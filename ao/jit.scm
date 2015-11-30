@@ -60,17 +60,17 @@
                 accum))
           (bin-reduce sym default other)))))
 
-;; Store backups of our numeric functions
-(define _+ +)
-(define _* *)
-(define _max max)
-(define _min min)
+;; Helper macro to make a backup of the builtin procedure then
+;; make the wrapper function and export it
+(define-syntax-rule (wrap-commutative f sym default)
+    (begin (define _f f)
+           (define f (make-commutative _f sym default))
+           (export! f)))
 
-;; Overload commutative functions
-(define + (make-commutative _+ 'add 0))
-(define * (make-commutative _* 'mul 1))
-(define max (make-commutative _max 'max #nil))
-(define min (make-commutative _min 'min #nil))
+(wrap-commutative + 'add 0)
+(wrap-commutative * 'mul 0)
+(wrap-commutative min 'min #nil)
+(wrap-commutative max 'max #nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -84,13 +84,15 @@
       (make-op sym (to-token (car args))
                    (to-token (apply g (cdr args))))))))
 
-;; Store backups of functions
-(define _- -)
-(define _/ /)
+;; Helper macro to make a backup of the builtin procedure then
+;; make the wrapper function and export it
+(define-syntax-rule (wrap-non-commutative f g sym )
+    (begin (define _f f)
+           (define f (make-non-commutative _f g sym))
+           (export! f)))
 
-;; Overload non-commutative functions
-(define - (make-non-commutative _- + 'sub))
-(define / (make-non-commutative _/ * 'div))
+(wrap-non-commutative - + 'sub)
+(wrap-non-commutative / * 'div)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -99,23 +101,20 @@
   (lambda (a)
     (if (number? a) (f a) (make-op sym a))))
 
-;; Store backups of functions
-(define _sqrt sqrt)
+;; Helper macro for unary definition and export
+(define-syntax-rule (wrap-unary f sym )
+    (begin (define _f f)
+           (define f (make-unary _f sym))
+           (export! f)))
 
-;; Overload unary functions
-(define sqrt (make-unary _sqrt 'sqrt))
+(wrap-unary sqrt 'sqrt)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (jit f)
+(define-public (jit f)
   (let ((args (car (procedure-minimum-arity f))))
     (cond ((= 2 args) (f (make-var 'x) (make-var 'y)))
           ((= 3 args) (f (make-var 'x) (make-var 'y) (make-var 'z)))
           (else (error "Invalid function arity" f)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(export jit)
-(export! + * min max - / sqrt)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
