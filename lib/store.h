@@ -25,6 +25,7 @@ struct Store
 extern "C" {
     void delete_store(void* ptr);
     SCM make_store();
+    SCM describe_store(SCM store);
     SCM make_var_token(SCM store, SCM v);
     SCM make_num_token(SCM store, SCM n);
     SCM make_op_token(SCM store, SCM op, SCM args);

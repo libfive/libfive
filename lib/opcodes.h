@@ -11,6 +11,7 @@ enum Opcode
     NO_ARGUMENTS,
 
     OP_SQRT,
+    OP_NEG,
     ONE_ARGUMENT,
 
     OP_ADD,

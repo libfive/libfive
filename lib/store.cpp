@@ -23,6 +23,7 @@ static Opcode symbol_to_opcode(SCM sym)
     else if (str == "sub")      return OP_SUB;
     else if (str == "div")      return OP_DIV;
     else if (str == "sqrt")     return OP_SQRT;
+    else if (str == "neg")      return OP_NEG;
     else                        return INVALID;
 }
 
@@ -98,4 +99,20 @@ SCM make_op_token(SCM store, SCM op_sym, SCM args)
         s->ops[op][arg_pair] = new OpToken(op, arg_pair.first, arg_pair.second);
     }
     return scm_from_pointer(s->ops[op][arg_pair], NULL);
+}
+
+SCM describe_store(SCM store)
+{
+    Store* s = static_cast<Store*>(scm_to_pointer(store));
+
+    unsigned long op_count = 0;
+    for (auto o : s->ops)
+        op_count += o.second.size();
+
+    printf("Store containing\n");
+    printf("  %lu constants\n", s->constants.size());
+    printf("  %lu operations\n", op_count);
+    printf("  %lu vars\n", s->vars.size());
+
+    return SCM_BOOL_T;
 }
