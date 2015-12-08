@@ -1,6 +1,6 @@
 (define-module (ao shapes))
 
-(use-modules (ao jit))
+(use-modules (ao overload))
 
 (define-public (square x) (* x x))
 (define-public (circle x0 y0 r)
