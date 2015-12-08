@@ -1,32 +1,46 @@
 #pragma once
 
 #include <map>
-#include <utility>
-#include <string>
+#include <vector>
+#include <array>
 
-#include <libguile.h>
-#include "opcodes.h"
+#include "opcode.h"
 
-////////////////////////////////////////////////////////////////////////////////
+class Token;
 
-struct Token;
-
-////////////////////////////////////////////////////////////////////////////////
-
-struct Store
+/*
+ *  A Store contains a set of Tokens with efficient routines for lookups
+ */
+class Store
 {
+public:
+    /*
+     *  Returns a token for the given constant
+     */
+    Token* constant(double v);
+
+    /*
+     *  Returns a token for the given operation
+     *
+     *  Arguments should be filled in from left to right
+     *  (i.e. a must not be null if b is not null)
+     */
+    Token* operation(Opcode op, Token* a=nullptr, Token* b=nullptr);
+
+    /*
+     *  Return tokens for base variables
+     */
+    Token* X() { return operation(OP_X); }
+    Token* Y() { return operation(OP_Y); }
+    Token* Z() { return operation(OP_Z); }
+
+protected:
+    typedef std::pair<Token*, Token*> Key;
+    typedef std::array<std::map<Key, Token*>, LAST_OP> Row;
+
+    /*  Constants are indexed solely by value */
     std::map<double, Token*> constants;
-    std::map<Opcode, std::map<std::pair<Token*, Token*>, Token*>> ops;
-    std::map<std::string, Token*> vars;
-};
 
-////////////////////////////////////////////////////////////////////////////////
-
-extern "C" {
-    void delete_store(void* ptr);
-    SCM make_store();
-    SCM describe_store(SCM store);
-    SCM make_var_token(SCM store, SCM v);
-    SCM make_num_token(SCM store, SCM n);
-    SCM make_op_token(SCM store, SCM op, SCM args);
+    /*  Operators are indexed by weight, opcode, and arguments */
+    std::vector<Row> ops;
 };

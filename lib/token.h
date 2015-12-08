@@ -1,43 +1,40 @@
 #pragma once
 
-#include <map>
-#include <string>
+#include <cstdlib>
 
-#include "opcodes.h"
+#include "opcode.h"
 
-////////////////////////////////////////////////////////////////////////////////
-
-class Node;
-struct Token;
-
-typedef std::map<Token*, Node*> TokenMap;
-
-////////////////////////////////////////////////////////////////////////////////
-
-struct Token
+/*
+ *  A token represents a single expression (with up to two arguments)
+ */
+class Token
 {
-    virtual void toNode(Node* const n, const TokenMap& tokens) const=0;
-};
+public:
+    /*
+     *  Constructs a token for an operation
+     */
+    Token(Opcode op, Token* a=nullptr, Token* b=nullptr);
 
-struct VarToken : public Token
-{
-    VarToken(std::string v);
-    void toNode(Node* const n, const TokenMap& tokens) const override;
-    std::string var;
-};
+    /*
+     *  Constructs a token for a constant
+     */
+    Token(double v);
 
-struct ConstToken : public Token
-{
-    ConstToken(double v);
-    void toNode(Node* const n, const TokenMap& tokens) const override;
-    double value;
-};
+    /*
+     *  Returns the number of arguments for the given token
+     */
+    static size_t args(Opcode op);
 
-struct OpToken : public Token
-{
-    OpToken(Opcode op, Token* a, Token* b);
-    void toNode(Node* const n, const TokenMap& tokens) const override;
-    Opcode op;
-    Token* a;
-    Token* b;
+protected:
+    const Opcode op;
+    const size_t weight;
+
+    /*  If this token is a constant, value is populated */
+    const double value;
+
+    /*  Otherwise, pointers to arguments are stored in a and b */
+    Token* const a;
+    Token* const b;
+
+    friend class Store;
 };
