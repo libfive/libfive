@@ -1,6 +1,25 @@
 #include "store.h"
 #include "token.h"
 
+Store::~Store()
+{
+    for (auto c : constants)
+    {
+        delete c.second;
+    }
+
+    for (auto row : ops)
+    {
+        for (auto sub : row)
+        {
+            for (auto t : sub)
+            {
+                delete t.second;
+            }
+        }
+    }
+}
+
 Token* Store::constant(double v)
 {
     if (constants.find(v) == constants.end())

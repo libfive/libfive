@@ -15,6 +15,11 @@ class Store
 {
 public:
     /*
+     *  In destructor, delete all Tokens associated with this Store
+     */
+    ~Store();
+
+    /*
      *  Returns a token for the given constant
      */
     Token* constant(double v);
