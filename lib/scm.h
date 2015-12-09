@@ -35,5 +35,5 @@ extern "C" {
     /*
      *  Initialize the shared library functions
      */
-    void fab_init();
+    void libao_init();
 }
