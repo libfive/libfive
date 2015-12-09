@@ -29,10 +29,10 @@ protected:
     const Opcode op;
     const size_t weight;
 
-    /*  If this token is a constant, value is populated */
+    /*  If this token is a constant, value is populated  */
     const double value;
 
-    /*  Otherwise, pointers to arguments are stored in a and b */
+    /*  Otherwise, pointers to arguments are stored in a and b  */
     Token* const a;
     Token* const b;
 

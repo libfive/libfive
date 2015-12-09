@@ -41,11 +41,11 @@ public:
 
 protected:
     typedef std::pair<Token*, Token*> Key;
-    typedef std::array<std::map<Key, Token*>, LAST_OP> Row;
+    typedef std::array<std::map<Key, Token*>, LAST_OP> Cache;
 
-    /*  Constants are indexed solely by value */
+    /*  Constants are indexed solely by value  */
     std::map<double, Token*> constants;
 
-    /*  Operators are indexed by weight, opcode, and arguments */
-    std::vector<Row> ops;
+    /*  Operators are indexed by weight, opcode, and arguments  */
+    std::vector<Cache> ops;
 };
