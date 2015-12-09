@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(libfab)
+project(libao)
 set(CMAKE_BUILD_TYPE DEBUG)
 
 ################################################################################
@@ -27,8 +27,8 @@ include_directories(${BOOST_INCLUDE_DIR})
 
 ################################################################################
 
-add_library(fab SHARED store.cpp token.cpp scm.cpp atom.cpp tree.cpp)
+add_library(ao SHARED store.cpp token.cpp scm.cpp atom.cpp tree.cpp)
 
-target_link_libraries(fab ${GUILE_LIBRARY})
+target_link_libraries(ao ${GUILE_LIBRARY})
 #install(TARGETS fab DESTINATION ${PROJECT_SOURCE_DIR})
 

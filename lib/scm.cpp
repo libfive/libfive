@@ -105,7 +105,7 @@ SCM tree_new(SCM store, SCM root)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void fab_init()
+void libao_init()
 {
     scm_c_define_gsubr("make-store", 0, 0, 0, (void*)store_new);
     scm_c_define_gsubr("make-tree", 2, 0, 0, (void*)tree_new);

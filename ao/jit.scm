@@ -1,7 +1,7 @@
 (define-module (ao jit))
 
 (use-modules (system foreign))
-(load-extension "libfab" "fab_init")
+(load-extension "libao" "libao_init")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
