@@ -27,7 +27,7 @@ include_directories(${BOOST_INCLUDE_DIR})
 
 ################################################################################
 
-add_library(fab SHARED store.cpp token.cpp scm.cpp atom.cpp)
+add_library(fab SHARED store.cpp token.cpp scm.cpp atom.cpp tree.cpp)
 
 target_link_libraries(fab ${GUILE_LIBRARY})
 #install(TARGETS fab DESTINATION ${PROJECT_SOURCE_DIR})

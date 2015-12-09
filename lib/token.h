@@ -4,6 +4,8 @@
 
 #include "opcode.h"
 
+class Atom;
+
 /*
  *  A token represents a single expression (with up to two arguments)
  */
@@ -36,5 +38,10 @@ protected:
     Token* const a;
     Token* const b;
 
+    /*  When packed into a Tree, store a pointer to the resulting Atom  */
+    Atom* atom;
+
     friend class Store;
+    friend class Tree;
+    friend class Atom;
 };

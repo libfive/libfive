@@ -6,7 +6,7 @@
 Token::Token(Opcode op, Token* a, Token* b)
     : op(op), weight(std::max(a ? a->weight + 1 : 0,
                               b ? b->weight + 1 : 0)),
-      value(nan("")), a(a), b(b)
+      value(nan("")), a(a), b(b), atom(nullptr)
 {
     // Nothing to do here
 }

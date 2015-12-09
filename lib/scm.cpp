@@ -2,6 +2,7 @@
 
 #include "scm.h"
 #include "store.h"
+#include "tree.h"
 #include "opcode.h"
 #include "token.h"
 
@@ -90,10 +91,24 @@ SCM token_op(SCM store, SCM op_sym, SCM args)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void tree_delete(void* ptr)
+{
+    delete static_cast<Tree*>(ptr);
+}
+
+SCM tree_new(SCM store, SCM root)
+{
+    Store* s = static_cast<Store*>(scm_to_pointer(store));
+    Token* r = static_cast<Token*>(scm_to_pointer(root));
+    return scm_from_pointer(new Tree(s, r), tree_delete);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void fab_init()
 {
     scm_c_define_gsubr("make-store", 0, 0, 0, (void*)store_new);
-    //scm_c_define_gsubr("describe-store", 1, 0, 0, (void*)describe_store);
+    scm_c_define_gsubr("make-tree", 2, 0, 0, (void*)tree_new);
 
     scm_c_define_gsubr("token-x", 1, 0, 0, (void*)token_x);
     scm_c_define_gsubr("token-y", 1, 0, 0, (void*)token_y);

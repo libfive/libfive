@@ -48,4 +48,6 @@ protected:
 
     /*  Operators are indexed by weight, opcode, and arguments  */
     std::vector<Cache> ops;
+
+    friend class Tree;
 };

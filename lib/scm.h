@@ -8,7 +8,12 @@ extern "C" {
      */
     void store_delete(void* ptr);
     SCM store_new();
-    SCM store_describe(SCM store);
+
+    /*
+     *  Helper functions to manipulate tree pointers
+     */
+    void tree_delete(void* ptr);
+    SCM tree_new(SCM store, SCM root);
 
     /*
      *  Return variables wrapped as SCM pointers
