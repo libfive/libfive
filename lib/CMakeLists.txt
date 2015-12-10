@@ -5,7 +5,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 ################################################################################
 
 find_path(GUILE_INCLUDE_DIR libguile.h /usr/local/include/guile/2.0)
-find_library(GUILE_LIBRARY NAMES guile-2.0 PATH //usr/local/lib)
+find_library(GUILE_LIBRARY NAMES guile-2.0 PATH /usr/local/lib)
 
 find_package(Boost REQUIRED)
 
