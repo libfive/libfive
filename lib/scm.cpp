@@ -1,3 +1,4 @@
+#include <iostream>
 #include <string>
 
 #include "scm.h"
@@ -78,7 +79,7 @@ SCM token_op(SCM store, SCM op_sym, SCM args)
     const int arg_count = Token::args(op);
     if (arg_count != scm_to_int(scm_length(args)))
     {
-        scm_misc_error("make_op_token", "Invalid argument count", NULL);
+        scm_misc_error("make_op_token", "Invalid argument count", SCM_EOL);
     }
 
     Token* a = (arg_count < 1) ? NULL :
@@ -110,6 +111,50 @@ SCM tree_eval_double(SCM tree, SCM x, SCM y, SCM z)
                          scm_to_double(y),
                          scm_to_double(z));
     return scm_from_double(out);
+}
+
+SCM tree_eval_doubles(SCM tree, SCM x, SCM y, SCM z)
+{
+    Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
+
+    std::vector<double> xs;
+    std::vector<double> ys;
+    std::vector<double> zs;
+
+    int nx = scm_to_int(scm_length(x));
+    int ny = scm_to_int(scm_length(y));
+    int nz = scm_to_int(scm_length(z));
+
+    if (nx != ny || ny != nz)
+    {
+        scm_misc_error("tree_eval_doubles",
+                       "Arrays must be of the same size", SCM_EOL);
+        return SCM_ELISP_NIL;
+    }
+
+    xs.reserve(nx);
+    while (!scm_is_null(x))
+    {
+        xs.push_back(scm_to_double(scm_car(x)));
+        x = scm_cdr(x);
+    }
+
+    ys.reserve(ny);
+    while (!scm_is_null(y))
+    {
+        ys.push_back(scm_to_double(scm_car(y)));
+        y = scm_cdr(y);
+    }
+
+    zs.reserve(nz);
+    while (!scm_is_null(z))
+    {
+        zs.push_back(scm_to_double(scm_car(z)));
+        z = scm_cdr(z);
+    }
+
+    t->eval(xs, ys, zs);
+    return SCM_BOOL_T;
 }
 
 SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
@@ -145,6 +190,7 @@ void libao_init()
     scm_c_define_gsubr("make-store", 0, 0, 0, (void*)store_new);
     scm_c_define_gsubr("make-tree", 2, 0, 0, (void*)tree_new);
     scm_c_define_gsubr("tree-eval-double", 4, 0, 0, (void*)tree_eval_double);
+    scm_c_define_gsubr("tree-eval-doubles", 4, 0, 0, (void*)tree_eval_doubles);
     scm_c_define_gsubr("tree-eval-interval", 4, 0, 0, (void*)tree_eval_interval);
     scm_c_define_gsubr("tree-mode-double", 2, 0, 0, (void*)tree_mode_double);
     scm_c_define_gsubr("tree-mode-interval", 2, 0, 0, (void*)tree_mode_interval);
