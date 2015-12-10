@@ -7,8 +7,8 @@
 
 ;; Creates a binary tree that reduces the given list of arguments
 (define (bin-reduce sym default args)
-    (let ((len  (length args))
-          (half (quotient (length args) 2)))
+    (let* ((len  (length args))
+           (half (quotient len 2)))
         (cond ((= 0 len) (if (null? default) (error "Too few arguments")
                                              (make-token default)))
               ((= 1 len) (make-token (car args)))
