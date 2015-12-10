@@ -33,7 +33,7 @@ Token* Store::operation(Opcode op, Token* a, Token* b)
 {
     const auto t = new Token(op, a, b);
 
-    if (ops.size() >= t->weight)
+    if (ops.size() <= t->weight)
     {
         ops.resize(t->weight + 1);
     }
