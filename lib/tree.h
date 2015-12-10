@@ -104,17 +104,6 @@ protected:
      */
     void setFlag(uint8_t flag);
 
-    /*
-     *  Prepare for evaluation on a set of doubles
-     *
-     *  Throws an assertion if there are more doubles than ATOM_ARRAY_SIZE
-     *  or if the vectors are of different sizes.
-     */
-    template <class T>
-    void setPos(const std::vector<T>& x,
-                const std::vector<T>& y,
-                const std::vector<T>& z);
-
     /*  All operations live in a set of rows sorted by weight */
     std::list<Row> rows;
 

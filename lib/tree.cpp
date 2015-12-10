@@ -99,72 +99,97 @@ Interval Tree::eval(Interval x, Interval y, Interval z)
                 std::vector<Interval>(1, z))[0];
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 #define EVAL_LOOP(M, R, F) \
 for (size_t i=0; i < count; ++i) { M->result.R[i] = F; } break;
 
-#define EVAL_FUNC(T, R) \
-std::vector<T> Tree::eval(const std::vector<T>& x,                                  \
-                          const std::vector<T>& y,                                  \
-                          const std::vector<T>& z)                                  \
-{                                                                                   \
-    setPos(x, y, z);                                                                \
-                                                                                    \
-    const size_t count = x.size();                                                  \
-    for (const auto& row : rows)                                                    \
-    {                                                                               \
-        for (auto& m : row)                                                         \
-        {                                                                           \
-            switch (m->op) {                                                        \
-            case OP_ADD:                                                            \
-                EVAL_LOOP(m, R, m->a->result.R[i] + m->b->result.R[i])              \
-            case OP_MUL:                                                            \
-                EVAL_LOOP(m, R, m->a->result.R[i] * m->b->result.R[i])              \
-            case OP_MIN:                                                            \
-                EVAL_LOOP(m, R, std::min(m->a->result.R[i], m->b->result.R[i]))     \
-            case OP_MAX:                                                            \
-                EVAL_LOOP(m, R, std::max(m->a->result.R[i], m->b->result.R[i]))     \
-            case OP_SUB:                                                            \
-                EVAL_LOOP(m, R, m->a->result.R[i] - m->b->result.R[i])              \
-            case OP_DIV:                                                            \
-                EVAL_LOOP(m, R, m->a->result.R[i] / m->b->result.R[i])              \
-            case OP_SQRT:                                                           \
-                EVAL_LOOP(m, R, sqrt(m->a->result.R[i]))                            \
-            case OP_NEG:                                                            \
-                EVAL_LOOP(m, R, -m->a->result.R[i])                                 \
-            case INVALID:                                                           \
-            case OP_CONST:                                                          \
-            case OP_X:                                                              \
-            case OP_Y:                                                              \
-            case OP_Z:                                                              \
-            case LAST_OP: assert(false);                                            \
-            }                                                                       \
-        }                                                                           \
-    }                                                                               \
-    return std::vector<T>(root->result.R, root->result.R + x.size());               \
-}                                                                                   \
+#define EVAL_FUNC(T, R, C) \
+std::vector<T> Tree::eval(const std::vector<T>& x,                          \
+                          const std::vector<T>& y,                          \
+                          const std::vector<T>& z)                          \
+{                                                                           \
+    assert(x.size() == y.size() && x.size() == z.size());                   \
+                                                                            \
+    size_t remaining = x.size();                                            \
+                                                                            \
+    std::vector<T> out;                                                     \
+    out.resize(remaining);                                                  \
+    size_t index = 0;                                                       \
+                                                                            \
+    while (remaining)                                                       \
+    {                                                                       \
+        const size_t count = std::min(remaining, C);                        \
+                                                                            \
+        X->result.set(&x[index], count);                                    \
+        Y->result.set(&y[index], count);                                    \
+        Z->result.set(&z[index], count);                                    \
+                                                                            \
+        for (const auto& row : rows)                                        \
+        {                                                                   \
+            for (auto& m : row)                                             \
+            {                                                               \
+                switch (m->op) {                                            \
+                case OP_ADD:                                                \
+                    EVAL_LOOP(m, R, m->a->result.R[i] + m->b->result.R[i])  \
+                case OP_MUL:                                                \
+                    EVAL_LOOP(m, R, m->a->result.R[i] * m->b->result.R[i])  \
+                case OP_MIN:                                                \
+                    EVAL_LOOP(m, R, std::min(m->a->result.R[i],             \
+                                             m->b->result.R[i]))            \
+                case OP_MAX:                                                \
+                    EVAL_LOOP(m, R, std::max(m->a->result.R[i],             \
+                                             m->b->result.R[i]))            \
+                case OP_SUB:                                                \
+                    EVAL_LOOP(m, R, m->a->result.R[i] - m->b->result.R[i])  \
+                case OP_DIV:                                                \
+                    EVAL_LOOP(m, R, m->a->result.R[i] / m->b->result.R[i])  \
+                case OP_SQRT:                                               \
+                    EVAL_LOOP(m, R, sqrt(m->a->result.R[i]))                \
+                case OP_NEG:                                                \
+                    EVAL_LOOP(m, R, -m->a->result.R[i])                     \
+                case INVALID:                                               \
+                case OP_CONST:                                              \
+                case OP_X:                                                  \
+                case OP_Y:                                                  \
+                case OP_Z:                                                  \
+                case LAST_OP: assert(false);                                \
+                }                                                           \
+            }                                                               \
+        }                                                                   \
+        remaining -= count;                                                 \
+        std::copy(root->result.R, root->result.R + count, &out[index]);     \
+        index += count;                                                     \
+    }                                                                       \
+    return out;                                                             \
+}                                                                           \
 
-EVAL_FUNC(double, d);
-EVAL_FUNC(Interval, i);
+EVAL_FUNC(double, d, ATOM_DOUBLE_COUNT);
+EVAL_FUNC(Interval, i, ATOM_INTERVAL_COUNT);
+
+#undef EVAL_LOOP
+#undef EVAL_FUNC
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void Tree::modeDouble(size_t count)
 {
-    assert(count <= ATOM_ARRAY_SIZE);
+    count = std::min(count, ATOM_DOUBLE_COUNT);
     for (auto c : constants)
     {
-        c->result.set(std::vector<double>(count ? count : ATOM_ARRAY_SIZE,
-                                          c->value));
+        c->result.set(std::vector<double>(
+                    count ? count : ATOM_DOUBLE_COUNT,
+                    c->value));
     }
 }
 
 void Tree::modeInterval(size_t count)
 {
-    assert(count <= ATOM_ARRAY_SIZE / 2);
+    count = std::min(count, ATOM_INTERVAL_COUNT);
     for (auto c : constants)
     {
         c->result.set(std::vector<Interval>(
-                    count ? count : ATOM_ARRAY_SIZE / 2,
+                    count ? count : ATOM_INTERVAL_COUNT,
                     Interval(c->value, c->value)));
     }
 }
@@ -177,20 +202,6 @@ void Tree::setFlag(uint8_t flag)
     {
         r.setFlag(flag);
     }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <class T>
-void Tree::setPos(const std::vector<T>& x,
-                  const std::vector<T>& y,
-                  const std::vector<T>& z)
-{
-    assert(x.size() == y.size() && x.size() == z.size());
-
-    X->result.set(x);
-    Y->result.set(y);
-    Z->result.set(z);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

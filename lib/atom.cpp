@@ -4,11 +4,18 @@
 #include "atom.h"
 #include "token.h"
 
+/*  Compile-time macro to check array size  */
+#define CHECK_ARRAY_SIZE(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+
 Atom::Atom(Token* t)
     : op(t->op), value(t->value), flags(0),
       a(t->a ? t->a->atom : nullptr),
       b(t->b ? t->b->atom : nullptr)
 {
+    CHECK_ARRAY_SIZE(ATOM_ARRAY_BYTES % sizeof(double));
+    CHECK_ARRAY_SIZE(ATOM_ARRAY_BYTES % sizeof(Interval));
+    CHECK_ARRAY_SIZE(ATOM_ARRAY_BYTES % sizeof(Gradient));
+
     // Assert that children have atom pointers populated
     assert(t->a ? t->a->atom != nullptr : true);
     assert(t->b ? t->b->atom != nullptr : true);
@@ -19,14 +26,14 @@ Atom::Atom(Token* t)
     t->atom = this;
 }
 
-void Atom::Result::set(const std::vector<double>& ds)
+void Atom::Result::set(const double* ds, size_t count)
 {
-    assert(ds.size() <= ATOM_ARRAY_SIZE);
-    std::copy(ds.begin(), ds.end(), d);
+    assert(count <= ATOM_DOUBLE_COUNT);
+    std::copy(ds, ds + count, d);
 }
 
-void Atom::Result::set(const std::vector<Interval>& is)
+void Atom::Result::set(const Interval* is, size_t count)
 {
-    assert(is.size() <= ATOM_ARRAY_SIZE / 2);
-    std::copy(is.begin(), is.end(), i);
+    assert(count <= ATOM_INTERVAL_COUNT);
+    std::copy(is, is + count, i);
 }

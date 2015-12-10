@@ -132,29 +132,29 @@ SCM tree_eval_doubles(SCM tree, SCM x, SCM y, SCM z)
         return SCM_ELISP_NIL;
     }
 
-    xs.reserve(nx);
-    while (!scm_is_null(x))
+    auto unpack = [](int n, SCM d, std::vector<double>* ds)
     {
-        xs.push_back(scm_to_double(scm_car(x)));
-        x = scm_cdr(x);
-    }
+        ds->reserve(n);
+        while (!scm_is_null(d))
+        {
+            ds->push_back(scm_to_double(scm_car(d)));
+            d = scm_cdr(d);
+        }
+    };
 
-    ys.reserve(ny);
-    while (!scm_is_null(y))
+    unpack(nx, x, &xs);
+    unpack(ny, y, &ys);
+    unpack(nz, z, &zs);
+
+    std::vector<double> result = t->eval(xs, ys, zs);
+
+    // Pack the results into a Scheme list
+    SCM out = SCM_ELISP_NIL;
+    for (auto itr = result.crbegin(); itr != result.crend(); ++itr)
     {
-        ys.push_back(scm_to_double(scm_car(y)));
-        y = scm_cdr(y);
+        out = scm_cons(scm_from_double(*itr), out);
     }
-
-    zs.reserve(nz);
-    while (!scm_is_null(z))
-    {
-        zs.push_back(scm_to_double(scm_car(z)));
-        z = scm_cdr(z);
-    }
-
-    t->eval(xs, ys, zs);
-    return SCM_BOOL_T;
+    return out;
 }
 
 SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
