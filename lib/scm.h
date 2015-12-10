@@ -14,8 +14,10 @@ extern "C" {
      */
     void tree_delete(void* ptr);
     SCM tree_new(SCM store, SCM root);
-    SCM tree_eval(SCM tree, SCM x, SCM y, SCM z);
+    SCM tree_eval_double(SCM tree, SCM x, SCM y, SCM z);
+    SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z);
     SCM tree_mode_double(SCM tree, SCM count);
+    SCM tree_mode_interval(SCM tree, SCM count);
 
     /*
      *  Return variables wrapped as SCM pointers

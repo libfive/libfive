@@ -103,13 +103,25 @@ SCM tree_new(SCM store, SCM root)
     return scm_from_pointer(new Tree(s, r), tree_delete);
 }
 
-SCM tree_eval(SCM tree, SCM x, SCM y, SCM z)
+SCM tree_eval_double(SCM tree, SCM x, SCM y, SCM z)
 {
     Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
     double out = t->eval(scm_to_double(x),
                          scm_to_double(y),
                          scm_to_double(z));
     return scm_from_double(out);
+}
+
+SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
+{
+    Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
+    Interval X(scm_to_double(scm_car(x)), scm_to_double(scm_cdr(x)));
+    Interval Y(scm_to_double(scm_car(y)), scm_to_double(scm_cdr(y)));
+    Interval Z(scm_to_double(scm_car(z)), scm_to_double(scm_cdr(z)));
+
+    Interval out = t->eval(X, Y, Z);
+    return scm_cons(scm_from_double(out.lower()),
+                    scm_from_double(out.upper()));
 }
 
 SCM tree_mode_double(SCM tree, SCM count)
@@ -119,14 +131,23 @@ SCM tree_mode_double(SCM tree, SCM count)
     return SCM_ELISP_NIL;
 }
 
+SCM tree_mode_interval(SCM tree, SCM count)
+{
+    Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
+    t->modeInterval(scm_to_int(count));
+    return SCM_ELISP_NIL;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void libao_init()
 {
     scm_c_define_gsubr("make-store", 0, 0, 0, (void*)store_new);
     scm_c_define_gsubr("make-tree", 2, 0, 0, (void*)tree_new);
-    scm_c_define_gsubr("tree-eval", 4, 0, 0, (void*)tree_eval);
+    scm_c_define_gsubr("tree-eval-double", 4, 0, 0, (void*)tree_eval_double);
+    scm_c_define_gsubr("tree-eval-interval", 4, 0, 0, (void*)tree_eval_interval);
     scm_c_define_gsubr("tree-mode-double", 2, 0, 0, (void*)tree_mode_double);
+    scm_c_define_gsubr("tree-mode-interval", 2, 0, 0, (void*)tree_mode_interval);
 
     scm_c_define_gsubr("token-x", 1, 0, 0, (void*)token_x);
     scm_c_define_gsubr("token-y", 1, 0, 0, (void*)token_y);

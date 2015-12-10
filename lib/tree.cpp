@@ -158,6 +158,17 @@ void Tree::modeDouble(size_t count)
     }
 }
 
+void Tree::modeInterval(size_t count)
+{
+    assert(count <= ATOM_ARRAY_SIZE / 2);
+    for (auto c : constants)
+    {
+        c->result.set(std::vector<Interval>(
+                    count ? count : ATOM_ARRAY_SIZE / 2,
+                    Interval(c->value, c->value)));
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void Tree::setFlag(uint8_t flag)
