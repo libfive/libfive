@@ -27,7 +27,7 @@
     (set! store (make-store))
     (let ((x (token-x store))
           (y (token-y store))
-          (z (token-y store)))
+          (z (token-z store)))
     (let ((root (cond ((= 2 args) (make-token (f x y)))
                       ((= 3 args) (make-token (f x y z)))
                       (else (error "Invalid function arity" f)))))
