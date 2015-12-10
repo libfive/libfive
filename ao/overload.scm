@@ -80,7 +80,7 @@
     (if (number? a) (f a) (make-token sym a))))
 
 ;; Helper macro for unary definition and export
-(define-syntax-rule (wrap-unary f sym )
+(define-syntax-rule (wrap-unary f sym)
     (begin (define builtin f)
            (define f (make-unary builtin sym))
            (export! f)))
