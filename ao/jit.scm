@@ -24,34 +24,39 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (interval? i)     (and (pair? i) (not (list? i))))
+(define (number-list? i)  (and (list? i) (every number? i)))
+
+(define (default-like x)
+  (cond ((number? x)    0)
+        ((interval? x)  '(0 . 0))
+        ((number-list? x)   (make-list (length x) 0))
+        (else (error "Invalid type in default-like" x))))
+
 (define (wrap-tree t arity)
-   (let ((eval-double (lambda (x y z)
+   (let* ((eval-double (lambda (x y z)
                         (tree-mode-double t 1)
                         (tree-eval-double t x y z)))
-         (eval-doubles (lambda (x y z)
+          (eval-doubles (lambda (x y z)
                         (tree-mode-double t (length x))
                         (tree-eval-doubles t x y z)))
-         (eval-interval (lambda (x y z)
+          (eval-interval (lambda (x y z)
                         (tree-mode-interval t 1)
                         (tree-eval-interval t x y z)))
-         (interval? (lambda (i) (and (pair? i) (not (list? i)))))
-         (number-list? (lambda (i) (and (list? i) (every number? i)))))
-       (cond ((= 2 arity) (lambda (x y)
-                (cond ((every interval? (list x y))
-                            (eval-interval x y '(0 . 0)))
-                      ((every number-list? (list x y))
-                            (eval-doubles x y (make-list (length x) 0)))
-                      ((every number? (list x y))
-                            (eval-double x y 0))
-                      (else (error "Input arguments are of invalid types")))))
-             ((= 3 arity) (lambda (x y z)
+
+          ;; Generic evaluator that dispatches based on argument type
+          (eval-generic (lambda (x y z)
                 (cond ((every interval? (list x y z))
                             (eval-interval x y z))
                       ((every number-list? (list x y z))
-                            (eval-doubles x y (make-list (length x) z)))
+                            (eval-doubles x y z))
                       ((every number? (list x y z))
                             (eval-double x y z))
-                      (else (error "Input arguments are of invalid types"))))))))
+                      (else (error "Input arguments are of invalid types"))))))
+
+       ;; Create a local function based on function arity
+       (cond ((= 2 arity) (lambda (x y) (eval-generic x y (default-like x))))
+             ((= 3 arity) (lambda (x y z) (eval-generic x y z))))))
 
 (define-public (jit f)
     (set! store (make-store))
