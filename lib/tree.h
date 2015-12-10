@@ -42,6 +42,15 @@ public:
     std::vector<Interval> eval(const std::vector<Interval>& x,
                                const std::vector<Interval>& y,
                                const std::vector<Interval>& z);
+
+    /*
+     *  Prepares for evaluation on a set of doubles by filling constant
+     *  results with their value
+     *
+     *  count is the number of slots to fill or 0 to fill all
+     */
+    void modeDouble(size_t count);
+
 protected:
     /*
      *  The Row subclass stores a row of atoms (of a particular weight)

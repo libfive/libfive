@@ -103,12 +103,30 @@ SCM tree_new(SCM store, SCM root)
     return scm_from_pointer(new Tree(s, r), tree_delete);
 }
 
+SCM tree_eval(SCM tree, SCM x, SCM y, SCM z)
+{
+    Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
+    double out = t->eval(scm_to_double(x),
+                         scm_to_double(y),
+                         scm_to_double(z));
+    return scm_from_double(out);
+}
+
+SCM tree_mode_double(SCM tree, SCM count)
+{
+    Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
+    t->modeDouble(scm_to_int(count));
+    return SCM_ELISP_NIL;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void libao_init()
 {
     scm_c_define_gsubr("make-store", 0, 0, 0, (void*)store_new);
     scm_c_define_gsubr("make-tree", 2, 0, 0, (void*)tree_new);
+    scm_c_define_gsubr("tree-eval", 4, 0, 0, (void*)tree_eval);
+    scm_c_define_gsubr("tree-mode-double", 2, 0, 0, (void*)tree_mode_double);
 
     scm_c_define_gsubr("token-x", 1, 0, 0, (void*)token_x);
     scm_c_define_gsubr("token-y", 1, 0, 0, (void*)token_y);

@@ -148,6 +148,18 @@ EVAL_FUNC(Interval, i);
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void Tree::modeDouble(size_t count)
+{
+    assert(count <= ATOM_ARRAY_SIZE);
+    for (auto c : constants)
+    {
+        c->result.set(std::vector<double>(count ? count : ATOM_ARRAY_SIZE,
+                                          c->value));
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void Tree::setFlag(uint8_t flag)
 {
     for (auto& r : rows)

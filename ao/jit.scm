@@ -33,6 +33,9 @@
                        (else (error "Invalid function arity" f))))
            (out (make-tree store root)))
        (set! store #nil)
-       out))
+       (let ((eval-double (lambda (x y z) (tree-mode-double out 1)
+                                          (tree-eval out x y z))))
+           (cond ((= 2 args) (lambda (x y)   (eval-double x y 0)))
+                 ((= 3 args) (lambda (x y z) (eval-double x y z)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
