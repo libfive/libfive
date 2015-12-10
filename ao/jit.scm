@@ -12,7 +12,7 @@
 ;; Converts the given argument to a token
 ;; Based on argument type, the following behavior occurs
 ;; - A number is converted to constant
-;; - A symbol and further arguments is converted to operator
+;; - A symbol and further arguments is converted an operator
 (define-public (make-token a . args)
   (cond ((= 0 (length args))
             (cond ((pointer? a) a)
@@ -23,16 +23,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (jit f)
-  (let ((args (car (procedure-minimum-arity f))))
     (set! store (make-store))
-    (let ((x (token-x store))
-          (y (token-y store))
-          (z (token-z store)))
-    (let ((root (cond ((= 2 args) (make-token (f x y)))
-                      ((= 3 args) (make-token (f x y z)))
-                      (else (error "Invalid function arity" f)))))
-    (let ((out (make-tree store root)))
-        (set! store #nil)
-        (out))))))
+    (let* ((args (car (procedure-minimum-arity f)))
+           (x (token-x store))
+           (y (token-y store))
+           (z (token-z store))
+           (root (cond ((= 2 args) (make-token (f x y)))
+                       ((= 3 args) (make-token (f x y z)))
+                       (else (error "Invalid function arity" f))))
+           (out (make-tree store root)))
+       (set! store #nil)
+       out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
