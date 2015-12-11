@@ -25,15 +25,3 @@ Atom::Atom(Token* t)
 
     t->atom = this;
 }
-
-void Atom::Result::set(const double* ds, size_t count)
-{
-    assert(count <= ATOM_DOUBLE_COUNT);
-    std::copy(ds, ds + count, d);
-}
-
-void Atom::Result::set(const Interval* is, size_t count)
-{
-    assert(count <= ATOM_INTERVAL_COUNT);
-    std::copy(is, is + count, i);
-}

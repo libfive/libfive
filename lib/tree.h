@@ -30,18 +30,16 @@ public:
     /*
      *  Single-argument evaluation
      */
-    double eval(double x, double y, double z);
-    Interval eval(Interval x, Interval y, Interval z);
+    template <class T>
+    T eval(T x, T y, T z);
 
     /*
-     *  Vectorized evaluation
+     *  Vectorized evaluation (defined below)
      */
-    std::vector<double> eval(const std::vector<double>& x,
-                             const std::vector<double>& y,
-                             const std::vector<double>& z);
-    std::vector<Interval> eval(const std::vector<Interval>& x,
-                               const std::vector<Interval>& y,
-                               const std::vector<Interval>& z);
+    template <class T>
+    std::vector<T> eval(const std::vector<T>& x,
+                        const std::vector<T>& y,
+                        const std::vector<T>& z);
 
     /*
      *  Prepares for evaluation on a set of doubles by filling constant
@@ -100,6 +98,12 @@ protected:
     };
 
     /*
+     *  If the given atom is present, load vs[index] through vs[index + count]
+     */
+    template <class T>
+    void load_if(Atom* a, const std::vector<T>& vs, size_t index, size_t count);
+
+    /*
      *  Sets the given flag for every node in the tree
      */
     void setFlag(uint8_t flag);
@@ -120,3 +124,94 @@ protected:
     /*  Big bag-o-data that contains this tree's atoms  */
     Atom* data;
 };
+
+////////////////////////////////////////////////////////////////////////////////
+
+#include "atom.h"
+
+template <class T>
+inline void Tree::load_if(Atom* a, const std::vector<T>& vs,
+                          size_t index, size_t count)
+{
+    if (a)
+    {
+        a->result.set(&vs[index], count);
+    }
+}
+
+#define EVAL_LOOP(M, R, F) \
+for (size_t i=0; i < count; ++i) { M->result.set(F, i); } break;
+
+template <class T>
+inline std::vector<T> Tree::eval(const std::vector<T>& x,
+                                 const std::vector<T>& y,
+                                 const std::vector<T>& z)
+{
+    assert(x.size() == y.size() && x.size() == z.size());
+
+    size_t remaining = x.size();
+
+    std::vector<T> out;
+    out.resize(remaining);
+    size_t index = 0;
+
+    while (remaining)
+    {
+        const size_t count = std::min(remaining, ATOM_ARRAY_BYTES / sizeof(T));
+
+        load_if(X, x, index, count);
+        load_if(Y, y, index, count);
+        load_if(Z, z, index, count);
+
+        for (const auto& row : rows)
+        {
+            for (auto& m : row)
+            {
+                switch (m->op) {
+                case OP_ADD:
+                    EVAL_LOOP(m, R, m->a->result.get<T>(i) +
+                                    m->b->result.get<T>(i))
+                case OP_MUL:
+                    EVAL_LOOP(m, R, m->a->result.get<T>(i) *
+                                    m->b->result.get<T>(i))
+                case OP_MIN:
+                    EVAL_LOOP(m, R, std::min(m->a->result.get<T>(i),
+                                             m->b->result.get<T>(i)))
+                case OP_MAX:
+                    EVAL_LOOP(m, R, std::max(m->a->result.get<T>(i),
+                                             m->b->result.get<T>(i)))
+                case OP_SUB:
+                    EVAL_LOOP(m, R, m->a->result.get<T>(i) -
+                                    m->b->result.get<T>(i))
+                case OP_DIV:
+                    EVAL_LOOP(m, R, m->a->result.get<T>(i) /
+                                    m->b->result.get<T>(i))
+                case OP_SQRT:
+                    EVAL_LOOP(m, R, sqrt(m->a->result.get<T>(i)))
+                case OP_NEG:
+                    EVAL_LOOP(m, R, -m->a->result.get<T>(i))
+                case INVALID:
+                case OP_CONST:
+                case OP_X:
+                case OP_Y:
+                case OP_Z:
+                case LAST_OP: assert(false);
+                }
+            }
+        }
+        remaining -= count;
+        root->result.copy_to(&out[index], count);
+        index += count;
+    }
+    return out;
+}
+
+#undef EVAL_LOOP
+
+template <class T>
+inline T Tree::eval(T x, T y, T z)
+{
+    return eval(std::vector<T>(1, x),
+                std::vector<T>(1, y),
+                std::vector<T>(1, z))[0];
+}

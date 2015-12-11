@@ -101,100 +101,6 @@ Tree::~Tree()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-double Tree::eval(double x, double y, double z)
-{
-    return eval(std::vector<double>(1, x),
-                std::vector<double>(1, y),
-                std::vector<double>(1, z))[0];
-}
-
-Interval Tree::eval(Interval x, Interval y, Interval z)
-{
-    return eval(std::vector<Interval>(1, x),
-                std::vector<Interval>(1, y),
-                std::vector<Interval>(1, z))[0];
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-#define EVAL_LOOP(M, R, F) \
-for (size_t i=0; i < count; ++i) { M->result.R[i] = F; } break;
-
-#define LOAD_IF(V, VS, I, C) \
-if (V)                                  \
-{                                       \
-    V->result.set(&VS[I], C);           \
-}
-
-#define EVAL_FUNC(T, R, C) \
-std::vector<T> Tree::eval(const std::vector<T>& x,                          \
-                          const std::vector<T>& y,                          \
-                          const std::vector<T>& z)                          \
-{                                                                           \
-    assert(x.size() == y.size() && x.size() == z.size());                   \
-                                                                            \
-    size_t remaining = x.size();                                            \
-                                                                            \
-    std::vector<T> out;                                                     \
-    out.resize(remaining);                                                  \
-    size_t index = 0;                                                       \
-                                                                            \
-    while (remaining)                                                       \
-    {                                                                       \
-        const size_t count = std::min(remaining, C);                        \
-                                                                            \
-        LOAD_IF(X, x, index, count);                                        \
-        LOAD_IF(Y, y, index, count);                                        \
-        LOAD_IF(Z, z, index, count);                                        \
-                                                                            \
-        for (const auto& row : rows)                                        \
-        {                                                                   \
-            for (auto& m : row)                                             \
-            {                                                               \
-                switch (m->op) {                                            \
-                case OP_ADD:                                                \
-                    EVAL_LOOP(m, R, m->a->result.R[i] + m->b->result.R[i])  \
-                case OP_MUL:                                                \
-                    EVAL_LOOP(m, R, m->a->result.R[i] * m->b->result.R[i])  \
-                case OP_MIN:                                                \
-                    EVAL_LOOP(m, R, std::min(m->a->result.R[i],             \
-                                             m->b->result.R[i]))            \
-                case OP_MAX:                                                \
-                    EVAL_LOOP(m, R, std::max(m->a->result.R[i],             \
-                                             m->b->result.R[i]))            \
-                case OP_SUB:                                                \
-                    EVAL_LOOP(m, R, m->a->result.R[i] - m->b->result.R[i])  \
-                case OP_DIV:                                                \
-                    EVAL_LOOP(m, R, m->a->result.R[i] / m->b->result.R[i])  \
-                case OP_SQRT:                                               \
-                    EVAL_LOOP(m, R, sqrt(m->a->result.R[i]))                \
-                case OP_NEG:                                                \
-                    EVAL_LOOP(m, R, -m->a->result.R[i])                     \
-                case INVALID:                                               \
-                case OP_CONST:                                              \
-                case OP_X:                                                  \
-                case OP_Y:                                                  \
-                case OP_Z:                                                  \
-                case LAST_OP: assert(false);                                \
-                }                                                           \
-            }                                                               \
-        }                                                                   \
-        remaining -= count;                                                 \
-        std::copy(root->result.R, root->result.R + count, &out[index]);     \
-        index += count;                                                     \
-    }                                                                       \
-    return out;                                                             \
-}                                                                           \
-
-EVAL_FUNC(double, d, ATOM_DOUBLE_COUNT);
-EVAL_FUNC(Interval, i, ATOM_INTERVAL_COUNT);
-
-#undef EVAL_LOOP
-#undef EVAL_FUNC
-#undef LOAD_IF
-
-////////////////////////////////////////////////////////////////////////////////
-
 void Tree::modeDouble(size_t count)
 {
     count = std::min(count, ATOM_DOUBLE_COUNT);
@@ -255,6 +161,3 @@ void Tree::Row::disable(size_t i)
     std::swap((*this)[i], (*this)[--active]);
     disabled.top()++;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
