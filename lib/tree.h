@@ -104,6 +104,12 @@ protected:
     void load_if(Atom* a, const std::vector<T>& vs, size_t index, size_t count);
 
     /*
+     *  Evaluates a specific atom (with a switch statement on the opcode)
+     */
+    template <class T>
+    void eval_atom(Atom* a, size_t i);
+
+    /*
      *  Sets the given flag for every node in the tree
      */
     void setFlag(uint8_t flag);
@@ -139,8 +145,40 @@ inline void Tree::load_if(Atom* a, const std::vector<T>& vs,
     }
 }
 
-#define EVAL_LOOP(M, R, F) \
-for (size_t i=0; i < count; ++i) { M->result.set(F, i); } break;
+template <class T>
+inline void Tree::eval_atom(Atom* m, size_t i)
+{
+    switch (m->op) {
+        case OP_ADD:
+            m->result.set<T>(m->a->result.get<T>(i) +
+                             m->a->result.get<T>(i), i);
+        case OP_MUL:
+            m->result.set<T>(m->a->result.get<T>(i) *
+                             m->a->result.get<T>(i), i);
+        case OP_MIN:
+            m->result.set<T>(std::min(m->a->result.get<T>(i),
+                                      m->a->result.get<T>(i)), i);
+        case OP_MAX:
+            m->result.set<T>(std::max(m->a->result.get<T>(i),
+                                      m->a->result.get<T>(i)), i);
+        case OP_SUB:
+            m->result.set<T>(m->a->result.get<T>(i) -
+                             m->a->result.get<T>(i), i);
+        case OP_DIV:
+            m->result.set<T>(m->a->result.get<T>(i) /
+                             m->a->result.get<T>(i), i);
+        case OP_SQRT:
+            m->result.set<T>(sqrt(m->a->result.get<T>(i)), i);
+        case OP_NEG:
+            m->result.set<T>(-m->a->result.get<T>(i), i);
+        case INVALID:
+        case OP_CONST:
+        case OP_X:
+        case OP_Y:
+        case OP_Z:
+        case LAST_OP: assert(false);
+    }
+}
 
 template <class T>
 inline std::vector<T> Tree::eval(const std::vector<T>& x,
@@ -167,35 +205,9 @@ inline std::vector<T> Tree::eval(const std::vector<T>& x,
         {
             for (auto& m : row)
             {
-                switch (m->op) {
-                case OP_ADD:
-                    EVAL_LOOP(m, R, m->a->result.get<T>(i) +
-                                    m->b->result.get<T>(i))
-                case OP_MUL:
-                    EVAL_LOOP(m, R, m->a->result.get<T>(i) *
-                                    m->b->result.get<T>(i))
-                case OP_MIN:
-                    EVAL_LOOP(m, R, std::min(m->a->result.get<T>(i),
-                                             m->b->result.get<T>(i)))
-                case OP_MAX:
-                    EVAL_LOOP(m, R, std::max(m->a->result.get<T>(i),
-                                             m->b->result.get<T>(i)))
-                case OP_SUB:
-                    EVAL_LOOP(m, R, m->a->result.get<T>(i) -
-                                    m->b->result.get<T>(i))
-                case OP_DIV:
-                    EVAL_LOOP(m, R, m->a->result.get<T>(i) /
-                                    m->b->result.get<T>(i))
-                case OP_SQRT:
-                    EVAL_LOOP(m, R, sqrt(m->a->result.get<T>(i)))
-                case OP_NEG:
-                    EVAL_LOOP(m, R, -m->a->result.get<T>(i))
-                case INVALID:
-                case OP_CONST:
-                case OP_X:
-                case OP_Y:
-                case OP_Z:
-                case LAST_OP: assert(false);
+                for (size_t i=0; i < count; ++i)
+                {
+                    eval_atom<T>(m, i);
                 }
             }
         }
@@ -205,8 +217,6 @@ inline std::vector<T> Tree::eval(const std::vector<T>& x,
     }
     return out;
 }
-
-#undef EVAL_LOOP
 
 template <class T>
 inline T Tree::eval(T x, T y, T z)
