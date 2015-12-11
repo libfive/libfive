@@ -56,10 +56,11 @@ protected:
 
         /*
          *  Set the values to the given vector
+         *  (using the pointer-based setters below)
          */
-        template <class T> void set(const std::vector<T>& ds)
+        template <class T> void set(const std::vector<T>& vs)
         {
-            set(&ds[0], ds.size());
+            set(&vs[0], vs.size());
         }
 
         /*

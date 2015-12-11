@@ -120,6 +120,12 @@ Interval Tree::eval(Interval x, Interval y, Interval z)
 #define EVAL_LOOP(M, R, F) \
 for (size_t i=0; i < count; ++i) { M->result.R[i] = F; } break;
 
+#define LOAD_IF(V, VS, I, C) \
+if (V)                                  \
+{                                       \
+    V->result.set(&VS[I], C);           \
+}
+
 #define EVAL_FUNC(T, R, C) \
 std::vector<T> Tree::eval(const std::vector<T>& x,                          \
                           const std::vector<T>& y,                          \
@@ -137,9 +143,9 @@ std::vector<T> Tree::eval(const std::vector<T>& x,                          \
     {                                                                       \
         const size_t count = std::min(remaining, C);                        \
                                                                             \
-        X->result.set(&x[index], count);                                    \
-        Y->result.set(&y[index], count);                                    \
-        Z->result.set(&z[index], count);                                    \
+        LOAD_IF(X, x, index, count);                                        \
+        LOAD_IF(Y, y, index, count);                                        \
+        LOAD_IF(Z, z, index, count);                                        \
                                                                             \
         for (const auto& row : rows)                                        \
         {                                                                   \
@@ -185,6 +191,7 @@ EVAL_FUNC(Interval, i, ATOM_INTERVAL_COUNT);
 
 #undef EVAL_LOOP
 #undef EVAL_FUNC
+#undef LOAD_IF
 
 ////////////////////////////////////////////////////////////////////////////////
 
