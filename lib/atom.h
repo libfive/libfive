@@ -72,7 +72,6 @@ protected:
         inline void set(Interval v, size_t index) { i[index] = v; }
 
         template <class T> T get(size_t index);
-        template <> double get<double>(size_t index) { return d[index]; }
 
         double d[ATOM_DOUBLE_COUNT];
         Interval i[ATOM_INTERVAL_COUNT];
@@ -81,3 +80,13 @@ protected:
 
     friend class Tree;
 };
+
+template <> double Atom::Result::get<double>(size_t index)
+{
+    return d[index];
+}
+
+template <> Interval Atom::Result::get<Interval>(size_t index)
+{
+    return i[index];
+}
