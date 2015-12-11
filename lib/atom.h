@@ -81,12 +81,14 @@ protected:
     friend class Tree;
 };
 
-template <> double Atom::Result::get<double>(size_t index)
+template <>
+inline double Atom::Result::get<double>(size_t index)
 {
     return d[index];
 }
 
-template <> Interval Atom::Result::get<Interval>(size_t index)
+template <>
+inline Interval Atom::Result::get<Interval>(size_t index)
 {
     return i[index];
 }
