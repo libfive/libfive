@@ -68,6 +68,11 @@ protected:
          */
         void set(const double* ds, size_t count=ATOM_DOUBLE_COUNT);
         void set(const Interval* ds, size_t count=ATOM_INTERVAL_COUNT);
+        inline void set(double v, size_t index) { d[index] = v; }
+        inline void set(Interval v, size_t index) { i[index] = v; }
+
+        template <class T> T get(size_t index);
+        template <> double get<double>(size_t index) { return d[index]; }
 
         double d[ATOM_DOUBLE_COUNT];
         Interval i[ATOM_INTERVAL_COUNT];
