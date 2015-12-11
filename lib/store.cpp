@@ -50,3 +50,46 @@ Token* Store::operation(Opcode op, Token* a, Token* b)
 
     return row[{a,b}];
 }
+
+void Store::clearFound()
+{
+    for (auto a : ops)
+    {
+        for (auto b : a)
+        {
+            for (auto c : b)
+            {
+                c.second->found = false;
+            }
+        }
+    }
+}
+
+void Store::markFound(Token* root)
+{
+    clearFound();
+
+    root->found = true;
+
+    for (auto itr = ops.rbegin(); itr != ops.rend(); ++itr)
+    {
+        for (auto b : *itr)
+        {
+            for (auto c : b)
+            {
+                Token* const t = c.second;
+                if (t->found)
+                {
+                    if (t->a)
+                    {
+                        t->a->found = true;
+                    }
+                    if (t->b)
+                    {
+                        t->b->found = true;
+                    }
+                }
+            }
+        }
+    }
+}

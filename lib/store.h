@@ -39,7 +39,17 @@ public:
     Token* Y() { return operation(OP_Y); }
     Token* Z() { return operation(OP_Z); }
 
+    /*
+     *  Set found in every token descending from root
+     */
+    void markFound(Token* root);
+
 protected:
+    /*
+     *  Set the found member of each token to false
+     */
+    void clearFound();
+
     typedef std::pair<Token*, Token*> Key;
     typedef std::array<std::map<Key, Token*>, LAST_OP> Cache;
 

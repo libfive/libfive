@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "tree.h"
 #include "store.h"
 #include "atom.h"
@@ -6,13 +8,21 @@
 Tree::Tree(Store* s, Token* root_token)
     : X(nullptr), Y(nullptr), Z(nullptr), root(nullptr), data(nullptr)
 {
-    {   // Allocate space for all of the atoms in the tree
-        size_t count = s->constants.size();
+    // Set flags to mark which tokens are used in the tree
+    s->markFound(root_token);
+
+    {   // Count up active tokens and allocate space for them
+        size_t count = std::count_if(s->constants.begin(), s->constants.end(),
+                [](decltype(s->constants)::value_type t)
+                { return t.second->found; });
+
         for (auto a : s->ops)
         {
             for (auto b : a)
             {
-                count += b.size();
+                count += std::count_if(b.begin(), b.end(),
+                        [](const decltype(b)::value_type& t)
+                        { return t.second->found; });
             }
         }
         data = static_cast<Atom*>(malloc(sizeof(Atom) * count));
@@ -26,7 +36,10 @@ Tree::Tree(Store* s, Token* root_token)
         constants.reserve(s->constants.size());
         for (auto c : s->constants)
         {
-            constants.push_back(new(&data[i++]) Atom(c.second));
+            if (c.second->found)
+            {
+                constants.push_back(new(&data[i++]) Atom(c.second));
+            }
         }
 
         // Flatten operations into the data array and the list of rows vectors
@@ -38,7 +51,10 @@ Tree::Tree(Store* s, Token* root_token)
             {
                 for (auto c : b)
                 {
-                    row->push_back(new(&data[i++]) Atom(c.second));
+                    if (c.second->found)
+                    {
+                        row->push_back(new(&data[i++]) Atom(c.second));
+                    }
                 }
             }
             row++;

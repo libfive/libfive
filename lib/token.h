@@ -38,6 +38,9 @@ protected:
     Token* const a;
     Token* const b;
 
+    /*  found is used to detect which tokens are in the tree  */
+    bool found;
+
     /*  When packed into a Tree, store a pointer to the resulting Atom  */
     Atom* atom;
 
