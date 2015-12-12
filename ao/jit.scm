@@ -34,22 +34,15 @@
         (else (error "Invalid type in default-like" x))))
 
 (define (wrap-tree t arity)
-   (let* ((eval-double (lambda (x y z)
-                        (tree-eval-double t x y z)))
-          (eval-doubles (lambda (x y z)
-                        (tree-eval-doubles t x y z)))
-          (eval-interval (lambda (x y z)
-                        (tree-eval-interval t x y z)))
-
-          ;; Generic evaluator that dispatches based on argument type
-          (eval-generic (lambda (x y z)
-                (cond ((every interval? (list x y z))
-                            (eval-interval x y z))
-                      ((every number-list? (list x y z))
-                            (eval-doubles x y z))
-                      ((every number? (list x y z))
-                            (eval-double x y z))
-                      (else (error "Input arguments are of invalid types"))))))
+   (let ;; Generic evaluator that dispatches based on argument type
+        ((eval-generic (lambda (x y z)
+            (cond ((every interval? (list x y z))
+                        (tree-eval-interval t x y z))
+                  ((every number-list? (list x y z))
+                        (tree-eval-doubles t x y z))
+                  ((every number? (list x y z))
+                        (tree-eval-double t x y z))
+                  (else (error "Input arguments are of invalid types"))))))
 
        ;; Create a local function based on function arity
        (cond ((= 2 arity) (lambda (x y) (eval-generic x y (default-like x))))
