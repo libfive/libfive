@@ -133,6 +133,7 @@ void Tree::Row::pop()
 void Tree::Row::disable(size_t i)
 {
     assert(i < active);
+    assert(disabled.size() > 0);
 
     std::swap((*this)[i], (*this)[--active]);
     disabled.top()++;

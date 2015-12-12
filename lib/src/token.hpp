@@ -27,6 +27,11 @@ public:
      */
     static size_t args(Opcode op);
 
+    /*
+     *  Returns the found flag
+     */
+    bool isFound() const { return found; }
+
 protected:
     const Opcode op;
     const size_t weight;
