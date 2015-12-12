@@ -2,8 +2,8 @@
 #include "atom.hpp"
 
 template <class T>
-inline void Tree::load_if(Atom* a, const std::vector<T>& vs,
-                          size_t index, size_t count)
+inline void Tree::loadIf(Atom* a, const std::vector<T>& vs,
+                         size_t index, size_t count)
 {
     if (a)
     {
@@ -12,7 +12,7 @@ inline void Tree::load_if(Atom* a, const std::vector<T>& vs,
 }
 
 template <class T>
-inline void Tree::eval_atom(Atom* m, size_t i)
+inline void Tree::evalAtom(Atom* m, size_t i)
 {
     switch (m->op) {
         case OP_ADD:
@@ -55,7 +55,7 @@ inline void Tree::eval_atom(Atom* m, size_t i)
 }
 
 template <class T>
-inline void Tree::eval_core(size_t count)
+inline void Tree::evalCore(size_t count)
 {
     for (const auto& row : rows)
     {
@@ -63,7 +63,7 @@ inline void Tree::eval_core(size_t count)
         {
             for (size_t i=0; i < count; ++i)
             {
-                eval_atom<T>(m, i);
+                evalAtom<T>(m, i);
             }
         }
     }
@@ -85,14 +85,14 @@ inline std::vector<T> Tree::eval(const std::vector<T>& x,
     {
         const size_t count = std::min(remaining, ATOM_ARRAY_BYTES / sizeof(T));
 
-        load_if(X, x, index, count);
-        load_if(Y, y, index, count);
-        load_if(Z, z, index, count);
+        loadIf(X, x, index, count);
+        loadIf(Y, y, index, count);
+        loadIf(Z, z, index, count);
 
-        eval_core<T>(count);
+        evalCore<T>(count);
 
         remaining -= count;
-        root->result.copy_to(&out[index], count);
+        root->result.copyTo(&out[index], count);
         index += count;
     }
     return out;

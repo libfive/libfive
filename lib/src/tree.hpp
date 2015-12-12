@@ -92,20 +92,20 @@ protected:
      *  If the given atom is present, load vs[index] through vs[index + count]
      */
     template <class T>
-    void load_if(Atom* a, const std::vector<T>& vs, size_t index, size_t count);
+    void loadIf(Atom* a, const std::vector<T>& vs, size_t index, size_t count);
 
     /*
      *  Evaluates a specific atom (with a switch statement on the opcode)
      */
     template <class T>
-    void eval_atom(Atom* a, size_t i);
+    void evalAtom(Atom* a, size_t i);
 
     /*
      *  Performs the core evaluation sweep (across rows and atoms),
      *  assuming that 'count' locations have been loaded
      */
     template <class T>
-    void eval_core(size_t count);
+    void evalCore(size_t count);
 
     /*
      *  Sets the given flag for every node in the tree

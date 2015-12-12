@@ -42,7 +42,7 @@ inline T Result::get(size_t index) const
 }
 
 template <class T>
-inline void Result::copy_to(T* target, size_t count) const
+inline void Result::copyTo(T* target, size_t count) const
 {
     std::copy(ptr<T>(), ptr<T>() + count, target);
 }

@@ -38,7 +38,7 @@ union Result {
      *  Template to copy out of result (specialized inline below)
      */
     template <class T>
-    void copy_to(T* target, size_t count) const;
+    void copyTo(T* target, size_t count) const;
 
 protected:
     /*
