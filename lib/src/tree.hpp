@@ -42,13 +42,6 @@ public:
                         const std::vector<T>& y,
                         const std::vector<T>& z);
 
-    /*
-     *  Prepares for evaluation on the given type, filling constants
-     *  with values of the appropriate shape
-     */
-    template <class T>
-    void setMode();
-
 protected:
     /*
      *  The Row subclass stores a row of atoms (of a particular weight)
@@ -107,6 +100,13 @@ protected:
      */
     template <class T>
     void evalCore(size_t count);
+
+    /*
+     *  Prepares for evaluation on the given type, filling constants
+     *  with values of the appropriate shape
+     */
+    template <class T>
+    void setMode();
 
     /*
      *  Sets the given flag for every node in the tree

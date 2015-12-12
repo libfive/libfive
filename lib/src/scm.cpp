@@ -169,20 +169,6 @@ SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
                     scm_from_double(out.upper()));
 }
 
-SCM tree_mode_double(SCM tree)
-{
-    Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
-    t->setMode<double>();
-    return SCM_ELISP_NIL;
-}
-
-SCM tree_mode_interval(SCM tree)
-{
-    Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
-    t->setMode<Interval>();
-    return SCM_ELISP_NIL;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 void libao_init()
@@ -192,8 +178,6 @@ void libao_init()
     scm_c_define_gsubr("tree-eval-double", 4, 0, 0, (void*)tree_eval_double);
     scm_c_define_gsubr("tree-eval-doubles", 4, 0, 0, (void*)tree_eval_doubles);
     scm_c_define_gsubr("tree-eval-interval", 4, 0, 0, (void*)tree_eval_interval);
-    scm_c_define_gsubr("tree-mode-double", 1, 0, 0, (void*)tree_mode_double);
-    scm_c_define_gsubr("tree-mode-interval", 1, 0, 0, (void*)tree_mode_interval);
 
     scm_c_define_gsubr("token-x", 1, 0, 0, (void*)token_x);
     scm_c_define_gsubr("token-y", 1, 0, 0, (void*)token_y);

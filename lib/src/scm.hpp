@@ -22,8 +22,6 @@ extern "C" {
     SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z);
     SCM tree_eval_doubles(SCM tree, SCM x, SCM y, SCM z);
     SCM tree_eval_intervals(SCM tree, SCM x, SCM y, SCM z);
-    SCM tree_mode_double(SCM tree);
-    SCM tree_mode_interval(SCM tree);
 
     /*
      *  Return variables wrapped as SCM pointers

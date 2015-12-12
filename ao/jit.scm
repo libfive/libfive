@@ -35,13 +35,10 @@
 
 (define (wrap-tree t arity)
    (let* ((eval-double (lambda (x y z)
-                        (tree-mode-double t)
                         (tree-eval-double t x y z)))
           (eval-doubles (lambda (x y z)
-                        (tree-mode-double t)
                         (tree-eval-doubles t x y z)))
           (eval-interval (lambda (x y z)
-                        (tree-mode-interval t)
                         (tree-eval-interval t x y z)))
 
           ;; Generic evaluator that dispatches based on argument type
