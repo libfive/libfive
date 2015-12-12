@@ -1,0 +1,16 @@
+find_path(GUILE_INCLUDE_DIR libguile.h /usr/local/include/guile/2.0)
+find_library(GUILE_LIBRARY NAMES guile-2.0 PATH /usr/local/lib)
+
+find_package(Boost REQUIRED)
+
+################################################################################
+
+include_directories(${GUILE_INCLUDE_DIR})
+include_directories(${BOOST_INCLUDE_DIR})
+
+################################################################################
+
+file(GLOB SRC_FILES *.cpp)
+add_library(ao SHARED ${SRC_FILES})
+
+target_link_libraries(ao ${GUILE_LIBRARY})
