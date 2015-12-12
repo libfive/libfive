@@ -1,6 +1,3 @@
-#include <cmath>
-#include <algorithm>
-
 #include "atom.hpp"
 #include "token.hpp"
 
