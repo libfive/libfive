@@ -1,8 +1,8 @@
 #include <cmath>
 #include <algorithm>
 
-#include "atom.h"
-#include "token.h"
+#include "atom.hpp"
+#include "token.hpp"
 
 /*  Compile-time macro to check array size  */
 #define CHECK_ARRAY_SIZE(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
@@ -24,16 +24,4 @@ Atom::Atom(Token* t)
     assert(t->atom == nullptr);
 
     t->atom = this;
-}
-
-void Atom::Result::set(const double* ds, size_t count)
-{
-    assert(count <= ATOM_DOUBLE_COUNT);
-    std::copy(ds, ds + count, d);
-}
-
-void Atom::Result::set(const Interval* is, size_t count)
-{
-    assert(count <= ATOM_INTERVAL_COUNT);
-    std::copy(is, is + count, i);
 }

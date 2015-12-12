@@ -5,7 +5,7 @@
 #include <list>
 #include <cstdlib>
 
-#include "interval.h"
+#include "interval.hpp"
 
 class Atom;
 class Store;
@@ -30,18 +30,16 @@ public:
     /*
      *  Single-argument evaluation
      */
-    double eval(double x, double y, double z);
-    Interval eval(Interval x, Interval y, Interval z);
+    template <class T>
+    T eval(T x, T y, T z);
 
     /*
-     *  Vectorized evaluation
+     *  Vectorized evaluation (defined below)
      */
-    std::vector<double> eval(const std::vector<double>& x,
-                             const std::vector<double>& y,
-                             const std::vector<double>& z);
-    std::vector<Interval> eval(const std::vector<Interval>& x,
-                               const std::vector<Interval>& y,
-                               const std::vector<Interval>& z);
+    template <class T>
+    std::vector<T> eval(const std::vector<T>& x,
+                        const std::vector<T>& y,
+                        const std::vector<T>& z);
 
     /*
      *  Prepares for evaluation on a set of doubles by filling constant
@@ -100,6 +98,18 @@ protected:
     };
 
     /*
+     *  If the given atom is present, load vs[index] through vs[index + count]
+     */
+    template <class T>
+    void load_if(Atom* a, const std::vector<T>& vs, size_t index, size_t count);
+
+    /*
+     *  Evaluates a specific atom (with a switch statement on the opcode)
+     */
+    template <class T>
+    void eval_atom(Atom* a, size_t i);
+
+    /*
      *  Sets the given flag for every node in the tree
      */
     void setFlag(uint8_t flag);
@@ -120,3 +130,5 @@ protected:
     /*  Big bag-o-data that contains this tree's atoms  */
     Atom* data;
 };
+
+#include "tree.ipp"
