@@ -126,7 +126,9 @@ protected:
     /*  This is the top atom of the tree  */
     Atom* root;
 
-    /*  This flag stores how result unions are currently configured  */
+    /*  This flag stores how result unions are currently configured  *
+     *  There's a compile-time check in atom.cpp that ensures these  *
+     *  values are distinct                                          */
     enum Mode { MODE_NONE=0,
                 MODE_DOUBLE=sizeof(double),
                 MODE_INTERVAL=sizeof(Interval),
