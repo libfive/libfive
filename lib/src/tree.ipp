@@ -78,8 +78,7 @@ inline std::vector<T> Tree::eval(const std::vector<T>& x,
 
     size_t remaining = x.size();
 
-    std::vector<T> out;
-    out.resize(remaining);
+    std::vector<T> out(remaining);
     size_t index = 0;
 
     while (remaining)
