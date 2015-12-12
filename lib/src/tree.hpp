@@ -44,11 +44,9 @@ public:
     /*
      *  Prepares for evaluation on the given type, filling constants
      *  with values of the appropriate shape
-     *
-     *  count is the number of slots to fill or 0 to fill all
      */
     template <class T>
-    void mode(size_t count);
+    void mode();
 
 protected:
     /*
