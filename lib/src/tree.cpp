@@ -101,30 +101,6 @@ Tree::~Tree()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Tree::modeDouble(size_t count)
-{
-    count = std::min(count, ATOM_DOUBLE_COUNT);
-    for (auto c : constants)
-    {
-        c->result.set(std::vector<double>(
-                    count ? count : ATOM_DOUBLE_COUNT,
-                    c->value));
-    }
-}
-
-void Tree::modeInterval(size_t count)
-{
-    count = std::min(count, ATOM_INTERVAL_COUNT);
-    for (auto c : constants)
-    {
-        c->result.set(std::vector<Interval>(
-                    count ? count : ATOM_INTERVAL_COUNT,
-                    Interval(c->value, c->value)));
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 void Tree::setFlag(uint8_t flag)
 {
     for (auto& r : rows)

@@ -42,20 +42,13 @@ public:
                         const std::vector<T>& z);
 
     /*
-     *  Prepares for evaluation on a set of doubles by filling constant
-     *  results with their value
+     *  Prepares for evaluation on the given type, filling constants
+     *  with values of the appropriate shape
      *
      *  count is the number of slots to fill or 0 to fill all
      */
-    void modeDouble(size_t count);
-
-    /*
-     *  Prepares for evaluation on a set of doubles by filling constant
-     *  results with their value
-     *
-     *  count is the number of slots to fill or 0 to fill all
-     */
-    void modeInterval(size_t count);
+    template <class T>
+    void mode(size_t count);
 
 protected:
     /*

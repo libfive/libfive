@@ -99,3 +99,23 @@ inline T Tree::eval(T x, T y, T z)
                 std::vector<T>(1, y),
                 std::vector<T>(1, z))[0];
 }
+
+template <class T>
+void Tree::mode(size_t count)
+{
+    const size_t MAX_COUNT = ATOM_ARRAY_BYTES / sizeof(T);
+
+    if (count > MAX_COUNT)
+    {
+        count = MAX_COUNT;
+    }
+    else if (count == 0)
+    {
+        count = MAX_COUNT;
+    }
+
+    for (auto c : constants)
+    {
+        c->result.set(std::vector<T>(count, T(c->value)));
+    }
+}
