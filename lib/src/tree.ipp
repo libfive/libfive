@@ -55,6 +55,21 @@ inline void Tree::eval_atom(Atom* m, size_t i)
 }
 
 template <class T>
+inline void Tree::eval_core(size_t count)
+{
+    for (const auto& row : rows)
+    {
+        for (auto& m : row)
+        {
+            for (size_t i=0; i < count; ++i)
+            {
+                eval_atom<T>(m, i);
+            }
+        }
+    }
+}
+
+template <class T>
 inline std::vector<T> Tree::eval(const std::vector<T>& x,
                                  const std::vector<T>& y,
                                  const std::vector<T>& z)
@@ -75,16 +90,8 @@ inline std::vector<T> Tree::eval(const std::vector<T>& x,
         load_if(Y, y, index, count);
         load_if(Z, z, index, count);
 
-        for (const auto& row : rows)
-        {
-            for (auto& m : row)
-            {
-                for (size_t i=0; i < count; ++i)
-                {
-                    eval_atom<T>(m, i);
-                }
-            }
-        }
+        eval_core<T>(count);
+
         remaining -= count;
         root->result.copy_to(&out[index], count);
         index += count;

@@ -101,6 +101,13 @@ protected:
     void eval_atom(Atom* a, size_t i);
 
     /*
+     *  Performs the core evaluation sweep (across rows and atoms),
+     *  assuming that 'count' locations have been loaded
+     */
+    template <class T>
+    void eval_core(size_t count);
+
+    /*
      *  Sets the given flag for every node in the tree
      */
     void setFlag(uint8_t flag);
