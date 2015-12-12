@@ -17,27 +17,27 @@ inline void Tree::eval_atom(Atom* m, size_t i)
     switch (m->op) {
         case OP_ADD:
             m->result.set<T>(m->a->result.get<T>(i) +
-                             m->a->result.get<T>(i), i);
+                             m->b->result.get<T>(i), i);
             break;
         case OP_MUL:
             m->result.set<T>(m->a->result.get<T>(i) *
-                             m->a->result.get<T>(i), i);
+                             m->b->result.get<T>(i), i);
             break;
         case OP_MIN:
             m->result.set<T>(std::min(m->a->result.get<T>(i),
-                                      m->a->result.get<T>(i)), i);
+                                      m->b->result.get<T>(i)), i);
             break;
         case OP_MAX:
             m->result.set<T>(std::max(m->a->result.get<T>(i),
-                                      m->a->result.get<T>(i)), i);
+                                      m->b->result.get<T>(i)), i);
             break;
         case OP_SUB:
             m->result.set<T>(m->a->result.get<T>(i) -
-                             m->a->result.get<T>(i), i);
+                             m->b->result.get<T>(i), i);
             break;
         case OP_DIV:
             m->result.set<T>(m->a->result.get<T>(i) /
-                             m->a->result.get<T>(i), i);
+                             m->b->result.get<T>(i), i);
             break;
         case OP_SQRT:
             m->result.set<T>(sqrt(m->a->result.get<T>(i)), i);
