@@ -1,9 +1,9 @@
 #include <algorithm>
 
-#include "tree.h"
-#include "store.h"
-#include "atom.h"
-#include "token.h"
+#include "tree.hpp"
+#include "store.hpp"
+#include "atom.hpp"
+#include "token.hpp"
 
 Tree::Tree(Store* s, Token* root_token)
     : X(nullptr), Y(nullptr), Z(nullptr), root(nullptr), data(nullptr)

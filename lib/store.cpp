@@ -1,5 +1,5 @@
-#include "store.h"
-#include "token.h"
+#include "store.hpp"
+#include "token.hpp"
 
 Store::~Store()
 {

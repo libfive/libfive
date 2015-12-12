@@ -1,8 +1,8 @@
 #include <cmath>
 #include <algorithm>
 
-#include "atom.h"
-#include "token.h"
+#include "atom.hpp"
+#include "token.hpp"
 
 /*  Compile-time macro to check array size  */
 #define CHECK_ARRAY_SIZE(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
