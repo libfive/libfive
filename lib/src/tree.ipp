@@ -107,7 +107,7 @@ inline T Tree::eval(T x, T y, T z)
 }
 
 template <class T>
-void Tree::mode()
+void Tree::setMode()
 {
     const size_t count = ATOM_ARRAY_BYTES / sizeof(T);
     for (auto c : constants)

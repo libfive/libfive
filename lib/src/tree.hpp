@@ -46,7 +46,7 @@ public:
      *  with values of the appropriate shape
      */
     template <class T>
-    void mode();
+    void setMode();
 
 protected:
     /*

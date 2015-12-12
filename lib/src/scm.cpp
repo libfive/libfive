@@ -172,14 +172,14 @@ SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
 SCM tree_mode_double(SCM tree)
 {
     Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
-    t->mode<double>();
+    t->setMode<double>();
     return SCM_ELISP_NIL;
 }
 
 SCM tree_mode_interval(SCM tree)
 {
     Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
-    t->mode<Interval>();
+    t->setMode<Interval>();
     return SCM_ELISP_NIL;
 }
 
