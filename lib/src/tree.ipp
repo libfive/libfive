@@ -109,9 +109,15 @@ inline T Tree::eval(T x, T y, T z)
 template <class T>
 void Tree::setMode()
 {
-    const size_t count = ATOM_ARRAY_BYTES / sizeof(T);
-    for (auto c : constants)
+    // Skip this function if mode is already set correctly
+    if (mode != sizeof(T))
     {
-        c->result.set(std::vector<T>(count, T(c->value)));
+        const size_t count = ATOM_ARRAY_BYTES / sizeof(T);
+        for (auto c : constants)
+        {
+            c->result.set(std::vector<T>(count, T(c->value)));
+        }
+
+        mode = static_cast<Mode>(sizeof(T));
     }
 }

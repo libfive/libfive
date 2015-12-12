@@ -6,7 +6,8 @@
 #include "token.hpp"
 
 Tree::Tree(Store* s, Token* root_token)
-    : X(nullptr), Y(nullptr), Z(nullptr), root(nullptr), data(nullptr)
+    : X(nullptr), Y(nullptr), Z(nullptr), root(nullptr),
+      mode(MODE_NONE), data(nullptr)
 {
     // Set flags to mark which tokens are used in the tree
     s->markFound(root_token);

@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 #include "interval.hpp"
+#include "gradient.hpp"
 
 class Atom;
 class Store;
@@ -124,6 +125,12 @@ protected:
 
     /*  This is the top atom of the tree  */
     Atom* root;
+
+    /*  This flag stores how result unions are currently configured  */
+    enum Mode { MODE_NONE=0,
+                MODE_DOUBLE=sizeof(double),
+                MODE_INTERVAL=sizeof(Interval),
+                MODE_GRADIENT=sizeof(Gradient) } mode;
 
     /*  Big bag-o-data that contains this tree's atoms  */
     Atom* data;
