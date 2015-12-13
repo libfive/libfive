@@ -7,7 +7,7 @@
 // For efficiency, it should be sized to fit an non-fractional number of
 // doubles, Intervals, and Gradient objects.  An error will be thrown
 // at compile-time if this condition is not met.
-#define ATOM_ARRAY_BYTES ((size_t)256)
+#define ATOM_ARRAY_BYTES ((size_t)1024)
 
 #define ATOM_DOUBLE_COUNT   (ATOM_ARRAY_BYTES / sizeof(double))
 #define ATOM_INTERVAL_COUNT (ATOM_ARRAY_BYTES / sizeof(Interval))

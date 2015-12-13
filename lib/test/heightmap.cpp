@@ -1,4 +1,6 @@
 #include <iostream>
+#include <chrono>
+
 #include <catch/catch.hpp>
 
 #include "heightmap.hpp"
@@ -46,7 +48,16 @@ TEST_CASE("3D rendering of a sphere")
 
     SECTION("High resolution")
     {
-        Region r({-1, 1}, {-1, 1}, {-1, 1}, 300);
+        std::chrono::time_point<std::chrono::system_clock> start, end;
+        start = std::chrono::system_clock::now();
+
+        Region r({-1, 1}, {-1, 1}, {-1, 1}, 100);
         auto out = Heightmap::Render(&t, r);
+
+        end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+
+        std::cout << "Rendered sphere in " << elapsed.count()
+                  << " sec\n";
     }
 }

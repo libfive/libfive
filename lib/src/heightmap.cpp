@@ -63,7 +63,8 @@ static void recurse(Tree* t, Region r, Eigen::ArrayXXd& img)
     {
         block = block.max(r.Z.upper());
     }
-    else
+    // Otherwise, recurse if the output interval is ambiguous
+    else if (out.lower() <= 0)
     {
         // Prune the tree
 

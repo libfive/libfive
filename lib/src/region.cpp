@@ -44,24 +44,20 @@ std::tuple<std::vector<double>,
            std::vector<double>,
            std::vector<double>> Region::flatten() const
 {
-    std::vector<double> x, y, z;
-
-    {
-        const size_t voxels = X.size * Y.size * Z.size;
-        x.reserve(voxels);
-        y.reserve(voxels);
-        z.reserve(voxels);
-    }
+    const size_t voxels = (X.size + 1) * (Y.size + 1) * (Z.size + 1);
+    std::vector<double> x(voxels), y(voxels), z(voxels);
 
     const auto xs = X.flatten();
     const auto ys = Y.flatten();
     const auto zs = Z.flatten();
 
+    size_t index = 0;
     forEach([&](size_t i, size_t j, size_t k)
             {
-                x.push_back(xs[i]);
-                y.push_back(ys[j]);
-                z.push_back(zs[k]);
+                x[index] = xs[i];
+                y[index] = ys[j];
+                z[index] = zs[k];
+                index++;
             });
 
     return std::make_tuple(x, y, z);
