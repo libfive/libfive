@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <utility>
 #include <vector>
 
@@ -25,6 +26,13 @@ public:
      *  Returns true if the region can be split
      */
     bool canSplit() const;
+
+    /*
+     *  Calls a function on each voxel in the region
+     *
+     *  Used to iterate over the region's voxels in deterministic order
+     */
+    void forEach(std::function<void(size_t, size_t, size_t)> f) const;
 
     /*
      *  Flattens the 3D voxel array into a 1D list of positions

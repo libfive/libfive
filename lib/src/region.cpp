@@ -57,20 +57,28 @@ std::tuple<std::vector<double>,
     const auto ys = Y.flatten();
     const auto zs = Z.flatten();
 
-    for (unsigned k=0; k < zs.size(); ++k)
-    {
-        for (unsigned j=0; j < ys.size(); ++j)
-        {
-            for (unsigned i=0; i < xs.size(); ++i)
+    forEach([&](size_t i, size_t j, size_t k)
             {
                 x.push_back(xs[i]);
                 y.push_back(ys[j]);
                 z.push_back(zs[k]);
+            });
+
+    return std::make_tuple(x, y, z);
+}
+
+void Region::forEach(std::function<void(size_t, size_t, size_t)> f) const
+{
+    for (unsigned k=0; k <= Z.size; ++k)
+    {
+        for (unsigned j=0; j <= Y.size; ++j)
+        {
+            for (unsigned i=0; i <= X.size; ++i)
+            {
+                f(i, j, k);
             }
         }
     }
-
-    return std::make_tuple(x, y, z);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
