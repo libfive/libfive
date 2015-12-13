@@ -114,7 +114,7 @@ std::vector<double> Region::DiscreteRange::flatten() const
 
     for (unsigned i=0; i <= size; ++i)
     {
-        out.push_back(lower() + (upper() - lower()) * i / size);
+        out.push_back(lower() + (size ? (upper() - lower()) * i / size : 0));
     }
     return out;
 }
