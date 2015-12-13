@@ -25,14 +25,24 @@ public:
      */
     bool canSplit() const;
 
-    class DiscreteRange : public Interval
+    class DiscreteRange
     {
     public:
         DiscreteRange(Interval i, double res);
         DiscreteRange(Interval i, size_t min, size_t size);
 
+        /*
+         *  Splits the region along a voxel boundary
+         */
         std::pair<DiscreteRange, DiscreteRange> split() const;
 
+        /*
+         *  Accessor functions for the interval object
+         */
+        double lower() const { return interval.lower(); }
+        double upper() const { return interval.upper(); }
+
+        const Interval interval;
         const size_t min;
         const size_t size;
     };

@@ -41,13 +41,13 @@ bool Region::canSplit() const
 ////////////////////////////////////////////////////////////////////////////////
 
 Region::DiscreteRange::DiscreteRange(Interval i, double res)
-    : Interval(i), min(0), size(res * (i.upper() - i.lower()))
+    : interval(i), min(0), size(res * (i.upper() - i.lower()))
 {
     // Nothing to do here
 }
 
 Region::DiscreteRange::DiscreteRange(Interval i, size_t min, size_t size)
-    : Interval(i), min(min), size(size)
+    : interval(i), min(min), size(size)
 {
     // Nothing to do here
 }
