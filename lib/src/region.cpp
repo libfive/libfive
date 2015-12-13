@@ -101,9 +101,9 @@ Region::DiscreteRange::split() const
     const size_t mid = size / 2;
     const double delta = upper() - lower();
 
-    return {DiscreteRange(Interval(lower(), delta * mid / size),
+    return {DiscreteRange(Interval(lower(), lower() + delta * mid / size),
                           min, mid),
-            DiscreteRange(Interval(delta * mid / size, upper()),
+            DiscreteRange(Interval(lower() + delta * mid / size, upper()),
                           min + mid, size - mid)};
 }
 

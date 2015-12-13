@@ -94,3 +94,15 @@ TEST_CASE("Flattening a whole region")
     REQUIRE(y == std::vector<double>({0, 0, 1, 1, 0, 0, 1, 1}));
     REQUIRE(z == std::vector<double>({0, 0, 0, 0, 1, 1, 1, 1}));
 }
+
+TEST_CASE("Splitting a big region")
+{
+    Region r({-1, 1}, {-1, 1}, {0, 0}, 100);
+    auto rs = r.split();
+
+    REQUIRE(rs.first.Y.lower() == -1);
+    REQUIRE(rs.first.Y.upper() == 0);
+
+    REQUIRE(rs.second.Y.lower() == 0);
+    REQUIRE(rs.second.Y.upper() == 1);
+}
