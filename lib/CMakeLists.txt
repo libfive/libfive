@@ -12,6 +12,8 @@ set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -pedantic -std=c++11")
 set(CMAKE_CXX_FLAGS_RELEASE  "-O3")
 set(CMAKE_CXX_FLAGS_DEBUG    "-O0")
 
+include_directories(../vendor)
+
 ################################################################################
 
 add_subdirectory(src)

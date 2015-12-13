@@ -1,4 +1,3 @@
-include_directories(../../vendor)
 include_directories(../src)
 
 file(GLOB SRC_FILES *.cpp)
