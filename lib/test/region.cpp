@@ -36,9 +36,13 @@ TEST_CASE("Splitting a region")
 
     REQUIRE(rs.first.Z.min == 0);
     REQUIRE(rs.first.Z.size == 1);
+    REQUIRE(rs.first.Z.lower() == 0);
+    REQUIRE(rs.first.Z.upper() == 1);
 
     REQUIRE(rs.second.Z.min == 1);
     REQUIRE(rs.second.Z.size == 1);
+    REQUIRE(rs.second.Z.lower() == 1);
+    REQUIRE(rs.second.Z.upper() == 2);
 }
 
 TEST_CASE("Splitting a region with odd voxel count")
