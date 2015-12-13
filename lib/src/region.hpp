@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility>
+#include <vector>
 
 #include "interval.hpp"
 
@@ -25,6 +26,15 @@ public:
      */
     bool canSplit() const;
 
+    /*
+     *  Flattens the 3D voxel array into a 1D list of positions
+     *
+     *  Returns X, Y, Z position arrays
+     */
+    std::tuple<std::vector<double>,
+               std::vector<double>,
+               std::vector<double>> flatten() const;
+
     class DiscreteRange
     {
     public:
@@ -41,6 +51,11 @@ public:
          */
         double lower() const { return interval.lower(); }
         double upper() const { return interval.upper(); }
+
+        /*
+         *  Returns a vector with 'size' elements representing positions
+         */
+        std::vector<double> flatten() const;
 
         const Interval interval;
         const size_t min;

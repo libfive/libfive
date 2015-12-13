@@ -40,6 +40,41 @@ bool Region::canSplit() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
+std::tuple<std::vector<double>,
+           std::vector<double>,
+           std::vector<double>> Region::flatten() const
+{
+    std::vector<double> x, y, z;
+
+    {
+        const size_t voxels = X.size * Y.size * Z.size;
+        x.reserve(voxels);
+        y.reserve(voxels);
+        z.reserve(voxels);
+    }
+
+    const auto xs = X.flatten();
+    const auto ys = Y.flatten();
+    const auto zs = Z.flatten();
+
+    for (unsigned k=0; k < zs.size(); ++k)
+    {
+        for (unsigned j=0; j < ys.size(); ++j)
+        {
+            for (unsigned i=0; i < xs.size(); ++i)
+            {
+                x.push_back(xs[i]);
+                y.push_back(ys[j]);
+                z.push_back(zs[k]);
+            }
+        }
+    }
+
+    return std::make_tuple(x, y, z);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 Region::DiscreteRange::DiscreteRange(Interval i, double res)
     : interval(i), min(0), size(res * (i.upper() - i.lower()))
 {
@@ -62,4 +97,16 @@ Region::DiscreteRange::split() const
                           min, mid),
             DiscreteRange(Interval(delta * mid / size, upper()),
                           min + mid, size - mid)};
+}
+
+std::vector<double> Region::DiscreteRange::flatten() const
+{
+    std::vector<double> out;
+    out.reserve(size + 1);
+
+    for (unsigned i=0; i <= size; ++i)
+    {
+        out.push_back(lower() + (upper() - lower()) * i / size);
+    }
+    return out;
 }
