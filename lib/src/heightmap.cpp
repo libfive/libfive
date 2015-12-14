@@ -81,7 +81,7 @@ static void recurse(Tree* t, Region r, Eigen::ArrayXXd& img)
 
 Eigen::ArrayXXd Render(Tree* t, Region r)
 {
-    auto img = Eigen::ArrayXXd(r.Y.size + 1, r.X.size + 1);
+    auto img = Eigen::ArrayXXd(r.Y.size, r.X.size);
     img.fill(-std::numeric_limits<double>::infinity());
 
     recurse(t, r, img);

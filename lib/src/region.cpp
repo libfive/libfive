@@ -40,18 +40,18 @@ bool Region::canSplit() const
 
 size_t Region::voxels() const
 {
-    return (X.size + 1) * (Y.size + 1) * (Z.size + 1);
+    return X.size * Y.size * Z.size;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void Region::forEach(std::function<void(size_t, size_t, size_t)> f) const
 {
-    for (unsigned k=0; k <= Z.size; ++k)
+    for (unsigned k=0; k < Z.size; ++k)
     {
-        for (unsigned j=0; j <= Y.size; ++j)
+        for (unsigned j=0; j < Y.size; ++j)
         {
-            for (unsigned i=0; i <= X.size; ++i)
+            for (unsigned i=0; i < X.size; ++i)
             {
                 f(i, j, k);
             }
