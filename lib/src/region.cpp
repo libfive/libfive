@@ -76,16 +76,24 @@ Region::DiscreteRange::DiscreteRange(Interval i, size_t min, size_t size)
 std::pair<Region::DiscreteRange, Region::DiscreteRange>
 Region::DiscreteRange::split() const
 {
-    const size_t mid = size / 2;
-    const double delta = upper() - lower();
+    const size_t half = size / 2;
+    const double frac = half / double(size);
 
-    return {DiscreteRange(Interval(lower(), lower() + delta * mid / size),
-                          min, mid),
-            DiscreteRange(Interval(lower() + delta * mid / size, upper()),
-                          min + mid, size - mid)};
+    const double middle = upper() * frac + lower() * (1 - frac);
+
+    return {DiscreteRange(Interval(lower(), middle), min, half),
+            DiscreteRange(Interval(middle, upper()), min + half, size - half)};
 }
 
 double Region::DiscreteRange::pos(size_t i) const
 {
-    return lower() + (size ? (upper() - lower()) * i / size : 0);
+    if (size == 0)
+    {
+        return lower();
+    }
+    else
+    {
+        const double frac = (i + 0.5) / size;
+        return lower() * (1 - frac) + upper() * frac;
+    }
 }
