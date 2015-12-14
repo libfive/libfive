@@ -9,6 +9,9 @@ TEST_CASE("Region::DiscreteRange construction")
 
     auto db = Region::DiscreteRange(Interval(0, 1), 10);
     REQUIRE(db.size == 10);
+
+    auto dc = Region::DiscreteRange(Interval(0, 0), 1);
+    REQUIRE(dc.size == 1);
 }
 
 TEST_CASE("Region::DiscreteRange pos")

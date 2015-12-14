@@ -17,9 +17,24 @@ TEST_CASE("2D rendering of a circle")
 
     SECTION("Without recursion")
     {
-        Region r({-1, 1}, {-1, 1}, {0, 0}, 10);
+        Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
         auto out = Heightmap::Render(&t, r);
-        std::cout << "2D circle:\n" << out << "\n";
+
+        Eigen::ArrayXXd comp(10, 10);
+        double inf = std::numeric_limits<double>::infinity();
+        comp <<
+            -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
+            -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+            -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+               0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+               0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+               0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+               0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+            -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+            -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+            -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf;
+
+        REQUIRE((comp == out).all());
     }
 
     SECTION("With recursion")

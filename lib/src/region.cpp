@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "region.hpp"
 
 Region::Region(Interval x, Interval y, Interval z, double res)
@@ -62,7 +64,8 @@ void Region::forEach(std::function<void(size_t, size_t, size_t)> f) const
 ////////////////////////////////////////////////////////////////////////////////
 
 Region::DiscreteRange::DiscreteRange(Interval i, double res)
-    : interval(i), min(0), size(res * (i.upper() - i.lower()))
+    : interval(i), min(0),
+      size(std::max((size_t)1, (size_t)(res * (i.upper() - i.lower()))))
 {
     // Nothing to do here
 }
