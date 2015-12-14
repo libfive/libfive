@@ -28,20 +28,16 @@ public:
     bool canSplit() const;
 
     /*
+     *  Returns the number of voxels in this region
+     */
+    size_t voxels() const;
+
+    /*
      *  Calls a function on each voxel in the region
      *
      *  Used to iterate over the region's voxels in deterministic order
      */
     void forEach(std::function<void(size_t, size_t, size_t)> f) const;
-
-    /*
-     *  Flattens the 3D voxel array into a 1D list of positions
-     *
-     *  Returns X, Y, Z position arrays
-     */
-    std::tuple<std::vector<double>,
-               std::vector<double>,
-               std::vector<double>> flatten() const;
 
     class DiscreteRange
     {
@@ -61,9 +57,12 @@ public:
         double upper() const { return interval.upper(); }
 
         /*
-         *  Returns a vector with 'size' elements representing positions
+         *  Returns the value at a given index.
+         *
+         *  pos(0)    = interval.lower()
+         *  pos(size) = interval.upper()
          */
-        std::vector<double> flatten() const;
+        double pos(size_t i) const;
 
         const Interval interval;
         const size_t min;

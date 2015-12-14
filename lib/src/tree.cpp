@@ -12,6 +12,11 @@ Tree::Tree(Store* s, Token* root_token)
     // Set flags to mark which tokens are used in the tree
     s->markFound(root_token);
 
+    // Ensure that the base variables are all present in the tree
+    s->X()->found = true;
+    s->Y()->found = true;
+    s->Z()->found = true;
+
     {   // Count up active tokens and allocate space for them
         size_t count = std::count_if(s->constants.begin(), s->constants.end(),
                 [](decltype(s->constants)::value_type t)
@@ -82,6 +87,7 @@ Tree::Tree(Store* s, Token* root_token)
             Z = a;
         }
     }
+    assert(X != nullptr && Y != nullptr && Z != nullptr);
     rows.pop_front();
 
     // Set the active node count in every row to the number of atoms
@@ -108,6 +114,25 @@ void Tree::setFlag(uint8_t flag)
     {
         r.setFlag(flag);
     }
+}
+
+const double* Tree::eval(const Region& r)
+{
+    assert(r.voxels() <= ATOM_DOUBLE_COUNT);
+
+    setMode<double>();
+
+    size_t index = 0;
+    r.forEach([&](size_t i, size_t j, size_t k)
+            {
+                X->result.set(r.X.pos(i), index);
+                Y->result.set(r.Y.pos(j), index);
+                Z->result.set(r.Z.pos(k), index);
+                index++;
+            });
+
+    evalCore<double>(r.voxels());
+    return root->result.ptr<double>();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -38,30 +38,12 @@ bool Region::canSplit() const
     return X.size > 1 || Y.size > 1 || Z.size > 1;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-std::tuple<std::vector<double>,
-           std::vector<double>,
-           std::vector<double>> Region::flatten() const
+size_t Region::voxels() const
 {
-    const size_t voxels = (X.size + 1) * (Y.size + 1) * (Z.size + 1);
-    std::vector<double> x(voxels), y(voxels), z(voxels);
-
-    const auto xs = X.flatten();
-    const auto ys = Y.flatten();
-    const auto zs = Z.flatten();
-
-    size_t index = 0;
-    forEach([&](size_t i, size_t j, size_t k)
-            {
-                x[index] = xs[i];
-                y[index] = ys[j];
-                z[index] = zs[k];
-                index++;
-            });
-
-    return std::make_tuple(x, y, z);
+    return (X.size + 1) * (Y.size + 1) * (Z.size + 1);
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 void Region::forEach(std::function<void(size_t, size_t, size_t)> f) const
 {
@@ -103,14 +85,7 @@ Region::DiscreteRange::split() const
                           min + mid, size - mid)};
 }
 
-std::vector<double> Region::DiscreteRange::flatten() const
+double Region::DiscreteRange::pos(size_t i) const
 {
-    std::vector<double> out;
-    out.reserve(size + 1);
-
-    for (unsigned i=0; i <= size; ++i)
-    {
-        out.push_back(lower() + (size ? (upper() - lower()) * i / size : 0));
-    }
-    return out;
+    return lower() + (size ? (upper() - lower()) * i / size : 0);
 }

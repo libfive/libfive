@@ -13,16 +13,13 @@ namespace Heightmap
  */
 static void pixels(Tree* t, Region r, Eigen::ArrayXXd& img)
 {
-    auto xyz = r.flatten();
-    auto out = t->eval(std::get<0>(xyz), std::get<1>(xyz), std::get<2>(xyz));
+    const double* out = t->eval(r);
 
     int index = 0;
     r.forEach([&](size_t i, size_t j, size_t k)
             {
-                (void)k; // k is unused here
-
-                // Get this voxel's z position from the flattened arrays
-                const double z = std::get<2>(xyz)[index];
+                // Get this voxel's z position
+                const double z = r.Z.pos(k);
 
                 // If the voxel is filled and higher than the current pixel
                 // in the heightmap, fill it in with the new z height
@@ -72,8 +69,11 @@ static void recurse(Tree* t, Region r, Eigen::ArrayXXd& img)
         assert(r.canSplit());
 
         auto rs = r.split();
-        recurse(t, rs.first, img);
+
+        // Since the higher Z region is in the second item of the
+        // split, evaluate rs.second then rs.first
         recurse(t, rs.second, img);
+        recurse(t, rs.first, img);
 
         // Unprune the tree
     }

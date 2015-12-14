@@ -40,7 +40,6 @@ union Result {
     template <class T>
     void copyTo(T* target, size_t count) const;
 
-protected:
     /*
      *  Template to look up the base pointer for a particular type
      *  (specialized inline below)
@@ -48,6 +47,7 @@ protected:
     template <class T>
     T* ptr() const;
 
+protected:
     double d[ATOM_DOUBLE_COUNT];
     Interval i[ATOM_INTERVAL_COUNT];
     Gradient g[ATOM_GRADIENT_COUNT];

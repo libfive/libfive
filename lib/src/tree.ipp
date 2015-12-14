@@ -2,16 +2,6 @@
 #include "atom.hpp"
 
 template <class T>
-inline void Tree::loadIf(Atom* a, const std::vector<T>& vs,
-                         size_t index, size_t count)
-{
-    if (a)
-    {
-        a->result.set(&vs[index], count);
-    }
-}
-
-template <class T>
 inline void Tree::evalAtom(Atom* m, size_t i)
 {
     switch (m->op) {
@@ -86,9 +76,9 @@ inline std::vector<T> Tree::eval(const std::vector<T>& x,
     {
         const size_t count = std::min(remaining, ATOM_ARRAY_BYTES / sizeof(T));
 
-        loadIf(X, x, index, count);
-        loadIf(Y, y, index, count);
-        loadIf(Z, z, index, count);
+        X->result.set<T>(&x[index], count);
+        Y->result.set<T>(&y[index], count);
+        Z->result.set<T>(&z[index], count);
 
         evalCore<T>(count);
 

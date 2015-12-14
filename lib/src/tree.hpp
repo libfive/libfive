@@ -7,6 +7,7 @@
 
 #include "interval.hpp"
 #include "gradient.hpp"
+#include "region.hpp"
 
 class Atom;
 class Store;
@@ -41,6 +42,11 @@ public:
     std::vector<T> eval(const std::vector<T>& x,
                         const std::vector<T>& y,
                         const std::vector<T>& z);
+
+    /*
+     *  Evaluate across a flattened region
+     */
+    const double* eval(const Region& r);
 
 protected:
     /*
@@ -81,12 +87,6 @@ protected:
          *  with Row::pop                                                 */
         std::stack<size_t> disabled;
     };
-
-    /*
-     *  If the given atom is present, load vs[index] through vs[index + count]
-     */
-    template <class T>
-    void loadIf(Atom* a, const std::vector<T>& vs, size_t index, size_t count);
 
     /*
      *  Evaluates a specific atom (with a switch statement on the opcode)
