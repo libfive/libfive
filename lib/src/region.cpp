@@ -16,20 +16,20 @@ Region::Region(DiscreteRange x, DiscreteRange y, DiscreteRange z)
 
 std::pair<Region, Region> Region::split() const
 {
-    if (X.size > Y.size && X.size > Z.size)
+    if (Z.size > Y.size && Z.size > X.size)
     {
-        auto xs = X.split();
-        return std::make_pair(Region(xs.first, Y, Z), Region(xs.second, Y, Z));
+        auto zs = Z.split();
+        return std::make_pair(Region(X, Y, zs.first), Region(X, Y, zs.second));
     }
-    else if (Y.size > Z.size)
+    else if (Y.size > X.size)
     {
         auto ys = Y.split();
         return std::make_pair(Region(X, ys.first, Z), Region(X, ys.second, Z));
     }
     else
     {
-        auto zs = Z.split();
-        return std::make_pair(Region(X, Y, zs.first), Region(X, Y, zs.second));
+        auto xs = X.split();
+        return std::make_pair(Region(xs.first, Y, Z), Region(xs.second, Y, Z));
     }
 }
 
