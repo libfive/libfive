@@ -32,18 +32,12 @@ public:
      */
     size_t voxels() const;
 
-    /*
-     *  Calls a function on each voxel in the region
-     *
-     *  Used to iterate over the region's voxels in deterministic order
-     */
-    void forEach(std::function<void(size_t, size_t, size_t)> f) const;
-
     class DiscreteRange
     {
     public:
         DiscreteRange(Interval i, double res);
-        DiscreteRange(Interval i, size_t min, size_t size);
+        DiscreteRange(const DiscreteRange& other);
+        ~DiscreteRange();
 
         /*
          *  Splits the region along a voxel boundary
@@ -62,11 +56,22 @@ public:
          *  pos(0)    = interval.lower()
          *  pos(size) = interval.upper()
          */
-        double pos(size_t i) const;
+        double pos(size_t i) const { return ptr[i]; }
 
         const Interval interval;
         const size_t min;
         const size_t size;
+
+        /*  This is a pointer into a vector of positions in the region.   *
+         *  It points into the vec member of the top Region in the tree.  */
+        double* const ptr;
+        bool root;
+
+    protected:
+        /*
+         *  Protected constructor used when splitting
+         */
+        DiscreteRange(Interval i, size_t min, size_t size, double* ptr);
     };
 
     const DiscreteRange X, Y, Z;
@@ -77,3 +82,9 @@ protected:
      */
     Region(DiscreteRange x, DiscreteRange y, DiscreteRange z);
 };
+
+// Helper macro to iterate over a region in a deterministic order
+#define REGION_ITERATE_XYZ(r) \
+for (unsigned i=0; i < r.X.size; ++i)           \
+    for (unsigned j=0; j < r.Y.size; ++j)       \
+        for (unsigned k=0; k < r.Z.size; ++k)   \

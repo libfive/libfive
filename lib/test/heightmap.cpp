@@ -15,33 +15,24 @@ TEST_CASE("2D rendering of a circle")
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
 
-    SECTION("Without recursion")
-    {
-        Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
-        auto out = Heightmap::Render(&t, r);
+    Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
+    auto out = Heightmap::Render(&t, r);
 
-        Eigen::ArrayXXd comp(10, 10);
-        double inf = std::numeric_limits<double>::infinity();
-        comp <<
-            -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
-            -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
-            -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
-               0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-               0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-               0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-               0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-            -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
-            -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
-            -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf;
+    Eigen::ArrayXXd comp(10, 10);
+    double inf = std::numeric_limits<double>::infinity();
+    comp <<
+        -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
+        -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+        -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+           0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+           0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+           0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+           0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+        -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+        -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+        -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf;
 
-        REQUIRE((comp == out).all());
-    }
-
-    SECTION("With recursion")
-    {
-        Region r({-1, 1}, {-1, 1}, {0, 0}, 100);
-        auto out = Heightmap::Render(&t, r);
-    }
+    REQUIRE((comp == out).all());
 }
 
 TEST_CASE("3D rendering of a sphere")
@@ -54,7 +45,7 @@ TEST_CASE("3D rendering of a sphere")
                                    s.operation(OP_MUL, s.Z(), s.Z())),
                s.constant(1)));
 
-    SECTION("Low resolution")
+    SECTION("Values")
     {
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
         auto out = Heightmap::Render(&t, r);
@@ -73,10 +64,13 @@ TEST_CASE("3D rendering of a sphere")
             -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
             -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf;
 
-        REQUIRE((comp == out).all());
+        auto diff = comp - out;
+        CAPTURE(out);
+        CAPTURE(diff);
+        REQUIRE((diff.abs() < 1e-10 || diff != diff).all());
     }
 
-    SECTION("High resolution")
+    SECTION("Performance")
     {
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
@@ -87,7 +81,18 @@ TEST_CASE("3D rendering of a sphere")
         end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed = end - start;
 
-        std::cout << "Rendered sphere in " << elapsed.count()
-                  << " sec\n";
+        auto elapsed_ms =
+            std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
+
+        auto description = "Rendered sphere in " +
+                           std::to_string(elapsed.count()) + " sec";
+        CAPTURE(description);
+
+        // Check for major regressions in render performance
+#ifdef RELEASE
+        REQUIRE(elapsed_ms.count() < 15);
+#else
+        REQUIRE(elapsed_ms.count() < 500);
+#endif
     }
 }

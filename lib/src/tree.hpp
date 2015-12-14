@@ -89,10 +89,10 @@ protected:
     };
 
     /*
-     *  Evaluates a specific atom (with a switch statement on the opcode)
+     *  Evaluates the first 'count' atoms in the list
      */
     template <class T>
-    void evalAtom(Atom* a, size_t i);
+    void evalAtom(Atom* a, size_t count);
 
     /*
      *  Performs the core evaluation sweep (across rows and atoms),

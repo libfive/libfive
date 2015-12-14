@@ -1,38 +1,48 @@
 #include "tree.hpp"
 #include "atom.hpp"
 
+#define TREE_ATOM_LOOP for (size_t i=0; i < count; ++i)
+
 template <class T>
-inline void Tree::evalAtom(Atom* m, size_t i)
+inline void Tree::evalAtom(Atom* m, size_t count)
 {
     switch (m->op) {
         case OP_ADD:
+            TREE_ATOM_LOOP
             m->result.set<T>(m->a->result.get<T>(i) +
                              m->b->result.get<T>(i), i);
             break;
         case OP_MUL:
+            TREE_ATOM_LOOP
             m->result.set<T>(m->a->result.get<T>(i) *
                              m->b->result.get<T>(i), i);
             break;
         case OP_MIN:
+            TREE_ATOM_LOOP
             m->result.set<T>(std::min(m->a->result.get<T>(i),
                                       m->b->result.get<T>(i)), i);
             break;
         case OP_MAX:
+            TREE_ATOM_LOOP
             m->result.set<T>(std::max(m->a->result.get<T>(i),
                                       m->b->result.get<T>(i)), i);
             break;
         case OP_SUB:
+            TREE_ATOM_LOOP
             m->result.set<T>(m->a->result.get<T>(i) -
                              m->b->result.get<T>(i), i);
             break;
         case OP_DIV:
+            TREE_ATOM_LOOP
             m->result.set<T>(m->a->result.get<T>(i) /
                              m->b->result.get<T>(i), i);
             break;
         case OP_SQRT:
+            TREE_ATOM_LOOP
             m->result.set<T>(sqrt(m->a->result.get<T>(i)), i);
             break;
         case OP_NEG:
+            TREE_ATOM_LOOP
             m->result.set<T>(-m->a->result.get<T>(i), i);
             break;
         case INVALID:
@@ -51,10 +61,7 @@ inline void Tree::evalCore(size_t count)
     {
         for (auto& m : row)
         {
-            for (size_t i=0; i < count; ++i)
-            {
-                evalAtom<T>(m, i);
-            }
+            evalAtom<T>(m, count);
         }
     }
 }
@@ -92,9 +99,14 @@ inline std::vector<T> Tree::eval(const std::vector<T>& x,
 template <class T>
 inline T Tree::eval(T x, T y, T z)
 {
-    return eval(std::vector<T>(1, x),
-                std::vector<T>(1, y),
-                std::vector<T>(1, z))[0];
+    setMode<T>();
+
+    X->result.set<T>(x, 0);
+    Y->result.set<T>(y, 0);
+    Z->result.set<T>(z, 0);
+
+    evalCore<T>(1);
+    return root->result.get<T>(0);
 }
 
 template <class T>

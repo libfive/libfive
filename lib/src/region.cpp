@@ -47,34 +47,39 @@ size_t Region::voxels() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Region::forEach(std::function<void(size_t, size_t, size_t)> f) const
-{
-    for (unsigned k=0; k < Z.size; ++k)
-    {
-        for (unsigned j=0; j < Y.size; ++j)
-        {
-            for (unsigned i=0; i < X.size; ++i)
-            {
-                f(i, j, k);
-            }
-        }
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 Region::DiscreteRange::DiscreteRange(Interval i, double res)
     : interval(i), min(0),
-      size(std::max((size_t)1, (size_t)(res * (i.upper() - i.lower()))))
+      size(std::max((size_t)1, (size_t)(res * (i.upper() - i.lower())))),
+      ptr(new double[size]), root(true)
+{
+    for (unsigned index=0; index < size; ++index)
+    {
+        const double frac = (index + 0.5) / size;
+        ptr[index] = lower() * (1 - frac) + upper() * frac;
+    }
+}
+Region::DiscreteRange::DiscreteRange(const DiscreteRange& other)
+    : interval(other.interval), min(other.min), size(other.size),
+      ptr(other.ptr), root(false)
 {
     // Nothing to do here
 }
 
-Region::DiscreteRange::DiscreteRange(Interval i, size_t min, size_t size)
-    : interval(i), min(min), size(size)
+Region::DiscreteRange::DiscreteRange(Interval i, size_t min, size_t size,
+                                     double* ptr)
+    : interval(i), min(min), size(size), ptr(ptr), root(false)
 {
     // Nothing to do here
 }
+
+Region::DiscreteRange::~DiscreteRange()
+{
+    if (root)
+    {
+        delete [] ptr;
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
 
 std::pair<Region::DiscreteRange, Region::DiscreteRange>
 Region::DiscreteRange::split() const
@@ -84,19 +89,7 @@ Region::DiscreteRange::split() const
 
     const double middle = upper() * frac + lower() * (1 - frac);
 
-    return {DiscreteRange(Interval(lower(), middle), min, half),
-            DiscreteRange(Interval(middle, upper()), min + half, size - half)};
-}
-
-double Region::DiscreteRange::pos(size_t i) const
-{
-    if (size == 0)
-    {
-        return lower();
-    }
-    else
-    {
-        const double frac = (i + 0.5) / size;
-        return lower() * (1 - frac) + upper() * frac;
-    }
+    return {DiscreteRange(Interval(lower(), middle), min, half, ptr),
+            DiscreteRange(Interval(middle, upper()), min + half,
+                          size - half, ptr + half)};
 }

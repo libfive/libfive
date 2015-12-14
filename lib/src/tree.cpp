@@ -123,13 +123,16 @@ const double* Tree::eval(const Region& r)
     setMode<double>();
 
     size_t index = 0;
-    r.forEach([&](size_t i, size_t j, size_t k)
-            {
-                X->result.set(r.X.pos(i), index);
-                Y->result.set(r.Y.pos(j), index);
-                Z->result.set(r.Z.pos(k), index);
-                index++;
-            });
+
+    // Flatten the region in a particular order
+    // (which needs to be obeyed by anything unflattening results)
+    REGION_ITERATE_XYZ(r)
+    {
+        X->result.set(r.X.pos(i), index);
+        Y->result.set(r.Y.pos(j), index);
+        Z->result.set(r.Z.pos(r.Z.size - k - 1), index);
+        index++;
+    }
 
     evalCore<double>(r.voxels());
     return root->result.ptr<double>();
