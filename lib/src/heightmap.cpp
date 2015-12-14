@@ -46,7 +46,7 @@ static void recurse(Tree* t, Region r, Eigen::ArrayXXd& img)
     }
 
     // If we're below a certain size, render pixel-by-pixel
-    if ((r.X.size + 1) * (r.Z.size + 1) * (r.Z.size + 1) <= ATOM_DOUBLE_COUNT)
+    if (r.voxels() <= ATOM_DOUBLE_COUNT)
     {
         pixels(t, r, img);
         return;
