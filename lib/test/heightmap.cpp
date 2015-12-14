@@ -56,9 +56,24 @@ TEST_CASE("3D rendering of a sphere")
 
     SECTION("Low resolution")
     {
-        Region r({-1, 1}, {-1, 1}, {-1, 1}, 10);
+        Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
         auto out = Heightmap::Render(&t, r);
-        std::cout << "3D sphere:\n" << out << "\n";
+
+        Eigen::ArrayXXd comp(10, 10);
+        double inf = std::numeric_limits<double>::infinity();
+        comp <<
+            -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf,
+            -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
+            -inf, 0.5, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.5,-inf,
+             0.3, 0.5, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.5, 0.3,
+             0.3, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.7, 0.3,
+             0.3, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.7, 0.3,
+             0.3, 0.5, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.5, 0.3,
+            -inf, 0.5, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.5,-inf,
+            -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
+            -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf;
+
+        REQUIRE((comp == out).all());
     }
 
     SECTION("High resolution")
