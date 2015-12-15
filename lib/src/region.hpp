@@ -65,7 +65,7 @@ public:
         /*  This is a pointer into a vector of positions in the region.   *
          *  It points into the vec member of the top Region in the tree.  */
         double* const ptr;
-        bool root;
+        const bool root;
 
     protected:
         /*
