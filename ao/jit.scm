@@ -14,17 +14,24 @@
 ;; Converts the given argument to a token
 ;; Based on argument type, the following behavior occurs
 ;; - A number is converted to constant
-;; - A symbol and further arguments is converted an operator
+;; - A symbol and further arguments is converted to an operator
 (define-public (make-token a . args)
-  (cond ((= 0 (length args))
-            (cond ((pointer? a) a)
-                  ((number? a) (token-const store a))
-                  (else (error "Failed to construct token" a))))
-        (else (token-op store a (map make-token args)))))
+    "Creates a token in the global store.
+A token is returned without changes
+A number is converted to a constant
+A symbol and further arguments are converted to an operation"
+    (if (= 0 (length args))
+        (cond ((pointer? a) a)
+              ((number? a) (token-const store a))
+              (else (error "Failed to construct token" a)))
+        (token-op store a (map make-token args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (interval? i)     (and (pair? i) (not (list? i))))
+(define-public (interval? i)
+    "Check to see if the given argument is a valid Interval"
+    (and (pair? i) (not (list? i)) (number? (car i)) (number? (cdr i))))
+
 (define (number-list? i)  (and (list? i) (every number? i)))
 
 (define (default-like x)
@@ -48,7 +55,18 @@
        (cond ((= 2 arity) (lambda (x y) (eval-generic x y (default-like x))))
              ((= 3 arity) (lambda (x y z) (eval-generic x y z))))))
 
-(define-public (jit f)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-public (tree? t)
+    "Checks to see if the given object is a tagged tree pointer"
+    (and (pair? t) (eq? (car t) 'ptr-tree) (pointer? (cdr t))))
+
+(define-public (tree-ptr t)
+    "Extracts the pointer from a tagged tree pointer"
+    (cdr t))
+
+(define-public (to-tree f)
+    "Compile an arithmetic lambda function to a tagged tree pointer"
     (set! store (make-store))
     (let* ((arity (car (procedure-minimum-arity f)))
            (x (token-x store))
@@ -59,6 +77,8 @@
                        (else (error "Invalid function arity" f))))
            (out (make-tree store root)))
        (set! store #nil)
-       (wrap-tree out arity)))
+       (cons 'ptr-tree out)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-public (jit f)
+    "Compiles an arithmetic lambda function into a wrapped function"
+    (wrap-tree (cdr (to-tree f)) (car (procedure-minimum-arity f))))
