@@ -34,26 +34,15 @@ A symbol and further arguments are converted to an operation"
 
 (define (number-list? i)  (and (list? i) (every number? i)))
 
-(define (default-like x)
-  (cond ((number? x)    0)
-        ((interval? x)  '(0 . 0))
-        ((number-list? x)   (make-list (length x) 0))
-        (else (error "Invalid type in default-like" x))))
-
 (define (wrap-tree t arity)
-   (let ;; Generic evaluator that dispatches based on argument type
-        ((eval-generic (lambda (x y z)
-            (cond ((every interval? (list x y z))
-                        (tree-eval-interval t x y z))
-                  ((every number-list? (list x y z))
-                        (tree-eval-doubles t x y z))
-                  ((every number? (list x y z))
-                        (tree-eval-double t x y z))
-                  (else (error "Input arguments are of invalid types"))))))
-
-       ;; Create a local function based on function arity
-       (cond ((= 2 arity) (lambda (x y) (eval-generic x y (default-like x))))
-             ((= 3 arity) (lambda (x y z) (eval-generic x y z))))))
+    (lambda (x y z) ;; Generic evaluator that dispatches based on argument type
+        (cond ((every interval? (list x y z))
+                    (tree-eval-interval t x y z))
+              ((every number-list? (list x y z))
+                    (tree-eval-doubles t x y z))
+              ((every number? (list x y z))
+                    (tree-eval-double t x y z))
+              (else (error "Input arguments are of invalid types")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -72,13 +61,11 @@ A symbol and further arguments are converted to an operation"
            (x (token-x store))
            (y (token-y store))
            (z (token-z store))
-           (root (cond ((= 2 arity) (make-token (f x y)))
-                       ((= 3 arity) (make-token (f x y z)))
-                       (else (error "Invalid function arity" f))))
+           (root (make-token (f x y z)))
            (out (make-tree store root)))
        (set! store #nil)
        (cons 'ptr-tree out)))
 
 (define-public (jit f)
     "Compiles an arithmetic lambda function into a wrapped function"
-    (wrap-tree (cdr (to-tree f)) (car (procedure-minimum-arity f))))
+    (wrap-tree (tree-ptr (to-tree f)) (car (procedure-minimum-arity f))))
