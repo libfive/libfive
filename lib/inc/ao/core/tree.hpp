@@ -5,9 +5,9 @@
 #include <list>
 #include <cstdlib>
 
-#include "interval.hpp"
-#include "gradient.hpp"
-#include "region.hpp"
+#include "ao/core/interval.hpp"
+#include "ao/core/gradient.hpp"
+#include "ao/core/region.hpp"
 
 class Atom;
 class Store;

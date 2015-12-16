@@ -2,7 +2,7 @@
 
 #include <png.h>
 
-#include "image.hpp"
+#include "ao/format/image.hpp"
 
 namespace Image
 {

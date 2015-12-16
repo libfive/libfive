@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include "region.hpp"
+#include "ao/core/region.hpp"
 
 Region::Region(Interval x, Interval y, Interval z, double res)
     : X(x, res), Y(y, res), Z(z, res)

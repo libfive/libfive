@@ -2,7 +2,7 @@
 
 #include <Eigen/Dense>
 
-#include "region.hpp"
+#include "ao/core/region.hpp"
 
 class Tree;
 

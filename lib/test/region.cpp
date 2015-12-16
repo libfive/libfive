@@ -1,6 +1,6 @@
 #include <catch/catch.hpp>
 
-#include "region.hpp"
+#include "ao/core/region.hpp"
 
 TEST_CASE("Region::DiscreteRange construction")
 {

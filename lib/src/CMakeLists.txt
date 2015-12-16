@@ -13,7 +13,7 @@ include_directories(${PNG_INCLUDE_DIR})
 
 ################################################################################
 
-file(GLOB SRC_FILES *.cpp)
+file(GLOB SRC_FILES core/*.cpp format/*.cpp bind/*.cpp ui/*.cpp render/*.cpp)
 add_library(ao SHARED ${SRC_FILES})
 
 target_link_libraries(ao ${GUILE_LIBRARY})

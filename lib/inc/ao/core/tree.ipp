@@ -1,5 +1,5 @@
-#include "tree.hpp"
-#include "atom.hpp"
+#include "ao/core/tree.hpp"
+#include "ao/core/atom.hpp"
 
 #define TREE_ATOM_LOOP for (size_t i=0; i < count; ++i)
 

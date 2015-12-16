@@ -1,7 +1,7 @@
 #include <catch/catch.hpp>
 
-#include "store.hpp"
-#include "tree.hpp"
+#include "ao/core/store.hpp"
+#include "ao/core/tree.hpp"
 
 TEST_CASE("Double evaluation")
 {

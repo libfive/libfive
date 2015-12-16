@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-#include "opcode.hpp"
+#include "ao/core/opcode.hpp"
 
 class Atom;
 

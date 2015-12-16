@@ -2,9 +2,9 @@
 
 #include <vector>
 
-#include "interval.hpp"
-#include "gradient.hpp"
-#include "atom.hpp"
+#include "ao/core/interval.hpp"
+#include "ao/core/gradient.hpp"
+#include "ao/core/atom.hpp"
 
 union Result {
     Result() { /* Provide default constructor */ }

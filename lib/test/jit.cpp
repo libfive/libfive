@@ -1,7 +1,7 @@
 #include <catch/catch.hpp>
 
-#include "store.hpp"
-#include "token.hpp"
+#include "ao/core/store.hpp"
+#include "ao/core/token.hpp"
 
 TEST_CASE("Constructing a simple shape")
 {

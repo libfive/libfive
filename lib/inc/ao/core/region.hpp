@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "interval.hpp"
+#include "ao/core/interval.hpp"
 
 /*
  *  A region constains X, Y, Z bounds and voxel count / positions

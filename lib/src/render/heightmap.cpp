@@ -1,7 +1,7 @@
 #include <limits>
 
-#include "heightmap.hpp"
-#include "tree.hpp"
+#include "ao/render/heightmap.hpp"
+#include "ao/core/tree.hpp"
 
 #include <iostream>
 

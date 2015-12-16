@@ -3,9 +3,9 @@
 
 #include <catch/catch.hpp>
 
-#include "heightmap.hpp"
-#include "tree.hpp"
-#include "store.hpp"
+#include "ao/render/heightmap.hpp"
+#include "ao/core/tree.hpp"
+#include "ao/core/store.hpp"
 
 TEST_CASE("2D rendering of a circle")
 {

@@ -1,9 +1,9 @@
 #include <algorithm>
 
-#include "tree.hpp"
-#include "store.hpp"
-#include "atom.hpp"
-#include "token.hpp"
+#include "ao/core/tree.hpp"
+#include "ao/core/store.hpp"
+#include "ao/core/atom.hpp"
+#include "ao/core/token.hpp"
 
 Tree::Tree(Store* s, Token* root_token)
     : X(nullptr), Y(nullptr), Z(nullptr), root(nullptr),

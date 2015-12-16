@@ -13,8 +13,8 @@
 #define ATOM_INTERVAL_COUNT (ATOM_ARRAY_BYTES / sizeof(Interval))
 #define ATOM_GRADIENT_COUNT (ATOM_ARRAY_BYTES / sizeof(Gradient))
 
-#include "opcode.hpp"
-#include "result.hpp"
+#include "ao/core/opcode.hpp"
+#include "ao/core/result.hpp"
 
 class Token;
 

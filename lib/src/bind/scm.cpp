@@ -1,11 +1,11 @@
 #include <iostream>
 #include <string>
 
-#include "scm.hpp"
-#include "store.hpp"
-#include "tree.hpp"
-#include "opcode.hpp"
-#include "token.hpp"
+#include "ao/bind/scm.hpp"
+#include "ao/core/store.hpp"
+#include "ao/core/tree.hpp"
+#include "ao/core/opcode.hpp"
+#include "ao/core/token.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 

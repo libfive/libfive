@@ -1,5 +1,5 @@
-#include "atom.hpp"
-#include "token.hpp"
+#include "ao/core/atom.hpp"
+#include "ao/core/token.hpp"
 
 /*  Compile-time macro to check array size  */
 #define CHECK(condition) ((void)sizeof(char[1 - 2*!!(condition)]))

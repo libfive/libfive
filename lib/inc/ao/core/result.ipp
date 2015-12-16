@@ -1,4 +1,4 @@
-#include "result.hpp"
+#include "ao/core/result.hpp"
 
 template <>
 inline double* Result::ptr<double>() const
