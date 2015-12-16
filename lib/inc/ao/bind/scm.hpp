@@ -41,6 +41,11 @@ extern "C" {
     SCM token_op(SCM store, SCM op, SCM args);
 
     /*
+     *  Open an OpenGL window
+     */
+    SCM gl_window(SCM tree);
+
+    /*
      *  Initialize the shared library functions
      */
     void libao_init();

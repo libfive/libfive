@@ -2,10 +2,13 @@
 #include <string>
 
 #include "ao/bind/scm.hpp"
+
 #include "ao/core/store.hpp"
 #include "ao/core/tree.hpp"
 #include "ao/core/opcode.hpp"
 #include "ao/core/token.hpp"
+
+#include "ao/ui/window.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -171,6 +174,15 @@ SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+SCM gl_window(SCM tree)
+{
+    return Window::Show(static_cast<Tree*>(scm_to_pointer(tree)))
+           ? SCM_BOOL_T
+           : SCM_BOOL_F;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void libao_init()
 {
     scm_c_define_gsubr("make-store", 0, 0, 0, (void*)store_new);
@@ -185,4 +197,6 @@ void libao_init()
 
     scm_c_define_gsubr("token-const", 2, 0, 0, (void*)token_const);
     scm_c_define_gsubr("token-op", 3, 0, 0, (void*)token_op);
+
+    scm_c_define_gsubr("gl-window", 1, 0, 0, (void*)gl_window);
 }
