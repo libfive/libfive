@@ -96,3 +96,8 @@ Shaders::Shaders()
     auto frag = compile(base_frag, GL_FRAGMENT_SHADER);
     prog = link(vert, frag);
 }
+
+void Shaders::Use() const
+{
+    glUseProgram(prog);
+}

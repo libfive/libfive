@@ -3,9 +3,10 @@
 #include <memory>
 #include <GLFW/glfw3.h>
 
+#include "ao/gl/shaders.hpp"
+#include "ao/gl/frame.hpp"
+
 class Tree;
-class Frame;
-class Shaders;
 
 class Window
 {
@@ -18,6 +19,6 @@ protected:
     void run();
 
     GLFWwindow* const window;
-    std::unique_ptr<Frame> frame;
-    std::unique_ptr<Shaders> shaders;
+    Frame frame;
+    Shaders shaders;
 };

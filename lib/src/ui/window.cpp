@@ -13,7 +13,7 @@ bool Window::Show(Tree* tree)
     // Initialize the library
     if (!glfwInit())
     {
-        return NULL;
+        return false;
     }
 
     glfwWindowHint(GLFW_SAMPLES, 8);    // multisampling!
@@ -30,15 +30,14 @@ bool Window::Show(Tree* tree)
     {
         std::cerr << "Error: failed to create window!" << std::endl;
         glfwTerminate();
-        return NULL;
+        return false;
     }
 
     // Make the window's context current
     glfwMakeContextCurrent(window);
 
-    auto win = new Window(window);
+    std::unique_ptr<Window> win(new Window(window));
     win->run();
-    delete win;
 
     return true;
 }
@@ -46,7 +45,7 @@ bool Window::Show(Tree* tree)
 ////////////////////////////////////////////////////////////////////////////////
 
 Window::Window(GLFWwindow* window)
-    : window(window), frame(new Frame())
+    : window(window)
 {
     // Nothing to do here
 }
@@ -57,6 +56,9 @@ void Window::run()
     {
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        shaders.Use();
+        frame.Draw();
 
         // Swap front and back buffers
         glfwSwapBuffers(window);
