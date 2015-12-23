@@ -16,7 +16,7 @@ void CHECK_SIZES()
 ////////////////////////////////////////////////////////////////////////////////
 
 Atom::Atom(Token* t)
-    : op(t->op), value(t->value), mutable_value(nan("")), flags(0),
+    : op(t->op), value(t->value), mutable_value(nan("")),
       a(t->a ? t->a->atom : nullptr),
       b(t->b ? t->b->atom : nullptr)
 {
@@ -32,13 +32,13 @@ Atom::Atom(Token* t)
 }
 
 Atom::Atom(Opcode op, Atom* a, Atom* b)
-    : op(op), value(nan("")), mutable_value(nan("")), flags(0), a(a), b(b)
+    : op(op), value(nan("")), mutable_value(nan("")), a(a), b(b)
 {
     // Nothing to do here
 }
 
 Atom::Atom(double value)
-    : op(OP_MUTABLE), value(nan("")), mutable_value(value), flags(0),
+    : op(OP_MUTABLE), value(nan("")), mutable_value(value),
       a(nullptr), b(nullptr)
 {
     // Nothing to do here

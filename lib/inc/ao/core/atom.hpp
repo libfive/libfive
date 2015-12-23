@@ -56,7 +56,7 @@ protected:
     double mutable_value;
 
     /*  Flags are set during evaluation for various purposes  */
-    uint8_t flags;
+    uint8_t flags=0;
 
     /*  Populated for operators with arguments */
     Atom* const a;

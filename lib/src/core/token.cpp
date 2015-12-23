@@ -6,14 +6,13 @@
 Token::Token(Opcode op, Token* a, Token* b)
     : op(op), weight(std::max(a ? a->weight + 1 : 0,
                               b ? b->weight + 1 : 0)),
-      value(nan("")), a(a), b(b), found(false), atom(nullptr)
+      value(nan("")), a(a), b(b)
 {
     // Nothing to do here
 }
 
 Token::Token(double v)
-    : op(OP_CONST), weight(0), value(v), a(nullptr), b(nullptr),
-      found(false), atom(nullptr)
+    : op(OP_CONST), weight(0), value(v), a(nullptr), b(nullptr)
 {
     // Nothing to do here
 }

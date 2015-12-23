@@ -44,10 +44,10 @@ protected:
     Token* const b;
 
     /*  found is used to detect which tokens are in the tree  */
-    bool found;
+    bool found=false;
 
     /*  When packed into a Tree, store a pointer to the resulting Atom  */
-    Atom* atom;
+    Atom* atom=nullptr;
 
     friend class Store;
     friend class Tree;
