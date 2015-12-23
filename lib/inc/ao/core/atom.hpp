@@ -36,6 +36,12 @@ class Atom
      */
     Atom(Token* t);
 
+    /*
+     *  Construct an atom from scratch
+     */
+    Atom(Opcode op, Atom* a=NULL, Atom* b=NULL);
+    Atom(double d);
+
 protected:
     const Opcode op;
 

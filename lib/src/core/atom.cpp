@@ -25,3 +25,15 @@ Atom::Atom(Token* t)
 
     t->atom = this;
 }
+
+Atom::Atom(Opcode op, Atom* a, Atom* b)
+    : op(op), value(nan("")), flags(0), a(a), b(b)
+{
+    // Nothing to do here
+}
+
+Atom::Atom(double value)
+    : op(OP_CONST), value(value), flags(0), a(nullptr), b(nullptr)
+{
+    // Nothing to do here
+}

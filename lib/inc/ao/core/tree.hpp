@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stack>
+#include <array>
 #include <vector>
 #include <list>
 #include <cstdlib>
@@ -89,6 +90,14 @@ protected:
     };
 
     /*
+     *  Creates a row of the transform matrix
+     *
+     *  Requires X, Y, Z to be populated
+     *  Fills 12 spots in the data array
+     */
+    Atom* buildMatrixRow(size_t i);
+
+    /*
      *  Evaluates the first 'count' atoms in the list
      */
     template <class T>
@@ -114,11 +123,14 @@ protected:
     void setFlag(uint8_t flag);
 
     /*  All operations live in a set of rows sorted by weight */
-    std::list<Row> rows;
+    std::vector<Row> rows;
 
     /*  Our position variables are stored as separate pointers     *
      *  (so that they can be easily accessed to set their values)  */
     Atom *X, *Y, *Z;
+
+    /*  matrix is a pointer to a 4x3 transform matrix  */
+    std::array<Atom*, 12> matrix;
 
     /*  Pointers to constants live in this vector  */
     std::vector<Atom*> constants;
@@ -136,6 +148,9 @@ protected:
 
     /*  Big bag-o-data that contains this tree's atoms  */
     Atom* data;
+
+    /*  Pointer to the current location in the data array */
+    Atom* ptr;
 };
 
 #include "tree.ipp"

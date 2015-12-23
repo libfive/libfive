@@ -5,14 +5,19 @@
 #include "ao/core/atom.hpp"
 #include "ao/core/token.hpp"
 
+////////////////////////////////////////////////////////////////////////////////
+
+#define NEW_ATOM(...) new (ptr++) Atom(__VA_ARGS__)
+
 Tree::Tree(Store* s, Token* root_token)
     : X(nullptr), Y(nullptr), Z(nullptr), root(nullptr),
-      mode(MODE_NONE), data(nullptr)
+      mode(MODE_NONE), data(nullptr), ptr(nullptr)
 {
     // Set flags to mark which tokens are used in the tree
     s->markFound(root_token);
 
-    // Ensure that the base variables are all present in the tree
+    // Ensure that the base variables are all present in the tree and marked
+    // as found (even if there wasn't a path to them from the root)
     s->X()->found = true;
     s->Y()->found = true;
     s->Z()->found = true;
@@ -31,64 +36,60 @@ Tree::Tree(Store* s, Token* root_token)
                         { return t.second->found; });
             }
         }
+
+        // Allocate extra space for the matrix transform
+        const size_t MATRIX_TRANFORM_ATOMS = 3*12;
+        count += MATRIX_TRANFORM_ATOMS;
+
         data = static_cast<Atom*>(malloc(sizeof(Atom) * count));
+        ptr = data;
     }
 
-    // Expand rows to fit all of the token weights
-    rows.resize(s->ops.size());
+    // Create base variables
+    X = NEW_ATOM(OP_X);
+    Y = NEW_ATOM(OP_Y);
+    Z = NEW_ATOM(OP_Z);
 
-    {   // Flatten constants into the data array and constants vector
-        size_t i = 0;
-        constants.reserve(s->constants.size());
-        for (auto c : s->constants)
+    // Use matrix-transform variables to apply a mapping to the store
+    const size_t MATRIX_ROWS = 3;
+    rows.resize(MATRIX_ROWS);
+    s->X()->atom = buildMatrixRow(0);
+    s->Y()->atom = buildMatrixRow(1);
+    s->Z()->atom = buildMatrixRow(2);
+
+    // Flatten constants into the data array and constants vector
+    constants.reserve(constants.size() + s->constants.size());
+    for (auto c : s->constants)
+    {
+        if (c.second->found)
         {
-            if (c.second->found)
-            {
-                constants.push_back(new(&data[i++]) Atom(c.second));
-            }
+            constants.push_back(NEW_ATOM(c.second));
         }
+    }
 
-        // Flatten operations into the data array and the list of rows vectors
-        // row is an iterator that points to the current row
-        auto row = rows.begin();
-        for (auto a : s->ops)
+    {   // Flatten operations into the vector of rows vectors
+        assert(rows.size() == MATRIX_ROWS);
+        rows.resize(MATRIX_ROWS + s->ops.size() - 1);
+        auto row = rows.begin() + MATRIX_ROWS;
+
+        // We skip the weight-0 operations, since we've already captured them
+        // in the matrix transform and the X, Y, Z members
+        for (auto itr = s->ops.begin() + 1; itr != s->ops.end(); ++itr, ++row)
         {
-            for (auto b : a)
+            assert(row != rows.end());
+            for (auto b : *itr)
             {
                 for (auto c : b)
                 {
                     if (c.second->found)
                     {
-                        row->push_back(new(&data[i++]) Atom(c.second));
+                        row->push_back(NEW_ATOM(c.second));
                     }
                 }
             }
-            row++;
         }
+        assert(row == rows.end());
     }
-
-    // Extract variables from weight-0 row then erase it
-    assert(rows.front().size() <= 3);
-    for (auto a : rows.front())
-    {
-        if (a->op == OP_X)
-        {
-            assert(X == nullptr);
-            X = a;
-        }
-        else if (a->op == OP_Y)
-        {
-            assert(Y == nullptr);
-            Y = a;
-        }
-        else if (a->op == OP_Z)
-        {
-            assert(Z == nullptr);
-            Z = a;
-        }
-    }
-    assert(X != nullptr && Y != nullptr && Z != nullptr);
-    rows.pop_front();
 
     // Set the active node count in every row to the number of atoms
     for (auto& r : rows)
@@ -104,6 +105,47 @@ Tree::Tree(Store* s, Token* root_token)
 Tree::~Tree()
 {
     free(data);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+Atom* Tree::buildMatrixRow(size_t i)
+{
+    assert(data != nullptr);
+    assert(X != nullptr && Y != nullptr && Z != nullptr);
+    assert(rows.size() == 3);
+
+    Atom* a  = NEW_ATOM(i == 0 ? 1.0 : 0.0);
+    Atom* b  = NEW_ATOM(i == 1 ? 1.0 : 0.0);
+    Atom* c  = NEW_ATOM(i == 2 ? 1.0 : 0.0);
+    Atom* d  = NEW_ATOM(0.0);
+
+    Atom* ax = NEW_ATOM(OP_MUL, X, a);
+    Atom* by = NEW_ATOM(OP_MUL, Y, b);
+    Atom* cz = NEW_ATOM(OP_MUL, Z, c);
+
+    Atom* ax_by = NEW_ATOM(OP_ADD, ax, by);
+    Atom* cz_d  = NEW_ATOM(OP_ADD, cz, d);
+
+    Atom* ax_by_cz_d = NEW_ATOM(OP_ADD, ax_by, cz_d);
+
+    // Store relevant constant Atoms in the matrix array
+    matrix[4*i]     = a;
+    matrix[4*i + 1] = b;
+    matrix[4*i + 2] = c;
+    matrix[4*i + 3] = d;
+
+    // Load matrix transform into the operator array
+    rows[0].push_back(ax);
+    rows[0].push_back(by);
+    rows[0].push_back(cz);
+
+    rows[1].push_back(ax_by);
+    rows[1].push_back(cz_d);
+
+    rows[2].push_back(ax_by_cz_d);
+
+    return ax_by_cz_d;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

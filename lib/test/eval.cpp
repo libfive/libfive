@@ -3,6 +3,14 @@
 #include "ao/core/store.hpp"
 #include "ao/core/tree.hpp"
 
+TEST_CASE("Variable evaluation")
+{
+    Store s;
+    Tree t(&s, s.X());
+
+    REQUIRE(t.eval(1.0, 2.0, 3.0) == 1.0);
+}
+
 TEST_CASE("Double evaluation")
 {
     Store s;

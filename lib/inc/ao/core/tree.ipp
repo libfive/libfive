@@ -121,6 +121,11 @@ void Tree::setMode()
             c->result.set(std::vector<T>(count, T(c->value)));
         }
 
+        for (auto m : matrix)
+        {
+            m->result.set(std::vector<T>(count, T(m->value)));
+        }
+
         mode = static_cast<Mode>(sizeof(T));
     }
 }
