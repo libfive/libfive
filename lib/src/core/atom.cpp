@@ -5,7 +5,7 @@
 #define CHECK(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 
 Atom::Atom(Token* t)
-    : op(t->op), value(t->value), flags(0),
+    : op(t->op), value(t->value), mutable_value(nan("")), flags(0),
       a(t->a ? t->a->atom : nullptr),
       b(t->b ? t->b->atom : nullptr)
 {
@@ -27,13 +27,14 @@ Atom::Atom(Token* t)
 }
 
 Atom::Atom(Opcode op, Atom* a, Atom* b)
-    : op(op), value(nan("")), flags(0), a(a), b(b)
+    : op(op), value(nan("")), mutable_value(nan("")), flags(0), a(a), b(b)
 {
     // Nothing to do here
 }
 
 Atom::Atom(double value)
-    : op(OP_CONST), value(value), flags(0), a(nullptr), b(nullptr)
+    : op(OP_MUTABLE), value(nan("")), mutable_value(value), flags(0),
+      a(nullptr), b(nullptr)
 {
     // Nothing to do here
 }

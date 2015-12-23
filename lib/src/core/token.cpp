@@ -23,6 +23,7 @@ size_t Token::args(Opcode op)
     switch (op)
     {
         case OP_CONST: return 0;
+        case OP_MUTABLE: return 0;
         case OP_X: return 0;
         case OP_Y: return 0;
         case OP_Z: return 0;

@@ -37,9 +37,13 @@ class Atom
     Atom(Token* t);
 
     /*
-     *  Construct an atom from scratch
+     *  Construct an operation atom from scratch
      */
     Atom(Opcode op, Atom* a=NULL, Atom* b=NULL);
+
+    /*
+     *  Construct an OP_MUTABLE atom from scratch
+     */
     Atom(double d);
 
 protected:
@@ -47,6 +51,9 @@ protected:
 
     /*  Populated for OP_CONST atoms */
     const double value;
+
+    /*  Populated for OP_MUTABLE atoms  */
+    double mutable_value;
 
     /*  Flags are set during evaluation for various purposes  */
     uint8_t flags;

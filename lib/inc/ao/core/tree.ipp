@@ -47,6 +47,7 @@ inline void Tree::evalAtom(Atom* m, size_t count)
             break;
         case INVALID:
         case OP_CONST:
+        case OP_MUTABLE:
         case OP_X:
         case OP_Y:
         case OP_Z:
@@ -123,7 +124,7 @@ void Tree::setMode()
 
         for (auto m : matrix)
         {
-            m->result.set(std::vector<T>(count, T(m->value)));
+            m->result.set(std::vector<T>(count, T(m->mutable_value)));
         }
 
         mode = static_cast<Mode>(sizeof(T));

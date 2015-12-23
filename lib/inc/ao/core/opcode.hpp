@@ -5,6 +5,7 @@ enum Opcode
     INVALID,
 
     OP_CONST,
+    OP_MUTABLE,
     OP_X,
     OP_Y,
     OP_Z,
