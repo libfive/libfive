@@ -1,6 +1,10 @@
 #include "ao/core/tree.hpp"
 #include "ao/core/atom.hpp"
 
+#ifndef TREE_INCLUDE_IPP
+#error "Cannot include .ipp file on its own"
+#endif
+
 #define TREE_ATOM_LOOP for (size_t i=0; i < count; ++i)
 
 template <class T>

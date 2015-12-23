@@ -1,5 +1,9 @@
 #include "ao/core/result.hpp"
 
+#ifndef RESULT_INCLUDE_IPP
+#error "Cannot include .ipp file on its own"
+#endif
+
 template <>
 inline double* Result::ptr<double>() const
 {

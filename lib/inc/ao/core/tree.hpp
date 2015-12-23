@@ -153,4 +153,6 @@ protected:
     Atom* ptr;
 };
 
+#define TREE_INCLUDE_IPP
 #include "tree.ipp"
+#undef TREE_INCLUDE_IPP

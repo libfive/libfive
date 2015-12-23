@@ -53,4 +53,6 @@ protected:
     Gradient g[ATOM_GRADIENT_COUNT];
 };
 
+#define RESULT_INCLUDE_IPP
 #include "result.ipp"
+#undef RESULT_INCLUDE_IPP
