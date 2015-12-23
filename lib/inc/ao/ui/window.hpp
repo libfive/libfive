@@ -14,7 +14,7 @@ public:
     static bool Show(Tree* tree);
 
 protected:
-    Window(GLFWwindow* window);
+    explicit Window(GLFWwindow* window);
 
     void run();
 

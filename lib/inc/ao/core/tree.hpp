@@ -23,7 +23,7 @@ public:
     /*
      *  Construct a tree from the given Store
      */
-    Tree(Store* s, Token* root);
+    explicit Tree(Store* s, Token* root);
 
     /*
      *  In destructor, delete all of the data that this Tree owns

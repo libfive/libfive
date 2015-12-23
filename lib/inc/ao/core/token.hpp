@@ -15,12 +15,12 @@ public:
     /*
      *  Constructs a token for an operation
      */
-    Token(Opcode op, Token* a=nullptr, Token* b=nullptr);
+    explicit Token(Opcode op, Token* a=nullptr, Token* b=nullptr);
 
     /*
      *  Constructs a token for a constant
      */
-    Token(double v);
+    explicit Token(double v);
 
     /*
      *  Returns the number of arguments for the given token

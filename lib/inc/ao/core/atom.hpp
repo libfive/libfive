@@ -34,17 +34,17 @@ class Atom
      *  Requires that the token's children be packed into Atoms
      *  beforehand (otherwise will throw an assertion)
      */
-    Atom(Token* t);
+    explicit Atom(Token* t);
 
     /*
      *  Construct an operation atom from scratch
      */
-    Atom(Opcode op, Atom* a=NULL, Atom* b=NULL);
+    explicit Atom(Opcode op, Atom* a=NULL, Atom* b=NULL);
 
     /*
      *  Construct an OP_MUTABLE atom from scratch
      */
-    Atom(double d);
+    explicit Atom(double d);
 
 protected:
     const Opcode op;

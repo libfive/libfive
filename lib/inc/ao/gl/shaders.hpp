@@ -7,7 +7,7 @@
 class Shaders
 {
 public:
-    Shaders();
+    explicit Shaders();
 
     /*
      *  Activate the default program

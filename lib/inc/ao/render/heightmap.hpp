@@ -8,7 +8,5 @@ class Tree;
 
 namespace Heightmap
 {
-
 Eigen::ArrayXXd Render(Tree* t, Region r);
-
 }

@@ -7,7 +7,7 @@
 #include "ao/core/atom.hpp"
 
 union Result {
-    Result() { /* Provide default constructor */ }
+    explicit Result() { /* Provide default constructor */ }
 
     /*
      *  Inline setters for base types (used in eval's inner loop)

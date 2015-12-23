@@ -8,7 +8,7 @@
 class Frame
 {
 public:
-    Frame();
+    explicit Frame();
     ~Frame();
 
     void Draw();
