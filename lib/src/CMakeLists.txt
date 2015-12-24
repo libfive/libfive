@@ -1,8 +1,8 @@
 find_path(GUILE_INCLUDE_DIR libguile.h)
 find_library(GUILE_LIBRARY NAMES guile-2.0)
 
-find_path(GLEW_INCLUDE_DIR GL/glew.h /usr/local/include)
-find_library(GLEW_LIBRARY NAMES glew)
+find_path(EPOXY_INCLUDE_DIR epoxy/gl.h)
+find_library(EPOXY_LIBRARY NAMES epoxy)
 
 find_package(Boost REQUIRED)
 
@@ -19,7 +19,7 @@ include_directories(${GUILE_INCLUDE_DIR}
                     ${BOOST_INCLUDE_DIR}
                     ${PNG_INCLUDE_DIR}
                     ${GLFW_INCLUDE_DIRS}
-                    ${GLEW_INCLUDE_DIR})
+                    ${EPOXY_INCLUDE_DIR})
 
 ################################################################################
 
@@ -32,4 +32,4 @@ target_link_libraries(ao ${GUILE_LIBRARY}
                          ${PNG_LIBRARIES}
                          ${GLFW_LIBRARIES}
                          ${OPENGL_LIBRARY}
-                         ${GLEW_LIBRARY})
+                         ${EPOXY_LIBRARY})

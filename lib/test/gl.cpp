@@ -26,17 +26,6 @@ static GLFWwindow* makeContext()
     return out;
 }
 
-static GLFWwindow* init()
-{
-    auto window = makeContext();
-    if (window)
-    {
-        glewInit();
-        glGetError(); // Eat a GL_INVALID_ENUM error
-    }
-    return window;
-}
-
 static void finish(GLFWwindow* window)
 {
     if (window)
@@ -55,16 +44,9 @@ TEST_CASE("Context creation")
     finish(window);
 }
 
-TEST_CASE("Loading GLEW")
-{
-    auto window = makeContext();
-    REQUIRE(glewInit() == GLEW_OK);
-    finish(window);
-}
-
 TEST_CASE("OpenGL version")
 {
-    auto window = init();
+    auto window = makeContext();
 
     auto version = glGetString(GL_VERSION);
     REQUIRE(version);
@@ -86,7 +68,7 @@ TEST_CASE("Shader creation")
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
 
-    auto window = init();
+    auto window = makeContext();
 
     SECTION("Raw OpenGL")
     {
