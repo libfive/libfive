@@ -6,6 +6,8 @@
 #include <list>
 #include <cstdlib>
 
+#include <glm/mat4x4.hpp>
+
 #include "ao/core/interval.hpp"
 #include "ao/core/gradient.hpp"
 #include "ao/core/region.hpp"
@@ -29,6 +31,11 @@ public:
      *  In destructor, delete all of the data that this Tree owns
      */
     ~Tree();
+
+    /*
+     *  Sets the matrix constants to the given matrix
+     */
+    void setMatrix(const glm::mat4& m);
 
     /*
      *  Single-argument evaluation

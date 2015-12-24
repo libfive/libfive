@@ -109,6 +109,20 @@ Tree::~Tree()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void Tree::setMatrix(const glm::mat4& m)
+{
+    size_t index=0;
+    for (int i=0; i < 3; ++i)
+    {
+        for (int j=0; j < 4; ++j)
+        {
+            matrix[index++]->mutable_value = m[j][i];
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 Atom* Tree::buildMatrixRow(size_t i)
 {
     assert(data != nullptr);
