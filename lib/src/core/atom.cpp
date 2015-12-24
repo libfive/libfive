@@ -98,6 +98,74 @@ bool Atom::checkDisabled()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+std::string Atom::toShader(size_t index,
+                           std::unordered_map<const Atom*, size_t>* atoms) const
+{
+    // Each atom should be stored into the hashmap only once.
+    // There's a special case for the tree's root, which is pre-emptively
+    // inserted into the hashmap at index 0 (to make the end of the shader
+    // easy to write).
+    assert(atoms->count(this) == 0 || (*atoms)[this] == 0);
+
+    // Store this atom in the array if it is not already present;
+    // otherwise, update the index from the hashmap
+    if (!atoms->count(this))
+    {
+        (*atoms)[this] = index;
+    }
+    else
+    {
+        index = (*atoms)[this];
+    }
+
+    std::string out = "    float m" + std::to_string(index) + " = ";
+
+    auto get = [&](Atom* m){
+        if (m)
+        {
+            auto itr = atoms->find(m);
+            if (itr != atoms->end())
+            {
+                return "m" + std::to_string(itr->second);
+            }
+            else switch (m->op)
+            {
+                case OP_X: return std::string("x");
+                case OP_Y: return std::string("y");
+                case OP_Z: return std::string("z");
+                case OP_CONST:  return std::to_string(m->value) + "f";
+                default:        return std::to_string(m->mutable_value) + "f";
+            }
+        }
+        return std::string(); };
+    std::string sa = get(a);
+    std::string sb = get(b);
+
+    switch (op)
+    {
+        case OP_ADD:    out += "(" + sa + " + " + sb + ")";     break;
+        case OP_MUL:    out += "(" + sa + " * " + sb + ")";     break;
+        case OP_MIN:    out += "min(" + sa + ", " + sb + ")";   break;
+        case OP_MAX:    out += "max(" + sa + ", " + sb + ")";   break;
+        case OP_SUB:    out += "(" + sa + " - " + sb + ")";     break;
+        case OP_DIV:    out += "(" + sa + " / " + sb + ")";     break;
+        case OP_SQRT:   out += "sqrt(" + sa + ", " + sb + ")";  break;
+        case OP_NEG:    out += "(-" + sa + ", " + sb + ")";     break;
+
+        case OP_X:  // Fallthrough!
+        case OP_Y:
+        case OP_Z:
+        case LAST_OP:
+        case OP_CONST:
+        case OP_MUTABLE:
+        case INVALID:   assert(false);
+    }
+
+    return out + ";\n";
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 std::ostream& operator<<(std::ostream& os, const Atom& atom)
 {
     switch (atom.op)

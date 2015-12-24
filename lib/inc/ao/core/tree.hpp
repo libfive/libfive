@@ -66,6 +66,11 @@ public:
      */
     void pop();
 
+    /*
+     *  Convert the tree to an OpenGL 3.3 fragment shader
+     */
+    std::string toShader() const;
+
 protected:
     /*
      *  Creates a row of the transform matrix

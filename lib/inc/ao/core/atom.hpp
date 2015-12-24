@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <iostream>
+#include <unordered_map>
 
 #include "ao/core/opcode.hpp"
 #include "ao/core/result.hpp"
@@ -53,6 +54,12 @@ public:
      *  leave one child active), returning false.
      */
     bool checkDisabled();
+
+    /*
+     *  Converts this atom to a line in an OpenGL shader
+     */
+    std::string toShader(size_t index,
+                         std::unordered_map<const Atom*, size_t>* atoms) const;
 
     /*
      *  Print an Atom to an ostream

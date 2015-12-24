@@ -111,7 +111,7 @@ Tree::~Tree()
 
 void Tree::setMatrix(const glm::mat4& m)
 {
-    size_t index=0;
+    size_t index = 0;
     for (int i=0; i < 3; ++i)
     {
         for (int j=0; j < 4; ++j)
@@ -239,3 +239,53 @@ const double* Tree::eval(const Region& r)
     return root->result.ptr<double>();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+std::string Tree::toShader() const
+{
+    std::unordered_map<const Atom*, size_t> atoms;
+
+    // Write shader's header
+    std::string out = R"EOF(
+#version 330
+
+out vec4 fragColor;
+in vec2 frag_pos;
+
+uniform int nk;
+uniform float dz;
+
+void main()
+{
+    float x = frag_pos.x;
+    float y = frag_pos.y;
+    float z = 0.0f;
+
+)EOF";
+
+    // Build shader line-by-line from the active atoms
+    size_t index = 1;
+    atoms[root] = 0;
+    for (const auto& row : rows)
+    {
+        for (size_t i=0; i < row.active; ++i)
+        {
+            out += row[i]->toShader(index++, &atoms);
+        }
+    }
+
+    // Append the shader's footer
+    out += R"EOF(
+    if (m0 <=0)
+    {
+        fragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+    else
+    {
+        fragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    }
+}
+)EOF";
+
+    return out;
+}
