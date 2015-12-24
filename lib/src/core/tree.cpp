@@ -116,6 +116,7 @@ void Tree::setMatrix(const glm::mat4& m)
     {
         for (int j=0; j < 4; ++j)
         {
+            assert(matrix[index]->op == OP_MUTABLE);
             matrix[index++]->mutable_value = m[j][i];
         }
     }
