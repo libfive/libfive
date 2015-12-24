@@ -5,7 +5,8 @@ void Row::push()
 {
     disabled.push(0);
 
-    for (size_t index=0; index < active; ++index)
+    size_t index=0;
+    while (index < active)
     {
         if ((*this)[index]->checkDisabled())
         {
