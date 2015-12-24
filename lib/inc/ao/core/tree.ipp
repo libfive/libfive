@@ -64,9 +64,9 @@ inline void Tree::evalCore(size_t count)
 {
     for (const auto& row : rows)
     {
-        for (auto& m : row)
+        for (size_t i=0; i < row.active; ++i)
         {
-            evalAtom<T>(m, count);
+            evalAtom<T>(row[i], count);
         }
     }
 }
@@ -122,6 +122,7 @@ void Tree::setMode()
     {
         fillConstants<T>();
         fillMatrix<T>();
+        fillDisabled<T>();
         mode = static_cast<Mode>(sizeof(T));
     }
 }
@@ -143,5 +144,19 @@ void Tree::fillMatrix()
     for (auto m : matrix)
     {
         m->result.set(std::vector<T>(count, T(m->mutable_value)));
+    }
+}
+
+template <class T>
+void Tree::fillDisabled()
+{
+    const size_t count = Result::count<T>();
+    for (const auto& row : rows)
+    {
+        for (auto i = row.active; i != row.size(); ++i)
+        {
+            auto atom = row[i];
+            atom->result.set(std::vector<T>(count, T(atom->mutable_value)));
+        }
     }
 }

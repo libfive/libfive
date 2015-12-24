@@ -67,7 +67,8 @@ static void recurse(Tree* t, const Region& r, Eigen::ArrayXXd& img)
     // Otherwise, recurse if the output interval is ambiguous
     else if (out.lower() <= 0)
     {
-        // Prune the tree
+        // Disable inactive nodes in the tree
+        t->push();
 
         // Subdivide and recurse
         assert(r.canSplit());
@@ -79,7 +80,8 @@ static void recurse(Tree* t, const Region& r, Eigen::ArrayXXd& img)
         recurse(t, rs.second, img);
         recurse(t, rs.first, img);
 
-        // Unprune the tree
+        // Re-enable disabled nodes from the tree
+        t->pop();
     }
 }
 

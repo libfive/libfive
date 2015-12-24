@@ -31,3 +31,67 @@ Atom::Atom(double value)
 {
     // Nothing to do here
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+bool Atom::checkDisabled()
+{
+    if (flags & ATOM_FLAG_IGNORED)
+    {
+        clearFlags();
+        mutable_value = result.get<Interval>(0).lower();
+        return true;
+    }
+
+    // For min and max operations, we may only need to keep one branch
+    // active if it is decisively above or below the other branch.
+    if (op == OP_MAX)
+    {
+        if (a->result.get<Interval>(0).lower() >=
+            b->result.get<Interval>(0).upper())
+        {
+            a->clearFlag(ATOM_FLAG_IGNORED);
+        }
+        else if (b->result.get<Interval>(0).lower() >=
+                 a->result.get<Interval>(0).upper())
+        {
+            b->clearFlag(ATOM_FLAG_IGNORED);
+        }
+        else
+        {
+            a->clearFlag(ATOM_FLAG_IGNORED);
+            b->clearFlag(ATOM_FLAG_IGNORED);
+        }
+    }
+    else if (op == OP_MIN)
+    {
+        if (a->result.get<Interval>(0).lower() >=
+            b->result.get<Interval>(0).upper())
+        {
+            b->clearFlag(ATOM_FLAG_IGNORED);
+        }
+        else if (b->result.get<Interval>(0).lower() >=
+                 a->result.get<Interval>(0).upper())
+        {
+            a->clearFlag(ATOM_FLAG_IGNORED);
+        }
+        else
+        {
+            a->clearFlag(ATOM_FLAG_IGNORED);
+            b->clearFlag(ATOM_FLAG_IGNORED);
+        }
+    }
+    // For other operations, we keep both branches active
+    else
+    {
+        if (a)
+        {
+            a->clearFlag(ATOM_FLAG_IGNORED);
+        }
+        if (b)
+        {
+            b->clearFlag(ATOM_FLAG_IGNORED);
+        }
+    }
+    return true;
+}

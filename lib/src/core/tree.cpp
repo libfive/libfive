@@ -91,10 +91,10 @@ Tree::Tree(Store* s, Token* root_token)
         assert(row == rows.end());
     }
 
-    // Set the active node count in every row to the number of atoms
+    // Set the active count in every row to the number of atoms
     for (auto& r : rows)
     {
-        r.active = r.size();
+        r.setSize();
     }
 
     // Get the root atom from the root token
@@ -182,13 +182,40 @@ Atom* Tree::buildMatrixRow(size_t i)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Tree::setFlag(uint8_t flag)
+void Tree::push()
 {
-    for (auto& r : rows)
+    // push is only valid if we've just completed an interval evaluation
+    assert(mode == MODE_INTERVAL);
+
+    // Walk up the tree, marking every atom with ATOM_FLAG_IGNORED
+    for (const auto& row : rows)
     {
-        r.setFlag(flag);
+        for (size_t i=0; i < row.active; ++i)
+        {
+            row[i]->setFlag(ATOM_FLAG_IGNORED);
+        }
+    }
+
+    // Clear the IGNORED flag on the root
+    root->clearFlag(ATOM_FLAG_IGNORED);
+
+    // Walk down the tree, clearing IGNORED flags as appropriate
+    // and disabling atoms that still have IGNORED flags set.
+    for (auto itr = rows.rbegin(); itr != rows.rend(); ++itr)
+    {
+        itr->push();
     }
 }
+
+void Tree::pop()
+{
+    for (auto& row : rows)
+    {
+        row.pop();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 const double* Tree::eval(const Region& r)
 {
@@ -212,32 +239,3 @@ const double* Tree::eval(const Region& r)
     return root->result.ptr<double>();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-void Tree::Row::setFlag(uint8_t flag)
-{
-    for (size_t i=0; i < active; ++i)
-    {
-        (*this)[i]->flags |= flag;
-    }
-}
-
-void Tree::Row::push()
-{
-    disabled.push(0);
-}
-
-void Tree::Row::pop()
-{
-    active += disabled.top();
-    disabled.pop();
-}
-
-void Tree::Row::disable(size_t i)
-{
-    assert(i < active);
-    assert(disabled.size() > 0);
-
-    std::swap((*this)[i], (*this)[--active]);
-    disabled.top()++;
-}

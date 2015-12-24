@@ -7,15 +7,14 @@
 
 class Token;
 
-#define ATOM_FLAG_MASK 0xff
 #define ATOM_FLAG_IGNORED 1
-#define ATOM_FLAG_BOOLEAN 2
 
 /*
  *  An Atom represent an operation in a math tree.
  */
 class Atom
 {
+public:
     /*
      *  Construct an atom from the given token, setting the token's
      *  atom pointer to this.
@@ -34,6 +33,25 @@ class Atom
      *  Construct an OP_MUTABLE atom from scratch
      */
     explicit Atom(double d);
+
+    /*
+     *  Flag manipulation functions
+     */
+    void setFlag(uint8_t f)     { flags |=  f; }
+    void clearFlag(uint8_t f)   { flags &= ~f; }
+    void clearFlags()           { flags  =  0; }
+
+    /*
+     *  If the ATOM_FLAG_IGNORED flag is set:
+     *      Saves the interval result to mutable_value
+     *      Clears the flag
+     *      Returns true.
+     *
+     *  Otherwise, propagates the IGNORED flag to its children,
+     *  properly handling min and max operations (which may only
+     *  leave one child active), returning false.
+     */
+    bool checkDisabled();
 
 protected:
     const Opcode op;

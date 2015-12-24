@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stack>
 #include <array>
 #include <vector>
 #include <list>
@@ -11,6 +10,7 @@
 #include "ao/core/interval.hpp"
 #include "ao/core/gradient.hpp"
 #include "ao/core/region.hpp"
+#include "ao/core/row.hpp"
 
 class Atom;
 class Store;
@@ -56,46 +56,17 @@ public:
      */
     const double* eval(const Region& r);
 
-protected:
     /*
-     *  The Row subclass stores a row of atoms (of a particular weight)
+     *  Pushes into a subinterval, disabling inactive nodes
      */
-    class Row : public std::vector<Atom*>
-    {
-    public:
-        /*
-         *  Applies the given flag to every Atom in the row
-         */
-        void setFlag(uint8_t flag);
+    void push();
 
-        /*
-         *  Push a new disabled count onto the stack
-         */
-        void push();
+    /*
+     *  Pops out of interval evaluation, re-enabling disabled nodes
+     */
+    void pop();
 
-        /*
-         *  Re-enable nodes that were disabled since the last push
-         */
-        void pop();
-
-        /*
-         *  Disables the i'th atom in the list by swapping it to the back
-         *  and decrementing the active count by 1
-         *
-         *  Also increments the disabled count by one; must be called after at
-         *  least one push() so that there's something on the disabled stack
-         */
-        void disable(size_t i);
-
-        /*  active is the number of atoms to evaluate in each pass  */
-        size_t active;
-
-        /*  disabled stores the number of atoms disabled in each call to  *
-         *  Row::disable.  It's a stack with values that are popped off   *
-         *  with Row::pop                                                 */
-        std::stack<size_t> disabled;
-    };
-
+protected:
     /*
      *  Creates a row of the transform matrix
      *
@@ -137,9 +108,10 @@ protected:
     void fillMatrix();
 
     /*
-     *  Sets the given flag for every node in the tree
+     *  Prepares the most recent set of disabled nodes from mutable_values
      */
-    void setFlag(uint8_t flag);
+    template <class T>
+    void fillDisabled();
 
     /*  All operations live in a set of rows sorted by weight */
     std::vector<Row> rows;
@@ -171,6 +143,8 @@ protected:
     /*  Pointer to the current location in the data array */
     Atom* ptr;
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 #define TREE_INCLUDE_IPP
 #include "tree.ipp"
