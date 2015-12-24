@@ -173,13 +173,15 @@ TEST_CASE("3D rendering of a sphere")
 
         auto description = "Rendered sphere in " +
                            std::to_string(elapsed.count()) + " sec";
-        CAPTURE(description);
 
         // Check for major regressions in render performance
 #ifdef RELEASE
-        REQUIRE(elapsed_ms.count() < 50);
+        if (elapsed_ms.count() > 50)
 #else
-        REQUIRE(elapsed_ms.count() < 500);
+        if (elapsed_ms.count() > 500)
 #endif
+        {
+            WARN(description);
+        }
     }
 }
