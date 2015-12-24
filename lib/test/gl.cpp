@@ -32,6 +32,7 @@ static GLFWwindow* init()
     if (window)
     {
         glewInit();
+        glGetError(); // Eat a GL_INVALID_ENUM error
     }
     return window;
 }
@@ -113,6 +114,13 @@ TEST_CASE("Shader creation")
         CAPTURE(error_msg);
 
         REQUIRE(status != GL_FALSE);
+    }
+
+    SECTION("OGLplus")
+    {
+        oglplus::VertexShader vs;
+        vs.Source(t.toShader());
+        vs.Compile();
     }
 
     finish(window);
