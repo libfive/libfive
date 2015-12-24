@@ -1,6 +1,6 @@
 #include <catch/catch.hpp>
-#include <oglplus/oglplus.hpp>
 
+#include "ao/gl/core.hpp"
 #include "ao/core/store.hpp"
 #include "ao/core/tree.hpp"
 
