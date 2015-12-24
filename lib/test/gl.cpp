@@ -6,37 +6,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static GLFWwindow* makeContext()
-{
-    if (!glfwInit())
-    {
-        return nullptr;
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_VERSION_MAJOR);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_VERSION_MINOR);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
-
-    auto out = glfwCreateWindow(640, 480, "", nullptr, nullptr);
-    glfwMakeContextCurrent(out);
-
-    return out;
-}
-
-static void finish(GLFWwindow* window)
-{
-    if (window)
-    {
-        glfwDestroyWindow(window);
-    }
-    glfwTerminate();
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 TEST_CASE("Context creation")
 {
     auto window = makeContext();
