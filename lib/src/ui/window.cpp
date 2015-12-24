@@ -3,6 +3,7 @@
 #include "ao/ui/window.hpp"
 #include "ao/core/tree.hpp"
 
+#include "ao/gl/core.hpp"
 #include "ao/gl/shaders.hpp"
 #include "ao/gl/frame.hpp"
 
@@ -10,33 +11,12 @@ bool Window::Show(Tree* tree)
 {
     (void)tree;
 
-    // Initialize the library
-    if (!glfwInit())
+    auto glfw_window = makeWindow(640, 480, "Hello!");
+    if (glfw_window == nullptr)
     {
         return false;
     }
-
-    glfwWindowHint(GLFW_SAMPLES, 8);    // multisampling!
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // Create a windowed mode window and its OpenGL context
-    GLFWwindow* const window = glfwCreateWindow(
-            600, 400, "ao", NULL, NULL);
-
-    if (!window)
-    {
-        std::cerr << "Error: failed to create window!" << std::endl;
-        glfwTerminate();
-        return false;
-    }
-
-    // Make the window's context current
-    glfwMakeContextCurrent(window);
-
-    std::unique_ptr<Window> win(new Window(window));
+    std::unique_ptr<Window> win(new Window(glfw_window));
     win->run();
 
     return true;

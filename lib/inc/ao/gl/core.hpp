@@ -10,16 +10,17 @@
 /*
  *  Creates a visible window and returns a pointer
  *  (or nullptr if something failed)
+ *
+ *  glfwInitialize is called if not already initialized.
+ *  The returned context is set to current.
+ *  Caller takes ownership of window.
  */
 GLFWwindow* makeWindow(int width, int height, std::string title);
 
 /*
  *  Creates an OpenGL context attached to a hidden window,
  *  returning the window (or nullptr if something failed)
+ *
+ *  Same caveats apply as for makeWindow
  */
 GLFWwindow* makeContext();
-
-/*
- *  Destroys the window (if not a nullptr) and calls glfwTerminate
- */
-void finish(GLFWwindow* window);

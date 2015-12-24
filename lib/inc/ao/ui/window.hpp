@@ -1,8 +1,8 @@
 #pragma once
 
 #include <memory>
-#include <GLFW/glfw3.h>
 
+#include "ao/gl/core.hpp"
 #include "ao/gl/shaders.hpp"
 #include "ao/gl/frame.hpp"
 

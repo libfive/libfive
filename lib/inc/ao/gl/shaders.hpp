@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include <GLFW/glfw3.h>
+#include "ao/gl/core.hpp"
 
 class Shaders
 {

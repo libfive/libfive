@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
+#include "ao/gl/core.hpp"
 
 /*
  *  The Frame class contains and draws a rendered Tree texture

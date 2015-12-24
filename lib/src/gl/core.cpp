@@ -1,5 +1,22 @@
 #include "ao/gl/core.hpp"
 
+////////////////////////////////////////////////////////////////////////////////
+
+static bool glfw_initialized = false;
+
+// Attemp to call glfwInit() if the library is not already initialized
+// Returns true on success, otherwise false.
+static bool initialize()
+{
+    if (glfw_initialized || glfwInit() == GL_TRUE)
+    {
+        glfw_initialized = true;
+    }
+    return glfw_initialized;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 static void setWindowHints()
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_VERSION_MAJOR);
@@ -8,9 +25,11 @@ static void setWindowHints()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 GLFWwindow* makeWindow(int width, int height, std::string title)
 {
-    if (!glfwInit())
+    if (!initialize())
     {
         return nullptr;
     }
@@ -26,7 +45,7 @@ GLFWwindow* makeWindow(int width, int height, std::string title)
 
 GLFWwindow* makeContext()
 {
-    if (!glfwInit())
+    if (!initialize())
     {
         return nullptr;
     }
@@ -38,13 +57,4 @@ GLFWwindow* makeContext()
     glfwMakeContextCurrent(out);
 
     return out;
-}
-
-void finish(GLFWwindow* window)
-{
-    if (window)
-    {
-        glfwDestroyWindow(window);
-    }
-    glfwTerminate();
 }

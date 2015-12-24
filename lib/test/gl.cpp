@@ -1,3 +1,5 @@
+#include <memory>
+
 #include <catch/catch.hpp>
 
 #include "ao/gl/core.hpp"
@@ -6,16 +8,17 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
+typedef std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> WindowPtr;
+
 TEST_CASE("Context creation")
 {
-    auto window = makeContext();
+    WindowPtr window(makeContext(), glfwDestroyWindow);
     REQUIRE(window != nullptr);
-    finish(window);
 }
 
 TEST_CASE("OpenGL version")
 {
-    auto window = makeContext();
+    WindowPtr window(makeContext(), glfwDestroyWindow);
 
     auto version = glGetString(GL_VERSION);
     REQUIRE(version);
@@ -25,8 +28,6 @@ TEST_CASE("OpenGL version")
 
     CAPTURE(version);
     REQUIRE((major * 10 + minor) >= 33);
-
-    finish(window);
 }
 
 TEST_CASE("Shader creation")
@@ -37,7 +38,7 @@ TEST_CASE("Shader creation")
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
 
-    auto window = makeContext();
+    WindowPtr window(makeContext(), glfwDestroyWindow);
 
     SECTION("Raw OpenGL")
     {
@@ -73,6 +74,4 @@ TEST_CASE("Shader creation")
         vs.Source(t.toShader());
         vs.Compile();
     }
-
-    finish(window);
 }
