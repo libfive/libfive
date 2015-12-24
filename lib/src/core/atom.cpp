@@ -95,3 +95,29 @@ bool Atom::checkDisabled()
     }
     return true;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+std::ostream& operator<<(std::ostream& os, const Atom& atom)
+{
+    switch (atom.op)
+    {
+        case OP_ADD:    os << "(" << *atom.a << " + " << *atom.b << ")"; break;
+        case OP_MUL:    os << "(" << *atom.a << " * " << *atom.b << ")"; break;
+        case OP_MIN:    os << "min(" << *atom.a << ", " << *atom.b << ")"; break;
+        case OP_MAX:    os << "max(" << *atom.a << ", " << *atom.b << ")"; break;
+        case OP_SUB:    os << "(" << *atom.a << " - " << *atom.b << ")"; break;
+        case OP_DIV:    os << "(" << *atom.a << " / " << *atom.b << ")"; break;
+        case OP_SQRT:   os << "sqrt(" << *atom.a << ")"; break;
+        case OP_NEG:    os << "(-" << *atom.a << ")"; break;
+        case OP_CONST:  os << atom.value; break;
+        case OP_MUTABLE:  os << atom.mutable_value; break;
+        case OP_X:      os << "X"; break;
+        case OP_Y:      os << "Y"; break;
+        case OP_Z:      os << "Z"; break;
+
+        case LAST_OP:   // Fallthrough!
+        case INVALID:   assert(false);
+    }
+    return os;
+}

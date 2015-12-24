@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
 
 #include "ao/core/opcode.hpp"
 #include "ao/core/result.hpp"
@@ -53,6 +54,11 @@ public:
      */
     bool checkDisabled();
 
+    /*
+     *  Print an Atom to an ostream
+     */
+    friend std::ostream& operator<<(std::ostream& os, const Atom& atom);
+
 protected:
     const Opcode op;
 
@@ -74,3 +80,5 @@ protected:
 
     friend class Tree;
 };
+
+std::ostream& operator<<(std::ostream& os, const Atom& atom);
