@@ -119,6 +119,15 @@ void Tree::setMatrix(const glm::mat4& m)
             matrix[index++]->mutable_value = m[j][i];
         }
     }
+
+    // Depending on the current mode, refresh the matrix result array
+    switch (mode)
+    {
+        case MODE_DOUBLE:   fillMatrix<double>(); break;
+        case MODE_INTERVAL: fillMatrix<Interval>(); break;
+        case MODE_GRADIENT: fillMatrix<Gradient>(); break;
+        case MODE_NONE:     break;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

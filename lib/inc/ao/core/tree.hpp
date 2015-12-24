@@ -125,6 +125,18 @@ protected:
     void setMode();
 
     /*
+     *  Prepares the transform matrix's constants arrays with its values
+     */
+    template <class T>
+    void fillConstants();
+
+    /*
+     *  Prepares the constant result arrays with its mutable_values
+     */
+    template <class T>
+    void fillMatrix();
+
+    /*
      *  Sets the given flag for every node in the tree
      */
     void setFlag(uint8_t flag);

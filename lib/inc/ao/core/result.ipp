@@ -4,6 +4,16 @@
 #error "Cannot include .ipp file on its own"
 #endif
 
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+inline size_t Result::count()
+{
+    return ATOM_ARRAY_BYTES / sizeof(T);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 template <>
 inline double* Result::ptr<double>() const
 {
@@ -14,6 +24,12 @@ template <>
 inline Interval* Result::ptr<Interval>() const
 {
     return const_cast<Interval*>(i);
+}
+
+template <>
+inline Gradient* Result::ptr<Gradient>() const
+{
+    return const_cast<Gradient*>(g);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -50,4 +66,3 @@ inline void Result::copyTo(T* target, size_t count) const
 {
     std::copy(ptr<T>(), ptr<T>() + count, target);
 }
-

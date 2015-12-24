@@ -120,17 +120,28 @@ void Tree::setMode()
     // Skip this function if mode is already set correctly
     if (mode != sizeof(T))
     {
-        const size_t count = ATOM_ARRAY_BYTES / sizeof(T);
-        for (auto c : constants)
-        {
-            c->result.set(std::vector<T>(count, T(c->value)));
-        }
-
-        for (auto m : matrix)
-        {
-            m->result.set(std::vector<T>(count, T(m->mutable_value)));
-        }
-
+        fillConstants<T>();
+        fillMatrix<T>();
         mode = static_cast<Mode>(sizeof(T));
+    }
+}
+
+template <class T>
+void Tree::fillConstants()
+{
+    const size_t count = Result::count<T>();
+    for (auto c : constants)
+    {
+        c->result.set(std::vector<T>(count, T(c->value)));
+    }
+}
+
+template <class T>
+void Tree::fillMatrix()
+{
+    const size_t count = Result::count<T>();
+    for (auto m : matrix)
+    {
+        m->result.set(std::vector<T>(count, T(m->mutable_value)));
     }
 }

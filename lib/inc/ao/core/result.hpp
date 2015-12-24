@@ -10,6 +10,12 @@ union Result {
     explicit Result() { /* Provide default constructor */ }
 
     /*
+     *  Returns the array size for the given type
+     */
+    template <class T>
+    static size_t count();
+
+    /*
      *  Inline setters for base types (used in eval's inner loop)
      */
     template <class T>
