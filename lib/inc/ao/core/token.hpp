@@ -32,7 +32,7 @@ public:
      */
     bool isFound() const { return found; }
 
-protected:
+    /*  Member variables  */
     const Opcode op;
     const size_t weight;
 
@@ -43,6 +43,7 @@ protected:
     Token* const a;
     Token* const b;
 
+protected:
     /*  found is used to detect which tokens are in the tree  */
     bool found=false;
 
