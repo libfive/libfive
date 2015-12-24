@@ -31,6 +31,56 @@ Token* Store::constant(double v)
 
 Token* Store::operation(Opcode op, Token* a, Token* b)
 {
+    // Special cases to handle identity operations
+    if (op == OP_ADD)
+    {
+        if (a->op == OP_CONST && a->value == 0)
+        {
+            return b;
+        }
+        if (b->op == OP_CONST && b->value == 0)
+        {
+            return a;
+        }
+    }
+    else if (op == OP_SUB)
+    {
+        if (a->op == OP_CONST && a->value == 0)
+        {
+            return operation(OP_NEG, b);
+        }
+        if (b->op == OP_CONST && b->value == 0)
+        {
+            return a;
+        }
+    }
+    else if (op == OP_MUL)
+    {
+        if (a->op == OP_CONST)
+        {
+            if (a->value == 0)
+            {
+                return a;
+            }
+            else if (a->value == 1)
+            {
+                return b;
+            }
+        }
+        if (b->op == OP_CONST)
+        {
+            if (b->value == 0)
+            {
+                return b;
+            }
+            else if (b->value == 1)
+            {
+                return a;
+            }
+        }
+    }
+
+    // Otherwise, construct a new Token and add it to the ops set
     const auto t = new Token(op, a, b);
 
     if (ops.size() <= t->weight)
