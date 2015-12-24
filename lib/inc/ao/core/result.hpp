@@ -70,6 +70,8 @@ protected:
     SizedArray<Gradient> g;
 };
 
+#undef RESULT_COUNT
+
 #define RESULT_INCLUDE_IPP
 #include "result.ipp"
 #undef RESULT_INCLUDE_IPP
