@@ -139,6 +139,14 @@ Atom* Tree::buildMatrixRow(size_t i)
     assert(X != nullptr && Y != nullptr && Z != nullptr);
     assert(rows.size() == 3);
 
+    // The matrix transform is of the form
+    //     q' = a*x + b*y + c*z + d
+    // (where q' is x', y', or z')
+    //
+    // It is implemented with three OP_MULs (a*x, b*y, c*z)
+    // and three OP_ADDs (a*x + b*y, c*z + d, a*x + b*y + c*z + d)
+
+    // The default matrix preserves X, Y, Z values
     Atom* a  = NEW_ATOM(i == 0 ? 1.0 : 0.0);
     Atom* b  = NEW_ATOM(i == 1 ? 1.0 : 0.0);
     Atom* c  = NEW_ATOM(i == 2 ? 1.0 : 0.0);
