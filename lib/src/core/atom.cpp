@@ -93,7 +93,7 @@ bool Atom::checkDisabled()
             b->clearFlag(ATOM_FLAG_IGNORED);
         }
     }
-    return true;
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
