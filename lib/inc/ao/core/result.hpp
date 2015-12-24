@@ -5,7 +5,6 @@
 
 #include "ao/core/interval.hpp"
 #include "ao/core/gradient.hpp"
-#include "ao/core/atom.hpp"
 
 // This is the storage size allocated to each array (in bytes)
 //
