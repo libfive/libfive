@@ -183,7 +183,7 @@ void Tree::setFlag(uint8_t flag)
 
 const double* Tree::eval(const Region& r)
 {
-    assert(r.voxels() <= ATOM_DOUBLE_COUNT);
+    assert(r.voxels() <= Result::count<double>());
 
     setMode<double>();
 

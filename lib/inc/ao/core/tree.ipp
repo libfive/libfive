@@ -86,7 +86,7 @@ inline std::vector<T> Tree::eval(const std::vector<T>& x,
     setMode<T>();
     while (remaining)
     {
-        const size_t count = std::min(remaining, ATOM_ARRAY_BYTES / sizeof(T));
+        const size_t count = std::min(remaining, Result::count<T>());
 
         X->result.set<T>(&x[index], count);
         Y->result.set<T>(&y[index], count);

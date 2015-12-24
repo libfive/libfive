@@ -6,30 +6,22 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <class T>
-inline size_t Result::count()
-{
-    return ATOM_ARRAY_BYTES / sizeof(T);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 template <>
 inline double* Result::ptr<double>() const
 {
-    return const_cast<double*>(d);
+    return const_cast<double*>(&d[0]);
 }
 
 template <>
 inline Interval* Result::ptr<Interval>() const
 {
-    return const_cast<Interval*>(i);
+    return const_cast<Interval*>(&i[0]);
 }
 
 template <>
 inline Gradient* Result::ptr<Gradient>() const
 {
-    return const_cast<Gradient*>(g);
+    return const_cast<Gradient*>(&g[0]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,10 +33,10 @@ inline void Result::set(T v, size_t index)
 }
 
 template <class T>
-inline void Result::set(const T* ts, size_t count)
+inline void Result::set(const T* ts, size_t n)
 {
-    assert(count <= (ATOM_ARRAY_BYTES / sizeof(T)));
-    std::copy(ts, ts + count, ptr<T>());
+    assert(n <= count<T>());
+    std::copy(ts, ts + n, ptr<T>());
 }
 
 template <class T>
@@ -62,7 +54,8 @@ inline T Result::get(size_t index) const
 }
 
 template <class T>
-inline void Result::copyTo(T* target, size_t count) const
+inline void Result::copyTo(T* target, size_t n) const
 {
-    std::copy(ptr<T>(), ptr<T>() + count, target);
+    assert(n <= count<T>());
+    std::copy(ptr<T>(), ptr<T>() + n, target);
 }
