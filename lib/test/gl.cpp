@@ -97,6 +97,21 @@ TEST_CASE("Shader creation")
         CAPTURE(t.toShader());
         GLint status;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+
+        std::string error_msg;
+        if (status == GL_FALSE)
+        {
+            GLint log_length;
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length);
+
+            GLchar* info_log = new GLchar[log_length + 1];
+            glGetShaderInfoLog(shader, log_length, NULL, info_log);
+
+            error_msg = info_log;
+            delete [] info_log;
+        }
+        CAPTURE(error_msg);
+
         REQUIRE(status != GL_FALSE);
     }
 
