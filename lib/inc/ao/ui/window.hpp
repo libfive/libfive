@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "ao/gl/core.hpp"
-#include "ao/gl/shaders.hpp"
 #include "ao/gl/frame.hpp"
 
 class Tree;
@@ -19,6 +18,4 @@ protected:
     void run();
 
     GLFWwindow* const window;
-    Frame frame;
-    Shaders shaders;
 };

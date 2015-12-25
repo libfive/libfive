@@ -4,7 +4,6 @@
 #include "ao/core/tree.hpp"
 
 #include "ao/gl/core.hpp"
-#include "ao/gl/shaders.hpp"
 #include "ao/gl/frame.hpp"
 
 bool Window::Show(Tree* tree)
@@ -37,8 +36,8 @@ void Window::run()
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        shaders.Use();
-        frame.Draw();
+        //shaders.Use();
+        //frame.Draw();
 
         // Swap front and back buffers
         glfwSwapBuffers(window);

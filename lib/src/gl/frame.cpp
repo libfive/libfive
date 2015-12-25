@@ -1,5 +1,33 @@
 #include "ao/gl/frame.hpp"
 
+////////////////////////////////////////////////////////////////////////////////
+
+std::string base_vert = R"EOF(
+#version 330
+
+layout(location=0) in vec3 vertex_position;
+
+void main()
+{
+    gl_Position = vec4(vertex_position, 1.0f);
+}
+)EOF";
+
+////////////////////////////////////////////////////////////////////////////////
+
+std::string base_frag = R"EOF(
+#version 330
+
+out vec4 fragColor;
+
+void main()
+{
+    fragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+}
+)EOF";
+
+////////////////////////////////////////////////////////////////////////////////
+
 Frame::Frame()
 {
     glGenBuffers(1, &vbo);

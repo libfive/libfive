@@ -3,6 +3,8 @@
 #include <catch/catch.hpp>
 
 #include "ao/gl/core.hpp"
+#include "ao/gl/shader.hpp"
+
 #include "ao/core/store.hpp"
 #include "ao/core/tree.hpp"
 
@@ -40,38 +42,17 @@ TEST_CASE("Shader creation")
 
     WindowPtr window(makeContext(), glfwDestroyWindow);
 
-    SECTION("Raw OpenGL")
-    {
-        GLuint shader = glCreateShader(GL_FRAGMENT_SHADER);
-        const char* txt = t.toShader().c_str();
-        glShaderSource(shader, 1, &txt, NULL);
-        glCompileShader(shader);
+    // Redirect std::cerr
+    std::streambuf* _cerr = std::cerr.rdbuf();
+    std::ostringstream capture;
+    std::cerr.rdbuf(capture.rdbuf());
 
-        CAPTURE(t.toShader());
-        GLint status;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    // Build the shader and capture any error output
+    auto out = Shader::compile(t.toShader(), GL_FRAGMENT_SHADER);
+    CAPTURE(capture.str());
 
-        std::string error_msg;
-        if (status == GL_FALSE)
-        {
-            GLint log_length;
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length);
+    // Restore old std::cerr
+    std::cerr.rdbuf(_cerr);
 
-            GLchar* info_log = new GLchar[log_length + 1];
-            glGetShaderInfoLog(shader, log_length, NULL, info_log);
-
-            error_msg = info_log;
-            delete [] info_log;
-        }
-        CAPTURE(error_msg);
-
-        REQUIRE(status != GL_FALSE);
-    }
-
-    SECTION("OGLplus")
-    {
-        oglplus::VertexShader vs;
-        vs.Source(t.toShader());
-        vs.Compile();
-    }
+    REQUIRE(out != 0);
 }
