@@ -61,9 +61,6 @@ Window::Window(GLFWwindow* window)
     glfwSetCursorPosCallback(window, _mouseMove);
     glfwSetMouseButtonCallback(window, _mouseButton);
     glfwSetScrollCallback(window, _mouseScroll);
-
-    // Make a dummy tex to test rendering
-    frames.back()->push(glm::mat4());
 }
 
 Window::~Window()
@@ -96,7 +93,7 @@ void Window::mouseMove(double x, double y)
     if (drag_mode == WINDOW_DRAG_PAN)
     {
         // Find the starting position in world coordinates
-        auto inv = glm::inverse(proj() * view());
+        auto inv = glm::inverse(M());
         auto diff = inv * glm::vec4(new_pos, 0.0, 1.0) -
                     inv * glm::vec4(mouse_pos, 0.0, 1.0);
 
@@ -129,6 +126,11 @@ void Window::mouseButton(int button, int action, int mods)
         else if (button == GLFW_MOUSE_BUTTON_2)
         {
             drag_mode = WINDOW_DRAG_ROTATE;
+        }
+        else if (button == GLFW_MOUSE_BUTTON_3)
+        {
+            // Make a dummy tex to test rendering
+            frames.back()->push(M());
         }
     }
     else
@@ -175,7 +177,7 @@ glm::mat4 Window::view() const
 
 void Window::draw() const
 {
-    auto m = proj() * view();
+    auto m = M();
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);

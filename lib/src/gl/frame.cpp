@@ -1,3 +1,4 @@
+#include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "ao/gl/frame.hpp"
@@ -46,10 +47,10 @@ Frame::Frame()
 
     glBindVertexArray(vao);
     {
-        GLfloat vertices[] = {0.0f, 0.0f, 0.0f,
-                              1.0f, 0.0f, 0.0f,
-                              1.0f, 1.0f, 0.0f,
-                              0.0f, 1.0f, 0.0f};
+        GLfloat vertices[] = {-1.0f, -1.0f, 0.0f,
+                               1.0f, -1.0f, 0.0f,
+                               1.0f,  1.0f, 0.0f,
+                              -1.0f,  1.0f, 0.0f};
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),
                      vertices, GL_STATIC_DRAW);
@@ -80,14 +81,14 @@ void Frame::draw(const glm::mat4& m) const
 
     glUseProgram(prog);
     GLint m_loc = glGetUniformLocation(prog, "m");
-    glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm::value_ptr(m));
 
     for (auto t : texs)
     {
-        (void)t;
+        auto mat = m * glm::inverse(t.first);
+        glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm::value_ptr(mat));
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-        glBindVertexArray(0);
     }
+    glBindVertexArray(0);
 }
 
 void Frame::push(const glm::mat4& m)

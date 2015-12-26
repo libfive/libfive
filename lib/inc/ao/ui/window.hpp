@@ -67,6 +67,11 @@ protected:
      */
     glm::mat4 view() const;
 
+    /*
+     *  Complete transform matrix
+     */
+    glm::mat4 M() const { return proj() * view(); }
+
     /*  Pointer to raw window  */
     GLFWwindow* const window;
 
