@@ -46,7 +46,7 @@ TEST_CASE("2D rendering of a circle")
     }
 }
 
-TEST_CASE("Large 2D rendering")
+TEST_CASE("2D interval Z values")
 {
     Store s;
     Tree t(&s, s.operation(OP_SUB,
@@ -58,6 +58,21 @@ TEST_CASE("Large 2D rendering")
     auto out = Heightmap::Render(&t, r);
     CAPTURE(out);
     REQUIRE((out == 0 ||
+             out == -std::numeric_limits<double>::infinity()).all());
+}
+
+TEST_CASE("3D interval Z values")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+               s.constant(1)));
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 25);
+
+    auto out = Heightmap::Render(&t, r);
+    CAPTURE(out);
+    REQUIRE((out == r.Z.pos(r.Z.size - 1) ||
              out == -std::numeric_limits<double>::infinity()).all());
 }
 
