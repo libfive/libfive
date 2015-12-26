@@ -33,3 +33,11 @@ target_link_libraries(ao ${GUILE_LIBRARY}
                          ${GLFW_LIBRARIES}
                          ${OPENGL_LIBRARY}
                          ${EPOXY_LIBRARY})
+
+################################################################################
+
+# Mask error message that warns about including gl.h and gl3.h
+# (since it's actually a false positive caused by epoxy/gl.h)
+if (APPLE)
+    add_definitions("-DGL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED")
+endif (APPLE)
