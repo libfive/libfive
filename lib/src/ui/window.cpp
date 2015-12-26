@@ -11,24 +11,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Window::Show(Tree* tree)
-{
-    (void)tree;
-
-    auto glfw_window = makeWindow(640, 480, "Hello!");
-    if (glfw_window == nullptr)
-    {
-        return false;
-    }
-    std::unique_ptr<Window> win(new Window(glfw_window));
-    win->addShape(tree);
-    win->run();
-
-    return true;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 // Callback wrappers
 static void _resized(GLFWwindow* window, int w, int h)
 {
@@ -52,9 +34,11 @@ static void _mouseScroll(GLFWwindow* window, double sx, double sy)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Window::Window(GLFWwindow* window)
-    : window(window), frames()
+Window::Window()
+    : window(makeWindow(640, 480, "Hello!"))
 {
+    assert(window != nullptr);
+
     glfwGetFramebufferSize(window, &width, &height);
     glfwSetWindowUserPointer(window, this);
 

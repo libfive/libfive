@@ -176,9 +176,10 @@ SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
 
 SCM gl_window(SCM tree)
 {
-    return Window::Show(static_cast<Tree*>(scm_to_pointer(tree)))
-           ? SCM_BOOL_T
-           : SCM_BOOL_F;
+    auto win = Window();
+    win.addShape(static_cast<Tree*>(scm_to_pointer(tree)));
+    win.run();
+    return SCM_ELISP_NIL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

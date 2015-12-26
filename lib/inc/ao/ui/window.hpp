@@ -15,7 +15,12 @@ class Tree;
 class Window
 {
 public:
-    static bool Show(Tree* tree);
+    /*
+     *  Default Window constructor
+     *
+     *  Triggers an assertion failure on OpenGL errors
+     */
+    explicit Window();
 
     /*
      *  Window destructor deletes all associated Frames
@@ -47,14 +52,12 @@ public:
      */
     void mouseButton(int button, int action, int mods);
 
-protected:
-    explicit Window(GLFWwindow* window);
-
     /*
      *  Blocking loop updating the window until it is closed
      */
     void run();
 
+protected:
     /*
      *  Redraw the window with the current state
      */
