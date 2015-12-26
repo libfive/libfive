@@ -83,6 +83,11 @@ void Window::mouseMove(double x, double y)
 
         center += glm::vec3(diff.x, diff.y, diff.z);
     }
+    else if (drag_mode == WINDOW_DRAG_ROTATE)
+    {
+        roll += mouse_pos.x - new_pos.x;
+        pitch += new_pos.y - mouse_pos.y;
+    }
 
     mouse_pos = new_pos;
 
@@ -131,6 +136,8 @@ glm::mat4 Window::view() const
 {
     glm::mat4 m;
     m = glm::scale(m, {scale, scale, scale});
+    m = glm::rotate(m, pitch,  {1.0, 0.0, 0.0});
+    m = glm::rotate(m, roll, {0.0, 1.0, 0.0});
     m = glm::translate(m, center);
 
     return m;
