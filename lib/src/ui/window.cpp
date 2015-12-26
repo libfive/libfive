@@ -161,7 +161,7 @@ void Window::render()
 {
     for (auto f : frames)
     {
-        f->render(M(), width, height);
+        f->render(M(), width, height, (width+height) / 2);
     }
 }
 
