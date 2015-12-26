@@ -46,6 +46,21 @@ TEST_CASE("2D rendering of a circle")
     }
 }
 
+TEST_CASE("Large 2D rendering")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+               s.constant(1)));
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 0);
+
+    auto out = Heightmap::Render(&t, r);
+    CAPTURE(out);
+    REQUIRE((out == 0 ||
+             out == -std::numeric_limits<double>::infinity()).all());
+}
+
 TEST_CASE("Render orientation")
 {
     Store s;
