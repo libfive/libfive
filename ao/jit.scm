@@ -69,7 +69,3 @@ A symbol and further arguments are converted to an operation"
 (define-public (jit f)
     "Compiles an arithmetic lambda function into a wrapped function"
     (wrap-tree (tree-ptr (to-tree f)) (car (procedure-minimum-arity f))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(export gl-window)

@@ -4,14 +4,61 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (square x) (* x x))
+;; 2D shapes
+(define-public (circle center r)
+    " Constructs a circle from a center and radius "
+    (let ((square (lambda (a) (* a a)))
+          (x0 (car center))
+          (y0 (cdr center)))
+    (lambda (x y z) (- (sqrt (+ (square (- x x0))
+                                (square (- y y0)))) r))))
 
-(define-public (circle x0 y0 r)
-        (lambda (x y z) (- (sqrt (+ (square (- x x0))
-                                    (square (- y y0)))) r)))
-(define-public (rect xmin xmax ymin ymax)
-        (lambda (x y z) (max (- xmin x) (- x xmax)
-                             (- ymin y) (- y ymax))))
+(define-public (rect a b)
+    " Constructs a rectangle from two x,y pairs representing corners "
+    (let* ((xa (car a)) (xb (car b)) (ya (cdr a)) (yb (cdr b))
+           (xmin (min xa xb)) (xmax (max xa xb))
+           (ymin (min ya yb)) (ymax (max ya yb)))
+    (lambda (x y z) (max (- xmin x) (- x xmax)
+                         (- ymin y) (- y ymax)))))
+
+(define-public (triangle a b c)
+    " Constructs a triangle from three x,y pairs "
+    (let* ;; Find the center point of the triangle
+          ((xm (+ (car a) (car b) (car c)))
+           (ym (+ (cdr a) (cdr b) (cdr c)))
+
+           ;; Calculate the angles of each point about the center
+           (get-angle (lambda (p) (atan (- (car p) xm) (- (cdr p) ym))))
+
+           ;; Extract the three angles
+           (ta (get-angle a))
+           (tb (get-angle b))
+           (tc (get-angle c))
+
+           ;; Rotate the points so that the smallest angle is first
+           (sorted (cond ((and (< tb ta) (< tb tc)) (list tb tc ta))
+                         ((and (< tc ta) (< tc tb)) (list tc ta tb))
+                         (else (list ta tb tc))))
+
+           ;; If the points are in increasing order, it's a sign that
+           ;; they aren't sorted in a clockwise fashion.  In this case, swap
+           ;; the second and third point to make them clockwise
+           (clockwise (if (> (caddr sorted) (cadr sorted))
+                          (list a c b) (list a b c)))
+
+           ;; Extract coordinates from sorted list
+           (x0 (caar clockwise))   (y0 (cdar clockwise))
+           (x1 (caadr clockwise))  (y1 (cdadr clockwise))
+           (x2 (caaddr clockwise)) (y2 (cdaddr clockwise))
+
+           ;; Function to hangle one edge of the triangle
+           (edge (lambda (x0 y0 dx dy x y)
+                    (- (* dy (- x x0)) (* (- y y0))))))
+
+          (lambda (x y z) (- (min (edge x0 y0 (- x1 x0) (- y1 y0) x y)
+                                  (edge x1 y1 (- x2 x1) (- y2 y1) x y)
+                                  (edge x2 y2 (- x0 x2) (- y0 y2) x y))))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
