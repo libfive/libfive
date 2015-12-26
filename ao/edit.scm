@@ -6,6 +6,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (show-tree f)
-    (gl-window (tree-ptr (to-tree f))))
+(define-public (show-shape f)
+    (gl-window (jit f)))
 

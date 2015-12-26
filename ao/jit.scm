@@ -34,7 +34,8 @@ A symbol and further arguments are converted to an operation"
 
 (define (number-list? i)  (and (list? i) (every number? i)))
 
-(define (wrap-tree t arity)
+(define-public (wrap-tree t)
+    " Wraps a bare tree pointer in a callable interface "
     (lambda (x y z) ;; Generic evaluator that dispatches based on argument type
         (cond ((every interval? (list x y z))
                     (tree-eval-interval t x y z))
@@ -46,26 +47,13 @@ A symbol and further arguments are converted to an operation"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (tree? t)
-    "Checks to see if the given object is a tagged tree pointer"
-    (and (pair? t) (eq? (car t) 'ptr-tree) (pointer? (cdr t))))
-
-(define-public (tree-ptr t)
-    "Extracts the pointer from a tagged tree pointer"
-    (cdr t))
-
-(define-public (to-tree f)
-    "Compile an arithmetic lambda function to a tagged tree pointer"
+(define-public (jit f)
+    "Compile an arithmetic lambda function to a bare tree pointer"
     (set! store (make-store))
-    (let* ((arity (car (procedure-minimum-arity f)))
-           (x (token-x store))
+    (let* ((x (token-x store))
            (y (token-y store))
            (z (token-z store))
            (root (make-token (f x y z)))
            (out (make-tree store root)))
        (set! store #nil)
-       (cons 'ptr-tree out)))
-
-(define-public (jit f)
-    "Compiles an arithmetic lambda function into a wrapped function"
-    (wrap-tree (tree-ptr (to-tree f)) (car (procedure-minimum-arity f))))
+       out))
