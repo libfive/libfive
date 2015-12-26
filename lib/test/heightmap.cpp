@@ -15,9 +15,6 @@ TEST_CASE("2D rendering of a circle")
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
 
-    Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
-    auto out = Heightmap::Render(&t, r);
-
     Eigen::ArrayXXd comp(10, 10);
     double inf = std::numeric_limits<double>::infinity();
     comp <<
@@ -32,8 +29,21 @@ TEST_CASE("2D rendering of a circle")
         -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
         -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf;
 
-    CAPTURE(out);
-    REQUIRE((comp == out).all());
+    SECTION("Empty Z")
+    {
+        Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
+        auto out = Heightmap::Render(&t, r);
+        CAPTURE(out);
+        REQUIRE((comp == out).all());
+    }
+
+    SECTION("Zero-resolution Z")
+    {
+        Region r({-1, 1}, {-1, 1}, {-1, 1}, 5, 5, 0);
+        auto out = Heightmap::Render(&t, r);
+        CAPTURE(out);
+        REQUIRE((comp == out).all());
+    }
 }
 
 TEST_CASE("Render orientation")

@@ -44,8 +44,8 @@ void main()
     }
     else
     {
-        float z = (t + 1) / 2;
-        fragColor = vec4(t, t, t, 1.0f);
+        float h = (t + 1.0f) / 2.0f;
+        fragColor = vec4(h, h, h, 1.0f);
     }
 }
 )";
