@@ -44,6 +44,11 @@ static void _mouseButton(GLFWwindow* window, int b, int a, int m)
     static_cast<Window*>(glfwGetWindowUserPointer(window))->mouseButton(b, a, m);
 }
 
+static void _mouseScroll(GLFWwindow* window, double sx, double sy)
+{
+    static_cast<Window*>(glfwGetWindowUserPointer(window))->mouseScroll(sx, sy);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 Window::Window(GLFWwindow* window)
@@ -55,6 +60,7 @@ Window::Window(GLFWwindow* window)
     glfwSetFramebufferSizeCallback(window, _resized);
     glfwSetCursorPosCallback(window, _mouseMove);
     glfwSetMouseButtonCallback(window, _mouseButton);
+    glfwSetScrollCallback(window, _mouseScroll);
 }
 
 void Window::resized(int w, int h)
@@ -63,6 +69,8 @@ void Window::resized(int w, int h)
     height = h;
     draw();
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 void Window::mouseMove(double x, double y)
 {
@@ -118,6 +126,14 @@ void Window::mouseButton(int button, int action, int mods)
     }
 }
 
+void Window::mouseScroll(double sx, double sy)
+{
+    (void)sx; /* unused */
+
+    const float delta = 1.1;
+    scale *= sy < 0 ? delta : 1/delta;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 glm::mat4 Window::proj() const
@@ -134,8 +150,7 @@ glm::mat4 Window::proj() const
 
 glm::mat4 Window::view() const
 {
-    glm::mat4 m;
-    m = glm::scale(m, {scale, scale, scale});
+    glm::mat4 m = glm::scale(glm::vec3(scale, scale, scale));;
     m = glm::rotate(m, pitch,  {1.0, 0.0, 0.0});
     m = glm::rotate(m, roll, {0.0, 1.0, 0.0});
     m = glm::translate(m, center);

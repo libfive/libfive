@@ -28,6 +28,11 @@ public:
     void mouseMove(double x, double y);
 
     /*
+     *  Callback for mouse scroll
+     */
+    void mouseScroll(double x, double y);
+
+    /*
      *  Mouse press callback
      */
     void mouseButton(int button, int action, int mods);
