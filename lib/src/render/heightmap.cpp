@@ -62,7 +62,7 @@ static void recurse(Tree* t, const Region& r, Eigen::ArrayXXd& img)
     // If strictly negative, fill up the block and return
     if (out.upper() < 0)
     {
-        block = block.max(r.Z.upper());
+        block = block.max((r.Z.upper() + r.Z.lower()) / 2);
     }
     // Otherwise, recurse if the output interval is ambiguous
     else if (out.lower() <= 0)
