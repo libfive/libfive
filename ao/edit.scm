@@ -1,4 +1,4 @@
-(define-module (ao editor))
+(define-module (ao edit))
 
 (use-modules (system foreign))
 (use-modules (ao jit))
