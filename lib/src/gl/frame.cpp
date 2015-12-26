@@ -42,8 +42,11 @@ void main()
     {
         discard;
     }
-    float z = (t + 1) / 2;
-    fragColor = vec4(z, z, z, 1.0f);
+    else
+    {
+        float z = (t + 1) / 2;
+        fragColor = vec4(t, t, t, 1.0f);
+    }
 }
 )";
 
@@ -92,10 +95,11 @@ void Frame::draw(const glm::mat4& m) const
 {
     (void)m;
 
-    glBindVertexArray(vao);
-
     // Active the shader
     glUseProgram(prog);
+
+    // Bind the vertex array (which sets up VBO bindings)
+    glBindVertexArray(vao);
 
     // Get the uniform location for the transform matrix
     GLint m_loc = glGetUniformLocation(prog, "m");
@@ -104,6 +108,7 @@ void Frame::draw(const glm::mat4& m) const
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(glGetUniformLocation(prog, "tex"), 0);
 
+    glEnable(GL_DEPTH_TEST);
     for (auto t : texs)
     {
         auto mat = m * glm::inverse(t.first);
@@ -112,6 +117,7 @@ void Frame::draw(const glm::mat4& m) const
         glBindTexture(GL_TEXTURE_2D, t.second.depth);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
+    glDisable(GL_DEPTH_TEST);
     glBindVertexArray(0);
 }
 
@@ -124,7 +130,7 @@ void Frame::push(const glm::mat4& m)
     // Render the frame to an Eigen matrix and cast to float
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 10);
     tree->setMatrix(glm::inverse(m));
-    Eigen::ArrayXXf out = Heightmap::Render(tree, r).cast<float>();
+    Eigen::ArrayXXf out = Heightmap::Render(tree, r).cast<float>().transpose();
 
     // Pack the Eigen matrix into an OpenGL texture
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned

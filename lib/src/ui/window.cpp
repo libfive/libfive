@@ -187,9 +187,10 @@ void Window::draw() const
     auto m = M();
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    axes.draw(m);
+    glClearDepth(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    axes.draw(m);
     for (auto f : frames)
     {
         f->draw(m);
