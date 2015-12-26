@@ -31,6 +31,7 @@ Window::~Window()
     {
         delete f;
     }
+    glfwDestroyWindow(window);
 }
 
 void Window::resized(int w, int h)
