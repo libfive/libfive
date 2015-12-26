@@ -44,7 +44,7 @@ static void recurse(Tree* t, const Region& r, Eigen::ArrayXXd& img)
     auto block = img.block(r.Y.min, r.X.min, r.Y.size, r.X.size);
 
     // If all points in the region are below the heightmap, skip it
-    if ((block >= r.Z.upper()).all())
+    if ((block >= r.Z.pos(r.Z.size - 1)).all())
     {
         return;
     }
