@@ -18,6 +18,11 @@ public:
     static bool Show(Tree* tree);
 
     /*
+     *  Window destructor deletes all associated Frames
+     */
+    ~Window();
+
+    /*
      *  Resized window callback
      */
     void resized(int w, int h);
@@ -86,4 +91,5 @@ protected:
 
     /*  Objects to draw in 3D viewport  */
     Axes axes;
+    std::list<Frame*> frames;
 };

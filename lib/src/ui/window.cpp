@@ -52,7 +52,7 @@ static void _mouseScroll(GLFWwindow* window, double sx, double sy)
 ////////////////////////////////////////////////////////////////////////////////
 
 Window::Window(GLFWwindow* window)
-    : window(window)
+    : window(window), frames({new Frame})
 {
     glfwGetFramebufferSize(window, &width, &height);
     glfwSetWindowUserPointer(window, this);
@@ -61,6 +61,17 @@ Window::Window(GLFWwindow* window)
     glfwSetCursorPosCallback(window, _mouseMove);
     glfwSetMouseButtonCallback(window, _mouseButton);
     glfwSetScrollCallback(window, _mouseScroll);
+
+    // Make a dummy tex to test rendering
+    frames.back()->push(glm::mat4());
+}
+
+Window::~Window()
+{
+    for (auto f : frames)
+    {
+        delete f;
+    }
 }
 
 void Window::resized(int w, int h)
@@ -169,6 +180,11 @@ void Window::draw() const
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     axes.draw(m);
+
+    for (auto f : frames)
+    {
+        f->draw(m);
+    }
 
     glfwSwapBuffers(window);
 }
