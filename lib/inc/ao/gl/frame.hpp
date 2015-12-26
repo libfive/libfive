@@ -14,6 +14,9 @@ class Tree;
 class Frame
 {
 public:
+    /*
+     *  Constructor and destructor
+     */
     explicit Frame(Tree* tree);
     ~Frame();
 

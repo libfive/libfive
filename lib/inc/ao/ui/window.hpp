@@ -23,6 +23,11 @@ public:
     ~Window();
 
     /*
+     *  Adds a Frame to redraw the given shape
+     */
+    void addShape(Tree* t);
+
+    /*
      *  Resized window callback
      */
     void resized(int w, int h);
@@ -43,7 +48,7 @@ public:
     void mouseButton(int button, int action, int mods);
 
 protected:
-    explicit Window(Tree* tree, GLFWwindow* window);
+    explicit Window(GLFWwindow* window);
 
     /*
      *  Blocking loop updating the window until it is closed

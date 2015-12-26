@@ -125,6 +125,7 @@ void Frame::render(const glm::mat4& m, size_t ni, size_t nj)
 
     // Render the frame to an Eigen matrix and cast to float
     Region r({-1, 1}, {-1, 1}, {-1, 1}, ni/2, nj/2, (ni + nj)/4);
+
     tree->setMatrix(glm::inverse(m));
     Eigen::ArrayXXf out = Heightmap::Render(tree, r).cast<float>().transpose();
 

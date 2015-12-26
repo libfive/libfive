@@ -20,7 +20,8 @@ bool Window::Show(Tree* tree)
     {
         return false;
     }
-    std::unique_ptr<Window> win(new Window(tree, glfw_window));
+    std::unique_ptr<Window> win(new Window(glfw_window));
+    win->addShape(tree);
     win->run();
 
     return true;
@@ -51,14 +52,9 @@ static void _mouseScroll(GLFWwindow* window, double sx, double sy)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Window::Window(Tree* tree, GLFWwindow* window)
+Window::Window(GLFWwindow* window)
     : window(window), frames()
 {
-    if (tree != nullptr)
-    {
-        frames.push_back(new Frame(tree));
-    }
-
     glfwGetFramebufferSize(window, &width, &height);
     glfwSetWindowUserPointer(window, this);
 
@@ -66,8 +62,6 @@ Window::Window(Tree* tree, GLFWwindow* window)
     glfwSetCursorPosCallback(window, _mouseMove);
     glfwSetMouseButtonCallback(window, _mouseButton);
     glfwSetScrollCallback(window, _mouseScroll);
-
-    render();
 }
 
 Window::~Window()
@@ -82,6 +76,13 @@ void Window::resized(int w, int h)
 {
     width = w;
     height = h;
+    draw();
+}
+
+void Window::addShape(Tree* t)
+{
+    frames.push_back(new Frame(t));
+    render();
     draw();
 }
 
