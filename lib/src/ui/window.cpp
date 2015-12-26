@@ -66,6 +66,8 @@ Window::Window(Tree* tree, GLFWwindow* window)
     glfwSetCursorPosCallback(window, _mouseMove);
     glfwSetMouseButtonCallback(window, _mouseButton);
     glfwSetScrollCallback(window, _mouseScroll);
+
+    render();
 }
 
 Window::~Window()
@@ -103,11 +105,13 @@ void Window::mouseMove(double x, double y)
                     inv * glm::vec4(mouse_pos, 0.0, 1.0);
 
         center += glm::vec3(diff.x, diff.y, diff.z);
+        render();
     }
     else if (drag_mode == WINDOW_DRAG_ROTATE)
     {
         roll += mouse_pos.x - new_pos.x;
         pitch += new_pos.y - mouse_pos.y;
+        render();
     }
 
     mouse_pos = new_pos;
@@ -132,12 +136,6 @@ void Window::mouseButton(int button, int action, int mods)
         {
             drag_mode = WINDOW_DRAG_ROTATE;
         }
-        else if (button == GLFW_MOUSE_BUTTON_3)
-        {
-            // Make a dummy tex to test rendering
-            frames.back()->push(M());
-            draw();
-        }
     }
     else
     {
@@ -151,7 +149,19 @@ void Window::mouseScroll(double sx, double sy)
 
     const float delta = 1.1;
     scale *= sy < 0 ? delta : 1/delta;
+
+    render();
     draw();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void Window::render()
+{
+    for (auto f : frames)
+    {
+        f->push(M());
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

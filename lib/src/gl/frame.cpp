@@ -60,6 +60,8 @@ Frame::Frame(Tree* tree)
     assert(fs);
     assert(prog);
 
+    glGenTextures(1, &depth);
+
     glGenBuffers(1, &vbo);
     glGenVertexArrays(1, &vao);
 
@@ -81,12 +83,7 @@ Frame::Frame(Tree* tree)
 
 Frame::~Frame()
 {
-    for (auto t :texs)
-    {
-        glDeleteBuffers(1, &t.second.depth);
-        glDeleteBuffers(1, &t.second.normal);
-    }
-
+    glDeleteTextures(1, &depth);
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
 }
@@ -108,24 +105,23 @@ void Frame::draw(const glm::mat4& m) const
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(glGetUniformLocation(prog, "tex"), 0);
 
-    glEnable(GL_DEPTH_TEST);
-    for (auto t : texs)
-    {
-        auto mat = m * glm::inverse(t.first);
-        glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm::value_ptr(mat));
+    // Calculate the appropriate transform matrix
+    auto mat = m * glm::inverse(m_render);
+    glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm::value_ptr(mat));
 
-        glBindTexture(GL_TEXTURE_2D, t.second.depth);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    }
+    // Bind textures and draw the quad
+    glBindTexture(GL_TEXTURE_2D, depth);
+    glEnable(GL_DEPTH_TEST);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glDisable(GL_DEPTH_TEST);
+
     glBindVertexArray(0);
 }
 
 void Frame::push(const glm::mat4& m)
 {
-    texs.push_back({m, {0,0}});
-    glGenTextures(1, &texs.back().second.depth);
-    glGenTextures(1, &texs.back().second.normal);
+    // Store the matrix as our render matrix
+    m_render = m;
 
     // Render the frame to an Eigen matrix and cast to float
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 10);
@@ -134,7 +130,7 @@ void Frame::push(const glm::mat4& m)
 
     // Pack the Eigen matrix into an OpenGL texture
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned
-    glBindTexture(GL_TEXTURE_2D, texs.back().second.depth);
+    glBindTexture(GL_TEXTURE_2D, depth);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, out.cols(), out.rows(),
             0, GL_RED, GL_FLOAT, out.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

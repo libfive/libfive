@@ -56,6 +56,11 @@ protected:
     void draw() const;
 
     /*
+     *  Request that every child Frame render itself
+     */
+    void render();
+
+    /*
      *  Projection matrix
      *  (compensates for window size)
      */

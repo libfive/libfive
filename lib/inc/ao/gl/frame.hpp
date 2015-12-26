@@ -38,12 +38,8 @@ protected:
     GLuint vao; // Vertex array object
 
     // List of texture planes and the matrices with which they were rendered
-    struct Tex
-    {
-        GLuint depth;
-        GLuint normal;
-    };
-    std::list<std::pair<glm::mat4, Tex>> texs;
+    glm::mat4 m_render;
+    GLuint depth;
 
 
     // Shader source strings
