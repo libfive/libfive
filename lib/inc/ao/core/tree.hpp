@@ -10,6 +10,7 @@
 #include "ao/core/interval.hpp"
 #include "ao/core/gradient.hpp"
 #include "ao/core/region.hpp"
+#include "ao/core/result.hpp"
 #include "ao/core/row.hpp"
 
 class Atom;
@@ -42,14 +43,6 @@ public:
      */
     template <class T>
     T eval(T x, T y, T z);
-
-    /*
-     *  Vectorized evaluation (defined below)
-     */
-    template <class T>
-    std::vector<T> eval(const std::vector<T>& x,
-                        const std::vector<T>& y,
-                        const std::vector<T>& z);
 
     /*
      *  Evaluate across a flattened region
@@ -93,31 +86,6 @@ protected:
     template <class T>
     void evalCore(size_t count);
 
-    /*
-     *  Prepares for evaluation on the given type, filling constants
-     *  with values of the appropriate shape
-     */
-    template <class T>
-    void setMode();
-
-    /*
-     *  Prepares the transform matrix's constants arrays with its values
-     */
-    template <class T>
-    void fillConstants();
-
-    /*
-     *  Prepares the constant result arrays with its mutable_values
-     */
-    template <class T>
-    void fillMatrix();
-
-    /*
-     *  Prepares the most recent set of disabled nodes from mutable_values
-     */
-    template <class T>
-    void fillDisabled();
-
     /*  All operations live in a set of rows sorted by weight */
     std::vector<Row> rows;
 
@@ -133,14 +101,6 @@ protected:
 
     /*  This is the top atom of the tree  */
     Atom* root;
-
-    /*  This flag stores how result unions are currently configured  *
-     *  There's a compile-time check in atom.cpp that ensures these  *
-     *  values are distinct                                          */
-    enum Mode { MODE_NONE=0,
-                MODE_DOUBLE=sizeof(double),
-                MODE_INTERVAL=sizeof(Interval),
-                MODE_GRADIENT=sizeof(Gradient) } mode;
 
     /*  Big bag-o-data that contains this tree's atoms  */
     Atom* data;

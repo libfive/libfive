@@ -30,14 +30,3 @@ TEST_CASE("Interval evaluation")
     REQUIRE(out.lower() == 2.0);
     REQUIRE(out.upper() == 3.0);
 }
-
-TEST_CASE("List of doubles evaluation")
-{
-    Store s;
-    Tree t(&s, s.operation(OP_ADD, s.X(), s.constant(1)));
-
-    std::vector<double> args({1, 2, 3, 4, 5});
-    std::vector<double>  out({2, 3, 4, 5, 6});
-
-    REQUIRE(t.eval(args, args, args) == out);
-}

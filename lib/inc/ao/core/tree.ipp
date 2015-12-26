@@ -7,6 +7,7 @@
 
 #define TREE_ATOM_LOOP for (size_t i=0; i < count; ++i)
 
+////////////////////////////////////////////////////////////////////////////////
 /*
  *  std::min and std::max misbehave when given Intervals, so we overload
  *  those functions with partial template specialization here
@@ -102,91 +103,12 @@ inline void Tree::evalCore(size_t count)
 }
 
 template <class T>
-inline std::vector<T> Tree::eval(const std::vector<T>& x,
-                                 const std::vector<T>& y,
-                                 const std::vector<T>& z)
-{
-    assert(x.size() == y.size() && x.size() == z.size());
-
-    size_t remaining = x.size();
-
-    std::vector<T> out(remaining);
-    size_t index = 0;
-
-    setMode<T>();
-    while (remaining)
-    {
-        const size_t count = std::min(remaining, Result::count<T>());
-
-        X->result.set<T>(&x[index], count);
-        Y->result.set<T>(&y[index], count);
-        Z->result.set<T>(&z[index], count);
-
-        evalCore<T>(count);
-
-        remaining -= count;
-        root->result.copyTo(&out[index], count);
-        index += count;
-    }
-    return out;
-}
-
-template <class T>
 inline T Tree::eval(T x, T y, T z)
 {
-    setMode<T>();
-
     X->result.set<T>(x, 0);
     Y->result.set<T>(y, 0);
     Z->result.set<T>(z, 0);
 
     evalCore<T>(1);
     return root->result.get<T>(0);
-}
-
-template <class T>
-void Tree::setMode()
-{
-    // Skip this function if mode is already set correctly
-    if (mode != sizeof(T))
-    {
-        fillConstants<T>();
-        fillMatrix<T>();
-        fillDisabled<T>();
-        mode = static_cast<Mode>(sizeof(T));
-    }
-}
-
-template <class T>
-void Tree::fillConstants()
-{
-    const size_t count = Result::count<T>();
-    for (auto c : constants)
-    {
-        c->result.set(std::vector<T>(count, T(c->value)));
-    }
-}
-
-template <class T>
-void Tree::fillMatrix()
-{
-    const size_t count = Result::count<T>();
-    for (auto m : matrix)
-    {
-        m->result.set(std::vector<T>(count, T(m->mutable_value)));
-    }
-}
-
-template <class T>
-void Tree::fillDisabled()
-{
-    const size_t count = Result::count<T>();
-    for (const auto& row : rows)
-    {
-        for (auto i = row.active; i != row.size(); ++i)
-        {
-            auto atom = row[i];
-            atom->result.set(std::vector<T>(count, T(atom->mutable_value)));
-        }
-    }
 }

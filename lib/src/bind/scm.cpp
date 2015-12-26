@@ -149,7 +149,8 @@ SCM tree_eval_doubles(SCM tree, SCM x, SCM y, SCM z)
     unpack(ny, y, &ys);
     unpack(nz, z, &zs);
 
-    std::vector<double> result = t->eval(xs, ys, zs);
+    //std::vector<double> result = t->eval(xs, ys, zs);
+    std::vector<double> result;
 
     // Pack the results into a Scheme list
     SCM out = SCM_ELISP_NIL;

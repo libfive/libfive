@@ -16,6 +16,12 @@ Atom::Atom(Token* t)
     // Assert that this token hasn't already been added to the tree
     assert(t->atom == nullptr);
 
+    // If this is a constant Atom, fill the result arrays with its value
+    if (op == OP_CONST)
+    {
+        result.fill(value);
+    }
+
     t->atom = this;
 }
 
@@ -29,7 +35,7 @@ Atom::Atom(double value)
     : op(OP_MUTABLE), value(nan("")), mutable_value(value),
       a(nullptr), b(nullptr)
 {
-    // Nothing to do here
+    result.fill(value);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

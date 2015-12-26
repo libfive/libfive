@@ -86,6 +86,7 @@ protected:
     Result result;
 
     friend class Tree;
+    friend class Row;
 };
 
 std::ostream& operator<<(std::ostream& os, const Atom& atom);

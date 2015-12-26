@@ -11,7 +11,7 @@
 
 Tree::Tree(Store* s, Token* root_token)
     : X(nullptr), Y(nullptr), Z(nullptr), root(nullptr),
-      mode(MODE_NONE), data(nullptr), ptr(nullptr)
+      data(nullptr), ptr(nullptr)
 {
     // Set flags to mark which tokens are used in the tree
     s->markFound(root_token);
@@ -121,13 +121,9 @@ void Tree::setMatrix(const glm::mat4& m)
         }
     }
 
-    // Depending on the current mode, refresh the matrix result array
-    switch (mode)
+    for (auto m : matrix)
     {
-        case MODE_DOUBLE:   fillMatrix<double>(); break;
-        case MODE_INTERVAL: fillMatrix<Interval>(); break;
-        case MODE_GRADIENT: fillMatrix<Gradient>(); break;
-        case MODE_NONE:     break;
+        m->result.fill(m->mutable_value);
     }
 }
 
@@ -184,9 +180,6 @@ Atom* Tree::buildMatrixRow(size_t i)
 
 void Tree::push()
 {
-    // push is only valid if we've just completed an interval evaluation
-    assert(mode == MODE_INTERVAL);
-
     // Walk up the tree, marking every atom with ATOM_FLAG_IGNORED
     for (const auto& row : rows)
     {
@@ -220,8 +213,6 @@ void Tree::pop()
 const double* Tree::eval(const Region& r)
 {
     assert(r.voxels() <= Result::count<double>());
-
-    setMode<double>();
 
     size_t index = 0;
 
