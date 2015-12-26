@@ -33,26 +33,6 @@ public:
     void addShape(Tree* t);
 
     /*
-     *  Resized window callback
-     */
-    void resized(int w, int h);
-
-    /*
-     *  Callback for mouse movement
-     */
-    void mouseMove(double x, double y);
-
-    /*
-     *  Callback for mouse scroll
-     */
-    void mouseScroll(double x, double y);
-
-    /*
-     *  Mouse press callback
-     */
-    void mouseButton(int button, int action, int mods);
-
-    /*
      *  Blocking loop updating the window until it is closed
      */
     void run();
@@ -84,6 +64,30 @@ protected:
      *  Complete transform matrix
      */
     glm::mat4 M() const { return proj() * view(); }
+
+    /*
+     *  Resized window callback
+     */
+    static void _resized(GLFWwindow* window, int w, int h);
+    void resized(int w, int h);
+
+    /*
+     *  Callback for mouse movement
+     */
+    static void _mouseMove(GLFWwindow* window, double x, double y);
+    void mouseMove(double x, double y);
+
+    /*
+     *  Callback for mouse scroll
+     */
+    static void _mouseButton(GLFWwindow* window, int b, int a, int m);
+    void mouseScroll(double x, double y);
+
+    /*
+     *  Mouse press callback
+     */
+    static void _mouseScroll(GLFWwindow* window, double sx, double sy);
+    void mouseButton(int button, int action, int mods);
 
     /*  Pointer to raw window  */
     GLFWwindow* const window;

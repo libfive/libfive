@@ -11,29 +11,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// Callback wrappers
-static void _resized(GLFWwindow* window, int w, int h)
-{
-    static_cast<Window*>(glfwGetWindowUserPointer(window))->resized(w, h);
-}
-
-static void _mouseMove(GLFWwindow* window, double x, double y)
-{
-    static_cast<Window*>(glfwGetWindowUserPointer(window))->mouseMove(x, y);
-}
-
-static void _mouseButton(GLFWwindow* window, int b, int a, int m)
-{
-    static_cast<Window*>(glfwGetWindowUserPointer(window))->mouseButton(b, a, m);
-}
-
-static void _mouseScroll(GLFWwindow* window, double sx, double sy)
-{
-    static_cast<Window*>(glfwGetWindowUserPointer(window))->mouseScroll(sx, sy);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 Window::Window()
     : window(makeWindow(640, 480, "Hello!"))
 {
@@ -204,4 +181,27 @@ void Window::run()
         // Poll for and process events
         glfwPollEvents();
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Static callback wrappers
+void Window::_resized(GLFWwindow* window, int w, int h)
+{
+    static_cast<Window*>(glfwGetWindowUserPointer(window))->resized(w, h);
+}
+
+void Window::_mouseMove(GLFWwindow* window, double x, double y)
+{
+    static_cast<Window*>(glfwGetWindowUserPointer(window))->mouseMove(x, y);
+}
+
+void Window::_mouseButton(GLFWwindow* window, int b, int a, int m)
+{
+    static_cast<Window*>(glfwGetWindowUserPointer(window))->mouseButton(b, a, m);
+}
+
+void Window::_mouseScroll(GLFWwindow* window, double sx, double sy)
+{
+    static_cast<Window*>(glfwGetWindowUserPointer(window))->mouseScroll(sx, sy);
 }
