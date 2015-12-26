@@ -118,20 +118,20 @@ void Frame::draw(const glm::mat4& m) const
     glBindVertexArray(0);
 }
 
-void Frame::push(const glm::mat4& m)
+void Frame::render(const glm::mat4& m, size_t ni, size_t nj)
 {
     // Store the matrix as our render matrix
     m_render = m;
 
     // Render the frame to an Eigen matrix and cast to float
-    Region r({-1, 1}, {-1, 1}, {-1, 1}, 10);
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, ni/2, nj/2, (ni + nj)/4);
     tree->setMatrix(glm::inverse(m));
     Eigen::ArrayXXf out = Heightmap::Render(tree, r).cast<float>().transpose();
 
     // Pack the Eigen matrix into an OpenGL texture
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned
     glBindTexture(GL_TEXTURE_2D, depth);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, out.cols(), out.rows(),
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, out.rows(), out.cols(),
             0, GL_RED, GL_FLOAT, out.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

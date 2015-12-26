@@ -3,7 +3,14 @@
 #include "ao/core/region.hpp"
 
 Region::Region(Interval x, Interval y, Interval z, double res)
-    : X(x, res), Y(y, res), Z(z, res)
+    : Region(x, y, z, res, res, res)
+{
+    // Nothing to do here
+}
+
+Region::Region(Interval x, Interval y, Interval z,
+               double rx, double ry, double rz)
+    : X(x, rx), Y(y, ry), Z(z, rz)
 {
     // Nothing to do here
 }

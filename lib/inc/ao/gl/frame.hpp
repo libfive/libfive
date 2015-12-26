@@ -25,7 +25,7 @@ public:
     /*
      *  Pushes a new render task to the stack at the given matrix
      */
-    void push(const glm::mat4& m);
+    void render(const glm::mat4& m, size_t ni, size_t nj);
 
 protected:
     Tree* const tree;

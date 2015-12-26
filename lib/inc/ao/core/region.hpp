@@ -18,6 +18,12 @@ public:
     Region(Interval x, Interval y, Interval z, double res);
 
     /*
+     *  Constructs a region with the given bounds and per-axis resolution
+     */
+    Region(Interval x, Interval y, Interval z,
+           double rx, double ry, double rz);
+
+    /*
      *  Splits the region along its largest axis
      */
     std::pair<Region, Region> split() const;

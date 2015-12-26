@@ -160,7 +160,7 @@ void Window::render()
 {
     for (auto f : frames)
     {
-        f->push(M());
+        f->render(M(), width, height);
     }
 }
 
