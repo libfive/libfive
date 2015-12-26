@@ -20,7 +20,7 @@ bool Window::Show(Tree* tree)
     {
         return false;
     }
-    std::unique_ptr<Window> win(new Window(glfw_window));
+    std::unique_ptr<Window> win(new Window(tree, glfw_window));
     win->run();
 
     return true;
@@ -51,9 +51,14 @@ static void _mouseScroll(GLFWwindow* window, double sx, double sy)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Window::Window(GLFWwindow* window)
-    : window(window), frames({new Frame})
+Window::Window(Tree* tree, GLFWwindow* window)
+    : window(window), frames()
 {
+    if (tree != nullptr)
+    {
+        frames.push_back(new Frame(tree));
+    }
+
     glfwGetFramebufferSize(window, &width, &height);
     glfwSetWindowUserPointer(window, this);
 
@@ -131,6 +136,7 @@ void Window::mouseButton(int button, int action, int mods)
         {
             // Make a dummy tex to test rendering
             frames.back()->push(M());
+            draw();
         }
     }
     else
@@ -145,6 +151,7 @@ void Window::mouseScroll(double sx, double sy)
 
     const float delta = 1.1;
     scale *= sy < 0 ? delta : 1/delta;
+    draw();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -193,12 +200,12 @@ void Window::draw() const
 
 void Window::run()
 {
+    // Draw the initial frame (other draw calls are triggered as-needed)
+    draw();
+
     while (!glfwWindowShouldClose(window))
     {
         // Poll for and process events
         glfwPollEvents();
-
-        // Redraw the window
-        draw();
     }
 }

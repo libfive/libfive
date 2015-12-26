@@ -4,6 +4,11 @@
 #include "ao/gl/frame.hpp"
 #include "ao/gl/shader.hpp"
 
+#include "ao/core/region.hpp"
+#include "ao/core/tree.hpp"
+
+#include "ao/render/heightmap.hpp"
+
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex shader
 const std::string Frame::vert = R"(
@@ -33,10 +38,9 @@ void main()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Frame::Frame()
-    : vs(Shader::compile(vert, GL_VERTEX_SHADER)),
-      fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
-      prog(Shader::link(vs, fs))
+Frame::Frame(Tree* tree)
+    : tree(tree), vs(Shader::compile(vert, GL_VERTEX_SHADER)),
+      fs(Shader::compile(frag, GL_FRAGMENT_SHADER)), prog(Shader::link(vs, fs))
 {
     assert(vs);
     assert(fs);
@@ -96,4 +100,8 @@ void Frame::push(const glm::mat4& m)
     texs.push_back({m, {0,0}});
     glGenTextures(1, &texs.back().second.depth);
     glGenTextures(1, &texs.back().second.normal);
+
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 10);
+    tree->setMatrix(glm::inverse(m));
+    auto out = Heightmap::Render(tree, r);
 }

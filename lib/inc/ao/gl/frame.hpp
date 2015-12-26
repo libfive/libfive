@@ -6,13 +6,15 @@
 
 #include "ao/gl/core.hpp"
 
+class Tree;
+
 /*
  *  The Frame class contains and draws many rendered Tree textures
  */
 class Frame
 {
 public:
-    explicit Frame();
+    explicit Frame(Tree* tree);
     ~Frame();
 
     /*
@@ -26,6 +28,8 @@ public:
     void push(const glm::mat4& m);
 
 protected:
+    Tree* const tree;
+
     GLuint vs;  // Vertex shader
     GLuint fs;  // Fragment shader
     GLuint prog;    // Shader program

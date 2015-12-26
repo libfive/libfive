@@ -43,7 +43,7 @@ public:
     void mouseButton(int button, int action, int mods);
 
 protected:
-    explicit Window(GLFWwindow* window);
+    explicit Window(Tree* tree, GLFWwindow* window);
 
     /*
      *  Blocking loop updating the window until it is closed
