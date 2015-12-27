@@ -90,7 +90,7 @@ Frame::~Frame()
 
 void Frame::draw(const glm::mat4& m) const
 {
-    if (!current.isValid())
+    if (!current.valid())
     {
         return;
     }
@@ -125,7 +125,7 @@ void Frame::draw(const glm::mat4& m) const
 
 void Frame::render(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
 {
-    next = Task(m, ni, nj, nk);
+    next = Task(m, ni, nj, nk, 16);
     if (!future.valid())
     {
         startRender();
@@ -135,13 +135,16 @@ void Frame::render(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
 void Frame::startRender()
 {
     assert(!future.valid());
+    assert(!pending.valid());
 
-    if (next.isValid())
+    // Start up the next render task
+    if (next.valid())
     {
         // Create the target region for rendering
         // (allocated on the heap so it can persist)
+        double div = 2.0 * next.level;
         Region* r = new Region({-1, 1}, {-1, 1}, {-1, 1},
-                               next.ni/2, next.nj/2, next.nk/2);
+                               next.ni/div, next.nj/div, next.nk/div);
 
         // Apply the matrix transform to the tree
         tree->setMatrix(glm::inverse(next.mat));
@@ -149,11 +152,18 @@ void Frame::startRender()
         // Then kick off an async render operation
         // (also responsible for cleaning up the Region allocated above)
         pending = next;
-        next = Task();
+        next.reset();
         future = std::async(std::launch::async, [=](){
                 auto out = Heightmap::Render(tree, *r);
                 delete r;
                 return out; });
+    }
+    // Schedule a refinement of the current render task
+    else if (current.level > 1)
+    {
+        next = current;
+        next.level--;
+        startRender();
     }
 }
 
@@ -181,7 +191,7 @@ bool Frame::poll()
 
         // Swap tasks objects
         current = pending;
-        pending = Task();
+        pending.reset();
 
         // Attempt to kick off a new render
         startRender();

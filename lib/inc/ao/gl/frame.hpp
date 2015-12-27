@@ -52,18 +52,24 @@ protected:
     struct Task
     {
         /* Constructors */
-        Task() : ni(0), nj(0), nk(0) { /* Nothing to do here */ }
-        Task(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
-            : mat(m), ni(ni), nj(nj), nk(nk) {}
+        Task() : ni(0), nj(0), nk(0), level(0) {}
+        Task(const glm::mat4& m, size_t ni, size_t nj, size_t nk, int level)
+            : mat(m), ni(ni), nj(nj), nk(nk), level(level) {}
+
+        /* Mark the task as invalid */
+        void reset() { level = 0; }
 
         /* Check if the task is valid */
-        bool isValid() const { return ni != 0 && nj != 0; }
+        bool valid() const { return level > 0; }
 
         /* Transform matrix associated with the task */
         glm::mat4 mat;
 
         /* Voxel size associated with the task */
         size_t ni, nj, nk;
+
+        /* Subdivision level (1 is highest resolution) */
+        size_t level;
     };
 
     Tree* const tree;
