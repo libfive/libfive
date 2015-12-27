@@ -56,6 +56,11 @@ public:
     bool checkDisabled();
 
     /*
+     *  Stores the most recent Interval evaluation in the result arrays
+     */
+    void cacheResult();
+
+    /*
      *  Converts this atom to a line in an OpenGL shader
      */
     std::string toShader(size_t index,
@@ -86,7 +91,6 @@ protected:
     Result result;
 
     friend class Tree;
-    friend class Row;
 };
 
 std::ostream& operator<<(std::ostream& os, const Atom& atom);

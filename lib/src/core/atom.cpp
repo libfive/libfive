@@ -104,6 +104,13 @@ bool Atom::checkDisabled()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void Atom::cacheResult()
+{
+    result.fill(result.get<Interval>(0).lower());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 std::string Atom::toShader(size_t index,
                            std::unordered_map<const Atom*, size_t>* atoms) const
 {
