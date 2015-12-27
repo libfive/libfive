@@ -1,6 +1,11 @@
 (define-module (ao lib))
 
-(load-extension "lib/libao" "libao_init")
+(define ao-load-path (getenv "AO_LOAD_PATH"))
+(define ao-lib-name "libao")
+
+(load-extension (if ao-load-path (string-append ao-load-path ao-lib-name)
+                                 ao-lib-name)
+                "libao_init")
 
 (export make-store)
 (export make-tree)
