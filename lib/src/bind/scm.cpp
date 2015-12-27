@@ -31,6 +31,43 @@ static Opcode symbol_to_opcode(SCM sym)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+template <class T>
+std::string class_name();
+
+template <>
+std::string class_name<Tree>() { return "Tree"; }
+
+template <>
+std::string class_name<Token>() { return "Token"; }
+
+template <>
+std::string class_name<Store>() { return "Store"; }
+
+template <class T>
+static SCM tag_ptr(T* p, void (*finalizer)(void*)=NULL)
+{
+    return scm_cons(scm_string_to_symbol(
+                        scm_from_locale_string(class_name<T>().c_str())),
+                    scm_from_pointer(p, finalizer));
+}
+
+template <class T>
+static T* untag_ptr(SCM ptr)
+{
+    char* str_ptr = scm_to_locale_string(scm_symbol_to_string(scm_car(ptr)));
+    std::string str(str_ptr);
+    free(str_ptr);
+
+    if (str != class_name<T>())
+    {
+        scm_wrong_type_arg("untag_ptr", 1, ptr);
+    }
+
+    return static_cast<T*>(scm_to_pointer(scm_cdr(ptr)));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void store_delete(void* ptr)
 {
     delete static_cast<Store*>(ptr);
@@ -38,39 +75,38 @@ void store_delete(void* ptr)
 
 SCM store_new()
 {
-    Store* s = new Store;
-    return scm_from_pointer(s, store_delete);
+    return tag_ptr(new Store, store_delete);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 SCM token_x(SCM s)
 {
-    return scm_from_pointer(static_cast<Store*>(scm_to_pointer(s))->X(), NULL);
+    return tag_ptr(untag_ptr<Store>(s)->X());
 }
 
 SCM token_y(SCM s)
 {
-    return scm_from_pointer(static_cast<Store*>(scm_to_pointer(s))->Y(), NULL);
+    return tag_ptr(untag_ptr<Store>(s)->Y());
 }
 
 SCM token_z(SCM s)
 {
-    return scm_from_pointer(static_cast<Store*>(scm_to_pointer(s))->Z(), NULL);
+    return tag_ptr(untag_ptr<Store>(s)->Z());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 SCM token_const(SCM store, SCM v)
 {
-    Store* s = static_cast<Store*>(scm_to_pointer(store));
+    auto s = untag_ptr<Store>(store);
     double value = scm_to_double(v);
-    return scm_from_pointer(s->constant(value), NULL);
+    return tag_ptr(s->constant(value));
 }
 
 SCM token_op(SCM store, SCM op_sym, SCM args)
 {
-    Store* s = static_cast<Store*>(scm_to_pointer(store));
+    auto s = untag_ptr<Store>(store);
     Opcode op = symbol_to_opcode(op_sym);
 
     if (op == INVALID)
@@ -86,11 +122,11 @@ SCM token_op(SCM store, SCM op_sym, SCM args)
     }
 
     Token* a = (arg_count < 1) ? NULL :
-        static_cast<Token*>(scm_to_pointer(scm_car(args)));
+        untag_ptr<Token>(scm_car(args));
     Token* b = (arg_count < 2) ? NULL :
-        static_cast<Token*>(scm_to_pointer(scm_cadr(args)));
+        untag_ptr<Token>(scm_cadr(args));
 
-    return scm_from_pointer(s->operation(op, a, b), NULL);
+    return tag_ptr(s->operation(op, a, b));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -102,14 +138,14 @@ void tree_delete(void* ptr)
 
 SCM tree_new(SCM store, SCM root)
 {
-    Store* s = static_cast<Store*>(scm_to_pointer(store));
-    Token* r = static_cast<Token*>(scm_to_pointer(root));
-    return scm_from_pointer(new Tree(s, r), tree_delete);
+    auto s = untag_ptr<Store>(store);
+    auto r = untag_ptr<Token>(root);
+    return tag_ptr(new Tree(s, r), tree_delete);
 }
 
 SCM tree_eval_double(SCM tree, SCM x, SCM y, SCM z)
 {
-    Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
+    auto t = untag_ptr<Tree>(tree);
     double out = t->eval(scm_to_double(x),
                          scm_to_double(y),
                          scm_to_double(z));
@@ -118,7 +154,7 @@ SCM tree_eval_double(SCM tree, SCM x, SCM y, SCM z)
 
 SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
 {
-    Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
+    auto t = untag_ptr<Tree>(tree);
     Interval X(scm_to_double(scm_car(x)), scm_to_double(scm_cdr(x)));
     Interval Y(scm_to_double(scm_car(y)), scm_to_double(scm_cdr(y)));
     Interval Z(scm_to_double(scm_car(z)), scm_to_double(scm_cdr(z)));
@@ -133,7 +169,7 @@ SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
 SCM gl_window(SCM tree)
 {
     auto win = Window();
-    win.addShape(static_cast<Tree*>(scm_to_pointer(tree)));
+    win.addShape(untag_ptr<Tree>(tree));
     win.run();
     return SCM_ELISP_NIL;
 }

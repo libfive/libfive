@@ -2,7 +2,7 @@
 
 (use-modules (system foreign))
 (use-modules (ice-9 common-list))
-(use-modules (ao lib))
+(use-modules (ao lib) (ao ptr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -20,7 +20,7 @@ A token is returned without changes
 A number is converted to a constant
 A symbol and further arguments are converted to an operation"
     (if (= 0 (length args))
-        (cond ((pointer? a) a)
+        (cond ((tagged-ptr? 'Token a) a)
               ((number? a) (token-const store a))
               (else (error "Failed to construct token" a)))
         (token-op store a (map make-token args))))
