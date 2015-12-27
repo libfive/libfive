@@ -125,7 +125,7 @@ void Frame::draw(const glm::mat4& m) const
 
 void Frame::render(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
 {
-    next = Task(m, ni, nj, nk, 16);
+    next = Task(m, ni, nj, nk, 8);
     if (!future.valid())
     {
         startRender();
@@ -162,7 +162,7 @@ void Frame::startRender()
     else if (current.level > 1)
     {
         next = current;
-        next.level--;
+        next.level /= 2;
         startRender();
     }
 }
