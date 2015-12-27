@@ -90,7 +90,10 @@ Frame::~Frame()
 
 void Frame::draw(const glm::mat4& m) const
 {
-    (void)m;
+    if (!current.isValid())
+    {
+        return;
+    }
 
     // Active the shader
     glUseProgram(prog);
@@ -106,7 +109,7 @@ void Frame::draw(const glm::mat4& m) const
     glUniform1i(glGetUniformLocation(prog, "tex"), 0);
 
     // Calculate the appropriate transform matrix
-    auto mat = m * glm::inverse(m_render);
+    auto mat = m * glm::inverse(current.mat);
     glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm::value_ptr(mat));
 
     // Bind textures and draw the quad
@@ -118,22 +121,75 @@ void Frame::draw(const glm::mat4& m) const
     glBindVertexArray(0);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 void Frame::render(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
 {
-    // Store the matrix as our render matrix
-    m_render = m;
+    next = Task(m, ni, nj, nk);
+    if (!future.valid())
+    {
+        startRender();
+    }
+}
 
-    // Render the frame to an Eigen matrix and cast to float
-    Region r({-1, 1}, {-1, 1}, {-1, 1}, ni/2, nj/2, nk/2);
+void Frame::startRender()
+{
+    assert(!future.valid());
 
-    tree->setMatrix(glm::inverse(m));
-    Eigen::ArrayXXf out = Heightmap::Render(tree, r).cast<float>().transpose();
+    if (next.isValid())
+    {
+        // Create the target region for rendering
+        // (allocated on the heap so it can persist)
+        Region* r = new Region({-1, 1}, {-1, 1}, {-1, 1},
+                               next.ni/2, next.nj/2, next.nk/2);
 
-    // Pack the Eigen matrix into an OpenGL texture
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned
-    glBindTexture(GL_TEXTURE_2D, depth);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, out.rows(), out.cols(),
-            0, GL_RED, GL_FLOAT, out.data());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        // Apply the matrix transform to the tree
+        tree->setMatrix(glm::inverse(next.mat));
+
+        // Then kick off an async render operation
+        // (also responsible for cleaning up the Region allocated above)
+        pending = next;
+        next = Task();
+        future = std::async(std::launch::async, [=](){
+                auto out = Heightmap::Render(tree, *r);
+                delete r;
+                return out; });
+    }
+}
+
+bool Frame::poll()
+{
+    if(!future.valid())
+    {
+        return false;
+    }
+
+    std::future_status status = future.wait_for(std::chrono::seconds(0));
+    if (status == std::future_status::ready)
+    {
+        // Get the resulting matrix
+        Eigen::ArrayXXd o = future.get();
+        Eigen::ArrayXXf out = o.cast<float>().transpose();
+
+        // Pack the Eigen matrix into an OpenGL texture
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned
+        glBindTexture(GL_TEXTURE_2D, depth);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, out.rows(), out.cols(),
+                0, GL_RED, GL_FLOAT, out.data());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        // Swap tasks objects
+        current = pending;
+        pending = Task();
+
+        // Attempt to kick off a new render
+        startRender();
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }

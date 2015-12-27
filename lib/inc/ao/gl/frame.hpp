@@ -1,8 +1,10 @@
 #pragma once
 
 #include <list>
+#include <future>
 
 #include <glm/mat4x4.hpp>
+#include <Eigen/Dense>
 
 #include "ao/gl/core.hpp"
 
@@ -30,7 +32,40 @@ public:
      */
     void render(const glm::mat4& m, size_t ni, size_t nj, size_t nk);
 
+    /*
+     *  Check the future watcher and see if it's ready
+     *  Returns true if the parent window should redraw
+     */
+    bool poll();
+
 protected:
+    /*
+     *  Kicks off an async render task if there is a pending valid task
+     *
+     *  Requires the future to be invalid when called
+     */
+    void startRender();
+
+    /*
+     *  Represents a render task
+     */
+    struct Task
+    {
+        /* Constructors */
+        Task() : ni(0), nj(0), nk(0) { /* Nothing to do here */ }
+        Task(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
+            : mat(m), ni(ni), nj(nj), nk(nk) {}
+
+        /* Check if the task is valid */
+        bool isValid() const { return ni != 0 && nj != 0; }
+
+        /* Transform matrix associated with the task */
+        glm::mat4 mat;
+
+        /* Voxel size associated with the task */
+        size_t ni, nj, nk;
+    };
+
     Tree* const tree;
 
     GLuint vs;  // Vertex shader
@@ -40,10 +75,17 @@ protected:
     GLuint vbo; // Vertex buffer object
     GLuint vao; // Vertex array object
 
-    // List of texture planes and the matrices with which they were rendered
-    glm::mat4 m_render;
-    GLuint depth;
+    GLuint depth; // Depth texture
 
+    // Represents the current render task
+    Task current;
+
+    // Active render task
+    Task pending;
+    std::future<Eigen::ArrayXXd> future;
+
+    // Next matrix to render
+    Task next;
 
     // Shader source strings
     static const std::string vert;

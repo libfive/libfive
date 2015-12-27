@@ -165,6 +165,7 @@ void Window::draw() const
 
     for (auto f : frames)
     {
+        f->poll();
         f->draw(m);
     }
     axes.draw(m);
@@ -181,6 +182,15 @@ void Window::run()
     {
         // Poll for and process events
         glfwPollEvents();
+
+        // Poll for future changes
+        for (auto f : frames)
+        {
+            if (f->poll())
+            {
+                draw();
+            }
+        }
     }
 }
 
