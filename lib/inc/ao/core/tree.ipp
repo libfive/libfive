@@ -10,30 +10,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 /*
  *  std::min and std::max misbehave when given Intervals, so we overload
- *  those functions with partial template specialization here
+ *  those functions with our own _min and _max (defined below for doubles)
  */
-template<class T>
-inline T _min(const T& a, const T& b)
+inline double _min(const double& a, const double& b)
 {
     return std::min(a, b);
 }
 
-template<class T>
-inline T _max(const T& a, const T& b)
+inline double _max(const double& a, const double& b)
 {
     return std::max(a, b);
-}
-
-template <>
-inline Interval _min<Interval>(const Interval& a, const Interval& b)
-{
-    return boost::numeric::min(a, b);
-}
-
-template <>
-inline Interval _max<Interval>(const Interval& a, const Interval& b)
-{
-    return boost::numeric::max(a, b);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
