@@ -30,6 +30,8 @@ void main()
 const std::string Frame::frag = R"(
 #version 330
 
+uniform mat4 m;
+
 in vec2 tex_coord;
 uniform sampler2D depth;
 uniform sampler2D norm;
@@ -38,16 +40,17 @@ out vec4 fragColor;
 
 void main()
 {
-    float t = texture(depth, tex_coord).r;
-    vec4 n = texture(norm, tex_coord);
-    if (isinf(t))
+    float d = texture(depth, tex_coord).r;
+    vec3 n = texture(norm, tex_coord).xyz - vec3(0.5f);;
+    if (isinf(d))
     {
         discard;
     }
     else
     {
-        float h = (t + 1.0f) / 2.0f;
-        fragColor = vec4(n.xyz - vec3(0.5f), 1.0f);
+        float h = (d + 1.0f) / 2.0f;
+        gl_FragDepth = d;
+        fragColor = m * vec4(n, 1.0f);
     }
 }
 )";
