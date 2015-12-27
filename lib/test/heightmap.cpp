@@ -225,3 +225,31 @@ TEST_CASE("3D rendering of a sphere")
         }
     }
 }
+
+TEST_CASE("2D rendering with normals")
+{
+    Store s;
+
+    Region r({-1, 1}, {-1, 1}, {0}, 5);
+
+    SECTION("X")
+    {
+        Tree t(&s, s.X());
+        auto depth = Heightmap::Render(&t, r);
+        auto norm = Heightmap::Shade(&t, r, depth);
+
+        CAPTURE(norm);
+        REQUIRE((norm == 0x7f0000ff || norm == 0).all());
+    }
+
+    SECTION("-X")
+    {
+        Tree t(&s, s.operation(OP_NEG, s.X()));
+        auto depth = Heightmap::Render(&t, r);
+        auto norm = Heightmap::Shade(&t, r, depth);
+
+        CAPTURE(norm);
+        REQUIRE((norm == 0x810000ff || norm == 0).all());
+    }
+
+}

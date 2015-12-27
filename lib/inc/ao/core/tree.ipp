@@ -77,7 +77,7 @@ inline void Tree::evalAtom(Atom* m, size_t count)
 }
 
 template <class T>
-inline void Tree::evalCore(size_t count)
+inline const T* Tree::evalCore(size_t count)
 {
     for (const auto& row : rows)
     {
@@ -86,6 +86,7 @@ inline void Tree::evalCore(size_t count)
             evalAtom<T>(row[i], count);
         }
     }
+    return root->result.ptr<T>();
 }
 
 template <class T>
@@ -95,6 +96,13 @@ inline T Tree::eval(T x, T y, T z)
     Y->result.set<T>(y, 0);
     Z->result.set<T>(z, 0);
 
-    evalCore<T>(1);
-    return root->result.get<T>(0);
+    return evalCore<T>(1)[0];
+}
+
+template <class T>
+inline void Tree::setPoint(T x, T y, T z, size_t index)
+{
+    X->result.set<T>(x, index);
+    Y->result.set<T>(y, index);
+    Z->result.set<T>(z, index);
 }

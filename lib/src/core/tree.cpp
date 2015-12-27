@@ -226,8 +226,7 @@ const double* Tree::eval(const Region& r)
         index++;
     }
 
-    evalCore<double>(r.voxels());
-    return root->result.ptr<double>();
+    return evalCore<double>(r.voxels());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

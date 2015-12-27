@@ -94,4 +94,57 @@ Eigen::ArrayXXd Render(Tree* t, Region r)
     return img;
 }
 
+Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth)
+{
+    auto img = Image(r.Y.size, r.X.size);
+    img.fill(0);
+
+    // Store the x, y coordinates of rendered points
+    constexpr size_t NUM_POINTS = Result::count<Gradient>();
+    size_t xs[NUM_POINTS];
+    size_t ys[NUM_POINTS];
+    size_t index = 0;
+
+    auto run = [&](){
+        const Gradient* gs = t->evalCore<Gradient>(index);
+        for (size_t i=0; i < index; ++i)
+        {
+            double len = sqrt(pow(gs[i].dx, 2) +
+                              pow(gs[i].dy, 2) +
+                              pow(gs[i].dz, 2));
+            int8_t dx = gs[i].dx / len * 127;
+            int8_t dy = gs[i].dy / len * 127;
+            int8_t dz = gs[i].dz / len * 127;
+            img(ys[i], xs[i]) = (dx << 24) | (dy << 16) | (dz << 8) | 0xff;
+        }
+        index = 0;
+    };
+
+    for (int row=0; row < depth.rows(); ++row)
+    {
+        const double y = r.Y.pos(row);
+        for (int col=0; col < depth.cols(); ++col)
+        {
+            const double d = depth(row, col);
+            if (!isinf(d))
+            {
+                xs[index] = col;
+                ys[index] = row;
+                t->setPoint<Gradient>(Gradient(r.X.pos(col), 1, 0, 0),
+                                      Gradient(y, 0, 1, 0),
+                                      Gradient(d, 0, 0, 1), index++);
+                if (index == NUM_POINTS)
+                {
+                    run();
+                }
+            }
+        }
+    }
+    if (index > 0)
+    {
+        run();
+    }
+    return img;
+}
+
 } // namespace Heightmap

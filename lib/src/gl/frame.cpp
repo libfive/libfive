@@ -31,13 +31,15 @@ const std::string Frame::frag = R"(
 #version 330
 
 in vec2 tex_coord;
-uniform sampler2D tex;
+uniform sampler2D depth;
+uniform sampler2D norm;
 
 out vec4 fragColor;
 
 void main()
 {
-    float t = texture(tex, tex_coord).r;
+    float t = texture(depth, tex_coord).r;
+    vec4 n = texture(norm, tex_coord);
     if (isinf(t))
     {
         discard;
@@ -45,7 +47,7 @@ void main()
     else
     {
         float h = (t + 1.0f) / 2.0f;
-        fragColor = vec4(h, h, h, 1.0f);
+        fragColor = n;
     }
 }
 )";
@@ -61,6 +63,7 @@ Frame::Frame(Tree* tree)
     assert(prog);
 
     glGenTextures(1, &depth);
+    glGenTextures(1, &norm);
 
     glGenBuffers(1, &vbo);
     glGenVertexArrays(1, &vao);
@@ -84,6 +87,7 @@ Frame::Frame(Tree* tree)
 Frame::~Frame()
 {
     glDeleteTextures(1, &depth);
+    glDeleteTextures(1, &norm);
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
 }
@@ -104,16 +108,19 @@ void Frame::draw(const glm::mat4& m) const
     // Get the uniform location for the transform matrix
     GLint m_loc = glGetUniformLocation(prog, "m");
 
-    // Bind the "tex" sampler to TEXTURE0
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(glGetUniformLocation(prog, "tex"), 0);
-
     // Calculate the appropriate transform matrix
     auto mat = m * glm::inverse(current.mat);
     glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm::value_ptr(mat));
 
-    // Bind textures and draw the quad
+    // Bind depth and normal texture
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, depth);
+    glUniform1i(glGetUniformLocation(prog, "depth"), 0);
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, norm);
+    glUniform1i(glGetUniformLocation(prog, "norm"), 1);
+
+    // Draw the quad!
     glEnable(GL_DEPTH_TEST);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glDisable(GL_DEPTH_TEST);
@@ -154,9 +161,10 @@ void Frame::startRender()
         pending = next;
         next.reset();
         future = std::async(std::launch::async, [=](){
-                auto out = Heightmap::Render(tree, *r);
+                auto depth = Heightmap::Render(tree, *r);
+                auto shaded = Heightmap::Shade(tree, *r, depth);
                 delete r;
-                return out; });
+                return std::make_pair(depth, shaded); });
     }
     // Schedule a refinement of the current render task
     else if (current.level > 1)
@@ -178,14 +186,23 @@ bool Frame::poll()
     if (status == std::future_status::ready)
     {
         // Get the resulting matrix
-        Eigen::ArrayXXd o = future.get();
-        Eigen::ArrayXXf out = o.cast<float>().transpose();
+        auto out = future.get();
+        Eigen::ArrayXXf d = out.first.cast<float>().transpose();
+        Image s = out.second;
 
-        // Pack the Eigen matrix into an OpenGL texture
+        // Pack the Eigen matrices into an OpenGL texture
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, depth);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, out.rows(), out.cols(),
-                0, GL_RED, GL_FLOAT, out.data());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, d.rows(), d.cols(),
+                0, GL_RED, GL_FLOAT, d.data());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        glActiveTexture(GL_TEXTURE0 + 1);
+        glBindTexture(GL_TEXTURE_2D, norm);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, s.rows(), s.cols(),
+                0, GL_RGB, GL_UNSIGNED_BYTE, s.data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 

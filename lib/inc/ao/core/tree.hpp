@@ -50,6 +50,19 @@ public:
     const double* eval(const Region& r);
 
     /*
+     *  Performs the core evaluation sweep (across rows and atoms),
+     *  assuming that 'count' locations have been loaded
+     */
+    template <class T>
+    const T* evalCore(size_t count);
+
+    /*
+     *  Sets the evaluation target at the given index
+     */
+    template <class T>
+    void setPoint(T x, T y, T z, size_t index);
+
+    /*
      *  Pushes into a subinterval, disabling inactive nodes
      */
     void push();
@@ -74,17 +87,10 @@ protected:
     Atom* buildMatrixRow(size_t i);
 
     /*
-     *  Evaluates the first 'count' atoms in the list
+     *  Evaluates the first 'count' result slots in the given atom
      */
     template <class T>
     void evalAtom(Atom* a, size_t count);
-
-    /*
-     *  Performs the core evaluation sweep (across rows and atoms),
-     *  assuming that 'count' locations have been loaded
-     */
-    template <class T>
-    void evalCore(size_t count);
 
     /*  All operations live in a set of rows sorted by weight */
     std::vector<Row> rows;

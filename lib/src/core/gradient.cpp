@@ -71,3 +71,8 @@ Gradient sqrt(const Gradient& a)
                            a.dz / (2 * v));
     }
 }
+
+Gradient operator-(const Gradient& a)
+{
+    return Gradient(-a.v, -a.dx, -a.dy, -a.dz);
+}

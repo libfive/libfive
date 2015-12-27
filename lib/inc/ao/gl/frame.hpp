@@ -7,6 +7,7 @@
 #include <Eigen/Dense>
 
 #include "ao/gl/core.hpp"
+#include "ao/render/heightmap.hpp"
 
 class Tree;
 
@@ -81,14 +82,15 @@ protected:
     GLuint vbo; // Vertex buffer object
     GLuint vao; // Vertex array object
 
-    GLuint depth; // Depth texture
+    GLuint depth;  // Depth texture
+    GLuint norm;   // Normals texture
 
     // Represents the current render task
     Task current;
 
     // Active render task
     Task pending;
-    std::future<Eigen::ArrayXXd> future;
+    std::future<std::pair<Eigen::ArrayXXd, Image>> future;
 
     // Next matrix to render
     Task next;
