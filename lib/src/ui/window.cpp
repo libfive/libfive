@@ -163,11 +163,11 @@ void Window::draw() const
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    axes.draw(m);
     for (auto f : frames)
     {
         f->draw(m);
     }
+    axes.draw(m);
 
     glfwSwapBuffers(window);
 }

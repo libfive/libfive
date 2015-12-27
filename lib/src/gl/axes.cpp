@@ -14,11 +14,13 @@ layout(location=1) in vec3 color;
 uniform mat4 m;
 
 out vec3 frag_color;
+out float frac;
 
 void main()
 {
     gl_Position = m * vec4(vertex_position, 1.0f);
     frag_color = color;
+    frac = vertex_position.x + vertex_position.y + vertex_position.z;
 }
 )";
 
@@ -27,10 +29,17 @@ const std::string Axes::frag = R"(
 #version 330
 
 in vec3 frag_color;
+in float frac;
+uniform int dotted;
+
 out vec4 fragColor;
 
 void main()
 {
+    if (dotted == 1 && mod(frac * 20.0f, 1.0f) >= 0.8f)
+    {
+        discard;
+    }
     fragColor = vec4(frag_color, 1.0f);
 }
 )";
@@ -89,9 +98,17 @@ void Axes::draw(const glm::mat4& m) const
     GLint m_loc = glGetUniformLocation(prog, "m");
     glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm::value_ptr(m));
 
-    glLineWidth(2);
     glBindVertexArray(vao);
+
+    // Draw once with depth test and non-dotted lines
+    glEnable(GL_DEPTH_TEST);
+    glUniform1i(glGetUniformLocation(prog, "dotted"), 0);
     glDrawArrays(GL_LINES, 0, 6);
+
+    // Then draw again without depth test and with dotted lines
+    glDisable(GL_DEPTH_TEST);
+    glUniform1i(glGetUniformLocation(prog, "dotted"), 1);
+    glDrawArrays(GL_LINES, 0, 6);
+
     glBindVertexArray(0);
-    glLineWidth(1);
 }
