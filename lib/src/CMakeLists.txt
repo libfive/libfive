@@ -36,6 +36,10 @@ target_link_libraries(ao ${GUILE_LIBRARY}
 
 ################################################################################
 
+install(TARGETS ao DESTINATION ${PROJECT_SOURCE_DIR})
+
+################################################################################
+
 # Mask error message that warns about including gl.h and gl3.h
 # (since it's actually a false positive caused by epoxy/gl.h)
 if (APPLE)

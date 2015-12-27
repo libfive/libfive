@@ -2,8 +2,7 @@
 
 (use-modules (system foreign))
 (use-modules (ice-9 common-list))
-
-(load-extension "libao" "libao_init")
+(use-modules (ao lib))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
