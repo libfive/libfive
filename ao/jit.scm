@@ -32,15 +32,11 @@ A symbol and further arguments are converted to an operation"
     "Check to see if the given argument is a valid Interval"
     (and (pair? i) (not (list? i)) (number? (car i)) (number? (cdr i))))
 
-(define (number-list? i)  (and (list? i) (every number? i)))
-
 (define-public (wrap-tree t)
     " Wraps a bare tree pointer in a callable interface "
     (lambda (x y z) ;; Generic evaluator that dispatches based on argument type
         (cond ((every interval? (list x y z))
                     (tree-eval-interval t x y z))
-              ((every number-list? (list x y z))
-                    (tree-eval-doubles t x y z))
               ((every number? (list x y z))
                     (tree-eval-double t x y z))
               (else (error "Input arguments are of invalid types")))))

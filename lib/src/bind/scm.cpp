@@ -116,51 +116,6 @@ SCM tree_eval_double(SCM tree, SCM x, SCM y, SCM z)
     return scm_from_double(out);
 }
 
-SCM tree_eval_doubles(SCM tree, SCM x, SCM y, SCM z)
-{
-    Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
-
-    std::vector<double> xs;
-    std::vector<double> ys;
-    std::vector<double> zs;
-
-    int nx = scm_to_int(scm_length(x));
-    int ny = scm_to_int(scm_length(y));
-    int nz = scm_to_int(scm_length(z));
-
-    if (nx != ny || ny != nz)
-    {
-        scm_misc_error("tree_eval_doubles",
-                       "Arrays must be of the same size", SCM_EOL);
-        return SCM_ELISP_NIL;
-    }
-
-    auto unpack = [](int n, SCM d, std::vector<double>* ds)
-    {
-        ds->reserve(n);
-        while (!scm_is_null(d))
-        {
-            ds->push_back(scm_to_double(scm_car(d)));
-            d = scm_cdr(d);
-        }
-    };
-
-    unpack(nx, x, &xs);
-    unpack(ny, y, &ys);
-    unpack(nz, z, &zs);
-
-    //std::vector<double> result = t->eval(xs, ys, zs);
-    std::vector<double> result;
-
-    // Pack the results into a Scheme list
-    SCM out = SCM_ELISP_NIL;
-    for (auto itr = result.crbegin(); itr != result.crend(); ++itr)
-    {
-        out = scm_cons(scm_from_double(*itr), out);
-    }
-    return out;
-}
-
 SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
 {
     Tree* t = static_cast<Tree*>(scm_to_pointer(tree));
@@ -190,7 +145,6 @@ void libao_init()
     scm_c_define_gsubr("make-store", 0, 0, 0, (void*)store_new);
     scm_c_define_gsubr("make-tree", 2, 0, 0, (void*)tree_new);
     scm_c_define_gsubr("tree-eval-double", 4, 0, 0, (void*)tree_eval_double);
-    scm_c_define_gsubr("tree-eval-doubles", 4, 0, 0, (void*)tree_eval_doubles);
     scm_c_define_gsubr("tree-eval-interval", 4, 0, 0, (void*)tree_eval_interval);
 
     scm_c_define_gsubr("token-x", 1, 0, 0, (void*)token_x);
