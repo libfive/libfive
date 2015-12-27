@@ -47,7 +47,7 @@ void main()
     else
     {
         float h = (t + 1.0f) / 2.0f;
-        fragColor = n;
+        fragColor = vec4(n.xyz - vec3(0.5f), 1.0f);
     }
 }
 )";
@@ -188,7 +188,7 @@ bool Frame::poll()
         // Get the resulting matrix
         auto out = future.get();
         Eigen::ArrayXXf d = out.first.cast<float>().transpose();
-        Image s = out.second;
+        Image s = out.second.transpose();
 
         // Pack the Eigen matrices into an OpenGL texture
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned
@@ -202,7 +202,7 @@ bool Frame::poll()
         glActiveTexture(GL_TEXTURE0 + 1);
         glBindTexture(GL_TEXTURE_2D, norm);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, s.rows(), s.cols(),
-                0, GL_RGB, GL_UNSIGNED_BYTE, s.data());
+                0, GL_RGBA, GL_UNSIGNED_BYTE, s.data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 

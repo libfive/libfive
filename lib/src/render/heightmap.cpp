@@ -109,12 +109,17 @@ Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth)
         const Gradient* gs = t->evalCore<Gradient>(index);
         for (size_t i=0; i < index; ++i)
         {
+            // Find the normal's length (to normalize it)
             double len = sqrt(pow(gs[i].dx, 2) +
                               pow(gs[i].dy, 2) +
                               pow(gs[i].dz, 2));
-            int8_t dx = gs[i].dx / len * 127;
-            int8_t dy = gs[i].dy / len * 127;
-            int8_t dz = gs[i].dz / len * 127;
+
+            // Pack each normal into the 0-255 range
+            int8_t dx = 255 * (gs[i].dx / (2 * len) + 0.5);
+            int8_t dy = 255 * (gs[i].dy / (2 * len) + 0.5);
+            int8_t dz = 255 * (gs[i].dz / (2 * len) + 0.5);
+
+            // Pack the normals and a dummy alpha byte into the image
             img(ys[i], xs[i]) = (dx << 24) | (dy << 16) | (dz << 8) | 0xff;
         }
         index = 0;
