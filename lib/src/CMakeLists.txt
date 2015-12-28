@@ -15,33 +15,35 @@ find_library(OPENGL_LIBRARY OpenGL)
 
 ################################################################################
 
-include_directories(${GUILE_INCLUDE_DIR}
-                    ${BOOST_INCLUDE_DIR}
-                    ${PNG_INCLUDE_DIR}
-                    ${GLFW_INCLUDE_DIRS}
-                    ${EPOXY_INCLUDE_DIR})
+add_definitions(-DGLFW_INCLUDE_GLCOREARB)
 
 ################################################################################
 
 file(GLOB SRC_FILES core/*.cpp format/*.cpp ui/*.cpp
                     render/*.cpp gl/*.cpp)
-add_library(ao STATIC ${SRC_FILES})
 
-add_definitions(-DGLFW_INCLUDE_GLCOREARB)
-target_link_libraries(ao ${GUILE_LIBRARY}
-                         ${PNG_LIBRARIES}
-                         ${GLFW_LIBRARIES}
-                         ${OPENGL_LIBRARY}
-                         ${EPOXY_LIBRARY})
+add_library(ao STATIC ${SRC_FILES})
+target_include_directories(ao PUBLIC
+    ${BOOST_INCLUDE_DIR}
+    ${PNG_INCLUDE_DIR}
+    ${GLFW_INCLUDE_DIRS}
+    ${EPOXY_INCLUDE_DIR})
+target_link_libraries(ao
+    ${PNG_LIBRARIES}
+    ${GLFW_LIBRARIES}
+    ${OPENGL_LIBRARY}
+    ${EPOXY_LIBRARY})
 
 ################################################################################
 
 add_executable(ao-guile bind/guile.cpp)
-target_link_libraries(ao-guile ao)
+target_link_libraries(ao-guile ao ${GUILE_LIBRARY})
+target_include_directories(ao-guile PUBLIC ${GUILE_INCLUDE_DIR})
 
 add_custom_command(
     TARGET ao-guile POST_BUILD
-    COMMAND ln -sf ${CMAKE_CURRENT_BINARY_DIR}/ao-guile ${PROJECT_SOURCE_DIR}/../ao-guile
+    COMMAND ln -sf ${CMAKE_CURRENT_BINARY_DIR}/ao-guile
+                   ${PROJECT_SOURCE_DIR}/../ao-guile
 )
 
 ################################################################################
