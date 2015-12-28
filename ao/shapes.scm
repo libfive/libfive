@@ -66,10 +66,10 @@
 
 ;; 2D -> 3D functions
 
-(define-public (extrude shape bounds)
-    "Extrudes the given shape given bounds '(zmin zmax)"
-    (let ((zmin (apply min bounds))
-          (zmax (apply max bounds)))
+(define-public (extrude-z shape za zb)
+    "Extrudes the given shape between za and zb"
+    (let ((zmin (min za zb))
+          (zmax (max za zb)))
     (lambda (x y z) (max (shape x y z) (- zmin z) (- z zmax)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -83,11 +83,12 @@
 
 (define-public (cube a b)
     "Defines a cube with corners a and b, each a list '(x y z)"
-    (extrude (rect a b) (list (caddr a) (caddr b))))
+    (extrude-z (rect a b) (caddr a) (caddr b)))
 
-(define-public (cylinder base r height)
+(define-public (cylinder-z base r height)
     "Creates a circle with the given base '(x y z), radius r, and height dz"
-    (extrude (circle base r) (list (caddr base) height)))
+    (let ((zmin (caadr base)))
+    (extrude-z (circle base r) zmin (+ zmin height))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -154,3 +155,18 @@ The center of rotation is 0,0 or specified by optional argument '(x0 y0)"
     "Reflect the given shape about the z origin or an optional argument z0"
     (let ((z0 (if (> 0 (length args)) (car args) 0)))
     (lambda (x y z) (shape x y (- (* 2 z0) z)))))
+
+(define-public (scale-x shape sx . args)
+    "Scales a shape by sx on the x axis about 0 or an optional argument x0"
+    (let ((x0 (if (> (length args) 0) (car args) 0)))
+    (lambda (x y z) (shape (+ x0 (/ (- x x0) sx)) y z))))
+
+(define-public (scale-y shape sy . args)
+    "Scales a shape by sy on the y axis about 0 or an optional argument y0"
+    (let ((y0 (if (> (length args) 0) (car args) 0)))
+    (lambda (x y z) (shape x (+ y0 (/ (- y y0) sy)) z))))
+
+(define-public (scale-z shape sz . args)
+    "Scales a shape by sz on the z axis about 0 or an optional argument z0"
+    (let ((z0 (if (> (length args) 0) (car args) 0)))
+    (lambda (x y z) (shape x y (+ z0 (/ (- z z0) sz))))))
