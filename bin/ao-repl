@@ -1,3 +1,0 @@
-#!/bin/sh
-env AO_LOAD_PATH=$(dirname $0)/../lib/ \
-guile -l $(dirname $0)/ao-startup.scm
