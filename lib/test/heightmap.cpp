@@ -249,7 +249,17 @@ TEST_CASE("2D rendering with normals")
         auto norm = Heightmap::Shade(&t, r, depth);
 
         CAPTURE(norm);
-        REQUIRE((norm == 0x007f7fff || norm == 0).all());
+        REQUIRE((norm == 0xff7f7f00 || norm == 0).all());
+    }
+
+    SECTION("Y")
+    {
+        Tree t(&s, s.Y());
+        auto depth = Heightmap::Render(&t, r);
+        auto norm = Heightmap::Shade(&t, r, depth);
+
+        CAPTURE(norm);
+        REQUIRE((norm == 0xff7fff7f || norm == 0).all());
     }
 
 }

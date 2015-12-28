@@ -41,16 +41,16 @@ out vec4 fragColor;
 void main()
 {
     float d = texture(depth, tex_coord).r;
-    vec4 n = texture(norm, tex_coord) - vec4(0.5f);
+    vec3 n = texture(norm, tex_coord).rgb - vec3(0.5f);
     if (isinf(d))
     {
         discard;
     }
     else
     {
-        float h = (d + 1.0f) / 2.0f;
-        gl_FragDepth = d;
-        fragColor = m * vec4(n.r, n.r, n.r, 1.0f);
+        float z = (1.0f - d) / 2.0f;
+        gl_FragDepth = z;
+        fragColor = m * vec4(2.0f * abs(n), 1.0f);
     }
 }
 )";

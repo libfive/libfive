@@ -115,12 +115,12 @@ Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth)
                               pow(gs[i].dz, 2));
 
             // Pack each normal into the 0-255 range
-            int8_t dx = 255 * (gs[i].dx / (2 * len) + 0.5);
-            int8_t dy = 255 * (gs[i].dy / (2 * len) + 0.5);
-            int8_t dz = 255 * (gs[i].dz / (2 * len) + 0.5);
+            uint32_t dx = 255 * (gs[i].dx / (2 * len) + 0.5);
+            uint32_t dy = 255 * (gs[i].dy / (2 * len) + 0.5);
+            uint32_t dz = 255 * (gs[i].dz / (2 * len) + 0.5);
 
             // Pack the normals and a dummy alpha byte into the image
-            img(ys[i], xs[i]) = (dx << 24) | (dy << 16) | (dz << 8) | 0xff;
+            img(ys[i], xs[i]) = (0xff << 24) | (dz << 16) | (dy << 8) | dx;
         }
         index = 0;
     };
