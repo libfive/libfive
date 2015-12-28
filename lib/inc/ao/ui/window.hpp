@@ -16,11 +16,10 @@ class Window
 {
 public:
     /*
-     *  Default Window constructor
-     *
-     *  Triggers an assertion failure on OpenGL errors
+     *  We should only have one window constructed at a time
      */
-    explicit Window();
+    static Window* singleton;
+    static Window* instance();
 
     /*
      *  Window destructor deletes all associated Frames
@@ -28,20 +27,28 @@ public:
     ~Window();
 
     /*
-     *  Adds a Frame to redraw the given shape
+     *  Adds a Frame to redraw the given shape asynchronously
+     *  (will not take effect until the next poll() call)
      */
-    void addShape(Tree* t);
+    void addTree(Tree* t);
 
     /*
-     *  Blocking loop updating the window until it is closed
+     *  Polls for window events
      */
-    void run();
+    void poll();
 
-protected:
     /*
      *  Redraw the window with the current state
      */
     void draw() const;
+
+protected:
+    /*
+     *  Default Window constructor
+     *
+     *  Triggers an assertion failure on OpenGL errors
+     */
+    explicit Window();
 
     /*
      *  Request that every child Frame render itself
@@ -91,6 +98,9 @@ protected:
 
     /*  Pointer to raw window  */
     GLFWwindow* const window;
+
+    /*  Atomic pointer to incoming tree  */
+    std::atomic<Tree*> incoming;
 
     /*  Width and height are of the framebuffer, rather than the window  *
      *  (to properly cope with high DPI monitors)                        */

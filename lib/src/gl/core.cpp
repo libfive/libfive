@@ -36,6 +36,7 @@ GLFWwindow* makeWindow(int width, int height, std::string title)
 
     glfwDefaultWindowHints();
     setWindowHints();
+    //glfwWindowHint(GLFW_DECORATED, GL_FALSE);
 
     auto out = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
     glfwMakeContextCurrent(out);
@@ -51,7 +52,7 @@ GLFWwindow* makeContext()
     }
 
     setWindowHints();
-    glfwWindowHint(GLFW_VISIBLE, GL_FALSE);    // multisampling!
+    glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 
     auto out = glfwCreateWindow(1, 1, "", nullptr, nullptr);
     glfwMakeContextCurrent(out);

@@ -9,10 +9,20 @@
 #include "ao/gl/core.hpp"
 #include "ao/gl/frame.hpp"
 
+Window* Window::singleton = nullptr;
+Window* Window::instance()
+{
+    if (!singleton)
+    {
+        singleton = new Window();
+    }
+    return singleton;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 Window::Window()
-    : window(makeWindow(640, 480, "Hello!"))
+    : window(makeWindow(640, 480, "Hello!")), incoming(nullptr)
 {
     assert(window != nullptr);
 
@@ -41,11 +51,12 @@ void Window::resized(int w, int h)
     draw();
 }
 
-void Window::addShape(Tree* t)
+void Window::addTree(Tree* t)
 {
-    frames.push_back(new Frame(t));
-    render();
-    draw();
+    // Loop waiting for the incoming tree to be claimed
+    while (incoming.load() != nullptr);
+
+    incoming.store(t);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -173,23 +184,25 @@ void Window::draw() const
     glfwSwapBuffers(window);
 }
 
-void Window::run()
+void Window::poll()
 {
-    // Draw the initial frame (other draw calls are triggered as-needed)
-    draw();
+    // Poll for and process events
+    glfwPollEvents();
 
-    while (!glfwWindowShouldClose(window))
+    Tree* t = incoming.exchange(nullptr);
+    if (t)
     {
-        // Poll for and process events
-        glfwPollEvents();
+        frames.push_back(new Frame(t));
+        render();
+        draw();
+    }
 
-        // Poll for future changes
-        for (auto f : frames)
+    // Poll for future changes
+    for (auto f : frames)
+    {
+        if (f->poll())
         {
-            if (f->poll())
-            {
-                draw();
-            }
+            draw();
         }
     }
 }

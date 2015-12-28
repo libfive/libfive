@@ -1,4 +1,4 @@
-find_path(GUILE_INCLUDE_DIR libguile.h)
+find_path(GUILE_INCLUDE_DIR libguile.h /usr/local/include/guile/2.0)
 find_library(GUILE_LIBRARY NAMES guile-2.0)
 
 find_path(EPOXY_INCLUDE_DIR epoxy/gl.h)
@@ -23,9 +23,9 @@ include_directories(${GUILE_INCLUDE_DIR}
 
 ################################################################################
 
-file(GLOB SRC_FILES core/*.cpp format/*.cpp bind/*.cpp ui/*.cpp
+file(GLOB SRC_FILES core/*.cpp format/*.cpp ui/*.cpp
                     render/*.cpp gl/*.cpp)
-add_library(ao SHARED ${SRC_FILES})
+add_library(ao STATIC ${SRC_FILES})
 
 add_definitions(-DGLFW_INCLUDE_GLCOREARB)
 target_link_libraries(ao ${GUILE_LIBRARY}
@@ -36,7 +36,13 @@ target_link_libraries(ao ${GUILE_LIBRARY}
 
 ################################################################################
 
-install(TARGETS ao DESTINATION ${PROJECT_SOURCE_DIR})
+add_executable(ao-guile bind/guile.cpp)
+target_link_libraries(ao-guile ao)
+
+add_custom_command(
+    TARGET ao-guile POST_BUILD
+    COMMAND ln -sf ${CMAKE_CURRENT_BINARY_DIR}/ao-guile ${PROJECT_SOURCE_DIR}/../ao-guile
+)
 
 ################################################################################
 

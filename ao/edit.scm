@@ -5,6 +5,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (show-shape f)
-    (gl-window (jit f)))
+(define-public (ao-show f)
+    (show-tree (jit f)))
 
