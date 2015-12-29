@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 
+#include <boost/algorithm/string.hpp>
 #include <libguile.h>
 
 #include "ao/core/store.hpp"
@@ -199,12 +200,42 @@ static void populate_module(void* data)
     define("show-tree", 1, (void*)show_tree);
 }
 
+static void guile_hotpatch()
+{
+    SCM v = scm_c_private_lookup("system repl common", "*version*");
+
+    char* str_ptr = scm_to_locale_string(scm_variable_ref(v));
+    std::string str(str_ptr);
+    free(str_ptr);
+
+    // Patch ambiguity in the Guile startup message
+    boost::replace_all(str, "This program", "Guile");
+
+    str = R"(         .8.           ,o888888o.
+        .888.       . 8888     `88.
+       :88888.     ,8 8888       `8b
+      . `88888.    88 8888        `8b
+     .8. `88888.   88 8888         88
+    .8`8. `88888.  88 8888         88
+   .8' `8. `88888. 88 8888        ,8P
+  .8'   `8. `88888.`8 8888       ,8P
+ .888888888. `88888.` 8888     ,88'
+.8'       `8. `88888.  `8888888P'
+       (c) 2015 Matt Keeter
+
+REPL is provided by )" + str;
+
+    scm_variable_set_x(v, scm_from_locale_string(str.c_str()));
+}
+
 static void* guile_init(void* data)
 {
     (void)data;
 
     scm_c_define_module("ao lib", populate_module, nullptr);
     scm_primitive_load(scm_from_locale_string("ao/startup.scm"));
+
+    guile_hotpatch();
 
     return nullptr;
 }
