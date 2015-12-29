@@ -33,6 +33,11 @@ public:
     void addTree(Tree* t);
 
     /*
+     *  Runs the window forever
+     */
+    void run();
+
+    /*
      *  Polls for window events
      */
     void poll();

@@ -246,20 +246,12 @@ int main(int argc, char* argv[])
     Window::instance()->draw();
 
     // Start a Guile REPL running in a secondary thread
-    auto repl = std::async(std::launch::async, [=](){
+    auto repl = std::thread([=](){
         scm_with_guile(&guile_init, NULL);
         scm_shell(argc, argv); });
+    repl.detach();
 
-    while (1)
-    {
-        Window::instance()->poll();
-        std::future_status status = repl.wait_for(std::chrono::seconds(0));
-        if (status == std::future_status::ready)
-        {
-            break;
-        }
-    }
-    delete Window::instance();
+    Window::instance()->run();
 
     return 0;
 }

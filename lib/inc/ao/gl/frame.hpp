@@ -90,7 +90,9 @@ protected:
 
     // Active render task
     Task pending;
+    std::promise<std::pair<Eigen::ArrayXXd, Image>> promise;
     std::future<std::pair<Eigen::ArrayXXd, Image>> future;
+    std::thread thread;
 
     // Next matrix to render
     Task next;

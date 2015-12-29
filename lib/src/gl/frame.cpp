@@ -159,15 +159,21 @@ void Frame::startRender()
         // Apply the matrix transform to the tree
         tree->setMatrix(glm::inverse(next.mat));
 
-        // Then kick off an async render operation
-        // (also responsible for cleaning up the Region allocated above)
+        // Swap around render tasks
         pending = next;
         next.reset();
-        future = std::async(std::launch::async, [=](){
+
+        // Then kick off an async render operation which sets a future and
+        // sends an empty glfw event when it is complete (also responsible
+        // for cleaning up the Region allocated above)
+        promise = decltype(promise)();
+        future = promise.get_future();
+        thread = std::thread([=](){
                 auto depth = Heightmap::Render(tree, *r);
                 auto shaded = Heightmap::Shade(tree, *r, depth);
                 delete r;
-                return std::make_pair(depth, shaded); });
+                this->promise.set_value(std::make_pair(depth, shaded));
+                glfwPostEmptyEvent(); });
     }
     // Schedule a refinement of the current render task
     else if (current.level > 1)
@@ -212,6 +218,9 @@ bool Frame::poll()
         // Swap tasks objects
         current = pending;
         pending.reset();
+
+        // Join the task
+        thread.join();
 
         // Attempt to kick off a new render
         startRender();

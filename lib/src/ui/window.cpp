@@ -57,6 +57,7 @@ void Window::addTree(Tree* t)
     while (incoming.load() != nullptr);
 
     incoming.store(t);
+    glfwPostEmptyEvent();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -184,11 +185,20 @@ void Window::draw() const
     glfwSwapBuffers(window);
 }
 
+void Window::run()
+{
+    while (!glfwWindowShouldClose(window))
+    {
+        poll();
+    }
+}
+
 void Window::poll()
 {
-    // Poll for and process events
-    glfwPollEvents();
+    // Block until a GLFW event occurs
+    glfwWaitEvents();
 
+    // Grab an incoming tree from the atomic pointer
     Tree* t = incoming.exchange(nullptr);
     if (t)
     {
@@ -197,7 +207,7 @@ void Window::poll()
         draw();
     }
 
-    // Poll for future changes
+    // Poll for render tasks that have finished
     for (auto f : frames)
     {
         if (f->poll())
