@@ -65,6 +65,8 @@ Frame::Frame(Tree* tree)
     assert(fs);
     assert(prog);
 
+    tree->parent = this;
+
     glGenTextures(1, &depth);
     glGenTextures(1, &norm);
 
@@ -89,6 +91,13 @@ Frame::Frame(Tree* tree)
 
 Frame::~Frame()
 {
+    if (thread.joinable())
+    {
+        thread.join();
+    }
+
+    delete tree;
+
     glDeleteTextures(1, &depth);
     glDeleteTextures(1, &norm);
     glDeleteBuffers(1, &vbo);
@@ -231,4 +240,10 @@ bool Frame::poll()
     {
         return false;
     }
+}
+
+bool Frame::running() const
+{
+    return future.valid() && future.wait_for(std::chrono::seconds(0)) ==
+                             std::future_status::timeout;
 }

@@ -87,7 +87,7 @@
 
 (define-public (cylinder-z base r height)
     "Creates a circle with the given base '(x y z), radius r, and height dz"
-    (let ((zmin (caadr base)))
+    (let ((zmin (caddr base)))
     (extrude-z (circle base r) zmin (+ zmin height))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

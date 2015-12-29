@@ -19,6 +19,9 @@ class Frame
 public:
     /*
      *  Constructor and destructor
+     *
+     *  On construction, takes ownership of the given Tree and sets
+     *  its parent pointer.
      */
     explicit Frame(Tree* tree);
     ~Frame();
@@ -38,6 +41,11 @@ public:
      *  Returns true if the parent window should redraw
      */
     bool poll();
+
+    /*
+     *  Returns true if the render thread is still running
+     */
+    bool running() const;
 
 protected:
     /*

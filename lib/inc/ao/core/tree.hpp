@@ -77,6 +77,9 @@ public:
      */
     std::string toShader() const;
 
+    /*  Pointer to a parent (used to decide who destroys the tree)  */
+    void* parent=nullptr;
+
 protected:
     /*
      *  Creates a row of the transform matrix

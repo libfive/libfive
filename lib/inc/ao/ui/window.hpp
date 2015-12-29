@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <map>
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
@@ -30,7 +31,13 @@ public:
      *  Adds a Frame to redraw the given shape asynchronously
      *  (will not take effect until the next poll() call)
      */
-    void addTree(Tree* t);
+    void addTree(std::string name, Tree* t);
+
+    /*
+     *  Clears existing frames asynchronously
+     *  (will not take effect until the next poll() call)
+     */
+    void clearFrames();
 
     /*
      *  Runs the window forever
@@ -105,7 +112,10 @@ protected:
     GLFWwindow* const window;
 
     /*  Atomic pointer to incoming tree  */
-    std::atomic<Tree*> incoming;
+    std::atomic<std::pair<std::string, Tree*>*> incoming;
+
+    /*  Set to true if frames should be cleared  */
+    std::atomic<bool> clear;
 
     /*  Width and height are of the framebuffer, rather than the window  *
      *  (to properly cope with high DPI monitors)                        */
@@ -128,5 +138,8 @@ protected:
 
     /*  Objects to draw in 3D viewport  */
     Axes axes;
-    std::list<Frame*> frames;
+    std::map<std::string, Frame*> frames;
+
+    /*  Frames that should be deleted once they are done rendering  */
+    std::list<Frame*> stale;
 };

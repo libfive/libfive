@@ -1,8 +1,11 @@
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include <boost/algorithm/string.hpp>
 #include <libguile.h>
+
+#include <efsw/include/efsw/efsw.hpp>
 
 #include "ao/core/store.hpp"
 #include "ao/core/tree.hpp"
@@ -13,11 +16,20 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
+static std::string scm_to_std_string(SCM s)
+{
+    auto ptr = scm_to_locale_string(s);
+    std::string out(ptr);
+    free(ptr);
+
+    return out;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 static Opcode symbol_to_opcode(SCM sym)
 {
-    char* str_ptr = scm_to_locale_string(scm_symbol_to_string(sym));
-    std::string str(str_ptr);
-    free(str_ptr);
+    auto str = scm_to_std_string(scm_symbol_to_string(sym));
 
     if (str == "add")           return OP_ADD;
     else if (str == "mul")      return OP_MUL;
@@ -55,9 +67,7 @@ static SCM tag_ptr(T* p, void (*finalizer)(void*)=NULL)
 template <class T>
 static T* untag_ptr(SCM ptr)
 {
-    char* str_ptr = scm_to_locale_string(scm_symbol_to_string(scm_car(ptr)));
-    std::string str(str_ptr);
-    free(str_ptr);
+    auto str = scm_to_std_string(scm_symbol_to_string(scm_car(ptr)));
 
     if (str != class_name<T>())
     {
@@ -134,7 +144,11 @@ static SCM token_op(SCM store, SCM op_sym, SCM args)
 
 static void tree_delete(void* ptr)
 {
-    delete static_cast<Tree*>(ptr);
+    auto t = static_cast<Tree*>(ptr);
+    if (t->parent == nullptr)
+    {
+        delete t;
+    }
 }
 
 static SCM tree_new(SCM store, SCM root)
@@ -167,9 +181,82 @@ static SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static SCM show_tree(SCM tree)
+static SCM show_tree(SCM name, SCM tree)
 {
-    Window::instance()->addTree(untag_ptr<Tree>(tree));
+    Window::instance()->addTree(scm_to_std_string(name),
+                                untag_ptr<Tree>(tree));
+    return SCM_ELISP_NIL;
+}
+
+static SCM window_clear()
+{
+    Window::instance()->clearFrames();
+    return SCM_ELISP_NIL;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+static void* exec_file(void* data)
+{
+    const std::string& txt = *static_cast<std::string*>(data);
+    scm_eval_string(scm_from_locale_string(txt.c_str()));
+    return nullptr;
+}
+
+class UpdateListener : public efsw::FileWatchListener
+{
+public:
+    UpdateListener(std::string filename) : target(filename) {}
+
+    void trigger()
+    {
+        std::ifstream file;
+        std::string txt;
+
+        file.open(target);
+        std::string line;
+        while (std::getline(file, line))
+        {
+            txt += line;
+        }
+
+        scm_with_guile(exec_file, (void*)&txt);
+    }
+
+    void handleFileAction(efsw::WatchID watchid, const std::string& dir,
+                          const std::string& filename, efsw::Action action,
+                          std::string old_filename="")
+    {
+        (void)dir;
+        (void)watchid;
+        (void)old_filename;
+
+        if (filename == target && action == efsw::Actions::Modified)
+        {
+            trigger();
+        }
+    }
+
+protected:
+    const std::string target;
+};
+
+static SCM watch_file(SCM dir, SCM file)
+{
+    static efsw::FileWatcher* file_watcher = new efsw::FileWatcher();
+
+    std::string dirname = scm_to_std_string(dir);
+    std::string filename = scm_to_std_string(file);
+
+    auto listener = new UpdateListener(filename);
+    listener->trigger();
+
+    if (file_watcher->addWatch(dirname, listener, false) == -1)
+    {
+        scm_misc_error("watch_file", "addWatch failed", SCM_EOL);
+    }
+
+    file_watcher->watch();
     return SCM_ELISP_NIL;
 }
 
@@ -197,30 +284,30 @@ static void populate_module(void* data)
     define("token-const", 2, (void*)token_const);
     define("token-op", 3, (void*)token_op);
 
-    define("show-tree", 1, (void*)show_tree);
+    define("show-tree", 2, (void*)show_tree);
+    define("watch-file", 2, (void*)watch_file);
+    define("clear-frames", 0, (void*)window_clear);
 }
 
 static void guile_hotpatch()
 {
     SCM v = scm_c_private_lookup("system repl common", "*version*");
 
-    char* str_ptr = scm_to_locale_string(scm_variable_ref(v));
-    std::string str(str_ptr);
-    free(str_ptr);
+    std::string str = scm_to_std_string(scm_variable_ref(v));
 
     // Patch ambiguity in the Guile startup message
     boost::replace_all(str, "This program", "Guile");
 
-    str = R"(         .8.           ,o888888o.
-        .888.       . 8888     `88.
-       :88888.     ,8 8888       `8b
-      . `88888.    88 8888        `8b
-     .8. `88888.   88 8888         88
-    .8`8. `88888.  88 8888         88
-   .8' `8. `88888. 88 8888        ,8P
-  .8'   `8. `88888.`8 8888       ,8P
- .888888888. `88888.` 8888     ,88'
-.8'       `8. `88888.  `8888888P'
+    str = R"(         .8.
+        .888.
+       :88888.          ,o8888o.
+      . `88888.      . 8888   `88.
+     .8. `88888.    ,8 8888     `8b
+    .8`8. `88888.   88 8888      `8b
+   .8' `8. `88888.  88 8888      ,8P
+  .8'   `8. `88888. `8 8888     ,8P
+ .888888888. `88888. ` 8888   ,88'
+.8'       `8. `88888.   `88888P'
        (c) 2015 Matt Keeter
 
 REPL is provided by )" + str;

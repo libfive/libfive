@@ -22,7 +22,7 @@ Window* Window::instance()
 ////////////////////////////////////////////////////////////////////////////////
 
 Window::Window()
-    : window(makeWindow(640, 480, "Hello!")), incoming(nullptr)
+    : window(makeWindow(640, 480, "Hello!")), incoming(nullptr), clear(false)
 {
     assert(window != nullptr);
 
@@ -39,7 +39,7 @@ Window::~Window()
 {
     for (auto f : frames)
     {
-        delete f;
+        delete f.second;
     }
     glfwDestroyWindow(window);
 }
@@ -51,12 +51,20 @@ void Window::resized(int w, int h)
     draw();
 }
 
-void Window::addTree(Tree* t)
+void Window::addTree(std::string name, Tree* t)
 {
+    auto ptr = new std::pair<std::string, Tree*>(name, t);
+
     // Loop waiting for the incoming tree to be claimed
     while (incoming.load() != nullptr);
 
-    incoming.store(t);
+    incoming.store(ptr);
+    glfwPostEmptyEvent();
+}
+
+void Window::clearFrames()
+{
+    clear.store(true);
     glfwPostEmptyEvent();
 }
 
@@ -135,7 +143,7 @@ void Window::render()
 {
     for (auto f : frames)
     {
-        f->render(M(), width, height, (width+height) / 2);
+        f.second->render(M(), width, height, (width+height) / 2);
     }
 }
 
@@ -177,8 +185,8 @@ void Window::draw() const
 
     for (auto f : frames)
     {
-        f->poll();
-        f->draw(m);
+        f.second->poll();
+        f.second->draw(m);
     }
     axes.draw(m);
 
@@ -199,10 +207,17 @@ void Window::poll()
     glfwWaitEvents();
 
     // Grab an incoming tree from the atomic pointer
-    Tree* t = incoming.exchange(nullptr);
-    if (t)
+    std::pair<std::string, Tree*>* in = incoming.exchange(nullptr);
+    if (in)
     {
-        frames.push_back(new Frame(t));
+        // If the name is already claimed, replace it
+        if (frames.count(in->first) != 0)
+        {
+            stale.push_back(frames[in->first]);
+        }
+        frames[in->first] = new Frame(in->second);
+        delete in;
+
         render();
         draw();
     }
@@ -210,9 +225,36 @@ void Window::poll()
     // Poll for render tasks that have finished
     for (auto f : frames)
     {
-        if (f->poll())
+        if (f.second->poll())
         {
             draw();
+        }
+    }
+
+    // If the clear flag is set, mark all frames as stale
+    if (clear.load())
+    {
+        clear.store(false);
+        for (auto f : frames)
+        {
+            stale.push_back(f.second);
+        }
+        frames.clear();
+        draw();
+    }
+
+    // Check all stale frames to see if they can be pruned
+    auto itr = stale.begin();
+    while (itr != stale.end())
+    {
+        if (!(*itr)->running())
+        {
+            delete *itr;
+            itr = stale.erase(itr);
+        }
+        else
+        {
+            itr++;
         }
     }
 }
