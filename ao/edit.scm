@@ -23,6 +23,6 @@
 (define-public (ao-edit file)
     " Watch and edit the given file "
     (ao-watch file)
-    (system (cond ((getenv "TMUX") (string-append "tmux split-window -b $EDITOR "
-                                                  file))
-                  (else (string-append "$EDITOR " file)))))
+    (if (getenv "TMUX")
+        (system (string-append "tmux split-window -b $EDITOR " file))
+        (warn "Could not detect tmux session")))
