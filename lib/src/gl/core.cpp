@@ -37,6 +37,7 @@ GLFWwindow* makeWindow(int width, int height, std::string title)
     glfwDefaultWindowHints();
     setWindowHints();
     glfwWindowHint(GLFW_FLOATING, GL_TRUE);
+    glfwWindowHint(GLFW_FOCUSED, GL_FALSE);
     //glfwWindowHint(GLFW_DECORATED, GL_FALSE);
 
     auto out = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);

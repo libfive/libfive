@@ -70,14 +70,19 @@ void Window::clearFrames()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Window::mouseMove(double x, double y)
+glm::vec2 Window::scaledMousePos(double x, double y) const
 {
     int w;
     int h;
     glfwGetWindowSize(window, &w, &h);
 
+    return glm::vec2((2*x)/w - 1, 1 - (2*y)/h);
+}
+
+void Window::mouseMove(double x, double y)
+{
     // Scale coordinates to the range -1, 1
-    auto new_pos = glm::vec2((2*x)/w - 1, 1 - (2*y)/h);
+    auto new_pos = scaledMousePos(x, y);
 
     // If we're panning, adjust the center position
     if (drag_mode == WINDOW_DRAG_PAN)
@@ -124,6 +129,11 @@ void Window::mouseButton(int button, int action, int mods)
     {
         drag_mode = WINDOW_DRAG_NONE;
     }
+
+    double x;
+    double y;
+    glfwGetCursorPos(window, &x, &y);
+    mouse_pos = scaledMousePos(x, y);
 }
 
 void Window::mouseScroll(double sx, double sy)
@@ -167,7 +177,7 @@ glm::mat4 Window::view() const
 {
     glm::mat4 m = glm::scale(glm::vec3(scale, scale, scale));;
     m = glm::rotate(m, pitch,  {1.0, 0.0, 0.0});
-    m = glm::rotate(m, roll, {0.0, 1.0, 0.0});
+    m = glm::rotate(m, roll, {0.0, 0.0, 1.0});
     m = glm::translate(m, center);
 
     return m;
@@ -182,6 +192,7 @@ void Window::draw() const
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
 
     for (auto f : frames)
     {

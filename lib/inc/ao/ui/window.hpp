@@ -85,6 +85,11 @@ protected:
     glm::mat4 M() const { return proj() * view(); }
 
     /*
+     *  Returns a mouse position scaled to the range -1, 1
+     */
+    glm::vec2 scaledMousePos(double x, double y) const;
+
+    /*
      *  Resized window callback
      */
     static void _resized(GLFWwindow* window, int w, int h);
@@ -126,8 +131,8 @@ protected:
      *  (Euler angles aren't the best representation, but they're easy)  */
     glm::vec3 center;
     float scale=1;
-    float pitch=0;
-    float  roll=0;
+    float pitch=-3*M_PI/4;
+    float  roll=M_PI/6;
 
     enum { WINDOW_DRAG_NONE,
            WINDOW_DRAG_PAN,

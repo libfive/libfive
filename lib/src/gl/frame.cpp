@@ -133,9 +133,7 @@ void Frame::draw(const glm::mat4& m) const
     glUniform1i(glGetUniformLocation(prog, "norm"), 1);
 
     // Draw the quad!
-    glEnable(GL_DEPTH_TEST);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glDisable(GL_DEPTH_TEST);
 
     glBindVertexArray(0);
 }
@@ -165,8 +163,10 @@ void Frame::startRender()
         Region* r = new Region({-1, 1}, {-1, 1}, {-1, 1},
                                next.ni/div, next.nj/div, next.nk/div);
 
-        // Apply the matrix transform to the tree
-        tree->setMatrix(glm::inverse(next.mat));
+        // Compensate for the fact that OpenGL is a left-handed system
+        // then apply the matrix to the tree
+        auto m_ = glm::scale(glm::inverse(next.mat), glm::vec3(1, 1, -1));
+        tree->setMatrix(m_);
 
         // Swap around render tasks
         pending = next;

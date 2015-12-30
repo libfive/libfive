@@ -14,13 +14,11 @@ layout(location=1) in vec3 color;
 uniform mat4 m;
 
 out vec3 frag_color;
-out float frac;
 
 void main()
 {
     gl_Position = m * vec4(vertex_position, 1.0f);
     frag_color = color;
-    frac = vertex_position.x + vertex_position.y + vertex_position.z;
 }
 )";
 
@@ -30,16 +28,11 @@ const std::string Axes::frag = R"(
 
 in vec3 frag_color;
 in float frac;
-uniform int dotted;
 
 out vec4 fragColor;
 
 void main()
 {
-    if (dotted == 1 && mod(frac * 20.0f, 1.0f) >= 0.8f)
-    {
-        discard;
-    }
     fragColor = vec4(frag_color, 1.0f);
 }
 )";
@@ -58,15 +51,89 @@ Axes::Axes()
     glGenBuffers(1, &vbo);
     glGenVertexArrays(1, &vao);
 
+    const float o = 0.05;
     glBindVertexArray(vao);
     {
-        // Data is arranged  x    y     z     r     g     b
-        GLfloat data[] = {0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                          1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                          0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-                          0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-                          0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-                          0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f};
+        // Data is arranged  x   y   z   r   g   b
+        GLfloat data[] = {   /********************/
+                             /*    X axis        */
+                             o,  o,  o,  1,  0,  0,
+                             o, -o,  o,  1,  0,  0,
+                             1,  0,  0,  1,  0,  0,
+
+                             o,  o, -o,  1,  0,  0,
+                             o, -o, -o,  1,  0,  0,
+                             1,  0,  0,  1,  0,  0,
+
+                             o,  o,  o,  1,  0,  0,
+                             o,  o, -o,  1,  0,  0,
+                             1,  0,  0,  1,  0,  0,
+
+                             o, -o,  o,  1,  0,  0,
+                             o, -o, -o,  1,  0,  0,
+                             1,  0,  0,  1,  0,  0,
+                             /********************/
+                             /*    Y axis        */
+                             o,  o,  o,  0,  1,  0,
+                            -o,  o,  o,  0,  1,  0,
+                             0,  1,  0,  0,  1,  0,
+
+                             o,  o, -o,  0,  1,  0,
+                            -o,  o, -o,  0,  1,  0,
+                             0,  1,  0,  0,  1,  0,
+
+                             o,  o,  o,  0,  1,  0,
+                             o,  o, -o,  0,  1,  0,
+                             0,  1,  0,  0,  1,  0,
+
+                            -o,  o,  o,  0,  1,  0,
+                            -o,  o, -o,  0,  1,  0,
+                             0,  1,  0,  0,  1,  0,
+                             /********************/
+                             /*    Z axis        */
+                             o,  o,  o,  0,  0,  1,
+                            -o,  o,  o,  0,  0,  1,
+                             0,  0,  1,  0,  0,  1,
+
+                             o, -o,  o,  0,  0,  1,
+                            -o, -o,  o,  0,  0,  1,
+                             0,  0,  1,  0,  0,  1,
+
+                             o,  o,  o,  0,  0,  1,
+                             o, -o,  o,  0,  0,  1,
+                             0,  0,  1,  0,  0,  1,
+
+                            -o,  o,  o,  0,  0,  1,
+                            -o, -o,  o,  0,  0,  1,
+                             0,  0,  1,  0,  0,  1,
+                             /********************/
+                             /*    Base cube     */
+                             o,  o, -o,  1,  1,  1,
+                             o, -o, -o,  1,  1,  1,
+                            -o,  o, -o,  1,  1,  1,
+
+                            -o, -o,  o,  1,  1,  1,
+                            -o,  o,  o,  1,  1,  1,
+                            -o,  o, -o,  1,  1,  1,
+
+                            -o, -o,  o,  1,  1,  1,
+                             o, -o, -o,  1,  1,  1,
+                             o, -o,  o,  1,  1,  1,
+
+                            -o, -o, -o,  1,  1,  1,
+                             o, -o, -o,  1,  1,  1,
+                            -o,  o, -o,  1,  1,  1,
+
+                            -o, -o,  o,  1,  1,  1,
+                            -o, -o, -o,  1,  1,  1,
+                            -o,  o, -o,  1,  1,  1,
+
+                            -o, -o,  o,  1,  1,  1,
+                             o, -o, -o,  1,  1,  1,
+                            -o, -o, -o,  1,  1,  1,
+
+
+        };
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(data),
                      data, GL_STATIC_DRAW);
@@ -99,16 +166,6 @@ void Axes::draw(const glm::mat4& m) const
     glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm::value_ptr(m));
 
     glBindVertexArray(vao);
-
-    // Draw once with depth test and non-dotted lines
-    glEnable(GL_DEPTH_TEST);
-    glUniform1i(glGetUniformLocation(prog, "dotted"), 0);
-    glDrawArrays(GL_LINES, 0, 6);
-
-    // Then draw again without depth test and with dotted lines
-    glDisable(GL_DEPTH_TEST);
-    glUniform1i(glGetUniformLocation(prog, "dotted"), 1);
-    glDrawArrays(GL_LINES, 0, 6);
-
+    glDrawArrays(GL_TRIANGLES, 0, 54);
     glBindVertexArray(0);
 }
