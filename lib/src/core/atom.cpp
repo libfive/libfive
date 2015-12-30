@@ -155,6 +155,7 @@ std::string Atom::toShader(size_t index,
         return std::string(); };
     std::string sa = get(a);
     std::string sb = get(b);
+    std::string sc = get(cond);
 
     switch (op)
     {
@@ -166,6 +167,9 @@ std::string Atom::toShader(size_t index,
         case OP_DIV:    out += "(" + sa + " / " + sb + ")";     break;
         case OP_SQRT:   out += "sqrt(" + sa + ", " + sb + ")";  break;
         case OP_NEG:    out += "(-" + sa + ", " + sb + ")";     break;
+
+        case COND_LZ:   out += "(" + sc + " < 0 ? " + sa + " : " + sb + ")";
+                        break;
 
         case OP_X:  // Fallthrough!
         case OP_Y:
@@ -198,6 +202,9 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case OP_X:      os << "X"; break;
         case OP_Y:      os << "Y"; break;
         case OP_Z:      os << "Z"; break;
+
+        case COND_LZ:   os << "(" << *atom.cond << " < 0 ? "
+                                  << *atom.a << " : " << *atom.b << ")"; break;
 
         case LAST_OP:   // Fallthrough!
         case INVALID:   assert(false);

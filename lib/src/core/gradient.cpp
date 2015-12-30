@@ -76,3 +76,8 @@ Gradient operator-(const Gradient& a)
 {
     return Gradient(-a.v, -a.dx, -a.dy, -a.dz);
 }
+
+bool operator<(const Gradient& a, const int& b)
+{
+    return a.v < b;
+}

@@ -66,6 +66,12 @@ inline void Tree::evalAtom(Atom* m, size_t count)
             TREE_ATOM_LOOP
             m->result.set<T>(-m->a->result.get<T>(i), i);
             break;
+        case COND_LZ:
+            TREE_ATOM_LOOP
+            m->result.set<T>(m->cond->result.get<T>(i) < 0
+                              ? m->a->result.get<T>(i)
+                              : m->b->result.get<T>(i), i);
+            break;
         case INVALID:
         case OP_CONST:
         case OP_MUTABLE:

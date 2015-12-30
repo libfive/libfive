@@ -30,3 +30,13 @@ TEST_CASE("Interval evaluation")
     REQUIRE(out.lower() == 2.0);
     REQUIRE(out.upper() == 3.0);
 }
+
+TEST_CASE("Condition statement")
+{
+    Store s;
+    Tree t(&s, s.operation(COND_LZ, s.constant(1), s.constant(2), s.X()));
+
+    REQUIRE(t.eval(1.0, 0.0, 0.0) == 2);
+    REQUIRE(t.eval(0.0, 0.0, 0.0) == 2);
+    REQUIRE(t.eval(-1.0, 0.0, 0.0) == 1);
+}
