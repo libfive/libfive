@@ -170,3 +170,8 @@ The center of rotation is 0,0 or specified by optional argument '(x0 y0)"
     "Scales a shape by sz on the z axis about 0 or an optional argument z0"
     (let ((z0 (if (> (length args) 0) (car args) 0)))
     (lambda (x y z) (shape x y (+ z0 (/ (- z z0) sz))))))
+
+(define-public (shear-x-y shape ymin ymax dx0 dx1)
+    " Shears a shape in the XY plane "
+    (lambda (x y z) (shape (- x dx0 (* (- dx1 dx0) (/ (- y ymin)
+                                                      (- ymax ymin)))) y z)))
