@@ -5,8 +5,6 @@
 #error "Cannot include .ipp file on its own"
 #endif
 
-#define TREE_ATOM_LOOP for (size_t i=0; i < count; ++i)
-
 ////////////////////////////////////////////////////////////////////////////////
 /*
  *  std::min and std::max misbehave when given Intervals, so we overload
@@ -23,6 +21,8 @@ inline double _max(const double& a, const double& b)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+#define TREE_ATOM_LOOP for (size_t i=0; i < count; ++i)
 
 template <class T>
 inline void Tree::evalAtom(Atom* m, size_t count)

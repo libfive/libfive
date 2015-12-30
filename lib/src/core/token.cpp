@@ -3,16 +3,17 @@
 
 #include "ao/core/token.hpp"
 
-Token::Token(Opcode op, Token* a, Token* b)
+Token::Token(Opcode op, Token* a, Token* b, Token* cond)
     : op(op), weight(std::max(a ? a->weight + 1 : 0,
-                              b ? b->weight + 1 : 0)),
-      value(nan("")), a(a), b(b)
+                     std::max(b ? b->weight + 1 : 0,
+                              cond ? cond->weight + 1 : 0))),
+      value(nan("")), a(a), b(b), cond(cond)
 {
     // Nothing to do here
 }
 
 Token::Token(double v)
-    : op(OP_CONST), weight(0), value(v), a(nullptr), b(nullptr)
+    : op(OP_CONST), weight(0), value(v), a(nullptr), b(nullptr), cond(nullptr)
 {
     // Nothing to do here
 }

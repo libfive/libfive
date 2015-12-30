@@ -87,6 +87,9 @@ protected:
     Atom* const a;
     Atom* const b;
 
+    /*  Populated for conditional operators  */
+    Atom* const cond;
+
     /*  Results are stored in a union */
     Result result;
 
