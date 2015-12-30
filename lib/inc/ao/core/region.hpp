@@ -25,6 +25,8 @@ public:
 
     /*
      *  Splits the region along its largest axis
+     *
+     *  The returned regions become invalid if their parent is destroyed
      */
     std::pair<Region, Region> split() const;
 
@@ -68,9 +70,11 @@ public:
         const size_t min;
         const size_t size;
 
-        /*  This is a pointer into a vector of positions in the region.   *
-         *  It points into the vec member of the top Region in the tree.  */
+        /*  This is a pointer into an array of voxel positions  */
         double* const ptr;
+
+        /*  Root is set as true if we allocated ptr in this instance,   *
+         *  false otherwise (controls whether the destructor frees it)  */
         const bool root;
 
     protected:
