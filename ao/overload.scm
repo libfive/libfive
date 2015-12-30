@@ -86,3 +86,15 @@
            (export! f)))
 
 (wrap-unary sqrt 'sqrt)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-public (cond-lz c a b)
+    " Returns a function of the form (c x y z) < 0 ? (a x y z) : (b x y z) "
+    (lambda (x y z)
+    (let ((rc (c x y z))
+          (ra (a x y z))
+          (rb (b x y z)))
+        (if (every number? (list rc ra rb))
+            (if (< rc 0) ra rb)
+            (make-token 'lz ra rb rc)))))
