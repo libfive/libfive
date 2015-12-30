@@ -21,8 +21,13 @@ void efPRINTC	( unsigned int cond, const char * format, ... );
 #define efASSERTM( expr, msg )
 
 #ifndef EFSW_COMPILER_MSVC
-	#define efPRINT( format, args... ) {}
-	#define efPRINTC( cond, format, args... ) {}
+	#ifndef __clang__
+		#define efPRINT( format, args... ) {}
+		#define efPRINTC( cond, format, args... ) {}
+	#else
+		#define efPRINT(...) {}
+		#define efPRINTC(...) {}
+	#endif
 #else
 	#define efPRINT
 	#define efPRINTC
@@ -36,8 +41,13 @@ void efPRINTC	( unsigned int cond, const char * format, ... );
 #else
 
 	#ifndef EFSW_COMPILER_MSVC
-		#define efDEBUG( format, args... ) {}
-		#define efDEBUGC( cond, format, args... ) {}
+		#ifndef __clang__
+			#define efDEBUG( format, args... ) {}
+			#define efDEBUGC( cond, format, args... ) {}
+		#else
+			#define efDEBUG(...) {}
+			#define efDEBUGC(...) {}
+		#endif
 	#else
 		#define efDEBUG
 		#define efDEBUGC
