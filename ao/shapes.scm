@@ -10,7 +10,7 @@
     (move (lambda (x y z) (- (sqrt (+ (* x x) (* y y))) r))
           center))
 
-(define-public (rect a b)
+(define-public (rectangle a b)
     " Constructs a rectangle from two '(x y) lists representing corners "
     (let* ((xa (car a))
            (xb (car b))
@@ -83,7 +83,7 @@
 
 (define-public (cube a b)
     "Defines a cube with corners a and b, each a list '(x y z)"
-    (extrude-z (rect a b) (caddr a) (caddr b)))
+    (extrude-z (rectangle a b) (caddr a) (caddr b)))
 
 (define-public (cylinder-z base r height)
     "Creates a circle with the given base '(x y z), radius r, and height dz"

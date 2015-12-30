@@ -32,7 +32,7 @@ A symbol and further arguments are converted to an operation"
     (and (pair? i) (not (list? i)) (number? (car i)) (number? (cdr i))))
 
 (define-public (wrap-tree t)
-    " Wraps a bare tree pointer in a callable interface "
+    " Wraps a tagged tree pointer in a callable interface "
     (lambda (x y z) ;; Generic evaluator that dispatches based on argument type
         (cond ((every interval? (list x y z))
                     (tree-eval-interval t x y z))
