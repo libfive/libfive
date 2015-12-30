@@ -97,8 +97,8 @@ void Window::mouseMove(double x, double y)
     }
     else if (drag_mode == WINDOW_DRAG_ROTATE)
     {
-        roll += mouse_pos.x - new_pos.x;
-        pitch += new_pos.y - mouse_pos.y;
+        roll -= mouse_pos.x - new_pos.x;
+        pitch -= new_pos.y - mouse_pos.y;
         render();
     }
 

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <map>
+#include <cmath>
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
@@ -131,8 +132,8 @@ protected:
      *  (Euler angles aren't the best representation, but they're easy)  */
     glm::vec3 center;
     float scale=1;
-    float pitch=-3*M_PI/4;
-    float  roll=M_PI/6;
+    float pitch=0;
+    float  roll=0;
 
     enum { WINDOW_DRAG_NONE,
            WINDOW_DRAG_PAN,
