@@ -9,6 +9,8 @@
 
 TEST_CASE("2D rendering of a circle")
 {
+    std::atomic<bool> abort(false);
+
     Store s;
     Tree t(&s, s.operation(OP_SUB,
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
@@ -32,7 +34,7 @@ TEST_CASE("2D rendering of a circle")
     SECTION("Empty Z")
     {
         Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
-        auto out = Heightmap::Render(&t, r);
+        auto out = Heightmap::Render(&t, r, abort);
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
@@ -40,7 +42,7 @@ TEST_CASE("2D rendering of a circle")
     SECTION("Zero-resolution Z")
     {
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 5, 5, 0);
-        auto out = Heightmap::Render(&t, r);
+        auto out = Heightmap::Render(&t, r, abort);
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
@@ -48,6 +50,8 @@ TEST_CASE("2D rendering of a circle")
 
 TEST_CASE("2D interval Z values")
 {
+    std::atomic<bool> abort(false);
+
     Store s;
     Tree t(&s, s.operation(OP_SUB,
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
@@ -55,7 +59,7 @@ TEST_CASE("2D interval Z values")
                s.constant(1)));
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 0);
 
-    auto out = Heightmap::Render(&t, r);
+    auto out = Heightmap::Render(&t, r, abort);
     CAPTURE(out);
     REQUIRE((out == 0 ||
              out == -std::numeric_limits<double>::infinity()).all());
@@ -63,6 +67,8 @@ TEST_CASE("2D interval Z values")
 
 TEST_CASE("3D interval Z values")
 {
+    std::atomic<bool> abort(false);
+
     Store s;
     Tree t(&s, s.operation(OP_SUB,
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
@@ -70,7 +76,7 @@ TEST_CASE("3D interval Z values")
                s.constant(1)));
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 25);
 
-    auto out = Heightmap::Render(&t, r);
+    auto out = Heightmap::Render(&t, r, abort);
     CAPTURE(out);
     REQUIRE((out == r.Z.pos(r.Z.size - 1) ||
              out == -std::numeric_limits<double>::infinity()).all());
@@ -78,6 +84,8 @@ TEST_CASE("3D interval Z values")
 
 TEST_CASE("Render orientation")
 {
+    std::atomic<bool> abort(false);
+
     Store s;
     Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
 
@@ -89,7 +97,7 @@ TEST_CASE("Render orientation")
                                        s.operation(OP_MUL, s.Y(), s.Y())),
                    s.constant(1)), s.Y()));
 
-        auto out = Heightmap::Render(&t, r);
+        auto out = Heightmap::Render(&t, r, abort);
 
         Eigen::ArrayXXd comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
@@ -117,7 +125,7 @@ TEST_CASE("Render orientation")
                                        s.operation(OP_MUL, s.Y(), s.Y())),
                    s.constant(1)), s.X()));
 
-        auto out = Heightmap::Render(&t, r);
+        auto out = Heightmap::Render(&t, r, abort);
 
         Eigen::ArrayXXd comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
@@ -140,6 +148,8 @@ TEST_CASE("Render orientation")
 
 TEST_CASE("Render shape")
 {
+    std::atomic<bool> abort(false);
+
     Store s;
     Tree t(&s, s.operation(OP_SUB,
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
@@ -149,14 +159,14 @@ TEST_CASE("Render shape")
     SECTION("X")
     {
         Region r({0, 1}, {-1, 1}, {0, 0}, 5);
-        auto out = Heightmap::Render(&t, r);
+        auto out = Heightmap::Render(&t, r, abort);
         REQUIRE(out.rows() == 10);
         REQUIRE(out.cols() == 5);
     }
     SECTION("Y")
     {
         Region r({-1, 1}, {0, 1}, {0, 0}, 5);
-        auto out = Heightmap::Render(&t, r);
+        auto out = Heightmap::Render(&t, r, abort);
         REQUIRE(out.rows() == 5);
         REQUIRE(out.cols() == 10);
     }
@@ -164,6 +174,8 @@ TEST_CASE("Render shape")
 
 TEST_CASE("3D rendering of a sphere")
 {
+    std::atomic<bool> abort(false);
+
     Store s;
     Tree t(&s, s.operation(OP_SUB,
                s.operation(OP_ADD,
@@ -175,7 +187,7 @@ TEST_CASE("3D rendering of a sphere")
     SECTION("Values")
     {
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
-        auto out = Heightmap::Render(&t, r);
+        auto out = Heightmap::Render(&t, r, abort);
 
         Eigen::ArrayXXd comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
@@ -203,7 +215,7 @@ TEST_CASE("3D rendering of a sphere")
         start = std::chrono::system_clock::now();
 
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 100);
-        auto out = Heightmap::Render(&t, r);
+        auto out = Heightmap::Render(&t, r, abort);
 
         end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed = end - start;
@@ -228,6 +240,8 @@ TEST_CASE("3D rendering of a sphere")
 
 TEST_CASE("2D rendering with normals")
 {
+    std::atomic<bool> abort(false);
+
     Store s;
 
     Region r({-1, 1}, {-1, 1}, {0}, 5);
@@ -235,8 +249,8 @@ TEST_CASE("2D rendering with normals")
     SECTION("X")
     {
         Tree t(&s, s.X());
-        auto depth = Heightmap::Render(&t, r);
-        auto norm = Heightmap::Shade(&t, r, depth, false);
+        auto depth = Heightmap::Render(&t, r, abort);
+        auto norm = Heightmap::Shade(&t, r, depth, abort, false);
 
         CAPTURE(norm);
         REQUIRE((norm == 0xff7f7fff || norm == 0).all());
@@ -245,8 +259,8 @@ TEST_CASE("2D rendering with normals")
     SECTION("-X")
     {
         Tree t(&s, s.operation(OP_NEG, s.X()));
-        auto depth = Heightmap::Render(&t, r);
-        auto norm = Heightmap::Shade(&t, r, depth, false);
+        auto depth = Heightmap::Render(&t, r, abort);
+        auto norm = Heightmap::Shade(&t, r, depth, abort, false);
 
         CAPTURE(norm);
         REQUIRE((norm == 0xff7f7f00 || norm == 0).all());
@@ -255,8 +269,8 @@ TEST_CASE("2D rendering with normals")
     SECTION("Y")
     {
         Tree t(&s, s.Y());
-        auto depth = Heightmap::Render(&t, r);
-        auto norm = Heightmap::Shade(&t, r, depth, false);
+        auto depth = Heightmap::Render(&t, r, abort);
+        auto norm = Heightmap::Shade(&t, r, depth, abort, false);
 
         CAPTURE(norm);
         REQUIRE((norm == 0xff7fff7f || norm == 0).all());
@@ -266,6 +280,8 @@ TEST_CASE("2D rendering with normals")
 
 TEST_CASE("Normal clipping")
 {
+    std::atomic<bool> abort(false);
+
     Store s;
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
     Tree t(&s, s.operation(OP_SUB,
@@ -273,8 +289,8 @@ TEST_CASE("Normal clipping")
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
 
-    auto depth = Heightmap::Render(&t, r);
-    auto norm = Heightmap::Shade(&t, r, depth);
+    auto depth = Heightmap::Render(&t, r, abort);
+    auto norm = Heightmap::Shade(&t, r, depth, abort);
 
     CAPTURE(norm);
     REQUIRE((norm == 0xffff7f7f || norm == 0).all());

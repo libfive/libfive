@@ -164,12 +164,12 @@ glm::mat4 Window::proj() const
     if (width > height)
     {
         const float frac = height/float(width);
-        return glm::scale(glm::vec3(frac, 1.0, frac));
+        return glm::scale(glm::vec3(frac, 1.0, -frac));
     }
     else
     {
         const float frac = width/float(height);
-        return glm::scale(glm::vec3(1.0, frac, frac));
+        return glm::scale(glm::vec3(1.0, frac, -frac));
     }
 }
 

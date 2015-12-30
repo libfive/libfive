@@ -38,8 +38,15 @@ static void pixels(Tree* t, const Region& r, Eigen::ArrayXXd& img)
 /*
  * Helper function that reduces a particular matrix block
  */
-static void recurse(Tree* t, const Region& r, Eigen::ArrayXXd& img)
+static void recurse(Tree* t, const Region& r, Eigen::ArrayXXd& img,
+                    const std::atomic<bool>& abort)
 {
+    // Stop rendering if the abort flag is set
+    if (abort.load())
+    {
+        return;
+    }
+
     // Extract the block of the image that's being inspected
     auto block = img.block(r.Y.min, r.X.min, r.Y.size, r.X.size);
 
@@ -77,24 +84,25 @@ static void recurse(Tree* t, const Region& r, Eigen::ArrayXXd& img)
 
         // Since the higher Z region is in the second item of the
         // split, evaluate rs.second then rs.first
-        recurse(t, rs.second, img);
-        recurse(t, rs.first, img);
+        recurse(t, rs.second, img, abort);
+        recurse(t, rs.first, img, abort);
 
         // Re-enable disabled nodes from the tree
         t->pop();
     }
 }
 
-Eigen::ArrayXXd Render(Tree* t, Region r)
+Eigen::ArrayXXd Render(Tree* t, Region r, const std::atomic<bool>& abort)
 {
     auto img = Eigen::ArrayXXd(r.Y.size, r.X.size);
     img.fill(-std::numeric_limits<double>::infinity());
 
-    recurse(t, r, img);
+    recurse(t, r, img, abort);
     return img;
 }
 
-Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth, bool clip)
+Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth,
+            const std::atomic<bool>& abort, bool clip)
 {
     auto img = Image(r.Y.size, r.X.size);
     img.fill(0);
@@ -129,6 +137,12 @@ Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth, bool clip)
 
     for (int row=0; row < depth.rows(); ++row)
     {
+        // Escape out of the loop if the abort flag is set
+        if (abort.load())
+        {
+            break;
+        }
+
         const double y = r.Y.pos(row);
         for (int col=0; col < depth.cols(); ++col)
         {

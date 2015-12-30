@@ -192,13 +192,13 @@ void Axes::draw(const glm::mat4& m) const
     glUniformMatrix4fv(glGetUniformLocation(prog, "m"),
                        1, GL_FALSE, glm::value_ptr(m));
 
-    glBindVertexArray(vao_solid);
-    glDrawArrays(GL_TRIANGLES, 0, 54);
-
     glDisable(GL_DEPTH_TEST);
     glBindVertexArray(vao_wire);
     glDrawArrays(GL_LINES, 0, 6);
     glEnable(GL_DEPTH_TEST);
+
+    glBindVertexArray(vao_solid);
+    glDrawArrays(GL_TRIANGLES, 0, 54);
 
     glBindVertexArray(0);
 }

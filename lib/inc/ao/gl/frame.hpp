@@ -4,10 +4,9 @@
 #include <future>
 
 #include <glm/mat4x4.hpp>
-#include <Eigen/Dense>
 
 #include "ao/gl/core.hpp"
-#include "ao/render/heightmap.hpp"
+#include "ao/ui/task.hpp"
 
 class Tree;
 
@@ -58,30 +57,8 @@ protected:
     /*
      *  Represents a render task
      */
-    struct Task
-    {
-        /* Constructors */
-        Task() : ni(0), nj(0), nk(0), level(0) {}
-        Task(const glm::mat4& m, size_t ni, size_t nj, size_t nk, int level)
-            : mat(m), ni(ni), nj(nj), nk(nk), level(level) {}
 
-        /* Mark the task as invalid */
-        void reset() { level = 0; }
-
-        /* Check if the task is valid */
-        bool valid() const { return level > 0; }
-
-        /* Transform matrix associated with the task */
-        glm::mat4 mat;
-
-        /* Voxel size associated with the task */
-        size_t ni, nj, nk;
-
-        /* Subdivision level (1 is highest resolution) */
-        size_t level;
-    };
-
-    Tree* const tree;
+    std::unique_ptr<Tree> const tree;
 
     GLuint vs;  // Vertex shader
     GLuint fs;  // Fragment shader
@@ -93,16 +70,14 @@ protected:
     GLuint depth;  // Depth texture
     GLuint norm;   // Normals texture
 
-    // Represents the current render task
+    // Completed render task
     Task current;
 
-    // Active render task
+    // Active render task and worker
     Task pending;
-    std::promise<std::pair<Eigen::ArrayXXd, Image>> promise;
-    std::future<std::pair<Eigen::ArrayXXd, Image>> future;
-    std::thread thread;
+    std::unique_ptr<Worker> worker;
 
-    // Next matrix to render
+    // Next render task
     Task next;
 
     // Shader source strings

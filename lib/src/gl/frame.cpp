@@ -7,6 +7,8 @@
 #include "ao/core/region.hpp"
 #include "ao/core/tree.hpp"
 
+#include "ao/ui/worker.hpp"
+
 #include "ao/render/heightmap.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -105,13 +107,6 @@ Frame::Frame(Tree* tree)
 
 Frame::~Frame()
 {
-    if (thread.joinable())
-    {
-        thread.join();
-    }
-
-    delete tree;
-
     glDeleteTextures(1, &depth);
     glDeleteTextures(1, &norm);
     glDeleteBuffers(1, &vbo);
@@ -156,8 +151,20 @@ void Frame::draw(const glm::mat4& m) const
 
 void Frame::render(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
 {
-    next = Task(m, ni, nj, nk, 8);
-    if (!future.valid())
+    const float DEFAULT_LEVEL = 8;
+
+    next = Task(tree.get(), m, ni, nj, nk, DEFAULT_LEVEL);
+
+    // If a task is running and isn't a min-resolution render action,
+    // set the abort flag so that it stops early
+    if (worker)
+    {
+        if (pending.level < DEFAULT_LEVEL)
+        {
+            worker->halt();
+        }
+    }
+    else
     {
         startRender();
     }
@@ -165,38 +172,16 @@ void Frame::render(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
 
 void Frame::startRender()
 {
-    assert(!future.valid());
     assert(!pending.valid());
+    assert(worker == nullptr);
 
     // Start up the next render task
     if (next.valid())
     {
-        // Create the target region for rendering
-        // (allocated on the heap so it can persist)
-        double div = 2.0 * next.level;
-        Region* r = new Region({-1, 1}, {-1, 1}, {-1, 1},
-                               next.ni/div, next.nj/div, next.nk/div);
-
-        // Compensate for the fact that OpenGL is a left-handed system
-        // then apply the matrix to the tree
-        auto m_ = glm::scale(glm::inverse(next.mat), glm::vec3(1, 1, -1));
-        tree->setMatrix(m_);
-
-        // Swap around render tasks
+        // Swap around render tasks and start an async worker
         pending = next;
+        worker.reset(next.start());
         next.reset();
-
-        // Then kick off an async render operation which sets a future and
-        // sends an empty glfw event when it is complete (also responsible
-        // for cleaning up the Region allocated above)
-        promise = decltype(promise)();
-        future = promise.get_future();
-        thread = std::thread([=](){
-                auto depth = Heightmap::Render(tree, *r);
-                auto shaded = Heightmap::Shade(tree, *r, depth);
-                delete r;
-                this->promise.set_value(std::make_pair(depth, shaded));
-                glfwPostEmptyEvent(); });
     }
     // Schedule a refinement of the current render task
     else if (current.level > 1)
@@ -209,41 +194,18 @@ void Frame::startRender()
 
 bool Frame::poll()
 {
-    if(!future.valid())
+    if (worker == nullptr)
     {
         return false;
     }
-
-    std::future_status status = future.wait_for(std::chrono::seconds(0));
-    if (status == std::future_status::ready)
+    else if (worker->poll(depth, norm))
     {
-        // Get the resulting matrix
-        auto out = future.get();
-        Eigen::ArrayXXf d = out.first.cast<float>().transpose();
-        Image s = out.second.transpose();
-
-        // Pack the Eigen matrices into an OpenGL texture
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depth);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, d.rows(), d.cols(),
-                0, GL_RED, GL_FLOAT, d.data());
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-        glActiveTexture(GL_TEXTURE0 + 1);
-        glBindTexture(GL_TEXTURE_2D, norm);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, s.rows(), s.cols(),
-                0, GL_RGBA, GL_UNSIGNED_BYTE, s.data());
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
         // Swap tasks objects
         current = pending;
         pending.reset();
 
-        // Join the task
-        thread.join();
+        // Release the worker (which joins the thread)
+        worker.reset();
 
         // Attempt to kick off a new render
         startRender();
@@ -258,6 +220,5 @@ bool Frame::poll()
 
 bool Frame::running() const
 {
-    return future.valid() && future.wait_for(std::chrono::seconds(0)) ==
-                             std::future_status::timeout;
+    return worker && worker->running();
 }
