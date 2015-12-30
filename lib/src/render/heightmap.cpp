@@ -94,7 +94,7 @@ Eigen::ArrayXXd Render(Tree* t, Region r)
     return img;
 }
 
-Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth)
+Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth, bool clip)
 {
     auto img = Image(r.Y.size, r.X.size);
     img.fill(0);
@@ -125,13 +125,22 @@ Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth)
         index = 0;
     };
 
+    const double zmax = r.Z.pos(r.Z.size - 1);
+
     for (int row=0; row < depth.rows(); ++row)
     {
         const double y = r.Y.pos(row);
         for (int col=0; col < depth.cols(); ++col)
         {
             const double d = depth(row, col);
-            if (!isinf(d))
+
+            // If the pixel is touching the top Z boundary, set
+            // its normal to be solely in the Z direction.
+            if (clip && d == zmax)
+            {
+                img(row, col) = 0xffff7f7f;
+            }
+            else if (!isinf(d))
             {
                 xs[index] = col;
                 ys[index] = row;

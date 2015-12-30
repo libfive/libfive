@@ -236,7 +236,7 @@ TEST_CASE("2D rendering with normals")
     {
         Tree t(&s, s.X());
         auto depth = Heightmap::Render(&t, r);
-        auto norm = Heightmap::Shade(&t, r, depth);
+        auto norm = Heightmap::Shade(&t, r, depth, false);
 
         CAPTURE(norm);
         REQUIRE((norm == 0xff7f7fff || norm == 0).all());
@@ -246,7 +246,7 @@ TEST_CASE("2D rendering with normals")
     {
         Tree t(&s, s.operation(OP_NEG, s.X()));
         auto depth = Heightmap::Render(&t, r);
-        auto norm = Heightmap::Shade(&t, r, depth);
+        auto norm = Heightmap::Shade(&t, r, depth, false);
 
         CAPTURE(norm);
         REQUIRE((norm == 0xff7f7f00 || norm == 0).all());
@@ -256,10 +256,26 @@ TEST_CASE("2D rendering with normals")
     {
         Tree t(&s, s.Y());
         auto depth = Heightmap::Render(&t, r);
-        auto norm = Heightmap::Shade(&t, r, depth);
+        auto norm = Heightmap::Shade(&t, r, depth, false);
 
         CAPTURE(norm);
         REQUIRE((norm == 0xff7fff7f || norm == 0).all());
     }
 
+}
+
+TEST_CASE("Normal clipping")
+{
+    Store s;
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+               s.constant(1)));
+
+    auto depth = Heightmap::Render(&t, r);
+    auto norm = Heightmap::Shade(&t, r, depth);
+
+    CAPTURE(norm);
+    REQUIRE((norm == 0xffff7f7f || norm == 0).all());
 }

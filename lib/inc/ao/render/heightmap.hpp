@@ -17,6 +17,8 @@ Eigen::ArrayXXd Render(Tree* t, Region r);
 
 /*
  *  Return a shaded image with R, G, B, A packed into int32_t pixels
+ *
+ *  If clip is true, voxels at the max Z height are given the normal (0, 0, 1)
  */
-Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth);
+Image Shade(Tree* t, Region r, const Eigen::ArrayXXd& depth, bool clip=true);
 }
