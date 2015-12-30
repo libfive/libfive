@@ -17,8 +17,11 @@ protected:
     GLuint fs;  // Fragment shader
     GLuint prog;    // Shader program
 
-    GLuint vbo; // Vertex buffer
-    GLuint vao; // Vertex array
+    GLuint vbo_solid; // Vertex buffer for solid axes
+    GLuint vao_solid; // Vertex array for drawing shaded
+
+    GLuint vbo_wire;  // Vertex buffer for wireframe axes
+    GLuint vao_wire;  // Vertex array for drawing wireframe
 
     // Shader source strings
     static const std::string vert;

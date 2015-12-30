@@ -48,12 +48,15 @@ Axes::Axes()
     assert(fs);
     assert(prog);
 
-    glGenBuffers(1, &vbo);
-    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo_solid);
+    glGenBuffers(1, &vbo_wire);
+    glGenVertexArrays(1, &vao_solid);
+    glGenVertexArrays(1, &vao_wire);
 
-    const float o = 0.05;
-    glBindVertexArray(vao);
+    glBindVertexArray(vao_solid);
     {
+        const float o = 0.05;
+
         // Data is arranged  x   y   z   r   g   b
         GLfloat data[] = {   /********************/
                              /*    X axis        */
@@ -131,10 +134,31 @@ Axes::Axes()
                             -o, -o,  o,  1,  1,  1,
                              o, -o, -o,  1,  1,  1,
                             -o, -o, -o,  1,  1,  1,
-
-
         };
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_solid);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(data),
+                     data, GL_STATIC_DRAW);
+        glVertexAttribPointer(
+                0, 3, GL_FLOAT, GL_FALSE,
+                6 * sizeof(GLfloat), (GLvoid*)0);
+        glVertexAttribPointer(
+                1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat),
+                (GLvoid*)(3 * sizeof(GLfloat)));
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+    }
+
+    glBindVertexArray(vao_wire);
+    {
+        // Data is arranged  x   y   z   r   g   b
+        GLfloat data[] = {   0,  0,  0,  1,  0,  0,
+                             1,  0,  0,  1,  0,  0,
+                             0,  0,  0,  0,  1,  0,
+                             0,  1,  0,  0,  1,  0,
+                             0,  0,  0,  0,  0,  1,
+                             0,  0,  1,  0,  0,  1,
+        };
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_wire);
         glBufferData(GL_ARRAY_BUFFER, sizeof(data),
                      data, GL_STATIC_DRAW);
         glVertexAttribPointer(
@@ -155,17 +179,26 @@ Axes::~Axes()
     glDeleteShader(fs);
     glDeleteProgram(prog);
 
-    glDeleteBuffers(1, &vbo);
-    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo_solid);
+    glDeleteBuffers(1, &vbo_wire);
+
+    glDeleteVertexArrays(1, &vao_solid);
+    glDeleteVertexArrays(1, &vao_wire);
 }
 
 void Axes::draw(const glm::mat4& m) const
 {
     glUseProgram(prog);
-    GLint m_loc = glGetUniformLocation(prog, "m");
-    glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm::value_ptr(m));
+    glUniformMatrix4fv(glGetUniformLocation(prog, "m"),
+                       1, GL_FALSE, glm::value_ptr(m));
 
-    glBindVertexArray(vao);
+    glBindVertexArray(vao_solid);
     glDrawArrays(GL_TRIANGLES, 0, 54);
+
+    glDisable(GL_DEPTH_TEST);
+    glBindVertexArray(vao_wire);
+    glDrawArrays(GL_LINES, 0, 6);
+    glEnable(GL_DEPTH_TEST);
+
     glBindVertexArray(0);
 }
