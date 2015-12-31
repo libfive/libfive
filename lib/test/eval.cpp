@@ -31,7 +31,7 @@ TEST_CASE("Interval evaluation")
     REQUIRE(out.upper() == 3.0);
 }
 
-TEST_CASE("Condition statement")
+TEST_CASE("Condition statement double")
 {
     Store s;
     Tree t(&s, s.operation(COND_LZ, s.constant(1), s.constant(2), s.X()));
@@ -39,4 +39,37 @@ TEST_CASE("Condition statement")
     REQUIRE(t.eval(1.0, 0.0, 0.0) == 2);
     REQUIRE(t.eval(0.0, 0.0, 0.0) == 2);
     REQUIRE(t.eval(-1.0, 0.0, 0.0) == 1);
+}
+
+TEST_CASE("Condition statement interval")
+{
+    Store s;
+    Tree t(&s, s.operation(COND_LZ, s.constant(1), s.constant(2), s.X()));
+
+    SECTION("Above")
+    {
+        Interval i(0.5, 1.0);
+        Interval out = t.eval(i, i, i);
+        CAPTURE(out.lower());
+        CAPTURE(out.upper());
+        REQUIRE(out == Interval(2));
+    }
+
+    SECTION("Below")
+    {
+        Interval i(-1, -0.5);
+        Interval out = t.eval(i, i, i);
+        CAPTURE(out.lower());
+        CAPTURE(out.upper());
+        REQUIRE(out == Interval(1));
+    }
+
+    SECTION("Split")
+    {
+        Interval i(-1, 1);
+        Interval out = t.eval(i, i, i);
+        CAPTURE(out.lower());
+        CAPTURE(out.upper());
+        REQUIRE(out == Interval(1, 2));
+    }
 }
