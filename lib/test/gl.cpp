@@ -100,25 +100,57 @@ TEST_CASE("Accelerator rendering (3D)")
     WindowPtr window(makeContext(), glfwDestroyWindow);
     auto accel = Accel(&t);
 
-    Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
-    auto out = accel.Render(r);
+    SECTION("Values")
+    {
+        Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
+        auto out = accel.Render(r);
 
-    Eigen::ArrayXXd comp(10, 10);
-    double inf = std::numeric_limits<double>::infinity();
-    comp <<
-        -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf,
-        -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
-        -inf, 0.5, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.5,-inf,
-         0.3, 0.5, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.5, 0.3,
-         0.3, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.7, 0.3,
-         0.3, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.7, 0.3,
-         0.3, 0.5, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.5, 0.3,
-        -inf, 0.5, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.5,-inf,
-        -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
-        -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf;
+        Eigen::ArrayXXd comp(10, 10);
+        double inf = std::numeric_limits<double>::infinity();
+        comp <<
+            -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf,
+            -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
+            -inf, 0.5, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.5,-inf,
+             0.3, 0.5, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.5, 0.3,
+             0.3, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.7, 0.3,
+             0.3, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.7, 0.3,
+             0.3, 0.5, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.5, 0.3,
+            -inf, 0.5, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.5,-inf,
+            -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
+            -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf;
 
-    auto diff = comp - out;
-    CAPTURE(out);
-    CAPTURE(diff);
-    REQUIRE((diff.abs() < 1e-6 || diff != diff).all());
+        auto diff = comp - out;
+        CAPTURE(out);
+        CAPTURE(diff);
+        REQUIRE((diff.abs() < 1e-6 || diff != diff).all());
+    }
+
+    SECTION("Performance")
+    {
+        std::chrono::time_point<std::chrono::system_clock> start, end;
+        start = std::chrono::system_clock::now();
+
+        Region r({-1, 1}, {-1, 1}, {-1, 1}, 100);
+        auto out = accel.Render(r);
+
+        end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+
+        auto elapsed_ms =
+            std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
+
+        auto description = "Rendered sphere in " +
+                           std::to_string(elapsed.count()) + " sec";
+        CAPTURE(description);
+
+        // Check for major regressions in render performance
+#ifdef RELEASE
+        if (elapsed_ms.count() > 50)
+#else
+        if (elapsed_ms.count() > 500)
+#endif
+        {
+            WARN(description);
+        }
+    }
 }
