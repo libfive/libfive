@@ -54,6 +54,16 @@ Accel::Accel(const Tree* tree)
     glBindVertexArray(0);
 }
 
+Accel::~Accel()
+{
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+    glDeleteProgram(prog);
+
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
+}
+
 std::string Accel::toShader(const Tree* tree)
 {
     // Write shader's header

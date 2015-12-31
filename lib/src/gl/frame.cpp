@@ -107,6 +107,10 @@ Frame::Frame(Tree* tree)
 
 Frame::~Frame()
 {
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+    glDeleteProgram(prog);
+
     glDeleteTextures(1, &depth);
     glDeleteTextures(1, &norm);
     glDeleteBuffers(1, &vbo);

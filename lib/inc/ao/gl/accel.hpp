@@ -15,6 +15,7 @@ class Accel
 {
 public:
     Accel(const Tree* tree);
+    ~Accel();
 
     /*
      *  Converts a tree to an OpenGL 3.3 fragment shader
