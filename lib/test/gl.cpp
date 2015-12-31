@@ -154,3 +154,30 @@ TEST_CASE("Accelerator rendering (3D)")
         }
     }
 }
+
+TEST_CASE("Accelerator aspect ratio")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+               s.constant(1)));
+
+    auto accel = Accelerator(&t);
+    accel.makeContextCurrent();
+
+    Region r({-1, 1}, {0, 1}, {0}, 5);
+    auto out = accel.Render(r);
+
+    Eigen::ArrayXXd comp(5, 10);
+    double inf = std::numeric_limits<double>::infinity();
+    comp <<
+        -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
+        -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+        -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+           0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+           0,   0,   0,   0,   0,   0,   0,   0,   0,   0;
+
+    CAPTURE(out);
+    REQUIRE((comp == out).all());
+}

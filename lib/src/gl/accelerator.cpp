@@ -22,7 +22,8 @@ uniform vec2 ybounds;
 void main()
 {
     // Normalized (0-1) xy coordinates
-    vec2 norm = (vertex_position.xy + 1.0f) / 2.0f;
+    vec2 norm = vec2((vertex_position.x + 1.0f) / 2.0f,
+                     1 - (vertex_position.y + 1.0f) / 2.0f);
 
     // Position of the fragment in region space
     pos = vec2(norm.x * (xbounds[1]- xbounds[0]) + xbounds[0],
@@ -186,7 +187,7 @@ void Accelerator::Render(const Region& r, Eigen::ArrayXXd& img)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Copy matrix to an Eigen array
-    Eigen::ArrayXXf out(r.Y.size, r.X.size);
+    Eigen::ArrayXXf out(r.X.size, r.Y.size);
     glBindTexture(GL_TEXTURE_2D, tex);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, out.data());
 
@@ -195,7 +196,8 @@ void Accelerator::Render(const Region& r, Eigen::ArrayXXd& img)
             -std::numeric_limits<float>::infinity(), out);
 
     // Assign into the output depth image
-    img.block(r.Y.min, r.X.min, r.Y.size, r.X.size) = out.cast<double>();
+    img.block(r.Y.min, r.X.min, r.Y.size, r.X.size) =
+        out.transpose().cast<double>();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
