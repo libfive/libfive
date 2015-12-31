@@ -86,3 +86,39 @@ TEST_CASE("Accelerator rendering")
     CAPTURE(out);
     REQUIRE((comp == out).all());
 }
+
+TEST_CASE("Accelerator rendering (3D)")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+                                   s.operation(OP_MUL, s.Z(), s.Z())),
+               s.constant(1)));
+
+    WindowPtr window(makeContext(), glfwDestroyWindow);
+    auto accel = Accel(&t);
+
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
+    auto out = accel.Render(r);
+
+    Eigen::ArrayXXd comp(10, 10);
+    double inf = std::numeric_limits<double>::infinity();
+    comp <<
+        -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf,
+        -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
+        -inf, 0.5, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.5,-inf,
+         0.3, 0.5, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.5, 0.3,
+         0.3, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.7, 0.3,
+         0.3, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.7, 0.3,
+         0.3, 0.5, 0.7, 0.9, 0.9, 0.9, 0.9, 0.7, 0.5, 0.3,
+        -inf, 0.5, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.5,-inf,
+        -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
+        -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf;
+
+    auto diff = comp - out;
+    CAPTURE(out);
+    CAPTURE(diff);
+    REQUIRE((diff.abs() < 1e-6 || diff != diff).all());
+}
