@@ -12,13 +12,13 @@ class Atom;
 class Region;
 
 /*
- *  An Accel object speeds up tree rendering with OpenGL
+ *  An Accelerator object speeds up tree rendering with OpenGL
  */
-class Accel
+class Accelerator
 {
 public:
-    Accel(const Tree* tree);
-    ~Accel();
+    Accelerator(const Tree* tree);
+    ~Accelerator();
 
     /*
      *  Render a region and return the resulting depth image

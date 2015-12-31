@@ -89,7 +89,7 @@ protected:
     Result result;
 
     friend class Tree;
-    friend class Accel;
+    friend class Accelerator;
 };
 
 std::ostream& operator<<(std::ostream& os, const Atom& atom);

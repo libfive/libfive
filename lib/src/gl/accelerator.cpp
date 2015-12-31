@@ -1,6 +1,6 @@
 #include <cassert>
 
-#include "ao/gl/accel.hpp"
+#include "ao/gl/accelerator.hpp"
 #include "ao/gl/shader.hpp"
 
 #include "ao/core/atom.hpp"
@@ -9,7 +9,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex shader
-const std::string Accel::vert = R"(
+const std::string Accelerator::vert = R"(
 #version 330
 
 layout(location=0) in vec2 vertex_position;
@@ -32,7 +32,7 @@ void main()
 }
 )";
 
-const std::string Accel::frag = R"(
+const std::string Accelerator::frag = R"(
 #version 330
 
 in vec2 pos;
@@ -66,7 +66,7 @@ void main()
 )";
 ////////////////////////////////////////////////////////////////////////////////
 
-Accel::Accel(const Tree* tree)
+Accelerator::Accelerator(const Tree* tree)
     : vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(toShader(tree), GL_FRAGMENT_SHADER)),
       prog(Shader::link(vs, fs))
@@ -98,7 +98,7 @@ Accel::Accel(const Tree* tree)
     glGenFramebuffers(1, &fbo);
 }
 
-Accel::~Accel()
+Accelerator::~Accelerator()
 {
     glDeleteShader(vs);
     glDeleteShader(fs);
@@ -113,14 +113,14 @@ Accel::~Accel()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Eigen::ArrayXXd Accel::Render(const Region& r)
+Eigen::ArrayXXd Accelerator::Render(const Region& r)
 {
     Eigen::ArrayXXd out(r.Y.size, r.X.size);
     Render(r, out);
     return out;
 }
 
-void Accel::Render(const Region& r, Eigen::ArrayXXd& img)
+void Accelerator::Render(const Region& r, Eigen::ArrayXXd& img)
 {
     // Generate a texture of the appropriate size
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -173,7 +173,7 @@ void Accel::Render(const Region& r, Eigen::ArrayXXd& img)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::string Accel::toShader(const Tree* tree)
+std::string Accelerator::toShader(const Tree* tree)
 {
     // Write shader's header
     std::string out = frag;
@@ -194,7 +194,7 @@ std::string Accel::toShader(const Tree* tree)
     return out;
 }
 
-std::string Accel::toShader(const Atom* m)
+std::string Accelerator::toShader(const Atom* m)
 {
     // Each atom should be stored into the hashmap only once.
     // There's a special case for the tree's root, which is pre-emptively

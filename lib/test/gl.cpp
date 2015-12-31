@@ -4,7 +4,7 @@
 
 #include "ao/gl/core.hpp"
 #include "ao/gl/shader.hpp"
-#include "ao/gl/accel.hpp"
+#include "ao/gl/accelerator.hpp"
 
 #include "ao/core/store.hpp"
 #include "ao/core/tree.hpp"
@@ -49,7 +49,7 @@ TEST_CASE("Shader creation")
     //std::cerr.rdbuf(capture.rdbuf());
 
     // Build a tree accelerator (which throws assertions on failure)
-    auto out = Accel(&t);
+    auto out = Accelerator(&t);
 
     // Restore old std::cerr
     //std::cerr.rdbuf(_cerr);
@@ -64,7 +64,7 @@ TEST_CASE("Accelerator rendering")
                s.constant(1)));
 
     WindowPtr window(makeContext(), glfwDestroyWindow);
-    auto accel = Accel(&t);
+    auto accel = Accelerator(&t);
 
     Region r({-1, 1}, {-1, 1}, {0}, 5);
     auto out = accel.Render(r);
@@ -98,7 +98,7 @@ TEST_CASE("Accelerator rendering (3D)")
                s.constant(1)));
 
     WindowPtr window(makeContext(), glfwDestroyWindow);
-    auto accel = Accel(&t);
+    auto accel = Accelerator(&t);
 
     SECTION("Values")
     {

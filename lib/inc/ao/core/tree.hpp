@@ -112,7 +112,7 @@ protected:
     /*  Pointer to the current location in the data array */
     Atom* ptr;
 
-    friend class Accel;
+    friend class Accelerator;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
