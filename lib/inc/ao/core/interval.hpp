@@ -31,6 +31,7 @@ inline Interval _cond_nz(const Interval& cond,
     }
     else
     {
-        return Interval(a.lower(), b.upper());
+        return Interval(std::min(a.lower(), b.lower()),
+                        std::max(a.upper(), b.upper()));
     }
 }
