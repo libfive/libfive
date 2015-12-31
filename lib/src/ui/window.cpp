@@ -37,7 +37,6 @@ Window::Window()
 
 Window::~Window()
 {
-    std::lock_guard<std::mutex> lock(gl::mutex);
     for (auto f : frames)
     {
         delete f.second;
@@ -188,8 +187,6 @@ glm::mat4 Window::view() const
 
 void Window::draw() const
 {
-    std::lock_guard<std::mutex> lock(gl::mutex);
-
     auto m = M();
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -233,10 +230,8 @@ void Window::poll()
             stale.push_back(frames[in->first]);
         }
 
-        {   // Claim the OpenGL mutex and construct a new frame
-            std::lock_guard<std::mutex> lock(gl::mutex);
-            frames[in->first] = new Frame(in->second);
-        }
+        // Construct a new frame
+        frames[in->first] = new Frame(in->second);
 
         // Delete the string, Tree* pair (which was allocated on the heap)
         delete in;
@@ -249,13 +244,9 @@ void Window::poll()
     }
 
     // Poll for render tasks that have finished
-    // (with the GL mutex claimed, because tasks pack matrices into textures)
+    for (auto f : frames)
     {
-        std::lock_guard<std::mutex> lock(gl::mutex);
-        for (auto f : frames)
-        {
-            needs_draw |= f.second->poll();
-        }
+        needs_draw |= f.second->poll();
     }
 
     // If the clear flag is set, mark all frames as stale
@@ -281,7 +272,6 @@ void Window::poll()
     {
         if (!(*itr)->running())
         {
-            std::lock_guard<std::mutex> lock(gl::mutex);
             delete *itr;
             itr = stale.erase(itr);
         }

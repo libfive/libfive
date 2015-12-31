@@ -67,10 +67,16 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////
 
 Accelerator::Accelerator(const Tree* tree)
-    : vs(Shader::compile(vert, GL_VERTEX_SHADER)),
-      fs(Shader::compile(toShader(tree), GL_FRAGMENT_SHADER)),
-      prog(Shader::link(vs, fs))
 {
+    GLFWwindow* prev = glfwGetCurrentContext();
+
+    context = makeContext();
+    assert(context);
+
+    vs = Shader::compile(vert, GL_VERTEX_SHADER);
+    fs = Shader::compile(toShader(tree), GL_FRAGMENT_SHADER);
+    prog = Shader::link(vs, fs);
+
     assert(vs);
     assert(fs);
     assert(prog);
@@ -96,10 +102,18 @@ Accelerator::Accelerator(const Tree* tree)
 
     glGenTextures(1, &tex);
     glGenFramebuffers(1, &fbo);
+
+    // Restore the previous context
+    glfwMakeContextCurrent(prev);
 }
 
 Accelerator::~Accelerator()
 {
+    // Save the previous context then make this Accelerator's context current
+    GLFWwindow* prev = glfwGetCurrentContext();
+    glfwMakeContextCurrent(context);
+
+    // Delete all the things!
     glDeleteShader(vs);
     glDeleteShader(fs);
     glDeleteProgram(prog);
@@ -109,6 +123,19 @@ Accelerator::~Accelerator()
 
     glDeleteFramebuffers(1, &fbo);
     glDeleteTextures(1, &tex);
+
+    // Restore previous context
+    glfwMakeContextCurrent(prev);
+
+    // Destroy our context
+    glfwDestroyWindow(context);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void Accelerator::makeContextCurrent() const
+{
+    glfwMakeContextCurrent(context);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

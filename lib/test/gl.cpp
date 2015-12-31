@@ -63,8 +63,8 @@ TEST_CASE("Accelerator rendering")
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
 
-    WindowPtr window(makeContext(), glfwDestroyWindow);
     auto accel = Accelerator(&t);
+    accel.makeContextCurrent();
 
     Region r({-1, 1}, {-1, 1}, {0}, 5);
     auto out = accel.Render(r);
@@ -97,8 +97,8 @@ TEST_CASE("Accelerator rendering (3D)")
                                    s.operation(OP_MUL, s.Z(), s.Z())),
                s.constant(1)));
 
-    WindowPtr window(makeContext(), glfwDestroyWindow);
     auto accel = Accelerator(&t);
+    accel.makeContextCurrent();
 
     SECTION("Values")
     {

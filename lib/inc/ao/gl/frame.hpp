@@ -21,17 +21,12 @@ public:
      *
      *  On construction, takes ownership of the given Tree and sets
      *  its parent pointer.
-     *
-     *  Constructor and destructor both perform OpenGL operations and
-     *  require the gl::mutex to be claimed from the outside for safety
      */
     explicit Frame(Tree* tree);
     ~Frame();
 
     /*
      *  Draws the set of textures with the given matrix applied
-     *
-     *  Requires that gl::mutex be claimed by the caller
      */
     void draw(const glm::mat4& m) const;
 
@@ -43,8 +38,6 @@ public:
     /*
      *  Check the future watcher and see if it's ready
      *  Returns true if the parent window should redraw
-     *
-     *  Requires that gl::mutex be claimed by the caller
      */
     bool poll();
 

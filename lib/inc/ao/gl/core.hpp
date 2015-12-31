@@ -26,9 +26,3 @@ GLFWwindow* makeWindow(int width, int height, std::string title);
  *  Same caveats apply as for makeWindow
  */
 GLFWwindow* makeContext();
-
-/*  Mutex used to ensure that only one thread does OpenGL stuff at a time  */
-namespace gl
-{
-extern std::mutex mutex;
-}

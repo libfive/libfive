@@ -17,16 +17,30 @@ class Region;
 class Accelerator
 {
 public:
+    /*
+     *  Constructs a new Accelerator
+     *
+     *  This must be called from the main thread
+     */
     Accelerator(const Tree* tree);
     ~Accelerator();
 
     /*
+     *  Makes this accelerator's context current
+     */
+    void makeContextCurrent() const;
+
+    /*
      *  Render a region and return the resulting depth image
+     *
+     *  The accelerator's context must be current when this is called
      */
     Eigen::ArrayXXd Render(const Region& r);
 
     /*
      *  Render a target region and blit it into the given depth image
+     *
+     *  The accelerator's context must be current when this is called
      */
     void Render(const Region& r, Eigen::ArrayXXd& img);
 
@@ -44,6 +58,8 @@ public:
 protected:
     std::unordered_map<const Atom*, size_t> atoms;
     size_t index=0;
+
+    GLFWwindow* context;
 
     GLuint vs;  // Vertex shader
     GLuint fs;  // Fragment shader
