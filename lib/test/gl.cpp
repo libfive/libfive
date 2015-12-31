@@ -4,6 +4,7 @@
 
 #include "ao/gl/core.hpp"
 #include "ao/gl/shader.hpp"
+#include "ao/gl/accel.hpp"
 
 #include "ao/core/store.hpp"
 #include "ao/core/tree.hpp"
@@ -43,16 +44,13 @@ TEST_CASE("Shader creation")
     WindowPtr window(makeContext(), glfwDestroyWindow);
 
     // Redirect std::cerr
-    std::streambuf* _cerr = std::cerr.rdbuf();
-    std::ostringstream capture;
-    std::cerr.rdbuf(capture.rdbuf());
+    //std::streambuf* _cerr = std::cerr.rdbuf();
+    //std::ostringstream capture;
+    //std::cerr.rdbuf(capture.rdbuf());
 
-    // Build the shader and capture any error output
-    auto out = Shader::compile(t.toShader(), GL_FRAGMENT_SHADER);
-    CAPTURE(capture.str());
+    // Build a tree accelerator (which throws assertions on failure)
+    auto out = Accel(&t);
 
     // Restore old std::cerr
-    std::cerr.rdbuf(_cerr);
-
-    REQUIRE(out != 0);
+    //std::cerr.rdbuf(_cerr);
 }

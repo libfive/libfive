@@ -44,4 +44,5 @@ protected:
     std::stack<size_t> disabled;
 
     friend class Tree;
+    friend class Accel;
 };

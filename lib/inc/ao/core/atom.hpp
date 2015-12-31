@@ -61,17 +61,12 @@ public:
     void cacheResult();
 
     /*
-     *  Converts this atom to a line in an OpenGL shader
-     */
-    std::string toShader(size_t index,
-                         std::unordered_map<const Atom*, size_t>* atoms) const;
-
-    /*
      *  Print an Atom to an ostream
      */
     friend std::ostream& operator<<(std::ostream& os, const Atom& atom);
 
 protected:
+    /*  Opcode for this atom  */
     const Opcode op;
 
     /*  Populated for OP_CONST atoms */
@@ -94,6 +89,7 @@ protected:
     Result result;
 
     friend class Tree;
+    friend class Accel;
 };
 
 std::ostream& operator<<(std::ostream& os, const Atom& atom);

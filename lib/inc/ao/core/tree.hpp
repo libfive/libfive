@@ -72,11 +72,6 @@ public:
      */
     void pop();
 
-    /*
-     *  Convert the tree to an OpenGL 3.3 fragment shader
-     */
-    std::string toShader() const;
-
     /*  Pointer to a parent (used to decide who destroys the tree)  */
     void* parent=nullptr;
 
@@ -116,6 +111,8 @@ protected:
 
     /*  Pointer to the current location in the data array */
     Atom* ptr;
+
+    friend class Accel;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
