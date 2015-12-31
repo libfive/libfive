@@ -13,7 +13,7 @@ const std::string Accel::vert = R"(
 
 layout(location=0) in vec2 vertex_position;
 
-out vec2 frag_pos;
+out vec2 pos;
 
 uniform vec2 xbounds;
 uniform vec2 ybounds;
@@ -24,38 +24,40 @@ void main()
     vec2 norm = (vertex_position.xy + 1.0f) / 2.0f;
 
     // Position of the fragment in region space
-    frag_pos = vec2(norm.x * (xbounds[1]- xbounds[0]) + xbounds[0],
-                    norm.y * (ybounds[1]- ybounds[0]) + ybounds[0]);
+    pos = vec2(norm.x * (xbounds[1]- xbounds[0]) + xbounds[0],
+               norm.y * (ybounds[1]- ybounds[0]) + ybounds[0]);
 
     gl_Position = vec4(vertex_position, 0.0f, 1.0f);
 }
 )";
 
 const std::string Accel::frag = R"(
-
 #version 330
 
 out vec4 fragColor;
-in vec2 frag_pos;
+in vec2 pos;
 
 uniform int nk;
-uniform float dz;
+uniform vec2 zbounds;
 
 float f(float x, float y, float z);
 
 void main()
 {
-    float x = frag_pos.x;
-    float y = frag_pos.y;
-    float z = 0.0f;
+    float x = pos.x;
+    float y = pos.y;
 
-    if (f(x, y, z) <= 0)
+    fragColor = vec4(zbounds[0]);
+    for (int i=0; i < nk; ++i)
     {
-        fragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    }
-    else
-    {
-        fragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        float frac = (i + 0.5f) / nk;
+        float z = zbounds[1] * (1 - frac) + zbounds[0] * frac;
+
+        if (f(x, y, z) < 0)
+        {
+            fragColor = vec4(z);
+            break;
+        }
     }
 }
 )";
