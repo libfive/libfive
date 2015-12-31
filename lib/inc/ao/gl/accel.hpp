@@ -3,10 +3,13 @@
 #include <string>
 #include <unordered_map>
 
+#include <Eigen/Dense>
+
 #include "ao/gl/core.hpp"
 
 class Tree;
 class Atom;
+class Region;
 
 /*
  *  An Accel object speeds up tree rendering with OpenGL
@@ -16,6 +19,16 @@ class Accel
 public:
     Accel(const Tree* tree);
     ~Accel();
+
+    /*
+     *  Render a region and return the resulting depth image
+     */
+    Eigen::ArrayXXd Render(const Region& r);
+
+    /*
+     *  Render a target region and blit it into the given depth image
+     */
+    void Render(const Region& r, Eigen::ArrayXXd& img);
 
     /*
      *  Converts a tree to an OpenGL 3.3 fragment shader
@@ -38,6 +51,9 @@ protected:
 
     GLuint vbo; // Vertex buffer object
     GLuint vao; // Vertex array object
+
+    GLuint fbo; // Frame-buffer object
+    GLuint tex; // Target texture
 
     static const std::string vert;
     static const std::string frag;

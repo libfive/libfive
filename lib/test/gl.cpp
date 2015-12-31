@@ -54,3 +54,21 @@ TEST_CASE("Shader creation")
     // Restore old std::cerr
     //std::cerr.rdbuf(_cerr);
 }
+
+TEST_CASE("Accelerator rendering")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+               s.constant(1)));
+
+    WindowPtr window(makeContext(), glfwDestroyWindow);
+    auto accel = Accel(&t);
+
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
+    auto out = accel.Render(r);
+
+    CAPTURE(out);
+    REQUIRE(false);
+}

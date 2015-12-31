@@ -4,6 +4,7 @@
 #include "ao/gl/shader.hpp"
 
 #include "ao/core/atom.hpp"
+#include "ao/core/region.hpp"
 #include "ao/core/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -34,8 +35,8 @@ void main()
 const std::string Accel::frag = R"(
 #version 330
 
-out vec4 fragColor;
 in vec2 pos;
+out float frag_depth;
 
 uniform int nk;
 uniform vec2 zbounds;
@@ -47,7 +48,9 @@ void main()
     float x = pos.x;
     float y = pos.y;
 
-    fragColor = vec4(zbounds[0]);
+    // Set the default depth to a value below zmin
+    // (as GLSL doesn't support -inf directly)
+    frag_depth = zbounds[0] - 1;
     for (int i=0; i < nk; ++i)
     {
         float frac = (i + 0.5f) / nk;
@@ -55,7 +58,7 @@ void main()
 
         if (f(x, y, z) < 0)
         {
-            fragColor = vec4(z);
+            frag_depth = z;
             break;
         }
     }
@@ -90,6 +93,9 @@ Accel::Accel(const Tree* tree)
         glEnableVertexAttribArray(0);
     }
     glBindVertexArray(0);
+
+    glGenTextures(1, &tex);
+    glGenFramebuffers(1, &fbo);
 }
 
 Accel::~Accel()
@@ -100,7 +106,72 @@ Accel::~Accel()
 
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
+
+    glDeleteFramebuffers(1, &fbo);
+    glDeleteTextures(1, &tex);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+Eigen::ArrayXXd Accel::Render(const Region& r)
+{
+    Eigen::ArrayXXd out(r.Y.size, r.X.size);
+    Render(r, out);
+    return out;
+}
+
+void Accel::Render(const Region& r, Eigen::ArrayXXd& img)
+{
+    // Generate a texture of the appropriate size
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, r.X.size, r.Y.size,
+                 0, GL_RED, GL_FLOAT, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    // Bind the desired texture to the framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D, tex, 0);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Set the viewport to the appropriate size
+    glViewport(0, 0, r.X.size, r.Y.size);
+
+    glUseProgram(prog);
+    glBindVertexArray(vao);
+
+    // Load various uniforms defining the render bounds
+    glUniform2f(glGetUniformLocation(prog, "xbounds"),
+                r.X.lower(), r.X.upper());
+    glUniform2f(glGetUniformLocation(prog, "ybounds"),
+                r.Y.lower(), r.Y.upper());
+    glUniform2f(glGetUniformLocation(prog, "zbounds"),
+                r.Z.lower(), r.Z.upper());
+    glUniform1i(glGetUniformLocation(prog, "nk"), r.Z.size);
+
+    // Draw the full rectangle into the FBO
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glBindVertexArray(0);
+
+    // Switch back to the default framebuffer.
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Copy matrix to an Eigen array
+    Eigen::ArrayXXf out(r.Y.size, r.X.size);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, out.data());
+
+    // Mask all of the lower points with -infinity
+    out = (out < r.Z.lower()).select(
+            -std::numeric_limits<float>::infinity(), out);
+
+    // Assign into the output depth image
+    img.block(r.Y.min, r.X.min, r.Y.size, r.X.size) = out.cast<double>();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 std::string Accel::toShader(const Tree* tree)
 {
