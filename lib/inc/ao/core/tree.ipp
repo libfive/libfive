@@ -20,6 +20,11 @@ inline double _max(const double& a, const double& b)
     return std::max(a, b);
 }
 
+inline double _cond_nz(const double& cond, const double& a, const double& b)
+{
+    return (cond < 0) ? a : b;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #define TREE_ATOM_LOOP for (size_t i=0; i < count; ++i)
@@ -68,9 +73,9 @@ inline void Tree::evalAtom(Atom* m, size_t count)
             break;
         case COND_LZ:
             TREE_ATOM_LOOP
-            m->result.set<T>(m->cond->result.get<T>(i) < 0
-                              ? m->a->result.get<T>(i)
-                              : m->b->result.get<T>(i), i);
+            m->result.set<T>(_cond_nz(m->cond->result.get<T>(i),
+                                      m->a->result.get<T>(i),
+                                      m->b->result.get<T>(i)), i);
             break;
         case INVALID:
         case OP_CONST:

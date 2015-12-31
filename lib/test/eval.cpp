@@ -70,6 +70,7 @@ TEST_CASE("Condition statement interval")
         Interval out = t.eval(i, i, i);
         CAPTURE(out.lower());
         CAPTURE(out.upper());
-        REQUIRE(out == Interval(1, 2));
+        REQUIRE(out.lower() == 1);
+        REQUIRE(out.upper() == 2);
     }
 }
