@@ -82,6 +82,7 @@ Frame::Frame(Tree* tree)
     assert(prog);
 
     tree->parent = this;
+    tree->buildAccelerator();
 
     glGenTextures(1, &depth);
     glGenTextures(1, &norm);

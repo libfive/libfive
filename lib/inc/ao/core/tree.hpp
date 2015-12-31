@@ -16,6 +16,7 @@
 class Atom;
 class Store;
 class Token;
+class Accelerator;
 
 /*
  *  A tree represents a math expression that can be evaluated in various ways
@@ -30,8 +31,18 @@ public:
 
     /*
      *  In destructor, delete all of the data that this Tree owns
+     *
+     *  If accel is populated, this function must be called from the
+     *  main thread (to properly destroy OpenGL context)
      */
     ~Tree();
+
+    /*
+     *  Constructs an OpenGL accelerator in the accel pointer
+     *
+     *  Must be called from the main thread
+     */
+    void buildAccelerator();
 
     /*
      *  Sets the matrix constants to the given matrix
@@ -111,6 +122,9 @@ protected:
 
     /*  Pointer to the current location in the data array */
     Atom* ptr;
+
+    /*  Optional OpenGL accelerator for faster rendering  */
+    std::unique_ptr<Accelerator> accel;
 
     friend class Accelerator;
 };

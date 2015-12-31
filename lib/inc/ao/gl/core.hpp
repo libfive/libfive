@@ -3,6 +3,12 @@
 #define GL_VERSION_MAJOR 3
 #define GL_VERSION_MINOR 3
 
+/*
+ *  If USE_ACCELERATOR is set to 1, Frames will construct an Accelerator
+ *  object to speed up rendering of Trees.
+ */
+#define USE_ACCELERATOR 1
+
 #include <mutex>
 #include <string>
 
