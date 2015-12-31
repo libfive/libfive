@@ -44,6 +44,8 @@ bool Worker::poll(GLuint depth, GLuint norm)
     auto out = future.get();
     Eigen::ArrayXXf d = out.first.cast<float>().transpose();
 
+    // Convert the resulting matrix into an OpenGL texture
+    // if the abort flag is not set
     if (!abort.load())
     {
         Image s = out.second.transpose();

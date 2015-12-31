@@ -37,6 +37,7 @@ Window::Window()
 
 Window::~Window()
 {
+    std::lock_guard<std::mutex> lock(gl::mutex);
     for (auto f : frames)
     {
         delete f.second;
@@ -187,6 +188,8 @@ glm::mat4 Window::view() const
 
 void Window::draw() const
 {
+    std::lock_guard<std::mutex> lock(gl::mutex);
+
     auto m = M();
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -214,6 +217,9 @@ void Window::run()
 
 void Window::poll()
 {
+    // Flag used to detect if a redraw is needed
+    bool needs_draw = false;
+
     // Block until a GLFW event occurs
     glfwWaitEvents();
 
@@ -226,19 +232,29 @@ void Window::poll()
         {
             stale.push_back(frames[in->first]);
         }
-        frames[in->first] = new Frame(in->second);
+
+        {   // Claim the OpenGL mutex and construct a new frame
+            std::lock_guard<std::mutex> lock(gl::mutex);
+            frames[in->first] = new Frame(in->second);
+        }
+
+        // Delete the string, Tree* pair (which was allocated on the heap)
         delete in;
 
+        // Kick off a render operation for the new tree
         render();
-        draw();
+
+        // Mark that a redraw is needed
+        needs_draw = true;
     }
 
     // Poll for render tasks that have finished
-    for (auto f : frames)
+    // (with the GL mutex claimed, because tasks pack matrices into textures)
     {
-        if (f.second->poll())
+        std::lock_guard<std::mutex> lock(gl::mutex);
+        for (auto f : frames)
         {
-            draw();
+            needs_draw |= f.second->poll();
         }
     }
 
@@ -251,6 +267,11 @@ void Window::poll()
             stale.push_back(f.second);
         }
         frames.clear();
+        needs_draw = true;
+    }
+
+    if (needs_draw)
+    {
         draw();
     }
 
@@ -260,6 +281,7 @@ void Window::poll()
     {
         if (!(*itr)->running())
         {
+            std::lock_guard<std::mutex> lock(gl::mutex);
             delete *itr;
             itr = stale.erase(itr);
         }

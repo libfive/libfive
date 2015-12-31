@@ -33,6 +33,8 @@ struct Worker
     /*
      *  Polls the worker, loading data into the given textures if complete
      *  Returns true if the worker is done running, false otherwise
+     *
+     *  Requires that gl::mutex be claimed for safety
      */
     bool poll(GLuint depth, GLuint norm);
 

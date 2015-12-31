@@ -3,6 +3,7 @@
 #define GL_VERSION_MAJOR 3
 #define GL_VERSION_MINOR 3
 
+#include <mutex>
 #include <string>
 
 #include <epoxy/gl.h>
@@ -25,3 +26,9 @@ GLFWwindow* makeWindow(int width, int height, std::string title);
  *  Same caveats apply as for makeWindow
  */
 GLFWwindow* makeContext();
+
+/*  Mutex used to ensure that only one thread does OpenGL stuff at a time  */
+namespace gl
+{
+extern std::mutex mutex;
+}
