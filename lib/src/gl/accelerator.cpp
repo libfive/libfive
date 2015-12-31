@@ -269,8 +269,8 @@ std::string Accelerator::toShader(const Atom* m)
         case OP_MAX:    out += "max(" + sa + ", " + sb + ")";   break;
         case OP_SUB:    out += "(" + sa + " - " + sb + ")";     break;
         case OP_DIV:    out += "(" + sa + " / " + sb + ")";     break;
-        case OP_SQRT:   out += "sqrt(" + sa + ", " + sb + ")";  break;
-        case OP_NEG:    out += "(-" + sa + ", " + sb + ")";     break;
+        case OP_SQRT:   out += "sqrt(" + sa + ")";  break;
+        case OP_NEG:    out += "(-" + sa + ")";     break;
 
         case COND_LZ:   out += "(" + sc + " < 0 ? " + sa + " : " + sb + ")";
                         break;
