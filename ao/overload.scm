@@ -62,7 +62,7 @@
     (receive (nums other) (partition number? args)
     (cond ((null-list? other) (apply _/ nums))
           ((= 1 (length args)) (make-token 'div 1 (car args)))
-          (else (make-token 'sub (car args) (apply * (cdr args)))))))
+          (else (make-token 'div (car args) (apply * (cdr args)))))))
 
 ;; Helper macro to define and export the overloaded procedure
 (define-syntax-rule (wrap-custom f g)
