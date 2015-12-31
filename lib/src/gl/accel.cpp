@@ -11,18 +11,54 @@
 const std::string Accel::vert = R"(
 #version 330
 
-layout(location=0) in vec3 vertex_position;
+layout(location=0) in vec2 vertex_position;
 
 out vec2 frag_pos;
-uniform mat4 m;
+
+uniform vec2 xbounds;
+uniform vec2 ybounds;
 
 void main()
 {
-    frag_pos = vec2(1.0f, 1.0f);
-    gl_Position = m * vec4(vertex_position, 1.0f);
+    // Normalized (0-1) xy coordinates
+    vec2 norm = (vertex_position.xy + 1.0f) / 2.0f;
+
+    // Position of the fragment in region space
+    frag_pos = vec2(norm.x * (xbounds[1]- xbounds[0]) + xbounds[0],
+                    norm.y * (ybounds[1]- ybounds[0]) + ybounds[0]);
+
+    gl_Position = vec4(vertex_position, 0.0f, 1.0f);
 }
 )";
 
+const std::string Accel::frag = R"(
+
+#version 330
+
+out vec4 fragColor;
+in vec2 frag_pos;
+
+uniform int nk;
+uniform float dz;
+
+float f(float x, float y, float z);
+
+void main()
+{
+    float x = frag_pos.x;
+    float y = frag_pos.y;
+    float z = 0.0f;
+
+    if (f(x, y, z) <= 0)
+    {
+        fragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+    else
+    {
+        fragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    }
+}
+)";
 ////////////////////////////////////////////////////////////////////////////////
 
 Accel::Accel(const Tree* tree)
@@ -40,15 +76,15 @@ Accel::Accel(const Tree* tree)
     // Generate and bind a simple quad shape
     glBindVertexArray(vao);
     {
-        GLfloat vertices[] = {-1.0f, -1.0f, 0.0f,
-                               1.0f, -1.0f, 0.0f,
-                               1.0f,  1.0f, 0.0f,
-                              -1.0f,  1.0f, 0.0f};
+        GLfloat vertices[] = {-1.0f, -1.0f,
+                               1.0f, -1.0f,
+                               1.0f,  1.0f,
+                              -1.0f,  1.0f};
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),
                      vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-                              3 * sizeof(GLfloat), (GLvoid*)0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
+                              2 * sizeof(GLfloat), (GLvoid*)0);
         glEnableVertexAttribArray(0);
     }
     glBindVertexArray(0);
@@ -67,22 +103,9 @@ Accel::~Accel()
 std::string Accel::toShader(const Tree* tree)
 {
     // Write shader's header
-    std::string out = R"EOF(
-#version 330
+    std::string out = frag;
 
-out vec4 fragColor;
-in vec2 frag_pos;
-
-uniform int nk;
-uniform float dz;
-
-void main()
-{
-    float x = frag_pos.x;
-    float y = frag_pos.y;
-    float z = 0.0f;
-
-)EOF";
+    out += "float f(float x, float y, float z) {";
 
     // Build shader line-by-line from the active atoms
     atoms[tree->root] = index++;
@@ -94,19 +117,7 @@ void main()
         }
     }
 
-    // Append the shader's footer
-    out += R"EOF(
-    if (m0 <= 0)
-    {
-        fragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    }
-    else
-    {
-        fragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    }
-}
-)EOF";
-
+    out += "return m0;}";
     return out;
 }
 

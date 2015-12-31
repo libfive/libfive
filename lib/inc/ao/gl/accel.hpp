@@ -40,4 +40,5 @@ protected:
     GLuint vao; // Vertex array object
 
     static const std::string vert;
+    static const std::string frag;
 };
