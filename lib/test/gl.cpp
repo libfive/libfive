@@ -66,9 +66,23 @@ TEST_CASE("Accelerator rendering")
     WindowPtr window(makeContext(), glfwDestroyWindow);
     auto accel = Accel(&t);
 
-    Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
+    Region r({-1, 1}, {-1, 1}, {0}, 5);
     auto out = accel.Render(r);
 
+    Eigen::ArrayXXd comp(10, 10);
+    double inf = std::numeric_limits<double>::infinity();
+    comp <<
+        -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
+        -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+        -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+           0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+           0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+           0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+           0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+        -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+        -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
+        -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf;
+
     CAPTURE(out);
-    REQUIRE(false);
+    REQUIRE((comp == out).all());
 }
