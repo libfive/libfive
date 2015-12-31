@@ -173,5 +173,6 @@ The center of rotation is 0,0 or specified by optional argument '(x0 y0)"
 
 (define-public (shear-x-y shape ymin ymax dx0 dx1)
     " Shears a shape in the XY plane "
-    (lambda (x y z) (shape (- x dx0 (* (- dx1 dx0) (/ (- y ymin)
-                                                      (- ymax ymin)))) y z)))
+    (lambda (x y z)
+        (let ((f (/ (- y ymin) (- ymax ymin))))
+        (shape (- x (* dx0 (- 1 f)) (* dx1 f)) y z))))
