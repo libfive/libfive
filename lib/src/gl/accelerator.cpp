@@ -38,6 +38,9 @@ const std::string Accelerator::frag = R"(
 in vec2 pos;
 out float frag_depth;
 
+// Generic matrix transform
+uniform float mat[12];
+
 uniform int nk;
 uniform vec2 zbounds;
 
@@ -140,6 +143,18 @@ void Accelerator::makeContextCurrent() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void Accelerator::setMatrix(const glm::mat4& m)
+{
+    size_t k = 0;
+    for (int i=0; i < 3; ++i)
+    {
+        for (int j=0; j < 4; ++j)
+        {
+            mat[k++] = m[j][i];
+        }
+    }
+}
+
 Eigen::ArrayXXd Accelerator::Render(const Region& r)
 {
     Eigen::ArrayXXd out(r.Y.size, r.X.size);
@@ -178,6 +193,9 @@ void Accelerator::Render(const Region& r, Eigen::ArrayXXd& img)
                 r.Z.lower(), r.Z.upper());
     glUniform1i(glGetUniformLocation(prog, "nk"), r.Z.size);
 
+    // Load the generic transform matrix into the shader
+    glUniform1fv(glGetUniformLocation(prog, "mat"), 12, mat);
+
     // Draw the full rectangle into the FBO
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glBindVertexArray(0);
@@ -208,8 +226,17 @@ std::string Accelerator::toShader(const Tree* tree)
 
     out += "float f(float x, float y, float z) {";
 
-    // Build shader line-by-line from the active atoms
+    // Hard-code the tree's root as atom 0
     atoms[tree->root] = index++;
+
+    // Hard-code the matrix atoms as atoms 0-11
+    // (in a separately-indexed array named 'mat')
+    for (int i=0; i < 12; ++i)
+    {
+        atoms[tree->matrix[i]] = i;
+    }
+
+    // Build shader line-by-line from the active atoms
     for (const auto& row : tree->rows)
     {
         for (size_t i=0; i < row.active; ++i)
@@ -243,17 +270,27 @@ std::string Accelerator::toShader(const Atom* m)
         if (m)
         {
             auto itr = atoms.find(m);
-            if (itr != atoms.end())
+
+            // Special-case for mutable atoms, which are assumed to be part
+            // of the generic transform matrix and are GLSL uniforms
+            if (m->op == OP_MUTABLE)
+            {
+                assert(itr != atoms.end());
+                assert(itr->second < 12);
+                return "mat[" + std::to_string(itr->second) + "]";
+            }
+            // If the atom is already stored, save it
+            else if (itr != atoms.end())
             {
                 return "m" + std::to_string(itr->second);
             }
+            // Otherwise, the atom must be something hard-coded!
             else switch (m->op)
             {
                 case OP_X:       return std::string("x");
                 case OP_Y:       return std::string("y");
                 case OP_Z:       return std::string("z");
                 case OP_CONST:   return std::to_string(m->value) + "f";
-                case OP_MUTABLE: return std::to_string(m->mutable_value) + "f";
                 default: assert(false);
             }
         }

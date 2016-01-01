@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include <Eigen/Dense>
+#include <glm/mat4x4.hpp>
 
 #include "ao/gl/core.hpp"
 
@@ -24,6 +25,11 @@ public:
      */
     Accelerator(const Tree* tree);
     ~Accelerator();
+
+    /*
+     *  Saves our generic transform matrix
+     */
+    void setMatrix(const glm::mat4& m);
 
     /*
      *  Makes this accelerator's context current
@@ -71,6 +77,9 @@ protected:
     GLuint fbo; // Frame-buffer object
     GLuint tex; // Target texture
 
+    GLfloat mat[12]; // Generic transform matrix
+
+    // Static shader strings
     static const std::string vert;
     static const std::string frag;
 };

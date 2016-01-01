@@ -134,6 +134,11 @@ void Tree::setMatrix(const glm::mat4& m)
     {
         m->result.fill(m->mutable_value);
     }
+
+    if (accel)
+    {
+        accel->setMatrix(m);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
