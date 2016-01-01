@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <array>
 
 #include <Eigen/Dense>
 #include <glm/mat4x4.hpp>
@@ -77,7 +78,7 @@ protected:
     GLuint fbo; // Frame-buffer object
     GLuint tex; // Target texture
 
-    GLfloat mat[12]; // Generic transform matrix
+    std::array<GLfloat, 12> mat; // Generic transform matrix
 
     // Static shader strings
     static const std::string vert;

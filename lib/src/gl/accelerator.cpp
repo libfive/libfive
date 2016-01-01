@@ -70,6 +70,9 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////
 
 Accelerator::Accelerator(const Tree* tree)
+    : mat({{1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0}})
 {
     GLFWwindow* prev = glfwGetCurrentContext();
 
@@ -194,7 +197,7 @@ void Accelerator::Render(const Region& r, Eigen::ArrayXXd& img)
     glUniform1i(glGetUniformLocation(prog, "nk"), r.Z.size);
 
     // Load the generic transform matrix into the shader
-    glUniform1fv(glGetUniformLocation(prog, "mat"), 12, mat);
+    glUniform1fv(glGetUniformLocation(prog, "mat"), 12, &mat[0]);
 
     // Draw the full rectangle into the FBO
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
