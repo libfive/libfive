@@ -98,7 +98,16 @@ Eigen::ArrayXXd Render(Tree* t, Region r, const std::atomic<bool>& abort)
     auto img = Eigen::ArrayXXd(r.Y.size, r.X.size);
     img.fill(-std::numeric_limits<double>::infinity());
 
-    recurse(t, r, img, abort);
+    if (auto accel = t->getAccelerator())
+    {
+        accel->makeContextCurrent();
+        accel->Render(r, img);
+    }
+    else
+    {
+        recurse(t, r, img, abort);
+    }
+
     return img;
 }
 
