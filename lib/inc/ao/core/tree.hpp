@@ -45,6 +45,11 @@ public:
     void buildAccelerator();
 
     /*
+     *  Returns the accelerator or a nullptr if not present
+     */
+    Accelerator* getAccelerator() const { return accel.get(); }
+
+    /*
      *  Sets the matrix constants to the given matrix
      */
     void setMatrix(const glm::mat4& m);

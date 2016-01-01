@@ -2,6 +2,7 @@
 
 #include "ao/render/heightmap.hpp"
 #include "ao/core/tree.hpp"
+#include "ao/gl/accelerator.hpp"
 
 #include <iostream>
 

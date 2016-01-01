@@ -7,7 +7,7 @@
 #include "ao/core/tree.hpp"
 #include "ao/core/store.hpp"
 
-TEST_CASE("2D rendering of a circle")
+TEST_CASE("2D rendering of a circle (CPU)")
 {
     std::atomic<bool> abort(false);
 
@@ -82,7 +82,7 @@ TEST_CASE("3D interval Z values")
              out == -std::numeric_limits<double>::infinity()).all());
 }
 
-TEST_CASE("Render orientation")
+TEST_CASE("Render orientation (CPU)")
 {
     std::atomic<bool> abort(false);
 
@@ -146,7 +146,7 @@ TEST_CASE("Render orientation")
     }
 }
 
-TEST_CASE("Render shape")
+TEST_CASE("Render shape (CPU)")
 {
     std::atomic<bool> abort(false);
 
@@ -172,7 +172,7 @@ TEST_CASE("Render shape")
     }
 }
 
-TEST_CASE("3D rendering of a sphere")
+TEST_CASE("3D rendering of a sphere (CPU)")
 {
     std::atomic<bool> abort(false);
 
@@ -238,7 +238,7 @@ TEST_CASE("3D rendering of a sphere")
     }
 }
 
-TEST_CASE("2D rendering with normals")
+TEST_CASE("2D rendering with normals (CPU)")
 {
     std::atomic<bool> abort(false);
 
