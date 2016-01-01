@@ -22,8 +22,7 @@ uniform vec2 ybounds;
 void main()
 {
     // Normalized (0-1) xy coordinates
-    vec2 norm = vec2((vertex_position.x + 1.0f) / 2.0f,
-                     1 - (vertex_position.y + 1.0f) / 2.0f);
+    vec2 norm = (vertex_position.xy + 1.0f) / 2.0f;
 
     // Position of the fragment in region space
     pos = vec2(norm.x * (xbounds[1]- xbounds[0]) + xbounds[0],
