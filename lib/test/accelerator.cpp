@@ -110,8 +110,6 @@ TEST_CASE("3D rendering of a sphere (GPU)")
 
 TEST_CASE("Render orientation (GPU)")
 {
-    std::atomic<bool> abort(false);
-
     Store s;
     Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
 
@@ -178,8 +176,6 @@ TEST_CASE("Render orientation (GPU)")
 
 TEST_CASE("Render shape (GPU)")
 {
-    std::atomic<bool> abort(false);
-
     Store s;
     Tree t(&s, s.operation(OP_SUB,
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
