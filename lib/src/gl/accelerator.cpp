@@ -76,6 +76,7 @@ void main()
             // Pack normal into 0-255 range
             frag_norm = vec4(normalize(n.xyz) / 2.0f + 0.5f,
                              0.0f);
+            break;
         }
     }
 }
@@ -259,6 +260,10 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
 {
     DepthImage depth(r.Y.size, r.X.size);
     NormalImage norm(r.Y.size, r.X.size);
+
+    depth.fill(-std::numeric_limits<double>::infinity());
+    norm.fill(0);
+
     Render(r, depth, norm);
 
     return std::make_pair(depth, norm);
@@ -337,10 +342,10 @@ void Accelerator::Render(const Region& r, DepthImage& depth, NormalImage& norm)
         for (unsigned j=0; j < r.Y.size; ++j)
         {
             // Check to see whether the voxel is in front of the image's depth
-            if (out_depth(i, j) < depth(j, i))
+            if (depth(r.Y.min + j, r.X.min + i) < out_depth(i, j))
             {
-                depth(j, i) = out_depth(i, j);
-                norm(j, i) = out_norm(i, j);
+                depth(r.Y.min + j, r.X.min + i) = out_depth(i, j);
+                norm(r.Y.min + j, r.X.min + i) = out_norm(i, j);
             }
         }
     }
