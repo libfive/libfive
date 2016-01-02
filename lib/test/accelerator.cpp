@@ -21,7 +21,7 @@ TEST_CASE("2D rendering of a circle (GPU)")
 
     t.buildAccelerator();
     t.getAccelerator()->makeContextCurrent();
-    auto out = t.getAccelerator()->Render(r);
+    auto out = t.getAccelerator()->Render(r).first;
 
     DepthImage comp(10, 10);
     double inf = std::numeric_limits<double>::infinity();
@@ -57,7 +57,7 @@ TEST_CASE("3D rendering of a sphere (GPU)")
     SECTION("Values")
     {
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
-        auto out = accel.Render(r);
+        auto out = accel.Render(r).first;
 
         DepthImage comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
@@ -85,7 +85,7 @@ TEST_CASE("3D rendering of a sphere (GPU)")
         start = std::chrono::system_clock::now();
 
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 100);
-        auto out = accel.Render(r);
+        auto out = accel.Render(r).first;
 
         end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed = end - start;
@@ -124,7 +124,7 @@ TEST_CASE("Render orientation (GPU)")
 
         t.buildAccelerator();
         t.getAccelerator()->makeContextCurrent();
-        auto out = t.getAccelerator()->Render(r);
+        auto out = t.getAccelerator()->Render(r).first;
 
         DepthImage comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
@@ -154,7 +154,7 @@ TEST_CASE("Render orientation (GPU)")
 
         t.buildAccelerator();
         t.getAccelerator()->makeContextCurrent();
-        auto out = t.getAccelerator()->Render(r);
+        auto out = t.getAccelerator()->Render(r).first;
 
         DepthImage comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
@@ -188,7 +188,7 @@ TEST_CASE("Render shape (GPU)")
     SECTION("X")
     {
         Region r({0, 1}, {-1, 1}, {0, 0}, 5);
-        auto out = t.getAccelerator()->Render(r);
+        auto out = t.getAccelerator()->Render(r).first;
         CAPTURE(out);
         REQUIRE(out.rows() == 10);
         REQUIRE(out.cols() == 5);
@@ -196,7 +196,7 @@ TEST_CASE("Render shape (GPU)")
     SECTION("Y")
     {
         Region r({-1, 1}, {0, 1}, {0, 0}, 5);
-        auto out = t.getAccelerator()->Render(r);
+        auto out = t.getAccelerator()->Render(r).first;
         CAPTURE(out);
         REQUIRE(out.rows() == 5);
         REQUIRE(out.cols() == 10);

@@ -8,6 +8,7 @@
 #include <glm/mat4x4.hpp>
 
 #include "ao/gl/core.hpp"
+#include "ao/render/heightmap.hpp"
 
 class Tree;
 class Atom;
@@ -42,14 +43,14 @@ public:
      *
      *  The accelerator's context must be current when this is called
      */
-    Eigen::ArrayXXd Render(const Region& r);
+    std::pair<DepthImage, NormalImage> Render(const Region& r);
 
     /*
      *  Render a target region and blit it into the given depth image
      *
      *  The accelerator's context must be current when this is called
      */
-    void Render(const Region& r, Eigen::ArrayXXd& img);
+    void Render(const Region& r, DepthImage& depth, NormalImage& norm);
 
     /*
      *  Converts a tree to an OpenGL 3.3 fragment shader
@@ -78,7 +79,8 @@ protected:
     GLuint vao; // Vertex array object
 
     GLuint fbo; // Frame-buffer object
-    GLuint tex; // Target texture
+    GLuint tex_depth; // Target texture
+    GLuint tex_norm; // Target texture
 
     std::array<GLfloat, 12> mat; // Generic transform matrix
 
