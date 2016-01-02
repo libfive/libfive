@@ -327,15 +327,23 @@ void Accelerator::Render(const Region& r, DepthImage& depth, NormalImage& norm)
     glBindTexture(GL_TEXTURE_2D, tex_norm);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, out_norm.data());
 
-    std::cout << out_norm;
-
     // Mask all of the lower points with -infinity
     out_depth = (out_depth < r.Z.lower()).select(
             -std::numeric_limits<float>::infinity(), out_depth);
 
-    // Assign into the output depth image
-    depth.block(r.Y.min, r.X.min, r.Y.size, r.X.size) =
-        out_depth.transpose().cast<double>();
+    // Iterate over every pixel in the region, storing new depths and normals
+    for (unsigned i=0; i < r.X.size; ++i)
+    {
+        for (unsigned j=0; j < r.Y.size; ++j)
+        {
+            // Check to see whether the voxel is in front of the image's depth
+            if (out_depth(i, j) < depth(j, i))
+            {
+                depth(j, i) = out_depth(i, j);
+                norm(j, i) = out_norm(i, j);
+            }
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
