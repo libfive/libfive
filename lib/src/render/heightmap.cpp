@@ -69,7 +69,7 @@ static void pixels(Tree* t, const Region& r, DepthImage& depth, NormalImage& nor
                 ys[norm_count] = r.Y.min + j;
                 t->setPoint<Gradient>(Gradient(r.X.pos(i), 1, 0, 0),
                                       Gradient(r.Y.pos(j), 0, 1, 0),
-                                      Gradient(r.Z.pos(k), 0, 0, 1),
+                                      Gradient(z, 0, 0, 1),
                                       norm_count++);
                 // If the gradient array is completely full, execute a
                 // calculation that finds normals and blits them to the image
