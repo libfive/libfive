@@ -49,6 +49,37 @@ uniform vec2 zbounds;
 float f(float x, float y, float z);
 vec4 g(vec4 x, vec4 y, vec4 z);
 
+void main()
+{
+    float x = pos.x;
+    float y = pos.y;
+
+    // Set the default depth to a value below zmin
+    // (as GLSL doesn't support -inf directly)
+    frag_depth = zbounds[0] - 1.0f;
+    frag_norm = vec4(0.0f);
+
+    for (int i=0; i < nk; ++i)
+    {
+        float frac = (i + 0.5f) / nk;
+        float z = zbounds[1] * (1 - frac) + zbounds[0] * frac;
+
+        if (f(x, y, z) < 0.0f)
+        {
+            frag_depth = z;
+
+            // Calculate normal
+            vec4 n = g(vec4(1.0f, 0.0f, 0.0f, x),
+                       vec4(0.0f, 1.0f, 0.0f, y),
+                       vec4(0.0f, 0.0f, 1.0f, z));
+
+            // Pack normal into 0-255 range
+            frag_norm = vec4(normalize(n.xyz) / 2.0f + 0.5f,
+                             0.0f);
+        }
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Gradient math
 vec4 add_g(vec4 a, vec4 b)
@@ -64,20 +95,20 @@ vec4 sub_g(vec4 a, vec4 b)
 vec4 mul_g(vec4 a, vec4 b)
 {
     // Product rule
-    return vec4(a.w * b.w,
-            a.w * b.x + b.w * a.x,
-            a.w * b.y + b.w * a.y,
-            a.w * b.z + b.w * a.z);
+    return vec4(a.w * b.x + b.w * a.x,
+                a.w * b.y + b.w * a.y,
+                a.w * b.z + b.w * a.z,
+                a.w * b.w);
 }
 
 vec4 div_g(vec4 a, vec4 b)
 {
     // Quotient rule
     float p = pow(b.w, 2.0f);
-    return vec4(a.w / b.w,
-            (b.w * a.x - a.w * b.x) / p,
-            (b.w * a.y - a.w * b.y) / p,
-            (b.w * a.z - a.w * b.z) / p);
+    return vec4((b.w * a.x - a.w * b.x) / p,
+                (b.w * a.y - a.w * b.y) / p,
+                (b.w * a.z - a.w * b.z) / p,
+                a.w / b.w);
 }
 
 vec4 min_g(vec4 a, vec4 b)
@@ -103,10 +134,11 @@ vec4 pow_g(vec4 a, vec4 b)
     // If a.w is negative, then m will be NaN (because of log's domain).
     // We work around this by checking if d/d{xyz}(B) == 0 and using a
     // simplified expression if that's true.
-    return vec4(pow(a.w, b.w),
+    return vec4(
         p * (b.w*a.x + (b.x != 0.0f ? m*b.x : 0.0f)),
         p * (b.w*a.y + (b.y != 0.0f ? m*b.y : 0.0f)),
-        p * (b.w*a.z + (b.z != 0.0f ? m*b.z : 0.0f)));
+        p * (b.w*a.z + (b.z != 0.0f ? m*b.z : 0.0f)),
+        pow(a.w, b.w));
 }
 
 vec4 sqrt_g(vec4 a)
@@ -118,9 +150,9 @@ vec4 sqrt_g(vec4 a)
     else
     {
         float v = sqrt(a.w);
-        return vec4(v, a.x / (2.0f * v),
-                       a.y / (2.0f * v),
-                       a.z / (2.0f * v));
+        return vec4(a.x / (2.0f * v),
+                    a.y / (2.0f * v),
+                    a.z / (2.0f * v), v);
     }
 }
 
@@ -128,36 +160,8 @@ vec4 neg_g(vec4 a)
 {
     return -a;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-void main()
-{
-    float x = pos.x;
-    float y = pos.y;
-
-    // Set the default depth to a value below zmin
-    // (as GLSL doesn't support -inf directly)
-    frag_depth = zbounds[0] - 1.0f;
-    frag_norm = vec4(1.0f);
-
-    for (int i=0; i < nk; ++i)
-    {
-        float frac = (i + 0.5f) / nk;
-        float z = zbounds[1] * (1 - frac) + zbounds[0] * frac;
-
-        if (f(x, y, z) < 0.0f)
-        {
-            frag_depth = z;
-            frag_norm = g(vec4(x, 0.0f, 0.0f, 0.0f),
-                          vec4(y, 0.0f, 0.0f, 0.0f),
-                          vec4(z, 0.0f, 0.0f, 0.0f));
-            frag_norm = vec4(1.0f, 0.0f, 0.0f, 0.0f);
-            break;
-        }
-    }
-}
 )";
+
 ////////////////////////////////////////////////////////////////////////////////
 
 Accelerator::Accelerator(const Tree* tree)
@@ -272,7 +276,7 @@ void Accelerator::Render(const Region& r, DepthImage& depth, NormalImage& norm)
     // Generate a normal texture of the appropriate size
     glBindTexture(GL_TEXTURE_2D, tex_norm);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, r.X.size, r.Y.size,
-                 0, GL_RGBA, GL_BYTE, 0);
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -321,7 +325,7 @@ void Accelerator::Render(const Region& r, DepthImage& depth, NormalImage& norm)
 
     NormalImage out_norm(r.X.size, r.Y.size);
     glBindTexture(GL_TEXTURE_2D, tex_norm);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_BYTE, out_norm.data());
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, out_norm.data());
 
     std::cout << out_norm;
 
@@ -405,10 +409,11 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
             {
                 assert(itr != atoms.end());
                 assert(itr->second < 12);
+
                 return (mode == DEPTH)
                     ? ("mat[" + std::to_string(itr->second) + "]")
-                    : ("vec4(mat[" + std::to_string(itr->second)
-                                   + "], 0.0f, 0.0f, 0.0f)");
+                    : ("vec4(0.0f, 0.0f, 0.0f, mat["
+                            + std::to_string(itr->second) + "])");
             }
             // If the atom is already stored, save it
             else if (itr != atoms.end())
@@ -423,8 +428,8 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
                 case OP_Z:       return std::string("z");
                 case OP_CONST:   return (mode == DEPTH)
                                  ? (std::to_string(m->value) + "f")
-                                 : ("vec4(" + std::to_string(m->value)
-                                            + "f, 0.0f, 0.0f, 0.0f)");
+                                 : ("vec4(0.0f, 0.0f, 0.0f, "
+                                         + std::to_string(m->value) + ")");
                 default: assert(false);
             }
         }
@@ -483,6 +488,5 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
             case INVALID:   assert(false);
         }
     }
-
     return out + ";\n";
 }
