@@ -44,7 +44,90 @@ uniform float mat[12];
 uniform int nk;
 uniform vec2 zbounds;
 
+// Forward declaration of f-rep function
 float f(float x, float y, float z);
+
+////////////////////////////////////////////////////////////////////////////////
+// Gradient math
+vec4 add_g(vec4 a, vec4 b)
+{
+    return a + b;
+}
+
+vec4 sub_g(vec4 a, vec4 b)
+{
+    return a - b;
+}
+
+vec4 mul_g(vec4 a, vec4 b)
+{
+    // Product rule
+    return vec4(a.w * b.w,
+            a.w * b.x + b.w * a.x,
+            a.w * b.y + b.w * a.y,
+            a.w * b.z + b.w * a.z);
+}
+
+vec4 div_g(vec4 a, vec4 b)
+{
+    // Quotient rule
+    float p = pow(b.w, 2.0f);
+    return vec4(a.w / b.w,
+            (b.w * a.x - a.w * b.x) / p,
+            (b.w * a.y - a.w * b.y) / p,
+            (b.w * a.z - a.w * b.z) / p);
+}
+
+vec4 min_g(vec4 a, vec4 b)
+{
+    return (a.w < b.w) ? a : b;
+}
+
+vec4 max_g(vec4 a, vec4 b)
+{
+    return (a.w < b.w) ? b : a;
+}
+
+vec4 cond_nz_g(vec4 cond, vec4 a, vec4 b)
+{
+    return (cond.w < 0.0f) ? a : b;
+}
+
+vec4 pow_g(vec4 a, vec4 b)
+{
+    float p = pow(a.w, b.w - 1.0f);
+    float m = a.w * log(a.w);
+
+    // If a.w is negative, then m will be NaN (because of log's domain).
+    // We work around this by checking if d/d{xyz}(B) == 0 and using a
+    // simplified expression if that's true.
+    return vec4(pow(a.w, b.w),
+        p * (b.w*a.x + (b.x != 0.0f ? m*b.x : 0.0f)),
+        p * (b.w*a.y + (b.y != 0.0f ? m*b.y : 0.0f)),
+        p * (b.w*a.z + (b.z != 0.0f ? m*b.z : 0.0f)));
+}
+
+vec4 sqrt_g(vec4 a)
+{
+    if (a.w < 0.0f)
+    {
+        return vec4(0.0f);
+    }
+    else
+    {
+        float v = sqrt(a.w);
+        return vec4(v, a.x / (2.0f * v),
+                       a.y / (2.0f * v),
+                       a.z / (2.0f * v));
+    }
+}
+
+vec4 neg_g(vec4 a)
+{
+    return -a;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 void main()
 {
@@ -222,12 +305,15 @@ void Accelerator::Render(const Region& r, Eigen::ArrayXXd& img)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::string Accelerator::toShader(const Tree* tree)
+std::string Accelerator::toShaderFunc(const Tree* tree, Mode mode)
 {
-    // Write shader's header
-    std::string out = frag;
+    std::string out = (mode == DEPTH)
+        ? "float f(float x, float y, float z) {\n"
+        : "vec4 g(vec4 x, vec4 y, vec4 z) {\n";
 
-    out += "float f(float x, float y, float z) {";
+    // Reset the atoms and index objects
+    atoms.clear();
+    index = 0;
 
     // Hard-code the tree's root as atom 0
     atoms[tree->root] = index++;
@@ -244,7 +330,7 @@ std::string Accelerator::toShader(const Tree* tree)
     {
         for (size_t i=0; i < row.active; ++i)
         {
-            out += toShader(row[i]);
+            out += toShader(row[i], mode);
         }
     }
 
@@ -252,7 +338,13 @@ std::string Accelerator::toShader(const Tree* tree)
     return out;
 }
 
-std::string Accelerator::toShader(const Atom* m)
+std::string Accelerator::toShader(const Tree* tree)
+{
+    return frag + toShaderFunc(tree, DEPTH) + "\n\n"
+                + toShaderFunc(tree, NORMAL);
+}
+
+std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
 {
     // Each atom should be stored into the hashmap only once.
     // There's a special case for the tree's root, which is pre-emptively
@@ -268,7 +360,9 @@ std::string Accelerator::toShader(const Atom* m)
     }
     size_t i = atoms[m];
 
-    std::string out = "    float m" + std::to_string(i) + " = ";
+    std::string out = ((mode == DEPTH) ? "    float m"
+                                       : "    vec4 m") + std::to_string(i)
+                                                       + " = ";
     auto get = [&](Atom* m){
         if (m)
         {
@@ -280,7 +374,10 @@ std::string Accelerator::toShader(const Atom* m)
             {
                 assert(itr != atoms.end());
                 assert(itr->second < 12);
-                return "mat[" + std::to_string(itr->second) + "]";
+                return (mode == DEPTH)
+                    ? ("mat[" + std::to_string(itr->second) + "]")
+                    : ("vec4(mat[" + std::to_string(itr->second)
+                                   + "], 0.0f, 0.0f, 0.0f)");
             }
             // If the atom is already stored, save it
             else if (itr != atoms.end())
@@ -293,7 +390,10 @@ std::string Accelerator::toShader(const Atom* m)
                 case OP_X:       return std::string("x");
                 case OP_Y:       return std::string("y");
                 case OP_Z:       return std::string("z");
-                case OP_CONST:   return std::to_string(m->value) + "f";
+                case OP_CONST:   return (mode == DEPTH)
+                                 ? (std::to_string(m->value) + "f")
+                                 : ("vec4(" + std::to_string(m->value)
+                                            + "f, 0.0f, 0.0f, 0.0f)");
                 default: assert(false);
             }
         }
@@ -302,27 +402,55 @@ std::string Accelerator::toShader(const Atom* m)
     std::string sb = get(m->b);
     std::string sc = get(m->cond);
 
-    switch (m->op)
+    if (mode == DEPTH)
     {
-        case OP_ADD:    out += "(" + sa + " + " + sb + ")";     break;
-        case OP_MUL:    out += "(" + sa + " * " + sb + ")";     break;
-        case OP_MIN:    out += "min(" + sa + ", " + sb + ")";   break;
-        case OP_MAX:    out += "max(" + sa + ", " + sb + ")";   break;
-        case OP_SUB:    out += "(" + sa + " - " + sb + ")";     break;
-        case OP_DIV:    out += "(" + sa + " / " + sb + ")";     break;
-        case OP_SQRT:   out += "sqrt(" + sa + ")";  break;
-        case OP_NEG:    out += "(-" + sa + ")";     break;
+        switch (m->op)
+        {
+            case OP_ADD:    out += "(" + sa + " + " + sb + ")";     break;
+            case OP_MUL:    out += "(" + sa + " * " + sb + ")";     break;
+            case OP_MIN:    out += "min(" + sa + ", " + sb + ")";   break;
+            case OP_MAX:    out += "max(" + sa + ", " + sb + ")";   break;
+            case OP_SUB:    out += "(" + sa + " - " + sb + ")";     break;
+            case OP_DIV:    out += "(" + sa + " / " + sb + ")";     break;
+            case OP_SQRT:   out += "sqrt(" + sa + ")";  break;
+            case OP_NEG:    out += "(-" + sa + ")";     break;
 
-        case COND_LZ:   out += "(" + sc + " < 0 ? " + sa + " : " + sb + ")";
-                        break;
+            case COND_LZ:   out += "(" + sc + " < 0 ? " + sa + " : " + sb + ")";
+                            break;
 
-        case OP_X:  // Fallthrough!
-        case OP_Y:
-        case OP_Z:
-        case LAST_OP:
-        case OP_CONST:
-        case OP_MUTABLE:
-        case INVALID:   assert(false);
+            case OP_X:  // Fallthrough!
+            case OP_Y:
+            case OP_Z:
+            case LAST_OP:
+            case OP_CONST:
+            case OP_MUTABLE:
+            case INVALID:   assert(false);
+        }
+    }
+    else if (mode == NORMAL)
+    {
+        switch (m->op)
+        {
+            case OP_ADD:    out += "add_g(" + sa + ", " + sb + ")";     break;
+            case OP_MUL:    out += "mul_g(" + sa + ", " + sb + ")";     break;
+            case OP_MIN:    out += "min_g(" + sa + ", " + sb + ")";   break;
+            case OP_MAX:    out += "max_g(" + sa + ", " + sb + ")";   break;
+            case OP_SUB:    out += "sub_g(" + sa + ", " + sb + ")";     break;
+            case OP_DIV:    out += "div_g(" + sa + ", " + sb + ")";     break;
+            case OP_SQRT:   out += "sqrt_g(" + sa + ")";  break;
+            case OP_NEG:    out += "neg_g(" + sa + ")";     break;
+
+            case COND_LZ:   out += "cond_nz_g(" + sc + ", " + sa + ", " + sb + ")";
+                            break;
+
+            case OP_X:  // Fallthrough!
+            case OP_Y:
+            case OP_Z:
+            case LAST_OP:
+            case OP_CONST:
+            case OP_MUTABLE:
+            case INVALID:   assert(false);
+        }
     }
 
     return out + ";\n";

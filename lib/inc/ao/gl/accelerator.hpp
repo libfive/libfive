@@ -54,13 +54,15 @@ public:
     /*
      *  Converts a tree to an OpenGL 3.3 fragment shader
      */
+    enum Mode { DEPTH, NORMAL };
     std::string toShader(const Tree* tree);
+    std::string toShaderFunc(const Tree* tree, Mode mode);
 
     /*
      *  Converts a single Atom into a shader string, incrementing index
      *  and storing the atom in atoms
      */
-    std::string toShader(const Atom* a);
+    std::string toShader(const Atom* m, Mode mode);
 
 protected:
     std::unordered_map<const Atom*, size_t> atoms;
