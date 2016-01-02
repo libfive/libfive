@@ -36,7 +36,8 @@ const std::string Accelerator::frag = R"(
 #version 330
 
 in vec2 pos;
-out float frag_depth;
+layout(location=0) out float frag_depth;
+layout(location=1) out vec3 frag_norm;
 
 // Generic matrix transform
 uniform float mat[12];
@@ -44,8 +45,9 @@ uniform float mat[12];
 uniform int nk;
 uniform vec2 zbounds;
 
-// Forward declaration of f-rep function
+// Forward declaration of f-rep function and normal function
 float f(float x, float y, float z);
+vec4 g(vec4 x, vec4 y, vec4 z);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Gradient math
@@ -136,15 +138,20 @@ void main()
 
     // Set the default depth to a value below zmin
     // (as GLSL doesn't support -inf directly)
-    frag_depth = zbounds[0] - 1;
+    frag_depth = zbounds[0] - 1.0f;
+    frag_norm = vec3(0.0f);
+
     for (int i=0; i < nk; ++i)
     {
         float frac = (i + 0.5f) / nk;
         float z = zbounds[1] * (1 - frac) + zbounds[0] * frac;
 
-        if (f(x, y, z) < 0)
+        if (f(x, y, z) < 0.0f)
         {
             frag_depth = z;
+            frag_norm = g(vec4(x, 0.0f, 0.0f, 0.0f),
+                          vec4(y, 0.0f, 0.0f, 0.0f),
+                          vec4(z, 0.0f, 0.0f, 0.0f)).xyz;
             break;
         }
     }
