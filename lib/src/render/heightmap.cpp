@@ -10,8 +10,34 @@ namespace Heightmap
 {
 
 /*
- *  Helper functions that evaluates a region of pixels
- */
+*  Helper functions that calculates normals for a region of the image
+*/
+static void normals(Tree* t, NormalImage& norm,
+                    size_t* xs, size_t* ys, size_t num)
+{
+    const Gradient* gs = t->evalCore<Gradient>(num);
+    for (size_t i=0; i < num; ++i)
+    {
+        // Find the normal's length (to normalize it)
+        double len = sqrt(pow(gs[i].dx, 2) +
+                          pow(gs[i].dy, 2) +
+                          pow(gs[i].dz, 2));
+
+        // Pack each normal into the 0-255 range
+        uint32_t dx = 255 * (gs[i].dx / (2 * len) + 0.5);
+        uint32_t dy = 255 * (gs[i].dy / (2 * len) + 0.5);
+        uint32_t dz = 255 * (gs[i].dz / (2 * len) + 0.5);
+
+        // Pack the normals and a dummy alpha byte into the image
+        norm(ys[i], xs[i]) = (0xff << 24) | (dz << 16) | (dy << 8) | dx;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+*  Helper functions that evaluates a region of pixels
+*/
 static void pixels(Tree* t, const Region& r, DepthImage& depth, NormalImage& norm)
 {
     const double* out = t->eval(r);
@@ -23,28 +49,6 @@ static void pixels(Tree* t, const Region& r, DepthImage& depth, NormalImage& nor
     size_t xs[NUM_POINTS];
     size_t ys[NUM_POINTS];
     size_t norm_count = 0;
-
-    // Helper function to calculate a set of gradients and apply them to
-    // the normal image
-    auto run = [&](){
-        const Gradient* gs = t->evalCore<Gradient>(norm_count);
-        for (size_t i=0; i < norm_count; ++i)
-        {
-            // Find the normal's length (to normalize it)
-            double len = sqrt(pow(gs[i].dx, 2) +
-                              pow(gs[i].dy, 2) +
-                              pow(gs[i].dz, 2));
-
-            // Pack each normal into the 0-255 range
-            uint32_t dx = 255 * (gs[i].dx / (2 * len) + 0.5);
-            uint32_t dy = 255 * (gs[i].dy / (2 * len) + 0.5);
-            uint32_t dz = 255 * (gs[i].dz / (2 * len) + 0.5);
-
-            // Pack the normals and a dummy alpha byte into the image
-            norm(ys[i], xs[i]) = (0xff << 24) | (dz << 16) | (dy << 8) | dx;
-        }
-        norm_count = 0;
-    };
 
     // Unflatten results into the image, breaking out of loops early when a pixel
     // is written (because all subsequent pixels will be below it).  This
@@ -75,7 +79,8 @@ static void pixels(Tree* t, const Region& r, DepthImage& depth, NormalImage& nor
                 // calculation that finds normals and blits them to the image
                 if (norm_count == NUM_POINTS)
                 {
-                    run();
+                    normals(t, norm, xs, ys, norm_count);
+                    norm_count = 0;
                 }
 
                 break;
@@ -86,15 +91,70 @@ static void pixels(Tree* t, const Region& r, DepthImage& depth, NormalImage& nor
     // Render the last of the normal calculations
     if (norm_count > 0)
     {
-        run();
+        normals(t, norm, xs, ys, norm_count);
     }
 }
 
 /*
- * Helper function that reduces a particular matrix block
+ *  Fills the given region with depth = zmax,
+ *  calculating normals as appropriate
+ *
+ *  This function is used when marking an Interval as filled
  */
+static void fill(Tree* t, const Region& r, DepthImage& depth,
+                 NormalImage& norm)
+{
+    // Store the x, y coordinates of rendered points for normal calculations
+    constexpr size_t NUM_POINTS = Result::count<Gradient>();
+    size_t xs[NUM_POINTS];
+    size_t ys[NUM_POINTS];
+    size_t norm_count = 0;
+
+    // Store the maximum z position (which is what we're flooding into
+    // the depth image)
+    const double z = r.Z.pos(r.Z.size - 1);
+
+    // Iterate over every pixel in the region
+    for (unsigned i=0; i < r.X.size; ++i)
+    {
+        for (unsigned j=0; j < r.Y.size; ++j)
+        {
+            // Check to see whether the voxel is in front of the image's depth
+            if (depth(r.Y.min + j, r.X.min + i) < z)
+            {
+                depth(r.Y.min + j, r.X.min + i) = z;
+
+                // Store information for rendering gradients in bulk
+                xs[norm_count] = r.X.min + i;
+                ys[norm_count] = r.Y.min + j;
+                t->setPoint<Gradient>(Gradient(r.X.pos(i), 1, 0, 0),
+                                      Gradient(r.Y.pos(j), 0, 1, 0),
+                                      Gradient(z, 0, 0, 1),
+                                      norm_count++);
+
+                // If the gradient array is completely full, execute a
+                // calculation that finds normals and blits them to the image
+                if (norm_count == NUM_POINTS)
+                {
+                    normals(t, norm, xs, ys, norm_count);
+                    norm_count = 0;
+                }
+            }
+        }
+    }
+
+    // Render the last of the normal calculations
+    if (norm_count > 0)
+    {
+        normals(t, norm, xs, ys, norm_count);
+    }
+}
+
+/*
+* Helper function that reduces a particular matrix block
+*/
 static void recurse(Tree* t, const Region& r, DepthImage& depth,
-                    NormalImage& norm,const std::atomic<bool>& abort)
+                NormalImage& norm, const std::atomic<bool>& abort)
 {
     // Stop rendering if the abort flag is set
     if (abort.load())
@@ -124,7 +184,7 @@ static void recurse(Tree* t, const Region& r, DepthImage& depth,
     // If strictly negative, fill up the block and return
     if (out.upper() < 0)
     {
-        block = block.max(r.Z.pos(r.Z.size - 1));
+        fill(t, r, depth, norm);
     }
     // Otherwise, recurse if the output interval is ambiguous
     else if (out.lower() <= 0)
@@ -148,7 +208,7 @@ static void recurse(Tree* t, const Region& r, DepthImage& depth,
 }
 
 std::pair<DepthImage, NormalImage> Render(
-        Tree* t, Region r, const std::atomic<bool>& abort, bool clip)
+    Tree* t, Region r, const std::atomic<bool>& abort, bool clip)
 {
     auto depth = DepthImage(r.Y.size, r.X.size);
     auto norm = NormalImage(r.Y.size, r.X.size);
