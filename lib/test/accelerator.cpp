@@ -6,6 +6,7 @@
 #include "ao/core/tree.hpp"
 #include "ao/core/store.hpp"
 
+#include "ao/render/heightmap.hpp"
 #include "ao/gl/accelerator.hpp"
 
 TEST_CASE("2D rendering of a circle (GPU)")
@@ -22,7 +23,7 @@ TEST_CASE("2D rendering of a circle (GPU)")
     t.getAccelerator()->makeContextCurrent();
     auto out = t.getAccelerator()->Render(r);
 
-    Eigen::ArrayXXd comp(10, 10);
+    DepthImage comp(10, 10);
     double inf = std::numeric_limits<double>::infinity();
     comp <<
         -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
@@ -58,7 +59,7 @@ TEST_CASE("3D rendering of a sphere (GPU)")
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
         auto out = accel.Render(r);
 
-        Eigen::ArrayXXd comp(10, 10);
+        DepthImage comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
         comp <<
             -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf,
@@ -125,7 +126,7 @@ TEST_CASE("Render orientation (GPU)")
         t.getAccelerator()->makeContextCurrent();
         auto out = t.getAccelerator()->Render(r);
 
-        Eigen::ArrayXXd comp(10, 10);
+        DepthImage comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
         comp <<
             -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
@@ -155,7 +156,7 @@ TEST_CASE("Render orientation (GPU)")
         t.getAccelerator()->makeContextCurrent();
         auto out = t.getAccelerator()->Render(r);
 
-        Eigen::ArrayXXd comp(10, 10);
+        DepthImage comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
         comp <<
             -inf,-inf,-inf,   0,   0,-inf,-inf,-inf,-inf,-inf,

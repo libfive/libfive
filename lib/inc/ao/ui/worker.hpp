@@ -39,8 +39,8 @@ struct Worker
     /*  Region that is being analyzed  */
     Region region;
 
-    std::promise<std::pair<Eigen::ArrayXXd, Image>> promise;
-    std::future<std::pair<Eigen::ArrayXXd, Image>> future;
+    std::promise<std::pair<DepthImage, NormalImage>> promise;
+    std::future<std::pair<DepthImage, NormalImage>> future;
     std::atomic<bool> abort;
     std::thread thread;
 };

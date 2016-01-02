@@ -6,9 +6,8 @@ Worker::Worker(Tree* tree, size_t ni, size_t nj, size_t nk, double div)
       future(promise.get_future()), abort(false)
 {
     thread = std::thread([=](){
-            auto depth = Heightmap::Render(tree, this->region, this->abort);
-            auto shaded = Heightmap::Shade(tree, this->region, depth, this->abort);
-            this->promise.set_value(std::make_pair(depth, shaded));
+            auto out = Heightmap::Render(tree, this->region, this->abort);
+            this->promise.set_value(out);
             glfwPostEmptyEvent(); });
 }
 
@@ -48,7 +47,7 @@ bool Worker::poll(GLuint depth, GLuint norm)
     // if the abort flag is not set
     if (!abort.load())
     {
-        Image s = out.second.transpose();
+        NormalImage s = out.second.transpose();
 
         // Pack the Eigen matrices into an OpenGL texture
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned

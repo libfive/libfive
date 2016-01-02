@@ -23,7 +23,7 @@ static void on_png_warn(png_structp p, png_const_charp msg)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool SavePng(std::string filename, const Eigen::ArrayXXd& img)
+bool SavePng(std::string filename, const DepthImage& img)
 {
     // Open up a file for writing
     FILE* output = fopen(filename.c_str(), "wb");
@@ -59,7 +59,7 @@ bool SavePng(std::string filename, const Eigen::ArrayXXd& img)
 
     const double zmax = img.maxCoeff();
     const double zmin = (img == -std::numeric_limits<double>::infinity())
-            .select(Eigen::ArrayXXd::Constant(img.rows(), img.cols(), zmax),
+            .select(DepthImage::Constant(img.rows(), img.cols(), zmax),
                     img)
             .minCoeff();
 
