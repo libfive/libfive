@@ -62,11 +62,18 @@ public:
      *  Pops out of interval evaluation, re-enabling disabled nodes
      */
     void pop();
+
     /*
      *  Evaluates the first 'count' result slots in the given atom
      */
     template <class T>
     void evalClause(Clause* a, size_t count);
+
+    /*
+     *  Returns the fraction active / total nodes
+     *  (to check how well disabling is working)
+     */
+    double utilization() const;
 
 protected:
     /*

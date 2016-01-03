@@ -136,3 +136,19 @@ Clause* Evaluator::newClause(const Atom* m,
 {
     return new (ptr++) Clause(m, clauses);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+double Evaluator::utilization() const
+{
+    double total = 0;
+    double active = 0;
+
+    for (const auto& r : rows)
+    {
+        total += r.size();
+        active += r.active;
+    }
+
+    return active / total;
+}
