@@ -1,5 +1,7 @@
-#include "ao/core/row.hpp"
-#include "ao/core/atom.hpp"
+#include <cassert>
+
+#include "ao/eval/row.hpp"
+#include "ao/eval/clause.hpp"
 
 void Row::push()
 {

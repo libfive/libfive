@@ -4,7 +4,7 @@
 #include <glm/mat4x4.hpp>
 
 struct Worker;
-class Tree;
+class Evaluator;
 
 struct Task
 {
@@ -12,8 +12,8 @@ struct Task
      *  The default constructor leaves the task in an invalid state
      */
     Task();
-    Task(Tree* t, const glm::mat4& m, size_t ni, size_t nj, size_t nk,
-         int level);
+    Task(Evaluator* e, const glm::mat4& m,
+         size_t ni, size_t nj, size_t nk, int level);
 
     /*
      *  Mark the task as invalid
@@ -31,7 +31,7 @@ struct Task
     Worker* start() const;
 
     /*  Target tree  */
-    Tree* tree;
+    Evaluator* eval;
 
     /*  Transform matrix associated with the task  */
     glm::mat4 mat;

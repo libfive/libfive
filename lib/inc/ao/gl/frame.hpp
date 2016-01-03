@@ -9,6 +9,7 @@
 #include "ao/ui/task.hpp"
 
 class Tree;
+class Evaluator;
 
 /*
  *  The Frame class contains and draws many rendered Tree textures
@@ -55,6 +56,7 @@ protected:
     void startRender();
 
     std::unique_ptr<Tree> const tree;
+    std::unique_ptr<Evaluator> const eval;
 
     GLuint vs;  // Vertex shader
     GLuint fs;  // Fragment shader

@@ -2,9 +2,7 @@
 
 #include <cstdlib>
 
-#include "ao/core/opcode.hpp"
-
-class Atom;
+#include "ao/tree/opcode.hpp"
 
 /*
  *  A token represents a single expression (with up to two arguments)
@@ -50,9 +48,6 @@ public:
 protected:
     /*  found is used to detect which tokens are in the tree  */
     bool found=false;
-
-    /*  When packed into a Tree, store a pointer to the resulting Atom  */
-    Atom* atom=nullptr;
 
     friend class Store;
     friend class Tree;

@@ -13,7 +13,7 @@ struct Worker
      *  Constructs a region from the given voxel count and a divisor
      *  (higher divisors produce lower-resolution workers)
      */
-    Worker(Tree* tree, size_t ni, size_t nj, size_t nk, double div);
+    Worker(Evaluator* eval, size_t ni, size_t nj, size_t nk, double div);
 
     /*
      *  On destruction, join the thread

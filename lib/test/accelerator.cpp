@@ -3,12 +3,13 @@
 
 #include <catch/catch.hpp>
 
-#include "ao/core/tree.hpp"
-#include "ao/core/store.hpp"
+#include "ao/tree/tree.hpp"
+#include "ao/tree/store.hpp"
 
 #include "ao/render/heightmap.hpp"
 #include "ao/gl/accelerator.hpp"
 
+/*
 TEST_CASE("2D rendering of a circle (GPU)")
 {
     Store s;
@@ -202,3 +203,4 @@ TEST_CASE("Render shape (GPU)")
         REQUIRE(out.cols() == 10);
     }
 }
+*/

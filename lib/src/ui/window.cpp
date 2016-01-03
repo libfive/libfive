@@ -4,7 +4,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "ao/ui/window.hpp"
-#include "ao/core/tree.hpp"
+#include "ao/tree/tree.hpp"
 
 #include "ao/gl/core.hpp"
 #include "ao/gl/frame.hpp"

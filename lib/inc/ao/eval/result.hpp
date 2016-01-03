@@ -3,8 +3,8 @@
 #include <array>
 #include <vector>
 
-#include "ao/core/interval.hpp"
-#include "ao/core/gradient.hpp"
+#include "ao/eval/interval.hpp"
+#include "ao/eval/gradient.hpp"
 
 struct Result {
     /*

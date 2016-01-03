@@ -4,8 +4,9 @@
 #include <catch/catch.hpp>
 
 #include "ao/render/heightmap.hpp"
-#include "ao/core/tree.hpp"
-#include "ao/core/store.hpp"
+#include "ao/eval/evaluator.hpp"
+#include "ao/tree/tree.hpp"
+#include "ao/tree/store.hpp"
 
 TEST_CASE("2D rendering of a circle (CPU)")
 {
@@ -16,6 +17,7 @@ TEST_CASE("2D rendering of a circle (CPU)")
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
+    Evaluator e(&t);
 
     DepthImage comp(10, 10);
     double inf = std::numeric_limits<double>::infinity();
@@ -34,7 +36,7 @@ TEST_CASE("2D rendering of a circle (CPU)")
     SECTION("Empty Z")
     {
         Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
-        auto out = Heightmap::Render(&t, r, abort).first;
+        auto out = Heightmap::Render(&e, r, abort).first;
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
@@ -42,7 +44,7 @@ TEST_CASE("2D rendering of a circle (CPU)")
     SECTION("Zero-resolution Z")
     {
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 5, 5, 0);
-        auto out = Heightmap::Render(&t, r, abort).first;
+        auto out = Heightmap::Render(&e, r, abort).first;
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
@@ -57,9 +59,10 @@ TEST_CASE("2D interval Z values")
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
+    Evaluator e(&t);
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 0);
 
-    auto out = Heightmap::Render(&t, r, abort).first;
+    auto out = Heightmap::Render(&e, r, abort).first;
     CAPTURE(out);
     REQUIRE((out == 0 ||
              out == -std::numeric_limits<double>::infinity()).all());
@@ -74,9 +77,10 @@ TEST_CASE("3D interval Z values")
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
+    Evaluator e(&t);
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 25);
 
-    auto out = Heightmap::Render(&t, r, abort).first;
+    auto out = Heightmap::Render(&e, r, abort).first;
     CAPTURE(out);
     REQUIRE((out == r.Z.pos(r.Z.size - 1) ||
              out == -std::numeric_limits<double>::infinity()).all());
@@ -96,8 +100,9 @@ TEST_CASE("Render orientation (CPU)")
                    s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
                                        s.operation(OP_MUL, s.Y(), s.Y())),
                    s.constant(1)), s.Y()));
+        Evaluator e(&t);
 
-        auto out = Heightmap::Render(&t, r, abort).first;
+        auto out = Heightmap::Render(&e, r, abort).first;
 
         DepthImage comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
@@ -124,8 +129,9 @@ TEST_CASE("Render orientation (CPU)")
                    s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
                                        s.operation(OP_MUL, s.Y(), s.Y())),
                    s.constant(1)), s.X()));
+        Evaluator e(&t);
 
-        auto out = Heightmap::Render(&t, r, abort).first;
+        auto out = Heightmap::Render(&e, r, abort).first;
 
         DepthImage comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
@@ -155,18 +161,19 @@ TEST_CASE("Render shape (CPU)")
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
+    Evaluator e(&t);
 
     SECTION("X")
     {
         Region r({0, 1}, {-1, 1}, {0, 0}, 5);
-        auto out = Heightmap::Render(&t, r, abort).first;
+        auto out = Heightmap::Render(&e, r, abort).first;
         REQUIRE(out.rows() == 10);
         REQUIRE(out.cols() == 5);
     }
     SECTION("Y")
     {
         Region r({-1, 1}, {0, 1}, {0, 0}, 5);
-        auto out = Heightmap::Render(&t, r, abort).first;
+        auto out = Heightmap::Render(&e, r, abort).first;
         REQUIRE(out.rows() == 5);
         REQUIRE(out.cols() == 10);
     }
@@ -183,11 +190,12 @@ TEST_CASE("3D rendering of a sphere (CPU)")
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                                    s.operation(OP_MUL, s.Z(), s.Z())),
                s.constant(1)));
+    Evaluator e(&t);
 
     SECTION("Values")
     {
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
-        auto out = Heightmap::Render(&t, r, abort).first;
+        auto out = Heightmap::Render(&e, r, abort).first;
 
         DepthImage comp(10, 10);
         double inf = std::numeric_limits<double>::infinity();
@@ -215,7 +223,7 @@ TEST_CASE("3D rendering of a sphere (CPU)")
         start = std::chrono::system_clock::now();
 
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 100);
-        auto out = Heightmap::Render(&t, r, abort).first;
+        auto out = Heightmap::Render(&e, r, abort).first;
 
         end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed = end - start;
@@ -249,7 +257,8 @@ TEST_CASE("2D rendering with normals (CPU)")
     SECTION("X")
     {
         Tree t(&s, s.X());
-        auto norm = Heightmap::Render(&t, r, abort, false).second;
+        Evaluator e(&t);
+        auto norm = Heightmap::Render(&e, r, abort, false).second;
 
         CAPTURE(norm);
         REQUIRE((norm == 0xff7f7fff || norm == 0).all());
@@ -258,7 +267,8 @@ TEST_CASE("2D rendering with normals (CPU)")
     SECTION("-X")
     {
         Tree t(&s, s.operation(OP_NEG, s.X()));
-        auto norm = Heightmap::Render(&t, r, abort, false).second;
+        Evaluator e(&t);
+        auto norm = Heightmap::Render(&e, r, abort, false).second;
 
         CAPTURE(norm);
         REQUIRE((norm == 0xff7f7f00 || norm == 0).all());
@@ -267,7 +277,8 @@ TEST_CASE("2D rendering with normals (CPU)")
     SECTION("Y")
     {
         Tree t(&s, s.Y());
-        auto norm = Heightmap::Render(&t, r, abort, false).second;
+        Evaluator e(&t);
+        auto norm = Heightmap::Render(&e, r, abort, false).second;
 
         CAPTURE(norm);
         REQUIRE((norm == 0xff7fff7f || norm == 0).all());
@@ -285,8 +296,9 @@ TEST_CASE("Normal clipping")
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
+    Evaluator e(&t);
 
-    auto norm = Heightmap::Render(&t, r, abort).second;
+    auto norm = Heightmap::Render(&e, r, abort).second;
 
     CAPTURE(norm);
     REQUIRE((norm == 0xffff7f7f || norm == 0).all());

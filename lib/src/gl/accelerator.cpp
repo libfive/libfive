@@ -3,9 +3,10 @@
 #include "ao/gl/accelerator.hpp"
 #include "ao/gl/shader.hpp"
 
-#include "ao/core/atom.hpp"
-#include "ao/core/region.hpp"
-#include "ao/core/tree.hpp"
+#include "ao/tree/atom.hpp"
+#include "ao/tree/tree.hpp"
+
+#include "ao/render/region.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex shader
@@ -376,7 +377,7 @@ std::string Accelerator::toShaderFunc(const Tree* tree, Mode mode)
     // Build shader line-by-line from the active atoms
     for (const auto& row : tree->rows)
     {
-        for (size_t i=0; i < row.active; ++i)
+        for (size_t i=0; i < row.size(); ++i)
         {
             out += toShader(row[i], mode);
         }

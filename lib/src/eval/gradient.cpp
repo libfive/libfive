@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "ao/core/gradient.hpp"
+#include "ao/eval/gradient.hpp"
 
 Gradient operator+(const Gradient& a, const Gradient& b)
 {
@@ -31,7 +31,6 @@ Gradient operator/(const Gradient& a, const Gradient& b)
             (b.v * a.dy - a.v * b.dy) / p,
             (b.v * a.dz - a.v * b.dz) / p);
 }
-
 
 Gradient _min(const Gradient& a, const Gradient& b)
 {

@@ -16,8 +16,8 @@ add_definitions(-DGLFW_INCLUDE_GLCOREARB)
 
 ################################################################################
 
-file(GLOB SRC_FILES core/*.cpp format/*.cpp ui/*.cpp
-                    render/*.cpp gl/*.cpp)
+file(GLOB SRC_FILES tree/*.cpp format/*.cpp ui/*.cpp
+                    render/*.cpp gl/*.cpp eval/*.cpp)
 
 add_library(ao STATIC ${SRC_FILES})
 target_include_directories(ao PUBLIC

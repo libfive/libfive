@@ -7,10 +7,10 @@
 
 #include <efsw/include/efsw/efsw.hpp>
 
-#include "ao/core/store.hpp"
-#include "ao/core/tree.hpp"
-#include "ao/core/opcode.hpp"
-#include "ao/core/token.hpp"
+#include "ao/tree/store.hpp"
+#include "ao/tree/tree.hpp"
+#include "ao/tree/opcode.hpp"
+#include "ao/tree/token.hpp"
 
 #include "ao/ui/window.hpp"
 

@@ -4,8 +4,9 @@
 #include "ao/gl/frame.hpp"
 #include "ao/gl/shader.hpp"
 
-#include "ao/core/region.hpp"
-#include "ao/core/tree.hpp"
+#include "ao/render/region.hpp"
+#include "ao/tree/tree.hpp"
+#include "ao/eval/evaluator.hpp"
 
 #include "ao/ui/worker.hpp"
 
@@ -74,7 +75,8 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////
 
 Frame::Frame(Tree* tree)
-    : tree(tree), vs(Shader::compile(vert, GL_VERTEX_SHADER)),
+    : tree(tree), eval(new Evaluator(tree)),
+      vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)), prog(Shader::link(vs, fs))
 {
     assert(vs);
@@ -82,7 +84,6 @@ Frame::Frame(Tree* tree)
     assert(prog);
 
     tree->parent = this;
-    tree->buildAccelerator();
 
     glGenTextures(1, &depth);
     glGenTextures(1, &norm);
@@ -158,7 +159,7 @@ void Frame::render(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
 {
     const float DEFAULT_LEVEL = 8;
 
-    next = Task(tree.get(), m, ni, nj, nk, DEFAULT_LEVEL);
+    next = Task(eval.get(), m, ni, nj, nk, DEFAULT_LEVEL);
 
     // If a task is running and isn't a min-resolution render action,
     // set the abort flag so that it stops early

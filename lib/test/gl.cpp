@@ -6,8 +6,8 @@
 #include "ao/gl/shader.hpp"
 #include "ao/gl/accelerator.hpp"
 
-#include "ao/core/store.hpp"
-#include "ao/core/tree.hpp"
+#include "ao/tree/store.hpp"
+#include "ao/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 

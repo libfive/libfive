@@ -1,8 +1,8 @@
 #include <limits>
 
 #include "ao/render/heightmap.hpp"
-#include "ao/core/tree.hpp"
-#include "ao/gl/accelerator.hpp"
+#include "ao/eval/result.hpp"
+#include "ao/eval/evaluator.hpp"
 
 #include <iostream>
 
@@ -16,8 +16,8 @@ namespace Heightmap
  */
 struct NormalRenderer
 {
-    NormalRenderer(Tree* t, const Region& r, NormalImage& norm)
-        : t(t), r(r), norm(norm) {}
+    NormalRenderer(Evaluator* e, const Region& r, NormalImage& norm)
+        : e(e), r(r), norm(norm) {}
 
     /*
      *  Assert on destruction that the normals were flushed
@@ -29,7 +29,7 @@ struct NormalRenderer
 
     void run()
     {
-        const Gradient* gs = t->evalCore<Gradient>(count);
+        const Gradient* gs = e->evalCore<Gradient>(count);
         for (size_t i=0; i < count; ++i)
         {
             // Find the normal's length (to normalize it)
@@ -60,7 +60,7 @@ struct NormalRenderer
     {
         xs[count] = r.X.min + i;
         ys[count] = r.Y.min + j;
-        t->setPoint<Gradient>(Gradient(r.X.pos(i), 1, 0, 0),
+        e->setPoint<Gradient>(Gradient(r.X.pos(i), 1, 0, 0),
                               Gradient(r.Y.pos(j), 0, 1, 0),
                               Gradient(z, 0, 0, 1),
                               count++);
@@ -73,7 +73,7 @@ struct NormalRenderer
         }
     }
 
-    Tree* t;
+    Evaluator* e;
     const Region& r;
     NormalImage& norm;
 
@@ -89,14 +89,15 @@ struct NormalRenderer
 /*
 *  Helper functions that evaluates a region of pixels
 */
-static void pixels(Tree* t, const Region& r, DepthImage& depth, NormalImage& norm)
+static void pixels(Evaluator* e, const Region& r,
+                   DepthImage& depth, NormalImage& norm)
 {
-    const double* out = t->eval(r);
+    const double* out = e->eval(r);
 
     int index = 0;
 
     // Helper struct to render normals
-    NormalRenderer nr(t, r, norm);
+    NormalRenderer nr(e, r, norm);
 
     // Unflatten results into the image, breaking out of loops early when a pixel
     // is written (because all subsequent pixels will be below it).  This
@@ -133,7 +134,7 @@ static void pixels(Tree* t, const Region& r, DepthImage& depth, NormalImage& nor
  *
  *  This function is used when marking an Interval as filled
  */
-static void fill(Tree* t, const Region& r, DepthImage& depth,
+static void fill(Evaluator* e, const Region& r, DepthImage& depth,
                  NormalImage& norm)
 {
     // Store the maximum z position (which is what we're flooding into
@@ -141,7 +142,7 @@ static void fill(Tree* t, const Region& r, DepthImage& depth,
     const double z = r.Z.pos(r.Z.size - 1);
 
     // Helper struct to handle normal rendering
-    NormalRenderer nr(t, r, norm);
+    NormalRenderer nr(e, r, norm);
 
     // Iterate over every pixel in the region
     for (unsigned i=0; i < r.X.size; ++i)
@@ -164,7 +165,7 @@ static void fill(Tree* t, const Region& r, DepthImage& depth,
 /*
 * Helper function that reduces a particular matrix block
 */
-static void recurse(Tree* t, const Region& r, DepthImage& depth,
+static void recurse(Evaluator* e, const Region& r, DepthImage& depth,
                 NormalImage& norm, const std::atomic<bool>& abort)
 {
     // Stop rendering if the abort flag is set
@@ -185,23 +186,23 @@ static void recurse(Tree* t, const Region& r, DepthImage& depth,
     // If we're below a certain size, render pixel-by-pixel
     if (r.voxels() <= Result::count<double>())
     {
-        pixels(t, r, depth, norm);
+        pixels(e, r, depth, norm);
         return;
     }
 
     // Do the interval evaluation
-    Interval out = t->eval(r.X.interval, r.Y.interval, r.Z.interval);
+    Interval out = e->eval(r.X.interval, r.Y.interval, r.Z.interval);
 
     // If strictly negative, fill up the block and return
     if (out.upper() < 0)
     {
-        fill(t, r, depth, norm);
+        fill(e, r, depth, norm);
     }
     // Otherwise, recurse if the output interval is ambiguous
     else if (out.lower() <= 0)
     {
         // Disable inactive nodes in the tree
-        t->push();
+        e->push();
 
         // Subdivide and recurse
         assert(r.canSplit());
@@ -210,16 +211,16 @@ static void recurse(Tree* t, const Region& r, DepthImage& depth,
 
         // Since the higher Z region is in the second item of the
         // split, evaluate rs.second then rs.first
-        recurse(t, rs.second, depth, norm, abort);
-        recurse(t, rs.first, depth, norm, abort);
+        recurse(e, rs.second, depth, norm, abort);
+        recurse(e, rs.first, depth, norm, abort);
 
         // Re-enable disabled nodes from the tree
-        t->pop();
+        e->pop();
     }
 }
 
 std::pair<DepthImage, NormalImage> Render(
-    Tree* t, Region r, const std::atomic<bool>& abort, bool clip)
+    Evaluator* e, Region r, const std::atomic<bool>& abort, bool clip)
 {
     auto depth = DepthImage(r.Y.size, r.X.size);
     auto norm = NormalImage(r.Y.size, r.X.size);
@@ -227,17 +228,7 @@ std::pair<DepthImage, NormalImage> Render(
     depth.fill(-std::numeric_limits<double>::infinity());
     norm.fill(0);
 
-#if 0
-    if (auto accel = t->getAccelerator())
-    {
-        accel->makeContextCurrent();
-        accel->Render(r, depth);
-    }
-    else
-#endif
-    {
-        recurse(t, r, depth, norm, abort);
-    }
+    recurse(e, r, depth, norm, abort);
 
     // If the pixel is touching the top Z boundary and clip is true,
     // set this pixel's normal to be pointing in the Z direction

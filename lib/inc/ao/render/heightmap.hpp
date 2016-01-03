@@ -4,9 +4,9 @@
 
 #include <Eigen/Dense>
 
-#include "ao/core/region.hpp"
+#include "ao/render/region.hpp"
 
-class Tree;
+class Evaluator;
 
 typedef Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> DepthImage;
 typedef Eigen::Array<uint32_t, Eigen::Dynamic, Eigen::Dynamic> NormalImage;
@@ -21,5 +21,5 @@ namespace Heightmap
  *  If clip is true, voxels at the max Z height are given the normal (0, 0, 1)
  */
 std::pair<DepthImage, NormalImage> Render(
-        Tree* t, Region r, const std::atomic<bool>& abort, bool clip=true);
+        Evaluator* e, Region r, const std::atomic<bool>& abort, bool clip=true);
 }
