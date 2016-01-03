@@ -1,13 +1,25 @@
+#include <glm/gtx/transform.hpp>
+
 #include "ao/gl/core.hpp"
 #include "ao/ui/worker.hpp"
+#include "ao/ui/task.hpp"
 
 #include "ao/tree/tree.hpp"
+#include "ao/eval/evaluator.hpp"
 #include "ao/gl/accelerator.hpp"
 
-Worker::Worker(Evaluator* eval, size_t ni, size_t nj, size_t nk, double div)
-    : region({-1, 1}, {-1, 1}, {-1, 1}, ni/(2*div), nj/(2*div), nk/(2*div)),
+Worker::Worker(Evaluator* eval, const Task& t)
+    : region({-1, 1}, {-1, 1}, {-1, 1},
+             t.ni/(2*t.level), t.nj/(2*t.level), t.nk/(2*t.level)),
       future(promise.get_future()), abort(false)
 {
+    assert(t.level > 0);
+
+    // Apply the matrix to the tree, applying an extra scaling on
+    // the z axis to make the coordinate system match OpenGL
+    auto m = glm::scale(glm::inverse(t.mat), glm::vec3(1, 1, -1));
+    eval->setMatrix(m);
+
     thread = std::thread([=](){
             std::pair<DepthImage, NormalImage> out =
                 Heightmap::Render(eval, this->region, this->abort);

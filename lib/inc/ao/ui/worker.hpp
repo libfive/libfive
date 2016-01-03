@@ -4,6 +4,8 @@
 #include "ao/gl/core.hpp"
 #include "ao/render/heightmap.hpp"
 
+class Task;
+
 /*
  *  A worker contains all of the data needed for a running render task
  */
@@ -13,7 +15,7 @@ struct Worker
      *  Constructs a region from the given voxel count and a divisor
      *  (higher divisors produce lower-resolution workers)
      */
-    Worker(Evaluator* eval, size_t ni, size_t nj, size_t nk, double div);
+    Worker(Evaluator* eval, const Task& task);
 
     /*
      *  On destruction, join the thread

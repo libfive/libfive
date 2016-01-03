@@ -12,8 +12,7 @@ struct Task
      *  The default constructor leaves the task in an invalid state
      */
     Task();
-    Task(Evaluator* e, const glm::mat4& m,
-         size_t ni, size_t nj, size_t nk, int level);
+    Task(const glm::mat4& m, size_t ni, size_t nj, size_t nk, int level);
 
     /*
      *  Mark the task as invalid
@@ -24,14 +23,6 @@ struct Task
      *  Check if the task is valid
      */
     bool valid() const;
-
-    /*
-     *  Kick off a render operation in a separate thread
-     */
-    Worker* start() const;
-
-    /*  Target tree  */
-    Evaluator* eval;
 
     /*  Transform matrix associated with the task  */
     glm::mat4 mat;

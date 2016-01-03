@@ -159,7 +159,7 @@ void Frame::render(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
 {
     const float DEFAULT_LEVEL = 8;
 
-    next = Task(eval.get(), m, ni, nj, nk, DEFAULT_LEVEL);
+    next = Task(m, ni, nj, nk, DEFAULT_LEVEL);
 
     // If a task is running and isn't a min-resolution render action,
     // set the abort flag so that it stops early
@@ -186,7 +186,7 @@ void Frame::startRender()
     {
         // Swap around render tasks and start an async worker
         pending = next;
-        worker.reset(next.start());
+        worker.reset(new Worker(eval.get(), pending));
         next.reset();
     }
     // Schedule a refinement of the current render task
