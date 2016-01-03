@@ -7,7 +7,8 @@
 
 class Atom;
 
-#define CLAUSE_FLAG_IGNORED 1
+#define CLAUSE_FLAG_IGNORED  1
+#define CLAUSE_FLAG_DISABLED 2
 
 /*
  *  A clause is used in an Evaluator to evaluate a tree
@@ -38,9 +39,28 @@ public:
     bool checkDisabled();
 
     /*
-     *  Stores the most recent Interval evaluation in the result arrays
+     *  Stores the most recent Interval evaluation in the mutable_value slot
+     *  and set CLAUSE_FLAG_DISABLED
      */
-    void cacheResult();
+    void disable();
+    void enable();
+
+    /*
+     *  Returns results.get<T>(i) if this clause is enabled,
+     *  T(mutable_value) otherwise
+     */
+    template <class T>
+    T get(size_t index)
+    {
+        if (flags & CLAUSE_FLAG_DISABLED)
+        {
+            return T(mutable_value);
+        }
+        else
+        {
+            return result.get<T>(index);
+        }
+    }
 
 protected:
     /*  Opcode for this clause  */

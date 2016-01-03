@@ -36,47 +36,47 @@ inline void Evaluator::evalClause(Clause* m, size_t count)
     switch (m->op) {
         case OP_ADD:
             EVAL_LOOP
-            m->result.set<T>(m->a->result.get<T>(i) +
-                             m->b->result.get<T>(i), i);
+            m->result.set<T>(m->a->get<T>(i) +
+                             m->b->get<T>(i), i);
             break;
         case OP_MUL:
             EVAL_LOOP
-            m->result.set<T>(m->a->result.get<T>(i) *
-                             m->b->result.get<T>(i), i);
+            m->result.set<T>(m->a->get<T>(i) *
+                             m->b->get<T>(i), i);
             break;
         case OP_MIN:
             EVAL_LOOP
-            m->result.set<T>(_min(m->a->result.get<T>(i),
-                                  m->b->result.get<T>(i)), i);
+            m->result.set<T>(_min(m->a->get<T>(i),
+                                  m->b->get<T>(i)), i);
             break;
         case OP_MAX:
             EVAL_LOOP
-            m->result.set<T>(_max(m->a->result.get<T>(i),
-                                  m->b->result.get<T>(i)), i);
+            m->result.set<T>(_max(m->a->get<T>(i),
+                                  m->b->get<T>(i)), i);
             break;
         case OP_SUB:
             EVAL_LOOP
-            m->result.set<T>(m->a->result.get<T>(i) -
-                             m->b->result.get<T>(i), i);
+            m->result.set<T>(m->a->get<T>(i) -
+                             m->b->get<T>(i), i);
             break;
         case OP_DIV:
             EVAL_LOOP
-            m->result.set<T>(m->a->result.get<T>(i) /
-                             m->b->result.get<T>(i), i);
+            m->result.set<T>(m->a->get<T>(i) /
+                             m->b->get<T>(i), i);
             break;
         case OP_SQRT:
             EVAL_LOOP
-            m->result.set<T>(sqrt(m->a->result.get<T>(i)), i);
+            m->result.set<T>(sqrt(m->a->get<T>(i)), i);
             break;
         case OP_NEG:
             EVAL_LOOP
-            m->result.set<T>(-m->a->result.get<T>(i), i);
+            m->result.set<T>(-m->a->get<T>(i), i);
             break;
         case COND_LZ:
             EVAL_LOOP
-            m->result.set<T>(_cond_nz(m->cond->result.get<T>(i),
-                                      m->a->result.get<T>(i),
-                                      m->b->result.get<T>(i)), i);
+            m->result.set<T>(_cond_nz(m->cond->get<T>(i),
+                                      m->a->get<T>(i),
+                                      m->b->get<T>(i)), i);
             break;
         case INVALID:
         case OP_CONST:

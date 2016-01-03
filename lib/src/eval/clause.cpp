@@ -30,7 +30,6 @@ bool Clause::checkDisabled()
     if (flags & CLAUSE_FLAG_IGNORED)
     {
         clearFlags();
-        mutable_value = result.get<Interval>(0).lower();
         return true;
     }
 
@@ -89,7 +88,13 @@ bool Clause::checkDisabled()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Clause::cacheResult()
+void Clause::disable()
 {
-    result.fill(result.get<Interval>(0).lower());
+    mutable_value = result.get<Interval>(0).lower();
+    setFlag(CLAUSE_FLAG_DISABLED);
+}
+
+void Clause::enable()
+{
+    clearFlag(CLAUSE_FLAG_DISABLED);
 }
