@@ -23,7 +23,7 @@ public:
     /*
      *  Constructs a new Accelerator
      *
-     *  This must be called from the main thread
+     *  This must be called from the main thread with a current OpenGL context
      */
     Accelerator(const Tree* tree);
     ~Accelerator();
@@ -34,23 +34,11 @@ public:
     void setMatrix(const glm::mat4& m);
 
     /*
-     *  Makes this accelerator's context current
-     */
-    void makeContextCurrent() const;
-
-    /*
-     *  Render a region and return the resulting depth image
-     *
-     *  The accelerator's context must be current when this is called
-     */
-    std::pair<DepthImage, NormalImage> Render(const Region& r);
-
-    /*
      *  Render a target region and blit it into the given depth image
      *
      *  The accelerator's context must be current when this is called
      */
-    void Render(const Region& r, DepthImage& depth, NormalImage& norm);
+    void Render(const Region& r, GLuint depth, GLuint norm);
 
     /*
      *  Converts a tree to an OpenGL 3.3 fragment shader
@@ -79,8 +67,6 @@ protected:
     GLuint vao; // Vertex array object
 
     GLuint fbo; // Frame-buffer object
-    GLuint tex_depth; // Target texture
-    GLuint tex_norm; // Target texture
 
     std::array<GLfloat, 12> mat; // Generic transform matrix
 

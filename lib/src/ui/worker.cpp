@@ -6,13 +6,20 @@
 
 #include "ao/tree/tree.hpp"
 #include "ao/eval/evaluator.hpp"
+#include "ao/gl/accelerator.hpp"
 #include "ao/gl/texture.hpp"
 
-Worker::Worker(Evaluator* eval, const Task& t, GLFWwindow* context,
-               GLuint depth, GLuint norm)
+Worker::Worker(const Task& t)
     : region({-1, 1}, {-1, 1}, {-1, 1},
              t.ni/(2*t.level), t.nj/(2*t.level), t.nk/(2*t.level)),
       future(promise.get_future()), abort(false)
+{
+    // Nothing to do here
+}
+
+Worker::Worker(Evaluator* eval, const Task& t, GLFWwindow* context,
+               GLuint depth, GLuint norm)
+    : Worker(t)
 {
     assert(t.level > 0);
 
@@ -35,6 +42,23 @@ Worker::Worker(Evaluator* eval, const Task& t, GLFWwindow* context,
         {
             this->promise.set_value(false);
         }
+        glfwPostEmptyEvent(); });
+}
+
+Worker::Worker(Accelerator* accel, const Task& t, GLFWwindow* context,
+               GLuint depth, GLuint norm)
+    : Worker(t)
+{
+    // Apply the matrix to the tree, applying an extra scaling on
+    // the z axis to make the coordinate system match OpenGL
+    auto m = glm::scale(glm::inverse(t.mat), glm::vec3(1, 1, -1));
+    accel->setMatrix(m);
+
+    thread = std::thread([=](){
+        glfwMakeContextCurrent(context);
+        accel->Render(this->region, depth, norm);
+        glFinish();
+        this->promise.set_value(true);
         glfwPostEmptyEvent(); });
 }
 

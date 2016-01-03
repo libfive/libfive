@@ -171,11 +171,6 @@ Accelerator::Accelerator(const Tree* tree)
             0, 1, 0, 0,
             0, 0, 1, 0}})
 {
-    GLFWwindow* prev = glfwGetCurrentContext();
-
-    context = makeContext();
-    assert(context);
-
     vs = Shader::compile(vert, GL_VERTEX_SHADER);
     fs = Shader::compile(toShader(tree), GL_FRAGMENT_SHADER);
     prog = Shader::link(vs, fs);
@@ -203,20 +198,11 @@ Accelerator::Accelerator(const Tree* tree)
     }
     glBindVertexArray(0);
 
-    glGenTextures(1, &tex_depth);
-    glGenTextures(1, &tex_norm);
     glGenFramebuffers(1, &fbo);
-
-    // Restore the previous context
-    glfwMakeContextCurrent(prev);
 }
 
 Accelerator::~Accelerator()
 {
-    // Save the previous context then make this Accelerator's context current
-    GLFWwindow* prev = glfwGetCurrentContext();
-    glfwMakeContextCurrent(context);
-
     // Delete all the things!
     glDeleteShader(vs);
     glDeleteShader(fs);
@@ -226,21 +212,6 @@ Accelerator::~Accelerator()
     glDeleteVertexArrays(1, &vao);
 
     glDeleteFramebuffers(1, &fbo);
-    glDeleteTextures(1, &tex_depth);
-    glDeleteTextures(1, &tex_norm);
-
-    // Restore previous context
-    glfwMakeContextCurrent(prev);
-
-    // Destroy our context
-    glfwDestroyWindow(context);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-void Accelerator::makeContextCurrent() const
-{
-    glfwMakeContextCurrent(context);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -257,30 +228,17 @@ void Accelerator::setMatrix(const glm::mat4& m)
     }
 }
 
-std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
-{
-    DepthImage depth(r.Y.size, r.X.size);
-    NormalImage norm(r.Y.size, r.X.size);
-
-    depth.fill(-std::numeric_limits<double>::infinity());
-    norm.fill(0);
-
-    Render(r, depth, norm);
-
-    return std::make_pair(depth, norm);
-}
-
-void Accelerator::Render(const Region& r, DepthImage& depth, NormalImage& norm)
+void Accelerator::Render(const Region& r, GLuint depth, GLuint norm)
 {
     // Generate a depth texture of the appropriate size
-    glBindTexture(GL_TEXTURE_2D, tex_depth);
+    glBindTexture(GL_TEXTURE_2D, depth);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, r.X.size, r.Y.size,
                  0, GL_RED, GL_FLOAT, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     // Generate a normal texture of the appropriate size
-    glBindTexture(GL_TEXTURE_2D, tex_norm);
+    glBindTexture(GL_TEXTURE_2D, norm);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, r.X.size, r.Y.size,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -289,9 +247,9 @@ void Accelerator::Render(const Region& r, DepthImage& depth, NormalImage& norm)
     // Bind the target textures to the framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                           GL_TEXTURE_2D, tex_depth, 0);
+                           GL_TEXTURE_2D, depth, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
-                           GL_TEXTURE_2D, tex_norm, 0);
+                           GL_TEXTURE_2D, norm, 0);
 
      // Set the list of draw buffers.
     GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
@@ -300,7 +258,7 @@ void Accelerator::Render(const Region& r, DepthImage& depth, NormalImage& norm)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Set the viewport to the appropriate size
-    glViewport(0, 0, r.X.size, r.Y.size);
+    glViewport(r.X.min, r.Y.min, r.X.size, r.Y.size);
 
     glUseProgram(prog);
     glBindVertexArray(vao);
@@ -323,33 +281,6 @@ void Accelerator::Render(const Region& r, DepthImage& depth, NormalImage& norm)
 
     // Switch back to the default framebuffer.
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // Copy depth and normal textures to Eigen arrays
-    Eigen::ArrayXXf out_depth(r.X.size, r.Y.size);
-    glBindTexture(GL_TEXTURE_2D, tex_depth);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, out_depth.data());
-
-    NormalImage out_norm(r.X.size, r.Y.size);
-    glBindTexture(GL_TEXTURE_2D, tex_norm);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, out_norm.data());
-
-    // Mask all of the lower points with -infinity
-    out_depth = (out_depth < r.Z.lower()).select(
-            -std::numeric_limits<float>::infinity(), out_depth);
-
-    // Iterate over every pixel in the region, storing new depths and normals
-    for (unsigned i=0; i < r.X.size; ++i)
-    {
-        for (unsigned j=0; j < r.Y.size; ++j)
-        {
-            // Check to see whether the voxel is in front of the image's depth
-            if (depth(r.Y.min + j, r.X.min + i) < out_depth(i, j))
-            {
-                depth(r.Y.min + j, r.X.min + i) = out_depth(i, j);
-                norm(r.Y.min + j, r.X.min + i) = out_norm(i, j);
-            }
-        }
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
