@@ -12,6 +12,8 @@
 #include "ao/tree/opcode.hpp"
 #include "ao/tree/token.hpp"
 
+#include "ao/eval/evaluator.hpp"
+
 #include "ao/ui/window.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -166,9 +168,10 @@ static SCM tree_new(SCM store, SCM root)
 static SCM tree_eval_double(SCM tree, SCM x, SCM y, SCM z)
 {
     auto t = untag_ptr<Tree>(tree);
-    double out = t->eval(scm_to_double(x),
-                         scm_to_double(y),
-                         scm_to_double(z));
+    auto e = Evaluator(t);
+    double out = e.eval(scm_to_double(x),
+                        scm_to_double(y),
+                        scm_to_double(z));
     return scm_from_double(out);
 }
 
@@ -179,7 +182,8 @@ static SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
     Interval Y(scm_to_double(scm_car(y)), scm_to_double(scm_cdr(y)));
     Interval Z(scm_to_double(scm_car(z)), scm_to_double(scm_cdr(z)));
 
-    Interval out = t->eval(X, Y, Z);
+    auto e = Evaluator(t);
+    Interval out = e.eval(X, Y, Z);
     return scm_cons(scm_from_double(out.lower()),
                     scm_from_double(out.upper()));
 }

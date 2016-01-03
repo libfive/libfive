@@ -21,7 +21,7 @@ include_directories(lib/inc)
 add_subdirectory(lib)
 
 # Build the ao-guile building
-#add_subdirectory(bind)
+add_subdirectory(bind)
 
 # Build efsw as a separate library
 add_subdirectory(vendor/efsw)
