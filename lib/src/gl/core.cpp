@@ -46,7 +46,7 @@ GLFWwindow* makeWindow(int width, int height, std::string title)
     return out;
 }
 
-GLFWwindow* makeContext()
+GLFWwindow* makeContext(GLFWwindow* share, bool make_current)
 {
     if (!initialize())
     {
@@ -56,8 +56,12 @@ GLFWwindow* makeContext()
     setWindowHints();
     glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 
-    auto out = glfwCreateWindow(1, 1, "", nullptr, nullptr);
-    glfwMakeContextCurrent(out);
+    auto out = glfwCreateWindow(1, 1, "", nullptr, share);
+
+    if (make_current)
+    {
+        glfwMakeContextCurrent(out);
+    }
 
     return out;
 }

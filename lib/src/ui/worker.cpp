@@ -6,9 +6,10 @@
 
 #include "ao/tree/tree.hpp"
 #include "ao/eval/evaluator.hpp"
-#include "ao/gl/accelerator.hpp"
+#include "ao/gl/texture.hpp"
 
-Worker::Worker(Evaluator* eval, const Task& t)
+Worker::Worker(Evaluator* eval, const Task& t, GLFWwindow* context,
+               GLuint depth, GLuint norm)
     : region({-1, 1}, {-1, 1}, {-1, 1},
              t.ni/(2*t.level), t.nj/(2*t.level), t.nk/(2*t.level)),
       future(promise.get_future()), abort(false)
@@ -21,10 +22,20 @@ Worker::Worker(Evaluator* eval, const Task& t)
     eval->setMatrix(m);
 
     thread = std::thread([=](){
-            std::pair<DepthImage, NormalImage> out =
-                Heightmap::Render(eval, this->region, this->abort);
-            this->promise.set_value(out);
-            glfwPostEmptyEvent(); });
+        auto out = Heightmap::Render(eval, this->region, this->abort);
+        if (!this->abort.load())
+        {
+            glfwMakeContextCurrent(context);
+            toTexture(out.first, depth);
+            toTexture(out.second, norm);
+            glFinish();
+            this->promise.set_value(true);
+        }
+        else
+        {
+            this->promise.set_value(false);
+        }
+        glfwPostEmptyEvent(); });
 }
 
 Worker::~Worker()
@@ -46,41 +57,15 @@ void Worker::halt()
     abort.store(true);
 }
 
-bool Worker::poll(GLuint depth, GLuint norm)
+Worker::State Worker::poll()
 {
     std::future_status status = future.wait_for(std::chrono::seconds(0));
 
     if (status != std::future_status::ready)
     {
-        return false;
+        return RUNNING;
     }
 
     // Get the resulting matrix
-    auto out = future.get();
-    Eigen::ArrayXXf d = out.first.cast<float>().transpose();
-
-    // Convert the resulting matrix into an OpenGL texture
-    // if the abort flag is not set
-    if (!abort.load())
-    {
-        NormalImage s = out.second.transpose();
-
-        // Pack the Eigen matrices into an OpenGL texture
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depth);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, d.rows(), d.cols(),
-                0, GL_RED, GL_FLOAT, d.data());
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-        glActiveTexture(GL_TEXTURE0 + 1);
-        glBindTexture(GL_TEXTURE_2D, norm);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, s.rows(), s.cols(),
-                0, GL_RGBA, GL_UNSIGNED_BYTE, s.data());
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    }
-
-    return true;
+    return future.get() ? DONE : ABORTED;
 }

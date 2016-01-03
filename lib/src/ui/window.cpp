@@ -231,7 +231,7 @@ void Window::poll()
         }
 
         // Construct a new frame
-        frames[in->first] = new Frame(in->second);
+        frames[in->first] = new Frame(in->second, window);
 
         // Delete the string, Tree* pair (which was allocated on the heap)
         delete in;

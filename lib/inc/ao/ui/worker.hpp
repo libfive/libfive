@@ -4,7 +4,7 @@
 #include "ao/gl/core.hpp"
 #include "ao/render/heightmap.hpp"
 
-class Task;
+struct Task;
 
 /*
  *  A worker contains all of the data needed for a running render task
@@ -12,10 +12,13 @@ class Task;
 struct Worker
 {
     /*
-     *  Constructs a region from the given voxel count and a divisor
-     *  (higher divisors produce lower-resolution workers)
+     *  Constructs a worker from the given Evaluator and a task
+     *  (higher task divisors produce lower-resolution workers)
+     *
+     *  depth and norm are target textures in which results are stored
      */
-    Worker(Evaluator* eval, const Task& task);
+    Worker(Evaluator* eval, const Task& task, GLFWwindow* context,
+           GLuint depth, GLuint norm);
 
     /*
      *  On destruction, join the thread
@@ -34,15 +37,18 @@ struct Worker
 
     /*
      *  Polls the worker, loading data into the given textures if complete
-     *  Returns true if the worker is done running, false otherwise
+     *
+     *  Returns RUNNING if the worker is still running, DONE if the worker
+     *  is done, and ABORTED if the worker was aborted but is complete.
      */
-    bool poll(GLuint depth, GLuint norm);
+    enum State { RUNNING, DONE, ABORTED };
+    State poll();
 
     /*  Region that is being analyzed  */
     Region region;
 
-    std::promise<std::pair<DepthImage, NormalImage>> promise;
-    std::future<std::pair<DepthImage, NormalImage>> future;
+    std::promise<bool> promise;
+    std::future<bool> future;
     std::atomic<bool> abort;
     std::thread thread;
 };

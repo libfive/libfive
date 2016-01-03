@@ -74,10 +74,11 @@ void main()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Frame::Frame(Tree* tree)
+Frame::Frame(Tree* tree, GLFWwindow* window)
     : tree(tree), eval(new Evaluator(tree)),
       vs(Shader::compile(vert, GL_VERTEX_SHADER)),
-      fs(Shader::compile(frag, GL_FRAGMENT_SHADER)), prog(Shader::link(vs, fs))
+      fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
+      prog(Shader::link(vs, fs)), context(makeContext(window, false))
 {
     assert(vs);
     assert(fs);
@@ -85,8 +86,8 @@ Frame::Frame(Tree* tree)
 
     tree->parent = this;
 
-    glGenTextures(1, &depth);
-    glGenTextures(1, &norm);
+    glGenTextures(2, depth);
+    glGenTextures(2, norm);
 
     glGenBuffers(1, &vbo);
     glGenVertexArrays(1, &vao);
@@ -113,10 +114,12 @@ Frame::~Frame()
     glDeleteShader(fs);
     glDeleteProgram(prog);
 
-    glDeleteTextures(1, &depth);
-    glDeleteTextures(1, &norm);
+    glDeleteTextures(2, depth);
+    glDeleteTextures(2, norm);
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
+
+    glfwDestroyWindow(context);
 }
 
 void Frame::draw(const glm::mat4& m) const
@@ -141,10 +144,10 @@ void Frame::draw(const glm::mat4& m) const
 
     // Bind depth and normal texture
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, depth);
+    glBindTexture(GL_TEXTURE_2D, depth[ping]);
     glUniform1i(glGetUniformLocation(prog, "depth"), 0);
     glActiveTexture(GL_TEXTURE0 + 1);
-    glBindTexture(GL_TEXTURE_2D, norm);
+    glBindTexture(GL_TEXTURE_2D, norm[ping]);
     glUniform1i(glGetUniformLocation(prog, "norm"), 1);
 
     // Draw the quad!
@@ -186,7 +189,8 @@ void Frame::startRender()
     {
         // Swap around render tasks and start an async worker
         pending = next;
-        worker.reset(new Worker(eval.get(), pending));
+        worker.reset(new Worker(eval.get(), pending, context,
+                                depth[!ping], norm[!ping]));
         next.reset();
     }
     // Schedule a refinement of the current render task
@@ -200,28 +204,34 @@ void Frame::startRender()
 
 bool Frame::poll()
 {
-    if (worker == nullptr)
-    {
-        return false;
-    }
-    else if (worker->poll(depth, norm))
-    {
-        // Swap tasks objects
-        current = pending;
-        pending.reset();
+    bool success = false;
 
-        // Release the worker (which joins the thread)
-        worker.reset();
-
-        // Attempt to kick off a new render
-        startRender();
-
-        return true;
-    }
-    else
+    if (worker != nullptr)
     {
-        return false;
+        // If the worker has successfully finished, swap task objects,
+        // swap textures, and mark success as true
+        Worker::State state = worker->poll();
+        if (state == Worker::DONE)
+        {
+            // Swap tasks objects
+            current = pending;
+
+            ping = !ping;
+            success = true;
+        }
+
+        // If the worker has finished (either DONE or ABORTED), clear the
+        // pending task and worker pointer (which joins the thread)
+        if (state != Worker::RUNNING)
+        {
+            pending.reset();
+            worker.reset();
+
+            // Attempt to kick off a new render
+            startRender();
+        }
     }
+    return success;
 }
 
 bool Frame::running() const

@@ -31,4 +31,4 @@ GLFWwindow* makeWindow(int width, int height, std::string title);
  *
  *  Same caveats apply as for makeWindow
  */
-GLFWwindow* makeContext();
+GLFWwindow* makeContext(GLFWwindow* share=nullptr, bool make_current=true);
