@@ -3,7 +3,6 @@
 
 #include <catch/catch.hpp>
 
-#include "ao/render/heightmap.hpp"
 #include "ao/tree/tree.hpp"
 #include "ao/tree/store.hpp"
 
@@ -235,7 +234,6 @@ TEST_CASE("2D rendering with normals " DESCRIPTION)
         REQUIRE((norm == 0xffd9d97f ||
                  norm == 0xffdada7f).all());
     }
-
 }
 
 TEST_CASE("Normal clipping" DESCRIPTION)
