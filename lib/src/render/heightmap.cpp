@@ -220,7 +220,7 @@ static void recurse(Evaluator* e, const Region& r, DepthImage& depth,
 }
 
 std::pair<DepthImage, NormalImage> Render(
-    Evaluator* e, Region r, const std::atomic<bool>& abort, bool clip)
+    Evaluator* e, Region r, const std::atomic<bool>& abort)
 {
     auto depth = DepthImage(r.Y.size, r.X.size);
     auto norm = NormalImage(r.Y.size, r.X.size);
@@ -230,12 +230,9 @@ std::pair<DepthImage, NormalImage> Render(
 
     recurse(e, r, depth, norm, abort);
 
-    // If the pixel is touching the top Z boundary and clip is true,
-    // set this pixel's normal to be pointing in the Z direction
-    if (clip)
-    {
-        norm = (depth == r.Z.pos(r.Z.size - 1)).select(0xffff7f7f, norm);
-    }
+    // If a voxel is touching the top Z boundary, set the normal to be
+    // pointing in the Z direction.
+    norm = (depth == r.Z.pos(r.Z.size - 1)).select(0xffff7f7f, norm);
 
     return std::make_pair(depth, norm);
 }
