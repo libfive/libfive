@@ -44,24 +44,6 @@ TEST_CASE("3D interval Z values")
              out == -std::numeric_limits<double>::infinity()).all());
 }
 
-TEST_CASE("Normal clipping")
-{
-    std::atomic<bool> abort(false);
-
-    Store s;
-    Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-               s.constant(1)));
-    Evaluator e(&t);
-
-    auto norm = Heightmap::Render(&e, r, abort).second;
-
-    CAPTURE(norm);
-    REQUIRE((norm == 0xffff7f7f || norm == 0).all());
-}
-
 // Run the standard render test suite with this render function
 static std::pair<DepthImage, NormalImage> RENDER(Tree* t, const Region& r)
 {
