@@ -39,6 +39,7 @@ public:
      *  The accelerator's context must be current when this is called
      */
     void Render(const Region& r, GLuint depth, GLuint norm);
+    std::pair<DepthImage, NormalImage> Render(const Region& r);
 
     /*
      *  Converts a tree to an OpenGL 3.3 fragment shader

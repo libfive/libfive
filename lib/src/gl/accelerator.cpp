@@ -234,6 +234,34 @@ void Accelerator::setMatrix(const glm::mat4& m)
     }
 }
 
+std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
+{
+    GLuint depth, norm;
+    glGenTextures(1, &depth);
+    glGenTextures(1, &norm);
+
+    Render(r, depth, norm);
+
+    // Copy depth and normal textures to Eigen arrays
+    Eigen::ArrayXXf out_depth_f(r.X.size, r.Y.size);
+    glBindTexture(GL_TEXTURE_2D, depth);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, out_depth_f.data());
+
+    NormalImage out_norm(r.X.size, r.Y.size);
+    glBindTexture(GL_TEXTURE_2D, norm);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, out_norm.data());
+
+    // Mask all of the lower points with -infinity
+    DepthImage out_depth = (out_depth_f < r.Z.lower()).select(
+            -std::numeric_limits<double>::infinity(),
+            out_depth_f.cast<double>()).transpose();
+
+    glDeleteTextures(1, &depth);
+    glDeleteTextures(1, &norm);
+
+    return std::make_pair(out_depth, out_norm.transpose());
+}
+
 void Accelerator::Render(const Region& r, GLuint depth, GLuint norm)
 {
     // Generate a depth texture of the appropriate size
