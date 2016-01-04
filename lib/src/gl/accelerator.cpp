@@ -75,8 +75,14 @@ void main()
                        vec4(0.0f, 0.0f, 1.0f, z));
 
             // Pack normal into 0-255 range
-            frag_norm = vec4(normalize(n.xyz) / 2.0f + 0.5f,
-                             0.0f);
+            if (i == 0)
+            {
+                frag_norm = vec4(0.5f, 0.5f, 1.0f, 1.0f);
+            }
+            else
+            {
+                frag_norm = vec4(normalize(n.xyz) / 2.0f + 0.5f, 1.0f);
+            }
             break;
         }
     }
