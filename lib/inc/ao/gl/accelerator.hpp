@@ -6,6 +6,7 @@
 
 #include <Eigen/Dense>
 #include <glm/mat4x4.hpp>
+#include <glm/vec2.hpp>
 
 #include "ao/gl/core.hpp"
 #include "ao/render/heightmap.hpp"
@@ -27,6 +28,12 @@ public:
      */
     Accelerator(const Tree* tree);
     ~Accelerator();
+
+    /*
+     *  Prepares to render the given region, allocating memory for the
+     *  textures and saving global z bounds to render correctly
+     */
+    void init(const Region& r, GLuint depth, GLuint norm);
 
     /*
      *  Saves our generic transform matrix
@@ -70,6 +77,8 @@ protected:
     GLuint fbo; // Frame-buffer object
 
     std::array<GLfloat, 12> mat; // Generic transform matrix
+
+    glm::vec2 zbounds; // Global z bounds (saved in init)
 
     // Static shader strings
     static const std::string vert;

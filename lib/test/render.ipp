@@ -236,7 +236,7 @@ TEST_CASE("2D rendering with normals " DESCRIPTION)
     }
 }
 
-TEST_CASE("Normal clipping" DESCRIPTION)
+TEST_CASE("Normal clipping " DESCRIPTION)
 {
     Store s;
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);

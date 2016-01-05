@@ -60,14 +60,14 @@ vec4 shade(vec3 norm)
 void main()
 {
     float d = texture(depth, tex_coord).r;
-    if (isinf(d))
+    if (d == 1.0f)
     {
         discard;
     }
     else
     {
-        float z = (1.0f - d) / 2.0f;
-        gl_FragDepth = z;
+        // Map a depth in the range [1, -1] to the depth buffer's [0, 1] range
+        gl_FragDepth = d;
         fragColor = shade(2.0f * (texture(norm, tex_coord).rgb - 0.5f));
     }
 }

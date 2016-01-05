@@ -37,14 +37,14 @@ const std::string Accelerator::frag = R"(
 #version 330
 
 in vec2 pos;
-layout(location=0) out float frag_depth;
-layout(location=1) out vec4 frag_norm;
+layout(location=0) out vec4 frag_norm;
 
 // Generic matrix transform
 uniform float mat[12];
 
 uniform int nk;
 uniform vec2 zbounds;
+uniform vec2 zglobal;
 
 // Forward declaration of f-rep function and normal function
 float f(float x, float y, float z);
@@ -55,9 +55,8 @@ void main()
     float x = pos.x;
     float y = pos.y;
 
-    // Set the default depth to a value below zmin
-    // (as GLSL doesn't support -inf directly)
-    frag_depth = zbounds[0] - 1.0f;
+    // Set the default depth to the back value
+    gl_FragDepth = 1.0f;
     frag_norm = vec4(0.0f);
 
     for (int i=0; i < nk; ++i)
@@ -67,7 +66,8 @@ void main()
 
         if (f(x, y, z) < 0.0f)
         {
-            frag_depth = z;
+            // Map the z coordinate to the 0 - 1 depth buffer
+            gl_FragDepth = (z - zglobal[0]) / (zglobal[1] - zglobal[0]);
 
             // Calculate normal
             vec4 n = g(vec4(1.0f, 0.0f, 0.0f, x),
@@ -222,6 +222,26 @@ Accelerator::~Accelerator()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void Accelerator::init(const Region& r, GLuint depth, GLuint norm)
+{
+    zbounds = glm::vec2(r.Z.lower(), r.Z.upper());
+
+    // Generate a depth texture of the appropriate size
+    glBindTexture(GL_TEXTURE_2D, depth);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, r.X.size, r.Y.size,
+                 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    // Generate a normal texture of the appropriate size
+    glBindTexture(GL_TEXTURE_2D, norm);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, r.X.size, r.Y.size,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+}
+
 void Accelerator::setMatrix(const glm::mat4& m)
 {
     size_t k = 0;
@@ -240,54 +260,40 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
     glGenTextures(1, &depth);
     glGenTextures(1, &norm);
 
+    init(r, depth, norm);
     Render(r, depth, norm);
 
     // Copy depth and normal textures to Eigen arrays
     Eigen::ArrayXXf out_depth_f(r.X.size, r.Y.size);
     glBindTexture(GL_TEXTURE_2D, depth);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, out_depth_f.data());
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                  GL_FLOAT, out_depth_f.data());
 
     NormalImage out_norm(r.X.size, r.Y.size);
     glBindTexture(GL_TEXTURE_2D, norm);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, out_norm.data());
 
     // Mask all of the lower points with -infinity
-    DepthImage out_depth = (out_depth_f < r.Z.lower()).select(
+    /*
+    DepthImage out_depth = (out_depth_f <= r.Z.lower()).select(
             -std::numeric_limits<double>::infinity(),
-            out_depth_f.cast<double>()).transpose();
+            1 - 2 * out_depth_f.cast<double>()).transpose();
+            */
 
     glDeleteTextures(1, &depth);
     glDeleteTextures(1, &norm);
 
-    return std::make_pair(out_depth, out_norm.transpose());
+    return std::make_pair(out_depth_f.cast<double>().transpose(), out_norm.transpose());
 }
 
 void Accelerator::Render(const Region& r, GLuint depth, GLuint norm)
 {
-    // Generate a depth texture of the appropriate size
-    glBindTexture(GL_TEXTURE_2D, depth);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, r.X.size, r.Y.size,
-                 0, GL_RED, GL_FLOAT, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-    // Generate a normal texture of the appropriate size
-    glBindTexture(GL_TEXTURE_2D, norm);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, r.X.size, r.Y.size,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
     // Bind the target textures to the framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                            GL_TEXTURE_2D, depth, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                            GL_TEXTURE_2D, norm, 0);
-
-     // Set the list of draw buffers.
-    GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-    glDrawBuffers(2, buffers);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -304,12 +310,15 @@ void Accelerator::Render(const Region& r, GLuint depth, GLuint norm)
                 r.Y.lower(), r.Y.upper());
     glUniform2f(glGetUniformLocation(prog, "zbounds"),
                 r.Z.lower(), r.Z.upper());
+    glUniform2f(glGetUniformLocation(prog, "zglobal"),
+                zbounds[0], zbounds[1]);
     glUniform1i(glGetUniformLocation(prog, "nk"), r.Z.size);
 
     // Load the generic transform matrix into the shader
     glUniform1fv(glGetUniformLocation(prog, "mat"), 12, &mat[0]);
 
     // Draw the full rectangle into the FBO
+    glEnable(GL_DEPTH_TEST);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glBindVertexArray(0);
 
