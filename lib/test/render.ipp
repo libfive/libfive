@@ -45,6 +45,34 @@ TEST_CASE("2D rendering of a circle " DESCRIPTION)
     }
 }
 
+TEST_CASE("2D circle rendering at non-zero Z " DESCRIPTION)
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+               s.constant(1)));
+
+    Region r({-1, 1}, {-1, 1}, {1, 1}, 5);
+    auto out = RENDER(&t, r).first;
+    CAPTURE(out);
+
+    DepthImage comp(10, 10);
+    double inf = std::numeric_limits<double>::infinity();
+    comp <<
+        -inf,-inf,-inf,   1,   1,   1,   1,-inf,-inf,-inf,
+        -inf,   1,   1,   1,   1,   1,   1,   1,   1,-inf,
+        -inf,   1,   1,   1,   1,   1,   1,   1,   1,-inf,
+           1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+           1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+           1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+           1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+        -inf,   1,   1,   1,   1,   1,   1,   1,   1,-inf,
+        -inf,   1,   1,   1,   1,   1,   1,   1,   1,-inf,
+        -inf,-inf,-inf,   1,   1,   1,   1,-inf,-inf,-inf;
+    REQUIRE((comp == out).all());
+}
+
 TEST_CASE("Render orientation " DESCRIPTION)
 {
     Store s;
