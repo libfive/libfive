@@ -247,6 +247,9 @@ void Accelerator::init(const Region& r, GLuint depth, GLuint norm)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+    // Enable depth buffer
+    glEnable(GL_DEPTH_TEST);
+
     // Bind the target textures to the framebuffer and clear them
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
