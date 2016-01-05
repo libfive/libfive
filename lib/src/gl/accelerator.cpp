@@ -330,9 +330,6 @@ std::string Accelerator::toShaderFunc(const Tree* tree, Mode mode)
     atoms.clear();
     index = 0;
 
-    // Hard-code the tree's root as atom 0
-    atoms[tree->root] = index++;
-
     // Hard-code the matrix atoms as atoms 0-11
     // (in a separately-indexed array named 'mat')
     for (int i=0; i < 12; ++i)
@@ -345,11 +342,14 @@ std::string Accelerator::toShaderFunc(const Tree* tree, Mode mode)
     {
         for (size_t i=0; i < row.size(); ++i)
         {
-            out += toShader(row[i], mode);
+            if (row[i] != tree->root)
+            {
+                out += toShader(row[i], mode);
+            }
         }
     }
-
-    out += "return m0;}";
+    out += toShader(tree->root, mode);
+    out += "return m" + std::to_string(atoms[tree->root]) + ";}";
     return out;
 }
 
@@ -378,14 +378,14 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
     std::string out = ((mode == DEPTH) ? "    float m"
                                        : "    vec4 m") + std::to_string(i)
                                                        + " = ";
-    auto get = [&](Atom* m){
-        if (m)
+    auto get = [&](const Atom* n){
+        if (n)
         {
-            auto itr = atoms.find(m);
+            auto itr = atoms.find(n);
 
             // Special-case for mutable atoms, which are assumed to be part
             // of the generic transform matrix and are GLSL uniforms
-            if (m->op == OP_MUTABLE)
+            if (n->op == OP_MUTABLE)
             {
                 assert(itr != atoms.end());
                 assert(itr->second < 12);
@@ -396,20 +396,20 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
                             + std::to_string(itr->second) + "])");
             }
             // If the atom is already stored, save it
-            else if (itr != atoms.end())
+            else if (itr != atoms.end() && n != m)
             {
                 return "m" + std::to_string(itr->second);
             }
             // Otherwise, the atom must be something hard-coded!
-            else switch (m->op)
+            else switch (n->op)
             {
                 case OP_X:       return std::string("x");
                 case OP_Y:       return std::string("y");
                 case OP_Z:       return std::string("z");
                 case OP_CONST:   return (mode == DEPTH)
-                                 ? (std::to_string(m->value) + "f")
+                                 ? (std::to_string(n->value) + "f")
                                  : ("vec4(0.0f, 0.0f, 0.0f, "
-                                         + std::to_string(m->value) + ")");
+                                         + std::to_string(n->value) + ")");
                 default: assert(false);
             }
         }
@@ -437,9 +437,10 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
             case OP_X:  // Fallthrough!
             case OP_Y:
             case OP_Z:
-            case LAST_OP:
             case OP_CONST:
-            case OP_MUTABLE:
+            case OP_MUTABLE: out += get(m); break;
+
+            case LAST_OP:   // Fallthrough
             case INVALID:   assert(false);
         }
     }
@@ -462,9 +463,10 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
             case OP_X:  // Fallthrough!
             case OP_Y:
             case OP_Z:
-            case LAST_OP:
             case OP_CONST:
-            case OP_MUTABLE:
+            case OP_MUTABLE: out += get(m); break;
+
+            case LAST_OP:
             case INVALID:   assert(false);
         }
     }

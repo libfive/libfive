@@ -54,3 +54,21 @@ TEST_CASE("Shader creation")
     // Restore old std::cerr
     //std::cerr.rdbuf(_cerr);
 }
+
+TEST_CASE("Edge cases in shader creation")
+{
+    Store s;
+    WindowPtr window(makeContext(), glfwDestroyWindow);
+
+    SECTION("Single variable")
+    {
+        Tree t(&s, s.X());
+        auto out = Accelerator(&t);
+    }
+
+    SECTION("Constant")
+    {
+        Tree t(&s, s.constant(-1));
+        auto out = Accelerator(&t);
+    }
+}
