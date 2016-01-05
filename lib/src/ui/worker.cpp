@@ -33,8 +33,8 @@ Worker::Worker(Evaluator* eval, const Task& t, GLFWwindow* context,
         if (!this->abort.load())
         {
             glfwMakeContextCurrent(context);
-            toTexture(out.first, depth);
-            toTexture(out.second, norm);
+            toDepthTexture(out.first, depth);
+            toNormalTexture(out.second, norm);
             glFinish();
             this->promise.set_value(true);
         }

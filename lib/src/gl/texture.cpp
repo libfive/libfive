@@ -1,6 +1,6 @@
 #include "ao/gl/texture.hpp"
 
-void toTexture(const DepthImage& img, GLuint tex)
+void toDepthTexture(const DepthImage& img, GLuint tex)
 {
     // Map the depth buffer into the 0 - 1 range, with -inf = 1
     // This assumes that the depth image only cares about the range [-1, 1]
@@ -15,7 +15,7 @@ void toTexture(const DepthImage& img, GLuint tex)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
-void toTexture(const NormalImage& img, GLuint tex)
+void toNormalTexture(const NormalImage& img, GLuint tex)
 {
     NormalImage i = img.transpose();
 
@@ -26,3 +26,29 @@ void toTexture(const NormalImage& img, GLuint tex)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
+
+DepthImage fromDepthTexture(GLuint tex, const Region& r)
+{
+    // Copy depth textures to a floating-point Eigen array
+    Eigen::ArrayXXf out(r.X.size, r.Y.size);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                  GL_FLOAT, out.data());
+
+    // Mask all of the lowest points with -infinity; scale the other points
+    // between zmin and zmax based on their depth value between 1 and 0.
+    return (out == 1.0f).select(
+            -std::numeric_limits<double>::infinity(),
+            r.Z.upper() - (r.Z.upper() - r.Z.lower()) * out.cast<double>())
+        .transpose();
+}
+
+NormalImage fromNormalTexture(GLuint tex, const Region& r)
+{
+    NormalImage out(r.X.size, r.Y.size);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, out.data());
+
+    return out.transpose();
+}
+

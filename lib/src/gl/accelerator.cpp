@@ -2,6 +2,7 @@
 
 #include "ao/gl/accelerator.hpp"
 #include "ao/gl/shader.hpp"
+#include "ao/gl/texture.hpp"
 
 #include "ao/tree/atom.hpp"
 #include "ao/tree/tree.hpp"
@@ -268,26 +269,13 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
     init(r, depth, norm);
     Render(r, depth, norm);
 
-    // Copy depth and normal textures to Eigen arrays
-    Eigen::ArrayXXf out_depth_f(r.X.size, r.Y.size);
-    glBindTexture(GL_TEXTURE_2D, depth);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-                  GL_FLOAT, out_depth_f.data());
-
-    NormalImage out_norm(r.X.size, r.Y.size);
-    glBindTexture(GL_TEXTURE_2D, norm);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, out_norm.data());
-
-    // Mask all of the lower points with -infinity
-    DepthImage out_depth = (out_depth_f == 1.0f).select(
-            -std::numeric_limits<double>::infinity(),
-            zbounds.upper() - (zbounds.upper() - zbounds.lower()) *
-                               out_depth_f.cast<double>()).transpose();
+    auto out = std::make_pair(fromDepthTexture(depth, r),
+                              fromNormalTexture(norm, r));
 
     glDeleteTextures(1, &depth);
     glDeleteTextures(1, &norm);
 
-    return std::make_pair(out_depth, out_norm.transpose());
+    return out;
 }
 
 void Accelerator::Render(const Region& r, GLuint depth, GLuint norm)
