@@ -6,7 +6,6 @@
 
 #include <Eigen/Dense>
 #include <glm/mat4x4.hpp>
-#include <glm/vec2.hpp>
 
 #include "ao/gl/core.hpp"
 #include "ao/render/heightmap.hpp"
@@ -78,7 +77,7 @@ protected:
 
     std::array<GLfloat, 12> mat; // Generic transform matrix
 
-    glm::vec2 zbounds; // Global z bounds (saved in init)
+    Interval zbounds; // Global z bounds (set in init)
 
     // Static shader strings
     static const std::string vert;

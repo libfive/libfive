@@ -42,9 +42,14 @@ layout(location=0) out vec4 frag_norm;
 // Generic matrix transform
 uniform float mat[12];
 
-uniform int nk;
+// Bounds within this raycast region
 uniform vec2 zbounds;
+
+// Global Z render bounds
 uniform vec2 zglobal;
+
+// Number of raycast voxels
+uniform int nk;
 
 // Forward declaration of f-rep function and normal function
 float f(float x, float y, float z);
@@ -67,7 +72,7 @@ void main()
         if (f(x, y, z) < 0.0f)
         {
             // Map the z coordinate to the 0 - 1 depth buffer
-            gl_FragDepth = (z - zglobal[0]) / (zglobal[1] - zglobal[0]);
+            gl_FragDepth = (zglobal[1] - z) / (zglobal[1] - zglobal[0]);
 
             // Calculate normal
             vec4 n = g(vec4(1.0f, 0.0f, 0.0f, x),
@@ -224,7 +229,7 @@ Accelerator::~Accelerator()
 
 void Accelerator::init(const Region& r, GLuint depth, GLuint norm)
 {
-    zbounds = glm::vec2(r.Z.lower(), r.Z.upper());
+    zbounds = {r.Z.lower(), r.Z.upper()};
 
     // Generate a depth texture of the appropriate size
     glBindTexture(GL_TEXTURE_2D, depth);
@@ -274,16 +279,15 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, out_norm.data());
 
     // Mask all of the lower points with -infinity
-    /*
-    DepthImage out_depth = (out_depth_f <= r.Z.lower()).select(
+    DepthImage out_depth = (out_depth_f == 1.0f).select(
             -std::numeric_limits<double>::infinity(),
-            1 - 2 * out_depth_f.cast<double>()).transpose();
-            */
+            zbounds.upper() - (zbounds.upper() - zbounds.lower()) *
+                               out_depth_f.cast<double>()).transpose();
 
     glDeleteTextures(1, &depth);
     glDeleteTextures(1, &norm);
 
-    return std::make_pair(out_depth_f.cast<double>().transpose(), out_norm.transpose());
+    return std::make_pair(out_depth, out_norm.transpose());
 }
 
 void Accelerator::Render(const Region& r, GLuint depth, GLuint norm)
@@ -311,7 +315,7 @@ void Accelerator::Render(const Region& r, GLuint depth, GLuint norm)
     glUniform2f(glGetUniformLocation(prog, "zbounds"),
                 r.Z.lower(), r.Z.upper());
     glUniform2f(glGetUniformLocation(prog, "zglobal"),
-                zbounds[0], zbounds[1]);
+                zbounds.lower(), zbounds.upper());
     glUniform1i(glGetUniformLocation(prog, "nk"), r.Z.size);
 
     // Load the generic transform matrix into the shader
