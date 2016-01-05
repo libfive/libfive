@@ -65,6 +65,7 @@ void main()
     gl_FragDepth = 1.0f;
     frag_norm = vec4(0.0f);
 
+    bool found = false;
     for (int i=0; i < nk; ++i)
     {
         float frac = (i + 0.5f) / nk;
@@ -89,8 +90,15 @@ void main()
             {
                 frag_norm = vec4(normalize(n.xyz) / 2.0f + 0.5f, 1.0f);
             }
+            found = true;
             break;
         }
+    }
+
+    // Discard fragments that aren't found in raycasting
+    if (!found)
+    {
+        discard;
     }
 }
 
