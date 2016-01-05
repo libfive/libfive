@@ -65,7 +65,6 @@ void main()
     gl_FragDepth = 1.0f;
     frag_norm = vec4(0.0f);
 
-    bool found = false;
     for (int i=0; i < nk; ++i)
     {
         float frac = (i + 0.5f) / nk;
@@ -90,16 +89,12 @@ void main()
             {
                 frag_norm = vec4(normalize(n.xyz) / 2.0f + 0.5f, 1.0f);
             }
-            found = true;
-            break;
+            return;
         }
     }
 
     // Discard fragments that aren't found in raycasting
-    if (!found)
-    {
-        discard;
-    }
+    discard;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -307,6 +302,12 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
 
 void Accelerator::RenderSubregion(const Region& r)
 {
+    {   // Assert that our program is running
+        GLint p;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &p);
+        assert(p == prog);
+    }
+
     // Set the viewport to the appropriate size
     glViewport(r.X.min, r.Y.min, r.X.size, r.Y.size);
 
