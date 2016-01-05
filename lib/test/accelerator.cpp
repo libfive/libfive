@@ -18,6 +18,30 @@ static std::pair<DepthImage, NormalImage> RENDER(Tree* t, const Region& r)
     return out;
 }
 
+TEST_CASE("Partial rendering (GPU)")
+{
+    Store s;
+    Tree t(&s, s.constant(-1));
+
+    GLFWwindow* window = makeContext();
+    Accelerator a(&t);
+
+    Region r({-1, 1}, {-1, 1}, {-1, -1}, 5);
+
+    GLuint depth, norm;
+    glGenTextures(1, &depth);
+    glGenTextures(1, &norm);
+
+    a.init(r, depth, norm);
+
+    Region ra({-1, 1}, {-1, 1}, {0, 0}, 5);
+    a.RenderSubregion(ra);
+
+    glDeleteTextures(1, &depth);
+    glDeleteTextures(1, &norm);
+    glfwDestroyWindow(window);
+}
+
 #define DESCRIPTION "(GPU)"
 #define EPSILON 1e-6
 #include "render.ipp"

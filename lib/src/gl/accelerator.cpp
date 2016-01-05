@@ -238,8 +238,6 @@ Accelerator::~Accelerator()
 
 void Accelerator::init(const Region& r, GLuint depth, GLuint norm)
 {
-    zbounds = {r.Z.lower(), r.Z.upper()};
-
     // Generate a depth texture of the appropriate size
     glBindTexture(GL_TEXTURE_2D, depth);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, r.X.size, r.Y.size,
@@ -254,6 +252,27 @@ void Accelerator::init(const Region& r, GLuint depth, GLuint norm)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+    // Bind the target textures to the framebuffer and clear them
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                           GL_TEXTURE_2D, depth, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D, norm, 0);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Select the active program
+    glUseProgram(prog);
+
+    // Bind the VAO
+    glBindVertexArray(vao);
+
+    // Load the global Z bounds
+    glUniform2f(glGetUniformLocation(prog, "zglobal"),
+                r.Z.lower(), r.Z.upper());
+
+    // Load the generic transform matrix into the shader
+    glUniform1fv(glGetUniformLocation(prog, "mat"), 12, &mat[0]);
 }
 
 void Accelerator::setMatrix(const glm::mat4& m)
@@ -275,7 +294,7 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
     glGenTextures(1, &norm);
 
     init(r, depth, norm);
-    Render(r, depth, norm);
+    RenderSubregion(r);
 
     auto out = std::make_pair(fromDepthTexture(depth, r),
                               fromNormalTexture(norm, r));
@@ -286,22 +305,10 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
     return out;
 }
 
-void Accelerator::Render(const Region& r, GLuint depth, GLuint norm)
+void Accelerator::RenderSubregion(const Region& r)
 {
-    // Bind the target textures to the framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                           GL_TEXTURE_2D, depth, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                           GL_TEXTURE_2D, norm, 0);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     // Set the viewport to the appropriate size
     glViewport(r.X.min, r.Y.min, r.X.size, r.Y.size);
-
-    glUseProgram(prog);
-    glBindVertexArray(vao);
 
     // Load various uniforms defining the render bounds
     glUniform2f(glGetUniformLocation(prog, "xbounds"),
@@ -310,20 +317,10 @@ void Accelerator::Render(const Region& r, GLuint depth, GLuint norm)
                 r.Y.lower(), r.Y.upper());
     glUniform2f(glGetUniformLocation(prog, "zbounds"),
                 r.Z.lower(), r.Z.upper());
-    glUniform2f(glGetUniformLocation(prog, "zglobal"),
-                zbounds.lower(), zbounds.upper());
     glUniform1i(glGetUniformLocation(prog, "nk"), r.Z.size);
 
-    // Load the generic transform matrix into the shader
-    glUniform1fv(glGetUniformLocation(prog, "mat"), 12, &mat[0]);
-
     // Draw the full rectangle into the FBO
-    glEnable(GL_DEPTH_TEST);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glBindVertexArray(0);
-
-    // Switch back to the default framebuffer.
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -57,7 +57,7 @@ Worker::Worker(Accelerator* accel, const Task& t, GLFWwindow* context,
     thread = std::thread([=](){
         glfwMakeContextCurrent(context);
         accel->init(this->region, depth, norm);
-        accel->Render(this->region, depth, norm);
+        accel->RenderSubregion(this->region);
         glFinish();
         this->promise.set_value(true);
         glfwPostEmptyEvent(); });

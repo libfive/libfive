@@ -3,9 +3,9 @@
 
 /*
  *  Stores a DepthImage as a 1-channel depth texture in tex
- *  Assumes that the relevant range is [-1, 1]
  */
-void toDepthTexture(const DepthImage& img, GLuint tex);
+void toDepthTexture(const DepthImage& img, GLuint tex,
+                    Interval zbounds={-1, 1});
 
 /*
  *  Stores a NormalImage as a 4-channel 8-bit texture in tex

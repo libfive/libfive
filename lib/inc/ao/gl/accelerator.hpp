@@ -40,12 +40,18 @@ public:
     void setMatrix(const glm::mat4& m);
 
     /*
-     *  Render a target region and blit it into the given depth image
+     *  Render a target region, returning a pair of matrices
      *
      *  The accelerator's context must be current when this is called
      */
-    void Render(const Region& r, GLuint depth, GLuint norm);
     std::pair<DepthImage, NormalImage> Render(const Region& r);
+
+    /*
+     *  Render a subregion into the active depth and normal textures
+     *
+     *  init must be called before this function
+     */
+    void RenderSubregion(const Region& r);
 
     /*
      *  Converts a tree to an OpenGL 3.3 fragment shader
@@ -76,8 +82,6 @@ protected:
     GLuint fbo; // Frame-buffer object
 
     std::array<GLfloat, 12> mat; // Generic transform matrix
-
-    Interval zbounds; // Global z bounds (set in init)
 
     // Static shader strings
     static const std::string vert;
