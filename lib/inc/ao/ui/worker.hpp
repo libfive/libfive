@@ -1,4 +1,6 @@
+#include <chrono>
 #include <future>
+
 #include <Eigen/Dense>
 
 #include "ao/gl/core.hpp"
@@ -13,7 +15,7 @@ class Accelerator;
 struct Worker
 {
     /*
-     *  Constructs a worker from the given Evaluator and a task
+     *  Constructs a CPU worker from the given Evaluator and a task
      *  (higher task divisors produce lower-resolution workers)
      *
      *  depth and norm are target textures in which results are stored
@@ -22,13 +24,22 @@ struct Worker
            GLuint depth, GLuint norm);
 
     /*
-     *  Constructs a worker from the given Accelerator and a task
+     *  Constructs a GPU worker from the given Accelerator and a task
      *  (higher task divisors produce lower-resolution workers)
      *
      *  depth and norm are target textures in which results are stored
      */
     Worker(Accelerator* accel, const Task& task, GLFWwindow* context,
            GLuint depth, GLuint norm);
+
+    /*
+     *  Constructs a CPU + GPU worker from the given Accelerator and a task
+     *  (higher task divisors produce lower-resolution workers)
+     *
+     *  depth and norm are target textures in which results are stored
+     */
+    Worker(Evaluator* eval, Accelerator* accel, const Task& task,
+           GLFWwindow* context, GLuint depth, GLuint norm);
 
     /*
      *  On destruction, join the thread
@@ -68,4 +79,17 @@ protected:
      *  region, future, and abort fields
      */
     Worker(const Task& t);
+
+    /*
+     *  Record the starting time in start_time
+     */
+    void start();
+
+    /*
+     *  Record the elapsed time in elapsed and call glfwPostEmptyEvent
+     */
+    void end();
+
+    std::chrono::time_point<std::chrono::system_clock> start_time;
+    std::chrono::duration<double> elapsed;
 };

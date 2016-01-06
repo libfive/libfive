@@ -17,6 +17,19 @@ Worker::Worker(const Task& t)
     // Nothing to do here
 }
 
+void Worker::start()
+{
+    start_time = std::chrono::system_clock::now();
+}
+
+void Worker::end()
+{
+    elapsed = std::chrono::system_clock::now() - start_time;
+    promise.set_value(!abort.load());
+    glfwPostEmptyEvent();
+}
+
+
 Worker::Worker(Evaluator* eval, const Task& t, GLFWwindow* context,
                GLuint depth, GLuint norm)
     : Worker(t)
@@ -29,6 +42,7 @@ Worker::Worker(Evaluator* eval, const Task& t, GLFWwindow* context,
     eval->setMatrix(m);
 
     thread = std::thread([=](){
+        this->start();
         auto out = Heightmap::Render(eval, this->region, this->abort);
         if (!this->abort.load())
         {
@@ -36,13 +50,8 @@ Worker::Worker(Evaluator* eval, const Task& t, GLFWwindow* context,
             toDepthTexture(out.first, depth);
             toNormalTexture(out.second, norm);
             glFinish();
-            this->promise.set_value(true);
         }
-        else
-        {
-            this->promise.set_value(false);
-        }
-        glfwPostEmptyEvent(); });
+        this->end(); });
 }
 
 Worker::Worker(Accelerator* accel, const Task& t, GLFWwindow* context,
@@ -59,8 +68,26 @@ Worker::Worker(Accelerator* accel, const Task& t, GLFWwindow* context,
         accel->init(this->region, depth, norm);
         accel->RenderSubregion(this->region);
         glFinish();
-        this->promise.set_value(true);
-        glfwPostEmptyEvent(); });
+        this->end(); });
+}
+
+Worker::Worker(Evaluator* eval, Accelerator* accel, const Task& t,
+               GLFWwindow* context, GLuint depth, GLuint norm)
+    : Worker(t)
+{
+    // Apply the matrix to the tree, applying an extra scaling on
+    // the z axis to make the coordinate system match OpenGL
+    auto m = glm::scale(glm::inverse(t.mat), glm::vec3(1, 1, -1));
+    eval->setMatrix(m);
+    accel->setMatrix(m);
+
+    thread = std::thread([=](){
+        this->start();
+        glfwMakeContextCurrent(context);
+        Heightmap::Render(eval, accel, this->region, depth, norm, this->abort);
+        glFinish();
+        this->end(); });
+
 }
 
 Worker::~Worker()

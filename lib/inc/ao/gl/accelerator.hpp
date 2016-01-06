@@ -54,6 +54,13 @@ public:
     void RenderSubregion(const Region& r);
 
     /*
+     *  Fills a subregion into the active depth and normal textures
+     *
+     *  init must be called before this function
+     */
+    void FillSubregion(const Region& r);
+
+    /*
      *  Converts a tree to an OpenGL 3.3 fragment shader
      */
     enum Mode { DEPTH, NORMAL };
@@ -82,6 +89,12 @@ protected:
     GLuint fbo; // Frame-buffer object
 
     std::array<GLfloat, 12> mat; // Generic transform matrix
+
+    // Uniform locations are saved here
+    GLint xbounds_loc;
+    GLint ybounds_loc;
+    GLint zbounds_loc;
+    GLint nk_loc;
 
     // Static shader strings
     static const std::string vert;

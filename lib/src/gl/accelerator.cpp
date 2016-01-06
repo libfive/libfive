@@ -80,8 +80,9 @@ void main()
                        vec4(0.0f, 1.0f, 0.0f, y),
                        vec4(0.0f, 0.0f, 1.0f, z));
 
-            // Pack normal into 0-255 range
-            if (i == 0)
+            // Pack normal into 0-255 range, clipping if we're at the
+            // top of the Z range
+            if (i == 0 && zbounds[1] == zglobal[1])
             {
                 frag_norm = vec4(0.5f, 0.5f, 1.0f, 1.0f);
             }
@@ -193,6 +194,12 @@ Accelerator::Accelerator(const Tree* tree)
     assert(vs);
     assert(fs);
     assert(prog);
+
+    // Store uniform locations for easy access
+    xbounds_loc = glGetUniformLocation(prog, "xbounds");
+    ybounds_loc = glGetUniformLocation(prog, "ybounds");
+    zbounds_loc = glGetUniformLocation(prog, "zbounds");
+    nk_loc = glGetUniformLocation(prog, "nk");
 
     glGenBuffers(1, &vbo);
     glGenVertexArrays(1, &vao);
@@ -315,13 +322,31 @@ void Accelerator::RenderSubregion(const Region& r)
     glViewport(r.X.min, r.Y.min, r.X.size, r.Y.size);
 
     // Load various uniforms defining the render bounds
-    glUniform2f(glGetUniformLocation(prog, "xbounds"),
-                r.X.lower(), r.X.upper());
-    glUniform2f(glGetUniformLocation(prog, "ybounds"),
-                r.Y.lower(), r.Y.upper());
-    glUniform2f(glGetUniformLocation(prog, "zbounds"),
-                r.Z.lower(), r.Z.upper());
-    glUniform1i(glGetUniformLocation(prog, "nk"), r.Z.size);
+    glUniform2f(xbounds_loc, r.X.lower(), r.X.upper());
+    glUniform2f(ybounds_loc, r.Y.lower(), r.Y.upper());
+    glUniform2f(zbounds_loc, r.Z.lower(), r.Z.upper());
+    glUniform1i(nk_loc, r.Z.size);
+
+    // Draw the full rectangle into the FBO
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+void Accelerator::FillSubregion(const Region& r)
+{
+    {   // Assert that our program is running
+        GLint p;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &p);
+        assert(p == prog);
+    }
+
+    // Set the viewport to the appropriate size
+    glViewport(r.X.min, r.Y.min, r.X.size, r.Y.size);
+
+    // Load various uniforms defining the render bounds
+    glUniform2f(xbounds_loc, r.X.lower(), r.X.upper());
+    glUniform2f(ybounds_loc, r.Y.lower(), r.Y.upper());
+    glUniform2f(zbounds_loc, r.Z.pos(r.Z.size - 1), r.Z.pos(r.Z.size - 1));
+    glUniform1i(nk_loc, 1);
 
     // Draw the full rectangle into the FBO
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

@@ -190,7 +190,7 @@ void Frame::startRender()
     {
         // Swap around render tasks and start an async worker
         pending = next;
-        worker.reset(new Worker(eval.get(), pending, context,
+        worker.reset(new Worker(eval.get(), accel.get(), pending, context,
                                 depth[!ping], norm[!ping]));
         next.reset();
     }
