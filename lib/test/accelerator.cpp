@@ -34,19 +34,79 @@ TEST_CASE("Partial rendering (GPU)")
     glGenTextures(1, &norm);
 
     a.init(r, depth, norm);
-    {
+
+    {   // Default depth
         auto d = fromDepthTexture(depth, r);
         CAPTURE(d);
         REQUIRE((d == -std::numeric_limits<double>::infinity()).all());
     }
 
-    Region ra({-1, 1}, {-1, 1}, {0, 0}, 5);
-    a.RenderSubregion(ra);
+    {   // Full-region rendering
+        Region sub({-1, 1}, {-1, 1}, {0, 0}, 5);
+        a.RenderSubregion(sub);
 
-    {
         auto d = fromDepthTexture(depth, r);
         CAPTURE(d);
         REQUIRE((d == 0).all());
+    }
+
+    {   // Rendering underneath
+        Region sub({-1, 1}, {-1, 1}, {0, 0}, 5);
+        a.RenderSubregion(sub);
+
+        auto d = fromDepthTexture(depth, r);
+        CAPTURE(d);
+        REQUIRE((d == 0).all());
+    }
+
+    {   // Rendering partially over
+        Region sub = r.split().first;
+        a.RenderSubregion(sub);
+
+        auto d = fromDepthTexture(depth, r);
+        CAPTURE(d);
+
+        DepthImage comp(10, 10);
+        comp <<
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0;
+
+        auto diff = d - comp;
+        CAPTURE(diff);
+        REQUIRE((diff.abs() < 1e-6).all());
+    }
+
+    {   // Rendering over on the other axis
+        Region sub = r.split().second.split().first;
+        a.RenderSubregion(sub);
+
+        auto d = fromDepthTexture(depth, r);
+        CAPTURE(d);
+
+        DepthImage comp(10, 10);
+        comp <<
+            0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,
+            0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,
+            0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,
+            0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,
+            0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
+            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0;
+
+        auto diff = d - comp;
+        CAPTURE(diff);
+        REQUIRE((diff.abs() < 1e-6).all());
     }
 
     glDeleteTextures(1, &depth);
