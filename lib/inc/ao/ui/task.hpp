@@ -12,7 +12,7 @@ struct Task
      *  The default constructor leaves the task in an invalid state
      */
     Task();
-    Task(const glm::mat4& m, size_t ni, size_t nj, size_t nk, int level);
+    Task(const glm::mat4& m, size_t ni, size_t nj, size_t nk, size_t level);
 
     /*
      *  Mark the task as invalid

@@ -8,7 +8,7 @@ Task::Task()
     // Nothing to do here
 }
 
-Task::Task(const glm::mat4& m, size_t ni, size_t nj, size_t nk, int level)
+Task::Task(const glm::mat4& m, size_t ni, size_t nj, size_t nk, size_t level)
     : mat(m), ni(ni), nj(nj), nk(nk), level(level)
 {
     // Nothing to do here

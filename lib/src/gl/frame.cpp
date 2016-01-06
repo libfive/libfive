@@ -161,7 +161,7 @@ void Frame::draw(const glm::mat4& m) const
 
 void Frame::render(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
 {
-    const float DEFAULT_LEVEL = 8;
+    const size_t DEFAULT_LEVEL = 4;
 
     next = Task(m, ni, nj, nk, DEFAULT_LEVEL);
 
@@ -198,7 +198,7 @@ void Frame::startRender()
     else if (current.level > 1)
     {
         next = current;
-        next.level /= 2;
+        next.level--;
         startRender();
     }
 }
