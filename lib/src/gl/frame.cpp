@@ -161,15 +161,13 @@ void Frame::draw(const glm::mat4& m) const
 
 void Frame::render(const glm::mat4& m, size_t ni, size_t nj, size_t nk)
 {
-    const size_t DEFAULT_LEVEL = 4;
-
-    next = Task(m, ni, nj, nk, DEFAULT_LEVEL);
+    next = Task(m, ni, nj, nk, default_level);
 
     // If a task is running and isn't a min-resolution render action,
     // set the abort flag so that it stops early
     if (worker)
     {
-        if (pending.level < DEFAULT_LEVEL)
+        if (pending.level < default_level)
         {
             worker->halt();
         }
@@ -214,6 +212,20 @@ bool Frame::poll()
         Worker::State state = worker->poll();
         if (state == Worker::DONE)
         {
+            // Adjust the default level based on performance, trying to keep
+            // framerate between 20 and 40 fps
+            if (pending.level == default_level)
+            {
+                if (worker->elapsed < std::chrono::milliseconds(25))
+                {
+                    default_level = std::max(default_level - 1, (size_t)1);
+                }
+                else if (worker->elapsed < std::chrono::milliseconds(50))
+                {
+                    default_level++;
+                }
+            }
+
             // Swap tasks objects
             current = pending;
 

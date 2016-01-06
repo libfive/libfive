@@ -87,6 +87,10 @@ protected:
     // Next render task
     Task next;
 
+    // Default subdivision level
+    // (changes depending on render time)
+    size_t default_level=4;
+
     // Shader source strings
     static const std::string vert;
     static const std::string frag;

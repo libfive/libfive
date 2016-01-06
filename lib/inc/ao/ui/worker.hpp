@@ -68,10 +68,14 @@ struct Worker
     /*  Region that is being analyzed  */
     Region region;
 
+    /*  Fun async stuff  */
     std::promise<bool> promise;
     std::future<bool> future;
     std::atomic<bool> abort;
     std::thread thread;
+
+    /*  Records how long the render took  */
+    std::chrono::duration<double> elapsed;
 
 protected:
     /*
@@ -91,5 +95,4 @@ protected:
     void end();
 
     std::chrono::time_point<std::chrono::system_clock> start_time;
-    std::chrono::duration<double> elapsed;
 };
