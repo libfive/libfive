@@ -120,6 +120,14 @@
     "Returns a shell of shape a offset by amount o"
     (clearance a a o))
 
+(define-public (blend a b m)
+    "Blends the given shape by a certain amount"
+    (let ((joint (union a b))
+          (fillet (lambda (x y z)
+                    (- (+ (sqrt (abs (a x y z)))
+                          (sqrt (abs (b x y z)))) m))))
+    (union joint fillet)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Transforms
 (define-public (move f delta)
