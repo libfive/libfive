@@ -30,6 +30,7 @@ size_t Token::args(Opcode op)
 
         case OP_SQRT: return 1;
         case OP_NEG: return 1;
+        case OP_ABS: return 1;
 
         case OP_ADD: return 2;
         case OP_MUL: return 2;

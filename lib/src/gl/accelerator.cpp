@@ -178,6 +178,18 @@ vec4 neg_g(vec4 a)
 {
     return -a;
 }
+
+vec4 abs_g(vec4 a)
+{
+    if (a.w < 0)
+    {
+        return -a;
+    }
+    else
+    {
+        return a;
+    }
+}
 )";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -464,6 +476,7 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
             case OP_DIV:    out += "(" + sa + " / " + sb + ")";     break;
             case OP_SQRT:   out += "sqrt(" + sa + ")";  break;
             case OP_NEG:    out += "(-" + sa + ")";     break;
+            case OP_ABS:    out += "abs(" + sa + ")";     break;
 
             case COND_LZ:   out += "(" + sc + " < 0 ? " + sa + " : " + sb + ")";
                             break;
@@ -490,6 +503,7 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
             case OP_DIV:    out += "div_g(" + sa + ", " + sb + ")";     break;
             case OP_SQRT:   out += "sqrt_g(" + sa + ")";  break;
             case OP_NEG:    out += "neg_g(" + sa + ")";     break;
+            case OP_ABS:    out += "abs_g(" + sa + ")";     break;
 
             case COND_LZ:   out += "cond_nz_g(" + sc + ", " + sa + ", " + sb + ")";
                             break;

@@ -26,6 +26,11 @@ inline double _cond_nz(const double& cond, const double& a, const double& b)
     return (cond < 0) ? a : b;
 }
 
+inline double _abs(const double& a)
+{
+    return std::abs(a);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #define EVAL_LOOP for (size_t i=0; i < count; ++i)
@@ -71,6 +76,10 @@ inline void Evaluator::evalClause(Clause* m, size_t count)
         case OP_NEG:
             EVAL_LOOP
             m->result.set<T>(-m->a->get<T>(i), i);
+            break;
+        case OP_ABS:
+            EVAL_LOOP
+            m->result.set<T>(_abs(m->a->get<T>(i)), i);
             break;
         case COND_LZ:
             EVAL_LOOP

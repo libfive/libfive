@@ -12,6 +12,7 @@ enum Opcode
 
     OP_SQRT,
     OP_NEG,
+    OP_ABS,
 
     OP_ADD,
     OP_MUL,

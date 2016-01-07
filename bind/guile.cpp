@@ -40,6 +40,7 @@ static Opcode symbol_to_opcode(SCM sym)
     else if (str == "sub")      return OP_SUB;
     else if (str == "div")      return OP_DIV;
     else if (str == "sqrt")     return OP_SQRT;
+    else if (str == "abs")      return OP_ABS;
     else if (str == "neg")      return OP_NEG;
 
     else if (str == "lz")       return COND_LZ;

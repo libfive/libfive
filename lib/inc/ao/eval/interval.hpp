@@ -35,3 +35,8 @@ inline Interval _cond_nz(const Interval& cond,
                         std::max(a.upper(), b.upper()));
     }
 }
+
+inline Interval _abs(const Interval& a)
+{
+    return boost::numeric::abs(a);
+}

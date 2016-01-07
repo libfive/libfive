@@ -76,6 +76,18 @@ Gradient sqrt(const Gradient& a)
     }
 }
 
+Gradient _abs(const Gradient& a)
+{
+    if (a.v < 0)
+    {
+        return Gradient(-a.v, -a.dx, -a.dy, -a.dz);
+    }
+    else
+    {
+        return a;
+    }
+}
+
 Gradient operator-(const Gradient& a)
 {
     return Gradient(-a.v, -a.dx, -a.dy, -a.dz);
