@@ -128,6 +128,10 @@
                           (sqrt (abs (b x y z)))) m))))
     (union joint fillet)))
 
+(define-public (morph a b m)
+    "Morphs between two shapes.  m = 0 produces a, m = 1 produces b"
+    (lambda (x y z) (+ (* (a x y z) (- 1 m)) (* (b x y z) m))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Transforms
 (define-public (move f delta)
