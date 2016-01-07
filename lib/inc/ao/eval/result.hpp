@@ -45,7 +45,7 @@ struct Result {
     T* ptr() const;
 
 protected:
-    double d[1024];
+    double d[256];
     Gradient g[256];
 
     Interval i;

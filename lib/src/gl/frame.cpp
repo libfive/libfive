@@ -218,9 +218,12 @@ bool Frame::poll()
             {
                 if (worker->elapsed < std::chrono::milliseconds(25))
                 {
-                    default_level = std::max(default_level - 1, (size_t)1);
+                    if (default_level > 1)
+                    {
+                        default_level--;
+                    }
                 }
-                else if (worker->elapsed < std::chrono::milliseconds(50))
+                else if (worker->elapsed > std::chrono::milliseconds(50))
                 {
                     default_level++;
                 }
