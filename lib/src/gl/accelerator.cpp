@@ -453,9 +453,9 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
                 case OP_Y:       return std::string("y");
                 case OP_Z:       return std::string("z");
                 case OP_CONST:   return (mode == DEPTH)
-                                 ? (std::to_string(n->value) + "f")
+                                 ? ("(" + std::to_string(n->value) + "f)")
                                  : ("vec4(0.0f, 0.0f, 0.0f, "
-                                         + std::to_string(n->value) + ")");
+                                         + std::to_string(n->value) + "f)");
                 default: assert(false);
             }
         }

@@ -71,4 +71,10 @@ TEST_CASE("Edge cases in shader creation")
         Tree t(&s, s.constant(-1));
         auto out = Accelerator(&t);
     }
+
+    SECTION("Double-negative")
+    {
+        Tree t(&s, s.operation(OP_NEG, s.constant(-1)));
+        auto out = Accelerator(&t);
+    }
 }
