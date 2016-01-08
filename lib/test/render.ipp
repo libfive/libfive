@@ -199,7 +199,7 @@ TEST_CASE("3D rendering of a sphere " DESCRIPTION)
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
 
-        Region r({-1, 1}, {-1, 1}, {-1, 1}, 100);
+        Region r({-1, 1}, {-1, 1}, {-1, 1}, 500);
         auto out = RENDER(&t, r).first;
 
         end = std::chrono::system_clock::now();

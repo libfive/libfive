@@ -1,3 +1,4 @@
+#include <iostream>
 #include <limits>
 #include <set>
 
@@ -242,6 +243,7 @@ std::pair<DepthImage, NormalImage> Render(
 /*
 * Helper function that reduces a particular matrix block
 */
+static int quads=0;
 static void recurse(Evaluator* e, Accelerator* a, const Region& r,
                     std::set<Quad>& filled, const std::atomic<bool>& abort)
 {
@@ -260,6 +262,7 @@ static void recurse(Evaluator* e, Accelerator* a, const Region& r,
     // If we're below a certain size, render pixel-by-pixel
     if (r.voxels() <= Result::count<double>()*256)
     {
+        quads++;
         a->RenderSubregion(r);
         return;
     }
@@ -270,6 +273,7 @@ static void recurse(Evaluator* e, Accelerator* a, const Region& r,
     // If strictly negative, fill up the block and return
     if (out.upper() < 0)
     {
+        quads++;
         a->FillSubregion(r);
         filled.insert(Quad(r.X.min, r.X.size, r.Y.min, r.Y.size));
     }
@@ -298,10 +302,12 @@ static void recurse(Evaluator* e, Accelerator* a, const Region& r,
 void Render(Evaluator* e, Accelerator* a, const Region& r,
             GLuint depth, GLuint norm, const std::atomic<bool>& abort)
 {
+    quads = 0;
     std::set<Quad> filled;
 
     a->init(r, depth, norm);
     recurse(e, a, r, filled, abort);
+    std::cout << "Quads:" << quads << std::endl;
 }
 
 

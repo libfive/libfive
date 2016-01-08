@@ -17,6 +17,7 @@ Worker::Worker(const Task& t)
     // Nothing to do here
 }
 
+#include <iostream>
 void Worker::start()
 {
     start_time = std::chrono::system_clock::now();
@@ -26,6 +27,7 @@ void Worker::end()
 {
     elapsed = std::chrono::system_clock::now() - start_time;
     promise.set_value(!abort.load());
+    std::cout << "Time taken: " << elapsed.count() << " ms\n";
     glfwPostEmptyEvent();
 }
 
@@ -82,10 +84,13 @@ Worker::Worker(Evaluator* eval, Accelerator* accel, const Task& t,
     accel->setMatrix(m);
 
     thread = std::thread([=](){
+
+        std::cout << "Starting worker with level " << t.level << '\n';
         this->start();
         glfwMakeContextCurrent(context);
         Heightmap::Render(eval, accel, this->region, depth, norm, this->abort);
         glFinish();
+        std::cout << "Ending worker with level " << t.level << '\n';
         this->end(); });
 
 }

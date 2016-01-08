@@ -1,5 +1,8 @@
 #include <cassert>
 
+#include <glm/vec3.hpp>
+#include <glm/gtx/string_cast.hpp>
+
 #include "ao/gl/accelerator.hpp"
 #include "ao/gl/shader.hpp"
 #include "ao/gl/texture.hpp"
@@ -14,43 +17,58 @@
 const std::string Accelerator::vert = R"(
 #version 330
 
-layout(location=0) in vec2 vertex_position;
+// min, max bounds of target region
+uniform vec3 bounds[2];
+uniform ivec3 dimensions;
 
-out vec2 pos;
+// Vertex values are i, j, kmax, nk
+layout (location=0) in ivec4 vert;
 
-uniform vec2 xbounds;
-uniform vec2 ybounds;
+// Outputs are fragment position [x, y, zfront, zback] and nk
+out vec4 frag;
+flat out int nk;
 
 void main()
 {
-    // Normalized (0-1) xy coordinates
-    vec2 norm = (vertex_position.xy + 1.0f) / 2.0f;
+    // Fractions of the various positions in the global region
+    float fx  = float(vert.x) / float(dimensions.x - 1);
+    float fy  = float(vert.y) / float(dimensions.y - 1);
+    float fz0 = float(vert.z) / float(dimensions.z - 1);
+    float fz1 = float(vert.z + vert.w - 1) / float(dimensions.z - 1);
 
-    // Position of the fragment in region space
-    pos = vec2(norm.x * (xbounds[1]- xbounds[0]) + xbounds[0],
-               norm.y * (ybounds[1]- ybounds[0]) + ybounds[0]);
+    // Fragment position in region space
+    frag = vec4(bounds[0].x * (1.0f - fx) + bounds[1].x * fx,
+                bounds[0].y * (1.0f - fy) + bounds[1].y * fy,
+                bounds[0].z * (1.0f - fz1) + bounds[1].z * fz1,
+                bounds[0].z * (1.0f - fz0) + bounds[1].z * fz0);
 
-    gl_Position = vec4(vertex_position, 0.0f, 1.0f);
+    // Number of voxels for raymarching
+    nk = vert.w;
+
+    // Position in screen space
+    gl_Position = vec4(2.0f * fx - 1.0f,
+                       2.0f * fy - 1.0f,
+                       2.0f * fz1 - 1.0f, 1.0f);
 }
 )";
 
 const std::string Accelerator::frag = R"(
 #version 330
 
-in vec2 pos;
-layout(location=0) out vec4 frag_norm;
+// Raycast position [x, y, zfront, zback]
+in vec4 frag;
+
+// Number of voxels to walk through
+flat in int nk;
+
+// Our output buffer is the fragment's normal and depth
+layout (location=0) out vec4 frag_norm;
 
 // Generic matrix transform
 uniform float mat[12];
 
-// Bounds within this raycast region
-uniform vec2 zbounds;
-
 // Global Z render bounds
-uniform vec2 zglobal;
-
-// Number of raycast voxels
-uniform int nk;
+uniform vec3 bounds[2];
 
 // Forward declaration of f-rep function and normal function
 float f(float x, float y, float z);
@@ -58,8 +76,8 @@ vec4 g(vec4 x, vec4 y, vec4 z);
 
 void main()
 {
-    float x = pos.x;
-    float y = pos.y;
+    float x = frag.x;
+    float y = frag.y;
 
     // Set the default depth to the back value
     gl_FragDepth = 1.0f;
@@ -67,13 +85,16 @@ void main()
 
     for (int i=0; i < nk; ++i)
     {
-        float frac = (i + 0.5f) / nk;
-        float z = zbounds[1] * (1 - frac) + zbounds[0] * frac;
+        // Fraction along which we've marched
+        float frac = (i + 0.5f) / float(nk);
+
+        // Coordinate in region space
+        float z = frag.w * (1 - frac) + frag.z * frac;
 
         if (f(x, y, z) < 0.0f)
         {
             // Map the z coordinate to the 0 - 1 depth buffer
-            gl_FragDepth = (zglobal[1] - z) / (zglobal[1] - zglobal[0]);
+            gl_FragDepth = (bounds[1].z - z) / (bounds[1].z - bounds[0].z);
 
             // Calculate normal
             vec4 n = g(vec4(1.0f, 0.0f, 0.0f, x),
@@ -82,7 +103,7 @@ void main()
 
             // Pack normal into 0-255 range, clipping if we're at the
             // top of the Z range
-            if (i == 0 && zbounds[1] == zglobal[1])
+            if (i == 0 && frag.w == bounds[1].z)
             {
                 frag_norm = vec4(0.5f, 0.5f, 1.0f, 1.0f);
             }
@@ -207,30 +228,8 @@ Accelerator::Accelerator(const Tree* tree)
     assert(fs);
     assert(prog);
 
-    // Store uniform locations for easy access
-    xbounds_loc = glGetUniformLocation(prog, "xbounds");
-    ybounds_loc = glGetUniformLocation(prog, "ybounds");
-    zbounds_loc = glGetUniformLocation(prog, "zbounds");
-    nk_loc = glGetUniformLocation(prog, "nk");
-
     glGenBuffers(1, &vbo);
     glGenVertexArrays(1, &vao);
-
-    // Generate and bind a simple quad shape
-    glBindVertexArray(vao);
-    {
-        GLfloat vertices[] = {-1.0f, -1.0f,
-                               1.0f, -1.0f,
-                               1.0f,  1.0f,
-                              -1.0f,  1.0f};
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),
-                     vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
-                              2 * sizeof(GLfloat), (GLvoid*)0);
-        glEnableVertexAttribArray(0);
-    }
-    glBindVertexArray(0);
 
     glGenFramebuffers(1, &fbo);
 }
@@ -252,6 +251,9 @@ Accelerator::~Accelerator()
 
 void Accelerator::init(const Region& r, GLuint depth, GLuint norm)
 {
+    // Assert that we're being initialized with a top-level Region
+    assert(r.X.min == 0 && r.Y.min == 0 && r.Z.min == 0);
+
     // Generate a depth texture of the appropriate size
     glBindTexture(GL_TEXTURE_2D, depth);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, r.X.size, r.Y.size,
@@ -276,6 +278,7 @@ void Accelerator::init(const Region& r, GLuint depth, GLuint norm)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                            GL_TEXTURE_2D, norm, 0);
 
+    // Clear the buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Select the active program
@@ -284,12 +287,46 @@ void Accelerator::init(const Region& r, GLuint depth, GLuint norm)
     // Bind the VAO
     glBindVertexArray(vao);
 
-    // Load the global Z bounds
-    glUniform2f(glGetUniformLocation(prog, "zglobal"),
-                r.Z.lower(), r.Z.upper());
+    // Load the global voxel dimensions
+    glUniform3i(glGetUniformLocation(prog, "dimensions"),
+                r.X.size, r.Y.size, r.Z.size);
+
+    // Load the global bounds
+    glm::vec3 bounds[2] = {glm::vec3(r.X.lower(), r.Y.lower(), r.Z.lower()),
+                           glm::vec3(r.X.upper(), r.Y.upper(), r.Z.upper())};
+
+    glUniform3fv(glGetUniformLocation(prog, "bounds"), 2,
+                 reinterpret_cast<GLfloat*>(bounds));
 
     // Load the generic transform matrix into the shader
     glUniform1fv(glGetUniformLocation(prog, "mat"), 12, &mat[0]);
+
+    // Set the viewport to the appropriate size
+    glViewport(r.X.min, r.Y.min, r.X.size, r.Y.size);
+}
+
+void Accelerator::finish()
+{
+    std::cout << "Loading " << data.size() * sizeof(data[0]) << " bytes into buffer\n";
+
+    // Generate and bind a simple quad shape
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(data[0]),
+                 &data[0], GL_STREAM_DRAW);
+
+    // Set up pointer to vertex attributes
+    glVertexAttribPointer(0, 4, GL_INT, GL_FALSE,
+                          4 * sizeof(GLint), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
+
+    // Assert that we're drawing quads (2 triangles x 3 points)
+    assert(data.size() % 6 == 0);
+
+    // Actually draw the quads
+    std::cout << "Drawing " << data.size() << " indices\n";
+    glDrawArrays(GL_TRIANGLES, 0, data.size());
+
+    data.clear();
 }
 
 void Accelerator::setMatrix(const glm::mat4& m)
@@ -312,6 +349,7 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
 
     init(r, depth, norm);
     RenderSubregion(r);
+    finish();
 
     auto out = std::make_pair(fromDepthTexture(depth, r),
                               fromNormalTexture(norm, r));
@@ -324,44 +362,31 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
 
 void Accelerator::RenderSubregion(const Region& r)
 {
-    {   // Assert that our program is running
-        GLint p;
-        glGetIntegerv(GL_CURRENT_PROGRAM, &p);
-        assert(p == prog);
-    }
+    const size_t z = r.Z.min + r.Z.size - 1;
+    const size_t nk = r.Z.size;
 
-    // Set the viewport to the appropriate size
-    glViewport(r.X.min, r.Y.min, r.X.size, r.Y.size);
+    data.push_back(glm::ivec4(r.X.min, r.Y.min, z, nk));
+    data.push_back(glm::ivec4(r.X.min + r.X.size - 1, r.Y.min, z, nk));
+    data.push_back(glm::ivec4(r.X.min, r.Y.min + r.Y.size - 1, z, nk));
 
-    // Load various uniforms defining the render bounds
-    glUniform2f(xbounds_loc, r.X.lower(), r.X.upper());
-    glUniform2f(ybounds_loc, r.Y.lower(), r.Y.upper());
-    glUniform2f(zbounds_loc, r.Z.lower(), r.Z.upper());
-    glUniform1i(nk_loc, r.Z.size);
-
-    // Draw the full rectangle into the FBO
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    data.push_back(glm::ivec4(r.X.min, r.Y.min + r.Y.size - 1, z, nk));
+    data.push_back(glm::ivec4(r.X.min + r.X.size - 1, r.Y.min, z, nk));
+    data.push_back(glm::ivec4(r.X.min + r.X.size - 1,
+                              r.Y.min + r.Y.size - 1, z, nk));
 }
 
 void Accelerator::FillSubregion(const Region& r)
 {
-    {   // Assert that our program is running
-        GLint p;
-        glGetIntegerv(GL_CURRENT_PROGRAM, &p);
-        assert(p == prog);
-    }
+    const size_t z = r.Z.min + r.Z.size - 1;
 
-    // Set the viewport to the appropriate size
-    glViewport(r.X.min, r.Y.min, r.X.size, r.Y.size);
+    data.push_back(glm::ivec4(r.X.min, r.Y.min, z, 1));
+    data.push_back(glm::ivec4(r.X.min + r.X.size - 1, r.Y.min, z, 1));
+    data.push_back(glm::ivec4(r.X.min, r.Y.min + r.Y.size - 1, z, 1));
 
-    // Load various uniforms defining the render bounds
-    glUniform2f(xbounds_loc, r.X.lower(), r.X.upper());
-    glUniform2f(ybounds_loc, r.Y.lower(), r.Y.upper());
-    glUniform2f(zbounds_loc, r.Z.pos(r.Z.size - 1), r.Z.pos(r.Z.size - 1));
-    glUniform1i(nk_loc, 1);
-
-    // Draw the full rectangle into the FBO
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    data.push_back(glm::ivec4(r.X.min, r.Y.min + r.Y.size - 1, z, 1));
+    data.push_back(glm::ivec4(r.X.min + r.X.size - 1, r.Y.min, z, 1));
+    data.push_back(glm::ivec4(r.X.min + r.X.size - 1,
+                              r.Y.min + r.Y.size - 1, z, 1));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

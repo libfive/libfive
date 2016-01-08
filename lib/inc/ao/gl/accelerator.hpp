@@ -35,6 +35,11 @@ public:
     void init(const Region& r, GLuint depth, GLuint norm);
 
     /*
+     *  Actually executes the queued-up raycast operations
+     */
+    void finish();
+
+    /*
      *  Saves our generic transform matrix
      */
     void setMatrix(const glm::mat4& m);
@@ -90,11 +95,8 @@ protected:
 
     std::array<GLfloat, 12> mat; // Generic transform matrix
 
-    // Uniform locations are saved here
-    GLint xbounds_loc;
-    GLint ybounds_loc;
-    GLint zbounds_loc;
-    GLint nk_loc;
+    // Vertices of quads to be rendered in bulk
+    std::vector<glm::ivec4> data;
 
     // Static shader strings
     static const std::string vert;
