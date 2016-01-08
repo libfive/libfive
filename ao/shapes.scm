@@ -184,7 +184,27 @@ The center of rotation is 0,0 or specified by optional argument '(x0 y0)"
     (lambda (x y z) (shape x y (+ z0 (/ (- z z0) sz))))))
 
 (define-public (shear-x-y shape ymin ymax dx0 dx1)
-    " Shears a shape in the XY plane "
+    "Shears a shape in the XY plane"
     (lambda (x y z)
         (let ((f (/ (- y ymin) (- ymax ymin))))
         (shape (- x (* dx0 (- 1 f)) (* dx1 f)) y z))))
+
+(define-public (taper-x-y shape x0 ymin ymax s0 s1)
+    "Tapers a shape in the XY plane"
+    (let ((dy (- ymax ymin))
+          (ds (- s1 s0)))
+    (lambda (x y z)
+        (let ((s (/ dy (- (* s1 (- y ymin)) (* s0 (- y ymax))))))
+        (shape (+ x0 (* (- x x0) s))
+               y z)))))
+
+(define-public (taper-xy-z shape xy zmin zmax s0 s1)
+    "Tapers a shape along the Z axis"
+    (let ((x0 (car xy))
+          (y0 (cadr xy))
+          (dz (- zmax zmin)))
+    (lambda (x y z)
+        (let ((s (/ dz (- (* s1 (- z zmin)) (* s0 (- z zmax))))))
+        (shape (+ x0 (* (- x x0) s))
+               (+ y0 (* (- y y0) s))
+               z)))))
