@@ -17,30 +17,30 @@
 const std::string Accelerator::vert = R"(
 #version 330
 
+// Vertex values are i, j, kmax, nk
+layout (location=0) in ivec4 vert;
+
 // min, max bounds of target region
 uniform vec3 bounds[2];
 uniform ivec3 dimensions;
 
-// Vertex values are i, j, kmax, nk
-layout (location=0) in ivec4 vert;
-
 // Outputs are fragment position [x, y, zfront, zback] and nk
-out vec4 frag;
+out vec4 pos;
 flat out int nk;
 
 void main()
 {
     // Fractions of the various positions in the global region
-    float fx  = float(vert.x) / float(dimensions.x - 1);
-    float fy  = float(vert.y) / float(dimensions.y - 1);
-    float fz0 = float(vert.z) / float(dimensions.z - 1);
-    float fz1 = float(vert.z + vert.w - 1) / float(dimensions.z - 1);
+    float fx  = float(vert.x) / float(dimensions.x);
+    float fy  = float(vert.y) / float(dimensions.y);
+    float fz0 = float(vert.z) / float(dimensions.z);
+    float fz1 = float(vert.z + vert.w) / float(dimensions.z);
 
     // Fragment position in region space
-    frag = vec4(bounds[0].x * (1.0f - fx) + bounds[1].x * fx,
-                bounds[0].y * (1.0f - fy) + bounds[1].y * fy,
-                bounds[0].z * (1.0f - fz1) + bounds[1].z * fz1,
-                bounds[0].z * (1.0f - fz0) + bounds[1].z * fz0);
+    pos = vec4(bounds[0].x * (1.0f - fx) + bounds[1].x * fx,
+               bounds[0].y * (1.0f - fy) + bounds[1].y * fy,
+               bounds[0].z * (1.0f - fz1) + bounds[1].z * fz1,
+               bounds[0].z * (1.0f - fz0) + bounds[1].z * fz0);
 
     // Number of voxels for raymarching
     nk = vert.w;
@@ -56,13 +56,13 @@ const std::string Accelerator::frag = R"(
 #version 330
 
 // Raycast position [x, y, zfront, zback]
-in vec4 frag;
+in vec4 pos;
 
 // Number of voxels to walk through
 flat in int nk;
 
 // Our output buffer is the fragment's normal and depth
-layout (location=0) out vec4 frag_norm;
+layout (location=0) out vec4 norm;
 
 // Generic matrix transform
 uniform float mat[12];
@@ -76,12 +76,12 @@ vec4 g(vec4 x, vec4 y, vec4 z);
 
 void main()
 {
-    float x = frag.x;
-    float y = frag.y;
+    float x = pos.x;
+    float y = pos.y;
 
     // Set the default depth to the back value
     gl_FragDepth = 1.0f;
-    frag_norm = vec4(0.0f);
+    norm = vec4(0.0f);
 
     for (int i=0; i < nk; ++i)
     {
@@ -89,12 +89,13 @@ void main()
         float frac = (i + 0.5f) / float(nk);
 
         // Coordinate in region space
-        float z = frag.w * (1 - frac) + frag.z * frac;
+        float z = pos.z * (1 - frac) + pos.w * frac;
 
         if (f(x, y, z) < 0.0f)
         {
             // Map the z coordinate to the 0 - 1 depth buffer
-            gl_FragDepth = (bounds[1].z - z) / (bounds[1].z - bounds[0].z);
+            gl_FragDepth = (bounds[1].z == bounds[0].z)
+                ? 0.5f : (z - bounds[0].z) / (bounds[1].z - bounds[0].z);
 
             // Calculate normal
             vec4 n = g(vec4(1.0f, 0.0f, 0.0f, x),
@@ -103,13 +104,13 @@ void main()
 
             // Pack normal into 0-255 range, clipping if we're at the
             // top of the Z range
-            if (i == 0 && frag.w == bounds[1].z)
+            if (i == 0 && pos.w == bounds[1].z)
             {
-                frag_norm = vec4(0.5f, 0.5f, 1.0f, 1.0f);
+                norm = vec4(0.5f, 0.5f, 1.0f, 1.0f);
             }
             else
             {
-                frag_norm = vec4(normalize(n.xyz) / 2.0f + 0.5f, 1.0f);
+                norm = vec4(normalize(n.xyz) / 2.0f + 0.5f, 1.0f);
             }
             return;
         }
@@ -361,17 +362,14 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
 
 void Accelerator::RenderSubregion(const Region& r)
 {
-    const size_t z = r.Z.min + r.Z.size - 1;
-    const size_t nk = r.Z.size;
+    data.push_back(glm::ivec4(r.X.min, r.Y.min, r.Z.min, r.Z.size));
+    data.push_back(glm::ivec4(r.X.min + r.X.size, r.Y.min, r.Z.min, r.Z.size));
+    data.push_back(glm::ivec4(r.X.min, r.Y.min + r.Y.size, r.Z.min, r.Z.size));
 
-    data.push_back(glm::ivec4(r.X.min, r.Y.min, z, nk));
-    data.push_back(glm::ivec4(r.X.min + r.X.size - 1, r.Y.min, z, nk));
-    data.push_back(glm::ivec4(r.X.min, r.Y.min + r.Y.size - 1, z, nk));
-
-    data.push_back(glm::ivec4(r.X.min, r.Y.min + r.Y.size - 1, z, nk));
-    data.push_back(glm::ivec4(r.X.min + r.X.size - 1, r.Y.min, z, nk));
-    data.push_back(glm::ivec4(r.X.min + r.X.size - 1,
-                              r.Y.min + r.Y.size - 1, z, nk));
+    data.push_back(glm::ivec4(r.X.min, r.Y.min + r.Y.size, r.Z.min, r.Z.size));
+    data.push_back(glm::ivec4(r.X.min + r.X.size,
+                              r.Y.min + r.Y.size, r.Z.min, r.Z.size));
+    data.push_back(glm::ivec4(r.X.min + r.X.size, r.Y.min, r.Z.min, r.Z.size));
 }
 
 void Accelerator::FillSubregion(const Region& r)
