@@ -49,9 +49,6 @@ protected:
     Atom* const a;
     Atom* const b;
 
-    /*  Populated for conditional operators  */
-    Atom* const cond;
-
     friend class Tree;
     friend class Accelerator;
     friend class Clause;

@@ -46,7 +46,7 @@ TEST_CASE("Partial rendering (GPU)")
     {   // Rendering partially over
         Region sub = r.split().first;
         a.RenderSubregion(sub);
-        a.finish();
+        a.flush();
 
         auto d = fromDepthTexture(depth, r);
         CAPTURE(d);
@@ -72,7 +72,7 @@ TEST_CASE("Partial rendering (GPU)")
     {   // Rendering over on the other axis
         Region sub = r.split().second.split().first;
         a.RenderSubregion(sub);
-        a.finish();
+        a.flush();
 
         auto d = fromDepthTexture(depth, r);
         CAPTURE(d);

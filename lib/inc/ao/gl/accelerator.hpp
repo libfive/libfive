@@ -35,9 +35,9 @@ public:
     void init(const Region& r, GLuint depth, GLuint norm);
 
     /*
-     *  Actually executes the queued-up raycast operations
+     *  Executes the queued-up raycast operations
      */
-    void finish();
+    void flush();
 
     /*
      *  Saves our generic transform matrix

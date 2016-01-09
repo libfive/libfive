@@ -3,17 +3,16 @@
 
 #include "ao/tree/token.hpp"
 
-Token::Token(Opcode op, Token* a, Token* b, Token* cond)
+Token::Token(Opcode op, Token* a, Token* b)
     : op(op), weight(std::max(a ? a->weight + 1 : 0,
-                     std::max(b ? b->weight + 1 : 0,
-                              cond ? cond->weight + 1 : 0))),
-      value(nan("")), a(a), b(b), cond(cond)
+                              b ? b->weight + 1 : 0)),
+      value(nan("")), a(a), b(b)
 {
     // Nothing to do here
 }
 
 Token::Token(double v)
-    : op(OP_CONST), weight(0), value(v), a(nullptr), b(nullptr), cond(nullptr)
+    : op(OP_CONST), weight(0), value(v), a(nullptr), b(nullptr)
 {
     // Nothing to do here
 }
@@ -38,8 +37,6 @@ size_t Token::args(Opcode op)
         case OP_MAX: return 2;
         case OP_SUB: return 2;
         case OP_DIV: return 2;
-
-        case COND_LZ: return 3;
 
         case INVALID: // fallthrough
         case LAST_OP: return -1;

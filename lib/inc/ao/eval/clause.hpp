@@ -79,9 +79,6 @@ protected:
     Clause* const a;
     Clause* const b;
 
-    /*  Populated for conditional operators  */
-    Clause* const cond;
-
     /*  Results are stored in a struct */
     Result result;
 

@@ -101,13 +101,3 @@ TEST_CASE("Automatic expression pruning")
         REQUIRE(od == s.constant(0));
     }
 }
-
-TEST_CASE("Deduplication of condition statements")
-{
-    Store s;
-
-    Token* ox = s.operation(COND_LZ, s.constant(1), s.constant(2), s.X());
-    Token* oy = s.operation(COND_LZ, s.constant(1), s.constant(2), s.Y());
-
-    REQUIRE(ox != oy);
-}

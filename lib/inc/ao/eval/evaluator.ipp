@@ -21,11 +21,6 @@ inline double _max(const double& a, const double& b)
     return std::max(a, b);
 }
 
-inline double _cond_nz(const double& cond, const double& a, const double& b)
-{
-    return (cond < 0) ? a : b;
-}
-
 inline double _abs(const double& a)
 {
     return std::abs(a);
@@ -80,12 +75,6 @@ inline void Evaluator::evalClause(Clause* m, size_t count)
         case OP_ABS:
             EVAL_LOOP
             m->result.set<T>(_abs(m->a->get<T>(i)), i);
-            break;
-        case COND_LZ:
-            EVAL_LOOP
-            m->result.set<T>(_cond_nz(m->cond->get<T>(i),
-                                      m->a->get<T>(i),
-                                      m->b->get<T>(i)), i);
             break;
         case INVALID:
         case OP_CONST:

@@ -6,13 +6,11 @@
 Clause::Clause(const Atom* m,
                std::unordered_map<const Atom*, Clause*>& clauses)
     : op(m->op), value(m->value), mutable_value(m->value),
-      a(m->a ? clauses[m->a] : nullptr), b(m->b ? clauses[m->b] : nullptr),
-      cond(m->cond ? clauses[m->cond] : nullptr)
+      a(m->a ? clauses[m->a] : nullptr), b(m->b ? clauses[m->b] : nullptr)
 {
     // Assert that children have been added to the clause map
     assert(m->a ? clauses.count(m->a) : true);
     assert(m->b ? clauses.count(m->b) : true);
-    assert(m->cond ? clauses.count(m->cond) : true);
 
     // Assert that this atom hasn't already been added to the tree
     assert(clauses[m] == nullptr);

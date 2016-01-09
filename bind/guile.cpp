@@ -43,8 +43,6 @@ static Opcode symbol_to_opcode(SCM sym)
     else if (str == "abs")      return OP_ABS;
     else if (str == "neg")      return OP_NEG;
 
-    else if (str == "lz")       return COND_LZ;
-
     else                        return INVALID;
 }
 
@@ -142,10 +140,8 @@ static SCM token_op(SCM store, SCM op_sym, SCM args)
         untag_ptr<Token>(scm_car(args));
     Token* b = (arg_count < 2) ? NULL :
         untag_ptr<Token>(scm_cadr(args));
-    Token* cond = (arg_count < 3) ? NULL :
-        untag_ptr<Token>(scm_caddr(args));
 
-    return tag_ptr(s->operation(op, a, b, cond));
+    return tag_ptr(s->operation(op, a, b));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

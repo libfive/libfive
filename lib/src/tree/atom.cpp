@@ -8,13 +8,11 @@
 Atom::Atom(const Token* t, std::unordered_map<const Token*, Atom*>& atoms)
     : op(t->op), value(t->value),
       a(t->a ? atoms[t->a] : nullptr),
-      b(t->b ? atoms[t->b] : nullptr),
-      cond(t->cond ? atoms[t->cond] : nullptr)
+      b(t->b ? atoms[t->b] : nullptr)
 {
     // Assert that children have atom pointers populated
     assert(t->a ? atoms.count(t->a) : true);
     assert(t->b ? atoms.count(t->b) : true);
-    assert(t->cond ? atoms.count(t->cond) : true);
 
     // Assert that this token hasn't already been added to the tree
     assert(atoms[t] == nullptr);
@@ -23,13 +21,13 @@ Atom::Atom(const Token* t, std::unordered_map<const Token*, Atom*>& atoms)
 }
 
 Atom::Atom(Opcode op, Atom* a, Atom* b)
-    : op(op), value(nan("")), a(a), b(b), cond(nullptr)
+    : op(op), value(nan("")), a(a), b(b)
 {
     // Nothing to do here
 }
 
 Atom::Atom(double d)
-    : op(OP_MUTABLE), value(d), a(nullptr), b(nullptr), cond(nullptr)
+    : op(OP_MUTABLE), value(d), a(nullptr), b(nullptr)
 {
     // Nothing to do here
 }
@@ -53,9 +51,6 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case OP_X:      os << "X"; break;
         case OP_Y:      os << "Y"; break;
         case OP_Z:      os << "Z"; break;
-
-        case COND_LZ:   os << "(" << *atom.cond << " < 0 ? "
-                                  << *atom.a << " : " << *atom.b << ")"; break;
 
         case LAST_OP:   // Fallthrough!
         case INVALID:   assert(false);

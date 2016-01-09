@@ -244,7 +244,8 @@ std::pair<DepthImage, NormalImage> Render(
 * Helper function that reduces a particular matrix block
 */
 static void recurse(Evaluator* e, Accelerator* a, const Region& r,
-                    std::set<Quad>& filled, const std::atomic<bool>& abort)
+                    std::set<Quad>& filled, float utilization,
+                    const std::atomic<bool>& abort)
 {
     // Stop rendering if this quad is blocked by one closer to the camera
     if (filled.count(Quad(r.X.min, r.X.size, r.Y.min, r.Y.size)) != 0)
@@ -280,6 +281,10 @@ static void recurse(Evaluator* e, Accelerator* a, const Region& r,
         // Disable inactive nodes in the tree
         e->push();
 
+        // Mark if we should flush the queue at this point in the tree
+        float u = e->utilization();
+        bool marked = u < utilization / 4;
+
         // Subdivide and recurse
         assert(r.canSplit());
 
@@ -287,8 +292,15 @@ static void recurse(Evaluator* e, Accelerator* a, const Region& r,
 
         // Since the higher Z region is in the second item of the
         // split, evaluate rs.second then rs.first
-        recurse(e, a, rs.second, filled, abort);
-        recurse(e, a, rs.first, filled, abort);
+        recurse(e, a, rs.second, filled, marked ? u : utilization, abort);
+        recurse(e, a, rs.first, filled, marked ? u : utilization, abort);
+
+        // If this was marked as a checkpoint, flush the accelerator's queue
+        // before popping out (which re-enables unused nodes)
+        if (marked)
+        {
+            a->flush();
+        }
 
         // Re-enable disabled nodes from the tree
         e->pop();
@@ -302,9 +314,8 @@ void Render(Evaluator* e, Accelerator* a, const Region& r,
     std::set<Quad> filled;
 
     a->init(r, depth, norm);
-    recurse(e, a, r, filled, abort);
-    a->finish();
+    recurse(e, a, r, filled, 1, abort);
+    a->flush();
 }
-
 
 } // namespace Heightmap

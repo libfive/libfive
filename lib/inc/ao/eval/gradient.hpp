@@ -22,5 +22,3 @@ Gradient pow(const Gradient& a, const Gradient& b);
 Gradient sqrt(const Gradient& a);
 Gradient _abs(const Gradient& a);
 Gradient operator-(const Gradient& a);
-
-Gradient _cond_nz(const Gradient& cond, const Gradient& a, const Gradient& b);

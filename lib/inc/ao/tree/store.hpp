@@ -29,11 +29,8 @@ public:
      *
      *  Arguments should be filled in from left to right
      *  (i.e. a must not be null if b is not null)
-     *
-     *  If this is a conditional operation, cond must be present
      */
-    Token* operation(Opcode op, Token* a=nullptr, Token* b=nullptr,
-                     Token* cond=nullptr);
+    Token* operation(Opcode op, Token* a=nullptr, Token* b=nullptr);
 
     /*
      *  Return tokens for base variables
@@ -53,7 +50,7 @@ protected:
      */
     void clearFound();
 
-    typedef std::tuple<Token*, Token*, Token*> Key;
+    typedef std::pair<Token*, Token*> Key;
     typedef std::array<std::map<Key, Token*>, LAST_OP> Cache;
 
     /*  Constants are indexed solely by value  */

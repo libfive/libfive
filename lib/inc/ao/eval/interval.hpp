@@ -17,25 +17,6 @@ inline Interval _max(const Interval& a, const Interval& b)
     return boost::numeric::max(a, b);
 }
 
-inline Interval _cond_nz(const Interval& cond,
-                         const Interval& a,
-                         const Interval& b)
-{
-    if (cond.upper() < 0)
-    {
-        return a;
-    }
-    else if (cond.lower() >= 0)
-    {
-        return b;
-    }
-    else
-    {
-        return Interval(std::min(a.lower(), b.lower()),
-                        std::max(a.upper(), b.upper()));
-    }
-}
-
 inline Interval _abs(const Interval& a)
 {
     return boost::numeric::abs(a);

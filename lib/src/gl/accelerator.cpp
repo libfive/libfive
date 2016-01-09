@@ -161,11 +161,6 @@ vec4 max_g(vec4 a, vec4 b)
     return (a.w < b.w) ? b : a;
 }
 
-vec4 cond_nz_g(vec4 cond, vec4 a, vec4 b)
-{
-    return (cond.w < 0.0f) ? a : b;
-}
-
 vec4 pow_g(vec4 a, vec4 b)
 {
     float p = pow(a.w, b.w - 1.0f);
@@ -306,10 +301,8 @@ void Accelerator::init(const Region& r, GLuint depth, GLuint norm)
     glViewport(r.X.min, r.Y.min, r.X.size, r.Y.size);
 }
 
-void Accelerator::finish()
+void Accelerator::flush()
 {
-    std::cout << "Loading " << data.size() * sizeof(data[0]) << " bytes into buffer\n";
-
     // Generate and bind a simple quad shape
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(data[0]),
@@ -348,7 +341,7 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
 
     init(r, depth, norm);
     RenderSubregion(r);
-    finish();
+    flush();
 
     auto out = std::make_pair(fromDepthTexture(depth, r),
                               fromNormalTexture(norm, r));
@@ -483,7 +476,6 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
         return std::string(); };
     std::string sa = get(m->a);
     std::string sb = get(m->b);
-    std::string sc = get(m->cond);
 
     if (mode == DEPTH)
     {
@@ -498,9 +490,6 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
             case OP_SQRT:   out += "sqrt(" + sa + ")";  break;
             case OP_NEG:    out += "(-" + sa + ")";     break;
             case OP_ABS:    out += "abs(" + sa + ")";     break;
-
-            case COND_LZ:   out += "(" + sc + " < 0 ? " + sa + " : " + sb + ")";
-                            break;
 
             case OP_X:  // Fallthrough!
             case OP_Y:
@@ -525,9 +514,6 @@ std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
             case OP_SQRT:   out += "sqrt_g(" + sa + ")";  break;
             case OP_NEG:    out += "neg_g(" + sa + ")";     break;
             case OP_ABS:    out += "abs_g(" + sa + ")";     break;
-
-            case COND_LZ:   out += "cond_nz_g(" + sc + ", " + sa + ", " + sb + ")";
-                            break;
 
             case OP_X:  // Fallthrough!
             case OP_Y:

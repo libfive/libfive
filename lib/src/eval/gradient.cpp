@@ -42,11 +42,6 @@ Gradient _max(const Gradient& a, const Gradient& b)
     return (a.v < b.v) ? b : a;
 }
 
-Gradient _cond_nz(const Gradient& cond, const Gradient& a, const Gradient& b)
-{
-    return (cond.v < 0) ? a : b;
-}
-
 Gradient pow(const Gradient& a, const Gradient& b)
 {
     const double p = pow(a.v, b.v - 1);

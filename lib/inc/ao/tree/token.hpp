@@ -13,8 +13,7 @@ public:
     /*
      *  Constructs a token for an operation
      */
-    explicit Token(Opcode op, Token* a=nullptr, Token* b=nullptr,
-                   Token* cond=nullptr);
+    explicit Token(Opcode op, Token* a=nullptr, Token* b=nullptr);
 
     /*
      *  Constructs a token for a constant
@@ -41,9 +40,6 @@ public:
     /*  Otherwise, pointers to arguments are stored in a and b  */
     Token* const a;
     Token* const b;
-
-    /*  Condition pointer is stored in cond  */
-    Token* const cond;
 
 protected:
     /*  found is used to detect which tokens are in the tree  */

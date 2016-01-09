@@ -29,7 +29,7 @@ Token* Store::constant(double v)
     return constants[v];
 }
 
-Token* Store::operation(Opcode op, Token* a, Token* b, Token* cond)
+Token* Store::operation(Opcode op, Token* a, Token* b)
 {
     // Special cases to handle identity operations
     if (op == OP_ADD)
@@ -81,7 +81,7 @@ Token* Store::operation(Opcode op, Token* a, Token* b, Token* cond)
     }
 
     // Otherwise, construct a new Token and add it to the ops set
-    const auto t = new Token(op, a, b, cond);
+    const auto t = new Token(op, a, b);
 
     if (ops.size() <= t->weight)
     {
@@ -89,16 +89,16 @@ Token* Store::operation(Opcode op, Token* a, Token* b, Token* cond)
     }
 
     auto& row = ops[t->weight][t->op];
-    if (row.find({a,b,cond}) == row.end())
+    if (row.find({a,b}) == row.end())
     {
-        row[{a,b,cond}] = t;
+        row[{a,b}] = t;
     }
     else
     {
         delete t;
     }
 
-    return row[{a,b,cond}];
+    return row[{a,b}];
 }
 
 void Store::clearFound()

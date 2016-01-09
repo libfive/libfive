@@ -21,7 +21,5 @@ enum Opcode
     OP_SUB,
     OP_DIV,
 
-    COND_LZ,
-
     LAST_OP,
 };
