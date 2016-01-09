@@ -35,30 +35,12 @@ TEST_CASE("Partial rendering (GPU)")
 
     a.init(r, depth, norm);
 
+    const double i = -std::numeric_limits<double>::infinity();
+
     {   // Default depth
         auto d = fromDepthTexture(depth, r);
         CAPTURE(d);
         REQUIRE((d == -std::numeric_limits<double>::infinity()).all());
-    }
-
-    {   // Full-region rendering
-        Region sub({-1, 1}, {-1, 1}, {0, 0}, 5);
-        a.RenderSubregion(sub);
-        a.finish();
-
-        auto d = fromDepthTexture(depth, r);
-        CAPTURE(d);
-        REQUIRE((d == 0).all());
-    }
-
-    {   // Rendering underneath
-        Region sub({-1, 1}, {-1, 1}, {0, 0}, 5);
-        a.RenderSubregion(sub);
-        a.finish();
-
-        auto d = fromDepthTexture(depth, r);
-        CAPTURE(d);
-        REQUIRE((d == 0).all());
     }
 
     {   // Rendering partially over
@@ -71,20 +53,20 @@ TEST_CASE("Partial rendering (GPU)")
 
         DepthImage comp(10, 10);
         comp <<
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0;
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i;
 
         auto diff = d - comp;
         CAPTURE(diff);
-        REQUIRE((diff.abs() < 1e-6).all());
+        REQUIRE((diff.abs() < 1e-6 || diff != diff).all());
     }
 
     {   // Rendering over on the other axis
@@ -102,15 +84,15 @@ TEST_CASE("Partial rendering (GPU)")
             0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,
             0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,
             0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0,
-            0.9,0.9,0.9,0.9,0.9,  0,  0,  0,  0,  0;
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i,
+            0.9,0.9,0.9,0.9,0.9,  i,  i,  i,  i,  i;
 
         auto diff = d - comp;
         CAPTURE(diff);
-        REQUIRE((diff.abs() < 1e-6).all());
+        REQUIRE((diff.abs() < 1e-6 || diff != diff).all());
     }
 
     glDeleteTextures(1, &depth);
