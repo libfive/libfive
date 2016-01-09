@@ -315,8 +315,7 @@ void Accelerator::finish()
                  &data[0], GL_STREAM_DRAW);
 
     // Set up pointer to vertex attributes
-    glVertexAttribPointer(0, 4, GL_INT, GL_FALSE,
-                          4 * sizeof(GLint), (GLvoid*)0);
+    glVertexAttribIPointer(0, 4, GL_INT, 0, (GLvoid*)0);
     glEnableVertexAttribArray(0);
 
     // Assert that we're drawing quads (2 triangles x 3 points)
