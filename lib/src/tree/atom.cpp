@@ -46,6 +46,7 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case OP_DIV:    os << "(" << *atom.a << " / " << *atom.b << ")"; break;
         case OP_SQRT:   os << "sqrt(" << *atom.a << ")"; break;
         case OP_NEG:    os << "(-" << *atom.a << ")"; break;
+        case OP_ABS:    os << "abs(" << *atom.a << ")"; break;
         case OP_CONST:  os << atom.value; break;
         case OP_MUTABLE:  os << atom.value; break;
         case OP_X:      os << "X"; break;
