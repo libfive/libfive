@@ -95,7 +95,7 @@ void main()
         {
             // Map the z coordinate to the 0 - 1 depth buffer
             gl_FragDepth = (bounds[1].z == bounds[0].z)
-                ? 0.5f : (z - bounds[0].z) / (bounds[1].z - bounds[0].z);
+                ? 0.5f : (bounds[1].z - z) / (bounds[1].z - bounds[0].z);
 
             // Calculate normal
             vec4 n = g(vec4(1.0f, 0.0f, 0.0f, x),
@@ -323,7 +323,6 @@ void Accelerator::finish()
     assert(data.size() % 6 == 0);
 
     // Actually draw the quads
-    std::cout << "Drawing " << data.size() << " indices\n";
     glDrawArrays(GL_TRIANGLES, 0, data.size());
 
     data.clear();
