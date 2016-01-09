@@ -101,8 +101,6 @@ protected:
     /*  Bag-o-data that stores clauses  */
     Clause* data;
     Clause* ptr;
-
-    friend class Accelerator;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

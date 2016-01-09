@@ -3,7 +3,6 @@
 
 #include "ao/gl/frame.hpp"
 #include "ao/gl/shader.hpp"
-#include "ao/gl/accelerator.hpp"
 
 #include "ao/render/region.hpp"
 #include "ao/tree/tree.hpp"
@@ -76,7 +75,7 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////
 
 Frame::Frame(Tree* tree, GLFWwindow* window)
-    : tree(tree), eval(new Evaluator(tree)), accel(new Accelerator()),
+    : tree(tree), eval(new Evaluator(tree)),
       vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
       prog(Shader::link(vs, fs)), context(makeContext(window, false))
@@ -188,7 +187,7 @@ void Frame::startRender()
     {
         // Swap around render tasks and start an async worker
         pending = next;
-        worker.reset(new Worker(eval.get(), accel.get(), pending, context,
+        worker.reset(new Worker(eval.get(), pending, context,
                                 depth[!ping], norm[!ping]));
         next.reset();
     }

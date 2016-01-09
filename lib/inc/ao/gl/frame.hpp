@@ -10,7 +10,6 @@
 
 class Tree;
 class Evaluator;
-class Accelerator;
 
 /*
  *  The Frame class contains and draws many rendered Tree textures
@@ -58,7 +57,6 @@ protected:
 
     std::unique_ptr<Tree> const tree;
     std::unique_ptr<Evaluator> const eval;
-    std::unique_ptr<Accelerator> const accel;
 
     GLuint vs;  // Vertex shader
     GLuint fs;  // Fragment shader

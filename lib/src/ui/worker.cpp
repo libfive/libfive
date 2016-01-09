@@ -6,7 +6,6 @@
 
 #include "ao/tree/tree.hpp"
 #include "ao/eval/evaluator.hpp"
-#include "ao/gl/accelerator.hpp"
 #include "ao/gl/texture.hpp"
 
 Worker::Worker(const Task& t)
@@ -54,45 +53,6 @@ Worker::Worker(Evaluator* eval, const Task& t, GLFWwindow* context,
             glFinish();
         }
         this->end(); });
-}
-
-Worker::Worker(Accelerator* accel, const Task& t, GLFWwindow* context,
-               GLuint depth, GLuint norm)
-    : Worker(t)
-{
-    // Apply the matrix to the tree, applying an extra scaling on
-    // the z axis to make the coordinate system match OpenGL
-    auto m = glm::scale(glm::inverse(t.mat), glm::vec3(1, 1, -1));
-    accel->setMatrix(m);
-
-    thread = std::thread([=](){
-        glfwMakeContextCurrent(context);
-        accel->init(this->region, depth, norm);
-        accel->RenderSubregion(this->region);
-        glFinish();
-        this->end(); });
-}
-
-Worker::Worker(Evaluator* eval, Accelerator* accel, const Task& t,
-               GLFWwindow* context, GLuint depth, GLuint norm)
-    : Worker(t)
-{
-    // Apply the matrix to the tree, applying an extra scaling on
-    // the z axis to make the coordinate system match OpenGL
-    auto m = glm::scale(glm::inverse(t.mat), glm::vec3(1, 1, -1));
-    eval->setMatrix(m);
-    accel->setMatrix(m);
-
-    thread = std::thread([=](){
-
-        std::cout << "Starting worker with level " << t.level << '\n';
-        this->start();
-        glfwMakeContextCurrent(context);
-        Heightmap::Render(eval, accel, this->region, depth, norm, this->abort);
-        glFinish();
-        std::cout << "Ending worker with level " << t.level << '\n';
-        this->end(); });
-
 }
 
 Worker::~Worker()

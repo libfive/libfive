@@ -83,5 +83,4 @@ protected:
     Result result;
 
     friend class Evaluator;
-    friend class Accelerator;
 };

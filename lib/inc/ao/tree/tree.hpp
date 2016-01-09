@@ -58,6 +58,5 @@ protected:
     /*  This is the top atom of the tree  */
     Atom* root;
 
-    friend class Accelerator;
     friend class Evaluator;
 };

@@ -7,7 +7,6 @@
 #include "ao/render/heightmap.hpp"
 
 struct Task;
-class Accelerator;
 
 /*
  *  A worker contains all of the data needed for a running render task
@@ -22,24 +21,6 @@ struct Worker
      */
     Worker(Evaluator* eval, const Task& task, GLFWwindow* context,
            GLuint depth, GLuint norm);
-
-    /*
-     *  Constructs a GPU worker from the given Accelerator and a task
-     *  (higher task divisors produce lower-resolution workers)
-     *
-     *  depth and norm are target textures in which results are stored
-     */
-    Worker(Accelerator* accel, const Task& task, GLFWwindow* context,
-           GLuint depth, GLuint norm);
-
-    /*
-     *  Constructs a CPU + GPU worker from the given Accelerator and a task
-     *  (higher task divisors produce lower-resolution workers)
-     *
-     *  depth and norm are target textures in which results are stored
-     */
-    Worker(Evaluator* eval, Accelerator* accel, const Task& task,
-           GLFWwindow* context, GLuint depth, GLuint norm);
 
     /*
      *  On destruction, join the thread

@@ -4,7 +4,6 @@
 
 #include "ao/gl/core.hpp"
 #include "ao/gl/shader.hpp"
-#include "ao/gl/accelerator.hpp"
 
 #include "ao/tree/store.hpp"
 #include "ao/tree/tree.hpp"
@@ -31,20 +30,4 @@ TEST_CASE("OpenGL version")
 
     CAPTURE(version);
     REQUIRE((major * 10 + minor) >= 33);
-}
-
-TEST_CASE("Shader creation")
-{
-    WindowPtr window(makeContext(), glfwDestroyWindow);
-
-    // Redirect std::cerr
-    //std::streambuf* _cerr = std::cerr.rdbuf();
-    //std::ostringstream capture;
-    //std::cerr.rdbuf(capture.rdbuf());
-
-    // Build a tree accelerator (which throws assertions on failure)
-    Accelerator accel;
-
-    // Restore old std::cerr
-    //std::cerr.rdbuf(_cerr);
 }

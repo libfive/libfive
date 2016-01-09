@@ -5,7 +5,6 @@
 #include "ao/render/heightmap.hpp"
 #include "ao/eval/result.hpp"
 #include "ao/eval/evaluator.hpp"
-#include "ao/gl/accelerator.hpp"
 
 namespace Heightmap
 {
@@ -236,86 +235,6 @@ std::pair<DepthImage, NormalImage> Render(
     norm = (depth == r.Z.pos(r.Z.size - 1)).select(0xffff7f7f, norm);
 
     return std::make_pair(depth, norm);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-* Helper function that reduces a particular matrix block
-*/
-static void recurse(Evaluator* e, Accelerator* a, const Region& r,
-                    std::set<Quad>& filled, float utilization,
-                    const std::atomic<bool>& abort)
-{
-    // Stop rendering if this quad is blocked by one closer to the camera
-    if (filled.count(Quad(r.X.min, r.X.size, r.Y.min, r.Y.size)) != 0)
-    {
-        return;
-    }
-
-    // Stop rendering if the abort flag is set
-    if (abort.load())
-    {
-        return;
-    }
-
-    // If we're below a certain size, render pixel-by-pixel
-    if (r.voxels() <= Result::count<double>()*256)
-    {
-        a->RenderSubregion(r);
-        return;
-    }
-
-    // Do the interval evaluation
-    Interval out = e->eval(r.X.interval, r.Y.interval, r.Z.interval);
-
-    // If strictly negative, fill up the block and return
-    if (out.upper() < 0)
-    {
-        a->FillSubregion(r);
-        filled.insert(Quad(r.X.min, r.X.size, r.Y.min, r.Y.size));
-    }
-    // Otherwise, recurse if the output interval is ambiguous
-    else if (out.lower() <= 0)
-    {
-        // Disable inactive nodes in the tree
-        e->push();
-
-        // Mark if we should flush the queue at this point in the tree
-        float u = e->utilization();
-        bool marked = u < utilization / 4;
-
-        // Subdivide and recurse
-        assert(r.canSplit());
-
-        auto rs = r.split();
-
-        // Since the higher Z region is in the second item of the
-        // split, evaluate rs.second then rs.first
-        recurse(e, a, rs.second, filled, marked ? u : utilization, abort);
-        recurse(e, a, rs.first, filled, marked ? u : utilization, abort);
-
-        // If this was marked as a checkpoint, flush the accelerator's queue
-        // before popping out (which re-enables unused nodes)
-        if (marked)
-        {
-            a->flush(e);
-        }
-
-        // Re-enable disabled nodes from the tree
-        e->pop();
-    }
-}
-
-// Accelerated render functions
-void Render(Evaluator* e, Accelerator* a, const Region& r,
-            GLuint depth, GLuint norm, const std::atomic<bool>& abort)
-{
-    std::set<Quad> filled;
-
-    a->init(r, depth, norm);
-    recurse(e, a, r, filled, 1, abort);
-    a->flush(e);
 }
 
 } // namespace Heightmap
