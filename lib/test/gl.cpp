@@ -35,12 +35,6 @@ TEST_CASE("OpenGL version")
 
 TEST_CASE("Shader creation")
 {
-    Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-               s.constant(1)));
-
     WindowPtr window(makeContext(), glfwDestroyWindow);
 
     // Redirect std::cerr
@@ -49,32 +43,8 @@ TEST_CASE("Shader creation")
     //std::cerr.rdbuf(capture.rdbuf());
 
     // Build a tree accelerator (which throws assertions on failure)
-    auto out = Accelerator(&t);
+    Accelerator accel;
 
     // Restore old std::cerr
     //std::cerr.rdbuf(_cerr);
-}
-
-TEST_CASE("Edge cases in shader creation")
-{
-    Store s;
-    WindowPtr window(makeContext(), glfwDestroyWindow);
-
-    SECTION("Single variable")
-    {
-        Tree t(&s, s.X());
-        auto out = Accelerator(&t);
-    }
-
-    SECTION("Constant")
-    {
-        Tree t(&s, s.constant(-1));
-        auto out = Accelerator(&t);
-    }
-
-    SECTION("Double-negative")
-    {
-        Tree t(&s, s.operation(OP_NEG, s.constant(-1)));
-        auto out = Accelerator(&t);
-    }
 }

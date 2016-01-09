@@ -76,7 +76,7 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////
 
 Frame::Frame(Tree* tree, GLFWwindow* window)
-    : tree(tree), eval(new Evaluator(tree)), accel(new Accelerator(tree)),
+    : tree(tree), eval(new Evaluator(tree)), accel(new Accelerator()),
       vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
       prog(Shader::link(vs, fs)), context(makeContext(window, false))

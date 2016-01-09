@@ -44,4 +44,5 @@ protected:
     std::stack<size_t> disabled;
 
     friend class Evaluator;
+    friend class Accelerator;
 };

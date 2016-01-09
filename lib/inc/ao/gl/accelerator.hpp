@@ -25,7 +25,7 @@ public:
      *
      *  This must be called from the main thread with a current OpenGL context
      */
-    Accelerator(const Tree* tree);
+    Accelerator();
     ~Accelerator();
 
     /*
@@ -35,9 +35,10 @@ public:
     void init(const Region& r, GLuint depth, GLuint norm);
 
     /*
-     *  Executes the queued-up raycast operations
+     *  Executes the queued-up raycast operations on the given tree
      */
-    void flush();
+    void flush(Tree* tree);
+    void flush(Evaluator* eval);
 
     /*
      *  Saves our generic transform matrix
@@ -49,7 +50,7 @@ public:
      *
      *  The accelerator's context must be current when this is called
      */
-    std::pair<DepthImage, NormalImage> Render(const Region& r);
+    std::pair<DepthImage, NormalImage> Render(Tree* t, const Region& r);
 
     /*
      *  Render a subregion into the active depth and normal textures
@@ -65,22 +66,8 @@ public:
      */
     void FillSubregion(const Region& r);
 
-    /*
-     *  Converts a tree to an OpenGL 3.3 fragment shader
-     */
-    enum Mode { DEPTH, NORMAL };
-    std::string toShader(const Tree* tree);
-    std::string toShaderFunc(const Tree* tree, Mode mode);
-
-    /*
-     *  Converts a single Atom into a shader string, incrementing index
-     *  and storing the atom in atoms
-     */
-    std::string toShader(const Atom* m, Mode mode);
-
 protected:
-    std::unordered_map<const Atom*, size_t> atoms;
-    size_t index=0;
+    void populateTape(Evaluator* eval);
 
     GLFWwindow* context;
 
@@ -97,6 +84,9 @@ protected:
 
     // Vertices of quads to be rendered in bulk
     std::vector<glm::ivec4> data;
+
+    // Instruction tape for the fragment shader
+    std::vector<glm::ivec3> tape;
 
     // Static shader strings
     static const std::string vert;

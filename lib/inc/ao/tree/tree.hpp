@@ -25,6 +25,11 @@ public:
      */
     ~Tree();
 
+    /*
+     *  Looks up root atom in the tree
+     */
+    Atom* getRoot() const { return root; }
+
     /*  Pointer to a parent (used to decide who destroys the tree)  */
     void* parent=nullptr;
 

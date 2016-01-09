@@ -50,7 +50,6 @@ protected:
     Atom* const b;
 
     friend class Tree;
-    friend class Accelerator;
     friend class Clause;
 };
 

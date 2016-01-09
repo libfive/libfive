@@ -17,7 +17,7 @@ static std::pair<DepthImage, NormalImage> RENDER(Tree* t, const Region& r)
     glGenTextures(1, &depth);
     glGenTextures(1, &norm);
 
-    Accelerator a(t);
+    Accelerator a;
     Evaluator e(t);
 
     Heightmap::Render(&e, &a, r, depth, norm, abort);

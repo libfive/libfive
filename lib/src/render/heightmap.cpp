@@ -299,7 +299,7 @@ static void recurse(Evaluator* e, Accelerator* a, const Region& r,
         // before popping out (which re-enables unused nodes)
         if (marked)
         {
-            a->flush();
+            a->flush(e);
         }
 
         // Re-enable disabled nodes from the tree
@@ -315,7 +315,7 @@ void Render(Evaluator* e, Accelerator* a, const Region& r,
 
     a->init(r, depth, norm);
     recurse(e, a, r, filled, 1, abort);
-    a->flush();
+    a->flush(e);
 }
 
 } // namespace Heightmap

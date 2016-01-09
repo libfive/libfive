@@ -9,6 +9,7 @@
 
 #include "ao/tree/atom.hpp"
 #include "ao/tree/tree.hpp"
+#include "ao/eval/evaluator.hpp"
 
 #include "ao/render/region.hpp"
 
@@ -70,9 +71,52 @@ uniform float mat[12];
 // Global Z render bounds
 uniform vec3 bounds[2];
 
-// Forward declaration of f-rep function and normal function
-float f(float x, float y, float z);
-vec4 g(vec4 x, vec4 y, vec4 z);
+// Instruction tape and scratch memory area
+#define MAX_CLAUSE 128
+uniform ivec3 tape[MAX_CLAUSE];
+vec4 mem[MAX_CLAUSE];
+uniform int ops;
+
+// Tape evaluation function for f-rep value
+float f(float x, float y, float z)
+{
+    int i;
+    for (i=0; i < ops; ++i)
+    {
+        // Find arguments (checking for immediate flags in opcode)
+        float a = ((tape[i][0] & 0x0800) != 0) ? mat[tape[i][1]]
+                : ((tape[i][0] & 0x0400) != 0) ? mem[tape[i][1]].w
+                                               : intBitsToFloat(tape[i][1]);
+        float b = ((tape[i][0] & 0x0200) != 0) ? mat[tape[i][2]]
+                : ((tape[i][0] & 0x0100) != 0) ? mem[tape[i][2]].w
+                                               : intBitsToFloat(tape[i][2]);
+
+        switch(tape[i][0])
+        {
+            case 3:  mem[i].w = x; break;
+            case 4:  mem[i].w = y; break;
+            case 5:  mem[i].w = z; break;
+
+            case 6:  mem[i].w = sqrt(a); break;
+            case 7:  mem[i].w = -a; break;
+            case 8:  mem[i].w = abs(a); break;
+
+            case 9:  mem[i].w = a + b; break;
+            case 10: mem[i].w = a * b; break;
+            case 11: mem[i].w = min(a, b); break;
+            case 12: mem[i].w = max(a, b); break;
+            case 13: mem[i].w = a - b; break;
+            case 14: mem[i].w = a / b; break;
+        }
+    }
+    return mem[i - 1].w;
+}
+
+// Tape evaluation function for f-rep derivatives
+vec4 g(vec4 x, vec4 y, vec4 z)
+{
+    return mem[10];
+}
 
 void main()
 {
@@ -211,13 +255,13 @@ vec4 abs_g(vec4 a)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Accelerator::Accelerator(const Tree* tree)
+Accelerator::Accelerator()
     : mat({{1, 0, 0, 0,
             0, 1, 0, 0,
             0, 0, 1, 0}})
 {
     vs = Shader::compile(vert, GL_VERTEX_SHADER);
-    fs = Shader::compile(toShader(tree), GL_FRAGMENT_SHADER);
+    fs = Shader::compile(frag, GL_FRAGMENT_SHADER);
     prog = Shader::link(vs, fs);
 
     assert(vs);
@@ -301,7 +345,13 @@ void Accelerator::init(const Region& r, GLuint depth, GLuint norm)
     glViewport(r.X.min, r.Y.min, r.X.size, r.Y.size);
 }
 
-void Accelerator::flush()
+void Accelerator::flush(Tree* tree)
+{
+    Evaluator e(tree);
+    flush(&e);
+}
+
+void Accelerator::flush(Evaluator* eval)
 {
     // Generate and bind a simple quad shape
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -312,6 +362,17 @@ void Accelerator::flush()
     glVertexAttribIPointer(0, 4, GL_INT, 0, (GLvoid*)0);
     glEnableVertexAttribArray(0);
 
+    // Load our instruction tape and tape length into the shader
+    populateTape(eval);
+    size_t i=0;
+    for (auto t : tape)
+        std::cout << i++ << ": " << std::hex << t.x <<' ' <<  t.y << ' ' << t.z << '\n';
+    //tape.clear();
+    //ktape.push_back(glm::ivec3(3, 0, 0));
+    glUniform3iv(glGetUniformLocation(prog, "tape"), tape.size(),
+                 reinterpret_cast<GLint*>(&tape[0]));
+    glUniform1i(glGetUniformLocation(prog, "ops"), tape.size());
+
     // Assert that we're drawing quads (2 triangles x 3 points)
     assert(data.size() % 6 == 0);
 
@@ -319,6 +380,89 @@ void Accelerator::flush()
     glDrawArrays(GL_TRIANGLES, 0, data.size());
 
     data.clear();
+}
+
+void Accelerator::populateTape(Evaluator* eval)
+{
+    tape.clear();
+
+    // Store the indices of clauses in the shader tape
+    std::unordered_map<const Clause*, GLint> clauses;
+    size_t index = 0;
+
+    // Hard-code the matrix clauses as numbers 0 through 11
+    // in a separately-indexed array named 'mat'
+    for (int i=0; i < 12; ++i)
+    {
+        assert(eval->matrix[i]->op == OP_MUTABLE);
+        clauses[eval->matrix[i]] = i;
+    }
+
+    auto get = [&](const Clause* c){
+        // If the clause is null, don't return anything
+        if (c == nullptr)
+        {
+            return std::pair<GLint, uint8_t>(0, 0);
+        }
+        // Special-case for mutable atoms, which are assumed to be part
+        // of the generic transform matrix and are GLSL uniforms
+        else if (c->op == OP_MUTABLE)
+        {
+            assert(clauses.find(c) != clauses.end());
+            assert(clauses[c] < 12);
+
+            return std::pair<GLint, uint8_t>(clauses[c], 2);
+        }
+        // Store the clause's value if it is disabled
+        else if (c->flags & CLAUSE_FLAG_DISABLED)
+        {
+            float v = c->mutable_value;
+            return std::pair<GLint, uint8_t>(
+                    *reinterpret_cast<GLint*>(&v), 0);
+        }
+        else if (c->op == OP_CONST)
+        {
+            float v = c->value;
+            return std::pair<GLint, uint8_t>(
+                    *reinterpret_cast<GLint*>(&v), 0);
+        }
+        // Otherwise, add the clause to the memory array if not present
+        else if (clauses.find(c) == clauses.end())
+        {
+            clauses[c] = index++;
+        }
+        // Return a reference to the generic memory array
+        return std::pair<GLint, uint8_t>(clauses[c], 1);
+    };
+
+    auto push = [&](Clause* c)
+    {
+        auto a = get(c->a);
+        auto b = get(c->b);
+
+        GLint op = static_cast<GLint>(c->op);
+        op |= b.second << 8;
+        op |= a.second << 10;
+
+        tape.push_back(glm::ivec3(op, a.first, b.first));
+    };
+
+    push(eval->X);
+    push(eval->Y);
+    push(eval->Z);
+
+    for (const auto& row : eval->rows)
+    {
+        for (size_t i=0; i < row.active; ++i)
+        {
+            if (row[i] != eval->root)
+            {
+                push(row[i]);
+            }
+        }
+    }
+    std::cout << tape.size() << "\n";
+    push(eval->root);
 }
 
 void Accelerator::setMatrix(const glm::mat4& m)
@@ -333,7 +477,7 @@ void Accelerator::setMatrix(const glm::mat4& m)
     }
 }
 
-std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
+std::pair<DepthImage, NormalImage> Accelerator::Render(Tree* t, const Region& r)
 {
     GLuint depth, norm;
     glGenTextures(1, &depth);
@@ -341,7 +485,7 @@ std::pair<DepthImage, NormalImage> Accelerator::Render(const Region& r)
 
     init(r, depth, norm);
     RenderSubregion(r);
-    flush();
+    flush(t);
 
     auto out = std::make_pair(fromDepthTexture(depth, r),
                               fromNormalTexture(norm, r));
@@ -376,154 +520,4 @@ void Accelerator::FillSubregion(const Region& r)
     data.push_back(glm::ivec4(r.X.min + r.X.size - 1, r.Y.min, z, 1));
     data.push_back(glm::ivec4(r.X.min + r.X.size - 1,
                               r.Y.min + r.Y.size - 1, z, 1));
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-std::string Accelerator::toShaderFunc(const Tree* tree, Mode mode)
-{
-    std::string out = (mode == DEPTH)
-        ? "float f(float x, float y, float z) {\n"
-        : "vec4 g(vec4 x, vec4 y, vec4 z) {\n";
-
-    // Reset the atoms and index objects
-    atoms.clear();
-    index = 0;
-
-    // Hard-code the matrix atoms as atoms 0-11
-    // (in a separately-indexed array named 'mat')
-    for (int i=0; i < 12; ++i)
-    {
-        atoms[tree->matrix[i]] = i;
-    }
-
-    // Build shader line-by-line from the active atoms
-    for (const auto& row : tree->rows)
-    {
-        for (size_t i=0; i < row.size(); ++i)
-        {
-            if (row[i] != tree->root)
-            {
-                out += toShader(row[i], mode);
-            }
-        }
-    }
-    out += toShader(tree->root, mode);
-    out += "return m" + std::to_string(atoms[tree->root]) + ";}";
-    return out;
-}
-
-std::string Accelerator::toShader(const Tree* tree)
-{
-    return frag + toShaderFunc(tree, DEPTH) + "\n\n"
-                + toShaderFunc(tree, NORMAL);
-}
-
-std::string Accelerator::toShader(const Atom* m, Accelerator::Mode mode)
-{
-    // Each atom should be stored into the hashmap only once.
-    // There's a special case for the tree's root, which is pre-emptively
-    // inserted into the hashmap at index 0 (to make the end of the shader
-    // easy to write).
-    assert(atoms.count(m) == 0 || atoms[m] == 0);
-
-    // Store this atom in the array if it is not already present;
-    // otherwise, update the index from the hashmap
-    if (!atoms.count(m))
-    {
-        atoms[m] = index++;
-    }
-    size_t i = atoms[m];
-
-    std::string out = ((mode == DEPTH) ? "    float m"
-                                       : "    vec4 m") + std::to_string(i)
-                                                       + " = ";
-    auto get = [&](const Atom* n){
-        if (n)
-        {
-            auto itr = atoms.find(n);
-
-            // Special-case for mutable atoms, which are assumed to be part
-            // of the generic transform matrix and are GLSL uniforms
-            if (n->op == OP_MUTABLE)
-            {
-                assert(itr != atoms.end());
-                assert(itr->second < 12);
-
-                return (mode == DEPTH)
-                    ? ("mat[" + std::to_string(itr->second) + "]")
-                    : ("vec4(0.0f, 0.0f, 0.0f, mat["
-                            + std::to_string(itr->second) + "])");
-            }
-            // If the atom is already stored, save it
-            else if (itr != atoms.end() && n != m)
-            {
-                return "m" + std::to_string(itr->second);
-            }
-            // Otherwise, the atom must be something hard-coded!
-            else switch (n->op)
-            {
-                case OP_X:       return std::string("x");
-                case OP_Y:       return std::string("y");
-                case OP_Z:       return std::string("z");
-                case OP_CONST:   return (mode == DEPTH)
-                                 ? ("(" + std::to_string(n->value) + "f)")
-                                 : ("vec4(0.0f, 0.0f, 0.0f, "
-                                         + std::to_string(n->value) + "f)");
-                default: assert(false);
-            }
-        }
-        return std::string(); };
-    std::string sa = get(m->a);
-    std::string sb = get(m->b);
-
-    if (mode == DEPTH)
-    {
-        switch (m->op)
-        {
-            case OP_ADD:    out += "(" + sa + " + " + sb + ")";     break;
-            case OP_MUL:    out += "(" + sa + " * " + sb + ")";     break;
-            case OP_MIN:    out += "min(" + sa + ", " + sb + ")";   break;
-            case OP_MAX:    out += "max(" + sa + ", " + sb + ")";   break;
-            case OP_SUB:    out += "(" + sa + " - " + sb + ")";     break;
-            case OP_DIV:    out += "(" + sa + " / " + sb + ")";     break;
-            case OP_SQRT:   out += "sqrt(" + sa + ")";  break;
-            case OP_NEG:    out += "(-" + sa + ")";     break;
-            case OP_ABS:    out += "abs(" + sa + ")";     break;
-
-            case OP_X:  // Fallthrough!
-            case OP_Y:
-            case OP_Z:
-            case OP_CONST:
-            case OP_MUTABLE: out += get(m); break;
-
-            case LAST_OP:   // Fallthrough
-            case INVALID:   assert(false);
-        }
-    }
-    else if (mode == NORMAL)
-    {
-        switch (m->op)
-        {
-            case OP_ADD:    out += "add_g(" + sa + ", " + sb + ")";     break;
-            case OP_MUL:    out += "mul_g(" + sa + ", " + sb + ")";     break;
-            case OP_MIN:    out += "min_g(" + sa + ", " + sb + ")";   break;
-            case OP_MAX:    out += "max_g(" + sa + ", " + sb + ")";   break;
-            case OP_SUB:    out += "sub_g(" + sa + ", " + sb + ")";     break;
-            case OP_DIV:    out += "div_g(" + sa + ", " + sb + ")";     break;
-            case OP_SQRT:   out += "sqrt_g(" + sa + ")";  break;
-            case OP_NEG:    out += "neg_g(" + sa + ")";     break;
-            case OP_ABS:    out += "abs_g(" + sa + ")";     break;
-
-            case OP_X:  // Fallthrough!
-            case OP_Y:
-            case OP_Z:
-            case OP_CONST:
-            case OP_MUTABLE: out += get(m); break;
-
-            case LAST_OP:
-            case INVALID:   assert(false);
-        }
-    }
-    return out + ";\n";
 }

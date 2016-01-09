@@ -4,16 +4,21 @@
 #include <catch/catch.hpp>
 
 #include "ao/tree/tree.hpp"
+#include "ao/tree/atom.hpp"
 #include "ao/tree/store.hpp"
 
 TEST_CASE("2D rendering of a circle " DESCRIPTION)
 {
     Store s;
+    /*
     Tree t(&s, s.operation(OP_SUB,
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(1)));
+               */
+    Tree t(&s, s.X());
 
+    std::cout << *(t.getRoot()) << '\n';
     DepthImage comp(10, 10);
     double inf = std::numeric_limits<double>::infinity();
     comp <<

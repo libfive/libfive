@@ -13,8 +13,8 @@
 static std::pair<DepthImage, NormalImage> RENDER(Tree* t, const Region& r)
 {
     GLFWwindow* window = makeContext();
-    Accelerator a(t);
-    auto out = a.Render(r);
+    Accelerator a;
+    auto out = a.Render(t, r);
     glfwDestroyWindow(window);
     return out;
 }
@@ -25,7 +25,7 @@ TEST_CASE("Partial rendering (GPU)")
     Tree t(&s, s.constant(-1));
 
     GLFWwindow* window = makeContext();
-    Accelerator a(&t);
+    Accelerator a;
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
 
@@ -46,7 +46,7 @@ TEST_CASE("Partial rendering (GPU)")
     {   // Rendering partially over
         Region sub = r.split().first;
         a.RenderSubregion(sub);
-        a.flush();
+        a.flush(&t);
 
         auto d = fromDepthTexture(depth, r);
         CAPTURE(d);
@@ -72,7 +72,7 @@ TEST_CASE("Partial rendering (GPU)")
     {   // Rendering over on the other axis
         Region sub = r.split().second.split().first;
         a.RenderSubregion(sub);
-        a.flush();
+        a.flush(&t);
 
         auto d = fromDepthTexture(depth, r);
         CAPTURE(d);
