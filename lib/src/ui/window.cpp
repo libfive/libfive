@@ -51,9 +51,10 @@ void Window::resized(int w, int h)
     draw();
 }
 
-void Window::addTree(std::string name, Tree* t)
+void Window::addTree(std::string filename, std::string name, Tree* t)
 {
-    auto ptr = new std::pair<std::string, Tree*>(name, t);
+    auto ptr = new std::tuple<std::string, std::string, Tree*>(
+            filename, name, t);
 
     // Loop waiting for the incoming tree to be claimed
     while (incoming.load() != nullptr);
@@ -221,19 +222,20 @@ void Window::poll()
     glfwWaitEvents();
 
     // Grab an incoming tree from the atomic pointer
-    std::pair<std::string, Tree*>* in = incoming.exchange(nullptr);
+    auto in = incoming.exchange(nullptr);
     if (in)
     {
+        auto key = std::make_pair(std::get<0>(*in), std::get<1>(*in));
         // If the name is already claimed, replace it
-        if (frames.count(in->first) != 0)
+        if (frames.count(key) != 0)
         {
-            stale.push_back(frames[in->first]);
+            stale.push_back(frames[key]);
         }
 
         // Construct a new frame
-        frames[in->first] = new Frame(in->second, window);
+        frames[key] = new Frame(std::get<2>(*in), window);
 
-        // Delete the string, Tree* pair (which was allocated on the heap)
+        // Delete the key, Tree* pair (which was allocated on the heap)
         delete in;
 
         // Kick off a render operation for the new tree

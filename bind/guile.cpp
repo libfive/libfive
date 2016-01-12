@@ -187,9 +187,10 @@ static SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static SCM show_tree(SCM name, SCM tree)
+static SCM show_tree(SCM filename, SCM name, SCM tree)
 {
-    Window::instance()->addTree(scm_to_std_string(name),
+    Window::instance()->addTree(scm_to_std_string(filename),
+                                scm_to_std_string(name),
                                 untag_ptr<Tree>(tree));
     return SCM_ELISP_NIL;
 }
@@ -202,31 +203,20 @@ static SCM window_clear()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static void* exec_file(void* data)
-{
-    const std::string& txt = *static_cast<std::string*>(data);
-    scm_eval_string(scm_from_locale_string(txt.c_str()));
-    return nullptr;
-}
-
 class UpdateListener : public efsw::FileWatchListener
 {
 public:
     UpdateListener(std::string filename) : target(filename) {}
 
+    static void* load(void* data)
+    {
+        scm_c_primitive_load(static_cast<char*>(data));
+        return nullptr;
+    }
+
     void trigger()
     {
-        std::ifstream file;
-        std::string txt;
-
-        file.open(target);
-        std::string line;
-        while (std::getline(file, line))
-        {
-            txt += line;
-        }
-
-        scm_with_guile(exec_file, (void*)&txt);
+        scm_with_guile(load, (void*)target.c_str());
     }
 
     void handleFileAction(efsw::WatchID watchid, const std::string& dir,
@@ -290,7 +280,7 @@ static void populate_module(void* data)
     define("token-const", 2, (void*)token_const);
     define("token-op", 3, (void*)token_op);
 
-    define("show-tree", 2, (void*)show_tree);
+    define("show-tree", 3, (void*)show_tree);
     define("watch-file", 2, (void*)watch_file);
     define("clear-frames", 0, (void*)window_clear);
 }

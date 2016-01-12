@@ -7,7 +7,7 @@
 
 (define-public (ao-show name f)
     " Show the given function in the 3D viewport "
-    (show-tree name (jit f)))
+    (show-tree (or (current-filename) "<repl>") name (jit f)))
 
 (define-public (ao-watch f)
     " Watch a particular file for changes "
