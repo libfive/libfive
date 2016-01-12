@@ -88,10 +88,12 @@ inline void Evaluator::evalClause(Clause* m, size_t count)
 #undef EVAL_LOOP
 
 // Partial template specialization for SIMD evaluation
-#define EVAL_LOOP for (size_t i=0; i < 32; ++i)
+#define EVAL_LOOP for (size_t i=0; i <= (count - 1)/8; ++i)
 template <>
 inline void Evaluator::evalClause<__m256>(Clause* m, size_t count)
 {
+    assert(count > 0);
+
     switch (m->op) {
         case OP_ADD:
             EVAL_LOOP
@@ -127,16 +129,16 @@ inline void Evaluator::evalClause<__m256>(Clause* m, size_t count)
             EVAL_LOOP
             m->result.set(_mm256_sqrt_ps(m->a->get<__m256>(i)), i);
             break;
-            /*
         case OP_NEG:
             EVAL_LOOP
-            m->result.m[i] = _mm256_neg_ps(m->a->result.m[i]);
+            m->result.set(_mm256_mul_ps(m->a->get<__m256>(i),
+                                        _mm256_set1_ps(-1)), i);
             break;
         case OP_ABS:
             EVAL_LOOP
-            m->result.m[i] = _mm256_abs_ps(m->a->result.m[i]);
+            m->result.set(_mm256_andnot_ps(m->a->get<__m256>(i),
+                                           _mm256_set1_ps(-0.0f)), i);
             break;
-            */
         case INVALID:
         case OP_CONST:
         case OP_MUTABLE:
