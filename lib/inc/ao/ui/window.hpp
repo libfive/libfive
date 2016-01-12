@@ -41,6 +41,12 @@ public:
     void clearFrames();
 
     /*
+     *  Clears frames associated with the given filename
+     *  Executed synchronously (so must be called from main thread)
+     */
+    void clearFile(std::string filename);
+
+    /*
      *  Runs the window forever
      */
     void run();
@@ -62,6 +68,33 @@ protected:
      *  Triggers an assertion failure on OpenGL errors
      */
     explicit Window();
+
+    /*
+     *  Check if the incoming pointer is populated and create a Frame if so
+     *
+     *  Returns true if the window should be redrawn.
+     */
+    bool loadFrame();
+
+    /*
+     *  Iterate over all frames, checking their render status.
+     *
+     *  Returns true if the window should be redrawn.
+     */
+    bool pollFrames();
+
+    /*
+     *  Checks if the clear flag is set, clearing frames if it is
+     *  (by moving them to the stale list)
+     *
+     *  Returns true if the window should be redrawn.
+     */
+    bool checkClear();
+
+    /*
+     *  Checks the frames in the stale list, deleting those that are done
+     */
+    void pruneStale();
 
     /*
      *  Request that every child Frame render itself
@@ -144,7 +177,7 @@ protected:
 
     /*  Objects to draw in 3D viewport  */
     Axes axes;
-    std::map<std::pair<std::string, std::string>, Frame*> frames;
+    std::map<std::string, std::map<std::string, Frame*>> frames;
 
     /*  Frames that should be deleted once they are done rendering  */
     std::list<Frame*> stale;

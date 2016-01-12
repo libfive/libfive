@@ -39,7 +39,10 @@ Window::~Window()
 {
     for (auto f : frames)
     {
-        delete f.second;
+        for (auto g : f.second)
+        {
+            delete g.second;
+        }
     }
     glfwDestroyWindow(window);
 }
@@ -67,6 +70,15 @@ void Window::clearFrames()
 {
     clear.store(true);
     glfwPostEmptyEvent();
+}
+
+void Window::clearFile(std::string filename)
+{
+    for (auto f : frames[filename])
+    {
+        stale.push_back(f.second);
+    }
+    frames[filename].clear();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -154,7 +166,10 @@ void Window::render()
 {
     for (auto f : frames)
     {
-        f.second->render(M(), width, height, (width+height) / 2);
+        for (auto g : f.second)
+        {
+            g.second->render(M(), width, height, (width+height) / 2);
+        }
     }
 }
 
@@ -197,8 +212,11 @@ void Window::draw() const
 
     for (auto f : frames)
     {
-        f.second->poll();
-        f.second->draw(m);
+        for (auto g : f.second)
+        {
+            g.second->poll();
+            g.second->draw(m);
+        }
     }
     axes.draw(m);
 
@@ -213,27 +231,23 @@ void Window::run()
     }
 }
 
-void Window::poll()
+bool Window::loadFrame()
 {
-    // Flag used to detect if a redraw is needed
-    bool needs_draw = false;
-
-    // Block until a GLFW event occurs
-    glfwWaitEvents();
-
     // Grab an incoming tree from the atomic pointer
-    auto in = incoming.exchange(nullptr);
-    if (in)
+    if (auto in = incoming.exchange(nullptr))
     {
-        auto key = std::make_pair(std::get<0>(*in), std::get<1>(*in));
+        auto filename = std::get<0>(*in);
+        auto partname = std::get<1>(*in);
+
         // If the name is already claimed, replace it
-        if (frames.count(key) != 0)
+        if (frames.count(filename) != 0 &&
+            frames[filename].count(partname) != 0)
         {
-            stale.push_back(frames[key]);
+            stale.push_back(frames[filename][partname]);
         }
 
         // Construct a new frame
-        frames[key] = new Frame(std::get<2>(*in), window);
+        frames[filename][partname] = new Frame(std::get<2>(*in), window);
 
         // Delete the key, Tree* pair (which was allocated on the heap)
         delete in;
@@ -242,26 +256,60 @@ void Window::poll()
         render();
 
         // Mark that a redraw is needed
-        needs_draw = true;
+        return true;
     }
+    return false;
+}
 
-    // Poll for render tasks that have finished
+bool Window::pollFrames()
+{
+    bool out = false;
+
     for (auto f : frames)
     {
-        needs_draw |= f.second->poll();
+        for (auto g : f.second)
+        {
+            out |= g.second->poll();
+        }
     }
 
-    // If the clear flag is set, mark all frames as stale
+    return out;
+}
+
+bool Window::checkClear()
+{
     if (clear.load())
     {
         clear.store(false);
         for (auto f : frames)
         {
-            stale.push_back(f.second);
+            for (auto g : f.second)
+            {
+                stale.push_back(g.second);
+            }
         }
         frames.clear();
-        needs_draw = true;
+        return true;
     }
+    return false;
+}
+
+void Window::poll()
+{
+    // Flag used to detect if a redraw is needed
+    bool needs_draw = false;
+
+    // Block until a GLFW event occurs
+    glfwWaitEvents();
+
+    // Load incoming frames
+    needs_draw |= loadFrame();
+
+    // Poll for render tasks that have finished
+    needs_draw |= pollFrames();
+
+    // If the clear flag is set, mark all frames as stale
+    needs_draw |= checkClear();
 
     if (needs_draw)
     {
@@ -269,6 +317,11 @@ void Window::poll()
     }
 
     // Check all stale frames to see if they can be pruned
+    pruneStale();
+}
+
+void Window::pruneStale()
+{
     auto itr = stale.begin();
     while (itr != stale.end())
     {

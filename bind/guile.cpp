@@ -229,6 +229,7 @@ public:
 
         if (filename == target && action == efsw::Actions::Modified)
         {
+            Window::instance()->clearFile(target);
             trigger();
         }
     }
