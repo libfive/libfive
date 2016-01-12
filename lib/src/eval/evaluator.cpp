@@ -126,6 +126,7 @@ const float* Evaluator::eval(const Region& r)
         index++;
     }
 
+#ifdef USE_AVX
     X->result.packAVX();
     Y->result.packAVX();
     Z->result.packAVX();
@@ -133,6 +134,10 @@ const float* Evaluator::eval(const Region& r)
     evalCore<__m256>(r.voxels());
 
     root->result.unpackAVX();
+#else
+    evalCore<float>(r.voxels());
+#endif
+
     return root->result.ptr<float>();
 }
 

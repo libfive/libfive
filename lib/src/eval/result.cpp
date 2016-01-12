@@ -14,12 +14,15 @@ void Result::fill(float v)
     {
         set<Interval>(Interval(v), i);
     }
+#ifdef USE_AVX
     for (size_t i=0; i < count<__m256>(); ++i)
     {
         m[i] = _mm256_set1_ps(v);
     }
+#endif
 }
 
+#ifdef USE_AVX
 void Result::packAVX()
 {
     for (size_t i=0; i < 256; i += 8)
@@ -39,3 +42,4 @@ void Result::unpackAVX()
         _mm_store_ps(f + i*8 + 4, high);
     }
 }
+#endif

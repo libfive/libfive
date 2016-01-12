@@ -2,6 +2,7 @@
 
 #include "ao/eval/result.hpp"
 
+#ifdef USE_AVX
 TEST_CASE("AVX load / store")
 {
     Result r;
@@ -40,3 +41,4 @@ TEST_CASE("AVX load / store")
         REQUIRE(r.get<float>(i) == i);
     }
 }
+#endif

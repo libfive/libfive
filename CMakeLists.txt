@@ -4,11 +4,7 @@ set(CMAKE_BUILD_TYPE RELEASE)
 
 ################################################################################
 
-set(CMAKE_C_FLAGS "-Wall -g -fPIC -pedantic -std=c99 -mavx")
-set(CMAKE_C_FLAGS_RELEASE  "-O3 -DRELEASE")
-set(CMAKE_C_FLAGS_DEBUG    "-O0")
-
-set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -pedantic -std=c++11 -mavx")
+set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -pedantic -std=c++11 -mavx -DUSE_AVX")
 set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -DRELEASE")
 set(CMAKE_CXX_FLAGS_DEBUG    "-O0")
 

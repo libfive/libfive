@@ -46,6 +46,7 @@ struct Result {
     template <class T>
     T* ptr() const;
 
+#ifdef USE_AVX
     /*
      *  Packs values from the float array into the AVX array
      */
@@ -55,11 +56,15 @@ struct Result {
      *  Unpacks values from the AVX array into the float array
      */
     void unpackAVX();
+#endif
 
 protected:
     float f[256];
     Gradient g[256];
+
+#ifdef USE_AVX
     __m256 m[32];
+#endif
 
     Interval i;
 };
