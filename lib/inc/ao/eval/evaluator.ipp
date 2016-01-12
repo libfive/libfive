@@ -9,19 +9,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 /*
  *  std::min and std::max misbehave when given Intervals, so we overload
- *  those functions with our own _min and _max (defined below for doubles)
+ *  those functions with our own _min and _max (defined below for floats)
  */
-inline double _min(const double& a, const double& b)
+inline float _min(const float& a, const float& b)
 {
     return std::min(a, b);
 }
 
-inline double _max(const double& a, const double& b)
+inline float _max(const float& a, const float& b)
 {
     return std::max(a, b);
 }
 
-inline double _abs(const double& a)
+inline float _abs(const float& a)
 {
     return std::abs(a);
 }

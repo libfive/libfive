@@ -67,10 +67,10 @@ protected:
     const Opcode op;
 
     /*  Populated for OP_CONST clause */
-    const double value;
+    const float value;
 
     /*  Populated for OP_MUTABLE clause  */
-    double mutable_value;
+    float mutable_value;
 
     /*  Flags are set during evaluation for various purposes  */
     uint8_t flags=0;

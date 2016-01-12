@@ -9,9 +9,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 template <>
-constexpr size_t Result::count<double>()
+constexpr size_t Result::count<float>()
 {
-    return sizeof(Result::d) / sizeof(Result::d[0]);
+    return sizeof(Result::f) / sizeof(Result::f[0]);
 }
 
 template <>
@@ -35,9 +35,9 @@ constexpr size_t Result::count<__m256>()
 ////////////////////////////////////////////////////////////////////////////////
 
 template <>
-inline double* Result::ptr<double>() const
+inline float* Result::ptr<float>() const
 {
-    return const_cast<double*>(d);
+    return const_cast<float*>(f);
 }
 
 template <>

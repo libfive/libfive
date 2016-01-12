@@ -25,7 +25,7 @@ Gradient operator*(const Gradient& a, const Gradient& b)
 Gradient operator/(const Gradient& a, const Gradient& b)
 {
     // Quotient rule
-    const double p = pow(b.v, 2);
+    const float p = pow(b.v, 2);
     return Gradient(a.v / b.v,
             (b.v * a.dx - a.v * b.dx) / p,
             (b.v * a.dy - a.v * b.dy) / p,
@@ -44,8 +44,8 @@ Gradient _max(const Gradient& a, const Gradient& b)
 
 Gradient pow(const Gradient& a, const Gradient& b)
 {
-    const double p = pow(a.v, b.v - 1);
-    const double m = a.v * log(a.v);
+    const float p = pow(a.v, b.v - 1);
+    const float m = a.v * log(a.v);
 
     // If a.v is negative, then m will be NaN (because of log's domain).
     // We work around this by checking if d/d{xyz}(B) == 0 and using a
@@ -64,7 +64,7 @@ Gradient sqrt(const Gradient& a)
     }
     else
     {
-        const double v = sqrt(a.v);
+        const float v = sqrt(a.v);
         return Gradient(v, a.dx / (2 * v),
                            a.dy / (2 * v),
                            a.dz / (2 * v));

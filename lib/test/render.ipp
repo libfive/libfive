@@ -16,7 +16,7 @@ TEST_CASE("2D rendering of a circle " DESCRIPTION)
                s.constant(1)));
 
     DepthImage comp(10, 10);
-    double inf = std::numeric_limits<double>::infinity();
+    float inf = std::numeric_limits<float>::infinity();
     comp <<
         -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
         -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
@@ -59,7 +59,7 @@ TEST_CASE("2D circle rendering at non-zero Z " DESCRIPTION)
     CAPTURE(out);
 
     DepthImage comp(10, 10);
-    double inf = std::numeric_limits<double>::infinity();
+    float inf = std::numeric_limits<float>::infinity();
     comp <<
         -inf,-inf,-inf,   1,   1,   1,   1,-inf,-inf,-inf,
         -inf,   1,   1,   1,   1,   1,   1,   1,   1,-inf,
@@ -90,7 +90,7 @@ TEST_CASE("Render orientation " DESCRIPTION)
         auto out = RENDER(&t, r).first;
 
         DepthImage comp(10, 10);
-        double inf = std::numeric_limits<double>::infinity();
+        float inf = std::numeric_limits<float>::infinity();
         comp <<
             -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
             -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
@@ -118,7 +118,7 @@ TEST_CASE("Render orientation " DESCRIPTION)
         auto out = RENDER(&t, r).first;
 
         DepthImage comp(10, 10);
-        double inf = std::numeric_limits<double>::infinity();
+        float inf = std::numeric_limits<float>::infinity();
         comp <<
             -inf,-inf,-inf,   0,   0,-inf,-inf,-inf,-inf,-inf,
             -inf,   0,   0,   0,   0,-inf,-inf,-inf,-inf,-inf,
@@ -176,7 +176,7 @@ TEST_CASE("3D rendering of a sphere " DESCRIPTION)
         auto out = RENDER(&t, r).first;
 
         DepthImage comp(10, 10);
-        double inf = std::numeric_limits<double>::infinity();
+        float inf = std::numeric_limits<float>::infinity();
         comp <<
             -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf,
             -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
@@ -230,18 +230,13 @@ TEST_CASE("2D rendering with normals " DESCRIPTION)
 
     Region r({-1, 1}, {-1, 1}, {-2,2}, 5);
 
-    // We're a little bit flexible here, testing against two possible
-    // values because the CPU operates on doubles and the GPU operates
-    // on floats so they up diverging slightly
     SECTION("X")
     {
         Tree t(&s, s.operation(OP_ADD, s.X(), s.Z()));
         auto norm = RENDER(&t, r).second;
 
         CAPTURE(norm);
-        REQUIRE((norm == 0xffd97fd9 ||
-                 norm == 0xffda7fda).all());
-
+        REQUIRE((norm == 0xffd97fd9).all());
     }
 
     SECTION("-X")

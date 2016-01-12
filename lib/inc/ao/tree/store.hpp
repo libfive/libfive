@@ -22,7 +22,7 @@ public:
     /*
      *  Returns a token for the given constant
      */
-    Token* constant(double v);
+    Token* constant(float v);
 
     /*
      *  Returns a token for the given operation
@@ -54,7 +54,7 @@ protected:
     typedef std::array<std::map<Key, Token*>, LAST_OP> Cache;
 
     /*  Constants are indexed solely by value  */
-    std::map<double, Token*> constants;
+    std::map<float, Token*> constants;
 
     /*  Operators are indexed by weight, opcode, and arguments  */
     std::vector<Cache> ops;

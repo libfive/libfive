@@ -38,7 +38,7 @@ public:
     /*
      *  Evaluate across a flattened region
      */
-    const double* eval(const Region& r);
+    const float* eval(const Region& r);
 
     /*
      *  Performs the core evaluation sweep (across rows and atoms),

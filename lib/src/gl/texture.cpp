@@ -3,7 +3,7 @@
 void toDepthTexture(const DepthImage& img, GLuint tex, Interval zbounds)
 { 
     // Map the depth buffer into the 0 - 1 range, with -inf = 1
-    Eigen::ArrayXXf i = (img == -std::numeric_limits<double>::infinity())
+    Eigen::ArrayXXf i = (img == -std::numeric_limits<float>::infinity())
         .select(1, (zbounds.upper() - img.cast<float>()) /
                    (zbounds.upper() - zbounds.lower())).transpose();
 
@@ -38,8 +38,8 @@ DepthImage fromDepthTexture(GLuint tex, const Region& r)
     // Mask all of the lowest points with -infinity; scale the other points
     // between zmin and zmax based on their depth value between 1 and 0.
     return (out == 1.0f).select(
-            -std::numeric_limits<double>::infinity(),
-            r.Z.upper() - (r.Z.upper() - r.Z.lower()) * out.cast<double>())
+            -std::numeric_limits<float>::infinity(),
+            r.Z.upper() - (r.Z.upper() - r.Z.lower()) * out.cast<float>())
         .transpose();
 }
 

@@ -11,7 +11,7 @@ Token::Token(Opcode op, Token* a, Token* b)
     // Nothing to do here
 }
 
-Token::Token(double v)
+Token::Token(float v)
     : op(OP_CONST), weight(0), value(v), a(nullptr), b(nullptr)
 {
     // Nothing to do here

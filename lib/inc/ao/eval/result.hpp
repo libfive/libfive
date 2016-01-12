@@ -22,10 +22,10 @@ struct Result {
     void set(T v, size_t index);
 
     /*
-     *  Sets all of the values to the given double
-     *  (across the Interval, double, and Gradient arrays)
+     *  Sets all of the values to the given float
+     *  (across the Interval, float, Gradient, and __m256 arrays)
      */
-    void fill(double v);
+    void fill(float v);
 
     /*
      *  Set values 0 through count from the given array
@@ -47,17 +47,17 @@ struct Result {
     T* ptr() const;
 
     /*
-     *  Packs values from the doubles array into the AVX array
+     *  Packs values from the float array into the AVX array
      */
     void packAVX();
 
     /*
-     *  Unpacks values from the AVX array into the doubles array
+     *  Unpacks values from the AVX array into the float array
      */
     void unpackAVX();
 
 protected:
-    double d[256];
+    float f[256];
     Gradient g[256];
     __m256 m[32];
 

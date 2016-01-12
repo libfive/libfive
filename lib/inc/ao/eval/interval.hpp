@@ -2,7 +2,7 @@
 
 #include <boost/numeric/interval.hpp>
 
-typedef boost::numeric::interval<double> Interval;
+typedef boost::numeric::interval<float> Interval;
 
 /*
  *  Define overloaded min and max for tree evaluation

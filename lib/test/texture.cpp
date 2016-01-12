@@ -21,7 +21,7 @@ TEST_CASE("Texture value preservation")
         CAPTURE(d_);
         CAPTURE(diff);
 
-        const double EPSILON = 1e-6;
+        const float EPSILON = 1e-6;
         REQUIRE((diff.abs() < EPSILON).all());
     }
 

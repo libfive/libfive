@@ -15,13 +15,13 @@ public:
     /*
      *  Constructs a region with the given bounds and res voxels per unit
      */
-    Region(Interval x, Interval y, Interval z, double res);
+    Region(Interval x, Interval y, Interval z, float res);
 
     /*
      *  Constructs a region with the given bounds and per-axis resolution
      */
     Region(Interval x, Interval y, Interval z,
-           double rx, double ry, double rz);
+           float rx, float ry, float rz);
 
     /*
      *  Splits the region along its largest axis
@@ -43,7 +43,7 @@ public:
     class DiscreteRange
     {
     public:
-        DiscreteRange(Interval i, double res);
+        DiscreteRange(Interval i, float res);
         DiscreteRange(const DiscreteRange& other);
         ~DiscreteRange();
 
@@ -55,8 +55,8 @@ public:
         /*
          *  Accessor functions for the interval object
          */
-        double lower() const { return interval.lower(); }
-        double upper() const { return interval.upper(); }
+        float lower() const { return interval.lower(); }
+        float upper() const { return interval.upper(); }
 
         /*
          *  Returns the value at a given index.
@@ -64,14 +64,14 @@ public:
          *  pos(0)    = interval.lower()
          *  pos(size) = interval.upper()
          */
-        double pos(size_t i) const { return ptr[i]; }
+        float pos(size_t i) const { return ptr[i]; }
 
         const Interval interval;
         const size_t min;
         const size_t size;
 
         /*  This is a pointer into an array of voxel positions  */
-        double* const ptr;
+        float* const ptr;
 
         /*  Root is set as true if we allocated ptr in this instance,   *
          *  false otherwise (controls whether the destructor frees it)  */
@@ -81,7 +81,7 @@ public:
         /*
          *  Protected constructor used when splitting
          */
-        DiscreteRange(Interval i, size_t min, size_t size, double* ptr);
+        DiscreteRange(Interval i, size_t min, size_t size, float* ptr);
     };
 
     const DiscreteRange X, Y, Z;

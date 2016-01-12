@@ -4,12 +4,12 @@ struct Gradient
 {
     Gradient()
         : Gradient(0) {}
-    Gradient(double v)
+    Gradient(float v)
         : v(v), dx(0), dy(0), dz(0) {}
-    Gradient(double v, double dx, double dy, double dz)
+    Gradient(float v, float dx, float dy, float dz)
         : v(v), dx(dx), dy(dy), dz(dz) {}
 
-    double v, dx, dy, dz;
+    float v, dx, dy, dz;
 };
 
 Gradient operator+(const Gradient& a, const Gradient& b);

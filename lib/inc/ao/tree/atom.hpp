@@ -31,7 +31,7 @@ public:
     /*
      *  Constructs an OP_MUTABLE atom with the given value
      */
-    explicit Atom(double d);
+    explicit Atom(float d);
 
     /*
      *  Print an Atom to an ostream
@@ -43,7 +43,7 @@ protected:
     const Opcode op;
 
     /*  Populated for OP_CONST atoms */
-    const double value;
+    const float value;
 
     /*  Populated for operators with arguments */
     Atom* const a;

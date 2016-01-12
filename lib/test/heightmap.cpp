@@ -26,7 +26,7 @@ TEST_CASE("2D interval Z values")
     auto out = RENDER(&t, r).first;
     CAPTURE(out);
     REQUIRE((out == 0 ||
-             out == -std::numeric_limits<double>::infinity()).all());
+             out == -std::numeric_limits<float>::infinity()).all());
 }
 
 TEST_CASE("3D interval Z values")
@@ -41,9 +41,9 @@ TEST_CASE("3D interval Z values")
     auto out = RENDER(&t, r).first;
     CAPTURE(out);
     REQUIRE((out == r.Z.pos(r.Z.size - 1) ||
-             out == -std::numeric_limits<double>::infinity()).all());
+             out == -std::numeric_limits<float>::infinity()).all());
 }
 
 #define DESCRIPTION "(CPU)"
-#define EPSILON 1e-10
+#define EPSILON 1e-6
 #include "render.ipp"

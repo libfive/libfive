@@ -5,31 +5,31 @@
 TEST_CASE("AVX load / store")
 {
     Result r;
-    REQUIRE(r.count<double>() == 256);
+    REQUIRE(r.count<float>() == 256);
 
     for (int i=0; i < 256; ++i)
     {
-        r.set<double>(i, i);
+        r.set<float>(i, i);
     }
 
     // Confirm that loading worked
     for (int i=0; i < 256; ++i)
     {
-        REQUIRE(r.get<double>(i) == i);
+        REQUIRE(r.get<float>(i) == i);
     }
 
     r.packAVX();
 
-    // Wipe the double memory banks
+    // Wipe the float memory banks
     for (int i=0; i < 256; ++i)
     {
-        r.set<double>(0.0f, i);
+        r.set<float>(0.0f, i);
     }
 
     // Confirm that wiping worked
     for (int i=0; i < 256; ++i)
     {
-        REQUIRE(r.get<double>(i) == 0.0f);
+        REQUIRE(r.get<float>(i) == 0.0f);
     }
 
     r.unpackAVX();
@@ -37,6 +37,6 @@ TEST_CASE("AVX load / store")
     // Confirm that unpacking worked
     for (int i=0; i < 256; ++i)
     {
-        REQUIRE(r.get<double>(i) == i);
+        REQUIRE(r.get<float>(i) == i);
     }
 }
