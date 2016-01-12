@@ -87,9 +87,16 @@ protected:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// Template specialization to skip disabled check for SIMD evaluation
+// Template specialization to properly construct __m256 types
 template <>
 inline __m256 Clause::get<__m256>(size_t index) const
 {
-    return result.get<__m256>(index);
+    if (flags & CLAUSE_FLAG_DISABLED)
+    {
+        return _mm256_set1_ps(mutable_value);
+    }
+    else
+    {
+        return result.get<__m256>(index);
+    }
 }
