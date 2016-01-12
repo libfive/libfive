@@ -89,6 +89,12 @@ bool Clause::checkDisabled()
 void Clause::disable()
 {
     mutable_value = result.get<Interval>(0).lower();
+
+    for (size_t i=0; i < 32; ++i)
+    {
+        result.m[i] = _mm256_set1_ps(mutable_value);
+    }
+
     setFlag(CLAUSE_FLAG_DISABLED);
 }
 

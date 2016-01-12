@@ -3,6 +3,8 @@
 #include <array>
 #include <vector>
 
+#include <immintrin.h>
+
 #include "ao/eval/interval.hpp"
 #include "ao/eval/gradient.hpp"
 
@@ -47,8 +49,11 @@ struct Result {
 protected:
     double d[256];
     Gradient g[256];
+    __m256 m[32];
 
     Interval i;
+
+    friend class Clause;
 };
 
 #define RESULT_INCLUDE_IPP

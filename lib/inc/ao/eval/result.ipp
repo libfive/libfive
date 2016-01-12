@@ -1,3 +1,5 @@
+#include <immintrin.h>
+
 #include "ao/eval/result.hpp"
 
 #ifndef RESULT_INCLUDE_IPP
@@ -70,6 +72,10 @@ inline void Result::fill(double v)
     for (size_t i=0; i < count<Interval>(); ++i)
     {
         set<Interval>(Interval(v), i);
+    }
+    for (size_t i=0; i < 32; ++i)
+    {
+        m[i] = _mm256_set1_ps(v);
     }
 }
 

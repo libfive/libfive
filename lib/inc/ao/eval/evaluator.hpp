@@ -48,6 +48,12 @@ public:
     const T* evalCore(size_t count);
 
     /*
+     *  Evaluates using the SIMD result values, packing into doubles
+     *  at the last minute for efficiency
+     */
+    double* evalFast(size_t count);
+
+    /*
      *  Sets the evaluation target at the given index
      */
     template <class T>
