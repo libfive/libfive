@@ -46,6 +46,16 @@ struct Result {
     template <class T>
     T* ptr() const;
 
+    /*
+     *  Packs values from the doubles array into the AVX array
+     */
+    void packAVX();
+
+    /*
+     *  Unpacks values from the AVX array into the doubles array
+     */
+    void unpackAVX();
+
 protected:
     double d[256];
     Gradient g[256];

@@ -48,12 +48,6 @@ public:
     const T* evalCore(size_t count);
 
     /*
-     *  Evaluates using the SIMD result values, packing into doubles
-     *  at the last minute for efficiency
-     */
-    double* evalFast(size_t count);
-
-    /*
      *  Sets the evaluation target at the given index
      */
     template <class T>
@@ -87,6 +81,11 @@ protected:
      */
     Clause* newClause(const Atom* m,
                       std::unordered_map<const Atom*, Clause*>& clauses);
+
+    /*
+     *  Evaluates using AVX SIMD arrays for top spead
+     */
+    void evalFast(size_t count);
 
     /*  All operations live in a set of rows sorted by weight */
     std::vector<Row> rows;
