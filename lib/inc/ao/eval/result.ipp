@@ -27,6 +27,14 @@ constexpr size_t Result::count<Interval>()
 }
 
 template <>
+constexpr size_t Result::count<__m256>()
+{
+    return 32;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <>
 inline double* Result::ptr<double>() const
 {
     return const_cast<double*>(d);
@@ -44,6 +52,12 @@ inline Gradient* Result::ptr<Gradient>() const
     return const_cast<Gradient*>(g);
 }
 
+template <>
+inline __m256* Result::ptr<__m256>() const
+{
+    return const_cast<__m256*>(m);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template <class T>
@@ -57,26 +71,6 @@ inline void Result::set(const T* ts, size_t n)
 {
     assert(n <= count<T>());
     std::copy(ts, ts + n, ptr<T>());
-}
-
-inline void Result::fill(double v)
-{
-    for (size_t i=0; i < count<double>(); ++i)
-    {
-        set<double>(v, i);
-    }
-    for (size_t i=0; i < count<Gradient>(); ++i)
-    {
-        set<Gradient>(Gradient(v), i);
-    }
-    for (size_t i=0; i < count<Interval>(); ++i)
-    {
-        set<Interval>(Interval(v), i);
-    }
-    for (size_t i=0; i < 32; ++i)
-    {
-        m[i] = _mm256_set1_ps(v);
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

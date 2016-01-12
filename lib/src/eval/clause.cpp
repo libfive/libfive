@@ -90,9 +90,9 @@ void Clause::disable()
 {
     mutable_value = result.get<Interval>(0).lower();
 
-    for (size_t i=0; i < 32; ++i)
+    for (size_t i=0; i < result.count<__m256>(); ++i)
     {
-        result.m[i] = _mm256_set1_ps(mutable_value);
+        result.set(_mm256_set1_ps(mutable_value), i);
     }
 
     setFlag(CLAUSE_FLAG_DISABLED);

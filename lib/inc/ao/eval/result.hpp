@@ -62,8 +62,6 @@ protected:
     __m256 m[32];
 
     Interval i;
-
-    friend class Clause;
 };
 
 #define RESULT_INCLUDE_IPP

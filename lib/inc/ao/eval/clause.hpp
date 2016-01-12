@@ -50,7 +50,7 @@ public:
      *  T(mutable_value) otherwise
      */
     template <class T>
-    T get(size_t index)
+    T get(size_t index) const
     {
         if (flags & CLAUSE_FLAG_DISABLED)
         {
@@ -84,3 +84,12 @@ protected:
 
     friend class Evaluator;
 };
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Template specialization to skip disabled check for SIMD evaluation
+template <>
+inline __m256 Clause::get<__m256>(size_t index) const
+{
+    return result.get<__m256>(index);
+}

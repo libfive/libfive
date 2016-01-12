@@ -130,15 +130,10 @@ const double* Evaluator::eval(const Region& r)
     Y->result.packAVX();
     Z->result.packAVX();
 
-    evalFast(r.voxels());
+    evalCore<__m256>(r.voxels());
 
     root->result.unpackAVX();
     return root->result.ptr<double>();
-}
-
-void Evaluator::evalFast(size_t count)
-{
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,5 +1,25 @@
 #include "ao/eval/result.hpp"
 
+void Result::fill(double v)
+{
+    for (size_t i=0; i < count<double>(); ++i)
+    {
+        set<double>(v, i);
+    }
+    for (size_t i=0; i < count<Gradient>(); ++i)
+    {
+        set<Gradient>(Gradient(v), i);
+    }
+    for (size_t i=0; i < count<Interval>(); ++i)
+    {
+        set<Interval>(Interval(v), i);
+    }
+    for (size_t i=0; i < count<__m256>(); ++i)
+    {
+        m[i] = _mm256_set1_ps(v);
+    }
+}
+
 void Result::packAVX()
 {
     for (size_t i=0; i < 256; i += 8)
