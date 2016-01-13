@@ -23,6 +23,26 @@
     (lambda (x y z) (max (- xmin x) (- x xmax)
                          (- ymin y) (- y ymax)))))
 
+(define-public (rounded-rectangle a b r)
+    "Construct a rounded rectangle from two '(x y) lists representing corners
+and a value r in the range 0 to 1"
+    (let* ((xa (car a))
+           (xb (car b))
+           (ya (cadr a))
+           (yb (cadr b))
+           (xmin (min xa xb))
+           (xmax (max xa xb))
+           (ymin (min ya yb))
+           (ymax (max ya yb))
+           (r (* r (min (- xmax xmin) (- ymax ymin)) 0.5)))
+    (union (rectangle (list xmin (+ ymin r)) (list xmax (- ymax r)))
+           (rectangle (list (+ xmin r) ymin) (list (- xmax r) ymax))
+           (circle (list (+ xmin r) (+ ymin r)) r)
+           (circle (list (+ xmin r) (- ymax r)) r)
+           (circle (list (- xmax r) (+ ymin r)) r)
+           (circle (list (- xmax r) (- ymax r)) r))))
+
+
 (define-public (triangle a b c)
     " Constructs a triangle from three '(x y) lists"
     (let* ;; Find the center point of the triangle
