@@ -3,6 +3,8 @@
 #include <array>
 #include <vector>
 
+#include <immintrin.h>
+
 #include "ao/eval/interval.hpp"
 #include "ao/eval/gradient.hpp"
 
@@ -20,10 +22,10 @@ struct Result {
     void set(T v, size_t index);
 
     /*
-     *  Sets all of the values to the given double
-     *  (across the Interval, double, and Gradient arrays)
+     *  Sets all of the values to the given float
+     *  (across the Interval, float, Gradient, and __m256 arrays)
      */
-    void fill(double v);
+    void fill(float v);
 
     /*
      *  Set values 0 through count from the given array
@@ -44,9 +46,25 @@ struct Result {
     template <class T>
     T* ptr() const;
 
+#ifdef USE_AVX
+    /*
+     *  Packs values from the float array into the AVX array
+     */
+    void packAVX();
+
+    /*
+     *  Unpacks values from the AVX array into the float array
+     */
+    void unpackAVX();
+#endif
+
 protected:
-    double d[256];
+    float f[256];
     Gradient g[256];
+
+#ifdef USE_AVX
+    __m256 m[32];
+#endif
 
     Interval i;
 };

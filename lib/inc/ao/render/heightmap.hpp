@@ -9,7 +9,7 @@
 
 class Evaluator;
 
-typedef Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> DepthImage;
+typedef Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> DepthImage;
 typedef Eigen::Array<uint32_t, Eigen::Dynamic, Eigen::Dynamic> NormalImage;
 
 namespace Heightmap
@@ -19,7 +19,7 @@ namespace Heightmap
 typedef std::tuple<size_t, size_t, size_t, size_t> Quad;
 
 /*
- *  Render a height-map image into an array of doubles (representing depth)
+ *  Render a height-map image into an array of floats (representing depth)
  *  and the height-map's normals into a shaded image with R, G, B, A packed
  *  into int32_t pixels.
  */

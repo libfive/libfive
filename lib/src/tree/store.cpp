@@ -20,7 +20,7 @@ Store::~Store()
     }
 }
 
-Token* Store::constant(double v)
+Token* Store::constant(float v)
 {
     if (constants.find(v) == constants.end())
     {

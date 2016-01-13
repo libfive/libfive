@@ -9,19 +9,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 /*
  *  std::min and std::max misbehave when given Intervals, so we overload
- *  those functions with our own _min and _max (defined below for doubles)
+ *  those functions with our own _min and _max (defined below for floats)
  */
-inline double _min(const double& a, const double& b)
+inline float _min(const float& a, const float& b)
 {
     return std::min(a, b);
 }
 
-inline double _max(const double& a, const double& b)
+inline float _max(const float& a, const float& b)
 {
     return std::max(a, b);
 }
 
-inline double _abs(const double& a)
+inline float _abs(const float& a)
 {
     return std::abs(a);
 }
@@ -85,6 +85,72 @@ inline void Evaluator::evalClause(Clause* m, size_t count)
         case LAST_OP: assert(false);
     }
 }
+#undef EVAL_LOOP
+
+#ifdef USE_AVX
+// Partial template specialization for SIMD evaluation
+#define EVAL_LOOP for (size_t i=0; i <= (count - 1)/8; ++i)
+template <>
+inline void Evaluator::evalClause<__m256>(Clause* m, size_t count)
+{
+    assert(count > 0);
+
+    switch (m->op) {
+        case OP_ADD:
+            EVAL_LOOP
+            m->result.set(_mm256_add_ps(m->a->get<__m256>(i),
+                                        m->b->get<__m256>(i)), i);
+            break;
+        case OP_MUL:
+            EVAL_LOOP
+            m->result.set(_mm256_mul_ps(m->a->get<__m256>(i),
+                                        m->b->get<__m256>(i)), i);
+            break;
+        case OP_MIN:
+            EVAL_LOOP
+            m->result.set(_mm256_min_ps(m->a->get<__m256>(i),
+                                        m->b->get<__m256>(i)), i);
+            break;
+        case OP_MAX:
+            EVAL_LOOP
+            m->result.set(_mm256_max_ps(m->a->get<__m256>(i),
+                                        m->b->get<__m256>(i)), i);
+            break;
+        case OP_SUB:
+            EVAL_LOOP
+            m->result.set(_mm256_sub_ps(m->a->get<__m256>(i),
+                                        m->b->get<__m256>(i)), i);
+            break;
+        case OP_DIV:
+            EVAL_LOOP
+            m->result.set(_mm256_div_ps(m->a->get<__m256>(i),
+                                        m->b->get<__m256>(i)), i);
+            break;
+        case OP_SQRT:
+            EVAL_LOOP
+            m->result.set(_mm256_sqrt_ps(m->a->get<__m256>(i)), i);
+            break;
+        case OP_NEG:
+            EVAL_LOOP
+            m->result.set(_mm256_mul_ps(m->a->get<__m256>(i),
+                                        _mm256_set1_ps(-1)), i);
+            break;
+        case OP_ABS:
+            EVAL_LOOP
+            m->result.set(_mm256_andnot_ps(m->a->get<__m256>(i),
+                                           _mm256_set1_ps(-0.0f)), i);
+            break;
+        case INVALID:
+        case OP_CONST:
+        case OP_MUTABLE:
+        case OP_X:
+        case OP_Y:
+        case OP_Z:
+        case LAST_OP: assert(false);
+    }
+}
+#undef EVAL_LOOP
+#endif
 
 template <class T>
 inline const T* Evaluator::evalCore(size_t count)

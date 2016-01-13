@@ -50,7 +50,7 @@ public:
      *  T(mutable_value) otherwise
      */
     template <class T>
-    T get(size_t index)
+    T get(size_t index) const
     {
         if (flags & CLAUSE_FLAG_DISABLED)
         {
@@ -67,10 +67,10 @@ protected:
     const Opcode op;
 
     /*  Populated for OP_CONST clause */
-    const double value;
+    const float value;
 
     /*  Populated for OP_MUTABLE clause  */
-    double mutable_value;
+    float mutable_value;
 
     /*  Flags are set during evaluation for various purposes  */
     uint8_t flags=0;
@@ -84,3 +84,21 @@ protected:
 
     friend class Evaluator;
 };
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Template specialization to properly construct __m256 types
+#ifdef USE_AVX
+template <>
+inline __m256 Clause::get<__m256>(size_t index) const
+{
+    if (flags & CLAUSE_FLAG_DISABLED)
+    {
+        return _mm256_set1_ps(mutable_value);
+    }
+    else
+    {
+        return result.get<__m256>(index);
+    }
+}
+#endif

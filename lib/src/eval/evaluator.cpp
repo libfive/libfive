@@ -110,9 +110,9 @@ void Evaluator::pop()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const double* Evaluator::eval(const Region& r)
+const float* Evaluator::eval(const Region& r)
 {
-    assert(r.voxels() <= Result::count<double>());
+    assert(r.voxels() <= Result::count<float>());
 
     size_t index = 0;
 
@@ -120,13 +120,25 @@ const double* Evaluator::eval(const Region& r)
     // (which needs to be obeyed by anything unflattening results)
     REGION_ITERATE_XYZ(r)
     {
-        X->result.set(r.X.pos(i), index);
-        Y->result.set(r.Y.pos(j), index);
-        Z->result.set(r.Z.pos(r.Z.size - k - 1), index);
+        X->result.set<float>(r.X.pos(i), index);
+        Y->result.set<float>(r.Y.pos(j), index);
+        Z->result.set<float>(r.Z.pos(r.Z.size - k - 1), index);
         index++;
     }
 
-    return evalCore<double>(r.voxels());
+#ifdef USE_AVX
+    X->result.packAVX();
+    Y->result.packAVX();
+    Z->result.packAVX();
+
+    evalCore<__m256>(r.voxels());
+
+    root->result.unpackAVX();
+#else
+    evalCore<float>(r.voxels());
+#endif
+
+    return root->result.ptr<float>();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

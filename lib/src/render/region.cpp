@@ -2,14 +2,14 @@
 
 #include "ao/render/region.hpp"
 
-Region::Region(Interval x, Interval y, Interval z, double res)
+Region::Region(Interval x, Interval y, Interval z, float res)
     : Region(x, y, z, res, res, res)
 {
     // Nothing to do here
 }
 
 Region::Region(Interval x, Interval y, Interval z,
-               double rx, double ry, double rz)
+               float rx, float ry, float rz)
     : X(x, rx), Y(y, ry), Z(z, rz)
 {
     // Nothing to do here
@@ -54,14 +54,14 @@ size_t Region::voxels() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Region::DiscreteRange::DiscreteRange(Interval i, double res)
+Region::DiscreteRange::DiscreteRange(Interval i, float res)
     : interval(i), min(0),
       size(std::max((size_t)1, (size_t)(res * (i.upper() - i.lower())))),
-      ptr(new double[size]), root(true)
+      ptr(new float[size]), root(true)
 {
     for (unsigned index=0; index < size; ++index)
     {
-        const double frac = (index + 0.5) / size;
+        const float frac = (index + 0.5) / size;
         ptr[index] = lower() * (1 - frac) + upper() * frac;
     }
 }
@@ -73,7 +73,7 @@ Region::DiscreteRange::DiscreteRange(const DiscreteRange& other)
 }
 
 Region::DiscreteRange::DiscreteRange(Interval i, size_t min, size_t size,
-                                     double* ptr)
+                                     float* ptr)
     : interval(i), min(min), size(size), ptr(ptr), root(false)
 {
     // Nothing to do here
@@ -92,9 +92,9 @@ std::pair<Region::DiscreteRange, Region::DiscreteRange>
 Region::DiscreteRange::split() const
 {
     const size_t half = size / 2;
-    const double frac = half / double(size);
+    const float frac = half / float(size);
 
-    const double middle = upper() * frac + lower() * (1 - frac);
+    const float middle = upper() * frac + lower() * (1 - frac);
 
     return {DiscreteRange(Interval(lower(), middle), min, half, ptr),
             DiscreteRange(Interval(middle, upper()), min + half,

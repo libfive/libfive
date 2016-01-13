@@ -57,8 +57,8 @@ bool SavePng(std::string filename, const DepthImage& img)
 
     png_init_io(png_ptr, output);
 
-    const double zmax = img.maxCoeff();
-    const double zmin = (img == -std::numeric_limits<double>::infinity())
+    const float zmax = img.maxCoeff();
+    const float zmin = (img == -std::numeric_limits<float>::infinity())
             .select(DepthImage::Constant(img.rows(), img.cols(), zmax),
                     img)
             .minCoeff();

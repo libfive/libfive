@@ -1,3 +1,5 @@
+#include <immintrin.h>
+
 #include "ao/eval/result.hpp"
 
 #ifndef RESULT_INCLUDE_IPP
@@ -7,9 +9,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 template <>
-constexpr size_t Result::count<double>()
+constexpr size_t Result::count<float>()
 {
-    return sizeof(Result::d) / sizeof(Result::d[0]);
+    return sizeof(Result::f) / sizeof(Result::f[0]);
 }
 
 template <>
@@ -24,10 +26,20 @@ constexpr size_t Result::count<Interval>()
     return 1;
 }
 
+#ifdef USE_AVX
 template <>
-inline double* Result::ptr<double>() const
+constexpr size_t Result::count<__m256>()
 {
-    return const_cast<double*>(d);
+    return 32;
+}
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <>
+inline float* Result::ptr<float>() const
+{
+    return const_cast<float*>(f);
 }
 
 template <>
@@ -42,6 +54,14 @@ inline Gradient* Result::ptr<Gradient>() const
     return const_cast<Gradient*>(g);
 }
 
+#ifdef USE_AVX
+template <>
+inline __m256* Result::ptr<__m256>() const
+{
+    return const_cast<__m256*>(m);
+}
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template <class T>
@@ -55,22 +75,6 @@ inline void Result::set(const T* ts, size_t n)
 {
     assert(n <= count<T>());
     std::copy(ts, ts + n, ptr<T>());
-}
-
-inline void Result::fill(double v)
-{
-    for (size_t i=0; i < count<double>(); ++i)
-    {
-        set<double>(v, i);
-    }
-    for (size_t i=0; i < count<Gradient>(); ++i)
-    {
-        set<Gradient>(Gradient(v), i);
-    }
-    for (size_t i=0; i < count<Interval>(); ++i)
-    {
-        set<Interval>(Interval(v), i);
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

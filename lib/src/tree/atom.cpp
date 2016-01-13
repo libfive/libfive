@@ -26,7 +26,7 @@ Atom::Atom(Opcode op, Atom* a, Atom* b)
     // Nothing to do here
 }
 
-Atom::Atom(double d)
+Atom::Atom(float d)
     : op(OP_MUTABLE), value(d), a(nullptr), b(nullptr)
 {
     // Nothing to do here

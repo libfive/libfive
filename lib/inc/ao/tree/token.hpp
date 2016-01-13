@@ -18,7 +18,7 @@ public:
     /*
      *  Constructs a token for a constant
      */
-    explicit Token(double v);
+    explicit Token(float v);
 
     /*
      *  Returns the number of arguments for the given token
@@ -35,7 +35,7 @@ public:
     const size_t weight;
 
     /*  If this token is a constant, value is populated  */
-    const double value;
+    const float value;
 
     /*  Otherwise, pointers to arguments are stored in a and b  */
     Token* const a;

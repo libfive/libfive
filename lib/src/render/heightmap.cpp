@@ -1,4 +1,3 @@
-#include <iostream>
 #include <limits>
 #include <set>
 
@@ -33,9 +32,9 @@ struct NormalRenderer
         for (size_t i=0; i < count; ++i)
         {
             // Find the normal's length (to normalize it)
-            double len = sqrt(pow(gs[i].dx, 2) +
-                              pow(gs[i].dy, 2) +
-                              pow(gs[i].dz, 2));
+            float len = sqrt(pow(gs[i].dx, 2) +
+                             pow(gs[i].dy, 2) +
+                             pow(gs[i].dz, 2));
 
             // Pack each normal into the 0-255 range
             uint32_t dx = 255 * (gs[i].dx / (2 * len) + 0.5);
@@ -56,7 +55,7 @@ struct NormalRenderer
         }
     }
 
-    void push(size_t i, size_t j, double z)
+    void push(size_t i, size_t j, float z)
     {
         xs[count] = r.X.min + i;
         ys[count] = r.Y.min + j;
@@ -92,7 +91,7 @@ struct NormalRenderer
 static void pixels(Evaluator* e, const Region& r,
                    DepthImage& depth, NormalImage& norm)
 {
-    const double* out = e->eval(r);
+    const float* out = e->eval(r);
 
     int index = 0;
 
@@ -108,7 +107,7 @@ static void pixels(Evaluator* e, const Region& r,
         if (out[index++] < 0)
         {
             // Check to see whether the voxel is in front of the image's depth
-            const double z = r.Z.pos(r.Z.size - k - 1);
+            const float z = r.Z.pos(r.Z.size - k - 1);
             if (depth(r.Y.min + j, r.X.min + i) < z)
             {
                 depth(r.Y.min + j, r.X.min + i) = z;
@@ -139,7 +138,7 @@ static void fill(Evaluator* e, const Region& r, DepthImage& depth,
 {
     // Store the maximum z position (which is what we're flooding into
     // the depth image)
-    const double z = r.Z.pos(r.Z.size - 1);
+    const float z = r.Z.pos(r.Z.size - 1);
 
     // Helper struct to handle normal rendering
     NormalRenderer nr(e, r, norm);
@@ -184,7 +183,7 @@ static void recurse(Evaluator* e, const Region& r, DepthImage& depth,
     }
 
     // If we're below a certain size, render pixel-by-pixel
-    if (r.voxels() <= Result::count<double>())
+    if (r.voxels() <= Result::count<float>())
     {
         pixels(e, r, depth, norm);
         return;
@@ -225,7 +224,7 @@ std::pair<DepthImage, NormalImage> Render(
     auto depth = DepthImage(r.Y.size, r.X.size);
     auto norm = NormalImage(r.Y.size, r.X.size);
 
-    depth.fill(-std::numeric_limits<double>::infinity());
+    depth.fill(-std::numeric_limits<float>::infinity());
     norm.fill(0);
 
     recurse(e, r, depth, norm, abort);
