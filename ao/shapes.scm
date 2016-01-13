@@ -2,6 +2,8 @@
 
 (use-modules (ao overload))
 
+(define-public pi 3.1415926)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; 2D shapes
@@ -110,6 +112,28 @@ and a value r in the range 0 to 1"
     (let ((zmin (caddr base)))
     (extrude-z (circle base r) zmin (+ zmin height))))
 
+(define-public (cone-z base r height)
+    "Creates a cone with the given base '(x y z), radius r, and height"
+    (let ((zmin (caddr base)))
+    (taper-xy-z (cylinder-z base r height)
+                base zmin (+ zmin height) 1 0)))
+
+(define-public (pyramid-z a b zmin height)
+    "Returns a pyramid from '(x y) lists a and b, zmin, and height"
+    (taper-xy-z (extrude-z (rectangle a b) zmin (+ zmin height))
+        (list (/ (+  (car a)  (car b)) 2)
+              (/ (+ (cadr a) (cadr b)) 2))
+        zmin (+ zmin height) 1 0))
+
+(define-public (torus-z center R r)
+    "Create a toruz at the given position"
+    (let ((distance (lambda (a b)
+        (sqrt (+ (* a a) (* b b))))))
+    (move (lambda (x y z)
+        (let ((d (distance x y)))
+        (- (distance (- R d) z) r)))
+    center)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; CSG operations
@@ -166,12 +190,15 @@ and a value r in the range 0 to 1"
 The center of rotation is 0,0 or specified by optional argument '(x0 y0)"
     (let* ((argc (length args))
            (x0 (if (> argc 0) (caar  args) 0))
-           (y0 (if (> argc 0) (cadar args) 0))
+           (y0 (if (> argc 1) (cadar args) 0))
            (ca (cos angle))
            (sa (sin angle)))
-    (lambda (x y z) (shape (+ (* ca x) (* sa y))
-                           (+ (* (- sa) x) (* ca y))
-                           z))))
+    (move (lambda (x y z)
+        ((move shape (list (- x0) (- y0)))
+            (+ (* ca x) (* sa y))
+            (+ (* (- sa) x) (* ca y))
+            z))
+        (list x0 y0))))
 
 (define-public (reflect-x shape . args)
     "Reflect the given shape about the x origin or an optional argument x0"
@@ -228,3 +255,32 @@ The center of rotation is 0,0 or specified by optional argument '(x0 y0)"
         (shape (+ x0 (* (- x x0) s))
                (+ y0 (* (- y y0) s))
                z)))))
+
+(define-public (array-2d shape i j dx dy)
+    "Iterates a part in a 2D array"
+    (let ((a (apply union
+        (map (lambda (i)
+            (move shape (list (* i dx) 0 0))) (iota i)))))
+    (apply union
+        (map (lambda (j)
+            (move a (list 0 (* j dy) 0))) (iota j)))))
+
+(define-public (array-3d shape i j k dx dy dz)
+    "Iterate a shape in a 3D array"
+    (let*
+        ((a (apply union
+        (map (lambda (i)
+            (move shape (list (* i dx) 0 0))) (iota i))))
+        (b (apply union
+        (map (lambda (j)
+            (move a (list 0 (* j dy) 0))) (iota j)))))
+    (apply union
+        (map (lambda (k)
+            (move b (list 0 0 (* k dz)))) (iota k)))))
+
+(define-public (array-polar shape n . args)
+    "Iterate a shape about an optional '(x y) position"
+    (apply union
+        (map (lambda (i)
+            (apply rotate-z (append (list shape (* 2 pi (/ i n))) args)))
+            (iota n))))
