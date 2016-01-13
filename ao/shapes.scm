@@ -71,17 +71,18 @@ and a value r in the range 0 to 1"
                           (list a c b) (list a b c)))
 
            ;; Extract coordinates from sorted list
-           (x0 (caar clockwise))   (y0 (cdar clockwise))
-           (x1 (caadr clockwise))  (y1 (cdadr clockwise))
-           (x2 (caaddr clockwise)) (y2 (cdaddr clockwise))
+           (x0 (caar clockwise))   (y0 (cadr (car clockwise)))
+           (x1 (caadr clockwise))  (y1 (cadr (cadr clockwise)))
+           (x2 (caaddr clockwise)) (y2 (cadr (caddr clockwise)))
 
            ;; Function to calculate one edge of the triangle
-           (edge (lambda (x0 y0 dx dy x y)
-                    (- (* dy (- x x0)) (* dx (- y y0))))))
+           (edge (lambda (x0 y0 dx dy)
+                 (lambda (x y z)
+                    (- (* dy (- x x0)) (* dx (- y y0)))))))
 
-          (lambda (x y z) (max (edge x2 y2 (- x0 x2) (- y0 y2) x y)
-                               (edge x1 y1 (- x2 x1) (- y2 y1) x y)
-                               (edge x0 y0 (- x1 x0) (- y1 y0) x y)))))
+          (intersection (edge x2 y2 (- x0 x2) (- y0 y2))
+                        (edge x1 y1 (- x2 x1) (- y2 y1))
+                        (edge x0 y0 (- x1 x0) (- y1 y0)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
