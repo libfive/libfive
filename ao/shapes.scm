@@ -155,17 +155,17 @@ The center of rotation is 0,0 or specified by optional argument '(x0 y0)"
 
 (define-public (reflect-x shape . args)
     "Reflect the given shape about the x origin or an optional argument x0"
-    (let ((x0 (if (> 0 (length args)) (car args) 0)))
+    (let ((x0 (if (> (length args) 0) (car args) 0)))
     (lambda (x y z) (shape (- (* 2 x0) x) y z))))
 
 (define-public (reflect-y shape . args)
     "Reflect the given shape about the y origin or an optional argument y0"
-    (let ((y0 (if (> 0 (length args)) (car args) 0)))
+    (let ((y0 (if (> (length args) 0) (car args) 0)))
     (lambda (x y z) (shape x (- (* 2 y0) y) z))))
 
 (define-public (reflect-z shape . args)
     "Reflect the given shape about the z origin or an optional argument z0"
-    (let ((z0 (if (> 0 (length args)) (car args) 0)))
+    (let ((z0 (if (> (length args) 0) (car args) 0)))
     (lambda (x y z) (shape x y (- (* 2 z0) z)))))
 
 (define-public (scale-x shape sx . args)
