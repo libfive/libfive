@@ -1,3 +1,5 @@
+#include <future>
+#include <list>
 #include <limits>
 #include <set>
 
@@ -219,7 +221,8 @@ static void recurse(Evaluator* e, const Region& r, DepthImage& depth,
 }
 
 std::pair<DepthImage, NormalImage> Render(
-    Evaluator* e, Region r, const std::atomic_bool& abort)
+    Tree* t, Region r, const std::atomic_bool& abort,
+    glm::mat4 m, size_t workers)
 {
     auto depth = DepthImage(r.Y.size, r.X.size);
     auto norm = NormalImage(r.Y.size, r.X.size);
@@ -227,7 +230,35 @@ std::pair<DepthImage, NormalImage> Render(
     depth.fill(-std::numeric_limits<float>::infinity());
     norm.fill(0);
 
-    recurse(e, r, depth, norm, abort);
+    // Build a list of regions by splitting on the XY axes
+    std::list<Region> rs = {r};
+    while (rs.size() < workers && rs.front().canSplitXY())
+    {
+        auto f = rs.front();
+        rs.pop_front();
+        auto p = f.splitXY();
+        rs.push_back(p.first);
+        rs.push_back(p.second);
+    }
+
+    // Start a set of async tasks to render subregions in separate threads
+    std::list<std::future<void>> futures;
+    for (auto region : rs)
+    {
+        auto e = new Evaluator(t, m);
+
+        futures.push_back(std::async(std::launch::async,
+            [e, region, &depth, &norm, &abort](){
+                recurse(e, region, depth, norm, abort);
+                delete e;
+            }));
+    }
+
+    // Wait for all of the tasks to finish running in the background
+    for (auto& f : futures)
+    {
+        f.wait();
+    }
 
     // If a voxel is touching the top Z boundary, set the normal to be
     // pointing in the Z direction.

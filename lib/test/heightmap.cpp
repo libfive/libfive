@@ -10,8 +10,7 @@ static std::pair<DepthImage, NormalImage> RENDER(Tree* t, const Region& r)
 {
     std::atomic_bool abort(false);
 
-    Evaluator e(t);
-    return Heightmap::Render(&e, r, abort);
+    return Heightmap::Render(t, r, abort);
 }
 
 TEST_CASE("2D interval Z values")

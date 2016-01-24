@@ -42,9 +42,28 @@ std::pair<Region, Region> Region::split() const
     }
 }
 
+std::pair<Region, Region> Region::splitXY() const
+{
+    if (Y.size > X.size)
+    {
+        auto ys = Y.split();
+        return std::make_pair(Region(X, ys.first, Z), Region(X, ys.second, Z));
+    }
+    else
+    {
+        auto xs = X.split();
+        return std::make_pair(Region(xs.first, Y, Z), Region(xs.second, Y, Z));
+    }
+}
+
 bool Region::canSplit() const
 {
     return X.size > 1 || Y.size > 1 || Z.size > 1;
+}
+
+bool Region::canSplitXY() const
+{
+    return X.size > 1 || Y.size > 1;
 }
 
 size_t Region::voxels() const

@@ -31,20 +31,19 @@ void Worker::end()
 }
 
 
-Worker::Worker(Evaluator* eval, const Task& t, GLFWwindow* context,
+Worker::Worker(Tree* tree, const Task& t, GLFWwindow* context,
                GLuint depth, GLuint norm)
     : Worker(t)
 {
     assert(t.level > 0);
 
-    // Apply the matrix to the tree, applying an extra scaling on
-    // the z axis to make the coordinate system match OpenGL
+    // Generate a transform matrix, applying an extra scaling
+    // on the z axis to make the coordinate system match OpenGL
     auto m = glm::scale(glm::inverse(t.mat), glm::vec3(1, 1, -1));
-    eval->setMatrix(m);
 
     thread = std::thread([=](){
         this->start();
-        auto out = Heightmap::Render(eval, this->region, this->abort);
+        auto out = Heightmap::Render(tree, this->region, this->abort, m);
         if (!this->abort.load())
         {
             glfwMakeContextCurrent(context);
