@@ -63,14 +63,16 @@ bool SavePng(std::string filename, const DepthImage& img)
                     img)
             .minCoeff();
 
-    auto scaled = (img - zmin) * 65534 / (zmax - zmin) + 1;
+    auto scaled = (zmax == zmin)
+        ? DepthImage((img - zmin) + 65535)
+        : DepthImage((img - zmin) * 65534 / (zmax - zmin) + 1);
     Eigen::Array<uint16_t, Eigen::Dynamic, Eigen::Dynamic>
-        pixels = scaled.cast<uint16_t>();
+        pixels = scaled.cast<uint16_t>().transpose();
 
     std::vector<uint16_t*> rows;
-    for (int i=0; i < pixels.rows(); ++i)
+    for (int i=pixels.cols() - 1; i >= 0; --i)
     {
-        rows.push_back(pixels.data() + i * pixels.cols());
+        rows.push_back(pixels.data() + i * pixels.rows());
     }
 
     png_set_rows(png_ptr, info_ptr, reinterpret_cast<png_bytepp>(&rows[0]));

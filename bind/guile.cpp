@@ -14,6 +14,9 @@
 
 #include "ao/eval/evaluator.hpp"
 
+#include "ao/render/heightmap.hpp"
+#include "ao/format/image.hpp"
+
 #include "ao/ui/window.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -185,6 +188,35 @@ static SCM tree_eval_interval(SCM tree, SCM x, SCM y, SCM z)
                     scm_from_double(out.upper()));
 }
 
+static SCM tree_export_heightmap(SCM tree, SCM filename,
+                                 SCM x, SCM y, SCM z, SCM res)
+{
+    auto t = untag_ptr<Tree>(tree);
+    auto f = scm_to_std_string(filename);
+
+    if (f.substr(f.length() - 4, 4) != ".png")
+    {
+        scm_misc_error("tree_export_heightmap",
+                       "Filename must end in '.png'", SCM_EOL);
+    }
+
+
+    Interval X(scm_to_double(scm_car(x)), scm_to_double(scm_cdr(x)));
+    Interval Y(scm_to_double(scm_car(y)), scm_to_double(scm_cdr(y)));
+    Interval Z(scm_to_double(scm_car(z)), scm_to_double(scm_cdr(z)));
+    printf("Got intervals\n");
+
+    Region r(X, Y, Z, scm_to_double(res));
+
+    auto e = Evaluator(t);
+    std::atomic_bool abort(false);
+    auto img = Heightmap::Render(&e, r, abort);
+
+    Image::SavePng(f, img.first);
+
+    return SCM_BOOL_T;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 static SCM show_tree(SCM filename, SCM name, SCM tree)
@@ -275,6 +307,7 @@ static void populate_ao_lib(void* data)
     define("tree_new", 2, (void*)tree_new);
     define("tree_eval_double", 4, (void*)tree_eval_double);
     define("tree_eval_interval", 4, (void*)tree_eval_interval);
+    define("tree_export_heightmap", 6, (void*)tree_export_heightmap);
 
     define("token_x", 1, (void*)token_x);
     define("token_y", 1, (void*)token_y);
