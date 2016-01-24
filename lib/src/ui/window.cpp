@@ -22,7 +22,7 @@ Window* Window::instance()
 ////////////////////////////////////////////////////////////////////////////////
 
 Window::Window()
-    : window(makeWindow(640, 480, "Hello!")), incoming(nullptr), clear(false)
+    : window(makeWindow(640, 480, "Ao")), incoming(nullptr), clear(false)
 {
     assert(window != nullptr);
 

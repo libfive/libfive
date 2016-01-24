@@ -16,7 +16,6 @@ Worker::Worker(const Task& t)
     // Nothing to do here
 }
 
-#include <iostream>
 void Worker::start()
 {
     start_time = std::chrono::system_clock::now();
@@ -26,10 +25,8 @@ void Worker::end()
 {
     elapsed = std::chrono::system_clock::now() - start_time;
     promise.set_value(!abort.load());
-    std::cout << "Time taken: " << elapsed.count() << " ms\n";
     glfwPostEmptyEvent();
 }
-
 
 Worker::Worker(Tree* tree, const Task& t, GLFWwindow* context,
                GLuint depth, GLuint norm)
