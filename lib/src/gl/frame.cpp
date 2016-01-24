@@ -6,7 +6,6 @@
 
 #include "ao/render/region.hpp"
 #include "ao/tree/tree.hpp"
-#include "ao/eval/evaluator.hpp"
 
 #include "ao/ui/worker.hpp"
 
@@ -75,7 +74,7 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////
 
 Frame::Frame(Tree* tree, GLFWwindow* window)
-    : tree(tree), eval(new Evaluator(tree)),
+    : tree(tree),
       vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
       prog(Shader::link(vs, fs)), context(makeContext(window, false))
@@ -187,7 +186,7 @@ void Frame::startRender()
     {
         // Swap around render tasks and start an async worker
         pending = next;
-        worker.reset(new Worker(eval.get(), pending, context,
+        worker.reset(new Worker(tree.get(), pending, context,
                                 depth[!ping], norm[!ping]));
         next.reset();
     }

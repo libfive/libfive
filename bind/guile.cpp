@@ -208,9 +208,8 @@ static SCM tree_export_heightmap(SCM tree, SCM filename,
 
     Region r(X, Y, Z, scm_to_double(res));
 
-    auto e = Evaluator(t);
     std::atomic_bool abort(false);
-    auto img = Heightmap::Render(&e, r, abort);
+    auto img = Heightmap::Render(t, r, abort);
 
     Image::SavePng(f, img.first);
 

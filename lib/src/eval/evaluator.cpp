@@ -51,6 +51,12 @@ Evaluator::Evaluator(const Tree* tree)
     root = clauses[tree->root];
 }
 
+Evaluator::Evaluator(const Tree* t, const glm::mat4& m)
+    : Evaluator(t)
+{
+    setMatrix(m);
+}
+
 Evaluator::~Evaluator()
 {
     free(data);

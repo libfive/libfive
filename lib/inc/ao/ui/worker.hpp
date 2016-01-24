@@ -14,12 +14,12 @@ struct Task;
 struct Worker
 {
     /*
-     *  Constructs a CPU worker from the given Evaluator and a task
+     *  Constructs a CPU worker from the given Tree and a task
      *  (higher task divisors produce lower-resolution workers)
      *
      *  depth and norm are target textures in which results are stored
      */
-    Worker(Evaluator* eval, const Task& task, GLFWwindow* context,
+    Worker(Tree* tree, const Task& task, GLFWwindow* context,
            GLuint depth, GLuint norm);
 
     /*

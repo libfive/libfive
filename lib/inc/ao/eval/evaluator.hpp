@@ -22,6 +22,7 @@ public:
      *  Construct an evaluator for the given tree
      */
     explicit Evaluator(const Tree* t);
+    explicit Evaluator(const Tree* t, const glm::mat4& m);
     ~Evaluator();
 
     /*
