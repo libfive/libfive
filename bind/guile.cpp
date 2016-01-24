@@ -203,10 +203,11 @@ static SCM window_clear()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class UpdateListener : public efsw::FileWatchListener
+class ScriptWatcher : public efsw::FileWatchListener
 {
 public:
-    UpdateListener(std::string filename) : target(filename) {}
+    ScriptWatcher(Window* window, std::string filename) :
+        window(window), target(filename) {}
 
     static void* load(void* data)
     {
@@ -229,12 +230,13 @@ public:
 
         if (filename == target && action == efsw::Actions::Modified)
         {
-            Window::instance()->clearFile(target);
+            window->clearFile(target);
             trigger();
         }
     }
 
 protected:
+    Window* const window;
     const std::string target;
 };
 
@@ -245,10 +247,10 @@ static SCM watch_file(SCM dir, SCM file)
     std::string dirname = scm_to_std_string(dir);
     std::string filename = scm_to_std_string(file);
 
-    auto listener = new UpdateListener(filename);
-    listener->trigger();
+    auto watcher = new ScriptWatcher(Window::instance(), filename);
+    watcher->trigger();
 
-    if (file_watcher->addWatch(dirname, listener, false) == -1)
+    if (file_watcher->addWatch(dirname, watcher, false) == -1)
     {
         scm_misc_error("watch_file", "addWatch failed", SCM_EOL);
     }
@@ -259,7 +261,7 @@ static SCM watch_file(SCM dir, SCM file)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static void populate_module(void* data)
+static void populate_ao_lib(void* data)
 {
     (void)data;
 
@@ -316,7 +318,7 @@ static void* guile_init(void* data)
 {
     (void)data;
 
-    scm_c_define_module("ao lib", populate_module, nullptr);
+    scm_c_define_module("ao lib", populate_ao_lib, nullptr);
     scm_primitive_load(scm_from_locale_string("ao/startup.scm"));
 
     guile_hotpatch();
@@ -327,7 +329,8 @@ static void* guile_init(void* data)
 int main(int argc, char* argv[])
 {
     // Initialize OpenGL and trigger an initial draw action
-    Window::instance()->draw();
+    auto window = Window::instance();
+    window->draw();
 
     // Start a Guile REPL running in a secondary thread
     auto repl = std::thread([=](){
@@ -335,7 +338,7 @@ int main(int argc, char* argv[])
         scm_shell(argc, argv); });
     repl.detach();
 
-    Window::instance()->run();
+    window->run();
 
     return 0;
 }
