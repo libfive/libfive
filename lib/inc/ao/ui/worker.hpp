@@ -52,7 +52,7 @@ struct Worker
     /*  Fun async stuff  */
     std::promise<bool> promise;
     std::future<bool> future;
-    std::atomic<bool> abort;
+    std::atomic_bool abort;
     std::thread thread;
 
     /*  Records how long the render took  */

@@ -165,7 +165,7 @@ static void fill(Evaluator* e, const Region& r, DepthImage& depth,
 * Helper function that reduces a particular matrix block
 */
 static void recurse(Evaluator* e, const Region& r, DepthImage& depth,
-                NormalImage& norm, const std::atomic<bool>& abort)
+                NormalImage& norm, const std::atomic_bool& abort)
 {
     // Stop rendering if the abort flag is set
     if (abort.load())
@@ -219,7 +219,7 @@ static void recurse(Evaluator* e, const Region& r, DepthImage& depth,
 }
 
 std::pair<DepthImage, NormalImage> Render(
-    Evaluator* e, Region r, const std::atomic<bool>& abort)
+    Evaluator* e, Region r, const std::atomic_bool& abort)
 {
     auto depth = DepthImage(r.Y.size, r.X.size);
     auto norm = NormalImage(r.Y.size, r.X.size);

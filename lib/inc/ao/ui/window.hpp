@@ -154,7 +154,7 @@ protected:
     std::atomic<std::tuple<std::string, std::string, Tree*>*> incoming;
 
     /*  Set to true if frames should be cleared  */
-    std::atomic<bool> clear;
+    std::atomic_bool clear;
 
     /*  Width and height are of the framebuffer, rather than the window  *
      *  (to properly cope with high DPI monitors)                        */

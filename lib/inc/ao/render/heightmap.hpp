@@ -24,5 +24,5 @@ typedef std::tuple<size_t, size_t, size_t, size_t> Quad;
  *  into int32_t pixels.
  */
 std::pair<DepthImage, NormalImage> Render(
-        Evaluator* e, Region r, const std::atomic<bool>& abort);
+        Evaluator* e, Region r, const std::atomic_bool& abort);
 }

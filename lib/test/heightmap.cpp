@@ -8,7 +8,7 @@
 // Run the standard render test suite with this render function
 static std::pair<DepthImage, NormalImage> RENDER(Tree* t, const Region& r)
 {
-    std::atomic<bool> abort(false);
+    std::atomic_bool abort(false);
 
     Evaluator e(t);
     return Heightmap::Render(&e, r, abort);
