@@ -10,7 +10,7 @@
 
 Worker::Worker(const Task& t)
     : region({-1, 1}, {-1, 1}, {-1, 1},
-             t.ni/(2 << t.level), t.nj/(2 << t.level), t.nk/(2 << t.level)),
+             t.ni/(1 << t.level), t.nj/(1 << t.level), t.nk/(1 << t.level)),
       future(promise.get_future()), abort(false)
 {
     // Nothing to do here
