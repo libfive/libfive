@@ -31,9 +31,17 @@ public:
     std::pair<Region, Region> split() const;
 
     /*
+     *  Splits a region along the larger of the X and Y axes
+     *
+     *  The returned regions become in valid if their parent is destroyed
+     */
+    std::pair<Region, Region> splitXY() const;
+
+    /*
      *  Returns true if the region can be split
      */
     bool canSplit() const;
+    bool canSplitXY() const;
 
     /*
      *  Returns the number of voxels in this region
