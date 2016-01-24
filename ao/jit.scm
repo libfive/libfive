@@ -7,7 +7,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; This is our local store.  When populated, it's an opaque pointer to a
-;; Store object (created in C++ with make-store)
+;; Store object (created in C++ with store_new)
 (define store #nil)
 
 ;; Converts the given argument to a token
@@ -21,9 +21,9 @@ A number is converted to a constant
 A symbol and further arguments are converted to an operation"
     (if (= 0 (length args))
         (cond ((tagged-ptr? 'Token a) a)
-              ((number? a) (token-const store a))
+              ((number? a) (token_const store a))
               (else (error "Failed to construct token" a)))
-        (token-op store a (map make-token args))))
+        (token_op store a (map make-token args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -35,20 +35,20 @@ A symbol and further arguments are converted to an operation"
     " Wraps a tagged tree pointer in a callable interface "
     (lambda (x y z) ;; Generic evaluator that dispatches based on argument type
         (cond ((every interval? (list x y z))
-                    (tree-eval-interval t x y z))
+                    (tree_eval_interval t x y z))
               ((every number? (list x y z))
-                    (tree-eval-double t x y z))
+                    (tree_eval_double t x y z))
               (else (error "Input arguments are of invalid types")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (jit f)
     "Compile an arithmetic lambda function to a bare tree pointer"
-    (set! store (make-store))
-    (let* ((x (token-x store))
-           (y (token-y store))
-           (z (token-z store))
+    (set! store (store_new))
+    (let* ((x (token_x store))
+           (y (token_y store))
+           (z (token_z store))
            (root (make-token (f x y z)))
-           (out (make-tree store root)))
+           (out (tree_new store root)))
        (set! store #nil)
        out))

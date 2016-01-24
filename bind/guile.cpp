@@ -270,18 +270,18 @@ static void populate_ao_lib(void* data)
         scm_c_define(name.c_str(), f);
         scm_c_export(name.c_str(), 0); };
 
-    define("make-store", 0, (void*)store_new);
+    define("store_new", 0, (void*)store_new);
 
-    define("make-tree", 2, (void*)tree_new);
-    define("tree-eval-double", 4, (void*)tree_eval_double);
-    define("tree-eval-interval", 4, (void*)tree_eval_interval);
+    define("tree_new", 2, (void*)tree_new);
+    define("tree_eval_double", 4, (void*)tree_eval_double);
+    define("tree_eval_interval", 4, (void*)tree_eval_interval);
 
-    define("token-x", 1, (void*)token_x);
-    define("token-y", 1, (void*)token_y);
-    define("token-z", 1, (void*)token_z);
+    define("token_x", 1, (void*)token_x);
+    define("token_y", 1, (void*)token_y);
+    define("token_z", 1, (void*)token_z);
 
-    define("token-const", 2, (void*)token_const);
-    define("token-op", 3, (void*)token_op);
+    define("token_const", 2, (void*)token_const);
+    define("token_op", 3, (void*)token_op);
 
     define("show-tree", 3, (void*)show_tree);
     define("watch-file", 2, (void*)watch_file);
