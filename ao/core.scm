@@ -22,6 +22,7 @@
 
 (define-public (ao-edit file)
     " Watch and edit the given file "
+    (system (string-append "touch " file))
     (ao-watch file)
     (if (getenv "TMUX")
         (system (string-append "tmux split-window -b $EDITOR " file))
