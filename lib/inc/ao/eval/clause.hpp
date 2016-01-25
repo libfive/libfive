@@ -88,7 +88,7 @@ protected:
 ////////////////////////////////////////////////////////////////////////////////
 
 // Template specialization to properly construct __m256 types
-#ifdef USE_AVX
+#ifdef __AVX__
 template <>
 inline __m256 Clause::get<__m256>(size_t index) const
 {

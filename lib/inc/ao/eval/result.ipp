@@ -26,7 +26,7 @@ constexpr size_t Result::count<Interval>()
     return 1;
 }
 
-#ifdef USE_AVX
+#ifdef __AVX__
 template <>
 constexpr size_t Result::count<__m256>()
 {
@@ -54,7 +54,7 @@ inline Gradient* Result::ptr<Gradient>() const
     return const_cast<Gradient*>(g);
 }
 
-#ifdef USE_AVX
+#ifdef __AVX__
 template <>
 inline __m256* Result::ptr<__m256>() const
 {

@@ -14,7 +14,7 @@ void Result::fill(float v)
     {
         set<Interval>(Interval(v), i);
     }
-#ifdef USE_AVX
+#ifdef __AVX__
     for (size_t i=0; i < count<__m256>(); ++i)
     {
         m[i] = _mm256_set1_ps(v);
@@ -22,7 +22,7 @@ void Result::fill(float v)
 #endif
 }
 
-#ifdef USE_AVX
+#ifdef __AVX__
 void Result::packAVX()
 {
     for (size_t i=0; i < 256; i += 8)

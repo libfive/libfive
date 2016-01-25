@@ -87,7 +87,7 @@ inline void Evaluator::evalClause(Clause* m, size_t count)
 }
 #undef EVAL_LOOP
 
-#ifdef USE_AVX
+#ifdef __AVX__
 // Partial template specialization for SIMD evaluation
 #define EVAL_LOOP for (size_t i=0; i <= (count - 1)/8; ++i)
 template <>

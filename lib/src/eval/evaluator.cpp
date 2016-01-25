@@ -132,7 +132,7 @@ const float* Evaluator::eval(const Subregion& r)
         index++;
     }
 
-#ifdef USE_AVX
+#ifdef __AVX__
     X->result.packAVX();
     Y->result.packAVX();
     Z->result.packAVX();

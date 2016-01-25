@@ -46,7 +46,7 @@ struct Result {
     template <class T>
     T* ptr() const;
 
-#ifdef USE_AVX
+#ifdef __AVX__
     /*
      *  Packs values from the float array into the AVX array
      */
@@ -62,7 +62,7 @@ protected:
     float f[256];
     Gradient g[256];
 
-#ifdef USE_AVX
+#ifdef __AVX__
     __m256 m[32];
 #endif
 

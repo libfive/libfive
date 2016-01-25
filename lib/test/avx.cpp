@@ -2,7 +2,7 @@
 
 #include "ao/eval/result.hpp"
 
-#ifdef USE_AVX
+#ifdef __AVX__
 TEST_CASE("AVX load / store")
 {
     Result r;
