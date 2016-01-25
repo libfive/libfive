@@ -14,10 +14,12 @@ TEST_CASE("AVX load / store")
     }
 
     // Confirm that loading worked
+    bool success = true;
     for (int i=0; i < 256; ++i)
     {
-        REQUIRE(r.get<float>(i) == i);
+        success &= r.get<float>(i) == i;
     }
+    REQUIRE(success);
 
     r.packAVX();
 
@@ -28,17 +30,21 @@ TEST_CASE("AVX load / store")
     }
 
     // Confirm that wiping worked
+    success = true;
     for (int i=0; i < 256; ++i)
     {
-        REQUIRE(r.get<float>(i) == 0.0f);
+        success &= r.get<float>(i) == 0.0f;
     }
+    REQUIRE(success);
 
     r.unpackAVX();
 
     // Confirm that unpacking worked
+    success = true;
     for (int i=0; i < 256; ++i)
     {
-        REQUIRE(r.get<float>(i) == i);
+        success &= r.get<float>(i) == i;
     }
+    REQUIRE(success);
 }
 #endif

@@ -15,107 +15,21 @@ Region::Region(Interval x, Interval y, Interval z,
     // Nothing to do here
 }
 
-Region::Region(DiscreteRange x, DiscreteRange y, DiscreteRange z)
-    : X(x), Y(y), Z(z)
+Subregion Region::view() const
 {
-    // Nothing to do here
+    return Subregion(*this);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::pair<Region, Region> Region::split() const
+Region::Axis::Axis(Interval i, float res)
+    : bounds(i)
 {
-    if (Z.size > Y.size && Z.size > X.size)
-    {
-        auto zs = Z.split();
-        return std::make_pair(Region(X, Y, zs.first), Region(X, Y, zs.second));
-    }
-    else if (Y.size > X.size)
-    {
-        auto ys = Y.split();
-        return std::make_pair(Region(X, ys.first, Z), Region(X, ys.second, Z));
-    }
-    else
-    {
-        auto xs = X.split();
-        return std::make_pair(Region(xs.first, Y, Z), Region(xs.second, Y, Z));
-    }
-}
-
-std::pair<Region, Region> Region::splitXY() const
-{
-    if (Y.size > X.size)
-    {
-        auto ys = Y.split();
-        return std::make_pair(Region(X, ys.first, Z), Region(X, ys.second, Z));
-    }
-    else
-    {
-        auto xs = X.split();
-        return std::make_pair(Region(xs.first, Y, Z), Region(xs.second, Y, Z));
-    }
-}
-
-bool Region::canSplit() const
-{
-    return X.size > 1 || Y.size > 1 || Z.size > 1;
-}
-
-bool Region::canSplitXY() const
-{
-    return X.size > 1 || Y.size > 1;
-}
-
-size_t Region::voxels() const
-{
-    return X.size * Y.size * Z.size;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-Region::DiscreteRange::DiscreteRange(Interval i, float res)
-    : interval(i), min(0),
-      size(std::max((size_t)1, (size_t)(res * (i.upper() - i.lower())))),
-      ptr(new float[size]), root(true)
-{
+    size_t size = std::max((size_t)1,
+                           (size_t)(res * (i.upper() - i.lower())));
     for (unsigned index=0; index < size; ++index)
     {
         const float frac = (index + 0.5) / size;
-        ptr[index] = lower() * (1 - frac) + upper() * frac;
+        values.push_back(i.lower() * (1 - frac) + i.upper() * frac);
     }
-}
-Region::DiscreteRange::DiscreteRange(const DiscreteRange& other)
-    : interval(other.interval), min(other.min), size(other.size),
-      ptr(other.ptr), root(false)
-{
-    // Nothing to do here
-}
-
-Region::DiscreteRange::DiscreteRange(Interval i, size_t min, size_t size,
-                                     float* ptr)
-    : interval(i), min(min), size(size), ptr(ptr), root(false)
-{
-    // Nothing to do here
-}
-
-Region::DiscreteRange::~DiscreteRange()
-{
-    if (root)
-    {
-        delete [] ptr;
-    }
-}
-////////////////////////////////////////////////////////////////////////////////
-
-std::pair<Region::DiscreteRange, Region::DiscreteRange>
-Region::DiscreteRange::split() const
-{
-    const size_t half = size / 2;
-    const float frac = half / float(size);
-
-    const float middle = upper() * frac + lower() * (1 - frac);
-
-    return {DiscreteRange(Interval(lower(), middle), min, half, ptr),
-            DiscreteRange(Interval(middle, upper()), min + half,
-                          size - half, ptr + half)};
 }

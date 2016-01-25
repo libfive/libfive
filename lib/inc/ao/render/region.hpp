@@ -1,10 +1,9 @@
 #pragma once
 
-#include <functional>
-#include <utility>
 #include <vector>
 
 #include "ao/eval/interval.hpp"
+#include "ao/render/subregion.hpp"
 
 /*
  *  A region constains X, Y, Z bounds and voxel count / positions
@@ -24,85 +23,23 @@ public:
            float rx, float ry, float rz);
 
     /*
-     *  Splits the region along its largest axis
-     *
-     *  The returned regions become invalid if their parent is destroyed
+     *  Return a subregion watching the full region
      */
-    std::pair<Region, Region> split() const;
+    Subregion view() const;
 
     /*
-     *  Splits a region along the larger of the X and Y axes
-     *
-     *  The returned regions become in valid if their parent is destroyed
+     *  Helper struct that contains bounds and values for each axis
      */
-    std::pair<Region, Region> splitXY() const;
-
-    /*
-     *  Returns true if the region can be split
-     */
-    bool canSplit() const;
-    bool canSplitXY() const;
-
-    /*
-     *  Returns the number of voxels in this region
-     */
-    size_t voxels() const;
-
-    class DiscreteRange
+    struct Axis
     {
-    public:
-        DiscreteRange(Interval i, float res);
-        DiscreteRange(const DiscreteRange& other);
-        ~DiscreteRange();
+        Axis(Interval i, float res);
+        const float* ptr() const { return &values[0]; }
 
-        /*
-         *  Splits the region along a voxel boundary
-         */
-        std::pair<DiscreteRange, DiscreteRange> split() const;
-
-        /*
-         *  Accessor functions for the interval object
-         */
-        float lower() const { return interval.lower(); }
-        float upper() const { return interval.upper(); }
-
-        /*
-         *  Returns the value at a given index.
-         *
-         *  pos(0)    = interval.lower()
-         *  pos(size) = interval.upper()
-         */
-        float pos(size_t i) const { return ptr[i]; }
-
-        const Interval interval;
-        const size_t min;
-        const size_t size;
-
-        /*  This is a pointer into an array of voxel positions  */
-        float* const ptr;
-
-        /*  Root is set as true if we allocated ptr in this instance,   *
-         *  false otherwise (controls whether the destructor frees it)  */
-        const bool root;
-
-    protected:
-        /*
-         *  Protected constructor used when splitting
-         */
-        DiscreteRange(Interval i, size_t min, size_t size, float* ptr);
+        const Interval bounds;
+        std::vector<float> values;
     };
 
-    const DiscreteRange X, Y, Z;
-
-protected:
-    /*
-     *  Internal constructor used in split
-     */
-    Region(DiscreteRange x, DiscreteRange y, DiscreteRange z);
+    const Axis X;
+    const Axis Y;
+    const Axis Z;
 };
-
-// Helper macro to iterate over a region in a deterministic order
-#define REGION_ITERATE_XYZ(r) \
-for (unsigned i=0; i < r.X.size; ++i)           \
-    for (unsigned j=0; j < r.Y.size; ++j)       \
-        for (unsigned k=0; k < r.Z.size; ++k)   \

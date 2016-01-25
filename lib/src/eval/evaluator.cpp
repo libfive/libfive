@@ -116,7 +116,7 @@ void Evaluator::pop()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const float* Evaluator::eval(const Region& r)
+const float* Evaluator::eval(const Subregion& r)
 {
     assert(r.voxels() <= Result::count<float>());
 
@@ -124,7 +124,7 @@ const float* Evaluator::eval(const Region& r)
 
     // Flatten the region in a particular order
     // (which needs to be obeyed by anything unflattening results)
-    REGION_ITERATE_XYZ(r)
+    SUBREGION_ITERATE_XYZ(r)
     {
         X->result.set<float>(r.X.pos(i), index);
         Y->result.set<float>(r.Y.pos(j), index);

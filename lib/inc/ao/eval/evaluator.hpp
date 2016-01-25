@@ -13,7 +13,7 @@
 class Atom;
 class Clause;
 class Tree;
-class Region;
+class Subregion;
 
 class Evaluator
 {
@@ -39,7 +39,7 @@ public:
     /*
      *  Evaluate across a flattened region
      */
-    const float* eval(const Region& r);
+    const float* eval(const Subregion& r);
 
     /*
      *  Performs the core evaluation sweep (across rows and atoms),

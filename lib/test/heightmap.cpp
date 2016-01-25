@@ -39,7 +39,7 @@ TEST_CASE("3D interval Z values")
 
     auto out = RENDER(&t, r).first;
     CAPTURE(out);
-    REQUIRE((out == r.Z.pos(r.Z.size - 1) ||
+    REQUIRE((out == r.Z.values.back() ||
              out == -std::numeric_limits<float>::infinity()).all());
 }
 

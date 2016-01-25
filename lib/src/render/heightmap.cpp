@@ -17,7 +17,7 @@ namespace Heightmap
  */
 struct NormalRenderer
 {
-    NormalRenderer(Evaluator* e, const Region& r, NormalImage& norm)
+    NormalRenderer(Evaluator* e, const Subregion& r, NormalImage& norm)
         : e(e), r(r), norm(norm) {}
 
     /*
@@ -75,7 +75,7 @@ struct NormalRenderer
     }
 
     Evaluator* e;
-    const Region& r;
+    const Subregion& r;
     NormalImage& norm;
 
     // Store the x, y coordinates of rendered points for normal calculations
@@ -90,7 +90,7 @@ struct NormalRenderer
 /*
 *  Helper functions that evaluates a region of pixels
 */
-static void pixels(Evaluator* e, const Region& r,
+static void pixels(Evaluator* e, const Subregion& r,
                    DepthImage& depth, NormalImage& norm)
 {
     const float* out = e->eval(r);
@@ -103,7 +103,7 @@ static void pixels(Evaluator* e, const Region& r,
     // Unflatten results into the image, breaking out of loops early when a pixel
     // is written (because all subsequent pixels will be below it).  This
     // loop's behavior is dependent on how Tree::eval(Region) is structured.
-    REGION_ITERATE_XYZ(r)
+    SUBREGION_ITERATE_XYZ(r)
     {
         // If this voxel is filled (because the f-rep is less than zero)
         if (out[index++] < 0)
@@ -135,7 +135,7 @@ static void pixels(Evaluator* e, const Region& r,
  *
  *  This function is used when marking an Interval as filled
  */
-static void fill(Evaluator* e, const Region& r, DepthImage& depth,
+static void fill(Evaluator* e, const Subregion& r, DepthImage& depth,
                  NormalImage& norm)
 {
     // Store the maximum z position (which is what we're flooding into
@@ -166,7 +166,7 @@ static void fill(Evaluator* e, const Region& r, DepthImage& depth,
 /*
 * Helper function that reduces a particular matrix block
 */
-static void recurse(Evaluator* e, const Region& r, DepthImage& depth,
+static void recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
                 NormalImage& norm, const std::atomic_bool& abort)
 {
     // Stop rendering if the abort flag is set
@@ -192,7 +192,7 @@ static void recurse(Evaluator* e, const Region& r, DepthImage& depth,
     }
 
     // Do the interval evaluation
-    Interval out = e->eval(r.X.interval, r.Y.interval, r.Z.interval);
+    Interval out = e->eval(r.X.bounds, r.Y.bounds, r.Z.bounds);
 
     // If strictly negative, fill up the block and return
     if (out.upper() < 0)
@@ -224,14 +224,14 @@ std::pair<DepthImage, NormalImage> Render(
     Tree* t, Region r, const std::atomic_bool& abort,
     glm::mat4 m, size_t workers)
 {
-    auto depth = DepthImage(r.Y.size, r.X.size);
-    auto norm = NormalImage(r.Y.size, r.X.size);
+    auto depth = DepthImage(r.Y.values.size(), r.X.values.size());
+    auto norm = NormalImage(r.Y.values.size(), r.X.values.size());
 
     depth.fill(-std::numeric_limits<float>::infinity());
     norm.fill(0);
 
     // Build a list of regions by splitting on the XY axes
-    std::list<Region> rs = {r};
+    std::list<Subregion> rs = {r.view()};
     while (rs.size() < workers && rs.front().canSplitXY())
     {
         auto f = rs.front();
@@ -262,7 +262,7 @@ std::pair<DepthImage, NormalImage> Render(
 
     // If a voxel is touching the top Z boundary, set the normal to be
     // pointing in the Z direction.
-    norm = (depth == r.Z.pos(r.Z.size - 1)).select(0xffff7f7f, norm);
+    norm = (depth == r.Z.values.back()).select(0xffff7f7f, norm);
 
     return std::make_pair(depth, norm);
 }
