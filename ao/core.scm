@@ -25,5 +25,8 @@
     (system (string-append "touch " file))
     (ao-watch file)
     (if (getenv "TMUX")
-        (system (string-append "tmux split-window -b $EDITOR " file))
+        (if (equal? (system "which reattach-to-user-namespace") 0)
+             (system (string-append "tmux split-window -b "
+                                    "reattach-to-user-namespace $EDITOR " file))
+             (system (string-append "tmux split-window -b $EDITOR " file)))
         (warn "Could not detect tmux session")))
