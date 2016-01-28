@@ -5,7 +5,7 @@
 
 TEST_CASE("Subregion::Axis split")
 {
-    auto d = Region::Axis(Interval(0, 1), 10);
+    auto d = Region::Axis(Interval(0, 1), 10.0f);
     auto s = Subregion::Axis(d.bounds, d.values);
     auto ds = s.split();
 
@@ -86,4 +86,14 @@ TEST_CASE("Splitting a big region")
 
     REQUIRE(rs.second.X.lower() == 0);
     REQUIRE(rs.second.X.upper() == 1);
+}
+
+TEST_CASE("Splitting a region with equal voxels")
+{
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 8);
+    auto s = r.view();
+    auto rs = s.split();
+
+    REQUIRE(rs.first.X.lower() == -1);
+    REQUIRE(rs.first.X.upper() == 0);
 }

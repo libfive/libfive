@@ -23,6 +23,11 @@ public:
            float rx, float ry, float rz);
 
     /*
+     *  Returns a cubical region with power-of-two voxel count
+     */
+    Region powerOfTwo() const;
+
+    /*
      *  Return a subregion watching the full region
      */
     Subregion view() const;
@@ -33,6 +38,9 @@ public:
     struct Axis
     {
         Axis(Interval i, float res);
+        Axis(Interval i, size_t size);
+
+        /*  Returns a pointer to the first value  */
         const float* ptr() const { return &values[0]; }
 
         const Interval bounds;
@@ -42,4 +50,11 @@ public:
     const Axis X;
     const Axis Y;
     const Axis Z;
+
+protected:
+    /*
+     *  Constructs a region with the given bounds and certain size
+     */
+    Region(Axis x, Axis y, Axis z);
+
 };

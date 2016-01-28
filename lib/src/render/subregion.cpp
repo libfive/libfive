@@ -1,3 +1,4 @@
+#include <array>
 
 #include "ao/render/subregion.hpp"
 #include "ao/render/region.hpp"
@@ -64,6 +65,29 @@ bool Subregion::canSplitXY() const
 size_t Subregion::voxels() const
 {
     return X.size * Y.size * Z.size;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+std::array<Subregion, 8> Subregion::octsect() const
+{
+    assert(X.size == Y.size && X.size == Z.size);
+    assert(X.size >= 2 && X.size % 2 == 0);
+    assert(Y.size >= 2 && Y.size % 2 == 0);
+    assert(Z.size >= 2 && Z.size % 2 == 0);
+
+    auto x = split();
+
+    auto xy = x.first.split();
+    auto Xy = x.second.split();
+
+    auto xyz = xy.first.split();
+    auto xYz = xy.second.split();
+    auto Xyz = Xy.first.split();
+    auto XYz = Xy.second.split();
+
+    return {{xyz.first, xyz.second, xYz.first, xYz.second,
+             Xyz.first, Xyz.second, XYz.first, XYz.second}};
 }
 
 ////////////////////////////////////////////////////////////////////////////////
