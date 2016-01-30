@@ -138,9 +138,9 @@ Octree::Intersection Octree::searchEdge(
         d /= 2;
     }
 
-    return {p, eval->eval(Gradient(p.x, 1, 0, 0),
-                          Gradient(p.y, 0, 1, 0),
-                          Gradient(p.z, 0, 0, 1))};
+    return {p, eval->eval(Gradient(p.x, {1, 0, 0}),
+                          Gradient(p.y, {0, 1, 0}),
+                          Gradient(p.z, {0, 0, 1}))};
 }
 
 void Octree::findIntersections(Evaluator* eval)

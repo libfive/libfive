@@ -5,31 +5,25 @@
 
 Gradient operator+(const Gradient& a, const Gradient& b)
 {
-    return Gradient(a.v + b.v, a.dx + b.dx, a.dy + b.dy, a.dz + b.dz);
+    return Gradient(a.v + b.v, a.d + b.d);
 }
 
 Gradient operator-(const Gradient& a, const Gradient& b)
 {
-    return Gradient(a.v - b.v, a.dx - b.dx, a.dy - b.dy, a.dz - b.dz);
+    return Gradient(a.v - b.v, a.d - b.d);
 }
 
 Gradient operator*(const Gradient& a, const Gradient& b)
 {
     // Product rule
-    return Gradient(a.v * b.v,
-            a.v * b.dx + b.v * a.dx,
-            a.v * b.dy + b.v * a.dy,
-            a.v * b.dz + b.v * a.dz);
+    return Gradient(a.v * b.v, a.v * b.d + b.v * a.d);
 }
 
 Gradient operator/(const Gradient& a, const Gradient& b)
 {
     // Quotient rule
     const float p = pow(b.v, 2);
-    return Gradient(a.v / b.v,
-            (b.v * a.dx - a.v * b.dx) / p,
-            (b.v * a.dy - a.v * b.dy) / p,
-            (b.v * a.dz - a.v * b.dz) / p);
+    return Gradient(a.v / b.v, (b.v * a.d - a.v * b.d) / p);
 }
 
 Gradient _min(const Gradient& a, const Gradient& b)
@@ -51,9 +45,9 @@ Gradient pow(const Gradient& a, const Gradient& b)
     // We work around this by checking if d/d{xyz}(B) == 0 and using a
     // simplified expression if that's true.
     return Gradient(pow(a.v, b.v),
-        p * (b.v*a.dx + (b.dx ? m*b.dx : 0)),
-        p * (b.v*a.dy + (b.dy ? m*b.dy : 0)),
-        p * (b.v*a.dz + (b.dz ? m*b.dz : 0)));
+        {p * (b.v*a.d.x + (b.d.x ? m*b.d.x : 0)),
+         p * (b.v*a.d.y + (b.d.y ? m*b.d.y : 0)),
+         p * (b.v*a.d.z + (b.d.z ? m*b.d.z : 0))});
 }
 
 Gradient sqrt(const Gradient& a)
@@ -65,9 +59,7 @@ Gradient sqrt(const Gradient& a)
     else
     {
         const float v = sqrt(a.v);
-        return Gradient(v, a.dx / (2 * v),
-                           a.dy / (2 * v),
-                           a.dz / (2 * v));
+        return Gradient(v, a.d / (2 * v));
     }
 }
 
@@ -75,7 +67,7 @@ Gradient _abs(const Gradient& a)
 {
     if (a.v < 0)
     {
-        return Gradient(-a.v, -a.dx, -a.dy, -a.dz);
+        return Gradient(-a.v, -a.d);
     }
     else
     {
@@ -85,5 +77,5 @@ Gradient _abs(const Gradient& a)
 
 Gradient operator-(const Gradient& a)
 {
-    return Gradient(-a.v, -a.dx, -a.dy, -a.dz);
+    return Gradient(-a.v, -a.d);
 }

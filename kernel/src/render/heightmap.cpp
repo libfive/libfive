@@ -3,6 +3,8 @@
 #include <limits>
 #include <set>
 
+#include <glm/glm.hpp>
+
 #include "ao/kernel/render/heightmap.hpp"
 #include "ao/kernel/eval/result.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
@@ -33,15 +35,13 @@ struct NormalRenderer
         const Gradient* gs = e->evalCore<Gradient>(count);
         for (size_t i=0; i < count; ++i)
         {
-            // Find the normal's length (to normalize it)
-            float len = sqrt(pow(gs[i].dx, 2) +
-                             pow(gs[i].dy, 2) +
-                             pow(gs[i].dz, 2));
+            // Normalize the vector
+            auto d = 255.0f * (glm::normalize(gs[i].d) / 2.0f + 0.5f);
 
             // Pack each normal into the 0-255 range
-            uint32_t dx = 255 * (gs[i].dx / (2 * len) + 0.5);
-            uint32_t dy = 255 * (gs[i].dy / (2 * len) + 0.5);
-            uint32_t dz = 255 * (gs[i].dz / (2 * len) + 0.5);
+            uint32_t dx = d.x;
+            uint32_t dy = d.y;
+            uint32_t dz = d.z;
 
             // Pack the normals and a dummy alpha byte into the image
             norm(ys[i], xs[i]) = (0xff << 24) | (dz << 16) | (dy << 8) | dx;
@@ -61,9 +61,9 @@ struct NormalRenderer
     {
         xs[count] = r.X.min + i;
         ys[count] = r.Y.min + j;
-        e->setPoint<Gradient>(Gradient(r.X.pos(i), 1, 0, 0),
-                              Gradient(r.Y.pos(j), 0, 1, 0),
-                              Gradient(z, 0, 0, 1),
+        e->setPoint<Gradient>(Gradient(r.X.pos(i), {1, 0, 0}),
+                              Gradient(r.Y.pos(j), {0, 1, 0}),
+                              Gradient(z, {0, 0, 1}),
                               count++);
 
         // If the gradient array is completely full, execute a
