@@ -7,15 +7,15 @@
 
 #include <efsw/include/efsw/efsw.hpp>
 
-#include "ao/tree/store.hpp"
-#include "ao/tree/tree.hpp"
-#include "ao/tree/opcode.hpp"
-#include "ao/tree/token.hpp"
+#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/tree/opcode.hpp"
+#include "ao/kernel/tree/token.hpp"
 
-#include "ao/eval/evaluator.hpp"
+#include "ao/kernel/eval/evaluator.hpp"
 
-#include "ao/render/heightmap.hpp"
-#include "ao/format/image.hpp"
+#include "ao/kernel/render/heightmap.hpp"
+#include "ao/kernel/format/image.hpp"
 
 #include "ao/ui/window.hpp"
 
