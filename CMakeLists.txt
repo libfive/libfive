@@ -12,14 +12,14 @@ include_directories(vendor)
 
 ################################################################################
 
-# Build the ao kernel and ui libraries (as well as test suites)
+# Build the ao kernel and ui libraries
 add_subdirectory(kernel)
 add_subdirectory(ui)
 
-# Build the test suite executable
+# Build the test suite
 add_subdirectory(test)
 
-# Build the ao-guile building
+# Build the ao-guile binding
 add_subdirectory(bind)
 
 # Build efsw as a separate library
