@@ -1,5 +1,5 @@
-#include "ao/gl/core.hpp"
-#include "ao/render/heightmap.hpp"
+#include "ao/ui/gl/core.hpp"
+#include "ao/kernel/render/heightmap.hpp"
 
 /*
  *  Stores a DepthImage as a 1-channel depth texture in tex

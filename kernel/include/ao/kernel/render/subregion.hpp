@@ -3,7 +3,7 @@
 #include <vector>
 #include <utility>
 
-#include "ao/eval/interval.hpp"
+#include "ao/kernel/eval/interval.hpp"
 
 class Region;
 

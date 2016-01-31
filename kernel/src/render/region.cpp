@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include "ao/render/region.hpp"
+#include "ao/kernel/render/region.hpp"
 
 Region::Region(Interval x, Interval y, Interval z, float res)
     : Region(x, y, z, res, res, res)

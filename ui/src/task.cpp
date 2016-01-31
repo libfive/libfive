@@ -1,6 +1,7 @@
 #include "ao/ui/task.hpp"
 #include "ao/ui/worker.hpp"
-#include "ao/eval/evaluator.hpp"
+
+#include "ao/kernel/eval/evaluator.hpp"
 
 Task::Task()
     : ni(0), nj(0), nk(0), level(0)

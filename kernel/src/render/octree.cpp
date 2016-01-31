@@ -1,8 +1,8 @@
-#include "ao/render/octree.hpp"
-#include "ao/render/region.hpp"
+#include "ao/kernel/render/octree.hpp"
+#include "ao/kernel/render/region.hpp"
 
-#include "ao/eval/evaluator.hpp"
-#include "ao/tree/tree.hpp"
+#include "ao/kernel/eval/evaluator.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 Octree::Octree(Evaluator* e, const Subregion& r)
     : X(r.X.lower(), r.X.upper()),

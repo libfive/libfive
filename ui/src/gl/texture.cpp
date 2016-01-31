@@ -1,4 +1,4 @@
-#include "ao/gl/texture.hpp"
+#include "ao/ui/gl/texture.hpp"
 
 void toDepthTexture(const DepthImage& img, GLuint tex, Interval zbounds)
 {

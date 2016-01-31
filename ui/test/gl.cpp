@@ -2,11 +2,11 @@
 
 #include <catch/catch.hpp>
 
-#include "ao/gl/core.hpp"
-#include "ao/gl/shader.hpp"
+#include "ao/ui/gl/core.hpp"
+#include "ao/ui/gl/shader.hpp"
 
-#include "ao/tree/store.hpp"
-#include "ao/tree/tree.hpp"
+#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 

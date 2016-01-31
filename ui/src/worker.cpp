@@ -1,12 +1,13 @@
 #include <glm/gtx/transform.hpp>
 
-#include "ao/gl/core.hpp"
 #include "ao/ui/worker.hpp"
 #include "ao/ui/task.hpp"
 
-#include "ao/tree/tree.hpp"
-#include "ao/eval/evaluator.hpp"
-#include "ao/gl/texture.hpp"
+#include "ao/ui/gl/core.hpp"
+#include "ao/ui/gl/texture.hpp"
+
+#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/eval/evaluator.hpp"
 
 Worker::Worker(const Task& t)
     : region({-1, 1}, {-1, 1}, {-1, 1},

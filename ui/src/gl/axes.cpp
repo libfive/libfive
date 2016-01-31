@@ -1,7 +1,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
-#include "ao/gl/axes.hpp"
-#include "ao/gl/shader.hpp"
+#include "ao/ui/gl/axes.hpp"
+#include "ao/ui/gl/shader.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex shader

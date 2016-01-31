@@ -1,15 +1,14 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "ao/gl/frame.hpp"
-#include "ao/gl/shader.hpp"
-
-#include "ao/render/region.hpp"
-#include "ao/tree/tree.hpp"
+#include "ao/ui/gl/frame.hpp"
+#include "ao/ui/gl/shader.hpp"
 
 #include "ao/ui/worker.hpp"
 
-#include "ao/render/heightmap.hpp"
+#include "ao/kernel/render/heightmap.hpp"
+#include "ao/kernel/render/region.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex shader

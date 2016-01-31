@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cassert>
 
-#include "ao/gl/shader.hpp"
+#include "ao/ui/gl/shader.hpp"
 
 // Tricky macro to print a shader or program error
 #define CHECK_ERROR(GET, INFO, DEL, STATUS, TARGET, CONTEXT) \

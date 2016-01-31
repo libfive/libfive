@@ -9,12 +9,12 @@ set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -DRELEASE")
 set(CMAKE_CXX_FLAGS_DEBUG    "-O0")
 
 include_directories(vendor)
-include_directories(lib/inc)
 
 ################################################################################
 
-# Build the ao library and test suite
-add_subdirectory(lib)
+# Build the ao kernel and ui libraries (as well as test suites)
+add_subdirectory(kernel)
+add_subdirectory(ui)
 
 # Build the ao-guile building
 add_subdirectory(bind)

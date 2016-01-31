@@ -3,7 +3,7 @@
 #include <string>
 #include <Eigen/Dense>
 
-#include "ao/render/heightmap.hpp"
+#include "ao/kernel/render/heightmap.hpp"
 
 namespace Image
 {

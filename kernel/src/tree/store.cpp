@@ -1,5 +1,5 @@
-#include "ao/tree/store.hpp"
-#include "ao/tree/token.hpp"
+#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/token.hpp"
 
 Store::~Store()
 {

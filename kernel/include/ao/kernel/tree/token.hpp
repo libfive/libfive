@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-#include "ao/tree/opcode.hpp"
+#include "ao/kernel/tree/opcode.hpp"
 
 /*
  *  A token represents a single expression (with up to two arguments)

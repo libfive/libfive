@@ -1,9 +1,9 @@
 #include <catch/catch.hpp>
 
-#include "ao/render/heightmap.hpp"
-#include "ao/eval/evaluator.hpp"
-#include "ao/tree/tree.hpp"
-#include "ao/tree/store.hpp"
+#include "ao/kernel/render/heightmap.hpp"
+#include "ao/kernel/eval/evaluator.hpp"
+#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/tree/store.hpp"
 
 #define EPSILON 1e-6
 

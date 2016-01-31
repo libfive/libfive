@@ -8,9 +8,9 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 
-#include "ao/gl/core.hpp"
-#include "ao/gl/frame.hpp"
-#include "ao/gl/axes.hpp"
+#include "ao/ui/gl/core.hpp"
+#include "ao/ui/gl/frame.hpp"
+#include "ao/ui/gl/axes.hpp"
 
 class Tree;
 

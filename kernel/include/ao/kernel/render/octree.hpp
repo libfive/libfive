@@ -5,8 +5,8 @@
 
 #include <glm/vec3.hpp>
 
-#include "ao/eval/gradient.hpp"
-#include "ao/eval/interval.hpp"
+#include "ao/kernel/eval/gradient.hpp"
+#include "ao/kernel/eval/interval.hpp"
 
 class Region;
 class Subregion;

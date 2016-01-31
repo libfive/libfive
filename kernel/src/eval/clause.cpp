@@ -1,5 +1,5 @@
-#include "ao/eval/clause.hpp"
-#include "ao/tree/atom.hpp"
+#include "ao/kernel/eval/clause.hpp"
+#include "ao/kernel/tree/atom.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 

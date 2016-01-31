@@ -4,7 +4,7 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "ao/tree/opcode.hpp"
+#include "ao/kernel/tree/opcode.hpp"
 
 class Token;
 

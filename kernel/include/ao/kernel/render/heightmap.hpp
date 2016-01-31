@@ -5,8 +5,7 @@
 #include <Eigen/Dense>
 #include <glm/mat4x4.hpp>
 
-#include "ao/render/region.hpp"
-#include "ao/gl/core.hpp"
+#include "ao/kernel/render/region.hpp"
 
 class Tree;
 

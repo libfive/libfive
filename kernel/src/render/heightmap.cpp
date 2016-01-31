@@ -3,9 +3,9 @@
 #include <limits>
 #include <set>
 
-#include "ao/render/heightmap.hpp"
-#include "ao/eval/result.hpp"
-#include "ao/eval/evaluator.hpp"
+#include "ao/kernel/render/heightmap.hpp"
+#include "ao/kernel/eval/result.hpp"
+#include "ao/kernel/eval/evaluator.hpp"
 
 namespace Heightmap
 {

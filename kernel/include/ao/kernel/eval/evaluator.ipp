@@ -1,6 +1,6 @@
-#include "ao/eval/evaluator.hpp"
-#include "ao/eval/clause.hpp"
-#include "ao/render/region.hpp"
+#include "ao/kernel/eval/evaluator.hpp"
+#include "ao/kernel/eval/clause.hpp"
+#include "ao/kernel/render/region.hpp"
 
 #ifndef EVALUATOR_INCLUDE_IPP
 #error "Cannot include .ipp file on its own"

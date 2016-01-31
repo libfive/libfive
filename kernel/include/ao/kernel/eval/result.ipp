@@ -1,6 +1,6 @@
 #include <immintrin.h>
 
-#include "ao/eval/result.hpp"
+#include "ao/kernel/eval/result.hpp"
 
 #ifndef RESULT_INCLUDE_IPP
 #error "Cannot include .ipp file on its own"

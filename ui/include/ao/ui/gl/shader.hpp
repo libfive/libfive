@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "ao/gl/core.hpp"
+#include "ao/ui/gl/core.hpp"
 
 namespace Shader
 {

@@ -4,7 +4,7 @@
 #include <vector>
 #include <array>
 
-#include "ao/tree/opcode.hpp"
+#include "ao/kernel/tree/opcode.hpp"
 
 class Token;
 

@@ -5,8 +5,8 @@
 
 #include <immintrin.h>
 
-#include "ao/eval/interval.hpp"
-#include "ao/eval/gradient.hpp"
+#include "ao/kernel/eval/interval.hpp"
+#include "ao/kernel/eval/gradient.hpp"
 
 struct Result {
     /*

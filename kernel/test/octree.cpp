@@ -2,11 +2,11 @@
 
 #include <glm/gtx/string_cast.hpp>
 
-#include "ao/tree/tree.hpp"
-#include "ao/tree/store.hpp"
+#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/tree/store.hpp"
 
-#include "ao/render/octree.hpp"
-#include "ao/render/region.hpp"
+#include "ao/kernel/render/octree.hpp"
+#include "ao/kernel/render/region.hpp"
 
 TEST_CASE("Octree coordinates")
 {

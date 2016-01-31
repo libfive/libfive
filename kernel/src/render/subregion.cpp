@@ -1,7 +1,7 @@
 #include <array>
 
-#include "ao/render/subregion.hpp"
-#include "ao/render/region.hpp"
+#include "ao/kernel/render/subregion.hpp"
+#include "ao/kernel/render/region.hpp"
 
 Subregion::Subregion(const Region& r)
     : X(r.X.bounds, r.X.values),

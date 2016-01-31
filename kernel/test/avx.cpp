@@ -1,6 +1,6 @@
 #include <catch/catch.hpp>
 
-#include "ao/eval/result.hpp"
+#include "ao/kernel/eval/result.hpp"
 
 #ifdef __AVX__
 TEST_CASE("AVX load / store")

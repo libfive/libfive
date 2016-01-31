@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "ao/eval/interval.hpp"
-#include "ao/render/subregion.hpp"
+#include "ao/kernel/eval/interval.hpp"
+#include "ao/kernel/render/subregion.hpp"
 
 /*
  *  A region constains X, Y, Z bounds and voxel count / positions

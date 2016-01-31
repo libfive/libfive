@@ -1,7 +1,7 @@
 #include <catch/catch.hpp>
 
-#include "ao/render/region.hpp"
-#include "ao/render/subregion.hpp"
+#include "ao/kernel/render/region.hpp"
+#include "ao/kernel/render/subregion.hpp"
 
 TEST_CASE("Subregion::Axis split")
 {

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "ao/eval/gradient.hpp"
+#include "ao/kernel/eval/gradient.hpp"
 
 Gradient operator+(const Gradient& a, const Gradient& b)
 {

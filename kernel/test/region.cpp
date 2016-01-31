@@ -1,6 +1,6 @@
 #include <catch/catch.hpp>
 
-#include "ao/render/region.hpp"
+#include "ao/kernel/render/region.hpp"
 
 TEST_CASE("Region::Axis construction")
 {

@@ -3,8 +3,8 @@
 
 #include <Eigen/Dense>
 
-#include "ao/gl/core.hpp"
-#include "ao/render/heightmap.hpp"
+#include "ao/ui/gl/core.hpp"
+#include "ao/kernel/render/heightmap.hpp"
 
 struct Task;
 

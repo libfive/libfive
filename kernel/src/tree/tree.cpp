@@ -1,10 +1,10 @@
 #include <cassert>
 #include <algorithm>
 
-#include "ao/tree/tree.hpp"
-#include "ao/tree/store.hpp"
-#include "ao/tree/atom.hpp"
-#include "ao/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/atom.hpp"
+#include "ao/kernel/tree/token.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 

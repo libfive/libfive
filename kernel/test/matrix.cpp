@@ -3,9 +3,9 @@
 #include <catch/catch.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "ao/tree/store.hpp"
-#include "ao/tree/tree.hpp"
-#include "ao/eval/evaluator.hpp"
+#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/eval/evaluator.hpp"
 
 TEST_CASE("Matrix evaluation")
 {

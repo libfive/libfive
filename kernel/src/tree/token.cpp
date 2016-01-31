@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "ao/tree/token.hpp"
+#include "ao/kernel/tree/token.hpp"
 
 Token::Token(Opcode op, Token* a, Token* b)
     : op(op), weight(std::max(a ? a->weight + 1 : 0,

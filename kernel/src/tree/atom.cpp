@@ -1,7 +1,7 @@
 #include <cassert>
 
-#include "ao/tree/atom.hpp"
-#include "ao/tree/token.hpp"
+#include "ao/kernel/tree/atom.hpp"
+#include "ao/kernel/tree/token.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
