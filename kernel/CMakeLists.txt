@@ -1,4 +1,14 @@
-include_directories(include)
+find_package(Boost REQUIRED)
+find_package(png REQUIRED)
 
-add_subdirectory(src)
-add_subdirectory(test)
+################################################################################
+
+file(GLOB SRC_FILES src/tree/*.cpp src/format/*.cpp
+                    src/render/*.cpp src/eval/*.cpp)
+add_library(ao-kernel STATIC ${SRC_FILES})
+
+target_include_directories(ao-kernel PUBLIC
+    include
+    ${BOOST_INCLUDE_DIR}
+    ${PNG_INCLUDE_DIR})
+target_link_libraries(ao-kernel ${PNG_LIBRARIES})

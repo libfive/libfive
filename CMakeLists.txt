@@ -16,6 +16,9 @@ include_directories(vendor)
 add_subdirectory(kernel)
 add_subdirectory(ui)
 
+# Build the test suite executable
+add_subdirectory(test)
+
 # Build the ao-guile building
 add_subdirectory(bind)
 
