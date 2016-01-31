@@ -9,9 +9,9 @@ See the [TURTLE](https://en.wikipedia.org/wiki/Turtle_graphics) of enormous girt
 - [Boost](http://www.boost.org/)
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
 
-## UI
+### UI
 - [GLFW](http://www.glfw.org/)
 - [`libepoxy`](https://github.com/anholt/libepoxy)
 
-## Bindings
+### Bindings
 - [Guile](http://www.gnu.org/software/guile/)
