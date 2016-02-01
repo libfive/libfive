@@ -19,8 +19,7 @@ struct Worker
      *
      *  depth and norm are target textures in which results are stored
      */
-    Worker(Tree* tree, const Task& task, GLFWwindow* context,
-           GLuint depth, GLuint norm);
+    Worker(Tree* tree, const Task& task);
 
     /*
      *  On destruction, join the thread
@@ -42,38 +41,22 @@ struct Worker
      *
      *  Returns RUNNING if the worker is still running, DONE if the worker
      *  is done, and ABORTED if the worker was aborted but is complete.
+     *
+     *  On success, images are deployed to depth and norm textures
+     *  (so there needs to be a current OpenGL context)
      */
     enum State { RUNNING, DONE, ABORTED };
-    State poll();
+    State poll(GLuint depth, GLuint norm);
 
     /*  Region that is being analyzed  */
     Region region;
 
     /*  Fun async stuff  */
-    std::promise<bool> promise;
-    std::future<bool> future;
+    std::promise<std::pair<DepthImage, NormalImage>> promise;
+    std::future<std::pair<DepthImage, NormalImage>> future;
     std::atomic_bool abort;
     std::thread thread;
 
     /*  Records how long the render took  */
     std::chrono::duration<double> elapsed;
-
-protected:
-    /*
-     *  Private constructor that populates the
-     *  region, future, and abort fields
-     */
-    Worker(const Task& t);
-
-    /*
-     *  Record the starting time in start_time
-     */
-    void start();
-
-    /*
-     *  Record the elapsed time in elapsed and call glfwPostEmptyEvent
-     */
-    void end();
-
-    std::chrono::time_point<std::chrono::system_clock> start_time;
 };

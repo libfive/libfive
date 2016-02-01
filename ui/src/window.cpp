@@ -245,7 +245,7 @@ bool Window::loadFrame()
         }
 
         // Construct a new frame
-        frames[filename][partname] = new Frame(std::get<2>(*in), window);
+        frames[filename][partname] = new Frame(std::get<2>(*in));
 
         // Delete the key, Tree* pair (which was allocated on the heap)
         delete in;

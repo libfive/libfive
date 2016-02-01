@@ -9,29 +9,10 @@
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 
-Worker::Worker(const Task& t)
+Worker::Worker(Tree* tree, const Task& t)
     : region({-1, 1}, {-1, 1}, {-1, 1},
              t.ni/(1 << t.level), t.nj/(1 << t.level), t.nk/(1 << t.level)),
       future(promise.get_future()), abort(false)
-{
-    // Nothing to do here
-}
-
-void Worker::start()
-{
-    start_time = std::chrono::system_clock::now();
-}
-
-void Worker::end()
-{
-    elapsed = std::chrono::system_clock::now() - start_time;
-    promise.set_value(!abort.load());
-    glfwPostEmptyEvent();
-}
-
-Worker::Worker(Tree* tree, const Task& t, GLFWwindow* context,
-               GLuint depth, GLuint norm)
-    : Worker(t)
 {
     assert(t.level > 0);
 
@@ -40,16 +21,11 @@ Worker::Worker(Tree* tree, const Task& t, GLFWwindow* context,
     auto m = glm::scale(glm::inverse(t.mat), glm::vec3(1, 1, -1));
 
     thread = std::thread([=](){
-        this->start();
-        auto out = Heightmap::Render(tree, this->region, this->abort, m);
-        if (!this->abort.load())
-        {
-            glfwMakeContextCurrent(context);
-            toDepthTexture(out.first, depth);
-            toNormalTexture(out.second, norm);
-            glFinish();
-        }
-        this->end(); });
+        auto start_time = std::chrono::system_clock::now();
+        promise.set_value(
+                Heightmap::Render(tree, this->region, this->abort, m));
+        elapsed = std::chrono::system_clock::now() - start_time;
+        glfwPostEmptyEvent(); });
 }
 
 Worker::~Worker()
@@ -71,7 +47,7 @@ void Worker::halt()
     abort.store(true);
 }
 
-Worker::State Worker::poll()
+Worker::State Worker::poll(GLuint depth, GLuint norm)
 {
     std::future_status status = future.wait_for(std::chrono::seconds(0));
 
@@ -79,7 +55,15 @@ Worker::State Worker::poll()
     {
         return RUNNING;
     }
-
-    // Get the resulting matrix
-    return future.get() ? DONE : ABORTED;
+    else if (!abort.load())
+    {
+        auto out = future.get();
+        toDepthTexture(out.first, depth);
+        toNormalTexture(out.second, norm);
+        return DONE;
+    }
+    else
+    {
+        return ABORTED;
+    }
 }

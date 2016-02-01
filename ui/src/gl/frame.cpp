@@ -72,11 +72,11 @@ void main()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Frame::Frame(Tree* tree, GLFWwindow* window)
+Frame::Frame(Tree* tree)
     : tree(tree),
       vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
-      prog(Shader::link(vs, fs)), context(makeContext(window, false))
+      prog(Shader::link(vs, fs))
 {
     assert(vs);
     assert(fs);
@@ -116,8 +116,6 @@ Frame::~Frame()
     glDeleteTextures(2, norm);
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
-
-    glfwDestroyWindow(context);
 }
 
 void Frame::draw(const glm::mat4& m) const
@@ -185,8 +183,7 @@ void Frame::startRender()
     {
         // Swap around render tasks and start an async worker
         pending = next;
-        worker.reset(new Worker(tree.get(), pending, context,
-                                depth[!ping], norm[!ping]));
+        worker.reset(new Worker(tree.get(), pending));
         next.reset();
     }
     // Schedule a refinement of the current render task
@@ -206,7 +203,8 @@ bool Frame::poll()
     {
         // If the worker has successfully finished, swap task objects,
         // swap textures, and mark success as true
-        Worker::State state = worker->poll();
+        Worker::State state = worker->poll(depth[!ping], norm[!ping]);
+
         if (state == Worker::DONE)
         {
             // Adjust the default level based on performance, trying to keep

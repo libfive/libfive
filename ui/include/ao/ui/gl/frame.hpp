@@ -22,7 +22,7 @@ public:
      *  On construction, takes ownership of the given Tree and sets
      *  its parent pointer.
      */
-    explicit Frame(Tree* tree, GLFWwindow* window);
+    explicit Frame(Tree* tree);
     ~Frame();
 
     /*
@@ -62,10 +62,6 @@ protected:
 
     GLuint vbo; // Vertex buffer object
     GLuint vao; // Vertex array object
-
-    /*  Dedicated context used by this Frame to do  *
-     *  OpenGL things in separate threads           */
-    GLFWwindow* context;
 
     // We use a pair of buffers and ping-pong between then
     // depth[ping] is rendered while depth[!ping] is written
