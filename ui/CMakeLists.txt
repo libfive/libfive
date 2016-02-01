@@ -18,12 +18,15 @@ add_library(ao-ui STATIC ${SRC_FILES})
 target_include_directories(ao-ui PRIVATE
     ${GLFW_INCLUDE_DIRS}
     ${EPOXY_INCLUDE_DIR})
-target_include_directories(ao-ui PUBLIC include)
+target_include_directories(ao-ui PUBLIC include vendor)
 
 target_link_libraries(ao-ui
     ${GLFW_LIBRARIES}
     ${OPENGL_LIBRARY}
-    ${EPOXY_LIBRARY} ao-kernel)
+    ${EPOXY_LIBRARY} efsw ao-kernel)
+
+# Build efsw as a separate library
+add_subdirectory(vendor/efsw)
 
 ################################################################################
 

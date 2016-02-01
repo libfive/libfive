@@ -21,6 +21,3 @@ add_subdirectory(test)
 
 # Build the ao-guile binding
 add_subdirectory(bind)
-
-# Build efsw as a separate library
-add_subdirectory(vendor/efsw)
