@@ -32,12 +32,13 @@ Octree::Type Octree::populateChildren(Evaluator* e, const Subregion& r)
         for (uint8_t i=0; i < 8; ++i)
         {
             auto c = pos(i);
-            e->setPoint<Gradient>(Gradient(c.x, 1, 0, 0),
-                                  Gradient(c.y, 0, 1, 0),
-                                  Gradient(c.z, 0, 0, 1), i);
+            e->setPoint<float>(c.x, c.y, c.z, i);
         }
-        const Gradient* gs = e->evalCore<Gradient>(8);
-        std::copy(gs, gs + 8, corners.begin());
+        const float* fs = e->evalCore<float>(8);
+        for (uint8_t i=0; i < 8; ++i)
+        {
+            corners[i] = fs[i] < 0;
+        }
         return collapseLeaf();
     }
 }
@@ -73,8 +74,8 @@ Octree::Type Octree::collapseLeaf()
 
     for (uint8_t i=0; i < 8; ++i)
     {
-        empty &= (corners[i].v > 0);
-        full  &= (corners[i].v <= 0);
+        empty &= !corners[i];
+        full  &=  corners[i];
     }
 
     if (empty || full)

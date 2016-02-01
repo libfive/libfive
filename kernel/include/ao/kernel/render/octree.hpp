@@ -5,7 +5,6 @@
 
 #include <glm/vec3.hpp>
 
-#include "ao/kernel/eval/gradient.hpp"
 #include "ao/kernel/eval/interval.hpp"
 
 class Region;
@@ -28,7 +27,7 @@ public:
     /*
      *  Look up a corner's value
      */
-    Gradient corner(uint8_t i) const { return corners[i]; }
+    bool corner(uint8_t i) const { return corners[i]; }
 
     /*
      *  Look up a child octree
@@ -39,8 +38,8 @@ protected:
     /*  Pointers to children octrees (either all populated or all null)  */
     std::array<std::unique_ptr<Octree>, 8> children;
 
-    /*  Array of values in the cell's corners  */
-    std::array<Gradient, 8> corners;
+    /*  Array of filled states for the cell's corners  */
+    std::array<bool, 8> corners;
 
 public:
     /*  Bounds for this octree  */

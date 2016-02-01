@@ -57,16 +57,6 @@ TEST_CASE("Octree values")
     // Check that values and gradients are correct
     for (int i=0; i < 8; ++i)
     {
-        auto g = out->corner(i);
-        CAPTURE(g.v);
-        CAPTURE(g.dx);
-        CAPTURE(g.dy);
-        CAPTURE(g.dz);
-
-        REQUIRE(g.v == 2);
-
-        glm::vec3 d(g.dx, g.dy, g.dz);
-        d /= 2;
-        REQUIRE(out->pos(i) == d);
+        REQUIRE(!out->corner(i));
     }
 }
