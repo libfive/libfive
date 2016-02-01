@@ -5,8 +5,6 @@
 #include <boost/algorithm/string.hpp>
 #include <libguile.h>
 
-#include <efsw/include/efsw/efsw.hpp>
-
 #include "ao/kernel/tree/store.hpp"
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/opcode.hpp"
@@ -18,6 +16,7 @@
 #include "ao/kernel/format/image.hpp"
 
 #include "ao/ui/window.hpp"
+#include "ao/ui/watcher.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -234,59 +233,25 @@ static SCM window_clear()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class ScriptWatcher : public efsw::FileWatchListener
+static void* watch_load(void* data)
 {
-public:
-    ScriptWatcher(Window* window, std::string filename) :
-        window(window), target(filename) {}
+    scm_c_primitive_load(static_cast<char*>(data));
+    return nullptr;
+}
 
-    static void* load(void* data)
-    {
-        scm_c_primitive_load(static_cast<char*>(data));
-        return nullptr;
-    }
-
-    void trigger()
-    {
-        scm_with_guile(load, (void*)target.c_str());
-    }
-
-    void handleFileAction(efsw::WatchID watchid, const std::string& dir,
-                          const std::string& filename, efsw::Action action,
-                          std::string old_filename="")
-    {
-        (void)dir;
-        (void)watchid;
-        (void)old_filename;
-
-        if (filename == target && action == efsw::Actions::Modified)
-        {
-            window->clearFile(target);
-            trigger();
-        }
-    }
-
-protected:
-    Window* const window;
-    const std::string target;
-};
+void watch_callback(std::string filename)
+{
+    scm_with_guile(watch_load, (void*)filename.c_str());
+}
 
 static SCM watch_file(SCM dir, SCM file)
 {
-    static efsw::FileWatcher* file_watcher = new efsw::FileWatcher();
-
     std::string dirname = scm_to_std_string(dir);
     std::string filename = scm_to_std_string(file);
 
-    auto watcher = new ScriptWatcher(Window::instance(), filename);
-    watcher->trigger();
+    new ScriptWatcher(Window::instance(), watch_callback,
+                      dirname, filename);
 
-    if (file_watcher->addWatch(dirname, watcher, false) == -1)
-    {
-        scm_misc_error("watch_file", "addWatch failed", SCM_EOL);
-    }
-
-    file_watcher->watch();
     return SCM_ELISP_NIL;
 }
 
