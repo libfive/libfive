@@ -4,6 +4,7 @@ See the [TURTLE](https://en.wikipedia.org/wiki/Turtle_graphics) of enormous girt
 ## Dependencies
 ### Compilation
 - [cmake](https://cmake.org/)
+- [Ninja](https://ninja-build.org/) (recommended)
 
 ### Kernel
 - [Boost](http://www.boost.org/)
