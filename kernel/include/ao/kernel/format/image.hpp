@@ -3,7 +3,8 @@
 #include <string>
 #include <Eigen/Dense>
 
-#include "ao/kernel/render/heightmap.hpp"
+typedef Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> DepthImage;
+typedef Eigen::Array<uint32_t, Eigen::Dynamic, Eigen::Dynamic> NormalImage;
 
 namespace Image
 {

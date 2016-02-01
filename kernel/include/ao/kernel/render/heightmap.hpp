@@ -2,15 +2,12 @@
 
 #include <atomic>
 
-#include <Eigen/Dense>
 #include <glm/mat4x4.hpp>
 
 #include "ao/kernel/render/region.hpp"
+#include "ao/kernel/format/image.hpp"
 
 class Tree;
-
-typedef Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> DepthImage;
-typedef Eigen::Array<uint32_t, Eigen::Dynamic, Eigen::Dynamic> NormalImage;
 
 namespace Heightmap
 {
