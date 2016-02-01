@@ -38,3 +38,35 @@ TEST_CASE("Octree coordinates")
         REQUIRE(out->pos(i) == out->child(i)->pos(i));
     }
 }
+
+TEST_CASE("Octree values")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+                                   s.operation(OP_MUL, s.Z(), s.Z())),
+               s.constant(1)));
+
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
+    REQUIRE(r.X.values.size() == 2);
+
+    std::unique_ptr<Octree> out(Octree::Render(&t, r));
+
+    // Check that values and gradients are correct
+    for (int i=0; i < 8; ++i)
+    {
+        auto g = out->corner(i);
+        CAPTURE(g.v);
+        CAPTURE(g.dx);
+        CAPTURE(g.dy);
+        CAPTURE(g.dz);
+
+        REQUIRE(g.v == 2);
+
+        glm::vec3 d(g.dx, g.dy, g.dz);
+        d /= 2;
+        REQUIRE(out->pos(i) == d);
+    }
+}
