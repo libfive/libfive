@@ -88,7 +88,6 @@ bool Clause::checkDisabled()
 
 void Clause::disable()
 {
-    mutable_value = result.get<Interval>(0).lower();
     setFlag(CLAUSE_FLAG_DISABLED);
 }
 
