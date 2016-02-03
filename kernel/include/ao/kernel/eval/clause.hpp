@@ -45,23 +45,6 @@ public:
     void disable();
     void enable();
 
-    /*
-     *  Returns results.get<T>(i) if this clause is enabled,
-     *  T(mutable_value) otherwise
-     */
-    template <class T>
-    T get(size_t index) const
-    {
-        if (flags & CLAUSE_FLAG_DISABLED)
-        {
-            return T(mutable_value);
-        }
-        else
-        {
-            return result.get<T>(index);
-        }
-    }
-
 protected:
     /*  Opcode for this clause  */
     const Opcode op;
@@ -84,21 +67,3 @@ protected:
 
     friend class Evaluator;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-
-// Template specialization to properly construct __m256 types
-#ifdef __AVX__
-template <>
-inline __m256 Clause::get<__m256>(size_t index) const
-{
-    if (flags & CLAUSE_FLAG_DISABLED)
-    {
-        return _mm256_set1_ps(mutable_value);
-    }
-    else
-    {
-        return result.get<__m256>(index);
-    }
-}
-#endif
