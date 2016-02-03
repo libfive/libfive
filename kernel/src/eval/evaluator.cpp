@@ -126,10 +126,7 @@ const float* Evaluator::eval(const Subregion& r)
     // (which needs to be obeyed by anything unflattening results)
     SUBREGION_ITERATE_XYZ(r)
     {
-        X->result.set<float>(r.X.pos(i), index);
-        Y->result.set<float>(r.Y.pos(j), index);
-        Z->result.set<float>(r.Z.pos(r.Z.size - k - 1), index);
-        index++;
+        setPoint(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
     }
 
 #ifdef __AVX__
