@@ -13,7 +13,6 @@
 class Atom;
 class Clause;
 class Tree;
-class Subregion;
 
 class Evaluator
 {
@@ -35,11 +34,6 @@ public:
      */
     template <class T>
     T eval(T x, T y, T z);
-
-    /*
-     *  Evaluate across a flattened region
-     */
-    const float* eval(const Subregion& r);
 
     /*
      *  Performs the core evaluation sweep (across rows and atoms),
@@ -69,6 +63,18 @@ public:
      *  (to check how well disabling is working)
      */
     double utilization() const;
+
+#ifdef __AVX__
+    /*
+     *  Pack values from the X, Y, Z float arrays to the AVX array
+     */
+    void packAVX();
+
+    /*
+     *  Unpack values from the result array to the float array
+     */
+    const float* unpackAVX();
+#endif
 
 protected:
     /*
