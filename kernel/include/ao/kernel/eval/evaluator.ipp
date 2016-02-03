@@ -97,8 +97,6 @@ template <>
 inline void clause<__m256>(Opcode op, __m256* __restrict a, __m256* __restrict b,
                            __m256* __restrict out, size_t count)
 {
-    assert(count > 0);
-
     switch (op) {
         case OP_ADD:
             EVAL_LOOP
