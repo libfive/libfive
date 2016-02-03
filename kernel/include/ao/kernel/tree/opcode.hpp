@@ -21,5 +21,9 @@ enum Opcode
     OP_SUB,
     OP_DIV,
 
+    // Dummy opcodes used to select the left or right-hand side of a function
+    // (used when one of the children is disabled)
+    OP_A,
+    OP_B,
     LAST_OP,
 };

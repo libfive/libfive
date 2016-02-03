@@ -39,6 +39,8 @@ size_t Token::args(Opcode op)
         case OP_DIV: return 2;
 
         case INVALID: // fallthrough
+        case OP_A:
+        case OP_B:
         case LAST_OP: return -1;
     }
 }

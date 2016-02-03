@@ -76,6 +76,12 @@ inline void evalClause(Opcode op, Result* a, Result* b, Result& result, size_t c
             EVAL_LOOP
             result.set<T>(_abs(a->get<T>(i)), i);
             break;
+        case OP_A:
+            EVAL_LOOP
+            result.set<T>(a->get<T>(i), i);
+        case OP_B:
+            EVAL_LOOP
+            result.set<T>(b->get<T>(i), i);
         case INVALID:
         case OP_CONST:
         case OP_MUTABLE:
@@ -140,6 +146,12 @@ inline void evalClause<__m256>(Opcode op, Result* __restrict a, Result* __restri
             result.set(_mm256_andnot_ps(a->get<__m256>(i),
                                            _mm256_set1_ps(-0.0f)), i);
             break;
+        case OP_A:
+            EVAL_LOOP
+            result.set(a->get<__m256>(i), i);
+        case OP_B:
+            EVAL_LOOP
+            result.set(b->get<__m256>(i), i);
         case INVALID:
         case OP_CONST:
         case OP_MUTABLE:
