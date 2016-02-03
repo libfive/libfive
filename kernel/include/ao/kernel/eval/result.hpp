@@ -34,7 +34,7 @@ struct Result {
     void set(const T* ts, size_t n=count<T>());
 
     /*
-     *  Template for lookups by type (used in eval's inner loop)
+     *  Template for lookups by type
      */
     template <class T>
     T get(size_t index) const;
