@@ -42,8 +42,8 @@ public:
      *  Stores the most recent Interval evaluation in the mutable_value slot
      *  and set CLAUSE_FLAG_DISABLED
      */
-    void disable();
-    void enable();
+    void disable() {   setFlag(CLAUSE_FLAG_DISABLED); }
+    void enable()  { clearFlag(CLAUSE_FLAG_DISABLED); }
 
 protected:
     /*  Opcode for this clause  */

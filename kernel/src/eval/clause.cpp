@@ -83,15 +83,3 @@ bool Clause::checkDisabled()
     }
     return false;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-void Clause::disable()
-{
-    setFlag(CLAUSE_FLAG_DISABLED);
-}
-
-void Clause::enable()
-{
-    clearFlag(CLAUSE_FLAG_DISABLED);
-}
