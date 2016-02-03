@@ -79,9 +79,11 @@ inline void evalClause(Opcode op, Result* a, Result* b, Result& result, size_t c
         case OP_A:
             EVAL_LOOP
             result.set<T>(a->get<T>(i), i);
+            break;
         case OP_B:
             EVAL_LOOP
             result.set<T>(b->get<T>(i), i);
+            break;
         case INVALID:
         case OP_CONST:
         case OP_MUTABLE:
@@ -149,9 +151,11 @@ inline void evalClause<__m256>(Opcode op, Result* __restrict a, Result* __restri
         case OP_A:
             EVAL_LOOP
             result.set(a->get<__m256>(i), i);
+            break;
         case OP_B:
             EVAL_LOOP
             result.set(b->get<__m256>(i), i);
+            break;
         case INVALID:
         case OP_CONST:
         case OP_MUTABLE:
@@ -171,9 +175,30 @@ inline const T* Evaluator::evalCore(size_t count)
     {
         for (size_t i=0; i < row.active; ++i)
         {
-            Result* a = row[i]->a ? &row[i]->a->result : nullptr;
-            Result* b = row[i]->b ? &row[i]->b->result : nullptr;
-            evalClause<T>(row[i]->op, a, b, row[i]->result, count);
+            auto op = row[i]->op;
+            Result* a = nullptr;
+            Result* b = nullptr;
+
+            // Customize the opcode and result pointers depending on which
+            // branches of the tree are enabled.
+            if (row[i]->a)
+            {
+                a = &row[i]->a->result;
+                if (row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_B;
+                }
+            }
+            if (row[i]->b)
+            {
+                b = &row[i]->b->result;
+                if (row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_A;
+                }
+            }
+
+            evalClause<T>(op, a, b, row[i]->result, count);
         }
     }
     return root->result.ptr<T>();
