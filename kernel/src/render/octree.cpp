@@ -94,7 +94,7 @@ Octree* Octree::Render(Tree* t, const Region& r)
 
 glm::vec3 Octree::pos(uint8_t i) const
 {
-    return {i & 4 ? X.upper() : X.lower(),
-            i & 2 ? Y.upper() : Y.lower(),
-            i & 1 ? Z.upper() : Z.lower()};
+    return {i & AXIS_X ? X.upper() : X.lower(),
+            i & AXIS_Y ? Y.upper() : Y.lower(),
+            i & AXIS_Z ? Z.upper() : Z.lower()};
 }

@@ -34,6 +34,10 @@ public:
      */
     Octree* child(uint8_t i) const { return children[i].get(); }
 
+    /*  Enumerator to refer to octree axes  */
+    enum Axis { AXIS_X = 4,
+                AXIS_Y = 2,
+                AXIS_Z = 1 };
 protected:
     /*  Pointers to children octrees (either all populated or all null)  */
     std::array<std::unique_ptr<Octree>, 8> children;
