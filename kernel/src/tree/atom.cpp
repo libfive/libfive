@@ -54,6 +54,8 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case OP_Z:      os << "Z"; break;
 
         case LAST_OP:   // Fallthrough!
+        case OP_A:
+        case OP_B:
         case INVALID:   assert(false);
     }
     return os;

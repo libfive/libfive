@@ -42,25 +42,8 @@ public:
      *  Stores the most recent Interval evaluation in the mutable_value slot
      *  and set CLAUSE_FLAG_DISABLED
      */
-    void disable();
-    void enable();
-
-    /*
-     *  Returns results.get<T>(i) if this clause is enabled,
-     *  T(mutable_value) otherwise
-     */
-    template <class T>
-    T get(size_t index) const
-    {
-        if (flags & CLAUSE_FLAG_DISABLED)
-        {
-            return T(mutable_value);
-        }
-        else
-        {
-            return result.get<T>(index);
-        }
-    }
+    void disable() {   setFlag(CLAUSE_FLAG_DISABLED); }
+    void enable()  { clearFlag(CLAUSE_FLAG_DISABLED); }
 
 protected:
     /*  Opcode for this clause  */
@@ -84,21 +67,3 @@ protected:
 
     friend class Evaluator;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-
-// Template specialization to properly construct __m256 types
-#ifdef __AVX__
-template <>
-inline __m256 Clause::get<__m256>(size_t index) const
-{
-    if (flags & CLAUSE_FLAG_DISABLED)
-    {
-        return _mm256_set1_ps(mutable_value);
-    }
-    else
-    {
-        return result.get<__m256>(index);
-    }
-}
-#endif

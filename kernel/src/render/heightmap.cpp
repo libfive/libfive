@@ -93,9 +93,24 @@ struct NormalRenderer
 static void pixels(Evaluator* e, const Subregion& r,
                    DepthImage& depth, NormalImage& norm)
 {
-    const float* out = e->eval(r);
+    size_t index = 0;
 
-    int index = 0;
+    // Flatten the region in a particular order
+    // (which needs to be obeyed by anything unflattening results)
+    SUBREGION_ITERATE_XYZ(r)
+    {
+        e->setPoint(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
+    }
+
+#ifdef __AVX__
+    e->packAVX();
+    e->evalCore<__m256>(r.voxels());
+    const float* out = e->unpackAVX();
+#else
+    const float* out = e->evalCore<float>(r.voxels());
+#endif
+
+    index = 0;
 
     // Helper struct to render normals
     NormalRenderer nr(e, r, norm);

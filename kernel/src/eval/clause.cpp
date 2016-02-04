@@ -83,16 +83,3 @@ bool Clause::checkDisabled()
     }
     return false;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-void Clause::disable()
-{
-    mutable_value = result.get<Interval>(0).lower();
-    setFlag(CLAUSE_FLAG_DISABLED);
-}
-
-void Clause::enable()
-{
-    clearFlag(CLAUSE_FLAG_DISABLED);
-}

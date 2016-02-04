@@ -116,39 +116,6 @@ void Evaluator::pop()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const float* Evaluator::eval(const Subregion& r)
-{
-    assert(r.voxels() <= Result::count<float>());
-
-    size_t index = 0;
-
-    // Flatten the region in a particular order
-    // (which needs to be obeyed by anything unflattening results)
-    SUBREGION_ITERATE_XYZ(r)
-    {
-        X->result.set<float>(r.X.pos(i), index);
-        Y->result.set<float>(r.Y.pos(j), index);
-        Z->result.set<float>(r.Z.pos(r.Z.size - k - 1), index);
-        index++;
-    }
-
-#ifdef __AVX__
-    X->result.packAVX();
-    Y->result.packAVX();
-    Z->result.packAVX();
-
-    evalCore<__m256>(r.voxels());
-
-    root->result.unpackAVX();
-#else
-    evalCore<float>(r.voxels());
-#endif
-
-    return root->result.ptr<float>();
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 Clause* Evaluator::newClause(const Atom* m,
                              std::unordered_map<const Atom*, Clause*>& clauses)
 {
@@ -170,3 +137,20 @@ double Evaluator::utilization() const
 
     return active / total;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+#ifdef __AVX__
+void Evaluator::packAVX()
+{
+    X->result.packAVX();
+    Y->result.packAVX();
+    Z->result.packAVX();
+}
+
+const float* Evaluator::unpackAVX()
+{
+    root->result.unpackAVX();
+    return root->result.ptr<float>();
+}
+#endif

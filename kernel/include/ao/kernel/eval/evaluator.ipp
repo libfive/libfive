@@ -31,50 +31,53 @@ inline float _abs(const float& a)
 #define EVAL_LOOP for (size_t i=0; i < count; ++i)
 
 template <class T>
-inline void Evaluator::evalClause(Clause* m, size_t count)
+inline void clause(Opcode op, T* __restrict a, T* __restrict b,
+                   T* __restrict out, size_t count)
 {
-    switch (m->op) {
+    switch (op) {
         case OP_ADD:
             EVAL_LOOP
-            m->result.set<T>(m->a->get<T>(i) +
-                             m->b->get<T>(i), i);
+            out[i] = a[i] + b[i];
             break;
         case OP_MUL:
             EVAL_LOOP
-            m->result.set<T>(m->a->get<T>(i) *
-                             m->b->get<T>(i), i);
+            out[i] = a[i] * b[i];
             break;
         case OP_MIN:
             EVAL_LOOP
-            m->result.set<T>(_min(m->a->get<T>(i),
-                                  m->b->get<T>(i)), i);
+            out[i] = _min(a[i], b[i]);
             break;
         case OP_MAX:
             EVAL_LOOP
-            m->result.set<T>(_max(m->a->get<T>(i),
-                                  m->b->get<T>(i)), i);
+            out[i] = _max(a[i], b[i]);
             break;
         case OP_SUB:
             EVAL_LOOP
-            m->result.set<T>(m->a->get<T>(i) -
-                             m->b->get<T>(i), i);
+            out[i] = a[i] - b[i];
             break;
         case OP_DIV:
             EVAL_LOOP
-            m->result.set<T>(m->a->get<T>(i) /
-                             m->b->get<T>(i), i);
+            out[i] = a[i] / b[i];
             break;
         case OP_SQRT:
             EVAL_LOOP
-            m->result.set<T>(sqrt(m->a->get<T>(i)), i);
+            out[i] = sqrt(a[i]);
             break;
         case OP_NEG:
             EVAL_LOOP
-            m->result.set<T>(-m->a->get<T>(i), i);
+            out[i] = -a[i];
             break;
         case OP_ABS:
             EVAL_LOOP
-            m->result.set<T>(_abs(m->a->get<T>(i)), i);
+            out[i] = _abs(a[i]);
+            break;
+        case OP_A:
+            EVAL_LOOP
+            out[i] = a[i];
+            break;
+        case OP_B:
+            EVAL_LOOP
+            out[i] = b[i];
             break;
         case INVALID:
         case OP_CONST:
@@ -91,54 +94,53 @@ inline void Evaluator::evalClause(Clause* m, size_t count)
 // Partial template specialization for SIMD evaluation
 #define EVAL_LOOP for (size_t i=0; i <= (count - 1)/8; ++i)
 template <>
-inline void Evaluator::evalClause<__m256>(Clause* m, size_t count)
+inline void clause<__m256>(Opcode op, __m256* __restrict a, __m256* __restrict b,
+                           __m256* __restrict out, size_t count)
 {
-    assert(count > 0);
-
-    switch (m->op) {
+    switch (op) {
         case OP_ADD:
             EVAL_LOOP
-            m->result.set(_mm256_add_ps(m->a->get<__m256>(i),
-                                        m->b->get<__m256>(i)), i);
+            out[i] = _mm256_add_ps(a[i], b[i]);
             break;
         case OP_MUL:
             EVAL_LOOP
-            m->result.set(_mm256_mul_ps(m->a->get<__m256>(i),
-                                        m->b->get<__m256>(i)), i);
+            out[i] = _mm256_mul_ps(a[i], b[i]);
             break;
         case OP_MIN:
             EVAL_LOOP
-            m->result.set(_mm256_min_ps(m->a->get<__m256>(i),
-                                        m->b->get<__m256>(i)), i);
+            out[i] = _mm256_min_ps(a[i], b[i]);
             break;
         case OP_MAX:
             EVAL_LOOP
-            m->result.set(_mm256_max_ps(m->a->get<__m256>(i),
-                                        m->b->get<__m256>(i)), i);
+            out[i] = _mm256_max_ps(a[i], b[i]);
             break;
         case OP_SUB:
             EVAL_LOOP
-            m->result.set(_mm256_sub_ps(m->a->get<__m256>(i),
-                                        m->b->get<__m256>(i)), i);
+            out[i] = _mm256_sub_ps(a[i], b[i]);
             break;
         case OP_DIV:
             EVAL_LOOP
-            m->result.set(_mm256_div_ps(m->a->get<__m256>(i),
-                                        m->b->get<__m256>(i)), i);
+            out[i] = _mm256_div_ps(a[i], b[i]);
             break;
         case OP_SQRT:
             EVAL_LOOP
-            m->result.set(_mm256_sqrt_ps(m->a->get<__m256>(i)), i);
+            out[i] = _mm256_sqrt_ps(a[i]);
             break;
         case OP_NEG:
             EVAL_LOOP
-            m->result.set(_mm256_mul_ps(m->a->get<__m256>(i),
-                                        _mm256_set1_ps(-1)), i);
+            out[i] = _mm256_mul_ps(a[i], _mm256_set1_ps(-1));
             break;
         case OP_ABS:
             EVAL_LOOP
-            m->result.set(_mm256_andnot_ps(m->a->get<__m256>(i),
-                                           _mm256_set1_ps(-0.0f)), i);
+            out[i] = _mm256_andnot_ps(a[i], _mm256_set1_ps(-0.0f));
+            break;
+        case OP_A:
+            EVAL_LOOP
+            out[i] = a[i];
+            break;
+        case OP_B:
+            EVAL_LOOP
+            out[i] = b[i];
             break;
         case INVALID:
         case OP_CONST:
@@ -159,7 +161,30 @@ inline const T* Evaluator::evalCore(size_t count)
     {
         for (size_t i=0; i < row.active; ++i)
         {
-            evalClause<T>(row[i], count);
+            auto op = row[i]->op;
+            T* a = nullptr;
+            T* b = nullptr;
+
+            // Customize the opcode and result pointers depending on which
+            // branches of the tree are enabled.
+            if (row[i]->a)
+            {
+                a = row[i]->a->result.ptr<T>();
+                if (row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_B;
+                }
+            }
+            if (row[i]->b)
+            {
+                b = row[i]->b->result.ptr<T>();
+                if (row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_A;
+                }
+            }
+
+            clause<T>(op, a, b, row[i]->result.ptr<T>(), count);
         }
     }
     return root->result.ptr<T>();
@@ -168,10 +193,7 @@ inline const T* Evaluator::evalCore(size_t count)
 template <class T>
 inline T Evaluator::eval(T x, T y, T z)
 {
-    X->result.set<T>(x, 0);
-    Y->result.set<T>(y, 0);
-    Z->result.set<T>(z, 0);
-
+    setPoint(x, y, z, 0);
     return evalCore<T>(1)[0];
 }
 
