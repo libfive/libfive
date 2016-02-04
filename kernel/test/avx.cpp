@@ -1,5 +1,8 @@
 #include <catch/catch.hpp>
 
+#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/eval/result.hpp"
 
 #ifdef __AVX__
@@ -46,5 +49,39 @@ TEST_CASE("AVX load / store")
         success &= r.get<float>(i) == i;
     }
     REQUIRE(success);
+}
+
+TEST_CASE("Vectorized performance")
+{
+    const float N = 1000;
+
+    Store s;
+    Tree t(&s, s.operation(OP_ADD, s.X(), s.Y()));
+    Evaluator e(&t);
+
+    for (int i=0; i < 256; ++i)
+    {
+        e.setPoint<float>(i, 2*i, 0, i);
+    }
+    e.packAVX();
+
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+    for (int i=0; i < N; ++i)
+    {
+        e.evalCore<float>(256);
+    }
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> ft = end - start;
+
+    start = std::chrono::system_clock::now();
+    for (int i=0; i < N; ++i)
+    {
+        e.evalCore<__m256>(256);
+    }
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> mt = end - start;
+
+    REQUIRE(mt.count() < ft.count());
 }
 #endif
