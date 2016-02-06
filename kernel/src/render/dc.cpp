@@ -162,7 +162,14 @@ void Worker::edge(const Octree* a, const Octree* b,
         c->type == Octree::LEAF && d->type == Octree::LEAF &&
         d->corner(0) != d->corner(axis))
     {
-        quad(a, b, c, d);
+        if (d->corner(0))
+        {
+            quad(a, b, c, d);
+        }
+        else
+        {
+            quad(a, c, b, d);
+        }
     }
     else if (a->type == Octree::BRANCH || b->type == Octree::BRANCH ||
              c->type == Octree::BRANCH || d->type == Octree::BRANCH)
