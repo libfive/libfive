@@ -38,7 +38,7 @@ struct Worker
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Octree::Axis Q(Octree::Axis a)
+Octree::Axis Worker::Q(Octree::Axis a)
 {
     return (a == Octree::AXIS_X) ? Octree::AXIS_Y :
            (a == Octree::AXIS_Y) ? Octree::AXIS_Z
