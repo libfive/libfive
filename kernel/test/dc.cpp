@@ -13,7 +13,7 @@ TEST_CASE("Small sphere mesh")
                s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                                    s.operation(OP_MUL, s.Z(), s.Z())),
-               s.constant(1)));
+               s.constant(0.5)));
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
 
