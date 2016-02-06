@@ -12,6 +12,11 @@ struct Mesh
     void writeSTL(std::string filename);
     void writeSTL(std::ostream& out);
 
+    /*
+     *  Returns the unit-length normal of the i'th triangle
+     */
+    glm::vec3 norm(unsigned i) const;
+
     /*  Vertices in 3D space  */
     std::vector<glm::vec3> verts;
 

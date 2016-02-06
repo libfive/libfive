@@ -1,6 +1,8 @@
 #include <fstream>
 #include <string>
 
+#include <glm/geometric.hpp>
+
 #include "ao/kernel/format/mesh.hpp"
 
 void Mesh::writeSTL(std::ostream& out)
@@ -44,4 +46,15 @@ void Mesh::writeSTL(std::string filename)
     std::ofstream file;
     file.open(filename, std::ios::out);
     writeSTL(file);
+}
+
+glm::vec3 Mesh::norm(unsigned i) const
+{
+    assert(i < tris.size());
+
+    const auto a = verts[tris[i][1]] - verts[tris[i][0]];
+    const auto b = verts[tris[i][2]] - verts[tris[i][0]];
+
+    const auto n = glm::cross(a, b);
+    return glm::normalize(n);
 }
