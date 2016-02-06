@@ -85,7 +85,7 @@ TEST_CASE("Octree intersections")
         std::unique_ptr<Octree> out(Octree::Render(&t, r));
         REQUIRE(out->type == Octree::BRANCH);
 
-        REQUIRE(out->intersections.size() == 8);
+        REQUIRE(out->intersections.size() == 9);
         for (auto i : out->intersections)
         {
             auto err = fabs(i.pos.x - 0.75);

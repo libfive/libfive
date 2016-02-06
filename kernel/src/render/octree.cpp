@@ -1,3 +1,6 @@
+#include <set>
+#include <glm/geometric.hpp>
+
 #include "ao/kernel/render/octree.hpp"
 #include "ao/kernel/render/region.hpp"
 
@@ -149,6 +152,9 @@ std::vector<Octree::Intersection> Octree::findIntersections(
         Evaluator* eval) const
 {
     std::vector<Intersection> intersections;
+
+    // If this is a leaf cell, check every edge and use binary search to
+    // find intersections on edges that have mismatched signs
     if (type == LEAF)
     {
         for (auto e : cellEdges)
@@ -168,14 +174,25 @@ std::vector<Octree::Intersection> Octree::findIntersections(
             }
         }
     }
+    // If this is a branch cell, then accumulate intersections from all the
+    // children (de-duplicating to avoid weighting intersections incorrectly)
     else if (type == BRANCH)
     {
-        // Accumulate intersections from child branches
+        std::list<glm::vec3> pts;
         for (uint8_t i=0; i < 8; ++i)
         {
-            intersections.insert(intersections.end(),
-                    child(i)->intersections.begin(),
-                    child(i)->intersections.end());
+            for (auto n : child(i)->intersections)
+            {
+                // Only store this intersection point if it hasn't been stored
+                // already (to a given epsilon of floating-point error)
+                if (!std::any_of(pts.begin(), pts.end(),
+                        [&](glm::vec3 p)
+                        { return glm::length(n.pos - p) < 1e-8; }))
+                {
+                    pts.push_back(n.pos);
+                    intersections.push_back(n);
+                }
+            }
         }
     }
     return intersections;
