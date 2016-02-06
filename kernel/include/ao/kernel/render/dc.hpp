@@ -59,15 +59,15 @@ namespace DC
      *  Returns a quadratic error function based on surface intersections
      *  and normals along the octree's edges
      */
-    QEF getQEF(Octree* o, Evaluator* e);
+    QEF getQEF(const Octree* o, Evaluator* e);
 
     /*
      *  Checks to see whether a cell should be collapsed (using its QEF)
      */
-    bool shouldCollapse(Octree* o);
+    bool shouldCollapse(const Octree* o);
 
     /*
      *  Returns the point at the center of the cell (using its QEF)
      */
-    glm::vec3 center(Octree* o);
+    glm::vec3 center(const Octree* o);
 };

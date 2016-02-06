@@ -32,7 +32,8 @@ public:
     /*
      *  Look up a child octree
      */
-    Octree* child(uint8_t i) const { return children[i].get(); }
+    const Octree* child(uint8_t i) const
+    { return type == BRANCH ? children[i].get() : this; }
 
     /*  Enumerator to refer to octree axes  */
     enum Axis { AXIS_X = 4,

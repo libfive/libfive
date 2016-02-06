@@ -17,14 +17,16 @@ struct Worker
     /*
      *  Mutually recursive functions to get a mesh from an Octree
      */
-    void cell(Octree* c);
-    void face(Octree* a, Octree* b, Octree::Axis axis);
-    void edge(Octree* a, Octree* b, Octree* c, Octree* d, Octree::Axis axis);
+    void cell(const Octree* c);
+    void face(const Octree* a, const Octree* b, Octree::Axis axis);
+    void edge(const Octree* a, const Octree* b,
+              const Octree* c, const Octree* d, Octree::Axis axis);
 
     /*
      *  Write out the given quad into the mesh
      */
-    void quad(Octree* a, Octree* b, Octree* c, Octree* d);
+    void quad(const Octree* a, const Octree* b,
+              const Octree* c, const Octree* d);
 
     /*
      *  Return new axes such that a, q, r is right-handed
@@ -32,7 +34,7 @@ struct Worker
     static Octree::Axis Q(Octree::Axis a);
     static Octree::Axis R(Octree::Axis a);
 
-    std::map<Octree*, unsigned> verts;
+    std::map<const Octree*, unsigned> verts;
     Mesh mesh;
 };
 
@@ -52,7 +54,7 @@ Octree::Axis Worker::R(Octree::Axis a)
                                  : Octree::AXIS_Y;
 }
 
-void Worker::cell(Octree* c)
+void Worker::cell(const Octree* c)
 {
     if (c->type == Octree::BRANCH)
     {
@@ -132,7 +134,7 @@ void Worker::cell(Octree* c)
     }
 }
 
-void Worker::face(Octree* a, Octree* b, Octree::Axis axis)
+void Worker::face(const Octree* a, const Octree* b, Octree::Axis axis)
 {
     if (a->type == Octree::BRANCH || b->type == Octree::BRANCH)
     {
@@ -152,7 +154,8 @@ void Worker::face(Octree* a, Octree* b, Octree::Axis axis)
     }
 }
 
-void Worker::edge(Octree* a, Octree* b, Octree* c, Octree* d,
+void Worker::edge(const Octree* a, const Octree* b,
+                  const Octree* c, const Octree* d,
                   Octree::Axis axis)
 {
     if (a->type == Octree::LEAF && b->type == Octree::LEAF &&
@@ -173,9 +176,10 @@ void Worker::edge(Octree* a, Octree* b, Octree* c, Octree* d,
     }
 }
 
-void Worker::quad(Octree* a, Octree* b, Octree* c, Octree* d)
+void Worker::quad(const Octree* a, const Octree* b,
+                  const Octree* c, const Octree* d)
 {
-    auto index = [&](Octree* o)
+    auto index = [&](const Octree* o)
     {
         auto i = verts.find(o);
         if (i == verts.end())
@@ -207,13 +211,13 @@ Mesh Render(Tree* t, const Region& r)
     return w.mesh;
 }
 
-bool shouldCollapse(Octree* o)
+bool shouldCollapse(const Octree* o)
 {
     (void)o;
     return false;
 }
 
-glm::vec3 center(Octree* o)
+glm::vec3 center(const Octree* o)
 {
     return {(o->X.lower() + o->X.upper()) / 2,
             (o->Y.lower() + o->Y.upper()) / 2,
