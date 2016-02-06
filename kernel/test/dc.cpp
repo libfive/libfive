@@ -1,10 +1,12 @@
 #include <catch/catch.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 #include "ao/kernel/render/dc.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/store.hpp"
+
+// Overloaded toString for glm::vec3
+#include "glm.hpp"
 
 TEST_CASE("Small sphere mesh")
 {
@@ -67,8 +69,6 @@ TEST_CASE("Face normals")
             auto m = DC::Render(&t, r);
             for (unsigned j=0; j < m.tris.size(); ++j)
             {
-                CAPTURE(glm::to_string(m.norm(j)));
-                CAPTURE(glm::to_string(norm[i]));
                 REQUIRE(m.norm(j) == norm[i]);
             }
         }
@@ -83,8 +83,6 @@ TEST_CASE("Face normals")
             auto m = DC::Render(&t, r);
             for (unsigned j=0; j < m.tris.size(); ++j)
             {
-                CAPTURE(glm::to_string(m.norm(j)));
-                CAPTURE(glm::to_string(-norm[i]));
                 REQUIRE(m.norm(j) == -norm[i]);
             }
         }

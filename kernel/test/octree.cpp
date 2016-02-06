@@ -1,12 +1,13 @@
 #include <catch/catch.hpp>
 
-#include <glm/gtx/string_cast.hpp>
-
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/store.hpp"
 
 #include "ao/kernel/render/octree.hpp"
 #include "ao/kernel/render/region.hpp"
+
+// Overloaded toString for glm::vec3
+#include "glm.hpp"
 
 TEST_CASE("Octree coordinates")
 {
@@ -33,8 +34,6 @@ TEST_CASE("Octree coordinates")
     // Check that Subregion::octsect and Octree::pos have consistent ordering
     for (int i=0; i < 8; ++i)
     {
-        CAPTURE(glm::to_string(out->pos(i)));
-        CAPTURE(glm::to_string(out->child(i)->pos(i)));
         REQUIRE(out->pos(i) == out->child(i)->pos(i));
     }
 }
