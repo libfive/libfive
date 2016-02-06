@@ -107,4 +107,6 @@ protected:
 
     /*  This is a hard-coded list of axis pairs that represent cell edges  */
     const static std::pair<unsigned, unsigned> cellEdges[12];
+
+    const static int SEARCH_COUNT = 8;
 };

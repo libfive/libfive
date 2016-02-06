@@ -130,7 +130,7 @@ Octree::Intersection Octree::searchEdge(
     auto d = (a - b) / 4.0f;
 
     // Binary search for intersection
-    for (int i=0; i < 8; ++i)
+    for (int i=0; i < SEARCH_COUNT; ++i)
     {
         if (eval->eval(p.x, p.y, p.z) < 0)
         {
@@ -178,7 +178,15 @@ std::vector<Octree::Intersection> Octree::findIntersections(
     // children (de-duplicating to avoid weighting intersections incorrectly)
     else if (type == BRANCH)
     {
+        // pts stores a list of unique points (within some epsilon)
         std::list<glm::vec3> pts;
+
+        // Compute epsilon from the cell size and edge search count
+        const float epsilon = std::max(
+                {X.upper() - X.lower(),
+                 Y.upper() - Y.lower(),
+                 Z.upper() - Z.lower()}) / (4 << SEARCH_COUNT);
+
         for (uint8_t i=0; i < 8; ++i)
         {
             for (auto n : child(i)->intersections)
@@ -187,7 +195,7 @@ std::vector<Octree::Intersection> Octree::findIntersections(
                 // already (to a given epsilon of floating-point error)
                 if (!std::any_of(pts.begin(), pts.end(),
                         [&](glm::vec3 p)
-                        { return glm::length(n.pos - p) < 1e-8; }))
+                        { return glm::length(n.pos - p) < epsilon; }))
                 {
                     pts.push_back(n.pos);
                     intersections.push_back(n);
