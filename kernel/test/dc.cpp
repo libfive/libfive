@@ -21,3 +21,32 @@ TEST_CASE("Small sphere mesh")
 
     REQUIRE(m.tris.size() == 12);
 }
+
+TEST_CASE("Face counts")
+{
+    Store s;
+
+    SECTION("Single level of recursion")
+    {
+        Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
+
+        for (Token* axis : {s.X(), s.Y(), s.Z()})
+        {
+            Tree t(&s, s.operation(OP_ADD, axis, s.constant(0.75)));
+            auto m = DC::Render(&t, r);
+            REQUIRE(m.tris.size() == 2);
+        }
+    }
+
+    SECTION("Two levels of recursion")
+    {
+        Region r({-1, 1}, {-1, 1}, {-1, 1}, 2);
+
+        for (Token* axis : {s.X(), s.Y(), s.Z()})
+        {
+            Tree t(&s, s.operation(OP_ADD, axis, s.constant(0.75)));
+            auto m = DC::Render(&t, r);
+            REQUIRE(m.tris.size() == 18);
+        }
+    }
+}
