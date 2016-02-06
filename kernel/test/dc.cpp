@@ -1,4 +1,5 @@
 #include <catch/catch.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include "ao/kernel/render/dc.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
@@ -47,6 +48,45 @@ TEST_CASE("Face counts")
             Tree t(&s, s.operation(OP_ADD, axis, s.constant(0.75)));
             auto m = DC::Render(&t, r);
             REQUIRE(m.tris.size() == 18);
+        }
+    }
+}
+
+TEST_CASE("Face normals")
+{
+    Store s;
+    Token* axis[3] = {s.X(), s.Y(), s.Z()};
+    glm::vec3 norm[3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 2);
+
+    SECTION("Positive")
+    {
+        for (int i=0; i < 3; ++i)
+        {
+            Tree t(&s, s.operation(OP_ADD, axis[i], s.constant(0.75)));
+            auto m = DC::Render(&t, r);
+            for (unsigned j=0; j < m.tris.size(); ++j)
+            {
+                CAPTURE(glm::to_string(m.norm(j)));
+                CAPTURE(glm::to_string(norm[i]));
+                REQUIRE(m.norm(j) == norm[i]);
+            }
+        }
+    }
+
+    SECTION("Negative")
+    {
+        for (int i=0; i < 3; ++i)
+        {
+            Tree t(&s, s.operation(OP_NEG,
+                       s.operation(OP_ADD, axis[i], s.constant(0.75))));
+            auto m = DC::Render(&t, r);
+            for (unsigned j=0; j < m.tris.size(); ++j)
+            {
+                CAPTURE(glm::to_string(m.norm(j)));
+                CAPTURE(glm::to_string(-norm[i]));
+                REQUIRE(m.norm(j) == -norm[i]);
+            }
         }
     }
 }
