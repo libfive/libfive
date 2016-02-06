@@ -59,3 +59,37 @@ TEST_CASE("Octree values")
         REQUIRE(!out->corner(i));
     }
 }
+
+TEST_CASE("Octree intersections")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB, s.X(), s.constant(0.75)));
+
+    SECTION("Leaf")
+    {
+        Region r({0, 1}, {0, 1}, {0, 1}, 1);
+        std::unique_ptr<Octree> out(Octree::Render(&t, r));
+        REQUIRE(out->type == Octree::LEAF);
+
+        REQUIRE(out->intersections.size() == 4);
+        for (auto i : out->intersections)
+        {
+            auto err = fabs(i.pos.x - 0.75);
+            REQUIRE(err < 0.125);
+        }
+    }
+
+    SECTION("Branch")
+    {
+        Region r({0, 1}, {0, 1}, {0, 1}, 2);
+        std::unique_ptr<Octree> out(Octree::Render(&t, r));
+        REQUIRE(out->type == Octree::BRANCH);
+
+        REQUIRE(out->intersections.size() == 8);
+        for (auto i : out->intersections)
+        {
+            auto err = fabs(i.pos.x - 0.75);
+            REQUIRE(err < 0.125);
+        }
+    }
+}

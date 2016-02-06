@@ -2,10 +2,13 @@
 
 #include <array>
 #include <memory>
+#include <vector>
 
+#include <glm/vec3.hpp>
 #include <glm/vec3.hpp>
 
 #include "ao/kernel/eval/interval.hpp"
+#include "ao/kernel/eval/gradient.hpp"
 
 class Region;
 class Subregion;
@@ -39,6 +42,13 @@ public:
     enum Axis { AXIS_X = 4,
                 AXIS_Y = 2,
                 AXIS_Z = 1 };
+
+    /*  Struct to store Hermite intersection data  */
+    struct Intersection {
+        glm::vec3 pos;
+        Gradient value;
+    };
+
 protected:
     /*  Pointers to children octrees (either all populated or all null)  */
     std::array<std::unique_ptr<Octree>, 8> children;
@@ -52,6 +62,9 @@ public:
 
     /*  Cell type  */
     const enum Type { LEAF, BRANCH, EMPTY, FULL } type;
+
+    /*  Intersections where the shape crosses the cell  */
+    const std::vector<Intersection> intersections;
 
 protected:
     /*
@@ -70,6 +83,11 @@ protected:
     Type populateChildren(Evaluator* e, const Subregion& r);
 
     /*
+     *  Finds a set of gradients for the given region
+     */
+    std::vector<Intersection> findIntersections(Evaluator* e) const;
+
+    /*
      *  If all children are of the same type, collapse the node
      *  (returning the correct cell Type: BRANCH, FULL, or EMPTY)
      */
@@ -80,4 +98,13 @@ protected:
      *  (returning the correct cell Type: LEAF, FULL, or EMPTY)
      */
     Type collapseLeaf();
+
+    /*
+     *  Performs binary search along a cube's edge
+     *  eval(a) should be < 0 (inside the shape) and eval(b) should be outside
+     */
+    static Intersection searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e);
+
+    /*  This is a hard-coded list of axis pairs that represent cell edges  */
+    const static std::pair<unsigned, unsigned> cellEdges[12];
 };
