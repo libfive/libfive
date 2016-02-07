@@ -1,5 +1,5 @@
 Gerstner, T., and Pajarola, R. 2000.
-Topology preserving and controlled topology simplifying multiresolution isosurface extraction.
+"Topology preserving and controlled topology simplifying multiresolution isosurface extraction."
 IEEE Visualization 2000, 259–266.
 
 T. Ju, F. Losasso, S. Schaefer, and J. Warren,
