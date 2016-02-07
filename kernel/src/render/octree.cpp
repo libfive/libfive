@@ -133,8 +133,7 @@ const std::pair<unsigned, unsigned> Octree::cellEdges[12] =
      {AXIS_Z|AXIS_X, AXIS_Z|AXIS_X|AXIS_Y},
      {AXIS_Z|AXIS_Y, AXIS_Z|AXIS_Y|AXIS_X}};
 
-// Performs binary search between two points
-// eval(a) should be < 0 (inside the shape) and eval(b) should be outside
+
 Octree::Intersection Octree::searchEdge(
         glm::vec3 a, glm::vec3 b, Evaluator* eval)
 {
@@ -155,9 +154,12 @@ Octree::Intersection Octree::searchEdge(
         d /= 2;
     }
 
-    return {p, eval->eval(Gradient(p.x, {1, 0, 0}),
-                          Gradient(p.y, {0, 1, 0}),
-                          Gradient(p.z, {0, 0, 1}))};
+    // Calculate value and gradient at the given point
+    auto g = eval->eval(Gradient(p.x, {1, 0, 0}),
+                        Gradient(p.y, {0, 1, 0}),
+                        Gradient(p.z, {0, 0, 1}));
+
+    return {p, glm::normalize(g.d)};
 }
 
 void Octree::findIntersections(Evaluator* eval)
@@ -243,7 +245,7 @@ float Octree::findVertex()
     Eigen::MatrixX3f A(intersections.size(), 3);
     for (unsigned i=0; i < intersections.size(); ++i)
     {
-        auto d = intersections[i].value.d;
+        auto d = intersections[i].norm;
         A.row(i) << Eigen::Vector3f(d.x, d.y, d.z).transpose();
     }
 
@@ -261,7 +263,7 @@ float Octree::findVertex()
     Eigen::VectorXf B(intersections.size(), 1);
     for (unsigned i=0; i < intersections.size(); ++i)
     {
-        B.row(i) << glm::dot(intersections[i].value.d,
+        B.row(i) << glm::dot(intersections[i].norm,
                              intersections[i].pos - center);
     }
 

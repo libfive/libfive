@@ -52,7 +52,7 @@ public:
     /*  Struct to store Hermite intersection data  */
     struct Intersection {
         glm::vec3 pos;
-        Gradient value;
+        glm::vec3 norm;
     };
 
     /*
@@ -107,6 +107,9 @@ protected:
 
     /*
      *  Performs binary search along a cube's edge
+     *
+     *  The resulting Intersection's normal is of unit length
+     *
      *  eval(a) should be < 0 (inside the shape) and eval(b) should be outside
      */
     static Intersection searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e);
