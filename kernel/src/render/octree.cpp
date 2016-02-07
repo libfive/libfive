@@ -270,6 +270,11 @@ float Octree::findVertex()
     Eigen::Vector3f solution = svd.solve(B);
     vert = glm::vec3(solution.x(), solution.y(), solution.z()) + center;
 
+    // Clamp vertex to be within the bounding box
+    vert.x = std::min(X.upper(), std::max(vert.x, X.lower()));
+    vert.y = std::min(Y.upper(), std::max(vert.y, Y.lower()));
+    vert.z = std::min(Z.upper(), std::max(vert.z, Z.lower()));
+
     // Find and return QEF residual
     auto m = A * solution - B;
     return m.transpose() * m;
