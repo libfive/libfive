@@ -50,19 +50,13 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r)
 
 void Octree::collapseBranch()
 {
-    bool empty = true;
-    bool full = true;
-
-    for (uint8_t i=0; i < 8; ++i)
-    {
-        empty &= (children[i]->type == EMPTY);
-        full  &= (children[i]->type == FULL);
-    }
+    bool empty = std::all_of(children.begin(), children.end(),
+        [](std::unique_ptr<Octree>& o){ return o->type == EMPTY; });
+    bool full  = std::all_of(children.begin(), children.end(),
+        [](std::unique_ptr<Octree>& o){ return o->type == FULL; });
 
     if (empty || full)
     {
-        assert(empty != full);
-
         for (uint8_t i=0; i < 8; ++i)
         {
             children[i].reset();
@@ -73,18 +67,13 @@ void Octree::collapseBranch()
 
 void Octree::collapseLeaf()
 {
-    bool empty = true;
-    bool full = true;
-
-    for (uint8_t i=0; i < 8; ++i)
-    {
-        empty &= !corners[i];
-        full  &=  corners[i];
-    }
+    bool empty = std::all_of(corners.begin(), corners.end(),
+                             [](bool c){ return !c; });
+    bool full  = std::all_of(corners.begin(), corners.end(),
+                             [](bool c){ return c; });
 
     if (empty || full)
     {
-        assert(empty != full);
         type = empty ? EMPTY : FULL;
     }
 }
