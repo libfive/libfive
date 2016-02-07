@@ -14,6 +14,15 @@ Octree::Octree(Evaluator* e, const Subregion& r)
 {
     populateChildren(e, r);
     findIntersections(e);
+
+    if (type == BRANCH)
+    {
+        collapseBranch();
+    }
+    else
+    {
+        collapseLeaf();
+    }
 }
 
 void Octree::populateChildren(Evaluator* e, const Subregion& r)
@@ -28,7 +37,6 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r)
             corners[i] = children[i]->corners[i];
         }
         type = BRANCH;
-        collapseBranch();
     }
     // Otherwise, calculate corner values
     else
@@ -44,7 +52,6 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r)
             corners[i] = fs[i] < 0;
         }
         type = LEAF;
-        collapseLeaf();
     }
 }
 
@@ -54,6 +61,8 @@ void Octree::collapseBranch()
         [](std::unique_ptr<Octree>& o){ return o->type == EMPTY; });
     bool full  = std::all_of(children.begin(), children.end(),
         [](std::unique_ptr<Octree>& o){ return o->type == FULL; });
+    bool leafs = std::all_of(children.begin(), children.end(),
+        [](std::unique_ptr<Octree>& o){ return o->type != BRANCH; });
 
     if (empty || full)
     {
@@ -62,6 +71,10 @@ void Octree::collapseBranch()
             children[i].reset();
         }
         type = empty ? EMPTY : FULL;
+    }
+    else if (leafs)
+    {
+        // Check for leaf collapsing here
     }
 }
 
