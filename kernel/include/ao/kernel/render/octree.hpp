@@ -20,6 +20,12 @@ class Octree
 public:
     static Octree* Render(Tree* t, const Region& r);
 
+    /*  Enumerator that distinguishes between cell types  */
+    enum Type { LEAF, BRANCH, EMPTY, FULL };
+
+    /*  Enumerator to refer to octree axes  */
+    enum Axis { AXIS_X = 4, AXIS_Y = 2, AXIS_Z = 1 };
+
     /*
      *  Returns the position of the given corner
      *
@@ -38,10 +44,10 @@ public:
     const Octree* child(uint8_t i) const
     { return type == BRANCH ? children[i].get() : this; }
 
-    /*  Enumerator to refer to octree axes  */
-    enum Axis { AXIS_X = 4,
-                AXIS_Y = 2,
-                AXIS_Z = 1 };
+    /*
+     *  Returns this cell's type
+     */
+    Type getType() const { return type; }
 
     /*  Struct to store Hermite intersection data  */
     struct Intersection {
@@ -49,22 +55,11 @@ public:
         Gradient value;
     };
 
-protected:
-    /*  Pointers to children octrees (either all populated or all null)  */
-    std::array<std::unique_ptr<Octree>, 8> children;
-
-    /*  Array of filled states for the cell's corners  */
-    std::array<bool, 8> corners;
-
-public:
-    /*  Bounds for this octree  */
-    const Interval X, Y, Z;
-
-    /*  Cell type  */
-    const enum Type { LEAF, BRANCH, EMPTY, FULL } type;
-
-    /*  Intersections where the shape crosses the cell  */
-    const std::vector<Intersection> intersections;
+    /*
+     *  Returns the vector of intersections
+     */
+    const std::vector<Intersection>& getIntersections() const
+    { return intersections; }
 
 protected:
     /*
@@ -73,31 +68,30 @@ protected:
     Octree(Evaluator* e, const Subregion& r);
 
     /*
-     *  Splits a subregion and fills out child pointers
+     *  Splits a subregion and fills out child pointers and cell type
      *
      *  Saves corner gradients in corners array
      *  (either from children or calculated from the evaluator)
-     *
-     *  Returns the cell's type.
      */
-    Type populateChildren(Evaluator* e, const Subregion& r);
+    void populateChildren(Evaluator* e, const Subregion& r);
 
     /*
-     *  Finds a set of gradients for the given region
+     *  Stores edge-wise intersections for the cell,
+     *  storing them in the intersections vector
      */
-    std::vector<Intersection> findIntersections(Evaluator* e) const;
+    void findIntersections(Evaluator* e);
 
     /*
      *  If all children are of the same type, collapse the node
      *  (returning the correct cell Type: BRANCH, FULL, or EMPTY)
      */
-    Type collapseBranch();
+    void collapseBranch();
 
     /*
      *  If all corners are of the same sign, convert to FULL or EMPTY
      *  (returning the correct cell Type: LEAF, FULL, or EMPTY)
      */
-    Type collapseLeaf();
+    void collapseLeaf();
 
     /*
      *  Performs binary search along a cube's edge
@@ -105,8 +99,22 @@ protected:
      */
     static Intersection searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e);
 
+    /*  Bounds for this octree  */
+    const Interval X, Y, Z;
+
+    /*  Cell type  */
+    Type type;
+
+    /*  Intersections where the shape crosses the cell  */
+    std::vector<Intersection> intersections;
+
+    /*  Pointers to children octrees (either all populated or all null)  */
+    std::array<std::unique_ptr<Octree>, 8> children;
+
+    /*  Array of filled states for the cell's corners  */
+    std::array<bool, 8> corners;
+
     /*  This is a hard-coded list of axis pairs that represent cell edges  */
     const static std::pair<unsigned, unsigned> cellEdges[12];
-
     const static int SEARCH_COUNT = 8;
 };

@@ -10,14 +10,13 @@
 Octree::Octree(Evaluator* e, const Subregion& r)
     : X(r.X.lower(), r.X.upper()),
       Y(r.Y.lower(), r.Y.upper()),
-      Z(r.Z.lower(), r.Z.upper()),
-      type(populateChildren(e, r)),
-      intersections(findIntersections(e))
+      Z(r.Z.lower(), r.Z.upper())
 {
-    // Nothing to do here
+    populateChildren(e, r);
+    findIntersections(e);
 }
 
-Octree::Type Octree::populateChildren(Evaluator* e, const Subregion& r)
+void Octree::populateChildren(Evaluator* e, const Subregion& r)
 {
     // Subdivide and recurse if possible
     if (r.canSplit())
@@ -28,7 +27,8 @@ Octree::Type Octree::populateChildren(Evaluator* e, const Subregion& r)
             children[i].reset(new Octree(e, rs[i]));
             corners[i] = children[i]->corners[i];
         }
-        return collapseBranch();
+        type = BRANCH;
+        collapseBranch();
     }
     // Otherwise, calculate corner values
     else
@@ -43,11 +43,12 @@ Octree::Type Octree::populateChildren(Evaluator* e, const Subregion& r)
         {
             corners[i] = fs[i] < 0;
         }
-        return collapseLeaf();
+        type = LEAF;
+        collapseLeaf();
     }
 }
 
-Octree::Type Octree::collapseBranch()
+void Octree::collapseBranch()
 {
     bool empty = true;
     bool full = true;
@@ -66,12 +67,11 @@ Octree::Type Octree::collapseBranch()
         {
             children[i].reset();
         }
-        return empty ? EMPTY : FULL;
+        type = empty ? EMPTY : FULL;
     }
-    return BRANCH;
 }
 
-Octree::Type Octree::collapseLeaf()
+void Octree::collapseLeaf()
 {
     bool empty = true;
     bool full = true;
@@ -85,15 +85,8 @@ Octree::Type Octree::collapseLeaf()
     if (empty || full)
     {
         assert(empty != full);
-        return empty ? EMPTY : FULL;
+        type = empty ? EMPTY : FULL;
     }
-    return LEAF;
-}
-
-Octree* Octree::Render(Tree* t, const Region& r)
-{
-    Evaluator e(t);
-    return new Octree(&e, r.powerOfTwo());
 }
 
 glm::vec3 Octree::pos(uint8_t i) const
@@ -101,6 +94,12 @@ glm::vec3 Octree::pos(uint8_t i) const
     return {i & AXIS_X ? X.upper() : X.lower(),
             i & AXIS_Y ? Y.upper() : Y.lower(),
             i & AXIS_Z ? Z.upper() : Z.lower()};
+}
+
+Octree* Octree::Render(Tree* t, const Region& r)
+{
+    Evaluator e(t);
+    return new Octree(&e, r.powerOfTwo());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -148,11 +147,8 @@ Octree::Intersection Octree::searchEdge(
                           Gradient(p.z, 0, 0, 1))};
 }
 
-std::vector<Octree::Intersection> Octree::findIntersections(
-        Evaluator* eval) const
+void Octree::findIntersections(Evaluator* eval)
 {
-    std::vector<Intersection> intersections;
-
     // If this is a leaf cell, check every edge and use binary search to
     // find intersections on edges that have mismatched signs
     if (type == LEAF)
@@ -203,6 +199,5 @@ std::vector<Octree::Intersection> Octree::findIntersections(
             }
         }
     }
-    return intersections;
 }
 

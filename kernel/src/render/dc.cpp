@@ -56,7 +56,7 @@ Octree::Axis Worker::R(Octree::Axis a)
 
 void Worker::cell(const Octree* c)
 {
-    if (c->type == Octree::BRANCH)
+    if (c->getType() == Octree::BRANCH)
     {
         // Recurse, calling the cell procedure for every child
         for (uint8_t i=0; i < 8; ++i)
@@ -136,7 +136,7 @@ void Worker::cell(const Octree* c)
 
 void Worker::face(const Octree* a, const Octree* b, Octree::Axis axis)
 {
-    if (a->type == Octree::BRANCH || b->type == Octree::BRANCH)
+    if (a->getType() == Octree::BRANCH || b->getType() == Octree::BRANCH)
     {
         Octree::Axis q = Q(axis);
         Octree::Axis r = R(axis);
@@ -158,8 +158,8 @@ void Worker::edge(const Octree* a, const Octree* b,
                   const Octree* c, const Octree* d,
                   Octree::Axis axis)
 {
-    if (a->type == Octree::LEAF && b->type == Octree::LEAF &&
-        c->type == Octree::LEAF && d->type == Octree::LEAF &&
+    if (a->getType() == Octree::LEAF && b->getType() == Octree::LEAF &&
+        c->getType() == Octree::LEAF && d->getType() == Octree::LEAF &&
         d->corner(0) != d->corner(axis))
     {
         if (d->corner(0))
@@ -171,8 +171,8 @@ void Worker::edge(const Octree* a, const Octree* b,
             quad(a, c, b, d);
         }
     }
-    else if (a->type == Octree::BRANCH || b->type == Octree::BRANCH ||
-             c->type == Octree::BRANCH || d->type == Octree::BRANCH)
+    else if (a->getType() == Octree::BRANCH || b->getType() == Octree::BRANCH ||
+             c->getType() == Octree::BRANCH || d->getType() == Octree::BRANCH)
     {
         Octree::Axis q = Q(axis);
         Octree::Axis r = R(axis);
@@ -226,9 +226,7 @@ bool shouldCollapse(const Octree* o)
 
 glm::vec3 center(const Octree* o)
 {
-    return {(o->X.lower() + o->X.upper()) / 2,
-            (o->Y.lower() + o->Y.upper()) / 2,
-            (o->Z.lower() + o->Z.upper()) / 2};
+    return (o->pos(7) + o->pos(0)) / 2.0f;
 }
 
 } // DC namespace

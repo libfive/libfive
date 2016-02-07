@@ -21,7 +21,7 @@ TEST_CASE("Octree coordinates")
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
     std::unique_ptr<Octree> out(Octree::Render(&t, r));
-    REQUIRE(out->type == Octree::BRANCH);
+    REQUIRE(out->getType() == Octree::BRANCH);
 
     // Check that all child pointers are populated
     for (int i=0; i < 8; ++i)
@@ -69,10 +69,11 @@ TEST_CASE("Octree intersections")
     {
         Region r({0, 1}, {0, 1}, {0, 1}, 1);
         std::unique_ptr<Octree> out(Octree::Render(&t, r));
-        REQUIRE(out->type == Octree::LEAF);
+        REQUIRE(out->getType() == Octree::LEAF);
 
-        REQUIRE(out->intersections.size() == 4);
-        for (auto i : out->intersections)
+        auto is = out->getIntersections();
+        REQUIRE(is.size() == 4);
+        for (auto i : is)
         {
             auto err = fabs(i.pos.x - 0.75);
             REQUIRE(err < 0.125);
@@ -83,10 +84,11 @@ TEST_CASE("Octree intersections")
     {
         Region r({0, 1}, {0, 1}, {0, 1}, 2);
         std::unique_ptr<Octree> out(Octree::Render(&t, r));
-        REQUIRE(out->type == Octree::BRANCH);
+        REQUIRE(out->getType() == Octree::BRANCH);
 
-        REQUIRE(out->intersections.size() == 9);
-        for (auto i : out->intersections)
+        auto is = out->getIntersections();
+        REQUIRE(is.size() == 9);
+        for (auto i : is)
         {
             auto err = fabs(i.pos.x - 0.75);
             REQUIRE(err < 0.125);
