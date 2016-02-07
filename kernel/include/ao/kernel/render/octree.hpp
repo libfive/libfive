@@ -66,6 +66,11 @@ public:
      */
     glm::vec3 getVertex() const { return vert; }
 
+    /*
+     *  Return the tree's level (leafs are 0 and it goes up from there)
+     */
+    unsigned getLevel() const { return level; }
+
 protected:
     /*
      *  Constructs an octree recursively from the given subregion
@@ -131,6 +136,9 @@ protected:
 
     /*  Pointers to children octrees (either all populated or all null)  */
     std::array<std::unique_ptr<Octree>, 8> children;
+
+    /*  level = max(map(level, children)) + 1  */
+    unsigned level;
 
     /*  Array of filled states for the cell's corners  */
     std::array<bool, 8> corners;

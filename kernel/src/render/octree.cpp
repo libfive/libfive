@@ -20,6 +20,13 @@ Octree::Octree(Evaluator* e, const Subregion& r)
     populateChildren(e, r);
     findIntersections(e);
 
+    // Find this Octree's level
+    level = (type == BRANCH)
+        ?  std::accumulate(children.begin(), children.end(), (unsigned)0,
+                [](const unsigned& a, const std::unique_ptr<Octree>& b)
+                    { return std::max(a, b->level);} ) + 1
+        : 0;
+
     if (type == BRANCH)
     {
         collapseBranch();

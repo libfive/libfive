@@ -162,27 +162,56 @@ void Worker::edge(const Octree* a, const Octree* b,
     Octree::Axis r = R(axis);
 
     if (a->getType() == Octree::LEAF && b->getType() == Octree::LEAF &&
-        c->getType() == Octree::LEAF && d->getType() == Octree::LEAF &&
-        (a->corner(q|r) != a->corner(q|r|axis) ||
-         b->corner(r) != b->corner(r|axis) ||
-         c->corner(q) != c->corner(q|axis) ||
-         d->corner(0) != d->corner(axis)))
+        c->getType() == Octree::LEAF && d->getType() == Octree::LEAF)
     {
-        if (d->corner(0))
+        /*  We need to check the values on the shared edge to see whether we need
+         *  to add a face.  However, this is tricky when the edge spans multiple
+         *  octree levels.
+         *
+         * In the following diagram, the target edge is marked with an x
+         * (travelling into the screen):
+         *      _________________
+         *      | a |           |
+         *      ----x   c, d    |
+         *      | b |           |
+         *      ----------------|
+         *
+         *  If we were to look at corners of c or d, we wouldn't be looking at the
+         *  correct edge.  Instead, we need to look at corners for the smallest cell
+         *  among the function arguments.
+         */
+
+        // For different octrees, these are the corners to check
+        std::map<const Octree*, unsigned> corners =
+            {{a, q|r}, {b, r}, {c, q}, {d, 0}};
+
+        // Sort the octrees by level
+        std::vector<const Octree*> ptrs = {a, b, c, d};
+        std::sort(ptrs.begin(), ptrs.end(),
+                [](const Octree* lhs, const Octree* rhs){
+                    return lhs->getLevel() < rhs->getLevel(); });
+
+        // Find the target cell that is smallest
+        const Octree* smallest = ptrs.front();
+
+        // If the relevant edge is mismatched, then add a quad (flipping
+        // it around depending on sign to get normals correct)
+        if (smallest->corner(corners[smallest]) !=
+            smallest->corner(axis|corners[smallest]))
         {
-            quad(a, b, c, d);
-        }
-        else
-        {
-            quad(a, c, b, d);
+            if (smallest->corner(corners[smallest]))
+            {
+                quad(a, b, c, d);
+            }
+            else
+            {
+                quad(a, c, b, d);
+            }
         }
     }
     else if (a->getType() == Octree::BRANCH || b->getType() == Octree::BRANCH ||
              c->getType() == Octree::BRANCH || d->getType() == Octree::BRANCH)
     {
-        Octree::Axis q = Q(axis);
-        Octree::Axis r = R(axis);
-
         edge(a->child(q|r), b->child(r), c->child(q), d->child(0), axis);
         edge(a->child(q|r|axis), b->child(r|axis),
              c->child(q|axis), d->child(axis), axis);
