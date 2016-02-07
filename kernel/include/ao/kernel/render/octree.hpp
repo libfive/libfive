@@ -61,6 +61,11 @@ public:
     const std::vector<Intersection>& getIntersections() const
     { return intersections; }
 
+    /*
+     *  Looks up the vertex position
+     */
+    glm::vec3 getVertex() const { return vert; }
+
 protected:
     /*
      *  Constructs an octree recursively from the given subregion

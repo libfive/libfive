@@ -95,3 +95,48 @@ TEST_CASE("Octree intersections")
         }
     }
 }
+
+TEST_CASE("Vertex positioning")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+                                   s.operation(OP_MUL, s.Z(), s.Z())),
+               s.constant(0.5)));
+
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 4);
+
+    std::unique_ptr<Octree> out(Octree::Render(&t, r));
+
+    // Walk every leaf node in the octree, keeping track of the
+    // minimum and maximum vertex radius
+    float rmax = -std::numeric_limits<float>::infinity();
+    float rmin =  std::numeric_limits<float>::infinity();
+
+    // Queue of octrees to process
+    std::list<const Octree*> targets = {out.get()};
+    while (targets.size())
+    {
+        const Octree* o = targets.front();
+        targets.pop_front();
+
+        if (o->getType() == Octree::BRANCH)
+        {
+            for (unsigned i=0; i < 8; ++i)
+            {
+                targets.push_back(o->child(i));
+            }
+        }
+        else if (o->getType() == Octree::LEAF)
+        {
+            float r = glm::length(o->getVertex());
+            rmax = std::max(r, rmax);
+            rmin = std::max(r, rmin);
+        }
+    }
+
+    REQUIRE(rmin > sqrt(0.5)*0.95);
+    REQUIRE(rmax < sqrt(0.5)*1.05);
+}

@@ -19,14 +19,4 @@ namespace DC
      *  a triangle mesh.
      */
     Mesh Render(Tree* t, const Region& r);
-
-    /*
-     *  Checks to see whether a cell should be collapsed (using its QEF)
-     */
-    bool shouldCollapse(const Octree* o);
-
-    /*
-     *  Returns the point at the center of the cell (using its QEF)
-     */
-    glm::vec3 center(const Octree* o);
 };

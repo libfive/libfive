@@ -192,7 +192,7 @@ void Worker::quad(const Octree* a, const Octree* b,
         if (i == verts.end())
         {
             verts[o] = mesh.verts.size();
-            mesh.verts.push_back(center(o));
+            mesh.verts.push_back(o->getVertex());
         }
         return verts[o];
     };
@@ -216,17 +216,6 @@ Mesh Render(Tree* t, const Region& r)
     w.cell(o);
 
     return w.mesh;
-}
-
-bool shouldCollapse(const Octree* o)
-{
-    (void)o;
-    return false;
-}
-
-glm::vec3 center(const Octree* o)
-{
-    return (o->pos(7) + o->pos(0)) / 2.0f;
 }
 
 } // DC namespace
