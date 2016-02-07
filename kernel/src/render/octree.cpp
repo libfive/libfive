@@ -57,37 +57,41 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r)
 
 void Octree::collapseBranch()
 {
-    bool empty = std::all_of(children.begin(), children.end(),
-        [](std::unique_ptr<Octree>& o){ return o->type == EMPTY; });
-    bool full  = std::all_of(children.begin(), children.end(),
-        [](std::unique_ptr<Octree>& o){ return o->type == FULL; });
-    bool leafs = std::all_of(children.begin(), children.end(),
-        [](std::unique_ptr<Octree>& o){ return o->type != BRANCH; });
-
-    if (empty || full)
+    if (std::all_of(children.begin(), children.end(),
+            [](std::unique_ptr<Octree>& o){ return o->type == EMPTY; }))
     {
-        for (uint8_t i=0; i < 8; ++i)
-        {
-            children[i].reset();
-        }
-        type = empty ? EMPTY : FULL;
+        type = EMPTY;
     }
-    else if (leafs)
+    else if (std::all_of(children.begin(), children.end(),
+            [](std::unique_ptr<Octree>& o){ return o->type == FULL; }))
     {
-        // Check for leaf collapsing here
+        type = FULL;
+    }
+    else if (std::all_of(children.begin(), children.end(),
+            [](std::unique_ptr<Octree>& o){ return o->type != BRANCH; }))
+    {
+        // Handle leaf collapsing here
+    }
+
+    // If this cell is no longer a branch, remove its children
+    if (type != BRANCH)
+    {
+        std::for_each(children.begin(), children.end(),
+            [](std::unique_ptr<Octree>& o) { o.reset(); });
     }
 }
 
 void Octree::collapseLeaf()
 {
-    bool empty = std::all_of(corners.begin(), corners.end(),
-                             [](bool c){ return !c; });
-    bool full  = std::all_of(corners.begin(), corners.end(),
-                             [](bool c){ return c; });
-
-    if (empty || full)
+    if (std::all_of(corners.begin(), corners.end(),
+            [](bool c){ return !c; }))
     {
-        type = empty ? EMPTY : FULL;
+        type = EMPTY;
+    }
+    else if (std::all_of(corners.begin(), corners.end(),
+            [](bool c){ return c; }))
+    {
+        type = FULL;
     }
 }
 
