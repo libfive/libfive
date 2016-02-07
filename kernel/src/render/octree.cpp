@@ -108,19 +108,13 @@ Octree* Octree::Render(Tree* t, const Region& r)
 
 // These are the twelve edges of an octree cell
 const std::pair<unsigned, unsigned> Octree::cellEdges[12] =
-    {{0, Octree::AXIS_X}, {0, Octree::AXIS_Y}, {0, Octree::AXIS_Z},
-     {Octree::AXIS_X, Octree::AXIS_X|Octree::AXIS_Y},
-     {Octree::AXIS_X, Octree::AXIS_X|Octree::AXIS_Z},
-     {Octree::AXIS_Y, Octree::AXIS_Y|Octree::AXIS_X},
-     {Octree::AXIS_Y, Octree::AXIS_Y|Octree::AXIS_Z},
-     {Octree::AXIS_X|Octree::AXIS_Y,
-      Octree::AXIS_X|Octree::AXIS_Y|Octree::AXIS_Z},
-     {Octree::AXIS_Z, Octree::AXIS_Z|Octree::AXIS_X},
-     {Octree::AXIS_Z, Octree::AXIS_Z|Octree::AXIS_Y},
-     {Octree::AXIS_Z|Octree::AXIS_X,
-      Octree::AXIS_Z|Octree::AXIS_X|Octree::AXIS_Y},
-     {Octree::AXIS_Z|Octree::AXIS_Y,
-      Octree::AXIS_Z|Octree::AXIS_Y|Octree::AXIS_X}};
+    {{0, AXIS_X}, {0, AXIS_Y}, {0, AXIS_Z},
+     {AXIS_X, AXIS_X|AXIS_Y}, {AXIS_X, AXIS_X|AXIS_Z},
+     {AXIS_Y, AXIS_Y|AXIS_X}, {AXIS_Y, AXIS_Y|AXIS_Z},
+     {AXIS_X|AXIS_Y, AXIS_X|AXIS_Y|AXIS_Z},
+     {AXIS_Z, AXIS_Z|AXIS_X}, {AXIS_Z, AXIS_Z|AXIS_Y},
+     {AXIS_Z|AXIS_X, AXIS_Z|AXIS_X|AXIS_Y},
+     {AXIS_Z|AXIS_Y, AXIS_Z|AXIS_Y|AXIS_X}};
 
 // Performs binary search between two points
 // eval(a) should be < 0 (inside the shape) and eval(b) should be outside
