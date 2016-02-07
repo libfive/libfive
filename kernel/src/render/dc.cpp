@@ -158,9 +158,15 @@ void Worker::edge(const Octree* a, const Octree* b,
                   const Octree* c, const Octree* d,
                   Octree::Axis axis)
 {
+    Octree::Axis q = Q(axis);
+    Octree::Axis r = R(axis);
+
     if (a->getType() == Octree::LEAF && b->getType() == Octree::LEAF &&
         c->getType() == Octree::LEAF && d->getType() == Octree::LEAF &&
-        d->corner(0) != d->corner(axis))
+        (a->corner(q|r) != a->corner(q|r|axis) ||
+         b->corner(r) != b->corner(r|axis) ||
+         c->corner(q) != c->corner(q|axis) ||
+         d->corner(0) != d->corner(axis)))
     {
         if (d->corner(0))
         {
