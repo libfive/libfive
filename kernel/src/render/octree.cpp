@@ -1,4 +1,8 @@
+#include <iostream>
+#include <numeric>
 #include <set>
+
+#include <Eigen/Dense>
 #include <glm/geometric.hpp>
 
 #include "ao/kernel/render/octree.hpp"
@@ -10,7 +14,8 @@
 Octree::Octree(Evaluator* e, const Subregion& r)
     : X(r.X.lower(), r.X.upper()),
       Y(r.Y.lower(), r.Y.upper()),
-      Z(r.Z.lower(), r.Z.upper())
+      Z(r.Z.lower(), r.Z.upper()),
+      vert(std::numeric_limits<double>::quiet_NaN())
 {
     populateChildren(e, r);
     findIntersections(e);
@@ -22,6 +27,11 @@ Octree::Octree(Evaluator* e, const Subregion& r)
     else
     {
         collapseLeaf();
+    }
+
+    if (type == LEAF && std::isnan(vert.x))
+    {
+        findVertex();
     }
 }
 
@@ -70,7 +80,10 @@ void Octree::collapseBranch()
     else if (std::all_of(children.begin(), children.end(),
             [](std::unique_ptr<Octree>& o){ return o->type != BRANCH; }))
     {
-        // Handle leaf collapsing here
+        if (false /* topologically safe to collapse */ && findVertex() < 0.014)
+        {
+            type = LEAF;
+        }
     }
 
     // If this cell is no longer a branch, remove its children
@@ -201,3 +214,67 @@ void Octree::findIntersections(Evaluator* eval)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+ *  Vertex positioning is based on
+ *
+ *  "Feature Sensitive Surface Extraction from Volume Data"
+ *  (Kobbelt, Leif P. and Botsch, Mario and
+ *   Schwanecke, Ulrich and Seidel, Hans-Peter)
+ *
+ *  SIGGRAPH 2001
+ */
+float Octree::findVertex()
+{
+    // Find the center of intersection positions
+    glm::vec3 center = std::accumulate(
+            intersections.begin(), intersections.end(), glm::vec3(),
+            [](const glm::vec3& a, const Intersection& b)
+                { return a + b.pos; }) / float(intersections.size());
+
+    /*  The A matrix is of the form
+     *  [n1x, n1y, n1z]
+     *  [n2x, n2y, n2z]
+     *  [n3x, n3y, n3z]
+     *  ...
+     *  (with one row for each Hermite intersection)
+     */
+    Eigen::MatrixX3f A(intersections.size(), 3);
+    for (unsigned i=0; i < intersections.size(); ++i)
+    {
+        auto d = intersections[i].value.d;
+        A.row(i) << Eigen::Vector3f(d.x, d.y, d.z).transpose();
+    }
+
+    /*  The B matrix is of the form
+     *  [p1 . n1]
+     *  [p2 . n2]
+     *  [p3 . n3]
+     *  ...
+     *  (with one row for each Hermite intersection)
+     *
+     *  Positions are pre-emtively shifted so that the center of the contoru
+     *  is at 0, 0, 0 (since the least-squares fix minimizes distance to the
+     *  origin); we'll unshift afterwards.
+     */
+    Eigen::VectorXf B(intersections.size(), 1);
+    for (unsigned i=0; i < intersections.size(); ++i)
+    {
+        B.row(i) << glm::dot(intersections[i].value.d,
+                             intersections[i].pos - center);
+    }
+
+    // Use singular value decomposition to solve the least-squares fit.
+    Eigen::JacobiSVD<Eigen::MatrixX3f> svd(A, Eigen::ComputeFullU |
+                                              Eigen::ComputeFullV);
+
+    Eigen::Vector3f solution = svd.solve(B);
+
+    std::cout << "A:\n" << A << '\n';
+    std::cout << "B:\n" << B << '\n';
+    std::cout << "v:\n" << solution << '\n';
+    std::cout <<'\n';
+
+    vert = glm::vec3(solution.x(), solution.y(), solution.z()) + center;
+}

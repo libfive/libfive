@@ -94,6 +94,13 @@ protected:
     void collapseLeaf();
 
     /*
+     *  Finds a feature vertex by solving a least-squares fit to intersections
+     *
+     *  The resulting vertex is stored in vert; the residual is returned
+     */
+    float findVertex();
+
+    /*
      *  Performs binary search along a cube's edge
      *  eval(a) should be < 0 (inside the shape) and eval(b) should be outside
      */
@@ -113,6 +120,9 @@ protected:
 
     /*  Array of filled states for the cell's corners  */
     std::array<bool, 8> corners;
+
+    /*  Feature vertex located in the cell  */
+    glm::vec3 vert;
 
     /*  This is a hard-coded list of axis pairs that represent cell edges  */
     const static std::pair<unsigned, unsigned> cellEdges[12];
