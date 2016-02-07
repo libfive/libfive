@@ -111,8 +111,20 @@ protected:
     float findVertex();
 
     /*
+     *  Checks to see if the eight corners describe an ambiguous
+     *  (non-manifold) topology.
+     *
+     *  Returns true if the cell is safe to collapse (i.e. has manifold corner
+     *  topology), false otherwise.
+     */
+    bool cornerTopology() const;
+
+    /*
      *  Checks to make sure that the fine contour is topologically equivalent
      *  to the coarser contour by comparing signs in edges and faces
+     *
+     *  Returns true if the cell can be collapsed without changing topology
+     *  (with respect to the leaves)
      */
     bool leafTopology() const;
 
