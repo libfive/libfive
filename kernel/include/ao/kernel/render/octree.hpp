@@ -106,6 +106,12 @@ protected:
     float findVertex();
 
     /*
+     *  Checks to make sure that the fine contour is topologically equivalent
+     *  to the coarser contour by comparing signs in edges and faces
+     */
+    bool leafTopology() const;
+
+    /*
      *  Performs binary search along a cube's edge
      *
      *  The resulting Intersection's normal is of unit length

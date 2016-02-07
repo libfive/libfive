@@ -80,7 +80,8 @@ void Octree::collapseBranch()
     else if (std::all_of(children.begin(), children.end(),
             [](std::unique_ptr<Octree>& o){ return o->type != BRANCH; }))
     {
-        if (false /* topologically safe to collapse */ && findVertex() < 0.014)
+        if (false /* topologically safe to collapse */ &&
+            leafTopology() && findVertex() < 0.01)
         {
             type = LEAF;
         }
@@ -219,13 +220,7 @@ void Octree::findIntersections(Evaluator* eval)
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
- *  Vertex positioning is based on
- *
- *  "Feature Sensitive Surface Extraction from Volume Data"
- *  (Kobbelt, Leif P. and Botsch, Mario and
- *   Schwanecke, Ulrich and Seidel, Hans-Peter)
- *
- *  SIGGRAPH 2001
+ *  Vertex positioning is based on [Kobbelt et al, 2001]
  */
 float Octree::findVertex()
 {
@@ -278,4 +273,98 @@ float Octree::findVertex()
     // Find and return QEF residual
     auto m = A * solution - B;
     return m.transpose() * m;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+bool Octree::leafTopology() const
+{
+    /*  - The sign in the middle of a coarse edge must agree with the sign of at
+     *    least one of the edge’s two endpoints.
+     *  - The sign in the middle of a coarse face must agree with the sign of at
+     *    least one of the face’s four corners.
+     *  - The sign in the middle of a coarse cube must agree with the sign of at
+     *    least one of the cube’s eight corners.
+     *  [Ju et al, 2002]    */
+
+    // Check the signs in the middle of leaf cell edges
+    const bool edges_safe =
+        (child(0)->corner(AXIS_Z) == corner(0) ||
+         child(0)->corner(AXIS_Z) == corner(AXIS_Z))
+    &&  (child(0)->corner(AXIS_X) == corner(0) ||
+         child(0)->corner(AXIS_X) == corner(AXIS_X))
+    &&  (child(0)->corner(AXIS_Y) == corner(0) ||
+         child(0)->corner(AXIS_Y) == corner(AXIS_Y))
+
+    &&  (child(AXIS_X)->corner(AXIS_X|AXIS_Y) == corner(AXIS_X) ||
+         child(AXIS_X)->corner(AXIS_X|AXIS_Y) == corner(AXIS_X|AXIS_Y))
+    &&  (child(AXIS_X)->corner(AXIS_X|AXIS_Z) == corner(AXIS_X) ||
+         child(AXIS_X)->corner(AXIS_X|AXIS_Z) == corner(AXIS_X|AXIS_Z))
+
+    &&  (child(AXIS_Y)->corner(AXIS_Y|AXIS_X) == corner(AXIS_Y) ||
+         child(AXIS_Y)->corner(AXIS_Y|AXIS_X) == corner(AXIS_Y|AXIS_X))
+    &&  (child(AXIS_Y)->corner(AXIS_Y|AXIS_Z) == corner(AXIS_Y) ||
+         child(AXIS_Y)->corner(AXIS_Y|AXIS_Z) == corner(AXIS_Y|AXIS_Z))
+
+    &&  (child(AXIS_X|AXIS_Y)->corner(AXIS_X|AXIS_Y|AXIS_Z) ==
+                               corner(AXIS_X|AXIS_Y) ||
+         child(AXIS_X|AXIS_Y)->corner(AXIS_X|AXIS_Y|AXIS_Z) ==
+                               corner(AXIS_X|AXIS_Y|AXIS_Z))
+
+    &&  (child(AXIS_Z)->corner(AXIS_Z|AXIS_X) == corner(AXIS_Z) ||
+         child(AXIS_Z)->corner(AXIS_Z|AXIS_X) == corner(AXIS_Z|AXIS_X))
+    &&  (child(AXIS_Z)->corner(AXIS_Z|AXIS_Y) == corner(AXIS_Z) ||
+         child(AXIS_Z)->corner(AXIS_Z|AXIS_Y) == corner(AXIS_Z|AXIS_Y))
+
+    &&  (child(AXIS_Z|AXIS_X)->corner(AXIS_Z|AXIS_X|AXIS_Y) ==
+                               corner(AXIS_Z|AXIS_X) ||
+         child(AXIS_Z|AXIS_X)->corner(AXIS_Z|AXIS_X|AXIS_Y) ==
+                               corner(AXIS_Z|AXIS_X|AXIS_Y))
+
+    &&  (child(AXIS_Z|AXIS_Y)->corner(AXIS_Z|AXIS_Y|AXIS_X) ==
+                               corner(AXIS_Z|AXIS_Y) ||
+         child(AXIS_Z|AXIS_Y)->corner(AXIS_Z|AXIS_Y|AXIS_X) ==
+                               corner(AXIS_Z|AXIS_Y|AXIS_X));
+
+    const bool faces_safe =
+        (child(0)->corner(AXIS_X|AXIS_Z) == corner(0) ||
+         child(0)->corner(AXIS_X|AXIS_Z) == corner(AXIS_X) ||
+         child(0)->corner(AXIS_X|AXIS_Z) == corner(AXIS_Z) ||
+         child(0)->corner(AXIS_X|AXIS_Z) == corner(AXIS_X|AXIS_Z))
+    &&  (child(0)->corner(AXIS_Y|AXIS_Z) == corner(0) ||
+         child(0)->corner(AXIS_Y|AXIS_Z) == corner(AXIS_Y) ||
+         child(0)->corner(AXIS_Y|AXIS_Z) == corner(AXIS_Z) ||
+         child(0)->corner(AXIS_Y|AXIS_Z) == corner(AXIS_Y|AXIS_Z))
+    &&  (child(0)->corner(AXIS_Y|AXIS_X) == corner(0) ||
+         child(0)->corner(AXIS_Y|AXIS_X) == corner(AXIS_Y) ||
+         child(0)->corner(AXIS_Y|AXIS_X) == corner(AXIS_X) ||
+         child(0)->corner(AXIS_Y|AXIS_X) == corner(AXIS_Y|AXIS_X))
+
+    && (child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_X) == corner(AXIS_X) ||
+        child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_X) == corner(AXIS_X|AXIS_Z) ||
+        child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_X) == corner(AXIS_X|AXIS_Y) ||
+        child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_X) ==
+                                     corner(AXIS_X|AXIS_Y|AXIS_Z))
+    && (child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Y) == corner(AXIS_Y) ||
+        child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Y) == corner(AXIS_Y|AXIS_Z) ||
+        child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Y) == corner(AXIS_Y|AXIS_X) ||
+        child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Y) ==
+                                     corner(AXIS_Y|AXIS_Y|AXIS_X))
+    && (child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Z) == corner(AXIS_Z) ||
+        child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Z) == corner(AXIS_Z|AXIS_Y) ||
+        child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Z) == corner(AXIS_Z|AXIS_X) ||
+        child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Z) ==
+                                     corner(AXIS_Z|AXIS_Y|AXIS_X));
+
+    const bool center_safe =
+        child(0)->corner(AXIS_X|AXIS_Y|AXIS_Z) == corner(0) ||
+        child(0)->corner(AXIS_X|AXIS_Y|AXIS_Z) == corner(AXIS_X) ||
+        child(0)->corner(AXIS_X|AXIS_Y|AXIS_Z) == corner(AXIS_Y) ||
+        child(0)->corner(AXIS_X|AXIS_Y|AXIS_Z) == corner(AXIS_X|AXIS_Y) ||
+        child(0)->corner(AXIS_X|AXIS_Y|AXIS_Z) == corner(AXIS_Z) ||
+        child(0)->corner(AXIS_X|AXIS_Y|AXIS_Z) == corner(AXIS_Z|AXIS_X) ||
+        child(0)->corner(AXIS_X|AXIS_Y|AXIS_Z) == corner(AXIS_Z|AXIS_Y) ||
+        child(0)->corner(AXIS_X|AXIS_Y|AXIS_Z) == corner(AXIS_Z|AXIS_X|AXIS_Y);
+
+    return edges_safe && faces_safe && center_safe;
 }
