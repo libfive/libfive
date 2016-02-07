@@ -271,12 +271,11 @@ float Octree::findVertex()
     Eigen::JacobiSVD<Eigen::MatrixX3f> svd(A, Eigen::ComputeFullU |
                                               Eigen::ComputeFullV);
 
+    // Solve the equation and convert back to cell coordinates
     Eigen::Vector3f solution = svd.solve(B);
-
-    std::cout << "A:\n" << A << '\n';
-    std::cout << "B:\n" << B << '\n';
-    std::cout << "v:\n" << solution << '\n';
-    std::cout <<'\n';
-
     vert = glm::vec3(solution.x(), solution.y(), solution.z()) + center;
+
+    // Find and return QEF residual
+    auto m = A * solution - B;
+    return m.transpose() * m;
 }
