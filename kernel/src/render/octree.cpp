@@ -97,7 +97,7 @@ void Octree::collapseBranch()
         if (cornerTopology() && std::all_of(children.begin(), children.end(),
                     [](const std::unique_ptr<Octree>& o)
                     { return o->cornerTopology(); }) &&
-            leafTopology() && findVertex() < 0.01)
+            leafTopology() && findVertex() < 1e-8)
         {
             type = LEAF;
         }
