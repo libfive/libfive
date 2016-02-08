@@ -282,6 +282,10 @@ float Octree::findVertex()
     Eigen::JacobiSVD<Eigen::MatrixX3f> svd(A, Eigen::ComputeFullU |
                                               Eigen::ComputeFullV);
 
+    // Truncate singular values below 0.1
+    auto singular = svd.singularValues();
+    svd.setThreshold(0.1 / singular.maxCoeff());
+
     // Solve the equation and convert back to cell coordinates
     Eigen::Vector3f solution = svd.solve(B);
     vert = glm::vec3(solution.x(), solution.y(), solution.z()) + center;
