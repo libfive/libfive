@@ -19,6 +19,7 @@ def safe(index):
         for e in edges:
             if f[e[0]] == f[e[1]]:
                 edges = merge(e[0], e[1])
+                break
         else:
             break
     s = set(map(lambda t: tuple(sorted(t)),edges))
