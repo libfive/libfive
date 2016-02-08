@@ -74,11 +74,13 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r)
 
 void Octree::collapseBranch()
 {
+    // If all of the children are leafs, then collapse into a single LEAF cell
     if (std::all_of(children.begin(), children.end(),
             [](std::unique_ptr<Octree>& o){ return o->type == EMPTY; }))
     {
         type = EMPTY;
     }
+    // If all of the children are full, then collapse into a single FULL cell
     else if (std::all_of(children.begin(), children.end(),
             [](std::unique_ptr<Octree>& o){ return o->type == FULL; }))
     {
@@ -396,7 +398,7 @@ bool Octree::leafTopology() const
         child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Y) == corner(AXIS_Y|AXIS_Z) ||
         child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Y) == corner(AXIS_Y|AXIS_X) ||
         child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Y) ==
-                                     corner(AXIS_Y|AXIS_Y|AXIS_X))
+                                     corner(AXIS_Y|AXIS_Z|AXIS_X))
     && (child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Z) == corner(AXIS_Z) ||
         child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Z) == corner(AXIS_Z|AXIS_Y) ||
         child(AXIS_X|AXIS_Y|AXIS_Z)->corner(AXIS_Z) == corner(AXIS_Z|AXIS_X) ||
