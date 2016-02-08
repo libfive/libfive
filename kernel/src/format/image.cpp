@@ -39,6 +39,7 @@ bool SavePng(std::string filename, const DepthImage& img)
     if (png_ptr == NULL)
     {
         fprintf(stderr, "Failed to allocate png write_struct\n");
+        fclose(output);
         return false;
     }
 
@@ -47,6 +48,8 @@ bool SavePng(std::string filename, const DepthImage& img)
     if (info_ptr == NULL)
     {
         fprintf(stderr, "Failed to create png info_struct");
+        png_destroy_write_struct(&png_ptr, &info_ptr);
+        fclose(output);
         return false;
     }
 
