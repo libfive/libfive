@@ -237,8 +237,14 @@ void Worker::quad(const Octree* a, const Octree* b,
     unsigned ic = index(c);
     unsigned id = index(d);
 
-    mesh.tris.push_back({ia, ib, ic});
-    mesh.tris.push_back({ic, ib, id});
+    if (ia != ib && ia != ic && ib != ic)
+    {
+        mesh.tris.push_back({ia, ib, ic});
+    }
+    if (ib != ic && ic != id && ib != id)
+    {
+        mesh.tris.push_back({ic, ib, id});
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
