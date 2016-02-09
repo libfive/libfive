@@ -156,7 +156,14 @@ protected:
     std::array<bool, 8> corners;
 
     /*  Feature vertex located in the cell  */
-    glm::vec3 vert;
+    glm::vec3 vert=glm::vec3(std::numeric_limits<float>::quiet_NaN());
+
+    /*  Feature rank for the cell's vertex, where                    *
+     *      1 is face, 2 is edge, 3 is corner                        *
+     *                                                               *
+     *  This value is populated in findVertex and used when merging  *
+     *  intersections from lower-ranked children                     */
+    unsigned rank=0;
 
     /*  This is a hard-coded list of axis pairs that represent cell edges  */
     const static std::pair<unsigned, unsigned> cellEdges[12];

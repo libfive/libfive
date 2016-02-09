@@ -14,8 +14,7 @@
 Octree::Octree(Evaluator* e, const Subregion& r)
     : X(r.X.lower(), r.X.upper()),
       Y(r.Y.lower(), r.Y.upper()),
-      Z(r.Z.lower(), r.Z.upper()),
-      vert(std::numeric_limits<double>::quiet_NaN())
+      Z(r.Z.lower(), r.Z.upper())
 {
     populateChildren(e, r);
     findIntersections(e);
@@ -203,7 +202,8 @@ void Octree::findIntersections(Evaluator* eval)
         }
     }
     // If this is a branch cell, then accumulate intersections from all the
-    // children (de-duplicating to avoid weighting intersections incorrectly)
+    // children with the max rank (de-duplicating to avoid weighting
+    // intersections incorrectly)
     else if (type == BRANCH)
     {
         // pts stores a list of unique points (within some epsilon)
@@ -215,18 +215,29 @@ void Octree::findIntersections(Evaluator* eval)
                  Y.upper() - Y.lower(),
                  Z.upper() - Z.lower()}) / (4 << SEARCH_COUNT);
 
+        // Find the max rank among children, then only accumulate
+        // intersections from children with that rank
+        const unsigned max_rank = std::accumulate(
+                children.begin(), children.end(), (unsigned)0,
+                [](const unsigned& a, const std::unique_ptr<Octree>& b)
+                    { return std::max(a, b->rank);} );
+
         for (uint8_t i=0; i < 8; ++i)
         {
-            for (auto n : child(i)->intersections)
+            if (child(i)->rank == max_rank)
             {
-                // Only store this intersection point if it hasn't been stored
-                // already (to a given epsilon of floating-point error)
-                if (!std::any_of(pts.begin(), pts.end(),
-                        [&](glm::vec3 p)
-                        { return glm::length(n.pos - p) < epsilon; }))
+                for (auto n : child(i)->intersections)
                 {
-                    pts.push_back(n.pos);
-                    intersections.push_back(n);
+                    // Only store this intersection point if it hasn't
+                    // been stored already (to a given epsilon of
+                    // floating-point error)
+                    if (!std::any_of(pts.begin(), pts.end(),
+                            [&](glm::vec3 p)
+                            { return glm::length(n.pos - p) < epsilon; }))
+                    {
+                        pts.push_back(n.pos);
+                        intersections.push_back(n);
+                    }
                 }
             }
         }
@@ -285,6 +296,7 @@ float Octree::findVertex()
     // Truncate singular values below 0.1
     auto singular = svd.singularValues();
     svd.setThreshold(0.1 / singular.maxCoeff());
+    rank = svd.rank();
 
     // Solve the equation and convert back to cell coordinates
     Eigen::Vector3f solution = svd.solve(B);
