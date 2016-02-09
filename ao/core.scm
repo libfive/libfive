@@ -5,9 +5,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (ao-show name f)
-    " Show the given function in the 3D viewport "
+(define (ao-show- name f)
     (show-tree (or (current-filename) "<repl>") name (jit f)))
+
+(define-syntax ao-show
+    (syntax-rules ()
+    " Show the given function in the 3D viewport
+      Invoked as (ao-show VARIABLE) or (ao-show ID SHAPE) "
+    ((_ shape)
+         (if (pair? 'shape)
+             (error
+              "ao-show needs an identifier if its argument is not a variable")
+         (ao-show- (symbol->string 'shape) shape)))
+    ((_ id shape)
+        (ao-show- (symbol->string 'id) shape))))
+(export ao-show)
 
 (define-public (ao-watch f)
     " Watch a particular file for changes "
