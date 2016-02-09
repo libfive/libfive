@@ -32,19 +32,24 @@ struct NormalRenderer
 
     void run()
     {
-        const Gradient* gs = e->evalCore<Gradient>(count);
+        // Get derivative array pointers
+        auto ds = e->derivs(count);
+        auto dx = std::get<1>(ds);
+        auto dy = std::get<2>(ds);
+        auto dz = std::get<3>(ds);
+
         for (size_t i=0; i < count; ++i)
         {
-            // Normalize the vector
-            auto d = 255.0f * (glm::normalize(gs[i].d) / 2.0f + 0.5f);
+            // Find the vector's length
+            float length = sqrt(pow(dx[i], 2) + pow(dy[i], 2) + pow(dz[i], 2));
 
-            // Pack each normal into the 0-255 range
-            uint32_t dx = d.x;
-            uint32_t dy = d.y;
-            uint32_t dz = d.z;
+            // Scale each normal into the 0-255 range
+            uint32_t ix = 255 * (dx[i] / (2 * length) + 0.5);
+            uint32_t iy = 255 * (dy[i] / (2 * length) + 0.5);
+            uint32_t iz = 255 * (dz[i] / (2 * length) + 0.5);
 
             // Pack the normals and a dummy alpha byte into the image
-            norm(ys[i], xs[i]) = (0xff << 24) | (dz << 16) | (dy << 8) | dx;
+            norm(ys[i], xs[i]) = (0xff << 24) | (iz << 16) | (iy << 8) | ix;
         }
         count = 0;
     }
@@ -61,10 +66,7 @@ struct NormalRenderer
     {
         xs[count] = r.X.min + i;
         ys[count] = r.Y.min + j;
-        e->setPoint<Gradient>(Gradient(r.X.pos(i), {1, 0, 0}),
-                              Gradient(r.Y.pos(j), {0, 1, 0}),
-                              Gradient(z, {0, 0, 1}),
-                              count++);
+        e->set(r.X.pos(i), r.Y.pos(j), z, count++);
 
         // If the gradient array is completely full, execute a
         // calculation that finds normals and blits them to the image
@@ -79,7 +81,7 @@ struct NormalRenderer
     NormalImage& norm;
 
     // Store the x, y coordinates of rendered points for normal calculations
-    static constexpr size_t NUM_POINTS = Result::count<Gradient>();
+    static constexpr size_t NUM_POINTS = 256;
     size_t xs[NUM_POINTS];
     size_t ys[NUM_POINTS];
     size_t count = 0;
@@ -99,7 +101,7 @@ static void pixels(Evaluator* e, const Subregion& r,
     // (which needs to be obeyed by anything unflattening results)
     SUBREGION_ITERATE_XYZ(r)
     {
-        e->setPoint(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
+        e->set(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
     }
 
 #ifdef __AVX__
@@ -107,7 +109,7 @@ static void pixels(Evaluator* e, const Subregion& r,
     e->evalCore<__m256>(r.voxels());
     const float* out = e->unpackAVX();
 #else
-    const float* out = e->evalCore<float>(r.voxels());
+    const float* out = e->values(r.voxels());
 #endif
 
     index = 0;
@@ -200,7 +202,7 @@ static void recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
     }
 
     // If we're below a certain size, render pixel-by-pixel
-    if (r.voxels() <= Result::count<float>())
+    if (r.voxels() <= 256)
     {
         pixels(e, r, depth, norm);
         return;

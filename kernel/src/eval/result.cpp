@@ -1,19 +1,30 @@
 #include "ao/kernel/eval/result.hpp"
 
+void Result::set(float v, float x, float y, float z, size_t index)
+{
+    f[index] = v;
+    dx[index] = x;
+    dy[index] = y;
+    dz[index] = z;
+}
+
+void Result::set(Interval V)
+{
+    i = V;
+}
+
 void Result::fill(float v)
 {
-    for (size_t i=0; i < count<float>(); ++i)
+    for (unsigned i=0; i < 256; ++i)
     {
-        set<float>(v, i);
+        f[i] = v;
+        dx[i] = 0;
+        dy[i] = 0;
+        dz[i] = 0;
     }
-    for (size_t i=0; i < count<Gradient>(); ++i)
-    {
-        set<Gradient>(Gradient(v), i);
-    }
-    for (size_t i=0; i < count<Interval>(); ++i)
-    {
-        set<Interval>(Interval(v), i);
-    }
+
+    i = Interval(v, v);
+
 #ifdef __AVX__
     for (size_t i=0; i < count<__m256>(); ++i)
     {

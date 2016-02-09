@@ -6,45 +6,25 @@
 #include <immintrin.h>
 
 #include "ao/kernel/eval/interval.hpp"
-#include "ao/kernel/eval/gradient.hpp"
 
 struct Result {
     /*
-     *  Returns the array size for the given type
+     *  Sets a particular value in the array
      */
-    template <class T>
-    static constexpr size_t count();
+    void set(float v, float dx, float dy, float dz, size_t index);
 
     /*
-     *  Set the value at index to v
+     *  Sets the interval value in the array
      */
-    template <class T>
-    void set(T v, size_t index);
+    void set(Interval V);
 
     /*
-     *  Sets all of the values to the given float
+     *  Sets all of the values to the given constant float
      *  (across the Interval, float, Gradient, and __m256 arrays)
+     *
+     *  Gradients are set to {0, 0, 0}
      */
     void fill(float v);
-
-    /*
-     *  Set values 0 through count from the given array
-     */
-    template <class T>
-    void set(const T* ts, size_t n=count<T>());
-
-    /*
-     *  Template for lookups by type
-     */
-    template <class T>
-    T get(size_t index) const;
-
-    /*
-     *  Template to look up the base pointer for a particular type
-     *  (specialized inline below)
-     */
-    template <class T>
-    T* ptr() const;
 
 #ifdef __AVX__
     /*
@@ -60,15 +40,16 @@ struct Result {
 
 protected:
     float f[256];
-    Gradient g[256];
+    float dx[256];
+    float dy[256];
+    float dz[256];
+
+    Interval i;
 
 #ifdef __AVX__
     __m256 m[32];
 #endif
 
-    Interval i;
+    friend class Evaluator;
+    friend class Clause;
 };
-
-#define RESULT_INCLUDE_IPP
-#include "result.ipp"
-#undef RESULT_INCLUDE_IPP

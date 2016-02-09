@@ -35,13 +35,11 @@ bool Clause::checkDisabled()
     // active if it is decisively above or below the other branch.
     if (op == OP_MAX)
     {
-        if (a->result.get<Interval>(0).lower() >=
-            b->result.get<Interval>(0).upper())
+        if (a->result.i.lower() >= b->result.i.upper())
         {
             a->clearFlag(CLAUSE_FLAG_IGNORED);
         }
-        else if (b->result.get<Interval>(0).lower() >=
-                 a->result.get<Interval>(0).upper())
+        else if (b->result.i.lower() >= a->result.i.upper())
         {
             b->clearFlag(CLAUSE_FLAG_IGNORED);
         }
@@ -53,13 +51,11 @@ bool Clause::checkDisabled()
     }
     else if (op == OP_MIN)
     {
-        if (a->result.get<Interval>(0).lower() >=
-            b->result.get<Interval>(0).upper())
+        if (a->result.i.lower() >= b->result.i.upper())
         {
             b->clearFlag(CLAUSE_FLAG_IGNORED);
         }
-        else if (b->result.get<Interval>(0).lower() >=
-                 a->result.get<Interval>(0).upper())
+        else if (b->result.i.lower() >= a->result.i.upper())
         {
             a->clearFlag(CLAUSE_FLAG_IGNORED);
         }

@@ -170,9 +170,9 @@ static SCM tree_eval_double(SCM tree, SCM x, SCM y, SCM z)
 {
     auto t = untag_ptr<Tree>(tree);
     auto e = Evaluator(t);
-    double out = e.eval<float>(scm_to_double(x),
-                               scm_to_double(y),
-                               scm_to_double(z));
+    double out = e.eval(scm_to_double(x),
+                        scm_to_double(y),
+                        scm_to_double(z));
     return scm_from_double(out);
 }
 

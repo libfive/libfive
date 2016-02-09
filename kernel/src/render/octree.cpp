@@ -66,9 +66,9 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r,
         for (uint8_t i=0; i < 8; ++i)
         {
             auto c = pos(i);
-            e->setPoint<float>(c.x, c.y, c.z, i);
+            e->set(c.x, c.y, c.z, i);
         }
-        const float* fs = e->evalCore<float>(8);
+        const float* fs = e->values(8);
         for (uint8_t i=0; i < 8; ++i)
         {
             corners[i] = fs[i] < 0;
@@ -177,11 +177,15 @@ Octree::Intersection Octree::searchEdge(
     }
 
     // Calculate value and gradient at the given point
-    auto g = eval->eval(Gradient(p.x, {1, 0, 0}),
-                        Gradient(p.y, {0, 1, 0}),
-                        Gradient(p.z, {0, 0, 1}));
+    eval->set(p.x, p.y, p.z, 0);
 
-    return {p, glm::normalize(g.d)};
+    // Get set of derivative arrays
+    auto ds = eval->derivs(1);
+
+    // Extract gradient from set of arrays
+    glm::vec3 g(std::get<1>(ds)[0], std::get<2>(ds)[0], std::get<3>(ds)[0]);
+
+    return {p, glm::normalize(g)};
 }
 
 void Octree::findIntersections(Evaluator* eval)

@@ -7,6 +7,7 @@
 #include <glm/mat4x4.hpp>
 
 #include "ao/kernel/eval/row.hpp"
+#include "ao/kernel/eval/interval.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -32,21 +33,34 @@ public:
     /*
      *  Single-argument evaluation
      */
-    template <class T>
-    T eval(T x, T y, T z);
+    float eval(float x, float y, float z);
+    Interval eval(Interval x, Interval y, Interval z);
 
     /*
-     *  Performs the core evaluation sweep (across rows and atoms),
-     *  assuming that 'count' locations have been loaded
+     *  Evaluates a set of floating-point results
+     *  (which have been loaded with set)
      */
-    template <class T>
-    const T* evalCore(size_t count);
+    const float* values(size_t count);
 
     /*
-     *  Sets the evaluation target at the given index
+     *  Evaluate a set of gradients, returning a tuple
+     *      value, dx, dy, dz
+     *
+     *  Values must have been previously loaded by set
      */
-    template <class T>
-    void setPoint(T x, T y, T z, size_t index);
+    std::tuple<const float*, const float*,
+               const float*, const float*> derivs(size_t count);
+
+    /*
+     *  Evaluates a single interval (stored with set)
+     */
+    Interval interval();
+
+    /*
+     *  Stores the given value in the result arrays
+     */
+    void set(float x, float y, float z, size_t index);
+    void set(Interval X, Interval Y, Interval Z);
 
     /*
      *  Pushes into a subinterval, disabling inactive nodes
@@ -103,9 +117,3 @@ protected:
     Clause* data;
     Clause* ptr;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-
-#define EVALUATOR_INCLUDE_IPP
-#include "evaluator.ipp"
-#undef EVALUATOR_INCLUDE_IPP
