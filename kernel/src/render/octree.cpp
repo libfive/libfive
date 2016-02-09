@@ -11,12 +11,12 @@
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/tree/tree.hpp"
 
-Octree::Octree(Evaluator* e, const Subregion& r)
+Octree::Octree(Evaluator* e, const Subregion& r, uint32_t flags)
     : X(r.X.lower(), r.X.upper()),
       Y(r.Y.lower(), r.Y.upper()),
       Z(r.Z.lower(), r.Z.upper())
 {
-    populateChildren(e, r);
+    populateChildren(e, r, flags);
     findIntersections(e);
 
     // Find this Octree's level
@@ -26,12 +26,17 @@ Octree::Octree(Evaluator* e, const Subregion& r)
                     { return std::max(a, b->level);} ) + 1
         : 0;
 
+    // Collapse branches if the COLLAPSE flag is set
     if (type == BRANCH)
     {
-        collapseBranch();
+        if (flags & COLLAPSE)
+        {
+            collapseBranch();
+        }
     }
     else
     {
+        // Always convert leafs to empty / filled cells
         collapseLeaf();
     }
 
@@ -41,7 +46,8 @@ Octree::Octree(Evaluator* e, const Subregion& r)
     }
 }
 
-void Octree::populateChildren(Evaluator* e, const Subregion& r)
+void Octree::populateChildren(Evaluator* e, const Subregion& r,
+                              uint32_t flags)
 {
     // Subdivide and recurse if possible
     if (r.canSplit())
@@ -49,7 +55,7 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r)
         auto rs = r.octsect();
         for (uint8_t i=0; i < 8; ++i)
         {
-            children[i].reset(new Octree(e, rs[i]));
+            children[i].reset(new Octree(e, rs[i], flags));
             corners[i] = children[i]->corners[i];
         }
         type = BRANCH;
@@ -131,10 +137,10 @@ glm::vec3 Octree::pos(uint8_t i) const
             i & AXIS_Z ? Z.upper() : Z.lower()};
 }
 
-Octree* Octree::Render(Tree* t, const Region& r)
+Octree* Octree::Render(Tree* t, const Region& r, uint32_t flags)
 {
     Evaluator e(t);
-    return new Octree(&e, r.powerOfTwo());
+    return new Octree(&e, r.powerOfTwo(), flags);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

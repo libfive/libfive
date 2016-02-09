@@ -249,9 +249,9 @@ void Worker::quad(const Octree* a, const Octree* b,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Mesh Render(Tree* t, const Region& r)
+Mesh Render(Tree* t, const Region& r, uint32_t flags)
 {
-    auto o = Octree::Render(t, r);
+    auto o = Octree::Render(t, r, flags);
 
     Worker w;
     w.cell(o);

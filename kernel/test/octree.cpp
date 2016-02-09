@@ -83,7 +83,7 @@ TEST_CASE("Octree intersections")
     SECTION("Branch")
     {
         Region r({0, 1}, {0, 1}, {0, 1}, 2);
-        std::unique_ptr<Octree> out(Octree::Render(&t, r));
+        std::unique_ptr<Octree> out(Octree::Render(&t, r, 0));
         REQUIRE(out->getType() == Octree::BRANCH);
 
         auto is = out->getIntersections();

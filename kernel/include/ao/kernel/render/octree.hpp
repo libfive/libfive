@@ -18,7 +18,11 @@ class Evaluator;
 class Octree
 {
 public:
-    static Octree* Render(Tree* t, const Region& r);
+    static Octree* Render(Tree* t, const Region& r,
+                          uint32_t flags=COLLAPSE);
+
+    /*  Enumerator for optional flags  */
+    enum Flags { COLLAPSE = 1 };
 
     /*  Enumerator that distinguishes between cell types  */
     enum Type { LEAF, BRANCH, EMPTY, FULL };
@@ -75,31 +79,33 @@ protected:
     /*
      *  Constructs an octree recursively from the given subregion
      */
-    Octree(Evaluator* e, const Subregion& r);
+    Octree(Evaluator* e, const Subregion& r, uint32_t flags);
 
     /*
      *  Splits a subregion and fills out child pointers and cell type
-     *
-     *  Saves corner gradients in corners array
-     *  (either from children or calculated from the evaluator)
      */
-    void populateChildren(Evaluator* e, const Subregion& r);
+    void populateChildren(Evaluator* e, const Subregion& r, uint32_t flags);
 
     /*
      *  Stores edge-wise intersections for the cell,
-     *  storing them in the intersections vector
+     *  storing them in the intersections vector.
+     *
+     *  For leaf cells, intersections are found with binary search along every
+     *  edge that exhibits a sign change.  For branch cells, intersections are
+     *  found by accumulating from all child leaf cells with max rank.
      */
     void findIntersections(Evaluator* e);
 
     /*
-     *  If all children are of the same type, collapse the node
-     *  (returning the correct cell Type: BRANCH, FULL, or EMPTY)
+     *  If all children are filled or empty, collapse the branch
+     *
+     *  Otherwise, collapse the branch if it is topologically safe to do
+     *  so and the residual QEF error isn't too large.
      */
     void collapseBranch();
 
     /*
      *  If all corners are of the same sign, convert to FULL or EMPTY
-     *  (returning the correct cell Type: LEAF, FULL, or EMPTY)
      */
     void collapseLeaf();
 
