@@ -13,7 +13,9 @@
 #include "ao/kernel/eval/evaluator.hpp"
 
 #include "ao/kernel/render/heightmap.hpp"
+#include "ao/kernel/render/dc.hpp"
 #include "ao/kernel/format/image.hpp"
+#include "ao/kernel/format/mesh.hpp"
 
 #include "ao/ui/window.hpp"
 #include "ao/ui/watcher.hpp"
@@ -199,11 +201,9 @@ static SCM tree_export_heightmap(SCM tree, SCM filename,
                        "Filename must end in '.png'", SCM_EOL);
     }
 
-
     Interval X(scm_to_double(scm_car(x)), scm_to_double(scm_cdr(x)));
     Interval Y(scm_to_double(scm_car(y)), scm_to_double(scm_cdr(y)));
     Interval Z(scm_to_double(scm_car(z)), scm_to_double(scm_cdr(z)));
-    printf("Got intervals\n");
 
     Region r(X, Y, Z, scm_to_double(res));
 
@@ -213,6 +213,32 @@ static SCM tree_export_heightmap(SCM tree, SCM filename,
     Image::SavePng(f, img.first);
 
     return SCM_BOOL_T;
+}
+
+static SCM tree_export_mesh(SCM tree, SCM filename,
+                            SCM x, SCM y, SCM z, SCM res)
+{
+    auto t = untag_ptr<Tree>(tree);
+    auto f = scm_to_std_string(filename);
+
+    if (f.substr(f.length() - 4, 4) != ".stl")
+    {
+        scm_misc_error("tree_export_mesh",
+                       "Filename must end in '.stl'", SCM_EOL);
+    }
+
+    Interval X(scm_to_double(scm_car(x)), scm_to_double(scm_cdr(x)));
+    Interval Y(scm_to_double(scm_car(y)), scm_to_double(scm_cdr(y)));
+    Interval Z(scm_to_double(scm_car(z)), scm_to_double(scm_cdr(z)));
+
+    Region r(X, Y, Z, scm_to_double(res));
+
+    std::atomic_bool abort(false);
+    auto mesh = DC::Render(t, r);
+    mesh.writeSTL(f);
+
+    return SCM_BOOL_T;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -272,6 +298,7 @@ static void populate_ao_lib(void* data)
     define("tree_eval_double", 4, (void*)tree_eval_double);
     define("tree_eval_interval", 4, (void*)tree_eval_interval);
     define("tree_export_heightmap", 6, (void*)tree_export_heightmap);
+    define("tree_export_mesh", 6, (void*)tree_export_mesh);
 
     define("token_x", 1, (void*)token_x);
     define("token_y", 1, (void*)token_y);

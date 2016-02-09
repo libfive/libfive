@@ -1,15 +1,18 @@
 #pragma once
 
+#include <glm/vec3.hpp>
+
 struct Gradient
 {
     Gradient()
         : Gradient(0) {}
     Gradient(float v)
-        : v(v), dx(0), dy(0), dz(0) {}
-    Gradient(float v, float dx, float dy, float dz)
-        : v(v), dx(dx), dy(dy), dz(dz) {}
+        : v(v), d(0, 0, 0) {}
+    Gradient(float v, const glm::vec3& d)
+        : v(v), d(d) {}
 
-    float v, dx, dy, dz;
+    float v;
+    glm::vec3 d;
 };
 
 Gradient operator+(const Gradient& a, const Gradient& b);
