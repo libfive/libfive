@@ -10,8 +10,12 @@
 struct Result {
     /*
      *  Sets a particular value in the array
+     *  (inlined for efficiency)
      */
-    void set(float v, float dx, float dy, float dz, size_t index);
+    void set(float v, size_t index)
+    {
+        f[index] = v;
+    }
 
     /*
      *  Sets the interval value in the array
@@ -25,6 +29,11 @@ struct Result {
      *  Gradients are set to {0, 0, 0}
      */
     void fill(float v);
+
+    /*
+     *  Fills the derivative arrays with the given values
+     */
+    void deriv(float x, float y, float z);
 
 #ifdef __AVX__
     /*

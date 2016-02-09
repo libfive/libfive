@@ -30,6 +30,11 @@ Evaluator::Evaluator(const Tree* tree)
     Y = newClause(tree->Y, clauses);
     Z = newClause(tree->Z, clauses);
 
+    // Set derivatives for X, Y, Z (since these never change)
+    X->result.deriv(1, 0, 0);
+    Y->result.deriv(0, 1, 0);
+    Z->result.deriv(0, 0, 1);
+
     // Create matrix clauses
     assert(tree->matrix.size() == matrix.size());
     for (size_t i=0; i < tree->matrix.size(); ++i)
@@ -95,13 +100,6 @@ Interval Evaluator::eval(Interval x, Interval y, Interval z)
 {
     set(x, y, z);
     return interval();
-}
-
-void Evaluator::set(float x, float y, float z, size_t index)
-{
-    X->result.set(x, 1, 0, 0, index);
-    Y->result.set(y, 0, 1, 0, index);
-    Z->result.set(z, 0, 0, 1, index);
 }
 
 void Evaluator::set(Interval x, Interval y, Interval z)

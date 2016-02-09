@@ -8,6 +8,7 @@
 
 #include "ao/kernel/eval/row.hpp"
 #include "ao/kernel/eval/interval.hpp"
+#include "ao/kernel/eval/clause.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -58,8 +59,18 @@ public:
 
     /*
      *  Stores the given value in the result arrays
+     *  (inlined for efficiency)
      */
-    void set(float x, float y, float z, size_t index);
+    void set(float x, float y, float z, size_t index)
+    {
+        X->result.set(x, index);
+        Y->result.set(y, index);
+        Z->result.set(z, index);
+    }
+
+    /*
+     *  Stores the given interval in the result objects
+     */
     void set(Interval X, Interval Y, Interval Z);
 
     /*

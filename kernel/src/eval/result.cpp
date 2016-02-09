@@ -1,13 +1,5 @@
 #include "ao/kernel/eval/result.hpp"
 
-void Result::set(float v, float x, float y, float z, size_t index)
-{
-    f[index] = v;
-    dx[index] = x;
-    dy[index] = y;
-    dz[index] = z;
-}
-
 void Result::set(Interval V)
 {
     i = V;
@@ -31,6 +23,16 @@ void Result::fill(float v)
         m[i] = _mm256_set1_ps(v);
     }
 #endif
+}
+
+void Result::deriv(float x, float y, float z)
+{
+    for (size_t i=0; i < 256; ++i)
+    {
+        dx[i] = x;
+        dy[i] = y;
+        dz[i] = z;
+    }
 }
 
 #ifdef __AVX__
