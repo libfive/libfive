@@ -412,6 +412,152 @@ static void clause(Opcode op,
         case LAST_OP: assert(false);
     }
 }
+
+//  We'll use this comparison operator, which is
+//      less than
+//      ordered (which defines how it handles NaNs)
+//      quiet (meaning it doesn't signal on NaN)
+#define CMP_LT_OQ 17
+
+static void clause(Opcode op,
+        const __m256* __restrict av,  const __m256* __restrict adx,
+        const __m256* __restrict ady, const __m256* __restrict adz,
+
+        const __m256* __restrict bv,  const __m256* __restrict bdx,
+        const __m256* __restrict bdy, const __m256* __restrict bdz,
+
+        __m256* __restrict ov,  __m256* __restrict odx,
+        __m256* __restrict ody, __m256* __restrict odz,
+        size_t count)
+{
+    // Evaluate the base operations in a single pass
+    clause(op, av, bv, ov, count);
+
+    switch (op) {
+        case OP_ADD:
+            EVAL_LOOP
+            {
+                odx[i] = _mm256_add_ps(adx[i], bdx[i]);
+                ody[i] = _mm256_add_ps(ady[i], bdy[i]);
+                odz[i] = _mm256_add_ps(adz[i], bdz[i]);
+            }
+            break;
+        case OP_MUL:
+            EVAL_LOOP
+            {   // Product rule
+                odx[i] = _mm256_add_ps(_mm256_mul_ps(av[i], bdx[i]),
+                                       _mm256_mul_ps(adx[i], bv[i]));
+                ody[i] = _mm256_add_ps(_mm256_mul_ps(av[i], bdy[i]),
+                                       _mm256_mul_ps(ady[i], bv[i]));
+                odz[i] = _mm256_add_ps(_mm256_mul_ps(av[i], bdz[i]),
+                                       _mm256_mul_ps(adz[i], bv[i]));
+            }
+            break;
+        case OP_MIN:
+            EVAL_LOOP
+            {
+                __m256 cmp = _mm256_cmp_ps(av[i], bv[i], CMP_LT_OQ);
+                odx[i] = _mm256_blendv_ps(adx[i], bdx[i], cmp);
+                ody[i] = _mm256_blendv_ps(ady[i], bdy[i], cmp);
+                odz[i] = _mm256_blendv_ps(adz[i], bdz[i], cmp);
+            }
+            break;
+        case OP_MAX:
+            EVAL_LOOP
+            {
+                __m256 cmp = _mm256_cmp_ps(av[i], bv[i], CMP_LT_OQ);
+                odx[i] = _mm256_blendv_ps(bdx[i], adx[i], cmp);
+                ody[i] = _mm256_blendv_ps(bdy[i], ady[i], cmp);
+                odz[i] = _mm256_blendv_ps(bdz[i], adz[i], cmp);
+            }
+            break;
+        case OP_SUB:
+            EVAL_LOOP
+            {
+                odx[i] = _mm256_sub_ps(adx[i], bdx[i]);
+                ody[i] = _mm256_sub_ps(ady[i], bdy[i]);
+                odz[i] = _mm256_sub_ps(adz[i], bdz[i]);
+            }
+            break;
+        case OP_DIV:
+            EVAL_LOOP
+            {
+                const __m256 p = _mm256_mul_ps(bv[i], bv[i]);
+                odx[i] = _mm256_div_ps(
+                          _mm256_sub_ps(_mm256_mul_ps(bv[i], adx[i]),
+                                        _mm256_mul_ps(av[i], bdx[i])), p);
+                ody[i] = _mm256_div_ps(
+                          _mm256_sub_ps(_mm256_mul_ps(bv[i], ady[i]),
+                                        _mm256_mul_ps(av[i], bdy[i])), p);
+                odz[i] = _mm256_div_ps(
+                          _mm256_sub_ps(_mm256_mul_ps(bv[i], adz[i]),
+                                        _mm256_mul_ps(av[i], bdz[i])), p);
+            }
+            break;
+        case OP_SQRT:
+            EVAL_LOOP
+            {
+                __m256 cmp = _mm256_cmp_ps(av[i], _mm256_setzero_ps(), CMP_LT_OQ);
+
+                // Calculate the common denominator
+                __m256 den = _mm256_mul_ps(ov[i], _mm256_set1_ps(2));
+
+                // If the value is less than zero, clamp the derivative at zero
+                odx[i] = _mm256_blendv_ps(
+                        _mm256_setzero_ps(), _mm256_div_ps(adx[i], den), cmp);
+                ody[i] = _mm256_blendv_ps(
+                        _mm256_setzero_ps(), _mm256_div_ps(ady[i], den), cmp);
+                odz[i] = _mm256_blendv_ps(
+                        _mm256_setzero_ps(), _mm256_div_ps(adz[i], den), cmp);
+            }
+            break;
+        case OP_NEG:
+            EVAL_LOOP
+            {
+                odx[i] = _mm256_sub_ps(_mm256_setzero_ps(), adx[i]);
+                ody[i] = _mm256_sub_ps(_mm256_setzero_ps(), ady[i]);
+                odz[i] = _mm256_sub_ps(_mm256_setzero_ps(), adz[i]);
+            }
+            break;
+        case OP_ABS:
+            EVAL_LOOP
+            {
+                __m256 cmp = _mm256_cmp_ps(av[i], _mm256_setzero_ps(), CMP_LT_OQ);
+
+                // If a value is less than zero, negate its derivative
+                odx[i] = _mm256_blendv_ps(
+                        _mm256_sub_ps(_mm256_setzero_ps(), adx[i]), adx[i], cmp);
+                ody[i] = _mm256_blendv_ps(
+                        _mm256_sub_ps(_mm256_setzero_ps(), ady[i]), ady[i], cmp);
+                odz[i] = _mm256_blendv_ps(
+                        _mm256_sub_ps(_mm256_setzero_ps(), adz[i]), adz[i], cmp);
+            }
+            break;
+        case OP_A:
+            EVAL_LOOP
+            {
+                odx[i] = adx[i];
+                ody[i] = ady[i];
+                odz[i] = adz[i];
+            }
+            break;
+        case OP_B:
+            EVAL_LOOP
+            {
+                odx[i] = bdx[i];
+                ody[i] = bdy[i];
+                odz[i] = bdz[i];
+            }
+            break;
+        case INVALID:
+        case OP_CONST:
+        case OP_MUTABLE:
+        case OP_X:
+        case OP_Y:
+        case OP_Z:
+        case LAST_OP: assert(false);
+    }
+}
 #endif
 
 static Interval clause(Opcode op, const Interval& a, const Interval& b)
@@ -520,8 +666,42 @@ std::tuple<const float*, const float*,
 {
     if (vectorize)
     {
-        // Do vectorized evaluation here
-        return nullptr;
+        count = (count - 1)/8 + 1;
+
+        for (const auto& row : rows)
+        {
+            for (size_t i=0; i < row.active; ++i)
+            {
+                auto op = row[i]->op;
+
+                __m256* av  = row[i]->a ? row[i]->a->result.mf  : nullptr;
+                __m256* adx = row[i]->a ? row[i]->a->result.mdx : nullptr;
+                __m256* ady = row[i]->a ? row[i]->a->result.mdy : nullptr;
+                __m256* adz = row[i]->a ? row[i]->a->result.mdz : nullptr;
+
+                __m256* bv  = row[i]->b ? row[i]->b->result.mf  : nullptr;
+                __m256* bdx = row[i]->b ? row[i]->b->result.mdx : nullptr;
+                __m256* bdy = row[i]->b ? row[i]->b->result.mdy : nullptr;
+                __m256* bdz = row[i]->b ? row[i]->b->result.mdz : nullptr;
+
+                // Modify the opcode if parts of the tree are disabled
+                if (av && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_B;
+                }
+                if (bv && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_A;
+                }
+
+                clause(op, av, adx, ady, adz,
+                           bv, bdx, bdy, bdz,
+                           row[i]->result.mf, row[i]->result.mdx,
+                           row[i]->result.mdy, row[i]->result.mdz,
+                       count);
+            }
+        }
+        return {root->result.f, root->result.dx, root->result.dy, root->result.dz};
     }
 #else
 std::tuple<const float*, const float*,

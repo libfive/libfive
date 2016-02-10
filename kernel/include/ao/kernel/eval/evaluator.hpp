@@ -56,7 +56,7 @@ public:
 #ifdef __AVX__
     std::tuple<const float*, const float*,
                const float*, const float*> derivs(size_t count,
-                                                  bool vectorize=false);
+                                                  bool vectorize=true);
 #else
     std::tuple<const float*, const float*,
                const float*, const float*> derivs(size_t count);
