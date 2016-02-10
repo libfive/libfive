@@ -173,6 +173,10 @@ static void clause(Opcode op,
             EVAL_LOOP
             out[i] = a[i] / b[i];
             break;
+        case OP_SQUARE:
+            EVAL_LOOP
+            out[i] = a[i] * a[i];
+            break;
         case OP_SQRT:
             EVAL_LOOP
             out[i] = sqrt(a[i]);
@@ -285,6 +289,14 @@ static void clause(Opcode op,
                 odz[i] = (bv[i]*adz[i] - av[i]*bdz[i]) / p;
             }
             break;
+        case OP_SQUARE:
+            EVAL_LOOP
+            {
+                odx[i] = 2 * av[i] * adx[i];
+                ody[i] = 2 * av[i] * ady[i];
+                odz[i] = 2 * av[i] * adz[i];
+            }
+            break;
         case OP_SQRT:
             EVAL_LOOP
             {
@@ -382,6 +394,10 @@ static void clause(Opcode op,
         case OP_DIV:
             EVAL_LOOP
             out[i] = _mm256_div_ps(a[i], b[i]);
+            break;
+        case OP_SQUARE:
+            EVAL_LOOP
+            out[i] = _mm256_mul_ps(a[i], a[i]);
             break;
         case OP_SQRT:
             EVAL_LOOP
@@ -494,6 +510,16 @@ static void clause(Opcode op,
                                         _mm256_mul_ps(av[i], bdz[i])), p);
             }
             break;
+        case OP_SQUARE:
+            EVAL_LOOP
+            {
+                odx[i] = _mm256_mul_ps(_mm256_set1_ps(2),
+                                       _mm256_mul_ps(av[i], adx[i]));
+                ody[i] = _mm256_mul_ps(_mm256_set1_ps(2),
+                                       _mm256_mul_ps(av[i], ady[i]));
+                odz[i] = _mm256_mul_ps(_mm256_set1_ps(2),
+                                       _mm256_mul_ps(av[i], adz[i]));
+            }
         case OP_SQRT:
             EVAL_LOOP
             {
@@ -582,6 +608,8 @@ static Interval clause(Opcode op, const Interval& a_, const Interval& b_)
             return a - b;
         case OP_DIV:
             return a / b;
+        case OP_SQUARE:
+            return boost::numeric::square(a);
         case OP_SQRT:
             return sqrt(a);
         case OP_NEG:

@@ -27,6 +27,7 @@ size_t Token::args(Opcode op)
         case OP_Y: return 0;
         case OP_Z: return 0;
 
+        case OP_SQUARE: return 1;
         case OP_SQRT: return 1;
         case OP_NEG: return 1;
         case OP_ABS: return 1;
