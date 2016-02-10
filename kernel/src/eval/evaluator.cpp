@@ -352,7 +352,66 @@ static void clause(Opcode op,
         case LAST_OP: assert(false);
     }
 }
-#undef EVAL_LOOP
+
+#ifdef __AVX__
+void clause(Opcode op, const __m256* __restrict a, const __m256* __restrict b,
+                       __m256* __restrict out, size_t count)
+{
+    switch (op) {
+        case OP_ADD:
+            EVAL_LOOP
+            out[i] = _mm256_add_ps(a[i], b[i]);
+            break;
+        case OP_MUL:
+            EVAL_LOOP
+            out[i] = _mm256_mul_ps(a[i], b[i]);
+            break;
+        case OP_MIN:
+            EVAL_LOOP
+            out[i] = _mm256_min_ps(a[i], b[i]);
+            break;
+        case OP_MAX:
+            EVAL_LOOP
+            out[i] = _mm256_max_ps(a[i], b[i]);
+            break;
+        case OP_SUB:
+            EVAL_LOOP
+            out[i] = _mm256_sub_ps(a[i], b[i]);
+            break;
+        case OP_DIV:
+            EVAL_LOOP
+            out[i] = _mm256_div_ps(a[i], b[i]);
+            break;
+        case OP_SQRT:
+            EVAL_LOOP
+            out[i] = _mm256_sqrt_ps(a[i]);
+            break;
+        case OP_NEG:
+            EVAL_LOOP
+            out[i] = _mm256_mul_ps(a[i], _mm256_set1_ps(-1));
+            break;
+        case OP_ABS:
+            EVAL_LOOP
+            out[i] = _mm256_andnot_ps(a[i], _mm256_set1_ps(-0.0f));
+            break;
+        case OP_A:
+            EVAL_LOOP
+            out[i] = a[i];
+            break;
+        case OP_B:
+            EVAL_LOOP
+            out[i] = b[i];
+            break;
+        case INVALID:
+        case OP_CONST:
+        case OP_MUTABLE:
+        case OP_X:
+        case OP_Y:
+        case OP_Z:
+        case LAST_OP: assert(false);
+    }
+}
+#endif
 
 static Interval clause(Opcode op, const Interval& a, const Interval& b)
 {
@@ -390,13 +449,41 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
     return Interval();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 #ifdef __AVX__
 const float* Evaluator::values(size_t count, bool vectorize)
 {
     if (vectorize)
     {
-        // Do vectorized evaluation here
-        return nullptr;
+        packAVX();
+        count = (count - 1)/8;
+
+        for (const auto& row : rows)
+        {
+            for (size_t i=0; i < row.active; ++i)
+            {
+                auto op = row[i]->op;
+
+                __m256* a = row[i]->a ? row[i]->a->result.mf : nullptr;
+                __m256* b = row[i]->b ? row[i]->b->result.mf : nullptr;
+
+                // Modify the opcode if parts of the tree are disabled
+                if (a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_B;
+                }
+                if (b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_A;
+                }
+
+                clause(op, a, b, row[i]->result.mf, count);
+            }
+        }
+
+        unpackAVX();
+        return root->result.f;
     }
 #else
 const float* Evaluator::values(size_t count)

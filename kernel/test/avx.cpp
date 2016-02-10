@@ -66,21 +66,36 @@ TEST_CASE("Vectorized performance")
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
+    const float* slow;
     for (int i=0; i < N; ++i)
     {
-        e.values(256, false);
+        slow = e.values(256, false);
     }
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> ft = end - start;
 
     start = std::chrono::system_clock::now();
+    const float* fast;
     for (int i=0; i < N; ++i)
     {
-        e.values(256, true);
+        fast = e.values(256, true);
     }
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> mt = end - start;
 
     REQUIRE(mt.count() < ft.count());
+
+    bool matched = true;
+    for (int i=0; i < 256; ++i)
+    {
+        if (fast[i] != slow[i])
+        {
+            CAPTURE(i);
+            CAPTURE(fast[i]);
+            CAPTURE(slow[i]);
+            matched = false;
+        }
+    }
+    REQUIRE(matched);
 }
 #endif
