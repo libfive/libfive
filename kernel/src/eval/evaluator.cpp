@@ -354,8 +354,9 @@ static void clause(Opcode op,
 }
 
 #ifdef __AVX__
-void clause(Opcode op, const __m256* __restrict a, const __m256* __restrict b,
-                       __m256* __restrict out, size_t count)
+static void clause(Opcode op,
+        const __m256* __restrict a, const __m256* __restrict b,
+              __m256* __restrict out, size_t count)
 {
     switch (op) {
         case OP_ADD:
@@ -388,7 +389,7 @@ void clause(Opcode op, const __m256* __restrict a, const __m256* __restrict b,
             break;
         case OP_NEG:
             EVAL_LOOP
-            out[i] = _mm256_mul_ps(a[i], _mm256_set1_ps(-1));
+            out[i] = _mm256_sub_ps(_mm256_setzero_ps(), a[i]);
             break;
         case OP_ABS:
             EVAL_LOOP
