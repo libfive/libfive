@@ -42,7 +42,7 @@ public:
      *  (which have been loaded with set)
      */
 #ifdef __AVX__
-    const float* values(size_t count, bool vectorize=false);
+    const float* values(size_t count, bool vectorize=true);
 #else
     const float* values(size_t count);
 #endif

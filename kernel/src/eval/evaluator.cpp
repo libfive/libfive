@@ -457,7 +457,7 @@ const float* Evaluator::values(size_t count, bool vectorize)
     if (vectorize)
     {
         packAVX();
-        count = (count - 1)/8;
+        count = (count - 1)/8 + 1;
 
         for (const auto& row : rows)
         {
