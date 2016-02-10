@@ -457,18 +457,18 @@ static void clause(Opcode op,
             EVAL_LOOP
             {
                 __m256 cmp = _mm256_cmp_ps(av[i], bv[i], CMP_LT_OQ);
-                odx[i] = _mm256_blendv_ps(adx[i], bdx[i], cmp);
-                ody[i] = _mm256_blendv_ps(ady[i], bdy[i], cmp);
-                odz[i] = _mm256_blendv_ps(adz[i], bdz[i], cmp);
+                odx[i] = _mm256_blendv_ps(bdx[i], adx[i], cmp);
+                ody[i] = _mm256_blendv_ps(bdy[i], ady[i], cmp);
+                odz[i] = _mm256_blendv_ps(bdz[i], adz[i], cmp);
             }
             break;
         case OP_MAX:
             EVAL_LOOP
             {
                 __m256 cmp = _mm256_cmp_ps(av[i], bv[i], CMP_LT_OQ);
-                odx[i] = _mm256_blendv_ps(bdx[i], adx[i], cmp);
-                ody[i] = _mm256_blendv_ps(bdy[i], ady[i], cmp);
-                odz[i] = _mm256_blendv_ps(bdz[i], adz[i], cmp);
+                odx[i] = _mm256_blendv_ps(adx[i], bdx[i], cmp);
+                ody[i] = _mm256_blendv_ps(ady[i], bdy[i], cmp);
+                odz[i] = _mm256_blendv_ps(adz[i], bdz[i], cmp);
             }
             break;
         case OP_SUB:
@@ -504,11 +504,11 @@ static void clause(Opcode op,
 
                 // If the value is less than zero, clamp the derivative at zero
                 odx[i] = _mm256_blendv_ps(
-                        _mm256_setzero_ps(), _mm256_div_ps(adx[i], den), cmp);
+                        _mm256_div_ps(adx[i], den), _mm256_setzero_ps(), cmp);
                 ody[i] = _mm256_blendv_ps(
-                        _mm256_setzero_ps(), _mm256_div_ps(ady[i], den), cmp);
+                        _mm256_div_ps(ady[i], den), _mm256_setzero_ps(), cmp);
                 odz[i] = _mm256_blendv_ps(
-                        _mm256_setzero_ps(), _mm256_div_ps(adz[i], den), cmp);
+                        _mm256_div_ps(adz[i], den), _mm256_setzero_ps(), cmp);
             }
             break;
         case OP_NEG:
@@ -526,11 +526,11 @@ static void clause(Opcode op,
 
                 // If a value is less than zero, negate its derivative
                 odx[i] = _mm256_blendv_ps(
-                        _mm256_sub_ps(_mm256_setzero_ps(), adx[i]), adx[i], cmp);
+                        adx[i], _mm256_sub_ps(_mm256_setzero_ps(), adx[i]), cmp);
                 ody[i] = _mm256_blendv_ps(
-                        _mm256_sub_ps(_mm256_setzero_ps(), ady[i]), ady[i], cmp);
+                        ady[i], _mm256_sub_ps(_mm256_setzero_ps(), ady[i]), cmp);
                 odz[i] = _mm256_blendv_ps(
-                        _mm256_sub_ps(_mm256_setzero_ps(), adz[i]), adz[i], cmp);
+                        adz[i], _mm256_sub_ps(_mm256_setzero_ps(), adz[i]), cmp);
             }
             break;
         case OP_A:
