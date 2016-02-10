@@ -9,6 +9,11 @@
 
 struct Result {
     /*
+     *  In the constructor, initialize array points
+     */
+    Result();
+
+    /*
      *  Sets a particular value in the array
      *  (inlined for efficiency)
      */
@@ -40,32 +45,28 @@ struct Result {
      */
     void deriv(float x, float y, float z);
 
-#ifdef __AVX__
-    /*
-     *  Packs values from the float array into the AVX array
-     */
-    void packAVX();
-
-    /*
-     *  Unpacks values from the AVX array into the float array
-     */
-    void unpackAVX();
-#endif
-
 protected:
-    float f[256];
-    float dx[256];
-    float dy[256];
-    float dz[256];
 
-    Interval i;
-
+    // If we're using AVX for evaluation, then our floats are simply
+    // pointers to the first member of the __m256 array
 #ifdef __AVX__
+    float* f;
+    float* dx;
+    float* dy;
+    float* dz;
+
     __m256 mf[32];
     __m256 mdx[32];
     __m256 mdy[32];
     __m256 mdz[32];
+#else
+    float f[256];
+    float dx[256];
+    float dy[256];
+    float dz[256];
 #endif
+
+    Interval i;
 
     friend class Evaluator;
     friend class Clause;

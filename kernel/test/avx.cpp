@@ -6,49 +6,6 @@
 #include "ao/kernel/eval/result.hpp"
 
 #ifdef __AVX__
-TEST_CASE("AVX load / store")
-{
-    Result r;
-
-    for (int i=0; i < 256; ++i)
-    {
-        r.set(i, i);
-    }
-
-    // Confirm that loading worked
-    bool success = true;
-    for (int i=0; i < 256; ++i)
-    {
-        success &= r.get(i) == i;
-    }
-    REQUIRE(success);
-
-    r.packAVX();
-
-    // Wipe the float memory banks
-    for (int i=0; i < 256; ++i)
-    {
-        r.set(0, i);
-    }
-
-    // Confirm that wiping worked
-    success = true;
-    for (int i=0; i < 256; ++i)
-    {
-        success &= r.get(i) == 0.0f;
-    }
-    REQUIRE(success);
-
-    r.unpackAVX();
-
-    // Confirm that unpacking worked
-    success = true;
-    for (int i=0; i < 256; ++i)
-    {
-        success &= r.get(i) == i;
-    }
-    REQUIRE(success);
-}
 
 TEST_CASE("Vectorized performance")
 {
@@ -62,7 +19,6 @@ TEST_CASE("Vectorized performance")
     {
         e.set(i, 2*i, 0, i);
     }
-    e.packAVX();
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
@@ -98,4 +54,5 @@ TEST_CASE("Vectorized performance")
     }
     REQUIRE(matched);
 }
+
 #endif

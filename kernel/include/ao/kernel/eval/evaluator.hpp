@@ -99,18 +99,6 @@ public:
      */
     double utilization() const;
 
-#ifdef __AVX__
-    /*
-     *  Pack values from the X, Y, Z float arrays to the AVX array
-     */
-    void packAVX();
-
-    /*
-     *  Unpack values from the result array to the float array
-     */
-    const float* unpackAVX();
-#endif
-
 protected:
     /*
      *  Constructs a new clause in the data array and increments ptr

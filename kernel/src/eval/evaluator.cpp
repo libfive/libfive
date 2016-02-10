@@ -456,7 +456,6 @@ const float* Evaluator::values(size_t count, bool vectorize)
 {
     if (vectorize)
     {
-        packAVX();
         count = (count - 1)/8 + 1;
 
         for (const auto& row : rows)
@@ -482,7 +481,6 @@ const float* Evaluator::values(size_t count, bool vectorize)
             }
         }
 
-        unpackAVX();
         return root->result.f;
     }
 #else
@@ -614,20 +612,3 @@ double Evaluator::utilization() const
 
     return active / total;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-#ifdef __AVX__
-void Evaluator::packAVX()
-{
-    X->result.packAVX();
-    Y->result.packAVX();
-    Z->result.packAVX();
-}
-
-const float* Evaluator::unpackAVX()
-{
-    root->result.unpackAVX();
-    return root->result.f;
-}
-#endif
