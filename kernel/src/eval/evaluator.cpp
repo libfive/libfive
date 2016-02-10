@@ -560,8 +560,15 @@ static void clause(Opcode op,
 }
 #endif
 
-static Interval clause(Opcode op, const Interval& a, const Interval& b)
+static Interval clause(Opcode op, const Interval& a_, const Interval& b_)
 {
+    // Convert intervals to unprotected intervals
+    // (there better be an Interval::traits_type::rounding object
+    //  protecting us here)
+    typedef boost::numeric::interval_lib::unprotect<Interval>::type I;
+    const I& a(a_);
+    const I& b(b_);
+
     switch (op) {
         case OP_ADD:
             return a + b;
@@ -730,6 +737,10 @@ std::tuple<const float*, const float*,
 
 Interval Evaluator::interval()
 {
+    // Save and initialize the rounding mode (so that intervals can be
+    // unprotected in clause evaluation)
+    Interval::traits_type::rounding rnd;
+
     for (const auto& row : rows)
     {
         for (size_t i=0; i < row.active; ++i)
