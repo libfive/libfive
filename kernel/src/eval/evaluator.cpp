@@ -611,20 +611,18 @@ const float* Evaluator::values(size_t count, bool vectorize)
             {
                 auto op = row[i]->op;
 
-                __m256* a = row[i]->a ? row[i]->a->result.mf : nullptr;
-                __m256* b = row[i]->b ? row[i]->b->result.mf : nullptr;
-
                 // Modify the opcode if parts of the tree are disabled
-                if (a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+                if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
                 {
                     op = OP_B;
                 }
-                if (b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+                if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
                 {
                     op = OP_A;
                 }
 
-                clause(op, a, b, row[i]->result.mf, count);
+                clause(op, row[i]->ptrs.a.mf, row[i]->ptrs.b.mf,
+                           row[i]->result.mf, count);
             }
         }
 
@@ -640,20 +638,18 @@ const float* Evaluator::values(size_t count)
         {
             auto op = row[i]->op;
 
-            float* a = row[i]->a ? row[i]->a->result.f : nullptr;
-            float* b = row[i]->b ? row[i]->b->result.f : nullptr;
-
             // Modify the opcode if parts of the tree are disabled
-            if (a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+            if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
             {
                 op = OP_B;
             }
-            if (b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+            if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
             {
                 op = OP_A;
             }
 
-            clause(op, a, b, row[i]->result.f, count);
+            clause(op, row[i]->ptrs.a.f, row[i]->ptrs.b.f,
+                       row[i]->result.f, count);
         }
     }
     return root->result.f;
@@ -674,28 +670,22 @@ std::tuple<const float*, const float*,
             {
                 auto op = row[i]->op;
 
-                __m256* av  = row[i]->a ? row[i]->a->result.mf  : nullptr;
-                __m256* adx = row[i]->a ? row[i]->a->result.mdx : nullptr;
-                __m256* ady = row[i]->a ? row[i]->a->result.mdy : nullptr;
-                __m256* adz = row[i]->a ? row[i]->a->result.mdz : nullptr;
-
-                __m256* bv  = row[i]->b ? row[i]->b->result.mf  : nullptr;
-                __m256* bdx = row[i]->b ? row[i]->b->result.mdx : nullptr;
-                __m256* bdy = row[i]->b ? row[i]->b->result.mdy : nullptr;
-                __m256* bdz = row[i]->b ? row[i]->b->result.mdz : nullptr;
-
                 // Modify the opcode if parts of the tree are disabled
-                if (av && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+                if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
                 {
                     op = OP_B;
                 }
-                if (bv && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+                if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
                 {
                     op = OP_A;
                 }
 
-                clause(op, av, adx, ady, adz,
-                           bv, bdx, bdy, bdz,
+                clause(op, row[i]->ptrs.a.mf, row[i]->ptrs.a.mdx,
+                           row[i]->ptrs.a.mdy, row[i]->ptrs.a.mdz,
+
+                           row[i]->ptrs.b.mf, row[i]->ptrs.b.mdx,
+                           row[i]->ptrs.b.mdy, row[i]->ptrs.b.mdz,
+
                            row[i]->result.mf, row[i]->result.mdx,
                            row[i]->result.mdy, row[i]->result.mdz,
                        count);
@@ -714,28 +704,22 @@ std::tuple<const float*, const float*,
         {
             auto op = row[i]->op;
 
-            float* av  = row[i]->a ? row[i]->a->result.f  : nullptr;
-            float* adx = row[i]->a ? row[i]->a->result.dx : nullptr;
-            float* ady = row[i]->a ? row[i]->a->result.dy : nullptr;
-            float* adz = row[i]->a ? row[i]->a->result.dz : nullptr;
-
-            float* bv  = row[i]->b ? row[i]->b->result.f  : nullptr;
-            float* bdx = row[i]->b ? row[i]->b->result.dx : nullptr;
-            float* bdy = row[i]->b ? row[i]->b->result.dy : nullptr;
-            float* bdz = row[i]->b ? row[i]->b->result.dz : nullptr;
-
             // Modify the opcode if parts of the tree are disabled
-            if (av && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+            if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
             {
                 op = OP_B;
             }
-            if (bv && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+            if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
             {
                 op = OP_A;
             }
 
-            clause(op, av, adx, ady, adz,
-                       bv, bdx, bdy, bdz,
+            clause(op, row[i]->ptrs.a.f, row[i]->ptrs.a.dx,
+                       row[i]->ptrs.a.dy, row[i]->ptrs.a.dz,
+
+                       row[i]->ptrs.b.f, row[i]->ptrs.b.dx,
+                       row[i]->ptrs.b.dy, row[i]->ptrs.b.dz,
+
                        row[i]->result.f, row[i]->result.dx,
                        row[i]->result.dy, row[i]->result.dz,
                    count);
