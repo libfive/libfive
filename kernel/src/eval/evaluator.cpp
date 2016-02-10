@@ -611,7 +611,7 @@ static Interval clause(Opcode op, const Interval& a_, const Interval& b_)
         case OP_SQUARE:
             return boost::numeric::square(a);
         case OP_SQRT:
-            return sqrt(a);
+            return boost::numeric::sqrt(a);
         case OP_NEG:
             return -a;
         case OP_ABS:
