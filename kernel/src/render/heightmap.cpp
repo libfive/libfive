@@ -89,9 +89,15 @@ struct NormalRenderer
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// Helper macro to iterate over a region in a deterministic order
+#define SUBREGION_ITERATE_XYZ(r) \
+for (unsigned i=0; i < r.X.size; ++i)           \
+    for (unsigned j=0; j < r.Y.size; ++j)       \
+        for (unsigned k=0; k < r.Z.size; ++k)
+
 /*
-*  Helper functions that evaluates a region of pixels
-*/
+ *  Helper functions that evaluates a region of pixels
+ */
 static void pixels(Evaluator* e, const Subregion& r,
                    DepthImage& depth, NormalImage& norm)
 {

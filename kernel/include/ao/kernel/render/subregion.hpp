@@ -104,9 +104,3 @@ protected:
      */
     Subregion(const Axis& x, const Axis& y, const Axis& z);
 };
-
-// Helper macro to iterate over a region in a deterministic order
-#define SUBREGION_ITERATE_XYZ(r) \
-for (unsigned i=0; i < r.X.size; ++i)           \
-    for (unsigned j=0; j < r.Y.size; ++j)       \
-        for (unsigned k=0; k < r.Z.size; ++k)   \
