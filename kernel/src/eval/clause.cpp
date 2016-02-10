@@ -12,6 +12,43 @@ Clause::Clause(const Atom* m,
     assert(m->a ? clauses.count(m->a) : true);
     assert(m->b ? clauses.count(m->b) : true);
 
+    // Helper function to copy a set of result pointers if a clause is present
+    auto load_ptrs = [](ResultPtrs* p, Clause* c)
+    {
+        if (c)
+        {
+            p->f = c->result.f;
+            p->dx = c->result.dx;
+            p->dy = c->result.dy;
+            p->dz = c->result.dz;
+        }
+        else
+        {
+            p->f = nullptr;
+            p->dx = nullptr;
+            p->dy = nullptr;
+            p->dz = nullptr;
+        }
+#ifdef __AVX__
+        if (c)
+        {
+            p->mf = c->result.mf;
+            p->mdx = c->result.mdx;
+            p->mdy = c->result.mdy;
+            p->mdz = c->result.mdz;
+        }
+        else
+        {
+            p->mf = nullptr;
+            p->mdx = nullptr;
+            p->mdy = nullptr;
+            p->mdz = nullptr;
+        }
+#endif
+    };
+    load_ptrs(&ptrs.a, a);
+    load_ptrs(&ptrs.b, b);
+
     // Assert that this atom hasn't already been added to the tree
     assert(clauses[m] == nullptr);
 
