@@ -390,8 +390,18 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
     return Interval();
 }
 
+#ifdef __AVX__
+const float* Evaluator::values(size_t count, bool vectorize)
+{
+    if (vectorize)
+    {
+        // Do vectorized evaluation here
+        return nullptr;
+    }
+#else
 const float* Evaluator::values(size_t count)
 {
+#endif
     for (const auto& row : rows)
     {
         for (size_t i=0; i < row.active; ++i)
@@ -417,9 +427,21 @@ const float* Evaluator::values(size_t count)
     return root->result.f;
 }
 
+#ifdef __AVX__
+std::tuple<const float*, const float*,
+           const float*, const float*> Evaluator::derivs(size_t count,
+                                                         bool vectorize)
+{
+    if (vectorize)
+    {
+        // Do vectorized evaluation here
+        return nullptr;
+    }
+#else
 std::tuple<const float*, const float*,
            const float*, const float*> Evaluator::derivs(size_t count)
 {
+#endif
     for (const auto& row : rows)
     {
         for (size_t i=0; i < row.active; ++i)
@@ -519,6 +541,6 @@ void Evaluator::packAVX()
 const float* Evaluator::unpackAVX()
 {
     root->result.unpackAVX();
-    return root->result.ptr<float>();
+    return root->result.f;
 }
 #endif

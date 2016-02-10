@@ -41,7 +41,11 @@ public:
      *  Evaluates a set of floating-point results
      *  (which have been loaded with set)
      */
+#ifdef __AVX__
+    const float* values(size_t count, bool vectorize=false);
+#else
     const float* values(size_t count);
+#endif
 
     /*
      *  Evaluate a set of gradients, returning a tuple
@@ -49,8 +53,14 @@ public:
      *
      *  Values must have been previously loaded by set
      */
+#ifdef __AVX__
+    std::tuple<const float*, const float*,
+               const float*, const float*> derivs(size_t count,
+                                                  bool vectorize=false);
+#else
     std::tuple<const float*, const float*,
                const float*, const float*> derivs(size_t count);
+#endif
 
     /*
      *  Evaluates a single interval (stored with set)

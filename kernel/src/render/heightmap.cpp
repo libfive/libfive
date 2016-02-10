@@ -104,13 +104,7 @@ static void pixels(Evaluator* e, const Subregion& r,
         e->set(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
     }
 
-#ifdef __AVX__
-    e->packAVX();
-    e->evalCore<__m256>(r.voxels());
-    const float* out = e->unpackAVX();
-#else
     const float* out = e->values(r.voxels());
-#endif
 
     index = 0;
 

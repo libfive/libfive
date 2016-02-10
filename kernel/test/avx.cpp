@@ -9,18 +9,17 @@
 TEST_CASE("AVX load / store")
 {
     Result r;
-    REQUIRE(r.count<float>() == 256);
 
     for (int i=0; i < 256; ++i)
     {
-        r.set<float>(i, i);
+        r.set(i, i);
     }
 
     // Confirm that loading worked
     bool success = true;
     for (int i=0; i < 256; ++i)
     {
-        success &= r.get<float>(i) == i;
+        success &= r.get(i) == i;
     }
     REQUIRE(success);
 
@@ -29,14 +28,14 @@ TEST_CASE("AVX load / store")
     // Wipe the float memory banks
     for (int i=0; i < 256; ++i)
     {
-        r.set<float>(0.0f, i);
+        r.set(0, i);
     }
 
     // Confirm that wiping worked
     success = true;
     for (int i=0; i < 256; ++i)
     {
-        success &= r.get<float>(i) == 0.0f;
+        success &= r.get(i) == 0.0f;
     }
     REQUIRE(success);
 
@@ -46,7 +45,7 @@ TEST_CASE("AVX load / store")
     success = true;
     for (int i=0; i < 256; ++i)
     {
-        success &= r.get<float>(i) == i;
+        success &= r.get(i) == i;
     }
     REQUIRE(success);
 }
@@ -61,7 +60,7 @@ TEST_CASE("Vectorized performance")
 
     for (int i=0; i < 256; ++i)
     {
-        e.setPoint<float>(i, 2*i, 0, i);
+        e.set(i, 2*i, 0, i);
     }
     e.packAVX();
 
@@ -69,7 +68,7 @@ TEST_CASE("Vectorized performance")
     start = std::chrono::system_clock::now();
     for (int i=0; i < N; ++i)
     {
-        e.evalCore<float>(256);
+        e.values(256, false);
     }
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> ft = end - start;
@@ -77,7 +76,7 @@ TEST_CASE("Vectorized performance")
     start = std::chrono::system_clock::now();
     for (int i=0; i < N; ++i)
     {
-        e.evalCore<__m256>(256);
+        e.values(256, true);
     }
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> mt = end - start;

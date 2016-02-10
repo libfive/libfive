@@ -23,6 +23,11 @@ struct Result {
     void set(Interval V);
 
     /*
+     *  Returns the float at the given index
+     */
+    float get(size_t index) const { return f[index]; }
+
+    /*
      *  Sets all of the values to the given constant float
      *  (across the Interval, float, Gradient, and __m256 arrays)
      *
@@ -56,7 +61,10 @@ protected:
     Interval i;
 
 #ifdef __AVX__
-    __m256 m[32];
+    __m256 mf[32];
+    __m256 mdx[32];
+    __m256 mdy[32];
+    __m256 mdz[32];
 #endif
 
     friend class Evaluator;
