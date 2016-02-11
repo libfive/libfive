@@ -9,7 +9,7 @@
 
 struct Result {
     /*
-     *  In the constructor, initialize array points
+     *  Initialize array pointers
      */
     Result();
 
