@@ -10,7 +10,7 @@ TEST_CASE("Variable evaluation")
     Tree t(&s, s.X());
     Evaluator e(&t);
 
-    REQUIRE(e.eval<float>(1.0, 2.0, 3.0) == 1.0);
+    REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.0);
 }
 
 TEST_CASE("Float evaluation")
@@ -19,7 +19,7 @@ TEST_CASE("Float evaluation")
     Tree t(&s, s.operation(OP_ADD, s.X(), s.constant(1)));
     Evaluator e(&t);
 
-    REQUIRE(e.eval<float>(1.0, 2.0, 3.0) == 2.0);
+    REQUIRE(e.eval(1.0, 2.0, 3.0) == 2.0);
 }
 
 TEST_CASE("Interval evaluation")

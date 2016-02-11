@@ -1,45 +1,39 @@
 #include "ao/kernel/eval/result.hpp"
 
+Result::Result()
+{
+#ifdef __AVX__
+    f  = reinterpret_cast<float*>(mf);
+    dx = reinterpret_cast<float*>(mdx);
+    dy = reinterpret_cast<float*>(mdy);
+    dz = reinterpret_cast<float*>(mdz);
+#endif
+}
+
+void Result::set(Interval V)
+{
+    i = V;
+}
+
 void Result::fill(float v)
 {
-    for (size_t i=0; i < count<float>(); ++i)
+    for (unsigned i=0; i < 256; ++i)
     {
-        set<float>(v, i);
+        f[i] = v;
+        dx[i] = 0;
+        dy[i] = 0;
+        dz[i] = 0;
     }
-    for (size_t i=0; i < count<Gradient>(); ++i)
-    {
-        set<Gradient>(Gradient(v), i);
-    }
-    for (size_t i=0; i < count<Interval>(); ++i)
-    {
-        set<Interval>(Interval(v), i);
-    }
-#ifdef __AVX__
-    for (size_t i=0; i < count<__m256>(); ++i)
-    {
-        m[i] = _mm256_set1_ps(v);
-    }
-#endif
+
+    i = Interval(v, v);
 }
 
-#ifdef __AVX__
-void Result::packAVX()
+void Result::deriv(float x, float y, float z)
 {
-    for (size_t i=0; i < 256; i += 8)
+    for (size_t i=0; i < 256; ++i)
     {
-        m[i/8] = _mm256_load_ps(&f[i]);
+        dx[i] = x;
+        dy[i] = y;
+        dz[i] = z;
     }
 }
-
-void Result::unpackAVX()
-{
-    for (size_t i=0; i < 32; ++i)
-    {
-        __m128 low =  _mm256_extractf128_ps(m[i], 0);
-        __m128 high = _mm256_extractf128_ps(m[i], 1);
-
-        _mm_store_ps(f + i*8, low);
-        _mm_store_ps(f + i*8 + 4, high);
-    }
-}
-#endif

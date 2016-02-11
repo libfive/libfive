@@ -7,6 +7,8 @@
 #include <glm/mat4x4.hpp>
 
 #include "ao/kernel/eval/row.hpp"
+#include "ao/kernel/eval/interval.hpp"
+#include "ao/kernel/eval/clause.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -32,21 +34,54 @@ public:
     /*
      *  Single-argument evaluation
      */
-    template <class T>
-    T eval(T x, T y, T z);
+    float eval(float x, float y, float z);
+    Interval eval(Interval x, Interval y, Interval z);
 
     /*
-     *  Performs the core evaluation sweep (across rows and atoms),
-     *  assuming that 'count' locations have been loaded
+     *  Evaluates a set of floating-point results
+     *  (which have been loaded with set)
      */
-    template <class T>
-    const T* evalCore(size_t count);
+#ifdef __AVX__
+    const float* values(size_t count, bool vectorize=true);
+#else
+    const float* values(size_t count);
+#endif
 
     /*
-     *  Sets the evaluation target at the given index
+     *  Evaluate a set of gradients, returning a tuple
+     *      value, dx, dy, dz
+     *
+     *  Values must have been previously loaded by set
      */
-    template <class T>
-    void setPoint(T x, T y, T z, size_t index);
+#ifdef __AVX__
+    std::tuple<const float*, const float*,
+               const float*, const float*> derivs(size_t count,
+                                                  bool vectorize=true);
+#else
+    std::tuple<const float*, const float*,
+               const float*, const float*> derivs(size_t count);
+#endif
+
+    /*
+     *  Evaluates a single interval (stored with set)
+     */
+    Interval interval();
+
+    /*
+     *  Stores the given value in the result arrays
+     *  (inlined for efficiency)
+     */
+    void set(float x, float y, float z, size_t index)
+    {
+        X->result.set(x, index);
+        Y->result.set(y, index);
+        Z->result.set(z, index);
+    }
+
+    /*
+     *  Stores the given interval in the result objects
+     */
+    void set(Interval X, Interval Y, Interval Z);
 
     /*
      *  Pushes into a subinterval, disabling inactive nodes
@@ -63,18 +98,6 @@ public:
      *  (to check how well disabling is working)
      */
     double utilization() const;
-
-#ifdef __AVX__
-    /*
-     *  Pack values from the X, Y, Z float arrays to the AVX array
-     */
-    void packAVX();
-
-    /*
-     *  Unpack values from the result array to the float array
-     */
-    const float* unpackAVX();
-#endif
 
 protected:
     /*
@@ -103,9 +126,3 @@ protected:
     Clause* data;
     Clause* ptr;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-
-#define EVALUATOR_INCLUDE_IPP
-#include "evaluator.ipp"
-#undef EVALUATOR_INCLUDE_IPP

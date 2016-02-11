@@ -1,5 +1,6 @@
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
+#include "ao/kernel/eval/clause.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -28,6 +29,11 @@ Evaluator::Evaluator(const Tree* tree)
     X = newClause(tree->X, clauses);
     Y = newClause(tree->Y, clauses);
     Z = newClause(tree->Z, clauses);
+
+    // Set derivatives for X, Y, Z (since these never change)
+    X->result.deriv(1, 0, 0);
+    Y->result.deriv(0, 1, 0);
+    Z->result.deriv(0, 0, 1);
 
     // Create matrix clauses
     assert(tree->matrix.size() == matrix.size());
@@ -84,6 +90,27 @@ void Evaluator::setMatrix(const glm::mat4& m)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+float Evaluator::eval(float x, float y, float z)
+{
+    set(x, y, z, 0);
+    return values(1)[0];
+}
+
+Interval Evaluator::eval(Interval x, Interval y, Interval z)
+{
+    set(x, y, z);
+    return interval();
+}
+
+void Evaluator::set(Interval x, Interval y, Interval z)
+{
+    X->result.set(x);
+    Y->result.set(y);
+    Z->result.set(z);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void Evaluator::push()
 {
     // Walk up the tree, marking every atom with ATOM_FLAG_IGNORED
@@ -116,6 +143,647 @@ void Evaluator::pop()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#define EVAL_LOOP for (size_t i=0; i < count; ++i)
+static void clause(Opcode op,
+        const float* __restrict a, const float* __restrict b,
+        float* __restrict out, size_t count)
+{
+    switch (op) {
+        case OP_ADD:
+            EVAL_LOOP
+            out[i] = a[i] + b[i];
+            break;
+        case OP_MUL:
+            EVAL_LOOP
+            out[i] = a[i] * b[i];
+            break;
+        case OP_MIN:
+            EVAL_LOOP
+            out[i] = fmin(a[i], b[i]);
+            break;
+        case OP_MAX:
+            EVAL_LOOP
+            out[i] = fmax(a[i], b[i]);
+            break;
+        case OP_SUB:
+            EVAL_LOOP
+            out[i] = a[i] - b[i];
+            break;
+        case OP_DIV:
+            EVAL_LOOP
+            out[i] = a[i] / b[i];
+            break;
+        case OP_SQUARE:
+            EVAL_LOOP
+            out[i] = a[i] * a[i];
+            break;
+        case OP_SQRT:
+            EVAL_LOOP
+            out[i] = sqrt(a[i]);
+            break;
+        case OP_NEG:
+            EVAL_LOOP
+            out[i] = -a[i];
+            break;
+        case OP_ABS:
+            EVAL_LOOP
+            out[i] = fabs(a[i]);
+            break;
+        case OP_A:
+            EVAL_LOOP
+            out[i] = a[i];
+            break;
+        case OP_B:
+            EVAL_LOOP
+            out[i] = b[i];
+            break;
+        case INVALID:
+        case OP_CONST:
+        case OP_MUTABLE:
+        case OP_X:
+        case OP_Y:
+        case OP_Z:
+        case LAST_OP: assert(false);
+    }
+}
+
+static void clause(Opcode op,
+        const float* __restrict av,  const float* __restrict adx,
+        const float* __restrict ady, const float* __restrict adz,
+
+        const float* __restrict bv,  const float* __restrict bdx,
+        const float* __restrict bdy, const float* __restrict bdz,
+
+        float* __restrict ov,  float* __restrict odx,
+        float* __restrict ody, float* __restrict odz,
+        size_t count)
+{
+    // Evaluate the base operations in a single pass
+    clause(op, av, bv, ov, count);
+
+    switch (op) {
+        case OP_ADD:
+            EVAL_LOOP
+            {
+                odx[i] = adx[i] + bdx[i];
+                ody[i] = ady[i] + bdy[i];
+                odz[i] = adz[i] + bdz[i];
+            }
+            break;
+        case OP_MUL:
+            EVAL_LOOP
+            {   // Product rule
+                odx[i] = av[i]*bdx[i] + adx[i]*bv[i];
+                ody[i] = av[i]*bdy[i] + ady[i]*bv[i];
+                odz[i] = av[i]*bdz[i] + adz[i]*bv[i];
+            }
+            break;
+        case OP_MIN:
+            EVAL_LOOP
+            {
+                if (av[i] < bv[i])
+                {
+                    odx[i] = adx[i];
+                    ody[i] = ady[i];
+                    odz[i] = adz[i];
+                }
+                else
+                {
+                    odx[i] = bdx[i];
+                    ody[i] = bdy[i];
+                    odz[i] = bdz[i];
+                }
+            }
+            break;
+        case OP_MAX:
+            EVAL_LOOP
+            {
+                if (av[i] < bv[i])
+                {
+                    odx[i] = bdx[i];
+                    ody[i] = bdy[i];
+                    odz[i] = bdz[i];
+                }
+                else
+                {
+                    odx[i] = adx[i];
+                    ody[i] = ady[i];
+                    odz[i] = adz[i];
+                }
+            }
+            break;
+        case OP_SUB:
+            EVAL_LOOP
+            {
+                odx[i] = adx[i] - bdx[i];
+                ody[i] = ady[i] - bdy[i];
+                odz[i] = adz[i] - bdz[i];
+            }
+            break;
+        case OP_DIV:
+            EVAL_LOOP
+            {
+                const float p = pow(bv[i], 2);
+                odx[i] = (bv[i]*adx[i] - av[i]*bdx[i]) / p;
+                ody[i] = (bv[i]*ady[i] - av[i]*bdy[i]) / p;
+                odz[i] = (bv[i]*adz[i] - av[i]*bdz[i]) / p;
+            }
+            break;
+        case OP_SQUARE:
+            EVAL_LOOP
+            {
+                odx[i] = 2 * av[i] * adx[i];
+                ody[i] = 2 * av[i] * ady[i];
+                odz[i] = 2 * av[i] * adz[i];
+            }
+            break;
+        case OP_SQRT:
+            EVAL_LOOP
+            {
+                if (av[i] < 0)
+                {
+                    odx[i] = 0;
+                    ody[i] = 0;
+                    odz[i] = 0;
+                }
+                else
+                {
+                    odx[i] = adx[i] / (2 * ov[i]);
+                    ody[i] = ady[i] / (2 * ov[i]);
+                    odz[i] = adz[i] / (2 * ov[i]);
+                }
+            }
+            break;
+        case OP_NEG:
+            EVAL_LOOP
+            {
+                odx[i] = -adx[i];
+                ody[i] = -ady[i];
+                odz[i] = -adz[i];
+            }
+            break;
+        case OP_ABS:
+            EVAL_LOOP
+            {
+                if (av[i] < 0)
+                {
+                    odx[i] = -adx[i];
+                    ody[i] = -ady[i];
+                    odz[i] = -adz[i];
+                }
+                else
+                {
+                    odx[i] = adx[i];
+                    ody[i] = ady[i];
+                    odz[i] = adz[i];
+                }
+            }
+            break;
+        case OP_A:
+            EVAL_LOOP
+            {
+                odx[i] = adx[i];
+                ody[i] = ady[i];
+                odz[i] = adz[i];
+            }
+            break;
+        case OP_B:
+            EVAL_LOOP
+            {
+                odx[i] = bdx[i];
+                ody[i] = bdy[i];
+                odz[i] = bdz[i];
+            }
+            break;
+        case INVALID:
+        case OP_CONST:
+        case OP_MUTABLE:
+        case OP_X:
+        case OP_Y:
+        case OP_Z:
+        case LAST_OP: assert(false);
+    }
+}
+
+#ifdef __AVX__
+static void clause(Opcode op,
+        const __m256* __restrict a, const __m256* __restrict b,
+              __m256* __restrict out, size_t count)
+{
+    switch (op) {
+        case OP_ADD:
+            EVAL_LOOP
+            out[i] = _mm256_add_ps(a[i], b[i]);
+            break;
+        case OP_MUL:
+            EVAL_LOOP
+            out[i] = _mm256_mul_ps(a[i], b[i]);
+            break;
+        case OP_MIN:
+            EVAL_LOOP
+            out[i] = _mm256_min_ps(a[i], b[i]);
+            break;
+        case OP_MAX:
+            EVAL_LOOP
+            out[i] = _mm256_max_ps(a[i], b[i]);
+            break;
+        case OP_SUB:
+            EVAL_LOOP
+            out[i] = _mm256_sub_ps(a[i], b[i]);
+            break;
+        case OP_DIV:
+            EVAL_LOOP
+            out[i] = _mm256_div_ps(a[i], b[i]);
+            break;
+        case OP_SQUARE:
+            EVAL_LOOP
+            out[i] = _mm256_mul_ps(a[i], a[i]);
+            break;
+        case OP_SQRT:
+            EVAL_LOOP
+            out[i] = _mm256_sqrt_ps(a[i]);
+            break;
+        case OP_NEG:
+            EVAL_LOOP
+            out[i] = _mm256_sub_ps(_mm256_setzero_ps(), a[i]);
+            break;
+        case OP_ABS:
+            EVAL_LOOP
+            out[i] = _mm256_andnot_ps(a[i], _mm256_set1_ps(-0.0f));
+            break;
+        case OP_A:
+            EVAL_LOOP
+            out[i] = a[i];
+            break;
+        case OP_B:
+            EVAL_LOOP
+            out[i] = b[i];
+            break;
+        case INVALID:
+        case OP_CONST:
+        case OP_MUTABLE:
+        case OP_X:
+        case OP_Y:
+        case OP_Z:
+        case LAST_OP: assert(false);
+    }
+}
+
+//  We'll use this comparison operator, which is
+//      less than
+//      ordered (which defines how it handles NaNs)
+//      quiet (meaning it doesn't signal on NaN)
+#define CMP_LT_OQ 17
+
+static void clause(Opcode op,
+        const __m256* __restrict av,  const __m256* __restrict adx,
+        const __m256* __restrict ady, const __m256* __restrict adz,
+
+        const __m256* __restrict bv,  const __m256* __restrict bdx,
+        const __m256* __restrict bdy, const __m256* __restrict bdz,
+
+        __m256* __restrict ov,  __m256* __restrict odx,
+        __m256* __restrict ody, __m256* __restrict odz,
+        size_t count)
+{
+    // Evaluate the base operations in a single pass
+    clause(op, av, bv, ov, count);
+
+    switch (op) {
+        case OP_ADD:
+            EVAL_LOOP
+            {
+                odx[i] = _mm256_add_ps(adx[i], bdx[i]);
+                ody[i] = _mm256_add_ps(ady[i], bdy[i]);
+                odz[i] = _mm256_add_ps(adz[i], bdz[i]);
+            }
+            break;
+        case OP_MUL:
+            EVAL_LOOP
+            {   // Product rule
+                odx[i] = _mm256_add_ps(_mm256_mul_ps(av[i], bdx[i]),
+                                       _mm256_mul_ps(adx[i], bv[i]));
+                ody[i] = _mm256_add_ps(_mm256_mul_ps(av[i], bdy[i]),
+                                       _mm256_mul_ps(ady[i], bv[i]));
+                odz[i] = _mm256_add_ps(_mm256_mul_ps(av[i], bdz[i]),
+                                       _mm256_mul_ps(adz[i], bv[i]));
+            }
+            break;
+        case OP_MIN:
+            EVAL_LOOP
+            {
+                __m256 cmp = _mm256_cmp_ps(av[i], bv[i], CMP_LT_OQ);
+                odx[i] = _mm256_blendv_ps(bdx[i], adx[i], cmp);
+                ody[i] = _mm256_blendv_ps(bdy[i], ady[i], cmp);
+                odz[i] = _mm256_blendv_ps(bdz[i], adz[i], cmp);
+            }
+            break;
+        case OP_MAX:
+            EVAL_LOOP
+            {
+                __m256 cmp = _mm256_cmp_ps(av[i], bv[i], CMP_LT_OQ);
+                odx[i] = _mm256_blendv_ps(adx[i], bdx[i], cmp);
+                ody[i] = _mm256_blendv_ps(ady[i], bdy[i], cmp);
+                odz[i] = _mm256_blendv_ps(adz[i], bdz[i], cmp);
+            }
+            break;
+        case OP_SUB:
+            EVAL_LOOP
+            {
+                odx[i] = _mm256_sub_ps(adx[i], bdx[i]);
+                ody[i] = _mm256_sub_ps(ady[i], bdy[i]);
+                odz[i] = _mm256_sub_ps(adz[i], bdz[i]);
+            }
+            break;
+        case OP_DIV:
+            EVAL_LOOP
+            {
+                const __m256 p = _mm256_mul_ps(bv[i], bv[i]);
+                odx[i] = _mm256_div_ps(
+                          _mm256_sub_ps(_mm256_mul_ps(bv[i], adx[i]),
+                                        _mm256_mul_ps(av[i], bdx[i])), p);
+                ody[i] = _mm256_div_ps(
+                          _mm256_sub_ps(_mm256_mul_ps(bv[i], ady[i]),
+                                        _mm256_mul_ps(av[i], bdy[i])), p);
+                odz[i] = _mm256_div_ps(
+                          _mm256_sub_ps(_mm256_mul_ps(bv[i], adz[i]),
+                                        _mm256_mul_ps(av[i], bdz[i])), p);
+            }
+            break;
+        case OP_SQUARE:
+            EVAL_LOOP
+            {
+                odx[i] = _mm256_mul_ps(_mm256_set1_ps(2),
+                                       _mm256_mul_ps(av[i], adx[i]));
+                ody[i] = _mm256_mul_ps(_mm256_set1_ps(2),
+                                       _mm256_mul_ps(av[i], ady[i]));
+                odz[i] = _mm256_mul_ps(_mm256_set1_ps(2),
+                                       _mm256_mul_ps(av[i], adz[i]));
+            }
+        case OP_SQRT:
+            EVAL_LOOP
+            {
+                __m256 cmp = _mm256_cmp_ps(av[i], _mm256_setzero_ps(), CMP_LT_OQ);
+
+                // Calculate the common denominator
+                __m256 den = _mm256_mul_ps(ov[i], _mm256_set1_ps(2));
+
+                // If the value is less than zero, clamp the derivative at zero
+                odx[i] = _mm256_blendv_ps(
+                        _mm256_div_ps(adx[i], den), _mm256_setzero_ps(), cmp);
+                ody[i] = _mm256_blendv_ps(
+                        _mm256_div_ps(ady[i], den), _mm256_setzero_ps(), cmp);
+                odz[i] = _mm256_blendv_ps(
+                        _mm256_div_ps(adz[i], den), _mm256_setzero_ps(), cmp);
+            }
+            break;
+        case OP_NEG:
+            EVAL_LOOP
+            {
+                odx[i] = _mm256_sub_ps(_mm256_setzero_ps(), adx[i]);
+                ody[i] = _mm256_sub_ps(_mm256_setzero_ps(), ady[i]);
+                odz[i] = _mm256_sub_ps(_mm256_setzero_ps(), adz[i]);
+            }
+            break;
+        case OP_ABS:
+            EVAL_LOOP
+            {
+                __m256 cmp = _mm256_cmp_ps(av[i], _mm256_setzero_ps(), CMP_LT_OQ);
+
+                // If a value is less than zero, negate its derivative
+                odx[i] = _mm256_blendv_ps(
+                        adx[i], _mm256_sub_ps(_mm256_setzero_ps(), adx[i]), cmp);
+                ody[i] = _mm256_blendv_ps(
+                        ady[i], _mm256_sub_ps(_mm256_setzero_ps(), ady[i]), cmp);
+                odz[i] = _mm256_blendv_ps(
+                        adz[i], _mm256_sub_ps(_mm256_setzero_ps(), adz[i]), cmp);
+            }
+            break;
+        case OP_A:
+            EVAL_LOOP
+            {
+                odx[i] = adx[i];
+                ody[i] = ady[i];
+                odz[i] = adz[i];
+            }
+            break;
+        case OP_B:
+            EVAL_LOOP
+            {
+                odx[i] = bdx[i];
+                ody[i] = bdy[i];
+                odz[i] = bdz[i];
+            }
+            break;
+        case INVALID:
+        case OP_CONST:
+        case OP_MUTABLE:
+        case OP_X:
+        case OP_Y:
+        case OP_Z:
+        case LAST_OP: assert(false);
+    }
+}
+#endif
+
+static Interval clause(Opcode op, const Interval& a, const Interval& b)
+{
+    switch (op) {
+        case OP_ADD:
+            return a + b;
+        case OP_MUL:
+            return a * b;
+        case OP_MIN:
+            return boost::numeric::min(a, b);
+        case OP_MAX:
+            return boost::numeric::max(a, b);
+        case OP_SUB:
+            return a - b;
+        case OP_DIV:
+            return a / b;
+        case OP_SQUARE:
+            return boost::numeric::square(a);
+        case OP_SQRT:
+            return boost::numeric::sqrt(a);
+        case OP_NEG:
+            return -a;
+        case OP_ABS:
+            return boost::numeric::abs(a);
+        case OP_A:
+            return a;
+        case OP_B:
+            return b;
+        case INVALID:
+        case OP_CONST:
+        case OP_MUTABLE:
+        case OP_X:
+        case OP_Y:
+        case OP_Z:
+        case LAST_OP: assert(false);
+    }
+    return Interval();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+#ifdef __AVX__
+const float* Evaluator::values(size_t count, bool vectorize)
+{
+    if (vectorize)
+    {
+        count = (count - 1)/8 + 1;
+
+        for (const auto& row : rows)
+        {
+            for (size_t i=0; i < row.active; ++i)
+            {
+                auto op = row[i]->op;
+
+                // Modify the opcode if parts of the tree are disabled
+                if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_B;
+                }
+                if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_A;
+                }
+
+                clause(op, row[i]->ptrs.a.mf, row[i]->ptrs.b.mf,
+                           row[i]->result.mf, count);
+            }
+        }
+
+        return root->result.f;
+    }
+#else
+const float* Evaluator::values(size_t count)
+{
+#endif
+    for (const auto& row : rows)
+    {
+        for (size_t i=0; i < row.active; ++i)
+        {
+            auto op = row[i]->op;
+
+            // Modify the opcode if parts of the tree are disabled
+            if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+            {
+                op = OP_B;
+            }
+            if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+            {
+                op = OP_A;
+            }
+
+            clause(op, row[i]->ptrs.a.f, row[i]->ptrs.b.f,
+                       row[i]->result.f, count);
+        }
+    }
+    return root->result.f;
+}
+
+#ifdef __AVX__
+std::tuple<const float*, const float*,
+           const float*, const float*> Evaluator::derivs(size_t count,
+                                                         bool vectorize)
+{
+    if (vectorize)
+    {
+        count = (count - 1)/8 + 1;
+
+        for (const auto& row : rows)
+        {
+            for (size_t i=0; i < row.active; ++i)
+            {
+                auto op = row[i]->op;
+
+                // Modify the opcode if parts of the tree are disabled
+                if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_B;
+                }
+                if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+                {
+                    op = OP_A;
+                }
+
+                clause(op, row[i]->ptrs.a.mf, row[i]->ptrs.a.mdx,
+                           row[i]->ptrs.a.mdy, row[i]->ptrs.a.mdz,
+
+                           row[i]->ptrs.b.mf, row[i]->ptrs.b.mdx,
+                           row[i]->ptrs.b.mdy, row[i]->ptrs.b.mdz,
+
+                           row[i]->result.mf, row[i]->result.mdx,
+                           row[i]->result.mdy, row[i]->result.mdz,
+                       count);
+            }
+        }
+        return {root->result.f, root->result.dx, root->result.dy, root->result.dz};
+    }
+#else
+std::tuple<const float*, const float*,
+           const float*, const float*> Evaluator::derivs(size_t count)
+{
+#endif
+    for (const auto& row : rows)
+    {
+        for (size_t i=0; i < row.active; ++i)
+        {
+            auto op = row[i]->op;
+
+            // Modify the opcode if parts of the tree are disabled
+            if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+            {
+                op = OP_B;
+            }
+            if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+            {
+                op = OP_A;
+            }
+
+            clause(op, row[i]->ptrs.a.f, row[i]->ptrs.a.dx,
+                       row[i]->ptrs.a.dy, row[i]->ptrs.a.dz,
+
+                       row[i]->ptrs.b.f, row[i]->ptrs.b.dx,
+                       row[i]->ptrs.b.dy, row[i]->ptrs.b.dz,
+
+                       row[i]->result.f, row[i]->result.dx,
+                       row[i]->result.dy, row[i]->result.dz,
+                   count);
+        }
+    }
+    return {root->result.f, root->result.dx, root->result.dy, root->result.dz};
+}
+
+Interval Evaluator::interval()
+{
+    for (const auto& row : rows)
+    {
+        for (size_t i=0; i < row.active; ++i)
+        {
+            auto op = row[i]->op;
+
+            Interval a = row[i]->a ? row[i]->a->result.i : Interval();
+            Interval b = row[i]->b ? row[i]->b->result.i : Interval();
+
+            // Modify the opcode if parts of the tree are disabled
+            if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
+            {
+                op = OP_B;
+            }
+            if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
+            {
+                op = OP_A;
+            }
+
+            row[i]->result.i = clause(op, a, b);
+        }
+    }
+    return root->result.i;
+}
+////////////////////////////////////////////////////////////////////////////////
+
 Clause* Evaluator::newClause(const Atom* m,
                              std::unordered_map<const Atom*, Clause*>& clauses)
 {
@@ -137,20 +805,3 @@ double Evaluator::utilization() const
 
     return active / total;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-#ifdef __AVX__
-void Evaluator::packAVX()
-{
-    X->result.packAVX();
-    Y->result.packAVX();
-    Z->result.packAVX();
-}
-
-const float* Evaluator::unpackAVX()
-{
-    root->result.unpackAVX();
-    return root->result.ptr<float>();
-}
-#endif

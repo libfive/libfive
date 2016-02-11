@@ -10,6 +10,7 @@ enum Opcode
     OP_Y,
     OP_Z,
 
+    OP_SQUARE,
     OP_SQRT,
     OP_NEG,
     OP_ABS,

@@ -6,69 +6,68 @@
 #include <immintrin.h>
 
 #include "ao/kernel/eval/interval.hpp"
-#include "ao/kernel/eval/gradient.hpp"
 
 struct Result {
     /*
-     *  Returns the array size for the given type
+     *  In the constructor, initialize array points
      */
-    template <class T>
-    static constexpr size_t count();
+    Result();
 
     /*
-     *  Set the value at index to v
+     *  Sets a particular value in the array
+     *  (inlined for efficiency)
      */
-    template <class T>
-    void set(T v, size_t index);
+    void set(float v, size_t index)
+    {
+        f[index] = v;
+    }
 
     /*
-     *  Sets all of the values to the given float
+     *  Sets the interval value in the array
+     */
+    void set(Interval V);
+
+    /*
+     *  Returns the float at the given index
+     */
+    float get(size_t index) const { return f[index]; }
+
+    /*
+     *  Sets all of the values to the given constant float
      *  (across the Interval, float, Gradient, and __m256 arrays)
+     *
+     *  Gradients are set to {0, 0, 0}
      */
     void fill(float v);
 
     /*
-     *  Set values 0 through count from the given array
+     *  Fills the derivative arrays with the given values
      */
-    template <class T>
-    void set(const T* ts, size_t n=count<T>());
-
-    /*
-     *  Template for lookups by type
-     */
-    template <class T>
-    T get(size_t index) const;
-
-    /*
-     *  Template to look up the base pointer for a particular type
-     *  (specialized inline below)
-     */
-    template <class T>
-    T* ptr() const;
-
-#ifdef __AVX__
-    /*
-     *  Packs values from the float array into the AVX array
-     */
-    void packAVX();
-
-    /*
-     *  Unpacks values from the AVX array into the float array
-     */
-    void unpackAVX();
-#endif
+    void deriv(float x, float y, float z);
 
 protected:
-    float f[256];
-    Gradient g[256];
 
+    // If we're using AVX for evaluation, then our floats are simply
+    // pointers to the first member of the __m256 array
 #ifdef __AVX__
-    __m256 m[32];
+    float* f;
+    float* dx;
+    float* dy;
+    float* dz;
+
+    __m256 mf[32];
+    __m256 mdx[32];
+    __m256 mdy[32];
+    __m256 mdz[32];
+#else
+    float f[256];
+    float dx[256];
+    float dy[256];
+    float dz[256];
 #endif
 
     Interval i;
-};
 
-#define RESULT_INCLUDE_IPP
-#include "result.ipp"
-#undef RESULT_INCLUDE_IPP
+    friend class Evaluator;
+    friend class Clause;
+};

@@ -1,7 +1,10 @@
 #include <catch/catch.hpp>
 
 #include "ao/kernel/render/dc.hpp"
+#include "ao/kernel/render/region.hpp"
+
 #include "ao/kernel/eval/evaluator.hpp"
+
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/store.hpp"
 
