@@ -186,9 +186,41 @@ and a value r in the range 0 to 1"
           (dz (if (>= (length delta) 3) (caddr delta) 0)))
     (lambda (x y z) (f (- x dx) (- y dy) (- z dz)))))
 
+(define-public (rotate-x shape angle . args)
+    "Rotate the given shape by an angle in radians
+The center of rotation is 0,0,0 or specified by optional argument '(x0 y0 z0)"
+    (let* ((argc (length args))
+           (y0 (if (> argc 1) (cadar  args) 0))
+           (z0 (if (> argc 2) (caddar args) 0))
+           (ca (cos angle))
+           (sa (sin angle)))
+    (move (lambda (x y z)
+        ((move shape (list 0 (- y0) (- z0)))
+            x
+            (+ (* ca y) (* sa z))
+            (+ (* (- sa) y) (* ca z))
+            ))
+        (list 0 y0 z0))))
+
+(define-public (rotate-y shape angle . args)
+    "Rotate the given shape by an angle in radians
+The center of rotation is 0,0,0 or specified by optional argument '(x0 y0 z0)"
+    (let* ((argc (length args))
+           (x0 (if (> argc 0) (caar  args) 0))
+           (z0 (if (> argc 2) (caddar args) 0))
+           (ca (cos angle))
+           (sa (sin angle)))
+    (move (lambda (x y z)
+        ((move shape (list (- x0) 0 (- z0)))
+            (+ (* ca x) (* sa z))
+            y
+            (+ (* (- sa) x) (* ca z))
+            ))
+        (list x0 0 z0))))
+
 (define-public (rotate-z shape angle . args)
     "Rotate the given shape by an angle in radians
-The center of rotation is 0,0 or specified by optional argument '(x0 y0)"
+The center of rotation is 0,0,0 or specified by optional argument '(x0 y0 z0)"
     (let* ((argc (length args))
            (x0 (if (> argc 0) (caar  args) 0))
            (y0 (if (> argc 1) (cadar args) 0))
