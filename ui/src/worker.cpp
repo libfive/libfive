@@ -22,8 +22,14 @@ Worker::Worker(Tree* tree, const Task& t)
 
     thread = std::thread([=](){
         auto start_time = std::chrono::system_clock::now();
-        promise.set_value(
-                Heightmap::Render(tree, this->region, this->abort, m));
+        auto out = Heightmap::Render(tree, this->region, this->abort, m);
+
+        // Map the depth buffer into the 0 - 1 range, with -inf = 1
+        Eigen::ArrayXXf d =
+            (out.first == -std::numeric_limits<float>::infinity())
+            .select(1, (1 - out.first) / 2);
+
+        promise.set_value({d, out.second});
         elapsed = std::chrono::system_clock::now() - start_time;
         glfwPostEmptyEvent(); });
 }

@@ -1,16 +1,11 @@
 #include "ao/ui/gl/texture.hpp"
 
-void toDepthTexture(const DepthImage& img, GLuint tex, Interval zbounds)
+void toDepthTexture(const DepthImage& img, GLuint tex)
 {
-    // Map the depth buffer into the 0 - 1 range, with -inf = 1
-    Eigen::ArrayXXf i = (img == -std::numeric_limits<float>::infinity())
-        .select(1, (zbounds.upper() - img.cast<float>()) /
-                   (zbounds.upper() - zbounds.lower()));
-
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Floats are 4-byte aligned
     glBindTexture(GL_TEXTURE_2D, tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, i.rows(), i.cols(),
-            0, GL_DEPTH_COMPONENT, GL_FLOAT, i.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, img.rows(), img.cols(),
+            0, GL_DEPTH_COMPONENT, GL_FLOAT, img.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
