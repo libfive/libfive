@@ -208,17 +208,17 @@ bool Frame::poll()
         if (state == Worker::DONE)
         {
             // Adjust the default level based on performance, trying to keep
-            // framerate between 20 and 40 fps
+            // framerate between 30 and 60 fps
             if (pending.level == default_level)
             {
-                if (worker->elapsed < std::chrono::milliseconds(25))
+                if (worker->elapsed < std::chrono::milliseconds(16))
                 {
                     if (default_level > 1)
                     {
                         default_level--;
                     }
                 }
-                else if (worker->elapsed > std::chrono::milliseconds(50))
+                else if (worker->elapsed > std::chrono::milliseconds(32))
                 {
                     default_level++;
                 }
