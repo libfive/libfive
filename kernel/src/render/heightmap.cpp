@@ -49,7 +49,7 @@ struct NormalRenderer
             uint32_t iz = 255 * (dz[i] / (2 * length) + 0.5);
 
             // Pack the normals and a dummy alpha byte into the image
-            norm(ys[i], xs[i]) = (0xff << 24) | (iz << 16) | (iy << 8) | ix;
+            norm(xs[i], ys[i]) = (0xff << 24) | (iz << 16) | (iy << 8) | ix;
         }
         count = 0;
     }
@@ -127,9 +127,9 @@ static void pixels(Evaluator* e, const Subregion& r,
         {
             // Check to see whether the voxel is in front of the image's depth
             const float z = r.Z.pos(r.Z.size - k - 1);
-            if (depth(r.Y.min + j, r.X.min + i) < z)
+            if (depth(r.X.min + i, r.Y.min + j) < z)
             {
-                depth(r.Y.min + j, r.X.min + i) = z;
+                depth(r.X.min + i, r.Y.min + j) = z;
 
                 // Adjust the index pointer, since we can skip the rest of
                 // this z-column (since future voxels are behind this one)
@@ -168,9 +168,9 @@ static void fill(Evaluator* e, const Subregion& r, DepthImage& depth,
         for (unsigned j=0; j < r.Y.size; ++j)
         {
             // Check to see whether the voxel is in front of the image's depth
-            if (depth(r.Y.min + j, r.X.min + i) < z)
+            if (depth(r.X.min + i, r.Y.min + j) < z)
             {
-                depth(r.Y.min + j, r.X.min + i) = z;
+                depth(r.X.min + i, r.Y.min + j) = z;
                 nr.push(i, j, z);
             }
         }
@@ -193,7 +193,7 @@ static void recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
     }
 
     // Extract the block of the image that's being inspected
-    auto block = depth.block(r.Y.min, r.X.min, r.Y.size, r.X.size);
+    auto block = depth.block(r.X.min, r.Y.min, r.X.size, r.Y.size);
 
     // If all points in the region are below the heightmap, skip it
     if ((block >= r.Z.pos(r.Z.size - 1)).all())
@@ -241,8 +241,8 @@ std::pair<DepthImage, NormalImage> Render(
     Tree* t, Region r, const std::atomic_bool& abort,
     glm::mat4 m, size_t workers)
 {
-    auto depth = DepthImage(r.Y.values.size(), r.X.values.size());
-    auto norm = NormalImage(r.Y.values.size(), r.X.values.size());
+    auto depth = DepthImage(r.X.values.size(), r.Y.values.size());
+    auto norm = NormalImage(r.X.values.size(), r.Y.values.size());
 
     depth.fill(-std::numeric_limits<float>::infinity());
     norm.fill(0);

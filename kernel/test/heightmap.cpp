@@ -12,7 +12,9 @@ static std::pair<DepthImage, NormalImage> Render(Tree* t, const Region& r)
 {
     std::atomic_bool abort(false);
 
-    return Heightmap::Render(t, r, abort);
+    auto out = Heightmap::Render(t, r, abort);
+    return std::make_pair(out.first.transpose(),
+                          out.second.transpose());
 }
 
 TEST_CASE("2D interval Z values")
