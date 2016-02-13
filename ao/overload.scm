@@ -92,6 +92,7 @@
 (wrap-unary tan 'tan)
 (wrap-unary asin 'asin)
 (wrap-unary acos 'acos)
+(wrap-unary exp 'exp)
 
 (define _atan atan)
 (define (atan a . b)
@@ -106,6 +107,12 @@
                 (make-token 'atan (make-token a))))
         (else (error "Too many arguments to atan"))))
 (export! atan)
+
+(define-public (mod a b)
+    (if (and (number? a) (number? b))
+        (let ((r (floor (/ a b))))
+            (- a (* r b)))
+        (make-token 'mod (make-token a) (make-token b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
