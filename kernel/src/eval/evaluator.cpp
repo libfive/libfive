@@ -177,6 +177,16 @@ static void clause(Opcode op,
             EVAL_LOOP
             out[i] = atan2(a[i], b[i]);
             break;
+        case OP_MOD:
+            EVAL_LOOP
+            {
+                out[i] = std::fmod(a[i], b[i]);
+                while (out[i] < 0)
+                {
+                    out[i] += b[i];
+                }
+            }
+            break;
 
         case OP_SQUARE:
             EVAL_LOOP
@@ -217,6 +227,10 @@ static void clause(Opcode op,
         case OP_ATAN:
             EVAL_LOOP
             out[i] = atan(a[i]);
+            break;
+        case OP_EXP:
+            EVAL_LOOP
+            out[i] = exp(a[i]);
             break;
 
         case OP_A:
@@ -329,6 +343,16 @@ static void clause(Opcode op,
                 odz[i] = (adz[i]*bv[i] - av[i]*bdz[i]) / d;
             }
             break;
+        case OP_MOD:
+            EVAL_LOOP
+            {
+                // This isn't quite how partial derivatives of mod work,
+                // but close enough normals rendering.
+                odx[i] = adx[i];
+                ody[i] = ady[i];
+                odz[i] = adz[i];
+            }
+            break;
 
         case OP_SQUARE:
             EVAL_LOOP
@@ -434,6 +458,15 @@ static void clause(Opcode op,
                 odz[i] = adz[i] / d;
             }
             break;
+        case OP_EXP:
+            EVAL_LOOP
+            {
+                const float e = exp(av[i]);
+                odx[i] = e * adx[i];
+                ody[i] = e * ady[i];
+                odz[i] = e * adz[i];
+            }
+            break;
 
         case OP_A:
             EVAL_LOOP
@@ -527,6 +560,8 @@ static void clause(Opcode op,
         case OP_ASIN:
         case OP_ACOS:
         case OP_ATAN:
+        case OP_EXP:
+        case OP_MOD:
             clause(op, reinterpret_cast<const float*>(a),
                        reinterpret_cast<const float*>(b),
                        reinterpret_cast<float*>(out), count*8);
@@ -699,6 +734,8 @@ static void clause(Opcode op,
         case OP_ASIN:
         case OP_ACOS:
         case OP_ATAN:
+        case OP_EXP:
+        case OP_MOD:
             clause(op, reinterpret_cast<const float*>(av),
                        reinterpret_cast<const float*>(adx),
                        reinterpret_cast<const float*>(ady),
@@ -743,6 +780,8 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
             return a / b;
         case OP_ATAN2:
             return Interval(-M_PI, M_PI); // YOLO
+        case OP_MOD:
+            return Interval(0.0f, b.upper()); // YOLO
 
         case OP_SQUARE:
             return boost::numeric::square(a);
@@ -764,6 +803,8 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
             return boost::numeric::acos(a);
         case OP_ATAN:
             return boost::numeric::atan(a);
+        case OP_EXP:
+            return boost::numeric::exp(a);
 
         case OP_A:
             return a;

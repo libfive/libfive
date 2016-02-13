@@ -38,6 +38,7 @@ size_t Token::args(Opcode op)
         case OP_ASIN:
         case OP_ACOS:
         case OP_ATAN:
+        case OP_EXP:
             return 1;
 
         case OP_ADD: // fallthrough
@@ -47,6 +48,7 @@ size_t Token::args(Opcode op)
         case OP_SUB:
         case OP_DIV:
         case OP_ATAN2:
+        case OP_MOD:
             return 2;
 
         case INVALID: // fallthrough
