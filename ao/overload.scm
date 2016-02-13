@@ -87,3 +87,9 @@
 
 (wrap-unary sqrt 'sqrt)
 (wrap-unary abs 'abs)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-public (square f)
+    (if (number? f) (* f f)
+                    (make-token 'square f)))
