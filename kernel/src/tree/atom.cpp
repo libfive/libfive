@@ -44,10 +44,19 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case OP_MAX:    os << "max(" << *atom.a << ", " << *atom.b << ")"; break;
         case OP_SUB:    os << "(" << *atom.a << " - " << *atom.b << ")"; break;
         case OP_DIV:    os << "(" << *atom.a << " / " << *atom.b << ")"; break;
+        case OP_ATAN2:  os << "atan2(" << *atom.a << ", " << *atom.b << ")"; break;
+
         case OP_SQUARE: os << "square(" << *atom.a << ")"; break;
         case OP_SQRT:   os << "sqrt(" << *atom.a << ")"; break;
         case OP_NEG:    os << "(-" << *atom.a << ")"; break;
         case OP_ABS:    os << "abs(" << *atom.a << ")"; break;
+        case OP_SIN:    os << "sin(" << *atom.a << ")"; break;
+        case OP_COS:    os << "cos(" << *atom.a << ")"; break;
+        case OP_TAN:    os << "tan(" << *atom.a << ")"; break;
+        case OP_ASIN:    os << "asin(" << *atom.a << ")"; break;
+        case OP_ACOS:    os << "acos(" << *atom.a << ")"; break;
+        case OP_ATAN:    os << "atan(" << *atom.a << ")"; break;
+
         case OP_CONST:  os << atom.value; break;
         case OP_MUTABLE:  os << atom.value; break;
         case OP_X:      os << "X"; break;
