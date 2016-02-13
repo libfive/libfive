@@ -20,6 +20,7 @@ enum Opcode
     OP_ASIN,
     OP_ACOS,
     OP_ATAN,
+    OP_EXP,
 
     OP_ADD,
     OP_MUL,
@@ -28,6 +29,7 @@ enum Opcode
     OP_SUB,
     OP_DIV,
     OP_ATAN2,
+    OP_MOD,
 
     // Dummy opcodes used to select the left or right-hand side of a function
     // (used when one of the children is disabled)
