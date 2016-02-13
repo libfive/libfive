@@ -44,6 +44,7 @@ static Opcode symbol_to_opcode(SCM sym)
     else if (str == "sub")      return OP_SUB;
     else if (str == "div")      return OP_DIV;
     else if (str == "atan2")    return OP_ATAN2;
+    else if (str == "mod")      return OP_MOD;
 
     else if (str == "square")   return OP_SQUARE;
     else if (str == "sqrt")     return OP_SQRT;
@@ -55,6 +56,7 @@ static Opcode symbol_to_opcode(SCM sym)
     else if (str == "asin")     return OP_ASIN;
     else if (str == "acos")     return OP_ACOS;
     else if (str == "atan")     return OP_ATAN;
+    else if (str == "exp")      return OP_EXP;
 
     else                        return INVALID;
 }
