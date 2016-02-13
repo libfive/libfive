@@ -633,6 +633,7 @@ static void clause(Opcode op,
                 odz[i] = _mm256_mul_ps(_mm256_set1_ps(2),
                                        _mm256_mul_ps(av[i], adz[i]));
             }
+            break;
         case OP_SQRT:
             EVAL_LOOP
             {
