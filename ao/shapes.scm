@@ -9,7 +9,7 @@
 ;; 2D shapes
 (define-public (circle center r)
     " Constructs a circle from a center '(x0 y0 z0) and radius "
-    (move (lambda (x y z) (- (sqrt (+ (* x x) (* y y))) r))
+    (move (lambda (x y z) (- (sqrt (+ (square x) (square y))) r))
           center))
 
 (define-public (rectangle a b)
@@ -101,7 +101,7 @@ and a value r in the range 0 to 1"
 
 (define-public (sphere center r)
     "Defines a sphere from a center '(x0 y0 z0) and radius r"
-    (move (lambda (x y z) (- (sqrt (+ (* x x) (* y y) (* z z))) r))
+    (move (lambda (x y z) (- (sqrt (+ (square x) (square y) (square z))) r))
           center))
 
 (define-public (cube a b)

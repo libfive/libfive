@@ -173,6 +173,11 @@ static void clause(Opcode op,
             EVAL_LOOP
             out[i] = a[i] / b[i];
             break;
+        case OP_ATAN2:
+            EVAL_LOOP
+            out[i] = atan2(a[i], b[i]);
+            break;
+
         case OP_SQUARE:
             EVAL_LOOP
             out[i] = a[i] * a[i];
@@ -189,6 +194,31 @@ static void clause(Opcode op,
             EVAL_LOOP
             out[i] = fabs(a[i]);
             break;
+        case OP_SIN:
+            EVAL_LOOP
+            out[i] = sin(a[i]);
+            break;
+        case OP_COS:
+            EVAL_LOOP
+            out[i] = cos(a[i]);
+            break;
+        case OP_TAN:
+            EVAL_LOOP
+            out[i] = tan(a[i]);
+            break;
+        case OP_ASIN:
+            EVAL_LOOP
+            out[i] = asin(a[i]);
+            break;
+        case OP_ACOS:
+            EVAL_LOOP
+            out[i] = acos(a[i]);
+            break;
+        case OP_ATAN:
+            EVAL_LOOP
+            out[i] = atan(a[i]);
+            break;
+
         case OP_A:
             EVAL_LOOP
             out[i] = a[i];
@@ -197,6 +227,7 @@ static void clause(Opcode op,
             EVAL_LOOP
             out[i] = b[i];
             break;
+
         case INVALID:
         case OP_CONST:
         case OP_MUTABLE:
@@ -289,6 +320,16 @@ static void clause(Opcode op,
                 odz[i] = (bv[i]*adz[i] - av[i]*bdz[i]) / p;
             }
             break;
+        case OP_ATAN2:
+            EVAL_LOOP
+            {
+                const float d = pow(av[i], 2) + pow(bv[i], 2);
+                odx[i] = (adx[i]*bv[i] - av[i]*bdx[i]) / d;
+                ody[i] = (ady[i]*bv[i] - av[i]*bdy[i]) / d;
+                odz[i] = (adz[i]*bv[i] - av[i]*bdz[i]) / d;
+            }
+            break;
+
         case OP_SQUARE:
             EVAL_LOOP
             {
@@ -339,6 +380,61 @@ static void clause(Opcode op,
                 }
             }
             break;
+        case OP_SIN:
+            EVAL_LOOP
+            {
+                const float c = cos(av[i]);
+                odx[i] = adx[i] * c;
+                ody[i] = ady[i] * c;
+                odz[i] = adz[i] * c;
+            }
+            break;
+        case OP_COS:
+            EVAL_LOOP
+            {
+                const float s = -sin(av[i]);
+                odx[i] = adx[i] * s;
+                ody[i] = ady[i] * s;
+                odz[i] = adz[i] * s;
+            }
+            break;
+        case OP_TAN:
+            EVAL_LOOP
+            {
+                const float s = pow(1/cos(av[i]), 2);
+                odx[i] = adx[i] * s;
+                ody[i] = ady[i] * s;
+                odz[i] = adz[i] * s;
+            }
+            break;
+        case OP_ASIN:
+            EVAL_LOOP
+            {
+                const float d = sqrt(1 - pow(av[i], 2));
+                odx[i] = adx[i] / d;
+                ody[i] = ady[i] / d;
+                odz[i] = adz[i] / d;
+            }
+            break;
+        case OP_ACOS:
+            EVAL_LOOP
+            {
+                const float d = -sqrt(1 - pow(av[i], 2));
+                odx[i] = adx[i] / d;
+                ody[i] = ady[i] / d;
+                odz[i] = adz[i] / d;
+            }
+            break;
+        case OP_ATAN:
+            EVAL_LOOP
+            {
+                const float d = pow(av[i], 2) + 1;
+                odx[i] = adx[i] / d;
+                ody[i] = ady[i] / d;
+                odz[i] = adz[i] / d;
+            }
+            break;
+
         case OP_A:
             EVAL_LOOP
             {
@@ -395,6 +491,7 @@ static void clause(Opcode op,
             EVAL_LOOP
             out[i] = _mm256_div_ps(a[i], b[i]);
             break;
+
         case OP_SQUARE:
             EVAL_LOOP
             out[i] = _mm256_mul_ps(a[i], a[i]);
@@ -411,6 +508,7 @@ static void clause(Opcode op,
             EVAL_LOOP
             out[i] = _mm256_andnot_ps(a[i], _mm256_set1_ps(-0.0f));
             break;
+
         case OP_A:
             EVAL_LOOP
             out[i] = a[i];
@@ -419,6 +517,21 @@ static void clause(Opcode op,
             EVAL_LOOP
             out[i] = b[i];
             break;
+
+        // Trig functions don't have AVX equivalents, so fall back to
+        // default clause evaluation
+        case OP_ATAN2:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+            clause(op, reinterpret_cast<const float*>(a),
+                       reinterpret_cast<const float*>(b),
+                       reinterpret_cast<float*>(out), count*8);
+            break;
+
         case INVALID:
         case OP_CONST:
         case OP_MUTABLE:
@@ -575,6 +688,32 @@ static void clause(Opcode op,
                 odz[i] = bdz[i];
             }
             break;
+
+        // Trig functions don't have AVX equivalents, so fall back to
+        // default clause evaluation
+        case OP_ATAN2:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+            clause(op, reinterpret_cast<const float*>(av),
+                       reinterpret_cast<const float*>(adx),
+                       reinterpret_cast<const float*>(ady),
+                       reinterpret_cast<const float*>(adz),
+
+                       reinterpret_cast<const float*>(bv),
+                       reinterpret_cast<const float*>(bdx),
+                       reinterpret_cast<const float*>(bdy),
+                       reinterpret_cast<const float*>(bdz),
+
+                       reinterpret_cast<float*>(ov),
+                       reinterpret_cast<float*>(odx),
+                       reinterpret_cast<float*>(ody),
+                       reinterpret_cast<float*>(odz), count*8);
+            break;
+
         case INVALID:
         case OP_CONST:
         case OP_MUTABLE:
@@ -601,6 +740,9 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
             return a - b;
         case OP_DIV:
             return a / b;
+        case OP_ATAN2:
+            return Interval(-M_PI, M_PI); // YOLO
+
         case OP_SQUARE:
             return boost::numeric::square(a);
         case OP_SQRT:
@@ -609,6 +751,19 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
             return -a;
         case OP_ABS:
             return boost::numeric::abs(a);
+        case OP_SIN:
+            return boost::numeric::sin(a);
+        case OP_COS:
+            return boost::numeric::cos(a);
+        case OP_TAN:
+            return boost::numeric::tan(a);
+        case OP_ASIN:
+            return boost::numeric::asin(a);
+        case OP_ACOS:
+            return boost::numeric::acos(a);
+        case OP_ATAN:
+            return boost::numeric::atan(a);
+
         case OP_A:
             return a;
         case OP_B:

@@ -43,9 +43,18 @@ static Opcode symbol_to_opcode(SCM sym)
     else if (str == "max")      return OP_MAX;
     else if (str == "sub")      return OP_SUB;
     else if (str == "div")      return OP_DIV;
+    else if (str == "atan2")    return OP_ATAN2;
+
+    else if (str == "square")   return OP_SQUARE;
     else if (str == "sqrt")     return OP_SQRT;
     else if (str == "abs")      return OP_ABS;
     else if (str == "neg")      return OP_NEG;
+    else if (str == "sin")      return OP_SIN;
+    else if (str == "cos")      return OP_COS;
+    else if (str == "tan")      return OP_TAN;
+    else if (str == "asin")     return OP_ASIN;
+    else if (str == "acos")     return OP_ACOS;
+    else if (str == "atan")     return OP_ATAN;
 
     else                        return INVALID;
 }

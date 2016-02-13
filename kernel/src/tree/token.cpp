@@ -21,23 +21,33 @@ size_t Token::args(Opcode op)
 {
     switch (op)
     {
-        case OP_CONST: return 0;
-        case OP_MUTABLE: return 0;
-        case OP_X: return 0;
-        case OP_Y: return 0;
-        case OP_Z: return 0;
+        case OP_CONST: // fallthrough
+        case OP_MUTABLE:
+        case OP_X:
+        case OP_Y:
+        case OP_Z:
+            return 0;
 
-        case OP_SQUARE: return 1;
-        case OP_SQRT: return 1;
-        case OP_NEG: return 1;
-        case OP_ABS: return 1;
+        case OP_SQUARE: // fallthrough
+        case OP_SQRT:
+        case OP_NEG:
+        case OP_ABS:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+            return 1;
 
-        case OP_ADD: return 2;
-        case OP_MUL: return 2;
-        case OP_MIN: return 2;
-        case OP_MAX: return 2;
-        case OP_SUB: return 2;
-        case OP_DIV: return 2;
+        case OP_ADD: // fallthrough
+        case OP_MUL:
+        case OP_MIN:
+        case OP_MAX:
+        case OP_SUB:
+        case OP_DIV:
+        case OP_ATAN2:
+            return 2;
 
         case INVALID: // fallthrough
         case OP_A:
