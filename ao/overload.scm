@@ -87,6 +87,25 @@
 
 (wrap-unary sqrt 'sqrt)
 (wrap-unary abs 'abs)
+(wrap-unary sin 'sin)
+(wrap-unary cos 'cos)
+(wrap-unary tan 'tan)
+(wrap-unary asin 'asin)
+(wrap-unary acos 'acos)
+
+(define _atan atan)
+(define (atan a . b)
+    (cond
+        ((= 1 (length b))
+            (if (and (number? a) (number? (car b)))
+                (_atan a (car b))
+                (make-token 'atan2 (make-token a) (make-token (car b)))))
+        ((= 0 (length b))
+            (if (number? a)
+                (_atan a)
+                (make-token 'atan (make-token a))))
+        (else (error "Too many arguments to atan"))))
+(export! atan)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
