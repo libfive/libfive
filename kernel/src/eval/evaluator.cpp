@@ -179,7 +179,13 @@ static void clause(Opcode op,
             break;
         case OP_MOD:
             EVAL_LOOP
-            out[i] = std::fmod(a[i], b[i]);
+            {
+                out[i] = std::fmod(a[i], b[i]);
+                while (out[i] < 0)
+                {
+                    out[i] += b[i];
+                }
+            }
             break;
 
         case OP_SQUARE:
@@ -775,7 +781,7 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
         case OP_ATAN2:
             return Interval(-M_PI, M_PI); // YOLO
         case OP_MOD:
-            return boost::numeric::fmod(a, b);
+            return Interval(0.0f, b.upper()); // YOLO
 
         case OP_SQUARE:
             return boost::numeric::square(a);
