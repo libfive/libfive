@@ -23,7 +23,7 @@ git clone git@github.com:mkeeter/ao
 cd ao
 mkdir build
 cd build
-cmake ..
+cmake -G Ninja ..
 ninja
 ```
 This will drop an executable named `ao-guile` in the top-level directory.
