@@ -1,5 +1,5 @@
 ## About
-See the [TURTLE](https://en.wikipedia.org/wiki/Turtle_graphics) of enormous girth!
+See the TURTLE of enormous girth!
 
 ## Dependencies
 ### Compilation
@@ -16,3 +16,20 @@ See the [TURTLE](https://en.wikipedia.org/wiki/Turtle_graphics) of enormous girt
 
 ### Bindings
 - [Guile](http://www.gnu.org/software/guile/)
+
+## Building
+```
+git clone git@github.com:mkeeter/ao
+cd ao
+mkdir build
+cd build
+cmake ..
+ninja
+```
+This will drop an executable named `ao-guile` in the top-level directory.
+Use `cd ..` to go up a level then `./ao-guile` to run it.
+
+You'll need to be in the root directory to run `ao-guile`, as it looks
+for the `ao` folder to find various Scheme scripts.  Alternatively, you
+can [add `ao` to your load path](https://www.gnu.org/software/guile/manual/html_node/Load-Paths.html)
+in your `.guile` [init file](http://www.gnu.org/software/guile/manual/guile.html#Init-File).
