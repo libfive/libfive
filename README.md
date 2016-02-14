@@ -2,6 +2,12 @@
 See the TURTLE of enormous girth!
 
 ## Dependencies
+
+On a Mac with [Homebrew](http://brew.sh/), run
+```
+brew install cmake ninja boost libpng glfw3 libepoxy guile
+```
+
 ### Compilation
 - [cmake](https://cmake.org/)
 - [Ninja](https://ninja-build.org/) (recommended)
