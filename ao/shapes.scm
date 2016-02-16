@@ -279,6 +279,21 @@
     (let ((z0 (if (> (length args) 0) (car args) 0)))
     (lambda (x y z) (shape x y (- (* 2 z0) z)))))
 
+(define-public (reflect-xy shape)
+    "reflect-xy shape
+    Reflects the given shape about the line x = y"
+    (lambda (x y z) (shape y x z)))
+
+(define-public (reflect-xz shape)
+    "reflect-xz shape
+    Reflects the given shape about the line x = z"
+    (lambda (x y z) (shape z y x)))
+
+(define-public (reflect-yz shape)
+    "reflect-yz shape
+    Reflects the given shape about the line y = z"
+    (lambda (x y z) (shape x z y)))
+
 (define-public (scale-x shape sx . args)
     "scale-x shape sx [x0]
     Scales a shape by sx on the x axis about 0 or an optional offset"
