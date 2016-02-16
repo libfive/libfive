@@ -323,40 +323,12 @@ static void populate_ao_lib(void* data)
     define("clear_frames", 0, (void*)window_clear);
 }
 
-static void guile_hotpatch()
-{
-    SCM v = scm_c_private_lookup("system repl common", "*version*");
-
-    std::string str = scm_to_std_string(scm_variable_ref(v));
-
-    // Patch ambiguity in the Guile startup message
-    boost::replace_all(str, "This program", "Guile");
-
-    str = R"(         .8.
-        .888.
-       :88888.          ,o8888o.
-      . `88888.      . 8888   `88.
-     .8. `88888.    ,8 8888     `8b
-    .8`8. `88888.   88 8888      `8b
-   .8' `8. `88888.  88 8888      ,8P
-  .8'   `8. `88888. `8 8888     ,8P
- .888888888. `88888. ` 8888   ,88'
-.8'       `8. `88888.   `88888P'
-       (c) 2015 Matt Keeter
-
-REPL is provided by )" + str;
-
-    scm_variable_set_x(v, scm_from_locale_string(str.c_str()));
-}
-
 static void* guile_init(void* data)
 {
     (void)data;
 
     scm_c_define_module("ao lib", populate_ao_lib, nullptr);
     scm_primitive_load(scm_from_locale_string("ao/startup.scm"));
-
-    guile_hotpatch();
 
     return nullptr;
 }
