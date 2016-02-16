@@ -39,3 +39,8 @@ You'll need to be in the root directory to run `ao-guile`, as it looks
 for the `ao` folder to find various Scheme scripts.  Alternatively, you
 can [add `ao` to your load path](https://www.gnu.org/software/guile/manual/html_node/Load-Paths.html)
 in your `.guile` [init file](http://www.gnu.org/software/guile/manual/guile.html#Init-File).
+
+## Usage
+`(ao-list-shapes)` lists available shape functions.
+`(ao-show ...)` shows a shape in the 3D viewport.
+`(ao-watch ...)` watches a script and re-runs it on changes.
