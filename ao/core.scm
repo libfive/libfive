@@ -10,8 +10,8 @@
 
 (define-syntax ao-show
     (syntax-rules ()
-    " Show the given function in the 3D viewport
-      Invoked as (ao-show VARIABLE) or (ao-show ID SHAPE) "
+    "ao-show [id] variable
+    Show the given function in the 3D viewport"
     ((_ shape)
          (if (pair? 'shape)
              (error
@@ -22,18 +22,21 @@
 (export ao-show)
 
 (define-public (ao-watch f)
-    " Watch a particular file for changes "
+    "ao-watch filename
+    Watch a particular file for changes"
     (let ((target (if (absolute-file-name? f) f
                     (string-append (getcwd) file-name-separator-string f))))
     (display "Watching ") (display target) (newline)
     (watch-file (dirname target) (basename target))))
 
 (define-public (ao-clear)
-    " Clear the Window's frames and redraw "
+    "ao-clear
+    Clear the window's frames"
     (clear-frames))
 
 (define-public (ao-edit file)
-    " Watch and edit the given file "
+    "ao-edit filename
+    Watch and edit the given file "
     (system (string-append "touch " file))
     (ao-watch file)
     (if (getenv "TMUX")
