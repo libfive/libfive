@@ -72,6 +72,12 @@
 (wrap-custom - sub)
 (wrap-custom / div)
 
+(define-public (mod a b)
+    (if (and (number? a) (number? b))
+        (let ((r (floor (/ a b))))
+            (- a (* r b)))
+        (make-token 'mod (make-token a) (make-token b))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Return a wrapper function for a unary function
@@ -107,14 +113,6 @@
                 (make-token 'atan (make-token a))))
         (else (error "Too many arguments to atan"))))
 (export! atan)
-
-(define-public (mod a b)
-    (if (and (number? a) (number? b))
-        (let ((r (floor (/ a b))))
-            (- a (* r b)))
-        (make-token 'mod (make-token a) (make-token b))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (square f)
     (if (number? f) (* f f)
