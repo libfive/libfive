@@ -318,9 +318,9 @@ static void populate_ao_lib(void* data)
     define("token_const", 2, (void*)token_const);
     define("token_op", 3, (void*)token_op);
 
-    define("show-tree", 3, (void*)show_tree);
-    define("watch-file", 2, (void*)watch_file);
-    define("clear-frames", 0, (void*)window_clear);
+    define("show_tree", 3, (void*)show_tree);
+    define("watch_file", 2, (void*)watch_file);
+    define("clear_frames", 0, (void*)window_clear);
 }
 
 static void guile_hotpatch()

@@ -6,7 +6,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (ao-show- name f)
-    (show-tree (or (current-filename) "<repl>") name (jit f)))
+    (show_tree (or (current-filename) "<repl>") name (jit f)))
 
 (define-syntax ao-show
     (syntax-rules ()
@@ -27,12 +27,12 @@
     (let ((target (if (absolute-file-name? f) f
                     (string-append (getcwd) file-name-separator-string f))))
     (display "Watching ") (display target) (newline)
-    (watch-file (dirname target) (basename target))))
+    (watch_file (dirname target) (basename target))))
 
 (define-public (ao-clear)
     "ao-clear
     Clear the window's frames"
-    (clear-frames))
+    (clear_frames))
 
 (define-public (ao-edit file)
     "ao-edit filename
