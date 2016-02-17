@@ -46,6 +46,7 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case OP_DIV:    os << "(" << *atom.a << " / " << *atom.b << ")"; break;
         case OP_ATAN2:  os << "atan2(" << *atom.a << ", " << *atom.b << ")"; break;
         case OP_MOD:    os << "mod(" << *atom.a << ", " << *atom.b << ")"; break;
+        case OP_NANFILL:    os << "nanfill(" << *atom.a << ", " << *atom.b << ")"; break;
 
         case OP_SQUARE: os << "square(" << *atom.a << ")"; break;
         case OP_SQRT:   os << "sqrt(" << *atom.a << ")"; break;

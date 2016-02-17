@@ -187,6 +187,10 @@ static void clause(Opcode op,
                 }
             }
             break;
+        case OP_NANFILL:
+            EVAL_LOOP
+            out[i] = isnan(a[i]) ? b[i] : a[i];
+            break;
 
         case OP_SQUARE:
             EVAL_LOOP
@@ -351,6 +355,14 @@ static void clause(Opcode op,
                 odx[i] = adx[i];
                 ody[i] = ady[i];
                 odz[i] = adz[i];
+            }
+            break;
+        case OP_NANFILL:
+            EVAL_LOOP
+            {
+                odx[i] = isnan(av[i]) ? bdx[i] : adx[i];
+                ody[i] = isnan(av[i]) ? bdy[i] : ady[i];
+                odz[i] = isnan(av[i]) ? bdz[i] : adz[i];
             }
             break;
 
@@ -562,6 +574,7 @@ static void clause(Opcode op,
         case OP_ATAN:
         case OP_EXP:
         case OP_MOD:
+        case OP_NANFILL:
             clause(op, reinterpret_cast<const float*>(a),
                        reinterpret_cast<const float*>(b),
                        reinterpret_cast<float*>(out), count*8);
@@ -736,6 +749,7 @@ static void clause(Opcode op,
         case OP_ATAN:
         case OP_EXP:
         case OP_MOD:
+        case OP_NANFILL:
             clause(op, reinterpret_cast<const float*>(av),
                        reinterpret_cast<const float*>(adx),
                        reinterpret_cast<const float*>(ady),
@@ -782,6 +796,8 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
             return Interval(-M_PI, M_PI); // YOLO
         case OP_MOD:
             return Interval(0.0f, b.upper()); // YOLO
+        case OP_NANFILL:
+            return (isnan(a.lower()) || isnan(a.upper())) ? b : a;
 
         case OP_SQUARE:
             return boost::numeric::square(a);

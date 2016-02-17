@@ -30,6 +30,7 @@ enum Opcode
     OP_DIV,
     OP_ATAN2,
     OP_MOD,
+    OP_NANFILL,
 
     // Dummy opcodes used to select the left or right-hand side of a function
     // (used when one of the children is disabled)

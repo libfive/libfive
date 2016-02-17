@@ -49,6 +49,7 @@ size_t Token::args(Opcode op)
         case OP_DIV:
         case OP_ATAN2:
         case OP_MOD:
+        case OP_NANFILL:
             return 2;
 
         case INVALID: // fallthrough

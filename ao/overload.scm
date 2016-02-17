@@ -1,7 +1,7 @@
 (define-module (ao overload))
 
 (use-modules (srfi srfi-1) (ice-9 receive))
-(use-modules (ao jit))
+(use-modules (ao jit) (ao ptr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -77,6 +77,11 @@
         (let ((r (floor (/ a b))))
             (- a (* r b)))
         (make-token 'mod (make-token a) (make-token b))))
+
+(define-public (nan-fill a b)
+    (if (or (tagged-ptr? 'Token a) (tagged-ptr? 'Token b))
+        (make-token 'nan-fill (make-token a) (make-token b))
+        (if (nan? a) b a)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

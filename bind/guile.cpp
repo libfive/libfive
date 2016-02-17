@@ -45,6 +45,7 @@ static Opcode symbol_to_opcode(SCM sym)
     else if (str == "div")      return OP_DIV;
     else if (str == "atan2")    return OP_ATAN2;
     else if (str == "mod")      return OP_MOD;
+    else if (str == "nan-fill") return OP_NANFILL;
 
     else if (str == "square")   return OP_SQUARE;
     else if (str == "sqrt")     return OP_SQRT;
