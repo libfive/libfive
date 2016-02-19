@@ -16,7 +16,7 @@
          (sort (filter string? docs) string<?)))
     #t)
 
-(display     "         .8.
+(display     "         \x1b[1m.8.
         .888.
        :88888.          ,o8888o.
       . `88888.      . 8888   `88.
@@ -26,7 +26,7 @@
   .8'   `8. `88888. `8 8888     ,8P
  .888888888. `88888. ` 8888   ,88'
 .8'       `8. `88888.   `88888P'
-       (c) 2015 Matt Keeter
+       \x1b[0m(c) 2015 Matt Keeter
 
 REPL is provided by ")
 
@@ -38,11 +38,11 @@ REPL is provided by ")
 
 ;; Patch the repl-welcome function so that it also modifies the prompt
 (define (ao-prompt repl)
-    (format #f "Ao~A> "
+    (format #f "\x1b[34mAo~A\x1b[36m>\x1b[0m "
             (let ((level (length (cond
                                   ((fluid-ref *repl-stack*) => cdr)
                                   (else '())))))
-              (if (zero? level) "" (format #f " [~a]" level)))))
+              (if (zero? level) "" (format #f " \x1b[31m[~a]" level)))))
 
 (define repl-welcome- repl-welcome)
 (set! repl-welcome
