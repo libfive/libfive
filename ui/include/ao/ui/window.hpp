@@ -156,6 +156,9 @@ protected:
     /*  Set to true if frames should be cleared  */
     std::atomic_bool clear;
 
+    /*  Set to true if the window should be redrawn  */
+    std::atomic_bool redraw;
+
     /*  Width and height are of the framebuffer, rather than the window  *
      *  (to properly cope with high DPI monitors)                        */
     int width;

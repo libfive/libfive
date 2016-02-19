@@ -5,8 +5,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (ao-show- name f)
-    (show_tree (or (current-filename) "<repl>") name (jit f)))
+(define (ao-show- file name f)
+    (show_tree file name (jit f)))
 
 (define-syntax ao-show
     (syntax-rules ()
@@ -16,9 +16,9 @@
          (if (pair? 'shape)
              (error
               "ao-show needs an identifier if its argument is not a variable")
-         (ao-show- (symbol->string 'shape) shape)))
+         (ao-show- (or (current-filename) "<repl>") (symbol->string 'shape) shape)))
     ((_ id shape)
-        (ao-show- (symbol->string 'id) shape))))
+        (ao-show- (or (current-filename) "<repl>") (symbol->string 'id) shape))))
 (export ao-show)
 
 (define-public (ao-watch f)

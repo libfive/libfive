@@ -75,6 +75,8 @@ void Window::clearFile(std::string filename)
     for (auto f : frames[filename])
     {
         stale.push_back(f.second);
+        redraw.store(true);
+        glfwPostEmptyEvent();
     }
     frames[filename].clear();
 }
@@ -294,11 +296,11 @@ bool Window::checkClear()
 
 void Window::poll()
 {
-    // Flag used to detect if a redraw is needed
-    bool needs_draw = false;
-
     // Block until a GLFW event occurs
     glfwWaitEvents();
+
+    // Flag used to detect if a redraw is needed
+    bool needs_draw = redraw.exchange(false);
 
     // Load incoming frames
     needs_draw |= loadFrame();
