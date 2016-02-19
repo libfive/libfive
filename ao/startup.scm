@@ -35,3 +35,18 @@ REPL is provided by ")
 
 (use-modules (ice-9 readline))
 (activate-readline)
+
+;; Patch the repl-welcome function so that it also modifies the prompt
+(define (ao-prompt repl)
+    (format #f "Ao~A> "
+            (let ((level (length (cond
+                                  ((fluid-ref *repl-stack*) => cdr)
+                                  (else '())))))
+              (if (zero? level) "" (format #f " [~a]" level)))))
+
+(define repl-welcome- repl-welcome)
+(set! repl-welcome
+    (lambda (repl)
+        (repl-option-set! repl 'prompt ao-prompt)
+        (repl-default-option-set! 'prompt ao-prompt)
+        (repl-welcome- repl)))
