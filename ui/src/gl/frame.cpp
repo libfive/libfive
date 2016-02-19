@@ -218,7 +218,8 @@ bool Frame::poll()
                         default_level--;
                     }
                 }
-                else if (worker->elapsed > std::chrono::milliseconds(16))
+                else if (worker->elapsed > std::chrono::milliseconds(16)
+                         && default_level < 5)
                 {
                     default_level++;
                 }
