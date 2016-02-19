@@ -1,7 +1,9 @@
 (add-to-load-path (string-append (dirname (current-filename)) "/.."))
-(use-modules (ao overload) (ao shapes) (ao core) (ao export))
 
 (use-modules (ice-9 regex))
+(use-modules (system repl common))
+(use-modules (ao overload) (ao shapes) (ao core) (ao export))
+
 (system "clear")
 
 (define (ao-shapes)
@@ -28,6 +30,8 @@
 
 REPL is provided by ")
 
-(use-modules (system repl common))
 (set! *version* (regexp-substitute #f (string-match "This program" *version*)
                                       'pre "Guile" 'post))
+
+(use-modules (ice-9 readline))
+(activate-readline)
