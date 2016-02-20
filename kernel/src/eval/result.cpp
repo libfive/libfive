@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2016 Matthew Keeter
+ *  Copyright (C) 2016 Matthew Keeter  <matt.j.keeter@gmail.com>
  *
  *  This file is part of Ao.
  *
