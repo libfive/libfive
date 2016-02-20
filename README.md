@@ -44,3 +44,11 @@ in your `.guile` [init file](http://www.gnu.org/software/guile/manual/guile.html
 `(ao-list-shapes)` lists available shape functions.
 `(ao-show ...)` shows a shape in the 3D viewport.
 `(ao-watch ...)` watches a script and re-runs it on changes.
+
+## License
+Copyright (C) 2016 Matthew Keeter  <matt.j.keeter@gmail.com>
+
+Ao is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
