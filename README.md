@@ -41,12 +41,12 @@ can [add `ao` to your load path](https://www.gnu.org/software/guile/manual/html_
 in your `.guile` [init file](http://www.gnu.org/software/guile/manual/guile.html#Init-File).
 
 ## Usage
-`(ao-list-shapes)` lists available shape functions.
-`(ao-show ...)` shows a shape in the 3D viewport.
-`(ao-watch ...)` watches a script and re-runs it on changes.
+- `(ao-list-shapes)` lists available shape functions.
+- `(ao-show ...)` shows a shape in the 3D viewport.
+- `(ao-watch ...)` watches a script and re-runs it on changes.
 
 ## License
-Copyright (C) 2016 Matthew Keeter  <matt.j.keeter@gmail.com>
+Copyright (C) 2016 Matthew Keeter (matt.j.keeter@gmail.com)
 
 Ao is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
