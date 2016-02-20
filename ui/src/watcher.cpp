@@ -19,8 +19,6 @@
 #include "ao/ui/watcher.hpp"
 #include "ao/ui/window.hpp"
 
-efsw::FileWatcher* ScriptWatcher::parent = nullptr;
-
 static std::string join(std::string directory, std::string filename)
 {
     if (directory[directory.length() - 1] == '/')
@@ -32,15 +30,11 @@ static std::string join(std::string directory, std::string filename)
 
 ScriptWatcher::ScriptWatcher(Window* window, Callback callback,
                              std::string directory, std::string filename)
-    : window(window), target(join(directory, filename)), callback(callback)
+    : window(window), target(join(directory, filename)), callback(callback),
+      parent(new efsw::FileWatcher())
 {
-    if (!parent)
-    {
-        parent = new efsw::FileWatcher();
-        parent->watch();
-    }
-
     parent->addWatch(directory, this, false);
+    parent->watch();
 
     // Trigger the callback once on construction
     callback(target);

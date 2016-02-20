@@ -57,5 +57,5 @@ protected:
     Callback callback;
 
     /*  Global FileWatcher instance  */
-    static efsw::FileWatcher* parent;
+    std::unique_ptr<efsw::FileWatcher> parent;
 };
