@@ -61,6 +61,7 @@ REPL is provided by ")
 ;; (the 17 \x01 characters are to pad the prompt so it ends up at the same
 ;;  length as "scheme@(guile-user)> "; otherwise readline does bad things with
 ;;  parenthesis matching).
+#|
 (define (ao-prompt repl)
     (format #f "\x1b[34mAo~A\x1b[36m>\x1b[0m \x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
             (let ((level (length (cond
@@ -68,7 +69,9 @@ REPL is provided by ")
                                   (else '())))))
               (if (zero? level) "" (format #f " \x1b[31m[~a]" level)))))
 
+(repl-default-option-set! 'prompt ao-prompt)
+|#
+
 (use-modules (ice-9 readline))
 (activate-readline)
 
-(repl-default-option-set! 'prompt ao-prompt)

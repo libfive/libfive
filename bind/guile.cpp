@@ -360,23 +360,13 @@ int main(int argc, char* argv[])
     auto window = Window::instance();
     window->draw();
 
-    // Construct a custom argument array
-    char* q = new char[2];
-    memcpy(q, "-q", 2);
-    char** argv_ = new char*[2];
-    argv_[0] = argv[0];
-    argv_[1] = q;
-
     // Start a Guile REPL running in a secondary thread
     auto repl = std::thread([=](){
         scm_with_guile(&guile_init, NULL);
-        scm_shell(2, argv_); });
+        scm_shell(argc, argv); });
     repl.detach();
 
     window->run();
-
-    delete [] q;
-    delete [] argv_;
 
     return 0;
 }
