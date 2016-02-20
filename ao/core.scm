@@ -18,7 +18,7 @@
               "ao-show needs an identifier if its argument is not a variable")
          (ao-show- (or (current-filename) "<repl>") (symbol->string 'shape) shape)))
     ((_ id shape)
-        (ao-show- (or (current-filename) "<repl>") (symbol->string 'id) shape))))
+        (ao-show- (or (current-filename) "<repl>") id shape))))
 (export ao-show)
 
 (define-public (ao-watch f)
