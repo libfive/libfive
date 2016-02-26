@@ -56,16 +56,16 @@
 
 (define-public token-const
     (pointer->procedure
-    '* (dynamic-func "token_const" libao) '(* float)))
+    '* (dynamic-func "token_const" libao) (list '* float)))
 
 (define-public (token-op store op a . bs)
     (let ((i (opcode->int op))
           (len (length bs)))
     (cond ((= 0 len) ((pointer->procedure
-        '* (dynamic-func "token_unary" libao) '(* int *))
+        '* (dynamic-func "token_unary" libao) (list '* int '*))
             store i a))
           ((= 1 len) ((pointer->procedure
-        '* (dynamic-func "token_binary" libao) '(* int * *))
+        '* (dynamic-func "token_binary" libao) (list '* int '* '*))
             store i a (car bs)))
           (else (error "Incorrect arguments to token-op")))))
 
@@ -81,19 +81,19 @@
 
 (define-public tree-eval-double
     (pointer->procedure
-    float (dynamic-func "tree_eval_double" libao) '(* float float float)))
+    float (dynamic-func "tree_eval_double" libao) (list '* float float float)))
 
 (define-public (tree-export-heightmap tree filename a b res)
     ((pointer->procedure void (dynamic-func "tree_export_heightmap" libao)
-        '(* * float float float
-              float float float float))
+        (list '* '* float float float
+                    float float float float))
     tree (string->pointer filename)
     (car a) (car b) (cadr a) (cadr b) (caddr a) (caddr b) res))
 
 (define-public (tree-export-mesh tree filename a b res)
     ((pointer->procedure void (dynamic-func "tree_export_mesh" libao)
-        '(* * float float float
-              float float float float))
+        (list '* '* float float float
+                    float float float float))
     tree (string->pointer filename)
     (car a) (car b) (cadr a) (cadr b) (caddr a) (caddr b) res))
 
