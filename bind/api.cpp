@@ -49,11 +49,52 @@ Store* store_new()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+int opcode(char* op)
+{
+    std::string str(op);
+
+    if (str == "add")           return OP_ADD;
+    else if (str == "mul")      return OP_MUL;
+    else if (str == "min")      return OP_MIN;
+    else if (str == "max")      return OP_MAX;
+    else if (str == "sub")      return OP_SUB;
+    else if (str == "div")      return OP_DIV;
+    else if (str == "atan2")    return OP_ATAN2;
+    else if (str == "mod")      return OP_MOD;
+    else if (str == "nan-fill") return OP_NANFILL;
+
+    else if (str == "square")   return OP_SQUARE;
+    else if (str == "sqrt")     return OP_SQRT;
+    else if (str == "abs")      return OP_ABS;
+    else if (str == "neg")      return OP_NEG;
+    else if (str == "sin")      return OP_SIN;
+    else if (str == "cos")      return OP_COS;
+    else if (str == "tan")      return OP_TAN;
+    else if (str == "asin")     return OP_ASIN;
+    else if (str == "acos")     return OP_ACOS;
+    else if (str == "atan")     return OP_ATAN;
+    else if (str == "exp")      return OP_EXP;
+
+    else                        return INVALID;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 Token* token_x(Store* s) { return s->X(); }
 Token* token_y(Store* s) { return s->Y(); }
 Token* token_z(Store* s) { return s->Z(); }
 
 Token* token_const(Store* s, float f)   { return s->constant(f); }
+
+Token* token_unary(Store* s, int op, Token* a)
+{
+    return s->operation(static_cast<Opcode>(op), a);
+}
+
+Token* token_binary(Store* s, int op, Token* a, Token* b)
+{
+    return s->operation(static_cast<Opcode>(op), a, b);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 

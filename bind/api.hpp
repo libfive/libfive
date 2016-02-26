@@ -29,6 +29,8 @@ extern "C"
     Store* store_new();
     void store_delete(Store* ptr);
 
+    int opcode(char* op);
+
 ////////////////////////////////////////////////////////////////////////////////
 
     Token* token_x(Store* s);
@@ -36,6 +38,9 @@ extern "C"
     Token* token_z(Store* s);
 
     Token* token_const(Store* s, float f);
+
+    Token* token_unary(Store* s, int op, Token* a);
+    Token* token_binary(Store* s, int op, Token* a, Token* b);
 
 ////////////////////////////////////////////////////////////////////////////////
 
