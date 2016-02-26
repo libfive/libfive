@@ -81,6 +81,7 @@ REPL is provided by ")
         (string-match "This program" *version*) 'pre "Guile" 'post))
 
     (activate-readline)
+    (use-modules (ao operators))
     (start-repl)
 
     ; On repl halt, stop the main loop too

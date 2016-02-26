@@ -25,13 +25,37 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public store-new
-    (pointer->procedure
-    '* (dynamic-func "store_new" libao) '()))
+(define-wrapped-pointer-type
+    store store? wrap-store unwrap-store
+    (lambda (o p)
+        (format p "#<store 0x~x>"
+        (pointer-address (unwrap-store o)))))
+(export store store? wrap-store unwrap-store)
 
-(define-public store-delete
-    (pointer->procedure
-    void (dynamic-func "store_delete" libao) '(*)))
+(define-wrapped-pointer-type
+    token token? wrap-token unwrap-token
+    (lambda (o p)
+        (format p "#<token 0x~x>"
+        (pointer-address (unwrap-token o)))))
+(export token token? wrap-token unwrap-token)
+
+(define-wrapped-pointer-type
+    tree tree? wrap-tree unwrap-tree
+    (lambda (o p)
+        (format p "#<tree 0x~x>"
+        (pointer-address (unwrap-tree o)))))
+(export tree tree? wrap-tree unwrap-tree)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-public (store-new)
+    (wrap-store ((pointer->procedure
+    '* (dynamic-func "store_new" libao) '()))))
+
+(define-public (store-delete s)
+    ((pointer->procedure
+    void (dynamic-func "store_delete" libao) '(*))
+        (unwrap-store s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -42,66 +66,68 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public token-x
-    (pointer->procedure
-    '* (dynamic-func "token_x" libao) '(*)))
+(define-public (token-x s)
+    (wrap-token ((pointer->procedure
+    '* (dynamic-func "token_x" libao) '(*)) (unwrap-store s))))
 
-(define-public token-y
-    (pointer->procedure
-    '* (dynamic-func "token_y" libao) '(*)))
+(define-public (token-y s)
+    (wrap-token ((pointer->procedure
+    '* (dynamic-func "token_y" libao) '(*)) (unwrap-store s))))
 
-(define-public token-z
-    (pointer->procedure
-    '* (dynamic-func "token_z" libao) '(*)))
+(define-public (token-z s)
+    (wrap-token ((pointer->procedure
+    '* (dynamic-func "token_z" libao) '(*)) (unwrap-store s))))
 
-(define-public token-const
-    (pointer->procedure
-    '* (dynamic-func "token_const" libao) (list '* float)))
+(define-public (token-const s v)
+    (wrap-token ((pointer->procedure
+    '* (dynamic-func "token_const" libao) (list '* float)) (unwrap-store s) v)))
 
-(define-public (token-op store op a . bs)
-    (let ((i (opcode->int op))
-          (len (length bs)))
-    (cond ((= 0 len) ((pointer->procedure
+(define-public (token-op-unary s op a)
+    (wrap-token ((pointer->procedure
         '* (dynamic-func "token_unary" libao) (list '* int '*))
-            store i a))
-          ((= 1 len) ((pointer->procedure
+    (unwrap-store s) (opcode->int op) (unwrap-token a))))
+
+(define-public (token-op-binary s op a b)
+    (wrap-token ((pointer->procedure
         '* (dynamic-func "token_binary" libao) (list '* int '* '*))
-            store i a (car bs)))
-          (else (error "Incorrect arguments to token-op")))))
+    (unwrap-store s) (opcode->int op) (unwrap-token a) (unwrap-token b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public tree-new
-    (pointer->procedure
-    '* (dynamic-func "store_new" libao) '(* *)))
+(define-public (tree-new s t)
+    (wrap-tree ((pointer->procedure
+    '* (dynamic-func "tree_new" libao) '(* *))
+        (unwrap-store s) (unwrap-token t))))
 
-(define-public tree-delete
-    (pointer->procedure
-    void (dynamic-func "tree_delete" libao) '(*)))
+(define-public (tree-delete t)
+    ((pointer->procedure
+    void (dynamic-func "tree_delete" libao) '(*)) (unwrap-tree t)))
 
-(define-public tree-eval-double
-    (pointer->procedure
-    float (dynamic-func "tree_eval_double" libao) (list '* float float float)))
+(define-public (tree-eval-double t x y z)
+    ((pointer->procedure
+    float (dynamic-func "tree_eval_double" libao)
+    (list '* float float float))
+        (unwrap-tree t) x y z))
 
-(define-public (tree-export-heightmap tree filename a b res)
+(define-public (tree-export-heightmap t filename a b res)
     ((pointer->procedure void (dynamic-func "tree_export_heightmap" libao)
         (list '* '* float float float
                     float float float float))
-    tree (string->pointer filename)
+    (unwrap-tree t) (string->pointer filename)
     (car a) (car b) (cadr a) (cadr b) (caddr a) (caddr b) res))
 
-(define-public (tree-export-mesh tree filename a b res)
+(define-public (tree-export-mesh t filename a b res)
     ((pointer->procedure void (dynamic-func "tree_export_mesh" libao)
         (list '* '* float float float
                     float float float float))
-    tree (string->pointer filename)
+    (unwrap-tree t) (string->pointer filename)
     (car a) (car b) (cadr a) (cadr b) (caddr a) (caddr b) res))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (window-show-tree filename name tree)
+(define-public (window-show-tree filename name t)
     ((pointer->procedure void (dynamic-func "window_show_tree" libao) '(* * *))
-    (string->pointer filename) (string->pointer name) tree))
+    (string->pointer filename) (string->pointer name) (unwrap-tree t)))
 
 (define-public (window-watch-file dir file)
     ((pointer->procedure void (dynamic-func "window_watch_file" libao) '(* *))
