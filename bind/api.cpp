@@ -127,9 +127,14 @@ void window_watch_file(std::string dir, std::string file)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void run()
+void ao_run()
 {
     auto window = Window::instance();
     window->draw();
     window->run();
+}
+
+void ao_halt()
+{
+    Window::instance()->quit();
 }

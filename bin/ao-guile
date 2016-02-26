@@ -1,0 +1,98 @@
+#!/usr/bin/env guile
+!#
+
+#|
+    Copyright (C) 2016 Matthew Keeter  <matt.j.keeter@gmail.com>
+
+    This file is part of Ao.
+
+    Ao is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Ao is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Ao.  If not, see <http://www.gnu.org/licenses/>.
+|#
+
+;; We define root-dir as a syntax rule instead of a normal function because
+;; otherwise dynamic-link throws a compile-time error.
+(define-syntax-rule (root-dir) (dirname (current-filename)))
+
+;; Tweak the load path to find the ao module
+(add-to-load-path (string-append (root-dir) "/../bind/guile"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-modules (system foreign))
+
+(define libao (dynamic-link (string-append (root-dir) "/../lib/libao")))
+
+; Run ao_init_guile to set correct file-evaluation callback
+((pointer->procedure void (dynamic-func "ao_init_guile" libao) '()))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-modules (system repl repl))
+(use-modules (system repl common))
+(use-modules (ice-9 regex))
+(use-modules (ice-9 readline))
+
+(define (ao-prompt repl)
+    "ao-prompt repl
+    Prompt of the form 'Ao> ' or 'Ao [n]> ', with colors"
+    ;; rl-escape wraps a string in special characters that tell readline to
+    ;; ignore it when calculating prompt length (for ANSI escape sequences)
+    (define (rl-escape s) (string-append "\x01" s "\x02"))
+    (let* ((COLOR_BLUE (rl-escape "\x1b[34m"))
+           (COLOR_RED (rl-escape "\x1b[31m"))
+           (COLOR_CYAN (rl-escape "\x1b[36m"))
+           (COLOR_CLEAR (rl-escape "\x1b[0m"))
+           (base-prompt (string-append COLOR_BLUE "Ao~A" COLOR_CYAN "> " COLOR_CLEAR))
+           (level-prompt (string-append COLOR_RED " [~a]")))
+    (format #f base-prompt
+        (let ((level (length (cond ((fluid-ref *repl-stack*) => cdr)
+                                   (else '())))))
+            (if (zero? level) "" (format #f level-prompt level))))))
+
+(repl-default-option-set! 'prompt ao-prompt)
+
+;; Start the REPL running in a separate thread
+(define repl-thread (call-with-new-thread (lambda ()
+    ; Clear display and print startup message
+    (system "clear")
+    (display "         \x1b[1m.8.
+        .888.
+       :88888.          ,o8888o.
+      . `88888.      . 8888   `88.
+     .8. `88888.    ,8 8888     `8b
+    .8`8. `88888.   88 8888      `8b
+   .8' `8. `88888.  88 8888      ,8P
+  .8'   `8. `88888. `8 8888     ,8P
+ .888888888. `88888. ` 8888   ,88'
+.8'       `8. `88888.   `88888P'
+       \x1b[0m(c) 2015 Matt Keeter
+
+REPL is provided by ")
+
+    ; Hot-patch version string
+    (set! *version* (regexp-substitute #f
+        (string-match "This program" *version*) 'pre "Guile" 'post))
+
+    (activate-readline)
+    (start-repl)
+
+    ; On repl halt, stop the main loop too
+    ((pointer->procedure void (dynamic-func "ao_halt" libao) '())))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Run the main loop
+((pointer->procedure void (dynamic-func "ao_run" libao) '()))
+(cancel-thread repl-thread)
+(join-thread repl-thread)
