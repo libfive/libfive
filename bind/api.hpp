@@ -29,7 +29,7 @@ extern "C"
     Store* store_new();
     void store_delete(Store* ptr);
 
-    int opcode(char* op);
+    int opcode_enum(char* op);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -62,14 +62,13 @@ extern "C"
 ////////////////////////////////////////////////////////////////////////////////
 
     void window_show_tree(char* filename, char* name, Tree* tree);
-    void window_watch_file(std::string dir, std::string file);
+    void window_watch_file(char* dir, char* file);
 
     extern void (*window_watch_callback)(const char*);
 
-    void ao_halt();
-
 ////////////////////////////////////////////////////////////////////////////////
 
+    void ao_halt();
     void ao_run();
 
 }

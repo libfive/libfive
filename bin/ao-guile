@@ -29,12 +29,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-modules (system foreign))
-
-(define libao (dynamic-link (string-append (root-dir) "/../lib/libao")))
-
-; Run ao_init_guile to set correct file-evaluation callback
-((pointer->procedure void (dynamic-func "ao_init_guile" libao) '()))
+(use-modules (ao bind))
+(ao-init-guile)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -88,11 +84,9 @@ REPL is provided by ")
     (start-repl)
 
     ; On repl halt, stop the main loop too
-    ((pointer->procedure void (dynamic-func "ao_halt" libao) '())))))
+    (ao-halt))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Run the main loop
-((pointer->procedure void (dynamic-func "ao_run" libao) '()))
-(cancel-thread repl-thread)
-(join-thread repl-thread)
+(ao-run)

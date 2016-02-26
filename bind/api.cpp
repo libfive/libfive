@@ -49,7 +49,7 @@ Store* store_new()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-int opcode(char* op)
+int opcode_enum(char* op)
 {
     std::string str(op);
 
@@ -160,7 +160,7 @@ void window_show_tree(char* filename, char* name, Tree* tree)
     Window::instance()->addTree(filename, name, tree);
 }
 
-void window_watch_file(std::string dir, std::string file)
+void window_watch_file(char* dir, char* file)
 {
     new ScriptWatcher(Window::instance(), window_watch_callback_,
                       dir, file);
