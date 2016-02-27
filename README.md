@@ -32,13 +32,10 @@ cd build
 cmake -G Ninja ..
 ninja
 ```
-This will drop an executable named `ao-guile` in the top-level directory.
-Use `cd ..` to go up a level then `./ao-guile` to run it.
+This will produce a library named `libao`.
 
-You'll need to be in the root directory to run `ao-guile`, as it looks
-for the `ao` folder to find various Scheme scripts.  Alternatively, you
-can [add `ao` to your load path](https://www.gnu.org/software/guile/manual/html_node/Load-Paths.html)
-in your `.guile` [init file](http://www.gnu.org/software/guile/manual/guile.html#Init-File).
+To start a shell, run the executable named `ao-guile`
+(in the `bin` directory).
 
 ## Usage
 - `(ao-list-shapes)` lists available shape functions.
