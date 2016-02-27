@@ -65,5 +65,5 @@ A symbol and further arguments are converted to an operation"
 
 (define-public (jit-function f)
     "Compile and arithmetic lambda function to a wrapped math function"
-    (let ((t (jit f)))
+    (let ((t (tree-attach-finalizer (jit f))))
     (lambda (x y z) (tree-eval-double t x y z))))

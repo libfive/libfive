@@ -99,9 +99,11 @@
     '* (dynamic-func "tree_new" libao) '(* *))
         (unwrap-store s) (unwrap-token t))))
 
-(define-public (tree-delete t)
-    ((pointer->procedure
-    void (dynamic-func "tree_delete" libao) '(*)) (unwrap-tree t)))
+(define-public (tree-attach-finalizer t)
+    "Attaches tree_delete to a wrapped Tree pointer"
+    (wrap-tree (make-pointer
+        (pointer-address (unwrap-tree t))
+        (dynamic-func "tree_delete" libao))))
 
 (define-public (tree-eval-double t x y z)
     ((pointer->procedure

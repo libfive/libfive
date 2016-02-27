@@ -39,13 +39,11 @@
 
 void store_delete(Store* ptr)
 {
-    printf("Deleting store %p\n", ptr);
     delete ptr;
 }
 
 Store* store_new()
 {
-    printf("Making new store\n");
     return new Store();
 }
 
@@ -102,13 +100,11 @@ Token* token_binary(Store* s, int op, Token* a, Token* b)
 
 void tree_delete(Tree* ptr)
 {
-    printf("Deleting tree %p\n", ptr);
     delete ptr;
 }
 
 Tree* tree_new(Store* store, Token* root)
 {
-    printf("Making new tree\n");
     return new Tree(store, root);
 }
 
