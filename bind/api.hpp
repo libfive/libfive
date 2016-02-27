@@ -63,6 +63,7 @@ extern "C"
 
     void window_show_tree(char* filename, char* name, Tree* tree);
     void window_watch_file(char* dir, char* file);
+    void window_clear_frames();
 
     extern void (*window_watch_callback)(const char*);
 

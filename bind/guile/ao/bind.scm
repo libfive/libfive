@@ -133,6 +133,9 @@
     ((pointer->procedure void (dynamic-func "window_watch_file" libao) '(* *))
     (string->pointer dir) (string->pointer file)))
 
+(define-public window-clear-frames
+    (pointer->procedure void (dynamic-func "window_clear_frames" libao) '()))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public ao-run

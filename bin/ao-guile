@@ -20,12 +20,8 @@
     along with Ao.  If not, see <http://www.gnu.org/licenses/>.
 |#
 
-;; We define root-dir as a syntax rule instead of a normal function because
-;; otherwise dynamic-link throws a compile-time error.
-(define-syntax-rule (root-dir) (dirname (current-filename)))
-
 ;; Tweak the load path to find the ao module
-(add-to-load-path (string-append (root-dir) "/../bind/guile"))
+(add-to-load-path (string-append (dirname (current-filename)) "/../bind/guile"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -60,6 +56,9 @@
 
 ;; Start the REPL running in a separate thread
 (define repl-thread (call-with-new-thread (lambda ()
+    ; Import relevant modules
+    (use-modules (ao operators) (ao user) (ao export) (ao shapes))
+
     ; Clear display and print startup message
     (system "clear")
     (display "         \x1b[1m.8.
@@ -81,7 +80,6 @@ REPL is provided by ")
         (string-match "This program" *version*) 'pre "Guile" 'post))
 
     (activate-readline)
-    (use-modules (ao operators))
     (start-repl)
 
     ; On repl halt, stop the main loop too

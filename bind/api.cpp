@@ -170,6 +170,11 @@ void window_watch_file(char* dir, char* file)
                       dir, file);
 }
 
+void window_clear_frames()
+{
+    Window::instance()->clearFrames();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void ao_run()
