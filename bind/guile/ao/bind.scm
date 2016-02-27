@@ -144,5 +144,9 @@
 (define-public ao-halt
     (pointer->procedure void (dynamic-func "ao_halt" libao) '()))
 
-(define-public ao-init-guile
-    (pointer->procedure void (dynamic-func "ao_init_guile" libao) '()))
+(define-public (ao-init-guile)
+    "Initialize libao by setting a callback pointer for file watchers"
+    ((pointer->procedure void (dynamic-func "window_set_callback" libao) '(*))
+     (procedure->pointer void
+        (lambda (f) (primitive-load (pointer->string f)))
+     '(*))))

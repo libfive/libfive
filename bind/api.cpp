@@ -151,11 +151,12 @@ void tree_export_mesh(Tree* tree, char* filename,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// window_callback will be initialized by a language-specific init function
+// window_callback must be set at program startup
 void (*window_watch_callback)(const char*) = nullptr;
 
 static void window_watch_callback_(std::string s)
 {
+    assert(window_watch_callback != nullptr);
     window_watch_callback(s.c_str());
 }
 
@@ -173,6 +174,11 @@ void window_watch_file(char* dir, char* file)
 void window_clear_frames()
 {
     Window::instance()->clearFrames();
+}
+
+void window_set_callback(void (*callback)(const char*))
+{
+    window_watch_callback = callback;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
