@@ -47,7 +47,8 @@
 (use-modules (ice-9 top-repl))
 (use-modules (system repl common))
 (use-modules (ice-9 regex))
-(use-modules (ice-9 readline))
+(use-modules ((ice-9 readline) #:select
+    (write-history activate-readline history-file)))
 
 (define (ao-prompt repl)
     "ao-prompt repl
@@ -96,10 +97,18 @@ REPL is provided by ")
     (activate-readline)
     (top-repl)
 
+    ; Disable readline flushing (since the REPL exited normally)
+    (set-thread-cleanup! (current-thread) #f)
+
     ; On repl halt, stop the main loop too
     (ao-halt))))
 
+;; Attach a thread cleanup routine that flushes the history to file
+(set-thread-cleanup! repl-thread (lambda () (write-history history-file)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Run the main loop
 (ao-run)
+
+(cancel-thread repl-thread)
+(join-thread repl-thread)
