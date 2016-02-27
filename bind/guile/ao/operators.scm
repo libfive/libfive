@@ -97,7 +97,7 @@
         (make-token 'mod a b)))
 
 (define-public (nan-fill a b)
-    (if (or (pointer? a) (pointer? b))
+    (if (or (token? a) (token? b))
         (make-token 'nan-fill a b)
         (if (nan? a) b a)))
 
