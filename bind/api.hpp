@@ -65,6 +65,7 @@ extern "C"
     void window_watch_file(char* dir, char* file);
     void window_clear_frames();
     void window_set_callback(void (*callback)(const char*));
+    void window_set_thread_init(void (*init)());
 
 ////////////////////////////////////////////////////////////////////////////////
 

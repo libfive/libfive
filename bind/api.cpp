@@ -19,6 +19,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <set>
 
 #include "ao/kernel/tree/store.hpp"
 #include "ao/kernel/tree/tree.hpp"
@@ -150,9 +151,22 @@ void tree_export_mesh(Tree* tree, char* filename,
 // window_callback must be set at program startup
 void (*window_watch_callback)(const char*) = nullptr;
 
+// window_thread_init is a callback that runs once in each watcher thread
+// (e.g. scm_init_guile to make a thread able to call Guile callbacks)
+void (*window_thread_init)() = nullptr;
+std::set<std::thread::id> initialized;
+
 static void window_watch_callback_(std::string s)
 {
     assert(window_watch_callback != nullptr);
+
+    auto id = std::this_thread::get_id();
+    if (window_thread_init && initialized.count(id) == 0)
+    {
+        window_thread_init();
+        initialized.insert(id);
+    }
+
     window_watch_callback(s.c_str());
 }
 
@@ -175,6 +189,11 @@ void window_clear_frames()
 void window_set_callback(void (*callback)(const char*))
 {
     window_watch_callback = callback;
+}
+
+void window_set_thread_init(void (*init)())
+{
+    window_thread_init = init;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -146,9 +146,19 @@
 (define-public ao-halt
     (pointer->procedure void (dynamic-func "ao_halt" libao) '()))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; The callback will be called from a non-Guile thread, so we need to install
+;; scm_init_guile as the watcher thread initialization function.
+(define libguile (dynamic-link "libguile-2.0"))
+
+;; This is the callback function that activates when a file changes
+(define (callback f)
+    (primitive-load (pointer->string f)))
+
 (define-public (ao-init-guile)
-    "Initialize libao by setting a callback pointer for file watchers"
+    "Initialize libao by setting a init and callback pointers for file watchers"
+    ((pointer->procedure void (dynamic-func "window_set_thread_init" libao) '(*))
+     (dynamic-func "scm_init_guile" libguile))
     ((pointer->procedure void (dynamic-func "window_set_callback" libao) '(*))
-     (procedure->pointer void
-        (lambda (f) (primitive-load (pointer->string f)))
-     '(*))))
+     (procedure->pointer void callback '(*))))
