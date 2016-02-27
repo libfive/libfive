@@ -53,6 +53,12 @@ public:
     void addTree(std::string filename, std::string name, Tree* t);
 
     /*
+     *  Instructs the window to quit asynchronously
+     *  (will not take effect until the next poll() call)
+     */
+    void quit();
+
+    /*
      *  Clears existing frames asynchronously
      *  (will not take effect until the next poll() call)
      */
@@ -176,6 +182,9 @@ protected:
 
     /*  Set to true if the window should be redrawn  */
     std::atomic_bool redraw;
+
+    /*  Set to true if the window should be closed  */
+    std::atomic_bool halt;
 
     /*  Width and height are of the framebuffer, rather than the window  *
      *  (to properly cope with high DPI monitors)                        */

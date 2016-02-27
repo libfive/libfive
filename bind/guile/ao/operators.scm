@@ -16,10 +16,10 @@
     You should have received a copy of the GNU General Public License
     along with Ao.  If not, see <http://www.gnu.org/licenses/>.
 |#
-(define-module (ao overload))
+(define-module (ao operators))
 
 (use-modules (srfi srfi-1) (ice-9 receive))
-(use-modules (ao jit) (ao ptr))
+(use-modules (ao jit))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -94,11 +94,11 @@
     (if (and (number? a) (number? b))
         (let ((r (floor (/ a b))))
             (- a (* r b)))
-        (make-token 'mod (make-token a) (make-token b))))
+        (make-token 'mod a b)))
 
 (define-public (nan-fill a b)
-    (if (or (tagged-ptr? 'Token a) (tagged-ptr? 'Token b))
-        (make-token 'nan-fill (make-token a) (make-token b))
+    (if (or (pointer? a) (pointer? b))
+        (make-token 'nan-fill a b)
         (if (nan? a) b a)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -129,11 +129,11 @@
         ((= 1 (length b))
             (if (and (number? a) (number? (car b)))
                 (_atan a (car b))
-                (make-token 'atan2 (make-token a) (make-token (car b)))))
+                (make-token 'atan2 a (car b))))
         ((= 0 (length b))
             (if (number? a)
                 (_atan a)
-                (make-token 'atan (make-token a))))
+                (make-token 'atan a)))
         (else (error "Too many arguments to atan"))))
 (export! atan)
 

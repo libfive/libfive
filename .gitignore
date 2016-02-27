@@ -1,4 +1,4 @@
 .ycm_extra_conf.py*
 build/*
-lib/libao.dylib
+lib/libao.*
 ao-guile

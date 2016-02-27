@@ -16,15 +16,14 @@
     You should have received a copy of the GNU General Public License
     along with Ao.  If not, see <http://www.gnu.org/licenses/>.
 |#
-(define-module (ao core))
+(define-module (ao user))
 
-(use-modules (system foreign))
-(use-modules (ao jit) (ao lib))
+(use-modules (ao bind) (ao jit))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (ao-show- file name f)
-    (show_tree file name (jit f)))
+    (window-show-tree file name (jit f)))
 
 (define-syntax ao-show
     (syntax-rules ()
@@ -45,12 +44,12 @@
     (let ((target (if (absolute-file-name? f) f
                     (string-append (getcwd) file-name-separator-string f))))
     (display "Watching ") (display target) (newline)
-    (watch_file (dirname target) (basename target))))
+    (window-watch-file (dirname target) (basename target))))
 
 (define-public (ao-clear)
     "ao-clear
     Clear the window's frames"
-    (clear_frames))
+    (window-clear-frames))
 
 (define-public (ao-edit file)
     "ao-edit filename
@@ -63,3 +62,4 @@
                                     "reattach-to-user-namespace $EDITOR " file))
              (system (string-append "tmux split-window -b $EDITOR " file)))
         (warn "Could not detect tmux session")))
+

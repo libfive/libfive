@@ -18,22 +18,16 @@
 |#
 (define-module (ao export))
 
-(use-modules (ao jit) (ao lib))
+(use-modules (ao bind) (ao jit))
 
 (define-public (ao-export-heightmap shape file a b res)
-    " Renders a shape and saves it to an image.
-a and b are '(x y z) corners; res is a resolution in voxels per unit."
-    (tree_export_heightmap (jit shape) file
-        (cons (car   a) (car   b))
-        (cons (cadr  a) (cadr  b))
-        (cons (if (>= (length a) 3) (caddr a) 0)
-              (if (>= (length b) 3) (caddr b) 0)) res))
+    "ao-export-heightmap shape file '(x0 y0 z0) '(x1 y1 z1) res
+    Renders a shape and saves it to an image.
+    bounds are three-element lists; res is a resolution in voxels per unit."
+    (tree-export-heightmap (jit shape) file a b res))
 
 (define-public (ao-export-mesh shape file a b res)
-    " Renders a shape and saves it to an mesh
-a and b are '(x y z) corners; res is a resolution in voxels per unit."
-    (tree_export_mesh (jit shape) file
-        (cons (car   a) (car   b))
-        (cons (cadr  a) (cadr  b))
-        (cons (caddr a)
-              (caddr b)) res))
+    "ao-export-mesh shape file '(x0 y0 z0) '(x1 y1 z1) res
+    Renders a shape and saves it to an mesh
+    bounds are three-element lists; res is a resolution in voxels per unit."
+    (tree-export-mesh (jit shape) file a b res))

@@ -16,11 +16,12 @@
     You should have received a copy of the GNU General Public License
     along with Ao.  If not, see <http://www.gnu.org/licenses/>.
 |#
+
 (define-module (ao jit))
 
-(use-modules (system foreign))
 (use-modules (ice-9 common-list))
-(use-modules (ao lib) (ao ptr))
+(use-modules (ao bind))
+(use-modules (system foreign))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -37,36 +38,32 @@
 A token is returned without changes
 A number is converted to a constant
 A symbol and further arguments are converted to an operation"
-    (if (= 0 (length args))
-        (cond ((tagged-ptr? 'Token a) a)
-              ((number? a) (token_const store a))
-              (else (error "Failed to construct token" a)))
-        (token_op store a (map make-token args))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define-public (interval? i)
-    "Check to see if the given argument is a valid Interval"
-    (and (pair? i) (not (list? i)) (number? (car i)) (number? (cdr i))))
-
-(define-public (wrap-tree t)
-    " Wraps a tagged tree pointer in a callable interface "
-    (lambda (x y z) ;; Generic evaluator that dispatches based on argument type
-        (cond ((every interval? (list x y z))
-                    (tree_eval_interval t x y z))
-              ((every number? (list x y z))
-                    (tree_eval_double t x y z))
-              (else (error "Input arguments are of invalid types")))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    (let ((len (length args)))
+    (cond
+        ((= 0 len)
+            (cond ((token? a) a)
+                  ((number? a) (token-const store a))
+                  (else (error "Failed to construct token" a))))
+        ((= 1 len)
+            (token-op-unary store a (make-token (car args))))
+        ((= 2 len)
+            (token-op-binary store a (make-token (car args))
+                                     (make-token (cadr args))))
+        (else (error "Incorrect argument count to make-token")))))
 
 (define-public (jit f)
     "Compile an arithmetic lambda function to a bare tree pointer"
-    (set! store (store_new))
-    (let* ((x (token_x store))
-           (y (token_y store))
-           (z (token_z store))
+    (set! store (store-new))
+    (let* ((x (token-x store))
+           (y (token-y store))
+           (z (token-z store))
            (root (make-token (f x y z)))
-           (out (tree_new store root)))
-       (set! store #nil)
-       out))
+           (out (tree-new store root)))
+        (store-delete store)
+        (set! store #nil)
+    out))
+
+(define-public (jit-function f)
+    "Compile and arithmetic lambda function to a wrapped math function"
+    (let ((t (tree-attach-finalizer (jit f))))
+    (lambda (x y z) (tree-eval-double t x y z))))

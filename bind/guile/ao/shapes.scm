@@ -18,7 +18,7 @@
 |#
 (define-module (ao shapes))
 
-(use-modules (ao overload))
+(use-modules (ao operators))
 
 (define-public pi 3.1415926)
 

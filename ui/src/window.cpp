@@ -38,7 +38,8 @@ Window* Window::instance()
 ////////////////////////////////////////////////////////////////////////////////
 
 Window::Window()
-    : window(makeWindow(640, 480, "Ao")), incoming(nullptr), clear(false)
+    : window(makeWindow(640, 480, "Ao")), incoming(nullptr),
+      clear(false), halt(false)
 {
     assert(window != nullptr);
 
@@ -79,6 +80,12 @@ void Window::addTree(std::string filename, std::string name, Tree* t)
     while (incoming.load() != nullptr);
 
     incoming.store(ptr);
+    glfwPostEmptyEvent();
+}
+
+void Window::quit()
+{
+    halt.store(true);
     glfwPostEmptyEvent();
 }
 
@@ -316,6 +323,11 @@ void Window::poll()
 {
     // Block until a GLFW event occurs
     glfwWaitEvents();
+
+    if (halt.load())
+    {
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
 
     // Flag used to detect if a redraw is needed
     bool needs_draw = redraw.exchange(false);
