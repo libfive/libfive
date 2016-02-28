@@ -154,7 +154,11 @@
 
 ;; This is the callback function that activates when a file changes
 (define (callback f)
-    (primitive-load (pointer->string f)))
+    (catch #t
+        (lambda () (primitive-load (pointer->string f)))
+        (lambda (key . params)
+            (newline) (display key) (display " in ") (display (car params))
+            (newline) (display (cadr params)) (newline))))
 
 (define-public (ao-init-guile)
     "Initialize libao by setting a init and callback pointers for file watchers"
