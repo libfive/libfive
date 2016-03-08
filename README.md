@@ -38,7 +38,7 @@ To start a shell, run the executable named `ao-guile`
 (in the `bin` directory).
 
 ## Usage
-- `(ao-list-shapes)` lists available shape functions.
+- `(ao-shapes)` lists available shape functions.
 - `(ao-show ...)` shows a shape in the 3D viewport.
 - `(ao-watch ...)` watches a script and re-runs it on changes.
 
