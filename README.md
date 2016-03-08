@@ -45,7 +45,13 @@ To start a shell, run the executable named `ao-guile`
 ## License
 Copyright (C) 2016 Matthew Keeter (matt.j.keeter@gmail.com)
 
-Ao is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
+Ao is free software, with the core library licensed under the LGPL
+and bindings licensed under the GPL.
+
+The Ao shared library (named `libao` and built from the `kernel` and
+`ui` folders plus `bind/api.cpp`) is licensed under the LGPL.
+
+The Guile buildings and library of shapes (in the `bind/guile`
+subfolder) are licensed under the GPL.
+
+For details, see `COPYING.md` and the specific license files.
