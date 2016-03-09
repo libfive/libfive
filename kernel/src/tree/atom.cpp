@@ -39,7 +39,7 @@ Atom::Atom(const Token* t, std::unordered_map<const Token*, Atom*>& atoms)
 }
 
 Atom::Atom(Opcode op, Atom* a, Atom* b)
-    : op(op), value(nan("")), a(a), b(b)
+    : op(op), value(std::nan("")), a(a), b(b)
 {
     // Nothing to do here
 }
