@@ -242,25 +242,36 @@ const std::pair<unsigned, unsigned> Octree::cellEdges[12] =
 Octree::Intersection Octree::searchEdge(
         glm::vec3 a, glm::vec3 b, Evaluator* eval)
 {
-    auto p = (a + b) / 2.0f;
-    auto d = (a - b) / 4.0f;
+    // We do an N-fold reduction at each stage
+    constexpr int _N = 4;
+    constexpr int N = (1 << _N);
+    constexpr int ITER = SEARCH_COUNT / _N;
 
     // Binary search for intersection
-    for (int i=0; i < SEARCH_COUNT; ++i)
+    for (int i=0; i < ITER; ++i)
     {
-        if (eval->eval(p.x, p.y, p.z) < 0)
+        glm::vec3 ps[N];
+        for (int j=0; j < N; ++j)
         {
-            p -= d;
+            float frac = j / (N - 1.0);
+            ps[j] = (a * (1 - frac)) + (b * frac);
+            eval->set(ps[j].x, ps[j].y, ps[j].z, j);
         }
-        else
+
+        auto out = eval->values(N);
+        for (int j=0; j < N; ++j)
         {
-            p += d;
+            if (out[j] >= 0)
+            {
+                a = ps[j - 1];
+                b = ps[j];
+                break;
+            }
         }
-        d /= 2;
     }
 
     // Calculate value and gradient at the given point
-    eval->set(p.x, p.y, p.z, 0);
+    eval->set(a.x, a.y, a.z, 0);
 
     // Get set of derivative arrays
     auto ds = eval->derivs(1);
@@ -268,7 +279,7 @@ Octree::Intersection Octree::searchEdge(
     // Extract gradient from set of arrays
     glm::vec3 g(std::get<1>(ds)[0], std::get<2>(ds)[0], std::get<3>(ds)[0]);
 
-    return {p, glm::normalize(g)};
+    return {a, glm::normalize(g)};
 }
 
 void Octree::findIntersections(Evaluator* eval)
