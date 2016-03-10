@@ -115,3 +115,15 @@ TEST_CASE("Splitting a region with equal voxels")
     REQUIRE(rs.first.X.lower() == -1);
     REQUIRE(rs.first.X.upper() == 0);
 }
+
+TEST_CASE("Subregion::canOctsect")
+{
+    Region a({-1, 1}, {-1, 1}, {-1, 1}, 8);
+    REQUIRE(a.view().canOctsect());
+
+    Region b({0, 1}, {0, 1}, {0, 1}, 7);
+    REQUIRE(!b.view().canOctsect());
+
+    Region c({0, 1}, {-1, 1}, {-1, 1}, 8);
+    REQUIRE(!c.view().canOctsect());
+}

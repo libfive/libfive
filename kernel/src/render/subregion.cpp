@@ -108,6 +108,14 @@ std::array<Subregion, 8> Subregion::octsect() const
              Xyz.first, Xyz.second, XYz.first, XYz.second}};
 }
 
+bool Subregion::canOctsect() const
+{
+    return X.size == Y.size && X.size == Z.size &&
+           X.size >= 2 && X.size % 2 == 0 &&
+           Y.size >= 2 && Y.size % 2 == 0 &&
+           Z.size >= 2 && Z.size % 2 == 0;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 Subregion::Axis::Axis(Interval i, const std::vector<float>& vs)

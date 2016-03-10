@@ -36,7 +36,8 @@ class Octree
 {
 public:
     static Octree* Render(Tree* t, const Region& r,
-                          uint32_t flags=COLLAPSE);
+                          uint32_t flags=COLLAPSE,
+                          bool multithread=true);
 
     /*  Enumerator for optional flags  */
     enum Flags { COLLAPSE = 1 };
@@ -97,11 +98,23 @@ protected:
      *  Constructs an octree recursively from the given subregion
      */
     Octree(Evaluator* e, const Subregion& r, uint32_t flags);
+    /*  Delegating constructor to initialize X, Y, Z  */
+    Octree(const Subregion& r);
+    /*  Helpful constructor to assemble from multiple threads  */
+    Octree(Evaluator* e, const std::array<Octree*, 8>& children,
+           const Subregion& r, uint32_t flags);
 
     /*
      *  Splits a subregion and fills out child pointers and cell type
      */
     void populateChildren(Evaluator* e, const Subregion& r, uint32_t flags);
+
+    /*
+     *  Finishes initialization once the type and child pointers are in place
+     *  (split into a separate function because we can get child pointers
+     *   either through recursion or with threaded construction)
+     */
+    void finalize(Evaluator* e, uint32_t flags);
 
     /*
      *  Stores edge-wise intersections for the cell,

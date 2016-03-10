@@ -69,6 +69,11 @@ public:
     std::array<Subregion, 8> octsect() const;
 
     /*
+     *  Returns true if we can octsect the given subregion
+     */
+    bool canOctsect() const;
+
+    /*
      *  Returns the number of voxels in this region
      */
     size_t voxels() const;

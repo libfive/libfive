@@ -19,6 +19,7 @@
 #include <iostream>
 #include <numeric>
 #include <set>
+#include <future>
 
 #include <Eigen/Dense>
 #include <glm/geometric.hpp>
@@ -29,12 +30,35 @@
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/tree/tree.hpp"
 
-Octree::Octree(Evaluator* e, const Subregion& r, uint32_t flags)
+Octree::Octree(const Subregion& r)
     : X(r.X.lower(), r.X.upper()),
       Y(r.Y.lower(), r.Y.upper()),
       Z(r.Z.lower(), r.Z.upper())
 {
+    // Nothing to do here
+}
+
+Octree::Octree(Evaluator* e, const Subregion& r, uint32_t flags)
+    : Octree(r)
+{
     populateChildren(e, r, flags);
+    finalize(e, flags);
+}
+
+Octree::Octree(Evaluator* e, const std::array<Octree*, 8>& cs,
+               const Subregion& r, uint32_t flags)
+    : Octree(r)
+{
+    for (uint8_t i=0; i < 8; ++i)
+    {
+        children[i].reset(cs[i]);
+    }
+    type = BRANCH;
+    finalize(e, flags);
+}
+
+void Octree::finalize(Evaluator* e, uint32_t flags)
+{
     findIntersections(e);
 
     // Find this Octree's level
@@ -44,9 +68,15 @@ Octree::Octree(Evaluator* e, const Subregion& r, uint32_t flags)
                     { return std::max(a, b->level);} ) + 1
         : 0;
 
-    // Collapse branches if the COLLAPSE flag is set
     if (type == BRANCH)
     {
+        // Grab corner values from children
+        for (uint8_t i=0; i < 8; ++i)
+        {
+            corners[i] = children[i]->corners[i];
+        }
+
+        // Collapse branches if the COLLAPSE flag is set
         if (flags & COLLAPSE)
         {
             collapseBranch();
@@ -63,6 +93,7 @@ Octree::Octree(Evaluator* e, const Subregion& r, uint32_t flags)
         findVertex();
     }
 }
+////////////////////////////////////////////////////////////////////////////////
 
 void Octree::populateChildren(Evaluator* e, const Subregion& r,
                               uint32_t flags)
@@ -74,7 +105,6 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r,
         for (uint8_t i=0; i < 8; ++i)
         {
             children[i].reset(new Octree(e, rs[i], flags));
-            corners[i] = children[i]->corners[i];
         }
         type = BRANCH;
     }
@@ -155,10 +185,45 @@ glm::vec3 Octree::pos(uint8_t i) const
             i & AXIS_Z ? Z.upper() : Z.lower()};
 }
 
-Octree* Octree::Render(Tree* t, const Region& r, uint32_t flags)
+Octree* Octree::Render(Tree* t, const Region& r, uint32_t flags,
+                       bool multithread)
 {
-    Evaluator e(t);
-    return new Octree(&e, r.powerOfTwo(), flags);
+    auto rp = r.powerOfTwo().view();
+
+    if (multithread && rp.canOctsect())
+    {
+        std::list<std::future<Octree*>> futures;
+
+        // Start up a set of future rendering every branch of the octree
+        for (auto region : rp.octsect())
+        {
+            auto e = new Evaluator(t);
+
+            futures.push_back(std::async(std::launch::async,
+                [e, region, flags](){
+                    auto out = new Octree(e, region, flags);
+                    delete e;
+                    return out;}));
+        }
+
+        // Wait for all of the tasks to finish running in the background
+        std::array<Octree*, 8> sub;
+        int index = 0;
+        for (auto& f : futures)
+        {
+            f.wait();
+            sub[index++] = f.get();
+        }
+
+        Evaluator e(t);
+        return new Octree(&e, sub, rp, flags);
+    }
+
+    else
+    {
+        Evaluator e(t);
+        return new Octree(&e, rp, flags);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
