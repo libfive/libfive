@@ -59,8 +59,6 @@ Octree::Octree(Evaluator* e, const std::array<Octree*, 8>& cs,
 
 void Octree::finalize(Evaluator* e, uint32_t flags)
 {
-    findIntersections(e);
-
     // Find this Octree's level
     level = (type == BRANCH)
         ?  std::accumulate(children.begin(), children.end(), (unsigned)0,
@@ -79,7 +77,7 @@ void Octree::finalize(Evaluator* e, uint32_t flags)
         // Collapse branches if the COLLAPSE flag is set
         if (flags & COLLAPSE)
         {
-            collapseBranch();
+            collapseBranch(e);
         }
     }
     else
@@ -90,7 +88,7 @@ void Octree::finalize(Evaluator* e, uint32_t flags)
 
     if (type == LEAF && std::isnan(vert.x))
     {
-        findVertex();
+        findVertex(e);
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -143,7 +141,7 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r,
     }
 }
 
-void Octree::collapseBranch()
+void Octree::collapseBranch(Evaluator* e)
 {
     // If all of the children are leafs, then collapse into a single LEAF cell
     if (std::all_of(children.begin(), children.end(),
@@ -168,7 +166,7 @@ void Octree::collapseBranch()
         if (cornerTopology() && std::all_of(children.begin(), children.end(),
                     [](const std::unique_ptr<Octree>& o)
                     { return o->cornerTopology(); }) &&
-            leafTopology() && findVertex() < 1e-8)
+            leafTopology() && findVertex(e) < 1e-8)
         {
             type = LEAF;
         }
@@ -371,8 +369,10 @@ void Octree::findIntersections(Evaluator* eval)
 /*
  *  Vertex positioning is based on [Kobbelt et al, 2001]
  */
-float Octree::findVertex()
+float Octree::findVertex(Evaluator* e)
 {
+    findIntersections(e);
+
     // Find the center of intersection positions
     glm::vec3 center = std::accumulate(
             intersections.begin(), intersections.end(), glm::vec3(),

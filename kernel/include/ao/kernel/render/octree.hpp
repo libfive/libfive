@@ -132,7 +132,7 @@ protected:
      *  Otherwise, collapse the branch if it is topologically safe to do
      *  so and the residual QEF error isn't too large.
      */
-    void collapseBranch();
+    void collapseBranch(Evaluator* e);
 
     /*
      *  If all corners are of the same sign, convert to FULL or EMPTY
@@ -140,11 +140,12 @@ protected:
     void collapseLeaf();
 
     /*
-     *  Finds a feature vertex by solving a least-squares fit to intersections
+     *  Finds a feature vertex by finding intersections then solving a
+     *  least-squares fit to minimize a quadratic error function.
      *
      *  The resulting vertex is stored in vert; the residual is returned
      */
-    float findVertex();
+    float findVertex(Evaluator* e);
 
     /*
      *  Checks to see if the eight corners describe an ambiguous
