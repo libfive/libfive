@@ -98,18 +98,37 @@ void Octree::finalize(Evaluator* e, uint32_t flags)
 void Octree::populateChildren(Evaluator* e, const Subregion& r,
                               uint32_t flags)
 {
-    // Subdivide and recurse if possible
+    // The cell is a LEAF cell until proven otherwise
+    type = LEAF;
+
+    // If we can recurse, then it may become a BRANCH cell
     if (r.canSplit())
     {
-        auto rs = r.octsect();
-        for (uint8_t i=0; i < 8; ++i)
+        // First, do interval evaluation to see if the cell should be checked
+        Interval out = e->eval(r.X.bounds, r.Y.bounds, r.Z.bounds);
+        if (out.upper() < 0)
         {
-            children[i].reset(new Octree(e, rs[i], flags));
+            type = FULL;
         }
-        type = BRANCH;
+        else if (out.lower() >= 0)
+        {
+            type = EMPTY;
+        }
+        else
+        {   // If the cell wasn't empty or filled, recurse
+            e->push();
+            auto rs = r.octsect();
+            for (uint8_t i=0; i < 8; ++i)
+            {
+                children[i].reset(new Octree(e, rs[i], flags));
+            }
+            type = BRANCH;
+            e->pop();
+        }
     }
+
     // Otherwise, calculate corner values
-    else
+    if (type != BRANCH)
     {
         for (uint8_t i=0; i < 8; ++i)
         {
@@ -121,7 +140,6 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r,
         {
             corners[i] = fs[i] < 0;
         }
-        type = LEAF;
     }
 }
 
