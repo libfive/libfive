@@ -50,29 +50,10 @@
 
 ;; Pre-emptively look up all function names to avoid many calls to dynamic-func
 (define cached-pointers (make-hash-table))
-(map (lambda (x) (hash-set! cached-pointers x (dynamic-func x libao))) '(
-    "store_new"
-    "store_delete"
-    "opcode_enum"
-    "token_x"
-    "token_y"
-    "token_z"
-    "token_const"
-    "token_unary"
-    "token_binary"
-    "tree_new"
-    "tree_delete"
-    "tree_eval_double"
-    "tree_export_heightmap"
-    "tree_export_mesh"
-    "window_show_tree"
-    "window_watch_file"
-    "window_clear_frames"
-    "ao_run"
-    "ao_halt"
-    "window_set_thread_init"
-    "window_set_callback"))
-(define (get-function f) (hash-ref cached-pointers f))
+(define (get-function f) (or (hash-ref cached-pointers f)
+    (let ((ptr (dynamic-func f libao)))
+         (hash-set! cached-pointers f ptr)
+         ptr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
