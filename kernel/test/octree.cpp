@@ -97,21 +97,6 @@ TEST_CASE("Octree intersections")
             REQUIRE(err < 0.125);
         }
     }
-
-    SECTION("Branch")
-    {
-        Region r({0, 1}, {0, 1}, {0, 1}, 2);
-        std::unique_ptr<Octree> out(Octree::Render(&t, r, 0));
-        REQUIRE(out->getType() == Octree::BRANCH);
-
-        auto is = out->getIntersections();
-        REQUIRE(is.size() == 9);
-        for (auto i : is)
-        {
-            auto err = fabs(i.pos.x - 0.75);
-            REQUIRE(err < 0.125);
-        }
-    }
 }
 
 TEST_CASE("Vertex positioning")
