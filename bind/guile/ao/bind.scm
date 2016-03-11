@@ -48,78 +48,108 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Pre-emptively look up all function names to avoid many calls to dynamic-func
+(define cached-pointers (make-hash-table))
+(map (lambda (x) (hash-set! cached-pointers x (dynamic-func x libao))) '(
+    "store_new"
+    "store_delete"
+    "opcode_enum"
+    "token_x"
+    "token_y"
+    "token_z"
+    "token_const"
+    "token_unary"
+    "token_binary"
+    "tree_new"
+    "tree_delete"
+    "tree_eval_double"
+    "tree_export_heightmap"
+    "tree_export_mesh"
+    "window_show_tree"
+    "window_watch_file"
+    "window_clear_frames"
+    "ao_run"
+    "ao_halt"
+    "window_set_thread_init"
+    "window_set_callback"))
+(define (get-function f) (hash-ref cached-pointers f))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define c_store_new (get-function "store_new"))
+
 (define-public (store-new)
     (wrap-store ((pointer->procedure
-    '* (dynamic-func "store_new" libao) '()))))
+    '* (get-function "store_new") '()))))
 
 (define-public (store-delete s)
     ((pointer->procedure
-    void (dynamic-func "store_delete" libao) '(*))
+    void (get-function "store_delete") '(*))
         (unwrap-store s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (opcode->int op)
     ((pointer->procedure
-        int (dynamic-func "opcode_enum" libao) '(*))
+        int (get-function "opcode_enum") '(*))
     (string->pointer (symbol->string op))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (token-x s)
     (wrap-token ((pointer->procedure
-    '* (dynamic-func "token_x" libao) '(*)) (unwrap-store s))))
+    '* (get-function "token_x") '(*)) (unwrap-store s))))
 
 (define-public (token-y s)
     (wrap-token ((pointer->procedure
-    '* (dynamic-func "token_y" libao) '(*)) (unwrap-store s))))
+    '* (get-function "token_y") '(*)) (unwrap-store s))))
 
 (define-public (token-z s)
     (wrap-token ((pointer->procedure
-    '* (dynamic-func "token_z" libao) '(*)) (unwrap-store s))))
+    '* (get-function "token_z") '(*)) (unwrap-store s))))
 
 (define-public (token-const s v)
     (wrap-token ((pointer->procedure
-    '* (dynamic-func "token_const" libao) (list '* float)) (unwrap-store s) v)))
+    '* (get-function "token_const") (list '* float)) (unwrap-store s) v)))
 
 (define-public (token-op-unary s op a)
     (wrap-token ((pointer->procedure
-        '* (dynamic-func "token_unary" libao) (list '* int '*))
+        '* (get-function "token_unary") (list '* int '*))
     (unwrap-store s) (opcode->int op) (unwrap-token a))))
 
 (define-public (token-op-binary s op a b)
     (wrap-token ((pointer->procedure
-        '* (dynamic-func "token_binary" libao) (list '* int '* '*))
+        '* (get-function "token_binary") (list '* int '* '*))
     (unwrap-store s) (opcode->int op) (unwrap-token a) (unwrap-token b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (tree-new s t)
     (wrap-tree ((pointer->procedure
-    '* (dynamic-func "tree_new" libao) '(* *))
+    '* (get-function "tree_new") '(* *))
         (unwrap-store s) (unwrap-token t))))
 
 (define-public (tree-attach-finalizer t)
     "Attaches tree_delete to a wrapped Tree pointer"
     (wrap-tree (make-pointer
         (pointer-address (unwrap-tree t))
-        (dynamic-func "tree_delete" libao))))
+        (get-function "tree_delete"))))
 
 (define-public (tree-eval-double t x y z)
     ((pointer->procedure
-    float (dynamic-func "tree_eval_double" libao)
+    float (get-function "tree_eval_double")
     (list '* float float float))
         (unwrap-tree t) x y z))
 
 (define-public (tree-export-heightmap t filename a b res)
-    ((pointer->procedure void (dynamic-func "tree_export_heightmap" libao)
+    ((pointer->procedure void (get-function "tree_export_heightmap")
         (list '* '* float float float
                     float float float float))
     (unwrap-tree t) (string->pointer filename)
     (car a) (car b) (cadr a) (cadr b) (caddr a) (caddr b) res))
 
 (define-public (tree-export-mesh t filename a b res)
-    ((pointer->procedure void (dynamic-func "tree_export_mesh" libao)
+    ((pointer->procedure void (get-function "tree_export_mesh")
         (list '* '* float float float
                     float float float float))
     (unwrap-tree t) (string->pointer filename)
@@ -128,23 +158,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (window-show-tree filename name t)
-    ((pointer->procedure void (dynamic-func "window_show_tree" libao) '(* * *))
+    ((pointer->procedure void (get-function "window_show_tree") '(* * *))
     (string->pointer filename) (string->pointer name) (unwrap-tree t)))
 
 (define-public (window-watch-file dir file)
-    ((pointer->procedure void (dynamic-func "window_watch_file" libao) '(* *))
+    ((pointer->procedure void (get-function "window_watch_file") '(* *))
     (string->pointer dir) (string->pointer file)))
 
 (define-public window-clear-frames
-    (pointer->procedure void (dynamic-func "window_clear_frames" libao) '()))
+    (pointer->procedure void (get-function "window_clear_frames") '()))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public ao-run
-    (pointer->procedure void (dynamic-func "ao_run" libao) '()))
+    (pointer->procedure void (get-function "ao_run") '()))
 
 (define-public ao-halt
-    (pointer->procedure void (dynamic-func "ao_halt" libao) '()))
+    (pointer->procedure void (get-function "ao_halt") '()))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -162,7 +192,7 @@
 
 (define-public (ao-init-guile)
     "Initialize libao by setting a init and callback pointers for file watchers"
-    ((pointer->procedure void (dynamic-func "window_set_thread_init" libao) '(*))
+    ((pointer->procedure void (get-function "window_set_thread_init") '(*))
      (dynamic-func "scm_init_guile" libguile))
-    ((pointer->procedure void (dynamic-func "window_set_callback" libao) '(*))
+    ((pointer->procedure void (get-function "window_set_callback") '(*))
      (procedure->pointer void callback '(*))))
