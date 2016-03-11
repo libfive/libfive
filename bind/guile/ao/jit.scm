@@ -51,8 +51,9 @@ A symbol and further arguments are converted to an operation"
                                      (make-token (cadr args))))
         (else (error "Incorrect argument count to make-token")))))
 
-(define-public (jit f)
-    "Compile an arithmetic lambda function to a bare tree pointer"
+(define* (jit f #:key (manage #t))
+    "Compile an arithmetic lambda function to a bare tree pointer
+    If manage is #t (default), attaches a finalizer to the output"
     (set! store (store-new))
     (let* ((x (token-x store))
            (y (token-y store))
@@ -61,9 +62,10 @@ A symbol and further arguments are converted to an operation"
            (out (tree-new store root)))
         (store-delete store)
         (set! store #nil)
-    out))
+        (if manage (tree-attach-finalizer out) out)))
+(export jit)
 
 (define-public (jit-function f)
     "Compile and arithmetic lambda function to a wrapped math function"
-    (let ((t (tree-attach-finalizer (jit f))))
+    (let ((t (jit f)))
     (lambda (x y z) (tree-eval-double t x y z))))

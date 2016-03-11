@@ -23,7 +23,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (ao-show- file name f)
-    (window-show-tree file name (jit f)))
+    (window-show-tree file name (jit f #:manage #f)))
 
 (define-syntax ao-show
     (syntax-rules ()
