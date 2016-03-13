@@ -48,12 +48,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Pre-emptively look up all function names to avoid many calls to dynamic-func
-(define cached-pointers (make-hash-table))
-(define (get-function f) (or (hash-ref cached-pointers f)
-    (let ((ptr (dynamic-func f libao)))
-         (hash-set! cached-pointers f ptr)
-         ptr)))
+;; Cached function lookup in libao
+(define get-function
+    (let ((cache (make-hash-table)))
+    (lambda (f) (or (hash-ref cache f)
+                    (let ((ptr (dynamic-func f libao)))
+                         (hash-set! cache f ptr)
+                         ptr)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
