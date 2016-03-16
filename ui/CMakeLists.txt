@@ -15,10 +15,12 @@ add_definitions(-DGLFW_INCLUDE_GLCOREARB)
 file(GLOB SRC_FILES src/*.cpp src/gl/*.cpp)
 add_library(ao-ui STATIC ${SRC_FILES})
 
-target_include_directories(ao-ui PRIVATE
+target_include_directories(ao-ui SYSTEM PRIVATE
     ${GLFW_INCLUDE_DIRS}
     ${EPOXY_INCLUDE_DIR})
-target_include_directories(ao-ui PUBLIC include vendor)
+target_include_directories(ao-ui PUBLIC include)
+target_include_directories(ao-ui SYSTEM PUBLIC vendor)
+
 
 target_link_libraries(ao-ui
     ${GLFW_LIBRARIES}

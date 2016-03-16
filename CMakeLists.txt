@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -pedantic -std=c++11 -Werror=switch -march=n
 set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -DRELEASE")
 set(CMAKE_CXX_FLAGS_DEBUG    "-O0")
 
-include_directories(vendor)
+include_directories(SYSTEM vendor)
 
 ################################################################################
 
