@@ -280,3 +280,56 @@ std::set<Token*> Store::findConnected(Token* root)
 
     return found;
 }
+
+Token* Store::collapseAffine(Token* root)
+{
+    std::map<Token*, Token*> changed;
+
+    // Turn every AFFINE_ROOT into a normal OP_ADD
+    // (with identity operations automatically cancelled out)
+    for (auto r : affine_roots)
+    {
+        changed[r.second] = operation(OP_ADD,
+                operation(OP_ADD,
+                    operation(OP_MUL, X(), constant(std::get<0>(r.first))),
+                    operation(OP_MUL, Y(), constant(std::get<1>(r.first)))),
+                operation(OP_ADD,
+                    operation(OP_MUL, Z(), constant(std::get<2>(r.first))),
+                    constant(std::get<3>(r.first))));
+    }
+
+    // Iterate over weight levels from bottom to top
+    for (auto& weight : ops)
+    {
+        // Iterate over operations in a given weight level
+        for (auto& op : weight)
+        {
+            // Iterate over Key, Token* pairs
+            for (auto itr = op.begin(); itr != op.end();)
+            {
+                // Get child pointers
+                auto a = itr->second->a;
+                auto b = itr->second->b;
+
+                // If either of the child pointers has changed, regenerate
+                // the operation to ensure correct pointers and weight
+                if (changed.count(a) || changed.count(b))
+                {
+                    changed[itr->second] = operation(itr->second->op,
+                        changed.count(a) ? changed[a] : a,
+                        changed.count(b) ? changed[b] : b);
+
+                    // Delete the Token and remove it from the Cache
+                    delete itr->second;
+                    itr = op.erase(itr);
+                }
+                else
+                {
+                    itr++;
+                }
+            }
+        }
+    }
+
+    return changed.count(root) ? changed[root] : root;
+}

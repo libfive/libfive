@@ -68,6 +68,15 @@ public:
      */
     std::set<Token*> findConnected(Token* root);
 
+    /*
+     *  Collapses AFFINE_ROOT nodes into normal OP_ADD, taking advantage of
+     *  identity operations to make the tree smaller.  Returns the new root
+     *  token (which may have changed).
+     *
+     *  Invalidates all Token pointers.
+     */
+    Token* collapseAffine(Token* root);
+
 protected:
     /*
      *  Checks whether the operation is an identity operation

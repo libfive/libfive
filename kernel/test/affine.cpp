@@ -101,3 +101,59 @@ TEST_CASE("Affine math")
         REQUIRE(affineVec(t) == glm::vec4(0.5, 1, 1.5, 2));
     }
 }
+
+TEST_CASE("collapseAffine")
+{
+    Store s;
+
+    SECTION("Base case")
+    {
+        auto t = s.affine(1, 0, 0, 0);
+        auto t_ = s.collapseAffine(t);
+        REQUIRE(t_->op == OP_X);
+        REQUIRE(t_->weight == 0);
+    }
+
+    SECTION("Sum")
+    {
+        auto t = s.affine(1, 1, 0, 0);
+        auto t_ = s.collapseAffine(t);
+        REQUIRE(t_->op == OP_ADD);
+        REQUIRE(t_->a->op == OP_X);
+        REQUIRE(t_->b->op == OP_Y);
+        REQUIRE(t_->weight == 1);
+    }
+
+    SECTION("Multiplication")
+    {
+        auto t = s.affine(2, 3, 0, 0);
+        auto t_ = s.collapseAffine(t);
+        REQUIRE(t_->op == OP_ADD);
+        REQUIRE(t_->a->op == OP_MUL);
+        REQUIRE(t_->b->op == OP_MUL);
+
+        REQUIRE(t_->a->a->op == OP_X);
+        REQUIRE(t_->a->b->op == OP_CONST);
+        REQUIRE(t_->a->b->value == 2);
+        REQUIRE(t_->b->a->op == OP_Y);
+        REQUIRE(t_->b->b->op == OP_CONST);
+        REQUIRE(t_->b->b->value == 3);
+    }
+
+    SECTION("Constant")
+    {
+        auto t = s.affine(1, 0, 0, 3);
+        auto t_ = s.collapseAffine(t);
+        REQUIRE(t_->op == OP_ADD);
+        REQUIRE(t_->a->op == OP_X);
+        REQUIRE(t_->b->op == OP_CONST);
+        REQUIRE(t_->b->value == 3);
+    }
+
+    SECTION("Not affine at all")
+    {
+        auto t = s.X();
+        auto t_ = s.collapseAffine(t);
+        REQUIRE(t == t_);
+    }
+}
