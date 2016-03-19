@@ -73,6 +73,19 @@ protected:
      */
     void clearFound();
 
+    /*
+     *  Checks whether the operation is an identity operation
+     *  If so returns an appropriately simplified Token
+     *  i.e. (X + 0) will return X
+     */
+    Token* checkIdentity(Opcode op, Token* a, Token* b);
+
+    /*
+     *  Checks whether the operation should be handled as an affine
+     *  transformation, returning an AFFINE_ROOT Token if true.
+     */
+    Token* checkAffine(Opcode op, Token* a, Token* b);
+
     typedef std::pair<Token*, Token*> Key;
     typedef std::array<std::map<Key, Token*>, LAST_OP> Cache;
 

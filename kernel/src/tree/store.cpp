@@ -52,20 +52,11 @@ Token* Store::constant(float v)
     return constants[v];
 }
 
-Token* Store::operation(Opcode op, Token* a, Token* b)
+Token* Store::checkAffine(Opcode op, Token* a, Token* b)
 {
-    // Special cases to handle identity operations
     if (op == OP_ADD)
     {
-        if (a->op == OP_CONST && a->value == 0)
-        {
-            return b;
-        }
-        else if (b->op == OP_CONST && b->value == 0)
-        {
-            return a;
-        }
-        else if (a->op == AFFINE_ROOT && b->op == OP_CONST)
+        if (a->op == AFFINE_ROOT && b->op == OP_CONST)
         {
             return affine(a->a->a->b->value,
                           a->a->b->b->value,
@@ -89,15 +80,7 @@ Token* Store::operation(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_SUB)
     {
-        if (a->op == OP_CONST && a->value == 0)
-        {
-            return operation(OP_NEG, b);
-        }
-        else if (b->op == OP_CONST && b->value == 0)
-        {
-            return a;
-        }
-        else if (a->op == AFFINE_ROOT && b->op == OP_CONST)
+        if (a->op == AFFINE_ROOT && b->op == OP_CONST)
         {
             return affine(a->a->a->b->value,
                           a->a->b->b->value,
@@ -117,6 +100,34 @@ Token* Store::operation(Opcode op, Token* a, Token* b)
                           a->a->b->b->value - b->a->b->b->value,
                           a->b->a->b->value - b->b->a->b->value,
                           a->b->b->value - b->b->b->value);
+        }
+    }
+    return nullptr;
+}
+
+Token* Store::checkIdentity(Opcode op, Token* a, Token* b)
+{
+    // Special cases to handle identity operations
+    if (op == OP_ADD)
+    {
+        if (a->op == OP_CONST && a->value == 0)
+        {
+            return b;
+        }
+        else if (b->op == OP_CONST && b->value == 0)
+        {
+            return a;
+        }
+    }
+    else if (op == OP_SUB)
+    {
+        if (a->op == OP_CONST && a->value == 0)
+        {
+            return operation(OP_NEG, b);
+        }
+        else if (b->op == OP_CONST && b->value == 0)
+        {
+            return a;
         }
     }
     else if (op == OP_MUL)
@@ -143,6 +154,21 @@ Token* Store::operation(Opcode op, Token* a, Token* b)
                 return a;
             }
         }
+    }
+    return nullptr;
+}
+
+Token* Store::operation(Opcode op, Token* a, Token* b)
+{
+    // See if we can simplify the expression, either because it's an identity
+    // operation (e.g. X + 0) or a linear combination of affine forms
+    if (auto t = checkIdentity(op, a, b))
+    {
+        return t;
+    }
+    else if (auto t = checkAffine(op, a, b))
+    {
+        return t;
     }
 
     // Otherwise, construct a new Token and add it to the ops set
