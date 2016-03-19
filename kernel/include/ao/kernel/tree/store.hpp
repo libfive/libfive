@@ -79,6 +79,10 @@ protected:
     /*  Constants are indexed solely by value  */
     std::map<float, Token*> constants;
 
+    /*  Affine values live in a separate area, because they should not
+     *  be de-duplicated by value or anything else  */
+    std::vector<Token*> values;
+
     /*  Operators are indexed by weight, opcode, and arguments  */
     std::vector<Cache> ops;
 

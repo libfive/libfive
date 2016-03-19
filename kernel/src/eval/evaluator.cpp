@@ -52,6 +52,11 @@ Evaluator::Evaluator(const Tree* tree)
     auto newClause = [&ptr, &clauses](const Atom* m)
         { return new (ptr++) Clause(m, clauses); };
 
+    // Extracts a glm::vec4 from an AFFINE_ROOT clause
+    auto getVec = [](const Clause* c)
+        { return glm::vec4(c->a->a->b->value, c->a->b->b->value,
+                           c->b->a->b->value, c->b->b->value); };
+
     // Load constants into the array first
     for (auto m : tree->constants)
     {
@@ -70,7 +75,7 @@ Evaluator::Evaluator(const Tree* tree)
                 case OP_X:          X = clause; break;
                 case OP_Y:          Y = clause; break;
                 case OP_Z:          Z = clause; break;
-                case AFFINE_ROOT:   matrices.push_back({clause, glm::vec4()});
+                case AFFINE_ROOT:   matrices.push_back({clause, getVec(clause)});
                                     // Fallthrough!
                 default:            rows.back().push_back(clause);
             }
@@ -102,22 +107,15 @@ Evaluator::~Evaluator()
 
 void Evaluator::setMatrix(const glm::mat4& m)
 {
-    /*
-    size_t index = 0;
-    for (int i=0; i < 3; ++i)
+    for (auto a : matrices)
     {
-        for (int j=0; j < 4; ++j)
-        {
-            assert(matrix[index]->op == OP_MUTABLE);
-            matrix[index++]->mutable_value = m[j][i];
-        }
-    }
+        glm::vec4 v = a.second * m;
 
-    for (auto m : matrix)
-    {
-        m->result.fill(m->mutable_value);
+        a.first->a->a->b->result.fill(v.x);
+        a.first->a->b->b->result.fill(v.y);
+        a.first->b->a->b->result.fill(v.z);
+        a.first->b->b->result.fill(v.q);
     }
-    */
 }
 
 ////////////////////////////////////////////////////////////////////////////////

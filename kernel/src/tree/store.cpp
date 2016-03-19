@@ -26,6 +26,11 @@ Store::~Store()
         delete c.second;
     }
 
+    for (auto v : values)
+    {
+        delete v;
+    }
+
     for (auto row : ops)
     {
         for (auto sub : row)
@@ -121,12 +126,22 @@ Token* Store::operation(Opcode op, Token* a, Token* b)
 
 Token* Store::affine(float a, float b, float c, float d)
 {
+    auto a_ = new Token(a, AFFINE_VALUE);
+    auto b_ = new Token(b, AFFINE_VALUE);
+    auto c_ = new Token(c, AFFINE_VALUE);
+    auto d_ = new Token(d, AFFINE_VALUE);
+
+    for (auto t : {a_, b_, c_, d_})
+    {
+        values.push_back(t);
+    }
+
     return operation(AFFINE_ROOT,
                 operation(OP_ADD,
-                    operation(OP_MUL, X(), constant(a)),
-                    operation(OP_MUL, Y(), constant(b))),
+                    operation(OP_MUL, X(), a_),
+                    operation(OP_MUL, Y(), b_)),
                 operation(OP_ADD,
-                    operation(OP_MUL, Z(), constant(c)), constant(d)));
+                    operation(OP_MUL, Z(), c_), d_));
 }
 
 void Store::clearFound()

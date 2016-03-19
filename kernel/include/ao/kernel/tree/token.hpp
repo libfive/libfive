@@ -34,9 +34,10 @@ public:
     explicit Token(Opcode op, Token* a=nullptr, Token* b=nullptr);
 
     /*
-     *  Constructs a token for a constant
+     *  Constructs a token for a constant or affine value
+     *  op must be OP_CONST or AFFINE_VALUE
      */
-    explicit Token(float v);
+    explicit Token(float v, Opcode op=OP_CONST);
 
     /*
      *  Returns the number of arguments for the given token

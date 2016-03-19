@@ -18,6 +18,7 @@
  */
 #include <algorithm>
 #include <cmath>
+#include <cassert>
 
 #include "ao/kernel/tree/token.hpp"
 
@@ -29,10 +30,10 @@ Token::Token(Opcode op, Token* a, Token* b)
     // Nothing to do here
 }
 
-Token::Token(float v)
-    : op(OP_CONST), weight(0), value(v), a(nullptr), b(nullptr)
+Token::Token(float v, Opcode op)
+    : op(op), weight(0), value(v), a(nullptr), b(nullptr)
 {
-    // Nothing to do here
+    assert(op == OP_CONST || op == AFFINE_VALUE);
 }
 
 size_t Token::args(Opcode op)
