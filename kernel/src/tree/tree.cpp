@@ -29,9 +29,11 @@
 Tree::Tree(Store* s, Token* root_token)
     : root(nullptr)
 {
-    std::unordered_map<const Token*, Atom*> atoms;
+    // Optimize the store by collapsing affine nodes, now that calculations
+    // are done and we're packing it into a tree.
+    root_token = s->collapseAffine(root_token);
 
-    // Set flags to mark which tokens are used in the tree
+    // Get a set of Tokens that are connected to the root
     auto found = s->findConnected(root_token);
 
     // Ensure that the base variables are all present in the tree and marked
@@ -40,6 +42,9 @@ Tree::Tree(Store* s, Token* root_token)
     {
         found.insert(c);
     }
+
+    // This is a mapping from Tokens in the Store to Atoms in the Tree
+    std::unordered_map<const Token*, Atom*> atoms;
 
     // Flatten constants into the data array and constants vector
     constants.reserve(constants.size() +
