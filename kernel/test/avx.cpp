@@ -73,4 +73,19 @@ TEST_CASE("Vectorized performance")
     REQUIRE(matched);
 }
 
+TEST_CASE("Alignment")
+{
+    // Make sure that struct padding works like I think it works
+    struct { char a;
+             Result result; } s;
+    REQUIRE(((intptr_t)(&s.result[0]) & 0x1f) == 0);
+
+    // Ensure that tightly-packing Clauses keeps everything aligned
+    REQUIRE((sizeof(Clause) & 0x1f) == 0);
+
+    // Double-check alignment requirements
+    REQUIRE(alignof(Result) == 32);
+    REQUIRE(alignof(Clause) == 32);
+}
+
 #endif

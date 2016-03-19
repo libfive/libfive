@@ -32,6 +32,11 @@ struct Result {
     Result();
 
     /*
+     *  Look up a particular value by index
+     */
+    float& operator[](size_t index) { return f[index]; }
+
+    /*
      *  Sets a particular value in the array
      *  (inlined for efficiency)
      */
@@ -68,15 +73,15 @@ protected:
     // If we're using AVX for evaluation, then our floats are simply
     // pointers to the first member of the __m256 array
 #ifdef __AVX__
-    float* f;
-    float* dx;
-    float* dy;
-    float* dz;
-
     __m256 mf[32];
     __m256 mdx[32];
     __m256 mdy[32];
     __m256 mdz[32];
+
+    float* f;
+    float* dx;
+    float* dy;
+    float* dz;
 #else
     float f[256];
     float dx[256];

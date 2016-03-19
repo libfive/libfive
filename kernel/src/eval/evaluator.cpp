@@ -34,8 +34,19 @@ Evaluator::Evaluator(const Tree* tree)
     {
         count += r.size();
     }
+#if __AVX__
+    {   // Ensure that we have 32-byte alignment for Clauses and Results
+        size_t alignment = 32;
+        size_t bytes = sizeof(Clause) * count + alignment;
+        void* buf = malloc(bytes);
+        data = static_cast<Clause*>(buf);
+        ptr = static_cast<Clause*>(
+                std::align(alignment, sizeof(Clause) * count, buf, bytes));
+    }
+#else
     data = static_cast<Clause*>(malloc(sizeof(Clause) * count));
     ptr = data;
+#endif
 
     // Load constants into the array first
     for (auto m : tree->constants)
