@@ -27,8 +27,10 @@
 Evaluator::Evaluator(const Tree* tree)
 {
     // Count up the number of Atoms in the Tree
-    size_t count = std::accumulate(tree->rows.begin(), tree->rows.end(),
-            tree->constants.size(),
+    size_t count =  std::accumulate(tree->rows.begin(), tree->rows.end(),
+            3                           // X, Y, Z
+            + tree->matrix.size()       // Transform matrix
+            + tree->constants.size(),   // Constants
             [](size_t i, const std::vector<Atom*>& r){ return i + r.size(); });
 
     // Then, allocate space for them (ensuring alignment if AVX is used)
@@ -58,31 +60,36 @@ Evaluator::Evaluator(const Tree* tree)
         constants.push_back(newClause(m));
     }
 
+    // Create base clauses X, Y, Z
+    X = newClause(tree->X);
+    Y = newClause(tree->Y);
+    Z = newClause(tree->Z);
+
+    // Set derivatives for X, Y, Z (since these never change)
+    X->result.deriv(1, 0, 0);
+    Y->result.deriv(0, 1, 0);
+    Z->result.deriv(0, 0, 1);
+
+    // Create matrix clauses
+    assert(tree->matrix.size() == matrix.size());
+    for (size_t i=0; i < tree->matrix.size(); ++i)
+    {
+        matrix[i] = newClause(tree->matrix[i]);
+    }
+
     // Finally, create the rest of the Tree's clauses
     for (auto row : tree->rows)
     {
         rows.push_back(Row());
         for (auto atom : row)
         {
-            auto clause = newClause(atom);
-            switch (clause->op)
-            {
-                case OP_X:          X = clause; break;
-                case OP_Y:          Y = clause; break;
-                case OP_Z:          Z = clause; break;
-                default:            rows.back().push_back(clause);
-            }
+            rows.back().push_back(newClause(atom));
         }
         rows.back().setSize();
     }
 
     assert(clauses[tree->root]);
     root = clauses[tree->root];
-
-    // Set derivatives for X, Y, Z (since these never change)
-    X->result.deriv(1, 0, 0);
-    Y->result.deriv(0, 1, 0);
-    Z->result.deriv(0, 0, 1);
 }
 
 Evaluator::Evaluator(const Tree* t, const glm::mat4& m)
@@ -100,14 +107,16 @@ Evaluator::~Evaluator()
 
 void Evaluator::setMatrix(const glm::mat4& m)
 {
-    for (auto a : matrices)
+    // Though the matrix values are of opcode OP_CONST, we're going to
+    // hot-patch the result arrays (which are actually used in computation
+    // to apply the given transform matrix).
+    size_t index = 0;
+    for (int i=0; i < 3; ++i)
     {
-        glm::vec4 v = a.second * m;
-
-        a.first->a->a->b->result.fill(v.x);
-        a.first->a->b->b->result.fill(v.y);
-        a.first->b->a->b->result.fill(v.z);
-        a.first->b->b->result.fill(v.q);
+        for (int j=0; j < 4; ++j)
+        {
+            matrix[index++]->result.fill(m[j][i]);
+        }
     }
 }
 

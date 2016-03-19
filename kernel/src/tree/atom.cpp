@@ -44,6 +44,12 @@ Atom::Atom(Opcode op, Atom* a, Atom* b)
     // Nothing to do here
 }
 
+Atom::Atom(float f)
+    : op(OP_CONST), value(f), a(nullptr), b(nullptr)
+{
+    // Nothing to do here
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, const Atom& atom)

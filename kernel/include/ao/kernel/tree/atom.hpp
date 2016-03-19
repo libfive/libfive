@@ -52,6 +52,12 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Atom& atom);
 
 protected:
+    /*
+     *  Constructs an OP_CONST atom with the given value
+     *  Should only be used by a Tree to construct matrix atoms.
+     */
+    explicit Atom(float f);
+
     /*  Opcode for this atom  */
     const Opcode op;
 

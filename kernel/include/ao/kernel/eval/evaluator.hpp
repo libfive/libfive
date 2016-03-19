@@ -125,9 +125,8 @@ protected:
      *  (so that they can be easily accessed to set their values)  */
     Clause *X, *Y, *Z;
 
-    /*  matrices storea bunch of AFFINE_ROOT clauses and their constant values
-     *  This list is used to apply a 4x4 transform matrix across the tree  */
-    std::vector<std::pair<Clause*, glm::vec4>> matrices;
+    /*  matrix is a 4x3 pointer to transform matrix values  */
+    std::array<Clause*, 12> matrix;
 
     /*  Pointers to constants live in this vector  */
     std::vector<Clause*> constants;
