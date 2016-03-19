@@ -61,9 +61,30 @@ Token* Store::operation(Opcode op, Token* a, Token* b)
         {
             return b;
         }
-        if (b->op == OP_CONST && b->value == 0)
+        else if (b->op == OP_CONST && b->value == 0)
         {
             return a;
+        }
+        else if (a->op == AFFINE_ROOT && b->op == OP_CONST)
+        {
+            return affine(a->a->a->b->value,
+                          a->a->b->b->value,
+                          a->b->a->b->value,
+                          a->b->b->value + b->value);
+        }
+        else if (b->op == AFFINE_ROOT && a->op == OP_CONST)
+        {
+            return affine(b->a->a->b->value,
+                          b->a->b->b->value,
+                          b->b->a->b->value,
+                          b->b->b->value + a->value);
+        }
+        else if (a->op == AFFINE_ROOT && b->op == AFFINE_ROOT)
+        {
+            return affine(a->a->a->b->value + b->a->a->b->value,
+                          a->a->b->b->value + b->a->b->b->value,
+                          a->b->a->b->value + b->b->a->b->value,
+                          a->b->b->value + b->b->b->value);
         }
     }
     else if (op == OP_SUB)
