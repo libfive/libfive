@@ -119,6 +119,16 @@ Token* Store::operation(Opcode op, Token* a, Token* b)
     return row[{a,b}];
 }
 
+Token* Store::affine(float a, float b, float c, float d)
+{
+    return operation(AFFINE_ROOT,
+                operation(OP_ADD,
+                    operation(OP_MUL, X(), constant(a)),
+                    operation(OP_MUL, Y(), constant(b))),
+                operation(OP_ADD,
+                    operation(OP_MUL, Z(), constant(c)), constant(d)));
+}
+
 void Store::clearFound()
 {
     for (auto a : ops)

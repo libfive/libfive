@@ -58,6 +58,11 @@ public:
     Token* Z() { return operation(OP_Z); }
 
     /*
+     *  Returns an AFFINE_ROOT of the form a*x + b*y + c*z + d
+     */
+    Token* affine(float a, float b, float c, float d);
+
+    /*
      *  Set found in every token descending from root
      */
     void markFound(Token* root);

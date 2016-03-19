@@ -46,7 +46,6 @@ public:
 
     /*
      *  If the CLAUSE_FLAG_IGNORED flag is set:
-     *      Saves the interval result to mutable_value
      *      Clears the flag
      *      Returns true.
      *
@@ -57,8 +56,7 @@ public:
     bool checkDisabled();
 
     /*
-     *  Stores the most recent Interval evaluation in the mutable_value slot
-     *  and set CLAUSE_FLAG_DISABLED
+     *  Sets or clears CLAUSE_FLAG_DISABLED
      */
     void disable() {   setFlag(CLAUSE_FLAG_DISABLED); }
     void enable()  { clearFlag(CLAUSE_FLAG_DISABLED); }
@@ -69,9 +67,6 @@ protected:
 
     /*  Populated for OP_CONST clause */
     const float value;
-
-    /*  Populated for OP_MUTABLE clause  */
-    float mutable_value;
 
     /*  Flags are set during evaluation for various purposes  */
     uint8_t flags=0;

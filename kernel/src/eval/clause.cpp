@@ -23,7 +23,7 @@
 
 Clause::Clause(const Atom* m,
                std::unordered_map<const Atom*, Clause*>& clauses)
-    : op(m->op), value(m->value), mutable_value(m->value),
+    : op(m->op), value(m->value),
       a(m->a ? clauses[m->a] : nullptr), b(m->b ? clauses[m->b] : nullptr)
 {
     // Assert that children have been added to the clause map
