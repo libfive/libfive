@@ -79,4 +79,25 @@ TEST_CASE("Affine math")
         REQUIRE(t->op == AFFINE_ROOT);
         REQUIRE(affineVec(t) == glm::vec4(-1, -2, -3, -4));
     }
+
+    SECTION("Affine times constant")
+    {
+        Token* t = s.operation(OP_MUL, s.affine(1, 2, 3, 4), s.constant(2));
+        REQUIRE(t->op == AFFINE_ROOT);
+        REQUIRE(affineVec(t) == glm::vec4(2, 4, 6, 8));
+    }
+
+    SECTION("Constant times affine")
+    {
+        Token* t = s.operation(OP_MUL, s.constant(2), s.affine(1, 2, 3, 4));
+        REQUIRE(t->op == AFFINE_ROOT);
+        REQUIRE(affineVec(t) == glm::vec4(2, 4, 6, 8));
+    }
+
+    SECTION("Affine divided by constant")
+    {
+        Token* t = s.operation(OP_DIV, s.affine(1, 2, 3, 4), s.constant(2));
+        REQUIRE(t->op == AFFINE_ROOT);
+        REQUIRE(affineVec(t) == glm::vec4(0.5, 1, 1.5, 2));
+    }
 }

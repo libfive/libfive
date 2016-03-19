@@ -102,6 +102,33 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
                           a->b->b->value - b->b->b->value);
         }
     }
+    else if (op == OP_MUL)
+    {
+        if (a->op == AFFINE_ROOT && b->op == OP_CONST)
+        {
+            return affine(a->a->a->b->value * b->value,
+                          a->a->b->b->value * b->value,
+                          a->b->a->b->value * b->value,
+                          a->b->b->value * b->value);
+        }
+        else if (b->op == AFFINE_ROOT && a->op == OP_CONST)
+        {
+            return affine(b->a->a->b->value * a->value,
+                          b->a->b->b->value * a->value,
+                          b->b->a->b->value * a->value,
+                          b->b->b->value * a->value);
+        }
+    }
+    else if (op == OP_DIV)
+    {
+        if (a->op == AFFINE_ROOT && b->op == OP_CONST)
+        {
+            return affine(a->a->a->b->value / b->value,
+                          a->a->b->b->value / b->value,
+                          a->b->a->b->value / b->value,
+                          a->b->b->value / b->value);
+        }
+    }
     return nullptr;
 }
 
