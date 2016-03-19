@@ -32,13 +32,13 @@ Tree::Tree(Store* s, Token* root_token)
     std::unordered_map<const Token*, Atom*> atoms;
 
     // Set flags to mark which tokens are used in the tree
-    s->markFound(root_token);
+    auto found = s->findConnected(root_token);
 
     // Ensure that the base variables are all present in the tree and marked
     // as found (even if there wasn't a path to them from the root)
     for (auto c : {s->X(), s->Y(), s->Z()})
     {
-        c->found = true;
+        found.insert(c);
     }
 
     // Flatten constants into the data array and constants vector
@@ -47,14 +47,14 @@ Tree::Tree(Store* s, Token* root_token)
                       s->affine_values.size());
     for (auto c : s->constants)
     {
-        if (c.second->found)
+        if (found.find(c.second) != found.end())
         {
             constants.push_back(new Atom(c.second, atoms));
         }
     }
     for (auto v : s->affine_values)
     {
-        if (v->found)
+        if (found.find(v) != found.end())
         {
             constants.push_back(new Atom(v, atoms));
         }
@@ -70,7 +70,7 @@ Tree::Tree(Store* s, Token* root_token)
             {
                 for (auto c : b)
                 {
-                    if (c.second->found)
+                    if (found.find(c.second) != found.end())
                     {
                         row->push_back(new Atom(c.second, atoms));
                     }

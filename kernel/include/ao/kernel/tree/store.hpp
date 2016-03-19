@@ -21,6 +21,7 @@
 #include <map>
 #include <vector>
 #include <array>
+#include <set>
 
 #include "ao/kernel/tree/opcode.hpp"
 
@@ -65,14 +66,9 @@ public:
     /*
      *  Set found in every token descending from root
      */
-    void markFound(Token* root);
+    std::set<Token*> findConnected(Token* root);
 
 protected:
-    /*
-     *  Set the found member of each token to false
-     */
-    void clearFound();
-
     /*
      *  Checks whether the operation is an identity operation
      *  If so returns an appropriately simplified Token

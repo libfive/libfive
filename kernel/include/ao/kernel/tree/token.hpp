@@ -44,11 +44,6 @@ public:
      */
     static size_t args(Opcode op);
 
-    /*
-     *  Returns the found flag
-     */
-    bool isFound() const { return found; }
-
     /*  Member variables  */
     const Opcode op;
     const size_t weight;
@@ -61,9 +56,6 @@ public:
     Token* const b;
 
 protected:
-    /*  found is used to detect which tokens are in the tree  */
-    bool found=false;
-
     friend class Store;
     friend class Tree;
     friend class Atom;

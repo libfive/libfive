@@ -249,61 +249,34 @@ Token* Store::affine(float a, float b, float c, float d)
     return affine_roots[{a,b,c,d}];
 }
 
-void Store::clearFound()
+std::set<Token*> Store::findConnected(Token* root)
 {
-    for (auto a : ops)
+    std::set<Token*> found = {root};
+
+    // Iterate over weight levels from top to bottom
+    for (auto weight = ops.rbegin(); weight != ops.rend(); ++weight)
     {
-        for (auto b : a)
+        // Iterate over operations in a given weight level
+        for (auto op : *weight)
         {
-            for (auto c : b)
-            {
-                c.second->found = false;
-            }
-        }
-    }
-}
-
-void Store::markFound(Token* root)
-{
-    clearFound();
-
-    root->found = true;
-
-    for (auto itr = ops.rbegin(); itr != ops.rend(); ++itr)
-    {
-        for (auto b : *itr)
-        {
-            for (auto c : b)
+            // Iterate over Key, Token* pairs
+            for (auto c : op)
             {
                 Token* const t = c.second;
-                if (t->found)
+                if (found.find(t) != found.end())
                 {
                     if (t->a)
                     {
-                        t->a->found = true;
+                        found.insert(t->a);
                     }
                     if (t->b)
                     {
-                        t->b->found = true;
+                        found.insert(t->b);
                     }
                 }
             }
         }
     }
+
+    return found;
 }
-
-/*
-    Atom* a  = new Atom(i == 0 ? 1.0 : 0.0);
-    Atom* b  = new Atom(i == 1 ? 1.0 : 0.0);
-    Atom* c  = new Atom(i == 2 ? 1.0 : 0.0);
-    Atom* d  = new Atom(0.0);
-
-    Atom* ax = new Atom(OP_MUL, X, a);
-    Atom* by = new Atom(OP_MUL, Y, b);
-    Atom* cz = new Atom(OP_MUL, Z, c);
-
-    Atom* ax_by = new Atom(OP_ADD, ax, by);
-    Atom* cz_d  = new Atom(OP_ADD, cz, d);
-
-    Atom* ax_by_cz_d = new Atom(OP_ADD, ax_by, cz_d);
-*/
