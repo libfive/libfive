@@ -44,7 +44,7 @@ Tree::Tree(Store* s, Token* root_token)
     // Flatten constants into the data array and constants vector
     constants.reserve(constants.size() +
                       s->constants.size() +
-                      s->values.size());
+                      s->affine_values.size());
     for (auto c : s->constants)
     {
         if (c.second->found)
@@ -52,7 +52,7 @@ Tree::Tree(Store* s, Token* root_token)
             constants.push_back(new Atom(c.second, atoms));
         }
     }
-    for (auto v : s->values)
+    for (auto v : s->affine_values)
     {
         if (v->found)
         {

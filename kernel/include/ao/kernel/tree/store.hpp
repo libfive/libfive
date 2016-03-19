@@ -92,9 +92,16 @@ protected:
     /*  Constants are indexed solely by value  */
     std::map<float, Token*> constants;
 
-    /*  Affine values live in a separate area, because they should not
-     *  be de-duplicated by value or anything else  */
-    std::vector<Token*> values;
+    /*  Affine values are stored in a single vector.
+     *  They can't be combined like constants, because each AFFINE_ROOT tree
+     *  needs to be independent - cross-linking would corrupt matrix stuff  */
+    std::vector<Token*> affine_values;
+
+    /*  Affine values are indexed by vec4, as each one represents
+     *  a term of the form a*x + b*y + c*z + d.  AFFINE_ROOTS are also stored
+     *  in the operations array, but that array's deduplication isn't useful
+     *  (since it only looks at children, which will be unique)  */
+    std::map<std::tuple<float, float, float, float>, Token*> affine_roots;
 
     /*  Operators are indexed by weight, opcode, and arguments  */
     std::vector<Cache> ops;

@@ -16,6 +16,8 @@
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <cassert>
+
 #include "ao/kernel/tree/store.hpp"
 #include "ao/kernel/tree/token.hpp"
 
@@ -26,7 +28,7 @@ Store::~Store()
         delete c.second;
     }
 
-    for (auto v : values)
+    for (auto v : affine_values)
     {
         delete v;
     }
@@ -187,6 +189,10 @@ Token* Store::checkIdentity(Opcode op, Token* a, Token* b)
 
 Token* Store::operation(Opcode op, Token* a, Token* b)
 {
+    // These are opcodes that you're not allowed to use here
+    assert(op != AFFINE_VALUE && op != OP_CONST && op != INVALID &&
+           op != OP_A && op != OP_B && op != LAST_OP);
+
     // See if we can simplify the expression, either because it's an identity
     // operation (e.g. X + 0) or a linear combination of affine forms
     if (auto t = checkIdentity(op, a, b))
@@ -221,22 +227,26 @@ Token* Store::operation(Opcode op, Token* a, Token* b)
 
 Token* Store::affine(float a, float b, float c, float d)
 {
-    auto a_ = new Token(a, AFFINE_VALUE);
-    auto b_ = new Token(b, AFFINE_VALUE);
-    auto c_ = new Token(c, AFFINE_VALUE);
-    auto d_ = new Token(d, AFFINE_VALUE);
-
-    for (auto t : {a_, b_, c_, d_})
+    if (affine_roots.find({a, b, c, d}) == affine_roots.end())
     {
-        values.push_back(t);
-    }
+        auto a_ = new Token(a, AFFINE_VALUE);
+        auto b_ = new Token(b, AFFINE_VALUE);
+        auto c_ = new Token(c, AFFINE_VALUE);
+        auto d_ = new Token(d, AFFINE_VALUE);
 
-    return operation(AFFINE_ROOT,
-                operation(OP_ADD,
-                    operation(OP_MUL, X(), a_),
-                    operation(OP_MUL, Y(), b_)),
-                operation(OP_ADD,
-                    operation(OP_MUL, Z(), c_), d_));
+        for (auto t : {a_, b_, c_, d_})
+        {
+            affine_values.push_back(t);
+        }
+
+        affine_roots[{a,b,c,d}] = operation(AFFINE_ROOT,
+                    operation(OP_ADD,
+                        operation(OP_MUL, X(), a_),
+                        operation(OP_MUL, Y(), b_)),
+                    operation(OP_ADD,
+                        operation(OP_MUL, Z(), c_), d_));
+    }
+    return affine_roots[{a,b,c,d}];
 }
 
 void Store::clearFound()
