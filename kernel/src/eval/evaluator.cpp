@@ -52,11 +52,6 @@ Evaluator::Evaluator(const Tree* tree)
     auto newClause = [&ptr, &clauses](const Atom* m)
         { return new (ptr++) Clause(m, clauses); };
 
-    // Extracts a glm::vec4 from an AFFINE_ROOT clause
-    auto getVec = [](const Clause* c)
-        { return glm::vec4(c->a->a->b->value, c->a->b->b->value,
-                           c->b->a->b->value, c->b->b->value); };
-
     // Load constants into the array first
     for (auto m : tree->constants)
     {
@@ -75,8 +70,6 @@ Evaluator::Evaluator(const Tree* tree)
                 case OP_X:          X = clause; break;
                 case OP_Y:          Y = clause; break;
                 case OP_Z:          Z = clause; break;
-                case AFFINE_ROOT:   matrices.push_back({clause, getVec(clause)});
-                                    // Fallthrough!
                 default:            rows.back().push_back(clause);
             }
         }
@@ -180,7 +173,6 @@ static void clause(Opcode op,
 {
     switch (op) {
         case OP_ADD:
-        case AFFINE_ROOT:
             EVAL_LOOP
             out[i] = a[i] + b[i];
             break;
@@ -282,7 +274,7 @@ static void clause(Opcode op,
         case OP_X:
         case OP_Y:
         case OP_Z:
-        case AFFINE_VALUE:
+        case AFFINE:
         case LAST_OP: assert(false);
     }
 }
@@ -303,7 +295,6 @@ static void clause(Opcode op,
 
     switch (op) {
         case OP_ADD:
-        case AFFINE_ROOT:
             EVAL_LOOP
             {
                 odx[i] = adx[i] + bdx[i];
@@ -533,7 +524,7 @@ static void clause(Opcode op,
         case OP_X:
         case OP_Y:
         case OP_Z:
-        case AFFINE_VALUE:
+        case AFFINE:
         case LAST_OP: assert(false);
     }
 }
@@ -545,7 +536,6 @@ static void clause(Opcode op,
 {
     switch (op) {
         case OP_ADD:
-        case AFFINE_ROOT:
             EVAL_LOOP
             out[i] = _mm256_add_ps(a[i], b[i]);
             break;
@@ -618,7 +608,7 @@ static void clause(Opcode op,
         case OP_X:
         case OP_Y:
         case OP_Z:
-        case AFFINE_VALUE:
+        case AFFINE:
         case LAST_OP: assert(false);
     }
 }
@@ -645,7 +635,6 @@ static void clause(Opcode op,
 
     switch (op) {
         case OP_ADD:
-        case AFFINE_ROOT:
             EVAL_LOOP
             {
                 odx[i] = _mm256_add_ps(adx[i], bdx[i]);
@@ -805,7 +794,7 @@ static void clause(Opcode op,
         case OP_X:
         case OP_Y:
         case OP_Z:
-        case AFFINE_VALUE:
+        case AFFINE:
         case LAST_OP: assert(false);
     }
 }
@@ -815,7 +804,6 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
 {
     switch (op) {
         case OP_ADD:
-        case AFFINE_ROOT:
             return a + b;
         case OP_MUL:
             return a * b;
@@ -866,7 +854,7 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
         case OP_X:
         case OP_Y:
         case OP_Z:
-        case AFFINE_VALUE:
+        case AFFINE:
         case LAST_OP: assert(false);
     }
     return Interval();

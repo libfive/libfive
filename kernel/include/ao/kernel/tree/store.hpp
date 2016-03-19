@@ -48,8 +48,12 @@ public:
      *
      *  Arguments should be filled in from left to right
      *  (i.e. a must not be null if b is not null)
+     *
+     *  If collapse is true (the default), identity and affine operations will
+     *  be collapsed; if false, all branches will be created
      */
-    Token* operation(Opcode op, Token* a=nullptr, Token* b=nullptr);
+    Token* operation(Opcode op, Token* a=nullptr, Token* b=nullptr,
+                     bool collapse=true);
 
     /*
      *  Return tokens for base variables
@@ -96,17 +100,6 @@ protected:
 
     /*  Constants are indexed solely by value  */
     std::map<float, Token*> constants;
-
-    /*  Affine values are stored in a single vector.
-     *  They can't be combined like constants, because each AFFINE_ROOT tree
-     *  needs to be independent - cross-linking would corrupt matrix stuff  */
-    std::vector<Token*> affine_values;
-
-    /*  Affine values are indexed by vec4, as each one represents
-     *  a term of the form a*x + b*y + c*z + d.  AFFINE_ROOTS are also stored
-     *  in the operations array, but that array's deduplication isn't useful
-     *  (since it only looks at children, which will be unique)  */
-    std::map<std::tuple<float, float, float, float>, Token*> affine_roots;
 
     /*  Operators are indexed by weight, opcode, and arguments  */
     std::vector<Cache> ops;

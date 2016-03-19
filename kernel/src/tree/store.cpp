@@ -28,11 +28,6 @@ Store::~Store()
         delete c.second;
     }
 
-    for (auto v : affine_values)
-    {
-        delete v;
-    }
-
     for (auto row : ops)
     {
         for (auto sub : row)
@@ -58,21 +53,21 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
 {
     if (op == OP_ADD)
     {
-        if (a->op == AFFINE_ROOT && b->op == OP_CONST)
+        if (a->op == AFFINE && b->op == OP_CONST)
         {
             return affine(a->a->a->b->value,
                           a->a->b->b->value,
                           a->b->a->b->value,
                           a->b->b->value + b->value);
         }
-        else if (b->op == AFFINE_ROOT && a->op == OP_CONST)
+        else if (b->op == AFFINE && a->op == OP_CONST)
         {
             return affine(b->a->a->b->value,
                           b->a->b->b->value,
                           b->b->a->b->value,
                           b->b->b->value + a->value);
         }
-        else if (a->op == AFFINE_ROOT && b->op == AFFINE_ROOT)
+        else if (a->op == AFFINE && b->op == AFFINE)
         {
             return affine(a->a->a->b->value + b->a->a->b->value,
                           a->a->b->b->value + b->a->b->b->value,
@@ -82,21 +77,21 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_SUB)
     {
-        if (a->op == AFFINE_ROOT && b->op == OP_CONST)
+        if (a->op == AFFINE && b->op == OP_CONST)
         {
             return affine(a->a->a->b->value,
                           a->a->b->b->value,
                           a->b->a->b->value,
                           a->b->b->value - b->value);
         }
-        else if (b->op == AFFINE_ROOT && a->op == OP_CONST)
+        else if (b->op == AFFINE && a->op == OP_CONST)
         {
             return affine(-b->a->a->b->value,
                           -b->a->b->b->value,
                           -b->b->a->b->value,
                           a->value - b->b->b->value);
         }
-        else if (a->op == AFFINE_ROOT && b->op == AFFINE_ROOT)
+        else if (a->op == AFFINE && b->op == AFFINE)
         {
             return affine(a->a->a->b->value - b->a->a->b->value,
                           a->a->b->b->value - b->a->b->b->value,
@@ -106,14 +101,14 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_MUL)
     {
-        if (a->op == AFFINE_ROOT && b->op == OP_CONST)
+        if (a->op == AFFINE && b->op == OP_CONST)
         {
             return affine(a->a->a->b->value * b->value,
                           a->a->b->b->value * b->value,
                           a->b->a->b->value * b->value,
                           a->b->b->value * b->value);
         }
-        else if (b->op == AFFINE_ROOT && a->op == OP_CONST)
+        else if (b->op == AFFINE && a->op == OP_CONST)
         {
             return affine(b->a->a->b->value * a->value,
                           b->a->b->b->value * a->value,
@@ -123,7 +118,7 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_DIV)
     {
-        if (a->op == AFFINE_ROOT && b->op == OP_CONST)
+        if (a->op == AFFINE && b->op == OP_CONST)
         {
             return affine(a->a->a->b->value / b->value,
                           a->a->b->b->value / b->value,
@@ -187,21 +182,24 @@ Token* Store::checkIdentity(Opcode op, Token* a, Token* b)
     return nullptr;
 }
 
-Token* Store::operation(Opcode op, Token* a, Token* b)
+Token* Store::operation(Opcode op, Token* a, Token* b, bool collapse)
 {
     // These are opcodes that you're not allowed to use here
-    assert(op != AFFINE_VALUE && op != OP_CONST && op != INVALID &&
+    assert(op != OP_CONST && op != INVALID &&
            op != OP_A && op != OP_B && op != LAST_OP);
 
     // See if we can simplify the expression, either because it's an identity
     // operation (e.g. X + 0) or a linear combination of affine forms
-    if (auto t = checkIdentity(op, a, b))
+    if (collapse)
     {
-        return t;
-    }
-    else if (auto t = checkAffine(op, a, b))
-    {
-        return t;
+        if (auto t = checkIdentity(op, a, b))
+        {
+            return t;
+        }
+        else if (auto t = checkAffine(op, a, b))
+        {
+            return t;
+        }
     }
 
     // Otherwise, construct a new Token and add it to the ops set
@@ -227,26 +225,15 @@ Token* Store::operation(Opcode op, Token* a, Token* b)
 
 Token* Store::affine(float a, float b, float c, float d)
 {
-    if (affine_roots.find({a, b, c, d}) == affine_roots.end())
-    {
-        auto a_ = new Token(a, AFFINE_VALUE);
-        auto b_ = new Token(b, AFFINE_VALUE);
-        auto c_ = new Token(c, AFFINE_VALUE);
-        auto d_ = new Token(d, AFFINE_VALUE);
-
-        for (auto t : {a_, b_, c_, d_})
-        {
-            affine_values.push_back(t);
-        }
-
-        affine_roots[{a,b,c,d}] = operation(AFFINE_ROOT,
-                    operation(OP_ADD,
-                        operation(OP_MUL, X(), a_),
-                        operation(OP_MUL, Y(), b_)),
-                    operation(OP_ADD,
-                        operation(OP_MUL, Z(), c_), d_));
-    }
-    return affine_roots[{a,b,c,d}];
+    // Build up the desired tree structure with collapse = false
+    // to keep branches from automatically collapsing.
+    return operation(AFFINE,
+            operation(OP_ADD,
+                operation(OP_MUL, X(), constant(a), false),
+                operation(OP_MUL, Y(), constant(b), false), false),
+            operation(OP_ADD,
+                operation(OP_MUL, Z(), constant(c), false),
+                constant(d), false));
 }
 
 std::set<Token*> Store::findConnected(Token* root)
@@ -283,19 +270,25 @@ std::set<Token*> Store::findConnected(Token* root)
 
 Token* Store::collapseAffine(Token* root)
 {
-    std::map<Token*, Token*> changed;
+    // If the tree isn't big enough to have any affine functions,
+    // then we can safely return right away
+    if (ops.size() < 4)
+    {
+        return root;
+    }
 
     // Turn every AFFINE_ROOT into a normal OP_ADD
     // (with identity operations automatically cancelled out)
-    for (auto r : affine_roots)
+    std::map<Token*, Token*> changed;
+    for (auto r : ops[3][AFFINE])
     {
         changed[r.second] = operation(OP_ADD,
                 operation(OP_ADD,
-                    operation(OP_MUL, X(), constant(std::get<0>(r.first))),
-                    operation(OP_MUL, Y(), constant(std::get<1>(r.first)))),
+                    operation(OP_MUL, X(), r.second->a->a->b),
+                    operation(OP_MUL, Y(), r.second->a->b->b)),
                 operation(OP_ADD,
-                    operation(OP_MUL, Z(), constant(std::get<2>(r.first))),
-                    constant(std::get<3>(r.first))));
+                    operation(OP_MUL, Z(), r.second->b->a->b),
+                    r.second->b->b));
     }
 
     // Iterate over weight levels from bottom to top

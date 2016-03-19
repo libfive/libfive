@@ -81,9 +81,15 @@ int opcode_enum(char* op)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#if 1
 Token* token_x(Store* s) { return s->affine(1, 0, 0, 0); }
 Token* token_y(Store* s) { return s->affine(0, 1, 0, 0); }
 Token* token_z(Store* s) { return s->affine(0, 0, 1, 0); }
+#else
+Token* token_x(Store* s) { return s->X(); }
+Token* token_y(Store* s) { return s->Y(); }
+Token* token_z(Store* s) { return s->Z(); }
+#endif
 
 Token* token_const(Store* s, float f)   { return s->constant(f); }
 

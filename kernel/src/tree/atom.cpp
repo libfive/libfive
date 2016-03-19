@@ -50,8 +50,7 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
 {
     switch (atom.op)
     {
-        case OP_ADD:
-        case AFFINE_ROOT:   os << "(" << *atom.a << " + " << *atom.b << ")"; break;
+        case OP_ADD:    os << "(" << *atom.a << " + " << *atom.b << ")"; break;
         case OP_MUL:    os << "(" << *atom.a << " * " << *atom.b << ")"; break;
         case OP_MIN:    os << "min(" << *atom.a << ", " << *atom.b << ")"; break;
         case OP_MAX:    os << "max(" << *atom.a << ", " << *atom.b << ")"; break;
@@ -73,8 +72,7 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case OP_ATAN:    os << "atan(" << *atom.a << ")"; break;
         case OP_EXP:    os << "exp(" << *atom.a << ")"; break;
 
-        case OP_CONST:
-        case AFFINE_VALUE:  os << atom.value; break;
+        case OP_CONST:  os << atom.value; break;
         case OP_X:      os << "X"; break;
         case OP_Y:      os << "Y"; break;
         case OP_Z:      os << "Z"; break;
@@ -82,6 +80,7 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case LAST_OP:   // Fallthrough!
         case OP_A:
         case OP_B:
+        case AFFINE:
         case INVALID:   assert(false);
     }
     return os;

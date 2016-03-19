@@ -47,21 +47,12 @@ Tree::Tree(Store* s, Token* root_token)
     std::unordered_map<const Token*, Atom*> atoms;
 
     // Flatten constants into the data array and constants vector
-    constants.reserve(constants.size() +
-                      s->constants.size() +
-                      s->affine_values.size());
+    constants.reserve(constants.size() + s->constants.size());
     for (auto c : s->constants)
     {
         if (found.find(c.second) != found.end())
         {
             constants.push_back(new Atom(c.second, atoms));
-        }
-    }
-    for (auto v : s->affine_values)
-    {
-        if (found.find(v) != found.end())
-        {
-            constants.push_back(new Atom(v, atoms));
         }
     }
 
@@ -88,6 +79,11 @@ Tree::Tree(Store* s, Token* root_token)
     // Get the root atom from the root token
     assert(atoms.count(root_token) == 1);
     root = atoms[root_token];
+
+    size_t i=0;
+    for (auto r : rows) i += r.size();
+    std::cout << "Clause count: " << i << '\n';
+    std::cout << "Row count: " << rows.size() << '\n';
 }
 
 Tree::~Tree()

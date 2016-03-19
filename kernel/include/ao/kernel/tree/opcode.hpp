@@ -54,12 +54,11 @@ enum Opcode
     //             /      \
     //          OP_ADD    OP_ADD
     //        /    \      /      \
-    //      MUL    MUL   MUL     V
+    //      MUL    MUL   MUL     C
     //    /   \   /  \  /   \
-    //   X    V  Y   V  Z   V
-    // (where X, Y, Z are base coordinates and V is AFFINE_VALUE)
-    AFFINE_ROOT,
-    AFFINE_VALUE,
+    //   X    C  Y   C  Z   C
+    // (where X, Y, Z are base coordinates and C is OP_CONST)
+    AFFINE,
 
     // Dummy opcodes used to select the left or right-hand side of a function
     // (used when one of the children is disabled)

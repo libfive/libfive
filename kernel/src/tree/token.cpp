@@ -30,10 +30,10 @@ Token::Token(Opcode op, Token* a, Token* b)
     // Nothing to do here
 }
 
-Token::Token(float v, Opcode op)
-    : op(op), weight(0), value(v), a(nullptr), b(nullptr)
+Token::Token(float v)
+    : op(OP_CONST), weight(0), value(v), a(nullptr), b(nullptr)
 {
-    assert(op == OP_CONST || op == AFFINE_VALUE);
+    // Nothing to do here
 }
 
 size_t Token::args(Opcode op)
@@ -44,7 +44,6 @@ size_t Token::args(Opcode op)
         case OP_X:
         case OP_Y:
         case OP_Z:
-        case AFFINE_VALUE:
             return 0;
 
         case OP_SQUARE: // fallthrough
@@ -69,7 +68,7 @@ size_t Token::args(Opcode op)
         case OP_ATAN2:
         case OP_MOD:
         case OP_NANFILL:
-        case AFFINE_ROOT:
+        case AFFINE:
             return 2;
 
         case INVALID: // fallthrough
