@@ -47,11 +47,6 @@ public:
     explicit Atom(Opcode op, Atom* a=NULL, Atom* b=NULL);
 
     /*
-     *  Constructs an OP_MUTABLE atom with the given value
-     */
-    explicit Atom(float d);
-
-    /*
      *  Print an Atom to an ostream
      */
     friend std::ostream& operator<<(std::ostream& os, const Atom& atom);

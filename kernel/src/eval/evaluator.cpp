@@ -16,6 +16,8 @@
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <numeric>
+
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/eval/clause.hpp"
@@ -24,16 +26,13 @@
 
 Evaluator::Evaluator(const Tree* tree)
 {
-    std::unordered_map<const Atom*, Clause*> clauses;
+    // Count up the number of Atoms in the Tree
+    size_t count = std::accumulate(tree->rows.begin(), tree->rows.end(),
+            tree->constants.size(),
+            [](size_t i, const std::vector<Atom*>& r){ return i + r.size(); });
 
-    // Count up the number of Atoms in the Tree and allocate space for them
-    size_t count = 3                // X, Y, Z
-         + tree->matrix.size()      // Transform matrix
-         + tree->constants.size();  // Constants
-    for (auto r : tree->rows)
-    {
-        count += r.size();
-    }
+    // Then, allocate space for them (ensuring alignment if AVX is used)
+    Clause* ptr;
 #if __AVX__
     {   // Ensure that we have 32-byte alignment for Clauses and Results
         size_t alignment = 32;
@@ -48,42 +47,44 @@ Evaluator::Evaluator(const Tree* tree)
     ptr = data;
 #endif
 
+    // Helper function to create a new clause in the data array
+    std::unordered_map<const Atom*, Clause*> clauses;
+    auto newClause = [&ptr, &clauses](const Atom* m)
+        { return new (ptr++) Clause(m, clauses); };
+
     // Load constants into the array first
     for (auto m : tree->constants)
     {
-        constants.push_back(newClause(m, clauses));
-    }
-
-    // Create base clauses X, Y, Z
-    X = newClause(tree->X, clauses);
-    Y = newClause(tree->Y, clauses);
-    Z = newClause(tree->Z, clauses);
-
-    // Set derivatives for X, Y, Z (since these never change)
-    X->result.deriv(1, 0, 0);
-    Y->result.deriv(0, 1, 0);
-    Z->result.deriv(0, 0, 1);
-
-    // Create matrix clauses
-    assert(tree->matrix.size() == matrix.size());
-    for (size_t i=0; i < tree->matrix.size(); ++i)
-    {
-        matrix[i] = newClause(tree->matrix[i], clauses);
+        constants.push_back(newClause(m));
     }
 
     // Finally, create the rest of the Tree's clauses
-    for (auto r : tree->rows)
+    for (auto row : tree->rows)
     {
         rows.push_back(Row());
-        for (auto m : r)
+        for (auto atom : row)
         {
-            rows.back().push_back(newClause(m, clauses));
+            auto clause = newClause(atom);
+            switch (clause->op)
+            {
+                case OP_X:          X = clause; break;
+                case OP_Y:          Y = clause; break;
+                case OP_Z:          Z = clause; break;
+                case AFFINE_ROOT:   matrices.push_back({clause, glm::vec4()});
+                                    // Fallthrough!
+                default:            rows.back().push_back(clause);
+            }
         }
         rows.back().setSize();
     }
 
     assert(clauses[tree->root]);
     root = clauses[tree->root];
+
+    // Set derivatives for X, Y, Z (since these never change)
+    X->result.deriv(1, 0, 0);
+    Y->result.deriv(0, 1, 0);
+    Z->result.deriv(0, 0, 1);
 }
 
 Evaluator::Evaluator(const Tree* t, const glm::mat4& m)
@@ -101,6 +102,7 @@ Evaluator::~Evaluator()
 
 void Evaluator::setMatrix(const glm::mat4& m)
 {
+    /*
     size_t index = 0;
     for (int i=0; i < 3; ++i)
     {
@@ -115,6 +117,7 @@ void Evaluator::setMatrix(const glm::mat4& m)
     {
         m->result.fill(m->mutable_value);
     }
+    */
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -179,6 +182,7 @@ static void clause(Opcode op,
 {
     switch (op) {
         case OP_ADD:
+        case AFFINE_ROOT:
             EVAL_LOOP
             out[i] = a[i] + b[i];
             break;
@@ -277,10 +281,10 @@ static void clause(Opcode op,
 
         case INVALID:
         case OP_CONST:
-        case OP_MUTABLE:
         case OP_X:
         case OP_Y:
         case OP_Z:
+        case AFFINE_VALUE:
         case LAST_OP: assert(false);
     }
 }
@@ -301,6 +305,7 @@ static void clause(Opcode op,
 
     switch (op) {
         case OP_ADD:
+        case AFFINE_ROOT:
             EVAL_LOOP
             {
                 odx[i] = adx[i] + bdx[i];
@@ -527,10 +532,10 @@ static void clause(Opcode op,
             break;
         case INVALID:
         case OP_CONST:
-        case OP_MUTABLE:
         case OP_X:
         case OP_Y:
         case OP_Z:
+        case AFFINE_VALUE:
         case LAST_OP: assert(false);
     }
 }
@@ -542,6 +547,7 @@ static void clause(Opcode op,
 {
     switch (op) {
         case OP_ADD:
+        case AFFINE_ROOT:
             EVAL_LOOP
             out[i] = _mm256_add_ps(a[i], b[i]);
             break;
@@ -611,10 +617,10 @@ static void clause(Opcode op,
 
         case INVALID:
         case OP_CONST:
-        case OP_MUTABLE:
         case OP_X:
         case OP_Y:
         case OP_Z:
+        case AFFINE_VALUE:
         case LAST_OP: assert(false);
     }
 }
@@ -641,6 +647,7 @@ static void clause(Opcode op,
 
     switch (op) {
         case OP_ADD:
+        case AFFINE_ROOT:
             EVAL_LOOP
             {
                 odx[i] = _mm256_add_ps(adx[i], bdx[i]);
@@ -797,10 +804,10 @@ static void clause(Opcode op,
 
         case INVALID:
         case OP_CONST:
-        case OP_MUTABLE:
         case OP_X:
         case OP_Y:
         case OP_Z:
+        case AFFINE_VALUE:
         case LAST_OP: assert(false);
     }
 }
@@ -810,6 +817,7 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
 {
     switch (op) {
         case OP_ADD:
+        case AFFINE_ROOT:
             return a + b;
         case OP_MUL:
             return a * b;
@@ -857,10 +865,10 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
             return b;
         case INVALID:
         case OP_CONST:
-        case OP_MUTABLE:
         case OP_X:
         case OP_Y:
         case OP_Z:
+        case AFFINE_VALUE:
         case LAST_OP: assert(false);
     }
     return Interval();
@@ -1023,13 +1031,6 @@ Interval Evaluator::interval()
         }
     }
     return root->result.i;
-}
-////////////////////////////////////////////////////////////////////////////////
-
-Clause* Evaluator::newClause(const Atom* m,
-                             std::unordered_map<const Atom*, Clause*>& clauses)
-{
-    return new (ptr++) Clause(m, clauses);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

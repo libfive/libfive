@@ -161,3 +161,19 @@ void Store::markFound(Token* root)
         }
     }
 }
+
+/*
+    Atom* a  = new Atom(i == 0 ? 1.0 : 0.0);
+    Atom* b  = new Atom(i == 1 ? 1.0 : 0.0);
+    Atom* c  = new Atom(i == 2 ? 1.0 : 0.0);
+    Atom* d  = new Atom(0.0);
+
+    Atom* ax = new Atom(OP_MUL, X, a);
+    Atom* by = new Atom(OP_MUL, Y, b);
+    Atom* cz = new Atom(OP_MUL, Z, c);
+
+    Atom* ax_by = new Atom(OP_ADD, ax, by);
+    Atom* cz_d  = new Atom(OP_ADD, cz, d);
+
+    Atom* ax_by_cz_d = new Atom(OP_ADD, ax_by, cz_d);
+*/

@@ -40,10 +40,10 @@ size_t Token::args(Opcode op)
     switch (op)
     {
         case OP_CONST: // fallthrough
-        case OP_MUTABLE:
         case OP_X:
         case OP_Y:
         case OP_Z:
+        case AFFINE_VALUE:
             return 0;
 
         case OP_SQUARE: // fallthrough
@@ -68,6 +68,7 @@ size_t Token::args(Opcode op)
         case OP_ATAN2:
         case OP_MOD:
         case OP_NANFILL:
+        case AFFINE_ROOT:
             return 2;
 
         case INVALID: // fallthrough

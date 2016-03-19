@@ -52,23 +52,8 @@ public:
     void* parent=nullptr;
 
 protected:
-    /*
-     *  Creates a row of the transform matrix
-     *
-     *  Requires X, Y, Z to be populated
-     *  Fills 12 spots in the data array
-     */
-    Atom* buildMatrixRow(size_t i);
-
     /*  All operations live in a set of rows sorted by weight */
     std::vector<std::vector<Atom*>> rows;
-
-    /*  Our position variables are stored as separate pointers     *
-     *  (so that they can be easily accessed to set their values)  */
-    Atom *X, *Y, *Z;
-
-    /*  matrix is a pointer to a 4x3 transform matrix  */
-    std::array<Atom*, 12> matrix;
 
     /*  Pointers to constants live in this vector  */
     std::vector<Atom*> constants;

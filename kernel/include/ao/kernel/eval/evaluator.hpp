@@ -118,12 +118,6 @@ public:
     double utilization() const;
 
 protected:
-    /*
-     *  Constructs a new clause in the data array and increments ptr
-     */
-    Clause* newClause(const Atom* m,
-                      std::unordered_map<const Atom*, Clause*>& clauses);
-
     /*  All operations live in a set of rows sorted by weight */
     std::vector<Row> rows;
 
@@ -131,8 +125,9 @@ protected:
      *  (so that they can be easily accessed to set their values)  */
     Clause *X, *Y, *Z;
 
-    /*  matrix is a pointer to a 4x3 transform matrix  */
-    std::array<Clause*, 12> matrix;
+    /*  matrices storea bunch of AFFINE_ROOT clauses and their constant values
+     *  This list is used to apply a 4x4 transform matrix across the tree  */
+    std::vector<std::pair<Clause*, glm::vec4>> matrices;
 
     /*  Pointers to constants live in this vector  */
     std::vector<Clause*> constants;
@@ -142,5 +137,4 @@ protected:
 
     /*  Bag-o-data that stores clauses  */
     Clause* data;
-    Clause* ptr;
 };

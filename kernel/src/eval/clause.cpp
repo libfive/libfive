@@ -72,7 +72,7 @@ Clause::Clause(const Atom* m,
 
     clauses[m] = this;
 
-    if (op == OP_CONST || op == OP_MUTABLE)
+    if (op == OP_CONST || op == AFFINE_VALUE)
     {
         result.fill(value);
     }
