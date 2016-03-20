@@ -63,7 +63,7 @@ public:
     Token* Z() { return operation(OP_Z); }
 
     /*
-     *  Returns an AFFINE_ROOT of the form a*x + b*y + c*z + d
+     *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
      */
     Token* affine(float a, float b, float c, float d);
 
@@ -73,7 +73,7 @@ public:
     std::set<Token*> findConnected(Token* root);
 
     /*
-     *  Collapses AFFINE_ROOT nodes into normal OP_ADD, taking advantage of
+     *  Collapses AFFINE nodes into normal OP_ADD, taking advantage of
      *  identity operations to make the tree smaller.  Returns the new root
      *  token (which may have changed).
      *
@@ -91,7 +91,7 @@ protected:
 
     /*
      *  Checks whether the operation should be handled as an affine
-     *  transformation, returning an AFFINE_ROOT Token if true.
+     *  transformation, returning an AFFINE Token if true.
      */
     Token* checkAffine(Opcode op, Token* a, Token* b);
 

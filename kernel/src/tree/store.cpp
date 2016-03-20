@@ -283,7 +283,7 @@ Token* Store::collapseAffine(Token* root)
     // These are tokens that should be removed from the tree
     std::set<Token*> pruned;
 
-    // Turn every AFFINE_ROOT into a normal OP_ADD
+    // Turn every AFFINE into a normal OP_ADD
     // (with identity operations automatically cancelled out)
     std::map<Token*, Token*> changed;
     for (auto r : ops_[3][AFFINE])
