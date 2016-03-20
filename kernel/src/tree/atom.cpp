@@ -44,8 +44,8 @@ Atom::Atom(Opcode op, Atom* a, Atom* b)
     // Nothing to do here
 }
 
-Atom::Atom(float d)
-    : op(OP_MUTABLE), value(d), a(nullptr), b(nullptr)
+Atom::Atom(float f)
+    : op(OP_CONST), value(f), a(nullptr), b(nullptr)
 {
     // Nothing to do here
 }
@@ -79,7 +79,6 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case OP_EXP:    os << "exp(" << *atom.a << ")"; break;
 
         case OP_CONST:  os << atom.value; break;
-        case OP_MUTABLE:  os << atom.value; break;
         case OP_X:      os << "X"; break;
         case OP_Y:      os << "Y"; break;
         case OP_Z:      os << "Z"; break;
@@ -87,6 +86,7 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case LAST_OP:   // Fallthrough!
         case OP_A:
         case OP_B:
+        case AFFINE:
         case INVALID:   assert(false);
     }
     return os;

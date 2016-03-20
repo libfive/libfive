@@ -56,16 +56,17 @@ TEST_CASE("Interval evaluation")
 TEST_CASE("Push / pop behavior")
 {
     Store s;
-    Tree t(&s, s.operation(OP_MIN, s.X(), s.Y()));
+    Tree t(&s, s.operation(OP_MIN, s.operation(OP_ADD, s.X(), s.constant(1)),
+                                   s.operation(OP_ADD, s.Y(), s.constant(1))));
     Evaluator e(&t);
 
     // Store -3 in the rhs's value
-    REQUIRE(e.eval(1.0f, -3.0f, 0.0f) == -3);
+    REQUIRE(e.eval(1.0f, -3.0f, 0.0f) == -2);
 
     // Do an interval evaluation that will lead to disabling the rhs
     auto i = e.eval(Interval(-5, -4), Interval(8, 9), Interval(0, 0));
-    REQUIRE(i.lower() == -5);
-    REQUIRE(i.upper() == -4);
+    REQUIRE(i.lower() == -4);
+    REQUIRE(i.upper() == -3);
 
     // Push (which should disable the rhs of min
     e.push();
@@ -75,5 +76,5 @@ TEST_CASE("Push / pop behavior")
     CAPTURE(e.utilization());
 
     // Require that the evaluation gets 1
-    REQUIRE(e.eval(1.0f, 2.0f, 0.0f) == 1);
+    REQUIRE(e.eval(1.0f, 2.0f, 0.0f) == 2);
 }

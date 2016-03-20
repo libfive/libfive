@@ -23,7 +23,6 @@ enum Opcode
     INVALID,
 
     OP_CONST,
-    OP_MUTABLE,
     OP_X,
     OP_Y,
     OP_Z,
@@ -50,9 +49,21 @@ enum Opcode
     OP_MOD,
     OP_NANFILL,
 
+    // Affine trees must have the form
+    //              AFFINE
+    //             /      \
+    //          OP_ADD    OP_ADD
+    //        /    \      /      \
+    //      MUL    MUL   MUL     C
+    //    /   \   /  \  /   \
+    //   X    C  Y   C  Z   C
+    // (where X, Y, Z are base coordinates and C is OP_CONST)
+    AFFINE,
+
     // Dummy opcodes used to select the left or right-hand side of a function
     // (used when one of the children is disabled)
     OP_A,
     OP_B,
+
     LAST_OP,
 };

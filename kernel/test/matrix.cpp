@@ -28,7 +28,7 @@
 TEST_CASE("Matrix evaluation")
 {
     Store s;
-    Tree t(&s, s.X());
+    Tree t(&s, s.affine(1, 0, 0, 0));
     Evaluator e(&t);
 
     SECTION("Default matrix")

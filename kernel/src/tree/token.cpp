@@ -18,6 +18,7 @@
  */
 #include <algorithm>
 #include <cmath>
+#include <cassert>
 
 #include "ao/kernel/tree/token.hpp"
 
@@ -40,7 +41,6 @@ size_t Token::args(Opcode op)
     switch (op)
     {
         case OP_CONST: // fallthrough
-        case OP_MUTABLE:
         case OP_X:
         case OP_Y:
         case OP_Z:
@@ -68,6 +68,7 @@ size_t Token::args(Opcode op)
         case OP_ATAN2:
         case OP_MOD:
         case OP_NANFILL:
+        case AFFINE:
             return 2;
 
         case INVALID: // fallthrough

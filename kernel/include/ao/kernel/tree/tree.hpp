@@ -23,6 +23,8 @@
 #include <list>
 #include <cstdlib>
 
+#include "ao/kernel/tree/opcode.hpp"
+
 class Atom;
 class Store;
 class Token;
@@ -58,16 +60,17 @@ protected:
      *  Requires X, Y, Z to be populated
      *  Fills 12 spots in the data array
      */
-    Atom* buildMatrixRow(size_t i);
+    Atom* buildMatrixRow(Opcode op);
 
     /*  All operations live in a set of rows sorted by weight */
     std::vector<std::vector<Atom*>> rows;
 
-    /*  Our position variables are stored as separate pointers     *
-     *  (so that they can be easily accessed to set their values)  */
-    Atom *X, *Y, *Z;
+    /*  Our position variables are stored as separate pointers */
+    Atom* const X;
+    Atom* const Y;
+    Atom* const Z;
 
-    /*  matrix is a pointer to a 4x3 transform matrix  */
+    /*  matrix is a 4x3 set of pointers to a transform matrix  */
     std::array<Atom*, 12> matrix;
 
     /*  Pointers to constants live in this vector  */

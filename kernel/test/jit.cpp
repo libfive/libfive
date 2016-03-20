@@ -71,14 +71,14 @@ TEST_CASE("Found flag propagation")
     Token* oa = s.operation(OP_ADD, s.X(), s.constant(1));
     Token* ob = s.operation(OP_MUL, s.Y(), s.constant(1));
 
-    s.markFound(oa);
+    auto f = s.findConnected(oa);
 
-    REQUIRE(oa->isFound());
-    REQUIRE(s.X()->isFound());
-    REQUIRE(s.constant(1)->isFound());
+    REQUIRE(f.count(oa));
+    REQUIRE(f.count(s.X()));
+    REQUIRE(f.count(s.constant(1)));
 
-    REQUIRE(!ob->isFound());
-    REQUIRE(!s.Y()->isFound());
+    REQUIRE(!f.count(ob));
+    REQUIRE(!f.count(s.Y()));
 }
 
 TEST_CASE("Automatic expression pruning")

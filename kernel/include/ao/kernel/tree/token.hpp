@@ -34,7 +34,7 @@ public:
     explicit Token(Opcode op, Token* a=nullptr, Token* b=nullptr);
 
     /*
-     *  Constructs a token for a constant
+     *  Constructs a token for a constant value
      */
     explicit Token(float v);
 
@@ -42,11 +42,6 @@ public:
      *  Returns the number of arguments for the given token
      */
     static size_t args(Opcode op);
-
-    /*
-     *  Returns the found flag
-     */
-    bool isFound() const { return found; }
 
     /*  Member variables  */
     const Opcode op;
@@ -60,9 +55,6 @@ public:
     Token* const b;
 
 protected:
-    /*  found is used to detect which tokens are in the tree  */
-    bool found=false;
-
     friend class Store;
     friend class Tree;
     friend class Atom;

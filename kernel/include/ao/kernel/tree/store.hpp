@@ -21,6 +21,7 @@
 #include <map>
 #include <vector>
 #include <array>
+#include <set>
 
 #include "ao/kernel/tree/opcode.hpp"
 
@@ -47,8 +48,12 @@ public:
      *
      *  Arguments should be filled in from left to right
      *  (i.e. a must not be null if b is not null)
+     *
+     *  If collapse is true (the default), identity and affine operations will
+     *  be collapsed; if false, all branches will be created
      */
-    Token* operation(Opcode op, Token* a=nullptr, Token* b=nullptr);
+    Token* operation(Opcode op, Token* a=nullptr, Token* b=nullptr,
+                     bool collapse=true);
 
     /*
      *  Return tokens for base variables
@@ -58,15 +63,37 @@ public:
     Token* Z() { return operation(OP_Z); }
 
     /*
+     *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
+     */
+    Token* affine(float a, float b, float c, float d);
+
+    /*
      *  Set found in every token descending from root
      */
-    void markFound(Token* root);
+    std::set<Token*> findConnected(Token* root);
+
+    /*
+     *  Collapses AFFINE nodes into normal OP_ADD, taking advantage of
+     *  identity operations to make the tree smaller.  Returns the new root
+     *  token (which may have changed).
+     *
+     *  Invalidates all Token pointers.
+     */
+    Token* collapseAffine(Token* root);
 
 protected:
     /*
-     *  Set the found member of each token to false
+     *  Checks whether the operation is an identity operation
+     *  If so returns an appropriately simplified Token
+     *  i.e. (X + 0) will return X
      */
-    void clearFound();
+    Token* checkIdentity(Opcode op, Token* a, Token* b);
+
+    /*
+     *  Checks whether the operation should be handled as an affine
+     *  transformation, returning an AFFINE Token if true.
+     */
+    Token* checkAffine(Opcode op, Token* a, Token* b);
 
     typedef std::pair<Token*, Token*> Key;
     typedef std::array<std::map<Key, Token*>, LAST_OP> Cache;

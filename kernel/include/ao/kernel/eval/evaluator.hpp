@@ -118,12 +118,6 @@ public:
     double utilization() const;
 
 protected:
-    /*
-     *  Constructs a new clause in the data array and increments ptr
-     */
-    Clause* newClause(const Atom* m,
-                      std::unordered_map<const Atom*, Clause*>& clauses);
-
     /*  All operations live in a set of rows sorted by weight */
     std::vector<Row> rows;
 
@@ -131,7 +125,7 @@ protected:
      *  (so that they can be easily accessed to set their values)  */
     Clause *X, *Y, *Z;
 
-    /*  matrix is a pointer to a 4x3 transform matrix  */
+    /*  matrix is a 4x3 pointer to transform matrix values  */
     std::array<Clause*, 12> matrix;
 
     /*  Pointers to constants live in this vector  */
@@ -142,5 +136,4 @@ protected:
 
     /*  Bag-o-data that stores clauses  */
     Clause* data;
-    Clause* ptr;
 };

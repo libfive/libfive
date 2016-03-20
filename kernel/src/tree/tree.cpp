@@ -27,36 +27,35 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 Tree::Tree(Store* s, Token* root_token)
-    : X(nullptr), Y(nullptr), Z(nullptr), root(nullptr)
+    : X(new Atom(OP_X)), Y(new Atom(OP_Y)), Z(new Atom(OP_Z)), root(nullptr)
 {
+    // Optimize the store by collapsing affine nodes, now that calculations
+    // are done and we're packing it into a tree.
+    root_token = s->collapseAffine(root_token);
+
+    // Get a set of Tokens that are connected to the root
+    auto found = s->findConnected(root_token);
+
+    // This is a mapping from Tokens in the Store to Atoms in the Tree
     std::unordered_map<const Token*, Atom*> atoms;
 
-    // Set flags to mark which tokens are used in the tree
-    s->markFound(root_token);
+    // We'll be adding a 4x3 transform matrix below X, Y, Z
+    const size_t MATRIX_ROWS = 3;
+    rows.resize(MATRIX_ROWS);
 
     // Ensure that the base variables are all present in the tree and marked
     // as found (even if there wasn't a path to them from the root)
-    s->X()->found = true;
-    s->Y()->found = true;
-    s->Z()->found = true;
-
-    // Create base variables
-    X = new Atom(OP_X);
-    Y = new Atom(OP_Y);
-    Z = new Atom(OP_Z);
-
-    // Use matrix-transform variables to apply a mapping to the store
-    const size_t MATRIX_ROWS = 3;
-    rows.resize(MATRIX_ROWS);
-    atoms[s->X()] = buildMatrixRow(0);
-    atoms[s->Y()] = buildMatrixRow(1);
-    atoms[s->Z()] = buildMatrixRow(2);
+    for (auto c : {s->X(), s->Y(), s->Z()})
+    {
+        found.insert(c);
+        atoms[c] = buildMatrixRow(c->op);
+    }
 
     // Flatten constants into the data array and constants vector
     constants.reserve(constants.size() + s->constants.size());
     for (auto c : s->constants)
     {
-        if (c.second->found)
+        if (found.find(c.second) != found.end())
         {
             constants.push_back(new Atom(c.second, atoms));
         }
@@ -76,7 +75,7 @@ Tree::Tree(Store* s, Token* root_token)
             {
                 for (auto c : b)
                 {
-                    if (c.second->found)
+                    if (found.find(c.second) != found.end())
                     {
                         row->push_back(new Atom(c.second, atoms));
                     }
@@ -116,11 +115,11 @@ Tree::~Tree()
     }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 
-Atom* Tree::buildMatrixRow(size_t i)
+Atom* Tree::buildMatrixRow(Opcode op)
 {
+    assert(op == OP_X || op == OP_Y || op == OP_Z);
     assert(X != nullptr && Y != nullptr && Z != nullptr);
     assert(rows.size() == 3);
 
@@ -132,9 +131,9 @@ Atom* Tree::buildMatrixRow(size_t i)
     // and three OP_ADDs (a*x + b*y, c*z + d, a*x + b*y + c*z + d)
 
     // The default matrix preserves X, Y, Z values
-    Atom* a  = new Atom(i == 0 ? 1.0 : 0.0);
-    Atom* b  = new Atom(i == 1 ? 1.0 : 0.0);
-    Atom* c  = new Atom(i == 2 ? 1.0 : 0.0);
+    Atom* a  = new Atom(op == OP_X ? 1.0 : 0.0);
+    Atom* b  = new Atom(op == OP_Y ? 1.0 : 0.0);
+    Atom* c  = new Atom(op == OP_Z ? 1.0 : 0.0);
     Atom* d  = new Atom(0.0);
 
     Atom* ax = new Atom(OP_MUL, X, a);
@@ -147,10 +146,10 @@ Atom* Tree::buildMatrixRow(size_t i)
     Atom* ax_by_cz_d = new Atom(OP_ADD, ax_by, cz_d);
 
     // Store relevant constant Atoms in the matrix array
-    matrix[4*i]     = a;
-    matrix[4*i + 1] = b;
-    matrix[4*i + 2] = c;
-    matrix[4*i + 3] = d;
+    matrix[4*(op - OP_X)]     = a;
+    matrix[4*(op - OP_X) + 1] = b;
+    matrix[4*(op - OP_X) + 2] = c;
+    matrix[4*(op - OP_X) + 3] = d;
 
     // Load matrix transform into the operator array
     rows[0].push_back(ax);
