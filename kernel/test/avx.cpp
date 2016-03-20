@@ -27,13 +27,14 @@
 
 TEST_CASE("Vectorized performance")
 {
+    // Oversample to get meaningful result
     const float N = 1000;
 
     Store s;
     Tree t(&s, s.operation(OP_ADD, s.X(), s.Y()));
     Evaluator e(&t);
 
-    for (int i=0; i < 256; ++i)
+    for (unsigned i=0; i < Result::N; ++i)
     {
         e.set(i, 2*i, 0, i);
     }
@@ -43,7 +44,7 @@ TEST_CASE("Vectorized performance")
     const float* slow;
     for (int i=0; i < N; ++i)
     {
-        slow = e.values(256, false);
+        slow = e.values(Result::N, false);
     }
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> ft = end - start;
@@ -52,7 +53,7 @@ TEST_CASE("Vectorized performance")
     const float* fast;
     for (int i=0; i < N; ++i)
     {
-        fast = e.values(256, true);
+        fast = e.values(Result::N, true);
     }
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> mt = end - start;
@@ -60,7 +61,7 @@ TEST_CASE("Vectorized performance")
     REQUIRE(mt.count() < ft.count());
 
     bool matched = true;
-    for (int i=0; i < 256; ++i)
+    for (unsigned i=0; i < Result::N; ++i)
     {
         if (fast[i] != slow[i])
         {

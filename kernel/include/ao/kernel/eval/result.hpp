@@ -68,25 +68,28 @@ struct Result {
      */
     void deriv(float x, float y, float z);
 
+    // This is the number of samples that we can process in one pass
+    static constexpr size_t N = 256;
+
 protected:
 
     // If we're using AVX for evaluation, then our floats are simply
     // pointers to the first member of the __m256 array
 #ifdef __AVX__
-    __m256 mf[32];
-    __m256 mdx[32];
-    __m256 mdy[32];
-    __m256 mdz[32];
+    __m256  mf[N / 8];
+    __m256 mdx[N / 8];
+    __m256 mdy[N / 8];
+    __m256 mdz[N / 8];
 
     float* f;
     float* dx;
     float* dy;
     float* dz;
 #else
-    float f[256];
-    float dx[256];
-    float dy[256];
-    float dz[256];
+    float  f[N];
+    float dx[N];
+    float dy[N];
+    float dz[N];
 #endif
 
     Interval i;

@@ -35,7 +35,7 @@ void Result::set(Interval V)
 
 void Result::fill(float v)
 {
-    for (unsigned i=0; i < 256; ++i)
+    for (unsigned i=0; i < N; ++i)
     {
         f[i] = v;
         dx[i] = 0;
@@ -48,7 +48,7 @@ void Result::fill(float v)
 
 void Result::deriv(float x, float y, float z)
 {
-    for (size_t i=0; i < 256; ++i)
+    for (size_t i=0; i < N; ++i)
     {
         dx[i] = x;
         dy[i] = y;

@@ -99,7 +99,7 @@ struct NormalRenderer
     NormalImage& norm;
 
     // Store the x, y coordinates of rendered points for normal calculations
-    static constexpr size_t NUM_POINTS = 256;
+    static constexpr size_t NUM_POINTS = Result::N;
     size_t xs[NUM_POINTS];
     size_t ys[NUM_POINTS];
     size_t count = 0;
@@ -220,7 +220,7 @@ static void recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
     }
 
     // If we're below a certain size, render pixel-by-pixel
-    if (r.voxels() <= 256)
+    if (r.voxels() <= Result::N)
     {
         pixels(e, r, depth, norm);
         return;
