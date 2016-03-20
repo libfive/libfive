@@ -277,10 +277,16 @@ Token* Store::collapseAffine(Token* root)
         return root;
     }
 
+    // Deep copy of ops so that changes don't invalidate iterators
+    decltype(ops) ops_ = ops;
+
+    // These are tokens that should be removed from the tree
+    std::set<Token*> pruned;
+
     // Turn every AFFINE_ROOT into a normal OP_ADD
     // (with identity operations automatically cancelled out)
     std::map<Token*, Token*> changed;
-    for (auto r : ops[3][AFFINE])
+    for (auto r : ops_[3][AFFINE])
     {
         changed[r.second] = operation(OP_ADD,
                 operation(OP_ADD,
@@ -289,16 +295,18 @@ Token* Store::collapseAffine(Token* root)
                 operation(OP_ADD,
                     operation(OP_MUL, Z(), r.second->b->a->b),
                     r.second->b->b));
+
+        pruned.insert(r.second);
     }
 
     // Iterate over weight levels from bottom to top
-    for (auto& weight : ops)
+    for (const auto& weight : ops_)
     {
         // Iterate over operations in a given weight level
-        for (auto& op : weight)
+        for (const auto& op : weight)
         {
             // Iterate over Key, Token* pairs
-            for (auto itr = op.begin(); itr != op.end();)
+            for (auto itr = op.begin(); itr != op.end(); ++itr)
             {
                 // Get child pointers
                 auto a = itr->second->a;
@@ -312,13 +320,28 @@ Token* Store::collapseAffine(Token* root)
                         changed.count(a) ? changed[a] : a,
                         changed.count(b) ? changed[b] : b);
 
-                    // Delete the Token and remove it from the Cache
-                    delete itr->second;
+                    pruned.insert(itr->second);
+                }
+            }
+        }
+    }
+
+    // Then, we'll remove pruned tokens from the actual ops cache
+    for (auto& weight : ops)
+    {
+        // Iterate over operations in a given weight level
+        for (auto& op : weight)
+        {
+            // Iterate over Key, Token* pairs
+            for (auto itr = op.begin(); itr != op.end();)
+            {
+                if (pruned.count(itr->second))
+                {
                     itr = op.erase(itr);
                 }
                 else
                 {
-                    itr++;
+                    ++itr;
                 }
             }
         }
