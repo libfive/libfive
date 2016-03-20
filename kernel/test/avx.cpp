@@ -39,39 +39,49 @@ TEST_CASE("Vectorized performance")
         e.set(i, 2*i, 0, i);
     }
 
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    start = std::chrono::system_clock::now();
-    const float* slow;
-    for (int i=0; i < N; ++i)
+    SECTION("Speed")
     {
-        slow = e.values(Result::N, false);
-    }
-    end = std::chrono::system_clock::now();
-    std::chrono::duration<double> ft = end - start;
-
-    start = std::chrono::system_clock::now();
-    const float* fast;
-    for (int i=0; i < N; ++i)
-    {
-        fast = e.values(Result::N, true);
-    }
-    end = std::chrono::system_clock::now();
-    std::chrono::duration<double> mt = end - start;
-
-    REQUIRE(mt.count() < ft.count());
-
-    bool matched = true;
-    for (unsigned i=0; i < Result::N; ++i)
-    {
-        if (fast[i] != slow[i])
+        std::chrono::time_point<std::chrono::system_clock> start, end;
+        start = std::chrono::system_clock::now();
+        for (int i=0; i < N; ++i)
         {
-            CAPTURE(i);
-            CAPTURE(fast[i]);
-            CAPTURE(slow[i]);
-            matched = false;
+            e.values(Result::N, false);
         }
+        end = std::chrono::system_clock::now();
+        std::chrono::duration<double> ft = end - start;
+
+        start = std::chrono::system_clock::now();
+        for (int i=0; i < N; ++i)
+        {
+            e.values(Result::N, true);
+        }
+        end = std::chrono::system_clock::now();
+        std::chrono::duration<double> mt = end - start;
+
+        REQUIRE(mt.count() < ft.count());
     }
-    REQUIRE(matched);
+
+    SECTION("Accuracy")
+    {
+        float vec[Result::N];
+        float nonvec[Result::N];
+
+        memcpy(   vec, e.values(Result::N,  true), Result::N * sizeof(float));
+        memcpy(nonvec, e.values(Result::N, false), Result::N * sizeof(float));
+
+        bool matched = true;
+        for (unsigned i=0; i < Result::N; ++i)
+        {
+            if (vec[i] != nonvec[i])
+            {
+                CAPTURE(i);
+                CAPTURE(vec[i]);
+                CAPTURE(nonvec[i]);
+                matched = false;
+            }
+        }
+        REQUIRE(matched);
+    }
 }
 
 TEST_CASE("Alignment")
