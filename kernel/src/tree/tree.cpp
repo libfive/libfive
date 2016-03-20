@@ -88,11 +88,6 @@ Tree::Tree(Store* s, Token* root_token)
     // Get the root atom from the root token
     assert(atoms.count(root_token) == 1);
     root = atoms[root_token];
-
-    size_t i=0;
-    for (auto r : rows) i += r.size();
-    std::cout << "Clause count: " << i << '\n';
-    std::cout << "Row count: " << rows.size() << '\n';
 }
 
 Tree::~Tree()
