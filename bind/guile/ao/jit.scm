@@ -65,6 +65,17 @@ A symbol and further arguments are converted to an operation"
         (if manage (tree-attach-finalizer out) out)))
 (export jit)
 
+(define-public (affine-vec f)
+    (set! store (store-new))
+    (let* ((x (token-x store))
+           (y (token-y store))
+           (z (token-z store))
+           (root (make-token (f x y z)))
+           (result (token-affine-vec root)))
+        (store-delete store)
+        (set! store #nil)
+        result))
+
 (define-public (jit-function f)
     "Compile and arithmetic lambda function to a wrapped math function"
     (let ((t (jit f)))

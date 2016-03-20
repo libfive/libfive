@@ -104,6 +104,14 @@
         '* (get-function "token_binary") (list '* int '* '*))
     (unwrap-store s) (opcode->int op) (unwrap-token a) (unwrap-token b))))
 
+(define-public (token-affine-vec t)
+    (let* ((struct (list float float float float))
+           (v (make-c-struct struct '(0 0 0 0)))
+           (token_affine_vec (pointer->procedure int
+                             (get-function "token_affine_vec") (list '* '*)))
+           (result (token_affine_vec (unwrap-token t) v)))
+    (if (= result 1) (parse-c-struct v struct) #f)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (tree-new s t)

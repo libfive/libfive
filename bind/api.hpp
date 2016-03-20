@@ -26,6 +26,8 @@ class Tree;
 
 extern "C"
 {
+    struct v4 { float x; float y; float z; float w; };
+
     Store* store_new();
     void store_delete(Store* ptr);
 
@@ -41,6 +43,12 @@ extern "C"
 
     Token* token_unary(Store* s, int op, Token* a);
     Token* token_binary(Store* s, int op, Token* a, Token* b);
+
+    /*
+     *  If t is an AFFINE token, stores its parameters in vec and returns 1;
+     *  otherwise, returns 0
+     */
+    int token_affine_vec(Token* t, v4* vec);
 
 ////////////////////////////////////////////////////////////////////////////////
 

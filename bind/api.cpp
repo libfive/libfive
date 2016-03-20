@@ -98,6 +98,22 @@ Token* token_binary(Store* s, int op, Token* a, Token* b)
     return s->operation(static_cast<Opcode>(op), a, b);
 }
 
+int token_affine_vec(Token* t, v4* vec)
+{
+    if (t->op == AFFINE)
+    {
+        *vec = {t->a->a->b->value,
+                t->a->b->b->value,
+                t->b->a->b->value,
+                t->b->b->value};
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void tree_delete(Tree* ptr)
