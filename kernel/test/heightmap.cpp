@@ -17,6 +17,7 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <catch/catch.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "ao/kernel/render/heightmap.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
@@ -25,12 +26,13 @@
 
 #define EPSILON 1e-6
 
-// Run the standard render test suite with this render function
-static std::pair<DepthImage, NormalImage> Render(Tree* t, const Region& r)
+// Helper function to make rendering a single call
+static std::pair<DepthImage, NormalImage> Render(
+        Tree* t, const Region& r, glm::mat4 M=glm::mat4())
 {
     std::atomic_bool abort(false);
 
-    auto out = Heightmap::Render(t, r, abort);
+    auto out = Heightmap::Render(t, r, abort, M);
     return std::make_pair(out.first.transpose(),
                           out.second.transpose());
 }
@@ -253,33 +255,6 @@ TEST_CASE("3D rendering of a sphere ")
         REQUIRE((diff.abs() < EPSILON || diff != diff).all());
     }
 
-    SECTION("Performance")
-    {
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-        start = std::chrono::system_clock::now();
-
-        Region r({-1, 1}, {-1, 1}, {-1, 1}, 500);
-        auto out = Render(&t, r).first;
-
-        end = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed = end - start;
-
-        auto elapsed_ms =
-            std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
-
-        auto description = "Rendered sphere in " +
-                           std::to_string(elapsed.count()) + " sec";
-
-        // Check for major regressions in render performance
-#ifdef RELEASE
-        if (elapsed_ms.count() > 50)
-#else
-        if (elapsed_ms.count() > 1000)
-#endif
-        {
-            WARN(description);
-        }
-    }
 }
 
 TEST_CASE("2D rendering with normals ")
@@ -331,4 +306,118 @@ TEST_CASE("Normal clipping ")
 
     CAPTURE(norm);
     REQUIRE((norm == 0xffff7f7f || norm == 0).all());
+}
+
+TEST_CASE("Performance")
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> elapsed;
+    Store s;
+
+    std::string log;
+
+    {   // Build and render sphere
+        Tree t(&s, s.operation(OP_SUB,
+                   s.operation(OP_ADD,
+                   s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                       s.operation(OP_MUL, s.Y(), s.Y())),
+                                       s.operation(OP_MUL, s.Z(), s.Z())),
+                   s.constant(1)));
+
+        Region r({-1, 1}, {-1, 1}, {-1, 1}, 500);
+
+        start = std::chrono::system_clock::now();
+        auto out = Render(&t, r).first;
+        end = std::chrono::system_clock::now();
+
+        elapsed = end - start;
+
+        log += "Rendered sphere in " + std::to_string(elapsed.count()) + " sec";
+    }
+
+    {   // Build and render Menger sponge (this is much prettier in Scheme)
+        auto rectangle =
+            [&s](float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
+            {
+                auto x = s.affine(M[0][0], M[0][1], M[0][2], M[0][3]);
+                auto y = s.affine(M[1][0], M[1][1], M[1][2], M[1][3]);
+                auto z = s.affine(M[2][0], M[2][1], M[2][2], M[2][3]);
+
+                return s.operation(OP_MAX,
+                       s.operation(OP_MAX, s.operation(OP_SUB, s.constant(xmin), x),
+                                           s.operation(OP_SUB, x, s.constant(xmax))),
+                       s.operation(OP_MAX, s.operation(OP_SUB, s.constant(ymin), y),
+                                           s.operation(OP_SUB, y, s.constant(ymax))));
+            };
+
+        std::function<Token*(float, float, float, glm::mat4, int)> recurse =
+            [&](float x, float y, float scale, glm::mat4 M, int i)
+            {
+                auto base = rectangle(x - scale/2, x + scale/2,
+                                      y - scale/2, y + scale/2, M);
+
+                if (i == 0)
+                {
+                    return base;
+                }
+                else
+                {
+                    auto j = i - 1;
+                    auto t = scale / 3;
+
+                    return s.operation(OP_MIN, base,
+                           s.operation(OP_MIN, recurse(x + scale, y, t, M, j),
+                           s.operation(OP_MIN, recurse(x - scale, y, t, M, j),
+                           s.operation(OP_MIN, recurse(x, y + scale, t, M, j),
+                           s.operation(OP_MIN, recurse(x, y - scale, t, M, j),
+                           s.operation(OP_MIN, recurse(x + scale, y + scale, t, M, j),
+                           s.operation(OP_MIN, recurse(x + scale, y - scale, t, M, j),
+                           s.operation(OP_MIN, recurse(x - scale, y + scale, t, M, j),
+                                               recurse(x - scale, y - scale, t, M, j)
+                           ))))))));
+                }
+            };
+
+        auto M = glm::mat4();
+        Token* a = recurse(0, 0, 1, M, 2);
+
+        M = glm::rotate(M, float(M_PI/2), {1, 0, 0});
+        Token* b = recurse(0, 0, 1, M, 2);
+
+        M = glm::rotate(M, float(M_PI/2), {0, 1, 0});
+        Token* c = recurse(0, 0, 1, M, 2);
+
+        auto cube = s.operation(OP_MAX,
+                    s.operation(OP_MAX,
+                       s.operation(OP_MAX, s.affine(-1,  0,  0, -1.5),
+                                           s.affine( 1,  0,  0, -1.5)),
+                       s.operation(OP_MAX, s.affine( 0, -1,  0, -1.5),
+                                           s.affine( 0,  1,  0, -1.5))),
+                       s.operation(OP_MAX, s.affine( 0,  0, -1, -1.5),
+                                           s.affine( 0,  0,  1, -1.5)));
+
+        Token* cutout = s.operation(OP_NEG,
+                        s.operation(OP_MIN, s.operation(OP_MIN, a, b), c));
+
+        Tree sponge(&s, s.operation(OP_MAX, cube, cutout));
+
+        Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 250);
+        auto rot = glm::rotate(glm::rotate(glm::mat4(), float(M_PI/4), {0, 1, 0}),
+                               float(atan(1/sqrt(2))), {1, 0, 0});
+
+        // Begin timekeeping
+        start = std::chrono::system_clock::now();
+        auto heightmap = Render(&sponge, r, rot).first;
+        end = std::chrono::system_clock::now();
+
+        elapsed = end - start;
+
+        auto elapsed_ms =
+            std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
+
+        log += "\nRendered sponge in " +
+               std::to_string(elapsed.count()) + " sec";
+    }
+
+    WARN(log);
 }
