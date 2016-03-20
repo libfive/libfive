@@ -825,7 +825,7 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
         case OP_DIV:
             return a / b;
         case OP_ATAN2:
-            return Interval(-M_PI, M_PI); // YOLO
+            return atan2(a, b);
         case OP_MOD:
             return Interval(0.0f, b.upper()); // YOLO
         case OP_NANFILL:
