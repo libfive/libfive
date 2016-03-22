@@ -8,8 +8,13 @@ file(GLOB SRC_FILES src/tree/*.cpp src/format/*.cpp
 
 find_package(CUDA)
 if (CUDA_FOUND)
-    set(CUDA_NVCC_FLAGS
-      ${CUDA_NVCC_FLAGS} -Xcompiler -Wno-language-extension-token)
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}
+        -Xcompiler -Wno-language-extension-token)
+
+    # Need to add this so that nested CMake calls can find
+    # include/ao/kernel/.../accelerator.hpp header
+    include_directories(SYSTEM include)
+
     cuda_add_library(ao-kernel STATIC ${SRC_FILES} src/render/accelerator.cu)
 else()
     add_library(ao-kernel STATIC ${SRC_FILES})

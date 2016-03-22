@@ -126,4 +126,7 @@ protected:
 
     /*  Bag-o-data that stores clauses  */
     Clause* data;
+
+    /*  Friend class for GPU-accelerated rendering  */
+    friend class Accelerator;
 };

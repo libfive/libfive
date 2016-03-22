@@ -21,8 +21,6 @@
 #include <array>
 #include <vector>
 
-#include <immintrin.h>
-
 #include "ao/kernel/eval/interval.hpp"
 
 struct Result {
