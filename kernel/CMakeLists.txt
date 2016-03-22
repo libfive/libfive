@@ -15,7 +15,7 @@ if (CUDA_FOUND)
     # include/ao/kernel/.../accelerator.hpp header
     include_directories(SYSTEM include)
 
-    cuda_add_library(ao-kernel STATIC ${SRC_FILES} src/render/accelerator.cu)
+    cuda_add_library(ao-kernel STATIC ${SRC_FILES} src/eval/accelerator.cu)
 else()
     add_library(ao-kernel STATIC ${SRC_FILES})
 endif()
