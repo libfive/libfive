@@ -47,22 +47,6 @@ Clause::Clause(const Atom* m,
             p->dy = nullptr;
             p->dz = nullptr;
         }
-#ifdef __AVX__
-        if (c)
-        {
-            p->mf = c->result.mf;
-            p->mdx = c->result.mdx;
-            p->mdy = c->result.mdy;
-            p->mdz = c->result.mdz;
-        }
-        else
-        {
-            p->mf = nullptr;
-            p->mdx = nullptr;
-            p->mdy = nullptr;
-            p->mdz = nullptr;
-        }
-#endif
     };
     load_ptrs(&ptrs.a, a);
     load_ptrs(&ptrs.b, b);

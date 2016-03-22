@@ -75,22 +75,10 @@ protected:
 
     // If we're using AVX for evaluation, then our floats are simply
     // pointers to the first member of the __m256 array
-#ifdef __AVX__
-    __m256  mf[N / 8];
-    __m256 mdx[N / 8];
-    __m256 mdy[N / 8];
-    __m256 mdz[N / 8];
-
-    float* f;
-    float* dx;
-    float* dy;
-    float* dz;
-#else
     float  f[N];
     float dx[N];
     float dy[N];
     float dz[N];
-#endif
 
     Interval i;
 

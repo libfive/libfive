@@ -78,12 +78,7 @@ protected:
     /*  Store pointers to various result arrays for fast evaluation
      *  (since a and b don't change, no need to check them for null on
      *   every iteration through an evaluation)*/
-#ifdef __AVX__
-    struct ResultPtrs { float *f, *dx, *dy, *dz;
-                        __m256 *mf, *mdx, *mdy, *mdz; };
-#else
     struct ResultPtrs { float *f, *dx, *dy, *dz; };
-#endif
     struct { ResultPtrs a;
              ResultPtrs b; } ptrs;
 

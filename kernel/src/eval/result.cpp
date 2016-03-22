@@ -20,12 +20,7 @@
 
 Result::Result()
 {
-#ifdef __AVX__
-    f  = reinterpret_cast<float*>(mf);
-    dx = reinterpret_cast<float*>(mdx);
-    dy = reinterpret_cast<float*>(mdy);
-    dz = reinterpret_cast<float*>(mdz);
-#endif
+    // Nothing to do here
 }
 
 void Result::set(Interval V)
