@@ -33,10 +33,9 @@ Evaluator::Evaluator(const Tree* tree)
             + tree->constants.size(),   // Constants
             [](size_t i, const std::vector<Atom*>& r){ return i + r.size(); });
 
-    // Then, allocate space for them (ensuring alignment if AVX is used)
-    Clause* ptr;
+    // Then, allocate space for them
     data = static_cast<Clause*>(malloc(sizeof(Clause) * count));
-    ptr = data;
+    Clause* ptr = data;
 
     // Helper function to create a new clause in the data array
     std::unordered_map<const Atom*, Clause*> clauses;
