@@ -205,6 +205,9 @@ static void clause(Opcode op, float* a, float* b, float* out, size_t count)
         case LAST_OP: assert(false);
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
 Accelerator::Accelerator(Evaluator* e)
     : evaluator(e)
 {
@@ -237,9 +240,11 @@ Accelerator::~Accelerator()
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 void Accelerator::allocate(Clause* c)
 {
-    size_t bytes = N * sizeof(float);
+    const size_t bytes = N * sizeof(float);
     cudaMalloc((void**)&mem[c], bytes);
 
     // If this is a constant operation, fill with the constant value
@@ -273,4 +278,19 @@ float* Accelerator::values(size_t count)
     }
 
     return mem[evaluator->root];
+}
+
+void Accelerator::toDevice()
+{
+    const size_t bytes = N * sizeof(float);
+    cudaMemcpy(mem[evaluator->X], &X[0], bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(mem[evaluator->Y], &Y[0], bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(mem[evaluator->Z], &Z[0], bytes, cudaMemcpyHostToDevice);
+}
+
+float* Accelerator::fromDevice(float* ptr_d)
+{
+    const size_t bytes = N * sizeof(float);
+    cudaMemcpy(&buf[0], ptr_d, bytes, cudaMemcpyDeviceToHost);
+    return &buf[0];
 }

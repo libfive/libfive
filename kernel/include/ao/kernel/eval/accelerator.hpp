@@ -36,6 +36,32 @@ public:
      */
     float* values(size_t count);
 
+    /*
+     *  Loads data from the device to host memory, returning a pointer
+     *  (which is owned by the Accelerator)
+     */
+    float* fromDevice(float* ptr_d);
+
+    /*
+     *  Sets a value in host memory
+     *  (inlined for speed)
+     *
+     *  In practice, you should use a more efficient GPU-side strategy
+     *  to load values (e.g. a kernel that unwraps a region and assigns
+     *  appropriate positions)
+     */
+    void set(float x, float y, float z, size_t index)
+    {
+        X[index] = x;
+        Y[index] = y;
+        Z[index] = z;
+    }
+
+    /*
+     *  Writes X, Y, Z arrays to device memory
+     */
+    void toDevice();
+
     /*  Samples per clause  */
     static constexpr size_t N=4096;
 protected:
@@ -50,6 +76,9 @@ protected:
 
     /*  Buffer used when copying to and from device memory  */
     std::array<float, N> buf;
+    std::array<float, N> X;
+    std::array<float, N> Y;
+    std::array<float, N> Z;
 
     /*  Pointer back to parent evaluator  */
     const Evaluator* const evaluator;
