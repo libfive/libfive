@@ -1,4 +1,4 @@
-find_package(Boost REQUIRED)
+find_package(Boost QUIET REQUIRED)
 find_package(png REQUIRED)
 
 file(GLOB SRC_FILES src/tree/*.cpp src/format/*.cpp
@@ -6,7 +6,6 @@ file(GLOB SRC_FILES src/tree/*.cpp src/format/*.cpp
 
 ################################################################################
 
-find_package(CUDA)
 if (CUDA_FOUND)
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}
         -Xcompiler -Wno-language-extension-token)

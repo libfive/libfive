@@ -12,9 +12,21 @@ include_directories(SYSTEM vendor)
 
 ################################################################################
 
+if (APPLE)
+    set(CMAKE_MACOSX_RPATH ON)
+endif()
+
+################################################################################
+
+if(NOT WIN32)
+    string(ASCII 27 ESCAPE)
+    set(RESET "${ESCAPE}[m")
+    set(GREEN "${ESCAPE}[32m")
+endif()
+
 find_package(CUDA)
 if (CUDA_FOUND)
-    # Add define to conditionally compile code
+    message("${GREEN}Using CUDA for faster rendering!${RESET}")
     add_definitions("-DUSE_CUDA")
 endif()
 
