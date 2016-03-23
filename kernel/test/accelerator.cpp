@@ -17,12 +17,15 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <catch/catch.hpp>
+#include <cstdlib>
 
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/eval/accelerator.hpp"
 
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/store.hpp"
+
+#include "shapes.hpp"
 
 #ifdef USE_CUDA
 
@@ -56,6 +59,49 @@ TEST_CASE("Vectorized evaluation")
     CAPTURE(i);
     CAPTURE(out[i]);
     CAPTURE(3*i);
+    REQUIRE(matched);
+}
+
+TEST_CASE("Vectorized sponge")
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> elapsed;
+
+    std::unique_ptr<Tree> sponge(menger(2));
+
+    Evaluator e(sponge.get());
+    Accelerator a(&e);
+
+    for (unsigned i=0; i < Result::N; ++i)
+    {
+        float x = rand() / float(RAND_MAX);
+        float y = rand() / float(RAND_MAX);
+        float z = rand() / float(RAND_MAX);
+
+        e.set(x, y, z, i);
+        a.set(x, y, z, i);
+    }
+
+    a.toDevice();
+    auto out_d = a.values(Result::N);
+    auto out_accel = a.fromDevice(out_d);
+
+    auto out_normal = e.values(Result::N);
+
+    bool matched = true;
+    unsigned i;
+    for (i=0; i < Result::N; ++i)
+    {
+        if (out_normal[i] != out_accel[i])
+        {
+            matched = false;
+            break;
+        }
+    }
+
+    CAPTURE(i);
+    CAPTURE(out_normal[i]);
+    CAPTURE(out_accel[i]);
     REQUIRE(matched);
 }
 
