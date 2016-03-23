@@ -12,7 +12,7 @@ if (CUDA_FOUND)
 
     # Need to add this so that nested CMake calls can find
     # include/ao/kernel/.../accelerator.hpp header
-    include_directories(SYSTEM include)
+    include_directories(include)
 
     cuda_add_library(ao-kernel STATIC ${SRC_FILES} src/eval/accelerator.cu)
 else()
