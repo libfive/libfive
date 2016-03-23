@@ -27,6 +27,10 @@
 #include "ao/kernel/eval/result.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 
+#ifdef USE_CUDA
+#include "ao/kernel/eval/accelerator.hpp"
+#endif
+
 namespace Heightmap
 {
 
@@ -116,7 +120,12 @@ for (unsigned i=0; i < r.X.size; ++i)           \
 /*
  *  Helper functions that evaluates a region of pixels
  */
-static void pixels(Evaluator* e, const Subregion& r,
+#ifdef USE_CUDA
+static void pixels(Evaluator* e, Accelerator* a,
+#else
+static void pixels(Evaluator* e,
+#endif
+                   const Subregion& r,
                    DepthImage& depth, NormalImage& norm)
 {
     size_t index = 0;
@@ -125,10 +134,15 @@ static void pixels(Evaluator* e, const Subregion& r,
     // (which needs to be obeyed by anything unflattening results)
     SUBREGION_ITERATE_XYZ(r)
     {
+#ifdef USE_CUDA
+        a->set(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
+#else
         e->set(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
+#endif
     }
 
-    const float* out = e->values(r.voxels());
+    a->toDevice();
+    const float* out = a->fromDevice(a->values(r.voxels()));
 
     index = 0;
 
@@ -201,8 +215,13 @@ static void fill(Evaluator* e, const Subregion& r, DepthImage& depth,
 /*
 * Helper function that reduces a particular matrix block
 */
-static void recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
-                NormalImage& norm, const std::atomic_bool& abort)
+#ifdef USE_CUDA
+static void recurse(Evaluator* e, Accelerator* a,
+#else
+static void recurse(Evaluator* e,
+#endif
+                    const Subregion& r, DepthImage& depth,
+                    NormalImage& norm, const std::atomic_bool& abort)
 {
     // Stop rendering if the abort flag is set
     if (abort.load())
@@ -220,9 +239,15 @@ static void recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
     }
 
     // If we're below a certain size, render pixel-by-pixel
+#ifdef USE_CUDA
+    if (r.voxels() <= Accelerator::N)
+    {
+        pixels(e, a, r, depth, norm);
+#else
     if (r.voxels() <= Result::N)
     {
         pixels(e, r, depth, norm);
+#endif
         return;
     }
 
@@ -247,8 +272,13 @@ static void recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
 
         // Since the higher Z region is in the second item of the
         // split, evaluate rs.second then rs.first
+#ifdef USE_CUDA
+        recurse(e, a, rs.second, depth, norm, abort);
+        recurse(e, a, rs.first, depth, norm, abort);
+#else
         recurse(e, rs.second, depth, norm, abort);
         recurse(e, rs.first, depth, norm, abort);
+#endif
 
         // Re-enable disabled nodes from the tree
         e->pop();
@@ -265,6 +295,12 @@ std::pair<DepthImage, NormalImage> Render(
     depth.fill(-std::numeric_limits<float>::infinity());
     norm.fill(0);
 
+#ifdef USE_CUDA
+    (void)workers; /* unused */
+    auto eval = Evaluator(t, m);
+    auto accel = Accelerator(&eval);
+    recurse(&eval, &accel, r.view(), depth, norm, abort);
+#else
     // Build a list of regions by splitting on the XY axes
     std::list<Subregion> rs = {r.view()};
     while (rs.size() < workers && rs.front().canSplitXY())
@@ -294,6 +330,7 @@ std::pair<DepthImage, NormalImage> Render(
     {
         f.wait();
     }
+#endif
 
     // If a voxel is touching the top Z boundary, set the normal to be
     // pointing in the Z direction.
