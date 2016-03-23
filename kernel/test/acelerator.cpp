@@ -24,6 +24,8 @@
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/store.hpp"
 
+#ifdef USE_CUDA
+
 TEST_CASE("Vectorized evaluation")
 {
     Store s;
@@ -56,3 +58,5 @@ TEST_CASE("Vectorized evaluation")
     CAPTURE(3*i);
     REQUIRE(matched);
 }
+
+#endif

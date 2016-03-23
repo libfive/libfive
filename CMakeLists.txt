@@ -12,6 +12,14 @@ include_directories(SYSTEM vendor)
 
 ################################################################################
 
+find_package(CUDA)
+if (CUDA_FOUND)
+    # Add define to conditionally compile code
+    add_definitions("-DUSE_CUDA")
+endif()
+
+################################################################################
+
 # Build the ao kernel and ui libraries
 add_subdirectory(kernel)
 add_subdirectory(ui)
