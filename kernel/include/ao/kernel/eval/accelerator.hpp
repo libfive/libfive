@@ -23,6 +23,7 @@
 
 class Evaluator;
 class Clause;
+class Subregion;
 
 class Accelerator
 {
@@ -61,6 +62,11 @@ public:
      *  Writes X, Y, Z arrays to device memory
      */
     void toDevice();
+
+    /*
+     *  Loads X, Y, Z arrays in device memory with the unrolled region
+     */
+    void setRegion(const Subregion& r);
 
     /*  Samples per clause  */
     static constexpr size_t N=4096;

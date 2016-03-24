@@ -22,6 +22,7 @@
 
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/eval/clause.hpp"
+#include "ao/kernel/render/subregion.hpp"
 
 // Helpful macros that are repeated in every kernel
 #define GET_INDEX int i = blockIdx.x
@@ -165,6 +166,32 @@ KERNEL(b_f)
     out[i] = b[i];
 }
 
+__global__ void flatten_region(float* x, float xmin, float xmax, int ni,
+                               float* y, float ymin, float ymax, int nj,
+                               float* z, float zmin, float zmax, int nk)
+{
+    int index = blockIdx.x;
+    int i = index / (nj * nk);
+    int j = (index / nk) % nj;
+    int k = index % nk;
+
+    if (i <= ni)
+    {
+        float frac = (i + 0.5f) / ni;
+        x[index] = xmin * (1.0f - frac) + xmax * frac;
+    }
+    if (j <= nj)
+    {
+        float frac = (j + 0.5f) / nj;
+        y[index] = ymin * (1.0f - frac) + ymax * frac;
+    }
+    if (k <= nk)
+    {
+        float frac = (k + 0.5f) / nk;
+        z[index] = zmin * (1.0f - frac) + zmax * frac;
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // Pointers are into device memory, not host memory!
@@ -289,4 +316,12 @@ float* Accelerator::fromDevice(float* ptr_d)
     const size_t bytes = N * sizeof(float);
     cudaMemcpy(&buf[0], ptr_d, bytes, cudaMemcpyDeviceToHost);
     return &buf[0];
+}
+
+void Accelerator::setRegion(const Subregion& r)
+{
+    flatten_region<<<r.voxels(), 1>>>(
+        mem[evaluator->X], r.X.lower(), r.X.upper(), r.X.size,
+        mem[evaluator->Y], r.Y.lower(), r.Y.upper(), r.Y.size,
+        mem[evaluator->Z], r.Z.lower(), r.Z.upper(), r.Z.size);
 }

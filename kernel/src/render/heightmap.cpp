@@ -132,17 +132,16 @@ static void pixels(Evaluator* e,
 
     // Flatten the region in a particular order
     // (which needs to be obeyed by anything unflattening results)
+#ifdef USE_CUDA
+    a->setRegion(r);
+#else
     SUBREGION_ITERATE_XYZ(r)
     {
-#ifdef USE_CUDA
-        a->set(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
-#else
         e->set(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
-#endif
     }
+#endif
 
 #ifdef USE_CUDA
-    a->toDevice();
     const float* out = a->fromDevice(a->values(r.voxels()));
 #else
     const float* out = e->values(r.voxels());
