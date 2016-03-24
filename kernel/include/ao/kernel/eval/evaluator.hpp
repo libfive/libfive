@@ -40,14 +40,8 @@ public:
     /*
      *  Construct an evaluator for the given tree
      */
-    explicit Evaluator(const Tree* t);
-    explicit Evaluator(const Tree* t, const glm::mat4& m);
+    explicit Evaluator(const Tree* t, const glm::mat4& M=glm::mat4());
     ~Evaluator();
-
-    /*
-     *  Sets the matrix constants to the given matrix
-     */
-    void setMatrix(const glm::mat4& m);
 
     /*
      *  Single-argument evaluation
@@ -114,9 +108,6 @@ protected:
     /*  Our position variables are stored as separate pointers     *
      *  (so that they can be easily accessed to set their values)  */
     Clause *X, *Y, *Z;
-
-    /*  matrix is a 4x3 pointer to transform matrix values  */
-    std::array<Clause*, 12> matrix;
 
     /*  Pointers to constants live in this vector  */
     std::vector<Clause*> constants;

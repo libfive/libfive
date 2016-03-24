@@ -29,36 +29,29 @@ TEST_CASE("Matrix evaluation")
 {
     Store s;
     Tree t(&s, s.affine(1, 0, 0, 0));
-    Evaluator e(&t);
 
     SECTION("Default matrix")
     {
+        Evaluator e(&t);
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.0);
     }
 
     SECTION("Scaling")
     {
-        e.setMatrix(glm::scale(glm::mat4(), {0.5, 1.0, 1.0}));
+        Evaluator e(&t, glm::scale(glm::mat4(), {0.5, 1.0, 1.0}));
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 0.5);
     }
 
     SECTION("Swapping")
     {
-        e.setMatrix(glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
+        Evaluator e(&t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
                                {0.0, 0.0, 1.0}));
         REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(2.0));
     }
 
-    SECTION("Re-evaluation")
-    {
-        e.eval(1.0, 2.0, 3.0);
-        e.setMatrix(glm::scale(glm::mat4(), {0.5, 1.0, 1.0}));
-        REQUIRE(e.eval(1.0, 2.0, 3.0) == 0.5);
-    }
-
     SECTION("Offset")
     {
-        e.setMatrix(glm::translate(glm::mat4(), {0.5, 0.0, 0.0}));
+        Evaluator e(&t, glm::translate(glm::mat4(), {0.5, 0.0, 0.0}));
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.5);
     }
 }

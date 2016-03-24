@@ -38,18 +38,6 @@ Atom::Atom(const Token* t, std::unordered_map<const Token*, Atom*>& atoms)
     atoms[t] = this;
 }
 
-Atom::Atom(Opcode op, Atom* a, Atom* b)
-    : op(op), value(std::nan("")), a(a), b(b)
-{
-    // Nothing to do here
-}
-
-Atom::Atom(float f)
-    : op(OP_CONST), value(f), a(nullptr), b(nullptr)
-{
-    // Nothing to do here
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, const Atom& atom)

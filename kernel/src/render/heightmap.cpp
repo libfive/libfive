@@ -141,8 +141,12 @@ static void pixels(Evaluator* e,
 #endif
     }
 
+#ifdef USE_CUDA
     a->toDevice();
     const float* out = a->fromDevice(a->values(r.voxels()));
+#else
+    const float* out = e->values(r.voxels());
+#endif
 
     index = 0;
 

@@ -215,10 +215,6 @@ Accelerator::Accelerator(Evaluator* e)
     {
         allocate(c);
     }
-    for (auto c : e->matrix)
-    {
-        allocate(c);
-    }
     for (auto c : e->constants)
     {
         allocate(c);
