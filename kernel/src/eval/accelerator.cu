@@ -318,6 +318,36 @@ float* Accelerator::fromDevice(float* ptr_d)
     return &buf[0];
 }
 
+void Accelerator::warmup()
+{
+    float* a = new float[N];
+    float* b = new float[N];
+    float* out = new float[N];
+
+    float* a_d = nullptr;
+    float* b_d = nullptr;
+    float* out_d = nullptr;
+
+    auto bytes = N * sizeof(float);
+    cudaMalloc((void**)&a_d, bytes);
+    cudaMalloc((void**)&b_d, bytes);
+    cudaMalloc((void**)&out_d, bytes);
+
+    cudaMemcpy(&a_d, a, bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(&b_d, b, bytes, cudaMemcpyHostToDevice);
+
+    add_f<<<N, 1>>>(a_d, b_d, out_d);
+    cudaMemcpy(out, out_d, bytes, cudaMemcpyDeviceToHost);
+
+    delete [] a;
+    delete [] b;
+    delete [] out;
+
+    cudaFree(a_d);
+    cudaFree(b_d);
+    cudaFree(out_d);
+}
+
 void Accelerator::setRegion(const Subregion& r)
 {
     flatten_region<<<r.voxels(), 1>>>(
