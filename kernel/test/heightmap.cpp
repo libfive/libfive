@@ -69,7 +69,7 @@ TEST_CASE("3D interval Z values")
              out == -std::numeric_limits<float>::infinity()).all());
 }
 
-TEST_CASE("2D rendering of a circle ")
+TEST_CASE("2D rendering of a circle")
 {
     Store s;
     Tree t(&s, s.operation(OP_SUB,
@@ -108,7 +108,7 @@ TEST_CASE("2D rendering of a circle ")
     }
 }
 
-TEST_CASE("2D circle rendering at non-zero Z ")
+TEST_CASE("2D circle rendering at non-zero Z")
 {
     Store s;
     Tree t(&s, s.operation(OP_SUB,
@@ -136,7 +136,7 @@ TEST_CASE("2D circle rendering at non-zero Z ")
     REQUIRE((comp == out).all());
 }
 
-TEST_CASE("Render orientation ")
+TEST_CASE("Render orientation")
 {
     Store s;
     Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
@@ -198,7 +198,7 @@ TEST_CASE("Render orientation ")
     }
 }
 
-TEST_CASE("Render shape ")
+TEST_CASE("Render shape")
 {
     Store s;
     Tree t(&s, s.operation(OP_SUB,
@@ -222,7 +222,7 @@ TEST_CASE("Render shape ")
     }
 }
 
-TEST_CASE("3D rendering of a sphere ")
+TEST_CASE("3D rendering of a sphere")
 {
     Store s;
     Tree t(&s, s.operation(OP_SUB,
@@ -259,7 +259,7 @@ TEST_CASE("3D rendering of a sphere ")
 
 }
 
-TEST_CASE("2D rendering with normals ")
+TEST_CASE("2D rendering with normals")
 {
     Store s;
 
@@ -295,7 +295,7 @@ TEST_CASE("2D rendering with normals ")
     }
 }
 
-TEST_CASE("Normal clipping ")
+TEST_CASE("Normal clipping")
 {
     Store s;
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
