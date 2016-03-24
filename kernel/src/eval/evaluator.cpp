@@ -34,7 +34,7 @@ Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
     // Count up the number of Atoms in the Tree
     size_t count =  std::accumulate(tree->rows.begin(), tree->rows.end(),
             3                           // X, Y, Z
-            + 12*3                      // Transform matrix
+            + 10*3                      // Transform matrix
             + tree->constants.size(),   // Constants
             [](size_t i, const std::vector<Atom*>& r){ return i + r.size(); });
 
