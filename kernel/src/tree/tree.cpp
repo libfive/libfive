@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 Tree::Tree(Store* s, Token* root_token)
-    : X(new Atom(OP_X)), Y(new Atom(OP_Y)), Z(new Atom(OP_Z)), root(nullptr)
+    : root(nullptr)
 {
     // Optimize the store by collapsing affine nodes, now that calculations
     // are done and we're packing it into a tree.
@@ -39,16 +39,14 @@ Tree::Tree(Store* s, Token* root_token)
     // This is a mapping from Tokens in the Store to Atoms in the Tree
     std::unordered_map<const Token*, Atom*> atoms;
 
-    // We'll be adding a 4x3 transform matrix below X, Y, Z
-    const size_t MATRIX_ROWS = 3;
-    rows.resize(MATRIX_ROWS);
-
     // Ensure that the base variables are all present in the tree and marked
     // as found (even if there wasn't a path to them from the root)
+    X = new Atom(s->X(), atoms);
+    Y = new Atom(s->Y(), atoms);
+    Z = new Atom(s->Z(), atoms);
     for (auto c : {s->X(), s->Y(), s->Z()})
     {
         found.insert(c);
-        atoms[c] = buildMatrixRow(c->op);
     }
 
     // Flatten constants into the data array and constants vector
@@ -62,12 +60,9 @@ Tree::Tree(Store* s, Token* root_token)
     }
 
     {   // Flatten operations into the vector of rows vectors
-        assert(rows.size() == MATRIX_ROWS);
-        rows.resize(MATRIX_ROWS + s->ops.size() - 1);
-        auto row = rows.begin() + MATRIX_ROWS;
+        rows.resize(s->ops.size() - 1);
+        auto row = rows.begin();
 
-        // We skip the weight-0 operations, since we've already captured them
-        // in the matrix transform and the X, Y, Z members
         for (auto itr = s->ops.begin() + 1; itr != s->ops.end(); ++itr, ++row)
         {
             assert(row != rows.end());
@@ -108,58 +103,7 @@ Tree::~Tree()
             delete m;
         }
     }
-
-    for (auto m : matrix)
-    {
-        delete m;
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Atom* Tree::buildMatrixRow(Opcode op)
-{
-    assert(op == OP_X || op == OP_Y || op == OP_Z);
-    assert(X != nullptr && Y != nullptr && Z != nullptr);
-    assert(rows.size() == 3);
-
-    // The matrix transform is of the form
-    //     q' = a*x + b*y + c*z + d
-    // (where q' is x', y', or z')
-    //
-    // It is implemented with three OP_MULs (a*x, b*y, c*z)
-    // and three OP_ADDs (a*x + b*y, c*z + d, a*x + b*y + c*z + d)
-
-    // The default matrix preserves X, Y, Z values
-    Atom* a  = new Atom(op == OP_X ? 1.0 : 0.0);
-    Atom* b  = new Atom(op == OP_Y ? 1.0 : 0.0);
-    Atom* c  = new Atom(op == OP_Z ? 1.0 : 0.0);
-    Atom* d  = new Atom(0.0);
-
-    Atom* ax = new Atom(OP_MUL, X, a);
-    Atom* by = new Atom(OP_MUL, Y, b);
-    Atom* cz = new Atom(OP_MUL, Z, c);
-
-    Atom* ax_by = new Atom(OP_ADD, ax, by);
-    Atom* cz_d  = new Atom(OP_ADD, cz, d);
-
-    Atom* ax_by_cz_d = new Atom(OP_ADD, ax_by, cz_d);
-
-    // Store relevant constant Atoms in the matrix array
-    matrix[4*(op - OP_X)]     = a;
-    matrix[4*(op - OP_X) + 1] = b;
-    matrix[4*(op - OP_X) + 2] = c;
-    matrix[4*(op - OP_X) + 3] = d;
-
-    // Load matrix transform into the operator array
-    rows[0].push_back(ax);
-    rows[0].push_back(by);
-    rows[0].push_back(cz);
-
-    rows[1].push_back(ax_by);
-    rows[1].push_back(cz_d);
-
-    rows[2].push_back(ax_by_cz_d);
-
-    return ax_by_cz_d;
-}

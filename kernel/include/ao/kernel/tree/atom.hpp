@@ -42,22 +42,11 @@ public:
                   std::unordered_map<const Token*, Atom*>& atoms);
 
     /*
-     *  Construct an operation atom from scratch
-     */
-    explicit Atom(Opcode op, Atom* a=NULL, Atom* b=NULL);
-
-    /*
      *  Print an Atom to an ostream
      */
     friend std::ostream& operator<<(std::ostream& os, const Atom& atom);
 
 protected:
-    /*
-     *  Constructs an OP_CONST atom with the given value
-     *  Should only be used by a Tree to construct matrix atoms.
-     */
-    explicit Atom(float f);
-
     /*  Opcode for this atom  */
     const Opcode op;
 
@@ -70,6 +59,7 @@ protected:
 
     friend class Tree;
     friend class Clause;
+    friend class Evaluator;
 };
 
 std::ostream& operator<<(std::ostream& os, const Atom& atom);
