@@ -9,7 +9,7 @@ file(GLOB SRC_FILES src/tree/*.cpp src/format/*.cpp
 if (CUDA_FOUND)
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}
         -O3 -Xcompiler -Wno-language-extension-token
-        -gencode arch=compute_35,code=sm_35)
+        -gencode arch=compute_30,code=sm_30)
 
     # Need to add this so that nested CMake calls can find
     # include/ao/kernel/.../accelerator.hpp header
