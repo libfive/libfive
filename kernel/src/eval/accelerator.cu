@@ -26,10 +26,11 @@
 #include "ao/kernel/render/subregion.hpp"
 
 // Helpful macros that are repeated in every kernel
-#define GET_INDEX int i = blockIdx.x; \
+#define GET_INDEX int i = threadIdx.x + blockIdx.x * blockDim.x;\
                   if (i >= Accelerator::N)  return
-#define KERNEL(name) __global__ void name(float* a, float* b, float* out)
+#define KERNEL(name) __global__ void name(float* __restrict__ a, float* __restrict__ b, float* __restrict__ out)
 
+#define RENDER_PARAMS count/1024,1024
 ////////////////////////////////////////////////////////////////////////////////
 // Floating-point kernels
 KERNEL(add_f)
@@ -200,30 +201,30 @@ __global__ void flatten_region(float* x, float xmin, float xmax, int ni,
 static void clause(Opcode op, float* a, float* b, float* out, size_t count)
 {
     switch (op) {
-        case OP_ADD:    add_f<<<count,1>>>(a, b, out); break;
-        case OP_MUL:    mul_f<<<count,1>>>(a, b, out); break;
-        case OP_MIN:    min_f<<<count,1>>>(a, b, out); break;
-        case OP_MAX:    max_f<<<count,1>>>(a, b, out); break;
-        case OP_SUB:    sub_f<<<count,1>>>(a, b, out); break;
-        case OP_DIV:    div_f<<<count,1>>>(a, b, out); break;
-        case OP_ATAN2:  atan2_f<<<count,1>>>(a, b, out); break;
-        case OP_MOD:    mod_f<<<count,1>>>(a, b, out); break;
-        case OP_NANFILL:    nanfill_f<<<count,1>>>(a, b, out); break;
+        case OP_ADD:    add_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_MUL:    mul_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_MIN:    min_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_MAX:    max_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_SUB:    sub_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_DIV:    div_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_ATAN2:  atan2_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_MOD:    mod_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_NANFILL:    nanfill_f<<<RENDER_PARAMS>>>(a, b, out); break;
 
-        case OP_SQUARE: square_f<<<count,1>>>(a, b, out); break;
-        case OP_SQRT: sqrt_f<<<count,1>>>(a, b, out); break;
-        case OP_NEG: neg_f<<<count,1>>>(a, b, out); break;
-        case OP_ABS: abs_f<<<count,1>>>(a, b, out); break;
-        case OP_SIN: sin_f<<<count,1>>>(a, b, out); break;
-        case OP_COS: cos_f<<<count,1>>>(a, b, out); break;
-        case OP_TAN: tan_f<<<count,1>>>(a, b, out); break;
-        case OP_ASIN: asin_f<<<count,1>>>(a, b, out); break;
-        case OP_ACOS: acos_f<<<count,1>>>(a, b, out); break;
-        case OP_ATAN: atan_f<<<count,1>>>(a, b, out); break;
-        case OP_EXP: exp_f<<<count,1>>>(a, b, out); break;
+        case OP_SQUARE: square_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_SQRT: sqrt_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_NEG: neg_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_ABS: abs_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_SIN: sin_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_COS: cos_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_TAN: tan_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_ASIN: asin_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_ACOS: acos_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_ATAN: atan_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_EXP: exp_f<<<RENDER_PARAMS>>>(a, b, out); break;
 
-        case OP_A: a_f<<<count,1>>>(a, b, out); break;
-        case OP_B: b_f<<<count,1>>>(a, b, out); break;
+        case OP_A: a_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_B: b_f<<<RENDER_PARAMS>>>(a, b, out); break;
 
         case INVALID:
         case OP_CONST:
