@@ -24,6 +24,8 @@
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/store.hpp"
 
+#include "shapes.hpp"
+
 #define EPSILON 1e-6
 
 // Helper function to make rendering a single call
@@ -335,71 +337,8 @@ TEST_CASE("Performance")
         log += "Rendered sphere in " + std::to_string(elapsed.count()) + " sec";
     }
 
-    {   // Build and render Menger sponge (this is much prettier in Scheme)
-        auto rectangle =
-            [&s](float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
-            {
-                auto x = s.affine(M[0][0], M[0][1], M[0][2], M[0][3]);
-                auto y = s.affine(M[1][0], M[1][1], M[1][2], M[1][3]);
-                auto z = s.affine(M[2][0], M[2][1], M[2][2], M[2][3]);
-
-                return s.operation(OP_MAX,
-                       s.operation(OP_MAX, s.operation(OP_SUB, s.constant(xmin), x),
-                                           s.operation(OP_SUB, x, s.constant(xmax))),
-                       s.operation(OP_MAX, s.operation(OP_SUB, s.constant(ymin), y),
-                                           s.operation(OP_SUB, y, s.constant(ymax))));
-            };
-
-        std::function<Token*(float, float, float, glm::mat4, int)> recurse =
-            [&](float x, float y, float scale, glm::mat4 M, int i)
-            {
-                auto base = rectangle(x - scale/2, x + scale/2,
-                                      y - scale/2, y + scale/2, M);
-
-                if (i == 0)
-                {
-                    return base;
-                }
-                else
-                {
-                    auto j = i - 1;
-                    auto t = scale / 3;
-
-                    return s.operation(OP_MIN, base,
-                           s.operation(OP_MIN, recurse(x + scale, y, t, M, j),
-                           s.operation(OP_MIN, recurse(x - scale, y, t, M, j),
-                           s.operation(OP_MIN, recurse(x, y + scale, t, M, j),
-                           s.operation(OP_MIN, recurse(x, y - scale, t, M, j),
-                           s.operation(OP_MIN, recurse(x + scale, y + scale, t, M, j),
-                           s.operation(OP_MIN, recurse(x + scale, y - scale, t, M, j),
-                           s.operation(OP_MIN, recurse(x - scale, y + scale, t, M, j),
-                                               recurse(x - scale, y - scale, t, M, j)
-                           ))))))));
-                }
-            };
-
-        auto M = glm::mat4();
-        Token* a = recurse(0, 0, 1, M, 2);
-
-        M = glm::rotate(M, float(M_PI/2), {1, 0, 0});
-        Token* b = recurse(0, 0, 1, M, 2);
-
-        M = glm::rotate(M, float(M_PI/2), {0, 1, 0});
-        Token* c = recurse(0, 0, 1, M, 2);
-
-        auto cube = s.operation(OP_MAX,
-                    s.operation(OP_MAX,
-                       s.operation(OP_MAX, s.affine(-1,  0,  0, -1.5),
-                                           s.affine( 1,  0,  0, -1.5)),
-                       s.operation(OP_MAX, s.affine( 0, -1,  0, -1.5),
-                                           s.affine( 0,  1,  0, -1.5))),
-                       s.operation(OP_MAX, s.affine( 0,  0, -1, -1.5),
-                                           s.affine( 0,  0,  1, -1.5)));
-
-        Token* cutout = s.operation(OP_NEG,
-                        s.operation(OP_MIN, s.operation(OP_MIN, a, b), c));
-
-        Tree sponge(&s, s.operation(OP_MAX, cube, cutout));
+    {   // Build and render Menger sponge
+        std::unique_ptr<Tree> sponge(menger(2));
 
         Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 250);
         auto rot = glm::rotate(glm::rotate(glm::mat4(), float(M_PI/4), {0, 1, 0}),
@@ -407,7 +346,7 @@ TEST_CASE("Performance")
 
         // Begin timekeeping
         start = std::chrono::system_clock::now();
-        auto heightmap = Render(&sponge, r, rot).first;
+        auto heightmap = Render(sponge.get(), r, rot).first;
         end = std::chrono::system_clock::now();
 
         elapsed = end - start;
