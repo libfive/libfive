@@ -17,6 +17,7 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <cstdio>
+#include <numeric>
 
 #include "ao/kernel/eval/accelerator.hpp"
 
@@ -25,7 +26,8 @@
 #include "ao/kernel/render/subregion.hpp"
 
 // Helpful macros that are repeated in every kernel
-#define GET_INDEX int i = blockIdx.x
+#define GET_INDEX int i = blockIdx.x; \
+                  if (i >= Accelerator::N)  return
 #define KERNEL(name) __global__ void name(float* a, float* b, float* out)
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -238,45 +240,39 @@ static void clause(Opcode op, float* a, float* b, float* out, size_t count)
 Accelerator::Accelerator(Evaluator* e)
     : evaluator(e)
 {
-    for (auto c : {e->X, e->Y, e->Z})
-    {
-        allocate(c);
-    }
+    // Count up the number of clauses in the evaluator
+    size_t count =  std::accumulate(e->rows.begin(), e->rows.end(),
+            3                           // X, Y, Z
+            + e->constants.size(),      // Constants
+            [](size_t i, const Row& r){ return i + r.size(); });
+
+    auto out = cudaMalloc((void**)&data, N * count * sizeof(float));
+
+    // If this is a constant operation, fill with the constant value
     for (auto c : e->constants)
     {
-        allocate(c);
-    }
-    for (auto row : e->rows)
-    {
-        for (auto c : row)
-        {
-            allocate(c);
-        }
+        std::fill(buf.begin(), buf.end(), c->value);
+        cudaMemcpy(devPtr(c), &buf[0], N * sizeof(float),
+                   cudaMemcpyHostToDevice);
     }
 }
 
 Accelerator::~Accelerator()
 {
-    for (auto m : mem)
-    {
-        cudaFree(m.second);
-    }
+    cudaFree(data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Accelerator::allocate(Clause* c)
+float* Accelerator::devPtr(const Clause* c)
 {
-    const size_t bytes = N * sizeof(float);
-    cudaMalloc((void**)&mem[c], bytes);
-
-    // If this is a constant operation, fill with the constant value
-    if (c->op == OP_CONST)
-    {
-        std::fill(buf.begin(), buf.end(), c->value);
-        cudaMemcpy(mem[c], &buf[0], bytes, cudaMemcpyHostToDevice);
-    }
+    // Clauses are allocated in the data array of the evaluator
+    // (using placement new); this function finds the clause's
+    // location in that array then maps to the device data array
+    return &data[(c - evaluator->data) * N];
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 float* Accelerator::values(size_t count)
 {
@@ -295,20 +291,19 @@ float* Accelerator::values(size_t count)
             {
                 op = OP_A;
             }
-
-            clause(op, mem[row[i]->a], mem[row[i]->b], mem[row[i]], count);
+            clause(op, devPtr(row[i]->a), devPtr(row[i]->b), devPtr(row[i]), count);
         }
     }
 
-    return mem[evaluator->root];
+    return devPtr(evaluator->root);
 }
 
 void Accelerator::toDevice()
 {
     const size_t bytes = N * sizeof(float);
-    cudaMemcpy(mem[evaluator->X], &X[0], bytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(mem[evaluator->Y], &Y[0], bytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(mem[evaluator->Z], &Z[0], bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(devPtr(evaluator->X), &X[0], bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(devPtr(evaluator->Y), &Y[0], bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(devPtr(evaluator->Z), &Z[0], bytes, cudaMemcpyHostToDevice);
 }
 
 float* Accelerator::fromDevice(float* ptr_d)
@@ -351,7 +346,7 @@ void Accelerator::warmup()
 void Accelerator::setRegion(const Subregion& r)
 {
     flatten_region<<<r.voxels(), 1>>>(
-        mem[evaluator->X], r.X.lower(), r.X.upper(), r.X.size,
-        mem[evaluator->Y], r.Y.lower(), r.Y.upper(), r.Y.size,
-        mem[evaluator->Z], r.Z.lower(), r.Z.upper(), r.Z.size);
+        devPtr(evaluator->X), r.X.lower(), r.X.upper(), r.X.size,
+        devPtr(evaluator->Y), r.Y.lower(), r.Y.upper(), r.Y.size,
+        devPtr(evaluator->Z), r.Z.lower(), r.Z.upper(), r.Z.size);
 }

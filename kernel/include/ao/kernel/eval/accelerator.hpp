@@ -77,13 +77,13 @@ public:
     static constexpr size_t N=4096;
 protected:
     /*
-     *  Allocates device memory for the given clause
-     *  and stores it in the mem array
+     *  Returns the device pointer for the given clause
+     *  (which must be associated with the parent Evaluator)
      */
-    void allocate(Clause* c);
+    float* devPtr(const Clause* c);
 
-    /*  Memory allocated on the target device  */
-    std::unordered_map<Clause*, float*> mem;
+    /*  Bag-o-data allocated on the target device  */
+    float* data;
 
     /*  Buffer used when copying to and from device memory  */
     std::array<float, N> buf;
