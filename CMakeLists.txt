@@ -12,6 +12,12 @@ include_directories(SYSTEM vendor)
 
 ################################################################################
 
+if (APPLE)
+    set(CMAKE_MACOSX_RPATH ON)
+endif()
+
+################################################################################
+
 # Build the ao kernel and ui libraries
 add_subdirectory(kernel)
 add_subdirectory(ui)
