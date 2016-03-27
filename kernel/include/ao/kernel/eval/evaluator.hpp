@@ -127,4 +127,6 @@ protected:
 
     /*  Bag-o-data that stores clauses  */
     Clause* data;
+
+    friend class MultikernelAccelerator;
 };

@@ -64,9 +64,6 @@ TEST_CASE("Vectorized evaluation")
 
 TEST_CASE("Vectorized sponge")
 {
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    std::chrono::duration<double> elapsed;
-
     std::unique_ptr<Tree> sponge(menger(2));
 
     Evaluator e(sponge.get());
