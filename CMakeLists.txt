@@ -28,6 +28,7 @@ find_package(CUDA)
 if (CUDA_FOUND)
     message("${GREEN}Building with CUDA!${RESET}")
     add_definitions("-DUSE_CUDA")
+    link_directories(${CUDA_TOOLKIT_ROOT_DIR}/lib)
 endif()
 
 ################################################################################

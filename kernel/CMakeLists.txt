@@ -18,8 +18,10 @@ if (CUDA_FOUND)
 
     file(GLOB_RECURSE CUDA_FILES src/*.cu)
     cuda_add_library(ao-kernel STATIC ${SRC_FILES} ${CUDA_FILES})
+    target_link_libraries(ao-kernel ${PNG_LIBRARIES} nvrtc)
 else()
     add_library(ao-kernel STATIC ${SRC_FILES})
+    target_link_libraries(ao-kernel ${PNG_LIBRARIES})
 endif()
 
 ################################################################################
@@ -28,5 +30,3 @@ target_include_directories(ao-kernel SYSTEM PRIVATE
     ${BOOST_INCLUDE_DIR}
     ${PNG_INCLUDE_DIR})
 target_include_directories(ao-kernel PUBLIC include)
-
-target_link_libraries(ao-kernel ${PNG_LIBRARIES})
