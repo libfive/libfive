@@ -18,14 +18,11 @@
  */
 #pragma once
 
-#include <unordered_map>
-#include <array>
-
-class Evaluator;
 class Clause;
-class Subregion;
 
-class MultikernelAccelerator
+#include "ao/kernel/cuda/accelerator.hpp"
+
+class MultikernelAccelerator : public Accelerator
 {
 public:
     MultikernelAccelerator(Evaluator* e);
@@ -35,46 +32,8 @@ public:
      *  Evaluates a certain number of values, returning a
      *  pointer to device memory.
      */
-    float* values(size_t count);
+    float* values(size_t count) override;
 
-    /*
-     *  Loads data from the device to host memory, returning a pointer
-     *  (which is owned by the MultikernelAccelerator)
-     */
-    float* fromDevice(float* ptr_d);
-
-    /*
-     *  Sets a value in host memory
-     *  (inlined for speed)
-     *
-     *  In practice, you should use a more efficient GPU-side strategy
-     *  to load values (e.g. a kernel that unwraps a region and assigns
-     *  appropriate positions)
-     */
-    void set(float x, float y, float z, size_t index)
-    {
-        X[index] = x;
-        Y[index] = y;
-        Z[index] = z;
-    }
-
-    /*
-     *  Writes X, Y, Z arrays to device memory
-     */
-    void toDevice();
-
-    /*
-     *  Loads X, Y, Z arrays in device memory with the unrolled region
-     */
-    void setRegion(const Subregion& r);
-
-    /*
-     *  Do a dummy evaluation to force CUDA to initialize
-     */
-    static void warmup();
-
-    /*  Samples per clause  */
-    static constexpr size_t N=4096;
 protected:
     /*
      *  Returns the device pointer for the given clause
@@ -84,13 +43,4 @@ protected:
 
     /*  Bag-o-data allocated on the target device  */
     float* data;
-
-    /*  Buffer used when copying to and from device memory  */
-    std::array<float, N> buf;
-    std::array<float, N> X;
-    std::array<float, N> Y;
-    std::array<float, N> Z;
-
-    /*  Pointer back to parent evaluator  */
-    const Evaluator* const evaluator;
 };
