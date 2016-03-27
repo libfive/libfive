@@ -30,7 +30,6 @@
                   if (i >= MultikernelAccelerator::N)  return
 #define KERNEL(name) __global__ void name(float* __restrict__ a, float* __restrict__ b, float* __restrict__ out)
 
-#define RENDER_PARAMS count/1024,1024
 ////////////////////////////////////////////////////////////////////////////////
 // Floating-point kernels
 KERNEL(add_f)
@@ -198,33 +197,34 @@ __global__ void flatten_region(float* x, float xmin, float xmax, int ni,
 ////////////////////////////////////////////////////////////////////////////////
 
 // Pointers are into device memory, not host memory!
-static void clause(Opcode op, float* a, float* b, float* out, size_t count)
+static void clause(Opcode op, float* a, float* b, float* out,
+                   int blocks, int threads)
 {
     switch (op) {
-        case OP_ADD:    add_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_MUL:    mul_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_MIN:    min_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_MAX:    max_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_SUB:    sub_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_DIV:    div_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_ATAN2:  atan2_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_MOD:    mod_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_NANFILL:    nanfill_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_ADD:    add_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_MUL:    mul_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_MIN:    min_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_MAX:    max_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_SUB:    sub_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_DIV:    div_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_ATAN2:  atan2_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_MOD:    mod_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_NANFILL:    nanfill_f<<<blocks, threads>>>(a, b, out); break;
 
-        case OP_SQUARE: square_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_SQRT: sqrt_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_NEG: neg_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_ABS: abs_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_SIN: sin_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_COS: cos_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_TAN: tan_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_ASIN: asin_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_ACOS: acos_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_ATAN: atan_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_EXP: exp_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_SQUARE: square_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_SQRT: sqrt_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_NEG: neg_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_ABS: abs_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_SIN: sin_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_COS: cos_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_TAN: tan_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_ASIN: asin_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_ACOS: acos_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_ATAN: atan_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_EXP: exp_f<<<blocks, threads>>>(a, b, out); break;
 
-        case OP_A: a_f<<<RENDER_PARAMS>>>(a, b, out); break;
-        case OP_B: b_f<<<RENDER_PARAMS>>>(a, b, out); break;
+        case OP_A: a_f<<<blocks, threads>>>(a, b, out); break;
+        case OP_B: b_f<<<blocks, threads>>>(a, b, out); break;
 
         case INVALID:
         case OP_CONST:
@@ -277,6 +277,9 @@ float* MultikernelAccelerator::devPtr(const Clause* c)
 
 float* MultikernelAccelerator::values(size_t count)
 {
+    int threads = 256;
+    int blocks = (count + threads - 1) / threads;
+
     for (const auto& row : evaluator->rows)
     {
         for (size_t i=0; i < row.active; ++i)
@@ -292,7 +295,8 @@ float* MultikernelAccelerator::values(size_t count)
             {
                 op = OP_A;
             }
-            clause(op, devPtr(row[i]->a), devPtr(row[i]->b), devPtr(row[i]), count);
+            clause(op, devPtr(row[i]->a), devPtr(row[i]->b), devPtr(row[i]),
+                   blocks, threads);
         }
     }
 
