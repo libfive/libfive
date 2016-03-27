@@ -18,6 +18,20 @@ endif()
 
 ################################################################################
 
+if(NOT WIN32)
+    string(ASCII 27 ESCAPE)
+    set(RESET "${ESCAPE}[m")
+    set(GREEN "${ESCAPE}[32m")
+endif()
+
+find_package(CUDA)
+if (CUDA_FOUND)
+    message("${GREEN}Building with CUDA!${RESET}")
+    add_definitions("-DUSE_CUDA")
+endif()
+
+################################################################################
+
 # Build the ao kernel and ui libraries
 add_subdirectory(kernel)
 add_subdirectory(ui)
