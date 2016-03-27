@@ -62,12 +62,12 @@ TEST_CASE("Vectorized evaluation")
     REQUIRE(matched);
 }
 
-TEST_CASE("Vectorized sponge")
+template <class T> void testSponge()
 {
     std::unique_ptr<Tree> sponge(menger(2));
 
     Evaluator e(sponge.get());
-    MultikernelAccelerator a(&e);
+    T a(&e);
 
     for (unsigned i=0; i < Result::N; ++i)
     {
@@ -100,6 +100,48 @@ TEST_CASE("Vectorized sponge")
     CAPTURE(out_normal[i]);
     CAPTURE(out_accel[i]);
     REQUIRE(matched);
+}
+
+template <class T> void testSpongeSpeed(int oversample)
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> elapsed;
+
+    std::unique_ptr<Tree> sponge(menger(2));
+
+    Evaluator e(sponge.get());
+    T a(&e);
+
+    for (unsigned i=0; i < T::N; ++i)
+    {
+        float x = rand() / float(RAND_MAX);
+        float y = rand() / float(RAND_MAX);
+        float z = rand() / float(RAND_MAX);
+
+        e.set(x, y, z, i);
+        a.set(x, y, z, i);
+    }
+
+    start = std::chrono::system_clock::now();
+    a.toDevice();
+    float* out_d;
+    for (int i=0; i < oversample; ++i)
+    {
+        out_d = a.values(T::N);
+    }
+    auto out_accel = a.fromDevice(out_d);
+    end = std::chrono::system_clock::now();
+
+    elapsed = end - start;
+    std::string log("Rendered sponge in " + std::to_string(elapsed.count() / oversample) + " sec");
+
+    WARN(log);
+}
+
+TEST_CASE("Vectorized sponge")
+{
+    testSponge<MultikernelAccelerator>();
+    testSpongeSpeed<MultikernelAccelerator>(500);
 }
 
 #endif
