@@ -218,7 +218,7 @@ MultikernelAccelerator::MultikernelAccelerator(Evaluator* e)
     size_t count =  std::accumulate(e->rows.begin(), e->rows.end(),
             3                           // X, Y, Z
             + e->constants.size(),      // Constants
-            [](size_t i, const Row& r){ return i + r.size(); });
+            [](size_t i, const Row& r){ return i + r.active; });
 
     auto out = cudaMalloc((void**)&data, N * count * sizeof(float));
 

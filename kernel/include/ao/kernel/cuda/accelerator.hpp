@@ -70,6 +70,7 @@ public:
      *  Do a dummy evaluation to force CUDA to initialize
      */
     static void warmup();
+
     /*  Samples per clause  */
     static constexpr size_t N=4096;
 
