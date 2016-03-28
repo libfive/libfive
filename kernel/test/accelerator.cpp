@@ -21,6 +21,7 @@
 
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/cuda/multikernel.hpp"
+#include "ao/kernel/cuda/tape.hpp"
 
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/store.hpp"
@@ -34,20 +35,20 @@ TEST_CASE("Vectorized evaluation")
     Store s;
     Tree t(&s, s.operation(OP_ADD, s.X(), s.Y()));
     Evaluator e(&t);
-    MultikernelAccelerator a(&e);
+    TapeAccelerator a(&e);
 
-    for (unsigned i=0; i < MultikernelAccelerator::N; ++i)
+    for (unsigned i=0; i < TapeAccelerator::N; ++i)
     {
         a.set(i, 2*i, 0, i);
     }
     a.toDevice();
 
-    auto out_d = a.values(MultikernelAccelerator::N);
+    auto out_d = a.values(TapeAccelerator::N);
     auto out = a.fromDevice(out_d);
 
     bool matched = true;
     unsigned i;
-    for (i=0; i < MultikernelAccelerator::N; ++i)
+    for (i=0; i < TapeAccelerator::N; ++i)
     {
         if (out[i] != 3*i)
         {
@@ -140,8 +141,8 @@ template <class T> void testSpongeSpeed(int oversample)
 
 TEST_CASE("Vectorized sponge")
 {
-    testSponge<MultikernelAccelerator>();
-    testSpongeSpeed<MultikernelAccelerator>(500);
+    testSponge<TapeAccelerator>();
+    testSpongeSpeed<TapeAccelerator>(500);
 }
 
 #endif

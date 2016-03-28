@@ -129,4 +129,5 @@ protected:
     Clause* data;
 
     friend class MultikernelAccelerator;
+    friend class TapeAccelerator;
 };

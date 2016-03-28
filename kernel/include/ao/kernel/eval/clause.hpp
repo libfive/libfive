@@ -109,4 +109,5 @@ protected:
 
     friend class Evaluator;
     friend class MultikernelAccelerator;
+    friend class TapeAccelerator;
 };
