@@ -44,12 +44,12 @@
  */
 __global__ void eval(uint32_t const* tape,
                      float const* X, float const* Y, float const* Z,
-                     float* out, float* mem, int clauses, uint32_t root)
+                     float* out, uint32_t root)
 {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
 
     // This is our local slice of the big memory buffer
-    float* local = &mem[index * clauses];
+    float local[TapeAccelerator::NUM_CLAUSES];
 
     // Load coordinates into the buffer
     local[0] = X[index];
@@ -135,7 +135,14 @@ TapeAccelerator::TapeAccelerator(Evaluator* e)
     cudaMalloc((void**)&Z_d, N * sizeof(float));
     cudaMalloc((void**)&out_d, N * sizeof(float));
 
+    // In the worst case, every clause in the tape has two operands
+    cudaMalloc((void**)&tape_d, NUM_CLAUSES * sizeof(uint32_t) * 3);
 
+    reloadTape();
+}
+
+void TapeAccelerator::reloadTape()
+{
     // Construct the tape!
     std::vector<uint32_t> tape;
 
@@ -145,9 +152,9 @@ TapeAccelerator::TapeAccelerator(Evaluator* e)
     clauses = 3;
 
     std::unordered_map<Clause*, uint32_t> addr =
-        {{e->X, 0}, {e->Y, 1}, {e->Z, 2}};
+        {{evaluator->X, 0}, {evaluator->Y, 1}, {evaluator->Z, 2}};
 
-    for (const auto& r : e->rows)
+    for (const auto& r : evaluator->rows)
     {
         for (size_t i=0; i < r.active; ++i)
         {
@@ -201,17 +208,12 @@ TapeAccelerator::TapeAccelerator(Evaluator* e)
     }
     tape.push_back(0);
 
-    assert(addr.count(e->root));
-    root = addr[e->root];
+    assert(addr.count(evaluator->root));
+    root = addr[evaluator->root];
 
     // Allocate the tape and copy it over to the GPU
     size_t tape_bytes = tape.size() * sizeof(uint32_t);
-    cudaMalloc((void**)&tape_d, tape_bytes);
     cudaMemcpy(tape_d, &tape[0], tape_bytes, cudaMemcpyHostToDevice);
-
-    // Allocate the working memory buffer
-    // (it's empty to begin with and populated by the kernel)
-    cudaMalloc((void**)&mem_d, clauses * N * sizeof(float));
 }
 
 TapeAccelerator::~TapeAccelerator()
@@ -228,8 +230,7 @@ float* TapeAccelerator::values(size_t count)
     int threads = 256;
     int blocks = (count + threads - 1) / threads;
 
-    eval<<<blocks, threads>>>(tape_d, X_d, Y_d, Z_d, out_d, mem_d,
-                              clauses, root);
+    eval<<<blocks, threads>>>(tape_d, X_d, Y_d, Z_d, out_d, root);
 
     return out_d;
 }

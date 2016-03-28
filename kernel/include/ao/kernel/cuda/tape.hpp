@@ -32,6 +32,16 @@ public:
      */
     float* values(size_t count) override;
 
+    /*
+     *  Reloads the tape from the evaluator's current state
+     *  Updates root, clauses and the data stored at tape_d
+     */
+    void reloadTape();
+
+    /*  This is the maximum number of clauses we can evaluate in a single
+     *  pass (due to limited local per-thread memory)   */
+    static constexpr size_t NUM_CLAUSES = 2096;
+
 protected:
     /*  Number of clauses we're evaluating  */
     size_t clauses = 0;
@@ -41,9 +51,6 @@ protected:
 
     /*  Device pointer for the allocated tape  */
     uint32_t* tape_d;
-
-    /*  Generic data array for clause data storage  */
-    float* mem_d;
 
     /*  Shorter data array used to store results  */
     float* out_d;
