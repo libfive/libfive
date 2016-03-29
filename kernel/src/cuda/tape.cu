@@ -26,58 +26,48 @@
 
 #define ARG_B_IMM 0x1000
 #define ARG_B_MEM 0x2000
+
 /*
- *  eval is a kernel that executes an instruction tape in parallel.
- *  The arguments are as follows:
- *      tape is a list of opcodes enums or'd with supporting data
- *          The lowest byte of each uint32 is the opcode itself
- *          The third and fourth nibbles are both
- *                  0x0 if this argument isn't relevant
- *                  0x1 if an immediate argument follows
- *                  0x2 if a memory address is given
- *              for the a and b arguments
- *      X, Y, Z are pointers into device memory storing coordinates
- *      out is a pointer into device memory for the output
- *      clauses is the number of clauses to be evaluated
- *      root is the clause number to be copied to output
+ *  Copy a tape from global to local storage, using the power of friendship
+ *  Requires that __syncthreads be called before the tape is used.
  */
-__global__ void eval(uint32_t const* tape_,
-                     float const* X, float const* Y, float const* Z,
-                     float* out, uint32_t tape_size, uint32_t root)
+__device__ void copy_tape(uint32_t* tape_out,
+                          uint32_t const* tape_in,
+                          uint32_t tape_size)
+{
+    // How many items from the tape must each thread copy over?
+    // (rounded up, so we'll need to truncate later)
+    unsigned num = (tape_size + TapeAccelerator::THREADS_PER_BLOCK - 1) /
+                    TapeAccelerator::THREADS_PER_BLOCK;
+
+    // This is the starting point in tape memory assigned to this thread
+    unsigned start = threadIdx.x * num;
+    unsigned end = start + num;
+    if (end > tape_size)
+    {
+        end = tape_size;
+    }
+    for (unsigned i=start; i < end; ++i)
+    {
+        tape_out[i] = tape_in[i];
+    }
+}
+
+/*
+ *  Evaluate a single point (see eval below for details)
+ */
+__device__ float eval_single(uint32_t* const tape,
+                             float x, float y, float z,
+                             uint32_t tape_size, uint32_t root)
 {
     // This is our local slice of memory used to store clause results
     float local[TapeAccelerator::NUM_CLAUSES];
 
-    // Use the power of friendship to quickly copy the tape into local memory
-    __shared__ uint32_t tape[TapeAccelerator::NUM_CLAUSES * 3];
-    {
-        // How many items from the tape must each thread copy over?
-        // (rounded up, so we'll need to truncate later)
-        unsigned num = (tape_size + TapeAccelerator::THREADS_PER_BLOCK - 1) /
-                        TapeAccelerator::THREADS_PER_BLOCK;
+    local[0] = x;
+    local[1] = y;
+    local[2] = z;
 
-        // This is the starting point in tape memory assigned to this thread
-        unsigned start = threadIdx.x * num;
-        unsigned end = start + num;
-        if (end > tape_size)
-        {
-            end = tape_size;
-        }
-        for (unsigned i=start; i < end; ++i)
-        {
-            tape[i] = tape_[i];
-        }
-    }
-
-    // Index of this piece of work in the global space
-    int index = threadIdx.x + blockIdx.x * blockDim.x;
-
-    // Load coordinates into the buffer
-    local[0] = X[index];
-    local[1] = Y[index];
-    local[2] = Z[index];
-
-    // (this concludes the copy-to-local-tape operation)
+    // Make sure that the tape is ready for use
     __syncthreads();
 
     // First three opcodes are dummies for X, Y, Z coordinates
@@ -142,8 +132,39 @@ __global__ void eval(uint32_t const* tape_,
         }
     }
 
-    // Collect the resulting value and put it into the output array
-    out[index] = local[root];
+    return local[root];
+}
+
+
+/*
+ *  eval is a kernel that executes an instruction tape in parallel.
+ *  The arguments are as follows:
+ *      tape is a list of opcodes enums or'd with supporting data
+ *          The lowest byte of each uint32 is the opcode itself
+ *          The third and fourth nibbles are both
+ *                  0x0 if this argument isn't relevant
+ *                  0x1 if an immediate argument follows
+ *                  0x2 if a memory address is given
+ *              for the a and b arguments
+ *      X, Y, Z are pointers into device memory storing coordinates
+ *      out is a pointer into device memory for the output
+ *      clauses is the number of clauses to be evaluated
+ *      root is the clause number to be copied to output
+ */
+__global__ void eval(uint32_t const* tape_,
+                     float const* X, float const* Y, float const* Z,
+                     float* out, uint32_t tape_size, uint32_t root)
+{
+    // Make a local copy of the tape for faster access
+    __shared__ uint32_t tape[TapeAccelerator::NUM_CLAUSES * 3];
+    copy_tape(tape, tape_, tape_size);
+
+    // Index of this piece of work in the global space
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+    // Evaluate the expression on the target coordinates
+    out[index] = eval_single(tape, X[index], Y[index], Z[index],
+                             tape_size, root);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
