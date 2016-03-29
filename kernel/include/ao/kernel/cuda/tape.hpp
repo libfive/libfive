@@ -52,9 +52,6 @@ protected:
     /*  Memory address of root token  */
     uint32_t root;
 
-    /*  Device pointer for the allocated tape  */
-    uint32_t* tape_d;
-
     /*  Shorter data array used to store results  */
     float* out_d;
 };
