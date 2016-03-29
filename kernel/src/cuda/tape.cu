@@ -56,12 +56,12 @@ __global__ void eval(uint32_t const* tape,
     local[2] = Z[index];
 
     // First three opcodes are dummies for X, Y, Z coordinates
-    int i=3;
-    int j=3;
-    while(j < clauses)
+    int tape_index=3;
+    int clause_index=3;
+    while(clause_index < clauses)
     {
         // Grab the next opcode from the tape
-        uint32_t opcode = tape[i++];
+        uint32_t opcode = tape[tape_index++];
 
         // These are the values that we'll do math on
         float a, b;
@@ -70,53 +70,53 @@ __global__ void eval(uint32_t const* tape,
         // argument (i.e. an inline float) or an address in the local mem
         if (opcode & ARG_A_IMM)
         {
-            a = ((float*)tape)[i++];
+            a = ((float*)tape)[tape_index++];
         }
         else if (opcode & ARG_A_MEM)
         {
-            a = local[tape[i++]];
+            a = local[tape[tape_index++]];
         }
 
         if (opcode & ARG_B_IMM)
         {
-            b = ((float*)tape)[i++];
+            b = ((float*)tape)[tape_index++];
         }
         else if (opcode & ARG_B_MEM)
         {
-            b = local[tape[i++]];
+            b = local[tape[tape_index++]];
         }
 
         switch (opcode & 0xFF)
         {
-            case OP_ADD:    local[j] = a + b; break;
-            case OP_MUL:    local[j] = a * b; break;
+            case OP_ADD:    local[clause_index] = a + b; break;
+            case OP_MUL:    local[clause_index] = a * b; break;
 
-            case OP_MIN:    local[j] = fmin(a, b); break;
-            case OP_MAX:    local[j] = fmax(a, b); break;
-            case OP_SUB:    local[j] = a - b; break;
-            case OP_DIV:    local[j] = a / b; break;
-            case OP_ATAN2:  local[j] = atan2(a, b); break;
-            case OP_MOD:    local[j] = fmod(a, b);
-                            while (local[j] < 0)
+            case OP_MIN:    local[clause_index] = fmin(a, b); break;
+            case OP_MAX:    local[clause_index] = fmax(a, b); break;
+            case OP_SUB:    local[clause_index] = a - b; break;
+            case OP_DIV:    local[clause_index] = a / b; break;
+            case OP_ATAN2:  local[clause_index] = atan2(a, b); break;
+            case OP_MOD:    local[clause_index] = fmod(a, b);
+                            while (local[clause_index] < 0)
                             {
-                                local[j] += b;
+                                local[clause_index] += b;
                             }
                             break;
-            case OP_NANFILL:    local[j] = isnan(a) ? b : a; break;
+            case OP_NANFILL:    local[clause_index] = isnan(a) ? b : a; break;
 
-            case OP_SQUARE: local[j] = a * a; break;
-            case OP_SQRT:   local[j] = sqrt(a); break;
-            case OP_NEG:    local[j] = -a; break;
-            case OP_ABS:    local[j] = fabs(a); break;
-            case OP_SIN:    local[j] = sin(a); break;
-            case OP_COS:    local[j] = cos(a); break;
-            case OP_TAN:    local[j] = tan(a); break;
-            case OP_ASIN:   local[j] = asin(a); break;
-            case OP_ACOS:   local[j] = acos(a); break;
-            case OP_ATAN:   local[j] = atan(a); break;
-            case OP_EXP:    local[j] = exp(a); break;
+            case OP_SQUARE: local[clause_index] = a * a; break;
+            case OP_SQRT:   local[clause_index] = sqrt(a); break;
+            case OP_NEG:    local[clause_index] = -a; break;
+            case OP_ABS:    local[clause_index] = fabs(a); break;
+            case OP_SIN:    local[clause_index] = sin(a); break;
+            case OP_COS:    local[clause_index] = cos(a); break;
+            case OP_TAN:    local[clause_index] = tan(a); break;
+            case OP_ASIN:   local[clause_index] = asin(a); break;
+            case OP_ACOS:   local[clause_index] = acos(a); break;
+            case OP_ATAN:   local[clause_index] = atan(a); break;
+            case OP_EXP:    local[clause_index] = exp(a); break;
         }
-        j++;
+        clause_index++;
     }
 
     // Collect the resulting value and put it into the output array
@@ -225,10 +225,10 @@ TapeAccelerator::~TapeAccelerator()
 
 float* TapeAccelerator::values(size_t count)
 {
-    int threads = 256;
-    int blocks = (count + threads - 1) / threads;
+    int blocks = (count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-    eval<<<blocks, threads>>>(tape_d, X_d, Y_d, Z_d, out_d, clauses, root);
+    eval<<<blocks, THREADS_PER_BLOCK>>>(
+            tape_d, X_d, Y_d, Z_d, out_d, clauses, root);
 
     return out_d;
 }

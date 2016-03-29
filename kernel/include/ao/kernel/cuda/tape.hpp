@@ -42,6 +42,9 @@ public:
      *  pass (due to limited local per-thread memory)   */
     static constexpr size_t NUM_CLAUSES = 2096;
 
+    /*  This is the number of threads executing in one CUDA block  */
+    static constexpr size_t THREADS_PER_BLOCK = 256;
+
 protected:
     /*  Number of clauses we're evaluating  */
     size_t clauses = 0;
