@@ -41,7 +41,7 @@
  *      clauses is the number of clauses to be evaluated
  *      root is the clause number to be copied to output
  */
-__global__ void eval(uint32_t const* tape,
+__global__ void eval(uint32_t const* tape_,
                      float const* X, float const* Y, float const* Z,
                      float* out, uint32_t tape_size, uint32_t root)
 {
@@ -49,6 +49,28 @@ __global__ void eval(uint32_t const* tape,
 
     // This is our local slice of memory used to store clause results
     float local[TapeAccelerator::NUM_CLAUSES];
+
+    // Use the power of friendship to quickly copy the tape into local memory
+    __shared__ uint32_t tape[TapeAccelerator::NUM_CLAUSES * 3];
+    {
+        // How many items from the tape must each thread copy over?
+        // (rounded up, so we'll need to truncate later)
+        unsigned num = (tape_size + TapeAccelerator::THREADS_PER_BLOCK - 1) /
+                        TapeAccelerator::THREADS_PER_BLOCK;
+
+        // This is the starting point in tape memory assigned to this thread
+        unsigned start = threadIdx.x * num;
+        unsigned end = start + num;
+        if (end > tape_size)
+        {
+            end = tape_size;
+        }
+        for (unsigned i=start; i < end; ++i)
+        {
+            tape[i] = tape_[i];
+        }
+    }
+    __syncthreads();
 
     // Load coordinates into the buffer
     local[0] = X[index];
