@@ -45,8 +45,6 @@ __global__ void eval(uint32_t const* tape_,
                      float const* X, float const* Y, float const* Z,
                      float* out, uint32_t tape_size, uint32_t root)
 {
-    int index = threadIdx.x + blockIdx.x * blockDim.x;
-
     // This is our local slice of memory used to store clause results
     float local[TapeAccelerator::NUM_CLAUSES];
 
@@ -70,12 +68,17 @@ __global__ void eval(uint32_t const* tape_,
             tape[i] = tape_[i];
         }
     }
-    __syncthreads();
+
+    // Index of this piece of work in the global space
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
 
     // Load coordinates into the buffer
     local[0] = X[index];
     local[1] = Y[index];
     local[2] = Z[index];
+
+    // (this concludes the copy-to-local-tape operation)
+    __syncthreads();
 
     // First three opcodes are dummies for X, Y, Z coordinates
     for (int tape_index=3, clause_index=3; tape_index < tape_size;
