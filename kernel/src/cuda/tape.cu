@@ -43,7 +43,7 @@
  */
 __global__ void eval(uint32_t const* tape,
                      float const* X, float const* Y, float const* Z,
-                     float* out, uint32_t clauses, uint32_t root)
+                     float* out, uint32_t tape_size, uint32_t root)
 {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -58,7 +58,7 @@ __global__ void eval(uint32_t const* tape,
     // First three opcodes are dummies for X, Y, Z coordinates
     int tape_index=3;
     int clause_index=3;
-    while(clause_index < clauses)
+    while(tape_index < tape_size)
     {
         // Grab the next opcode from the tape
         uint32_t opcode = tape[tape_index++];
@@ -148,7 +148,7 @@ void TapeAccelerator::reloadTape()
     tape.push_back(OP_X);
     tape.push_back(OP_Y);
     tape.push_back(OP_Z);
-    clauses = 3;
+    size_t clauses = 3;
 
     std::unordered_map<Clause*, uint32_t> addr =
         {{evaluator->X, 0}, {evaluator->Y, 1}, {evaluator->Z, 2}};
@@ -209,8 +209,9 @@ void TapeAccelerator::reloadTape()
     assert(addr.count(evaluator->root));
     root = addr[evaluator->root];
 
-    // Allocate the tape and copy it over to the GPU
-    size_t tape_bytes = tape.size() * sizeof(uint32_t);
+    // Save the tape's size and copy it over to the GPU
+    tape_size = tape.size();
+    size_t tape_bytes = tape_size * sizeof(uint32_t);
     cudaMemcpy(tape_d, &tape[0], tape_bytes, cudaMemcpyHostToDevice);
 }
 
@@ -228,7 +229,7 @@ float* TapeAccelerator::values(size_t count)
     int blocks = (count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
     eval<<<blocks, THREADS_PER_BLOCK>>>(
-            tape_d, X_d, Y_d, Z_d, out_d, clauses, root);
+            tape_d, X_d, Y_d, Z_d, out_d, tape_size, root);
 
     return out_d;
 }
