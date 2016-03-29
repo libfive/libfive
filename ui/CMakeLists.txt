@@ -4,7 +4,7 @@ find_library(EPOXY_LIBRARY NAMES epoxy)
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
 
-find_library(OPENGL_LIBRARY OpenGL)
+find_library(OPENGL_LIBRARIES OpenGL)
 
 ################################################################################
 

@@ -16,6 +16,8 @@
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <chrono>
+
 #include <catch/catch.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 

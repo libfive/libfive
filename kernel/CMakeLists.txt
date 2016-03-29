@@ -1,5 +1,5 @@
 find_package(Boost QUIET REQUIRED)
-find_package(png REQUIRED)
+find_package(PNG REQUIRED)
 
 ################################################################################
 
