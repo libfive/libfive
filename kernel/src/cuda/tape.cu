@@ -56,12 +56,11 @@ __global__ void eval(uint32_t const* tape,
     local[2] = Z[index];
 
     // First three opcodes are dummies for X, Y, Z coordinates
-    int tape_index=3;
-    int clause_index=3;
-    while(tape_index < tape_size)
+    for (int tape_index=3, clause_index=3; tape_index < tape_size;
+         tape_index++, clause_index++)
     {
         // Grab the next opcode from the tape
-        uint32_t opcode = tape[tape_index++];
+        uint32_t opcode = tape[tape_index];
 
         // These are the values that we'll do math on
         float a, b;
@@ -70,20 +69,20 @@ __global__ void eval(uint32_t const* tape,
         // argument (i.e. an inline float) or an address in the local mem
         if (opcode & ARG_A_IMM)
         {
-            a = ((float*)tape)[tape_index++];
+            a = ((float*)tape)[++tape_index];
         }
         else if (opcode & ARG_A_MEM)
         {
-            a = local[tape[tape_index++]];
+            a = local[tape[++tape_index]];
         }
 
         if (opcode & ARG_B_IMM)
         {
-            b = ((float*)tape)[tape_index++];
+            b = ((float*)tape)[++tape_index];
         }
         else if (opcode & ARG_B_MEM)
         {
-            b = local[tape[tape_index++]];
+            b = local[tape[++tape_index]];
         }
 
         switch (opcode & 0xFF)
@@ -116,7 +115,6 @@ __global__ void eval(uint32_t const* tape,
             case OP_ATAN:   local[clause_index] = atan(a); break;
             case OP_EXP:    local[clause_index] = exp(a); break;
         }
-        clause_index++;
     }
 
     // Collect the resulting value and put it into the output array
