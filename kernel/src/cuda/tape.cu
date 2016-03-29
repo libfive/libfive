@@ -38,17 +38,16 @@
  *              for the a and b arguments
  *      X, Y, Z are pointers into device memory storing coordinates
  *      out is a pointer into device memory for the output
- *      mem is a pointer into device memory for scratch results
- *          It should be clauses * blocks * threads * sizeof(float) in size
  *      clauses is the number of clauses to be evaluated
+ *      root is the clause number to be copied to output
  */
 __global__ void eval(uint32_t const* tape,
                      float const* X, float const* Y, float const* Z,
-                     float* out, uint32_t root)
+                     float* out, uint32_t clauses, uint32_t root)
 {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
 
-    // This is our local slice of the big memory buffer
+    // This is our local slice of memory used to store clause results
     float local[TapeAccelerator::NUM_CLAUSES];
 
     // Load coordinates into the buffer
@@ -59,7 +58,7 @@ __global__ void eval(uint32_t const* tape,
     // First three opcodes are dummies for X, Y, Z coordinates
     int i=3;
     int j=3;
-    while(tape[i])
+    while(j < clauses)
     {
         // Grab the next opcode from the tape
         uint32_t opcode = tape[i++];
@@ -206,7 +205,6 @@ void TapeAccelerator::reloadTape()
             }
         }
     }
-    tape.push_back(0);
 
     assert(addr.count(evaluator->root));
     root = addr[evaluator->root];
@@ -230,7 +228,7 @@ float* TapeAccelerator::values(size_t count)
     int threads = 256;
     int blocks = (count + threads - 1) / threads;
 
-    eval<<<blocks, threads>>>(tape_d, X_d, Y_d, Z_d, out_d, root);
+    eval<<<blocks, threads>>>(tape_d, X_d, Y_d, Z_d, out_d, clauses, root);
 
     return out_d;
 }
