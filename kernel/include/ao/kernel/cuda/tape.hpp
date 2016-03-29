@@ -43,7 +43,7 @@ public:
     static constexpr size_t NUM_CLAUSES = 2048;
 
     /*  This is the number of threads executing in one CUDA block  */
-    static constexpr size_t THREADS_PER_BLOCK = 256;
+    static constexpr size_t THREADS_PER_BLOCK = 1024;
 
 protected:
     /*  Length of the tape  */
