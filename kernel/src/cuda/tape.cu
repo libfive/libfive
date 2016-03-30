@@ -21,20 +21,21 @@
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/eval/clause.hpp"
 
-#define ARG_A_IMM 0x100
-#define ARG_A_MEM 0x200
+#define ARG_A_CONST 0x100
+#define ARG_A_MEM   0x200
 
-#define ARG_B_IMM 0x1000
-#define ARG_B_MEM 0x2000
+#define ARG_B_CONST 0x1000
+#define ARG_B_MEM   0x2000
 
 /*  This is the tape that the evaluator uses  */
-__constant__ int tape_d[TapeAccelerator::NUM_CLAUSES * 3];
+__constant__ int tape_d[TapeAccelerator::NUM_CLAUSES * 2];
+__constant__ float constants_d[TapeAccelerator::NUM_CONSTANTS];
 
 /*
  *  Evaluate a single point (see eval below for details)
  */
 __device__ float eval_single(float x, float y, float z,
-                             uint32_t tape_size, uint32_t root)
+                             uint32_t clause_count, uint32_t root)
 {
     // This is our local slice of memory used to store clause results
     float local[TapeAccelerator::NUM_CLAUSES];
@@ -46,34 +47,37 @@ __device__ float eval_single(float x, float y, float z,
     // Make sure that the tape is ready for use
     __syncthreads();
 
-    // First three opcodes are dummies for X, Y, Z coordinates
-    for (int tape_index=3, clause_index=3; tape_index < tape_size;
-         tape_index++, clause_index++)
+    // First three clauses are dummies for X, Y, Z coordinates
+    for (int clause_index=3; clause_index < clause_count; clause_index++)
     {
         // Grab the next opcode from the tape
-        uint32_t opcode = tape_d[tape_index];
+        uint32_t opcode = tape_d[2 * clause_index];
+        uint32_t   addr = tape_d[2 * clause_index + 1];
+
+        uint16_t a_addr = addr & 0xFFFF;
+        uint16_t b_addr = (addr >> 16) & 0xFFFF;
 
         // These are the values that we'll do math on
         float a, b;
 
         // Read arguments if present, selecting either from an immediate
         // argument (i.e. an inline float) or an address in the local mem
-        if (opcode & ARG_A_IMM)
+        if (opcode & ARG_A_CONST)
         {
-            a = ((float*)tape_d)[++tape_index];
+            a = constants_d[a_addr];
         }
         else if (opcode & ARG_A_MEM)
         {
-            a = local[tape_d[++tape_index]];
+            a = local[a_addr];
         }
 
-        if (opcode & ARG_B_IMM)
+        if (opcode & ARG_B_CONST)
         {
-            b = ((float*)tape_d)[++tape_index];
+            b = constants_d[b_addr];
         }
         else if (opcode & ARG_B_MEM)
         {
-            b = local[tape_d[++tape_index]];
+            b = local[b_addr];
         }
 
         switch (opcode & 0xFF)
@@ -128,14 +132,14 @@ __device__ float eval_single(float x, float y, float z,
  *      root is the clause number to be copied to output
  */
 __global__ void eval(float const* X, float const* Y, float const* Z,
-                     float* out, uint32_t tape_size, uint32_t root)
+                     float* out, uint32_t clause_count, uint32_t root)
 {
     // Index of this piece of work in the global space
     int index = threadIdx.x + blockIdx.x * blockDim.x;
 
     // Evaluate the expression on the target coordinates
     out[index] = eval_single(X[index], Y[index], Z[index],
-                             tape_size, root);
+                             clause_count, root);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -155,33 +159,45 @@ TapeAccelerator::TapeAccelerator(Evaluator* e)
 void TapeAccelerator::reloadTape()
 {
     // Construct the tape!
-    std::vector<uint32_t> tape;
+    std::vector<uint32_t> tape = {OP_X, 0, OP_Y, 0, OP_Z, 0};
+    std::vector<float> constants;
 
-    tape.push_back(OP_X);
-    tape.push_back(OP_Y);
-    tape.push_back(OP_Z);
-    size_t clauses = 3;
+    clause_count = 3;
 
-    std::unordered_map<Clause*, uint32_t> addr =
+    // clause_addr stores addresses of normal clauses
+    std::unordered_map<Clause*, uint32_t> clause_addr =
         {{evaluator->X, 0}, {evaluator->Y, 1}, {evaluator->Z, 2}};
+
+    // const_addr maps from constant values to addresses
+    std::unordered_map<float, uint32_t> const_addr;
 
     for (const auto& r : evaluator->rows)
     {
         for (size_t i=0; i < r.active; ++i)
         {
             Clause* c = r[i];
+
             uint32_t op = c->op;
-            addr[c] = clauses++;
+            uint32_t addr = 0;
+
+            clause_addr[c] = clause_count++;
 
             if (c->a)
             {
                 if (c->a->op == OP_CONST)
                 {
-                    op |= ARG_A_IMM;
+                    if (const_addr.count(c->a->value) == 0)
+                    {
+                        const_addr[c->a->value] = constants.size();
+                        constants.push_back(c->a->value);
+                    }
+                    op |= ARG_A_CONST;
+                    addr |= const_addr[c->a->value];
                 }
                 else
                 {
                     op |= ARG_A_MEM;
+                    addr |= clause_addr[c->a];
                 }
             }
 
@@ -189,47 +205,44 @@ void TapeAccelerator::reloadTape()
             {
                 if (c->b->op == OP_CONST)
                 {
-                    op |= ARG_B_IMM;
+                    if (const_addr.count(c->b->value) == 0)
+                    {
+                        const_addr[c->b->value] = constants.size();
+                        constants.push_back(c->b->value);
+                    }
+                    op |= ARG_B_CONST;
+                    addr |= (const_addr[c->b->value] << 16);
                 }
                 else
                 {
                     op |= ARG_B_MEM;
+                    addr |= (clause_addr[c->b] << 16);
                 }
             }
 
             tape.push_back(op);
-            if (op & ARG_A_IMM)
-            {
-                tape.push_back(*(uint32_t*)&c->a->value);
-            }
-            else if (op & ARG_A_MEM)
-            {
-                tape.push_back(addr[c->a]);
-            }
-
-            if (op & ARG_B_IMM)
-            {
-                tape.push_back(*(uint32_t*)&c->b->value);
-            }
-            else if (op & ARG_B_MEM)
-            {
-                tape.push_back(addr[c->b]);
-            }
+            tape.push_back(addr);
         }
     }
 
-    assert(addr.count(evaluator->root));
-    root = addr[evaluator->root];
+    assert(clause_addr.count(evaluator->root));
+    root = clause_addr[evaluator->root];
 
-    // Save the tape's size and copy it over to the GPU
-    tape_size = tape.size();
-    size_t tape_bytes = tape_size * sizeof(uint32_t);
-    auto i = cudaMemcpyToSymbol(tape_d, &tape[0], tape_bytes);
+    // Make sure that we didn't run out space in our global arrays
+    assert(clause_count <= NUM_CLAUSES);
+    assert(constants.size() <= NUM_CONSTANTS);
+
+    // Copy the tape over to the GPU
+    cudaMemcpyToSymbol(tape_d, &tape[0], tape.size() * sizeof(uint32_t));
+
+    // Copy the constant array to the GPU
+    cudaMemcpyToSymbol(constants_d, &constants[0],
+                       constants.size() * sizeof(float));
 }
 
 TapeAccelerator::~TapeAccelerator()
 {
-    for (auto& ptr : {X_d, Y_d, Z_d, out_d, out_d})
+    for (auto& ptr : {X_d, Y_d, Z_d, out_d})
     {
         cudaFree(ptr);
     }
@@ -240,7 +253,7 @@ float* TapeAccelerator::values(size_t count)
     int blocks = (count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
     eval<<<blocks, THREADS_PER_BLOCK>>>(
-            X_d, Y_d, Z_d, out_d, tape_size, root);
+            X_d, Y_d, Z_d, out_d, clause_count, root);
 
     return out_d;
 }

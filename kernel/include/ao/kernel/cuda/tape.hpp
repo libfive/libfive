@@ -41,13 +41,14 @@ public:
     /*  This is the maximum number of clauses we can evaluate in a single
      *  pass (due to limited local per-thread memory)   */
     static constexpr size_t NUM_CLAUSES = 2048;
+    static constexpr size_t NUM_CONSTANTS = 2048;
 
     /*  This is the number of threads executing in one CUDA block  */
     static constexpr size_t THREADS_PER_BLOCK = 1024;
 
 protected:
-    /*  Length of the tape  */
-    size_t tape_size = 0;
+    /*  Number of clauses in the tape  */
+    size_t clause_count = 0;
 
     /*  Memory address of root token  */
     uint32_t root;
