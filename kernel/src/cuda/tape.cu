@@ -31,11 +31,13 @@
 __constant__ int tape_d[TapeAccelerator::NUM_CLAUSES * 2];
 __constant__ float constants_d[TapeAccelerator::NUM_CONSTANTS];
 
+__constant__ uint32_t clause_count_d;
+__constant__ uint32_t tree_root_d;
+
 /*
  *  Evaluate a single point (see eval below for details)
  */
-__device__ float eval_single(float x, float y, float z,
-                             uint32_t clause_count, uint32_t root)
+__device__ float eval_single(float x, float y, float z)
 {
     // This is our local slice of memory used to store clause results
     float local[TapeAccelerator::NUM_CLAUSES];
@@ -48,7 +50,7 @@ __device__ float eval_single(float x, float y, float z,
     __syncthreads();
 
     // First three clauses are dummies for X, Y, Z coordinates
-    for (int clause_index=3; clause_index < clause_count; clause_index++)
+    for (int clause_index=3; clause_index < clause_count_d; clause_index++)
     {
         // Grab the next opcode from the tape
         uint32_t opcode = tape_d[2 * clause_index];
@@ -112,7 +114,7 @@ __device__ float eval_single(float x, float y, float z,
         }
     }
 
-    return local[root];
+    return local[tree_root_d];
 }
 
 /*
@@ -132,14 +134,13 @@ __device__ float eval_single(float x, float y, float z,
  *      root is the clause number to be copied to output
  */
 __global__ void eval(float const* X, float const* Y, float const* Z,
-                     float* out, uint32_t clause_count, uint32_t root)
+                     float* out)
 {
     // Index of this piece of work in the global space
     int index = threadIdx.x + blockIdx.x * blockDim.x;
 
     // Evaluate the expression on the target coordinates
-    out[index] = eval_single(X[index], Y[index], Z[index],
-                             clause_count, root);
+    out[index] = eval_single(X[index], Y[index], Z[index]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -162,7 +163,7 @@ void TapeAccelerator::reloadTape()
     std::vector<uint32_t> tape = {OP_X, 0, OP_Y, 0, OP_Z, 0};
     std::vector<float> constants;
 
-    clause_count = 3;
+    uint32_t clause_count = 3;
 
     // clause_addr stores addresses of normal clauses
     std::unordered_map<Clause*, uint32_t> clause_addr =
@@ -226,7 +227,6 @@ void TapeAccelerator::reloadTape()
     }
 
     assert(clause_addr.count(evaluator->root));
-    root = clause_addr[evaluator->root];
 
     // Make sure that we didn't run out space in our global arrays
     assert(clause_count <= NUM_CLAUSES);
@@ -238,6 +238,11 @@ void TapeAccelerator::reloadTape()
     // Copy the constant array to the GPU
     cudaMemcpyToSymbol(constants_d, &constants[0],
                        constants.size() * sizeof(float));
+
+    // Deploy clause count and root address to GPU memory
+    uint32_t root = clause_addr[evaluator->root];
+    cudaMemcpyToSymbol(clause_count_d, &clause_count, sizeof(clause_count));
+    cudaMemcpyToSymbol(tree_root_d, &root, sizeof(root));
 }
 
 TapeAccelerator::~TapeAccelerator()
@@ -251,9 +256,7 @@ TapeAccelerator::~TapeAccelerator()
 float* TapeAccelerator::values(size_t count)
 {
     int blocks = (count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-
-    eval<<<blocks, THREADS_PER_BLOCK>>>(
-            X_d, Y_d, Z_d, out_d, clause_count, root);
+    eval<<<blocks, THREADS_PER_BLOCK>>>(X_d, Y_d, Z_d, out_d);
 
     return out_d;
 }

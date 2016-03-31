@@ -47,12 +47,6 @@ public:
     static constexpr size_t THREADS_PER_BLOCK = 1024;
 
 protected:
-    /*  Number of clauses in the tape  */
-    size_t clause_count = 0;
-
-    /*  Memory address of root token  */
-    uint32_t root;
-
     /*  Shorter data array used to store results  */
     float* out_d;
 };
