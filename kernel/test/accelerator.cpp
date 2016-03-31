@@ -22,6 +22,7 @@
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/cuda/multikernel.hpp"
 #include "ao/kernel/cuda/tape.hpp"
+#include "ao/kernel/render/region.hpp"
 
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/store.hpp"
@@ -143,6 +144,26 @@ TEST_CASE("Vectorized sponge")
 {
     testSponge<TapeAccelerator>();
     testSpongeSpeed<TapeAccelerator>(500);
+}
+
+TEST_CASE("TapeAccelerator::render")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+                                   s.operation(OP_MUL, s.Z(), s.Z())),
+               s.constant(1)));
+
+    Evaluator e(&t);
+    TapeAccelerator a(&e);
+
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
+    a.allocateImage(r);
+
+    a.render(r.view());
+    a.getImage();
 }
 
 #endif

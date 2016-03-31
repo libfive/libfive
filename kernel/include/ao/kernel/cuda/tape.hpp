@@ -20,11 +20,29 @@
 
 #include "ao/kernel/cuda/accelerator.hpp"
 
+class Region;
+class Subregion;
+
 class TapeAccelerator : public Accelerator
 {
 public:
     TapeAccelerator(Evaluator* e);
     ~TapeAccelerator();
+
+    /*
+     *  Allocates a width x height image for the given region
+     *
+     *  The device memory is stored in image_d and the image's stride
+     *  (number of points per row) is in image_stride
+     */
+    void allocateImage(const Region& r);
+
+    /*
+     *  Renders a particular subregion to image_d
+     */
+    void render(const Subregion& r);
+
+    void getImage() const;
 
     /*
      *  Evaluates a certain number of values, returning a
@@ -49,4 +67,9 @@ public:
 protected:
     /*  Shorter data array used to store results  */
     float* out_d;
+
+    /*  Target image and image stride  */
+    uint32_t* image_d=nullptr;
+    uint32_t image_width=0;
+    uint32_t image_height=0;
 };

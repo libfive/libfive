@@ -16,10 +16,13 @@
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <iostream>
+
 #include "ao/kernel/cuda/tape.hpp"
 
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/eval/clause.hpp"
+#include "ao/kernel/render/region.hpp"
 
 #define ARG_A_CONST 0x100
 #define ARG_A_MEM   0x200
@@ -143,6 +146,44 @@ __global__ void eval(float const* X, float const* Y, float const* Z,
     out[index] = eval_single(X[index], Y[index], Z[index]);
 }
 
+__global__ void eval_region(float xmin, float xmax, int imin, int ni,
+                            float ymin, float ymax, int jmin, int nj,
+                            float zmin, float zmax, int kmin, int nk,
+                            uint32_t* image, uint32_t stride)
+{
+    // Index of this piece of work in the global space
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+    int i = index / (nj * nk);
+    int j = (index / nk) % nj;
+    int k = index % nk;
+
+    // Abort if we're too beyond the bounds of reason
+    if (i > ni)
+    {
+        return;
+    }
+
+    // Find our global coordinates
+    float x_frac = (i + 0.5f) / ni;
+    float x = xmin * (1.0f - x_frac) + xmax * x_frac;
+
+    float y_frac = (j + 0.5f) / nj;
+    float y = ymin * (1.0f - y_frac) + ymax * y_frac;
+
+    float z_frac = (k + 0.5f) / nk;
+    float z = zmin * (1.0f - z_frac) + zmax * z_frac;
+
+    // Evaluate the expression on the target coordinates
+    float out = eval_single(x, y, z);
+
+    // If this reading is less than zero, update the heightmap
+    if (out < 0)
+    {
+        atomicMax(&image[imin + i + (jmin + j) * stride], k);
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 TapeAccelerator::TapeAccelerator(Evaluator* e)
@@ -250,6 +291,50 @@ TapeAccelerator::~TapeAccelerator()
     for (auto& ptr : {X_d, Y_d, Z_d, out_d})
     {
         cudaFree(ptr);
+    }
+
+    if (image_d)
+    {
+        cudaFree(image_d);
+    }
+}
+
+void TapeAccelerator::allocateImage(const Region& r)
+{
+    image_width = r.X.values.size();
+    image_height = r.Y.values.size();
+
+    size_t bytes = image_width * image_height * sizeof(uint32_t);
+    cudaMalloc(&image_d, bytes);
+    cudaMemset(image_d, 0,  bytes);
+}
+
+void TapeAccelerator::render(const Subregion& r)
+{
+    assert(r.voxels() <= N);
+
+    int blocks = (r.voxels() + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    eval_region<<<blocks, THREADS_PER_BLOCK>>>(
+        r.X.lower(), r.X.upper(), r.X.min, r.X.size,
+        r.Y.lower(), r.Y.upper(), r.Y.min, r.Y.size,
+        r.Z.lower(), r.Z.upper(), r.Z.min, r.Z.size,
+        image_d, image_width);
+}
+
+void TapeAccelerator::getImage() const
+{
+    auto out = new uint32_t[image_width * image_height];
+
+    cudaMemcpy(out, image_d,
+               image_width * image_height * sizeof(uint32_t),
+               cudaMemcpyDeviceToHost);
+
+    int k=0;
+    for (int i=0; i < image_width; ++i)
+    {
+        for (int j=0; j < image_height; ++j)
+            std::cout << out[k++] << ' ';
+        std::cout << '\n';
     }
 }
 
