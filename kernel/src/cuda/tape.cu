@@ -301,10 +301,11 @@ TapeAccelerator::~TapeAccelerator()
 
 void TapeAccelerator::allocateImage(const Region& r)
 {
-    image_width = r.X.values.size();
-    image_height = r.Y.values.size();
+    image_dims = {r.X.values.size(), r.Y.values.size(), r.Z.values.size()};
+    image_min = {r.X.bounds.lower(), r.Y.bounds.lower(), r.Z.bounds.lower()};
+    image_max = {r.X.bounds.upper(), r.Y.bounds.upper(), r.Z.bounds.upper()};
 
-    size_t bytes = image_width * image_height * sizeof(uint32_t);
+    size_t bytes = image_dims.x * image_dims.y * sizeof(uint32_t);
     cudaMalloc(&image_d, bytes);
     cudaMemset(image_d, 0,  bytes);
 }
@@ -318,21 +319,21 @@ void TapeAccelerator::render(const Subregion& r)
         r.X.lower(), r.X.upper(), r.X.min, r.X.size,
         r.Y.lower(), r.Y.upper(), r.Y.min, r.Y.size,
         r.Z.lower(), r.Z.upper(), r.Z.min, r.Z.size,
-        image_d, image_width);
+        image_d, image_dims.x);
 }
 
 void TapeAccelerator::getImage() const
 {
-    auto out = new uint32_t[image_width * image_height];
+    auto out = new uint32_t[image_dims.x * image_dims.y];
 
     cudaMemcpy(out, image_d,
-               image_width * image_height * sizeof(uint32_t),
+               image_dims.x * image_dims.y * sizeof(uint32_t),
                cudaMemcpyDeviceToHost);
 
     int k=0;
-    for (int i=0; i < image_width; ++i)
+    for (int i=0; i < image_dims.y; ++i)
     {
-        for (int j=0; j < image_height; ++j)
+        for (int j=0; j < image_dims.x; ++j)
             std::cout << out[k++] << ' ';
         std::cout << '\n';
     }

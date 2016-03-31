@@ -18,6 +18,10 @@
  */
 #pragma once
 
+#include <vector>
+
+#include "glm/vec3.hpp"
+
 #include "ao/kernel/cuda/accelerator.hpp"
 
 class Region;
@@ -68,8 +72,12 @@ protected:
     /*  Shorter data array used to store results  */
     float* out_d;
 
-    /*  Target image and image stride  */
+    /*  Target image (allocated memory on the device) */
     uint32_t* image_d=nullptr;
-    uint32_t image_width=0;
-    uint32_t image_height=0;
+
+    /*  Image corners in viewport space  */
+    glm::vec3 image_min, image_max;
+
+    /*  Image dimensions in voxels  */
+    glm::ivec3 image_dims;
 };
