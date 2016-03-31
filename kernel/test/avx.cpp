@@ -16,6 +16,8 @@
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <chrono>
+#include <cstring>
 #include <catch/catch.hpp>
 
 #include "ao/kernel/tree/store.hpp"

@@ -20,6 +20,7 @@
 
 #include <functional>
 #include <string>
+#include <memory>
 
 #include <efsw/include/efsw/efsw.hpp>
 

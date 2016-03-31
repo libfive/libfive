@@ -17,6 +17,7 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <numeric>
+#include <memory>
 
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/atom.hpp"
@@ -1013,7 +1014,11 @@ std::tuple<const float*, const float*,
                        count);
             }
         }
-        return {root->result.f, root->result.dx, root->result.dy, root->result.dz};
+        return std::tuple<const float*, const float*,
+                          const float*, const float*> {
+                            root->result.f, root->result.dx,
+                            root->result.dy, root->result.dz
+                          };
     }
 #else
 std::tuple<const float*, const float*,
@@ -1047,7 +1052,11 @@ std::tuple<const float*, const float*,
                    count);
         }
     }
-    return {root->result.f, root->result.dx, root->result.dy, root->result.dz};
+    return std::tuple<const float*, const float*,
+                      const float*, const float*> {
+                        root->result.f, root->result.dx,
+                        root->result.dy, root->result.dz
+                      };
 }
 
 Interval Evaluator::interval()

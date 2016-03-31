@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <utility>
+#include <functional>
 
 #include "ao/kernel/eval/interval.hpp"
 

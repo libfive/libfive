@@ -18,6 +18,7 @@
  */
 #include <stack>
 #include <vector>
+#include <cstddef>
 
 class Clause;
 
