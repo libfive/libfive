@@ -185,6 +185,31 @@ TEST_CASE("TapeAccelerator::render")
     REQUIRE((diff.abs() < EPSILON || diff != diff).all());
 }
 
+TEST_CASE("RenderCUDA")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+                                   s.operation(OP_MUL, s.Z(), s.Z())),
+               s.constant(1)));
+
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 13);
+    auto out_gpu = Heightmap::RenderCUDA(&t, r);
+
+    std::atomic_bool abort;
+    auto out_cpu = Heightmap::Render(&t, r, abort).first;
+    Image::SavePng("out_gpu.png", out_gpu);
+    Image::SavePng("out_cpu.png", out_cpu);
+
+    auto diff = out_gpu - out_cpu;
+    CAPTURE(out_gpu);
+    CAPTURE(out_cpu);
+    CAPTURE(diff);
+    REQUIRE((diff.abs() < EPSILON || diff != diff).all());
+}
+
 TEST_CASE("TapeAccelerator rendering of pruned tree")
 {
 
