@@ -42,11 +42,20 @@ public:
     void allocateImage(const Region& r);
 
     /*
+     *  Fills the given subregion
+     */
+    void fill(const Subregion& r);
+
+    /*
      *  Renders a particular subregion to image_d
      */
     void render(const Subregion& r);
 
-    void getImage() const;
+    /*
+     *  We can't compile Eigen with nvcc, so this returns a vector of
+     *  floats instead of a matrix.
+     */
+    std::vector<float> getImage() const;
 
     /*
      *  Evaluates a certain number of values, returning a

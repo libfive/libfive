@@ -17,11 +17,13 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <catch/catch.hpp>
-#include <cstdlib>
+#include <iostream>
+
+#include "ao/kernel/cuda/tape.hpp"
+#include "ao/kernel/cuda/heightmap.hpp"
 
 #include "ao/kernel/eval/evaluator.hpp"
-#include "ao/kernel/cuda/multikernel.hpp"
-#include "ao/kernel/cuda/tape.hpp"
+#include "ao/kernel/render/heightmap.hpp"
 #include "ao/kernel/render/region.hpp"
 
 #include "ao/kernel/tree/tree.hpp"
@@ -30,6 +32,9 @@
 #include "shapes.hpp"
 
 #ifdef USE_CUDA
+
+// Used for floating-point comparisons
+#define EPSILON 1e-6
 
 TEST_CASE("Vectorized evaluation")
 {
@@ -162,8 +167,32 @@ TEST_CASE("TapeAccelerator::render")
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
     a.allocateImage(r);
 
+    // Render this region through the accelerator
+    // (this will all be rendered in a single cycle, since it's below the
+    //  max voxel count for GPU evaluation)
     a.render(r.view());
-    a.getImage();
+    auto img = a.getImage();
+    Eigen::Map<DepthImage> out_gpu(img.data(), r.X.values.size(), r.Y.values.size());
+
+    // Do CPU-side rendering for a comparison
+    std::atomic_bool abort;
+    auto out_cpu = Heightmap::Render(&t, r, abort).first;
+
+    auto diff = out_gpu - out_cpu;
+    CAPTURE(out_gpu);
+    CAPTURE(out_cpu);
+    CAPTURE(diff);
+    REQUIRE((diff.abs() < EPSILON || diff != diff).all());
+}
+
+TEST_CASE("TapeAccelerator rendering of pruned tree")
+{
+
+}
+
+TEST_CASE("TapeAccelerator::fill")
+{
+
 }
 
 #endif

@@ -146,6 +146,24 @@ __global__ void eval(float const* X, float const* Y, float const* Z,
     out[index] = eval_single(X[index], Y[index], Z[index]);
 }
 
+__global__ void fill_region(int imin, int ni, int jmin, int nj,
+                            int kmax, uint32_t* image, uint32_t stride)
+{
+    // Index of this piece of work in the global space
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+    int i = index / nj;
+    int j = index % nj;
+
+    // Abort if we're outside of the target region
+    if (i >= ni)
+    {
+        return;
+    }
+
+    atomicMax(&image[imin + i + (jmin + j) * stride], kmax);
+}
+
 __global__ void eval_region(float xmin, float xmax, int imin, int ni,
                             float ymin, float ymax, int jmin, int nj,
                             float zmin, float zmax, int kmin, int nk,
@@ -159,7 +177,7 @@ __global__ void eval_region(float xmin, float xmax, int imin, int ni,
     int k = index % nk;
 
     // Abort if we're too beyond the bounds of reason
-    if (i > ni)
+    if (i >= ni)
     {
         return;
     }
@@ -322,21 +340,35 @@ void TapeAccelerator::render(const Subregion& r)
         image_d, image_dims.x);
 }
 
-void TapeAccelerator::getImage() const
+void TapeAccelerator::fill(const Subregion& r)
 {
-    auto out = new uint32_t[image_dims.x * image_dims.y];
+    auto pixels = r.X.size * r.Y.size;
 
-    cudaMemcpy(out, image_d,
+    int blocks = (pixels + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    fill_region<<<blocks, THREADS_PER_BLOCK>>>(
+        r.X.min, r.X.size, r.Y.min, r.Y.size,
+        r.Z.min + r.Z.size, image_d, image_dims.x);
+}
+
+std::vector<float> TapeAccelerator::getImage() const
+{
+    std::vector<uint32_t> ks;
+    ks.resize(image_dims.x * image_dims.y);
+
+    cudaMemcpy(ks.data(), image_d,
                image_dims.x * image_dims.y * sizeof(uint32_t),
                cudaMemcpyDeviceToHost);
 
-    int k=0;
-    for (int i=0; i < image_dims.y; ++i)
+    Region::Axis Z({image_min.z, image_max.z}, (size_t)image_dims.z);
+    std::vector<float> out;
+    out.reserve(ks.size());
+    for (auto k : ks)
     {
-        for (int j=0; j < image_dims.x; ++j)
-            std::cout << out[k++] << ' ';
-        std::cout << '\n';
+        out.push_back(k == 0 ? -std::numeric_limits<float>::infinity()
+                             : Z.values[k]);
     }
+
+    return out;
 }
 
 float* TapeAccelerator::values(size_t count)
