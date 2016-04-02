@@ -268,36 +268,11 @@ std::set<Token*> Store::findConnected(Token* root)
     return found;
 }
 
-Token* Store::collapseAffine(Token* root)
+Token* Store::rebuild(Token* root, std::set<Token*> pruned,
+                      std::map<Token*, Token*> changed)
 {
-    // If the tree isn't big enough to have any affine functions,
-    // then we can safely return right away
-    if (ops.size() < 4)
-    {
-        return root;
-    }
-
     // Deep copy of ops so that changes don't invalidate iterators
     decltype(ops) ops_ = ops;
-
-    // These are tokens that should be removed from the tree
-    std::set<Token*> pruned;
-
-    // Turn every AFFINE into a normal OP_ADD
-    // (with identity operations automatically cancelled out)
-    std::map<Token*, Token*> changed;
-    for (auto r : ops_[3][META_AFFINE])
-    {
-        changed[r.second] = operation(OP_ADD,
-                operation(OP_ADD,
-                    operation(OP_MUL, X(), r.second->a->a->b),
-                    operation(OP_MUL, Y(), r.second->a->b->b)),
-                operation(OP_ADD,
-                    operation(OP_MUL, Z(), r.second->b->a->b),
-                    r.second->b->b));
-
-        pruned.insert(r.second);
-    }
 
     // Iterate over weight levels from bottom to top
     for (const auto& weight : ops_)
@@ -348,4 +323,38 @@ Token* Store::collapseAffine(Token* root)
     }
 
     return changed.count(root) ? changed[root] : root;
+}
+
+Token* Store::collapseAffine(Token* root)
+{
+    // If the tree isn't big enough to have any affine functions,
+    // then we can safely return right away
+    if (ops.size() < 4)
+    {
+        return root;
+    }
+
+    // Deep copy of affine clauses so that changes don't invalidate iterators
+    auto afs = ops[3][META_AFFINE];
+
+    // These are tokens that should be removed from the tree
+    std::set<Token*> pruned;
+
+    // Turn every AFFINE into a normal OP_ADD
+    // (with identity operations automatically cancelled out)
+    std::map<Token*, Token*> changed;
+    for (auto r : afs)
+    {
+        changed[r.second] = operation(OP_ADD,
+                operation(OP_ADD,
+                    operation(OP_MUL, X(), r.second->a->a->b),
+                    operation(OP_MUL, Y(), r.second->a->b->b)),
+                operation(OP_ADD,
+                    operation(OP_MUL, Z(), r.second->b->a->b),
+                    r.second->b->b));
+
+        pruned.insert(r.second);
+    }
+
+    return rebuild(root, pruned, changed);
 }

@@ -95,6 +95,12 @@ protected:
      */
     Token* checkAffine(Opcode op, Token* a, Token* b);
 
+    /*
+     *  Rebuilds a tree from the base up, returning the new root
+     */
+    Token* rebuild(Token* root, std::set<Token*> pruned,
+                   std::map<Token*, Token*> changed);
+
     typedef std::pair<Token*, Token*> Key;
     typedef std::array<std::map<Key, Token*>, LAST_OP> Cache;
 
