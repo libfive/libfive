@@ -50,7 +50,7 @@ protected:
     /*  Opcode for this atom  */
     const Opcode op;
 
-    /*  Populated for OP_CONST atoms */
+    /*  Populated for CONST atoms */
     const float value;
 
     /*  Populated for operators with arguments */

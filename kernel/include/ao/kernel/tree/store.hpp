@@ -58,9 +58,9 @@ public:
     /*
      *  Return tokens for base variables
      */
-    Token* X() { return operation(OP_X); }
-    Token* Y() { return operation(OP_Y); }
-    Token* Z() { return operation(OP_Z); }
+    Token* X() { return operation(VAR_X); }
+    Token* Y() { return operation(VAR_Y); }
+    Token* Z() { return operation(VAR_Z); }
 
     /*
      *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)

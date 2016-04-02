@@ -31,7 +31,7 @@ Token::Token(Opcode op, Token* a, Token* b)
 }
 
 Token::Token(float v)
-    : op(OP_CONST), weight(0), value(v), a(nullptr), b(nullptr)
+    : op(CONST), weight(0), value(v), a(nullptr), b(nullptr)
 {
     // Nothing to do here
 }
@@ -40,10 +40,10 @@ size_t Token::args(Opcode op)
 {
     switch (op)
     {
-        case OP_CONST: // fallthrough
-        case OP_X:
-        case OP_Y:
-        case OP_Z:
+        case CONST: // fallthrough
+        case VAR_X:
+        case VAR_Y:
+        case VAR_Z:
             return 0;
 
         case OP_SQUARE: // fallthrough
@@ -68,12 +68,12 @@ size_t Token::args(Opcode op)
         case OP_ATAN2:
         case OP_MOD:
         case OP_NANFILL:
-        case AFFINE:
+        case META_AFFINE:
             return 2;
 
         case INVALID: // fallthrough
-        case OP_A:
-        case OP_B:
+        case DUMMY_A:
+        case DUMMY_B:
         case LAST_OP: return -1;
     }
 }

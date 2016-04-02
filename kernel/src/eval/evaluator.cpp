@@ -56,9 +56,9 @@ Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
 #endif
 
     // Allocate default X, Y, Z clauses
-    X = new (ptr++) Clause(OP_X);
-    Y = new (ptr++) Clause(OP_Y);
-    Z = new (ptr++) Clause(OP_Z);
+    X = new (ptr++) Clause(VAR_X);
+    Y = new (ptr++) Clause(VAR_Y);
+    Z = new (ptr++) Clause(VAR_Z);
 
     // Helper function to create a new clause in the data array
     std::unordered_map<const Atom*, Clause*> clauses;
@@ -73,7 +73,7 @@ Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
      */
     auto buildMatrixRow = [&](Opcode op)
     {
-        assert(op == OP_X || op == OP_Y || op == OP_Z);
+        assert(op == VAR_X || op == VAR_Y || op == VAR_Z);
         assert(X != nullptr && Y != nullptr && Z != nullptr);
         assert(rows.size() == 3);
 
@@ -86,7 +86,7 @@ Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
 
         // The matrix is built from the incoming transform matrix M
         // and is stored in the constants array
-        int row = op - OP_X;
+        int row = op - VAR_X;
         Clause* a  = new (ptr++) Clause(M[0][row]);
         Clause* b  = new (ptr++) Clause(M[1][row]);
         Clause* c  = new (ptr++) Clause(M[2][row]);
@@ -319,21 +319,21 @@ static void clause(Opcode op,
             out[i] = exp(a[i]);
             break;
 
-        case OP_A:
+        case DUMMY_A:
             EVAL_LOOP
             out[i] = a[i];
             break;
-        case OP_B:
+        case DUMMY_B:
             EVAL_LOOP
             out[i] = b[i];
             break;
 
         case INVALID:
-        case OP_CONST:
-        case OP_X:
-        case OP_Y:
-        case OP_Z:
-        case AFFINE:
+        case CONST:
+        case VAR_X:
+        case VAR_Y:
+        case VAR_Z:
+        case META_AFFINE:
         case LAST_OP: assert(false);
     }
 }
@@ -562,7 +562,7 @@ static void clause(Opcode op,
             }
             break;
 
-        case OP_A:
+        case DUMMY_A:
             EVAL_LOOP
             {
                 odx[i] = adx[i];
@@ -570,7 +570,7 @@ static void clause(Opcode op,
                 odz[i] = adz[i];
             }
             break;
-        case OP_B:
+        case DUMMY_B:
             EVAL_LOOP
             {
                 odx[i] = bdx[i];
@@ -579,11 +579,11 @@ static void clause(Opcode op,
             }
             break;
         case INVALID:
-        case OP_CONST:
-        case OP_X:
-        case OP_Y:
-        case OP_Z:
-        case AFFINE:
+        case CONST:
+        case VAR_X:
+        case VAR_Y:
+        case VAR_Z:
+        case META_AFFINE:
         case LAST_OP: assert(false);
     }
 }
@@ -636,11 +636,11 @@ static void clause(Opcode op,
             out[i] = _mm256_andnot_ps(a[i], _mm256_set1_ps(-0.0f));
             break;
 
-        case OP_A:
+        case DUMMY_A:
             EVAL_LOOP
             out[i] = a[i];
             break;
-        case OP_B:
+        case DUMMY_B:
             EVAL_LOOP
             out[i] = b[i];
             break;
@@ -663,11 +663,11 @@ static void clause(Opcode op,
             break;
 
         case INVALID:
-        case OP_CONST:
-        case OP_X:
-        case OP_Y:
-        case OP_Z:
-        case AFFINE:
+        case CONST:
+        case VAR_X:
+        case VAR_Y:
+        case VAR_Z:
+        case META_AFFINE:
         case LAST_OP: assert(false);
     }
 }
@@ -803,7 +803,7 @@ static void clause(Opcode op,
                         adz[i], _mm256_sub_ps(_mm256_setzero_ps(), adz[i]), cmp);
             }
             break;
-        case OP_A:
+        case DUMMY_A:
             EVAL_LOOP
             {
                 odx[i] = adx[i];
@@ -811,7 +811,7 @@ static void clause(Opcode op,
                 odz[i] = adz[i];
             }
             break;
-        case OP_B:
+        case DUMMY_B:
             EVAL_LOOP
             {
                 odx[i] = bdx[i];
@@ -849,11 +849,11 @@ static void clause(Opcode op,
             break;
 
         case INVALID:
-        case OP_CONST:
-        case OP_X:
-        case OP_Y:
-        case OP_Z:
-        case AFFINE:
+        case CONST:
+        case VAR_X:
+        case VAR_Y:
+        case VAR_Z:
+        case META_AFFINE:
         case LAST_OP: assert(false);
     }
 }
@@ -904,16 +904,16 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
         case OP_EXP:
             return boost::numeric::exp(a);
 
-        case OP_A:
+        case DUMMY_A:
             return a;
-        case OP_B:
+        case DUMMY_B:
             return b;
         case INVALID:
-        case OP_CONST:
-        case OP_X:
-        case OP_Y:
-        case OP_Z:
-        case AFFINE:
+        case CONST:
+        case VAR_X:
+        case VAR_Y:
+        case VAR_Z:
+        case META_AFFINE:
         case LAST_OP: assert(false);
     }
     return Interval();
@@ -932,18 +932,7 @@ const float* Evaluator::values(size_t count, bool vectorize)
         {
             for (size_t i=0; i < row.active; ++i)
             {
-                auto op = row[i]->op;
-
-                // Modify the opcode if parts of the tree are disabled
-                if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
-                {
-                    op = OP_B;
-                }
-                if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
-                {
-                    op = OP_A;
-                }
-
+                auto op = getOpcode(row[i]);
                 clause(op, row[i]->ptrs.a.mf, row[i]->ptrs.b.mf,
                            row[i]->result.mf, count);
             }
@@ -959,18 +948,7 @@ const float* Evaluator::values(size_t count)
     {
         for (size_t i=0; i < row.active; ++i)
         {
-            auto op = row[i]->op;
-
-            // Modify the opcode if parts of the tree are disabled
-            if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
-            {
-                op = OP_B;
-            }
-            if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
-            {
-                op = OP_A;
-            }
-
+            auto op = getOpcode(row[i]);
             clause(op, row[i]->ptrs.a.f, row[i]->ptrs.b.f,
                        row[i]->result.f, count);
         }
@@ -991,17 +969,7 @@ std::tuple<const float*, const float*,
         {
             for (size_t i=0; i < row.active; ++i)
             {
-                auto op = row[i]->op;
-
-                // Modify the opcode if parts of the tree are disabled
-                if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
-                {
-                    op = OP_B;
-                }
-                if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
-                {
-                    op = OP_A;
-                }
+                auto op = getOpcode(row[i]);
 
                 clause(op, row[i]->ptrs.a.mf, row[i]->ptrs.a.mdx,
                            row[i]->ptrs.a.mdy, row[i]->ptrs.a.mdz,
@@ -1029,17 +997,7 @@ std::tuple<const float*, const float*,
     {
         for (size_t i=0; i < row.active; ++i)
         {
-            auto op = row[i]->op;
-
-            // Modify the opcode if parts of the tree are disabled
-            if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
-            {
-                op = OP_B;
-            }
-            if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
-            {
-                op = OP_A;
-            }
+            auto op = getOpcode(row[i]);
 
             clause(op, row[i]->ptrs.a.f, row[i]->ptrs.a.dx,
                        row[i]->ptrs.a.dy, row[i]->ptrs.a.dz,
@@ -1065,20 +1023,10 @@ Interval Evaluator::interval()
     {
         for (size_t i=0; i < row.active; ++i)
         {
-            auto op = row[i]->op;
+            auto op = getOpcode(row[i]);
 
             Interval a = row[i]->a ? row[i]->a->result.i : Interval();
             Interval b = row[i]->b ? row[i]->b->result.i : Interval();
-
-            // Modify the opcode if parts of the tree are disabled
-            if (row[i]->a && row[i]->a->flags & CLAUSE_FLAG_DISABLED)
-            {
-                op = OP_B;
-            }
-            if (row[i]->b && row[i]->b->flags & CLAUSE_FLAG_DISABLED)
-            {
-                op = OP_A;
-            }
 
             row[i]->result.i = clause(op, a, b);
         }
@@ -1100,4 +1048,21 @@ double Evaluator::utilization() const
     }
 
     return active / total;
+}
+
+Opcode Evaluator::getOpcode(Clause* c)
+{
+    auto op = c->op;
+
+    // Modify the opcode if parts of the tree are disabled
+    if (c->a && c->a->flags & CLAUSE_FLAG_DISABLED)
+    {
+        op = DUMMY_B;
+    }
+    if (c->b && c->b->flags & CLAUSE_FLAG_DISABLED)
+    {
+        op = DUMMY_A;
+    }
+
+    return op;
 }

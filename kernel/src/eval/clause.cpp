@@ -82,14 +82,14 @@ Clause::Clause(Opcode op, float value, Clause* a, Clause* b)
     load_ptrs(&ptrs.b, b);
 
 
-    if (op == OP_CONST)
+    if (op == CONST)
     {
         result.fill(value);
     }
 }
 
 Clause::Clause(float c)
-    : Clause(OP_CONST, c)
+    : Clause(CONST, c)
 {
     // Nothing to do here
 }

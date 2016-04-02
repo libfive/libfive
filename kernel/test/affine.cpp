@@ -36,7 +36,7 @@ TEST_CASE("Affine math")
     {
         Token* t = s.operation(OP_ADD, s.affine(1, 0, 0, 0), s.constant(1));
 
-        REQUIRE(t->op == AFFINE);
+        REQUIRE(t->op == META_AFFINE);
         REQUIRE(affineVec(t) == glm::vec4(1, 0, 0, 1));
     }
 
@@ -44,7 +44,7 @@ TEST_CASE("Affine math")
     {
         Token* t = s.operation(OP_ADD, s.constant(2), s.affine(1, 0, 0, 0));
 
-        REQUIRE(t->op == AFFINE);
+        REQUIRE(t->op == META_AFFINE);
         REQUIRE(affineVec(t) == glm::vec4(1, 0, 0, 2));
     }
 
@@ -52,7 +52,7 @@ TEST_CASE("Affine math")
     {
         Token* t = s.operation(OP_ADD, s.affine(1, 2, 3, 4),
                                        s.affine(2, 4, 6, 8));
-        REQUIRE(t->op == AFFINE);
+        REQUIRE(t->op == META_AFFINE);
         REQUIRE(affineVec(t) == glm::vec4(3, 6, 9, 12));
     }
 
@@ -60,7 +60,7 @@ TEST_CASE("Affine math")
     {
         Token* t = s.operation(OP_SUB, s.affine(1, 0, 0, 0), s.constant(1));
 
-        REQUIRE(t->op == AFFINE);
+        REQUIRE(t->op == META_AFFINE);
         REQUIRE(affineVec(t) == glm::vec4(1, 0, 0, -1));
     }
 
@@ -68,7 +68,7 @@ TEST_CASE("Affine math")
     {
         Token* t = s.operation(OP_SUB, s.constant(2), s.affine(1, 0, 0, 0));
 
-        REQUIRE(t->op == AFFINE);
+        REQUIRE(t->op == META_AFFINE);
         REQUIRE(affineVec(t) == glm::vec4(-1, 0, 0, 2));
     }
 
@@ -76,28 +76,28 @@ TEST_CASE("Affine math")
     {
         Token* t = s.operation(OP_SUB, s.affine(1, 2, 3, 4),
                                        s.affine(2, 4, 6, 8));
-        REQUIRE(t->op == AFFINE);
+        REQUIRE(t->op == META_AFFINE);
         REQUIRE(affineVec(t) == glm::vec4(-1, -2, -3, -4));
     }
 
     SECTION("Affine times constant")
     {
         Token* t = s.operation(OP_MUL, s.affine(1, 2, 3, 4), s.constant(2));
-        REQUIRE(t->op == AFFINE);
+        REQUIRE(t->op == META_AFFINE);
         REQUIRE(affineVec(t) == glm::vec4(2, 4, 6, 8));
     }
 
     SECTION("Constant times affine")
     {
         Token* t = s.operation(OP_MUL, s.constant(2), s.affine(1, 2, 3, 4));
-        REQUIRE(t->op == AFFINE);
+        REQUIRE(t->op == META_AFFINE);
         REQUIRE(affineVec(t) == glm::vec4(2, 4, 6, 8));
     }
 
     SECTION("Affine divided by constant")
     {
         Token* t = s.operation(OP_DIV, s.affine(1, 2, 3, 4), s.constant(2));
-        REQUIRE(t->op == AFFINE);
+        REQUIRE(t->op == META_AFFINE);
         REQUIRE(affineVec(t) == glm::vec4(0.5, 1, 1.5, 2));
     }
 }
@@ -110,7 +110,7 @@ TEST_CASE("collapseAffine")
     {
         auto t = s.affine(1, 0, 0, 0);
         auto t_ = s.collapseAffine(t);
-        REQUIRE(t_->op == OP_X);
+        REQUIRE(t_->op == VAR_X);
         REQUIRE(t_->weight == 0);
     }
 
@@ -119,8 +119,8 @@ TEST_CASE("collapseAffine")
         auto t = s.affine(1, 1, 0, 0);
         auto t_ = s.collapseAffine(t);
         REQUIRE(t_->op == OP_ADD);
-        REQUIRE(t_->a->op == OP_X);
-        REQUIRE(t_->b->op == OP_Y);
+        REQUIRE(t_->a->op == VAR_X);
+        REQUIRE(t_->b->op == VAR_Y);
         REQUIRE(t_->weight == 1);
     }
 
@@ -132,11 +132,11 @@ TEST_CASE("collapseAffine")
         REQUIRE(t_->a->op == OP_MUL);
         REQUIRE(t_->b->op == OP_MUL);
 
-        REQUIRE(t_->a->a->op == OP_X);
-        REQUIRE(t_->a->b->op == OP_CONST);
+        REQUIRE(t_->a->a->op == VAR_X);
+        REQUIRE(t_->a->b->op == CONST);
         REQUIRE(t_->a->b->value == 2);
-        REQUIRE(t_->b->a->op == OP_Y);
-        REQUIRE(t_->b->b->op == OP_CONST);
+        REQUIRE(t_->b->a->op == VAR_Y);
+        REQUIRE(t_->b->b->op == CONST);
         REQUIRE(t_->b->b->value == 3);
     }
 
@@ -145,8 +145,8 @@ TEST_CASE("collapseAffine")
         auto t = s.affine(1, 0, 0, 3);
         auto t_ = s.collapseAffine(t);
         REQUIRE(t_->op == OP_ADD);
-        REQUIRE(t_->a->op == OP_X);
-        REQUIRE(t_->b->op == OP_CONST);
+        REQUIRE(t_->a->op == VAR_X);
+        REQUIRE(t_->b->op == CONST);
         REQUIRE(t_->b->value == 3);
     }
 

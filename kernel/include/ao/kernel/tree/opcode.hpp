@@ -22,10 +22,10 @@ enum Opcode
 {
     INVALID,
 
-    OP_CONST,
-    OP_X,
-    OP_Y,
-    OP_Z,
+    CONST,
+    VAR_X,
+    VAR_Y,
+    VAR_Z,
 
     OP_SQUARE,
     OP_SQRT,
@@ -57,13 +57,13 @@ enum Opcode
     //      MUL    MUL   MUL     C
     //    /   \   /  \  /   \
     //   X    C  Y   C  Z   C
-    // (where X, Y, Z are base coordinates and C is OP_CONST)
-    AFFINE,
+    // (where X, Y, Z are base coordinates and C is CONST)
+    META_AFFINE,
 
     // Dummy opcodes used to select the left or right-hand side of a function
     // (used when one of the children is disabled)
-    OP_A,
-    OP_B,
+    DUMMY_A,
+    DUMMY_B,
 
     LAST_OP,
 };

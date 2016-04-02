@@ -66,15 +66,15 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case OP_ATAN:    os << "atan(" << *atom.a << ")"; break;
         case OP_EXP:    os << "exp(" << *atom.a << ")"; break;
 
-        case OP_CONST:  os << atom.value; break;
-        case OP_X:      os << "X"; break;
-        case OP_Y:      os << "Y"; break;
-        case OP_Z:      os << "Z"; break;
+        case CONST:     os << atom.value; break;
+        case VAR_X:     os << "X"; break;
+        case VAR_Y:     os << "Y"; break;
+        case VAR_Z:     os << "Z"; break;
 
         case LAST_OP:   // Fallthrough!
-        case OP_A:
-        case OP_B:
-        case AFFINE:
+        case DUMMY_A:
+        case DUMMY_B:
+        case META_AFFINE:
         case INVALID:   assert(false);
     }
     return os;

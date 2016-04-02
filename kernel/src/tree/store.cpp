@@ -53,21 +53,21 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
 {
     if (op == OP_ADD)
     {
-        if (a->op == AFFINE && b->op == OP_CONST)
+        if (a->op == META_AFFINE && b->op == CONST)
         {
             return affine(a->a->a->b->value,
                           a->a->b->b->value,
                           a->b->a->b->value,
                           a->b->b->value + b->value);
         }
-        else if (b->op == AFFINE && a->op == OP_CONST)
+        else if (b->op == META_AFFINE && a->op == CONST)
         {
             return affine(b->a->a->b->value,
                           b->a->b->b->value,
                           b->b->a->b->value,
                           b->b->b->value + a->value);
         }
-        else if (a->op == AFFINE && b->op == AFFINE)
+        else if (a->op == META_AFFINE && b->op == META_AFFINE)
         {
             return affine(a->a->a->b->value + b->a->a->b->value,
                           a->a->b->b->value + b->a->b->b->value,
@@ -77,21 +77,21 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_SUB)
     {
-        if (a->op == AFFINE && b->op == OP_CONST)
+        if (a->op == META_AFFINE && b->op == CONST)
         {
             return affine(a->a->a->b->value,
                           a->a->b->b->value,
                           a->b->a->b->value,
                           a->b->b->value - b->value);
         }
-        else if (b->op == AFFINE && a->op == OP_CONST)
+        else if (b->op == META_AFFINE && a->op == CONST)
         {
             return affine(-b->a->a->b->value,
                           -b->a->b->b->value,
                           -b->b->a->b->value,
                           a->value - b->b->b->value);
         }
-        else if (a->op == AFFINE && b->op == AFFINE)
+        else if (a->op == META_AFFINE && b->op == META_AFFINE)
         {
             return affine(a->a->a->b->value - b->a->a->b->value,
                           a->a->b->b->value - b->a->b->b->value,
@@ -101,14 +101,14 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_MUL)
     {
-        if (a->op == AFFINE && b->op == OP_CONST)
+        if (a->op == META_AFFINE && b->op == CONST)
         {
             return affine(a->a->a->b->value * b->value,
                           a->a->b->b->value * b->value,
                           a->b->a->b->value * b->value,
                           a->b->b->value * b->value);
         }
-        else if (b->op == AFFINE && a->op == OP_CONST)
+        else if (b->op == META_AFFINE && a->op == CONST)
         {
             return affine(b->a->a->b->value * a->value,
                           b->a->b->b->value * a->value,
@@ -118,7 +118,7 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_DIV)
     {
-        if (a->op == AFFINE && b->op == OP_CONST)
+        if (a->op == META_AFFINE && b->op == CONST)
         {
             return affine(a->a->a->b->value / b->value,
                           a->a->b->b->value / b->value,
@@ -134,29 +134,29 @@ Token* Store::checkIdentity(Opcode op, Token* a, Token* b)
     // Special cases to handle identity operations
     if (op == OP_ADD)
     {
-        if (a->op == OP_CONST && a->value == 0)
+        if (a->op == CONST && a->value == 0)
         {
             return b;
         }
-        else if (b->op == OP_CONST && b->value == 0)
+        else if (b->op == CONST && b->value == 0)
         {
             return a;
         }
     }
     else if (op == OP_SUB)
     {
-        if (a->op == OP_CONST && a->value == 0)
+        if (a->op == CONST && a->value == 0)
         {
             return operation(OP_NEG, b);
         }
-        else if (b->op == OP_CONST && b->value == 0)
+        else if (b->op == CONST && b->value == 0)
         {
             return a;
         }
     }
     else if (op == OP_MUL)
     {
-        if (a->op == OP_CONST)
+        if (a->op == CONST)
         {
             if (a->value == 0)
             {
@@ -167,7 +167,7 @@ Token* Store::checkIdentity(Opcode op, Token* a, Token* b)
                 return b;
             }
         }
-        if (b->op == OP_CONST)
+        if (b->op == CONST)
         {
             if (b->value == 0)
             {
@@ -185,8 +185,8 @@ Token* Store::checkIdentity(Opcode op, Token* a, Token* b)
 Token* Store::operation(Opcode op, Token* a, Token* b, bool collapse)
 {
     // These are opcodes that you're not allowed to use here
-    assert(op != OP_CONST && op != INVALID &&
-           op != OP_A && op != OP_B && op != LAST_OP);
+    assert(op != CONST && op != INVALID &&
+           op != DUMMY_A && op != DUMMY_B && op != LAST_OP);
 
     // See if we can simplify the expression, either because it's an identity
     // operation (e.g. X + 0) or a linear combination of affine forms
@@ -227,7 +227,7 @@ Token* Store::affine(float a, float b, float c, float d)
 {
     // Build up the desired tree structure with collapse = false
     // to keep branches from automatically collapsing.
-    return operation(AFFINE,
+    return operation(META_AFFINE,
             operation(OP_ADD,
                 operation(OP_MUL, X(), constant(a), false),
                 operation(OP_MUL, Y(), constant(b), false), false),
@@ -286,7 +286,7 @@ Token* Store::collapseAffine(Token* root)
     // Turn every AFFINE into a normal OP_ADD
     // (with identity operations automatically cancelled out)
     std::map<Token*, Token*> changed;
-    for (auto r : ops_[3][AFFINE])
+    for (auto r : ops_[3][META_AFFINE])
     {
         changed[r.second] = operation(OP_ADD,
                 operation(OP_ADD,

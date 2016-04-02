@@ -112,6 +112,11 @@ public:
     double utilization() const;
 
 protected:
+    /*
+     *  Looks up an opcode, using dummy ops if children are disabled
+     */
+    static Opcode getOpcode(Clause* c);
+
     /*  All operations live in a set of rows sorted by weight */
     std::vector<Row> rows;
 

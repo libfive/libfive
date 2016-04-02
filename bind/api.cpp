@@ -100,7 +100,7 @@ Token* token_binary(Store* s, int op, Token* a, Token* b)
 
 int token_affine_vec(Token* t, v4* vec)
 {
-    if (t->op == AFFINE)
+    if (t->op == META_AFFINE)
     {
         *vec = {t->a->a->b->value,
                 t->a->b->b->value,
