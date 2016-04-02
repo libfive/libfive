@@ -29,6 +29,21 @@
 ;; Store object (created in C++ with store_new)
 (define store #nil)
 
+;; Nested stores are pushed onto this stack
+(define stack '())
+
+(define (store-push)
+    "Pushes the existing store to the stack and creates a new store"
+    (set! stack (cons store stack))
+    (set! store (store-new)))
+
+(define (store-pop)
+    "Replaces the store with the top of the stack"
+    (set! store (car stack))
+    (set! stack (cdr stack)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; Converts the given argument to a token
 ;; Based on argument type, the following behavior occurs
 ;; - A number is converted to constant
@@ -53,22 +68,21 @@ A symbol and further arguments are converted to an operation"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (get-token f)
-    "Returns the root token for the given function
-    Requires that the caller erases the global store"
-    (set! store (store-new))
+(define (get-root-token f)
+    "Returns the root token for the given function"
     (let* ((x (token-x store))
            (y (token-y store))
-           (z (token-z store)))
-    (make-token (f x y z))))
+           (z (token-z store))
+           (out (make-token (f x y z))))
+        out))
 
 (define* (jit f #:key (manage #t))
     "Compile an arithmetic lambda function to a bare tree pointer
     If manage is #t (default), attaches a finalizer to the output"
-    (let* ((root (get-token f))
+    (store-push)
+    (let* ((root (get-root-token f))
            (out (tree-new store root)))
-        (store-delete store)
-        (set! store #nil)
+        (store-pop)
         (if manage (tree-attach-finalizer out) out)))
 (export jit)
 
@@ -80,8 +94,8 @@ A symbol and further arguments are converted to an operation"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (affine-vec f)
-    (let* ((root (get-token f))
+    (store-push)
+    (let* ((root (get-root-token f))
            (result (token-affine-vec root)))
-        (store-delete store)
-        (set! store #nil)
+        (store-pop)
         result))

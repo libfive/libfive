@@ -58,14 +58,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (store-new)
+(define (store-new-raw)
     (wrap-store ((pointer->procedure
     '* (get-function "store_new") '()))))
+
+(define-public (store-new)
+    (store-attach-finalizer (store-new-raw)))
 
 (define-public (store-delete s)
     ((pointer->procedure
     void (get-function "store_delete") '(*))
         (unwrap-store s)))
+
+(define-public (store-attach-finalizer s)
+    "Attaches store_delete to a wrapped Store pointer"
+    (wrap-store (make-pointer
+        (pointer-address (unwrap-store s))
+        (get-function "store_delete"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -29,10 +29,10 @@
     (lambda coords
         (let ((x fx)
               (y fy)
-              (z fz))
-              ;(vx (affine-vec (lambda coords fx)))
-              ;(vy (affine-vec (lambda coords fy)))
-              ;(vz (affine-vec (lambda coords fz))))
+              (z fz)
+              (vx (affine-vec (lambda coords fx)))
+              (vy (affine-vec (lambda coords fy)))
+              (vz (affine-vec (lambda coords fz))))
         (shape x y z))))
 (export apply-transform)
 
