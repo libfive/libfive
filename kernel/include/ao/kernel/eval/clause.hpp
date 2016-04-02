@@ -82,7 +82,7 @@ protected:
     /*  Opcode for this clause  */
     const Opcode op;
 
-    /*  Populated for OP_CONST clause */
+    /*  Populated for CONST clause */
     const float value;
 
     /*  Flags are set during evaluation for various purposes  */

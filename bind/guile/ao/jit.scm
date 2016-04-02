@@ -51,32 +51,37 @@ A symbol and further arguments are converted to an operation"
                                      (make-token (cadr args))))
         (else (error "Incorrect argument count to make-token")))))
 
-(define* (jit f #:key (manage #t))
-    "Compile an arithmetic lambda function to a bare tree pointer
-    If manage is #t (default), attaches a finalizer to the output"
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (get-token f)
+    "Returns the root token for the given function
+    Requires that the caller erases the global store"
     (set! store (store-new))
     (let* ((x (token-x store))
            (y (token-y store))
-           (z (token-z store))
-           (root (make-token (f x y z)))
+           (z (token-z store)))
+    (make-token (f x y z))))
+
+(define* (jit f #:key (manage #t))
+    "Compile an arithmetic lambda function to a bare tree pointer
+    If manage is #t (default), attaches a finalizer to the output"
+    (let* ((root (get-token f))
            (out (tree-new store root)))
         (store-delete store)
         (set! store #nil)
         (if manage (tree-attach-finalizer out) out)))
 (export jit)
 
-(define-public (affine-vec f)
-    (set! store (store-new))
-    (let* ((x (token-x store))
-           (y (token-y store))
-           (z (token-z store))
-           (root (make-token (f x y z)))
-           (result (token-affine-vec root)))
-        (store-delete store)
-        (set! store #nil)
-        result))
-
 (define-public (jit-function f)
     "Compile and arithmetic lambda function to a wrapped math function"
     (let ((t (jit f)))
     (lambda (x y z) (tree-eval-double t x y z))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-public (affine-vec f)
+    (let* ((root (get-token f))
+           (result (token-affine-vec root)))
+        (store-delete store)
+        (set! store #nil)
+        result))
