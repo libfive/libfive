@@ -176,8 +176,9 @@ __global__ void eval_region(float xmin, float xmax, int imin, int ni,
     int j = (index / nk) % nj;
     int k = index % nk;
 
-    // Abort if we're too beyond the bounds of reason
-    if (i >= ni)
+    // Abort if we're outside of the render area or if this thread
+    // has no chance to change the result
+    if (i >= ni || image[imin + i + (jmin + j) * stride] > k + kmin)
     {
         return;
     }
@@ -198,7 +199,7 @@ __global__ void eval_region(float xmin, float xmax, int imin, int ni,
     // If this reading is less than zero, update the heightmap
     if (out < 0)
     {
-        atomicMax(&image[imin + i + (jmin + j) * stride], k);
+        atomicMax(&image[imin + i + (jmin + j) * stride], k + kmin);
     }
 }
 
