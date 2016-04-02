@@ -58,8 +58,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define c_store_new (get-function "store_new"))
-
 (define-public (store-new)
     (wrap-store ((pointer->procedure
     '* (get-function "store_new") '()))))

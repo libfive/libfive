@@ -72,7 +72,8 @@
 ;; Start the REPL running in a separate thread
 (define repl-thread (call-with-new-thread (lambda ()
     ; Import relevant modules
-    (use-modules (ao operators) (ao user) (ao export) (ao shapes))
+    (use-modules (ao operators) (ao user) (ao export)
+                 (ao shapes) (ao csg) (ao transforms))
 
     ; Clear display and print startup message
     (system "clear")
