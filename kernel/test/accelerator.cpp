@@ -195,18 +195,24 @@ TEST_CASE("RenderCUDA")
                                    s.operation(OP_MUL, s.Z(), s.Z())),
                s.constant(1)));
 
-    Region r({-1, 1}, {-1, 1}, {-1, 1}, 13);
-    auto out_gpu = Heightmap::RenderCUDA(&t, r);
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 500);
 
-    std::atomic_bool abort;
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> elapsed;
+    Heightmap::RenderCUDA(&t, r); // Warmup!
+    start = std::chrono::system_clock::now();
+    auto out_gpu = Heightmap::RenderCUDA(&t, r);
+    end = std::chrono::system_clock::now();
+    elapsed = end - start;
+
+    std::cout <<  "CUDA:" + std::to_string(elapsed.count()) + " sec\n";
+
+    std::atomic_bool abort(false);
     auto out_cpu = Heightmap::Render(&t, r, abort).first;
     Image::SavePng("out_gpu.png", out_gpu);
     Image::SavePng("out_cpu.png", out_cpu);
 
     auto diff = out_gpu - out_cpu;
-    CAPTURE(out_gpu);
-    CAPTURE(out_cpu);
-    CAPTURE(diff);
     REQUIRE((diff.abs() < EPSILON || diff != diff).all());
 }
 

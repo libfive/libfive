@@ -65,7 +65,6 @@ static void recurse(Evaluator* e, TapeAccelerator* a, const Subregion& r)
 
 DepthImage RenderCUDA(Tree* t, Region r, glm::mat4 m)
 {
-    auto depth = DepthImage(r.X.values.size(), r.Y.values.size());
     auto e = Evaluator(t, m);
     auto a = TapeAccelerator(&e);
 
