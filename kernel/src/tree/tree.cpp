@@ -31,7 +31,7 @@ Tree::Tree(Store* s, Token* root_token)
 {
     // Optimize the store by collapsing affine nodes, now that calculations
     // are done and we're packing it into a tree.
-    root_token = s->collapseAffine(root_token);
+    root_token = s->collapseMeta(root_token);
 
     // Get a set of Tokens that are connected to the root
     auto found = s->findConnected(root_token);

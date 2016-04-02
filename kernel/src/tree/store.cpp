@@ -422,3 +422,8 @@ Token* Store::collapseAffine(Token* root)
 
     return rebuild(root, pruned, changed);
 }
+
+Token* Store::collapseMeta(Token* root)
+{
+    return collapseBounds(collapseAffine(root));
+}

@@ -79,6 +79,13 @@ public:
     std::set<Token*> findConnected(Token* root);
 
     /*
+     *  Collapses all META_ tokens, returning the new root token
+     *
+     *  Invalidates all Token pointers.
+     */
+    Token* collapseMeta(Token* root);
+
+    /*
      *  Collapses BOUNDS nodes into normal OP_MAX, taking advantage of
      *  identity operations to make the tree smaller.  Returns the new root
      *  token (which may have changed).
