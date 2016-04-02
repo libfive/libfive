@@ -18,8 +18,7 @@
 |#
 (define-module (ao transforms))
 
-(use-modules (ao operators))
-(use-modules (ao jit))
+(use-modules (ao operators) (ao jit))
 
 (define-syntax-rule (apply-transform shape coords fx fy fz)
     "Applies a transform to a shape
@@ -30,9 +29,9 @@
         (let ((x fx)
               (y fy)
               (z fz)
-              (vx (affine-vec (lambda coords fx)))
-              (vy (affine-vec (lambda coords fy)))
-              (vz (affine-vec (lambda coords fz))))
+              (vx (get-affine-vec (lambda coords fx)))
+              (vy (get-affine-vec (lambda coords fy)))
+              (vz (get-affine-vec (lambda coords fz))))
         (shape x y z))))
 (export apply-transform)
 

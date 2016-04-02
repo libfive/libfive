@@ -66,6 +66,10 @@ A symbol and further arguments are converted to an operation"
                                      (make-token (cadr args))))
         (else (error "Incorrect argument count to make-token")))))
 
+
+(define-public (make-bounds-token shape lower upper)
+    (token-bounded store shape lower upper))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (get-root-token f)
@@ -93,9 +97,23 @@ A symbol and further arguments are converted to an operation"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (affine-vec f)
+(define-public (get-affine-vec f)
+    "get-affine-vec f
+    f should be a function of the form (lambda (x y z) ...)
+    If the result is an affine combination a*x + b*y + c*z + d, returns
+    '(a b c d); otherwise, returns #f"
     (store-push)
     (let* ((root (get-root-token f))
            (result (token-affine-vec root)))
+        (store-pop)
+        result))
+
+(define-public (get-bounds f)
+    "get-bounds f
+    If f is wrapped with set-bounds, returns the bounds in the form
+    '((xmin ymin zmin) (xmax ymax zmax)); otherwise, returns #f"
+    (store-push)
+    (let* ((root (get-root-token f))
+           (result (token-bounds root)))
         (store-pop)
         result))

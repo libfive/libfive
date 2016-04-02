@@ -18,8 +18,7 @@
 |#
 (define-module (ao shapes))
 
-(use-modules (ao operators))
-(use-modules (ao transforms))
+(use-modules (ao operators) (ao transforms) (ao csg))
 
 (define-public pi 3.1415926)
 

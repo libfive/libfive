@@ -51,10 +51,12 @@
 ;; Cached function lookup in libao
 (define get-function
     (let ((cache (make-hash-table)))
-    (lambda (f) (or (hash-ref cache f)
-                    (let ((ptr (dynamic-func f libao)))
-                         (hash-set! cache f ptr)
-                         ptr)))))
+    (lambda (f)
+        "Look up a function in libao, with caching"
+        (or (hash-ref cache f)
+            (let ((ptr (dynamic-func f libao)))
+                 (hash-set! cache f ptr)
+                 ptr)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -79,6 +81,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (opcode->int op)
+    "opcode->int op
+    Converts an opcode (which should be a symbol, e.g. 'add)
+    into an integer representing its enum value"
     ((pointer->procedure
         int (get-function "opcode_enum") '(*))
     (string->pointer (symbol->string op))))
@@ -86,32 +91,60 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (token-x s)
+    "token-x store
+    Constructs a X token in the given Store"
     (wrap-token ((pointer->procedure
     '* (get-function "token_x") '(*)) (unwrap-store s))))
 
 (define-public (token-y s)
+    "token-y store
+    Constructs a Y token in the given Store"
     (wrap-token ((pointer->procedure
     '* (get-function "token_y") '(*)) (unwrap-store s))))
 
 (define-public (token-z s)
+    "token-z store
+    Constructs a Z token in the given Store"
     (wrap-token ((pointer->procedure
     '* (get-function "token_z") '(*)) (unwrap-store s))))
 
 (define-public (token-const s v)
+    "token-const store value
+    Constructs a constant token in the given Store"
     (wrap-token ((pointer->procedure
     '* (get-function "token_const") (list '* float)) (unwrap-store s) v)))
 
 (define-public (token-op-unary s op a)
+    "token-op-unary store opcode a
+    Constructs a unary token in the given Store"
     (wrap-token ((pointer->procedure
         '* (get-function "token_unary") (list '* int '*))
     (unwrap-store s) (opcode->int op) (unwrap-token a))))
 
 (define-public (token-op-binary s op a b)
+    "token-op-binary store opcode a b
+    Constructs a binary token in the given Store"
     (wrap-token ((pointer->procedure
         '* (get-function "token_binary") (list '* int '* '*))
     (unwrap-store s) (opcode->int op) (unwrap-token a) (unwrap-token b))))
 
+(define-public (token-bounded s t a b)
+    "token-bounded store shape lower upper
+    Constructs a META_BOUNDS token for the given shape.
+    lower and upper should be '(x y z) lists"
+    (let* ((struct (list float float float))
+           (a (make-c-struct struct a))
+           (b (make-c-struct struct b))
+           (token_bounded (pointer->procedure '*
+                          (get-function "token_bounded") (list '* '* '* '*)))
+           (result (token_bounded (unwrap-store s) (unwrap-token t) a b)))
+    (wrap-token result)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define-public (token-affine-vec t)
+    "Extracts the affine terms from a Token, returning a list '(a b c d)
+    or #f if the token is not affine"
     (let* ((struct (list float float float float))
            (v (make-c-struct struct '(0 0 0 0)))
            (token_affine_vec (pointer->procedure int
@@ -119,9 +152,23 @@
            (result (token_affine_vec (unwrap-token t) v)))
     (if (= result 1) (parse-c-struct v struct) #f)))
 
+(define-public (token-bounds t)
+    "Extracts the bounds from a token, return a list
+    '((xmin ymin zmin) (xmax ymax zmax))
+    (or #f if the token is not a META_BOUNDS token"
+    (let* ((struct (list float float float))
+           (lower (make-c-struct struct '(0 0 0)))
+           (upper (make-c-struct struct '(0 0 0)))
+           (token_bounds (pointer->procedure int
+                         (get-function "token_bounds") (list '* '* '*)))
+           (result (token_bounds (unwrap-token t) lower upper)))
+    (if (= result 1) (list (parse-c-struct lower struct)
+                           (parse-c-struct upper struct)) #f)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (tree-new s t)
+    "Construct a new Tree pointer"
     (wrap-tree ((pointer->procedure
     '* (get-function "tree_new") '(* *))
         (unwrap-store s) (unwrap-token t))))
@@ -133,12 +180,18 @@
         (get-function "tree_delete"))))
 
 (define-public (tree-eval-double t x y z)
+    "Evaluates a Tree at the given position
+    x y z should be numbers"
     ((pointer->procedure
     float (get-function "tree_eval_double")
     (list '* float float float))
         (unwrap-tree t) x y z))
 
 (define-public (tree-export-heightmap t filename a b res)
+    "tree-export-heightmap tree filename lower upper res
+    Exports a tree as a heightmap
+    lower and upper should be '(x y z) lists
+    res is resolution in voxels per unit"
     ((pointer->procedure void (get-function "tree_export_heightmap")
         (list '* '* float float float
                     float float float float))
@@ -146,6 +199,10 @@
     (car a) (car b) (cadr a) (cadr b) (caddr a) (caddr b) res))
 
 (define-public (tree-export-mesh t filename a b res)
+    "tree-export-mesh tree filename lower upper res
+    Exports a tree as a mesh
+    lower and upper should be '(x y z) lists
+    res is resolution in voxels per unit"
     ((pointer->procedure void (get-function "tree_export_mesh")
         (list '* '* float float float
                     float float float float))

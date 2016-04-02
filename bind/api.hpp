@@ -27,6 +27,7 @@ class Tree;
 extern "C"
 {
     struct v4 { float x; float y; float z; float w; };
+    struct v3 { float x; float y; float z; };
 
     Store* store_new();
     void store_delete(Store* ptr);
@@ -44,11 +45,19 @@ extern "C"
     Token* token_unary(Store* s, int op, Token* a);
     Token* token_binary(Store* s, int op, Token* a, Token* b);
 
+    Token* token_bounded(Store* s, Token* a, v3* lower, v3* upper);
+
     /*
      *  If t is an AFFINE token, stores its parameters in vec and returns 1;
      *  otherwise, returns 0
      */
     int token_affine_vec(Token* t, v4* vec);
+
+    /*
+     *  If t is a BOUNDS token, store its parameters in lower and upper
+     *  Returns 1 on success and 0 on failure
+     */
+    int token_bounds(Token* t, v3* lower, v3* upper);
 
 ////////////////////////////////////////////////////////////////////////////////
 
