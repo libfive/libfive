@@ -20,7 +20,10 @@
 
 #include <cstdlib>
 
+#include "glm/vec4.hpp"
+
 #include "ao/kernel/tree/opcode.hpp"
+#include "ao/kernel/tree/bounds.hpp"
 
 /*
  *  A token represents a single expression (with up to two arguments)
@@ -42,6 +45,18 @@ public:
      *  Returns the number of arguments for the given token
      */
     static size_t args(Opcode op);
+
+    /*
+     *  Attempts to get bounds from a META_BOUNDS token
+     *  If success is provided, it is populated with true or false
+     */
+    Bounds getBounds(bool* success=nullptr);
+
+    /*
+     *  Attempts to get affine terms from a META_AFFINE token
+     *  If success is provided, it is populated with true or false
+     */
+    glm::vec4 getAffine(bool* success=nullptr);
 
     /*  Member variables  */
     const Opcode op;

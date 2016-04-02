@@ -334,6 +334,7 @@ static void clause(Opcode op,
         case VAR_Y:
         case VAR_Z:
         case META_AFFINE:
+        case META_BOUNDS:
         case LAST_OP: assert(false);
     }
 }
@@ -584,6 +585,7 @@ static void clause(Opcode op,
         case VAR_Y:
         case VAR_Z:
         case META_AFFINE:
+        case META_BOUNDS:
         case LAST_OP: assert(false);
     }
 }
@@ -668,6 +670,7 @@ static void clause(Opcode op,
         case VAR_Y:
         case VAR_Z:
         case META_AFFINE:
+        case META_BOUNDS:
         case LAST_OP: assert(false);
     }
 }
@@ -854,6 +857,7 @@ static void clause(Opcode op,
         case VAR_Y:
         case VAR_Z:
         case META_AFFINE:
+        case META_BOUNDS:
         case LAST_OP: assert(false);
     }
 }
@@ -914,6 +918,7 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
         case VAR_Y:
         case VAR_Z:
         case META_AFFINE:
+        case META_BOUNDS:
         case LAST_OP: assert(false);
     }
     return Interval();

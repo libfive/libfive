@@ -24,6 +24,7 @@
 #include <set>
 
 #include "ao/kernel/tree/opcode.hpp"
+#include "ao/kernel/tree/bounds.hpp"
 
 class Token;
 
@@ -68,9 +69,23 @@ public:
     Token* affine(float a, float b, float c, float d);
 
     /*
+     *  Returns a BOUNDS token that applies a bounding box to the given shape
+     */
+    Token* bounded(Token* shape, Bounds b);
+
+    /*
      *  Set found in every token descending from root
      */
     std::set<Token*> findConnected(Token* root);
+
+    /*
+     *  Collapses BOUNDS nodes into normal OP_MAX, taking advantage of
+     *  identity operations to make the tree smaller.  Returns the new root
+     *  token (which may have changed).
+     *
+     *  Invalidates all Token pointers.
+     */
+    Token* collapseBounds(Token* root);
 
     /*
      *  Collapses AFFINE nodes into normal OP_ADD, taking advantage of

@@ -60,6 +60,20 @@ enum Opcode
     // (where X, Y, Z are base coordinates and C is CONST)
     META_AFFINE,
 
+    // Bounds trees must have the form
+    //                  BOUNDS
+    //                /       \
+    //              MAX       MAX
+    //            /    \     /    \
+    //           S      X   Y      Z
+    //  where S is a bounded shape and X, Y, Z are subtrees of the form
+    //           MAX
+    //         /     \
+    //      SUB       SUB
+    //     /   \    /     \
+    //   xmin   X  X      xmin
+    META_BOUNDS,
+
     // Dummy opcodes used to select the left or right-hand side of a function
     // (used when one of the children is disabled)
     DUMMY_A,

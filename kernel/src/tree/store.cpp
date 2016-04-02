@@ -17,6 +17,7 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <cassert>
+#include <list>
 
 #include "ao/kernel/tree/store.hpp"
 #include "ao/kernel/tree/token.hpp"
@@ -236,6 +237,22 @@ Token* Store::affine(float a, float b, float c, float d)
                 constant(d), false));
 }
 
+Token* Store::bounded(Token* shape, Bounds b)
+{
+    return operation(META_BOUNDS,
+        operation(OP_MAX, shape,
+            operation(OP_MAX,
+                operation(OP_SUB, constant(b.lower.x), X(), false),
+                operation(OP_SUB, X(), constant(b.upper.x), false), false), false),
+        operation(OP_MAX,
+            operation(OP_MAX,
+                operation(OP_SUB, constant(b.lower.y), Y(), false),
+                operation(OP_SUB, Y(), constant(b.upper.y), false), false),
+            operation(OP_MAX,
+                operation(OP_SUB, constant(b.lower.z), Z(), false),
+                operation(OP_SUB, Z(), constant(b.upper.z), false), false), false), false);
+}
+
 std::set<Token*> Store::findConnected(Token* root)
 {
     std::set<Token*> found = {root};
@@ -323,6 +340,53 @@ Token* Store::rebuild(Token* root, std::set<Token*> pruned,
     }
 
     return changed.count(root) ? changed[root] : root;
+}
+
+Token* Store::collapseBounds(Token* root)
+{
+    // We need to save a copy of bounds tokens to avoid iterator invalidation
+    std::list<Token*> bounds;
+
+    for (auto& weight : ops)
+    {
+        for (auto& op : weight[META_BOUNDS])
+        {
+            bounds.push_back(op.second);
+        }
+    }
+
+    // These are tokens that should be removed from the tree
+    std::set<Token*> pruned;
+
+    // Turn every BOUNDS into a normal OP_MAX
+    // (with identity operations automatically cancelled out)
+    std::map<Token*, Token*> changed;
+
+    for (auto t : bounds)
+    {
+        changed[t] = operation(OP_MAX,
+            operation(OP_MAX, t->a->a,  // Shape
+                operation(OP_MAX,       // X bounds
+                    operation(OP_SUB, t->a->b->a->a,
+                                      t->a->b->a->b),
+                    operation(OP_SUB, t->a->b->b->a,
+                                      t->a->b->b->b))),
+            operation(OP_MAX,
+                operation(OP_MAX,       // Y bounds
+                    operation(OP_SUB, t->b->a->a->a,
+                                      t->b->a->a->b),
+                    operation(OP_SUB, t->b->a->b->a,
+                                      t->b->a->b->b)),
+                operation(OP_MAX,       // Z bounds
+                    operation(OP_SUB, t->b->a->b->a,
+                                      t->b->a->b->b),
+                    operation(OP_SUB, t->b->a->b->a,
+                                      t->b->a->b->b))));
+
+        pruned.insert(t);
+    }
+
+    return rebuild(root, pruned, changed);
 }
 
 Token* Store::collapseAffine(Token* root)

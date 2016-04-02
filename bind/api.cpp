@@ -100,12 +100,12 @@ Token* token_binary(Store* s, int op, Token* a, Token* b)
 
 int token_affine_vec(Token* t, v4* vec)
 {
-    if (t->op == META_AFFINE)
+    bool success = false;
+    glm::vec4 v = t->getAffine(&success);
+
+    if (success)
     {
-        *vec = {t->a->a->b->value,
-                t->a->b->b->value,
-                t->b->a->b->value,
-                t->b->b->value};
+        *vec = {v.x, v.y, v.z, v.w};
         return 1;
     }
     else

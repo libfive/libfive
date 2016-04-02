@@ -75,6 +75,7 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case DUMMY_A:
         case DUMMY_B:
         case META_AFFINE:
+        case META_BOUNDS:
         case INVALID:   assert(false);
     }
     return os;
