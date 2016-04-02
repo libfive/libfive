@@ -86,6 +86,15 @@ extern "C"
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    /*
+     *  Inverts the matrix with rows x, y, z, [0 0 0 1]
+     *  x, y, and z are modified in-place
+     *  Returns 1 on success, 0 otherwise
+     */
+    void matrix_invert(v4* x, v4* y, v4* z);
+
+////////////////////////////////////////////////////////////////////////////////
+
     void ao_halt();
     void ao_run();
 

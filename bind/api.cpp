@@ -21,6 +21,8 @@
 #include <fstream>
 #include <set>
 
+#include "glm/gtc/matrix_inverse.hpp"
+
 #include "ao/kernel/tree/store.hpp"
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/opcode.hpp"
@@ -234,6 +236,22 @@ void window_set_callback(void (*callback)(const char*))
 void window_set_thread_init(void (*init)())
 {
     window_thread_init = init;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void matrix_invert(v4* x, v4* y, v4* z)
+{
+    glm::mat4 M;
+    M[0] = {x->x, x->y, x->z, x->w};
+    M[1] = {y->x, y->y, y->z, y->w};
+    M[2] = {z->x, z->y, z->z, z->w};
+    M[3] = {0, 0, 0, 1};
+
+    auto Mi = glm::inverse(M);
+    *x = {Mi[0].x, Mi[0].y, Mi[0].z, Mi[0].w};
+    *y = {Mi[1].x, Mi[1].y, Mi[1].z, Mi[1].w};
+    *z = {Mi[2].x, Mi[2].y, Mi[2].z, Mi[2].w};
 }
 
 ////////////////////////////////////////////////////////////////////////////////

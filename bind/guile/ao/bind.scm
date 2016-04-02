@@ -224,6 +224,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define-public (matrix-invert x y z)
+    "Inverts a matrix with rows x, y, z, '(0 0 0 1)
+    x, y, and z should be four-element lists
+    Returns a list of the new x, y, z rows (from the inverted matrix)"
+    (let* ((struct (list float float float float))
+           (x (make-c-struct struct x))
+           (y (make-c-struct struct y))
+           (z (make-c-struct struct z))
+           (matrix_invert (pointer->procedure '*
+                          (get-function "matrix_invert") (list '* '* '*))))
+    (matrix_invert x y z)
+    (list (parse-c-struct x struct)
+          (parse-c-struct y struct)
+          (parse-c-struct z struct))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define-public ao-run
     (pointer->procedure void (get-function "ao_run") '()))
 
