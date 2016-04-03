@@ -20,6 +20,10 @@
 
 (use-modules (ao operators) (ao jit) (ao bind))
 
+(define (apply-affine v)
+    (lambda (x y z)
+    (+ (* (car v) x) (* (cadr v) y) (* (caddr v) z) (cadddr v))))
+
 (define-syntax-rule (apply-transform shape coords fx fy fz)
     "Applies a transform to a shape
         coords is usually (x, y, z)
@@ -32,13 +36,34 @@
           (vz (get-affine-vec (lambda coords fz)))
           (bounds (get-bounds shape))
           (shape (lambda coords (shape fx fy fz))))
+
+    ; If we have bounds and an affine transform, then we should calculate
+    ; the new bounding box and apply it to the output shape
     (if (and vx vy vz bounds)
-        (let ((lower (car bounds))
-              (upper (cadr bounds)))
-            (matrix-invert vx vy vz)
+        (let* (; Get bounds from the bounds list
+               (lower (car bounds))
+               (upper (cadr bounds))
+               (X (cons (car lower)   (car upper)))
+               (Y (cons (cadr lower)  (cadr upper)))
+               (Z (cons (caddr lower) (caddr upper)))
+
+               ; Get matrix inverse and affine functions
+               (inverse (matrix-invert vx vy vz))
+               (ix (apply-affine (car inverse)))
+               (iy (apply-affine (cadr inverse)))
+               (iz (apply-affine (caddr inverse)))
+
+               ; Get inverted bounds
+               (Xi ((jit-function ix) X Y Z))
+               (Yi ((jit-function iy) X Y Z))
+               (Zi ((jit-function iz) X Y Z))
+
+               (new-min (list (car Xi) (car Yi) (car Zi)))
+               (new-max (list (cdr Xi) (cdr Yi) (cdr Zi))))
+
             ;; Apply this inverse to intervals
             ;; Set new bounds on shape
-            shape)
+            (set-bounds shape new-min new-max))
         shape)))
 
 
