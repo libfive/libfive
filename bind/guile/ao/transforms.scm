@@ -25,7 +25,8 @@
     (+ (* (car v) x) (* (cadr v) y) (* (caddr v) z) (cadddr v))))
 
 (define-syntax-rule (apply-transform shape coords fx fy fz)
-    "Applies a transform to a shape
+    "apply-transform shape coords fx fy fz
+    Applies a generic transform to a shape
         coords is usually (x, y, z)
         fx, fy, and fz are modified coordinates
             (and must use only variables from coords, for hygiene)
@@ -35,7 +36,7 @@
           (vy (get-affine-vec (lambda coords fy)))
           (vz (get-affine-vec (lambda coords fz)))
           (bounds (get-bounds shape))
-          (shape (lambda coords (shape fx fy fz))))
+          (out (lambda coords (shape fx fy fz))))
 
     ; If we have bounds and an affine transform, then we should calculate
     ; the new bounding box and apply it to the output shape
@@ -63,8 +64,8 @@
 
             ;; Apply this inverse to intervals
             ;; Set new bounds on shape
-            (set-bounds shape new-min new-max))
-        shape)))
+            (set-bounds out new-min new-max))
+        out)))
 
 
 (export apply-transform)
