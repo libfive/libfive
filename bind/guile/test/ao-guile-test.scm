@@ -23,7 +23,7 @@
 (use-modules (ggspec lib))
 
 (use-modules (ao bind))
-(suite "Low-level bindings"
+(suite "bind.scm (low-level libao interface)"
     (tests
     (test "store-new" env
         (assert-true (store? (store-new))))
@@ -62,6 +62,29 @@
                 (assert-equal (token-affine-vec x) '(1.0 0.0 0.0 0.0))
                 (assert-equal (token-affine-vec y) '(0.0 1.0 0.0 0.0))
                 (assert-equal (token-affine-vec p) '(1.0 1.0 0.0 0.0)))))
+    (test "tree-new" env
+        (let* ((store (store-new))
+               (x (token-x store))
+               (t (tree-new store x)))
+            (assert-true (tree? t))))
+    (test "tree-eval-double" env
+        (let* ((store (store-new))
+               (x (token-x store))
+               (t (tree-new store x)))
+            (assert-equal (tree-eval-double t 1.0 2.0 3.0) 1.0)))
+    (test "tree-eval-interval" env
+        (let* ((store (store-new))
+               (x (token-x store))
+               (t (tree-new store x)))
+            (assert-equal (tree-eval-interval t '(1 . 2) '(3 . 4) '(5 . 6)) '(1.0 . 2.0))))
+    (test "matrix-invert" env
+        ; TODO: Make this use a floating-point comparison
+        (assert-equal (matrix-invert '(1 0 0 1)
+                                     '(0 1 0 2)
+                                     '(0 0 1 3))
+                                    '((1.0 -0.0 0.0 -1.0)
+                                      (-0.0 1.0 -0.0 -2.0)
+                                      (0.0 -0.0 1.0 -3.0))))
 
 ))
 
