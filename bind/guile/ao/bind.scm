@@ -18,6 +18,7 @@
 |#
 (define-module (ao bind))
 
+(use-modules (srfi srfi-1))
 (use-modules (system foreign))
 
 (define libao (dynamic-link (string-append (dirname (current-filename))
@@ -57,6 +58,13 @@
             (let ((ptr (dynamic-func f libao)))
                  (hash-set! cache f ptr)
                  ptr)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Structures used in sending / receiving data
+(define v2 (list float float))
+(define v3 (list float float float))
+(define v4 (list float float float float))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -132,9 +140,8 @@
     "token-bounded store shape lower upper
     Constructs a META_BOUNDS token for the given shape.
     lower and upper should be '(x y z) lists"
-    (let* ((struct (list float float float))
-           (a (make-c-struct struct a))
-           (b (make-c-struct struct b))
+    (let* ((a (make-c-struct v3 a))
+           (b (make-c-struct v3 b))
            (token_bounded (pointer->procedure '*
                           (get-function "token_bounded") (list '* '* '* '*)))
            (result (token_bounded (unwrap-store s) (unwrap-token t) a b)))
@@ -145,25 +152,23 @@
 (define-public (token-affine-vec t)
     "Extracts the affine terms from a Token, returning a list '(a b c d)
     or #f if the token is not affine"
-    (let* ((struct (list float float float float))
-           (v (make-c-struct struct '(0 0 0 0)))
+    (let* ((v (make-c-struct v4 '(0 0 0 0)))
            (token_affine_vec (pointer->procedure int
                              (get-function "token_affine_vec") (list '* '*)))
            (result (token_affine_vec (unwrap-token t) v)))
-    (if (= result 1) (parse-c-struct v struct) #f)))
+    (if (= result 1) (parse-c-struct v v4) #f)))
 
 (define-public (token-bounds t)
     "Extracts the bounds from a token, return a list
     '((xmin ymin zmin) (xmax ymax zmax))
     (or #f if the token is not a META_BOUNDS token"
-    (let* ((struct (list float float float))
-           (lower (make-c-struct struct '(0 0 0)))
-           (upper (make-c-struct struct '(0 0 0)))
+    (let* ((lower (make-c-struct v3 '(0 0 0)))
+           (upper (make-c-struct v3 '(0 0 0)))
            (token_bounds (pointer->procedure int
                          (get-function "token_bounds") (list '* '* '*)))
            (result (token_bounds (unwrap-token t) lower upper)))
-    (if (= result 1) (list (parse-c-struct lower struct)
-                           (parse-c-struct upper struct)) #f)))
+    (if (= result 1) (list (parse-c-struct lower v3)
+                           (parse-c-struct upper v3)) #f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -186,6 +191,20 @@
     float (get-function "tree_eval_double")
     (list '* float float float))
         (unwrap-tree t) x y z))
+
+(define-public (tree-eval-interval t X Y Z)
+    "Evaluates a Tree over the given region
+    X, Y, Z should be pairs '(lower . upper)
+    Returns a pair '(lower . upper)"
+    (if (any (lambda (I) (< (cdr I) (car I))) (list X Y Z))
+        (error "Intervals must be ordered"))
+    (let ((vx (make-c-struct v2 (list (car X) (cdr X))))
+          (vy (make-c-struct v2 (list (car Y) (cdr Y))))
+          (vz (make-c-struct v2 (list (car Z) (cdr Z)))))
+    ((pointer->procedure void (get-function "tree_eval_interval")
+        (list '* '* '* '*)) (unwrap-tree t) vx vy vz)
+    (let ((out (parse-c-struct vx v2)))
+        (cons (car out) (cadr out)))))
 
 (define-public (tree-export-heightmap t filename a b res)
     "tree-export-heightmap tree filename lower upper res
@@ -228,16 +247,15 @@
     "Inverts a matrix with rows x, y, z, '(0 0 0 1)
     x, y, and z should be four-element lists
     Returns a list of the new x, y, z rows (from the inverted matrix)"
-    (let* ((struct (list float float float float))
-           (x (make-c-struct struct x))
-           (y (make-c-struct struct y))
-           (z (make-c-struct struct z))
+    (let* ((x (make-c-struct v4 x))
+           (y (make-c-struct v4 y))
+           (z (make-c-struct v4 z))
            (matrix_invert (pointer->procedure '*
                           (get-function "matrix_invert") (list '* '* '*))))
     (matrix_invert x y z)
-    (list (parse-c-struct x struct)
-          (parse-c-struct y struct)
-          (parse-c-struct z struct))))
+    (list (parse-c-struct x v4)
+          (parse-c-struct y v4)
+          (parse-c-struct z v4))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

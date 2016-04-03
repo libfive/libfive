@@ -157,6 +157,17 @@ float tree_eval_double(Tree* tree, float x, float y, float z)
     return e.eval(x, y, z);
 }
 
+void tree_eval_interval(Tree* tree, v2* x, v2* y, v2* z)
+{
+    auto e = Evaluator(tree);
+    auto out =  e.eval({x->lower, x->upper},
+                       {y->lower, y->upper},
+                       {z->lower, z->upper});
+
+    x->lower = out.lower();
+    x->upper = out.upper();
+}
+
 void tree_export_heightmap(Tree* tree, char* filename,
                            float xmin, float xmax,
                            float ymin, float ymax,

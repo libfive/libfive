@@ -20,8 +20,9 @@
 (define-module (ao jit))
 
 (use-modules (ice-9 common-list))
-(use-modules (ao bind))
 (use-modules (system foreign))
+
+(use-modules (ao bind))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -91,9 +92,15 @@ A symbol and further arguments are converted to an operation"
 (export jit)
 
 (define-public (jit-function f)
-    "Compile and arithmetic lambda function to a wrapped math function"
-    (let ((t (jit f)))
-    (lambda (x y z) (tree-eval-double t x y z))))
+    "Compile an arithmetic lambda function to a wrapped math function"
+    (let ((t (jit f))
+          (interval? (lambda (x) (and (pair? x) (not (list? x))))))
+    (lambda (x y z)
+        (cond ((and (interval? x) (interval? y) (interval? z))
+               (tree-eval-interval t x y z))
+              ((and (number? x) (number? y) (number? z))
+               (tree-eval-double t x y z))
+              (else (error "Invalid arguments (must be floats or pairs)"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

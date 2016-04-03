@@ -26,8 +26,9 @@ class Tree;
 
 extern "C"
 {
-    struct v4 { float x; float y; float z; float w; };
+    struct v2 { float lower; float upper; };
     struct v3 { float x; float y; float z; };
+    struct v4 { float x; float y; float z; float w; };
 
     Store* store_new();
     void store_delete(Store* ptr);
@@ -64,7 +65,17 @@ extern "C"
     Tree* tree_new(Store* store, Token* root);
     void tree_delete(Tree* ptr);
 
+    /*
+     *  Evaluates the tree at the given position
+     *  Returns the result
+     */
     float tree_eval_double(Tree* tree, float x, float y, float z);
+
+    /*
+     *  Evaluates the tree on the given interval.
+     *  Stores results in x
+     */
+    void tree_eval_interval(Tree* tree, v2* x, v2* y, v2* z);
 
     void tree_export_heightmap(Tree* tree, char* filename,
                                float xmin, float xmax,
