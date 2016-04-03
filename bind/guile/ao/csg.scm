@@ -18,30 +18,73 @@
 |#
 (define-module (ao csg))
 
+(use-modules (srfi srfi-1))
 (use-modules (ao operators))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (bounds-union bs)
+    "bounds-union bs
+    bs should be a list of '((xmin ymin zmin) (xmax ymax zmax)) lists
+    Finds the union along each dimension and returns a list in the same form"
+    (let* ((lower (map car bs))
+           (upper (map cadr bs))
+           (xmin (apply min (map (lambda (b) (car b)) lower)))
+           (ymin (apply min (map (lambda (b) (cadr b)) lower)))
+           (zmin (apply min (map (lambda (b) (caddr b)) lower)))
+           (xmax (apply max (map (lambda (b) (car b)) upper)))
+           (ymax (apply max (map (lambda (b) (cadr b)) upper)))
+           (zmax (apply max (map (lambda (b) (caddr b)) upper))))
+    (list (list xmin ymin zmin) (list xmax ymax zmax))))
+
+(define (bounds-intersection bs)
+    "bounds-intersection bs
+    bs should be a list of '((xmin ymin zmin) (xmax ymax zmax)) lists
+    Finds the intersection along each dimension and returns a list in the same form"
+    (let* ((lower (map car bs))
+           (upper (map cadr bs))
+           (xmin (apply max (map (lambda (b) (car b)) lower)))
+           (ymin (apply max (map (lambda (b) (cadr b)) lower)))
+           (zmin (apply max (map (lambda (b) (caddr b)) lower)))
+           (xmax (apply min (map (lambda (b) (car b)) upper)))
+           (ymax (apply min (map (lambda (b) (cadr b)) upper)))
+           (zmax (apply min (map (lambda (b) (caddr b)) upper))))
+    (list (list xmin ymin zmin) (list xmax ymax zmax))))
+
 (define-public (union . shapes)
     "union a [b [c [...]]]
     Returns the union of any number of shapes"
+    (let ((bounds (map get-bounds shapes)))
     (if (= 0 (length shapes))
         (error "Cannot take the union of an empty list")
-        (lambda (x y z) (apply min (map (lambda (s) (s x y z)) shapes)))))
+        (let ((out (lambda (x y z) ; New shape function!
+                   (apply min (map (lambda (s) (s x y z)) shapes)))))
+            (if (every (lambda (x) x) bounds)
+                (let ((b (bounds-union bounds)))
+                    (set-bounds out (car b) (cadr b)))
+                out)))))
 
 (define-public (intersection . shapes)
     "intersection a [b [c [...]]]
     Returns the intersection of any number of shapes"
+    (let ((bounds (map get-bounds shapes)))
     (if (= 0 (length shapes))
-        (error "Cannot take the union of an empty list")
-        (lambda (x y z) (apply max (map (lambda (s) (s x y z)) shapes)))))
+        (error "Cannot take the intersection of an empty list")
+        (let ((out (lambda (x y z) ; New shape function!
+                   (apply max (map (lambda (s) (s x y z)) shapes)))))
+            (if (every (lambda (x) x) bounds)
+                (let ((b (bounds-intersection bounds)))
+                    (set-bounds out (car b) (cadr b)))
+                out)))))
 
 (define-public (difference a . b)
     "difference a b [c [d [...]]]
     Subtracts any number of shapes from the first argument"
-    (let ((accum (apply union b)))
-    (lambda (x y z) (max (a x y z)
-                         (-(accum x y z))))))
+    (let* ((accum (apply union b))
+           (out (lambda (x y z) (max (a x y z) (-(accum x y z)))))
+           (bounds (get-bounds a)))
+    (if bounds (set-bounds out (car bounds) (cadr bounds))
+               out)))
 
 (define-public (offset s o)
     "offset shape o
@@ -51,8 +94,11 @@
 (define-public (clearance a b o)
     "clearance a b o
     Expands shape b by the given offset then subtracts it from shape a"
-    (let ((bo (offset b o)))
-    (lambda (x y z) (max (a x y z) (- (bo x y z))))))
+    (let* ((bo (offset b o))
+           (out (lambda (x y z) (max (a x y z) (- (bo x y z)))))
+           (bounds (get-bounds a)))
+    (if bounds (set-bounds out (car bounds) (cadr bounds))
+               out)))
 
 (define-public (shell shape o)
     "shell shape o
