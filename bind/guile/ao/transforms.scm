@@ -18,21 +18,30 @@
 |#
 (define-module (ao transforms))
 
-(use-modules (ao operators) (ao jit))
+(use-modules (ao operators) (ao jit) (ao bind))
 
 (define-syntax-rule (apply-transform shape coords fx fy fz)
     "Applies a transform to a shape
         coords is usually (x, y, z)
         fx, fy, and fz are modified coordinates
-            (and must use only variables from coords, for hygiene)"
-    (lambda coords
-        (let ((x fx)
-              (y fy)
-              (z fz)
-              (vx (get-affine-vec (lambda coords fx)))
-              (vy (get-affine-vec (lambda coords fy)))
-              (vz (get-affine-vec (lambda coords fz))))
-        (shape x y z))))
+            (and must use only variables from coords, for hygiene)
+        If fx, fy, and fz are affine and shape has bounds, the output
+        will also have attached bounds"
+    (let ((vx (get-affine-vec (lambda coords fx)))
+          (vy (get-affine-vec (lambda coords fy)))
+          (vz (get-affine-vec (lambda coords fz)))
+          (bounds (get-bounds shape))
+          (shape (lambda coords (shape fx fy fz))))
+    (if (and vx vy vz bounds)
+        (let ((lower (car bounds))
+              (upper (cadr bounds)))
+            (matrix-invert vx vy vz)
+            ;; Apply this inverse to intervals
+            ;; Set new bounds on shape
+            shape)
+        shape)))
+
+
 (export apply-transform)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
