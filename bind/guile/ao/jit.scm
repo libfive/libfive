@@ -20,6 +20,7 @@
 (define-module (ao jit))
 
 (use-modules (ice-9 common-list))
+(use-modules (srfi srfi-1))
 (use-modules (system foreign))
 
 (use-modules (ao bind))
@@ -96,9 +97,9 @@ A symbol and further arguments are converted to an operation"
     (let ((t (jit f))
           (interval? (lambda (x) (and (pair? x) (not (list? x))))))
     (lambda (x y z)
-        (cond ((and (interval? x) (interval? y) (interval? z))
+        (cond ((every interval? (list x y z))
                (tree-eval-interval t x y z))
-              ((and (number? x) (number? y) (number? z))
+              ((every number? (list x y z))
                (tree-eval-double t x y z))
               (else (error "Invalid arguments (must be floats or pairs)"))))))
 
