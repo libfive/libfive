@@ -40,7 +40,8 @@
 (define (bounds-intersection bs)
     "bounds-intersection bs
     bs should be a list of '((xmin ymin zmin) (xmax ymax zmax)) lists
-    Finds the intersection along each dimension and returns a list in the same form"
+    Finds the intersection along each dimension
+    If bounds are disjoint, returns empty interval (0, 0)"
     (let* ((lower (map car bs))
            (upper (map cadr bs))
            (xmin (apply max (map (lambda (b) (car b)) lower)))
@@ -49,6 +50,10 @@
            (xmax (apply min (map (lambda (b) (car b)) upper)))
            (ymax (apply min (map (lambda (b) (cadr b)) upper)))
            (zmax (apply min (map (lambda (b) (caddr b)) upper))))
+    ;; Clamp intervals to empty (0,0) if bounds are disjoint
+    (if (< xmax xmin)   (begin (set! xmin 0) (set! xmax 0)))
+    (if (< ymax ymin)   (begin (set! ymin 0) (set! ymax 0)))
+    (if (< zmax zmin)   (begin (set! zmin 0) (set! zmax 0)))
     (list (list xmin ymin zmin) (list xmax ymax zmax))))
 
 (define-public (union . shapes)

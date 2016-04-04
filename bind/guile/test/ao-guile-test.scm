@@ -25,7 +25,7 @@
 
 (use-modules (ggspec lib))
 
-(use-modules (ao bind) (ao jit) (ao operators) (ao transforms))
+(use-modules (ao bind) (ao jit) (ao operators) (ao transforms) (ao csg))
 
 (suite "bind.scm (low-level libao interface)"
     (tests
@@ -129,4 +129,38 @@
         (assert-all
             (assert-true b)
             (assert-equal b '((-0.5 -3.0 -9.0) ( 2.0 4.0 18.0))))))
+))
+
+
+(suite "csg.scm (CSG and bounds merging)"
+    (tests
+    (test "union evaluation" env
+        (let* ((f (lambda (x y z) x))
+               (g (lambda (x y z) y))
+               (u (union f g)))
+        (assert-all
+            (assert-equal (u 1 0 0) 0)
+            (assert-equal (u 2 3 0) 2))))
+    (test "union (bounds merging)" env
+        (let* ((f (set-bounds (lambda (x y z) x) '(0 -2 0) '(1 0 3)))
+               (g (set-bounds (lambda (x y z) y) '(-1 0 -3) '(0 2 0)))
+               (u (union f g)))
+            (assert-equal (get-bounds u) '((-1.0 -2.0 -3.0) (1.0 2.0 3.0)))))
+    (test "intersection (evaluation)" env
+        (let* ((f (lambda (x y z) x))
+               (g (lambda (x y z) y))
+               (u (intersection f g)))
+        (assert-all
+            (assert-equal (u 1 0 0) 1)
+            (assert-equal (u 2 3 0) 3))))
+    (test "intersection (bounds merging)" env
+        (let* ((f (set-bounds (lambda (x y z) x) '(-5 -2 0) '(1 8 3)))
+               (g (set-bounds (lambda (x y z) y) '(-1 -5 -3) '(3 2 0)))
+               (u (intersection f g)))
+            (assert-equal (get-bounds u) '((-1.0 -2.0 0.0) (1.0 2.0 0.0)))))
+    (test "intersection (disjoint bounds)" env
+        (let* ((f (set-bounds (lambda (x y z) x) '(-1 -1 -1) '(0 0 0)))
+               (g (set-bounds (lambda (x y z) y) '(1 2 3) '(2 3 4)))
+               (u (intersection f g)))
+            (assert-equal (get-bounds u) '((0.0 0.0 0.0) (0.0 0.0 0.0)))))
 ))
