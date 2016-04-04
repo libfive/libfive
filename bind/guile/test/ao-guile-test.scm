@@ -22,7 +22,8 @@
 
 (use-modules (ggspec lib))
 
-(use-modules (ao bind))
+(use-modules (ao bind) (ao jit) (ao operators) (ao transforms))
+
 (suite "bind.scm (low-level libao interface)"
     (tests
     (test "store-new" env
@@ -85,6 +86,44 @@
                                     '((1.0 -0.0 0.0 -1.0)
                                       (-0.0 1.0 -0.0 -2.0)
                                       (0.0 -0.0 1.0 -3.0))))
-
 ))
 
+(suite "jit.scm (operations on lambda functions)"
+    (tests
+    (test "jit-function (float evaluation)" env
+        (let ((f (jit-function (lambda (x y z) x))))
+        (assert-all
+            (assert-equal (f 1 0 0) 1.0)
+            (assert-equal (f 2 0 0) 2.0))))
+    (test "jit-function (interval evaluation)" env
+        (let ((f (jit-function (lambda (x y z) x))))
+        (assert-all
+            (assert-equal (f '(1 . 2) '(0 . 0) '(0 . 0)) '(1.0 . 2.0))
+            (assert-equal (f '(2 . 3) '(0 . 0) '(0 . 0)) '(2.0 . 3.0)))))
+    (test "get-affine-vec" env
+        (let ((f (lambda (x y z) (+ (* 2 x) y (* 3 z) 4)))
+              (g (lambda (x y z) (* x y))))
+        (assert-all
+            (assert-equal (get-affine-vec f) '(2.0 1.0 3.0 4.0))
+            (assert-equal (get-affine-vec g) #f))))
+    (test "get-bounds" env
+        (let ((f (set-bounds (lambda (x y z) x) '(-1 -2 -3) '(4 5 6)))
+              (g (lambda (x y z) x)))
+        (assert-all
+            (assert-equal (get-bounds f) '((-1.0 -2.0 -3.0) (4.0 5.0 6.0)))
+            (assert-equal (get-bounds g) #f))))
+))
+
+(suite "transforms.scm (transforms and bounds tracking)"
+    (tests
+    (test "apply-transform" env
+        (let* ((f (lambda (x y z) x))
+               (fb (set-bounds f '(-1 -2 -3) '(4 5 6)))
+               (t (apply-transform fb (x y z)
+                        (* x 2) (+ y 1) (/ z 3)))
+               (b (get-bounds t))
+          )
+        (assert-all
+            (assert-true b)
+            (assert-equal b '((-0.5 -3.0 -9.0) ( 2.0 4.0 18.0))))))
+))

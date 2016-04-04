@@ -19,7 +19,7 @@
 (define-module (ao csg))
 
 (use-modules (srfi srfi-1))
-(use-modules (ao operators))
+(use-modules (ao operators) (ao jit))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

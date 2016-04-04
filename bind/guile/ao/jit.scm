@@ -20,7 +20,6 @@
 (define-module (ao jit))
 
 (use-modules (ice-9 common-list))
-(use-modules (srfi srfi-1))
 (use-modules (system foreign))
 
 (use-modules (ao bind))
@@ -70,6 +69,10 @@ A symbol and further arguments are converted to an operation"
 
 
 (define-public (make-bounds-token shape lower upper)
+    "make-bounds-token shape lower upper
+    Creates a META_BOUNDS token in the global store
+    Should only be called during evaluation (i.e. when store is populated)
+    lower and upper should be '(x y z) lists"
     (token-bounded store shape lower upper))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -83,7 +86,8 @@ A symbol and further arguments are converted to an operation"
         out))
 
 (define* (jit f #:key (manage #t))
-    "Compile an arithmetic lambda function to a bare tree pointer
+    "jit f
+    Compile an arithmetic lambda function (f x y z) to a bare tree pointer
     If manage is #t (default), attaches a finalizer to the output"
     (store-push)
     (let* ((root (get-root-token f))
@@ -93,7 +97,10 @@ A symbol and further arguments are converted to an operation"
 (export jit)
 
 (define-public (jit-function f)
-    "Compile an arithmetic lambda function to a wrapped math function"
+    "jit-function f
+    Compile an arithmetic lambda function (f x y z) to a wrapped math function
+    The returned function can be called with numbers or pairs representing
+    intervals, i.e. '(lower . upper)"
     (let ((t (jit f))
           (interval? (lambda (x) (and (pair? x) (not (list? x))))))
     (lambda (x y z)
