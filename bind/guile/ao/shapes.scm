@@ -28,7 +28,8 @@
 (define-public (circle center r)
     "circle '(x y) r
     Constructs a circle from a center and radius"
-    (move (lambda (x y z) (- (sqrt (+ (square x) (square y))) r))
+    (move (set-bounds (lambda (x y z) (- (sqrt (+ (square x) (square y))) r))
+                      (list (- r) (- r)) (list r r))
           center))
 
 (define-public (rectangle a b)
@@ -42,8 +43,10 @@
            (xmax (max xa xb))
            (ymin (min ya yb))
            (ymax (max ya yb)))
-    (lambda (x y z) (max (- xmin x) (- x xmax)
-                         (- ymin y) (- y ymax)))))
+    (set-bounds (lambda (x y z)
+            (max (- xmin x) (- x xmax)
+            (- ymin y) (- y ymax)))
+        (list xmin ymin) (list xmax ymax))))
 
 (define-public (rounded-rectangle a b r)
     "rounded-rectangle '(xmin ymin) '(xmax ymax) r
