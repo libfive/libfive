@@ -105,9 +105,12 @@
                  (lambda (x y z)
                     (- (* dy (- x x0)) (* dx (- y y0)))))))
 
+          (set-bounds
           (intersection (edge x2 y2 (- x0 x2) (- y0 y2))
                         (edge x1 y1 (- x2 x1) (- y2 y1))
-                        (edge x0 y0 (- x1 x0) (- y1 y0)))))
+                        (edge x0 y0 (- x1 x0) (- y1 y0)))
+          (list (min x0 x1 x2) (min y0 y1 y2))
+          (list (max x0 x1 x2) (max y0 y1 y2)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -116,9 +119,16 @@
 (define-public (extrude-z shape za zb)
     "extrude-z shape za zb
     Extrudes the given 2D shape between za and zb"
-    (let ((zmin (min za zb))
-          (zmax (max za zb)))
-    (lambda (x y z) (max (shape x y z) (- zmin z) (- z zmax)))))
+    (let* ((zmin (min za zb))
+           (zmax (max za zb))
+           (bounds (get-bounds shape))
+           (out (lambda (x y z) (max (shape x y z) (- zmin z) (- z zmax)))))
+    (if (bounds)
+        (let* ((lower (car bounds))
+               (upper (cadr bounds)))
+        (set-bounds out (list (car lower) (cadr lower) zmin)
+                        (list (car upper) (cadr upper) zmax)))
+        out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 3D shapes
@@ -126,8 +136,11 @@
 (define-public (sphere center r)
     "sphere '(x y z) r
     Defines a sphere from a center and radius"
-    (move (lambda (x y z) (- (sqrt (+ (square x) (square y) (square z))) r))
-          center))
+    (move
+    (set-bounds
+        (lambda (x y z) (- (sqrt (+ (square x) (square y) (square z))) r))
+        (list (- r) (- r) (- r)) (list r r r))
+    center))
 
 (define-public (cube a b)
     "cube '(xmin ymin zmin) '(xmax ymax zmax)
@@ -160,9 +173,12 @@
     Create a torus from the given center, outer radius, and inner radius"
     (let ((distance (lambda (a b)
         (sqrt (+ (* a a) (* b b))))))
-    (move (lambda (x y z)
-        (let ((d (distance x y)))
-        (- (distance (- R d) z) r)))
+    (move
+    (set-bounds (lambda (x y z)
+            (let ((d (distance x y)))
+            (- (distance (- R d) z) r)))
+        (list (- (+ R r)) (- (+ R r)) (- r))
+        (list (+ R r) (+ R r) r))
     center)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
