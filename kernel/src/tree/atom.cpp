@@ -74,8 +74,7 @@ std::ostream& operator<<(std::ostream& os, const Atom& atom)
         case LAST_OP:   // Fallthrough!
         case DUMMY_A:
         case DUMMY_B:
-        case META_AFFINE:
-        case META_BOUNDS:
+        case AFFINE_VEC:
         case INVALID:   assert(false);
     }
     return os;

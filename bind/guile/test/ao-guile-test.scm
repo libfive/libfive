@@ -25,7 +25,7 @@
 
 (use-modules (ggspec lib))
 
-(use-modules (ao bind) (ao jit) (ao operators) (ao transforms) (ao csg))
+(use-modules (ao bind) (ao jit) (ao operators) (ao transforms) (ao csg) (ao bounds))
 
 (suite "bind.scm (low-level libao interface)"
     (tests
@@ -49,14 +49,6 @@
                (x (token-x store))
                (y (token-y store)))
             (assert-true (token? (token-op-binary store 'add x y)))))
-    (test "token-bounded and token-bounds" env
-        (let* ((store (store-new))
-               (x (token-x store))
-               (b (token-bounded store x '(-1 -2 -3) '( 5 6 7))))
-            (assert-all
-                (assert-true (token? b))
-                (assert-equal (token-bounds b)
-                              '((-1.0 -2.0 -3.0) (5.0 6.0 7.0))))))
     (test "token-affine-vec" env
         (let* ((store (store-new))
                (x (token-x store))
@@ -109,11 +101,15 @@
         (assert-all
             (assert-equal (get-affine-vec f) '(2.0 1.0 3.0 4.0))
             (assert-equal (get-affine-vec g) #f))))
+))
+
+(suite "bounds.scm (bounds metadata)"
+    (tests
     (test "get-bounds" env
         (let ((f (set-bounds (lambda (x y z) x) '(-1 -2 -3) '(4 5 6)))
               (g (lambda (x y z) x)))
         (assert-all
-            (assert-equal (get-bounds f) '((-1.0 -2.0 -3.0) (4.0 5.0 6.0)))
+            (assert-equal (get-bounds f) '((-1 -2 -3) (4 5 6)))
             (assert-equal (get-bounds g) #f))))
 ))
 
@@ -145,7 +141,7 @@
         (let* ((f (set-bounds (lambda (x y z) x) '(0 -2 0) '(1 0 3)))
                (g (set-bounds (lambda (x y z) y) '(-1 0 -3) '(0 2 0)))
                (u (union f g)))
-            (assert-equal (get-bounds u) '((-1.0 -2.0 -3.0) (1.0 2.0 3.0)))))
+            (assert-equal (get-bounds u) '((-1 -2 -3) (1 2 3)))))
     (test "intersection (evaluation)" env
         (let* ((f (lambda (x y z) x))
                (g (lambda (x y z) y))
@@ -157,10 +153,10 @@
         (let* ((f (set-bounds (lambda (x y z) x) '(-5 -2 0) '(1 8 3)))
                (g (set-bounds (lambda (x y z) y) '(-1 -5 -3) '(3 2 0)))
                (u (intersection f g)))
-            (assert-equal (get-bounds u) '((-1.0 -2.0 0.0) (1.0 2.0 0.0)))))
+            (assert-equal (get-bounds u) '((-1 -2 0) (1 2 0)))))
     (test "intersection (disjoint bounds)" env
         (let* ((f (set-bounds (lambda (x y z) x) '(-1 -1 -1) '(0 0 0)))
                (g (set-bounds (lambda (x y z) y) '(1 2 3) '(2 3 4)))
                (u (intersection f g)))
-            (assert-equal (get-bounds u) '((0.0 0.0 0.0) (0.0 0.0 0.0)))))
+            (assert-equal (get-bounds u) '((0 0 0) (0 0 0)))))
 ))

@@ -68,8 +68,7 @@ size_t Token::args(Opcode op)
         case OP_ATAN2:
         case OP_MOD:
         case OP_NANFILL:
-        case META_AFFINE:
-        case META_BOUNDS:
+        case AFFINE_VEC:
             return 2;
 
         case INVALID: // fallthrough
@@ -79,33 +78,9 @@ size_t Token::args(Opcode op)
     }
 }
 
-Bounds Token::getBounds(bool* success)
-{
-    if (op != META_BOUNDS)
-    {
-        if (success != nullptr)
-        {
-            *success = false;
-        }
-        return {};
-    }
-
-    if (success != nullptr)
-    {
-        *success = true;
-    }
-
-    return {{a->b->a->a->value,  // xmin
-             b->a->a->a->value,  // ymin
-             b->b->a->a->value}, // zmin
-            {a->b->b->b->value,  // xmax
-             b->a->b->b->value,  // ymax
-             b->b->b->b->value}}; // zmax
-}
-
 glm::vec4 Token::getAffine(bool* success)
 {
-    if (op != META_AFFINE)
+    if (op != AFFINE_VEC)
     {
         if (success != nullptr)
         {

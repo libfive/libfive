@@ -18,7 +18,7 @@
 |#
 (define-module (ao transforms))
 
-(use-modules (ao operators) (ao jit) (ao bind))
+(use-modules (ao operators) (ao bounds) (ao jit))
 
 (define (apply-affine v)
     (lambda (x y z)

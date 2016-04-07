@@ -54,21 +54,21 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
 {
     if (op == OP_ADD)
     {
-        if (a->op == META_AFFINE && b->op == CONST)
+        if (a->op == AFFINE_VEC && b->op == CONST)
         {
             return affine(a->a->a->b->value,
                           a->a->b->b->value,
                           a->b->a->b->value,
                           a->b->b->value + b->value);
         }
-        else if (b->op == META_AFFINE && a->op == CONST)
+        else if (b->op == AFFINE_VEC && a->op == CONST)
         {
             return affine(b->a->a->b->value,
                           b->a->b->b->value,
                           b->b->a->b->value,
                           b->b->b->value + a->value);
         }
-        else if (a->op == META_AFFINE && b->op == META_AFFINE)
+        else if (a->op == AFFINE_VEC && b->op == AFFINE_VEC)
         {
             return affine(a->a->a->b->value + b->a->a->b->value,
                           a->a->b->b->value + b->a->b->b->value,
@@ -78,21 +78,21 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_SUB)
     {
-        if (a->op == META_AFFINE && b->op == CONST)
+        if (a->op == AFFINE_VEC && b->op == CONST)
         {
             return affine(a->a->a->b->value,
                           a->a->b->b->value,
                           a->b->a->b->value,
                           a->b->b->value - b->value);
         }
-        else if (b->op == META_AFFINE && a->op == CONST)
+        else if (b->op == AFFINE_VEC && a->op == CONST)
         {
             return affine(-b->a->a->b->value,
                           -b->a->b->b->value,
                           -b->b->a->b->value,
                           a->value - b->b->b->value);
         }
-        else if (a->op == META_AFFINE && b->op == META_AFFINE)
+        else if (a->op == AFFINE_VEC && b->op == AFFINE_VEC)
         {
             return affine(a->a->a->b->value - b->a->a->b->value,
                           a->a->b->b->value - b->a->b->b->value,
@@ -102,14 +102,14 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_MUL)
     {
-        if (a->op == META_AFFINE && b->op == CONST)
+        if (a->op == AFFINE_VEC && b->op == CONST)
         {
             return affine(a->a->a->b->value * b->value,
                           a->a->b->b->value * b->value,
                           a->b->a->b->value * b->value,
                           a->b->b->value * b->value);
         }
-        else if (b->op == META_AFFINE && a->op == CONST)
+        else if (b->op == AFFINE_VEC && a->op == CONST)
         {
             return affine(b->a->a->b->value * a->value,
                           b->a->b->b->value * a->value,
@@ -119,7 +119,7 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_DIV)
     {
-        if (a->op == META_AFFINE && b->op == CONST)
+        if (a->op == AFFINE_VEC && b->op == CONST)
         {
             return affine(a->a->a->b->value / b->value,
                           a->a->b->b->value / b->value,
@@ -228,29 +228,13 @@ Token* Store::affine(float a, float b, float c, float d)
 {
     // Build up the desired tree structure with collapse = false
     // to keep branches from automatically collapsing.
-    return operation(META_AFFINE,
+    return operation(AFFINE_VEC,
             operation(OP_ADD,
                 operation(OP_MUL, X(), constant(a), false),
                 operation(OP_MUL, Y(), constant(b), false), false),
             operation(OP_ADD,
                 operation(OP_MUL, Z(), constant(c), false),
                 constant(d), false));
-}
-
-Token* Store::bounded(Token* shape, Bounds b)
-{
-    return operation(META_BOUNDS,
-        operation(OP_MAX, shape,
-            operation(OP_MAX,
-                operation(OP_SUB, constant(b.lower.x), X(), false),
-                operation(OP_SUB, X(), constant(b.upper.x), false), false), false),
-        operation(OP_MAX,
-            operation(OP_MAX,
-                operation(OP_SUB, constant(b.lower.y), Y(), false),
-                operation(OP_SUB, Y(), constant(b.upper.y), false), false),
-            operation(OP_MAX,
-                operation(OP_SUB, constant(b.lower.z), Z(), false),
-                operation(OP_SUB, Z(), constant(b.upper.z), false), false), false), false);
 }
 
 std::set<Token*> Store::findConnected(Token* root)
@@ -342,53 +326,6 @@ Token* Store::rebuild(Token* root, std::set<Token*> pruned,
     return changed.count(root) ? changed[root] : root;
 }
 
-Token* Store::collapseBounds(Token* root)
-{
-    // We need to save a copy of bounds tokens to avoid iterator invalidation
-    std::list<Token*> bounds;
-
-    for (auto& weight : ops)
-    {
-        for (auto& op : weight[META_BOUNDS])
-        {
-            bounds.push_back(op.second);
-        }
-    }
-
-    // These are tokens that should be removed from the tree
-    std::set<Token*> pruned;
-
-    // Turn every BOUNDS into a normal OP_MAX
-    // (with identity operations automatically cancelled out)
-    std::map<Token*, Token*> changed;
-
-    for (auto t : bounds)
-    {
-        changed[t] = operation(OP_MAX,
-            operation(OP_MAX, t->a->a,  // Shape
-                operation(OP_MAX,       // X bounds
-                    operation(OP_SUB, t->a->b->a->a,
-                                      t->a->b->a->b),
-                    operation(OP_SUB, t->a->b->b->a,
-                                      t->a->b->b->b))),
-            operation(OP_MAX,
-                operation(OP_MAX,       // Y bounds
-                    operation(OP_SUB, t->b->a->a->a,
-                                      t->b->a->a->b),
-                    operation(OP_SUB, t->b->a->b->a,
-                                      t->b->a->b->b)),
-                operation(OP_MAX,       // Z bounds
-                    operation(OP_SUB, t->b->a->b->a,
-                                      t->b->a->b->b),
-                    operation(OP_SUB, t->b->a->b->a,
-                                      t->b->a->b->b))));
-
-        pruned.insert(t);
-    }
-
-    return rebuild(root, pruned, changed);
-}
-
 Token* Store::collapseAffine(Token* root)
 {
     // If the tree isn't big enough to have any affine functions,
@@ -399,7 +336,7 @@ Token* Store::collapseAffine(Token* root)
     }
 
     // Deep copy of affine clauses so that changes don't invalidate iterators
-    auto afs = ops[3][META_AFFINE];
+    auto afs = ops[3][AFFINE_VEC];
 
     // These are tokens that should be removed from the tree
     std::set<Token*> pruned;
@@ -421,9 +358,4 @@ Token* Store::collapseAffine(Token* root)
     }
 
     return rebuild(root, pruned, changed);
-}
-
-Token* Store::collapseMeta(Token* root)
-{
-    return collapseBounds(collapseAffine(root));
 }

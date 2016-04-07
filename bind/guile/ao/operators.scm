@@ -19,7 +19,7 @@
 (define-module (ao operators))
 
 (use-modules (srfi srfi-1) (ice-9 receive))
-(use-modules (ao jit) (ao bind))
+(use-modules (ao bind) (ao jit))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -140,25 +140,3 @@
 (define-public (square f)
     (if (number? f) (* f f)
                     (make-token 'square f)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define-public (set-bounds shape lower upper)
-    "set-bounds shape '(xmin ymin [zmin]) '(xmax ymax [zmax])
-    Sets the bounds of a shape"
-    (lambda (x y z)
-        (let ((s (shape x y z))
-              (xmin (car lower))
-              (ymin (cadr lower))
-              (zmin (if (= 3 (length lower)) (caddr lower) (- (inf))))
-              (xmax (car upper))
-              (ymax (cadr upper))
-              (zmax (if (= 3 (length upper)) (caddr upper) (inf))))
-        (if (number? s)
-            ;; For normal evaluation, just clamp the shape with bounding cube
-            (max s (- xmin x) (- x xmax)
-                   (- ymin y) (- y ymax)
-                   (- zmin z) (- z zmax))
-            ;; Otherwise, make a META_BOUNDS token from the bounds
-            (make-bounds-token s (list xmin ymin zmin)
-                                 (list xmax ymax zmax))))))

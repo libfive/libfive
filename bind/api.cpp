@@ -100,12 +100,6 @@ Token* token_binary(Store* s, int op, Token* a, Token* b)
     return s->operation(static_cast<Opcode>(op), a, b);
 }
 
-Token* token_bounded(Store* s, Token* t, v3* lower, v3* upper)
-{
-    return s->bounded(t, {{lower->x, lower->y, lower->z},
-                          {upper->x, upper->y, upper->z}});
-}
-
 int token_affine_vec(Token* t, v4* vec)
 {
     bool success = false;
@@ -114,23 +108,6 @@ int token_affine_vec(Token* t, v4* vec)
     if (success)
     {
         *vec = {v.x, v.y, v.z, v.w};
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
-
-int token_bounds(Token* t, v3* lower, v3* upper)
-{
-    bool success = false;
-    auto v = t->getBounds(&success);
-
-    if (success)
-    {
-        *lower = {v.lower.x, v.lower.y, v.lower.z};
-        *upper = {v.upper.x, v.upper.y, v.upper.z};
         return 1;
     }
     else

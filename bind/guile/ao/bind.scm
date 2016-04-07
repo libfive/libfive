@@ -136,17 +136,6 @@
         '* (get-function "token_binary") (list '* int '* '*))
     (unwrap-store s) (opcode->int op) (unwrap-token a) (unwrap-token b))))
 
-(define-public (token-bounded s t a b)
-    "token-bounded store shape lower upper
-    Constructs a META_BOUNDS token for the given shape.
-    lower and upper should be '(x y z) lists"
-    (let* ((a (make-c-struct v3 a))
-           (b (make-c-struct v3 b))
-           (token_bounded (pointer->procedure '*
-                          (get-function "token_bounded") (list '* '* '* '*)))
-           (result (token_bounded (unwrap-store s) (unwrap-token t) a b)))
-    (wrap-token result)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (token-affine-vec t)
@@ -157,18 +146,6 @@
                              (get-function "token_affine_vec") (list '* '*)))
            (result (token_affine_vec (unwrap-token t) v)))
     (if (= result 1) (parse-c-struct v v4) #f)))
-
-(define-public (token-bounds t)
-    "Extracts the bounds from a token, return a list
-    '((xmin ymin zmin) (xmax ymax zmax))
-    (or #f if the token is not a META_BOUNDS token"
-    (let* ((lower (make-c-struct v3 '(0 0 0)))
-           (upper (make-c-struct v3 '(0 0 0)))
-           (token_bounds (pointer->procedure int
-                         (get-function "token_bounds") (list '* '* '*)))
-           (result (token_bounds (unwrap-token t) lower upper)))
-    (if (= result 1) (list (parse-c-struct lower v3)
-                           (parse-c-struct upper v3)) #f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
