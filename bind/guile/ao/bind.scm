@@ -68,22 +68,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (store-new-raw)
-    (wrap-store ((pointer->procedure
-    '* (get-function "store_new") '()))))
-
 (define-public (store-new)
-    (store-attach-finalizer (store-new-raw)))
-
-(define-public (store-delete s)
-    ((pointer->procedure
-    void (get-function "store_delete") '(*))
-        (unwrap-store s)))
-
-(define-public (store-attach-finalizer s)
-    "Attaches store_delete to a wrapped Store pointer"
-    (wrap-store (make-pointer
-        (pointer-address (unwrap-store s))
+    "store-new
+    Create a new store object
+    Attaches a finalizer that frees the store on object deletion"
+    (wrap-store (make-pointer (pointer-address
+        ((pointer->procedure '* (get-function "store_new") '())))
         (get-function "store_delete"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -139,7 +129,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (token-affine-vec t)
-    "Extracts the affine terms from a Token, returning a list '(a b c d)
+    "token-affine-vec token
+    Extracts the affine terms from a Token, returning a list '(a b c d)
     or #f if the token is not affine"
     (let* ((v (make-c-struct v4 '(0 0 0 0)))
            (token_affine_vec (pointer->procedure int
@@ -150,19 +141,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (tree-new s t)
-    "Construct a new Tree pointer"
+    "tree-new store token
+    Construct a new Tree pointer"
     (wrap-tree ((pointer->procedure
     '* (get-function "tree_new") '(* *))
         (unwrap-store s) (unwrap-token t))))
 
 (define-public (tree-attach-finalizer t)
-    "Attaches tree_delete to a wrapped Tree pointer"
+    "tree-attach-finalizer t
+    Attaches tree_delete to a wrapped Tree pointer"
     (wrap-tree (make-pointer
         (pointer-address (unwrap-tree t))
         (get-function "tree_delete"))))
 
 (define-public (tree-eval-double t x y z)
-    "Evaluates a Tree at the given position
+    "tree-eval-double tree x y z
+    Evaluates a Tree at the given position
     x y z should be numbers"
     ((pointer->procedure
     float (get-function "tree_eval_double")
@@ -170,7 +164,8 @@
         (unwrap-tree t) x y z))
 
 (define-public (tree-eval-interval t X Y Z)
-    "Evaluates a Tree over the given region
+    "tree-eval-interval tree X Y Z
+    Evaluates a Tree over the given region
     X, Y, Z should be pairs '(lower . upper)
     Returns a pair '(lower . upper)"
     (if (any (lambda (I) (< (cdr I) (car I))) (list X Y Z))
