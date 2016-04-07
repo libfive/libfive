@@ -29,19 +29,22 @@
 ;; This is our local store.  When populated, it's an opaque pointer to a
 ;; Store object (created in C++ with store_new)
 (define store #nil)
+(define jit-mutex (make-mutex))
 
 ;; Nested stores are pushed onto this stack
 (define stack '())
 
 (define (store-push)
     "Pushes the existing store to the stack and creates a new store"
+    (lock-mutex jit-mutex)
     (set! stack (cons store stack))
     (set! store (store-new)))
 
 (define (store-pop)
     "Replaces the store with the top of the stack"
     (set! store (car stack))
-    (set! stack (cdr stack)))
+    (set! stack (cdr stack))
+    (unlock-mutex jit-mutex))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
