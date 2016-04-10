@@ -123,7 +123,7 @@
            (zmax (max za zb))
            (bounds (get-bounds shape))
            (out (lambda (x y z) (max (shape x y z) (- zmin z) (- z zmax)))))
-    (if (bounds)
+    (if bounds
         (let* ((lower (car bounds))
                (upper (cadr bounds)))
         (set-bounds out (list (car lower) (cadr lower) zmin)
