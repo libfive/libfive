@@ -67,7 +67,7 @@
         (let* ((store (store-new))
                (x (token-x store))
                (t (tree-new store x)))
-            (assert-equal (tree-eval-double t 1.0 2.0 3.0) 1.0)))
+            (assert-near (tree-eval-double t 1 2 3) 1)))
     (test "tree-eval-interval" env
         (let* ((store (store-new))
                (x (token-x store))
@@ -88,8 +88,8 @@
     (test "jit-function (float evaluation)" env
         (let ((f (jit-function (lambda (x y z) x))))
         (assert-all
-            (assert-equal (f 1 0 0) 1.0)
-            (assert-equal (f 2 0 0) 2.0))))
+            (assert-near (f 1 0 0) 1)
+            (assert-near (f 2 0 0) 2))))
     (test "jit-function (interval evaluation)" env
         (let ((f (jit-function (lambda (x y z) x))))
         (assert-all
