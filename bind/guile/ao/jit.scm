@@ -26,25 +26,27 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; This is our local store.  When populated, it's an opaque pointer to a
-;; Store object (created in C++ with store_new)
-(define store #nil)
-(define jit-mutex (make-mutex))
+;; Nested stores are pushed onto a per-thread local stack
+(define-public stack (make-hash-table))
 
-;; Nested stores are pushed onto this stack
-(define stack '())
+;; Looking up (current-thread) returns the store
+(define-public (get-store)
+    (let ((h (hash-get-handle stack (current-thread))))
+    (if (and h (not (eq? (cdr h) '()))) (cadr h) #f)))
 
-(define (store-push)
-    "Pushes the existing store to the stack and creates a new store"
-    (lock-mutex jit-mutex)
-    (set! stack (cons store stack))
-    (set! store (store-new)))
+(define-public (store-push)
+    "Create a new store at the top of the stack"
+    (let* ((t (current-thread))
+           (h (hash-get-handle stack t))
+           (s (store-new)))
+    (hash-set! stack t (if h (cons s (cdr h))
+                             (list s)))))
 
-(define (store-pop)
-    "Replaces the store with the top of the stack"
-    (set! store (car stack))
-    (set! stack (cdr stack))
-    (unlock-mutex jit-mutex))
+(define-public (store-pop)
+    "Remove the store at the top of the stack"
+    (let* ((t (current-thread))
+           (h (hash-get-handle stack t)))
+    (hash-set! stack t (cddr h))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -61,22 +63,22 @@ A symbol and further arguments are converted to an operation"
     (cond
         ((= 0 len)
             (cond ((token? a) a)
-                  ((number? a) (token-const store a))
+                  ((number? a) (token-const (get-store) a))
                   (else (error "Failed to construct token" a))))
         ((= 1 len)
-            (token-op-unary store a (make-token (car args))))
+            (token-op-unary (get-store) a (make-token (car args))))
         ((= 2 len)
-            (token-op-binary store a (make-token (car args))
-                                     (make-token (cadr args))))
+            (token-op-binary (get-store) a (make-token (car args))
+                                           (make-token (cadr args))))
         (else (error "Incorrect argument count to make-token")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (get-root-token f)
     "Returns the root token for the given function"
-    (let* ((x (token-x store))
-           (y (token-y store))
-           (z (token-z store))
+    (let* ((x (token-x (get-store)))
+           (y (token-y (get-store)))
+           (z (token-z (get-store)))
            (out (make-token (f x y z))))
         out))
 
@@ -86,7 +88,7 @@ A symbol and further arguments are converted to an operation"
     If manage is #t (default), attaches a finalizer to the output"
     (store-push)
     (let* ((root (get-root-token f))
-           (out (tree-new store root)))
+           (out (tree-new (get-store) root)))
         (store-pop)
         (if manage (tree-attach-finalizer out) out)))
 (export jit)
