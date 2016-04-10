@@ -19,7 +19,7 @@
 (define-module (ao operators))
 
 (use-modules (srfi srfi-1) (ice-9 receive))
-(use-modules (ao jit))
+(use-modules (ao bind) (ao jit))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

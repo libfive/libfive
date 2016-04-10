@@ -20,14 +20,33 @@
 (define-module (ao jit))
 
 (use-modules (ice-9 common-list))
-(use-modules (ao bind))
 (use-modules (system foreign))
+
+(use-modules (ao bind))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; This is our local store.  When populated, it's an opaque pointer to a
 ;; Store object (created in C++ with store_new)
 (define store #nil)
+(define jit-mutex (make-mutex))
+
+;; Nested stores are pushed onto this stack
+(define stack '())
+
+(define (store-push)
+    "Pushes the existing store to the stack and creates a new store"
+    (lock-mutex jit-mutex)
+    (set! stack (cons store stack))
+    (set! store (store-new)))
+
+(define (store-pop)
+    "Replaces the store with the top of the stack"
+    (set! store (car stack))
+    (set! stack (cdr stack))
+    (unlock-mutex jit-mutex))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Converts the given argument to a token
 ;; Based on argument type, the following behavior occurs
@@ -51,32 +70,50 @@ A symbol and further arguments are converted to an operation"
                                      (make-token (cadr args))))
         (else (error "Incorrect argument count to make-token")))))
 
-(define* (jit f #:key (manage #t))
-    "Compile an arithmetic lambda function to a bare tree pointer
-    If manage is #t (default), attaches a finalizer to the output"
-    (set! store (store-new))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (get-root-token f)
+    "Returns the root token for the given function"
     (let* ((x (token-x store))
            (y (token-y store))
            (z (token-z store))
-           (root (make-token (f x y z)))
+           (out (make-token (f x y z))))
+        out))
+
+(define* (jit f #:key (manage #t))
+    "jit f
+    Compile an arithmetic lambda function (f x y z) to a bare tree pointer
+    If manage is #t (default), attaches a finalizer to the output"
+    (store-push)
+    (let* ((root (get-root-token f))
            (out (tree-new store root)))
-        (store-delete store)
-        (set! store #nil)
+        (store-pop)
         (if manage (tree-attach-finalizer out) out)))
 (export jit)
 
-(define-public (affine-vec f)
-    (set! store (store-new))
-    (let* ((x (token-x store))
-           (y (token-y store))
-           (z (token-z store))
-           (root (make-token (f x y z)))
-           (result (token-affine-vec root)))
-        (store-delete store)
-        (set! store #nil)
-        result))
-
 (define-public (jit-function f)
-    "Compile and arithmetic lambda function to a wrapped math function"
-    (let ((t (jit f)))
-    (lambda (x y z) (tree-eval-double t x y z))))
+    "jit-function f
+    Compile an arithmetic lambda function (f x y z) to a wrapped math function
+    The returned function can be called with numbers or pairs representing
+    intervals, i.e. '(lower . upper)"
+    (let ((t (jit f))
+          (interval? (lambda (x) (and (pair? x) (not (list? x))))))
+    (lambda (x y z)
+        (cond ((every interval? (list x y z))
+               (tree-eval-interval t x y z))
+              ((every number? (list x y z))
+               (tree-eval-double t x y z))
+              (else (error "Invalid arguments (must be floats or pairs)"))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-public (get-affine-vec f)
+    "get-affine-vec f
+    f should be a function of the form (lambda (x y z) ...)
+    If the result is an affine combination a*x + b*y + c*z + d, returns
+    '(a b c d); otherwise, returns #f"
+    (store-push)
+    (let* ((root (get-root-token f))
+           (result (token-affine-vec root)))
+        (store-pop)
+        result))

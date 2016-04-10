@@ -68,7 +68,7 @@ size_t Token::args(Opcode op)
         case OP_ATAN2:
         case OP_MOD:
         case OP_NANFILL:
-        case META_AFFINE:
+        case AFFINE_VEC:
             return 2;
 
         case INVALID: // fallthrough
@@ -76,4 +76,24 @@ size_t Token::args(Opcode op)
         case DUMMY_B:
         case LAST_OP: return -1;
     }
+}
+
+glm::vec4 Token::getAffine(bool* success)
+{
+    if (op != AFFINE_VEC)
+    {
+        if (success != nullptr)
+        {
+            *success = false;
+        }
+        return {};
+    }
+
+    if (success != nullptr)
+    {
+        *success = true;
+    }
+
+    return {a->a->b->value, a->b->b->value,
+            b->a->b->value, b->b->value};
 }

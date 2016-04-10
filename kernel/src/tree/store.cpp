@@ -17,6 +17,7 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <cassert>
+#include <list>
 
 #include "ao/kernel/tree/store.hpp"
 #include "ao/kernel/tree/token.hpp"
@@ -53,21 +54,21 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
 {
     if (op == OP_ADD)
     {
-        if (a->op == META_AFFINE && b->op == CONST)
+        if (a->op == AFFINE_VEC && b->op == CONST)
         {
             return affine(a->a->a->b->value,
                           a->a->b->b->value,
                           a->b->a->b->value,
                           a->b->b->value + b->value);
         }
-        else if (b->op == META_AFFINE && a->op == CONST)
+        else if (b->op == AFFINE_VEC && a->op == CONST)
         {
             return affine(b->a->a->b->value,
                           b->a->b->b->value,
                           b->b->a->b->value,
                           b->b->b->value + a->value);
         }
-        else if (a->op == META_AFFINE && b->op == META_AFFINE)
+        else if (a->op == AFFINE_VEC && b->op == AFFINE_VEC)
         {
             return affine(a->a->a->b->value + b->a->a->b->value,
                           a->a->b->b->value + b->a->b->b->value,
@@ -77,21 +78,21 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_SUB)
     {
-        if (a->op == META_AFFINE && b->op == CONST)
+        if (a->op == AFFINE_VEC && b->op == CONST)
         {
             return affine(a->a->a->b->value,
                           a->a->b->b->value,
                           a->b->a->b->value,
                           a->b->b->value - b->value);
         }
-        else if (b->op == META_AFFINE && a->op == CONST)
+        else if (b->op == AFFINE_VEC && a->op == CONST)
         {
             return affine(-b->a->a->b->value,
                           -b->a->b->b->value,
                           -b->b->a->b->value,
                           a->value - b->b->b->value);
         }
-        else if (a->op == META_AFFINE && b->op == META_AFFINE)
+        else if (a->op == AFFINE_VEC && b->op == AFFINE_VEC)
         {
             return affine(a->a->a->b->value - b->a->a->b->value,
                           a->a->b->b->value - b->a->b->b->value,
@@ -101,14 +102,14 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_MUL)
     {
-        if (a->op == META_AFFINE && b->op == CONST)
+        if (a->op == AFFINE_VEC && b->op == CONST)
         {
             return affine(a->a->a->b->value * b->value,
                           a->a->b->b->value * b->value,
                           a->b->a->b->value * b->value,
                           a->b->b->value * b->value);
         }
-        else if (b->op == META_AFFINE && a->op == CONST)
+        else if (b->op == AFFINE_VEC && a->op == CONST)
         {
             return affine(b->a->a->b->value * a->value,
                           b->a->b->b->value * a->value,
@@ -118,7 +119,7 @@ Token* Store::checkAffine(Opcode op, Token* a, Token* b)
     }
     else if (op == OP_DIV)
     {
-        if (a->op == META_AFFINE && b->op == CONST)
+        if (a->op == AFFINE_VEC && b->op == CONST)
         {
             return affine(a->a->a->b->value / b->value,
                           a->a->b->b->value / b->value,
@@ -227,7 +228,7 @@ Token* Store::affine(float a, float b, float c, float d)
 {
     // Build up the desired tree structure with collapse = false
     // to keep branches from automatically collapsing.
-    return operation(META_AFFINE,
+    return operation(AFFINE_VEC,
             operation(OP_ADD,
                 operation(OP_MUL, X(), constant(a), false),
                 operation(OP_MUL, Y(), constant(b), false), false),
@@ -268,36 +269,11 @@ std::set<Token*> Store::findConnected(Token* root)
     return found;
 }
 
-Token* Store::collapseAffine(Token* root)
+Token* Store::rebuild(Token* root, std::set<Token*> pruned,
+                      std::map<Token*, Token*> changed)
 {
-    // If the tree isn't big enough to have any affine functions,
-    // then we can safely return right away
-    if (ops.size() < 4)
-    {
-        return root;
-    }
-
     // Deep copy of ops so that changes don't invalidate iterators
     decltype(ops) ops_ = ops;
-
-    // These are tokens that should be removed from the tree
-    std::set<Token*> pruned;
-
-    // Turn every AFFINE into a normal OP_ADD
-    // (with identity operations automatically cancelled out)
-    std::map<Token*, Token*> changed;
-    for (auto r : ops_[3][META_AFFINE])
-    {
-        changed[r.second] = operation(OP_ADD,
-                operation(OP_ADD,
-                    operation(OP_MUL, X(), r.second->a->a->b),
-                    operation(OP_MUL, Y(), r.second->a->b->b)),
-                operation(OP_ADD,
-                    operation(OP_MUL, Z(), r.second->b->a->b),
-                    r.second->b->b));
-
-        pruned.insert(r.second);
-    }
 
     // Iterate over weight levels from bottom to top
     for (const auto& weight : ops_)
@@ -348,4 +324,38 @@ Token* Store::collapseAffine(Token* root)
     }
 
     return changed.count(root) ? changed[root] : root;
+}
+
+Token* Store::collapseAffine(Token* root)
+{
+    // If the tree isn't big enough to have any affine functions,
+    // then we can safely return right away
+    if (ops.size() < 4)
+    {
+        return root;
+    }
+
+    // Deep copy of affine clauses so that changes don't invalidate iterators
+    auto afs = ops[3][AFFINE_VEC];
+
+    // These are tokens that should be removed from the tree
+    std::set<Token*> pruned;
+
+    // Turn every AFFINE into a normal OP_ADD
+    // (with identity operations automatically cancelled out)
+    std::map<Token*, Token*> changed;
+    for (auto r : afs)
+    {
+        changed[r.second] = operation(OP_ADD,
+                operation(OP_ADD,
+                    operation(OP_MUL, X(), r.second->a->a->b),
+                    operation(OP_MUL, Y(), r.second->a->b->b)),
+                operation(OP_ADD,
+                    operation(OP_MUL, Z(), r.second->b->a->b),
+                    r.second->b->b));
+
+        pruned.insert(r.second);
+    }
+
+    return rebuild(root, pruned, changed);
 }

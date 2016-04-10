@@ -20,6 +20,8 @@
 
 #include <cstdlib>
 
+#include "glm/vec4.hpp"
+
 #include "ao/kernel/tree/opcode.hpp"
 
 /*
@@ -42,6 +44,12 @@ public:
      *  Returns the number of arguments for the given token
      */
     static size_t args(Opcode op);
+
+    /*
+     *  Attempts to get affine terms from a AFFINE_VEC token
+     *  If success is provided, it is populated with true or false
+     */
+    glm::vec4 getAffine(bool* success=nullptr);
 
     /*  Member variables  */
     const Opcode op;

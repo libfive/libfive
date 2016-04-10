@@ -21,6 +21,8 @@
 #include <fstream>
 #include <set>
 
+#include "glm/gtc/matrix_inverse.hpp"
+
 #include "ao/kernel/tree/store.hpp"
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/opcode.hpp"
@@ -100,12 +102,12 @@ Token* token_binary(Store* s, int op, Token* a, Token* b)
 
 int token_affine_vec(Token* t, v4* vec)
 {
-    if (t->op == META_AFFINE)
+    bool success = false;
+    glm::vec4 v = t->getAffine(&success);
+
+    if (success)
     {
-        *vec = {t->a->a->b->value,
-                t->a->b->b->value,
-                t->b->a->b->value,
-                t->b->b->value};
+        *vec = {v.x, v.y, v.z, v.w};
         return 1;
     }
     else
@@ -130,6 +132,17 @@ float tree_eval_double(Tree* tree, float x, float y, float z)
 {
     auto e = Evaluator(tree);
     return e.eval(x, y, z);
+}
+
+void tree_eval_interval(Tree* tree, v2* x, v2* y, v2* z)
+{
+    auto e = Evaluator(tree);
+    auto out =  e.eval({x->lower, x->upper},
+                       {y->lower, y->upper},
+                       {z->lower, z->upper});
+
+    x->lower = out.lower();
+    x->upper = out.upper();
 }
 
 void tree_export_heightmap(Tree* tree, char* filename,
@@ -211,6 +224,22 @@ void window_set_callback(void (*callback)(const char*))
 void window_set_thread_init(void (*init)())
 {
     window_thread_init = init;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void matrix_invert(v4* x, v4* y, v4* z)
+{
+    glm::mat4 M;
+    M[0] = {x->x, x->y, x->z, x->w};
+    M[1] = {y->x, y->y, y->z, y->w};
+    M[2] = {z->x, z->y, z->z, z->w};
+    M[3] = {0, 0, 0, 1};
+
+    auto Mi = glm::inverse(M);
+    *x = {Mi[0].x, Mi[0].y, Mi[0].z, Mi[0].w};
+    *y = {Mi[1].x, Mi[1].y, Mi[1].z, Mi[1].w};
+    *z = {Mi[2].x, Mi[2].y, Mi[2].z, Mi[2].w};
 }
 
 ////////////////////////////////////////////////////////////////////////////////

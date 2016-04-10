@@ -58,7 +58,7 @@ enum Opcode
     //    /   \   /  \  /   \
     //   X    C  Y   C  Z   C
     // (where X, Y, Z are base coordinates and C is CONST)
-    META_AFFINE,
+    AFFINE_VEC,
 
     // Dummy opcodes used to select the left or right-hand side of a function
     // (used when one of the children is disabled)

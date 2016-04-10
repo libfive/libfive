@@ -26,6 +26,8 @@ class Tree;
 
 extern "C"
 {
+    struct v2 { float lower; float upper; };
+    struct v3 { float x; float y; float z; };
     struct v4 { float x; float y; float z; float w; };
 
     Store* store_new();
@@ -55,7 +57,17 @@ extern "C"
     Tree* tree_new(Store* store, Token* root);
     void tree_delete(Tree* ptr);
 
+    /*
+     *  Evaluates the tree at the given position
+     *  Returns the result
+     */
     float tree_eval_double(Tree* tree, float x, float y, float z);
+
+    /*
+     *  Evaluates the tree on the given interval.
+     *  Stores results in x
+     */
+    void tree_eval_interval(Tree* tree, v2* x, v2* y, v2* z);
 
     void tree_export_heightmap(Tree* tree, char* filename,
                                float xmin, float xmax,
@@ -74,6 +86,15 @@ extern "C"
     void window_clear_frames();
     void window_set_callback(void (*callback)(const char*));
     void window_set_thread_init(void (*init)());
+
+////////////////////////////////////////////////////////////////////////////////
+
+    /*
+     *  Inverts the matrix with rows x, y, z, [0 0 0 1]
+     *  x, y, and z are modified in-place
+     *  Returns 1 on success, 0 otherwise
+     */
+    void matrix_invert(v4* x, v4* y, v4* z);
 
 ////////////////////////////////////////////////////////////////////////////////
 

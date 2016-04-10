@@ -1,5 +1,5 @@
 ;; Menger sponge fractal
-(use-modules (ao shapes))
+(use-modules (ao shapes) (ao transforms) (ao csg))
 
 (define (recurse x y scale i)
     (let* ((s (/ scale 2))

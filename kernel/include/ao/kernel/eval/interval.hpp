@@ -20,6 +20,8 @@
 
 #include <boost/numeric/interval.hpp>
 
+#include "glm/vec3.hpp"
+
 typedef boost::numeric::interval<float,
     boost::numeric::interval_lib::policies<
         boost::numeric::interval_lib::save_state_nothing<
