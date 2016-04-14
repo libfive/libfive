@@ -72,8 +72,8 @@ TEST_CASE("Push / pop behavior")
     e.push();
 
     // Check to make sure that the push disabled something
-    REQUIRE(e.utilization() < 1);
     CAPTURE(e.utilization());
+    REQUIRE(e.utilization() < 1);
 
     // Require that the evaluation gets 1
     REQUIRE(e.eval(1.0f, 2.0f, 0.0f) == 2);
