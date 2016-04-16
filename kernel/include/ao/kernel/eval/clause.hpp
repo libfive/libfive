@@ -62,23 +62,6 @@ public:
     void enable()  { clearFlag(CLAUSE_FLAG_DISABLED); }
 
 protected:
-    /*
-     *  Construct a clause from scratch
-     *  This is a private constructor used to build matrix rows
-     */
-    Clause(Opcode op, Clause* a=nullptr, Clause* b=nullptr);
-
-    /*
-     *  Build a constant clause
-     *  This is a private constructor used to build matrix rows
-     */
-    Clause(float c);
-
-    /*
-     *  Baseline delegating constructor
-     */
-    Clause(Opcode op, float value, Clause* a=nullptr, Clause* b=nullptr);
-
     /*  Opcode for this clause  */
     const Opcode op;
 

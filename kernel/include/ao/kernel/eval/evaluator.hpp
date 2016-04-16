@@ -85,9 +85,9 @@ public:
      */
     void set(float x, float y, float z, size_t index)
     {
-        X->result.set(x, index);
-        Y->result.set(y, index);
-        Z->result.set(z, index);
+        X->result.set(M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0], index);
+        Y->result.set(M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1], index);
+        Z->result.set(M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2], index);
     }
 
     /*
@@ -116,6 +116,10 @@ protected:
      *  Looks up an opcode, using dummy ops if children are disabled
      */
     static Opcode getOpcode(Clause* c);
+
+    /*  Global matrix transform (and inverse) applied to all coordinates  */
+    const glm::mat4 M;
+    const glm::mat4 Mi;
 
     /*  All operations live in a set of rows sorted by weight */
     std::vector<Row> rows;

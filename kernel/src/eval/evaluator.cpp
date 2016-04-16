@@ -19,6 +19,8 @@
 #include <numeric>
 #include <memory>
 
+#include <glm/gtc/matrix_inverse.hpp>
+
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/atom.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
@@ -27,6 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
+    : M(M), Mi(glm::inverse(M))
 {
     // We'll be adding a 4x3 transform matrix below X, Y, Z
     const size_t MATRIX_ROWS = 3;
@@ -35,7 +38,6 @@ Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
     // Count up the number of Atoms in the Tree
     size_t count =  std::accumulate(tree->rows.begin(), tree->rows.end(),
             3                           // X, Y, Z
-            + 10*3                      // Transform matrix
             + tree->constants.size(),   // Constants
             [](size_t i, const std::vector<Atom*>& r){ return i + r.size(); });
 
@@ -55,69 +57,10 @@ Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
     ptr = data;
 #endif
 
-    // Allocate default X, Y, Z clauses
-    X = new (ptr++) Clause(VAR_X);
-    Y = new (ptr++) Clause(VAR_Y);
-    Z = new (ptr++) Clause(VAR_Z);
-
     // Helper function to create a new clause in the data array
     std::unordered_map<const Atom*, Clause*> clauses;
     auto newClause = [&ptr, &clauses](const Atom* m)
         { return new (ptr++) Clause(m, clauses); };
-
-    /*
-     *  Creates a row of the transform matrix
-     *
-     *  Requires X, Y, Z to be populated
-     *  Fills 12 spots in the data array
-     */
-    auto buildMatrixRow = [&](Opcode op)
-    {
-        assert(op == VAR_X || op == VAR_Y || op == VAR_Z);
-        assert(X != nullptr && Y != nullptr && Z != nullptr);
-        assert(rows.size() == 3);
-
-        // The matrix transform is of the form
-        //     q' = a*x + b*y + c*z + d
-        // (where q' is x', y', or z')
-        //
-        // It is implemented with three OP_MULs (a*x, b*y, c*z)
-        // and three OP_ADDs (a*x + b*y, c*z + d, a*x + b*y + c*z + d)
-
-        // The matrix is built from the incoming transform matrix M
-        // and is stored in the constants array
-        int row = op - VAR_X;
-        Clause* a  = new (ptr++) Clause(M[0][row]);
-        Clause* b  = new (ptr++) Clause(M[1][row]);
-        Clause* c  = new (ptr++) Clause(M[2][row]);
-        Clause* d  = new (ptr++) Clause(M[3][row]);
-        for (auto i : {a, b, c, d})
-        {
-             constants.push_back(i);
-        }
-
-        // The reduction tree is stored in the bag-o-data
-        Clause* ax = new (ptr++) Clause(OP_MUL, X, a);
-        Clause* by = new (ptr++) Clause(OP_MUL, Y, b);
-        Clause* cz = new (ptr++) Clause(OP_MUL, Z, c);
-
-        Clause* ax_by = new (ptr++) Clause(OP_ADD, ax, by);
-        Clause* cz_d  = new (ptr++) Clause(OP_ADD, cz, d);
-
-        Clause* ax_by_cz_d = new (ptr++) Clause(OP_ADD, ax_by, cz_d);
-
-        // Load matrix transform into the operator array
-        rows[0].push_back(ax);
-        rows[0].push_back(by);
-        rows[0].push_back(cz);
-
-        rows[1].push_back(ax_by);
-        rows[1].push_back(cz_d);
-
-        rows[2].push_back(ax_by_cz_d);
-
-        return ax_by_cz_d;
-    };
 
     // Load constants into the array first
     for (auto m : tree->constants)
@@ -125,11 +68,9 @@ Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
         constants.push_back(newClause(m));
     }
 
-    // Create base clauses X, Y, Z
-    for (auto a : { tree->X, tree->Y, tree->Z})
-    {
-        clauses[a] = buildMatrixRow(a->op);
-    }
+    X = newClause(tree->X);
+    Y = newClause(tree->Y);
+    Z = newClause(tree->Z);
 
     // Set derivatives for X, Y, Z (since these never change)
     X->result.deriv(1, 0, 0);
@@ -137,28 +78,14 @@ Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
     Z->result.deriv(0, 0, 1);
 
     // Finally, create the rest of the Tree's clauses
+    for (auto row : tree->rows)
     {
-        assert(rows.size() == MATRIX_ROWS);
-        rows.resize(rows.size() + tree->rows.size());
-
-        // Skip the matrix rows and bring in clauses above them
-        auto row = rows.begin() + MATRIX_ROWS;
-
-        // Skip the first row, because we've already stored X, Y, Z
-        for (auto itr = tree->rows.begin();
-                  itr != tree->rows.end(); ++itr, ++row)
+        rows.push_back(Row());
+        for (auto atom : row)
         {
-            for (auto atom : *itr)
-            {
-                row->push_back(newClause(atom));
-            }
+            rows.back().push_back(newClause(atom));
         }
-    }
-
-    // Mark that this is the max size for all rows
-    for (auto& r : rows)
-    {
-        r.setSize();
+        rows.back().setSize();
     }
 
     assert(clauses[tree->root]);
@@ -186,9 +113,9 @@ Interval Evaluator::eval(Interval x, Interval y, Interval z)
 
 void Evaluator::set(Interval x, Interval y, Interval z)
 {
-    X->result.set(x);
-    Y->result.set(y);
-    Z->result.set(z);
+    X->result.set(M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0]);
+    Y->result.set(M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1]);
+    Z->result.set(M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -963,7 +890,7 @@ std::tuple<const float*, const float*,
 {
     if (vectorize)
     {
-        count = (count - 1)/8 + 1;
+        size_t vc = (count - 1)/8 + 1;
 
         for (const auto& row : rows)
         {
@@ -979,15 +906,10 @@ std::tuple<const float*, const float*,
 
                            row[i]->result.mf, row[i]->result.mdx,
                            row[i]->result.mdy, row[i]->result.mdz,
-                       count);
+                       vc);
             }
         }
-        return std::tuple<const float*, const float*,
-                          const float*, const float*> {
-                            root->result.f, root->result.dx,
-                            root->result.dy, root->result.dz
-                          };
-    }
+    } else
 #else
 std::tuple<const float*, const float*,
            const float*, const float*> Evaluator::derivs(size_t count)
@@ -1010,6 +932,18 @@ std::tuple<const float*, const float*,
                    count);
         }
     }
+
+    // Apply the inverse matrix transform to our normals
+    for (size_t i=0; i < count; ++i)
+    {
+        auto o = Mi * glm::vec4(root->result.dx[i],
+                                root->result.dy[i],
+                                root->result.dz[i], 1);
+        root->result.dx[i] = o.x;
+        root->result.dy[i] = o.y;
+        root->result.dz[i] = o.z;
+    }
+
     return std::tuple<const float*, const float*,
                       const float*, const float*> {
                         root->result.f, root->result.dx,

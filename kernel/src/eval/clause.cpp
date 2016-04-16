@@ -23,8 +23,8 @@
 
 Clause::Clause(const Atom* m,
                std::unordered_map<const Atom*, Clause*>& clauses)
-    : Clause(m->op, m->value, m->a ? clauses[m->a] : nullptr,
-                              m->b ? clauses[m->b] : nullptr)
+    : op(m->op), value(m->value), a(m->a ? clauses[m->a] : nullptr),
+                                  b(m->b ? clauses[m->b] : nullptr)
 {
     // Assert that children have been added to the clause map
     assert(m->a ? clauses.count(m->a) : true);
@@ -33,17 +33,7 @@ Clause::Clause(const Atom* m,
     // Assert that this atom hasn't already been added to the tree
     assert(clauses[m] == nullptr);
     clauses[m] = this;
-}
 
-Clause::Clause(Opcode op, Clause* a, Clause* b)
-    : Clause(op, std::nan(""), a, b)
-{
-    // Nothing to do here
-}
-
-Clause::Clause(Opcode op, float value, Clause* a, Clause* b)
-    : op(op), value(value), a(a), b(b)
-{
     // Helper function to copy a set of result pointers if a clause is present
     auto load_ptrs = [](ResultPtrs* p, Clause* c)
     {
@@ -86,12 +76,6 @@ Clause::Clause(Opcode op, float value, Clause* a, Clause* b)
     {
         result.fill(value);
     }
-}
-
-Clause::Clause(float c)
-    : Clause(CONST, c)
-{
-    // Nothing to do here
 }
 
 ////////////////////////////////////////////////////////////////////////////////
