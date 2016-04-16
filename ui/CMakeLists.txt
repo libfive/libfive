@@ -29,6 +29,7 @@ target_link_libraries(ao-ui
 
 # Build efsw as a separate library
 add_subdirectory(vendor/efsw)
+set_target_properties(efsw PROPERTIES COMPILE_FLAGS -w)
 
 ################################################################################
 
