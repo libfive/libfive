@@ -966,6 +966,60 @@ Interval Evaluator::interval()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void Evaluator::applyTransform(size_t count)
+{
+#if __AVX__
+#define MM256_LOADDUP(a) _mm256_set_ps(a,a,a,a,a,a,a,a)
+    __m256 M00 = MM256_LOADDUP(M[0][0]);
+    __m256 M10 = MM256_LOADDUP(M[1][0]);
+    __m256 M20 = MM256_LOADDUP(M[2][0]);
+    __m256 M30 = MM256_LOADDUP(M[3][0]);
+
+    __m256 M01 = MM256_LOADDUP(M[0][1]);
+    __m256 M11 = MM256_LOADDUP(M[1][1]);
+    __m256 M21 = MM256_LOADDUP(M[2][1]);
+    __m256 M31 = MM256_LOADDUP(M[3][1]);
+
+    __m256 M02 = MM256_LOADDUP(M[0][2]);
+    __m256 M12 = MM256_LOADDUP(M[1][2]);
+    __m256 M22 = MM256_LOADDUP(M[2][2]);
+    __m256 M32 = MM256_LOADDUP(M[3][2]);
+
+    for (size_t i=0; i < (count + 7) / 8; ++i)
+    {
+        __m256 x = X->result.mf[i];
+        __m256 y = Y->result.mf[i];
+        __m256 z = Z->result.mf[i];
+        X->result.mf[i] = _mm256_add_ps(
+            _mm256_add_ps(
+                _mm256_mul_ps(x, M00), _mm256_mul_ps(y, M10)),
+            _mm256_add_ps(_mm256_mul_ps(z, M20), M30));
+        Y->result.mf[i] = _mm256_add_ps(
+            _mm256_add_ps(
+                _mm256_mul_ps(x, M01), _mm256_mul_ps(y, M11)),
+            _mm256_add_ps(_mm256_mul_ps(z, M21), M31));
+        Z->result.mf[i] = _mm256_add_ps(
+            _mm256_add_ps(
+                _mm256_mul_ps(x, M02), _mm256_mul_ps(y, M12)),
+            _mm256_add_ps(_mm256_mul_ps(z, M22), M32));
+    }
+
+#undef MM256_LOADDUP
+#else
+    for (size_t i=0; i < count; ++i)
+    {
+        float x = X->result.f[i];
+        float y = Y->result.f[i];
+        float z = Z->result.f[i];
+        X->result.f[i] = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
+        Y->result.f[i] = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
+        Z->result.f[i] = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
+    }
+#endif
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 double Evaluator::utilization() const
 {
     double total = 0;

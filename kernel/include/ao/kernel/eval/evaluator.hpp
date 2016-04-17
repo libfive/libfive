@@ -91,6 +91,21 @@ public:
     }
 
     /*
+     *  Unsafe setter (which requires a call to applyTransform afterwards)
+     */
+    void setRaw(float x, float y, float z, size_t index)
+    {
+        X->result.set(x, index);
+        Y->result.set(y, index);
+        Z->result.set(z, index);
+    }
+
+    /*
+     *  Applies M to values stored by set
+     */
+    void applyTransform(size_t count);
+
+    /*
      *  Stores the given interval in the result objects
      */
     void set(Interval X, Interval Y, Interval Z);

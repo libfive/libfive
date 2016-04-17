@@ -120,15 +120,17 @@ static void pixels(Evaluator* e, const Subregion& r,
                    DepthImage& depth, NormalImage& norm)
 {
     size_t index = 0;
+    const size_t count = r.voxels();
 
     // Flatten the region in a particular order
     // (which needs to be obeyed by anything unflattening results)
     SUBREGION_ITERATE_XYZ(r)
     {
-        e->set(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
+        e->setRaw(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
     }
+    e->applyTransform(count);
 
-    const float* out = e->values(r.voxels());
+    const float* out = e->values(count);
 
     index = 0;
 
