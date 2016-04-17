@@ -111,6 +111,7 @@ struct NormalRenderer
 #define SUBREGION_ITERATE_XYZ(r) \
 for (unsigned i=0; i < r.X.size; ++i)           \
     for (unsigned j=0; j < r.Y.size; ++j)       \
+        if (depth(r.X.min + i, r.Y.min + j) < r.Z.pos(r.Z.size - 1)) \
         for (unsigned k=0; k < r.Z.size; ++k)
 
 /*
@@ -120,7 +121,6 @@ static void pixels(Evaluator* e, const Subregion& r,
                    DepthImage& depth, NormalImage& norm)
 {
     size_t index = 0;
-    const size_t count = r.voxels();
 
     // Flatten the region in a particular order
     // (which needs to be obeyed by anything unflattening results)
@@ -128,9 +128,9 @@ static void pixels(Evaluator* e, const Subregion& r,
     {
         e->setRaw(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
     }
-    e->applyTransform(count);
+    e->applyTransform(index);
 
-    const float* out = e->values(count);
+    const float* out = e->values(index);
 
     index = 0;
 
