@@ -149,14 +149,14 @@ static void pixels(Evaluator* e, const Subregion& r,
             {
                 depth(r.X.min + i, r.Y.min + j) = z;
 
-                // Adjust the index pointer, since we can skip the rest of
-                // this z-column (since future voxels are behind this one)
-                index += r.Z.size - k - 1;
-
                 // Store normals to render in a bulk pass
                 nr.push(i, j, z);
-                break;
             }
+            // Adjust the index pointer, since we can skip the rest of
+            // this z-column (since future voxels are behind this one)
+            index += r.Z.size - k - 1;
+
+            break;
         }
     }
 
