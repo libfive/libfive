@@ -31,10 +31,6 @@
 Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
     : M(M), Mi(glm::inverse(M))
 {
-    // We'll be adding a 4x3 transform matrix below X, Y, Z
-    const size_t MATRIX_ROWS = 3;
-    rows.resize(MATRIX_ROWS);
-
     // Count up the number of Atoms in the Tree
     size_t count =  std::accumulate(tree->rows.begin(), tree->rows.end(),
             3                           // X, Y, Z
