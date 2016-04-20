@@ -25,9 +25,6 @@
 
 class Atom;
 
-#define CLAUSE_FLAG_IGNORED  1
-#define CLAUSE_FLAG_DISABLED 2
-
 /*
  *  A clause is used in an Evaluator to evaluate a tree
  */
@@ -38,28 +35,19 @@ public:
                     std::unordered_map<const Atom*, Clause*>& clauses);
 
     /*
-     *  Flag manipulation functions
-     */
-    void setFlag(uint8_t f)     { flags |=  f; }
-    void clearFlag(uint8_t f)   { flags &= ~f; }
-    void clearFlags()           { flags  =  0; }
-
-    /*
-     *  If the CLAUSE_FLAG_IGNORED flag is set:
-     *      Clears the flag
-     *      Returns true.
+     *  If the disabled flag is set, returns true
      *
-     *  Otherwise, propagates the IGNORED flag to its children,
-     *  properly handling min and max operations (which may only
-     *  leave one child active), returning false.
+     *  Otherwise, clears the disabled flag in its children, handling min
+     *  and max operations (which may only  leave one child active),
+     *  returning false.
      */
     bool checkDisabled();
 
     /*
      *  Sets or clears CLAUSE_FLAG_DISABLED
      */
-    void disable() {   setFlag(CLAUSE_FLAG_DISABLED); }
-    void enable()  { clearFlag(CLAUSE_FLAG_DISABLED); }
+    void disable() { disabled = true; }
+    void enable()  { disabled = false; }
 
 protected:
     /*  Opcode for this clause  */
@@ -68,8 +56,8 @@ protected:
     /*  Populated for CONST clause */
     const float value;
 
-    /*  Flags are set during evaluation for various purposes  */
-    uint8_t flags=0;
+    /*  Flag used in tree pruning  */
+    bool disabled = false;
 
     /*  Populated for operators with arguments */
     Clause* const a;

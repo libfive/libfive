@@ -82,9 +82,8 @@ Clause::Clause(const Atom* m,
 
 bool Clause::checkDisabled()
 {
-    if (flags & CLAUSE_FLAG_IGNORED)
+    if (disabled)
     {
-        clearFlags();
         return true;
     }
 
@@ -94,32 +93,32 @@ bool Clause::checkDisabled()
     {
         if (a->result.i.lower() >= b->result.i.upper())
         {
-            a->clearFlag(CLAUSE_FLAG_IGNORED);
+            a->enable();
         }
         else if (b->result.i.lower() >= a->result.i.upper())
         {
-            b->clearFlag(CLAUSE_FLAG_IGNORED);
+            b->enable();
         }
         else
         {
-            a->clearFlag(CLAUSE_FLAG_IGNORED);
-            b->clearFlag(CLAUSE_FLAG_IGNORED);
+            a->enable();
+            b->enable();
         }
     }
     else if (op == OP_MIN)
     {
         if (a->result.i.lower() >= b->result.i.upper())
         {
-            b->clearFlag(CLAUSE_FLAG_IGNORED);
+            b->enable();
         }
         else if (b->result.i.lower() >= a->result.i.upper())
         {
-            a->clearFlag(CLAUSE_FLAG_IGNORED);
+            a->enable();
         }
         else
         {
-            a->clearFlag(CLAUSE_FLAG_IGNORED);
-            b->clearFlag(CLAUSE_FLAG_IGNORED);
+            a->enable();
+            b->enable();
         }
     }
     // For other operations, we keep both branches active
@@ -127,11 +126,11 @@ bool Clause::checkDisabled()
     {
         if (a)
         {
-            a->clearFlag(CLAUSE_FLAG_IGNORED);
+            a->enable();
         }
         if (b)
         {
-            b->clearFlag(CLAUSE_FLAG_IGNORED);
+            b->enable();
         }
     }
     return false;

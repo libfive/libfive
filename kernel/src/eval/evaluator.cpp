@@ -123,12 +123,12 @@ void Evaluator::push()
     {
         for (size_t i=0; i < row.active; ++i)
         {
-            row[i]->setFlag(CLAUSE_FLAG_IGNORED);
+            row[i]->disable();
         }
     }
 
     // Clear the IGNORED flag on the root
-    root->clearFlag(CLAUSE_FLAG_IGNORED);
+    root->enable();
 
     // Walk down the tree, clearing IGNORED flags as appropriate
     // and disabling atoms that still have IGNORED flags set.
@@ -1039,11 +1039,11 @@ Opcode Evaluator::getOpcode(Clause* c)
     auto op = c->op;
 
     // Modify the opcode if parts of the tree are disabled
-    if (c->a && c->a->flags & CLAUSE_FLAG_DISABLED)
+    if (c->a && c->a->disabled)
     {
         op = DUMMY_B;
     }
-    if (c->b && c->b->flags & CLAUSE_FLAG_DISABLED)
+    if (c->b && c->b->disabled)
     {
         op = DUMMY_A;
     }
