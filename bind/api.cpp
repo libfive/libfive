@@ -170,10 +170,33 @@ void tree_export_mesh(Tree* tree, char* filename,
     assert(f.substr(f.length() - 4, 4) == ".stl");
 
     Region region({xmin, xmax}, {ymin, ymax}, {zmin, zmax}, res);
-    std::atomic_bool abort(false);
-
     auto mesh = DC::Render(tree, region);
+
     mesh.writeSTL(f);
+}
+
+int tree_render_mesh(Tree* tree, float** out,
+                     float xmin, float xmax,
+                     float ymin, float ymax,
+                     float zmin, float zmax, float res)
+{
+    Region region({xmin, xmax}, {ymin, ymax}, {zmin, zmax}, res);
+    auto mesh = DC::Render(tree, region);
+
+    *out = (float*)malloc(mesh.tris.size() * 3 * 3 * sizeof(float));
+    size_t index = 0;
+    for (auto t : mesh.tris)
+    {
+        for (auto i : {t[0], t[1], t[2]})
+        {
+            auto v = mesh.verts[i];
+            *out[index++] = v.x;
+            *out[index++] = v.y;
+            *out[index++] = v.z;
+        }
+    }
+
+    return mesh.tris.size();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

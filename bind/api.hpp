@@ -79,6 +79,16 @@ extern "C"
                           float ymin, float ymax,
                           float zmin, float zmax, float res);
 
+    /*
+     *  Renders a mesh, returning the number of triangles.
+     *  *out is malloced to tris * 3 verts per tri * 3 coords per vert
+     *  and is a flat list of [x0, y0, z0, x1, y1, z1, x2, y2, z2, ...]
+     */
+    int tree_render_mesh(Tree* tree, float** out,
+                         float xmin, float xmax,
+                         float ymin, float ymax,
+                         float zmin, float zmax, float res);
+
 ////////////////////////////////////////////////////////////////////////////////
 
     void window_show_tree(char* filename, char* name, Tree* tree);
