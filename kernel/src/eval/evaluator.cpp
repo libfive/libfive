@@ -930,14 +930,15 @@ std::tuple<const float*, const float*,
     }
 
     // Apply the inverse matrix transform to our normals
+    auto o = Mi * glm::vec4(0,0,0,1);
     for (size_t i=0; i < count; ++i)
     {
-        auto o = Mi * glm::vec4(root->result.dx[i],
+        auto n = Mi * glm::vec4(root->result.dx[i],
                                 root->result.dy[i],
-                                root->result.dz[i], 1);
-        root->result.dx[i] = o.x;
-        root->result.dy[i] = o.y;
-        root->result.dz[i] = o.z;
+                                root->result.dz[i], 1) - o;
+        root->result.dx[i] = n.x;
+        root->result.dy[i] = n.y;
+        root->result.dz[i] = n.z;
     }
 
     return std::tuple<const float*, const float*,
