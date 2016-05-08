@@ -271,7 +271,7 @@ Octree::Intersection Octree::searchEdge(
         {
             float frac = j / (N - 1.0);
             ps[j] = (a * (1 - frac)) + (b * frac);
-            eval->set(ps[j].x, ps[j].y, ps[j].z, j);
+            eval->setRaw(ps[j].x, ps[j].y, ps[j].z, j);
         }
 
         auto out = eval->values(N);
@@ -287,7 +287,7 @@ Octree::Intersection Octree::searchEdge(
     }
 
     // Calculate value and gradient at the given point
-    eval->set(a.x, a.y, a.z, 0);
+    eval->setRaw(a.x, a.y, a.z, 0);
 
     // Get set of derivative arrays
     auto ds = eval->derivs(1);
