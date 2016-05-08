@@ -101,6 +101,9 @@ A symbol and further arguments are converted to an operation"
     (let ((t (jit f))
           (interval? (lambda (x) (and (pair? x) (not (list? x))))))
     (lambda (x y z)
+        "(f x y z)
+    x, y, z are floats (for single evaluation)
+    or pairs  (for interval evaluation)"
         (cond ((every interval? (list x y z))
                (tree-eval-interval t x y z))
               ((every number? (list x y z))
