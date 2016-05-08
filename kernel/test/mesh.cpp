@@ -16,9 +16,17 @@
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <chrono>
+
 #include <catch/catch.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "ao/kernel/format/mesh.hpp"
+#include "ao/kernel/render/dc.hpp"
+#include "ao/kernel/render/region.hpp"
+#include "ao/kernel/tree/tree.hpp"
+
+#include "shapes.hpp"
 
 TEST_CASE("Saving a mesh")
 {
@@ -47,4 +55,29 @@ TEST_CASE("Mesh normals")
 
     m.tris.push_back({0, 2, 1});
     REQUIRE(m.norm(1) == glm::vec3(0, 0, -1));
+}
+
+
+TEST_CASE("Mesh performance")
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> elapsed;
+
+    std::unique_ptr<Tree> sponge(menger(2));
+
+    Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 100);
+
+    // Begin timekeeping
+    start = std::chrono::system_clock::now();
+    auto mesh = DC::Render(sponge.get(), r);
+    end = std::chrono::system_clock::now();
+
+    elapsed = end - start;
+
+    auto elapsed_ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
+
+    std::string log = "\nMade sponge mesh in " +
+           std::to_string(elapsed.count()) + " sec";
+    WARN(log);
 }
