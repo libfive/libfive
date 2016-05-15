@@ -20,6 +20,7 @@
 
 #include "ao/kernel/render/subregion.hpp"
 #include "ao/kernel/render/region.hpp"
+#include "ao/kernel/render/octree.hpp"
 
 Subregion::Subregion(const Region& r)
     : X(r.X.bounds, r.X.values),
@@ -104,8 +105,19 @@ std::array<Subregion, 8> Subregion::octsect() const
     auto Xyz = Xy.first.split();
     auto XYz = Xy.second.split();
 
-    return {{xyz.first, xyz.second, xYz.first, xYz.second,
-             Xyz.first, Xyz.second, XYz.first, XYz.second}};
+    // Order subregions based on Octree axes
+    std::array<Subregion*, 8> out;
+    out[0] = &xyz.first;
+    out[Octree::AXIS_X] = &Xyz.first;
+    out[Octree::AXIS_Y] = &xYz.first;
+    out[Octree::AXIS_X|Octree::AXIS_Y] = &XYz.first;
+    out[Octree::AXIS_Z] = &xyz.second;
+    out[Octree::AXIS_X|Octree::AXIS_Z] = &Xyz.second;
+    out[Octree::AXIS_Y|Octree::AXIS_Z] = &xYz.second;
+    out[Octree::AXIS_X|Octree::AXIS_Y|Octree::AXIS_Z] = &XYz.second;
+
+    return {{*out[0], *out[1], *out[2], *out[3],
+             *out[4], *out[5], *out[6], *out[7]}};
 }
 
 bool Subregion::canOctsect() const
