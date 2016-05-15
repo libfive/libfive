@@ -49,7 +49,7 @@ Octree::Octree(Evaluator* e, const std::array<Octree*, 8>& cs,
                const Subregion& r, uint32_t flags)
     : Octree(r)
 {
-    for (uint8_t i=0; i < 8; ++i)
+    for (uint8_t i=0; i < cs.size(); ++i)
     {
         children[i].reset(cs[i]);
     }
@@ -69,7 +69,7 @@ void Octree::finalize(Evaluator* e, uint32_t flags)
     if (type == BRANCH)
     {
         // Grab corner values from children
-        for (uint8_t i=0; i < 8; ++i)
+        for (uint8_t i=0; i < children.size(); ++i)
         {
             corners[i] = children[i]->corners[i];
         }
@@ -116,7 +116,7 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r,
         {   // If the cell wasn't empty or filled, recurse
             e->push();
             auto rs = r.octsect();
-            for (uint8_t i=0; i < 8; ++i)
+            for (uint8_t i=0; i < children.size(); ++i)
             {
                 children[i].reset(new Octree(e, rs[i], flags));
             }
@@ -128,13 +128,13 @@ void Octree::populateChildren(Evaluator* e, const Subregion& r,
     // Otherwise, calculate corner values
     if (type != BRANCH)
     {
-        for (uint8_t i=0; i < 8; ++i)
+        for (uint8_t i=0; i < children.size(); ++i)
         {
             auto c = pos(i);
             e->set(c.x, c.y, c.z, i);
         }
-        const float* fs = e->values(8);
-        for (uint8_t i=0; i < 8; ++i)
+        const float* fs = e->values(children.size());
+        for (uint8_t i=0; i < children.size(); ++i)
         {
             corners[i] = fs[i] < 0;
         }
@@ -342,7 +342,7 @@ void Octree::findIntersections(Evaluator* eval)
                 [](const unsigned& a, const std::unique_ptr<Octree>& b)
                     { return std::max(a, b->rank);} );
 
-        for (uint8_t i=0; i < 8; ++i)
+        for (uint8_t i=0; i < children.size(); ++i)
         {
             if (child(i)->rank == max_rank)
             {
