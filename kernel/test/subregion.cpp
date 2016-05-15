@@ -117,26 +117,34 @@ TEST_CASE("Splitting a region with equal voxels")
     REQUIRE(rs.first.X.upper() == 0);
 }
 
-TEST_CASE("Subregion::canOctsect")
+TEST_CASE("Subregion::canSplitEven")
 {
     Region a({-1, 1}, {-1, 1}, {-1, 1}, 8);
-    REQUIRE(a.view().canOctsect());
+    REQUIRE(a.view().canSplitEven(3));
+    REQUIRE(!a.view().canSplitEven(2));
 
     Region b({0, 1}, {0, 1}, {0, 1}, 7);
-    REQUIRE(!b.view().canOctsect());
+    REQUIRE(!b.view().canSplitEven(3));
+    REQUIRE(!b.view().canSplitEven(2));
 
     Region c({0, 1}, {-1, 1}, {-1, 1}, 8);
-    REQUIRE(!c.view().canOctsect());
+    REQUIRE(!c.view().canSplitEven(3));
+    REQUIRE(!c.view().canSplitEven(2));
+
+    Region d({-1, 1}, {-1, 1}, {0, 0}, 8);
+    REQUIRE(d.view().canSplitEven(2));
+    REQUIRE(!d.view().canSplitEven(3));
 }
 
-TEST_CASE("Subregion::octsect")
+TEST_CASE("Subregion::splitEven(3)")
 {
     Region a({-1, 1}, {-2, 2}, {-4, 4}, 4, 2, 1);
     Subregion s = a.view();
 
-    REQUIRE(s.canOctsect());
+    REQUIRE(s.canSplitEven(3));
 
-    auto out = s.octsect();
+    auto out = s.splitEven(3);
+    REQUIRE(out.size() == 8);
     for (int i=0; i < 8; ++i)
     {
         const Subregion& sub = out[i];
@@ -178,5 +186,47 @@ TEST_CASE("Subregion::octsect")
             REQUIRE(sub.Z.lower() == -4);
             REQUIRE(sub.Z.upper() ==  0);
         }
+    }
+}
+
+TEST_CASE("Subregion::splitEven(2)")
+{
+    Region a({-1, 1}, {-2, 2}, {0, 0}, 4, 2, 1);
+    Subregion s = a.view();
+
+    REQUIRE(s.canSplitEven(2));
+
+    auto out = s.splitEven(2);
+    REQUIRE(out.size() == 4);
+    for (int i=0; i < 4; ++i)
+    {
+        const Subregion& sub = out[i];
+        CAPTURE(sub.X.lower());
+        CAPTURE(sub.X.upper());
+        CAPTURE(sub.Y.lower());
+        CAPTURE(sub.Y.upper());
+        if (i & Octree::AXIS_X)
+        {
+            REQUIRE(sub.X.lower() ==  0);
+            REQUIRE(sub.X.upper() ==  1);
+        }
+        else
+        {
+            REQUIRE(sub.X.lower() == -1);
+            REQUIRE(sub.X.upper() ==  0);
+        }
+
+        if (i & Octree::AXIS_Y)
+        {
+            REQUIRE(sub.Y.lower() ==  0);
+            REQUIRE(sub.Y.upper() ==  2);
+        }
+        else
+        {
+            REQUIRE(sub.Y.lower() == -2);
+            REQUIRE(sub.Y.upper() ==  0);
+        }
+
+        REQUIRE(!(i & Octree::AXIS_Z));
     }
 }

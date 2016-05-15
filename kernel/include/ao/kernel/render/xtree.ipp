@@ -30,12 +30,12 @@ T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
 {
     auto rp = r.powerOfTwo(dims).view();
 
-    if (multithread && rp.canOctsect())
+    if (multithread && rp.canSplitEven(dims))
     {
         std::list<std::future<T*>> futures;
 
         // Start up a set of future rendering every branch of the octree
-        for (auto region : rp.octsect())
+        for (auto region : rp.splitEven(3))
         {
             auto e = new Evaluator(t);
 
@@ -116,7 +116,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
         else
         {   // If the cell wasn't empty or filled, recurse
             e->push();
-            auto rs = r.octsect();
+            auto rs = r.splitEven(dims);
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 children[i].reset(new T(e, rs[i], flags));

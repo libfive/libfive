@@ -88,44 +88,66 @@ size_t Subregion::voxels() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::array<Subregion, 8> Subregion::octsect() const
+std::vector<Subregion> Subregion::splitEven(int dims) const
 {
-    assert(X.size == Y.size && X.size == Z.size);
+    assert(dims == 2 || dims == 3);
+
+    assert(X.size == Y.size);
     assert(X.size >= 2 && X.size % 2 == 0);
     assert(Y.size >= 2 && Y.size % 2 == 0);
-    assert(Z.size >= 2 && Z.size % 2 == 0);
+    if (dims == 3)
+    {
+        assert(X.size == Z.size);
+        assert(Z.size >= 2 && Z.size % 2 == 0);
+    }
 
     auto x = split();
 
     auto xy = x.first.split();
     auto Xy = x.second.split();
 
-    auto xyz = xy.first.split();
-    auto xYz = xy.second.split();
-    auto Xyz = Xy.first.split();
-    auto XYz = Xy.second.split();
-
     // Order subregions based on Octree axes
-    std::array<Subregion*, 8> out;
-    out[0] = &xyz.first;
-    out[Octree::AXIS_X] = &Xyz.first;
-    out[Octree::AXIS_Y] = &xYz.first;
-    out[Octree::AXIS_X|Octree::AXIS_Y] = &XYz.first;
-    out[Octree::AXIS_Z] = &xyz.second;
-    out[Octree::AXIS_X|Octree::AXIS_Z] = &Xyz.second;
-    out[Octree::AXIS_Y|Octree::AXIS_Z] = &xYz.second;
-    out[Octree::AXIS_X|Octree::AXIS_Y|Octree::AXIS_Z] = &XYz.second;
+    if (dims == 3)
+    {
+        auto xyz = xy.first.split();
+        auto xYz = xy.second.split();
+        auto Xyz = Xy.first.split();
+        auto XYz = Xy.second.split();
 
-    return {{*out[0], *out[1], *out[2], *out[3],
-             *out[4], *out[5], *out[6], *out[7]}};
+        std::array<Subregion*, 8> out;
+        out[0] = &xyz.first;
+        out[Octree::AXIS_X] = &Xyz.first;
+        out[Octree::AXIS_Y] = &xYz.first;
+        out[Octree::AXIS_X|Octree::AXIS_Y] = &XYz.first;
+        out[Octree::AXIS_Z] = &xyz.second;
+        out[Octree::AXIS_X|Octree::AXIS_Z] = &Xyz.second;
+        out[Octree::AXIS_Y|Octree::AXIS_Z] = &xYz.second;
+        out[Octree::AXIS_X|Octree::AXIS_Y|Octree::AXIS_Z] = &XYz.second;
+
+        return {{*out[0], *out[1], *out[2], *out[3],
+                 *out[4], *out[5], *out[6], *out[7]}};
+    }
+    else
+    {
+        std::array<Subregion*, 4> out;
+        out[0] = &xy.first;
+        out[Octree::AXIS_X] = &Xy.first;
+        out[Octree::AXIS_Y] = &xy.second;
+        out[Octree::AXIS_X|Octree::AXIS_Y] = &Xy.second;
+
+        return {{*out[0], *out[1], *out[2], *out[3]}};
+    }
 }
 
-bool Subregion::canOctsect() const
+bool Subregion::canSplitEven(int dims) const
 {
-    return X.size == Y.size && X.size == Z.size &&
+    assert(dims == 2 || dims == 3);
+
+    return X.size == Y.size &&
            X.size >= 2 && X.size % 2 == 0 &&
            Y.size >= 2 && Y.size % 2 == 0 &&
-           Z.size >= 2 && Z.size % 2 == 0;
+           ((dims == 2 && Z.size == 1) ||
+            (dims == 3 && X.size == Z.size && Z.size >= 2 && Z.size % 2 == 0));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

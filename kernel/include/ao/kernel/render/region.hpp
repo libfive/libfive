@@ -43,9 +43,9 @@ public:
     /*
      *  Returns a region with power-of-two voxel count
      *
-     *  dims is the number of dimensions we care about
-     *  If 3, a cubical region is returned
-     *  If 2, a square region is returned
+     *  dims is the number of dimensions we care about, and must be 2 or 3
+     *      If 3, a cubical region is returned
+     *      If 2, a square region is returned
      */
     Region powerOfTwo(int dims) const;
 

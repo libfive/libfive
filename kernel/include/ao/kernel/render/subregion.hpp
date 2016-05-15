@@ -63,17 +63,19 @@ public:
     bool canSplitXY() const;
 
     /*
-     *  Splits this subregion into 8 other subregions
+     *  Splits this subregion into (1 << dims) other subregions
      *
-     *  This function may only be called with dimensions are all equal
-     *  and all divisible by 2
+     *  This function may only be called with relevant dimensions that are
+     *  equal and divisible by 2
+     *
+     *  dims must be 2 or 3
      */
-    std::array<Subregion, 8> octsect() const;
+    std::vector<Subregion> splitEven(int dims) const;
 
     /*
      *  Returns true if we can octsect the given subregion
      */
-    bool canOctsect() const;
+    bool canSplitEven(int dims) const;
 
     /*
      *  Returns the number of voxels in this region
