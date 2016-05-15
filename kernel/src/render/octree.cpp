@@ -28,6 +28,23 @@
 #include "ao/kernel/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
+Octree::Octree(const Subregion& r) : XTree(r)
+{
+    // Nothing to do here
+}
+
+Octree::Octree(Evaluator* e, const Subregion& r, uint32_t flags)
+    : XTree(e, r, flags)
+{
+    finalize(e, flags);
+}
+
+Octree::Octree(Evaluator* e, const std::array<Octree*, 8>& cs,
+       const Subregion& r, uint32_t flags)
+    : XTree(cs, r)
+{
+    finalize(e, flags);
+}
 
 // These are the twelve edges of an octree cell
 const std::vector<std::pair<unsigned, unsigned>> Octree::_cellEdges =

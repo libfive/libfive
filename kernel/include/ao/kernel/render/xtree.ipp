@@ -80,12 +80,10 @@ XTree<T, dims>::XTree(Evaluator* e, const Subregion& r, uint32_t flags)
     : XTree(r)
 {
     populateChildren(e, r, flags);
-    finalize(e, flags);
 }
 
 template <class T, int dims>
-XTree<T, dims>::XTree(Evaluator* e, const std::array<T*, 1 << dims>& cs,
-                      const Subregion& r, uint32_t flags)
+XTree<T, dims>::XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r)
     : XTree(r)
 {
     for (uint8_t i=0; i < cs.size(); ++i)
@@ -93,7 +91,6 @@ XTree<T, dims>::XTree(Evaluator* e, const std::array<T*, 1 << dims>& cs,
         children[i].reset(cs[i]);
     }
     type = BRANCH;
-    finalize(e, flags);
 }
 
 template <class T, int dims>

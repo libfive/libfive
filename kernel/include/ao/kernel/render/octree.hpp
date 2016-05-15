@@ -23,16 +23,10 @@
 class Octree : public XTree<Octree, 3>
 {
 protected:
-    Octree(const Subregion& r) : XTree(r) { /* Nothing to do here */ }
-
-    Octree(Evaluator* e, const Subregion& r, uint32_t flags)
-        : XTree(e, r, flags)
-    {   /* Nothing to do here */ }
-
+    Octree(const Subregion& r);
+    Octree(Evaluator* e, const Subregion& r, uint32_t flags);
     Octree(Evaluator* e, const std::array<Octree*, 8>& cs,
-           const Subregion& r, uint32_t flags)
-        : XTree(e, cs, r, flags)
-    {   /* Nothing to do here */ }
+           const Subregion& r, uint32_t flags);
 
     bool cornerTopology() const override;
     bool leafTopology() const override;

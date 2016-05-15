@@ -100,19 +100,20 @@ public:
 protected:
     /*
      *  Recursive constructor that splits r
+     *  Requires a call to finalize in the parent constructor
      */
     XTree(Evaluator* e, const Subregion& r, uint32_t flags);
+
+    /*
+     *  Collecting constructor that assembles multiple subtrees
+     *  Requires a call to finalize in the parent constructor
+     */
+    XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r);
 
     /*
      *  Delegating constructor to initialize X, Y, Z
      */
     XTree(const Subregion& r);
-
-    /*
-     *  Collecting constructor that assembles multiple subtrees
-     */
-    XTree(Evaluator* e, const std::array<T*, 1 << dims>& cs,
-          const Subregion& r, uint32_t flags);
 
     /*
      *  Splits a subregion and fills out child pointers and cell type
