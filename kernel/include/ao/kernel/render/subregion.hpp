@@ -18,6 +18,7 @@
  */
 #pragma once
 
+#include <array>
 #include <vector>
 #include <utility>
 #include <functional>
