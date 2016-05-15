@@ -65,7 +65,7 @@ TEST_CASE("Mesh performance")
 
     std::unique_ptr<Tree> sponge(menger(2));
 
-    Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 100);
+    Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 25);
 
     // Begin timekeeping
     start = std::chrono::system_clock::now();
