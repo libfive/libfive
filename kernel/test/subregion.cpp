@@ -20,6 +20,7 @@
 
 #include "ao/kernel/render/region.hpp"
 #include "ao/kernel/render/subregion.hpp"
+#include "ao/kernel/render/octree.hpp"
 
 TEST_CASE("Subregion::Axis split")
 {
@@ -126,4 +127,56 @@ TEST_CASE("Subregion::canOctsect")
 
     Region c({0, 1}, {-1, 1}, {-1, 1}, 8);
     REQUIRE(!c.view().canOctsect());
+}
+
+TEST_CASE("Subregion::octsect")
+{
+    Region a({-1, 1}, {-2, 2}, {-4, 4}, 4, 2, 1);
+    Subregion s = a.view();
+
+    REQUIRE(s.canOctsect());
+
+    auto out = s.octsect();
+    for (int i=0; i < 8; ++i)
+    {
+        const Subregion& sub = out[i];
+        CAPTURE(sub.X.lower());
+        CAPTURE(sub.X.upper());
+        CAPTURE(sub.Y.lower());
+        CAPTURE(sub.Y.upper());
+        CAPTURE(sub.Z.lower());
+        CAPTURE(sub.Z.upper());
+        if (i & Octree::AXIS_X)
+        {
+            REQUIRE(sub.X.lower() ==  0);
+            REQUIRE(sub.X.upper() ==  1);
+        }
+        else
+        {
+            REQUIRE(sub.X.lower() == -1);
+            REQUIRE(sub.X.upper() ==  0);
+        }
+
+        if (i & Octree::AXIS_Y)
+        {
+            REQUIRE(sub.Y.lower() ==  0);
+            REQUIRE(sub.Y.upper() ==  2);
+        }
+        else
+        {
+            REQUIRE(sub.Y.lower() == -2);
+            REQUIRE(sub.Y.upper() ==  0);
+        }
+
+        if (i & Octree::AXIS_Z)
+        {
+            REQUIRE(sub.Z.lower() ==  0);
+            REQUIRE(sub.Z.upper() ==  4);
+        }
+        else
+        {
+            REQUIRE(sub.Z.lower() == -4);
+            REQUIRE(sub.Z.upper() ==  0);
+        }
+    }
 }
