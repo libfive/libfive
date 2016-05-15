@@ -17,17 +17,11 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <iostream>
-#include <numeric>
-#include <set>
-
-#include <glm/geometric.hpp>
 
 #include "ao/kernel/render/octree.hpp"
-#include "ao/kernel/render/region.hpp"
-#include "ao/kernel/eval/evaluator.hpp"
-#include "ao/kernel/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
+
 Octree::Octree(const Subregion& r) : XTree(r)
 {
     // Nothing to do here
