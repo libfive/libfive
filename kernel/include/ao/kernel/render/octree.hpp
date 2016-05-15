@@ -46,7 +46,7 @@ public:
     enum Type { LEAF, BRANCH, EMPTY, FULL };
 
     /*  Enumerator to refer to octree axes  */
-    enum Axis { AXIS_X = 4, AXIS_Y = 2, AXIS_Z = 1 };
+    enum Axis { AXIS_X = 1, AXIS_Y = 2, AXIS_Z = 4 };
 
     /*
      *  Returns the position of the given corner
