@@ -50,10 +50,10 @@ TEST_CASE("Region resolution")
     REQUIRE(r.Z.values.size() == 25);
 }
 
-TEST_CASE("Region power-of-two generation")
+TEST_CASE("Region power-of-two generation (cube)")
 {
     auto r = Region({0, 10}, {0, 5}, {0, 2.5}, 10);
-    auto p = r.powerOfTwo();
+    auto p = r.powerOfTwo(3);
 
     REQUIRE(p.X.values.size() == 128);
     REQUIRE(p.X.values.size() == p.Y.values.size());
@@ -67,4 +67,23 @@ TEST_CASE("Region power-of-two generation")
 
     REQUIRE(p.Z.bounds.lower() <= r.Z.bounds.lower());
     REQUIRE(p.Z.bounds.upper() >= r.Z.bounds.upper());
+}
+
+TEST_CASE("Region power-of-two generation (square)")
+{
+    auto r = Region({0, 10}, {0, 5}, {0, 0}, 10);
+    auto p = r.powerOfTwo(2);
+
+    REQUIRE(p.X.values.size() == 128);
+    REQUIRE(p.X.values.size() == p.Y.values.size());
+    REQUIRE(p.Z.values.size() == 1);
+
+    REQUIRE(p.X.bounds.lower() <= r.X.bounds.lower());
+    REQUIRE(p.X.bounds.upper() >= r.X.bounds.upper());
+
+    REQUIRE(p.Y.bounds.lower() <= r.Y.bounds.lower());
+    REQUIRE(p.Y.bounds.upper() >= r.Y.bounds.upper());
+
+    REQUIRE(p.Z.bounds.lower() == r.Z.bounds.lower());
+    REQUIRE(p.Z.bounds.upper() == r.Z.bounds.upper());
 }

@@ -41,9 +41,13 @@ public:
            float rx, float ry, float rz);
 
     /*
-     *  Returns a cubical region with power-of-two voxel count
+     *  Returns a region with power-of-two voxel count
+     *
+     *  dims is the number of dimensions we care about
+     *  If 3, a cubical region is returned
+     *  If 2, a square region is returned
      */
-    Region powerOfTwo() const;
+    Region powerOfTwo(int dims) const;
 
     /*
      *  Return a subregion watching the full region

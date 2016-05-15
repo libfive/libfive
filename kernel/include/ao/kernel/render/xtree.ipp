@@ -28,7 +28,7 @@ template <class T, int dims>
 T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
                           bool multithread)
 {
-    auto rp = r.powerOfTwo().view();
+    auto rp = r.powerOfTwo(dims).view();
 
     if (multithread && rp.canOctsect())
     {

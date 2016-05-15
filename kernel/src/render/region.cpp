@@ -46,8 +46,14 @@ Subregion Region::view() const
     return Subregion(*this);
 }
 
-Region Region::powerOfTwo() const
+Region Region::powerOfTwo(int dims) const
 {
+    assert(dims == 2 || dims == 3);
+    if (dims == 2)
+    {
+        assert(Z.values.size() == 1);
+    }
+
     size_t vox = std::max({X.values.size(), Y.values.size(), Z.values.size()});
     size_t n = 1 << (size_t)ceil(log(vox) / log(2));
 
@@ -64,11 +70,11 @@ Region Region::powerOfTwo() const
                      a.bounds.upper() + da/2}, n);
     };
 
-    auto r = Region(a(X), a(Y), a(Z));
+    auto r = Region(a(X), a(Y), dims == 3 ? a(Z) : Z);
 
     assert(r.X.values.size() == n);
     assert(r.Y.values.size() == n);
-    assert(r.Z.values.size() == n);
+    assert(r.Z.values.size() == (dims == 3) ? n : 1);
 
     return r;
 }
