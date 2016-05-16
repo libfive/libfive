@@ -22,7 +22,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "ao/kernel/format/mesh.hpp"
-#include "ao/kernel/render/dc.hpp"
 #include "ao/kernel/render/region.hpp"
 #include "ao/kernel/tree/tree.hpp"
 
@@ -69,7 +68,7 @@ TEST_CASE("Mesh performance")
 
     // Begin timekeeping
     start = std::chrono::system_clock::now();
-    auto mesh = DC::Render(sponge.get(), r);
+    auto mesh = Mesh::Render(sponge.get(), r);
     end = std::chrono::system_clock::now();
 
     elapsed = end - start;

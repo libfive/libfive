@@ -18,7 +18,7 @@
  */
 #include <map>
 
-#include "ao/kernel/render/dc.hpp"
+#include "ao/kernel/format/mesh.hpp"
 #include "ao/kernel/render/region.hpp"
 #include "ao/kernel/render/octree.hpp"
 
@@ -27,9 +27,6 @@
 /*
  *  Helper struct that can be passed around when meshing
  */
-namespace DC
-{
-
 struct Worker
 {
     /*
@@ -267,7 +264,7 @@ void Worker::quad(const Octree* a, const Octree* b,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Mesh Render(Tree* t, const Region& r, uint32_t flags)
+Mesh Mesh::Render(Tree* t, const Region& r, uint32_t flags)
 {
     auto o = Octree::Render(t, r, flags);
 
@@ -276,5 +273,3 @@ Mesh Render(Tree* t, const Region& r, uint32_t flags)
 
     return w.mesh;
 }
-
-} // DC namespace
