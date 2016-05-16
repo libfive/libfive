@@ -185,7 +185,7 @@ void XTree<T, dims>::findIntersections(Evaluator* eval)
     // find intersections on edges that have mismatched signs
     if (type == LEAF)
     {
-        for (auto e : this->cellEdges())
+        for (auto e : static_cast<T*>(this)->cellEdges())
         {
             if (corner(e.first) != corner(e.second))
             {
@@ -268,10 +268,11 @@ void XTree<T, dims>::collapseBranch(Evaluator* e)
         //  This conditional implements the three checks described in
         //  [Ju et al, 2002] in the section titled
         //      "Simplification with topology safety"
-        if (this->cornerTopology() && std::all_of(children.begin(), children.end(),
+        if (this->cornerTopology() &&
+            std::all_of(children.begin(), children.end(),
                     [](const std::unique_ptr<T>& o)
                     { return o->cornerTopology(); }) &&
-            this->leafTopology() && findVertex(e) < 1e-8)
+            static_cast<T*>(this)->leafTopology() && findVertex(e) < 1e-8)
         {
             type = LEAF;
         }
@@ -364,6 +365,22 @@ float XTree<T, dims>::findVertex(Evaluator* e)
     // Find and return QEF residual
     auto m = A * solution - B;
     return m.transpose() * m;
+}
+
+
+template <class T, int dims>
+bool XTree<T, dims>::cornerTopology() const
+{
+    uint8_t index = 0;
+    for (uint8_t i=0; i < children.size(); ++i)
+    {
+        if (corners[i])
+        {
+            index |= (1 << i);
+        }
+    }
+
+    return static_cast<const T*>(this)->cornerTable()[index];
 }
 
 template<class T, int dims>

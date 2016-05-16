@@ -28,12 +28,14 @@ protected:
     Octree(Evaluator* e, const std::array<Octree*, 8>& cs,
            const Subregion& r, uint32_t flags);
 
-    bool cornerTopology() const override;
-    bool leafTopology() const override;
-    const std::vector<std::pair<unsigned, unsigned>>& cellEdges() override
-    { return _cellEdges; }
+    static const std::vector<bool>& cornerTable()
+        { return _cornerTable; }
+    static const std::vector<std::pair<unsigned, unsigned>>& cellEdges()
+        { return _cellEdges; }
+    bool leafTopology() const;
 
     const static std::vector<std::pair<unsigned, unsigned>> _cellEdges;
+    const static std::vector<bool> _cornerTable;
 
     friend class XTree;
 };
