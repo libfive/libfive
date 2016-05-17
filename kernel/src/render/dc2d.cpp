@@ -17,8 +17,28 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <set>
+#include <map>
+
+#include <glm/gtx/common.hpp>
+
 #include "ao/kernel/format/contours.hpp"
 #include "ao/kernel/render/region.hpp"
+
+struct Comparator
+{
+    bool operator()(const glm::vec2& a, const glm::vec2& b) const
+    {
+        if (a.x != b.x)
+        {
+            return a.x < b.x;
+        }
+        else
+        {
+            return a.y < b.y;
+        }
+    }
+};
 
 /*
  *  Helper struct that can be passed around when making contours
@@ -95,4 +115,50 @@ void Worker::segment(const Quadtree* a, const Quadtree* b)
     auto vb = b->getVertex();
 
     segments.push_back({{va.x, va.y}, {vb.x, vb.y}});
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+Contours Contours::Render(Tree* t, const Region& r, uint32_t flags)
+{
+    auto q = Quadtree::Render(t, r, flags);
+
+    Worker w;
+    w.cell(q);
+
+    std::map<glm::vec2, glm::vec2, Comparator> segs;
+    for (auto s : w.segments)
+    {
+        segs[s.first] = segs[s.second];
+    }
+
+    Contours c;
+    while (segs.size())
+    {
+        auto front = *segs.begin();
+        std::set<glm::vec2, Comparator> found = {front.first};
+        std::vector<glm::vec2> vec = {front.first};
+
+        auto back = front.first;
+        // Walk around the contour until we hit a vertex that we've already
+        // seen or we run out of vertices to walk around
+        while (!found.count(back))
+        {
+            auto b = segs.find(back);
+            if (b == segs.end())
+            {
+                break;
+            }
+            else
+            {
+                back = b->second;
+                segs.erase(b);
+            }
+
+            vec.push_back(back);
+            found.insert(back);
+        }
+        c.contours.emplace_back(std::move(vec));
+    }
+    return c;
 }
