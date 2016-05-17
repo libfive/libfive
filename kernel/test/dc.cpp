@@ -19,6 +19,8 @@
 #include <catch/catch.hpp>
 
 #include "ao/kernel/format/mesh.hpp"
+#include "ao/kernel/format/contours.hpp"
+
 #include "ao/kernel/render/region.hpp"
 
 #include "ao/kernel/eval/evaluator.hpp"
@@ -108,4 +110,18 @@ TEST_CASE("Face normals")
             }
         }
     }
+}
+
+TEST_CASE("2D contouring")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+               s.constant(0.5)));
+
+    Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
+
+    auto m = Contours::Render(&t, r);
+    REQUIRE(m.contours.size() == 1);
 }
