@@ -34,7 +34,7 @@ struct Contours
     /*
      *  Saves the given contours as an SVG file
      */
-    void writeSVG(std::string filename);
+    void writeSVG(std::string filename, const Region& r);
 
     /*  Contours in 2D space  */
     std::vector<std::vector<glm::vec2>> contours;
