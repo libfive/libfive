@@ -19,40 +19,23 @@
 #pragma once
 
 #include <vector>
+#include <glm/vec2.hpp>
 
-#include <glm/vec3.hpp>
-
-#include "ao/kernel/render/octree.hpp"
+#include "ao/kernel/render/quadtree.hpp"
 
 class Tree;
 class Region;
 
-struct Mesh
+struct Contours
 {
-    /*
-     *  Run dual contouring on the given evaluator, returning a Mesh
-     *
-     *  This involves sampling the evaluator on an octree (with QEF
-     *  simplification to collapse leaf cells), then using DC to generate
-     *  a triangle mesh.
-     */
-    static Mesh Render(Tree* t, const Region& r,
-                       uint32_t flags=Octree::COLLAPSE);
+    static Contours Render(Tree* t, const Region& r,
+                           uint32_t flags=Quadtree::COLLAPSE);
 
     /*
-     *  Saves the given mesh as a .stl file
+     *  Saves the given contours as an SVG file
      */
-    void writeSTL(std::string filename);
-    void writeSTL(std::ostream& out);
+    void writeSVG(std::string filename);
 
-    /*
-     *  Returns the unit-length normal of the i'th triangle
-     */
-    glm::vec3 norm(unsigned i) const;
-
-    /*  Vertices in 3D space  */
-    std::vector<glm::vec3> verts;
-
-    /*  Triangles in the mesh (as indices in verts list)  */
-    std::vector<glm::uvec3> tris;
+    /*  Contours in 2D space  */
+    std::vector<std::vector<glm::vec2>> contours;
 };
