@@ -91,20 +91,30 @@ void Worker2D::edge(const Quadtree* a, const Quadtree* b, Quadtree::Axis axis)
     if (a->getType() == Quadtree::LEAF && b->getType() == Quadtree::LEAF)
     {
         bool crossed;
+        bool ordering;
 
         //  See detailed comment in the 3D implementation
         if (a->getLevel() < b->getLevel())
         {
             crossed = a->corner(axis) != a->corner(3);
+            ordering = a->corner(axis);
         }
         else
         {
             crossed = b->corner(0) != b->corner(3 ^ axis);
+            ordering = b->corner(0);
         }
 
         if (crossed)
         {
-            segment(a, b);
+            if (ordering ^ (axis == Quadtree::AXIS_X))
+            {
+                segment(a, b);
+            }
+            else
+            {
+                segment(b, a);
+            }
         }
     }
     else if (a->getType() == Quadtree::BRANCH || b->getType() == Quadtree::BRANCH)
