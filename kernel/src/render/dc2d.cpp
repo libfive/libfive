@@ -43,8 +43,13 @@ struct Comparator
 /*
  *  Helper struct that can be passed around when making contours
  */
-struct Worker
+namespace DC
 {
+
+struct Worker2D
+{
+    Worker2D() {}
+
     /*
      *  Mutually recursive functions to get a mesh from an Octree
      */
@@ -59,7 +64,7 @@ struct Worker
     std::list<std::pair<glm::vec2, glm::vec2>> segments;
 };
 
-void Worker::cell(const Quadtree* c)
+void Worker2D::cell(const Quadtree* c)
 {
     if (c->getType() == Quadtree::BRANCH)
     {
@@ -81,7 +86,7 @@ void Worker::cell(const Quadtree* c)
     }
 }
 
-void Worker::edge(const Quadtree* a, const Quadtree* b, Quadtree::Axis axis)
+void Worker2D::edge(const Quadtree* a, const Quadtree* b, Quadtree::Axis axis)
 {
     if (a->getType() == Quadtree::LEAF && b->getType() == Quadtree::LEAF)
     {
@@ -109,12 +114,13 @@ void Worker::edge(const Quadtree* a, const Quadtree* b, Quadtree::Axis axis)
     }
 }
 
-void Worker::segment(const Quadtree* a, const Quadtree* b)
+void Worker2D::segment(const Quadtree* a, const Quadtree* b)
 {
     auto va = a->getVertex();
     auto vb = b->getVertex();
 
     segments.push_back({{va.x, va.y}, {vb.x, vb.y}});
+}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -123,27 +129,28 @@ Contours Contours::Render(Tree* t, const Region& r, uint32_t flags)
 {
     auto q = Quadtree::Render(t, r, flags);
 
-    Worker w;
+    DC::Worker2D w;
     w.cell(q);
 
     std::map<glm::vec2, glm::vec2, Comparator> segs;
-    for (auto s : w.segments)
+    for (const auto& s : w.segments)
     {
-        segs[s.first] = segs[s.second];
+        segs[s.first] = s.second;
     }
 
     Contours c;
     while (segs.size())
     {
         auto front = *segs.begin();
-        std::set<glm::vec2, Comparator> found = {front.first};
         std::vector<glm::vec2> vec = {front.first};
+        std::set<glm::vec2, Comparator> found;
 
         auto back = front.first;
         // Walk around the contour until we hit a vertex that we've already
         // seen or we run out of vertices to walk around
         while (!found.count(back))
         {
+            found.insert(back);
             auto b = segs.find(back);
             if (b == segs.end())
             {
@@ -156,7 +163,6 @@ Contours Contours::Render(Tree* t, const Region& r, uint32_t flags)
             }
 
             vec.push_back(back);
-            found.insert(back);
         }
         c.contours.emplace_back(std::move(vec));
     }

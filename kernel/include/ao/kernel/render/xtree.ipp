@@ -35,7 +35,7 @@ T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
         std::list<std::future<T*>> futures;
 
         // Start up a set of future rendering every branch of the octree
-        for (auto region : rp.splitEven(3))
+        for (auto region : rp.splitEven(dims))
         {
             auto e = new Evaluator(t);
 

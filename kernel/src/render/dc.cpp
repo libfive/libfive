@@ -27,6 +27,8 @@
 /*
  *  Helper struct that can be passed around when meshing
  */
+namespace DC
+{
 struct Worker
 {
     /*
@@ -261,6 +263,7 @@ void Worker::quad(const Octree* a, const Octree* b,
         mesh.tris.push_back({ic, ib, id});
     }
 }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -268,7 +271,7 @@ Mesh Mesh::Render(Tree* t, const Region& r, uint32_t flags)
 {
     auto o = Octree::Render(t, r, flags);
 
-    Worker w;
+    DC::Worker w;
     w.cell(o);
 
     return w.mesh;

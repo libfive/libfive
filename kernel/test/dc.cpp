@@ -120,7 +120,7 @@ TEST_CASE("2D contouring")
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(0.5)));
 
-    Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
+    Region r({-1, 1}, {-1, 1}, {0, 0}, 1);
 
     auto m = Contours::Render(&t, r);
     REQUIRE(m.contours.size() == 1);
