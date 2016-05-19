@@ -112,7 +112,7 @@ TEST_CASE("Face normals")
     }
 }
 
-TEST_CASE("2D contouring")
+TEST_CASE("Simple 2D contouring")
 {
     Store s;
     Tree t(&s, s.operation(OP_SUB,
@@ -124,4 +124,26 @@ TEST_CASE("2D contouring")
 
     auto m = Contours::Render(&t, r);
     REQUIRE(m.contours.size() == 1);
+}
+
+#include <iostream>
+TEST_CASE("2D contour tracking")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+               s.constant(0.5)));
+
+    Region r({-1, 1}, {-1, 1}, {0, 0}, 10);
+
+    auto m = Contours::Render(&t, r);
+    REQUIRE(m.contours.size() == 1);
+
+    for (auto c : m.contours[0])
+    {
+        auto r = pow(c.x, 2) + pow(c.y, 2);
+        REQUIRE(r < 0.51);
+        REQUIRE(r > 0.49);
+    }
 }
