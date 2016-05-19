@@ -29,28 +29,40 @@ void Contours::writeSVG(std::string filename, const Region& r)
     file <<
         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
         "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"\n"
-        "    viewBox=\"" <<
-        r.X.bounds.lower() << ' ' << r.Y.bounds.lower() << ' ' <<
-        r.X.bounds.upper() << ' ' << r.Y.bounds.upper() << ' ' <<
-        "\" width=\"" << r.X.bounds.upper() - r.X.bounds.lower() <<
-        "\" height=\"" << r.Y.bounds.upper() - r.Y.bounds.lower() << 
+          " width=\"" << r.X.bounds.upper() - r.X.bounds.lower() <<
+        "\" height=\"" << r.Y.bounds.upper() - r.Y.bounds.lower() <<
         "\" id=\"Ao\">\n";
 
-    for (auto seg : contours)
+    for (const auto& seg : contours)
     {
-        file << "<polyline points=\"";
+        file << "<path d=\"";
 
-        auto itr = seg.begin();
-        if (seg.front() == seg.back())
+        const bool closed = seg.front() == seg.back();
+        auto itr = seg.cbegin();
+        auto end = seg.cend();
+        if (closed)
         {
-            itr++;
+            end--;
         }
-        while (itr != seg.end())
+
+        // Initial move command
+        file << "M " << itr->x - r.X.bounds.lower()
+             << ' '  << r.Y.bounds.upper() - itr->y << ' ';
+        itr++;
+
+        // Line to commands
+        while (itr != end)
         {
-            file << itr->x << "," << itr->y << " ";
+            file << "L " << itr->x - r.X.bounds.lower()
+                 << ' '  << r.Y.bounds.upper() - itr->y << ' ';
             ++itr;
         }
-        file << "\"\nstyle=\"fill:none,stroke:black;stroke-width:1\"/>";
+
+        if (closed)
+        {
+            file << "Z";
+        }
+        file << "\"\nfill=\"none\" stroke=\"black\" stroke-width=\"0.01\"/>";
     }
     file << "\n</svg>";
 }

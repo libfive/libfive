@@ -31,3 +31,11 @@
     Renders a shape and saves it to an mesh
     bounds are three-element lists; res is a resolution in voxels per unit."
     (tree-export-mesh (jit shape) file a b res))
+
+(define-public (ao-export-slice shape file a b z res)
+    "ao-export-slice shape file '(x0 y0) '(x1 y1) z res
+    Renders a 2D slice of a model and saves it to an svg file
+    bounds are two-element lists
+    z is a single number
+    res is a resolution in voxels per unit"
+    (tree-export-slice (jit shape) file a b z res))

@@ -200,6 +200,18 @@
     (unwrap-tree t) (string->pointer filename)
     (car a) (car b) (cadr a) (cadr b) (caddr a) (caddr b) res))
 
+(define-public (tree-export-slice t filename a b z res)
+    "tree-export-slice tree filename lower upper z res
+    Exports a tree as an svg slice
+    lower and upper should be '(x y) lists
+    z is the z height of the slice
+    res is resolution in voxels per unit"
+    ((pointer->procedure void (get-function "tree_export_slice")
+        (list '* '* float float float
+                    float float float))
+    (unwrap-tree t) (string->pointer filename)
+    (car a) (car b) (cadr a) (cadr b) z res))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (window-show-tree filename name t)
