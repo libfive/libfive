@@ -18,24 +18,24 @@
  */
 #pragma once
 
-#include "ao/kernel/render/xtree.hpp"
+#include <vector>
+#include <glm/vec2.hpp>
 
-class Octree : public XTree<Octree, 3>
+#include "ao/kernel/render/quadtree.hpp"
+
+class Tree;
+class Region;
+
+struct Contours
 {
-protected:
-    Octree(const Subregion& r);
-    Octree(Evaluator* e, const Subregion& r, uint32_t flags);
-    Octree(Evaluator* e, const std::array<Octree*, 8>& cs,
-           const Subregion& r, uint32_t flags);
+    static Contours Render(Tree* t, const Region& r,
+                           uint32_t flags=Quadtree::COLLAPSE);
 
-    static const std::vector<bool>& cornerTable()
-        { return _cornerTable; }
-    static const std::vector<std::pair<unsigned, unsigned>>& cellEdges()
-        { return _cellEdges; }
-    bool leafTopology() const;
+    /*
+     *  Saves the given contours as an SVG file
+     */
+    void writeSVG(std::string filename, const Region& r);
 
-    const static std::vector<std::pair<unsigned, unsigned>> _cellEdges;
-    const static std::vector<bool> _cornerTable;
-
-    friend class XTree;
+    /*  Contours in 2D space  */
+    std::vector<std::vector<glm::vec2>> contours;
 };

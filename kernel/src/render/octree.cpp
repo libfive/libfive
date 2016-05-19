@@ -17,17 +17,11 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <iostream>
-#include <numeric>
-#include <set>
-
-#include <glm/geometric.hpp>
 
 #include "ao/kernel/render/octree.hpp"
-#include "ao/kernel/render/region.hpp"
-#include "ao/kernel/eval/evaluator.hpp"
-#include "ao/kernel/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
+
 Octree::Octree(const Subregion& r) : XTree(r)
 {
     // Nothing to do here
@@ -58,12 +52,7 @@ const std::vector<std::pair<unsigned, unsigned>> Octree::_cellEdges =
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Octree::cornerTopology() const
-{
-    /* Implements the test from [Gerstner et al, 2000],
-     * as described in [Ju et al, 2002].
-     *
-     * The code to generate the table is given below:
+/* The code to generate the table is given below:
 
 def safe(index):
     f = [(index & (1 << i)) != 0 for i in range(8)]
@@ -99,28 +88,17 @@ for i,s in enumerate([safe(i) for i in range(256)]):
 out += "}"
 print(out)
 
-    */
-    static std::vector<bool> corner_table =
-        {1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,0,1,0,1,0,0,0,1,0,1,0,1,
-         1,0,1,1,0,0,0,1,0,0,1,1,0,0,1,1,1,1,1,1,0,1,0,1,0,0,1,1,0,0,0,1,
-         1,0,0,0,1,1,0,1,0,0,0,0,1,1,1,1,1,1,0,1,1,1,0,1,0,0,0,0,1,1,0,1,
-         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,1,0,0,0,0,0,0,0,1,
-         1,0,0,0,0,0,0,0,1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-         1,0,1,1,0,0,0,0,1,0,1,1,1,0,1,1,1,1,1,1,0,0,0,0,1,0,1,1,0,0,0,1,
-         1,0,0,0,1,1,0,0,1,0,1,0,1,1,1,1,1,1,0,0,1,1,0,0,1,0,0,0,1,1,0,1,
-         1,0,1,0,1,0,0,0,1,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1};
+*/
 
-    uint8_t index = 0;
-    for (uint8_t i=0; i < 8; ++i)
-    {
-        if (corners[i])
-        {
-            index |= (1 << i);
-        }
-    }
-
-    return corner_table[index];
-}
+const std::vector<bool> Octree::_cornerTable =
+    {1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,0,1,0,1,0,0,0,1,0,1,0,1,
+     1,0,1,1,0,0,0,1,0,0,1,1,0,0,1,1,1,1,1,1,0,1,0,1,0,0,1,1,0,0,0,1,
+     1,0,0,0,1,1,0,1,0,0,0,0,1,1,1,1,1,1,0,1,1,1,0,1,0,0,0,0,1,1,0,1,
+     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,1,0,0,0,0,0,0,0,1,
+     1,0,0,0,0,0,0,0,1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+     1,0,1,1,0,0,0,0,1,0,1,1,1,0,1,1,1,1,1,1,0,0,0,0,1,0,1,1,0,0,0,1,
+     1,0,0,0,1,1,0,0,1,0,1,0,1,1,1,1,1,1,0,0,1,1,0,0,1,0,0,0,1,1,0,1,
+     1,0,1,0,1,0,0,0,1,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1};
 
 bool Octree::leafTopology() const
 {

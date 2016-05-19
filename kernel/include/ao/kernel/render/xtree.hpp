@@ -172,24 +172,38 @@ protected:
      *  Checks to see if the cell's corners describe an ambiguous
      *  (non-manifold) topology.
      *
-     *  Returns true if the cell is safe to collapse (i.e. has manifold corner
-     *  topology), false otherwise.
+     *  Returns true if the cell is safe to collapse (i.e. has manifold
+     *  corner topology), false otherwise.
      */
-    virtual bool cornerTopology() const=0;
+    bool cornerTopology() const;
 
-    /*
-     *  Checks to make sure that the fine contour is topologically equivalent
-     *  to the coarser contour by comparing signs in edges and faces
+    /**************************************************************************
      *
-     *  Returns true if the cell can be collapsed without changing topology
-     *  (with respect to the leaves)
-     */
-    virtual bool leafTopology() const=0;
-
-    /*
-     *  Returns a hard-coded list of axis pairs representing cell edges
-     */
-    virtual const std::vector<std::pair<unsigned, unsigned>>& cellEdges()=0;
+     * Every child class needs to implement the following three functions
+     * They're not virtual because we use the CRTP and might as well
+     * do the binding at compile-time.
+     *
+     *  static const std::vector<bool>& cornerTable();
+     *      Returns a table such that looking up a particular corner
+     *      configuration returns whether that configuration is safe to
+     *      collapse.
+     *
+     *      This implements the test from [Gerstner et al, 2000], as
+     *      described in [Ju et al, 2002].
+     *
+     *
+     *  bool leafTopology() const;
+     *      Checks to make sure that the fine contour is topologically equivalent
+     *      to the coarser contour by comparing signs in edges and faces
+     *
+     *      Returns true if the cell can be collapsed without changing topology
+     *      (with respect to the leaves)
+     *
+     *
+     *  const std::vector<std::pair<unsigned, unsigned>>& cellEdges();
+     *      Returns a hard-coded list of axis pairs representing cell edges
+     *
+     **************************************************************************/
 
     /*  Bounds for this octree  */
     const Interval X, Y, Z;

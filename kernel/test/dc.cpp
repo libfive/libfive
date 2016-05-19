@@ -18,7 +18,9 @@
  */
 #include <catch/catch.hpp>
 
-#include "ao/kernel/render/dc.hpp"
+#include "ao/kernel/format/mesh.hpp"
+#include "ao/kernel/format/contours.hpp"
+
 #include "ao/kernel/render/region.hpp"
 
 #include "ao/kernel/eval/evaluator.hpp"
@@ -41,7 +43,7 @@ TEST_CASE("Small sphere mesh")
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
 
-    auto m = DC::Render(&t, r);
+    auto m = Mesh::Render(&t, r);
 
     REQUIRE(m.tris.size() == 12);
 }
@@ -57,7 +59,7 @@ TEST_CASE("Face counts")
         for (Token* axis : {s.X(), s.Y(), s.Z()})
         {
             Tree t(&s, s.operation(OP_ADD, axis, s.constant(0.75)));
-            auto m = DC::Render(&t, r, 0);
+            auto m = Mesh::Render(&t, r, 0);
             REQUIRE(m.tris.size() == 2);
         }
     }
@@ -69,7 +71,7 @@ TEST_CASE("Face counts")
         for (Token* axis : {s.X(), s.Y(), s.Z()})
         {
             Tree t(&s, s.operation(OP_ADD, axis, s.constant(0.75)));
-            auto m = DC::Render(&t, r, 0);
+            auto m = Mesh::Render(&t, r, 0);
             REQUIRE(m.tris.size() == 18);
         }
     }
@@ -87,7 +89,7 @@ TEST_CASE("Face normals")
         for (int i=0; i < 3; ++i)
         {
             Tree t(&s, s.operation(OP_ADD, axis[i], s.constant(0.75)));
-            auto m = DC::Render(&t, r, 0);
+            auto m = Mesh::Render(&t, r, 0);
             for (unsigned j=0; j < m.tris.size(); ++j)
             {
                 REQUIRE(m.norm(j) == norm[i]);
@@ -101,11 +103,47 @@ TEST_CASE("Face normals")
         {
             Tree t(&s, s.operation(OP_NEG,
                        s.operation(OP_ADD, axis[i], s.constant(0.75))));
-            auto m = DC::Render(&t, r, 0);
+            auto m = Mesh::Render(&t, r, 0);
             for (unsigned j=0; j < m.tris.size(); ++j)
             {
                 REQUIRE(m.norm(j) == -norm[i]);
             }
         }
+    }
+}
+
+TEST_CASE("Simple 2D contouring")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+               s.constant(0.5)));
+
+    Region r({-1, 1}, {-1, 1}, {0, 0}, 1);
+
+    auto m = Contours::Render(&t, r);
+    REQUIRE(m.contours.size() == 1);
+}
+
+#include <iostream>
+TEST_CASE("2D contour tracking")
+{
+    Store s;
+    Tree t(&s, s.operation(OP_SUB,
+               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
+                                   s.operation(OP_MUL, s.Y(), s.Y())),
+               s.constant(0.5)));
+
+    Region r({-1, 1}, {-1, 1}, {0, 0}, 10);
+
+    auto m = Contours::Render(&t, r);
+    REQUIRE(m.contours.size() == 1);
+
+    for (auto c : m.contours[0])
+    {
+        auto r = pow(c.x, 2) + pow(c.y, 2);
+        REQUIRE(r < 0.51);
+        REQUIRE(r > 0.49);
     }
 }

@@ -18,23 +18,23 @@
  */
 #pragma once
 
-#include <glm/vec3.hpp>
+#include "ao/kernel/render/xtree.hpp"
 
-#include "ao/kernel/format/mesh.hpp"
-#include "ao/kernel/render/octree.hpp"
-
-class Tree;
-class Region;
-class Evaluator;
-
-namespace DC
+class Quadtree : public XTree<Quadtree, 2>
 {
-    /*
-     *  Run dual contouring on the given evaluator, returning a Mesh
-     *
-     *  This involves sampling the evaluator on an octree (with QEF
-     *  simplification to collapse leaf cells), then using DC to generate
-     *  a triangle mesh.
-     */
-    Mesh Render(Tree* t, const Region& r, uint32_t flags=Octree::COLLAPSE);
+    Quadtree(const Subregion& r);
+    Quadtree(Evaluator* e, const Subregion& r, uint32_t flags);
+    Quadtree(Evaluator* e, const std::array<Quadtree*, 4>& cs,
+           const Subregion& r, uint32_t flags);
+
+    static const std::vector<bool>& cornerTable()
+        { return _cornerTable; }
+    const std::vector<std::pair<unsigned, unsigned>>& cellEdges()
+        { return _cellEdges; }
+    bool leafTopology() const;
+
+    const static std::vector<std::pair<unsigned, unsigned>> _cellEdges;
+    const static std::vector<bool> _cornerTable;
+
+    friend class XTree;
 };
