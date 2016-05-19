@@ -69,16 +69,28 @@ extern "C"
      */
     void tree_eval_interval(Tree* tree, v2* x, v2* y, v2* z);
 
+    /*
+     *  Exports a heighmap to a .png image
+     */
     void tree_export_heightmap(Tree* tree, char* filename,
                                float xmin, float xmax,
                                float ymin, float ymax,
                                float zmin, float zmax, float res);
 
+    /*
+     *  Exports a mesh to a .stl file
+     */
     void tree_export_mesh(Tree* tree, char* filename,
                           float xmin, float xmax,
                           float ymin, float ymax,
                           float zmin, float zmax, float res);
 
+    /*
+     *  Exports a set of contours to a .svg file
+     */
+    void tree_export_slice(Tree* tree, char* filename,
+                           float xmin, float xmax, float ymin, float ymax,
+                           float z, float res);
     /*
      *  Renders a mesh, returning the number of triangles.
      *  *out is malloced to tris * 3 verts per tri * 3 coords per vert

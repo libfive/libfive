@@ -33,6 +33,7 @@
 #include "ao/kernel/render/heightmap.hpp"
 #include "ao/kernel/format/image.hpp"
 #include "ao/kernel/format/mesh.hpp"
+#include "ao/kernel/format/contours.hpp"
 
 #include "ao/ui/window.hpp"
 #include "ao/ui/watcher.hpp"
@@ -172,6 +173,19 @@ void tree_export_mesh(Tree* tree, char* filename,
     auto mesh = Mesh::Render(tree, region);
 
     mesh.writeSTL(f);
+}
+
+void tree_export_slice(Tree* tree, char* filename,
+                       float xmin, float xmax, float ymin, float ymax,
+                       float z, float res)
+{
+    auto f = std::string(filename);
+    assert(f.substr(f.length() - 4, 4) == ".svg");
+
+    Region region({xmin, xmax}, {ymin, ymax}, {z,z}, res);
+    auto cs = Contours::Render(tree, region);
+
+    cs.writeSVG(f, region);
 }
 
 int tree_render_mesh(Tree* tree, float** out,
