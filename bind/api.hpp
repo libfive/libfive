@@ -71,6 +71,8 @@ extern "C"
 
     /*
      *  Exports a heighmap to a .png image
+     *
+     *  The filename must end in ".png" (otherwise an assertion will occur)
      */
     void tree_export_heightmap(Tree* tree, char* filename,
                                float xmin, float xmax,
@@ -79,6 +81,8 @@ extern "C"
 
     /*
      *  Exports a mesh to a .stl file
+     *
+     *  The filename must end in ".stl" (otherwise an assertion will occur)
      */
     void tree_export_mesh(Tree* tree, char* filename,
                           float xmin, float xmax,
@@ -87,6 +91,8 @@ extern "C"
 
     /*
      *  Exports a set of contours to a .svg file
+     *
+     *  The filename must end in ".svg" (otherwise an assertion will occur)
      */
     void tree_export_slice(Tree* tree, char* filename,
                            float xmin, float xmax, float ymin, float ymax,
