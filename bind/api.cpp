@@ -54,10 +54,12 @@ void contours_delete(struct contours* cs)
 {
     for (uint32_t i=0; i < cs->size; ++i)
     {
-        free(cs->contours[i]);
+        free(cs->xs[i]);
+        free(cs->ys[i]);
     }
     free(cs->sizes);
-    free(cs->contours);
+    free(cs->xs);
+    free(cs->ys);
     free(cs);
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -206,19 +208,21 @@ struct contours* tree_render_slice(Tree* tree,
     auto cs = Contours::Render(tree, region);
 
     struct contours* out = (struct contours*)malloc(sizeof(struct contours));
-    out->contours = (struct v2**)malloc(sizeof(struct v2*) *
-                                        cs.contours.size());
+    out->xs = (float**)malloc(sizeof(float*) * cs.contours.size());
+    out->ys = (float**)malloc(sizeof(float*) * cs.contours.size());
     out->sizes = (uint32_t*)malloc(sizeof(uint32_t*) * cs.contours.size());
     out->size = cs.contours.size();
 
     size_t i=0;
     for (auto c : cs.contours)
     {
-        out->contours[i] = (struct v2*)malloc(sizeof(struct v2) * c.size());
+        out->xs[i] = (float*)malloc(sizeof(float) * c.size());
+        out->ys[i] = (float*)malloc(sizeof(float) * c.size());
         size_t j=0;
         for (auto pt : c)
         {
-            out->contours[i][j++] = {pt.x, pt.y};
+            out->xs[i][j]   = pt.x;
+            out->ys[i][j++] = pt.y;
         }
         out->sizes[i++] = c.size();
     }

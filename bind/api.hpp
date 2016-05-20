@@ -33,7 +33,8 @@ extern "C"
 ////////////////////////////////////////////////////////////////////////////////
 
     struct contours {
-        struct v2** contours;
+        float** xs;
+        float** ys;
         uint32_t* sizes;
         uint32_t size;
     };
