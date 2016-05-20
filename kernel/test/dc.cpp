@@ -126,7 +126,6 @@ TEST_CASE("Simple 2D contouring")
     REQUIRE(m.contours.size() == 1);
 }
 
-#include <iostream>
 TEST_CASE("2D contour tracking")
 {
     Store s;

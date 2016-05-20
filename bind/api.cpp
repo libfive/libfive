@@ -50,6 +50,16 @@ Store* store_new()
     return new Store();
 }
 
+void contours_delete(struct contours* cs)
+{
+    for (uint32_t i=0; i < cs->size; ++i)
+    {
+        free(cs->contours[i]);
+    }
+    free(cs->sizes);
+    free(cs->contours);
+    free(cs);
+}
 ////////////////////////////////////////////////////////////////////////////////
 
 int opcode_enum(char* op)
@@ -186,6 +196,33 @@ void tree_export_slice(Tree* tree, char* filename,
     auto cs = Contours::Render(tree, region);
 
     cs.writeSVG(f, region);
+}
+
+struct contours* tree_render_slice(Tree* tree,
+                       float xmin, float xmax, float ymin, float ymax,
+                       float z, float res)
+{
+    Region region({xmin, xmax}, {ymin, ymax}, {z,z}, res);
+    auto cs = Contours::Render(tree, region);
+
+    struct contours* out = (struct contours*)malloc(sizeof(struct contours));
+    out->contours = (struct v2**)malloc(sizeof(struct v2*) *
+                                        cs.contours.size());
+    out->sizes = (uint32_t*)malloc(sizeof(uint32_t*) * cs.contours.size());
+    out->size = cs.contours.size();
+
+    size_t i=0;
+    for (auto c : cs.contours)
+    {
+        out->contours[i] = (struct v2*)malloc(sizeof(struct v2) * c.size());
+        size_t j=0;
+        for (auto pt : c)
+        {
+            out->contours[i][j++] = {pt.x, pt.y};
+        }
+        out->sizes[i++] = c.size();
+    }
+    return out;
 }
 
 int tree_render_mesh(Tree* tree, float** out,

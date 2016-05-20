@@ -30,6 +30,18 @@ extern "C"
     struct v3 { float x; float y; float z; };
     struct v4 { float x; float y; float z; float w; };
 
+////////////////////////////////////////////////////////////////////////////////
+
+    struct contours {
+        struct v2** contours;
+        uint32_t* sizes;
+        uint32_t size;
+    };
+
+    void contours_delete(struct contours* cs);
+
+////////////////////////////////////////////////////////////////////////////////
+
     Store* store_new();
     void store_delete(Store* ptr);
 
@@ -97,6 +109,16 @@ extern "C"
     void tree_export_slice(Tree* tree, char* filename,
                            float xmin, float xmax, float ymin, float ymax,
                            float z, float res);
+
+    /*
+     *  Renders a 2D slice into a set of contours
+     *
+     *  The resulting struct must be freed with contours_delete
+     */
+    struct contours* tree_render_slice(Tree* tree,
+            float xmin, float xmax, float ymin, float ymax,
+            float z, float res);
+
     /*
      *  Renders a mesh, returning the number of triangles.
      *  *out is malloced to tris * 3 verts per tri * 3 coords per vert
