@@ -139,10 +139,14 @@ TEST_CASE("2D contour tracking")
     auto m = Contours::Render(&t, r);
     REQUIRE(m.contours.size() == 1);
 
+    float min = 1;
+    float max = 0;
     for (auto c : m.contours[0])
     {
         auto r = pow(c.x, 2) + pow(c.y, 2);
-        REQUIRE(r < 0.51);
-        REQUIRE(r > 0.49);
+        min = fmin(min, r);
+        max = fmax(max, r);
     }
+    REQUIRE(max < 0.51);
+    REQUIRE(min > 0.49);
 }

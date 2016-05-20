@@ -33,5 +33,16 @@ TEST_CASE("struct contours")
 
     struct contours* cs = tree_render_slice(&t, -1, 1, -1, 1, 0, 10);
     REQUIRE(cs->size == 1);
+
+    float min = 1;
+    float max = 0;
+    for (uint32_t i=0; i < cs->sizes[0]; ++i)
+    {
+        auto r = pow(cs->xs[0][i], 2) + pow(cs->ys[0][i], 2);
+        min = fmin(min, r);
+        max = fmax(max, r);
+    }
+    REQUIRE(max < 0.51);
+    REQUIRE(min > 0.49);
     contours_delete(cs);
 }
