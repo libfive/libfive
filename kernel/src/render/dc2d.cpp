@@ -137,10 +137,10 @@ void Worker2D::segment(const Quadtree* a, const Quadtree* b)
 
 Contours Contours::Render(Tree* t, const Region& r, uint32_t flags)
 {
-    auto q = Quadtree::Render(t, r, flags);
+    std::unique_ptr<Quadtree> q(Quadtree::Render(t, r, flags));
 
     DC::Worker2D w;
-    w.cell(q);
+    w.cell(q.get());
 
     std::map<glm::vec2, glm::vec2, Comparator> segs;
     for (const auto& s : w.segments)

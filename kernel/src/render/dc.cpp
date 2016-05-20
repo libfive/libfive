@@ -269,10 +269,10 @@ void Worker::quad(const Octree* a, const Octree* b,
 
 Mesh Mesh::Render(Tree* t, const Region& r, uint32_t flags)
 {
-    auto o = Octree::Render(t, r, flags);
+    std::unique_ptr<Octree> o(Octree::Render(t, r, flags));
 
     DC::Worker w;
-    w.cell(o);
+    w.cell(o.get());
 
     return w.mesh;
 }
