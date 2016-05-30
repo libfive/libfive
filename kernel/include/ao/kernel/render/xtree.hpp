@@ -99,6 +99,10 @@ public:
      */
     unsigned getLevel() const { return level; }
 
+    /*  This is the number of extra points added per intersection
+     *  if jittering is enabled */
+    const static unsigned JITTER_COUNT = 16;
+
 protected:
     /*
      *  Recursive constructor that splits r

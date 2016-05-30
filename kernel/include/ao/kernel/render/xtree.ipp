@@ -430,7 +430,6 @@ void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
     // If jitter is enabled, add a cloud of nearby points
     if (jitter)
     {
-        constexpr unsigned JITTER_COUNT = 16;
         static_assert(JITTER_COUNT < Result::N, "JITTER_COUNT is too large");
 
         const float r = len / 10.0f;
