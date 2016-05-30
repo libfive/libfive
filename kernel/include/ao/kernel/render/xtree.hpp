@@ -160,13 +160,13 @@ protected:
     float findVertex(Evaluator* e);
 
     /*
-     *  Performs binary search along a cube's edge
+     *  Performs binary search along a cube's edge and stores in intersections
      *
-     *  The resulting Intersection's normal is of unit length
+     *  The resulting Intersections' normals are of unit length
      *
      *  eval(a) should be < 0 (inside the shape) and eval(b) should be outside
      */
-    static Intersection searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval);
+    void searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval);
 
     /*
      *  Checks to see if the cell's corners describe an ambiguous
@@ -235,6 +235,11 @@ protected:
 
     /*  Number of iterations to run when doing binary search for verts  */
     const static int SEARCH_COUNT = 8;
+
+    /*  If true, points found with searchEdge are jittered slightly to avoid
+     *  numerical instability when rendering shapes that lie exactly on cell
+     *  boundaries */
+    bool jitter=true;
 };
 
 #include "ao/kernel/render/xtree.ipp"

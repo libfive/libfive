@@ -20,6 +20,7 @@
 #include <numeric>
 
 #include <glm/geometric.hpp>
+#include <glm/gtc/random.hpp>
 #include <Eigen/Dense>
 
 #include "ao/kernel/render/xtree.hpp"
@@ -191,13 +192,11 @@ void XTree<T, dims>::findIntersections(Evaluator* eval)
             {
                 if (corner(e.first))
                 {
-                    intersections.push_back(
-                            searchEdge(pos(e.first), pos(e.second), eval));
+                    searchEdge(pos(e.first), pos(e.second), eval);
                 }
                 else
                 {
-                    intersections.push_back(
-                        searchEdge(pos(e.second), pos(e.first), eval));
+                    searchEdge(pos(e.second), pos(e.first), eval);
                 }
             }
         }
@@ -384,12 +383,14 @@ bool XTree<T, dims>::cornerTopology() const
 }
 
 template<class T, int dims>
-Intersection XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
+void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
 {
     // We do an N-fold reduction at each stage
     constexpr int _N = 4;
     constexpr int N = (1 << _N);
     constexpr int ITER = SEARCH_COUNT / _N;
+
+    const float len = glm::length(a - b);
 
     // Binary search for intersection
     for (int i=0; i < ITER; ++i)
@@ -415,13 +416,31 @@ Intersection XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
     }
 
     // Calculate value and gradient at the given point
-    e->setRaw(a.x, a.y, a.z, 0);
+    std::vector<glm::vec3> pos = {a};
+
+    // If jitter is enabled, add a cloud of nearby points
+    if (jitter)
+    {
+        const float r = len / 10.0f;
+        while (pos.size() < 16)
+        {
+            pos.push_back(a + glm::sphericalRand(r));
+        }
+    }
+
+    size_t count = 0;
+    for (auto p : pos)
+    {
+        e->setRaw(p.x, p.y, p.z, count++);
+    }
 
     // Get set of derivative arrays
-    auto ds = e->derivs(1);
+    auto ds = e->derivs(count);
 
     // Extract gradient from set of arrays
-    glm::vec3 g(std::get<1>(ds)[0], std::get<2>(ds)[0], std::get<3>(ds)[0]);
-
-    return {a, glm::normalize(g)};
+    for (unsigned i=0; i < count; ++i)
+    {
+        glm::vec3 g(std::get<1>(ds)[i], std::get<2>(ds)[i], std::get<3>(ds)[i]);
+        intersections.push_back({pos[i], glm::normalize(g)});
+    }
 }
