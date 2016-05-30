@@ -45,7 +45,9 @@ public:
                      bool multithread=true);
 
     /*  Enumerator for optional flags  */
-    enum Flags { COLLAPSE = 1 };
+    enum Flags { COLLAPSE   = (1 << 0),
+                 NO_JITTER  = (1 << 1),
+    };
 
     /*  Enumerator that distinguishes between cell types  */
     enum Type { LEAF, BRANCH, EMPTY, FULL };
@@ -111,9 +113,10 @@ protected:
     XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r);
 
     /*
-     *  Delegating constructor to initialize X, Y, Z
+     *  Delegating constructor to initialize X, Y, Z, and jitter
      */
     XTree(const Subregion& r);
+    XTree(const Subregion& r, bool jitter);
 
     /*
      *  Splits a subregion and fills out child pointers and cell type
@@ -233,13 +236,13 @@ protected:
      *  intersections from lower-ranked children                     */
     unsigned rank=0;
 
-    /*  Number of iterations to run when doing binary search for verts  */
-    const static int SEARCH_COUNT = 8;
-
     /*  If true, points found with searchEdge are jittered slightly to avoid
      *  numerical instability when rendering shapes that lie exactly on cell
      *  boundaries */
-    bool jitter=true;
+    const bool jitter;
+
+    /*  Number of iterations to run when doing binary search for verts  */
+    const static int SEARCH_COUNT = 8;
 };
 
 #include "ao/kernel/render/xtree.ipp"

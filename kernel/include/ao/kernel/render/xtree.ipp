@@ -69,23 +69,32 @@ T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
 
 template <class T, int dims>
 XTree<T, dims>::XTree(const Subregion& r)
+    : XTree(r, false)
+{
+    // Nothing to do here
+}
+
+template <class T, int dims>
+XTree<T, dims>::XTree(const Subregion& r, bool jitter)
     : X(r.X.lower(), r.X.upper()),
       Y(r.Y.lower(), r.Y.upper()),
-      Z(r.Z.lower(), r.Z.upper())
+      Z(r.Z.lower(), r.Z.upper()),
+      jitter(jitter)
+
 {
     // Nothing to do here
 }
 
 template <class T, int dims>
 XTree<T, dims>::XTree(Evaluator* e, const Subregion& r, uint32_t flags)
-    : XTree(r)
+    : XTree(r, !(flags & NO_JITTER))
 {
     populateChildren(e, r, flags);
 }
 
 template <class T, int dims>
 XTree<T, dims>::XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r)
-    : XTree(r)
+    : XTree(r, false)
 {
     for (uint8_t i=0; i < cs.size(); ++i)
     {
