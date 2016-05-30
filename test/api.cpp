@@ -31,7 +31,7 @@ TEST_CASE("struct contours")
                                    s.operation(OP_MUL, s.Y(), s.Y())),
                s.constant(0.5)));
 
-    struct contours* cs = tree_render_slice(&t, -1, 1, -1, 1, 0, 10);
+    struct contours* cs = tree_render_slice(&t, -1, 1, -1, 1, 0, 50);
     REQUIRE(cs->size == 1);
 
     float min = 1;

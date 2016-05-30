@@ -20,6 +20,7 @@
 #include <numeric>
 
 #include <glm/geometric.hpp>
+#include <glm/gtc/random.hpp>
 #include <Eigen/Dense>
 
 #include "ao/kernel/render/xtree.hpp"
@@ -68,23 +69,32 @@ T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
 
 template <class T, int dims>
 XTree<T, dims>::XTree(const Subregion& r)
+    : XTree(r, false)
+{
+    // Nothing to do here
+}
+
+template <class T, int dims>
+XTree<T, dims>::XTree(const Subregion& r, bool jitter)
     : X(r.X.lower(), r.X.upper()),
       Y(r.Y.lower(), r.Y.upper()),
-      Z(r.Z.lower(), r.Z.upper())
+      Z(r.Z.lower(), r.Z.upper()),
+      jitter(jitter)
+
 {
     // Nothing to do here
 }
 
 template <class T, int dims>
 XTree<T, dims>::XTree(Evaluator* e, const Subregion& r, uint32_t flags)
-    : XTree(r)
+    : XTree(r, !(flags & NO_JITTER))
 {
     populateChildren(e, r, flags);
 }
 
 template <class T, int dims>
 XTree<T, dims>::XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r)
-    : XTree(r)
+    : XTree(r, false)
 {
     for (uint8_t i=0; i < cs.size(); ++i)
     {
@@ -191,13 +201,11 @@ void XTree<T, dims>::findIntersections(Evaluator* eval)
             {
                 if (corner(e.first))
                 {
-                    intersections.push_back(
-                            searchEdge(pos(e.first), pos(e.second), eval));
+                    searchEdge(pos(e.first), pos(e.second), eval);
                 }
                 else
                 {
-                    intersections.push_back(
-                        searchEdge(pos(e.second), pos(e.first), eval));
+                    searchEdge(pos(e.second), pos(e.first), eval);
                 }
             }
         }
@@ -384,12 +392,14 @@ bool XTree<T, dims>::cornerTopology() const
 }
 
 template<class T, int dims>
-Intersection XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
+void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
 {
     // We do an N-fold reduction at each stage
     constexpr int _N = 4;
     constexpr int N = (1 << _N);
     constexpr int ITER = SEARCH_COUNT / _N;
+
+    const float len = glm::length(a - b);
 
     // Binary search for intersection
     for (int i=0; i < ITER; ++i)
@@ -415,13 +425,40 @@ Intersection XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
     }
 
     // Calculate value and gradient at the given point
-    e->setRaw(a.x, a.y, a.z, 0);
+    std::vector<glm::vec3> pos = {a};
+
+    // If jitter is enabled, add a cloud of nearby points
+    if (jitter)
+    {
+        static_assert(JITTER_COUNT < Result::N, "JITTER_COUNT is too large");
+
+        const float r = len / 10.0f;
+        while (pos.size() < JITTER_COUNT)
+        {
+            if (dims == 3)
+            {
+                pos.push_back(a + glm::sphericalRand(r));
+            }
+            else if (dims == 2)
+            {
+                pos.push_back(a + glm::vec3(glm::circularRand(r), 0.0f));
+            }
+        }
+    }
+
+    size_t count = 0;
+    for (auto p : pos)
+    {
+        e->setRaw(p.x, p.y, p.z, count++);
+    }
 
     // Get set of derivative arrays
-    auto ds = e->derivs(1);
+    auto ds = e->derivs(count);
 
     // Extract gradient from set of arrays
-    glm::vec3 g(std::get<1>(ds)[0], std::get<2>(ds)[0], std::get<3>(ds)[0]);
-
-    return {a, glm::normalize(g)};
+    for (unsigned i=0; i < count; ++i)
+    {
+        glm::vec3 g(std::get<1>(ds)[i], std::get<2>(ds)[i], std::get<3>(ds)[i]);
+        intersections.push_back({pos[i], glm::normalize(g)});
+    }
 }

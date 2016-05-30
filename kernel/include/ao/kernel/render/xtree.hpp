@@ -45,7 +45,9 @@ public:
                      bool multithread=true);
 
     /*  Enumerator for optional flags  */
-    enum Flags { COLLAPSE = 1 };
+    enum Flags { COLLAPSE   = (1 << 0),
+                 NO_JITTER  = (1 << 1),
+    };
 
     /*  Enumerator that distinguishes between cell types  */
     enum Type { LEAF, BRANCH, EMPTY, FULL };
@@ -97,6 +99,10 @@ public:
      */
     unsigned getLevel() const { return level; }
 
+    /*  This is the number of extra points added per intersection
+     *  if jittering is enabled */
+    const static unsigned JITTER_COUNT = 16;
+
 protected:
     /*
      *  Recursive constructor that splits r
@@ -111,9 +117,10 @@ protected:
     XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r);
 
     /*
-     *  Delegating constructor to initialize X, Y, Z
+     *  Delegating constructor to initialize X, Y, Z, and jitter
      */
     XTree(const Subregion& r);
+    XTree(const Subregion& r, bool jitter);
 
     /*
      *  Splits a subregion and fills out child pointers and cell type
@@ -160,13 +167,13 @@ protected:
     float findVertex(Evaluator* e);
 
     /*
-     *  Performs binary search along a cube's edge
+     *  Performs binary search along a cube's edge and stores in intersections
      *
-     *  The resulting Intersection's normal is of unit length
+     *  The resulting Intersections' normals are of unit length
      *
      *  eval(a) should be < 0 (inside the shape) and eval(b) should be outside
      */
-    static Intersection searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval);
+    void searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval);
 
     /*
      *  Checks to see if the cell's corners describe an ambiguous
@@ -232,6 +239,11 @@ protected:
      *  This value is populated in findVertex and used when merging  *
      *  intersections from lower-ranked children                     */
     unsigned rank=0;
+
+    /*  If true, points found with searchEdge are jittered slightly to avoid
+     *  numerical instability when rendering shapes that lie exactly on cell
+     *  boundaries */
+    const bool jitter;
 
     /*  Number of iterations to run when doing binary search for verts  */
     const static int SEARCH_COUNT = 8;
