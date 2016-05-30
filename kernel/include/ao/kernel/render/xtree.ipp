@@ -427,7 +427,14 @@ void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
         const float r = len / 10.0f;
         while (pos.size() < JITTER_COUNT)
         {
-            pos.push_back(a + glm::sphericalRand(r));
+            if (dims == 3)
+            {
+                pos.push_back(a + glm::sphericalRand(r));
+            }
+            else if (dims == 2)
+            {
+                pos.push_back(a + glm::vec3(glm::circularRand(r), 0.0f));
+            }
         }
     }
 
