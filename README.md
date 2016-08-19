@@ -8,6 +8,11 @@ On a Mac with [Homebrew](http://brew.sh/), run
 brew install cmake ninja boost libpng glfw3 libepoxy guile
 ```
 
+On Ubuntu:
+```
+sudo apt install cmake ninja-build libboost-all-dev libpng16-dev libglfw3-dev libepoxy-dev guile-2.0-dev guile-2.0-libs
+```
+
 ### Compilation
 - [cmake](https://cmake.org/)
 - [Ninja](https://ninja-build.org/) (recommended)
