@@ -59,7 +59,7 @@ Token* recurse(Store* s, float x, float y, float scale, glm::mat4 M, int i)
                                     recurse(s, x - scale, y - scale, t, M, j)
                ))))))));
     }
-};
+}
 
 Tree* menger(int i)
 {
