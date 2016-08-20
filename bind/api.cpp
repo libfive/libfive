@@ -20,6 +20,7 @@
 #include <string>
 #include <fstream>
 #include <set>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include "glm/gtc/matrix_inverse.hpp"
 
@@ -179,12 +180,13 @@ void tree_export_mesh(Tree* tree, char* filename,
                       float zmin, float zmax, float res)
 {
     auto f = std::string(filename);
-    assert(f.substr(f.length() - 4, 4) == ".stl");
+    assert(boost::algorithm::ends_with(f, ".stl") ||
+           boost::algorithm::ends_with(f, ".obj"));
 
     Region region({xmin, xmax}, {ymin, ymax}, {zmin, zmax}, res);
     auto mesh = Mesh::Render(tree, region);
 
-    mesh.writeSTL(f);
+    mesh.writeMeshToFile(f);
 }
 
 void tree_export_slice(Tree* tree, char* filename,

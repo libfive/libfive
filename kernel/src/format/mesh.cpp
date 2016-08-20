@@ -18,10 +18,23 @@
  */
 #include <fstream>
 #include <string>
-
+#include <iostream>
+#include <iomanip>
+#include <boost/algorithm/string/predicate.hpp>
 #include <glm/geometric.hpp>
 
 #include "ao/kernel/format/mesh.hpp"
+
+
+void Mesh::writeMeshToFile(std::string filename)
+{
+    std::ofstream out;
+    out.open(filename, std::ios::out);
+
+    if (boost::algorithm::ends_with(filename, ".stl")) writeSTL(out);
+    else if (boost::algorithm::ends_with(filename, ".obj")) writeOBJ(out);
+    else std::cerr << "Mesh::writeMeshToStream -- unknown file extension";
+}
 
 void Mesh::writeSTL(std::ostream& out)
 {
@@ -59,11 +72,35 @@ void Mesh::writeSTL(std::ostream& out)
     }
 }
 
-void Mesh::writeSTL(std::string filename)
+std::string formatFloat(double n) {
+    // convert n to a string, but limit the number of digits after
+    // the decimal place to 6.  Trim off trailing zeros and perhaps decimal.
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(6) << n;
+    std::string s = ss.str();
+    s.erase(s.find_last_not_of('0') + 1, std::string::npos);
+    s.erase(s.find_last_not_of('.') + 1, std::string::npos);
+    return s;
+}
+
+void Mesh::writeOBJ(std::ostream& out)
 {
-    std::ofstream file;
-    file.open(filename, std::ios::out);
-    writeSTL(file);
+    for (auto v : verts)
+    {
+        out << "v ";
+        out << formatFloat(v[0]) << " ";
+        out << formatFloat(v[1]) << " ";
+        out << formatFloat(v[2]) << "\n";
+    }
+    out << "\n";
+
+    for (auto t : tris)
+    {
+        out << "f ";
+        out << (t[0] + 1) << " ";
+        out << (t[1] + 1) << " ";
+        out << (t[2] + 1) << "\n";
+    }
 }
 
 glm::vec3 Mesh::norm(unsigned i) const
