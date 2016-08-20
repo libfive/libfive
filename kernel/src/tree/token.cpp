@@ -71,6 +71,7 @@ size_t Token::args(Opcode op)
         case AFFINE_VEC:
             return 2;
 
+        default:
         case INVALID: // fallthrough
         case DUMMY_A:
         case DUMMY_B:
