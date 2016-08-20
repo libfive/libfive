@@ -18,6 +18,7 @@
  */
 #include <future>
 #include <numeric>
+#include <cmath>
 
 #include <glm/geometric.hpp>
 #include <glm/gtc/random.hpp>
