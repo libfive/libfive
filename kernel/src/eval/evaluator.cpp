@@ -32,12 +32,13 @@
 #if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5
 // http://stackoverflow.com/questions/27064791/stdalign-not-supported-by-g4-9
 namespace std {
-    inline void *align( std::size_t alignment, std::size_t size, void *&ptr, std::size_t &space ) {
-        auto pn = reinterpret_cast< std::uintptr_t >( ptr );
-        auto aligned = ( pn + alignment - 1 ) & - alignment;
-        auto new_space = space - ( aligned - pn );
-        if ( new_space < size ) return nullptr;
-        space = new_space;
+    inline void *align( std::size_t alignment, std::size_t size,
+                        void *&ptr, std::size_t &space ) {
+        std::uintptr_t pn = reinterpret_cast< std::uintptr_t >( ptr );
+        std::uintptr_t aligned = ( pn + alignment - 1 ) & - alignment;
+        std::size_t padding = aligned - pn;
+        if ( space < size + padding ) return nullptr;
+        space -= padding;
         return ptr = reinterpret_cast< void * >( aligned );
     }
 }
@@ -210,7 +211,7 @@ static void clause(Opcode op,
             break;
         case OP_NANFILL:
             EVAL_LOOP
-            out[i] = isnan(a[i]) ? b[i] : a[i];
+            out[i] = std::isnan(a[i]) ? b[i] : a[i];
             break;
 
         case OP_SQUARE:
@@ -381,9 +382,9 @@ static void clause(Opcode op,
         case OP_NANFILL:
             EVAL_LOOP
             {
-                odx[i] = isnan(av[i]) ? bdx[i] : adx[i];
-                ody[i] = isnan(av[i]) ? bdy[i] : ady[i];
-                odz[i] = isnan(av[i]) ? bdz[i] : adz[i];
+                odx[i] = std::isnan(av[i]) ? bdx[i] : adx[i];
+                ody[i] = std::isnan(av[i]) ? bdy[i] : ady[i];
+                odz[i] = std::isnan(av[i]) ? bdz[i] : adz[i];
             }
             break;
 
@@ -818,7 +819,7 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
         case OP_MOD:
             return Interval(0.0f, b.upper()); // YOLO
         case OP_NANFILL:
-            return (isnan(a.lower()) || isnan(a.upper())) ? b : a;
+            return (std::isnan(a.lower()) || std::isnan(a.upper())) ? b : a;
 
         case OP_SQUARE:
             return boost::numeric::square(a);
