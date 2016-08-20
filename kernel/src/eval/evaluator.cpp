@@ -29,6 +29,23 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
+
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5
+// http://stackoverflow.com/questions/27064791/stdalign-not-supported-by-g4-9
+namespace std {
+    inline void *align( std::size_t alignment, std::size_t size,
+                        void *&ptr, std::size_t &space ) {
+        std::uintptr_t pn = reinterpret_cast< std::uintptr_t >( ptr );
+        std::uintptr_t aligned = ( pn + alignment - 1 ) & - alignment;
+        std::size_t padding = aligned - pn;
+        if ( space < size + padding ) return nullptr;
+        space -= padding;
+        return ptr = reinterpret_cast< void * >( aligned );
+    }
+}
+#endif
+
+
 Evaluator::Evaluator(const Tree* tree, const glm::mat4& M)
     : M(M), Mi(glm::inverse(M))
 {
