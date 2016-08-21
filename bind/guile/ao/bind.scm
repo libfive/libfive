@@ -182,19 +182,18 @@
 
 (define (check-extension filename exts)
     "check-extension filename exts
-     Checks that the given filename ends with one of the members of list exts
-     If there is a match, returns filename with ext lowercased
-     Otherwise, emits an error"
+    Checks that the given filename ends with one of the members of list exts
+    If there is a match, returns filename with ext lowercased
+    Otherwise, emits an error"
     (let* ((len (string-length filename))
            (lower-filename
             (any (lambda (ext)
                    (if (string-suffix-ci? ext filename)
                        (string-append
-                        (substring filename 0 (- len (string-length ext))) ext)
+                         (string-drop-right filename (string-length ext)) ext)
                        #f))
                  exts)))
-      (if lower-filename
-          lower-filename
+      (or lower-filename
           (error
            (format #f
                    "Invalid file extension. Expected one of ~a, got ~a"
