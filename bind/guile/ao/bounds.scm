@@ -18,6 +18,13 @@
 |#
 (define-module (ao bounds))
 
+(define-public (set-default-bounds shape)
+    "set-default-bounds shape
+    Tags the given shape with [-inf, inf] bounds
+    Used when we want a shape to have bounds meta-data but don't know what
+    that meta-data should actually be"
+    (set-bounds shape '(-inf.0 -inf.0 -inf.0) '(+inf.0 +inf.0 +inf.0)))
+
 (define-public (set-bounds shape lower upper)
     "set-bounds shape '(xmin ymin [zmin]) '(xmax ymax [zmax])
     Sets the bounds of a shape"
