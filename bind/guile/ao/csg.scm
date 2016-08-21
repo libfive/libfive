@@ -49,28 +49,29 @@
                     (set-bounds out (car b) (cadr b)))
                 out)))))
 
+(define-public (inverse a)
+    "inverse a
+    Returns a shape that's the inverse of the input shape
+    If a is bounded, the output is tagged with infinite bounds"
+    (let ((out (lambda (x y z) (- (a x y z)))))
+    (if (get-bounds a) (set-default-bounds out) out)))
+
 (define-public (difference a . b)
     "difference a b [c [d [...]]]
     Subtracts any number of shapes from the first argument"
-    (let* ((accum (apply union b))
-           (out (lambda (x y z) (max (a x y z) (-(accum x y z)))))
-           (bounds (get-bounds a)))
-    (if bounds (set-bounds out (car bounds) (cadr bounds))
-               out)))
+    (intersection a (inverse (apply union b))))
 
 (define-public (offset s o)
     "offset shape o
-    Expand or contract a given shape by an offset"
-    (lambda (x y z) (- (s x y z) o)))
+    Expand or contract a given shape by an offset
+    If s is bounded, the output is tagged with infinite bounds"
+    (let ((out (lambda (x y z) (- (s x y z) o))))
+    (if (get-bounds s) (set-default-bounds out) out)))
 
 (define-public (clearance a b o)
     "clearance a b o
     Expands shape b by the given offset then subtracts it from shape a"
-    (let* ((bo (offset b o))
-           (out (lambda (x y z) (max (a x y z) (- (bo x y z)))))
-           (bounds (get-bounds a)))
-    (if bounds (set-bounds out (car bounds) (cadr bounds))
-               out)))
+    (difference a (offset b o)))
 
 (define-public (shell shape o)
     "shell shape o
