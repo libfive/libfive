@@ -25,9 +25,9 @@
         "(shape x y z) or (shape 'bounds)
     Shape with associated bounds"
         (let ((lower (if (= 3 (length lower)) lower
-                         (list (car lower) (cadr lower) (- (inf)))))
+                         (list (car lower) (cadr lower) -inf.0)))
               (upper (if (= 3 (length upper)) upper
-                         (list (car upper) (cadr upper) (- (inf))))))
+                         (list (car upper) (cadr upper) +inf.0))))
         (if (and (= 1 (length args))
                  (eq? (car args) 'bounds))
             (list lower upper)

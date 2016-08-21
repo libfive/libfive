@@ -111,6 +111,10 @@
         (assert-all
             (assert-equal (get-bounds f) '((-1 -2 -3) (4 5 6)))
             (assert-equal (get-bounds g) #f))))
+    (test "Default Z bounds" env
+        (let ((f (set-bounds (lambda (x y z) x) '(-1 -2) '(4 5))))
+        (assert-all
+            (assert-equal (get-bounds f) '((-1 -2 -inf.0) (4 5 +inf.0))))))
 ))
 
 (suite "transforms.scm (transforms and bounds tracking)"
