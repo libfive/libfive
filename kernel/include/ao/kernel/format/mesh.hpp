@@ -42,8 +42,9 @@ struct Mesh
     /*
      *  Saves the given mesh as a .stl file
      */
-    void writeSTL(std::string filename);
+    void writeMeshToFile(std::string filename);
     void writeSTL(std::ostream& out);
+    void writeOBJ(std::ostream& out);
 
     /*
      *  Returns the unit-length normal of the i'th triangle

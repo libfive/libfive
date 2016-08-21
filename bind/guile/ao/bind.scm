@@ -19,6 +19,7 @@
 (define-module (ao bind))
 
 (use-modules (srfi srfi-1))
+(use-modules (srfi srfi-13))
 (use-modules (ice-9 i18n))
 (use-modules (system foreign))
 
@@ -179,24 +180,32 @@
     (let ((out (parse-c-struct vx v2)))
         (cons (car out) (cadr out)))))
 
-(define (check-extension filename ext)
-    "check-extension filename ext
-    Checks that the given filename ends with ext
-        If they match, returns filename with ext lowercased
-        Otherwise, emits an error"
+(define (check-extension filename exts)
+    "check-extension filename exts
+     Checks that the given filename ends with one of the members of list exts
+     If there is a match, returns filename with ext lowercased
+     Otherwise, emits an error"
     (let* ((len (string-length filename))
-           (low (string-locale-downcase
-                (substring filename (- len (string-length ext)) len))))
-    (if (string=? low (string-locale-downcase ext))
-        (string-append (substring filename 0 (- len (string-length ext))) low)
-        (error (format #f "Invalid file extension. Expected ~a, got ~a" ext e)))))
+           (lower-filename
+            (any (lambda (ext)
+                   (if (string-suffix-ci? ext filename)
+                       (string-append
+                        (substring filename 0 (- len (string-length ext))) ext)
+                       #f))
+                 exts)))
+      (if lower-filename
+          lower-filename
+          (error
+           (format #f
+                   "Invalid file extension. Expected one of ~a, got ~a"
+                   exts filename)))))
 
 (define-public (tree-export-heightmap t filename a b res)
     "tree-export-heightmap tree filename lower upper res
     Exports a tree as a heightmap
     lower and upper should be '(x y z) lists
     res is resolution in voxels per unit"
-    (set! filename (check-extension filename ".png"))
+    (set! filename (check-extension filename '(".png")))
     ((pointer->procedure void (get-function "tree_export_heightmap")
         (list '* '* float float float
                     float float float float))
@@ -208,7 +217,7 @@
     Exports a tree as a mesh
     lower and upper should be '(x y z) lists
     res is resolution in voxels per unit"
-    (set! filename (check-extension filename ".stl"))
+    (set! filename (check-extension filename '(".stl" ".obj")))
     ((pointer->procedure void (get-function "tree_export_mesh")
         (list '* '* float float float
                     float float float float))
@@ -221,7 +230,7 @@
     lower and upper should be '(x y) lists
     z is the z height of the slice
     res is resolution in voxels per unit"
-    (set! filename (check-extension filename ".svg"))
+    (set! filename (check-extension filename '(".svg")))
     ((pointer->procedure void (get-function "tree_export_slice")
         (list '* '* float float float
                     float float float))
