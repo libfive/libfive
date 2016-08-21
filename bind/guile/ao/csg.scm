@@ -44,7 +44,7 @@
         (error "Cannot take the intersection of an empty list")
         (let ((out (lambda (x y z) ; New shape function!
                    (apply max (map (lambda (s) (s x y z)) shapes)))))
-            (if (every (lambda (x) x) bounds)
+            (if (every identity bounds)
                 (let ((b (bounds-intersection bounds)))
                     (set-bounds out (car b) (cadr b)))
                 out)))))
