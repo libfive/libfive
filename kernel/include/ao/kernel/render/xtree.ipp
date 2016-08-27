@@ -121,7 +121,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
             type = FULL;
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                corners[i] = -1;
+                corners[i] = true;
             }
         }
         else if (out.lower() >= 0)
@@ -129,7 +129,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
             type = EMPTY;
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                corners[i] = 1;
+                corners[i] = false;
             }
         }
         else
