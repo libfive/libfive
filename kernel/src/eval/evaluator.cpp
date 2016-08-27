@@ -1055,17 +1055,17 @@ double Evaluator::utilization() const
 
 Opcode Evaluator::getOpcode(Clause* c)
 {
-    auto op = c->op;
-
     // Modify the opcode if parts of the tree are disabled
     if (c->a && c->a->disabled)
     {
-        op = DUMMY_B;
+        return DUMMY_B;
     }
-    if (c->b && c->b->disabled)
+    else if (c->b && c->b->disabled)
     {
-        op = DUMMY_A;
+        return DUMMY_A;
     }
-
-    return op;
+    else
+    {
+        return c->op;
+    }
 }
