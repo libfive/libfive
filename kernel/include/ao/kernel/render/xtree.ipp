@@ -119,10 +119,18 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
         if (out.upper() < 0)
         {
             type = FULL;
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
+                corners[i] = -1;
+            }
         }
         else if (out.lower() >= 0)
         {
             type = EMPTY;
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
+                corners[i] = 1;
+            }
         }
         else
         {   // If the cell wasn't empty or filled, recurse
@@ -138,7 +146,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
     }
 
     // Otherwise, calculate corner values
-    if (type != BRANCH)
+    if (type == LEAF)
     {
         for (uint8_t i=0; i < children.size(); ++i)
         {
