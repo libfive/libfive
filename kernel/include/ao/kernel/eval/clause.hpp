@@ -31,6 +31,13 @@ class Atom;
 class Clause
 {
 public:
+    /*
+     *  Clause constructor
+     *
+     *  The clauses map is used to look up children, which must already have
+     *  been turned into clauses (i.e. the tree must be built from the lowest
+     *  levels up).
+     */
     explicit Clause(const Atom* m,
                     std::unordered_map<const Atom*, Clause*>& clauses);
 
@@ -38,7 +45,7 @@ public:
      *  If the disabled flag is set, returns true
      *
      *  Otherwise, clears the disabled flag in its children, handling min
-     *  and max operations (which may only  leave one child active),
+     *  and max operations (which may only leave one child active),
      *  returning false.
      */
     bool checkDisabled();
