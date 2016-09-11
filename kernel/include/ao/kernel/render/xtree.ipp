@@ -298,7 +298,7 @@ void XTree<T, dims>::collapseBranch(Evaluator* e)
         if (this->cornerTopology() &&
             std::all_of(children.begin(), children.end(),
                     [](const std::unique_ptr<T>& o)
-                    { return o->cornerTopology(); }) &&
+                    { return o->manifold; }) &&
             static_cast<T*>(this)->leafTopology() && findVertex(e) < 1e-8)
         {
             type = LEAF;
@@ -337,6 +337,20 @@ float XTree<T, dims>::findVertex(Evaluator* e)
     // Find the center of intersection positions
     glm::vec3 center = glm::vec3(mass_point.x, mass_point.y, mass_point.z) /
                        mass_point.w;
+
+    // For non-manifold leaf nodes, put the vertex at the mass point.
+    // As described in "Dual Contouring: The Secret Sauce", this improves
+    // mesh quality.
+    if (type == LEAF)
+    {
+        manifold = this->cornerTopology();
+        if (!manifold)
+        {
+            vert = center;
+            return std::numeric_limits<float>::infinity();
+        }
+    }
+
 
     /*  The A matrix is of the form
      *  [n1x, n1y, n1z]

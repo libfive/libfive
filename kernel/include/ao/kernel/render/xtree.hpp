@@ -243,6 +243,9 @@ protected:
      *  (the w coordinate is number of points averaged) */
     glm::vec4 mass_point=glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
+    /*  Marks whether a LEAF node is manifold or not  */
+    bool manifold;
+
     /*  Feature rank for the cell's vertex, where                    *
      *      1 is face, 2 is edge, 3 is corner                        *
      *                                                               *
