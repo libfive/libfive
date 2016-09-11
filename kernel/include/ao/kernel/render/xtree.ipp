@@ -405,35 +405,12 @@ float XTree<T, dims>::findVertex()
     auto p = Eigen::Vector3d(mass_point.x, mass_point.y, mass_point.z) /
              mass_point.w;
     auto v = AtAp * (AtB - AtA * p) + p;
-    auto vert = glm::vec3(v[0], v[1], v[2]);
 
-    printf("%i: %f %f %f\n", rank, vert[0], vert[1], vert[2]);
+    // Convert out of Eigen's format and store
+    vert = glm::vec3(v[0], v[1], v[2]);
 
-    return std::numeric_limits<float>::infinity();
-
-    /*
-    // Use singular value decomposition to solve the least-squares fit.
-    Eigen::JacobiSVD<Eigen::MatrixX3f> svd(A, Eigen::ComputeFullU |
-                                              Eigen::ComputeFullV);
-
-    // Truncate singular values below 0.1
-    auto singular = svd.singularValues();
-    svd.setThreshold(0.1 / singular.maxCoeff());
-    rank = svd.rank();
-
-    // Solve the equation and convert back to cell coordinates
-    Eigen::Vector3f solution = svd.solve(B);
-    vert = glm::vec3(solution.x(), solution.y(), solution.z()) + center;
-
-    // Clamp vertex to be within the bounding box
-    vert.x = std::min(X.upper(), std::max(vert.x, X.lower()));
-    vert.y = std::min(Y.upper(), std::max(vert.y, Y.lower()));
-    vert.z = std::min(Z.upper(), std::max(vert.z, Z.lower()));
-
-    // Find and return QEF residual
-    auto m = A * solution - B;
-    return m.transpose() * m;
-    */
+    float err = (v.transpose() * AtA * v - 2*v.transpose() * AtB)[0] + BtB;
+    return err;
 }
 
 
