@@ -385,24 +385,17 @@ float XTree<T, dims>::findVertex()
     // We need to find the pseudo-inverse of AtA.
     Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
     auto eigenvalues = es.eigenvalues().real();
-    Eigen::Vector3d diag;
     double s_max = eigenvalues.cwiseAbs().maxCoeff();
 
-    // Truncate near-singular eigenvalues
+    // Truncate near-singular eigenvalues in the SVD's diagonal matrix
+    Eigen::Matrix3d D(Eigen::Matrix3d::Zero());
     for (unsigned i=0; i < 3; ++i)
     {
-        if (std::abs(eigenvalues[i]) / s_max < 0.1)
-        {
-            diag[i] = 0;
-        }
-        else
-        {
-            diag[i] = 1 / eigenvalues[i];
-        }
+        D.diagonal()[i] = (std::abs(eigenvalues[i]) / s_max < 0.1)
+            ? 0 : (1 / eigenvalues[i]);
     }
 
     // SVD matrices
-    auto D = diag.asDiagonal();
     auto U = es.eigenvectors().real(); // = V
 
     // Pseudo-inverse of A
