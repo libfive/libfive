@@ -256,6 +256,7 @@ void XTree<T, dims>::findIntersections(Evaluator* eval)
                         pts.push_back(n.pos);
                         intersections.push_back(n);
                     }
+                    mass_point += child(i)->mass_point;
                 }
             }
         }
@@ -324,10 +325,8 @@ float XTree<T, dims>::findVertex(Evaluator* e)
     findIntersections(e);
 
     // Find the center of intersection positions
-    glm::vec3 center = std::accumulate(
-            intersections.begin(), intersections.end(), glm::vec3(),
-            [](const glm::vec3& a, const Intersection& b)
-                { return a + b.pos; }) / float(intersections.size());
+    glm::vec3 center = glm::vec3(mass_point.x, mass_point.y, mass_point.z) /
+                       mass_point.w;
 
     /*  The A matrix is of the form
      *  [n1x, n1y, n1z]
@@ -433,7 +432,8 @@ void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
         }
     }
 
-    // Calculate value and gradient at the given point
+    // pos is an array of positions to get normals for
+    // If jitter is disabled, it only contains the intersection
     std::vector<glm::vec3> pos = {a};
 
     // If jitter is enabled, add a cloud of nearby points
@@ -459,6 +459,7 @@ void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
     for (auto p : pos)
     {
         e->setRaw(p.x, p.y, p.z, count++);
+        mass_point += glm::vec4(p.x, p.y, p.z, 1.0f);
     }
 
     // Get set of derivative arrays

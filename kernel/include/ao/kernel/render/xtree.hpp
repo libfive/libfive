@@ -142,6 +142,10 @@ protected:
      *  For leaf cells, intersections are found with binary search along every
      *  edge that exhibits a sign change.  For branch cells, intersections are
      *  found by accumulating from all child leaf cells with max rank.
+     *
+     *  This function also populated mass_point from the mean of intersections
+     *  (in a leaf node) or the sum of mass points from max-rank children (in
+     *  a branch node)
      */
     void findIntersections(Evaluator* eval);
 
@@ -168,6 +172,7 @@ protected:
 
     /*
      *  Performs binary search along a cube's edge and stores in intersections
+     *  Accumulates intersection position in mass_point
      *
      *  The resulting Intersections' normals are of unit length
      *
@@ -232,6 +237,10 @@ protected:
 
     /*  Feature vertex located in the cell  */
     glm::vec3 vert=glm::vec3(std::numeric_limits<float>::quiet_NaN());
+
+    /*  Mass point is the average intersection location *
+     *  (the w coordinate is number of points averaged) */
+    glm::vec4 mass_point=glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
     /*  Feature rank for the cell's vertex, where                    *
      *      1 is face, 2 is edge, 3 is corner                        *
