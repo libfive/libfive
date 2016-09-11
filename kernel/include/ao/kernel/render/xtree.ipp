@@ -312,19 +312,17 @@ void XTree<T, dims>::collapseBranch(Evaluator* e)
 template <class T, int dims>
 bool XTree<T, dims>::collapseLeaf()
 {
-    if (std::all_of(corners.begin(), corners.end(),
-            [](bool c){ return !c; }))
+    bool filled = corners[0];
+    for (auto c : corners)
     {
-        type = EMPTY;
-        return true;
+        if (c != filled)
+        {
+            return false;
+        }
     }
-    else if (std::all_of(corners.begin(), corners.end(),
-            [](bool c){ return c; }))
-    {
-        type = FULL;
-        return true;
-    }
-    return false;
+
+    type = filled ? FULL : EMPTY;
+    return true;
 }
 
 template <class T, int dims>
