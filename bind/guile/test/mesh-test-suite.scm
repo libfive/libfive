@@ -73,6 +73,6 @@
 (define start-time (get-internal-real-time))
 (ao-export-mesh charm "meshes/charm.stl" '(-2 -2 -2) '(2 2 2) 100)
 (format #t "Exported charm in ~f sec\n"
-        (/ (- (get-internal-real-time) start-time)
+        (/ (- (get-internal-real-time) start-time 0.0)
            internal-time-units-per-second))
 
