@@ -399,7 +399,7 @@ float XTree<T, dims>::findVertex()
     auto U = es.eigenvectors().real(); // = V
 
     // Pseudo-inverse of A
-    auto AtAp = U.transpose() * D * U;
+    auto AtAp = U * D * U.transpose();
 
     // Solve for vertex (minimizing distance to center)
     auto p = Eigen::Vector3d(mass_point.x, mass_point.y, mass_point.z) /
