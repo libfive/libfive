@@ -271,22 +271,26 @@ void XTree<T, dims>::findIntersections(Evaluator* eval)
 template <class T, int dims>
 void XTree<T, dims>::collapseBranch(Evaluator* e)
 {
-    // If all of the children are leafs, then collapse into a single LEAF cell
-    if (std::all_of(children.begin(), children.end(),
-            [](std::unique_ptr<T>& o){ return o->type == EMPTY; }))
+    bool all_empty = true;
+    bool all_full  = true;
+    bool collapsible = true;
+
+    for (const auto& c : children)
+    {
+        all_empty   &= c->type == EMPTY;
+        all_full    &= c->type == FULL;
+        collapsible &= c->type != BRANCH;
+    }
+
+    if (all_empty)
     {
         type = EMPTY;
     }
-    // If all of the children are full, then collapse into a single FULL cell
-    else if (std::all_of(children.begin(), children.end(),
-            [](std::unique_ptr<T>& o){ return o->type == FULL; }))
+    else if (all_full)
     {
         type = FULL;
     }
-    // If all of the children are non-branches, then check to see whether we
-    // can collapse into a single LEAF cell.
-    else if (std::all_of(children.begin(), children.end(),
-            [](std::unique_ptr<T>& o){ return o->type != BRANCH; }))
+    else if (collapsible)
     {
         //  This conditional implements the three checks described in
         //  [Ju et al, 2002] in the section titled
