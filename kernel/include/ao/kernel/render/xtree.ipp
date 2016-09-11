@@ -68,11 +68,13 @@ T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 template <class T, int dims>
 XTree<T, dims>::XTree(const Subregion& r)
     : XTree(r, false)
 {
-    // Nothing to do here
+    // Nothing to do here (delegating constructor)
 }
 
 template <class T, int dims>
@@ -83,7 +85,7 @@ XTree<T, dims>::XTree(const Subregion& r, bool jitter)
       jitter(jitter)
 
 {
-    // Nothing to do here
+    // Nothing to do here (delegating constructor)
 }
 
 template <class T, int dims>
@@ -119,17 +121,17 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
         if (out.upper() < 0)
         {
             type = FULL;
-            for (uint8_t i=0; i < children.size(); ++i)
+            for (auto& c : corners)
             {
-                corners[i] = true;
+                c = true;
             }
         }
         else if (out.lower() >= 0)
         {
             type = EMPTY;
-            for (uint8_t i=0; i < children.size(); ++i)
+            for (auto& c : corners)
             {
-                corners[i] = false;
+                c = false;
             }
         }
         else
@@ -148,12 +150,17 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
     // Otherwise, calculate corner values
     if (type == LEAF)
     {
+        // Pack into evaluator
         for (uint8_t i=0; i < children.size(); ++i)
         {
             auto c = pos(i);
             e->set(c.x, c.y, c.z, i);
         }
+
+        // Do the evaluation
         const float* fs = e->values(children.size());
+
+        // And unpack from evaluator
         for (uint8_t i=0; i < children.size(); ++i)
         {
             corners[i] = fs[i] < 0;
@@ -182,16 +189,14 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
         // Collapse branches if the COLLAPSE flag is set
         if (flags & COLLAPSE)
         {
+            // This populate the vert member if the branch is collapsed
+            // into a LEAF node.
             collapseBranch(e);
         }
     }
-    else
-    {
-        // Always convert leafs to empty / filled cells
-        collapseLeaf();
-    }
-
-    if (type == LEAF && std::isnan(vert.x))
+    // Always try to convert a LEAF to an EMPTY / FILLED node
+    // Otherwise, populate the leaf vertex data
+    else if (!collapseLeaf())
     {
         findVertex(e);
     }
@@ -305,18 +310,21 @@ void XTree<T, dims>::collapseBranch(Evaluator* e)
 }
 
 template <class T, int dims>
-void XTree<T, dims>::collapseLeaf()
+bool XTree<T, dims>::collapseLeaf()
 {
     if (std::all_of(corners.begin(), corners.end(),
             [](bool c){ return !c; }))
     {
         type = EMPTY;
+        return true;
     }
     else if (std::all_of(corners.begin(), corners.end(),
             [](bool c){ return c; }))
     {
         type = FULL;
+        return true;
     }
+    return false;
 }
 
 template <class T, int dims>

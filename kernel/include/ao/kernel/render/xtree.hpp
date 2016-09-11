@@ -159,8 +159,9 @@ protected:
 
     /*
      *  If all corners are of the same sign, convert to FULL or EMPTY
+     *  Returns true if the leaf was collapsed, false otherwise.
      */
-    void collapseLeaf();
+    bool collapseLeaf();
 
     /*
      *  Finds a feature vertex by finding intersections then solving a
