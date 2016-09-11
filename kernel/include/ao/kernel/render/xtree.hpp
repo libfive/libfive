@@ -21,8 +21,10 @@
 #include <array>
 #include <memory>
 #include <vector>
+#include <limits>
 
 #include <glm/vec3.hpp>
+#include <Eigen/Eigen>
 
 #include "ao/kernel/eval/interval.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
@@ -136,18 +138,27 @@ protected:
     void finalize(Evaluator* e, uint32_t flags);
 
     /*
-     *  Stores edge-wise intersections for the cell,
+     *  Stores edge-wise intersections for a LEAF cell,
      *  storing them in the intersections vector.
      *
-     *  For leaf cells, intersections are found with binary search along every
-     *  edge that exhibits a sign change.  For branch cells, intersections are
-     *  found by accumulating from all child leaf cells with max rank.
+     *  Intersections are found with binary search along every
+     *  edge that exhibits a sign change.
      *
-     *  This function also populated mass_point from the mean of intersections
-     *  (in a leaf node) or the sum of mass points from max-rank children (in
-     *  a branch node)
+     *  This function also populated mass_point as the mean of intersections.
      */
-    void findIntersections(Evaluator* eval);
+    void findIntersections(Evaluator* e);
+
+    /*
+     *  Populates AtA, AtB, BtB, mass_point, and rank
+     *  by calling findIntersections then building matrices
+     */
+    void findLeafMatrices(Evaluator* e);
+
+    /*
+     *  Populates AtA, AtB, BtB, mass_point, and rank
+     *  by pulling matrices from children
+     */
+    void findBranchMatrices();
 
     /*
      *  If all children are filled or empty, collapse the branch
@@ -155,7 +166,7 @@ protected:
      *  Otherwise, collapse the branch if it is topologically safe to do
      *  so and the residual QEF error isn't too large.
      */
-    void collapseBranch(Evaluator* e);
+    void collapseBranch();
 
     /*
      *  If all corners are of the same sign, convert to FULL or EMPTY
@@ -164,12 +175,14 @@ protected:
     bool collapseLeaf();
 
     /*
-     *  Finds a feature vertex by finding intersections then solving a
-     *  least-squares fit to minimize a quadratic error function.
+     *  Finds a feature vertex by solving a least-squares fit to minimize
+     *  a quadratic error function.
+     *
+     *  Requires AtA, AtB, BtB, and mass_point to be populated
      *
      *  The resulting vertex is stored in vert; the residual is returned
      */
-    float findVertex(Evaluator* e);
+    float findVertex();
 
     /*
      *  Performs binary search along a cube's edge and stores in intersections
@@ -224,7 +237,8 @@ protected:
     /*  Cell type  */
     Type type;
 
-    /*  Intersections where the shape crosses the cell  */
+    /*  Intersections where the shape crosses the cell
+     *  Only populated for leaf cells */
     std::vector<Intersection> intersections;
 
     /*  Pointers to children octrees (either all populated or all null)  */
@@ -239,18 +253,23 @@ protected:
     /*  Feature vertex located in the cell  */
     glm::vec3 vert=glm::vec3(std::numeric_limits<float>::quiet_NaN());
 
+    /*  Marks whether a LEAF node is manifold or not  */
+    bool manifold;
+
     /*  Mass point is the average intersection location *
      *  (the w coordinate is number of points averaged) */
     glm::vec4 mass_point=glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-    /*  Marks whether a LEAF node is manifold or not  */
-    bool manifold;
+    /*  QEF terms */
+    Eigen::Matrix3d AtA=Eigen::Matrix3d::Zero();
+    Eigen::Vector3d AtB=Eigen::Vector3d::Zero();
+    double BtB=0;
 
     /*  Feature rank for the cell's vertex, where                    *
      *      1 is face, 2 is edge, 3 is corner                        *
      *                                                               *
-     *  This value is populated in findVertex and used when merging  *
-     *  intersections from lower-ranked children                     */
+     *  This value is populated in find{Leaf|Branch}Matrices and     *
+     *  used when merging intersections from lower-ranked children   */
     unsigned rank=0;
 
     /*  If true, points found with searchEdge are jittered slightly to avoid

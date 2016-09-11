@@ -191,85 +191,66 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
         {
             // This populate the vert member if the branch is collapsed
             // into a LEAF node.
-            collapseBranch(e);
+            collapseBranch();
         }
     }
     // Always try to convert a LEAF to an EMPTY / FILLED node
     // Otherwise, populate the leaf vertex data
     else if (!collapseLeaf())
     {
-        findVertex(e);
+        findLeafMatrices(e);
+        findVertex();
     }
 }
 
 template <class T, int dims>
 void XTree<T, dims>::findIntersections(Evaluator* eval)
 {
+    assert(type == LEAF);
+
     // If this is a leaf cell, check every edge and use binary search to
     // find intersections on edges that have mismatched signs
-    if (type == LEAF)
+    for (auto e : static_cast<T*>(this)->cellEdges())
     {
-        for (auto e : static_cast<T*>(this)->cellEdges())
+        if (corner(e.first) != corner(e.second))
         {
-            if (corner(e.first) != corner(e.second))
+            if (corner(e.first))
             {
-                if (corner(e.first))
-                {
-                    searchEdge(pos(e.first), pos(e.second), eval);
-                }
-                else
-                {
-                    searchEdge(pos(e.second), pos(e.first), eval);
-                }
+                searchEdge(pos(e.first), pos(e.second), eval);
             }
-        }
-    }
-    // If this is a branch cell, then accumulate intersections from all the
-    // children with the max rank (de-duplicating to avoid weighting
-    // intersections incorrectly)
-    else if (type == BRANCH)
-    {
-        // pts stores a list of unique points (within some epsilon)
-        std::list<glm::vec3> pts;
-
-        // Compute epsilon from the cell size and edge search count
-        const float epsilon = std::max(
-                {X.upper() - X.lower(),
-                 Y.upper() - Y.lower(),
-                 Z.upper() - Z.lower()}) / (4 << SEARCH_COUNT);
-
-        // Find the max rank among children, then only accumulate
-        // intersections from children with that rank
-        const unsigned max_rank = std::accumulate(
-                children.begin(), children.end(), (unsigned)0,
-                [](const unsigned& a, const std::unique_ptr<T>& b)
-                    { return std::max(a, b->rank);} );
-
-        for (uint8_t i=0; i < children.size(); ++i)
-        {
-            if (child(i)->rank == max_rank)
+            else
             {
-                for (auto n : child(i)->intersections)
-                {
-                    // Only store this intersection point if it hasn't
-                    // been stored already (to a given epsilon of
-                    // floating-point error)
-                    if (!std::any_of(pts.begin(), pts.end(),
-                            [&](glm::vec3 p)
-                            { return glm::length(n.pos - p) < epsilon; }))
-                    {
-                        pts.push_back(n.pos);
-                        intersections.push_back(n);
-                    }
-                    mass_point += child(i)->mass_point;
-                }
+                searchEdge(pos(e.second), pos(e.first), eval);
             }
         }
     }
 }
 
+
 template <class T, int dims>
-void XTree<T, dims>::collapseBranch(Evaluator* e)
+void XTree<T, dims>::findBranchMatrices()
+{
+    // Find the max rank among children, then only accumulate
+    // intersections from children with that rank
+    rank = std::accumulate(
+            children.begin(), children.end(), (unsigned)0,
+            [](const unsigned& a, const std::unique_ptr<T>& b)
+                { return std::max(a, b->rank);} );
+
+    for (const auto& c : children)
+    {
+        if (c->rank == rank)
+        {
+            mass_point += c->mass_point;
+        }
+        AtA += c->AtA;
+        AtB += c->AtB;
+        BtB += c->BtB;
+    }
+}
+
+template <class T, int dims>
+void XTree<T, dims>::collapseBranch()
 {
     bool all_empty = true;
     bool all_full  = true;
@@ -299,9 +280,13 @@ void XTree<T, dims>::collapseBranch(Evaluator* e)
             std::all_of(children.begin(), children.end(),
                     [](const std::unique_ptr<T>& o)
                     { return o->manifold; }) &&
-            static_cast<T*>(this)->leafTopology() && findVertex(e) < 1e-8)
+            static_cast<T*>(this)->leafTopology())
         {
-            type = LEAF;
+            findBranchMatrices();
+            if (findVertex() < 1e-8)
+            {
+                type = LEAF;
+            }
         }
     }
 
@@ -330,10 +315,59 @@ bool XTree<T, dims>::collapseLeaf()
 }
 
 template <class T, int dims>
-float XTree<T, dims>::findVertex(Evaluator* e)
+void XTree<T, dims>::findLeafMatrices(Evaluator* e)
 {
     findIntersections(e);
 
+    /*  The A matrix is of the form
+     *  [n1x, n1y, n1z]
+     *  [n2x, n2y, n2z]
+     *  [n3x, n3y, n3z]
+     *  ...
+     *  (with one row for each Hermite intersection)
+     */
+    Eigen::MatrixX3d A(intersections.size(), 3);
+
+    /*  The B matrix is of the form
+     *  [p1 . n1]
+     *  [p2 . n2]
+     *  [p3 . n3]
+     *  ...
+     *  (with one row for each Hermite intersection)
+     */
+    Eigen::VectorXd B(intersections.size(), 1);
+    for (unsigned i=0; i < intersections.size(); ++i)
+    {
+        auto d = intersections[i].norm;
+        A.row(i) << Eigen::Vector3d(d.x, d.y, d.z).transpose();
+        B.row(i) << glm::dot(intersections[i].norm, intersections[i].pos);
+    }
+
+    auto At = A.transpose();
+
+    AtA = At * A;
+    AtB = At * B;
+    BtB = B.transpose() * B;
+
+    // Only find Eigenvalues (this is to calculate rank)
+    Eigen::EigenSolver<Eigen::Matrix3d> es(AtA, false);
+    auto eigenvalues = es.eigenvalues().real();
+    double s_max = eigenvalues.cwiseAbs().maxCoeff();
+
+    // Truncate near-singular eigenvalues
+    rank = 3;
+    for (unsigned i=0; i < 3; ++i)
+    {
+        if (std::abs(eigenvalues[i]) / s_max < 0.1)
+        {
+            rank--;
+        }
+    }
+}
+
+template <class T, int dims>
+float XTree<T, dims>::findVertex()
+{
     // Find the center of intersection positions
     glm::vec3 center = glm::vec3(mass_point.x, mass_point.y, mass_point.z) /
                        mass_point.w;
@@ -351,39 +385,43 @@ float XTree<T, dims>::findVertex(Evaluator* e)
         }
     }
 
+    // We need to find the pseudo-inverse of AtA.
+    Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
+    auto eigenvalues = es.eigenvalues().real();
+    Eigen::Vector3d diag;
+    double s_max = eigenvalues.cwiseAbs().maxCoeff();
 
-    /*  The A matrix is of the form
-     *  [n1x, n1y, n1z]
-     *  [n2x, n2y, n2z]
-     *  [n3x, n3y, n3z]
-     *  ...
-     *  (with one row for each Hermite intersection)
-     */
-    Eigen::MatrixX3f A(intersections.size(), 3);
-    for (unsigned i=0; i < intersections.size(); ++i)
+    // Truncate near-singular eigenvalues
+    for (unsigned i=0; i < 3; ++i)
     {
-        auto d = intersections[i].norm;
-        A.row(i) << Eigen::Vector3f(d.x, d.y, d.z).transpose();
+        if (std::abs(eigenvalues[i]) / s_max < 0.1)
+        {
+            diag[i] = 0;
+        }
+        else
+        {
+            diag[i] = 1 / eigenvalues[i];
+        }
     }
 
-    /*  The B matrix is of the form
-     *  [p1 . n1]
-     *  [p2 . n2]
-     *  [p3 . n3]
-     *  ...
-     *  (with one row for each Hermite intersection)
-     *
-     *  Positions are pre-emtively shifted so that the center of the contoru
-     *  is at 0, 0, 0 (since the least-squares fix minimizes distance to the
-     *  origin); we'll unshift afterwards.
-     */
-    Eigen::VectorXf B(intersections.size(), 1);
-    for (unsigned i=0; i < intersections.size(); ++i)
-    {
-        B.row(i) << glm::dot(intersections[i].norm,
-                             intersections[i].pos - center);
-    }
+    // SVD matrices
+    auto D = diag.asDiagonal();
+    auto U = es.eigenvectors().real(); // = V
 
+    // Pseudo-inverse of A
+    auto AtAp = U.transpose() * D * U;
+
+    // Solve for vertex (minimizing distance to center)
+    auto p = Eigen::Vector3d(center.x, center.y, center.z);
+    auto v = AtAp * (AtB - AtA * p);
+    auto vert_ = glm::vec3(v[0], v[1], v[2]) + center;
+
+    printf("%f %f %f\n", vert_[0], vert_[1], vert_[2]);
+
+    vert = center;
+    return std::numeric_limits<float>::infinity();
+
+    /*
     // Use singular value decomposition to solve the least-squares fit.
     Eigen::JacobiSVD<Eigen::MatrixX3f> svd(A, Eigen::ComputeFullU |
                                               Eigen::ComputeFullV);
@@ -405,6 +443,7 @@ float XTree<T, dims>::findVertex(Evaluator* e)
     // Find and return QEF residual
     auto m = A * solution - B;
     return m.transpose() * m;
+    */
 }
 
 
