@@ -368,10 +368,6 @@ void XTree<T, dims>::findLeafMatrices(Evaluator* e)
 template <class T, int dims>
 float XTree<T, dims>::findVertex()
 {
-    // Find the center of intersection positions
-    glm::vec3 center = glm::vec3(mass_point.x, mass_point.y, mass_point.z) /
-                       mass_point.w;
-
     // For non-manifold leaf nodes, put the vertex at the mass point.
     // As described in "Dual Contouring: The Secret Sauce", this improves
     // mesh quality.
@@ -380,7 +376,8 @@ float XTree<T, dims>::findVertex()
         manifold = this->cornerTopology();
         if (!manifold)
         {
-            vert = center;
+            vert = glm::vec3(mass_point.x, mass_point.y, mass_point.z) /
+                   mass_point.w;
             return std::numeric_limits<float>::infinity();
         }
     }
@@ -412,13 +409,13 @@ float XTree<T, dims>::findVertex()
     auto AtAp = U.transpose() * D * U;
 
     // Solve for vertex (minimizing distance to center)
-    auto p = Eigen::Vector3d(center.x, center.y, center.z);
-    auto v = AtAp * (AtB - AtA * p);
-    auto vert_ = glm::vec3(v[0], v[1], v[2]) + center;
+    auto p = Eigen::Vector3d(mass_point.x, mass_point.y, mass_point.z) /
+             mass_point.w;
+    auto v = AtAp * (AtB - AtA * p) + p;
+    auto vert = glm::vec3(v[0], v[1], v[2]);
 
-    printf("%f %f %f\n", vert_[0], vert_[1], vert_[2]);
+    printf("%i: %f %f %f\n", rank, vert[0], vert[1], vert[2]);
 
-    vert = center;
     return std::numeric_limits<float>::infinity();
 
     /*
