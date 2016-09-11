@@ -23,14 +23,20 @@
 
 (use-modules (ao export) (ao shapes) (ao csg) (ao transforms) (ao operators))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (catch #t
   (lambda () (mkdir "meshes"))
   (lambda (key args . rest) #t))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; How do edges and vertex placement look?
 (define (slice x y z) (+ x y z -2.73))
 (define split (intersection (cube '(-1.5 -1.5 -1.5) '(1.5 1.5 1.5)) slice))
 (ao-export-mesh split "meshes/split.stl" '(-2.1 -2.1 -2.1) '(2.1 2.1 2.1) 2)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Triangle union with epsilon gap
 ;; Triggers bad meshing without jitter due to octree
@@ -44,6 +50,7 @@
   (- -0.125 Z) (- Z 0.125)))
 (ao-export-mesh triangle-union "meshes/triangle-union.stl" '(-5 -5 -5) '(5 5 5) 50)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Charm model to get export speed
 (define charm
