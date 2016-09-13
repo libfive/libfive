@@ -195,12 +195,13 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
 }
 
 template <class T, int dims>
-void XTree<T, dims>::findIntersections(Evaluator* eval)
+std::vector<Intersection> XTree<T, dims>::findIntersections(Evaluator* eval)
 {
     assert(type == LEAF);
 
     // If this is a leaf cell, check every edge and use binary search to
     // find intersections on edges that have mismatched signs
+    std::vector<Intersection> intersections;
     for (auto e : static_cast<T*>(this)->cellEdges())
     {
         if (corner(e.first) != corner(e.second))
@@ -216,6 +217,8 @@ void XTree<T, dims>::findIntersections(Evaluator* eval)
             mass_point += glm::vec4(i.pos, 1.0f);
         }
     }
+
+    return intersections;
 }
 
 
@@ -309,7 +312,7 @@ bool XTree<T, dims>::collapseLeaf()
 template <class T, int dims>
 void XTree<T, dims>::findLeafMatrices(Evaluator* e)
 {
-    findIntersections(e);
+    std::vector<Intersection> intersections = findIntersections(e);
 
     /*  The A matrix is of the form
      *  [n1x, n1y, n1z]

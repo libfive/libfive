@@ -87,8 +87,8 @@ public:
     /*
      *  Returns the vector of intersections
      */
-    const std::vector<Intersection>& getIntersections() const
-    { return intersections; }
+    std::vector<Intersection> getIntersections() const
+    { return {}; }
 
     /*
      *  Looks up the vertex position
@@ -140,7 +140,7 @@ protected:
      *
      *  This function also populated mass_point as the mean of intersections.
      */
-    void findIntersections(Evaluator* e);
+    std::vector<Intersection> findIntersections(Evaluator* e);
 
     /*
      *  Populates AtA, AtB, BtB, mass_point, and rank
@@ -229,10 +229,6 @@ protected:
 
     /*  Cell type  */
     Type type;
-
-    /*  Intersections where the shape crosses the cell
-     *  Only populated for leaf cells */
-    std::vector<Intersection> intersections;
 
     /*  Pointers to children octrees (either all populated or all null)  */
     std::array<std::unique_ptr<T>, 1 << dims> children;
