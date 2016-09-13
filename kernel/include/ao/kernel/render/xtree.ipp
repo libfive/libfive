@@ -195,14 +195,15 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
 }
 
 template <class T, int dims>
-std::vector<Intersection> XTree<T, dims>::findIntersections(Evaluator* eval)
+std::vector<Intersection> XTree<T, dims>::findIntersections(
+        Evaluator* eval) const
 {
     assert(type == LEAF);
 
     // If this is a leaf cell, check every edge and use binary search to
     // find intersections on edges that have mismatched signs
     std::vector<Intersection> intersections;
-    for (auto e : static_cast<T*>(this)->cellEdges())
+    for (auto e : static_cast<const T*>(this)->cellEdges())
     {
         if (corner(e.first) != corner(e.second))
         {
@@ -212,9 +213,6 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(Evaluator* eval)
 
             // Store big list o' intersections
             intersections.push_back(i);
-
-            // Accumulate intersection in mass point
-            mass_point += glm::vec4(i.pos, 1.0f);
         }
     }
 
@@ -333,9 +331,15 @@ void XTree<T, dims>::findLeafMatrices(Evaluator* e)
     Eigen::VectorXd B(intersections.size(), 1);
     for (unsigned i=0; i < intersections.size(); ++i)
     {
-        auto d = intersections[i].norm;
-        A.row(i) << Eigen::Vector3d(d.x, d.y, d.z).transpose();
-        B.row(i) << glm::dot(intersections[i].norm, intersections[i].pos);
+        const auto norm = intersections[i].norm;
+        const auto pos  = intersections[i].pos;
+
+        // Build up matrices
+        A.row(i) << Eigen::Vector3d(norm.x, norm.y, norm.z).transpose();
+        B.row(i) << glm::dot(norm, pos);
+
+        // Accumulate intersection in mass point
+        mass_point += glm::vec4(pos, 1.0f);
     }
 
     auto At = A.transpose();

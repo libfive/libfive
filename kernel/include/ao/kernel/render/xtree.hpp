@@ -140,7 +140,7 @@ protected:
      *
      *  This function also populated mass_point as the mean of intersections.
      */
-    std::vector<Intersection> findIntersections(Evaluator* e);
+    std::vector<Intersection> findIntersections(Evaluator* e) const;
 
     /*
      *  Populates AtA, AtB, BtB, mass_point, and rank
