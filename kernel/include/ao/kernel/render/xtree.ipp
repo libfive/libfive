@@ -281,11 +281,12 @@ void XTree<T, dims>::collapseBranch()
         //  This conditional implements the three checks described in
         //  [Ju et al, 2002] in the section titled
         //      "Simplification with topology safety"
-        if (this->cornerTopology() &&
+        manifold = this->cornerTopology() &&
             std::all_of(children.begin(), children.end(),
                     [](const std::unique_ptr<T>& o)
                     { return o->manifold; }) &&
-            static_cast<T*>(this)->leafTopology())
+            static_cast<T*>(this)->leafTopology();
+        if (manifold)
         {
             findBranchMatrices();
 
@@ -294,7 +295,6 @@ void XTree<T, dims>::collapseBranch()
             if (err < 1e-8)
             {
                 type = LEAF;
-                manifold = true;
             }
         }
     }
