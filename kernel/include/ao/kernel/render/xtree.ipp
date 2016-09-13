@@ -189,8 +189,21 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
     // Otherwise, populate the leaf vertex data
     else if (!collapseLeaf())
     {
+        // Populate matrices, rank, and mass point
         findLeafMatrices(e);
-        findVertex();
+        manifold = this->cornerTopology();
+        if (manifold)
+        {
+            findVertex();
+        }
+        else
+        {
+            // For non-manifold leaf nodes, put the vertex at the mass point.
+            // As described in "Dual Contouring: The Secret Sauce", this improves
+            // mesh quality.
+            vert = glm::vec3(mass_point.x, mass_point.y, mass_point.z) /
+                   mass_point.w;
+        }
     }
 }
 
@@ -304,6 +317,8 @@ bool XTree<T, dims>::collapseLeaf()
     }
 
     type = filled ? FULL : EMPTY;
+    manifold = true;
+
     return true;
 }
 
@@ -367,20 +382,6 @@ void XTree<T, dims>::findLeafMatrices(Evaluator* e)
 template <class T, int dims>
 float XTree<T, dims>::findVertex()
 {
-    // For non-manifold leaf nodes, put the vertex at the mass point.
-    // As described in "Dual Contouring: The Secret Sauce", this improves
-    // mesh quality.
-    if (type == LEAF)
-    {
-        manifold = this->cornerTopology();
-        if (!manifold)
-        {
-            vert = glm::vec3(mass_point.x, mass_point.y, mass_point.z) /
-                   mass_point.w;
-            return std::numeric_limits<float>::infinity();
-        }
-    }
-
     // We need to find the pseudo-inverse of AtA.
     Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
     auto eigenvalues = es.eigenvalues().real();
