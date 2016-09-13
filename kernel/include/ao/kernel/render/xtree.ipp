@@ -116,6 +116,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
             {
                 c = true;
             }
+            manifold = true;
         }
         else if (out.lower() >= 0)
         {
@@ -124,6 +125,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
             {
                 c = false;
             }
+            manifold = true;
         }
         else
         {   // If the cell wasn't empty or filled, recurse
@@ -274,10 +276,12 @@ void XTree<T, dims>::collapseBranch()
     if (all_empty)
     {
         type = EMPTY;
+        manifold = true;
     }
     else if (all_full)
     {
         type = FULL;
+        manifold = true;
     }
     else if (collapsible)
     {
@@ -297,6 +301,7 @@ void XTree<T, dims>::collapseBranch()
             if (err < 1e-8)
             {
                 type = LEAF;
+                manifold = true;
             }
         }
     }
