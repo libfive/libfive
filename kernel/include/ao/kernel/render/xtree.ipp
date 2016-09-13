@@ -101,28 +101,15 @@ template <class T, int dims>
 void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
                                       uint32_t flags)
 {
-    // The cell is a LEAF cell until proven otherwise
-    type = LEAF;
-
     // First, do interval evaluation to see if the cell should be checked
     Interval out = e->eval(r.X.bounds, r.Y.bounds, r.Z.bounds);
     if (out.upper() < 0)
     {
         type = FULL;
-        for (auto& c : corners)
-        {
-            c = true;
-        }
-        manifold = true;
     }
     else if (out.lower() >= 0)
     {
         type = EMPTY;
-        for (auto& c : corners)
-        {
-            c = false;
-        }
-        manifold = true;
     }
     // If the cell wasn't empty or filled, recurse
     else if (r.canSplit())
@@ -136,10 +123,12 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
         type = BRANCH;
         e->pop();
     }
-
     // Otherwise, calculate corner values
-    if (type == LEAF)
+    else
     {
+        // The cell is a LEAF cell until proven otherwise
+        type = LEAF;
+
         // Pack into evaluator
         for (uint8_t i=0; i < children.size(); ++i)
         {
@@ -155,6 +144,15 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
         {
             corners[i] = fs[i] < 0;
         }
+    }
+
+    if (type == FULL || type == EMPTY)
+    {
+        for (auto& c : corners)
+        {
+            c = type == FULL;
+        }
+        manifold = true;
     }
 }
 
