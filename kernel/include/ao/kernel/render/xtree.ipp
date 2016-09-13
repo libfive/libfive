@@ -118,7 +118,11 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
         auto rs = r.splitEven(dims);
         for (uint8_t i=0; i < children.size(); ++i)
         {
+            // Populate child recursively
             children[i].reset(new T(e, rs[i], flags));
+
+            // Grab corner values from children
+            corners[i] = children[i]->corners[i];
         }
         type = BRANCH;
         e->pop();
@@ -168,12 +172,6 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
 
     if (type == BRANCH)
     {
-        // Grab corner values from children
-        for (uint8_t i=0; i < children.size(); ++i)
-        {
-            corners[i] = children[i]->corners[i];
-        }
-
         // Collapse branches if the COLLAPSE flag is set
         if (flags & COLLAPSE)
         {
