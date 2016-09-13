@@ -48,7 +48,6 @@ public:
 
     /*  Enumerator for optional flags  */
     enum Flags { COLLAPSE   = (1 << 0),
-                 NO_JITTER  = (1 << 1),
     };
 
     /*  Enumerator that distinguishes between cell types  */
@@ -101,10 +100,6 @@ public:
      */
     unsigned getLevel() const { return level; }
 
-    /*  This is the number of extra points added per intersection
-     *  if jittering is enabled */
-    const static unsigned JITTER_COUNT = 16;
-
 protected:
     /*
      *  Recursive constructor that splits r
@@ -119,10 +114,9 @@ protected:
     XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r);
 
     /*
-     *  Delegating constructor to initialize X, Y, Z, and jitter
+     *  Delegating constructor to initialize X, Y, Z
      */
     XTree(const Subregion& r);
-    XTree(const Subregion& r, bool jitter);
 
     /*
      *  Splits a subregion and fills out child pointers and cell type
@@ -271,11 +265,6 @@ protected:
      *  This value is populated in find{Leaf|Branch}Matrices and     *
      *  used when merging intersections from lower-ranked children   */
     unsigned rank=0;
-
-    /*  If true, points found with searchEdge are jittered slightly to avoid
-     *  numerical instability when rendering shapes that lie exactly on cell
-     *  boundaries */
-    const bool jitter;
 
     /*  Number of iterations to run when doing binary search for verts  */
     const static int SEARCH_COUNT = 8;

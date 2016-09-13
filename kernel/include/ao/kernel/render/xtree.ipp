@@ -72,32 +72,23 @@ T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
 
 template <class T, int dims>
 XTree<T, dims>::XTree(const Subregion& r)
-    : XTree(r, false)
-{
-    // Nothing to do here (delegating constructor)
-}
-
-template <class T, int dims>
-XTree<T, dims>::XTree(const Subregion& r, bool jitter)
     : X(r.X.lower(), r.X.upper()),
       Y(r.Y.lower(), r.Y.upper()),
-      Z(r.Z.lower(), r.Z.upper()),
-      jitter(jitter)
-
+      Z(r.Z.lower(), r.Z.upper())
 {
     // Nothing to do here (delegating constructor)
 }
 
 template <class T, int dims>
 XTree<T, dims>::XTree(Evaluator* e, const Subregion& r, uint32_t flags)
-    : XTree(r, !(flags & NO_JITTER))
+    : XTree(r)
 {
     populateChildren(e, r, flags);
 }
 
 template <class T, int dims>
 XTree<T, dims>::XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r)
-    : XTree(r, false)
+    : XTree(r)
 {
     for (uint8_t i=0; i < cs.size(); ++i)
     {
@@ -437,8 +428,6 @@ void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
     constexpr int N = (1 << _N);
     constexpr int ITER = SEARCH_COUNT / _N;
 
-    const float len = glm::length(a - b);
-
     // Binary search for intersection
     for (int i=0; i < ITER; ++i)
     {
@@ -463,27 +452,7 @@ void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
     }
 
     // pos is an array of positions to get normals for
-    // If jitter is disabled, it only contains the intersection
     std::vector<glm::vec3> pos = {a};
-
-    // If jitter is enabled, add a cloud of nearby points
-    if (jitter)
-    {
-        static_assert(JITTER_COUNT < Result::N, "JITTER_COUNT is too large");
-
-        const float r = len / 10.0f;
-        while (pos.size() < JITTER_COUNT)
-        {
-            if (dims == 3)
-            {
-                pos.push_back(a + glm::sphericalRand(r));
-            }
-            else if (dims == 2)
-            {
-                pos.push_back(a + glm::vec3(glm::circularRand(r), 0.0f));
-            }
-        }
-    }
 
     size_t count = 0;
     for (auto p : pos)

@@ -86,25 +86,11 @@ TEST_CASE("Octree intersections")
 
     SECTION("Leaf")
     {
-        std::unique_ptr<Octree> out(Octree::Render(&t, r, Octree::NO_JITTER));
-        REQUIRE(out->getType() == Octree::LEAF);
-
-        auto is = out->getIntersections();
-        REQUIRE(is.size() == 4);
-        for (auto i : is)
-        {
-            auto err = fabs(i.pos.x - 0.75);
-            REQUIRE(err < 0.125);
-        }
-    }
-
-    SECTION("Jittered")
-    {
         std::unique_ptr<Octree> out(Octree::Render(&t, r));
         REQUIRE(out->getType() == Octree::LEAF);
 
         auto is = out->getIntersections();
-        REQUIRE(is.size() == 4 * Octree::JITTER_COUNT);
+        REQUIRE(is.size() == 4);
         for (auto i : is)
         {
             auto err = fabs(i.pos.x - 0.75);
