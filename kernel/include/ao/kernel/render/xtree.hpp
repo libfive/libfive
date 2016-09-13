@@ -179,14 +179,13 @@ protected:
     float findVertex();
 
     /*
-     *  Performs binary search along a cube's edge and stores in intersections
-     *  Accumulates intersection position in mass_point
+     *  Performs binary search along a cube's edge, returning the intersection
      *
      *  The resulting Intersections' normals are of unit length
      *
      *  eval(a) should be < 0 (inside the shape) and eval(b) should be outside
      */
-    void searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval);
+    Intersection searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval);
 
     /*
      *  Checks to see if the cell's corners describe an ambiguous

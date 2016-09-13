@@ -205,14 +205,10 @@ void XTree<T, dims>::findIntersections(Evaluator* eval)
     {
         if (corner(e.first) != corner(e.second))
         {
-            if (corner(e.first))
-            {
-                searchEdge(pos(e.first), pos(e.second), eval);
-            }
-            else
-            {
-                searchEdge(pos(e.second), pos(e.first), eval);
-            }
+            Intersection i = (corner(e.first))
+                ? searchEdge(pos(e.first), pos(e.second), eval)
+                : searchEdge(pos(e.second), pos(e.first), eval);
+            intersections.push_back(i);
         }
     }
 }
@@ -421,7 +417,7 @@ bool XTree<T, dims>::cornerTopology() const
 }
 
 template<class T, int dims>
-void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
+Intersection XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
 {
     // We do an N-fold reduction at each stage
     constexpr int _N = 4;
@@ -460,5 +456,5 @@ void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
 
     // Extract gradient from normal arrays
     glm::vec3 g(std::get<1>(ds)[0], std::get<2>(ds)[0], std::get<3>(ds)[0]);
-    intersections.push_back({a, glm::normalize(g)});
+    return {a, glm::normalize(g)};
 }
