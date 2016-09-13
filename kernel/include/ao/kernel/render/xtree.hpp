@@ -185,7 +185,7 @@ protected:
      *
      *  eval(a) should be < 0 (inside the shape) and eval(b) should be outside
      */
-    Intersection searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval);
+    Intersection searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval) const;
 
     /*
      *  Checks to see if the cell's corners describe an ambiguous

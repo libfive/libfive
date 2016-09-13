@@ -208,7 +208,12 @@ void XTree<T, dims>::findIntersections(Evaluator* eval)
             Intersection i = (corner(e.first))
                 ? searchEdge(pos(e.first), pos(e.second), eval)
                 : searchEdge(pos(e.second), pos(e.first), eval);
+
+            // Store big list o' intersections
             intersections.push_back(i);
+
+            // Accumulate intersection in mass point
+            mass_point += glm::vec4(i.pos, 1.0f);
         }
     }
 }
@@ -417,7 +422,8 @@ bool XTree<T, dims>::cornerTopology() const
 }
 
 template<class T, int dims>
-Intersection XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
+Intersection XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b,
+                                        Evaluator* e) const
 {
     // We do an N-fold reduction at each stage
     constexpr int _N = 4;
@@ -446,9 +452,6 @@ Intersection XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
             }
         }
     }
-
-    // Accumulate intersection in mass point
-    mass_point += glm::vec4(a, 1.0f);
 
     // Get derivatives
     e->setRaw(a.x, a.y, a.z, 0);
