@@ -451,23 +451,14 @@ void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
         }
     }
 
-    // pos is an array of positions to get normals for
-    std::vector<glm::vec3> pos = {a};
+    // Accumulate intersection in mass point
+    mass_point += glm::vec4(a, 1.0f);
 
-    size_t count = 0;
-    for (auto p : pos)
-    {
-        e->setRaw(p.x, p.y, p.z, count++);
-        mass_point += glm::vec4(p.x, p.y, p.z, 1.0f);
-    }
+    // Get derivatives
+    e->setRaw(a.x, a.y, a.z, 0);
+    auto ds = e->derivs(1);
 
-    // Get set of derivative arrays
-    auto ds = e->derivs(count);
-
-    // Extract gradient from set of arrays
-    for (unsigned i=0; i < count; ++i)
-    {
-        glm::vec3 g(std::get<1>(ds)[i], std::get<2>(ds)[i], std::get<3>(ds)[i]);
-        intersections.push_back({pos[i], glm::normalize(g)});
-    }
+    // Extract gradient from normal arrays
+    glm::vec3 g(std::get<1>(ds)[0], std::get<2>(ds)[0], std::get<3>(ds)[0]);
+    intersections.push_back({a, glm::normalize(g)});
 }
