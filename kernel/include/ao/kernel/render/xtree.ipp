@@ -112,41 +112,44 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
         type = EMPTY;
     }
     // If the cell wasn't empty or filled, recurse
-    else if (r.canSplit())
-    {
-        e->push();
-        auto rs = r.splitEven(dims);
-        for (uint8_t i=0; i < children.size(); ++i)
-        {
-            // Populate child recursively
-            children[i].reset(new T(e, rs[i], flags));
-
-            // Grab corner values from children
-            corners[i] = children[i]->corners[i];
-        }
-        type = BRANCH;
-        e->pop();
-    }
-    // Otherwise, calculate corner values
     else
     {
-        // The cell is a LEAF cell until proven otherwise
-        type = LEAF;
-
-        // Pack into evaluator
-        for (uint8_t i=0; i < children.size(); ++i)
+        if (r.canSplit())
         {
-            auto c = pos(i);
-            e->set(c.x, c.y, c.z, i);
+            e->push();
+            auto rs = r.splitEven(dims);
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
+                // Populate child recursively
+                children[i].reset(new T(e, rs[i], flags));
+
+                // Grab corner values from children
+                corners[i] = children[i]->corners[i];
+            }
+            type = BRANCH;
+            e->pop();
         }
-
-        // Do the evaluation
-        const float* fs = e->values(children.size());
-
-        // And unpack from evaluator
-        for (uint8_t i=0; i < children.size(); ++i)
+        // Otherwise, calculate corner values
+        else
         {
-            corners[i] = fs[i] < 0;
+            // The cell is a LEAF cell until proven otherwise
+            type = LEAF;
+
+            // Pack into evaluator
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
+                auto c = pos(i);
+                e->set(c.x, c.y, c.z, i);
+            }
+
+            // Do the evaluation
+            const float* fs = e->values(children.size());
+
+            // And unpack from evaluator
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
+                corners[i] = fs[i] < 0;
+            }
         }
     }
 
