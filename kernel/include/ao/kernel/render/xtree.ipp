@@ -191,10 +191,12 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
     {
         // Populate matrices, rank, and mass point
         findLeafMatrices(e);
+
+        // Find the vertex for this node
         manifold = this->cornerTopology();
         if (manifold)
         {
-            findVertex();
+            vert = findVertex();
         }
         else
         {
@@ -289,7 +291,10 @@ void XTree<T, dims>::collapseBranch()
             static_cast<T*>(this)->leafTopology())
         {
             findBranchMatrices();
-            if (findVertex() < 1e-8)
+
+            float err;
+            vert = findVertex(&err);
+            if (err < 1e-8)
             {
                 type = LEAF;
             }
@@ -380,7 +385,7 @@ void XTree<T, dims>::findLeafMatrices(Evaluator* e)
 }
 
 template <class T, int dims>
-float XTree<T, dims>::findVertex()
+glm::vec3 XTree<T, dims>::findVertex(float* err) const
 {
     // We need to find the pseudo-inverse of AtA.
     Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
@@ -406,11 +411,14 @@ float XTree<T, dims>::findVertex()
              mass_point.w;
     auto v = AtAp * (AtB - AtA * p) + p;
 
-    // Convert out of Eigen's format and store
-    vert = glm::vec3(v[0], v[1], v[2]);
+    // Find the QEF error if required
+    if (err)
+    {
+        *err = (v.transpose() * AtA * v - 2*v.transpose() * AtB)[0] + BtB;
+    }
 
-    float err = (v.transpose() * AtA * v - 2*v.transpose() * AtB)[0] + BtB;
-    return err;
+    // Convert out of Eigen's format and return
+    return glm::vec3(v[0], v[1], v[2]);
 }
 
 

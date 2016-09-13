@@ -174,9 +174,9 @@ protected:
      *
      *  Requires AtA, AtB, BtB, and mass_point to be populated
      *
-     *  The resulting vertex is stored in vert; the residual is returned
+     *  Returns the vertex and populates err if provided
      */
-    float findVertex();
+    glm::vec3 findVertex(float* err=NULL) const;
 
     /*
      *  Performs binary search along a cube's edge, returning the intersection
