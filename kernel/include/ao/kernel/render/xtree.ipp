@@ -104,40 +104,37 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
     // The cell is a LEAF cell until proven otherwise
     type = LEAF;
 
-    // If we can recurse, then it may become a BRANCH cell
-    if (r.canSplit())
+    // First, do interval evaluation to see if the cell should be checked
+    Interval out = e->eval(r.X.bounds, r.Y.bounds, r.Z.bounds);
+    if (out.upper() < 0)
     {
-        // First, do interval evaluation to see if the cell should be checked
-        Interval out = e->eval(r.X.bounds, r.Y.bounds, r.Z.bounds);
-        if (out.upper() < 0)
+        type = FULL;
+        for (auto& c : corners)
         {
-            type = FULL;
-            for (auto& c : corners)
-            {
-                c = true;
-            }
-            manifold = true;
+            c = true;
         }
-        else if (out.lower() >= 0)
+        manifold = true;
+    }
+    else if (out.lower() >= 0)
+    {
+        type = EMPTY;
+        for (auto& c : corners)
         {
-            type = EMPTY;
-            for (auto& c : corners)
-            {
-                c = false;
-            }
-            manifold = true;
+            c = false;
         }
-        else
-        {   // If the cell wasn't empty or filled, recurse
-            e->push();
-            auto rs = r.splitEven(dims);
-            for (uint8_t i=0; i < children.size(); ++i)
-            {
-                children[i].reset(new T(e, rs[i], flags));
-            }
-            type = BRANCH;
-            e->pop();
+        manifold = true;
+    }
+    // If the cell wasn't empty or filled, recurse
+    else if (r.canSplit())
+    {
+        e->push();
+        auto rs = r.splitEven(dims);
+        for (uint8_t i=0; i < children.size(); ++i)
+        {
+            children[i].reset(new T(e, rs[i], flags));
         }
+        type = BRANCH;
+        e->pop();
     }
 
     // Otherwise, calculate corner values
