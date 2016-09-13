@@ -29,7 +29,7 @@ class Quadtree : public XTree<Quadtree, 2>
 
     static const std::vector<bool>& cornerTable()
         { return _cornerTable; }
-    const std::vector<std::pair<unsigned, unsigned>>& cellEdges()
+    static const std::vector<std::pair<unsigned, unsigned>>& cellEdges()
         { return _cellEdges; }
     bool leafTopology() const;
 
