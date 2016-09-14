@@ -93,6 +93,7 @@ XTree<T, dims>::XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r)
     for (uint8_t i=0; i < cs.size(); ++i)
     {
         children[i].reset(cs[i]);
+        corners[i] = children[i]->corners[i];
     }
     type = BRANCH;
 }
