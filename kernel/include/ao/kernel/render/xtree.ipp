@@ -199,20 +199,16 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
         // Populate matrices, rank, and mass point
         findLeafMatrices(e);
 
-        // Find the vertex for this node
+        // Figure out if the leaf is manifold
         manifold = this->cornerTopology();
-        if (manifold)
-        {
-            vert = findVertex();
-        }
-        else
-        {
+
+        // Find the vertex for this node
+        vert = manifold ? findVertex() :
             // For non-manifold leaf nodes, put the vertex at the mass point.
             // As described in "Dual Contouring: The Secret Sauce", this improves
             // mesh quality.
             vert = glm::vec3(mass_point.x, mass_point.y, mass_point.z) /
                    mass_point.w;
-        }
     }
 
     // If this cell is no longer a branch, remove its children
@@ -229,8 +225,8 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
 {
     assert(type == LEAF);
 
-    // If this is a leaf cell, check every edge and use binary search to
-    // find intersections on edges that have mismatched signs
+    // Check every edge and use binary search to find intersections on
+    // edges that have mismatched signs
     std::vector<Intersection> intersections;
     for (auto e : static_cast<const T*>(this)->cellEdges())
     {
@@ -286,6 +282,7 @@ void XTree<T, dims>::collapseBranch()
                     [](const std::unique_ptr<T>& o)
                     { return o->manifold; }) &&
             static_cast<T*>(this)->leafTopology();
+
         if (manifold)
         {
             findBranchMatrices();
