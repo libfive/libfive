@@ -111,11 +111,14 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
     {
         type = EMPTY;
     }
-    // If the cell wasn't empty or filled, recurse
+    // If the cell wasn't empty or filled, build a BRANCH or LEAF
     else
     {
         if (r.canSplit())
         {
+            bool all_empty = true;
+            bool all_full  = true;
+
             e->push();
             auto rs = r.splitEven(dims);
             for (uint8_t i=0; i < children.size(); ++i)
@@ -125,8 +128,13 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
 
                 // Grab corner values from children
                 corners[i] = children[i]->corners[i];
+
+                all_empty &= children[i]->type == EMPTY;
+                all_full  &= children[i]->type == FULL;
             }
-            type = BRANCH;
+
+            type = all_empty ? EMPTY
+                 : all_full ? FULL : BRANCH;
             e->pop();
         }
         // Otherwise, calculate corner values
@@ -205,6 +213,13 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
                    mass_point.w;
         }
     }
+
+    // If this cell is no longer a branch, remove its children
+    if (type != BRANCH)
+    {
+        std::for_each(children.begin(), children.end(),
+            [](std::unique_ptr<T>& o) { o.reset(); });
+    }
 }
 
 template <class T, int dims>
@@ -258,28 +273,9 @@ void XTree<T, dims>::findBranchMatrices()
 template <class T, int dims>
 void XTree<T, dims>::collapseBranch()
 {
-    bool all_empty = true;
-    bool all_full  = true;
-    bool collapsible = true;
-
-    for (const auto& c : children)
-    {
-        all_empty   &= c->type == EMPTY;
-        all_full    &= c->type == FULL;
-        collapsible &= c->type != BRANCH;
-    }
-
-    if (all_empty)
-    {
-        type = EMPTY;
-        manifold = true;
-    }
-    else if (all_full)
-    {
-        type = FULL;
-        manifold = true;
-    }
-    else if (collapsible)
+    if (std::all_of(children.begin(), children.end(),
+                    [](const std::unique_ptr<T>& o)
+                    { return o->type != BRANCH; }))
     {
         //  This conditional implements the three checks described in
         //  [Ju et al, 2002] in the section titled
@@ -300,13 +296,6 @@ void XTree<T, dims>::collapseBranch()
                 type = LEAF;
             }
         }
-    }
-
-    // If this cell is no longer a branch, remove its children
-    if (type != BRANCH)
-    {
-        std::for_each(children.begin(), children.end(),
-            [](std::unique_ptr<T>& o) { o.reset(); });
     }
 }
 
