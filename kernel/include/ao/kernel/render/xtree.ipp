@@ -114,13 +114,13 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
     // If the cell wasn't empty or filled, build a BRANCH or LEAF
     else
     {
+        bool all_empty = true;
+        bool all_full  = true;
+
         if (r.canSplit())
         {
-            bool all_empty = true;
-            bool all_full  = true;
-
-            e->push();
             auto rs = r.splitEven(dims);
+            e->push();
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 // Populate child recursively
@@ -132,17 +132,14 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
                 all_empty &= children[i]->type == EMPTY;
                 all_full  &= children[i]->type == FULL;
             }
+            e->pop();
 
             type = all_empty ? EMPTY
                  : all_full ? FULL : BRANCH;
-            e->pop();
         }
         // Otherwise, calculate corner values
         else
         {
-            // The cell is a LEAF cell until proven otherwise
-            type = LEAF;
-
             // Pack into evaluator
             for (uint8_t i=0; i < children.size(); ++i)
             {
@@ -157,7 +154,11 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 corners[i] = fs[i] < 0;
+                all_full  &=  corners[i];
+                all_empty &= !corners[i];
             }
+            type = all_empty ? EMPTY
+                 : all_full ? FULL : LEAF;
         }
     }
 
@@ -193,7 +194,7 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
     }
     // Always try to convert a LEAF to an EMPTY / FILLED node
     // Otherwise, populate the leaf vertex data
-    else if (!collapseLeaf())
+    else if (type == LEAF)
     {
         // Populate matrices, rank, and mass point
         findLeafMatrices(e);
@@ -297,24 +298,6 @@ void XTree<T, dims>::collapseBranch()
             }
         }
     }
-}
-
-template <class T, int dims>
-bool XTree<T, dims>::collapseLeaf()
-{
-    bool filled = corners[0];
-    for (auto c : corners)
-    {
-        if (c != filled)
-        {
-            return false;
-        }
-    }
-
-    type = filled ? FULL : EMPTY;
-    manifold = true;
-
-    return true;
 }
 
 template <class T, int dims>
