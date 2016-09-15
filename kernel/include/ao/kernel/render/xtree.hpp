@@ -146,7 +146,7 @@ protected:
      *  Populates AtA, AtB, BtB, mass_point, and rank
      *  by calling findIntersections then building matrices
      */
-    void findLeafMatrices(Evaluator* e);
+    Eigen::EigenSolver<Eigen::Matrix3d> findLeafMatrices(Evaluator* e);
 
     /*
      *  Populates AtA, AtB, BtB, mass_point, and rank
@@ -171,6 +171,8 @@ protected:
      *  Returns the vertex and populates err if provided
      */
     glm::vec3 findVertex(float* err=NULL) const;
+    glm::vec3 findVertex(Eigen::EigenSolver<Eigen::Matrix3d>& es,
+                         float* err=NULL) const;
 
     /*
      *  Performs binary search along a cube's edge, returning the intersection

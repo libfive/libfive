@@ -198,13 +198,13 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
     else if (type == LEAF)
     {
         // Populate matrices, rank, and mass point
-        findLeafMatrices(e);
+        auto solver = findLeafMatrices(e);
 
         // Figure out if the leaf is manifold
         manifold = this->cornerTopology();
 
         // Find the vertex for this node
-        vert = manifold ? findVertex() :
+        vert = manifold ? findVertex(solver) :
             // For non-manifold leaf nodes, put the vertex at the mass point.
             // As described in "Dual Contouring: The Secret Sauce", this improves
             // mesh quality.
@@ -299,7 +299,7 @@ void XTree<T, dims>::collapseBranch()
 }
 
 template <class T, int dims>
-void XTree<T, dims>::findLeafMatrices(Evaluator* e)
+Eigen::EigenSolver<Eigen::Matrix3d> XTree<T, dims>::findLeafMatrices(Evaluator* e)
 {
     std::vector<Intersection> intersections = findIntersections(e);
 
@@ -340,7 +340,7 @@ void XTree<T, dims>::findLeafMatrices(Evaluator* e)
     BtB = B.transpose() * B;
 
     // Only find Eigenvalues (this is to calculate rank)
-    Eigen::EigenSolver<Eigen::Matrix3d> es(AtA, false);
+    Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
     auto eigenvalues = es.eigenvalues().real();
     double s_max = eigenvalues.cwiseAbs().maxCoeff();
 
@@ -353,13 +353,24 @@ void XTree<T, dims>::findLeafMatrices(Evaluator* e)
             rank--;
         }
     }
+
+    // Return the solver so it can be re-used
+    return es;
 }
 
 template <class T, int dims>
 glm::vec3 XTree<T, dims>::findVertex(float* err) const
 {
-    // We need to find the pseudo-inverse of AtA.
     Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
+    return findVertex(es, err);
+}
+
+template <class T, int dims>
+glm::vec3 XTree<T, dims>::findVertex(
+        Eigen::EigenSolver<Eigen::Matrix3d>& es,
+        float* err) const
+{
+    // We need to find the pseudo-inverse of AtA.
     auto eigenvalues = es.eigenvalues().real();
     double s_max = eigenvalues.cwiseAbs().maxCoeff();
 
