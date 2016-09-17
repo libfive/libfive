@@ -227,13 +227,29 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
     {
         if (corner(e.first) != corner(e.second))
         {
-            Intersection i = (corner(e.first))
+            const glm::vec3 p = corner(e.first)
                 ? searchEdge(pos(e.first), pos(e.second), eval)
                 : searchEdge(pos(e.second), pos(e.first), eval);
 
-            // Store big list o' intersections
-            intersections.push_back(i);
+            // Store position in big list o' intersections
+            // (along with a dummy normal)
+            intersections.push_back({p, glm::vec3()});
         }
+    }
+
+    // Calculate normals in bulk (since that's more efficient)
+    for (unsigned i=0; i < intersections.size(); ++i)
+    {
+        const auto p = intersections[i].pos;
+        eval->setRaw(p.x, p.y, p.z, i);
+    }
+    auto ds = eval->derivs(intersections.size());
+    for (unsigned i=0; i < intersections.size(); ++i)
+    {
+        const glm::vec3 g(std::get<1>(ds)[i],
+                          std::get<2>(ds)[i],
+                          std::get<3>(ds)[i]);
+        intersections[i].norm = glm::normalize(g);
     }
 
     return intersections;
@@ -412,8 +428,8 @@ bool XTree<T, dims>::cornerTopology() const
 }
 
 template<class T, int dims>
-Intersection XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b,
-                                        Evaluator* e) const
+glm::vec3 XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b,
+                                     Evaluator* e) const
 {
     // We do an N-fold reduction at each stage
     constexpr int _N = 4;
@@ -443,11 +459,5 @@ Intersection XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b,
         }
     }
 
-    // Get derivatives
-    e->setRaw(a.x, a.y, a.z, 0);
-    auto ds = e->derivs(1);
-
-    // Extract gradient from normal arrays
-    glm::vec3 g(std::get<1>(ds)[0], std::get<2>(ds)[0], std::get<3>(ds)[0]);
-    return {a, glm::normalize(g)};
+    return a;
 }

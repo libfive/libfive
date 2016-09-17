@@ -121,6 +121,7 @@ protected:
 
     /*
      *  Finds and returns edge-wise intersections for a LEAF cell
+     *  The intersections have normalized (length = 1) normals
      *
      *  Intersections are found with binary search along every
      *  edge that exhibits a sign change.
@@ -164,11 +165,9 @@ protected:
     /*
      *  Performs binary search along a cube's edge, returning the intersection
      *
-     *  The resulting Intersections' normals are of unit length
-     *
      *  eval(a) should be < 0 (inside the shape) and eval(b) should be outside
      */
-    Intersection searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval) const;
+    glm::vec3 searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval) const;
 
     /*
      *  Checks to see if the cell's corners describe an ambiguous
