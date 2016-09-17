@@ -43,12 +43,7 @@ template <class T, int dims>
 class XTree
 {
 public:
-    static T* Render(Tree* t, const Region& r, uint32_t flags=COLLAPSE,
-                     bool multithread=true);
-
-    /*  Enumerator for optional flags  */
-    enum Flags { COLLAPSE   = (1 << 0),
-    };
+    static T* Render(Tree* t, const Region& r, bool multithread=true);
 
     /*  Enumerator that distinguishes between cell types  */
     enum Type { LEAF, BRANCH, EMPTY, FULL };
@@ -99,7 +94,7 @@ protected:
      *  Recursive constructor that splits r
      *  Requires a call to finalize in the parent constructor
      */
-    XTree(Evaluator* e, const Subregion& r, uint32_t flags);
+    XTree(Evaluator* e, const Subregion& r);
 
     /*
      *  Collecting constructor that assembles multiple subtrees
@@ -115,15 +110,14 @@ protected:
     /*
      *  Splits a subregion and fills out child pointers and cell type
      */
-    void populateChildren(Evaluator* e, const Subregion& r,
-                          uint32_t flags);
+    void populateChildren(Evaluator* e, const Subregion& r);
 
     /*
      *  Finishes initialization once the type and child pointers are in place
      *  (split into a separate function because we can get child pointers
      *   either through recursion or with threaded construction)
      */
-    void finalize(Evaluator* e, uint32_t flags);
+    void finalize(Evaluator* e);
 
     /*
      *  Finds and returns edge-wise intersections for a LEAF cell

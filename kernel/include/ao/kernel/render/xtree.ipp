@@ -27,8 +27,7 @@
 #include "ao/kernel/render/xtree.hpp"
 
 template <class T, int dims>
-T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
-                          bool multithread)
+T* XTree<T, dims>::Render(Tree* t, const Region& r, bool multithread)
 {
     auto rp = r.powerOfTwo(dims).view();
 
@@ -42,8 +41,8 @@ T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
             auto e = new Evaluator(t);
 
             futures.push_back(std::async(std::launch::async,
-                [e, region, flags](){
-                    auto out = new T(e, region, flags);
+                [e, region](){
+                    auto out = new T(e, region);
                     delete e;
                     return out;}));
         }
@@ -58,13 +57,13 @@ T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
         }
 
         Evaluator e(t);
-        return new T(&e, sub, rp, flags);
+        return new T(&e, sub, rp);
     }
 
     else
     {
         Evaluator e(t);
-        return new T(&e, rp, flags);
+        return new T(&e, rp);
     }
 }
 
@@ -80,10 +79,10 @@ XTree<T, dims>::XTree(const Subregion& r)
 }
 
 template <class T, int dims>
-XTree<T, dims>::XTree(Evaluator* e, const Subregion& r, uint32_t flags)
+XTree<T, dims>::XTree(Evaluator* e, const Subregion& r)
     : XTree(r)
 {
-    populateChildren(e, r, flags);
+    populateChildren(e, r);
 }
 
 template <class T, int dims>
@@ -99,8 +98,7 @@ XTree<T, dims>::XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r)
 }
 
 template <class T, int dims>
-void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
-                                      uint32_t flags)
+void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r)
 {
     // First, do interval evaluation to see if the cell should be checked
     Interval out = e->eval(r.X.bounds, r.Y.bounds, r.Z.bounds);
@@ -125,7 +123,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 // Populate child recursively
-                children[i].reset(new T(e, rs[i], flags));
+                children[i].reset(new T(e, rs[i]));
 
                 // Grab corner values from children
                 corners[i] = children[i]->corners[i];
@@ -174,7 +172,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
 }
 
 template <class T, int dims>
-void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
+void XTree<T, dims>::finalize(Evaluator* e)
 {
     // Find this Octree's level
     level = (type == BRANCH)
@@ -185,13 +183,9 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
 
     if (type == BRANCH)
     {
-        // Collapse branches if the COLLAPSE flag is set
-        if (flags & COLLAPSE)
-        {
-            // This populate the vert member if the branch is collapsed
-            // into a LEAF node.
-            collapseBranch();
-        }
+        // This populate the vert member if the branch is collapsed
+        // into a LEAF node.
+        collapseBranch();
     }
     // Always try to convert a LEAF to an EMPTY / FILLED node
     // Otherwise, populate the leaf vertex data

@@ -28,8 +28,7 @@ class Region;
 
 struct Contours
 {
-    static Contours Render(Tree* t, const Region& r,
-                           uint32_t flags=Quadtree::COLLAPSE);
+    static Contours Render(Tree* t, const Region& r);
 
     /*
      *  Saves the given contours as an SVG file
