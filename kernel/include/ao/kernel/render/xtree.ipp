@@ -342,13 +342,12 @@ Eigen::EigenSolver<Eigen::Matrix3d> XTree<T, dims>::findLeafMatrices(Evaluator* 
     // Only find Eigenvalues (this is to calculate rank)
     Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
     auto eigenvalues = es.eigenvalues().real();
-    double s_max = eigenvalues.cwiseAbs().maxCoeff();
 
     // Truncate near-singular eigenvalues
     rank = 3;
     for (unsigned i=0; i < 3; ++i)
     {
-        if (std::abs(eigenvalues[i]) / s_max < 0.1)
+        if (std::abs(eigenvalues[i]) < 0.1)
         {
             rank--;
         }
@@ -372,15 +371,15 @@ glm::vec3 XTree<T, dims>::findVertex(
 {
     // We need to find the pseudo-inverse of AtA.
     auto eigenvalues = es.eigenvalues().real();
-    double s_max = eigenvalues.cwiseAbs().maxCoeff();
 
     // Truncate near-singular eigenvalues in the SVD's diagonal matrix
     Eigen::Matrix3d D(Eigen::Matrix3d::Zero());
     for (unsigned i=0; i < 3; ++i)
     {
-        D.diagonal()[i] = (std::abs(eigenvalues[i]) / s_max < 0.1)
+        D.diagonal()[i] = (std::abs(eigenvalues[i]) < 0.1)
             ? 0 : (1 / eigenvalues[i]);
     }
+    assert(D.diagonal().count() == rank);
 
     // SVD matrices
     auto U = es.eigenvectors().real(); // = V
