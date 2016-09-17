@@ -379,7 +379,12 @@ glm::vec3 XTree<T, dims>::findVertex(
         D.diagonal()[i] = (std::abs(eigenvalues[i]) < 0.1)
             ? 0 : (1 / eigenvalues[i]);
     }
-    assert(D.diagonal().count() == rank);
+
+    // Sanity-checking that rank matches eigenvalue count
+    if (type == LEAF)
+    {
+        assert(D.diagonal().count() == rank);
+    }
 
     // SVD matrices
     auto U = es.eigenvectors().real(); // = V
