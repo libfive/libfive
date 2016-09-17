@@ -22,23 +22,50 @@
 
 TEST_CASE("Region::Axis construction")
 {
-    auto da = Region::Axis(Interval(0, 1), 1.0f);
-    REQUIRE(da.values.size() == 1);
+    SECTION("Exact values")
+    {
+        auto da = Region::Axis(Interval(0, 1), 1.0f);
+        REQUIRE(da.values.size() == 1);
 
-    auto db = Region::Axis(Interval(0, 1), 10.0f);
-    REQUIRE(db.values.size() == 10);
+        auto db = Region::Axis(Interval(0, 1), 10.0f);
+        REQUIRE(db.values.size() == 10);
 
-    auto dc = Region::Axis(Interval(0, 0), 1.0f);
-    REQUIRE(dc.values.size() == 1);
+        auto dc = Region::Axis(Interval(0, 0), 1.0f);
+        REQUIRE(dc.values.size() == 1);
+
+        auto dd = Region::Axis(Interval(-1, 1), 0.0f);
+        REQUIRE(dd.values.size() == 1);
+    }
+
+    SECTION("Expanding interval")
+    {
+        auto da = Region::Axis(Interval(0, 1.1), 1.0f);
+        REQUIRE(da.values.size() == 2);
+    }
 }
 
 TEST_CASE("Region::Axis values")
 {
-    auto da = Region::Axis(Interval(0, 1), 1.0f);
-    REQUIRE(da.values[0] == 0.5);
+    SECTION("Exact values");
+    {
+        auto da = Region::Axis(Interval(0, 1), 1.0f);
+        REQUIRE(da.values[0] == 0.5);
 
-    auto db = Region::Axis(Interval(-0.5, 0.5), 3.0f);
-    REQUIRE(db.values[1] == 0);
+        auto db = Region::Axis(Interval(-0.5, 0.5), 3.0f);
+        REQUIRE(db.values[1] == 0);
+
+        auto dc = Region::Axis(Interval(-1, 1), 0.0f);
+        REQUIRE(dc.values[0] == 0);
+    }
+
+    SECTION("Expanding interval")
+    {
+        auto da = Region::Axis(Interval(0, 1.2), 1.0f);
+        REQUIRE(da.bounds.lower() == Approx(-0.4f));
+        REQUIRE(da.bounds.upper() == Approx(1.6f));
+        REQUIRE(da.values[0] == Approx(0.1f));
+        REQUIRE(da.values[1] == Approx(1.1f));
+    }
 }
 
 TEST_CASE("Region resolution")
