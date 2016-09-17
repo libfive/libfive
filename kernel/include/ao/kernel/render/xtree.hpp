@@ -252,6 +252,9 @@ protected:
 
     /*  Number of iterations to run when doing binary search for verts  */
     const static int SEARCH_COUNT = 8;
+
+    /*  Eigenvalue threshold for determining feature rank  */
+    constexpr static float EIGENVALUE_CUTOFF = 0.1f;
 };
 
 #include "ao/kernel/render/xtree.ipp"

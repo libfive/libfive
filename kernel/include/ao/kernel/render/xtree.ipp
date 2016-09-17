@@ -345,14 +345,7 @@ Eigen::EigenSolver<Eigen::Matrix3d> XTree<T, dims>::findLeafMatrices(Evaluator* 
     auto eigenvalues = es.eigenvalues().real();
 
     // Truncate near-singular eigenvalues
-    rank = 3;
-    for (unsigned i=0; i < 3; ++i)
-    {
-        if (std::abs(eigenvalues[i]) < 0.1)
-        {
-            rank--;
-        }
-    }
+    rank = (eigenvalues.array().abs() >= EIGENVALUE_CUTOFF).count();
 
     // Return the solver so it can be re-used
     return es;
@@ -377,7 +370,7 @@ glm::vec3 XTree<T, dims>::findVertex(
     Eigen::Matrix3d D(Eigen::Matrix3d::Zero());
     for (unsigned i=0; i < 3; ++i)
     {
-        D.diagonal()[i] = (std::abs(eigenvalues[i]) < 0.1)
+        D.diagonal()[i] = (std::abs(eigenvalues[i]) < EIGENVALUE_CUTOFF)
             ? 0 : (1 / eigenvalues[i]);
     }
 
