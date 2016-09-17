@@ -85,12 +85,6 @@ public:
     Type getType() const { return type; }
 
     /*
-     *  Returns the vector of intersections
-     */
-    std::vector<Intersection> getIntersections() const
-    { return {}; }
-
-    /*
      *  Looks up the vertex position
      */
     glm::vec3 getVertex() const { return vert; }
@@ -132,8 +126,7 @@ protected:
     void finalize(Evaluator* e, uint32_t flags);
 
     /*
-     *  Stores edge-wise intersections for a LEAF cell,
-     *  storing them in the intersections vector.
+     *  Finds and returns edge-wise intersections for a LEAF cell
      *
      *  Intersections are found with binary search along every
      *  edge that exhibits a sign change.
@@ -238,7 +231,7 @@ protected:
     /*  Feature vertex located in the cell  */
     glm::vec3 vert=glm::vec3(std::numeric_limits<float>::quiet_NaN());
 
-    /*  Marks whether a LEAF node is manifold or not  */
+    /*  Marks whether a node is manifold or not  */
     bool manifold;
 
     /*  Mass point is the average intersection location *

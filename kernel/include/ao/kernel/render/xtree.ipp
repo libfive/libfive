@@ -339,7 +339,8 @@ Eigen::EigenSolver<Eigen::Matrix3d> XTree<T, dims>::findLeafMatrices(Evaluator* 
     AtB = At * B;
     BtB = B.transpose() * B;
 
-    // Only find Eigenvalues (this is to calculate rank)
+    // Use eigenvalues to find rank, then return the solver
+    // (so it can be re-used to find vertex position)
     Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
     auto eigenvalues = es.eigenvalues().real();
 
