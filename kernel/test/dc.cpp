@@ -48,35 +48,6 @@ TEST_CASE("Small sphere mesh")
     REQUIRE(m.tris.size() == 12);
 }
 
-TEST_CASE("Face counts")
-{
-    Store s;
-
-    SECTION("Single level of recursion")
-    {
-        Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
-
-        for (Token* axis : {s.X(), s.Y(), s.Z()})
-        {
-            Tree t(&s, s.operation(OP_ADD, axis, s.constant(0.75)));
-            auto m = Mesh::Render(&t, r, 0);
-            REQUIRE(m.tris.size() == 2);
-        }
-    }
-
-    SECTION("Two levels of recursion")
-    {
-        Region r({-1, 1}, {-1, 1}, {-1, 1}, 2);
-
-        for (Token* axis : {s.X(), s.Y(), s.Z()})
-        {
-            Tree t(&s, s.operation(OP_ADD, axis, s.constant(0.75)));
-            auto m = Mesh::Render(&t, r, 0);
-            REQUIRE(m.tris.size() == 18);
-        }
-    }
-}
-
 TEST_CASE("Face normals")
 {
     Store s;
@@ -89,7 +60,7 @@ TEST_CASE("Face normals")
         for (int i=0; i < 3; ++i)
         {
             Tree t(&s, s.operation(OP_ADD, axis[i], s.constant(0.75)));
-            auto m = Mesh::Render(&t, r, Octree::NO_JITTER);
+            auto m = Mesh::Render(&t, r);
             for (unsigned j=0; j < m.tris.size(); ++j)
             {
                 REQUIRE(m.norm(j) == norm[i]);
@@ -103,28 +74,10 @@ TEST_CASE("Face normals")
         {
             Tree t(&s, s.operation(OP_NEG,
                        s.operation(OP_ADD, axis[i], s.constant(0.75))));
-            auto m = Mesh::Render(&t, r, Octree::NO_JITTER);
+            auto m = Mesh::Render(&t, r);
             for (unsigned j=0; j < m.tris.size(); ++j)
             {
                 REQUIRE(m.norm(j) == -norm[i]);
-            }
-        }
-    }
-
-    SECTION("Jittered")
-    {
-        for (int i=0; i < 3; ++i)
-        {
-            Tree t(&s, s.operation(OP_ADD, axis[i], s.constant(0.75)));
-            auto m = Mesh::Render(&t, r, 0);
-
-            for (unsigned j=0; j < m.tris.size(); ++j)
-            {
-                auto n = m.norm(j);
-                CAPTURE(glm::to_string(n));
-                CAPTURE(glm::to_string(norm[i]));
-                auto diff = glm::length(n - norm[i]);
-                REQUIRE(diff < 0.05);
             }
         }
     }
@@ -154,7 +107,7 @@ TEST_CASE("2D contour tracking")
 
     Region r({-1, 1}, {-1, 1}, {0, 0}, 10);
 
-    auto m = Contours::Render(&t, r, Quadtree::NO_JITTER);
+    auto m = Contours::Render(&t, r);
     REQUIRE(m.contours.size() == 1);
 
     float min = 1;

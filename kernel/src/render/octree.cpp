@@ -27,17 +27,17 @@ Octree::Octree(const Subregion& r) : XTree(r)
     // Nothing to do here
 }
 
-Octree::Octree(Evaluator* e, const Subregion& r, uint32_t flags)
-    : XTree(e, r, flags)
+Octree::Octree(Evaluator* e, const Subregion& r)
+    : XTree(e, r)
 {
-    finalize(e, flags);
+    finalize(e);
 }
 
 Octree::Octree(Evaluator* e, const std::array<Octree*, 8>& cs,
-       const Subregion& r, uint32_t flags)
+       const Subregion& r)
     : XTree(cs, r)
 {
-    finalize(e, flags);
+    finalize(e);
 }
 
 // These are the twelve edges of an octree cell

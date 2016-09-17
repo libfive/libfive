@@ -26,17 +26,17 @@ Quadtree::Quadtree(const Subregion& r) : XTree(r)
     // Nothing to do here
 }
 
-Quadtree::Quadtree(Evaluator* e, const Subregion& r, uint32_t flags)
-    : XTree(e, r, flags)
+Quadtree::Quadtree(Evaluator* e, const Subregion& r)
+    : XTree(e, r)
 {
-    finalize(e, flags);
+    finalize(e);
 }
 
 Quadtree::Quadtree(Evaluator* e, const std::array<Quadtree*, 4>& cs,
-       const Subregion& r, uint32_t flags)
+       const Subregion& r)
     : XTree(cs, r)
 {
-    finalize(e, flags);
+    finalize(e);
 }
 
 // These are the four edges of a quadtree cell

@@ -24,9 +24,8 @@ class Octree : public XTree<Octree, 3>
 {
 protected:
     Octree(const Subregion& r);
-    Octree(Evaluator* e, const Subregion& r, uint32_t flags);
-    Octree(Evaluator* e, const std::array<Octree*, 8>& cs,
-           const Subregion& r, uint32_t flags);
+    Octree(Evaluator* e, const Subregion& r);
+    Octree(Evaluator* e, const std::array<Octree*, 8>& cs, const Subregion& r);
 
     static const std::vector<bool>& cornerTable()
         { return _cornerTable; }

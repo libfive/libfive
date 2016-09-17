@@ -82,14 +82,16 @@ Region Region::powerOfTwo(int dims) const
 ////////////////////////////////////////////////////////////////////////////////
 
 Region::Axis::Axis(Interval i, float res)
-    : bounds(i)
+    : bounds(expand(i, res))
 {
+    // bounds should be an exact multiple of 1/res, but round to
+    // compensate for floating-point inaccuracies
     size_t size = std::max((size_t)1,
-                           (size_t)(res * (i.upper() - i.lower())));
+            (size_t)std::round(res * (bounds.upper() - bounds.lower())));
     for (unsigned index=0; index < size; ++index)
     {
         const float frac = (index + 0.5) / size;
-        values.push_back(i.lower() * (1 - frac) + i.upper() * frac);
+        values.push_back(bounds.lower() * (1 - frac) + bounds.upper() * frac);
     }
 }
 
@@ -100,5 +102,19 @@ Region::Axis::Axis(Interval i, size_t size)
     {
         const float frac = (index + 0.5) / size;
         values.push_back(i.lower() * (1 - frac) + i.upper() * frac);
+    }
+}
+
+Interval Region::Axis::expand(Interval i, float res)
+{
+    if (res == 0)
+    {
+        return i;
+    }
+    else
+    {
+        size_t size = std::ceil(res * (i.upper() - i.lower()));
+        float extra = size / res - (i.upper() - i.lower());
+        return {i.lower() - extra/2, i.upper() + extra/2};
     }
 }

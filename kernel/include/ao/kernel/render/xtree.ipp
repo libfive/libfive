@@ -27,8 +27,7 @@
 #include "ao/kernel/render/xtree.hpp"
 
 template <class T, int dims>
-T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
-                          bool multithread)
+T* XTree<T, dims>::Render(Tree* t, const Region& r, bool multithread)
 {
     auto rp = r.powerOfTwo(dims).view();
 
@@ -42,8 +41,8 @@ T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
             auto e = new Evaluator(t);
 
             futures.push_back(std::async(std::launch::async,
-                [e, region, flags](){
-                    auto out = new T(e, region, flags);
+                [e, region](){
+                    auto out = new T(e, region);
                     delete e;
                     return out;}));
         }
@@ -58,111 +57,122 @@ T* XTree<T, dims>::Render(Tree* t, const Region& r, uint32_t flags,
         }
 
         Evaluator e(t);
-        return new T(&e, sub, rp, flags);
+        return new T(&e, sub, rp);
     }
 
     else
     {
         Evaluator e(t);
-        return new T(&e, rp, flags);
+        return new T(&e, rp);
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 template <class T, int dims>
 XTree<T, dims>::XTree(const Subregion& r)
-    : XTree(r, false)
-{
-    // Nothing to do here
-}
-
-template <class T, int dims>
-XTree<T, dims>::XTree(const Subregion& r, bool jitter)
     : X(r.X.lower(), r.X.upper()),
       Y(r.Y.lower(), r.Y.upper()),
-      Z(r.Z.lower(), r.Z.upper()),
-      jitter(jitter)
-
+      Z(r.Z.lower(), r.Z.upper())
 {
-    // Nothing to do here
+    // Nothing to do here (delegating constructor)
 }
 
 template <class T, int dims>
-XTree<T, dims>::XTree(Evaluator* e, const Subregion& r, uint32_t flags)
-    : XTree(r, !(flags & NO_JITTER))
+XTree<T, dims>::XTree(Evaluator* e, const Subregion& r)
+    : XTree(r)
 {
-    populateChildren(e, r, flags);
+    populateChildren(e, r);
 }
 
 template <class T, int dims>
 XTree<T, dims>::XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r)
-    : XTree(r, false)
+    : XTree(r)
 {
     for (uint8_t i=0; i < cs.size(); ++i)
     {
         children[i].reset(cs[i]);
+        corners[i] = children[i]->corners[i];
     }
     type = BRANCH;
 }
 
 template <class T, int dims>
-void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r,
-                                      uint32_t flags)
+void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r)
 {
-    // The cell is a LEAF cell until proven otherwise
-    type = LEAF;
-
-    // If we can recurse, then it may become a BRANCH cell
-    if (r.canSplit())
+    // First, do interval evaluation to see if the cell should be checked
+    Interval out = e->eval(r.X.bounds, r.Y.bounds, r.Z.bounds);
+    if (out.upper() < 0)
     {
-        // First, do interval evaluation to see if the cell should be checked
-        Interval out = e->eval(r.X.bounds, r.Y.bounds, r.Z.bounds);
-        if (out.upper() < 0)
+        type = FULL;
+    }
+    else if (out.lower() >= 0)
+    {
+        type = EMPTY;
+    }
+    // If the cell wasn't empty or filled, build a BRANCH or LEAF
+    else
+    {
+        bool all_empty = true;
+        bool all_full  = true;
+
+        if (r.canSplit())
         {
-            type = FULL;
-            for (uint8_t i=0; i < children.size(); ++i)
-            {
-                corners[i] = true;
-            }
-        }
-        else if (out.lower() >= 0)
-        {
-            type = EMPTY;
-            for (uint8_t i=0; i < children.size(); ++i)
-            {
-                corners[i] = false;
-            }
-        }
-        else
-        {   // If the cell wasn't empty or filled, recurse
-            e->push();
             auto rs = r.splitEven(dims);
+            e->push();
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                children[i].reset(new T(e, rs[i], flags));
+                // Populate child recursively
+                children[i].reset(new T(e, rs[i]));
+
+                // Grab corner values from children
+                corners[i] = children[i]->corners[i];
+
+                all_empty &= children[i]->type == EMPTY;
+                all_full  &= children[i]->type == FULL;
             }
-            type = BRANCH;
             e->pop();
+
+            type = all_empty ? EMPTY
+                 : all_full ? FULL : BRANCH;
+        }
+        // Otherwise, calculate corner values
+        else
+        {
+            // Pack into evaluator
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
+                auto c = pos(i);
+                e->set(c.x, c.y, c.z, i);
+            }
+
+            // Do the evaluation
+            const float* fs = e->values(children.size());
+
+            // And unpack from evaluator
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
+                corners[i] = fs[i] < 0;
+                all_full  &=  corners[i];
+                all_empty &= !corners[i];
+            }
+            type = all_empty ? EMPTY
+                 : all_full ? FULL : LEAF;
         }
     }
 
-    // Otherwise, calculate corner values
-    if (type == LEAF)
+    if (type == FULL || type == EMPTY)
     {
-        for (uint8_t i=0; i < children.size(); ++i)
+        for (auto& c : corners)
         {
-            auto c = pos(i);
-            e->set(c.x, c.y, c.z, i);
+            c = type == FULL;
         }
-        const float* fs = e->values(children.size());
-        for (uint8_t i=0; i < children.size(); ++i)
-        {
-            corners[i] = fs[i] < 0;
-        }
+        manifold = true;
     }
 }
 
 template <class T, int dims>
-void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
+void XTree<T, dims>::finalize(Evaluator* e)
 {
     // Find this Octree's level
     level = (type == BRANCH)
@@ -173,126 +183,27 @@ void XTree<T, dims>::finalize(Evaluator* e, uint32_t flags)
 
     if (type == BRANCH)
     {
-        // Grab corner values from children
-        for (uint8_t i=0; i < children.size(); ++i)
-        {
-            corners[i] = children[i]->corners[i];
-        }
-
-        // Collapse branches if the COLLAPSE flag is set
-        if (flags & COLLAPSE)
-        {
-            collapseBranch(e);
-        }
+        // This populate the vert member if the branch is collapsed
+        // into a LEAF node.
+        collapseBranch();
     }
-    else
+    // Always try to convert a LEAF to an EMPTY / FILLED node
+    // Otherwise, populate the leaf vertex data
+    else if (type == LEAF)
     {
-        // Always convert leafs to empty / filled cells
-        collapseLeaf();
-    }
+        // Populate matrices, rank, and mass point
+        auto solver = findLeafMatrices(e);
 
-    if (type == LEAF && std::isnan(vert.x))
-    {
-        findVertex(e);
-    }
-}
+        // Figure out if the leaf is manifold
+        manifold = this->cornerTopology();
 
-template <class T, int dims>
-void XTree<T, dims>::findIntersections(Evaluator* eval)
-{
-    // If this is a leaf cell, check every edge and use binary search to
-    // find intersections on edges that have mismatched signs
-    if (type == LEAF)
-    {
-        for (auto e : static_cast<T*>(this)->cellEdges())
-        {
-            if (corner(e.first) != corner(e.second))
-            {
-                if (corner(e.first))
-                {
-                    searchEdge(pos(e.first), pos(e.second), eval);
-                }
-                else
-                {
-                    searchEdge(pos(e.second), pos(e.first), eval);
-                }
-            }
-        }
-    }
-    // If this is a branch cell, then accumulate intersections from all the
-    // children with the max rank (de-duplicating to avoid weighting
-    // intersections incorrectly)
-    else if (type == BRANCH)
-    {
-        // pts stores a list of unique points (within some epsilon)
-        std::list<glm::vec3> pts;
-
-        // Compute epsilon from the cell size and edge search count
-        const float epsilon = std::max(
-                {X.upper() - X.lower(),
-                 Y.upper() - Y.lower(),
-                 Z.upper() - Z.lower()}) / (4 << SEARCH_COUNT);
-
-        // Find the max rank among children, then only accumulate
-        // intersections from children with that rank
-        const unsigned max_rank = std::accumulate(
-                children.begin(), children.end(), (unsigned)0,
-                [](const unsigned& a, const std::unique_ptr<T>& b)
-                    { return std::max(a, b->rank);} );
-
-        for (uint8_t i=0; i < children.size(); ++i)
-        {
-            if (child(i)->rank == max_rank)
-            {
-                for (auto n : child(i)->intersections)
-                {
-                    // Only store this intersection point if it hasn't
-                    // been stored already (to a given epsilon of
-                    // floating-point error)
-                    if (!std::any_of(pts.begin(), pts.end(),
-                            [&](glm::vec3 p)
-                            { return glm::length(n.pos - p) < epsilon; }))
-                    {
-                        pts.push_back(n.pos);
-                        intersections.push_back(n);
-                    }
-                }
-            }
-        }
-    }
-}
-
-template <class T, int dims>
-void XTree<T, dims>::collapseBranch(Evaluator* e)
-{
-    // If all of the children are leafs, then collapse into a single LEAF cell
-    if (std::all_of(children.begin(), children.end(),
-            [](std::unique_ptr<T>& o){ return o->type == EMPTY; }))
-    {
-        type = EMPTY;
-    }
-    // If all of the children are full, then collapse into a single FULL cell
-    else if (std::all_of(children.begin(), children.end(),
-            [](std::unique_ptr<T>& o){ return o->type == FULL; }))
-    {
-        type = FULL;
-    }
-    // If all of the children are non-branches, then check to see whether we
-    // can collapse into a single LEAF cell.
-    else if (std::all_of(children.begin(), children.end(),
-            [](std::unique_ptr<T>& o){ return o->type != BRANCH; }))
-    {
-        //  This conditional implements the three checks described in
-        //  [Ju et al, 2002] in the section titled
-        //      "Simplification with topology safety"
-        if (this->cornerTopology() &&
-            std::all_of(children.begin(), children.end(),
-                    [](const std::unique_ptr<T>& o)
-                    { return o->cornerTopology(); }) &&
-            static_cast<T*>(this)->leafTopology() && findVertex(e) < 1e-8)
-        {
-            type = LEAF;
-        }
+        // Find the vertex for this node
+        vert = manifold ? findVertex(solver) :
+            // For non-manifold leaf nodes, put the vertex at the mass point.
+            // As described in "Dual Contouring: The Secret Sauce", this improves
+            // mesh quality.
+            vert = glm::vec3(mass_point.x, mass_point.y, mass_point.z) /
+                   mass_point.w;
     }
 
     // If this cell is no longer a branch, remove its children
@@ -304,30 +215,103 @@ void XTree<T, dims>::collapseBranch(Evaluator* e)
 }
 
 template <class T, int dims>
-void XTree<T, dims>::collapseLeaf()
+std::vector<Intersection> XTree<T, dims>::findIntersections(
+        Evaluator* eval) const
 {
-    if (std::all_of(corners.begin(), corners.end(),
-            [](bool c){ return !c; }))
+    assert(type == LEAF);
+
+    // Check every edge and use binary search to find intersections on
+    // edges that have mismatched signs
+    std::vector<Intersection> intersections;
+    for (auto e : static_cast<const T*>(this)->cellEdges())
     {
-        type = EMPTY;
+        if (corner(e.first) != corner(e.second))
+        {
+            const glm::vec3 p = corner(e.first)
+                ? searchEdge(pos(e.first), pos(e.second), eval)
+                : searchEdge(pos(e.second), pos(e.first), eval);
+
+            // Store position in big list o' intersections
+            // (along with a dummy normal)
+            intersections.push_back({p, glm::vec3()});
+        }
     }
-    else if (std::all_of(corners.begin(), corners.end(),
-            [](bool c){ return c; }))
+
+    // Calculate normals in bulk (since that's more efficient)
+    for (unsigned i=0; i < intersections.size(); ++i)
     {
-        type = FULL;
+        const auto p = intersections[i].pos;
+        eval->setRaw(p.x, p.y, p.z, i);
+    }
+    auto ds = eval->derivs(intersections.size());
+    for (unsigned i=0; i < intersections.size(); ++i)
+    {
+        const glm::vec3 g(std::get<1>(ds)[i],
+                          std::get<2>(ds)[i],
+                          std::get<3>(ds)[i]);
+        intersections[i].norm = glm::normalize(g);
+    }
+
+    return intersections;
+}
+
+
+template <class T, int dims>
+void XTree<T, dims>::findBranchMatrices()
+{
+    // Find the max rank among children, then only accumulate
+    // intersections from children with that rank
+    rank = std::accumulate(
+            children.begin(), children.end(), (unsigned)0,
+            [](const unsigned& a, const std::unique_ptr<T>& b)
+                { return std::max(a, b->rank);} );
+
+    for (const auto& c : children)
+    {
+        if (c->rank == rank)
+        {
+            mass_point += c->mass_point;
+        }
+        AtA += c->AtA;
+        AtB += c->AtB;
+        BtB += c->BtB;
     }
 }
 
 template <class T, int dims>
-float XTree<T, dims>::findVertex(Evaluator* e)
+void XTree<T, dims>::collapseBranch()
 {
-    findIntersections(e);
+    if (std::all_of(children.begin(), children.end(),
+                    [](const std::unique_ptr<T>& o)
+                    { return o->type != BRANCH; }))
+    {
+        //  This conditional implements the three checks described in
+        //  [Ju et al, 2002] in the section titled
+        //      "Simplification with topology safety"
+        manifold = this->cornerTopology() &&
+            std::all_of(children.begin(), children.end(),
+                    [](const std::unique_ptr<T>& o)
+                    { return o->manifold; }) &&
+            static_cast<T*>(this)->leafTopology();
 
-    // Find the center of intersection positions
-    glm::vec3 center = std::accumulate(
-            intersections.begin(), intersections.end(), glm::vec3(),
-            [](const glm::vec3& a, const Intersection& b)
-                { return a + b.pos; }) / float(intersections.size());
+        if (manifold)
+        {
+            findBranchMatrices();
+
+            float err;
+            vert = findVertex(&err);
+            if (err < 1e-8)
+            {
+                type = LEAF;
+            }
+        }
+    }
+}
+
+template <class T, int dims>
+Eigen::EigenSolver<Eigen::Matrix3d> XTree<T, dims>::findLeafMatrices(Evaluator* e)
+{
+    std::vector<Intersection> intersections = findIntersections(e);
 
     /*  The A matrix is of the form
      *  [n1x, n1y, n1z]
@@ -336,12 +320,7 @@ float XTree<T, dims>::findVertex(Evaluator* e)
      *  ...
      *  (with one row for each Hermite intersection)
      */
-    Eigen::MatrixX3f A(intersections.size(), 3);
-    for (unsigned i=0; i < intersections.size(); ++i)
-    {
-        auto d = intersections[i].norm;
-        A.row(i) << Eigen::Vector3f(d.x, d.y, d.z).transpose();
-    }
+    Eigen::MatrixX3d A(intersections.size(), 3);
 
     /*  The B matrix is of the form
      *  [p1 . n1]
@@ -349,39 +328,87 @@ float XTree<T, dims>::findVertex(Evaluator* e)
      *  [p3 . n3]
      *  ...
      *  (with one row for each Hermite intersection)
-     *
-     *  Positions are pre-emtively shifted so that the center of the contoru
-     *  is at 0, 0, 0 (since the least-squares fix minimizes distance to the
-     *  origin); we'll unshift afterwards.
      */
-    Eigen::VectorXf B(intersections.size(), 1);
+    Eigen::VectorXd B(intersections.size(), 1);
     for (unsigned i=0; i < intersections.size(); ++i)
     {
-        B.row(i) << glm::dot(intersections[i].norm,
-                             intersections[i].pos - center);
+        const auto norm = intersections[i].norm;
+        const auto pos  = intersections[i].pos;
+
+        // Build up matrices
+        A.row(i) << Eigen::Vector3d(norm.x, norm.y, norm.z).transpose();
+        B.row(i) << glm::dot(norm, pos);
+
+        // Accumulate intersection in mass point
+        mass_point += glm::vec4(pos, 1.0f);
     }
 
-    // Use singular value decomposition to solve the least-squares fit.
-    Eigen::JacobiSVD<Eigen::MatrixX3f> svd(A, Eigen::ComputeFullU |
-                                              Eigen::ComputeFullV);
+    auto At = A.transpose();
 
-    // Truncate singular values below 0.1
-    auto singular = svd.singularValues();
-    svd.setThreshold(0.1 / singular.maxCoeff());
-    rank = svd.rank();
+    AtA = At * A;
+    AtB = At * B;
+    BtB = B.transpose() * B;
 
-    // Solve the equation and convert back to cell coordinates
-    Eigen::Vector3f solution = svd.solve(B);
-    vert = glm::vec3(solution.x(), solution.y(), solution.z()) + center;
+    // Use eigenvalues to find rank, then return the solver
+    // (so it can be re-used to find vertex position)
+    Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
+    auto eigenvalues = es.eigenvalues().real();
 
-    // Clamp vertex to be within the bounding box
-    vert.x = std::min(X.upper(), std::max(vert.x, X.lower()));
-    vert.y = std::min(Y.upper(), std::max(vert.y, Y.lower()));
-    vert.z = std::min(Z.upper(), std::max(vert.z, Z.lower()));
+    // Truncate near-singular eigenvalues
+    rank = (eigenvalues.array().abs() >= EIGENVALUE_CUTOFF).count();
 
-    // Find and return QEF residual
-    auto m = A * solution - B;
-    return m.transpose() * m;
+    // Return the solver so it can be re-used
+    return es;
+}
+
+template <class T, int dims>
+glm::vec3 XTree<T, dims>::findVertex(float* err) const
+{
+    Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
+    return findVertex(es, err);
+}
+
+template <class T, int dims>
+glm::vec3 XTree<T, dims>::findVertex(
+        Eigen::EigenSolver<Eigen::Matrix3d>& es,
+        float* err) const
+{
+    // We need to find the pseudo-inverse of AtA.
+    auto eigenvalues = es.eigenvalues().real();
+
+    // Truncate near-singular eigenvalues in the SVD's diagonal matrix
+    Eigen::Matrix3d D(Eigen::Matrix3d::Zero());
+    for (unsigned i=0; i < 3; ++i)
+    {
+        D.diagonal()[i] = (std::abs(eigenvalues[i]) < EIGENVALUE_CUTOFF)
+            ? 0 : (1 / eigenvalues[i]);
+    }
+
+    // Sanity-checking that rank matches eigenvalue count
+    if (type == LEAF)
+    {
+        assert(D.diagonal().count() == rank);
+    }
+
+    // SVD matrices
+    auto U = es.eigenvectors().real(); // = V
+
+    // Pseudo-inverse of A
+    auto AtAp = U * D * U.transpose();
+
+    // Solve for vertex (minimizing distance to center)
+    auto p = Eigen::Vector3d(mass_point.x, mass_point.y, mass_point.z) /
+             mass_point.w;
+    auto v = AtAp * (AtB - AtA * p) + p;
+
+    // Find the QEF error if required
+    if (err)
+    {
+        *err = (v.transpose() * AtA * v - 2*v.transpose() * AtB)[0] + BtB;
+    }
+
+    // Convert out of Eigen's format and return
+    return glm::vec3(v[0], v[1], v[2]);
 }
 
 
@@ -401,14 +428,13 @@ bool XTree<T, dims>::cornerTopology() const
 }
 
 template<class T, int dims>
-void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
+glm::vec3 XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b,
+                                     Evaluator* e) const
 {
     // We do an N-fold reduction at each stage
     constexpr int _N = 4;
     constexpr int N = (1 << _N);
     constexpr int ITER = SEARCH_COUNT / _N;
-
-    const float len = glm::length(a - b);
 
     // Binary search for intersection
     for (int i=0; i < ITER; ++i)
@@ -433,41 +459,5 @@ void XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* e)
         }
     }
 
-    // Calculate value and gradient at the given point
-    std::vector<glm::vec3> pos = {a};
-
-    // If jitter is enabled, add a cloud of nearby points
-    if (jitter)
-    {
-        static_assert(JITTER_COUNT < Result::N, "JITTER_COUNT is too large");
-
-        const float r = len / 10.0f;
-        while (pos.size() < JITTER_COUNT)
-        {
-            if (dims == 3)
-            {
-                pos.push_back(a + glm::sphericalRand(r));
-            }
-            else if (dims == 2)
-            {
-                pos.push_back(a + glm::vec3(glm::circularRand(r), 0.0f));
-            }
-        }
-    }
-
-    size_t count = 0;
-    for (auto p : pos)
-    {
-        e->setRaw(p.x, p.y, p.z, count++);
-    }
-
-    // Get set of derivative arrays
-    auto ds = e->derivs(count);
-
-    // Extract gradient from set of arrays
-    for (unsigned i=0; i < count; ++i)
-    {
-        glm::vec3 g(std::get<1>(ds)[i], std::get<2>(ds)[i], std::get<3>(ds)[i]);
-        intersections.push_back({pos[i], glm::normalize(g)});
-    }
+    return a;
 }

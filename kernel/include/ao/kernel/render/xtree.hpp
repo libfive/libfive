@@ -21,8 +21,10 @@
 #include <array>
 #include <memory>
 #include <vector>
+#include <limits>
 
 #include <glm/vec3.hpp>
+#include <Eigen/Eigen>
 
 #include "ao/kernel/eval/interval.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
@@ -41,13 +43,7 @@ template <class T, int dims>
 class XTree
 {
 public:
-    static T* Render(Tree* t, const Region& r, uint32_t flags=COLLAPSE,
-                     bool multithread=true);
-
-    /*  Enumerator for optional flags  */
-    enum Flags { COLLAPSE   = (1 << 0),
-                 NO_JITTER  = (1 << 1),
-    };
+    static T* Render(Tree* t, const Region& r, bool multithread=true);
 
     /*  Enumerator that distinguishes between cell types  */
     enum Type { LEAF, BRANCH, EMPTY, FULL };
@@ -84,12 +80,6 @@ public:
     Type getType() const { return type; }
 
     /*
-     *  Returns the vector of intersections
-     */
-    const std::vector<Intersection>& getIntersections() const
-    { return intersections; }
-
-    /*
      *  Looks up the vertex position
      */
     glm::vec3 getVertex() const { return vert; }
@@ -99,16 +89,12 @@ public:
      */
     unsigned getLevel() const { return level; }
 
-    /*  This is the number of extra points added per intersection
-     *  if jittering is enabled */
-    const static unsigned JITTER_COUNT = 16;
-
 protected:
     /*
      *  Recursive constructor that splits r
      *  Requires a call to finalize in the parent constructor
      */
-    XTree(Evaluator* e, const Subregion& r, uint32_t flags);
+    XTree(Evaluator* e, const Subregion& r);
 
     /*
      *  Collecting constructor that assembles multiple subtrees
@@ -117,33 +103,44 @@ protected:
     XTree(const std::array<T*, 1 << dims>& cs, const Subregion& r);
 
     /*
-     *  Delegating constructor to initialize X, Y, Z, and jitter
+     *  Delegating constructor to initialize X, Y, Z
      */
     XTree(const Subregion& r);
-    XTree(const Subregion& r, bool jitter);
 
     /*
      *  Splits a subregion and fills out child pointers and cell type
      */
-    void populateChildren(Evaluator* e, const Subregion& r,
-                          uint32_t flags);
+    void populateChildren(Evaluator* e, const Subregion& r);
 
     /*
      *  Finishes initialization once the type and child pointers are in place
      *  (split into a separate function because we can get child pointers
      *   either through recursion or with threaded construction)
      */
-    void finalize(Evaluator* e, uint32_t flags);
+    void finalize(Evaluator* e);
 
     /*
-     *  Stores edge-wise intersections for the cell,
-     *  storing them in the intersections vector.
+     *  Finds and returns edge-wise intersections for a LEAF cell
+     *  The intersections have normalized (length = 1) normals
      *
-     *  For leaf cells, intersections are found with binary search along every
-     *  edge that exhibits a sign change.  For branch cells, intersections are
-     *  found by accumulating from all child leaf cells with max rank.
+     *  Intersections are found with binary search along every
+     *  edge that exhibits a sign change.
+     *
+     *  This function also populated mass_point as the mean of intersections.
      */
-    void findIntersections(Evaluator* eval);
+    std::vector<Intersection> findIntersections(Evaluator* e) const;
+
+    /*
+     *  Populates AtA, AtB, BtB, mass_point, and rank
+     *  by calling findIntersections then building matrices
+     */
+    Eigen::EigenSolver<Eigen::Matrix3d> findLeafMatrices(Evaluator* e);
+
+    /*
+     *  Populates AtA, AtB, BtB, mass_point, and rank
+     *  by pulling matrices from children
+     */
+    void findBranchMatrices();
 
     /*
      *  If all children are filled or empty, collapse the branch
@@ -151,29 +148,26 @@ protected:
      *  Otherwise, collapse the branch if it is topologically safe to do
      *  so and the residual QEF error isn't too large.
      */
-    void collapseBranch(Evaluator* e);
+    void collapseBranch();
 
     /*
-     *  If all corners are of the same sign, convert to FULL or EMPTY
-     */
-    void collapseLeaf();
-
-    /*
-     *  Finds a feature vertex by finding intersections then solving a
-     *  least-squares fit to minimize a quadratic error function.
+     *  Finds a feature vertex by solving a least-squares fit to minimize
+     *  a quadratic error function.
      *
-     *  The resulting vertex is stored in vert; the residual is returned
+     *  Requires AtA, AtB, BtB, and mass_point to be populated
+     *
+     *  Returns the vertex and populates err if provided
      */
-    float findVertex(Evaluator* e);
+    glm::vec3 findVertex(float* err=NULL) const;
+    glm::vec3 findVertex(Eigen::EigenSolver<Eigen::Matrix3d>& es,
+                         float* err=NULL) const;
 
     /*
-     *  Performs binary search along a cube's edge and stores in intersections
-     *
-     *  The resulting Intersections' normals are of unit length
+     *  Performs binary search along a cube's edge, returning the intersection
      *
      *  eval(a) should be < 0 (inside the shape) and eval(b) should be outside
      */
-    void searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval);
+    glm::vec3 searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval) const;
 
     /*
      *  Checks to see if the cell's corners describe an ambiguous
@@ -218,9 +212,6 @@ protected:
     /*  Cell type  */
     Type type;
 
-    /*  Intersections where the shape crosses the cell  */
-    std::vector<Intersection> intersections;
-
     /*  Pointers to children octrees (either all populated or all null)  */
     std::array<std::unique_ptr<T>, 1 << dims> children;
 
@@ -233,20 +224,30 @@ protected:
     /*  Feature vertex located in the cell  */
     glm::vec3 vert=glm::vec3(std::numeric_limits<float>::quiet_NaN());
 
+    /*  Marks whether a node is manifold or not  */
+    bool manifold;
+
+    /*  Mass point is the average intersection location *
+     *  (the w coordinate is number of points averaged) */
+    glm::vec4 mass_point=glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    /*  QEF terms */
+    Eigen::Matrix3d AtA=Eigen::Matrix3d::Zero();
+    Eigen::Vector3d AtB=Eigen::Vector3d::Zero();
+    double BtB=0;
+
     /*  Feature rank for the cell's vertex, where                    *
      *      1 is face, 2 is edge, 3 is corner                        *
      *                                                               *
-     *  This value is populated in findVertex and used when merging  *
-     *  intersections from lower-ranked children                     */
+     *  This value is populated in find{Leaf|Branch}Matrices and     *
+     *  used when merging intersections from lower-ranked children   */
     unsigned rank=0;
-
-    /*  If true, points found with searchEdge are jittered slightly to avoid
-     *  numerical instability when rendering shapes that lie exactly on cell
-     *  boundaries */
-    const bool jitter;
 
     /*  Number of iterations to run when doing binary search for verts  */
     const static int SEARCH_COUNT = 8;
+
+    /*  Eigenvalue threshold for determining feature rank  */
+    constexpr static float EIGENVALUE_CUTOFF = 0.1f;
 };
 
 #include "ao/kernel/render/xtree.ipp"

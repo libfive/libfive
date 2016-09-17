@@ -31,11 +31,19 @@ class Region
 public:
     /*
      *  Constructs a region with the given bounds and res voxels per unit
+     *
+     *  If the bounds and resolution imply fractional voxels, the bounds are
+     *  expanded about their centers to include a unit number of voxels at the
+     *  specified resolution.
      */
     Region(Interval x, Interval y, Interval z, float res);
 
     /*
      *  Constructs a region with the given bounds and per-axis resolution
+     *
+     *  If the bounds and resolution imply fractional voxels, the bounds are
+     *  expanded about their centers to include a unit number of voxels at the
+     *  specified resolution.
      */
     Region(Interval x, Interval y, Interval z,
            float rx, float ry, float rz);
@@ -59,11 +67,17 @@ public:
      */
     struct Axis
     {
+        /* If i and res imply fractional values, the interval will be
+         * expanded to fit a whole number of voxels. */
         Axis(Interval i, float res);
         Axis(Interval i, size_t size);
 
         /*  Returns a pointer to the first value  */
         const float* ptr() const { return &values[0]; }
+
+        /*  Expands the input interval if it implies a fractional
+         *  voxel count */
+        static Interval expand(Interval i, float res);
 
         const Interval bounds;
         std::vector<float> values;

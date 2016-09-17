@@ -31,6 +31,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (diamond x y z)
+  (max (+ x y -1)
+       (- x y 1)
+       (- y x 1)
+       (- -1 x y)))
+(ao-export-mesh (extrude-z diamond -1 1)
+                "meshes/diamond.stl" '(-2.1 -2.1 -2.1) '(2.1 2.1 2.1) 4)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; How do edges and vertex placement look?
 (define (slice x y z) (+ x y z -2.73))
 (define split (intersection (cube '(-1.5 -1.5 -1.5) '(1.5 1.5 1.5)) slice))
@@ -72,7 +82,6 @@
 
 (define start-time (get-internal-real-time))
 (ao-export-mesh charm "meshes/charm.stl" '(-2 -2 -2) '(2 2 2) 100)
-(format #t "Exported charm in ~f sec\n"
-        (/ (- (get-internal-real-time) start-time)
+(format #t "Exported charm in ~a sec\n"
+        (/ (- (get-internal-real-time) start-time 0.0)
            internal-time-units-per-second))
-

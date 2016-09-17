@@ -23,13 +23,13 @@
 class Quadtree : public XTree<Quadtree, 2>
 {
     Quadtree(const Subregion& r);
-    Quadtree(Evaluator* e, const Subregion& r, uint32_t flags);
+    Quadtree(Evaluator* e, const Subregion& r);
     Quadtree(Evaluator* e, const std::array<Quadtree*, 4>& cs,
-           const Subregion& r, uint32_t flags);
+             const Subregion& r);
 
     static const std::vector<bool>& cornerTable()
         { return _cornerTable; }
-    const std::vector<std::pair<unsigned, unsigned>>& cellEdges()
+    static const std::vector<std::pair<unsigned, unsigned>>& cellEdges()
         { return _cellEdges; }
     bool leafTopology() const;
 
