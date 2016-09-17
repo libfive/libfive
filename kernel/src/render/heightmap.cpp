@@ -138,8 +138,7 @@ static void pixels(Evaluator* e, const Subregion& r,
     NormalRenderer nr(e, r, norm);
 
     // Unflatten results into the image, breaking out of loops early when a pixel
-    // is written (because all subsequent pixels will be below it).  This
-    // loop's behavior is dependent on how Tree::eval(Region) is structured.
+    // is written (because all subsequent pixels will be below it).
     SUBREGION_ITERATE_XYZ(r)
     {
         // If this voxel is filled (because the f-rep is less than zero)
