@@ -72,6 +72,12 @@ public:
         Axis(Interval i, float res);
         Axis(Interval i, size_t size);
 
+        /*
+         *  Accessor functions for the interval object
+         */
+        float lower() const { return bounds.lower(); }
+        float upper() const { return bounds.upper(); }
+
         /*  Returns a pointer to the first value  */
         const float* ptr() const { return &values[0]; }
 
