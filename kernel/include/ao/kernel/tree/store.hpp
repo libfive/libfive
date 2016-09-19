@@ -19,13 +19,13 @@
 #pragma once
 
 #include <map>
-#include <vector>
-#include <array>
 #include <set>
+#include <boost/bimap.hpp>
+
+#include "glm/vec4.hpp"
 
 #include "ao/kernel/tree/opcode.hpp"
-
-class Token;
+#include "ao/kernel/tree/token.hpp"
 
 /*
  *  A Store contains a set of Tokens with efficient routines for lookups
@@ -34,14 +34,9 @@ class Store
 {
 public:
     /*
-     *  In destructor, delete all Tokens associated with this Store
-     */
-    ~Store();
-
-    /*
      *  Returns a token for the given constant
      */
-    Token* constant(float v);
+    Token::Id constant(float v);
 
     /*
      *  Returns a token for the given operation
@@ -52,25 +47,30 @@ public:
      *  If collapse is true (the default), identity and affine operations will
      *  be collapsed; if false, all branches will be created
      */
-    Token* operation(Opcode op, Token* a=nullptr, Token* b=nullptr,
-                     bool collapse=true);
+    Token::Id operation(Opcode::Opcode op, Token::Id a=0, Token::Id b=0,
+                        bool collapse=true);
 
-    /*
-     *  Return tokens for base variables
-     */
-    Token* X() { return operation(VAR_X); }
-    Token* Y() { return operation(VAR_Y); }
-    Token* Z() { return operation(VAR_Z); }
+    Token::Id X() { return operation(Opcode::VAR_X); }
+    Token::Id Y() { return operation(Opcode::VAR_Y); }
+    Token::Id Z() { return operation(Opcode::VAR_Z); }
 
     /*
      *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
      */
-    Token* affine(float a, float b, float c, float d);
+    Token::Id affine(float a, float b, float c, float d);
+    Token::Id affine(glm::vec4 v) { return affine(v.x, v.y, v.z, v.w); }
 
     /*
      *  Set found in every token descending from root
      */
-    std::set<Token*> findConnected(Token* root);
+    std::set<Token::Id> findConnected(Token::Id root);
+
+    /*
+     *  If the given Token is an AFFINE_VEC, return the affine terms
+     *
+     *  Set success to true / false if it is provided
+     */
+    glm::vec4 getAffine(Token::Id root, bool* success=nullptr) const;
 
     /*
      *  Collapses BOUNDS nodes into normal OP_MAX, taking advantage of
@@ -79,7 +79,7 @@ public:
      *
      *  Invalidates all Token pointers.
      */
-    Token* collapseBounds(Token* root);
+    Token::Id collapseBounds(Token::Id root);
 
     /*
      *  Collapses AFFINE nodes into normal OP_ADD, taking advantage of
@@ -88,7 +88,26 @@ public:
      *
      *  Invalidates all Token pointers.
      */
-    Token* collapseAffine(Token* root);
+    Token::Id collapseAffine(Token::Id root);
+
+    /*
+     *  Imports an external Store, returning the new root's id
+     */
+    Token::Id import(Store* s, Token::Id root);
+
+    /*
+     *  Accessor functions for token fields
+     */
+    Opcode::Opcode opcode(Token::Id id) const
+        { return std::get<0>(token(id)); }
+    Token::Id lhs(Token::Id id) const
+        { return std::get<1>(token(id)); }
+    Token::Id rhs(Token::Id id) const
+        { return std::get<2>(token(id)); }
+    size_t rank(Token::Id id) const
+        { return std::get<3>(token(id)); }
+    float value(Token::Id id) const
+        { return std::get<4>(token(id)); }
 
 protected:
     /*
@@ -96,28 +115,38 @@ protected:
      *  If so returns an appropriately simplified Token
      *  i.e. (X + 0) will return X
      */
-    Token* checkIdentity(Opcode op, Token* a, Token* b);
+    Token::Id checkIdentity(Opcode::Opcode op, Token::Id a, Token::Id b);
 
     /*
      *  Checks whether the operation should be handled as an affine
      *  transformation, returning an AFFINE Token if true.
      */
-    Token* checkAffine(Opcode op, Token* a, Token* b);
+    Token::Id checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b);
 
     /*
      *  Rebuilds a tree from the base up, returning the new root
      */
-    Token* rebuild(Token* root, std::set<Token*> pruned,
-                   std::map<Token*, Token*> changed);
+    Token::Id rebuild(Token::Id root, std::set<Token::Id> pruned,
+                      std::map<Token::Id, Token::Id> changed);
 
-    typedef std::pair<Token*, Token*> Key;
-    typedef std::array<std::map<Key, Token*>, LAST_OP> Cache;
+    /*
+     *  Keys store all relevant token data
+     */
+    typedef std::tuple<Opcode::Opcode, Token::Id, Token::Id, size_t, float> Key;
 
-    /*  Constants are indexed solely by value  */
-    std::map<float, Token*> constants;
+    /*
+     *  Key constructors
+     */
+    Key key(float v) const;
+    Key key(Opcode::Opcode op, Token::Id a, Token::Id b) const;
 
-    /*  Operators are indexed by weight, opcode, and arguments  */
-    std::vector<Cache> ops;
+    /*
+     *  Token reverse lookup
+     */
+    Key token(Token::Id id) const { return cache.right.at(id); }
+
+    boost::bimap<Key, Token::Id> cache;
+    Token::Id next=1;
 
     friend class Tree;
 };

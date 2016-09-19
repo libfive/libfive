@@ -130,7 +130,7 @@ protected:
     /*
      *  Looks up an opcode, using dummy ops if children are disabled
      */
-    static Opcode getOpcode(Clause* c);
+    static Opcode::Opcode getOpcode(Clause* c);
 
     /*  Global matrix transform (and inverse) applied to all coordinates  */
     const glm::mat4 M;

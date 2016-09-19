@@ -22,168 +22,18 @@
 #include "ao/kernel/tree/store.hpp"
 #include "ao/kernel/tree/token.hpp"
 
-Store::~Store()
+Token::Id Store::constant(float v)
 {
-    for (auto c : constants)
+    auto k = key(v);
+    if (cache.left.find(k) == cache.left.end())
     {
-        delete c.second;
+        cache.left[k] = next++;
     }
-
-    for (auto row : ops)
-    {
-        for (auto sub : row)
-        {
-            for (auto t : sub)
-            {
-                delete t.second;
-            }
-        }
-    }
+    return cache.left[k];
 }
 
-Token* Store::constant(float v)
-{
-    if (constants.find(v) == constants.end())
-    {
-        constants[v] = new Token(v);
-    }
-    return constants[v];
-}
-
-Token* Store::checkAffine(Opcode op, Token* a, Token* b)
-{
-    if (op == OP_ADD)
-    {
-        if (a->op == AFFINE_VEC && b->op == CONST)
-        {
-            return affine(a->a->a->b->value,
-                          a->a->b->b->value,
-                          a->b->a->b->value,
-                          a->b->b->value + b->value);
-        }
-        else if (b->op == AFFINE_VEC && a->op == CONST)
-        {
-            return affine(b->a->a->b->value,
-                          b->a->b->b->value,
-                          b->b->a->b->value,
-                          b->b->b->value + a->value);
-        }
-        else if (a->op == AFFINE_VEC && b->op == AFFINE_VEC)
-        {
-            return affine(a->a->a->b->value + b->a->a->b->value,
-                          a->a->b->b->value + b->a->b->b->value,
-                          a->b->a->b->value + b->b->a->b->value,
-                          a->b->b->value + b->b->b->value);
-        }
-    }
-    else if (op == OP_SUB)
-    {
-        if (a->op == AFFINE_VEC && b->op == CONST)
-        {
-            return affine(a->a->a->b->value,
-                          a->a->b->b->value,
-                          a->b->a->b->value,
-                          a->b->b->value - b->value);
-        }
-        else if (b->op == AFFINE_VEC && a->op == CONST)
-        {
-            return affine(-b->a->a->b->value,
-                          -b->a->b->b->value,
-                          -b->b->a->b->value,
-                          a->value - b->b->b->value);
-        }
-        else if (a->op == AFFINE_VEC && b->op == AFFINE_VEC)
-        {
-            return affine(a->a->a->b->value - b->a->a->b->value,
-                          a->a->b->b->value - b->a->b->b->value,
-                          a->b->a->b->value - b->b->a->b->value,
-                          a->b->b->value - b->b->b->value);
-        }
-    }
-    else if (op == OP_MUL)
-    {
-        if (a->op == AFFINE_VEC && b->op == CONST)
-        {
-            return affine(a->a->a->b->value * b->value,
-                          a->a->b->b->value * b->value,
-                          a->b->a->b->value * b->value,
-                          a->b->b->value * b->value);
-        }
-        else if (b->op == AFFINE_VEC && a->op == CONST)
-        {
-            return affine(b->a->a->b->value * a->value,
-                          b->a->b->b->value * a->value,
-                          b->b->a->b->value * a->value,
-                          b->b->b->value * a->value);
-        }
-    }
-    else if (op == OP_DIV)
-    {
-        if (a->op == AFFINE_VEC && b->op == CONST)
-        {
-            return affine(a->a->a->b->value / b->value,
-                          a->a->b->b->value / b->value,
-                          a->b->a->b->value / b->value,
-                          a->b->b->value / b->value);
-        }
-    }
-    return nullptr;
-}
-
-Token* Store::checkIdentity(Opcode op, Token* a, Token* b)
-{
-    // Special cases to handle identity operations
-    if (op == OP_ADD)
-    {
-        if (a->op == CONST && a->value == 0)
-        {
-            return b;
-        }
-        else if (b->op == CONST && b->value == 0)
-        {
-            return a;
-        }
-    }
-    else if (op == OP_SUB)
-    {
-        if (a->op == CONST && a->value == 0)
-        {
-            return operation(OP_NEG, b);
-        }
-        else if (b->op == CONST && b->value == 0)
-        {
-            return a;
-        }
-    }
-    else if (op == OP_MUL)
-    {
-        if (a->op == CONST)
-        {
-            if (a->value == 0)
-            {
-                return a;
-            }
-            else if (a->value == 1)
-            {
-                return b;
-            }
-        }
-        if (b->op == CONST)
-        {
-            if (b->value == 0)
-            {
-                return b;
-            }
-            else if (b->value == 1)
-            {
-                return a;
-            }
-        }
-    }
-    return nullptr;
-}
-
-Token* Store::operation(Opcode op, Token* a, Token* b, bool collapse)
+Token::Id Store::operation(Opcode::Opcode op, Token::Id a, Token::Id b,
+                           bool collapse)
 {
     // These are opcodes that you're not allowed to use here
     assert(op != CONST && op != INVALID &&
@@ -204,37 +54,188 @@ Token* Store::operation(Opcode op, Token* a, Token* b, bool collapse)
     }
 
     // Otherwise, construct a new Token and add it to the ops set
-    const auto t = new Token(op, a, b);
-
-    if (ops.size() <= t->weight)
+    auto k = key(op, a, b);
+    if (cache.left.find(k) == cache.left.end())
     {
-        ops.resize(t->weight + 1);
+        cache.left[k] = next++;
     }
 
-    auto& row = ops[t->weight][t->op];
-    if (row.find({a,b}) == row.end())
-    {
-        row[{a,b}] = t;
-    }
-    else
-    {
-        delete t;
-    }
-
-    return row[{a,b}];
+    return cache.left[k];
 }
 
-Token* Store::affine(float a, float b, float c, float d)
+Token::Id Store::affine(float a, float b, float c, float d)
 {
     // Build up the desired tree structure with collapse = false
     // to keep branches from automatically collapsing.
-    return operation(AFFINE_VEC,
-            operation(OP_ADD,
-                operation(OP_MUL, X(), constant(a), false),
-                operation(OP_MUL, Y(), constant(b), false), false),
-            operation(OP_ADD,
-                operation(OP_MUL, Z(), constant(c), false),
+    return operation(Opcode::AFFINE_VEC,
+            operation(Opcode::OP_ADD,
+                operation(Opcode::OP_MUL, X(), constant(a), false),
+                operation(Opcode::OP_MUL, Y(), constant(b), false), false),
+            operation(Opcode::OP_ADD,
+                operation(Opcode::OP_MUL, Z(), constant(c), false),
                 constant(d), false));
+}
+
+Token::Id Store::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
+{
+    if (Opcode::args(op) != 2)
+    {
+        return 0;
+    }
+
+    // Pull op-codes from both branches
+    auto op_a = opcode(a);
+    auto op_b = opcode(b);
+
+    if (op == Opcode::OP_ADD)
+    {
+        if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::CONST)
+        {
+            auto va = getAffine(a);
+            auto vb = glm::vec4(0, 0, 0, value(b));
+            return affine(va + vb);
+        }
+        else if (op_b == Opcode::AFFINE_VEC && op_a == Opcode::CONST)
+        {
+            auto va = glm::vec4(0, 0, 0, value(a));
+            auto vb = getAffine(b);
+            return affine(va + vb);
+        }
+        else if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::AFFINE_VEC)
+        {
+            auto va = getAffine(b);
+            auto vb = getAffine(b);
+            return affine(va + vb);
+        }
+    }
+    else if (op == Opcode::OP_SUB)
+    {
+        if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::CONST)
+        {
+            auto va = getAffine(a);
+            auto vb = glm::vec4(0, 0, 0, value(b));
+            return affine(va - vb);
+        }
+        else if (op_b == Opcode::AFFINE_VEC && op_a == Opcode::CONST)
+        {
+            auto va = glm::vec4(0, 0, 0, value(a));
+            auto vb = getAffine(b);
+            return affine(va - vb);
+        }
+        else if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::AFFINE_VEC)
+        {
+            auto va = getAffine(b);
+            auto vb = getAffine(b);
+            return affine(va - vb);
+        }
+    }
+    else if (op == Opcode::OP_MUL)
+    {
+        if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::CONST)
+        {
+            auto va = getAffine(a);
+            auto sb = value(b);
+            return affine(va * sb);
+        }
+        else if (op_b == Opcode::AFFINE_VEC && op_a == Opcode::CONST)
+        {
+            auto sb = value(a);
+            auto vb = getAffine(b);
+            return affine(vb * sa);
+        }
+    }
+    else if (op == Opcode::OP_DIV)
+    {
+        if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::CONST)
+        {
+            auto va = getAffine(a);
+            auto sb = value(b);
+            return affine(va / sb);
+        }
+    }
+    return 0;
+}
+
+Token::Id Store::checkIdentity(Opcode op, Token* a, Token* b)
+{
+    if (Opcode::args(op) != 2)
+    {
+        return 0;
+    }
+
+    // Pull op-codes from both branches
+    auto op_a = opcode(a);
+    auto op_b = opcode(b);
+
+    // Special cases to handle identity operations
+    if (op == Opcode::OP_ADD)
+    {
+        if (op_a == Opcode::CONST && value(a) == 0)
+        {
+            return b;
+        }
+        else if (op_b == Opcode::CONST && value(b) == 0)
+        {
+            return a;
+        }
+    }
+    else if (op == Opcode::OP_SUB)
+    {
+        if (op_a == Opcode::CONST && value(a) == 0)
+        {
+            return operation(Opcode::OP_NEG, b);
+        }
+        else if (op_b == Opcode::CONST && value(b) == 0)
+        {
+            return a;
+        }
+    }
+    else if (op == Opcode::OP_MUL)
+    {
+        if (op_a == Opcode::CONST)
+        {
+            if (value(a) == 0)
+            {
+                return a;
+            }
+            else if (value(a) == 1)
+            {
+                return b;
+            }
+        }
+        if (op_b == Opcode::CONST)
+        {
+            if (value(b) == 0)
+            {
+                return b;
+            }
+            else if (value(b) == 1)
+            {
+                return a;
+            }
+        }
+    }
+    return 0;
+}
+
+glm::vec4 Store::getAffine(Token::Id root, bool* success) const
+{
+    if (op != AFFINE_VEC)
+    {
+        if (success != nullptr)
+        {
+            *success = false;
+        }
+        return {};
+    }
+
+    if (success != nullptr)
+    {
+        *success = true;
+    }
+
+    return {value(rhs(lhs(lhs(root)))), value(rhs(rhs(lhs(root)))),
+            value(rhs(lhs(rhs(root)))), value(rhs(rhs(root)))};
 }
 
 std::set<Token*> Store::findConnected(Token* root)

@@ -21,80 +21,66 @@
 #include <cassert>
 
 #include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/store.hpp"
 
-Token::Token(Opcode op, Token* a, Token* b)
-    : op(op), weight(std::max(a ? a->weight + 1 : 0,
-                              b ? b->weight + 1 : 0)),
-      value(std::nan("")), a(a), b(b)
+Token* Token::constant(float v)
 {
-    // Nothing to do here
+    auto s = new Store();
+    return new Token(s->constant(v), s);
 }
 
-Token::Token(float v)
-    : op(CONST), weight(0), value(v), a(nullptr), b(nullptr)
+Token* Token::operation(Opcode::Opcode op, Token* a, Token* b)
 {
-    // Nothing to do here
-}
+    Store* s = nullptr;
+    Id a_id = a ? a->id : 0;
+    Id b_id = b ? b->id : 0;
 
-size_t Token::args(Opcode op)
-{
-    switch (op)
+    if (a && b)
     {
-        case CONST: // fallthrough
-        case VAR_X:
-        case VAR_Y:
-        case VAR_Z:
-            return 0;
-
-        case OP_SQUARE: // fallthrough
-        case OP_SQRT:
-        case OP_NEG:
-        case OP_ABS:
-        case OP_SIN:
-        case OP_COS:
-        case OP_TAN:
-        case OP_ASIN:
-        case OP_ACOS:
-        case OP_ATAN:
-        case OP_EXP:
-            return 1;
-
-        case OP_ADD: // fallthrough
-        case OP_MUL:
-        case OP_MIN:
-        case OP_MAX:
-        case OP_SUB:
-        case OP_DIV:
-        case OP_ATAN2:
-        case OP_MOD:
-        case OP_NANFILL:
-        case AFFINE_VEC:
-            return 2;
-
-        default:
-        case INVALID: // fallthrough
-        case DUMMY_A:
-        case DUMMY_B:
-        case LAST_OP: return -1;
-    }
-}
-
-glm::vec4 Token::getAffine(bool* success)
-{
-    if (op != AFFINE_VEC)
-    {
-        if (success != nullptr)
+        // If the two Stores are different, then import b's store
+        // into a and update the relevant id tag
+        if (a->parent != b->parent)
         {
-            *success = false;
+            b_id = a->parent->import(b->parent.get(), b->id);
         }
-        return {};
+        s = a->parent.get();
     }
-
-    if (success != nullptr)
+    else if (a)
     {
-        *success = true;
+        s = a->parent.get();
     }
 
-    return {a->a->b->value, a->b->b->value,
-            b->a->b->value, b->b->value};
+    if (!s)
+    {
+        s = new Store();
+    }
+    return new Token(s->operation(op, a_id, b_id), s);
 }
+
+/*
+ *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
+ */
+Token* Token::affine(float a, float b, float c, float d)
+{
+    Store* s = new Store();
+    return new Token(s->affine(a, b, c, d), s);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+ *  Accessor functions for Token data
+ *  (which lives in the parent Store)
+ */
+glm::vec4 Token::getAffine(bool* success)
+    { return parent->getAffine(id, success); }
+Opcode::Opcode Token::opcode() const
+    { return parent->opcode(id); }
+Token::Id Token::lhs() const
+    { return parent->lhs(id); }
+Token::Id Token::rhs() const
+    { return parent->rhs(id); }
+size_t Token::rank() const
+    { return parent->rank(id); }
+float Token::value() const
+    { return parent->value(id); }

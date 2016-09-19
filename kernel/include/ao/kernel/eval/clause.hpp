@@ -58,7 +58,7 @@ public:
 
 protected:
     /*  Opcode for this clause  */
-    const Opcode op;
+    const Opcode::Opcode op;
 
     /*  Populated for CONST clause */
     const float value;

@@ -18,6 +18,10 @@
  */
 #pragma once
 
+#include <cstdlib>
+
+namespace Opcode
+{
 enum Opcode
 {
     INVALID,
@@ -71,3 +75,7 @@ enum Opcode
 
     LAST_OP,
 };
+
+size_t args(Opcode op);
+}
+

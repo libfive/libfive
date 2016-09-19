@@ -19,10 +19,14 @@
 #pragma once
 
 #include <cstdlib>
+#include <memory>
 
 #include "glm/vec4.hpp"
 
 #include "ao/kernel/tree/opcode.hpp"
+
+/*  Forward declaration of Store class  */
+class Store;
 
 /*
  *  A token represents a single expression (with up to two arguments)
@@ -31,19 +35,26 @@ class Token
 {
 public:
     /*
-     *  Constructs a token for an operation
+     *  Returns a token for the given constant
      */
-    explicit Token(Opcode op, Token* a=nullptr, Token* b=nullptr);
+    static Token* constant(float v);
 
     /*
-     *  Constructs a token for a constant value
+     *  Returns a token for the given operation
+     *
+     *  Arguments should be filled in from left to right
+     *  (i.e. a must not be null if b is not null)
+     *
+     *  If collapse is true (the default), identity and affine operations will
+     *  be collapsed; if false, all branches will be created
      */
-    explicit Token(float v);
+    static Token* operation(Opcode::Opcode op,
+                            Token* a=nullptr, Token* b=nullptr);
 
     /*
-     *  Returns the number of arguments for the given token
+     *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
      */
-    static size_t args(Opcode op);
+    static Token* affine(float a, float b, float c, float d);
 
     /*
      *  Attempts to get affine terms from a AFFINE_VEC token
@@ -51,19 +62,33 @@ public:
      */
     glm::vec4 getAffine(bool* success=nullptr);
 
-    /*  Member variables  */
-    const Opcode op;
-    const size_t weight;
+    /*  Each token has an Id, which is unique to the parent Store  */
+    typedef size_t Id;
 
-    /*  If this token is a constant, value is populated  */
-    const float value;
-
-    /*  Otherwise, pointers to arguments are stored in a and b  */
-    Token* const a;
-    Token* const b;
+    /*
+     *  Accessors for token fields
+     */
+    Opcode::Opcode opcode() const;
+    Token::Id lhs() const;
+    Token::Id rhs() const;
+    size_t rank() const;
+    float value() const;
 
 protected:
+    /*
+     *  Private constructor
+     *  (only ever called by Store)
+     */
+    explicit Token(size_t id, Store* parent)
+        : id(id), parent(parent) {}
+
+    /*  ID indexing into the parent Store */
+    const size_t id;
+
+    /*  Shared pointer to parent Store
+     *  Every token that refers back to this store has a pointer to it,
+     *  and the Store is only deleted when all tokens are destroyed     */
+    std::shared_ptr<Store> parent;
+
     friend class Store;
-    friend class Tree;
-    friend class Atom;
 };
