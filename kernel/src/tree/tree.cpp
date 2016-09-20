@@ -19,25 +19,31 @@
 #include <cassert>
 #include <list>
 
-#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/token.hpp"
 
-Token::Id Store::constant(float v)
+/******************************************************************************
+ * Token constructors
+ ******************************************************************************/
+Token::Id Tree::constant(float v)
 {
     auto k = key(v);
     if (cache.left.find(k) == cache.left.end())
     {
-        cache.left[k] = next++;
+        cache.insert({k, next});
     }
-    return cache.left[k];
+    return cache.left.at(k);
 }
 
-Token::Id Store::operation(Opcode::Opcode op, Token::Id a, Token::Id b,
-                           bool collapse)
+Token::Id Tree::operation(Opcode::Opcode op, Token::Id a, Token::Id b,
+                          bool collapse)
 {
     // These are opcodes that you're not allowed to use here
-    assert(op != CONST && op != INVALID &&
-           op != DUMMY_A && op != DUMMY_B && op != LAST_OP);
+    assert(op != Opcode::CONST &&
+           op != Opcode::INVALID &&
+           op != Opcode::DUMMY_A &&
+           op != Opcode::DUMMY_B &&
+           op != Opcode::LAST_OP);
 
     // See if we can simplify the expression, either because it's an identity
     // operation (e.g. X + 0) or a linear combination of affine forms
@@ -57,13 +63,13 @@ Token::Id Store::operation(Opcode::Opcode op, Token::Id a, Token::Id b,
     auto k = key(op, a, b);
     if (cache.left.find(k) == cache.left.end())
     {
-        cache.left[k] = next++;
+        cache.insert({k, next++});
     }
 
-    return cache.left[k];
+    return cache.left.at(k);
 }
 
-Token::Id Store::affine(float a, float b, float c, float d)
+Token::Id Tree::affine(float a, float b, float c, float d)
 {
     // Build up the desired tree structure with collapse = false
     // to keep branches from automatically collapsing.
@@ -76,7 +82,10 @@ Token::Id Store::affine(float a, float b, float c, float d)
                 constant(d), false));
 }
 
-Token::Id Store::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
+/******************************************************************************
+ * Clause simplification
+ ******************************************************************************/
+Token::Id Tree::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
 {
     if (Opcode::args(op) != 2)
     {
@@ -139,7 +148,7 @@ Token::Id Store::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
         }
         else if (op_b == Opcode::AFFINE_VEC && op_a == Opcode::CONST)
         {
-            auto sb = value(a);
+            auto sa = value(a);
             auto vb = getAffine(b);
             return affine(vb * sa);
         }
@@ -156,7 +165,7 @@ Token::Id Store::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
     return 0;
 }
 
-Token::Id Store::checkIdentity(Opcode op, Token* a, Token* b)
+Token::Id Tree::checkIdentity(Opcode::Opcode op, Token::Id a, Token::Id b)
 {
     if (Opcode::args(op) != 2)
     {
@@ -218,9 +227,12 @@ Token::Id Store::checkIdentity(Opcode op, Token* a, Token* b)
     return 0;
 }
 
-glm::vec4 Store::getAffine(Token::Id root, bool* success) const
+/******************************************************************************
+ * Utilities
+ ******************************************************************************/
+glm::vec4 Tree::getAffine(Token::Id root, bool* success) const
 {
-    if (op != AFFINE_VEC)
+    if (opcode(root) != Opcode::AFFINE_VEC)
     {
         if (success != nullptr)
         {
@@ -238,31 +250,42 @@ glm::vec4 Store::getAffine(Token::Id root, bool* success) const
             value(rhs(lhs(rhs(root)))), value(rhs(rhs(root)))};
 }
 
-std::set<Token*> Store::findConnected(Token* root)
+std::vector<Token::Id> Tree::walk() const
 {
-    std::set<Token*> found = {root};
+    std::map<size_t, std::vector<Token::Id>> levels;
+
+    // Find nodes ranked on a per-level basis
+    for (auto c : cache.left)
+    {
+        levels[c.first.rank()].push_back(c.second);
+    }
+
+    // Then sort into a flat array
+    std::vector<Token::Id> out;
+    for (auto v : levels)
+    {
+        out.insert(out.end(), v.second.begin(), v.second.end());
+    }
+    return out;
+}
+
+std::set<Token::Id> Tree::findConnected(Token::Id root)
+{
+    std::set<Token::Id> found = {root};
+    auto tokens = walk();
 
     // Iterate over weight levels from top to bottom
-    for (auto weight = ops.rbegin(); weight != ops.rend(); ++weight)
+    for (auto t = tokens.rbegin(); t != tokens.rend(); ++t)
     {
-        // Iterate over operations in a given weight level
-        for (auto op : *weight)
+        if (found.find(*t) != found.end())
         {
-            // Iterate over Key, Token* pairs
-            for (auto c : op)
+            if (Token::Id a = lhs(*t))
             {
-                Token* const t = c.second;
-                if (found.find(t) != found.end())
-                {
-                    if (t->a)
-                    {
-                        found.insert(t->a);
-                    }
-                    if (t->b)
-                    {
-                        found.insert(t->b);
-                    }
-                }
+                found.insert(a);
+            }
+            if (Token::Id b = rhs(*t))
+            {
+                found.insert(b);
             }
         }
     }
@@ -270,92 +293,68 @@ std::set<Token*> Store::findConnected(Token* root)
     return found;
 }
 
-Token* Store::rebuild(Token* root, std::set<Token*> pruned,
-                      std::map<Token*, Token*> changed)
+/******************************************************************************
+ * Tree modification
+ ******************************************************************************/
+Token::Id Tree::rebuild(Token::Id root, std::set<Token::Id> pruned,
+                        std::map<Token::Id, Token::Id> changed)
 {
-    // Deep copy of ops so that changes don't invalidate iterators
-    decltype(ops) ops_ = ops;
+    auto tokens = walk();
 
     // Iterate over weight levels from bottom to top
-    for (const auto& weight : ops_)
+    for (auto t : tokens)
     {
-        // Iterate over operations in a given weight level
-        for (const auto& op : weight)
+        // Get child pointers
+        auto a = lhs(t);
+        auto b = rhs(t);
+
+        // If either of the child pointers has changed, regenerate
+        // the operation to ensure correct pointers and weight
+        if (changed.count(a) || changed.count(b))
         {
-            // Iterate over Key, Token* pairs
-            for (auto itr = op.begin(); itr != op.end(); ++itr)
-            {
-                // Get child pointers
-                auto a = itr->second->a;
-                auto b = itr->second->b;
+            changed[t] = operation(opcode(t),
+                changed.count(a) ? changed[a] : a,
+                changed.count(b) ? changed[b] : b);
 
-                // If either of the child pointers has changed, regenerate
-                // the operation to ensure correct pointers and weight
-                if (changed.count(a) || changed.count(b))
-                {
-                    changed[itr->second] = operation(itr->second->op,
-                        changed.count(a) ? changed[a] : a,
-                        changed.count(b) ? changed[b] : b);
-
-                    pruned.insert(itr->second);
-                }
-            }
+            pruned.insert(t);
         }
     }
 
     // Then, we'll remove pruned tokens from the actual ops cache
-    for (auto& weight : ops)
+    for (auto c : pruned)
     {
-        // Iterate over operations in a given weight level
-        for (auto& op : weight)
-        {
-            // Iterate over Key, Token* pairs
-            for (auto itr = op.begin(); itr != op.end();)
-            {
-                if (pruned.count(itr->second))
-                {
-                    itr = op.erase(itr);
-                }
-                else
-                {
-                    ++itr;
-                }
-            }
-        }
+        cache.right.erase(c);
     }
 
     return changed.count(root) ? changed[root] : root;
 }
 
-Token* Store::collapseAffine(Token* root)
+Token::Id Tree::collapseAffine(Token::Id root)
 {
-    // If the tree isn't big enough to have any affine functions,
-    // then we can safely return right away
-    if (ops.size() < 4)
-    {
-        return root;
-    }
+    // Deep copy of clauses so that changes don't invalidate iterators
+    auto tokens = walk();
 
-    // Deep copy of affine clauses so that changes don't invalidate iterators
-    auto afs = ops[3][AFFINE_VEC];
-
-    // These are tokens that should be removed from the tree
-    std::set<Token*> pruned;
+    // Details on which nodes have changed
+    std::set<Token::Id> pruned;
+    std::map<Token::Id, Token::Id> changed;
 
     // Turn every AFFINE into a normal OP_ADD
     // (with identity operations automatically cancelled out)
-    std::map<Token*, Token*> changed;
-    for (auto r : afs)
+    for (auto t : tokens)
     {
-        changed[r.second] = operation(OP_ADD,
-                operation(OP_ADD,
-                    operation(OP_MUL, X(), r.second->a->a->b),
-                    operation(OP_MUL, Y(), r.second->a->b->b)),
-                operation(OP_ADD,
-                    operation(OP_MUL, Z(), r.second->b->a->b),
-                    r.second->b->b));
+        if (opcode(t) == Opcode::AFFINE_VEC)
+        {
+            auto v = getAffine(t);
+            changed[t] = operation(Opcode::OP_ADD,
+                    operation(Opcode::OP_ADD,
+                        operation(Opcode::OP_MUL, X(), v.x),
+                        operation(Opcode::OP_MUL, Y(), v.y)),
+                    operation(Opcode::OP_ADD,
+                        operation(Opcode::OP_MUL, Z(), v.z),
+                        v.w));
+        }
 
-        pruned.insert(r.second);
+        pruned.insert(t);
     }
 
     return rebuild(root, pruned, changed);

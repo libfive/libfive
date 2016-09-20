@@ -21,23 +21,23 @@
 #include <cassert>
 
 #include "ao/kernel/tree/token.hpp"
-#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 Token* Token::constant(float v)
 {
-    auto s = new Store();
+    auto s = new Tree();
     return new Token(s->constant(v), s);
 }
 
 Token* Token::operation(Opcode::Opcode op, Token* a, Token* b)
 {
-    Store* s = nullptr;
+    Tree* s = nullptr;
     Id a_id = a ? a->id : 0;
     Id b_id = b ? b->id : 0;
 
     if (a && b)
     {
-        // If the two Stores are different, then import b's store
+        // If the two Tree are different, then import b's store
         // into a and update the relevant id tag
         if (a->parent != b->parent)
         {
@@ -52,7 +52,7 @@ Token* Token::operation(Opcode::Opcode op, Token* a, Token* b)
 
     if (!s)
     {
-        s = new Store();
+        s = new Tree();
     }
     return new Token(s->operation(op, a_id, b_id), s);
 }
@@ -62,7 +62,7 @@ Token* Token::operation(Opcode::Opcode op, Token* a, Token* b)
  */
 Token* Token::affine(float a, float b, float c, float d)
 {
-    Store* s = new Store();
+    Tree* s = new Tree();
     return new Token(s->affine(a, b, c, d), s);
 }
 
@@ -70,7 +70,7 @@ Token* Token::affine(float a, float b, float c, float d)
 
 /*
  *  Accessor functions for Token data
- *  (which lives in the parent Store)
+ *  (which lives in the parent Tree)
  */
 glm::vec4 Token::getAffine(bool* success)
     { return parent->getAffine(id, success); }

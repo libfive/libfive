@@ -29,7 +29,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-
 #if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5
 // http://stackoverflow.com/questions/27064791/stdalign-not-supported-by-g4-9
 namespace std {

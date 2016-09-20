@@ -20,6 +20,7 @@
 
 #include <map>
 #include <set>
+#include <vector>
 #include <boost/bimap.hpp>
 
 #include "glm/vec4.hpp"
@@ -28,9 +29,9 @@
 #include "ao/kernel/tree/token.hpp"
 
 /*
- *  A Store contains a set of Tokens with efficient routines for lookups
+ *  A Tree represents a deduplicated math expression
  */
-class Store
+class Tree
 {
 public:
     /*
@@ -91,23 +92,24 @@ public:
     Token::Id collapseAffine(Token::Id root);
 
     /*
-     *  Imports an external Store, returning the new root's id
+     *  Imports an external Tree, returning the new root's id
      */
-    Token::Id import(Store* s, Token::Id root);
+    Token::Id import(Tree* s, Token::Id root);
 
     /*
      *  Accessor functions for token fields
      */
-    Opcode::Opcode opcode(Token::Id id) const
-        { return std::get<0>(token(id)); }
-    Token::Id lhs(Token::Id id) const
-        { return std::get<1>(token(id)); }
-    Token::Id rhs(Token::Id id) const
-        { return std::get<2>(token(id)); }
-    size_t rank(Token::Id id) const
-        { return std::get<3>(token(id)); }
-    float value(Token::Id id) const
-        { return std::get<4>(token(id)); }
+    Opcode::Opcode opcode(Token::Id id) const { return token(id).opcode(); }
+    Token::Id lhs(Token::Id id) const { return token(id).lhs(); }
+    Token::Id rhs(Token::Id id) const { return token(id).rhs(); }
+    size_t rank(Token::Id id) const { return token(id).rank(); }
+    float value(Token::Id id) const { return token(id).value(); }
+
+    /*
+     *  Walks the tree in ascending rank order
+     *  (so constants + variables are first)
+     */
+    std::vector<Token::Id> walk() const;
 
 protected:
     /*
@@ -132,7 +134,20 @@ protected:
     /*
      *  Keys store all relevant token data
      */
-    typedef std::tuple<Opcode::Opcode, Token::Id, Token::Id, size_t, float> Key;
+    class Key : public std::tuple<Opcode::Opcode, Token::Id, Token::Id, size_t, float>
+    {
+    public:
+        Opcode::Opcode opcode() const
+            { return std::get<0>(*this); }
+        Token::Id lhs() const
+            { return std::get<1>(*this); }
+        Token::Id rhs() const
+            { return std::get<2>(*this); }
+        size_t rank() const
+            { return std::get<3>(*this); }
+        float value() const
+            { return std::get<4>(*this); }
+    };
 
     /*
      *  Key constructors

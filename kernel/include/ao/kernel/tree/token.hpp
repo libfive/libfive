@@ -25,8 +25,8 @@
 
 #include "ao/kernel/tree/opcode.hpp"
 
-/*  Forward declaration of Store class  */
-class Store;
+/*  Forward declaration of Tree class  */
+class Tree;
 
 /*
  *  A token represents a single expression (with up to two arguments)
@@ -62,7 +62,7 @@ public:
      */
     glm::vec4 getAffine(bool* success=nullptr);
 
-    /*  Each token has an Id, which is unique to the parent Store  */
+    /*  Each token has an Id, which is unique to the parent Tree  */
     typedef size_t Id;
 
     /*
@@ -77,18 +77,18 @@ public:
 protected:
     /*
      *  Private constructor
-     *  (only ever called by Store)
+     *  (only ever called by Tree)
      */
-    explicit Token(size_t id, Store* parent)
+    explicit Token(size_t id, Tree* parent)
         : id(id), parent(parent) {}
 
-    /*  ID indexing into the parent Store */
+    /*  ID indexing into the parent Tree */
     const size_t id;
 
-    /*  Shared pointer to parent Store
+    /*  Shared pointer to parent Tree
      *  Every token that refers back to this store has a pointer to it,
-     *  and the Store is only deleted when all tokens are destroyed     */
-    std::shared_ptr<Store> parent;
+     *  and the Tree is only deleted when all tokens are destroyed     */
+    std::shared_ptr<Tree> parent;
 
-    friend class Store;
+    friend class Tree;
 };
