@@ -134,9 +134,19 @@ protected:
     /*
      *  Keys store all relevant token data
      */
-    class Key : public std::tuple<Opcode::Opcode, Token::Id, Token::Id, size_t, float>
+    typedef std::tuple<Opcode::Opcode, /* opcode */
+                       Token::Id, /* lhs */
+                       Token::Id, /* rhs */
+                       size_t,  /* rank */
+                       float    /* value (for constants) */> _Key;
+    class Key : public _Key
     {
     public:
+        Key(float v)
+          : _Key(Opcode::CONST, 0, 0, 0, v) { /* Nothing to do here */ }
+        Key(Opcode::Opcode op, Token::Id a, Token::Id b, size_t rank)
+          : _Key(op, a, b, rank, 0.0f) { /* Nothing to do here */}
+
         Opcode::Opcode opcode() const
             { return std::get<0>(*this); }
         Token::Id lhs() const

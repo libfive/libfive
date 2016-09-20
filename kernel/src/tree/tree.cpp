@@ -250,22 +250,71 @@ glm::vec4 Tree::getAffine(Token::Id root, bool* success) const
             value(rhs(lhs(rhs(root)))), value(rhs(rhs(root)))};
 }
 
+/******************************************************************************
+ * Key constructors
+ ******************************************************************************/
+Tree::Key Tree::key(float v) const
+{
+    return Key(v);
+}
+
+Tree::Key Tree::key(Opcode::Opcode op, Token::Id a, Token::Id b) const
+{
+    return Key(op, a, b, std::max(a ? rank(a) + 1 : 0,
+                                  b ? rank(b) + 1 : 0));
+}
+
+/******************************************************************************
+ * Tree walking and modification
+ ******************************************************************************/
+Token::Id Tree::import(Tree* other, Token::Id root)
+{
+    if (other == this)
+    {
+        return root;
+    }
+
+    std::map<Token::Id, Token::Id> changed;
+    for (auto t : other->walk())
+    {
+        if (other->opcode(t) == Opcode::CONST)
+        {
+            // Import the constant into the tree
+            changed[t] = constant(other->value(t));
+        }
+        else
+        {
+            // Get child pointers
+            auto a = other->lhs(t);
+            auto b = other->rhs(t);
+
+            // Then import the operation into the tree
+            changed[t] = operation(other->opcode(t),
+                changed.count(a) ? changed[a] : a,
+                changed.count(b) ? changed[b] : b);
+        }
+    }
+
+    return changed[root];
+}
+
 std::vector<Token::Id> Tree::walk() const
 {
-    std::map<size_t, std::vector<Token::Id>> levels;
+    std::multimap<size_t, Token::Id> sorted;
 
     // Find nodes ranked on a per-level basis
     for (auto c : cache.left)
     {
-        levels[c.first.rank()].push_back(c.second);
+        sorted.insert({c.first.rank(), c.second});
     }
 
     // Then sort into a flat array
     std::vector<Token::Id> out;
-    for (auto v : levels)
+    for (auto v : sorted)
     {
-        out.insert(out.end(), v.second.begin(), v.second.end());
+        out.push_back(v.first);
     }
+
     return out;
 }
 
@@ -293,9 +342,6 @@ std::set<Token::Id> Tree::findConnected(Token::Id root)
     return found;
 }
 
-/******************************************************************************
- * Tree modification
- ******************************************************************************/
 Token::Id Tree::rebuild(Token::Id root, std::set<Token::Id> pruned,
                         std::map<Token::Id, Token::Id> changed)
 {
