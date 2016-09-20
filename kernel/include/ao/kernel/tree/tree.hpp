@@ -105,12 +105,6 @@ public:
     size_t rank(Token::Id id) const { return token(id).rank(); }
     float value(Token::Id id) const { return token(id).value(); }
 
-    /*
-     *  Walks the tree in ascending rank order
-     *  (so constants + variables are first)
-     */
-    std::vector<Token::Id> walk() const;
-
 protected:
     /*
      *  Checks whether the operation is an identity operation
@@ -133,27 +127,30 @@ protected:
 
     /*
      *  Keys store all relevant token data
+     *
+     *  tuples are compared lexigraphically, so we putting rank first
+     *  means that iterating over the bimap happens in rank order
      */
-    typedef std::tuple<Opcode::Opcode, /* opcode */
+    typedef std::tuple<size_t,  /* rank */
+                       Opcode::Opcode, /* opcode */
                        Token::Id, /* lhs */
                        Token::Id, /* rhs */
-                       size_t,  /* rank */
                        float    /* value (for constants) */> _Key;
     class Key : public _Key
     {
     public:
         Key(float v)
-          : _Key(Opcode::CONST, 0, 0, 0, v) { /* Nothing to do here */ }
+          : _Key(0, Opcode::CONST, 0, 0, v) { /* Nothing to do here */ }
         Key(Opcode::Opcode op, Token::Id a, Token::Id b, size_t rank)
-          : _Key(op, a, b, rank, 0.0f) { /* Nothing to do here */}
+          : _Key(rank, op, a, b, 0.0f) { /* Nothing to do here */}
 
-        Opcode::Opcode opcode() const
-            { return std::get<0>(*this); }
-        Token::Id lhs() const
-            { return std::get<1>(*this); }
-        Token::Id rhs() const
-            { return std::get<2>(*this); }
         size_t rank() const
+            { return std::get<0>(*this); }
+        Opcode::Opcode opcode() const
+            { return std::get<1>(*this); }
+        Token::Id lhs() const
+            { return std::get<2>(*this); }
+        Token::Id rhs() const
             { return std::get<3>(*this); }
         float value() const
             { return std::get<4>(*this); }

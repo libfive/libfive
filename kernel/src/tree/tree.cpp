@@ -275,8 +275,9 @@ Token::Id Tree::import(Tree* other, Token::Id root)
     }
 
     std::map<Token::Id, Token::Id> changed;
-    for (auto t : other->walk())
+    for (auto c : other->cache.left)
     {
+        Token::Id t = c.second;
         if (other->opcode(t) == Opcode::CONST)
         {
             // Import the constant into the tree
@@ -298,41 +299,21 @@ Token::Id Tree::import(Tree* other, Token::Id root)
     return changed[root];
 }
 
-std::vector<Token::Id> Tree::walk() const
-{
-    std::multimap<size_t, Token::Id> sorted;
-
-    // Find nodes ranked on a per-level basis
-    for (auto c : cache.left)
-    {
-        sorted.insert({c.first.rank(), c.second});
-    }
-
-    // Then sort into a flat array
-    std::vector<Token::Id> out;
-    for (auto v : sorted)
-    {
-        out.push_back(v.first);
-    }
-
-    return out;
-}
-
 std::set<Token::Id> Tree::findConnected(Token::Id root)
 {
     std::set<Token::Id> found = {root};
-    auto tokens = walk();
 
     // Iterate over weight levels from top to bottom
-    for (auto t = tokens.rbegin(); t != tokens.rend(); ++t)
+    for (auto c = cache.left.rbegin(); c != cache.left.rend(); ++c)
     {
-        if (found.find(*t) != found.end())
+        Token::Id t = c->second;
+        if (found.find(t) != found.end())
         {
-            if (Token::Id a = lhs(*t))
+            if (Token::Id a = lhs(t))
             {
                 found.insert(a);
             }
-            if (Token::Id b = rhs(*t))
+            if (Token::Id b = rhs(t))
             {
                 found.insert(b);
             }
@@ -345,24 +326,22 @@ std::set<Token::Id> Tree::findConnected(Token::Id root)
 Token::Id Tree::rebuild(Token::Id root, std::set<Token::Id> pruned,
                         std::map<Token::Id, Token::Id> changed)
 {
-    auto tokens = walk();
-
     // Iterate over weight levels from bottom to top
-    for (auto t : tokens)
+    for (auto c : cache.left)
     {
         // Get child pointers
-        auto a = lhs(t);
-        auto b = rhs(t);
+        auto a = c.first.lhs();
+        auto b = c.first.rhs();
 
         // If either of the child pointers has changed, regenerate
         // the operation to ensure correct pointers and weight
         if (changed.count(a) || changed.count(b))
         {
-            changed[t] = operation(opcode(t),
+            changed[c.second] = operation(c.first.opcode(),
                 changed.count(a) ? changed[a] : a,
                 changed.count(b) ? changed[b] : b);
 
-            pruned.insert(t);
+            pruned.insert(c.second);
         }
     }
 
@@ -378,7 +357,7 @@ Token::Id Tree::rebuild(Token::Id root, std::set<Token::Id> pruned,
 Token::Id Tree::collapseAffine(Token::Id root)
 {
     // Deep copy of clauses so that changes don't invalidate iterators
-    auto tokens = walk();
+    decltype(cache) tokens = cache;
 
     // Details on which nodes have changed
     std::set<Token::Id> pruned;
@@ -386,12 +365,12 @@ Token::Id Tree::collapseAffine(Token::Id root)
 
     // Turn every AFFINE into a normal OP_ADD
     // (with identity operations automatically cancelled out)
-    for (auto t : tokens)
+    for (auto c : tokens.left)
     {
-        if (opcode(t) == Opcode::AFFINE_VEC)
+        if (c.first.opcode() == Opcode::AFFINE_VEC)
         {
-            auto v = getAffine(t);
-            changed[t] = operation(Opcode::OP_ADD,
+            auto v = getAffine(c.second);
+            changed[c.second] = operation(Opcode::OP_ADD,
                     operation(Opcode::OP_ADD,
                         operation(Opcode::OP_MUL, X(), v.x),
                         operation(Opcode::OP_MUL, Y(), v.y)),
@@ -400,7 +379,7 @@ Token::Id Tree::collapseAffine(Token::Id root)
                         v.w));
         }
 
-        pruned.insert(t);
+        pruned.insert(c.second);
     }
 
     return rebuild(root, pruned, changed);
