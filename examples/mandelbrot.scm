@@ -7,6 +7,6 @@
         (recurse (+ (- (square real) (square imag)) x)
                  (+ (* 2 real imag) y)
                  (- i 1))
-        (+ (square real) (square real) -4)))))
+        (+ (square real) (square imag) -4)))))
 
 (ao-show "mandelbrot" (mandelbrot 10))
