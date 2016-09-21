@@ -32,6 +32,7 @@
 
 class Atom;
 class Clause;
+class Token;
 class Tree;
 
 class Evaluator
@@ -40,7 +41,7 @@ public:
     /*
      *  Construct an evaluator for the given tree
      */
-    explicit Evaluator(const Tree* t, const glm::mat4& M=glm::mat4());
+    Evaluator(const Token* root, const glm::mat4& M=glm::mat4());
     ~Evaluator();
 
     /*

@@ -34,12 +34,10 @@ public:
     /*
      *  Clause constructor
      *
-     *  The clauses map is used to look up children, which must already have
-     *  been turned into clauses (i.e. the tree must be built from the lowest
-     *  levels up).
+     *  value only matters for CONST operations;
+     *  lhs and rhs only matter for unary and binary operations
      */
-    explicit Clause(const Atom* m,
-                    std::unordered_map<const Atom*, Clause*>& clauses);
+    Clause(Opcode::Opcode op, float value, Clause* lhs, Clause* rhs);
 
     /*
      *  If the disabled flag is set, returns true

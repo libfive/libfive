@@ -74,22 +74,12 @@ public:
     glm::vec4 getAffine(Token::Id root, bool* success=nullptr) const;
 
     /*
-     *  Collapses BOUNDS nodes into normal OP_MAX, taking advantage of
-     *  identity operations to make the tree smaller.  Returns the new root
-     *  token (which may have changed).
-     *
-     *  Invalidates all Token pointers.
-     */
-    Token::Id collapseBounds(Token::Id root);
-
-    /*
      *  Collapses AFFINE nodes into normal OP_ADD, taking advantage of
-     *  identity operations to make the tree smaller.  Returns the new root
-     *  token (which may have changed).
+     *  identity operations to make the tree smaller.
      *
-     *  Invalidates all Token pointers.
+     *  Returns a root token for the new tree.
      */
-    Token::Id collapseAffine(Token::Id root);
+    Token::Id collapse(Token::Id root);
 
     /*
      *  Imports an external Tree, returning the new root's id
@@ -121,9 +111,11 @@ protected:
 
     /*
      *  Rebuilds a tree from the base up, returning the new root
+     *
+     *  All old Token ids remain valid, though they may be orphaned in
+     *  the tree
      */
-    Token::Id rebuild(Token::Id root, std::set<Token::Id> pruned,
-                      std::map<Token::Id, Token::Id> changed);
+    Token::Id rebuild(Token::Id root, std::map<Token::Id, Token::Id> changed);
 
     /*
      *  Keys store all relevant token data
@@ -170,5 +162,5 @@ protected:
     boost::bimap<Key, Token::Id> cache;
     Token::Id next=1;
 
-    friend class Tree;
+    friend class Evaluator;
 };

@@ -37,7 +37,7 @@ struct Worker
      *
      *  depth and norm are target textures in which results are stored
      */
-    Worker(Tree* tree, const Task& task);
+    Worker(Token* root, const Task& task);
 
     /*
      *  On destruction, join the thread

@@ -24,7 +24,6 @@
 
 #include "glm/gtc/matrix_inverse.hpp"
 
-#include "ao/kernel/tree/store.hpp"
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/opcode.hpp"
 #include "ao/kernel/tree/token.hpp"
@@ -40,16 +39,6 @@
 #include "ao/ui/watcher.hpp"
 
 #include "api.hpp"
-
-void store_delete(Store* ptr)
-{
-    delete ptr;
-}
-
-Store* store_new()
-{
-    return new Store();
-}
 
 void contours_delete(struct contours* cs)
 {
@@ -69,48 +58,54 @@ int opcode_enum(char* op)
 {
     std::string str(op);
 
-    if (str == "add")           return OP_ADD;
-    else if (str == "mul")      return OP_MUL;
-    else if (str == "min")      return OP_MIN;
-    else if (str == "max")      return OP_MAX;
-    else if (str == "sub")      return OP_SUB;
-    else if (str == "div")      return OP_DIV;
-    else if (str == "atan2")    return OP_ATAN2;
-    else if (str == "mod")      return OP_MOD;
-    else if (str == "nan-fill") return OP_NANFILL;
+    if (str == "add")           return Opcode::OP_ADD;
+    else if (str == "mul")      return Opcode::OP_MUL;
+    else if (str == "min")      return Opcode::OP_MIN;
+    else if (str == "max")      return Opcode::OP_MAX;
+    else if (str == "sub")      return Opcode::OP_SUB;
+    else if (str == "div")      return Opcode::OP_DIV;
+    else if (str == "atan2")    return Opcode::OP_ATAN2;
+    else if (str == "mod")      return Opcode::OP_MOD;
+    else if (str == "nan-fill") return Opcode::OP_NANFILL;
 
-    else if (str == "square")   return OP_SQUARE;
-    else if (str == "sqrt")     return OP_SQRT;
-    else if (str == "abs")      return OP_ABS;
-    else if (str == "neg")      return OP_NEG;
-    else if (str == "sin")      return OP_SIN;
-    else if (str == "cos")      return OP_COS;
-    else if (str == "tan")      return OP_TAN;
-    else if (str == "asin")     return OP_ASIN;
-    else if (str == "acos")     return OP_ACOS;
-    else if (str == "atan")     return OP_ATAN;
-    else if (str == "exp")      return OP_EXP;
+    else if (str == "square")   return Opcode::OP_SQUARE;
+    else if (str == "sqrt")     return Opcode::OP_SQRT;
+    else if (str == "abs")      return Opcode::OP_ABS;
+    else if (str == "neg")      return Opcode::OP_NEG;
+    else if (str == "sin")      return Opcode::OP_SIN;
+    else if (str == "cos")      return Opcode::OP_COS;
+    else if (str == "tan")      return Opcode::OP_TAN;
+    else if (str == "asin")     return Opcode::OP_ASIN;
+    else if (str == "acos")     return Opcode::OP_ACOS;
+    else if (str == "atan")     return Opcode::OP_ATAN;
+    else if (str == "exp")      return Opcode::OP_EXP;
 
-    else                        return INVALID;
+    else                        return Opcode::INVALID;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // Construct X, Y, Z tokens in affine form
-Token* token_x(Store* s) { return s->affine(1, 0, 0, 0); }
-Token* token_y(Store* s) { return s->affine(0, 1, 0, 0); }
-Token* token_z(Store* s) { return s->affine(0, 0, 1, 0); }
-
-Token* token_const(Store* s, float f)   { return s->constant(f); }
-
-Token* token_unary(Store* s, int op, Token* a)
-{
-    return s->operation(static_cast<Opcode>(op), a);
+struct axes token_axes() {
+    auto a = Token::axes();
+    return { std::get<0>(a),
+             std::get<1>(a),
+             std::get<2>(a) };
 }
 
-Token* token_binary(Store* s, int op, Token* a, Token* b)
+Token* token_const(float f)
 {
-    return s->operation(static_cast<Opcode>(op), a, b);
+    return Token::constant(f);
+}
+
+Token* token_unary(int op, Token* a)
+{
+    return Token::operation(Opcode::Opcode(op), a);
+}
+
+Token* token_binary(int op, Token* a, Token* b)
+{
+    return Token::operation(Opcode::Opcode(op), a, b);
 }
 
 int token_affine_vec(Token* t, v4* vec)
@@ -131,23 +126,18 @@ int token_affine_vec(Token* t, v4* vec)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void tree_delete(Tree* ptr)
+void tree_delete(Token* ptr)
 {
     delete ptr;
 }
 
-Tree* tree_new(Store* store, Token* root)
-{
-    return new Tree(store, root);
-}
-
-float tree_eval_double(Tree* tree, float x, float y, float z)
+float tree_eval_double(Token* tree, float x, float y, float z)
 {
     auto e = Evaluator(tree);
     return e.eval(x, y, z);
 }
 
-void tree_eval_interval(Tree* tree, v2* x, v2* y, v2* z)
+void tree_eval_interval(Token* tree, v2* x, v2* y, v2* z)
 {
     auto e = Evaluator(tree);
     auto out =  e.eval({x->lower, x->upper},
@@ -158,7 +148,7 @@ void tree_eval_interval(Tree* tree, v2* x, v2* y, v2* z)
     x->upper = out.upper();
 }
 
-void tree_export_heightmap(Tree* tree, char* filename,
+void tree_export_heightmap(Token* tree, char* filename,
                            float xmin, float xmax,
                            float ymin, float ymax,
                            float zmin, float zmax, float res)
@@ -174,7 +164,7 @@ void tree_export_heightmap(Tree* tree, char* filename,
     Image::SavePng(f, img.first);
 }
 
-void tree_export_mesh(Tree* tree, char* filename,
+void tree_export_mesh(Token* tree, char* filename,
                       float xmin, float xmax,
                       float ymin, float ymax,
                       float zmin, float zmax, float res)
@@ -189,7 +179,7 @@ void tree_export_mesh(Tree* tree, char* filename,
     mesh.writeMeshToFile(f);
 }
 
-void tree_export_slice(Tree* tree, char* filename,
+void tree_export_slice(Token* tree, char* filename,
                        float xmin, float xmax, float ymin, float ymax,
                        float z, float res)
 {
@@ -202,7 +192,7 @@ void tree_export_slice(Tree* tree, char* filename,
     cs.writeSVG(f, region);
 }
 
-struct contours* tree_render_slice(Tree* tree,
+struct contours* tree_render_slice(Token* tree,
                        float xmin, float xmax, float ymin, float ymax,
                        float z, float res)
 {
@@ -231,7 +221,7 @@ struct contours* tree_render_slice(Tree* tree,
     return out;
 }
 
-int tree_render_mesh(Tree* tree, float** out,
+int tree_render_mesh(Token* tree, float** out,
                      float xmin, float xmax,
                      float ymin, float ymax,
                      float zmin, float zmax, float res)
@@ -279,7 +269,7 @@ static void window_watch_callback_(std::string s)
     window_watch_callback(s.c_str());
 }
 
-void window_show_tree(char* filename, char* name, Tree* tree)
+void window_show_tree(char* filename, char* name, Token* tree)
 {
     Window::instance()->addTree(filename, name, tree);
 }

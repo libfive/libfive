@@ -66,6 +66,38 @@ Token* Token::affine(float a, float b, float c, float d)
     return new Token(s->affine(a, b, c, d), s);
 }
 
+
+std::tuple<Token*, Token*, Token*> Token::axes()
+{
+    Tree* s = new Tree();
+    return { new Token(s->affine(1, 0, 0, 0), s),
+             new Token(s->affine(0, 1, 0, 0), s),
+             new Token(s->affine(0, 0, 1, 0), s) };
+}
+
+Token* Token::X()
+{
+    Tree* s = new Tree();
+    return new Token(s->X(), s);
+}
+
+Token* Token::Y()
+{
+    Tree* s = new Tree();
+    return new Token(s->Y(), s);
+}
+
+Token* Token::Z()
+{
+    Tree* s = new Tree();
+    return new Token(s->Z(), s);
+}
+
+Token* Token::collapse()
+{
+    return new Token(parent->collapse(id), parent.get());
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 /*

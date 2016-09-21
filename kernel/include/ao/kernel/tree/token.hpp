@@ -52,9 +52,30 @@ public:
                             Token* a=nullptr, Token* b=nullptr);
 
     /*
+     *  Constructors for individual axes (non-affine)
+     *
+     *  The three-axis constructor axes() should be preferred to using
+     *  an individual-axis constructor, as it ensures that they're backed
+     *  by the same Tree object
+     */
+    static Token* X();
+    static Token* Y();
+    static Token* Z();
+
+    /*
      *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
      */
     static Token* affine(float a, float b, float c, float d);
+
+    /*
+     *  Returns a tuple of affine tokens for X, Y, Z axes
+     */
+    static std::tuple<Token*, Token*, Token*> axes();
+
+    /*
+     *  Returns a new Token that is a flattened copy of this tree
+     */
+    Token* collapse();
 
     /*
      *  Attempts to get affine terms from a AFFINE_VEC token
@@ -79,7 +100,7 @@ protected:
      *  Private constructor
      *  (only ever called by Tree)
      */
-    explicit Token(size_t id, Tree* parent)
+    explicit Token(Id id, Tree* parent)
         : id(id), parent(parent) {}
 
     /*  ID indexing into the parent Tree */
@@ -91,4 +112,5 @@ protected:
     std::shared_ptr<Tree> parent;
 
     friend class Tree;
+    friend class Evaluator;
 };

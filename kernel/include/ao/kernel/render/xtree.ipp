@@ -27,7 +27,7 @@
 #include "ao/kernel/render/xtree.hpp"
 
 template <class T, int dims>
-T* XTree<T, dims>::Render(Tree* t, const Region& r, bool multithread)
+T* XTree<T, dims>::Render(Token* t, const Region& r, bool multithread)
 {
     auto rp = r.powerOfTwo(dims).view();
 

@@ -323,11 +323,13 @@ std::set<Token::Id> Tree::findConnected(Token::Id root)
     return found;
 }
 
-Token::Id Tree::rebuild(Token::Id root, std::set<Token::Id> pruned,
-                        std::map<Token::Id, Token::Id> changed)
+Token::Id Tree::rebuild(Token::Id root, std::map<Token::Id, Token::Id> changed)
 {
+    // Deep copy of clauses so that changes don't invalidate iterators
+    decltype(cache) tokens = cache;
+
     // Iterate over weight levels from bottom to top
-    for (auto c : cache.left)
+    for (auto c : tokens.left)
     {
         // Get child pointers
         auto a = c.first.lhs();
@@ -340,27 +342,18 @@ Token::Id Tree::rebuild(Token::Id root, std::set<Token::Id> pruned,
             changed[c.second] = operation(c.first.opcode(),
                 changed.count(a) ? changed[a] : a,
                 changed.count(b) ? changed[b] : b);
-
-            pruned.insert(c.second);
         }
-    }
-
-    // Then, we'll remove pruned tokens from the actual ops cache
-    for (auto c : pruned)
-    {
-        cache.right.erase(c);
     }
 
     return changed.count(root) ? changed[root] : root;
 }
 
-Token::Id Tree::collapseAffine(Token::Id root)
+Token::Id Tree::collapse(Token::Id root)
 {
     // Deep copy of clauses so that changes don't invalidate iterators
     decltype(cache) tokens = cache;
 
     // Details on which nodes have changed
-    std::set<Token::Id> pruned;
     std::map<Token::Id, Token::Id> changed;
 
     // Turn every AFFINE into a normal OP_ADD
@@ -378,9 +371,7 @@ Token::Id Tree::collapseAffine(Token::Id root)
                         operation(Opcode::OP_MUL, Z(), v.z),
                         v.w));
         }
-
-        pruned.insert(c.second);
     }
 
-    return rebuild(root, pruned, changed);
+    return rebuild(root, changed);
 }

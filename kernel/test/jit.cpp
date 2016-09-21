@@ -18,37 +18,37 @@
  */
 #include <catch/catch.hpp>
 
-#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/token.hpp"
 
 TEST_CASE("Constructing a simple shape")
 {
-    Store s;
-    Token* out = s.operation(OP_ADD, s.X(), s.constant(1));
+    Token* out = Token::operation(Opcode::OP_ADD, Token::X(),
+            Token::constant(1));
     REQUIRE(out != nullptr);
 }
 
 TEST_CASE("Deduplication of variables")
 {
-    Store s;
+    Tree t;
 
-    Token* xa = s.X();
-    Token* xb = s.X();
+    Token::Id xa = t.X();
+    Token::Id xb = t.X();
     REQUIRE(xa == xb);
 
-    Token* ya = s.Y();
+    Token::Id ya = t.Y();
     REQUIRE(xa != ya);
 }
 
 TEST_CASE("Deduplication of constants")
 {
-    Store s;
+    Tree t;
 
-    Token* ca = s.constant(3.14);
-    Token* cb = s.constant(3.14);
+    Token::Id ca = t.constant(3.14);
+    Token::Id cb = t.constant(3.14);
     REQUIRE(ca == cb);
 
-    Token* cc = s.constant(4);
+    Token::Id cc = t.constant(4);
     REQUIRE(ca != cc);
 }
 

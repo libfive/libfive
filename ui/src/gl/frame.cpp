@@ -90,8 +90,8 @@ void main()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Frame::Frame(Tree* tree)
-    : tree(tree),
+Frame::Frame(Token* root)
+    : tree(root->collapse()),
       vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
       prog(Shader::link(vs, fs))
@@ -99,8 +99,6 @@ Frame::Frame(Tree* tree)
     assert(vs);
     assert(fs);
     assert(prog);
-
-    tree->parent = this;
 
     glGenTextures(2, depth);
     glGenTextures(2, norm);

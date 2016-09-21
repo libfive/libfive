@@ -43,7 +43,7 @@ template <class T, int dims>
 class XTree
 {
 public:
-    static T* Render(Tree* t, const Region& r, bool multithread=true);
+    static T* Render(Token* t, const Region& r, bool multithread=true);
 
     /*  Enumerator that distinguishes between cell types  */
     enum Type { LEAF, BRANCH, EMPTY, FULL };

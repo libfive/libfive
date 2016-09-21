@@ -30,7 +30,7 @@
 #include "ao/ui/gl/frame.hpp"
 #include "ao/ui/gl/axes.hpp"
 
-class Tree;
+class Token;
 
 class Window
 {
@@ -50,7 +50,7 @@ public:
      *  Adds a Frame to redraw the given shape asynchronously
      *  (will not take effect until the next poll() call)
      */
-    void addTree(std::string filename, std::string name, Tree* t);
+    void addTree(std::string filename, std::string name, Token* t);
 
     /*
      *  Instructs the window to quit asynchronously
@@ -175,7 +175,7 @@ protected:
     GLFWwindow* const window;
 
     /*  Atomic pointer to incoming tree  */
-    std::atomic<std::tuple<std::string, std::string, Tree*>*> incoming;
+    std::atomic<std::tuple<std::string, std::string, Token*>*> incoming;
 
     /*  Set to true if frames should be cleared  */
     std::atomic_bool clear;
