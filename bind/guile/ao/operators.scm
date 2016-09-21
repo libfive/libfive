@@ -101,6 +101,14 @@
         (make-token 'nan-fill a b)
         (if (nan? a) b a)))
 
+(define expt_ expt)
+(define-public (expt a b)
+  (if (or (token? a) (token? b))
+      (if (and (token? b) (token-const? b))
+        (make-token 'pow a b)
+        (error "RHS of exponentiation must be a constant"))
+      (expt_ a b)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Return a wrapper function for a unary function

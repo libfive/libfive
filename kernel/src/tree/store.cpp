@@ -189,6 +189,12 @@ Token* Store::operation(Opcode op, Token* a, Token* b, bool collapse)
     assert(op != CONST && op != INVALID &&
            op != DUMMY_A && op != DUMMY_B && op != LAST_OP);
 
+    // Powers are only allowed to have constant exponents
+    if (op == OP_POW)
+    {
+        assert(b->op == CONST);
+    }
+
     // See if we can simplify the expression, either because it's an identity
     // operation (e.g. X + 0) or a linear combination of affine forms
     if (collapse)

@@ -76,6 +76,7 @@ int opcode_enum(char* op)
     else if (str == "sub")      return OP_SUB;
     else if (str == "div")      return OP_DIV;
     else if (str == "atan2")    return OP_ATAN2;
+    else if (str == "pow")      return OP_POW;
     else if (str == "mod")      return OP_MOD;
     else if (str == "nan-fill") return OP_NANFILL;
 

@@ -200,6 +200,10 @@ static void clause(Opcode op,
             EVAL_LOOP
             out[i] = atan2(a[i], b[i]);
             break;
+        case OP_POW:
+            EVAL_LOOP
+            out[i] = pow(a[i], b[i]);
+            break;
         case OP_MOD:
             EVAL_LOOP
             {
@@ -368,6 +372,16 @@ static void clause(Opcode op,
                 odx[i] = (adx[i]*bv[i] - av[i]*bdx[i]) / d;
                 ody[i] = (ady[i]*bv[i] - av[i]*bdy[i]) / d;
                 odz[i] = (adz[i]*bv[i] - av[i]*bdz[i]) / d;
+            }
+            break;
+        case OP_POW:
+            EVAL_LOOP
+            {
+                const float d = av[i] * log(av[i]);
+                const float m = pow(av[i], bv[i] - 1);
+                odx[i] = m * (bv[i] * adx[i] + d*bdx[i]);
+                ody[i] = m * (bv[i] * ady[i] + d*bdy[i]);
+                odz[i] = m * (bv[i] * adz[i] + d*bdz[i]);
             }
             break;
         case OP_MOD:
@@ -596,6 +610,7 @@ static void clause(Opcode op,
         case OP_ACOS:
         case OP_ATAN:
         case OP_EXP:
+        case OP_POW:
         case OP_MOD:
         case OP_NANFILL:
             clause(op, reinterpret_cast<const float*>(a),
@@ -771,6 +786,7 @@ static void clause(Opcode op,
         case OP_ACOS:
         case OP_ATAN:
         case OP_EXP:
+        case OP_POW:
         case OP_MOD:
         case OP_NANFILL:
             clause(op, reinterpret_cast<const float*>(av),
@@ -817,6 +833,8 @@ static Interval clause(Opcode op, const Interval& a, const Interval& b)
             return a / b;
         case OP_ATAN2:
             return atan2(a, b);
+        case OP_POW:
+            return boost::numeric::pow(a, b.lower());
         case OP_MOD:
             return Interval(0.0f, b.upper()); // YOLO
         case OP_NANFILL:
