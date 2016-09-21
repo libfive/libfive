@@ -113,6 +113,11 @@ Token* token_binary(Store* s, int op, Token* a, Token* b)
     return s->operation(static_cast<Opcode>(op), a, b);
 }
 
+int token_is_const(Token* t)
+{
+    return t->op == CONST;
+}
+
 int token_affine_vec(Token* t, v4* vec)
 {
     bool success = false;
