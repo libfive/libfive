@@ -379,9 +379,13 @@ static void clause(Opcode op,
             {
                 const float d = av[i] * log(av[i]);
                 const float m = pow(av[i], bv[i] - 1);
-                odx[i] = m * (bv[i] * adx[i] + d*bdx[i]);
-                ody[i] = m * (bv[i] * ady[i] + d*bdy[i]);
-                odz[i] = m * (bv[i] * adz[i] + d*bdz[i]);
+
+                // If A[q].v is negative, then m will be NaN (because of log's domain).
+                // We work around this by checking if d/d{xyz}(B) == 0 and using a
+                // simplified expression if that's true.
+                odx[i] = m * (bv[i] * adx[i] + (bdx[i] ? d*bdx[i] : 0));
+                ody[i] = m * (bv[i] * ady[i] + (bdy[i] ? d*bdy[i] : 0));
+                odz[i] = m * (bv[i] * adz[i] + (bdz[i] ? d*bdz[i] : 0));
             }
             break;
         case OP_MOD:

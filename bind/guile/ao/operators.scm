@@ -104,10 +104,12 @@
 (define expt_ expt)
 (define-public (expt a b)
   (if (or (token? a) (token? b))
-      (if (and (token? b) (token-const? b))
-        (make-token 'pow a b)
-        (error "RHS of exponentiation must be a constant"))
+      (begin
+        (when (and (token? b) (not (token-const? b)))
+          (error "RHS of exponentiation must be a constant"))
+        (make-token 'pow a b))
       (expt_ a b)))
+(export! expt)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
