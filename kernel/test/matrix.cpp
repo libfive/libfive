@@ -21,49 +21,61 @@
 #include <catch/catch.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "ao/kernel/tree/store.hpp"
-#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/tree/token.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 
 TEST_CASE("Matrix evaluation")
 {
-    Store s;
-    Tree t(&s, s.affine(1, 0, 0, 0));
+    std::unique_ptr<Token> t(Token::affine(1, 0, 0, 0));
 
     SECTION("Default matrix")
     {
-        Evaluator e(&t);
+        Evaluator e(t.get());
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.0);
     }
 
     SECTION("Scaling")
     {
-        Evaluator e(&t, glm::scale(glm::mat4(), {0.5, 1.0, 1.0}));
+        Evaluator e(t.get(), glm::scale(glm::mat4(), {0.5, 1.0, 1.0}));
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 0.5);
     }
 
     SECTION("Swapping")
     {
-        Evaluator e(&t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
+        Evaluator e(t.get(), glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
                                {0.0, 0.0, 1.0}));
         REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(2.0));
     }
 
     SECTION("Offset")
     {
-        Evaluator e(&t, glm::translate(glm::mat4(), {0.5, 0.0, 0.0}));
+        Evaluator e(t.get(), glm::translate(glm::mat4(), {0.5, 0.0, 0.0}));
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.5);
     }
 }
 
 TEST_CASE("Matrix normals")
 {
-    Store s;
-    Tree t(&s, s.affine(1, 0, 0, 0));
+    std::unique_ptr<Token> t(Token::affine(1, 0, 0, 0));
 
     SECTION("Swapping")
     {
-        Evaluator e(&t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
+        Evaluator e(t.get(), glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
+                               {0.0, 0.0, 1.0}));
+        e.set(1, 2, 3, 0);
+        auto out = e.derivs(1);
+        glm::vec3 d(std::get<1>(out)[0],
+                    std::get<2>(out)[0],
+                    std::get<3>(out)[0]);
+
+        REQUIRE(d.x == Approx(0));
+        REQUIRE(d.y == Approx(1));
+        REQUIRE(d.z == Approx(0));
+    }
+
+    SECTION("Swapping")
+    {
+        Evaluator e(t.get(), glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
                                {0.0, 0.0, 1.0}));
         e.set(1, 2, 3, 0);
         auto out = e.derivs(1);

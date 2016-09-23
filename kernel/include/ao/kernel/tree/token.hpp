@@ -114,3 +114,9 @@ protected:
     friend class Tree;
     friend class Evaluator;
 };
+
+/*
+ *  Include tree.hpp so that files that only include token.hpp can build the
+ *  destructor for std::shared_ptr<Tree>
+ */
+#include "ao/kernel/tree/tree.hpp"

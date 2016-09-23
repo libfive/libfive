@@ -21,7 +21,6 @@
 #include <cassert>
 
 #include "ao/kernel/tree/token.hpp"
-#include "ao/kernel/tree/tree.hpp"
 
 Token* Token::constant(float v)
 {
