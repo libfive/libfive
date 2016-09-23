@@ -44,10 +44,10 @@ static std::pair<DepthImage, NormalImage> Render(
 TEST_CASE("2D interval Z values")
 {
     Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-               s.constant(1)));
+    Tree t(&s, Token::operation(Opcode::SUB,
+               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+               Token::constant(1)));
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 0);
 
     auto out = Render(&t, r).first;
@@ -59,25 +59,25 @@ TEST_CASE("2D interval Z values")
 TEST_CASE("3D interval Z values")
 {
     Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-               s.constant(1)));
+    Tree t(&s, Token::operation(Opcode::SUB,
+               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+               Token::constant(1)));
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 25);
 
     auto out = Render(&t, r).first;
     CAPTURE(out);
-    REQUIRE((out == r.Z.values.back() ||
+    REQUIRE((out == r.Z.valueToken::back() ||
              out == -std::numeric_limits<float>::infinity()).all());
 }
 
 TEST_CASE("2D rendering of a circle ")
 {
     Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-               s.constant(1)));
+    Tree t(&s, Token::operation(Opcode::SUB,
+               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+               Token::constant(1)));
 
     DepthImage comp(10, 10);
     float inf = std::numeric_limits<float>::infinity();
@@ -113,10 +113,10 @@ TEST_CASE("2D rendering of a circle ")
 TEST_CASE("2D circle rendering at non-zero Z ")
 {
     Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-               s.constant(1)));
+    Tree t(&s, Token::operation(Opcode::SUB,
+               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+               Token::constant(1)));
 
     Region r({-1, 1}, {-1, 1}, {1, 1}, 5);
     auto out = Render(&t, r).first;
@@ -145,11 +145,11 @@ TEST_CASE("Render orientation ")
 
     SECTION("Y")
     {
-        Tree t(&s, s.operation(OP_MAX,
-                   s.operation(OP_SUB,
-                   s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                       s.operation(OP_MUL, s.Y(), s.Y())),
-                   s.constant(1)), s.Y()));
+        Tree t(&s, Token::operation(Opcode::MAX,
+                   Token::operation(Opcode::SUB,
+                   Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                       Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+                   Token::constant(1)), Token::Y()));
 
         auto out = Render(&t, r).first;
 
@@ -173,11 +173,11 @@ TEST_CASE("Render orientation ")
 
     SECTION("X")
     {
-        Tree t(&s, s.operation(OP_MAX,
-                   s.operation(OP_SUB,
-                   s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                       s.operation(OP_MUL, s.Y(), s.Y())),
-                   s.constant(1)), s.X()));
+        Tree t(&s, Token::operation(Opcode::MAX,
+                   Token::operation(Opcode::SUB,
+                   Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                       Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+                   Token::constant(1)), Token::X()));
 
         auto out = Render(&t, r).first;
 
@@ -203,10 +203,10 @@ TEST_CASE("Render orientation ")
 TEST_CASE("Render shape ")
 {
     Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-               s.constant(1)));
+    Tree t(&s, Token::operation(Opcode::SUB,
+               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+               Token::constant(1)));
 
     SECTION("X")
     {
@@ -227,12 +227,12 @@ TEST_CASE("Render shape ")
 TEST_CASE("3D rendering of a sphere ")
 {
     Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-                                   s.operation(OP_MUL, s.Z(), s.Z())),
-               s.constant(1)));
+    Tree t(&s, Token::operation(Opcode::SUB,
+               Token::operation(Opcode::ADD,
+               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+                                   Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
+               Token::constant(1)));
 
     SECTION("Values")
     {
@@ -269,7 +269,7 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("X")
     {
-        Tree t(&s, s.operation(OP_ADD, s.X(), s.Z()));
+        Tree t(&s, Token::operation(Opcode::ADD, Token::X(), Token::Z()));
         auto norm = Render(&t, r).second;
 
         CAPTURE(norm);
@@ -278,7 +278,7 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("-X")
     {
-        Tree t(&s, s.operation(OP_ADD, s.Z(), s.operation(OP_NEG, s.X())));
+        Tree t(&s, Token::operation(Opcode::ADD, Token::Z(), Token::operation(Opcode::NEG, Token::X())));
         auto norm = Render(&t, r).second;
 
         CAPTURE(norm);
@@ -288,7 +288,7 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("Y")
     {
-        Tree t(&s, s.operation(OP_ADD, s.Y(), s.Z()));
+        Tree t(&s, Token::operation(Opcode::ADD, Token::Y(), Token::Z()));
         auto norm = Render(&t, r).second;
 
         CAPTURE(norm);
@@ -301,10 +301,10 @@ TEST_CASE("Normal clipping ")
 {
     Store s;
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-               s.constant(1)));
+    Tree t(&s, Token::operation(Opcode::SUB,
+               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                   Token::operation(Opcode::MUL, Token::Y(), s.Y())),
+               Token::constant(1)));
 
     auto norm = Render(&t, r).second;
 
@@ -321,12 +321,12 @@ TEST_CASE("Performance")
     std::string log;
 
     {   // Build and render sphere
-        Tree t(&s, s.operation(OP_SUB,
-                   s.operation(OP_ADD,
-                   s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                       s.operation(OP_MUL, s.Y(), s.Y())),
-                                       s.operation(OP_MUL, s.Z(), s.Z())),
-                   s.constant(1)));
+        Tree t(&s, Token::operation(Opcode::SUB,
+                   Token::operation(Opcode::ADD,
+                   Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                       Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+                                       Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
+                   Token::constant(1)));
 
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 500);
 

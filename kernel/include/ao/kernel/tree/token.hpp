@@ -95,6 +95,9 @@ public:
     size_t rank() const;
     float value() const;
 
+    /*  ID indexing into the parent Tree */
+    const size_t id;
+
 protected:
     /*
      *  Private constructor
@@ -102,9 +105,6 @@ protected:
      */
     explicit Token(Id id, Tree* parent)
         : id(id), parent(parent) {}
-
-    /*  ID indexing into the parent Tree */
-    const size_t id;
 
     /*  Shared pointer to parent Tree
      *  Every token that refers back to this store has a pointer to it,

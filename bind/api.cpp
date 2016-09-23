@@ -58,28 +58,28 @@ int opcode_enum(char* op)
 {
     std::string str(op);
 
-    if (str == "add")           return Opcode::OP_ADD;
-    else if (str == "mul")      return Opcode::OP_MUL;
-    else if (str == "min")      return Opcode::OP_MIN;
-    else if (str == "max")      return Opcode::OP_MAX;
-    else if (str == "sub")      return Opcode::OP_SUB;
-    else if (str == "div")      return Opcode::OP_DIV;
-    else if (str == "atan2")    return Opcode::OP_ATAN2;
-    else if (str == "pow")      return Opcode::OP_POW;
-    else if (str == "mod")      return Opcode::OP_MOD;
-    else if (str == "nan-fill") return Opcode::OP_NANFILL;
+    if (str == "add")           return Opcode::ADD;
+    else if (str == "mul")      return Opcode::MUL;
+    else if (str == "min")      return Opcode::MIN;
+    else if (str == "max")      return Opcode::MAX;
+    else if (str == "sub")      return Opcode::SUB;
+    else if (str == "div")      return Opcode::DIV;
+    else if (str == "atan2")    return Opcode::ATAN2;
+    else if (str == "pow")      return Opcode::POW;
+    else if (str == "mod")      return Opcode::MOD;
+    else if (str == "nan-fill") return Opcode::NANFILL;
 
-    else if (str == "square")   return Opcode::OP_SQUARE;
-    else if (str == "sqrt")     return Opcode::OP_SQRT;
-    else if (str == "abs")      return Opcode::OP_ABS;
-    else if (str == "neg")      return Opcode::OP_NEG;
-    else if (str == "sin")      return Opcode::OP_SIN;
-    else if (str == "cos")      return Opcode::OP_COS;
-    else if (str == "tan")      return Opcode::OP_TAN;
-    else if (str == "asin")     return Opcode::OP_ASIN;
-    else if (str == "acos")     return Opcode::OP_ACOS;
-    else if (str == "atan")     return Opcode::OP_ATAN;
-    else if (str == "exp")      return Opcode::OP_EXP;
+    else if (str == "square")   return Opcode::SQUARE;
+    else if (str == "sqrt")     return Opcode::SQRT;
+    else if (str == "abs")      return Opcode::ABS;
+    else if (str == "neg")      return Opcode::NEG;
+    else if (str == "sin")      return Opcode::SIN;
+    else if (str == "cos")      return Opcode::COS;
+    else if (str == "tan")      return Opcode::TAN;
+    else if (str == "asin")     return Opcode::ASIN;
+    else if (str == "acos")     return Opcode::ACOS;
+    else if (str == "atan")     return Opcode::ATAN;
+    else if (str == "exp")      return Opcode::EXP;
 
     else                        return Opcode::INVALID;
 }

@@ -33,7 +33,7 @@ TEST_CASE("Vectorized performance")
     const float N = 1000;
 
     Store s;
-    Tree t(&s, s.operation(OP_ADD, s.X(), s.Y()));
+    Tree t(&s, s.operation(Opcode::ADD, s.X(), s.Y()));
     Evaluator e(&t);
 
     for (unsigned i=0; i < Result::N; ++i)

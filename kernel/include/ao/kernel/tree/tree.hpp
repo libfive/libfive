@@ -74,7 +74,7 @@ public:
     glm::vec4 getAffine(Token::Id root, bool* success=nullptr) const;
 
     /*
-     *  Collapses AFFINE nodes into normal OP_ADD, taking advantage of
+     *  Collapses AFFINE nodes into normal Opcode::ADD, taking advantage of
      *  identity operations to make the tree smaller.
      *
      *  Returns a root token for the new tree.

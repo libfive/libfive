@@ -29,28 +29,28 @@ size_t Opcode::args(Opcode op)
         case VAR_Z:
             return 0;
 
-        case OP_SQUARE: // fallthrough
-        case OP_SQRT:
-        case OP_NEG:
-        case OP_ABS:
-        case OP_SIN:
-        case OP_COS:
-        case OP_TAN:
-        case OP_ASIN:
-        case OP_ACOS:
-        case OP_ATAN:
-        case OP_EXP:
+        case SQUARE: // fallthrough
+        case SQRT:
+        case NEG:
+        case ABS:
+        case SIN:
+        case COS:
+        case TAN:
+        case ASIN:
+        case ACOS:
+        case ATAN:
+        case EXP:
             return 1;
 
-        case OP_ADD: // fallthrough
-        case OP_MUL:
-        case OP_MIN:
-        case OP_MAX:
-        case OP_SUB:
-        case OP_DIV:
-        case OP_ATAN2:
-        case OP_MOD:
-        case OP_NANFILL:
+        case ADD: // fallthrough
+        case MUL:
+        case MIN:
+        case MAX:
+        case SUB:
+        case DIV:
+        case ATAN2:
+        case MOD:
+        case NANFILL:
         case AFFINE_VEC:
             return 2;
 

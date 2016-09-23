@@ -195,39 +195,39 @@ static void clause(Opcode::Opcode op,
         float* __restrict out, size_t count)
 {
     switch (op) {
-        case Opcode::OP_ADD:
+        case Opcode::ADD:
             EVAL_LOOP
             out[i] = a[i] + b[i];
             break;
-        case Opcode::OP_MUL:
+        case Opcode::MUL:
             EVAL_LOOP
             out[i] = a[i] * b[i];
             break;
-        case Opcode::OP_MIN:
+        case Opcode::MIN:
             EVAL_LOOP
             out[i] = fmin(a[i], b[i]);
             break;
-        case Opcode::OP_MAX:
+        case Opcode::MAX:
             EVAL_LOOP
             out[i] = fmax(a[i], b[i]);
             break;
-        case Opcode::OP_SUB:
+        case Opcode::SUB:
             EVAL_LOOP
             out[i] = a[i] - b[i];
             break;
-        case Opcode::OP_DIV:
+        case Opcode::DIV:
             EVAL_LOOP
             out[i] = a[i] / b[i];
             break;
-        case Opcode::OP_ATAN2:
+        case Opcode::ATAN2:
             EVAL_LOOP
             out[i] = atan2(a[i], b[i]);
             break;
-        case Opcode::OP_POW:
+        case Opcode::POW:
             EVAL_LOOP
             out[i] = pow(a[i], b[i]);
             break;
-        case Opcode::OP_MOD:
+        case Opcode::MOD:
             EVAL_LOOP
             {
                 out[i] = std::fmod(a[i], b[i]);
@@ -237,52 +237,52 @@ static void clause(Opcode::Opcode op,
                 }
             }
             break;
-        case Opcode::OP_NANFILL:
+        case Opcode::NANFILL:
             EVAL_LOOP
             out[i] = std::isnan(a[i]) ? b[i] : a[i];
             break;
 
-        case Opcode::OP_SQUARE:
+        case Opcode::SQUARE:
             EVAL_LOOP
             out[i] = a[i] * a[i];
             break;
-        case Opcode::OP_SQRT:
+        case Opcode::SQRT:
             EVAL_LOOP
             out[i] = sqrt(a[i]);
             break;
-        case Opcode::OP_NEG:
+        case Opcode::NEG:
             EVAL_LOOP
             out[i] = -a[i];
             break;
-        case Opcode::OP_ABS:
+        case Opcode::ABS:
             EVAL_LOOP
             out[i] = fabs(a[i]);
             break;
-        case Opcode::OP_SIN:
+        case Opcode::SIN:
             EVAL_LOOP
             out[i] = sin(a[i]);
             break;
-        case Opcode::OP_COS:
+        case Opcode::COS:
             EVAL_LOOP
             out[i] = cos(a[i]);
             break;
-        case Opcode::OP_TAN:
+        case Opcode::TAN:
             EVAL_LOOP
             out[i] = tan(a[i]);
             break;
-        case Opcode::OP_ASIN:
+        case Opcode::ASIN:
             EVAL_LOOP
             out[i] = asin(a[i]);
             break;
-        case Opcode::OP_ACOS:
+        case Opcode::ACOS:
             EVAL_LOOP
             out[i] = acos(a[i]);
             break;
-        case Opcode::OP_ATAN:
+        case Opcode::ATAN:
             EVAL_LOOP
             out[i] = atan(a[i]);
             break;
-        case Opcode::OP_EXP:
+        case Opcode::EXP:
             EVAL_LOOP
             out[i] = exp(a[i]);
             break;
@@ -321,7 +321,7 @@ static void clause(Opcode::Opcode op,
     clause(op, av, bv, ov, count);
 
     switch (op) {
-        case Opcode::OP_ADD:
+        case Opcode::ADD:
             EVAL_LOOP
             {
                 odx[i] = adx[i] + bdx[i];
@@ -329,7 +329,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = adz[i] + bdz[i];
             }
             break;
-        case Opcode::OP_MUL:
+        case Opcode::MUL:
             EVAL_LOOP
             {   // Product rule
                 odx[i] = av[i]*bdx[i] + adx[i]*bv[i];
@@ -337,7 +337,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = av[i]*bdz[i] + adz[i]*bv[i];
             }
             break;
-        case Opcode::OP_MIN:
+        case Opcode::MIN:
             EVAL_LOOP
             {
                 if (av[i] < bv[i])
@@ -354,7 +354,7 @@ static void clause(Opcode::Opcode op,
                 }
             }
             break;
-        case Opcode::OP_MAX:
+        case Opcode::MAX:
             EVAL_LOOP
             {
                 if (av[i] < bv[i])
@@ -371,7 +371,7 @@ static void clause(Opcode::Opcode op,
                 }
             }
             break;
-        case Opcode::OP_SUB:
+        case Opcode::SUB:
             EVAL_LOOP
             {
                 odx[i] = adx[i] - bdx[i];
@@ -379,7 +379,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = adz[i] - bdz[i];
             }
             break;
-        case Opcode::OP_DIV:
+        case Opcode::DIV:
             EVAL_LOOP
             {
                 const float p = pow(bv[i], 2);
@@ -388,7 +388,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = (bv[i]*adz[i] - av[i]*bdz[i]) / p;
             }
             break;
-        case Opcode::OP_ATAN2:
+        case Opcode::ATAN2:
             EVAL_LOOP
             {
                 const float d = pow(av[i], 2) + pow(bv[i], 2);
@@ -397,7 +397,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = (adz[i]*bv[i] - av[i]*bdz[i]) / d;
             }
             break;
-        case Opcode::OP_POW:
+        case Opcode::POW:
             EVAL_LOOP
             {
                 const float d = av[i] * log(av[i]);
@@ -411,7 +411,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = m * (bv[i] * adz[i] + (bdz[i] ? d*bdz[i] : 0));
             }
             break;
-        case Opcode::OP_MOD:
+        case Opcode::MOD:
             EVAL_LOOP
             {
                 // This isn't quite how partial derivatives of mod work,
@@ -421,7 +421,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = adz[i];
             }
             break;
-        case Opcode::OP_NANFILL:
+        case Opcode::NANFILL:
             EVAL_LOOP
             {
                 odx[i] = std::isnan(av[i]) ? bdx[i] : adx[i];
@@ -430,7 +430,7 @@ static void clause(Opcode::Opcode op,
             }
             break;
 
-        case Opcode::OP_SQUARE:
+        case Opcode::SQUARE:
             EVAL_LOOP
             {
                 odx[i] = 2 * av[i] * adx[i];
@@ -438,7 +438,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = 2 * av[i] * adz[i];
             }
             break;
-        case Opcode::OP_SQRT:
+        case Opcode::SQRT:
             EVAL_LOOP
             {
                 if (av[i] < 0)
@@ -455,7 +455,7 @@ static void clause(Opcode::Opcode op,
                 }
             }
             break;
-        case Opcode::OP_NEG:
+        case Opcode::NEG:
             EVAL_LOOP
             {
                 odx[i] = -adx[i];
@@ -463,7 +463,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = -adz[i];
             }
             break;
-        case Opcode::OP_ABS:
+        case Opcode::ABS:
             EVAL_LOOP
             {
                 if (av[i] < 0)
@@ -480,7 +480,7 @@ static void clause(Opcode::Opcode op,
                 }
             }
             break;
-        case Opcode::OP_SIN:
+        case Opcode::SIN:
             EVAL_LOOP
             {
                 const float c = cos(av[i]);
@@ -489,7 +489,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = adz[i] * c;
             }
             break;
-        case Opcode::OP_COS:
+        case Opcode::COS:
             EVAL_LOOP
             {
                 const float s = -sin(av[i]);
@@ -498,7 +498,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = adz[i] * s;
             }
             break;
-        case Opcode::OP_TAN:
+        case Opcode::TAN:
             EVAL_LOOP
             {
                 const float s = pow(1/cos(av[i]), 2);
@@ -507,7 +507,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = adz[i] * s;
             }
             break;
-        case Opcode::OP_ASIN:
+        case Opcode::ASIN:
             EVAL_LOOP
             {
                 const float d = sqrt(1 - pow(av[i], 2));
@@ -516,7 +516,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = adz[i] / d;
             }
             break;
-        case Opcode::OP_ACOS:
+        case Opcode::ACOS:
             EVAL_LOOP
             {
                 const float d = -sqrt(1 - pow(av[i], 2));
@@ -525,7 +525,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = adz[i] / d;
             }
             break;
-        case Opcode::OP_ATAN:
+        case Opcode::ATAN:
             EVAL_LOOP
             {
                 const float d = pow(av[i], 2) + 1;
@@ -534,7 +534,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = adz[i] / d;
             }
             break;
-        case Opcode::OP_EXP:
+        case Opcode::EXP:
             EVAL_LOOP
             {
                 const float e = exp(av[i]);
@@ -576,44 +576,44 @@ static void clause(Opcode::Opcode op,
               __m256* __restrict out, size_t count)
 {
     switch (op) {
-        case Opcode::OP_ADD:
+        case Opcode::ADD:
             EVAL_LOOP
             out[i] = _mm256_add_ps(a[i], b[i]);
             break;
-        case Opcode::OP_MUL:
+        case Opcode::MUL:
             EVAL_LOOP
             out[i] = _mm256_mul_ps(a[i], b[i]);
             break;
-        case Opcode::OP_MIN:
+        case Opcode::MIN:
             EVAL_LOOP
             out[i] = _mm256_min_ps(a[i], b[i]);
             break;
-        case Opcode::OP_MAX:
+        case Opcode::MAX:
             EVAL_LOOP
             out[i] = _mm256_max_ps(a[i], b[i]);
             break;
-        case Opcode::OP_SUB:
+        case Opcode::SUB:
             EVAL_LOOP
             out[i] = _mm256_sub_ps(a[i], b[i]);
             break;
-        case Opcode::OP_DIV:
+        case Opcode::DIV:
             EVAL_LOOP
             out[i] = _mm256_div_ps(a[i], b[i]);
             break;
 
-        case Opcode::OP_SQUARE:
+        case Opcode::SQUARE:
             EVAL_LOOP
             out[i] = _mm256_mul_ps(a[i], a[i]);
             break;
-        case Opcode::OP_SQRT:
+        case Opcode::SQRT:
             EVAL_LOOP
             out[i] = _mm256_sqrt_ps(a[i]);
             break;
-        case Opcode::OP_NEG:
+        case Opcode::NEG:
             EVAL_LOOP
             out[i] = _mm256_sub_ps(_mm256_setzero_ps(), a[i]);
             break;
-        case Opcode::OP_ABS:
+        case Opcode::ABS:
             EVAL_LOOP
             out[i] = _mm256_andnot_ps(a[i], _mm256_set1_ps(-0.0f));
             break;
@@ -629,17 +629,17 @@ static void clause(Opcode::Opcode op,
 
         // Trig functions don't have AVX equivalents, so fall back to
         // default clause evaluation
-        case Opcode::OP_ATAN2:
-        case Opcode::OP_SIN:
-        case Opcode::OP_COS:
-        case Opcode::OP_TAN:
-        case Opcode::OP_ASIN:
-        case Opcode::OP_ACOS:
-        case Opcode::OP_ATAN:
-        case Opcode::OP_EXP:
-        case Opcode::OP_POW:
-        case Opcode::OP_MOD:
-        case Opcode::OP_NANFILL:
+        case Opcode::ATAN2:
+        case Opcode::SIN:
+        case Opcode::COS:
+        case Opcode::TAN:
+        case Opcode::ASIN:
+        case Opcode::ACOS:
+        case Opcode::ATAN:
+        case Opcode::EXP:
+        case Opcode::POW:
+        case Opcode::MOD:
+        case Opcode::NANFILL:
             clause(op, reinterpret_cast<const float*>(a),
                        reinterpret_cast<const float*>(b),
                        reinterpret_cast<float*>(out), count*8);
@@ -676,7 +676,7 @@ static void clause(Opcode::Opcode op,
     clause(op, av, bv, ov, count);
 
     switch (op) {
-        case Opcode::OP_ADD:
+        case Opcode::ADD:
             EVAL_LOOP
             {
                 odx[i] = _mm256_add_ps(adx[i], bdx[i]);
@@ -684,7 +684,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = _mm256_add_ps(adz[i], bdz[i]);
             }
             break;
-        case Opcode::OP_MUL:
+        case Opcode::MUL:
             EVAL_LOOP
             {   // Product rule
                 odx[i] = _mm256_add_ps(_mm256_mul_ps(av[i], bdx[i]),
@@ -695,7 +695,7 @@ static void clause(Opcode::Opcode op,
                                        _mm256_mul_ps(adz[i], bv[i]));
             }
             break;
-        case Opcode::OP_MIN:
+        case Opcode::MIN:
             EVAL_LOOP
             {
                 __m256 cmp = _mm256_cmp_ps(av[i], bv[i], CMP_LT_OQ);
@@ -704,7 +704,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = _mm256_blendv_ps(bdz[i], adz[i], cmp);
             }
             break;
-        case Opcode::OP_MAX:
+        case Opcode::MAX:
             EVAL_LOOP
             {
                 __m256 cmp = _mm256_cmp_ps(av[i], bv[i], CMP_LT_OQ);
@@ -713,7 +713,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = _mm256_blendv_ps(adz[i], bdz[i], cmp);
             }
             break;
-        case Opcode::OP_SUB:
+        case Opcode::SUB:
             EVAL_LOOP
             {
                 odx[i] = _mm256_sub_ps(adx[i], bdx[i]);
@@ -721,7 +721,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = _mm256_sub_ps(adz[i], bdz[i]);
             }
             break;
-        case Opcode::OP_DIV:
+        case Opcode::DIV:
             EVAL_LOOP
             {
                 const __m256 p = _mm256_mul_ps(bv[i], bv[i]);
@@ -736,7 +736,7 @@ static void clause(Opcode::Opcode op,
                                         _mm256_mul_ps(av[i], bdz[i])), p);
             }
             break;
-        case Opcode::OP_SQUARE:
+        case Opcode::SQUARE:
             EVAL_LOOP
             {
                 odx[i] = _mm256_mul_ps(_mm256_set1_ps(2),
@@ -747,7 +747,7 @@ static void clause(Opcode::Opcode op,
                                        _mm256_mul_ps(av[i], adz[i]));
             }
             break;
-        case Opcode::OP_SQRT:
+        case Opcode::SQRT:
             EVAL_LOOP
             {
                 __m256 cmp = _mm256_cmp_ps(av[i], _mm256_setzero_ps(), CMP_LT_OQ);
@@ -764,7 +764,7 @@ static void clause(Opcode::Opcode op,
                         _mm256_div_ps(adz[i], den), _mm256_setzero_ps(), cmp);
             }
             break;
-        case Opcode::OP_NEG:
+        case Opcode::NEG:
             EVAL_LOOP
             {
                 odx[i] = _mm256_sub_ps(_mm256_setzero_ps(), adx[i]);
@@ -772,7 +772,7 @@ static void clause(Opcode::Opcode op,
                 odz[i] = _mm256_sub_ps(_mm256_setzero_ps(), adz[i]);
             }
             break;
-        case Opcode::OP_ABS:
+        case Opcode::ABS:
             EVAL_LOOP
             {
                 __m256 cmp = _mm256_cmp_ps(av[i], _mm256_setzero_ps(), CMP_LT_OQ);
@@ -805,17 +805,17 @@ static void clause(Opcode::Opcode op,
 
         // Trig functions don't have AVX equivalents, so fall back to
         // default clause evaluation
-        case Opcode::OP_ATAN2:
-        case Opcode::OP_SIN:
-        case Opcode::OP_COS:
-        case Opcode::OP_TAN:
-        case Opcode::OP_ASIN:
-        case Opcode::OP_ACOS:
-        case Opcode::OP_ATAN:
-        case Opcode::OP_EXP:
-        case Opcode::OP_POW:
-        case Opcode::OP_MOD:
-        case Opcode::OP_NANFILL:
+        case Opcode::ATAN2:
+        case Opcode::SIN:
+        case Opcode::COS:
+        case Opcode::TAN:
+        case Opcode::ASIN:
+        case Opcode::ACOS:
+        case Opcode::ATAN:
+        case Opcode::EXP:
+        case Opcode::POW:
+        case Opcode::MOD:
+        case Opcode::NANFILL:
             clause(op, reinterpret_cast<const float*>(av),
                        reinterpret_cast<const float*>(adx),
                        reinterpret_cast<const float*>(ady),
@@ -846,48 +846,48 @@ static void clause(Opcode::Opcode op,
 static Interval clause(Opcode::Opcode op, const Interval& a, const Interval& b)
 {
     switch (op) {
-        case Opcode::OP_ADD:
+        case Opcode::ADD:
             return a + b;
-        case Opcode::OP_MUL:
+        case Opcode::MUL:
             return a * b;
-        case Opcode::OP_MIN:
+        case Opcode::MIN:
             return boost::numeric::min(a, b);
-        case Opcode::OP_MAX:
+        case Opcode::MAX:
             return boost::numeric::max(a, b);
-        case Opcode::OP_SUB:
+        case Opcode::SUB:
             return a - b;
-        case Opcode::OP_DIV:
+        case Opcode::DIV:
             return a / b;
-        case Opcode::OP_ATAN2:
+        case Opcode::ATAN2:
             return atan2(a, b);
-        case Opcode::OP_POW:
+        case Opcode::POW:
             return boost::numeric::pow(a, b.lower());
-        case Opcode::OP_MOD:
+        case Opcode::MOD:
             return Interval(0.0f, b.upper()); // YOLO
-        case Opcode::OP_NANFILL:
+        case Opcode::NANFILL:
             return (std::isnan(a.lower()) || std::isnan(a.upper())) ? b : a;
 
-        case Opcode::OP_SQUARE:
+        case Opcode::SQUARE:
             return boost::numeric::square(a);
-        case Opcode::OP_SQRT:
+        case Opcode::SQRT:
             return boost::numeric::sqrt(a);
-        case Opcode::OP_NEG:
+        case Opcode::NEG:
             return -a;
-        case Opcode::OP_ABS:
+        case Opcode::ABS:
             return boost::numeric::abs(a);
-        case Opcode::OP_SIN:
+        case Opcode::SIN:
             return boost::numeric::sin(a);
-        case Opcode::OP_COS:
+        case Opcode::COS:
             return boost::numeric::cos(a);
-        case Opcode::OP_TAN:
+        case Opcode::TAN:
             return boost::numeric::tan(a);
-        case Opcode::OP_ASIN:
+        case Opcode::ASIN:
             return boost::numeric::asin(a);
-        case Opcode::OP_ACOS:
+        case Opcode::ACOS:
             return boost::numeric::acos(a);
-        case Opcode::OP_ATAN:
+        case Opcode::ATAN:
             return boost::numeric::atan(a);
-        case Opcode::OP_EXP:
+        case Opcode::EXP:
             return boost::numeric::exp(a);
 
         case Opcode::DUMMY_A:

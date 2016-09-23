@@ -19,13 +19,14 @@
 #include <catch/catch.hpp>
 
 #include "ao/kernel/tree/tree.hpp"
-#include "ao/kernel/tree/token.hpp"
 
 TEST_CASE("Constructing a simple shape")
 {
-    Token* out = Token::operation(Opcode::OP_ADD, Token::X(),
-            Token::constant(1));
-    REQUIRE(out != nullptr);
+    Tree t;
+
+    Token::Id out = t.operation(Opcode::ADD, t.X(),
+            t.constant(1));
+    REQUIRE(out == 3);
 }
 
 TEST_CASE("Deduplication of variables")
@@ -54,68 +55,70 @@ TEST_CASE("Deduplication of constants")
 
 TEST_CASE("Deduplication of operations")
 {
-    Store s;
+    Tree t;
 
-    Token* oa = s.operation(OP_ADD, s.X(), s.constant(1));
-    Token* ob = s.operation(OP_ADD, s.X(), s.constant(1));
+    Token::Id oa = t.operation(Opcode::ADD, t.X(), t.constant(1));
+    Token::Id ob = t.operation(Opcode::ADD, t.X(), t.constant(1));
     REQUIRE(oa == ob);
 
-    Token* oc = s.operation(OP_ADD, s.X(), s.constant(2));
+    Token::Id oc = t.operation(Opcode::ADD, t.X(), t.constant(2));
     REQUIRE(oa != oc);
 }
 
 TEST_CASE("Found flag propagation")
 {
-    Store s;
+    Tree t;
 
-    Token* oa = s.operation(OP_ADD, s.X(), s.constant(1));
-    Token* ob = s.operation(OP_MUL, s.Y(), s.constant(1));
+    Token::Id oa = t.operation(Opcode::ADD, t.X(), t.constant(1));
+    Token::Id ob = t.operation(Opcode::MUL, t.Y(), t.constant(1));
 
-    auto f = s.findConnected(oa);
+    auto f = t.findConnected(oa);
 
     REQUIRE(f.count(oa));
-    REQUIRE(f.count(s.X()));
-    REQUIRE(f.count(s.constant(1)));
+    REQUIRE(f.count(t.X()));
+    REQUIRE(f.count(t.constant(1)));
 
     REQUIRE(!f.count(ob));
-    REQUIRE(!f.count(s.Y()));
+    REQUIRE(!f.count(t.Y()));
 }
 
 TEST_CASE("Automatic expression pruning")
 {
-    Store s;
+    Tree t;
 
     SECTION("Addition")
     {
-        Token* oa = s.operation(OP_ADD, s.X(), s.constant(0));
-        REQUIRE(oa == s.X());
+        Token::Id oa = t.operation(Opcode::ADD, t.X(), t.constant(0));
+        REQUIRE(oa == t.X());
 
-        Token* ob = s.operation(OP_ADD, s.constant(0), s.X());
-        REQUIRE(ob == s.X());
+        Token::Id ob = t.operation(Opcode::ADD, t.constant(0), t.X());
+        REQUIRE(ob == t.X());
     }
 
     SECTION("Subtraction")
     {
-        Token* oa = s.operation(OP_SUB, s.X(), s.constant(0));
-        REQUIRE(oa == s.X());
+        Token::Id oa = t.operation(Opcode::SUB, t.X(), t.constant(0));
+        REQUIRE(oa == t.X());
 
-        Token* ob = s.operation(OP_SUB, s.constant(0), s.X());
-        REQUIRE(ob->op == OP_NEG);
-        REQUIRE(ob->a == s.X());
+        Token::Id ob = t.operation(Opcode::SUB, t.constant(0), t.X());
+        REQUIRE(t.opcode(ob) == Opcode::NEG);
+        REQUIRE(t.lhs(ob) == t.X());
     }
 
     SECTION("Multiplication")
     {
-        Token* oa = s.operation(OP_MUL, s.X(), s.constant(1));
-        REQUIRE(oa == s.X());
+        Token::Id oa = t.operation(Opcode::MUL, t.X(), t.constant(1));
+        REQUIRE(oa == t.X());
 
-        Token* ob = s.operation(OP_MUL, s.constant(1), s.X());
-        REQUIRE(ob == s.X());
+        Token::Id ob = t.operation(Opcode::MUL, t.constant(1), t.X());
+        REQUIRE(ob == t.X());
 
-        Token* oc = s.operation(OP_MUL, s.X(), s.constant(0));
-        REQUIRE(oc == s.constant(0));
+        Token::Id oc = t.operation(Opcode::MUL, t.X(), t.constant(0));
+        REQUIRE(t.opcode(oc) == Opcode::CONST);
+        REQUIRE(t.value(oc) == 0);
 
-        Token* od = s.operation(OP_MUL, s.constant(0), s.X());
-        REQUIRE(od == s.constant(0));
+        Token::Id od = t.operation(Opcode::MUL, t.constant(0), t.X());
+        REQUIRE(t.opcode(od) == Opcode::CONST);
+        REQUIRE(t.opcode(od) == 0);
     }
 }

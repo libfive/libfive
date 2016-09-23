@@ -34,7 +34,7 @@ TEST_CASE("Variable evaluation")
 TEST_CASE("Float evaluation")
 {
     Store s;
-    Tree t(&s, s.operation(OP_ADD, s.X(), s.constant(1)));
+    Tree t(&s, s.operation(Opcode::ADD, s.X(), s.constant(1)));
     Evaluator e(&t);
 
     REQUIRE(e.eval(1.0, 2.0, 3.0) == 2.0);
@@ -43,7 +43,7 @@ TEST_CASE("Float evaluation")
 TEST_CASE("Interval evaluation")
 {
     Store s;
-    Tree t(&s, s.operation(OP_ADD, s.X(), s.constant(1)));
+    Tree t(&s, s.operation(Opcode::ADD, s.X(), s.constant(1)));
     Evaluator e(&t);
 
     Interval arg(1, 2);
@@ -56,8 +56,8 @@ TEST_CASE("Interval evaluation")
 TEST_CASE("Push / pop behavior")
 {
     Store s;
-    Tree t(&s, s.operation(OP_MIN, s.operation(OP_ADD, s.X(), s.constant(1)),
-                                   s.operation(OP_ADD, s.Y(), s.constant(1))));
+    Tree t(&s, s.operation(Opcode::MIN, s.operation(Opcode::ADD, s.X(), s.constant(1)),
+                                   s.operation(Opcode::ADD, s.Y(), s.constant(1))));
     Evaluator e(&t);
 
     // Store -3 in the rhs's value

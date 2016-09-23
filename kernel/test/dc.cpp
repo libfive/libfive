@@ -31,12 +31,12 @@
 TEST_CASE("Small sphere mesh")
 {
     std::unique_ptr<Token> t(
-        Token::operation(Opcode::OP_SUB,
-            Token::operation(Opcode::OP_ADD,
-            Token::operation(Opcode::OP_ADD,
-                    Token::operation(Opcode::OP_MUL, Token::X(), Token::X()),
-                    Token::operation(Opcode::OP_MUL, Token::Y(), Token::Y())),
-                    Token::operation(Opcode::OP_MUL, Token::Z(), Token::Z())),
+        Token::operation(Opcode::SUB,
+            Token::operation(Opcode::ADD,
+            Token::operation(Opcode::ADD,
+                    Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                    Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+                    Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
             Token::constant(0.5)));
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
@@ -69,8 +69,8 @@ TEST_CASE("Face normals")
         for (int i=0; i < 3; ++i)
         {
             std::unique_ptr<Token> t(Token::operation(
-                        Opcode::OP_NEG,
-                        Token::operation(Opcode::OP_ADD, axis[i], 
+                        Opcode::NEG,
+                        Token::operation(Opcode::ADD, axis[i],
                             Token::constant(0.75))));
             auto m = Mesh::Render(t.get(), r);
             for (unsigned j=0; j < m.tris.size(); ++j)
@@ -90,10 +90,10 @@ TEST_CASE("Face normals")
 TEST_CASE("Simple 2D contouring")
 {
     std::unique_ptr<Token> t(
-        Token::operation(Opcode::OP_SUB,
-            Token::operation(Opcode::OP_ADD,
-                    Token::operation(Opcode::OP_MUL, Token::X(), Token::X()),
-                    Token::operation(Opcode::OP_MUL, Token::Y(), Token::Y())),
+        Token::operation(Opcode::SUB,
+            Token::operation(Opcode::ADD,
+                    Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                    Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
             Token::constant(0.5)));
 
     Region r({-1, 1}, {-1, 1}, {0, 0}, 1);
@@ -105,10 +105,10 @@ TEST_CASE("Simple 2D contouring")
 TEST_CASE("2D contour tracking")
 {
     std::unique_ptr<Token> t(
-        Token::operation(Opcode::OP_SUB,
-            Token::operation(Opcode::OP_ADD,
-                    Token::operation(Opcode::OP_MUL, Token::X(), Token::X()),
-                    Token::operation(Opcode::OP_MUL, Token::Y(), Token::Y())),
+        Token::operation(Opcode::SUB,
+            Token::operation(Opcode::ADD,
+                    Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                    Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
             Token::constant(0.5)));
 
     Region r({-1, 1}, {-1, 1}, {0, 0}, 10);

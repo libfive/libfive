@@ -74,11 +74,11 @@ Token::Id Tree::affine(float a, float b, float c, float d)
     // Build up the desired tree structure with collapse = false
     // to keep branches from automatically collapsing.
     return operation(Opcode::AFFINE_VEC,
-            operation(Opcode::OP_ADD,
-                operation(Opcode::OP_MUL, X(), constant(a), false),
-                operation(Opcode::OP_MUL, Y(), constant(b), false), false),
-            operation(Opcode::OP_ADD,
-                operation(Opcode::OP_MUL, Z(), constant(c), false),
+            operation(Opcode::ADD,
+                operation(Opcode::MUL, X(), constant(a), false),
+                operation(Opcode::MUL, Y(), constant(b), false), false),
+            operation(Opcode::ADD,
+                operation(Opcode::MUL, Z(), constant(c), false),
                 constant(d), false));
 }
 
@@ -96,7 +96,7 @@ Token::Id Tree::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
     auto op_a = opcode(a);
     auto op_b = opcode(b);
 
-    if (op == Opcode::OP_ADD)
+    if (op == Opcode::ADD)
     {
         if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::CONST)
         {
@@ -117,7 +117,7 @@ Token::Id Tree::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
             return affine(va + vb);
         }
     }
-    else if (op == Opcode::OP_SUB)
+    else if (op == Opcode::SUB)
     {
         if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::CONST)
         {
@@ -138,7 +138,7 @@ Token::Id Tree::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
             return affine(va - vb);
         }
     }
-    else if (op == Opcode::OP_MUL)
+    else if (op == Opcode::MUL)
     {
         if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::CONST)
         {
@@ -153,7 +153,7 @@ Token::Id Tree::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
             return affine(vb * sa);
         }
     }
-    else if (op == Opcode::OP_DIV)
+    else if (op == Opcode::DIV)
     {
         if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::CONST)
         {
@@ -177,7 +177,7 @@ Token::Id Tree::checkIdentity(Opcode::Opcode op, Token::Id a, Token::Id b)
     auto op_b = opcode(b);
 
     // Special cases to handle identity operations
-    if (op == Opcode::OP_ADD)
+    if (op == Opcode::ADD)
     {
         if (op_a == Opcode::CONST && value(a) == 0)
         {
@@ -188,18 +188,18 @@ Token::Id Tree::checkIdentity(Opcode::Opcode op, Token::Id a, Token::Id b)
             return a;
         }
     }
-    else if (op == Opcode::OP_SUB)
+    else if (op == Opcode::SUB)
     {
         if (op_a == Opcode::CONST && value(a) == 0)
         {
-            return operation(Opcode::OP_NEG, b);
+            return operation(Opcode::NEG, b);
         }
         else if (op_b == Opcode::CONST && value(b) == 0)
         {
             return a;
         }
     }
-    else if (op == Opcode::OP_MUL)
+    else if (op == Opcode::MUL)
     {
         if (op_a == Opcode::CONST)
         {
@@ -363,12 +363,12 @@ Token::Id Tree::collapse(Token::Id root)
         if (c.first.opcode() == Opcode::AFFINE_VEC)
         {
             auto v = getAffine(c.second);
-            changed[c.second] = operation(Opcode::OP_ADD,
-                    operation(Opcode::OP_ADD,
-                        operation(Opcode::OP_MUL, X(), v.x),
-                        operation(Opcode::OP_MUL, Y(), v.y)),
-                    operation(Opcode::OP_ADD,
-                        operation(Opcode::OP_MUL, Z(), v.z),
+            changed[c.second] = operation(Opcode::ADD,
+                    operation(Opcode::ADD,
+                        operation(Opcode::MUL, X(), v.x),
+                        operation(Opcode::MUL, Y(), v.y)),
+                    operation(Opcode::ADD,
+                        operation(Opcode::MUL, Z(), v.z),
                         v.w));
         }
     }

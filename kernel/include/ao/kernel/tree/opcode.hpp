@@ -31,34 +31,34 @@ enum Opcode
     VAR_Y,
     VAR_Z,
 
-    OP_SQUARE,
-    OP_SQRT,
-    OP_NEG,
-    OP_ABS,
-    OP_SIN,
-    OP_COS,
-    OP_TAN,
-    OP_ASIN,
-    OP_ACOS,
-    OP_ATAN,
-    OP_EXP,
+    SQUARE,
+    SQRT,
+    NEG,
+    ABS,
+    SIN,
+    COS,
+    TAN,
+    ASIN,
+    ACOS,
+    ATAN,
+    EXP,
 
-    OP_ADD,
-    OP_MUL,
-    OP_MIN,
-    OP_MAX,
-    OP_SUB,
-    OP_DIV,
-    OP_ATAN2,
-    OP_POW,
-    OP_MOD,
-    OP_NANFILL,
+    ADD,
+    MUL,
+    MIN,
+    MAX,
+    SUB,
+    DIV,
+    ATAN2,
+    POW,
+    MOD,
+    NANFILL,
 
     /*
      *  Affine trees must have the form
      *              AFFINE
      *             /      \
-     *          OP_ADD    OP_ADD
+     *          ADD       ADD
      *        /    \      /      \
      *      MUL    MUL   MUL     C
      *    /   \   /  \  /   \

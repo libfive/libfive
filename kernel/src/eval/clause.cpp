@@ -78,7 +78,7 @@ bool Clause::checkDisabled()
 
     // For min and max operations, we may only need to keep one branch
     // active if it is decisively above or below the other branch.
-    if (op == Opcode::OP_MAX)
+    if (op == Opcode::MAX)
     {
         if (a->result.i.lower() >= b->result.i.upper())
         {
@@ -94,7 +94,7 @@ bool Clause::checkDisabled()
             b->enable();
         }
     }
-    else if (op == Opcode::OP_MIN)
+    else if (op == Opcode::MIN)
     {
         if (a->result.i.lower() >= b->result.i.upper())
         {
