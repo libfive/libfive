@@ -50,6 +50,7 @@ enum Opcode
     OP_SUB,
     OP_DIV,
     OP_ATAN2,
+    OP_POW,
     OP_MOD,
     OP_NANFILL,
 

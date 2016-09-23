@@ -65,6 +65,7 @@ int opcode_enum(char* op)
     else if (str == "sub")      return Opcode::OP_SUB;
     else if (str == "div")      return Opcode::OP_DIV;
     else if (str == "atan2")    return Opcode::OP_ATAN2;
+    else if (str == "pow")      return Opcode::OP_POW;
     else if (str == "mod")      return Opcode::OP_MOD;
     else if (str == "nan-fill") return Opcode::OP_NANFILL;
 
@@ -106,6 +107,11 @@ Token* token_unary(int op, Token* a)
 Token* token_binary(int op, Token* a, Token* b)
 {
     return Token::operation(Opcode::Opcode(op), a, b);
+}
+
+int token_is_const(Token* t)
+{
+    return t->opcode() == Opcode::CONST;
 }
 
 int token_affine_vec(Token* t, v4* vec)

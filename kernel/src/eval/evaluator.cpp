@@ -223,6 +223,10 @@ static void clause(Opcode::Opcode op,
             EVAL_LOOP
             out[i] = atan2(a[i], b[i]);
             break;
+        case Opcode::OP_POW:
+            EVAL_LOOP
+            out[i] = pow(a[i], b[i]);
+            break;
         case Opcode::OP_MOD:
             EVAL_LOOP
             {
@@ -391,6 +395,20 @@ static void clause(Opcode::Opcode op,
                 odx[i] = (adx[i]*bv[i] - av[i]*bdx[i]) / d;
                 ody[i] = (ady[i]*bv[i] - av[i]*bdy[i]) / d;
                 odz[i] = (adz[i]*bv[i] - av[i]*bdz[i]) / d;
+            }
+            break;
+        case Opcode::OP_POW:
+            EVAL_LOOP
+            {
+                const float d = av[i] * log(av[i]);
+                const float m = pow(av[i], bv[i] - 1);
+
+                // If A[q].v is negative, then m will be NaN (because of log's domain).
+                // We work around this by checking if d/d{xyz}(B) == 0 and using a
+                // simplified expression if that's true.
+                odx[i] = m * (bv[i] * adx[i] + (bdx[i] ? d*bdx[i] : 0));
+                ody[i] = m * (bv[i] * ady[i] + (bdy[i] ? d*bdy[i] : 0));
+                odz[i] = m * (bv[i] * adz[i] + (bdz[i] ? d*bdz[i] : 0));
             }
             break;
         case Opcode::OP_MOD:
@@ -619,6 +637,7 @@ static void clause(Opcode::Opcode op,
         case Opcode::OP_ACOS:
         case Opcode::OP_ATAN:
         case Opcode::OP_EXP:
+        case Opcode::OP_POW:
         case Opcode::OP_MOD:
         case Opcode::OP_NANFILL:
             clause(op, reinterpret_cast<const float*>(a),
@@ -794,6 +813,7 @@ static void clause(Opcode::Opcode op,
         case Opcode::OP_ACOS:
         case Opcode::OP_ATAN:
         case Opcode::OP_EXP:
+        case Opcode::OP_POW:
         case Opcode::OP_MOD:
         case Opcode::OP_NANFILL:
             clause(op, reinterpret_cast<const float*>(av),
@@ -840,6 +860,8 @@ static Interval clause(Opcode::Opcode op, const Interval& a, const Interval& b)
             return a / b;
         case Opcode::OP_ATAN2:
             return atan2(a, b);
+        case Opcode::OP_POW:
+            return boost::numeric::pow(a, b.lower());
         case Opcode::OP_MOD:
             return Interval(0.0f, b.upper()); // YOLO
         case Opcode::OP_NANFILL:

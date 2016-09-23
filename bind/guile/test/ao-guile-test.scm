@@ -58,6 +58,13 @@
                 (assert-equal (token-affine-vec x) '(1.0 0.0 0.0 0.0))
                 (assert-equal (token-affine-vec y) '(0.0 1.0 0.0 0.0))
                 (assert-equal (token-affine-vec p) '(1.0 1.0 0.0 0.0)))))
+    (test "token-const?" env
+        (let* ((store (store-new))
+               (x (token-x store))
+               (y (token-const store 3.0)))
+            (assert-all
+              (assert-false (token-const? x))
+              (assert-true  (token-const? y)))))
     (test "tree-new" env
         (let* ((store (store-new))
                (x (token-x store))

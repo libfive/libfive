@@ -140,6 +140,13 @@
            (result (token_affine_vec (unwrap-token t) v)))
     (if (= result 1) (parse-c-struct v v4) #f)))
 
+(define-public (token-const? t)
+    "token-const? token
+    Returns #t if the given token is constant, false otherwise"
+    (= 1
+      ((pointer->procedure int (get-function "token_is_const") (list '*))
+       (unwrap-token t))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (tree-new s t)

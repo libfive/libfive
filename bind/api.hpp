@@ -57,6 +57,8 @@ extern "C"
     Token* token_unary(int op, Token* a);
     Token* token_binary(int op, Token* a, Token* b);
 
+    int token_is_const(Token* t);
+
     /*
      *  If t is an AFFINE token, stores its parameters in vec and returns 1;
      *  otherwise, returns 0
