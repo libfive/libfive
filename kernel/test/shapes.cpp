@@ -20,24 +20,25 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "ao/kernel/tree/token.hpp"
-#include "ao/kernel/tree/store.hpp"
-#include "ao/kernel/tree/tree.hpp"
 
-Token* rectangle(Store* s, float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
+Token* rectangle(float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
 {
-    auto x = s->affine(M[0][0], M[0][1], M[0][2], M[0][3]);
-    auto y = s->affine(M[1][0], M[1][1], M[1][2], M[1][3]);
+    auto x = Token::affine(M[0][0], M[0][1], M[0][2], M[0][3]);
+    auto y = Token::affine(M[1][0], M[1][1], M[1][2], M[1][3]);
 
-    return s->operation(OP_MAX,
-           s->operation(OP_MAX, s->operation(OP_SUB, s->constant(xmin), x),
-                                s->operation(OP_SUB, x, s->constant(xmax))),
-           s->operation(OP_MAX, s->operation(OP_SUB, s->constant(ymin), y),
-                                s->operation(OP_SUB, y, s->constant(ymax))));
+    return Token::operation(Opcode::MAX,
+               Token::operation(Opcode::MAX,
+                   Token::operation(Opcode::SUB, Token::constant(xmin), x),
+                   Token::operation(Opcode::SUB, x, Token::constant(xmax))),
+               Token::operation(Opcode::MAX,
+                   Token::operation(Opcode::SUB, Token::constant(ymin), y),
+                   Token::operation(Opcode::SUB, y, Token::constant(ymax))));
 }
-Token* recurse(Store* s, float x, float y, float scale, glm::mat4 M, int i)
+
+Token* recurse(float x, float y, float scale, glm::mat4 M, int i)
 {
-    auto base = rectangle(s, x - scale/2, x + scale/2,
-                             y - scale/2, y + scale/2, M);
+    auto base = rectangle(x - scale/2, x + scale/2,
+                          y - scale/2, y + scale/2, M);
 
     if (i == 0)
     {
@@ -48,43 +49,41 @@ Token* recurse(Store* s, float x, float y, float scale, glm::mat4 M, int i)
         auto j = i - 1;
         auto t = scale / 3;
 
-        return s->operation(OP_MIN, base,
-               s->operation(OP_MIN, recurse(s, x + scale, y, t, M, j),
-               s->operation(OP_MIN, recurse(s, x - scale, y, t, M, j),
-               s->operation(OP_MIN, recurse(s, x, y + scale, t, M, j),
-               s->operation(OP_MIN, recurse(s, x, y - scale, t, M, j),
-               s->operation(OP_MIN, recurse(s, x + scale, y + scale, t, M, j),
-               s->operation(OP_MIN, recurse(s, x + scale, y - scale, t, M, j),
-               s->operation(OP_MIN, recurse(s, x - scale, y + scale, t, M, j),
-                                    recurse(s, x - scale, y - scale, t, M, j)
+        return Token::operation(Opcode::MIN, base,
+               Token::operation(Opcode::MIN, recurse(x + scale, y, t, M, j),
+               Token::operation(Opcode::MIN, recurse(x - scale, y, t, M, j),
+               Token::operation(Opcode::MIN, recurse(x, y + scale, t, M, j),
+               Token::operation(Opcode::MIN, recurse(x, y - scale, t, M, j),
+               Token::operation(Opcode::MIN, recurse(x + scale, y + scale, t, M, j),
+               Token::operation(Opcode::MIN, recurse(x + scale, y - scale, t, M, j),
+               Token::operation(Opcode::MIN, recurse(x - scale, y + scale, t, M, j),
+                                             recurse(x - scale, y - scale, t, M, j)
                ))))))));
     }
 }
 
-Tree* menger(int i)
+Token* menger(int i)
 {
-    Store s;
-
     auto M = glm::mat4();
-    Token* a = recurse(&s, 0, 0, 1, M, i);
+    Token* a = recurse(0, 0, 1, M, i);
 
     M = glm::rotate(M, float(M_PI/2), {1, 0, 0});
-    Token* b = recurse(&s, 0, 0, 1, M, i);
+    Token* b = recurse(0, 0, 1, M, i);
 
     M = glm::rotate(M, float(M_PI/2), {0, 1, 0});
-    Token* c = recurse(&s, 0, 0, 1, M, i);
+    Token* c = recurse(0, 0, 1, M, i);
 
-    auto cube = s.operation(OP_MAX,
-                s.operation(OP_MAX,
-                   s.operation(OP_MAX, s.affine(-1,  0,  0, -1.5),
-                                       s.affine( 1,  0,  0, -1.5)),
-                   s.operation(OP_MAX, s.affine( 0, -1,  0, -1.5),
-                                       s.affine( 0,  1,  0, -1.5))),
-                   s.operation(OP_MAX, s.affine( 0,  0, -1, -1.5),
-                                       s.affine( 0,  0,  1, -1.5)));
+    auto cube = Token::operation(Opcode::MAX,
+                Token::operation(Opcode::MAX,
+                   Token::operation(Opcode::MAX, Token::affine(-1,  0,  0, -1.5),
+                                       Token::affine( 1,  0,  0, -1.5)),
+                   Token::operation(Opcode::MAX, Token::affine( 0, -1,  0, -1.5),
+                                       Token::affine( 0,  1,  0, -1.5))),
+                   Token::operation(Opcode::MAX, Token::affine( 0,  0, -1, -1.5),
+                                       Token::affine( 0,  0,  1, -1.5)));
 
-    Token* cutout = s.operation(OP_NEG,
-                    s.operation(OP_MIN, s.operation(OP_MIN, a, b), c));
+    auto cutout = Token::operation(Opcode::NEG,
+                  Token::operation(Opcode::MIN, Token::operation(Opcode::MIN, a, b), c));
 
-    return new Tree(&s, s.operation(OP_MAX, cube, cutout));
+    return Token::operation(Opcode::MAX, cube, cutout);
 }
