@@ -44,9 +44,10 @@ namespace std {
 }
 #endif
 
-Evaluator::Evaluator(const Tree root, const glm::mat4& M)
+Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     : M(M), Mi(glm::inverse(M))
 {
+    auto root = root_.collapse();
     Cache* cache = root.parent.get();
 
     // Reserve space for X, Y, Z, plus every clause in the cache
