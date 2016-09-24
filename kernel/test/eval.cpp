@@ -78,6 +78,12 @@ TEST_CASE("Push / pop behavior")
     REQUIRE(e.eval(1.0f, 2.0f, 0.0f) == 2);
 }
 
+TEST_CASE("Affine evaluation")
+{
+    Evaluator e(Tree::affine(1, 0, 0, 0));
+    REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.0);
+}
+
 TEST_CASE("Matrix evaluation")
 {
     Tree t(Tree::affine(1, 0, 0, 0));
