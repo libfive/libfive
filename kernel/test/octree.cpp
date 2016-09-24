@@ -102,6 +102,6 @@ TEST_CASE("Vertex positioning")
         }
     }
 
-    REQUIRE(rmin > radius*0.95);
-    REQUIRE(rmax < radius*1.05);
+    REQUIRE(rmin > radius*0.9);
+    REQUIRE(rmax < radius*1.1);
 }
