@@ -23,7 +23,6 @@
 
 #include "ao/kernel/render/region.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
-#include "ao/kernel/tree/tree.hpp"
 
 // Overloaded toString for glm::vec3
 #include "glm.hpp"

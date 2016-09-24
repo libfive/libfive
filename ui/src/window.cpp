@@ -23,8 +23,6 @@
 #include "ao/ui/gl/core.hpp"
 #include "ao/ui/gl/frame.hpp"
 
-#include "ao/kernel/tree/tree.hpp"
-
 Window* Window::singleton = nullptr;
 Window* Window::instance()
 {

@@ -28,10 +28,7 @@
 
 #include "ao/kernel/eval/interval.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
-
 #include "ao/kernel/render/region.hpp"
-
-#include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/token.hpp"
 
 /*  Helper struct to store Hermite intersection data  */

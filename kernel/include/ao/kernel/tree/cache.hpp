@@ -26,18 +26,20 @@
 #include "glm/vec4.hpp"
 
 #include "ao/kernel/tree/opcode.hpp"
-#include "ao/kernel/tree/token.hpp"
 
 /*
- *  A Tree represents a deduplicated math expression
+ *  A Cache stores values in a deduplicated math expression
  */
-class Tree
+class Cache
 {
 public:
+    /* Values in the cache are identified by a single value */
+    typedef size_t Id;
+
     /*
      *  Returns a token for the given constant
      */
-    Token::Id constant(float v);
+    Id constant(float v);
 
     /*
      *  Returns a token for the given operation
@@ -48,30 +50,30 @@ public:
      *  If collapse is true (the default), identity and affine operations will
      *  be collapsed; if false, all branches will be created
      */
-    Token::Id operation(Opcode::Opcode op, Token::Id a=0, Token::Id b=0,
+    Id operation(Opcode::Opcode op, Id a=0, Id b=0,
                         bool collapse=true);
 
-    Token::Id X() { return operation(Opcode::VAR_X); }
-    Token::Id Y() { return operation(Opcode::VAR_Y); }
-    Token::Id Z() { return operation(Opcode::VAR_Z); }
+    Id X() { return operation(Opcode::VAR_X); }
+    Id Y() { return operation(Opcode::VAR_Y); }
+    Id Z() { return operation(Opcode::VAR_Z); }
 
     /*
      *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
      */
-    Token::Id affine(float a, float b, float c, float d);
-    Token::Id affine(glm::vec4 v) { return affine(v.x, v.y, v.z, v.w); }
+    Id affine(float a, float b, float c, float d);
+    Id affine(glm::vec4 v) { return affine(v.x, v.y, v.z, v.w); }
 
     /*
      *  Set found in every token descending from root
      */
-    std::set<Token::Id> findConnected(Token::Id root);
+    std::set<Id> findConnected(Id root);
 
     /*
      *  If the given Token is an AFFINE_VEC, return the affine terms
      *
      *  Set success to true / false if it is provided
      */
-    glm::vec4 getAffine(Token::Id root, bool* success=nullptr) const;
+    glm::vec4 getAffine(Id root, bool* success=nullptr) const;
 
     /*
      *  Collapses AFFINE nodes into normal Opcode::ADD, taking advantage of
@@ -79,21 +81,21 @@ public:
      *
      *  Returns a root token for the new tree.
      */
-    Token::Id collapse(Token::Id root);
+    Id collapse(Id root);
 
     /*
-     *  Imports an external Tree, returning the new root's id
+     *  Imports an external Cache, returning the new root's id
      */
-    Token::Id import(Tree* s, Token::Id root);
+    Id import(Cache* s, Id root);
 
     /*
      *  Accessor functions for token fields
      */
-    Opcode::Opcode opcode(Token::Id id) const { return token(id).opcode(); }
-    Token::Id lhs(Token::Id id) const { return token(id).lhs(); }
-    Token::Id rhs(Token::Id id) const { return token(id).rhs(); }
-    size_t rank(Token::Id id) const { return token(id).rank(); }
-    float value(Token::Id id) const { return token(id).value(); }
+    Opcode::Opcode opcode(Id id) const { return token(id).opcode(); }
+    Id lhs(Id id) const { return token(id).lhs(); }
+    Id rhs(Id id) const { return token(id).rhs(); }
+    size_t rank(Id id) const { return token(id).rank(); }
+    float value(Id id) const { return token(id).value(); }
 
 protected:
     /*
@@ -101,13 +103,13 @@ protected:
      *  If so returns an appropriately simplified Token
      *  i.e. (X + 0) will return X
      */
-    Token::Id checkIdentity(Opcode::Opcode op, Token::Id a, Token::Id b);
+    Id checkIdentity(Opcode::Opcode op, Id a, Id b);
 
     /*
      *  Checks whether the operation should be handled as an affine
      *  transformation, returning an AFFINE Token if true.
      */
-    Token::Id checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b);
+    Id checkAffine(Opcode::Opcode op, Id a, Id b);
 
     /*
      *  Rebuilds a tree from the base up, returning the new root
@@ -115,7 +117,7 @@ protected:
      *  All old Token ids remain valid, though they may be orphaned in
      *  the tree
      */
-    Token::Id rebuild(Token::Id root, std::map<Token::Id, Token::Id> changed);
+    Id rebuild(Id root, std::map<Id, Id> changed);
 
     /*
      *  Keys store all relevant token data
@@ -125,24 +127,24 @@ protected:
      */
     typedef std::tuple<size_t,  /* rank */
                        Opcode::Opcode, /* opcode */
-                       Token::Id, /* lhs */
-                       Token::Id, /* rhs */
+                       Id, /* lhs */
+                       Id, /* rhs */
                        float    /* value (for constants) */> _Key;
     class Key : public _Key
     {
     public:
         Key(float v)
           : _Key(0, Opcode::CONST, 0, 0, v) { /* Nothing to do here */ }
-        Key(Opcode::Opcode op, Token::Id a, Token::Id b, size_t rank)
+        Key(Opcode::Opcode op, Id a, Id b, size_t rank)
           : _Key(rank, op, a, b, 0.0f) { /* Nothing to do here */}
 
         size_t rank() const
             { return std::get<0>(*this); }
         Opcode::Opcode opcode() const
             { return std::get<1>(*this); }
-        Token::Id lhs() const
+        Id lhs() const
             { return std::get<2>(*this); }
-        Token::Id rhs() const
+        Id rhs() const
             { return std::get<3>(*this); }
         float value() const
             { return std::get<4>(*this); }
@@ -152,15 +154,15 @@ protected:
      *  Key constructors
      */
     Key key(float v) const;
-    Key key(Opcode::Opcode op, Token::Id a, Token::Id b) const;
+    Key key(Opcode::Opcode op, Id a, Id b) const;
 
     /*
      *  Token reverse lookup
      */
-    Key token(Token::Id id) const { return cache.right.at(id); }
+    Key token(Id id) const { return data.right.at(id); }
 
-    boost::bimap<Key, Token::Id> cache;
-    Token::Id next=1;
+    boost::bimap<Key, Id> data;
+    Id next=1;
 
     friend class Evaluator;
 };

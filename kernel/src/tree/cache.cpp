@@ -19,24 +19,23 @@
 #include <cassert>
 #include <list>
 
-#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/tree/cache.hpp"
 #include "ao/kernel/tree/token.hpp"
 
 /******************************************************************************
  * Token constructors
  ******************************************************************************/
-Token::Id Tree::constant(float v)
+Cache::Id Cache::constant(float v)
 {
     auto k = key(v);
-    if (cache.left.find(k) == cache.left.end())
+    if (data.left.find(k) == data.left.end())
     {
-        cache.insert({k, next++});
+        data.insert({k, next++});
     }
-    return cache.left.at(k);
+    return data.left.at(k);
 }
 
-Token::Id Tree::operation(Opcode::Opcode op, Token::Id a, Token::Id b,
-                          bool collapse)
+Cache::Id Cache::operation(Opcode::Opcode op, Id a, Id b, bool collapse)
 {
     // These are opcodes that you're not allowed to use here
     assert(op != Opcode::CONST &&
@@ -61,15 +60,15 @@ Token::Id Tree::operation(Opcode::Opcode op, Token::Id a, Token::Id b,
 
     // Otherwise, construct a new Token and add it to the ops set
     auto k = key(op, a, b);
-    if (cache.left.find(k) == cache.left.end())
+    if (data.left.find(k) == data.left.end())
     {
-        cache.insert({k, next++});
+        data.insert({k, next++});
     }
 
-    return cache.left.at(k);
+    return data.left.at(k);
 }
 
-Token::Id Tree::affine(float a, float b, float c, float d)
+Cache::Id Cache::affine(float a, float b, float c, float d)
 {
     // Build up the desired tree structure with collapse = false
     // to keep branches from automatically collapsing.
@@ -85,7 +84,7 @@ Token::Id Tree::affine(float a, float b, float c, float d)
 /******************************************************************************
  * Clause simplification
  ******************************************************************************/
-Token::Id Tree::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
+Cache::Id Cache::checkAffine(Opcode::Opcode op, Id a, Id b)
 {
     if (Opcode::args(op) != 2)
     {
@@ -165,7 +164,7 @@ Token::Id Tree::checkAffine(Opcode::Opcode op, Token::Id a, Token::Id b)
     return 0;
 }
 
-Token::Id Tree::checkIdentity(Opcode::Opcode op, Token::Id a, Token::Id b)
+Cache::Id Cache::checkIdentity(Opcode::Opcode op, Id a, Id b)
 {
     if (Opcode::args(op) != 2)
     {
@@ -230,7 +229,7 @@ Token::Id Tree::checkIdentity(Opcode::Opcode op, Token::Id a, Token::Id b)
 /******************************************************************************
  * Utilities
  ******************************************************************************/
-glm::vec4 Tree::getAffine(Token::Id root, bool* success) const
+glm::vec4 Cache::getAffine(Id root, bool* success) const
 {
     if (opcode(root) != Opcode::AFFINE_VEC)
     {
@@ -253,12 +252,12 @@ glm::vec4 Tree::getAffine(Token::Id root, bool* success) const
 /******************************************************************************
  * Key constructors
  ******************************************************************************/
-Tree::Key Tree::key(float v) const
+Cache::Key Cache::key(float v) const
 {
     return Key(v);
 }
 
-Tree::Key Tree::key(Opcode::Opcode op, Token::Id a, Token::Id b) const
+Cache::Key Cache::key(Opcode::Opcode op, Id a, Id b) const
 {
     return Key(op, a, b, std::max(a ? rank(a) + 1 : 0,
                                   b ? rank(b) + 1 : 0));
@@ -267,17 +266,17 @@ Tree::Key Tree::key(Opcode::Opcode op, Token::Id a, Token::Id b) const
 /******************************************************************************
  * Tree walking and modification
  ******************************************************************************/
-Token::Id Tree::import(Tree* other, Token::Id root)
+Cache::Id Cache::import(Cache* other, Id root)
 {
     if (other == this)
     {
         return root;
     }
 
-    std::map<Token::Id, Token::Id> changed;
-    for (auto c : other->cache.left)
+    std::map<Id, Id> changed;
+    for (auto c : other->data.left)
     {
-        Token::Id t = c.second;
+        Id t = c.second;
         if (other->opcode(t) == Opcode::CONST)
         {
             // Import the constant into the tree
@@ -299,21 +298,21 @@ Token::Id Tree::import(Tree* other, Token::Id root)
     return changed[root];
 }
 
-std::set<Token::Id> Tree::findConnected(Token::Id root)
+std::set<Cache::Id> Cache::findConnected(Id root)
 {
-    std::set<Token::Id> found = {root};
+    std::set<Id> found = {root};
 
     // Iterate over weight levels from top to bottom
-    for (auto c = cache.left.rbegin(); c != cache.left.rend(); ++c)
+    for (auto c = data.left.rbegin(); c != data.left.rend(); ++c)
     {
-        Token::Id t = c->second;
+        Id t = c->second;
         if (found.find(t) != found.end())
         {
-            if (Token::Id a = lhs(t))
+            if (Id a = lhs(t))
             {
                 found.insert(a);
             }
-            if (Token::Id b = rhs(t))
+            if (Id b = rhs(t))
             {
                 found.insert(b);
             }
@@ -323,10 +322,10 @@ std::set<Token::Id> Tree::findConnected(Token::Id root)
     return found;
 }
 
-Token::Id Tree::rebuild(Token::Id root, std::map<Token::Id, Token::Id> changed)
+Cache::Id Cache::rebuild(Id root, std::map<Id, Id> changed)
 {
     // Deep copy of clauses so that changes don't invalidate iterators
-    decltype(cache) tokens = cache;
+    decltype(data) tokens = data;
 
     // Iterate over weight levels from bottom to top
     for (auto c : tokens.left)
@@ -348,13 +347,13 @@ Token::Id Tree::rebuild(Token::Id root, std::map<Token::Id, Token::Id> changed)
     return changed.count(root) ? changed[root] : root;
 }
 
-Token::Id Tree::collapse(Token::Id root)
+Cache::Id Cache::collapse(Id root)
 {
     // Deep copy of clauses so that changes don't invalidate iterators
-    decltype(cache) tokens = cache;
+    decltype(data) tokens = data;
 
     // Details on which nodes have changed
-    std::map<Token::Id, Token::Id> changed;
+    std::map<Id, Id> changed;
 
     // Turn every AFFINE into a normal OP_ADD
     // (with identity operations automatically cancelled out)

@@ -23,7 +23,6 @@
 
 #include "ao/kernel/render/heightmap.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
-#include "ao/kernel/tree/tree.hpp"
 
 #include "shapes.hpp"
 

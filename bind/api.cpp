@@ -24,7 +24,6 @@
 
 #include "glm/gtc/matrix_inverse.hpp"
 
-#include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/opcode.hpp"
 #include "ao/kernel/tree/token.hpp"
 

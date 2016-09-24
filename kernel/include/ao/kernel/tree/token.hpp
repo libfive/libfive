@@ -24,9 +24,7 @@
 #include "glm/vec4.hpp"
 
 #include "ao/kernel/tree/opcode.hpp"
-
-/*  Forward declaration of Tree class  */
-class Tree;
+#include "ao/kernel/tree/cache.hpp"
 
 /*
  *  A token represents a single expression (with up to two arguments)
@@ -54,7 +52,7 @@ public:
      *
      *  The three-axis constructor axes() should be preferred to using
      *  an individual-axis constructor, as it ensures that they're backed
-     *  by the same Tree object
+     *  by the same Cache object
      */
     static Token X();
     static Token Y();
@@ -81,9 +79,6 @@ public:
      */
     glm::vec4 getAffine(bool* success=nullptr);
 
-    /*  Each token has an Id, which is unique to the parent Tree  */
-    typedef size_t Id;
-
     /*
      *  Accessors for token fields
      */
@@ -93,27 +88,22 @@ public:
     size_t rank() const;
     float value() const;
 
-    /*  ID indexing into the parent Tree */
-    const size_t id;
+    /*  ID indexing into the parent Cache */
+    const Cache::Id id;
 
 protected:
     /*
      *  Private constructor
-     *  (only ever called by Tree)
+     *  (only ever called by Cache)
      */
-    explicit Token(Id id, Tree* parent) : id(id), parent(parent) {}
+    explicit Token(Cache::Id id, Cache* parent) : id(id), parent(parent) {}
 
-    /*  Shared pointer to parent Tree
-     *  Every token that refers back to this store has a pointer to it,
-     *  and the Tree is only deleted when all tokens are destroyed     */
-    std::shared_ptr<Tree> parent;
+    /*  Shared pointer to parent Cache
+     *  Every token that refers back to this cache has a pointer to it,
+     *  and the Cache is only deleted when all tokens are destroyed     */
+    std::shared_ptr<Cache> parent;
 
-    friend class Tree;
+    /*  An Evaluator needs to be able to pull out the parent Cache */
     friend class Evaluator;
 };
 
-/*
- *  Include tree.hpp so that files that only include token.hpp can build the
- *  destructor for std::shared_ptr<Tree>
- */
-#include "ao/kernel/tree/tree.hpp"

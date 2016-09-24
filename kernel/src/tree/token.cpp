@@ -24,18 +24,18 @@
 
 Token Token::constant(float v)
 {
-    auto s = new Tree();
+    auto s = new Cache();
     return Token(s->constant(v), s);
 }
 
 Token Token::operation(Opcode::Opcode op, Token a, Token b)
 {
-    Tree* t = nullptr;
-    Token::Id id_b = b.id;
+    Cache* t = nullptr;
+    Cache::Id id_b = b.id;
 
     if (a.id)
     {
-        // If the two Tree are different, then import b's store
+        // If the two Caches are different, then import b's store
         // into a and update the relevant id tag
         if (b.id && a.parent != b.parent)
         {
@@ -45,7 +45,7 @@ Token Token::operation(Opcode::Opcode op, Token a, Token b)
     }
     else
     {
-        t = new Tree();
+        t = new Cache();
     }
     assert(t);
 
@@ -57,7 +57,7 @@ Token Token::operation(Opcode::Opcode op, Token a, Token b)
  */
 Token Token::affine(float a, float b, float c, float d)
 {
-    Tree* s = new Tree();
+    Cache* s = new Cache();
     return Token(s->affine(a, b, c, d), s);
 }
 
@@ -66,7 +66,7 @@ std::tuple<Token,
            Token,
            Token> Token::axes()
 {
-    Tree* s = new Tree();
+    Cache* s = new Cache();
     return { Token(s->affine(1, 0, 0, 0), s),
              Token(s->affine(0, 1, 0, 0), s),
              Token(s->affine(0, 0, 1, 0), s) };
@@ -89,7 +89,7 @@ Token Token::Z()
 
 Token Token::collapse() const
 {
-    auto other = new Tree();
+    auto other = new Cache();
     return Token(other->collapse(other->import(parent.get(), id)), other);
 }
 
@@ -97,7 +97,7 @@ Token Token::collapse() const
 
 /*
  *  Accessor functions for Token data
- *  (which lives in the parent Tree)
+ *  (which lives in the parent Cache)
  */
 glm::vec4 Token::getAffine(bool* success)
     { return parent->getAffine(id, success); }

@@ -23,7 +23,6 @@
 
 #include "ao/kernel/format/mesh.hpp"
 #include "ao/kernel/render/region.hpp"
-#include "ao/kernel/tree/tree.hpp"
 
 #include "shapes.hpp"
 

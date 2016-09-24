@@ -26,7 +26,6 @@
 
 #include "ao/kernel/render/heightmap.hpp"
 #include "ao/kernel/render/region.hpp"
-#include "ao/kernel/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex shader

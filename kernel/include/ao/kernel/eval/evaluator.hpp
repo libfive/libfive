@@ -34,7 +34,7 @@
 class Atom;
 class Clause;
 class Token;
-class Tree;
+class Cache;
 
 class Evaluator
 {

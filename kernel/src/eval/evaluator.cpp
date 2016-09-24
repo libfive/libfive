@@ -22,7 +22,7 @@
 
 #include <glm/gtc/matrix_inverse.hpp>
 
-#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/tree/cache.hpp"
 #include "ao/kernel/tree/token.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/eval/clause.hpp"
@@ -47,10 +47,10 @@ namespace std {
 Evaluator::Evaluator(const Token root, const glm::mat4& M)
     : M(M), Mi(glm::inverse(M))
 {
-    Tree* tree = root.parent.get();
+    Cache* cache = root.parent.get();
 
-    // Reserve space for X, Y, Z, plus every clause in the tree
-    size_t count = 3 + tree->cache.size();
+    // Reserve space for X, Y, Z, plus every clause in the cache
+    size_t count = 3 + cache->data.size();
 
     // Then, allocate space for them (ensuring alignment if AVX is used)
     Clause* ptr;
@@ -69,11 +69,11 @@ Evaluator::Evaluator(const Token root, const glm::mat4& M)
 #endif
 
     // Helper function to create a new clause in the data array
-    std::unordered_map<Token::Id, Clause*> clauses;
-    auto newClause = [&ptr, tree, &clauses](const Token::Id t)
-        { auto lhs = tree->lhs(t);
-          auto rhs = tree->rhs(t);
-          auto c = new (ptr++) Clause(tree->opcode(t), tree->value(t),
+    std::unordered_map<Cache::Id, Clause*> clauses;
+    auto newClause = [&ptr, cache, &clauses](const Cache::Id t)
+        { auto lhs = cache->lhs(t);
+          auto rhs = cache->rhs(t);
+          auto c = new (ptr++) Clause(cache->opcode(t), cache->value(t),
                   clauses.find(lhs) == clauses.end() ? nullptr : clauses[lhs],
                   clauses.find(rhs) == clauses.end() ? nullptr : clauses[rhs]);
           clauses[t] = c;
@@ -84,7 +84,7 @@ Evaluator::Evaluator(const Token root, const glm::mat4& M)
     // CONST is guaranteed to be at the beginning of the cache
     // (by rank and enumerator ordering), so once we get to a non-CONST
     // value we can break out of the loop.
-    for (auto m : tree->cache.left)
+    for (auto m : cache->data.left)
     {
         if (m.first.opcode() == Opcode::CONST)
         {
@@ -96,9 +96,9 @@ Evaluator::Evaluator(const Token root, const glm::mat4& M)
         }
     }
 
-    X = newClause(tree->X());
-    Y = newClause(tree->Y());
-    Z = newClause(tree->Z());
+    X = newClause(cache->X());
+    Y = newClause(cache->Y());
+    Z = newClause(cache->Z());
 
     // Set derivatives for X, Y, Z (since these never change)
     X->result.deriv(1, 0, 0);
@@ -106,7 +106,7 @@ Evaluator::Evaluator(const Token root, const glm::mat4& M)
     Z->result.deriv(0, 0, 1);
 
     // Finally, create the rest of the Tree's clauses
-    for (auto m : tree->cache.left)
+    for (auto m : cache->data.left)
     {
         if (m.first.rank() == 0)
         {

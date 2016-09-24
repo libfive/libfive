@@ -24,7 +24,6 @@
 #include "ao/ui/gl/core.hpp"
 #include "ao/ui/gl/texture.hpp"
 
-#include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 
 Worker::Worker(const Token root, const Task& t)
