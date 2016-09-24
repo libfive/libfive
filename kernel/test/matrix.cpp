@@ -21,12 +21,12 @@
 #include <catch/catch.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 
 TEST_CASE("Matrix evaluation")
 {
-    Token t(Token::affine(1, 0, 0, 0));
+    Tree t(Tree::affine(1, 0, 0, 0));
 
     SECTION("Default matrix")
     {
@@ -56,7 +56,7 @@ TEST_CASE("Matrix evaluation")
 
 TEST_CASE("Matrix normals")
 {
-    Token t(Token::affine(1, 0, 0, 0));
+    Tree t(Tree::affine(1, 0, 0, 0));
 
     SECTION("Swapping")
     {

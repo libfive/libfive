@@ -26,7 +26,7 @@
 
 #include "ao/kernel/eval/evaluator.hpp"
 
-Worker::Worker(const Token root, const Task& t)
+Worker::Worker(const Tree root, const Task& t)
     : region({-1, 1}, {-1, 1}, {-1, 1},
              t.ni/(1 << t.level), t.nj/(1 << t.level), t.nk/(1 << t.level)),
       future(promise.get_future()), abort(false)

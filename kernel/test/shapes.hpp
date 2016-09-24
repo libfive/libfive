@@ -18,8 +18,8 @@
  */
 #pragma once
 
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
-Token menger(int i);
-Token circle(float r);
-Token sphere(float r);
+Tree menger(int i);
+Tree circle(float r);
+Tree sphere(float r);

@@ -18,14 +18,14 @@
  */
 #include <catch/catch.hpp>
 
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 #include "glm.hpp"
 
 TEST_CASE("Affine math")
 {
     SECTION("Affine plus constant")
     {
-        Token t = Token::operation(Opcode::ADD, Token::affine(1, 0, 0, 0), Token::constant(1));
+        Tree t = Tree::operation(Opcode::ADD, Tree::affine(1, 0, 0, 0), Tree::constant(1));
 
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(1, 0, 0, 1));
@@ -33,7 +33,7 @@ TEST_CASE("Affine math")
 
     SECTION("Constant plus affine")
     {
-        Token t = Token::operation(Opcode::ADD, Token::constant(2), Token::affine(1, 0, 0, 0));
+        Tree t = Tree::operation(Opcode::ADD, Tree::constant(2), Tree::affine(1, 0, 0, 0));
 
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(1, 0, 0, 2));
@@ -41,15 +41,15 @@ TEST_CASE("Affine math")
 
     SECTION("Affine plus affine")
     {
-        Token t = Token::operation(Opcode::ADD, Token::affine(1, 2, 3, 4),
-                                       Token::affine(2, 4, 6, 8));
+        Tree t = Tree::operation(Opcode::ADD, Tree::affine(1, 2, 3, 4),
+                                       Tree::affine(2, 4, 6, 8));
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(3, 6, 9, 12));
     }
 
     SECTION("Affine minus constant")
     {
-        Token t = Token::operation(Opcode::SUB, Token::affine(1, 0, 0, 0), Token::constant(1));
+        Tree t = Tree::operation(Opcode::SUB, Tree::affine(1, 0, 0, 0), Tree::constant(1));
 
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(1, 0, 0, -1));
@@ -57,7 +57,7 @@ TEST_CASE("Affine math")
 
     SECTION("Constant minus affine")
     {
-        Token t = Token::operation(Opcode::SUB, Token::constant(2), Token::affine(1, 0, 0, 0));
+        Tree t = Tree::operation(Opcode::SUB, Tree::constant(2), Tree::affine(1, 0, 0, 0));
 
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(-1, 0, 0, 2));
@@ -65,39 +65,39 @@ TEST_CASE("Affine math")
 
     SECTION("Affine minus affine")
     {
-        Token t = Token::operation(Opcode::SUB, Token::affine(1, 2, 3, 4),
-                                       Token::affine(2, 4, 6, 8));
+        Tree t = Tree::operation(Opcode::SUB, Tree::affine(1, 2, 3, 4),
+                                       Tree::affine(2, 4, 6, 8));
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(-1, -2, -3, -4));
     }
 
     SECTION("Affine times constant")
     {
-        Token t = Token::operation(Opcode::MUL, Token::affine(1, 2, 3, 4), Token::constant(2));
+        Tree t = Tree::operation(Opcode::MUL, Tree::affine(1, 2, 3, 4), Tree::constant(2));
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(2, 4, 6, 8));
     }
 
     SECTION("Constant times affine")
     {
-        Token t = Token::operation(Opcode::MUL, Token::constant(2), Token::affine(1, 2, 3, 4));
+        Tree t = Tree::operation(Opcode::MUL, Tree::constant(2), Tree::affine(1, 2, 3, 4));
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(2, 4, 6, 8));
     }
 
     SECTION("Affine divided by constant")
     {
-        Token t = Token::operation(Opcode::DIV, Token::affine(1, 2, 3, 4), Token::constant(2));
+        Tree t = Tree::operation(Opcode::DIV, Tree::affine(1, 2, 3, 4), Tree::constant(2));
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(0.5, 1, 1.5, 2));
     }
 }
 
-TEST_CASE("Token::collapse")
+TEST_CASE("Tree::collapse")
 {
     SECTION("Base case")
     {
-        auto t = Token::affine(1, 0, 0, 0);
+        auto t = Tree::affine(1, 0, 0, 0);
         auto t_ = t.collapse();
         REQUIRE(t_.opcode() == Opcode::VAR_X);
         REQUIRE(t_.rank() == 0);
@@ -105,7 +105,7 @@ TEST_CASE("Token::collapse")
 
     SECTION("Sum")
     {
-        auto t = Token::affine(1, 1, 0, 0);
+        auto t = Tree::affine(1, 1, 0, 0);
         auto t_ = t.collapse();
         REQUIRE(t_.opcode() == Opcode::ADD);
         REQUIRE(t_.lhs().opcode() == Opcode::VAR_X);
@@ -115,7 +115,7 @@ TEST_CASE("Token::collapse")
 
     SECTION("Multiplication")
     {
-        auto t = Token::affine(2, 3, 0, 0);
+        auto t = Tree::affine(2, 3, 0, 0);
         auto t_ = t.collapse();
         REQUIRE(t_.opcode() == Opcode::ADD);
         REQUIRE(t_.lhs().opcode() == Opcode::MUL);
@@ -131,7 +131,7 @@ TEST_CASE("Token::collapse")
 
     SECTION("Constant")
     {
-        auto t = Token::affine(1, 0, 0, 3);
+        auto t = Tree::affine(1, 0, 0, 3);
         auto t_ = t.collapse();
         REQUIRE(t_.opcode() == Opcode::ADD);
         REQUIRE(t_.lhs().opcode() == Opcode::VAR_X);
@@ -141,7 +141,7 @@ TEST_CASE("Token::collapse")
 
     SECTION("Not affine at all")
     {
-        auto t = Token::X();
+        auto t = Tree::X();
         auto t_ = t.collapse();
         REQUIRE(t.id == t_.id);
     }

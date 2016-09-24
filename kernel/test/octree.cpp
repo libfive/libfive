@@ -18,7 +18,7 @@
  */
 #include <catch/catch.hpp>
 
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 #include "ao/kernel/render/octree.hpp"
 #include "ao/kernel/render/region.hpp"
@@ -26,14 +26,11 @@
 // Overloaded toString for glm::vec3
 #include "glm.hpp"
 
+#include "shapes.hpp"
+
 TEST_CASE("Octree coordinates")
 {
-    Token t = Token::operation(Opcode::SUB,
-              Token::operation(Opcode::ADD,
-              Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-                                            Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
-              Token::constant(1));
+    Tree t = sphere(1);
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
     std::unique_ptr<Octree> out(Octree::Render(t, r));
@@ -56,12 +53,7 @@ TEST_CASE("Octree coordinates")
 
 TEST_CASE("Octree values")
 {
-    Token t = Token::operation(Opcode::SUB,
-              Token::operation(Opcode::ADD,
-              Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-                                            Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
-              Token::constant(1));
+    Tree t = sphere(1);
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
     REQUIRE(r.X.values.size() == 2);
@@ -77,12 +69,8 @@ TEST_CASE("Octree values")
 
 TEST_CASE("Vertex positioning")
 {
-    Token t = Token::operation(Opcode::SUB,
-              Token::operation(Opcode::ADD,
-              Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-                                            Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
-               Token::constant(0.5));
+    const float radius = 0.5;
+    Tree t = sphere(radius);
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 4);
 
@@ -115,6 +103,6 @@ TEST_CASE("Vertex positioning")
         }
     }
 
-    REQUIRE(rmin > sqrt(0.5)*0.95);
-    REQUIRE(rmax < sqrt(0.5)*1.05);
+    REQUIRE(rmin > radius*0.95);
+    REQUIRE(rmax < radius*1.05);
 }

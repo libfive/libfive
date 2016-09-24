@@ -89,7 +89,7 @@ void main()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Frame::Frame(const Token root)
+Frame::Frame(const Tree root)
     : tree(root.collapse()),
       vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),

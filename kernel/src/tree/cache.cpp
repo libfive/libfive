@@ -20,10 +20,10 @@
 #include <list>
 
 #include "ao/kernel/tree/cache.hpp"
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 /******************************************************************************
- * Token constructors
+ * Id constructors
  ******************************************************************************/
 Cache::Id Cache::constant(float v)
 {
@@ -58,7 +58,7 @@ Cache::Id Cache::operation(Opcode::Opcode op, Id a, Id b, bool collapse)
         }
     }
 
-    // Otherwise, construct a new Token and add it to the ops set
+    // Otherwise, construct a new Id and add it to the ops set
     auto k = key(op, a, b);
     if (data.left.find(k) == data.left.end())
     {

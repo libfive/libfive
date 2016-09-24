@@ -25,7 +25,7 @@
 #include "glm/gtc/matrix_inverse.hpp"
 
 #include "ao/kernel/tree/opcode.hpp"
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 #include "ao/kernel/eval/evaluator.hpp"
 
@@ -87,33 +87,33 @@ int opcode_enum(char* op)
 
 // Construct X, Y, Z tokens in affine form
 struct axes token_axes() {
-    auto a = Token::axes();
-    return { new Token(std::get<0>(a)),
-             new Token(std::get<1>(a)),
-             new Token(std::get<2>(a)) };
+    auto a = Tree::axes();
+    return { new Tree(std::get<0>(a)),
+             new Tree(std::get<1>(a)),
+             new Tree(std::get<2>(a)) };
 }
 
-Token* token_const(float f)
+Tree* token_const(float f)
 {
-    return new Token(Token::constant(f));
+    return new Tree(Tree::constant(f));
 }
 
-Token* token_unary(int op, Token* a)
+Tree* token_unary(int op, Tree* a)
 {
-    return new Token(Token::operation(Opcode::Opcode(op), *a));
+    return new Tree(Tree::operation(Opcode::Opcode(op), *a));
 }
 
-Token* token_binary(int op, Token* a, Token* b)
+Tree* token_binary(int op, Tree* a, Tree* b)
 {
-    return new Token(Token::operation(Opcode::Opcode(op), *a, *b));
+    return new Tree(Tree::operation(Opcode::Opcode(op), *a, *b));
 }
 
-int token_is_const(Token* t)
+int token_is_const(Tree* t)
 {
     return t->opcode() == Opcode::CONST;
 }
 
-int token_affine_vec(Token* t, v4* vec)
+int token_affine_vec(Tree* t, v4* vec)
 {
     bool success = false;
     glm::vec4 v = t->getAffine(&success);
@@ -131,18 +131,18 @@ int token_affine_vec(Token* t, v4* vec)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void tree_delete(Token* ptr)
+void tree_delete(Tree* ptr)
 {
     delete ptr;
 }
 
-float tree_eval_double(Token* tree, float x, float y, float z)
+float tree_eval_double(Tree* tree, float x, float y, float z)
 {
     auto e = Evaluator(*tree);
     return e.eval(x, y, z);
 }
 
-void tree_eval_interval(Token* tree, v2* x, v2* y, v2* z)
+void tree_eval_interval(Tree* tree, v2* x, v2* y, v2* z)
 {
     auto e = Evaluator(*tree);
     auto out =  e.eval({x->lower, x->upper},
@@ -153,7 +153,7 @@ void tree_eval_interval(Token* tree, v2* x, v2* y, v2* z)
     x->upper = out.upper();
 }
 
-void tree_export_heightmap(Token* tree, char* filename,
+void tree_export_heightmap(Tree* tree, char* filename,
                            float xmin, float xmax,
                            float ymin, float ymax,
                            float zmin, float zmax, float res)
@@ -169,7 +169,7 @@ void tree_export_heightmap(Token* tree, char* filename,
     Image::SavePng(f, img.first);
 }
 
-void tree_export_mesh(Token* tree, char* filename,
+void tree_export_mesh(Tree* tree, char* filename,
                       float xmin, float xmax,
                       float ymin, float ymax,
                       float zmin, float zmax, float res)
@@ -184,7 +184,7 @@ void tree_export_mesh(Token* tree, char* filename,
     mesh.writeMeshToFile(f);
 }
 
-void tree_export_slice(Token* tree, char* filename,
+void tree_export_slice(Tree* tree, char* filename,
                        float xmin, float xmax, float ymin, float ymax,
                        float z, float res)
 {
@@ -197,7 +197,7 @@ void tree_export_slice(Token* tree, char* filename,
     cs.writeSVG(f, region);
 }
 
-struct contours* tree_render_slice(Token* tree,
+struct contours* tree_render_slice(Tree* tree,
                        float xmin, float xmax, float ymin, float ymax,
                        float z, float res)
 {
@@ -226,7 +226,7 @@ struct contours* tree_render_slice(Token* tree,
     return out;
 }
 
-int tree_render_mesh(Token* tree, float** out,
+int tree_render_mesh(Tree* tree, float** out,
                      float xmin, float xmax,
                      float ymin, float ymax,
                      float zmin, float zmax, float res)
@@ -274,7 +274,7 @@ static void window_watch_callback_(std::string s)
     window_watch_callback(s.c_str());
 }
 
-void window_show_tree(char* filename, char* name, Token* tree)
+void window_show_tree(char* filename, char* name, Tree* tree)
 {
     Window::instance()->addTree(filename, name, *tree);
 }

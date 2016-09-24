@@ -61,7 +61,7 @@ TEST_CASE("Mesh performance")
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed;
 
-    Token sponge = menger(2);
+    Tree sponge = menger(2);
 
     Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 25);
 

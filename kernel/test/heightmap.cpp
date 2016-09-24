@@ -30,7 +30,7 @@
 
 // Helper function to make rendering a single call
 static std::pair<DepthImage, NormalImage> Render(
-        Token t, const Region& r, glm::mat4 M=glm::mat4())
+        Tree t, const Region& r, glm::mat4 M=glm::mat4())
 {
     std::atomic_bool abort(false);
 
@@ -41,7 +41,7 @@ static std::pair<DepthImage, NormalImage> Render(
 
 TEST_CASE("2D interval Z values")
 {
-    Token t = circle(1);
+    Tree t = circle(1);
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 0);
 
     auto out = Render(t, r).first;
@@ -52,7 +52,7 @@ TEST_CASE("2D interval Z values")
 
 TEST_CASE("3D interval Z values")
 {
-    Token t = circle(1);
+    Tree t = circle(1);
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 25);
 
     auto out = Render(t, r).first;
@@ -63,7 +63,7 @@ TEST_CASE("3D interval Z values")
 
 TEST_CASE("2D rendering of a circle ")
 {
-    Token t = circle(1);
+    Tree t = circle(1);
 
     DepthImage comp(10, 10);
     float inf = std::numeric_limits<float>::infinity();
@@ -98,7 +98,7 @@ TEST_CASE("2D rendering of a circle ")
 
 TEST_CASE("2D circle rendering at non-zero Z ")
 {
-    Token t = circle(1);
+    Tree t = circle(1);
 
     Region r({-1, 1}, {-1, 1}, {1, 1}, 5);
     auto out = Render(t, r).first;
@@ -126,7 +126,7 @@ TEST_CASE("Render orientation ")
 
     SECTION("Y")
     {
-        Token t = Token::operation(Opcode::MAX, circle(1), Token::Y());
+        Tree t = Tree::operation(Opcode::MAX, circle(1), Tree::Y());
         auto out = Render(t, r).first;
 
         DepthImage comp(10, 10);
@@ -149,7 +149,7 @@ TEST_CASE("Render orientation ")
 
     SECTION("X")
     {
-        Token t = Token::operation(Opcode::MAX, circle(1), Token::X());
+        Tree t = Tree::operation(Opcode::MAX, circle(1), Tree::X());
         auto out = Render(t, r).first;
 
         DepthImage comp(10, 10);
@@ -173,7 +173,7 @@ TEST_CASE("Render orientation ")
 
 TEST_CASE("Render shape ")
 {
-    Token t = circle(1);
+    Tree t = circle(1);
 
     SECTION("X")
     {
@@ -193,7 +193,7 @@ TEST_CASE("Render shape ")
 
 TEST_CASE("3D rendering of a sphere ")
 {
-    Token t = sphere(1);
+    Tree t = sphere(1);
 
     SECTION("Values")
     {
@@ -228,7 +228,7 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("X")
     {
-        Token t = Token::operation(Opcode::ADD, Token::X(), Token::Z());
+        Tree t = Tree::operation(Opcode::ADD, Tree::X(), Tree::Z());
         auto norm = Render(t, r).second;
 
         CAPTURE(norm);
@@ -237,8 +237,8 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("-X")
     {
-        Token t = Token::operation(Opcode::ADD, Token::Z(),
-                  Token::operation(Opcode::NEG, Token::X()));
+        Tree t = Tree::operation(Opcode::ADD, Tree::Z(),
+                 Tree::operation(Opcode::NEG, Tree::X()));
         auto norm = Render(t, r).second;
 
         CAPTURE(norm);
@@ -248,7 +248,7 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("Y")
     {
-        Token t = Token::operation(Opcode::ADD, Token::Y(), Token::Z());
+        Tree t = Tree::operation(Opcode::ADD, Tree::Y(), Tree::Z());
         auto norm = Render(t, r).second;
 
         CAPTURE(norm);
@@ -259,7 +259,7 @@ TEST_CASE("2D rendering with normals ")
 
 TEST_CASE("Normal clipping ")
 {
-    Token t = circle(1);
+    Tree t = circle(1);
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
 
     auto norm = Render(t, r).second;
@@ -276,7 +276,7 @@ TEST_CASE("Performance")
     std::string log;
 
     {   // Build and render sphere
-        Token t = sphere(1);
+        Tree t = sphere(1);
 
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 500);
 
@@ -290,7 +290,7 @@ TEST_CASE("Performance")
     }
 
     {   // Build and render Menger sponge
-        Token sponge = menger(2);
+        Tree sponge = menger(2);
 
         Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 250);
         auto rot = glm::rotate(glm::rotate(glm::mat4(), float(M_PI/4), {0, 1, 0}),

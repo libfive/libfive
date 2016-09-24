@@ -23,7 +23,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 
 #include "ao/kernel/tree/cache.hpp"
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/eval/clause.hpp"
 
@@ -44,7 +44,7 @@ namespace std {
 }
 #endif
 
-Evaluator::Evaluator(const Token root, const glm::mat4& M)
+Evaluator::Evaluator(const Tree root, const glm::mat4& M)
     : M(M), Mi(glm::inverse(M))
 {
     Cache* cache = root.parent.get();

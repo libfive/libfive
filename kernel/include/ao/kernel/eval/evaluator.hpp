@@ -27,14 +27,11 @@
 #include "ao/kernel/eval/row.hpp"
 #include "ao/kernel/eval/interval.hpp"
 #include "ao/kernel/eval/clause.hpp"
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class Atom;
 class Clause;
-class Token;
-class Cache;
 
 class Evaluator
 {
@@ -42,7 +39,7 @@ public:
     /*
      *  Construct an evaluator for the given tree
      */
-    Evaluator(const Token root, const glm::mat4& M=glm::mat4());
+    Evaluator(const Tree root, const glm::mat4& M=glm::mat4());
     ~Evaluator();
 
     /*

@@ -20,15 +20,15 @@
 #include <cmath>
 #include <cassert>
 
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
-Token Token::constant(float v)
+Tree Tree::constant(float v)
 {
     auto s = new Cache();
-    return Token(s->constant(v), s);
+    return Tree(s->constant(v), s);
 }
 
-Token Token::operation(Opcode::Opcode op, Token a, Token b)
+Tree Tree::operation(Opcode::Opcode op, Tree a, Tree b)
 {
     Cache* t = nullptr;
     Cache::Id id_b = b.id;
@@ -49,65 +49,63 @@ Token Token::operation(Opcode::Opcode op, Token a, Token b)
     }
     assert(t);
 
-    return Token(t->operation(op, a.id, id_b), t);
+    return Tree(t->operation(op, a.id, id_b), t);
 }
 
 /*
  *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
  */
-Token Token::affine(float a, float b, float c, float d)
+Tree Tree::affine(float a, float b, float c, float d)
 {
     Cache* s = new Cache();
-    return Token(s->affine(a, b, c, d), s);
+    return Tree(s->affine(a, b, c, d), s);
 }
 
 
-std::tuple<Token,
-           Token,
-           Token> Token::axes()
+std::tuple<Tree, Tree, Tree> Tree::axes()
 {
     Cache* s = new Cache();
-    return { Token(s->affine(1, 0, 0, 0), s),
-             Token(s->affine(0, 1, 0, 0), s),
-             Token(s->affine(0, 0, 1, 0), s) };
+    return { Tree(s->affine(1, 0, 0, 0), s),
+             Tree(s->affine(0, 1, 0, 0), s),
+             Tree(s->affine(0, 0, 1, 0), s) };
 }
 
-Token Token::X()
+Tree Tree::X()
 {
-    return Token::operation(Opcode::VAR_X);
+    return Tree::operation(Opcode::VAR_X);
 }
 
-Token Token::Y()
+Tree Tree::Y()
 {
-    return Token::operation(Opcode::VAR_Y);
+    return Tree::operation(Opcode::VAR_Y);
 }
 
-Token Token::Z()
+Tree Tree::Z()
 {
-    return Token::operation(Opcode::VAR_Z);
+    return Tree::operation(Opcode::VAR_Z);
 }
 
-Token Token::collapse() const
+Tree Tree::collapse() const
 {
     auto other = new Cache();
-    return Token(other->collapse(other->import(parent.get(), id)), other);
+    return Tree(other->collapse(other->import(parent.get(), id)), other);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
- *  Accessor functions for Token data
+ *  Accessor functions for Tree data
  *  (which lives in the parent Cache)
  */
-glm::vec4 Token::getAffine(bool* success)
+glm::vec4 Tree::getAffine(bool* success)
     { return parent->getAffine(id, success); }
-Opcode::Opcode Token::opcode() const
+Opcode::Opcode Tree::opcode() const
     { return parent->opcode(id); }
-Token Token::lhs() const
-    { return Token(parent->lhs(id), parent.get()); }
-Token Token::rhs() const
-    { return Token(parent->rhs(id), parent.get()); }
-size_t Token::rank() const
+Tree Tree::lhs() const
+    { return Tree(parent->lhs(id), parent.get()); }
+Tree Tree::rhs() const
+    { return Tree(parent->rhs(id), parent.get()); }
+size_t Tree::rank() const
     { return parent->rank(id); }
-float Token::value() const
+float Tree::value() const
     { return parent->value(id); }

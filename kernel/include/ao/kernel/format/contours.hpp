@@ -22,13 +22,13 @@
 #include <glm/vec2.hpp>
 
 #include "ao/kernel/render/quadtree.hpp"
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 class Region;
 
 struct Contours
 {
-    static Contours Render(const Token t, const Region& r);
+    static Contours Render(const Tree t, const Region& r);
 
     /*
      *  Saves the given contours as an SVG file

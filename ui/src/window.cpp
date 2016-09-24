@@ -69,9 +69,9 @@ void Window::resized(int w, int h)
     draw();
 }
 
-void Window::addTree(std::string filename, std::string name, Token t)
+void Window::addTree(std::string filename, std::string name, Tree t)
 {
-    auto ptr = new std::tuple<std::string, std::string, Token>(
+    auto ptr = new std::tuple<std::string, std::string, Tree>(
             filename, name, t);
 
     // Loop waiting for the incoming tree to be claimed

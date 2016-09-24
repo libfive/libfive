@@ -69,7 +69,7 @@ public:
     std::set<Id> findConnected(Id root);
 
     /*
-     *  If the given Token is an AFFINE_VEC, return the affine terms
+     *  If the given Id is an AFFINE_VEC, return the affine terms
      *
      *  Set success to true / false if it is provided
      */
@@ -100,21 +100,21 @@ public:
 protected:
     /*
      *  Checks whether the operation is an identity operation
-     *  If so returns an appropriately simplified Token
+     *  If so returns an appropriately simplified tree
      *  i.e. (X + 0) will return X
      */
     Id checkIdentity(Opcode::Opcode op, Id a, Id b);
 
     /*
      *  Checks whether the operation should be handled as an affine
-     *  transformation, returning an AFFINE Token if true.
+     *  transformation, returning an AFFINE tree if true.
      */
     Id checkAffine(Opcode::Opcode op, Id a, Id b);
 
     /*
      *  Rebuilds a tree from the base up, returning the new root
      *
-     *  All old Token ids remain valid, though they may be orphaned in
+     *  All old Cache::Ids remain valid, though they may be orphaned in
      *  the tree
      */
     Id rebuild(Id root, std::map<Id, Id> changed);
@@ -157,7 +157,7 @@ protected:
     Key key(Opcode::Opcode op, Id a, Id b) const;
 
     /*
-     *  Token reverse lookup
+     *  Id reverse lookup
      */
     Key token(Id id) const { return data.right.at(id); }
 

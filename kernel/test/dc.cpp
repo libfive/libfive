@@ -29,14 +29,14 @@
 
 TEST_CASE("Small sphere mesh")
 {
-    Token t(
-        Token::operation(Opcode::SUB,
-            Token::operation(Opcode::ADD,
-            Token::operation(Opcode::ADD,
-                    Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                    Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-                    Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
-            Token::constant(0.5)));
+    Tree t(
+        Tree::operation(Opcode::SUB,
+            Tree::operation(Opcode::ADD,
+            Tree::operation(Opcode::ADD,
+                    Tree::operation(Opcode::MUL, Tree::X(), Tree::X()),
+                    Tree::operation(Opcode::MUL, Tree::Y(), Tree::Y())),
+                    Tree::operation(Opcode::MUL, Tree::Z(), Tree::Z())),
+            Tree::constant(0.5)));
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
 
@@ -47,7 +47,7 @@ TEST_CASE("Small sphere mesh")
 
 TEST_CASE("Face normals")
 {
-    Token axis[3] = {Token::X(), Token::Y(), Token::Z()};
+    Tree axis[3] = {Tree::X(), Tree::Y(), Tree::Z()};
     glm::vec3 norm[3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 2);
 
@@ -67,10 +67,10 @@ TEST_CASE("Face normals")
     {
         for (int i=0; i < 3; ++i)
         {
-            Token t(Token::operation(
+            Tree t(Tree::operation(
                         Opcode::NEG,
-                        Token::operation(Opcode::ADD, axis[i],
-                            Token::constant(0.75))));
+                        Tree::operation(Opcode::ADD, axis[i],
+                            Tree::constant(0.75))));
             auto m = Mesh::Render(t, r);
             for (unsigned j=0; j < m.tris.size(); ++j)
             {
@@ -82,12 +82,12 @@ TEST_CASE("Face normals")
 
 TEST_CASE("Simple 2D contouring")
 {
-    Token t(
-        Token::operation(Opcode::SUB,
-            Token::operation(Opcode::ADD,
-                    Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                    Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-            Token::constant(0.5)));
+    Tree t(
+        Tree::operation(Opcode::SUB,
+            Tree::operation(Opcode::ADD,
+                    Tree::operation(Opcode::MUL, Tree::X(), Tree::X()),
+                    Tree::operation(Opcode::MUL, Tree::Y(), Tree::Y())),
+            Tree::constant(0.5)));
 
     Region r({-1, 1}, {-1, 1}, {0, 0}, 1);
 
@@ -97,12 +97,12 @@ TEST_CASE("Simple 2D contouring")
 
 TEST_CASE("2D contour tracking")
 {
-    Token t(
-        Token::operation(Opcode::SUB,
-            Token::operation(Opcode::ADD,
-                    Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                    Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-            Token::constant(0.5)));
+    Tree t(
+        Tree::operation(Opcode::SUB,
+            Tree::operation(Opcode::ADD,
+                    Tree::operation(Opcode::MUL, Tree::X(), Tree::X()),
+                    Tree::operation(Opcode::MUL, Tree::Y(), Tree::Y())),
+            Tree::constant(0.5)));
 
     Region r({-1, 1}, {-1, 1}, {0, 0}, 10);
 

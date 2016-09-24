@@ -18,25 +18,25 @@
  */
 #include <catch/catch.hpp>
 
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 
 TEST_CASE("Variable evaluation")
 {
-    Evaluator e(Token::X());
+    Evaluator e(Tree::X());
 
     REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.0);
 }
 
 TEST_CASE("Float evaluation")
 {
-    Evaluator e(Token::operation(Opcode::ADD, Token::X(), Token::constant(1)));
+    Evaluator e(Tree::operation(Opcode::ADD, Tree::X(), Tree::constant(1)));
     REQUIRE(e.eval(1.0, 2.0, 3.0) == 2.0);
 }
 
 TEST_CASE("Interval evaluation")
 {
-    Evaluator e(Token::operation(Opcode::ADD, Token::X(), Token::constant(1)));
+    Evaluator e(Tree::operation(Opcode::ADD, Tree::X(), Tree::constant(1)));
 
     Interval arg(1, 2);
     auto out = e.eval(arg, arg, arg);
@@ -48,9 +48,9 @@ TEST_CASE("Interval evaluation")
 TEST_CASE("Push / pop behavior")
 {
     Evaluator e(
-        Token::operation(Opcode::MIN,
-            Token::operation(Opcode::ADD, Token::X(), Token::constant(1)),
-            Token::operation(Opcode::ADD, Token::Y(), Token::constant(1))));
+        Tree::operation(Opcode::MIN,
+            Tree::operation(Opcode::ADD, Tree::X(), Tree::constant(1)),
+            Tree::operation(Opcode::ADD, Tree::Y(), Tree::constant(1))));
 
     // Store -3 in the rhs's value
     REQUIRE(e.eval(1.0f, -3.0f, 0.0f) == -2);

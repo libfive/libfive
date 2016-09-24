@@ -19,23 +19,23 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
-Token rectangle(float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
+Tree rectangle(float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
 {
-    auto x = Token::affine(M[0][0], M[0][1], M[0][2], M[0][3]);
-    auto y = Token::affine(M[1][0], M[1][1], M[1][2], M[1][3]);
+    auto x = Tree::affine(M[0][0], M[0][1], M[0][2], M[0][3]);
+    auto y = Tree::affine(M[1][0], M[1][1], M[1][2], M[1][3]);
 
-    return Token::operation(Opcode::MAX,
-               Token::operation(Opcode::MAX,
-                   Token::operation(Opcode::SUB, Token::constant(xmin), x),
-                   Token::operation(Opcode::SUB, x, Token::constant(xmax))),
-               Token::operation(Opcode::MAX,
-                   Token::operation(Opcode::SUB, Token::constant(ymin), y),
-                   Token::operation(Opcode::SUB, y, Token::constant(ymax))));
+    return Tree::operation(Opcode::MAX,
+               Tree::operation(Opcode::MAX,
+                   Tree::operation(Opcode::SUB, Tree::constant(xmin), x),
+                   Tree::operation(Opcode::SUB, x, Tree::constant(xmax))),
+               Tree::operation(Opcode::MAX,
+                   Tree::operation(Opcode::SUB, Tree::constant(ymin), y),
+                   Tree::operation(Opcode::SUB, y, Tree::constant(ymax))));
 }
 
-Token recurse(float x, float y, float scale, glm::mat4 M, int i)
+Tree recurse(float x, float y, float scale, glm::mat4 M, int i)
 {
     auto base = rectangle(x - scale/2, x + scale/2,
                           y - scale/2, y + scale/2, M);
@@ -49,61 +49,61 @@ Token recurse(float x, float y, float scale, glm::mat4 M, int i)
         auto j = i - 1;
         auto t = scale / 3;
 
-        return Token::operation(Opcode::MIN, base,
-               Token::operation(Opcode::MIN, recurse(x + scale, y, t, M, j),
-               Token::operation(Opcode::MIN, recurse(x - scale, y, t, M, j),
-               Token::operation(Opcode::MIN, recurse(x, y + scale, t, M, j),
-               Token::operation(Opcode::MIN, recurse(x, y - scale, t, M, j),
-               Token::operation(Opcode::MIN, recurse(x + scale, y + scale, t, M, j),
-               Token::operation(Opcode::MIN, recurse(x + scale, y - scale, t, M, j),
-               Token::operation(Opcode::MIN, recurse(x - scale, y + scale, t, M, j),
+        return Tree::operation(Opcode::MIN, base,
+               Tree::operation(Opcode::MIN, recurse(x + scale, y, t, M, j),
+               Tree::operation(Opcode::MIN, recurse(x - scale, y, t, M, j),
+               Tree::operation(Opcode::MIN, recurse(x, y + scale, t, M, j),
+               Tree::operation(Opcode::MIN, recurse(x, y - scale, t, M, j),
+               Tree::operation(Opcode::MIN, recurse(x + scale, y + scale, t, M, j),
+               Tree::operation(Opcode::MIN, recurse(x + scale, y - scale, t, M, j),
+               Tree::operation(Opcode::MIN, recurse(x - scale, y + scale, t, M, j),
                                              recurse(x - scale, y - scale, t, M, j)
                ))))))));
     }
 }
 
-Token menger(int i)
+Tree menger(int i)
 {
     auto M = glm::mat4();
-    Token a = recurse(0, 0, 1, M, i);
+    Tree a = recurse(0, 0, 1, M, i);
 
     M = glm::rotate(M, float(M_PI/2), {1, 0, 0});
-    Token b = recurse(0, 0, 1, M, i);
+    Tree b = recurse(0, 0, 1, M, i);
 
     M = glm::rotate(M, float(M_PI/2), {0, 1, 0});
-    Token c = recurse(0, 0, 1, M, i);
+    Tree c = recurse(0, 0, 1, M, i);
 
-    auto cube = Token::operation(Opcode::MAX,
-                Token::operation(Opcode::MAX,
-                   Token::operation(Opcode::MAX, Token::affine(-1,  0,  0, -1.5),
-                                       Token::affine( 1,  0,  0, -1.5)),
-                   Token::operation(Opcode::MAX, Token::affine( 0, -1,  0, -1.5),
-                                       Token::affine( 0,  1,  0, -1.5))),
-                   Token::operation(Opcode::MAX, Token::affine( 0,  0, -1, -1.5),
-                                       Token::affine( 0,  0,  1, -1.5)));
+    auto cube = Tree::operation(Opcode::MAX,
+                Tree::operation(Opcode::MAX,
+                   Tree::operation(Opcode::MAX, Tree::affine(-1,  0,  0, -1.5),
+                                       Tree::affine( 1,  0,  0, -1.5)),
+                   Tree::operation(Opcode::MAX, Tree::affine( 0, -1,  0, -1.5),
+                                       Tree::affine( 0,  1,  0, -1.5))),
+                   Tree::operation(Opcode::MAX, Tree::affine( 0,  0, -1, -1.5),
+                                       Tree::affine( 0,  0,  1, -1.5)));
 
-    auto cutout = Token::operation(Opcode::NEG,
-                  Token::operation(Opcode::MIN, Token::operation(Opcode::MIN, a, b), c));
+    auto cutout = Tree::operation(Opcode::NEG,
+                  Tree::operation(Opcode::MIN, Tree::operation(Opcode::MIN, a, b), c));
 
-    return Token::operation(Opcode::MAX, cube, cutout);
+    return Tree::operation(Opcode::MAX, cube, cutout);
 }
 
-Token circle(float r)
+Tree circle(float r)
 {
-    return Token::operation(Opcode::SUB,
-        Token::operation(Opcode::ADD,
-            Token::operation(Opcode::MUL, Token::X(), Token::X()),
-            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-        Token::constant(pow(r, 2)));
+    return Tree::operation(Opcode::SUB,
+        Tree::operation(Opcode::ADD,
+            Tree::operation(Opcode::MUL, Tree::X(), Tree::X()),
+            Tree::operation(Opcode::MUL, Tree::Y(), Tree::Y())),
+        Tree::constant(pow(r, 2)));
 }
 
-Token sphere(float r)
+Tree sphere(float r)
 {
-    return Token::operation(Opcode::SUB,
-        Token::operation(Opcode::ADD,
-        Token::operation(Opcode::ADD,
-            Token::operation(Opcode::MUL, Token::X(), Token::X()),
-            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-            Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
-        Token::constant(pow(r, 2)));
+    return Tree::operation(Opcode::SUB,
+        Tree::operation(Opcode::ADD,
+        Tree::operation(Opcode::ADD,
+            Tree::operation(Opcode::MUL, Tree::X(), Tree::X()),
+            Tree::operation(Opcode::MUL, Tree::Y(), Tree::Y())),
+            Tree::operation(Opcode::MUL, Tree::Z(), Tree::Z())),
+        Tree::constant(pow(r, 2)));
 }

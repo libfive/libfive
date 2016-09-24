@@ -23,7 +23,7 @@
 #include <glm/vec3.hpp>
 
 #include "ao/kernel/render/octree.hpp"
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 class Region;
 
@@ -36,7 +36,7 @@ struct Mesh
      *  simplification to collapse leaf cells), then using DC to generate
      *  a triangle mesh.
      */
-    static Mesh Render(const Token t, const Region& r);
+    static Mesh Render(const Tree t, const Region& r);
 
     /*
      *  Saves the given mesh as a .stl file

@@ -29,13 +29,13 @@
 /*
  *  A token represents a single expression (with up to two arguments)
  */
-class Token
+class Tree
 {
 public:
     /*
-     *  Returns a token for the given constant
+     *  Returns a Tree for the given constant
      */
-    static Token constant(float v);
+    static Tree constant(float v);
 
     /*
      *  Returns a token for the given operation
@@ -43,9 +43,9 @@ public:
      *  Arguments should be filled in from left to right
      *  (i.e. a must not be null if b is not null)
      */
-    static Token operation(Opcode::Opcode op,
-                           Token a=Token(0, nullptr),
-                           Token b=Token(0, nullptr));
+    static Tree operation(Opcode::Opcode op,
+                          Tree a=Tree(0, nullptr),
+                          Tree b=Tree(0, nullptr));
 
     /*
      *  Constructors for individual axes (non-affine)
@@ -54,24 +54,24 @@ public:
      *  an individual-axis constructor, as it ensures that they're backed
      *  by the same Cache object
      */
-    static Token X();
-    static Token Y();
-    static Token Z();
+    static Tree X();
+    static Tree Y();
+    static Tree Z();
 
     /*
      *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
      */
-    static Token affine(float a, float b, float c, float d);
+    static Tree affine(float a, float b, float c, float d);
 
     /*
      *  Returns a tuple of affine tokens for X, Y, Z axes
      */
-    static std::tuple<Token, Token, Token> axes();
+    static std::tuple<Tree, Tree, Tree> axes();
 
     /*
-     *  Returns a new Token that is a flattened copy of this tree
+     *  Returns a new Tree that is a flattened copy of this tree
      */
-    Token collapse() const;
+    Tree collapse() const;
 
     /*
      *  Attempts to get affine terms from a AFFINE_VEC token
@@ -83,8 +83,8 @@ public:
      *  Accessors for token fields
      */
     Opcode::Opcode opcode() const;
-    Token lhs() const;
-    Token rhs() const;
+    Tree lhs() const;
+    Tree rhs() const;
     size_t rank() const;
     float value() const;
 
@@ -96,7 +96,7 @@ protected:
      *  Private constructor
      *  (only ever called by Cache)
      */
-    explicit Token(Cache::Id id, Cache* parent) : id(id), parent(parent) {}
+    explicit Tree(Cache::Id id, Cache* parent) : id(id), parent(parent) {}
 
     /*  Shared pointer to parent Cache
      *  Every token that refers back to this cache has a pointer to it,

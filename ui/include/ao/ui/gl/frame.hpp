@@ -25,7 +25,7 @@
 
 #include "ao/ui/gl/core.hpp"
 #include "ao/ui/task.hpp"
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 /*
  *  The Frame class contains and draws many rendered Tree textures
@@ -39,7 +39,7 @@ public:
      *  On construction, takes ownership of the given Tree and sets
      *  its parent pointer.
      */
-    explicit Frame(const Token root);
+    explicit Frame(const Tree root);
     ~Frame();
 
     /*
@@ -71,7 +71,7 @@ protected:
      */
     void startRender();
 
-    const Token tree;
+    const Tree tree;
 
     GLuint vs;  // Vertex shader
     GLuint fs;  // Fragment shader
