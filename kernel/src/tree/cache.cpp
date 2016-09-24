@@ -111,7 +111,7 @@ Cache::Id Cache::checkAffine(Opcode::Opcode op, Id a, Id b)
         }
         else if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::AFFINE_VEC)
         {
-            auto va = getAffine(b);
+            auto va = getAffine(a);
             auto vb = getAffine(b);
             return affine(va + vb);
         }
@@ -132,7 +132,7 @@ Cache::Id Cache::checkAffine(Opcode::Opcode op, Id a, Id b)
         }
         else if (op_a == Opcode::AFFINE_VEC && op_b == Opcode::AFFINE_VEC)
         {
-            auto va = getAffine(b);
+            auto va = getAffine(a);
             auto vb = getAffine(b);
             return affine(va - vb);
         }
