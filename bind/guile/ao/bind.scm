@@ -34,7 +34,7 @@
         (format p "#<tree 0x~x>"
         (pointer-address (unwrap-tree o)))))
 
-(define-public (wrap-tree ptr)
+(define (wrap-tree ptr)
     "wrap-tree ptr
     Attaches tree_delete to a bare pointer"
     (wrap-tree_ (make-pointer
@@ -63,7 +63,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (opcode->int op)
+(define (opcode->int op)
     "opcode->int op
     Converts an opcode (which should be a symbol, e.g. 'add)
     into an integer representing its enum value"
