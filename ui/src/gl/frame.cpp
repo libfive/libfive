@@ -90,8 +90,8 @@ void main()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Frame::Frame(Token* root)
-    : tree(root->collapse()),
+Frame::Frame(const Token root)
+    : tree(root.collapse()),
       vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
       prog(Shader::link(vs, fs))
@@ -199,7 +199,7 @@ void Frame::startRender()
     {
         // Swap around render tasks and start an async worker
         pending = next;
-        worker.reset(new Worker(tree.get(), pending));
+        worker.reset(new Worker(tree, pending));
         next.reset();
     }
     // Schedule a refinement of the current render task

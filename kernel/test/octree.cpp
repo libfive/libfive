@@ -18,8 +18,7 @@
  */
 #include <catch/catch.hpp>
 
-#include "ao/kernel/tree/tree.hpp"
-#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/token.hpp"
 
 #include "ao/kernel/render/octree.hpp"
 #include "ao/kernel/render/region.hpp"
@@ -29,16 +28,15 @@
 
 TEST_CASE("Octree coordinates")
 {
-    Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-                                   s.operation(OP_MUL, s.Z(), s.Z())),
-               s.constant(1)));
+    Token t = Token::operation(Opcode::SUB,
+              Token::operation(Opcode::ADD,
+              Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+                                            Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
+              Token::constant(1));
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
-    std::unique_ptr<Octree> out(Octree::Render(&t, r));
+    std::unique_ptr<Octree> out(Octree::Render(t, r));
     REQUIRE(out->getType() == Octree::BRANCH);
 
     // Check that all child pointers are populated
@@ -58,18 +56,17 @@ TEST_CASE("Octree coordinates")
 
 TEST_CASE("Octree values")
 {
-    Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-                                   s.operation(OP_MUL, s.Z(), s.Z())),
-               s.constant(1)));
+    Token t = Token::operation(Opcode::SUB,
+              Token::operation(Opcode::ADD,
+              Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+                                            Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
+              Token::constant(1));
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
     REQUIRE(r.X.values.size() == 2);
 
-    std::unique_ptr<Octree> out(Octree::Render(&t, r));
+    std::unique_ptr<Octree> out(Octree::Render(t, r));
 
     // Check that values and gradients are correct
     for (int i=0; i < 8; ++i)
@@ -80,17 +77,16 @@ TEST_CASE("Octree values")
 
 TEST_CASE("Vertex positioning")
 {
-    Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-                                   s.operation(OP_MUL, s.Z(), s.Z())),
-               s.constant(0.5)));
+    Token t = Token::operation(Opcode::SUB,
+              Token::operation(Opcode::ADD,
+              Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+                                            Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
+               Token::constant(0.5));
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 4);
 
-    std::unique_ptr<Octree> out(Octree::Render(&t, r));
+    std::unique_ptr<Octree> out(Octree::Render(t, r));
 
     // Walk every leaf node in the octree, keeping track of the
     // minimum and maximum vertex radius

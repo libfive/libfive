@@ -44,10 +44,10 @@ namespace std {
 }
 #endif
 
-Evaluator::Evaluator(const Token* root, const glm::mat4& M)
+Evaluator::Evaluator(const Token root, const glm::mat4& M)
     : M(M), Mi(glm::inverse(M))
 {
-    Tree* tree = root->parent.get();
+    Tree* tree = root.parent.get();
 
     // Reserve space for X, Y, Z, plus every clause in the tree
     size_t count = 3 + tree->cache.size();
@@ -125,8 +125,8 @@ Evaluator::Evaluator(const Token* root, const glm::mat4& M)
         row.setSize();
     }
 
-    assert(clauses[root->id]);
-    this->root = clauses[root->id];
+    assert(clauses[root.id]);
+    this->root = clauses[root.id];
 }
 
 Evaluator::~Evaluator()

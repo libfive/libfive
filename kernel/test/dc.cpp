@@ -30,7 +30,7 @@
 
 TEST_CASE("Small sphere mesh")
 {
-    std::unique_ptr<Token> t(
+    Token t(
         Token::operation(Opcode::SUB,
             Token::operation(Opcode::ADD,
             Token::operation(Opcode::ADD,
@@ -41,14 +41,14 @@ TEST_CASE("Small sphere mesh")
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
 
-    auto m = Mesh::Render(t.get(), r);
+    auto m = Mesh::Render(t, r);
 
     REQUIRE(m.tris.size() == 12);
 }
 
 TEST_CASE("Face normals")
 {
-    Token* axis[3] = {Token::X(), Token::Y(), Token::Z()};
+    Token axis[3] = {Token::X(), Token::Y(), Token::Z()};
     glm::vec3 norm[3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 2);
 
@@ -68,28 +68,22 @@ TEST_CASE("Face normals")
     {
         for (int i=0; i < 3; ++i)
         {
-            std::unique_ptr<Token> t(Token::operation(
+            Token t(Token::operation(
                         Opcode::NEG,
                         Token::operation(Opcode::ADD, axis[i],
                             Token::constant(0.75))));
-            auto m = Mesh::Render(t.get(), r);
+            auto m = Mesh::Render(t, r);
             for (unsigned j=0; j < m.tris.size(); ++j)
             {
                 REQUIRE(m.norm(j) == -norm[i]);
             }
         }
     }
-
-    // Clean up after yourself!
-    for (auto a : axis)
-    {
-        delete a;
-    }
 }
 
 TEST_CASE("Simple 2D contouring")
 {
-    std::unique_ptr<Token> t(
+    Token t(
         Token::operation(Opcode::SUB,
             Token::operation(Opcode::ADD,
                     Token::operation(Opcode::MUL, Token::X(), Token::X()),
@@ -98,13 +92,13 @@ TEST_CASE("Simple 2D contouring")
 
     Region r({-1, 1}, {-1, 1}, {0, 0}, 1);
 
-    auto m = Contours::Render(t.get(), r);
+    auto m = Contours::Render(t, r);
     REQUIRE(m.contours.size() == 1);
 }
 
 TEST_CASE("2D contour tracking")
 {
-    std::unique_ptr<Token> t(
+    Token t(
         Token::operation(Opcode::SUB,
             Token::operation(Opcode::ADD,
                     Token::operation(Opcode::MUL, Token::X(), Token::X()),
@@ -113,7 +107,7 @@ TEST_CASE("2D contour tracking")
 
     Region r({-1, 1}, {-1, 1}, {0, 0}, 10);
 
-    auto m = Contours::Render(t.get(), r);
+    auto m = Contours::Render(t, r);
     REQUIRE(m.contours.size() == 1);
 
     float min = 1;

@@ -267,7 +267,7 @@ void Worker::quad(const Octree* a, const Octree* b,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Mesh Mesh::Render(Token* t, const Region& r)
+Mesh Mesh::Render(const Token t, const Region& r)
 {
     std::unique_ptr<Octree> o(Octree::Render(t, r));
 

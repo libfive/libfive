@@ -257,7 +257,7 @@ static void recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
 }
 
 std::pair<DepthImage, NormalImage> Render(
-    Token* t, Region r, const std::atomic_bool& abort,
+    const Token t, Region r, const std::atomic_bool& abort,
     glm::mat4 m, size_t workers)
 {
     auto depth = DepthImage(r.X.values.size(), r.Y.values.size());

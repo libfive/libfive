@@ -22,79 +22,75 @@
 
 #include "ao/kernel/tree/token.hpp"
 
-Token* Token::constant(float v)
+Token Token::constant(float v)
 {
     auto s = new Tree();
-    return new Token(s->constant(v), s);
+    return Token(s->constant(v), s);
 }
 
-Token* Token::operation(Opcode::Opcode op, Token* a, Token* b)
+Token Token::operation(Opcode::Opcode op, Token a, Token b)
 {
-    Tree* s = nullptr;
-    Id a_id = a ? a->id : 0;
-    Id b_id = b ? b->id : 0;
+    Tree* t = nullptr;
+    Token::Id id_b = b.id;
 
-    if (a && b)
+    if (a.id)
     {
         // If the two Tree are different, then import b's store
         // into a and update the relevant id tag
-        if (a->parent != b->parent)
+        if (b.id && a.parent != b.parent)
         {
-            b_id = a->parent->import(b->parent.get(), b->id);
+            id_b = a.parent->import(b.parent.get(), b.id);
         }
-        s = a->parent.get();
+        t = a.parent.get();
     }
-    else if (a)
+    else
     {
-        s = a->parent.get();
+        t = new Tree();
     }
+    assert(t);
 
-    if (!s)
-    {
-        s = new Tree();
-    }
-    return new Token(s->operation(op, a_id, b_id), s);
+    return Token(t->operation(op, a.id, id_b), t);
 }
 
 /*
  *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
  */
-Token* Token::affine(float a, float b, float c, float d)
+Token Token::affine(float a, float b, float c, float d)
 {
     Tree* s = new Tree();
-    return new Token(s->affine(a, b, c, d), s);
+    return Token(s->affine(a, b, c, d), s);
 }
 
 
-std::tuple<Token*, Token*, Token*> Token::axes()
+std::tuple<Token,
+           Token,
+           Token> Token::axes()
 {
     Tree* s = new Tree();
-    return { new Token(s->affine(1, 0, 0, 0), s),
-             new Token(s->affine(0, 1, 0, 0), s),
-             new Token(s->affine(0, 0, 1, 0), s) };
+    return { Token(s->affine(1, 0, 0, 0), s),
+             Token(s->affine(0, 1, 0, 0), s),
+             Token(s->affine(0, 0, 1, 0), s) };
 }
 
-Token* Token::X()
+Token Token::X()
 {
-    Tree* s = new Tree();
-    return new Token(s->X(), s);
+    return Token::operation(Opcode::VAR_X);
 }
 
-Token* Token::Y()
+Token Token::Y()
 {
-    Tree* s = new Tree();
-    return new Token(s->Y(), s);
+    return Token::operation(Opcode::VAR_Y);
 }
 
-Token* Token::Z()
+Token Token::Z()
 {
-    Tree* s = new Tree();
-    return new Token(s->Z(), s);
+    return Token::operation(Opcode::VAR_Z);
 }
 
-Token* Token::collapse()
+Token Token::collapse() const
 {
-    return new Token(parent->collapse(id), parent.get());
+    auto other = new Tree();
+    return Token(other->collapse(other->import(parent.get(), id)), other);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -107,10 +103,10 @@ glm::vec4 Token::getAffine(bool* success)
     { return parent->getAffine(id, success); }
 Opcode::Opcode Token::opcode() const
     { return parent->opcode(id); }
-Token::Id Token::lhs() const
-    { return parent->lhs(id); }
-Token::Id Token::rhs() const
-    { return parent->rhs(id); }
+Token Token::lhs() const
+    { return Token(parent->lhs(id), parent.get()); }
+Token Token::rhs() const
+    { return Token(parent->rhs(id), parent.get()); }
 size_t Token::rank() const
     { return parent->rank(id); }
 float Token::value() const

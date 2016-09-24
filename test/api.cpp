@@ -18,18 +18,16 @@
  */
 #include <catch/catch.hpp>
 
-#include "ao/kernel/tree/tree.hpp"
-#include "ao/kernel/tree/store.hpp"
+#include "ao/kernel/tree/token.hpp"
 
 #include "api.hpp"
 
 TEST_CASE("struct contours")
 {
-    Store s;
-    Tree t(&s, s.operation(OP_SUB,
-               s.operation(OP_ADD, s.operation(OP_MUL, s.X(), s.X()),
-                                   s.operation(OP_MUL, s.Y(), s.Y())),
-               s.constant(0.5)));
+    Token t = Token::operation(Opcode::SUB,
+              Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
+                                            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+               Token::constant(0.5));
 
     struct contours* cs = tree_render_slice(&t, -1, 1, -1, 1, 0, 50);
     REQUIRE(cs->size == 1);

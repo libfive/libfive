@@ -20,8 +20,7 @@
 #include <cstring>
 #include <catch/catch.hpp>
 
-#include "ao/kernel/tree/store.hpp"
-#include "ao/kernel/tree/tree.hpp"
+#include "ao/kernel/tree/token.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/eval/result.hpp"
 
@@ -32,9 +31,8 @@ TEST_CASE("Vectorized performance")
     // Oversample to get meaningful result
     const float N = 1000;
 
-    Store s;
-    Tree t(&s, s.operation(Opcode::ADD, s.X(), s.Y()));
-    Evaluator e(&t);
+    Token t = Token::operation(Opcode::ADD, Token::X(), Token::Y());
+    Evaluator e(t);
 
     for (unsigned i=0; i < Result::N; ++i)
     {

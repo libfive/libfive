@@ -21,7 +21,7 @@
 
 #include "ao/kernel/tree/token.hpp"
 
-Token* rectangle(float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
+Token rectangle(float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
 {
     auto x = Token::affine(M[0][0], M[0][1], M[0][2], M[0][3]);
     auto y = Token::affine(M[1][0], M[1][1], M[1][2], M[1][3]);
@@ -35,7 +35,7 @@ Token* rectangle(float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
                    Token::operation(Opcode::SUB, y, Token::constant(ymax))));
 }
 
-Token* recurse(float x, float y, float scale, glm::mat4 M, int i)
+Token recurse(float x, float y, float scale, glm::mat4 M, int i)
 {
     auto base = rectangle(x - scale/2, x + scale/2,
                           y - scale/2, y + scale/2, M);
@@ -62,16 +62,16 @@ Token* recurse(float x, float y, float scale, glm::mat4 M, int i)
     }
 }
 
-Token* menger(int i)
+Token menger(int i)
 {
     auto M = glm::mat4();
-    Token* a = recurse(0, 0, 1, M, i);
+    Token a = recurse(0, 0, 1, M, i);
 
     M = glm::rotate(M, float(M_PI/2), {1, 0, 0});
-    Token* b = recurse(0, 0, 1, M, i);
+    Token b = recurse(0, 0, 1, M, i);
 
     M = glm::rotate(M, float(M_PI/2), {0, 1, 0});
-    Token* c = recurse(0, 0, 1, M, i);
+    Token c = recurse(0, 0, 1, M, i);
 
     auto cube = Token::operation(Opcode::MAX,
                 Token::operation(Opcode::MAX,
@@ -86,4 +86,24 @@ Token* menger(int i)
                   Token::operation(Opcode::MIN, Token::operation(Opcode::MIN, a, b), c));
 
     return Token::operation(Opcode::MAX, cube, cutout);
+}
+
+Token circle(float r)
+{
+    return Token::operation(Opcode::SUB,
+        Token::operation(Opcode::ADD,
+            Token::operation(Opcode::MUL, Token::X(), Token::X()),
+            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+        Token::constant(pow(r, 2)));
+}
+
+Token sphere(float r)
+{
+    return Token::operation(Opcode::SUB,
+        Token::operation(Opcode::ADD,
+        Token::operation(Opcode::ADD,
+            Token::operation(Opcode::MUL, Token::X(), Token::X()),
+            Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
+            Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
+        Token::constant(pow(r, 2)));
 }

@@ -89,24 +89,24 @@ int opcode_enum(char* op)
 // Construct X, Y, Z tokens in affine form
 struct axes token_axes() {
     auto a = Token::axes();
-    return { std::get<0>(a),
-             std::get<1>(a),
-             std::get<2>(a) };
+    return { new Token(std::get<0>(a)),
+             new Token(std::get<1>(a)),
+             new Token(std::get<2>(a)) };
 }
 
 Token* token_const(float f)
 {
-    return Token::constant(f);
+    return new Token(Token::constant(f));
 }
 
 Token* token_unary(int op, Token* a)
 {
-    return Token::operation(Opcode::Opcode(op), a);
+    return new Token(Token::operation(Opcode::Opcode(op), *a));
 }
 
 Token* token_binary(int op, Token* a, Token* b)
 {
-    return Token::operation(Opcode::Opcode(op), a, b);
+    return new Token(Token::operation(Opcode::Opcode(op), *a, *b));
 }
 
 int token_is_const(Token* t)
@@ -139,13 +139,13 @@ void tree_delete(Token* ptr)
 
 float tree_eval_double(Token* tree, float x, float y, float z)
 {
-    auto e = Evaluator(tree);
+    auto e = Evaluator(*tree);
     return e.eval(x, y, z);
 }
 
 void tree_eval_interval(Token* tree, v2* x, v2* y, v2* z)
 {
-    auto e = Evaluator(tree);
+    auto e = Evaluator(*tree);
     auto out =  e.eval({x->lower, x->upper},
                        {y->lower, y->upper},
                        {z->lower, z->upper});
@@ -165,7 +165,7 @@ void tree_export_heightmap(Token* tree, char* filename,
     Region region({xmin, xmax}, {ymin, ymax}, {zmin, zmax}, res);
     std::atomic_bool abort(false);
 
-    auto img = Heightmap::Render(tree, region, abort);
+    auto img = Heightmap::Render(*tree, region, abort);
 
     Image::SavePng(f, img.first);
 }
@@ -180,7 +180,7 @@ void tree_export_mesh(Token* tree, char* filename,
            boost::algorithm::ends_with(f, ".obj"));
 
     Region region({xmin, xmax}, {ymin, ymax}, {zmin, zmax}, res);
-    auto mesh = Mesh::Render(tree, region);
+    auto mesh = Mesh::Render(*tree, region);
 
     mesh.writeMeshToFile(f);
 }
@@ -193,7 +193,7 @@ void tree_export_slice(Token* tree, char* filename,
     assert(f.substr(f.length() - 4, 4) == ".svg");
 
     Region region({xmin, xmax}, {ymin, ymax}, {z,z}, res);
-    auto cs = Contours::Render(tree, region);
+    auto cs = Contours::Render(*tree, region);
 
     cs.writeSVG(f, region);
 }
@@ -203,7 +203,7 @@ struct contours* tree_render_slice(Token* tree,
                        float z, float res)
 {
     Region region({xmin, xmax}, {ymin, ymax}, {z,z}, res);
-    auto cs = Contours::Render(tree, region);
+    auto cs = Contours::Render(*tree, region);
 
     struct contours* out = (struct contours*)malloc(sizeof(struct contours));
     out->xs = (float**)malloc(sizeof(float*) * cs.contours.size());
@@ -233,7 +233,7 @@ int tree_render_mesh(Token* tree, float** out,
                      float zmin, float zmax, float res)
 {
     Region region({xmin, xmax}, {ymin, ymax}, {zmin, zmax}, res);
-    auto mesh = Mesh::Render(tree, region);
+    auto mesh = Mesh::Render(*tree, region);
 
     *out = (float*)malloc(mesh.tris.size() * 3 * 3 * sizeof(float));
     size_t index = 0;
@@ -277,7 +277,7 @@ static void window_watch_callback_(std::string s)
 
 void window_show_tree(char* filename, char* name, Token* tree)
 {
-    Window::instance()->addTree(filename, name, tree);
+    Window::instance()->addTree(filename, name, *tree);
 }
 
 void window_watch_file(char* dir, char* file)

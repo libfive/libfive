@@ -18,136 +18,131 @@
  */
 #include <catch/catch.hpp>
 
-#include "ao/kernel/tree/store.hpp"
 #include "ao/kernel/tree/token.hpp"
 #include "glm.hpp"
 
 TEST_CASE("Affine math")
 {
-    Store s;
-
     SECTION("Affine plus constant")
     {
-        Token* t = s.operation(Opcode::ADD, s.affine(1, 0, 0, 0), s.constant(1));
+        Token t = Token::operation(Opcode::ADD, Token::affine(1, 0, 0, 0), Token::constant(1));
 
-        REQUIRE(t->op == AFFINE_VEC);
-        REQUIRE(t->getAffine() == glm::vec4(1, 0, 0, 1));
+        REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
+        REQUIRE(t.getAffine() == glm::vec4(1, 0, 0, 1));
     }
 
     SECTION("Constant plus affine")
     {
-        Token* t = s.operation(Opcode::ADD, s.constant(2), s.affine(1, 0, 0, 0));
+        Token t = Token::operation(Opcode::ADD, Token::constant(2), Token::affine(1, 0, 0, 0));
 
-        REQUIRE(t->op == AFFINE_VEC);
-        REQUIRE(t->getAffine() == glm::vec4(1, 0, 0, 2));
+        REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
+        REQUIRE(t.getAffine() == glm::vec4(1, 0, 0, 2));
     }
 
     SECTION("Affine plus affine")
     {
-        Token* t = s.operation(Opcode::ADD, s.affine(1, 2, 3, 4),
-                                       s.affine(2, 4, 6, 8));
-        REQUIRE(t->op == AFFINE_VEC);
-        REQUIRE(t->getAffine() == glm::vec4(3, 6, 9, 12));
+        Token t = Token::operation(Opcode::ADD, Token::affine(1, 2, 3, 4),
+                                       Token::affine(2, 4, 6, 8));
+        REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
+        REQUIRE(t.getAffine() == glm::vec4(3, 6, 9, 12));
     }
 
     SECTION("Affine minus constant")
     {
-        Token* t = s.operation(Opcode::SUB, s.affine(1, 0, 0, 0), s.constant(1));
+        Token t = Token::operation(Opcode::SUB, Token::affine(1, 0, 0, 0), Token::constant(1));
 
-        REQUIRE(t->op == AFFINE_VEC);
-        REQUIRE(t->getAffine() == glm::vec4(1, 0, 0, -1));
+        REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
+        REQUIRE(t.getAffine() == glm::vec4(1, 0, 0, -1));
     }
 
     SECTION("Constant minus affine")
     {
-        Token* t = s.operation(Opcode::SUB, s.constant(2), s.affine(1, 0, 0, 0));
+        Token t = Token::operation(Opcode::SUB, Token::constant(2), Token::affine(1, 0, 0, 0));
 
-        REQUIRE(t->op == AFFINE_VEC);
-        REQUIRE(t->getAffine() == glm::vec4(-1, 0, 0, 2));
+        REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
+        REQUIRE(t.getAffine() == glm::vec4(-1, 0, 0, 2));
     }
 
     SECTION("Affine minus affine")
     {
-        Token* t = s.operation(Opcode::SUB, s.affine(1, 2, 3, 4),
-                                       s.affine(2, 4, 6, 8));
-        REQUIRE(t->op == AFFINE_VEC);
-        REQUIRE(t->getAffine() == glm::vec4(-1, -2, -3, -4));
+        Token t = Token::operation(Opcode::SUB, Token::affine(1, 2, 3, 4),
+                                       Token::affine(2, 4, 6, 8));
+        REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
+        REQUIRE(t.getAffine() == glm::vec4(-1, -2, -3, -4));
     }
 
     SECTION("Affine times constant")
     {
-        Token* t = s.operation(Opcode::MUL, s.affine(1, 2, 3, 4), s.constant(2));
-        REQUIRE(t->op == AFFINE_VEC);
-        REQUIRE(t->getAffine() == glm::vec4(2, 4, 6, 8));
+        Token t = Token::operation(Opcode::MUL, Token::affine(1, 2, 3, 4), Token::constant(2));
+        REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
+        REQUIRE(t.getAffine() == glm::vec4(2, 4, 6, 8));
     }
 
     SECTION("Constant times affine")
     {
-        Token* t = s.operation(Opcode::MUL, s.constant(2), s.affine(1, 2, 3, 4));
-        REQUIRE(t->op == AFFINE_VEC);
-        REQUIRE(t->getAffine() == glm::vec4(2, 4, 6, 8));
+        Token t = Token::operation(Opcode::MUL, Token::constant(2), Token::affine(1, 2, 3, 4));
+        REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
+        REQUIRE(t.getAffine() == glm::vec4(2, 4, 6, 8));
     }
 
     SECTION("Affine divided by constant")
     {
-        Token* t = s.operation(Opcode::DIV, s.affine(1, 2, 3, 4), s.constant(2));
-        REQUIRE(t->op == AFFINE_VEC);
-        REQUIRE(t->getAffine() == glm::vec4(0.5, 1, 1.5, 2));
+        Token t = Token::operation(Opcode::DIV, Token::affine(1, 2, 3, 4), Token::constant(2));
+        REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
+        REQUIRE(t.getAffine() == glm::vec4(0.5, 1, 1.5, 2));
     }
 }
 
-TEST_CASE("collapseAffine")
+TEST_CASE("Token::collapse")
 {
-    Store s;
-
     SECTION("Base case")
     {
-        auto t = s.affine(1, 0, 0, 0);
-        auto t_ = s.collapseAffine(t);
-        REQUIRE(t_->op == VAR_X);
-        REQUIRE(t_->weight == 0);
+        auto t = Token::affine(1, 0, 0, 0);
+        auto t_ = t.collapse();
+        REQUIRE(t_.opcode() == Opcode::VAR_X);
+        REQUIRE(t_.rank() == 0);
     }
 
     SECTION("Sum")
     {
-        auto t = s.affine(1, 1, 0, 0);
-        auto t_ = s.collapseAffine(t);
-        REQUIRE(t_->op == Opcode::ADD);
-        REQUIRE(t_->a->op == VAR_X);
-        REQUIRE(t_->b->op == VAR_Y);
-        REQUIRE(t_->weight == 1);
+        auto t = Token::affine(1, 1, 0, 0);
+        auto t_ = t.collapse();
+        REQUIRE(t_.opcode() == Opcode::ADD);
+        REQUIRE(t_.lhs().opcode() == Opcode::VAR_X);
+        REQUIRE(t_.rhs().opcode() == Opcode::VAR_Y);
+        REQUIRE(t_.rank() == 1);
     }
 
     SECTION("Multiplication")
     {
-        auto t = s.affine(2, 3, 0, 0);
-        auto t_ = s.collapseAffine(t);
-        REQUIRE(t_->op == Opcode::ADD);
-        REQUIRE(t_->a->op == Opcode::MUL);
-        REQUIRE(t_->b->op == Opcode::MUL);
+        auto t = Token::affine(2, 3, 0, 0);
+        auto t_ = t.collapse();
+        REQUIRE(t_.opcode() == Opcode::ADD);
+        REQUIRE(t_.lhs().opcode() == Opcode::MUL);
+        REQUIRE(t_.rhs().opcode() == Opcode::MUL);
 
-        REQUIRE(t_->a->a->op == VAR_X);
-        REQUIRE(t_->a->b->op == CONST);
-        REQUIRE(t_->a->b->value == 2);
-        REQUIRE(t_->b->a->op == VAR_Y);
-        REQUIRE(t_->b->b->op == CONST);
-        REQUIRE(t_->b->b->value == 3);
+        REQUIRE(t_.lhs().lhs().opcode() == Opcode::VAR_X);
+        REQUIRE(t_.lhs().rhs().opcode() == Opcode::CONST);
+        REQUIRE(t_.lhs().rhs().value() == 2);
+        REQUIRE(t_.rhs().lhs().opcode() == Opcode::VAR_Y);
+        REQUIRE(t_.rhs().rhs().opcode() == Opcode::CONST);
+        REQUIRE(t_.rhs().rhs().value() == 3);
     }
 
     SECTION("Constant")
     {
-        auto t = s.affine(1, 0, 0, 3);
-        auto t_ = s.collapseAffine(t);
-        REQUIRE(t_->op == Opcode::ADD);
-        REQUIRE(t_->a->op == VAR_X);
-        REQUIRE(t_->b->op == CONST);
-        REQUIRE(t_->b->value == 3);
+        auto t = Token::affine(1, 0, 0, 3);
+        auto t_ = t.collapse();
+        REQUIRE(t_.opcode() == Opcode::ADD);
+        REQUIRE(t_.lhs().opcode() == Opcode::VAR_X);
+        REQUIRE(t_.rhs().opcode() == Opcode::CONST);
+        REQUIRE(t_.rhs().value() == 3);
     }
 
     SECTION("Not affine at all")
     {
-        auto t = s.X();
-        auto t_ = s.collapseAffine(t);
-        REQUIRE(t == t_);
+        auto t = Token::X();
+        auto t_ = t.collapse();
+        REQUIRE(t.id == t_.id);
     }
 }

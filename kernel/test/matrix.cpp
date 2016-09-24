@@ -26,41 +26,41 @@
 
 TEST_CASE("Matrix evaluation")
 {
-    std::unique_ptr<Token> t(Token::affine(1, 0, 0, 0));
+    Token t(Token::affine(1, 0, 0, 0));
 
     SECTION("Default matrix")
     {
-        Evaluator e(t.get());
+        Evaluator e(t);
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.0);
     }
 
     SECTION("Scaling")
     {
-        Evaluator e(t.get(), glm::scale(glm::mat4(), {0.5, 1.0, 1.0}));
+        Evaluator e(t, glm::scale(glm::mat4(), {0.5, 1.0, 1.0}));
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 0.5);
     }
 
     SECTION("Swapping")
     {
-        Evaluator e(t.get(), glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
+        Evaluator e(t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
                                {0.0, 0.0, 1.0}));
         REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(2.0));
     }
 
     SECTION("Offset")
     {
-        Evaluator e(t.get(), glm::translate(glm::mat4(), {0.5, 0.0, 0.0}));
+        Evaluator e(t, glm::translate(glm::mat4(), {0.5, 0.0, 0.0}));
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.5);
     }
 }
 
 TEST_CASE("Matrix normals")
 {
-    std::unique_ptr<Token> t(Token::affine(1, 0, 0, 0));
+    Token t(Token::affine(1, 0, 0, 0));
 
     SECTION("Swapping")
     {
-        Evaluator e(t.get(), glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
+        Evaluator e(t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
                                {0.0, 0.0, 1.0}));
         e.set(1, 2, 3, 0);
         auto out = e.derivs(1);
@@ -75,7 +75,7 @@ TEST_CASE("Matrix normals")
 
     SECTION("Swapping")
     {
-        Evaluator e(t.get(), glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
+        Evaluator e(t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
                                {0.0, 0.0, 1.0}));
         e.set(1, 2, 3, 0);
         auto out = e.derivs(1);

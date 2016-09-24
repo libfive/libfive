@@ -24,7 +24,6 @@
 #include "ao/kernel/render/heightmap.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/tree/tree.hpp"
-#include "ao/kernel/tree/store.hpp"
 
 #include "shapes.hpp"
 
@@ -32,7 +31,7 @@
 
 // Helper function to make rendering a single call
 static std::pair<DepthImage, NormalImage> Render(
-        Tree* t, const Region& r, glm::mat4 M=glm::mat4())
+        Token t, const Region& r, glm::mat4 M=glm::mat4())
 {
     std::atomic_bool abort(false);
 
@@ -43,14 +42,10 @@ static std::pair<DepthImage, NormalImage> Render(
 
 TEST_CASE("2D interval Z values")
 {
-    Store s;
-    Tree t(&s, Token::operation(Opcode::SUB,
-               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-               Token::constant(1)));
+    Token t = circle(1);
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 0);
 
-    auto out = Render(&t, r).first;
+    auto out = Render(t, r).first;
     CAPTURE(out);
     REQUIRE((out == 0 ||
              out == -std::numeric_limits<float>::infinity()).all());
@@ -58,26 +53,18 @@ TEST_CASE("2D interval Z values")
 
 TEST_CASE("3D interval Z values")
 {
-    Store s;
-    Tree t(&s, Token::operation(Opcode::SUB,
-               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-               Token::constant(1)));
+    Token t = circle(1);
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 25);
 
-    auto out = Render(&t, r).first;
+    auto out = Render(t, r).first;
     CAPTURE(out);
-    REQUIRE((out == r.Z.valueToken::back() ||
+    REQUIRE((out == r.Z.values.back() ||
              out == -std::numeric_limits<float>::infinity()).all());
 }
 
 TEST_CASE("2D rendering of a circle ")
 {
-    Store s;
-    Tree t(&s, Token::operation(Opcode::SUB,
-               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-               Token::constant(1)));
+    Token t = circle(1);
 
     DepthImage comp(10, 10);
     float inf = std::numeric_limits<float>::infinity();
@@ -96,7 +83,7 @@ TEST_CASE("2D rendering of a circle ")
     SECTION("Empty Z")
     {
         Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
-        auto out = Render(&t, r).first;
+        auto out = Render(t, r).first;
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
@@ -104,7 +91,7 @@ TEST_CASE("2D rendering of a circle ")
     SECTION("Zero-resolution Z")
     {
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 5, 5, 0);
-        auto out = Render(&t, r).first;
+        auto out = Render(t, r).first;
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
@@ -112,14 +99,10 @@ TEST_CASE("2D rendering of a circle ")
 
 TEST_CASE("2D circle rendering at non-zero Z ")
 {
-    Store s;
-    Tree t(&s, Token::operation(Opcode::SUB,
-               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-               Token::constant(1)));
+    Token t = circle(1);
 
     Region r({-1, 1}, {-1, 1}, {1, 1}, 5);
-    auto out = Render(&t, r).first;
+    auto out = Render(t, r).first;
     CAPTURE(out);
 
     DepthImage comp(10, 10);
@@ -140,18 +123,12 @@ TEST_CASE("2D circle rendering at non-zero Z ")
 
 TEST_CASE("Render orientation ")
 {
-    Store s;
     Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
 
     SECTION("Y")
     {
-        Tree t(&s, Token::operation(Opcode::MAX,
-                   Token::operation(Opcode::SUB,
-                   Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                       Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-                   Token::constant(1)), Token::Y()));
-
-        auto out = Render(&t, r).first;
+        Token t = Token::operation(Opcode::MAX, circle(1), Token::Y());
+        auto out = Render(t, r).first;
 
         DepthImage comp(10, 10);
         float inf = std::numeric_limits<float>::infinity();
@@ -173,13 +150,8 @@ TEST_CASE("Render orientation ")
 
     SECTION("X")
     {
-        Tree t(&s, Token::operation(Opcode::MAX,
-                   Token::operation(Opcode::SUB,
-                   Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                       Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-                   Token::constant(1)), Token::X()));
-
-        auto out = Render(&t, r).first;
+        Token t = Token::operation(Opcode::MAX, circle(1), Token::X());
+        auto out = Render(t, r).first;
 
         DepthImage comp(10, 10);
         float inf = std::numeric_limits<float>::infinity();
@@ -202,23 +174,19 @@ TEST_CASE("Render orientation ")
 
 TEST_CASE("Render shape ")
 {
-    Store s;
-    Tree t(&s, Token::operation(Opcode::SUB,
-               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-               Token::constant(1)));
+    Token t = circle(1);
 
     SECTION("X")
     {
         Region r({0, 1}, {-1, 1}, {0, 0}, 5);
-        auto out = Render(&t, r).first;
+        auto out = Render(t, r).first;
         REQUIRE(out.rows() == 10);
         REQUIRE(out.cols() == 5);
     }
     SECTION("Y")
     {
         Region r({-1, 1}, {0, 1}, {0, 0}, 5);
-        auto out = Render(&t, r).first;
+        auto out = Render(t, r).first;
         REQUIRE(out.rows() == 5);
         REQUIRE(out.cols() == 10);
     }
@@ -226,18 +194,12 @@ TEST_CASE("Render shape ")
 
 TEST_CASE("3D rendering of a sphere ")
 {
-    Store s;
-    Tree t(&s, Token::operation(Opcode::SUB,
-               Token::operation(Opcode::ADD,
-               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                   Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-                                   Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
-               Token::constant(1)));
+    Token t = sphere(1);
 
     SECTION("Values")
     {
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
-        auto out = Render(&t, r).first;
+        auto out = Render(t, r).first;
 
         DepthImage comp(10, 10);
         float inf = std::numeric_limits<float>::infinity();
@@ -263,14 +225,12 @@ TEST_CASE("3D rendering of a sphere ")
 
 TEST_CASE("2D rendering with normals ")
 {
-    Store s;
-
     Region r({-1, 1}, {-1, 1}, {-2,2}, 5);
 
     SECTION("X")
     {
-        Tree t(&s, Token::operation(Opcode::ADD, Token::X(), Token::Z()));
-        auto norm = Render(&t, r).second;
+        Token t = Token::operation(Opcode::ADD, Token::X(), Token::Z());
+        auto norm = Render(t, r).second;
 
         CAPTURE(norm);
         REQUIRE((norm == 0xffd97fd9).all());
@@ -278,8 +238,9 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("-X")
     {
-        Tree t(&s, Token::operation(Opcode::ADD, Token::Z(), Token::operation(Opcode::NEG, Token::X())));
-        auto norm = Render(&t, r).second;
+        Token t = Token::operation(Opcode::ADD, Token::Z(),
+                  Token::operation(Opcode::NEG, Token::X()));
+        auto norm = Render(t, r).second;
 
         CAPTURE(norm);
         REQUIRE((norm == 0xffd97f25 ||
@@ -288,8 +249,8 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("Y")
     {
-        Tree t(&s, Token::operation(Opcode::ADD, Token::Y(), Token::Z()));
-        auto norm = Render(&t, r).second;
+        Token t = Token::operation(Opcode::ADD, Token::Y(), Token::Z());
+        auto norm = Render(t, r).second;
 
         CAPTURE(norm);
         REQUIRE((norm == 0xffd9d97f ||
@@ -299,14 +260,10 @@ TEST_CASE("2D rendering with normals ")
 
 TEST_CASE("Normal clipping ")
 {
-    Store s;
+    Token t = circle(1);
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
-    Tree t(&s, Token::operation(Opcode::SUB,
-               Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                   Token::operation(Opcode::MUL, Token::Y(), s.Y())),
-               Token::constant(1)));
 
-    auto norm = Render(&t, r).second;
+    auto norm = Render(t, r).second;
 
     CAPTURE(norm);
     REQUIRE((norm == 0xffff7f7f || norm == 0).all());
@@ -316,22 +273,16 @@ TEST_CASE("Performance")
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed;
-    Store s;
 
     std::string log;
 
     {   // Build and render sphere
-        Tree t(&s, Token::operation(Opcode::SUB,
-                   Token::operation(Opcode::ADD,
-                   Token::operation(Opcode::ADD, Token::operation(Opcode::MUL, Token::X(), Token::X()),
-                                       Token::operation(Opcode::MUL, Token::Y(), Token::Y())),
-                                       Token::operation(Opcode::MUL, Token::Z(), Token::Z())),
-                   Token::constant(1)));
+        Token t = sphere(1);
 
         Region r({-1, 1}, {-1, 1}, {-1, 1}, 500);
 
         start = std::chrono::system_clock::now();
-        auto out = Render(&t, r).first;
+        auto out = Render(t, r).first;
         end = std::chrono::system_clock::now();
 
         elapsed = end - start;
@@ -340,7 +291,7 @@ TEST_CASE("Performance")
     }
 
     {   // Build and render Menger sponge
-        std::unique_ptr<Tree> sponge(menger(2));
+        Token sponge = menger(2);
 
         Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 250);
         auto rot = glm::rotate(glm::rotate(glm::mat4(), float(M_PI/4), {0, 1, 0}),
@@ -348,7 +299,7 @@ TEST_CASE("Performance")
 
         // Begin timekeeping
         start = std::chrono::system_clock::now();
-        auto heightmap = Render(sponge.get(), r, rot).first;
+        auto heightmap = Render(sponge, r, rot).first;
         end = std::chrono::system_clock::now();
 
         elapsed = end - start;
