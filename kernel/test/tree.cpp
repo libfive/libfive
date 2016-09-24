@@ -119,6 +119,6 @@ TEST_CASE("Automatic expression pruning")
 
         Token::Id od = t.operation(Opcode::MUL, t.constant(0), t.X());
         REQUIRE(t.opcode(od) == Opcode::CONST);
-        REQUIRE(t.opcode(od) == 0);
+        REQUIRE(t.value(od) == 0);
     }
 }
