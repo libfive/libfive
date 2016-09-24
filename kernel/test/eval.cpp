@@ -28,6 +28,12 @@ TEST_CASE("Variable evaluation")
     REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.0);
 }
 
+TEST_CASE("Constant evaluation")
+{
+    Evaluator e(Tree(3.14));
+    REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(3.14));
+}
+
 TEST_CASE("Float evaluation")
 {
     Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree(1)));
