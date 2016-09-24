@@ -23,9 +23,8 @@
 
 #include "ao/kernel/format/mesh.hpp"
 #include "ao/kernel/render/region.hpp"
-#include "ao/kernel/tree/tree.hpp"
 
-#include "shapes.hpp"
+#include "util/shapes.hpp"
 
 TEST_CASE("Saving a mesh")
 {
@@ -62,13 +61,13 @@ TEST_CASE("Mesh performance")
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed;
 
-    std::unique_ptr<Tree> sponge(menger(2));
+    Tree sponge = menger(2);
 
     Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 25);
 
     // Begin timekeeping
     start = std::chrono::system_clock::now();
-    auto mesh = Mesh::Render(sponge.get(), r);
+    auto mesh = Mesh::Render(sponge, r);
     end = std::chrono::system_clock::now();
 
     elapsed = end - start;

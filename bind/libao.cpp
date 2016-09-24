@@ -24,10 +24,8 @@
 
 #include "glm/gtc/matrix_inverse.hpp"
 
-#include "ao/kernel/tree/store.hpp"
-#include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/tree/opcode.hpp"
-#include "ao/kernel/tree/token.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 #include "ao/kernel/eval/evaluator.hpp"
 
@@ -39,17 +37,7 @@
 #include "ao/ui/window.hpp"
 #include "ao/ui/watcher.hpp"
 
-#include "api.hpp"
-
-void store_delete(Store* ptr)
-{
-    delete ptr;
-}
-
-Store* store_new()
-{
-    return new Store();
-}
+#include "libao.hpp"
 
 void contours_delete(struct contours* cs)
 {
@@ -67,59 +55,48 @@ void contours_delete(struct contours* cs)
 
 int opcode_enum(char* op)
 {
-    std::string str(op);
-
-    if (str == "add")           return OP_ADD;
-    else if (str == "mul")      return OP_MUL;
-    else if (str == "min")      return OP_MIN;
-    else if (str == "max")      return OP_MAX;
-    else if (str == "sub")      return OP_SUB;
-    else if (str == "div")      return OP_DIV;
-    else if (str == "atan2")    return OP_ATAN2;
-    else if (str == "pow")      return OP_POW;
-    else if (str == "mod")      return OP_MOD;
-    else if (str == "nan-fill") return OP_NANFILL;
-
-    else if (str == "square")   return OP_SQUARE;
-    else if (str == "sqrt")     return OP_SQRT;
-    else if (str == "abs")      return OP_ABS;
-    else if (str == "neg")      return OP_NEG;
-    else if (str == "sin")      return OP_SIN;
-    else if (str == "cos")      return OP_COS;
-    else if (str == "tan")      return OP_TAN;
-    else if (str == "asin")     return OP_ASIN;
-    else if (str == "acos")     return OP_ACOS;
-    else if (str == "atan")     return OP_ATAN;
-    else if (str == "exp")      return OP_EXP;
-
-    else                        return INVALID;
+    return Opcode::from_str(op);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// Construct X, Y, Z tokens in affine form
-Token* token_x(Store* s) { return s->affine(1, 0, 0, 0); }
-Token* token_y(Store* s) { return s->affine(0, 1, 0, 0); }
-Token* token_z(Store* s) { return s->affine(0, 0, 1, 0); }
-
-Token* token_const(Store* s, float f)   { return s->constant(f); }
-
-Token* token_unary(Store* s, int op, Token* a)
+// Construct X, Y, Z trees in affine form
+Tree* tree_x()
 {
-    return s->operation(static_cast<Opcode>(op), a);
+    return new Tree(Tree::affine(1, 0, 0, 0));
 }
 
-Token* token_binary(Store* s, int op, Token* a, Token* b)
+Tree* tree_y()
 {
-    return s->operation(static_cast<Opcode>(op), a, b);
+    return new Tree(Tree::affine(0, 1, 0, 0));
 }
 
-int token_is_const(Token* t)
+Tree* tree_z()
 {
-    return t->op == CONST;
+    return new Tree(Tree::affine(0, 0, 1, 0));
 }
 
-int token_affine_vec(Token* t, v4* vec)
+Tree* tree_const(float f)
+{
+    return new Tree(f);
+}
+
+Tree* tree_unary(int op, Tree* a)
+{
+    return new Tree(Opcode::Opcode(op), *a);
+}
+
+Tree* tree_binary(int op, Tree* a, Tree* b)
+{
+    return new Tree(Opcode::Opcode(op), *a, *b);
+}
+
+int tree_is_const(Tree* t)
+{
+    return t->opcode() == Opcode::CONST;
+}
+
+int tree_affine_vec(Tree* t, v4* vec)
 {
     bool success = false;
     glm::vec4 v = t->getAffine(&success);
@@ -142,20 +119,15 @@ void tree_delete(Tree* ptr)
     delete ptr;
 }
 
-Tree* tree_new(Store* store, Token* root)
-{
-    return new Tree(store, root);
-}
-
 float tree_eval_double(Tree* tree, float x, float y, float z)
 {
-    auto e = Evaluator(tree);
+    auto e = Evaluator(*tree);
     return e.eval(x, y, z);
 }
 
 void tree_eval_interval(Tree* tree, v2* x, v2* y, v2* z)
 {
-    auto e = Evaluator(tree);
+    auto e = Evaluator(*tree);
     auto out =  e.eval({x->lower, x->upper},
                        {y->lower, y->upper},
                        {z->lower, z->upper});
@@ -175,7 +147,7 @@ void tree_export_heightmap(Tree* tree, char* filename,
     Region region({xmin, xmax}, {ymin, ymax}, {zmin, zmax}, res);
     std::atomic_bool abort(false);
 
-    auto img = Heightmap::Render(tree, region, abort);
+    auto img = Heightmap::Render(*tree, region, abort);
 
     Image::SavePng(f, img.first);
 }
@@ -190,7 +162,7 @@ void tree_export_mesh(Tree* tree, char* filename,
            boost::algorithm::ends_with(f, ".obj"));
 
     Region region({xmin, xmax}, {ymin, ymax}, {zmin, zmax}, res);
-    auto mesh = Mesh::Render(tree, region);
+    auto mesh = Mesh::Render(*tree, region);
 
     mesh.writeMeshToFile(f);
 }
@@ -203,7 +175,7 @@ void tree_export_slice(Tree* tree, char* filename,
     assert(f.substr(f.length() - 4, 4) == ".svg");
 
     Region region({xmin, xmax}, {ymin, ymax}, {z,z}, res);
-    auto cs = Contours::Render(tree, region);
+    auto cs = Contours::Render(*tree, region);
 
     cs.writeSVG(f, region);
 }
@@ -213,7 +185,7 @@ struct contours* tree_render_slice(Tree* tree,
                        float z, float res)
 {
     Region region({xmin, xmax}, {ymin, ymax}, {z,z}, res);
-    auto cs = Contours::Render(tree, region);
+    auto cs = Contours::Render(*tree, region);
 
     struct contours* out = (struct contours*)malloc(sizeof(struct contours));
     out->xs = (float**)malloc(sizeof(float*) * cs.contours.size());
@@ -243,7 +215,7 @@ int tree_render_mesh(Tree* tree, float** out,
                      float zmin, float zmax, float res)
 {
     Region region({xmin, xmax}, {ymin, ymax}, {zmin, zmax}, res);
-    auto mesh = Mesh::Render(tree, region);
+    auto mesh = Mesh::Render(*tree, region);
 
     *out = (float*)malloc(mesh.tris.size() * 3 * 3 * sizeof(float));
     size_t index = 0;
@@ -287,7 +259,7 @@ static void window_watch_callback_(std::string s)
 
 void window_show_tree(char* filename, char* name, Tree* tree)
 {
-    Window::instance()->addTree(filename, name, tree);
+    Window::instance()->addTree(filename, name, *tree);
 }
 
 void window_watch_file(char* dir, char* file)

@@ -23,8 +23,6 @@
 #include "ao/ui/gl/core.hpp"
 #include "ao/ui/gl/frame.hpp"
 
-#include "ao/kernel/tree/tree.hpp"
-
 Window* Window::singleton = nullptr;
 Window* Window::instance()
 {
@@ -71,9 +69,9 @@ void Window::resized(int w, int h)
     draw();
 }
 
-void Window::addTree(std::string filename, std::string name, Tree* t)
+void Window::addTree(std::string filename, std::string name, Tree t)
 {
-    auto ptr = new std::tuple<std::string, std::string, Tree*>(
+    auto ptr = new std::tuple<std::string, std::string, Tree>(
             filename, name, t);
 
     // Loop waiting for the incoming tree to be claimed

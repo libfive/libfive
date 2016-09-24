@@ -20,8 +20,6 @@
 
 #include <string>
 
-class Store;
-class Token;
 class Tree;
 
 extern "C"
@@ -43,33 +41,29 @@ extern "C"
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    Store* store_new();
-    void store_delete(Store* ptr);
-
     int opcode_enum(char* op);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    Token* token_x(Store* s);
-    Token* token_y(Store* s);
-    Token* token_z(Store* s);
+    Tree* tree_x();
+    Tree* tree_y();
+    Tree* tree_z();
 
-    Token* token_const(Store* s, float f);
+    Tree* tree_const(float f);
 
-    Token* token_unary(Store* s, int op, Token* a);
-    Token* token_binary(Store* s, int op, Token* a, Token* b);
+    Tree* tree_unary(int op, Tree* a);
+    Tree* tree_binary(int op, Tree* a, Tree* b);
 
-    int token_is_const(Token* t);
+    int tree_is_const(Tree* t);
 
     /*
-     *  If t is an AFFINE token, stores its parameters in vec and returns 1;
+     *  If t is an AFFINE tree, stores its parameters in vec and returns 1;
      *  otherwise, returns 0
      */
-    int token_affine_vec(Token* t, v4* vec);
+    int tree_affine_vec(Tree* t, v4* vec);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    Tree* tree_new(Store* store, Token* root);
     void tree_delete(Tree* ptr);
 
     /*

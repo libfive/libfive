@@ -27,12 +27,11 @@
 #include "ao/kernel/eval/row.hpp"
 #include "ao/kernel/eval/interval.hpp"
 #include "ao/kernel/eval/clause.hpp"
+#include "ao/kernel/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class Atom;
 class Clause;
-class Tree;
 
 class Evaluator
 {
@@ -40,7 +39,7 @@ public:
     /*
      *  Construct an evaluator for the given tree
      */
-    explicit Evaluator(const Tree* t, const glm::mat4& M=glm::mat4());
+    Evaluator(const Tree root, const glm::mat4& M=glm::mat4());
     ~Evaluator();
 
     /*
@@ -130,7 +129,7 @@ protected:
     /*
      *  Looks up an opcode, using dummy ops if children are disabled
      */
-    static Opcode getOpcode(Clause* c);
+    static Opcode::Opcode getOpcode(Clause* c);
 
     /*  Global matrix transform (and inverse) applied to all coordinates  */
     const glm::mat4 M;

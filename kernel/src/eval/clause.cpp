@@ -17,23 +17,12 @@
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ao/kernel/eval/clause.hpp"
-#include "ao/kernel/tree/atom.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Clause::Clause(const Atom* m,
-               std::unordered_map<const Atom*, Clause*>& clauses)
-    : op(m->op), value(m->value), a(m->a ? clauses[m->a] : nullptr),
-                                  b(m->b ? clauses[m->b] : nullptr)
+Clause::Clause(Opcode::Opcode op, float value, Clause* lhs, Clause* rhs)
+    : op(op), value(value), a(lhs), b(rhs)
 {
-    // Assert that children have been added to the clause map
-    assert(m->a ? clauses.count(m->a) : true);
-    assert(m->b ? clauses.count(m->b) : true);
-
-    // Assert that this atom hasn't already been added to the tree
-    assert(clauses[m] == nullptr);
-    clauses[m] = this;
-
     // Helper function to copy a set of result pointers if a clause is present
     auto load_ptrs = [](ResultPtrs* p, Clause* c)
     {
@@ -72,7 +61,7 @@ Clause::Clause(const Atom* m,
     load_ptrs(&ptrs.b, b);
 
 
-    if (op == CONST)
+    if (op == Opcode::CONST)
     {
         result.fill(value);
     }
@@ -89,7 +78,7 @@ bool Clause::checkDisabled()
 
     // For min and max operations, we may only need to keep one branch
     // active if it is decisively above or below the other branch.
-    if (op == OP_MAX)
+    if (op == Opcode::MAX)
     {
         if (a->result.i.lower() >= b->result.i.upper())
         {
@@ -105,7 +94,7 @@ bool Clause::checkDisabled()
             b->enable();
         }
     }
-    else if (op == OP_MIN)
+    else if (op == Opcode::MIN)
     {
         if (a->result.i.lower() >= b->result.i.upper())
         {

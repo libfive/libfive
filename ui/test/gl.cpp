@@ -23,9 +23,6 @@
 #include "ao/ui/gl/core.hpp"
 #include "ao/ui/gl/shader.hpp"
 
-#include "ao/kernel/tree/store.hpp"
-#include "ao/kernel/tree/tree.hpp"
-
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> WindowPtr;

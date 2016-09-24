@@ -24,8 +24,7 @@
 
 #include "ao/kernel/render/region.hpp"
 #include "ao/kernel/format/image.hpp"
-
-class Tree;
+#include "ao/kernel/tree/tree.hpp"
 
 namespace Heightmap
 {
@@ -36,6 +35,6 @@ namespace Heightmap
  *  into int32_t pixels.
  */
 std::pair<DepthImage, NormalImage> Render(
-        Tree* t, Region r, const std::atomic_bool& abort,
+        const Tree t, Region r, const std::atomic_bool& abort,
         glm::mat4 m=glm::mat4(), size_t threads=8);
 }

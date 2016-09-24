@@ -18,55 +18,85 @@
  */
 #pragma once
 
-#include <array>
-#include <vector>
-#include <list>
 #include <cstdlib>
+#include <memory>
+
+#include "glm/vec4.hpp"
 
 #include "ao/kernel/tree/opcode.hpp"
-
-class Atom;
-class Store;
-class Token;
+#include "ao/kernel/tree/cache.hpp"
 
 /*
- *  A tree represents a math expression that can be evaluated in various ways
+ *  A Tree represents a tree of math expressions.
+ *
+ *  Trees are implemented as a flyweight with a shared pointer to a
+ *  Cache that stores deduplicated tree data  (children, values, etc).
  */
 class Tree
 {
 public:
     /*
-     *  Construct a tree from the given Store
+     *  Returns a Tree for the given constant
      */
-    explicit Tree(Store* s, Token* root);
+    Tree(float v);
 
     /*
-     *  In destructor, delete all of the data that this Tree owns
+     *  Returns a token for the given operation
+     *
+     *  Arguments should be filled in from left to right
+     *  (i.e. a must not be null if b is not null)
      */
-    ~Tree();
+    Tree(Opcode::Opcode op, Tree a=Tree(nullptr, 0), Tree b=Tree(nullptr, 0));
 
     /*
-     *  Looks up root atom in the tree
+     *  Constructors for individual axes (non-affine)
      */
-    Atom* getRoot() const { return root; }
+    static Tree X() { return Tree(Opcode::VAR_X); }
+    static Tree Y() { return Tree(Opcode::VAR_Y); }
+    static Tree Z() { return Tree(Opcode::VAR_Z); }
 
-    /*  Pointer to a parent (used to decide who destroys the tree)  */
-    void* parent=nullptr;
+    /*
+     *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
+     */
+    static Tree affine(float a, float b, float c, float d);
+
+    /*
+     *  Returns a new Tree that is a flattened copy of this tree
+     */
+    Tree collapse() const;
+
+    /*
+     *  Attempts to get affine terms from a AFFINE_VEC token
+     *  If success is provided, it is populated with true or false
+     */
+    glm::vec4 getAffine(bool* success=nullptr)
+        { return parent->getAffine(id, success); }
+
+    /*
+     *  Accessors for token fields
+     */
+    Opcode::Opcode opcode() const   { return parent->opcode(id); }
+    Tree lhs() const                { return Tree(parent, parent->lhs(id)); }
+    Tree rhs() const                { return Tree(parent, parent->rhs(id)); }
+    size_t rank() const             { return parent->rank(id); }
+    float value() const             { return parent->value(id); }
 
 protected:
-    /*  All operations live in a set of rows sorted by weight */
-    std::vector<std::vector<Atom*>> rows;
+    /*
+     *  Private constructor
+     *  (only ever called by Cache)
+     */
+    explicit Tree(std::shared_ptr<Cache> parent, Cache::Id id=0) : parent(parent), id(id) {}
 
-    /*  Our position variables are stored as separate pointers */
-    Atom* X;
-    Atom* Y;
-    Atom* Z;
+    /*  Shared pointer to parent Cache
+     *  Every token that refers back to this cache has a pointer to it,
+     *  and the Cache is only deleted when all tokens are destroyed     */
+    std::shared_ptr<Cache> parent;
 
-    /*  Pointers to constants live in this vector  */
-    std::vector<Atom*> constants;
+    /*  ID indexing into the parent Cache */
+    const Cache::Id id;
 
-    /*  This is the top atom of the tree  */
-    Atom* root;
-
+    /*  An Evaluator needs to be able to pull out the parent Cache */
     friend class Evaluator;
 };
+

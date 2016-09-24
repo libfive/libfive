@@ -26,7 +26,6 @@
 
 #include "ao/kernel/render/heightmap.hpp"
 #include "ao/kernel/render/region.hpp"
-#include "ao/kernel/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex shader
@@ -90,8 +89,8 @@ void main()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Frame::Frame(Tree* tree)
-    : tree(tree),
+Frame::Frame(const Tree root)
+    : tree(root.collapse()),
       vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
       prog(Shader::link(vs, fs))
@@ -99,8 +98,6 @@ Frame::Frame(Tree* tree)
     assert(vs);
     assert(fs);
     assert(prog);
-
-    tree->parent = this;
 
     glGenTextures(2, depth);
     glGenTextures(2, norm);
@@ -201,7 +198,7 @@ void Frame::startRender()
     {
         // Swap around render tasks and start an async worker
         pending = next;
-        worker.reset(new Worker(tree.get(), pending));
+        worker.reset(new Worker(tree, pending));
         next.reset();
     }
     // Schedule a refinement of the current render task

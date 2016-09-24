@@ -18,33 +18,32 @@
  */
 #include <catch/catch.hpp>
 
-#include "ao/kernel/tree/store.hpp"
+#include <glm/gtc/matrix_transform.hpp>
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 
 TEST_CASE("Variable evaluation")
 {
-    Store s;
-    Tree t(&s, s.X());
-    Evaluator e(&t);
+    Evaluator e(Tree::X());
 
     REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.0);
 }
 
+TEST_CASE("Constant evaluation")
+{
+    Evaluator e(Tree(3.14));
+    REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(3.14));
+}
+
 TEST_CASE("Float evaluation")
 {
-    Store s;
-    Tree t(&s, s.operation(OP_ADD, s.X(), s.constant(1)));
-    Evaluator e(&t);
-
+    Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree(1)));
     REQUIRE(e.eval(1.0, 2.0, 3.0) == 2.0);
 }
 
 TEST_CASE("Interval evaluation")
 {
-    Store s;
-    Tree t(&s, s.operation(OP_ADD, s.X(), s.constant(1)));
-    Evaluator e(&t);
+    Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree(1)));
 
     Interval arg(1, 2);
     auto out = e.eval(arg, arg, arg);
@@ -55,10 +54,10 @@ TEST_CASE("Interval evaluation")
 
 TEST_CASE("Push / pop behavior")
 {
-    Store s;
-    Tree t(&s, s.operation(OP_MIN, s.operation(OP_ADD, s.X(), s.constant(1)),
-                                   s.operation(OP_ADD, s.Y(), s.constant(1))));
-    Evaluator e(&t);
+    Evaluator e(
+        Tree(Opcode::MIN,
+            Tree(Opcode::ADD, Tree::X(), Tree(1)),
+            Tree(Opcode::ADD, Tree::Y(), Tree(1))));
 
     // Store -3 in the rhs's value
     REQUIRE(e.eval(1.0f, -3.0f, 0.0f) == -2);
@@ -77,4 +76,75 @@ TEST_CASE("Push / pop behavior")
 
     // Require that the evaluation gets 1
     REQUIRE(e.eval(1.0f, 2.0f, 0.0f) == 2);
+}
+
+TEST_CASE("Affine evaluation")
+{
+    Evaluator e(Tree::affine(1, 0, 0, 0));
+    REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.0);
+}
+
+TEST_CASE("Matrix evaluation")
+{
+    Tree t(Tree::affine(1, 0, 0, 0));
+
+    SECTION("Default matrix")
+    {
+        Evaluator e(t);
+        REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.0);
+    }
+
+    SECTION("Scaling")
+    {
+        Evaluator e(t, glm::scale(glm::mat4(), {0.5, 1.0, 1.0}));
+        REQUIRE(e.eval(1.0, 2.0, 3.0) == 0.5);
+    }
+
+    SECTION("Swapping")
+    {
+        Evaluator e(t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
+                               {0.0, 0.0, 1.0}));
+        REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(2.0));
+    }
+
+    SECTION("Offset")
+    {
+        Evaluator e(t, glm::translate(glm::mat4(), {0.5, 0.0, 0.0}));
+        REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.5);
+    }
+}
+
+TEST_CASE("Matrix normals")
+{
+    Tree t(Tree::affine(1, 0, 0, 0));
+
+    SECTION("Swapping")
+    {
+        Evaluator e(t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
+                               {0.0, 0.0, 1.0}));
+        e.set(1, 2, 3, 0);
+        auto out = e.derivs(1);
+        glm::vec3 d(std::get<1>(out)[0],
+                    std::get<2>(out)[0],
+                    std::get<3>(out)[0]);
+
+        REQUIRE(d.x == Approx(0));
+        REQUIRE(d.y == Approx(1));
+        REQUIRE(d.z == Approx(0));
+    }
+
+    SECTION("Swapping")
+    {
+        Evaluator e(t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
+                               {0.0, 0.0, 1.0}));
+        e.set(1, 2, 3, 0);
+        auto out = e.derivs(1);
+        glm::vec3 d(std::get<1>(out)[0],
+                    std::get<2>(out)[0],
+                    std::get<3>(out)[0]);
+
+        REQUIRE(d.x == Approx(0));
+        REQUIRE(d.y == Approx(1));
+        REQUIRE(d.z == Approx(0));
+    }
 }

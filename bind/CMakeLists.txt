@@ -1,4 +1,4 @@
-add_library(ao SHARED api.cpp)
+add_library(ao SHARED libao.cpp)
 target_link_libraries(ao ao-kernel ao-ui ${GUILE_LIBRARY})
 target_include_directories(ao SYSTEM PRIVATE ${GUILE_INCLUDE_DIR})
 target_include_directories(ao PRIVATE .)
