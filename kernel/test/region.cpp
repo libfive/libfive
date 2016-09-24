@@ -46,7 +46,7 @@ TEST_CASE("Region::Axis construction")
 
 TEST_CASE("Region::Axis values")
 {
-    SECTION("Exact values");
+    SECTION("Exact values")
     {
         auto da = Region::Axis(Interval(0, 1), 1.0f);
         REQUIRE(da.values[0] == 0.5);
