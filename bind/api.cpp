@@ -55,32 +55,7 @@ void contours_delete(struct contours* cs)
 
 int opcode_enum(char* op)
 {
-    std::string str(op);
-
-    if (str == "add")           return Opcode::ADD;
-    else if (str == "mul")      return Opcode::MUL;
-    else if (str == "min")      return Opcode::MIN;
-    else if (str == "max")      return Opcode::MAX;
-    else if (str == "sub")      return Opcode::SUB;
-    else if (str == "div")      return Opcode::DIV;
-    else if (str == "atan2")    return Opcode::ATAN2;
-    else if (str == "pow")      return Opcode::POW;
-    else if (str == "mod")      return Opcode::MOD;
-    else if (str == "nan-fill") return Opcode::NANFILL;
-
-    else if (str == "square")   return Opcode::SQUARE;
-    else if (str == "sqrt")     return Opcode::SQRT;
-    else if (str == "abs")      return Opcode::ABS;
-    else if (str == "neg")      return Opcode::NEG;
-    else if (str == "sin")      return Opcode::SIN;
-    else if (str == "cos")      return Opcode::COS;
-    else if (str == "tan")      return Opcode::TAN;
-    else if (str == "asin")     return Opcode::ASIN;
-    else if (str == "acos")     return Opcode::ACOS;
-    else if (str == "atan")     return Opcode::ATAN;
-    else if (str == "exp")      return Opcode::EXP;
-
-    else                        return Opcode::INVALID;
+    return Opcode::from_str(op);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -16,6 +16,7 @@
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <boost/bimap.hpp>
 
 #include "ao/kernel/tree/opcode.hpp"
 
@@ -62,3 +63,67 @@ size_t Opcode::args(Opcode op)
     }
 }
 
+static boost::bimap<std::string, Opcode::Opcode> opcode_strs;
+static bool opcode_strs_initialized = false;
+
+static void initialize_opcode_strs()
+{
+    if (opcode_strs_initialized == false)
+    {
+        std::vector<std::pair<std::string, Opcode::Opcode>> keys = {
+            {"const", Opcode::CONST},
+            {"affine-vec", Opcode::AFFINE_VEC},
+            {"dummy-a", Opcode::DUMMY_A},
+            {"dummy-b", Opcode::DUMMY_B},
+            {"last-op", Opcode::LAST_OP},
+            {"invalid", Opcode::INVALID},
+            {"X", Opcode::VAR_X},
+            {"Y", Opcode::VAR_Y},
+            {"Z", Opcode::VAR_Z},
+            {"add", Opcode::ADD},
+            {"mul", Opcode::MUL},
+            {"min", Opcode::MIN},
+            {"max", Opcode::MAX},
+            {"sub", Opcode::SUB},
+            {"div", Opcode::DIV},
+            {"atan2", Opcode::ATAN2},
+            {"pow", Opcode::POW},
+            {"mod", Opcode::MOD},
+            {"nan-fill", Opcode::NANFILL},
+            {"square", Opcode::SQUARE},
+            {"sqrt", Opcode::SQRT},
+            {"abs", Opcode::ABS},
+            {"neg", Opcode::NEG},
+            {"sin", Opcode::SIN},
+            {"cos", Opcode::COS},
+            {"tan", Opcode::TAN},
+            {"asin", Opcode::ASIN},
+            {"acos", Opcode::ACOS},
+            {"atan", Opcode::ATAN},
+            {"exp", Opcode::EXP}};
+
+        for (auto k : keys)
+        {
+            opcode_strs.insert({k.first, k.second});
+        }
+
+        opcode_strs_initialized = true;
+    }
+};
+
+std::string Opcode::to_str(Opcode op)
+{
+    initialize_opcode_strs();
+    return opcode_strs.right.at(op);
+}
+
+Opcode::Opcode Opcode::from_str(std::string s)
+{
+    initialize_opcode_strs();
+    auto itr = opcode_strs.left.find(s);
+    if (itr != opcode_strs.left.end())
+    {
+        return itr->second;
+    }
+    return INVALID;
+}
