@@ -278,6 +278,8 @@ Cache::Id Cache::import(Cache* other, Id root)
     }
 
     std::map<Id, Id> changed;
+    changed[0] = 0;
+
     for (auto c : other->data.left)
     {
         Id t = c.second;
@@ -294,8 +296,7 @@ Cache::Id Cache::import(Cache* other, Id root)
 
             // Then import the operation into the tree
             changed[t] = operation(other->opcode(t),
-                changed.count(a) ? changed[a] : a,
-                changed.count(b) ? changed[b] : b);
+                changed.at(a), changed.at(b), false);
         }
     }
 
