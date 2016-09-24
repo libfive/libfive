@@ -25,9 +25,8 @@
 #include "ao/kernel/eval/evaluator.hpp"
 
 // Overloaded toString for glm::vec3
-#include "glm.hpp"
-
-#include "shapes.hpp"
+#include "util/glm.hpp"
+#include "util/shapes.hpp"
 
 TEST_CASE("Small sphere mesh")
 {

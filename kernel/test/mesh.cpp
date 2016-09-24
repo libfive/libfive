@@ -24,7 +24,7 @@
 #include "ao/kernel/format/mesh.hpp"
 #include "ao/kernel/render/region.hpp"
 
-#include "shapes.hpp"
+#include "util/shapes.hpp"
 
 TEST_CASE("Saving a mesh")
 {

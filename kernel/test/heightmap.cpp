@@ -24,7 +24,7 @@
 #include "ao/kernel/render/heightmap.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 
-#include "shapes.hpp"
+#include "util/shapes.hpp"
 
 #define EPSILON 1e-6
 
