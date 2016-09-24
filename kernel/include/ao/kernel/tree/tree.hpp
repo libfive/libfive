@@ -38,7 +38,7 @@ public:
     /*
      *  Returns a Tree for the given constant
      */
-    static Tree constant(float v);
+    Tree(float v);
 
     /*
      *  Returns a token for the given operation
@@ -46,9 +46,7 @@ public:
      *  Arguments should be filled in from left to right
      *  (i.e. a must not be null if b is not null)
      */
-    static Tree operation(Opcode::Opcode op,
-                          Tree a=Tree(0, nullptr),
-                          Tree b=Tree(0, nullptr));
+    Tree(Opcode::Opcode op, Tree a=Tree(nullptr, 0), Tree b=Tree(nullptr, 0));
 
     /*
      *  Constructors for individual axes (non-affine)
@@ -91,20 +89,20 @@ public:
     size_t rank() const;
     float value() const;
 
-    /*  ID indexing into the parent Cache */
-    const Cache::Id id;
-
 protected:
     /*
      *  Private constructor
      *  (only ever called by Cache)
      */
-    explicit Tree(Cache::Id id, Cache* parent) : id(id), parent(parent) {}
+    explicit Tree(Cache* parent, Cache::Id id=0) : parent(parent), id(id) {}
 
     /*  Shared pointer to parent Cache
      *  Every token that refers back to this cache has a pointer to it,
      *  and the Cache is only deleted when all tokens are destroyed     */
     std::shared_ptr<Cache> parent;
+
+    /*  ID indexing into the parent Cache */
+    const Cache::Id id;
 
     /*  An Evaluator needs to be able to pull out the parent Cache */
     friend class Evaluator;

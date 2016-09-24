@@ -30,13 +30,13 @@ TEST_CASE("Variable evaluation")
 
 TEST_CASE("Float evaluation")
 {
-    Evaluator e(Tree::operation(Opcode::ADD, Tree::X(), Tree::constant(1)));
+    Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree(1)));
     REQUIRE(e.eval(1.0, 2.0, 3.0) == 2.0);
 }
 
 TEST_CASE("Interval evaluation")
 {
-    Evaluator e(Tree::operation(Opcode::ADD, Tree::X(), Tree::constant(1)));
+    Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree(1)));
 
     Interval arg(1, 2);
     auto out = e.eval(arg, arg, arg);
@@ -48,9 +48,9 @@ TEST_CASE("Interval evaluation")
 TEST_CASE("Push / pop behavior")
 {
     Evaluator e(
-        Tree::operation(Opcode::MIN,
-            Tree::operation(Opcode::ADD, Tree::X(), Tree::constant(1)),
-            Tree::operation(Opcode::ADD, Tree::Y(), Tree::constant(1))));
+        Tree(Opcode::MIN,
+            Tree(Opcode::ADD, Tree::X(), Tree(1)),
+            Tree(Opcode::ADD, Tree::Y(), Tree(1))));
 
     // Store -3 in the rhs's value
     REQUIRE(e.eval(1.0f, -3.0f, 0.0f) == -2);

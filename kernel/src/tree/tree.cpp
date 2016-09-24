@@ -22,34 +22,17 @@
 
 #include "ao/kernel/tree/tree.hpp"
 
-Tree Tree::constant(float v)
+Tree::Tree(float v)
+    : parent(new Cache()), id(parent->constant(v))
 {
-    auto s = new Cache();
-    return Tree(s->constant(v), s);
+    // Nothing to do here
 }
 
-Tree Tree::operation(Opcode::Opcode op, Tree a, Tree b)
+Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
+    : parent(a.id ? a.parent.get() : new Cache()),
+      id(parent->operation(op, a.id, parent->import(b.parent.get(), b.id)))
 {
-    Cache* t = nullptr;
-    Cache::Id id_b = b.id;
-
-    if (a.id)
-    {
-        // If the two Caches are different, then import b's store
-        // into a and update the relevant id tag
-        if (b.id && a.parent != b.parent)
-        {
-            id_b = a.parent->import(b.parent.get(), b.id);
-        }
-        t = a.parent.get();
-    }
-    else
-    {
-        t = new Cache();
-    }
-    assert(t);
-
-    return Tree(t->operation(op, a.id, id_b), t);
+    // Nothing to do here
 }
 
 /*
@@ -58,37 +41,37 @@ Tree Tree::operation(Opcode::Opcode op, Tree a, Tree b)
 Tree Tree::affine(float a, float b, float c, float d)
 {
     Cache* s = new Cache();
-    return Tree(s->affine(a, b, c, d), s);
+    return Tree(s, s->affine(a, b, c, d));
 }
 
 
 std::tuple<Tree, Tree, Tree> Tree::axes()
 {
     Cache* s = new Cache();
-    return { Tree(s->affine(1, 0, 0, 0), s),
-             Tree(s->affine(0, 1, 0, 0), s),
-             Tree(s->affine(0, 0, 1, 0), s) };
+    return { Tree(s, s->affine(1, 0, 0, 0)),
+             Tree(s, s->affine(0, 1, 0, 0)),
+             Tree(s, s->affine(0, 0, 1, 0)) };
 }
 
 Tree Tree::X()
 {
-    return Tree::operation(Opcode::VAR_X);
+    return Tree(Opcode::VAR_X);
 }
 
 Tree Tree::Y()
 {
-    return Tree::operation(Opcode::VAR_Y);
+    return Tree(Opcode::VAR_Y);
 }
 
 Tree Tree::Z()
 {
-    return Tree::operation(Opcode::VAR_Z);
+    return Tree(Opcode::VAR_Z);
 }
 
 Tree Tree::collapse() const
 {
     auto other = new Cache();
-    return Tree(other->collapse(other->import(parent.get(), id)), other);
+    return Tree(other, other->collapse(other->import(parent.get(), id)));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -102,9 +85,9 @@ glm::vec4 Tree::getAffine(bool* success)
 Opcode::Opcode Tree::opcode() const
     { return parent->opcode(id); }
 Tree Tree::lhs() const
-    { return Tree(parent->lhs(id), parent.get()); }
+    { return Tree(parent.get(), parent->lhs(id)); }
 Tree Tree::rhs() const
-    { return Tree(parent->rhs(id), parent.get()); }
+    { return Tree(parent.get(), parent->rhs(id)); }
 size_t Tree::rank() const
     { return parent->rank(id); }
 float Tree::value() const

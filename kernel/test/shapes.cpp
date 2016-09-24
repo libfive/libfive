@@ -26,13 +26,13 @@ Tree rectangle(float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
     auto x = Tree::affine(M[0][0], M[0][1], M[0][2], M[0][3]);
     auto y = Tree::affine(M[1][0], M[1][1], M[1][2], M[1][3]);
 
-    return Tree::operation(Opcode::MAX,
-               Tree::operation(Opcode::MAX,
-                   Tree::operation(Opcode::SUB, Tree::constant(xmin), x),
-                   Tree::operation(Opcode::SUB, x, Tree::constant(xmax))),
-               Tree::operation(Opcode::MAX,
-                   Tree::operation(Opcode::SUB, Tree::constant(ymin), y),
-                   Tree::operation(Opcode::SUB, y, Tree::constant(ymax))));
+    return Tree(Opcode::MAX,
+               Tree(Opcode::MAX,
+                   Tree(Opcode::SUB, Tree(xmin), x),
+                   Tree(Opcode::SUB, x, Tree(xmax))),
+               Tree(Opcode::MAX,
+                   Tree(Opcode::SUB, Tree(ymin), y),
+                   Tree(Opcode::SUB, y, Tree(ymax))));
 }
 
 Tree recurse(float x, float y, float scale, glm::mat4 M, int i)
@@ -49,14 +49,14 @@ Tree recurse(float x, float y, float scale, glm::mat4 M, int i)
         auto j = i - 1;
         auto t = scale / 3;
 
-        return Tree::operation(Opcode::MIN, base,
-               Tree::operation(Opcode::MIN, recurse(x + scale, y, t, M, j),
-               Tree::operation(Opcode::MIN, recurse(x - scale, y, t, M, j),
-               Tree::operation(Opcode::MIN, recurse(x, y + scale, t, M, j),
-               Tree::operation(Opcode::MIN, recurse(x, y - scale, t, M, j),
-               Tree::operation(Opcode::MIN, recurse(x + scale, y + scale, t, M, j),
-               Tree::operation(Opcode::MIN, recurse(x + scale, y - scale, t, M, j),
-               Tree::operation(Opcode::MIN, recurse(x - scale, y + scale, t, M, j),
+        return Tree(Opcode::MIN, base,
+               Tree(Opcode::MIN, recurse(x + scale, y, t, M, j),
+               Tree(Opcode::MIN, recurse(x - scale, y, t, M, j),
+               Tree(Opcode::MIN, recurse(x, y + scale, t, M, j),
+               Tree(Opcode::MIN, recurse(x, y - scale, t, M, j),
+               Tree(Opcode::MIN, recurse(x + scale, y + scale, t, M, j),
+               Tree(Opcode::MIN, recurse(x + scale, y - scale, t, M, j),
+               Tree(Opcode::MIN, recurse(x - scale, y + scale, t, M, j),
                                              recurse(x - scale, y - scale, t, M, j)
                ))))))));
     }
@@ -73,37 +73,37 @@ Tree menger(int i)
     M = glm::rotate(M, float(M_PI/2), {0, 1, 0});
     Tree c = recurse(0, 0, 1, M, i);
 
-    auto cube = Tree::operation(Opcode::MAX,
-                Tree::operation(Opcode::MAX,
-                   Tree::operation(Opcode::MAX, Tree::affine(-1,  0,  0, -1.5),
+    auto cube = Tree(Opcode::MAX,
+                Tree(Opcode::MAX,
+                   Tree(Opcode::MAX, Tree::affine(-1,  0,  0, -1.5),
                                        Tree::affine( 1,  0,  0, -1.5)),
-                   Tree::operation(Opcode::MAX, Tree::affine( 0, -1,  0, -1.5),
+                   Tree(Opcode::MAX, Tree::affine( 0, -1,  0, -1.5),
                                        Tree::affine( 0,  1,  0, -1.5))),
-                   Tree::operation(Opcode::MAX, Tree::affine( 0,  0, -1, -1.5),
+                   Tree(Opcode::MAX, Tree::affine( 0,  0, -1, -1.5),
                                        Tree::affine( 0,  0,  1, -1.5)));
 
-    auto cutout = Tree::operation(Opcode::NEG,
-                  Tree::operation(Opcode::MIN, Tree::operation(Opcode::MIN, a, b), c));
+    auto cutout = Tree(Opcode::NEG,
+                  Tree(Opcode::MIN, Tree(Opcode::MIN, a, b), c));
 
-    return Tree::operation(Opcode::MAX, cube, cutout);
+    return Tree(Opcode::MAX, cube, cutout);
 }
 
 Tree circle(float r)
 {
-    return Tree::operation(Opcode::SUB,
-        Tree::operation(Opcode::ADD,
-            Tree::operation(Opcode::MUL, Tree::X(), Tree::X()),
-            Tree::operation(Opcode::MUL, Tree::Y(), Tree::Y())),
-        Tree::constant(pow(r, 2)));
+    return Tree(Opcode::SUB,
+        Tree(Opcode::ADD,
+            Tree(Opcode::MUL, Tree::X(), Tree::X()),
+            Tree(Opcode::MUL, Tree::Y(), Tree::Y())),
+        Tree(pow(r, 2)));
 }
 
 Tree sphere(float r)
 {
-    return Tree::operation(Opcode::SUB,
-        Tree::operation(Opcode::ADD,
-        Tree::operation(Opcode::ADD,
-            Tree::operation(Opcode::MUL, Tree::X(), Tree::X()),
-            Tree::operation(Opcode::MUL, Tree::Y(), Tree::Y())),
-            Tree::operation(Opcode::MUL, Tree::Z(), Tree::Z())),
-        Tree::constant(pow(r, 2)));
+    return Tree(Opcode::SUB,
+        Tree(Opcode::ADD,
+        Tree(Opcode::ADD,
+            Tree(Opcode::MUL, Tree::X(), Tree::X()),
+            Tree(Opcode::MUL, Tree::Y(), Tree::Y())),
+            Tree(Opcode::MUL, Tree::Z(), Tree::Z())),
+        Tree(pow(r, 2)));
 }

@@ -95,17 +95,17 @@ struct axes token_axes() {
 
 Tree* token_const(float f)
 {
-    return new Tree(Tree::constant(f));
+    return new Tree(f);
 }
 
 Tree* token_unary(int op, Tree* a)
 {
-    return new Tree(Tree::operation(Opcode::Opcode(op), *a));
+    return new Tree(Opcode::Opcode(op), *a);
 }
 
 Tree* token_binary(int op, Tree* a, Tree* b)
 {
-    return new Tree(Tree::operation(Opcode::Opcode(op), *a, *b));
+    return new Tree(Opcode::Opcode(op), *a, *b);
 }
 
 int token_is_const(Tree* t)

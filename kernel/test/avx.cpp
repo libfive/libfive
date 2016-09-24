@@ -31,7 +31,7 @@ TEST_CASE("Vectorized performance")
     // Oversample to get meaningful result
     const float N = 1000;
 
-    Tree t = Tree::operation(Opcode::ADD, Tree::X(), Tree::Y());
+    Tree t = Tree(Opcode::ADD, Tree::X(), Tree::Y());
     Evaluator e(t);
 
     for (unsigned i=0; i < Result::N; ++i)

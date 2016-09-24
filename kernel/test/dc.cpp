@@ -27,16 +27,11 @@
 // Overloaded toString for glm::vec3
 #include "glm.hpp"
 
+#include "shapes.hpp"
+
 TEST_CASE("Small sphere mesh")
 {
-    Tree t(
-        Tree::operation(Opcode::SUB,
-            Tree::operation(Opcode::ADD,
-            Tree::operation(Opcode::ADD,
-                    Tree::operation(Opcode::MUL, Tree::X(), Tree::X()),
-                    Tree::operation(Opcode::MUL, Tree::Y(), Tree::Y())),
-                    Tree::operation(Opcode::MUL, Tree::Z(), Tree::Z())),
-            Tree::constant(0.5)));
+    Tree t = sphere(0.5);
 
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 1);
 
@@ -67,10 +62,10 @@ TEST_CASE("Face normals")
     {
         for (int i=0; i < 3; ++i)
         {
-            Tree t(Tree::operation(
+            Tree t(Tree(
                         Opcode::NEG,
-                        Tree::operation(Opcode::ADD, axis[i],
-                            Tree::constant(0.75))));
+                        Tree(Opcode::ADD, axis[i],
+                            Tree(0.75))));
             auto m = Mesh::Render(t, r);
             for (unsigned j=0; j < m.tris.size(); ++j)
             {
@@ -82,12 +77,7 @@ TEST_CASE("Face normals")
 
 TEST_CASE("Simple 2D contouring")
 {
-    Tree t(
-        Tree::operation(Opcode::SUB,
-            Tree::operation(Opcode::ADD,
-                    Tree::operation(Opcode::MUL, Tree::X(), Tree::X()),
-                    Tree::operation(Opcode::MUL, Tree::Y(), Tree::Y())),
-            Tree::constant(0.5)));
+    Tree t = circle(0.5);
 
     Region r({-1, 1}, {-1, 1}, {0, 0}, 1);
 
@@ -97,12 +87,7 @@ TEST_CASE("Simple 2D contouring")
 
 TEST_CASE("2D contour tracking")
 {
-    Tree t(
-        Tree::operation(Opcode::SUB,
-            Tree::operation(Opcode::ADD,
-                    Tree::operation(Opcode::MUL, Tree::X(), Tree::X()),
-                    Tree::operation(Opcode::MUL, Tree::Y(), Tree::Y())),
-            Tree::constant(0.5)));
+    Tree t = circle(0.5);
 
     Region r({-1, 1}, {-1, 1}, {0, 0}, 10);
 
@@ -113,7 +98,7 @@ TEST_CASE("2D contour tracking")
     float max = 0;
     for (auto c : m.contours[0])
     {
-        auto r = pow(c.x, 2) + pow(c.y, 2);
+        auto r = sqrt(pow(c.x, 2) + pow(c.y, 2));
         min = fmin(min, r);
         max = fmax(max, r);
     }

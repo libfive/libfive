@@ -126,7 +126,7 @@ TEST_CASE("Render orientation ")
 
     SECTION("Y")
     {
-        Tree t = Tree::operation(Opcode::MAX, circle(1), Tree::Y());
+        Tree t = Tree(Opcode::MAX, circle(1), Tree::Y());
         auto out = Render(t, r).first;
 
         DepthImage comp(10, 10);
@@ -149,7 +149,7 @@ TEST_CASE("Render orientation ")
 
     SECTION("X")
     {
-        Tree t = Tree::operation(Opcode::MAX, circle(1), Tree::X());
+        Tree t = Tree(Opcode::MAX, circle(1), Tree::X());
         auto out = Render(t, r).first;
 
         DepthImage comp(10, 10);
@@ -228,7 +228,7 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("X")
     {
-        Tree t = Tree::operation(Opcode::ADD, Tree::X(), Tree::Z());
+        Tree t = Tree(Opcode::ADD, Tree::X(), Tree::Z());
         auto norm = Render(t, r).second;
 
         CAPTURE(norm);
@@ -237,8 +237,8 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("-X")
     {
-        Tree t = Tree::operation(Opcode::ADD, Tree::Z(),
-                 Tree::operation(Opcode::NEG, Tree::X()));
+        Tree t = Tree(Opcode::ADD, Tree::Z(),
+                 Tree(Opcode::NEG, Tree::X()));
         auto norm = Render(t, r).second;
 
         CAPTURE(norm);
@@ -248,7 +248,7 @@ TEST_CASE("2D rendering with normals ")
 
     SECTION("Y")
     {
-        Tree t = Tree::operation(Opcode::ADD, Tree::Y(), Tree::Z());
+        Tree t = Tree(Opcode::ADD, Tree::Y(), Tree::Z());
         auto norm = Render(t, r).second;
 
         CAPTURE(norm);

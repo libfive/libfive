@@ -272,6 +272,10 @@ Cache::Id Cache::import(Cache* other, Id root)
     {
         return root;
     }
+    else if (other == nullptr)
+    {
+        return 0;
+    }
 
     std::map<Id, Id> changed;
     for (auto c : other->data.left)
