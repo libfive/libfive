@@ -94,7 +94,7 @@ protected:
      *  Private constructor
      *  (only ever called by Cache)
      */
-    explicit Tree(Cache* parent, Cache::Id id=0) : parent(parent), id(id) {}
+    explicit Tree(std::shared_ptr<Cache> parent, Cache::Id id=0) : parent(parent), id(id) {}
 
     /*  Shared pointer to parent Cache
      *  Every token that refers back to this cache has a pointer to it,

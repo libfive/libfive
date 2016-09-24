@@ -29,7 +29,7 @@ Tree::Tree(float v)
 }
 
 Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
-    : parent(a.id ? a.parent.get() : new Cache()),
+    : parent(a.id ? a.parent : std::make_shared<Cache>()),
       id(parent->operation(op, a.id, parent->import(b.parent.get(), b.id)))
 {
     // Nothing to do here
@@ -40,14 +40,14 @@ Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
  */
 Tree Tree::affine(float a, float b, float c, float d)
 {
-    Cache* s = new Cache();
+    auto s = std::make_shared<Cache>();
     return Tree(s, s->affine(a, b, c, d));
 }
 
 
 std::tuple<Tree, Tree, Tree> Tree::axes()
 {
-    Cache* s = new Cache();
+    auto s = std::make_shared<Cache>();
     return { Tree(s, s->affine(1, 0, 0, 0)),
              Tree(s, s->affine(0, 1, 0, 0)),
              Tree(s, s->affine(0, 0, 1, 0)) };
@@ -70,7 +70,7 @@ Tree Tree::Z()
 
 Tree Tree::collapse() const
 {
-    auto other = new Cache();
+    auto other = std::make_shared<Cache>();
     return Tree(other, other->collapse(other->import(parent.get(), id)));
 }
 
@@ -85,9 +85,9 @@ glm::vec4 Tree::getAffine(bool* success)
 Opcode::Opcode Tree::opcode() const
     { return parent->opcode(id); }
 Tree Tree::lhs() const
-    { return Tree(parent.get(), parent->lhs(id)); }
+    { return Tree(parent, parent->lhs(id)); }
 Tree Tree::rhs() const
-    { return Tree(parent.get(), parent->rhs(id)); }
+    { return Tree(parent, parent->rhs(id)); }
 size_t Tree::rank() const
     { return parent->rank(id); }
 float Tree::value() const
