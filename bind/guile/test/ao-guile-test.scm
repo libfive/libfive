@@ -29,57 +29,39 @@
 
 (suite "bind.scm (low-level libao interface)"
     (tests
-    (test "store-new" env
-        (assert-true (store? (store-new))))
     (test "Making variables" env
-        (let ((store (store-new)))
-            (assert-all
-                (assert-true (token? (token-x store)))
-                (assert-true (token? (token-y store)))
-                (assert-true (token? (token-z store))))))
+        (assert-all
+            (assert-true (tree? (token-x)))
+            (assert-true (tree? (token-y)))
+            (assert-true (tree? (token-z)))))
     (test "token-const" env
-        (let ((store (store-new)))
-            (assert-true (token? (token-const store 12)))))
+        (assert-true (tree? (token-const 12))))
     (test "token-op-unary" env
-        (let* ((store (store-new))
-               (x (token-x store)))
-            (assert-true (token? (token-op-unary store 'neg x)))))
+        (let* ((x (token-x)))
+            (assert-true (tree? (token-op-unary 'neg x)))))
     (test "token-op-binary" env
-        (let* ((store (store-new))
-               (x (token-x store))
-               (y (token-y store)))
-            (assert-true (token? (token-op-binary store 'add x y)))))
+        (let* ((x (token-x))
+               (y (token-y)))
+            (assert-true (tree? (token-op-binary 'add x y)))))
     (test "token-affine-vec" env
-        (let* ((store (store-new))
-               (x (token-x store))
-               (y (token-y store))
-               (p (token-op-binary store 'add x y)))
+        (let* ((x (token-x))
+               (y (token-y))
+               (p (token-op-binary 'add x y)))
             (assert-all
                 (assert-equal (token-affine-vec x) '(1.0 0.0 0.0 0.0))
                 (assert-equal (token-affine-vec y) '(0.0 1.0 0.0 0.0))
                 (assert-equal (token-affine-vec p) '(1.0 1.0 0.0 0.0)))))
     (test "token-const?" env
-        (let* ((store (store-new))
-               (x (token-x store))
-               (y (token-const store 3.0)))
+        (let* ((x (token-x))
+               (y (token-const 3.0)))
             (assert-all
               (assert-false (token-const? x))
               (assert-true  (token-const? y)))))
-    (test "tree-new" env
-        (let* ((store (store-new))
-               (x (token-x store))
-               (t (tree-new store x)))
-            (assert-true (tree? t))))
     (test "tree-eval-double" env
-        (let* ((store (store-new))
-               (x (token-x store))
-               (t (tree-new store x)))
-            (assert-near (tree-eval-double t 1 2 3) 1)))
+          (assert-near (tree-eval-double (token-x) 1 2 3) 1))
     (test "tree-eval-interval" env
-        (let* ((store (store-new))
-               (x (token-x store))
-               (t (tree-new store x)))
-            (assert-equal (tree-eval-interval t '(1 . 2) '(3 . 4) '(5 . 6)) '(1.0 . 2.0))))
+          (assert-equal (tree-eval-interval (token-x)
+            '(1 . 2) '(3 . 4) '(5 . 6)) '(1.0 . 2.0)))
     (test "matrix-invert" env
         ; TODO: Make this use a floating-point comparison
         (assert-equal (matrix-invert '(1 0 0 1)

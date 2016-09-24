@@ -32,7 +32,7 @@ Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
     : parent(a.id ? a.parent : std::make_shared<Cache>()),
       id(parent->operation(op, a.id, parent->import(b.parent.get(), b.id)))
 {
-    // Nothing to do here
+    // Nothing to do here (but the logic for id above is really clever!)
 }
 
 /*
@@ -42,15 +42,6 @@ Tree Tree::affine(float a, float b, float c, float d)
 {
     auto s = std::make_shared<Cache>();
     return Tree(s, s->affine(a, b, c, d));
-}
-
-
-std::tuple<Tree, Tree, Tree> Tree::axes()
-{
-    auto s = std::make_shared<Cache>();
-    return { Tree(s, s->affine(1, 0, 0, 0)),
-             Tree(s, s->affine(0, 1, 0, 0)),
-             Tree(s, s->affine(0, 0, 1, 0)) };
 }
 
 Tree Tree::collapse() const

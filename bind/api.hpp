@@ -45,12 +45,9 @@ extern "C"
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    struct axes {
-        Tree* x;
-        Tree* y;
-        Tree* z;
-    };
-    struct axes token_axes();
+    Tree* token_x();
+    Tree* token_y();
+    Tree* token_z();
 
     Tree* token_const(float f);
 

@@ -97,15 +97,15 @@
         (make-token 'mod a b)))
 
 (define-public (nan-fill a b)
-    (if (or (token? a) (token? b))
+    (if (or (tree? a) (tree? b))
         (make-token 'nan-fill a b)
         (if (nan? a) b a)))
 
 (define expt_ expt)
 (define-public (expt a b)
-  (if (or (token? a) (token? b))
+  (if (or (tree? a) (tree? b))
       (begin
-        (when (and (token? b) (not (token-const? b)))
+        (when (and (tree? b) (not (token-const? b)))
           (error "RHS of exponentiation must be a constant"))
         (make-token 'pow a b))
       (expt_ a b)))

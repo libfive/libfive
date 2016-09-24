@@ -50,10 +50,6 @@ public:
 
     /*
      *  Constructors for individual axes (non-affine)
-     *
-     *  The three-axis constructor axes() should be preferred to using
-     *  an individual-axis constructor, as it ensures that they're backed
-     *  by the same Cache object
      */
     static Tree X() { return Tree(Opcode::VAR_X); }
     static Tree Y() { return Tree(Opcode::VAR_Y); }
@@ -63,11 +59,6 @@ public:
      *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
      */
     static Tree affine(float a, float b, float c, float d);
-
-    /*
-     *  Returns a tuple of affine tokens for X, Y, Z axes
-     */
-    static std::tuple<Tree, Tree, Tree> axes();
 
     /*
      *  Returns a new Tree that is a flattened copy of this tree

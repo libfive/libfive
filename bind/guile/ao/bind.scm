@@ -29,25 +29,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-wrapped-pointer-type
-    store store? wrap-store unwrap-store
-    (lambda (o p)
-        (format p "#<store 0x~x>"
-        (pointer-address (unwrap-store o)))))
-(export store store? wrap-store unwrap-store)
-
-(define-wrapped-pointer-type
-    token token? wrap-token unwrap-token
-    (lambda (o p)
-        (format p "#<token 0x~x>"
-        (pointer-address (unwrap-token o)))))
-(export token token? wrap-token unwrap-token)
-
-(define-wrapped-pointer-type
-    tree tree? wrap-tree unwrap-tree
+    tree tree? wrap-tree_ unwrap-tree
     (lambda (o p)
         (format p "#<tree 0x~x>"
         (pointer-address (unwrap-tree o)))))
-(export tree tree? wrap-tree unwrap-tree)
+
+(define-public (wrap-tree ptr)
+    "wrap-tree ptr
+    Attaches tree_delete to a bare pointer"
+    (wrap-tree_ (make-pointer
+        (pointer-address ptr)
+        (get-function "tree_delete"))))
+(export tree?)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -70,16 +63,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (store-new)
-    "store-new
-    Create a new store object
-    Attaches a finalizer that frees the store on object deletion"
-    (wrap-store (make-pointer (pointer-address
-        ((pointer->procedure '* (get-function "store_new") '())))
-        (get-function "store_delete"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (define-public (opcode->int op)
     "opcode->int op
     Converts an opcode (which should be a symbol, e.g. 'add)
@@ -90,54 +73,51 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (token-x s)
-    "token-x store
-    Constructs a X token in the given Store"
-    (wrap-token ((pointer->procedure
-    '* (get-function "token_x") '(*)) (unwrap-store s))))
+(define-public (token-x)
+    "token-x
+    Constructs a X tree"
+    (wrap-tree ((pointer->procedure '* (get-function "token_x") '()))))
 
-(define-public (token-y s)
-    "token-y store
-    Constructs a Y token in the given Store"
-    (wrap-token ((pointer->procedure
-    '* (get-function "token_y") '(*)) (unwrap-store s))))
+(define-public (token-y)
+    "token-y
+    Constructs a Y tree"
+    (wrap-tree ((pointer->procedure '* (get-function "token_y") '()))))
 
-(define-public (token-z s)
-    "token-z store
-    Constructs a Z token in the given Store"
-    (wrap-token ((pointer->procedure
-    '* (get-function "token_z") '(*)) (unwrap-store s))))
+(define-public (token-z)
+    "token-z
+    Constructs a Z tree"
+    (wrap-tree ((pointer->procedure '* (get-function "token_z") '()))))
 
-(define-public (token-const s v)
-    "token-const store value
-    Constructs a constant token in the given Store"
-    (wrap-token ((pointer->procedure
-    '* (get-function "token_const") (list '* float)) (unwrap-store s) v)))
+(define-public (token-const v)
+    "token-const value
+    Constructs a constant tree"
+    (wrap-tree ((pointer->procedure
+    '* (get-function "token_const") (list float)) v)))
 
-(define-public (token-op-unary s op a)
-    "token-op-unary store opcode a
-    Constructs a unary token in the given Store"
-    (wrap-token ((pointer->procedure
-        '* (get-function "token_unary") (list '* int '*))
-    (unwrap-store s) (opcode->int op) (unwrap-token a))))
+(define-public (token-op-unary op a)
+    "token-op-unary opcode a
+    Constructs a unary operation"
+    (wrap-tree ((pointer->procedure
+        '* (get-function "token_unary") (list int '*))
+      (opcode->int op) (unwrap-tree a))))
 
-(define-public (token-op-binary s op a b)
-    "token-op-binary store opcode a b
-    Constructs a binary token in the given Store"
-    (wrap-token ((pointer->procedure
-        '* (get-function "token_binary") (list '* int '* '*))
-    (unwrap-store s) (opcode->int op) (unwrap-token a) (unwrap-token b))))
+(define-public (token-op-binary op a b)
+    "token-op-binary opcode a b
+    Constructs a binary operation"
+    (wrap-tree ((pointer->procedure
+        '* (get-function "token_binary") (list int '* '*))
+      (opcode->int op) (unwrap-tree a) (unwrap-tree b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (token-affine-vec t)
     "token-affine-vec token
-    Extracts the affine terms from a Token, returning a list '(a b c d)
+    Extracts the affine terms from a tree, returning a list '(a b c d)
     or #f if the token is not affine"
     (let* ((v (make-c-struct v4 '(0 0 0 0)))
            (token_affine_vec (pointer->procedure int
                              (get-function "token_affine_vec") (list '* '*)))
-           (result (token_affine_vec (unwrap-token t) v)))
+           (result (token_affine_vec (unwrap-tree t) v)))
     (if (= result 1) (parse-c-struct v v4) #f)))
 
 (define-public (token-const? t)
@@ -145,23 +125,9 @@
     Returns #t if the given token is constant, false otherwise"
     (= 1
       ((pointer->procedure int (get-function "token_is_const") (list '*))
-       (unwrap-token t))))
+       (unwrap-tree t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define-public (tree-new s t)
-    "tree-new store token
-    Construct a new Tree pointer"
-    (wrap-tree ((pointer->procedure
-    '* (get-function "tree_new") '(* *))
-        (unwrap-store s) (unwrap-token t))))
-
-(define-public (tree-attach-finalizer t)
-    "tree-attach-finalizer t
-    Attaches tree_delete to a wrapped Tree pointer"
-    (wrap-tree (make-pointer
-        (pointer-address (unwrap-tree t))
-        (get-function "tree_delete"))))
 
 (define-public (tree-eval-double t x y z)
     "tree-eval-double tree x y z

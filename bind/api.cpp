@@ -61,11 +61,19 @@ int opcode_enum(char* op)
 ////////////////////////////////////////////////////////////////////////////////
 
 // Construct X, Y, Z tokens in affine form
-struct axes token_axes() {
-    auto a = Tree::axes();
-    return { new Tree(std::get<0>(a)),
-             new Tree(std::get<1>(a)),
-             new Tree(std::get<2>(a)) };
+Tree* token_x()
+{
+    return new Tree(Tree::affine(1, 0, 0, 0));
+}
+
+Tree* token_y()
+{
+    return new Tree(Tree::affine(0, 1, 0, 0));
+}
+
+Tree* token_z()
+{
+    return new Tree(Tree::affine(0, 0, 1, 0));
 }
 
 Tree* token_const(float f)
