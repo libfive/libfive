@@ -82,6 +82,36 @@ TEST_CASE("Found flag propagation")
     REQUIRE(!f.count(t.Y()));
 }
 
+TEST_CASE("Cache::import")
+{
+    Cache a;
+    Cache b;
+
+    SECTION("Variables")
+    {
+        auto ax = a.X();
+        auto  _ = b.Y();
+        auto bx = b.X();
+
+        REQUIRE(ax == 1);
+        REQUIRE(bx == 2);
+        REQUIRE(a.import(&b, bx) == 1);
+    }
+
+    SECTION("Expressions")
+    {
+        auto ax = a.X();
+        auto bc = b.constant(1);
+        auto ac = a.import(&b, bc);
+
+        auto sum = a.operation(Opcode::ADD, ax, ac);
+        REQUIRE(ax == 1);
+        REQUIRE(bc == 1);
+        REQUIRE(ac == 2);
+        REQUIRE(sum == 3);
+    }
+}
+
 TEST_CASE("Automatic expression pruning")
 {
     Cache t;
