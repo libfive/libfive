@@ -49,9 +49,10 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
 {
     auto root = root_.collapse();
     Cache* cache = root.parent.get();
+    auto connected = cache->findConnected(root.id);
 
     // Reserve space for X, Y, Z, plus every clause in the cache
-    size_t count = 3 + cache->data.size();
+    size_t count = 3 + connected.size();
 
     // Then, allocate space for them (ensuring alignment if AVX is used)
     Clause* ptr;
@@ -72,10 +73,9 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     // Helper function to create a new clause in the data array
     std::unordered_map<Cache::Id, Clause*> clauses = {{0, nullptr}};
     auto newClause = [&ptr, cache, &clauses](const Cache::Id t)
-        { auto lhs = cache->lhs(t);
-          auto rhs = cache->rhs(t);
-          auto c = new (ptr++) Clause(cache->opcode(t), cache->value(t),
-                  clauses.at(lhs), clauses.at(rhs));
+        { auto c = new (ptr++) Clause(
+                cache->opcode(t), cache->value(t),
+                clauses.at(cache->lhs(t)), clauses.at(cache->rhs(t)));
           clauses[t] = c;
           return c; };
 
@@ -88,7 +88,10 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     {
         if (m.first.opcode() == Opcode::CONST)
         {
-            constants.push_back(newClause(m.second));
+            if (connected.count(m.second))
+            {
+                constants.push_back(newClause(m.second));
+            }
         }
         else
         {
@@ -113,11 +116,14 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
             continue;
         }
 
-        while (m.first.rank() > rows.size())
+        if (connected.count(m.second))
         {
-            rows.push_back(Row());
+            while (m.first.rank() > rows.size())
+            {
+                rows.push_back(Row());
+            }
+            rows[m.first.rank() - 1].push_back(newClause(m.second));
         }
-        rows[m.first.rank() - 1].push_back(newClause(m.second));
     }
 
     for (auto& row : rows)
