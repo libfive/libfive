@@ -288,13 +288,10 @@ Cache::Id Cache::import(Cache* other, Id root)
         }
         else
         {
-            // Get child pointers
-            auto a = other->lhs(t);
-            auto b = other->rhs(t);
-
-            // Then import the operation into the tree
+            // Import the operation into the tree with appropriate
+            // child pointers and no collapsing
             changed[t] = operation(other->opcode(t),
-                changed.at(a), changed.at(b), false);
+                changed.at(other->lhs(t)), changed.at(other->rhs(t)), false);
         }
     }
 
@@ -308,17 +305,10 @@ std::set<Cache::Id> Cache::findConnected(Id root)
     // Iterate over weight levels from top to bottom
     for (auto c = data.left.rbegin(); c != data.left.rend(); ++c)
     {
-        Id t = c->second;
-        if (found.find(t) != found.end())
+        if (found.find(c->second) != found.end())
         {
-            if (Id a = lhs(t))
-            {
-                found.insert(a);
-            }
-            if (Id b = rhs(t))
-            {
-                found.insert(b);
-            }
+            found.insert(c->first.lhs());
+            found.insert(c->first.rhs());
         }
     }
 
@@ -333,7 +323,7 @@ Cache::Id Cache::rebuild(Id root, std::map<Id, Id> changed)
     // Iterate over weight levels from bottom to top
     for (auto c : tokens.left)
     {
-        // Get child pointers
+        // Get child Ids
         auto a = c.first.lhs();
         auto b = c.first.rhs();
 

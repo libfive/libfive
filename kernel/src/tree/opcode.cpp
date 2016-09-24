@@ -50,12 +50,12 @@ size_t Opcode::args(Opcode op)
         case SUB:
         case DIV:
         case ATAN2:
+        case POW:
         case MOD:
         case NANFILL:
         case AFFINE_VEC:
             return 2;
 
-        default:
         case INVALID: // fallthrough
         case DUMMY_A:
         case DUMMY_B:
@@ -63,67 +63,55 @@ size_t Opcode::args(Opcode op)
     }
 }
 
-static boost::bimap<std::string, Opcode::Opcode> opcode_strs;
-static bool opcode_strs_initialized = false;
-
-static void initialize_opcode_strs()
-{
-    if (opcode_strs_initialized == false)
-    {
-        std::vector<std::pair<std::string, Opcode::Opcode>> keys = {
-            {"const", Opcode::CONST},
-            {"affine-vec", Opcode::AFFINE_VEC},
-            {"dummy-a", Opcode::DUMMY_A},
-            {"dummy-b", Opcode::DUMMY_B},
-            {"last-op", Opcode::LAST_OP},
-            {"invalid", Opcode::INVALID},
-            {"X", Opcode::VAR_X},
-            {"Y", Opcode::VAR_Y},
-            {"Z", Opcode::VAR_Z},
-            {"add", Opcode::ADD},
-            {"mul", Opcode::MUL},
-            {"min", Opcode::MIN},
-            {"max", Opcode::MAX},
-            {"sub", Opcode::SUB},
-            {"div", Opcode::DIV},
-            {"atan2", Opcode::ATAN2},
-            {"pow", Opcode::POW},
-            {"mod", Opcode::MOD},
-            {"nan-fill", Opcode::NANFILL},
-            {"square", Opcode::SQUARE},
-            {"sqrt", Opcode::SQRT},
-            {"abs", Opcode::ABS},
-            {"neg", Opcode::NEG},
-            {"sin", Opcode::SIN},
-            {"cos", Opcode::COS},
-            {"tan", Opcode::TAN},
-            {"asin", Opcode::ASIN},
-            {"acos", Opcode::ACOS},
-            {"atan", Opcode::ATAN},
-            {"exp", Opcode::EXP}};
-
-        for (auto k : keys)
-        {
-            opcode_strs.insert({k.first, k.second});
-        }
-
-        opcode_strs_initialized = true;
-    }
-};
-
 std::string Opcode::to_str(Opcode op)
 {
-    initialize_opcode_strs();
-    return opcode_strs.right.at(op);
+    switch (op)
+    {
+        case Opcode::CONST: return "const";
+        case Opcode::AFFINE_VEC: return "affine-vec";
+        case Opcode::DUMMY_A: return "dummy-a";
+        case Opcode::DUMMY_B: return "dummy-b";
+        case Opcode::LAST_OP: return "last-op";
+        case Opcode::INVALID: return "invalid";
+        case Opcode::VAR_X: return "X";
+        case Opcode::VAR_Y: return "Y";
+        case Opcode::VAR_Z: return "Z";
+        case Opcode::ADD: return "add";
+        case Opcode::MUL: return "mul";
+        case Opcode::MIN: return "min";
+        case Opcode::MAX: return "max";
+        case Opcode::SUB: return "sub";
+        case Opcode::DIV: return "div";
+        case Opcode::ATAN2: return "atan2";
+        case Opcode::POW: return "pow";
+        case Opcode::MOD: return "mod";
+        case Opcode::NANFILL: return "nan-fill";
+        case Opcode::SQUARE: return "square";
+        case Opcode::SQRT: return "sqrt";
+        case Opcode::ABS: return "abs";
+        case Opcode::NEG: return "neg";
+        case Opcode::SIN: return "sin";
+        case Opcode::COS: return "cos";
+        case Opcode::TAN: return "tan";
+        case Opcode::ASIN: return "asin";
+        case Opcode::ACOS: return "acos";
+        case Opcode::ATAN: return "atan";
+        case Opcode::EXP: return "exp";
+    }
 }
 
 Opcode::Opcode Opcode::from_str(std::string s)
 {
-    initialize_opcode_strs();
-    auto itr = opcode_strs.left.find(s);
-    if (itr != opcode_strs.left.end())
+    // Lazy initialization of string -> Opcode map
+    static std::map<std::string, Opcode> inverse;
+    if (inverse.size() == 0)
     {
-        return itr->second;
+        for (unsigned i=0; i <= LAST_OP; ++i)
+        {
+            inverse[to_str(Opcode(i))] = Opcode(i);
+        }
     }
-    return INVALID;
+
+    auto itr = inverse.find(s);
+    return itr != inverse.end() ? itr->second : INVALID;
 }

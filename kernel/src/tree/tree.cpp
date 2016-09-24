@@ -53,42 +53,8 @@ std::tuple<Tree, Tree, Tree> Tree::axes()
              Tree(s, s->affine(0, 0, 1, 0)) };
 }
 
-Tree Tree::X()
-{
-    return Tree(Opcode::VAR_X);
-}
-
-Tree Tree::Y()
-{
-    return Tree(Opcode::VAR_Y);
-}
-
-Tree Tree::Z()
-{
-    return Tree(Opcode::VAR_Z);
-}
-
 Tree Tree::collapse() const
 {
     auto other = std::make_shared<Cache>();
     return Tree(other, other->collapse(other->import(parent.get(), id)));
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-/*
- *  Accessor functions for Tree data
- *  (which lives in the parent Cache)
- */
-glm::vec4 Tree::getAffine(bool* success)
-    { return parent->getAffine(id, success); }
-Opcode::Opcode Tree::opcode() const
-    { return parent->opcode(id); }
-Tree Tree::lhs() const
-    { return Tree(parent, parent->lhs(id)); }
-Tree Tree::rhs() const
-    { return Tree(parent, parent->rhs(id)); }
-size_t Tree::rank() const
-    { return parent->rank(id); }
-float Tree::value() const
-    { return parent->value(id); }

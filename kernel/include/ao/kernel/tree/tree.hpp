@@ -55,9 +55,9 @@ public:
      *  an individual-axis constructor, as it ensures that they're backed
      *  by the same Cache object
      */
-    static Tree X();
-    static Tree Y();
-    static Tree Z();
+    static Tree X() { return Tree(Opcode::VAR_X); }
+    static Tree Y() { return Tree(Opcode::VAR_Y); }
+    static Tree Z() { return Tree(Opcode::VAR_Z); }
 
     /*
      *  Returns an AFFINE token (of the form a*x + b*y + c*z + d)
@@ -78,16 +78,17 @@ public:
      *  Attempts to get affine terms from a AFFINE_VEC token
      *  If success is provided, it is populated with true or false
      */
-    glm::vec4 getAffine(bool* success=nullptr);
+    glm::vec4 getAffine(bool* success=nullptr)
+        { return parent->getAffine(id, success); }
 
     /*
      *  Accessors for token fields
      */
-    Opcode::Opcode opcode() const;
-    Tree lhs() const;
-    Tree rhs() const;
-    size_t rank() const;
-    float value() const;
+    Opcode::Opcode opcode() const   { return parent->opcode(id); }
+    Tree lhs() const                { return Tree(parent, parent->lhs(id)); }
+    Tree rhs() const                { return Tree(parent, parent->rhs(id)); }
+    size_t rank() const             { return parent->rank(id); }
+    float value() const             { return parent->value(id); }
 
 protected:
     /*

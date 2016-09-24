@@ -79,6 +79,15 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
           clauses[t] = c;
           return c; };
 
+    // Make X, Y, Z clauses and set their derivatives (which never change)
+    X = newClause(cache->X());
+    Y = newClause(cache->Y());
+    Z = newClause(cache->Z());
+
+    X->result.deriv(1, 0, 0);
+    Y->result.deriv(0, 1, 0);
+    Z->result.deriv(0, 0, 1);
+
     // Load constants into the array first
     //
     // CONST is guaranteed to be at the beginning of the cache
@@ -86,43 +95,20 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     // value we can break out of the loop.
     for (auto m : cache->data.left)
     {
-        if (m.first.opcode() == Opcode::CONST)
+        if (connected.count(m.second))
         {
-            if (connected.count(m.second))
+            if (m.first.opcode() == Opcode::CONST)
             {
                 constants.push_back(newClause(m.second));
             }
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    X = newClause(cache->X());
-    Y = newClause(cache->Y());
-    Z = newClause(cache->Z());
-
-    // Set derivatives for X, Y, Z (since these never change)
-    X->result.deriv(1, 0, 0);
-    Y->result.deriv(0, 1, 0);
-    Z->result.deriv(0, 0, 1);
-
-    // Finally, create the rest of the Tree's clauses
-    for (auto m : cache->data.left)
-    {
-        if (m.first.rank() == 0)
-        {
-            continue;
-        }
-
-        if (connected.count(m.second))
-        {
-            while (m.first.rank() > rows.size())
+            else if (m.first.rank() > 0) // Ignore VAR_XYZ
             {
-                rows.push_back(Row());
+                while (m.first.rank() > rows.size())
+                {
+                    rows.push_back(Row());
+                }
+                rows[m.first.rank() - 1].push_back(newClause(m.second));
             }
-            rows[m.first.rank() - 1].push_back(newClause(m.second));
         }
     }
 

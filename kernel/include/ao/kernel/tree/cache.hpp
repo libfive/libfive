@@ -50,8 +50,7 @@ public:
      *  If collapse is true (the default), identity and affine operations will
      *  be collapsed; if false, all branches will be created
      */
-    Id operation(Opcode::Opcode op, Id a=0, Id b=0,
-                        bool collapse=true);
+    Id operation(Opcode::Opcode op, Id a=0, Id b=0, bool collapse=true);
 
     Id X() { return operation(Opcode::VAR_X); }
     Id Y() { return operation(Opcode::VAR_Y); }
@@ -64,7 +63,7 @@ public:
     Id affine(glm::vec4 v) { return affine(v.x, v.y, v.z, v.w); }
 
     /*
-     *  Set found in every token descending from root
+     *  Finds every token descending from root
      */
     std::set<Id> findConnected(Id root);
 
@@ -138,16 +137,11 @@ protected:
         Key(Opcode::Opcode op, Id a, Id b, size_t rank)
           : _Key(rank, op, a, b, 0.0f) { /* Nothing to do here */}
 
-        size_t rank() const
-            { return std::get<0>(*this); }
-        Opcode::Opcode opcode() const
-            { return std::get<1>(*this); }
-        Id lhs() const
-            { return std::get<2>(*this); }
-        Id rhs() const
-            { return std::get<3>(*this); }
-        float value() const
-            { return std::get<4>(*this); }
+        size_t rank() const             { return std::get<0>(*this); }
+        Opcode::Opcode opcode() const   { return std::get<1>(*this); }
+        Id lhs() const                  { return std::get<2>(*this); }
+        Id rhs() const                  { return std::get<3>(*this); }
+        float value() const             { return std::get<4>(*this); }
     };
 
     /*
