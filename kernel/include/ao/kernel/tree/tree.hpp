@@ -27,7 +27,10 @@
 #include "ao/kernel/tree/cache.hpp"
 
 /*
- *  A token represents a single expression (with up to two arguments)
+ *  A Tree represents a tree of math expressions.
+ *
+ *  Trees are implemented as a flyweight with a shared pointer to a
+ *  Cache that stores deduplicated tree data  (children, values, etc).
  */
 class Tree
 {
