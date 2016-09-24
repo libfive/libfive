@@ -70,13 +70,12 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
 #endif
 
     // Helper function to create a new clause in the data array
-    std::unordered_map<Cache::Id, Clause*> clauses;
+    std::unordered_map<Cache::Id, Clause*> clauses = {{0, nullptr}};
     auto newClause = [&ptr, cache, &clauses](const Cache::Id t)
         { auto lhs = cache->lhs(t);
           auto rhs = cache->rhs(t);
           auto c = new (ptr++) Clause(cache->opcode(t), cache->value(t),
-                  clauses.find(lhs) == clauses.end() ? nullptr : clauses[lhs],
-                  clauses.find(rhs) == clauses.end() ? nullptr : clauses[rhs]);
+                  clauses.at(lhs), clauses.at(rhs));
           clauses[t] = c;
           return c; };
 
