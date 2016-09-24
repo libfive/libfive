@@ -277,9 +277,7 @@ Cache::Id Cache::import(Cache* other, Id root)
         return 0;
     }
 
-    std::map<Id, Id> changed;
-    changed[0] = 0;
-
+    std::map<Id, Id> changed = {{0, 0}};
     for (auto c : other->data.left)
     {
         Id t = c.second;
