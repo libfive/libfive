@@ -30,7 +30,7 @@ Token::Id Tree::constant(float v)
     auto k = key(v);
     if (cache.left.find(k) == cache.left.end())
     {
-        cache.insert({k, next});
+        cache.insert({k, next++});
     }
     return cache.left.at(k);
 }
