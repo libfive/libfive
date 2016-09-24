@@ -368,11 +368,11 @@ Cache::Id Cache::collapse(Id root)
             auto v = getAffine(c.second);
             changed[c.second] = operation(Opcode::ADD,
                     operation(Opcode::ADD,
-                        operation(Opcode::MUL, X(), v.x),
-                        operation(Opcode::MUL, Y(), v.y)),
+                        operation(Opcode::MUL, X(), constant(v.x)),
+                        operation(Opcode::MUL, Y(), constant(v.y))),
                     operation(Opcode::ADD,
-                        operation(Opcode::MUL, Z(), v.z),
-                        v.w));
+                        operation(Opcode::MUL, Z(), constant(v.z)),
+                        constant(v.w)));
         }
     }
 

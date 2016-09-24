@@ -152,3 +152,26 @@ TEST_CASE("Automatic expression pruning")
         REQUIRE(t.value(od) == 0);
     }
 }
+
+TEST_CASE("Collapsing affine trees")
+{
+    Cache a;
+
+    auto a_affine = a.affine(1.0, 0.0, 0.0, 3.0);
+    /*
+     * The tree should be of the form
+     *              AFFINE
+     *             /      \
+     *          ADD         ADD
+     *        /    \      /      \
+     *      MUL    MUL   MUL     3
+     *    /   \   /  \  /   \
+     *   X    1  Y   0  Z   0
+     *
+     *  (and all of the zeros should point to the same token)
+     */
+    REQUIRE(a_affine == 12);
+
+    auto collapsed = a.collapse(a_affine);
+    REQUIRE(collapsed == 13);
+}

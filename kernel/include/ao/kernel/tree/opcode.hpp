@@ -58,7 +58,7 @@ enum Opcode
      *  Affine trees must have the form
      *              AFFINE
      *             /      \
-     *          ADD       ADD
+     *          ADD         ADD
      *        /    \      /      \
      *      MUL    MUL   MUL     C
      *    /   \   /  \  /   \

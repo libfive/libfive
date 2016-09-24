@@ -52,7 +52,7 @@ TEST_CASE("Affine math")
     SECTION("Affine plus affine")
     {
         Tree t = Tree(Opcode::ADD, Tree::affine(1, 2, 3, 4),
-                                       Tree::affine(2, 4, 6, 8));
+                                   Tree::affine(2, 4, 6, 8));
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(3, 6, 9, 12));
     }
@@ -76,7 +76,7 @@ TEST_CASE("Affine math")
     SECTION("Affine minus affine")
     {
         Tree t = Tree(Opcode::SUB, Tree::affine(1, 2, 3, 4),
-                                       Tree::affine(2, 4, 6, 8));
+                                   Tree::affine(2, 4, 6, 8));
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(-1, -2, -3, -4));
     }
