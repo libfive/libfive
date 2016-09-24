@@ -120,7 +120,7 @@ Evaluator::Evaluator(const Tree root, const glm::mat4& M)
         rows[m.first.rank() - 1].push_back(newClause(m.second));
     }
 
-    for (auto row : rows)
+    for (auto& row : rows)
     {
         row.setSize();
     }
