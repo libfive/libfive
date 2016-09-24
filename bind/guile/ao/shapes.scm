@@ -161,7 +161,7 @@
                 base zmin (+ zmin height) 1 0)))
 
 (define-public (pyramid-z a b zmin height)
-    "cone '(xmin ymin) '(xmax ymax) zmin dz
+    "pyramid '(xmin ymin) '(xmax ymax) zmin dz
     Creates a pyramid from a base rectangle, lower z value and height"
     (taper-xy-z (extrude-z (rectangle a b) zmin (+ zmin height))
         (list (/ (+  (car a)  (car b)) 2)
