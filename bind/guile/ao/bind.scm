@@ -73,58 +73,58 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (token-x)
-    "token-x
+(define-public (tree-x)
+    "tree-x
     Constructs a X tree"
-    (wrap-tree ((pointer->procedure '* (get-function "token_x") '()))))
+    (wrap-tree ((pointer->procedure '* (get-function "tree_x") '()))))
 
-(define-public (token-y)
-    "token-y
+(define-public (tree-y)
+    "tree-y
     Constructs a Y tree"
-    (wrap-tree ((pointer->procedure '* (get-function "token_y") '()))))
+    (wrap-tree ((pointer->procedure '* (get-function "tree_y") '()))))
 
-(define-public (token-z)
-    "token-z
+(define-public (tree-z)
+    "tree-z
     Constructs a Z tree"
-    (wrap-tree ((pointer->procedure '* (get-function "token_z") '()))))
+    (wrap-tree ((pointer->procedure '* (get-function "tree_z") '()))))
 
-(define-public (token-const v)
-    "token-const value
+(define-public (tree-const v)
+    "tree-const value
     Constructs a constant tree"
     (wrap-tree ((pointer->procedure
-    '* (get-function "token_const") (list float)) v)))
+    '* (get-function "tree_const") (list float)) v)))
 
-(define-public (token-op-unary op a)
-    "token-op-unary opcode a
+(define-public (tree-op-unary op a)
+    "tree-op-unary opcode a
     Constructs a unary operation"
     (wrap-tree ((pointer->procedure
-        '* (get-function "token_unary") (list int '*))
+        '* (get-function "tree_unary") (list int '*))
       (opcode->int op) (unwrap-tree a))))
 
-(define-public (token-op-binary op a b)
-    "token-op-binary opcode a b
+(define-public (tree-op-binary op a b)
+    "tree-op-binary opcode a b
     Constructs a binary operation"
     (wrap-tree ((pointer->procedure
-        '* (get-function "token_binary") (list int '* '*))
+        '* (get-function "tree_binary") (list int '* '*))
       (opcode->int op) (unwrap-tree a) (unwrap-tree b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (token-affine-vec t)
-    "token-affine-vec token
+(define-public (tree-affine-vec t)
+    "tree-affine-vec tree
     Extracts the affine terms from a tree, returning a list '(a b c d)
-    or #f if the token is not affine"
+    or #f if the tree is not affine"
     (let* ((v (make-c-struct v4 '(0 0 0 0)))
-           (token_affine_vec (pointer->procedure int
-                             (get-function "token_affine_vec") (list '* '*)))
-           (result (token_affine_vec (unwrap-tree t) v)))
+           (tree_affine_vec (pointer->procedure int
+                            (get-function "tree_affine_vec") (list '* '*)))
+           (result (tree_affine_vec (unwrap-tree t) v)))
     (if (= result 1) (parse-c-struct v v4) #f)))
 
-(define-public (token-const? t)
-    "token-const? token
-    Returns #t if the given token is constant, false otherwise"
+(define-public (tree-const? t)
+    "tree-const? tree
+    Returns #t if the given tree is constant, false otherwise"
     (= 1
-      ((pointer->procedure int (get-function "token_is_const") (list '*))
+      ((pointer->procedure int (get-function "tree_is_const") (list '*))
        (unwrap-tree t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

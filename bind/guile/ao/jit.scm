@@ -26,36 +26,36 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Converts the given argument to a token
+;; Converts the given argument to a tree
 ;; Based on argument type, the following behavior occurs
 ;; - A number is converted to constant
 ;; - A symbol and further arguments is converted to an operator
-(define-public (make-token a . args)
-    "Creates a token.
-A token is returned without changes
+(define-public (make-tree a . args)
+    "Creates a tree.
+A tree is returned without changes
 A number is converted to a constant
 A symbol and further arguments are converted to an operation"
     (let ((len (length args)))
     (cond
         ((= 0 len)
             (cond ((tree? a) a)
-                  ((number? a) (token-const a))
-                  (else (error "Failed to construct token" a))))
+                  ((number? a) (tree-const a))
+                  (else (error "Failed to construct tree" a))))
         ((= 1 len)
-            (token-op-unary a (make-token (car args))))
+            (tree-op-unary a (make-tree (car args))))
         ((= 2 len)
-            (token-op-binary a (make-token (car args))
-                               (make-token (cadr args))))
-        (else (error "Incorrect argument count to make-token")))))
+            (tree-op-binary a (make-tree (car args))
+                              (make-tree (cadr args))))
+        (else (error "Incorrect argument count to make-tree")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (jit f)
-    "Returns the root token for the given function"
-    (let* ((x (token-x))
-           (y (token-y))
-           (z (token-z))
-           (out (make-token (f x y z))))
+    "Returns the root tree for the given function"
+    (let* ((x (tree-x))
+           (y (tree-y))
+           (z (tree-z))
+           (out (make-tree (f x y z))))
         out))
 
 (define-public (jit-function f)
@@ -82,4 +82,4 @@ A symbol and further arguments are converted to an operation"
     f should be a function of the form (lambda (x y z) ...)
     If the result is an affine combination a*x + b*y + c*z + d, returns
     '(a b c d); otherwise, returns #f"
-    (token-affine-vec (jit f)))
+    (tree-affine-vec (jit f)))

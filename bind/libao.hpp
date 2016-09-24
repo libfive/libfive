@@ -45,22 +45,22 @@ extern "C"
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    Tree* token_x();
-    Tree* token_y();
-    Tree* token_z();
+    Tree* tree_x();
+    Tree* tree_y();
+    Tree* tree_z();
 
-    Tree* token_const(float f);
+    Tree* tree_const(float f);
 
-    Tree* token_unary(int op, Tree* a);
-    Tree* token_binary(int op, Tree* a, Tree* b);
+    Tree* tree_unary(int op, Tree* a);
+    Tree* tree_binary(int op, Tree* a, Tree* b);
 
-    int token_is_const(Tree* t);
+    int tree_is_const(Tree* t);
 
     /*
-     *  If t is an AFFINE token, stores its parameters in vec and returns 1;
+     *  If t is an AFFINE tree, stores its parameters in vec and returns 1;
      *  otherwise, returns 0
      */
-    int token_affine_vec(Tree* t, v4* vec);
+    int tree_affine_vec(Tree* t, v4* vec);
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -31,36 +31,36 @@
     (tests
     (test "Making variables" env
         (assert-all
-            (assert-true (tree? (token-x)))
-            (assert-true (tree? (token-y)))
-            (assert-true (tree? (token-z)))))
-    (test "token-const" env
-        (assert-true (tree? (token-const 12))))
-    (test "token-op-unary" env
-        (let* ((x (token-x)))
-            (assert-true (tree? (token-op-unary 'neg x)))))
-    (test "token-op-binary" env
-        (let* ((x (token-x))
-               (y (token-y)))
-            (assert-true (tree? (token-op-binary 'add x y)))))
-    (test "token-affine-vec" env
-        (let* ((x (token-x))
-               (y (token-y))
-               (p (token-op-binary 'add x y)))
+            (assert-true (tree? (tree-x)))
+            (assert-true (tree? (tree-y)))
+            (assert-true (tree? (tree-z)))))
+    (test "tree-const" env
+        (assert-true (tree? (tree-const 12))))
+    (test "tree-op-unary" env
+        (let* ((x (tree-x)))
+            (assert-true (tree? (tree-op-unary 'neg x)))))
+    (test "tree-op-binary" env
+        (let* ((x (tree-x))
+               (y (tree-y)))
+            (assert-true (tree? (tree-op-binary 'add x y)))))
+    (test "tree-affine-vec" env
+        (let* ((x (tree-x))
+               (y (tree-y))
+               (p (tree-op-binary 'add x y)))
             (assert-all
-                (assert-equal (token-affine-vec x) '(1.0 0.0 0.0 0.0))
-                (assert-equal (token-affine-vec y) '(0.0 1.0 0.0 0.0))
-                (assert-equal (token-affine-vec p) '(1.0 1.0 0.0 0.0)))))
-    (test "token-const?" env
-        (let* ((x (token-x))
-               (y (token-const 3.0)))
+                (assert-equal (tree-affine-vec x) '(1.0 0.0 0.0 0.0))
+                (assert-equal (tree-affine-vec y) '(0.0 1.0 0.0 0.0))
+                (assert-equal (tree-affine-vec p) '(1.0 1.0 0.0 0.0)))))
+    (test "tree-const?" env
+        (let* ((x (tree-x))
+               (y (tree-const 3.0)))
             (assert-all
-              (assert-false (token-const? x))
-              (assert-true  (token-const? y)))))
+              (assert-false (tree-const? x))
+              (assert-true  (tree-const? y)))))
     (test "tree-eval-double" env
-          (assert-near (tree-eval-double (token-x) 1 2 3) 1))
+          (assert-near (tree-eval-double (tree-x) 1 2 3) 1))
     (test "tree-eval-interval" env
-          (assert-equal (tree-eval-interval (token-x)
+          (assert-equal (tree-eval-interval (tree-x)
             '(1 . 2) '(3 . 4) '(5 . 6)) '(1.0 . 2.0)))
     (test "matrix-invert" env
         ; TODO: Make this use a floating-point comparison

@@ -20,7 +20,7 @@
 
 #include "ao/kernel/tree/tree.hpp"
 
-#include "api.hpp"
+#include "libao.hpp"
 
 TEST_CASE("struct contours")
 {

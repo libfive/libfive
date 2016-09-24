@@ -37,7 +37,7 @@
 #include "ao/ui/window.hpp"
 #include "ao/ui/watcher.hpp"
 
-#include "api.hpp"
+#include "libao.hpp"
 
 void contours_delete(struct contours* cs)
 {
@@ -60,43 +60,43 @@ int opcode_enum(char* op)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// Construct X, Y, Z tokens in affine form
-Tree* token_x()
+// Construct X, Y, Z trees in affine form
+Tree* tree_x()
 {
     return new Tree(Tree::affine(1, 0, 0, 0));
 }
 
-Tree* token_y()
+Tree* tree_y()
 {
     return new Tree(Tree::affine(0, 1, 0, 0));
 }
 
-Tree* token_z()
+Tree* tree_z()
 {
     return new Tree(Tree::affine(0, 0, 1, 0));
 }
 
-Tree* token_const(float f)
+Tree* tree_const(float f)
 {
     return new Tree(f);
 }
 
-Tree* token_unary(int op, Tree* a)
+Tree* tree_unary(int op, Tree* a)
 {
     return new Tree(Opcode::Opcode(op), *a);
 }
 
-Tree* token_binary(int op, Tree* a, Tree* b)
+Tree* tree_binary(int op, Tree* a, Tree* b)
 {
     return new Tree(Opcode::Opcode(op), *a, *b);
 }
 
-int token_is_const(Tree* t)
+int tree_is_const(Tree* t)
 {
     return t->opcode() == Opcode::CONST;
 }
 
-int token_affine_vec(Tree* t, v4* vec)
+int tree_affine_vec(Tree* t, v4* vec)
 {
     bool success = false;
     glm::vec4 v = t->getAffine(&success);

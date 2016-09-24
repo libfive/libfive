@@ -28,9 +28,9 @@
     (let* ((len  (length args))
            (half (quotient len 2)))
         (cond ((= 0 len) (if (null? default) (error "Too few arguments")
-                                             (make-token default)))
-              ((= 1 len) (make-token (car args)))
-              (else (make-token sym
+                                             (make-tree default)))
+              ((= 1 len) (make-tree (car args)))
+              (else (make-tree sym
                         (bin-reduce sym default (take args half))
                         (bin-reduce sym default (drop args half)))))))
 
@@ -69,9 +69,9 @@
 (define (sub . args)
     (receive (nums other) (partition number? args)
     (cond ((null-list? other) (apply _- nums))
-          ((= 1 (length args)) (make-token 'neg (car args)))
-          (else (make-token 'sub (car args)
-                                 (apply + (cdr args)))))))
+          ((= 1 (length args)) (make-tree 'neg (car args)))
+          (else (make-tree 'sub (car args)
+                                (apply + (cdr args)))))))
 
 ;; Handle division, which divides 1 / x for a single argument
 ;; (and accumulates cdr args with multiplication otherwise)
@@ -79,8 +79,8 @@
 (define (div . args)
     (receive (nums other) (partition number? args)
     (cond ((null-list? other) (apply _/ nums))
-          ((= 1 (length args)) (make-token 'div 1 (car args)))
-          (else (make-token 'div (car args) (apply * (cdr args)))))))
+          ((= 1 (length args)) (make-tree 'div 1 (car args)))
+          (else (make-tree 'div (car args) (apply * (cdr args)))))))
 
 ;; Helper macro to define and export the overloaded procedure
 (define-syntax-rule (wrap-custom f g)
@@ -94,20 +94,20 @@
     (if (and (number? a) (number? b))
         (let ((r (floor (/ a b))))
             (- a (* r b)))
-        (make-token 'mod a b)))
+        (make-tree 'mod a b)))
 
 (define-public (nan-fill a b)
     (if (or (tree? a) (tree? b))
-        (make-token 'nan-fill a b)
+        (make-tree 'nan-fill a b)
         (if (nan? a) b a)))
 
 (define expt_ expt)
 (define-public (expt a b)
   (if (or (tree? a) (tree? b))
       (begin
-        (when (and (tree? b) (not (token-const? b)))
+        (when (and (tree? b) (not (tree-const? b)))
           (error "RHS of exponentiation must be a constant"))
-        (make-token 'pow a b))
+        (make-tree 'pow a b))
       (expt_ a b)))
 (export! expt)
 
@@ -116,7 +116,7 @@
 ;; Return a wrapper function for a unary function
 (define (make-unary f sym)
   (lambda (a)
-    (if (number? a) (f a) (make-token sym a))))
+    (if (number? a) (f a) (make-tree sym a))))
 
 ;; Helper macro for unary definition and export
 (define-syntax-rule (wrap-unary f sym)
@@ -139,14 +139,14 @@
         ((= 1 (length b))
             (if (and (number? a) (number? (car b)))
                 (_atan a (car b))
-                (make-token 'atan2 a (car b))))
+                (make-tree 'atan2 a (car b))))
         ((= 0 (length b))
             (if (number? a)
                 (_atan a)
-                (make-token 'atan a)))
+                (make-tree 'atan a)))
         (else (error "Too many arguments to atan"))))
 (export! atan)
 
 (define-public (square f)
     (if (number? f) (* f f)
-                    (make-token 'square f)))
+                    (make-tree 'square f)))
