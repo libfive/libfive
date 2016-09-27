@@ -91,11 +91,6 @@ Tree* tree_binary(int op, Tree* a, Tree* b)
     return new Tree(Opcode::Opcode(op), *a, *b);
 }
 
-int tree_is_const(Tree* t)
-{
-    return t->opcode() == Opcode::CONST;
-}
-
 int tree_affine_vec(Tree* t, v4* vec)
 {
     bool success = false;

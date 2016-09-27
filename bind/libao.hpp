@@ -54,8 +54,6 @@ extern "C"
     Tree* tree_unary(int op, Tree* a);
     Tree* tree_binary(int op, Tree* a, Tree* b);
 
-    int tree_is_const(Tree* t);
-
     /*
      *  If t is an AFFINE tree, stores its parameters in vec and returns 1;
      *  otherwise, returns 0

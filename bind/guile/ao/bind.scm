@@ -120,13 +120,6 @@
            (result (tree_affine_vec (unwrap-tree t) v)))
     (if (= result 1) (parse-c-struct v v4) #f)))
 
-(define-public (tree-const? t)
-    "tree-const? tree
-    Returns #t if the given tree is constant, false otherwise"
-    (= 1
-      ((pointer->procedure int (get-function "tree_is_const") (list '*))
-       (unwrap-tree t))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (tree-eval-double t x y z)

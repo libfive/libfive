@@ -52,6 +52,7 @@ enum Opcode
     DIV,
     ATAN2,
     POW,
+    NTH_ROOT,
     MOD,
     NANFILL,
 

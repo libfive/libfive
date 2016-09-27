@@ -32,7 +32,18 @@ Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
     : parent(a.id ? a.parent : std::make_shared<Cache>()),
       id(parent->operation(op, a.id, parent->import(b.parent.get(), b.id)))
 {
-    // Nothing to do here (but the logic for id above is really clever!)
+    // POW only accepts integral values as its second argument
+    if (op == Opcode::POW)
+    {
+        assert(b.opcode() == Opcode::CONST &&
+               b.value() == std::round(b.value()));
+    }
+    else if (op == Opcode::NTH_ROOT)
+    {
+        assert(b.opcode() == Opcode::CONST &&
+               b.value() == std::round(b.value()) &&
+               b.value() > 0);
+    }
 }
 
 /*

@@ -45,6 +45,10 @@ public:
      *
      *  Arguments should be filled in from left to right
      *  (i.e. a must not be null if b is not null)
+     *
+     *  If the opcode is POW or NTH_ROOT, b must be an integral CONST
+     *  (otherwise an assertion will be triggered).
+     *  If the opcode is NTH_ROOT, b must be > 0.
      */
     Tree(Opcode::Opcode op, Tree a=Tree(nullptr, 0), Tree b=Tree(nullptr, 0));
 

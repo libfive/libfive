@@ -51,12 +51,6 @@
                 (assert-equal (tree-affine-vec x) '(1.0 0.0 0.0 0.0))
                 (assert-equal (tree-affine-vec y) '(0.0 1.0 0.0 0.0))
                 (assert-equal (tree-affine-vec p) '(1.0 1.0 0.0 0.0)))))
-    (test "tree-const?" env
-        (let* ((x (tree-x))
-               (y (tree-const 3.0)))
-            (assert-all
-              (assert-false (tree-const? x))
-              (assert-true  (tree-const? y)))))
     (test "tree-eval-double" env
           (assert-near (tree-eval-double (tree-x) 1 2 3) 1))
     (test "tree-eval-interval" env
@@ -67,9 +61,9 @@
         (assert-equal (matrix-invert '(1 0 0 1)
                                      '(0 1 0 2)
                                      '(0 0 1 3))
-                                    '((1.0 -0.0 0.0 -1.0)
-                                      (-0.0 1.0 -0.0 -2.0)
-                                      (0.0 -0.0 1.0 -3.0))))
+                                    '(( 1.0 -0.0  0.0 -1.0)
+                                      (-0.0  1.0 -0.0 -2.0)
+                                      ( 0.0 -0.0  1.0 -3.0))))
 ))
 
 (suite "jit.scm (operations on lambda functions)"
@@ -90,6 +84,14 @@
         (assert-all
             (assert-equal (get-affine-vec f) '(2.0 1.0 3.0 4.0))
             (assert-equal (get-affine-vec g) #f))))
+    (test "expt" env
+        (let ((f (jit-function (lambda (x y z) (expt x 3))))
+              (g (jit-function (lambda (x y z) (expt x 1/2))))
+              (h (jit-function (lambda (x y z) (expt x -1/2)))))
+          (assert-all
+            (assert-near (f 3 0 0) 27)
+            (assert-near (g 4 0 0) 2)
+            (assert-near (h 4 0 0) 1/2))))
 ))
 
 (suite "bounds.scm (bounds metadata)"

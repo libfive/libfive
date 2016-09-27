@@ -219,6 +219,10 @@ static void clause(Opcode::Opcode op,
             EVAL_LOOP
             out[i] = pow(a[i], b[i]);
             break;
+        case Opcode::NTH_ROOT:
+            EVAL_LOOP
+            out[i] = pow(a[i], 1.0f/b[i]);
+            break;
         case Opcode::MOD:
             EVAL_LOOP
             {
@@ -392,15 +396,24 @@ static void clause(Opcode::Opcode op,
         case Opcode::POW:
             EVAL_LOOP
             {
-                const float d = av[i] * log(av[i]);
                 const float m = pow(av[i], bv[i] - 1);
 
-                // If A[q].v is negative, then m will be NaN (because of log's domain).
-                // We work around this by checking if d/d{xyz}(B) == 0 and using a
-                // simplified expression if that's true.
-                odx[i] = m * (bv[i] * adx[i] + (bdx[i] ? d*bdx[i] : 0));
-                ody[i] = m * (bv[i] * ady[i] + (bdy[i] ? d*bdy[i] : 0));
-                odz[i] = m * (bv[i] * adz[i] + (bdz[i] ? d*bdz[i] : 0));
+                // The full form of the derivative is
+                // odx[i] = m * (bv[i] * adx[i] + av[i] * log(av[i]) * bdx[i]))
+                // However, log(av[i]) is often NaN and bdx[i] is always zero,
+                // (since it must be CONST), so we skip that part.
+                odx[i] = m * (bv[i] * adx[i]);
+                ody[i] = m * (bv[i] * ady[i]);
+                odz[i] = m * (bv[i] * adz[i]);
+            }
+            break;
+        case Opcode::NTH_ROOT:
+            EVAL_LOOP
+            {
+                const float m = pow(av[i], 1.0f/bv[i] - 1);
+                odx[i] = m * (1.0f/bv[i] * adx[i]);
+                ody[i] = m * (1.0f/bv[i] * ady[i]);
+                odz[i] = m * (1.0f/bv[i] * adz[i]);
             }
             break;
         case Opcode::MOD:
@@ -630,6 +643,7 @@ static void clause(Opcode::Opcode op,
         case Opcode::ATAN:
         case Opcode::EXP:
         case Opcode::POW:
+        case Opcode::NTH_ROOT:
         case Opcode::MOD:
         case Opcode::NANFILL:
             clause(op, reinterpret_cast<const float*>(a),
@@ -806,6 +820,7 @@ static void clause(Opcode::Opcode op,
         case Opcode::ATAN:
         case Opcode::EXP:
         case Opcode::POW:
+        case Opcode::NTH_ROOT:
         case Opcode::MOD:
         case Opcode::NANFILL:
             clause(op, reinterpret_cast<const float*>(av),
@@ -854,6 +869,8 @@ static Interval clause(Opcode::Opcode op, const Interval& a, const Interval& b)
             return atan2(a, b);
         case Opcode::POW:
             return boost::numeric::pow(a, b.lower());
+        case Opcode::NTH_ROOT:
+            return boost::numeric::nth_root(a, b.lower());
         case Opcode::MOD:
             return Interval(0.0f, b.upper()); // YOLO
         case Opcode::NANFILL:

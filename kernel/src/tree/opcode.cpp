@@ -51,6 +51,7 @@ size_t Opcode::args(Opcode op)
         case DIV:
         case ATAN2:
         case POW:
+        case NTH_ROOT:
         case MOD:
         case NANFILL:
         case AFFINE_VEC:
@@ -84,6 +85,7 @@ std::string Opcode::to_str(Opcode op)
         case Opcode::DIV: return "div";
         case Opcode::ATAN2: return "atan2";
         case Opcode::POW: return "pow";
+        case Opcode::NTH_ROOT: return "nth-root";
         case Opcode::MOD: return "mod";
         case Opcode::NANFILL: return "nan-fill";
         case Opcode::SQUARE: return "square";

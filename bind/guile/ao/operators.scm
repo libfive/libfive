@@ -103,12 +103,19 @@
 
 (define expt_ expt)
 (define-public (expt a b)
-  (if (or (tree? a) (tree? b))
-      (begin
-        (when (and (tree? b) (not (tree-const? b)))
-          (error "RHS of exponentiation must be a constant"))
-        (make-tree 'pow a b))
-      (expt_ a b)))
+  (when (tree? b)
+    (error "RHS of exponentiation must be a constant"))
+  (when (not (rational? b))
+    (error "RHS of exponentiation must be rational"))
+  (if (tree? a)
+    (let ((num (numerator b))
+          (denom (denominator b)))
+    (cond ((= 1 (abs denom))  (make-tree 'pow a b))
+          ((= 1  num)         (make-tree 'nth-root a denom))
+          ((= -1 num)         (/ (make-tree 'nth-root a denom)))
+          (else (error "RHS of exponentiation must be integer or 1 / integer"))
+          ))
+    (expt_ a b)))
 (export! expt)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
