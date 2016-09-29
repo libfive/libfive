@@ -18,8 +18,6 @@
  */
 #pragma once
 
-#include <unordered_map>
-
 #include "ao/kernel/tree/opcode.hpp"
 #include "ao/kernel/eval/result.hpp"
 

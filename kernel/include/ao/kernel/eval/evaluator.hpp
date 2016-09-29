@@ -142,9 +142,6 @@ protected:
      *  (so that they can be easily accessed to set their values)  */
     Clause *X, *Y, *Z;
 
-    /*  Pointers to constants live in this vector  */
-    std::vector<Clause*> constants;
-
     /*  This is the top atom of the tree  */
     Clause* root;
 

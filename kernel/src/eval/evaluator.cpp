@@ -99,7 +99,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
         {
             if (m.first.opcode() == Opcode::CONST)
             {
-                constants.push_back(newClause(m.second));
+                newClause(m.second);
             }
             else if (m.first.rank() > 0) // Ignore VAR_XYZ
             {
