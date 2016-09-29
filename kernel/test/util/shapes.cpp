@@ -75,12 +75,12 @@ Tree menger(int i)
 
     auto cube = Tree(Opcode::MAX,
                 Tree(Opcode::MAX,
-                   Tree(Opcode::MAX, Tree::affine(-1,  0,  0, -1.5),
-                                       Tree::affine( 1,  0,  0, -1.5)),
-                   Tree(Opcode::MAX, Tree::affine( 0, -1,  0, -1.5),
-                                       Tree::affine( 0,  1,  0, -1.5))),
-                   Tree(Opcode::MAX, Tree::affine( 0,  0, -1, -1.5),
-                                       Tree::affine( 0,  0,  1, -1.5)));
+                    Tree(Opcode::MAX, Tree::affine(-1,  0,  0, -1.5),
+                                      Tree::affine( 1,  0,  0, -1.5)),
+                    Tree(Opcode::MAX, Tree::affine( 0, -1,  0, -1.5),
+                                      Tree::affine( 0,  1,  0, -1.5))),
+                    Tree(Opcode::MAX, Tree::affine( 0,  0, -1, -1.5),
+                                      Tree::affine( 0,  0,  1, -1.5)));
 
     auto cutout = Tree(Opcode::NEG,
                   Tree(Opcode::MIN, Tree(Opcode::MIN, a, b), c));
