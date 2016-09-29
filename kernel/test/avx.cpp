@@ -24,14 +24,16 @@
 #include "ao/kernel/eval/evaluator.hpp"
 #include "ao/kernel/eval/result.hpp"
 
+#include "util/shapes.hpp"
+
 #ifdef __AVX__
 
 TEST_CASE("Vectorized performance")
 {
     // Oversample to get meaningful result
-    const float N = 1000;
+    const float N = 100;
 
-    Tree t = Tree(Opcode::ADD, Tree::X(), Tree::Y());
+    Tree t = menger(3);
     Evaluator e(t);
 
     for (unsigned i=0; i < Result::N; ++i)
@@ -58,7 +60,9 @@ TEST_CASE("Vectorized performance")
         end = std::chrono::system_clock::now();
         std::chrono::duration<double> mt = end - start;
 
-        REQUIRE(mt.count() < ft.count());
+        // Theoretically, vectorized performance is up to 8x faster
+        // We'll insist on at least a 2x speedup
+        REQUIRE(mt.count() < ft.count()/2);
     }
 
     SECTION("Accuracy")
