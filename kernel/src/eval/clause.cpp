@@ -21,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 Clause::Clause(Opcode::Opcode op, float value, Clause* lhs, Clause* rhs)
-    : op(op), value(value), a(lhs), b(rhs)
+    : op(op), op_(op), value(value), a(lhs), b(rhs)
 {
     // Helper function to copy a set of result pointers if a clause is present
     auto load_ptrs = [](ResultPtrs* p, Clause* c)

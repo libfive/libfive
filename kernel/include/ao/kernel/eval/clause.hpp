@@ -56,6 +56,9 @@ protected:
     /*  Opcode for this clause  */
     const Opcode::Opcode op;
 
+    /*  This is a mutable opcode that changes when children are disabled */
+    Opcode::Opcode op_;
+
     /*  Populated for CONST clause */
     const float value;
 

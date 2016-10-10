@@ -169,6 +169,14 @@ void Evaluator::push()
     {
         itr->push();
     }
+
+    for (const auto& row : rows)
+    {
+        for (size_t i=0; i < row.active; ++i)
+        {
+            row[i]->op_ = getOpcode(row[i]);
+        }
+    }
 }
 
 void Evaluator::pop()
@@ -176,6 +184,14 @@ void Evaluator::pop()
     for (auto& row : rows)
     {
         row.pop();
+    }
+
+    for (const auto& row : rows)
+    {
+        for (size_t i=0; i < row.active; ++i)
+        {
+            row[i]->op_ = getOpcode(row[i]);
+        }
     }
 }
 
@@ -927,7 +943,7 @@ const float* Evaluator::values(size_t count, bool vectorize)
         {
             for (size_t i=0; i < row.active; ++i)
             {
-                auto op = getOpcode(row[i]);
+                auto op = row[i]->op_;
                 clause(op, row[i]->ptrs.a.mf, row[i]->ptrs.b.mf,
                            row[i]->result.mf, count);
             }
@@ -943,7 +959,7 @@ const float* Evaluator::values(size_t count)
     {
         for (size_t i=0; i < row.active; ++i)
         {
-            auto op = getOpcode(row[i]);
+            auto op = row[i]->op_;
             clause(op, row[i]->ptrs.a.f, row[i]->ptrs.b.f,
                        row[i]->result.f, count);
         }
@@ -964,7 +980,7 @@ std::tuple<const float*, const float*,
         {
             for (size_t i=0; i < row.active; ++i)
             {
-                auto op = getOpcode(row[i]);
+                auto op = row[i]->op_;
 
                 clause(op, row[i]->ptrs.a.mf, row[i]->ptrs.a.mdx,
                            row[i]->ptrs.a.mdy, row[i]->ptrs.a.mdz,
@@ -987,7 +1003,7 @@ std::tuple<const float*, const float*,
     {
         for (size_t i=0; i < row.active; ++i)
         {
-            auto op = getOpcode(row[i]);
+            auto op = row[i]->op_;
 
             clause(op, row[i]->ptrs.a.f, row[i]->ptrs.a.dx,
                        row[i]->ptrs.a.dy, row[i]->ptrs.a.dz,
@@ -1026,7 +1042,7 @@ Interval Evaluator::interval()
     {
         for (size_t i=0; i < row.active; ++i)
         {
-            auto op = getOpcode(row[i]);
+            auto op = row[i]->op_;
 
             Interval a = row[i]->a ? row[i]->a->result.i : Interval();
             Interval b = row[i]->b ? row[i]->b->result.i : Interval();
