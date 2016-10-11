@@ -29,21 +29,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5
-// http://stackoverflow.com/questions/27064791/stdalign-not-supported-by-g4-9
-namespace std {
-    inline void *align( std::size_t alignment, std::size_t size,
-                        void *&ptr, std::size_t &space ) {
-        std::uintptr_t pn = reinterpret_cast< std::uintptr_t >( ptr );
-        std::uintptr_t aligned = ( pn + alignment - 1 ) & - alignment;
-        std::size_t padding = aligned - pn;
-        if ( space < size + padding ) return nullptr;
-        space -= padding;
-        return ptr = reinterpret_cast< void * >( aligned );
-    }
-}
-#endif
-
 Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     : M(M), Mi(glm::inverse(M))
 {
@@ -55,20 +40,13 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     size_t count = 3 + connected.size();
 
     // Then, allocate space for them (ensuring alignment if AVX is used)
-    Clause* ptr;
 #if __AVX__
-    {   // Ensure that we have 32-byte alignment for Clauses and Results
-        size_t alignment = 32;
-        size_t bytes = sizeof(Clause) * count + alignment;
-        void* buf = malloc(bytes);
-        data = static_cast<Clause*>(buf);
-        ptr = static_cast<Clause*>(
-                std::align(alignment, sizeof(Clause) * count, buf, bytes));
-    }
+    // Ensure that we have 32-byte alignment for Clauses and Results
+    data = static_cast<Clause*>(_mm_malloc(sizeof(Clause) * count, 32));
 #else
     data = static_cast<Clause*>(malloc(sizeof(Clause) * count));
-    ptr = data;
 #endif
+    Clause* ptr = data;
 
     // Helper function to create a new clause in the data array
     std::unordered_map<Cache::Id, Clause*> clauses = {{0, nullptr}};
@@ -123,7 +101,11 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
 
 Evaluator::~Evaluator()
 {
+#if __AVX__
+    _mm_free(data);
+#else
     free(data);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////
