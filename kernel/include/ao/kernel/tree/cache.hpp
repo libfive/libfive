@@ -21,6 +21,8 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <thread>
+
 #include <boost/bimap.hpp>
 
 #include "glm/vec4.hpp"
@@ -33,6 +35,16 @@
 class Cache
 {
 public:
+    /*
+     *  Look up the local Cache instance
+     *  (which is on a per-thread basis)
+     */
+    static std::shared_ptr<Cache> instance();
+    /*
+     *  Forget about the cache for this thread
+     */
+    static void reset();
+
     /* Values in the cache are identified by a single value */
     typedef size_t Id;
 
@@ -78,14 +90,11 @@ public:
      *  Collapses AFFINE nodes into normal Opcode::ADD, taking advantage of
      *  identity operations to make the tree smaller.
      *
+     *  All Ids remain valid.
+     *
      *  Returns a root token for the new tree.
      */
     Id collapse(Id root);
-
-    /*
-     *  Imports an external Cache, returning the new root's id
-     */
-    Id import(Cache* s, Id root);
 
     /*
      *  Accessor functions for token fields
@@ -97,6 +106,11 @@ public:
     float value(Id id) const { return token(id).value(); }
 
 protected:
+    /*
+     *  Cache constructor is private so outsiders must use instance()
+     */
+    Cache() {}
+
     /*
      *  Checks whether the operation is an identity operation
      *  If so returns an appropriately simplified tree
@@ -157,6 +171,10 @@ protected:
 
     boost::bimap<Key, Id> data;
     Id next=1;
+
+    /*  Here's the master list of per-thread caches */
+    static std::map<std::thread::id, std::shared_ptr<Cache>> instances;
+    static std::mutex instance_lock;
 
     friend class Evaluator;
 };

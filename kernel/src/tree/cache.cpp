@@ -23,6 +23,36 @@
 #include "ao/kernel/tree/tree.hpp"
 
 /******************************************************************************
+ * Per-thread cache lookup
+ ******************************************************************************/
+std::map<std::thread::id, std::shared_ptr<Cache>> Cache::instances;
+std::mutex Cache::instance_lock;
+
+std::shared_ptr<Cache> Cache::instance()
+{
+    auto id = std::this_thread::get_id();
+
+    std::lock_guard<std::mutex> g(instance_lock);
+    if (instances.find(id) == instances.end())
+    {
+        instances[id].reset(new Cache);
+    }
+    return instances[id];
+}
+
+void Cache::reset()
+{
+    auto id = std::this_thread::get_id();
+
+    std::lock_guard<std::mutex> g(instance_lock);
+    auto itr = instances.find(id);
+    if (itr != instances.end())
+    {
+        instances.erase(itr);
+    }
+}
+
+/******************************************************************************
  * Id constructors
  ******************************************************************************/
 Cache::Id Cache::constant(float v)
@@ -266,38 +296,6 @@ Cache::Key Cache::key(Opcode::Opcode op, Id a, Id b) const
 /******************************************************************************
  * Tree walking and modification
  ******************************************************************************/
-Cache::Id Cache::import(Cache* other, Id root)
-{
-    if (other == this)
-    {
-        return root;
-    }
-    else if (other == nullptr)
-    {
-        return 0;
-    }
-
-    std::map<Id, Id> changed = {{0, 0}};
-    for (auto c : other->data.left)
-    {
-        Id t = c.second;
-        if (other->opcode(t) == Opcode::CONST)
-        {
-            // Import the constant into the tree
-            changed[t] = constant(other->value(t));
-        }
-        else
-        {
-            // Import the operation into the tree with appropriate
-            // child pointers and no collapsing
-            changed[t] = operation(other->opcode(t),
-                changed.at(other->lhs(t)), changed.at(other->rhs(t)), false);
-        }
-    }
-
-    return changed[root];
-}
-
 std::set<Cache::Id> Cache::findConnected(Id root)
 {
     std::set<Id> found = {root};

@@ -250,6 +250,9 @@ static void window_watch_callback_(std::string s)
     }
 
     window_watch_callback(s.c_str());
+
+    // Avoid continually accumulating into a single Cache
+    Cache::reset();
 }
 
 void window_show_tree(char* filename, char* name, Tree* tree)

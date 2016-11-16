@@ -23,15 +23,17 @@
 #include "ao/kernel/tree/tree.hpp"
 
 Tree::Tree(float v)
-    : parent(new Cache()), id(parent->constant(v))
+    : parent(Cache::instance()), id(parent->constant(v))
 {
     // Nothing to do here
 }
 
 Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
-    : parent(a.id ? a.parent : std::make_shared<Cache>()),
-      id(parent->operation(op, a.id, parent->import(b.parent.get(), b.id)))
+    : parent(Cache::instance()), id(parent->operation(op, a.id, b.id))
 {
+    assert(!a.id || a.parent == Cache::instance());
+    assert(!b.id || b.parent == Cache::instance());
+
     // POW only accepts integral values as its second argument
     if (op == Opcode::POW)
     {
@@ -51,12 +53,11 @@ Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
  */
 Tree Tree::affine(float a, float b, float c, float d)
 {
-    auto s = std::make_shared<Cache>();
+    auto s = Cache::instance();
     return Tree(s, s->affine(a, b, c, d));
 }
 
 Tree Tree::collapse() const
 {
-    auto other = std::make_shared<Cache>();
-    return Tree(other, other->collapse(other->import(parent.get(), id)));
+    return Tree(parent, parent->collapse(id));
 }

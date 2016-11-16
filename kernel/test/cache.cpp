@@ -22,142 +22,119 @@
 
 TEST_CASE("Constructing a simple shape")
 {
-    Cache t;
+    Cache::reset();
+    auto t = Cache::instance();
 
-    Cache::Id out = t.operation(Opcode::ADD, t.X(),
-            t.constant(1));
+    Cache::Id out = t->operation(Opcode::ADD, t->X(),
+            t->constant(1));
     REQUIRE(out == 3);
 }
 
 TEST_CASE("Deduplication of variables")
 {
-    Cache t;
+    Cache::reset();
+    auto t = Cache::instance();
 
-    Cache::Id xa = t.X();
-    Cache::Id xb = t.X();
+    Cache::Id xa = t->X();
+    Cache::Id xb = t->X();
     REQUIRE(xa == xb);
 
-    Cache::Id ya = t.Y();
+    Cache::Id ya = t->Y();
     REQUIRE(xa != ya);
 }
 
 TEST_CASE("Deduplication of constants")
 {
-    Cache t;
+    Cache::reset();
+    auto t = Cache::instance();
 
-    Cache::Id ca = t.constant(3.14);
-    Cache::Id cb = t.constant(3.14);
+    Cache::Id ca = t->constant(3.14);
+    Cache::Id cb = t->constant(3.14);
     REQUIRE(ca == cb);
 
-    Cache::Id cc = t.constant(4);
+    Cache::Id cc = t->constant(4);
     REQUIRE(ca != cc);
 }
 
 TEST_CASE("Deduplication of operations")
 {
-    Cache t;
+    Cache::reset();
+    auto t = Cache::instance();
 
-    Cache::Id oa = t.operation(Opcode::ADD, t.X(), t.constant(1));
-    Cache::Id ob = t.operation(Opcode::ADD, t.X(), t.constant(1));
+    Cache::Id oa = t->operation(Opcode::ADD, t->X(), t->constant(1));
+    Cache::Id ob = t->operation(Opcode::ADD, t->X(), t->constant(1));
     REQUIRE(oa == ob);
 
-    Cache::Id oc = t.operation(Opcode::ADD, t.X(), t.constant(2));
+    Cache::Id oc = t->operation(Opcode::ADD, t->X(), t->constant(2));
     REQUIRE(oa != oc);
 }
 
 TEST_CASE("Found flag propagation")
 {
-    Cache t;
+    Cache::reset();
+    auto t = Cache::instance();
 
-    Cache::Id oa = t.operation(Opcode::ADD, t.X(), t.constant(1));
-    Cache::Id ob = t.operation(Opcode::MUL, t.Y(), t.constant(1));
+    Cache::Id oa = t->operation(Opcode::ADD, t->X(), t->constant(1));
+    Cache::Id ob = t->operation(Opcode::MUL, t->Y(), t->constant(1));
 
-    auto f = t.findConnected(oa);
+    auto f = t->findConnected(oa);
 
     REQUIRE(f.count(oa));
-    REQUIRE(f.count(t.X()));
-    REQUIRE(f.count(t.constant(1)));
+    REQUIRE(f.count(t->X()));
+    REQUIRE(f.count(t->constant(1)));
 
     REQUIRE(!f.count(ob));
-    REQUIRE(!f.count(t.Y()));
-}
-
-TEST_CASE("Cache::import")
-{
-    Cache a;
-    Cache b;
-
-    SECTION("Variables")
-    {
-        auto ax = a.X();
-        auto  _ = b.Y();
-        auto bx = b.X();
-
-        REQUIRE(ax == 1);
-        REQUIRE(bx == 2);
-        REQUIRE(a.import(&b, bx) == 1);
-    }
-
-    SECTION("Expressions")
-    {
-        auto ax = a.X();
-        auto bc = b.constant(1);
-        auto ac = a.import(&b, bc);
-
-        auto sum = a.operation(Opcode::ADD, ax, ac);
-        REQUIRE(ax == 1);
-        REQUIRE(bc == 1);
-        REQUIRE(ac == 2);
-        REQUIRE(sum == 3);
-    }
+    REQUIRE(!f.count(t->Y()));
 }
 
 TEST_CASE("Automatic expression pruning")
 {
-    Cache t;
+    Cache::reset();
+    auto t = Cache::instance();
 
     SECTION("Addition")
     {
-        Cache::Id oa = t.operation(Opcode::ADD, t.X(), t.constant(0));
-        REQUIRE(oa == t.X());
+        Cache::Id oa = t->operation(Opcode::ADD, t->X(), t->constant(0));
+        REQUIRE(oa == t->X());
 
-        Cache::Id ob = t.operation(Opcode::ADD, t.constant(0), t.X());
-        REQUIRE(ob == t.X());
+        Cache::Id ob = t->operation(Opcode::ADD, t->constant(0), t->X());
+        REQUIRE(ob == t->X());
     }
 
     SECTION("Subtraction")
     {
-        Cache::Id oa = t.operation(Opcode::SUB, t.X(), t.constant(0));
-        REQUIRE(oa == t.X());
+        Cache::Id oa = t->operation(Opcode::SUB, t->X(), t->constant(0));
+        REQUIRE(oa == t->X());
 
-        Cache::Id ob = t.operation(Opcode::SUB, t.constant(0), t.X());
-        REQUIRE(t.opcode(ob) == Opcode::NEG);
-        REQUIRE(t.lhs(ob) == t.X());
+        Cache::Id ob = t->operation(Opcode::SUB, t->constant(0), t->X());
+        REQUIRE(t->opcode(ob) == Opcode::NEG);
+        REQUIRE(t->lhs(ob) == t->X());
     }
 
     SECTION("Multiplication")
     {
-        Cache::Id oa = t.operation(Opcode::MUL, t.X(), t.constant(1));
-        REQUIRE(oa == t.X());
+        Cache::Id oa = t->operation(Opcode::MUL, t->X(), t->constant(1));
+        REQUIRE(oa == t->X());
 
-        Cache::Id ob = t.operation(Opcode::MUL, t.constant(1), t.X());
-        REQUIRE(ob == t.X());
+        Cache::Id ob = t->operation(Opcode::MUL, t->constant(1), t->X());
+        REQUIRE(ob == t->X());
 
-        Cache::Id oc = t.operation(Opcode::MUL, t.X(), t.constant(0));
-        REQUIRE(t.opcode(oc) == Opcode::CONST);
-        REQUIRE(t.value(oc) == 0);
+        Cache::Id oc = t->operation(Opcode::MUL, t->X(), t->constant(0));
+        REQUIRE(t->opcode(oc) == Opcode::CONST);
+        REQUIRE(t->value(oc) == 0);
 
-        Cache::Id od = t.operation(Opcode::MUL, t.constant(0), t.X());
-        REQUIRE(t.opcode(od) == Opcode::CONST);
-        REQUIRE(t.value(od) == 0);
+        Cache::Id od = t->operation(Opcode::MUL, t->constant(0), t->X());
+        REQUIRE(t->opcode(od) == Opcode::CONST);
+        REQUIRE(t->value(od) == 0);
     }
 }
 
 TEST_CASE("Collapsing affine trees")
 {
-    Cache a;
+    Cache::reset();
+    auto t = Cache::instance();
 
-    auto a_affine = a.affine(1.0, 0.0, 0.0, 3.0);
+    auto a_affine = t->affine(1.0, 0.0, 0.0, 3.0);
     /*
      * The tree should be of the form
      *              AFFINE
@@ -172,6 +149,6 @@ TEST_CASE("Collapsing affine trees")
      */
     REQUIRE(a_affine == 12);
 
-    auto collapsed = a.collapse(a_affine);
+    auto collapsed = t->collapse(a_affine);
     REQUIRE(collapsed == 13);
 }
