@@ -50,7 +50,8 @@ public:
      *  (otherwise an assertion will be triggered).
      *  If the opcode is NTH_ROOT, b must be > 0.
      */
-    Tree(Opcode::Opcode op, Tree a=Tree(nullptr, 0), Tree b=Tree(nullptr, 0));
+    Tree(Opcode::Opcode op, Tree a=Tree(nullptr, 0, false),
+                            Tree b=Tree(nullptr, 0, false));
 
     /*
      *  Constructors for individual axes (non-affine)
@@ -88,9 +89,10 @@ public:
 protected:
     /*
      *  Private constructor
-     *  (only ever called by Cache)
      */
-    explicit Tree(std::shared_ptr<Cache> parent, Cache::Id id=0) : parent(parent), id(id) {}
+    explicit Tree(std::shared_ptr<Cache> parent, Cache::Id id=0,
+                  bool collapsed=false)
+        : parent(parent), id(id), collapsed(collapsed) {}
 
     /*  Shared pointer to parent Cache
      *  Every token that refers back to this cache has a pointer to it,
@@ -99,6 +101,9 @@ protected:
 
     /*  ID indexing into the parent Cache */
     const Cache::Id id;
+
+    /*  Is this tree pre-collapsed and suitable for rendering?  */
+    const bool collapsed;
 
     /*  An Evaluator needs to be able to pull out the parent Cache */
     friend class Evaluator;

@@ -23,13 +23,13 @@
 #include "ao/kernel/tree/tree.hpp"
 
 Tree::Tree(float v)
-    : parent(Cache::instance()), id(parent->constant(v))
+    : Tree(Cache::instance(), Cache::instance()->constant(v))
 {
     // Nothing to do here
 }
 
 Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
-    : parent(Cache::instance()), id(parent->operation(op, a.id, b.id))
+    : Tree(Cache::instance(), Cache::instance()->operation(op, a.id, b.id))
 {
     assert(!a.id || a.parent == Cache::instance());
     assert(!b.id || b.parent == Cache::instance());
@@ -59,5 +59,6 @@ Tree Tree::affine(float a, float b, float c, float d)
 
 Tree Tree::collapse() const
 {
-    return Tree(parent, parent->collapse(id));
+    return collapsed ? *this :
+           Tree(parent, parent->collapse(id), true);
 }
