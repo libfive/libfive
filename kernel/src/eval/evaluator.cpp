@@ -937,21 +937,21 @@ const float* Evaluator::values(Result::Index count, bool vectorize)
             clause(itr->op, &result.mf[itr->a][0], &result.mf[itr->b][0],
                    &result.mf[--index][0], count);
         }
-
-        return result.f[index];
-    }
+    } else
 #else
 const float* Evaluator::values(Result::Index count)
 {
 #endif
-    auto index = tape.size();
-    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
     {
-        clause(itr->op, result.f[itr->a], result.f[itr->b],
-               result.f[--index], count);
+        auto index = tape.size();
+        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
+        {
+            clause(itr->op, result.f[itr->a], result.f[itr->b],
+                   result.f[--index], count);
+        }
     }
 
-    return result.f[index];
+    return result.f[0];
 }
 
 #ifdef __AVX__
