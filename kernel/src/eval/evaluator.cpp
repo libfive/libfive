@@ -46,6 +46,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     {
         rtape.push_back(
                 {cache->opcode(t),
+                 id,
                  clauses.at(cache->lhs(t)),
                  clauses.at(cache->rhs(t))});
         clauses[t] = id;
@@ -918,11 +919,10 @@ const float* Evaluator::values(Result::Index count, bool vectorize)
     {
         count = (count - 1)/8 + 1;
 
-        auto index = tape->size() - 1;
-        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr, --index)
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
             clause(itr->op, &result.mf[itr->a][0], &result.mf[itr->b][0],
-                   &result.mf[index][0], count);
+                   &result.mf[itr->id][0], count);
         }
     } else
 #else
@@ -930,11 +930,10 @@ const float* Evaluator::values(Result::Index count)
 {
 #endif
     {
-        auto index = tape->size() - 1;
-        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr, --index)
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
             clause(itr->op, result.f[itr->a], result.f[itr->b],
-                   result.f[index], count);
+                   result.f[itr->id], count);
         }
     }
 
@@ -950,8 +949,7 @@ std::tuple<const float*, const float*,
     {
         Result::Index vc = (count - 1)/8 + 1;
 
-        auto index = tape->size() - 1;
-        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr, --index)
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
             clause(itr->op,
                    &result.mf[itr->a][0], &result.mdx[itr->a][0],
@@ -960,8 +958,8 @@ std::tuple<const float*, const float*,
                    &result.mf[itr->b][0], &result.mdx[itr->b][0],
                    &result.mdy[itr->b][0], &result.mdz[itr->b][0],
 
-                   &result.mf[index][0], &result.mdx[index][0],
-                   &result.mdy[index][0], &result.mdz[index][0],
+                   &result.mf[itr->id][0], &result.mdx[itr->id][0],
+                   &result.mdy[itr->id][0], &result.mdz[itr->id][0],
                    vc);
         }
 
@@ -972,8 +970,7 @@ std::tuple<const float*, const float*,
 {
 #endif
     {
-        auto index = tape->size() - 1;
-        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr, --index)
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
             clause(itr->op,
                    result.f[itr->a], result.dx[itr->a],
@@ -982,8 +979,8 @@ std::tuple<const float*, const float*,
                    result.f[itr->b], result.dx[itr->b],
                    result.dy[itr->b], result.dz[itr->b],
 
-                   result.f[index], result.dx[index],
-                   result.dy[index], result.dz[index],
+                   result.f[itr->id], result.dx[itr->id],
+                   result.dy[itr->id], result.dz[itr->id],
                    count);
         }
     }
@@ -1008,13 +1005,12 @@ std::tuple<const float*, const float*,
 
 Interval Evaluator::interval()
 {
-    auto index = tape->size() - 1;
-    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr, --index)
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
     {
         Interval a = result.i[itr->a];
         Interval b = result.i[itr->b];
 
-        result.i[index] = clause(itr->op, a, b);
+        result.i[itr->id] = clause(itr->op, a, b);
     }
     return result.i[0];
 }

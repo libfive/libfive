@@ -30,13 +30,14 @@ struct Clause
     /*
      *  Clause constructor
      */
-    Clause(Opcode::Opcode op, uint32_t a, uint32_t b)
-        : op(op), a(a), b(b) {}
+    Clause(Opcode::Opcode op, uint32_t id, uint32_t a, uint32_t b)
+        : op(op), id(id), a(a), b(b) {}
 
     /*  Opcode for this clause  */
     const Opcode::Opcode op;
 
     /*  Populated for operators with arguments */
+    Id const id;
     Id const a;
     Id const b;
 };
