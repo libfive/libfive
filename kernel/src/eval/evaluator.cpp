@@ -165,7 +165,7 @@ void Evaluator::push()
         {
             tape->push_back(c);
         }
-        assert(tape->size() == current_tape->size());
+        assert(tape->size() <= current_tape->size());
     }
 }
 
