@@ -54,6 +54,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     };
 
     // And here we go!
+    std::map<Clause::Id, float> constants;
     for (auto m : cache->data.left)
     {
         if (connected.count(m.second))
@@ -68,7 +69,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
             {
                 if (m.first.opcode() == Opcode::CONST)
                 {
-                    result.fill(m.first.value(), id);
+                    constants[id] = m.first.value();
                 }
                 clauses[m.second] = id--;
             }
@@ -94,6 +95,12 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
 
     // Allocate enough memory for all the clauses
     result.resize(clauses.size());
+
+    // Store all constants in results array
+    for (auto c : constants)
+    {
+        result.fill(c.second, c.first);
+    }
 
     // Save X, Y, Z ids and set their derivatives
     X = clauses.at(cache->X());
