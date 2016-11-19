@@ -1,4 +1,3 @@
-#include <iostream>
 /*
  *  Copyright (C) 2016 Matthew Keeter  <matt.j.keeter@gmail.com>
  *
