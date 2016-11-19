@@ -931,11 +931,11 @@ const float* Evaluator::values(Result::Index count, bool vectorize)
     {
         count = (count - 1)/8 + 1;
 
-        auto index = tape.size();
-        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
+        auto index = tape.size() - 1;
+        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr, --index)
         {
             clause(itr->op, &result.mf[itr->a][0], &result.mf[itr->b][0],
-                   &result.mf[--index][0], count);
+                   &result.mf[index][0], count);
         }
     } else
 #else
@@ -943,11 +943,11 @@ const float* Evaluator::values(Result::Index count)
 {
 #endif
     {
-        auto index = tape.size();
-        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
+        auto index = tape.size() - 1;
+        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr, --index)
         {
             clause(itr->op, result.f[itr->a], result.f[itr->b],
-                   result.f[--index], count);
+                   result.f[index], count);
         }
     }
 
@@ -985,8 +985,8 @@ std::tuple<const float*, const float*,
 {
 #endif
     {
-        auto index = tape.size();
-        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
+        auto index = tape.size() - 1;
+        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr, --index)
         {
             clause(itr->op,
                    result.f[itr->a], result.dx[itr->a],
@@ -998,7 +998,6 @@ std::tuple<const float*, const float*,
                    result.f[index], result.dx[index],
                    result.dy[index], result.dz[index],
                    count);
-            --index;
         }
     }
 
@@ -1022,13 +1021,13 @@ std::tuple<const float*, const float*,
 
 Interval Evaluator::interval()
 {
-    auto index = tape.size();
-    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
+    auto index = tape.size() - 1;
+    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr, --index)
     {
         Interval a = result.i[itr->a];
         Interval b = result.i[itr->b];
 
-        result.i[--index] = clause(itr->op, a, b);
+        result.i[index] = clause(itr->op, a, b);
     }
     return result.i[0];
 }
