@@ -131,8 +131,11 @@ protected:
     uint32_t X, Y, Z;
 
     /*  Tape containing our opcodes in reverse order */
-    std::vector<Clause> tape;
-    std::vector<bool> disabled;
+    typedef std::vector<Clause> Tape;
+    std::list<Tape> tapes;
+    std::list<Tape>::iterator tape;
+
+    std::vector<uint8_t> disabled;
 
     Result result;
 };

@@ -77,9 +77,11 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     assert(id + 1 == 0);
 
     // Copy over the tape in reversed order
+    tapes.push_back(Tape());
+    tape = tapes.begin();
     for (auto itr = rtape.rbegin(); itr != rtape.rend(); ++itr)
     {
-        tape.push_back(*itr);
+        tape->push_back(*itr);
     }
 
     // Make sure that X, Y, Z have been allocated space
@@ -94,6 +96,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
 
     // Allocate enough memory for all the clauses
     result.resize(clauses.size());
+    disabled.resize(tape->size());
 
     // Store all constants in results array
     for (auto c : constants)
@@ -138,52 +141,37 @@ void Evaluator::set(Interval x, Interval y, Interval z)
 
 void Evaluator::push()
 {
-    /*
-    // Walk up the tree, marking every atom with ATOM_FLAG_IGNORED
-    for (const auto& row : rows)
+    auto current_tape = tape;
+    if (++tape == tapes.end())
     {
-        for (size_t i=0; i < row.active; ++i)
+        tape = tapes.insert(tape, Tape());
+        tape->reserve(current_tape->size());
+    }
+    assert(tape != tapes.end());
+
+    if (current_tape->size())
+    {
+        // We may be reusing an existing tape, so resize to 0
+        // (but make sure it still has allocated storage)
+        tape->clear();
+        assert(tape->capacity() >= current_tape->size());
+
+        // Next, we figure out which clauses are disabled and only push enabled
+        // clauses into the new tape (aspirationally)
+        std::fill(disabled.begin(), disabled.end(), true);
+        disabled[0] = false;
+        for (const auto& c : *current_tape)
         {
-            row[i]->disable();
+            tape->push_back(c);
         }
+        assert(tape->size() == current_tape->size());
     }
-
-    // Clear the IGNORED flag on the root
-    root->enable();
-
-    // Walk down the tree, clearing IGNORED flags as appropriate
-    // and disabling atoms that still have IGNORED flags set.
-    for (auto itr = rows.rbegin(); itr != rows.rend(); ++itr)
-    {
-        itr->push();
-    }
-
-    for (const auto& row : rows)
-    {
-        for (size_t i=0; i < row.active; ++i)
-        {
-            row[i]->op_ = getOpcode(row[i]);
-        }
-    }
-    */
 }
 
 void Evaluator::pop()
 {
-    /*
-    for (auto& row : rows)
-    {
-        row.pop();
-    }
-
-    for (const auto& row : rows)
-    {
-        for (size_t i=0; i < row.active; ++i)
-        {
-            row[i]->op_ = getOpcode(row[i]);
-        }
-    }
-    */
+    assert(tape != tapes.begin());
+    tape--;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -930,8 +918,8 @@ const float* Evaluator::values(Result::Index count, bool vectorize)
     {
         count = (count - 1)/8 + 1;
 
-        auto index = tape.size() - 1;
-        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr, --index)
+        auto index = tape->size() - 1;
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr, --index)
         {
             clause(itr->op, &result.mf[itr->a][0], &result.mf[itr->b][0],
                    &result.mf[index][0], count);
@@ -942,8 +930,8 @@ const float* Evaluator::values(Result::Index count)
 {
 #endif
     {
-        auto index = tape.size() - 1;
-        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr, --index)
+        auto index = tape->size() - 1;
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr, --index)
         {
             clause(itr->op, result.f[itr->a], result.f[itr->b],
                    result.f[index], count);
@@ -962,8 +950,8 @@ std::tuple<const float*, const float*,
     {
         Result::Index vc = (count - 1)/8 + 1;
 
-        auto index = tape.size() - 1;
-        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr, --index)
+        auto index = tape->size() - 1;
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr, --index)
         {
             clause(itr->op,
                    &result.mf[itr->a][0], &result.mdx[itr->a][0],
@@ -984,8 +972,8 @@ std::tuple<const float*, const float*,
 {
 #endif
     {
-        auto index = tape.size() - 1;
-        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr, --index)
+        auto index = tape->size() - 1;
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr, --index)
         {
             clause(itr->op,
                    result.f[itr->a], result.dx[itr->a],
@@ -1020,8 +1008,8 @@ std::tuple<const float*, const float*,
 
 Interval Evaluator::interval()
 {
-    auto index = tape.size() - 1;
-    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr, --index)
+    auto index = tape->size() - 1;
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr, --index)
     {
         Interval a = result.i[itr->a];
         Interval b = result.i[itr->b];
@@ -1089,17 +1077,5 @@ void Evaluator::applyTransform(Result::Index count)
 
 double Evaluator::utilization() const
 {
-    return 1.0f;
-    /*
-    double total = 0;
-    double active = 0;
-
-    for (const auto& r : rows)
-    {
-        total += r.size();
-        active += r.active;
-    }
-
-    return active / total;
-    */
+    return tape->size() / double(tapes.front().size());
 }
