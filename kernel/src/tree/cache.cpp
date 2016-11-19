@@ -309,7 +309,7 @@ std::set<Cache::Id> Cache::findConnected(Id root)
             found.insert(c->first.rhs());
         }
     }
-
+    found.erase(0);
     return found;
 }
 

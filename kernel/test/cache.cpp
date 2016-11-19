@@ -152,3 +152,11 @@ TEST_CASE("Collapsing affine trees")
     auto collapsed = t->collapse(a_affine);
     REQUIRE(collapsed == 13);
 }
+
+TEST_CASE("Cache::findConnected")
+{
+    Cache::reset();
+    auto t = Cache::instance();
+    auto connected = t->findConnected(t->X());
+    REQUIRE(connected.size() == 1);
+}
