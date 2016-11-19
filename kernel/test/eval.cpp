@@ -148,3 +148,27 @@ TEST_CASE("Matrix normals")
         REQUIRE(d.z == Approx(0));
     }
 }
+
+TEST_CASE("Evaluator::derivs")
+{
+    Evaluator e(Tree::affine(1, 0, 0, 0));
+    e.set(0, 0, 0, 0);
+    e.set(1, 2, 3, 1);
+    auto d = e.derivs(2);
+
+    // Values = x
+    REQUIRE(std::get<0>(d)[0] == 0.0);
+    REQUIRE(std::get<0>(d)[1] == 1.0);
+
+    // d/dx = 1
+    REQUIRE(std::get<1>(d)[0] == 1.0);
+    REQUIRE(std::get<1>(d)[1] == 1.0);
+
+    // d/dy = 0
+    REQUIRE(std::get<2>(d)[0] == 1.0);
+    REQUIRE(std::get<2>(d)[1] == 1.0);
+
+    // d/dz = 0
+    REQUIRE(std::get<3>(d)[0] == 1.0);
+    REQUIRE(std::get<3>(d)[1] == 1.0);
+}
