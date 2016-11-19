@@ -18,40 +18,46 @@
  */
 #include "ao/kernel/eval/result.hpp"
 
-Result::Result()
+void Result::resize(Index clauses)
 {
 #ifdef __AVX__
-    f  = reinterpret_cast<float*>(mf);
-    dx = reinterpret_cast<float*>(mdx);
-    dy = reinterpret_cast<float*>(mdy);
-    dz = reinterpret_cast<float*>(mdz);
+    _mf.resize(clauses);
+    _mdx.resize(clauses);
+    _mdy.resize(clauses);
+    _mdz.resize(clauses);
+    _i.resize(clauses);
+
+    _f  = reinterpret_cast<float(*)[N]>(&_mf[0]);
+    _dx = reinterpret_cast<float(*)[N]>(&_mdx[0]);
+    _dy = reinterpret_cast<float(*)[N]>(&_mdy[0]);
+    _dz = reinterpret_cast<float(*)[N]>(&_mdz[0]);
+#else
+    _f.resize(clauses);
+    _dx.resize(clauses);
+    _dy.resize(clauses);
+    _dz.resize(clauses);
 #endif
 }
 
-void Result::set(Interval V)
-{
-    i = V;
-}
-
-void Result::fill(float v)
+void Result::fill(float v, Clause::Id clause)
 {
     for (unsigned i=0; i < N; ++i)
     {
-        f[i] = v;
-        dx[i] = 0;
-        dy[i] = 0;
-        dz[i] = 0;
+        _f[clause][i] = v;
+        _dx[clause][i] = 0;
+        _dy[clause][i] = 0;
+        _dz[clause][i] = 0;
     }
 
-    i = Interval(v, v);
+    _i[clause] = Interval(v, v);
 }
 
-void Result::deriv(float x, float y, float z)
+void Result::deriv(float x, float y, float z, Clause::Id clause)
 {
     for (size_t i=0; i < N; ++i)
     {
-        dx[i] = x;
-        dy[i] = y;
-        dz[i] = z;
+        _dx[clause][i] = x;
+        _dy[clause][i] = y;
+        _dz[clause][i] = z;
     }
 }

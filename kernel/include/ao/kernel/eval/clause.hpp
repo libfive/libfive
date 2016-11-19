@@ -19,70 +19,24 @@
 #pragma once
 
 #include "ao/kernel/tree/opcode.hpp"
-#include "ao/kernel/eval/result.hpp"
-
-class Atom;
 
 /*
  *  A clause is used in an Evaluator to evaluate a tree
  */
-class Clause
+struct Clause
 {
-public:
+    typedef uint32_t Id;
+
     /*
      *  Clause constructor
-     *
-     *  value only matters for CONST operations;
-     *  lhs and rhs only matter for unary and binary operations
      */
-    Clause(Opcode::Opcode op, float value, Clause* lhs, Clause* rhs);
+    Clause(Opcode::Opcode op, uint32_t a, uint32_t b)
+        : op(op), a(a), b(b) {}
 
-    /*
-     *  If the disabled flag is set, returns true
-     *
-     *  Otherwise, clears the disabled flag in its children, handling min
-     *  and max operations (which may only leave one child active),
-     *  returning false.
-     */
-    bool checkDisabled();
-
-    /*
-     *  Sets or clears CLAUSE_FLAG_DISABLED
-     */
-    void disable() { disabled = true; }
-    void enable()  { disabled = false; }
-
-protected:
     /*  Opcode for this clause  */
     const Opcode::Opcode op;
 
-    /*  This is a mutable opcode that changes when children are disabled */
-    Opcode::Opcode op_;
-
-    /*  Populated for CONST clause */
-    const float value;
-
-    /*  Flag used in tree pruning  */
-    bool disabled = false;
-
     /*  Populated for operators with arguments */
-    Clause* const a;
-    Clause* const b;
-
-    /*  Store pointers to various result arrays for fast evaluation
-     *  (since a and b don't change, no need to check them for null on
-     *   every iteration through an evaluation)*/
-#ifdef __AVX__
-    struct ResultPtrs { float *f, *dx, *dy, *dz;
-                        __m256 *mf, *mdx, *mdy, *mdz; };
-#else
-    struct ResultPtrs { float *f, *dx, *dy, *dz; };
-#endif
-    struct { ResultPtrs a;
-             ResultPtrs b; } ptrs;
-
-    /*  Results are stored in a struct */
-    Result result;
-
-    friend class Evaluator;
+    Id const a;
+    Id const b;
 };

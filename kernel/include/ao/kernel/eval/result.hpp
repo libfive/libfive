@@ -24,36 +24,58 @@
 #include <immintrin.h>
 
 #include "ao/kernel/eval/interval.hpp"
+#include "ao/kernel/eval/clause.hpp"
 
 struct Result {
+    typedef uint32_t Index;
+
     /*
-     *  Initialize array pointers
+     *  Prepares the given number of clauses
      */
-    Result();
+    void resize(Clause::Id clauses);
 
     /*
      *  Look up a particular value by index
      */
-    float& operator[](size_t index) { return f[index]; }
+    float& f(Clause::Id clause, Index index)
+    { return _f[clause][index]; }
+
+    float& dx(Clause::Id clause, Index index)
+    { return _dx[clause][index]; }
+    float& dy(Clause::Id clause, Index index)
+    { return _dy[clause][index]; }
+    float& dz(Clause::Id clause, Index index)
+    { return _dz[clause][index]; }
+
+#ifdef __AVX__
+    __m256& mf(Clause::Id clause, Index index)
+    { return _mf[clause][index]; }
+
+    __m256& mdx(Clause::Id clause, Index index)
+    { return _mdx[clause][index]; }
+    __m256& mdy(Clause::Id clause, Index index)
+    { return _mdy[clause][index]; }
+    __m256& mdz(Clause::Id clause, Index index)
+    { return _mdz[clause][index]; }
+#endif
 
     /*
      *  Sets a particular value in the array
-     *  (inlined for efficiency)
      */
-    void set(float v, size_t index)
-    {
-        f[index] = v;
-    }
+    void set(float v, Clause::Id clause, Index index)
+    { _f[clause][index] = v; }
 
     /*
      *  Sets the interval value in the array
      */
-    void set(Interval V);
+    void set(const Interval& V, Clause::Id clause)
+    { _i[clause] = V; }
 
     /*
      *  Returns the float at the given index
      */
-    float get(size_t index) const { return f[index]; }
+    float get(Clause::Id clause, Index index) const
+    { return _f[clause][index]; }
 
     /*
      *  Sets all of the values to the given constant float
@@ -61,39 +83,37 @@ struct Result {
      *
      *  Gradients are set to {0, 0, 0}
      */
-    void fill(float v);
+    void fill(float v, Clause::Id clause);
 
     /*
      *  Fills the derivative arrays with the given values
      */
-    void deriv(float x, float y, float z);
+    void deriv(float x, float y, float z, Clause::Id clause);
 
     // This is the number of samples that we can process in one pass
-    static constexpr size_t N = 256;
+    static constexpr Index N = 256;
 
 protected:
 
     // If we're using AVX for evaluation, then our floats are simply
     // pointers to the first member of the __m256 array
 #ifdef __AVX__
-    __m256  mf[N / 8];
-    __m256 mdx[N / 8];
-    __m256 mdy[N / 8];
-    __m256 mdz[N / 8];
+    std::vector<std::array<__m256, N/8>> _mf;
+    std::vector<std::array<__m256, N/8>> _mdx;
+    std::vector<std::array<__m256, N/8>> _mdy;
+    std::vector<std::array<__m256, N/8>> _mdz;
 
-    float* f;
-    float* dx;
-    float* dy;
-    float* dz;
+    float (*_f)[N];
+    float (*_dx)[N];
+    float (*_dy)[N];
+    float (*_dz)[N];
 #else
-    float  f[N];
-    float dx[N];
-    float dy[N];
-    float dz[N];
+    std::vector<std::array<float, N>> _f;
+    std::vector<std::array<float, N>> _dx;
+    std::vector<std::array<float, N>> _dy;
+    std::vector<std::array<float, N>> _dz;
 #endif
-
-    Interval i;
+    std::vector<Interval> _i;
 
     friend class Evaluator;
-    friend class Clause;
 };
