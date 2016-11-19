@@ -130,9 +130,9 @@ Interval Evaluator::eval(Interval x, Interval y, Interval z)
 
 void Evaluator::set(Interval x, Interval y, Interval z)
 {
-    result.set(M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0], X);
-    result.set(M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1], Y);
-    result.set(M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2], Z);
+    result.i[X] = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
+    result.i[Y] = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
+    result.i[Z] = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -934,11 +934,11 @@ const float* Evaluator::values(Result::Index count, bool vectorize)
         auto index = tape.size();
         for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
         {
-            clause(itr->op, &result.mf(itr->a, 0), &result.mf(itr->b, 0),
-                   &result.mf(--index, 0), count);
+            clause(itr->op, &result.mf[itr->a][0], &result.mf[itr->b][0],
+                   &result.mf[--index][0], count);
         }
 
-        return &result.f(index, 0);
+        return result.f[index];
     }
 #else
 const float* Evaluator::values(Result::Index count)
@@ -947,11 +947,11 @@ const float* Evaluator::values(Result::Index count)
     auto index = tape.size();
     for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
     {
-        clause(itr->op, &result.f(itr->a, 0), &result.f(itr->b, 0),
-               &result.f(--index, 0), count);
+        clause(itr->op, result.f[itr->a], result.f[itr->b],
+               result.f[--index], count);
     }
 
-    return &result.f(index, 0);
+    return result.f[index];
 }
 
 #ifdef __AVX__
@@ -967,14 +967,14 @@ std::tuple<const float*, const float*,
         for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
         {
             clause(itr->op,
-                   &result.mf(itr->a, 0), &result.mdx(itr->a, 0),
-                   &result.mdy(itr->a, 0), &result.mdz(itr->a, 0),
+                   &result.mf[itr->a][0], &result.mdx[itr->a][0],
+                   &result.mdy[itr->a][0], &result.mdz[itr->a][0],
 
-                   &result.mf(itr->b, 0), &result.mdx(itr->b, 0),
-                   &result.mdy(itr->b, 0), &result.mdz(itr->b, 0),
+                   &result.mf[itr->b][0], &result.mdx[itr->b][0],
+                   &result.mdy[itr->b][0], &result.mdz[itr->b][0],
 
-                   &result.mf(index, 0), &result.mdx(index, 0),
-                   &result.mdy(index, 0), &result.mdz(index, 0),
+                   &result.mf[index][0], &result.mdx[index][0],
+                   &result.mdy[index][0], &result.mdz[index][0],
                    vc);
             --index;
         }
@@ -990,14 +990,14 @@ std::tuple<const float*, const float*,
         for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
         {
             clause(itr->op,
-                   &result.f(itr->a, 0), &result.dx(itr->a, 0),
-                   &result.dy(itr->a, 0), &result.dz(itr->a, 0),
+                   result.f[itr->a], result.dx[itr->a],
+                   result.dy[itr->a], result.dz[itr->a],
 
-                   &result.f(itr->b, 0), &result.dx(itr->b, 0),
-                   &result.dy(itr->b, 0), &result.dz(itr->b, 0),
+                   result.f[itr->b], result.dx[itr->b],
+                   result.dy[itr->b], result.dz[itr->b],
 
-                   &result.f(index, 0), &result.dx(index, 0),
-                   &result.dy(index, 0), &result.dz(index, 0),
+                   result.f[index], result.dx[index],
+                   result.dy[index], result.dz[index],
                    count);
             --index;
         }
@@ -1007,17 +1007,17 @@ std::tuple<const float*, const float*,
     auto o = Mi * glm::vec4(0,0,0,1);
     for (size_t i=0; i < count; ++i)
     {
-        auto n = Mi * glm::vec4(result.dx(0, i),
-                                result.dy(0, i),
-                                result.dz(0, i), 1) - o;
-        result.dx(0, i) = n.x;
-        result.dy(0, i) = n.y;
-        result.dz(0, i) = n.z;
+        auto n = Mi * glm::vec4(result.dx[0][i],
+                                result.dy[0][i],
+                                result.dz[0][i], 1) - o;
+        result.dx[0][i] = n.x;
+        result.dy[0][i] = n.y;
+        result.dz[0][i] = n.z;
     }
 
     return std::tuple<const float*, const float*,
                       const float*, const float*> {
-        &result.f(0,0), &result.dx(0,0), &result.dy(0,0), &result.dz(0,0)
+        result.f[0], result.dx[0], result.dy[0], result.dz[0]
     };
 }
 
@@ -1026,12 +1026,12 @@ Interval Evaluator::interval()
     auto index = tape.size();
     for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
     {
-        Interval a = result._i[itr->a];
-        Interval b = result._i[itr->b];
+        Interval a = result.i[itr->a];
+        Interval b = result.i[itr->b];
 
-        result._i[--index] = clause(itr->op, a, b);
+        result.i[--index] = clause(itr->op, a, b);
     }
-    return result._i[0];
+    return result.i[0];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1057,18 +1057,18 @@ void Evaluator::applyTransform(Result::Index count)
 
     for (size_t i=0; i < (count + 7) / 8; ++i)
     {
-        __m256 x = result.mf(X, i);
-        __m256 y = result.mf(Y, i);
-        __m256 z = result.mf(Z, i);
-        result.mf(X, i) = _mm256_add_ps(
+        __m256 x = result.mf[X][i];
+        __m256 y = result.mf[Y][i];
+        __m256 z = result.mf[Z][i];
+        result.mf[X][i] = _mm256_add_ps(
             _mm256_add_ps(
                 _mm256_mul_ps(x, M00), _mm256_mul_ps(y, M10)),
             _mm256_add_ps(_mm256_mul_ps(z, M20), M30));
-        result.mf(Y, i) = _mm256_add_ps(
+        result.mf[Y][i] = _mm256_add_ps(
             _mm256_add_ps(
                 _mm256_mul_ps(x, M01), _mm256_mul_ps(y, M11)),
             _mm256_add_ps(_mm256_mul_ps(z, M21), M31));
-        result.mf(Z, i) = _mm256_add_ps(
+        result.mf[Z][i] = _mm256_add_ps(
             _mm256_add_ps(
                 _mm256_mul_ps(x, M02), _mm256_mul_ps(y, M12)),
             _mm256_add_ps(_mm256_mul_ps(z, M22), M32));

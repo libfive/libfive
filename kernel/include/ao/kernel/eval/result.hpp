@@ -35,49 +35,6 @@ struct Result {
     void resize(Clause::Id clauses);
 
     /*
-     *  Look up a particular value by index
-     */
-    float& f(Clause::Id clause, Index index)
-    { return _f[clause][index]; }
-
-    float& dx(Clause::Id clause, Index index)
-    { return _dx[clause][index]; }
-    float& dy(Clause::Id clause, Index index)
-    { return _dy[clause][index]; }
-    float& dz(Clause::Id clause, Index index)
-    { return _dz[clause][index]; }
-
-#ifdef __AVX__
-    __m256& mf(Clause::Id clause, Index index)
-    { return _mf[clause][index]; }
-
-    __m256& mdx(Clause::Id clause, Index index)
-    { return _mdx[clause][index]; }
-    __m256& mdy(Clause::Id clause, Index index)
-    { return _mdy[clause][index]; }
-    __m256& mdz(Clause::Id clause, Index index)
-    { return _mdz[clause][index]; }
-#endif
-
-    /*
-     *  Sets a particular value in the array
-     */
-    void set(float v, Clause::Id clause, Index index)
-    { _f[clause][index] = v; }
-
-    /*
-     *  Sets the interval value in the array
-     */
-    void set(const Interval& V, Clause::Id clause)
-    { _i[clause] = V; }
-
-    /*
-     *  Returns the float at the given index
-     */
-    float get(Clause::Id clause, Index index) const
-    { return _f[clause][index]; }
-
-    /*
      *  Sets all of the values to the given constant float
      *  (across the Interval, float, Gradient, and __m256 arrays)
      *
@@ -93,27 +50,23 @@ struct Result {
     // This is the number of samples that we can process in one pass
     static constexpr Index N = 256;
 
-protected:
-
     // If we're using AVX for evaluation, then our floats are simply
     // pointers to the first member of the __m256 array
 #ifdef __AVX__
-    std::vector<std::array<__m256, N/8>> _mf;
-    std::vector<std::array<__m256, N/8>> _mdx;
-    std::vector<std::array<__m256, N/8>> _mdy;
-    std::vector<std::array<__m256, N/8>> _mdz;
+    std::vector<std::array<__m256, N/8>> mf;
+    std::vector<std::array<__m256, N/8>> mdx;
+    std::vector<std::array<__m256, N/8>> mdy;
+    std::vector<std::array<__m256, N/8>> mdz;
 
-    float (*_f)[N];
-    float (*_dx)[N];
-    float (*_dy)[N];
-    float (*_dz)[N];
+    float (*f)[N];
+    float (*dx)[N];
+    float (*dy)[N];
+    float (*dz)[N];
 #else
-    std::vector<std::array<float, N>> _f;
-    std::vector<std::array<float, N>> _dx;
-    std::vector<std::array<float, N>> _dy;
-    std::vector<std::array<float, N>> _dz;
+    std::vector<std::array<float, N>> f;
+    std::vector<std::array<float, N>> dx;
+    std::vector<std::array<float, N>> dy;
+    std::vector<std::array<float, N>> dz;
 #endif
-    std::vector<Interval> _i;
-
-    friend class Evaluator;
+    std::vector<Interval> i;
 };

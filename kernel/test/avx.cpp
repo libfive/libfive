@@ -94,15 +94,18 @@ TEST_CASE("Alignment")
     struct { char a;
              Result result; } s;
     s.result.resize(2);
-    REQUIRE(((intptr_t)(&s.result.mf(0,0)) & 0x1f) == 0);
-    REQUIRE(((intptr_t)(&s.result.mf(1,0)) & 0x1f) == 0);
 
-    REQUIRE(((intptr_t)(&s.result.mdx(0,0)) & 0x1f) == 0);
-    REQUIRE(((intptr_t)(&s.result.mdx(1,0)) & 0x1f) == 0);
-    REQUIRE(((intptr_t)(&s.result.mdy(0,0)) & 0x1f) == 0);
-    REQUIRE(((intptr_t)(&s.result.mdy(1,0)) & 0x1f) == 0);
-    REQUIRE(((intptr_t)(&s.result.mdz(0,0)) & 0x1f) == 0);
-    REQUIRE(((intptr_t)(&s.result.mdz(1,0)) & 0x1f) == 0);
+    // Check the alignment of the first two members of value array
+    REQUIRE(((intptr_t)(&s.result.mf[0]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mf[1]) & 0x1f) == 0);
+
+    // Check the derivative arrays too
+    REQUIRE(((intptr_t)(&s.result.mdx[0]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdx[1]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdy[0]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdy[1]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdz[0]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdz[1]) & 0x1f) == 0);
 }
 
 #endif

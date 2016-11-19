@@ -81,9 +81,9 @@ public:
      */
     void set(float x, float y, float z, Result::Index index)
     {
-        result.set(M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0], X, index);
-        result.set(M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1], Y, index);
-        result.set(M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2], Z, index);
+        result.f[X][index] = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
+        result.f[Y][index] = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
+        result.f[Z][index] = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
     }
 
     /*
@@ -91,9 +91,9 @@ public:
      */
     void setRaw(float x, float y, float z, Result::Index index)
     {
-        result.set(x, X, index);
-        result.set(y, Y, index);
-        result.set(z, Z, index);
+        result.f[X][index] = x;
+        result.f[Y][index] = y;
+        result.f[Z][index] = z;
     }
 
     /*

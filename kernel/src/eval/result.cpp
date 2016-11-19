@@ -21,21 +21,21 @@
 void Result::resize(Index clauses)
 {
 #ifdef __AVX__
-    _mf.resize(clauses);
-    _mdx.resize(clauses);
-    _mdy.resize(clauses);
-    _mdz.resize(clauses);
-    _i.resize(clauses);
+    mf.resize(clauses);
+    mdx.resize(clauses);
+    mdy.resize(clauses);
+    mdz.resize(clauses);
+    i.resize(clauses);
 
-    _f  = reinterpret_cast<float(*)[N]>(&_mf[0]);
-    _dx = reinterpret_cast<float(*)[N]>(&_mdx[0]);
-    _dy = reinterpret_cast<float(*)[N]>(&_mdy[0]);
-    _dz = reinterpret_cast<float(*)[N]>(&_mdz[0]);
+    f  = reinterpret_cast<float(*)[N]>(&mf[0]);
+    dx = reinterpret_cast<float(*)[N]>(&mdx[0]);
+    dy = reinterpret_cast<float(*)[N]>(&mdy[0]);
+    dz = reinterpret_cast<float(*)[N]>(&mdz[0]);
 #else
-    _f.resize(clauses);
-    _dx.resize(clauses);
-    _dy.resize(clauses);
-    _dz.resize(clauses);
+    f.resize(clauses);
+    dx.resize(clauses);
+    dy.resize(clauses);
+    dz.resize(clauses);
 #endif
 }
 
@@ -43,21 +43,21 @@ void Result::fill(float v, Clause::Id clause)
 {
     for (unsigned i=0; i < N; ++i)
     {
-        _f[clause][i] = v;
-        _dx[clause][i] = 0;
-        _dy[clause][i] = 0;
-        _dz[clause][i] = 0;
+        f[clause][i] = v;
+        dx[clause][i] = 0;
+        dy[clause][i] = 0;
+        dz[clause][i] = 0;
     }
 
-    _i[clause] = Interval(v, v);
+    i[clause] = Interval(v, v);
 }
 
 void Result::deriv(float x, float y, float z, Clause::Id clause)
 {
     for (size_t i=0; i < N; ++i)
     {
-        _dx[clause][i] = x;
-        _dy[clause][i] = y;
-        _dz[clause][i] = z;
+        dx[clause][i] = x;
+        dy[clause][i] = y;
+        dz[clause][i] = z;
     }
 }
