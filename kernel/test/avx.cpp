@@ -97,8 +97,12 @@ TEST_CASE("Alignment")
     REQUIRE(((intptr_t)(&s.result.mf(0,0)) & 0x1f) == 0);
     REQUIRE(((intptr_t)(&s.result.mf(1,0)) & 0x1f) == 0);
 
-    // Double-check alignment requirements
-    REQUIRE(alignof(Result) == 32);
+    REQUIRE(((intptr_t)(&s.result.mdx(0,0)) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdx(1,0)) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdy(0,0)) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdy(1,0)) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdz(0,0)) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdz(1,0)) & 0x1f) == 0);
 }
 
 #endif
