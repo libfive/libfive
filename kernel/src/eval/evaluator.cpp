@@ -1,3 +1,4 @@
+#include <iostream>
 /*
  *  Copyright (C) 2016 Matthew Keeter  <matt.j.keeter@gmail.com>
  *
@@ -42,6 +43,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     connected.insert(cache->Z());
 
     // Helper function to create a new clause in the data array
+    // The dummy clause (0) is mapped to the first result slot
     std::unordered_map<Cache::Id, Clause::Id> clauses = {{0, 0}};
     Clause::Id id = 0;
     auto newClause = [&id, &clauses, cache, this](const Cache::Id t)
@@ -56,7 +58,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
 
     // And here we go!
     for (auto itr = cache->data.left.rbegin();
-              itr != cache->data.left.rbegin(); ++itr)
+              itr != cache->data.left.rend(); ++itr)
     {
         if (connected.count(itr->second))
         {
@@ -77,9 +79,17 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
         }
     }
 
-    result.deriv(1, 0, 0, clauses.at(cache->X()));
-    result.deriv(0, 1, 0, clauses.at(cache->Y()));
-    result.deriv(0, 0, 1, clauses.at(cache->Z()));
+    // Allocate enough memory for all the clauses
+    result.resize(clauses.size());
+
+    // Save X, Y, Z ids and set their derivatives
+    X = clauses.at(cache->X());
+    Y = clauses.at(cache->Y());
+    Z = clauses.at(cache->Z());
+
+    result.deriv(1, 0, 0, X);
+    result.deriv(0, 1, 0, Y);
+    result.deriv(0, 0, 1, Z);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
