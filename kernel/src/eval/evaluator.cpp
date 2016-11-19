@@ -37,45 +37,58 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     Cache* cache = root.parent.get();
     auto connected = cache->findConnected(root.id);
 
-    // Make sure that X, Y, Z are to be loaded
-    connected.insert(cache->X());
-    connected.insert(cache->Y());
-    connected.insert(cache->Z());
-
     // Helper function to create a new clause in the data array
     // The dummy clause (0) is mapped to the first result slot
     std::unordered_map<Cache::Id, Clause::Id> clauses = {{0, 0}};
-    Clause::Id id = 0;
-    auto newClause = [&id, &clauses, cache, this](const Cache::Id t)
+    Clause::Id id = connected.size() - 1;
+
+    std::list<Clause> rtape;
+    auto newClause = [&id, &clauses, &rtape, cache](const Cache::Id t)
     {
-        this->tape.push_back(
+        rtape.push_back(
                 {cache->opcode(t),
                  clauses.at(cache->lhs(t)),
                  clauses.at(cache->rhs(t))});
         clauses[t] = id;
-        return id++;
+        return id--;
     };
 
     // And here we go!
-    for (auto itr = cache->data.left.rbegin();
-              itr != cache->data.left.rend(); ++itr)
+    for (auto m : cache->data.left)
     {
-        if (connected.count(itr->second))
+        if (connected.count(m.second))
         {
             // Normal clauses end up in the tape
-            if (itr->first.rank() > 0)
+            if (m.first.rank() > 0)
             {
-                newClause(itr->second);
+                newClause(m.second);
             }
             // Other clauses get allocated results but no tape
             else
             {
-                if (itr->first.opcode() == Opcode::CONST)
+                if (m.first.opcode() == Opcode::CONST)
                 {
-                    result.fill(itr->first.value(), id);
+                    result.fill(m.first.value(), id);
                 }
-                clauses[itr->second] = id++;
+                clauses[m.second] = id--;
             }
+        }
+    }
+    assert(id + 1 == 0);
+
+    // Copy over the tape in reversed order
+    for (auto itr = rtape.rbegin(); itr != rtape.rend(); ++itr)
+    {
+        tape.push_back(*itr);
+    }
+
+    // Make sure that X, Y, Z have been allocated space
+    for (auto a : {cache->X(), cache->Y(), cache->Z()})
+    {
+        if (!connected.count(a))
+        {
+            clauses[a] = connected.size();
+            connected.insert(a);
         }
     }
 
