@@ -90,6 +90,8 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     result.deriv(1, 0, 0, X);
     result.deriv(0, 1, 0, Y);
     result.deriv(0, 0, 1, Z);
+
+    assert(clauses.at(root.id) == 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
