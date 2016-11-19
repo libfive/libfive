@@ -963,8 +963,8 @@ std::tuple<const float*, const float*,
     {
         Result::Index vc = (count - 1)/8 + 1;
 
-        auto index = tape.size();
-        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr)
+        auto index = tape.size() - 1;
+        for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr, --index)
         {
             clause(itr->op,
                    &result.mf[itr->a][0], &result.mdx[itr->a][0],
@@ -976,7 +976,6 @@ std::tuple<const float*, const float*,
                    &result.mf[index][0], &result.mdx[index][0],
                    &result.mdy[index][0], &result.mdz[index][0],
                    vc);
-            --index;
         }
 
     } else
