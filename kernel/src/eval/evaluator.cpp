@@ -146,7 +146,7 @@ void Evaluator::push()
     if (++tape == tapes.end())
     {
         tape = tapes.insert(tape, Tape());
-        tape->reserve(current_tape->size());
+        tape->reserve(tapes.front().size());
     }
     assert(tape != tapes.end());
 
