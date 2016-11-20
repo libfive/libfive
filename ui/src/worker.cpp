@@ -26,7 +26,7 @@
 
 #include "ao/kernel/eval/evaluator.hpp"
 
-Worker::Worker(const Tree root, const Task& t)
+Worker::Worker(const std::vector<Evaluator*>& evaluators, const Task& t)
     : region({-1, 1}, {-1, 1}, {-1, 1},
              t.ni/(1 << t.level), t.nj/(1 << t.level), t.nk/(1 << t.level)),
       future(promise.get_future()), abort(false)
@@ -39,7 +39,7 @@ Worker::Worker(const Tree root, const Task& t)
 
     thread = std::thread([=](){
         auto start_time = std::chrono::system_clock::now();
-        auto out = Heightmap::Render(root, this->region, this->abort, m);
+        auto out = Heightmap::Render(evaluators, this->region, this->abort, m);
 
         // Map the depth buffer into the 0 - 1 range, with -inf = 1
         Eigen::ArrayXXf d =

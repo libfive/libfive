@@ -89,8 +89,7 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////
 
 Frame::Frame(const Tree root)
-    : tree(root.collapse()),
-      vs(Shader::compile(vert, GL_VERTEX_SHADER)),
+    : vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
       prog(Shader::link(vs, fs))
 {
@@ -119,6 +118,7 @@ Frame::Frame(const Tree root)
     }
     glBindVertexArray(0);
 
+    auto tree = root.collapse();
     for (unsigned i=0; i < 8; ++i)
     {
         evaluators.push_back(new Evaluator(tree));
@@ -207,7 +207,7 @@ void Frame::startRender()
     {
         // Swap around render tasks and start an async worker
         pending = next;
-        worker.reset(new Worker(tree, pending));
+        worker.reset(new Worker(evaluators, pending));
         next.reset();
     }
     // Schedule a refinement of the current render task

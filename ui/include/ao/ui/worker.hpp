@@ -39,7 +39,7 @@ struct Worker
      *
      *  depth and norm are target textures in which results are stored
      */
-    Worker(const Tree root, const Task& task);
+    Worker(const std::vector<Evaluator*>& evaluators, const Task& task);
 
     /*
      *  On destruction, join the thread
