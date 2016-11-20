@@ -37,14 +37,14 @@
        (- y x 1)
        (- -1 x y)))
 (ao-export-mesh (extrude-z diamond -1 1)
-                "meshes/diamond.stl" '(-2.1 -2.1 -2.1) '(2.1 2.1 2.1) 4)
+                "meshes/diamond.stl" 4 '(-2.1 -2.1 -2.1) '(2.1 2.1 2.1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; How do edges and vertex placement look?
 (define (slice x y z) (+ x y z -2.73))
 (define split (intersection (cube '(-1.5 -1.5 -1.5) '(1.5 1.5 1.5)) slice))
-(ao-export-mesh split "meshes/split.stl" '(-2.1 -2.1 -2.1) '(2.1 2.1 2.1) 2)
+(ao-export-mesh split "meshes/split.stl" 2 '(-2.1 -2.1 -2.1) '(2.1 2.1 2.1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -58,7 +58,7 @@
     (- (max (- Y X 1) (* 2 X) (- -1 X Y)) epsilon)
     (- (max (- X Y 1) (+ X Y -1) (* -2 X)) epsilon))
   (- -0.125 Z) (- Z 0.125)))
-(ao-export-mesh triangle-union "meshes/triangle-union.stl" '(-5 -5 -5) '(5 5 5) 50)
+(ao-export-mesh triangle-union "meshes/triangle-union.stl" 50 '(-5 -5 -5) '(5 5 5))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -81,7 +81,7 @@
                   (rotate-y e (/ pi 2)))))
 
 (define start-time (get-internal-real-time))
-(ao-export-mesh charm "meshes/charm.stl" '(-2 -2 -2) '(2 2 2) 100)
+(ao-export-mesh charm "meshes/charm.stl" 100 '(-2 -2 -2) '(2 2 2))
 (format #t "Exported charm in ~a sec\n"
         (/ (- (get-internal-real-time) start-time 0.0)
            internal-time-units-per-second))

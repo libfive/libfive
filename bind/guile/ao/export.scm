@@ -18,24 +18,38 @@
 |#
 (define-module (ao export))
 
-(use-modules (ao bind) (ao jit))
+(use-modules (ao bind) (ao jit) (ao bounds))
 
-(define-public (ao-export-heightmap shape file a b res)
-    "ao-export-heightmap shape file '(x0 y0 z0) '(x1 y1 z1) res
+(define (export-bounded func shape file res args)
+    "export-bounded func shape file res args
+    Checks for bounds on the shape; otherwise uses args"
+    (let ((bounds (get-bounds shape))
+          (shape (jit shape)))
+      (if bounds
+        (func shape file (car bounds) (cadr bounds) res)
+        (if (not (= 2 (length args)))
+          (error "Shape has no bounds; must provide them for export")
+          (func shape file (car args) (cadr args) res)))))
+
+
+(define-public (ao-export-heightmap shape file res . args)
+    "ao-export-heightmap shape file res ['(x0 y0 z0) '(x1 y1 z1)]
     Renders a shape and saves it to an image.
     bounds are three-element lists; res is a resolution in voxels per unit."
-    (tree-export-heightmap (jit shape) file a b res))
+    (export-bounded tree-export-heightmap shape file res args))
 
-(define-public (ao-export-mesh shape file a b res)
-    "ao-export-mesh shape file '(x0 y0 z0) '(x1 y1 z1) res
+(define-public (ao-export-mesh shape file res . args)
+    "ao-export-mesh shape file res ['(x0 y0 z0) '(x1 y1 z1)]
     Renders a shape and saves it to an mesh
     bounds are three-element lists; res is a resolution in voxels per unit."
-    (tree-export-mesh (jit shape) file a b res))
+    (export-bounded tree-export-mesh shape file res args))
 
-(define-public (ao-export-slice shape file a b z res)
-    "ao-export-slice shape file '(x0 y0) '(x1 y1) z res
+(define-public (ao-export-slice shape file res z . args)
+    "ao-export-slice shape file res z ['(x0 y0) '(x1 y1)]
     Renders a 2D slice of a model and saves it to an svg file
-    bounds are two-element lists
-    z is a single number
-    res is a resolution in voxels per unit"
-    (tree-export-slice (jit shape) file a b z res))
+      res is a resolution in voxels per unit
+      z is a single number
+      bounds are two-element lists"
+    (export-bounded (lambda (shape file a b res)
+                      (tree-export-slice shape file a b z res))
+      shape file res args))
