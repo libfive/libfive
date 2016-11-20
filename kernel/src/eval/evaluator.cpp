@@ -30,8 +30,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
-    : M(M), Mi(glm::inverse(M))
 {
+    setMatrix(M);
+
     auto root = root_.collapse();
     Cache* cache = root.parent.get();
     auto connected = cache->findConnected(root.id);
@@ -1114,4 +1115,10 @@ void Evaluator::applyTransform(Result::Index count)
 double Evaluator::utilization() const
 {
     return tape->size() / double(tapes.front().size());
+}
+
+void Evaluator::setMatrix(const glm::mat4& m)
+{
+    M = m;
+    Mi = glm::inverse(m);
 }

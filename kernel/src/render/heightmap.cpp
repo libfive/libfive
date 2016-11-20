@@ -260,6 +260,25 @@ std::pair<DepthImage, NormalImage> Render(
     const Tree t, Region r, const std::atomic_bool& abort,
     glm::mat4 m, size_t workers)
 {
+    std::vector<Evaluator*> es;
+    for (size_t i=0; i < workers; ++i)
+    {
+        es.push_back(new Evaluator(t));
+    }
+
+    auto out = Render(es, r, abort, m);
+
+    for (auto e : es)
+    {
+        delete e;
+    }
+    return out;
+}
+
+std::pair<DepthImage, NormalImage> Render(
+        const std::vector<Evaluator*>& es, Region r,
+        const std::atomic_bool& abort, glm::mat4 m)
+{
     auto depth = DepthImage(r.X.values.size(), r.Y.values.size());
     auto norm = NormalImage(r.X.values.size(), r.Y.values.size());
 
@@ -268,7 +287,7 @@ std::pair<DepthImage, NormalImage> Render(
 
     // Build a list of regions by splitting on the XY axes
     std::list<Subregion> rs = {r.view()};
-    while (rs.size() < workers && rs.front().canSplitXY())
+    while (rs.size() < es.size() && rs.front().canSplitXY())
     {
         auto f = rs.front();
         rs.pop_front();
@@ -279,15 +298,16 @@ std::pair<DepthImage, NormalImage> Render(
 
     // Start a set of async tasks to render subregions in separate threads
     std::list<std::future<void>> futures;
+    auto itr = es.begin();
     for (auto region : rs)
     {
-        auto e = new Evaluator(t, m);
+        (*itr)->setMatrix(m);
 
         futures.push_back(std::async(std::launch::async,
-            [e, region, &depth, &norm, &abort](){
-                recurse(e, region, depth, norm, abort);
-                delete e;
+            [itr, region, &depth, &norm, &abort](){
+                recurse(*itr, region, depth, norm, abort);
             }));
+        ++itr;
     }
 
     // Wait for all of the tasks to finish running in the background
@@ -301,6 +321,7 @@ std::pair<DepthImage, NormalImage> Render(
     norm = (depth == r.Z.values.back()).select(0xffff7f7f, norm);
 
     return std::make_pair(depth, norm);
+
 }
 
 } // namespace Heightmap
