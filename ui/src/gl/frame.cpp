@@ -24,8 +24,7 @@
 
 #include "ao/ui/worker.hpp"
 
-#include "ao/kernel/render/heightmap.hpp"
-#include "ao/kernel/render/region.hpp"
+#include "ao/kernel/eval/evaluator.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex shader
@@ -119,6 +118,11 @@ Frame::Frame(const Tree root)
         glEnableVertexAttribArray(0);
     }
     glBindVertexArray(0);
+
+    for (unsigned i=0; i < 8; ++i)
+    {
+        evaluators.push_back(new Evaluator(tree));
+    }
 }
 
 Frame::~Frame()
@@ -131,6 +135,11 @@ Frame::~Frame()
     glDeleteTextures(2, norm);
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
+
+    for (auto e : evaluators)
+    {
+        delete e;
+    }
 }
 
 void Frame::draw(const glm::mat4& m) const
