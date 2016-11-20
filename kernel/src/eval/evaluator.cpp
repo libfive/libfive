@@ -160,10 +160,50 @@ void Evaluator::push()
         // Next, we figure out which clauses are disabled and only push enabled
         // clauses into the new tape (aspirationally)
         std::fill(disabled.begin(), disabled.end(), true);
+
+        // Mark the root node as active
         disabled[0] = false;
+
         for (const auto& c : *current_tape)
         {
-            tape->push_back(c);
+            if (!disabled[c.id])
+            {
+                // For min and max operations, we may only need to keep one branch
+                // active if it is decisively above or below the other branch.
+                if (c.op == Opcode::MAX)
+                {
+                    if (result.i[c.a].lower() >= result.i[c.b].upper())
+                    {
+                        disabled[c.a] = false;
+                        tape->push_back({Opcode::DUMMY_A, c.id, c.a, 0});
+                        continue;
+                    }
+                    else if (result.i[c.b].lower() >= result.i[c.a].upper())
+                    {
+                        disabled[c.b] = false;
+                        tape->push_back({Opcode::DUMMY_B, c.id, 0, c.b});
+                        continue;
+                    }
+                }
+                else if (c.op == Opcode::MIN)
+                {
+                    if (result.i[c.a].lower() >= result.i[c.b].upper())
+                    {
+                        disabled[c.b] = false;
+                        tape->push_back({Opcode::DUMMY_B, c.id, 0, c.b});
+                        continue;
+                    }
+                    else if (result.i[c.b].lower() >= result.i[c.a].upper())
+                    {
+                        disabled[c.a] = false;
+                        tape->push_back({Opcode::DUMMY_A, c.id, c.a, 0});
+                        continue;
+                    }
+                }
+                disabled[c.a] = false;
+                disabled[c.b] = false;
+                tape->push_back(c);
+            }
         }
         assert(tape->size() <= current_tape->size());
     }
