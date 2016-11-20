@@ -24,36 +24,15 @@
 #include <immintrin.h>
 
 #include "ao/kernel/eval/interval.hpp"
+#include "ao/kernel/eval/clause.hpp"
 
 struct Result {
-    /*
-     *  Initialize array pointers
-     */
-    Result();
+    typedef uint32_t Index;
 
     /*
-     *  Look up a particular value by index
+     *  Prepares the given number of clauses
      */
-    float& operator[](size_t index) { return f[index]; }
-
-    /*
-     *  Sets a particular value in the array
-     *  (inlined for efficiency)
-     */
-    void set(float v, size_t index)
-    {
-        f[index] = v;
-    }
-
-    /*
-     *  Sets the interval value in the array
-     */
-    void set(Interval V);
-
-    /*
-     *  Returns the float at the given index
-     */
-    float get(size_t index) const { return f[index]; }
+    void resize(Clause::Id clauses);
 
     /*
      *  Sets all of the values to the given constant float
@@ -61,39 +40,33 @@ struct Result {
      *
      *  Gradients are set to {0, 0, 0}
      */
-    void fill(float v);
+    void fill(float v, Clause::Id clause);
 
     /*
      *  Fills the derivative arrays with the given values
      */
-    void deriv(float x, float y, float z);
+    void deriv(float x, float y, float z, Clause::Id clause);
 
     // This is the number of samples that we can process in one pass
-    static constexpr size_t N = 256;
-
-protected:
+    static constexpr Index N = 256;
 
     // If we're using AVX for evaluation, then our floats are simply
     // pointers to the first member of the __m256 array
 #ifdef __AVX__
-    __m256  mf[N / 8];
-    __m256 mdx[N / 8];
-    __m256 mdy[N / 8];
-    __m256 mdz[N / 8];
+    std::vector<std::array<__m256, N/8>> mf;
+    std::vector<std::array<__m256, N/8>> mdx;
+    std::vector<std::array<__m256, N/8>> mdy;
+    std::vector<std::array<__m256, N/8>> mdz;
 
-    float* f;
-    float* dx;
-    float* dy;
-    float* dz;
+    float (*f)[N];
+    float (*dx)[N];
+    float (*dy)[N];
+    float (*dz)[N];
 #else
-    float  f[N];
-    float dx[N];
-    float dy[N];
-    float dz[N];
+    std::vector<std::array<float, N>> f;
+    std::vector<std::array<float, N>> dx;
+    std::vector<std::array<float, N>> dy;
+    std::vector<std::array<float, N>> dz;
 #endif
-
-    Interval i;
-
-    friend class Evaluator;
-    friend class Clause;
+    std::vector<Interval> i;
 };

@@ -37,8 +37,17 @@ TEST_CASE("Constant evaluation")
 
 TEST_CASE("Float evaluation")
 {
-    Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree(1)));
-    REQUIRE(e.eval(1.0, 2.0, 3.0) == 2.0);
+    SECTION("X + 1")
+    {
+        Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree(1)));
+        REQUIRE(e.eval(1.0, 2.0, 3.0) == 2.0);
+    }
+
+    SECTION("X + Z")
+    {
+        Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree::Z()));
+        REQUIRE(e.eval(1.0, 2.0, 3.0) == 4.0);
+    }
 }
 
 TEST_CASE("Interval evaluation")
@@ -146,5 +155,57 @@ TEST_CASE("Matrix normals")
         REQUIRE(d.x == Approx(0));
         REQUIRE(d.y == Approx(1));
         REQUIRE(d.z == Approx(0));
+    }
+}
+
+TEST_CASE("Evaluator::derivs")
+{
+    SECTION("X")
+    {
+        Evaluator e(Tree::X());
+        e.set(0, 0, 0, 0);
+        e.set(1, 2, 3, 1);
+        auto d = e.derivs(2);
+
+        // Values = x
+        REQUIRE(std::get<0>(d)[0] == 0.0);
+        REQUIRE(std::get<0>(d)[1] == 1.0);
+
+        // d/dx = 1
+        REQUIRE(std::get<1>(d)[0] == 1.0);
+        REQUIRE(std::get<1>(d)[1] == 1.0);
+
+        // d/dy = 0
+        REQUIRE(std::get<2>(d)[0] == 0.0);
+        REQUIRE(std::get<2>(d)[1] == 0.0);
+
+        // d/dz = 0
+        REQUIRE(std::get<3>(d)[0] == 0.0);
+        REQUIRE(std::get<3>(d)[1] == 0.0);
+    }
+
+    SECTION("X + Z")
+    {
+        Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree::Z()));
+
+        e.set(1, 1, 1, 0);
+        e.set(1, 2, 3, 1);
+        auto d = e.derivs(2);
+
+        // Values = x
+        REQUIRE(std::get<0>(d)[0] == 2.0);
+        REQUIRE(std::get<0>(d)[1] == 4.0);
+
+        // d/dx = 1
+        REQUIRE(std::get<1>(d)[0] == 1.0);
+        REQUIRE(std::get<1>(d)[1] == 1.0);
+
+        // d/dy = 0
+        REQUIRE(std::get<2>(d)[0] == 0.0);
+        REQUIRE(std::get<2>(d)[1] == 0.0);
+
+        // d/dz = 1
+        REQUIRE(std::get<3>(d)[0] == 1.0);
+        REQUIRE(std::get<3>(d)[1] == 1.0);
     }
 }

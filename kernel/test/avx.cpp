@@ -93,14 +93,19 @@ TEST_CASE("Alignment")
     // Make sure that struct padding works like I think it works
     struct { char a;
              Result result; } s;
-    REQUIRE(((intptr_t)(&s.result[0]) & 0x1f) == 0);
+    s.result.resize(2);
 
-    // Ensure that tightly-packing Clauses keeps everything aligned
-    REQUIRE((sizeof(Clause) & 0x1f) == 0);
+    // Check the alignment of the first two members of value array
+    REQUIRE(((intptr_t)(&s.result.mf[0]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mf[1]) & 0x1f) == 0);
 
-    // Double-check alignment requirements
-    REQUIRE(alignof(Result) == 32);
-    REQUIRE(alignof(Clause) == 32);
+    // Check the derivative arrays too
+    REQUIRE(((intptr_t)(&s.result.mdx[0]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdx[1]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdy[0]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdy[1]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdz[0]) & 0x1f) == 0);
+    REQUIRE(((intptr_t)(&s.result.mdz[1]) & 0x1f) == 0);
 }
 
 #endif

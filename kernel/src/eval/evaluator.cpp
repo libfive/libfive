@@ -36,76 +36,85 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     Cache* cache = root.parent.get();
     auto connected = cache->findConnected(root.id);
 
-    // Reserve space for X, Y, Z, plus every clause in the cache
-    size_t count = 3 + connected.size();
-
-    // Then, allocate space for them (ensuring alignment if AVX is used)
-#if __AVX__
-    // Ensure that we have 32-byte alignment for Clauses and Results
-    data = static_cast<Clause*>(_mm_malloc(sizeof(Clause) * count, 32));
-#else
-    data = static_cast<Clause*>(malloc(sizeof(Clause) * count));
-#endif
-    Clause* ptr = data;
-
     // Helper function to create a new clause in the data array
-    std::unordered_map<Cache::Id, Clause*> clauses = {{0, nullptr}};
-    auto newClause = [&ptr, cache, &clauses](const Cache::Id t)
-        { auto c = new (ptr++) Clause(
-                cache->opcode(t), cache->value(t),
-                clauses.at(cache->lhs(t)), clauses.at(cache->rhs(t)));
-          clauses[t] = c;
-          return c; };
+    // The dummy clause (0) is mapped to the first result slot
+    std::unordered_map<Cache::Id, Clause::Id> clauses = {{0, 0}};
+    Clause::Id id = connected.size() - 1;
 
-    // Make X, Y, Z clauses and set their derivatives (which never change)
-    X = newClause(cache->X());
-    Y = newClause(cache->Y());
-    Z = newClause(cache->Z());
+    std::list<Clause> rtape;
+    auto newClause = [&id, &clauses, &rtape, cache](const Cache::Id t)
+    {
+        rtape.push_back(
+                {cache->opcode(t),
+                 id,
+                 clauses.at(cache->lhs(t)),
+                 clauses.at(cache->rhs(t))});
+        clauses[t] = id;
+        return id--;
+    };
 
-    X->result.deriv(1, 0, 0);
-    Y->result.deriv(0, 1, 0);
-    Z->result.deriv(0, 0, 1);
-
-    // Load constants into the array first
-    //
-    // CONST is guaranteed to be at the beginning of the cache
-    // (by rank and enumerator ordering), so once we get to a non-CONST
-    // value we can break out of the loop.
+    // And here we go!
+    std::map<Clause::Id, float> constants;
     for (auto m : cache->data.left)
     {
         if (connected.count(m.second))
         {
-            if (m.first.opcode() == Opcode::CONST)
+            // Normal clauses end up in the tape
+            if (m.first.rank() > 0)
             {
                 newClause(m.second);
             }
-            else if (m.first.rank() > 0) // Ignore VAR_XYZ
+            // Other clauses get allocated results but no tape
+            else
             {
-                while (m.first.rank() > rows.size())
+                if (m.first.opcode() == Opcode::CONST)
                 {
-                    rows.push_back(Row());
+                    constants[id] = m.first.value();
                 }
-                rows[m.first.rank() - 1].push_back(newClause(m.second));
+                clauses[m.second] = id--;
             }
         }
     }
+    assert(id + 1 == 0);
 
-    for (auto& row : rows)
+    // Copy over the tape in reversed order
+    tapes.push_back(Tape());
+    tape = tapes.begin();
+    for (auto itr = rtape.rbegin(); itr != rtape.rend(); ++itr)
     {
-        row.setSize();
+        tape->push_back(*itr);
     }
 
-    assert(clauses[root.id]);
-    this->root = clauses[root.id];
-}
+    // Make sure that X, Y, Z have been allocated space
+    for (auto a : {cache->X(), cache->Y(), cache->Z()})
+    {
+        if (!connected.count(a))
+        {
+            clauses[a] = connected.size();
+            connected.insert(a);
+        }
+    }
 
-Evaluator::~Evaluator()
-{
-#if __AVX__
-    _mm_free(data);
-#else
-    free(data);
-#endif
+    // Allocate enough memory for all the clauses
+    result.resize(clauses.size());
+    disabled.resize(clauses.size());
+
+    // Store all constants in results array
+    for (auto c : constants)
+    {
+        result.fill(c.second, c.first);
+    }
+
+    // Save X, Y, Z ids and set their derivatives
+    X = clauses.at(cache->X());
+    Y = clauses.at(cache->Y());
+    Z = clauses.at(cache->Z());
+
+    result.deriv(1, 0, 0, X);
+    result.deriv(0, 1, 0, Y);
+    result.deriv(0, 0, 1, Z);
+
+    assert(clauses.at(root.id) == 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -124,65 +133,94 @@ Interval Evaluator::eval(Interval x, Interval y, Interval z)
 
 void Evaluator::set(Interval x, Interval y, Interval z)
 {
-    X->result.set(M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0]);
-    Y->result.set(M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1]);
-    Z->result.set(M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2]);
+    result.i[X] = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
+    result.i[Y] = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
+    result.i[Z] = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void Evaluator::push()
 {
-    // Walk up the tree, marking every atom with ATOM_FLAG_IGNORED
-    for (const auto& row : rows)
+    auto current_tape = tape;
+    if (++tape == tapes.end())
     {
-        for (size_t i=0; i < row.active; ++i)
-        {
-            row[i]->disable();
-        }
+        tape = tapes.insert(tape, Tape());
+        tape->reserve(tapes.front().size());
     }
+    assert(tape != tapes.end());
 
-    // Clear the IGNORED flag on the root
-    root->enable();
-
-    // Walk down the tree, clearing IGNORED flags as appropriate
-    // and disabling atoms that still have IGNORED flags set.
-    for (auto itr = rows.rbegin(); itr != rows.rend(); ++itr)
+    if (current_tape->size())
     {
-        itr->push();
-    }
+        // We may be reusing an existing tape, so resize to 0
+        // (but make sure it still has allocated storage)
+        tape->clear();
+        assert(tape->capacity() >= current_tape->size());
 
-    for (const auto& row : rows)
-    {
-        for (size_t i=0; i < row.active; ++i)
+        // Next, we figure out which clauses are disabled and only push enabled
+        // clauses into the new tape (aspirationally)
+        std::fill(disabled.begin(), disabled.end(), true);
+
+        // Mark the root node as active
+        disabled[0] = false;
+
+        for (const auto& c : *current_tape)
         {
-            row[i]->op_ = getOpcode(row[i]);
+            if (!disabled[c.id])
+            {
+                // For min and max operations, we may only need to keep one branch
+                // active if it is decisively above or below the other branch.
+                if (c.op == Opcode::MAX)
+                {
+                    if (result.i[c.a].lower() >= result.i[c.b].upper())
+                    {
+                        disabled[c.a] = false;
+                        tape->push_back({Opcode::DUMMY_A, c.id, c.a, 0});
+                        continue;
+                    }
+                    else if (result.i[c.b].lower() >= result.i[c.a].upper())
+                    {
+                        disabled[c.b] = false;
+                        tape->push_back({Opcode::DUMMY_B, c.id, 0, c.b});
+                        continue;
+                    }
+                }
+                else if (c.op == Opcode::MIN)
+                {
+                    if (result.i[c.a].lower() >= result.i[c.b].upper())
+                    {
+                        disabled[c.b] = false;
+                        tape->push_back({Opcode::DUMMY_B, c.id, 0, c.b});
+                        continue;
+                    }
+                    else if (result.i[c.b].lower() >= result.i[c.a].upper())
+                    {
+                        disabled[c.a] = false;
+                        tape->push_back({Opcode::DUMMY_A, c.id, c.a, 0});
+                        continue;
+                    }
+                }
+                disabled[c.a] = false;
+                disabled[c.b] = false;
+                tape->push_back(c);
+            }
         }
+        assert(tape->size() <= current_tape->size());
     }
 }
 
 void Evaluator::pop()
 {
-    for (auto& row : rows)
-    {
-        row.pop();
-    }
-
-    for (const auto& row : rows)
-    {
-        for (size_t i=0; i < row.active; ++i)
-        {
-            row[i]->op_ = getOpcode(row[i]);
-        }
-    }
+    assert(tape != tapes.begin());
+    tape--;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define EVAL_LOOP for (size_t i=0; i < count; ++i)
+#define EVAL_LOOP for (Result::Index i=0; i < count; ++i)
 static void clause(Opcode::Opcode op,
         const float* __restrict a, const float* __restrict b,
-        float* __restrict out, size_t count)
+        float* __restrict out, Result::Index count)
 {
     switch (op) {
         case Opcode::ADD:
@@ -309,7 +347,7 @@ static void clause(Opcode::Opcode op,
 
         float* __restrict ov,  float* __restrict odx,
         float* __restrict ody, float* __restrict odz,
-        size_t count)
+        Result::Index count)
 {
     // Evaluate the base operations in a single pass
     clause(op, av, bv, ov, count);
@@ -576,7 +614,7 @@ static void clause(Opcode::Opcode op,
 #ifdef __AVX__
 static void clause(Opcode::Opcode op,
         const __m256* __restrict a, const __m256* __restrict b,
-              __m256* __restrict out, size_t count)
+              __m256* __restrict out, Result::Index count)
 {
     switch (op) {
         case Opcode::ADD:
@@ -674,7 +712,7 @@ static void clause(Opcode::Opcode op,
 
         __m256* __restrict ov,  __m256* __restrict odx,
         __m256* __restrict ody, __m256* __restrict odz,
-        size_t count)
+        Result::Index count)
 {
     // Evaluate the base operations in a single pass
     clause(op, av, bv, ov, count);
@@ -915,86 +953,74 @@ static Interval clause(Opcode::Opcode op, const Interval& a, const Interval& b)
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef __AVX__
-const float* Evaluator::values(size_t count, bool vectorize)
+const float* Evaluator::values(Result::Index count, bool vectorize)
 {
     if (vectorize)
     {
         count = (count - 1)/8 + 1;
 
-        for (const auto& row : rows)
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            for (size_t i=0; i < row.active; ++i)
-            {
-                auto op = row[i]->op_;
-                clause(op, row[i]->ptrs.a.mf, row[i]->ptrs.b.mf,
-                           row[i]->result.mf, count);
-            }
+            clause(itr->op, &result.mf[itr->a][0], &result.mf[itr->b][0],
+                   &result.mf[itr->id][0], count);
         }
-
-        return root->result.f;
-    }
+    } else
 #else
-const float* Evaluator::values(size_t count)
+const float* Evaluator::values(Result::Index count)
 {
 #endif
-    for (const auto& row : rows)
     {
-        for (size_t i=0; i < row.active; ++i)
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            auto op = row[i]->op_;
-            clause(op, row[i]->ptrs.a.f, row[i]->ptrs.b.f,
-                       row[i]->result.f, count);
+            clause(itr->op, result.f[itr->a], result.f[itr->b],
+                   result.f[itr->id], count);
         }
     }
-    return root->result.f;
+
+    return result.f[0];
 }
 
 #ifdef __AVX__
 std::tuple<const float*, const float*,
-           const float*, const float*> Evaluator::derivs(size_t count,
+           const float*, const float*> Evaluator::derivs(Result::Index count,
                                                          bool vectorize)
 {
     if (vectorize)
     {
-        size_t vc = (count - 1)/8 + 1;
+        Result::Index vc = (count - 1)/8 + 1;
 
-        for (const auto& row : rows)
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            for (size_t i=0; i < row.active; ++i)
-            {
-                auto op = row[i]->op_;
+            clause(itr->op,
+                   &result.mf[itr->a][0], &result.mdx[itr->a][0],
+                   &result.mdy[itr->a][0], &result.mdz[itr->a][0],
 
-                clause(op, row[i]->ptrs.a.mf, row[i]->ptrs.a.mdx,
-                           row[i]->ptrs.a.mdy, row[i]->ptrs.a.mdz,
+                   &result.mf[itr->b][0], &result.mdx[itr->b][0],
+                   &result.mdy[itr->b][0], &result.mdz[itr->b][0],
 
-                           row[i]->ptrs.b.mf, row[i]->ptrs.b.mdx,
-                           row[i]->ptrs.b.mdy, row[i]->ptrs.b.mdz,
-
-                           row[i]->result.mf, row[i]->result.mdx,
-                           row[i]->result.mdy, row[i]->result.mdz,
-                       vc);
-            }
+                   &result.mf[itr->id][0], &result.mdx[itr->id][0],
+                   &result.mdy[itr->id][0], &result.mdz[itr->id][0],
+                   vc);
         }
+
     } else
 #else
 std::tuple<const float*, const float*,
            const float*, const float*> Evaluator::derivs(size_t count)
 {
 #endif
-    for (const auto& row : rows)
     {
-        for (size_t i=0; i < row.active; ++i)
+        for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            auto op = row[i]->op_;
+            clause(itr->op,
+                   result.f[itr->a], result.dx[itr->a],
+                   result.dy[itr->a], result.dz[itr->a],
 
-            clause(op, row[i]->ptrs.a.f, row[i]->ptrs.a.dx,
-                       row[i]->ptrs.a.dy, row[i]->ptrs.a.dz,
+                   result.f[itr->b], result.dx[itr->b],
+                   result.dy[itr->b], result.dz[itr->b],
 
-                       row[i]->ptrs.b.f, row[i]->ptrs.b.dx,
-                       row[i]->ptrs.b.dy, row[i]->ptrs.b.dz,
-
-                       row[i]->result.f, row[i]->result.dx,
-                       row[i]->result.dy, row[i]->result.dz,
+                   result.f[itr->id], result.dx[itr->id],
+                   result.dy[itr->id], result.dz[itr->id],
                    count);
         }
     }
@@ -1003,41 +1029,35 @@ std::tuple<const float*, const float*,
     auto o = Mi * glm::vec4(0,0,0,1);
     for (size_t i=0; i < count; ++i)
     {
-        auto n = Mi * glm::vec4(root->result.dx[i],
-                                root->result.dy[i],
-                                root->result.dz[i], 1) - o;
-        root->result.dx[i] = n.x;
-        root->result.dy[i] = n.y;
-        root->result.dz[i] = n.z;
+        auto n = Mi * glm::vec4(result.dx[0][i],
+                                result.dy[0][i],
+                                result.dz[0][i], 1) - o;
+        result.dx[0][i] = n.x;
+        result.dy[0][i] = n.y;
+        result.dz[0][i] = n.z;
     }
 
     return std::tuple<const float*, const float*,
                       const float*, const float*> {
-                        root->result.f, root->result.dx,
-                        root->result.dy, root->result.dz
-                      };
+        result.f[0], result.dx[0], result.dy[0], result.dz[0]
+    };
 }
 
 Interval Evaluator::interval()
 {
-    for (const auto& row : rows)
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
     {
-        for (size_t i=0; i < row.active; ++i)
-        {
-            auto op = row[i]->op_;
+        Interval a = result.i[itr->a];
+        Interval b = result.i[itr->b];
 
-            Interval a = row[i]->a ? row[i]->a->result.i : Interval();
-            Interval b = row[i]->b ? row[i]->b->result.i : Interval();
-
-            row[i]->result.i = clause(op, a, b);
-        }
+        result.i[itr->id] = clause(itr->op, a, b);
     }
-    return root->result.i;
+    return result.i[0];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Evaluator::applyTransform(size_t count)
+void Evaluator::applyTransform(Result::Index count)
 {
 #if __AVX__
 #define MM256_LOADDUP(a) _mm256_set_ps(a,a,a,a,a,a,a,a)
@@ -1058,18 +1078,18 @@ void Evaluator::applyTransform(size_t count)
 
     for (size_t i=0; i < (count + 7) / 8; ++i)
     {
-        __m256 x = X->result.mf[i];
-        __m256 y = Y->result.mf[i];
-        __m256 z = Z->result.mf[i];
-        X->result.mf[i] = _mm256_add_ps(
+        __m256 x = result.mf[X][i];
+        __m256 y = result.mf[Y][i];
+        __m256 z = result.mf[Z][i];
+        result.mf[X][i] = _mm256_add_ps(
             _mm256_add_ps(
                 _mm256_mul_ps(x, M00), _mm256_mul_ps(y, M10)),
             _mm256_add_ps(_mm256_mul_ps(z, M20), M30));
-        Y->result.mf[i] = _mm256_add_ps(
+        result.mf[Y][i] = _mm256_add_ps(
             _mm256_add_ps(
                 _mm256_mul_ps(x, M01), _mm256_mul_ps(y, M11)),
             _mm256_add_ps(_mm256_mul_ps(z, M21), M31));
-        Z->result.mf[i] = _mm256_add_ps(
+        result.mf[Z][i] = _mm256_add_ps(
             _mm256_add_ps(
                 _mm256_mul_ps(x, M02), _mm256_mul_ps(y, M12)),
             _mm256_add_ps(_mm256_mul_ps(z, M22), M32));
@@ -1079,12 +1099,12 @@ void Evaluator::applyTransform(size_t count)
 #else
     for (size_t i=0; i < count; ++i)
     {
-        float x = X->result.f[i];
-        float y = Y->result.f[i];
-        float z = Z->result.f[i];
-        X->result.f[i] = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
-        Y->result.f[i] = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
-        Z->result.f[i] = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
+        float x = result.f(X, i);
+        float y = result.f(Y, i);
+        float z = result.f(Z, i);
+        result.f(X, i) = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
+        result.f(Y, i) = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
+        result.f(Z, i) = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
     }
 #endif
 }
@@ -1093,31 +1113,5 @@ void Evaluator::applyTransform(size_t count)
 
 double Evaluator::utilization() const
 {
-    double total = 0;
-    double active = 0;
-
-    for (const auto& r : rows)
-    {
-        total += r.size();
-        active += r.active;
-    }
-
-    return active / total;
-}
-
-Opcode::Opcode Evaluator::getOpcode(Clause* c)
-{
-    // Modify the opcode if parts of the tree are disabled
-    if (c->a && c->a->disabled)
-    {
-        return Opcode::DUMMY_B;
-    }
-    else if (c->b && c->b->disabled)
-    {
-        return Opcode::DUMMY_A;
-    }
-    else
-    {
-        return c->op;
-    }
+    return tape->size() / double(tapes.front().size());
 }
