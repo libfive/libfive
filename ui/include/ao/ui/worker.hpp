@@ -16,6 +16,8 @@
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with Ao.  If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
+
 #include <chrono>
 #include <future>
 
@@ -37,7 +39,7 @@ struct Worker
      *
      *  depth and norm are target textures in which results are stored
      */
-    Worker(const Tree root, const Task& task);
+    Worker(const std::vector<Evaluator*>& evaluators, const Task& task);
 
     /*
      *  On destruction, join the thread

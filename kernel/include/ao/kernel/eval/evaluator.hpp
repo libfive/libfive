@@ -122,10 +122,16 @@ public:
      */
     double utilization() const;
 
+    /*
+     *  Sets the global matrix transform
+     *  Invalidates all positions and results
+     */
+    void setMatrix(const glm::mat4& m);
+
 protected:
     /*  Global matrix transform (and inverse) applied to all coordinates  */
-    const glm::mat4 M;
-    const glm::mat4 Mi;
+    glm::mat4 M;
+    glm::mat4 Mi;
 
     /*  Indices of X, Y, Z coordinates */
     uint32_t X, Y, Z;

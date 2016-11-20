@@ -24,8 +24,7 @@
 
 #include "ao/ui/worker.hpp"
 
-#include "ao/kernel/render/heightmap.hpp"
-#include "ao/kernel/render/region.hpp"
+#include "ao/kernel/eval/evaluator.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex shader
@@ -90,8 +89,7 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////
 
 Frame::Frame(const Tree root)
-    : tree(root.collapse()),
-      vs(Shader::compile(vert, GL_VERTEX_SHADER)),
+    : vs(Shader::compile(vert, GL_VERTEX_SHADER)),
       fs(Shader::compile(frag, GL_FRAGMENT_SHADER)),
       prog(Shader::link(vs, fs))
 {
@@ -119,6 +117,12 @@ Frame::Frame(const Tree root)
         glEnableVertexAttribArray(0);
     }
     glBindVertexArray(0);
+
+    auto tree = root.collapse();
+    for (unsigned i=0; i < 8; ++i)
+    {
+        evaluators.push_back(new Evaluator(tree));
+    }
 }
 
 Frame::~Frame()
@@ -131,6 +135,11 @@ Frame::~Frame()
     glDeleteTextures(2, norm);
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
+
+    for (auto e : evaluators)
+    {
+        delete e;
+    }
 }
 
 void Frame::draw(const glm::mat4& m) const
@@ -198,7 +207,7 @@ void Frame::startRender()
     {
         // Swap around render tasks and start an async worker
         pending = next;
-        worker.reset(new Worker(tree, pending));
+        worker.reset(new Worker(evaluators, pending));
         next.reset();
     }
     // Schedule a refinement of the current render task

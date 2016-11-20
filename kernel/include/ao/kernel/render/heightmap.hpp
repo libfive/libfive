@@ -26,6 +26,8 @@
 #include "ao/kernel/format/image.hpp"
 #include "ao/kernel/tree/tree.hpp"
 
+class Evaluator;
+
 namespace Heightmap
 {
 
@@ -37,4 +39,9 @@ namespace Heightmap
 std::pair<DepthImage, NormalImage> Render(
         const Tree t, Region r, const std::atomic_bool& abort,
         glm::mat4 m=glm::mat4(), size_t threads=8);
+
+std::pair<DepthImage, NormalImage> Render(
+        const std::vector<Evaluator*>& es, Region r,
+        const std::atomic_bool& abort,
+        glm::mat4 m=glm::mat4());
 }

@@ -33,12 +33,6 @@
 class Frame
 {
 public:
-    /*
-     *  Constructor and destructor
-     *
-     *  On construction, takes ownership of the given Tree and sets
-     *  its parent pointer.
-     */
     explicit Frame(const Tree root);
     ~Frame();
 
@@ -71,7 +65,7 @@ protected:
      */
     void startRender();
 
-    const Tree tree;
+    std::vector<Evaluator*> evaluators;
 
     GLuint vs;  // Vertex shader
     GLuint fs;  // Fragment shader
