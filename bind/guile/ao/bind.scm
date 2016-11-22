@@ -250,8 +250,9 @@
     (catch #t
         (lambda () (primitive-load (pointer->string f)))
         (lambda (key . params)
-            (newline) (display key) (display " in ") (display (car params))
-            (newline) (display (cadr params)) (newline))))
+            (format #t "Error in evaluating ~s:\n" (pointer->string f))
+            (apply format (append (list #t (cadr params)) (cddr params)))
+            (newline))))
 
 (define-public (ao-init-guile)
     "Initialize libao by setting a init and callback pointers for file watchers"
