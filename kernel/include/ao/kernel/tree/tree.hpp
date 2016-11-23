@@ -66,6 +66,11 @@ public:
     static Tree affine(float a, float b, float c, float d);
 
     /*
+     *  Returns a new variable with the given value
+     */
+    static Tree var(float v);
+
+    /*
      *  Returns a new Tree that is a flattened copy of this tree
      */
     Tree collapse() const;

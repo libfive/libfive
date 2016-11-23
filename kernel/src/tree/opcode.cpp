@@ -28,6 +28,7 @@ size_t Opcode::args(Opcode op)
         case VAR_X:
         case VAR_Y:
         case VAR_Z:
+        case VAR:
             return 0;
 
         case SQUARE: // fallthrough
@@ -77,6 +78,7 @@ std::string Opcode::to_str(Opcode op)
         case Opcode::VAR_X: return "X";
         case Opcode::VAR_Y: return "Y";
         case Opcode::VAR_Z: return "Z";
+        case Opcode::VAR: return "var";
         case Opcode::ADD: return "add";
         case Opcode::MUL: return "mul";
         case Opcode::MIN: return "min";

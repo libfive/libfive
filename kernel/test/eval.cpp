@@ -22,7 +22,7 @@
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 
-TEST_CASE("Variable evaluation")
+TEST_CASE("Principle variable evaluation")
 {
     Evaluator e(Tree::X());
 
@@ -32,6 +32,12 @@ TEST_CASE("Variable evaluation")
 TEST_CASE("Constant evaluation")
 {
     Evaluator e(Tree(3.14));
+    REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(3.14));
+}
+
+TEST_CASE("Secondary variable evaluation")
+{
+    Evaluator e(Tree::var(3.14));
     REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(3.14));
 }
 

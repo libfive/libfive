@@ -64,6 +64,11 @@ public:
      */
     Id operation(Opcode::Opcode op, Id a=0, Id b=0, bool collapse=true);
 
+    /*
+     *  Returns a new variable node with the given value
+     */
+    Id var(float v);
+
     Id X() { return operation(Opcode::VAR_X); }
     Id Y() { return operation(Opcode::VAR_Y); }
     Id Z() { return operation(Opcode::VAR_Z); }
@@ -150,6 +155,8 @@ protected:
           : _Key(0, Opcode::CONST, 0, 0, v) { /* Nothing to do here */ }
         Key(Opcode::Opcode op, Id a, Id b, size_t rank)
           : _Key(rank, op, a, b, 0.0f) { /* Nothing to do here */}
+        Key(float v, Id id)
+          : _Key(0, Opcode::VAR, id, 0, v) { /* Nothing to do here */}
 
         size_t rank() const             { return std::get<0>(*this); }
         Opcode::Opcode opcode() const   { return std::get<1>(*this); }

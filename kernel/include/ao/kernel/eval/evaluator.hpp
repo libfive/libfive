@@ -134,7 +134,10 @@ protected:
     glm::mat4 Mi;
 
     /*  Indices of X, Y, Z coordinates */
-    uint32_t X, Y, Z;
+    Clause::Id X, Y, Z;
+
+    /*  Indices of other variables in the results array  */
+    std::vector<Clause::Id> vars;
 
     /*  Tape containing our opcodes in reverse order */
     typedef std::vector<Clause> Tape;

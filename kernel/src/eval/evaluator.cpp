@@ -68,9 +68,16 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
             // Other clauses get allocated results but no tape
             else
             {
+                // For constants and variables, record their values so
+                // that we can store those values in the result array
                 if (m.first.opcode() == Opcode::CONST)
                 {
                     constants[id] = m.first.value();
+                }
+                else if (m.first.opcode() == Opcode::VAR)
+                {
+                    constants[id] = m.first.value();
+                    vars.push_back(id);
                 }
                 clauses[m.second] = id--;
             }
@@ -334,6 +341,7 @@ static void clause(Opcode::Opcode op,
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
+        case Opcode::VAR:
         case Opcode::AFFINE_VEC:
         case Opcode::LAST_OP: assert(false);
     }
@@ -607,6 +615,7 @@ static void clause(Opcode::Opcode op,
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
+        case Opcode::VAR:
         case Opcode::AFFINE_VEC:
         case Opcode::LAST_OP: assert(false);
     }
@@ -693,6 +702,7 @@ static void clause(Opcode::Opcode op,
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
+        case Opcode::VAR:
         case Opcode::AFFINE_VEC:
         case Opcode::LAST_OP: assert(false);
     }
@@ -881,6 +891,7 @@ static void clause(Opcode::Opcode op,
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
+        case Opcode::VAR:
         case Opcode::AFFINE_VEC:
         case Opcode::LAST_OP: assert(false);
     }
@@ -945,6 +956,7 @@ static Interval clause(Opcode::Opcode op, const Interval& a, const Interval& b)
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
+        case Opcode::VAR:
         case Opcode::AFFINE_VEC:
         case Opcode::LAST_OP: assert(false);
     }
