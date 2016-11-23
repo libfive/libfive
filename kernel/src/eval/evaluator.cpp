@@ -104,7 +104,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     }
 
     // Allocate enough memory for all the clauses
-    result.resize(clauses.size());
+    result.resize(clauses.size(), vars.size());
     disabled.resize(clauses.size());
 
     // Store all constants in results array
