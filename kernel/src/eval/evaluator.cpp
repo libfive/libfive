@@ -235,7 +235,7 @@ void Evaluator::pop()
 ////////////////////////////////////////////////////////////////////////////////
 
 #define EVAL_LOOP for (Result::Index i=0; i < count; ++i)
-static void clause(Opcode::Opcode op,
+static void eval_clause_values(Opcode::Opcode op,
         const float* __restrict a, const float* __restrict b,
         float* __restrict out, Result::Index count)
 {
@@ -356,7 +356,7 @@ static void clause(Opcode::Opcode op,
     }
 }
 
-static void clause(Opcode::Opcode op,
+static void eval_clause_derivs(Opcode::Opcode op,
         const float* __restrict av,  const float* __restrict adx,
         const float* __restrict ady, const float* __restrict adz,
 
@@ -368,7 +368,7 @@ static void clause(Opcode::Opcode op,
         Result::Index count)
 {
     // Evaluate the base operations in a single pass
-    clause(op, av, bv, ov, count);
+    eval_clause_values(op, av, bv, ov, count);
 
     switch (op) {
         case Opcode::ADD:
@@ -631,7 +631,7 @@ static void clause(Opcode::Opcode op,
 }
 
 #ifdef __AVX__
-static void clause(Opcode::Opcode op,
+static void eval_clause_values(Opcode::Opcode op,
         const __m256* __restrict a, const __m256* __restrict b,
               __m256* __restrict out, Result::Index count)
 {
@@ -701,9 +701,10 @@ static void clause(Opcode::Opcode op,
         case Opcode::NTH_ROOT:
         case Opcode::MOD:
         case Opcode::NANFILL:
-            clause(op, reinterpret_cast<const float*>(a),
-                       reinterpret_cast<const float*>(b),
-                       reinterpret_cast<float*>(out), count*8);
+            eval_clause_values(op,
+                    reinterpret_cast<const float*>(a),
+                    reinterpret_cast<const float*>(b),
+                    reinterpret_cast<float*>(out), count*8);
             break;
 
         case Opcode::INVALID:
@@ -723,7 +724,7 @@ static void clause(Opcode::Opcode op,
 //      quiet (meaning it doesn't signal on NaN)
 #define CMP_LT_OQ 17
 
-static void clause(Opcode::Opcode op,
+static void eval_clause_derivs(Opcode::Opcode op,
         const __m256* __restrict av,  const __m256* __restrict adx,
         const __m256* __restrict ady, const __m256* __restrict adz,
 
@@ -735,7 +736,7 @@ static void clause(Opcode::Opcode op,
         Result::Index count)
 {
     // Evaluate the base operations in a single pass
-    clause(op, av, bv, ov, count);
+    eval_clause_values(op, av, bv, ov, count);
 
     switch (op) {
         case Opcode::ADD:
@@ -879,7 +880,8 @@ static void clause(Opcode::Opcode op,
         case Opcode::NTH_ROOT:
         case Opcode::MOD:
         case Opcode::NANFILL:
-            clause(op, reinterpret_cast<const float*>(av),
+            eval_clause_derivs(
+                       op, reinterpret_cast<const float*>(av),
                        reinterpret_cast<const float*>(adx),
                        reinterpret_cast<const float*>(ady),
                        reinterpret_cast<const float*>(adz),
@@ -907,7 +909,8 @@ static void clause(Opcode::Opcode op,
 }
 #endif
 
-static Interval clause(Opcode::Opcode op, const Interval& a, const Interval& b)
+static Interval eval_clause_interval(
+        Opcode::Opcode op, const Interval& a, const Interval& b)
 {
     switch (op) {
         case Opcode::ADD:
@@ -983,8 +986,9 @@ const float* Evaluator::values(Result::Index count, bool vectorize)
 
         for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            clause(itr->op, &result.mf[itr->a][0], &result.mf[itr->b][0],
-                   &result.mf[itr->id][0], count);
+            eval_clause_values(itr->op,
+                    &result.mf[itr->a][0], &result.mf[itr->b][0],
+                    &result.mf[itr->id][0], count);
         }
     } else
 #else
@@ -994,8 +998,9 @@ const float* Evaluator::values(Result::Index count)
     {
         for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            clause(itr->op, result.f[itr->a], result.f[itr->b],
-                   result.f[itr->id], count);
+            eval_clause_values(itr->op,
+                    result.f[itr->a], result.f[itr->b],
+                    result.f[itr->id], count);
         }
     }
 
@@ -1013,7 +1018,7 @@ std::tuple<const float*, const float*,
 
         for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            clause(itr->op,
+            eval_clause_derivs(itr->op,
                    &result.mf[itr->a][0], &result.mdx[itr->a][0],
                    &result.mdy[itr->a][0], &result.mdz[itr->a][0],
 
@@ -1034,7 +1039,7 @@ std::tuple<const float*, const float*,
     {
         for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            clause(itr->op,
+            eval_clause_derivs(itr->op,
                    result.f[itr->a], result.dx[itr->a],
                    result.dy[itr->a], result.dz[itr->a],
 
@@ -1072,7 +1077,7 @@ Interval Evaluator::interval()
         Interval a = result.i[itr->a];
         Interval b = result.i[itr->b];
 
-        result.i[itr->id] = clause(itr->op, a, b);
+        result.i[itr->id] = eval_clause_interval(itr->op, a, b);
     }
     return result.i[0];
 }
