@@ -27,25 +27,31 @@
 #include "ao/kernel/eval/clause.hpp"
 
 struct Result {
-    typedef uint32_t Index;
+    typedef Clause::Id Index;
 
     /*
      *  Prepares the given number of clauses
      */
-    void resize(Clause::Id clauses);
+    void resize(Index clauses, Index vars=0);
 
     /*
      *  Sets all of the values to the given constant float
      *  (across the Interval, float, Gradient, and __m256 arrays)
      *
      *  Gradients are set to {0, 0, 0}
+     *  Jacobian is set to 0
      */
-    void fill(float v, Clause::Id clause);
+    void fill(float v, Index clause);
+
+    /*
+     *  Marks that j[clause][var] = 1
+     */
+    void setJacobian(Index clause, Index var);
 
     /*
      *  Fills the derivative arrays with the given values
      */
-    void deriv(float x, float y, float z, Clause::Id clause);
+    void deriv(float x, float y, float z, Index clause);
 
     // This is the number of samples that we can process in one pass
     static constexpr Index N = 256;
@@ -68,5 +74,8 @@ struct Result {
     std::vector<std::array<float, N>> dy;
     std::vector<std::array<float, N>> dz;
 #endif
+    /*  mj[clause][var] = dclause / dvar */
+    std::vector<std::vector<float>> j;
+
     std::vector<Interval> i;
 };

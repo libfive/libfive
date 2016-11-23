@@ -113,14 +113,23 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
         result.fill(c.second, c.first);
     }
 
-    // Save X, Y, Z ids and set their derivatives
+    // Save X, Y, Z ids
     X = clauses.at(cache->X());
     Y = clauses.at(cache->Y());
     Z = clauses.at(cache->Z());
 
+    // Set derivatives for X, Y, Z (unchanging)
     result.deriv(1, 0, 0, X);
     result.deriv(0, 1, 0, Y);
     result.deriv(0, 0, 1, Z);
+
+    {   // Set the Jacobian for our variables (unchanging)
+        size_t index = 0;
+        for (auto v : vars)
+        {
+            result.setJacobian(v, index++);
+        }
+    }
 
     assert(clauses.at(root.id) == 0);
 }
