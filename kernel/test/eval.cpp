@@ -51,6 +51,21 @@ TEST_CASE("Evaluator::gradient")
         REQUIRE(g.size() == 1);
         REQUIRE(g[0] == Approx(1));
     }
+
+    SECTION("x * variable")
+    {
+        Evaluator e(Tree(Opcode::MUL, Tree::X(), Tree(1.0)));
+        REQUIRE(e.eval(2.0, 2.0, 3.0) == Approx(2.0));
+        {
+            auto g = e.gradient();
+            REQUIRE(g[0] == Approx(2));
+        }
+        REQUIRE(e.eval(3.0, 2.0, 3.0) == Approx(3.0));
+        {
+            auto g = e.gradient();
+            REQUIRE(g[0] == Approx(3));
+        }
+    }
 }
 
 TEST_CASE("Float evaluation")
