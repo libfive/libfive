@@ -1284,6 +1284,21 @@ std::tuple<const float*, const float*,
     };
 }
 
+const std::vector<float>& Evaluator::gradient()
+{
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
+    {
+        const float* av = result.f[itr->a];
+        const float* bv = result.f[itr->b];
+        std::vector<float>& aj = result.j[itr->a];
+        std::vector<float>& bj = result.j[itr->b];
+
+         eval_clause_jacobians(itr->op, av, aj, bv, bj,
+            result.f[itr->id], result.j[itr->id]);
+    }
+    return result.j[0];
+}
+
 Interval Evaluator::interval()
 {
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)

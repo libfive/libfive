@@ -41,6 +41,18 @@ TEST_CASE("Secondary variable evaluation")
     REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(3.14));
 }
 
+TEST_CASE("Evaluator::gradient")
+{
+    SECTION("constant + variable")
+    {
+        Evaluator e(Tree(Opcode::ADD, Tree::var(3.14), Tree(1.0)));
+        REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(4.14));
+        auto g = e.gradient();
+        REQUIRE(g.size() == 1);
+        REQUIRE(g[0] == Approx(1));
+    }
+}
+
 TEST_CASE("Float evaluation")
 {
     SECTION("X + 1")

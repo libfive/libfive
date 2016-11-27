@@ -71,6 +71,11 @@ public:
 #endif
 
     /*
+     *  Returns the gradient with respect to all VARs
+     */
+    const std::vector<float>& gradient();
+
+    /*
      *  Evaluates a single interval (stored with set)
      */
     Interval interval();
