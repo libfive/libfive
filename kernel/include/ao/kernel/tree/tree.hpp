@@ -90,6 +90,7 @@ public:
     Tree rhs() const                { return Tree(parent, parent->rhs(id)); }
     size_t rank() const             { return parent->rank(id); }
     float value() const             { return parent->value(id); }
+    size_t var() const              { return parent->lhs(id); }
 
 protected:
     /*
