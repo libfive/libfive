@@ -73,7 +73,7 @@ public:
     /*
      *  Returns the gradient with respect to all VARs
      */
-    const std::vector<float>& gradient();
+    std::map<Cache::Id, float> gradient();
 
     /*
      *  Evaluates a single interval (stored with set)
@@ -141,8 +141,10 @@ protected:
     /*  Indices of X, Y, Z coordinates */
     Clause::Id X, Y, Z;
 
-    /*  Indices of other variables in the results array  */
-    std::vector<Clause::Id> vars;
+    /*  Map of variables (in terms of where they live in this Evaluator) to
+     *  their ids in their respective Tree (e.g. what you get when calling
+     *  Tree::var(3.0).var() */
+    std::map<Clause::Id, Cache::Id> vars;
 
     /*  Tape containing our opcodes in reverse order */
     typedef std::vector<Clause> Tape;

@@ -77,7 +77,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
                 else if (m.first.opcode() == Opcode::VAR)
                 {
                     constants[id] = m.first.value();
-                    vars.push_back(id);
+                    vars[id] = m.first.var();
                 }
                 clauses[m.second] = id--;
             }
@@ -127,7 +127,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
         size_t index = 0;
         for (auto v : vars)
         {
-            result.setJacobian(v, index++);
+            result.setJacobian(v.first, index++);
         }
     }
 
@@ -1284,7 +1284,7 @@ std::tuple<const float*, const float*,
     };
 }
 
-const std::vector<float>& Evaluator::gradient()
+std::map<Cache::Id, float> Evaluator::gradient()
 {
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
     {
@@ -1296,7 +1296,17 @@ const std::vector<float>& Evaluator::gradient()
          eval_clause_jacobians(itr->op, av, aj, bv, bj,
             result.f[itr->id], result.j[itr->id]);
     }
-    return result.j[0];
+
+    std::map<Cache::Id, float> out;
+    {   // Unpack from flat array into map
+        // (to allow correlating back to VARs in Tree)
+        size_t index = 0;
+        for (auto v : vars)
+        {
+            out[v.second] = result.j[0][index++];
+        }
+    }
+    return out;
 }
 
 Interval Evaluator::interval()

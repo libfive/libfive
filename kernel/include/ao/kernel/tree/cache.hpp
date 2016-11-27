@@ -161,6 +161,7 @@ protected:
         size_t rank() const             { return std::get<0>(*this); }
         Opcode::Opcode opcode() const   { return std::get<1>(*this); }
         Id lhs() const                  { return std::get<2>(*this); }
+        Id var() const                  { return lhs(); }
         Id rhs() const                  { return std::get<3>(*this); }
         float value() const             { return std::get<4>(*this); }
     };
