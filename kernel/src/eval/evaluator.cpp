@@ -630,6 +630,220 @@ static void eval_clause_derivs(Opcode::Opcode op,
     }
 }
 
+#define JAC_LOOP for (auto a = aj.begin(), b = bj.begin(), o = oj.begin(); a != aj.end(); ++a, ++b, ++o)
+
+static void eval_clause_jacobians(Opcode::Opcode op,
+        const float* __restrict av,  std::vector<float>& aj,
+        const float* __restrict bv,  std::vector<float>& bj,
+        float* __restrict ov, std::vector<float>& oj)
+{
+    // Evaluate the base operations in a single pass
+    eval_clause_values(op, av, bv, ov, 1);
+
+    switch (op) {
+        case Opcode::ADD:
+            JAC_LOOP
+            {
+                (*o) = (*a) + (*b);
+            }
+            break;
+        case Opcode::MUL:
+            JAC_LOOP
+            {   // Product rule
+                (*o) = (*av) * (*b) + (*bv) * (*a);
+            }
+            break;
+        case Opcode::MIN:
+            JAC_LOOP
+            {
+                if ((*av) < (*bv))
+                {
+                    (*o) = (*a);
+                }
+                else
+                {
+                    (*o) = (*b);
+                }
+            }
+            break;
+        case Opcode::MAX:
+            JAC_LOOP
+            {
+                if ((*av) < (*bv))
+                {
+                    (*o) = (*b);
+                }
+                else
+                {
+                    (*o) = (*a);
+                }
+            }
+            break;
+        case Opcode::SUB:
+            JAC_LOOP
+            {
+                (*o) = (*a) - (*b);
+            }
+            break;
+        case Opcode::DIV:
+            JAC_LOOP
+            {
+                const float p = pow((*bv), 2);
+                (*o) = ((*bv)*(*a) - (*av)*(*b)) / p;
+            }
+            break;
+        case Opcode::ATAN2:
+            JAC_LOOP
+            {
+                const float d = pow((*av), 2) + pow((*bv), 2);
+                (*o) = ((*a)*(*bv) - (*av)*(*b)) / d;
+            }
+            break;
+        case Opcode::POW:
+            JAC_LOOP
+            {
+                const float m = pow((*av), (*bv) - 1);
+
+                // The full form of the derivative is
+                // (*o) = m * ((*bv) * (*a) + (*av) * log((*av)) * (*b)))
+                // However, log((*av)) is often NaN and (*b) is always zero,
+                // (since it must be CONST), so we skip that part.
+                (*o) = m * ((*bv) * (*a));
+            }
+            break;
+        case Opcode::NTH_ROOT:
+            JAC_LOOP
+            {
+                const float m = pow((*av), 1.0f/(*bv) - 1);
+                (*o) = m * (1.0f/(*bv) * (*a));
+            }
+            break;
+        case Opcode::MOD:
+            JAC_LOOP
+            {
+                // This isn't quite how partial derivatives of mod work,
+                // but close enough normals rendering.
+                (*o) = (*a);
+            }
+            break;
+        case Opcode::NANFILL:
+            JAC_LOOP
+            {
+                (*o) = std::isnan((*av)) ? (*b) : (*a);
+            }
+            break;
+
+        case Opcode::SQUARE:
+            JAC_LOOP
+            {
+                (*o) = 2 * (*av) * (*a);
+            }
+            break;
+        case Opcode::SQRT:
+            JAC_LOOP
+            {
+                if ((*av) < 0)
+                {
+                    (*o) = 0;
+                }
+                else
+                {
+                    (*o) = (*a) / (2 * (*ov));
+                }
+            }
+            break;
+        case Opcode::NEG:
+            JAC_LOOP
+            {
+                (*o) = -(*a);
+            }
+            break;
+        case Opcode::ABS:
+            JAC_LOOP
+            {
+                if ((*av) < 0)
+                {
+                    (*o) = -(*a);
+                }
+                else
+                {
+                    (*o) = (*a);
+                }
+            }
+            break;
+        case Opcode::SIN:
+            JAC_LOOP
+            {
+                const float c = cos((*av));
+                (*o) = (*a) * c;
+            }
+            break;
+        case Opcode::COS:
+            JAC_LOOP
+            {
+                const float s = -sin((*av));
+                (*o) = (*a) * s;
+            }
+            break;
+        case Opcode::TAN:
+            JAC_LOOP
+            {
+                const float s = pow(1/cos((*av)), 2);
+                (*o) = (*a) * s;
+            }
+            break;
+        case Opcode::ASIN:
+            JAC_LOOP
+            {
+                const float d = sqrt(1 - pow((*av), 2));
+                (*o) = (*a) / d;
+            }
+            break;
+        case Opcode::ACOS:
+            JAC_LOOP
+            {
+                const float d = -sqrt(1 - pow((*av), 2));
+                (*o) = (*a) / d;
+            }
+            break;
+        case Opcode::ATAN:
+            JAC_LOOP
+            {
+                const float d = pow((*av), 2) + 1;
+                (*o) = (*a) / d;
+            }
+            break;
+        case Opcode::EXP:
+            JAC_LOOP
+            {
+                const float e = exp((*av));
+                (*o) = e * (*a);
+            }
+            break;
+
+        case Opcode::DUMMY_A:
+            JAC_LOOP
+            {
+                (*o) = (*a);
+            }
+            break;
+        case Opcode::DUMMY_B:
+            JAC_LOOP
+            {
+                (*o) = (*b);
+            }
+            break;
+        case Opcode::INVALID:
+        case Opcode::CONST:
+        case Opcode::VAR_X:
+        case Opcode::VAR_Y:
+        case Opcode::VAR_Z:
+        case Opcode::VAR:
+        case Opcode::AFFINE_VEC:
+        case Opcode::LAST_OP: assert(false);
+    }
+}
+
 #ifdef __AVX__
 static void eval_clause_values(Opcode::Opcode op,
         const __m256* __restrict a, const __m256* __restrict b,
