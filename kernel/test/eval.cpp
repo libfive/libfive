@@ -54,17 +54,30 @@ TEST_CASE("Evaluator::gradient")
 
     SECTION("x * variable")
     {
-        Evaluator e(Tree(Opcode::MUL, Tree::X(), Tree(1.0)));
-        REQUIRE(e.eval(2.0, 2.0, 3.0) == Approx(2.0));
+        Evaluator e(Tree(Opcode::MUL, Tree::X(), Tree::var(1.0)));
         {
+            REQUIRE(e.eval(2.0, 2.0, 3.0) == Approx(2.0));
             auto g = e.gradient();
+            REQUIRE(g.size() == 1);
             REQUIRE(g[0] == Approx(2));
         }
-        REQUIRE(e.eval(3.0, 2.0, 3.0) == Approx(3.0));
         {
+            REQUIRE(e.eval(3.0, 2.0, 3.0) == Approx(3.0));
             auto g = e.gradient();
             REQUIRE(g[0] == Approx(3));
         }
+    }
+
+    SECTION("Multiple variables")
+    {
+        auto a = Tree::var(3.0);
+        auto b = Tree::var(5.0);
+        auto c = Tree::var(7.0);
+        Evaluator e(Tree(Opcode::ADD, Tree(Opcode::ADD,
+            Tree(Opcode::MUL, Tree(1.0f), a),
+            Tree(Opcode::MUL, Tree(2.0f), b)),
+            Tree(Opcode::MUL, Tree(3.0f), c)));
+        REQUIRE(e.eval(0, 0, 0) == Approx(34));
     }
 }
 
