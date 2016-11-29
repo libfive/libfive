@@ -71,6 +71,11 @@ public:
 #endif
 
     /*
+     *  Returns the gradient with respect to all VARs
+     */
+    std::map<Cache::Id, float> gradient(float x, float y, float z);
+
+    /*
      *  Evaluates a single interval (stored with set)
      */
     Interval interval();
@@ -128,13 +133,23 @@ public:
      */
     void setMatrix(const glm::mat4& m);
 
+    /*
+     *  Changes a variable's value
+     */
+    void setVar(Cache::Id var, float value);
+
 protected:
     /*  Global matrix transform (and inverse) applied to all coordinates  */
     glm::mat4 M;
     glm::mat4 Mi;
 
     /*  Indices of X, Y, Z coordinates */
-    uint32_t X, Y, Z;
+    Clause::Id X, Y, Z;
+
+    /*  Map of variables (in terms of where they live in this Evaluator) to
+     *  their ids in their respective Tree (e.g. what you get when calling
+     *  Tree::var(3.0).var() */
+    boost::bimap<Clause::Id, Cache::Id> vars;
 
     /*  Tape containing our opcodes in reverse order */
     typedef std::vector<Clause> Tape;

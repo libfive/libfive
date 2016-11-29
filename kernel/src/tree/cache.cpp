@@ -65,6 +65,14 @@ Cache::Id Cache::constant(float v)
     return data.left.at(k);
 }
 
+Cache::Id Cache::var(float v)
+{
+    auto k = Key(v, next);
+    assert(data.left.find(k) == data.left.end());
+    data.insert({k, next++});
+    return data.left.at(k);
+}
+
 Cache::Id Cache::operation(Opcode::Opcode op, Id a, Id b, bool collapse)
 {
     // These are opcodes that you're not allowed to use here

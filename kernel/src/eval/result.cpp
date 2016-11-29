@@ -18,14 +18,13 @@
  */
 #include "ao/kernel/eval/result.hpp"
 
-void Result::resize(Index clauses)
+void Result::resize(Index clauses, Index vars)
 {
 #ifdef __AVX__
     mf.resize(clauses);
     mdx.resize(clauses);
     mdy.resize(clauses);
     mdz.resize(clauses);
-    i.resize(clauses);
 
     f  = reinterpret_cast<float(*)[N]>(&mf[0]);
     dx = reinterpret_cast<float(*)[N]>(&mdx[0]);
@@ -37,9 +36,26 @@ void Result::resize(Index clauses)
     dy.resize(clauses);
     dz.resize(clauses);
 #endif
+    i.resize(clauses);
+    j.resize(clauses);
+    for (auto& d : j)
+    {
+        d.resize(vars);
+    }
 }
 
-void Result::fill(float v, Clause::Id clause)
+void Result::fill(float v, Index clause)
+{
+    setValue(v, clause);
+
+    // Fill the Gradient row with zeros
+    for (auto& d : j[clause])
+    {
+        d = 0;
+    }
+}
+
+void Result::setValue(float v, Index clause)
 {
     for (unsigned i=0; i < N; ++i)
     {
@@ -52,7 +68,13 @@ void Result::fill(float v, Clause::Id clause)
     i[clause] = Interval(v, v);
 }
 
-void Result::deriv(float x, float y, float z, Clause::Id clause)
+void Result::setGradient(Index clause, Index var)
+{
+    // Drop a 1 in the Jacobian row at the var index
+    j[clause][var] = 1;
+}
+
+void Result::deriv(float x, float y, float z, Index clause)
 {
     for (size_t i=0; i < N; ++i)
     {

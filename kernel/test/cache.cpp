@@ -160,3 +160,12 @@ TEST_CASE("Cache::findConnected")
     auto connected = t->findConnected(t->X());
     REQUIRE(connected.size() == 1);
 }
+
+TEST_CASE("Cache::var")
+{
+    Cache::reset();
+    auto t = Cache::instance();
+    auto a = t->var(3.1);
+    auto b = t->var(3.2);
+    REQUIRE(a != b);
+}

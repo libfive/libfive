@@ -57,6 +57,12 @@ Tree Tree::affine(float a, float b, float c, float d)
     return Tree(s, s->affine(a, b, c, d));
 }
 
+Tree Tree::var(float v)
+{
+    auto s = Cache::instance();
+    return Tree(s, s->var(v));
+}
+
 Tree Tree::collapse() const
 {
     return collapsed ? *this :

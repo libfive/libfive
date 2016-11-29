@@ -22,7 +22,7 @@
 #include "ao/kernel/tree/tree.hpp"
 #include "ao/kernel/eval/evaluator.hpp"
 
-TEST_CASE("Variable evaluation")
+TEST_CASE("Principle variable evaluation")
 {
     Evaluator e(Tree::X());
 
@@ -33,6 +33,80 @@ TEST_CASE("Constant evaluation")
 {
     Evaluator e(Tree(3.14));
     REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(3.14));
+}
+
+TEST_CASE("Secondary variable evaluation")
+{
+    Evaluator e(Tree::var(3.14));
+    REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(3.14));
+}
+
+TEST_CASE("Evaluator::gradient")
+{
+    SECTION("constant + variable")
+    {
+        auto v = Tree::var(3.14);
+        Evaluator e(Tree(Opcode::ADD, v, Tree(1.0)));
+        REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(4.14));
+        auto g = e.gradient(1, 2, 3);
+        REQUIRE(g.size() == 1);
+        REQUIRE(g.count(v.var()) == 1);
+        REQUIRE(g.at(v.var()) == Approx(1));
+    }
+
+    SECTION("x * variable")
+    {
+        auto v = Tree::var(1.0);
+        Evaluator e(Tree(Opcode::MUL, Tree::X(), v));
+        {
+            auto g = e.gradient(2, 0, 0);
+            REQUIRE(g.size() == 1);
+            REQUIRE(g.at(v.var()) == Approx(2));
+        }
+        {
+            auto g = e.gradient(3, 0, 0);
+            REQUIRE(g.at(v.var()) == Approx(3));
+        }
+    }
+
+    SECTION("Multiple variables")
+    {
+        // Deliberately construct out of order
+        auto a = Tree::var(3.0);
+        auto c = Tree::var(7.0);
+        auto b = Tree::var(5.0);
+
+        Evaluator e(Tree(Opcode::ADD, Tree(Opcode::ADD,
+            Tree(Opcode::MUL, Tree(1.0f), a),
+            Tree(Opcode::MUL, Tree(2.0f), b)),
+            Tree(Opcode::MUL, Tree(3.0f), c)));
+        REQUIRE(e.eval(0, 0, 0) == Approx(34));
+        auto g = e.gradient(0, 0, 0);
+        REQUIRE(g.at(a.var()) == Approx(1.0f));
+        REQUIRE(g.at(b.var()) == Approx(2.0f));
+        REQUIRE(g.at(c.var()) == Approx(3.0f));
+    }
+}
+
+TEST_CASE("Evaluator::setVar")
+{
+    // Deliberately construct out of order
+    auto a = Tree::var(3.0);
+    auto c = Tree::var(7.0);
+    auto b = Tree::var(5.0);
+
+    Evaluator e(Tree(Opcode::ADD, Tree(Opcode::ADD,
+        Tree(Opcode::MUL, Tree(1.0f), a),
+        Tree(Opcode::MUL, Tree(2.0f), b)),
+        Tree(Opcode::MUL, Tree(3.0f), c)));
+    REQUIRE(e.eval(0, 0, 0) == Approx(34));
+
+    e.setVar(a.var(), 5);
+    REQUIRE(e.eval(0, 0, 0) == Approx(36));
+    e.setVar(b.var(), 0);
+    REQUIRE(e.eval(0, 0, 0) == Approx(26));
+    e.setVar(c.var(), 10);
+    REQUIRE(e.eval(0, 0, 0) == Approx(35));
 }
 
 TEST_CASE("Float evaluation")

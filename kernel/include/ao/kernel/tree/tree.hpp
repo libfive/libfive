@@ -66,6 +66,11 @@ public:
     static Tree affine(float a, float b, float c, float d);
 
     /*
+     *  Returns a new variable with the given value
+     */
+    static Tree var(float v);
+
+    /*
      *  Returns a new Tree that is a flattened copy of this tree
      */
     Tree collapse() const;
@@ -85,6 +90,7 @@ public:
     Tree rhs() const                { return Tree(parent, parent->rhs(id)); }
     size_t rank() const             { return parent->rank(id); }
     float value() const             { return parent->value(id); }
+    size_t var() const              { return parent->lhs(id); }
 
 protected:
     /*

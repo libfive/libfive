@@ -68,9 +68,16 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
             // Other clauses get allocated results but no tape
             else
             {
+                // For constants and variables, record their values so
+                // that we can store those values in the result array
                 if (m.first.opcode() == Opcode::CONST)
                 {
                     constants[id] = m.first.value();
+                }
+                else if (m.first.opcode() == Opcode::VAR)
+                {
+                    constants[id] = m.first.value();
+                    vars.left.insert({id, m.first.var()});
                 }
                 clauses[m.second] = id--;
             }
@@ -97,7 +104,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     }
 
     // Allocate enough memory for all the clauses
-    result.resize(clauses.size());
+    result.resize(clauses.size(), vars.size());
     disabled.resize(clauses.size());
 
     // Store all constants in results array
@@ -106,14 +113,23 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
         result.fill(c.second, c.first);
     }
 
-    // Save X, Y, Z ids and set their derivatives
+    // Save X, Y, Z ids
     X = clauses.at(cache->X());
     Y = clauses.at(cache->Y());
     Z = clauses.at(cache->Z());
 
+    // Set derivatives for X, Y, Z (unchanging)
     result.deriv(1, 0, 0, X);
     result.deriv(0, 1, 0, Y);
     result.deriv(0, 0, 1, Z);
+
+    {   // Set the Jacobian for our variables (unchanging)
+        size_t index = 0;
+        for (auto v : vars.left)
+        {
+            result.setGradient(v.first, index++);
+        }
+    }
 
     assert(clauses.at(root.id) == 0);
 }
@@ -219,7 +235,7 @@ void Evaluator::pop()
 ////////////////////////////////////////////////////////////////////////////////
 
 #define EVAL_LOOP for (Result::Index i=0; i < count; ++i)
-static void clause(Opcode::Opcode op,
+static void eval_clause_values(Opcode::Opcode op,
         const float* __restrict a, const float* __restrict b,
         float* __restrict out, Result::Index count)
 {
@@ -334,12 +350,13 @@ static void clause(Opcode::Opcode op,
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
+        case Opcode::VAR:
         case Opcode::AFFINE_VEC:
         case Opcode::LAST_OP: assert(false);
     }
 }
 
-static void clause(Opcode::Opcode op,
+static void eval_clause_derivs(Opcode::Opcode op,
         const float* __restrict av,  const float* __restrict adx,
         const float* __restrict ady, const float* __restrict adz,
 
@@ -351,7 +368,7 @@ static void clause(Opcode::Opcode op,
         Result::Index count)
 {
     // Evaluate the base operations in a single pass
-    clause(op, av, bv, ov, count);
+    eval_clause_values(op, av, bv, ov, count);
 
     switch (op) {
         case Opcode::ADD:
@@ -607,13 +624,228 @@ static void clause(Opcode::Opcode op,
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
+        case Opcode::VAR:
+        case Opcode::AFFINE_VEC:
+        case Opcode::LAST_OP: assert(false);
+    }
+}
+
+#define JAC_LOOP for (auto a = aj.begin(), b = bj.begin(), o = oj.begin(); a != aj.end(); ++a, ++b, ++o)
+
+static void eval_clause_jacobians(Opcode::Opcode op,
+        const float* __restrict av,  std::vector<float>& aj,
+        const float* __restrict bv,  std::vector<float>& bj,
+        float* __restrict ov, std::vector<float>& oj)
+{
+    // Evaluate the base operations in a single pass
+    eval_clause_values(op, av, bv, ov, 1);
+
+    switch (op) {
+        case Opcode::ADD:
+            JAC_LOOP
+            {
+                (*o) = (*a) + (*b);
+            }
+            break;
+        case Opcode::MUL:
+            JAC_LOOP
+            {   // Product rule
+                (*o) = (*av) * (*b) + (*bv) * (*a);
+            }
+            break;
+        case Opcode::MIN:
+            JAC_LOOP
+            {
+                if ((*av) < (*bv))
+                {
+                    (*o) = (*a);
+                }
+                else
+                {
+                    (*o) = (*b);
+                }
+            }
+            break;
+        case Opcode::MAX:
+            JAC_LOOP
+            {
+                if ((*av) < (*bv))
+                {
+                    (*o) = (*b);
+                }
+                else
+                {
+                    (*o) = (*a);
+                }
+            }
+            break;
+        case Opcode::SUB:
+            JAC_LOOP
+            {
+                (*o) = (*a) - (*b);
+            }
+            break;
+        case Opcode::DIV:
+            JAC_LOOP
+            {
+                const float p = pow((*bv), 2);
+                (*o) = ((*bv)*(*a) - (*av)*(*b)) / p;
+            }
+            break;
+        case Opcode::ATAN2:
+            JAC_LOOP
+            {
+                const float d = pow((*av), 2) + pow((*bv), 2);
+                (*o) = ((*a)*(*bv) - (*av)*(*b)) / d;
+            }
+            break;
+        case Opcode::POW:
+            JAC_LOOP
+            {
+                const float m = pow((*av), (*bv) - 1);
+
+                // The full form of the derivative is
+                // (*o) = m * ((*bv) * (*a) + (*av) * log((*av)) * (*b)))
+                // However, log((*av)) is often NaN and (*b) is always zero,
+                // (since it must be CONST), so we skip that part.
+                (*o) = m * ((*bv) * (*a));
+            }
+            break;
+        case Opcode::NTH_ROOT:
+            JAC_LOOP
+            {
+                const float m = pow((*av), 1.0f/(*bv) - 1);
+                (*o) = m * (1.0f/(*bv) * (*a));
+            }
+            break;
+        case Opcode::MOD:
+            JAC_LOOP
+            {
+                // This isn't quite how partial derivatives of mod work,
+                // but close enough normals rendering.
+                (*o) = (*a);
+            }
+            break;
+        case Opcode::NANFILL:
+            JAC_LOOP
+            {
+                (*o) = std::isnan((*av)) ? (*b) : (*a);
+            }
+            break;
+
+        case Opcode::SQUARE:
+            JAC_LOOP
+            {
+                (*o) = 2 * (*av) * (*a);
+            }
+            break;
+        case Opcode::SQRT:
+            JAC_LOOP
+            {
+                if ((*av) < 0)
+                {
+                    (*o) = 0;
+                }
+                else
+                {
+                    (*o) = (*a) / (2 * (*ov));
+                }
+            }
+            break;
+        case Opcode::NEG:
+            JAC_LOOP
+            {
+                (*o) = -(*a);
+            }
+            break;
+        case Opcode::ABS:
+            JAC_LOOP
+            {
+                if ((*av) < 0)
+                {
+                    (*o) = -(*a);
+                }
+                else
+                {
+                    (*o) = (*a);
+                }
+            }
+            break;
+        case Opcode::SIN:
+            JAC_LOOP
+            {
+                const float c = cos((*av));
+                (*o) = (*a) * c;
+            }
+            break;
+        case Opcode::COS:
+            JAC_LOOP
+            {
+                const float s = -sin((*av));
+                (*o) = (*a) * s;
+            }
+            break;
+        case Opcode::TAN:
+            JAC_LOOP
+            {
+                const float s = pow(1/cos((*av)), 2);
+                (*o) = (*a) * s;
+            }
+            break;
+        case Opcode::ASIN:
+            JAC_LOOP
+            {
+                const float d = sqrt(1 - pow((*av), 2));
+                (*o) = (*a) / d;
+            }
+            break;
+        case Opcode::ACOS:
+            JAC_LOOP
+            {
+                const float d = -sqrt(1 - pow((*av), 2));
+                (*o) = (*a) / d;
+            }
+            break;
+        case Opcode::ATAN:
+            JAC_LOOP
+            {
+                const float d = pow((*av), 2) + 1;
+                (*o) = (*a) / d;
+            }
+            break;
+        case Opcode::EXP:
+            JAC_LOOP
+            {
+                const float e = exp((*av));
+                (*o) = e * (*a);
+            }
+            break;
+
+        case Opcode::DUMMY_A:
+            JAC_LOOP
+            {
+                (*o) = (*a);
+            }
+            break;
+        case Opcode::DUMMY_B:
+            JAC_LOOP
+            {
+                (*o) = (*b);
+            }
+            break;
+        case Opcode::INVALID:
+        case Opcode::CONST:
+        case Opcode::VAR_X:
+        case Opcode::VAR_Y:
+        case Opcode::VAR_Z:
+        case Opcode::VAR:
         case Opcode::AFFINE_VEC:
         case Opcode::LAST_OP: assert(false);
     }
 }
 
 #ifdef __AVX__
-static void clause(Opcode::Opcode op,
+static void eval_clause_values(Opcode::Opcode op,
         const __m256* __restrict a, const __m256* __restrict b,
               __m256* __restrict out, Result::Index count)
 {
@@ -683,9 +915,10 @@ static void clause(Opcode::Opcode op,
         case Opcode::NTH_ROOT:
         case Opcode::MOD:
         case Opcode::NANFILL:
-            clause(op, reinterpret_cast<const float*>(a),
-                       reinterpret_cast<const float*>(b),
-                       reinterpret_cast<float*>(out), count*8);
+            eval_clause_values(op,
+                    reinterpret_cast<const float*>(a),
+                    reinterpret_cast<const float*>(b),
+                    reinterpret_cast<float*>(out), count*8);
             break;
 
         case Opcode::INVALID:
@@ -693,6 +926,7 @@ static void clause(Opcode::Opcode op,
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
+        case Opcode::VAR:
         case Opcode::AFFINE_VEC:
         case Opcode::LAST_OP: assert(false);
     }
@@ -704,7 +938,7 @@ static void clause(Opcode::Opcode op,
 //      quiet (meaning it doesn't signal on NaN)
 #define CMP_LT_OQ 17
 
-static void clause(Opcode::Opcode op,
+static void eval_clause_derivs(Opcode::Opcode op,
         const __m256* __restrict av,  const __m256* __restrict adx,
         const __m256* __restrict ady, const __m256* __restrict adz,
 
@@ -716,7 +950,7 @@ static void clause(Opcode::Opcode op,
         Result::Index count)
 {
     // Evaluate the base operations in a single pass
-    clause(op, av, bv, ov, count);
+    eval_clause_values(op, av, bv, ov, count);
 
     switch (op) {
         case Opcode::ADD:
@@ -860,7 +1094,8 @@ static void clause(Opcode::Opcode op,
         case Opcode::NTH_ROOT:
         case Opcode::MOD:
         case Opcode::NANFILL:
-            clause(op, reinterpret_cast<const float*>(av),
+            eval_clause_derivs(
+                       op, reinterpret_cast<const float*>(av),
                        reinterpret_cast<const float*>(adx),
                        reinterpret_cast<const float*>(ady),
                        reinterpret_cast<const float*>(adz),
@@ -881,13 +1116,15 @@ static void clause(Opcode::Opcode op,
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
+        case Opcode::VAR:
         case Opcode::AFFINE_VEC:
         case Opcode::LAST_OP: assert(false);
     }
 }
 #endif
 
-static Interval clause(Opcode::Opcode op, const Interval& a, const Interval& b)
+static Interval eval_clause_interval(
+        Opcode::Opcode op, const Interval& a, const Interval& b)
 {
     switch (op) {
         case Opcode::ADD:
@@ -945,6 +1182,7 @@ static Interval clause(Opcode::Opcode op, const Interval& a, const Interval& b)
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
+        case Opcode::VAR:
         case Opcode::AFFINE_VEC:
         case Opcode::LAST_OP: assert(false);
     }
@@ -962,8 +1200,9 @@ const float* Evaluator::values(Result::Index count, bool vectorize)
 
         for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            clause(itr->op, &result.mf[itr->a][0], &result.mf[itr->b][0],
-                   &result.mf[itr->id][0], count);
+            eval_clause_values(itr->op,
+                    &result.mf[itr->a][0], &result.mf[itr->b][0],
+                    &result.mf[itr->id][0], count);
         }
     } else
 #else
@@ -973,8 +1212,9 @@ const float* Evaluator::values(Result::Index count)
     {
         for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            clause(itr->op, result.f[itr->a], result.f[itr->b],
-                   result.f[itr->id], count);
+            eval_clause_values(itr->op,
+                    result.f[itr->a], result.f[itr->b],
+                    result.f[itr->id], count);
         }
     }
 
@@ -992,7 +1232,7 @@ std::tuple<const float*, const float*,
 
         for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            clause(itr->op,
+            eval_clause_derivs(itr->op,
                    &result.mf[itr->a][0], &result.mdx[itr->a][0],
                    &result.mdy[itr->a][0], &result.mdz[itr->a][0],
 
@@ -1013,7 +1253,7 @@ std::tuple<const float*, const float*,
     {
         for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
-            clause(itr->op,
+            eval_clause_derivs(itr->op,
                    result.f[itr->a], result.dx[itr->a],
                    result.dy[itr->a], result.dz[itr->a],
 
@@ -1044,6 +1284,33 @@ std::tuple<const float*, const float*,
     };
 }
 
+std::map<Cache::Id, float> Evaluator::gradient(float x, float y, float z)
+{
+    set(x, y, z, 0);
+
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
+    {
+        const float* av = result.f[itr->a];
+        const float* bv = result.f[itr->b];
+        std::vector<float>& aj = result.j[itr->a];
+        std::vector<float>& bj = result.j[itr->b];
+
+         eval_clause_jacobians(itr->op, av, aj, bv, bj,
+            result.f[itr->id], result.j[itr->id]);
+    }
+
+    std::map<Cache::Id, float> out;
+    {   // Unpack from flat array into map
+        // (to allow correlating back to VARs in Tree)
+        size_t index = 0;
+        for (auto v : vars.left)
+        {
+            out[v.second] = result.j[0][index++];
+        }
+    }
+    return out;
+}
+
 Interval Evaluator::interval()
 {
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
@@ -1051,7 +1318,7 @@ Interval Evaluator::interval()
         Interval a = result.i[itr->a];
         Interval b = result.i[itr->b];
 
-        result.i[itr->id] = clause(itr->op, a, b);
+        result.i[itr->id] = eval_clause_interval(itr->op, a, b);
     }
     return result.i[0];
 }
@@ -1121,4 +1388,9 @@ void Evaluator::setMatrix(const glm::mat4& m)
 {
     M = m;
     Mi = glm::inverse(m);
+}
+
+void Evaluator::setVar(Cache::Id var, float value)
+{
+    result.setValue(value, vars.right.at(var));
 }

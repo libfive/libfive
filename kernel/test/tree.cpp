@@ -156,3 +156,16 @@ TEST_CASE("Tree::collapse")
         REQUIRE(t_.opcode() == Opcode::VAR_X);
     }
 }
+
+TEST_CASE("Tree::var")
+{
+    Cache::reset();
+
+    auto a = Tree::var(3.0);
+    auto b = Tree::var(5.0);
+    auto c = Tree::var(7.0);
+
+    REQUIRE(a.var() == 1);
+    REQUIRE(b.var() == 2);
+    REQUIRE(c.var() == 3);
+}
