@@ -1213,12 +1213,12 @@ const float* Evaluator::values(Result::Index count)
         for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
             eval_clause_values(itr->op,
-                    result.f[itr->a], result.f[itr->b],
-                    result.f[itr->id], count);
+                    &result.f[itr->a][0], &result.f[itr->b][0],
+                    &result.f[itr->id][0], count);
         }
     }
 
-    return result.f[0];
+    return &result.f[0][0];
 }
 
 #ifdef __AVX__
@@ -1247,21 +1247,21 @@ std::tuple<const float*, const float*,
     } else
 #else
 std::tuple<const float*, const float*,
-           const float*, const float*> Evaluator::derivs(size_t count)
+           const float*, const float*> Evaluator::derivs(Result::Index count)
 {
 #endif
     {
         for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
         {
             eval_clause_derivs(itr->op,
-                   result.f[itr->a], result.dx[itr->a],
-                   result.dy[itr->a], result.dz[itr->a],
+                   &result.f[itr->a][0], &result.dx[itr->a][0],
+                   &result.dy[itr->a][0], &result.dz[itr->a][0],
 
-                   result.f[itr->b], result.dx[itr->b],
-                   result.dy[itr->b], result.dz[itr->b],
+                   &result.f[itr->b][0], &result.dx[itr->b][0],
+                   &result.dy[itr->b][0], &result.dz[itr->b][0],
 
-                   result.f[itr->id], result.dx[itr->id],
-                   result.dy[itr->id], result.dz[itr->id],
+                   &result.f[itr->id][0], &result.dx[itr->id][0],
+                   &result.dy[itr->id][0], &result.dz[itr->id][0],
                    count);
         }
     }
@@ -1280,7 +1280,7 @@ std::tuple<const float*, const float*,
 
     return std::tuple<const float*, const float*,
                       const float*, const float*> {
-        result.f[0], result.dx[0], result.dy[0], result.dz[0]
+        &result.f[0][0], &result.dx[0][0], &result.dy[0][0], &result.dz[0][0]
     };
 }
 
@@ -1290,13 +1290,13 @@ std::map<Cache::Id, float> Evaluator::gradient(float x, float y, float z)
 
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
     {
-        const float* av = result.f[itr->a];
-        const float* bv = result.f[itr->b];
+        const float* av = &result.f[itr->a][0];
+        const float* bv = &result.f[itr->b][0];
         std::vector<float>& aj = result.j[itr->a];
         std::vector<float>& bj = result.j[itr->b];
 
          eval_clause_jacobians(itr->op, av, aj, bv, bj,
-            result.f[itr->id], result.j[itr->id]);
+            &result.f[itr->id][0], result.j[itr->id]);
     }
 
     std::map<Cache::Id, float> out;
@@ -1367,12 +1367,12 @@ void Evaluator::applyTransform(Result::Index count)
 #else
     for (size_t i=0; i < count; ++i)
     {
-        float x = result.f(X, i);
-        float y = result.f(Y, i);
-        float z = result.f(Z, i);
-        result.f(X, i) = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
-        result.f(Y, i) = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
-        result.f(Z, i) = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
+        float x = result.f[X][i];
+        float y = result.f[Y][i];
+        float z = result.f[Z][i];
+        result.f[X][i] = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
+        result.f[Y][i] = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
+        result.f[Z][i] = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
     }
 #endif
 }
