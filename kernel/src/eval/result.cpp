@@ -46,6 +46,17 @@ void Result::resize(Index clauses, Index vars)
 
 void Result::fill(float v, Index clause)
 {
+    setValue(v, clause);
+
+    // Fill the Jacobian row with zeros
+    for (auto& d : j[clause])
+    {
+        d = 0;
+    }
+}
+
+void Result::setValue(float v, Index clause)
+{
     for (unsigned i=0; i < N; ++i)
     {
         f[clause][i] = v;
@@ -55,12 +66,6 @@ void Result::fill(float v, Index clause)
     }
 
     i[clause] = Interval(v, v);
-
-    // Fill the Jacobian row with zeros
-    for (auto& d : j[clause])
-    {
-        d = 0;
-    }
 }
 
 void Result::setJacobian(Index clause, Index var)

@@ -77,7 +77,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
                 else if (m.first.opcode() == Opcode::VAR)
                 {
                     constants[id] = m.first.value();
-                    vars[id] = m.first.var();
+                    vars.left.insert({id, m.first.var()});
                 }
                 clauses[m.second] = id--;
             }
@@ -125,7 +125,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
 
     {   // Set the Jacobian for our variables (unchanging)
         size_t index = 0;
-        for (auto v : vars)
+        for (auto v : vars.left)
         {
             result.setJacobian(v.first, index++);
         }
@@ -1284,8 +1284,10 @@ std::tuple<const float*, const float*,
     };
 }
 
-std::map<Cache::Id, float> Evaluator::gradient()
+std::map<Cache::Id, float> Evaluator::gradient(float x, float y, float z)
 {
+    set(x, y, z, 0);
+
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr)
     {
         const float* av = result.f[itr->a];
@@ -1301,7 +1303,7 @@ std::map<Cache::Id, float> Evaluator::gradient()
     {   // Unpack from flat array into map
         // (to allow correlating back to VARs in Tree)
         size_t index = 0;
-        for (auto v : vars)
+        for (auto v : vars.left)
         {
             out[v.second] = result.j[0][index++];
         }
@@ -1386,4 +1388,9 @@ void Evaluator::setMatrix(const glm::mat4& m)
 {
     M = m;
     Mi = glm::inverse(m);
+}
+
+void Evaluator::setVar(Cache::Id var, float value)
+{
+    result.setValue(value, vars.right.at(var));
 }

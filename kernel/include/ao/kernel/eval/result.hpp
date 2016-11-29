@@ -36,12 +36,18 @@ struct Result {
 
     /*
      *  Sets all of the values to the given constant float
-     *  (across the Interval, float, Gradient, and __m256 arrays)
+     *  (across the Interval, and float / __m256 arrays)
      *
      *  Gradients are set to {0, 0, 0}
      *  Jacobian is set to 0
      */
     void fill(float v, Index clause);
+
+    /*
+     *  Sets all of the values to the given constant float
+     *  (across the Interval, and float / __m256 arrays)
+     */
+    void setValue(float v, Index clause);
 
     /*
      *  Marks that j[clause][var] = 1
