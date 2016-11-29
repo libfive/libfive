@@ -102,6 +102,8 @@ std::string Opcode::to_str(Opcode op)
         case Opcode::ATAN: return "atan";
         case Opcode::EXP: return "exp";
     }
+    assert(false); /* All enumeration values must be handled */
+    return "";
 }
 
 Opcode::Opcode Opcode::from_str(std::string s)
