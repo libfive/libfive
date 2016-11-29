@@ -22,6 +22,7 @@
 #include <set>
 #include <vector>
 #include <thread>
+#include <mutex>
 
 #include <boost/bimap.hpp>
 
