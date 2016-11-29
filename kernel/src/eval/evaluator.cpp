@@ -127,7 +127,7 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
         size_t index = 0;
         for (auto v : vars.left)
         {
-            result.setJacobian(v.first, index++);
+            result.setGradient(v.first, index++);
         }
     }
 

@@ -39,7 +39,7 @@ struct Result {
      *  (across the Interval, and float / __m256 arrays)
      *
      *  Gradients are set to {0, 0, 0}
-     *  Jacobian is set to 0
+     *  Gradient is set to 0
      */
     void fill(float v, Index clause);
 
@@ -52,7 +52,7 @@ struct Result {
     /*
      *  Marks that j[clause][var] = 1
      */
-    void setJacobian(Index clause, Index var);
+    void setGradient(Index clause, Index var);
 
     /*
      *  Fills the derivative arrays with the given values
@@ -80,7 +80,7 @@ struct Result {
     std::vector<std::array<float, N>> dy;
     std::vector<std::array<float, N>> dz;
 #endif
-    /*  mj[clause][var] = dclause / dvar */
+    /*  j[clause][var] = dclause / dvar */
     std::vector<std::vector<float>> j;
 
     std::vector<Interval> i;

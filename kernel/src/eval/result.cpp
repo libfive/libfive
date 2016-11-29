@@ -48,7 +48,7 @@ void Result::fill(float v, Index clause)
 {
     setValue(v, clause);
 
-    // Fill the Jacobian row with zeros
+    // Fill the Gradient row with zeros
     for (auto& d : j[clause])
     {
         d = 0;
@@ -68,7 +68,7 @@ void Result::setValue(float v, Index clause)
     i[clause] = Interval(v, v);
 }
 
-void Result::setJacobian(Index clause, Index var)
+void Result::setGradient(Index clause, Index var)
 {
     // Drop a 1 in the Jacobian row at the var index
     j[clause][var] = 1;
