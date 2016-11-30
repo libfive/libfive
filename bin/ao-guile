@@ -26,7 +26,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-modules (ao bind))
-(ao-init-guile)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -74,6 +73,12 @@
     ; Import relevant modules
     (use-modules (ao operators) (ao user) (ao export)
                  (ao shapes) (ao csg) (ao transforms))
+
+    ; Busy-loop until the application window is booted
+    (let recurse () (if (ao-running?) #f (recurse)))
+
+    ; Register all of the relevant callbacks
+    (ao-init-guile)
 
     ; Clear display and print startup message
     (system "clear")

@@ -145,5 +145,6 @@ extern "C"
 
     void ao_halt();
     void ao_run();
+    int ao_is_running();
 
 }

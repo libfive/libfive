@@ -238,6 +238,11 @@
 (define-public ao-run
     (pointer->procedure void (get-function "ao_run") '()))
 
+(define-public (ao-running?)
+    "ao-running
+    Checks whether the main Ao window is open yet"
+    (= 1 ((pointer->procedure int (get-function "ao_is_running") '()))))
+
 (define-public ao-halt
     (pointer->procedure void (get-function "ao_halt") '()))
 
