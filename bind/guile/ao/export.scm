@@ -18,7 +18,7 @@
 |#
 (define-module (ao export))
 
-(use-modules (ao bind) (ao jit) (ao bounds))
+(use-modules (ao bind) (ao jit) (ao bounds) (ao util))
 
 (define (export-bounded func shape file res args)
     "export-bounded func shape file res args
@@ -28,7 +28,8 @@
       (if bounds
         (func shape file (car bounds) (cadr bounds) res)
         (if (not (= 2 (length args)))
-          (error "Shape has no bounds; must provide them for export")
+          (ao-error 'export-bounds
+                    "Shape has no bounds; must provide them for export")
           (func shape file (car args) (cadr args) res)))))
 
 

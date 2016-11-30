@@ -19,7 +19,7 @@
 (define-module (ao operators))
 
 (use-modules (srfi srfi-1) (ice-9 receive))
-(use-modules (ao bind) (ao jit))
+(use-modules (ao bind) (ao jit) (ao util))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -27,8 +27,10 @@
 (define (bin-reduce sym default args)
     (let* ((len  (length args))
            (half (quotient len 2)))
-        (cond ((= 0 len) (if (null? default) (error "Too few arguments")
-                                             (make-tree default)))
+        (cond ((= 0 len)
+                 (if (null? default)
+                   (ao-error 'operator-error "Too few arguments")
+                   (make-tree default)))
               ((= 1 len) (make-tree (car args)))
               (else (make-tree sym
                         (bin-reduce sym default (take args half))
@@ -104,16 +106,19 @@
 (define expt_ expt)
 (define-public (expt a b)
   (when (tree? b)
-    (error "RHS of exponentiation must be a constant"))
+    (ao-error 'exponent-error
+              "RHS of exponentiation must be a constant, not ~A" b))
   (when (not (rational? b))
-    (error "RHS of exponentiation must be rational"))
+    (ao-error 'exponent-error "RHS of exponentiation must be rational, not ~A" b))
   (if (tree? a)
     (let ((num (numerator b))
           (denom (denominator b)))
     (cond ((= 1 (abs denom))  (make-tree 'pow a b))
           ((= 1  num)         (make-tree 'nth-root a denom))
           ((= -1 num)         (/ (make-tree 'nth-root a denom)))
-          (else (error "RHS of exponentiation must be integer or 1 / integer"))
+          (else (ao-error 'exponent-error
+                  "RHS of exponentiation must be integer or 1 / integer, not ~A"
+                  b))
           ))
     (expt_ a b)))
 (export! expt)
@@ -151,7 +156,7 @@
             (if (number? a)
                 (_atan a)
                 (make-tree 'atan a)))
-        (else (error "Too many arguments to atan"))))
+        (else (ao-error 'arg-count "Too many arguments to atan: ~A ~A" a b))))
 (export! atan)
 
 (define-public (square f)

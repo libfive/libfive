@@ -23,6 +23,8 @@
 (use-modules (ice-9 i18n))
 (use-modules (system foreign))
 
+(use-modules (ao util))
+
 (define libao (dynamic-link (string-append (dirname (current-filename))
                                            "/../../../lib/libao")))
 
@@ -137,7 +139,7 @@
     X, Y, Z should be pairs '(lower . upper)
     Returns a pair '(lower . upper)"
     (if (any (lambda (I) (< (cdr I) (car I))) (list X Y Z))
-        (error "Intervals must be ordered"))
+        (ao-error 'interval-order "Intervals must be ordered"))
     (let ((vx (make-c-struct v2 (list (car X) (cdr X))))
           (vy (make-c-struct v2 (list (car Y) (cdr Y))))
           (vz (make-c-struct v2 (list (car Z) (cdr Z)))))
@@ -160,7 +162,7 @@
                        #f))
                  exts)))
       (or lower-filename
-          (error
+          (ao-error 'export-file-extension
            (format #f
                    "Invalid file extension. Expected one of ~a, got ~a"
                    exts filename)))))

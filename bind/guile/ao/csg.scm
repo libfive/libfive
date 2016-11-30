@@ -19,7 +19,7 @@
 (define-module (ao csg))
 
 (use-modules (srfi srfi-1))
-(use-modules (ao operators) (ao bounds))
+(use-modules (ao operators) (ao bounds) (ao util))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -28,7 +28,7 @@
     Returns the union of any number of shapes"
     (let ((bounds (map get-bounds shapes)))
     (if (= 0 (length shapes))
-        (error "Cannot take the union of an empty list")
+        (ao-error 'csg-error "Cannot take union of an empty list")
         (let ((out (lambda (x y z) ; New shape function!
                    (apply min (map (lambda (s) (s x y z)) shapes)))))
             (if (every (lambda (x) x) bounds)
@@ -41,7 +41,7 @@
     Returns the intersection of any number of shapes"
     (let ((bounds (map get-bounds shapes)))
     (if (= 0 (length shapes))
-        (error "Cannot take the intersection of an empty list")
+        (ao-error 'csg-error #f "Cannot take intersection of empty list")
         (let ((out (lambda (x y z) ; New shape function!
                    (apply max (map (lambda (s) (s x y z)) shapes)))))
             (if (every identity bounds)

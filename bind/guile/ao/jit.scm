@@ -22,7 +22,7 @@
 (use-modules (ice-9 common-list))
 (use-modules (system foreign))
 
-(use-modules (ao bind))
+(use-modules (ao bind) (ao util))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -40,13 +40,14 @@ A symbol and further arguments are converted to an operation"
         ((= 0 len)
             (cond ((tree? a) a)
                   ((number? a) (tree-const a))
-                  (else (error "Failed to construct tree" a))))
+                  (else (ao-error 'tree-error "Failed to construct tree ~A" a))))
         ((= 1 len)
             (tree-op-unary a (make-tree (car args))))
         ((= 2 len)
             (tree-op-binary a (make-tree (car args))
                               (make-tree (cadr args))))
-        (else (error "Incorrect argument count to make-tree")))))
+        (else (ao-error 'tree-error
+                  "Incorrect argument count to make-tree: ~A" args)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -73,7 +74,9 @@ A symbol and further arguments are converted to an operation"
                (tree-eval-interval t x y z))
               ((every number? (list x y z))
                (tree-eval-double t x y z))
-              (else (error "Invalid arguments (must be floats or pairs)"))))))
+              (else (scm-error 'wrong-type-arg #f
+                       "Invalid arguments ~A ~A ~A (must be floats or pairs)"
+                       (list x y z) (list x y z)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

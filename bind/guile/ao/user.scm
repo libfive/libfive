@@ -31,7 +31,7 @@
     Show the given function in the 3D viewport"
     ((_ shape)
          (if (pair? 'shape)
-             (error
+             (ao-error 'ao-show-id
               "ao-show needs an identifier if its argument is not a variable")
          (ao-show- (or (current-filename) "<repl>") (symbol->string 'shape) shape)))
     ((_ id shape)
