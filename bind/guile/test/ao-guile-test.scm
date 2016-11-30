@@ -25,7 +25,8 @@
 
 (use-modules (ggspec lib))
 
-(use-modules (ao bind) (ao jit) (ao operators) (ao transforms) (ao csg) (ao bounds))
+(use-modules (ao sys libao) (ao sys jit) (ao sys operators)
+             (ao transforms) (ao csg) (ao bounds))
 
 (suite "bind.scm (low-level libao interface)"
     (tests

@@ -25,7 +25,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-modules (ao bind))
+(use-modules (ao sys libao))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -71,7 +71,7 @@
 ;; Start the REPL running in a separate thread
 (define repl-thread (call-with-new-thread (lambda ()
     ; Import relevant modules
-    (use-modules (ao operators) (ao user) (ao export)
+    (use-modules (ao sys operators) (ao sys user)
                  (ao shapes) (ao csg) (ao transforms))
 
     ; Busy-loop until the application window is booted

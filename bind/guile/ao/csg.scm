@@ -19,7 +19,7 @@
 (define-module (ao csg))
 
 (use-modules (srfi srfi-1))
-(use-modules (ao operators) (ao bounds) (ao util))
+(use-modules (ao sys operators) (ao sys util) (ao bounds))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

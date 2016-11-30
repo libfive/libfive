@@ -17,7 +17,7 @@
     along with Ao.  If not, see <http://www.gnu.org/licenses/>.
 |#
 
-(define-module (ao util))
+(define-module (ao sys util))
 
 (define-public (ao-error key str . args)
   (scm-error key #f str args #f))

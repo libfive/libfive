@@ -16,10 +16,10 @@
     You should have received a copy of the GNU General Public License
     along with Ao.  If not, see <http://www.gnu.org/licenses/>.
 |#
-(define-module (ao operators))
+(define-module (ao sys operators))
 
 (use-modules (srfi srfi-1) (ice-9 receive))
-(use-modules (ao bind) (ao jit) (ao util))
+(use-modules (ao sys libao) (ao sys jit) (ao sys util))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

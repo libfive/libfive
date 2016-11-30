@@ -16,17 +16,17 @@
     You should have received a copy of the GNU General Public License
     along with Ao.  If not, see <http://www.gnu.org/licenses/>.
 |#
-(define-module (ao bind))
+(define-module (ao sys libao))
 
 (use-modules (srfi srfi-1))
 (use-modules (srfi srfi-13))
 (use-modules (ice-9 i18n))
 (use-modules (system foreign))
 
-(use-modules (ao util))
+(use-modules (ao sys util))
 
 (define libao (dynamic-link (string-append (dirname (current-filename))
-                                           "/../../../lib/libao")))
+                                           "/../../../../lib/libao")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -17,12 +17,12 @@
     along with Ao.  If not, see <http://www.gnu.org/licenses/>.
 |#
 
-(define-module (ao jit))
+(define-module (ao sys jit))
 
 (use-modules (ice-9 common-list))
 (use-modules (system foreign))
 
-(use-modules (ao bind) (ao util))
+(use-modules (ao sys libao) (ao sys util))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

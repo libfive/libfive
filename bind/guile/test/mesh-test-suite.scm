@@ -21,7 +21,8 @@
 |#
 (add-to-load-path (string-append (dirname (current-filename)) "/../"))
 
-(use-modules (ao export) (ao shapes) (ao csg) (ao transforms) (ao operators))
+(use-modules (ao sys operators) (ao sys user)
+             (ao shapes) (ao csg) (ao transforms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
