@@ -77,9 +77,8 @@
     ; Busy-loop until the application window is booted
     (let recurse () (if (ao-running?) #f (recurse)))
 
-    ; Register the REPL thread's identity
+    ; Register all of the relevant callbacks
     (ao-init-guile)
-    (ao-register-repl)
 
     ; Clear display and print startup message
     (system "clear")

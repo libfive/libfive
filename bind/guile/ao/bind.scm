@@ -246,9 +246,6 @@
 (define-public ao-halt
     (pointer->procedure void (get-function "ao_halt") '()))
 
-(define-public ao-register-repl
-    (pointer->procedure void (get-function "ao_register_repl") '()))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; The callback will be called from a non-Guile thread, so we need to install

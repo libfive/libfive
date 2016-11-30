@@ -147,10 +147,4 @@ extern "C"
     void ao_run();
     int ao_is_running();
 
-    /*
-     *  Mark that the current thread is the REPL thread
-     *  (so window_thread_init does not need to be called)
-     */
-    void ao_register_repl();
-
 }

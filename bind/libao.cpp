@@ -280,6 +280,9 @@ void window_set_thread_init(void (*init)())
 {
     window_thread_init = init;
     window_thread_init();
+
+    auto id = std::this_thread::get_id();
+    initialized.insert(id);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -312,12 +315,6 @@ void ao_run()
 int ao_is_running()
 {
     return running;
-}
-
-void ao_register_repl()
-{
-    auto id = std::this_thread::get_id();
-    initialized.insert(id);
 }
 
 void ao_halt()
