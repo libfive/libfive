@@ -279,6 +279,7 @@ void window_set_callback(void (*callback)(const char*))
 void window_set_thread_init(void (*init)())
 {
     window_thread_init = init;
+    window_thread_init();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -299,11 +300,24 @@ void matrix_invert(v4* x, v4* y, v4* z)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+static bool running = false;
 void ao_run()
 {
     auto window = Window::instance();
     window->draw();
+    running = true;
     window->run();
+}
+
+int ao_is_running()
+{
+    return running;
+}
+
+void ao_register_repl()
+{
+    auto id = std::this_thread::get_id();
+    initialized.insert(id);
 }
 
 void ao_halt()
