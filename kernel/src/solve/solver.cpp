@@ -54,7 +54,7 @@ std::pair<float, Solution> findRoot(const Tree& t, const glm::vec3 v)
                 [](float v, decltype(ds)::value_type itr) {
                     return v + pow(itr.second, 2); });
         bool converged = false;
-        for (float step=1; true; step /= 2)
+        for (float step=fabs(r)/slope; true; step /= 2)
         {
             for (const auto& v : vars)
             {
