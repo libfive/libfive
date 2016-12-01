@@ -4,7 +4,7 @@ find_package(PNG REQUIRED)
 ################################################################################
 
 file(GLOB SRC_FILES src/tree/*.cpp src/format/*.cpp
-                    src/render/*.cpp src/eval/*.cpp)
+                    src/render/*.cpp src/eval/*.cpp src/solve/*.cpp)
 add_library(ao-kernel STATIC ${SRC_FILES})
 
 target_include_directories(ao-kernel SYSTEM PRIVATE
