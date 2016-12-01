@@ -58,7 +58,7 @@ std::pair<float, Solution> findRoot(const Tree& t, const glm::vec3 v)
         {
             for (const auto& v : vars)
             {
-                e.setVar(v.first, v.second + step * ds.at(v.first));
+                e.setVar(v.first, v.second - step * ds.at(v.first));
             }
 
             // Get new residual
