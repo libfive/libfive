@@ -63,6 +63,8 @@ size_t Opcode::args(Opcode op)
         case DUMMY_B:
         case LAST_OP: return -1;
     }
+    assert(false); /* All enumeration values must be handled */
+    return -1;
 }
 
 std::string Opcode::to_str(Opcode op)
