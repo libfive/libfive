@@ -34,27 +34,28 @@ std::pair<float, Solution> findRoot(const Tree& t, const glm::vec3 v)
     auto vars = e.varValues();
     float r = e.eval(v.x, v.y, v.z);
 
-    while (true)
+    bool converged = false;
+
+    while (!converged && fabs(r) >= EPSILON)
     {
         // Vars should be set from the most recent evaluation
-        auto ds = e.gradient(v.x, v.y, v.z);
+        const auto ds = e.gradient(v.x, v.y, v.z);
 
         // Break if all of our gradients are nearly zero
-        if (std::accumulate(ds.begin(), ds.end(), true,
-            [&EPSILON](bool b, decltype(ds)::value_type itr) {
-                return b && fabs(itr.second) < EPSILON;
-                }))
+        if (std::all_of(ds.begin(), ds.end(),
+            [&EPSILON](decltype(ds)::value_type itr) {
+                return fabs(itr.second) < EPSILON;
+            }))
         {
             break;
         }
 
         // Solve for step size using a backtracking line search
-        // Find a termination threshold as norm(ds) / 2
-        const float slope = std::accumulate(ds.begin(), ds.end(), 0,
-                [](float v, decltype(ds)::value_type itr) {
+        const float slope = std::accumulate(ds.begin(), ds.end(), 0.0f,
+                [](float v, const decltype(ds)::value_type& itr) {
                     return v + pow(itr.second, 2); });
-        bool converged = false;
-        for (float step=fabs(r)/slope; true; step /= 2)
+
+        for (float step = r / slope; true; step /= 2)
         {
             for (const auto& v : vars)
             {
@@ -66,9 +67,11 @@ std::pair<float, Solution> findRoot(const Tree& t, const glm::vec3 v)
 
             // Find change in residuals
             const auto diff = r - r_;
-            if (diff >= step * slope * 0.5)
+
+            // If we've satisfied the Armijo–Goldstein condition, then break
+            if (diff / step >= slope * 0.5)
             {
-                // If residuals are converging, then break out of outer loop
+                // If residuals are converging, then exit outer loop too
                 converged = fabs(diff) < EPSILON;
                 r = r_;
                 break;
