@@ -50,9 +50,9 @@ std::pair<float, Solution> findRoot(const Tree& t, const glm::vec3 v)
 
         // Solve for step size using a backtracking line search
         // Find a termination threshold as norm(ds) / 2
-        const float threshold = std::accumulate(ds.begin(), ds.end(), 0,
+        const float slope = std::accumulate(ds.begin(), ds.end(), 0,
                 [](float v, decltype(ds)::value_type itr) {
-                    return v + pow(itr.second, 2); }) / 2;
+                    return v + pow(itr.second, 2); });
         bool converged = false;
         for (float step=1; true; step /= 2)
         {
@@ -66,7 +66,7 @@ std::pair<float, Solution> findRoot(const Tree& t, const glm::vec3 v)
 
             // Find change in residuals
             const auto diff = r - r_;
-            if (diff >= step * threshold)
+            if (diff >= step * slope * 0.5)
             {
                 // If residuals are converging, then break out of outer loop
                 converged = fabs(diff) < EPSILON;
