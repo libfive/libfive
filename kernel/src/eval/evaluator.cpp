@@ -1394,3 +1394,14 @@ void Evaluator::setVar(Cache::Id var, float value)
 {
     result.setValue(value, vars.right.at(var));
 }
+
+std::map<Cache::Id, float> Evaluator::varValues() const
+{
+    std::map<Cache::Id, float> out;
+
+    for (auto v : vars.left)
+    {
+        out[v.second] = result.f[v.first][0];
+    }
+    return out;
+}

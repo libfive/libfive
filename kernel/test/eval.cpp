@@ -109,6 +109,26 @@ TEST_CASE("Evaluator::setVar")
     REQUIRE(e.eval(0, 0, 0) == Approx(35));
 }
 
+TEST_CASE("Evaluator::varValues")
+{
+    // Deliberately construct out of order
+    auto a = Tree::var(3.0);
+    Evaluator e(a);
+
+    {
+        auto v = e.varValues();
+        REQUIRE(v.size() == 1);
+        REQUIRE(v.at(a.var()) == 3.0);
+    }
+
+    e.setVar(a.var(), 5.0);
+    {
+        auto v = e.varValues();
+        REQUIRE(v.size() == 1);
+        REQUIRE(v.at(a.var()) == 5.0);
+    }
+}
+
 TEST_CASE("Float evaluation")
 {
     SECTION("X + 1")

@@ -138,6 +138,11 @@ public:
      */
     void setVar(Cache::Id var, float value);
 
+    /*
+     *  Returns the current values associated with all variables
+     */
+    std::map<Cache::Id, float> varValues() const;
+
 protected:
     /*  Global matrix transform (and inverse) applied to all coordinates  */
     glm::mat4 M;
