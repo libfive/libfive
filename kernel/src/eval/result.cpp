@@ -74,7 +74,7 @@ void Result::setGradient(Index clause, Index var)
     j[clause][var] = 1;
 }
 
-void Result::deriv(float x, float y, float z, Index clause)
+void Result::setDeriv(float x, float y, float z, Index clause)
 {
     for (size_t i=0; i < N; ++i)
     {

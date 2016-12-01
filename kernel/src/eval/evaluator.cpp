@@ -119,9 +119,9 @@ Evaluator::Evaluator(const Tree root_, const glm::mat4& M)
     Z = clauses.at(cache->Z());
 
     // Set derivatives for X, Y, Z (unchanging)
-    result.deriv(1, 0, 0, X);
-    result.deriv(0, 1, 0, Y);
-    result.deriv(0, 0, 1, Z);
+    result.setDeriv(1, 0, 0, X);
+    result.setDeriv(0, 1, 0, Y);
+    result.setDeriv(0, 0, 1, Z);
 
     {   // Set the Jacobian for our variables (unchanging)
         size_t index = 0;

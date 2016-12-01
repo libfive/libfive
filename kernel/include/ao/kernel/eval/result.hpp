@@ -57,7 +57,7 @@ struct Result {
     /*
      *  Fills the derivative arrays with the given values
      */
-    void deriv(float x, float y, float z, Index clause);
+    void setDeriv(float x, float y, float z, Index clause);
 
     // This is the number of samples that we can process in one pass
     static constexpr Index N = 256;
