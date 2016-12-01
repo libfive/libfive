@@ -80,33 +80,9 @@ std::pair<float, Solution> findRoot(const Tree& t, const glm::vec3 v)
 
         // Extract new variable table
         vars = e.varValues();
-
-        // If the line search converged, then break right away
-        if (converged || fabs(r) < EPSILON)
-        {
-            break;
-        }
     }
 
     return {r, vars};
 }
 
 } // namespace Solver
-
-/*
-step eqn vars =
-    if r < epsilon || all ((< epsilon) . abs) ds || converged
-    then Nothing
-    else Just next
-    where (r, ds) = eval eqn vars
-          (next, converged) = backtrack 1
-          threshold = 0.5 * (sum $ Map.map (^2) ds)
-          backtrack stepSize =
-              if r - r' >= stepSize * threshold
-              then (vars', abs (r - r') < epsilon)
-              else backtrack (stepSize * 0.5)
-              where vars' = Map.unionWith (-) vars $
-                            Map.map (*stepSize) ds
-                    r' = fst (eval eqn vars')
-                    */
-
