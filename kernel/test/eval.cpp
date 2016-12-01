@@ -46,7 +46,7 @@ TEST_CASE("Evaluator::gradient")
     SECTION("constant + variable")
     {
         auto v = Tree::var(3.14);
-        Evaluator e(Tree(Opcode::ADD, v, Tree(1.0)));
+        Evaluator e(v + 1.0);
         REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(4.14));
         auto g = e.gradient(1, 2, 3);
         REQUIRE(g.size() == 1);
@@ -57,7 +57,7 @@ TEST_CASE("Evaluator::gradient")
     SECTION("x * variable")
     {
         auto v = Tree::var(1.0);
-        Evaluator e(Tree(Opcode::MUL, Tree::X(), v));
+        Evaluator e(Tree::X() * v);
         {
             auto g = e.gradient(2, 0, 0);
             REQUIRE(g.size() == 1);
@@ -76,10 +76,7 @@ TEST_CASE("Evaluator::gradient")
         auto c = Tree::var(7.0);
         auto b = Tree::var(5.0);
 
-        Evaluator e(Tree(Opcode::ADD, Tree(Opcode::ADD,
-            Tree(Opcode::MUL, Tree(1.0f), a),
-            Tree(Opcode::MUL, Tree(2.0f), b)),
-            Tree(Opcode::MUL, Tree(3.0f), c)));
+        Evaluator e(Tree(a*1 + b*2 + c*3));
         REQUIRE(e.eval(0, 0, 0) == Approx(34));
         auto g = e.gradient(0, 0, 0);
         REQUIRE(g.at(a.var()) == Approx(1.0f));
@@ -95,10 +92,7 @@ TEST_CASE("Evaluator::setVar")
     auto c = Tree::var(7.0);
     auto b = Tree::var(5.0);
 
-    Evaluator e(Tree(Opcode::ADD, Tree(Opcode::ADD,
-        Tree(Opcode::MUL, Tree(1.0f), a),
-        Tree(Opcode::MUL, Tree(2.0f), b)),
-        Tree(Opcode::MUL, Tree(3.0f), c)));
+    Evaluator e(a*1 + b*2 + c*3);
     REQUIRE(e.eval(0, 0, 0) == Approx(34));
 
     e.setVar(a.var(), 5);
@@ -133,20 +127,20 @@ TEST_CASE("Float evaluation")
 {
     SECTION("X + 1")
     {
-        Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree(1)));
+        Evaluator e(Tree::X() + 1);
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 2.0);
     }
 
     SECTION("X + Z")
     {
-        Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree::Z()));
+        Evaluator e(Tree::X() + Tree::Z());
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 4.0);
     }
 }
 
 TEST_CASE("Interval evaluation")
 {
-    Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree(1)));
+    Evaluator e(Tree::X() + 1);
 
     Interval arg(1, 2);
     auto out = e.eval(arg, arg, arg);
@@ -157,10 +151,7 @@ TEST_CASE("Interval evaluation")
 
 TEST_CASE("Push / pop behavior")
 {
-    Evaluator e(
-        Tree(Opcode::MIN,
-            Tree(Opcode::ADD, Tree::X(), Tree(1)),
-            Tree(Opcode::ADD, Tree::Y(), Tree(1))));
+    Evaluator e(min(Tree::X() + 1, Tree::Y() + 1));
 
     // Store -3 in the rhs's value
     REQUIRE(e.eval(1.0f, -3.0f, 0.0f) == -2);
@@ -280,7 +271,7 @@ TEST_CASE("Evaluator::derivs")
 
     SECTION("X + Z")
     {
-        Evaluator e(Tree(Opcode::ADD, Tree::X(), Tree::Z()));
+        Evaluator e(Tree::X() + Tree::Z());
 
         e.set(1, 1, 1, 0);
         e.set(1, 2, 3, 1);

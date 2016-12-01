@@ -24,10 +24,7 @@
 
 TEST_CASE("struct contours")
 {
-    Tree t = Tree(Opcode::SUB,
-             Tree(Opcode::ADD, Tree(Opcode::MUL, Tree::X(), Tree::X()),
-                               Tree(Opcode::MUL, Tree::Y(), Tree::Y())),
-                 Tree(0.5));
+    Tree t = square(Tree::X()) + square(Tree::Y()) - 0.5;
 
     struct contours* cs = tree_render_slice(&t, -1, 1, -1, 1, 0, 50);
     REQUIRE(cs->size == 1);

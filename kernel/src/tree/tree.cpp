@@ -68,3 +68,36 @@ Tree Tree::collapse() const
     return collapsed ? *this :
            Tree(parent, parent->collapse(id), true);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Mass-produce definitions for overloaded operations
+#define OP_UNARY(name, opcode) \
+Tree name(const Tree& a) { return Tree(opcode, a); }
+OP_UNARY(square,    Opcode::SQUARE);
+OP_UNARY(sqrt,      Opcode::SQRT);
+Tree Tree::operator-() const { return Tree(Opcode::NEG, *this); }
+OP_UNARY(abs,       Opcode::ABS);
+OP_UNARY(sin,       Opcode::SIN);
+OP_UNARY(cos,       Opcode::COS);
+OP_UNARY(tan,       Opcode::TAN);
+OP_UNARY(asin,      Opcode::ASIN);
+OP_UNARY(acos,      Opcode::ACOS);
+OP_UNARY(atan,      Opcode::ATAN);
+OP_UNARY(exp,       Opcode::EXP);
+#undef OP_UNARY
+
+#define OP_BINARY(name, opcode) \
+Tree name(const Tree& a, const Tree& b) { return Tree(opcode, a, b); }
+OP_BINARY(operator+,    Opcode::ADD);
+OP_BINARY(operator*,    Opcode::MUL);
+OP_BINARY(min,          Opcode::MIN);
+OP_BINARY(max,          Opcode::MAX);
+OP_BINARY(operator-,    Opcode::SUB);
+OP_BINARY(operator/,    Opcode::DIV);
+OP_BINARY(atan2,        Opcode::ATAN2);
+OP_BINARY(pow,          Opcode::POW);
+OP_BINARY(nth_root,     Opcode::NTH_ROOT);
+OP_BINARY(mod,          Opcode::MOD);
+OP_BINARY(nanfill,      Opcode::NANFILL);
+#undef OP_BINARY

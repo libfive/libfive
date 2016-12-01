@@ -23,7 +23,7 @@
 
 TEST_CASE("Joining two trees")
 {
-    auto t = Tree(Opcode::ADD, Tree::X(), Tree(1));
+    auto t = Tree::X() + 1;
 
     REQUIRE(t.opcode() == Opcode::ADD);
     REQUIRE(t.lhs().opcode() == Opcode::VAR_X);
@@ -35,7 +35,7 @@ TEST_CASE("Affine math")
 {
     SECTION("Affine plus constant")
     {
-        Tree t = Tree(Opcode::ADD, Tree::affine(1, 0, 0, 0), Tree(1));
+        Tree t = Tree::affine(1, 0, 0, 0) + 1;
 
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(1, 0, 0, 1));
@@ -43,7 +43,7 @@ TEST_CASE("Affine math")
 
     SECTION("Constant plus affine")
     {
-        Tree t = Tree(Opcode::ADD, Tree(2), Tree::affine(1, 0, 0, 0));
+        Tree t = 2 + Tree::affine(1, 0, 0, 0);
 
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(1, 0, 0, 2));
@@ -51,15 +51,14 @@ TEST_CASE("Affine math")
 
     SECTION("Affine plus affine")
     {
-        Tree t = Tree(Opcode::ADD, Tree::affine(1, 2, 3, 4),
-                                   Tree::affine(2, 4, 6, 8));
+        Tree t = Tree::affine(1, 2, 3, 4) + Tree::affine(2, 4, 6, 8);
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(3, 6, 9, 12));
     }
 
     SECTION("Affine minus constant")
     {
-        Tree t = Tree(Opcode::SUB, Tree::affine(1, 0, 0, 0), Tree(1));
+        Tree t = Tree::affine(1, 0, 0, 0) - 1;
 
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(1, 0, 0, -1));
@@ -67,7 +66,7 @@ TEST_CASE("Affine math")
 
     SECTION("Constant minus affine")
     {
-        Tree t = Tree(Opcode::SUB, Tree(2), Tree::affine(1, 0, 0, 0));
+        Tree t = 2 - Tree::affine(1, 0, 0, 0);
 
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(-1, 0, 0, 2));
@@ -75,29 +74,28 @@ TEST_CASE("Affine math")
 
     SECTION("Affine minus affine")
     {
-        Tree t = Tree(Opcode::SUB, Tree::affine(1, 2, 3, 4),
-                                   Tree::affine(2, 4, 6, 8));
+        Tree t = Tree::affine(1, 2, 3, 4) - Tree::affine(2, 4, 6, 8);
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(-1, -2, -3, -4));
     }
 
     SECTION("Affine times constant")
     {
-        Tree t = Tree(Opcode::MUL, Tree::affine(1, 2, 3, 4), Tree(2));
+        Tree t = Tree::affine(1, 2, 3, 4) * 2;
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(2, 4, 6, 8));
     }
 
     SECTION("Constant times affine")
     {
-        Tree t = Tree(Opcode::MUL, Tree(2), Tree::affine(1, 2, 3, 4));
+        Tree t = 2 * Tree::affine(1, 2, 3, 4);
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(2, 4, 6, 8));
     }
 
     SECTION("Affine divided by constant")
     {
-        Tree t = Tree(Opcode::DIV, Tree::affine(1, 2, 3, 4), Tree(2));
+        Tree t = Tree::affine(1, 2, 3, 4) / 2;
         REQUIRE(t.opcode() == Opcode::AFFINE_VEC);
         REQUIRE(t.getAffine() == glm::vec4(0.5, 1, 1.5, 2));
     }

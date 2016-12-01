@@ -50,8 +50,8 @@ public:
      *  (otherwise an assertion will be triggered).
      *  If the opcode is NTH_ROOT, b must be > 0.
      */
-    Tree(Opcode::Opcode op, Tree a=Tree(nullptr, 0, false),
-                            Tree b=Tree(nullptr, 0, false));
+    explicit Tree(Opcode::Opcode op, Tree a=Tree(nullptr, 0, false),
+                                     Tree b=Tree(nullptr, 0, false));
 
     /*
      *  Constructors for individual axes (non-affine)
@@ -92,6 +92,11 @@ public:
     float value() const             { return parent->value(id); }
     size_t var() const              { return parent->lhs(id); }
 
+    /*
+     *  Overloaded operators
+     */
+    Tree operator-() const;
+
 protected:
     /*
      *  Private constructor
@@ -115,3 +120,30 @@ protected:
     friend class Evaluator;
 };
 
+// Mass-produce declarations for overloaded operations
+#define OP_UNARY(name)      Tree name(const Tree& a);
+OP_UNARY(square);
+OP_UNARY(sqrt);
+OP_UNARY(abs);
+OP_UNARY(sin);
+OP_UNARY(cos);
+OP_UNARY(tan);
+OP_UNARY(asin);
+OP_UNARY(acos);
+OP_UNARY(atan);
+OP_UNARY(exp);
+#undef OP_UNARY
+
+#define OP_BINARY(name)     Tree name(const Tree& a, const Tree& b);
+OP_BINARY(operator+);
+OP_BINARY(operator*);
+OP_BINARY(min);
+OP_BINARY(max);
+OP_BINARY(operator-);
+OP_BINARY(operator/);
+OP_BINARY(atan2);
+OP_BINARY(pow);
+OP_BINARY(nth_root);
+OP_BINARY(mod);
+OP_BINARY(nanfill);
+#undef OP_BINARY
