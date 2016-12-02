@@ -21,10 +21,37 @@
 #include <array>
 #include <vector>
 
-#include <immintrin.h>
-
 #include "ao/kernel/eval/interval.hpp"
 #include "ao/kernel/eval/clause.hpp"
+
+#ifdef __AVX__
+#include <immintrin.h>
+
+template <class T>
+struct _AlignedAllocator {
+    typedef T value_type;
+    _AlignedAllocator() noexcept {}
+
+    template <class U>
+    _AlignedAllocator(const _AlignedAllocator<U>& other) throw() {}
+
+    T* allocate(std::size_t n)
+        { return static_cast<T*>(_mm_malloc(n * sizeof(T), 32)); }
+    void deallocate(T* p, std::size_t /* n */)
+        { _mm_free(p); }
+};
+
+template <typename T, typename U>
+inline bool operator==(const _AlignedAllocator<T>& a,
+                       const _AlignedAllocator<U>& b)
+    { return true; }
+
+template <typename T, typename U>
+inline bool operator!=(const _AlignedAllocator<T>& a,
+                       const _AlignedAllocator<U>& b)
+    { return !(a == b); }
+#endif
+
 
 struct Result {
     typedef Clause::Id Index;
@@ -65,10 +92,15 @@ struct Result {
     // If we're using AVX for evaluation, then our floats are simply
     // pointers to the first member of the __m256 array
 #ifdef __AVX__
-    std::vector<std::array<__m256, N/8>> mf;
-    std::vector<std::array<__m256, N/8>> mdx;
-    std::vector<std::array<__m256, N/8>> mdy;
-    std::vector<std::array<__m256, N/8>> mdz;
+
+    typedef std::array<__m256, N/8> AVXArray;
+    typedef std::vector<AVXArray, _AlignedAllocator<AVXArray>> AVXVector;
+
+public:
+    AVXVector mf;
+    AVXVector mdx;
+    AVXVector mdy;
+    AVXVector mdz;
 
     float (*f)[N];
     float (*dx)[N];
