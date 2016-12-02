@@ -27,23 +27,26 @@
 #ifdef __AVX__
 #include <immintrin.h>
 
+// AVX data needs to be aligned on 32-byte boundaries.
+// This isn't the default on certain OSs, so we make a custom allocator
+// here that uses _mm_malloc and _mm_free.
 template <class T>
 struct _AlignedAllocator {
     typedef T value_type;
     _AlignedAllocator() noexcept {}
 
     template <class U>
-    _AlignedAllocator(const _AlignedAllocator<U>& other) throw() {}
+    _AlignedAllocator(const _AlignedAllocator<U>& /*other*/) throw() {}
 
     T* allocate(std::size_t n)
         { return static_cast<T*>(_mm_malloc(n * sizeof(T), 32)); }
-    void deallocate(T* p, std::size_t /* n */)
+    void deallocate(T* p, std::size_t /*n*/)
         { _mm_free(p); }
 };
 
 template <typename T, typename U>
-inline bool operator==(const _AlignedAllocator<T>& a,
-                       const _AlignedAllocator<U>& b)
+inline bool operator==(const _AlignedAllocator<T>& /*a*/,
+                       const _AlignedAllocator<U>& /*b*/)
     { return true; }
 
 template <typename T, typename U>
