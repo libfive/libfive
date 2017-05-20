@@ -4,11 +4,11 @@
 
 #include <glm/mat4x4.hpp>
 
-#include "kernel/render/region.hpp"
-#include "kernel/format/image.hpp"
-#include "kernel/tree/tree.hpp"
+#include "ao/render/region.hpp"
+#include "ao/format/image.hpp"
+#include "ao/tree/tree.hpp"
 
-#include "kernel/eval/evaluator.hpp"
+#include "ao/eval/evaluator.hpp"
 
 namespace Kernel {
 

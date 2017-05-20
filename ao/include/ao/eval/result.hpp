@@ -3,8 +3,8 @@
 #include <array>
 #include <vector>
 
-#include "kernel/eval/interval.hpp"
-#include "kernel/eval/clause.hpp"
+#include "ao/eval/interval.hpp"
+#include "ao/eval/clause.hpp"
 
 #ifdef __AVX__
 #include <immintrin.h>

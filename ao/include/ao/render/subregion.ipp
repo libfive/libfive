@@ -1,5 +1,5 @@
-#include "kernel/render/subregion.hpp"
-#include "kernel/render/axes.hpp"
+#include "ao/render/subregion.hpp"
+#include "ao/render/axes.hpp"
 
 namespace Kernel
 {

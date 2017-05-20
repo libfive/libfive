@@ -8,11 +8,11 @@
 #include <glm/vec3.hpp>
 #include <Eigen/Eigen>
 
-#include "kernel/eval/interval.hpp"
-#include "kernel/eval/evaluator.hpp"
-#include "kernel/render/region.hpp"
-#include "kernel/render/axes.hpp"
-#include "kernel/tree/tree.hpp"
+#include "ao/eval/interval.hpp"
+#include "ao/eval/evaluator.hpp"
+#include "ao/render/region.hpp"
+#include "ao/render/axes.hpp"
+#include "ao/tree/tree.hpp"
 
 namespace Kernel {
 
@@ -232,4 +232,4 @@ protected:
 
 }   // namespace Kernel
 
-#include "kernel/render/xtree.ipp"
+#include "ao/render/xtree.ipp"

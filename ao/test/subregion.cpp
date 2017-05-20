@@ -1,8 +1,8 @@
-#include <catch/catch.hpp>
+#include "catch.hpp"
 
-#include "kernel/render/region.hpp"
-#include "kernel/render/subregion.hpp"
-#include "kernel/render/octree.hpp"
+#include "ao/render/region.hpp"
+#include "ao/render/subregion.hpp"
+#include "ao/render/octree.hpp"
 
 using namespace Kernel;
 

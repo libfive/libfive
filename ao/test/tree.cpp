@@ -1,6 +1,6 @@
-#include <catch/catch.hpp>
+#include "catch.hpp"
 
-#include "kernel/tree/tree.hpp"
+#include "ao/tree/tree.hpp"
 #include "util/glm.hpp"
 
 using namespace Kernel;

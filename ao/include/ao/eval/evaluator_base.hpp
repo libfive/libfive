@@ -8,11 +8,11 @@
 #include <glm/mat4x4.hpp>
 #include <boost/bimap.hpp>
 
-#include "kernel/eval/result.hpp"
-#include "kernel/eval/interval.hpp"
-#include "kernel/eval/feature.hpp"
-#include "kernel/eval/clause.hpp"
-#include "kernel/tree/tree.hpp"
+#include "ao/eval/result.hpp"
+#include "ao/eval/interval.hpp"
+#include "ao/eval/feature.hpp"
+#include "ao/eval/clause.hpp"
+#include "ao/tree/tree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 

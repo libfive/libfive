@@ -5,7 +5,7 @@
 #include <utility>
 #include <functional>
 
-#include "kernel/eval/interval.hpp"
+#include "ao/eval/interval.hpp"
 
 namespace Kernel {
 
@@ -119,4 +119,4 @@ protected:
 
 }   // namespace Kernel
 
-#include "kernel/render/subregion.ipp"
+#include "ao/render/subregion.ipp"

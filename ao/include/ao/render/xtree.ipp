@@ -6,7 +6,7 @@
 #include <glm/gtc/random.hpp>
 #include <Eigen/Dense>
 
-#include "kernel/render/xtree.hpp"
+#include "ao/render/xtree.hpp"
 
 namespace Kernel {
 

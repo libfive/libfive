@@ -1,10 +1,10 @@
-#include <catch/catch.hpp>
+#include "catch.hpp"
 
-#include "kernel/format/mesh.hpp"
-#include "kernel/format/contours.hpp"
+#include "ao/format/mesh.hpp"
+#include "ao/format/contours.hpp"
 
-#include "kernel/render/region.hpp"
-#include "kernel/eval/evaluator.hpp"
+#include "ao/render/region.hpp"
+#include "ao/eval/evaluator.hpp"
 
 // Overloaded toString for glm::vec3
 #include "util/glm.hpp"

@@ -1,9 +1,9 @@
-#include <catch/catch.hpp>
+#include "catch.hpp"
 
-#include "kernel/tree/tree.hpp"
+#include "ao/tree/tree.hpp"
 
-#include "kernel/render/octree.hpp"
-#include "kernel/render/region.hpp"
+#include "ao/render/octree.hpp"
+#include "ao/render/region.hpp"
 
 // Overloaded toString for glm::vec3
 #include "util/glm.hpp"

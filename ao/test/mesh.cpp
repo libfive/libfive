@@ -1,10 +1,11 @@
 #include <chrono>
 
-#include <catch/catch.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "kernel/format/mesh.hpp"
-#include "kernel/render/region.hpp"
+#include "catch.hpp"
+
+#include "ao/format/mesh.hpp"
+#include "ao/render/region.hpp"
 
 #include "util/shapes.hpp"
 

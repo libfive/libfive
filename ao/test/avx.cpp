@@ -1,11 +1,12 @@
 #include <chrono>
 #include <cstring>
-#include <catch/catch.hpp>
 
-#include "kernel/tree/tree.hpp"
-#include "kernel/eval/evaluator_base.hpp"
-#include "kernel/eval/evaluator_avx.hpp"
-#include "kernel/eval/result.hpp"
+#include "catch.hpp"
+
+#include "ao/tree/tree.hpp"
+#include "ao/eval/evaluator_base.hpp"
+#include "ao/eval/evaluator_avx.hpp"
+#include "ao/eval/result.hpp"
 
 #include "util/shapes.hpp"
 

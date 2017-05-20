@@ -5,7 +5,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <glm/geometric.hpp>
 
-#include "kernel/format/mesh.hpp"
+#include "ao/format/mesh.hpp"
 
 namespace Kernel {
 

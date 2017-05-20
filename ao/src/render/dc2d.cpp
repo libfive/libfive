@@ -3,8 +3,8 @@
 
 #include <glm/gtx/common.hpp>
 
-#include "kernel/format/contours.hpp"
-#include "kernel/render/region.hpp"
+#include "ao/format/contours.hpp"
+#include "ao/render/region.hpp"
 
 namespace Kernel {
 

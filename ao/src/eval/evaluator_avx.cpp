@@ -1,6 +1,6 @@
 #ifdef __AVX__
 
-#include "kernel/eval/evaluator_avx.hpp"
+#include "ao/eval/evaluator_avx.hpp"
 
 namespace Kernel {
 

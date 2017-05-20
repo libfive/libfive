@@ -3,8 +3,8 @@
 #include <vector>
 #include <glm/vec2.hpp>
 
-#include "kernel/render/quadtree.hpp"
-#include "kernel/tree/tree.hpp"
+#include "ao/render/quadtree.hpp"
+#include "ao/tree/tree.hpp"
 
 namespace Kernel {
 

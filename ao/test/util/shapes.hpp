@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/mat4x4.hpp>
-#include "kernel/tree/tree.hpp"
+#include "ao/tree/tree.hpp"
 
 Kernel::Tree rectangle(float xmin, float xmax, float ymin, float ymax,
                        glm::mat4 M=glm::mat4());

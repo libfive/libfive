@@ -4,7 +4,7 @@
 #include <map>
 #include <glm/vec3.hpp>
 
-#include "kernel/eval/clause.hpp"
+#include "ao/eval/clause.hpp"
 
 namespace Kernel
 {

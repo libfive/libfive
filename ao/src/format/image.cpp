@@ -2,7 +2,7 @@
 
 #include <png.h>
 
-#include "kernel/format/image.hpp"
+#include "ao/format/image.hpp"
 
 namespace Kernel {
 

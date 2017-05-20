@@ -4,8 +4,8 @@
 
 #include <glm/vec3.hpp>
 
-#include "kernel/render/octree.hpp"
-#include "kernel/tree/tree.hpp"
+#include "ao/render/octree.hpp"
+#include "ao/tree/tree.hpp"
 
 namespace Kernel {
 

@@ -1,10 +1,11 @@
 #include <chrono>
 
-#include <catch/catch.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "kernel/render/heightmap.hpp"
-#include "kernel/eval/evaluator.hpp"
+#include "catch.hpp"
+
+#include "ao/render/heightmap.hpp"
+#include "ao/eval/evaluator.hpp"
 
 #include "util/shapes.hpp"
 

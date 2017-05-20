@@ -1,7 +1,7 @@
 #include <cassert>
 
-#include "kernel/tree/cache.hpp"
-#include "kernel/eval/evaluator.hpp"
+#include "ao/tree/cache.hpp"
+#include "ao/eval/evaluator.hpp"
 
 namespace Kernel {
 

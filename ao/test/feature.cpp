@@ -1,6 +1,6 @@
-#include <catch/catch.hpp>
+#include "catch.hpp"
 
-#include "kernel/eval/feature.hpp"
+#include "ao/eval/feature.hpp"
 
 using namespace Kernel;
 

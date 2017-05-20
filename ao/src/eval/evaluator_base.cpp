@@ -4,10 +4,10 @@
 
 #include <glm/gtc/matrix_inverse.hpp>
 
-#include "kernel/tree/cache.hpp"
-#include "kernel/tree/tree.hpp"
-#include "kernel/eval/evaluator_base.hpp"
-#include "kernel/eval/clause.hpp"
+#include "ao/tree/cache.hpp"
+#include "ao/tree/tree.hpp"
+#include "ao/eval/evaluator_base.hpp"
+#include "ao/eval/clause.hpp"
 
 namespace Kernel {
 

@@ -1,7 +1,7 @@
-#include <catch/catch.hpp>
+#include "catch.hpp"
 
-#include "kernel/tree/tree.hpp"
-#include "kernel/solve/solver.hpp"
+#include "ao/tree/tree.hpp"
+#include "ao/solve/solver.hpp"
 
 using namespace Kernel;
 

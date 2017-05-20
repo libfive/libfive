@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "kernel/eval/interval.hpp"
-#include "kernel/render/subregion.hpp"
+#include "ao/eval/interval.hpp"
+#include "ao/render/subregion.hpp"
 
 namespace Kernel {
 

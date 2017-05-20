@@ -1,8 +1,8 @@
 #include <map>
 
-#include "kernel/format/mesh.hpp"
-#include "kernel/render/region.hpp"
-#include "kernel/render/octree.hpp"
+#include "ao/format/mesh.hpp"
+#include "ao/render/region.hpp"
+#include "ao/render/octree.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -5,9 +5,9 @@
 
 #include <glm/glm.hpp>
 
-#include "kernel/render/heightmap.hpp"
-#include "kernel/eval/result.hpp"
-#include "kernel/eval/evaluator.hpp"
+#include "ao/render/heightmap.hpp"
+#include "ao/eval/result.hpp"
+#include "ao/eval/evaluator.hpp"
 
 namespace Kernel {
 

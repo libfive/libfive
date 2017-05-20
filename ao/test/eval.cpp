@@ -1,8 +1,9 @@
-#include <catch/catch.hpp>
+#include "catch.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
-#include "kernel/tree/tree.hpp"
-#include "kernel/eval/evaluator.hpp"
+
+#include "ao/tree/tree.hpp"
+#include "ao/eval/evaluator.hpp"
 
 #include "util/shapes.hpp"
 

@@ -1,8 +1,8 @@
 #include <numeric>
 
-#include "kernel/solve/solver.hpp"
-#include "kernel/tree/tree.hpp"
-#include "kernel/eval/evaluator.hpp"
+#include "ao/solve/solver.hpp"
+#include "ao/tree/tree.hpp"
+#include "ao/eval/evaluator.hpp"
 
 namespace Kernel {
 

@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 2.6)
-project(Straylight)
+project(Ao)
+
 set(CMAKE_BUILD_TYPE RELEASE)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 ################################################################################
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-comment -g -fPIC -pedantic -std=c++11 -Werror=switch -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -DRELEASE")
 set(CMAKE_CXX_FLAGS_DEBUG    "-O0")
-
-include_directories(SYSTEM vendor)
 
 ################################################################################
 
@@ -18,11 +18,4 @@ endif()
 
 ################################################################################
 
-# Build the kernel and graph libraries
-add_subdirectory(kernel)
-add_subdirectory(graph)
-
-# Build the test suite
-add_subdirectory(test)
-
-add_subdirectory(app)
+add_subdirectory(ao)
