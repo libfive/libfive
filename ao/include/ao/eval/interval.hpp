@@ -2,8 +2,6 @@
 
 #include <boost/numeric/interval.hpp>
 
-#include <glm/vec3.hpp>
-
 namespace Kernel {
 
 typedef boost::numeric::interval<float,

@@ -1,7 +1,7 @@
 #pragma once
 #include <map>
 
-#include "glm/vec3.hpp"
+#include <Eigen/Eigen>
 
 #include "ao/tree/cache.hpp"
 #include "ao/eval/evaluator.hpp"
@@ -23,11 +23,11 @@ namespace Solver
      */
     std::pair<float, Solution> findRoot(
             const Tree& t, const std::map<Tree::Id, float>& vars,
-            const glm::vec3 pos={0,0,0}, const Mask& mask=Mask(),
+            const Eigen::Vector3f pos={0,0,0}, const Mask& mask=Mask(),
             unsigned gas=25000);
     std::pair<float, Solution> findRoot(
             Evaluator& t, const std::map<Tree::Id, float>& vars,
-            const glm::vec3 pos={0,0,0}, const Mask& mask=Mask(),
+            const Eigen::Vector3f pos={0,0,0}, const Mask& mask=Mask(),
             unsigned gas=25000);
 
 }   // namespace Solver

@@ -10,7 +10,7 @@ namespace Solver
 {
 
 static std::pair<float, Solution> findRoot(
-        Evaluator& e, const glm::vec3 pos, const Mask& mask, unsigned gas)
+        Evaluator& e, const Eigen::Vector3f pos, const Mask& mask, unsigned gas)
 {
     const float EPSILON = 1e-6;
 
@@ -24,14 +24,14 @@ static std::pair<float, Solution> findRoot(
     auto vars = e.varValues();
     filter(vars);
 
-    float r = e.eval(pos.x, pos.y, pos.z);
+    float r = e.eval(pos.x(), pos.y(), pos.z());
 
     bool converged = false;
 
     while (!converged && fabs(r) >= EPSILON && --gas)
     {
         // Vars should be set from the most recent evaluation
-        auto ds = e.gradient(pos.x, pos.y, pos.z);
+        auto ds = e.gradient(pos.x(), pos.y(), pos.z());
         filter(ds);
 
         // Break if all of our gradients are nearly zero
@@ -56,7 +56,7 @@ static std::pair<float, Solution> findRoot(
             }
 
             // Get new residual
-            const auto r_ = e.eval(pos.x, pos.y, pos.z);
+            const auto r_ = e.eval(pos.x(), pos.y(), pos.z());
 
             // Find change in residuals
             const auto diff = r - r_;
@@ -84,7 +84,7 @@ static std::pair<float, Solution> findRoot(
 
 std::pair<float, Solution> findRoot(
         const Tree& t, const std::map<Tree::Id, float>& vars,
-        const glm::vec3 pos, const Mask& mask, unsigned gas)
+        const Eigen::Vector3f pos, const Mask& mask, unsigned gas)
 {
     Evaluator e(t, vars);
     return findRoot(e, pos, mask, gas);
@@ -92,7 +92,7 @@ std::pair<float, Solution> findRoot(
 
 std::pair<float, Solution> findRoot(
         Evaluator& e, const std::map<Tree::Id, float>& vars,
-        const glm::vec3 pos, const Mask& mask, unsigned gas)
+        const Eigen::Vector3f pos, const Mask& mask, unsigned gas)
 {
     // Load initial variable values here
     for (auto& v : vars)
