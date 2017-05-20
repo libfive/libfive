@@ -3,7 +3,6 @@
 #include <iostream>
 #include <iomanip>
 #include <boost/algorithm/string/predicate.hpp>
-#include <glm/geometric.hpp>
 
 #include "ao/format/mesh.hpp"
 
@@ -45,7 +44,7 @@ void Mesh::writeSTL(std::ostream& out)
         for (auto i : {t[0], t[1], t[2]})
         {
             auto v = verts[i];
-            float vert[3] = {v.x, v.y, v.z};
+            float vert[3] = {v.x(), v.y(), v.z()};
             out.write(reinterpret_cast<char*>(&vert), sizeof(vert));
         }
 
@@ -86,15 +85,14 @@ void Mesh::writeOBJ(std::ostream& out)
     }
 }
 
-glm::vec3 Mesh::norm(unsigned i) const
+Eigen::Vector3f Mesh::norm(unsigned i) const
 {
     assert(i < tris.size());
 
     const auto a = verts[tris[i][1]] - verts[tris[i][0]];
     const auto b = verts[tris[i][2]] - verts[tris[i][0]];
 
-    const auto n = glm::cross(a, b);
-    return glm::normalize(n);
+    return a.cross(b).normalized();
 }
 
 }   // namespace Kernel

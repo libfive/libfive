@@ -1,8 +1,6 @@
 #include <set>
 #include <map>
 
-#include <glm/gtx/common.hpp>
-
 #include "ao/format/contours.hpp"
 #include "ao/render/region.hpp"
 
@@ -10,15 +8,15 @@ namespace Kernel {
 
 struct Comparator
 {
-    bool operator()(const glm::vec2& a, const glm::vec2& b) const
+    bool operator()(const Eigen::Vector2f& a, const Eigen::Vector2f& b) const
     {
-        if (a.x != b.x)
+        if (a.x() != b.x())
         {
-            return a.x < b.x;
+            return a.x() < b.x();
         }
         else
         {
-            return a.y < b.y;
+            return a.y() < b.y();
         }
     }
 };
@@ -44,7 +42,7 @@ struct Worker2D
      */
     void segment(const Quadtree* a, const Quadtree* b);
 
-    std::list<std::pair<glm::vec2, glm::vec2>> segments;
+    std::list<std::pair<Eigen::Vector2f, Eigen::Vector2f>> segments;
 };
 
 void Worker2D::cell(const Quadtree* c)
@@ -112,7 +110,8 @@ void Worker2D::segment(const Quadtree* a, const Quadtree* b)
     auto va = a->getVertex();
     auto vb = b->getVertex();
 
-    segments.push_back({{va.x, va.y}, {vb.x, vb.y}});
+    segments.push_back({va.head<2>().cast<float>(),
+                        vb.head<2>().cast<float>()});
 }
 }
 
@@ -125,7 +124,7 @@ Contours Contours::render(const Tree t, const Region& r)
     DC::Worker2D w;
     w.cell(q.get());
 
-    std::map<glm::vec2, glm::vec2, Comparator> segs;
+    std::map<Eigen::Vector2f, Eigen::Vector2f, Comparator> segs;
     for (const auto& s : w.segments)
     {
         if (s.first != s.second)
@@ -138,8 +137,8 @@ Contours Contours::render(const Tree t, const Region& r)
     while (segs.size())
     {
         auto front = *segs.begin();
-        std::vector<glm::vec2> vec = {front.first};
-        std::set<glm::vec2, Comparator> found;
+        std::vector<Eigen::Vector2f> vec = {front.first};
+        std::set<Eigen::Vector2f, Comparator> found;
 
         auto back = front.first;
         // Walk around the contour until we hit a vertex that we've already

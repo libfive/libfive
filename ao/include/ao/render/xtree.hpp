@@ -5,7 +5,6 @@
 #include <vector>
 #include <limits>
 
-#include <glm/vec3.hpp>
 #include <Eigen/Eigen>
 
 #include "ao/eval/interval.hpp"
@@ -18,8 +17,8 @@ namespace Kernel {
 
 /*  Helper struct to store Hermite intersection data  */
 struct Intersection {
-    glm::vec3 pos;
-    glm::vec3 norm;
+    Eigen::Vector3d pos;
+    Eigen::Vector3d norm;
 };
 
 template <class T, int dims>
@@ -36,7 +35,7 @@ public:
      *
      *  Must be in agreement with the Subregion splitting order in octsect
      */
-    glm::vec3 pos(uint8_t i) const
+    Eigen::Vector3d pos(uint8_t i) const
     {
         return {i & AXIS_X ? X.upper() : X.lower(),
                 i & AXIS_Y ? Y.upper() : Y.lower(),
@@ -62,7 +61,7 @@ public:
     /*
      *  Looks up the vertex position
      */
-    glm::vec3 getVertex() const { return vert; }
+    Eigen::Vector3d getVertex() const { return vert; }
 
     /*
      *  Return the tree's level (leafs are 0 and it goes up from there)
@@ -138,16 +137,17 @@ protected:
      *
      *  Returns the vertex and populates err if provided
      */
-    glm::vec3 findVertex(float* err=NULL) const;
-    glm::vec3 findVertex(Eigen::EigenSolver<Eigen::Matrix3d>& es,
-                         float* err=NULL) const;
+    Eigen::Vector3d findVertex(float* err=NULL) const;
+    Eigen::Vector3d findVertex(Eigen::EigenSolver<Eigen::Matrix3d>& es,
+                               float* err=NULL) const;
 
     /*
      *  Performs binary search along a cube's edge, returning the intersection
      *
      *  eval(a) should be inside the shape and eval(b) should be outside
      */
-    glm::vec3 searchEdge(glm::vec3 a, glm::vec3 b, Evaluator* eval) const;
+    Eigen::Vector3d searchEdge(Eigen::Vector3d a, Eigen::Vector3d b,
+                               Evaluator* eval) const;
 
     /*
      *  Checks to see if the cell's corners describe an ambiguous
@@ -202,14 +202,14 @@ protected:
     std::array<bool, 1 << dims> corners;
 
     /*  Feature vertex located in the cell  */
-    glm::vec3 vert=glm::vec3(std::numeric_limits<float>::quiet_NaN());
+    Eigen::Vector3d vert={0, 0, 0};
 
     /*  Marks whether a node is manifold or not  */
     bool manifold;
 
     /*  Mass point is the average intersection location *
      *  (the w coordinate is number of points averaged) */
-    glm::vec4 mass_point=glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    Eigen::Vector4d mass_point={0.0f, 0.0f, 0.0f, 0.0f};
 
     /*  QEF terms */
     Eigen::Matrix3d AtA=Eigen::Matrix3d::Zero();

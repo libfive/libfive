@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <glm/vec2.hpp>
+#include <Eigen/Eigen>
 
 #include "ao/render/quadtree.hpp"
 #include "ao/tree/tree.hpp"
@@ -20,7 +20,7 @@ struct Contours
     void writeSVG(std::string filename, const Region& r);
 
     /*  Contours in 2D space  */
-    std::vector<std::vector<glm::vec2>> contours;
+    std::vector<std::vector<Eigen::Vector2f>> contours;
 };
 
 }   // namespace Kernel

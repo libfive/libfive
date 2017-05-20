@@ -1,12 +1,11 @@
-#include <glm/glm.hpp>
 #include "ao/eval/feature.hpp"
 
 namespace Kernel {
 
-bool Feature::isCompatible(glm::vec3 e) const
+bool Feature::isCompatible(Eigen::Vector3d e) const
 {
     {   // Normalize based on vector length
-        const auto norm = glm::length(e);
+        const auto norm = e.norm();
         if (norm == 0)
         {
             return false;
@@ -20,7 +19,7 @@ bool Feature::isCompatible(glm::vec3 e) const
     }
     else if (epsilons.size() == 1)
     {
-        return glm::dot(e, epsilons.front()) != -1;
+        return e.dot(epsilons.front()) != -1;
     }
 
     // Return early if the epsilon is already in the list
@@ -52,11 +51,11 @@ bool Feature::isCompatible(glm::vec3 e) const
     {
         for (auto b=es.begin(); b != es.end(); ++b)
         {
-            if (a == b || glm::dot(*a, *b) == -1)
+            if (a == b || a->dot(*b) == -1)
             {
                 continue;
             }
-            const auto norm = glm::cross(*a, *b);
+            const auto norm = a->cross(*b);
             int sign = 0;
             bool passed = true;
             for (auto c=es.begin(); passed && c != es.end(); ++c)
@@ -65,7 +64,7 @@ bool Feature::isCompatible(glm::vec3 e) const
                 {
                     continue;
                 }
-                auto d = glm::dot(norm, *c);
+                auto d = norm.dot(*c);
                 if (d < 0)
                 {
                     passed &= (sign <= 0);
@@ -90,16 +89,16 @@ bool Feature::isCompatible(glm::vec3 e) const
     return false;
 }
 
-void Feature::push_raw(Choice c, glm::vec3 v)
+void Feature::push_raw(Choice c, Eigen::Vector3d v)
 {
-    v /= glm::length(v);
+    v.normalize();
 
     epsilons.push_back(v);
     choices.push_back(c);
     _epsilons[c.id] = v;
 }
 
-bool Feature::push(glm::vec3 e, Choice choice)
+bool Feature::push(Eigen::Vector3d e, Choice choice)
 {
     if (isCompatible(e))
     {
@@ -107,7 +106,7 @@ bool Feature::push(glm::vec3 e, Choice choice)
         _epsilons[choice.id] = e;
 
         // Store the epsilon if it isn't already present
-        e /= glm::length(e);
+        e.normalize();
         for (auto i : epsilons)
         {
             if (e == i)
@@ -133,33 +132,33 @@ bool operator<(const Feature::Choice& a, const Feature::Choice& b)
     return a.choice < b.choice;
 }
 
-Feature::PlanarResult Feature::checkPlanar(glm::vec3 v) const
+Feature::PlanarResult Feature::checkPlanar(Eigen::Vector3d v) const
 {
     if (epsilons.size() < 2)
     {
         return NOT_PLANAR;
     }
 
-    v /= glm::length(v);
+    v.normalize();
 
     auto itr = epsilons.begin();
-    const auto cross = glm::cross(*itr, v);
-    const auto cross_ = cross / glm::length(cross);
+    const auto cross = itr->cross(v);
+    const auto cross_ = cross.normalized();
 
-    const auto angle = asin(glm::length(cross));
+    const auto angle = asin(cross.norm());
     auto angle_min = std::min(0.0, angle);
     auto angle_max = std::max(0.0, angle);
 
     while (++itr != epsilons.end())
     {
-        auto c = glm::cross(*itr, v);
-        auto c_ = c / glm::length(c);
-        if (std::abs(glm::dot(c_, cross_)) != 1)
+        auto c = itr->cross(v);
+        auto c_ = c.normalized();
+        if (std::abs(c_.dot(cross_)) != 1)
         {
             return NOT_PLANAR;
         }
 
-        const auto angle = asin(glm::length(c));
+        const auto angle = asin(c.norm());
         angle_min = std::min(angle, angle_min);
         angle_max = std::max(angle, angle_max);
     }

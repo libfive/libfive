@@ -46,7 +46,7 @@ TEST_CASE("2D contour tracking")
     float max = 0;
     for (auto c : m.contours[0])
     {
-        auto r = sqrt(pow(c.x, 2) + pow(c.y, 2));
+        auto r = c.norm();
         min = fmin(min, r);
         max = fmax(max, r);
     }

@@ -30,15 +30,15 @@ void Contours::writeSVG(std::string filename, const Region& r)
         }
 
         // Initial move command
-        file << "M " << itr->x - r.X.bounds.lower()
-             << ' '  << r.Y.bounds.upper() - itr->y << ' ';
+        file << "M " << itr->x() - r.X.bounds.lower()
+             << ' '  << r.Y.bounds.upper() - itr->y() << ' ';
         itr++;
 
         // Line to commands
         while (itr != end)
         {
-            file << "L " << itr->x - r.X.bounds.lower()
-                 << ' '  << r.Y.bounds.upper() - itr->y << ' ';
+            file << "L " << itr->x() - r.X.bounds.lower()
+                 << ' '  << r.Y.bounds.upper() - itr->y() << ' ';
             ++itr;
         }
 

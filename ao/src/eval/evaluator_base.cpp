@@ -389,7 +389,7 @@ bool EvaluatorBase::isInside(float x, float y, float z)
     // values out if it's got a non-zero gradient
     if (fs.size() == 1)
     {
-        return fs.front().deriv.length() > 0;
+        return fs.front().deriv.norm() > 0;
     }
 
     // Otherwise, check each feature
@@ -444,12 +444,12 @@ std::list<Feature> EvaluatorBase::featuresAt(float x, float y, float z)
                     result.f[itr->a][0] == result.f[itr->b][0])
             {
                 // Check both branches of the ambiguity
-                const glm::vec3 rhs(result.dx[itr->b][0],
-                                    result.dy[itr->b][0],
-                                    result.dz[itr->b][0]);
-                const glm::vec3 lhs(result.dx[itr->a][0],
-                                    result.dy[itr->a][0],
-                                    result.dz[itr->a][0]);
+                const Eigen::Vector3d rhs(result.dx[itr->b][0],
+                                          result.dy[itr->b][0],
+                                          result.dz[itr->b][0]);
+                const Eigen::Vector3d lhs(result.dx[itr->a][0],
+                                          result.dy[itr->a][0],
+                                          result.dz[itr->a][0]);
                 const auto epsilon = (itr->op == Opcode::MIN) ? (rhs - lhs)
                                                               : (lhs - rhs);
 

@@ -346,7 +346,7 @@ TEST_CASE("Evaluator::featuresAt")
         Evaluator e(Tree::X());
         auto fs = e.featuresAt(0, 0, 0);
         REQUIRE(fs.size() == 1);
-        REQUIRE(fs.front().deriv == glm::vec3(1, 0, 0));
+        REQUIRE(fs.front().deriv == Eigen::Vector3d(1, 0, 0));
     }
 
     SECTION("Two features (min)")
@@ -355,8 +355,8 @@ TEST_CASE("Evaluator::featuresAt")
         auto fs = e.featuresAt(0, 0, 0);
         REQUIRE(fs.size() == 2);
         auto i = fs.begin();
-        REQUIRE((i++)->deriv == glm::vec3(1, 0, 0));
-        REQUIRE((i++)->deriv == glm::vec3(-1, 0, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3d(1, 0, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3d(-1, 0, 0));
     }
 
     SECTION("Two features (max)")
@@ -365,8 +365,8 @@ TEST_CASE("Evaluator::featuresAt")
         auto fs = e.featuresAt(0, 0, 0);
         REQUIRE(fs.size() == 2);
         auto i = fs.begin();
-        REQUIRE((i++)->deriv == glm::vec3(1, 0, 0));
-        REQUIRE((i++)->deriv == glm::vec3(-1, 0, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3d(1, 0, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3d(-1, 0, 0));
     }
 
     SECTION("Three features")
@@ -378,9 +378,9 @@ TEST_CASE("Evaluator::featuresAt")
         // that chooise X, Y and X, Z collapse to X.
         REQUIRE(fs.size() == 3);
         auto i = fs.begin();
-        REQUIRE((i++)->deriv == glm::vec3(1, 0, 0));
-        REQUIRE((i++)->deriv == glm::vec3(0, 1, 0));
-        REQUIRE((i++)->deriv == glm::vec3(0, 0, 1));
+        REQUIRE((i++)->deriv == Eigen::Vector3d(1, 0, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3d(0, 1, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3d(0, 0, 1));
     }
 
     SECTION("Buried ambiguity")

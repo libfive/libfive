@@ -2,7 +2,8 @@
 
 #include <list>
 #include <map>
-#include <glm/vec3.hpp>
+
+#include <Eigen/Eigen>
 
 #include "ao/eval/clause.hpp"
 
@@ -24,13 +25,13 @@ public:
      *  This is a slow (worst-case O(n^3)) operation, but it should be called
      *  rarely and so doesn't need to be optimized yet.
      */
-    bool isCompatible(glm::vec3 e) const;
+    bool isCompatible(Eigen::Vector3d e) const;
 
     /*
      *  If incompatible, does nothing and returns false
      *  Otherwise, pushes to the front of the choice list and returns true
      */
-    bool push(glm::vec3 e, Choice c={0, 0});
+    bool push(Eigen::Vector3d e, Choice c={0, 0});
 
     /*
      *  Accessor method for the choice list
@@ -40,30 +41,30 @@ public:
     /*
      *  Top-level derivative (set manually)
      */
-    glm::vec3 deriv;
+    Eigen::Vector3d deriv;
 
     /*
      *  Inserts a choice without any checking
      */
-    void push_raw(Choice c, glm::vec3 v);
+    void push_raw(Choice c, Eigen::Vector3d v);
 
     /*
      *  Returns the epsilon associated with a particular choice
      */
-    glm::vec3 getEpsilon(Clause::Id i) const { return _epsilons.at(i); }
+    Eigen::Vector3d getEpsilon(Clause::Id i) const { return _epsilons.at(i); }
 
 protected:
     typedef enum { NOT_PLANAR, PLANAR_FAIL, PLANAR_SUCCESS } PlanarResult;
-    PlanarResult checkPlanar(glm::vec3 v) const;
+    PlanarResult checkPlanar(Eigen::Vector3d v) const;
 
     /*  Per-clause decisions  */
     std::list<Choice> choices;
 
     /*  Deduplicated list of epsilons  */
-    std::list<glm::vec3> epsilons;
+    std::list<Eigen::Vector3d> epsilons;
 
     /*  Per-clause epsilons  */
-    std::map<Clause::Id, glm::vec3> _epsilons;
+    std::map<Clause::Id, Eigen::Vector3d> _epsilons;
 };
 
 /*  Defining operator< lets us store Choices in std::set, etc */

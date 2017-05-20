@@ -26,7 +26,7 @@ TEST_CASE("Small sphere mesh")
 TEST_CASE("Face normals")
 {
     Tree axis[3] = {Tree::X(), Tree::Y(), Tree::Z()};
-    glm::vec3 norm[3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+    Eigen::Vector3f norm[3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
     Region r({-1, 1}, {-1, 1}, {-1, 1}, 2);
 
     SECTION("Positive")
@@ -45,8 +45,7 @@ TEST_CASE("Face normals")
     {
         for (int i=0; i < 3; ++i)
         {
-            Tree t(Tree(
-                        Opcode::NEG,
+            Tree t(Tree(Opcode::NEG,
                         Tree(Opcode::ADD, axis[i],
                             Tree(0.75))));
             auto m = Mesh::render(t, r);

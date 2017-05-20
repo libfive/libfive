@@ -1,7 +1,5 @@
 #include <chrono>
 
-#include <glm/gtc/matrix_transform.hpp>
-
 #include "catch.hpp"
 
 #include "ao/format/mesh.hpp"
@@ -34,10 +32,10 @@ TEST_CASE("Mesh normals")
     m.verts.push_back({0,1,0});
 
     m.tris.push_back({0, 1, 2});
-    REQUIRE(m.norm(0) == glm::vec3(0, 0, 1));
+    REQUIRE(m.norm(0) == Eigen::Vector3f(0, 0, 1));
 
     m.tris.push_back({0, 2, 1});
-    REQUIRE(m.norm(1) == glm::vec3(0, 0, -1));
+    REQUIRE(m.norm(1) == Eigen::Vector3f(0, 0, -1));
 }
 
 

@@ -2,8 +2,6 @@
 #include <numeric>
 #include <cmath>
 
-#include <glm/geometric.hpp>
-#include <glm/gtc/random.hpp>
 #include <Eigen/Dense>
 
 #include "ao/render/xtree.hpp"
@@ -127,7 +125,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r)
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 auto c = pos(i);
-                e->set(c.x, c.y, c.z, i);
+                e->set(c.x(), c.y(), c.z(), i);
             }
 
             // Do the evaluation
@@ -139,7 +137,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r)
                 if (fs[i] == 0)
                 {
                     const auto c = pos(i);
-                    corners[i] = e->isInside(c.x, c.y, c.z);
+                    corners[i] = e->isInside(c.x(), c.y(), c.z());
                 }
                 else
                 {
@@ -194,7 +192,7 @@ void XTree<T, dims>::finalize(Evaluator* e)
             // For non-manifold leaf nodes, put the vertex at the mass point.
             // As described in "Dual Contouring: The Secret Sauce", this improves
             // mesh quality.
-            glm::vec3(mass_point.x, mass_point.y, mass_point.z) / mass_point.w;
+            mass_point.head<3>() / mass_point.w();
     }
 
     // If this cell is no longer a branch, remove its children
@@ -213,12 +211,12 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
 
     // Check every edge and use binary search to find intersections on
     // edges that have mismatched signs
-    std::vector<glm::vec3> pts;
+    std::vector<Eigen::Vector3d> pts;
     for (auto e : static_cast<const T*>(this)->cellEdges())
     {
         if (corner(e.first) != corner(e.second))
         {
-            const glm::vec3 p = corner(e.first)
+            const Eigen::Vector3d p = corner(e.first)
                 ? searchEdge(pos(e.first), pos(e.second), eval)
                 : searchEdge(pos(e.second), pos(e.first), eval);
 
@@ -231,7 +229,7 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
     // Calculate normals in bulk (since that's more efficient)
     for (unsigned i=0; i < pts.size(); ++i)
     {
-        eval->setRaw(pts[i].x, pts[i].y, pts[i].z, i);
+        eval->setRaw(pts[i].x(), pts[i].y(), pts[i].z(), i);
     }
     auto ds = eval->derivs(pts.size());
 
@@ -245,12 +243,12 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
         const auto p = pts[i];
         if (ambiguous.find(i) == ambiguous.end())
         {
-            const glm::vec3 g(ds.dx[i], ds.dy[i], ds.dz[i]);
-            intersections.push_back({p, glm::normalize(g)});
+            const Eigen::Vector3d g(ds.dx[i], ds.dy[i], ds.dz[i]);
+            intersections.push_back({p, g.normalized()});
         }
         else
         {
-            for (auto& f : eval->featuresAt(p.x, p.y, p.z))
+            for (auto& f : eval->featuresAt(p.x(), p.y(), p.z()))
             {
                 if (f.isCompatible(f.deriv) && f.isCompatible(-f.deriv))
                 {
@@ -344,11 +342,12 @@ Eigen::EigenSolver<Eigen::Matrix3d> XTree<T, dims>::findLeafMatrices(Evaluator* 
         const auto pos  = intersections[i].pos;
 
         // Build up matrices
-        A.row(i) << Eigen::Vector3d(norm.x, norm.y, norm.z).transpose();
-        B.row(i) << glm::dot(norm, pos);
+        A.row(i) << norm.transpose();
+        B.row(i) << norm.dot(pos);
 
         // Accumulate intersection in mass point
-        mass_point += glm::vec4(pos, 1.0f);
+        mass_point.head<3>() += pos;
+        mass_point.w()++;
     }
 
     auto At = A.transpose();
@@ -370,14 +369,14 @@ Eigen::EigenSolver<Eigen::Matrix3d> XTree<T, dims>::findLeafMatrices(Evaluator* 
 }
 
 template <class T, int dims>
-glm::vec3 XTree<T, dims>::findVertex(float* err) const
+Eigen::Vector3d XTree<T, dims>::findVertex(float* err) const
 {
     Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
     return findVertex(es, err);
 }
 
 template <class T, int dims>
-glm::vec3 XTree<T, dims>::findVertex(
+Eigen::Vector3d XTree<T, dims>::findVertex(
         Eigen::EigenSolver<Eigen::Matrix3d>& es,
         float* err) const
 {
@@ -405,8 +404,7 @@ glm::vec3 XTree<T, dims>::findVertex(
     auto AtAp = U * D * U.transpose();
 
     // Solve for vertex (minimizing distance to center)
-    auto p = Eigen::Vector3d(mass_point.x, mass_point.y, mass_point.z) /
-             mass_point.w;
+    auto p = mass_point.head<3>() / mass_point.w();
     auto v = AtAp * (AtB - AtA * p) + p;
 
     // Find the QEF error if required
@@ -416,7 +414,7 @@ glm::vec3 XTree<T, dims>::findVertex(
     }
 
     // Convert out of Eigen's format and return
-    return glm::vec3(v[0], v[1], v[2]);
+    return v;
 }
 
 
@@ -436,8 +434,8 @@ bool XTree<T, dims>::cornerTopology() const
 }
 
 template<class T, int dims>
-glm::vec3 XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b,
-                                     Evaluator* e) const
+Eigen::Vector3d XTree<T, dims>::searchEdge(Eigen::Vector3d a, Eigen::Vector3d b,
+                                           Evaluator* e) const
 {
     // We do an N-fold reduction at each stage
     constexpr int _N = 4;
@@ -447,19 +445,19 @@ glm::vec3 XTree<T, dims>::searchEdge(glm::vec3 a, glm::vec3 b,
     // Binary search for intersection
     for (int i=0; i < ITER; ++i)
     {
-        glm::vec3 ps[N];
+        Eigen::Vector3d ps[N];
         for (int j=0; j < N; ++j)
         {
             float frac = j / (N - 1.0);
             ps[j] = (a * (1 - frac)) + (b * frac);
-            e->setRaw(ps[j].x, ps[j].y, ps[j].z, j);
+            e->setRaw(ps[j].x(), ps[j].y(), ps[j].z(), j);
         }
 
         auto out = e->values(N);
         for (int j=0; j < N; ++j)
         {
             if (out[j] > 0 ||
-                (out[j] == 0 && !e->isInside(ps[j].x, ps[j].y, ps[j].z)))
+                (out[j] == 0 && !e->isInside(ps[j].x(), ps[j].y(), ps[j].z())))
             {
                 a = ps[j - 1];
                 b = ps[j];

@@ -1,8 +1,7 @@
 #pragma once
 
 #include <vector>
-
-#include <glm/vec3.hpp>
+#include <Eigen/Eigen>
 
 #include "ao/render/octree.hpp"
 #include "ao/tree/tree.hpp"
@@ -32,13 +31,13 @@ struct Mesh
     /*
      *  Returns the unit-length normal of the i'th triangle
      */
-    glm::vec3 norm(unsigned i) const;
+    Eigen::Vector3f norm(unsigned i) const;
 
     /*  Vertices in 3D space  */
-    std::vector<glm::vec3> verts;
+    std::vector<Eigen::Vector3f> verts;
 
     /*  Triangles in the mesh (as indices in verts list)  */
-    std::vector<glm::uvec3> tris;
+    std::vector<Eigen::Vector3i> tris;
 };
 
 }   // namespace Kernel

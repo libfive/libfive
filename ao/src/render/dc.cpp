@@ -226,7 +226,7 @@ void Worker::quad(const Octree* a, const Octree* b,
         if (i == verts.end())
         {
             verts[o] = mesh.verts.size();
-            mesh.verts.push_back(o->getVertex());
+            mesh.verts.push_back(o->getVertex().cast<float>());
         }
         return verts[o];
     };

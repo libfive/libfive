@@ -80,7 +80,7 @@ TEST_CASE("Vertex positioning")
         }
         else if (o->getType() == Octree::LEAF)
         {
-            float r = glm::length(o->getVertex());
+            float r = o->getVertex().norm();
             rmax = std::max(r, rmax);
             rmin = std::max(r, rmin);
         }
