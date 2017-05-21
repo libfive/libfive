@@ -6,8 +6,6 @@
 #include "ao/render/region.hpp"
 #include "ao/eval/evaluator.hpp"
 
-// Overloaded toString for glm::vec3
-#include "util/glm.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;

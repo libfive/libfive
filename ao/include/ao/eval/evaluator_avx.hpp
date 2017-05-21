@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Eigen/Eigen>
 #include "ao/eval/evaluator_base.hpp"
 
 namespace Kernel {
@@ -10,7 +11,8 @@ public:
     /*
      *  Construct an evaluator for the given tree
      */
-    EvaluatorAVX(const Tree root, const glm::mat4& M=glm::mat4(),
+    EvaluatorAVX(const Tree root,
+                 const Eigen::Matrix4f& M=Eigen::Matrix4f::Identity(),
                  const std::map<Tree::Id, float>& vars=std::map<Tree::Id, float>())
         : EvaluatorBase(root, M, vars) { /* Nothing to do here */ }
     EvaluatorAVX(const Tree root, const std::map<Tree::Id, float>& vars)

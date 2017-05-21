@@ -1,6 +1,6 @@
-#include "catch.hpp"
+#include <Eigen/Geometry>
 
-#include <glm/gtc/matrix_transform.hpp>
+#include "catch.hpp"
 
 #include "ao/tree/tree.hpp"
 #include "ao/eval/evaluator.hpp"
@@ -192,6 +192,7 @@ TEST_CASE("Push / pop behavior")
 TEST_CASE("Matrix evaluation")
 {
     auto t = Tree::X();
+    Eigen::Matrix4f M = Eigen::Matrix4f::Identity();
 
     SECTION("Default matrix")
     {
@@ -201,20 +202,27 @@ TEST_CASE("Matrix evaluation")
 
     SECTION("Scaling")
     {
-        Evaluator e(t, glm::scale(glm::mat4(), {0.5, 1.0, 1.0}));
+        M = Eigen::Vector4f(0.5, 1.0, 1.0, 0.0).asDiagonal();
+        Evaluator e(t, M);
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 0.5);
     }
 
     SECTION("Swapping")
     {
-        Evaluator e(t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
-                               {0.0, 0.0, 1.0}));
+        Eigen::Matrix3f m;
+        m = Eigen::AngleAxisf(-(float)M_PI * 0.5f, Eigen::Vector3f::UnitZ());
+        M.block<3,3>(0,0) = m;
+
+        Evaluator e(t, M);
         REQUIRE(e.eval(1.0, 2.0, 3.0) == Approx(2.0));
     }
 
     SECTION("Offset")
     {
-        Evaluator e(t, glm::translate(glm::mat4(), {0.5, 0.0, 0.0}));
+        Eigen::Affine3f m;
+        m = Eigen::Translation<float, 3>(0.5, 0, 0);
+
+        Evaluator e(t, m.matrix());
         REQUIRE(e.eval(1.0, 2.0, 3.0) == 1.5);
     }
 }
@@ -222,11 +230,15 @@ TEST_CASE("Matrix evaluation")
 TEST_CASE("Matrix normals")
 {
     auto t = Tree::X();
+    Eigen::Matrix4f M = Eigen::Matrix4f::Identity();
 
     SECTION("Swapping")
     {
-        Evaluator e(t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
-                               {0.0, 0.0, 1.0}));
+        Eigen::Matrix3f m;
+        m = Eigen::AngleAxisf(-(float)M_PI * 0.5f, Eigen::Vector3f::UnitZ());
+
+        M.block<3,3>(0,0) = m;
+        Evaluator e(t, M);
         e.set(1, 2, 3, 0);
         auto out = e.derivs(1);
 
@@ -237,8 +249,11 @@ TEST_CASE("Matrix normals")
 
     SECTION("Swapping")
     {
-        Evaluator e(t, glm::rotate(glm::mat4(), -(float)M_PI * 0.5f,
-                               {0.0, 0.0, 1.0}));
+        Eigen::Matrix3f m;
+        m = Eigen::AngleAxisf(-(float)M_PI * 0.5f, Eigen::Vector3f::UnitZ());
+
+        M.block<3,3>(0,0) = m;
+        Evaluator e(t, M);
         e.set(1, 2, 3, 0);
         auto out = e.derivs(1);
 

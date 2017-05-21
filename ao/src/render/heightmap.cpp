@@ -3,8 +3,6 @@
 #include <limits>
 #include <set>
 
-#include <glm/glm.hpp>
-
 #include "ao/render/heightmap.hpp"
 #include "ao/eval/result.hpp"
 #include "ao/eval/evaluator.hpp"
@@ -254,7 +252,7 @@ static bool recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
 
 void render(
         const std::vector<Evaluator*>& es, Region r,
-        const std::atomic_bool& abort, glm::mat4 m,
+        const std::atomic_bool& abort, Eigen::Matrix4f m,
         DepthImage& depth, NormalImage& norm)
 {
     depth.fill(-std::numeric_limits<float>::infinity());
@@ -298,7 +296,7 @@ void render(
 
 std::pair<DepthImage, NormalImage> render(
     const Tree t, Region r, const std::atomic_bool& abort,
-    glm::mat4 m, size_t workers)
+    Eigen::Matrix4f m, size_t workers)
 {
     std::vector<Evaluator*> es;
     for (size_t i=0; i < workers; ++i)
@@ -317,7 +315,7 @@ std::pair<DepthImage, NormalImage> render(
 
 std::pair<DepthImage, NormalImage> render(
         const std::vector<Evaluator*>& es, Region r,
-        const std::atomic_bool& abort, glm::mat4 m)
+        const std::atomic_bool& abort, Eigen::Matrix4f m)
 {
     auto depth = DepthImage(r.Y.values.size(), r.X.values.size());
     auto norm = NormalImage(r.Y.values.size(), r.X.values.size());
@@ -330,7 +328,7 @@ std::pair<DepthImage, NormalImage> render(
 
 std::pair<DepthImage*, NormalImage*> render_(
         const std::vector<Evaluator*>& es, Region r,
-        const std::atomic_bool& abort, glm::mat4 m)
+        const std::atomic_bool& abort, Eigen::Matrix4f m)
 {
     auto depth = new DepthImage(r.Y.values.size(), r.X.values.size());
     auto norm = new NormalImage(r.Y.values.size(), r.X.values.size());

@@ -5,8 +5,6 @@
 #include "ao/render/octree.hpp"
 #include "ao/render/region.hpp"
 
-// Overloaded toString for glm::vec3
-#include "util/glm.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;

@@ -284,16 +284,16 @@ EvaluatorBase::Derivs EvaluatorAVX::derivs(Result::Index count)
 
     // Apply the inverse matrix transform to our normals
     // TODO: we could SIMD this as well!
-    auto o = Mi * glm::vec4(0,0,0,1);
+    auto o = Mi * Eigen::Vector4f(0, 0, 0, 1);
     const auto index = tape->i;
     for (size_t i=0; i < count; ++i)
     {
-        auto n = Mi * glm::vec4(result.dx[index][i],
-                                result.dy[index][i],
-                                result.dz[index][i], 1) - o;
-        result.dx[index][i] = n.x;
-        result.dy[index][i] = n.y;
-        result.dz[index][i] = n.z;
+        auto n = Mi * Eigen::Vector4f(result.dx[index][i],
+                                      result.dy[index][i],
+                                      result.dz[index][i], 1) - o;
+        result.dx[index][i] = n.x();
+        result.dy[index][i] = n.y();
+        result.dz[index][i] = n.z();
     }
 
     return { &result.f[index][0],  &result.dx[index][0],
@@ -303,20 +303,20 @@ EvaluatorBase::Derivs EvaluatorAVX::derivs(Result::Index count)
 void EvaluatorAVX::applyTransform(Result::Index count)
 {
 #define MM256_LOADDUP(a) _mm256_set_ps(a,a,a,a,a,a,a,a)
-    __m256 M00 = MM256_LOADDUP(M[0][0]);
-    __m256 M10 = MM256_LOADDUP(M[1][0]);
-    __m256 M20 = MM256_LOADDUP(M[2][0]);
-    __m256 M30 = MM256_LOADDUP(M[3][0]);
+    __m256 M00 = MM256_LOADDUP(M(0,0));
+    __m256 M10 = MM256_LOADDUP(M(0,1));
+    __m256 M20 = MM256_LOADDUP(M(0,2));
+    __m256 M30 = MM256_LOADDUP(M(0,3));
 
-    __m256 M01 = MM256_LOADDUP(M[0][1]);
-    __m256 M11 = MM256_LOADDUP(M[1][1]);
-    __m256 M21 = MM256_LOADDUP(M[2][1]);
-    __m256 M31 = MM256_LOADDUP(M[3][1]);
+    __m256 M01 = MM256_LOADDUP(M(1,0));
+    __m256 M11 = MM256_LOADDUP(M(1,1));
+    __m256 M21 = MM256_LOADDUP(M(1,2));
+    __m256 M31 = MM256_LOADDUP(M(1,3));
 
-    __m256 M02 = MM256_LOADDUP(M[0][2]);
-    __m256 M12 = MM256_LOADDUP(M[1][2]);
-    __m256 M22 = MM256_LOADDUP(M[2][2]);
-    __m256 M32 = MM256_LOADDUP(M[3][2]);
+    __m256 M02 = MM256_LOADDUP(M(2,0));
+    __m256 M12 = MM256_LOADDUP(M(2,1));
+    __m256 M22 = MM256_LOADDUP(M(2,2));
+    __m256 M32 = MM256_LOADDUP(M(2,3));
 
     for (size_t i=0; i < (count + 7) / 8; ++i)
     {

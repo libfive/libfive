@@ -2,8 +2,6 @@
 #include <memory>
 #include <cmath>
 
-#include <glm/gtc/matrix_inverse.hpp>
-
 #include "ao/tree/cache.hpp"
 #include "ao/tree/tree.hpp"
 #include "ao/eval/evaluator_base.hpp"
@@ -13,7 +11,7 @@ namespace Kernel {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-EvaluatorBase::EvaluatorBase(const Tree root, const glm::mat4& M,
+EvaluatorBase::EvaluatorBase(const Tree root, const Eigen::Matrix4f& M,
                              const std::map<Tree::Id, float>& vs)
     : root_op(root->op)
 {
@@ -136,9 +134,9 @@ Interval EvaluatorBase::eval(Interval x, Interval y, Interval z)
 
 void EvaluatorBase::set(Interval x, Interval y, Interval z)
 {
-    result.i[X] = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
-    result.i[Y] = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
-    result.i[Z] = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
+    result.i[X] = M(0,0) * x + M(0,1) * y + M(0,2) * z + M(0,3);
+    result.i[Y] = M(1,0) * x + M(1,1) * y + M(1,2) * z + M(1,3);
+    result.i[Z] = M(2,0) * x + M(2,1) * y + M(2,2) * z + M(2,3);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1165,15 +1163,15 @@ EvaluatorBase::Derivs EvaluatorBase::derivs(Result::Index count)
 
     // Apply the inverse matrix transform to our normals
     const auto index = tape->i;
-    auto o = Mi * glm::vec4(0,0,0,1);
+    auto o = Mi * Eigen::Vector4f(0,0,0,1);
     for (size_t i=0; i < count; ++i)
     {
-        auto n = Mi * glm::vec4(result.dx[index][i],
-                                result.dy[index][i],
-                                result.dz[index][i], 1) - o;
-        result.dx[index][i] = n.x;
-        result.dy[index][i] = n.y;
-        result.dz[index][i] = n.z;
+        auto n = Mi * Eigen::Vector4f(result.dx[index][i],
+                                      result.dy[index][i],
+                                      result.dz[index][i], 1) - o;
+        result.dx[index][i] = n.x();
+        result.dy[index][i] = n.y();
+        result.dz[index][i] = n.z();
     }
 
     return { &result.f[index][0],  &result.dx[index][0],
@@ -1229,9 +1227,10 @@ void EvaluatorBase::applyTransform(Result::Index count)
         float x = result.f[X][i];
         float y = result.f[Y][i];
         float z = result.f[Z][i];
-        result.f[X][i] = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
-        result.f[Y][i] = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
-        result.f[Z][i] = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
+
+        result.f[X][i] = M(0,0) * x + M(0,1) * y + M(0,2) * z + M(0,3);
+        result.f[Y][i] = M(1,0) * x + M(1,1) * y + M(1,2) * z + M(1,3);
+        result.f[Z][i] = M(2,0) * x + M(2,1) * y + M(2,2) * z + M(2,3);
     }
 }
 
@@ -1242,10 +1241,10 @@ double EvaluatorBase::utilization() const
     return tape->t.size() / double(tapes.front().t.size());
 }
 
-void EvaluatorBase::setMatrix(const glm::mat4& m)
+void EvaluatorBase::setMatrix(const Eigen::Matrix4f& m)
 {
     M = m;
-    Mi = glm::inverse(m);
+    Mi = m.inverse();
 }
 
 void EvaluatorBase::setVar(Tree::Id var, float value)

@@ -2,8 +2,6 @@
 
 #include <atomic>
 
-#include <glm/mat4x4.hpp>
-
 #include "ao/render/region.hpp"
 #include "ao/format/image.hpp"
 #include "ao/tree/tree.hpp"
@@ -22,12 +20,12 @@ namespace Heightmap
  */
 std::pair<DepthImage, NormalImage> render(
         const Tree t, Region r, const std::atomic_bool& abort,
-        glm::mat4 m=glm::mat4(), size_t threads=8);
+        Eigen::Matrix4f M=Eigen::Matrix4f::Identity(), size_t threads=8);
 
 std::pair<DepthImage, NormalImage> render(
         const std::vector<Evaluator*>& es, Region r,
         const std::atomic_bool& abort,
-        glm::mat4 m=glm::mat4());
+        Eigen::Matrix4f M=Eigen::Matrix4f::Identity());
 
 /*
  *  Render an image using pre-allocated evaluators, returning images
@@ -36,7 +34,7 @@ std::pair<DepthImage, NormalImage> render(
 std::pair<DepthImage*, NormalImage*> render_(
         const std::vector<Evaluator*>& es, Region r,
         const std::atomic_bool& abort,
-        glm::mat4 m=glm::mat4());
+        Eigen::Matrix4f M=Eigen::Matrix4f::Identity());
 
 }   // namespace Heightmap
 }   // namespace Kernel

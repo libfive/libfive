@@ -1,7 +1,5 @@
 #include <chrono>
 
-#include <glm/gtc/matrix_transform.hpp>
-
 #include "catch.hpp"
 
 #include "ao/render/heightmap.hpp"
@@ -15,7 +13,7 @@ using namespace Kernel;
 
 // Helper function to make rendering a single call
 static std::pair<DepthImage, NormalImage> render(
-        Tree t, const Region& r, glm::mat4 M=glm::mat4())
+        Tree t, const Region& r, Eigen::Matrix4f M=Eigen::Matrix4f::Identity())
 {
     std::atomic_bool abort(false);
 
@@ -275,8 +273,12 @@ TEST_CASE("Performance")
         Tree sponge = menger(2);
 
         Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 250);
-        auto rot = glm::rotate(glm::rotate(glm::mat4(), float(M_PI/4), {0, 1, 0}),
-                               float(atan(1/sqrt(2))), {1, 0, 0});
+
+        Eigen::Matrix3f m;
+        m = Eigen::AngleAxisf(float(M_PI/4), Eigen::Vector3f::UnitY()) *
+            Eigen::AngleAxisf(float(atan(1/sqrt(2))), Eigen::Vector3f::UnitX());
+        Eigen::Matrix4f rot;
+        rot.block<3,3>(0,0) = m;
 
         // Begin timekeeping
         start = std::chrono::system_clock::now();

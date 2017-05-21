@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 
-#include <glm/mat4x4.hpp>
+#include <Eigen/Eigen>
 #include <boost/bimap.hpp>
 
 #include "ao/eval/result.hpp"
@@ -24,11 +24,12 @@ public:
     /*
      *  Construct an evaluator for the given tree
      */
-    EvaluatorBase(const Tree root, const glm::mat4& M=glm::mat4(),
+    EvaluatorBase(const Tree root,
+                  const Eigen::Matrix4f& M=Eigen::Matrix4f::Identity(),
                   const std::map<Tree::Id, float>& vars=
                         std::map<Tree::Id, float>());
     EvaluatorBase(const Tree root, const std::map<Tree::Id, float>& vars)
-        : EvaluatorBase(root, glm::mat4(), vars) {}
+        : EvaluatorBase(root, Eigen::Matrix4f::Identity(), vars) {}
 
     /*
      *  Single-argument evaluation
@@ -76,9 +77,9 @@ public:
      */
     void set(float x, float y, float z, Result::Index index)
     {
-        result.f[X][index] = M[0][0] * x + M[1][0] * y + M[2][0] * z + M[3][0];
-        result.f[Y][index] = M[0][1] * x + M[1][1] * y + M[2][1] * z + M[3][1];
-        result.f[Z][index] = M[0][2] * x + M[1][2] * y + M[2][2] * z + M[3][2];
+        result.f[X][index] = M(0,0) * x + M(0,1) * y + M(0,2) * z + M(0,3);
+        result.f[Y][index] = M(1,0) * x + M(1,1) * y + M(1,2) * z + M(1,3);
+        result.f[Z][index] = M(2,0) * x + M(2,1) * y + M(2,2) * z + M(2,3);
     }
 
     /*
@@ -132,7 +133,7 @@ public:
      *  Sets the global matrix transform
      *  Invalidates all positions and results
      */
-    void setMatrix(const glm::mat4& m);
+    void setMatrix(const Eigen::Matrix4f& m);
 
     /*
      *  Changes a variable's value
@@ -228,8 +229,8 @@ protected:
         Opcode::Opcode op, const Interval& a, const Interval& b);
 
     /*  Global matrix transform (and inverse) applied to all coordinates  */
-    glm::mat4 M;
-    glm::mat4 Mi;
+    Eigen::Matrix4f M;
+    Eigen::Matrix4f Mi;
 
     /*  Indices of X, Y, Z coordinates */
     Clause::Id X, Y, Z;

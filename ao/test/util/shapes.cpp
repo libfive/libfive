@@ -1,18 +1,19 @@
-#include <glm/gtc/matrix_transform.hpp>
-
 #include "ao/tree/tree.hpp"
+
+#include "shapes.hpp"
 
 using namespace Kernel;
 
-Tree rectangle(float xmin, float xmax, float ymin, float ymax, glm::mat4 M)
+Tree rectangle(float xmin, float xmax, float ymin, float ymax,
+               Eigen::Matrix4f M)
 {
-    auto x = M[0][0]*Tree::X() + M[0][1]*Tree::Y() + M[0][2]*Tree::Z() + M[0][3];
-    auto y = M[1][0]*Tree::X() + M[1][1]*Tree::Y() + M[1][2]*Tree::Z() + M[1][3];
+    auto x = M(0,0)*Tree::X() + M(0,1)*Tree::Y() + M(0,2)*Tree::Z() + M(0,3);
+    auto y = M(1,0)*Tree::X() + M(1,1)*Tree::Y() + M(1,2)*Tree::Z() + M(1,3);
 
     return max(max(xmin - x, x - xmax), max(ymin - y, y - ymax));
 }
 
-Tree recurse(float x, float y, float scale, glm::mat4 M, int i)
+Tree recurse(float x, float y, float scale, Eigen::Matrix4f M, int i)
 {
     auto base = rectangle(x - scale/2, x + scale/2,
                           y - scale/2, y + scale/2, M);
@@ -41,13 +42,17 @@ Tree recurse(float x, float y, float scale, glm::mat4 M, int i)
 
 Tree menger(int i)
 {
-    auto M = glm::mat4();
+    Eigen::Matrix3f m = Eigen::Matrix3f::Identity();
+    Eigen::Matrix4f M;
+    M.block<3,3>(0,0) = m;
     Tree a = recurse(0, 0, 1, M, i);
 
-    M = glm::rotate(M, float(M_PI/2), {1, 0, 0});
+    m = Eigen::AngleAxisf(float(M_PI/2), Eigen::Vector3f::UnitX());
+    M.block<3,3>(0,0) = m;
     Tree b = recurse(0, 0, 1, M, i);
 
-    M = glm::rotate(M, float(M_PI/2), {0, 1, 0});
+    m = m * Eigen::AngleAxisf(float(M_PI/2), Eigen::Vector3f::UnitY());
+    M.block<3,3>(0,0) = m;
     Tree c = recurse(0, 0, 1, M, i);
 
     auto cube = max(max(
