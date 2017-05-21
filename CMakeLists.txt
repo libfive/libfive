@@ -7,7 +7,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 ################################################################################
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-comment -g -fPIC -pedantic -std=c++11 -Werror=switch -march=native")
-set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -DRELEASE")
+set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -DRELEASE -DEIGEN_NO_DEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG    "-O0")
 
 ################################################################################
