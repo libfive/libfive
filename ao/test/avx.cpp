@@ -25,8 +25,8 @@ TEST_CASE("Vectorized performance")
 
     for (unsigned i=0; i < Result::N; ++i)
     {
-        e.set(i, 2*i, 0, i);
-        ea.set(i, 2*i, 0, i);
+        e.set({i, 2*i, 0}, i);
+        ea.set({i, 2*i, 0}, i);
     }
 
     SECTION("Speed")

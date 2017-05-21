@@ -65,7 +65,7 @@ struct NormalRenderer
     {
         xs[count] = r.X.min + i;
         ys[count] = r.Y.min + j;
-        e->set(r.X.pos(i), r.Y.pos(j), z, count++);
+        e->set({r.X.pos(i), r.Y.pos(j), z}, count++);
 
         // If the gradient array is completely full, execute a
         // calculation that finds normals and blits them to the image
@@ -107,7 +107,7 @@ static void pixels(Evaluator* e, const Subregion& r,
     // (which needs to be obeyed by anything unflattening results)
     SUBREGION_ITERATE_XYZ(r)
     {
-        e->setRaw(r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1), index++);
+        e->setRaw({r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1)}, index++);
     }
     e->applyTransform(index);
 

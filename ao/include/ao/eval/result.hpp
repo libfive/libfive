@@ -3,6 +3,8 @@
 #include <array>
 #include <vector>
 
+#include <Eigen/Eigen>
+
 #include "ao/eval/interval.hpp"
 #include "ao/eval/clause.hpp"
 
@@ -71,7 +73,7 @@ struct Result {
     /*
      *  Fills the derivative arrays with the given values
      */
-    void setDeriv(float x, float y, float z, Index clause);
+    void setDeriv(Eigen::Vector3f d, Index clause);
 
     // This is the number of samples that we can process in one pass
     static constexpr Index N = 256;

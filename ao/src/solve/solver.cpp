@@ -24,14 +24,14 @@ static std::pair<float, Solution> findRoot(
     auto vars = e.varValues();
     filter(vars);
 
-    float r = e.eval(pos.x(), pos.y(), pos.z());
+    float r = e.eval(pos);
 
     bool converged = false;
 
     while (!converged && fabs(r) >= EPSILON && --gas)
     {
         // Vars should be set from the most recent evaluation
-        auto ds = e.gradient(pos.x(), pos.y(), pos.z());
+        auto ds = e.gradient(pos);
         filter(ds);
 
         // Break if all of our gradients are nearly zero
@@ -56,7 +56,7 @@ static std::pair<float, Solution> findRoot(
             }
 
             // Get new residual
-            const auto r_ = e.eval(pos.x(), pos.y(), pos.z());
+            const auto r_ = e.eval(pos);
 
             // Find change in residuals
             const auto diff = r - r_;

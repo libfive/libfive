@@ -58,13 +58,13 @@ void Result::setGradient(Index clause, Index var)
     j[clause][var] = 1;
 }
 
-void Result::setDeriv(float x, float y, float z, Index clause)
+void Result::setDeriv(Eigen::Vector3f d, Index clause)
 {
     for (size_t i=0; i < N; ++i)
     {
-        dx[clause][i] = x;
-        dy[clause][i] = y;
-        dz[clause][i] = z;
+        dx[clause][i] = d.x();
+        dy[clause][i] = d.y();
+        dz[clause][i] = d.z();
     }
 }
 

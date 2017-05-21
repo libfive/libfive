@@ -125,7 +125,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r)
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 auto c = pos(i);
-                e->set(c.x(), c.y(), c.z(), i);
+                e->set(c.template cast<float>(), i);
             }
 
             // Do the evaluation
@@ -137,7 +137,7 @@ void XTree<T, dims>::populateChildren(Evaluator* e, const Subregion& r)
                 if (fs[i] == 0)
                 {
                     const auto c = pos(i);
-                    corners[i] = e->isInside(c.x(), c.y(), c.z());
+                    corners[i] = e->isInside(c.template cast<float>());
                 }
                 else
                 {
@@ -229,7 +229,7 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
     // Calculate normals in bulk (since that's more efficient)
     for (unsigned i=0; i < pts.size(); ++i)
     {
-        eval->setRaw(pts[i].x(), pts[i].y(), pts[i].z(), i);
+        eval->setRaw(pts[i].cast<float>(), i);
     }
     auto ds = eval->derivs(pts.size());
 
@@ -248,7 +248,7 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
         }
         else
         {
-            for (auto& f : eval->featuresAt(p.x(), p.y(), p.z()))
+            for (auto& f : eval->featuresAt(p.cast<float>()))
             {
                 if (f.isCompatible(f.deriv) && f.isCompatible(-f.deriv))
                 {
@@ -450,14 +450,14 @@ Eigen::Vector3d XTree<T, dims>::searchEdge(Eigen::Vector3d a, Eigen::Vector3d b,
         {
             float frac = j / (N - 1.0);
             ps[j] = (a * (1 - frac)) + (b * frac);
-            e->setRaw(ps[j].x(), ps[j].y(), ps[j].z(), j);
+            e->setRaw(ps[j].cast<float>(), j);
         }
 
         auto out = e->values(N);
         for (int j=0; j < N; ++j)
         {
-            if (out[j] > 0 ||
-                (out[j] == 0 && !e->isInside(ps[j].x(), ps[j].y(), ps[j].z())))
+            if (out[j] > 0 || (out[j] == 0 &&
+                               !e->isInside(ps[j].cast<float>())))
             {
                 a = ps[j - 1];
                 b = ps[j];

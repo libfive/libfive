@@ -101,9 +101,9 @@ EvaluatorBase::EvaluatorBase(const Tree root, const Eigen::Matrix4f& M,
     Z = clauses.at(axes[2].id());
 
     // Set derivatives for X, Y, Z (unchanging)
-    result.setDeriv(1, 0, 0, X);
-    result.setDeriv(0, 1, 0, Y);
-    result.setDeriv(0, 0, 1, Z);
+    result.setDeriv(Eigen::Vector3f::UnitX(), X);
+    result.setDeriv(Eigen::Vector3f::UnitY(), Y);
+    result.setDeriv(Eigen::Vector3f::UnitZ(), Z);
 
     {   // Set the Jacobian for our variables (unchanging)
         size_t index = 0;
@@ -120,9 +120,9 @@ EvaluatorBase::EvaluatorBase(const Tree root, const Eigen::Matrix4f& M,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-float EvaluatorBase::eval(float x, float y, float z)
+float EvaluatorBase::eval(const Eigen::Vector3f& p)
 {
-    set(x, y, z, 0);
+    set(p, 0);
     return values(1)[0];
 }
 
@@ -304,10 +304,10 @@ Feature EvaluatorBase::push(const Feature& f)
     return out;
 }
 
-void EvaluatorBase::specialize(float x, float y, float z)
+void EvaluatorBase::specialize(const Eigen::Vector3f& p)
 {
     // Load results into the first floating-point result slot
-    eval(x, y, z);
+    eval(p);
 
     // The same logic as push, but using float instead of interval comparisons
     std::fill(disabled.begin(), disabled.end(), true);
@@ -363,9 +363,9 @@ void EvaluatorBase::specialize(float x, float y, float z)
     pushTape();
 }
 
-bool EvaluatorBase::isInside(float x, float y, float z)
+bool EvaluatorBase::isInside(const Eigen::Vector3f& p)
 {
-    set(x, y, z, 0);
+    set(p, 0);
     auto vs = values(1);
 
     // Unambiguous cases
@@ -381,7 +381,7 @@ bool EvaluatorBase::isInside(float x, float y, float z)
     // Otherwise, we need to handle the zero-crossing case!
 
     // First, we extract all of the features
-    auto fs = featuresAt(x, y, z);
+    auto fs = featuresAt(p);
 
     // If there's only a single feature, we can get both positive and negative
     // values out if it's got a non-zero gradient
@@ -404,7 +404,7 @@ bool EvaluatorBase::isInside(float x, float y, float z)
     return !(pos && !neg);
 }
 
-std::list<Feature> EvaluatorBase::featuresAt(float x, float y, float z)
+std::list<Feature> EvaluatorBase::featuresAt(const Eigen::Vector3f& p)
 {
     // The initial feature doesn't know any ambiguities
     Feature f;
@@ -413,7 +413,7 @@ std::list<Feature> EvaluatorBase::featuresAt(float x, float y, float z)
     std::set<std::list<Feature::Choice>> seen;
 
     // Load the location into the first results slot and evaluate
-    specialize(x, y, z);
+    specialize(p);
 
     while (todo.size())
     {
@@ -1178,9 +1178,9 @@ EvaluatorBase::Derivs EvaluatorBase::derivs(Result::Index count)
              &result.dy[index][0], &result.dz[index][0] };
 }
 
-std::map<Tree::Id, float> EvaluatorBase::gradient(float x, float y, float z)
+std::map<Tree::Id, float> EvaluatorBase::gradient(const Eigen::Vector3f& p)
 {
-    set(x, y, z, 0);
+    set(p, 0);
 
     for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
     {

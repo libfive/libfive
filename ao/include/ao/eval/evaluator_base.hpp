@@ -34,7 +34,7 @@ public:
     /*
      *  Single-argument evaluation
      */
-    float eval(float x, float y, float z);
+    float eval(const Eigen::Vector3f& p);
     Interval eval(Interval x, Interval y, Interval z);
 
     /*
@@ -64,7 +64,7 @@ public:
     /*
      *  Returns the gradient with respect to all VAR nodes
      */
-    std::map<Tree::Id, float> gradient(float x, float y, float z);
+    std::map<Tree::Id, float> gradient(const Eigen::Vector3f& p);
 
     /*
      *  Evaluates a single interval (stored with set)
@@ -75,21 +75,21 @@ public:
      *  Stores the given value in the result arrays
      *  (inlined for efficiency)
      */
-    void set(float x, float y, float z, Result::Index index)
+    void set(const Eigen::Vector3f& p, Result::Index index)
     {
-        result.f[X][index] = M(0,0) * x + M(0,1) * y + M(0,2) * z + M(0,3);
-        result.f[Y][index] = M(1,0) * x + M(1,1) * y + M(1,2) * z + M(1,3);
-        result.f[Z][index] = M(2,0) * x + M(2,1) * y + M(2,2) * z + M(2,3);
+        result.f[X][index] = M(0,0) * p.x() + M(0,1) * p.y() + M(0,2) * p.z() + M(0,3);
+        result.f[Y][index] = M(1,0) * p.x() + M(1,1) * p.y() + M(1,2) * p.z() + M(1,3);
+        result.f[Z][index] = M(2,0) * p.x() + M(2,1) * p.y() + M(2,2) * p.z() + M(2,3);
     }
 
     /*
      *  Unsafe setter (which requires a call to applyTransform afterwards)
      */
-    void setRaw(float x, float y, float z, Result::Index index)
+    void setRaw(const Eigen::Vector3f& p, Result::Index index)
     {
-        result.f[X][index] = x;
-        result.f[Y][index] = y;
-        result.f[Z][index] = z;
+        result.f[X][index] = p.x();
+        result.f[Y][index] = p.y();
+        result.f[Z][index] = p.z();
     }
 
     /*
@@ -156,7 +156,7 @@ public:
      *  Pushes into a tree with min/max nodes specialized
      *  based on evaluation at the given point
      */
-    void specialize(float x, float y, float z);
+    void specialize(const Eigen::Vector3f& p);
 
     /*
      *  Checks to see if the given point is inside the solid body.
@@ -165,12 +165,12 @@ public:
      *      eval(x, y, z) > 0  => false
      *      eval(x, y, z) == 0 => further checking is performed
      */
-    bool isInside(float x, float y, float z);
+    bool isInside(const Eigen::Vector3f& p);
 
     /*
      *  Checks for features at the given position
      */
-    std::list<Feature> featuresAt(float x, float y, float z);
+    std::list<Feature> featuresAt(const Eigen::Vector3f& p);
 
     /*
      *  Returns a list of ambiguous items from indices 0 to i
