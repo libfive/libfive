@@ -13,4 +13,4 @@ add_executable(ao-test main.cpp
     subregion.cpp
     tree.cpp
     util/shapes.cpp)
-target_link_libraries(ao-test ao-kernel)
+target_link_libraries(ao-test ao-kernel ao-kernel-c)

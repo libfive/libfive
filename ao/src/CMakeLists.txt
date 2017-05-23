@@ -25,11 +25,13 @@ add_library(ao-kernel STATIC
     tree/tree.cpp
 )
 
-target_include_directories(ao-kernel SYSTEM PUBLIC
+target_include_directories(ao-kernel SYSTEM PRIVATE
     ${BOOST_INCLUDE_DIR}
     ${PNG_INCLUDE_DIR}
-    ${EIGEN3_INCLUDE_DIR}
 )
-target_include_directories(ao-kernel PUBLIC ../include)
+target_include_directories(ao-kernel PUBLIC
+    ../include
+    ${EIGEN3_INCLUDE_DIR} # Eigen::Vector3f is used in APIs
+)
 
 target_link_libraries(ao-kernel ${PNG_LIBRARIES})
