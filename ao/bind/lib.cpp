@@ -25,7 +25,7 @@ void ao_mesh_delete(ao_mesh* m)
     delete m;
 }
 
-int ao_opcode_enum(char* op)
+int ao_opcode_enum(const char* op)
 {
     return Opcode::from_str(op);
 }
@@ -55,9 +55,9 @@ void ao_tree_delete(ao_tree ptr)
 ////////////////////////////////////////////////////////////////////////////////
 
 ao_contours* ao_tree_render_slice(ao_tree tree,
-        ao_interval x, ao_interval y, float z, float res)
+        ao_region2 R, float z, float res)
 {
-    Region region({x.lower, x.upper}, {y.lower, y.upper}, {z,z}, res);
+    Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper}, {z,z}, res);
     auto cs = Contours::render(*tree, region);
 
     auto out = new ao_contours;
@@ -80,11 +80,10 @@ ao_contours* ao_tree_render_slice(ao_tree tree,
     return out;
 }
 
-ao_mesh* ao_tree_render_mesh(ao_tree tree,
-        ao_interval x, ao_interval y, ao_interval z, float res)
+ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
 {
-    Region region({x.lower, x.upper}, {y.lower, y.upper},
-                  {z.lower, z.upper}, res);
+    Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper},
+                  {R.Z.lower, R.Z.upper}, res);
     auto ms = Mesh::render(*tree, region);
 
     auto out = new ao_mesh;

@@ -4,6 +4,7 @@ add_executable(ao-test main.cpp
     dc.cpp
     eval.cpp
     heightmap.cpp
+    lib.cpp
     mesh.cpp
     octree.cpp
     region.cpp
