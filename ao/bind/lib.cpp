@@ -52,6 +52,12 @@ void ao_tree_delete(ao_tree ptr)
     delete ptr;
 }
 
+float ao_tree_eval_f(ao_tree t, ao_vec3 p)
+{
+    Evaluator e(*t);
+    return e.eval({p.x, p.y, p.z});
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 ao_contours* ao_tree_render_slice(ao_tree tree,

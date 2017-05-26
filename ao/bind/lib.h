@@ -10,14 +10,14 @@ namespace Kernel {
 extern "C"
 {
 
-struct ao_interval { float lower; float upper; };
-struct ao_region2 { ao_interval X; ao_interval Y; };
-struct ao_region3 { ao_interval X; ao_interval Y; ao_interval Z; };
+struct ao_interval  { float lower; float upper; };
+struct ao_region2   { ao_interval X; ao_interval Y; };
+struct ao_region3   { ao_interval X; ao_interval Y; ao_interval Z; };
 
-struct ao_vec2 { float x; float y; };
-struct ao_vec3 { float x; float y; float z; };
-struct ao_vec4 { float x; float y; float z; float w; };
-struct ao_tri { uint32_t a; uint32_t b; uint32_t c; };
+struct ao_vec2      { float x; float y; };
+struct ao_vec3      { float x; float y; float z; };
+struct ao_vec4      { float x; float y; float z; float w; };
+struct ao_tri       { uint32_t a; uint32_t b; uint32_t c; };
 
 struct ao_contour {
     ao_vec2* pts;
