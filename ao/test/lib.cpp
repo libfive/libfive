@@ -10,6 +10,10 @@ TEST_CASE("ao_opcode_enum")
 {
     REQUIRE(ao_opcode_enum("min") == Opcode::MIN);
     REQUIRE(ao_opcode_enum("max") == Opcode::MAX);
+    REQUIRE(ao_opcode_enum("X") == Opcode::VAR_X);
+
+    REQUIRE(ao_opcode_enum("wat") == -1);
+    REQUIRE(ao_opcode_enum("") == -1);
 }
 
 TEST_CASE("ao_tree")
