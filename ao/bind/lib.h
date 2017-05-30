@@ -53,6 +53,12 @@ void ao_mesh_delete(ao_mesh* m);
  */
 int ao_opcode_enum(const char* op);
 
+/*
+ *  Returns the number of arguments for the given opcode
+ *  (either 0, 1, 2, or -1 if the opcode is invalid)
+ */
+int ao_opcode_args(int op);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef Kernel::Tree* ao_tree;
@@ -63,6 +69,7 @@ ao_tree ao_tree_z();
 
 ao_tree ao_tree_const(float f);
 
+ao_tree ao_tree_nonary(int op);
 ao_tree ao_tree_unary(int op, ao_tree a);
 ao_tree ao_tree_binary(int op, ao_tree a, ao_tree b);
 

@@ -27,7 +27,15 @@ void ao_mesh_delete(ao_mesh* m)
 
 int ao_opcode_enum(const char* op)
 {
-    return Opcode::from_str(op);
+    auto o = Opcode::from_str(op);
+    return (o == Opcode::INVALID || o == Opcode::LAST_OP) ? -1 : o;
+}
+
+int ao_opcode_args(int op)
+{
+    return (op >= 0 && op < Opcode::LAST_OP)
+        ? Opcode::args(Opcode::Opcode(op))
+        : -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -37,6 +45,11 @@ ao_tree ao_tree_y() { return new Tree(Tree::Y()); }
 ao_tree ao_tree_z() { return new Tree(Tree::Z()); }
 
 ao_tree ao_tree_const(float f) { return new Tree(f); }
+
+ao_tree ao_tree_nonary(int op)
+{
+    return new Tree(Opcode::Opcode(op));
+}
 
 ao_tree ao_tree_unary(int op, ao_tree a)
 {
