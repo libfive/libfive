@@ -75,6 +75,8 @@ ao_tree ao_tree_binary(int op, ao_tree a, ao_tree b);
 
 float ao_tree_eval_f(ao_tree t, ao_vec3 p);
 
+bool ao_tree_eq(ao_tree a, ao_tree b);
+
 void ao_tree_delete(ao_tree ptr);
 
 ////////////////////////////////////////////////////////////////////////////////

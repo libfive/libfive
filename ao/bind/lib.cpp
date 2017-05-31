@@ -71,6 +71,11 @@ float ao_tree_eval_f(ao_tree t, ao_vec3 p)
     return e.eval({p.x, p.y, p.z});
 }
 
+bool ao_tree_eq(ao_tree a, ao_tree b)
+{
+    return *a == *b;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 ao_contours* ao_tree_render_slice(ao_tree tree,
