@@ -1,4 +1,5 @@
 #include <boost/bimap.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "ao/tree/opcode.hpp"
 
@@ -56,9 +57,9 @@ std::string Opcode::to_str(Opcode op)
         case Opcode::CONST_VAR: return "const";
         case Opcode::LAST_OP: return "last-op";
         case Opcode::INVALID: return "invalid";
-        case Opcode::VAR_X: return "X";
-        case Opcode::VAR_Y: return "Y";
-        case Opcode::VAR_Z: return "Z";
+        case Opcode::VAR_X: return "x";
+        case Opcode::VAR_Y: return "y";
+        case Opcode::VAR_Z: return "z";
         case Opcode::VAR: return "var";
         case Opcode::ADD: return "add";
         case Opcode::MUL: return "mul";
@@ -98,6 +99,7 @@ Opcode::Opcode Opcode::from_str(std::string s)
         }
     }
 
+    boost::algorithm::to_lower(s);
     auto itr = inverse.find(s);
     return itr != inverse.end() ? itr->second : INVALID;
 }
