@@ -79,6 +79,15 @@ TEST_CASE("Collapsing of identites")
         REQUIRE(od->op == Opcode::CONST);
         REQUIRE(od->value == 0);
     }
+
+    SECTION("Exponentiation")
+    {
+        auto oa = t->operation(Opcode::POW, t->X(), t->constant(1));
+        REQUIRE(oa == t->X());
+
+        auto ob = t->operation(Opcode::NTH_ROOT, t->X(), t->constant(1));
+        REQUIRE(ob == t->X());
+    }
 }
 
 TEST_CASE("Collapsing constants")

@@ -144,52 +144,62 @@ Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b
     const auto op_b = b->op;
 
     // Special cases to handle identity operations
-    if (op == Opcode::ADD)
+    switch (op)
     {
-        if (op_a == Opcode::CONST && a->value == 0)
-        {
-            return b;
-        }
-        else if (op_b == Opcode::CONST && b->value == 0)
-        {
-            return a;
-        }
-    }
-    else if (op == Opcode::SUB)
-    {
-        if (op_a == Opcode::CONST && a->value == 0)
-        {
-            return operation(Opcode::NEG, b);
-        }
-        else if (op_b == Opcode::CONST && b->value == 0)
-        {
-            return a;
-        }
-    }
-    else if (op == Opcode::MUL)
-    {
-        if (op_a == Opcode::CONST)
-        {
-            if (a->value == 0)
-            {
-                return a;
-            }
-            else if (a->value == 1)
+        case Opcode::ADD:
+            if (op_a == Opcode::CONST && a->value == 0)
             {
                 return b;
             }
-        }
-        if (op_b == Opcode::CONST)
-        {
-            if (b->value == 0)
-            {
-                return b;
-            }
-            else if (b->value == 1)
+            else if (op_b == Opcode::CONST && b->value == 0)
             {
                 return a;
             }
-        }
+            break;
+        case Opcode::SUB:
+            if (op_a == Opcode::CONST && a->value == 0)
+            {
+                return operation(Opcode::NEG, b);
+            }
+            else if (op_b == Opcode::CONST && b->value == 0)
+            {
+                return a;
+            }
+            break;
+        case Opcode::MUL:
+            if (op_a == Opcode::CONST)
+            {
+                if (a->value == 0)
+                {
+                    return a;
+                }
+                else if (a->value == 1)
+                {
+                    return b;
+                }
+            }
+            if (op_b == Opcode::CONST)
+            {
+                if (b->value == 0)
+                {
+                    return b;
+                }
+                else if (b->value == 1)
+                {
+                    return a;
+                }
+            }
+            break;
+        case Opcode::POW:   // FALLTHROUGH
+        case Opcode::NTH_ROOT:
+            if (op_b == Opcode::CONST && b->value == 1)
+            {
+                return a;
+            }
+            break;
+
+        default:
+            break;
     }
     return Node();
 }
