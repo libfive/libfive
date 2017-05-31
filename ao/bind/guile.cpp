@@ -7,17 +7,31 @@
 
 void del_tree(void* t)      { ao_tree_delete((ao_tree)t); }
 
-SCM scm_wrap_tree = NULL;
-SCM scm_unwrap_tree = NULL;
-SCM scm_tree_p = NULL;
+SCM scm_wrap_tree_ = NULL;
+SCM scm_unwrap_tree_= NULL;
+SCM scm_tree_p_= NULL;
 
-bool scm_is_tree(SCM t) { return scm_is_true(scm_call_1(scm_tree_p, t)); }
+SCM scm_wrap_tree(SCM ptr)      { return scm_call_1(scm_wrap_tree_, ptr); }
+SCM scm_unwrap_tree(SCM ptr)    { return scm_call_1(scm_unwrap_tree_, ptr); }
+SCM scm_tree_p(SCM ptr)         { return scm_call_1(scm_tree_p_, ptr); }
+
+bool scm_is_tree(SCM t) { return scm_is_true(scm_tree_p(t)); }
 
 SCM scm_number_to_tree(SCM n)
 {
     SCM_ASSERT_TYPE(scm_is_number(n), n, 0, "scm_number_to_tree", "number");
     auto ptr = scm_from_pointer(ao_tree_const(scm_to_double(n)), del_tree);
-    return scm_call_1(scm_wrap_tree, ptr);
+    return scm_wrap_tree(ptr);
+}
+
+SCM scm_tree_equal_p(SCM a, SCM b)
+{
+    SCM_ASSERT_TYPE(scm_is_tree(a), a, 0, "scm_tree_equal_p", "tree");
+    SCM_ASSERT_TYPE(scm_is_tree(b), b, 1, "scm_tree_equal_p", "tree");
+
+    return ao_tree_eq((ao_tree)scm_to_pointer(scm_unwrap_tree(a)),
+                      (ao_tree)scm_to_pointer(scm_unwrap_tree(b)))
+        ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
 SCM scm_tree(SCM op, SCM a, SCM b)
@@ -49,15 +63,33 @@ SCM scm_tree(SCM op, SCM a, SCM b)
     {
         case 0: out = ao_tree_nonary(opcode); break;
         case 1: out = ao_tree_unary(opcode,
-            (ao_tree)scm_to_pointer(scm_call_1(scm_unwrap_tree, a))); break;
+            (ao_tree)scm_to_pointer(scm_unwrap_tree(a))); break;
         case 2: out = ao_tree_binary(opcode,
-            (ao_tree)scm_to_pointer(scm_call_1(scm_unwrap_tree, a)),
-            (ao_tree)scm_to_pointer(scm_call_1(scm_unwrap_tree, b))); break;
+            (ao_tree)scm_to_pointer(scm_unwrap_tree(a)),
+            (ao_tree)scm_to_pointer(scm_unwrap_tree(b))); break;
         default: assert(false);
     }
 
     auto ptr = scm_from_pointer(out, del_tree);
-    return scm_call_1(scm_wrap_tree, ptr);
+    return scm_wrap_tree(ptr);
+}
+
+SCM scm_tree_eval(SCM t, SCM x, SCM y, SCM z)
+{
+    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_eval", "tree");
+
+    SCM_ASSERT_TYPE(scm_is_number(x), x, 1, "scm_tree_eval", "number");
+    SCM_ASSERT_TYPE(scm_is_number(y), y, 2, "scm_tree_eval", "number");
+    SCM_ASSERT_TYPE(scm_is_number(z), z, 3, "scm_tree_eval", "number");
+
+    float x_ = scm_to_double(x);
+    float y_ = scm_to_double(y);
+    float z_ = scm_to_double(z);
+
+    auto r = ao_tree_eval_f((ao_tree)scm_to_pointer(scm_unwrap_tree(t)),
+                            {x_, y_, z_});
+
+    return scm_from_double(r);
 }
 
 void init_ao(void*)
@@ -69,15 +101,94 @@ void init_ao(void*)
     tree tree? wrap-tree unwrap-tree
     (lambda (o p)
         (format p "#<tree 0x~x>"
-        (pointer-address (unwrap-tree o))))) )");
+        (pointer-address (unwrap-tree o)))))
+)");
 
-    scm_tree_p = scm_c_eval_string("tree?");
-    scm_wrap_tree = scm_c_eval_string("wrap-tree");
-    scm_unwrap_tree = scm_c_eval_string("unwrap-tree");
+    scm_tree_p_ = scm_c_eval_string("tree?");
+    scm_wrap_tree_ = scm_c_eval_string("wrap-tree");
+    scm_unwrap_tree_ = scm_c_eval_string("unwrap-tree");
 
     scm_c_define_gsubr("make-tree", 1, 2, 0, (void*)scm_tree);
     scm_c_define_gsubr("number->tree", 1, 0, 0, (void*)scm_number_to_tree);
-    scm_c_export("make-tree", "number->tree", "tree?", "tree", "wrap-tree", "unwrap-tree");
+    scm_c_define_gsubr("tree-equal?", 2, 0, 0, (void*)scm_tree_equal_p);
+    scm_c_define_gsubr("tree-eval", 4, 0, 0, (void*)scm_tree_eval);
+
+    scm_c_eval_string(R"(
+(use-modules (srfi srfi-1) (ice-9 receive))
+
+(define (make-commutative func sym default)
+    (lambda (. args)
+        (if (any tree? args)
+            (fold (lambda (e p) (make-tree sym e p)) default args)
+            (apply func args))))
+
+(define (make-semicommutative func sym inverse)
+    (lambda (. args)
+        (format #t "args: ~A len ~A\n" args (> (length args) 1))
+        (if (any tree? args)
+            (if (> (length args) 1)
+                (make-tree sym (car args) (apply inverse (cdr args)))
+                (make-tree sym (inverse) (car args)))
+            (apply func args))))
+
+(define (make-unary func sym)
+    (lambda (a) (if (number? a) (func a) (make-tree sym a))))
+
+(define-syntax-rule (overload-commutative func sym default)
+    (define func (make-commutative func sym default)))
+
+(define-syntax-rule (overload-semicommutative func sym inverse)
+    (define func (make-semicommutative func sym inverse)))
+
+(define-syntax-rule (overload-unary func sym)
+    (define func (make-unary func sym)))
+
+(overload-commutative + 'add 0)
+(overload-commutative * 'mul 1)
+(overload-commutative min 'min #nil)
+(overload-commutative max 'max #nil)
+
+(overload-semicommutative - 'sub +)
+(overload-semicommutative / 'div *)
+
+(overload-unary sqrt 'sqrt)
+(overload-unary abs 'abs)
+(overload-unary sin 'sin)
+(overload-unary cos 'cos)
+(overload-unary tan 'tan)
+(overload-unary asin 'asin)
+(overload-unary acos 'acos)
+(overload-unary exp 'exp)
+
+(define (square f)
+    (if (number? f) (* f f) (make-tree 'square f)))
+
+(define $atan atan)
+(define* (atan a #:optional b)
+    (if b
+        (if (every number? (list a b))
+            ($atan a b)
+            (make-tree 'atan2 a b))
+        (if (number? a) ($atan a) (make-tree 'atan a))))
+
+(define $expt expt)
+(define-public (expt a b)
+    (when (not (rational? b))
+        (scm-error 'wrong-type-arg #f
+            "RHS of exponentiation must be rational, not ~A" (list b) #f))
+    (if (tree? a)
+        (make-tree 'nth-root (make-tree 'pow a (numerator b))
+                             (denominator b))
+        ($expt a b)))
+
+(export! + * min max - /
+    sqrt abs sin cos tan asin acos exp square atan expt)
+)");
+
+    scm_c_export(
+            "tree?", "tree", "wrap-tree", "unwrap-tree",
+            "make-tree", "number->tree", "tree-equal?", "tree-eval",
+            NULL);
 }
 
 extern "C"
