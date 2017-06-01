@@ -113,6 +113,7 @@ void init_ao(void*)
     scm_c_define_gsubr("tree-equal?", 2, 0, 0, (void*)scm_tree_equal_p);
     scm_c_define_gsubr("tree-eval", 4, 0, 0, (void*)scm_tree_eval);
 
+    // Overload all of the arithmetic operations with tree-based substitutes!
     scm_c_eval_string(R"(
 (use-modules (srfi srfi-1) (ice-9 receive))
 
@@ -172,17 +173,25 @@ void init_ao(void*)
         (if (number? a) ($atan a) (make-tree 'atan a))))
 
 (define $expt expt)
-(define-public (expt a b)
-    (when (not (rational? b))
-        (scm-error 'wrong-type-arg #f
-            "RHS of exponentiation must be rational, not ~A" (list b) #f))
+(define (expt a b)
     (if (tree? a)
-        (make-tree 'nth-root (make-tree 'pow a (numerator b))
-                             (denominator b))
+        (begin
+            (when (not (rational? b))
+                (scm-error 'wrong-type-arg #f
+                    "RHS of exponentiation must be rational, not ~A"
+                    (list b) #f))
+            (make-tree 'nth-root (make-tree 'pow a (numerator b))
+                                 (denominator b)))
         ($expt a b)))
 
+(define $modulo modulo)
+(define (modulo a b)
+    (if (every number? (list a b))
+        ($modulo a b)
+        (make-tree 'mod a b)))
+
 (export! + * min max - /
-    sqrt abs sin cos tan asin acos exp square atan expt)
+    sqrt abs sin cos tan asin acos exp square atan expt mod)
 )");
 
     scm_c_export(
