@@ -131,3 +131,11 @@ ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
 
     return out;
 }
+
+bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f)
+{
+    Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper},
+                  {R.Z.lower, R.Z.upper}, res);
+    auto ms = Mesh::render(*tree, region);
+    return ms.save(f);
+}

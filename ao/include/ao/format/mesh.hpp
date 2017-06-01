@@ -22,9 +22,12 @@ struct Mesh
     static Mesh render(const Tree t, const Region& r);
 
     /*
-     *  Saves the given mesh as a .stl file
+     *  Saves the given mesh
+     *
+     *  filename must end in ".stl" or ".obj"
+     *  Returns true on success, false if the extension isn't recognized
      */
-    void writeMeshToFile(std::string filename);
+    bool save(std::string filename);
     void writeSTL(std::ostream& out);
     void writeOBJ(std::ostream& out);
 

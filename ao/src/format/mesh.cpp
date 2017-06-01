@@ -3,19 +3,32 @@
 #include <iostream>
 #include <iomanip>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 
 #include "ao/format/mesh.hpp"
 
 namespace Kernel {
 
-void Mesh::writeMeshToFile(std::string filename)
+bool Mesh::save(std::string filename)
 {
     std::ofstream out;
     out.open(filename, std::ios::out);
 
-    if (boost::algorithm::ends_with(filename, ".stl")) writeSTL(out);
-    else if (boost::algorithm::ends_with(filename, ".obj")) writeOBJ(out);
-    else std::cerr << "Mesh::writeMeshToStream -- unknown file extension";
+    auto f = boost::algorithm::to_lower_copy(filename);
+    if (boost::algorithm::ends_with(f, ".stl"))
+    {
+        writeSTL(out);
+    }
+    else if (boost::algorithm::ends_with(f, ".obj"))
+    {
+        writeOBJ(out);
+    }
+    else
+    {
+        std::cerr << "Mesh::save -- unknown file extension";
+        return false;
+    }
+    return true;
 }
 
 void Mesh::writeSTL(std::ostream& out)
