@@ -1,14 +1,13 @@
 #pragma once
 #include <cstdint>
 
+#ifdef __cplusplus
 namespace Kernel {
     class Tree;
-    struct Contours;
-    struct Mesh;
 }
 
-extern "C"
-{
+extern "C" {
+#endif
 
 struct ao_interval  { float lower; float upper; };
 struct ao_region2   { ao_interval X; ao_interval Y; };
@@ -61,7 +60,11 @@ int ao_opcode_args(int op);
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifdef __cplusplus
 typedef Kernel::Tree* ao_tree;
+#else
+typedef void* ao_tree;
+#endif
 
 ao_tree ao_tree_x();
 ao_tree ao_tree_y();
@@ -86,4 +89,6 @@ ao_contours* ao_tree_render_slice(ao_tree tree, ao_region2 R,
 
 ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res);
 
+#ifdef __cplusplus
 }
+#endif

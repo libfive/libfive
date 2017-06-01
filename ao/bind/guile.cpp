@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include "lib.h"
+#include "guile.h"
 
 void del_tree(void* t)      { ao_tree_delete((ao_tree)t); }
 
@@ -200,12 +201,7 @@ void init_ao(void*)
             NULL);
 }
 
-extern "C"
-{
-
 void scm_init_ao_kernel_module()
 {
     scm_c_define_module("ao kernel", init_ao, NULL);
 }
-
-}   // extern C
