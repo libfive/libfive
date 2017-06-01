@@ -93,6 +93,38 @@ SCM scm_tree_eval(SCM t, SCM x, SCM y, SCM z)
     return scm_from_double(r);
 }
 
+SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
+{
+    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_to_mesh", "tree");
+    SCM_ASSERT_TYPE(scm_is_string(f), f, 1, "scm_tree_to_mesh", "string");
+    SCM_ASSERT_TYPE(scm_is_number(res), res, 2, "scm_tree_to_mesh", "number");
+    SCM_ASSERT_TYPE(scm_is_true(scm_list_p(region)) &&
+                    scm_to_int(scm_length(region)) == 3, region, 3,
+                    "scm_tree_to_mesh", "three-element list");
+
+    float rs[6];
+    for (int i=0; i < 3; ++i)
+    {
+        SCM_ASSERT_TYPE(scm_is_pair(scm_car(region)) &&
+                scm_is_number(scm_caar(region)) &&
+                scm_is_number(scm_cdar(region)),
+                scm_car(region), 3,
+                "scm_tree_to_mesh", "pair of numbers");
+        rs[i*2 + 0] = scm_to_double(scm_caar(region));
+        rs[i*2 + 1] = scm_to_double(scm_cdar(region));
+        region = scm_cdr(region);
+    }
+
+
+    auto filename = scm_to_locale_string(f);
+    auto out = ao_tree_save_mesh((ao_tree)scm_to_pointer(scm_unwrap_tree(t)),
+            {{rs[0], rs[1]}, {rs[2], rs[3]}, {rs[4], rs[5]}},
+            scm_to_double(res), filename);
+    free(filename);
+
+    return out ? SCM_BOOL_T : SCM_BOOL_F;
+}
+
 void init_ao(void*)
 {
     scm_c_eval_string(R"(
@@ -113,6 +145,7 @@ void init_ao(void*)
     scm_c_define_gsubr("number->tree", 1, 0, 0, (void*)scm_number_to_tree);
     scm_c_define_gsubr("tree-equal?", 2, 0, 0, (void*)scm_tree_equal_p);
     scm_c_define_gsubr("tree-eval", 4, 0, 0, (void*)scm_tree_eval);
+    scm_c_define_gsubr("tree->mesh", 4, 0, 0, (void*)scm_tree_to_mesh);
 
     // Overload all of the arithmetic operations with tree-based substitutes!
     scm_c_eval_string(R"(
@@ -198,6 +231,7 @@ void init_ao(void*)
     scm_c_export(
             "tree?", "tree", "wrap-tree", "unwrap-tree",
             "make-tree", "number->tree", "tree-equal?", "tree-eval",
+            "tree->mesh",
             NULL);
 }
 
