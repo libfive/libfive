@@ -10,6 +10,8 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-comment -g -fPIC -pedantic -std=c++11 -W
 set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -DRELEASE -DEIGEN_NO_DEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG    "-O0")
 
+find_package(Guile 2.2 QUIET)
+
 ################################################################################
 
 if (APPLE)

@@ -2,7 +2,6 @@ add_library(ao-kernel-c SHARED lib.cpp)
 target_link_libraries(ao-kernel-c ao-kernel)
 target_include_directories(ao-kernel-c PUBLIC .)
 
-find_package(Guile 2.2 QUIET)
 if (GUILE_FOUND)
     add_library(guile-ao-kernel SHARED lib.cpp guile.cpp)
     target_link_libraries(guile-ao-kernel ao-kernel ${GUILE_LIBRARIES})

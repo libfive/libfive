@@ -46,16 +46,37 @@ SCM scm_tree(SCM op, SCM a, SCM b)
     SCM_ASSERT_TYPE(opcode != -1, op, 0, "scm_tree", "opcode");
     auto args = ao_opcode_args(opcode);
 
-    if (args >= 1)
+    if (args == 0)
+    {
+        if (a != SCM_UNDEFINED || b != SCM_UNDEFINED)
+        {
+            scm_wrong_num_args(scm_from_locale_string("scm_tree"));
+            return SCM_UNDEFINED;
+        }
+    }
+    else if (args == 1)
     {
         SCM_ASSERT_TYPE(scm_is_number(a) || scm_is_tree(a),
                         a, 1, "scm_tree", "number or tree");
+        if (b != SCM_UNDEFINED)
+        {
+            scm_wrong_num_args(scm_from_locale_string("scm_tree"));
+            return SCM_UNDEFINED;
+        }
         if (scm_is_number(a)) { a = scm_number_to_tree(a); }
     }
-    if (args >= 2)
+    else if (args == 2)
     {
+        if (a == SCM_UNDEFINED || b == SCM_UNDEFINED)
+        {
+            scm_wrong_num_args(scm_from_locale_string("scm_tree"));
+            return SCM_UNDEFINED;
+        }
+        SCM_ASSERT_TYPE(scm_is_number(a) || scm_is_tree(a),
+                        a, 1, "scm_tree", "number or tree");
         SCM_ASSERT_TYPE(scm_is_number(b) || scm_is_tree(b),
                         b, 2, "scm_tree", "number or tree");
+        if (scm_is_number(a)) { a = scm_number_to_tree(a); }
         if (scm_is_number(b)) { b = scm_number_to_tree(b); }
     }
 
