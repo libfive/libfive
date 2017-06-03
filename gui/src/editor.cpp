@@ -2,6 +2,7 @@
 
 #include "gui/editor.hpp"
 #include "gui/syntax.hpp"
+#include "gui/material.hpp"
 
 Editor::Editor(QWidget* parent)
     : QWidget(parent)
@@ -10,7 +11,7 @@ Editor::Editor(QWidget* parent)
     txt->setAcceptRichText(false);
 
     auto err = new QPlainTextEdit(this);
-    err->setEnabled(false);
+    err->setReadOnly(true);
 
     {   // Use Courier as our default font
         QFont font;
@@ -34,11 +35,20 @@ Editor::Editor(QWidget* parent)
 
     // Forward result changed into error window
     connect(this, &Editor::resultChanged, err,
-            [=](bool valid, QString result){ err->setPlainText(result); });
+        [=](bool valid, QString result){
+            QTextCharFormat fmt;
+            fmt.setForeground(valid ? Material::green_800 : Material::red_800);
+            err->setCurrentCharFormat(fmt);
+            err->setPlainText(result);
+            int lines = err->document()->size().height() + 1;
+            QFontMetrics fm(err->document()->defaultFont());
+            err->setFixedHeight(std::min(this->height()/3, lines * fm.lineSpacing()));
+    });
 
     auto layout = new QVBoxLayout;
     layout->addWidget(txt);
     layout->addWidget(err);
-    layout->setMargin(2);
+    layout->setMargin(0);
+    layout->setSpacing(2);
     setLayout(layout);
 }

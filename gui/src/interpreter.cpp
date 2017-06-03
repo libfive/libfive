@@ -24,7 +24,7 @@ void Interpreter::init()
 void Interpreter::onScriptChanged(QString s)
 {
     script = s;
-    timer.start(200);
+    timer.start(10);
 }
 
 static SCM eval(void* body)
