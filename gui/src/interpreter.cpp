@@ -55,8 +55,6 @@ void Interpreter::evalScript()
     bool success = true;
     auto str = scm_to_locale_string(
             scm_internal_catch(SCM_BOOL_T, eval, &script, handler, &success));
-    QString out(str);
+    emit(resultChanged(success, QString(str)));
     free(str);
-
-    qDebug() << success << out;
 }

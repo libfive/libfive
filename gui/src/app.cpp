@@ -15,6 +15,8 @@ App::App(int& argc, char** argv)
     auto interpreter = new Interpreter();
     connect(editor, &Editor::scriptChanged,
             interpreter, &Interpreter::onScriptChanged);
+    connect(interpreter, &Interpreter::resultChanged,
+            editor, &Editor::resultChanged);
 
     window->show();
 }
