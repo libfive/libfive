@@ -20,6 +20,7 @@ set(SRCS src/main.cpp
 set(QOBJECTS
     include/gui/app.hpp
     include/gui/syntax.hpp
+    include/gui/editor.hpp
     include/gui/interpreter.hpp
 )
 

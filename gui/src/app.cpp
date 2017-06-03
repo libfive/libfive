@@ -2,11 +2,19 @@
 
 #include "gui/app.hpp"
 #include "gui/editor.hpp"
+#include "gui/interpreter.hpp"
 
 App::App(int& argc, char** argv)
     : QApplication(argc, argv)
 {
     auto window = new QMainWindow();
-    window->setCentralWidget(new Editor(window));
+    auto editor = new Editor(window);
+
+    window->setCentralWidget(editor);
+
+    auto interpreter = new Interpreter();
+    connect(editor, &Editor::scriptChanged,
+            interpreter, &Interpreter::onScriptChanged);
+
     window->show();
 }
