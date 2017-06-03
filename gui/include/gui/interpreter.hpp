@@ -15,6 +15,7 @@ public slots:
 
 protected slots:
     void evalScript();
+    void init();
 
 protected:
     QString script;
