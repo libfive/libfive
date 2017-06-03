@@ -27,11 +27,19 @@ void Interpreter::onScriptChanged(QString s)
     timer.start(200);
 }
 
-static SCM eval(void* body) {
-    QString& input = *(QString*)body;
-    auto out = scm_c_eval_string(input.toLocal8Bit().data());
+static SCM eval(void* body)
+{
+    auto str = scm_from_locale_string(((QString*)body)->toLocal8Bit().data());
+    auto in = scm_open_input_string(str);
+    auto parsed = scm_read(in);
+
+    auto scm_eval_sandboxed = scm_c_eval_string(R"(
+(use-modules (ice-9 sandbox))
+eval-in-sandbox
+)");
+
     return scm_simple_format(SCM_BOOL_F, scm_from_locale_string("~A"),
-            scm_list_1(out));
+            scm_list_1(scm_call_1(scm_eval_sandboxed, parsed)));
 }
 
 static SCM handler(void* data, SCM key, SCM args)
