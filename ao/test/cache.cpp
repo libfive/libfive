@@ -146,22 +146,26 @@ TEST_CASE("Cache::serialize")
     {
         auto a = t->operation(Opcode::MIN, t->X(), t->Y());
         auto out = t->serialize(a);
-        REQUIRE(out.size() == 4);
-        REQUIRE(out[0] == 't');
+        std::vector<uint8_t> expected =
+            {'t', Opcode::MIN, Opcode::VAR_X, Opcode::VAR_Y};
+        REQUIRE(out == expected);
     }
 
     SECTION("With a name")
     {
         auto a = t->operation(Opcode::MIN, t->X(), t->Y());
         auto out = t->serialize(a, "hi");
-        REQUIRE(out.size() == 8);
-        REQUIRE(out[0] == 'T');
+        std::vector<uint8_t> expected =
+            {'T', '"', 'h', 'i', '"', Opcode::MIN, Opcode::VAR_X, Opcode::VAR_Y};
+        REQUIRE(out == expected);
     }
 
     SECTION("With local references")
     {
         auto a = t->operation(Opcode::MIN, t->X(), t->X());
         auto out = t->serialize(a);
-        REQUIRE(out.size() == 8);
+        std::vector<uint8_t> expected =
+            {'t', Opcode::MIN, Opcode::VAR_X, Opcode::LAST_OP, 0, 0, 0, 0};
+        REQUIRE(out == expected);
     }
 }
