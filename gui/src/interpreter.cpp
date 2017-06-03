@@ -38,7 +38,7 @@ static SCM eval(void* body)
 eval-in-sandbox
 )");
 
-    return scm_simple_format(SCM_BOOL_F, scm_from_locale_string("~A"),
+    return scm_simple_format(SCM_BOOL_F, scm_from_locale_string("~S"),
             scm_list_1(scm_call_1(scm_eval_sandboxed, parsed)));
 }
 
