@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QThread>
 #include <QTimer>
+#include <libguile.h>
 
 class Interpreter : public QObject
 {
@@ -21,8 +22,16 @@ protected slots:
     void init();
 
 protected:
+    SCM eval();
+
     QString script;
     QTimer timer;
 
     QThread thread;
+
+    SCM scm_begin;
+    SCM scm_eval_sandboxed;
+    SCM scm_port_eof_p;
+
+    friend SCM _eval(void* body);
 };
