@@ -90,6 +90,11 @@ std::list<Tree> Tree::ordered() const
     return out;
 }
 
+std::vector<uint8_t> Tree::serialize(const std::string& name) const
+{
+    return Cache::instance()->serialize(ptr, name);
+}
+
 Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const
 {
     std::map<Tree::Id, std::shared_ptr<Tree_>> m = {

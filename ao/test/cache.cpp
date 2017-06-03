@@ -137,3 +137,31 @@ TEST_CASE("Cache::checkCommutative")
         REQUIRE(b->rank == 2);
     }
 }
+
+TEST_CASE("Cache::serialize")
+{
+    auto t = Cache::instance();
+
+    SECTION("Basic")
+    {
+        auto a = t->operation(Opcode::MIN, t->X(), t->Y());
+        auto out = t->serialize(a);
+        REQUIRE(out.size() == 4);
+        REQUIRE(out[0] == 't');
+    }
+
+    SECTION("With a name")
+    {
+        auto a = t->operation(Opcode::MIN, t->X(), t->Y());
+        auto out = t->serialize(a, "hi");
+        REQUIRE(out.size() == 8);
+        REQUIRE(out[0] == 'T');
+    }
+
+    SECTION("With local references")
+    {
+        auto a = t->operation(Opcode::MIN, t->X(), t->X());
+        auto out = t->serialize(a);
+        REQUIRE(out.size() == 8);
+    }
+}

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <list>
+#include <vector>
 
 #include "ao/tree/opcode.hpp"
 
@@ -108,6 +109,11 @@ public:
      *  The last item in the list will be the tree this is called on
      */
     std::list<Tree> ordered() const;
+
+    /*
+     *  Serializes to a vector of bytes, with an optional name
+     */
+    std::vector<uint8_t> serialize(const std::string& name="") const;
 
 protected:
     /*
