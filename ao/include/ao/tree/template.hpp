@@ -36,6 +36,24 @@ struct Template
         }
     }
 
+    template <typename T>
+    static T deserializeBytes(const uint8_t*& pos, const uint8_t* end)
+    {
+        T t;
+        for (unsigned i=0; i < sizeof(t) && pos < end; ++i)
+        {
+            ((uint8_t*)&t)[i] = *pos++;
+        }
+        return t;
+    }
+
+    /*
+     *  Deserializes a string, handling escaped characters
+     *  Moves pos along, returning early if it hits end
+     */
+    static std::string deserializeString(const uint8_t*& pos,
+                                         const uint8_t* end);
+
     /*  Root tree  */
     Tree tree;
 

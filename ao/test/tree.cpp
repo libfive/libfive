@@ -49,3 +49,16 @@ TEST_CASE("Tree::serialize")
         REQUIRE(out == expected);
     }
 }
+
+TEST_CASE("Tree::deserialize")
+{
+    SECTION("Simple")
+    {
+        auto a = Tree::deserialize(min(Tree::X(), Tree::Y()).serialize());
+        REQUIRE(a.id() != nullptr);
+        REQUIRE(a->op == Opcode::MIN);
+        REQUIRE(a->lhs->op == Opcode::VAR_X);
+        REQUIRE(a->lhs->op == Opcode::VAR_Y);
+    }
+
+}

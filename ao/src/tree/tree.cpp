@@ -96,6 +96,11 @@ std::vector<uint8_t> Tree::serialize() const
     return Template(*this).serialize();
 }
 
+Tree Tree::deserialize(const std::vector<uint8_t>& data)
+{
+    return Template::deserialize(data).tree;
+}
+
 Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const
 {
     std::map<Tree::Id, std::shared_ptr<Tree_>> m = {

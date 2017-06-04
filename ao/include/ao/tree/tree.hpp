@@ -32,6 +32,11 @@ public:
     static Tree Z() { return Tree(Opcode::VAR_Z); }
 
     /*
+     *  Used to mark a bad parse, among other things
+     */
+    static Tree Invalid() { return Tree(nullptr); }
+
+    /*
      *  Returns a token for the given operation
      *
      *  Arguments should be filled in from left to right
