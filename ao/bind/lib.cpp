@@ -99,7 +99,7 @@ ao_tree ao_tree_load(const char* filename)
         in.read((char*)&data[0], data.size());
 
         auto t = Template::deserialize(data);
-        return new Tree(t.tree);
+        return t.tree.id() ? new Tree(t.tree) : NULL;
     }
     else
     {
