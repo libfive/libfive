@@ -153,6 +153,11 @@ Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const
     std::map<Tree::Id, std::shared_ptr<Tree_>> m = {
         {X().id(), X_.ptr}, {Y().id(), Y_.ptr}, {Z().id(), Z_.ptr}};
 
+    return remap(m);
+}
+
+Tree Tree::remap(std::map<Id, std::shared_ptr<Tree_>> m) const
+{
     for (const auto& t : ordered())
     {
         if (Opcode::args(t->op) >= 1)

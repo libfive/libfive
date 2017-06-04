@@ -3,6 +3,7 @@
 #include <memory>
 #include <list>
 #include <vector>
+#include <map>
 
 #include "ao/tree/opcode.hpp"
 
@@ -105,6 +106,11 @@ public:
      *  Remaps the base coordinates
      */
     Tree remap(Tree X, Tree Y, Tree Z) const;
+
+    /*
+     *  Executes an arbitrary remapping
+     */
+    Tree remap(std::map<Id, std::shared_ptr<Tree_>> m) const;
 
     /*
      *  Walks the tree in rank order, from lowest to highest
