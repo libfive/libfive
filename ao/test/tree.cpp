@@ -59,4 +59,15 @@ TEST_CASE("Tree::serialize")
             {'T', '"', 'h', 'i', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::MIN, 1, 0, 0, 0, 0, 0, 0, 0};
         REQUIRE(out == expected);
     }
+
+    SECTION("String escaping")
+    {
+        auto a = Template(min(Tree::X(), Tree::Y()));
+        a.name = "hi";
+        a.doc = "\"\\";
+        auto out = Tree::serialize(a);
+        std::vector<uint8_t> expected =
+            {'T', '"', 'h', 'i', '"', '"', '\\', '"', '\\', '\\', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::MIN, 1, 0, 0, 0, 0, 0, 0, 0};
+        REQUIRE(out == expected);
+    }
 }
