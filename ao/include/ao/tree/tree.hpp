@@ -8,6 +8,8 @@
 
 namespace Kernel {
 
+struct Template; // forward declaration
+
 /*
  *  A Tree represents a tree of math expressions.
  *
@@ -111,9 +113,10 @@ public:
     std::list<Tree> ordered() const;
 
     /*
-     *  Serializes to a vector of bytes, with an optional name
+     *  Serializes to a vector of bytes
      */
-    std::vector<uint8_t> serialize(const std::string& name="") const;
+    std::vector<uint8_t> serialize() const;
+    static std::vector<uint8_t> serialize(const Template& t);
 
 protected:
     /*
@@ -128,6 +131,23 @@ protected:
 
     /*  Here's the actual Tree data */
     std::shared_ptr<Tree_> ptr;
+
+    /*
+     *  Serialize a string, wrapping in quotes and escaping with backslash
+     */
+    static void serializeString(const std::string& s, std::vector<uint8_t>& out);
+
+    /*
+     *  Serialize an arbitrary set of bytes
+     */
+    template <typename T>
+    static void serializeBytes(T t, std::vector<uint8_t>& out)
+    {
+        for (unsigned i=0; i < sizeof(t); ++i)
+        {
+            out.push_back(((uint8_t*)&t)[i]);
+        }
+    }
 
     /*  These classes need access to private constructor  */
     friend class Cache;

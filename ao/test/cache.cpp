@@ -137,35 +137,3 @@ TEST_CASE("Cache::checkCommutative")
         REQUIRE(b->rank == 2);
     }
 }
-
-TEST_CASE("Cache::serialize")
-{
-    auto t = Cache::instance();
-
-    SECTION("Basic")
-    {
-        auto a = t->operation(Opcode::MIN, t->X(), t->Y());
-        auto out = t->serialize(a);
-        std::vector<uint8_t> expected =
-            {'t', Opcode::MIN, Opcode::VAR_X, Opcode::VAR_Y};
-        REQUIRE(out == expected);
-    }
-
-    SECTION("With a name")
-    {
-        auto a = t->operation(Opcode::MIN, t->X(), t->Y());
-        auto out = t->serialize(a, "hi");
-        std::vector<uint8_t> expected =
-            {'T', '"', 'h', 'i', '"', Opcode::MIN, Opcode::VAR_X, Opcode::VAR_Y};
-        REQUIRE(out == expected);
-    }
-
-    SECTION("With local references")
-    {
-        auto a = t->operation(Opcode::MIN, t->X(), t->X());
-        auto out = t->serialize(a);
-        std::vector<uint8_t> expected =
-            {'t', Opcode::MIN, Opcode::VAR_X, Opcode::LAST_OP, 0, 0, 0, 0};
-        REQUIRE(out == expected);
-    }
-}

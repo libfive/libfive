@@ -49,21 +49,11 @@ public:
     void del(float v);
     void del(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr);
 
-    /*
-     *  Serialize to a byte array
-     */
-    std::vector<uint8_t> serialize(Node root, const std::string& name="") const;
-
 protected:
     /*
      *  Cache constructor is private so outsiders must use instance()
      */
     Cache() {}
-
-    /*
-     *  Serialize a string, wrapping in quotes and escaping with backslash
-     */
-    static void serialize(const std::string& s, std::vector<uint8_t>& out);
 
     /*
      *  Checks whether the operation is an identity operation
