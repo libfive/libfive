@@ -1,3 +1,4 @@
+#include <iostream>
 #include "catch.hpp"
 
 #include "ao/tree/opcode.hpp"
@@ -115,4 +116,24 @@ TEST_CASE("ao_tree_render_mesh")
         ao_tree_delete(t);
     }
     ao_mesh_delete(m);
+}
+
+TEST_CASE("ao_tree_save/load")
+{
+    auto a = ao_tree_x();
+    auto b = ao_tree_y();
+    auto c = ao_tree_binary(Opcode::DIV, a, b);
+
+    ao_tree_save(c, ".ao_tree.tmp");
+    auto c_ = ao_tree_load(".ao_tree.tmp");
+    REQUIRE(c_ != nullptr);
+    REQUIRE(ao_tree_eq(c, c_));
+
+    // Redirect stderr to avoid spurious print statements
+    std::stringstream buffer;
+    std::streambuf* old = std::cerr.rdbuf(buffer.rdbuf());
+    auto f = ao_tree_load(".not_ao_tree.tmp");
+    std::cerr.rdbuf(old);
+
+    REQUIRE(f == nullptr);
 }

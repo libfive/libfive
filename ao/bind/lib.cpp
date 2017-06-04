@@ -81,15 +81,14 @@ bool ao_tree_save(ao_tree ptr, const char* filename)
     }
     else
     {
-        fprintf(stderr, "ao_tree_save: could not open file");
+        std::cerr << "ao_tree_save: could not open file" << std::endl;
         return false;
     }
 }
 
 ao_tree ao_tree_load(const char* filename)
 {
-    std::ifstream in;
-    in.open(filename, std::ios::in|std::ios::binary|std::ios::ate);
+    std::ifstream in(filename, std::ios::in|std::ios::binary|std::ios::ate);
     if (in.is_open())
     {
         std::vector<uint8_t> data;
@@ -103,7 +102,7 @@ ao_tree ao_tree_load(const char* filename)
     }
     else
     {
-        fprintf(stderr, "ao_tree_load: could not open file");
+        std::cerr <<  "ao_tree_load: could not open file" << std::endl;
         return nullptr;
     }
 }
