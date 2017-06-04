@@ -12,6 +12,7 @@ set(SRCS main.cpp
     feature.cpp
     solver.cpp
     subregion.cpp
+    template.cpp
     tree.cpp
     util/shapes.cpp)
 set(LIBS ao-kernel ao-kernel-c)

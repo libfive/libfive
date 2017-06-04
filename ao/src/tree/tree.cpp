@@ -93,59 +93,7 @@ std::list<Tree> Tree::ordered() const
 
 std::vector<uint8_t> Tree::serialize() const
 {
-    return serialize(*this);
-}
-
-std::vector<uint8_t> Tree::serialize(const Template& t)
-{
-    static_assert(Opcode::LAST_OP <= 255, "Too many opcodes");
-
-    std::vector<uint8_t> out;
-    out.push_back('T');
-    serializeString(t.name, out);
-    serializeString(t.doc, out);
-
-    std::map<Tree::Id, uint32_t> ids;
-
-    for (auto& n : t.tree.ordered())
-    {
-        out.push_back(n->op);
-        ids.insert({n.id(), ids.size()});
-
-        // Write constants as raw bytes
-        if (n->op == Opcode::CONST)
-        {
-            serializeBytes(n->value, out);
-        }
-        else if (n->op == Opcode::VAR)
-        {
-            auto a = t.var_names.find(n.id());
-            auto d = t.var_docs.find(n.id());
-            serializeString(a == t.var_names.end() ? "" : a->second, out);
-            serializeString(d == t.var_docs.end()  ? "" : d->second, out);
-        }
-        switch (Opcode::args(n->op))
-        {
-            case 2:  serializeBytes(ids.at(n->rhs.get()), out);    // FALLTHROUGH
-            case 1:  serializeBytes(ids.at(n->lhs.get()), out);    // FALLTHROUGH
-            default: break;
-        }
-    }
-    return out;
-}
-
-void Tree::serializeString(const std::string& s, std::vector<uint8_t>& out)
-{
-    out.push_back('"');
-    for (auto& c : s)
-    {
-        if (c == '"' || c == '\\')
-        {
-            out.push_back('\\');
-        }
-        out.push_back(c);
-    }
-    out.push_back('"');
+    return Template(*this).serialize();
 }
 
 Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const

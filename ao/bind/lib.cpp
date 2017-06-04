@@ -1,7 +1,11 @@
+#include <iostream>
+#include <fstream>
+
 #include "lib.h"
 
 #include "ao/tree/opcode.hpp"
 #include "ao/tree/tree.hpp"
+#include "ao/tree/template.hpp"
 #include "ao/render/region.hpp"
 #include "ao/format/contours.hpp"
 #include "ao/format/mesh.hpp"
@@ -63,6 +67,45 @@ ao_tree ao_tree_binary(int op, ao_tree a, ao_tree b)
 void ao_tree_delete(ao_tree ptr)
 {
     delete ptr;
+}
+
+bool ao_tree_save(ao_tree ptr, const char* filename)
+{
+    auto data = ptr->serialize();
+    std::ofstream out;
+    out.open(filename, std::ios::out|std::ios::binary);
+    if (out.is_open())
+    {
+        out.write((const char*)&data[0], data.size());
+        return true;
+    }
+    else
+    {
+        fprintf(stderr, "ao_tree_save: could not open file");
+        return false;
+    }
+}
+
+ao_tree ao_tree_load(const char* filename)
+{
+    std::ifstream in;
+    in.open(filename, std::ios::in|std::ios::binary|std::ios::ate);
+    if (in.is_open())
+    {
+        std::vector<uint8_t> data;
+        data.resize(in.tellg());
+
+        in.seekg(0, std::ios::beg);
+        in.read((char*)&data[0], data.size());
+
+        auto t = Template::deserialize(data);
+        return new Tree(t.tree);
+    }
+    else
+    {
+        fprintf(stderr, "ao_tree_load: could not open file");
+        return nullptr;
+    }
 }
 
 float ao_tree_eval_f(ao_tree t, ao_vec3 p)

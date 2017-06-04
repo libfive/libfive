@@ -22,6 +22,7 @@ add_library(ao-kernel STATIC
     solve/solver.cpp
     tree/cache.cpp
     tree/opcode.cpp
+    tree/template.cpp
     tree/tree.cpp
 )
 
