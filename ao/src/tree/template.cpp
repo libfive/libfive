@@ -141,10 +141,14 @@ std::string Template::deserializeString(const uint8_t*& pos, const uint8_t* end)
     }
     else
     {
-        while (*pos != '"' && pos != end)
+        while (pos != end)
         {
             auto c = *pos++;
-            if (c == '\\')
+            if (c == '"')
+            {
+                break;
+            }
+            else if (c == '\\')
             {
                 if (pos != end)
                 {

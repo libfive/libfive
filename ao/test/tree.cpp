@@ -58,7 +58,6 @@ TEST_CASE("Tree::deserialize")
         REQUIRE(a.id() != nullptr);
         REQUIRE(a->op == Opcode::MIN);
         REQUIRE(a->lhs->op == Opcode::VAR_X);
-        REQUIRE(a->lhs->op == Opcode::VAR_Y);
+        REQUIRE(a->rhs->op == Opcode::VAR_Y);
     }
-
 }
