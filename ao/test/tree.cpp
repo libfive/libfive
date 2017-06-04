@@ -60,4 +60,23 @@ TEST_CASE("Tree::deserialize")
         REQUIRE(a->lhs->op == Opcode::VAR_X);
         REQUIRE(a->rhs->op == Opcode::VAR_Y);
     }
+
+    SECTION("With constant")
+    {
+        auto a = Tree::deserialize(min(Tree::X(), Tree(2.5f)).serialize());
+        REQUIRE(a.id() != nullptr);
+        REQUIRE(a->op == Opcode::MIN);
+        REQUIRE(a->lhs->op == Opcode::VAR_X);
+        REQUIRE(a->rhs->op == Opcode::CONST);
+        REQUIRE(a->rhs->value == 2.5f);
+    }
+
+    SECTION("With variable")
+    {
+        auto a = Tree::deserialize(min(Tree::X(), Tree::var()).serialize());
+        REQUIRE(a.id() != nullptr);
+        REQUIRE(a->op == Opcode::MIN);
+        REQUIRE(a->lhs->op == Opcode::VAR_X);
+        REQUIRE(a->rhs->op == Opcode::VAR);
+    }
 }
