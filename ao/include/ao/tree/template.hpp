@@ -60,8 +60,7 @@ struct Template
     std::string name;
     std::string doc;
 
-    std::map<Tree::Id, std::string> var_names;
-    std::map<Tree::Id, std::string> var_docs;
+    std::map<Tree::Id, std::string> vars;
 };
 
 }   // namespace Kernel

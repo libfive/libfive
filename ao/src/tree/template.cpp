@@ -28,10 +28,8 @@ std::vector<uint8_t> Template::serialize() const
         }
         else if (n->op == Opcode::VAR)
         {
-            auto a = var_names.find(n.id());
-            auto d = var_docs.find(n.id());
-            serializeString(a == var_names.end() ? "" : a->second, out);
-            serializeString(d == var_docs.end()  ? "" : d->second, out);
+            auto a = vars.find(n.id());
+            serializeString(a == vars.end() ? "" : a->second, out);
         }
         switch (Opcode::args(n->op))
         {
@@ -101,9 +99,10 @@ Template Template::deserialize(const std::vector<uint8_t>& data)
         }
         else if (op == Opcode::VAR)
         {
-            std::string var_name = deserializeString(pos, end);
-            std::string var_doc = deserializeString(pos, end);
-            ts.insert({next, Tree(op)});
+            std::string var = deserializeString(pos, end);
+            auto v = Tree(op);
+            out.vars.insert({v.id(), var});
+            ts.insert({next, v});
         }
         else if (args == 2)
         {
