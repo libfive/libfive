@@ -2,9 +2,8 @@
 #include <cstdint>
 
 #ifdef __cplusplus
-namespace Kernel {
-    class Tree;
-}
+#include "ao/tree/tree.hpp"
+#include "ao/tree/template.hpp"
 
 extern "C" {
 #endif
@@ -62,8 +61,12 @@ int ao_opcode_args(int op);
 
 #ifdef __cplusplus
 typedef Kernel::Tree* ao_tree;
+typedef Kernel::Tree::Id ao_id;
+typedef Kernel::Template* ao_template;
 #else
 typedef void* ao_tree;
+typedef void* ao_id;
+typedef void* ao_template;
 #endif
 
 ao_tree ao_tree_x();
@@ -84,6 +87,19 @@ void ao_tree_delete(ao_tree ptr);
 
 bool ao_tree_save(ao_tree ptr, const char* filename);
 ao_tree ao_tree_load(const char* filename);
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct ao_args;
+void ao_set_arg_name(ao_args* a, uint32_t i, const char* name);
+void ao_args_delete(ao_args* a);
+ao_args* ao_args_new(uint32_t count);
+const char* ao_arg_name(ao_args* a, uint32_t i);
+void ao_set_arg_name(ao_args* a, uint32_t i, const char* name);
+void ao_set_arg_id(ao_args* a, uint32_t i, ao_id id);
+
+ao_template ao_tree_to_template(ao_tree t);
+ao_args* ao_template_args(ao_template t);
 
 ////////////////////////////////////////////////////////////////////////////////
 

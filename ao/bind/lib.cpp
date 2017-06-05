@@ -181,3 +181,88 @@ bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f)
     auto ms = Mesh::render(*tree, region);
     return ms.save(f);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+typedef Tree::Id ao_id;
+
+struct ao_args {
+    char** names;
+    ao_id* ids;
+    ao_tree* bindings;
+    uint32_t count;
+};
+
+void ao_args_delete(ao_args* a)
+{
+    for (unsigned i=0; i < a->count; ++i)
+    {
+        delete [] a->names[i];
+        ao_tree_delete(a->bindings[i]);
+    }
+    delete [] a->names;
+    delete [] a->ids;
+    delete [] a->bindings;
+    delete a;
+}
+
+ao_args* ao_args_new(uint32_t count)
+{
+    auto a = new ao_args;
+    a->count = count;
+    a->names = new char*[count];
+    a->bindings = new ao_tree[count];
+    a->ids = new Tree::Id[count];
+
+    return a;
+}
+
+typedef Kernel::Template* ao_template;
+
+const char* ao_arg_name(ao_args* a, uint32_t i)
+{
+    return (i >= a->count) ? nullptr : a->names[i];
+}
+
+void ao_set_arg_name(ao_args* a, uint32_t i, const char* name)
+{
+    if (i < a->count)
+    {
+        if (a->names[i] != nullptr)
+        {
+            delete [] a->names[i];
+        }
+        auto len = strlen(name);
+        a->names[i] = new char[len + 1];
+        memcpy(a->names[i], name, len);
+        a->names[i][len] = 0; // apply null termination
+    }
+}
+
+void ao_set_arg_id(ao_args* a, uint32_t i, ao_id id)
+{
+    if (i < a->count)
+    {
+        a->ids[i] = id;
+    }
+}
+
+ao_template ao_tree_to_template(ao_tree t)
+{
+    return new Template(*t);
+}
+
+ao_args* ao_template_args(ao_template t)
+{
+    auto a = ao_args_new(t->vars.size());
+    uint32_t i=0;
+
+    for (auto v : t->vars)
+    {
+        ao_set_arg_name(a, i, v.second.c_str());
+        ao_set_arg_id(a, i, v.first);
+        i++;
+    }
+
+    return a;
+}
