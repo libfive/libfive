@@ -1,4 +1,5 @@
 #include "gui/interpreter.hpp"
+#include "guile.h"
 
 Interpreter::Interpreter()
     : timer(this)
@@ -18,9 +19,20 @@ void Interpreter::init()
 {
     scm_init_guile();
 
+    scm_init_ao_kernel_module();
+    scm_c_use_module("ao kernel");
     scm_eval_sandboxed = scm_c_eval_string(R"(
 (use-modules (ice-9 sandbox))
-eval-in-sandbox
+(define (eval-sandboxed t)
+  (define ao-bindings (cons '((ao kernel)
+    + * min max - /
+    sqrt abs sin cos tan asin acos exp square atan expt mod
+    lambda-shape define-shape
+    tree? tree wrap-tree unwrap-tree
+    make-tree number->tree tree-equal? tree-eval
+  ) all-pure-bindings))
+  (eval-in-sandbox t #:bindings ao-bindings))
+eval-sandboxed
 )");
 
     scm_begin = scm_from_utf8_symbol("begin");
