@@ -245,8 +245,15 @@ void init_ao(void*)
         ($modulo a b)
         (make-tree 'mod a b)))
 
+(define-syntax-rule (lambda-shape vars ...)
+  ((lambda vars ...) (make-tree 'x) (make-tree 'y) (make-tree 'z)))
+
+(define-syntax-rule (define-shape (name . vars) body ...)
+  (define name (lambda-shape vars body ...)))
+
 (export! + * min max - /
-    sqrt abs sin cos tan asin acos exp square atan expt mod)
+    sqrt abs sin cos tan asin acos exp square atan expt mod
+    lambda-shape define-shape)
 )");
 
     scm_c_export(
