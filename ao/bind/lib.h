@@ -111,6 +111,12 @@ ao_contours* ao_tree_render_slice(ao_tree tree, ao_region2 R,
                                   float z, float res);
 
 /*
+ *  Renders and saves a slice to a file
+ */
+void ao_tree_save_slice(ao_tree tree, ao_region2 R, float z, float res,
+                        const char* f);
+
+/*
  *  Renders a tree to a set of triangles
  *  The returned struct must be freed with ao_mesh_delete
  */

@@ -146,6 +146,14 @@ ao_contours* ao_tree_render_slice(ao_tree tree,
     return out;
 }
 
+void ao_tree_save_slice(ao_tree tree, ao_region2 R, float z, float res,
+                        const char* f)
+{
+    Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper}, {z,z}, res);
+    auto cs = Contours::render(*tree, region);
+    cs.writeSVG(f, region);
+}
+
 ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
 {
     Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper},
