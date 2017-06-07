@@ -20,6 +20,7 @@ Editor::Editor(QWidget* parent)
         txt->setTabStopWidth(fm.width("    "));
         txt->document()->setDefaultFont(font);
         err->document()->setDefaultFont(font);
+        err->setFixedHeight(fm.height());
     }
 
     // Create and bind a syntax highlighter
