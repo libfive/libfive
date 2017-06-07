@@ -12,6 +12,10 @@ Interpreter::Interpreter()
             this, &Interpreter::init);
 
     moveToThread(&thread);
+}
+
+void Interpreter::start()
+{
     thread.start();
 }
 
@@ -22,16 +26,9 @@ void Interpreter::init()
     scm_init_ao_kernel_module();
     scm_c_use_module("ao kernel");
     scm_eval_sandboxed = scm_c_eval_string(R"(
-(use-modules (ice-9 sandbox))
-(define (eval-sandboxed t)
-  (define ao-bindings (cons '((ao kernel)
-    + * min max - /
-    sqrt abs sin cos tan asin acos exp square atan expt mod
-    lambda-shape define-shape
-    tree? tree wrap-tree unwrap-tree
-    make-tree number->tree tree-equal? tree-eval
-  ) all-pure-bindings))
-  (eval-in-sandbox t #:bindings ao-bindings))
+(use-modules (ice-9 sandbox) (ao kernel))
+(define my-bindings (cons (cons '(ao kernel) ao-bindings) all-pure-bindings))
+(define (eval-sandboxed t) (eval-in-sandbox t #:bindings my-bindings))
 eval-sandboxed
 )");
 
@@ -40,6 +37,13 @@ eval-sandboxed
 (use-modules (rnrs io ports))
 port-eof?
 )");
+
+    auto kws = scm_to_locale_string(scm_c_eval_string(R"(
+(string-drop (string-drop-right
+    (format #f "~A" (apply append (map cdr my-bindings))) 1) 1)
+)"));
+    emit(keywords(kws));
+    free(kws);
 }
 
 void Interpreter::onScriptChanged(QString s)

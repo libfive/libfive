@@ -46,6 +46,10 @@ Editor::Editor(QWidget* parent)
             err->setFixedHeight(std::min(this->height()/3, lines * fm.lineSpacing()));
     });
 
+    // Bind keyword signals to syntax highlighter
+    // (used to communicate asychronously from interpreter)
+    connect(this, &Editor::keywords, syntax, &Syntax::setKeywords);
+
     auto layout = new QVBoxLayout;
     layout->addWidget(txt);
     layout->addWidget(err);

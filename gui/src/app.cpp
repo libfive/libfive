@@ -25,6 +25,9 @@ App::App(int& argc, char** argv)
             interpreter, &Interpreter::onScriptChanged);
     connect(interpreter, &Interpreter::resultChanged,
             editor, &Editor::resultChanged);
+    connect(interpreter, &Interpreter::keywords,
+            editor, &Editor::keywords);
+    interpreter->start();
 
     window->show();
 }

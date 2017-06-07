@@ -251,10 +251,11 @@ void init_ao(void*)
 (define-syntax-rule (define-shape (name . vars) body ...)
   (define name (lambda-shape vars body ...)))
 
-(export! + * min max - /
-    sqrt abs sin cos tan asin acos exp square atan expt mod
-    lambda-shape define-shape)
-)");
+(define ao-bindings '(+ * min max - /
+                      sqrt abs sin cos tan asin acos exp square atan expt mod
+                      lambda-shape define-shape ao-bindings))
+(eval (cons 'export! ao-bindings) (interaction-environment))
+ )");
 
     scm_c_export(
             "tree?", "tree", "wrap-tree", "unwrap-tree",
