@@ -16,12 +16,14 @@ set(SRCS src/main.cpp
     src/material.cpp
     src/editor.cpp
     src/interpreter.cpp
+    src/view.cpp
 )
 set(QOBJECTS
     include/gui/app.hpp
     include/gui/syntax.hpp
     include/gui/editor.hpp
     include/gui/interpreter.hpp
+    include/gui/view.hpp
 )
 
 if(APPLE)
