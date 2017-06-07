@@ -112,7 +112,7 @@ QPoint Syntax::matchedParen(int pos)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Syntax::Syntax(QTextDocument* doc, const QSet<QString>& keywords)
+Syntax::Syntax(QTextDocument* doc)
     : QSyntaxHighlighter(doc)
 {
     {   // Strings (single and multi-line)
@@ -154,22 +154,24 @@ Syntax::Syntax(QTextDocument* doc, const QSet<QString>& keywords)
         rules << Rule(R"(\;.*)", comment_format);
     }
 
-    {   // Keywords (from keyword set)
-        QTextCharFormat keyword_format;
-        keyword_format.setForeground(Material::blue_500);
-        for (const auto& k : keywords)
-        {
-            auto esc = QRegularExpression::escape(k);
-            rules << Rule("\\b" + esc + "\\b", keyword_format);
-        }
-    }
-
     // Special regex to catch parentheses
     // The target capture group is 1
     rules << Rule(R"([^()]*(\(|\)))", QTextCharFormat(), BASE, BASE, 1);
 
     // Set format for matched parentheses
     parens_highlight.setBackground(Material::green_50);
+}
+
+void Syntax::setKeywords(QString kws)
+{
+    QTextCharFormat kw_format;
+    kw_format.setForeground(Material::blue_500);
+
+    for (auto k : kws.split(' ', QString::SkipEmptyParts))
+    {
+        auto esc = QRegularExpression::escape(k);
+        rules << Rule("\\b" + esc + "\\b", kw_format);
+    }
 }
 
 void Syntax::matchParens(QTextEdit* text, int cursor_pos)

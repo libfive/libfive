@@ -8,8 +8,11 @@ class Syntax : public QSyntaxHighlighter
 {
     Q_OBJECT
 public:
-    Syntax(QTextDocument* doc, const QSet<QString>& keywords);
+    Syntax(QTextDocument* doc);
     void matchParens(QTextEdit* text, int cursor_pos);
+
+public slots:
+    void setKeywords(QString kws);
 
 protected:
     QPoint matchedParen(int pos);

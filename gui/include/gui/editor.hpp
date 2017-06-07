@@ -10,4 +10,5 @@ public:
 signals:
     void scriptChanged(QString s);
     void resultChanged(bool valid, QString result);
+    void keywords(QString kws);
 };

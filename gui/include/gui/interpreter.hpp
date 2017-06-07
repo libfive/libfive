@@ -10,12 +10,14 @@ class Interpreter : public QObject
     Q_OBJECT
 public:
     Interpreter();
+    void start();
 
 public slots:
     void onScriptChanged(QString s);
 
 signals:
     void resultChanged(bool valid, QString result);
+    void keywords(QString kws);
 
 protected slots:
     void evalScript();

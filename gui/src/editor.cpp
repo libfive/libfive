@@ -23,7 +23,7 @@ Editor::Editor(QWidget* parent)
     }
 
     // Create and bind a syntax highlighter
-    auto syntax = new Syntax(txt->document(), {});
+    auto syntax = new Syntax(txt->document());
 
     // Do parenthesis highlighting when the cursor moves
     connect(txt, &QTextEdit::cursorPositionChanged, syntax,
