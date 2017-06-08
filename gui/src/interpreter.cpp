@@ -37,6 +37,7 @@ eval-sandboxed
 (use-modules (rnrs io ports))
 port-eof?
 )");
+    scm_syntax_error = scm_from_utf8_symbol("syntax-error");
 
     auto kws = scm_to_locale_string(scm_c_eval_string(R"(
 (string-drop (string-drop-right
@@ -54,6 +55,7 @@ void Interpreter::onScriptChanged(QString s)
 
 SCM Interpreter::eval()
 {
+    valid = true;
     auto str = scm_from_locale_string(script.toLocal8Bit().data());
     auto in = scm_open_input_string(str);
 
@@ -69,24 +71,37 @@ SCM Interpreter::eval()
                              scm_list_1(result));
 }
 
+SCM Interpreter::handler(SCM key, SCM args)
+{
+    valid = false;
+    if (scm_is_eq(key, scm_syntax_error))
+    {
+        return scm_simple_format(SCM_BOOL_F,
+               scm_from_locale_string("~A: ~A in form ~A"),
+               scm_list_3(key, scm_cadr(args), scm_cadddr(args)));
+    }
+    else
+    {
+        return scm_simple_format(SCM_BOOL_F, scm_from_locale_string("~A: ~A"),
+               scm_list_2(key, scm_simple_format(
+                    SCM_BOOL_F, scm_cadr(args), scm_caddr(args))));
+    }
+}
+
 SCM _eval(void* body)
 {
     return ((Interpreter*)body)->eval();
 }
 
-static SCM handler(void* data, SCM key, SCM args)
+SCM _handler(void* data, SCM key, SCM args)
 {
-    *(bool*)data = false;
-    return scm_simple_format(SCM_BOOL_F, scm_from_locale_string("~A: ~A"),
-           scm_list_2(key, scm_simple_format(
-                SCM_BOOL_F, scm_cadr(args), scm_caddr(args))));
+    return ((Interpreter*)data)->handler(key, args);
 }
 
 void Interpreter::evalScript()
 {
-    bool success = true;
     auto str = scm_to_locale_string(
-            scm_internal_catch(SCM_BOOL_T, _eval, this, handler, &success));
-    emit(resultChanged(success, QString(str)));
+            scm_internal_catch(SCM_BOOL_T, _eval, this, _handler, this));
+    emit(resultChanged(valid, QString(str)));
     free(str);
 }

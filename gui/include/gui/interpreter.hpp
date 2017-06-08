@@ -25,8 +25,10 @@ protected slots:
 
 protected:
     SCM eval();
+    SCM handler(SCM key, SCM args);
 
     QString script;
+    bool valid;
     QTimer timer;
 
     QThread thread;
@@ -34,6 +36,8 @@ protected:
     SCM scm_begin;
     SCM scm_eval_sandboxed;
     SCM scm_port_eof_p;
+    SCM scm_syntax_error;
 
     friend SCM _eval(void* body);
+    friend SCM _handler(void* body, SCM key, SCM args);
 };
