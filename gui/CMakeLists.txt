@@ -14,6 +14,7 @@ set(SRCS src/main.cpp
     src/app.cpp
     src/axes.cpp
     src/background.cpp
+    src/camera.cpp
     src/syntax.cpp
     src/color.cpp
     src/editor.cpp
