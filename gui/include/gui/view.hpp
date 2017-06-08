@@ -28,7 +28,7 @@ protected:
     Camera camera;
 
     struct {
-        enum { RELEASED, DRAG_ROT, DRAG_PAN } state;
+        enum { RELEASED, DRAG_ROT, DRAG_PAN } state = RELEASED;
         QPoint pos;
     } mouse;
 };
