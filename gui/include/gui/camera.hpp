@@ -38,6 +38,6 @@ protected:
 
     float scale=1;
     QVector3D center={0,0,0};
-    float pitch=0;
-    float yaw=0;
+    float pitch=128;
+    float yaw=-109;
 };
