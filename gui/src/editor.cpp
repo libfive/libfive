@@ -2,7 +2,7 @@
 
 #include "gui/editor.hpp"
 #include "gui/syntax.hpp"
-#include "gui/material.hpp"
+#include "gui/color.hpp"
 
 Editor::Editor(QWidget* parent)
     : QWidget(parent)
@@ -23,6 +23,14 @@ Editor::Editor(QWidget* parent)
         err->setFixedHeight(fm.height());
     }
 
+    // Set background and base font color
+    setStyleSheet(QString(
+        "QWidget {"
+        "    background-color: %1;"
+        "    color: %2;"
+        "}").arg(Color::base3.name())
+            .arg(Color::base00.name()));
+
     // Create and bind a syntax highlighter
     auto syntax = new Syntax(txt->document());
 
@@ -38,7 +46,7 @@ Editor::Editor(QWidget* parent)
     connect(this, &Editor::resultChanged, err,
         [=](bool valid, QString result){
             QTextCharFormat fmt;
-            fmt.setForeground(valid ? Material::green_800 : Material::red_800);
+            fmt.setForeground(valid ? Color::green : Color::red);
             err->setCurrentCharFormat(fmt);
             err->setPlainText(result);
             int lines = err->document()->size().height() + 1;

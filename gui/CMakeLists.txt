@@ -12,11 +12,15 @@ find_package(Qt5Concurrent REQUIRED)
 
 set(SRCS src/main.cpp
     src/app.cpp
+    src/axes.cpp
+    src/background.cpp
     src/syntax.cpp
-    src/material.cpp
+    src/color.cpp
     src/editor.cpp
     src/interpreter.cpp
     src/view.cpp
+
+    resources.qrc
 )
 set(QOBJECTS
     include/gui/app.hpp

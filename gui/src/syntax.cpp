@@ -2,7 +2,7 @@
 #include <cassert>
 
 #include "gui/syntax.hpp"
-#include "gui/material.hpp"
+#include "gui/color.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -117,7 +117,7 @@ Syntax::Syntax(QTextDocument* doc)
 {
     {   // Strings (single and multi-line)
         QTextCharFormat string_format;
-        string_format.setForeground(Material::orange_500);
+        string_format.setForeground(Color::orange);
 
         // Strings on a single line
         // (with clever regex for escaped chars)
@@ -132,7 +132,7 @@ Syntax::Syntax(QTextDocument* doc)
     {   // Numbers (float and integer)
         {   // All the possible float formats
             QTextCharFormat float_format;
-            float_format.setForeground(Material::green_500);
+            float_format.setForeground(Color::green);
 
             rules << Rule(R"(\b(?:-|)\d+\.\d*e\d+)", float_format);
             rules << Rule(R"(\b(?:-|)\d+\.\d*)", float_format);
@@ -141,7 +141,7 @@ Syntax::Syntax(QTextDocument* doc)
 
         {   // Integers
             QTextCharFormat int_format;
-            int_format.setForeground(Material::light_green_500);
+            int_format.setForeground(Color::magenta);
 
             rules << Rule(R"(\b(?:-|)\d+\b)", int_format);
         }
@@ -149,7 +149,7 @@ Syntax::Syntax(QTextDocument* doc)
 
     {   // Comments!
         QTextCharFormat comment_format;
-        comment_format.setForeground(Material::grey_500);
+        comment_format.setForeground(Color::base1);
 
         rules << Rule(R"(\;.*)", comment_format);
     }
@@ -159,13 +159,13 @@ Syntax::Syntax(QTextDocument* doc)
     rules << Rule(R"([^()]*(\(|\)))", QTextCharFormat(), BASE, BASE, 1);
 
     // Set format for matched parentheses
-    parens_highlight.setBackground(Material::green_50);
+    parens_highlight.setBackground(Color::base2);
 }
 
 void Syntax::setKeywords(QString kws)
 {
     QTextCharFormat kw_format;
-    kw_format.setForeground(Material::blue_500);
+    kw_format.setForeground(Color::blue);
 
     for (auto k : kws.split(' ', QString::SkipEmptyParts))
     {
