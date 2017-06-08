@@ -22,3 +22,5 @@ extern const QColor blue;
 extern const QColor cyan;
 extern const QColor green;
 }
+
+#define COLOR(c)     Color::c.red()/255.0f, Color::c.green()/255.0f, Color::c.blue()/255.0f

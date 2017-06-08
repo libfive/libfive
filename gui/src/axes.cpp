@@ -19,7 +19,6 @@ void Axes::initializeGL()
     {   // In-line data for axes model
         const float o = 0.05;
 
-#define COLOR(c)     Color::c.red()/255.0f, Color::c.green()/255.0f, Color::c.blue()/255.0f
         // Data is arranged  x   y   z   r   g   b
         GLfloat data[] = {   /********************/
                              /*    X axis        */
