@@ -1,5 +1,3 @@
-#include <libguile.h>
-
 #include <cstdlib>
 #include <cassert>
 
@@ -8,15 +6,24 @@
 
 void del_tree(void* t)      { ao_tree_delete((ao_tree)t); }
 
+// Raw Scheme functions
 SCM scm_wrap_tree_ = NULL;
 SCM scm_unwrap_tree_= NULL;
 SCM scm_tree_p_= NULL;
 
+// Scheme-flavored bindings
 SCM scm_wrap_tree(SCM ptr)      { return scm_call_1(scm_wrap_tree_, ptr); }
 SCM scm_unwrap_tree(SCM ptr)    { return scm_call_1(scm_unwrap_tree_, ptr); }
 SCM scm_tree_p(SCM ptr)         { return scm_call_1(scm_tree_p_, ptr); }
 
+// C-flavored bindings
 bool scm_is_tree(SCM t) { return scm_is_true(scm_tree_p(t)); }
+ao_tree scm_to_tree(SCM t)
+{
+    return (ao_tree)scm_to_pointer(scm_unwrap_tree(t));
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 SCM scm_number_to_tree(SCM n)
 {
