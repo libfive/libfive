@@ -1,5 +1,6 @@
 #include "gui/interpreter.hpp"
 #include "guile.h"
+#include "lib.h"
 
 Interpreter::Interpreter()
     : timer(this)
@@ -66,9 +67,7 @@ SCM Interpreter::eval()
     }
     clauses = scm_reverse(clauses);
 
-    auto result = scm_call_1(scm_eval_sandboxed, clauses);
-    return scm_simple_format(SCM_BOOL_F, scm_from_locale_string("~S"),
-                             scm_list_1(result));
+    return scm_call_1(scm_eval_sandboxed, clauses);
 }
 
 SCM Interpreter::handler(SCM key, SCM args)
@@ -100,8 +99,19 @@ SCM _handler(void* data, SCM key, SCM args)
 
 void Interpreter::evalScript()
 {
-    auto str = scm_to_locale_string(
-            scm_internal_catch(SCM_BOOL_T, _eval, this, _handler, this));
+    auto result = scm_internal_catch(SCM_BOOL_T, _eval, this, _handler, this);
+
+    auto str = valid ? scm_to_locale_string(
+            scm_simple_format(SCM_BOOL_F, scm_from_locale_string("~S"),
+            scm_list_1(result)))
+        : scm_to_locale_string(result);
+
     emit(resultChanged(valid, QString(str)));
+
+    if (valid && scm_is_tree(result))
+    {
+        auto tree = scm_to_tree(result);
+        emit(gotShape(new Shape(*tree)));
+    }
     free(str);
 }

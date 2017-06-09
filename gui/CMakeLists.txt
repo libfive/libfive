@@ -16,6 +16,7 @@ set(SRCS src/main.cpp
     src/background.cpp
     src/camera.cpp
     src/syntax.cpp
+    src/shape.cpp
     src/color.cpp
     src/editor.cpp
     src/interpreter.cpp
@@ -26,6 +27,7 @@ set(SRCS src/main.cpp
 set(QOBJECTS
     include/gui/app.hpp
     include/gui/syntax.hpp
+    include/gui/shape.hpp
     include/gui/editor.hpp
     include/gui/interpreter.hpp
     include/gui/view.hpp

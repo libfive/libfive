@@ -5,6 +5,8 @@
 #include <QTimer>
 #include <libguile.h>
 
+#include "gui/shape.hpp"
+
 class Interpreter : public QObject
 {
     Q_OBJECT
@@ -18,6 +20,7 @@ public slots:
 signals:
     void resultChanged(bool valid, QString result);
     void keywords(QString kws);
+    void gotShape(Shape* s);
 
 protected slots:
     void evalScript();
