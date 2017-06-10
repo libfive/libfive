@@ -9,6 +9,13 @@ View::View(QWidget* parent)
     setMouseTracking(true);
 }
 
+void View::setShape(Shape* s)
+{
+    shape.reset(s);
+    connect(s, &Shape::gotMesh, this, [=](){ this->update(); });
+    shape->startRender();
+}
+
 void View::initializeGL()
 {
     Shader::initializeGL();
@@ -21,6 +28,11 @@ void View::paintGL()
     background.draw();
 
     auto m = camera.M();
+    if (shape)
+    {
+        shape->draw(m);
+    }
+
     axes.drawSolid(m);
     axes.drawWire(m);
 }

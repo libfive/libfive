@@ -1,3 +1,5 @@
+#include <QApplication>
+
 #include "gui/interpreter.hpp"
 #include "guile.h"
 #include "lib.h"
@@ -111,6 +113,8 @@ void Interpreter::evalScript()
     if (valid && scm_is_tree(result))
     {
         auto tree = scm_to_tree(result);
+        auto shape = new Shape(*tree);
+        shape->moveToThread(QApplication::instance()->thread());
         emit(gotShape(new Shape(*tree)));
     }
     free(str);

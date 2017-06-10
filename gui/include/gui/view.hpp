@@ -5,12 +5,16 @@
 #include "gui/axes.hpp"
 #include "gui/background.hpp"
 #include "gui/camera.hpp"
+#include "gui/shape.hpp"
 
 class View : public QOpenGLWidget
 {
     Q_OBJECT
 public:
     View(QWidget* parent=nullptr);
+
+public slots:
+    void setShape(Shape* s);
 
 protected:
     void initializeGL() override;
@@ -31,4 +35,6 @@ protected:
         enum { RELEASED, DRAG_ROT, DRAG_PAN } state = RELEASED;
         QPoint pos;
     } mouse;
+
+    QScopedPointer<Shape> shape;
 };
