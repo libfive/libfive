@@ -19,7 +19,7 @@ struct Mesh
      *  simplification to collapse leaf cells), then using DC to generate
      *  a triangle mesh.
      */
-    static Mesh render(const Tree t, const Region& r);
+    static std::unique_ptr<Mesh> render(const Tree t, const Region& r);
 
     /*
      *  Saves the given mesh

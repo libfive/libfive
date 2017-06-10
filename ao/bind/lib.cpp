@@ -127,11 +127,11 @@ ao_contours* ao_tree_render_slice(ao_tree tree,
     auto cs = Contours::render(*tree, region);
 
     auto out = new ao_contours;
-    out->count = cs.contours.size();
+    out->count = cs->contours.size();
     out->cs = new ao_contour[out->count];
 
     size_t i=0;
-    for (auto& c : cs.contours)
+    for (auto& c : cs->contours)
     {
         out->cs[i].count = c.size();
         out->cs[i].pts = new ao_vec2[c.size()];
@@ -151,7 +151,7 @@ void ao_tree_save_slice(ao_tree tree, ao_region2 R, float z, float res,
 {
     Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper}, {z,z}, res);
     auto cs = Contours::render(*tree, region);
-    cs.writeSVG(f, region);
+    cs->writeSVG(f, region);
 }
 
 ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
@@ -161,20 +161,20 @@ ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
     auto ms = Mesh::render(*tree, region);
 
     auto out = new ao_mesh;
-    out->verts = new ao_vec3[ms.verts.size()];
-    out->count = ms.tris.size();
-    out->tris = new ao_tri[ms.tris.size()];
+    out->verts = new ao_vec3[ms->verts.size()];
+    out->count = ms->tris.size();
+    out->tris = new ao_tri[ms->tris.size()];
 
     size_t i;
 
     i=0;
-    for (auto& v : ms.verts)
+    for (auto& v : ms->verts)
     {
         out->verts[i++] = {v.x(), v.y(), v.z()};
     }
 
     i=0;
-    for (auto& t : ms.tris)
+    for (auto& t : ms->tris)
     {
         out->tris[i++] = {(uint32_t)t.x(), (uint32_t)t.y(), (uint32_t)t.z()};
     }
@@ -187,7 +187,7 @@ bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f)
     Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper},
                   {R.Z.lower, R.Z.upper}, res);
     auto ms = Mesh::render(*tree, region);
-    return ms.save(f);
+    return ms->save(f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

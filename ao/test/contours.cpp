@@ -15,10 +15,10 @@ TEST_CASE("Contours::render (adjacent rectangles)")
     Region r({-2, 2}, {-2, 2}, {0, 0}, 2);
 
     auto cs_pos = Contours::render(rects, r);
-    REQUIRE(cs_pos.contours.size() == 1);
+    REQUIRE(cs_pos->contours.size() == 1);
 
     auto cs_neg = Contours::render(-rects, r);
-    REQUIRE(cs_neg.contours.size() == 1);
+    REQUIRE(cs_neg->contours.size() == 1);
 }
 
 TEST_CASE("Simple 2D contouring")
@@ -28,7 +28,7 @@ TEST_CASE("Simple 2D contouring")
     Region r({-1, 1}, {-1, 1}, {0, 0}, 1);
 
     auto m = Contours::render(t, r);
-    REQUIRE(m.contours.size() == 1);
+    REQUIRE(m->contours.size() == 1);
 }
 
 TEST_CASE("2D contour tracking")
@@ -38,11 +38,11 @@ TEST_CASE("2D contour tracking")
     Region r({-1, 1}, {-1, 1}, {0, 0}, 10);
 
     auto m = Contours::render(t, r);
-    REQUIRE(m.contours.size() == 1);
+    REQUIRE(m->contours.size() == 1);
 
     float min = 1;
     float max = 0;
-    for (auto c : m.contours[0])
+    for (auto c : m->contours[0])
     {
         auto r = c.norm();
         min = fmin(min, r);

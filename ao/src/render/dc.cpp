@@ -15,6 +15,8 @@ namespace DC
 {
 struct Worker
 {
+    Worker() : mesh(new Mesh) {}
+
     /*
      *  Mutually recursive functions to get a mesh from an Octree
      */
@@ -36,7 +38,7 @@ struct Worker
     static Axis R(Axis a);
 
     std::map<const Octree*, unsigned> verts;
-    Mesh mesh;
+    std::unique_ptr<Mesh> mesh;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -225,8 +227,8 @@ void Worker::quad(const Octree* a, const Octree* b,
         auto i = verts.find(o);
         if (i == verts.end())
         {
-            verts[o] = mesh.verts.size();
-            mesh.verts.push_back(o->getVertex().cast<float>());
+            verts[o] = mesh->verts.size();
+            mesh->verts.push_back(o->getVertex().cast<float>());
         }
         return verts[o];
     };
@@ -238,25 +240,25 @@ void Worker::quad(const Octree* a, const Octree* b,
 
     if (ia != ib && ia != ic && ib != ic)
     {
-        mesh.tris.push_back({ia, ib, ic});
+        mesh->tris.push_back({ia, ib, ic});
     }
     if (ib != ic && ic != id && ib != id)
     {
-        mesh.tris.push_back({ic, ib, id});
+        mesh->tris.push_back({ic, ib, id});
     }
 }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Mesh Mesh::render(const Tree t, const Region& r)
+std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region& r)
 {
     std::unique_ptr<Octree> o(Octree::render(t, r));
 
     DC::Worker w;
     w.cell(o.get());
 
-    return w.mesh;
+    return std::move(w.mesh);
 }
 
 }   // namespace Kernel

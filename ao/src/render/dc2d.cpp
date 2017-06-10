@@ -117,7 +117,7 @@ void Worker2D::segment(const Quadtree* a, const Quadtree* b)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Contours Contours::render(const Tree t, const Region& r)
+std::unique_ptr<Contours> Contours::render(const Tree t, const Region& r)
 {
     std::unique_ptr<Quadtree> q(Quadtree::render(t, r));
 
@@ -133,7 +133,7 @@ Contours Contours::render(const Tree t, const Region& r)
         }
     }
 
-    Contours c;
+    std::unique_ptr<Contours> c(new Contours);
     while (segs.size())
     {
         auto front = *segs.begin();
@@ -159,7 +159,7 @@ Contours Contours::render(const Tree t, const Region& r)
 
             vec.push_back(back);
         }
-        c.contours.emplace_back(std::move(vec));
+        c->contours.emplace_back(std::move(vec));
     }
     return c;
 }
