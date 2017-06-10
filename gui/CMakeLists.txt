@@ -15,6 +15,7 @@ set(SRCS src/main.cpp
     src/axes.cpp
     src/background.cpp
     src/camera.cpp
+    src/shader.cpp
     src/syntax.cpp
     src/shape.cpp
     src/color.cpp

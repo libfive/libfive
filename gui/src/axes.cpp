@@ -1,5 +1,6 @@
 #include "gui/axes.hpp"
 #include "gui/color.hpp"
+#include "gui/shader.hpp"
 
 Axes::Axes()
 {
@@ -9,12 +10,6 @@ Axes::Axes()
 void Axes::initializeGL()
 {
     initializeOpenGLFunctions();
-
-    shader.addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/basic.vert");
-    shader.addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/flat.frag");
-    shader.link();
 
     {   // In-line data for axes model
         const float o = 0.05;
@@ -151,20 +146,20 @@ void Axes::initializeGL()
 
 void Axes::drawSolid(QMatrix4x4 M)
 {
-    shader.bind();
-    glUniformMatrix4fv(shader.uniformLocation("M"), 1, GL_FALSE, M.data());
+    Shader::flat->bind();
+    glUniformMatrix4fv(Shader::flat->uniformLocation("M"), 1, GL_FALSE, M.data());
 
     solid_vao.bind();
     glDrawArrays(GL_TRIANGLES, 0, 54);
     solid_vao.release();
 
-    shader.release();
+    Shader::flat->release();
 }
 
 void Axes::drawWire(QMatrix4x4 M)
 {
-    shader.bind();
-    glUniformMatrix4fv(shader.uniformLocation("M"), 1, GL_FALSE, M.data());
+    Shader::flat->bind();
+    glUniformMatrix4fv(Shader::flat->uniformLocation("M"), 1, GL_FALSE, M.data());
 
     glDisable(GL_DEPTH_TEST);
     wire_vao.bind();
@@ -172,5 +167,5 @@ void Axes::drawWire(QMatrix4x4 M)
     wire_vao.release();
     glEnable(GL_DEPTH_TEST);
 
-    shader.release();
+    Shader::flat->release();
 }

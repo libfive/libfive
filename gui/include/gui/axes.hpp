@@ -2,7 +2,6 @@
 
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
-#include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions>
 
 class Axes : public QOpenGLFunctions
@@ -19,6 +18,4 @@ protected:
 
     QOpenGLBuffer wire_vbo;
     QOpenGLVertexArrayObject wire_vao;
-
-    QOpenGLShaderProgram shader;
 };

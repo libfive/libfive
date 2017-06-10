@@ -1,6 +1,7 @@
 #include <QMouseEvent>
 
 #include "gui/view.hpp"
+#include "gui/shader.hpp"
 
 View::View(QWidget* parent)
     : QOpenGLWidget(parent), camera(size())
@@ -10,6 +11,7 @@ View::View(QWidget* parent)
 
 void View::initializeGL()
 {
+    Shader::initializeGL();
     axes.initializeGL();
     background.initializeGL();
 }

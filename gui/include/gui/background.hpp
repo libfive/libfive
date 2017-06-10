@@ -2,7 +2,6 @@
 
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
-#include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions>
 
 class Background : public QOpenGLFunctions
@@ -15,5 +14,4 @@ public:
 protected:
     QOpenGLBuffer vbo;
     QOpenGLVertexArrayObject vao;
-    QOpenGLShaderProgram shader;
 };

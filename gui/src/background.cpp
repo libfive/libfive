@@ -1,5 +1,6 @@
 #include "gui/background.hpp"
 #include "gui/color.hpp"
+#include "gui/shader.hpp"
 
 Background::Background()
 {
@@ -9,12 +10,6 @@ Background::Background()
 void Background::initializeGL()
 {
     initializeOpenGLFunctions();
-
-    shader.addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/basic.vert");
-    shader.addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/flat.frag");
-    shader.link();
 
     {
         // Data is arranged  x   y   z   r   g   b
@@ -49,13 +44,13 @@ void Background::initializeGL()
 
 void Background::draw()
 {
-    shader.bind();
+    Shader::flat->bind();
     QMatrix4x4 M;
-    glUniformMatrix4fv(shader.uniformLocation("M"), 1, GL_FALSE, M.data());
+    glUniformMatrix4fv(Shader::flat->uniformLocation("M"), 1, GL_FALSE, M.data());
 
     vao.bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     vao.release();
 
-    shader.release();
+    Shader::flat->release();
 }
