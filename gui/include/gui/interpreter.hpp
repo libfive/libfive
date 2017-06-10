@@ -40,6 +40,7 @@ protected:
     SCM scm_eval_sandboxed;
     SCM scm_port_eof_p;
     SCM scm_syntax_error;
+    SCM scm_format_str;
 
     friend SCM _eval(void* body);
     friend SCM _handler(void* body, SCM key, SCM args);

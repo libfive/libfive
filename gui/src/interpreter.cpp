@@ -39,6 +39,7 @@ eval-sandboxed
 port-eof?
 )");
     scm_syntax_error = scm_from_utf8_symbol("syntax-error");
+    scm_format_str = scm_from_locale_string("~S");
 
     auto kws = scm_to_locale_string(scm_c_eval_string(R"(
 (string-drop (string-drop-right
@@ -102,8 +103,7 @@ void Interpreter::evalScript()
     auto result = scm_internal_catch(SCM_BOOL_T, _eval, this, _handler, this);
 
     auto str = valid ? scm_to_locale_string(
-            scm_simple_format(SCM_BOOL_F, scm_from_locale_string("~S"),
-            scm_list_1(result)))
+            scm_simple_format(SCM_BOOL_F, scm_format_str, scm_list_1(result)))
         : scm_to_locale_string(result);
 
     emit(resultChanged(valid, QString(str)));
