@@ -39,5 +39,6 @@ protected:
 
     bool gl_ready=false;
     QOpenGLVertexArrayObject vao;
-    QOpenGLBuffer vbo;
+    QOpenGLBuffer vert_vbo;
+    QOpenGLBuffer tri_vbo;
 };
