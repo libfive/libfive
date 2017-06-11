@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>gl/basic.vert</file>
         <file>gl/flat.frag</file>
+        <file>gl/shaded.frag</file>
     </qresource>
 </RCC>
 

@@ -6,4 +6,5 @@ namespace Shader
 {
     void initializeGL();
     extern QOpenGLShaderProgram* flat;
+    extern QOpenGLShaderProgram* shaded;
 }

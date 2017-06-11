@@ -62,12 +62,13 @@ void Shape::draw(const QMatrix4x4& M)
 
     if (gl_ready)
     {
-        Shader::flat->bind();
-        glUniformMatrix4fv(Shader::flat->uniformLocation("M"), 1, GL_FALSE, M.data());
+        Shader::shaded->bind();
+        glUniformMatrix4fv(Shader::shaded->uniformLocation("M"), 1, GL_FALSE, M.data());
+        glUniform1f(Shader::shaded->uniformLocation("zoom"), 1);
         vao.bind();
         glDrawElements(GL_TRIANGLES, mesh->tris.size() * 3, GL_UNSIGNED_INT, NULL);
         vao.release();
-        Shader::flat->release();
+        Shader::shaded->release();
     }
 }
 
