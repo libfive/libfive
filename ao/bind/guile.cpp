@@ -187,7 +187,6 @@ void init_ao(void*)
 
 (define (make-semicommutative func sym inverse)
     (lambda (. args)
-        (format #t "args: ~A len ~A\n" args (> (length args) 1))
         (if (any tree? args)
             (if (> (length args) 1)
                 (make-tree sym (car args) (apply inverse (cdr args)))
