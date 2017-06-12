@@ -1,5 +1,6 @@
 #include <QSurfaceFormat>
 #include "gui/app.hpp"
+#include "gui/settings.hpp"
 
 int main(int argc, char** argv)
 {
@@ -10,6 +11,9 @@ int main(int argc, char** argv)
         format.setSamples(4);
         QSurfaceFormat::setDefaultFormat(format);
     }
+
+    // Register settings meta-type to be sent across threads
+    qRegisterMetaType<Settings>("Settings");
 
     App a(argc, argv);
     a.exec();

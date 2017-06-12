@@ -8,13 +8,18 @@ View::View(QWidget* parent)
       settings({-10, -10, -10}, {10, 10, 10}, 10)
 {
     setMouseTracking(true);
+    connect(this, &View::settingsChanged,
+            this, &View::onSettingsChanged);
 }
 
 void View::setShape(Shape* s)
 {
     shape.reset(s);
     connect(s, &Shape::gotMesh, this, [=](){ this->update(); });
+    connect(this, &View::settingsChanged,
+            s, &Shape::startRender);
     shape->startRender(settings);
+    update();
 }
 
 void View::openSettings()
@@ -23,7 +28,7 @@ void View::openSettings()
     {
         pane = new SettingsPane(settings);
         connect(pane, &SettingsPane::changed,
-                this, &View::onSettingsChanged);
+                this, &View::settingsChanged);
         pane->show();
         pane->setFixedSize(pane->size());
     }
@@ -31,7 +36,6 @@ void View::openSettings()
 
 void View::onSettingsChanged(Settings s)
 {
-    qDebug() << s.min << s.max << s.res;
     settings = s;
 }
 

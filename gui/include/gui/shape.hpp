@@ -29,6 +29,7 @@ signals:
 
 protected slots:
     void onFutureFinished();
+    void deleteLater();
 
 protected:
     Kernel::Mesh* renderMesh(Settings s);
@@ -37,6 +38,7 @@ protected:
 
     Kernel::Tree tree;
     QScopedPointer<Kernel::Mesh> mesh;
+    Settings next;
 
     bool gl_ready=false;
     QOpenGLVertexArrayObject vao;

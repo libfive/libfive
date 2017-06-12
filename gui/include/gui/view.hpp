@@ -18,6 +18,9 @@ public slots:
     void setShape(Shape* s);
     void openSettings();
 
+signals:
+    void settingsChanged(Settings s);
+
 protected slots:
     void onSettingsChanged(Settings s);
 

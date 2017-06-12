@@ -9,6 +9,8 @@ struct Settings
 {
     Settings(QVector3D min, QVector3D max, float res)
         : min(min), max(max), res(res) {}
+    Settings()
+        : res(-1) {}
 
     QVector3D min;
     QVector3D max;

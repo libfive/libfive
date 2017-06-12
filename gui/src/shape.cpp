@@ -46,7 +46,10 @@ void Shape::draw(const QMatrix4x4& M)
         tri_vbo.allocate(tris, i*sizeof(*tris));
         delete [] tris;
 
-        vao.create();
+        if (!vao.isCreated())
+        {
+            vao.create();
+        }
         vao.bind();
         vert_vbo.bind();
         tri_vbo.bind();
@@ -74,9 +77,18 @@ void Shape::draw(const QMatrix4x4& M)
 
 void Shape::startRender(Settings s)
 {
-    assert(mesh.data() == nullptr);
-    mesh_future = QtConcurrent::run(this, &Shape::renderMesh, s);
-    mesh_watcher.setFuture(mesh_future);
+    if (mesh_future.isRunning())
+    {
+        if (next.res != -2)
+        {
+            next = s;
+        }
+    }
+    else
+    {
+        mesh_future = QtConcurrent::run(this, &Shape::renderMesh, s);
+        mesh_watcher.setFuture(mesh_future);
+    }
 }
 
 Kernel::Mesh* Shape::renderMesh(Settings s)
@@ -87,9 +99,32 @@ Kernel::Mesh* Shape::renderMesh(Settings s)
     return m.release();
 }
 
+void Shape::deleteLater()
+{
+    if (mesh_future.isRunning())
+    {
+        next.res = -2;
+    }
+    else
+    {
+        QObject::deleteLater();
+    }
+}
+
 void Shape::onFutureFinished()
 {
     mesh.reset(mesh_future.result());
     gl_ready = false;
     emit(gotMesh());
+
+    if (next.res > 0)
+    {
+        auto s = next;
+        next.res = -1;
+        startRender(s);
+    }
+    else if (next.res == -2)
+    {
+        QObject::deleteLater();
+    }
 }
