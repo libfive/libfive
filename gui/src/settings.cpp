@@ -26,11 +26,17 @@ SettingsPane::SettingsPane(Settings s)
     layout->addWidget(new QLabel("Z:"), 3, 0);
     layout->addWidget(zmin, 3, 1);
     layout->addWidget(zmax, 3, 2);
-    layout->addWidget(new QLabel("Resolution:"), 4, 0);
-    layout->addWidget(res, 4, 1);
 
-    layout->setMargin(4);
-    layout->setSpacing(2);
+    QFrame* line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Raised);
+    layout->addWidget(line, 4, 0, 1, 3);
+
+    layout->addWidget(new QLabel("Resolution:"), 5, 0, 1, 2, Qt::AlignCenter);
+    layout->addWidget(res, 5, 2);
+
+    layout->setMargin(10);
+    layout->setSpacing(4);
 
     for (auto t : {xmin, xmax, ymin, ymax, zmin, zmax})
     {

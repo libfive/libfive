@@ -25,6 +25,7 @@ void View::openSettings()
         connect(pane, &SettingsPane::changed,
                 this, &View::onSettingsChanged);
         pane->show();
+        pane->setFixedSize(pane->size());
     }
 }
 
