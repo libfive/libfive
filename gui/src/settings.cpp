@@ -13,7 +13,7 @@ Settings::Settings(QObject* parent)
 
 void Settings::openPane()
 {
-    if (pane.data() == nullptr)
+    if (pane.isNull())
     {
         pane = new SettingsPane(min, max, res);
         connect(pane, &SettingsPane::changed,
@@ -90,4 +90,5 @@ SettingsPane::SettingsPane(QVector3D min, QVector3D max, float _res)
     setLayout(layout);
     setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint |
                    Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+    setAttribute(Qt::WA_DeleteOnClose);
 }

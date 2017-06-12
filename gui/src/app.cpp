@@ -31,7 +31,7 @@ App::App(int& argc, char** argv)
     auto view_menu = window->menuBar()->addMenu("&View");
     auto render_settings = view_menu->addAction("Render settings");
     connect(render_settings, &QAction::triggered,
-            settings, [=](bool b){ if (b) settings->openPane(); });
+            settings, [=](bool){ settings->openPane(); });
 
     auto interpreter = new Interpreter();
     connect(editor, &Editor::scriptChanged,
