@@ -1,11 +1,13 @@
 #include <QMainWindow>
 #include <QDesktopWidget>
 #include <QSplitter>
+#include <QMenuBar>
 
 #include "gui/app.hpp"
 #include "gui/editor.hpp"
 #include "gui/interpreter.hpp"
 #include "gui/view.hpp"
+#include "gui/settings.hpp"
 
 App::App(int& argc, char** argv)
     : QApplication(argc, argv)
@@ -20,6 +22,17 @@ App::App(int& argc, char** argv)
     layout->addWidget(view);
     window->setCentralWidget(layout);
 
+    auto settings = new Settings();
+
+    auto file_menu = window->menuBar()->addMenu("&File");
+    auto open_action = file_menu->addAction("&Open");
+    connect(open_action, &QAction::triggered,
+            [](bool){ qDebug() << "Opening!"; });
+    auto view_menu = window->menuBar()->addMenu("&View");
+    auto render_settings = view_menu->addAction("Render settings");
+    connect(render_settings, &QAction::triggered,
+            settings, [=](bool b){ if (b) settings->openPane(); });
+
     auto interpreter = new Interpreter();
     connect(editor, &Editor::scriptChanged,
             interpreter, &Interpreter::onScriptChanged);
@@ -30,6 +43,8 @@ App::App(int& argc, char** argv)
     connect(interpreter, &Interpreter::gotShape,
             view, &View::setShape);
     interpreter->start();
+
+    settings->openPane();
 
     window->show();
 }
