@@ -72,16 +72,17 @@ void Shape::draw(const QMatrix4x4& M)
     }
 }
 
-void Shape::startRender()
+void Shape::startRender(Settings s)
 {
     assert(mesh.data() == nullptr);
-    mesh_future = QtConcurrent::run(this, &Shape::renderMesh);
+    mesh_future = QtConcurrent::run(this, &Shape::renderMesh, s);
     mesh_watcher.setFuture(mesh_future);
 }
 
-Kernel::Mesh* Shape::renderMesh()
+Kernel::Mesh* Shape::renderMesh(Settings s)
 {
-    Kernel::Region r({-1, 1}, {-1, 1}, {-1, 1}, 10);
+    Kernel::Region r({s.min.x(), s.max.x()}, {s.min.y(), s.max.y()},
+                     {s.min.z(), s.max.z()}, s.res);
     auto m = Kernel::Mesh::render(tree, r);
     return m.release();
 }

@@ -8,6 +8,7 @@
 
 #include "ao/tree/tree.hpp"
 #include "ao/format/mesh.hpp"
+#include "gui/settings.hpp"
 
 class Shape : public QObject, QOpenGLFunctions
 {
@@ -21,7 +22,7 @@ public:
     /*
      *  Kicks off a mesh rendering operation in a separate thread
      */
-    void startRender();
+    void startRender(Settings s);
 
 signals:
     void gotMesh();
@@ -30,7 +31,7 @@ protected slots:
     void onFutureFinished();
 
 protected:
-    Kernel::Mesh* renderMesh();
+    Kernel::Mesh* renderMesh(Settings s);
     QFuture<Kernel::Mesh*> mesh_future;
     QFutureWatcher<Kernel::Mesh*> mesh_watcher;
 

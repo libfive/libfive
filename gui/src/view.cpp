@@ -14,7 +14,7 @@ void View::setShape(Shape* s)
 {
     shape.reset(s);
     connect(s, &Shape::gotMesh, this, [=](){ this->update(); });
-    shape->startRender();
+    shape->startRender(settings);
 }
 
 void View::openSettings()
