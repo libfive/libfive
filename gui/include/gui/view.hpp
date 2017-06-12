@@ -6,6 +6,7 @@
 #include "gui/background.hpp"
 #include "gui/camera.hpp"
 #include "gui/shape.hpp"
+#include "gui/settings.hpp"
 
 class View : public QOpenGLWidget
 {
@@ -15,6 +16,10 @@ public:
 
 public slots:
     void setShape(Shape* s);
+    void openSettings();
+
+protected slots:
+    void onSettingsChanged(Settings s);
 
 protected:
     void initializeGL() override;
@@ -37,4 +42,6 @@ protected:
     } mouse;
 
     QScopedPointer<Shape> shape;
+    QPointer<SettingsPane> pane;
+    Settings settings;
 };

@@ -4,7 +4,8 @@
 #include "gui/shader.hpp"
 
 View::View(QWidget* parent)
-    : QOpenGLWidget(parent), camera(size())
+    : QOpenGLWidget(parent), camera(size()),
+      settings({-10, -10, -10}, {10, 10, 10}, 10)
 {
     setMouseTracking(true);
 }
@@ -14,6 +15,23 @@ void View::setShape(Shape* s)
     shape.reset(s);
     connect(s, &Shape::gotMesh, this, [=](){ this->update(); });
     shape->startRender();
+}
+
+void View::openSettings()
+{
+    if (pane.isNull())
+    {
+        pane = new SettingsPane(settings);
+        connect(pane, &SettingsPane::changed,
+                this, &View::onSettingsChanged);
+        pane->show();
+    }
+}
+
+void View::onSettingsChanged(Settings s)
+{
+    qDebug() << s.min << s.max << s.res;
+    settings = s;
 }
 
 void View::initializeGL()

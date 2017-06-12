@@ -5,36 +5,7 @@
 
 #include "gui/settings.hpp"
 
-Settings::Settings(QObject* parent)
-    : QObject(parent)
-{
-    // Nothing to do here
-}
-
-void Settings::openPane()
-{
-    if (pane.isNull())
-    {
-        pane = new SettingsPane(min, max, res);
-        connect(pane, &SettingsPane::changed,
-                this, &Settings::applyChange);
-        pane->show();
-    }
-}
-
-void Settings::applyChange(QVector3D _min, QVector3D _max, float _res)
-{
-    min = _min;
-    max = _max;
-    res = _res;
-
-    qDebug() << "Got change" << min << max << res;
-    emit(changed(min, max, res));
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-SettingsPane::SettingsPane(QVector3D min, QVector3D max, float _res)
+SettingsPane::SettingsPane(Settings s)
 {
     auto layout = new QGridLayout();
     auto xmin = new QDoubleSpinBox;
@@ -68,23 +39,23 @@ SettingsPane::SettingsPane(QVector3D min, QVector3D max, float _res)
     }
     res->setMaximum(100);
 
-    xmin->setValue(min.x());
-    ymin->setValue(min.y());
-    zmin->setValue(min.z());
-    xmax->setValue(max.x());
-    ymax->setValue(max.y());
-    zmax->setValue(max.z());
-    res->setValue(_res);
+    xmin->setValue(s.min.x());
+    ymin->setValue(s.min.y());
+    zmin->setValue(s.min.z());
+    xmax->setValue(s.max.x());
+    ymax->setValue(s.max.y());
+    zmax->setValue(s.max.z());
+    res->setValue(s.res);
 
     for (auto t : {xmin, xmax, ymin, ymax, zmin, zmax, res})
     {
         connect(t, static_cast<void (QDoubleSpinBox::*)(double)>
                     (&QDoubleSpinBox::valueChanged),
                 this, [=](double){
-                    emit(this->changed(
+                    emit(this->changed(Settings(
                         QVector3D(xmin->value(), ymin->value(), zmin->value()),
                         QVector3D(xmax->value(), ymax->value(), zmax->value()),
-                        res->value())); } );
+                        res->value()))); } );
     }
 
     setLayout(layout);

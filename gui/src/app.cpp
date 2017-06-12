@@ -7,7 +7,6 @@
 #include "gui/editor.hpp"
 #include "gui/interpreter.hpp"
 #include "gui/view.hpp"
-#include "gui/settings.hpp"
 
 App::App(int& argc, char** argv)
     : QApplication(argc, argv)
@@ -22,16 +21,13 @@ App::App(int& argc, char** argv)
     layout->addWidget(view);
     window->setCentralWidget(layout);
 
-    auto settings = new Settings();
-
     auto file_menu = window->menuBar()->addMenu("&File");
     auto open_action = file_menu->addAction("&Open");
     connect(open_action, &QAction::triggered,
             [](bool){ qDebug() << "Opening!"; });
     auto view_menu = window->menuBar()->addMenu("&View");
-    auto render_settings = view_menu->addAction("Render settings");
-    connect(render_settings, &QAction::triggered,
-            settings, [=](bool){ settings->openPane(); });
+    connect(view_menu->addAction("Bounds / resolution"), &QAction::triggered,
+            view, [=](bool){ view->openSettings(); });
 
     auto interpreter = new Interpreter();
     connect(editor, &Editor::scriptChanged,
@@ -44,7 +40,7 @@ App::App(int& argc, char** argv)
             view, &View::setShape);
     interpreter->start();
 
-    settings->openPane();
+    view->openSettings();
 
     window->show();
 }
