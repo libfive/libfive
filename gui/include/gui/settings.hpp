@@ -7,14 +7,17 @@
 
 struct Settings
 {
-    Settings(QVector3D min, QVector3D max, float res)
-        : min(min), max(max), res(res) {}
-    Settings()
-        : res(-1) {}
+    Settings(QVector3D min, QVector3D max, float res);
+    Settings();
+
+    Settings next() const;
 
     QVector3D min;
     QVector3D max;
     float res;
+    int div;
+protected:
+    Settings(QVector3D min, QVector3D max, float res, int div);
 };
 
 class SettingsPane : public QWidget

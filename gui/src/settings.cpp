@@ -1,9 +1,43 @@
-#include <QDebug>
+#include <cassert>
+#include <cmath>
+
 #include <QGridLayout>
 #include <QDoubleSpinBox>
 #include <QLabel>
 
 #include "gui/settings.hpp"
+
+Settings::Settings()
+    : res(-1)
+{
+    // Nothing to do here
+}
+
+Settings::Settings(QVector3D min, QVector3D max, float res)
+    : min(min), max(max), res(res)
+{
+    const float volume = (max.x() - min.x()) *
+                         (max.y() - min.y()) *
+                         (max.z() - min.z());
+
+    // Magic numbers from Antimony's mesh export dialog
+    const float target_res = pow((1 << 22) / volume, 0.33) / 2.52;
+
+    // More magic numbers
+    div = (target_res > res) ? 0
+        : int(log(res / target_res) / log(2) + 0.5);
+}
+
+Settings::Settings(QVector3D min, QVector3D max, float res, int div)
+    : min(min), max(max), res(res), div(div)
+{
+    // Nothing to do here
+}
+
+Settings Settings::next() const
+{
+    return div > 0 ? Settings(min, max, res, div - 1) : Settings();
+}
 
 SettingsPane::SettingsPane(Settings s)
 {

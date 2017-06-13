@@ -88,13 +88,14 @@ void Shape::startRender(Settings s)
     {
         mesh_future = QtConcurrent::run(this, &Shape::renderMesh, s);
         mesh_watcher.setFuture(mesh_future);
+        next = s.next();
     }
 }
 
 Kernel::Mesh* Shape::renderMesh(Settings s)
 {
     Kernel::Region r({s.min.x(), s.max.x()}, {s.min.y(), s.max.y()},
-                     {s.min.z(), s.max.z()}, s.res);
+                     {s.min.z(), s.max.z()}, s.res / (1 << s.div));
     auto m = Kernel::Mesh::render(tree, r);
     return m.release();
 }
@@ -117,14 +118,14 @@ void Shape::onFutureFinished()
     gl_ready = false;
     emit(gotMesh());
 
-    if (next.res > 0)
+    if (next.res == -2)
+    {
+        QObject::deleteLater();
+    }
+    else if (next.res > 0)
     {
         auto s = next;
         next.res = -1;
         startRender(s);
-    }
-    else if (next.res == -2)
-    {
-        QObject::deleteLater();
     }
 }
