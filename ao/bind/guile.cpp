@@ -23,13 +23,17 @@ ao_tree scm_to_tree(SCM t)
     return (ao_tree)scm_to_pointer(scm_unwrap_tree(t));
 }
 
+SCM scm_from_tree(ao_tree t)
+{
+    return scm_wrap_tree(scm_from_pointer(t, del_tree));
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 SCM scm_number_to_tree(SCM n)
 {
     SCM_ASSERT_TYPE(scm_is_number(n), n, 0, "scm_number_to_tree", "number");
-    auto ptr = scm_from_pointer(ao_tree_const(scm_to_double(n)), del_tree);
-    return scm_wrap_tree(ptr);
+    return scm_from_tree(ao_tree_const(scm_to_double(n)));
 }
 
 SCM scm_tree_equal_p(SCM a, SCM b)
