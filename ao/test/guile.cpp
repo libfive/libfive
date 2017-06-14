@@ -68,3 +68,17 @@ TEST_CASE("make-tree")
         REQUIRE(boost::algorithm::starts_with(a, "wrong-type-arg:"));
     }
 }
+
+TEST_CASE("Guile overloads")
+{
+    SECTION("min")
+    {
+        auto result = eval("(min (make-tree 'x) 1 2 3)");
+        CAPTURE(result);
+        REQUIRE(boost::algorithm::starts_with(result, "#<tree "));
+
+        auto err = eval("(min)");
+        CAPTURE(err);
+        REQUIRE(boost::algorithm::starts_with(err, "wrong-number-of-args"));
+    }
+}
