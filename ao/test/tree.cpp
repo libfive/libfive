@@ -80,3 +80,27 @@ TEST_CASE("Tree::deserialize")
         REQUIRE(a->rhs->op == Opcode::VAR);
     }
 }
+
+TEST_CASE("Tree::remap")
+{
+    SECTION("Simple")
+    {
+        auto x = Tree::X();
+        auto y = x.remap(Tree::Y(), Tree::X(), Tree::X());
+        REQUIRE(y == Tree::Y());
+    }
+
+    SECTION("Remapping to a constant")
+    {
+        auto x = Tree::X();
+        auto t = x.remap(Tree(12), Tree::X(), Tree::X());
+        REQUIRE(t == Tree(12));
+    }
+
+    SECTION("Collapsing while remapping")
+    {
+        auto x = Tree::X() + 5;
+        auto t = x.remap(Tree(3), Tree::X(), Tree::X());
+        REQUIRE(t == Tree(8));
+    }
+}
