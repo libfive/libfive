@@ -118,6 +118,11 @@ ao_tree ao_tree_load(const char* filename)
     }
 }
 
+ao_tree ao_tree_remap(ao_tree p, ao_tree x, ao_tree y, ao_tree z)
+{
+    return new Tree(p->remap(*x, *y, *z));
+}
+
 float ao_tree_eval_f(ao_tree t, ao_vec3 p)
 {
     Evaluator e(*t);

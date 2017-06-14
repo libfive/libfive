@@ -89,6 +89,8 @@ void ao_tree_delete(ao_tree ptr);
 bool ao_tree_save(ao_tree ptr, const char* filename);
 ao_tree ao_tree_load(const char* filename);
 
+ao_tree ao_tree_remap(ao_tree p, ao_tree x, ao_tree y, ao_tree z);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 struct ao_args;
