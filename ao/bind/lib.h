@@ -74,6 +74,7 @@ ao_tree ao_tree_y();
 ao_tree ao_tree_z();
 
 ao_tree ao_tree_const(float f);
+float ao_tree_get_const(ao_tree t, bool* success);
 
 ao_tree ao_tree_nonary(int op);
 ao_tree ao_tree_unary(int op, ao_tree a);

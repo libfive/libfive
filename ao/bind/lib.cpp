@@ -50,6 +50,17 @@ ao_tree ao_tree_z() { return new Tree(Tree::Z()); }
 
 ao_tree ao_tree_const(float f) { return new Tree(f); }
 
+float ao_tree_get_const(ao_tree t, bool* success)
+{
+    if ((*t)->op == Opcode::CONST)
+    {
+        if (success) { *success = true; }
+        return (*t)->value;
+    }
+    if (success) { *success = false; }
+    return 0;
+}
+
 ao_tree ao_tree_nonary(int op)
 {
     return new Tree(Opcode::Opcode(op));
