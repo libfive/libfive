@@ -103,26 +103,33 @@ SCM scm_tree(SCM op, SCM a, SCM b)
         default: assert(false);
     }
 
-    auto ptr = scm_from_pointer(out, del_tree);
-    return scm_wrap_tree(ptr);
+    return scm_from_tree(out);
 }
 
 SCM scm_tree_eval(SCM t, SCM x, SCM y, SCM z)
 {
     SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_eval", "tree");
 
-    SCM_ASSERT_TYPE(scm_is_number(x), x, 1, "scm_tree_eval", "number");
-    SCM_ASSERT_TYPE(scm_is_number(y), y, 2, "scm_tree_eval", "number");
-    SCM_ASSERT_TYPE(scm_is_number(z), z, 3, "scm_tree_eval", "number");
+    SCM_ASSERT_TYPE(scm_is_number(x) || scm_is_tree(t),
+                    x, 1, "scm_tree_eval", "number");
+    SCM_ASSERT_TYPE(scm_is_number(y) || scm_is_tree(t),
+                    y, 2, "scm_tree_eval", "number");
+    SCM_ASSERT_TYPE(scm_is_number(z) || scm_is_tree(t),
+                    z, 3, "scm_tree_eval", "number");
 
-    float x_ = scm_to_double(x);
-    float y_ = scm_to_double(y);
-    float z_ = scm_to_double(z);
+    auto x_ = scm_is_number(x) ? ao_tree_const(scm_to_double(x))
+                               : scm_to_tree(x);
+    auto y_ = scm_is_number(y) ? ao_tree_const(scm_to_double(y))
+                               : scm_to_tree(y);
+    auto z_ = scm_is_number(z) ? ao_tree_const(scm_to_double(z))
+                               : scm_to_tree(z);
 
-    auto r = ao_tree_eval_f((ao_tree)scm_to_pointer(scm_unwrap_tree(t)),
-                            {x_, y_, z_});
+    auto out = ao_tree_remap(scm_to_tree(t), x_, y_, z_);
 
-    return scm_from_double(r);
+    bool is_const = false;
+    auto val = ao_tree_get_const(out, &is_const);
+
+    return is_const ? scm_from_double(val) : scm_from_tree(out);
 }
 
 SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
