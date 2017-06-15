@@ -275,9 +275,15 @@ void init_ao(void*)
 (define-syntax-rule (define-shape (name . vars) body ...)
   (define name (lambda-shape vars body ...)))
 
+(define-syntax-rule (remap-shape (tree . vars) x y z)
+  (tree-eval tree (lambda-shape vars x)
+                  (lambda-shape vars y)
+                  (lambda-shape vars z)))
+
+;; These are "safe" bindings that can be used in the sandbox
 (define ao-bindings '(+ * min max - /
                       sqrt abs sin cos tan asin acos exp square atan expt mod
-                      lambda-shape define-shape ao-bindings))
+                      lambda-shape define-shape ao-bindings remap-shape))
 (eval (cons 'export! ao-bindings) (interaction-environment))
  )");
 
