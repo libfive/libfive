@@ -40,8 +40,18 @@ eval-sandboxed
 (use-modules (rnrs io ports))
 port-eof?
 )");
-    scm_syntax_error = scm_from_utf8_symbol("syntax-error");
-    scm_format_str = scm_from_locale_string("~S");
+    scm_syntax_error_sym = scm_from_utf8_symbol("syntax-error");
+    scm_result_fmt = scm_from_locale_string("~S");
+    scm_other_error_fmt = scm_from_locale_string("~A: ~A");
+    scm_syntax_error_fmt = scm_from_locale_string("~A: ~A in form ~A");
+
+    // Protect all of our interpreter vars from garbage collection
+    for (auto s : {scm_begin, scm_eval_sandboxed, scm_port_eof_p,
+                   scm_syntax_error_sym, scm_result_fmt, scm_syntax_error_fmt,
+                   scm_other_error_fmt})
+    {
+        scm_permanent_object(s);
+    }
 
     auto kws = scm_to_locale_string(scm_c_eval_string(R"(
 (string-drop (string-drop-right
@@ -76,15 +86,14 @@ SCM Interpreter::eval()
 SCM Interpreter::handler(SCM key, SCM args)
 {
     valid = false;
-    if (scm_is_eq(key, scm_syntax_error))
+    if (scm_is_eq(key, scm_syntax_error_sym))
     {
-        return scm_simple_format(SCM_BOOL_F,
-               scm_from_locale_string("~A: ~A in form ~A"),
+        return scm_simple_format(SCM_BOOL_F, scm_syntax_error_fmt,
                scm_list_3(key, scm_cadr(args), scm_cadddr(args)));
     }
     else
     {
-        return scm_simple_format(SCM_BOOL_F, scm_from_locale_string("~A: ~A"),
+        return scm_simple_format(SCM_BOOL_F, scm_other_error_fmt,
                scm_list_2(key, scm_simple_format(
                     SCM_BOOL_F, scm_cadr(args), scm_caddr(args))));
     }
@@ -105,7 +114,7 @@ void Interpreter::evalScript()
     auto result = scm_internal_catch(SCM_BOOL_T, _eval, this, _handler, this);
 
     auto str = valid ? scm_to_locale_string(
-            scm_simple_format(SCM_BOOL_F, scm_format_str, scm_list_1(result)))
+            scm_simple_format(SCM_BOOL_F, scm_result_fmt, scm_list_1(result)))
         : scm_to_locale_string(result);
 
     emit(resultChanged(valid, QString(str)));

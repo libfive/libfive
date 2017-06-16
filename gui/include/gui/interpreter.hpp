@@ -39,8 +39,10 @@ protected:
     SCM scm_begin;
     SCM scm_eval_sandboxed;
     SCM scm_port_eof_p;
-    SCM scm_syntax_error;
-    SCM scm_format_str;
+    SCM scm_syntax_error_sym;
+    SCM scm_syntax_error_fmt;
+    SCM scm_other_error_fmt;
+    SCM scm_result_fmt;
 
     friend SCM _eval(void* body);
     friend SCM _handler(void* body, SCM key, SCM args);
