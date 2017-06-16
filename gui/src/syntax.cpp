@@ -117,7 +117,7 @@ Syntax::Syntax(QTextDocument* doc)
 {
     {   // Strings (single and multi-line)
         QTextCharFormat string_format;
-        string_format.setForeground(Color::orange);
+        string_format.setForeground(Color::green);
 
         // Strings on a single line
         // (with clever regex for escaped chars)
@@ -132,7 +132,7 @@ Syntax::Syntax(QTextDocument* doc)
     {   // Numbers (float and integer)
         {   // All the possible float formats
             QTextCharFormat float_format;
-            float_format.setForeground(Color::green);
+            float_format.setForeground(Color::orange);
 
             rules << Rule(R"(\b(?:-|)\d+\.\d*e\d+)", float_format);
             rules << Rule(R"(\b(?:-|)\d+\.\d*)", float_format);
@@ -141,7 +141,7 @@ Syntax::Syntax(QTextDocument* doc)
 
         {   // Integers
             QTextCharFormat int_format;
-            int_format.setForeground(Color::magenta);
+            int_format.setForeground(Color::red);
 
             rules << Rule(R"(\b(?:-|)\d+\b)", int_format);
         }
