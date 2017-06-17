@@ -24,12 +24,13 @@ Editor::Editor(QWidget* parent)
     }
 
     // Set background and base font color
-    setStyleSheet(QString(
-        "QWidget {"
+    QString style = QString(
         "    background-color: %1;"
         "    color: %2;"
         "}").arg(Color::base3.name())
-            .arg(Color::base00.name()));
+            .arg(Color::base00.name());
+
+    setStyleSheet("QTextEdit {" + style + "QPlainTextEdit { " + style);
 
     // Create and bind a syntax highlighter
     auto syntax = new Syntax(txt->document());
