@@ -194,14 +194,14 @@ void init_ao_kernel(void*)
     (lambda (. args)
         (define (folder default args)
             (fold (lambda (e p) (make-tree sym e p)) default args))
-        (cond ((nil? default)
+        (cond ((not (any tree? args)) (apply func args))
+              ((nil? default)
                 (when (= 0 (length args))
                     (scm-error 'wrong-number-of-args #f
                          "Wrong number of arguments to ~A"
                          (list sym) #f))
                 (folder (car args) (cdr args)))
-              ((any tree? args) (folder default args))
-              (else (apply func args)))))
+                (else (folder default args)))))
 
 (define (make-semicommutative func sym inverse)
     (lambda (. args)
