@@ -188,7 +188,7 @@ void init_ao_kernel(void*)
 
     // Overload all of the arithmetic operations with tree-based substitutes!
     scm_c_eval_string(R"(
-(use-modules (srfi srfi-1) (ice-9 receive))
+(use-modules (srfi srfi-1))
 
 (define (make-commutative func sym default)
     (lambda (. args)
