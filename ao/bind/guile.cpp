@@ -300,21 +300,85 @@ void init_ao_kernel(void*)
 void init_ao_csg(void*)
 {
     scm_c_eval_string(R"(
+(use-modules (ao kernel))
 
-)");
-}
+(define-public (union . args)
+    "union a [b [c [...]]]
+    Returns the union of any number of shapes"
+    (apply min args))
 
-void init_ao_shapes(void*)
-{
-    scm_c_eval_string(R"(
+(define-public (intersection . args)
+    "intersection a [b [c [...]]]
+    Returns the intersection of any number of shapes"
+    (apply max args))
 
+(define-public (inverse a)
+    "inverse a
+    Returns a shape that's the inverse of the input shape"
+    (- a))
+
+(define-public (difference a . bs)
+    "difference a b [c [d [...]]]
+    Subtracts any number of shapes from the first argument"
+    (intersection a (inverse (apply union bs))))
+
+(define-public (offset s o)
+    "offset shape o
+    Expand or contract a given shape by an offset"
+    (+ s o))
+
+(define-public (clearance a b o)
+    "clearance a b o
+    Expands shape b by the given offset then subtracts it from shape a"
+    (difference a (offset b o)))
+
+(define-public (shell shape o)
+    "shell shape o
+    Returns a shell of a shape with the given offset"
+    (clearance shape shape o))
+
+(define-public (blend a b m)
+    "blend a b m
+    Blends two shapes by the given amount"
+    (union a b (- (+ (sqrt (abs a)) (sqrt (abs b))) m)))
+
+(define-public (morph a b m)
+    "morph a b m
+    Morphs between two shapes.
+    m = 0 produces a, m = 1 produces b"
+    (+ (* (a x y z) (- 1 m)) (* (b x y z) m)))
 )");
 }
 
 void init_ao_transforms(void*)
 {
     scm_c_eval_string(R"(
+(use-modules (ao kernel))
 
+(define-public (move shape delta)
+    "move shape #(dx dy [dz])
+    Moves the given shape in 2D or 3D space"
+    (remap-shape (shape x y z)
+        (+ x (.x delta))
+        (+ y (.y delta))
+        (+ z (catch #t (lambda ()(.z delta)) (lambda (. _) 0)))))
+)");
+}
+
+void init_ao_shapes(void*)
+{
+    scm_c_eval_string(R"(
+(use-modules (ao kernel) (ao csg) (ao transforms))
+
+(define-public (circle center r)
+    "circle #(x y) r"
+    (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y))) r))
+        center))
+
+(define-public (sphere center r)
+    "sphere #(x y z) r"
+    (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y) (square z))) r))
+        center))
 )");
 }
 
@@ -322,6 +386,6 @@ void scm_init_ao_kernel_module()
 {
     scm_c_define_module("ao kernel", init_ao_kernel, NULL);
     scm_c_define_module("ao csg", init_ao_csg, NULL);
-    scm_c_define_module("ao shapes", init_ao_shapes, NULL);
     scm_c_define_module("ao transforms", init_ao_transforms, NULL);
+    scm_c_define_module("ao shapes", init_ao_shapes, NULL);
 }

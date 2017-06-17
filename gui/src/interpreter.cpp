@@ -30,7 +30,14 @@ void Interpreter::init()
     scm_c_use_module("ao kernel");
     scm_eval_sandboxed = scm_c_eval_string(R"(
 (use-modules (ice-9 sandbox) (ao kernel))
-(define my-bindings (cons (cons '(ao kernel) ao-bindings) all-pure-bindings))
+(define my-bindings (append (list (cons '(ao kernel) ao-bindings)
+    (cons '(ao shapes)
+        (module-map (lambda (n . a) n) (resolve-interface '(ao shapes))))
+    (cons '(ao csg)
+        (module-map (lambda (n . a) n) (resolve-interface '(ao csg))))
+    (cons '(ao transforms)
+        (module-map (lambda (n . a) n) (resolve-interface '(ao transforms)))))
+    all-pure-bindings))
 (define (eval-sandboxed t) (eval-in-sandbox t #:bindings my-bindings))
 eval-sandboxed
 )");
