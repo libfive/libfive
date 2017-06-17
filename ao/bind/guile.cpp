@@ -164,7 +164,7 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
     return out ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
-void init_ao(void*)
+void init_ao_kernel(void*)
 {
     scm_c_eval_string(R"(
 (use-modules (system foreign))
@@ -297,7 +297,31 @@ void init_ao(void*)
             NULL);
 }
 
+void init_ao_csg(void*)
+{
+    scm_c_eval_string(R"(
+
+)");
+}
+
+void init_ao_shapes(void*)
+{
+    scm_c_eval_string(R"(
+
+)");
+}
+
+void init_ao_transforms(void*)
+{
+    scm_c_eval_string(R"(
+
+)");
+}
+
 void scm_init_ao_kernel_module()
 {
-    scm_c_define_module("ao kernel", init_ao, NULL);
+    scm_c_define_module("ao kernel", init_ao_kernel, NULL);
+    scm_c_define_module("ao csg", init_ao_csg, NULL);
+    scm_c_define_module("ao shapes", init_ao_shapes, NULL);
+    scm_c_define_module("ao transforms", init_ao_transforms, NULL);
 }
