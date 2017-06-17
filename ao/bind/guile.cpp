@@ -279,9 +279,12 @@ void init_ao(void*)
   (tree-eval tree (lambda-shape vars x)
                   (lambda-shape vars y)
                   (lambda-shape vars z)))
+(define (.x pt) (if (list? pt) (car pt)   (vector-ref pt 0)))
+(define (.y pt) (if (list? pt) (cadr pt)  (vector-ref pt 1)))
+(define (.z pt) (if (list? pt) (caddr pt) (vector-ref pt 2)))
 
 ;; These are "safe" bindings that can be used in the sandbox
-(define ao-bindings '(+ * min max - /
+(define ao-bindings '(+ * min max - / .x .y .z
                       sqrt abs sin cos tan asin acos exp square atan expt mod
                       lambda-shape define-shape ao-bindings remap-shape))
 (eval (cons 'export! ao-bindings) (interaction-environment))
