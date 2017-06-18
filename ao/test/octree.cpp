@@ -48,7 +48,7 @@ TEST_CASE("Octree values")
     }
 }
 
-TEST_CASE("Vertex positioning")
+TEST_CASE("Vertex positioning on sphere")
 {
     const float radius = 0.5;
     Tree t = sphere(radius);
@@ -86,4 +86,38 @@ TEST_CASE("Vertex positioning")
 
     REQUIRE(rmin > radius*0.9);
     REQUIRE(rmax < radius*1.1);
+}
+
+
+TEST_CASE("Vertex positioning on sliced box")
+{
+    auto t = max(max(max(max(-Tree::X(), Tree::X() - 1),
+                         max(-Tree::Y(), Tree::Y() - 1)),
+                         max(-Tree::Z(), Tree::Z() - 1)),
+                 1.5 - Tree::X() - Tree::Y() - Tree::Z());
+
+    Region r({-2, 2}, {-2, 2}, {-2, 2}, 2);
+    std::unique_ptr<Octree> out(Octree::render(t, r));
+
+    auto eval = Evaluator(t);
+    float worst = 0;
+    std::list<const Octree*> targets = {out.get()};
+    while (targets.size())
+    {
+        const Octree* o = targets.front();
+        targets.pop_front();
+
+        if (o->getType() == Octree::BRANCH)
+        {
+            for (unsigned i=0; i < 8; ++i)
+            {
+                targets.push_back(o->child(i));
+            }
+        }
+        else if (o->getType() == Octree::LEAF)
+        {
+            worst = fmax(worst, fabs(eval.eval(o->getVertex().cast<float>())));
+        }
+    }
+    REQUIRE(worst < 0.001);
 }
