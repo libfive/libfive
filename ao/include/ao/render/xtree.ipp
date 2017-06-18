@@ -188,7 +188,7 @@ void XTree<T, dims>::finalize(Evaluator* e)
         manifold = this->cornerTopology();
 
         // Find the vertex for this node
-        vert = manifold ? findVertex(solver) :
+        vert = manifold ? findVertex(solver).first :
             // For non-manifold leaf nodes, put the vertex at the mass point.
             // As described in "Dual Contouring: The Secret Sauce", this improves
             // mesh quality.
@@ -304,9 +304,9 @@ void XTree<T, dims>::collapseBranch()
         {
             findBranchMatrices();
 
-            float err;
-            vert = findVertex(&err);
-            if (err < 1e-8)
+            auto ve = findVertex();
+            vert = ve.first;
+            if (ve.second < 1e-8)
             {
                 type = LEAF;
             }
@@ -369,16 +369,15 @@ Eigen::EigenSolver<Eigen::Matrix3d> XTree<T, dims>::findLeafMatrices(Evaluator* 
 }
 
 template <class T, int dims>
-Eigen::Vector3d XTree<T, dims>::findVertex(float* err) const
+std::pair<Eigen::Vector3d, float> XTree<T, dims>::findVertex() const
 {
     Eigen::EigenSolver<Eigen::Matrix3d> es(AtA);
-    return findVertex(es, err);
+    return findVertex(es);
 }
 
 template <class T, int dims>
-Eigen::Vector3d XTree<T, dims>::findVertex(
-        Eigen::EigenSolver<Eigen::Matrix3d>& es,
-        float* err) const
+std::pair<Eigen::Vector3d, float> XTree<T, dims>::findVertex(
+        Eigen::EigenSolver<Eigen::Matrix3d>& es) const
 {
     // We need to find the pseudo-inverse of AtA.
     auto eigenvalues = es.eigenvalues().real();
@@ -408,13 +407,10 @@ Eigen::Vector3d XTree<T, dims>::findVertex(
     auto v = AtAp * (AtB - AtA * p) + p;
 
     // Find the QEF error if required
-    if (err)
-    {
-        *err = (v.transpose() * AtA * v - 2*v.transpose() * AtB)[0] + BtB;
-    }
+    float err = (v.transpose() * AtA * v - 2*v.transpose() * AtB)[0] + BtB;
 
     // Convert out of Eigen's format and return
-    return v;
+    return {v, err};
 }
 
 

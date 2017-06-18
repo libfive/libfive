@@ -135,11 +135,11 @@ protected:
      *
      *  Requires AtA, AtB, BtB, and mass_point to be populated
      *
-     *  Returns the vertex and populates err if provided
+     *  Returns a pair vertex, err
      */
-    Eigen::Vector3d findVertex(float* err=NULL) const;
-    Eigen::Vector3d findVertex(Eigen::EigenSolver<Eigen::Matrix3d>& es,
-                               float* err=NULL) const;
+    std::pair<Eigen::Vector3d, float> findVertex() const;
+    std::pair<Eigen::Vector3d, float> findVertex(
+            Eigen::EigenSolver<Eigen::Matrix3d>& es) const;
 
     /*
      *  Performs binary search along a cube's edge, returning the intersection
