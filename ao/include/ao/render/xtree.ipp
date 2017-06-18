@@ -192,7 +192,7 @@ void XTree<T, dims>::finalize(Evaluator* e)
             // For non-manifold leaf nodes, put the vertex at the mass point.
             // As described in "Dual Contouring: The Secret Sauce", this improves
             // mesh quality.
-            mass_point.head<3>() / mass_point.w();
+            (mass_point.head<3>() / mass_point.w());
     }
 
     // If this cell is no longer a branch, remove its children
