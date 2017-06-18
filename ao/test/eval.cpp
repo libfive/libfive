@@ -406,11 +406,9 @@ TEST_CASE("Evaluator::featuresAt")
         REQUIRE(e.featuresAt({-0.5, -1, 0}).size() == 1);
     }
 
-    SECTION("Two features (nested)")
+    SECTION("One feature (duplicated)")
     {
-        auto t = max(max(max(-Tree::X(), Tree::X() - 1),
-                             max(-Tree::Y(), Tree::Y() - 1)),
-                    -Tree::X());
+        auto t = max(-Tree::X(), -Tree::X());
         Evaluator e(t);
         REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
     }
