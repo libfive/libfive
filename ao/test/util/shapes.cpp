@@ -43,7 +43,7 @@ Tree recurse(float x, float y, float scale, Eigen::Matrix4f M, int i)
 Tree menger(int i)
 {
     Eigen::Matrix3f m = Eigen::Matrix3f::Identity();
-    Eigen::Matrix4f M;
+    Eigen::Matrix4f M = Eigen::Matrix4f::Zero();
     M.block<3,3>(0,0) = m;
     Tree a = recurse(0, 0, 1, M, i);
 
@@ -51,7 +51,7 @@ Tree menger(int i)
     M.block<3,3>(0,0) = m;
     Tree b = recurse(0, 0, 1, M, i);
 
-    m = m * Eigen::AngleAxisf(float(M_PI/2), Eigen::Vector3f::UnitY());
+    m = Eigen::AngleAxisf(float(M_PI/2), Eigen::Vector3f::UnitY());
     M.block<3,3>(0,0) = m;
     Tree c = recurse(0, 0, 1, M, i);
 
