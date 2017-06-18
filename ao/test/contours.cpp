@@ -51,3 +51,17 @@ TEST_CASE("2D contour tracking")
     REQUIRE(max < 0.51);
     REQUIRE(min > 0.49);
 }
+
+TEST_CASE("2D contour with ambiguities")
+{
+    Region r({-2, 2}, {-2, 2}, {0, 0}, 5);
+
+    auto t = max(max(max(-Tree::X(), Tree::X() - 1),
+                         max(-Tree::Y(), Tree::Y() - 1)),
+                -Tree::X());
+
+    auto m = Contours::render(t, r);
+    REQUIRE(m->contours.size() == 1);
+    REQUIRE(m->contours[0] == m->contours[m->contours.size() - 1]);
+    m->writeSVG("out.svg", r);
+}

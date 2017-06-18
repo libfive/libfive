@@ -238,9 +238,24 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
 
     // Accumulate intersections, ambiguous and non-ambiguous
     std::vector<Intersection> intersections;
+
+    // Only check each point once, by storing them into a set
+    auto comp = [](const Eigen::Vector3d& a, const Eigen::Vector3d& b)
+    {
+        return std::lexicographical_compare(
+            a.data(), a.data() + a.size(), b.data(), b.data() + b.size());
+    };
+    std::set<Eigen::Vector3d, decltype(comp)> seen(comp);
+
     for (unsigned i=0; i < pts.size(); ++i)
     {
         const auto p = pts[i];
+        if (seen.find(p) != seen.end())
+        {
+            continue;
+        }
+        seen.insert(p);
+
         if (ambiguous.find(i) == ambiguous.end())
         {
             const Eigen::Vector3d g(ds.dx[i], ds.dy[i], ds.dz[i]);
