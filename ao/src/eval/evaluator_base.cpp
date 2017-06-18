@@ -258,7 +258,7 @@ Feature EvaluatorBase::push(const Feature& f)
 
     for (const auto& c : tape->t)
     {
-        const bool match =  (result.f[c.a][0] == result.f[c.b][0] &&
+        const bool match = ((result.f[c.a][0] == result.f[c.b][0] || c.a == c.b) &&
                             (c.op == Opcode::MAX || c.op == Opcode::MIN) &&
                             itr != choices.end() && itr->id == c.id);
 
@@ -268,7 +268,14 @@ Feature EvaluatorBase::push(const Feature& f)
             // terms of which branch to take
             if (match)
             {
-                out.push_raw(*itr, f.getEpsilon(c.id));
+                if (f.hasEpsilon(c.id))
+                {
+                    out.push_raw(*itr, f.getEpsilon(c.id));
+                }
+                else
+                {
+                    out.push_choice_raw(*itr);
+                }
 
                 if (itr->choice == 0)
                 {
@@ -435,35 +442,46 @@ std::list<Feature> EvaluatorBase::featuresAt(const Eigen::Vector3f& p)
         const auto ds = derivs(1);
 
         bool ambiguous = false;
-        for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
+        for (auto itr = tape->t.rbegin(); itr != tape->t.rend() && !ambiguous;
+                ++itr)
         {
-            // Check for ambiguity here
-            if ((itr->op == Opcode::MIN || itr->op == Opcode::MAX) &&
-                    result.f[itr->a][0] == result.f[itr->b][0])
+            if ((itr->op == Opcode::MIN || itr->op == Opcode::MAX))
             {
-                // Check both branches of the ambiguity
-                const Eigen::Vector3d rhs(result.dx[itr->b][0],
-                                          result.dy[itr->b][0],
-                                          result.dz[itr->b][0]);
-                const Eigen::Vector3d lhs(result.dx[itr->a][0],
-                                          result.dy[itr->a][0],
-                                          result.dz[itr->a][0]);
-                const auto epsilon = (itr->op == Opcode::MIN) ? (rhs - lhs)
-                                                              : (lhs - rhs);
-
-                auto fa = f_;
-                if (fa.push(epsilon, {itr->id, 0}))
+                // If we've ended up with a non-selection, then collapse
+                // it to a single choice
+                if (itr->a == itr->b)
                 {
+                    auto fa = f_;
+                    fa.push_choice({itr->id, 0});
                     todo.push_back(fa);
+                    ambiguous = true;
                 }
-
-                auto fb = f_;
-                if (fb.push(-epsilon, {itr->id, 1}))
+                // Check for ambiguity here
+                else if (result.f[itr->a][0] == result.f[itr->b][0])
                 {
-                    todo.push_back(fb);
+                    // Check both branches of the ambiguity
+                    const Eigen::Vector3d rhs(result.dx[itr->b][0],
+                                              result.dy[itr->b][0],
+                                              result.dz[itr->b][0]);
+                    const Eigen::Vector3d lhs(result.dx[itr->a][0],
+                                              result.dy[itr->a][0],
+                                              result.dz[itr->a][0]);
+                    const auto epsilon = (itr->op == Opcode::MIN) ? (rhs - lhs)
+                                                                  : (lhs - rhs);
+
+                    auto fa = f_;
+                    if (fa.push(epsilon, {itr->id, 0}))
+                    {
+                        todo.push_back(fa);
+                    }
+
+                    auto fb = f_;
+                    if (fb.push(-epsilon, {itr->id, 1}))
+                    {
+                        todo.push_back(fb);
+                    }
+                    ambiguous = true;
                 }
-                ambiguous = true;
-                break;
             }
         }
 

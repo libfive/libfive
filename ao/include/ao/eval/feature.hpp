@@ -49,9 +49,26 @@ public:
     void push_raw(Choice c, Eigen::Vector3d v);
 
     /*
+     *  Inserts a choice without an associated direction
+     *  This is useful to collapse cases like min(a, a)
+     */
+    void push_choice(Choice c);
+
+    /*
+     *  Appends a choice to the end of the list
+     */
+    void push_choice_raw(Choice c);
+
+    /*
      *  Returns the epsilon associated with a particular choice
      */
     Eigen::Vector3d getEpsilon(Clause::Id i) const { return _epsilons.at(i); }
+
+    /*
+     *  Checks to see whether the given clause has an epsilon
+     */
+    bool hasEpsilon(Clause::Id i) const
+        { return _epsilons.find(i) != _epsilons.end(); }
 
 protected:
     typedef enum { NOT_PLANAR, PLANAR_FAIL, PLANAR_SUCCESS } PlanarResult;

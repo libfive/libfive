@@ -98,6 +98,16 @@ void Feature::push_raw(Choice c, Eigen::Vector3d v)
     _epsilons[c.id] = v;
 }
 
+void Feature::push_choice_raw(Choice c)
+{
+    choices.push_back(c);
+}
+
+void Feature::push_choice(Choice c)
+{
+    choices.push_front(c);
+}
+
 bool Feature::push(Eigen::Vector3d e, Choice choice)
 {
     if (isCompatible(e))

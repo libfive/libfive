@@ -406,9 +406,32 @@ TEST_CASE("Evaluator::featuresAt")
         REQUIRE(e.featuresAt({-0.5, -1, 0}).size() == 1);
     }
 
+    SECTION("One feature (nested)")
+    {
+        auto t = max(max(max(-Tree::X(), Tree::X() - 1),
+                         max(-Tree::Y(), Tree::Y() - 1)),
+                    -Tree::X());
+        Evaluator e(t);
+        REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
+    }
+
     SECTION("One feature (duplicated)")
     {
-        auto t = max(-Tree::X(), -Tree::X());
+        auto t = max(Tree::X(), Tree::X());
+        Evaluator e(t);
+        REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
+    }
+
+    SECTION("One feature (duplicated multiple times)")
+    {
+        auto t = max(Tree::X(), max(Tree::X(), Tree::X()));
+        Evaluator e(t);
+        REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
+    }
+
+    SECTION("One feature (duplicated even more times)")
+    {
+        auto t = max(max(Tree::X(), Tree::X()), max(Tree::X(), Tree::X()));
         Evaluator e(t);
         REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
     }
