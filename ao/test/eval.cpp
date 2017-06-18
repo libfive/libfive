@@ -405,6 +405,15 @@ TEST_CASE("Evaluator::featuresAt")
         Evaluator e(rectangle(-1, 0, -1, 1));
         REQUIRE(e.featuresAt({-0.5, -1, 0}).size() == 1);
     }
+
+    SECTION("Two features (nested)")
+    {
+        auto t = max(max(max(-Tree::X(), Tree::X() - 1),
+                             max(-Tree::Y(), Tree::Y() - 1)),
+                    -Tree::X());
+        Evaluator e(t);
+        REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
+    }
 }
 
 TEST_CASE("Evaluator::getAmbiguous")
