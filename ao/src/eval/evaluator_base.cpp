@@ -498,6 +498,7 @@ std::list<Feature> EvaluatorBase::featuresAt(const Eigen::Vector3f& p)
     }
     pop(); // specialization
 
+    assert(done.size() > 0);
     return done;
 }
 
