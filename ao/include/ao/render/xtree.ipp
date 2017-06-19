@@ -188,11 +188,28 @@ void XTree<T, dims>::finalize(Evaluator* e)
         manifold = this->cornerTopology();
 
         // Find the vertex for this node
-        vert = manifold ? findVertex(solver).first :
-            // For non-manifold leaf nodes, put the vertex at the mass point.
-            // As described in "Dual Contouring: The Secret Sauce", this improves
-            // mesh quality.
-            (mass_point.head<3>() / mass_point.w());
+        if (manifold)
+        {
+            vert = findVertex(solver).first;
+
+            // If the vertex ended up outside the model, mark as non-manifold
+            // so that it ends up positioned at the mass point.
+            auto a = pos(0);
+            auto b = pos(Axis::AXIS_X | Axis::AXIS_Y | Axis::AXIS_Z);
+            if (vert.x() < a.x() || vert.y() < a.y() || vert.z() < a.z() ||
+                vert.x() > b.x() || vert.y() > b.y() || vert.z() > b.z())
+            {
+                manifold = false;
+            }
+        }
+
+        // For non-manifold leaf nodes, put the vertex at the mass point.
+        // As described in "Dual Contouring: The Secret Sauce", this improves
+        // mesh quality.
+        if (!manifold)
+        {
+            vert = (mass_point.head<3>() / mass_point.w());
+        }
     }
 
     // If this cell is no longer a branch, remove its children
