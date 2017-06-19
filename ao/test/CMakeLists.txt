@@ -10,6 +10,7 @@ set(SRCS main.cpp
     region.cpp
     contours.cpp
     feature.cpp
+    quadtree.cpp
     solver.cpp
     subregion.cpp
     template.cpp
