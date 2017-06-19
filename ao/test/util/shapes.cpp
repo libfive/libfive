@@ -74,6 +74,5 @@ Tree circle(float r)
 
 Tree sphere(float r)
 {
-    return square(Tree::X()) + square(Tree::Y()) + square(Tree::Z())
-           - pow(r, 2);
+    return sqrt(square(Tree::X()) + square(Tree::Y()) + square(Tree::Z())) - r;
 }
