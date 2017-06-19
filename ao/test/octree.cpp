@@ -96,7 +96,7 @@ TEST_CASE("Vertex positioning on sliced box")
                          max(-Tree::Z(), Tree::Z() - 1)),
                  1.5 - Tree::X() - Tree::Y() - Tree::Z());
 
-    Region r({-2, 2}, {-2, 2}, {-2, 2}, 2);
+    Region r({-2, 2}, {-2, 2}, {-2, 2}, 4);
     std::unique_ptr<Octree> out(Octree::render(t, r));
 
     auto eval = Evaluator(t);

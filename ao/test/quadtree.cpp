@@ -13,7 +13,7 @@ TEST_CASE("Vertex positioning on sliced rectangle")
                      max(-Tree::Y(), Tree::Y() - 0.5)),
                  0.5 - Tree::X() - Tree::Y());
 
-    Region r({-1, 1}, {-1, 1}, {0, 0}, 2);
+    Region r({-1, 1}, {-1, 1}, {0, 0}, 4);
     std::unique_ptr<Quadtree> out(Quadtree::render(t, r));
 
     auto eval = Evaluator(t);
