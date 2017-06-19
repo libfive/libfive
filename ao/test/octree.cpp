@@ -88,20 +88,11 @@ TEST_CASE("Vertex positioning on sphere")
     REQUIRE(rmax < radius*1.1);
 }
 
-
-TEST_CASE("Vertex positioning on sliced box")
+float get_error(std::unique_ptr<Octree>& oct, Tree t)
 {
-    auto t = max(max(max(max(-Tree::X(), Tree::X() - 1),
-                         max(-Tree::Y(), Tree::Y() - 1)),
-                         max(-Tree::Z(), Tree::Z() - 1)),
-                 1.5 - Tree::X() - Tree::Y() - Tree::Z());
-
-    Region r({-2, 2}, {-2, 2}, {-2, 2}, 4);
-    std::unique_ptr<Octree> out(Octree::render(t, r));
-
     auto eval = Evaluator(t);
     float worst = 0;
-    std::list<const Octree*> targets = {out.get()};
+    std::list<const Octree*> targets = {oct.get()};
     while (targets.size())
     {
         const Octree* o = targets.front();
@@ -119,5 +110,28 @@ TEST_CASE("Vertex positioning on sliced box")
             worst = fmax(worst, fabs(eval.eval(o->getVertex().cast<float>())));
         }
     }
-    REQUIRE(worst < 0.001);
+    return worst;
+}
+
+TEST_CASE("Vertex positioning on sliced box")
+{
+    auto t = max(max(max(max(-Tree::X(), Tree::X() - 1),
+                         max(-Tree::Y(), Tree::Y() - 1)),
+                         max(-Tree::Z(), Tree::Z() - 1)),
+                 1.5 - Tree::X() - Tree::Y() - Tree::Z());
+
+    Region r({-2, 2}, {-2, 2}, {-2, 2}, 4);
+    std::unique_ptr<Octree> out(Octree::render(t, r));
+
+    REQUIRE(get_error(out, t) < 0.001);
+}
+
+TEST_CASE("Vertex positioning on sliced sphere")
+{
+    auto t = max(sphere(1), Tree::Z());
+
+    Region r({-2, 2}, {-2, 2}, {-2, 2}, 4);
+    std::unique_ptr<Octree> out(Octree::render(t, r));
+
+    REQUIRE(get_error(out, t) < 0.001);
 }
