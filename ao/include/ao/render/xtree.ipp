@@ -199,7 +199,7 @@ void XTree<T, dims>::finalize(Evaluator* e)
             if (vert.x() < a.x() || vert.y() < a.y() || vert.z() < a.z() ||
                 vert.x() > b.x() || vert.y() > b.y() || vert.z() > b.z())
             {
-                manifold = false;
+                //manifold = false;
             }
         }
 
