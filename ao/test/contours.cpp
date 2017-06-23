@@ -63,5 +63,4 @@ TEST_CASE("2D contour with ambiguities")
     auto m = Contours::render(t, r);
     REQUIRE(m->contours.size() == 1);
     REQUIRE(m->contours[0] == m->contours[m->contours.size() - 1]);
-    m->writeSVG("out.svg", r);
 }

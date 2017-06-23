@@ -33,10 +33,6 @@ TEST_CASE("Vertex positioning on sliced rectangle")
         }
         else if (o->getType() == Quadtree::LEAF)
         {
-            std::cout << "[" << o->pos(0).head<2>().transpose() << "]" 
-                << "[" << o->pos(Axis::AXIS_X | Axis::AXIS_Y).head<2>().transpose() << "]" << std::endl;
-            std::cout << o->getVertex().head<2>().transpose() << std::endl;
-            printf("%f\n\n",eval.eval(o->getVertex().cast<float>()));
             worst = fmax(worst, fabs(eval.eval(o->getVertex().cast<float>())));
         }
     }
