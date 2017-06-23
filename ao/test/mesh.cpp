@@ -62,3 +62,13 @@ TEST_CASE("Mesh performance")
            std::to_string(elapsed.count()) + " sec";
     WARN(log);
 }
+
+TEST_CASE("Face count in rectangular prism")
+{
+    auto t = max(max(max(-Tree::X(), Tree::X() - 4),
+                     max(-Tree::Y(), Tree::Y() - 1)),
+                     max(-Tree::Z(), Tree::Z() - 0.25));
+    auto m = Mesh::render(t, Region({-1, 5}, {-1, 2}, {-1, 1.25}, 8));
+    REQUIRE(m->verts.size() == 8);
+    REQUIRE(m->tris.size() == 12);
+}
