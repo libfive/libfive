@@ -69,7 +69,7 @@ Tree menger(int i)
 
 Tree circle(float r)
 {
-    return square(Tree::X()) + square(Tree::Y()) - pow(r, 2);
+    return sqrt(square(Tree::X()) + square(Tree::Y())) - r;
 }
 
 Tree sphere(float r)
