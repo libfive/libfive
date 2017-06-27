@@ -210,7 +210,13 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
 
     // Check every edge and use binary search to find intersections on
     // edges that have mismatched signs
-    std::vector<Eigen::Vector3d> pts;
+    // Only check each point once, by storing them into a set
+    auto comp = [](const Eigen::Vector3d& a, const Eigen::Vector3d& b)
+    {
+        return std::lexicographical_compare(
+            a.data(), a.data() + a.size(), b.data(), b.data() + b.size());
+    };
+    std::set<Eigen::Vector3d, decltype(comp)> _pts(comp);
     for (auto e : static_cast<const T*>(this)->cellEdges())
     {
         if (corner(e.first) != corner(e.second))
@@ -221,9 +227,12 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
 
             // Store position in big list o' intersections
             // (along with a dummy normal)
-            pts.push_back(p);
+            _pts.insert(p);
         }
     }
+
+    // Copy from a set to a vector for better iteration
+    std::vector<Eigen::Vector3d> pts(_pts.begin(), _pts.end());
 
     // Calculate normals in bulk (since that's more efficient)
     for (unsigned i=0; i < pts.size(); ++i)
@@ -238,23 +247,9 @@ std::vector<Intersection> XTree<T, dims>::findIntersections(
     // Accumulate intersections, ambiguous and non-ambiguous
     std::vector<Intersection> intersections;
 
-    // Only check each point once, by storing them into a set
-    auto comp = [](const Eigen::Vector3d& a, const Eigen::Vector3d& b)
-    {
-        return std::lexicographical_compare(
-            a.data(), a.data() + a.size(), b.data(), b.data() + b.size());
-    };
-    std::set<Eigen::Vector3d, decltype(comp)> seen(comp);
-
     for (unsigned i=0; i < pts.size(); ++i)
     {
         const auto p = pts[i];
-        if (seen.find(p) != seen.end())
-        {
-            continue;
-        }
-        seen.insert(p);
-
         if (ambiguous.find(i) == ambiguous.end())
         {
             const Eigen::Vector3d g(ds.dx[i], ds.dy[i], ds.dz[i]);
