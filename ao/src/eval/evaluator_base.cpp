@@ -1229,10 +1229,8 @@ Interval EvaluatorBase::interval()
 {
     for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
     {
-        Interval a = result.i[itr->a];
-        Interval b = result.i[itr->b];
-
-        result.i[itr->id] = eval_clause_interval(itr->op, a, b);
+        result.i[itr->id] = eval_clause_interval(itr->op,
+                result.i[itr->a], result.i[itr->b]);
     }
     return result.i[tape->i];
 }
