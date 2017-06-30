@@ -9,16 +9,16 @@ add_library(ao-kernel STATIC
     eval/evaluator_base.cpp
     eval/result.cpp
     eval/feature.cpp
-    format/contours.cpp
-    format/image.cpp
-    format/mesh.cpp
-    render/dc.cpp
-    render/dc2d.cpp
-    render/heightmap.cpp
-    render/octree.cpp
-    render/quadtree.cpp
+    #format/contours.cpp
+    #format/image.cpp
+    #format/mesh.cpp
+    #render/dc.cpp
+    #render/dc2d.cpp
+    #render/heightmap.cpp
+    #render/octree.cpp
+    #render/quadtree.cpp
     render/region.cpp
-    render/subregion.cpp
+    #    render/subregion.cpp
     solve/solver.cpp
     tree/cache.cpp
     tree/opcode.cpp

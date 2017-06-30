@@ -1,26 +1,26 @@
 set(SRCS main.cpp
     avx.cpp
     cache.cpp
-    dc.cpp
+    #dc.cpp
     eval.cpp
-    heightmap.cpp
-    lib.cpp
-    mesh.cpp
-    octree.cpp
+    #heightmap.cpp
+    #lib.cpp
+    #mesh.cpp
+    #octree.cpp
     region.cpp
-    contours.cpp
+    #contours.cpp
     feature.cpp
-    quadtree.cpp
+    #quadtree.cpp
     solver.cpp
-    subregion.cpp
+    #subregion.cpp
     template.cpp
     tree.cpp
     util/shapes.cpp)
-set(LIBS ao-kernel ao-kernel-c)
+set(LIBS ao-kernel) # ao-kernel-c)
 
 if (GUILE_FOUND)
-    set(SRCS ${SRCS} guile.cpp)
-    set(LIBS ${LIBS} guile-ao-kernel)
+    #    set(SRCS ${SRCS} guile.cpp)
+    #set(LIBS ${LIBS} guile-ao-kernel)
 endif(GUILE_FOUND)
 
 add_executable(ao-test ${SRCS})

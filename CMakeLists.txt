@@ -43,5 +43,5 @@ find_package(Guile 2.2 QUIET)
 add_subdirectory(ao)
 
 if(GUILE_FOUND)
-    add_subdirectory(gui)
+#    add_subdirectory(gui)
 endif(GUILE_FOUND)

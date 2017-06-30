@@ -4,103 +4,58 @@
 
 namespace Kernel {
 
-Region::Region(Interval x, Interval y, Interval z, float res)
-    : Region(x, y, z, res, res, res)
+Region::Region(Eigen::Vector3f lower, Eigen::Vector3f upper, float res)
+    : Region(lower, upper, {res, res, res})
 {
     // Nothing to do here
 }
 
-Region::Region(Interval x, Interval y, Interval z,
-               float rx, float ry, float rz)
-    : X(x, rx), Y(y, ry), Z(z, rz)
+Region::Region(Eigen::Vector3f _lower, Eigen::Vector3f _upper,
+               Eigen::Vector3f res)
 {
-    // Nothing to do here
-}
+    size = (res.array() * (_upper - _lower).array()).ceil().max(1).cast<int>();
 
-Region::Region(Axis x, Axis y, Axis z)
-    : X(x), Y(y), Z(z)
-{
-    // Nothing to do here
+    auto extra = size.array().cast<float>() / res.array() -
+                 (_upper - _lower).array();
+    lower = _lower.array() - extra/2;
+    upper = _upper.array() - extra/2;
+
+    for (int i=0; i < 3; ++i)
+    {
+        for (int index=0; index < size(i); ++index)
+        {
+            const float frac = (index + 0.5) / size(i);
+            pts[i].push_back(lower(i) * (1 - frac) + upper(i) * frac);
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Subregion Region::view() const
+Region::View Region::view() const
 {
-    return Subregion(*this);
+    return View(*this);
 }
 
-Region Region::powerOfTwo(int dims) const
+Region::View::View(const Region& r)
+    : lower(r.lower), upper(r.upper), size(r.size), corner({0,0,0}),
+      pts(r.pts[0].data(), r.pts[1].data(), r.pts[2].data())
 {
-    assert(dims == 2 || dims == 3);
-    if (dims == 2)
-    {
-        assert(Z.values.size() == 1);
-    }
-
-    size_t vox = std::max({X.values.size(), Y.values.size(), Z.values.size()});
-    size_t n = 1 << (size_t)ceil(log(vox) / log(2));
-
-    // Calculate how much extra needs to be added to an axis
-    auto d = [=](const Axis& a){
-        return (a.bounds.upper() - a.bounds.lower()) *
-               (float(n) / a.values.size() - 1);
-    };
-
-    // Return the expanded axis bounds
-    auto a = [=](const Axis& a){
-        auto da = d(a);
-        return Axis({a.bounds.lower() - da/2,
-                     a.bounds.upper() + da/2}, n);
-    };
-
-    auto r = Region(a(X), a(Y), dims == 3 ? a(Z) : Z);
-
-    assert(r.X.values.size() == n);
-    assert(r.Y.values.size() == n);
-    assert(r.Z.values.size() == (dims == 3) ? n : 1);
-
-    return r;
+    // Nothing to do here
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-Region::Axis::Axis(Interval i, float res)
-    : bounds(expand(i, res))
+Region::View::View(Eigen::Vector3f lower, Eigen::Vector3f upper,
+                   Eigen::Vector3i size, Eigen::Vector3i corner,
+                   Eigen::Matrix<const float*, 3, 1> pts)
+    : lower(lower), upper(upper), size(size), corner(corner),
+      pts(pts)
 {
-    // bounds should be an exact multiple of 1/res, but round to
-    // compensate for floating-point inaccuracies
-    size_t size = std::max((size_t)1,
-            (size_t)std::round(res * (bounds.upper() - bounds.lower())));
-    for (unsigned index=0; index < size; ++index)
-    {
-        const float frac = (index + 0.5) / size;
-        values.push_back(bounds.lower() * (1 - frac) + bounds.upper() * frac);
-    }
+  // Nothing to do here
 }
 
-Region::Axis::Axis(Interval i, size_t size)
-    : bounds(i)
+size_t Region::View::voxels() const
 {
-    for (unsigned index=0; index < size; ++index)
-    {
-        const float frac = (index + 0.5) / size;
-        values.push_back(i.lower() * (1 - frac) + i.upper() * frac);
-    }
-}
-
-Interval Region::Axis::expand(Interval i, float res)
-{
-    if (res == 0)
-    {
-        return i;
-    }
-    else
-    {
-        size_t size = std::ceil(res * (i.upper() - i.lower()));
-        float extra = size / res - (i.upper() - i.lower());
-        return {i.lower() - extra/2, i.upper() + extra/2};
-    }
+    return size.x() * size.y() * size.z();
 }
 
 }   // namespace Kernel
