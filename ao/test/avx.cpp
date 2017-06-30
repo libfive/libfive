@@ -14,7 +14,7 @@ using namespace Kernel;
 
 #ifdef __AVX__
 
-TEST_CASE("Vectorized performance")
+TEST_CASE("EvaluatorAVX: performance")
 {
     // Oversample to get meaningful result
     const float N = 100;
@@ -77,7 +77,7 @@ TEST_CASE("Vectorized performance")
     }
 }
 
-TEST_CASE("Alignment")
+TEST_CASE("Result: AVX alignment")
 {
     // Make sure that struct padding works like I think it works
     struct { char a;
