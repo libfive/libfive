@@ -15,10 +15,14 @@ Region::Region(Eigen::Vector3f _lower, Eigen::Vector3f _upper,
 {
     size = (res.array() * (_upper - _lower).array()).ceil().max(1).cast<int>();
 
-    auto extra = size.array().cast<float>() / res.array() -
-                 (_upper - _lower).array();
+    // Figure out much should be added to each axis, masking out
+    // the case where resolution is zero
+    auto extra = (res.array() > 0)
+        .select(size.array().cast<float>() / res.array() -
+                     (_upper - _lower).array(),
+                Eigen::Array3i::Zero());
     lower = _lower.array() - extra/2;
-    upper = _upper.array() - extra/2;
+    upper = _upper.array() + extra/2;
 
     for (int i=0; i < 3; ++i)
     {
