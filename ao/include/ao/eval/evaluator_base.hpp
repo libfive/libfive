@@ -31,6 +31,10 @@ public:
     EvaluatorBase(const Tree root, const std::map<Tree::Id, float>& vars)
         : EvaluatorBase(root, Eigen::Matrix4f::Identity(), vars) {}
 
+    /*  Make an aligned new operator, as this class has Eigen structs
+     *  inside of it (which are aligned for SSE) */
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     /*
      *  Single-argument evaluation
      */

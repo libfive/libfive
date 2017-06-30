@@ -24,6 +24,11 @@ public:
     EvaluatorAVX(const EvaluatorAVX& other)
         : EvaluatorBase(other) { /* Nothing to do here */ }
 
+
+    /*  Make an aligned new operator, as this class has Eigen structs
+     *  inside of it (which are aligned for SSE) */
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     /*
      *  AVX-accelerated versions of existing Evaluator functions
      */
