@@ -4,7 +4,7 @@
 
 using namespace Kernel;
 
-TEST_CASE("Region::XYZ")
+TEST_CASE("Region::pts values")
 {
     SECTION("Exact values")
     {
@@ -28,39 +28,47 @@ TEST_CASE("Region::XYZ")
     }
 }
 
-TEST_CASE("Region::size")
+TEST_CASE("Region::pts size")
 {
     SECTION("Simple")
     {
         auto r = Region({0, 0, 0}, {1, 1, 2}, 1);
-        REQUIRE(r.size.x() == 1);
-        REQUIRE(r.size.y() == 1);
-        REQUIRE(r.size.z() == 2);
+        REQUIRE(r.pts[0].size() == 1);
+        REQUIRE(r.pts[1].size() == 1);
+        REQUIRE(r.pts[2].size() == 2);
     }
 
     SECTION("Exact values")
     {
         auto r = Region({0, 0, 0}, {10, 5, 2.5}, 10);
 
-        REQUIRE(r.size.x() == 100);
-        REQUIRE(r.size.y() == 50);
-        REQUIRE(r.size.z() == 25);
+        REQUIRE(r.pts[0].size() == 100);
+        REQUIRE(r.pts[1].size() == 50);
+        REQUIRE(r.pts[2].size() == 25);
     }
 
     SECTION("Expanding interval")
     {
         auto r = Region({0, 0, 0}, {1.1, 2.1, 3.1}, 1.0f);
-        REQUIRE(r.size.x() == 2);
-        REQUIRE(r.size.y() == 3);
-        REQUIRE(r.size.z() == 4);
+        REQUIRE(r.pts[0].size() == 2);
+        REQUIRE(r.pts[1].size() == 3);
+        REQUIRE(r.pts[2].size() == 4);
     }
 
     SECTION("Per-axis resolution")
     {
         auto r = Region({0, 0, 0}, {1, 1, 1}, {1, 2, 3});
-        REQUIRE(r.size.x() == 1);
-        REQUIRE(r.size.y() == 2);
-        REQUIRE(r.size.z() == 3);
+        REQUIRE(r.pts[0].size() == 1);
+        REQUIRE(r.pts[1].size() == 2);
+        REQUIRE(r.pts[2].size() == 3);
+    }
+
+    SECTION("Empty axes")
+    {
+        auto r = Region({0, 0, 0}, {1, 1, 1}, {3, 2, 0});
+        REQUIRE(r.pts[0].size() == 3);
+        REQUIRE(r.pts[1].size() == 2);
+        REQUIRE(r.pts[2].size() == 1);
     }
 }
 
@@ -98,6 +106,16 @@ TEST_CASE("Region::View::split")
         REQUIRE(b.upper.x() == 1);
         REQUIRE(b.corner.x() == 5);
         REQUIRE(b.size.x() == 5);
+
+        REQUIRE(a.lower.tail<2>() == v.lower.tail<2>());
+        REQUIRE(a.upper.tail<2>() == v.upper.tail<2>());
+        REQUIRE(a.corner.tail<2>() == v.corner.tail<2>());
+        REQUIRE(a.size.tail<2>() == v.size.tail<2>());
+
+        REQUIRE(b.lower.tail<2>() == v.lower.tail<2>());
+        REQUIRE(b.upper.tail<2>() == v.upper.tail<2>());
+        REQUIRE(b.corner.tail<2>() == v.corner.tail<2>());
+        REQUIRE(b.size.tail<2>() == v.size.tail<2>());
     }
 
     SECTION("Axis selection")
@@ -167,5 +185,109 @@ TEST_CASE("Region::View::split")
         REQUIRE(b.upper.z() == 3);
         REQUIRE(b.corner.z() == 2);
         REQUIRE(b.size.z() == 1);
+    }
+
+    SECTION("Splitting a unit voxel")
+    {
+        auto r = Region({0, 0, 0}, {1, 1, 1}, 1);
+        auto v = r.view();
+
+        auto vs = v.split();
+        auto a = vs.first;
+        auto b = vs.second;
+
+        REQUIRE(!a.empty());
+        REQUIRE(b.empty());
+    }
+}
+
+TEST_CASE("Region::View::subdivide")
+{
+    Region a({-1, -2, -4}, {1, 2, 4}, {4, 2, 1});
+    auto v = a.view();
+
+    SECTION("3D")
+    {
+        auto out = v.subdivide<3>();
+        REQUIRE(out.size() == 8);
+        for (int i=0; i < 8; ++i)
+        {
+            const auto& sub = out[i];
+            CAPTURE(sub.lower.x());
+            CAPTURE(sub.upper.x());
+            CAPTURE(sub.lower.y());
+            CAPTURE(sub.upper.y());
+            CAPTURE(sub.lower.z());
+            CAPTURE(sub.upper.z());
+            if (i & AXIS_X)
+            {
+                REQUIRE(sub.lower.x() ==  0);
+                REQUIRE(sub.upper.x() ==  1);
+            }
+            else
+            {
+                REQUIRE(sub.lower.x() == -1);
+                REQUIRE(sub.upper.x() ==  0);
+            }
+
+            if (i & AXIS_Y)
+            {
+                REQUIRE(sub.lower.y() ==  0);
+                REQUIRE(sub.upper.y() ==  2);
+            }
+            else
+            {
+                REQUIRE(sub.lower.y() == -2);
+                REQUIRE(sub.upper.y() ==  0);
+            }
+
+            if (i & AXIS_Z)
+            {
+                REQUIRE(sub.lower.z() ==  0);
+                REQUIRE(sub.upper.z() ==  4);
+            }
+            else
+            {
+                REQUIRE(sub.lower.z() == -4);
+                REQUIRE(sub.upper.z() ==  0);
+            }
+        }
+    }
+
+    SECTION("2D")
+    {
+        auto out = v.subdivide<2>();
+        REQUIRE(out.size() == 4);
+        for (int i=0; i < 4; ++i)
+        {
+            const auto& sub = out[i];
+            CAPTURE(sub.lower.x());
+            CAPTURE(sub.upper.x());
+            CAPTURE(sub.lower.y());
+            CAPTURE(sub.upper.y());
+            if (i & AXIS_X)
+            {
+                REQUIRE(sub.lower.x() ==  0);
+                REQUIRE(sub.upper.x() ==  1);
+            }
+            else
+            {
+                REQUIRE(sub.lower.x() == -1);
+                REQUIRE(sub.upper.x() ==  0);
+            }
+
+            if (i & AXIS_Y)
+            {
+                REQUIRE(sub.lower.y() ==  0);
+                REQUIRE(sub.upper.y() ==  2);
+            }
+            else
+            {
+                REQUIRE(sub.lower.y() == -2);
+                REQUIRE(sub.upper.y() ==  0);
+            }
+
+            REQUIRE(!(i & AXIS_Z));
+        }
     }
 }

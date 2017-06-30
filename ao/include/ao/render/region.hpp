@@ -36,9 +36,6 @@ public:
     /*  Bounding box of the region  */
     Eigen::Vector3f lower, upper;
 
-    /*  Size in voxels  */
-    Eigen::Vector3i size;
-
     /*  Voxel sample positions  */
     std::array<std::vector<float>, 3> pts;
 
@@ -69,27 +66,32 @@ public:
             // Select the largest axis
             Eigen::Matrix3i::Index axis;
             (Eigen::Array3i(A & AXIS_X, A & AXIS_Y, A & AXIS_Z) != 0)
-                .select(size, Eigen::Matrix3i::Zero())
+                .select(size, Eigen::Vector3i::Zero())
                 .maxCoeff(&axis);
 
             // Figure out the offsets, rounding down
-            Eigen::Array3i size_upper = Eigen::Array3i::Zero();
+            Eigen::Array3i size_upper = size;
+            Eigen::Array3i size_lower = size;
             size_upper(axis) = size(axis) / 2;
-            Eigen::Array3i size_lower = size.array() - size_upper;
+            size_lower(axis) -= size_upper(axis);
 
-            auto frac = size_lower.array().cast<float>() /
-                        size.cast<float>().array();
-            auto middle = (upper.array().cast<float>() * frac) +
-                          (lower.array().cast<float>() * (1 - frac));
+            auto frac = size_lower(axis) / float(size(axis));
+            float middle = (upper(axis) * frac) + (lower(axis) * (1 - frac));
 
-            auto _pts = pts;
-            for (unsigned i=0; i < 3; ++i)
-            {
-                _pts[i] += size_lower[i];
-            }
-            return {View(lower, middle, size_lower, corner, pts),
-                    View(middle, upper, size_upper,
-                         corner.array() + size_lower, _pts)};
+            auto upper_lower = lower;
+            auto lower_upper = upper;
+
+            upper_lower(axis) = middle;
+            lower_upper(axis) = middle;
+
+            auto upper_pts = pts;
+            upper_pts(axis) += size_lower(axis);
+            auto upper_corner = corner;
+            upper_corner(axis) += size_lower(axis);
+
+            return {View(lower, lower_upper, size_lower, corner, pts),
+                    View(upper_lower, upper, size_upper,
+                         upper_corner, upper_pts)};
         }
 
         /*
@@ -108,7 +110,7 @@ public:
             auto middle = (upper.array() * frac) +
                           (lower.array() * (1 - frac));
 
-            std::array<View, (1 << N)> out;
+            std::array<View, (1 << N)> out = {};
             for (int i=0; i < (1 << N); ++i)
             {
                 auto a = Eigen::Array3i(i & AXIS_X, i & AXIS_Y, i & AXIS_Z) > 0;
@@ -144,13 +146,13 @@ public:
         bool unit() const { return size == Eigen::Vector3i(1, 1, 1); }
 
         /*  Region bounds  */
-        const Eigen::Vector3f lower, upper;
+        Eigen::Vector3f lower, upper;
 
         /*  Size of this subregion (in voxels)  */
-        const Eigen::Vector3i size;
+        Eigen::Vector3i size;
 
         /*  Lower corner in global voxel space  */
-        const Eigen::Vector3i corner;
+        Eigen::Vector3i corner;
 
         /*  Data pointers  */
         Eigen::Array<const float*, 3, 1> pts;
@@ -163,6 +165,7 @@ public:
              Eigen::Vector3i size, Eigen::Vector3i corner,
              Eigen::Matrix<const float*, 3, 1> pts);
 
+        View();
     };
 
     /*
