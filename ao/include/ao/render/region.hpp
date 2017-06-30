@@ -138,6 +138,11 @@ public:
          */
         bool empty() const { return size.minCoeff() == 0; }
 
+        /*
+         *  Checks to see if this view is of a unit voxel
+         */
+        bool unit() const { return size == Eigen::Vector3i(1, 1, 1); }
+
         /*  Region bounds  */
         const Eigen::Vector3f lower, upper;
 
