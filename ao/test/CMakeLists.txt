@@ -3,7 +3,7 @@ set(SRCS main.cpp
     cache.cpp
     #dc.cpp
     eval.cpp
-    #heightmap.cpp
+    heightmap.cpp
     #lib.cpp
     #mesh.cpp
     #octree.cpp

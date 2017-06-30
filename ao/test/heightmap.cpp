@@ -20,10 +20,10 @@ static std::pair<DepthImage, NormalImage> render(
     return Heightmap::render(t, r, abort, M);
 }
 
-TEST_CASE("2D interval Z values")
+TEST_CASE("Heightmap::render: 2D interval Z values")
 {
     Tree t = circle(1);
-    Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 0);
+    Region r({-1, -1, -1}, {1, 1, 1}, {25, 25, 0});
 
     auto out = render(t, r).first;
     CAPTURE(out);
@@ -31,18 +31,18 @@ TEST_CASE("2D interval Z values")
              out == -std::numeric_limits<float>::infinity()).all());
 }
 
-TEST_CASE("3D interval Z values")
+TEST_CASE("Heightmap::render: 3D interval Z values")
 {
     Tree t = circle(1);
-    Region r({-1, 1}, {-1, 1}, {-1, 1}, 25, 25, 25);
+    Region r({-1, -1, -1}, {1, 1, 1}, {25, 25, 25});
 
     auto out = render(t, r).first;
     CAPTURE(out);
-    REQUIRE((out == r.Z.values.back() ||
+    REQUIRE((out == r.pts[2].back() ||
              out == -std::numeric_limits<float>::infinity()).all());
 }
 
-TEST_CASE("2D rendering of a circle ")
+TEST_CASE("Heightmap::render: 2D circle ")
 {
     Tree t = circle(1);
 
@@ -62,7 +62,7 @@ TEST_CASE("2D rendering of a circle ")
 
     SECTION("Empty Z")
     {
-        Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
+        Region r({-1, -1, 0}, {1, 1, 0}, {5, 5, 0});
         auto out = render(t, r).first;
         CAPTURE(out);
         REQUIRE((comp == out).all());
@@ -70,18 +70,18 @@ TEST_CASE("2D rendering of a circle ")
 
     SECTION("Zero-resolution Z")
     {
-        Region r({-1, 1}, {-1, 1}, {-1, 1}, 5, 5, 0);
+        Region r({-1, -1, -1}, {1, 1, 1}, {5, 5, 0});
         auto out = render(t, r).first;
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
 }
 
-TEST_CASE("2D circle rendering at non-zero Z ")
+TEST_CASE("Heightmap::render: 2D circle at non-zero Z ")
 {
     Tree t = circle(1);
 
-    Region r({-1, 1}, {-1, 1}, {1, 1}, 5);
+    Region r({-1, -1, 1}, {1, 1, 1}, 5);
     auto out = render(t, r).first;
     CAPTURE(out);
 
@@ -101,9 +101,10 @@ TEST_CASE("2D circle rendering at non-zero Z ")
     REQUIRE((comp == out).all());
 }
 
-TEST_CASE("Render orientation ")
+TEST_CASE("Heightmap::render: orientation")
 {
-    Region r({-1, 1}, {-1, 1}, {0, 0}, 5);
+
+    Region r({-1, -1, 0}, {1, 1, 0}, 5);
 
     SECTION("Y")
     {
@@ -152,33 +153,33 @@ TEST_CASE("Render orientation ")
     }
 }
 
-TEST_CASE("Render shape ")
+TEST_CASE("Heightmap::render: image shape")
 {
     Tree t = circle(1);
 
     SECTION("X")
     {
-        Region r({0, 1}, {-1, 1}, {0, 0}, 5);
+        Region r({0, -1, 0}, {1, 1, 0}, 5);
         auto out = render(t, r).first;
         REQUIRE(out.rows() == 10);
         REQUIRE(out.cols() == 5);
     }
     SECTION("Y")
     {
-        Region r({-1, 1}, {0, 1}, {0, 0}, 5);
+        Region r({-1, 0, 0}, {1, 1, 0}, 5);
         auto out = render(t, r).first;
         REQUIRE(out.rows() == 5);
         REQUIRE(out.cols() == 10);
     }
 }
 
-TEST_CASE("3D rendering of a sphere ")
+TEST_CASE("Heightmap::render: 3D sphere")
 {
     Tree t = sphere(1);
 
     SECTION("Values")
     {
-        Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
+        Region r({-1, -1, -1}, {1, 1, 1}, 5);
         auto out = render(t, r).first;
 
         DepthImage comp(10, 10);
@@ -203,9 +204,9 @@ TEST_CASE("3D rendering of a sphere ")
 
 }
 
-TEST_CASE("2D rendering with normals ")
+TEST_CASE("Heightmap::render: 2D normals")
 {
-    Region r({-1, 1}, {-1, 1}, {-2,2}, 5);
+    Region r({-1, -1, -2}, {1, 1, 2}, 5);
 
     SECTION("X")
     {
@@ -237,10 +238,10 @@ TEST_CASE("2D rendering with normals ")
     }
 }
 
-TEST_CASE("Normal clipping ")
+TEST_CASE("Heightmap::render: Normal clipping ")
 {
     Tree t = circle(1);
-    Region r({-1, 1}, {-1, 1}, {-1, 1}, 5);
+    Region r({-1, -1, -1}, {1, 1, 1}, 5);
 
     auto norm = render(t, r).second;
 
@@ -248,7 +249,7 @@ TEST_CASE("Normal clipping ")
     REQUIRE((norm == 0xffff7f7f || norm == 0).all());
 }
 
-TEST_CASE("Performance")
+TEST_CASE("Heightmap::render: Performance")
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed;
@@ -258,7 +259,7 @@ TEST_CASE("Performance")
     {   // Build and render sphere
         Tree t = sphere(1);
 
-        Region r({-1, 1}, {-1, 1}, {-1, 1}, 500);
+        Region r({-1, -1, -1}, {1, 1, 1}, 500);
 
         start = std::chrono::system_clock::now();
         auto out = render(t, r).first;
@@ -272,7 +273,7 @@ TEST_CASE("Performance")
     {   // Build and render Menger sponge
         Tree sponge = menger(2);
 
-        Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 250);
+        Region r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5}, 250);
 
         Eigen::Matrix3f m;
         m = Eigen::AngleAxisf(float(M_PI/4), Eigen::Vector3f::UnitY()) *

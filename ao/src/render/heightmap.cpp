@@ -19,7 +19,7 @@ namespace Heightmap
  */
 struct NormalRenderer
 {
-    NormalRenderer(Evaluator* e, const Subregion& r, NormalImage& norm)
+    NormalRenderer(Evaluator* e, const Region::View& r, NormalImage& norm)
         : e(e), r(r), norm(norm) {}
 
     /*
@@ -63,9 +63,9 @@ struct NormalRenderer
 
     void push(size_t i, size_t j, float z)
     {
-        xs[count] = r.X.min + i;
-        ys[count] = r.Y.min + j;
-        e->set({r.X.pos(i), r.Y.pos(j), z}, count++);
+        xs[count] = r.corner.x() + i;
+        ys[count] = r.corner.y() + j;
+        e->set({r.pts.x()[i], r.pts.y()[j], z}, count++);
 
         // If the gradient array is completely full, execute a
         // calculation that finds normals and blits them to the image
@@ -76,7 +76,7 @@ struct NormalRenderer
     }
 
     Evaluator* e;
-    const Subregion& r;
+    const Region::View& r;
     NormalImage& norm;
 
     // Store the x, y coordinates of rendered points for normal calculations
@@ -89,25 +89,26 @@ struct NormalRenderer
 ////////////////////////////////////////////////////////////////////////////////
 
 // Helper macro to iterate over a region in a deterministic order
-#define SUBREGION_ITERATE_XYZ(r) \
-for (unsigned i=0; i < r.X.size; ++i)           \
-    for (unsigned j=0; j < r.Y.size; ++j)       \
-        if (depth(r.Y.min + j, r.X.min + i) < r.Z.pos(r.Z.size - 1)) \
-        for (unsigned k=0; k < r.Z.size; ++k)
+#define VIEW_ITERATE_XYZ(r) \
+for (int i=0; i < r.size.x(); ++i)           \
+    for (int j=0; j < r.size.y(); ++j)       \
+        if (depth(r.corner.y() + j, r.corner.x() + i) < r.pts.z()[r.size.z() - 1]) \
+        for (int k=0; k < r.size.z(); ++k)
 
 /*
  *  Helper functions that evaluates a region of pixels
  */
-static void pixels(Evaluator* e, const Subregion& r,
+static void pixels(Evaluator* e, const Region::View& r,
                    DepthImage& depth, NormalImage& norm)
 {
     size_t index = 0;
 
     // Flatten the region in a particular order
     // (which needs to be obeyed by anything unflattening results)
-    SUBREGION_ITERATE_XYZ(r)
+    VIEW_ITERATE_XYZ(r)
     {
-        e->setRaw({r.X.pos(i), r.Y.pos(j), r.Z.pos(r.Z.size - k - 1)}, index++);
+        e->setRaw({r.pts.x()[i], r.pts.y()[j], r.pts.z()[r.size.z() - k - 1]},
+                   index++);
     }
     e->applyTransform(index);
 
@@ -120,23 +121,23 @@ static void pixels(Evaluator* e, const Subregion& r,
 
     // Unflatten results into the image, breaking out of loops early when a pixel
     // is written (because all subsequent pixels will be below it).
-    SUBREGION_ITERATE_XYZ(r)
+    VIEW_ITERATE_XYZ(r)
     {
         // If this voxel is filled (because the f-rep is less than zero)
         if (out[index++] < 0)
         {
             // Check to see whether the voxel is in front of the image's depth
-            const float z = r.Z.pos(r.Z.size - k - 1);
-            if (depth(r.Y.min + j, r.X.min + i) < z)
+            const float z = r.pts.z()[r.size.z() - k - 1];
+            if (depth(r.corner.y() + j, r.corner.x() + i) < z)
             {
-                depth(r.Y.min + j, r.X.min + i) = z;
+                depth(r.corner.y() + j, r.corner.x() + i) = z;
 
                 // Store normals to render in a bulk pass
                 nr.push(i, j, z);
             }
             // Adjust the index pointer, since we can skip the rest of
             // this z-column (since future voxels are behind this one)
-            index += r.Z.size - k - 1;
+            index += r.size.z() - k - 1;
 
             break;
         }
@@ -152,25 +153,25 @@ static void pixels(Evaluator* e, const Subregion& r,
  *
  *  This function is used when marking an Interval as filled
  */
-static void fill(Evaluator* e, const Subregion& r, DepthImage& depth,
+static void fill(Evaluator* e, const Region::View& r, DepthImage& depth,
                  NormalImage& norm)
 {
     // Store the maximum z position (which is what we're flooding into
     // the depth image)
-    const float z = r.Z.pos(r.Z.size - 1);
+    const float z = r.pts.z()[r.size.z() - 1];
 
     // Helper struct to handle normal rendering
     NormalRenderer nr(e, r, norm);
 
     // Iterate over every pixel in the region
-    for (unsigned i=0; i < r.X.size; ++i)
+    for (int i=0; i < r.size.x(); ++i)
     {
-        for (unsigned j=0; j < r.Y.size; ++j)
+        for (int j=0; j < r.size.y(); ++j)
         {
             // Check to see whether the voxel is in front of the image's depth
-            if (depth(r.Y.min + j, r.X.min + i) < z)
+            if (depth(r.corner.y() + j, r.corner.x() + i) < z)
             {
-                depth(r.Y.min + j, r.X.min + i) = z;
+                depth(r.corner.y() + j, r.corner.x() + i) = z;
                 nr.push(i, j, z);
             }
         }
@@ -184,7 +185,7 @@ static void fill(Evaluator* e, const Subregion& r, DepthImage& depth,
 * Helper function that reduces a particular matrix block
 * Returns true if finished, false if aborted
 */
-static bool recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
+static bool recurse(Evaluator* e, const Region::View& r, DepthImage& depth,
                 NormalImage& norm, const std::atomic_bool& abort)
 {
     // Stop rendering if the abort flag is set
@@ -194,10 +195,11 @@ static bool recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
     }
 
     // Extract the block of the image that's being inspected
-    auto block = depth.block(r.Y.min, r.X.min, r.Y.size, r.X.size);
+    auto block = depth.block(r.corner.y(), r.corner.x(),
+                             r.size.y(), r.size.x());
 
     // If all points in the region are below the heightmap, skip it
-    if ((block >= r.Z.pos(r.Z.size - 1)).all())
+    if ((block >= r.pts.z()[r.size.z() - 1]).all())
     {
         return true;
     }
@@ -210,7 +212,9 @@ static bool recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
     }
 
     // Do the interval evaluation
-    Interval out = e->eval(r.X.bounds, r.Y.bounds, r.Z.bounds);
+    Interval out = e->eval({r.lower.x(), r.upper.x()},
+                           {r.lower.y(), r.upper.y()},
+                           {r.lower.z(), r.upper.z()});
 
     // If strictly negative, fill up the block and return
     if (out.upper() < 0)
@@ -222,9 +226,6 @@ static bool recurse(Evaluator* e, const Subregion& r, DepthImage& depth,
     {
         // Disable inactive nodes in the tree
         e->push();
-
-        // Subdivide and recurse
-        assert(r.canSplit());
 
         auto rs = r.split();
 
@@ -259,12 +260,12 @@ void render(
     norm.fill(0);
 
     // Build a list of regions by splitting on the XY axes
-    std::list<Subregion> rs = {r.view()};
-    while (rs.size() < es.size() && rs.front().canSplitXY())
+    std::list<Region::View> rs = {r.view()};
+    while (rs.size() < es.size() && rs.front().size.head<2>().minCoeff() > 1)
     {
         auto f = rs.front();
         rs.pop_front();
-        auto p = f.splitXY();
+        auto p = f.split<AXIS_X | AXIS_Y>();
         rs.push_back(p.first);
         rs.push_back(p.second);
     }
@@ -291,7 +292,7 @@ void render(
 
     // If a voxel is touching the top Z boundary, set the normal to be
     // pointing in the Z direction.
-    norm = (depth == r.Z.values.back()).select(0xffff7f7f, norm);
+    norm = (depth == r.pts[2].back()).select(0xffff7f7f, norm);
 }
 
 std::pair<DepthImage, NormalImage> render(
@@ -317,8 +318,8 @@ std::pair<DepthImage, NormalImage> render(
         const std::vector<Evaluator*>& es, Region r,
         const std::atomic_bool& abort, Eigen::Matrix4f m)
 {
-    auto depth = DepthImage(r.Y.values.size(), r.X.values.size());
-    auto norm = NormalImage(r.Y.values.size(), r.X.values.size());
+    auto depth = DepthImage(r.pts[1].size(), r.pts[0].size());
+    auto norm = NormalImage(r.pts[1].size(), r.pts[0].size());
 
     render(es, r, abort, m, depth, norm);
 
@@ -330,13 +331,12 @@ std::pair<DepthImage*, NormalImage*> render_(
         const std::vector<Evaluator*>& es, Region r,
         const std::atomic_bool& abort, Eigen::Matrix4f m)
 {
-    auto depth = new DepthImage(r.Y.values.size(), r.X.values.size());
-    auto norm = new NormalImage(r.Y.values.size(), r.X.values.size());
+    auto depth = new DepthImage(r.pts[1].size(), r.pts[0].size());
+    auto norm = new NormalImage(r.pts[1].size(), r.pts[0].size());
 
     render(es, r, abort, m, *depth, *norm);
 
     return std::make_pair(depth, norm);
-
 }
 
 } // namespace Heightmap

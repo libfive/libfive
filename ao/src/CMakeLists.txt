@@ -10,11 +10,11 @@ add_library(ao-kernel STATIC
     eval/result.cpp
     eval/feature.cpp
     #format/contours.cpp
-    #format/image.cpp
+    format/image.cpp
     #format/mesh.cpp
     #render/dc.cpp
     #render/dc2d.cpp
-    #render/heightmap.cpp
+    render/heightmap.cpp
     #render/octree.cpp
     #render/quadtree.cpp
     render/region.cpp
