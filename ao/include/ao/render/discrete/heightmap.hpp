@@ -2,7 +2,7 @@
 
 #include <atomic>
 
-#include "ao/render/region.hpp"
+#include "ao/render/discrete/voxels.hpp"
 #include "ao/format/image.hpp"
 #include "ao/tree/tree.hpp"
 
@@ -19,11 +19,11 @@ namespace Heightmap
  *  into int32_t pixels.
  */
 std::pair<DepthImage, NormalImage> render(
-        const Tree t, Region r, const std::atomic_bool& abort,
+        const Tree t, Voxels r, const std::atomic_bool& abort,
         Eigen::Matrix4f M=Eigen::Matrix4f::Identity(), size_t threads=8);
 
 std::pair<DepthImage, NormalImage> render(
-        const std::vector<Evaluator*>& es, Region r,
+        const std::vector<Evaluator*>& es, Voxels r,
         const std::atomic_bool& abort,
         Eigen::Matrix4f M=Eigen::Matrix4f::Identity());
 
@@ -32,7 +32,7 @@ std::pair<DepthImage, NormalImage> render(
  *  on the heap (for easier passing around)
  */
 std::pair<DepthImage*, NormalImage*> render_(
-        const std::vector<Evaluator*>& es, Region r,
+        const std::vector<Evaluator*>& es, Voxels r,
         const std::atomic_bool& abort,
         Eigen::Matrix4f M=Eigen::Matrix4f::Identity());
 

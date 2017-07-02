@@ -7,7 +7,6 @@ set(SRCS main.cpp
     #lib.cpp
     #mesh.cpp
     #octree.cpp
-    region.cpp
     #contours.cpp
     feature.cpp
     #quadtree.cpp
@@ -15,6 +14,7 @@ set(SRCS main.cpp
     #subregion.cpp
     template.cpp
     tree.cpp
+    voxels.cpp
     util/shapes.cpp)
 set(LIBS ao-kernel) # ao-kernel-c)
 

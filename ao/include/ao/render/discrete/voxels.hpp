@@ -10,9 +10,9 @@
 namespace Kernel {
 
 /*
- *  A region constains X, Y, Z bounds and voxel count / positions
+ *  A Voxels object constains X, Y, Z bounds and voxel count / positions
  */
-class Region
+class Voxels
 {
 public:
     /*
@@ -22,7 +22,7 @@ public:
      *  expanded about their centers to include a unit number of voxels at the
      *  specified resolution.
      */
-    Region(Eigen::Vector3f lower, Eigen::Vector3f upper, float res);
+    Voxels(Eigen::Vector3f lower, Eigen::Vector3f upper, float res);
 
     /*
      *  Constructs a region with the given bounds and per-axis resolution
@@ -31,7 +31,7 @@ public:
      *  expanded about their centers to include a unit number of voxels at the
      *  specified resolution.
      */
-    Region(Eigen::Vector3f lower, Eigen::Vector3f upper, Eigen::Vector3f res);
+    Voxels(Eigen::Vector3f lower, Eigen::Vector3f upper, Eigen::Vector3f res);
 
     /*  Bounding box of the region  */
     Eigen::Vector3f lower, upper;
@@ -40,19 +40,19 @@ public:
     std::array<std::vector<float>, 3> pts;
 
     /*
-     *  A Region::View is used when recursively rendering to quickly pass around
+     *  A Voxels::View is used when recursively rendering to quickly pass around
      *  position values without copying a lot of memory around.
      */
     class View
     {
     public:
         /*
-         *  A subregion is constructed from a parent Region.
+         *  A subregion is constructed from a parent Voxels.
          *
          *  When that parent region is destroyed, all child subregions are
          *  invalidated (because their pointers point into the parent region)
          */
-        View(const Region& r);
+        View(const Voxels& r);
 
         /*
          *  Splits the region along its largest axis in A
@@ -92,41 +92,6 @@ public:
             return {View(lower, lower_upper, size_lower, corner, pts),
                     View(upper_lower, upper, size_upper,
                          upper_corner, upper_pts)};
-        }
-
-        /*
-         *  Splits this subregion into (1 << dims) other subregions
-         *  For axes that cannot be split, returns a View with size = 0.
-         */
-        template <unsigned int N>
-        std::array<View, (1<<N)> subdivide() const
-        {
-            // Figure out the offsets, rounding down
-            Eigen::Array3i size_upper = size.array() / 2;
-            Eigen::Array3i size_lower = size.array() - size_upper;
-
-            auto frac = size_lower.array().cast<float>() /
-                        size.cast<float>().array();
-            auto middle = (upper.array() * frac) +
-                          (lower.array() * (1 - frac));
-
-            std::array<View, (1 << N)> out = {};
-            for (int i=0; i < (1 << N); ++i)
-            {
-                auto a = Eigen::Array3i(i & AXIS_X, i & AXIS_Y, i & AXIS_Z) > 0;
-                auto _lower = a.select(middle, lower);
-                auto _upper = a.select(upper, middle);
-                auto _size = a.select(size_upper, size_lower);
-                auto _corner = a.select(size_lower, Eigen::Array3i::Zero());
-
-                auto _pts = pts;
-                for (unsigned i=0; i < 3; ++i)
-                {
-                    _pts[i] += size_lower[i];
-                }
-                out[i] = View(_lower, _upper, _size, _corner, _pts);
-            }
-            return out;
         }
 
         /*

@@ -3,7 +3,7 @@
 #include <limits>
 #include <set>
 
-#include "ao/render/heightmap.hpp"
+#include "ao/render/discrete/heightmap.hpp"
 #include "ao/eval/result.hpp"
 #include "ao/eval/evaluator.hpp"
 
@@ -19,7 +19,7 @@ namespace Heightmap
  */
 struct NormalRenderer
 {
-    NormalRenderer(Evaluator* e, const Region::View& r, NormalImage& norm)
+    NormalRenderer(Evaluator* e, const Voxels::View& r, NormalImage& norm)
         : e(e), r(r), norm(norm) {}
 
     /*
@@ -76,7 +76,7 @@ struct NormalRenderer
     }
 
     Evaluator* e;
-    const Region::View& r;
+    const Voxels::View& r;
     NormalImage& norm;
 
     // Store the x, y coordinates of rendered points for normal calculations
@@ -98,7 +98,7 @@ for (int i=0; i < r.size.x(); ++i)           \
 /*
  *  Helper functions that evaluates a region of pixels
  */
-static void pixels(Evaluator* e, const Region::View& r,
+static void pixels(Evaluator* e, const Voxels::View& r,
                    DepthImage& depth, NormalImage& norm)
 {
     size_t index = 0;
@@ -153,7 +153,7 @@ static void pixels(Evaluator* e, const Region::View& r,
  *
  *  This function is used when marking an Interval as filled
  */
-static void fill(Evaluator* e, const Region::View& r, DepthImage& depth,
+static void fill(Evaluator* e, const Voxels::View& r, DepthImage& depth,
                  NormalImage& norm)
 {
     // Store the maximum z position (which is what we're flooding into
@@ -185,7 +185,7 @@ static void fill(Evaluator* e, const Region::View& r, DepthImage& depth,
 * Helper function that reduces a particular matrix block
 * Returns true if finished, false if aborted
 */
-static bool recurse(Evaluator* e, const Region::View& r, DepthImage& depth,
+static bool recurse(Evaluator* e, const Voxels::View& r, DepthImage& depth,
                 NormalImage& norm, const std::atomic_bool& abort)
 {
     // Stop rendering if the abort flag is set
@@ -252,7 +252,7 @@ static bool recurse(Evaluator* e, const Region::View& r, DepthImage& depth,
 
 
 void render(
-        const std::vector<Evaluator*>& es, Region r,
+        const std::vector<Evaluator*>& es, Voxels r,
         const std::atomic_bool& abort, Eigen::Matrix4f m,
         DepthImage& depth, NormalImage& norm)
 {
@@ -260,7 +260,7 @@ void render(
     norm.fill(0);
 
     // Build a list of regions by splitting on the XY axes
-    std::list<Region::View> rs = {r.view()};
+    std::list<Voxels::View> rs = {r.view()};
     while (rs.size() < es.size() && rs.front().size.head<2>().minCoeff() > 1)
     {
         auto f = rs.front();
@@ -296,7 +296,7 @@ void render(
 }
 
 std::pair<DepthImage, NormalImage> render(
-    const Tree t, Region r, const std::atomic_bool& abort,
+    const Tree t, Voxels r, const std::atomic_bool& abort,
     Eigen::Matrix4f m, size_t workers)
 {
     std::vector<Evaluator*> es;
@@ -315,7 +315,7 @@ std::pair<DepthImage, NormalImage> render(
 }
 
 std::pair<DepthImage, NormalImage> render(
-        const std::vector<Evaluator*>& es, Region r,
+        const std::vector<Evaluator*>& es, Voxels r,
         const std::atomic_bool& abort, Eigen::Matrix4f m)
 {
     auto depth = DepthImage(r.pts[1].size(), r.pts[0].size());
@@ -328,7 +328,7 @@ std::pair<DepthImage, NormalImage> render(
 }
 
 std::pair<DepthImage*, NormalImage*> render_(
-        const std::vector<Evaluator*>& es, Region r,
+        const std::vector<Evaluator*>& es, Voxels r,
         const std::atomic_bool& abort, Eigen::Matrix4f m)
 {
     auto depth = new DepthImage(r.pts[1].size(), r.pts[0].size());

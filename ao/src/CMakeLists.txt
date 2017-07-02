@@ -14,10 +14,10 @@ add_library(ao-kernel STATIC
     #format/mesh.cpp
     #render/dc.cpp
     #render/dc2d.cpp
-    render/heightmap.cpp
+    render/discrete/heightmap.cpp
     #render/octree.cpp
     #render/quadtree.cpp
-    render/region.cpp
+    render/discrete/voxels.cpp
     #    render/subregion.cpp
     solve/solver.cpp
     tree/cache.cpp

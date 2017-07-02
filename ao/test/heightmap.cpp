@@ -2,7 +2,7 @@
 
 #include "catch.hpp"
 
-#include "ao/render/heightmap.hpp"
+#include "ao/render/discrete/heightmap.hpp"
 #include "ao/eval/evaluator.hpp"
 
 #include "util/shapes.hpp"
@@ -13,7 +13,7 @@ using namespace Kernel;
 
 // Helper function to make rendering a single call
 static std::pair<DepthImage, NormalImage> render(
-        Tree t, const Region& r, Eigen::Matrix4f M=Eigen::Matrix4f::Identity())
+        Tree t, const Voxels& r, Eigen::Matrix4f M=Eigen::Matrix4f::Identity())
 {
     std::atomic_bool abort(false);
 
@@ -23,7 +23,7 @@ static std::pair<DepthImage, NormalImage> render(
 TEST_CASE("Heightmap::render: 2D interval Z values")
 {
     Tree t = circle(1);
-    Region r({-1, -1, -1}, {1, 1, 1}, {25, 25, 0});
+    Voxels r({-1, -1, -1}, {1, 1, 1}, {25, 25, 0});
 
     auto out = render(t, r).first;
     CAPTURE(out);
@@ -34,7 +34,7 @@ TEST_CASE("Heightmap::render: 2D interval Z values")
 TEST_CASE("Heightmap::render: 3D interval Z values")
 {
     Tree t = circle(1);
-    Region r({-1, -1, -1}, {1, 1, 1}, {25, 25, 25});
+    Voxels r({-1, -1, -1}, {1, 1, 1}, {25, 25, 25});
 
     auto out = render(t, r).first;
     CAPTURE(out);
@@ -62,7 +62,7 @@ TEST_CASE("Heightmap::render: 2D circle ")
 
     SECTION("Empty Z")
     {
-        Region r({-1, -1, 0}, {1, 1, 0}, {5, 5, 0});
+        Voxels r({-1, -1, 0}, {1, 1, 0}, {5, 5, 0});
         auto out = render(t, r).first;
         CAPTURE(out);
         REQUIRE((comp == out).all());
@@ -70,7 +70,7 @@ TEST_CASE("Heightmap::render: 2D circle ")
 
     SECTION("Zero-resolution Z")
     {
-        Region r({-1, -1, -1}, {1, 1, 1}, {5, 5, 0});
+        Voxels r({-1, -1, -1}, {1, 1, 1}, {5, 5, 0});
         auto out = render(t, r).first;
         CAPTURE(out);
         REQUIRE((comp == out).all());
@@ -81,7 +81,7 @@ TEST_CASE("Heightmap::render: 2D circle at non-zero Z ")
 {
     Tree t = circle(1);
 
-    Region r({-1, -1, 1}, {1, 1, 1}, 5);
+    Voxels r({-1, -1, 1}, {1, 1, 1}, 5);
     auto out = render(t, r).first;
     CAPTURE(out);
 
@@ -104,7 +104,7 @@ TEST_CASE("Heightmap::render: 2D circle at non-zero Z ")
 TEST_CASE("Heightmap::render: orientation")
 {
 
-    Region r({-1, -1, 0}, {1, 1, 0}, 5);
+    Voxels r({-1, -1, 0}, {1, 1, 0}, 5);
 
     SECTION("Y")
     {
@@ -159,14 +159,14 @@ TEST_CASE("Heightmap::render: image shape")
 
     SECTION("X")
     {
-        Region r({0, -1, 0}, {1, 1, 0}, 5);
+        Voxels r({0, -1, 0}, {1, 1, 0}, 5);
         auto out = render(t, r).first;
         REQUIRE(out.rows() == 10);
         REQUIRE(out.cols() == 5);
     }
     SECTION("Y")
     {
-        Region r({-1, 0, 0}, {1, 1, 0}, 5);
+        Voxels r({-1, 0, 0}, {1, 1, 0}, 5);
         auto out = render(t, r).first;
         REQUIRE(out.rows() == 5);
         REQUIRE(out.cols() == 10);
@@ -179,7 +179,7 @@ TEST_CASE("Heightmap::render: 3D sphere")
 
     SECTION("Values")
     {
-        Region r({-1, -1, -1}, {1, 1, 1}, 5);
+        Voxels r({-1, -1, -1}, {1, 1, 1}, 5);
         auto out = render(t, r).first;
 
         DepthImage comp(10, 10);
@@ -206,7 +206,7 @@ TEST_CASE("Heightmap::render: 3D sphere")
 
 TEST_CASE("Heightmap::render: 2D normals")
 {
-    Region r({-1, -1, -2}, {1, 1, 2}, 5);
+    Voxels r({-1, -1, -2}, {1, 1, 2}, 5);
 
     SECTION("X")
     {
@@ -241,7 +241,7 @@ TEST_CASE("Heightmap::render: 2D normals")
 TEST_CASE("Heightmap::render: Normal clipping ")
 {
     Tree t = circle(1);
-    Region r({-1, -1, -1}, {1, 1, 1}, 5);
+    Voxels r({-1, -1, -1}, {1, 1, 1}, 5);
 
     auto norm = render(t, r).second;
 
@@ -259,7 +259,7 @@ TEST_CASE("Heightmap::render: Performance")
     {   // Build and render sphere
         Tree t = sphere(1);
 
-        Region r({-1, -1, -1}, {1, 1, 1}, 500);
+        Voxels r({-1, -1, -1}, {1, 1, 1}, 500);
 
         start = std::chrono::system_clock::now();
         auto out = render(t, r).first;
@@ -273,7 +273,7 @@ TEST_CASE("Heightmap::render: Performance")
     {   // Build and render Menger sponge
         Tree sponge = menger(2);
 
-        Region r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5}, 250);
+        Voxels r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5}, 250);
 
         Eigen::Matrix3f m;
         m = Eigen::AngleAxisf(float(M_PI/4), Eigen::Vector3f::UnitY()) *

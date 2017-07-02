@@ -1,16 +1,16 @@
 #include <algorithm>
 
-#include "ao/render/region.hpp"
+#include "ao/render/discrete/voxels.hpp"
 
 namespace Kernel {
 
-Region::Region(Eigen::Vector3f lower, Eigen::Vector3f upper, float res)
-    : Region(lower, upper, {res, res, res})
+Voxels::Voxels(Eigen::Vector3f lower, Eigen::Vector3f upper, float res)
+    : Voxels(lower, upper, {res, res, res})
 {
     // Nothing to do here
 }
 
-Region::Region(Eigen::Vector3f _lower, Eigen::Vector3f _upper,
+Voxels::Voxels(Eigen::Vector3f _lower, Eigen::Vector3f _upper,
                Eigen::Vector3f res)
 {
     Eigen::Array3i size = (res.array() * (_upper - _lower).array()).ceil().max(1).cast<int>();
@@ -36,12 +36,12 @@ Region::Region(Eigen::Vector3f _lower, Eigen::Vector3f _upper,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Region::View Region::view() const
+Voxels::View Voxels::view() const
 {
     return View(*this);
 }
 
-Region::View::View(const Region& r)
+Voxels::View::View(const Voxels& r)
     : lower(r.lower), upper(r.upper),
       size(r.pts[0].size(), r.pts[1].size(), r.pts[2].size()),
       corner({0,0,0}), pts(r.pts[0].data(), r.pts[1].data(), r.pts[2].data())
@@ -49,7 +49,7 @@ Region::View::View(const Region& r)
     // Nothing to do here
 }
 
-Region::View::View(Eigen::Vector3f lower, Eigen::Vector3f upper,
+Voxels::View::View(Eigen::Vector3f lower, Eigen::Vector3f upper,
                    Eigen::Vector3i size, Eigen::Vector3i corner,
                    Eigen::Matrix<const float*, 3, 1> pts)
     : lower(lower), upper(upper), size(size), corner(corner),
@@ -58,13 +58,13 @@ Region::View::View(Eigen::Vector3f lower, Eigen::Vector3f upper,
   // Nothing to do here
 }
 
-Region::View::View()
+Voxels::View::View()
 {
     // Nothing to do here
     // (invalid initialization)
 }
 
-size_t Region::View::voxels() const
+size_t Voxels::View::voxels() const
 {
     return size.x() * size.y() * size.z();
 }

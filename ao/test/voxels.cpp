@@ -1,26 +1,26 @@
 #include "catch.hpp"
 
-#include "ao/render/region.hpp"
+#include "ao/render/discrete/voxels.hpp"
 
 using namespace Kernel;
 
-TEST_CASE("Region::pts values")
+TEST_CASE("Voxels::pts values")
 {
     SECTION("Exact values")
     {
-        auto a = Region({0, 0, 0}, {1, 1, 1}, 1.0f);
+        auto a = Voxels({0, 0, 0}, {1, 1, 1}, 1.0f);
         REQUIRE(a.pts[0][0] == 0.5);
 
-        auto b = Region({-0.5, 0, 0}, {0.5, 1, 1}, 3.0f);
+        auto b = Voxels({-0.5, 0, 0}, {0.5, 1, 1}, 3.0f);
         REQUIRE(b.pts[0][1] == 0);
 
-        auto c = Region({-1, 0, 0}, {1, 1, 1}, 0.0f);
+        auto c = Voxels({-1, 0, 0}, {1, 1, 1}, 0.0f);
         REQUIRE(c.pts[0][0] == 0);
     }
 
     SECTION("Expanding interval")
     {
-        auto a = Region({0, 0, 0}, {1.2, 1.2, 1.2}, 1);
+        auto a = Voxels({0, 0, 0}, {1.2, 1.2, 1.2}, 1);
         REQUIRE(a.lower.x() == Approx(-0.4));
         REQUIRE(a.upper.x() == Approx(1.6));
         REQUIRE(a.pts[0][0] == Approx(0.1f));
@@ -28,11 +28,11 @@ TEST_CASE("Region::pts values")
     }
 }
 
-TEST_CASE("Region::pts size")
+TEST_CASE("Voxels::pts size")
 {
     SECTION("Simple")
     {
-        auto r = Region({0, 0, 0}, {1, 1, 2}, 1);
+        auto r = Voxels({0, 0, 0}, {1, 1, 2}, 1);
         REQUIRE(r.pts[0].size() == 1);
         REQUIRE(r.pts[1].size() == 1);
         REQUIRE(r.pts[2].size() == 2);
@@ -40,7 +40,7 @@ TEST_CASE("Region::pts size")
 
     SECTION("Exact values")
     {
-        auto r = Region({0, 0, 0}, {10, 5, 2.5}, 10);
+        auto r = Voxels({0, 0, 0}, {10, 5, 2.5}, 10);
 
         REQUIRE(r.pts[0].size() == 100);
         REQUIRE(r.pts[1].size() == 50);
@@ -49,7 +49,7 @@ TEST_CASE("Region::pts size")
 
     SECTION("Expanding interval")
     {
-        auto r = Region({0, 0, 0}, {1.1, 2.1, 3.1}, 1.0f);
+        auto r = Voxels({0, 0, 0}, {1.1, 2.1, 3.1}, 1.0f);
         REQUIRE(r.pts[0].size() == 2);
         REQUIRE(r.pts[1].size() == 3);
         REQUIRE(r.pts[2].size() == 4);
@@ -57,7 +57,7 @@ TEST_CASE("Region::pts size")
 
     SECTION("Per-axis resolution")
     {
-        auto r = Region({0, 0, 0}, {1, 1, 1}, {1, 2, 3});
+        auto r = Voxels({0, 0, 0}, {1, 1, 1}, {1, 2, 3});
         REQUIRE(r.pts[0].size() == 1);
         REQUIRE(r.pts[1].size() == 2);
         REQUIRE(r.pts[2].size() == 3);
@@ -65,32 +65,32 @@ TEST_CASE("Region::pts size")
 
     SECTION("Empty axes")
     {
-        auto r = Region({0, 0, 0}, {1, 1, 1}, {3, 2, 0});
+        auto r = Voxels({0, 0, 0}, {1, 1, 1}, {3, 2, 0});
         REQUIRE(r.pts[0].size() == 3);
         REQUIRE(r.pts[1].size() == 2);
         REQUIRE(r.pts[2].size() == 1);
     }
 }
 
-TEST_CASE("Region::View::lower")
+TEST_CASE("Voxels::View::lower")
 {
-    auto r = Region({0, 0, 0}, {10, 5, 2.5}, 10);
+    auto r = Voxels({0, 0, 0}, {10, 5, 2.5}, 10);
     auto v = r.view();
     REQUIRE(v.lower == Eigen::Vector3f(0, 0, 0));
 }
 
-TEST_CASE("Region::View::size")
+TEST_CASE("Voxels::View::size")
 {
-    auto r = Region({0, 0, 0}, {1, 1, 2}, 1);
+    auto r = Voxels({0, 0, 0}, {1, 1, 2}, 1);
     auto v = r.view();
     REQUIRE(v.size == Eigen::Vector3i(1, 1, 2));
 }
 
-TEST_CASE("Region::View::split")
+TEST_CASE("Voxels::View::split")
 {
     SECTION("Simple")
     {
-        auto r = Region({0, 0, 0}, {1, 1, 1}, 10);
+        auto r = Voxels({0, 0, 0}, {1, 1, 1}, 10);
         auto v = r.view();
 
         auto vs = v.split();
@@ -120,7 +120,7 @@ TEST_CASE("Region::View::split")
 
     SECTION("Axis selection")
     {
-        auto r = Region({0, 0, 0}, {1, 1, 2}, 1);
+        auto r = Voxels({0, 0, 0}, {1, 1, 2}, 1);
         auto v = r.view();
         REQUIRE(v.size.z() == 2);
 
@@ -157,7 +157,7 @@ TEST_CASE("Region::View::split")
 
     SECTION("With odd voxel count")
     {
-        auto r = Region({0, 0, 0}, {1, 1, 3}, 1);
+        auto r = Voxels({0, 0, 0}, {1, 1, 3}, 1);
         auto v = r.view();
 
         auto vs = v.split();
@@ -189,7 +189,7 @@ TEST_CASE("Region::View::split")
 
     SECTION("Splitting a unit voxel")
     {
-        auto r = Region({0, 0, 0}, {1, 1, 1}, 1);
+        auto r = Voxels({0, 0, 0}, {1, 1, 1}, 1);
         auto v = r.view();
 
         auto vs = v.split();
@@ -198,96 +198,5 @@ TEST_CASE("Region::View::split")
 
         REQUIRE(!a.empty());
         REQUIRE(b.empty());
-    }
-}
-
-TEST_CASE("Region::View::subdivide")
-{
-    Region a({-1, -2, -4}, {1, 2, 4}, {4, 2, 1});
-    auto v = a.view();
-
-    SECTION("3D")
-    {
-        auto out = v.subdivide<3>();
-        REQUIRE(out.size() == 8);
-        for (int i=0; i < 8; ++i)
-        {
-            const auto& sub = out[i];
-            CAPTURE(sub.lower.x());
-            CAPTURE(sub.upper.x());
-            CAPTURE(sub.lower.y());
-            CAPTURE(sub.upper.y());
-            CAPTURE(sub.lower.z());
-            CAPTURE(sub.upper.z());
-            if (i & AXIS_X)
-            {
-                REQUIRE(sub.lower.x() ==  0);
-                REQUIRE(sub.upper.x() ==  1);
-            }
-            else
-            {
-                REQUIRE(sub.lower.x() == -1);
-                REQUIRE(sub.upper.x() ==  0);
-            }
-
-            if (i & AXIS_Y)
-            {
-                REQUIRE(sub.lower.y() ==  0);
-                REQUIRE(sub.upper.y() ==  2);
-            }
-            else
-            {
-                REQUIRE(sub.lower.y() == -2);
-                REQUIRE(sub.upper.y() ==  0);
-            }
-
-            if (i & AXIS_Z)
-            {
-                REQUIRE(sub.lower.z() ==  0);
-                REQUIRE(sub.upper.z() ==  4);
-            }
-            else
-            {
-                REQUIRE(sub.lower.z() == -4);
-                REQUIRE(sub.upper.z() ==  0);
-            }
-        }
-    }
-
-    SECTION("2D")
-    {
-        auto out = v.subdivide<2>();
-        REQUIRE(out.size() == 4);
-        for (int i=0; i < 4; ++i)
-        {
-            const auto& sub = out[i];
-            CAPTURE(sub.lower.x());
-            CAPTURE(sub.upper.x());
-            CAPTURE(sub.lower.y());
-            CAPTURE(sub.upper.y());
-            if (i & AXIS_X)
-            {
-                REQUIRE(sub.lower.x() ==  0);
-                REQUIRE(sub.upper.x() ==  1);
-            }
-            else
-            {
-                REQUIRE(sub.lower.x() == -1);
-                REQUIRE(sub.upper.x() ==  0);
-            }
-
-            if (i & AXIS_Y)
-            {
-                REQUIRE(sub.lower.y() ==  0);
-                REQUIRE(sub.upper.y() ==  2);
-            }
-            else
-            {
-                REQUIRE(sub.lower.y() == -2);
-                REQUIRE(sub.upper.y() ==  0);
-            }
-
-            REQUIRE(!(i & AXIS_Z));
-        }
     }
 }
