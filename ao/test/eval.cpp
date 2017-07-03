@@ -159,8 +159,7 @@ TEST_CASE("Interval evaluation")
 {
     Evaluator e(Tree::X() + 1);
 
-    Interval arg(1, 2);
-    auto out = e.eval(arg, arg, arg);
+    auto out = e.eval({1,1,1}, {2,2,2});
 
     REQUIRE(out.lower() == 2.0);
     REQUIRE(out.upper() == 3.0);
@@ -174,7 +173,7 @@ TEST_CASE("Push / pop behavior")
     REQUIRE(e.eval({1.0f, -3.0f, 0.0f}) == -2);
 
     // Do an interval evaluation that will lead to disabling the rhs
-    auto i = e.eval(Interval(-5, -4), Interval(8, 9), Interval(0, 0));
+    auto i = e.eval({-5, 8, 0}, {-4, 9, 0});
     REQUIRE(i.lower() == -4);
     REQUIRE(i.upper() == -3);
 

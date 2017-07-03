@@ -39,7 +39,7 @@ public:
      *  Single-argument evaluation
      */
     float eval(const Eigen::Vector3f& p);
-    Interval eval(Interval x, Interval y, Interval z);
+    Interval eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper);
 
     /*
      *  Evaluates a set of floating-point results
@@ -104,7 +104,7 @@ public:
     /*
      *  Stores the given interval in the result objects
      */
-    void set(Interval X, Interval Y, Interval Z);
+    void set(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper);
 
     /*
      *  Pushes into a subinterval, disabling inactive nodes

@@ -212,9 +212,7 @@ static bool recurse(Evaluator* e, const Voxels::View& r, DepthImage& depth,
     }
 
     // Do the interval evaluation
-    Interval out = e->eval({r.lower.x(), r.upper.x()},
-                           {r.lower.y(), r.upper.y()},
-                           {r.lower.z(), r.upper.z()});
+    Interval out = e->eval(r.lower, r.upper);
 
     // If strictly negative, fill up the block and return
     if (out.upper() < 0)

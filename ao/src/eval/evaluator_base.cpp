@@ -126,14 +126,18 @@ float EvaluatorBase::eval(const Eigen::Vector3f& p)
     return values(1)[0];
 }
 
-Interval EvaluatorBase::eval(Interval x, Interval y, Interval z)
+Interval EvaluatorBase::eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
 {
-    set(x, y, z);
+    set(lower, upper);
     return interval();
 }
 
-void EvaluatorBase::set(Interval x, Interval y, Interval z)
+void EvaluatorBase::set(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
 {
+    Interval x(lower.x(), upper.x());
+    Interval y(lower.y(), upper.y());
+    Interval z(lower.z(), upper.z());
+
     result.i[X] = M(0,0) * x + M(0,1) * y + M(0,2) * z + M(0,3);
     result.i[Y] = M(1,0) * x + M(1,1) * y + M(1,2) * z + M(1,3);
     result.i[Z] = M(2,0) * x + M(2,1) * y + M(2,2) * z + M(2,3);
