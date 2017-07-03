@@ -11,7 +11,7 @@ set(SRCS main.cpp
     feature.cpp
     #quadtree.cpp
     solver.cpp
-    #subregion.cpp
+    region.cpp
     template.cpp
     tree.cpp
     voxels.cpp

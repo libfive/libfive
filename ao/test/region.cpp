@@ -45,54 +45,54 @@ TEST_CASE("Region<2>::subdivide")
         REQUIRE(!(i & AXIS_Z));
     }
 }
+TEST_CASE("Region<3>::subdivide")
+{
+    Region<3> a({-1, -2, -4}, {1, 2, 4});
 
-/*
-    SECTION("3D")
+    // Force subdivision even though axes are unequal
+    auto out = a.subdivide(100);
+
+    REQUIRE(out.size() == 8);
+    for (int i=0; i < 8; ++i)
     {
-        auto out = a.subdivide();
-        REQUIRE(out.size() == 8);
-        for (int i=0; i < 8; ++i)
+        const auto& sub = out[i];
+        CAPTURE(sub.lower.x());
+        CAPTURE(sub.upper.x());
+        CAPTURE(sub.lower.y());
+        CAPTURE(sub.upper.y());
+        CAPTURE(sub.lower.z());
+        CAPTURE(sub.upper.z());
+        if (i & AXIS_X)
         {
-            const auto& sub = out[i];
-            CAPTURE(sub.lower.x());
-            CAPTURE(sub.upper.x());
-            CAPTURE(sub.lower.y());
-            CAPTURE(sub.upper.y());
-            CAPTURE(sub.lower.z());
-            CAPTURE(sub.upper.z());
-            if (i & AXIS_X)
-            {
-                REQUIRE(sub.lower.x() ==  0);
-                REQUIRE(sub.upper.x() ==  1);
-            }
-            else
-            {
-                REQUIRE(sub.lower.x() == -1);
-                REQUIRE(sub.upper.x() ==  0);
-            }
+            REQUIRE(sub.lower.x() ==  0);
+            REQUIRE(sub.upper.x() ==  1);
+        }
+        else
+        {
+            REQUIRE(sub.lower.x() == -1);
+            REQUIRE(sub.upper.x() ==  0);
+        }
 
-            if (i & AXIS_Y)
-            {
-                REQUIRE(sub.lower.y() ==  0);
-                REQUIRE(sub.upper.y() ==  2);
-            }
-            else
-            {
-                REQUIRE(sub.lower.y() == -2);
-                REQUIRE(sub.upper.y() ==  0);
-            }
+        if (i & AXIS_Y)
+        {
+            REQUIRE(sub.lower.y() ==  0);
+            REQUIRE(sub.upper.y() ==  2);
+        }
+        else
+        {
+            REQUIRE(sub.lower.y() == -2);
+            REQUIRE(sub.upper.y() ==  0);
+        }
 
-            if (i & AXIS_Z)
-            {
-                REQUIRE(sub.lower.z() ==  0);
-                REQUIRE(sub.upper.z() ==  4);
-            }
-            else
-            {
-                REQUIRE(sub.lower.z() == -4);
-                REQUIRE(sub.upper.z() ==  0);
-            }
+        if (i & AXIS_Z)
+        {
+            REQUIRE(sub.lower.z() ==  0);
+            REQUIRE(sub.upper.z() ==  4);
+        }
+        else
+        {
+            REQUIRE(sub.lower.z() == -4);
+            REQUIRE(sub.upper.z() ==  0);
         }
     }
-
-*/
+}
