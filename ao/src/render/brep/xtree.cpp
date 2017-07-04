@@ -1,3 +1,6 @@
+#include <numeric>
+#include <functional>
+
 #include "ao/render/brep/xtree.hpp"
 
 namespace Kernel {
@@ -73,6 +76,17 @@ bool XTree<N>::findVertex(Evaluator* eval)
     // Load data into QEF arrays here
     Eigen::Matrix<float, num, N + 1> A;
     Eigen::Matrix<float, num, 1> b;
+
+    // Find average value for w0, which we'll use as an offset
+    //
+    // This, in conjunction with offsetting by the cell's center, forces
+    // the solver to minimize towards the center of the cell and towards
+    // the average distance field value, rather than making strange
+    // trade-offs (e.g. moving out of the cell towards the 0 position of
+    // the distance field).
+    const float w0 = std::accumulate(
+            ds.v, ds.v + num, 0.0f, std::plus<float>()) / num;
+
     for (unsigned i=0; i < num; ++i)
     {
         Eigen::Array3f deriv(ds.dx[i], ds.dy[i], ds.dz[i]);
@@ -84,7 +98,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
         // Temporary variable for dot product
         Eigen::Matrix<float, 1, N + 1> n;
         n.template head<N>() = positions.row(i) - center.transpose();
-        n(N) = ds.v[i];
+        n(N) = ds.v[i] - w0;
 
         b(i) = A.row(i).dot(n);
     }
