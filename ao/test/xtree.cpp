@@ -1,6 +1,7 @@
 #include "catch.hpp"
 
 #include "ao/render/brep/xtree.hpp"
+#include "util/shapes.hpp"
 
 using namespace Kernel;
 

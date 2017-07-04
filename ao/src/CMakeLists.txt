@@ -18,6 +18,7 @@ add_library(ao-kernel STATIC
     #render/octree.cpp
     #render/quadtree.cpp
     render/discrete/voxels.cpp
+    render/brep/xtree.cpp
     #    render/subregion.cpp
     solve/solver.cpp
     tree/cache.cpp
