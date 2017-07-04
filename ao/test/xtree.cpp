@@ -32,15 +32,15 @@ TEST_CASE("XTree<2>()")
     {
         Evaluator a(circle(0.5));
         auto ta = XTree<2>(&a, Region<2>({0.6, -0.2}, {0.8, 0.2}));
-        REQUIRE(ta.vert.x() == Approx(0.6));
-        REQUIRE(ta.vert.y() == Approx(0.0));
+        REQUIRE(ta.vert.x() == Approx(0.6).epsilon(0.01));
+        REQUIRE(ta.vert.y() == Approx(0.0).epsilon(0.01));
     }
 
     SECTION("Snapping to cell corners")
     {
         Evaluator a(circle(0.5));
         auto ta = XTree<2>(&a, Region<2>({0.6, 0.6}, {0.8, 0.8}));
-        REQUIRE(ta.vert.x() == Approx(0.6));
-        REQUIRE(ta.vert.y() == Approx(0.6));
+        REQUIRE(ta.vert.x() == Approx(0.6).epsilon(0.01));
+        REQUIRE(ta.vert.y() == Approx(0.6).epsilon(0.01));
     }
 }

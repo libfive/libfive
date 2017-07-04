@@ -108,13 +108,66 @@ bool XTree<N>::findVertex(Evaluator* eval)
     // Store vertex location
     vert = sol.template head<N>().array() + center;
 
-    std::cout << "vert:\n" << vert << "\n";
+    // If the vertex ended up outside of the cell, then minimize the QEF
+    // on each of the cell's boundaries and position the vertex at the best
+    // boundary position.
+    if ((vert < lower).any() || (vert > upper).any())
+    {
+        float min_err = std::numeric_limits<float>::infinity();
 
-    auto err = A * sol - b;
-    std::cout << "err: " << err.dot(err) << '\n';
+        // This is our reduced matrix, which is missing an axis
+        Eigen::Matrix<float, num, N> A_;
+        A_.col(N - 1) = A.col(N);
 
-    // Check error
-    return true;
+        // Our b matrix is the same shape, but will be offset
+        Eigen::Matrix<float, num, 1> b_;
+
+        for (unsigned i=0; i < N*2; ++i)
+        {
+            // Pick out axis and boundary value
+            auto axis = i / 2;
+            auto value = ((i & 1) ? lower : upper)(axis);
+
+            // Construct modified A matrix by skipping one axis
+            unsigned k=0;
+            for (unsigned j=0; j < N; ++j)
+            {
+                if (j != axis)
+                {
+                    A_.col(k++) = A.col(j);
+                }
+            }
+
+            // Apply removed axis to the b_ matrix
+            b_ = b - A.col(axis) * value;
+
+            // Find new solution and error thereof
+            auto sol = A_.jacobiSvd(Eigen::ComputeThinU |
+                                    Eigen::ComputeThinV).solve(b_);
+            auto err = (A_ * sol - b_).squaredNorm();
+
+            if (err < min_err)
+            {
+                min_err = err;
+                // Save bounded vertex position
+                unsigned k = 0;
+                for (unsigned j=0; j < N; ++j)
+                {
+                    if (j != axis)
+                    {
+                        vert(j) = sol(k++);
+                    }
+                }
+                vert(axis) = value;
+            }
+        }
+        return min_err < 1e-6;
+    }
+    else
+    {
+        auto err = (A * sol - b).squaredNorm();
+        return err < 1e-6;
+    }
 }
 
 // Explicit initialization of templates
