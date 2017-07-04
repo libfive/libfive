@@ -170,6 +170,14 @@ bool XTree<N>::findVertex(Evaluator* eval)
     }
 }
 
+template <unsigned N>
+Eigen::Vector3f XTree<N>::vert3() const
+{
+    Eigen::Vector3f out;
+    out << vert, region.perp;
+    return out;
+}
+
 // Explicit initialization of templates
 template class XTree<2>;
 template class XTree<3>;

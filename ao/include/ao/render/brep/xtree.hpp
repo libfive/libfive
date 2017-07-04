@@ -39,6 +39,12 @@ public:
     /*  Vertex location, if this is a leaf  */
     Eigen::Array<float, N, 1> vert;
 
+    /*
+     *  Unpack the vertex into a 3-element array
+     *  (using the perpendicular coordinates)
+     */
+    Eigen::Vector3f vert3() const;
+
 protected:
     /*
      *  Searches for a vertex within the XTree cell, using a QEF
