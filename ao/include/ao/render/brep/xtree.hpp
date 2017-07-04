@@ -85,14 +85,14 @@ protected:
         Eigen::Array<float, num, N> positions;
         for (unsigned i=0; i < num; ++i)
         {
-            Eigen::Vector3f pos; // the evaluator works in 3-space
-
             // Unpack from grid positions into the position vector
             for (unsigned j=0; j < N; ++j)
             {
-                pos(j) = pts((i % _pow(R, j + 1)) / _pow(R, j), j);
-                positions(i, j) = pos(j);
+                positions(i, j) = pts((i % _pow(R, j + 1)) / _pow(R, j), j);
             }
+
+            Eigen::Vector3f pos; // the evaluator works in 3-space
+            pos.template head<N>() = positions.row(i);
             pos.tail<3 - N>() = region.perp;
             eval->set(pos, i);
         }
@@ -106,26 +106,30 @@ protected:
         for (unsigned i=0; i < num; ++i)
         {
             Eigen::Array3f deriv(ds.dx[i], ds.dy[i], ds.dz[i]);
-            Eigen::Matrix<float, 1, N + 1> n;
 
+            // Load this row of A matrix
+            A.row(i).template head<N>() = deriv.head<N>();
             A(i, N) = -1;
+
+            // Temporary variable for dot product
+            Eigen::Matrix<float, 1, N + 1> n;
+            n.template head<N>() = positions.row(i) - center.transpose();
             n(N) = ds.v[i];
-            for (unsigned j=0; j < N; ++j)
-            {
-                A(i, j) = deriv(j);
-                n(j) = positions(i, j);
-            }
+
             b(i) = A.row(i).dot(n);
         }
 
         // Solve QEF (least-squares)
         auto sol = A.jacobiSvd(Eigen::ComputeThinU |
                                Eigen::ComputeThinV).solve(b);
-        std::cout << A << "\n\n";
-        std::cout << b << "\n\n";
-        std::cout << "sol:\n" << sol << "\n";
 
-        std::cout << "result:" << A * sol << '\n';
+        // Store vertex location
+        vert = sol.template head<N>().array() + center;
+
+        std::cout << "vert:\n" << vert << "\n";
+
+        auto err = A * sol - b;
+        std::cout << "err: " << err.dot(err) << '\n';
 
         // Check error
         return true;
