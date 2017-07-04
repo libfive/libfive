@@ -56,7 +56,7 @@ public:
 
         /*
          *  Splits the region along its largest axis in A
-         *  A is a bitfield of AXIS_{X,Y,Z}
+         *  A is a bitfield of Axis::{X,Y,Z}
          *
          *  If no available axis can be split, the second field has size = 0.
          */
@@ -65,7 +65,7 @@ public:
         {
             // Select the largest axis
             Eigen::Array3i::Index axis;
-            (Eigen::Array3i(A & AXIS_X, A & AXIS_Y, A & AXIS_Z) != 0)
+            (Eigen::Array3i(A & Axis::X, A & Axis::Y, A & Axis::Z) != 0)
                 .select(size, Eigen::Vector3i::Zero())
                 .maxCoeff(&axis);
 

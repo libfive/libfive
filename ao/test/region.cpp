@@ -14,9 +14,9 @@ TEST_CASE("Region<2>::subdivide")
         auto out = a.subdivide();
         REQUIRE(out.size() == 4);
         REQUIRE(!out[0].empty());
-        REQUIRE(!out[AXIS_Y].empty());
-        REQUIRE(out[AXIS_X].empty());
-        REQUIRE(out[AXIS_X|AXIS_Y].empty());
+        REQUIRE(!out[Axis::Y].empty());
+        REQUIRE(out[Axis::X].empty());
+        REQUIRE(out[Axis::X|Axis::Y].empty());
     }
 
     SECTION("On all axes")
@@ -32,7 +32,7 @@ TEST_CASE("Region<2>::subdivide")
             CAPTURE(sub.upper.x());
             CAPTURE(sub.lower.y());
             CAPTURE(sub.upper.y());
-            if (i & AXIS_X)
+            if (i & Axis::X)
             {
                 REQUIRE(sub.lower.x() ==  0);
                 REQUIRE(sub.upper.x() ==  1);
@@ -43,7 +43,7 @@ TEST_CASE("Region<2>::subdivide")
                 REQUIRE(sub.upper.x() ==  0);
             }
 
-            if (i & AXIS_Y)
+            if (i & Axis::Y)
             {
                 REQUIRE(sub.lower.y() ==  0);
                 REQUIRE(sub.upper.y() ==  2);
@@ -54,7 +54,7 @@ TEST_CASE("Region<2>::subdivide")
                 REQUIRE(sub.upper.y() ==  0);
             }
 
-            REQUIRE(!(i & AXIS_Z));
+            REQUIRE(!(i & Axis::Z));
         }
     }
 }
@@ -66,13 +66,13 @@ TEST_CASE("Region<3>::subdivide")
     {
         auto out = a.subdivide();
         REQUIRE(!out[0].empty());
-        REQUIRE(!out[AXIS_Z].empty());
-        REQUIRE(out[AXIS_X].empty());
-        REQUIRE(out[AXIS_Y].empty());
-        REQUIRE(out[AXIS_X|AXIS_Y].empty());
-        REQUIRE(out[AXIS_Z|AXIS_X].empty());
-        REQUIRE(out[AXIS_Z|AXIS_X|AXIS_Y].empty());
-        REQUIRE(out[AXIS_Z|AXIS_Y].empty());
+        REQUIRE(!out[Axis::Z].empty());
+        REQUIRE(out[Axis::X].empty());
+        REQUIRE(out[Axis::Y].empty());
+        REQUIRE(out[Axis::X|Axis::Y].empty());
+        REQUIRE(out[Axis::Z|Axis::X].empty());
+        REQUIRE(out[Axis::Z|Axis::X|Axis::Y].empty());
+        REQUIRE(out[Axis::Z|Axis::Y].empty());
     }
 
     SECTION("On all axes")
@@ -90,7 +90,7 @@ TEST_CASE("Region<3>::subdivide")
             CAPTURE(sub.upper.y());
             CAPTURE(sub.lower.z());
             CAPTURE(sub.upper.z());
-            if (i & AXIS_X)
+            if (i & Axis::X)
             {
                 REQUIRE(sub.lower.x() ==  0);
                 REQUIRE(sub.upper.x() ==  1);
@@ -101,7 +101,7 @@ TEST_CASE("Region<3>::subdivide")
                 REQUIRE(sub.upper.x() ==  0);
             }
 
-            if (i & AXIS_Y)
+            if (i & Axis::Y)
             {
                 REQUIRE(sub.lower.y() ==  0);
                 REQUIRE(sub.upper.y() ==  2);
@@ -112,7 +112,7 @@ TEST_CASE("Region<3>::subdivide")
                 REQUIRE(sub.upper.y() ==  0);
             }
 
-            if (i & AXIS_Z)
+            if (i & Axis::Z)
             {
                 REQUIRE(sub.lower.z() ==  0);
                 REQUIRE(sub.upper.z() ==  4);

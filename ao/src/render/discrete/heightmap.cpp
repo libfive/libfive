@@ -263,7 +263,7 @@ void render(
     {
         auto f = rs.front();
         rs.pop_front();
-        auto p = f.split<AXIS_X | AXIS_Y>();
+        auto p = f.split<Axis::X | Axis::Y>();
         rs.push_back(p.first);
         rs.push_back(p.second);
     }
