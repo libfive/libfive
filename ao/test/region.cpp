@@ -9,20 +9,9 @@ TEST_CASE("Region<2>::subdivide")
 {
     Region<2> a({-1, -2}, {1, 2});
 
-    SECTION("On target axis")
-    {
-        auto out = a.subdivide();
-        REQUIRE(out.size() == 4);
-        REQUIRE(!out[0].empty());
-        REQUIRE(!out[Axis::Y].empty());
-        REQUIRE(out[Axis::X].empty());
-        REQUIRE(out[Axis::X|Axis::Y].empty());
-    }
-
     SECTION("On all axes")
     {
-        // Force subdivision even though axes are unequal
-        auto out = a.subdivide(100);
+        auto out = a.subdivide();
         REQUIRE(out.size() == 4);
 
         for (int i=0; i < 4; ++i)
@@ -62,23 +51,9 @@ TEST_CASE("Region<3>::subdivide")
 {
     Region<3> a({-1, -2, -4}, {1, 2, 4});
 
-    SECTION("On target axis")
-    {
-        auto out = a.subdivide();
-        REQUIRE(!out[0].empty());
-        REQUIRE(!out[Axis::Z].empty());
-        REQUIRE(out[Axis::X].empty());
-        REQUIRE(out[Axis::Y].empty());
-        REQUIRE(out[Axis::X|Axis::Y].empty());
-        REQUIRE(out[Axis::Z|Axis::X].empty());
-        REQUIRE(out[Axis::Z|Axis::X|Axis::Y].empty());
-        REQUIRE(out[Axis::Z|Axis::Y].empty());
-    }
-
     SECTION("On all axes")
     {
-        // Force subdivision even though axes are unequal
-        auto out = a.subdivide(100);
+        auto out = a.subdivide();
 
         REQUIRE(out.size() == 8);
         for (int i=0; i < 8; ++i)
