@@ -108,7 +108,7 @@ protected:
             Eigen::Array3f deriv(ds.dx[i], ds.dy[i], ds.dz[i]);
             Eigen::Matrix<float, 1, N + 1> n;
 
-            A(i, N) = 1;
+            A(i, N) = -1;
             n(N) = ds.v[i];
             for (unsigned j=0; j < N; ++j)
             {
@@ -121,6 +121,11 @@ protected:
         // Solve QEF (least-squares)
         auto sol = A.jacobiSvd(Eigen::ComputeThinU |
                                Eigen::ComputeThinV).solve(b);
+        std::cout << A << "\n\n";
+        std::cout << b << "\n\n";
+        std::cout << "sol:\n" << sol << "\n";
+
+        std::cout << "result:" << A * sol << '\n';
 
         // Check error
         return true;
