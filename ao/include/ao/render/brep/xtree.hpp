@@ -16,6 +16,17 @@ class XTree
 public:
     XTree(Evaluator* eval, Region<N> region);
 
+    /*
+     *  Checks whether this tree splits
+     */
+    bool isBranch() const { return children[0].get() != nullptr; }
+
+    /*
+     *  Looks up a child, returning *this if this isn't a branch
+     */
+    const XTree<N>& child(unsigned i) const
+    { return isBranch() ? *children[i] : *this; }
+
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
