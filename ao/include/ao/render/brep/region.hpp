@@ -10,9 +10,18 @@ class Region
 {
 public:
     typedef Eigen::Array<float, N, 1> Pt;
+    typedef Eigen::Array<float, 3 - N, 1> Perp;
 
-    // Constructs a region with the given bounds
-    Region(Pt lower, Pt upper) : lower(lower), upper(upper) {}
+    /*
+     *  Constructs a region with the given bounds
+     */
+    Region(Pt lower, Pt upper) : lower(lower), upper(upper), perp(0) {}
+
+    /*
+     *  Construct a region with the given bounds
+     *  and perpendicular coordinate(s)
+     */
+    Region(Pt lower, Pt upper, Perp p) : lower(lower), upper(upper), perp(p) {}
 
     /*
      *  Splits along the largest axes
@@ -79,8 +88,31 @@ public:
                (upper.array() == 0).all();
     }
 
+    Eigen::Array3f lower3() const
+    {
+        Eigen::Array3f out;
+        out.head<N>() = lower;
+        out.tail<3 - N>() = perp;
+        return out;
+    }
+
+    Eigen::Array3f upper3() const
+    {
+        Eigen::Array3f out;
+        out.head<N>() = upper;
+        out.tail<3 - N>() = perp;
+        return out;
+    }
+
+    /*  Lower and upper bounds for the region  */
     Pt lower, upper;
 
+    /*  perp is the coordinates on perpendicular axes, used when converting
+     *  a 2D region into 3D coordinates for Interval evaluation  */
+    Eigen::Array<float, 3 - N, 1> perp;
+
+    /*  Boilerplate for an object that contains an Eigen struct  */
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 protected:
     /*
      *  Private constructor for empty (invalid) region

@@ -9,12 +9,12 @@ set(SRCS main.cpp
     #octree.cpp
     #contours.cpp
     feature.cpp
-    #quadtree.cpp
     solver.cpp
     region.cpp
     template.cpp
     tree.cpp
     voxels.cpp
+    xtree.cpp
     util/shapes.cpp)
 set(LIBS ao-kernel) # ao-kernel-c)
 

@@ -64,7 +64,7 @@ public:
         std::pair<View, View> split() const
         {
             // Select the largest axis
-            Eigen::Matrix3i::Index axis;
+            Eigen::Array3i::Index axis;
             (Eigen::Array3i(A & AXIS_X, A & AXIS_Y, A & AXIS_Z) != 0)
                 .select(size, Eigen::Vector3i::Zero())
                 .maxCoeff(&axis);
