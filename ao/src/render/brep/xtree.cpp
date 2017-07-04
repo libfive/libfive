@@ -64,9 +64,10 @@ bool XTree<N>::findVertex(Evaluator* eval)
             positions(i, j) = pts((i % _pow(R, j + 1)) / _pow(R, j), j);
         }
 
-        Eigen::Vector3f pos; // the evaluator works in 3-space
-        pos.template head<N>() = positions.row(i);
-        pos.tail<3 - N>() = region.perp;
+        // The evaluator works in 3-space,
+        // regardless of the XTree's dimensionality
+        Eigen::Vector3f pos;
+        pos << positions.row(i).transpose(), region.perp;
         eval->set(pos, i);
     }
 
@@ -89,16 +90,13 @@ bool XTree<N>::findVertex(Evaluator* eval)
 
     for (unsigned i=0; i < num; ++i)
     {
-        Eigen::Array3f deriv(ds.dx[i], ds.dy[i], ds.dz[i]);
-
         // Load this row of A matrix
-        A.row(i).template head<N>() = deriv.head<N>();
-        A(i, N) = -1;
+        auto derivs = Eigen::Array3f(ds.dx[i], ds.dy[i], ds.dz[i]);
+        A.row(i) << derivs.head<N>().transpose(), -1;
 
         // Temporary variable for dot product
         Eigen::Matrix<float, 1, N + 1> n;
-        n.template head<N>() = positions.row(i) - center.transpose();
-        n(N) = ds.v[i] - w0;
+        n << (positions.row(i) - center.transpose()), (ds.v[i] - w0);
 
         b(i) = A.row(i).dot(n);
     }
