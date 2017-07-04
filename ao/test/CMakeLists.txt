@@ -2,6 +2,7 @@ set(SRCS main.cpp
     avx.cpp
     cache.cpp
     #dc.cpp
+    dual.cpp
     eval.cpp
     heightmap.cpp
     #lib.cpp
