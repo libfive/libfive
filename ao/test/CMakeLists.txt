@@ -10,6 +10,7 @@ set(SRCS main.cpp
     #octree.cpp
     #contours.cpp
     feature.cpp
+    scaffold.cpp
     solver.cpp
     region.cpp
     template.cpp
