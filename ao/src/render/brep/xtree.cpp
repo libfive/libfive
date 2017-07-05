@@ -113,7 +113,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
     // boundary position.
     if ((vert < lower).any() || (vert > upper).any())
     {
-        float min_err = std::numeric_limits<float>::infinity();
+        err = std::numeric_limits<float>::infinity();
 
         // This is our reduced matrix, which is missing an axis
         Eigen::Matrix<float, num, N> A_;
@@ -144,11 +144,11 @@ bool XTree<N>::findVertex(Evaluator* eval)
             // Find new solution and error thereof
             auto sol = A_.jacobiSvd(Eigen::ComputeThinU |
                                     Eigen::ComputeThinV).solve(b_);
-            auto err = (A_ * sol - b_).squaredNorm();
+            auto err_ = (A_ * sol - b_).squaredNorm();
 
-            if (err < min_err)
+            if (err_ < err)
             {
-                min_err = err;
+                err = err_;
                 // Save bounded vertex position
                 unsigned k = 0;
                 for (unsigned j=0; j < N; ++j)
@@ -161,11 +161,11 @@ bool XTree<N>::findVertex(Evaluator* eval)
                 vert(axis) = value;
             }
         }
-        return min_err < 1e-6;
+        return err < 1e-6;
     }
     else
     {
-        auto err = (A * sol - b).squaredNorm();
+        err = (A * sol - b).squaredNorm();
         return err < 1e-6;
     }
 }

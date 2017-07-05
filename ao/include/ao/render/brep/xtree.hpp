@@ -39,6 +39,9 @@ public:
     /*  Vertex location, if this is a leaf  */
     Eigen::Array<float, N, 1> vert;
 
+    /*  Error for QEF solving (-1 if unsolved)  */
+    float err = -1;
+
     /*
      *  Unpack the vertex into a 3-element array
      *  (using the perpendicular coordinates)
