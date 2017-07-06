@@ -14,14 +14,14 @@ class Dual
 {
 public:
     template<typename V>
-    static void walk(const XTree<N>& tree, V& v);
+    static void walk(XTree<N>& tree, V& v);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // 2D Implementation
 template <typename V>
-void vert2(const XTree<2>& a, const XTree<2>& b,
-           const XTree<2>& c, const XTree<2>& d, V& v)
+void vert2(XTree<2>& a, XTree<2>& b,
+           XTree<2>& c, XTree<2>& d, V& v)
 {
     if (a.isBranch() || b.isBranch() || c.isBranch() || d.isBranch())
     {
@@ -36,7 +36,7 @@ void vert2(const XTree<2>& a, const XTree<2>& b,
 }
 
 template <typename V, Axis::Axis A>
-void edge2(const XTree<2>& a, const XTree<2>& b, V& v)
+void edge2(XTree<2>& a, XTree<2>& b, V& v)
 {
     if (a.isBranch() || b.isBranch())
     {
@@ -57,7 +57,7 @@ void edge2(const XTree<2>& a, const XTree<2>& b, V& v)
 
 template <>
 template <typename V>
-void Dual<2>::walk(const XTree<2>& t, V& v)
+void Dual<2>::walk(XTree<2>& t, V& v)
 {
     if (t.isBranch())
     {
@@ -85,7 +85,7 @@ void Dual<2>::walk(const XTree<2>& t, V& v)
 
 template <>
 template <typename V>
-void Dual<3>::walk(const XTree<3>& t, V& v)
+void Dual<3>::walk(XTree<3>& t, V& v)
 {
     (void)t;
     (void)v;

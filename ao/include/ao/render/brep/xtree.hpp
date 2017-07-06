@@ -38,6 +38,8 @@ public:
      */
     const XTree<N>& child(unsigned i) const
     { return isBranch() ? *children[i] : *this; }
+    XTree<N>& child(unsigned i)
+    { return isBranch() ? *children[i] : *this; }
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

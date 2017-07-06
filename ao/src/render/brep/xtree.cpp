@@ -36,7 +36,7 @@ struct Refiner
 {
     Refiner(Evaluator* eval) : eval(eval) {}
 
-    void operator()(const std::array<const XTree<N>*, (1 << N)>& a)
+    void operator()(const std::array<XTree<N>*, (1 << N)>& a)
     {
         bool all_empty = true;
         bool all_full = true;
@@ -56,7 +56,7 @@ struct Refiner
     }
 
     Evaluator* eval;
-    std::set<const XTree<N>*> targets;
+    std::set<XTree<N>*> targets;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,13 +73,28 @@ XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold)
         }
     }
 
-    // Encode the cell type into the error field for the moment
-    err = -scaffold.type - 2;
-
+    // If this is the root, then walk through the dual grid, tagging
+    // cells that could include parts of the mesh (and therefore need
+    // vertex positioning / refinement).
     if (eval)
     {
         Refiner<N> ref(eval);
         Dual<N>::walk(*this, ref);
+
+        for (auto& t : ref.targets)
+        {
+            if (!t->findVertex(eval))
+            {
+                auto rs = region.subdivide();
+                for (unsigned i=0; i < (1 << N); ++i)
+                {
+                    if (!rs[i].empty())
+                    {
+                        t->children[i].reset(new XTree<N>(eval, rs[i]));
+                    }
+                }
+            }
+        }
     }
 }
 
