@@ -83,4 +83,13 @@ void Dual<2>::walk(const XTree<2>& t, V& v)
 }
 ////////////////////////////////////////////////////////////////////////////////
 
+template <>
+template <typename V>
+void Dual<3>::walk(const XTree<3>& t, V& v)
+{
+    (void)t;
+    (void)v;
+    // TODO
+}
+
 }   // namespace Kernel
