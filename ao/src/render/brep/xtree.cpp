@@ -2,6 +2,7 @@
 #include <functional>
 
 #include "ao/render/brep/xtree.hpp"
+#include "ao/render/brep/scaffold.hpp"
 
 namespace Kernel {
 
@@ -25,6 +26,55 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
         }
     }
     eval->pop();
+}
+
+template <unsigned N>
+class Refiner
+{
+    void operator()(const std::array<const XTree<N>*, (1 << N)>& a)
+    {
+        bool all_empty = true;
+        bool all_full = true;
+
+        for (unsigned i=0; i < (1 << N); ++i)
+        {
+            //all_empty &= (a[i]->type == EMPTY);
+            //all_full &= (a[i]->type == FULL);
+        }
+        if (!all_empty && !all_full)
+        {
+            for (unsigned i=0; i < (1 << N); ++i)
+            {
+                if (a[i]->err < 0)
+                {
+                    a[i]->refine(eval);
+                }
+            }
+        }
+    }
+
+    Evaluator* eval;
+};
+
+template <unsigned N>
+XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold)
+    : region(scaffold.region)
+{
+    if (scaffold.children[0].get())
+    {
+        for (unsigned i=0; i < (1 << N); ++i)
+        {
+            children[i].reset(new XTree<N>(nullptr, *scaffold.children[i]));
+        }
+    }
+
+    // Encode the cell type into the error field for the moment
+    err = -scaffold.type - 2;
+
+    if (eval)
+    {
+
+    }
 }
 
 /*  Used for compile-time checking of array bounds in findVertex */

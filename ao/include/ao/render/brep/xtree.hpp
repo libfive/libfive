@@ -10,11 +10,22 @@
 
 namespace Kernel {
 
+template <unsigned N> class Scaffold;
+
 template <unsigned N>
 class XTree
 {
 public:
+    /*
+     *  Constructs an octree or quadtree by subdividing a region
+     */
     XTree(Evaluator* eval, Region<N> region);
+
+    /*
+     *  Constructs an octree or quadtree on a scaffold, subdividing
+     *  leaf cells that are part of the dual grid
+     */
+    XTree(Evaluator* eval, const Scaffold<N>& sca);
 
     /*
      *  Checks whether this tree splits
