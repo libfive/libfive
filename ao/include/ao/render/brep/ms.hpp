@@ -9,8 +9,7 @@ class SquareMarcher
 public:
     SquareMarcher(Evaluator* e) : eval(e) {}
 
-    void operator()(const XTree<2>& a, const XTree<2>& b,
-                    const XTree<2>& c, const XTree<2>& d);
+    void operator()(const std::array<XTree<2>*, 4>& ts);
 
     typedef Eigen::Vector2f Pt;
     std::list<std::pair<Pt, Pt>> segments;

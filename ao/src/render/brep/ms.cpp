@@ -36,11 +36,8 @@ uint8_t SquareMarcher::edges[4][2][2] = {
     {{0, 0}, {1, 0}}, // LOWER
 };
 
-void SquareMarcher::operator()(const XTree<2>& a, const XTree<2>& b,
-                               const XTree<2>& c, const XTree<2>& d)
+void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
 {
-    std::array<const XTree<2>*, 4> ts = {{&a, &b, &c, &d}};
-
     unsigned i=0;
     for (auto t : ts)
     {
