@@ -7,6 +7,7 @@
 
 #include "ao/render/brep/region.hpp"
 #include "ao/eval/evaluator.hpp"
+#include "ao/eval/interval.hpp"
 
 namespace Kernel {
 
@@ -52,6 +53,9 @@ public:
 
     /*  Error for QEF solving (-1 if unsolved)  */
     float err = -1;
+
+    /*  Used when doing scaffolding construction */
+    Interval::State type = Interval::UNKNOWN;
 
     /*
      *  Unpack the vertex into a 3-element array

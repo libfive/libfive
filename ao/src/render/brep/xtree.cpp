@@ -2,6 +2,7 @@
 #include <functional>
 
 #include "ao/render/brep/xtree.hpp"
+#include "ao/render/brep/dual.hpp"
 #include "ao/render/brep/scaffold.hpp"
 
 namespace Kernel {
@@ -28,9 +29,13 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
     eval->pop();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 template <unsigned N>
-class Refiner
+struct Refiner
 {
+    Refiner(Evaluator* eval) : eval(eval) {}
+
     void operator()(const std::array<const XTree<N>*, (1 << N)>& a)
     {
         bool all_empty = true;
@@ -39,22 +44,22 @@ class Refiner
         for (unsigned i=0; i < (1 << N); ++i)
         {
             all_empty &= (a[i]->type == Interval::EMPTY);
-            all_full &=  (a[i]->type == Interval::FILLED);
+            all_full  &= (a[i]->type == Interval::FILLED);
         }
         if (!all_empty && !all_full)
         {
             for (unsigned i=0; i < (1 << N); ++i)
             {
-                if (a[i]->err < 0)
-                {
-                    a[i]->refine(eval);
-                }
+                targets.insert(a[i]);
             }
         }
     }
 
     Evaluator* eval;
+    std::set<const XTree<N>*> targets;
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
 XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold)
@@ -73,15 +78,20 @@ XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold)
 
     if (eval)
     {
-
+        Refiner<N> ref(eval);
+        Dual<N>::walk(*this, ref);
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 /*  Used for compile-time checking of array bounds in findVertex */
 constexpr unsigned _pow(unsigned x, unsigned y)
 {
     return y ? x * _pow(x, y - 1) : 1;
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
 template <unsigned R>
@@ -220,6 +230,8 @@ bool XTree<N>::findVertex(Evaluator* eval)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 template <unsigned N>
 Eigen::Vector3f XTree<N>::vert3() const
 {
@@ -227,6 +239,8 @@ Eigen::Vector3f XTree<N>::vert3() const
     out << vert, region.perp;
     return out;
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 // Explicit initialization of templates
 template class XTree<2>;
