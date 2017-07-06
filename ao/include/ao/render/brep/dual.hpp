@@ -7,7 +7,7 @@ namespace Kernel {
 
 /*
  *  Class to walk a dual grid for a quad or octree
- *  t needs operator(std::array<XTree<N>*, N>) defined
+ *  t needs operator(const std::array<XTree<N>*, N>& trees) defined
  */
 template <unsigned N>
 class Dual
@@ -26,12 +26,12 @@ void vert2(const XTree<2>& a, const XTree<2>& b,
     if (a.isBranch() || b.isBranch() || c.isBranch() || d.isBranch())
     {
         vert2(a.child(Axis::X | Axis::Y),
-              b.child(Axis::Y), d.child(0),
-              c.child(Axis::X), v);
+              b.child(Axis::Y), c.child(Axis::X),
+              d.child(0), v);
     }
     else
     {
-        v(a, b, c, c);
+        v({{&a, &b, &c, &d}});
     }
 }
 
@@ -46,11 +46,11 @@ void edge2(const XTree<2>& a, const XTree<2>& b, V& v)
 
         if (A == Axis::X)
         {
-            vert2(a.child(A), b.child(0), b.child(perp), a.child(A|perp), v);
+            vert2(a.child(A), b.child(0), a.child(A|perp), b.child(perp), v);
         }
         else if (A == Axis::Y)
         {
-            vert2(a.child(A), a.child(A|perp), b.child(perp), b.child(0), v);
+            vert2(a.child(A), a.child(A|perp), b.child(0), b.child(perp), v);
         }
     }
 }
@@ -77,8 +77,8 @@ void Dual<2>::walk(const XTree<2>& t, V& v)
         edge2<V, Axis::Y>(*t.children[Axis::X], *t.children[Axis::X | Axis::Y], v);
 
         // Finally, recurse down towards the center of the cell
-        vert2(*t.children[0],                *t.children[Axis::X],
-              *t.children[Axis::X|Axis::Y],  *t.children[Axis::Y], v);
+        vert2(*t.children[0],        *t.children[Axis::X],
+              *t.children[Axis::Y],  *t.children[Axis::X|Axis::Y], v);
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
