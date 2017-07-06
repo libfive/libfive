@@ -102,7 +102,7 @@ struct Result {
     /*  j[clause][var] = dclause / dvar */
     std::vector<std::vector<float>> j;
 
-    std::vector<Interval> i;
+    std::vector<Interval::I> i;
 };
 
 }   // namespace Kernel

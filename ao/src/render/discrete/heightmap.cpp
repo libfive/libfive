@@ -212,15 +212,15 @@ static bool recurse(Evaluator* e, const Voxels::View& r, DepthImage& depth,
     }
 
     // Do the interval evaluation
-    Interval out = e->eval(r.lower, r.upper);
+    Interval::I out = e->eval(r.lower, r.upper);
 
     // If strictly negative, fill up the block and return
-    if (out.upper() < 0)
+    if (Interval::isFilled(out))
     {
         fill(e, r, depth, norm);
     }
     // Otherwise, recurse if the output interval is ambiguous
-    else if (out.lower() <= 0)
+    else if (!Interval::isEmpty(out))
     {
         // Disable inactive nodes in the tree
         e->push();

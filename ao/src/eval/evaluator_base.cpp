@@ -126,7 +126,7 @@ float EvaluatorBase::eval(const Eigen::Vector3f& p)
     return values(1)[0];
 }
 
-Interval EvaluatorBase::eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
+Interval::I EvaluatorBase::eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
 {
     set(lower, upper);
     return interval();
@@ -134,9 +134,9 @@ Interval EvaluatorBase::eval(const Eigen::Vector3f& lower, const Eigen::Vector3f
 
 void EvaluatorBase::set(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
 {
-    Interval x(lower.x(), upper.x());
-    Interval y(lower.y(), upper.y());
-    Interval z(lower.z(), upper.z());
+    Interval::I x(lower.x(), upper.x());
+    Interval::I y(lower.y(), upper.y());
+    Interval::I z(lower.z(), upper.z());
 
     result.i[X] = M(0,0) * x + M(0,1) * y + M(0,2) * z + M(0,3);
     result.i[Y] = M(1,0) * x + M(1,1) * y + M(1,2) * z + M(1,3);
@@ -1092,8 +1092,8 @@ float EvaluatorBase::eval_clause_jacobians(Opcode::Opcode op,
     return out;
 }
 
-Interval EvaluatorBase::eval_clause_interval(
-        Opcode::Opcode op, const Interval& a, const Interval& b)
+Interval::I EvaluatorBase::eval_clause_interval(
+        Opcode::Opcode op, const Interval::I& a, const Interval::I& b)
 {
     switch (op) {
         case Opcode::ADD:
@@ -1115,7 +1115,7 @@ Interval EvaluatorBase::eval_clause_interval(
         case Opcode::NTH_ROOT:
             return boost::numeric::nth_root(a, b.lower());
         case Opcode::MOD:
-            return Interval(0.0f, b.upper()); // YOLO
+            return Interval::I(0.0f, b.upper()); // YOLO
         case Opcode::NANFILL:
             return (std::isnan(a.lower()) || std::isnan(a.upper())) ? b : a;
 
@@ -1151,7 +1151,7 @@ Interval EvaluatorBase::eval_clause_interval(
         case Opcode::VAR:
         case Opcode::LAST_OP: assert(false);
     }
-    return Interval();
+    return Interval::I();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1229,7 +1229,7 @@ std::map<Tree::Id, float> EvaluatorBase::gradient(const Eigen::Vector3f& p)
     return out;
 }
 
-Interval EvaluatorBase::interval()
+Interval::I EvaluatorBase::interval()
 {
     for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
     {

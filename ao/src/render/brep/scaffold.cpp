@@ -4,7 +4,7 @@ namespace Kernel {
 
 template <unsigned N>
 Scaffold<N>::Scaffold(Evaluator* eval, Region<N> region, unsigned depth)
-    : region(region), type(AMBIGUOUS)
+    : region(region), type(Interval::AMBIGUOUS)
 {
     eval->set(region.lower3(), region.upper3());
     const auto i = eval->interval();
@@ -12,14 +12,7 @@ Scaffold<N>::Scaffold(Evaluator* eval, Region<N> region, unsigned depth)
 
     if (depth == 0)
     {
-        if (i.upper() < 0)
-        {
-            type = FULL;
-        }
-        else if (i.lower() > 0)
-        {
-            type = EMPTY;
-        }
+        type = Interval::state(i);
     }
     else
     {

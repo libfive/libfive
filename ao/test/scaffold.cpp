@@ -12,8 +12,8 @@ TEST_CASE("Scaffold<2>::Scaffold")
     auto s = Scaffold<2>(&e, r, 2);
 
     REQUIRE(s.children[0].get() != nullptr);
-    REQUIRE(s.children[0]->type == s.AMBIGUOUS);
-    REQUIRE(s.children[0]->children[0]->type == s.FULL);
-    REQUIRE(s.children[1]->children[0]->type == s.AMBIGUOUS);
-    REQUIRE(s.children[1]->children[1]->type == s.EMPTY);
+    REQUIRE(s.children[0]->type == Interval::AMBIGUOUS);
+    REQUIRE(s.children[0]->children[0]->type == Interval::FILLED);
+    REQUIRE(s.children[1]->children[0]->type == Interval::AMBIGUOUS);
+    REQUIRE(s.children[1]->children[1]->type == Interval::EMPTY);
 }

@@ -39,7 +39,7 @@ public:
      *  Single-argument evaluation
      */
     float eval(const Eigen::Vector3f& p);
-    Interval eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper);
+    Interval::I eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper);
 
     /*
      *  Evaluates a set of floating-point results
@@ -73,7 +73,7 @@ public:
     /*
      *  Evaluates a single interval (stored with set)
      */
-    Interval interval();
+    Interval::I interval();
 
     /*
      *  Stores the given value in the result arrays
@@ -229,8 +229,8 @@ protected:
     /*
      *  Evaluates a single Interval clause
      */
-    static Interval eval_clause_interval(
-        Opcode::Opcode op, const Interval& a, const Interval& b);
+    static Interval::I eval_clause_interval(
+        Opcode::Opcode op, const Interval::I& a, const Interval::I& b);
 
     /*  Global matrix transform (and inverse) applied to all coordinates  */
     Eigen::Matrix4f M;

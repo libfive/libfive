@@ -38,8 +38,8 @@ class Refiner
 
         for (unsigned i=0; i < (1 << N); ++i)
         {
-            //all_empty &= (a[i]->type == EMPTY);
-            //all_full &= (a[i]->type == FULL);
+            all_empty &= (a[i]->type == Interval::EMPTY);
+            all_full &=  (a[i]->type == Interval::FILLED);
         }
         if (!all_empty && !all_full)
         {

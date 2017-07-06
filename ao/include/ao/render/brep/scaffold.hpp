@@ -3,6 +3,7 @@
 #include <array>
 
 #include "ao/render/brep/region.hpp"
+#include "ao/eval/interval.hpp"
 #include "ao/eval/evaluator.hpp"
 
 namespace Kernel {
@@ -31,7 +32,7 @@ public:
     std::array<std::unique_ptr<Scaffold<N>>, 1 << N> children;
 
     /*  Type, if this isn't a branch  */
-    enum { EMPTY, FULL, AMBIGUOUS } type;
+    Interval::State type;
 };
 
 };

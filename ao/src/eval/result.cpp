@@ -49,7 +49,7 @@ void Result::setValue(float v, Index clause)
         dz[clause][i] = 0;
     }
 
-    i[clause] = Interval(v, v);
+    i[clause] = Interval::I(v, v);
 }
 
 void Result::setGradient(Index clause, Index var)
