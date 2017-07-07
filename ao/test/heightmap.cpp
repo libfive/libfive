@@ -12,7 +12,7 @@ using namespace Kernel;
 #define EPSILON 1e-6
 
 // Helper function to make rendering a single call
-static std::pair<DepthImage, NormalImage> render(
+static std::unique_ptr<Heightmap> render(
         Tree t, const Voxels& r, Eigen::Matrix4f M=Eigen::Matrix4f::Identity())
 {
     std::atomic_bool abort(false);
@@ -25,7 +25,7 @@ TEST_CASE("Heightmap::render: 2D interval Z values")
     Tree t = circle(1);
     Voxels r({-1, -1, -1}, {1, 1, 1}, {25, 25, 0});
 
-    auto out = render(t, r).first;
+    auto out = render(t, r)->depth;
     CAPTURE(out);
     REQUIRE((out == 0 ||
              out == -std::numeric_limits<float>::infinity()).all());
@@ -36,7 +36,7 @@ TEST_CASE("Heightmap::render: 3D interval Z values")
     Tree t = circle(1);
     Voxels r({-1, -1, -1}, {1, 1, 1}, {25, 25, 25});
 
-    auto out = render(t, r).first;
+    auto out = render(t, r)->depth;
     CAPTURE(out);
     REQUIRE((out == r.pts[2].back() ||
              out == -std::numeric_limits<float>::infinity()).all());
@@ -46,7 +46,7 @@ TEST_CASE("Heightmap::render: 2D circle ")
 {
     Tree t = circle(1);
 
-    DepthImage comp(10, 10);
+    Heightmap::Depth comp(10, 10);
     float inf = std::numeric_limits<float>::infinity();
     comp <<
         -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
@@ -63,7 +63,7 @@ TEST_CASE("Heightmap::render: 2D circle ")
     SECTION("Empty Z")
     {
         Voxels r({-1, -1, 0}, {1, 1, 0}, {5, 5, 0});
-        auto out = render(t, r).first;
+        auto out = render(t, r)->depth;
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
@@ -71,7 +71,7 @@ TEST_CASE("Heightmap::render: 2D circle ")
     SECTION("Zero-resolution Z")
     {
         Voxels r({-1, -1, -1}, {1, 1, 1}, {5, 5, 0});
-        auto out = render(t, r).first;
+        auto out = render(t, r)->depth;
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
@@ -82,10 +82,10 @@ TEST_CASE("Heightmap::render: 2D circle at non-zero Z ")
     Tree t = circle(1);
 
     Voxels r({-1, -1, 1}, {1, 1, 1}, 5);
-    auto out = render(t, r).first;
+    auto out = render(t, r)->depth;
     CAPTURE(out);
 
-    DepthImage comp(10, 10);
+    Heightmap::Depth comp(10, 10);
     float inf = std::numeric_limits<float>::infinity();
     comp <<
         -inf,-inf,-inf,   1,   1,   1,   1,-inf,-inf,-inf,
@@ -109,9 +109,9 @@ TEST_CASE("Heightmap::render: orientation")
     SECTION("Y")
     {
         Tree t = max(circle(1), Tree::Y());
-        auto out = render(t, r).first;
+        auto out = render(t, r)->depth;
 
-        DepthImage comp(10, 10);
+        Heightmap::Depth comp(10, 10);
         float inf = std::numeric_limits<float>::infinity();
         comp <<
             -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
@@ -132,9 +132,9 @@ TEST_CASE("Heightmap::render: orientation")
     SECTION("X")
     {
         Tree t = max(circle(1), Tree::X());
-        auto out = render(t, r).first;
+        auto out = render(t, r)->depth;
 
-        DepthImage comp(10, 10);
+        Heightmap::Depth comp(10, 10);
         float inf = std::numeric_limits<float>::infinity();
         comp <<
             -inf,-inf,-inf,   0,   0,-inf,-inf,-inf,-inf,-inf,
@@ -160,14 +160,14 @@ TEST_CASE("Heightmap::render: image shape")
     SECTION("X")
     {
         Voxels r({0, -1, 0}, {1, 1, 0}, 5);
-        auto out = render(t, r).first;
+        auto out = render(t, r)->depth;
         REQUIRE(out.rows() == 10);
         REQUIRE(out.cols() == 5);
     }
     SECTION("Y")
     {
         Voxels r({-1, 0, 0}, {1, 1, 0}, 5);
-        auto out = render(t, r).first;
+        auto out = render(t, r)->depth;
         REQUIRE(out.rows() == 5);
         REQUIRE(out.cols() == 10);
     }
@@ -180,9 +180,9 @@ TEST_CASE("Heightmap::render: 3D sphere")
     SECTION("Values")
     {
         Voxels r({-1, -1, -1}, {1, 1, 1}, 5);
-        auto out = render(t, r).first;
+        auto out = render(t, r)->depth;
 
-        DepthImage comp(10, 10);
+        Heightmap::Depth comp(10, 10);
         float inf = std::numeric_limits<float>::infinity();
         comp <<
             -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf,
@@ -211,7 +211,7 @@ TEST_CASE("Heightmap::render: 2D normals")
     SECTION("X")
     {
         Tree t = Tree::X() + Tree::Z();
-        auto norm = render(t, r).second;
+        auto norm = render(t, r)->norm;
 
         CAPTURE(norm);
         REQUIRE((norm == 0xffd97fd9).all());
@@ -220,7 +220,7 @@ TEST_CASE("Heightmap::render: 2D normals")
     SECTION("-X")
     {
         Tree t = Tree::Z() + (-Tree::X());
-        auto norm = render(t, r).second;
+        auto norm = render(t, r)->norm;
 
         CAPTURE(norm);
         REQUIRE((norm == 0xffd97f25 ||
@@ -230,7 +230,7 @@ TEST_CASE("Heightmap::render: 2D normals")
     SECTION("Y")
     {
         Tree t = Tree::Y() + Tree::Z();
-        auto norm = render(t, r).second;
+        auto norm = render(t, r)->norm;
 
         CAPTURE(norm);
         REQUIRE((norm == 0xffd9d97f ||
@@ -243,7 +243,7 @@ TEST_CASE("Heightmap::render: Normal clipping ")
     Tree t = circle(1);
     Voxels r({-1, -1, -1}, {1, 1, 1}, 5);
 
-    auto norm = render(t, r).second;
+    auto norm = render(t, r)->norm;
 
     CAPTURE(norm);
     REQUIRE((norm == 0xffff7f7f || norm == 0).all());
@@ -262,7 +262,7 @@ TEST_CASE("Heightmap::render: Performance")
         Voxels r({-1, -1, -1}, {1, 1, 1}, 500);
 
         start = std::chrono::system_clock::now();
-        auto out = render(t, r).first;
+        auto out = render(t, r)->depth;
         end = std::chrono::system_clock::now();
 
         elapsed = end - start;
@@ -283,7 +283,7 @@ TEST_CASE("Heightmap::render: Performance")
 
         // Begin timekeeping
         start = std::chrono::system_clock::now();
-        auto heightmap = render(sponge, r, rot).first;
+        auto heightmap = render(sponge, r, rot)->depth;
         end = std::chrono::system_clock::now();
 
         elapsed = end - start;

@@ -1,16 +1,17 @@
+#include <iostream>
 #include <future>
 #include <list>
 #include <limits>
 #include <set>
+
+#include <boost/algorithm/string/predicate.hpp>
+#include <png.h>
 
 #include "ao/render/discrete/heightmap.hpp"
 #include "ao/eval/result.hpp"
 #include "ao/eval/evaluator.hpp"
 
 namespace Kernel {
-
-namespace Heightmap
-{
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -19,7 +20,7 @@ namespace Heightmap
  */
 struct NormalRenderer
 {
-    NormalRenderer(Evaluator* e, const Voxels::View& r, NormalImage& norm)
+    NormalRenderer(Evaluator* e, const Voxels::View& r, Heightmap::Normal& norm)
         : e(e), r(r), norm(norm) {}
 
     /*
@@ -77,7 +78,7 @@ struct NormalRenderer
 
     Evaluator* e;
     const Voxels::View& r;
-    NormalImage& norm;
+    Heightmap::Normal& norm;
 
     // Store the x, y coordinates of rendered points for normal calculations
     static constexpr size_t NUM_POINTS = Result::N;
@@ -98,8 +99,7 @@ for (int i=0; i < r.size.x(); ++i)           \
 /*
  *  Helper functions that evaluates a region of pixels
  */
-static void pixels(Evaluator* e, const Voxels::View& r,
-                   DepthImage& depth, NormalImage& norm)
+void Heightmap::pixels(Evaluator* e, const Voxels::View& r)
 {
     size_t index = 0;
 
@@ -153,8 +153,7 @@ static void pixels(Evaluator* e, const Voxels::View& r,
  *
  *  This function is used when marking an Interval as filled
  */
-static void fill(Evaluator* e, const Voxels::View& r, DepthImage& depth,
-                 NormalImage& norm)
+void Heightmap::fill(Evaluator* e, const Voxels::View& r)
 {
     // Store the maximum z position (which is what we're flooding into
     // the depth image)
@@ -185,8 +184,8 @@ static void fill(Evaluator* e, const Voxels::View& r, DepthImage& depth,
 * Helper function that reduces a particular matrix block
 * Returns true if finished, false if aborted
 */
-static bool recurse(Evaluator* e, const Voxels::View& r, DepthImage& depth,
-                NormalImage& norm, const std::atomic_bool& abort)
+bool Heightmap::recurse(Evaluator* e, const Voxels::View& r,
+                        const std::atomic_bool& abort)
 {
     // Stop rendering if the abort flag is set
     if (abort.load())
@@ -207,7 +206,7 @@ static bool recurse(Evaluator* e, const Voxels::View& r, DepthImage& depth,
     // If we're below a certain size, render pixel-by-pixel
     if (r.voxels() <= Result::N)
     {
-        pixels(e, r, depth, norm);
+        pixels(e, r);
         return true;
     }
 
@@ -217,7 +216,7 @@ static bool recurse(Evaluator* e, const Voxels::View& r, DepthImage& depth,
     // If strictly negative, fill up the block and return
     if (Interval::isFilled(out))
     {
-        fill(e, r, depth, norm);
+        fill(e, r);
     }
     // Otherwise, recurse if the output interval is ambiguous
     else if (!Interval::isEmpty(out))
@@ -229,12 +228,12 @@ static bool recurse(Evaluator* e, const Voxels::View& r, DepthImage& depth,
 
         // Since the higher Z region is in the second item of the
         // split, evaluate rs.second then rs.first
-        if (!recurse(e, rs.second, depth, norm, abort))
+        if (!recurse(e, rs.second, abort))
         {
             e->pop();
             return false;
         }
-        if (!recurse(e, rs.first, depth, norm, abort))
+        if (!recurse(e, rs.first, abort))
         {
             e->pop();
             return false;
@@ -248,14 +247,39 @@ static bool recurse(Evaluator* e, const Voxels::View& r, DepthImage& depth,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-
-void render(
-        const std::vector<Evaluator*>& es, Voxels r,
-        const std::atomic_bool& abort, Eigen::Matrix4f m,
-        DepthImage& depth, NormalImage& norm)
+Heightmap::Heightmap(unsigned rows, unsigned cols)
+    : depth(rows, cols), norm(rows, cols)
 {
-    depth.fill(-std::numeric_limits<float>::infinity());
-    norm.fill(0);
+    // Nothing to do here
+}
+
+std::unique_ptr<Heightmap> Heightmap::render(
+    const Tree t, Voxels r, const std::atomic_bool& abort,
+    Eigen::Matrix4f m, size_t workers)
+{
+    std::vector<Evaluator*> es;
+    for (size_t i=0; i < workers; ++i)
+    {
+        es.push_back(new Evaluator(t));
+    }
+
+    auto out = render(es, r, abort, m);
+
+    for (auto e : es)
+    {
+        delete e;
+    }
+    return out;
+}
+
+std::unique_ptr<Heightmap> Heightmap::render(
+        const std::vector<Evaluator*>& es, Voxels r,
+        const std::atomic_bool& abort, Eigen::Matrix4f m)
+{
+    auto out = new Heightmap(r.pts[1].size(), r.pts[0].size());
+
+    out->depth.fill(-std::numeric_limits<float>::infinity());
+    out->norm.fill(0);
 
     // Build a list of regions by splitting on the XY axes
     std::list<Voxels::View> rs = {r.view()};
@@ -276,8 +300,8 @@ void render(
         (*itr)->setMatrix(m);
 
         futures.push_back(std::async(std::launch::async,
-            [itr, region, &depth, &norm, &abort](){
-                recurse(*itr, region, depth, norm, abort);
+            [itr, region, &out, &abort](){
+                out->recurse(*itr, region, abort);
             }));
         ++itr;
     }
@@ -290,53 +314,92 @@ void render(
 
     // If a voxel is touching the top Z boundary, set the normal to be
     // pointing in the Z direction.
-    norm = (depth == r.pts[2].back()).select(0xffff7f7f, norm);
+    out->norm = (out->depth == r.pts[2].back()).select(0xffff7f7f, out->norm);
+
+    return std::unique_ptr<Heightmap>(out);
 }
 
-std::pair<DepthImage, NormalImage> render(
-    const Tree t, Voxels r, const std::atomic_bool& abort,
-    Eigen::Matrix4f m, size_t workers)
+////////////////////////////////////////////////////////////////////////////////
+
+static void on_png_error(png_structp p, png_const_charp msg)
 {
-    std::vector<Evaluator*> es;
-    for (size_t i=0; i < workers; ++i)
+    (void)p; // unused
+    fprintf(stderr, "libpng error with message '%s'\n", msg);
+}
+
+static void on_png_warn(png_structp p, png_const_charp msg)
+{
+    (void)p; // unused
+    fprintf(stderr, "libpng warning with message '%s'\n", msg);
+}
+
+bool Heightmap::savePNG(std::string filename)
+{
+    if (!boost::algorithm::iends_with(filename, ".png"))
     {
-        es.push_back(new Evaluator(t));
+        std::cerr << "Warning: filename \"" << filename
+                  << "\" does not end in .png (Heightmap::savePNG)" << std::endl;
     }
 
-    auto out = render(es, r, abort, m);
-
-    for (auto e : es)
+    // Open up a file for writing
+    FILE* output = fopen(filename.c_str(), "wb");
+    if (output == NULL)
     {
-        delete e;
+        printf("Failed to open PNG file for writing (errno = %i)\n", errno);
+        return false;
     }
-    return out;
+
+    // Create a png pointer with the callbacks above
+    png_structp png_ptr = png_create_write_struct(
+        PNG_LIBPNG_VER_STRING, NULL, on_png_error, on_png_warn);
+    if (png_ptr == NULL)
+    {
+        fprintf(stderr, "Failed to allocate png write_struct\n");
+        fclose(output);
+        return false;
+    }
+
+    // Create an info pointer
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+    if (info_ptr == NULL)
+    {
+        fprintf(stderr, "Failed to create png info_struct");
+        png_destroy_write_struct(&png_ptr, &info_ptr);
+        fclose(output);
+        return false;
+    }
+
+    // Set physical vars
+    png_set_IHDR(png_ptr, info_ptr, depth.cols(), depth.rows(), 16,
+                 PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+    png_init_io(png_ptr, output);
+
+    const float zmax = depth.maxCoeff();
+    const float zmin = (depth == -std::numeric_limits<float>::infinity())
+            .select(Depth::Constant(depth.rows(), depth.cols(), zmax),
+                    depth)
+            .minCoeff();
+
+    auto scaled = (zmax == zmin)
+        ? Depth((depth - zmin) + 65535)
+        : Depth((depth - zmin) * 65534 / (zmax - zmin) + 1);
+    Eigen::Array<uint16_t, Eigen::Dynamic, Eigen::Dynamic>
+        pixels = scaled.cast<uint16_t>().transpose();
+
+    std::vector<uint16_t*> rows;
+    for (int i=pixels.cols() - 1; i >= 0; --i)
+    {
+        rows.push_back(pixels.data() + i * pixels.rows());
+    }
+
+    png_set_rows(png_ptr, info_ptr, reinterpret_cast<png_bytepp>(&rows[0]));
+    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_SWAP_ENDIAN, NULL);
+    fclose(output);
+
+    png_destroy_write_struct(&png_ptr, &info_ptr);
+    return true;
 }
-
-std::pair<DepthImage, NormalImage> render(
-        const std::vector<Evaluator*>& es, Voxels r,
-        const std::atomic_bool& abort, Eigen::Matrix4f m)
-{
-    auto depth = DepthImage(r.pts[1].size(), r.pts[0].size());
-    auto norm = NormalImage(r.pts[1].size(), r.pts[0].size());
-
-    render(es, r, abort, m, depth, norm);
-
-    return std::make_pair(depth, norm);
-
-}
-
-std::pair<DepthImage*, NormalImage*> render_(
-        const std::vector<Evaluator*>& es, Voxels r,
-        const std::atomic_bool& abort, Eigen::Matrix4f m)
-{
-    auto depth = new DepthImage(r.pts[1].size(), r.pts[0].size());
-    auto norm = new NormalImage(r.pts[1].size(), r.pts[0].size());
-
-    render(es, r, abort, m, *depth, *norm);
-
-    return std::make_pair(depth, norm);
-}
-
-} // namespace Heightmap
 
 }   // namespace Kernel
