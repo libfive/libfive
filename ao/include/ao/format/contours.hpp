@@ -21,6 +21,9 @@ struct Contours
 
     /*  Contours in 2D space  */
     std::vector<std::vector<Eigen::Vector2f>> contours;
+
+    /*  Optional bounding box */
+    Region bbox;
 };
 
 }   // namespace Kernel

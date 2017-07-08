@@ -24,6 +24,11 @@ public:
     Region(Pt lower, Pt upper, Perp p) : lower(lower), upper(upper), perp(p) {}
 
     /*
+     *  Default constructor for an empty region
+     */
+    Region() : lower(0), upper(0) {}
+
+    /*
      *  Splits along all axes
      */
     std::array<Region, 1 << N> subdivide() const
@@ -90,11 +95,6 @@ public:
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-protected:
-    /*
-     *  Private constructor for empty (invalid) region
-     */
-    Region() : lower(0), upper(0) {}
 };
 
 }   // namespace Kernel

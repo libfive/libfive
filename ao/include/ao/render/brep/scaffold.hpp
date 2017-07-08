@@ -23,7 +23,14 @@ template <unsigned N>
 class Scaffold
 {
 public:
-    Scaffold(Evaluator* eval, Region<N> region, unsigned depth);
+    /*
+     *  Constructs a scaffolding
+     *
+     *  If pad is true, then the region is expanded so that the outermost
+     *  cells of the scaffold are just outside the original region.  This
+     *  is useful for creating outside-of-model sections for rendering.
+     */
+    Scaffold(Evaluator* eval, Region<N> region, unsigned depth, bool pad=false);
 
     /*  The region filled by this Scaffold */
     Region<N> region;

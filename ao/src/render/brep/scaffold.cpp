@@ -3,9 +3,27 @@
 namespace Kernel {
 
 template <unsigned N>
-Scaffold<N>::Scaffold(Evaluator* eval, Region<N> region, unsigned depth)
-    : region(region), type(Interval::AMBIGUOUS)
+Scaffold<N>::Scaffold(Evaluator* eval, Region<N> r, unsigned depth, bool pad)
+    : type(Interval::AMBIGUOUS)
 {
+
+    // Figure out an expanded region such that the outer shell of cells
+    // (at the given subdivision level) are outside of the target region
+    //
+    // This forces the creation of QEF cells / vertices on the model boundary.
+    if (pad)
+    {
+        const auto size = r.upper - r.lower;
+        const auto expanded = size * (1 << depth) / ((1 << depth) - 2.0);
+        const auto center = (r.upper + r.lower) / 2;
+
+        region = Region<N>(center - expanded/2, center + expanded/2);
+    }
+    else
+    {
+        region = r;
+    }
+
     eval->set(region.lower3(), region.upper3());
     const auto i = eval->interval();
     eval->push();

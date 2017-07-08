@@ -20,6 +20,7 @@ add_library(ao-kernel STATIC
     render/brep/xtree.cpp
     render/brep/scaffold.cpp
     render/brep/ms.cpp
+    render/brep/contour.cpp
     #    render/subregion.cpp
     solve/solver.cpp
     tree/cache.cpp
