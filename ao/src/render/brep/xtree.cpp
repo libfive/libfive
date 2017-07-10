@@ -63,7 +63,7 @@ struct Refiner
 
 template <unsigned N>
 XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold)
-    : region(scaffold.region)
+    : region(scaffold.region), type(scaffold.type)
 {
     if (scaffold.children[0].get())
     {
