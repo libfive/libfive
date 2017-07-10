@@ -29,11 +29,11 @@ SquareMarcher::Edge SquareMarcher::cases[16][2][2] = {
     {{LOWER, LEFT}, {NONE, NONE}},   // abcd
 };
 
-uint8_t SquareMarcher::edges[4][2][2] = {
-    {{0, 0}, {0, 1}}, // LEFT
-    {{1, 0}, {1, 1}}, // RIGHT
-    {{0, 1}, {1, 1}}, // UPPER
-    {{0, 0}, {1, 0}}, // LOWER
+uint8_t SquareMarcher::edges[4][2] = {
+    {0, 2}, // LEFT
+    {1, 3}, // RIGHT
+    {3, 4}, // UPPER
+    {0, 1}, // LOWER
 };
 
 void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
@@ -50,6 +50,33 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
     for (unsigned i=0; i < 4; ++i)
     {
         mask |= (vs[i] < 0) << i;
+    }
+
+    // First segment
+    for (unsigned seg=0; seg < 2; ++seg)
+    {
+        if (cases[mask][seg][0] != NONE)
+        {
+            Key _a(ts[edges[cases[mask][seg][0]][0]],
+                   ts[edges[cases[mask][seg][0]][1]]);
+            auto a = points.find(_a);
+            if (a == points.end())
+            {
+                auto pt = interp.between(_a.first->vert, _a.second->vert);
+                a = points.insert({_a, pt}).first;
+            }
+
+            Key _b(ts[edges[cases[mask][seg][1]][0]],
+                    ts[edges[cases[mask][seg][1]][1]]);
+            auto b = points.find(_b);
+            if (b == points.end())
+            {
+                auto pt = interp.between(_b.first->vert, _b.second->vert);
+                b = points.insert({_b, pt}).first;
+            }
+
+            segments.push_back({_a, _b});
+        }
     }
 }
 

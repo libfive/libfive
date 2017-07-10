@@ -10,6 +10,8 @@ set(SRCS main.cpp
     #octree.cpp
     #contours.cpp
     feature.cpp
+    interpolator.cpp
+    ms.cpp
     scaffold.cpp
     solver.cpp
     region.cpp

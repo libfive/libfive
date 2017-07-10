@@ -6,25 +6,24 @@
 
 namespace Kernel {
 
-std::unique_ptr<Contour> Contour::render(const Tree t, const Region<2>& _r)
+std::unique_ptr<Contour> Contour::render(const Tree t, const Region<2>& r)
 {
-    const int subdiv = 4;
-
-    // Figure out an expanded region such that the outer shell of cells
-    // (at the given subdivision level) are outside of the target region
-    //
-    // This forces the creation of QEF cells / vertices on the model boundary.
-    const auto size = _r.upper - _r.lower;
-    const auto expanded = size * (1 << subdiv) / ((1 << subdiv) - 2.0);
-    const auto center = (_r.upper + _r.lower) / 2;
-
-    const auto r = Region<2>(center - expanded/2, center + expanded/2);
-
     std::unique_ptr<Evaluator> eval(new Evaluator(t));
-    auto xtree = XTree<2>(eval.get(), Scaffold<2>(eval.get(), r, subdiv));
 
+    // Create a padded scaffolding for the XTree
+    const auto scaffold = Scaffold<2>(eval.get(), r, 4, true);
+
+    // Create the quadtree on the scaffold
+    auto xtree = XTree<2>(eval.get(), scaffold);
+
+    // Perform marching squares
     SquareMarcher ms(eval.get());
     Dual<2>::walk(xtree, ms);
+
+    auto out = new Contour;
+    out->bbox = r;
+
+    return std::unique_ptr<Contour>(out);
 }
 
 }   // namespace Kernel

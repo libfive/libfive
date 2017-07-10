@@ -1,0 +1,35 @@
+#include "catch.hpp"
+
+#include "ao/render/brep/ms.hpp"
+#include "ao/render/brep/dual.hpp"
+#include "ao/render/brep/scaffold.hpp"
+#include "util/shapes.hpp"
+
+using namespace Kernel;
+
+TEST_CASE("SquareMarcher: operator() on circle")
+{
+    Evaluator e(circle(1));
+
+    // Create a padded scaffolding for the tree
+    Region<2> r({-1, -1}, {1, 1});
+    const auto scaffold = Scaffold<2>(&e, r, 4, true);
+    std::cout << "Scaffolded between\n" << scaffold.region.lower.transpose() << '\n' << scaffold.region.upper.transpose() << '\n';
+
+    // Create the quadtree on the scaffold
+    auto xtree = XTree<2>(&e, scaffold);
+
+    SquareMarcher ms(&e);
+    Dual<2>::walk(xtree, ms);
+
+    float rmin = 2;
+    float rmax = 0;
+    for (auto pt : ms.points)
+    {
+        //std::cout << pt.second.transpose() << '\t' << pt.second.norm() << '\n';
+        rmin = fmin(rmin, pt.second.norm());
+        rmax = fmax(rmax, pt.second.norm());
+    }
+    REQUIRE(rmin > 0.99);
+    REQUIRE(rmax < 1.01);
+}

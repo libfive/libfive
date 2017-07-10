@@ -36,21 +36,21 @@ struct Refiner
 {
     Refiner(Evaluator* eval) : eval(eval) {}
 
-    void operator()(const std::array<XTree<N>*, (1 << N)>& a)
+    void operator()(const std::array<XTree<N>*, (1 << N)>& as)
     {
         bool all_empty = true;
         bool all_full = true;
 
-        for (unsigned i=0; i < (1 << N); ++i)
+        for (auto& a : as)
         {
-            all_empty &= (a[i]->type == Interval::EMPTY);
-            all_full  &= (a[i]->type == Interval::FILLED);
+            all_empty &= (a->type == Interval::EMPTY);
+            all_full  &= (a->type == Interval::FILLED);
         }
         if (!all_empty && !all_full)
         {
-            for (unsigned i=0; i < (1 << N); ++i)
+            for (auto& a : as)
             {
-                targets.insert(a[i]);
+                targets.insert(a);
             }
         }
     }
