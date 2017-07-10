@@ -75,6 +75,8 @@ protected:
      */
     template <unsigned R=4>
     bool findVertex(Evaluator* eval);
+
+    constexpr static float MAX_ERROR = 1e-6;
 };
 
 }   // namespace Kernel

@@ -236,12 +236,12 @@ bool XTree<N>::findVertex(Evaluator* eval)
                 vert(axis) = value;
             }
         }
-        return err < 1e-6;
+        return err < MAX_ERROR;
     }
     else
     {
         err = (A * sol - b).squaredNorm();
-        return err < 1e-6;
+        return err < MAX_ERROR;
     }
 }
 
