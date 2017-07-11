@@ -34,6 +34,11 @@ TEST_CASE("XTree<2>()")
         auto ta = XTree<2>(&a, Region<2>({0.6, -0.2}, {0.8, 0.2}));
         REQUIRE(ta.vert.x() == Approx(0.6).epsilon(0.01));
         REQUIRE(ta.vert.y() == Approx(0.0).epsilon(0.01));
+
+        Evaluator b(circle(1));
+        auto tb = XTree<2>(&b, Region<2>({-1, -1}, {0, 0}), 1000);
+        REQUIRE(tb.vert.x() == Approx(0).epsilon(0.01));
+        REQUIRE(tb.vert.y() == Approx(0).epsilon(0.01));
     }
 
     SECTION("Snapping to cell corners")
