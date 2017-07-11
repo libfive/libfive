@@ -20,13 +20,13 @@ public:
     /*
      *  Constructs an octree or quadtree by subdividing a region
      */
-    XTree(Evaluator* eval, Region<N> region);
+    XTree(Evaluator* eval, Region<N> region, float err=1e-6);
 
     /*
      *  Constructs an octree or quadtree on a scaffold, subdividing
      *  leaf cells that are part of the dual grid
      */
-    XTree(Evaluator* eval, const Scaffold<N>& sca);
+    XTree(Evaluator* eval, const Scaffold<N>& sca, float err=1e-6);
 
     /*
      *  Checks whether this tree splits
@@ -76,7 +76,8 @@ protected:
     template <unsigned R=4>
     bool findVertex(Evaluator* eval);
 
-    constexpr static float MAX_ERROR = 1e-6;
+    /*  Max QEF error (used to decide when to terminate meshing) */
+    const float max_error;
 };
 
 }   // namespace Kernel
