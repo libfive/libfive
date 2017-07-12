@@ -206,8 +206,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
             auto value = ((i & 1) ? lower : upper)(axis);
 
             // Construct modified A matrix by skipping one axis
-            unsigned k=0;
-            for (unsigned j=0; j < N; ++j)
+            for (unsigned j=0, k=0; j < N; ++j)
             {
                 if (j != axis)
                 {
@@ -227,8 +226,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
             {
                 err = err_;
                 // Save bounded vertex position
-                unsigned k = 0;
-                for (unsigned j=0; j < N; ++j)
+                for (unsigned j=0, k=0; j < N; ++j)
                 {
                     if (j != axis)
                     {
