@@ -215,7 +215,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
             }
 
             // Apply removed axis to the b_ matrix
-            b_ = b - A.col(axis) * value;
+            b_ = b - A.col(axis) * (value - center(axis));
 
             // Find new solution and error thereof
             auto sol = A_.jacobiSvd(Eigen::ComputeThinU |
@@ -230,7 +230,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
                 {
                     if (j != axis)
                     {
-                        vert(j) = sol(k++);
+                        vert(j) = sol(k++) + center(j);
                     }
                 }
                 vert(axis) = value;
