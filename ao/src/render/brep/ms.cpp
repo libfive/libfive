@@ -38,10 +38,9 @@ uint8_t SquareMarcher::edges[4][2] = {
 
 void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
 {
-    unsigned i=0;
-    for (auto t : ts)
+    for (unsigned i=0; i < 4; ++i)
     {
-        eval->set(t->vert3(), i++);
+        eval->set(ts[i]->vert3(), i);
     }
     auto vs = eval->values(4);
 
