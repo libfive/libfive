@@ -40,15 +40,21 @@ TEST_CASE("XTree<2>()")
     {
         Evaluator a(circle(0.5));
         {
-            auto ta = XTree<2>(&a, Region<2>({0.6, 0.6}, {0.8, 0.8}), 1000);
-            REQUIRE(ta.vert.x() == Approx(0.6).epsilon(0.01));
-            REQUIRE(ta.vert.y() == Approx(0.6).epsilon(0.01));
+            auto t = XTree<2>(&a, Region<2>({0.6, 0.6}, {0.8, 0.8}), 1000);
+            REQUIRE(t.vert.x() == Approx(0.6).epsilon(0.01));
+            REQUIRE(t.vert.y() == Approx(0.6).epsilon(0.01));
         }
 
         {
-            auto ta = XTree<2>(&a, Region<2>({-1, -1}, {0, 0}), 1000);
-            REQUIRE(ta.vert.x() == Approx(0).epsilon(0.01));
-            REQUIRE(ta.vert.y() == Approx(0).epsilon(0.01));
+            auto t = XTree<2>(&a, Region<2>({-1, -1}, {0, 0}), 1000);
+            REQUIRE(t.vert.x() == Approx(0).epsilon(0.01));
+            REQUIRE(t.vert.y() == Approx(0).epsilon(0.01));
+        }
+
+        {
+            auto t = XTree<2>(&a, Region<2>({-2, -1}, {-1, 0}), 1000);
+            REQUIRE(t.vert.x() == Approx(-1).epsilon(0.01));
+            REQUIRE(t.vert.y() == Approx(0).epsilon(0.01));
         }
     }
 }
