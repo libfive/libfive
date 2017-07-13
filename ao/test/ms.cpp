@@ -19,6 +19,7 @@ TEST_CASE("SquareMarcher: operator() on circle")
     // Create the quadtree on the scaffold (without subdividing farther)
     auto xtree = XTree<2>(&e, scaffold, 1000);
 
+    std::cout << "---------------------------------------------------------------------\n";
     SquareMarcher ms(&e);
     Dual<2>::walk(xtree, ms);
 
@@ -26,7 +27,7 @@ TEST_CASE("SquareMarcher: operator() on circle")
     float rmax = 0;
     for (auto pt : ms.points)
     {
-        //std::cout << pt.second.transpose() << '\t' << pt.second.norm() << '\n';
+        std::cout << pt.second.transpose() << '\t' << pt.second.norm() << '\n';
         rmin = fmin(rmin, pt.second.norm());
         rmax = fmax(rmax, pt.second.norm());
     }

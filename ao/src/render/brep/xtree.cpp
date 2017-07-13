@@ -1,5 +1,6 @@
 #include <numeric>
 #include <functional>
+#include <limits>
 
 #include "ao/render/brep/xtree.hpp"
 #include "ao/render/brep/dual.hpp"
@@ -103,10 +104,148 @@ XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float err)
 ////////////////////////////////////////////////////////////////////////////////
 
 /*  Used for compile-time checking of array bounds in findVertex */
-constexpr unsigned _pow(unsigned x, unsigned y)
+constexpr static unsigned _pow(unsigned x, unsigned y)
+{ return y ? x * _pow(x, y - 1) : 1; }
+
+/*  Used for compile-time array construction in solveQEF  */
+constexpr static unsigned _count_bits(unsigned x)
+{ return x ? (x & 1) + _count_bits(x >> 1) : 0; }
+
+////////////////////////////////////////////////////////////////////////////////
+
+template<unsigned N, unsigned R, unsigned C>
+class Solver
 {
-    return y ? x * _pow(x, y - 1) : 1;
+public:
+static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
+        const Eigen::Matrix<float, _pow(R, N), N + 1>& A,
+        const Eigen::Matrix<float, _pow(R, N), 1>& b,
+        const Region<N>& region)
+{
+    std::cout << "------------------------------------------------------------\n";
+    std::cout << "Got A matrix:\n" << A << "\n and B matrix\n" << b << "\n";
+    constexpr unsigned CONSTRAINED_AXES_COUNT = _count_bits(C);
+    static_assert(C > 0, "Unconstrained optimization shouldn't use solveQEF");
+    static_assert(C < _pow(2, N), "solveQEF called with too-large bitfield");
+    static_assert(CONSTRAINED_AXES_COUNT <= N , "solveQEF called with too-large bitfield");
+
+    // Our reduced A matrix still has the w column
+    Eigen::Matrix<float, _pow(R, N), N + 1 - CONSTRAINED_AXES_COUNT> A_;
+    A_.col(N - CONSTRAINED_AXES_COUNT) = A.col(N);
+
+    // The b matrix is expanded to search for multiple possible solutions,
+    // e.g. if we're constrained on the X axis, then we'll solve for
+    //      X = upper.X     and     X = lower.Y
+    // simultaneously then pick the best result.
+    Eigen::Matrix<float, _pow(R, N), 1 << CONSTRAINED_AXES_COUNT> b_;
+
+    // Construct the pruned A matrix and record which axes are constrained
+    uint8_t constrained_axes[CONSTRAINED_AXES_COUNT];
+    for (unsigned i=0, c=0, a=0; i < N; ++i)
+    {
+        // If this axis is constrained, then record that fact
+        if (C & (1 << i))
+        {
+            constrained_axes[a++] = i;
+        }
+        // Otherwise, keep it in the A matrix
+        else
+        {
+            A_.col(c++) = A.col(i);
+        }
+    }
+
+    std::cout << "Constrained axes: ";
+    for (auto c : constrained_axes)
+        std::cout << int(c) << " ";
+    std::cout << '\n';
+
+    // Figure out all of the possible constrained axes values, storing them
+    // into an array named 'verts' and removing the from the appropriate
+    // column of the b_ matrix
+    Eigen::Matrix<float, N + 1, (1 << CONSTRAINED_AXES_COUNT)> verts;
+    for (unsigned i=0; i < (1 << CONSTRAINED_AXES_COUNT); ++i)
+    {
+        // Start with the original b vector
+        b_.col(i) = b;
+
+        for (unsigned j=0; j < CONSTRAINED_AXES_COUNT; ++j)
+        {
+            // Pick whether we're constraining to the top or bottom of the axis
+            verts(j, i) = ((i & (1 << j))
+                    ? region.lower(constrained_axes[j])
+                    : region.upper(constrained_axes[j]));
+
+            // Then offset by the region's center, as we do for unconstrained
+            // points as well.
+            verts(j, i) -= region.center()(constrained_axes[j]);
+
+            // Strip out the offset from this particular column of b_
+            b_.col(i).array() -= (A.col(j) * verts(j, i)).array();
+        }
+    }
+
+    // Find constrained solution
+    auto sol = A_.jacobiSvd(Eigen::ComputeThinU |
+                            Eigen::ComputeThinV).solve(b_);
+
+    std::cout << "Got A matrix:\n" << A_ << "\n and B matrix\n" << b_ << "\n";
+    std::cout << "and solution\n" << sol << "\n";
+
+    // Unpack the solution into a set of full positions
+    std::cout << "lower: " << region.lower.transpose() << "\nupper: " << region.upper.transpose() << '\n';
+    for (unsigned i=0; i < (1 << CONSTRAINED_AXES_COUNT); ++i)
+    {
+        // Store the w value at the end of the vertex
+        verts(N, i) = sol(CONSTRAINED_AXES_COUNT, i);
+
+        // Then, unpack either solved or constrained values
+        for (unsigned j=0, k=0; j < N; ++j)
+        {
+            // If this axis was unconstrained, then pick out its position
+            // value from the solution array
+            if (!(C & (1 << j)))
+            {
+                verts(j, i) = sol(k++, i);
+            }
+        }
+    }
+    std::cout << "Found vertices \n" << verts << "\n";
+
+    auto errs = ((A * verts).colwise() - b).colwise().squaredNorm();
+    std::cout << "Found errs\n" << errs << '\n';
+    unsigned best_index;
+    float err_ = errs.minCoeff(&best_index);
+    auto vert_ = verts.col(best_index).template head<N>().array() + region.center();
+
+    std::cout << "Got vert [" << vert_.transpose() << "] (C = " << C << ")";
+    if (!region.contains(vert_))
+    {
+        err_ = std::numeric_limits<float>::infinity();
+    }
+    std::cout << " with err " << err_ << '\n';
+
+    auto next = Solver<N, R, C - 1>::solveQEF(A, b, region);
+    return (next.second < err_) ? next : std::make_pair(vert_, err_);
 }
+};
+
+/*
+ *  Partial template specialization to make expansion terminate
+ */
+template<unsigned N, unsigned R>
+class Solver<N, R, 0>
+{
+public:
+static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
+        const Eigen::Matrix<float, _pow(R, N), N + 1>&,
+        const Eigen::Matrix<float, _pow(R, N), 1>&,
+        const Region<N>&)
+{
+    return {Eigen::Array<float, N, 1>::Zero(),
+            std::numeric_limits<float>::infinity()};
+}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -117,18 +256,12 @@ bool XTree<N>::findVertex(Evaluator* eval)
     constexpr unsigned num = _pow(R, N);
     static_assert(num < Result::N, "Bad resolution");
 
-    // Evaluation takes place in 3-space regardless of tree dimensionality
-    // because evaluators need X / Y / Z coordinates
-    auto lower = region.lower;
-    auto upper = region.upper;
-    auto center = (region.lower + region.upper) / 2;
-    Eigen::Array<float, R, N> pts;
-
     // Pre-compute per-axis grid positions
+    Eigen::Array<float, R, N> pts;
     for (unsigned i=0; i < R; ++i)
     {
         const float frac = (i + 0.5) / R;
-        pts.row(i) = lower * (1 - frac) + upper * frac;
+        pts.row(i) = region.lower * (1 - frac) + region.upper * frac;
     }
 
     // Load all sample points into the evaluator
@@ -173,7 +306,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
 
         // Temporary variable for dot product
         Eigen::Matrix<float, 1, N + 1> n;
-        n << (positions.row(i) - center.transpose()), (ds.v[i] - w0);
+        n << (positions.row(i) - region.center().transpose()), (ds.v[i] - w0);
 
         b(i) = A.row(i).dot(n);
     }
@@ -183,59 +316,16 @@ bool XTree<N>::findVertex(Evaluator* eval)
                            Eigen::ComputeThinV).solve(b);
 
     // Store vertex location
-    vert = sol.template head<N>().array() + center;
+    vert = sol.template head<N>().array() + region.center();
 
     // If the vertex ended up outside of the cell, then minimize the QEF
     // on each of the cell's boundaries and position the vertex at the best
     // boundary position.
-    if ((vert < lower).any() || (vert > upper).any())
+    if (!region.contains(vert))
     {
-        err = std::numeric_limits<float>::infinity();
-
-        // This is our reduced matrix, which is missing an axis
-        Eigen::Matrix<float, num, N> A_;
-        A_.col(N - 1) = A.col(N);
-
-        // Our b matrix is the same shape, but will be offset
-        Eigen::Matrix<float, num, 1> b_;
-
-        for (unsigned i=0; i < N*2; ++i)
-        {
-            // Pick out axis and boundary value
-            auto axis = i / 2;
-            auto value = ((i & 1) ? lower : upper)(axis);
-
-            // Construct modified A matrix by skipping one axis
-            for (unsigned j=0, k=0; j < N; ++j)
-            {
-                if (j != axis)
-                {
-                    A_.col(k++) = A.col(j);
-                }
-            }
-
-            // Apply removed axis to the b_ matrix
-            b_ = b - A.col(axis) * (value - center(axis));
-
-            // Find new solution and error thereof
-            auto sol = A_.jacobiSvd(Eigen::ComputeThinU |
-                                    Eigen::ComputeThinV).solve(b_);
-            auto err_ = (A_ * sol - b_).squaredNorm();
-
-            if (err_ < err)
-            {
-                err = err_;
-                // Save bounded vertex position
-                for (unsigned j=0, k=0; j < N; ++j)
-                {
-                    if (j != axis)
-                    {
-                        vert(j) = sol(k++) + center(j);
-                    }
-                }
-                vert(axis) = value;
-            }
-        }
+        auto out = Solver<N, R, (1 << N) - 1>::solveQEF(A, b, region);
+        err = out.second;
+        vert = out.first;
         return err < max_error;
     }
     else
