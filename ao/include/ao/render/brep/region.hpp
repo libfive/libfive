@@ -13,6 +13,17 @@ public:
     typedef Eigen::Array<float, 3 - N, 1> Perp;
 
     /*
+     *  Check if the given point is in the region (inclusive)
+     */
+    bool contains(Pt p) const
+    { return (p >= lower).all() && (p <= upper).all(); }
+
+    /*
+     *  Helper function to get center of region
+     */
+    Pt center() const { return (lower + upper) / 2; }
+
+    /*
      *  Constructs a region with the given bounds
      */
     Region(Pt lower, Pt upper) : lower(lower), upper(upper), perp(0) {}
