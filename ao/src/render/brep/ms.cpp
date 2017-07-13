@@ -19,14 +19,14 @@ SquareMarcher::Edge SquareMarcher::cases[16][2][2] = {
     {{RIGHT, LOWER}, {LEFT, UPPER}}, // 0bc0
     {{LEFT, LOWER}, {NONE, NONE}},   // 0bcd
 
-    {{NONE, NONE}, {NONE, NONE}},    // a000
-    {{RIGHT, UPPER}, {NONE, NONE}},  // a00d
-    {{UPPER, LEFT}, {NONE, NONE}},   // a0c0
-    {{RIGHT, LEFT}, {NONE, NONE}},   // a0cd
-    {{LOWER, RIGHT}, {NONE, NONE}},  // ab00
-    {{LOWER, UPPER}, {NONE, NONE}},  // ab0d
-    {{LOWER, RIGHT}, {UPPER, LEFT}}, // abc0
-    {{LOWER, LEFT}, {NONE, NONE}},   // abcd
+    {{LOWER, LEFT}, {NONE, NONE}},   // a000
+    {{LOWER, RIGHT}, {UPPER, LEFT}}, // a00d
+    {{LOWER, UPPER}, {NONE, NONE}},  // a0c0
+    {{LOWER, RIGHT}, {NONE, NONE}},  // a0cd
+    {{RIGHT, LEFT}, {NONE, NONE}},   // ab00
+    {{UPPER, LEFT}, {NONE, NONE}},   // ab0d
+    {{LEFT, UPPER}, {NONE, NONE}},   // abc0
+    {{NONE, NONE}, {NONE, NONE}},    // abcd
 };
 
 uint8_t SquareMarcher::edges[4][2] = {
