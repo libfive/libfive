@@ -172,13 +172,13 @@ static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
         for (unsigned j=0; j < CONSTRAINED_AXES_COUNT; ++j)
         {
             // Pick whether we're constraining to the top or bottom of the axis
-            verts(j, i) = ((i & (1 << j))
+            verts(constrained_axes[j], i) = ((i & (1 << j))
                     ? region.lower(constrained_axes[j])
                     : region.upper(constrained_axes[j]));
 
             // Then offset by the region's center, as we do for unconstrained
             // points as well.
-            verts(j, i) -= region.center()(constrained_axes[j]);
+            verts(constrained_axes[j], i) -= region.center()(constrained_axes[j]);
 
             // Strip out the offset from this particular column of b_
             b_.col(i).array() -= (A.col(j) * verts(j, i)).array();
