@@ -4,35 +4,35 @@ namespace Kernel {
 
 /*
  *      Edges are recorded on the following square
- *      c ----- d
+ *      c2-----3d
  *      |       |   ^ Y
  *      |       |   |
- *      a-------b   ---> X
+ *      a0-----1b   ---> X
+ *
  */
 SquareMarcher::Edge SquareMarcher::cases[16][2][2] = {
     {{NONE, NONE}, {NONE, NONE}},    // 0000
-    {{UPPER, RIGHT}, {NONE, NONE}},  // 000d
-    {{LEFT, UPPER}, {NONE, NONE}},   // 00c0
-    {{LEFT, RIGHT}, {NONE, NONE}},   // 00cd
-    {{RIGHT, LOWER}, {NONE, NONE}},  // 0b00
-    {{UPPER, LOWER}, {NONE, NONE}},  // 0b0d
-    {{RIGHT, LOWER}, {LEFT, UPPER}}, // 0bc0
-    {{LEFT, LOWER}, {NONE, NONE}},   // 0bcd
-
-    {{LOWER, LEFT}, {NONE, NONE}},   // a000
-    {{LOWER, RIGHT}, {UPPER, LEFT}}, // a00d
-    {{LOWER, UPPER}, {NONE, NONE}},  // a0c0
-    {{LOWER, RIGHT}, {NONE, NONE}},  // a0cd
-    {{RIGHT, LEFT}, {NONE, NONE}},   // ab00
-    {{UPPER, LEFT}, {NONE, NONE}},   // ab0d
-    {{LEFT, UPPER}, {NONE, NONE}},   // abc0
-    {{NONE, NONE}, {NONE, NONE}},    // abcd
+    {{LOWER, LEFT}, {NONE, NONE}},   // 000a
+    {{RIGHT, LOWER}, {NONE, NONE}},  // 00b0
+    {{RIGHT, LEFT}, {NONE, NONE}},   // 00ba
+    {{LEFT, UPPER}, {NONE, NONE}},   // 0c00
+    {{LOWER, UPPER}, {NONE, NONE}},  // 0c0a
+    {{RIGHT, LOWER}, {LEFT, UPPER}}, // 0cb0
+    {{LEFT, UPPER}, {NONE, NONE}},   // 0cba
+    {{UPPER, RIGHT}, {NONE, NONE}},  // d000
+    {{LOWER, RIGHT}, {UPPER, LEFT}}, // d00a
+    {{UPPER, LOWER}, {NONE, NONE}},  // d0b0
+    {{UPPER, LEFT}, {NONE, NONE}},   // d0ba
+    {{LEFT, RIGHT}, {NONE, NONE}},   // dc00
+    {{LOWER, RIGHT}, {NONE, NONE}},  // dc0a
+    {{LEFT, LOWER}, {NONE, NONE}},   // dcb0
+    {{NONE, NONE}, {NONE, NONE}},    // dcba
 };
 
 uint8_t SquareMarcher::edges[4][2] = {
     {0, 2}, // LEFT
     {1, 3}, // RIGHT
-    {3, 4}, // UPPER
+    {2, 3}, // UPPER
     {0, 1}, // LOWER
 };
 
