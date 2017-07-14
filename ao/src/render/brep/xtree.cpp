@@ -122,8 +122,6 @@ static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
         const Eigen::Matrix<float, _pow(R, N), 1>& b,
         const Region<N>& region)
 {
-    std::cout << "------------------------------------------------------------\n";
-    std::cout << "Got A matrix:\n" << A << "\n and B matrix\n" << b << "\n";
     constexpr unsigned CONSTRAINED_AXES_COUNT = _count_bits(C);
     static_assert(C > 0, "Unconstrained optimization shouldn't use solveQEF");
     static_assert(C < _pow(2, N), "solveQEF called with too-large bitfield");
@@ -155,11 +153,6 @@ static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
         }
     }
 
-    std::cout << "Constrained axes: ";
-    for (auto c : constrained_axes)
-        std::cout << int(c) << " ";
-    std::cout << '\n';
-
     // Figure out all of the possible constrained axes values, storing them
     // into an array named 'verts' and removing the from the appropriate
     // column of the b_ matrix
@@ -190,12 +183,7 @@ static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
     auto sol = A_.jacobiSvd(Eigen::ComputeThinU |
                             Eigen::ComputeThinV).solve(b_);
 
-    std::cout << "Got A_ matrix:\n" << A_ << "\n and B_ matrix\n" << b_ << "\n";
-    std::cout << "and solution\n" << sol << "\n";
-    std::cout << "with starting verts\n" << verts << "\n";
-
     // Unpack the solution into a set of full positions
-    std::cout << "lower: " << region.lower.transpose() << "\nupper: " << region.upper.transpose() << '\n';
     for (unsigned i=0; i < (1 << CONSTRAINED_AXES_COUNT); ++i)
     {
         // Store the w value at the end of the vertex
@@ -212,20 +200,16 @@ static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
             }
         }
     }
-    std::cout << "Found vertices \n" << verts << "\n";
 
     auto errs = ((A * verts).colwise() - b).colwise().squaredNorm();
-    std::cout << "Found errs\n" << errs << '\n';
     unsigned best_index;
     float err_ = errs.minCoeff(&best_index);
     auto vert_ = verts.col(best_index).template head<N>().array() + region.center();
 
-    std::cout << "Got vert [" << vert_.transpose() << "] (C = " << C << ")";
     if (!region.contains(vert_))
     {
         err_ = std::numeric_limits<float>::infinity();
     }
-    std::cout << " with err " << err_ << '\n';
 
     auto next = Solver<N, R, C - 1>::solveQEF(A, b, region);
     return (next.second < err_) ? next : std::make_pair(vert_, err_);

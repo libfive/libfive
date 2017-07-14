@@ -41,7 +41,6 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
     for (unsigned i=0; i < 4; ++i)
     {
         eval->set(ts[i]->vert3(), i);
-        std::cout << "Checking vertex [" << ts[i]->vert3().transpose() << "]\n";
     }
     auto vs = eval->values(4);
 
@@ -51,7 +50,6 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
     {
         mask |= (vs[i] < 0) << i;
     }
-    std::cout << "Got mask " << int(mask) << '\n';
 
     // First segment
     for (unsigned seg=0; seg < 2; ++seg)
@@ -79,7 +77,6 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
             segments.push_back({_a, _b});
         }
     }
-    std::cout << "Done\n\n";
 }
 
 }   // namespace Kernel

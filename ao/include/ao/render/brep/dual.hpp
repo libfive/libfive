@@ -31,10 +31,6 @@ void vert2(XTree<2>& a, XTree<2>& b,
     }
     else
     {
-        std::cout << "vert2 on\n\t[" << a.region.lower.transpose() << "]\t[" << a.region.upper.transpose()
-                  << "]\n\t[" << b.region.lower.transpose() << "]\t[" << b.region.upper.transpose()
-                  << "]\n\t[" << c.region.lower.transpose() << "]\t[" << c.region.upper.transpose()
-                  << "]\n\t[" << d.region.lower.transpose() << "]\t[" << d.region.upper.transpose() << '\n';
         v({{&a, &b, &c, &d}});
     }
 }
