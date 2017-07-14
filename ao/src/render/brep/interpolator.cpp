@@ -33,7 +33,6 @@ typename Interpolator<N>::Pt Interpolator<N>::between(Pt a, Pt b)
             outside = a;
         }
     }
-    std::cout << "Interpolating between [" << inside.transpose() << "] and [" << outside.transpose() << "]\n";
 
     // Binary search for intersection
     for (int i=0; i < ITER; ++i)
@@ -58,7 +57,6 @@ typename Interpolator<N>::Pt Interpolator<N>::between(Pt a, Pt b)
             }
         }
     }
-    std::cout << "  Got [" << inside.transpose() << "]\n";
 
     return inside;
 }
