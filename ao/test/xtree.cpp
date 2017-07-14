@@ -55,10 +55,19 @@ TEST_CASE("XTree<2>()")
         }
 
         {
+            std::cout << "Testing -1,-2, 0, -1\n";
+            auto t = XTree<2>(&a, Region<2>({-1, -2}, {0, -1}), 1000);
+            CAPTURE(t.vert.transpose());
+            //REQUIRE(t.vert.x() == Approx(0).epsilon(0.01));
+            REQUIRE(t.vert.y() == Approx(-1).epsilon(0.01));
+        }
+
+        {
+            std::cout << "Testing -2,-1, -1, 0\n";
             auto t = XTree<2>(&a, Region<2>({-2, -1}, {-1, 0}), 1000);
+            CAPTURE(t.vert.transpose());
             REQUIRE(t.vert.x() == Approx(-1).epsilon(0.01));
-            REQUIRE(t.vert.y() < 0);
-            REQUIRE(t.vert.y() > -0.5);
+            //REQUIRE(t.vert.y() == Approx(0).epsilon(0.01));
         }
     }
 }
