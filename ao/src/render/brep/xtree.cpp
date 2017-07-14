@@ -190,8 +190,9 @@ static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
     auto sol = A_.jacobiSvd(Eigen::ComputeThinU |
                             Eigen::ComputeThinV).solve(b_);
 
-    std::cout << "Got A matrix:\n" << A_ << "\n and B matrix\n" << b_ << "\n";
+    std::cout << "Got A_ matrix:\n" << A_ << "\n and B_ matrix\n" << b_ << "\n";
     std::cout << "and solution\n" << sol << "\n";
+    std::cout << "with starting verts\n" << verts << "\n";
 
     // Unpack the solution into a set of full positions
     std::cout << "lower: " << region.lower.transpose() << "\nupper: " << region.upper.transpose() << '\n';
