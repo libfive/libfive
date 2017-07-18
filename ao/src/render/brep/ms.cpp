@@ -54,23 +54,24 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
     // First segment
     for (unsigned seg=0; seg < 2 && cases[mask][seg].first != NONE; ++seg)
     {
-        // Solve for the contour's starting position
-        Key a(ts[edges[cases[mask][seg].first].first],
-              ts[edges[cases[mask][seg].first].second]);
-        if (points.find(a) == points.end())
+        uint32_t s[2];
+        for (unsigned v=0; v < 2; ++v)
         {
-            points.insert({a, interp.between(a.first->vert, a.second->vert)});
-        }
+            /*  Construct an order-agnostic dual edge key  */
+            auto a = ts[edges[cases[mask][seg].first].first];
+            auto b = ts[edges[cases[mask][seg].first].second];
+            Key _k = (a < b) ? Key(a, b) : Key(b, a);
 
-        // Solve for the contour's ending position
-        Key b(ts[edges[cases[mask][seg].second].first],
-               ts[edges[cases[mask][seg].second].second]);
-        if (points.find(b) == points.end())
-        {
-            points.insert({b, interp.between(b.first->vert, b.second->vert)});
+            auto k = indices.find(_k);
+            if (k == indices.end())
+            {
+                auto pt = interp.between(_k.first->vert, _k.second->vert);
+                k = indices.insert({_k, pts.size()}).first;
+                pts.push_back(pt);
+            }
+            s[v] = k->second;
         }
-
-        segments.push_back({a, b});
+        segments.push_back({s[0], s[1]});
     }
 }
 

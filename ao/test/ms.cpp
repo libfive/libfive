@@ -23,10 +23,10 @@ TEST_CASE("SquareMarcher: operator() on circle")
 
     float rmin = 2;
     float rmax = 0;
-    for (auto pt : ms.points)
+    for (auto pt : ms.pts)
     {
-        rmin = fmin(rmin, pt.second.norm());
-        rmax = fmax(rmax, pt.second.norm());
+        rmin = fmin(rmin, pt.norm());
+        rmax = fmax(rmax, pt.norm());
     }
     REQUIRE(rmin > 0.99);
     REQUIRE(rmax < 1.01);
