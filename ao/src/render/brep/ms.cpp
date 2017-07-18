@@ -10,7 +10,7 @@ namespace Kernel {
  *      a0-----1b   ---> X
  *
  */
-SquareMarcher::Edge SquareMarcher::cases[16][2][2] = {
+SquareMarcher::Segment SquareMarcher::cases[16][2] = {
     {{NONE, NONE}, {NONE, NONE}},    // 0000
     {{LOWER, LEFT}, {NONE, NONE}},   // 000a
     {{RIGHT, LOWER}, {NONE, NONE}},  // 00b0
@@ -29,7 +29,7 @@ SquareMarcher::Edge SquareMarcher::cases[16][2][2] = {
     {{NONE, NONE}, {NONE, NONE}},    // dcba
 };
 
-uint8_t SquareMarcher::edges[4][2] = {
+std::pair<uint8_t, uint8_t> SquareMarcher::edges[4] = {
     {0, 2}, // LEFT
     {1, 3}, // RIGHT
     {2, 3}, // UPPER
@@ -52,30 +52,29 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
     }
 
     // First segment
-    for (unsigned seg=0; seg < 2; ++seg)
+    for (unsigned seg=0; seg < 2 && cases[mask][seg].first != NONE; ++seg)
     {
-        if (cases[mask][seg][0] != NONE)
+        // Solve for the contour's starting position
+        Key _a(ts[edges[cases[mask][seg].first].first],
+               ts[edges[cases[mask][seg].first].second]);
+        auto a = points.find(_a);
+        if (a == points.end())
         {
-            Key _a(ts[edges[cases[mask][seg][0]][0]],
-                   ts[edges[cases[mask][seg][0]][1]]);
-            auto a = points.find(_a);
-            if (a == points.end())
-            {
-                auto pt = interp.between(_a.first->vert, _a.second->vert);
-                a = points.insert({_a, pt}).first;
-            }
-
-            Key _b(ts[edges[cases[mask][seg][1]][0]],
-                    ts[edges[cases[mask][seg][1]][1]]);
-            auto b = points.find(_b);
-            if (b == points.end())
-            {
-                auto pt = interp.between(_b.first->vert, _b.second->vert);
-                b = points.insert({_b, pt}).first;
-            }
-
-            segments.push_back({_a, _b});
+            auto pt = interp.between(_a.first->vert, _a.second->vert);
+            a = points.insert({_a, pt}).first;
         }
+
+        // Solve for the contour's ending position
+        Key _b(ts[edges[cases[mask][seg].second].first],
+                ts[edges[cases[mask][seg].second].second]);
+        auto b = points.find(_b);
+        if (b == points.end())
+        {
+            auto pt = interp.between(_b.first->vert, _b.second->vert);
+            b = points.insert({_b, pt}).first;
+        }
+
+        segments.push_back({_a, _b});
     }
 }
 
