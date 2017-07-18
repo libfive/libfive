@@ -21,6 +21,7 @@ add_library(ao-kernel STATIC
     render/brep/interpolator.cpp
     render/brep/scaffold.cpp
     render/brep/ms.cpp
+    render/brep/mt.cpp
     render/brep/contour.cpp
     #    render/subregion.cpp
     solve/solver.cpp
