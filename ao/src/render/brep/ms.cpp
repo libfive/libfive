@@ -55,26 +55,22 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
     for (unsigned seg=0; seg < 2 && cases[mask][seg].first != NONE; ++seg)
     {
         // Solve for the contour's starting position
-        Key _a(ts[edges[cases[mask][seg].first].first],
-               ts[edges[cases[mask][seg].first].second]);
-        auto a = points.find(_a);
-        if (a == points.end())
+        Key a(ts[edges[cases[mask][seg].first].first],
+              ts[edges[cases[mask][seg].first].second]);
+        if (points.find(a) == points.end())
         {
-            auto pt = interp.between(_a.first->vert, _a.second->vert);
-            a = points.insert({_a, pt}).first;
+            points.insert({a, interp.between(a.first->vert, a.second->vert)});
         }
 
         // Solve for the contour's ending position
-        Key _b(ts[edges[cases[mask][seg].second].first],
-                ts[edges[cases[mask][seg].second].second]);
-        auto b = points.find(_b);
-        if (b == points.end())
+        Key b(ts[edges[cases[mask][seg].second].first],
+               ts[edges[cases[mask][seg].second].second]);
+        if (points.find(b) == points.end())
         {
-            auto pt = interp.between(_b.first->vert, _b.second->vert);
-            b = points.insert({_b, pt}).first;
+            points.insert({b, interp.between(b.first->vert, b.second->vert)});
         }
 
-        segments.push_back({_a, _b});
+        segments.push_back({a, b});
     }
 }
 
