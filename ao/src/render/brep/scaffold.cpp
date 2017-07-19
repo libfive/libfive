@@ -15,7 +15,7 @@ Scaffold<N>::Scaffold(Evaluator* eval, Region<N> r, unsigned depth, bool pad)
     {
         const auto size = r.upper - r.lower;
         const auto expanded = size * (1 << depth) / ((1 << depth) - 2.0);
-        const auto center = (r.upper + r.lower) / 2;
+        const auto center = r.center();
 
         region = Region<N>(center - expanded/2, center + expanded/2);
     }
