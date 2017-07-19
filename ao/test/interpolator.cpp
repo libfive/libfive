@@ -27,13 +27,4 @@ TEST_CASE("Interpolator::between")
         CAPTURE((a - target).abs());
         REQUIRE(((a - target).abs() < 0.001).all());
     }
-
-    SECTION("Reversed")
-    {
-        auto a = i.between({0,2}, {0,0});
-        auto target = Eigen::Array2f(0, 1);
-        CAPTURE(a);
-        CAPTURE((a - target).abs());
-        REQUIRE(((a - target).abs() < 0.001).all());
-    }
 }

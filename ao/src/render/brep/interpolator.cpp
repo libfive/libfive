@@ -4,35 +4,30 @@
 namespace Kernel {
 
 template <unsigned N>
-typename Interpolator<N>::Pt Interpolator<N>::between(Pt a, Pt b)
+typename Interpolator<N>::Pt Interpolator<N>::between(Pt inside, Pt outside)
 {
     // We do an F-fold reduction at each stage
     constexpr int _F = 4;
     constexpr int F = (1 << _F);
     constexpr int ITER = SEARCH_COUNT / _F;
 
-    Pt inside, outside;
-    {   // Figure out which point is the start vs end
+    {   // Check for inside/outside correctness
         Eigen::Array3f vec;
         vec.template tail<3 - N>() = perp;
 
-        vec.template head<N>() = a;
+        vec.template head<N>() = inside;
         eval->setRaw(vec, 0);
-        vec.template head<N>() = b;
+        vec.template head<N>() = outside;
         eval->setRaw(vec, 1);
 
         auto vs = eval->values(2);
-        assert(vs[0] < 0 || vs[1] < 0);
-        if (vs[0] < 0)
+        bool correct = (vs[0] < 0 && vs[1] >= 0);
+        if (!correct)
         {
-            inside = a;
-            outside = b;
+            std::cerr << "Interpolator::between: bad directionality"
+                      << std::endl;
         }
-        else
-        {
-            inside = b;
-            outside = a;
-        }
+        assert(correct);
     }
 
     // Binary search for intersection

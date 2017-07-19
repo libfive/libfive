@@ -24,7 +24,7 @@ public:
      *  Interpolate between two points, one of which is inside
      *  and the other is outside the model
      */
-    Pt between(Pt a, Pt b);
+    Pt between(Pt inside, Pt outside);
 
     /*
      *  Push the Evaluator into the given region
