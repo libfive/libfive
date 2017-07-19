@@ -1,10 +1,11 @@
+#include <iostream>
 #include "ao/render/brep/scaffold.hpp"
 
 namespace Kernel {
 
 template <unsigned N>
 Scaffold<N>::Scaffold(Evaluator* eval, Region<N> r, unsigned depth, bool pad)
-    : type(Interval::AMBIGUOUS)
+    : region(r), type(Interval::AMBIGUOUS)
 {
 
     // Figure out an expanded region such that the outer shell of cells
@@ -13,17 +14,19 @@ Scaffold<N>::Scaffold(Evaluator* eval, Region<N> r, unsigned depth, bool pad)
     // This forces the creation of QEF cells / vertices on the model boundary.
     if (pad)
     {
-        assert(depth > 1);
+        if (depth > 1)
+        {
+            const auto size = r.upper - r.lower;
+            const auto expanded = size * (1 << depth) / ((1 << depth) - 2.0);
+            const auto center = r.center();
 
-        const auto size = r.upper - r.lower;
-        const auto expanded = size * (1 << depth) / ((1 << depth) - 2.0);
-        const auto center = r.center();
-
-        region = Region<N>(center - expanded/2, center + expanded/2);
-    }
-    else
-    {
-        region = r;
+            region = Region<N>(center - expanded/2, center + expanded/2);
+        }
+        else
+        {
+            std::cerr << "Scaffold::Scaffold: cannot pad with depth=1"
+                      << std::endl;
+        }
     }
 
     eval->set(region.lower3(), region.upper3());

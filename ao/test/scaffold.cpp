@@ -23,9 +23,9 @@ TEST_CASE("Scaffold<3>::Scaffold (pad=true)")
     Evaluator e(Tree::X());
     Region<3> r({-1, -1, -1}, {1, 1, 1});
 
-    SECTION("depth=1")
+    SECTION("depth=2")
     {
-        auto s = Scaffold<3>(&e, r, 1, true);
+        auto s = Scaffold<3>(&e, r, 2, true);
 
         CAPTURE(s.region.lower);
         REQUIRE((s.region.lower == Eigen::Array3f(-2, -2, -2)).all());
@@ -33,6 +33,7 @@ TEST_CASE("Scaffold<3>::Scaffold (pad=true)")
         REQUIRE((s.region.upper == Eigen::Array3f(2, 2, 2)).all());
 
         REQUIRE(s.children[0].get());
-        REQUIRE(!s.children[0]->children[0].get());
+        REQUIRE(s.children[0]->children[0]);
+        REQUIRE(!s.children[0]->children[0]->children[0].get());
     }
 }
