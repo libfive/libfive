@@ -8,7 +8,7 @@ static const uint8_t VERTEX_LOOP[] = {6, 4, 5, 1, 3, 2, 6};
 // edges to interpolate between when forming zero, one, or two
 // triangles.
 // (filled vertex is first in the pair)
-static const int EDGE_MAP[16][2][3][2] = {
+static const std::pair<int8_t, int8_t> EDGE_MAP[16][2][3] = {
     {{{-1,-1}, {-1,-1}, {-1,-1}}, {{-1,-1}, {-1,-1}, {-1,-1}}}, // ----
     {{{ 0, 2}, { 0, 1}, { 0, 3}}, {{-1,-1}, {-1,-1}, {-1,-1}}}, // ---0
     {{{ 1, 0}, { 1, 2}, { 1, 3}}, {{-1,-1}, {-1,-1}, {-1,-1}}}, // --1-
@@ -44,21 +44,21 @@ void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
 
         // Build up the bitmask for this tetrahedron
         uint8_t mask = 0;
-        for (unsigned i=0; i < 3; ++i)
+        for (unsigned i=0; i < 4; ++i)
         {
             mask |= (vs[vertices[i]] < 0) << i;
         }
 
         // Iterate over up to two triangles in the tet, aborting early if
         // this particular configuration has one or zero.
-        for (unsigned t=0; t < 2 && EDGE_MAP[mask][t][0][0] != -1; ++t)
+        for (unsigned t=0; t < 2 && EDGE_MAP[mask][t][0].first != -1; ++t)
         {
             uint32_t tri[3];
             for (int v=0; v < 3; ++v)
             {
                 //  Construct an order-agnostic dual edge key
-                auto a = ts[vertices[EDGE_MAP[mask][t][v][0]]];
-                auto b = ts[vertices[EDGE_MAP[mask][t][v][1]]];
+                auto a = ts[vertices[EDGE_MAP[mask][t][v].first]];
+                auto b = ts[vertices[EDGE_MAP[mask][t][v].second]];
                 Key _k = (a < b) ? Key(a, b) : Key(b, a);
 
                 // Check if we have already searched along this dual edge
