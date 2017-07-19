@@ -49,17 +49,19 @@ void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
             mask |= (vs[vertices[i]] < 0) << i;
         }
 
-        // Iterate over up to two triangles in the tet
+        // Iterate over up to two triangles in the tet, aborting early if
+        // this particular configuration has one or zero.
         for (unsigned t=0; t < 2 && EDGE_MAP[mask][t][0][0] != -1; ++t)
         {
             uint32_t tri[3];
             for (int v=0; v < 3; ++v)
             {
-                /*  Construct an order-agnostic dual edge key  */
+                //  Construct an order-agnostic dual edge key
                 auto a = ts[vertices[EDGE_MAP[mask][t][v][0]]];
                 auto b = ts[vertices[EDGE_MAP[mask][t][v][1]]];
                 Key _k = (a < b) ? Key(a, b) : Key(b, a);
 
+                // Check if we have already searched along this dual edge
                 auto k = indices.find(_k);
                 if (k == indices.end())
                 {

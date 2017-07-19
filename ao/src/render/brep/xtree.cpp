@@ -180,14 +180,13 @@ static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
     }
 
     // Find constrained solution
-    auto sol = A_.jacobiSvd(Eigen::ComputeThinU |
-                            Eigen::ComputeThinV).solve(b_);
+    auto sol = A_.colPivHouseholderQr().solve(b_);
 
     // Unpack the solution into a set of full positions
     for (unsigned i=0; i < (1 << CONSTRAINED_AXES_COUNT); ++i)
     {
         // Store the w value at the end of the vertex
-        verts(N, i) = sol(CONSTRAINED_AXES_COUNT, i);
+        verts(N, i) = sol(N - CONSTRAINED_AXES_COUNT, i);
 
         // Then, unpack either solved or constrained values
         for (unsigned j=0, k=0; j < N; ++j)
@@ -298,8 +297,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
     }
 
     // Solve QEF (least-squares)
-    auto sol = A.jacobiSvd(Eigen::ComputeThinU |
-                           Eigen::ComputeThinV).solve(b);
+    auto sol = A.colPivHouseholderQr().solve(b);
 
     // Store vertex location
     vert = sol.template head<N>().array() + region.center();

@@ -22,6 +22,7 @@ typename Interpolator<N>::Pt Interpolator<N>::between(Pt a, Pt b)
         eval->setRaw(vec, 1);
 
         auto vs = eval->values(2);
+        assert(vs[0] < 0 || vs[1] < 0);
         if (vs[0] < 0)
         {
             inside = a;

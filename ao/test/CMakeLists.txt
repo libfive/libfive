@@ -12,6 +12,7 @@ set(SRCS main.cpp
     feature.cpp
     interpolator.cpp
     ms.cpp
+    mt.cpp
     scaffold.cpp
     solver.cpp
     region.cpp

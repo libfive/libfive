@@ -51,13 +51,14 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
         mask |= (vs[i] < 0) << i;
     }
 
-    // First segment
+    // Iterate over up to two segments in the square, aborting early if this
+    // particular configuration has one or zero segments.
     for (unsigned seg=0; seg < 2 && cases[mask][seg].first != NONE; ++seg)
     {
         uint32_t s[2];
         for (unsigned v=0; v < 2; ++v)
         {
-            /*  Construct an order-agnostic dual edge key  */
+            // Construct an order-agnostic dual edge key
             auto a = ts[edges[cases[mask][seg].first].first];
             auto b = ts[edges[cases[mask][seg].first].second];
             Key _k = (a < b) ? Key(a, b) : Key(b, a);
