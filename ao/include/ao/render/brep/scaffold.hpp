@@ -29,6 +29,9 @@ public:
      *  If pad is true, then the region is expanded so that the outermost
      *  cells of the scaffold are just outside the original region.  This
      *  is useful for creating outside-of-model sections for rendering.
+     *
+     *  Note that this kind of padding will lower the effective resolution
+     *  within the target region, by an amount that depends on the depth.
      */
     Scaffold(Evaluator* eval, Region<N> region, unsigned depth, bool pad=false);
 
