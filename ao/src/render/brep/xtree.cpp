@@ -21,10 +21,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, float err)
         auto rs = region.subdivide();
         for (unsigned i=0; i < (1 << N); ++i)
         {
-            if (!rs[i].empty())
-            {
-                children[i].reset(new XTree<N>(eval, rs[i], err));
-            }
+            children[i].reset(new XTree<N>(eval, rs[i], err));
         }
     }
     eval->pop();
@@ -91,10 +88,7 @@ XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float err)
                 auto rs = region.subdivide();
                 for (unsigned i=0; i < (1 << N); ++i)
                 {
-                    if (!rs[i].empty())
-                    {
-                        t->children[i].reset(new XTree<N>(eval, rs[i], err));
-                    }
+                    t->children[i].reset(new XTree<N>(eval, rs[i], err));
                 }
             }
         }
