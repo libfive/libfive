@@ -2,12 +2,11 @@
 
 namespace Kernel {
 
-static const uint8_t VERTEX_LOOP[] = {6, 4, 5, 1, 3, 2, 6};
+static const uint8_t VERTEX_LOOP[] = {6, 4, 5, 1, 3, 2};
 
 // Based on which vertices are filled, this map tells you which
 // edges to interpolate between when forming zero, one, or two
-// triangles.
-// (filled vertex is first in the pair)
+// triangles (filled vertex is first in the pair)
 static const std::pair<int8_t, int8_t> EDGE_MAP[16][2][3] = {
     {{{-1,-1}, {-1,-1}, {-1,-1}}, {{-1,-1}, {-1,-1}, {-1,-1}}}, // ----
     {{{ 0, 2}, { 0, 1}, { 0, 3}}, {{-1,-1}, {-1,-1}, {-1,-1}}}, // ---0
@@ -39,8 +38,9 @@ void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
     // Loop over the six tetrahedra that make up a voxel cell
     for (int t = 0; t < 6; ++t)
     {
-        // Find vertex positions for this tetrahedron
-        const uint8_t vertices[] = {0, 7, VERTEX_LOOP[t], VERTEX_LOOP[t+1]};
+        // Find vertex indices (into vs or ts) for this tetrahedron
+        const uint8_t vertices[] = {0, 7, VERTEX_LOOP[t],
+                                    VERTEX_LOOP[(t + 1) % 6]};
 
         // Build up the bitmask for this tetrahedron
         uint8_t mask = 0;
@@ -50,7 +50,7 @@ void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
         }
 
         // Iterate over up to two triangles in the tet, aborting early if
-        // this particular configuration has one or zero.
+        // this particular configuration has one or zero triangles.
         for (unsigned t=0; t < 2 && EDGE_MAP[mask][t][0].first != -1; ++t)
         {
             uint32_t tri[3];
