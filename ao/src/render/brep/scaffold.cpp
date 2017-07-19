@@ -13,6 +13,8 @@ Scaffold<N>::Scaffold(Evaluator* eval, Region<N> r, unsigned depth, bool pad)
     // This forces the creation of QEF cells / vertices on the model boundary.
     if (pad)
     {
+        assert(depth > 1);
+
         const auto size = r.upper - r.lower;
         const auto expanded = size * (1 << depth) / ((1 << depth) - 2.0);
         const auto center = r.center();

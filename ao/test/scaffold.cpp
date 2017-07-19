@@ -17,3 +17,22 @@ TEST_CASE("Scaffold<2>::Scaffold")
     REQUIRE(s.children[1]->children[0]->type == Interval::AMBIGUOUS);
     REQUIRE(s.children[1]->children[1]->type == Interval::EMPTY);
 }
+
+TEST_CASE("Scaffold<3>::Scaffold (pad=true)")
+{
+    Evaluator e(Tree::X());
+    Region<3> r({-1, -1, -1}, {1, 1, 1});
+
+    SECTION("depth=1")
+    {
+        auto s = Scaffold<3>(&e, r, 1, true);
+
+        CAPTURE(s.region.lower);
+        REQUIRE((s.region.lower == Eigen::Array3f(-2, -2, -2)).all());
+        CAPTURE(s.region.upper);
+        REQUIRE((s.region.upper == Eigen::Array3f(2, 2, 2)).all());
+
+        REQUIRE(s.children[0].get());
+        REQUIRE(!s.children[0]->children[0].get());
+    }
+}
