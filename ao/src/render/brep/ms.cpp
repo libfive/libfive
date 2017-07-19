@@ -10,30 +10,25 @@ namespace Kernel {
  *      a0-----1b   ---> X
  *
  */
-SquareMarcher::Segment SquareMarcher::cases[16][2] = {
-    {{NONE, NONE}, {NONE, NONE}},    // 0000
-    {{LOWER, LEFT}, {NONE, NONE}},   // 000a
-    {{RIGHT, LOWER}, {NONE, NONE}},  // 00b0
-    {{RIGHT, LEFT}, {NONE, NONE}},   // 00ba
-    {{LEFT, UPPER}, {NONE, NONE}},   // 0c00
-    {{LOWER, UPPER}, {NONE, NONE}},  // 0c0a
-    {{RIGHT, LOWER}, {LEFT, UPPER}}, // 0cb0
-    {{LEFT, UPPER}, {NONE, NONE}},   // 0cba
-    {{UPPER, RIGHT}, {NONE, NONE}},  // d000
-    {{LOWER, RIGHT}, {UPPER, LEFT}}, // d00a
-    {{UPPER, LOWER}, {NONE, NONE}},  // d0b0
-    {{UPPER, LEFT}, {NONE, NONE}},   // d0ba
-    {{LEFT, RIGHT}, {NONE, NONE}},   // dc00
-    {{LOWER, RIGHT}, {NONE, NONE}},  // dc0a
-    {{LEFT, LOWER}, {NONE, NONE}},   // dcb0
-    {{NONE, NONE}, {NONE, NONE}},    // dcba
-};
+#define NONE {-1, -1}
+SquareMarcher::Edge SquareMarcher::cases[16][2][2] = {
+    {{NONE,   NONE},    {NONE,   NONE}},    // 0000
+    {{{0, 1}, {0, 2}},  {NONE,   NONE}},    // 000a
+    {{{1, 3}, {1, 0}},  {NONE,   NONE}},    // 00b0
+    {{{1, 3}, {0, 2}},  {NONE,   NONE}},    // 00ba
+    {{{2, 0}, {2, 3}},  {NONE,   NONE}},    // 0c00
+    {{{0, 1}, {2, 3}},  {NONE,   NONE}},    // 0c0a
+    {{{2, 0}, {2, 3}},  {{1, 3}, {1, 0}}},  // 0cb0
+    {{{1, 3}, {2, 3}},  {NONE,   NONE}},    // 0cba
 
-std::pair<uint8_t, uint8_t> SquareMarcher::edges[4] = {
-    {0, 2}, // LEFT
-    {1, 3}, // RIGHT
-    {2, 3}, // UPPER
-    {0, 1}, // LOWER
+    {{{3, 2}, {3, 1}},  {NONE,   NONE}},    // d000
+    {{{3, 2}, {3, 1}},  {{0, 1}, {0, 2}}},  // d00a
+    {{{3, 2}, {1, 0}},  {NONE,   NONE}},    // d0b0
+    {{{3, 2}, {0, 2}},  {NONE,   NONE}},    // d0ba
+    {{{2, 0}, {3, 1}},  {NONE,   NONE}},    // dc00
+    {{{0, 1}, {3, 1}},  {NONE,   NONE}},    // dc0a
+    {{{2, 0}, {1, 0}},  {NONE,   NONE}},    // dcb0
+    {{NONE,   NONE},    {NONE,   NONE}},    // dcba
 };
 
 void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
@@ -53,15 +48,14 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
 
     // Iterate over up to two segments in the square, aborting early if this
     // particular configuration has one or zero segments.
-    for (unsigned seg=0; seg < 2 && cases[mask][seg].first != NONE; ++seg)
+    for (unsigned seg=0; seg < 2 && cases[mask][seg][0].first != -1; ++seg)
     {
         uint32_t s[2];
         for (unsigned v=0; v < 2; ++v)
         {
-            // Construct an order-agnostic dual edge key
-            auto a = ts[edges[cases[mask][seg].first].first];
-            auto b = ts[edges[cases[mask][seg].first].second];
-            Key _k = (a < b) ? Key(a, b) : Key(b, a);
+            // Construct a dual edge key
+            Key _k(ts[cases[mask][seg][v].first],
+                   ts[cases[mask][seg][v].second]);
 
             auto k = indices.find(_k);
             if (k == indices.end())

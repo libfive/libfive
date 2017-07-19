@@ -26,10 +26,8 @@ protected:
     Evaluator* eval;
     Interpolator<2> interp;
 
-    enum Edge { LEFT, RIGHT, UPPER, LOWER, NONE };
-    typedef std::pair<SquareMarcher::Edge, SquareMarcher::Edge> Segment;
-    static Segment cases[16][2];
-    static std::pair<uint8_t, uint8_t> edges[4];
+    typedef std::pair<int8_t, int8_t> Edge;
+    static Edge cases[16][2][2];
 };
 
 }   // namespace Kernel
