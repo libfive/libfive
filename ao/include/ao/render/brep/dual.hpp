@@ -118,7 +118,7 @@ void edge3(XTree<3>& a, XTree<3>& b, XTree<3>& c, XTree<3>& d, V& v)
             vert3<V>(a.child(Axis::Y|Axis::Z), a.child(Axis::Y|Axis::Z|Axis::X),
                      b.child(Axis::Z), b.child(Axis::Z|Axis::X),
                      c.child(Axis::Y), c.child(Axis::Y|Axis::X),
-                     d.child(0), c.child(Axis::X), v);
+                     d.child(0), d.child(Axis::X), v);
         }
         else if (A == Axis::Y)
         {
