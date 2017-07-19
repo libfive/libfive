@@ -56,10 +56,9 @@ void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
             uint32_t tri[3];
             for (int v=0; v < 3; ++v)
             {
-                //  Construct an order-agnostic dual edge key
-                auto a = ts[vertices[EDGE_MAP[mask][t][v].first]];
-                auto b = ts[vertices[EDGE_MAP[mask][t][v].second]];
-                Key _k = (a < b) ? Key(a, b) : Key(b, a);
+                //  Construct a dual edge key
+                Key _k(ts[vertices[EDGE_MAP[mask][t][v].first]],
+                       ts[vertices[EDGE_MAP[mask][t][v].second]]);
 
                 // Check if we have already searched along this dual edge
                 auto k = indices.find(_k);
