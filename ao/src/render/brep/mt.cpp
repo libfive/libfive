@@ -2,7 +2,7 @@
 
 namespace Kernel {
 
-static const uint8_t VERTEX_LOOP[] = {6, 4, 5, 1, 3, 2};
+static const std::array<uint8_t, 6> VERTEX_LOOP = {{6, 4, 5, 1, 3, 2}};
 
 // Based on which vertices are filled, this map tells you which
 // edges to interpolate between when forming zero, one, or two
@@ -29,22 +29,25 @@ static const std::pair<int8_t, int8_t> EDGE_MAP[16][2][3] = {
 
 void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
 {
-    for (unsigned i=0; i < 8; ++i)
+    // Evaluate at cell corners and save local copy
+    // (as values are otherwise invalided during interpolation)
+    for (unsigned i=0; i < ts.size(); ++i)
     {
         eval->set(ts[i]->vert3(), i);
     }
-    auto vs = eval->values(8);
+    std::array<float, 8> vs;
+    memcpy(&vs[0], eval->values(ts.size()), sizeof(float)*ts.size());
 
     // Loop over the six tetrahedra that make up a voxel cell
-    for (int t = 0; t < 6; ++t)
+    for (unsigned t = 0; t < VERTEX_LOOP.size(); ++t)
     {
         // Find vertex indices (into vs or ts) for this tetrahedron
-        const uint8_t vertices[] = {0, 7, VERTEX_LOOP[t],
-                                    VERTEX_LOOP[(t + 1) % 6]};
+        const std::array<uint8_t, 4> vertices =
+            {{0, 7, VERTEX_LOOP[t], VERTEX_LOOP[(t + 1) % VERTEX_LOOP.size()]}};
 
         // Build up the bitmask for this tetrahedron
         uint8_t mask = 0;
-        for (unsigned i=0; i < 4; ++i)
+        for (unsigned i=0; i < vertices.size(); ++i)
         {
             mask |= (vs[vertices[i]] < 0) << i;
         }
