@@ -25,7 +25,6 @@ TEST_CASE("TetMarcher: operator() on sphere")
     float rmax = 0;
     for (auto pt : mt.verts)
     {
-        std::cout << pt.transpose() << '\n';
         rmin = fmin(rmin, pt.norm());
         rmax = fmax(rmax, pt.norm());
     }
