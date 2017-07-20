@@ -28,7 +28,7 @@ protected:
     Interpolator<2> interp;
 
     typedef std::pair<int8_t, int8_t> Edge;
-    static Edge cases[16][2][2];
+    static const Edge cases[16][2][2];
 };
 
 }   // namespace Kernel

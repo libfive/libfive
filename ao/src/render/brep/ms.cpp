@@ -11,7 +11,7 @@ namespace Kernel {
  *
  */
 #define NONE {-1, -1}
-SquareMarcher::Edge SquareMarcher::cases[16][2][2] = {
+const SquareMarcher::Edge SquareMarcher::cases[16][2][2] = {
     {{NONE,   NONE},    {NONE,   NONE}},    // 0000
     {{{0, 1}, {0, 2}},  {NONE,   NONE}},    // 000a
     {{{1, 3}, {1, 0}},  {NONE,   NONE}},    // 00b0
