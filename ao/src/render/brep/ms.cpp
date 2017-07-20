@@ -33,15 +33,16 @@ SquareMarcher::Edge SquareMarcher::cases[16][2][2] = {
 
 void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
 {
-    for (unsigned i=0; i < 4; ++i)
+    for (unsigned i=0; i < ts.size(); ++i)
     {
         eval->set(ts[i]->vert3(), i);
+        assert(ts[i]->err >= 0);
     }
-    auto vs = eval->values(4);
+    auto vs = eval->values(ts.size());
 
     // Build up the bitmask for marching squares
     uint8_t mask = 0;
-    for (unsigned i=0; i < 4; ++i)
+    for (unsigned i=0; i < ts.size(); ++i)
     {
         mask |= (vs[i] < 0) << i;
     }

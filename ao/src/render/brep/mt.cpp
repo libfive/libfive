@@ -33,6 +33,7 @@ void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
     // (as values are otherwise invalided during interpolation)
     for (unsigned i=0; i < ts.size(); ++i)
     {
+        assert(ts[i]->err >= 0);
         eval->set(ts[i]->vert3(), i);
     }
     std::array<float, 8> vs;
