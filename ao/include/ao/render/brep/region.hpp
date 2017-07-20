@@ -44,10 +44,9 @@ public:
      */
     std::array<Region, 1 << N> subdivide() const
     {
-        auto middle = (upper.array() / 2) + (lower.array() / 2);
-
         // Default-construct empty regions
         std::array<Region, 1 << N> out = {};
+        auto c = center();
 
         for (unsigned i=0; i < (1 << N); ++i)
         {
@@ -56,8 +55,7 @@ public:
             {
                 a(j) = (i & (1 << j)) > 0;
             }
-            out[i] = Region(a.select(middle, lower),
-                            a.select(upper, middle));
+            out[i] = Region(a.select(c, lower), a.select(upper, c));
         }
         return out;
     }
