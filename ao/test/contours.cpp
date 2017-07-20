@@ -9,19 +9,7 @@
 
 using namespace Kernel;
 
-TEST_CASE("Contours::render (adjacent rectangles)")
-{
-    auto rects = min(rectangle(-1, 0, -1, 1), rectangle(0, 1, -1, 1));
-    Region<2> r({-2, -2}, {2, 2});
-
-    auto cs_pos = Contours::render(rects, r);
-    REQUIRE(cs_pos->contours.size() == 1);
-
-    auto cs_neg = Contours::render(-rects, r);
-    REQUIRE(cs_neg->contours.size() == 1);
-}
-
-TEST_CASE("Simple 2D contouring")
+TEST_CASE("Contours::render (segment welding)")
 {
     Tree t = circle(0.5);
 
@@ -31,7 +19,7 @@ TEST_CASE("Simple 2D contouring")
     REQUIRE(m->contours.size() == 1);
 }
 
-TEST_CASE("2D contour tracking")
+TEST_CASE("Contours::render (accuracy)")
 {
     Tree t = circle(0.5);
 
@@ -52,7 +40,7 @@ TEST_CASE("2D contour tracking")
     REQUIRE(min > 0.49);
 }
 
-TEST_CASE("2D contour with ambiguities")
+TEST_CASE("Contours::render (with ambiguities)")
 {
     Region<2> r({-2, -2}, {2, 2});
 
@@ -63,4 +51,16 @@ TEST_CASE("2D contour with ambiguities")
     auto m = Contours::render(t, r);
     REQUIRE(m->contours.size() == 1);
     REQUIRE(m->contours[0] == m->contours[m->contours.size() - 1]);
+}
+
+TEST_CASE("Contours::render (adjacent rectangles)")
+{
+    auto rects = min(rectangle(-1, 0, -1, 1), rectangle(0, 1, -1, 1));
+    Region<2> r({-2, -2}, {2, 2});
+
+    auto cs_pos = Contours::render(rects, r);
+    REQUIRE(cs_pos->contours.size() == 1);
+
+    auto cs_neg = Contours::render(-rects, r);
+    REQUIRE(cs_neg->contours.size() == 1);
 }
