@@ -32,8 +32,6 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, float err)
 template <unsigned N>
 struct Refiner
 {
-    Refiner(Evaluator* eval) : eval(eval) {}
-
     void operator()(const std::array<XTree<N>*, (1 << N)>& as)
     {
         bool all_empty = true;
@@ -41,6 +39,7 @@ struct Refiner
 
         for (auto& a : as)
         {
+            assert(a->type != Interval::UNKNOWN);
             all_empty &= (a->type == Interval::EMPTY);
             all_full  &= (a->type == Interval::FILLED);
         }
@@ -53,7 +52,6 @@ struct Refiner
         }
     }
 
-    Evaluator* eval;
     std::set<XTree<N>*> targets;
 };
 
@@ -78,7 +76,7 @@ XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float err)
     // vertex positioning / refinement).
     if (eval)
     {
-        Refiner<N> ref(eval);
+        Refiner<N> ref;
         Dual<N>::walk(*this, ref);
 
         for (auto& t : ref.targets)
