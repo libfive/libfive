@@ -1,4 +1,5 @@
 #include <fstream>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include "ao/render/brep/contours.hpp"
 #include "ao/render/brep/xtree.hpp"
