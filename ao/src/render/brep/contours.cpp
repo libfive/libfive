@@ -37,7 +37,9 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r)
             if (t != tails.end())
             {
                 contours[t->second].push_back(s.second);
-                break;
+                tails.insert({s.second, t->second});
+                tails.erase(t);
+                continue;
             }
         }
 
@@ -46,7 +48,9 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r)
             if (h != heads.end())
             {
                 contours[h->second].push_front(s.first);
-                break;
+                heads.insert({s.first, h->second});
+                heads.erase(h);
+                continue;
             }
         }
 
@@ -56,17 +60,39 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r)
         contours.push_back({s.first, s.second});
     }
 
-    out->contours.resize(contours.size());
-    unsigned i=0;
-    for (const auto& c : contours)
+    std::vector<bool> processed(contours.size(), false);
+    for (unsigned i=0; i < contours.size(); ++i)
     {
-        out->contours[i].resize(c.size());
-        unsigned j=0;
-        for (const auto& pt : c)
+        if (processed[i])
         {
-            out->contours[i][j++] = ms.pts[pt];
+            continue;
         }
-        i++;
+        out->contours.push_back(std::vector<Eigen::Vector2f>());
+
+        // Weld multiple contours together here
+        unsigned target = i;
+        while (true)
+        {
+            for (const auto& pt : contours[target])
+            {
+                out->contours.back().push_back(ms.pts[pt]);
+            }
+            processed[target] = true;
+
+            // Check for the next potentially-connected contour
+            auto h = heads.find(contours[target].back());
+            if (h != heads.end() && !processed[h->second])
+            {
+                // Remove the back point, beause it will be re-inserted
+                // as the first point in the next contour
+                out->contours.back().pop_back();
+                target = h->second;
+            }
+            else
+            {
+                break;
+            }
+        }
     }
 
     return std::unique_ptr<Contours>(out);
