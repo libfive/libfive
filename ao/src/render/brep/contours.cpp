@@ -25,6 +25,50 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r)
     auto out = new Contours;
     out->bbox = r;
 
+    // Maps from index (in ms) to item in segments vector
+    std::map<uint32_t, uint32_t> heads;
+    std::map<uint32_t, uint32_t> tails;
+    std::vector<std::list<uint32_t>> contours;
+
+    for (auto& s : ms.segments)
+    {
+        {   // Check to see whether we can attach to the back of a tail
+            auto t = tails.find(s.first);
+            if (t != tails.end())
+            {
+                contours[t->second].push_back(s.second);
+                break;
+            }
+        }
+
+        {   // Otherwise, see if we should prepend ourselves to a head
+            auto h = heads.find(s.second);
+            if (h != heads.end())
+            {
+                contours[h->second].push_front(s.first);
+                break;
+            }
+        }
+
+        // Otherwise, start a new multi-segment line
+        heads[s.first] = contours.size();
+        tails[s.second] = contours.size();
+        contours.push_back({s.first, s.second});
+    }
+
+    out->contours.resize(contours.size());
+    unsigned i=0;
+    for (const auto& c : contours)
+    {
+        out->contours[i].resize(c.size());
+        unsigned j=0;
+        for (const auto& pt : c)
+        {
+            out->contours[i][j++] = ms.pts[pt];
+        }
+        i++;
+    }
+
     return std::unique_ptr<Contours>(out);
 }
 

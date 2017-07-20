@@ -20,7 +20,8 @@ public:
     std::vector<Eigen::Vector2f> pts;
 
     /*  Segments, as a list of indices into point array */
-    std::list<std::pair<uint32_t, uint32_t>> segments;
+    typedef std::pair<uint32_t, uint32_t> Segment;
+    std::list<Segment> segments;
 
 protected:
     Evaluator* eval;
