@@ -10,7 +10,7 @@ namespace Kernel {
 
 template <unsigned N>
 XTree<N>::XTree(Evaluator* eval, Region<N> region, float max_err)
-    : region(region), max_error(max_err)
+    : region(region), vert(region.center()), max_error(max_err)
 {
     // Do a preliminary evaluation to prune the tree
     eval->eval(region.lower3(), region.upper3());
@@ -59,7 +59,8 @@ struct Refiner
 
 template <unsigned N>
 XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float max_err)
-    : region(scaffold.region), type(scaffold.type), max_error(max_err)
+    : region(scaffold.region), vert(region.center()),
+      type(scaffold.type), max_error(max_err)
 {
     // Recurse until the scaffold is empty
     if (scaffold.children[0].get())
