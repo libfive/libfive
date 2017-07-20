@@ -20,13 +20,13 @@ public:
     /*
      *  Constructs an octree or quadtree by subdividing a region
      */
-    XTree(Evaluator* eval, Region<N> region, float err=1e-6);
+    XTree(Evaluator* eval, Region<N> region, float max_err=1e-6);
 
     /*
      *  Constructs an octree or quadtree on a scaffold, subdividing
      *  leaf cells that are part of the dual grid
      */
-    XTree(Evaluator* eval, const Scaffold<N>& sca, float err=1e-6);
+    XTree(Evaluator* eval, const Scaffold<N>& sca, float max_err=1e-6);
 
     /*
      *  Checks whether this tree splits
