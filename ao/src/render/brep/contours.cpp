@@ -8,7 +8,8 @@
 
 namespace Kernel {
 
-std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r)
+std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
+                                           const float max_err)
 {
     std::unique_ptr<Evaluator> eval(new Evaluator(t));
 
@@ -16,7 +17,7 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r)
     const auto scaffold = Scaffold<2>(eval.get(), r, 4, true);
 
     // Create the quadtree on the scaffold
-    auto xtree = XTree<2>(eval.get(), scaffold);
+    auto xtree = XTree<2>(eval.get(), scaffold, max_err);
 
     // Perform marching squares
     SquareMarcher ms(eval.get());
