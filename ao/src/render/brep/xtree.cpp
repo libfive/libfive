@@ -83,7 +83,7 @@ XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float max_err)
         {
             if (!t->findVertex(eval))
             {
-                auto rs = region.subdivide();
+                auto rs = t->region.subdivide();
                 for (unsigned i=0; i < (1 << N); ++i)
                 {
                     t->children[i].reset(new XTree<N>(eval, rs[i], max_err));
