@@ -337,8 +337,8 @@ bool Heightmap::savePNG(std::string filename)
 {
     if (!boost::algorithm::iends_with(filename, ".png"))
     {
-        std::cerr << "Warning: filename \"" << filename
-                  << "\" does not end in .png (Heightmap::savePNG)" << std::endl;
+        std::cerr << "Heightmap::savePNG: filename \"" << filename
+                  << "\" does not end in .png" << std::endl;
     }
 
     // Open up a file for writing
