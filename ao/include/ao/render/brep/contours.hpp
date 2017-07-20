@@ -13,7 +13,7 @@ public:
     /*
      *  Saves the contours to an SVG file
      */
-    bool saveSVG(std::string filename);
+    bool saveSVG(const std::string& filename);
 
     /*  Contours in 2D space  */
     std::vector<std::vector<Eigen::Vector2f>> contours;

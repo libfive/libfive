@@ -99,8 +99,13 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
     return std::unique_ptr<Contours>(out);
 }
 
-bool Contours::saveSVG(std::string filename)
+bool Contours::saveSVG(const std::string& filename)
 {
+    if (!boost::algorithm::iends_with(filename, ".svg"))
+    {
+        std::cerr << "Contours::saveSVG: filename \"" << filename
+                  << "\" does not end in .svg" << std::endl;
+    }
     std::ofstream file;
     file.open(filename, std::ios::out);
     if (!file.is_open())
