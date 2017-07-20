@@ -2,8 +2,8 @@
 
 #include "ao/tree/tree.hpp"
 
-#include "ao/format/contours.hpp"
-#include "ao/render/region.hpp"
+#include "ao/render/brep/contours.hpp"
+#include "ao/render/brep/region.hpp"
 
 #include "util/shapes.hpp"
 
@@ -12,7 +12,7 @@ using namespace Kernel;
 TEST_CASE("Contours::render (adjacent rectangles)")
 {
     auto rects = min(rectangle(-1, 0, -1, 1), rectangle(0, 1, -1, 1));
-    Region r({-2, 2}, {-2, 2}, {0, 0}, 2);
+    Region<2> r({-2, -2}, {2, 2});
 
     auto cs_pos = Contours::render(rects, r);
     REQUIRE(cs_pos->contours.size() == 1);
@@ -25,7 +25,7 @@ TEST_CASE("Simple 2D contouring")
 {
     Tree t = circle(0.5);
 
-    Region r({-1, 1}, {-1, 1}, {0, 0}, 1);
+    Region<2> r({-1, -1}, {1, 1});
 
     auto m = Contours::render(t, r);
     REQUIRE(m->contours.size() == 1);
@@ -35,7 +35,7 @@ TEST_CASE("2D contour tracking")
 {
     Tree t = circle(0.5);
 
-    Region r({-1, 1}, {-1, 1}, {0, 0}, 10);
+    Region<2> r({-1, -1}, {1, 1});
 
     auto m = Contours::render(t, r);
     REQUIRE(m->contours.size() == 1);
@@ -54,7 +54,7 @@ TEST_CASE("2D contour tracking")
 
 TEST_CASE("2D contour with ambiguities")
 {
-    Region r({-2, 2}, {-2, 2}, {0, 0}, 5);
+    Region<2> r({-2, -2}, {2, 2});
 
     auto t = max(max(max(-Tree::X(), Tree::X() - 1),
                          max(-Tree::Y(), Tree::Y() - 1)),

@@ -6,12 +6,12 @@
 
 namespace Kernel {
 
-class Contour {
+class Contours {
 public:
-    static std::unique_ptr<Contour> render(const Tree t, const Region<2>& r);
+    static std::unique_ptr<Contours> render(const Tree t, const Region<2>& r);
 
     /*
-     *  Saves the depth component as a 16-bit single-channel PNG
+     *  Saves the contours to an SVG file
      */
     bool saveSVG(std::string filename);
 

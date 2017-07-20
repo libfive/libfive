@@ -8,7 +8,7 @@ set(SRCS main.cpp
     #lib.cpp
     #mesh.cpp
     #octree.cpp
-    #contours.cpp
+    contours.cpp
     feature.cpp
     interpolator.cpp
     ms.cpp
