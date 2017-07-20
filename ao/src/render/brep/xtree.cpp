@@ -9,8 +9,8 @@
 namespace Kernel {
 
 template <unsigned N>
-XTree<N>::XTree(Evaluator* eval, Region<N> region, float err)
-    : region(region), max_error(err)
+XTree<N>::XTree(Evaluator* eval, Region<N> region, float max_err)
+    : region(region), max_error(max_err)
 {
     // Do a preliminary evaluation to prune the tree
     eval->eval(region.lower3(), region.upper3());
@@ -21,7 +21,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, float err)
         auto rs = region.subdivide();
         for (unsigned i=0; i < (1 << N); ++i)
         {
-            children[i].reset(new XTree<N>(eval, rs[i], err));
+            children[i].reset(new XTree<N>(eval, rs[i], max_err));
         }
     }
     eval->pop();
@@ -58,8 +58,8 @@ struct Refiner
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float err)
-    : region(scaffold.region), type(scaffold.type), max_error(err)
+XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float max_err)
+    : region(scaffold.region), type(scaffold.type), max_error(max_err)
 {
     // Recurse until the scaffold is empty
     if (scaffold.children[0].get())
@@ -67,7 +67,7 @@ XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float err)
         for (unsigned i=0; i < (1 << N); ++i)
         {
             children[i].reset(new XTree<N>(
-                        nullptr, *scaffold.children[i], err));
+                        nullptr, *scaffold.children[i], max_err));
         }
     }
 
@@ -86,7 +86,7 @@ XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float err)
                 auto rs = region.subdivide();
                 for (unsigned i=0; i < (1 << N); ++i)
                 {
-                    t->children[i].reset(new XTree<N>(eval, rs[i], err));
+                    t->children[i].reset(new XTree<N>(eval, rs[i], max_err));
                 }
             }
         }
