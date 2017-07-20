@@ -33,7 +33,6 @@ void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
     // (as values are otherwise invalided during interpolation)
     for (unsigned i=0; i < ts.size(); ++i)
     {
-        assert(ts[i]->err >= 0);
         eval->set(ts[i]->vert3(), i);
     }
     std::array<float, 8> vs;
@@ -63,6 +62,11 @@ void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
                 //  Construct a dual edge key
                 Key _k(ts[vertices[EDGE_MAP[mask][t][v].first]],
                        ts[vertices[EDGE_MAP[mask][t][v].second]]);
+
+                // Make sure we're interpolating between valid vertices
+                // (which have had their QEFs solved)
+                assert(_k.first->err != -1);
+                assert(_k.second->err != -1);
 
                 // Check if we have already searched along this dual edge
                 auto k = indices.find(_k);

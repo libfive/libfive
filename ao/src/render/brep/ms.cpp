@@ -36,7 +36,6 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
     for (unsigned i=0; i < ts.size(); ++i)
     {
         eval->set(ts[i]->vert3(), i);
-        assert(ts[i]->err >= 0);
     }
     auto vs = eval->values(ts.size());
 
@@ -61,6 +60,11 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
             auto k = indices.find(_k);
             if (k == indices.end())
             {
+                // Make sure we're interpolating between valid vertices
+                // (which have had their QEFs solved)
+                assert(_k.first->err != -1);
+                assert(_k.second->err != -1);
+
                 auto pt = interp.between(_k.first->vert, _k.second->vert);
                 k = indices.insert({_k, pts.size()}).first;
                 pts.push_back(pt);
