@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ao/tree/tree.hpp"
-#include "ao/eval/evaluator.hpp"
 #include "ao/render/brep/region.hpp"
 
 namespace Kernel {
