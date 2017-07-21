@@ -63,4 +63,54 @@ TEST_CASE("XTree<2>()")
             REQUIRE(ta.vert.y() == Approx(tb.vert.x()));
         }
     }
+
+}
+
+TEST_CASE("XTree<2>(Scaffold)")
+{
+    SECTION("Rectangle corners")
+    {
+        auto rect = rectangle(-1, 1, -1, 1);
+        Region<2> r({-1, -1}, {1, 1});
+        auto a = Evaluator(rect);
+
+        // Make padded scaffold
+        auto s = Scaffold<2>(&a, r, 2, true);
+
+        // Build a tree onto the scaffold
+        auto ta = XTree<2>(&a, s);
+
+        // We want to check that each corner has a vertex on it
+        std::array<Eigen::Array2f, 4> corners;
+        corners[0] = {-1, -1};
+        corners[1] = {1, -1};
+        corners[2] = {-1, 1};
+        corners[3] = {1, 1};
+        std::array<float, 4> scores = {{1, 1, 1, 1}};
+
+        // Iterate over all cells, checking vertex positions
+        std::list<XTree<2>*> targets = {&ta};
+        while (targets.size())
+        {
+            auto t = targets.front();
+            targets.pop_front();
+
+            for (unsigned i=0; i < 4; ++i)
+            {
+                scores[i] = fmin(scores[i], (t->vert - corners[i]).matrix().squaredNorm());
+            }
+            for (auto& n : t->children)
+            {
+                if (n)
+                {
+                    targets.push_back(n.get());
+                }
+            }
+        }
+
+        for (unsigned i=0; i < 4; ++i)
+        {
+            REQUIRE(scores[i] < 1e-4);
+        }
+    }
 }
