@@ -60,7 +60,10 @@ struct Refiner
 template <unsigned N>
 XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float max_err)
     : region(scaffold.region), vert(region.center()),
-      type(scaffold.type), max_error(max_err)
+      type(scaffold.type),
+      value(type == Interval::FILLED ? -1 :
+            type == Interval::EMPTY ? 1 : std::nan("")),
+      max_error(max_err)
 {
     // Recurse until the scaffold is empty
     if (scaffold.children[0].get())
@@ -306,15 +309,19 @@ bool XTree<N>::findVertex(Evaluator* eval)
     if (!region.contains(vert))
     {
         auto out = Solver<N, R, (1 << N) - 1>::solveQEF(A, b, region);
-        err = out.second;
         vert = out.first;
-        return err < max_error;
+        err = out.second;
     }
     else
     {
         err = (A * sol - b).squaredNorm();
-        return err < max_error;
     }
+
+    //  Store distance field value here to avoid having to re-evaluate it
+    //  over and over again when walking the dual tree
+    value = eval->eval(vert3());
+
+    return err < max_error;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

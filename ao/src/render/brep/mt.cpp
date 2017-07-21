@@ -29,15 +29,6 @@ static const std::pair<int8_t, int8_t> EDGE_MAP[16][2][3] = {
 
 void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
 {
-    // Evaluate at cell corners and save local copy
-    // (as values are otherwise invalided during interpolation)
-    for (unsigned i=0; i < ts.size(); ++i)
-    {
-        eval->set(ts[i]->vert3(), i);
-    }
-    std::array<float, 8> vs;
-    memcpy(&vs[0], eval->values(ts.size()), sizeof(float)*ts.size());
-
     // Loop over the six tetrahedra that make up a voxel cell
     for (unsigned t = 0; t < VERTEX_LOOP.size(); ++t)
     {
@@ -49,7 +40,7 @@ void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
         uint8_t mask = 0;
         for (unsigned i=0; i < vertices.size(); ++i)
         {
-            mask |= (vs[vertices[i]] < 0) << i;
+            mask |= (ts[vertices[i]]->value < 0) << i;
         }
 
         // Iterate over up to two triangles in the tet, aborting early if
