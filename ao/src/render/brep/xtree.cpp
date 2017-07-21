@@ -238,7 +238,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
     Eigen::Array<float, R, N> pts;
     for (unsigned i=0; i < R; ++i)
     {
-        const float frac = (i + 0.5) / R;
+        const float frac = i / (R - 1.0f);
         pts.row(i) = region.lower * (1 - frac) + region.upper * frac;
     }
 
@@ -280,6 +280,11 @@ bool XTree<N>::findVertex(Evaluator* eval)
     {
         // Load this row of A matrix
         auto derivs = Eigen::Array3f(ds.dx[i], ds.dy[i], ds.dz[i]);
+        if (std::isnan(ds.dx[i]) || std::isnan(ds.dy[i]) ||
+            std::isnan(ds.dz[i]))
+        {
+            derivs << 0, 0, 0;
+        }
         A.row(i) << derivs.head<N>().transpose(), -1;
 
         // Temporary variable for dot product
