@@ -23,6 +23,7 @@ add_library(ao-kernel STATIC
     render/brep/ms.cpp
     render/brep/mt.cpp
     render/brep/contours.cpp
+    render/brep/mesh.cpp
     #    render/subregion.cpp
     solve/solver.cpp
     tree/cache.cpp
