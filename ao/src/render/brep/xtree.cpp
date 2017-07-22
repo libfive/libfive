@@ -10,7 +10,8 @@ namespace Kernel {
 
 template <unsigned N>
 XTree<N>::XTree(Evaluator* eval, Region<N> region, float max_err)
-    : region(region), vert(region.center()), max_error(max_err)
+    : region(region), vert(region.center()),
+      err(max_err + 1), max_error(max_err)
 {
     // Do a preliminary evaluation to prune the tree
     eval->eval(region.lower3(), region.upper3());
@@ -66,7 +67,7 @@ XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float max_err)
       type(scaffold.type),
       value(type == Interval::FILLED ? -1 :
             type == Interval::EMPTY ? 1 : std::nan("")),
-      max_error(max_err)
+      err(max_err + 1), max_error(max_err)
 {
     // Recurse until the scaffold is empty
     if (scaffold.children[0].get())
@@ -300,24 +301,39 @@ bool XTree<N>::findVertex(Evaluator* eval)
         b(i) = A.row(i).dot(n);
     }
 
-    // Solve QEF (least-squares)
-    auto sol = A.fullPivHouseholderQr().solve(b);
+    {   // First, try to put a vertex on the feature of the surface
+        // (rather than a feature of the distance field)
+        auto sol = A.block(0, 0, num, N+1).fullPivHouseholderQr().solve(b);
+        vert = sol.template head<N>().array() + region.center();
 
-    // Store vertex location
-    vert = sol.template head<N>().array() + region.center();
-
-    // If the vertex ended up outside of the cell, then minimize the QEF
-    // on each of the cell's boundaries and position the vertex at the best
-    // boundary position.
-    if (!region.contains(vert))
-    {
-        auto out = Solver<N, R, (1 << N) - 1>::solveQEF(A, b, region);
-        vert = out.first;
-        err = out.second;
+        if (region.contains(vert))
+        {
+            Eigen::Matrix<float, N + 1, 1> sol_;
+            sol_ << sol, 0;
+            err = (A * sol_ - b).squaredNorm();
+        }
     }
-    else
-    {
-        err = (A * sol - b).squaredNorm();
+
+    if (err >= max_error)
+    {   // Solve full QEF (least-squares)
+        auto sol = A.fullPivHouseholderQr().solve(b);
+
+        // Store vertex location
+        vert = sol.template head<N>().array() + region.center();
+
+        // If the vertex ended up outside of the cell, then minimize the QEF
+        // on each of the cell's boundaries and position the vertex at the best
+        // boundary position.
+        if (!region.contains(vert))
+        {
+            auto out = Solver<N, R, (1 << N) - 1>::solveQEF(A, b, region);
+            vert = out.first;
+            err = out.second;
+        }
+        else
+        {
+            err = (A * sol - b).squaredNorm();
+        }
     }
     assert(region.contains(vert));
 
