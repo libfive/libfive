@@ -59,9 +59,11 @@ TEST_CASE("Contours::render (adjacent rectangles)")
     Region<2> r({-2, -2}, {2, 2});
 
     auto cs_pos = Contours::render(rects, r);
+    cs_pos->saveSVG("/Users/mkeeter/Desktop/pos.svg");
     REQUIRE(cs_pos->contours.size() == 1);
 
     auto cs_neg = Contours::render(-rects, r);
+    cs_neg->saveSVG("/Users/mkeeter/Desktop/neg.svg");
     REQUIRE(cs_neg->contours.size() == 1);
 }
 
