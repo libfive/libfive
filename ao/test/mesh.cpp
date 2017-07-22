@@ -2,13 +2,14 @@
 
 #include "catch.hpp"
 
-#include "ao/format/mesh.hpp"
-#include "ao/render/region.hpp"
+#include "ao/render/brep/mesh.hpp"
+#include "ao/render/brep/region.hpp"
 
 #include "util/shapes.hpp"
 
 using namespace Kernel;
 
+/*
 TEST_CASE("Saving a mesh")
 {
     Mesh m;
@@ -37,21 +38,46 @@ TEST_CASE("Mesh normals")
     m.tris.push_back({0, 2, 1});
     REQUIRE(m.norm(1) == Eigen::Vector3f(0, 0, -1));
 }
+*/
 
+TEST_CASE("Mesh::render (sphere)")
+{
+    Tree s = sphere(0.5);
+    Region<3> r({-0.5, -0.5, -0.5}, {0.5, 0.5, 0.5});
 
-TEST_CASE("Mesh performance")
+    auto mesh = Mesh::render(s, r);
+    mesh->saveSTL("/Users/mkeeter/Desktop/sphere.stl");
+}
+
+TEST_CASE("Mesh::render (cube)")
+{
+    auto cube = max(max(
+                    max(-(Tree::X() + 1.5),
+                          Tree::X() - 1.5),
+                    max(-(Tree::Y() + 1.5),
+                          Tree::Y() - 1.5)),
+                    max(-(Tree::Z() + 1.5),
+                          Tree::Z() - 1.5));
+    Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
+
+    auto mesh = Mesh::render(cube, r);
+    mesh->saveSTL("/Users/mkeeter/Desktop/cube.stl");
+}
+
+TEST_CASE("Mesh::render (performance)")
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed;
 
-    Tree sponge = menger(2);
+    Tree sponge = menger(0);
 
-    Region r({-2.5, 2.5}, {-2.5, 2.5}, {-2.5, 2.5}, 25);
+    Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
 
     // Begin timekeeping
     start = std::chrono::system_clock::now();
     auto mesh = Mesh::render(sponge, r);
     end = std::chrono::system_clock::now();
+    mesh->saveSTL("/Users/mkeeter/Desktop/out.stl");
 
     elapsed = end - start;
 
@@ -63,6 +89,7 @@ TEST_CASE("Mesh performance")
     WARN(log);
 }
 
+/*
 TEST_CASE("Face count in rectangular prism")
 {
     auto t = max(max(max(-Tree::X(), Tree::X() - 4),
@@ -72,3 +99,4 @@ TEST_CASE("Face count in rectangular prism")
     REQUIRE(m->verts.size() == 8);
     REQUIRE(m->tris.size() == 12);
 }
+*/

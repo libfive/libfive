@@ -6,7 +6,7 @@ set(SRCS main.cpp
     eval.cpp
     heightmap.cpp
     #lib.cpp
-    #mesh.cpp
+    mesh.cpp
     #octree.cpp
     contours.cpp
     feature.cpp
