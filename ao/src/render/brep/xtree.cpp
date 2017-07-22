@@ -179,7 +179,7 @@ static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
     }
 
     // Find constrained solution
-    auto sol = A_.colPivHouseholderQr().solve(b_);
+    auto sol = A_.fullPivHouseholderQr().solve(b_);
 
     // Unpack the solution into a set of full positions
     for (unsigned i=0; i < (1 << CONSTRAINED_AXES_COUNT); ++i)
@@ -301,7 +301,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
     }
 
     // Solve QEF (least-squares)
-    auto sol = A.colPivHouseholderQr().solve(b);
+    auto sol = A.fullPivHouseholderQr().solve(b);
 
     // Store vertex location
     vert = sol.template head<N>().array() + region.center();
