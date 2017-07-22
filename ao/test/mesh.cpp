@@ -69,7 +69,7 @@ TEST_CASE("Mesh::render (performance)")
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed;
 
-    Tree sponge = menger(0);
+    Tree sponge = menger(2);
 
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
 
