@@ -319,6 +319,7 @@ bool XTree<N>::findVertex(Evaluator* eval)
     {
         err = (A * sol - b).squaredNorm();
     }
+    assert(region.contains(vert));
 
     //  Store distance field value here to avoid having to re-evaluate it
     //  over and over again when walking the dual tree
