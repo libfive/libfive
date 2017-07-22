@@ -25,7 +25,7 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
     Dual<3>::walk(xtree, ms);
 
     return std::unique_ptr<Mesh>(new Mesh(std::move(ms.verts),
-                                          std::move(ms.tris)));
+                                          std::move(ms.branes)));
 }
 
 bool Mesh::saveSTL(const std::string& filename)
@@ -58,14 +58,14 @@ bool Mesh::saveSTL(const std::string& filename)
     uint32_t num = tris.size();
     file.write(reinterpret_cast<char*>(&num), sizeof(num));
 
-    for (auto t : tris)
+    for (const auto& t : tris)
     {
         // Write out the normal vector for this face (all zeros)
         float norm[3] = {0, 0, 0};
         file.write(reinterpret_cast<char*>(&norm), sizeof(norm));
 
         // Iterate over vertices (which are indices into the verts list
-        for (auto i : {std::get<0>(t), std::get<1>(t), std::get<2>(t)})
+        for (const auto& i : t)
         {
             auto v = verts[i];
             float vert[3] = {v.x(), v.y(), v.z()};

@@ -23,7 +23,7 @@ TEST_CASE("SquareMarcher: operator() on circle (fixed depth)")
 
     float rmin = 2;
     float rmax = 0;
-    for (auto pt : ms.pts)
+    for (auto pt : ms.verts)
     {
         rmin = fmin(rmin, pt.norm());
         rmax = fmax(rmax, pt.norm());
@@ -50,7 +50,7 @@ TEST_CASE("SquareMarcher: operator() on circle (recursive)")
 
     float rmin = 2;
     float rmax = 0;
-    for (auto pt : ms.pts)
+    for (auto pt : ms.verts)
     {
         rmin = fmin(rmin, pt.norm());
         rmax = fmax(rmax, pt.norm());

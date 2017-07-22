@@ -66,12 +66,12 @@ void SquareMarcher::operator()(const std::array<XTree<2>*, 4>& ts)
                 assert(_k.second->err != -1);
 
                 auto pt = interp.between(_k.first->vert, _k.second->vert);
-                k = indices.insert({_k, pts.size()}).first;
-                pts.push_back(pt);
+                k = indices.insert({_k, verts.size()}).first;
+                verts.push_back(pt);
             }
             s[v] = k->second;
         }
-        segments.push_back({s[0], s[1]});
+        branes.push_back({{s[0], s[1]}});
     }
 }
 

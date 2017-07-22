@@ -15,7 +15,7 @@ public:
     /*  Flat array of vertex positions  */
     std::vector<Eigen::Vector3f> verts;
     /*  Triangles, as a list of indices into verts array */
-    std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> tris;
+    std::vector<std::array<uint32_t, 3>> tris;
 
 protected:
     /*
@@ -23,7 +23,7 @@ protected:
      *  or similar to avoid copying large buffers around.
      */
     Mesh(std::vector<Eigen::Vector3f>&& verts,
-         std::vector<std::tuple<uint32_t, uint32_t, uint32_t>>&& tris)
+         std::vector<std::array<uint32_t, 3>>&& tris)
         : verts(verts), tris(tris) {}
 };
 

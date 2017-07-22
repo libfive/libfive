@@ -32,6 +32,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, float max_err)
 template <unsigned N>
 struct Refiner
 {
+    void push(const Region<N>& r)   { (void)r; }
+    void pop()    { /* Nothing to do here */ }
+
     void operator()(const std::array<XTree<N>*, (1 << N)>& as)
     {
         bool all_empty = true;

@@ -32,34 +32,34 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
     std::map<uint32_t, uint32_t> tails;
     std::vector<std::list<uint32_t>> contours;
 
-    for (auto& s : ms.segments)
+    for (auto& s : ms.branes)
     {
         {   // Check to see whether we can attach to the back of a tail
-            auto t = tails.find(s.first);
+            auto t = tails.find(s[0]);
             if (t != tails.end())
             {
-                contours[t->second].push_back(s.second);
-                tails.insert({s.second, t->second});
+                contours[t->second].push_back(s[1]);
+                tails.insert({s[1], t->second});
                 tails.erase(t);
                 continue;
             }
         }
 
         {   // Otherwise, see if we should prepend ourselves to a head
-            auto h = heads.find(s.second);
+            auto h = heads.find(s[1]);
             if (h != heads.end())
             {
-                contours[h->second].push_front(s.first);
-                heads.insert({s.first, h->second});
+                contours[h->second].push_front(s[0]);
+                heads.insert({s[0], h->second});
                 heads.erase(h);
                 continue;
             }
         }
 
         // Otherwise, start a new multi-segment line
-        heads[s.first] = contours.size();
-        tails[s.second] = contours.size();
-        contours.push_back({s.first, s.second});
+        heads[s[0]] = contours.size();
+        tails[s[1]] = contours.size();
+        contours.push_back({s[0], s[1]});
     }
 
     std::vector<bool> processed(contours.size(), false);
@@ -77,7 +77,7 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
         {
             for (const auto& pt : contours[target])
             {
-                out->contours.back().push_back(ms.pts[pt]);
+                out->contours.back().push_back(ms.verts[pt]);
             }
             processed[target] = true;
 

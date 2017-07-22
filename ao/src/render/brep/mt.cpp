@@ -69,7 +69,7 @@ void TetMarcher::operator()(const std::array<XTree<3>*, 8>& ts)
                 }
                 tri[v] = k->second;
             }
-            tris.push_back({tri[0], tri[1], tri[2]});
+            branes.push_back({{tri[2], tri[1], tri[0]}});
         }
     }
 }

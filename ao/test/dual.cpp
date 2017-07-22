@@ -9,6 +9,9 @@ using namespace Kernel;
 
 struct Walker2
 {
+    void push(const Region<2>&) {}
+    void pop() {}
+
     void operator()(const std::array<const XTree<2>*, 4>& a)
     {
         CAPTURE(a[0]->vert);
@@ -26,6 +29,9 @@ struct Walker2
 
 struct Walker3
 {
+    void push(const Region<3>&) {}
+    void pop() {}
+
     void operator()(const std::array<const XTree<3>*, 8>& a)
     {
         CAPTURE(a[0]->vert.transpose());

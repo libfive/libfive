@@ -186,6 +186,8 @@ void Dual<3>::walk(XTree<3>& t, V& v)
 {
     if (t.isBranch())
     {
+        v.push(t.region);
+
         // Recurse, calling the cell procedure for every child
         for (auto& c : t.children)
         {
@@ -242,6 +244,7 @@ void Dual<3>::walk(XTree<3>& t, V& v)
               *t.children[Axis::Z],          *t.children[Axis::X|Axis::Z],
               *t.children[Axis::Y|Axis::Z],  *t.children[Axis::X|Axis::Y|Axis::Z], v);
 
+        v.pop();
     }
 }
 
