@@ -7,10 +7,9 @@ using namespace Kernel;
 
 TEST_CASE("Region<2>::subdivide")
 {
-    Region<2> a({-1, -2}, {1, 2});
-
     SECTION("On all axes")
     {
+        Region<2> a({-1, -2}, {1, 2});
         auto out = a.subdivide();
         REQUIRE(out.size() == 4);
 
@@ -46,7 +45,20 @@ TEST_CASE("Region<2>::subdivide")
             REQUIRE(!(i & Axis::Z));
         }
     }
+
+    SECTION("With perp")
+    {
+        Region<2> a({-1, -2}, {1, 2}, Region<2>::Perp(10));
+        auto out = a.subdivide();
+
+        for (int i=0; i < 4; ++i)
+        {
+            CAPTURE(out[i].perp);
+            REQUIRE((out[i].perp == Region<2>::Perp(10)).all());
+        }
+    }
 }
+
 TEST_CASE("Region<3>::subdivide")
 {
     Region<3> a({-1, -2, -4}, {1, 2, 4});

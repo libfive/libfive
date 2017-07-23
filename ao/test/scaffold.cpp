@@ -18,6 +18,17 @@ TEST_CASE("Scaffold<2>::Scaffold")
     REQUIRE(s.children[1]->children[1]->type == Interval::EMPTY);
 }
 
+TEST_CASE("Scaffold<2>::Scaffold (pad=true)")
+{
+    Evaluator e(Tree::X());
+    Region<2> r({-1, -1}, {1, 1}, Region<2>::Perp(1.5));
+
+    auto s = Scaffold<2>(&e, r, 2, true);
+
+    CAPTURE(s.region.perp);
+    REQUIRE((s.region.perp == Region<2>::Perp(1.5)).all());
+}
+
 TEST_CASE("Scaffold<3>::Scaffold (pad=true)")
 {
     Evaluator e(Tree::X());
