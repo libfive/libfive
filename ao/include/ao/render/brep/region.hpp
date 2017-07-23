@@ -55,7 +55,7 @@ public:
             {
                 a(j) = (i & (1 << j)) > 0;
             }
-            out[i] = Region(a.select(c, lower), a.select(upper, c));
+            out[i] = Region(a.select(c, lower), a.select(upper, c), perp);
         }
         return out;
     }
