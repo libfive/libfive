@@ -165,8 +165,6 @@ void Dual<3>::walk(const XTree<3>* t, V& v)
 {
     if (t->isBranch())
     {
-        v.push(t->region);
-
         // Recurse, calling the cell procedure for every child
         for (unsigned i=0; i < t->children.size(); ++i)
         {
@@ -220,8 +218,6 @@ void Dual<3>::walk(const XTree<3>* t, V& v)
              t->child(Axis::Z | Axis::Y),
              t->child(Axis::X | Axis::Y),
              t->child(Axis::Z | Axis::X | Axis::Y)}}, v);
-
-        v.pop();
     }
 }
 

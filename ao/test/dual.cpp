@@ -9,26 +9,32 @@ using namespace Kernel;
 
 struct Walker2
 {
-    void push(const Region<2>&) {}
-    void pop() {}
-
     void operator()(const std::array<const XTree<2>*, 2>& a)
     {
-        (void)a;
-        // Figure out what to test here
+        for (auto t : a)
+        {
+            auto n = t->vert.norm();
+            min_norm = fmin(n, min_norm);
+            max_norm = fmax(n, max_norm);
+        }
     }
+    float min_norm = 2;
+    float max_norm = 0;
 };
 
 struct Walker3
 {
-    void push(const Region<3>&) {}
-    void pop() {}
-
     void operator()(const std::array<const XTree<3>*, 4>& a)
     {
-        (void)a;
-        // Figure out what to test here
+        for (auto t : a)
+        {
+            auto n = t->vert.norm();
+            min_norm = fmin(n, min_norm);
+            max_norm = fmax(n, max_norm);
+        }
     }
+    float min_norm = 2;
+    float max_norm = 0;
 };
 
 TEST_CASE("Dual<2>::walk")
@@ -38,6 +44,8 @@ TEST_CASE("Dual<2>::walk")
 
     Walker2 c;
     Dual<2>::walk(&ta, c);
+    REQUIRE(c.min_norm > 0.49);
+    REQUIRE(c.max_norm < 0.51);
 }
 
 TEST_CASE("Dual<3>::walk")
@@ -47,4 +55,6 @@ TEST_CASE("Dual<3>::walk")
 
     Walker3 c;
     Dual<3>::walk(&ta, c);
+    REQUIRE(c.min_norm > 0.49);
+    REQUIRE(c.max_norm < 0.51);
 }
