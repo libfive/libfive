@@ -5,30 +5,95 @@
 
 using namespace Kernel;
 
-TEST_CASE("XTree<2>()")
+TEST_CASE("XTree<2>::vert")
 {
     SECTION("Vertex positioning (with two planes)")
     {
-        Evaluator a(min(Tree::X(), -Tree::X() + 0.2));
-        auto ta = XTree<2>(&a, Region<2>({-1, -1}, {1, 1}));
-        REQUIRE(ta.vert3().x() == Approx(0.1));
-        REQUIRE(ta.vert3().y() == Approx(0.0));
+        Evaluator a(min(Tree::X(), Tree::Y()));
+        auto ta = XTree<2>(&a, Region<2>({-3, -3}, {1, 1}));
+        REQUIRE(ta.vert.x() == Approx(0.0));
+        REQUIRE(ta.vert.y() == Approx(0.0));
+    }
+}
 
+TEST_CASE("XTree<2>::type")
+{
+    SECTION("Empty")
+    {
+        Evaluator a(min(Tree::X(), Tree::Y()));
+        auto e = XTree<2>(&a, Region<2>({1, 1}, {2, 2}));
+        REQUIRE(e.type == Interval::EMPTY);
+    }
+
+    SECTION("Filled")
+    {
+        Evaluator a(min(Tree::X(), Tree::Y()));
+        auto e = XTree<2>(&a, Region<2>({-3, -3}, {-1, -1}));
+        REQUIRE(e.type == Interval::FILLED);
+    }
+
+    SECTION("Containing corner")
+    {
+        Evaluator a(min(Tree::X(), Tree::Y()));
+        auto ta = XTree<2>(&a, Region<2>({-3, -3}, {1, 1}));
+        REQUIRE(ta.type == Interval::AMBIGUOUS);
+    }
+}
+
+TEST_CASE("XTree<2>::isBranch")
+{
+    SECTION("Empty")
+    {
+        Evaluator a(min(Tree::X(), Tree::Y()));
+        auto e = XTree<2>(&a, Region<2>({1, 1}, {2, 2}));
+        REQUIRE(!e.isBranch());
+    }
+
+    SECTION("Filled")
+    {
+        Evaluator a(min(Tree::X(), Tree::Y()));
+        auto e = XTree<2>(&a, Region<2>({-3, -3}, {-1, -1}));
+        REQUIRE(!e.isBranch());
+    }
+
+    SECTION("Containing line")
+    {
+        std::cout << "TESTING\n";
+        Evaluator a(Tree::X());
+        auto e = XTree<2>(&a, Region<2>({-2, -2}, {2, 2}));
+        REQUIRE(!e.isBranch());
+    }
+
+    SECTION("Containing corner")
+    {
+        Evaluator a(min(Tree::X(), Tree::Y()));
+        auto ta = XTree<2>(&a, Region<2>({-3, -3}, {1, 1}));
+        REQUIRE(!ta.isBranch());
+    }
+
+    SECTION("Containing shape")
+    {
+        Evaluator e = circle(0.5);
+        auto t = XTree<2>(&e, Region<2>({-1, -1}, {1, 1}));
+        REQUIRE(t.isBranch());
+    }
+}
+
+/*
         Evaluator b(max(Tree::X(), -Tree::X() + 0.2));
         auto tb = XTree<2>(&a, Region<2>({-1, -1}, {1, 1}));
-        REQUIRE(tb.vert3().x() == Approx(0.1));
-        REQUIRE(tb.vert3().y() == Approx(0.0));
+        REQUIRE(tb.vert.x() == Approx(0.1));
+        REQUIRE(tb.vert.y() == Approx(0.0));
     }
 
     SECTION("Snapping to cell center")
     {
         Evaluator a(Tree::X());
         auto ta = XTree<2>(&a, Region<2>({10, 13}, {12, 15}));
-        REQUIRE(ta.vert3().x() == Approx(11));
-        REQUIRE(ta.vert3().y() == Approx(14));
+        REQUIRE(ta.vert.x() == Approx(11));
+        REQUIRE(ta.vert.y() == Approx(14));
     }
 
-    /*
     SECTION("Snapping to cell walls (curved)")
     {
         Evaluator a(circle(0.5));
@@ -63,9 +128,9 @@ TEST_CASE("XTree<2>()")
             REQUIRE(ta.vert.y() == Approx(tb.vert.x()));
         }
     }
-    */
 
 }
+    */
 
 /*
 TEST_CASE("XTree<2>(Scaffold)")
