@@ -28,8 +28,13 @@ public:
     /*
      *  Looks up a child, returning *this if this isn't a branch
      */
-    const XTree<N>& child(unsigned i) const
-    { return isBranch() ? *children[i] : *this; }
+    const XTree<N>* child(unsigned i) const
+    { return isBranch() ? children[i].get() : this; }
+
+    /*
+     *  Returns the filled / empty state for the ith corner
+     */
+    Interval::State cornerState(uint8_t i) const { return corners[i]; }
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -91,11 +96,6 @@ protected:
         }
         return out;
     }
-
-    /*
-     *  Returns the filled / empty state for the ith corner
-     */
-    Interval::State cornerState(uint8_t i) const { return corners[i]; }
 
     /*
      *  Returns a bitfield mask based on which corners are set

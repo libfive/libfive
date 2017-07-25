@@ -14,235 +14,212 @@ class Dual
 {
 public:
     template<typename V>
-    static void walk(XTree<N>& tree, V& v);
+    static void walk(const XTree<N>* tree, V& v);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // 2D Implementation
-template <typename V>
-void vert2(XTree<2>& a, XTree<2>& b,
-           XTree<2>& c, XTree<2>& d, V& v)
-{
-    if (a.isBranch() || b.isBranch() || c.isBranch() || d.isBranch())
-    {
-        vert2(a.child(Axis::X | Axis::Y),
-              b.child(Axis::Y), c.child(Axis::X),
-              d.child(0), v);
-    }
-    else
-    {
-        v({{&a, &b, &c, &d}});
-    }
-}
-
 template <typename V, Axis::Axis A>
-void edge2(XTree<2>& a, XTree<2>& b, V& v)
+void edge2(const std::array<const XTree<2>*, 2>& ts, V& v)
 {
-    if (a.isBranch() || b.isBranch())
-    {
-        uint8_t perp = (Axis::X | Axis::Y) ^ A;
-        edge2<V, A>(a.child(A), b.child(0), v);
-        edge2<V, A>(a.child(A|perp), b.child(perp), v);
+    constexpr uint8_t perp = (Axis::X | Axis::Y) ^ A;
 
-        if (A == Axis::X)
+    if (std::any_of(ts.begin(), ts.end(),
+        [](const XTree<2>* t){ return t->isBranch(); }))
+    {
+        edge2<V, A>({{ts[0]->child(perp), ts[1]->child(0)}}, v);
+        edge2<V, A>({{ts[0]->child(A|perp), ts[1]->child(A)}}, v);
+    }
+    else if (std::all_of(ts.begin(), ts.end(),
+        [](const XTree<2>* t){ return t->type == Interval::AMBIGUOUS &&
+                                      !t->isBranch(); }))
+    {
+        const auto index = std::min_element(ts.begin(), ts.end(),
+                [](const XTree<2>* a, const XTree<2>* b)
+                { return a->level < b->level; }) - ts.begin();
+
+        constexpr std::array<uint8_t, 2> corners = {{perp, 0}};
+
+        // If there is a sign change across the relevant edge, then call the
+        // watcher with the segment corners (with proper winding order)
+        auto a = ts[index]->cornerState(corners[index]);
+        auto b = ts[index]->cornerState(corners[index] | A);
+        if (a != b)
         {
-            vert2(a.child(A), b.child(0), a.child(A|perp), b.child(perp), v);
-        }
-        else if (A == Axis::Y)
-        {
-            vert2(a.child(A), a.child(A|perp), b.child(0), b.child(perp), v);
+            auto ts_ = ts;
+            if ((a == Interval::FILLED && A == Axis::X) ||
+                (b == Interval::FILLED && A == Axis::Y))
+            {
+                std::reverse(ts_.begin(), ts_.end());
+            }
+            v(ts_);
         }
     }
 }
 
 template <>
 template <typename V>
-void Dual<2>::walk(XTree<2>& t, V& v)
+void Dual<2>::walk(const XTree<2>* t, V& v)
 {
-    if (t.isBranch())
+    if (t->isBranch())
     {
         // Recurse down every subface in the quadtree
-        for (auto& c : t.children)
+        for (unsigned i=0; i < t->children.size(); ++i)
         {
-            walk(*c, v);
+            auto c = t->child(i);
+            if (c != t)
+            {
+                walk(c, v);
+            }
         }
 
         //  Then, call edge on every pair of cells
-        edge2<V, Axis::X>(*t.children[0], *t.children[Axis::X], v);
-        edge2<V, Axis::X>(*t.children[Axis::Y], *t.children[Axis::Y | Axis::X], v);
-        edge2<V, Axis::Y>(*t.children[0], *t.children[Axis::Y], v);
-        edge2<V, Axis::Y>(*t.children[Axis::X], *t.children[Axis::X | Axis::Y], v);
-
-        // Finally, recurse down towards the center of the cell
-        vert2(*t.children[0],        *t.children[Axis::X],
-              *t.children[Axis::Y],  *t.children[Axis::X|Axis::Y], v);
+        edge2<V, Axis::Y>({{t->child(0), t->child(Axis::X)}}, v);
+        edge2<V, Axis::Y>({{t->child(Axis::Y), t->child(Axis::Y | Axis::X)}}, v);
+        edge2<V, Axis::X>({{t->child(0), t->child(Axis::Y)}}, v);
+        edge2<V, Axis::X>({{t->child(Axis::X), t->child(Axis::X | Axis::Y)}}, v);
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename V>
-void vert3(XTree<3>& a, XTree<3>& b, XTree<3>& c, XTree<3>& d,
-           XTree<3>& e, XTree<3>& f, XTree<3>& g, XTree<3>& h, V& v)
+template <typename V, Axis::Axis A>
+void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
 {
-    if (a.isBranch() || b.isBranch() || c.isBranch() || d.isBranch() ||
-        e.isBranch() || f.isBranch() || g.isBranch() || h.isBranch())
+    constexpr auto Q = Axis::Q(A);
+    constexpr auto R = Axis::R(A);
+
+    if (std::any_of(ts.begin(), ts.end(),
+        [](const XTree<3>* t){ return t->isBranch(); }))
     {
-        vert3(a.child(Axis::X | Axis::Y | Axis::Z),
-              b.child(Axis::Y | Axis::Z),
-              c.child(Axis::X | Axis::Z),
-              d.child(Axis::Z),
-              e.child(Axis::X | Axis::Y),
-              f.child(Axis::Y),
-              g.child(Axis::X),
-              h.child(0), v);
+        edge3<V, A>({{ts[0]->child(Q|R), ts[1]->child(R), ts[2]->child(Q), ts[3]->child(0)}}, v);
+        edge3<V, A>({{ts[0]->child(Q|R|A), ts[1]->child(R|A), ts[2]->child(Q|A), ts[3]->child(A)}}, v);
     }
-    else
+    else if (std::all_of(ts.begin(), ts.end(),
+        [](const XTree<3>* t){ return t->type == Interval::AMBIGUOUS &&
+                                      !t->isBranch(); }))
     {
-        v({{&a, &b, &c, &d, &e, &f, &g, &h}});
+        /*  We need to check the values on the shared edge to see whether we need
+         *  to add a face.  However, this is tricky when the edge spans multiple
+         *  octree levels.
+         *
+         * In the following diagram, the target edge is marked with an x
+         * (travelling into the screen):
+         *      _________________
+         *      | a |           |
+         *      ----x   c, d    |
+         *      | b |           |
+         *      ----------------|
+         *
+         *  If we were to look at corners of c or d, we wouldn't be looking at the
+         *  correct edge.  Instead, we need to look at corners for the smallest cell
+         *  among the function arguments.
+         */
+        const auto index = std::min_element(ts.begin(), ts.end(),
+                [](const XTree<3>* a, const XTree<3>* b)
+                { return a->level < b->level; }) - ts.begin();
+
+        constexpr std::array<uint8_t, 4> corners = {{Q|R, R, Q, 0}};
+
+        // If there is a sign change across the relevant edge, then call the
+        // watcher with the segment corners (with proper winding order)
+        auto a = ts[index]->cornerState(corners[index]);
+        auto b = ts[index]->cornerState(corners[index] | A);
+        if (a != b)
+        {
+            auto ts_ = ts;
+            if ((a == Interval::FILLED && A == Axis::X) ||
+                (b == Interval::FILLED && A == Axis::Y)) // ???
+            {
+                std::reverse(ts_.begin(), ts_.end());
+            }
+            v(ts_);
+        }
     }
 }
 
 template <typename V, Axis::Axis A>
-void edge3(XTree<3>& a, XTree<3>& b, XTree<3>& c, XTree<3>& d, V& v)
+void face3(const std::array<const XTree<3>*, 2> ts, V& v)
 {
-    if (a.isBranch() || b.isBranch() || c.isBranch() || d.isBranch())
+    if (std::any_of(ts.begin(), ts.end(),
+        [](const XTree<3>* t){ return t->isBranch(); }))
     {
         constexpr auto Q = Axis::Q(A);
         constexpr auto R = Axis::R(A);
 
-        edge3<V, A>(a.child(Q|R), b.child(R), c.child(Q), d.child(0), v);
-        edge3<V, A>(a.child(Q|R|A), b.child(R|A), c.child(Q|A), d.child(A), v);
+        face3<V, A>({{ts[0]->child(A), ts[1]->child(0)}}, v);
+        face3<V, A>({{ts[0]->child(Q|A), ts[1]->child(Q)}}, v);
+        face3<V, A>({{ts[0]->child(R|A), ts[1]->child(R)}}, v);
+        face3<V, A>({{ts[0]->child(Q|R|A), ts[1]->child(Q|R)}}, v);
 
-        if (A == Axis::X)
-        {
-            vert3<V>(a.child(Axis::Y|Axis::Z), a.child(Axis::Y|Axis::Z|Axis::X),
-                     b.child(Axis::Z), b.child(Axis::Z|Axis::X),
-                     c.child(Axis::Y), c.child(Axis::Y|Axis::X),
-                     d.child(0), d.child(Axis::X), v);
-        }
-        else if (A == Axis::Y)
-        {
-            vert3<V>(a.child(Axis::X|Axis::Z), c.child(Axis::Z),
-                     a.child(Axis::X|Axis::Y|Axis::Z), c.child(Axis::Y|Axis::Z),
-                     b.child(Axis::X), d.child(0),
-                     b.child(Axis::X|Axis::Y), d.child(Axis::Y), v);
-        }
-        else if (A == Axis::Z)
-        {
-            vert3<V>(a.child(Axis::X|Axis::Y), b.child(Axis::Y),
-                     c.child(Axis::X), d.child(0),
-                     a.child(Axis::X|Axis::Y|Axis::Z), b.child(Axis::Y|Axis::Z),
-                     c.child(Axis::X|Axis::Z), d.child(Axis::Z), v);
-        }
-    }
-}
+        edge3<V, Q>({{ts[0]->child(A), ts[0]->child(R|A), ts[1]->child(0), ts[1]->child(R)}}, v);
+        edge3<V, Q>({{ts[0]->child(Q|A), ts[0]->child(Q|R|A), ts[1]->child(Q), ts[1]->child(Q|R)}}, v);
 
-template <typename V, Axis::Axis A>
-void face3(XTree<3>& a, XTree<3>& b, V& v)
-{
-    if (a.isBranch() || b.isBranch())
-    {
-        constexpr auto Q = Axis::Q(A);
-        constexpr auto R = Axis::R(A);
-
-        face3<V, A>(a.child(A), b.child(0), v);
-        face3<V, A>(a.child(Q|A), b.child(Q), v);
-        face3<V, A>(a.child(R|A), b.child(R), v);
-        face3<V, A>(a.child(Q|R|A), b.child(Q|R), v);
-
-        edge3<V, Q>(a.child(A), a.child(R|A), b.child(0), b.child(R), v);
-        edge3<V, Q>(a.child(Q|A), a.child(Q|R|A), b.child(Q), b.child(Q|R), v);
-
-        edge3<V, R>(a.child(A), b.child(0), a.child(A|Q), b.child(Q), v);
-        edge3<V, R>(a.child(R|A), b.child(R), a.child(R|A|Q), b.child(R|Q), v);
-
-        if (A == Axis::X)
-        {
-            vert3<V>(a.child(Axis::X), b.child(0),
-                     a.child(Axis::X|Axis::Y), b.child(Axis::Y),
-                     a.child(Axis::X|Axis::Z), b.child(Axis::Z),
-                     a.child(Axis::X|Axis::Y|Axis::Z), b.child(Axis::Y|Axis::Z), v);
-        }
-        else if (A == Axis::Y)
-        {
-            vert3<V>(a.child(Axis::Y), a.child(Axis::X|Axis::Y),
-                     b.child(0), b.child(Axis::X),
-                     a.child(Axis::Y|Axis::Z), a.child(Axis::X|Axis::Y|Axis::Z),
-                     b.child(Axis::Z), b.child(Axis::X|Axis::Z), v);
-        }
-        else if (A == Axis::Z)
-        {
-            vert3<V>(a.child(Axis::Z), a.child(Axis::X|Axis::Z),
-                     a.child(Axis::Y|Axis::Z), a.child(Axis::X|Axis::Y|Axis::Z),
-                     b.child(0), b.child(Axis::X),
-                     b.child(Axis::Y), b.child(Axis::X|Axis::Y), v);
-        }
+        edge3<V, R>({{ts[0]->child(A), ts[1]->child(0), ts[0]->child(A|Q), ts[1]->child(Q)}}, v);
+        edge3<V, R>({{ts[0]->child(R|A), ts[1]->child(R), ts[0]->child(R|A|Q), ts[1]->child(R|Q)}}, v);
     }
 }
 
 template <>
 template <typename V>
-void Dual<3>::walk(XTree<3>& t, V& v)
+void Dual<3>::walk(const XTree<3>* t, V& v)
 {
-    if (t.isBranch())
+    if (t->isBranch())
     {
-        v.push(t.region);
+        v.push(t->region);
 
         // Recurse, calling the cell procedure for every child
-        for (auto& c : t.children)
+        for (unsigned i=0; i < t->children.size(); ++i)
         {
-            walk(*c, v);
+            auto c = t->child(i);
+            if (c != t)
+            {
+                walk(c, v);
+            }
         }
 
         // Then call the face procedure on every pair of cells
-        face3<V, Axis::X>(t.child(0), t.child(Axis::X), v);
-        face3<V, Axis::X>(t.child(Axis::Y), t.child(Axis::Y | Axis::X), v);
-        face3<V, Axis::X>(t.child(Axis::Z), t.child(Axis::Z | Axis::X), v);
-        face3<V, Axis::X>(t.child(Axis::Y | Axis::Z), t.child(Axis::Y | Axis::Z | Axis::X), v);
+        face3<V, Axis::X>({{t->child(0), t->child(Axis::X)}}, v);
+        face3<V, Axis::X>({{t->child(Axis::Y), t->child(Axis::Y | Axis::X)}}, v);
+        face3<V, Axis::X>({{t->child(Axis::Z), t->child(Axis::Z | Axis::X)}}, v);
+        face3<V, Axis::X>({{t->child(Axis::Y | Axis::Z), t->child(Axis::Y | Axis::Z | Axis::X)}}, v);
 
-        face3<V, Axis::Y>(t.child(0), t.child(Axis::Y), v);
-        face3<V, Axis::Y>(t.child(Axis::X), t.child(Axis::X | Axis::Y), v);
-        face3<V, Axis::Y>(t.child(Axis::Z), t.child(Axis::Z | Axis::Y), v);
-        face3<V, Axis::Y>(t.child(Axis::X | Axis::Z), t.child(Axis::X | Axis::Z | Axis::Y), v);
+        face3<V, Axis::Y>({{t->child(0), t->child(Axis::Y)}}, v);
+        face3<V, Axis::Y>({{t->child(Axis::X), t->child(Axis::X | Axis::Y)}}, v);
+        face3<V, Axis::Y>({{t->child(Axis::Z), t->child(Axis::Z | Axis::Y)}}, v);
+        face3<V, Axis::Y>({{t->child(Axis::X | Axis::Z), t->child(Axis::X | Axis::Z | Axis::Y)}}, v);
 
-        face3<V, Axis::Z>(t.child(0), t.child(Axis::Z), v);
-        face3<V, Axis::Z>(t.child(Axis::X), t.child(Axis::X | Axis::Z), v);
-        face3<V, Axis::Z>(t.child(Axis::Y), t.child(Axis::Y | Axis::Z), v);
-        face3<V, Axis::Z>(t.child(Axis::X | Axis::Y), t.child(Axis::X | Axis::Y | Axis::Z), v);
+        face3<V, Axis::Z>({{t->child(0), t->child(Axis::Z)}}, v);
+        face3<V, Axis::Z>({{t->child(Axis::X), t->child(Axis::X | Axis::Z)}}, v);
+        face3<V, Axis::Z>({{t->child(Axis::Y), t->child(Axis::Y | Axis::Z)}}, v);
+        face3<V, Axis::Z>({{t->child(Axis::X | Axis::Y), t->child(Axis::X | Axis::Y | Axis::Z)}}, v);
 
         // Call the edge function 6 times
-        edge3<V, Axis::Z>(t.child(0),
-             t.child(Axis::X),
-             t.child(Axis::Y),
-             t.child(Axis::X | Axis::Y), v);
-        edge3<V, Axis::Z>(t.child(Axis::Z),
-             t.child(Axis::X | Axis::Z),
-             t.child(Axis::Y | Axis::Z),
-             t.child(Axis::X | Axis::Y | Axis::Z), v);
+        edge3<V, Axis::Z>({{t->child(0),
+             t->child(Axis::X),
+             t->child(Axis::Y),
+             t->child(Axis::X | Axis::Y)}}, v);
+        edge3<V, Axis::Z>({{t->child(Axis::Z),
+             t->child(Axis::X | Axis::Z),
+             t->child(Axis::Y | Axis::Z),
+             t->child(Axis::X | Axis::Y | Axis::Z)}}, v);
 
-        edge3<V, Axis::X>(t.child(0),
-             t.child(Axis::Y),
-             t.child(Axis::Z),
-             t.child(Axis::Y | Axis::Z), v);
-        edge3<V, Axis::X>(t.child(Axis::X),
-             t.child(Axis::Y | Axis::X),
-             t.child(Axis::Z | Axis::X),
-             t.child(Axis::Y | Axis::Z | Axis::X), v);
+        edge3<V, Axis::X>({{t->child(0),
+             t->child(Axis::Y),
+             t->child(Axis::Z),
+             t->child(Axis::Y | Axis::Z)}}, v);
+        edge3<V, Axis::X>({{t->child(Axis::X),
+             t->child(Axis::Y | Axis::X),
+             t->child(Axis::Z | Axis::X),
+             t->child(Axis::Y | Axis::Z | Axis::X)}}, v);
 
-        edge3<V, Axis::Y>(t.child(0),
-             t.child(Axis::Z),
-             t.child(Axis::X),
-             t.child(Axis::Z | Axis::X), v);
-        edge3<V, Axis::Y>(t.child(Axis::Y),
-             t.child(Axis::Z | Axis::Y),
-             t.child(Axis::X | Axis::Y),
-             t.child(Axis::Z | Axis::X | Axis::Y), v);
-
-        // Finally, recurse down towards the center of the cell
-        vert3(*t.children[0],                *t.children[Axis::X],
-              *t.children[Axis::Y],          *t.children[Axis::X|Axis::Y],
-              *t.children[Axis::Z],          *t.children[Axis::X|Axis::Z],
-              *t.children[Axis::Y|Axis::Z],  *t.children[Axis::X|Axis::Y|Axis::Z], v);
+        edge3<V, Axis::Y>({{t->child(0),
+             t->child(Axis::Z),
+             t->child(Axis::X),
+             t->child(Axis::Z | Axis::X)}}, v);
+        edge3<V, Axis::Y>({{t->child(Axis::Y),
+             t->child(Axis::Z | Axis::Y),
+             t->child(Axis::X | Axis::Y),
+             t->child(Axis::Z | Axis::X | Axis::Y)}}, v);
 
         v.pop();
     }
