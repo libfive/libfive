@@ -384,19 +384,40 @@ Eigen::Matrix<double, N, 1> XTree<N>::massPoint() const
 template <>
 bool XTree<2>::leafsAreManifold() const
 {
-    return true;
+    /*  See detailed comment in Octree::leafTopology */
+    const bool edges_safe =
+        (child(0).cornerState(Axis::X) == cornerState(0) ||
+         child(0).cornerState(Axis::X) == cornerState(Axis::X))
+    &&  (child(0).cornerState(Axis::Y) == cornerState(0) ||
+         child(0).cornerState(Axis::Y) == cornerState(Axis::Y))
+    &&  (child(Axis::X).cornerState(Axis::X|Axis::Y) == cornerState(Axis::X) ||
+         child(Axis::X).cornerState(Axis::X|Axis::Y) == cornerState(Axis::X|Axis::Y))
+    &&  (child(Axis::Y).cornerState(Axis::Y|Axis::X) == cornerState(Axis::Y) ||
+         child(Axis::Y).cornerState(Axis::Y|Axis::X) == cornerState(Axis::Y|Axis::X));
+
+    const bool faces_safe =
+        (child(0).cornerState(Axis::Y|Axis::X) == cornerState(0) ||
+         child(0).cornerState(Axis::Y|Axis::X) == cornerState(Axis::Y) ||
+         child(0).cornerState(Axis::Y|Axis::X) == cornerState(Axis::X) ||
+         child(0).cornerState(Axis::Y|Axis::X) == cornerState(Axis::Y|Axis::X));
+
+    return edges_safe && faces_safe;
 }
 
 template <>
 bool XTree<2>::cornersAreManifold() const
 {
-    return true;
+    const static bool corner_table[] =
+        {1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1};
+    return corner_table[cornerMask()];
 }
 
 template <>
 const std::vector<std::pair<uint8_t, uint8_t>>& XTree<2>::edges() const
 {
-    static const std::vector<std::pair<uint8_t, uint8_t>> es;
+    static const std::vector<std::pair<uint8_t, uint8_t>> es =
+        {{0, Axis::X}, {0, Axis::Y},
+         {Axis::X, Axis::X|Axis::Y}, {Axis::Y, Axis::Y|Axis::X}};
     return es;
 }
 
