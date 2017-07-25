@@ -17,6 +17,14 @@ struct Walker2
             min_norm = fmin(n, min_norm);
             max_norm = fmax(n, max_norm);
         }
+        auto angle0 = atan2(a[0]->vert.y(), a[0]->vert.x());
+        auto angle1 = atan2(a[1]->vert.y(), a[1]->vert.x());
+
+        // Ignore situations near the wrap-around
+        if (fabs(angle0) < 3.0)
+        {
+            REQUIRE(angle1 > angle0);
+        }
     }
     float min_norm = 2;
     float max_norm = 0;

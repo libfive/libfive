@@ -47,8 +47,8 @@ void edge2(const std::array<const XTree<2>*, 2>& ts, V& v)
         if (a != b)
         {
             auto ts_ = ts;
-            if ((a == Interval::FILLED && A == Axis::X) ||
-                (b == Interval::FILLED && A == Axis::Y))
+            if ((a == Interval::FILLED && A == Axis::Y) ||
+                (b == Interval::FILLED && A == Axis::X))
             {
                 std::reverse(ts_.begin(), ts_.end());
             }
