@@ -379,6 +379,48 @@ Eigen::Matrix<double, N, 1> XTree<N>::massPoint() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Specializations for quadtree
+template <>
+bool XTree<2>::leafsAreManifold() const
+{
+    return true;
+}
+
+template <>
+bool XTree<2>::cornersAreManifold() const
+{
+    return true;
+}
+
+template <>
+const std::vector<std::pair<uint8_t, uint8_t>>& XTree<2>::edges() const
+{
+    static const std::vector<std::pair<uint8_t, uint8_t>> es;
+    return es;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Specializations for octree
+template <>
+bool XTree<3>::leafsAreManifold() const
+{
+    return true;
+}
+
+template <>
+bool XTree<3>::cornersAreManifold() const
+{
+    return true;
+}
+
+template <>
+const std::vector<std::pair<uint8_t, uint8_t>>& XTree<3>::edges() const
+{
+    static const std::vector<std::pair<uint8_t, uint8_t>> es;
+    return es;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 // Explicit initialization of templates
 template class XTree<2>;

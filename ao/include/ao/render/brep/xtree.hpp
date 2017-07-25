@@ -82,7 +82,7 @@ protected:
      *  Returns edges (as indices into corners)
      *  (must be specialized for a specific dimensionality)
      */
-    std::vector<std::pair<uint8_t, uint8_t>> edges() const;
+    const std::vector<std::pair<uint8_t, uint8_t>>& edges() const;
 
     /*
      *  Returns a table such that looking up a particular corner
