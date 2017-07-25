@@ -59,6 +59,13 @@ public:
     /*  Leaf cell state, when known  */
     Interval::State type=Interval::UNKNOWN;
 
+    /*  Feature rank for the cell's vertex, where                    *
+     *      1 is face, 2 is edge, 3 is corner                        *
+     *                                                               *
+     *  This value is populated in find{Leaf|Branch}Matrices and     *
+     *  used when merging intersections from lower-ranked children   */
+    unsigned rank=0;
+
 protected:
     /*
      *  Searches for a vertex within the XTree cell, using the QEF matrices
@@ -138,13 +145,6 @@ protected:
     Eigen::Matrix<double, N, N> AtA=Eigen::Matrix<double, N, N>::Zero();
     Eigen::Matrix<double, N, 1> AtB=Eigen::Matrix<double, N, 1>::Zero();
     double BtB=0;
-
-    /*  Feature rank for the cell's vertex, where                    *
-     *      1 is face, 2 is edge, 3 is corner                        *
-     *                                                               *
-     *  This value is populated in find{Leaf|Branch}Matrices and     *
-     *  used when merging intersections from lower-ranked children   */
-    unsigned rank=0;
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;
