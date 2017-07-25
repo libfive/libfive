@@ -47,7 +47,7 @@ public:
     std::array<std::unique_ptr<const XTree<N>>, 1 << N> children;
 
     /*  level = max(map(level, children)) + 1  */
-    unsigned level;
+    unsigned level=0;
 
     /*  Vertex location, if this is a leaf  */
     Eigen::Matrix<double, N, 1> vert;
@@ -81,9 +81,9 @@ protected:
     /*
      *  Returns the corner position for the ith corner
      */
-    Eigen::Array<double, 1, N> cornerPos(uint8_t i) const
+    Eigen::Array<double, N, 1> cornerPos(uint8_t i) const
     {
-        Eigen::Array<double, 1, N> out;
+        Eigen::Array<double, N, 1> out;
         for (unsigned axis=0; axis < N; ++axis)
         {
             out(axis) = (i & (1 << axis)) ? region.upper(axis)
@@ -139,7 +139,8 @@ protected:
 
     /*  Mass point is the average intersection location *
      *  (the last coordinate is number of points summed) */
-    Eigen::Matrix<double, N + 1, 1> _mass_point;
+    Eigen::Matrix<double, N + 1, 1> _mass_point=
+        Eigen::Matrix<double, N + 1, 1>::Zero();
 
     /*  QEF matrices */
     Eigen::Matrix<double, N, N> AtA=Eigen::Matrix<double, N, N>::Zero();

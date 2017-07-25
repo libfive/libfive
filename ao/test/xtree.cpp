@@ -58,7 +58,6 @@ TEST_CASE("XTree<2>::isBranch")
 
     SECTION("Containing line")
     {
-        std::cout << "TESTING\n";
         Evaluator a(Tree::X());
         auto e = XTree<2>(&a, Region<2>({-2, -2}, {2, 2}));
         REQUIRE(!e.isBranch());

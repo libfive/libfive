@@ -77,13 +77,15 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
     }
     eval->pop();
 
-    // If this cell is unambiguous, then fill its corners with values
+    // If this cell is unambiguous, then fill its corners with values and
+    // forget all its branches; these may be no-ops, but they're idempotent
     if (type == Interval::FILLED || type == Interval::EMPTY)
     {
         std::fill(corners.begin(), corners.end(), type);
+        std::for_each(children.begin(), children.end(),
+            [](std::unique_ptr<const XTree<N>>& o) { o.reset(); });
         manifold = true;
     }
-
 
     // Branch checking and simplifications
     if (isBranch())
@@ -331,6 +333,8 @@ template <unsigned N>
 double XTree<N>::findVertex(
         Eigen::EigenSolver<Eigen::Matrix<double, N, N>>& es)
 {
+    assert(_mass_point(N) > 0);
+
     // We need to find the pseudo-inverse of AtA.
     auto eigenvalues = es.eigenvalues().real();
 
