@@ -71,6 +71,10 @@ public:
      *  used when merging intersections from lower-ranked children   */
     unsigned rank=0;
 
+    /* Used as a unqiue index when unpacking into a b-rep, since this
+     * is cheaper than storing a map of XTree* -> uint32_t  */
+    mutable uint32_t index=0;
+
 protected:
     /*
      *  Searches for a vertex within the XTree cell, using the QEF matrices

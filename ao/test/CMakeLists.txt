@@ -1,17 +1,12 @@
 set(SRCS main.cpp
     avx.cpp
     cache.cpp
-    #dc.cpp
     dual.cpp
     eval.cpp
     heightmap.cpp
     #lib.cpp
-    #mesh.cpp
-    #octree.cpp
-    #contours.cpp
+    mesh.cpp
     feature.cpp
-    #ms.cpp
-    #mt.cpp
     solver.cpp
     region.cpp
     template.cpp

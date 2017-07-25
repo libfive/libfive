@@ -9,19 +9,11 @@ add_library(ao-kernel STATIC
     eval/evaluator_base.cpp
     eval/result.cpp
     eval/feature.cpp
-    #format/contours.cpp
-    #format/mesh.cpp
-    #render/dc.cpp
-    #render/dc2d.cpp
     render/discrete/heightmap.cpp
-    #render/octree.cpp
-    #render/quadtree.cpp
     render/discrete/voxels.cpp
     render/brep/xtree.cpp
-    #render/brep/ms.cpp
-    #render/brep/mt.cpp
     #render/brep/contours.cpp
-    #render/brep/mesh.cpp
+    render/brep/mesh.cpp
     #    render/subregion.cpp
     solve/solver.cpp
     tree/cache.cpp

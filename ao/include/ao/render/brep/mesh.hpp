@@ -1,30 +1,26 @@
 #pragma once
 
 #include "ao/tree/tree.hpp"
+
 #include "ao/render/brep/region.hpp"
+#include "ao/render/brep/brep.hpp"
+#include "ao/render/brep/xtree.hpp"
 
 namespace Kernel {
 
-class Mesh {
+class Mesh : public BRep<3> {
 public:
-    static std::unique_ptr<Mesh> render(const Tree t, const Region<3>& r,
-                                        const float max_err=1e-6);
+    static std::unique_ptr<Mesh> render(const Tree t, const Region<3>& r);
 
+    /*
+     *  Writes the mesh to a file
+     */
     bool saveSTL(const std::string& filename);
 
-    /*  Flat array of vertex positions  */
-    std::vector<Eigen::Vector3f> verts;
-    /*  Triangles, as a list of indices into verts array */
-    std::vector<std::array<uint32_t, 3>> tris;
-
-protected:
     /*
-     *  The Mesh constructor expects to move arrays from a TetMarcher
-     *  or similar to avoid copying large buffers around.
+     *  Called by Dual::walk to construct the triangle mesh
      */
-    Mesh(std::vector<Eigen::Vector3f>&& verts,
-         std::vector<std::array<uint32_t, 3>>&& tris)
-        : verts(verts), tris(tris) {}
+    void operator()(const std::array<const XTree<3>*, 4>& ts);
 };
 
 }   // namespace Kernel

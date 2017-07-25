@@ -3,29 +3,37 @@
 
 #include "ao/render/brep/mesh.hpp"
 #include "ao/render/brep/xtree.hpp"
-#include "ao/render/brep/scaffold.hpp"
-#include "ao/render/brep/mt.hpp"
 #include "ao/render/brep/dual.hpp"
 
 namespace Kernel {
 
-std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
-                                   const float max_err)
+std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r)
 {
     std::unique_ptr<Evaluator> eval(new Evaluator(t));
 
-    // Create a padded scaffolding for the XTree
-    const auto scaffold = Scaffold<3>(eval.get(), r, 4, true);
-
     // Create the quadtree on the scaffold
-    auto xtree = XTree<3>(eval.get(), scaffold, max_err);
+    auto xtree = XTree<3>(eval.get(), r);
 
     // Perform marching squares
-    TetMarcher ms(eval.get());
-    Dual<3>::walk(xtree, ms);
+    auto m = std::unique_ptr<Mesh>(new Mesh());
+    Dual<3>::walk(&xtree, *m);
+    return m;
+}
 
-    return std::unique_ptr<Mesh>(new Mesh(std::move(ms.verts),
-                                          std::move(ms.branes)));
+void Mesh::operator()(const std::array<const XTree<3>*, 4>& ts)
+{
+    uint32_t vs[4];
+    for (unsigned i=0; i < 4; ++i)
+    {
+        if (ts[i]->index == 0)
+        {
+            ts[i]->index = verts.size();
+            verts.push_back(ts[i]->vert.template cast<float>());
+        }
+        vs[i] = ts[i]->index;
+    }
+    branes.push_back({vs[0], vs[1], vs[2]});
+    branes.push_back({vs[2], vs[1], vs[3]});
 }
 
 bool Mesh::saveSTL(const std::string& filename)
@@ -55,19 +63,19 @@ bool Mesh::saveSTL(const std::string& filename)
     }
 
     // Write the number of triangles
-    uint32_t num = tris.size();
+    uint32_t num = branes.size();
     file.write(reinterpret_cast<char*>(&num), sizeof(num));
 
-    for (const auto& t : tris)
+    for (const auto& t : branes)
     {
         // Write out the normal vector for this face (all zeros)
         float norm[3] = {0, 0, 0};
         file.write(reinterpret_cast<char*>(&norm), sizeof(norm));
 
-        // Iterate over vertices (which are indices into the verts list
-        for (const auto& i : t)
+        // Iterate over vertices (which are indices into the verts list)
+        for (unsigned i=0; i < 3; ++i)
         {
-            auto v = verts[i];
+            auto v = verts[t[i]];
             float vert[3] = {v.x(), v.y(), v.z()};
             file.write(reinterpret_cast<char*>(&vert), sizeof(vert));
         }
