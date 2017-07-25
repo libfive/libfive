@@ -51,7 +51,6 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
                 all_empty &= children[i]->type == Interval::EMPTY;
                 all_full  &= children[i]->type == Interval::FILLED;
             }
-            eval->pop();
         }
         // Terminate recursion here
         else
@@ -91,12 +90,12 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
     {
         // Store this tree's depth as a function of its children
         level = std::accumulate(children.begin(), children.end(), (unsigned)0,
-            [](const unsigned& a, const std::unique_ptr<XTree<N>>& b)
+            [](const unsigned& a, const std::unique_ptr<const XTree<N>>& b)
             { return std::max(a, b->level);} ) + 1;
 
         // If all children are non-branches, then we could collapse
         if (std::all_of(children.begin(), children.end(),
-                        [](const std::unique_ptr<XTree<N>>& o)
+                        [](const std::unique_ptr<const XTree<N>>& o)
                         { return !o->isBranch(); }))
         {
             //  This conditional implements the three checks described in
@@ -104,7 +103,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
             //      "Simplification with topology safety"
             manifold = cornersAreManifold() &&
                 std::all_of(children.begin(), children.end(),
-                        [](const std::unique_ptr<XTree<N>>& o)
+                        [](const std::unique_ptr<const XTree<N>>& o)
                         { return o->manifold; }) &&
                 leafsAreManifold();
 
@@ -116,7 +115,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
                 // feature ranks (as seen in DC: The Secret Sauce)
                 rank = std::accumulate(
                         children.begin(), children.end(), (unsigned)0,
-                        [](unsigned a, const std::unique_ptr<XTree<N>>& b)
+                        [](unsigned a, const std::unique_ptr<const XTree<N>>& b)
                             { return std::max(a, b->rank);} );
 
                 // Accumulate the mass point and QEF matrices
@@ -136,7 +135,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
                 if (findVertex() < 1e-8)
                 {
                     std::for_each(children.begin(), children.end(),
-                        [](std::unique_ptr<XTree<N>>& o) { o.reset(); });
+                        [](std::unique_ptr<const XTree<N>>& o) { o.reset(); });
                 }
             }
         }

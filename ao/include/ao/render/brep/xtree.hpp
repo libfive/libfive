@@ -30,8 +30,6 @@ public:
      */
     const XTree<N>& child(unsigned i) const
     { return isBranch() ? *children[i] : *this; }
-    XTree<N>& child(unsigned i)
-    { return isBranch() ? *children[i] : *this; }
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -41,6 +39,25 @@ public:
      *  (using the region's perpendicular coordinates)
      */
     Eigen::Vector3d vert3() const;
+
+    /*  The region filled by this XTree */
+    const Region<N> region;
+
+    /*  Children pointers, if this is a branch  */
+    std::array<std::unique_ptr<const XTree<N>>, 1 << N> children;
+
+    /*  level = max(map(level, children)) + 1  */
+    unsigned level;
+
+    /*  Vertex location, if this is a leaf  */
+    Eigen::Matrix<double, N, 1> vert;
+
+    /*  Array of filled states for the cell's corners
+     *  (must only be FILLEd / EMPTY, not UNKNOWN or AMBIGUOUS ) */
+    std::array<Interval::State, 1 << N> corners;
+
+    /*  Leaf cell state, when known  */
+    Interval::State type=Interval::UNKNOWN;
 
 protected:
     /*
@@ -109,25 +126,6 @@ protected:
      *  Returns the averaged mass point
      */
     Eigen::Matrix<double, N, 1> massPoint() const;
-
-    /*  The region filled by this XTree */
-    Region<N> region;
-
-    /*  Children pointers, if this is a branch  */
-    std::array<std::unique_ptr<XTree<N>>, 1 << N> children;
-
-    /*  level = max(map(level, children)) + 1  */
-    unsigned level;
-
-    /*  Vertex location, if this is a leaf  */
-    Eigen::Matrix<double, N, 1> vert;
-
-    /*  Array of filled states for the cell's corners
-     *  (must only be FILLEd / EMPTY, not UNKNOWN or AMBIGUOUS ) */
-    std::array<Interval::State, 1 << N> corners;
-
-    /*  Leaf cell state, when known  */
-    Interval::State type=Interval::UNKNOWN;
 
     /*  Marks whether this cell is manifold or not  */
     bool manifold=false;
