@@ -295,5 +295,13 @@ TEST_CASE("Heightmap::render: Performance")
                std::to_string(elapsed.count()) + " sec";
     }
 
+    {
+        Tree sponge = menger(2);
+
+        Voxels r({-2.5, -2.5, 0}, {2.5, 2.5, 0}, 250);
+        auto heightmap = render(sponge, r);
+        heightmap->savePNG("/Users/mkeeter/Desktop/sponge.png");
+    }
+
     WARN(log);
 }

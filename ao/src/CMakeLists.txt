@@ -18,12 +18,10 @@ add_library(ao-kernel STATIC
     #render/quadtree.cpp
     render/discrete/voxels.cpp
     render/brep/xtree.cpp
-    render/brep/interpolator.cpp
-    render/brep/scaffold.cpp
-    render/brep/ms.cpp
-    render/brep/mt.cpp
-    render/brep/contours.cpp
-    render/brep/mesh.cpp
+    #render/brep/ms.cpp
+    #render/brep/mt.cpp
+    #render/brep/contours.cpp
+    #render/brep/mesh.cpp
     #    render/subregion.cpp
     solve/solver.cpp
     tree/cache.cpp

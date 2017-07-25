@@ -67,11 +67,12 @@ TEST_CASE("Contours::render (adjacent rectangles)")
     REQUIRE(cs_neg->contours.size() == 1);
 }
 
-TEST_CASE("Contours::render (menger)")
+TEST_CASE("Contours::render (menger, perp offset)")
 {
     auto m = menger(2);
-    Region<2> r({-1.5, -1.5}, {1.5, 1.5});
+    Region<2> r({-1.5, -1.5}, {1.5, 1.5}, Eigen::Array<float, 1, 1>(1.49));
 
     auto cs = Contours::render(m, r);
     cs->saveSVG("/Users/mkeeter/Desktop/menger.svg");
+    REQUIRE(cs->contours.size() == 74);
 }

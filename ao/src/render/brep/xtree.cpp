@@ -3,355 +3,379 @@
 #include <limits>
 
 #include "ao/render/brep/xtree.hpp"
-#include "ao/render/brep/dual.hpp"
-#include "ao/render/brep/scaffold.hpp"
 
 namespace Kernel {
 
+//  Here's our cutoff value (with a value set in the header)
+template <unsigned N> constexpr double XTree<N>::EIGENVALUE_CUTOFF;
+
+//  Used for compile-time checking of array bounds in vertex finding
+constexpr static unsigned _pow(unsigned x, unsigned y)
+{ return y ? x * _pow(x, y - 1) : 1; }
+
 template <unsigned N>
-XTree<N>::XTree(Evaluator* eval, Region<N> region, float max_err)
-    : region(region), vert(region.center()),
-      err(max_err + 1), max_error(max_err)
+XTree<N>::XTree(Evaluator* eval, Region<N> region)
+    : region(region)
 {
     // Do a preliminary evaluation to prune the tree
-    eval->eval(region.lower3(), region.upper3());
+    auto i = eval->eval(region.lower3(), region.upper3());
+
     eval->push();
-
-    if (!findVertex(eval))
+    if (Interval::isFilled(i))
     {
-        auto rs = region.subdivide();
-        for (unsigned i=0; i < (1 << N); ++i)
-        {
-            children[i].reset(new XTree<N>(eval, rs[i], max_err));
-        }
+        type = Interval::FILLED;
     }
-    eval->pop();
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <unsigned N>
-struct Refiner
-{
-    void push(const Region<N>& r)   { (void)r; }
-    void pop()    { /* Nothing to do here */ }
-
-    void operator()(const std::array<XTree<N>*, (1 << N)>& as)
+    else if (Interval::isEmpty(i))
+    {
+        type = Interval::EMPTY;
+    }
+    // If the cell wasn't empty or filled, attempt to subdivide and recurse
+    else
     {
         bool all_empty = true;
-        bool all_full = true;
+        bool all_full  = true;
 
-        for (auto& a : as)
+        // Recurse until volume is too small
+        if (region.volume() > 0.001)
         {
-            assert(a->type != Interval::UNKNOWN);
-            all_empty &= (a->type == Interval::EMPTY);
-            all_full  &= (a->type == Interval::FILLED);
-        }
-        if (!all_empty && !all_full)
-        {
-            for (auto& a : as)
+            auto rs = region.subdivide();
+            for (uint8_t i=0; i < children.size(); ++i)
             {
-                targets.insert(a);
+                // Populate child recursively
+                children[i].reset(new XTree<N>(eval, rs[i]));
+
+                // Grab corner values from children
+                corners[i] = children[i]->corners[i];
+
+                all_empty &= children[i]->type == Interval::EMPTY;
+                all_full  &= children[i]->type == Interval::FILLED;
+            }
+            eval->pop();
+        }
+        // Terminate recursion here
+        else
+        {
+            // Pack corners into evaluator
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
+                Eigen::Vector3f pos;
+                pos << cornerPos(i).template cast<float>(), region.perp;
+                eval->set(pos, i);
+            }
+
+            // Evaluate the region's corners and unpack from evaluator
+            const float* fs = eval->values(children.size());
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
+                corners[i] = (fs[i] < 0) ? Interval::FILLED : Interval::EMPTY;
+                all_full  &=  corners[i];
+                all_empty &= !corners[i];
             }
         }
+        type = all_empty ? Interval::EMPTY
+             : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
+    }
+    eval->pop();
+
+    // If this cell is unambiguous, then fill its corners with values
+    if (type == Interval::FILLED || type == Interval::EMPTY)
+    {
+        std::fill(corners.begin(), corners.end(), type);
+        manifold = true;
     }
 
-    std::set<XTree<N>*> targets;
-};
 
-////////////////////////////////////////////////////////////////////////////////
-
-template <unsigned N>
-XTree<N>::XTree(Evaluator* eval, const Scaffold<N>& scaffold, float max_err)
-    : region(scaffold.region), vert(region.center()),
-      type(scaffold.type),
-      value(type == Interval::FILLED ? -1 :
-            type == Interval::EMPTY ? 1 : std::nan("")),
-      err(max_err + 1), max_error(max_err)
-{
-    // Recurse until the scaffold is empty
-    if (scaffold.children[0].get())
+    // Branch checking and simplifications
+    if (isBranch())
     {
-        for (unsigned i=0; i < (1 << N); ++i)
-        {
-            children[i].reset(new XTree<N>(
-                        nullptr, *scaffold.children[i], max_err));
-        }
-    }
+        // Store this tree's depth as a function of its children
+        level = std::accumulate(children.begin(), children.end(), (unsigned)0,
+            [](const unsigned& a, const std::unique_ptr<XTree<N>>& b)
+            { return std::max(a, b->level);} ) + 1;
 
-    // If this is the root, then walk through the dual grid, tagging
-    // cells that could include parts of the mesh (and therefore need
-    // vertex positioning / refinement).
-    if (eval)
-    {
-        Refiner<N> ref;
-        Dual<N>::walk(*this, ref);
-
-        for (auto& t : ref.targets)
+        // If all children are non-branches, then we could collapse
+        if (std::all_of(children.begin(), children.end(),
+                        [](const std::unique_ptr<XTree<N>>& o)
+                        { return !o->isBranch(); }))
         {
-            if (!t->findVertex(eval))
+            //  This conditional implements the three checks described in
+            //  [Ju et al, 2002] in the section titled
+            //      "Simplification with topology safety"
+            manifold = cornersAreManifold() &&
+                std::all_of(children.begin(), children.end(),
+                        [](const std::unique_ptr<XTree<N>>& o)
+                        { return o->manifold; }) &&
+                leafsAreManifold();
+
+            // Attempt to collapse this tree by positioning the vertex
+            // in the summed QEF and checking to see if the error is small
+            if (manifold)
             {
-                auto rs = t->region.subdivide();
-                for (unsigned i=0; i < (1 << N); ++i)
+                // Populate the feature rank as the maximum of all children
+                // feature ranks (as seen in DC: The Secret Sauce)
+                rank = std::accumulate(
+                        children.begin(), children.end(), (unsigned)0,
+                        [](unsigned a, const std::unique_ptr<XTree<N>>& b)
+                            { return std::max(a, b->rank);} );
+
+                // Accumulate the mass point and QEF matrices
+                for (const auto& c : children)
                 {
-                    t->children[i].reset(new XTree<N>(eval, rs[i], max_err));
+                    if (c->rank == rank)
+                    {
+                        _mass_point += c->_mass_point;
+                    }
+                    AtA += c->AtA;
+                    AtB += c->AtB;
+                    BtB += c->BtB;
+                }
+
+                // If the vertex error is below a threshold, then convert
+                // into a leaf by erasing all of the child branches
+                if (findVertex() < 1e-8)
+                {
+                    std::for_each(children.begin(), children.end(),
+                        [](std::unique_ptr<XTree<N>>& o) { o.reset(); });
                 }
             }
         }
     }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-/*  Used for compile-time checking of array bounds in findVertex */
-constexpr static unsigned _pow(unsigned x, unsigned y)
-{ return y ? x * _pow(x, y - 1) : 1; }
-
-/*  Used for compile-time array construction in solveQEF  */
-constexpr static unsigned _count_bits(unsigned x)
-{ return x ? (x & 1) + _count_bits(x >> 1) : 0; }
-
-////////////////////////////////////////////////////////////////////////////////
-
-template<unsigned N, unsigned R, unsigned C>
-class Solver
-{
-public:
-static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
-        const Eigen::Matrix<float, _pow(R, N), N + 1>& A,
-        const Eigen::Matrix<float, _pow(R, N), 1>& b,
-        const Region<N>& region)
-{
-    constexpr unsigned CONSTRAINED_AXES_COUNT = _count_bits(C);
-    static_assert(C > 0, "Unconstrained optimization shouldn't use solveQEF");
-    static_assert(C < _pow(2, N), "solveQEF called with too-large bitfield");
-    static_assert(CONSTRAINED_AXES_COUNT <= N , "solveQEF called with too-large bitfield");
-
-    // Our reduced A matrix still has the w column
-    Eigen::Matrix<float, _pow(R, N), N + 1 - CONSTRAINED_AXES_COUNT> A_;
-    A_.col(N - CONSTRAINED_AXES_COUNT) = A.col(N);
-
-    // The b matrix is expanded to search for multiple possible solutions,
-    // e.g. if we're constrained on the X axis, then we'll solve for
-    //      X = upper.X     and     X = lower.Y
-    // simultaneously then pick the best result.
-    Eigen::Matrix<float, _pow(R, N), 1 << CONSTRAINED_AXES_COUNT> b_;
-
-    // Construct the pruned A matrix and record which axes are constrained
-    uint8_t constrained_axes[CONSTRAINED_AXES_COUNT];
-    for (unsigned i=0, c=0, a=0; i < N; ++i)
+    else if (type == Interval::AMBIGUOUS)
     {
-        // If this axis is constrained, then record that fact
-        if (C & (1 << i))
+        // Figure out if the leaf is manifold
+        manifold = cornersAreManifold();
+
+        // Populate mass point here, as we use it in both the non-manifold
+        // case (where it becomes the cell's vertex) and the manifold case
+        // (where we minimize the QEF towards it)
+        for (auto e : edges())
         {
-            constrained_axes[a++] = i;
-        }
-        // Otherwise, keep it in the A matrix
-        else
-        {
-            A_.col(c++) = A.col(i);
-        }
-    }
-
-    // Figure out all of the possible constrained axes values, storing them
-    // into an array named 'verts' and removing the from the appropriate
-    // column of the b_ matrix
-    Eigen::Matrix<float, N + 1, (1 << CONSTRAINED_AXES_COUNT)> verts;
-    for (unsigned i=0; i < (1 << CONSTRAINED_AXES_COUNT); ++i)
-    {
-        // Start with the original b vector
-        b_.col(i) = b;
-
-        for (unsigned j=0; j < CONSTRAINED_AXES_COUNT; ++j)
-        {
-            auto a = constrained_axes[j];
-            // Pick whether we're constraining to the top or bottom of the axis
-            verts(a, i) = ((i & (1 << j))
-                    ? region.lower(a)
-                    : region.upper(a));
-
-            // Then offset by the region's center, as we do for unconstrained
-            // points as well.
-            verts(a, i) -= region.center()(a);
-
-            // Strip out the offset from this particular column of b_
-            b_.col(i).array() -= (A.col(a) * verts(a, i)).array();
-        }
-    }
-
-    // Find constrained solution
-    auto sol = A_.fullPivHouseholderQr().solve(b_);
-
-    // Unpack the solution into a set of full positions
-    for (unsigned i=0; i < (1 << CONSTRAINED_AXES_COUNT); ++i)
-    {
-        // Store the w value at the end of the vertex
-        verts(N, i) = sol(N - CONSTRAINED_AXES_COUNT, i);
-
-        // Then, unpack either solved or constrained values
-        for (unsigned j=0, k=0; j < N; ++j)
-        {
-            // If this axis was unconstrained, then pick out its position
-            // value from the solution array
-            if (!(C & (1 << j)))
+            if (cornerState(e.first) != cornerState(e.second))
             {
-                verts(j, i) = sol(k++, i);
+                auto inside = (cornerState(e.first) == Interval::FILLED)
+                    ? cornerPos(e.first) : cornerPos(e.second);
+                auto outside = (cornerState(e.first) == Interval::FILLED)
+                    ? cornerPos(e.second) : cornerPos(e.first);
+
+                // We do an N-fold reduction at each stage
+                constexpr int _N = 4;
+                constexpr int SEARCH_COUNT = 16;
+                constexpr int NUM = (1 << _N);
+                constexpr int ITER = SEARCH_COUNT / _N;
+
+                // Binary search for intersection
+                for (int i=0; i < ITER; ++i)
+                {
+                    // Load search points into evaluator
+                    Eigen::Array<double, N, 1> ps[NUM];
+                    for (int j=0; j < NUM; ++j)
+                    {
+                        double frac = j / (N - 1.0);
+                        ps[j] = (inside * (1 - frac)) + (outside * frac);
+                        Eigen::Vector3f pos;
+                        pos << ps[j].template cast<float>(), region.perp;
+                        eval->setRaw(pos, j);
+                    }
+
+                    // Evaluate, then search for the first inside point
+                    // and adjust inside / outside to their new positions
+                    auto out = eval->values(NUM);
+                    for (int j=0; j < NUM; ++j)
+                    {
+                        if (out[j] >= 0)
+                        {
+                            inside = ps[j - 1];
+                            outside = ps[j];
+                            break;
+                        }
+                    }
+                }
+
+                // Accumulate this intersection in the mass point
+                Eigen::Matrix<double, N + 1, 1> mp;
+                mp << inside, 1;
+                _mass_point += mp;
             }
         }
-    }
 
-    auto errs = ((A * verts).colwise() - b).colwise().squaredNorm();
-    unsigned best_index;
-    float err_ = errs.minCoeff(&best_index);
-    auto vert_ = verts.col(best_index).template head<N>().array() + region.center();
-
-    if (!region.contains(vert_))
-    {
-        err_ = std::numeric_limits<float>::infinity();
-    }
-
-    auto next = Solver<N, R, C - 1>::solveQEF(A, b, region);
-    return (next.second < err_) ? next : std::make_pair(vert_, err_);
-}
-};
-
-/*
- *  Partial template specialization to make expansion terminate
- */
-template<unsigned N, unsigned R>
-class Solver<N, R, 0>
-{
-public:
-static std::pair<Eigen::Array<float, N, 1>, float> solveQEF(
-        const Eigen::Matrix<float, _pow(R, N), N + 1>&,
-        const Eigen::Matrix<float, _pow(R, N), 1>&,
-        const Region<N>&)
-{
-    return {Eigen::Array<float, N, 1>::Zero(),
-            std::numeric_limits<float>::infinity()};
-}
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <unsigned N>
-template <unsigned R>
-bool XTree<N>::findVertex(Evaluator* eval)
-{
-    constexpr unsigned num = _pow(R, N);
-    static_assert(num < Result::N, "Bad resolution");
-
-    // Pre-compute per-axis grid positions
-    Eigen::Array<float, R, N> pts;
-    for (unsigned i=0; i < R; ++i)
-    {
-        const float frac = i / (R - 1.0f);
-        pts.row(i) = region.lower * (1 - frac) + region.upper * frac;
-    }
-
-    // Load all sample points into the evaluator
-    Eigen::Array<float, num, N> positions;
-    for (unsigned i=0; i < num; ++i)
-    {
-        // Unpack from grid positions into the position vector
-        for (unsigned j=0; j < N; ++j)
+        // If this leaf cell is manifold, then find its vertex
+        // Here, we diverge from standard DC, using the sampling strategy
+        // from DMC (with regularly spaced samples on a grid), then solving
+        // for the constrained minimizer with w = 0 (as described in the
+        // "sliver elimination" section of the DMC paper).
+        if (manifold)
         {
-            positions(i, j) = pts((i % _pow(R, j + 1)) / _pow(R, j), j);
-        }
+            constexpr unsigned R = 4;
+            constexpr unsigned num = _pow(R, N);
+            static_assert(num < Result::N, "Bad resolution");
 
-        // The evaluator works in 3-space,
-        // regardless of the XTree's dimensionality
-        Eigen::Vector3f pos;
-        pos << positions.row(i).transpose(), region.perp;
-        eval->set(pos, i);
-    }
+            // Pre-compute per-axis grid positions
+            Eigen::Array<double, R, N> pts;
+            for (unsigned i=0; i < R; ++i)
+            {
+                const double frac = i / (R - 1.0f);
+                pts.row(i) = region.lower.template cast<double>() * (1 - frac) +
+                             region.upper.template cast<double>() * frac;
+            }
 
-    // Get derivatives!
-    auto ds = eval->derivs(num);
+            // Load all sample points into the evaluator
+            Eigen::Array<double, num, N> positions;
+            for (unsigned i=0; i < num; ++i)
+            {
+                // Unpack from grid positions into the position vector
+                for (unsigned j=0; j < N; ++j)
+                {
+                    positions(i, j) = pts((i % _pow(R, j + 1)) / _pow(R, j), j);
+                }
 
-    // Load data into QEF arrays here
-    Eigen::Matrix<float, num, N + 1> A;
-    Eigen::Matrix<float, num, 1> b;
+                // The evaluator works in 3-space,
+                // regardless of the XTree's dimensionality
+                Eigen::Vector3f pos;
+                pos << positions.row(i).transpose().template cast<float>(),
+                       region.perp;
+                eval->set(pos, i);
+            }
 
-    // Find average value for w0, which we'll use as an offset
-    //
-    // This, in conjunction with offsetting by the cell's center, forces
-    // the solver to minimize towards the center of the cell and towards
-    // the average distance field value, rather than making strange
-    // trade-offs (e.g. moving out of the cell towards the 0 position of
-    // the distance field).
-    const float w0 = std::accumulate(
-            ds.v, ds.v + num, 0.0f, std::plus<float>()) / num;
+            // Get derivatives!
+            auto ds = eval->derivs(num);
 
-    for (unsigned i=0; i < num; ++i)
-    {
-        // Load this row of A matrix
-        auto derivs = Eigen::Array3f(ds.dx[i], ds.dy[i], ds.dz[i]);
-        if (std::isnan(ds.dx[i]) || std::isnan(ds.dy[i]) ||
-            std::isnan(ds.dz[i]))
-        {
-            derivs << 0, 0, 0;
-        }
-        A.row(i) << derivs.head<N>().transpose(), -1;
+            //  The A matrix is of the form
+            //  [n1x, n1y, n1z]
+            //  [n2x, n2y, n2z]
+            //  [n3x, n3y, n3z]
+            //  ...
+            //  (with one row for each sampled point's normal)
+            Eigen::Matrix<double, num, N> A;
 
-        // Temporary variable for dot product
-        Eigen::Matrix<float, 1, N + 1> n;
-        n << (positions.row(i) - region.center().transpose()), (ds.v[i] - w0);
+            //  The b matrix is of the form
+            //  [p1 . n1 - w1]
+            //  [p2 . n2 - w2]
+            //  [p3 . n3 - w3]
+            //  ...
+            //  (with one row for each sampled point)
+            Eigen::Matrix<double, num, 1> b;
 
-        b(i) = A.row(i).dot(n);
-    }
+            // Load samples into the QEF arrays
+            for (unsigned i=0; i < num; ++i)
+            {
+                // Load this row of A matrix, with a special case for
+                // situations with NaN derivatives
+                auto derivs = Eigen::Array3d(ds.dx[i], ds.dy[i], ds.dz[i]);
+                if (std::isnan(ds.dx[i]) || std::isnan(ds.dy[i]) ||
+                    std::isnan(ds.dz[i]))
+                {
+                    derivs << 0, 0, 0;
+                }
+                else
+                {
+                    derivs /= derivs.matrix().norm();
+                }
+                A.row(i) << derivs.head<N>().transpose();
+                b(i) = A.row(i).dot(positions.row(i).matrix()) - ds.v[i];
+            }
 
-    {   // First, try to put a vertex on the feature of the surface
-        // (rather than a feature of the distance field)
-        auto sol = A.block(0, 0, num, N+1).fullPivHouseholderQr().solve(b);
-        vert = sol.template head<N>().array() + region.center();
+            // Save compact QEF matrices
+            auto At = A.transpose();
+            AtA = At * A;
+            AtB = At * b;
+            BtB = b.transpose() * b;
 
-        if (region.contains(vert))
-        {
-            Eigen::Matrix<float, N + 1, 1> sol_;
-            sol_ << sol, 0;
-            err = (A * sol_ - b).squaredNorm();
-        }
-    }
+            // Use eigenvalues to find rank, then re-use the solver
+            // to find vertex position
+            Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(AtA);
+            auto eigenvalues = es.eigenvalues().real();
 
-    if (err >= max_error)
-    {   // Solve full QEF (least-squares)
-        auto sol = A.fullPivHouseholderQr().solve(b);
+            // Count non-singular Eigenvalues to determine rank
+            rank = (eigenvalues.array().abs() >= EIGENVALUE_CUTOFF).count();
 
-        // Store vertex location
-        vert = sol.template head<N>().array() + region.center();
-
-        // If the vertex ended up outside of the cell, then minimize the QEF
-        // on each of the cell's boundaries and position the vertex at the best
-        // boundary position.
-        if (!region.contains(vert))
-        {
-            auto out = Solver<N, R, (1 << N) - 1>::solveQEF(A, b, region);
-            vert = out.first;
-            err = out.second;
+            // Re-use the solver to find the vertex position, ignoring the
+            // error result (because this is the bottom of the recursion)
+            findVertex(es);
         }
         else
         {
-            err = (A * sol - b).squaredNorm();
+            // For non-manifold leaf nodes, put the vertex at the mass point.
+            // As described in "Dual Contouring: The Secret Sauce", this improves
+            // mesh quality.
+            vert = massPoint();
         }
     }
-    assert(region.contains(vert));
-
-    //  Store distance field value here to avoid having to re-evaluate it
-    //  over and over again when walking the dual tree
-    value = eval->eval(vert3());
-
-    return err < max_error;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-Eigen::Vector3f XTree<N>::vert3() const
+uint8_t XTree<N>::cornerMask() const
 {
-    Eigen::Vector3f out;
-    out << vert, region.perp;
+    uint8_t mask = 0;
+    for (unsigned i=0; i < children.size(); ++i)
+    {
+        if (cornerState(i) == Interval::FILLED)
+        {
+            mask |= 1 << i;
+        }
+    }
+    return mask;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+double XTree<N>::findVertex()
+{
+    Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(AtA);
+    return findVertex(es);
+}
+
+template <unsigned N>
+double XTree<N>::findVertex(
+        Eigen::EigenSolver<Eigen::Matrix<double, N, N>>& es)
+{
+    // We need to find the pseudo-inverse of AtA.
+    auto eigenvalues = es.eigenvalues().real();
+
+    // Truncate near-singular eigenvalues in the SVD's diagonal matrix
+    Eigen::Matrix<double, N, N> D = Eigen::Matrix<double, N, N>::Zero();
+    for (unsigned i=0; i < N; ++i)
+    {
+        D.diagonal()[i] = (std::abs(eigenvalues[i]) < EIGENVALUE_CUTOFF)
+            ? 0 : (1 / eigenvalues[i]);
+    }
+
+    // Sanity-checking that rank matches eigenvalue count
+    if (!isBranch())
+    {
+        assert(D.diagonal().count() == rank);
+    }
+
+    // SVD matrices
+    auto U = es.eigenvectors().real(); // = V
+
+    // Pseudo-inverse of A
+    auto AtAp = U * D * U.transpose();
+
+    // Solve for vertex (minimizing distance to center)
+    auto center = massPoint();
+    vert = AtAp * (AtB - (AtA * center)) + center;
+
+    // Return the QEF error
+    return (vert.matrix().transpose() * AtA * vert.matrix() - 2*vert.matrix().transpose() * AtB)[0] + BtB;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+Eigen::Vector3d XTree<N>::vert3() const
+{
+    Eigen::Vector3d out;
+    out << vert, region.perp.template cast<double>();
     return out;
+}
+
+template <unsigned N>
+Eigen::Matrix<double, N, 1> XTree<N>::massPoint() const
+{
+    return _mass_point.template head<N>() / _mass_point(N);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

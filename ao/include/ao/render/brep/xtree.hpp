@@ -11,8 +11,6 @@
 
 namespace Kernel {
 
-template <unsigned N> class Scaffold;
-
 template <unsigned N>
 class XTree
 {
@@ -20,13 +18,7 @@ public:
     /*
      *  Constructs an octree or quadtree by subdividing a region
      */
-    XTree(Evaluator* eval, Region<N> region, float max_err=1e-6);
-
-    /*
-     *  Constructs an octree or quadtree on a scaffold, subdividing
-     *  leaf cells that are part of the dual grid
-     */
-    XTree(Evaluator* eval, const Scaffold<N>& sca, float max_err=1e-6);
+    XTree(Evaluator* eval, Region<N> region);
 
     /*
      *  Checks whether this tree splits
@@ -44,43 +36,120 @@ public:
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    /*
+     *  Unpack the vertex into a 3-element array
+     *  (using the region's perpendicular coordinates)
+     */
+    Eigen::Vector3d vert3() const;
+
+protected:
+    /*
+     *  Searches for a vertex within the XTree cell, using the QEF matrices
+     *  that are pre-populated in AtA, AtB, etc.
+     *
+     *  Minimizes the QEF towards mass_point
+     *
+     *  Stores the vertex in vert and returns the QEF error
+     */
+    double findVertex();
+    double findVertex(Eigen::EigenSolver<Eigen::Matrix<double, N, N>>& es);
+
+    /*
+     *  Returns the corner position for the ith corner
+     */
+    Eigen::Array<double, 1, N> cornerPos(uint8_t i) const
+    {
+        Eigen::Array<double, 1, N> out;
+        for (unsigned axis=0; axis < N; ++axis)
+        {
+            out(axis) = (i & (1 << axis)) ? region.upper(axis)
+                                          : region.lower(axis);
+        }
+        return out;
+    }
+
+    /*
+     *  Returns the filled / empty state for the ith corner
+     */
+    Interval::State cornerState(uint8_t i) const { return corners[i]; }
+
+    /*
+     *  Returns a bitfield mask based on which corners are set
+     */
+    uint8_t cornerMask() const;
+
+    /*
+     *  Returns edges (as indices into corners)
+     *  (must be specialized for a specific dimensionality)
+     */
+    std::vector<std::pair<uint8_t, uint8_t>> edges() const;
+
+    /*
+     *  Returns a table such that looking up a particular corner
+     *  configuration returns whether that configuration is safe to
+     *  collapse.
+     *  (must be specialized for a specific dimensionality)
+     *
+     *  This implements the test from [Gerstner et al, 2000], as
+     *  described in [Ju et al, 2002].
+     */
+    bool cornersAreManifold() const;
+
+    /*
+     *  Checks to make sure that the fine contour is topologically equivalent
+     *  to the coarser contour by comparing signs in edges and faces
+     *  (must be specialized for a specific dimensionality)
+     *
+     *  Returns true if the cell can be collapsed without changing topology
+     *  (with respect to the leaves)
+     */
+    bool leafsAreManifold() const;
+
+    /*
+     *  Returns the averaged mass point
+     */
+    Eigen::Matrix<double, N, 1> massPoint() const;
+
     /*  The region filled by this XTree */
     Region<N> region;
 
     /*  Children pointers, if this is a branch  */
     std::array<std::unique_ptr<XTree<N>>, 1 << N> children;
 
+    /*  level = max(map(level, children)) + 1  */
+    unsigned level;
+
     /*  Vertex location, if this is a leaf  */
-    Eigen::Array<float, N, 1> vert;
+    Eigen::Matrix<double, N, 1> vert;
 
-    /*  Used when doing scaffolding construction */
-    Interval::State type = Interval::UNKNOWN;
+    /*  Array of filled states for the cell's corners
+     *  (must only be FILLEd / EMPTY, not UNKNOWN or AMBIGUOUS ) */
+    std::array<Interval::State, 1 << N> corners;
 
-    /*  Distance field value at the vertex  */
-    float value;
+    /*  Leaf cell state, when known  */
+    Interval::State type=Interval::UNKNOWN;
 
-    /*  Error for QEF solving (-1 if unsolved)  */
-    float err = -1;
+    /*  Marks whether this cell is manifold or not  */
+    bool manifold=false;
 
-    /*
-     *  Unpack the vertex into a 3-element array
-     *  (using the perpendicular coordinates)
-     */
-    Eigen::Vector3f vert3() const;
+    /*  Mass point is the average intersection location *
+     *  (the last coordinate is number of points summed) */
+    Eigen::Matrix<double, N + 1, 1> _mass_point;
 
-protected:
-    /*
-     *  Searches for a vertex within the XTree cell, using a QEF
-     *  and `R` samples per axis.
-     *
-     *  Returns true if a vertex is found with sufficiently low error,
-     *  otherwise false.
-     */
-    template <unsigned R=4>
-    bool findVertex(Evaluator* eval);
+    /*  QEF matrices */
+    Eigen::Matrix<double, N, N> AtA=Eigen::Matrix<double, N, N>::Zero();
+    Eigen::Matrix<double, N, 1> AtB=Eigen::Matrix<double, N, 1>::Zero();
+    double BtB=0;
 
-    /*  Max QEF error (used to decide when to terminate meshing) */
-    const float max_error;
+    /*  Feature rank for the cell's vertex, where                    *
+     *      1 is face, 2 is edge, 3 is corner                        *
+     *                                                               *
+     *  This value is populated in find{Leaf|Branch}Matrices and     *
+     *  used when merging intersections from lower-ranked children   */
+    unsigned rank=0;
+
+    /*  Eigenvalue threshold for determining feature rank  */
+    constexpr static double EIGENVALUE_CUTOFF=0.1f;
 };
 
 }   // namespace Kernel
