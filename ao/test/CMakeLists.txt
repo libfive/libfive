@@ -1,6 +1,7 @@
 set(SRCS main.cpp
     avx.cpp
     cache.cpp
+    contours.cpp
     dual.cpp
     eval.cpp
     heightmap.cpp

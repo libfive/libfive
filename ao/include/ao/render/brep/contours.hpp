@@ -7,8 +7,7 @@ namespace Kernel {
 
 class Contours {
 public:
-    static std::unique_ptr<Contours> render(const Tree t, const Region<2>& r,
-                                            const float max_err=1e-6);
+    static std::unique_ptr<Contours> render(const Tree t, const Region<2>& r);
 
     /*
      *  Saves the contours to an SVG file
@@ -20,6 +19,9 @@ public:
 
     /*  Optional bounding box */
     Region<2> bbox;
+
+protected:
+    Contours(Region<2> bbox) : bbox(bbox) {}
 };
 
 }   // namespace Kernel

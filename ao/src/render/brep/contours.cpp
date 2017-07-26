@@ -3,36 +3,49 @@
 
 #include "ao/render/brep/contours.hpp"
 #include "ao/render/brep/xtree.hpp"
-#include "ao/render/brep/scaffold.hpp"
-#include "ao/render/brep/ms.hpp"
 #include "ao/render/brep/dual.hpp"
+#include "ao/render/brep/brep.hpp"
 
 namespace Kernel {
 
-std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
-                                           const float max_err)
+class Segments : public BRep<2>
+{
+public:
+    void operator()(const std::array<const XTree<2>*, 2>& ts)
+    {
+        uint32_t vs[2];
+        for (unsigned i=0; i < ts.size(); ++i)
+        {
+            if (ts[i]->index == 0)
+            {
+                ts[i]->index = verts.size();
+                verts.push_back(ts[i]->vert.template cast<float>());
+            }
+            vs[i] = ts[i]->index;
+        }
+        branes.push_back({vs[0], vs[1]});
+    }
+};
+
+std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r)
 {
     std::unique_ptr<Evaluator> eval(new Evaluator(t));
 
-    // Create a padded scaffolding for the XTree
-    const auto scaffold = Scaffold<2>(eval.get(), r, 4, true);
-
     // Create the quadtree on the scaffold
-    auto xtree = XTree<2>(eval.get(), scaffold, max_err);
+    auto xtree = XTree<2>(eval.get(), r);
 
     // Perform marching squares
-    SquareMarcher ms(eval.get());
-    Dual<2>::walk(xtree, ms);
+    Segments segs;
+    Dual<2>::walk(&xtree, segs);
 
-    auto out = new Contours;
-    out->bbox = r;
+    auto c = std::unique_ptr<Contours>(new Contours(r));
 
     // Maps from index (in ms) to item in segments vector
     std::map<uint32_t, uint32_t> heads;
     std::map<uint32_t, uint32_t> tails;
     std::vector<std::list<uint32_t>> contours;
 
-    for (auto& s : ms.branes)
+    for (auto& s : segs.branes)
     {
         {   // Check to see whether we can attach to the back of a tail
             auto t = tails.find(s[0]);
@@ -69,7 +82,7 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
         {
             continue;
         }
-        out->contours.push_back(std::vector<Eigen::Vector2f>());
+        c->contours.push_back(std::vector<Eigen::Vector2f>());
 
         // Weld multiple contours together here
         unsigned target = i;
@@ -77,7 +90,7 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
         {
             for (const auto& pt : contours[target])
             {
-                out->contours.back().push_back(ms.verts[pt]);
+                c->contours.back().push_back(segs.verts[pt]);
             }
             processed[target] = true;
 
@@ -87,7 +100,7 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
             {
                 // Remove the back point, beause it will be re-inserted
                 // as the first point in the next contour
-                out->contours.back().pop_back();
+                c->contours.back().pop_back();
                 target = h->second;
             }
             else
@@ -97,7 +110,7 @@ std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
         }
     }
 
-    return std::unique_ptr<Contours>(out);
+    return c;
 }
 
 bool Contours::saveSVG(const std::string& filename)

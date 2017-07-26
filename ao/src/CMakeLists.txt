@@ -12,9 +12,8 @@ add_library(ao-kernel STATIC
     render/discrete/heightmap.cpp
     render/discrete/voxels.cpp
     render/brep/xtree.cpp
-    #render/brep/contours.cpp
+    render/brep/contours.cpp
     render/brep/mesh.cpp
-    #    render/subregion.cpp
     solve/solver.cpp
     tree/cache.cpp
     tree/opcode.cpp
