@@ -56,11 +56,11 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
         else
         {
             // Pack corners into evaluator
+            std::array<Eigen::Vector3f, 1 << N> pos;
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                Eigen::Vector3f pos;
-                pos << cornerPos(i).template cast<float>(), region.perp;
-                eval->set(pos, i);
+                pos[i] << cornerPos(i).template cast<float>(), region.perp;
+                eval->set(pos[i], i);
             }
 
             // Evaluate the region's corners and unpack from evaluator
@@ -72,9 +72,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
                 else if (fs[i] > 0) { corners[i] = Interval::EMPTY; }
                 else
                 {
-                    Eigen::Vector3f pos;
-                    pos << cornerPos(i).template cast<float>(), region.perp;
-                    corners[i] = eval->isInside(pos)
+                    corners[i] = eval->isInside(pos[i])
                         ? Interval::FILLED : Interval::EMPTY;
                 }
 
