@@ -263,14 +263,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
                 // Load this row of A matrix, with a special case for
                 // situations with NaN derivatives
                 auto derivs = Eigen::Array3d(ds.dx[i], ds.dy[i], ds.dz[i]);
-                if (std::isnan(ds.dx[i]) || std::isnan(ds.dy[i]) ||
-                    std::isnan(ds.dz[i]))
+                if (derivs.array().isNaN().any())
                 {
                     derivs << 0, 0, 0;
-                }
-                else
-                {
-                    derivs /= derivs.matrix().norm();
                 }
                 A.row(i) << derivs.head<N>().transpose();
                 b(i) = A.row(i).dot(positions.row(i).matrix()) - ds.v[i];
