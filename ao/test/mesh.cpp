@@ -40,13 +40,38 @@ TEST_CASE("Mesh normals")
 }
 */
 
-TEST_CASE("Mesh::render (sphere)")
+TEST_CASE("Mesh::render (sphere normals)")
 {
     Tree s = sphere(0.5);
     Region<3> r({-0.5, -0.5, -0.5}, {0.5, 0.5, 0.5});
 
     auto mesh = Mesh::render(s, r);
     mesh->saveSTL("/Users/mkeeter/Desktop/sphere.stl");
+
+    float dot = 2;
+    int pos = 0;
+    int neg = 0;
+    for (auto t : mesh->branes)
+    {
+        auto norm = (mesh->verts[t(1)] - mesh->verts[t(0)])
+            .cross(mesh->verts[t(2)] - mesh->verts[t(0)])
+            .normalized();
+        auto center = ((mesh->verts[t(0)] +
+                        mesh->verts[t(1)] +
+                        mesh->verts[t(2)]) / 3).normalized();
+        if (norm.dot(center) < 0)
+        {
+            neg++;
+        }
+        else
+        {
+            pos++;
+        }
+        dot = fmin(dot, norm.dot(center));
+    }
+    CAPTURE(neg);
+    CAPTURE(pos);
+    REQUIRE(dot > 0.9);
 }
 
 TEST_CASE("Mesh::render (cube)")
