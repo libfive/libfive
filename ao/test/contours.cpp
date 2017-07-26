@@ -70,7 +70,7 @@ TEST_CASE("Contours::render (adjacent rectangles)")
 TEST_CASE("Contours::render (menger, perp offset)")
 {
     auto m = menger(2);
-    Region<2> r({-1.5, -1.5}, {1.5, 1.5}, Eigen::Array<float, 1, 1>(1.49));
+    Region<2> r({-2.5, -2.5}, {2.5, 2.5}, Eigen::Array<float, 1, 1>(1.49));
 
     auto cs = Contours::render(m, r);
     cs->saveSVG("/Users/mkeeter/Desktop/menger.svg");

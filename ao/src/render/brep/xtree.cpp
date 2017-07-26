@@ -67,7 +67,17 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
             const float* fs = eval->values(children.size());
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                corners[i] = (fs[i] < 0) ? Interval::FILLED : Interval::EMPTY;
+                // Handle inside, outside, and on-boundary crossings
+                if (fs[i] < 0)      { corners[i] = Interval::FILLED; }
+                else if (fs[i] > 0) { corners[i] = Interval::EMPTY; }
+                else
+                {
+                    Eigen::Vector3f pos;
+                    pos << cornerPos(i).template cast<float>(), region.perp;
+                    corners[i] = eval->isInside(pos)
+                        ? Interval::FILLED : Interval::EMPTY;
+                }
+
                 all_full  &=  corners[i];
                 all_empty &= !corners[i];
             }
