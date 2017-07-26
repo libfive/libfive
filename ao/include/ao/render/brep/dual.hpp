@@ -127,10 +127,9 @@ void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
         if (a != b)
         {
             auto ts_ = ts;
-            if ((a == Interval::FILLED && A == Axis::X) ||
-                (b == Interval::FILLED && A == Axis::Y)) // ???
+            if (a != Interval::FILLED)
             {
-                std::reverse(ts_.begin(), ts_.end());
+                std::swap(ts_[1], ts_[2]);
             }
             v(ts_);
         }
