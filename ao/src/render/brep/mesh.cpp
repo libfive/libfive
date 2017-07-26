@@ -23,7 +23,7 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r)
 void Mesh::operator()(const std::array<const XTree<3>*, 4>& ts)
 {
     uint32_t vs[4];
-    for (unsigned i=0; i < 4; ++i)
+    for (unsigned i=0; i < ts.size(); ++i)
     {
         if (ts[i]->index == 0)
         {
