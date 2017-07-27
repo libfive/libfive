@@ -43,7 +43,7 @@ TEST_CASE("Mesh normals")
 TEST_CASE("Mesh::render (sphere normals)")
 {
     Tree s = sphere(0.5);
-    Region<3> r({-0.5, -0.5, -0.5}, {0.5, 0.5, 0.5});
+    Region<3> r({-1, -1, -1}, {1, 1, 1});
 
     auto mesh = Mesh::render(s, r);
     mesh->saveSTL("/Users/mkeeter/Desktop/sphere.stl");
