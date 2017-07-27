@@ -58,16 +58,11 @@ TEST_CASE("Mesh::render (sphere normals)")
             .normalized();
         auto center = ((mesh->verts[t(0)] +
                         mesh->verts[t(1)] +
-                        mesh->verts[t(2)]) / 3).normalized();
-        if (norm.dot(center) < 0)
-        {
-            neg++;
-        }
-        else
-        {
-            pos++;
-        }
-        dot = fmin(dot, norm.dot(center));
+                        mesh->verts[t(2)])).normalized();
+        auto dot_ = norm.dot(center);
+        neg += (dot_ < 0);
+        pos += (dot_ > 0);
+        dot = fmin(dot, dot_);
     }
     CAPTURE(neg);
     CAPTURE(pos);
