@@ -273,12 +273,19 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
                 // Load this row of A matrix, with a special case for
                 // situations with NaN derivatives
                 auto derivs = Eigen::Array3d(ds.dx[i], ds.dy[i], ds.dz[i]);
+                auto w = ds.v[i];
                 if (derivs.array().isNaN().any())
                 {
                     derivs << 0, 0, 0;
                 }
+                else
+                {
+                    auto norm = derivs.matrix().norm();
+                    w /= norm;
+                    derivs /= norm;
+                }
                 A.row(i) << derivs.head<N>().transpose();
-                b(i) = A.row(i).dot(positions.row(i).matrix()) - ds.v[i];
+                b(i) = A.row(i).dot(positions.row(i).matrix()) - w;
             }
 
             // Save compact QEF matrices
