@@ -18,12 +18,6 @@ public:
     EvaluatorAVX(const Tree root, const std::map<Tree::Id, float>& vars)
         : EvaluatorBase(root, vars) { /* Nothing to do here */ }
 
-    /*
-     *  Copy constructor
-     */
-    EvaluatorAVX(const EvaluatorAVX& other)
-        : EvaluatorBase(other) { /* Nothing to do here */ }
-
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
