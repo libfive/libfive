@@ -32,8 +32,25 @@ void Mesh::operator()(const std::array<const XTree<3>*, 4>& ts)
         }
         vs[i] = ts[i]->index;
     }
-    branes.push_back({vs[0], vs[1], vs[2]});
-    branes.push_back({vs[2], vs[1], vs[3]});
+
+    // Pick a triangulation that prevents triangles from folding back
+    // on each other by checking normals.
+    std::array<Eigen::Vector3d, 4> norms;
+    for (unsigned i=0; i < norms.size(); ++i)
+    {
+        norms[i] = (ts[(i + 3) % 4]->vert - ts[i]->vert).cross
+                   (ts[(i + 1) % 4]->vert - ts[i]->vert).normalized();
+    }
+    if (norms[0].dot(norms[3]) > norms[1].dot(norms[2]))
+    {
+        branes.push_back({vs[0], vs[1], vs[2]});
+        branes.push_back({vs[2], vs[1], vs[3]});
+    }
+    else
+    {
+        branes.push_back({vs[0], vs[1], vs[3]});
+        branes.push_back({vs[0], vs[3], vs[2]});
+    }
 }
 
 bool Mesh::saveSTL(const std::string& filename)
