@@ -64,7 +64,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
             }
 
             // Evaluate the region's corners and unpack from evaluator
-            const float* fs = eval->values(children.size());
+            std::array<float, 1 << N> fs;
+            assert(fs.size() == children.size());
+            std::copy_n(eval->values(children.size()), fs.size(), fs.begin());
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 // Handle inside, outside, and on-boundary crossings
