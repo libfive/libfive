@@ -1,3 +1,4 @@
+#include <future>
 #include <numeric>
 #include <functional>
 #include <limits>
@@ -17,16 +18,31 @@ constexpr static unsigned _pow(unsigned x, unsigned y)
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-std::unique_ptr<const XTree<N>> XTree<N>::build(Tree t, Region<N> region)
+std::unique_ptr<const XTree<N>> XTree<N>::build(Tree t, Region<N> region,
+                                                bool multithread)
 {
-    Evaluator e(t);
-    return std::unique_ptr<const XTree<N>>(new XTree(&e, region));
+    XTree<N>* out = nullptr;
+    if (multithread)
+    {
+        std::vector<Evaluator> es;
+        for (unsigned i=0; i < (1 << N); ++i)
+        {
+            es.emplace_back(Evaluator(t));
+        }
+        out = new XTree(&es[0], region, true);
+    }
+    else
+    {
+        Evaluator e(t);
+        out = new XTree(&e, region, false);
+    }
+    return std::unique_ptr<const XTree<N>>(out);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(Evaluator* eval, Region<N> region)
+XTree<N>::XTree(Evaluator* eval, Region<N> region, bool multithread)
     : region(region)
 {
     // Do a preliminary evaluation to prune the tree
@@ -52,11 +68,37 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
         if (region.volume() > 0.001)
         {
             auto rs = region.subdivide();
+
+            if (multithread)
+            {
+                // Evaluate every child in a separate thread
+                std::array<std::future<XTree<N>*>, 1 << N> futures;
+
+                assert(children.size() == futures.size());
+
+                for (unsigned i=0; i < children.size(); ++i)
+                {
+                    futures[i] = std::async(std::launch::async,
+                        [&eval, &rs, i]()
+                        { return new XTree(eval + i, rs[i], false); });
+                }
+                for (unsigned i=0; i < children.size(); ++i)
+                {
+                    children[i].reset(futures[i].get());
+                }
+            }
+            // Single-threaded recursive construction
+            else
+            {
+                for (uint8_t i=0; i < children.size(); ++i)
+                {
+                    // Populate child recursively
+                    children[i].reset(new XTree<N>(eval, rs[i], false));
+                }
+            }
+            // Update corner and filled / empty state from children
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                // Populate child recursively
-                children[i].reset(new XTree<N>(eval, rs[i]));
-
                 // Grab corner values from children
                 corners[i] = children[i]->corners[i];
 
