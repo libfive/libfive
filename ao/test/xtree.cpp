@@ -9,10 +9,10 @@ TEST_CASE("XTree<2>::vert")
 {
     SECTION("Vertex positioning (with two planes)")
     {
-        Evaluator a(min(Tree::X(), Tree::Y()));
-        auto ta = XTree<2>(&a, Region<2>({-3, -3}, {1, 1}));
-        REQUIRE(ta.vert.x() == Approx(0.0));
-        REQUIRE(ta.vert.y() == Approx(0.0));
+        Tree a = min(Tree::X(), Tree::Y());
+        auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {1, 1}));
+        REQUIRE(ta->vert.x() == Approx(0.0));
+        REQUIRE(ta->vert.y() == Approx(0.0));
     }
 }
 
@@ -20,23 +20,23 @@ TEST_CASE("XTree<2>::type")
 {
     SECTION("Empty")
     {
-        Evaluator a(min(Tree::X(), Tree::Y()));
-        auto e = XTree<2>(&a, Region<2>({1, 1}, {2, 2}));
-        REQUIRE(e.type == Interval::EMPTY);
+        Tree a = min(Tree::X(), Tree::Y());
+        auto e = XTree<2>::build(a, Region<2>({1, 1}, {2, 2}));
+        REQUIRE(e->type == Interval::EMPTY);
     }
 
     SECTION("Filled")
     {
-        Evaluator a(min(Tree::X(), Tree::Y()));
-        auto e = XTree<2>(&a, Region<2>({-3, -3}, {-1, -1}));
-        REQUIRE(e.type == Interval::FILLED);
+        Tree a = min(Tree::X(), Tree::Y());
+        auto e = XTree<2>::build(a, Region<2>({-3, -3}, {-1, -1}));
+        REQUIRE(e->type == Interval::FILLED);
     }
 
     SECTION("Containing corner")
     {
-        Evaluator a(min(Tree::X(), Tree::Y()));
-        auto ta = XTree<2>(&a, Region<2>({-3, -3}, {1, 1}));
-        REQUIRE(ta.type == Interval::AMBIGUOUS);
+        Tree a = min(Tree::X(), Tree::Y());
+        auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {1, 1}));
+        REQUIRE(ta->type == Interval::AMBIGUOUS);
     }
 }
 
@@ -44,37 +44,36 @@ TEST_CASE("XTree<2>::isBranch")
 {
     SECTION("Empty")
     {
-        Evaluator a(min(Tree::X(), Tree::Y()));
-        auto e = XTree<2>(&a, Region<2>({1, 1}, {2, 2}));
-        REQUIRE(!e.isBranch());
+        Tree a = min(Tree::X(), Tree::Y());
+        auto e = XTree<2>::build(a, Region<2>({1, 1}, {2, 2}));
+        REQUIRE(!e->isBranch());
     }
 
     SECTION("Filled")
     {
-        Evaluator a(min(Tree::X(), Tree::Y()));
-        auto e = XTree<2>(&a, Region<2>({-3, -3}, {-1, -1}));
-        REQUIRE(!e.isBranch());
+        Tree a = min(Tree::X(), Tree::Y());
+        auto e = XTree<2>::build(a, Region<2>({-3, -3}, {-1, -1}));
+        REQUIRE(!e->isBranch());
     }
 
     SECTION("Containing line")
     {
-        Evaluator a(Tree::X());
-        auto e = XTree<2>(&a, Region<2>({-2, -2}, {2, 2}));
-        REQUIRE(!e.isBranch());
+        auto e = XTree<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}));
+        REQUIRE(!e->isBranch());
     }
 
     SECTION("Containing corner")
     {
-        Evaluator a(min(Tree::X(), Tree::Y()));
-        auto ta = XTree<2>(&a, Region<2>({-3, -3}, {1, 1}));
-        REQUIRE(!ta.isBranch());
+        Tree a = min(Tree::X(), Tree::Y());
+        auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {1, 1}));
+        REQUIRE(!ta->isBranch());
     }
 
     SECTION("Containing shape")
     {
         Evaluator e = circle(0.5);
-        auto t = XTree<2>(&e, Region<2>({-1, -1}, {1, 1}));
-        REQUIRE(t.isBranch());
+        auto t = XTree<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
+        REQUIRE(t->isBranch());
     }
 }
 

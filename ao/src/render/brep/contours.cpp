@@ -29,14 +29,12 @@ public:
 
 std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r)
 {
-    std::unique_ptr<Evaluator> eval(new Evaluator(t));
-
     // Create the quadtree on the scaffold
-    auto xtree = XTree<2>(eval.get(), r);
+    auto xtree = XTree<2>::build(t, r);
 
     // Perform marching squares
     Segments segs;
-    Dual<2>::walk(&xtree, segs);
+    Dual<2>::walk(xtree.get(), segs);
 
     auto c = std::unique_ptr<Contours>(new Contours(r));
 

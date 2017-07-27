@@ -9,14 +9,12 @@ namespace Kernel {
 
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r)
 {
-    std::unique_ptr<Evaluator> eval(new Evaluator(t));
-
     // Create the quadtree on the scaffold
-    auto xtree = XTree<3>(eval.get(), r);
+    auto xtree = XTree<3>::build(t, r);
 
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());
-    Dual<3>::walk(&xtree, *m);
+    Dual<3>::walk(xtree.get(), *m);
     return m;
 }
 

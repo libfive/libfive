@@ -18,7 +18,7 @@ public:
     /*
      *  Constructs an octree or quadtree by subdividing a region
      */
-    XTree(Evaluator* eval, Region<N> region);
+    static std::unique_ptr<const XTree> build(Tree t, Region<N> region);
 
     /*
      *  Checks whether this tree splits
@@ -76,6 +76,12 @@ public:
     mutable uint32_t index=0;
 
 protected:
+
+    /*
+     *  Private constructor for XTree
+     */
+    XTree(Evaluator* eval, Region<N> region);
+
     /*
      *  Searches for a vertex within the XTree cell, using the QEF matrices
      *  that are pre-populated in AtA, AtB, etc.

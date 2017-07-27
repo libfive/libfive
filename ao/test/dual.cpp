@@ -43,22 +43,21 @@ struct Walker3
 
 TEST_CASE("Dual<2>::walk")
 {
-    Evaluator a(circle(0.5));
-    auto ta = XTree<2>(&a, Region<2>({-1, -1}, {1, 1}));
+    auto ta = XTree<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
 
     Walker2 c;
-    Dual<2>::walk(&ta, c);
-    REQUIRE(c.min_norm > 0.49);
-    REQUIRE(c.max_norm < 0.51);
+    Dual<2>::walk(ta.get(), c);
+    CAPTURE(c.neg);
+    CAPTURE(c.pos);
+    REQUIRE(c.dot > 0.9);
 }
 
 TEST_CASE("Dual<3>::walk")
 {
-    Evaluator a(sphere(0.5));
-    auto ta = XTree<3>(&a, Region<3>({-1, -1, -1}, {1, 1, 1}));
+    auto ta = XTree<3>::build(sphere(0.5), Region<3>({-1, -1, -1}, {1, 1, 1}));
 
     Walker3 c;
-    Dual<3>::walk(&ta, c);
+    Dual<3>::walk(ta.get(), c);
     REQUIRE(c.min_norm > 0.49);
     REQUIRE(c.max_norm < 0.51);
 }

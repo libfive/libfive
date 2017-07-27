@@ -14,6 +14,17 @@ template <unsigned N> constexpr double XTree<N>::EIGENVALUE_CUTOFF;
 constexpr static unsigned _pow(unsigned x, unsigned y)
 { return y ? x * _pow(x, y - 1) : 1; }
 
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+std::unique_ptr<const XTree<N>> XTree<N>::build(Tree t, Region<N> region)
+{
+    Evaluator e(t);
+    return std::unique_ptr<const XTree<N>>(new XTree(&e, region));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 template <unsigned N>
 XTree<N>::XTree(Evaluator* eval, Region<N> region)
     : region(region)
