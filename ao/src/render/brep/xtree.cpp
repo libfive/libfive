@@ -19,7 +19,8 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
     : region(region)
 {
     // Do a preliminary evaluation to prune the tree
-    auto i = eval->eval(region.lower3(), region.upper3());
+    auto i = eval->eval(region.lower3().template cast<float>(),
+                        region.upper3().template cast<float>());
 
     eval->push();
     if (Interval::isFilled(i))
@@ -59,7 +60,8 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
             std::array<Eigen::Vector3f, 1 << N> pos;
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                pos[i] << cornerPos(i).template cast<float>(), region.perp;
+                pos[i] << cornerPos(i).template cast<float>(),
+                          region.perp.template cast<float>();
                 eval->set(pos[i], i);
             }
 
@@ -185,7 +187,8 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
                         double frac = j / (N - 1.0);
                         ps[j] = (inside * (1 - frac)) + (outside * frac);
                         Eigen::Vector3f pos;
-                        pos << ps[j].template cast<float>(), region.perp;
+                        pos << ps[j].template cast<float>(),
+                               region.perp.template cast<float>();
                         eval->setRaw(pos, j);
                     }
 
@@ -244,7 +247,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region)
                 // regardless of the XTree's dimensionality
                 Eigen::Vector3f pos;
                 pos << positions.row(i).transpose().template cast<float>(),
-                       region.perp;
+                       region.perp.template cast<float>();
                 eval->set(pos, i);
             }
 

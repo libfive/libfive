@@ -9,8 +9,8 @@ template <unsigned int N>
 class Region
 {
 public:
-    typedef Eigen::Array<float, N, 1> Pt;
-    typedef Eigen::Array<float, 3 - N, 1> Perp;
+    typedef Eigen::Array<double, N, 1> Pt;
+    typedef Eigen::Array<double, 3 - N, 1> Perp;
 
     /*
      *  Check if the given point is in the region (inclusive)
@@ -50,7 +50,7 @@ public:
 
         for (unsigned i=0; i < (1 << N); ++i)
         {
-            auto a = Eigen::Array<float, N, 1>(0);
+            auto a = Eigen::Array<double, N, 1>(0);
             for (unsigned j=0; j < N; ++j)
             {
                 a(j) = (i & (1 << j)) > 0;
@@ -63,9 +63,9 @@ public:
     /*
      *  Returns the volume of the region in arbitrary units
      */
-    float volume() const
+    double volume() const
     {
-        float out = 1;
+        double out = 1;
         for (unsigned i=0; i < N; ++i)
         {
             out *= upper(i) - lower(i);
@@ -79,19 +79,17 @@ public:
                (upper.array() == 0).all();
     }
 
-    Eigen::Array3f lower3() const
+    Eigen::Array3d lower3() const
     {
-        Eigen::Array3f out;
-        out.head<N>() = lower;
-        out.tail<3 - N>() = perp;
+        Eigen::Array3d out;
+        out << lower, perp;
         return out;
     }
 
-    Eigen::Array3f upper3() const
+    Eigen::Array3d upper3() const
     {
-        Eigen::Array3f out;
-        out.head<N>() = upper;
-        out.tail<3 - N>() = perp;
+        Eigen::Array3d out;
+        out << upper, perp;
         return out;
     }
 
@@ -100,7 +98,7 @@ public:
 
     /*  perp is the coordinates on perpendicular axes, used when converting
      *  a 2D region into 3D coordinates for Interval evaluation  */
-    Eigen::Array<float, 3 - N, 1> perp;
+    Perp perp;
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
