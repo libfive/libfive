@@ -359,9 +359,9 @@ void init_ao_transforms(void*)
     "move shape #(dx dy [dz])
     Moves the given shape in 2D or 3D space"
     (remap-shape (shape x y z)
-        (+ x (.x delta))
-        (+ y (.y delta))
-        (+ z (catch #t (lambda ()(.z delta)) (lambda (. _) 0)))))
+        (- x (.x delta))
+        (- y (.y delta))
+        (- z (catch #t (lambda ()(.z delta)) (lambda (. _) 0)))))
 )");
 }
 
