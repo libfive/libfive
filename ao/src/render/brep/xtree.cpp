@@ -3,6 +3,8 @@
 #include <functional>
 #include <limits>
 
+#include <Eigen/StdVector>
+
 #include "ao/render/brep/xtree.hpp"
 #include "ao/render/axes.hpp"
 
@@ -24,12 +26,13 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(Tree t, Region<N> region,
     XTree<N>* out = nullptr;
     if (multithread)
     {
-        std::vector<Evaluator> es;
+        std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
+        es.reserve(1 << N);
         for (unsigned i=0; i < (1 << N); ++i)
         {
             es.emplace_back(Evaluator(t));
         }
-        out = new XTree(&es[0], region, true);
+        out = new XTree(es.data(), region, false);
     }
     else
     {
