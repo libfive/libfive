@@ -199,6 +199,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, bool multithread)
                     AtB += c->AtB;
                     BtB += c->BtB;
                 }
+                assert(region.contains(massPoint()));
 
                 // If the vertex error is below a threshold, then convert
                 // into a leaf by erasing all of the child branches
@@ -228,32 +229,29 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, bool multithread)
                     ? cornerPos(e.second) : cornerPos(e.first);
 
                 // We do an N-fold reduction at each stage
-                constexpr int _N = 4;
-                constexpr int SEARCH_COUNT = 16;
-                constexpr int NUM = (1 << _N);
-                constexpr int ITER = SEARCH_COUNT / _N;
+                constexpr int SEARCH_COUNT = 4;
+                constexpr int POINTS_PER_SEARCH = 16;
 
                 // Binary search for intersection
-                for (int i=0; i < ITER; ++i)
+                for (int i=0; i < SEARCH_COUNT; ++i)
                 {
                     // Load search points into evaluator
-                    Eigen::Array<double, N, 1> ps[NUM];
-                    for (int j=0; j < NUM; ++j)
+                    Eigen::Array<double, N, 1> ps[POINTS_PER_SEARCH];
+                    for (int j=0; j < POINTS_PER_SEARCH; ++j)
                     {
-                        double frac = j / (N - 1.0);
+                        double frac = j / (POINTS_PER_SEARCH - 1.0);
                         ps[j] = (inside * (1 - frac)) + (outside * frac);
-                        Eigen::Vector3f pos;
-                        pos << ps[j].template cast<float>(),
-                               region.perp.template cast<float>();
-                        eval->setRaw(pos, j);
+                        Eigen::Vector3d pos;
+                        pos << ps[j], region.perp;
+                        eval->setRaw(pos.template cast<float>(), j);
                     }
 
                     // Evaluate, then search for the first inside point
                     // and adjust inside / outside to their new positions
-                    auto out = eval->values(NUM);
-                    for (int j=0; j < NUM; ++j)
+                    auto out = eval->values(POINTS_PER_SEARCH);
+                    for (int j=0; j < POINTS_PER_SEARCH; ++j)
                     {
-                        if (out[j] >= 0)
+                        if (out[j] > 0)
                         {
                             inside = ps[j - 1];
                             outside = ps[j];
@@ -268,6 +266,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, bool multithread)
                 _mass_point += mp;
             }
         }
+        assert(region.contains(massPoint()));
 
         // If this leaf cell is manifold, then find its vertex
         // Here, we diverge from standard DC, using the sampling strategy
@@ -301,10 +300,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, bool multithread)
 
                 // The evaluator works in 3-space,
                 // regardless of the XTree's dimensionality
-                Eigen::Vector3f pos;
-                pos << positions.row(i).transpose().template cast<float>(),
-                       region.perp.template cast<float>();
-                eval->set(pos, i);
+                Eigen::Vector3d pos;
+                pos << positions.row(i).transpose(), region.perp;
+                eval->set(pos.template cast<float>(), i);
             }
 
             // Get derivatives!
