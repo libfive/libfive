@@ -14,11 +14,11 @@ set(SRCS main.cpp
     voxels.cpp
     xtree.cpp
     util/shapes.cpp)
-set(LIBS ao-kernel) # ao-kernel-c)
+set(LIBS ao-kernel)
 
 if (GUILE_FOUND)
-    #    set(SRCS ${SRCS} guile.cpp)
-    #set(LIBS ${LIBS} guile-ao-kernel)
+    set(SRCS ${SRCS} guile.cpp)
+    set(LIBS ${LIBS} guile-ao-kernel)
 endif(GUILE_FOUND)
 
 add_executable(ao-test ${SRCS})

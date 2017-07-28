@@ -6,9 +6,9 @@
 #include "ao/tree/opcode.hpp"
 #include "ao/tree/tree.hpp"
 #include "ao/tree/template.hpp"
-#include "ao/render/region.hpp"
-#include "ao/format/contours.hpp"
-#include "ao/format/mesh.hpp"
+#include "ao/render/brep/region.hpp"
+#include "ao/render/brep/contours.hpp"
+#include "ao/render/brep/mesh.hpp"
 
 using namespace Kernel;
 
@@ -139,8 +139,9 @@ bool ao_tree_eq(ao_tree a, ao_tree b)
 ao_contours* ao_tree_render_slice(ao_tree tree,
         ao_region2 R, float z, float res)
 {
-    Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper}, {z,z}, res);
-    auto cs = Contours::render(*tree, region);
+    Region<2> region({R.X.lower, R.Y.lower}, {R.X.upper, R.Y.upper},
+            Region<2>::Perp(z));
+    auto cs = Contours::render(*tree, region, 1/res);
 
     auto out = new ao_contours;
     out->count = cs->contours.size();
@@ -165,21 +166,22 @@ ao_contours* ao_tree_render_slice(ao_tree tree,
 void ao_tree_save_slice(ao_tree tree, ao_region2 R, float z, float res,
                         const char* f)
 {
-    Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper}, {z,z}, res);
-    auto cs = Contours::render(*tree, region);
-    cs->writeSVG(f, region);
+    Region<2> region({R.X.lower, R.Y.lower}, {R.X.upper, R.Y.upper},
+            Region<2>::Perp(z));
+    auto cs = Contours::render(*tree, region, 1/res);
+    cs->saveSVG(f);
 }
 
 ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
 {
-    Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper},
-                  {R.Z.lower, R.Z.upper}, res);
-    auto ms = Mesh::render(*tree, region);
+    Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
+                     {R.X.upper, R.Y.upper, R.Z.upper});
+    auto ms = Mesh::render(*tree, region, 1/res);
 
     auto out = new ao_mesh;
     out->verts = new ao_vec3[ms->verts.size()];
-    out->count = ms->tris.size();
-    out->tris = new ao_tri[ms->tris.size()];
+    out->count = ms->branes.size();
+    out->tris = new ao_tri[ms->branes.size()];
 
     size_t i;
 
@@ -190,7 +192,7 @@ ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
     }
 
     i=0;
-    for (auto& t : ms->tris)
+    for (auto& t : ms->branes)
     {
         out->tris[i++] = {(uint32_t)t.x(), (uint32_t)t.y(), (uint32_t)t.z()};
     }
@@ -200,10 +202,10 @@ ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
 
 bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f)
 {
-    Region region({R.X.lower, R.X.upper}, {R.Y.lower, R.Y.upper},
-                  {R.Z.lower, R.Z.upper}, res);
-    auto ms = Mesh::render(*tree, region);
-    return ms->save(f);
+    Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
+                     {R.X.upper, R.Y.upper, R.Z.upper});
+    auto ms = Mesh::render(*tree, region, 1/res);
+    return ms->saveSTL(f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

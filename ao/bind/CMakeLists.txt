@@ -1,6 +1,6 @@
-add_library(ao-kernel-c SHARED lib.cpp)
-target_link_libraries(ao-kernel-c ao-kernel)
-target_include_directories(ao-kernel-c PUBLIC .)
+add_library(ao-kernel SHARED lib.cpp)
+target_link_libraries(ao-kernel ao-kernel-core)
+target_include_directories(ao-kernel PUBLIC .)
 
 if (GUILE_FOUND)
     add_library(guile-ao-kernel SHARED lib.cpp guile.cpp)
