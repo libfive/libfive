@@ -9,44 +9,12 @@
 
 using namespace Kernel;
 
-/*
-TEST_CASE("Saving a mesh")
-{
-    Mesh m;
-    m.verts.push_back({0,0,0});
-    m.tris.push_back({0,0,0});
-
-    std::stringstream ss;
-    m.writeSTL(ss);
-    REQUIRE(ss.str().size() ==
-             80 // Header
-           + sizeof(uint32_t) // Number of triangles
-           + 3*sizeof(float)*4 // Normal and vertex position
-           + sizeof(uint16_t));
-}
-
-TEST_CASE("Mesh normals")
-{
-    Mesh m;
-    m.verts.push_back({0,0,0});
-    m.verts.push_back({1,0,0});
-    m.verts.push_back({0,1,0});
-
-    m.tris.push_back({0, 1, 2});
-    REQUIRE(m.norm(0) == Eigen::Vector3f(0, 0, 1));
-
-    m.tris.push_back({0, 2, 1});
-    REQUIRE(m.norm(1) == Eigen::Vector3f(0, 0, -1));
-}
-*/
-
 TEST_CASE("Mesh::render (sphere normals)")
 {
     Tree s = sphere(0.5);
     Region<3> r({-1, -1, -1}, {1, 1, 1});
 
     auto mesh = Mesh::render(s, r);
-    mesh->saveSTL("/Users/mkeeter/Desktop/sphere.stl");
 
     float dot = 2;
     int pos = 0;
@@ -81,7 +49,6 @@ TEST_CASE("Mesh::render (cube)")
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
 
     auto mesh = Mesh::render(cube, r);
-    mesh->saveSTL("/Users/mkeeter/Desktop/cube.stl");
 }
 
 TEST_CASE("Mesh::render (performance)")
@@ -97,7 +64,6 @@ TEST_CASE("Mesh::render (performance)")
     start = std::chrono::system_clock::now();
     auto mesh = Mesh::render(sponge, r, 0.02);
     end = std::chrono::system_clock::now();
-    mesh->saveSTL("/Users/mkeeter/Desktop/out.stl");
 
     elapsed = end - start;
 
@@ -110,13 +76,13 @@ TEST_CASE("Mesh::render (performance)")
 }
 
 /*
-TEST_CASE("Face count in rectangular prism")
+TEST_CASE("Mesh::Render (face count in rectangular prism)")
 {
     auto t = max(max(max(-Tree::X(), Tree::X() - 4),
                      max(-Tree::Y(), Tree::Y() - 1)),
                      max(-Tree::Z(), Tree::Z() - 0.25));
-    auto m = Mesh::render(t, Region({-1, 5}, {-1, 2}, {-1, 1.25}, 8));
+    auto m = Mesh::render(t, Region<3>({-1, -1, -1}, {5, 2, 1.25}), 0.125);
     REQUIRE(m->verts.size() == 8);
-    REQUIRE(m->tris.size() == 12);
+    REQUIRE(m->branes.size() == 12);
 }
 */
