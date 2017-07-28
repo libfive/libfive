@@ -10,7 +10,8 @@ namespace Kernel {
 
 class Mesh : public BRep<3> {
 public:
-    static std::unique_ptr<Mesh> render(const Tree t, const Region<3>& r);
+    static std::unique_ptr<Mesh> render(const Tree t, const Region<3>& r,
+                                        double min_feature=0.1);
 
     /*
      *  Writes the mesh to a file

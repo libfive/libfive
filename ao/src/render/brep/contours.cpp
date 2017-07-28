@@ -27,10 +27,11 @@ public:
     }
 };
 
-std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r)
+std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
+                                           double min_feature)
 {
     // Create the quadtree on the scaffold
-    auto xtree = XTree<2>::build(t, r);
+    auto xtree = XTree<2>::build(t, r, min_feature);
 
     // Perform marching squares
     Segments segs;

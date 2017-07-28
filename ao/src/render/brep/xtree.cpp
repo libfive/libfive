@@ -20,8 +20,8 @@ constexpr static unsigned _pow(unsigned x, unsigned y)
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-std::unique_ptr<const XTree<N>> XTree<N>::build(Tree t, Region<N> region,
-                                                bool multithread)
+std::unique_ptr<const XTree<N>> XTree<N>::build(
+        Tree t, Region<N> region, double min_feature, bool multithread)
 {
     XTree<N>* out = nullptr;
     if (multithread)
@@ -32,12 +32,12 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(Tree t, Region<N> region,
         {
             es.emplace_back(Evaluator(t));
         }
-        out = new XTree(es.data(), region, false);
+        out = new XTree(es.data(), region, min_feature, false);
     }
     else
     {
         Evaluator e(t);
-        out = new XTree(&e, region, false);
+        out = new XTree(&e, region, min_feature, false);
     }
     return std::unique_ptr<const XTree<N>>(out);
 }
@@ -45,7 +45,8 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(Tree t, Region<N> region,
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(Evaluator* eval, Region<N> region, bool multithread)
+XTree<N>::XTree(Evaluator* eval, Region<N> region,
+                double min_feature, bool multithread)
     : region(region)
 {
     // Do a preliminary evaluation to prune the tree
@@ -68,7 +69,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, bool multithread)
         bool all_full  = true;
 
         // Recurse until volume is too small
-        if (region.volume() > 0.001)
+        if (((region.upper - region.lower) > min_feature).any())
         {
             auto rs = region.subdivide();
 
@@ -82,8 +83,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, bool multithread)
                 for (unsigned i=0; i < children.size(); ++i)
                 {
                     futures[i] = std::async(std::launch::async,
-                        [&eval, &rs, i]()
-                        { return new XTree(eval + i, rs[i], false); });
+                        [&eval, &rs, i, min_feature]()
+                        { return new XTree(eval + i, rs[i],
+                                           min_feature, false); });
                 }
                 for (unsigned i=0; i < children.size(); ++i)
                 {
@@ -96,7 +98,8 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region, bool multithread)
                 for (uint8_t i=0; i < children.size(); ++i)
                 {
                     // Populate child recursively
-                    children[i].reset(new XTree<N>(eval, rs[i], false));
+                    children[i].reset(new XTree<N>(
+                                eval, rs[i], min_feature, false));
                 }
             }
             // Update corner and filled / empty state from children

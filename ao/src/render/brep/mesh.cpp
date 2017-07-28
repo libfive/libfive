@@ -7,10 +7,11 @@
 
 namespace Kernel {
 
-std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r)
+std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
+                                   double min_feature)
 {
     // Create the quadtree on the scaffold
-    auto xtree = XTree<3>::build(t, r);
+    auto xtree = XTree<3>::build(t, r, min_feature);
 
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());
