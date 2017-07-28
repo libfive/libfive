@@ -32,9 +32,9 @@ void Shape::draw(const QMatrix4x4& M)
         vert_vbo.allocate(verts, i*sizeof(*verts));
         delete [] verts;
 
-        uint32_t* tris = new uint32_t[mesh->tris.size() * 3];
+        uint32_t* tris = new uint32_t[mesh->branes.size() * 3];
         i = 0;
-        for (auto& t: mesh->tris)
+        for (auto& t: mesh->branes)
         {
             tris[i++] = t[0];
             tris[i++] = t[1];
@@ -69,7 +69,7 @@ void Shape::draw(const QMatrix4x4& M)
         glUniformMatrix4fv(Shader::shaded->uniformLocation("M"), 1, GL_FALSE, M.data());
         glUniform1f(Shader::shaded->uniformLocation("zoom"), 1);
         vao.bind();
-        glDrawElements(GL_TRIANGLES, mesh->tris.size() * 3, GL_UNSIGNED_INT, NULL);
+        glDrawElements(GL_TRIANGLES, mesh->branes.size() * 3, GL_UNSIGNED_INT, NULL);
         vao.release();
         Shader::shaded->release();
     }
@@ -94,9 +94,9 @@ void Shape::startRender(Settings s)
 
 Kernel::Mesh* Shape::renderMesh(Settings s)
 {
-    Kernel::Region r({s.min.x(), s.max.x()}, {s.min.y(), s.max.y()},
-                     {s.min.z(), s.max.z()}, s.res / (1 << s.div));
-    auto m = Kernel::Mesh::render(tree, r);
+    Kernel::Region<3> r({s.min.x(), s.min.y(), s.min.z()},
+                        {s.max.x(), s.max.y(), s.max.z()});
+    auto m = Kernel::Mesh::render(tree, r, 1 / (s.res / (1 << s.div)));
     return m.release();
 }
 

@@ -7,7 +7,7 @@
 #include <QOpenGLFunctions>
 
 #include "ao/tree/tree.hpp"
-#include "ao/format/mesh.hpp"
+#include "ao/render/brep/mesh.hpp"
 #include "gui/settings.hpp"
 
 class Shape : public QObject, QOpenGLFunctions
