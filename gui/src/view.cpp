@@ -32,6 +32,10 @@ void View::openSettings()
         pane->show();
         pane->setFixedSize(pane->size());
     }
+    else
+    {
+        pane->setFocus();
+    }
 }
 
 void View::onSettingsChanged(Settings s)
