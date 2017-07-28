@@ -15,15 +15,23 @@ struct Walker2
         auto norm = Eigen::Vector2d(a[0]->vert.y() - a[1]->vert.y(),
                                     a[1]->vert.x() - a[0]->vert.x()).normalized();
         Eigen::Vector2d center = (a[0]->vert + a[1]->vert).normalized();
-        auto dot_ = center.dot(norm);
-        std::cout << dot_ << '\n';
+        auto dot_ = -center.dot(norm);
         neg += (dot_ < 0);
         pos += (dot_ > 0);
         dot = fmin(dot, dot_);
+
+        for (auto t : a)
+        {
+            auto n = t->vert.norm();
+            min_norm = fmin(n, min_norm);
+            max_norm = fmax(n, max_norm);
+        }
     }
     int pos = 0;
     int neg = 0;
     float dot = 2;
+    float min_norm = 2;
+    float max_norm = 0;
 };
 
 struct Walker3
@@ -47,6 +55,8 @@ TEST_CASE("Dual<2>::walk")
 
     Walker2 c;
     Dual<2>::walk(ta.get(), c);
+    REQUIRE(c.min_norm > 0.49);
+    REQUIRE(c.max_norm < 0.51);
     CAPTURE(c.neg);
     CAPTURE(c.pos);
     REQUIRE(c.dot > 0.9);
