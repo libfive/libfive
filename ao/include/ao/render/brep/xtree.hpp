@@ -38,6 +38,25 @@ public:
      */
     Interval::State cornerState(uint8_t i) const { return corners[i]; }
 
+    /*
+     *  Returns the corner position for the ith corner
+     */
+    Eigen::Array<double, N, 1> cornerPos(uint8_t i) const
+    {
+        Eigen::Array<double, N, 1> out;
+        for (unsigned axis=0; axis < N; ++axis)
+        {
+            out(axis) = (i & (1 << axis)) ? region.upper(axis)
+                                          : region.lower(axis);
+        }
+        return out;
+    }
+
+    /*
+     *  Returns the averaged mass point
+     */
+    Eigen::Matrix<double, N, 1> massPoint() const;
+
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -100,20 +119,6 @@ protected:
     double findVertex(Eigen::EigenSolver<Eigen::Matrix<double, N, N>>& es);
 
     /*
-     *  Returns the corner position for the ith corner
-     */
-    Eigen::Array<double, N, 1> cornerPos(uint8_t i) const
-    {
-        Eigen::Array<double, N, 1> out;
-        for (unsigned axis=0; axis < N; ++axis)
-        {
-            out(axis) = (i & (1 << axis)) ? region.upper(axis)
-                                          : region.lower(axis);
-        }
-        return out;
-    }
-
-    /*
      *  Returns a bitfield mask based on which corners are set
      */
     uint8_t cornerMask() const;
@@ -144,11 +149,6 @@ protected:
      *  (with respect to the leaves)
      */
     bool leafsAreManifold() const;
-
-    /*
-     *  Returns the averaged mass point
-     */
-    Eigen::Matrix<double, N, 1> massPoint() const;
 
     /*  Marks whether this cell is manifold or not  */
     bool manifold=false;
