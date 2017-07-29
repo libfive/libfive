@@ -204,10 +204,13 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 }
                 assert(region.contains(massPoint()));
 
-                // If the vertex error is below a threshold, then convert
-                // into a leaf by erasing all of the child branches
-                if (findVertex() < 1e-8)
+                // If the vertex error is below a threshold, and the vertex
+                // is well-placed in the distance field, then convert into
+                // a leaf by erasing all of the child branches
+                if (findVertex() < 1e-8 &&
+                    fabs(eval->eval(vert3().template cast<float>())) < 1e-8)
                 {
+
                     std::for_each(children.begin(), children.end(),
                         [](std::unique_ptr<const XTree<N>>& o) { o.reset(); });
                 }
