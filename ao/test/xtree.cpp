@@ -77,6 +77,37 @@ TEST_CASE("XTree<2>::isBranch")
     }
 }
 
+TEST_CASE("XTree<3>::vert")
+{
+    SECTION("Mesh::Render (sliced box)")
+    {
+        auto b = max(box({0, 0, 0}, {1, 1, 1}),
+                Tree::X() + Tree::Y() + Tree::Z() - 1.3);
+        Evaluator eval(b);
+        Region<3> r({-2, -2, -2}, {2, 2, 2});
+        auto xtree = XTree<3>::build(b, r, 0.1);
+
+        std::list<const XTree<3>*> todo = {xtree.get()};
+        while (todo.size())
+        {
+            auto t = todo.front();
+            todo.pop_front();
+            if (t->isBranch())
+            {
+                for (auto& c : t->children)
+                {
+                    todo.push_back(c.get());
+                }
+            }
+            if (!t->isBranch() && t->type == Interval::AMBIGUOUS)
+            {
+                CAPTURE(t->vert.transpose());
+                REQUIRE(eval.eval(t->vert.template cast<float>()) == Approx(0).epsilon(0.05));
+            }
+        }
+    }
+}
+
 /*
         Evaluator b(max(Tree::X(), -Tree::X() + 0.2));
         auto tb = XTree<2>(&a, Region<2>({-1, -1}, {1, 1}));
