@@ -251,7 +251,13 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
 
                     // Evaluate, then search for the first outside point
                     // and adjust inside / outside to their new positions
-                    auto out = eval->values(POINTS_PER_SEARCH);
+                    //
+                    // We copy to a temporary array here to avoid invalidating
+                    // out if we need to call eval->isInside (e.g. when out[i]
+                    // is exactly 0 so we're not sure about the boundary)
+                    float out[POINTS_PER_SEARCH];
+                    std::copy_n(eval->values(POINTS_PER_SEARCH),
+                                POINTS_PER_SEARCH, out);
                     for (int j=0; j < POINTS_PER_SEARCH; ++j)
                     {
                         if (out[j] > 0)
@@ -259,6 +265,17 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                             inside = ps[j - 1];
                             outside = ps[j];
                             break;
+                        }
+                        else if (out[j] == 0)
+                        {
+                            Eigen::Vector3d pos;
+                            pos << ps[j], region.perp;
+                            if (!eval->isInside(pos.template cast<float>()))
+                            {
+                                inside = ps[j - 1];
+                                outside = ps[j];
+                                break;
+                            }
                         }
                     }
                 }
