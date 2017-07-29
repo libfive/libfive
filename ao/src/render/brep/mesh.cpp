@@ -17,8 +17,8 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
     auto m = std::unique_ptr<Mesh>(new Mesh());
     Dual<3>::walk(xtree.get(), *m);
 
-#if 0
-    // Store rectangles
+#if DEBUG_OCTREE_CELLS
+    // Store octree cells as lines
     std::list<const XTree<3>*> todo = {xtree.get()};
     while (todo.size())
     {
@@ -39,9 +39,6 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
         for (auto e : es)
             m->line(t->cornerPos(e.first).template cast<float>(),
                     t->cornerPos(e.second).template cast<float>());
-        if (t->rank > 0 && !t->isBranch())
-            m->line(t->vert.template cast<float>(), (t->region.upper + t->region.lower).template cast<float>() / 2);
-        //m->line(t->massPoint().template cast<float>(), (t->region.upper + t->region.lower).template cast<float>() / 2);
     }
 #endif
     return m;
