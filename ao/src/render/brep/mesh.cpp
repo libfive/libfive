@@ -16,7 +16,45 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());
     Dual<3>::walk(xtree.get(), *m);
+
+#if 0
+    // Store rectangles
+    std::list<const XTree<3>*> todo = {xtree.get()};
+    while (todo.size())
+    {
+        auto t = todo.front();
+        todo.pop_front();
+        if (t->isBranch())
+            for (auto& c : t->children)
+                todo.push_back(c.get());
+
+        static const std::vector<std::pair<uint8_t, uint8_t>> es =
+            {{0, Axis::X}, {0, Axis::Y}, {0, Axis::Z},
+             {Axis::X, Axis::X|Axis::Y}, {Axis::X, Axis::X|Axis::Z},
+             {Axis::Y, Axis::Y|Axis::X}, {Axis::Y, Axis::Y|Axis::Z},
+             {Axis::X|Axis::Y, Axis::X|Axis::Y|Axis::Z},
+             {Axis::Z, Axis::Z|Axis::X}, {Axis::Z, Axis::Z|Axis::Y},
+             {Axis::Z|Axis::X, Axis::Z|Axis::X|Axis::Y},
+             {Axis::Z|Axis::Y, Axis::Z|Axis::Y|Axis::X}};
+        for (auto e : es)
+            m->line(t->cornerPos(e.first).template cast<float>(),
+                    t->cornerPos(e.second).template cast<float>());
+        if (t->rank > 0 && !t->isBranch())
+            m->line(t->vert.template cast<float>(), (t->region.upper + t->region.lower).template cast<float>() / 2);
+        //m->line(t->massPoint().template cast<float>(), (t->region.upper + t->region.lower).template cast<float>() / 2);
+    }
+#endif
     return m;
+}
+
+void Mesh::line(Eigen::Vector3f a, Eigen::Vector3f b)
+{
+    auto a_ = verts.size();
+    verts.push_back(a);
+    auto b_ = verts.size();
+    verts.push_back(b);
+
+    branes.push_back({a_, a_, b_});
 }
 
 void Mesh::operator()(const std::array<const XTree<3>*, 4>& ts)

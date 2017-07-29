@@ -22,6 +22,13 @@ public:
      *  Called by Dual::walk to construct the triangle mesh
      */
     void operator()(const std::array<const XTree<3>*, 4>& ts);
+
+protected:
+    /*
+     *  Inserts a line into the mesh as a zero-size triangle
+     *  (used for debugging)
+     */
+    void line(Eigen::Vector3f a, Eigen::Vector3f b);
 };
 
 }   // namespace Kernel
