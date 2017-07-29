@@ -249,7 +249,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                         eval->setRaw(pos.template cast<float>(), j);
                     }
 
-                    // Evaluate, then search for the first inside point
+                    // Evaluate, then search for the first outside point
                     // and adjust inside / outside to their new positions
                     auto out = eval->values(POINTS_PER_SEARCH);
                     for (int j=0; j < POINTS_PER_SEARCH; ++j)
