@@ -9,3 +9,4 @@ Kernel::Tree rectangle(float xmin, float xmax, float ymin, float ymax,
 Kernel::Tree menger(int i);
 Kernel::Tree circle(float r);
 Kernel::Tree sphere(float r);
+Kernel::Tree box(Eigen::Vector3f lower, Eigen::Vector3f upper);

@@ -76,3 +76,14 @@ Tree sphere(float r)
 {
     return sqrt(square(Tree::X()) + square(Tree::Y()) + square(Tree::Z())) - r;
 }
+
+Tree box(Eigen::Vector3f lower, Eigen::Vector3f upper)
+{
+    return max(max(
+               max(lower.x() - Tree::X(),
+                   Tree::X() - upper.x()),
+               max(lower.y() - Tree::Y(),
+                   Tree::Y() - upper.y())),
+               max(lower.z() - Tree::Z(),
+                   Tree::Z() - upper.z()));
+}
