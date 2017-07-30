@@ -79,14 +79,7 @@ TEST_CASE("XTree<2>::isBranch")
 
 TEST_CASE("XTree<3>::vert")
 {
-    SECTION("Mesh::Render (sliced box)")
-    {
-        auto b = max(box({0, 0, 0}, {1, 1, 1}),
-                Tree::X() + Tree::Y() + Tree::Z() - 1.3);
-        Evaluator eval(b);
-        Region<3> r({-2, -2, -2}, {2, 2, 2});
-        auto xtree = XTree<3>::build(b, r, 0.1);
-
+    auto walk = [](std::unique_ptr<const XTree<3>>& xtree, Evaluator& eval){
         std::list<const XTree<3>*> todo = {xtree.get()};
         while (todo.size())
         {
@@ -105,6 +98,26 @@ TEST_CASE("XTree<3>::vert")
                 REQUIRE(eval.eval(t->vert.template cast<float>()) == Approx(0).epsilon(0.001));
             }
         }
+    };
+
+    SECTION("Sliced box")
+    {
+        auto b = max(box({0, 0, 0}, {1, 1, 1}),
+                Tree::X() + Tree::Y() + Tree::Z() - 1.3);
+        Evaluator eval(b);
+        Region<3> r({-2, -2, -2}, {2, 2, 2});
+        auto xtree = XTree<3>::build(b, r, 0.1);
+        walk(xtree, eval);
+    }
+
+    SECTION("Another sliced box")
+    {
+        auto b = max(box({0, 0, 0}, {1, 1, 1}),
+                Tree::X() + Tree::Y() + Tree::Z() - 1.2);
+        Evaluator eval(b);
+        Region<3> r({-10, -10, -10}, {10, 10, 10});
+        auto xtree = XTree<3>::build(b, r, 0.1);
+        walk(xtree, eval);
     }
 }
 
