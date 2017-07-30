@@ -13,10 +13,6 @@ namespace Kernel {
 //  Here's our cutoff value (with a value set in the header)
 template <unsigned N> constexpr double XTree<N>::EIGENVALUE_CUTOFF;
 
-//  Used for compile-time checking of array bounds in vertex finding
-constexpr static unsigned _pow(unsigned x, unsigned y)
-{ return y ? x * _pow(x, y - 1) : 1; }
-
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
@@ -220,6 +216,12 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
         // Figure out if the leaf is manifold
         manifold = cornersAreManifold();
 
+        // We'll save every inside/outside crossing, so that we can build
+        // up the normals matrix in the manifold case
+        std::vector<Eigen::Matrix<double, N, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, N, 1>>> crossings;
+        // Reserve the max amount of space here to avoid re-allocating
+        crossings.reserve(edges().size() * 2);
+
         // Populate mass point here, as we use it in both the non-manifold
         // case (where it becomes the cell's vertex) and the manifold case
         // (where we minimize the QEF towards it)
@@ -285,85 +287,89 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 Eigen::Matrix<double, N + 1, 1> mp;
                 mp << inside, 1;
                 _mass_point += mp;
+
+                // Store both inside and outside point for use in matrices
+                crossings.push_back(inside);
+                crossings.push_back(outside);
             }
         }
         assert(region.contains(massPoint()));
 
-        // If this leaf cell is manifold, then find its vertex
-        // Here, we diverge from standard DC, using the sampling strategy
-        // from DMC (with regularly spaced samples on a grid), then solving
-        // for the constrained minimizer with w = 0 (as described in the
-        // "sliver elimination" section of the DMC paper).
+        // If this leaf cell is manifold, then find its vertex by building
+        // QEF matrices for each of the edge intersections, properly handling
+        // the case where an edge intersection touches multiple features.
         if (manifold)
         {
-            constexpr unsigned R = 4;
-            constexpr unsigned num = _pow(R, N);
-            static_assert(num < Result::N, "Bad resolution");
+            // Here, we'll store position, {normal, value} pairs
+            // for every crossing and feature
+            typedef std::pair<Eigen::Matrix<double, N, 1>,
+                              Eigen::Matrix<double, N + 1, 1>> Intersection;
+            std::vector<Intersection, Eigen::aligned_allocator<Intersection>>
+                intersections;
 
-            // Pre-compute per-axis grid positions
-            Eigen::Array<double, R, N> pts;
-            for (unsigned i=0; i < R; ++i)
+            for (const auto& pt : crossings)
             {
-                const double frac = i / (R - 1.0f);
-                pts.row(i) = region.lower.template cast<double>() * (1 - frac) +
-                             region.upper.template cast<double>() * frac;
-            }
-
-            // Load all sample points into the evaluator
-            Eigen::Array<double, num, N> positions;
-            for (unsigned i=0; i < num; ++i)
-            {
-                // Unpack from grid positions into the position vector
-                for (unsigned j=0; j < N; ++j)
-                {
-                    positions(i, j) = pts((i % _pow(R, j + 1)) / _pow(R, j), j);
-                }
-
-                // The evaluator works in 3-space,
-                // regardless of the XTree's dimensionality
                 Eigen::Vector3d pos;
-                pos << positions.row(i).transpose(), region.perp;
-                eval->set(pos.template cast<float>(), i);
+                pos << pt, region.perp;
+                auto pos_ = pos.template cast<float>();
+                const auto fs = eval->featuresAt(pos_);
+
+                eval->set(pos_, 0);
+                for (auto& f : fs)
+                {
+                    // Evaluate feature-specific distance and
+                    // derivatives value at this particular point
+                    eval->push(f);
+                    const auto ds = eval->derivs(1);
+
+                    // Unpack 3D derivatives into XTree-specific
+                    // dimensionality, and find normal.
+                    const auto derivs3 = Eigen::Vector3d(
+                            ds.dx[0], ds.dy[0], ds.dz[0]);
+                    const auto derivs = derivs3.template head<N>();
+                    const auto norm = derivs.norm();
+
+                    // Find normalized derivatives and distance value
+                    Eigen::Matrix<double, N + 1, 1> dv;
+                    dv << derivs / norm, ds.v[0] / norm;
+                    if (!dv.array().isNaN().any())
+                    {
+                        intersections.push_back({pt, dv});
+                    }
+                    eval->pop();
+                }
             }
 
-            // Get derivatives!
-            auto ds = eval->derivs(num);
-
+            // Now, we'll unpack into A and b matrices
+            //
             //  The A matrix is of the form
             //  [n1x, n1y, n1z]
             //  [n2x, n2y, n2z]
             //  [n3x, n3y, n3z]
             //  ...
             //  (with one row for each sampled point's normal)
-            Eigen::Matrix<double, num, N> A;
+            Eigen::Matrix<double, Eigen::Dynamic, N> A(intersections.size(), N);
 
             //  The b matrix is of the form
-            //  [p1 . n1 - w1]
-            //  [p2 . n2 - w2]
-            //  [p3 . n3 - w3]
+            //  [p1 . n1]
+            //  [p2 . n2]
+            //  [p3 . n3]
             //  ...
             //  (with one row for each sampled point)
-            Eigen::Matrix<double, num, 1> b;
+            Eigen::Matrix<double, Eigen::Dynamic, 1> b(intersections.size(), 1);
 
             // Load samples into the QEF arrays
-            for (unsigned i=0; i < num; ++i)
+            //
+            // Since we're deliberately sampling on either side of the
+            // intersection, we subtract out the distance-field value
+            // to make the math work out.
+            for (unsigned i=0; i < intersections.size(); ++i)
             {
-                // Load this row of A matrix, with a special case for
-                // situations with NaN derivatives
-                auto derivs = Eigen::Array3d(ds.dx[i], ds.dy[i], ds.dz[i]);
-                auto w = ds.v[i];
-                if (derivs.array().isNaN().any())
-                {
-                    derivs << 0, 0, 0;
-                }
-                else
-                {
-                    auto norm = derivs.matrix().norm();
-                    w /= norm;
-                    derivs /= norm;
-                }
-                A.row(i) << derivs.head<N>().transpose();
-                b(i) = A.row(i).dot(positions.row(i).matrix()) - w;
+                A.row(i) << intersections[i].second
+                                            .template head<N>()
+                                            .transpose();
+                b(i) = A.row(i).dot(intersections[i].first) -
+                       intersections[i].second(N);
             }
 
             // Save compact QEF matrices
