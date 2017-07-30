@@ -203,7 +203,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 // is well-placed in the distance field, then convert into
                 // a leaf by erasing all of the child branches
                 if (findVertex() < 1e-8 &&
-                    fabs(eval->eval(vert3().template cast<float>())) < 1e-8)
+                    fabs(eval->baseEval(vert3().template cast<float>())) < 1e-8)
                 {
                     std::for_each(children.begin(), children.end(),
                         [](std::unique_ptr<const XTree<N>>& o) { o.reset(); });
