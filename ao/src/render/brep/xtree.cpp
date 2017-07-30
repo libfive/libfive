@@ -32,7 +32,7 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         {
             es.emplace_back(Evaluator(t));
         }
-        out = new XTree(es.data(), region, min_feature, false);
+        out = new XTree(es.data(), region, min_feature, true);
     }
     else
     {
