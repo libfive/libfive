@@ -102,7 +102,7 @@ TEST_CASE("XTree<3>::vert")
             if (!t->isBranch() && t->type == Interval::AMBIGUOUS)
             {
                 CAPTURE(t->vert.transpose());
-                REQUIRE(eval.eval(t->vert.template cast<float>()) == Approx(0).epsilon(0.05));
+                REQUIRE(eval.eval(t->vert.template cast<float>()) == Approx(0).epsilon(0.001));
             }
         }
     }
