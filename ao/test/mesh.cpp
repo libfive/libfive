@@ -75,14 +75,12 @@ TEST_CASE("Mesh::render (performance)")
     WARN(log);
 }
 
-/*
 TEST_CASE("Mesh::Render (face count in rectangular prism)")
 {
     auto t = max(max(max(-Tree::X(), Tree::X() - 4),
                      max(-Tree::Y(), Tree::Y() - 1)),
                      max(-Tree::Z(), Tree::Z() - 0.25));
     auto m = Mesh::render(t, Region<3>({-1, -1, -1}, {5, 2, 1.25}), 0.125);
-    REQUIRE(m->verts.size() == 8);
+    REQUIRE(m->verts.size() == 9); // index 0 is unused
     REQUIRE(m->branes.size() == 12);
 }
-*/
