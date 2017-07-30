@@ -126,6 +126,15 @@ float EvaluatorBase::eval(const Eigen::Vector3f& p)
     return values(1)[0];
 }
 
+float EvaluatorBase::baseEval(const Eigen::Vector3f& p)
+{
+    auto prev_tape = tape;
+    tape = tapes.begin();
+    auto out = eval(p);
+    tape = prev_tape;
+    return out;
+}
+
 Interval::I EvaluatorBase::eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
 {
     set(lower, upper);

@@ -42,6 +42,13 @@ public:
     Interval::I eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper);
 
     /*
+     *  Evaluates the given point using the root tape
+     *  (this is useful when we're not sure about which region
+     *  the points fits into)
+     */
+    float baseEval(const Eigen::Vector3f& p);
+
+    /*
      *  Evaluates a set of floating-point results
      *  (which have been loaded with set)
      */
