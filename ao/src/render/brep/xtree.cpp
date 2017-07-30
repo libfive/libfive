@@ -146,7 +146,6 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
         type = all_empty ? Interval::EMPTY
              : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
     }
-    eval->pop();
 
     // If this cell is unambiguous, then fill its corners with values and
     // forget all its branches; these may be no-ops, but they're idempotent
@@ -394,6 +393,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             vert = massPoint();
         }
     }
+
+    // ...and we're done.
+    eval->pop();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
