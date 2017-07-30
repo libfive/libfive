@@ -108,6 +108,13 @@ ao_args* ao_template_args(ao_template t);
 
 /*
  *  Renders a tree to a set of contours
+ *
+ *  R is a region that will be subdivided into an octree.  For clean
+ *  triangles, it should be near-cubical, but that isn't a hard requirement
+ *
+ *  res should be approximately half the model's smallest feature size;
+ *  subdivision halts when all sides of the region are below it.
+ *
  *  The returned struct must be freed with ao_contours_delete
  */
 ao_contours* ao_tree_render_slice(ao_tree tree, ao_region2 R,
@@ -115,19 +122,30 @@ ao_contours* ao_tree_render_slice(ao_tree tree, ao_region2 R,
 
 /*
  *  Renders and saves a slice to a file
+ *
+ *  See argument details in ao_tree_render_slice
  */
 void ao_tree_save_slice(ao_tree tree, ao_region2 R, float z, float res,
                         const char* f);
 
 /*
  *  Renders a tree to a set of triangles
+ *
+ *  R is a region that will be subdivided into an octree.  For clean
+ *  triangles, it should be near-cubical, but that isn't a hard requirement
+ *
+ *  res should be approximately half the model's smallest feature size;
+ *  subdivision halts when all sides of the region are below it.
+ *
  *  The returned struct must be freed with ao_mesh_delete
  */
 ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res);
 
 /*
  *  Renders and saves a mesh to a file
+ *
  *  Returns true on success, false otherwise
+ *  See argument details in ao_tree_render_mesh
  */
 bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f);
 
