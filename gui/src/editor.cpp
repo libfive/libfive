@@ -5,12 +5,9 @@
 #include "gui/color.hpp"
 
 Editor::Editor(QWidget* parent)
-    : QWidget(parent)
+    : QWidget(parent), txt(new QTextEdit), err(new QPlainTextEdit)
 {
-    auto txt = new QTextEdit(this);
     txt->setAcceptRichText(false);
-
-    auto err = new QPlainTextEdit(this);
     err->setReadOnly(true);
 
     {   // Use Courier as our default font
@@ -43,18 +40,6 @@ Editor::Editor(QWidget* parent)
     connect(txt, &QTextEdit::textChanged, txt,
             [=](){ this->scriptChanged(txt->document()->toPlainText()); });
 
-    // Forward result changed into error window
-    connect(this, &Editor::resultChanged, err,
-        [=](bool valid, QString result){
-            QTextCharFormat fmt;
-            fmt.setForeground(valid ? Color::green : Color::red);
-            err->setCurrentCharFormat(fmt);
-            err->setPlainText(result);
-            int lines = err->document()->size().height() + 1;
-            QFontMetrics fm(err->document()->defaultFont());
-            err->setFixedHeight(std::min(this->height()/3, lines * fm.lineSpacing()));
-    });
-
     // Bind keyword signals to syntax highlighter
     // (used to communicate asychronously from interpreter)
     connect(this, &Editor::keywords, syntax, &Syntax::setKeywords);
@@ -65,4 +50,25 @@ Editor::Editor(QWidget* parent)
     layout->setMargin(0);
     layout->setSpacing(2);
     setLayout(layout);
+}
+
+void Editor::onResultChanged(bool valid, QString result)
+{
+    QTextCharFormat fmt;
+    fmt.setForeground(valid ? Color::green : Color::red);
+    err->setCurrentCharFormat(fmt);
+    err->setPlainText(result);
+    int lines = err->document()->size().height() + 1;
+    QFontMetrics fm(err->document()->defaultFont());
+    err->setFixedHeight(std::min(this->height()/3, lines * fm.lineSpacing()));
+}
+
+void Editor::setScript(const QString& s)
+{
+    txt->setPlainText(s);
+}
+
+QString Editor::getScript() const
+{
+    return txt->toPlainText();
 }
