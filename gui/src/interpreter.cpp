@@ -38,11 +38,16 @@ void Interpreter::init()
     (cons '(ao transforms)
         (module-map (lambda (n . a) n) (resolve-interface '(ao transforms)))))
     all-pure-bindings))
-(define (eval-sandboxed t) (eval-in-sandbox t #:bindings my-bindings))
+(define (eval-sandboxed t)
+    (let ((mod (make-sandbox-module my-bindings)))
+        (let loop ((t t))
+            (if (nil? t)
+                (eval-in-sandbox #nil #:module mod) ; to sever module
+                (cons (eval-in-sandbox (car t) #:module mod #:sever-module? #f)
+                      (loop (cdr t)))))))
 eval-sandboxed
 )");
 
-    scm_begin = scm_from_utf8_symbol("begin");
     scm_port_eof_p = scm_c_eval_string(R"(
 (use-modules (rnrs io ports))
 port-eof?
@@ -53,7 +58,7 @@ port-eof?
     scm_syntax_error_fmt = scm_from_locale_string("~A: ~A in form ~A");
 
     // Protect all of our interpreter vars from garbage collection
-    for (auto s : {scm_begin, scm_eval_sandboxed, scm_port_eof_p,
+    for (auto s : {scm_eval_sandboxed, scm_port_eof_p,
                    scm_syntax_error_sym, scm_result_fmt, scm_syntax_error_fmt,
                    scm_other_error_fmt})
     {
@@ -80,7 +85,7 @@ SCM Interpreter::eval()
     auto str = scm_from_locale_string(script.toLocal8Bit().data());
     auto in = scm_open_input_string(str);
 
-    auto clauses = scm_list_1(scm_begin);
+    auto clauses = SCM_EOL;
     while (scm_is_false(scm_call_1(scm_port_eof_p, in)))
     {
         clauses = scm_cons(scm_read(in), clauses);
@@ -126,12 +131,21 @@ void Interpreter::evalScript()
 
     emit(resultChanged(valid, QString(str)));
 
-    if (valid && scm_is_tree(result))
+    if (valid)
     {
-        auto tree = scm_to_tree(result);
-        auto shape = new Shape(*tree);
-        shape->moveToThread(QApplication::instance()->thread());
-        emit(gotShape(new Shape(*tree)));
+        QList<Shape*> shapes;
+        while (!scm_is_null(result))
+        {
+            if (scm_is_tree(scm_car(result)))
+            {
+                auto tree = scm_to_tree(scm_car(result));
+                auto shape = new Shape(*tree);
+                shape->moveToThread(QApplication::instance()->thread());
+                shapes.push_back(shape);
+            }
+            result = scm_cdr(result);
+        }
+        emit(gotShapes(shapes));
     }
     free(str);
 }

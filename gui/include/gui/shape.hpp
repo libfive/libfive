@@ -27,9 +27,11 @@ public:
 signals:
     void gotMesh();
 
+public slots:
+    void deleteLater();
+
 protected slots:
     void onFutureFinished();
-    void deleteLater();
 
 protected:
     Kernel::Mesh* renderMesh(Settings s);

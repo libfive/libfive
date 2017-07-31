@@ -1,6 +1,8 @@
 #include <QSurfaceFormat>
+
 #include "gui/app.hpp"
 #include "gui/settings.hpp"
+#include "gui/shape.hpp"
 
 int main(int argc, char** argv)
 {
@@ -12,8 +14,9 @@ int main(int argc, char** argv)
         QSurfaceFormat::setDefaultFormat(format);
     }
 
-    // Register settings meta-type to be sent across threads
+    // Register settings and shape meta-types to be sent across threads
     qRegisterMetaType<Settings>("Settings");
+    qRegisterMetaType<QList<Shape*>>("QList<Shape*>");
 
     App a(argc, argv);
     a.exec();

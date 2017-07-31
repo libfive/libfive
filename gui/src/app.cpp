@@ -45,8 +45,8 @@ App::App(int& argc, char** argv)
             editor, &Editor::onResultChanged);
     connect(interpreter, &Interpreter::keywords,
             editor, &Editor::keywords);
-    connect(interpreter, &Interpreter::gotShape,
-            view, &View::setShape);
+    connect(interpreter, &Interpreter::gotShapes,
+            view, &View::setShapes);
     interpreter->start();
 
     window->show();

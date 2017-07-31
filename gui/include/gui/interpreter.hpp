@@ -20,7 +20,7 @@ public slots:
 signals:
     void resultChanged(bool valid, QString result);
     void keywords(QString kws);
-    void gotShape(Shape* s);
+    void gotShapes(QList<Shape*> s);
 
 protected slots:
     void evalScript();
@@ -36,7 +36,6 @@ protected:
 
     QThread thread;
 
-    SCM scm_begin;
     SCM scm_eval_sandboxed;
     SCM scm_port_eof_p;
     SCM scm_syntax_error_sym;

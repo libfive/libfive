@@ -15,7 +15,7 @@ public:
     View(QWidget* parent=nullptr);
 
 public slots:
-    void setShape(Shape* s);
+    void setShapes(QList<Shape*> shapes);
     void openSettings();
 
 signals:
@@ -23,6 +23,7 @@ signals:
 
 protected slots:
     void onSettingsChanged(Settings s);
+    void update() { QOpenGLWidget::update(); }
 
 protected:
     void initializeGL() override;
@@ -44,7 +45,7 @@ protected:
         QPoint pos;
     } mouse;
 
-    QScopedPointer<Shape> shape;
+    QList<Shape*> shapes;
     QPointer<SettingsPane> pane;
     Settings settings;
 };

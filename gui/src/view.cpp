@@ -12,13 +12,25 @@ View::View(QWidget* parent)
             this, &View::onSettingsChanged);
 }
 
-void View::setShape(Shape* s)
+void View::setShapes(QList<Shape*> new_shapes)
 {
-    shape.reset(s);
-    connect(s, &Shape::gotMesh, this, [=](){ this->update(); });
-    connect(this, &View::settingsChanged,
-            s, &Shape::startRender);
-    shape->startRender(settings);
+    for (auto s : shapes)
+    {
+        disconnect(s, &Shape::gotMesh, this, &View::update);
+        s->deleteLater();
+    }
+    shapes.clear();
+
+    for (auto s : new_shapes)
+    {
+        connect(s, &Shape::gotMesh, this, &View::update);
+        connect(this, &View::settingsChanged,
+                s, &Shape::startRender);
+        s->startRender(settings);
+        s->setParent(this);
+
+        shapes.push_back(s);
+    }
     update();
 }
 
@@ -55,9 +67,9 @@ void View::paintGL()
     background.draw();
 
     auto m = camera.M();
-    if (shape)
+    for (auto& s : shapes)
     {
-        shape->draw(m);
+        s->draw(m);
     }
 
     axes.drawSolid(m);
