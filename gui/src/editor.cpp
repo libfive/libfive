@@ -88,17 +88,8 @@ void Editor::setError(QPair<uint32_t, uint32_t> begin,
     c.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, begin.first);
     c.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, begin.second);
     c.movePosition(QTextCursor::Down, QTextCursor::KeepAnchor, end.first - begin.first);
-
-    if (end.second > begin.second)
-    {
-        c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
-                end.second - begin.second);
-    }
-    else
-    {
-        c.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor,
-                begin.second - end.second);
-    }
+    c.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+    c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, end.second);
 
     QTextEdit::ExtraSelection s;
     s.cursor = c;
