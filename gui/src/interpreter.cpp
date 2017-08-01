@@ -45,12 +45,12 @@ void Interpreter::init()
         (failed #f))
     (let loop ()
       ;; Attempt to read the next clause, storing text location
-      (let ((before (list (port-line in) (port-column in)))
+      (let ((before (cons (port-line in) (port-column in)))
             (clause (catch #t (lambda () (read in))
                               (lambda (key . params)
                                       (set! failed #t)
                                       (list key params))))
-            (after (list (port-line in) (port-column in))))
+            (after (cons (port-line in) (port-column in))))
 
         (cond
           ;; If we've failed, then record a failed tag
@@ -126,41 +126,45 @@ void Interpreter::evalScript()
     // into a string (with special cases for various erorr forms)
     auto last = scm_is_null(result) ? nullptr
                                     : scm_cdr(scm_car(scm_last_pair(result)));
-    SCM str = nullptr;
     if (!valid)
     {
         /* last = '(before after key params) */
+        auto before = scm_car(last);
+        auto after = scm_cadr(last);
         auto key = scm_caddr(last);
         auto params = scm_cadddr(last);
 
+        SCM _str = nullptr;
         if (scm_is_eq(key, scm_syntax_error_sym))
         {
-            str = scm_simple_format(SCM_BOOL_F, scm_syntax_error_fmt,
+            _str = scm_simple_format(SCM_BOOL_F, scm_syntax_error_fmt,
                    scm_list_3(key, scm_cadr(params), scm_cadddr(params)));
         }
         else
         {
-            str = scm_simple_format(SCM_BOOL_F, scm_other_error_fmt,
+            _str = scm_simple_format(SCM_BOOL_F, scm_other_error_fmt,
                    scm_list_2(key, scm_simple_format(
                         SCM_BOOL_F, scm_cadr(params), scm_caddr(params))));
         }
+        auto str = scm_to_locale_string(_str);
+        emit(gotError(QString(str),
+                    {scm_to_uint32(scm_car(before)),
+                     scm_to_uint32(scm_cdr(before))},
+                    {scm_to_uint32(scm_car(after)),
+                     scm_to_uint32(scm_cdr(after))}));
+        free(str);
     }
     else if (last)
     {
-        str = scm_simple_format(SCM_BOOL_F, scm_result_fmt,
-                                scm_list_1(last));
-    }
-
-    // Emit the resulting string to update the UI
-    if (str)
-    {
-        auto str_ = scm_to_locale_string(str);
-        emit(resultChanged(valid, QString(str_)));
-        free(str_);
+        auto str = scm_to_locale_string(
+                scm_simple_format(SCM_BOOL_F, scm_result_fmt,
+                                  scm_list_1(last)));
+        emit(gotResult(QString(str)));
+        free(str);
     }
     else
     {
-        emit(resultChanged(true, "#<eof>"));
+        emit(gotResult("#<eof>"));
     }
 
     // Then iterate over the results, picking out shapes

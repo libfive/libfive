@@ -176,7 +176,16 @@ void Syntax::setKeywords(QString kws)
 
 void Syntax::matchParens(QTextEdit* text, int cursor_pos)
 {
-    QList<QTextEdit::ExtraSelection> selections;
+    // Erase previous parens-matching selections, leaving other
+    // extra selections intact (e.g. for error highlighting)
+    auto selections = text->extraSelections();
+    for (auto itr = selections.begin(); itr != selections.end(); ++itr)
+    {
+        if (itr->format == parens_highlight)
+        {
+            itr = --selections.erase(itr);
+        }
+    }
 
     auto pos = matchedParen(cursor_pos);
     if (pos.x() != -1 && pos.y() != -1)

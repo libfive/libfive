@@ -7,6 +7,9 @@
 Editor::Editor(QWidget* parent)
     : QWidget(parent), txt(new QTextEdit), err(new QPlainTextEdit)
 {
+    error_format.setUnderlineColor(Color::red);
+    error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
+
     txt->setAcceptRichText(false);
     err->setReadOnly(true);
 
@@ -52,7 +55,67 @@ Editor::Editor(QWidget* parent)
     setLayout(layout);
 }
 
-void Editor::onResultChanged(bool valid, QString result)
+void Editor::onResult(QString result)
+{
+    setResult(true, result);
+    clearError();
+}
+
+QList<QTextEdit::ExtraSelection> Editor::clearError(bool set)
+{
+    auto selections = txt->extraSelections();
+    for (auto itr = selections.begin(); itr != selections.end(); ++itr)
+    {
+        if (itr->format == error_format)
+        {
+            itr = --selections.erase(itr);
+        }
+    }
+
+    if (set)
+    {
+        txt->setExtraSelections(selections);
+    }
+    return selections;
+}
+
+void Editor::setError(QPair<uint32_t, uint32_t> begin,
+                      QPair<uint32_t, uint32_t> end)
+{
+    auto selections = clearError(false);
+
+    QTextCursor c(txt->document());
+    c.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, begin.first);
+    c.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, begin.second);
+    c.movePosition(QTextCursor::Down, QTextCursor::KeepAnchor, end.first - begin.first);
+
+    if (end.second > begin.second)
+    {
+        c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
+                end.second - begin.second);
+    }
+    else
+    {
+        c.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor,
+                begin.second - end.second);
+    }
+
+    QTextEdit::ExtraSelection s;
+    s.cursor = c;
+    s.format = error_format;
+    selections.append(s);
+
+    txt->setExtraSelections(selections);
+}
+
+void Editor::onError(QString result, QPair<uint32_t, uint32_t> start,
+                                     QPair<uint32_t, uint32_t> end)
+{
+    setResult(false, result);
+    setError(start, end);
+}
+
+void Editor::setResult(bool valid, QString result)
 {
     QTextCharFormat fmt;
     fmt.setForeground(valid ? Color::green : Color::red);
