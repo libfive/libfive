@@ -180,8 +180,9 @@ ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
 
     auto out = new ao_mesh;
     out->verts = new ao_vec3[ms->verts.size()];
-    out->count = ms->branes.size();
+    out->vert_count = ms->verts.size();
     out->tris = new ao_tri[ms->branes.size()];
+    out->tri_count = ms->branes.size();
 
     size_t i;
 

@@ -30,7 +30,8 @@ struct ao_contours {
 struct ao_mesh {
     ao_vec3* verts;
     ao_tri* tris;
-    uint32_t count;
+    uint32_t tri_count;
+    uint32_t vert_count;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
