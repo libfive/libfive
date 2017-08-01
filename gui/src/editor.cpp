@@ -5,7 +5,8 @@
 #include "gui/color.hpp"
 
 Editor::Editor(QWidget* parent)
-    : QWidget(parent), txt(new QTextEdit), err(new QPlainTextEdit)
+    : QWidget(parent), txt(new QTextEdit), err(new QPlainTextEdit),
+      syntax(new Syntax(txt->document()))
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
@@ -32,9 +33,6 @@ Editor::Editor(QWidget* parent)
 
     setStyleSheet("QTextEdit {" + style + "QPlainTextEdit { " + style);
 
-    // Create and bind a syntax highlighter
-    auto syntax = new Syntax(txt->document());
-
     // Do parenthesis highlighting when the cursor moves
     connect(txt, &QTextEdit::cursorPositionChanged, syntax,
             [=](){ syntax->matchParens(txt, txt->textCursor().position()); });
@@ -42,10 +40,6 @@ Editor::Editor(QWidget* parent)
     // Emit the script whenever text changes
     connect(txt, &QTextEdit::textChanged, txt,
             [=](){ this->scriptChanged(txt->document()->toPlainText()); });
-
-    // Bind keyword signals to syntax highlighter
-    // (used to communicate asychronously from interpreter)
-    connect(this, &Editor::keywords, syntax, &Syntax::setKeywords);
 
     auto layout = new QVBoxLayout;
     layout->addWidget(txt);
@@ -125,4 +119,11 @@ void Editor::setScript(const QString& s)
 QString Editor::getScript() const
 {
     return txt->toPlainText();
+}
+
+void Editor::setKeywords(QString kws)
+{
+    syntax->setKeywords(kws);
+    auto doc = txt->document();
+    doc->contentsChange(0, 0, doc->toPlainText().length());
 }

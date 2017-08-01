@@ -43,14 +43,12 @@ App::App(int& argc, char** argv)
     auto interpreter = new Interpreter();
     connect(editor, &Editor::scriptChanged,
             interpreter, &Interpreter::onScriptChanged);
-    connect(interpreter, &Interpreter::gotResult,
-            editor, &Editor::onResult);
-    connect(interpreter, &Interpreter::gotError,
-            editor, &Editor::onError);
-    connect(interpreter, &Interpreter::keywords,
-            editor, &Editor::keywords);
-    connect(interpreter, &Interpreter::gotShapes,
-            view, &View::setShapes);
+
+    connect(interpreter, &Interpreter::gotResult, editor, &Editor::onResult);
+    connect(interpreter, &Interpreter::gotError, editor, &Editor::onError);
+    connect(interpreter, &Interpreter::keywords, editor, &Editor::setKeywords);
+    connect(interpreter, &Interpreter::gotShapes, view, &View::setShapes);
+
     interpreter->start();
 
     window->show();
