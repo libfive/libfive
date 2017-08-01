@@ -8,10 +8,10 @@
 #include "ao/eval/interval.hpp"
 #include "ao/eval/clause.hpp"
 
+namespace Kernel {
+
 #ifdef __AVX__
 #include <immintrin.h>
-
-namespace Kernel {
 
 // AVX data needs to be aligned on 32-byte boundaries.
 // This isn't the default on certain OSs, so we make a custom allocator

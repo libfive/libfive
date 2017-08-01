@@ -338,6 +338,6 @@ void EvaluatorAVX::applyTransform(Result::Index count)
     }
 }
 
-#endif
-
 }   // namespace Kernel
+
+#endif

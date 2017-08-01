@@ -5,7 +5,6 @@
 
 #include "ao/tree/tree.hpp"
 #include "ao/eval/evaluator_base.hpp"
-#include "ao/eval/evaluator_avx.hpp"
 #include "ao/eval/result.hpp"
 
 #include "util/shapes.hpp"
@@ -13,6 +12,7 @@
 using namespace Kernel;
 
 #ifdef __AVX__
+#include "ao/eval/evaluator_avx.hpp"
 
 TEST_CASE("EvaluatorAVX: performance")
 {
