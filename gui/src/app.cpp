@@ -26,13 +26,15 @@ App::App(int& argc, char** argv)
 
     auto open_action = file_menu->addAction("Open");
     open_action->setShortcut(QKeySequence::Open);
-    connect(open_action, &QAction::triggered,
-            this, &App::onOpen);
+    connect(open_action, &QAction::triggered, this, &App::onOpen);
 
     auto save_action = file_menu->addAction("Save");
     save_action->setShortcut(QKeySequence::Save);
+    connect(save_action, &QAction::triggered, this, &App::onSave);
+
     auto save_as_action = file_menu->addAction("Save As");
     save_as_action->setShortcut(QKeySequence::SaveAs);
+    connect(save_as_action, &QAction::triggered, this, &App::onSaveAs);
 
     auto view_menu = window->menuBar()->addMenu("&View");
     connect(view_menu->addAction("Bounds / resolution"), &QAction::triggered,
