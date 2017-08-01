@@ -38,13 +38,40 @@ void Interpreter::init()
     (cons '(ao transforms)
         (module-map (lambda (n . a) n) (resolve-interface '(ao transforms)))))
     all-pure-bindings))
-(define (eval-sandboxed t)
-    (let ((mod (make-sandbox-module my-bindings)))
-        (let loop ((t t))
-            (if (nil? t)
-                (eval-in-sandbox #nil #:module mod) ; to sever module
-                (cons (eval-in-sandbox (car t) #:module mod #:sever-module? #f)
-                      (loop (cdr t)))))))
+
+(define (eval-sandboxed str)
+  (let ((mod (make-sandbox-module my-bindings))
+        (in (open-input-string str))
+        (failed #f))
+    (let loop ()
+      ;; Attempt to read the next clause, storing text location
+      (let ((before (list (port-line in) (port-column in)))
+            (clause (catch #t (lambda () (read in))
+                              (lambda (key . params)
+                                      (set! failed #t)
+                                      (list key params))))
+            (after (list (port-line in) (port-column in))))
+
+        (cond
+          ;; If we've failed, then record a failed tag
+          (failed (list (append (list 'error before after) clause)))
+
+          ;; If we're at the end of the stream, then sever module
+          ;; and return a dummy list
+          ((eof-object? clause) (eval-in-sandbox #nil #:module mod))
+
+          ;; Otherwise, attempt to evaluate
+          (else
+            (let ((result
+              (catch #t
+                (lambda () (cons 'valid
+                  (eval-in-sandbox clause #:module mod #:sever-module? #f)))
+                (lambda (key . params)
+                  (set! failed #t)
+                  (list 'error before after key params)))))
+              (if (not failed)
+                  (cons result (loop))
+                  (list result)))))))))
 eval-sandboxed
 )");
 
@@ -53,12 +80,13 @@ eval-sandboxed
 port-eof?
 )");
     scm_syntax_error_sym = scm_from_utf8_symbol("syntax-error");
+    scm_valid_sym = scm_from_utf8_symbol("valid");
     scm_result_fmt = scm_from_locale_string("~S");
     scm_other_error_fmt = scm_from_locale_string("~A: ~A");
     scm_syntax_error_fmt = scm_from_locale_string("~A: ~A in form ~A");
 
     // Protect all of our interpreter vars from garbage collection
-    for (auto s : {scm_eval_sandboxed, scm_port_eof_p,
+    for (auto s : {scm_eval_sandboxed, scm_port_eof_p, scm_valid_sym,
                    scm_syntax_error_sym, scm_result_fmt, scm_syntax_error_fmt,
                    scm_other_error_fmt})
     {
@@ -79,66 +107,71 @@ void Interpreter::onScriptChanged(QString s)
     timer.start(10);
 }
 
-SCM Interpreter::eval()
+void Interpreter::evalScript()
 {
-    valid = true;
-    auto str = scm_from_locale_string(script.toLocal8Bit().data());
-    auto in = scm_open_input_string(str);
+    auto result = scm_call_1(scm_eval_sandboxed,
+            scm_from_locale_string(script.toLocal8Bit().data()));
 
-    auto clauses = SCM_EOL;
-    while (scm_is_false(scm_call_1(scm_port_eof_p, in)))
+    //  Loop through the whole result list, looking for an invalid clause
+    bool valid = true;
+    for (auto r = result; !scm_is_null(r) && valid; r = scm_cdr(r))
     {
-        clauses = scm_cons(scm_read(in), clauses);
+        if (!scm_is_eq(scm_caar(r), scm_valid_sym))
+        {
+            valid = false;
+        }
     }
-    clauses = scm_reverse(clauses);
 
-    return scm_call_1(scm_eval_sandboxed, clauses);
-}
-
-SCM Interpreter::handler(SCM key, SCM args)
-{
-    valid = false;
-    if (scm_is_eq(key, scm_syntax_error_sym))
+    // If there is at least one result, then we'll convert the last one
+    // into a string (with special cases for various erorr forms)
+    auto last = scm_is_null(result) ? nullptr
+                                    : scm_cdr(scm_car(scm_last_pair(result)));
+    SCM str = nullptr;
+    if (!valid)
     {
-        return scm_simple_format(SCM_BOOL_F, scm_syntax_error_fmt,
-               scm_list_3(key, scm_cadr(args), scm_cadddr(args)));
+        /* last = '(before after key params) */
+        auto key = scm_caddr(last);
+        auto params = scm_cadddr(last);
+
+        if (scm_is_eq(key, scm_syntax_error_sym))
+        {
+            str = scm_simple_format(SCM_BOOL_F, scm_syntax_error_fmt,
+                   scm_list_3(key, scm_cadr(params), scm_cadddr(params)));
+        }
+        else
+        {
+            str = scm_simple_format(SCM_BOOL_F, scm_other_error_fmt,
+                   scm_list_2(key, scm_simple_format(
+                        SCM_BOOL_F, scm_cadr(params), scm_caddr(params))));
+        }
+    }
+    else if (last)
+    {
+        str = scm_simple_format(SCM_BOOL_F, scm_result_fmt,
+                                scm_list_1(last));
+    }
+
+    // Emit the resulting string to update the UI
+    if (str)
+    {
+        auto str_ = scm_to_locale_string(str);
+        emit(resultChanged(valid, QString(str_)));
+        free(str_);
     }
     else
     {
-        return scm_simple_format(SCM_BOOL_F, scm_other_error_fmt,
-               scm_list_2(key, scm_simple_format(
-                    SCM_BOOL_F, scm_cadr(args), scm_caddr(args))));
+        emit(resultChanged(true, "#<eof>"));
     }
-}
 
-SCM _eval(void* body)
-{
-    return ((Interpreter*)body)->eval();
-}
-
-SCM _handler(void* data, SCM key, SCM args)
-{
-    return ((Interpreter*)data)->handler(key, args);
-}
-
-void Interpreter::evalScript()
-{
-    auto result = scm_internal_catch(SCM_BOOL_T, _eval, this, _handler, this);
-
-    auto str = valid ? scm_to_locale_string(
-            scm_simple_format(SCM_BOOL_F, scm_result_fmt, scm_list_1(result)))
-        : scm_to_locale_string(result);
-
-    emit(resultChanged(valid, QString(str)));
-
+    // Then iterate over the results, picking out shapes
     if (valid)
     {
         QList<Shape*> shapes;
         while (!scm_is_null(result))
         {
-            if (scm_is_tree(scm_car(result)))
+            if (scm_is_tree(scm_cdar(result)))
             {
-                auto tree = scm_to_tree(scm_car(result));
+                auto tree = scm_to_tree(scm_cdar(result));
                 auto shape = new Shape(*tree);
                 shape->moveToThread(QApplication::instance()->thread());
                 shapes.push_back(shape);
@@ -147,5 +180,4 @@ void Interpreter::evalScript()
         }
         emit(gotShapes(shapes));
     }
-    free(str);
 }
