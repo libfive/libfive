@@ -72,9 +72,11 @@ Tree circle(float r)
     return sqrt(square(Tree::X()) + square(Tree::Y())) - r;
 }
 
-Tree sphere(float r)
+Tree sphere(float r, Eigen::Vector3f center)
 {
-    return sqrt(square(Tree::X()) + square(Tree::Y()) + square(Tree::Z())) - r;
+    return sqrt(square(Tree::X() - center.x()) +
+                square(Tree::Y() - center.y()) +
+                square(Tree::Z() - center.z())) - r;
 }
 
 Tree box(Eigen::Vector3f lower, Eigen::Vector3f upper)
