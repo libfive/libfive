@@ -9,10 +9,10 @@ TEST_CASE("XTree<2>::vert")
 {
     SECTION("Vertex positioning (with two planes)")
     {
-        Tree a = min(Tree::X(), Tree::Y());
+        Tree a = min(Tree::X() + 0.1, Tree::Y() - 0.2);
         auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {1, 1}));
-        REQUIRE(ta->vert.x() == Approx(0.0));
-        REQUIRE(ta->vert.y() == Approx(0.0));
+        REQUIRE(ta->vert.x() == Approx(0.1));
+        REQUIRE(ta->vert.y() == Approx(0.2));
     }
 }
 
