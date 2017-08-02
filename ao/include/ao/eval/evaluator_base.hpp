@@ -189,6 +189,11 @@ public:
     std::set<Result::Index> getAmbiguous(Result::Index i) const;
 
 protected:
+    /*
+     *  Performs matrix multiplication to transform derivs with global matrix
+     */
+    Derivs remapDerivs(Result::Index count);
+
     /*  This is our evaluation tape type */
     struct Tape {
         std::vector<Clause> t;

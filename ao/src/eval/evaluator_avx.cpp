@@ -282,22 +282,8 @@ EvaluatorBase::Derivs EvaluatorAVX::derivs(Result::Index count)
                vc);
     }
 
-    // Apply the inverse matrix transform to our normals
-    // TODO: we could SIMD this as well!
-    auto o = Mi * Eigen::Vector4f(0, 0, 0, 1);
-    const auto index = tape->i;
-    for (size_t i=0; i < count; ++i)
-    {
-        auto n = Mi * Eigen::Vector4f(result.dx[index][i],
-                                      result.dy[index][i],
-                                      result.dz[index][i], 1) - o;
-        result.dx[index][i] = n.x();
-        result.dy[index][i] = n.y();
-        result.dz[index][i] = n.z();
-    }
-
-    return { &result.f[index][0],  &result.dx[index][0],
-             &result.dy[index][0], &result.dz[index][0] };
+    // TODO: make a SIMD version of remapDerivs
+    return remapDerivs(count);
 }
 
 void EvaluatorAVX::applyTransform(Result::Index count)

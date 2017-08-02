@@ -1192,10 +1192,14 @@ EvaluatorBase::Derivs EvaluatorBase::derivs(Result::Index count)
                &result.dy[itr->id][0], &result.dz[itr->id][0],
                count);
     }
+    return remapDerivs(count);
+}
 
+EvaluatorBase::Derivs EvaluatorBase::remapDerivs(Result::Index count)
+{
     // Apply the inverse matrix transform to our normals
     const auto index = tape->i;
-    auto o = Mi * Eigen::Vector4f(0,0,0,1);
+    const Eigen::Vector4f o = Mi * Eigen::Vector4f(0,0,0,1);
     for (size_t i=0; i < count; ++i)
     {
         auto n = Mi * Eigen::Vector4f(result.dx[index][i],
