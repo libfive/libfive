@@ -373,7 +373,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             }
 
             // Save compact QEF matrices
-            auto At = A.transpose();
+            auto At = A.transpose().eval();
             AtA = At * A;
             AtB = At * b;
             BtB = b.transpose() * b;
@@ -452,7 +452,7 @@ double XTree<N>::findVertex(
     }
 
     // SVD matrices
-    auto U = es.eigenvectors().real(); // = V
+    auto U = es.eigenvectors().real().eval(); // = V
 
     // Pseudo-inverse of A
     auto AtAp = U * D * U.transpose();

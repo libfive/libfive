@@ -1202,9 +1202,9 @@ EvaluatorBase::Derivs EvaluatorBase::remapDerivs(Result::Index count)
     const Eigen::Vector4f o = Mi * Eigen::Vector4f(0,0,0,1);
     for (size_t i=0; i < count; ++i)
     {
-        auto n = Mi * Eigen::Vector4f(result.dx[index][i],
-                                      result.dy[index][i],
-                                      result.dz[index][i], 1) - o;
+        auto n = (Mi * Eigen::Vector4f(result.dx[index][i],
+                                       result.dy[index][i],
+                                       result.dz[index][i], 1) - o).eval();
         result.dx[index][i] = n.x();
         result.dy[index][i] = n.y();
         result.dz[index][i] = n.z();
