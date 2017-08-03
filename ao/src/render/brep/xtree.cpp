@@ -378,17 +378,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             AtB = At * b;
             BtB = b.transpose() * b;
 
-            // Use eigenvalues to find rank, then re-use the solver
-            // to find vertex position
-            Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(AtA);
-            auto eigenvalues = es.eigenvalues().real();
-
-            // Count non-singular Eigenvalues to determine rank
-            rank = (eigenvalues.array().abs() >= EIGENVALUE_CUTOFF).count();
-
-            // Re-use the solver to find the vertex position, ignoring the
-            // error result (because this is the bottom of the recursion)
-            findVertex(es);
+            // Find the vertex position, ignoring the error result
+            // (because this is the bottom of the recursion)
+            findVertex();
         }
         else
         {
@@ -425,13 +417,6 @@ template <unsigned N>
 double XTree<N>::findVertex()
 {
     Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(AtA);
-    return findVertex(es);
-}
-
-template <unsigned N>
-double XTree<N>::findVertex(
-        Eigen::EigenSolver<Eigen::Matrix<double, N, N>>& es)
-{
     assert(_mass_point(N) > 0);
 
     // We need to find the pseudo-inverse of AtA.
@@ -445,10 +430,11 @@ double XTree<N>::findVertex(
             ? 0 : (1 / eigenvalues[i]);
     }
 
-    // Sanity-checking that rank matches eigenvalue count
+    // Get rank from eigenvalues
     if (!isBranch())
     {
-        assert(D.diagonal().count() == rank);
+        assert(rank == 0);
+        rank = D.diagonal().count();
     }
 
     // SVD matrices

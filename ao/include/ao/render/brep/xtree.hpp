@@ -116,7 +116,6 @@ protected:
      *  Stores the vertex in vert and returns the QEF error
      */
     double findVertex();
-    double findVertex(Eigen::EigenSolver<Eigen::Matrix<double, N, N>>& es);
 
     /*
      *  Returns a bitfield mask based on which corners are set
