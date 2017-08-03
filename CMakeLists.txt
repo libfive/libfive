@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.3)
 project(Ao)
+
+# Properly distinguish between Apple and upstream Clang
+cmake_policy(SET CMP0025 NEW)
 
 set(CMAKE_BUILD_TYPE RELEASE)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
