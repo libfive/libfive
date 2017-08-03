@@ -77,6 +77,22 @@ TEST_CASE("XTree<2>::isBranch")
     }
 }
 
+TEST_CASE("XTree<2>::rank")
+{
+    SECTION("Containing line")
+    {
+        auto e = XTree<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}));
+        REQUIRE(e->rank == 1);
+    }
+
+    SECTION("Containing corner")
+    {
+        Tree a = min(Tree::X(), Tree::Y());
+        auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {1, 1}));
+        REQUIRE(ta->rank == 2);
+    }
+}
+
 TEST_CASE("XTree<3>::vert")
 {
     auto walk = [](std::unique_ptr<const XTree<3>>& xtree, Evaluator& eval){
