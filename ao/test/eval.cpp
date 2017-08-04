@@ -334,23 +334,42 @@ TEST_CASE("Evaluator::specialize")
 
 TEST_CASE("Evaluator::isInside")
 {
-    Evaluator a(Tree::X());
-    REQUIRE(a.isInside({0, 0, 0}) == true);
-    REQUIRE(a.isInside({-1, 0, 0}) == true);
-    REQUIRE(a.isInside({1, 0, 0}) == false);
+    SECTION("Single plane edge")
+    {
+        Evaluator a(Tree::X());
+        REQUIRE(a.isInside({0, 0, 0}) == true);
+        REQUIRE(a.isInside({-1, 0, 0}) == true);
+        REQUIRE(a.isInside({1, 0, 0}) == false);
+    }
 
-    Evaluator b(min(Tree::X(), -Tree::X()));
-    REQUIRE(b.isInside({0, 0, 0}) == true);
-    REQUIRE(b.isInside({1, 0, 0}) == true);
-    REQUIRE(b.isInside({-1, 0, 0}) == true);
+    SECTION("2D plane-to-plane (full)")
+    {
+        Evaluator b(min(Tree::X(), -Tree::X()));
+        REQUIRE(b.isInside({0, 0, 0}) == true);
+        REQUIRE(b.isInside({1, 0, 0}) == true);
+        REQUIRE(b.isInside({-1, 0, 0}) == true);
+    }
 
-    Evaluator c(max(Tree::X(), -Tree::X()));
-    REQUIRE(c.isInside({0, 0, 0}) == false);
-    REQUIRE(c.isInside({1, 0, 0}) == false);
-    REQUIRE(c.isInside({-1, 0, 0}) == false);
+    SECTION("2D plane-to-plane (empty)")
+    {
+        Evaluator c(max(Tree::X(), -Tree::X()));
+        REQUIRE(c.isInside({0, 0, 0}) == false);
+        REQUIRE(c.isInside({1, 0, 0}) == false);
+        REQUIRE(c.isInside({-1, 0, 0}) == false);
+    }
 
-    Evaluator d(min(min(Tree::X(), -Tree::X()), min(Tree::Y(), -Tree::Y())));
-    REQUIRE(d.isInside({0, 0, 0}) == true);
+    SECTION("2D Corner")
+    {
+        Evaluator d(min(min(Tree::X(), -Tree::X()), min(Tree::Y(), -Tree::Y())));
+        REQUIRE(d.isInside({0, 0, 0}) == true);
+    }
+
+    SECTION("Coincident planes with same normal")
+    {
+        auto t = max(Tree::Z() - 6, Tree::Z() + -6);
+        Evaluator e(t);
+        REQUIRE(e.isInside({0, 0, 6}));
+    }
 }
 
 TEST_CASE("Evaluator::featuresAt")
