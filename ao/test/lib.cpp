@@ -94,7 +94,7 @@ TEST_CASE("ao_tree_render_mesh")
 
     float rmin = 2;
     float rmax = 0;
-    for (unsigned i=0; i < m->count; ++i)
+    for (unsigned i=0; i < m->tri_count; ++i)
     {
         auto& t = m->tris[i];
         auto& va = m->verts[t.a];
