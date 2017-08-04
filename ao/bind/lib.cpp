@@ -99,17 +99,10 @@ bool ao_tree_save(ao_tree ptr, const char* filename)
 
 ao_tree ao_tree_load(const char* filename)
 {
-    std::ifstream in(filename, std::ios::in|std::ios::binary|std::ios::ate);
-    if (in.is_open())
+    auto t = Tree::load(filename);
+    if (t.id())
     {
-        std::vector<uint8_t> data;
-        data.resize(in.tellg());
-
-        in.seekg(0, std::ios::beg);
-        in.read((char*)&data[0], data.size());
-
-        auto t = Template::deserialize(data);
-        return t.tree.id() ? new Tree(t.tree) : NULL;
+        return new Tree(t);
     }
     else
     {
