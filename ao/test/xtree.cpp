@@ -95,7 +95,9 @@ TEST_CASE("XTree<2>::rank")
 
 TEST_CASE("XTree<3>::vert")
 {
-    auto walk = [](std::unique_ptr<const XTree<3>>& xtree, Evaluator& eval){
+    auto walk = [](std::unique_ptr<const XTree<3>>& xtree,
+                   Evaluator& eval, float err=0.001)
+    {
         std::list<const XTree<3>*> todo = {xtree.get()};
         while (todo.size())
         {
@@ -111,7 +113,9 @@ TEST_CASE("XTree<3>::vert")
             if (!t->isBranch() && t->type == Interval::AMBIGUOUS)
             {
                 CAPTURE(t->vert.transpose());
-                REQUIRE(eval.eval(t->vert.template cast<float>()) == Approx(0).epsilon(0.001));
+                CAPTURE(t->rank);
+                CAPTURE(t->level);
+                REQUIRE(eval.eval(t->vert.template cast<float>()) == Approx(0).epsilon(err));
             }
         }
     };
@@ -134,5 +138,14 @@ TEST_CASE("XTree<3>::vert")
         Region<3> r({-10, -10, -10}, {10, 10, 10});
         auto xtree = XTree<3>::build(b, r, 0.1);
         walk(xtree, eval);
+    }
+
+    SECTION("Sphere with circular cutout")
+    {
+        auto s = max(sphere(1), -circle(0.5));
+        Region<3> r({-5, -5, -5}, {5, 5, 5});
+        auto xtree = XTree<3>::build(s, r, 1/6.0f);
+        Evaluator eval(s);
+        walk(xtree, eval, 0.01);
     }
 }
