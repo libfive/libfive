@@ -38,7 +38,7 @@ TEST_CASE("make-tree")
 {
     SECTION("Valid")
     {
-        auto result = eval("(make-tree 'x)");
+        auto result = eval("(make-tree 'var-x)");
         CAPTURE(result);
         REQUIRE(boost::algorithm::starts_with(result, "#<tree "));
     }
@@ -52,7 +52,7 @@ TEST_CASE("make-tree")
 
     SECTION("Invalid argument count")
     {
-        auto a = eval("(make-tree 'x 12)");
+        auto a = eval("(make-tree 'var-x 12)");
         CAPTURE(a);
         REQUIRE(boost::algorithm::starts_with(a, "wrong-number-of-args:"));
 
@@ -73,7 +73,7 @@ TEST_CASE("Guile overloads")
 {
     SECTION("min")
     {
-        auto result = eval("(min (make-tree 'x) 1 2 3)");
+        auto result = eval("(min (make-tree 'var-x) 1 2 3)");
         CAPTURE(result);
         REQUIRE(boost::algorithm::starts_with(result, "#<tree "));
 

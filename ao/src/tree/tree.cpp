@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 #include <set>
 #include <list>
 #include <cmath>
@@ -128,6 +129,60 @@ Tree Tree::remap(std::map<Id, std::shared_ptr<Tree_>> m) const
     return r == m.end() ? *this : Tree(r->second);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
+{
+    const bool commutative = (prev_op == op);
+    const int args = Opcode::args(op);
+
+    if (!commutative)
+    {
+        switch (args)
+        {
+            case 2:
+            case 1: stream << "(" <<  Opcode::toOpString(op) << " ";
+                    break;
+            case 0:
+                if (op == Opcode::CONST)
+                {
+                    if (value == int(value))
+                    {
+                        stream << int(value);
+                    }
+                    else
+                    {
+                        stream << value;
+                    }
+                }
+                else
+                {
+                    stream << Opcode::toOpString(op);
+                }
+                break;
+            default:    assert(false);
+        }
+    }
+
+    const auto op_ = Opcode::isCommutative(op) ? op : Opcode::INVALID;
+    switch (args)
+    {
+        case 2:     lhs->print(stream, op_);
+                    stream << " ";
+                    rhs->print(stream, op_);
+                    break;
+        case 1:     lhs->print(stream, op_);
+                    break;
+        case 0:     break;
+        default:    assert(false);
+    }
+
+    if (!commutative && args > 0)
+    {
+        stream <<")";
+    }
+}
+
 }   // namespace Kernel
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -164,3 +219,10 @@ OP_BINARY(nth_root,     Kernel::Opcode::NTH_ROOT);
 OP_BINARY(mod,          Kernel::Opcode::MOD);
 OP_BINARY(nanfill,      Kernel::Opcode::NANFILL);
 #undef OP_BINARY
+
+
+std::ostream& operator<<(std::ostream& stream, const Kernel::Tree& tree)
+{
+    tree->print(stream);
+    return stream;
+}

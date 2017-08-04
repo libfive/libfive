@@ -31,7 +31,7 @@ void ao_mesh_delete(ao_mesh* m)
 
 int ao_opcode_enum(const char* op)
 {
-    auto o = Opcode::from_str(op);
+    auto o = Opcode::fromScmString(op);
     return (o == Opcode::INVALID || o == Opcode::LAST_OP) ? -1 : o;
 }
 

@@ -104,3 +104,10 @@ TEST_CASE("Tree::remap")
         REQUIRE(t == Tree(8));
     }
 }
+
+TEST_CASE("Tree: operator<<")
+{
+    std::stringstream ss;
+    ss << (Tree::X() + 5);
+    REQUIRE(ss.str() == "(+ x 5)");
+}

@@ -1,4 +1,6 @@
+#include <iostream>
 #include <map>
+
 #include <boost/algorithm/string.hpp>
 
 #include "ao/tree/opcode.hpp"
@@ -49,59 +51,94 @@ size_t Opcode::args(Opcode op)
     return -1;
 }
 
-std::string Opcode::to_str(Opcode op)
+const static std::string opcode_names[Opcode::LAST_OP] = {
+#define OPCODE(s, i) #s,
+    OPCODES
+#undef OPCODE
+};
+
+std::string Opcode::toString(Opcode op)
 {
-    switch (op)
+    if (op >= LAST_OP || op < 0)
     {
-        case Opcode::CONST: return "const";
-        case Opcode::CONST_VAR: return "const";
-        case Opcode::LAST_OP: return "last-op";
-        case Opcode::INVALID: return "invalid";
-        case Opcode::VAR_X: return "x";
-        case Opcode::VAR_Y: return "y";
-        case Opcode::VAR_Z: return "z";
-        case Opcode::VAR: return "var";
-        case Opcode::ADD: return "add";
-        case Opcode::MUL: return "mul";
-        case Opcode::MIN: return "min";
-        case Opcode::MAX: return "max";
-        case Opcode::SUB: return "sub";
-        case Opcode::DIV: return "div";
-        case Opcode::ATAN2: return "atan2";
-        case Opcode::POW: return "pow";
-        case Opcode::NTH_ROOT: return "nth-root";
-        case Opcode::MOD: return "mod";
-        case Opcode::NANFILL: return "nan-fill";
-        case Opcode::SQUARE: return "square";
-        case Opcode::SQRT: return "sqrt";
-        case Opcode::NEG: return "neg";
-        case Opcode::SIN: return "sin";
-        case Opcode::COS: return "cos";
-        case Opcode::TAN: return "tan";
-        case Opcode::ASIN: return "asin";
-        case Opcode::ACOS: return "acos";
-        case Opcode::ATAN: return "atan";
-        case Opcode::EXP: return "exp";
+        std::cerr << "Opcode::toString: Invalid opcode " << op << std::endl;
+        return "";
     }
-    assert(false); /* All enumeration values must be handled */
-    return "";
+    return opcode_names[op];
 }
 
-Opcode::Opcode Opcode::from_str(std::string s)
+std::string Opcode::toScmString(Opcode op)
+{
+    if (op >= LAST_OP || op < 0)
+    {
+        std::cerr << "Opcode::toString: Invalid opcode " << op << std::endl;
+        return "";
+    }
+
+    auto s = opcode_names[op];
+    std::replace(s.begin(), s.end(), '_', '-');
+    boost::algorithm::to_lower(s);
+    return s;
+}
+
+Opcode::Opcode Opcode::fromScmString(std::string s)
 {
     // Lazy initialization of string -> Opcode map
     static std::map<std::string, Opcode> inverse;
     if (inverse.size() == 0)
     {
-        for (unsigned i=0; i <= LAST_OP; ++i)
+        for (unsigned i=0; i < LAST_OP; ++i)
         {
-            inverse[to_str(Opcode(i))] = Opcode(i);
+            inverse[toScmString(Opcode(i))] = Opcode(i);
         }
     }
 
+    // Be liberal in what you accept
     boost::algorithm::to_lower(s);
+
     auto itr = inverse.find(s);
     return itr != inverse.end() ? itr->second : INVALID;
+}
+
+std::string Opcode::toOpString(Opcode op)
+{
+    switch (op)
+    {
+        case VAR_X: return "x";
+        case VAR_Y: return "y";
+        case VAR_Z: return "z";
+
+        case VAR:
+        case SQUARE: // fallthrough
+        case SQRT:
+        case SIN:
+        case COS:
+        case TAN:
+        case ASIN:
+        case ACOS:
+        case ATAN:
+        case ATAN2:
+        case EXP:
+        case CONST_VAR:
+        case MIN:
+        case MAX:
+        case POW:
+        case NTH_ROOT:
+        case MOD:
+        case NANFILL:
+            return toScmString(op);
+
+
+        case ADD:   return "+";
+        case MUL:   return "*";
+        case NEG:   // FALLTHROUGH
+        case SUB:   return "-";
+        case DIV:   return "/";
+
+        case INVALID: // fallthrough
+        case CONST:
+        case LAST_OP: return "";
+    }
 }
 
 bool Opcode::isCommutative(Opcode op)

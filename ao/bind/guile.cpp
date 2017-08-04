@@ -270,7 +270,7 @@ void init_ao_kernel(void*)
         (make-tree 'mod a b)))
 
 (define-syntax-rule (lambda-shape vars ...)
-  ((lambda vars ...) (make-tree 'x) (make-tree 'y) (make-tree 'z)))
+  ((lambda vars ...) (make-tree 'var-x) (make-tree 'var-y) (make-tree 'var-z)))
 
 (define-syntax-rule (define-shape (name . vars) body ...)
   (define name (lambda-shape vars body ...)))

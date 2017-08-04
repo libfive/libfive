@@ -77,6 +77,13 @@ public:
         /*  Only populated for operations  */
         const std::shared_ptr<Tree_> lhs;
         const std::shared_ptr<Tree_> rhs;
+
+
+        /*
+         *  Pushes a Scheme-format serialization to an ostream
+         */
+        void print(std::ostream& stream,
+                   Opcode::Opcode prev_op=Opcode::INVALID);
     };
 
     /*  Trees are uniquely identified by their Tree_ address, but we don't
@@ -178,3 +185,8 @@ OP_BINARY(nth_root);
 OP_BINARY(mod);
 OP_BINARY(nanfill);
 #undef OP_BINARY
+
+/*
+ *  Deserialize with Scheme-style syntax
+ */
+std::ostream& operator<<(std::ostream& stream, const Kernel::Tree& tree);
