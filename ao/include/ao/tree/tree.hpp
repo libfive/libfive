@@ -138,6 +138,11 @@ public:
      */
     static Tree deserialize(const std::vector<uint8_t>& data);
 
+    /*
+     *  Loads a tree from a file
+     */
+    static Tree load(const std::string& filename);
+
 protected:
     /*
      *  Empty tree constructor

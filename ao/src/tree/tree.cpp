@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <set>
 #include <list>
@@ -100,6 +101,23 @@ std::vector<uint8_t> Tree::serialize() const
 Tree Tree::deserialize(const std::vector<uint8_t>& data)
 {
     return Template::deserialize(data).tree;
+}
+
+Tree Tree::load(const std::string& filename)
+{
+    std::ifstream in(filename, std::ios::in|std::ios::binary|std::ios::ate);
+    if (in.is_open())
+    {
+        std::vector<uint8_t> data;
+        data.resize(in.tellg());
+
+        in.seekg(0, std::ios::beg);
+        in.read((char*)&data[0], data.size());
+
+        auto t = Template::deserialize(data);
+        return t.tree;
+    }
+    return Tree();
 }
 
 Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const
