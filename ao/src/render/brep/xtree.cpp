@@ -306,20 +306,20 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                               Eigen::Matrix<double, N + 1, 1>> Intersection;
             std::vector<Intersection, Eigen::aligned_allocator<Intersection>>
                 intersections;
+            // RAM is cheap, so reserve a bunch of space here to avoid
+            // the need for re-allocating later on
+            intersections.reserve(crossings.size() * 2);
 
             for (const auto& pt : crossings)
             {
                 Eigen::Vector3d pos;
                 pos << pt, region.perp;
                 auto pos_ = pos.template cast<float>();
-                const auto fs = eval->featuresAt(pos_);
 
                 eval->set(pos_, 0);
-                for (auto& f : fs)
+
+                auto saveIntersection = [&]()
                 {
-                    // Evaluate feature-specific distance and
-                    // derivatives value at this particular point
-                    eval->push(f);
                     const auto ds = eval->derivs(1);
 
                     // Unpack 3D derivatives into XTree-specific
@@ -336,7 +336,24 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                     {
                         intersections.push_back({pt, dv});
                     }
-                    eval->pop();
+                };
+
+                if (eval->isAmbiguous(pos_))
+                {
+                    const auto fs = eval->featuresAt(pos_);
+                    for (auto& f : fs)
+                    {
+                        // Evaluate feature-specific distance and
+                        // derivatives value at this particular point
+                        eval->push(f);
+                        saveIntersection();
+                        eval->pop();
+                    }
+                }
+                else
+                {
+                    // Perform a single evaluation and save the intersection
+                    saveIntersection();
                 }
             }
 
