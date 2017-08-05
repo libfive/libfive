@@ -365,6 +365,23 @@ TEST_CASE("Evaluator::isInside")
     }
 }
 
+TEST_CASE("Evaluator::isAmbiguous")
+{
+    SECTION("Single feature")
+    {
+        Evaluator e(Tree::X());
+        REQUIRE(e.isAmbiguous({0, 0, 0}) == false);
+        REQUIRE(e.isAmbiguous({1, 0, 0}) == false);
+    }
+
+    SECTION("Two features (min)")
+    {
+        Evaluator e(min(Tree::X(), -Tree::X()));
+        REQUIRE(e.isAmbiguous({0, 0, 0}) == true);
+        REQUIRE(e.isAmbiguous({1, 0, 0}) == false);
+    }
+}
+
 TEST_CASE("Evaluator::featuresAt")
 {
     SECTION("Single feature")

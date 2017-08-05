@@ -516,6 +516,20 @@ std::list<Feature> EvaluatorBase::featuresAt(const Eigen::Vector3f& p)
     return done;
 }
 
+bool EvaluatorBase::isAmbiguous(const Eigen::Vector3f& p)
+{
+    eval(p);
+    for (const auto& c : tape->t)
+    {
+        if ((c.op == Opcode::MIN || c.op == Opcode::MAX) &&
+            result.f[c.a][0] == result.f[c.b][0])
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::set<Result::Index> EvaluatorBase::getAmbiguous(Result::Index i) const
 {
     std::set<Result::Index> out;

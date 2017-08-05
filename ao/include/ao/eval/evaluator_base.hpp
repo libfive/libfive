@@ -188,6 +188,11 @@ public:
      */
     std::set<Result::Index> getAmbiguous(Result::Index i) const;
 
+    /*
+     *  Checks whether the given position is ambiguous
+     */
+    bool isAmbiguous(const Eigen::Vector3f& p);
+
 protected:
     /*
      *  Performs matrix multiplication to transform derivs with global matrix
