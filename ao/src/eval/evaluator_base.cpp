@@ -485,15 +485,16 @@ std::list<Feature> EvaluatorBase::featuresAt(const Eigen::Vector3f& p)
                     auto fa = f_;
                     if (fa.push(epsilon, {itr->id, 0}))
                     {
+                        ambiguous = true;
                         todo.push_back(fa);
                     }
 
                     auto fb = f_;
                     if (fb.push(-epsilon, {itr->id, 1}))
                     {
+                        ambiguous = true;
                         todo.push_back(fb);
                     }
-                    ambiguous = true;
                 }
             }
         }

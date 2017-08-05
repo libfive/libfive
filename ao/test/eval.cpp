@@ -363,13 +363,6 @@ TEST_CASE("Evaluator::isInside")
         Evaluator d(min(min(Tree::X(), -Tree::X()), min(Tree::Y(), -Tree::Y())));
         REQUIRE(d.isInside({0, 0, 0}) == true);
     }
-
-    SECTION("Coincident planes with same normal")
-    {
-        auto t = max(Tree::Z() - 6, Tree::Z() + -6);
-        Evaluator e(t);
-        REQUIRE(e.isInside({0, 0, 6}));
-    }
 }
 
 TEST_CASE("Evaluator::featuresAt")
@@ -452,6 +445,13 @@ TEST_CASE("Evaluator::featuresAt")
         auto t = max(max(Tree::X(), Tree::X()), max(Tree::X(), Tree::X()));
         Evaluator e(t);
         REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
+    }
+
+    SECTION("Coincident planes with same normal")
+    {
+        auto t = max(Tree::Z() - 6, Tree::Z() + -6);
+        Evaluator e(t);
+        REQUIRE(e.featuresAt({0, 0, 6}).size() == 1);
     }
 }
 
