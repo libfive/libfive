@@ -14,6 +14,7 @@ add_library(ao-kernel-core STATIC
     render/brep/xtree.cpp
     render/brep/contours.cpp
     render/brep/mesh.cpp
+    render/brep/marching.cpp
     solve/solver.cpp
     tree/cache.cpp
     tree/opcode.cpp
