@@ -193,6 +193,11 @@ public:
      */
     bool isAmbiguous(const Eigen::Vector3f& p);
 
+    /*
+     *  Checks whether the result in slot 0 is ambiguous
+     */
+    bool isAmbiguous();
+
 protected:
     /*
      *  Performs matrix multiplication to transform derivs with global matrix

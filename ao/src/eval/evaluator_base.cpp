@@ -543,6 +543,11 @@ std::list<Feature> EvaluatorBase::featuresAt(const Eigen::Vector3f& p)
 bool EvaluatorBase::isAmbiguous(const Eigen::Vector3f& p)
 {
     eval(p);
+    return isAmbiguous();
+}
+
+bool EvaluatorBase::isAmbiguous()
+{
     for (const auto& c : tape->t)
     {
         if ((c.op == Opcode::MIN || c.op == Opcode::MAX) &&
