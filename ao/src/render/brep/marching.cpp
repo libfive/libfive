@@ -1,4 +1,5 @@
 #include <array>
+#include <set>
 
 #include <Eigen/Eigen>
 
@@ -123,73 +124,188 @@ void loadCases<2>(MarchingTable<2>& t)
 template <>
 void loadCases<3>(MarchingTable<3>& t)
 {
-    // Case 0 (no vertices set)
-    t[0][0][0].first = -1;
+    unsigned bitmap;
+    unsigned patch;
+    unsigned edge;
 
-    // Case 1 (vertex 0 set)
-    t[1][0][0] = {0, 1};
-    t[1][0][1] = {0, 2};
-    t[1][0][2] = {0, 4};
+    auto begin = [&](std::set<unsigned> verts)
+    {
+        bitmap = 0;
+        for (auto& i : verts)
+        {
+            bitmap |= 1 << i;
+        }
+        assert(bitmap > 0 && bitmap < t.size());
+        patch = 0;
+        edge = 0;
+    };
+
+    auto push = [&](Edge e)
+    {
+        assert(patch < t[bitmap].size());
+        assert(edge < t[bitmap][patch].size());
+        t[bitmap][patch][edge++] = e;
+    };
+    auto next = [&]()
+    {
+        patch++;
+        edge = 0;
+    };
+
+    // Case 0 (no vertices set)
+    // (Nothing to do here)
+
+    // Case 1
+    begin({0});
+    push({0, 1});
+    push({0, 2});
+    push({0, 4});
 
     // Case 2 (verts 0 and 1 set, 1 patch)
-    t[3][0][0] = {1, 3};
-    t[3][0][1] = {0, 2};
-    t[3][0][2] = {0, 4};
-    t[3][0][3] = {1, 5};
+    begin({0, 1});
+    push({1, 3});
+    push({0, 2});
+    push({0, 4});
+    push({1, 5});
 
     // Case 3 (verts 0 and 5 set, 2 patches)
-    t[33][0][0] = {0, 1};
-    t[33][0][1] = {0, 2};
-    t[33][0][2] = {0, 4};
+    begin({0, 5});
+    push({0, 1});
+    push({0, 2});
+    push({0, 4});
 
-    t[33][1][0] = {5, 7};
-    t[33][1][1] = {5, 4};
-    t[33][1][2] = {5, 1};
+    next();
+    push({5, 7});
+    push({5, 4});
+    push({5, 1});
 
     // Case 4 (verts 0 and 7 set, 2 patches)
-    t[129][0][0] = {0, 1};
-    t[129][0][1] = {0, 2};
-    t[129][0][2] = {0, 4};
+    begin({0, 7});
+    push({0, 1});
+    push({0, 2});
+    push({0, 4});
 
-    t[129][1][0] = {7, 6};
-    t[129][1][1] = {7, 3};
-    t[129][1][2] = {7, 5};
+    next();
+    push({7, 6});
+    push({7, 3});
+    push({7, 5});
 
     // Case 5 (verts 1, 2, 3 set, 1 patch)
-    t[14][0][0] = {1, 0};
-    t[14][0][1] = {1, 5};
-    t[14][0][2] = {3, 7};
-    t[14][0][3] = {2, 6};
-    t[14][0][4] = {2, 0};
+    begin({1, 2, 3});
+    push({1, 0});
+    push({1, 5});
+    push({3, 7});
+    push({2, 6});
+    push({2, 0});
 
     // Case 6 (verts 0, 1, 7 set, 2 patches)
-    t[131][0][0] = {1, 3};
-    t[131][0][1] = {0, 2};
-    t[131][0][2] = {0, 4};
-    t[131][0][3] = {1, 5};
+    begin({0, 1, 7});
+    push({1, 3});
+    push({0, 2});
+    push({0, 4});
+    push({1, 5});
 
-    t[131][1][0] = {7, 6};
-    t[131][1][1] = {7, 3};
-    t[131][1][2] = {7, 5};
+    next();
+    push({7, 6});
+    push({7, 3});
+    push({7, 5});
 
     // Case 7 (verts 1, 4, 7 set, 3 patches)
-    t[146][0][0] = {1, 3};
-    t[146][0][1] = {1, 0};
-    t[146][0][2] = {1, 5};
+    begin({1, 4, 7});
+    push({1, 3});
+    push({1, 0});
+    push({1, 5});
 
-    t[146][1][0] = {4, 6};
-    t[146][1][1] = {4, 5};
-    t[146][1][2] = {4, 0};
+    next();
+    push({4, 6});
+    push({4, 5});
+    push({4, 0});
 
-    t[146][2][0] = {7, 6};
-    t[146][2][1] = {7, 3};
-    t[146][2][2] = {7, 5};
+    next();
+    push({7, 6});
+    push({7, 3});
+    push({7, 5});
 
     // Case 8 (verts 0, 1, 2, 3 set, 1 patch)
-    t[15][0][0] = {0, 4};
-    t[15][0][1] = {1, 5};
-    t[15][0][2] = {3, 7};
-    t[15][0][3] = {2, 6};
+    begin({0, 1, 2, 3});
+    push({0, 4});
+    push({1, 5});
+    push({3, 7});
+    push({2, 6});
+
+    // Case 9   (verts 0, 2, 3, 6 set; 1 patch)
+    begin({0, 2, 3, 6});
+    push({0, 1});
+    push({3, 1});
+    push({3, 7});
+    push({6, 7});
+    push({6, 4});
+    push({0, 4});
+
+    // Case 10  (verts 0, 4, 3, 7 set; 2 patches)
+    begin({0, 4, 3, 7});
+    push({0, 1});
+    push({0, 2});
+    push({4, 6});
+    push({4, 5});
+
+    next();
+    push({3, 2});
+    push({3, 1});
+    push({7, 5});
+    push({7, 6});
+
+    // Case 11 (verts 0, 2, 3, 7; 1 patch)
+    begin({0, 2, 3, 7});
+    push({0, 1});
+    push({3, 1});
+    push({7, 5});
+    push({7, 6});
+    push({2, 6});
+    push({0, 4});
+
+    // Case 12 (verts 1, 3, 2, 4; 2 patches)
+    begin({1, 2, 3, 4});
+    push({4, 6});
+    push({4, 5});
+    push({4, 0});
+
+    next();
+    push({1, 0});
+    push({1, 5});
+    push({3, 7});
+    push({2, 6});
+    push({2, 0});
+
+    // Case 13 (verts 0, 3, 6, 1; 4 patches)
+    begin({0, 3, 6, 1});
+    push({0, 2});
+    push({0, 4});
+    push({0, 1});
+
+    next();
+    push({3, 7});
+    push({3, 2});
+    push({3, 1});
+
+    next();
+    push({6, 4});
+    push({6, 2});
+    push({6, 7});
+
+    next();
+    push({5, 7});
+    push({5, 1});
+    push({5, 4});
+
+    // Case 14 (verts 1, 3, 2, 6; 1 patch)
+    begin({1, 3, 2, 6});
+    push({1, 5});
+    push({3, 7});
+    push({6, 7});
+    push({6, 4});
+    push({2, 0});
+    push({1, 0});
 }
 
 ////////////////////////////////////////////////////////////////////////////////
