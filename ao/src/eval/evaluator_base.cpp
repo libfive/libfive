@@ -410,7 +410,8 @@ void EvaluatorBase::specialize(const Eigen::Vector3f& p)
 bool EvaluatorBase::isInside(const Eigen::Vector3f& p)
 {
     set(p, 0);
-    auto vs = values(1);
+    auto ds = derivs(1);
+    auto vs = ds.v;
 
     // Unambiguous cases
     if (vs[0] < 0)
@@ -420,6 +421,14 @@ bool EvaluatorBase::isInside(const Eigen::Vector3f& p)
     else if (vs[0] > 0)
     {
         return false;
+    }
+
+    // Special case to save time on non-ambiguous features: we can get both
+    // positive and negative values out if there's a non-zero gradient
+    // (same as single-feature case below).
+    if (!isAmbiguous())
+    {
+        return (ds.dx[0] != 0) || (ds.dy[0] != 0) || (ds.dz[0] != 0);
     }
 
     // Otherwise, we need to handle the zero-crossing case!
