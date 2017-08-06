@@ -129,7 +129,24 @@ float EvaluatorBase::eval(const Eigen::Vector3f& p)
 float EvaluatorBase::baseEval(const Eigen::Vector3f& p)
 {
     auto prev_tape = tape;
-    tape = tapes.begin();
+
+    // Walk up the tape stack until we find an interval-type tape
+    // that contains the given point, or we hit the start of the stack
+    while (tape != tapes.begin())
+    {
+        if (tape->type == Tape::INTERVAL &&
+            p.x() >= tape->X.lower() && p.x() <= tape->X.upper() &&
+            p.y() >= tape->Y.lower() && p.y() <= tape->Y.upper() &&
+            p.z() >= tape->Z.lower() && p.z() <= tape->Z.upper())
+        {
+            break;
+        }
+        else
+        {
+            tape--;
+        }
+    }
+
     auto out = eval(p);
     tape = prev_tape;
     return out;
@@ -154,7 +171,7 @@ void EvaluatorBase::set(const Eigen::Vector3f& lower, const Eigen::Vector3f& upp
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void EvaluatorBase::pushTape()
+void EvaluatorBase::pushTape(Tape::Type t)
 {
     auto prev_tape = tape;
 
@@ -176,6 +193,9 @@ void EvaluatorBase::pushTape()
     assert(tape != tapes.end());
     assert(tape != tapes.begin());
     assert(tape->t.capacity() >= prev_tape->t.size());
+
+    // Reset tape type
+    tape->type = t;
 
     // Now, use the data in disabled and remap to make the new tape
     for (const auto& c : prev_tape->t)
@@ -250,7 +270,10 @@ void EvaluatorBase::push()
         }
     }
 
-    pushTape();
+    pushTape(Tape::INTERVAL);
+    tape->X = result.i[X];
+    tape->Y = result.i[Y];
+    tape->Z = result.i[Z];
 }
 
 Feature EvaluatorBase::push(const Feature& f)
@@ -320,7 +343,8 @@ Feature EvaluatorBase::push(const Feature& f)
     }
     assert(itr == choices.end());
 
-    pushTape();
+    pushTape(Tape::FEATURE);
+
     return out;
 }
 
@@ -380,7 +404,7 @@ void EvaluatorBase::specialize(const Eigen::Vector3f& p)
         }
     }
 
-    pushTape();
+    pushTape(Tape::SPECIALIZED);
 }
 
 bool EvaluatorBase::isInside(const Eigen::Vector3f& p)

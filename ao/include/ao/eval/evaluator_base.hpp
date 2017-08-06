@@ -42,9 +42,9 @@ public:
     Interval::I eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper);
 
     /*
-     *  Evaluates the given point using the root tape
-     *  (this is useful when we're not sure about which region
-     *  the points fits into)
+     *  Evaluates the given point using whichever tape in the tape stack
+     *  contains the point in its region (this is useful when we're not
+     *  sure about which region the points fits into)
      */
     float baseEval(const Eigen::Vector3f& p);
 
@@ -203,6 +203,8 @@ protected:
     struct Tape {
         std::vector<Clause> t;
         Clause::Id i;
+        Interval::I X, Y, Z;
+        enum Type { UNKNOWN, INTERVAL, SPECIALIZED, FEATURE } type;
     };
 
     /*
@@ -211,7 +213,7 @@ protected:
      *  Requires disabled and remap both to contain useful data; this is used
      *  when deciding which clauses to push into the new tape.
      */
-    void pushTape();
+    void pushTape(Tape::Type t);
 
     /*
      *  Evaluate a single clause, populating the out array
