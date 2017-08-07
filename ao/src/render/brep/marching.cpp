@@ -161,14 +161,14 @@ void loadCases<3>(MarchingTable<3>& t)
     push({0, 2});
     push({0, 4});
 
-    // Case 2 (verts 0 and 1 set, 1 patch)
+    // Case 2
     begin({0, 1});
     push({1, 3});
     push({0, 2});
     push({0, 4});
     push({1, 5});
 
-    // Case 3 (verts 0 and 5 set, 2 patches)
+    // Case 3
     begin({0, 5});
     push({0, 1});
     push({0, 2});
@@ -179,7 +179,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({5, 4});
     push({5, 1});
 
-    // Case 4 (verts 0 and 7 set, 2 patches)
+    // Case 4
     begin({0, 7});
     push({0, 1});
     push({0, 2});
@@ -190,7 +190,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({7, 3});
     push({7, 5});
 
-    // Case 5 (verts 1, 2, 3 set, 1 patch)
+    // Case 5
     begin({1, 2, 3});
     push({1, 0});
     push({1, 5});
@@ -198,7 +198,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({2, 6});
     push({2, 0});
 
-    // Case 6 (verts 0, 1, 7 set, 2 patches)
+    // Case 6
     begin({0, 1, 7});
     push({1, 3});
     push({0, 2});
@@ -210,7 +210,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({7, 3});
     push({7, 5});
 
-    // Case 7 (verts 1, 4, 7 set, 3 patches)
+    // Case 7
     begin({1, 4, 7});
     push({1, 3});
     push({1, 0});
@@ -226,14 +226,14 @@ void loadCases<3>(MarchingTable<3>& t)
     push({7, 3});
     push({7, 5});
 
-    // Case 8 (verts 0, 1, 2, 3 set, 1 patch)
+    // Case 8
     begin({0, 1, 2, 3});
     push({0, 4});
     push({1, 5});
     push({3, 7});
     push({2, 6});
 
-    // Case 9   (verts 0, 2, 3, 6 set; 1 patch)
+    // Case 9
     begin({0, 2, 3, 6});
     push({0, 1});
     push({3, 1});
@@ -242,7 +242,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({6, 4});
     push({0, 4});
 
-    // Case 10  (verts 0, 4, 3, 7 set; 2 patches)
+    // Case 10
     begin({0, 4, 3, 7});
     push({0, 1});
     push({0, 2});
@@ -255,7 +255,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({7, 5});
     push({7, 6});
 
-    // Case 11 (verts 0, 2, 3, 7; 1 patch)
+    // Case 11
     begin({0, 2, 3, 7});
     push({0, 1});
     push({3, 1});
@@ -264,7 +264,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({2, 6});
     push({0, 4});
 
-    // Case 12 (verts 1, 3, 2, 4; 2 patches)
+    // Case 12
     begin({1, 2, 3, 4});
     push({4, 6});
     push({4, 5});
@@ -277,7 +277,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({2, 6});
     push({2, 0});
 
-    // Case 13 (verts 0, 3, 6, 1; 4 patches)
+    // Case 13
     begin({0, 3, 6, 1});
     push({0, 2});
     push({0, 4});
@@ -298,7 +298,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({5, 1});
     push({5, 4});
 
-    // Case 14 (verts 1, 3, 2, 6; 1 patch)
+    // Case 14
     begin({1, 3, 2, 6});
     push({1, 5});
     push({3, 7});
@@ -306,6 +306,74 @@ void loadCases<3>(MarchingTable<3>& t)
     push({6, 4});
     push({2, 0});
     push({1, 0});
+
+    // Case 15
+    begin({0, 2, 3,5, 6});
+    push({0, 1});
+    push({3, 1});
+    push({3, 7});
+    push({6, 7});
+    push({6, 4});
+    push({0, 4});
+
+    next();
+    push({5, 7});
+    push({5, 1});
+    push({5, 4});
+
+    // Case 16
+    begin({2, 3, 4, 5, 6});
+    push({3,1});
+    push({3,7});
+    push({6, 7});
+    push({5, 7});
+    push({5, 1});
+    push({4, 0});
+    push({2, 0});
+
+    // Case 17
+    begin({0, 4, 5, 7});
+    push({0, 2});
+    push({6, 2});
+    push({7, 3});
+    push({5, 1});
+    push({0, 1});
+
+    // Case 18
+    begin({1, 2, 3, 4, 5, 6});
+    push({1, 0});
+    push({4, 0});
+    push({2, 0});
+
+    next();
+    push({6, 7});
+    push({5, 7});
+    push({3, 7});
+
+    // Case 19
+    begin({1, 2, 3, 4, 6, 7});
+    push({1, 0});
+    push({1, 5});
+    push({7, 5});
+    push({4, 5});
+    push({4, 0});
+    push({2, 0});
+
+    // Case 20
+    begin({2, 3, 4, 5, 6, 7});
+    push({4, 0});
+    push({5, 1});
+    push({3, 1});
+    push({2, 0});
+
+    // Case 21
+    begin({1,2,3,4,5,6,7});
+    push({1, 0});
+    push({4, 0});
+    push({2, 0});
+
+    // Case 22
+    // (nothing to do here)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
