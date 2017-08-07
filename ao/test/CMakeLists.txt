@@ -6,6 +6,7 @@ set(SRCS main.cpp
     eval.cpp
     heightmap.cpp
     lib.cpp
+    marching.cpp
     mesh.cpp
     feature.cpp
     solver.cpp

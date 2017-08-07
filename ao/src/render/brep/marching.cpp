@@ -1,41 +1,10 @@
-#include <array>
-#include <set>
-
+#include <iostream>
 #include <Eigen/Eigen>
 
-////////////////////////////////////////////////////////////////////////////////
+#include "ao/render/brep/marching.hpp"
 
-/*  Compile-time power */
-static constexpr int _pow(unsigned P, unsigned N)
-{ return (N == 0) ? 1 : P * _pow(P, N - 1); }
-
-/*  Returns the number of vertices in an N-dimensional cube */
-static constexpr int _verts(unsigned N)
-{ return _pow(2, N - 1); }
-
-/*  Returns the number of edges in an N-dimensional cube */
-static constexpr int _edges(unsigned N)
-{ return (N == 1) ? 0 : _edges(N - 1) * 2 + _verts(N - 1); }
-
-////////////////////////////////////////////////////////////////////////////////
-
-/*  Represents an edge as a corner-to-corner mapping */
-typedef std::pair<int, int> Edge;
-
-/*  Represents the set of edges that define a particular patch
- *  There may not be _edges(N) edges for a particular patch;
- *  use -1 to terminate the array  */
-template <unsigned N>
-using PatchEdges = std::array<Edge, _edges(N)>;
-
-/*  Represents a full set of patches
- *  Use an empty patch (-1) to terminate */
-template <unsigned N>
-using Patches = std::array<PatchEdges<N>, _pow(2, N - 1)>;
-
-/*  Represents a full Marching cubes or squares table  */
-template <unsigned N>
-using MarchingTable = std::array<Patches<N>, _pow(2, _verts(N))>;
+namespace Kernel {
+namespace Marching {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -44,10 +13,14 @@ using MarchingTable = std::array<Patches<N>, _pow(2, _verts(N))>;
  *  (must be specialized to a particular dimension)
  */
 template <unsigned N>
-static std::list<Eigen::Matrix<double, N, N>> rigidRotations();
+static std::list<Eigen::Matrix<double, N, N>,
+                 Eigen::aligned_allocator<Eigen::Matrix<double, N, N>>>
+    rigidRotations();
 
 template <>
-std::list<Eigen::Matrix<double, 2, 2>> rigidRotations<2>()
+std::list<Eigen::Matrix<double, 2, 2>,
+          Eigen::aligned_allocator<Eigen::Matrix<double, 2, 2>>>
+    rigidRotations<2>()
 {
     Eigen::Matrix2d r;
     r = Eigen::Rotation2Dd(M_PI/2);
@@ -55,7 +28,9 @@ std::list<Eigen::Matrix<double, 2, 2>> rigidRotations<2>()
 }
 
 template <>
-std::list<Eigen::Matrix<double, 3, 3>> rigidRotations<3>()
+std::list<Eigen::Matrix<double, 3, 3>,
+          Eigen::aligned_allocator<Eigen::Matrix<double, 3, 3>>>
+    rigidRotations<3>()
 {
     Eigen::Matrix3d x, y, z;
     x = Eigen::AngleAxisd(M_PI/2, Eigen::Vector3d::UnitX());
@@ -89,7 +64,7 @@ template <>
 void loadCases<2>(MarchingTable<2>& t)
 {
     // Empty
-    t[0][0][0].first = -1;
+    // Nothing to do here
 
     // Single corner
     t[1][0][0] = {0, 1};
@@ -104,6 +79,13 @@ void loadCases<2>(MarchingTable<2>& t)
     t[9][0][1] = {0, 2};
     t[9][1][0] = {3, 2};
     t[9][1][1] = {3, 1};
+
+    // All but one corner
+    t[7][0][0] = {1, 3};
+    t[7][0][1] = {2, 3};
+
+    // Filled
+    // Nothing to do here
 }
 
 /*
@@ -379,12 +361,14 @@ void loadCases<3>(MarchingTable<3>& t)
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
- *  Applies a rigid-body rotation to a bitmasked vertex,
- *  returning a new bitmasked vertex.
+ *  Applies a rigid-body rotation to a single vertex id
+ *  returning a new vertex (by id)
  */
 template <unsigned N>
-static uint8_t applyRotation(uint8_t vert, Eigen::Matrix<double, N, N> rot)
+static int rotateVertex(int vert, Eigen::Matrix<double, N, N> rot)
 {
+    assert(vert < _verts(N));
+
     // Unpack the bitmask into a vector
     Eigen::Matrix<double, N, 1> v;
     for (unsigned i=0; i < N; ++i)
@@ -393,13 +377,35 @@ static uint8_t applyRotation(uint8_t vert, Eigen::Matrix<double, N, N> rot)
     }
 
     Eigen::Matrix<double, N, 1> v_ = rot * v;
-    uint8_t vert_ = 0;
+    int vert_ = 0;
     for (unsigned i=0; i < N; ++i)
     {
         vert_ |= (v_(i) > 0) << i;
     }
     return vert_;
 }
+
+/*
+ *  Applies a rigid-body rotation to a bitmasked set of vertices
+ *  returning a new bitmasked set of vertices.
+ */
+template <unsigned N>
+static unsigned rotateMask(unsigned mask, Eigen::Matrix<double, N, N> rot)
+{
+    assert(mask < _pow(2, _verts(N)));
+
+    unsigned mask_ = 0;
+    for (unsigned i=0; i < _pow(2, N); ++i)
+    {
+        if (mask & (1 << i))
+        {
+            mask_ |= 1 << rotateVertex<N>(i, rot);
+        }
+    }
+    return mask_;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
 std::unique_ptr<MarchingTable<N>> buildTable()
@@ -421,7 +427,7 @@ std::unique_ptr<MarchingTable<N>> buildTable()
     auto rots = rigidRotations<N>();
 
     //  Start by marking the changed elements on the table
-    std::array<bool, _pow(2, N)> changed;
+    std::array<bool, _pow(2, _verts(N))> changed;
     for (unsigned i=0; i < table.size(); ++i)
     {
         changed[i] = table[i][0][0].first != -1;
@@ -442,7 +448,7 @@ std::unique_ptr<MarchingTable<N>> buildTable()
                 for (const auto& rot : rots)
                 {
                     const Patches<N>& patches = table[i];
-                    auto i_ = applyRotation<N>(i, rot);
+                    auto i_ = rotateMask<N>(i, rot);
                     Patches<N>& target = table[i_];
 
                     // If this new target is uninitialized, then populate it
@@ -461,8 +467,8 @@ std::unique_ptr<MarchingTable<N>> buildTable()
                                                patches[p][e].first != -1; ++e)
                             {
                                 target[p][e] = {
-                                    applyRotation<N>(patches[p][e].first, rot),
-                                    applyRotation<N>(patches[p][e].second, rot)
+                                    rotateVertex<N>(patches[p][e].first, rot),
+                                    rotateVertex<N>(patches[p][e].second, rot)
                                 };
                             }
                         }
@@ -472,8 +478,11 @@ std::unique_ptr<MarchingTable<N>> buildTable()
         }
     }
 
-    return _table;
+    return std::move(_table);
 }
 
 template std::unique_ptr<MarchingTable<2>> buildTable<2>();
 template std::unique_ptr<MarchingTable<3>> buildTable<3>();
+
+}   // namespace Marching
+}   // namespace Kernel
