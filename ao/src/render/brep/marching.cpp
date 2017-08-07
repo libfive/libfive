@@ -260,7 +260,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({2, 0});
 
     // Case 13
-    begin({0, 3, 6, 1});
+    begin({0, 3, 6, 5});
     push({0, 2});
     push({0, 4});
     push({0, 1});
@@ -314,7 +314,7 @@ void loadCases<3>(MarchingTable<3>& t)
     push({2, 0});
 
     // Case 17
-    begin({0, 4, 5, 7});
+    begin({0, 4, 5, 6, 7});
     push({0, 2});
     push({6, 2});
     push({7, 3});
