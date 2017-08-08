@@ -39,9 +39,30 @@ using Patches = std::array<PatchEdges<N>, _pow(2, N - 1)>;
 
 /*  Represents a full Marching cubes or squares table  */
 template <unsigned N>
-using MarchingTable = std::array<Patches<N>, _pow(2, _verts(N))>;
+using VertsToPatches = std::array<Patches<N>, _pow(2, _verts(N))>;
+
+// VertsToEdge is indexed by [a][b] where a and b are vertices, and
+// returns an edge index (0 to _edges(N) - 1)
+// The edge index is only used for indexing EdgeToPatch
+template <unsigned N>
+using VertsToEdge = std::array<std::array<int, _verts(N)>, _verts(N)>;
+
+// EdgeToVertex is indexed by [mask][edge] where mask is a corner bitmask and
+// edge is from VertsToEdge.  It returns a patch index (0-3 for 3D case,
+// 0-1 for 2D case)
+template <unsigned N>
+using EdgeToPatch = std::array<std::array<unsigned, _edges(N)>,
+                               _pow(2, _verts(N))>;
 
 ////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+struct MarchingTable
+{
+    VertsToPatches<N> v;
+    VertsToEdge<N> e;
+    EdgeToPatch<N> p;
+};
 
 template <unsigned N>
 std::unique_ptr<MarchingTable<N>> buildTable();
