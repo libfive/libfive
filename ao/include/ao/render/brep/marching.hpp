@@ -16,7 +16,7 @@ static constexpr int _verts(unsigned N)
 
 /*  Returns the number of edges in an N-dimensional cube */
 static constexpr int _edges(unsigned N)
-{ return (N == 1) ? 0 : _edges(N - 1) * 2 + _verts(N - 1); }
+{ return (N == 0) ? 0 : (_edges(N - 1) * 2 + _verts(N - 1)); }
 
 ////////////////////////////////////////////////////////////////////////////////
 
