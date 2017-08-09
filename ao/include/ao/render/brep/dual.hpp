@@ -145,10 +145,10 @@ void face3(const std::array<const XTree<3>*, 2> ts, V& v)
         constexpr auto Q = Axis::Q(A);
         constexpr auto R = Axis::R(A);
 
-        face3<V, A>({{ts[0]->child(A), ts[1]->child(0)}}, v);
-        face3<V, A>({{ts[0]->child(Q|A), ts[1]->child(Q)}}, v);
-        face3<V, A>({{ts[0]->child(R|A), ts[1]->child(R)}}, v);
-        face3<V, A>({{ts[0]->child(Q|R|A), ts[1]->child(Q|R)}}, v);
+        for (unsigned k : {0, (int)Q, (int)R, Q|R})
+        {
+            face3<V, A>({{ts[0]->child(k|A), ts[1]->child(k)}}, v);
+        }
 
         edge3<V, Q>({{ts[0]->child(A), ts[0]->child(R|A), ts[1]->child(0), ts[1]->child(R)}}, v);
         edge3<V, Q>({{ts[0]->child(Q|A), ts[0]->child(Q|R|A), ts[1]->child(Q), ts[1]->child(Q|R)}}, v);
