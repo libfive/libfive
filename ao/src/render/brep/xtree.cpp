@@ -213,6 +213,19 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
     }
     else if (type == Interval::AMBIGUOUS)
     {
+        // Find and store mask
+        // Iterate over all patches for this mask here
+            // Reset mass point
+            // Iterate over edges in this patch
+                // Search edge for intersection
+                // Store intersection in mass point
+                // Store position / normal(s) in intersections
+            // Create A and b matrices
+            // Load intersections into A and b matrices
+            // Compute and save AtA, AtB, BtB matrices
+            // Find this patch's vertex
+            // Save the vertex to the correct column of verts
+
         // Figure out if the leaf is manifold
         manifold = cornersAreManifold();
 
