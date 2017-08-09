@@ -163,6 +163,12 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
         manifold = true;
     }
 
+    // Build and store the corner mask
+    for (unsigned i=0; i < children.size(); ++i)
+    {
+        corner_mask |= (corners[i] == Interval::FILLED) << i;
+    }
+
     // Branch checking and simplifications
     if (isBranch())
     {
@@ -438,22 +444,6 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-uint8_t XTree<N>::cornerMask() const
-{
-    uint8_t mask = 0;
-    for (unsigned i=0; i < children.size(); ++i)
-    {
-        if (cornerState(i) == Interval::FILLED)
-        {
-            mask |= 1 << i;
-        }
-    }
-    return mask;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <unsigned N>
 double XTree<N>::findVertex()
 {
     Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(AtA);
@@ -537,7 +527,7 @@ bool XTree<2>::cornersAreManifold() const
 {
     const static bool corner_table[] =
         {1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1};
-    return corner_table[cornerMask()];
+    return corner_table[corner_mask];
 }
 
 template <>
@@ -686,7 +676,7 @@ bool XTree<3>::cornersAreManifold() const
          1,0,1,1,0,0,0,0,1,0,1,1,1,0,1,1,1,1,1,1,0,0,0,0,1,0,1,1,0,0,0,1,
          1,0,0,0,1,1,0,0,1,0,1,0,1,1,1,1,1,1,0,0,1,1,0,0,1,0,0,0,1,1,0,1,
          1,0,1,0,1,0,0,0,1,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1};
-    return corner_table[cornerMask()];
+    return corner_table[corner_mask];
 }
 
 template <>

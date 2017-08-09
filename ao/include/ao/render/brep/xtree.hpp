@@ -118,10 +118,8 @@ protected:
      */
     double findVertex();
 
-    /*
-     *  Returns a bitfield mask based on which corners are set
-     */
-    uint8_t cornerMask() const;
+    /*  Bitfield marking which corners are set */
+    uint8_t corner_mask=0;
 
     /*
      *  Returns edges (as indices into corners)
