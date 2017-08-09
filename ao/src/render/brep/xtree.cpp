@@ -26,7 +26,8 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
     // Lazy initialization of marching squares / cubes table
     if (mt.get() == nullptr)
     {
-        mt.reset(new Marching::MarchingTable<N>());
+        mt = Marching::buildTable<N>();
+        assert(mt->v[0][0][0].first == -1);
     }
 
     XTree<N>* out = nullptr;
@@ -229,39 +230,38 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
     }
     else if (type == Interval::AMBIGUOUS)
     {
-        // Find and store mask
-        // Iterate over all patches for this mask here
-            // Reset mass point
-            // Iterate over edges in this patch
-                // Search edge for intersection
-                // Store intersection in mass point
-                // Store position / normal(s) in intersections
-            // Create A and b matrices
-            // Load intersections into A and b matrices
-            // Compute and save AtA, AtB, BtB matrices
-            // Find this patch's vertex
-            // Save the vertex to the correct column of verts
-
         // Figure out if the leaf is manifold
         manifold = cornersAreManifold();
 
-        // We'll save every inside/outside crossing, so that we can build
-        // up the normals matrix in the manifold case
-        std::vector<Eigen::Matrix<double, N, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, N, 1>>> crossings;
-        // Reserve the max amount of space here to avoid re-allocating
-        crossings.reserve(edges().size() * 2);
+        // Here, we'll prepare to store position, {normal, value} pairs
+        // for every crossing and feature
+        typedef std::pair<Eigen::Matrix<double, N, 1>,
+                          Eigen::Matrix<double, N + 1, 1>> Intersection;
+        std::vector<Intersection, Eigen::aligned_allocator<Intersection>>
+            intersections;
 
-        // Populate mass point here, as we use it in both the non-manifold
-        // case (where it becomes the cell's vertex) and the manifold case
-        // (where we minimize the QEF towards it)
-        for (auto e : edges())
+        // RAM is cheap, so reserve a bunch of space here to avoid
+        // the need for re-allocating later on
+        intersections.reserve(_edges(N) * 2);
+
+        // Iterate over manifold patches for this corner case
+        const auto& ps = mt->v[corner_mask];
+        for (unsigned p=0; p < ps.size() && ps[p][0].first != -1; ++p)
         {
-            if (cornerState(e.first) != cornerState(e.second))
+            // Reset mass point and intersections
+            _mass_point = _mass_point.Zero();
+            intersections.clear();
+
+            // Iterate over edges in this patch
+            for (unsigned e=0; e < ps[p].size() && ps[p][e].first != -1; ++e)
             {
-                auto inside = (cornerState(e.first) == Interval::FILLED)
-                    ? cornerPos(e.first) : cornerPos(e.second);
-                auto outside = (cornerState(e.first) == Interval::FILLED)
-                    ? cornerPos(e.second) : cornerPos(e.first);
+                // Sanity-checking
+                assert(corners[ps[p][e].first] == Interval::FILLED);
+                assert(corners[ps[p][e].second] == Interval::EMPTY);
+
+                // Search edge for intersection
+                auto inside = cornerPos(ps[p][e].first);
+                auto outside = cornerPos(ps[p][e].second);
 
                 // We do an N-fold reduction at each stage
                 constexpr int SEARCH_COUNT = 4;
@@ -317,72 +317,53 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 mp << inside, 1;
                 _mass_point += mp;
 
-                // Store both inside and outside point for use in matrices
-                crossings.push_back(inside);
-                crossings.push_back(outside);
-            }
-        }
-        assert(region.contains(massPoint()));
-
-        // If this leaf cell is manifold, then find its vertex by building
-        // QEF matrices for each of the edge intersections, properly handling
-        // the case where an edge intersection touches multiple features.
-        if (manifold)
-        {
-            // Here, we'll store position, {normal, value} pairs
-            // for every crossing and feature
-            typedef std::pair<Eigen::Matrix<double, N, 1>,
-                              Eigen::Matrix<double, N + 1, 1>> Intersection;
-            std::vector<Intersection, Eigen::aligned_allocator<Intersection>>
-                intersections;
-            // RAM is cheap, so reserve a bunch of space here to avoid
-            // the need for re-allocating later on
-            intersections.reserve(crossings.size() * 2);
-
-            for (const auto& pt : crossings)
-            {
-                Eigen::Vector3d pos;
-                pos << pt, region.perp;
-                auto pos_ = pos.template cast<float>();
-
-                eval->set(pos_, 0);
-
-                auto saveIntersection = [&]()
+                // Here, we'll store position, {normal, value} pairs
+                // for every crossing (inside/outside) and feature
+                for (const auto& pt : {inside, outside})
                 {
-                    const auto ds = eval->derivs(1);
+                    Eigen::Vector3d pos;
+                    pos << pt, region.perp;
+                    auto pos_ = pos.template cast<float>();
 
-                    // Unpack 3D derivatives into XTree-specific
-                    // dimensionality, and find normal.
-                    const auto derivs3 = Eigen::Vector3d(
-                            ds.dx[0], ds.dy[0], ds.dz[0]);
-                    const auto derivs = derivs3.template head<N>();
-                    const auto norm = derivs.norm();
+                    eval->set(pos_, 0);
 
-                    // Find normalized derivatives and distance value
-                    Eigen::Matrix<double, N + 1, 1> dv;
-                    dv << derivs / norm, ds.v[0] / norm;
-                    if (!dv.array().isNaN().any())
+                    auto saveIntersection = [&]()
                     {
-                        intersections.push_back({pt, dv});
+                        const auto ds = eval->derivs(1);
+
+                        // Unpack 3D derivatives into XTree-specific
+                        // dimensionality, and find normal.
+                        const auto derivs3 = Eigen::Vector3d(
+                                ds.dx[0], ds.dy[0], ds.dz[0]);
+                        const auto derivs = derivs3.template head<N>();
+                        const auto norm = derivs.norm();
+
+                        // Find normalized derivatives and distance value
+                        Eigen::Matrix<double, N + 1, 1> dv;
+                        dv << derivs / norm, ds.v[0] / norm;
+                        if (!dv.array().isNaN().any())
+                        {
+                            intersections.push_back({pt, dv});
+                        }
+                    };
+
+                    if (eval->isAmbiguous(pos_))
+                    {
+                        const auto fs = eval->featuresAt(pos_);
+                        for (auto& f : fs)
+                        {
+                            // Evaluate feature-specific distance and
+                            // derivatives value at this particular point
+                            eval->push(f);
+                            saveIntersection();
+                            eval->pop();
+                        }
                     }
-                };
-
-                if (eval->isAmbiguous(pos_))
-                {
-                    const auto fs = eval->featuresAt(pos_);
-                    for (auto& f : fs)
+                    else
                     {
-                        // Evaluate feature-specific distance and
-                        // derivatives value at this particular point
-                        eval->push(f);
+                        // Perform a single evaluation and save the intersection
                         saveIntersection();
-                        eval->pop();
                     }
-                }
-                else
-                {
-                    // Perform a single evaluation and save the intersection
-                    saveIntersection();
                 }
             }
 
@@ -424,16 +405,10 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             AtB = At * b;
             BtB = b.transpose() * b;
 
-            // Find the vertex position, ignoring the error result
-            // (because this is the bottom of the recursion)
-            findVertex();
-        }
-        else
-        {
-            // For non-manifold leaf nodes, put the vertex at the mass point.
-            // As described in "Dual Contouring: The Secret Sauce", this improves
-            // mesh quality.
-            vert = massPoint();
+            // Find the vertex position, storing into the appropriate column
+            // of the vertex array and ignoring the error result (because
+            // this is the bottom of the recursion)
+            findVertex(p);
         }
     }
 
@@ -444,7 +419,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-double XTree<N>::findVertex()
+double XTree<N>::findVertex(unsigned index)
 {
     Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(AtA);
     assert(_mass_point(N) > 0);
@@ -463,7 +438,7 @@ double XTree<N>::findVertex()
     // Get rank from eigenvalues
     if (!isBranch())
     {
-        assert(rank == 0);
+        assert(index > 0 || rank == 0);
         rank = D.diagonal().count();
     }
 
@@ -473,21 +448,24 @@ double XTree<N>::findVertex()
     // Pseudo-inverse of A
     auto AtAp = U * D * U.transpose();
 
-    // Solve for vertex (minimizing distance to center)
+    // Solve for vertex position (minimizing distance to center)
     auto center = massPoint();
-    vert = AtAp * (AtB - (AtA * center)) + center;
+    Eigen::Matrix<double, N, 1> v = AtAp * (AtB - (AtA * center)) + center;
+
+    // Store this specific vertex in the verts matrix
+    verts.col(index) = v;
 
     // Return the QEF error
-    return (vert.matrix().transpose() * AtA * vert.matrix() - 2*vert.matrix().transpose() * AtB)[0] + BtB;
+    return (v.transpose() * AtA * v - 2*v.transpose() * AtB)[0] + BtB;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-Eigen::Vector3d XTree<N>::vert3() const
+Eigen::Vector3d XTree<N>::vert3(unsigned index) const
 {
     Eigen::Vector3d out;
-    out << vert, region.perp.template cast<double>();
+    out << vert(index), region.perp.template cast<double>();
     return out;
 }
 

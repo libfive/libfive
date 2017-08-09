@@ -62,7 +62,8 @@ void Mesh::operator()(const std::array<const XTree<3>*, 4>& ts)
         if (ts[i]->index == 0)
         {
             ts[i]->index = verts.size();
-            verts.push_back(ts[i]->vert.template cast<float>());
+            // TODO
+            verts.push_back(ts[i]->vert().template cast<float>());
         }
         vs[i] = ts[i]->index;
     }
@@ -72,8 +73,9 @@ void Mesh::operator()(const std::array<const XTree<3>*, 4>& ts)
     std::array<Eigen::Vector3d, 4> norms;
     for (unsigned i=0; i < norms.size(); ++i)
     {
-        norms[i] = (ts[(i + 3) % 4]->vert - ts[i]->vert).cross
-                   (ts[(i + 1) % 4]->vert - ts[i]->vert).normalized();
+        // TODO
+        norms[i] = (ts[(i + 3) % 4]->vert() - ts[i]->vert()).cross
+                   (ts[(i + 1) % 4]->vert() - ts[i]->vert()).normalized();
     }
     if (norms[0].dot(norms[3]) > norms[1].dot(norms[2]))
     {

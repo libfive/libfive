@@ -65,7 +65,7 @@ public:
      *  Unpack the vertex into a 3-element array
      *  (using the region's perpendicular coordinates)
      */
-    Eigen::Vector3d vert3() const;
+    Eigen::Vector3d vert3(unsigned index=0) const;
 
     /*  The region filled by this XTree */
     const Region<N> region;
@@ -76,8 +76,17 @@ public:
     /*  level = max(map(level, children)) + 1  */
     unsigned level=0;
 
-    /*  Vertex location, if this is a leaf  */
-    Eigen::Matrix<double, N, 1> vert;
+    /*  Vertex locations, if this is a leaf
+     *
+     *  To make cells manifold, we may store multiple vertices in a single
+     *  leaf; see writeup in marching.cpp for details  */
+    Eigen::Matrix<double, N, _pow(2, N - 1)> verts;
+
+    /*
+     *  Look up a particular vertex by index
+     */
+    Eigen::Matrix<double, N, 1> vert(unsigned i=0) const
+    { return verts.col(i); }
 
     /*  Array of filled states for the cell's corners
      *  (must only be FILLEd / EMPTY, not UNKNOWN or AMBIGUOUS ) */
@@ -116,7 +125,7 @@ protected:
      *
      *  Stores the vertex in vert and returns the QEF error
      */
-    double findVertex();
+    double findVertex(unsigned i=0);
 
     /*  Bitfield marking which corners are set */
     uint8_t corner_mask=0;

@@ -11,8 +11,8 @@ TEST_CASE("XTree<2>::vert")
     {
         Tree a = min(Tree::X() + 0.1, Tree::Y() - 0.2);
         auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {1, 1}));
-        REQUIRE(ta->vert.x() == Approx(-0.1));
-        REQUIRE(ta->vert.y() == Approx(0.2));
+        REQUIRE(ta->vert().x() == Approx(-0.1));
+        REQUIRE(ta->vert().y() == Approx(0.2));
     }
 }
 
@@ -112,10 +112,11 @@ TEST_CASE("XTree<3>::vert")
             }
             if (!t->isBranch() && t->type == Interval::AMBIGUOUS)
             {
-                CAPTURE(t->vert.transpose());
+                CAPTURE(t->vert().transpose());
                 CAPTURE(t->rank);
                 CAPTURE(t->level);
-                REQUIRE(eval.eval(t->vert.template cast<float>()) == Approx(0).epsilon(err));
+                REQUIRE(eval.eval(t->vert3().template cast<float>())
+                        == Approx(0).epsilon(err));
             }
         }
     };
@@ -140,7 +141,7 @@ TEST_CASE("XTree<3>::vert")
         walk(xtree, eval);
     }
 
-    SECTION("Sphere with circular cutout")
+    SECTION("Sphere with circular cutout (manifoldness)")
     {
         auto s = max(sphere(1), -circle(0.5));
         Region<3> r({-5, -5, -5}, {5, 5, 5});

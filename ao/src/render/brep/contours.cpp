@@ -19,7 +19,8 @@ public:
             if (ts[i]->index == 0)
             {
                 ts[i]->index = verts.size();
-                verts.push_back(ts[i]->vert.template cast<float>());
+                // TODO: use correct index
+                verts.push_back(ts[i]->vert().template cast<float>());
             }
             vs[i] = ts[i]->index;
         }

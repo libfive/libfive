@@ -16,6 +16,9 @@ TEST_CASE("Marching::buildTable<2>")
         auto& _t = t->v[i];
         REQUIRE(t->v[i][0][0].first != -1);
     }
+
+    REQUIRE(t->v[0][0][0].first == -1);
+    REQUIRE(t->v[15][0][0].first == -1);
 }
 
 TEST_CASE("Marching::buildTable<3>")
@@ -30,4 +33,7 @@ TEST_CASE("Marching::buildTable<3>")
         auto& _t = t->v[i];
         REQUIRE(t->v[i][0][0].first != -1);
     }
+
+    REQUIRE(t->v[0][0][0].first == -1);
+    REQUIRE(t->v[255][0][0].first == -1);
 }

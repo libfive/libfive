@@ -513,6 +513,7 @@ std::unique_ptr<MarchingTable<N>> buildTable()
         }
     }
     assert(j == 2*_edges(N));
+    assert(table->v[0][0][0].first == -1);
 
     return table;
 }
