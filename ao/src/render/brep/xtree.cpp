@@ -27,7 +27,6 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
     if (mt.get() == nullptr)
     {
         mt = Marching::buildTable<N>();
-        assert(mt->v[0][0][0].first == -1);
     }
 
     XTree<N>* out = nullptr;
