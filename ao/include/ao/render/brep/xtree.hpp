@@ -6,6 +6,7 @@
 #include <Eigen/Eigen>
 
 #include "ao/render/brep/region.hpp"
+#include "ao/render/brep/marching.hpp"
 #include "ao/eval/evaluator.hpp"
 #include "ao/eval/interval.hpp"
 
@@ -164,6 +165,10 @@ protected:
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;
+
+    /*  Single copy of the marching squares / cubes table, lazily
+     *  initialized when needed */
+    static std::unique_ptr<const Marching::MarchingTable<N>> mt;
 };
 
 }   // namespace Kernel

@@ -13,12 +13,22 @@ namespace Kernel {
 //  Here's our cutoff value (with a value set in the header)
 template <unsigned N> constexpr double XTree<N>::EIGENVALUE_CUTOFF;
 
+//  Allocating static var for marching cubes table
+template <unsigned N>
+std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
 std::unique_ptr<const XTree<N>> XTree<N>::build(
         Tree t, Region<N> region, double min_feature, bool multithread)
 {
+    // Lazy initialization of marching squares / cubes table
+    if (mt.get() == nullptr)
+    {
+        mt.reset(new Marching::MarchingTable<N>());
+    }
+
     XTree<N>* out = nullptr;
     if (multithread)
     {
