@@ -10,18 +10,22 @@ using namespace Kernel;
 struct Walker2
 {
     // Check winding of contours
-    void operator()(const std::array<const XTree<2>*, 2>& a)
+    template<Axis::Axis A, bool D>
+    void load(const std::array<const XTree<2>*, 2>& ts)
     {
-        auto norm = Eigen::Vector2d(a[0]->vert().y() - a[1]->vert().y(),
-                                    a[1]->vert().x() - a[0]->vert().x())
+        auto a = ts[!D];
+        auto b = ts[D];
+
+        auto norm = Eigen::Vector2d(a->vert().y() - b->vert().y(),
+                                    b->vert().x() - a->vert().x())
             .normalized();
-        Eigen::Vector2d center = (a[0]->vert() + a[1]->vert()).normalized();
+        Eigen::Vector2d center = (a->vert() + b->vert()).normalized();
         auto dot_ = -center.dot(norm);
         neg += (dot_ < 0);
         pos += (dot_ > 0);
         dot = fmin(dot, dot_);
 
-        for (auto t : a)
+        for (auto t : ts)
         {
             auto n = t->vert().norm();
             min_norm = fmin(n, min_norm);

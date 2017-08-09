@@ -11,20 +11,40 @@ namespace Kernel {
 class Segments : public BRep<2>
 {
 public:
-    void operator()(const std::array<const XTree<2>*, 2>& ts)
+    template <Axis::Axis A, bool D>
+    void load(const std::array<const XTree<2>*, 2>& ts)
     {
+        // From axis and contour direction, extract the relevant edge index
+        // numbers for the two cells in ts
+        int es[2];
+        if (D ^ (A == Axis::X))
+        {
+            es[0] = XTree<2>::mt->e[3][3^A];
+            es[1] = XTree<2>::mt->e[A][0];
+        }
+        else
+        {
+            es[0] = XTree<2>::mt->e[3^A][3];
+            es[1] = XTree<2>::mt->e[0][A];
+        }
+        assert(es[0] != -1);
+        assert(es[1] != -1);
+
         uint32_t vs[2];
         for (unsigned i=0; i < ts.size(); ++i)
         {
             if (ts[i]->index == 0)
             {
                 ts[i]->index = verts.size();
-                // TODO: use correct index
-                verts.push_back(ts[i]->vert().template cast<float>());
+
+                auto index = XTree<2>::mt->p[ts[i]->corner_mask][es[i]];
+                assert(index != -1);
+                verts.push_back(ts[i]->vert(index).template cast<float>());
             }
             vs[i] = ts[i]->index;
         }
-        branes.push_back({vs[0], vs[1]});
+        // Handle contour winding direction
+        branes.push_back({vs[!D], vs[D]});
     }
 };
 

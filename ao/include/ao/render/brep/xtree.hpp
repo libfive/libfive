@@ -106,6 +106,13 @@ public:
      * is cheaper than storing a map of XTree* -> uint32_t  */
     mutable uint32_t index=0;
 
+    /*  Bitfield marking which corners are set */
+    uint8_t corner_mask=0;
+
+    /*  Single copy of the marching squares / cubes table, lazily
+     *  initialized when needed */
+    static std::unique_ptr<const Marching::MarchingTable<N>> mt;
+
 protected:
 
     /*
@@ -126,9 +133,6 @@ protected:
      *  Stores the vertex in vert and returns the QEF error
      */
     double findVertex(unsigned i=0);
-
-    /*  Bitfield marking which corners are set */
-    uint8_t corner_mask=0;
 
     /*
      *  Returns edges (as indices into corners)
@@ -172,10 +176,6 @@ protected:
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;
-
-    /*  Single copy of the marching squares / cubes table, lazily
-     *  initialized when needed */
-    static std::unique_ptr<const Marching::MarchingTable<N>> mt;
 };
 
 }   // namespace Kernel

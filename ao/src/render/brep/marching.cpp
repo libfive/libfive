@@ -484,6 +484,9 @@ std::unique_ptr<MarchingTable<N>> buildTable()
     for (unsigned i=0; i < table->e.size(); ++i)
     {
         std::fill(table->e[i].begin(), table->e[i].end(), -1);
+    }
+    for (unsigned i=0; i < table->p.size(); ++i)
+    {
         std::fill(table->p[i].begin(), table->p[i].end(), -1);
     }
 

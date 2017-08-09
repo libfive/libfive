@@ -46,13 +46,16 @@ void edge2(const std::array<const XTree<2>*, 2>& ts, V& v)
         auto b = ts[index]->cornerState(corners[index] | A);
         if (a != b)
         {
-            auto ts_ = ts;
+            // Use either forward or reversed segment building
             if ((a == Interval::FILLED && A == Axis::Y) ||
                 (b == Interval::FILLED && A == Axis::X))
             {
-                std::reverse(ts_.begin(), ts_.end());
+                v.template load<A, 0>(ts);
             }
-            v(ts_);
+            else
+            {
+                v.template load<A, 1>(ts);
+            }
         }
     }
 }
