@@ -102,13 +102,13 @@ void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
          *  to add a face.  However, this is tricky when the edge spans multiple
          *  octree levels.
          *
-         * In the following diagram, the target edge is marked with an x
-         * (travelling into the screen):
+         * In the following diagram, the target edge is marked with an o
+         * (travelling out of the screen):
          *      _________________
-         *      | a |           |
-         *      ----x   c, d    |
-         *      | b |           |
-         *      ----------------|
+         *      | c |           |
+         *      ----o   b, d    |  ^ R
+         *      | a |           |  |
+         *      ----------------|  --> Q
          *
          *  If we were to look at corners of c or d, we wouldn't be looking at the
          *  correct edge.  Instead, we need to look at corners for the smallest cell
@@ -158,6 +158,30 @@ void face3(const std::array<const XTree<3>*, 2> ts, V& v)
     }
 }
 
+template <typename V, Axis::Axis A>
+void call_edge3(const XTree<3>* t, V& v)
+{
+    for (auto a : {Axis::Axis(0), A})
+    {
+        edge3<V, A>({{t->child(a),
+             t->child(Axis::Q(A) | a),
+             t->child(Axis::R(A) | a),
+             t->child(Axis::Q(A) | Axis::R(A) | a)}}, v);
+    }
+}
+
+template <typename V, Axis::Axis A>
+void call_face3(const XTree<3>* t, V& v)
+{
+    constexpr auto q = Axis::Q(A);
+    constexpr auto r = Axis::R(A);
+
+    face3<V, A>({{t->child(0), t->child(A)}}, v);
+    face3<V, A>({{t->child(q), t->child(q|A)}}, v);
+    face3<V, A>({{t->child(r), t->child(r|A)}}, v);
+    face3<V, A>({{t->child(q|r), t->child(q|r|A)}}, v);
+}
+
 template <>
 template <typename V>
 void Dual<3>::walk(const XTree<3>* t, V& v)
@@ -174,49 +198,15 @@ void Dual<3>::walk(const XTree<3>* t, V& v)
             }
         }
 
-        // Then call the face procedure on every pair of cells
-        face3<V, Axis::X>({{t->child(0), t->child(Axis::X)}}, v);
-        face3<V, Axis::X>({{t->child(Axis::Y), t->child(Axis::Y | Axis::X)}}, v);
-        face3<V, Axis::X>({{t->child(Axis::Z), t->child(Axis::Z | Axis::X)}}, v);
-        face3<V, Axis::X>({{t->child(Axis::Y | Axis::Z), t->child(Axis::Y | Axis::Z | Axis::X)}}, v);
+        // Call the face procedure on every pair of cells (4x per axis)
+        call_face3<V, Axis::X>(t, v);
+        call_face3<V, Axis::Y>(t, v);
+        call_face3<V, Axis::Z>(t, v);
 
-        face3<V, Axis::Y>({{t->child(0), t->child(Axis::Y)}}, v);
-        face3<V, Axis::Y>({{t->child(Axis::X), t->child(Axis::X | Axis::Y)}}, v);
-        face3<V, Axis::Y>({{t->child(Axis::Z), t->child(Axis::Z | Axis::Y)}}, v);
-        face3<V, Axis::Y>({{t->child(Axis::X | Axis::Z), t->child(Axis::X | Axis::Z | Axis::Y)}}, v);
-
-        face3<V, Axis::Z>({{t->child(0), t->child(Axis::Z)}}, v);
-        face3<V, Axis::Z>({{t->child(Axis::X), t->child(Axis::X | Axis::Z)}}, v);
-        face3<V, Axis::Z>({{t->child(Axis::Y), t->child(Axis::Y | Axis::Z)}}, v);
-        face3<V, Axis::Z>({{t->child(Axis::X | Axis::Y), t->child(Axis::X | Axis::Y | Axis::Z)}}, v);
-
-        // Call the edge function 6 times
-        edge3<V, Axis::Z>({{t->child(0),
-             t->child(Axis::X),
-             t->child(Axis::Y),
-             t->child(Axis::X | Axis::Y)}}, v);
-        edge3<V, Axis::Z>({{t->child(Axis::Z),
-             t->child(Axis::X | Axis::Z),
-             t->child(Axis::Y | Axis::Z),
-             t->child(Axis::X | Axis::Y | Axis::Z)}}, v);
-
-        edge3<V, Axis::X>({{t->child(0),
-             t->child(Axis::Y),
-             t->child(Axis::Z),
-             t->child(Axis::Y | Axis::Z)}}, v);
-        edge3<V, Axis::X>({{t->child(Axis::X),
-             t->child(Axis::Y | Axis::X),
-             t->child(Axis::Z | Axis::X),
-             t->child(Axis::Y | Axis::Z | Axis::X)}}, v);
-
-        edge3<V, Axis::Y>({{t->child(0),
-             t->child(Axis::Z),
-             t->child(Axis::X),
-             t->child(Axis::Z | Axis::X)}}, v);
-        edge3<V, Axis::Y>({{t->child(Axis::Y),
-             t->child(Axis::Z | Axis::Y),
-             t->child(Axis::X | Axis::Y),
-             t->child(Axis::Z | Axis::X | Axis::Y)}}, v);
+        // Call the edge function 6 times (2x per axis)
+        call_edge3<V, Axis::X>(t, v);
+        call_edge3<V, Axis::Y>(t, v);
+        call_edge3<V, Axis::Z>(t, v);
     }
 }
 
