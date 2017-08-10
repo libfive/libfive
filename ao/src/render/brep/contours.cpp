@@ -37,9 +37,12 @@ public:
             {
                 ts[i]->index = verts.size();
 
-                auto index = XTree<2>::mt->p[ts[i]->corner_mask][es[i]];
-                assert(index != -1);
-                verts.push_back(ts[i]->vert(index).template cast<float>());
+                // Look up the appropriate vertex id
+                auto vi = ts[i]->level > 0
+                    ? 0
+                    : XTree<2>::mt->p[ts[i]->corner_mask][es[i]];
+                assert(vi != -1);
+                verts.push_back(ts[i]->vert(vi).template cast<float>());
             }
             vs[i] = ts[i]->index;
         }

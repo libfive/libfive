@@ -10,14 +10,35 @@ namespace Kernel {
 template <Axis::Axis A, bool D>
 void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 {
+    int es[4];
+    {   // Unpack edge vertex pairs into edge indices
+        auto q = Axis::Q(A);
+        auto r = Axis::R(A);
+        std::vector<std::pair<unsigned, unsigned>> ev = {
+            {q|r, q|r|A},
+            {r, r|A},
+            {q, q|A},
+            {0, A}};
+        for (unsigned i=0; i < 4; ++i)
+        {
+            es[i] = XTree<3>::mt->e[D ? ev[i].first  : ev[i].second]
+                                   [D ? ev[i].second : ev[i].first];
+            assert(es[i] != -1);
+        }
+    }
+
     uint32_t vs[4];
     for (unsigned i=0; i < ts.size(); ++i)
     {
         if (ts[i]->index == 0)
         {
             ts[i]->index = verts.size();
-            // TODO
-            verts.push_back(ts[i]->vert().template cast<float>());
+
+            auto vi = ts[i]->level > 0
+                ? 0
+                : XTree<3>::mt->p[ts[i]->corner_mask][es[i]];
+            assert(vi != -1);
+            verts.push_back(ts[i]->vert(vi).template cast<float>());
         }
         vs[i] = ts[i]->index;
     }
