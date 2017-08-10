@@ -55,6 +55,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 double min_feature, bool multithread)
     : region(region)
 {
+    // Clear all indices
+    std::fill(index.begin(), index.end(), 0);
+
     // Do a preliminary evaluation to prune the tree
     auto i = eval->eval(region.lower3().template cast<float>(),
                         region.upper3().template cast<float>());

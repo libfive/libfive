@@ -33,18 +33,22 @@ public:
         uint32_t vs[2];
         for (unsigned i=0; i < ts.size(); ++i)
         {
-            if (ts[i]->index == 0)
+            auto vi = ts[i]->level > 0
+                ? 0
+                : XTree<2>::mt->p[ts[i]->corner_mask][es[i]];
+            assert(vi != -1);
+
+            // Sanity-checking manifoldness of collapsed cells
+            assert(ts[i]->level == 0 || ts[i]->vertex_count == 1);
+
+            if (ts[i]->index[vi] == 0)
             {
-                ts[i]->index = verts.size();
+                ts[i]->index[vi] = verts.size();
 
                 // Look up the appropriate vertex id
-                auto vi = ts[i]->level > 0
-                    ? 0
-                    : XTree<2>::mt->p[ts[i]->corner_mask][es[i]];
-                assert(vi != -1);
                 verts.push_back(ts[i]->vert(vi).template cast<float>());
             }
-            vs[i] = ts[i]->index;
+            vs[i] = ts[i]->index[vi];
         }
         // Handle contour winding direction
         branes.push_back({vs[!D], vs[D]});

@@ -102,9 +102,9 @@ public:
      *  used when merging intersections from lower-ranked children   */
     unsigned rank=0;
 
-    /* Used as a unqiue index when unpacking into a b-rep, since this
-     * is cheaper than storing a map of XTree* -> uint32_t  */
-    mutable uint32_t index=0;
+    /* Used as a unique per-vertex index when unpacking into a b-rep;   *
+     * this is cheaper than storing a map of XTree* -> uint32_t         */
+    mutable std::array<uint32_t, _pow(2, N - 1)> index;
 
     /*  Bitfield marking which corners are set */
     uint8_t corner_mask=0;

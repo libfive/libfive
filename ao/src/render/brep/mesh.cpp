@@ -30,23 +30,23 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
     uint32_t vs[4];
     for (unsigned i=0; i < ts.size(); ++i)
     {
-        if (ts[i]->index == 0)
+        // Load either a patch-specific vertex (if this is a lowest-level,
+        // potentially non-manifold cell) or the default vertex
+        auto vi = ts[i]->level > 0
+            ? 0
+            : XTree<3>::mt->p[ts[i]->corner_mask][es[i]];
+        assert(vi != -1);
+
+        // Sanity-checking manifoldness of collapsed cells
+        assert(ts[i]->level == 0 || ts[i]->vertex_count == 1);
+
+        if (ts[i]->index[vi] == 0)
         {
-            ts[i]->index = verts.size();
+            ts[i]->index[vi] = verts.size();
 
-            // Sanity-checking manifoldness of collapsed cells
-            if (ts[i]->level > 0) { assert(ts[i]->vertex_count == 1); }
-
-            // Load either a patch-specific vertex (if this is a lowest-level,
-            // potentially non-manifold cell) or the default vertex
-            auto vi = ts[i]->level > 0
-                ? 0
-                : XTree<3>::mt->p[ts[i]->corner_mask][es[i]];
-
-            assert(vi != -1);
             verts.push_back(ts[i]->vert(vi).template cast<float>());
         }
-        vs[i] = ts[i]->index;
+        vs[i] = ts[i]->index[vi];
     }
 
     // Handle polarity-based windings
