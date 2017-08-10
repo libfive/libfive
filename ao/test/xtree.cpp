@@ -180,7 +180,7 @@ TEST_CASE("XTree<3>::vert")
     {
         auto s = max(sphere(1), -circle(0.5));
         Region<3> r({-5, -5, -5}, {5, 5, 5});
-        auto xtree = XTree<3>::build(s, r, 1/6.0f);
+        auto xtree = XTree<3>::build(s, r, 1/9.0f);
         Evaluator eval(s);
         walk(xtree, eval, 0.01);
     }
