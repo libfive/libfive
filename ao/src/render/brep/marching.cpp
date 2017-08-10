@@ -89,7 +89,7 @@ void loadCases<2>(VertsToPatches<2>& t)
 }
 
 /*
- *  Based on Figure 5 in Nielsen's Dual Marching Cubes
+ *  Based on Figure 5 in Nielson's Dual Marching Cubes
  *
  *  Vertices are numbered as follows:
  *
