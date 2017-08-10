@@ -93,6 +93,32 @@ TEST_CASE("XTree<2>::rank")
     }
 }
 
+TEST_CASE("XTree<2>::vertex_count")
+{
+    SECTION("Single corner")
+    {
+        Tree a = min(Tree::X(), Tree::Y());
+        auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
+        REQUIRE(ta->rank == 2);
+        REQUIRE(ta->level == 0);
+        REQUIRE(ta->vertex_count == 1);
+    }
+    SECTION("Diagonally opposite corners")
+    {
+        Tree a = min(max(Tree::X(), Tree::Y()),
+                     max(1 - Tree::X(), 1 - Tree::Y()));
+        Evaluator eval(a);
+        auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
+        REQUIRE(ta->level == 0);
+        REQUIRE(ta->vertex_count == 2);
+        for (unsigned i=0; i < ta->vertex_count; ++i)
+        {
+            auto pt = ta->vert3(i).template cast<float>();
+            REQUIRE(fabs(eval.eval(pt)) < 1e-6);
+        }
+    }
+}
+
 TEST_CASE("XTree<3>::vert")
 {
     auto walk = [](std::unique_ptr<const XTree<3>>& xtree,

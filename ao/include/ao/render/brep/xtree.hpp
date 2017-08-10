@@ -86,7 +86,7 @@ public:
      *  Look up a particular vertex by index
      */
     Eigen::Matrix<double, N, 1> vert(unsigned i=0) const
-    { return verts.col(i); }
+    { assert(i < vertex_count); return verts.col(i); }
 
     /*  Array of filled states for the cell's corners
      *  (must only be FILLEd / EMPTY, not UNKNOWN or AMBIGUOUS ) */
@@ -108,6 +108,13 @@ public:
 
     /*  Bitfield marking which corners are set */
     uint8_t corner_mask=0;
+
+    /*  Stores the number of patches / vertices in this cell
+     *  (which could be more than one to keep the surface manifold */
+    unsigned vertex_count=0;
+
+    /*  Marks whether this cell is manifold or not  */
+    bool manifold=false;
 
     /*  Single copy of the marching squares / cubes table, lazily
      *  initialized when needed */
@@ -160,9 +167,6 @@ protected:
      *  (with respect to the leaves)
      */
     bool leafsAreManifold() const;
-
-    /*  Marks whether this cell is manifold or not  */
-    bool manifold=false;
 
     /*  Mass point is the average intersection location *
      *  (the last coordinate is number of points summed) */

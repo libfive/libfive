@@ -218,11 +218,15 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 // If the vertex error is below a threshold, and the vertex
                 // is well-placed in the distance field, then convert into
                 // a leaf by erasing all of the child branches
-                if (findVertex() < 1e-8 &&
+                if (findVertex(vertex_count++) < 1e-8 &&
                     fabs(eval->baseEval(vert3().template cast<float>())) < 1e-8)
                 {
                     std::for_each(children.begin(), children.end(),
                         [](std::unique_ptr<const XTree<N>>& o) { o.reset(); });
+                }
+                else
+                {
+                    vertex_count = 0;
                 }
             }
         }
@@ -245,22 +249,23 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
 
         // Iterate over manifold patches for this corner case
         const auto& ps = mt->v[corner_mask];
-        for (unsigned p=0; p < ps.size() && ps[p][0].first != -1; ++p)
+        while (vertex_count < ps.size() && ps[vertex_count][0].first != -1)
         {
             // Reset mass point and intersections
             _mass_point = _mass_point.Zero();
             intersections.clear();
 
             // Iterate over edges in this patch
-            for (unsigned e=0; e < ps[p].size() && ps[p][e].first != -1; ++e)
+            for (unsigned e=0; e < ps[vertex_count].size() &&
+                               ps[vertex_count][e].first != -1; ++e)
             {
                 // Sanity-checking
-                assert(corners[ps[p][e].first] == Interval::FILLED);
-                assert(corners[ps[p][e].second] == Interval::EMPTY);
+                assert(corners[ps[vertex_count][e].first] == Interval::FILLED);
+                assert(corners[ps[vertex_count][e].second] == Interval::EMPTY);
 
                 // Search edge for intersection
-                auto inside = cornerPos(ps[p][e].first);
-                auto outside = cornerPos(ps[p][e].second);
+                auto inside = cornerPos(ps[vertex_count][e].first);
+                auto outside = cornerPos(ps[vertex_count][e].second);
 
                 // We do an N-fold reduction at each stage
                 constexpr int SEARCH_COUNT = 4;
@@ -407,7 +412,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             // Find the vertex position, storing into the appropriate column
             // of the vertex array and ignoring the error result (because
             // this is the bottom of the recursion)
-            findVertex(p);
+            findVertex(vertex_count++);
         }
     }
 

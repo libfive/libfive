@@ -34,9 +34,15 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
         {
             ts[i]->index = verts.size();
 
+            // Sanity-checking manifoldness of collapsed cells
+            if (ts[i]->level > 0) { assert(ts[i]->vertex_count == 1); }
+
+            // Load either a patch-specific vertex (if this is a lowest-level,
+            // potentially non-manifold cell) or the default vertex
             auto vi = ts[i]->level > 0
                 ? 0
                 : XTree<3>::mt->p[ts[i]->corner_mask][es[i]];
+
             assert(vi != -1);
             verts.push_back(ts[i]->vert(vi).template cast<float>());
         }
