@@ -138,11 +138,20 @@ TEST_CASE("XTree<3>::vert")
             }
             if (!t->isBranch() && t->type == Interval::AMBIGUOUS)
             {
-                CAPTURE(t->vert().transpose());
-                CAPTURE(t->rank);
-                CAPTURE(t->level);
-                REQUIRE(eval.eval(t->vert3().template cast<float>())
-                        == Approx(0).epsilon(err));
+                for (unsigned i=0; i < t->vertex_count; ++i)
+                {
+                    CAPTURE(t->vert(i).transpose());
+                    CAPTURE(t->rank);
+                    CAPTURE(t->level);
+                    CAPTURE(t->vertex_count);
+                    CAPTURE(i);
+                    CAPTURE(t->manifold);
+                    CAPTURE((int)t->corner_mask);
+                    CAPTURE(t->region.lower.transpose());
+                    CAPTURE(t->region.upper.transpose());
+                    REQUIRE(eval.eval(t->vert3(i).template cast<float>())
+                            == Approx(0).epsilon(err));
+                }
             }
         }
     };
