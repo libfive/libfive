@@ -7,6 +7,49 @@
 
 namespace Kernel {
 
+template <Axis::Axis A, bool D>
+void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
+{
+    uint32_t vs[4];
+    for (unsigned i=0; i < ts.size(); ++i)
+    {
+        if (ts[i]->index == 0)
+        {
+            ts[i]->index = verts.size();
+            // TODO
+            verts.push_back(ts[i]->vert().template cast<float>());
+        }
+        vs[i] = ts[i]->index;
+    }
+
+    // Handle polarity-based windings
+    if (!D)
+    {
+        std::swap(vs[1], vs[2]);
+    }
+
+    // Pick a triangulation that prevents triangles from folding back
+    // on each other by checking normals.
+    std::array<Eigen::Vector3f, 4> norms;
+    for (unsigned i=0; i < norms.size(); ++i)
+    {
+        norms[i] = (verts[vs[(i + 3) % 4]] - verts[vs[i]]).cross
+                   (verts[vs[(i + 1) % 4]] - verts[vs[i]]).normalized();
+    }
+    if (norms[0].dot(norms[3]) > norms[1].dot(norms[2]))
+    {
+        branes.push_back({vs[0], vs[1], vs[2]});
+        branes.push_back({vs[2], vs[1], vs[3]});
+    }
+    else
+    {
+        branes.push_back({vs[0], vs[1], vs[3]});
+        branes.push_back({vs[0], vs[3], vs[2]});
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    double min_feature)
 {
@@ -54,40 +97,7 @@ void Mesh::line(Eigen::Vector3f a, Eigen::Vector3f b)
     branes.push_back({a_, a_, b_});
 }
 
-void Mesh::operator()(const std::array<const XTree<3>*, 4>& ts)
-{
-    uint32_t vs[4];
-    for (unsigned i=0; i < ts.size(); ++i)
-    {
-        if (ts[i]->index == 0)
-        {
-            ts[i]->index = verts.size();
-            // TODO
-            verts.push_back(ts[i]->vert().template cast<float>());
-        }
-        vs[i] = ts[i]->index;
-    }
-
-    // Pick a triangulation that prevents triangles from folding back
-    // on each other by checking normals.
-    std::array<Eigen::Vector3d, 4> norms;
-    for (unsigned i=0; i < norms.size(); ++i)
-    {
-        // TODO
-        norms[i] = (ts[(i + 3) % 4]->vert() - ts[i]->vert()).cross
-                   (ts[(i + 1) % 4]->vert() - ts[i]->vert()).normalized();
-    }
-    if (norms[0].dot(norms[3]) > norms[1].dot(norms[2]))
-    {
-        branes.push_back({vs[0], vs[1], vs[2]});
-        branes.push_back({vs[2], vs[1], vs[3]});
-    }
-    else
-    {
-        branes.push_back({vs[0], vs[1], vs[3]});
-        branes.push_back({vs[0], vs[3], vs[2]});
-    }
-}
+////////////////////////////////////////////////////////////////////////////////
 
 bool Mesh::saveSTL(const std::string& filename)
 {

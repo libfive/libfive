@@ -108,9 +108,9 @@ void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
          * In the following diagram, the target edge is marked with an o
          * (travelling out of the screen):
          *      _________________
-         *      | c |           |
-         *      ----o   b, d    |  ^ R
-         *      | a |           |  |
+         *      | 2 |           |
+         *      ----o   1, 3    |  ^ R
+         *      | 0 |           |  |
          *      ----------------|  --> Q
          *
          *  If we were to look at corners of c or d, we wouldn't be looking at the
@@ -129,12 +129,14 @@ void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
         auto b = ts[index]->cornerState(corners[index] | A);
         if (a != b)
         {
-            auto ts_ = ts;
             if (a != Interval::FILLED)
             {
-                std::swap(ts_[1], ts_[2]);
+                v.template load<A, 0>(ts);
             }
-            v(ts_);
+            else
+            {
+                v.template load<A, 1>(ts);
+            }
         }
     }
 }

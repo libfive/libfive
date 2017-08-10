@@ -2,6 +2,7 @@
 
 #include "ao/tree/tree.hpp"
 
+#include "ao/render/axes.hpp"
 #include "ao/render/brep/region.hpp"
 #include "ao/render/brep/brep.hpp"
 #include "ao/render/brep/xtree.hpp"
@@ -21,7 +22,8 @@ public:
     /*
      *  Called by Dual::walk to construct the triangle mesh
      */
-    void operator()(const std::array<const XTree<3>*, 4>& ts);
+    template <Axis::Axis A, bool D>
+    void load(const std::array<const XTree<3>*, 4>& ts);
 
 protected:
     /*

@@ -41,7 +41,8 @@ struct Walker2
 
 struct Walker3
 {
-    void operator()(const std::array<const XTree<3>*, 4>& a)
+    template <Axis::Axis A, bool D>
+    void load(const std::array<const XTree<3>*, 4>& a)
     {
         for (auto t : a)
         {
