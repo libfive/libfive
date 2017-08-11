@@ -1,4 +1,3 @@
-#include <QMainWindow>
 #include <QDesktopWidget>
 #include <QFileDialog>
 #include <QSplitter>
@@ -10,23 +9,36 @@
 #include "gui/interpreter.hpp"
 #include "gui/view.hpp"
 
-App::App(int& argc, char** argv)
-    : QApplication(argc, argv), editor(new Editor)
+#define CHECK_UNSAVED() \
+switch (checkUnsaved())                                         \
+{                                                               \
+    case QMessageBox::Save:     onSave();   /* FALLTHROUGH */   \
+    case QMessageBox::Ok:                   /* FALLTHROUGH */   \
+    case QMessageBox::Discard:  break;                          \
+    case QMessageBox::Cancel:   return;                         \
+    default:    assert(false);                                  \
+}
+
+App::App(int& argc, char **argv)
+    : QMainWindow(), editor(new Editor)
 {
-    auto window = new QMainWindow;
-    window->resize(QDesktopWidget().availableGeometry(window).size() * 0.5);
+    resize(QDesktopWidget().availableGeometry(this).size() * 0.5);
 
     auto layout = new QSplitter();
     auto view = new View();
     layout->addWidget(editor);
     layout->addWidget(view);
-    window->setCentralWidget(layout);
+    setCentralWidget(layout);
 
     // Sync document modification state with window
     connect(editor, &Editor::modificationChanged,
-            window, &QWidget::setWindowModified);
+            this, &QWidget::setWindowModified);
 
-    auto file_menu = window->menuBar()->addMenu("&File");
+    auto file_menu = menuBar()->addMenu("&File");
+
+    auto new_action = file_menu->addAction("New");
+    new_action->setShortcut(QKeySequence::New);
+    connect(new_action, &QAction::triggered, this, &App::onNew);
 
     auto open_action = file_menu->addAction("Open");
     open_action->setShortcut(QKeySequence::Open);
@@ -40,9 +52,18 @@ App::App(int& argc, char** argv)
     save_as_action->setShortcut(QKeySequence::SaveAs);
     connect(save_as_action, &QAction::triggered, this, &App::onSaveAs);
 
-    auto view_menu = window->menuBar()->addMenu("&View");
+    auto export_action = file_menu->addAction("Export mesh");
+    connect(export_action, &QAction::triggered, this, &App::onExport);
+
+    auto view_menu = menuBar()->addMenu("&View");
     connect(view_menu->addAction("Bounds / resolution"), &QAction::triggered,
-            view, [=](bool){ view->openSettings(); });
+            view, &View::openSettings);
+
+    auto show_axes_action = view_menu->addAction("Show axes");
+    show_axes_action->setCheckable(true);
+    show_axes_action->setChecked(true);
+    connect(show_axes_action, &QAction::triggered,
+            view, &View::showAxes);
 
     auto interpreter = new Interpreter();
     connect(editor, &Editor::scriptChanged,
@@ -55,11 +76,11 @@ App::App(int& argc, char** argv)
 
     interpreter->start();
 
-    window->show();
+    show();
 
     if (argc > 1 && loadFile(argv[1]))
     {
-        filename = argv[1];
+        setFilename(argv[1]);
     }
 }
 
@@ -67,10 +88,12 @@ App::App(int& argc, char** argv)
 
 void App::onOpen(bool)
 {
+    CHECK_UNSAVED();
+
     QString f = QFileDialog::getOpenFileName(nullptr, "Open", "", "*.ao");
     if (!f.isEmpty() && loadFile(f))
     {
-        filename = f;
+        setFilename(f);
     }
 }
 
@@ -115,6 +138,7 @@ bool App::saveFile(QString f)
     {
         QTextStream out(&file);
         out << editor->getScript();
+
         editor->setModified(false);
         return true;
     }
@@ -145,7 +169,80 @@ void App::onSaveAs(bool)
 #endif
         if (saveFile(f))
         {
-            filename = f;
+            setFilename(f);
         }
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void App::onNew(bool)
+{
+    CHECK_UNSAVED();
+
+    setFilename("");
+    editor->setScript("");
+    editor->setModified(false);
+}
+
+void App::closeEvent(QCloseEvent* event)
+{
+    if (closing)
+    {
+        event->accept();
+    }
+    else
+    {
+        switch (checkUnsaved())
+        {
+            case QMessageBox::Save:     onSave();   /* FALLTHROUGH */
+            case QMessageBox::Ok:                   /* FALLTHROUGH */
+            case QMessageBox::Discard:  event->accept(); break;
+            case QMessageBox::Cancel:   event->ignore(); break;
+            default:                    assert(false);
+        }
+        closing = event->isAccepted();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+QMessageBox::StandardButton App::checkUnsaved()
+{
+    if (isWindowModified())
+    {
+        auto m = new QMessageBox(this);
+        m->setText("Do you want to save your changes to this document?");
+        m->setInformativeText("If you don't save, your changes will be lost");
+        m->addButton(QMessageBox::Discard);
+        m->addButton(QMessageBox::Cancel);
+        m->addButton(QMessageBox::Save);
+        m->setIcon(QMessageBox::Warning);
+        m->setWindowModality(Qt::WindowModal);
+        auto r = static_cast<QMessageBox::StandardButton>(m->exec());
+        delete m;
+        return r;
+    }
+    else
+    {
+        return QMessageBox::Ok;
+    }
+}
+
+void App::setFilename(const QString& f)
+{
+    filename = f;
+    setWindowFilePath(f);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void App::onExport(bool)
+{
+    QString f = QFileDialog::getSaveFileName(nullptr, "Export", "", "*.stl");
+    if (f.isEmpty())
+    {
+        return;
+    }
+
 }

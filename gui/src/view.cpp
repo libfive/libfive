@@ -34,7 +34,7 @@ void View::setShapes(QList<Shape*> new_shapes)
     update();
 }
 
-void View::openSettings()
+void View::openSettings(bool)
 {
     if (pane.isNull())
     {
@@ -72,8 +72,11 @@ void View::paintGL()
         s->draw(m);
     }
 
-    axes.drawSolid(m);
-    axes.drawWire(m);
+    if (show_axes)
+    {
+        axes.drawSolid(m);
+        axes.drawWire(m);
+    }
 }
 
 void View::resizeGL(int width, int height)
@@ -125,5 +128,11 @@ void View::wheelEvent(QWheelEvent *event)
 {
     QOpenGLWidget::wheelEvent(event);
     camera.zoomIncremental(event->angleDelta().y(), mouse.pos);
+    update();
+}
+
+void View::showAxes(bool a)
+{
+    show_axes = a;
     update();
 }

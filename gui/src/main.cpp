@@ -1,3 +1,4 @@
+#include <QApplication>
 #include <QSurfaceFormat>
 
 #include "gui/app.hpp"
@@ -19,6 +20,7 @@ int main(int argc, char** argv)
     qRegisterMetaType<QList<Shape*>>("QList<Shape*>");
     qRegisterMetaType<QPair<uint32_t,uint32_t>>("QPair<uint32_t,uint32_t>");
 
+    QApplication app(argc, argv);
     App a(argc, argv);
-    a.exec();
+    app.exec();
 }

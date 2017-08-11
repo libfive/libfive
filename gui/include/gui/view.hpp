@@ -16,7 +16,8 @@ public:
 
 public slots:
     void setShapes(QList<Shape*> shapes);
-    void openSettings();
+    void openSettings(bool);
+    void showAxes(bool a);
 
 signals:
     void settingsChanged(Settings s);
@@ -48,4 +49,5 @@ protected:
     QList<Shape*> shapes;
     QPointer<SettingsPane> pane;
     Settings settings;
+    bool show_axes=true;
 };

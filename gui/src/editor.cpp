@@ -5,22 +5,24 @@
 #include "gui/color.hpp"
 
 Editor::Editor(QWidget* parent)
-    : QWidget(parent), txt(new QTextEdit), err(new QPlainTextEdit),
-      syntax(new Syntax(txt->document()))
+    : QWidget(parent), script(new QTextEdit), script_doc(script->document()),
+      syntax(new Syntax(script_doc)), err(new QPlainTextEdit),
+      err_doc(err->document())
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
 
-    txt->setAcceptRichText(false);
+    script->setAcceptRichText(false);
+    script->setLineWrapMode(QTextEdit::NoWrap);
     err->setReadOnly(true);
 
     {   // Use Courier as our default font
         QFont font;
         font.setFamily("Courier");
         QFontMetrics fm(font);
-        txt->setTabStopWidth(fm.width("    "));
-        txt->document()->setDefaultFont(font);
-        err->document()->setDefaultFont(font);
+        script->setTabStopWidth(fm.width("    "));
+        script_doc->setDefaultFont(font);
+        err_doc->setDefaultFont(font);
         err->setFixedHeight(fm.height());
     }
 
@@ -34,19 +36,19 @@ Editor::Editor(QWidget* parent)
     setStyleSheet("QTextEdit {" + style + "QPlainTextEdit { " + style);
 
     // Do parenthesis highlighting when the cursor moves
-    connect(txt, &QTextEdit::cursorPositionChanged, syntax,
-            [=](){ syntax->matchParens(txt, txt->textCursor().position()); });
+    connect(script, &QTextEdit::cursorPositionChanged, syntax,
+            [=](){ syntax->matchParens(script, script->textCursor().position()); });
 
     // Emit the script whenever text changes
-    connect(txt, &QTextEdit::textChanged, txt,
-            [=](){ this->scriptChanged(txt->document()->toPlainText()); });
+    connect(script, &QTextEdit::textChanged, script,
+            [=](){ this->scriptChanged(script_doc->toPlainText()); });
 
     // Emit modificationChanged to keep window in sync
-    connect(txt->document(), &QTextDocument::modificationChanged,
+    connect(script_doc, &QTextDocument::modificationChanged,
             this, &Editor::modificationChanged);
 
     auto layout = new QVBoxLayout;
-    layout->addWidget(txt);
+    layout->addWidget(script);
     layout->addWidget(err);
     layout->setMargin(0);
     layout->setSpacing(2);
@@ -61,7 +63,7 @@ void Editor::onResult(QString result)
 
 QList<QTextEdit::ExtraSelection> Editor::clearError(bool set)
 {
-    auto selections = txt->extraSelections();
+    auto selections = script->extraSelections();
     for (auto itr = selections.begin(); itr != selections.end(); ++itr)
     {
         if (itr->format == error_format)
@@ -72,7 +74,7 @@ QList<QTextEdit::ExtraSelection> Editor::clearError(bool set)
 
     if (set)
     {
-        txt->setExtraSelections(selections);
+        script->setExtraSelections(selections);
     }
     return selections;
 }
@@ -82,7 +84,7 @@ void Editor::setError(QPair<uint32_t, uint32_t> begin,
 {
     auto selections = clearError(false);
 
-    QTextCursor c(txt->document());
+    QTextCursor c(script_doc);
     c.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, begin.first);
     c.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, begin.second);
     c.movePosition(QTextCursor::Down, QTextCursor::KeepAnchor, end.first - begin.first);
@@ -94,7 +96,7 @@ void Editor::setError(QPair<uint32_t, uint32_t> begin,
     s.format = error_format;
     selections.append(s);
 
-    txt->setExtraSelections(selections);
+    script->setExtraSelections(selections);
 }
 
 void Editor::onError(QString result, QPair<uint32_t, uint32_t> start,
@@ -110,29 +112,29 @@ void Editor::setResult(bool valid, QString result)
     fmt.setForeground(valid ? Color::green : Color::red);
     err->setCurrentCharFormat(fmt);
     err->setPlainText(result);
-    int lines = err->document()->size().height() + 1;
-    QFontMetrics fm(err->document()->defaultFont());
+    int lines = err_doc->size().height() + 1;
+    QFontMetrics fm(err_doc->defaultFont());
     err->setFixedHeight(std::min(this->height()/3, lines * fm.lineSpacing()));
 }
 
 void Editor::setScript(const QString& s)
 {
-    txt->setPlainText(s);
+    script->setPlainText(s);
 }
 
 QString Editor::getScript() const
 {
-    return txt->toPlainText();
+    return script->toPlainText();
 }
 
 void Editor::setModified(bool m)
 {
-    txt->document()->setModified(m);
+    script_doc->setModified(m);
+    script_doc->modificationChanged(m);
 }
 
 void Editor::setKeywords(QString kws)
 {
     syntax->setKeywords(kws);
-    auto doc = txt->document();
-    doc->contentsChange(0, 0, doc->toPlainText().length());
+    script_doc->contentsChange(0, 0, script_doc->toPlainText().length());
 }

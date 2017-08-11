@@ -28,9 +28,12 @@ protected:
                   QPair<uint32_t, uint32_t> end);
     QList<QTextEdit::ExtraSelection> clearError(bool set=true);
 
-    QTextEdit* txt;
-    QPlainTextEdit* err;
+    QTextEdit* script;
+    QTextDocument* script_doc;
     Syntax* syntax;
+
+    QPlainTextEdit* err;
+    QTextDocument* err_doc;
 
     QTextCharFormat error_format;
 };
