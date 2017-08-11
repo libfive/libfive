@@ -345,7 +345,8 @@ bool Heightmap::savePNG(std::string filename)
     FILE* output = fopen(filename.c_str(), "wb");
     if (output == NULL)
     {
-        printf("Failed to open PNG file for writing (errno = %i)\n", errno);
+        fprintf(stderr, "Failed to open PNG file for writing (errno = %i)\n",
+                errno);
         return false;
     }
 
