@@ -10,6 +10,7 @@ public:
     Editor(QWidget* parent=nullptr);
     void setScript(const QString& s);
     QString getScript() const;
+    void setModified(bool m);
 
 public slots:
     void onResult(QString result);
@@ -19,6 +20,7 @@ public slots:
 
 signals:
     void scriptChanged(QString s);
+    void modificationChanged(bool m);
 
 protected:
     void setResult(bool valid, QString result);

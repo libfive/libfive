@@ -41,6 +41,10 @@ Editor::Editor(QWidget* parent)
     connect(txt, &QTextEdit::textChanged, txt,
             [=](){ this->scriptChanged(txt->document()->toPlainText()); });
 
+    // Emit modificationChanged to keep window in sync
+    connect(txt->document(), &QTextDocument::modificationChanged,
+            this, &Editor::modificationChanged);
+
     auto layout = new QVBoxLayout;
     layout->addWidget(txt);
     layout->addWidget(err);
@@ -119,6 +123,11 @@ void Editor::setScript(const QString& s)
 QString Editor::getScript() const
 {
     return txt->toPlainText();
+}
+
+void Editor::setModified(bool m)
+{
+    txt->document()->setModified(m);
 }
 
 void Editor::setKeywords(QString kws)

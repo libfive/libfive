@@ -22,6 +22,10 @@ App::App(int& argc, char** argv)
     layout->addWidget(view);
     window->setCentralWidget(layout);
 
+    // Sync document modification state with window
+    connect(editor, &Editor::modificationChanged,
+            window, &QWidget::setWindowModified);
+
     auto file_menu = window->menuBar()->addMenu("&File");
 
     auto open_action = file_menu->addAction("Open");
@@ -83,6 +87,7 @@ bool App::loadFile(QString f)
     else
     {
         editor->setScript(file.readAll());
+        editor->setModified(false);
         return true;
     }
 }
@@ -110,6 +115,7 @@ bool App::saveFile(QString f)
     {
         QTextStream out(&file);
         out << editor->getScript();
+        editor->setModified(false);
         return true;
     }
 }
