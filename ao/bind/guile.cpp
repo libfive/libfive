@@ -232,7 +232,6 @@ void init_ao_kernel(void*)
 (overload-semicommutative / 'div *)
 
 (overload-unary sqrt 'sqrt)
-(overload-unary abs 'abs)
 (overload-unary sin 'sin)
 (overload-unary cos 'cos)
 (overload-unary tan 'tan)
@@ -242,6 +241,10 @@ void init_ao_kernel(void*)
 
 (define (square f)
     (if (number? f) (* f f) (make-tree 'square f)))
+
+(define $abs abs)
+(define* (abs a)
+  (if (number? a) ($abs a) (max a (- a))))
 
 (define $atan atan)
 (define* (atan a #:optional b)
