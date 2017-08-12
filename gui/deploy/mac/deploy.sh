@@ -70,6 +70,7 @@ rm icon.png
 rm -rf $EXE $EXE.dmg
 mkdir $EXE
 cp ../README.md ./$EXE/README.txt
+cp -r ../gui/examples ./$EXE/examples
 cp -R $APP ./$EXE
 hdiutil create $EXE.dmg -volname "$EXE $VERSION" -srcfolder $EXE
 rm -rf $EXE
