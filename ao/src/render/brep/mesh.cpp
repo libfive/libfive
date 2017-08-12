@@ -126,7 +126,8 @@ void Mesh::line(Eigen::Vector3f a, Eigen::Vector3f b)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Mesh::saveSTL(const std::string& filename)
+bool Mesh::saveSTL(const std::string& filename,
+                   const std::list<const Mesh*>& meshes)
 {
     if (!boost::algorithm::iends_with(filename, ".stl"))
     {
@@ -152,29 +153,39 @@ bool Mesh::saveSTL(const std::string& filename)
         file.put(' ');
     }
 
-    // Write the number of triangles
-    uint32_t num = branes.size();
+    // Write the triangle count to the file
+    uint32_t num = std::accumulate(meshes.begin(), meshes.end(), (uint32_t)0,
+            [](uint32_t i, const Mesh* m){ return i + m->branes.size(); });
     file.write(reinterpret_cast<char*>(&num), sizeof(num));
 
-    for (const auto& t : branes)
+    for (const auto& m : meshes)
     {
-        // Write out the normal vector for this face (all zeros)
-        float norm[3] = {0, 0, 0};
-        file.write(reinterpret_cast<char*>(&norm), sizeof(norm));
-
-        // Iterate over vertices (which are indices into the verts list)
-        for (unsigned i=0; i < 3; ++i)
+        for (const auto& t : m->branes)
         {
-            auto v = verts[t[i]];
-            float vert[3] = {v.x(), v.y(), v.z()};
-            file.write(reinterpret_cast<char*>(&vert), sizeof(vert));
-        }
+            // Write out the normal vector for this face (all zeros)
+            float norm[3] = {0, 0, 0};
+            file.write(reinterpret_cast<char*>(&norm), sizeof(norm));
 
-        // Write out this face's attribute short
-        uint16_t attrib = 0;
-        file.write(reinterpret_cast<char*>(&attrib), sizeof(attrib));
+            // Iterate over vertices (which are indices into the verts list)
+            for (unsigned i=0; i < 3; ++i)
+            {
+                auto v = m->verts[t[i]];
+                float vert[3] = {v.x(), v.y(), v.z()};
+                file.write(reinterpret_cast<char*>(&vert), sizeof(vert));
+            }
+
+            // Write out this face's attribute short
+            uint16_t attrib = 0;
+            file.write(reinterpret_cast<char*>(&attrib), sizeof(attrib));
+        }
     }
+
     return true;
+}
+
+bool Mesh::saveSTL(const std::string& filename)
+{
+    return saveSTL(filename, {this});
 }
 
 }   // namespace Kernel

@@ -20,6 +20,12 @@ public:
     bool saveSTL(const std::string& filename);
 
     /*
+     *  Merge multiple bodies and write them to a single file
+     */
+    static bool saveSTL(const std::string& filename,
+                        const std::list<const Mesh*>& meshes);
+
+    /*
      *  Called by Dual::walk to construct the triangle mesh
      */
     template <Axis::Axis A, bool D>
