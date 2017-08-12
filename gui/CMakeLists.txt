@@ -52,8 +52,5 @@ target_link_libraries(Studio guile-ao-kernel
     Qt5::Widgets
     Qt5::Gui
     Qt5::OpenGL
-    Qt5::Network
     Qt5::Concurrent
 )
-
-################################################################################
