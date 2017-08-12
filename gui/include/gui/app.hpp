@@ -32,7 +32,13 @@ protected:
 
     void onExportReady(QList<const Kernel::Mesh*> shapes);
 
+    /*  Filename of the current file, or empty string */
     QString filename;
+
+    /*  Used to store the export target while meshes are being generated
+     *  and the main event loop is blocked by a progress dialog */
+    QString export_filename;
+
     Editor* editor;
     View* view;
     bool closing=false;

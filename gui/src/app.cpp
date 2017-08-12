@@ -215,17 +215,15 @@ QMessageBox::StandardButton App::checkUnsaved()
 {
     if (isWindowModified())
     {
-        auto m = new QMessageBox(this);
-        m->setText("Do you want to save your changes to this document?");
-        m->setInformativeText("If you don't save, your changes will be lost");
-        m->addButton(QMessageBox::Discard);
-        m->addButton(QMessageBox::Cancel);
-        m->addButton(QMessageBox::Save);
-        m->setIcon(QMessageBox::Warning);
-        m->setWindowModality(Qt::WindowModal);
-        auto r = static_cast<QMessageBox::StandardButton>(m->exec());
-        delete m;
-        return r;
+        QMessageBox m(this);
+        m.setText("Do you want to save your changes to this document?");
+        m.setInformativeText("If you don't save, your changes will be lost");
+        m.addButton(QMessageBox::Discard);
+        m.addButton(QMessageBox::Cancel);
+        m.addButton(QMessageBox::Save);
+        m.setIcon(QMessageBox::Warning);
+        m.setWindowModality(Qt::WindowModal);
+        return static_cast<QMessageBox::StandardButton>(m.exec());
     }
     else
     {
@@ -244,15 +242,27 @@ void App::setFilename(const QString& f)
 void App::onExportReady(QList<const Kernel::Mesh*> shapes)
 {
     disconnect(view, &View::meshesReady, this, &App::onExportReady);
+    if (!Kernel::Mesh::saveSTL(export_filename.toStdString(),
+                               shapes.toStdList()))
+    {
+        QMessageBox m(this);
+        m.setText("Could not save file");
+        m.setInformativeText("Check the console for more information");
+        m.addButton(QMessageBox::Ok);
+        m.setIcon(QMessageBox::Critical);
+        m.setWindowModality(Qt::WindowModal);
+        m.exec();
+    }
     emit(exportDone());
 }
 
 void App::onExport(bool)
 {
-    //QString f = QFileDialog::getSaveFileName(nullptr, "Export", "", "*.stl");
-    //if (f.isEmpty())
+    export_filename = QFileDialog::getSaveFileName(
+            nullptr, "Export", "", "*.stl");
+    if (export_filename.isEmpty())
     {
-//        return;
+        return;
     }
 
     connect(view, &View::meshesReady, this, &App::onExportReady);
@@ -262,7 +272,6 @@ void App::onExport(bool)
     p->setWindowModality(Qt::WindowModal);
     p->setLabelText("Exporting...");
     p->setMaximum(0);
-    connect(this, &App::exportDone, [](){ qDebug() << "Ending"; });
     connect(this, &App::exportDone, p, &QProgressDialog::reset);
     p->show();
 
