@@ -91,6 +91,11 @@ void Shape::startRender(Settings s)
     }
 }
 
+bool Shape::done() const
+{
+    return next.res == -1 && mesh_future.isFinished();
+}
+
 Kernel::Mesh* Shape::renderMesh(Settings s)
 {
     Kernel::Region<3> r({s.min.x(), s.min.y(), s.min.z()},

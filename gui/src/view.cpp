@@ -14,6 +14,7 @@ View::View(QWidget* parent)
 
 void View::setShapes(QList<Shape*> new_shapes)
 {
+    // Erase all existing shapes
     for (auto s : shapes)
     {
         disconnect(s, &Shape::gotMesh, this, &View::update);
@@ -21,9 +22,11 @@ void View::setShapes(QList<Shape*> new_shapes)
     }
     shapes.clear();
 
+    // Connect all new shapes
     for (auto s : new_shapes)
     {
         connect(s, &Shape::gotMesh, this, &View::update);
+        connect(s, &Shape::gotMesh, this, &View::checkMeshes);
         connect(this, &View::settingsChanged,
                 s, &Shape::startRender);
         s->startRender(settings);
@@ -135,4 +138,25 @@ void View::showAxes(bool a)
 {
     show_axes = a;
     update();
+}
+
+void View::checkMeshes() const
+{
+    bool all_done = true;
+    QList<const Kernel::Mesh*> meshes;
+    for (auto s : shapes)
+    {
+        if (s->done())
+        {
+            meshes.push_back(s->getMesh());
+        }
+        else
+        {
+            all_done = false;
+        }
+    }
+    if (all_done)
+    {
+        emit(meshesReady(meshes));
+    }
 }

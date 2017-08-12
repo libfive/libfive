@@ -19,8 +19,19 @@ public slots:
     void openSettings(bool);
     void showAxes(bool a);
 
+    /*
+     *  Emits shapesReady if all the shapes being drawn
+     *  are at their final (highest) resolution
+     */
+    void checkMeshes() const;
+
 signals:
     void settingsChanged(Settings s);
+
+    /*
+     *  Emitted when all shapes are done rendering at their highest resolution
+     */
+    void meshesReady(QList<const Kernel::Mesh*> shapes) const;
 
 protected slots:
     void onSettingsChanged(Settings s);

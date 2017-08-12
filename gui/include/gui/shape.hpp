@@ -24,6 +24,16 @@ public:
      */
     void startRender(Settings s);
 
+    /*
+     *  Checks whether the shape is done rendering
+     */
+    bool done() const;
+
+    /*
+     *  Returns the raw mesh object pointer
+     */
+    const Kernel::Mesh* getMesh() const { return mesh.data(); }
+
 signals:
     void gotMesh();
 

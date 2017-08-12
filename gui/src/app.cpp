@@ -1,5 +1,6 @@
 #include <QDesktopWidget>
 #include <QFileDialog>
+#include <QProgressDialog>
 #include <QSplitter>
 #include <QMenuBar>
 #include <QMessageBox>
@@ -20,12 +21,11 @@ switch (checkUnsaved())                                         \
 }
 
 App::App(int& argc, char **argv)
-    : QMainWindow(), editor(new Editor)
+    : QMainWindow(), editor(new Editor), view(new View)
 {
     resize(QDesktopWidget().availableGeometry(this).size() * 0.5);
 
     auto layout = new QSplitter();
-    auto view = new View();
     layout->addWidget(editor);
     layout->addWidget(view);
     setCentralWidget(layout);
@@ -40,19 +40,23 @@ App::App(int& argc, char **argv)
     new_action->setShortcut(QKeySequence::New);
     connect(new_action, &QAction::triggered, this, &App::onNew);
 
-    auto open_action = file_menu->addAction("Open");
+    auto open_action = file_menu->addAction("Open...");
     open_action->setShortcut(QKeySequence::Open);
     connect(open_action, &QAction::triggered, this, &App::onOpen);
+
+    file_menu->addSeparator();
 
     auto save_action = file_menu->addAction("Save");
     save_action->setShortcut(QKeySequence::Save);
     connect(save_action, &QAction::triggered, this, &App::onSave);
 
-    auto save_as_action = file_menu->addAction("Save As");
+    auto save_as_action = file_menu->addAction("Save As...");
     save_as_action->setShortcut(QKeySequence::SaveAs);
     connect(save_as_action, &QAction::triggered, this, &App::onSaveAs);
 
-    auto export_action = file_menu->addAction("Export mesh");
+    file_menu->addSeparator();
+
+    auto export_action = file_menu->addAction("Export...");
     connect(export_action, &QAction::triggered, this, &App::onExport);
 
     auto view_menu = menuBar()->addMenu("&View");
@@ -237,12 +241,30 @@ void App::setFilename(const QString& f)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void App::onExportReady(QList<const Kernel::Mesh*> shapes)
+{
+    disconnect(view, &View::meshesReady, this, &App::onExportReady);
+    emit(exportDone());
+}
+
 void App::onExport(bool)
 {
-    QString f = QFileDialog::getSaveFileName(nullptr, "Export", "", "*.stl");
-    if (f.isEmpty())
+    //QString f = QFileDialog::getSaveFileName(nullptr, "Export", "", "*.stl");
+    //if (f.isEmpty())
     {
-        return;
+//        return;
     }
 
+    connect(view, &View::meshesReady, this, &App::onExportReady);
+
+    auto p = new QProgressDialog(this);
+    p->setCancelButton(nullptr);
+    p->setWindowModality(Qt::WindowModal);
+    p->setLabelText("Exporting...");
+    p->setMaximum(0);
+    connect(this, &App::exportDone, [](){ qDebug() << "Ending"; });
+    connect(this, &App::exportDone, p, &QProgressDialog::reset);
+    p->show();
+
+    view->checkMeshes();
 }

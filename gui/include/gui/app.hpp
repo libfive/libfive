@@ -3,6 +3,8 @@
 #include <QMessageBox>
 
 class Editor;
+class View;
+namespace Kernel { class Mesh; }
 
 class App : public QMainWindow
 {
@@ -17,6 +19,9 @@ protected slots:
     void onNew(bool=false);
     void onExport(bool=false);
 
+signals:
+    void exportDone();
+
 protected:
     void closeEvent(QCloseEvent* event) override;
     QMessageBox::StandardButton checkUnsaved();
@@ -25,7 +30,10 @@ protected:
     bool loadFile(QString f);
     bool saveFile(QString f);
 
+    void onExportReady(QList<const Kernel::Mesh*> shapes);
+
     QString filename;
     Editor* editor;
+    View* view;
     bool closing=false;
 };
