@@ -106,9 +106,13 @@ bool App::loadFile(QString f)
     QFile file(f);
     if (!file.open(QIODevice::ReadOnly))
     {
-        QMessageBox::critical(NULL, "Loading error",
-                "<b>Loading error:</b><br>"
-                "File does not exist.");
+        QMessageBox m(this);
+        m.setText("Failed to open file");
+        m.setInformativeText("<code>" + f + "</code><br>does not exist");
+        m.addButton(QMessageBox::Ok);
+        m.setIcon(QMessageBox::Critical);
+        m.setWindowModality(Qt::WindowModal);
+        m.exec();
         return false;
     }
     else
@@ -126,16 +130,25 @@ bool App::saveFile(QString f)
     QFile file(f);
     if (!QFileInfo(QFileInfo(f).path()).isWritable())
     {
-        QMessageBox::critical(NULL, "Save As error",
-                "<b>Save As error:</b><br>"
-                "Target file is not writable.");
+
+        QMessageBox m(this);
+        m.setText("Failed to save file");
+        m.setInformativeText("<code>" + f + "</code><br>is not writable");
+        m.addButton(QMessageBox::Ok);
+        m.setIcon(QMessageBox::Critical);
+        m.setWindowModality(Qt::WindowModal);
+        m.exec();
         return false;
     }
     if (!file.open(QIODevice::WriteOnly))
     {
-        QMessageBox::critical(nullptr, "Save error",
-                "<b>Error while saving:</b><br>"
-                "File does not exist.");
+        QMessageBox m(this);
+        m.setText("Failed to save file");
+        m.setInformativeText("<code>" + f + "</code><br>does not exist");
+        m.addButton(QMessageBox::Ok);
+        m.setIcon(QMessageBox::Critical);
+        m.setWindowModality(Qt::WindowModal);
+        m.exec();
         return false;
     }
     else
