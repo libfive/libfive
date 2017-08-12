@@ -38,6 +38,9 @@ set(QOBJECTS
 
 if(APPLE)
     add_executable(Studio MACOSX_BUNDLE ${SRCS} ${QOBJECTS})
+    set_target_properties(Studio PROPERTIES
+           MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/deploy/mac/Info.plist
+    )
 else()
     add_executable(Studio ${SRCS})
 endif()
