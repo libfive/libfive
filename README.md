@@ -2,6 +2,7 @@
 ## Dependencies
 ### Geometry Kernel
 - [Eigen 3.x](http://eigen.tuxfamily.org/index.php?title=Main_Page)
+- [`libpng`](http://www.libpng.org/pub/png/libpng.html)
 
 ### Bindings and GUI
 - [Qt 5.7 or later](https://www.qt.io)
