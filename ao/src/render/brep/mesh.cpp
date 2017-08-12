@@ -1,3 +1,4 @@
+#include <numeric>
 #include <fstream>
 #include <boost/algorithm/string/predicate.hpp>
 
