@@ -8,7 +8,8 @@ VERSION=`git describe --exact-match --tags || echo "($(git rev-parse --abbrev-re
 VERSION=`echo $VERSION|sed s:/:-:g`
 
 cd ../../../build
-#ninja clean
+rm -rf $APP
+ninja clean
 ninja
 
 # Pull out framework paths info with otool
@@ -45,9 +46,17 @@ done
 
 # Update release number in Info.plist
 cd ../../../..
+cp ../gui/deploy/mac/Info.plist $APP/Contents/Info.plist
 sed -i "" "s:0\.0\.0:$VERSION:g" $APP/Contents/Info.plist
 
+# Build icon and deploy into bundle
+convert -background none ../gui/deploy/icon/icon.svg icon.png
+png2icns ao.icns icon.png
+mv ao.icns $APP/Contents/Resources/ao.icns
+rm icon.png
+
 # Create the disk image
+rm -rf $EXE $EXE.dmg
 mkdir $EXE
 cp ../README.md ./$EXE/README.txt
 cp -R $APP ./$EXE
