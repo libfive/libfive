@@ -24,6 +24,12 @@ void Interpreter::start()
 
 void Interpreter::init()
 {
+    // Modify environmental variables to use local Guile path
+    auto path = QCoreApplication::applicationDirPath().toLocal8Bit() +
+                "/../Resources/guile/";
+    qputenv("GUILE_LOAD_COMPILED_PATH", path + "ccache/");
+    qputenv("GUILE_LOAD_PATH", path + "scm/");
+
     scm_init_guile();
 
     scm_init_ao_kernel_module();

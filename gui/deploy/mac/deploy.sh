@@ -14,7 +14,8 @@ ninja
 
 # Pull out framework paths info with otool
 MACDEPLOYQT=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:\(.*\)lib/QtCore.*:\1/bin/macdeployqt:gp"`
-GUILE_SHARE=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:lib/libguile.*:share/:gp"`
+GUILE_SCM=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:lib/libguile.*:share/guile/2.2/:gp"`
+GUILE_CCACHE=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:lib/libguile.*:lib/guile/2.2/ccache/:gp"`
 
 $MACDEPLOYQT $APP
 
@@ -45,9 +46,14 @@ do
     fix_qt $LIB.framework/Versions/Current/$LIB
 done
 
-# Deploy Guile library
+# Deploy Guile library (including both bare scm files and precompiled,
+# on the assumption that stuff which is useful for this application
+# will have been pre-compiled at least one)
 cd ../Resources
-cp -r $GUILE_SHARE/guile .
+mkdir -p guile/scm
+mkdir -p guile/ccache
+cp -r $GUILE_SCM guile/scm/
+cp -r $GUILE_CCACHE guile/ccache/
 
 # Update release number in Info.plist
 cd ../../../..
