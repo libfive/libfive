@@ -14,6 +14,7 @@ ninja
 
 # Pull out framework paths info with otool
 MACDEPLOYQT=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:\(.*\)lib/QtCore.*:\1/bin/macdeployqt:gp"`
+GUILE_SHARE=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:lib/libguile.*:share/:gp"`
 
 $MACDEPLOYQT $APP
 
@@ -43,6 +44,10 @@ for LIB in $( ls|sed -n -e "s:\(Qt.*\)\.framework:\1:gp" )
 do
     fix_qt $LIB.framework/Versions/Current/$LIB
 done
+
+# Deploy Guile library
+cd ../Resources
+cp -r $GUILE_SHARE/guile .
 
 # Update release number in Info.plist
 cd ../../../..
