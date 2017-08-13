@@ -18,6 +18,7 @@ protected slots:
     void onSaveAs(bool=false);
     void onNew(bool=false);
     void onExport(bool=false);
+    void onAbout(bool=false);
 
 signals:
     void exportDone();

@@ -34,6 +34,7 @@ App::App(int& argc, char **argv)
     connect(editor, &Editor::modificationChanged,
             this, &QWidget::setWindowModified);
 
+    // File menu
     auto file_menu = menuBar()->addMenu("&File");
 
     auto new_action = file_menu->addAction("New");
@@ -59,6 +60,7 @@ App::App(int& argc, char **argv)
     auto export_action = file_menu->addAction("Export...");
     connect(export_action, &QAction::triggered, this, &App::onExport);
 
+    // Settings menu
     auto view_menu = menuBar()->addMenu("&View");
     connect(view_menu->addAction("Bounds / resolution"), &QAction::triggered,
             view, &View::openSettings);
@@ -69,6 +71,12 @@ App::App(int& argc, char **argv)
     connect(show_axes_action, &QAction::triggered,
             view, &View::showAxes);
 
+    // Help menu
+    auto help_menu = menuBar()->addMenu("Help");
+    connect(help_menu->addAction("About"), &QAction::triggered,
+            this, &App::onAbout);
+
+    // Start embedded Guile interpreter
     auto interpreter = new Interpreter();
     connect(editor, &Editor::scriptChanged,
             interpreter, &Interpreter::onScriptChanged);
@@ -289,4 +297,26 @@ void App::onExport(bool)
     p->show();
 
     view->checkMeshes();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void App::onAbout(bool)
+{
+    QString info = "A Scheme-based GUI for<br>the Ao CAD kernel<br><br>"
+                   "<a href=\"https://github.com/mkeeter/ao\">Source on Github</a>";
+#ifdef Q_OS_MAC
+    QWidget a;
+    QIcon icon(QCoreApplication::applicationDirPath() +
+               "/../Resources/ao.icns");
+    QMessageBox m(this);
+    auto px = icon.pixmap(128);
+    px.setDevicePixelRatio(devicePixelRatio());
+    m.setIconPixmap(px);
+    m.setText("Studio");
+    m.setInformativeText(info);
+    m.exec();
+#else
+    QMessageBox::about(this, "Studio",info);
+#endif
 }

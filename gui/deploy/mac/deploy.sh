@@ -61,10 +61,14 @@ cp ../gui/deploy/mac/Info.plist $APP/Contents/Info.plist
 sed -i "" "s:0\.0\.0:$VERSION:g" $APP/Contents/Info.plist
 
 # Build icon and deploy into bundle
-convert -background none ../gui/deploy/icon/icon.svg icon.png
-png2icns ao.icns icon.png
+convert -background none ../gui/deploy/icon/icon.svg icon512.png
+convert icon512.png -resize 256x256 icon256.png
+convert icon512.png -resize 128x128 icon128.png
+convert icon512.png -resize 32x32 icon32.png
+convert icon512.png -resize 16x16 icon16.png
+png2icns ao.icns icon512.png icon256.png icon128.png icon32.png icon16.png
 mv ao.icns $APP/Contents/Resources/ao.icns
-rm icon.png
+rm icon512.png icon256.png icon128.png icon32.png icon16.png
 
 # Create the disk image
 rm -rf $EXE $EXE.dmg
