@@ -21,16 +21,14 @@ public:
      */
     static std::unique_ptr<Heightmap> render(
             const Tree t, Voxels r,
-            const std::atomic_bool& abort,
-            Eigen::Matrix4f M=Eigen::Matrix4f::Identity(), size_t threads=8);
+            const std::atomic_bool& abort, size_t threads=8);
 
     /*
      *  Render an image using pre-allocated evaluators
      */
     static std::unique_ptr<Heightmap> render(
             const std::vector<Evaluator*>& es, Voxels r,
-            const std::atomic_bool& abort,
-            Eigen::Matrix4f M=Eigen::Matrix4f::Identity());
+            const std::atomic_bool& abort);
 
     /*
      *  Saves the depth component as a 16-bit single-channel PNG

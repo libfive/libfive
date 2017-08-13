@@ -83,24 +83,6 @@ TEST_CASE("Evaluator::gradient")
     }
 }
 
-TEST_CASE("Evaluator copy-constructor")
-{
-    // Deliberately construct out of order
-    auto a = Tree::var();
-    auto c = Tree::var();
-    auto b = Tree::var();
-
-    Evaluator e_(Tree(a*1 + b*2 + c*3),
-                {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
-
-    Evaluator e(e_);
-    REQUIRE(e.eval({0, 0, 0}) == Approx(34));
-    auto g = e.gradient({0, 0, 0});
-    REQUIRE(g.at(a.id()) == Approx(1.0f));
-    REQUIRE(g.at(b.id()) == Approx(2.0f));
-    REQUIRE(g.at(c.id()) == Approx(3.0f));
-}
-
 TEST_CASE("Evaluator::setVar")
 {
     // Deliberately construct out of order
@@ -186,80 +168,6 @@ TEST_CASE("Push / pop behavior")
 
     // Require that the evaluation gets 1
     REQUIRE(e.eval({1.0f, 2.0f, 0.0f}) == 2);
-}
-
-TEST_CASE("Matrix evaluation")
-{
-    auto t = Tree::X();
-    Eigen::Matrix4f M = Eigen::Matrix4f::Identity();
-
-    SECTION("Default matrix")
-    {
-        Evaluator e(t);
-        REQUIRE(e.eval({1.0, 2.0, 3.0}) == 1.0);
-    }
-
-    SECTION("Scaling")
-    {
-        M = Eigen::Vector4f(0.5, 1.0, 1.0, 0.0).asDiagonal();
-        Evaluator e(t, M);
-        REQUIRE(e.eval({1.0, 2.0, 3.0}) == 0.5);
-    }
-
-    SECTION("Swapping")
-    {
-        Eigen::Matrix3f m;
-        m = Eigen::AngleAxisf(-(float)M_PI * 0.5f, Eigen::Vector3f::UnitZ());
-        M.block<3,3>(0,0) = m;
-
-        Evaluator e(t, M);
-        REQUIRE(e.eval({1.0, 2.0, 3.0}) == Approx(2.0));
-    }
-
-    SECTION("Offset")
-    {
-        Eigen::Affine3f m;
-        m = Eigen::Translation<float, 3>(0.5, 0, 0);
-
-        Evaluator e(t, m.matrix());
-        REQUIRE(e.eval({1.0, 2.0, 3.0}) == 1.5);
-    }
-}
-
-TEST_CASE("Matrix normals")
-{
-    auto t = Tree::X();
-    Eigen::Matrix4f M = Eigen::Matrix4f::Identity();
-
-    SECTION("Swapping")
-    {
-        Eigen::Matrix3f m;
-        m = Eigen::AngleAxisf(-(float)M_PI * 0.5f, Eigen::Vector3f::UnitZ());
-
-        M.block<3,3>(0,0) = m;
-        Evaluator e(t, M);
-        e.set({1, 2, 3}, 0);
-        auto out = e.derivs(1);
-
-        REQUIRE(out.dx[0] == Approx(0));
-        REQUIRE(out.dy[0] == Approx(1));
-        REQUIRE(out.dz[0] == Approx(0));
-    }
-
-    SECTION("Swapping")
-    {
-        Eigen::Matrix3f m;
-        m = Eigen::AngleAxisf(-(float)M_PI * 0.5f, Eigen::Vector3f::UnitZ());
-
-        M.block<3,3>(0,0) = m;
-        Evaluator e(t, M);
-        e.set({1, 2, 3}, 0);
-        auto out = e.derivs(1);
-
-        REQUIRE(out.dx[0] == Approx(0));
-        REQUIRE(out.dy[0] == Approx(1));
-        REQUIRE(out.dz[0] == Approx(0));
-    }
 }
 
 TEST_CASE("Evaluator::derivs")

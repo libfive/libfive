@@ -2,24 +2,11 @@
 
 namespace Kernel {
 
-void Result::resize(Index clauses, Index vars)
-{
-#ifdef __AVX__
-    mf.resize(clauses);
-    mdx.resize(clauses);
-    mdy.resize(clauses);
-    mdz.resize(clauses);
+constexpr Result::Index Result::N;
 
-    f  = reinterpret_cast<float(*)[N]>(&mf[0]);
-    dx = reinterpret_cast<float(*)[N]>(&mdx[0]);
-    dy = reinterpret_cast<float(*)[N]>(&mdy[0]);
-    dz = reinterpret_cast<float(*)[N]>(&mdz[0]);
-#else
-    f.resize(clauses);
-    dx.resize(clauses);
-    dy.resize(clauses);
-    dz.resize(clauses);
-#endif
+Result::Result(Index clauses, Index vars)
+    : f(clauses, N), dx(clauses, N), dy(clauses, N), dz(clauses, N)
+{
     i.resize(clauses);
     j.resize(clauses);
     for (auto& d : j)
@@ -43,10 +30,10 @@ void Result::setValue(float v, Index clause)
 {
     for (unsigned i=0; i < N; ++i)
     {
-        f[clause][i] = v;
-        dx[clause][i] = 0;
-        dy[clause][i] = 0;
-        dz[clause][i] = 0;
+        f(clause, i) = v;
+        dx(clause, i) = 0;
+        dy(clause, i) = 0;
+        dz(clause, i) = 0;
     }
 
     i[clause] = Interval::I(v, v);
@@ -62,9 +49,9 @@ void Result::setDeriv(Eigen::Vector3f d, Index clause)
 {
     for (size_t i=0; i < N; ++i)
     {
-        dx[clause][i] = d.x();
-        dy[clause][i] = d.y();
-        dz[clause][i] = d.z();
+        dx(clause, i) = d.x();
+        dy(clause, i) = d.y();
+        dz(clause, i) = d.z();
     }
 }
 

@@ -107,10 +107,9 @@ void Heightmap::pixels(Evaluator* e, const Voxels::View& r)
     // (which needs to be obeyed by anything unflattening results)
     VIEW_ITERATE_XYZ(r)
     {
-        e->setRaw({r.pts.x()[i], r.pts.y()[j], r.pts.z()[r.size.z() - k - 1]},
-                   index++);
+        e->set({r.pts.x()[i], r.pts.y()[j], r.pts.z()[r.size.z() - k - 1]},
+                index++);
     }
-    e->applyTransform(index);
 
     const float* out = e->values(index);
 
@@ -255,7 +254,7 @@ Heightmap::Heightmap(unsigned rows, unsigned cols)
 
 std::unique_ptr<Heightmap> Heightmap::render(
     const Tree t, Voxels r, const std::atomic_bool& abort,
-    Eigen::Matrix4f m, size_t workers)
+    size_t workers)
 {
     std::vector<Evaluator*> es;
     for (size_t i=0; i < workers; ++i)
@@ -263,7 +262,7 @@ std::unique_ptr<Heightmap> Heightmap::render(
         es.push_back(new Evaluator(t));
     }
 
-    auto out = render(es, r, abort, m);
+    auto out = render(es, r, abort);
 
     for (auto e : es)
     {
@@ -274,7 +273,7 @@ std::unique_ptr<Heightmap> Heightmap::render(
 
 std::unique_ptr<Heightmap> Heightmap::render(
         const std::vector<Evaluator*>& es, Voxels r,
-        const std::atomic_bool& abort, Eigen::Matrix4f m)
+        const std::atomic_bool& abort)
 {
     auto out = new Heightmap(r.pts[1].size(), r.pts[0].size());
 
@@ -297,8 +296,6 @@ std::unique_ptr<Heightmap> Heightmap::render(
     auto itr = es.begin();
     for (auto region : rs)
     {
-        (*itr)->setMatrix(m);
-
         futures.push_back(std::async(std::launch::async,
             [itr, region, &out, &abort](){
                 out->recurse(*itr, region, abort);

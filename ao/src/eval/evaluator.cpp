@@ -4,19 +4,16 @@
 
 #include "ao/tree/cache.hpp"
 #include "ao/tree/tree.hpp"
-#include "ao/eval/evaluator_base.hpp"
+#include "ao/eval/evaluator.hpp"
 #include "ao/eval/clause.hpp"
 
 namespace Kernel {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-EvaluatorBase::EvaluatorBase(const Tree root, const Eigen::Matrix4f& M,
-                             const std::map<Tree::Id, float>& vs)
+Evaluator::Evaluator(const Tree root, const std::map<Tree::Id, float>& vs)
     : root_op(root->op)
 {
-    setMatrix(M);
-
     auto flat = root.ordered();
 
     // Helper function to create a new clause in the data array
@@ -85,14 +82,14 @@ EvaluatorBase::EvaluatorBase(const Tree root, const Eigen::Matrix4f& M,
     }
 
     // Allocate enough memory for all the clauses
-    result.resize(clauses.size() + 1, vars.size());
+    result.reset(new Result(clauses.size() + 1, vars.size()));
     disabled.resize(clauses.size() + 1);
     remap.resize(clauses.size() + 1);
 
     // Store all constants in results array
     for (auto c : constants)
     {
-        result.fill(c.second, c.first);
+        result->fill(c.second, c.first);
     }
 
     // Save X, Y, Z ids
@@ -101,15 +98,15 @@ EvaluatorBase::EvaluatorBase(const Tree root, const Eigen::Matrix4f& M,
     Z = clauses.at(axes[2].id());
 
     // Set derivatives for X, Y, Z (unchanging)
-    result.setDeriv(Eigen::Vector3f::UnitX(), X);
-    result.setDeriv(Eigen::Vector3f::UnitY(), Y);
-    result.setDeriv(Eigen::Vector3f::UnitZ(), Z);
+    result->setDeriv(Eigen::Vector3f::UnitX(), X);
+    result->setDeriv(Eigen::Vector3f::UnitY(), Y);
+    result->setDeriv(Eigen::Vector3f::UnitZ(), Z);
 
     {   // Set the Jacobian for our variables (unchanging)
         size_t index = 0;
         for (auto v : vars.left)
         {
-            result.setGradient(v.first, index++);
+            result->setGradient(v.first, index++);
         }
     }
 
@@ -120,13 +117,13 @@ EvaluatorBase::EvaluatorBase(const Tree root, const Eigen::Matrix4f& M,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-float EvaluatorBase::eval(const Eigen::Vector3f& p)
+float Evaluator::eval(const Eigen::Vector3f& p)
 {
     set(p, 0);
     return values(1)[0];
 }
 
-float EvaluatorBase::baseEval(const Eigen::Vector3f& p)
+float Evaluator::baseEval(const Eigen::Vector3f& p)
 {
     auto prev_tape = tape;
 
@@ -152,26 +149,22 @@ float EvaluatorBase::baseEval(const Eigen::Vector3f& p)
     return out;
 }
 
-Interval::I EvaluatorBase::eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
+Interval::I Evaluator::eval(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
 {
     set(lower, upper);
     return interval();
 }
 
-void EvaluatorBase::set(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
+void Evaluator::set(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
 {
-    Interval::I x(lower.x(), upper.x());
-    Interval::I y(lower.y(), upper.y());
-    Interval::I z(lower.z(), upper.z());
-
-    result.i[X] = M(0,0) * x + M(0,1) * y + M(0,2) * z + M(0,3);
-    result.i[Y] = M(1,0) * x + M(1,1) * y + M(1,2) * z + M(1,3);
-    result.i[Z] = M(2,0) * x + M(2,1) * y + M(2,2) * z + M(2,3);
+    result->i[X] = {lower.x(), upper.x()};
+    result->i[Y] = {lower.y(), upper.y()};
+    result->i[Z] = {lower.z(), upper.z()};
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void EvaluatorBase::pushTape(Tape::Type t)
+void Evaluator::pushTape(Tape::Type t)
 {
     auto prev_tape = tape;
 
@@ -216,7 +209,7 @@ void EvaluatorBase::pushTape(Tape::Type t)
     assert(tape->t.size() <= prev_tape->t.size());
 }
 
-void EvaluatorBase::push()
+void Evaluator::push()
 {
     // Since we'll be figuring out which clauses are disabled and
     // which should be remapped, we reset those arrays here
@@ -234,12 +227,12 @@ void EvaluatorBase::push()
             // active if it is decisively above or below the other branch.
             if (c.op == Opcode::MAX)
             {
-                if (result.i[c.a].lower() > result.i[c.b].upper())
+                if (result->i[c.a].lower() > result->i[c.b].upper())
                 {
                     disabled[c.a] = false;
                     remap[c.id] = c.a;
                 }
-                else if (result.i[c.b].lower() > result.i[c.a].upper())
+                else if (result->i[c.b].lower() > result->i[c.a].upper())
                 {
                     disabled[c.b] = false;
                     remap[c.id] = c.b;
@@ -247,12 +240,12 @@ void EvaluatorBase::push()
             }
             else if (c.op == Opcode::MIN)
             {
-                if (result.i[c.a].lower() > result.i[c.b].upper())
+                if (result->i[c.a].lower() > result->i[c.b].upper())
                 {
                     disabled[c.b] = false;
                     remap[c.id] = c.b;
                 }
-                else if (result.i[c.b].lower() > result.i[c.a].upper())
+                else if (result->i[c.b].lower() > result->i[c.a].upper())
                 {
                     disabled[c.a] = false;
                     remap[c.id] = c.a;
@@ -271,12 +264,12 @@ void EvaluatorBase::push()
     }
 
     pushTape(Tape::INTERVAL);
-    tape->X = result.i[X];
-    tape->Y = result.i[Y];
-    tape->Z = result.i[Z];
+    tape->X = result->i[X];
+    tape->Y = result->i[Y];
+    tape->Z = result->i[Z];
 }
 
-Feature EvaluatorBase::push(const Feature& f)
+Feature Evaluator::push(const Feature& f)
 {
     // Since we'll be figuring out which clauses are disabled and
     // which should be remapped, we reset those arrays here
@@ -294,7 +287,7 @@ Feature EvaluatorBase::push(const Feature& f)
 
     for (const auto& c : tape->t)
     {
-        const bool match = ((result.f[c.a][0] == result.f[c.b][0] || c.a == c.b) &&
+        const bool match = ((result->f(c.a, 0) == result->f(c.b, 0) || c.a == c.b) &&
                             (c.op == Opcode::MAX || c.op == Opcode::MIN) &&
                             itr != choices.end() && itr->id == c.id);
 
@@ -348,7 +341,7 @@ Feature EvaluatorBase::push(const Feature& f)
     return out;
 }
 
-void EvaluatorBase::specialize(const Eigen::Vector3f& p)
+void Evaluator::specialize(const Eigen::Vector3f& p)
 {
     // Load results into the first floating-point result slot
     eval(p);
@@ -368,12 +361,12 @@ void EvaluatorBase::specialize(const Eigen::Vector3f& p)
             // active if it is decisively above or below the other branch.
             if (c.op == Opcode::MAX)
             {
-                if (result.f[c.a][0] > result.f[c.b][0])
+                if (result->f(c.a, 0) > result->f(c.b, 0))
                 {
                     disabled[c.a] = false;
                     remap[c.id] = c.a;
                 }
-                else if (result.f[c.b][0] > result.f[c.a][0])
+                else if (result->f(c.b, 0) > result->f(c.a, 0))
                 {
                     disabled[c.b] = false;
                     remap[c.id] = c.b;
@@ -381,12 +374,12 @@ void EvaluatorBase::specialize(const Eigen::Vector3f& p)
             }
             else if (c.op == Opcode::MIN)
             {
-                if (result.f[c.a][0] > result.f[c.b][0])
+                if (result->f(c.a, 0) > result->f(c.b, 0))
                 {
                     disabled[c.b] = false;
                     remap[c.id] = c.b;
                 }
-                else if (result.f[c.b][0] > result.f[c.a][0])
+                else if (result->f(c.b, 0) > result->f(c.a, 0))
                 {
                     disabled[c.a] = false;
                     remap[c.id] = c.a;
@@ -407,7 +400,7 @@ void EvaluatorBase::specialize(const Eigen::Vector3f& p)
     pushTape(Tape::SPECIALIZED);
 }
 
-bool EvaluatorBase::isInside(const Eigen::Vector3f& p)
+bool Evaluator::isInside(const Eigen::Vector3f& p)
 {
     set(p, 0);
     auto ds = derivs(1);
@@ -457,7 +450,7 @@ bool EvaluatorBase::isInside(const Eigen::Vector3f& p)
     return !(pos && !neg);
 }
 
-std::list<Feature> EvaluatorBase::featuresAt(const Eigen::Vector3f& p)
+std::list<Feature> Evaluator::featuresAt(const Eigen::Vector3f& p)
 {
     // The initial feature doesn't know any ambiguities
     Feature f;
@@ -503,15 +496,15 @@ std::list<Feature> EvaluatorBase::featuresAt(const Eigen::Vector3f& p)
                     ambiguous = true;
                 }
                 // Check for ambiguity here
-                else if (result.f[itr->a][0] == result.f[itr->b][0])
+                else if (result->f(itr->a, 0) == result->f(itr->b, 0))
                 {
                     // Check both branches of the ambiguity
-                    const Eigen::Vector3d rhs(result.dx[itr->b][0],
-                                              result.dy[itr->b][0],
-                                              result.dz[itr->b][0]);
-                    const Eigen::Vector3d lhs(result.dx[itr->a][0],
-                                              result.dy[itr->a][0],
-                                              result.dz[itr->a][0]);
+                    const Eigen::Vector3d rhs(result->dx(itr->b, 0),
+                                              result->dy(itr->b, 0),
+                                              result->dz(itr->b, 0));
+                    const Eigen::Vector3d lhs(result->dx(itr->a, 0),
+                                              result->dy(itr->a, 0),
+                                              result->dz(itr->a, 0));
                     const auto epsilon = (itr->op == Opcode::MIN) ? (rhs - lhs)
                                                                   : (lhs - rhs);
 
@@ -549,18 +542,18 @@ std::list<Feature> EvaluatorBase::featuresAt(const Eigen::Vector3f& p)
     return done;
 }
 
-bool EvaluatorBase::isAmbiguous(const Eigen::Vector3f& p)
+bool Evaluator::isAmbiguous(const Eigen::Vector3f& p)
 {
     eval(p);
     return isAmbiguous();
 }
 
-bool EvaluatorBase::isAmbiguous()
+bool Evaluator::isAmbiguous()
 {
     for (const auto& c : tape->t)
     {
         if ((c.op == Opcode::MIN || c.op == Opcode::MAX) &&
-            result.f[c.a][0] == result.f[c.b][0])
+            result->f(c.a, 0) == result->f(c.b, 0))
         {
             return true;
         }
@@ -568,7 +561,7 @@ bool EvaluatorBase::isAmbiguous()
     return false;
 }
 
-std::set<Result::Index> EvaluatorBase::getAmbiguous(Result::Index i) const
+std::set<Result::Index> Evaluator::getAmbiguous(Result::Index i) const
 {
     std::set<Result::Index> out;
     for (const auto& c : tape->t)
@@ -577,7 +570,7 @@ std::set<Result::Index> EvaluatorBase::getAmbiguous(Result::Index i) const
         {
             for (Result::Index j=0; j < i; ++j)
             {
-                if (result.f[c.a][j] == result.f[c.b][j])
+                if (result->f(c.a, j) == result->f(c.b, j))
                 {
                     out.insert(j);
                 }
@@ -587,7 +580,7 @@ std::set<Result::Index> EvaluatorBase::getAmbiguous(Result::Index i) const
     return out;
 }
 
-void EvaluatorBase::pop()
+void Evaluator::pop()
 {
     assert(tape != tapes.begin());
     tape--;
@@ -595,378 +588,12 @@ void EvaluatorBase::pop()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define EVAL_LOOP for (Result::Index i=0; i < count; ++i)
-void EvaluatorBase::eval_clause_values(Opcode::Opcode op,
-        const float* __restrict a, const float* __restrict b,
-        float* __restrict out, Result::Index count)
-{
-    switch (op) {
-        case Opcode::ADD:
-            EVAL_LOOP
-            out[i] = a[i] + b[i];
-            break;
-        case Opcode::MUL:
-            EVAL_LOOP
-            out[i] = a[i] * b[i];
-            break;
-        case Opcode::MIN:
-            EVAL_LOOP
-            out[i] = fmin(a[i], b[i]);
-            break;
-        case Opcode::MAX:
-            EVAL_LOOP
-            out[i] = fmax(a[i], b[i]);
-            break;
-        case Opcode::SUB:
-            EVAL_LOOP
-            out[i] = a[i] - b[i];
-            break;
-        case Opcode::DIV:
-            EVAL_LOOP
-            out[i] = a[i] / b[i];
-            break;
-        case Opcode::ATAN2:
-            EVAL_LOOP
-            out[i] = atan2(a[i], b[i]);
-            break;
-        case Opcode::POW:
-            EVAL_LOOP
-            out[i] = pow(a[i], b[i]);
-            break;
-        case Opcode::NTH_ROOT:
-            EVAL_LOOP
-            out[i] = pow(a[i], 1.0f/b[i]);
-            break;
-        case Opcode::MOD:
-            EVAL_LOOP
-            {
-                out[i] = std::fmod(a[i], b[i]);
-                while (out[i] < 0)
-                {
-                    out[i] += b[i];
-                }
-            }
-            break;
-        case Opcode::NANFILL:
-            EVAL_LOOP
-            out[i] = std::isnan(a[i]) ? b[i] : a[i];
-            break;
-
-        case Opcode::SQUARE:
-            EVAL_LOOP
-            out[i] = a[i] * a[i];
-            break;
-        case Opcode::SQRT:
-            EVAL_LOOP
-            out[i] = sqrt(a[i]);
-            break;
-        case Opcode::NEG:
-            EVAL_LOOP
-            out[i] = -a[i];
-            break;
-        case Opcode::SIN:
-            EVAL_LOOP
-            out[i] = sin(a[i]);
-            break;
-        case Opcode::COS:
-            EVAL_LOOP
-            out[i] = cos(a[i]);
-            break;
-        case Opcode::TAN:
-            EVAL_LOOP
-            out[i] = tan(a[i]);
-            break;
-        case Opcode::ASIN:
-            EVAL_LOOP
-            out[i] = asin(a[i]);
-            break;
-        case Opcode::ACOS:
-            EVAL_LOOP
-            out[i] = acos(a[i]);
-            break;
-        case Opcode::ATAN:
-            EVAL_LOOP
-            out[i] = atan(a[i]);
-            break;
-        case Opcode::EXP:
-            EVAL_LOOP
-            out[i] = exp(a[i]);
-            break;
-
-        case Opcode::CONST_VAR:
-            EVAL_LOOP
-            out[i] = a[i];
-            break;
-
-        case Opcode::INVALID:
-        case Opcode::CONST:
-        case Opcode::VAR_X:
-        case Opcode::VAR_Y:
-        case Opcode::VAR_Z:
-        case Opcode::VAR:
-        case Opcode::LAST_OP: assert(false);
-    }
-}
-
-void EvaluatorBase::eval_clause_derivs(Opcode::Opcode op,
-        const float* __restrict av,  const float* __restrict adx,
-        const float* __restrict ady, const float* __restrict adz,
-
-        const float* __restrict bv,  const float* __restrict bdx,
-        const float* __restrict bdy, const float* __restrict bdz,
-
-        float* __restrict ov,  float* __restrict odx,
-        float* __restrict ody, float* __restrict odz,
-        Result::Index count)
-{
-    // Evaluate the base operations in a single pass
-    eval_clause_values(op, av, bv, ov, count);
-
-    switch (op) {
-        case Opcode::ADD:
-            EVAL_LOOP
-            {
-                odx[i] = adx[i] + bdx[i];
-                ody[i] = ady[i] + bdy[i];
-                odz[i] = adz[i] + bdz[i];
-            }
-            break;
-        case Opcode::MUL:
-            EVAL_LOOP
-            {   // Product rule
-                odx[i] = av[i]*bdx[i] + adx[i]*bv[i];
-                ody[i] = av[i]*bdy[i] + ady[i]*bv[i];
-                odz[i] = av[i]*bdz[i] + adz[i]*bv[i];
-            }
-            break;
-        case Opcode::MIN:
-            EVAL_LOOP
-            {
-                if (av[i] < bv[i])
-                {
-                    odx[i] = adx[i];
-                    ody[i] = ady[i];
-                    odz[i] = adz[i];
-                }
-                else
-                {
-                    odx[i] = bdx[i];
-                    ody[i] = bdy[i];
-                    odz[i] = bdz[i];
-                }
-            }
-            break;
-        case Opcode::MAX:
-            EVAL_LOOP
-            {
-                if (av[i] < bv[i])
-                {
-                    odx[i] = bdx[i];
-                    ody[i] = bdy[i];
-                    odz[i] = bdz[i];
-                }
-                else
-                {
-                    odx[i] = adx[i];
-                    ody[i] = ady[i];
-                    odz[i] = adz[i];
-                }
-            }
-            break;
-        case Opcode::SUB:
-            EVAL_LOOP
-            {
-                odx[i] = adx[i] - bdx[i];
-                ody[i] = ady[i] - bdy[i];
-                odz[i] = adz[i] - bdz[i];
-            }
-            break;
-        case Opcode::DIV:
-            EVAL_LOOP
-            {
-                const float p = pow(bv[i], 2);
-                odx[i] = (bv[i]*adx[i] - av[i]*bdx[i]) / p;
-                ody[i] = (bv[i]*ady[i] - av[i]*bdy[i]) / p;
-                odz[i] = (bv[i]*adz[i] - av[i]*bdz[i]) / p;
-            }
-            break;
-        case Opcode::ATAN2:
-            EVAL_LOOP
-            {
-                const float d = pow(av[i], 2) + pow(bv[i], 2);
-                odx[i] = (adx[i]*bv[i] - av[i]*bdx[i]) / d;
-                ody[i] = (ady[i]*bv[i] - av[i]*bdy[i]) / d;
-                odz[i] = (adz[i]*bv[i] - av[i]*bdz[i]) / d;
-            }
-            break;
-        case Opcode::POW:
-            EVAL_LOOP
-            {
-                const float m = pow(av[i], bv[i] - 1);
-
-                // The full form of the derivative is
-                // odx[i] = m * (bv[i] * adx[i] + av[i] * log(av[i]) * bdx[i]))
-                // However, log(av[i]) is often NaN and bdx[i] is always zero,
-                // (since it must be CONST), so we skip that part.
-                odx[i] = m * (bv[i] * adx[i]);
-                ody[i] = m * (bv[i] * ady[i]);
-                odz[i] = m * (bv[i] * adz[i]);
-            }
-            break;
-        case Opcode::NTH_ROOT:
-            EVAL_LOOP
-            {
-                const float m = pow(av[i], 1.0f/bv[i] - 1);
-                odx[i] = m * (1.0f/bv[i] * adx[i]);
-                ody[i] = m * (1.0f/bv[i] * ady[i]);
-                odz[i] = m * (1.0f/bv[i] * adz[i]);
-            }
-            break;
-        case Opcode::MOD:
-            EVAL_LOOP
-            {
-                // This isn't quite how partial derivatives of mod work,
-                // but close enough normals rendering.
-                odx[i] = adx[i];
-                ody[i] = ady[i];
-                odz[i] = adz[i];
-            }
-            break;
-        case Opcode::NANFILL:
-            EVAL_LOOP
-            {
-                odx[i] = std::isnan(av[i]) ? bdx[i] : adx[i];
-                ody[i] = std::isnan(av[i]) ? bdy[i] : ady[i];
-                odz[i] = std::isnan(av[i]) ? bdz[i] : adz[i];
-            }
-            break;
-
-        case Opcode::SQUARE:
-            EVAL_LOOP
-            {
-                odx[i] = 2 * av[i] * adx[i];
-                ody[i] = 2 * av[i] * ady[i];
-                odz[i] = 2 * av[i] * adz[i];
-            }
-            break;
-        case Opcode::SQRT:
-            EVAL_LOOP
-            {
-                if (av[i] < 0)
-                {
-                    odx[i] = 0;
-                    ody[i] = 0;
-                    odz[i] = 0;
-                }
-                else
-                {
-                    odx[i] = adx[i] / (2 * ov[i]);
-                    ody[i] = ady[i] / (2 * ov[i]);
-                    odz[i] = adz[i] / (2 * ov[i]);
-                }
-            }
-            break;
-        case Opcode::NEG:
-            EVAL_LOOP
-            {
-                odx[i] = -adx[i];
-                ody[i] = -ady[i];
-                odz[i] = -adz[i];
-            }
-            break;
-        case Opcode::SIN:
-            EVAL_LOOP
-            {
-                const float c = cos(av[i]);
-                odx[i] = adx[i] * c;
-                ody[i] = ady[i] * c;
-                odz[i] = adz[i] * c;
-            }
-            break;
-        case Opcode::COS:
-            EVAL_LOOP
-            {
-                const float s = -sin(av[i]);
-                odx[i] = adx[i] * s;
-                ody[i] = ady[i] * s;
-                odz[i] = adz[i] * s;
-            }
-            break;
-        case Opcode::TAN:
-            EVAL_LOOP
-            {
-                const float s = pow(1/cos(av[i]), 2);
-                odx[i] = adx[i] * s;
-                ody[i] = ady[i] * s;
-                odz[i] = adz[i] * s;
-            }
-            break;
-        case Opcode::ASIN:
-            EVAL_LOOP
-            {
-                const float d = sqrt(1 - pow(av[i], 2));
-                odx[i] = adx[i] / d;
-                ody[i] = ady[i] / d;
-                odz[i] = adz[i] / d;
-            }
-            break;
-        case Opcode::ACOS:
-            EVAL_LOOP
-            {
-                const float d = -sqrt(1 - pow(av[i], 2));
-                odx[i] = adx[i] / d;
-                ody[i] = ady[i] / d;
-                odz[i] = adz[i] / d;
-            }
-            break;
-        case Opcode::ATAN:
-            EVAL_LOOP
-            {
-                const float d = pow(av[i], 2) + 1;
-                odx[i] = adx[i] / d;
-                ody[i] = ady[i] / d;
-                odz[i] = adz[i] / d;
-            }
-            break;
-        case Opcode::EXP:
-            EVAL_LOOP
-            {
-                const float e = exp(av[i]);
-                odx[i] = e * adx[i];
-                ody[i] = e * ady[i];
-                odz[i] = e * adz[i];
-            }
-            break;
-
-        case Opcode::CONST_VAR:
-            EVAL_LOOP
-            {
-                odx[i] = adx[i];
-                ody[i] = ady[i];
-                odz[i] = adz[i];
-            }
-            break;
-
-        case Opcode::INVALID:
-        case Opcode::CONST:
-        case Opcode::VAR_X:
-        case Opcode::VAR_Y:
-        case Opcode::VAR_Z:
-        case Opcode::VAR:
-        case Opcode::LAST_OP: assert(false);
-    }
-}
-
 #define JAC_LOOP for (auto a = aj.begin(), b = bj.begin(), o = oj.begin(); a != aj.end(); ++a, ++b, ++o)
-float EvaluatorBase::eval_clause_jacobians(Opcode::Opcode op,
-        const float av,  std::vector<float>& aj,
-        const float bv,  std::vector<float>& bj,
-        std::vector<float>& oj)
+void Evaluator::eval_clause_jacobians(Opcode::Opcode op,
+    const float av,  std::vector<float>& aj,
+    const float bv,  std::vector<float>& bj,
+    std::vector<float>& oj)
 {
-    // Evaluate the base operations in a single pass
-    float out;
-    eval_clause_values(op, &av, &bv, &out, 1);
-
     switch (op) {
         case Opcode::ADD:
             JAC_LOOP
@@ -1075,7 +702,7 @@ float EvaluatorBase::eval_clause_jacobians(Opcode::Opcode op,
                 }
                 else
                 {
-                    (*o) = (*a) / (2 * out);
+                    (*o) = (*a) / (2 * sqrt(av));
                 }
             }
             break;
@@ -1107,54 +734,52 @@ float EvaluatorBase::eval_clause_jacobians(Opcode::Opcode op,
             }
             break;
         case Opcode::ASIN:
-            JAC_LOOP
-            {
-                const float d = sqrt(1 - pow(av, 2));
-                (*o) = (*a) / d;
-            }
-            break;
-        case Opcode::ACOS:
-            JAC_LOOP
-            {
-                const float d = -sqrt(1 - pow(av, 2));
-                (*o) = (*a) / d;
-            }
-            break;
-        case Opcode::ATAN:
-            JAC_LOOP
-            {
-                const float d = pow(av, 2) + 1;
-                (*o) = (*a) / d;
-            }
-            break;
-        case Opcode::EXP:
-            JAC_LOOP
-            {
-                const float e = exp(av);
-                (*o) = e * (*a);
-            }
-            break;
+                JAC_LOOP
+                {
+                    const float d = sqrt(1 - pow(av, 2));
+                    (*o) = (*a) / d;
+                }
+                break;
+            case Opcode::ACOS:
+                JAC_LOOP
+                {
+                    const float d = -sqrt(1 - pow(av, 2));
+                    (*o) = (*a) / d;
+                }
+                break;
+            case Opcode::ATAN:
+                JAC_LOOP
+                {
+                    const float d = pow(av, 2) + 1;
+                    (*o) = (*a) / d;
+                }
+                break;
+            case Opcode::EXP:
+                JAC_LOOP
+                {
+                    const float e = exp(av);
+                    (*o) = e * (*a);
+                }
+                break;
 
-        case Opcode::CONST_VAR:
-            JAC_LOOP
-            {
-                (*o) = 0;
-            }
-            break;
+            case Opcode::CONST_VAR:
+                JAC_LOOP
+                {
+                    (*o) = 0;
+                }
+                break;
 
-        case Opcode::INVALID:
-        case Opcode::CONST:
-        case Opcode::VAR_X:
-        case Opcode::VAR_Y:
-        case Opcode::VAR_Z:
-        case Opcode::VAR:
-        case Opcode::LAST_OP: assert(false);
-    }
-
-    return out;
+            case Opcode::INVALID:
+            case Opcode::CONST:
+            case Opcode::VAR_X:
+            case Opcode::VAR_Y:
+            case Opcode::VAR_Z:
+            case Opcode::VAR:
+            case Opcode::LAST_OP: assert(false);
+        }
 }
 
-Interval::I EvaluatorBase::eval_clause_interval(
+Interval::I Evaluator::eval_clause_interval(
         Opcode::Opcode op, const Interval::I& a, const Interval::I& b)
 {
     switch (op) {
@@ -1218,68 +843,309 @@ Interval::I EvaluatorBase::eval_clause_interval(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const float* EvaluatorBase::values(Result::Index count)
+const float* Evaluator::values(Result::Index count)
 {
     for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
     {
-        eval_clause_values(itr->op,
-                &result.f[itr->a][0], &result.f[itr->b][0],
-                &result.f[itr->id][0], count);
+#define out result->f.row(itr->id).head(count)
+#define a result->f.row(itr->a).head(count)
+#define b result->f.row(itr->b).head(count)
+        switch (itr->op) {
+            case Opcode::ADD:
+                out = a + b;
+                break;
+            case Opcode::MUL:
+                out = a * b;
+                break;
+            case Opcode::MIN:
+                out = a.cwiseMin(b);
+                break;
+            case Opcode::MAX:
+                out = a.cwiseMax(b);
+                break;
+            case Opcode::SUB:
+                out = a - b;
+                break;
+            case Opcode::DIV:
+                out = a / b;
+                break;
+            case Opcode::ATAN2:
+                for (auto i=0; i < a.size(); ++i)
+                {
+                    out(i) = atan2(a(i), b(i));
+                }
+                break;
+            case Opcode::POW:
+                out = a.pow(b);
+                break;
+            case Opcode::NTH_ROOT:
+                out = pow(a, 1.0f/b);
+                break;
+            case Opcode::MOD:
+                for (auto i=0; i < a.size(); ++i)
+                {
+                    out(i) = std::fmod(a(i), b(i));
+                    while (out(i) < 0)
+                    {
+                        out(i) += b(i);
+                    }
+                }
+                break;
+            case Opcode::NANFILL:
+                out = a.isNaN().select(b, a);
+                break;
+
+            case Opcode::SQUARE:
+                out = a * a;
+                break;
+            case Opcode::SQRT:
+                out = sqrt(a);
+                break;
+            case Opcode::NEG:
+                out = -a;
+                break;
+            case Opcode::SIN:
+                out = sin(a);
+                break;
+            case Opcode::COS:
+                out = cos(a);
+                break;
+            case Opcode::TAN:
+                out = tan(a);
+                break;
+            case Opcode::ASIN:
+                out = asin(a);
+                break;
+            case Opcode::ACOS:
+                out = acos(a);
+                break;
+            case Opcode::ATAN:
+                out = atan(a);
+                break;
+            case Opcode::EXP:
+                out = exp(a);
+                break;
+
+            case Opcode::CONST_VAR:
+                out = a;
+                break;
+
+            case Opcode::INVALID:
+            case Opcode::CONST:
+            case Opcode::VAR_X:
+            case Opcode::VAR_Y:
+            case Opcode::VAR_Z:
+            case Opcode::VAR:
+            case Opcode::LAST_OP: assert(false);
+        }
+
+#undef out
+#undef a
+#undef b
     }
 
-    return &result.f[tape->i][0];
+    return &result->f(tape->i, 0);
 }
 
-EvaluatorBase::Derivs EvaluatorBase::derivs(Result::Index count)
+Evaluator::Derivs Evaluator::derivs(Result::Index count)
 {
+    values(count);
+
     for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
     {
-        eval_clause_derivs(itr->op,
-               &result.f[itr->a][0], &result.dx[itr->a][0],
-               &result.dy[itr->a][0], &result.dz[itr->a][0],
 
-               &result.f[itr->b][0], &result.dx[itr->b][0],
-               &result.dy[itr->b][0], &result.dz[itr->b][0],
+#define ov result->f.row(itr->id).head(count)
+#define odx result->dx.row(itr->id).head(count)
+#define ody result->dy.row(itr->id).head(count)
+#define odz result->dz.row(itr->id).head(count)
 
-               &result.f[itr->id][0], &result.dx[itr->id][0],
-               &result.dy[itr->id][0], &result.dz[itr->id][0],
-               count);
+#define av  result->f.row(itr->a).head(count)
+#define adx result->dx.row(itr->a).head(count)
+#define ady result->dy.row(itr->a).head(count)
+#define adz result->dz.row(itr->a).head(count)
+
+#define bv  result->f.row(itr->b).head(count)
+#define bdx result->dx.row(itr->b).head(count)
+#define bdy result->dy.row(itr->b).head(count)
+#define bdz result->dz.row(itr->b).head(count)
+
+        switch (itr->op) {
+            case Opcode::ADD:
+                odx = adx + bdx;
+                ody = ady + bdy;
+                odz = adz + bdz;
+                break;
+            case Opcode::MUL:
+                // Product rule
+                odx = av*bdx + adx*bv;
+                ody = av*bdy + ady*bv;
+                odz = av*bdz + adz*bv;
+                break;
+            case Opcode::MIN:
+                odx = (av < bv).select(adx, bdx);
+                ody = (av < bv).select(ady, bdy);
+                odz = (av < bv).select(adz, bdz);
+                break;
+            case Opcode::MAX:
+                odx = (av < bv).select(bdx, adx);
+                ody = (av < bv).select(bdy, ady);
+                odz = (av < bv).select(bdz, adz);
+                break;
+            case Opcode::SUB:
+                odx = adx - bdx;
+                ody = ady - bdy;
+                odz = adz - bdz;
+                break;
+            case Opcode::DIV:
+                odz = bv.pow(2); // Temporary
+                odx = (bv*adx - av*bdx) / odz;
+                ody = (bv*ady - av*bdy) / odz;
+                odz = (bv*adz - av*bdz) / odz;
+                break;
+            case Opcode::ATAN2:
+                odz = av.pow(2) + bv.pow(2); // Temporary
+                odx = (adx*bv - av*bdx) / odz;
+                ody = (ady*bv - av*bdy) / odz;
+                odz = (adz*bv - av*bdz) / odz;
+                break;
+            case Opcode::POW:
+                odz = av.pow(bv - 1); // Temporary
+
+                // The full form of the derivative is
+                // odx = m * (bv * adx + av * log(av) * bdx))
+                // However, log(av) is often NaN and bdx is always zero,
+                // (since it must be CONST), so we skip that part.
+                odx = odz * (bv * adx);
+                ody = odz * (bv * ady);
+                odz = odz * (bv * adz);
+                break;
+
+            case Opcode::NTH_ROOT:
+                odz = 1.0f / bv;    // Temporary
+                odz = av.pow(odz - 1) * odz; // Temporary
+                odx = odz * adx;
+                ody = odz * ady;
+                odz = odz * adz;
+                break;
+            case Opcode::MOD:
+                odx = adx;
+                ody = ady;
+                odz = adz;
+                break;
+            case Opcode::NANFILL:
+                odx = av.isNaN().select(bdx, adx);
+                ody = av.isNaN().select(bdy, ady);
+                odz = av.isNaN().select(bdz, adz);
+                break;
+
+            case Opcode::SQUARE:
+                odz = 2 * av; // Temporary
+                odx = odz * adx;
+                ody = odz * ady;
+                odz = odz * adz;
+                break;
+            case Opcode::SQRT:
+                // TODO: this could be more efficient
+                odx = (av < 0).select(0, adx / (2 * ov));
+                ody = (av < 0).select(0, ady / (2 * ov));
+                odz = (av < 0).select(0, adz / (2 * ov));
+                break;
+            case Opcode::NEG:
+                odx = -adx;
+                ody = -ady;
+                odz = -adz;
+                break;
+            case Opcode::SIN:
+                odz = cos(av); // Temporary
+                odx = adx * odz;
+                ody = ady * odz;
+                odz = adz * odz;
+                break;
+            case Opcode::COS:
+                odz = -sin(av); // Temporary
+                odx = adx * odz;
+                ody = ady * odz;
+                odz = adz * odz;
+                break;
+            case Opcode::TAN:
+                odz = pow(1/cos(av), 2);
+                odx = adx * odz;
+                ody = ady * odz;
+                odz = adz * odz;
+                break;
+            case Opcode::ASIN:
+                odz = sqrt(1 - pow(av, 2)); // Temporary
+                odx = adx / odz;
+                ody = ady / odz;
+                odz = adz / odz;
+                break;
+            case Opcode::ACOS:
+                odz = -sqrt(1 - pow(av, 2)); // Temporary
+                odx = adx / odz;
+                ody = ady / odz;
+                odz = adz / odz;
+                break;
+            case Opcode::ATAN:
+                odz = pow(av, 2) + 1; // Temporary
+                odx = adx / odz;
+                ody = ady / odz;
+                odz = adz / odz;
+                break;
+            case Opcode::EXP:
+                odz = exp(av); // Temporary
+                odx = odz * adx;
+                ody = odz * ady;
+                odz = odz * adz;
+                break;
+
+            case Opcode::CONST_VAR:
+                odx = adx;
+                ody = ady;
+                odz = adz;
+                break;
+
+            case Opcode::INVALID:
+            case Opcode::CONST:
+            case Opcode::VAR_X:
+            case Opcode::VAR_Y:
+            case Opcode::VAR_Z:
+            case Opcode::VAR:
+            case Opcode::LAST_OP: assert(false);
+        }
+
+#undef ov
+#undef odx
+#undef ody
+#undef odz
+
+#undef av
+#undef adx
+#undef ady
+#undef adz
+
+#undef bv
+#undef bdx
+#undef bdy
+#undef bdz
     }
-    return remapDerivs(count);
+    return { &result->f(tape->i, 0),  &result->dx(tape->i, 0),
+             &result->dy(tape->i, 0), &result->dz(tape->i, 0) };
 }
 
-EvaluatorBase::Derivs EvaluatorBase::remapDerivs(Result::Index count)
+std::map<Tree::Id, float> Evaluator::gradient(const Eigen::Vector3f& p)
 {
-    // Apply the inverse matrix transform to our normals
-    const auto index = tape->i;
-    const Eigen::Vector4f o = Mi * Eigen::Vector4f(0,0,0,1);
-    for (size_t i=0; i < count; ++i)
-    {
-        auto n = (Mi * Eigen::Vector4f(result.dx[index][i],
-                                       result.dy[index][i],
-                                       result.dz[index][i], 1) - o).eval();
-        result.dx[index][i] = n.x();
-        result.dy[index][i] = n.y();
-        result.dz[index][i] = n.z();
-    }
-
-    return { &result.f[index][0],  &result.dx[index][0],
-             &result.dy[index][0], &result.dz[index][0] };
-}
-
-std::map<Tree::Id, float> EvaluatorBase::gradient(const Eigen::Vector3f& p)
-{
+    // Fill the values before solving for jacobians
     set(p, 0);
+    values(1);
 
     for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
     {
-        float av = result.f[itr->a][0];
-        float bv = result.f[itr->b][0];
-        std::vector<float>& aj = result.j[itr->a];
-        std::vector<float>& bj = result.j[itr->b];
+        float av = result->f(itr->a, 0);
+        float bv = result->f(itr->b, 0);
+        std::vector<float>& aj = result->j[itr->a];
+        std::vector<float>& bj = result->j[itr->b];
 
-        result.f[itr->id][0] = eval_clause_jacobians(
-                itr->op, av, aj, bv, bj, result.j[itr->id]);
+        eval_clause_jacobians(itr->op, av, aj, bv, bj, result->j[itr->id]);
     }
 
     std::map<Tree::Id, float> out;
@@ -1289,78 +1155,56 @@ std::map<Tree::Id, float> EvaluatorBase::gradient(const Eigen::Vector3f& p)
         size_t index = 0;
         for (auto v : vars.left)
         {
-            out[v.second] = result.j[ti][index++];
+            out[v.second] = result->j[ti][index++];
         }
     }
     return out;
 }
 
-Interval::I EvaluatorBase::interval()
+Interval::I Evaluator::interval()
 {
     for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
     {
-        result.i[itr->id] = eval_clause_interval(itr->op,
-                result.i[itr->a], result.i[itr->b]);
+        result->i[itr->id] = eval_clause_interval(itr->op,
+                result->i[itr->a], result->i[itr->b]);
     }
-    return result.i[tape->i];
+    return result->i[tape->i];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void EvaluatorBase::applyTransform(Result::Index count)
-{
-    for (size_t i=0; i < count; ++i)
-    {
-        float x = result.f[X][i];
-        float y = result.f[Y][i];
-        float z = result.f[Z][i];
-
-        result.f[X][i] = M(0,0) * x + M(0,1) * y + M(0,2) * z + M(0,3);
-        result.f[Y][i] = M(1,0) * x + M(1,1) * y + M(1,2) * z + M(1,3);
-        result.f[Z][i] = M(2,0) * x + M(2,1) * y + M(2,2) * z + M(2,3);
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-double EvaluatorBase::utilization() const
+double Evaluator::utilization() const
 {
     return tape->t.size() / double(tapes.front().t.size());
 }
 
-void EvaluatorBase::setMatrix(const Eigen::Matrix4f& m)
-{
-    M = m;
-    Mi = m.inverse();
-}
-
-void EvaluatorBase::setVar(Tree::Id var, float value)
+void Evaluator::setVar(Tree::Id var, float value)
 {
     auto r = vars.right.find(var);
     if (r != vars.right.end())
     {
-        result.setValue(value, r->second);
+        result->setValue(value, r->second);
     }
 }
 
-std::map<Tree::Id, float> EvaluatorBase::varValues() const
+std::map<Tree::Id, float> Evaluator::varValues() const
 {
     std::map<Tree::Id, float> out;
 
     for (auto v : vars.left)
     {
-        out[v.second] = result.f[v.first][0];
+        out[v.second] = result->f(v.first, 0);
     }
     return out;
 }
 
-bool EvaluatorBase::updateVars(const std::map<Kernel::Tree::Id, float>& vars_)
+bool Evaluator::updateVars(const std::map<Kernel::Tree::Id, float>& vars_)
 {
     bool changed = false;
     for (const auto& v : vars.left)
     {
         auto val = vars_.at(v.second);
-        if (val != result.f[v.first][0])
+        if (val != result->f(v.first, 0))
         {
             setVar(v.second, val);
             changed = true;

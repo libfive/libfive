@@ -285,7 +285,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                         ps[j] = (inside * (1 - frac)) + (outside * frac);
                         Eigen::Vector3d pos;
                         pos << ps[j], region.perp;
-                        eval->setRaw(pos.template cast<float>(), j);
+                        eval->set(pos.template cast<float>(), j);
                     }
 
                     // Evaluate, then search for the first outside point

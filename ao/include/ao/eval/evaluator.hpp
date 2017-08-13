@@ -18,18 +18,15 @@
 
 namespace Kernel {
 
-class EvaluatorBase
+class Evaluator
 {
 public:
     /*
      *  Construct an evaluator for the given tree
      */
-    EvaluatorBase(const Tree root,
-                  const Eigen::Matrix4f& M=Eigen::Matrix4f::Identity(),
-                  const std::map<Tree::Id, float>& vars=
-                        std::map<Tree::Id, float>());
-    EvaluatorBase(const Tree root, const std::map<Tree::Id, float>& vars)
-        : EvaluatorBase(root, Eigen::Matrix4f::Identity(), vars) {}
+    Evaluator(const Tree root) : Evaluator(root, std::map<Tree::Id, float>())
+        { /* Nothing to do here */ }
+    Evaluator(const Tree root, const std::map<Tree::Id, float>& vars);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
@@ -88,25 +85,10 @@ public:
      */
     void set(const Eigen::Vector3f& p, Result::Index index)
     {
-        result.f[X][index] = M(0,0) * p.x() + M(0,1) * p.y() + M(0,2) * p.z() + M(0,3);
-        result.f[Y][index] = M(1,0) * p.x() + M(1,1) * p.y() + M(1,2) * p.z() + M(1,3);
-        result.f[Z][index] = M(2,0) * p.x() + M(2,1) * p.y() + M(2,2) * p.z() + M(2,3);
+        result->f(X, index) = p.x();
+        result->f(Y, index) = p.y();
+        result->f(Z, index) = p.z();
     }
-
-    /*
-     *  Unsafe setter (which requires a call to applyTransform afterwards)
-     */
-    void setRaw(const Eigen::Vector3f& p, Result::Index index)
-    {
-        result.f[X][index] = p.x();
-        result.f[Y][index] = p.y();
-        result.f[Z][index] = p.z();
-    }
-
-    /*
-     *  Applies M to values stored by set
-     */
-    void applyTransform(Result::Index count);
 
     /*
      *  Stores the given interval in the result objects
@@ -139,12 +121,6 @@ public:
      *  (to check how well disabling is working)
      */
     double utilization() const;
-
-    /*
-     *  Sets the global matrix transform
-     *  Invalidates all positions and results
-     */
-    void setMatrix(const Eigen::Matrix4f& m);
 
     /*
      *  Changes a variable's value
@@ -199,11 +175,6 @@ public:
     bool isAmbiguous();
 
 protected:
-    /*
-     *  Performs matrix multiplication to transform derivs with global matrix
-     */
-    Derivs remapDerivs(Result::Index count);
-
     /*  This is our evaluation tape type */
     struct Tape {
         std::vector<Clause> t;
@@ -221,31 +192,10 @@ protected:
     void pushTape(Tape::Type t);
 
     /*
-     *  Evaluate a single clause, populating the out array
-     */
-    static void eval_clause_values(Opcode::Opcode op,
-        const float* __restrict a, const float* __restrict b,
-        float* __restrict out, Result::Index count);
-
-    /*
-     *  Evaluate a set of derivatives (X, Y, Z)
-     */
-    static void eval_clause_derivs(Opcode::Opcode op,
-        const float* __restrict av,  const float* __restrict adx,
-        const float* __restrict ady, const float* __restrict adz,
-
-        const float* __restrict bv,  const float* __restrict bdx,
-        const float* __restrict bdy, const float* __restrict bdz,
-
-        float* __restrict ov,  float* __restrict odx,
-        float* __restrict ody, float* __restrict odz,
-        Result::Index count);
-
-    /*
      *  Evaluate the tree's values and Jacobian
      *  with respect to all its variables
      */
-    static float eval_clause_jacobians(Opcode::Opcode op,
+    static void eval_clause_jacobians(Opcode::Opcode op,
         const float av,  std::vector<float>& aj,
         const float bv,  std::vector<float>& bj,
                          std::vector<float>& oj);
@@ -255,10 +205,6 @@ protected:
      */
     static Interval::I eval_clause_interval(
         Opcode::Opcode op, const Interval::I& a, const Interval::I& b);
-
-    /*  Global matrix transform (and inverse) applied to all coordinates  */
-    Eigen::Matrix4f M;
-    Eigen::Matrix4f Mi;
 
     /*  Indices of X, Y, Z coordinates */
     Clause::Id X, Y, Z;
@@ -282,7 +228,7 @@ protected:
     std::vector<uint8_t> disabled;
     std::vector<Clause::Id> remap;
 
-    Result result;
+    std::unique_ptr<Result> result;
 };
 
 }   // namespace Kernel

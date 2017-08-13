@@ -5,8 +5,7 @@ find_package(Eigen3 REQUIRED)
 ################################################################################
 
 add_library(ao-kernel STATIC
-    eval/evaluator_avx.cpp
-    eval/evaluator_base.cpp
+    eval/evaluator.cpp
     eval/result.cpp
     eval/feature.cpp
     render/discrete/heightmap.cpp

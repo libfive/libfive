@@ -12,12 +12,11 @@ using namespace Kernel;
 #define EPSILON 1e-6
 
 // Helper function to make rendering a single call
-static std::unique_ptr<Heightmap> render(
-        Tree t, const Voxels& r, Eigen::Matrix4f M=Eigen::Matrix4f::Identity())
+static std::unique_ptr<Heightmap> render(Tree t, const Voxels& r)
 {
     std::atomic_bool abort(false);
 
-    return Heightmap::render(t, r, abort, M);
+    return Heightmap::render(t, r, abort);
 }
 
 TEST_CASE("Heightmap::render: 2D interval Z values")
@@ -278,12 +277,15 @@ TEST_CASE("Heightmap::render: Performance")
         Eigen::Matrix3f m;
         m = Eigen::AngleAxisf(float(M_PI/4), Eigen::Vector3f::UnitY()) *
             Eigen::AngleAxisf(float(atan(1/sqrt(2))), Eigen::Vector3f::UnitX());
-        Eigen::Matrix4f rot;
-        rot.block<3,3>(0,0) = m;
+
+        auto sponge_ = sponge.remap(
+            m(0,0)*Tree::X() + m(0,1)*Tree::Y() + m(0,2)*Tree::Z(),
+            m(1,0)*Tree::X() + m(1,1)*Tree::Y() + m(1,2)*Tree::Z(),
+            m(2,0)*Tree::X() + m(2,1)*Tree::Y() + m(2,2)*Tree::Z());
 
         // Begin timekeeping
         start = std::chrono::system_clock::now();
-        auto heightmap = render(sponge, r, rot)->depth;
+        auto heightmap = render(sponge_, r);
         end = std::chrono::system_clock::now();
 
         elapsed = end - start;

@@ -1,6 +1,5 @@
 set(SRCS main.cpp
     api.cpp
-    avx.cpp
     cache.cpp
     contours.cpp
     dual.cpp
