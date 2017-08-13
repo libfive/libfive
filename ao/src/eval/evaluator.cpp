@@ -421,7 +421,7 @@ bool Evaluator::isInside(const Eigen::Vector3f& p)
     // (same as single-feature case below).
     if (!isAmbiguous())
     {
-        return (ds.dx[0] != 0) || (ds.dy[0] != 0) || (ds.dz[0] != 0);
+        return (ds.d[0] != 0).any();
     }
 
     // Otherwise, we need to handle the zero-crossing case!
@@ -499,12 +499,10 @@ std::list<Feature> Evaluator::featuresAt(const Eigen::Vector3f& p)
                 else if (result->f(itr->a, 0) == result->f(itr->b, 0))
                 {
                     // Check both branches of the ambiguity
-                    const Eigen::Vector3d rhs(result->dx(itr->b, 0),
-                                              result->dy(itr->b, 0),
-                                              result->dz(itr->b, 0));
-                    const Eigen::Vector3d lhs(result->dx(itr->a, 0),
-                                              result->dy(itr->a, 0),
-                                              result->dz(itr->a, 0));
+                    const Eigen::Vector3d rhs
+                        (result->d(itr->b, 0).template cast<double>());
+                    const Eigen::Vector3d lhs(
+                            result->d(itr->a, 0).template cast<double>());
                     const auto epsilon = (itr->op == Opcode::MIN) ? (rhs - lhs)
                                                                   : (lhs - rhs);
 
@@ -527,7 +525,7 @@ std::list<Feature> Evaluator::featuresAt(const Eigen::Vector3f& p)
 
         if (!ambiguous)
         {
-            f_.deriv = {ds.dx[0], ds.dy[0], ds.dz[0]};
+            f_.deriv = ds.d[0].template cast<double>();
             if (seen.find(f_.getChoices()) == seen.end())
             {
                 seen.insert(f_.getChoices());
@@ -764,153 +762,88 @@ Evaluator::Derivs Evaluator::derivs(Result::Index count)
     {
 
 #define ov result->f.row(itr->id).head(count)
-#define odx result->dx.row(itr->id).head(count)
-#define ody result->dy.row(itr->id).head(count)
-#define odz result->dz.row(itr->id).head(count)
+#define od result->d.row(itr->id).head(count)
 
-#define av  result->f.row(itr->a).head(count)
-#define adx result->dx.row(itr->a).head(count)
-#define ady result->dy.row(itr->a).head(count)
-#define adz result->dz.row(itr->a).head(count)
+#define av result->f.row(itr->a).head(count)
+#define ad result->d.row(itr->a).head(count)
 
-#define bv  result->f.row(itr->b).head(count)
-#define bdx result->dx.row(itr->b).head(count)
-#define bdy result->dy.row(itr->b).head(count)
-#define bdz result->dz.row(itr->b).head(count)
+#define bv result->f.row(itr->b).head(count)
+#define bd result->d.row(itr->b).head(count)
 
         switch (itr->op) {
             case Opcode::ADD:
-                odx = adx + bdx;
-                ody = ady + bdy;
-                odz = adz + bdz;
+                od = ad + bd;
                 break;
             case Opcode::MUL:
                 // Product rule
-                odx = av*bdx + adx*bv;
-                ody = av*bdy + ady*bv;
-                odz = av*bdz + adz*bv;
+                od = av*bd + ad*bv;
                 break;
             case Opcode::MIN:
-                odx = (av < bv).select(adx, bdx);
-                ody = (av < bv).select(ady, bdy);
-                odz = (av < bv).select(adz, bdz);
+                od = (av < bv).select(ad, bd);
                 break;
             case Opcode::MAX:
-                odx = (av < bv).select(bdx, adx);
-                ody = (av < bv).select(bdy, ady);
-                odz = (av < bv).select(bdz, adz);
+                od = (av < bv).select(bd, ad);
                 break;
             case Opcode::SUB:
-                odx = adx - bdx;
-                ody = ady - bdy;
-                odz = adz - bdz;
+                od = ad - bd;
                 break;
             case Opcode::DIV:
-                odz = bv.pow(2); // Temporary
-                odx = (bv*adx - av*bdx) / odz;
-                ody = (bv*ady - av*bdy) / odz;
-                odz = (bv*adz - av*bdz) / odz;
+                od = (bv*ad - av*bd) / bv.pow(2);
                 break;
             case Opcode::ATAN2:
-                odz = av.pow(2) + bv.pow(2); // Temporary
-                odx = (adx*bv - av*bdx) / odz;
-                ody = (ady*bv - av*bdy) / odz;
-                odz = (adz*bv - av*bdz) / odz;
+                od = (ad*bv - av*bd) / (av.pow(2) + bv.pow(2));
                 break;
             case Opcode::POW:
-                odz = av.pow(bv - 1); // Temporary
-
                 // The full form of the derivative is
-                // odx = m * (bv * adx + av * log(av) * bdx))
-                // However, log(av) is often NaN and bdx is always zero,
+                // od = m * (bv * ad + av * log(av) * bd))
+                // However, log(av) is often NaN and bd is always zero,
                 // (since it must be CONST), so we skip that part.
-                odx = odz * (bv * adx);
-                ody = odz * (bv * ady);
-                odz = odz * (bv * adz);
+                od = av.pow(bv - 1) * (bv * ad);
                 break;
 
             case Opcode::NTH_ROOT:
-                odz = 1.0f / bv;    // Temporary
-                odz = av.pow(odz - 1) * odz; // Temporary
-                odx = odz * adx;
-                ody = odz * ady;
-                odz = odz * adz;
+                od = av.pow(1.0f / bv - 1) / bv * ad;
                 break;
             case Opcode::MOD:
-                odx = adx;
-                ody = ady;
-                odz = adz;
+                od = ad;
                 break;
             case Opcode::NANFILL:
-                odx = av.isNaN().select(bdx, adx);
-                ody = av.isNaN().select(bdy, ady);
-                odz = av.isNaN().select(bdz, adz);
+                od = av.isNaN().select(bd, ad);
                 break;
 
             case Opcode::SQUARE:
-                odz = 2 * av; // Temporary
-                odx = odz * adx;
-                ody = odz * ady;
-                odz = odz * adz;
+                od = 2 * av * ad;
                 break;
             case Opcode::SQRT:
-                // TODO: this could be more efficient
-                odx = (av < 0).select(0, adx / (2 * ov));
-                ody = (av < 0).select(0, ady / (2 * ov));
-                odz = (av < 0).select(0, adz / (2 * ov));
+                od = (av < 0).select({0, 0, 0}, ad / (2 * ov));
                 break;
             case Opcode::NEG:
-                odx = -adx;
-                ody = -ady;
-                odz = -adz;
+                od = -ad;
                 break;
             case Opcode::SIN:
-                odz = cos(av); // Temporary
-                odx = adx * odz;
-                ody = ady * odz;
-                odz = adz * odz;
+                od = ad * cos(av);
                 break;
             case Opcode::COS:
-                odz = -sin(av); // Temporary
-                odx = adx * odz;
-                ody = ady * odz;
-                odz = adz * odz;
+                od = ad * -sin(av);
                 break;
             case Opcode::TAN:
-                odz = pow(1/cos(av), 2);
-                odx = adx * odz;
-                ody = ady * odz;
-                odz = adz * odz;
+                od = ad * pow(1/cos(av), 2);
                 break;
             case Opcode::ASIN:
-                odz = sqrt(1 - pow(av, 2)); // Temporary
-                odx = adx / odz;
-                ody = ady / odz;
-                odz = adz / odz;
+                od = ad / sqrt(1 - pow(av, 2));
                 break;
             case Opcode::ACOS:
-                odz = -sqrt(1 - pow(av, 2)); // Temporary
-                odx = adx / odz;
-                ody = ady / odz;
-                odz = adz / odz;
+                od = ad / -sqrt(1 - pow(av, 2));
                 break;
             case Opcode::ATAN:
-                odz = pow(av, 2) + 1; // Temporary
-                odx = adx / odz;
-                ody = ady / odz;
-                odz = adz / odz;
+                od = ad / (pow(av, 2) + 1);
                 break;
             case Opcode::EXP:
-                odz = exp(av); // Temporary
-                odx = odz * adx;
-                ody = odz * ady;
-                odz = odz * adz;
+                od = exp(av) * ad;
                 break;
 
             case Opcode::CONST_VAR:
-                odx = adx;
-                ody = ady;
-                odz = adz;
+                od = ad;
                 break;
 
             case Opcode::INVALID:
@@ -921,24 +854,16 @@ Evaluator::Derivs Evaluator::derivs(Result::Index count)
             case Opcode::VAR:
             case Opcode::LAST_OP: assert(false);
         }
-
 #undef ov
-#undef odx
-#undef ody
-#undef odz
+#undef od
 
 #undef av
-#undef adx
-#undef ady
-#undef adz
+#undef ad
 
 #undef bv
-#undef bdx
-#undef bdy
-#undef bdz
+#undef bd
     }
-    return { &result->f(tape->i, 0),  &result->dx(tape->i, 0),
-             &result->dy(tape->i, 0), &result->dz(tape->i, 0) };
+    return { &result->f(tape->i, 0),  &result->d(tape->i, 0) };
 }
 
 std::map<Tree::Id, float> Evaluator::gradient(const Eigen::Vector3f& p)
