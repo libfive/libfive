@@ -1,11 +1,11 @@
 set(SRCS main.cpp
+    api.cpp
     avx.cpp
     cache.cpp
     contours.cpp
     dual.cpp
     eval.cpp
     heightmap.cpp
-    lib.cpp
     marching.cpp
     mesh.cpp
     feature.cpp

@@ -4,7 +4,7 @@ find_package(Eigen3 REQUIRED)
 
 ################################################################################
 
-add_library(ao-kernel-core STATIC
+add_library(ao-kernel STATIC
     eval/evaluator_avx.cpp
     eval/evaluator_base.cpp
     eval/result.cpp
@@ -20,15 +20,16 @@ add_library(ao-kernel-core STATIC
     tree/opcode.cpp
     tree/template.cpp
     tree/tree.cpp
+    ao.cpp
 )
 
-target_include_directories(ao-kernel-core SYSTEM PRIVATE
+target_include_directories(ao-kernel SYSTEM PRIVATE
     ${BOOST_INCLUDE_DIR}
     ${PNG_INCLUDE_DIR}
 )
-target_include_directories(ao-kernel-core PUBLIC
+target_include_directories(ao-kernel PUBLIC
     ../include
     ${EIGEN3_INCLUDE_DIR} # Eigen::Vector3f is used in APIs
 )
 
-target_link_libraries(ao-kernel-core ${PNG_LIBRARIES})
+target_link_libraries(ao-kernel ${PNG_LIBRARIES})

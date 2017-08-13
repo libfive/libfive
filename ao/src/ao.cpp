@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "lib.h"
+#include "ao/ao.h"
 
 #include "ao/tree/opcode.hpp"
 #include "ao/tree/tree.hpp"

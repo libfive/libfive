@@ -3,7 +3,7 @@
 
 #include "ao/tree/opcode.hpp"
 #include "ao/tree/tree.hpp"
-#include "lib.h"
+#include "ao/ao.h"
 
 using namespace Kernel;
 

@@ -1,8 +1,7 @@
 #include <QApplication>
 
 #include "gui/interpreter.hpp"
-#include "guile.h"
-#include "lib.h"
+#include "ao-guile.h"
 
 Interpreter::Interpreter()
     : timer(this)

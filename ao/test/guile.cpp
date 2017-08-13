@@ -2,7 +2,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include "catch.hpp"
 
-#include "guile.h"
+#include "ao-guile.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 

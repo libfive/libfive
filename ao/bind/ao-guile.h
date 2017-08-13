@@ -1,7 +1,7 @@
 #pragma once
 
 #include <libguile.h>
-#include "lib.h"
+#include "ao/ao.h"
 
 #ifdef __cplusplus
 extern "C" {

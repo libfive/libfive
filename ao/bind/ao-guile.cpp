@@ -1,8 +1,7 @@
 #include <cstdlib>
 #include <cassert>
 
-#include "lib.h"
-#include "guile.h"
+#include "ao-guile.h"
 
 void del_tree(void* t)      { ao_tree_delete((ao_tree)t); }
 
