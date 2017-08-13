@@ -57,8 +57,8 @@ struct Result {
     Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> dy;
     Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> dz;
 
-    /*  j[clause][var] = dclause / dvar */
-    std::vector<std::vector<float>> j;
+    /*  j(clause, var) = dclause / dvar */
+    Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> j;
 
     std::vector<Interval::I> i;
 };

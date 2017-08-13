@@ -588,197 +588,6 @@ void Evaluator::pop()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define JAC_LOOP for (auto a = aj.begin(), b = bj.begin(), o = oj.begin(); a != aj.end(); ++a, ++b, ++o)
-void Evaluator::eval_clause_jacobians(Opcode::Opcode op,
-    const float av,  std::vector<float>& aj,
-    const float bv,  std::vector<float>& bj,
-    std::vector<float>& oj)
-{
-    switch (op) {
-        case Opcode::ADD:
-            JAC_LOOP
-            {
-                (*o) = (*a) + (*b);
-            }
-            break;
-        case Opcode::MUL:
-            JAC_LOOP
-            {   // Product rule
-                (*o) = av * (*b) + bv * (*a);
-            }
-            break;
-        case Opcode::MIN:
-            JAC_LOOP
-            {
-                if (av < bv)
-                {
-                    (*o) = (*a);
-                }
-                else
-                {
-                    (*o) = (*b);
-                }
-            }
-            break;
-        case Opcode::MAX:
-            JAC_LOOP
-            {
-                if (av < bv)
-                {
-                    (*o) = (*b);
-                }
-                else
-                {
-                    (*o) = (*a);
-                }
-            }
-            break;
-        case Opcode::SUB:
-            JAC_LOOP
-            {
-                (*o) = (*a) - (*b);
-            }
-            break;
-        case Opcode::DIV:
-            JAC_LOOP
-            {
-                const float p = pow(bv, 2);
-                (*o) = (bv*(*a) - av*(*b)) / p;
-            }
-            break;
-        case Opcode::ATAN2:
-            JAC_LOOP
-            {
-                const float d = pow(av, 2) + pow(bv, 2);
-                (*o) = ((*a)*bv - av*(*b)) / d;
-            }
-            break;
-        case Opcode::POW:
-            JAC_LOOP
-            {
-                const float m = pow(av, bv - 1);
-
-                // The full form of the derivative is
-                // (*o) = m * (bv * (*a) + av * log(av) * (*b)))
-                // However, log(av) is often NaN and (*b) is always zero,
-                // (since it must be CONST), so we skip that part.
-                (*o) = m * (bv * (*a));
-            }
-            break;
-        case Opcode::NTH_ROOT:
-            JAC_LOOP
-            {
-                const float m = pow(av, 1.0f/bv - 1);
-                (*o) = m * (1.0f/bv * (*a));
-            }
-            break;
-        case Opcode::MOD:
-            JAC_LOOP
-            {
-                // This isn't quite how partial derivatives of mod work,
-                // but close enough normals rendering.
-                (*o) = (*a);
-            }
-            break;
-        case Opcode::NANFILL:
-            JAC_LOOP
-            {
-                (*o) = std::isnan(av) ? (*b) : (*a);
-            }
-            break;
-
-        case Opcode::SQUARE:
-            JAC_LOOP
-            {
-                (*o) = 2 * av * (*a);
-            }
-            break;
-        case Opcode::SQRT:
-            JAC_LOOP
-            {
-                if (av < 0)
-                {
-                    (*o) = 0;
-                }
-                else
-                {
-                    (*o) = (*a) / (2 * sqrt(av));
-                }
-            }
-            break;
-        case Opcode::NEG:
-            JAC_LOOP
-            {
-                (*o) = -(*a);
-            }
-            break;
-        case Opcode::SIN:
-            JAC_LOOP
-            {
-                const float c = cos(av);
-                (*o) = (*a) * c;
-            }
-            break;
-        case Opcode::COS:
-            JAC_LOOP
-            {
-                const float s = -sin(av);
-                (*o) = (*a) * s;
-            }
-            break;
-        case Opcode::TAN:
-            JAC_LOOP
-            {
-                const float s = pow(1/cos(av), 2);
-                (*o) = (*a) * s;
-            }
-            break;
-        case Opcode::ASIN:
-                JAC_LOOP
-                {
-                    const float d = sqrt(1 - pow(av, 2));
-                    (*o) = (*a) / d;
-                }
-                break;
-            case Opcode::ACOS:
-                JAC_LOOP
-                {
-                    const float d = -sqrt(1 - pow(av, 2));
-                    (*o) = (*a) / d;
-                }
-                break;
-            case Opcode::ATAN:
-                JAC_LOOP
-                {
-                    const float d = pow(av, 2) + 1;
-                    (*o) = (*a) / d;
-                }
-                break;
-            case Opcode::EXP:
-                JAC_LOOP
-                {
-                    const float e = exp(av);
-                    (*o) = e * (*a);
-                }
-                break;
-
-            case Opcode::CONST_VAR:
-                JAC_LOOP
-                {
-                    (*o) = 0;
-                }
-                break;
-
-            case Opcode::INVALID:
-            case Opcode::CONST:
-            case Opcode::VAR_X:
-            case Opcode::VAR_Y:
-            case Opcode::VAR_Z:
-            case Opcode::VAR:
-            case Opcode::LAST_OP: assert(false);
-        }
-}
-
 Interval::I Evaluator::eval_clause_interval(
         Opcode::Opcode op, const Interval::I& a, const Interval::I& b)
 {
@@ -1140,12 +949,106 @@ std::map<Tree::Id, float> Evaluator::gradient(const Eigen::Vector3f& p)
 
     for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
     {
-        float av = result->f(itr->a, 0);
-        float bv = result->f(itr->b, 0);
-        std::vector<float>& aj = result->j[itr->a];
-        std::vector<float>& bj = result->j[itr->b];
 
-        eval_clause_jacobians(itr->op, av, aj, bv, bj, result->j[itr->id]);
+#define ov result->f.row(itr->id)(0)
+#define av result->f.row(itr->a)(0)
+#define bv result->f.row(itr->b)(0)
+
+#define oj result->j.row(itr->id)
+#define aj result->j.row(itr->a)
+#define bj result->j.row(itr->b)
+
+        switch (itr->op) {
+            case Opcode::ADD:
+                oj = aj + bj;
+                break;
+            case Opcode::MUL:
+                oj = av * bj + bv * aj;
+                break;
+            case Opcode::MIN:
+                oj = (av < bv) ? aj : bj;
+                break;
+            case Opcode::MAX:
+                oj = (av < bv) ? bj : aj;
+                break;
+            case Opcode::SUB:
+                oj = aj - bj;
+                break;
+            case Opcode::DIV:
+                oj = (bv*aj - av*bj) / pow(bv, 2);
+                break;
+            case Opcode::ATAN2:
+                oj = (aj*bv - av*bj) / (pow(av, 2) + pow(bv, 2));
+                break;
+            case Opcode::POW:
+                // The full form of the derivative is
+                // oj = m * (bv * aj + av * log(av) * bj))
+                // However, log(av) is often NaN and bj is always zero,
+                // (since it must be CONST), so we skip that part.
+                oj = pow(av, bv - 1) * (bv * aj);
+                break;
+            case Opcode::NTH_ROOT:
+                oj = pow(av, 1.0f/bv - 1) * (1.0f/bv * aj);
+                break;
+            case Opcode::MOD:
+                // This isn't quite how partial derivatives of mod work,
+                // but close enough normals rendering.
+                oj = aj;
+                break;
+            case Opcode::NANFILL:
+                oj = std::isnan(av) ? bj : aj;
+                break;
+
+            case Opcode::SQUARE:
+                oj = 2 * av * aj;
+                break;
+            case Opcode::SQRT:
+                if (av < 0) oj = 0.0;
+                else        oj = (aj / (2 * sqrt(av)));
+                break;
+            case Opcode::NEG:
+                oj = -aj;
+                break;
+            case Opcode::SIN:
+                oj = aj * cos(av);
+                break;
+            case Opcode::COS:
+                oj = aj * -sin(av);
+                break;
+            case Opcode::TAN:
+                oj = aj * pow(1/cos(av), 2);
+                break;
+            case Opcode::ASIN:
+                oj = aj / sqrt(1 - pow(av, 2));
+                break;
+            case Opcode::ACOS:
+                oj = aj / -sqrt(1 - pow(av, 2));
+                break;
+            case Opcode::ATAN:
+                oj = aj / (pow(av, 2) + 1);
+                break;
+            case Opcode::EXP:
+                oj = exp(av) * aj;
+                break;
+
+            case Opcode::CONST_VAR:
+                oj = 0;
+                break;
+
+            case Opcode::INVALID:
+            case Opcode::CONST:
+            case Opcode::VAR_X:
+            case Opcode::VAR_Y:
+            case Opcode::VAR_Z:
+            case Opcode::VAR:
+            case Opcode::LAST_OP: assert(false);
+        }
+#undef ov
+#undef av
+#undef bv
+#undef oj
+#undef aj
+#undef bj
     }
 
     std::map<Tree::Id, float> out;
@@ -1155,7 +1058,7 @@ std::map<Tree::Id, float> Evaluator::gradient(const Eigen::Vector3f& p)
         size_t index = 0;
         for (auto v : vars.left)
         {
-            out[v.second] = result->j[ti][index++];
+            out[v.second] = result->j(ti, index++);
         }
     }
     return out;
