@@ -11,10 +11,11 @@ View::View(QWidget* parent)
     connect(this, &View::settingsChanged,
             this, &View::onSettingsChanged);
 
-    connect(&busy, &Busy::redraw,
-            this, &View::update);
-    connect(this, &View::meshesReady,
-            &busy, [&](QList<const Kernel::Mesh*>){ busy.hide(); });
+    connect(&busy, &Busy::redraw, this, &View::update);
+    connect(this, &View::meshesReady, &busy,
+            [&](QList<const Kernel::Mesh*>){ busy.hide(); });
+    connect(this, &View::settingsChanged, &busy,
+            [&](Settings){ busy.show(); });
 }
 
 void View::setShapes(QList<Shape*> new_shapes)
@@ -28,7 +29,10 @@ void View::setShapes(QList<Shape*> new_shapes)
     shapes.clear();
 
     // Start up the busy spinner
-    busy.show();
+    if (new_shapes.size())
+    {
+        busy.show();
+    }
 
     // Connect all new shapes
     for (auto s : new_shapes)
