@@ -14,7 +14,6 @@ void Background::initializeGL()
     {
         // Data is arranged  x   y   z   r   g   b
         GLfloat data[] = {   /********************/
-                             /*    X axis        */
                             -1, -1,  0.9,  COLOR(base03),
                             -1,  1,  0.9,  COLOR(base02),
                              1, -1,  0.9,  COLOR(base02),

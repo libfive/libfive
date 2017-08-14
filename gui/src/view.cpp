@@ -10,6 +10,11 @@ View::View(QWidget* parent)
     setMouseTracking(true);
     connect(this, &View::settingsChanged,
             this, &View::onSettingsChanged);
+
+    connect(&busy, &Busy::redraw,
+            this, &View::update);
+    connect(this, &View::meshesReady,
+            &busy, [&](QList<const Kernel::Mesh*>){ busy.hide(); });
 }
 
 void View::setShapes(QList<Shape*> new_shapes)
@@ -21,6 +26,9 @@ void View::setShapes(QList<Shape*> new_shapes)
         s->deleteLater();
     }
     shapes.clear();
+
+    // Start up the busy spinner
+    busy.show();
 
     // Connect all new shapes
     for (auto s : new_shapes)
@@ -61,8 +69,10 @@ void View::onSettingsChanged(Settings s)
 void View::initializeGL()
 {
     Shader::initializeGL();
+
     axes.initializeGL();
     background.initializeGL();
+    busy.initializeGL();
 }
 
 void View::paintGL()
@@ -80,11 +90,14 @@ void View::paintGL()
         axes.drawSolid(m);
         axes.drawWire(m);
     }
+
+    // This is a no-op if the spinner is hidden
+    busy.draw(camera.size);
 }
 
 void View::resizeGL(int width, int height)
 {
-    camera.resize({width, height});
+    camera.size = {width, height};
 }
 
 void View::mouseMoveEvent(QMouseEvent* event)

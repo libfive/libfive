@@ -4,6 +4,7 @@
 
 #include "gui/axes.hpp"
 #include "gui/background.hpp"
+#include "gui/busy.hpp"
 #include "gui/camera.hpp"
 #include "gui/shape.hpp"
 #include "gui/settings.hpp"
@@ -45,6 +46,7 @@ protected:
     /*  Background items to render  */
     Axes axes;
     Background background;
+    Busy busy;
 
     void mouseMoveEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;

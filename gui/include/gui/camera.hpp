@@ -29,12 +29,10 @@ public:
     void panIncremental(QPoint delta);
     void zoomIncremental(float ds, QPoint c);
 
-    /*  Resize window  */
-    void resize(QSize s) { size = s; }
-
-protected:
     /*  Window size  */
     QSize size;
+
+protected:
 
     float scale=1;
     QVector3D center={0,0,0};

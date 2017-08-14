@@ -14,6 +14,7 @@ set(SRCS src/main.cpp
     src/app.cpp
     src/axes.cpp
     src/background.cpp
+    src/busy.cpp
     src/camera.cpp
     src/settings.cpp
     src/shader.cpp
@@ -28,6 +29,7 @@ set(SRCS src/main.cpp
 )
 set(QOBJECTS
     include/gui/app.hpp
+    include/gui/busy.hpp
     include/gui/settings.hpp
     include/gui/syntax.hpp
     include/gui/shape.hpp
