@@ -7,6 +7,11 @@
 
 #include "gui/settings.hpp"
 
+QRegularExpression Settings::bounds_regex("#! BOUNDS (.*) (.*) (.*) (.*) (.*) (.*) !#");
+QRegularExpression Settings::res_regex("#! RES (.*) !#");
+QString Settings::bounds_fmt("#! BOUNDS %1 %2 %3 %4 %5 %6 !#");
+QString Settings::res_fmt("#! RES %1 !#");
+
 Settings::Settings()
     : res(-1)
 {

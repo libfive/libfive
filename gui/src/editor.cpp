@@ -138,3 +138,33 @@ void Editor::setKeywords(QString kws)
     syntax->setKeywords(kws);
     script_doc->contentsChange(0, 0, script_doc->toPlainText().length());
 }
+
+void Editor::onSettingsChanged(Settings s)
+{
+    auto txt = script_doc->toPlainText();
+
+    auto res_str = s.res_fmt.arg(s.res);
+    auto bounds_str = s.bounds_fmt
+        .arg(s.min.x()).arg(s.min.y()).arg(s.min.z())
+        .arg(s.max.x()).arg(s.max.y()).arg(s.max.z());
+
+    for (auto pair : {std::make_pair(s.res_regex, res_str),
+                      std::make_pair(s.bounds_regex, bounds_str)})
+    {
+        auto match = pair.first.match(txt);
+        if (!match.hasMatch())
+        {
+            QTextCursor c(script_doc);
+            c.insertText(pair.second);
+            c.insertText("\n");
+        }
+        else if (match.captured(0) != pair.second)
+        {
+            QTextCursor c(script_doc);
+            c.setPosition(match.capturedStart());
+            c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
+            c.removeSelectedText();
+            c.insertText(pair.second);
+        }
+    }
+}

@@ -16,6 +16,13 @@ struct Settings
     QVector3D max;
     float res;
     int div;
+
+    // Used to read and write to scripts
+    static QRegularExpression bounds_regex;
+    static QRegularExpression res_regex;
+    static QString bounds_fmt;
+    static QString res_fmt;
+
 protected:
     Settings(QVector3D min, QVector3D max, float res, int div);
 };

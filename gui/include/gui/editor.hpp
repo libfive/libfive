@@ -1,6 +1,8 @@
 #include <QTextEdit>
 #include <QPlainTextEdit>
 
+#include "gui/settings.hpp"
+
 class Syntax;
 
 class Editor : public QWidget
@@ -17,6 +19,12 @@ public slots:
     void onError(QString result, QPair<uint32_t, uint32_t> begin,
                                  QPair<uint32_t, uint32_t> end);
     void setKeywords(QString kws);
+
+    /*
+     *  When settings are changed, add a line of meta-code
+     *  to the script to define them in-line.
+     */
+    void onSettingsChanged(Settings s);
 
 signals:
     void scriptChanged(QString s);
