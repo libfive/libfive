@@ -43,6 +43,18 @@ Settings Settings::next() const
     return div > 0 ? Settings(min, max, res, div - 1) : Settings();
 }
 
+bool Settings::operator==(const Settings& other) const
+{
+    return min == other.min && max == other.max && res == other.res;
+}
+
+bool Settings::operator!=(const Settings& other) const
+{
+    return !(*this == other);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 SettingsPane::SettingsPane(Settings s)
     : xmin(new QDoubleSpinBox),
       xmax(new QDoubleSpinBox),

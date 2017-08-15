@@ -22,6 +22,9 @@ struct Settings
     static QRegularExpression settings_regex;
     static QString settings_fmt;
 
+    bool operator==(const Settings& other) const;
+    bool operator!=(const Settings& other) const;
+
 protected:
     Settings(QVector3D min, QVector3D max, float res, int div);
 };

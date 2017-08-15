@@ -72,15 +72,18 @@ void View::onSettingsFromPane(Settings s)
 
 void View::onSettingsFromScript(Settings s)
 {
-    if (pane.isNull())
+    if (settings != s)
     {
-        settings = s;
-        startRender(s);
-    }
-    else
-    {
-        // This ends up calling onSettingsFromPane if anything has changed
-        pane->set(s);
+        if (pane.isNull())
+        {
+            settings = s;
+            startRender(s);
+        }
+        else
+        {
+            // This ends up calling onSettingsFromPane if anything has changed
+            pane->set(s);
+        }
     }
 }
 
