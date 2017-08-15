@@ -184,10 +184,8 @@ void Editor::onScriptChanged()
         }
         if (ok)
         {
-            Settings s;
-            s.min = {out[0], out[1], out[2]};
-            s.max = {out[3], out[4], out[5]};
-            s.res = out[6];
+            Settings s({out[0], out[1], out[2]},
+                       {out[3], out[4], out[5]}, out[6]);
 
             emit(settingsChanged(s));
         }
