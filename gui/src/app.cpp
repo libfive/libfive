@@ -34,9 +34,13 @@ App::App(int& argc, char **argv)
     connect(editor, &Editor::modificationChanged,
             this, &QWidget::setWindowModified);
 
-    // Sync settings with script
+    // Sync settings with script and vice versa
+    // (the editor breaks the loop by not re-emitting the signal
+    // if no changes are necessary to the block comment)
     connect(view, &View::settingsChanged,
             editor, &Editor::onSettingsChanged);
+    connect(editor, &Editor::settingsChanged,
+            view, &View::onSettingsFromScript);
 
     // File menu
     auto file_menu = menuBar()->addMenu("&File");

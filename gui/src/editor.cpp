@@ -1,3 +1,5 @@
+#include <array>
+
 #include <QVBoxLayout>
 
 #include "gui/editor.hpp"
@@ -40,8 +42,7 @@ Editor::Editor(QWidget* parent)
             [=](){ syntax->matchParens(script, script->textCursor().position()); });
 
     // Emit the script whenever text changes
-    connect(script, &QTextEdit::textChanged, script,
-            [=](){ this->scriptChanged(script_doc->toPlainText()); });
+    connect(script, &QTextEdit::textChanged, this, &Editor::onScriptChanged);
 
     // Emit modificationChanged to keep window in sync
     connect(script_doc, &QTextDocument::modificationChanged,
@@ -143,28 +144,52 @@ void Editor::onSettingsChanged(Settings s)
 {
     auto txt = script_doc->toPlainText();
 
-    auto res_str = s.res_fmt.arg(s.res);
-    auto bounds_str = s.bounds_fmt
+    auto render_str = s.settings_fmt
         .arg(s.min.x()).arg(s.min.y()).arg(s.min.z())
-        .arg(s.max.x()).arg(s.max.y()).arg(s.max.z());
+        .arg(s.max.x()).arg(s.max.y()).arg(s.max.z())
+        .arg(s.res);
 
-    for (auto pair : {std::make_pair(s.res_regex, res_str),
-                      std::make_pair(s.bounds_regex, bounds_str)})
+    QTextCursor c(script_doc);
+
+    c.beginEditBlock();
+    auto match = s.settings_regex.match(txt);
+    if (!match.hasMatch())
     {
-        auto match = pair.first.match(txt);
-        if (!match.hasMatch())
+        c.insertText(render_str);
+        c.insertText("\n");
+    }
+    else if (match.captured(0) != render_str)
+    {
+        c.setPosition(match.capturedStart());
+        c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
+        c.removeSelectedText();
+        c.insertText(render_str);
+    }
+    c.endEditBlock();
+}
+
+void Editor::onScriptChanged()
+{
+    auto txt = script_doc->toPlainText();
+    emit(scriptChanged(txt));
+
+    auto match = Settings::settings_regex.match(txt);
+    if (match.hasMatch())
+    {
+        bool ok = true;
+        std::array<float, 7> out;
+        for (unsigned i=0; i < out.size() && ok; ++i)
         {
-            QTextCursor c(script_doc);
-            c.insertText(pair.second);
-            c.insertText("\n");
+            out[i] = match.captured(i + 1).toFloat(&ok);
         }
-        else if (match.captured(0) != pair.second)
+        if (ok)
         {
-            QTextCursor c(script_doc);
-            c.setPosition(match.capturedStart());
-            c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
-            c.removeSelectedText();
-            c.insertText(pair.second);
+            Settings s;
+            s.min = {out[0], out[1], out[2]};
+            s.max = {out[3], out[4], out[5]};
+            s.res = out[6];
+
+            emit(settingsChanged(s));
         }
     }
 }

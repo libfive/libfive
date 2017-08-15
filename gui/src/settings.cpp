@@ -2,15 +2,14 @@
 #include <cmath>
 
 #include <QGridLayout>
-#include <QDoubleSpinBox>
 #include <QLabel>
 
 #include "gui/settings.hpp"
 
-QRegularExpression Settings::bounds_regex("#! BOUNDS (.*) (.*) (.*) (.*) (.*) (.*) !#");
-QRegularExpression Settings::res_regex("#! RES (.*) !#");
-QString Settings::bounds_fmt("#! BOUNDS %1 %2 %3 %4 %5 %6 !#");
-QString Settings::res_fmt("#! RES %1 !#");
+QRegularExpression Settings::settings_regex(
+        "#! RENDER (.*) (.*) (.*) / (.*) (.*) (.*) / (.*) !#");
+QString Settings::settings_fmt(
+        "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 !#");
 
 Settings::Settings()
     : res(-1)
@@ -45,15 +44,15 @@ Settings Settings::next() const
 }
 
 SettingsPane::SettingsPane(Settings s)
+    : xmin(new QDoubleSpinBox),
+      xmax(new QDoubleSpinBox),
+      ymin(new QDoubleSpinBox),
+      ymax(new QDoubleSpinBox),
+      zmin(new QDoubleSpinBox),
+      zmax(new QDoubleSpinBox),
+      res(new QDoubleSpinBox)
 {
     auto layout = new QGridLayout();
-    auto xmin = new QDoubleSpinBox;
-    auto xmax = new QDoubleSpinBox;
-    auto ymin = new QDoubleSpinBox;
-    auto ymax = new QDoubleSpinBox;
-    auto zmin = new QDoubleSpinBox;
-    auto zmax = new QDoubleSpinBox;
-    auto res = new QDoubleSpinBox;
 
     layout->addWidget(new QLabel("<b>Bounds:</b>"), 0, 1);
     layout->addWidget(new QLabel("X:"), 1, 0);
@@ -84,13 +83,7 @@ SettingsPane::SettingsPane(Settings s)
     }
     res->setMaximum(100);
 
-    xmin->setValue(s.min.x());
-    ymin->setValue(s.min.y());
-    zmin->setValue(s.min.z());
-    xmax->setValue(s.max.x());
-    ymax->setValue(s.max.y());
-    zmax->setValue(s.max.z());
-    res->setValue(s.res);
+    set(s);
 
     for (auto t : {xmin, xmax, ymin, ymax, zmin, zmax, res})
     {
@@ -107,4 +100,15 @@ SettingsPane::SettingsPane(Settings s)
     setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint |
                    Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     setAttribute(Qt::WA_DeleteOnClose);
+}
+
+void SettingsPane::set(Settings s)
+{
+    xmin->setValue(s.min.x());
+    ymin->setValue(s.min.y());
+    zmin->setValue(s.min.z());
+    xmax->setValue(s.max.x());
+    ymax->setValue(s.max.y());
+    zmax->setValue(s.max.z());
+    res->setValue(s.res);
 }

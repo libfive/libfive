@@ -8,14 +8,12 @@ View::View(QWidget* parent)
       settings({-10, -10, -10}, {10, 10, 10}, 10)
 {
     setMouseTracking(true);
-    connect(this, &View::settingsChanged,
-            this, &View::onSettingsChanged);
 
     connect(&busy, &Busy::redraw, this, &View::update);
+    connect(this, &View::startRender, &busy,
+            [&](Settings){ busy.show(); });
     connect(this, &View::meshesReady, &busy,
             [&](QList<const Kernel::Mesh*>){ busy.hide(); });
-    connect(this, &View::settingsChanged, &busy,
-            [&](Settings){ busy.show(); });
 }
 
 void View::setShapes(QList<Shape*> new_shapes)
@@ -39,7 +37,7 @@ void View::setShapes(QList<Shape*> new_shapes)
     {
         connect(s, &Shape::gotMesh, this, &View::update);
         connect(s, &Shape::gotMesh, this, &View::checkMeshes);
-        connect(this, &View::settingsChanged,
+        connect(this, &View::startRender,
                 s, &Shape::startRender);
         s->startRender(settings);
         s->setParent(this);
@@ -55,7 +53,7 @@ void View::openSettings(bool)
     {
         pane = new SettingsPane(settings);
         connect(pane, &SettingsPane::changed,
-                this, &View::settingsChanged);
+                this, &View::onSettingsFromPane);
         pane->show();
         pane->setFixedSize(pane->size());
     }
@@ -65,9 +63,25 @@ void View::openSettings(bool)
     }
 }
 
-void View::onSettingsChanged(Settings s)
+void View::onSettingsFromPane(Settings s)
 {
     settings = s;
+    startRender(s);
+    emit(settingsChanged(s));
+}
+
+void View::onSettingsFromScript(Settings s)
+{
+    if (pane.isNull())
+    {
+        settings = s;
+        startRender(s);
+    }
+    else
+    {
+        // This ends up calling onSettingsFromPane if anything has changed
+        pane->set(s);
+    }
 }
 
 void View::initializeGL()

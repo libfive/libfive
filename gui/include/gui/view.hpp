@@ -26,7 +26,25 @@ public slots:
      */
     void checkMeshes() const;
 
+    /*
+     *  Called when the script changes settings
+     */
+    void onSettingsFromScript(Settings s);
+
+    /*
+     *  Called when the settings pane is edited
+     */
+    void onSettingsFromPane(Settings s);
+
 signals:
+    /*
+     *  Called to kick off a render and start the busy spinner running
+     */
+    void startRender(Settings s);
+
+    /*
+     *  Emitted whenever settings are changed in the pane
+     */
     void settingsChanged(Settings s);
 
     /*
@@ -35,7 +53,6 @@ signals:
     void meshesReady(QList<const Kernel::Mesh*> shapes) const;
 
 protected slots:
-    void onSettingsChanged(Settings s);
     void update() { QOpenGLWidget::update(); }
 
 protected:

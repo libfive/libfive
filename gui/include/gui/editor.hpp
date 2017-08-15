@@ -21,14 +21,26 @@ public slots:
     void setKeywords(QString kws);
 
     /*
-     *  When settings are changed, add a line of meta-code
-     *  to the script to define them in-line.
+     *  When settings are changed, add specially-formatted comment blocks
+     *  to the script to control settings
      */
     void onSettingsChanged(Settings s);
+
+    /*
+     *  When script changes, emit scriptChanged and check for settings
+     *  embedded in the script
+     */
+    void onScriptChanged();
 
 signals:
     void scriptChanged(QString s);
     void modificationChanged(bool m);
+
+    /*
+     *  Invoked when a script defines settings using specially-formatted
+     *  comment blocks
+     */
+    void settingsChanged(Settings s);
 
 protected:
     void setResult(bool valid, QString result);

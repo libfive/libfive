@@ -4,6 +4,7 @@
 #include <QPointer>
 #include <QVector3D>
 #include <QWidget>
+#include <QDoubleSpinBox>
 
 struct Settings
 {
@@ -18,20 +19,31 @@ struct Settings
     int div;
 
     // Used to read and write to scripts
-    static QRegularExpression bounds_regex;
-    static QRegularExpression res_regex;
-    static QString bounds_fmt;
-    static QString res_fmt;
+    static QRegularExpression settings_regex;
+    static QString settings_fmt;
 
 protected:
     Settings(QVector3D min, QVector3D max, float res, int div);
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 class SettingsPane : public QWidget
 {
     Q_OBJECT
 public:
     SettingsPane(Settings s);
+    void set(Settings s);
+
 signals:
     void changed(Settings s);
+
+protected:
+    QDoubleSpinBox* xmin;
+    QDoubleSpinBox* xmax;
+    QDoubleSpinBox* ymin;
+    QDoubleSpinBox* ymax;
+    QDoubleSpinBox* zmin;
+    QDoubleSpinBox* zmax;
+    QDoubleSpinBox* res;
 };
