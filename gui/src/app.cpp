@@ -23,10 +23,11 @@ switch (checkUnsaved())                                         \
 App::App(int& argc, char **argv)
     : QMainWindow(), editor(new Editor), view(new View)
 {
-    resize(QDesktopWidget().availableGeometry(this).size() * 0.5);
+    resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
 
     auto layout = new QSplitter();
     layout->addWidget(editor);
+    editor->resize(width() * 0.4, editor->height());
     layout->addWidget(view);
     setCentralWidget(layout);
 
@@ -98,9 +99,10 @@ App::App(int& argc, char **argv)
 
     show();
 
-    if (argc > 1 && loadFile(argv[1]))
+    QString target = (argc > 1) ? argv[1] : ":/examples/tutorial.ao";
+    if (loadFile(target))
     {
-        setFilename(argv[1]);
+        setFilename(target);
     }
 }
 

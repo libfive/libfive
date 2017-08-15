@@ -4,6 +4,7 @@
         <file>gl/flat.frag</file>
         <file>gl/shaded.frag</file>
         <file>gl/busy.frag</file>
+        <file>examples/tutorial.ao</file>
     </qresource>
 </RCC>
 
