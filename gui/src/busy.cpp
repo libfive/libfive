@@ -54,8 +54,8 @@ void Busy::hide()
     anim->setStartValue(fade);
     anim->setEndValue(0.0);
 
-    connect(anim, &QPropertyAnimation::finished,
-            &timer, &QTimer::stop);
+    connect(anim, &QPropertyAnimation::finished, &timer, &QTimer::stop);
+    connect(anim, &QPropertyAnimation::finished, this, &Busy::redraw);
     anim->start(QPropertyAnimation::DeleteWhenStopped);
 }
 
