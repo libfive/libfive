@@ -180,7 +180,7 @@ bool Window::saveFile(QString f)
 
 void Window::onSave(bool)
 {
-    if (filename.isEmpty())
+    if (filename.isEmpty() || filename.startsWith(":/"))
     {
         onSaveAs();
     }
