@@ -11,7 +11,6 @@ find_package(Qt5Network REQUIRED)
 find_package(Qt5Concurrent REQUIRED)
 
 set(SRCS src/main.cpp
-    src/app.cpp
     src/axes.cpp
     src/background.cpp
     src/busy.cpp
@@ -24,11 +23,11 @@ set(SRCS src/main.cpp
     src/editor.cpp
     src/interpreter.cpp
     src/view.cpp
+    src/window.cpp
 
     resources.qrc
 )
 set(QOBJECTS
-    include/gui/app.hpp
     include/gui/busy.hpp
     include/gui/settings.hpp
     include/gui/syntax.hpp
@@ -36,6 +35,7 @@ set(QOBJECTS
     include/gui/editor.hpp
     include/gui/interpreter.hpp
     include/gui/view.hpp
+    include/gui/window.hpp
 )
 
 if(APPLE)

@@ -5,7 +5,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 
-#include "gui/app.hpp"
+#include "gui/window.hpp"
 #include "gui/editor.hpp"
 #include "gui/interpreter.hpp"
 #include "gui/view.hpp"
@@ -20,7 +20,7 @@ switch (checkUnsaved())                                         \
     default:    assert(false);                                  \
 }
 
-App::App(int& argc, char **argv)
+Window::Window(const QString& target)
     : QMainWindow(), editor(new Editor), view(new View)
 {
     resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
@@ -48,26 +48,26 @@ App::App(int& argc, char **argv)
 
     auto new_action = file_menu->addAction("New");
     new_action->setShortcut(QKeySequence::New);
-    connect(new_action, &QAction::triggered, this, &App::onNew);
+    connect(new_action, &QAction::triggered, this, &Window::onNew);
 
     auto open_action = file_menu->addAction("Open...");
     open_action->setShortcut(QKeySequence::Open);
-    connect(open_action, &QAction::triggered, this, &App::onOpen);
+    connect(open_action, &QAction::triggered, this, &Window::onOpen);
 
     file_menu->addSeparator();
 
     auto save_action = file_menu->addAction("Save");
     save_action->setShortcut(QKeySequence::Save);
-    connect(save_action, &QAction::triggered, this, &App::onSave);
+    connect(save_action, &QAction::triggered, this, &Window::onSave);
 
     auto save_as_action = file_menu->addAction("Save As...");
     save_as_action->setShortcut(QKeySequence::SaveAs);
-    connect(save_as_action, &QAction::triggered, this, &App::onSaveAs);
+    connect(save_as_action, &QAction::triggered, this, &Window::onSaveAs);
 
     file_menu->addSeparator();
 
     auto export_action = file_menu->addAction("Export...");
-    connect(export_action, &QAction::triggered, this, &App::onExport);
+    connect(export_action, &QAction::triggered, this, &Window::onExport);
 
     // Settings menu
     auto view_menu = menuBar()->addMenu("&View");
@@ -83,7 +83,7 @@ App::App(int& argc, char **argv)
     // Help menu
     auto help_menu = menuBar()->addMenu("Help");
     connect(help_menu->addAction("About"), &QAction::triggered,
-            this, &App::onAbout);
+            this, &Window::onAbout);
 
     // Start embedded Guile interpreter
     auto interpreter = new Interpreter();
@@ -99,7 +99,6 @@ App::App(int& argc, char **argv)
 
     show();
 
-    QString target = (argc > 1) ? argv[1] : ":/examples/tutorial.ao";
     if (loadFile(target))
     {
         setFilename(target);
@@ -108,7 +107,7 @@ App::App(int& argc, char **argv)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void App::onOpen(bool)
+void Window::onOpen(bool)
 {
     CHECK_UNSAVED();
 
@@ -119,7 +118,7 @@ void App::onOpen(bool)
     }
 }
 
-bool App::loadFile(QString f)
+bool Window::loadFile(QString f)
 {
     QFile file(f);
     if (!file.open(QIODevice::ReadOnly))
@@ -143,7 +142,7 @@ bool App::loadFile(QString f)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool App::saveFile(QString f)
+bool Window::saveFile(QString f)
 {
     QFile file(f);
     if (!QFileInfo(QFileInfo(f).path()).isWritable())
@@ -179,7 +178,7 @@ bool App::saveFile(QString f)
     }
 }
 
-void App::onSave(bool)
+void Window::onSave(bool)
 {
     if (filename.isEmpty())
     {
@@ -191,7 +190,7 @@ void App::onSave(bool)
     }
 }
 
-void App::onSaveAs(bool)
+void Window::onSaveAs(bool)
 {
     QString f = QFileDialog::getSaveFileName(nullptr, "Save as", "", "*.ao");
     if (!f.isEmpty())
@@ -211,7 +210,7 @@ void App::onSaveAs(bool)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void App::onNew(bool)
+void Window::onNew(bool)
 {
     CHECK_UNSAVED();
 
@@ -220,7 +219,7 @@ void App::onNew(bool)
     editor->setModified(false);
 }
 
-void App::closeEvent(QCloseEvent* event)
+void Window::closeEvent(QCloseEvent* event)
 {
     if (closing)
     {
@@ -242,7 +241,7 @@ void App::closeEvent(QCloseEvent* event)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-QMessageBox::StandardButton App::checkUnsaved()
+QMessageBox::StandardButton Window::checkUnsaved()
 {
     if (isWindowModified())
     {
@@ -262,7 +261,7 @@ QMessageBox::StandardButton App::checkUnsaved()
     }
 }
 
-void App::setFilename(const QString& f)
+void Window::setFilename(const QString& f)
 {
     filename = f;
     setWindowFilePath(f);
@@ -270,9 +269,9 @@ void App::setFilename(const QString& f)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void App::onExportReady(QList<const Kernel::Mesh*> shapes)
+void Window::onExportReady(QList<const Kernel::Mesh*> shapes)
 {
-    disconnect(view, &View::meshesReady, this, &App::onExportReady);
+    disconnect(view, &View::meshesReady, this, &Window::onExportReady);
     if (!Kernel::Mesh::saveSTL(export_filename.toStdString(),
                                shapes.toStdList()))
     {
@@ -287,7 +286,7 @@ void App::onExportReady(QList<const Kernel::Mesh*> shapes)
     emit(exportDone());
 }
 
-void App::onExport(bool)
+void Window::onExport(bool)
 {
     export_filename = QFileDialog::getSaveFileName(
             nullptr, "Export", "", "*.stl");
@@ -296,14 +295,14 @@ void App::onExport(bool)
         return;
     }
 
-    connect(view, &View::meshesReady, this, &App::onExportReady);
+    connect(view, &View::meshesReady, this, &Window::onExportReady);
 
     auto p = new QProgressDialog(this);
     p->setCancelButton(nullptr);
     p->setWindowModality(Qt::WindowModal);
     p->setLabelText("Exporting...");
     p->setMaximum(0);
-    connect(this, &App::exportDone, p, &QProgressDialog::reset);
+    connect(this, &Window::exportDone, p, &QProgressDialog::reset);
     p->show();
 
     view->checkMeshes();
@@ -311,7 +310,7 @@ void App::onExport(bool)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void App::onAbout(bool)
+void Window::onAbout(bool)
 {
     QString info = "A Scheme-based GUI for<br>the Ao CAD kernel<br><br>"
                    "<a href=\"https://github.com/mkeeter/ao\">Source on Github</a>";

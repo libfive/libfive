@@ -6,11 +6,11 @@ class Editor;
 class View;
 namespace Kernel { class Mesh; }
 
-class App : public QMainWindow
+class Window : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit App(int& argc, char **argv);
+    explicit Window(const QString& target);
 
 protected slots:
     void onOpen(bool=false);
