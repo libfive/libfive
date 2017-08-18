@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QSurfaceFormat>
 
+#include "gui/app.hpp"
 #include "gui/window.hpp"
 #include "gui/settings.hpp"
 #include "gui/shape.hpp"
@@ -20,7 +21,6 @@ int main(int argc, char** argv)
     qRegisterMetaType<QList<Shape*>>("QList<Shape*>");
     qRegisterMetaType<QPair<uint32_t,uint32_t>>("QPair<uint32_t,uint32_t>");
 
-    QApplication app(argc, argv);
-    Window w(argc > 1 ? argv[1] : ":/examples/tutorial.ao");
-    app.exec();
+    App a(argc, argv);
+    a.exec();
 }

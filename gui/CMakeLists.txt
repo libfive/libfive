@@ -11,6 +11,7 @@ find_package(Qt5Network REQUIRED)
 find_package(Qt5Concurrent REQUIRED)
 
 set(SRCS src/main.cpp
+    src/app.cpp
     src/axes.cpp
     src/background.cpp
     src/busy.cpp
@@ -28,6 +29,7 @@ set(SRCS src/main.cpp
     resources.qrc
 )
 set(QOBJECTS
+    include/gui/app.hpp
     include/gui/busy.hpp
     include/gui/settings.hpp
     include/gui/syntax.hpp
