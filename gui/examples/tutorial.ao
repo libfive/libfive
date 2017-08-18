@@ -29,10 +29,10 @@
 ;; the pane below.  Here, we'll find the first 10
 ;; numbers in the Fibonacci sequence:
 (reverse
-  (let fib ((fs '(1 1)) (i 10))
-   (if (= i 0) fs
-     (fib (cons (+ (car fs) (cadr fs)) fs)
-          (- i 1)))))
+  (let fib ((fs '(1 1)))
+   (if (= 10 (length fs)) fs
+     (fib (cons (+ (car fs) (cadr fs)) fs))
+)))
 
 
 ;; Errors are marked with a red underline and
