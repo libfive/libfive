@@ -107,6 +107,16 @@ Window::Window(const QString& target)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void Window::openFile(const QString& name)
+{
+    CHECK_UNSAVED();
+
+    if (loadFile(name))
+    {
+        setFilename(name);
+    }
+}
+
 void Window::onOpen(bool)
 {
     CHECK_UNSAVED();

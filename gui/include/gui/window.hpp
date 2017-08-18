@@ -1,3 +1,5 @@
+#pragma once
+
 #include <QApplication>
 #include <QMainWindow>
 #include <QMessageBox>
@@ -11,6 +13,12 @@ class Window : public QMainWindow
     Q_OBJECT
 public:
     explicit Window(const QString& target);
+
+    /*
+     *  Loads a file by path, properly checking if the existing document
+     *  is unsaved and asking the user to save it in that case.
+     */
+    void openFile(const QString& name);
 
 protected slots:
     void onOpen(bool=false);
