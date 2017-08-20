@@ -70,7 +70,9 @@ void Interpreter::init()
             (let ((result
               (catch #t
                 (lambda () (cons 'valid
-                  (eval-in-sandbox clause #:module mod #:sever-module? #f)))
+                  (eval-in-sandbox clause #:module mod #:sever-module? #f
+                                          #:time-limit 10
+                                          #:allocation-limit #e10e8)))
                 (lambda (key . params)
                   (set! failed #t)
                   (list 'error before after key params)))))
