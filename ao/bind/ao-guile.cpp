@@ -409,6 +409,11 @@ void init_ao_shapes(void*)
     Extrudes a 2D shape between za and zb"
     (when (< zmax zmin) (error "zmax must be >= zmin"))
     (max shape (lambda-shape (x y z) (max (- zmin z) (- z zmax)))))
+
+(define-public (cylinder center r zmin zmax)
+    "cylinder '(x0 y0) r zmin zmax
+    A cylinder (oriented along the Z axis) "
+    (extrude-z (circle center r) zmin zmax))
 )");
 }
 
