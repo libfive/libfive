@@ -422,3 +422,17 @@ TEST_CASE("Evaluator::push(Feature)")
         REQUIRE(e.utilization() < 1);
     }
 }
+
+TEST_CASE("Evaluator::eval (every operation)")
+{
+    for (unsigned i=7; i < Kernel::Opcode::LAST_OP; ++i)
+    {
+        auto op = (Kernel::Opcode::Opcode)i;
+        Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree::Y())
+                                        : Tree(op, Tree::X()));
+        Evaluator e(t);
+        e.eval({0, 0, 0});
+        e.derivs(1);
+        REQUIRE(true /* No crash! */ );
+    }
+}
