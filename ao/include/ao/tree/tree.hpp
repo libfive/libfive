@@ -78,7 +78,6 @@ public:
         const std::shared_ptr<Tree_> lhs;
         const std::shared_ptr<Tree_> rhs;
 
-
         /*
          *  Pushes a Scheme-format serialization to an ostream
          */
