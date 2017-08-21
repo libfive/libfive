@@ -20,11 +20,10 @@ class Cache
     class Handle
     {
     public:
-        Handle() : lock(mut), cache(&_instance) {}
-        Cache* operator->() const { return cache; }
+        Handle() : lock(mut) {}
+        Cache* operator->() const { return &_instance; }
     protected:
         std::unique_lock<std::recursive_mutex> lock;
-        Cache* cache;
     };
 
 public:
