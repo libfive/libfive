@@ -433,6 +433,8 @@ TEST_CASE("Evaluator::eval (every operation)")
         Evaluator e(t);
         e.eval({0, 0, 0});
         e.derivs(1);
+        e.set({0, 0, 0}, {1, 1, 1});
+        e.interval();
         REQUIRE(true /* No crash! */ );
     }
 }
