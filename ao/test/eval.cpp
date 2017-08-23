@@ -428,7 +428,7 @@ TEST_CASE("Evaluator::eval (every operation)")
     for (unsigned i=7; i < Kernel::Opcode::LAST_OP; ++i)
     {
         auto op = (Kernel::Opcode::Opcode)i;
-        Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree::Y())
+        Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                         : Tree(op, Tree::X()));
         Evaluator e(t);
         e.eval({0, 0, 0});
