@@ -421,7 +421,7 @@ bool Evaluator::isInside(const Eigen::Vector3f& p)
     // (same as single-feature case below).
     if (!isAmbiguous())
     {
-        return (ds.d[0] != 0).any();
+        return (ds.d.col(0) != 0).any();
     }
 
     // Otherwise, we need to handle the zero-crossing case!
@@ -499,10 +499,10 @@ std::list<Feature> Evaluator::featuresAt(const Eigen::Vector3f& p)
                 else if (result->f(itr->a, 0) == result->f(itr->b, 0))
                 {
                     // Check both branches of the ambiguity
-                    const Eigen::Vector3d rhs
-                        (result->d(itr->b, 0).template cast<double>());
+                    const Eigen::Vector3d rhs(
+                            result->d(itr->b).col(0).template cast<double>());
                     const Eigen::Vector3d lhs(
-                            result->d(itr->a, 0).template cast<double>());
+                            result->d(itr->a).col(0).template cast<double>());
                     const auto epsilon = (itr->op == Opcode::MIN) ? (rhs - lhs)
                                                                   : (lhs - rhs);
 
@@ -525,7 +525,7 @@ std::list<Feature> Evaluator::featuresAt(const Eigen::Vector3f& p)
 
         if (!ambiguous)
         {
-            f_.deriv = ds.d[0].template cast<double>();
+            f_.deriv = ds.d.col(0).template cast<double>();
             if (seen.find(f_.getChoices()) == seen.end())
             {
                 seen.insert(f_.getChoices());
@@ -762,13 +762,13 @@ Evaluator::Derivs Evaluator::derivs(Result::Index count)
     {
 
 #define ov result->f.row(itr->id).head(count)
-#define od result->d.row(itr->id).head(count)
+#define od result->d(itr->id).leftCols(count)
 
 #define av result->f.row(itr->a).head(count)
-#define ad result->d.row(itr->a).head(count)
+#define ad result->d(itr->a).leftCols(count)
 
 #define bv result->f.row(itr->b).head(count)
-#define bd result->d.row(itr->b).head(count)
+#define bd result->d(itr->b).leftCols(count)
 
         switch (itr->op) {
             case Opcode::ADD:
@@ -776,70 +776,78 @@ Evaluator::Derivs Evaluator::derivs(Result::Index count)
                 break;
             case Opcode::MUL:
                 // Product rule
-                od = av*bd + ad*bv;
+                od = bd.rowwise()*av + ad.rowwise()*bv;
                 break;
             case Opcode::MIN:
-                od = (av < bv).select(ad, bd);
+                for (unsigned i=0; i < od.rows(); ++i)
+                    od.row(i) = (av < bv).select(ad.row(i), bd.row(i));
                 break;
             case Opcode::MAX:
-                od = (av < bv).select(bd, ad);
+                for (unsigned i=0; i < od.rows(); ++i)
+                    od.row(i) = (av < bv).select(bd.row(i), ad.row(i));
                 break;
             case Opcode::SUB:
                 od = ad - bd;
                 break;
             case Opcode::DIV:
-                od = (bv*ad - av*bd) / bv.pow(2);
+                od = (ad.rowwise()*bv - bd.rowwise()*av).rowwise() /
+                     bv.pow(2);
                 break;
             case Opcode::ATAN2:
-                od = (ad*bv - av*bd) / (av.pow(2) + bv.pow(2));
+                od = (ad.rowwise()*bv - bd.rowwise()*av).rowwise() /
+                     (av.pow(2) + bv.pow(2));
                 break;
             case Opcode::POW:
                 // The full form of the derivative is
                 // od = m * (bv * ad + av * log(av) * bd))
                 // However, log(av) is often NaN and bd is always zero,
                 // (since it must be CONST), so we skip that part.
-                od = av.pow(bv - 1) * (bv * ad);
+                od = ad.rowwise() * (bv * av.pow(bv - 1));
                 break;
 
             case Opcode::NTH_ROOT:
-                od = av.pow(1.0f / bv - 1) / bv * ad;
+                od = ad.rowwise() * (av.pow(1.0f / bv - 1) / bv);
                 break;
             case Opcode::MOD:
                 od = ad;
                 break;
             case Opcode::NANFILL:
-                od = av.isNaN().select(bd, ad);
+                for (unsigned i=0; i < od.rows(); ++i)
+                    od.row(i) = av.isNaN().select(bd.row(i), ad.row(i));
                 break;
 
             case Opcode::SQUARE:
-                od = 2 * av * ad;
+                od = ad.rowwise() * av * 2;
                 break;
             case Opcode::SQRT:
-                od = (av < 0).select({0, 0, 0}, ad / (2 * ov));
+                for (unsigned i=0; i < od.rows(); ++i)
+                    od.row(i) = (av < 0).select(
+                        Eigen::Array<float, 1, Eigen::Dynamic>::Zero(1, count),
+                        ad.row(i) / (2 * ov));
                 break;
             case Opcode::NEG:
                 od = -ad;
                 break;
             case Opcode::SIN:
-                od = ad * cos(av);
+                od = ad.rowwise() * cos(av);
                 break;
             case Opcode::COS:
-                od = ad * -sin(av);
+                od = ad.rowwise() * -sin(av);
                 break;
             case Opcode::TAN:
-                od = ad * pow(1/cos(av), 2);
+                od = ad.rowwise() * pow(1/cos(av), 2);
                 break;
             case Opcode::ASIN:
-                od = ad / sqrt(1 - pow(av, 2));
+                od = ad.rowwise() / sqrt(1 - pow(av, 2));
                 break;
             case Opcode::ACOS:
-                od = ad / -sqrt(1 - pow(av, 2));
+                od = ad.rowwise() / -sqrt(1 - pow(av, 2));
                 break;
             case Opcode::ATAN:
-                od = ad / (pow(av, 2) + 1);
+                od = ad.rowwise() / (pow(av, 2) + 1);
                 break;
             case Opcode::EXP:
-                od = exp(av) * ad;
+                od = ad.rowwise() * exp(av);
                 break;
 
             case Opcode::CONST_VAR:
@@ -863,7 +871,7 @@ Evaluator::Derivs Evaluator::derivs(Result::Index count)
 #undef bv
 #undef bd
     }
-    return { &result->f(tape->i, 0),  &result->d(tape->i, 0) };
+    return { &result->f(tape->i, 0),  result->d(tape->i) };
 }
 
 std::map<Tree::Id, float> Evaluator::gradient(const Eigen::Vector3f& p)

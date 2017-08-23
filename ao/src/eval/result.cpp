@@ -5,7 +5,7 @@ namespace Kernel {
 constexpr Result::Index Result::N;
 
 Result::Result(Index clauses, Index vars)
-    : f(clauses, N), d(clauses, N), j(clauses, vars)
+    : f(clauses, N), d(clauses, 1), j(clauses, vars)
 {
     i.resize(clauses);
     j = 0;
@@ -25,7 +25,7 @@ void Result::setValue(float v, Index clause)
     for (unsigned i=0; i < N; ++i)
     {
         f(clause, i) = v;
-        d(clause, i) = 0;
+        d(clause).col(i) = 0;
     }
 
     i[clause] = Interval::I(v, v);
@@ -41,7 +41,7 @@ void Result::setDeriv(Eigen::Vector3f deriv, Index clause)
 {
     for (size_t i=0; i < N; ++i)
     {
-        d(clause, i) = deriv;
+        d(clause).col(i) = deriv;
     }
 }
 

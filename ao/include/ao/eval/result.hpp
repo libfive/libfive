@@ -54,9 +54,8 @@ struct Result {
     /*  f(clause, index) is a specific data point */
     Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> f;
 
-    /*  d(clause, index) is a set of partial derivatives [dx, dy, dz] */
-    Eigen::Array<Eigen::Array<float, 3, 1>,
-                 Eigen::Dynamic, N, Eigen::RowMajor> d;
+    /*  d(clause).col(index) is a set of partial derivatives [dx, dy, dz] */
+    Eigen::Array<Eigen::Array<float, 3, N>, Eigen::Dynamic, 1> d;
 
     /*  j(clause, var) = dclause / dvar */
     Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> j;

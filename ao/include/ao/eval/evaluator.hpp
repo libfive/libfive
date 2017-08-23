@@ -56,7 +56,7 @@ public:
      */
     struct Derivs {
         const float* v;
-        const Eigen::Array<float, 3, 1>* d;
+        const Eigen::Array<float, 3, Result::N>& d;
     };
 
     /*

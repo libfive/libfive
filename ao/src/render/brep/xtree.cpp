@@ -340,8 +340,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
 
                         // Unpack 3D derivatives into XTree-specific
                         // dimensionality, and find normal.
-                        const auto derivs3 = ds.d[0].template cast<double>();
-                        const auto derivs = derivs3.template head<N>();
+                        const auto derivs = ds.d.col(0)
+                            .template head<N>()
+                            .template cast<double>();
                         const auto norm = derivs.matrix().norm();
 
                         // Find normalized derivatives and distance value

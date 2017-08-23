@@ -184,16 +184,16 @@ TEST_CASE("Evaluator::derivs")
         REQUIRE(d.v[1] == 1.0);
 
         // d/dx = 1
-        REQUIRE(d.d[0].x() == 1.0);
-        REQUIRE(d.d[1].x() == 1.0);
+        REQUIRE(d.d.col(0).x() == 1.0);
+        REQUIRE(d.d.col(1).x() == 1.0);
 
         // d/dy = 0
-        REQUIRE(d.d[0].y() == 0.0);
-        REQUIRE(d.d[1].y() == 0.0);
+        REQUIRE(d.d.col(0).y() == 0.0);
+        REQUIRE(d.d.col(1).y() == 0.0);
 
         // d/dz = 0
-        REQUIRE(d.d[0].z() == 0.0);
-        REQUIRE(d.d[1].z() == 0.0);
+        REQUIRE(d.d.col(0).z() == 0.0);
+        REQUIRE(d.d.col(1).z() == 0.0);
     }
 
     SECTION("X + Z")
@@ -209,16 +209,16 @@ TEST_CASE("Evaluator::derivs")
         REQUIRE(d.v[1] == 4.0);
 
         // d/dx = 1
-        REQUIRE(d.d[0].x() == 1.0);
-        REQUIRE(d.d[1].x() == 1.0);
+        REQUIRE(d.d.col(0).x() == 1.0);
+        REQUIRE(d.d.col(1).x() == 1.0);
 
         // d/dy = 0
-        REQUIRE(d.d[0].y() == 0.0);
-        REQUIRE(d.d[1].y() == 0.0);
+        REQUIRE(d.d.col(0).y() == 0.0);
+        REQUIRE(d.d.col(1).y() == 0.0);
 
         // d/dz = 1
-        REQUIRE(d.d[0].z() == 1.0);
-        REQUIRE(d.d[1].z() == 1.0);
+        REQUIRE(d.d.col(0).z() == 1.0);
+        REQUIRE(d.d.col(1).z() == 1.0);
     }
 }
 
