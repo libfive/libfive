@@ -287,8 +287,8 @@ Feature Evaluator::push(const Feature& f)
 
     for (const auto& c : tape->t)
     {
-        const bool match = ((result->f(c.a, 0) == result->f(c.b, 0) || c.a == c.b) &&
-                            (c.op == Opcode::MAX || c.op == Opcode::MIN) &&
+        const bool match = ((c.op == Opcode::MAX || c.op == Opcode::MIN) &&
+                            (result->f(c.a, 0) == result->f(c.b, 0) || c.a == c.b) &&
                             itr != choices.end() && itr->id == c.id);
 
         if (!disabled[c.id])
