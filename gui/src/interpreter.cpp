@@ -69,10 +69,12 @@ void Interpreter::init()
           (else
             (let ((result
               (catch #t
+                ;; Evaluation thunk
                 (lambda () (cons 'valid
                   (eval-in-sandbox clause #:module mod #:sever-module? #f
                                           #:time-limit 10
                                           #:allocation-limit #e10e8)))
+                ;; Error handling thunk
                 (lambda (key . params)
                   (set! failed #t)
                   (list 'error before after key params)))))
