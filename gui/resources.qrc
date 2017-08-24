@@ -5,6 +5,7 @@
         <file>gl/shaded.frag</file>
         <file>gl/busy.frag</file>
         <file>examples/tutorial.ao</file>
+        <file>scm/interpreter.scm</file>
     </qresource>
 </RCC>
 
