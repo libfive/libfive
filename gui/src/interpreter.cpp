@@ -87,15 +87,18 @@ eval-sandboxed
 port-eof?
 )");
     scm_syntax_error_sym = scm_from_utf8_symbol("syntax-error");
+    scm_numerical_overflow_sym = scm_from_utf8_symbol("numerical-overflow");
     scm_valid_sym = scm_from_utf8_symbol("valid");
     scm_result_fmt = scm_from_locale_string("~S");
     scm_other_error_fmt = scm_from_locale_string("~A: ~A");
     scm_syntax_error_fmt = scm_from_locale_string("~A: ~A in form ~A");
+    scm_numerical_overflow_fmt = scm_from_locale_string("~A: ~A in ~A");
 
     // Protect all of our interpreter vars from garbage collection
     for (auto s : {scm_eval_sandboxed, scm_port_eof_p, scm_valid_sym,
-                   scm_syntax_error_sym, scm_result_fmt, scm_syntax_error_fmt,
-                   scm_other_error_fmt})
+                   scm_syntax_error_sym, scm_numerical_overflow_sym,
+                   scm_result_fmt, scm_syntax_error_fmt,
+                   scm_numerical_overflow_fmt, scm_other_error_fmt})
     {
         scm_permanent_object(s);
     }
@@ -146,6 +149,11 @@ void Interpreter::evalScript()
         {
             _str = scm_simple_format(SCM_BOOL_F, scm_syntax_error_fmt,
                    scm_list_3(key, scm_cadr(params), scm_cadddr(params)));
+        }
+        else if (scm_is_eq(key, scm_numerical_overflow_sym))
+        {
+            _str = scm_simple_format(SCM_BOOL_F, scm_numerical_overflow_fmt,
+                   scm_list_3(key, scm_cadr(params), scm_car(params)));
         }
         else
         {

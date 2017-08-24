@@ -47,7 +47,10 @@ protected:
     SCM scm_port_eof_p;
     SCM scm_valid_sym;
     SCM scm_syntax_error_sym;
+    SCM scm_numerical_overflow_sym;
+
     SCM scm_syntax_error_fmt;
+    SCM scm_numerical_overflow_fmt;
     SCM scm_other_error_fmt;
     SCM scm_result_fmt;
 };
