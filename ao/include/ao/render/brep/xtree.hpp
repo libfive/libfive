@@ -182,4 +182,17 @@ protected:
     constexpr static double EIGENVALUE_CUTOFF=0.1f;
 };
 
+// Explicit template instantiation declarations
+template <> bool XTree<2>::cornersAreManifold() const;
+template <> bool XTree<3>::cornersAreManifold() const;
+
+template <> bool XTree<2>::leafsAreManifold() const;
+template <> bool XTree<3>::leafsAreManifold() const;
+
+template <> const std::vector<std::pair<uint8_t, uint8_t>>& XTree<2>::edges() const;
+template <> const std::vector<std::pair<uint8_t, uint8_t>>& XTree<3>::edges() const;
+
+extern template class XTree<2>;
+extern template class XTree<3>;
+
 }   // namespace Kernel
