@@ -340,10 +340,10 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
 
                         // Unpack 3D derivatives into XTree-specific
                         // dimensionality, and find normal.
-                        const auto derivs = ds.d.col(0)
+                        const Eigen::Array<double, N, 1> derivs = ds.d.col(0)
                             .template head<N>()
                             .template cast<double>();
-                        const auto norm = derivs.matrix().norm();
+                        const double norm = derivs.matrix().norm();
 
                         // Find normalized derivatives and distance value
                         Eigen::Matrix<double, N + 1, 1> dv;
@@ -453,7 +453,7 @@ double XTree<N>::findVertex(unsigned index)
     auto U = es.eigenvectors().real().eval(); // = V
 
     // Pseudo-inverse of A
-    auto AtAp = U * D * U.transpose();
+    auto AtAp = (U * D * U.transpose()).eval();
 
     // Solve for vertex position (minimizing distance to center)
     auto center = massPoint();

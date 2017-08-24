@@ -113,7 +113,9 @@ TEST_CASE("XTree<2>::vertex_count")
         REQUIRE(ta->vertex_count == 2);
         for (unsigned i=0; i < ta->vertex_count; ++i)
         {
-            auto pt = ta->vert3(i).template cast<float>();
+            auto pt = ta->vert3(i).template cast<float>().eval();
+            CAPTURE(i);
+            CAPTURE(pt.transpose());
             REQUIRE(fabs(eval.eval(pt)) < 1e-6);
         }
     }
