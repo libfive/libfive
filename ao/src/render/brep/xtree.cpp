@@ -254,9 +254,6 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
         // Figure out if the leaf is manifold
         manifold = cornersAreManifold();
 
-        std::vector<Vec, Eigen::aligned_allocator<Vec>> targets;
-        targets.reserve(_edges(N) * 2);
-
         // Here, we'll prepare to store position, {normal, value} pairs
         // for every crossing and feature
         typedef std::pair<Vec, Eigen::Matrix<double, N + 1, 1>> Intersection;
@@ -271,70 +268,80 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
         const auto& ps = mt->v[corner_mask];
         while (vertex_count < ps.size() && ps[vertex_count][0].first != -1)
         {
-            targets.clear();
-
-            // Iterate over edges in this patch
-            for (unsigned e=0; e < ps[vertex_count].size() &&
-                               ps[vertex_count][e].first != -1; ++e)
+            // Iterate over edges in this patch, storing [inside, outside]
+            unsigned target_count;
+            std::array<std::pair<Vec, Vec>, _edges(N)> targets;
+            for (target_count=0; target_count < ps[vertex_count].size() &&
+                          ps[vertex_count][target_count].first != -1; ++target_count)
             {
                 // Sanity-checking
-                assert(corners[ps[vertex_count][e].first] == Interval::FILLED);
-                assert(corners[ps[vertex_count][e].second] == Interval::EMPTY);
+                assert(corners[ps[vertex_count][target_count].first]
+                       == Interval::FILLED);
+                assert(corners[ps[vertex_count][target_count].second]
+                       == Interval::EMPTY);
 
-                // Search edge for intersection
-                auto inside = cornerPos(ps[vertex_count][e].first);
-                auto outside = cornerPos(ps[vertex_count][e].second);
+                // Store inside / outside in targets array
+                targets[target_count] = {cornerPos(ps[vertex_count][target_count].first),
+                                  cornerPos(ps[vertex_count][target_count].second)};
+            }
 
-                // We do an N-fold reduction at each stage
-                constexpr int SEARCH_COUNT = 4;
-                constexpr int POINTS_PER_SEARCH = 16;
+            // We do an N-fold reduction at each stage
+            constexpr int SEARCH_COUNT = 4;
+            constexpr int POINTS_PER_SEARCH = 16;
+            static_assert(_edges(N) * POINTS_PER_SEARCH <= Result::N,
+                          "Potential overflow");
 
-                // Binary search for intersection
-                for (int i=0; i < SEARCH_COUNT; ++i)
+            // Multi-stage binary search for intersection
+            for (int s=0; s < SEARCH_COUNT; ++s)
+            {
+                // Load search points into evaluator
+                Eigen::Array<double, N, POINTS_PER_SEARCH * _edges(N)> ps;
+                for (unsigned e=0; e < target_count; ++e)
                 {
-                    // Load search points into evaluator
-                    Eigen::Array<double, N, 1> ps[POINTS_PER_SEARCH];
                     for (int j=0; j < POINTS_PER_SEARCH; ++j)
                     {
-                        double frac = j / (POINTS_PER_SEARCH - 1.0);
-                        ps[j] = (inside * (1 - frac)) + (outside * frac);
+                        const double frac = j / (POINTS_PER_SEARCH - 1.0);
+                        const unsigned i = j + e*POINTS_PER_SEARCH;
+                        ps.col(i) = (targets[e].first * (1 - frac)) +
+                                    (targets[e].second * frac);
                         Eigen::Vector3d pos;
-                        pos << ps[j], region.perp;
-                        eval->set(pos.template cast<float>(), j);
+                        pos << ps.col(i), region.perp;
+                        eval->set(pos.template cast<float>(), i);
                     }
+                }
 
-                    // Evaluate, then search for the first outside point
-                    // and adjust inside / outside to their new positions
-                    //
-                    // We copy to a temporary array here to avoid invalidating
-                    // out if we need to call eval->isInside (e.g. when out[i]
-                    // is exactly 0 so we're not sure about the boundary)
-                    float out[POINTS_PER_SEARCH];
-                    std::copy_n(eval->values(POINTS_PER_SEARCH),
-                                POINTS_PER_SEARCH, out);
-                    for (int j=0; j < POINTS_PER_SEARCH; ++j)
+                // Evaluate, then search for the first outside point
+                // and adjust inside / outside to their new positions
+                //
+                // We copy to a temporary array here to avoid invalidating
+                // out if we need to call eval->isInside (e.g. when out[i]
+                // is exactly 0 so we're not sure about the boundary)
+                std::array<float, POINTS_PER_SEARCH * _edges(N)> out;
+                std::copy_n(eval->values(POINTS_PER_SEARCH * target_count),
+                            POINTS_PER_SEARCH * target_count, out.data());
+
+                for (unsigned e=0; e < target_count; ++e)
+                {
+                    for (unsigned j=0; j < POINTS_PER_SEARCH; ++j)
                     {
-                        if (out[j] > 0)
+                        const unsigned i = j + e*POINTS_PER_SEARCH;
+                        if (out[i] > 0)
                         {
-                            inside = ps[j - 1];
-                            outside = ps[j];
+                            targets[e] = {ps.col(i - 1), ps.col(i)};
                             break;
                         }
-                        else if (out[j] == 0)
+                        else if (out[i] == 0)
                         {
                             Eigen::Vector3d pos;
-                            pos << ps[j], region.perp;
+                            pos << ps.col(i), region.perp;
                             if (!eval->isInside(pos.template cast<float>()))
                             {
-                                inside = ps[j - 1];
-                                outside = ps[j];
+                                targets[e] = {ps.col(i - 1), ps.col(i)};
                                 break;
                             }
                         }
                     }
                 }
-                targets.push_back(inside);
-                targets.push_back(outside);
             }
 
             // Reset mass point and intersections
@@ -343,23 +350,27 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
 
             // Store mass point and prepare for a bulk evaluation
             static_assert(_edges(N) * 2 <= Result::N, "Too many results");
-            for (unsigned i=0; i < targets.size(); ++i)
+            for (unsigned i=0; i < target_count; ++i)
             {
                 // Accumulate this intersection in the mass point
                 Eigen::Matrix<double, N + 1, 1> mp;
-                mp << targets[i], 1;
+                mp << targets[i].first, 1;
+                _mass_point += mp;
+                mp << targets[i].second, 1;
                 _mass_point += mp;
 
                 Eigen::Vector3d pos;
-                pos << targets[i], region.perp;
-                eval->set(pos.template cast<float>(), i);
+                pos << targets[i].first, region.perp;
+                eval->set(pos.template cast<float>(), 2*i);
+                pos << targets[i].second, region.perp;
+                eval->set(pos.template cast<float>(), 2*i + 1);
             }
 
-            auto ds = eval->derivs(targets.size());
-            auto ambig = eval->getAmbiguous(targets.size());
+            auto ds = eval->derivs(2 * target_count);
+            auto ambig = eval->getAmbiguous(2 * target_count);
 
             // Handle unambiguous nodes first, which were evaluated in bulk
-            for (unsigned i=0; i < targets.size(); ++i)
+            for (unsigned i=0; i < 2 * target_count; ++i)
             {
                 if (!ambig(i))
                 {
@@ -373,19 +384,22 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                     dv << derivs / norm, ds.v[i] / norm;
                     if (!dv.array().isNaN().any())
                     {
-                        intersections.push_back({targets[i], dv});
+                        intersections.push_back({
+                            (i & 1) ? targets[i/2].second : targets[i/2].first,
+                            dv});
                     }
                 }
             }
 
             // Special-case checking for ambiguous nodes
-            for (unsigned i=0; i < targets.size(); ++i)
+            for (unsigned i=0; i < 2 * target_count; ++i)
             {
                 if (ambig(i))
                 {
                     // Load the ambiguous position and find its features
                     Eigen::Vector3d pos;
-                    pos << targets[i], region.perp;
+                    pos << ((i & 1) ? targets[i/2].second : targets[i/2].first),
+                           region.perp;
                     const auto fs = eval->featuresAt(pos.template cast<float>());
 
                     for (auto& f : fs)
@@ -408,7 +422,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                         dv << derivs / norm, ds.v[0] / norm;
                         if (!dv.array().isNaN().any())
                         {
-                            intersections.push_back({targets[i], dv});
+                            intersections.push_back({
+                                (i & 1) ? targets[i/2].second
+                                        : targets[i/2].first, dv});
                         }
                         eval->pop();
                     }
