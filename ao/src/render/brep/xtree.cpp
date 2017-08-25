@@ -133,21 +133,36 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 eval->set(pos[i], i);
             }
 
-            // Evaluate the region's corners and unpack from evaluator
-            std::array<float, 1 << N> fs;
-            assert(fs.size() == children.size());
-            std::copy_n(eval->values(children.size()), fs.size(), fs.begin());
+            // Evaluate the region's corners and check their states
+            auto ds = eval->derivs(children.size());
+            auto ambig = eval->getAmbiguous(children.size());
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                // Handle inside, outside, and on-boundary crossings
-                if (fs[i] < 0)      { corners[i] = Interval::FILLED; }
-                else if (fs[i] > 0) { corners[i] = Interval::EMPTY; }
-                else
+                // Handle inside, outside, and (non-ambiguous) on-boundary
+                if (ds.v[i] < 0)      { corners[i] = Interval::FILLED; }
+                else if (ds.v[i] > 0) { corners[i] = Interval::EMPTY; }
+                else if (!ambig(i))
+                {
+                    // Optimization for non-ambiguous features
+                    // (see explanation in Evaluator::isInside)
+                    corners[i] = (ds.d.col(i) != 0).any()
+                        ? Interval::FILLED : Interval::EMPTY;
+                }
+            }
+
+            // Separate pass for handling ambiguous corners
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
+                if (ds.v[i] == 0 && ambig(i))
                 {
                     corners[i] = eval->isInside(pos[i])
                         ? Interval::FILLED : Interval::EMPTY;
                 }
+            }
 
+            // Pack corners into filled / empty arrays
+            for (uint8_t i=0; i < children.size(); ++i)
+            {
                 all_full  &=  corners[i];
                 all_empty &= !corners[i];
             }
