@@ -239,10 +239,12 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
         // Figure out if the leaf is manifold
         manifold = cornersAreManifold();
 
+        std::vector<Vec, Eigen::aligned_allocator<Vec>> targets;
+        targets.reserve(_edges(N) * 2);
+
         // Here, we'll prepare to store position, {normal, value} pairs
         // for every crossing and feature
-        typedef std::pair<Eigen::Matrix<double, N, 1>,
-                          Eigen::Matrix<double, N + 1, 1>> Intersection;
+        typedef std::pair<Vec, Eigen::Matrix<double, N + 1, 1>> Intersection;
         std::vector<Intersection, Eigen::aligned_allocator<Intersection>>
             intersections;
 
@@ -254,9 +256,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
         const auto& ps = mt->v[corner_mask];
         while (vertex_count < ps.size() && ps[vertex_count][0].first != -1)
         {
-            // Reset mass point and intersections
-            _mass_point = _mass_point.Zero();
-            intersections.clear();
+            targets.clear();
 
             // Iterate over edges in this patch
             for (unsigned e=0; e < ps[vertex_count].size() &&
@@ -318,59 +318,82 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                         }
                     }
                 }
+                targets.push_back(inside);
+                targets.push_back(outside);
+            }
 
+            // Reset mass point and intersections
+            _mass_point = _mass_point.Zero();
+            intersections.clear();
+
+            // Store mass point and prepare for a bulk evaluation
+            static_assert(_edges(N) * 2 <= Result::N, "Too many results");
+            for (unsigned i=0; i < targets.size(); ++i)
+            {
                 // Accumulate this intersection in the mass point
                 Eigen::Matrix<double, N + 1, 1> mp;
-                mp << inside, 1;
+                mp << targets[i], 1;
                 _mass_point += mp;
 
-                // Here, we'll store position, {normal, value} pairs
-                // for every crossing (inside/outside) and feature
-                for (const auto& pt : {inside, outside})
+                Eigen::Vector3d pos;
+                pos << targets[i], region.perp;
+                eval->set(pos.template cast<float>(), i);
+            }
+
+            auto ds = eval->derivs(targets.size());
+            auto ambig = eval->getAmbiguous(targets.size());
+
+            // Handle unambiguous nodes first, which were evaluated in bulk
+            for (unsigned i=0; i < targets.size(); ++i)
+            {
+                if (ambig.find(i) == ambig.end())
                 {
-                    Eigen::Vector3d pos;
-                    pos << pt, region.perp;
-                    auto pos_ = pos.template cast<float>();
+                    const Eigen::Array<double, N, 1> derivs = ds.d.col(i)
+                        .template head<N>()
+                        .template cast<double>();
+                    const double norm = derivs.matrix().norm();
 
-                    eval->set(pos_, 0);
-
-                    auto saveIntersection = [&]()
+                    // Find normalized derivatives and distance value
+                    Eigen::Matrix<double, N + 1, 1> dv;
+                    dv << derivs / norm, ds.v[i] / norm;
+                    if (!dv.array().isNaN().any())
                     {
-                        const auto ds = eval->derivs(1);
-
-                        // Unpack 3D derivatives into XTree-specific
-                        // dimensionality, and find normal.
-                        const Eigen::Array<double, N, 1> derivs = ds.d.col(0)
-                            .template head<N>()
-                            .template cast<double>();
-                        const double norm = derivs.matrix().norm();
-
-                        // Find normalized derivatives and distance value
-                        Eigen::Matrix<double, N + 1, 1> dv;
-                        dv << derivs / norm, ds.v[0] / norm;
-                        if (!dv.array().isNaN().any())
-                        {
-                            intersections.push_back({pt, dv});
-                        }
-                    };
-
-                    if (eval->isAmbiguous(pos_))
-                    {
-                        const auto fs = eval->featuresAt(pos_);
-                        for (auto& f : fs)
-                        {
-                            // Evaluate feature-specific distance and
-                            // derivatives value at this particular point
-                            eval->push(f);
-                            saveIntersection();
-                            eval->pop();
-                        }
+                        intersections.push_back({targets[i], dv});
                     }
-                    else
+                }
+            }
+
+            // Special-case checking for ambiguous nodes
+            for (const auto& a : ambig)
+            {
+                // Load the ambiguous position and find its features
+                Eigen::Vector3d pos;
+                pos << targets[a], region.perp;
+                const auto fs = eval->featuresAt(pos.template cast<float>());
+
+                for (auto& f : fs)
+                {
+                    // Evaluate feature-specific distance and
+                    // derivatives value at this particular point
+                    eval->push(f);
+
+                    const auto ds = eval->derivs(1);
+
+                    // Unpack 3D derivatives into XTree-specific
+                    // dimensionality, and find normal.
+                    const Eigen::Array<double, N, 1> derivs = ds.d.col(0)
+                        .template head<N>()
+                        .template cast<double>();
+                    const double norm = derivs.matrix().norm();
+
+                    // Find normalized derivatives and distance value
+                    Eigen::Matrix<double, N + 1, 1> dv;
+                    dv << derivs / norm, ds.v[0] / norm;
+                    if (!dv.array().isNaN().any())
                     {
-                        // Perform a single evaluation and save the intersection
-                        saveIntersection();
+                        intersections.push_back({targets[a], dv});
                     }
+                    eval->pop();
                 }
             }
 
@@ -457,7 +480,7 @@ double XTree<N>::findVertex(unsigned index)
 
     // Solve for vertex position (minimizing distance to center)
     auto center = massPoint();
-    Eigen::Matrix<double, N, 1> v = AtAp * (AtB - (AtA * center)) + center;
+    Vec v = AtAp * (AtB - (AtA * center)) + center;
 
     // Store this specific vertex in the verts matrix
     verts.col(index) = v;
@@ -477,7 +500,7 @@ Eigen::Vector3d XTree<N>::vert3(unsigned index) const
 }
 
 template <unsigned N>
-Eigen::Matrix<double, N, 1> XTree<N>::massPoint() const
+typename XTree<N>::Vec XTree<N>::massPoint() const
 {
     return _mass_point.template head<N>() / _mass_point(N);
 }

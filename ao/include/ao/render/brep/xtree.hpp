@@ -121,6 +121,8 @@ public:
     static std::unique_ptr<const Marching::MarchingTable<N>> mt;
 
 protected:
+    /*  Helper typedef for N-dimensional column vector */
+    typedef Eigen::Matrix<double, N, 1> Vec;
 
     /*
      *  Private constructor for XTree
