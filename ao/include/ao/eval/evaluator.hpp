@@ -160,7 +160,7 @@ public:
     /*
      *  Returns a list of ambiguous items from indices 0 to i
      */
-    std::set<Result::Index> getAmbiguous(Result::Index i) const;
+    const Eigen::Array<bool, Result::N, 1>& getAmbiguous(Result::Index i);
 
     /*
      *  Checks whether the given position is ambiguous

@@ -391,13 +391,13 @@ TEST_CASE("Evaluator::getAmbiguous")
     e.values(4);
 
     auto a = e.getAmbiguous(3);
-    REQUIRE(a.size() == 1);
-    REQUIRE(a.count(0) == 1);
+    REQUIRE(a.count() == 1);
+    REQUIRE(a(0) == 1);
 
     auto b = e.getAmbiguous(4);
-    REQUIRE(b.size() == 2);
-    REQUIRE(b.count(0) == 1);
-    REQUIRE(b.count(3) == 1);
+    REQUIRE(b.count() == 2);
+    REQUIRE(b(0) == 1);
+    REQUIRE(b(3) == 1);
 }
 
 TEST_CASE("Evaluator::push(Feature)")

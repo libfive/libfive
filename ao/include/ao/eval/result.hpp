@@ -60,7 +60,11 @@ struct Result {
     /*  j(clause, var) = dclause / dvar */
     Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> j;
 
+    /*  i[clause] is the interval result for that clause */
     std::vector<Interval::I> i;
+
+    /*  ambig(index) returns whether a particular slot is ambiguous */
+    Eigen::Array<bool, N, 1> ambig;
 };
 
 }   // namespace Kernel

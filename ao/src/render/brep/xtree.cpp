@@ -346,7 +346,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             // Handle unambiguous nodes first, which were evaluated in bulk
             for (unsigned i=0; i < targets.size(); ++i)
             {
-                if (ambig.find(i) == ambig.end())
+                if (!ambig(i))
                 {
                     const Eigen::Array<double, N, 1> derivs = ds.d.col(i)
                         .template head<N>()
@@ -364,36 +364,39 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             }
 
             // Special-case checking for ambiguous nodes
-            for (const auto& a : ambig)
+            for (unsigned i=0; i < targets.size(); ++i)
             {
-                // Load the ambiguous position and find its features
-                Eigen::Vector3d pos;
-                pos << targets[a], region.perp;
-                const auto fs = eval->featuresAt(pos.template cast<float>());
-
-                for (auto& f : fs)
+                if (ambig(i))
                 {
-                    // Evaluate feature-specific distance and
-                    // derivatives value at this particular point
-                    eval->push(f);
+                    // Load the ambiguous position and find its features
+                    Eigen::Vector3d pos;
+                    pos << targets[i], region.perp;
+                    const auto fs = eval->featuresAt(pos.template cast<float>());
 
-                    const auto ds = eval->derivs(1);
-
-                    // Unpack 3D derivatives into XTree-specific
-                    // dimensionality, and find normal.
-                    const Eigen::Array<double, N, 1> derivs = ds.d.col(0)
-                        .template head<N>()
-                        .template cast<double>();
-                    const double norm = derivs.matrix().norm();
-
-                    // Find normalized derivatives and distance value
-                    Eigen::Matrix<double, N + 1, 1> dv;
-                    dv << derivs / norm, ds.v[0] / norm;
-                    if (!dv.array().isNaN().any())
+                    for (auto& f : fs)
                     {
-                        intersections.push_back({targets[a], dv});
+                        // Evaluate feature-specific distance and
+                        // derivatives value at this particular point
+                        eval->push(f);
+
+                        const auto ds = eval->derivs(1);
+
+                        // Unpack 3D derivatives into XTree-specific
+                        // dimensionality, and find normal.
+                        const Eigen::Array<double, N, 1> derivs = ds.d.col(0)
+                            .template head<N>()
+                            .template cast<double>();
+                        const double norm = derivs.matrix().norm();
+
+                        // Find normalized derivatives and distance value
+                        Eigen::Matrix<double, N + 1, 1> dv;
+                        dv << derivs / norm, ds.v[0] / norm;
+                        if (!dv.array().isNaN().any())
+                        {
+                            intersections.push_back({targets[i], dv});
+                        }
+                        eval->pop();
                     }
-                    eval->pop();
                 }
             }
 

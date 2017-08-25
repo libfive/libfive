@@ -559,23 +559,20 @@ bool Evaluator::isAmbiguous()
     return false;
 }
 
-std::set<Result::Index> Evaluator::getAmbiguous(Result::Index i) const
+const Eigen::Array<bool, Result::N, 1>& Evaluator::getAmbiguous(Result::Index i)
 {
-    std::set<Result::Index> out;
+    result->ambig = 0;
+
     for (const auto& c : tape->t)
     {
         if (c.op == Opcode::MIN || c.op == Opcode::MAX)
         {
-            for (Result::Index j=0; j < i; ++j)
-            {
-                if (result->f(c.a, j) == result->f(c.b, j))
-                {
-                    out.insert(j);
-                }
-            }
+            result->ambig.head(i) = result->ambig.head(i) ||
+                (result->f.block(c.a, 0, 1, i) ==
+                 result->f.block(c.b, 0, 1, i)).transpose();
         }
     }
-    return out;
+    return result->ambig;
 }
 
 void Evaluator::pop()
