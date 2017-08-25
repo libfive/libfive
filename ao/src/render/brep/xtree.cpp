@@ -264,6 +264,15 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
         // the need for re-allocating later on
         intersections.reserve(_edges(N) * 2);
 
+        // We'll use this vector anytime we need to pass something
+        // into the evaluator (which requires a Vector3f)
+        Eigen::Vector3f _pos;
+        _pos.template tail<3 - N>() = region.perp.template cast<float>();
+        auto set = [&](const Vec& v, Result::Index i){
+            _pos.template head<N>() = v.template cast<float>();
+            eval->set(_pos, i);
+        };
+
         // Iterate over manifold patches for this corner case
         const auto& ps = mt->v[corner_mask];
         while (vertex_count < ps.size() && ps[vertex_count][0].first != -1)
@@ -304,9 +313,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                         const unsigned i = j + e*POINTS_PER_SEARCH;
                         ps.col(i) = (targets[e].first * (1 - frac)) +
                                     (targets[e].second * frac);
-                        Eigen::Vector3d pos;
-                        pos << ps.col(i), region.perp;
-                        eval->set(pos.template cast<float>(), i);
+                        set(ps.col(i), i);
                     }
                 }
 
@@ -359,11 +366,8 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 mp << targets[i].second, 1;
                 _mass_point += mp;
 
-                Eigen::Vector3d pos;
-                pos << targets[i].first, region.perp;
-                eval->set(pos.template cast<float>(), 2*i);
-                pos << targets[i].second, region.perp;
-                eval->set(pos.template cast<float>(), 2*i + 1);
+                set(targets[i].first, 2*i);
+                set(targets[i].second, 2*i + 1);
             }
 
             auto ds = eval->derivs(2 * target_count);
