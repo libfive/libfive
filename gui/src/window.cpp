@@ -90,6 +90,7 @@ Window::Window(const QString& target)
     connect(editor, &Editor::scriptChanged,
             interpreter, &Interpreter::onScriptChanged);
 
+    connect(interpreter, &Interpreter::busy, editor, &Editor::onBusy);
     connect(interpreter, &Interpreter::gotResult, editor, &Editor::onResult);
     connect(interpreter, &Interpreter::gotError, editor, &Editor::onError);
     connect(interpreter, &Interpreter::keywords, editor, &Editor::setKeywords);

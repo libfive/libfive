@@ -18,6 +18,7 @@ public slots:
     void onResult(QString result);
     void onError(QString result, QPair<uint32_t, uint32_t> begin,
                                  QPair<uint32_t, uint32_t> end);
+    void onBusy();
     void setKeywords(QString kws);
 
     /*

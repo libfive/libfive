@@ -3,25 +3,13 @@
 #include "gui/interpreter.hpp"
 #include "ao-guile.h"
 
-Interpreter::Interpreter()
-    : timer(this)
+_Interpreter::_Interpreter()
 {
-    timer.setSingleShot(true);
-    connect(&timer, &QTimer::timeout,
-            this, &Interpreter::evalScript,
-            Qt::QueuedConnection);
-    connect(&thread, &QThread::started,
-            this, &Interpreter::init);
-
+    connect(&thread, &QThread::started, this, &_Interpreter::init);
     moveToThread(&thread);
 }
 
-void Interpreter::start()
-{
-    thread.start();
-}
-
-void Interpreter::init()
+void _Interpreter::init()
 {
     // Modify environmental variables to use local Guile path
     auto path = QCoreApplication::applicationDirPath().toLocal8Bit() +
@@ -69,14 +57,15 @@ port-eof?
     free(kws);
 }
 
-void Interpreter::onScriptChanged(QString s)
+void _Interpreter::eval()
 {
-    script = s;
-    timer.start(10);
-}
+    // Safely read in the text of the script
+    QString script;
+    {
+        QMutexLocker lock(&mutex);
+        script = _script;
+    }
 
-void Interpreter::evalScript()
-{
     auto result = scm_call_1(scm_eval_sandboxed,
             scm_from_locale_string(script.toLocal8Bit().data()));
 
@@ -157,4 +146,56 @@ void Interpreter::evalScript()
         }
         emit(gotShapes(shapes));
     }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+Interpreter::Interpreter()
+{
+    // Start evaluation some amount of time after the most recent change
+    // to the script (should feel responsive, but we don't need to re-evaluate
+    // every single character change).
+    eval_timer.setSingleShot(true);
+    eval_timer.setInterval(150);
+    connect(&eval_timer, &QTimer::timeout, &interpreter, &_Interpreter::eval);
+
+    // After the interpreter is kicked off, then emit the busy signal after
+    // a short delay.  This is cancelled by either of the interpreter's
+    // "done" signals (gotResult and gotError), to avoid jittering the UI
+    // during very short evaluations.
+    busy_timer.setSingleShot(true);
+    busy_timer.setInterval(100);
+    connect(&eval_timer, &QTimer::timeout, &busy_timer,
+            static_cast<void (QTimer::*)()>(&QTimer::start));
+    connect(&busy_timer, &QTimer::timeout, this, &Interpreter::busy);
+    connect(&interpreter, &_Interpreter::gotResult,
+            &busy_timer, [&](QString){ busy_timer.stop(); });
+    connect(&interpreter, &_Interpreter::gotError, &busy_timer,
+            [&](QString, QPair<uint32_t, uint32_t>,
+                         QPair<uint32_t, uint32_t>){ busy_timer.stop(); });
+
+    // Forward all signals from _Interpreter (running in its own thread)
+    connect(&interpreter, &_Interpreter::gotResult,
+            this, &Interpreter::gotResult);
+    connect(&interpreter, &_Interpreter::gotError,
+            this, &Interpreter::gotError);
+    connect(&interpreter, &_Interpreter::keywords,
+            this, &Interpreter::keywords);
+    connect(&interpreter, &_Interpreter::gotShapes,
+            this, &Interpreter::gotShapes);
+}
+
+void Interpreter::start()
+{
+    interpreter.thread.start();
+}
+
+void Interpreter::onScriptChanged(QString s)
+{
+    {   // Swap the script into the other thread
+        QMutexLocker lock(&interpreter.mutex);
+        interpreter._script = s;
+    }
+    eval_timer.start();
 }

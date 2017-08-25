@@ -107,6 +107,11 @@ void Editor::onError(QString result, QPair<uint32_t, uint32_t> start,
     setError(start, end);
 }
 
+void Editor::onBusy()
+{
+    setResult(true, "-");
+}
+
 void Editor::setResult(bool valid, QString result)
 {
     QTextCharFormat fmt;
