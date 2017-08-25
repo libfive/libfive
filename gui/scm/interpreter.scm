@@ -42,7 +42,13 @@
                 ;; Error handling thunk
                 (lambda (key . params)
                   (set! failed #t)
-                  (list 'error before after key params)))))
+                  (list 'error before after key params))
+                ;; Pre-unwind handler to capture stack
+                (lambda (key . parameters)
+                  (define p (standard-output-port))
+                  (display-backtrace (make-stack #t) p 4)
+                  (flush-output-port p))
+                )))
               (if (not failed)
                   (cons result (loop))
                   (list result)))))))))
