@@ -157,7 +157,7 @@ Interpreter::Interpreter()
     // to the script (should feel responsive, but we don't need to re-evaluate
     // every single character change).
     eval_timer.setSingleShot(true);
-    eval_timer.setInterval(150);
+    eval_timer.setInterval(250);
     connect(&eval_timer, &QTimer::timeout, &interpreter, &_Interpreter::eval);
 
     // After the interpreter is kicked off, then emit the busy signal after
