@@ -1,5 +1,6 @@
 #include <QTextEdit>
 #include <QPlainTextEdit>
+#include <QTimer>
 
 #include "gui/settings.hpp"
 
@@ -43,8 +44,11 @@ signals:
      */
     void settingsChanged(Settings s);
 
+protected slots:
+    void onSpinner();
+
 protected:
-    void setResult(bool valid, QString result);
+    void setResult(QColor color, QString result);
     void setError(QPair<uint32_t, uint32_t> begin,
                   QPair<uint32_t, uint32_t> end);
     QList<QTextEdit::ExtraSelection> clearError(bool set=true);
@@ -57,4 +61,5 @@ protected:
     QTextDocument* err_doc;
 
     QTextCharFormat error_format;
+    QTimer spinner;
 };

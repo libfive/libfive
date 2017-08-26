@@ -54,13 +54,41 @@ Editor::Editor(QWidget* parent)
     layout->setMargin(0);
     layout->setSpacing(2);
     setLayout(layout);
+
+    spinner.setInterval(150);
+    connect(&spinner, &QTimer::timeout, this, &Editor::onSpinner);
+}
+
+void Editor::onSpinner()
+{
+    const QString spin[4] = { "◐ ", "◓ ", "◑ ", "◒ " };
+    static int i = 0;
+    i = (i + 1) % 4;
+    setResult(Color::blue, spin[i]);
 }
 
 void Editor::onResult(QString result)
 {
-    setResult(true, result);
+    spinner.stop();
+    setResult(Color::green , result);
     clearError();
 }
+
+void Editor::onError(QString result, QPair<uint32_t, uint32_t> start,
+                                     QPair<uint32_t, uint32_t> end)
+{
+    spinner.stop();
+    setResult(Color::red, result);
+    setError(start, end);
+}
+
+void Editor::onBusy()
+{
+    spinner.start();
+    onSpinner();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 QList<QTextEdit::ExtraSelection> Editor::clearError(bool set)
 {
@@ -100,22 +128,10 @@ void Editor::setError(QPair<uint32_t, uint32_t> begin,
     script->setExtraSelections(selections);
 }
 
-void Editor::onError(QString result, QPair<uint32_t, uint32_t> start,
-                                     QPair<uint32_t, uint32_t> end)
-{
-    setResult(false, result);
-    setError(start, end);
-}
-
-void Editor::onBusy()
-{
-    setResult(true, "-");
-}
-
-void Editor::setResult(bool valid, QString result)
+void Editor::setResult(QColor color, QString result)
 {
     QTextCharFormat fmt;
-    fmt.setForeground(valid ? Color::green : Color::red);
+    fmt.setForeground(color);
     err->setCurrentCharFormat(fmt);
     err->setPlainText(result);
     int lines = err_doc->size().height() + 1;
