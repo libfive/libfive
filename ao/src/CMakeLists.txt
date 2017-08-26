@@ -4,7 +4,7 @@ find_package(Eigen3 REQUIRED)
 
 ################################################################################
 
-add_library(ao-kernel STATIC
+add_library(ao-kernel SHARED
     eval/evaluator.cpp
     eval/result.cpp
     eval/feature.cpp
