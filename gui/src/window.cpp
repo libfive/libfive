@@ -25,6 +25,8 @@ Window::Window(const QString& target)
 {
     resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
 
+    setAcceptDrops(true);
+
     auto layout = new QSplitter();
     layout->addWidget(editor);
     editor->resize(width() * 0.4, editor->height());
@@ -247,6 +249,29 @@ void Window::closeEvent(QCloseEvent* event)
             default:                    assert(false);
         }
         closing = event->isAccepted();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void Window::dragEnterEvent(QDragEnterEvent* event)
+{
+    if (event->mimeData()->hasUrls() &&
+        event->mimeData()->urls().size() == 1 &&
+        event->mimeData()->urls().front().fileName().toLower().endsWith(".ao"))
+    {
+        event->acceptProposedAction();
+    }
+}
+
+void Window::dropEvent(QDropEvent* event)
+{
+    CHECK_UNSAVED();
+
+    QString f = event->mimeData()->urls().first().path();
+    if (!f.isEmpty() && loadFile(f))
+    {
+        setFilename(f);
     }
 }
 

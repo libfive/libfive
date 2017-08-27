@@ -32,7 +32,10 @@ signals:
     void exportDone();
 
 protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
     void closeEvent(QCloseEvent* event) override;
+
     QMessageBox::StandardButton checkUnsaved();
     void setFilename(const QString& str);
 
