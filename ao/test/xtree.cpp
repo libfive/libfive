@@ -1,3 +1,5 @@
+#include <future>
+
 #include "catch.hpp"
 
 #include "ao/render/brep/xtree.hpp"
@@ -186,4 +188,35 @@ TEST_CASE("XTree<3>::vert")
         Evaluator eval(s);
         walk(xtree, eval, 0.01);
     }
+}
+
+TEST_CASE("XTree<3> cancellation")
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> elapsed;
+
+    Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
+    Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
+    std::atomic_bool cancel(false);
+
+    // Start a long render operation, then cancel it immediately
+    auto future = std::async(std::launch::async, [&](){
+        return XTree<3>::build(sponge, r, 0.02, 8, true, cancel); });
+
+    // Record how long it takes betwen triggering the cancel
+    // and the future finishing, so we can check that the cancelling
+    // ended the computation within some short amount of time.
+    start = std::chrono::system_clock::now();
+    cancel.store(true);
+    auto result = future.get();
+    end = std::chrono::system_clock::now();
+
+    elapsed = end - start;
+    auto elapsed_ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
+    REQUIRE(elapsed_ms.count() < 50);
+
+    // The cancelled computation must return nullptr
+    // (rather than a partially-constructed or invalid tree)
+    REQUIRE(result.get() == nullptr);
 }
