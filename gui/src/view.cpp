@@ -18,16 +18,31 @@ View::View(QWidget* parent)
 
 void View::setShapes(QList<Shape*> new_shapes)
 {
-    // Erase all existing shapes
-    for (auto s : shapes)
+    // Pack tree IDs into a pair of sets for fast checking
+    QSet<Kernel::Tree::Id> new_shape_ids;
+    for (auto& s : new_shapes)
     {
-        disconnect(s, &Shape::gotMesh, this, &View::update);
-        s->deleteLater();
+        new_shape_ids.insert(s->id());
     }
-    shapes.clear();
+
+    // Erase all existing shapes that aren't in the new_shapes list
+    for (auto itr=shapes.begin(); itr != shapes.end(); /* no update */ )
+    {
+        if (new_shape_ids.find((*itr)->id()) == new_shape_ids.end())
+        {
+            disconnect(*itr, &Shape::gotMesh, this, &View::update);
+            (*itr)->deleteLater();
+            itr = shapes.erase(itr);
+        }
+        else
+        {
+            new_shape_ids.remove((*itr)->id());
+            ++itr;
+        }
+    }
 
     // Start up the busy spinner
-    if (new_shapes.size())
+    if (new_shape_ids.size())
     {
         busy.show();
     }
@@ -35,14 +50,17 @@ void View::setShapes(QList<Shape*> new_shapes)
     // Connect all new shapes
     for (auto s : new_shapes)
     {
-        connect(s, &Shape::gotMesh, this, &View::update);
-        connect(s, &Shape::gotMesh, this, &View::checkMeshes);
-        connect(this, &View::startRender,
-                s, &Shape::startRender);
-        s->startRender(settings);
-        s->setParent(this);
+        if (new_shape_ids.find(s->id()) != new_shape_ids.end())
+        {
+            connect(s, &Shape::gotMesh, this, &View::update);
+            connect(s, &Shape::gotMesh, this, &View::checkMeshes);
+            connect(this, &View::startRender,
+                    s, &Shape::startRender);
+            s->startRender(settings);
+            s->setParent(this);
 
-        shapes.push_back(s);
+            shapes.push_back(s);
+        }
     }
     update();
 }
