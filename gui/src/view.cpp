@@ -61,6 +61,10 @@ void View::setShapes(QList<Shape*> new_shapes)
 
             shapes.push_back(s);
         }
+        else
+        {
+            s->deleteLater();
+        }
     }
     update();
 }
