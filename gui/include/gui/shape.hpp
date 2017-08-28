@@ -52,6 +52,7 @@ protected:
     Kernel::Mesh* renderMesh(Settings s);
     QFuture<Kernel::Mesh*> mesh_future;
     QFutureWatcher<Kernel::Mesh*> mesh_watcher;
+    std::atomic_bool cancel;
 
     Kernel::Tree tree;
     QScopedPointer<Kernel::Mesh> mesh;
@@ -61,4 +62,7 @@ protected:
     QOpenGLVertexArrayObject vao;
     QOpenGLBuffer vert_vbo;
     QOpenGLBuffer tri_vbo;
+
+    const static int MESH_RES_ABORT=-2;
+    const static int MESH_RES_EMPTY=-1;
 };

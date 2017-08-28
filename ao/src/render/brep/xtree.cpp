@@ -21,7 +21,18 @@ std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
 
 template <unsigned N>
 std::unique_ptr<const XTree<N>> XTree<N>::build(
-        Tree t, Region<N> region, double min_feature, bool multithread)
+        Tree t, Region<N> region, double min_feature,
+        double max_err, bool multithread)
+{
+    std::atomic_bool cancel(false);
+    return build(t, region, min_feature, max_err, multithread, cancel);
+}
+
+template <unsigned N>
+std::unique_ptr<const XTree<N>> XTree<N>::build(
+        Tree t, Region<N> region, double min_feature,
+        double max_err, bool multithread,
+        std::atomic_bool& cancel)
 {
     // Lazy initialization of marching squares / cubes table
     if (mt.get() == nullptr)
@@ -38,13 +49,22 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         {
             es.emplace_back(Evaluator(t));
         }
-        out = new XTree(es.data(), region, min_feature, true);
+        out = new XTree(es.data(), region, min_feature, max_err, true, cancel);
     }
     else
     {
         Evaluator e(t);
-        out = new XTree(&e, region, min_feature, false);
+        out = new XTree(&e, region, min_feature, max_err, false, cancel);
     }
+
+    // Return an empty XTree when cancelled
+    // (to avoid potentially ambiguous or mal-constructed trees situations)
+    if (cancel.load())
+    {
+        delete out;
+        out = nullptr;
+    }
+
     return std::unique_ptr<const XTree<N>>(out);
 }
 
@@ -52,9 +72,15 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
 
 template <unsigned N>
 XTree<N>::XTree(Evaluator* eval, Region<N> region,
-                double min_feature, bool multithread)
+                double min_feature, double max_err, bool multithread,
+                std::atomic_bool& cancel)
     : region(region)
 {
+    if (cancel.load())
+    {
+        return;
+    }
+
     // Clear all indices
     std::fill(index.begin(), index.end(), 0);
 
@@ -92,9 +118,10 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 for (unsigned i=0; i < children.size(); ++i)
                 {
                     futures[i] = std::async(std::launch::async,
-                        [&eval, &rs, i, min_feature]()
-                        { return new XTree(eval + i, rs[i],
-                                           min_feature, false); });
+                        [&eval, &rs, i, min_feature, max_err, &cancel]()
+                        { return new XTree(
+                                eval + i, rs[i], min_feature, max_err,
+                                false, cancel); });
                 }
                 for (unsigned i=0; i < children.size(); ++i)
                 {
@@ -108,9 +135,19 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 {
                     // Populate child recursively
                     children[i].reset(new XTree<N>(
-                                eval, rs[i], min_feature, false));
+                                eval, rs[i], min_feature, max_err,
+                                false, cancel));
                 }
             }
+
+            // Abort early if children could have been mal-constructed
+            // by an early cancel operation
+            if (cancel.load())
+            {
+                eval->pop();
+                return;
+            }
+
             // Update corner and filled / empty state from children
             for (uint8_t i=0; i < children.size(); ++i)
             {
@@ -236,8 +273,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 // If the vertex error is below a threshold, and the vertex
                 // is well-placed in the distance field, then convert into
                 // a leaf by erasing all of the child branches
-                if (findVertex(vertex_count++) < 1e-8 &&
-                    fabs(eval->baseEval(vert3().template cast<float>())) < 1e-8)
+                if (findVertex(vertex_count++) < max_err &&
+                    fabs(eval->baseEval(vert3().template cast<float>())) <
+                        max_err)
                 {
                     std::for_each(children.begin(), children.end(),
                         [](std::unique_ptr<const XTree<N>>& o) { o.reset(); });

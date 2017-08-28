@@ -78,7 +78,7 @@ void Shape::startRender(Settings s)
 {
     if (mesh_future.isRunning())
     {
-        if (next.res != -2)
+        if (next.res != MESH_RES_ABORT)
         {
             next = s;
         }
@@ -93,14 +93,16 @@ void Shape::startRender(Settings s)
 
 bool Shape::done() const
 {
-    return next.res == -1 && mesh_future.isFinished();
+    return next.res == MESH_RES_EMPTY && mesh_future.isFinished();
 }
 
 Kernel::Mesh* Shape::renderMesh(Settings s)
 {
+    cancel.store(false);
     Kernel::Region<3> r({s.min.x(), s.min.y(), s.min.z()},
                         {s.max.x(), s.max.y(), s.max.z()});
-    auto m = Kernel::Mesh::render(tree, r, 1 / (s.res / (1 << s.div)));
+    auto m = Kernel::Mesh::render(tree, r, 1 / (s.res / (1 << s.div)),
+                                  pow(10, -s.quality), cancel);
     return m.release();
 }
 
@@ -108,7 +110,7 @@ void Shape::deleteLater()
 {
     if (mesh_future.isRunning())
     {
-        next.res = -2;
+        next.res = MESH_RES_ABORT;
     }
     else
     {
@@ -122,14 +124,14 @@ void Shape::onFutureFinished()
     gl_ready = false;
     emit(gotMesh());
 
-    if (next.res == -2)
+    if (next.res == MESH_RES_ABORT)
     {
         QObject::deleteLater();
     }
     else if (next.res > 0)
     {
         auto s = next;
-        next.res = -1;
+        next.res = MESH_RES_EMPTY;
         startRender(s);
     }
 }

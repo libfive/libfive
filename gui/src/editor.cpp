@@ -168,7 +168,7 @@ void Editor::onSettingsChanged(Settings s)
     auto render_str = s.settings_fmt
         .arg(s.min.x()).arg(s.min.y()).arg(s.min.z())
         .arg(s.max.x()).arg(s.max.y()).arg(s.max.z())
-        .arg(s.res);
+        .arg(s.res).arg(s.quality);
 
     QTextCursor c(script_doc);
 
@@ -198,15 +198,15 @@ void Editor::onScriptChanged()
     if (match.hasMatch())
     {
         bool ok = true;
-        std::array<float, 7> out;
-        for (unsigned i=0; i < out.size() && ok; ++i)
+        std::vector<float> out;
+        for (int i=1; i <= match.lastCapturedIndex() && ok; ++i)
         {
-            out[i] = match.captured(i + 1).toFloat(&ok);
+            out.push_back(match.captured(i).toFloat(&ok));
         }
         if (ok)
         {
             Settings s({out[0], out[1], out[2]},
-                       {out[3], out[4], out[5]}, out[6]);
+                       {out[3], out[4], out[5]}, out[6], out[7]);
 
             emit(settingsChanged(s));
         }

@@ -79,10 +79,18 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 ////////////////////////////////////////////////////////////////////////////////
 
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
-                                   double min_feature)
+                                   double min_feature, double max_err)
 {
-    // Create the quadtree on the scaffold
-    auto xtree = XTree<3>::build(t, r, min_feature);
+    std::atomic_bool cancel;
+    return render(t, r, min_feature, max_err, cancel);
+}
+
+std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
+                                   double min_feature, double max_err,
+                                   std::atomic_bool& cancel)
+{
+    // Create the octree (multithreaded and cancellable)
+    auto xtree = XTree<3>::build(t, r, min_feature, max_err, true, cancel);
 
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());

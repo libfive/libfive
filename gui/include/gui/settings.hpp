@@ -8,7 +8,10 @@
 
 struct Settings
 {
-    Settings(QVector3D min, QVector3D max, float res);
+    /*
+     *  Default constructor estimates initial div using heuristic
+     */
+    Settings(QVector3D min, QVector3D max, float res, float quality);
     Settings();
 
     Settings next() const;
@@ -16,6 +19,7 @@ struct Settings
     QVector3D min;
     QVector3D max;
     float res;
+    float quality;
     int div;
 
     // Used to read and write to scripts
@@ -26,7 +30,10 @@ struct Settings
     bool operator!=(const Settings& other) const;
 
 protected:
-    Settings(QVector3D min, QVector3D max, float res, int div);
+    /*
+     *  Construct a new Setting object with a different division
+     */
+    Settings(const Settings& other, int div);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -49,4 +56,5 @@ protected:
     QDoubleSpinBox* zmin;
     QDoubleSpinBox* zmax;
     QDoubleSpinBox* res;
+    QDoubleSpinBox* quality;
 };

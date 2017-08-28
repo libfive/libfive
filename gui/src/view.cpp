@@ -5,7 +5,7 @@
 
 View::View(QWidget* parent)
     : QOpenGLWidget(parent), camera(size()),
-      settings({-10, -10, -10}, {10, 10, 10}, 10)
+      settings({-10, -10, -10}, {10, 10, 10}, 10, 8)
 {
     setMouseTracking(true);
 

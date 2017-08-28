@@ -7,9 +7,9 @@
 #include "gui/settings.hpp"
 
 QRegularExpression Settings::settings_regex(
-        "#! RENDER (.*) (.*) (.*) / (.*) (.*) (.*) / (.*) !#");
+        "#! RENDER (.*) (.*) (.*) / (.*) (.*) (.*) / (.*) / (.*) !#");
 QString Settings::settings_fmt(
-        "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 !#");
+        "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 / %8 !#");
 
 Settings::Settings()
     : res(-1)
@@ -17,8 +17,8 @@ Settings::Settings()
     // Nothing to do here
 }
 
-Settings::Settings(QVector3D min, QVector3D max, float res)
-    : min(min), max(max), res(res)
+Settings::Settings(QVector3D min, QVector3D max, float res, float quality)
+    : min(min), max(max), res(res), quality(quality)
 {
     const float volume = (max.x() - min.x()) *
                          (max.y() - min.y()) *
@@ -32,20 +32,22 @@ Settings::Settings(QVector3D min, QVector3D max, float res)
         : int(log(res / target_res) / log(2) + 0.5);
 }
 
-Settings::Settings(QVector3D min, QVector3D max, float res, int div)
-    : min(min), max(max), res(res), div(div)
+Settings::Settings(const Settings& other, int div)
+    : min(other.min), max(other.max), res(other.res),
+      quality(other.quality), div(div)
 {
     // Nothing to do here
 }
 
 Settings Settings::next() const
 {
-    return div > 0 ? Settings(min, max, res, div - 1) : Settings();
+    return div > 0 ? Settings(*this, div - 1) : Settings();
 }
 
 bool Settings::operator==(const Settings& other) const
 {
-    return min == other.min && max == other.max && res == other.res;
+    return min == other.min && max == other.max &&
+           res == other.res && quality == other.quality;
 }
 
 bool Settings::operator!=(const Settings& other) const
@@ -62,7 +64,8 @@ SettingsPane::SettingsPane(Settings s)
       ymax(new QDoubleSpinBox),
       zmin(new QDoubleSpinBox),
       zmax(new QDoubleSpinBox),
-      res(new QDoubleSpinBox)
+      res(new QDoubleSpinBox),
+      quality(new QDoubleSpinBox)
 {
     auto layout = new QGridLayout();
 
@@ -77,13 +80,22 @@ SettingsPane::SettingsPane(Settings s)
     layout->addWidget(zmin, 3, 1);
     layout->addWidget(zmax, 3, 2);
 
-    QFrame* line = new QFrame();
+    QFrame* line;
+    line = new QFrame();
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Raised);
     layout->addWidget(line, 4, 0, 1, 3);
 
     layout->addWidget(new QLabel("Resolution:"), 5, 0, 1, 2, Qt::AlignCenter);
     layout->addWidget(res, 5, 2);
+
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Raised);
+    layout->addWidget(line, 6, 0, 1, 3);
+
+    layout->addWidget(new QLabel("Quality:"), 7, 0, 1, 2, Qt::AlignCenter);
+    layout->addWidget(quality, 7, 2);
 
     layout->setMargin(10);
     layout->setSpacing(4);
@@ -94,10 +106,11 @@ SettingsPane::SettingsPane(Settings s)
         t->setMaximum(100);
     }
     res->setMaximum(100);
+    quality->setMaximum(11);
 
     set(s);
 
-    for (auto t : {xmin, xmax, ymin, ymax, zmin, zmax, res})
+    for (auto t : {xmin, xmax, ymin, ymax, zmin, zmax, res, quality})
     {
         connect(t, static_cast<void (QDoubleSpinBox::*)(double)>
                     (&QDoubleSpinBox::valueChanged),
@@ -105,7 +118,7 @@ SettingsPane::SettingsPane(Settings s)
                     emit(this->changed(Settings(
                         QVector3D(xmin->value(), ymin->value(), zmin->value()),
                         QVector3D(xmax->value(), ymax->value(), zmax->value()),
-                        res->value()))); } );
+                        res->value(), quality->value()))); } );
     }
 
     setLayout(layout);
@@ -123,4 +136,5 @@ void SettingsPane::set(Settings s)
     ymax->setValue(s.max.y());
     zmax->setValue(s.max.z());
     res->setValue(s.res);
+    quality->setValue(s.quality);
 }

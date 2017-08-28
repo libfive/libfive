@@ -18,10 +18,19 @@ class XTree
 public:
     /*
      *  Constructs an octree or quadtree by subdividing a region
+     *  (unstoppable)
      */
     static std::unique_ptr<const XTree> build(
             Tree t, Region<N> region, double min_feature=0.1,
-            bool multithread=true);
+            double max_err=1e-8, bool multithread=true);
+
+    /*
+     *  Fully-specified XTree builder (stoppable through cancel)
+     */
+    static std::unique_ptr<const XTree> build(
+            Tree t, Region<N> region, double min_feature,
+            double max_err, bool multithread,
+            std::atomic_bool& cancel);
 
     /*
      *  Checks whether this tree splits
@@ -131,7 +140,8 @@ protected:
      *  be distributed across multiple threads.
      */
     XTree(Evaluator* eval, Region<N> region,
-          double min_feature, bool multithread);
+          double min_feature, double max_err, bool multithread,
+          std::atomic_bool& cancel);
 
     /*
      *  Searches for a vertex within the XTree cell, using the QEF matrices
