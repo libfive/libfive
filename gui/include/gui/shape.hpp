@@ -34,6 +34,11 @@ public:
      */
     const Kernel::Mesh* getMesh() const { return mesh.data(); }
 
+    /*
+     *  Looks up the tree's ID
+     */
+    Kernel::Tree::Id id() const { return tree.id(); }
+
 signals:
     void gotMesh();
 
