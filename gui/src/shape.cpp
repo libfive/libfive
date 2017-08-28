@@ -111,6 +111,7 @@ void Shape::deleteLater()
     if (mesh_future.isRunning())
     {
         next.res = MESH_RES_ABORT;
+        cancel.store(true);
     }
     else
     {
