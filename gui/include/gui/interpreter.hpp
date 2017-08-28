@@ -54,7 +54,7 @@ protected:
     /*  This is the worker thread which the _Interpreter runs in */
     QThread thread;
 
-    /*  script is locked by mutex.  It is used to deliver a new script
+    /*  _script is locked by mutex.  It is used to deliver a new script
      *  to the worker thread, where it is loaded into script */
     QMutex mutex;
     QString _script;
