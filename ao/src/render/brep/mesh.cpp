@@ -94,33 +94,41 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
 
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());
-    Dual<3>::walk(xtree.get(), *m);
+
+    if (cancel.load())
+    {
+        return nullptr;
+    }
+    else
+    {
+        Dual<3>::walk(xtree.get(), *m);
 
 #if DEBUG_OCTREE_CELLS
-    // Store octree cells as lines
-    std::list<const XTree<3>*> todo = {xtree.get()};
-    while (todo.size())
-    {
-        auto t = todo.front();
-        todo.pop_front();
-        if (t->isBranch())
-            for (auto& c : t->children)
-                todo.push_back(c.get());
+        // Store octree cells as lines
+        std::list<const XTree<3>*> todo = {xtree.get()};
+        while (todo.size())
+        {
+            auto t = todo.front();
+            todo.pop_front();
+            if (t->isBranch())
+                for (auto& c : t->children)
+                    todo.push_back(c.get());
 
-        static const std::vector<std::pair<uint8_t, uint8_t>> es =
-            {{0, Axis::X}, {0, Axis::Y}, {0, Axis::Z},
-             {Axis::X, Axis::X|Axis::Y}, {Axis::X, Axis::X|Axis::Z},
-             {Axis::Y, Axis::Y|Axis::X}, {Axis::Y, Axis::Y|Axis::Z},
-             {Axis::X|Axis::Y, Axis::X|Axis::Y|Axis::Z},
-             {Axis::Z, Axis::Z|Axis::X}, {Axis::Z, Axis::Z|Axis::Y},
-             {Axis::Z|Axis::X, Axis::Z|Axis::X|Axis::Y},
-             {Axis::Z|Axis::Y, Axis::Z|Axis::Y|Axis::X}};
-        for (auto e : es)
-            m->line(t->cornerPos(e.first).template cast<float>(),
-                    t->cornerPos(e.second).template cast<float>());
-    }
+            static const std::vector<std::pair<uint8_t, uint8_t>> es =
+                {{0, Axis::X}, {0, Axis::Y}, {0, Axis::Z},
+                 {Axis::X, Axis::X|Axis::Y}, {Axis::X, Axis::X|Axis::Z},
+                 {Axis::Y, Axis::Y|Axis::X}, {Axis::Y, Axis::Y|Axis::Z},
+                 {Axis::X|Axis::Y, Axis::X|Axis::Y|Axis::Z},
+                 {Axis::Z, Axis::Z|Axis::X}, {Axis::Z, Axis::Z|Axis::Y},
+                 {Axis::Z|Axis::X, Axis::Z|Axis::X|Axis::Y},
+                 {Axis::Z|Axis::Y, Axis::Z|Axis::Y|Axis::X}};
+            for (auto e : es)
+                m->line(t->cornerPos(e.first).template cast<float>(),
+                        t->cornerPos(e.second).template cast<float>());
+        }
 #endif
-    return m;
+        return m;
+    }
 }
 
 void Mesh::line(Eigen::Vector3f a, Eigen::Vector3f b)
