@@ -15,6 +15,12 @@ class View : public QOpenGLWidget
 public:
     View(QWidget* parent=nullptr);
 
+    /*
+     *  Requests that every active Shape cancels its render operation
+     *  This is used when quitting to clean up threads quickly
+     */
+    void cancelShapes();
+
 public slots:
     void setShapes(QList<Shape*> shapes);
     void openSettings(bool);

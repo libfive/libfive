@@ -69,6 +69,15 @@ void View::setShapes(QList<Shape*> new_shapes)
     update();
 }
 
+void View::cancelShapes()
+{
+    for (auto& s : shapes)
+    {
+        s->deleteLater();
+    }
+    shapes.clear();
+}
+
 void View::openSettings(bool)
 {
     if (pane.isNull())

@@ -249,6 +249,10 @@ void Window::closeEvent(QCloseEvent* event)
             default:                    assert(false);
         }
         closing = event->isAccepted();
+        if (closing)
+        {
+            view->cancelShapes();
+        }
     }
 }
 
