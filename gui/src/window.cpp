@@ -1,3 +1,4 @@
+#include <QActionGroup>
 #include <QDesktopWidget>
 #include <QFileDialog>
 #include <QProgressDialog>
@@ -81,6 +82,22 @@ Window::Window(const QString& target)
     show_axes_action->setChecked(true);
     connect(show_axes_action, &QAction::triggered,
             view, &View::showAxes);
+
+    auto perspective_action = new QAction("Perspective");
+    auto ortho_action = new QAction("Orthographic");
+    view_menu->addSection("Projection");
+    view_menu->addAction(perspective_action);
+    view_menu->addAction(ortho_action);
+    perspective_action->setCheckable(true);
+    perspective_action->setChecked(true);
+    ortho_action->setCheckable(true);
+    auto projection = new QActionGroup(view_menu);
+    projection->addAction(perspective_action);
+    projection->addAction(ortho_action);
+    connect(perspective_action, &QAction::triggered,
+            view, &View::toPerspective);
+    connect(ortho_action, &QAction::triggered,
+            view, &View::toOrthographic);
 
     // Help menu
     auto help_menu = menuBar()->addMenu("Help");

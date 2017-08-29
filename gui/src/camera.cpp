@@ -1,6 +1,12 @@
 #include <cmath>
 #include "gui/camera.hpp"
 
+Camera::Camera(QSize size)
+    : size(size), anim(this, "perspective")
+{
+    anim.setDuration(100);
+}
+
 QMatrix4x4 Camera::proj() const
 {
     QMatrix4x4 m;
@@ -23,6 +29,7 @@ QMatrix4x4 Camera::proj() const
 QMatrix4x4 Camera::view() const
 {
     QMatrix4x4 m;
+    m(3, 2) = perspective;
     m.scale(scale, scale, scale);
     m.rotate(pitch, {1, 0, 0});
     m.rotate(yaw,   {0, 0, 1});
@@ -60,4 +67,18 @@ void Camera::zoomIncremental(float ds, QPoint c)
 
     scale *= pow(1.1, ds / 120.);
     center += 2 * (M().inverted().map(pt) - a);
+}
+
+void Camera::toOrthographic()
+{
+    anim.setStartValue(perspective);
+    anim.setEndValue(0);
+    anim.start();
+}
+
+void Camera::toPerspective()
+{
+    anim.setStartValue(perspective);
+    anim.setEndValue(0.25);
+    anim.start();
 }

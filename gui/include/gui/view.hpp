@@ -26,6 +26,9 @@ public slots:
     void openSettings(bool);
     void showAxes(bool a);
 
+    void toOrthographic(bool=false) { camera.toOrthographic();  }
+    void toPerspective(bool=false)  { camera.toPerspective();   }
+
     /*
      *  Emits shapesReady if all the shapes being drawn
      *  are at their final (highest) resolution

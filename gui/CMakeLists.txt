@@ -31,6 +31,7 @@ set(SRCS src/main.cpp
 set(QOBJECTS
     include/gui/app.hpp
     include/gui/busy.hpp
+    include/gui/camera.hpp
     include/gui/settings.hpp
     include/gui/syntax.hpp
     include/gui/shape.hpp

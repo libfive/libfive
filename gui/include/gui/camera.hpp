@@ -1,11 +1,20 @@
 #pragma once
 
 #include <QMatrix4x4>
+#include <QObject>
+#include <QPropertyAnimation>
 
-class Camera
+class Camera : public QObject
 {
+    Q_OBJECT
 public:
-    Camera(QSize size) : size(size) { /* nothing to do here */ }
+    Camera(QSize size);
+
+    /*
+     *  Triggers an animation of the perspective member variable
+     */
+    void toOrthographic();
+    void toPerspective();
 
     /*
      *  Returns the projection matrix
@@ -32,10 +41,18 @@ public:
     /*  Window size  */
     QSize size;
 
+signals:
+    void changed();
+
 protected:
 
     float scale=1;
     QVector3D center={0,0,0};
     float pitch=128;
     float yaw=-109;
+
+    float perspective=0.25;
+    Q_PROPERTY(float perspective MEMBER perspective NOTIFY changed)
+
+    QPropertyAnimation anim;
 };
