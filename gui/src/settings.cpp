@@ -89,13 +89,8 @@ SettingsPane::SettingsPane(Settings s)
     layout->addWidget(new QLabel("Resolution:"), 5, 0, 1, 2, Qt::AlignCenter);
     layout->addWidget(res, 5, 2);
 
-    line = new QFrame();
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Raised);
-    layout->addWidget(line, 6, 0, 1, 3);
-
-    layout->addWidget(new QLabel("Quality:"), 7, 0, 1, 2, Qt::AlignCenter);
-    layout->addWidget(quality, 7, 2);
+    layout->addWidget(new QLabel("Quality:"), 6, 0, 1, 2, Qt::AlignCenter);
+    layout->addWidget(quality, 6, 2);
 
     layout->setMargin(10);
     layout->setSpacing(4);
