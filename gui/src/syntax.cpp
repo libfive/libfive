@@ -152,6 +152,20 @@ Syntax::Syntax(QTextDocument* doc)
         comment_format.setForeground(Color::base1);
 
         rules << Rule(R"(\;.*)", comment_format);
+
+        // Single-line block comments of the form #| ... |#
+        rules << Rule(R"(#\|(?:\|(?!#)|[^|])*\|#)", comment_format, BASE, BASE);
+
+        // Multi-line block comment of the form #| ... |#
+        rules << Rule(R"(#\|(?:\|(?!#)|[^|])*$)", comment_format, BASE, COMMENT_BAR);
+        rules << Rule(R"(^(?:\|(?!#)|[^|])*\|#)", comment_format, COMMENT_BAR, BASE);
+        rules << Rule(R"((?:\|(?!#)|[^|])+)", comment_format, COMMENT_BAR, COMMENT_BAR);
+
+        // Block comments with #! ... !#
+        rules << Rule(R"(#!(?:!(?!#)|[^!])*!#)", comment_format, BASE, BASE);
+        rules << Rule(R"(#!(?:!(?!#)|[^!])*$)", comment_format, BASE, COMMENT_BANG);
+        rules << Rule(R"(^(?:!(?!#)|[^!])*!#)", comment_format, COMMENT_BANG, BASE);
+        rules << Rule(R"((?:!(?!#)|[^!])+)", comment_format, COMMENT_BANG, COMMENT_BANG);
     }
 
     // Special regex to catch parentheses

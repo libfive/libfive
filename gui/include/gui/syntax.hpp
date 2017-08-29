@@ -22,8 +22,8 @@ protected:
 
     void highlightBlock(const QString& text) override;
 
-    /*  Define states to keep track of multiline strings. */
-    enum State { BASE = -1, STRING = 1 };
+    /*  Define states to keep track of multiline strings and comments. */
+    enum State { BASE = -1, STRING = 1, COMMENT_BANG = 2, COMMENT_BAR = 3 };
 
     /*  Structure to use as a rule when highlighting    */
     struct Rule
