@@ -9,7 +9,7 @@ void main() {
 
     // Per-face flat normals
     vec3 ec_normal = cross(dFdx(ec_pos), dFdy(ec_pos));
-    ec_normal.z /= 4;
+    ec_normal.z /= 8;
     ec_normal = normalize(ec_normal);
 
     // Per-fragment shading

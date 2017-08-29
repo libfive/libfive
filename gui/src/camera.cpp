@@ -5,9 +5,9 @@ QMatrix4x4 Camera::proj() const
 {
     QMatrix4x4 m;
 
-    //  Compress the Z axis to avoid clipping
-    //  The value 4 isn't anything magical here, just seems to work well
-    const float Z_COMPRESS = 4;
+    //  Compress the Z axis to avoid clipping.  The exact value is arbitrary,
+    //  but seems to work well for common model aspect ratios.
+    const float Z_COMPRESS = 8;
     const float frac = size.width() / float(size.height());
     if (frac > 1)
     {
