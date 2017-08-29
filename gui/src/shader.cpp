@@ -6,6 +6,7 @@ namespace Shader
 QOpenGLShaderProgram* flat;
 QOpenGLShaderProgram* shaded;
 QOpenGLShaderProgram* busy;
+QOpenGLShaderProgram* bars;
 
 void initializeGL()
 {
@@ -29,6 +30,13 @@ void initializeGL()
     busy->addShaderFromSourceFile(
             QOpenGLShader::Fragment, ":/gl/busy.frag");
     busy->link();
+
+    bars = new QOpenGLShaderProgram;
+    bars->addShaderFromSourceFile(
+            QOpenGLShader::Vertex, ":/gl/basic.vert");
+    bars->addShaderFromSourceFile(
+            QOpenGLShader::Fragment, ":/gl/bars.frag");
+    bars->link();
 }
 
 }

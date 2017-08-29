@@ -74,9 +74,6 @@ Window::Window(const QString& target)
 
     // Settings menu
     auto view_menu = menuBar()->addMenu("&View");
-    connect(view_menu->addAction("Bounds / resolution"), &QAction::triggered,
-            view, &View::openSettings);
-
     auto show_axes_action = view_menu->addAction("Show axes");
     show_axes_action->setCheckable(true);
     show_axes_action->setChecked(true);

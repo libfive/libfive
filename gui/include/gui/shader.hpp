@@ -8,4 +8,5 @@ namespace Shader
     extern QOpenGLShaderProgram* flat;
     extern QOpenGLShaderProgram* shaded;
     extern QOpenGLShaderProgram* busy;
+    extern QOpenGLShaderProgram* bars;
 }

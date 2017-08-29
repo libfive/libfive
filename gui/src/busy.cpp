@@ -6,8 +6,7 @@
 
 Busy::Busy()
 {
-    connect(&timer, &QTimer::timeout,
-            this, &Busy::redraw);
+    connect(&timer, &QTimer::timeout, this, &Busy::redraw);
 }
 
 void Busy::initializeGL()

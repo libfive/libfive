@@ -4,6 +4,7 @@
 
 #include "gui/axes.hpp"
 #include "gui/background.hpp"
+#include "gui/bars.hpp"
 #include "gui/busy.hpp"
 #include "gui/camera.hpp"
 #include "gui/shape.hpp"
@@ -23,7 +24,7 @@ public:
 
 public slots:
     void setShapes(QList<Shape*> shapes);
-    void openSettings(bool);
+    void openSettings();
     void showAxes(bool a);
 
     void toOrthographic(bool=false) { camera.toOrthographic();  }
@@ -73,6 +74,7 @@ protected:
     Axes axes;
     Background background;
     Busy busy;
+    Bars bars;
 
     void mouseMoveEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;

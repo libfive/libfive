@@ -14,6 +14,7 @@ set(SRCS src/main.cpp
     src/app.cpp
     src/axes.cpp
     src/background.cpp
+    src/bars.cpp
     src/busy.cpp
     src/camera.cpp
     src/settings.cpp

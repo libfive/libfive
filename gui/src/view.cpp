@@ -79,7 +79,7 @@ void View::cancelShapes()
     shapes.clear();
 }
 
-void View::openSettings(bool)
+void View::openSettings()
 {
     if (pane.isNull())
     {
@@ -126,6 +126,7 @@ void View::initializeGL()
     axes.initializeGL();
     background.initializeGL();
     busy.initializeGL();
+    bars.initializeGL();
 }
 
 void View::paintGL()
@@ -146,6 +147,9 @@ void View::paintGL()
 
     // This is a no-op if the spinner is hidden
     busy.draw(camera.size);
+
+    // Draw hamburger menu
+    bars.draw(camera.size);
 }
 
 void View::resizeGL(int width, int height)
@@ -167,6 +171,11 @@ void View::mouseMoveEvent(QMouseEvent* event)
         camera.panIncremental(event->pos() - mouse.pos);
         update();
     }
+    else if (bars.hover(event->pos().x() > camera.size.width() - bars.side &&
+                        event->pos().y() < bars.side))
+    {
+        update();
+    }
     mouse.pos = event->pos();
 }
 
@@ -176,7 +185,12 @@ void View::mousePressEvent(QMouseEvent* event)
 
     if (mouse.state == mouse.RELEASED)
     {
-        if (event->button() == Qt::LeftButton)
+        if (event->pos().x() > camera.size.width() - bars.side &&
+            event->pos().y() < bars.side)
+        {
+            openSettings();
+        }
+        else if (event->button() == Qt::LeftButton)
         {
             mouse.state = mouse.DRAG_ROT;
         }
