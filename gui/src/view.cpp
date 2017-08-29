@@ -214,6 +214,15 @@ void View::wheelEvent(QWheelEvent *event)
     update();
 }
 
+void View::leaveEvent(QEvent* event)
+{
+    QOpenGLWidget::leaveEvent(event);
+    if (bars.hover(false))
+    {
+        update();
+    }
+}
+
 void View::showAxes(bool a)
 {
     show_axes = a;
