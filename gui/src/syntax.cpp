@@ -126,7 +126,7 @@ Syntax::Syntax(QTextDocument* doc)
         // Multi-line strings
         rules << Rule(R"("(?:\\.|[^"\\])*$)", string_format, BASE, STRING);
         rules << Rule(R"(^(?:\\.|[^"\\])*")", string_format, STRING, BASE);
-        rules << Rule(R"(.+)", string_format, STRING, STRING);
+        rules << Rule(R"((?:\\.|[^"\\])+)", string_format, STRING, STRING);
     }
 
     {   // Numbers (float and integer)
