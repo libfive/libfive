@@ -76,6 +76,8 @@ ao_tree ao_tree_z();
 
 ao_tree ao_tree_var();
 
+bool ao_tree_is_var(ao_tree t);
+
 ao_tree ao_tree_const(float f);
 float ao_tree_get_const(ao_tree t, bool* success);
 

@@ -73,6 +73,12 @@ SCM scm_var(SCM value)
     return scm_wrap_tree(scm_from_pointer(out, del_tree));
 }
 
+SCM scm_var_p(SCM a)
+{
+    return scm_is_tree(a) && ao_tree_is_var(scm_to_tree(a)->t)
+        ? SCM_BOOL_T : SCM_BOOL_F;
+}
+
 SCM scm_tree(SCM op, SCM a, SCM b)
 {
     SCM_ASSERT_TYPE(scm_is_symbol(op), op, 0, "scm_tree", "symbol");
@@ -206,6 +212,7 @@ void init_ao_kernel(void*)
 
     scm_c_define_gsubr("make-tree", 1, 2, 0, (void*)scm_tree);
     scm_c_define_gsubr("make-var", 1, 0, 0, (void*)scm_var);
+    scm_c_define_gsubr("var?", 1, 0, 0, (void*)scm_var_p);
     scm_c_define_gsubr("number->tree", 1, 0, 0, (void*)scm_number_to_tree);
     scm_c_define_gsubr("tree-equal?", 2, 0, 0, (void*)scm_tree_equal_p);
     scm_c_define_gsubr("tree-eval", 4, 0, 0, (void*)scm_tree_eval);
@@ -320,8 +327,8 @@ void init_ao_kernel(void*)
 
     scm_c_export(
             "tree?", "tree", "wrap-tree", "unwrap-tree",
-            "make-tree", "make-var", "number->tree", "tree-equal?", "tree-eval",
-            "tree->mesh",
+            "make-tree", "make-var", "var?", "number->tree",
+            "tree-equal?", "tree-eval", "tree->mesh",
             NULL);
 }
 
