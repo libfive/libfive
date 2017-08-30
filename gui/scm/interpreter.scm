@@ -27,7 +27,7 @@
           (failed (list (append (list 'error before after) clause)))
 
           ;; If we're at the end of the stream, then sever module
-          ;; and return a dummy list
+          ;; and return the end of the list
           ((eof-object? clause) (eval-in-sandbox #nil #:module mod))
 
           ;; Otherwise, attempt to evaluate

@@ -138,7 +138,7 @@ void _Interpreter::eval()
             if (scm_is_tree(scm_cdar(result)))
             {
                 auto tree = scm_to_tree(scm_cdar(result));
-                auto shape = new Shape(*tree);
+                auto shape = new Shape(*(tree->t));
                 shape->moveToThread(QApplication::instance()->thread());
                 shapes.push_back(shape);
             }

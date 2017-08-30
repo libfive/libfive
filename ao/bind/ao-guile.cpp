@@ -2,8 +2,18 @@
 #include <cassert>
 
 #include "ao-guile.h"
+#include "ao/ao.h"
 
-void del_tree(void* t)      { ao_tree_delete((ao_tree)t); }
+////////////////////////////////////////////////////////////////////////////////
+
+void del_tree(void* t)
+{
+    auto s = (scm_ao_tree*)t;
+
+    ao_tree_delete(s->t);
+    delete [] s->tree_pos;
+    delete s;
+}
 
 // Raw Scheme functions
 SCM scm_wrap_tree_ = NULL;
@@ -17,14 +27,22 @@ SCM scm_tree_p(SCM ptr)         { return scm_call_1(scm_tree_p_, ptr); }
 
 // C-flavored bindings
 bool scm_is_tree(SCM t) { return scm_is_true(scm_tree_p(t)); }
-ao_tree scm_to_tree(SCM t)
+scm_ao_tree* scm_to_tree(SCM t)
 {
-    return (ao_tree)scm_to_pointer(scm_unwrap_tree(t));
+    return (scm_ao_tree*)scm_to_pointer(scm_unwrap_tree(t));
 }
 
 SCM scm_from_tree(ao_tree t)
 {
-    return scm_wrap_tree(scm_from_pointer(t, del_tree));
+    auto s = new scm_ao_tree;
+
+    s->t = t;
+    s->text_pos[0] = -1;
+    s->text_pos[1] = -1;
+    s->tree_pos = nullptr;
+    s->value = 0.0f;
+
+    return scm_wrap_tree(scm_from_pointer(s, del_tree));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,8 +58,7 @@ SCM scm_tree_equal_p(SCM a, SCM b)
     SCM_ASSERT_TYPE(scm_is_tree(a), a, 0, "scm_tree_equal_p", "tree");
     SCM_ASSERT_TYPE(scm_is_tree(b), b, 1, "scm_tree_equal_p", "tree");
 
-    return ao_tree_eq((ao_tree)scm_to_pointer(scm_unwrap_tree(a)),
-                      (ao_tree)scm_to_pointer(scm_unwrap_tree(b)))
+    return ao_tree_eq(scm_to_tree(a)->t, scm_to_tree(b)->t)
         ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
@@ -93,12 +110,10 @@ SCM scm_tree(SCM op, SCM a, SCM b)
     ao_tree out = nullptr;
     switch (args)
     {
-        case 0: out = ao_tree_nonary(opcode); break;
-        case 1: out = ao_tree_unary(opcode,
-            (ao_tree)scm_to_pointer(scm_unwrap_tree(a))); break;
-        case 2: out = ao_tree_binary(opcode,
-            (ao_tree)scm_to_pointer(scm_unwrap_tree(a)),
-            (ao_tree)scm_to_pointer(scm_unwrap_tree(b))); break;
+        case 0: out = ao_tree_nonary(opcode);                   break;
+        case 1: out = ao_tree_unary(opcode, scm_to_tree(a)->t); break;
+        case 2: out = ao_tree_binary(opcode, scm_to_tree(a)->t,
+                                     scm_to_tree(b)->t);        break;
         default: assert(false);
     }
 
@@ -117,13 +132,13 @@ SCM scm_tree_eval(SCM t, SCM x, SCM y, SCM z)
                     z, 3, "scm_tree_eval", "number");
 
     auto x_ = scm_is_number(x) ? ao_tree_const(scm_to_double(x))
-                               : scm_to_tree(x);
+                               : scm_to_tree(x)->t;
     auto y_ = scm_is_number(y) ? ao_tree_const(scm_to_double(y))
-                               : scm_to_tree(y);
+                               : scm_to_tree(y)->t;
     auto z_ = scm_is_number(z) ? ao_tree_const(scm_to_double(z))
-                               : scm_to_tree(z);
+                               : scm_to_tree(z)->t;
 
-    auto out = ao_tree_remap(scm_to_tree(t), x_, y_, z_);
+    auto out = ao_tree_remap(scm_to_tree(t)->t, x_, y_, z_);
 
     bool is_const = false;
     auto val = ao_tree_get_const(out, &is_const);
@@ -153,9 +168,8 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
         region = scm_cdr(region);
     }
 
-
     auto filename = scm_to_locale_string(f);
-    auto out = ao_tree_save_mesh((ao_tree)scm_to_pointer(scm_unwrap_tree(t)),
+    auto out = ao_tree_save_mesh(scm_to_tree(t)->t,
             {{rs[0], rs[1]}, {rs[2], rs[3]}, {rs[4], rs[5]}},
             scm_to_double(res), filename);
     free(filename);
