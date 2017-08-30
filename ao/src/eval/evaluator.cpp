@@ -1,3 +1,4 @@
+#include <iostream>
 #include <numeric>
 #include <memory>
 #include <cmath>
@@ -49,7 +50,17 @@ Evaluator::Evaluator(const Tree root, const std::map<Tree::Id, float>& vs)
         }
         else if (m->op == Opcode::VAR)
         {
-            constants[id] = vs.at(m.id());
+            auto v = vs.find(m.id());
+            if (v == vs.end())
+            {
+                std::cerr << "Evaluator::Evaluator: unassigned variable"
+                          << std::endl;
+                constants[id] = 0;
+            }
+            else
+            {
+                constants[id] = v->second;
+            }
             vars.left.insert({id, m.id()});
             var_handles.insert({m.id(), m});
         }
