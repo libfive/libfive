@@ -71,7 +71,7 @@ TEST_CASE("make-tree")
 
 TEST_CASE("make-var")
 {
-    auto result = eval("(make-var 12 '(0 . 2))");
+    auto result = eval("(make-var 12)");
     CAPTURE(result);
     REQUIRE(boost::algorithm::starts_with(result, "#<tree "));
 }

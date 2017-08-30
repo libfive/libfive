@@ -14,10 +14,11 @@
        (iota 10)))
 
 (map (lambda (c)
-  (eval `(read-hash-extend ,c (lambda (chr port)
-                                (unget-char port ,c)
-                                (read port)))
-        (interaction-environment)))
+  (eval `(read-hash-extend ,c
+    (lambda (chr port)
+      (unget-char port ,c)
+      (make-var (read port))))
+    (interaction-environment)))
   (cons #\- integer-chars))
 
 (define (eval-sandboxed str)

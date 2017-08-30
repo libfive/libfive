@@ -37,8 +37,6 @@ SCM scm_from_tree(ao_tree t)
     auto s = new scm_ao_tree;
 
     s->t = t;
-    s->text_pos[0] = -1;
-    s->text_pos[1] = -1;
     s->tree_pos = nullptr;
     s->value = 0.0f;
 
@@ -62,22 +60,13 @@ SCM scm_tree_equal_p(SCM a, SCM b)
         ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
-SCM scm_var(SCM value, SCM text_pos)
+SCM scm_var(SCM value)
 {
     SCM_ASSERT_TYPE(scm_is_number(value), value, 0, "scm_var", "number");
-
-    SCM_ASSERT_TYPE(scm_is_pair(text_pos), text_pos, 1, "scm_var", "pair");
-    SCM_ASSERT_TYPE(scm_is_integer(scm_car(text_pos)), scm_car(text_pos),
-                    1, "scm_var", "integer");
-    SCM_ASSERT_TYPE(scm_is_integer(scm_cdr(text_pos)), scm_cdr(text_pos),
-                    1, "scm_var", "integer");
-
 
     auto out = new scm_ao_tree;
 
     out->t = ao_tree_var();
-    out->text_pos[0] = scm_to_int32(scm_car(text_pos));
-    out->text_pos[1] = scm_to_int32(scm_cdr(text_pos));
     out->tree_pos = nullptr;
     out->value = scm_to_double(value);
 
@@ -216,7 +205,7 @@ void init_ao_kernel(void*)
     scm_unwrap_tree_ = scm_c_eval_string("unwrap-tree");
 
     scm_c_define_gsubr("make-tree", 1, 2, 0, (void*)scm_tree);
-    scm_c_define_gsubr("make-var", 2, 0, 0, (void*)scm_var);
+    scm_c_define_gsubr("make-var", 1, 0, 0, (void*)scm_var);
     scm_c_define_gsubr("number->tree", 1, 0, 0, (void*)scm_number_to_tree);
     scm_c_define_gsubr("tree-equal?", 2, 0, 0, (void*)scm_tree_equal_p);
     scm_c_define_gsubr("tree-eval", 4, 0, 0, (void*)scm_tree_eval);
