@@ -49,6 +49,7 @@ ao_tree ao_tree_y() { return new Tree(Tree::Y()); }
 ao_tree ao_tree_z() { return new Tree(Tree::Z()); }
 
 ao_tree ao_tree_const(float f) { return new Tree(f); }
+ao_tree ao_tree_var() { return new Tree(Tree::var()); }
 
 float ao_tree_get_const(ao_tree t, bool* success)
 {

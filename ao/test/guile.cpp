@@ -69,6 +69,13 @@ TEST_CASE("make-tree")
     }
 }
 
+TEST_CASE("make-var")
+{
+    auto result = eval("(make-var 12 '(0 . 2))");
+    CAPTURE(result);
+    REQUIRE(boost::algorithm::starts_with(result, "#<tree "));
+}
+
 TEST_CASE("Guile overloads")
 {
     SECTION("min")
