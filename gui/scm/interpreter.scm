@@ -1,4 +1,4 @@
-(use-modules (ice-9 sandbox) (ao kernel))
+(use-modules (ice-9 sandbox) (ice-9 textual-ports) (ao kernel))
 
 (define my-bindings (append (list (cons '(ao kernel) ao-bindings)
     (cons '(ao shapes)
@@ -8,6 +8,17 @@
     (cons '(ao transforms)
         (module-map (lambda (n . a) n) (resolve-interface '(ao transforms)))))
     all-pure-bindings))
+
+(define integer-chars
+  (map (lambda (i) (integer->char (+ i (char->integer #\0))))
+       (iota 10)))
+
+(map (lambda (c)
+  (eval `(read-hash-extend ,c (lambda (chr port)
+                                (unget-char port ,c)
+                                (read port)))
+        (interaction-environment)))
+  (cons #\- integer-chars))
 
 (define (eval-sandboxed str)
   (let ((mod (make-sandbox-module my-bindings))
