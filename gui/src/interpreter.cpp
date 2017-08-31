@@ -143,16 +143,26 @@ void _Interpreter::eval()
     if (valid)
     {
         QList<Shape*> shapes;
+        std::shared_ptr<std::map<Kernel::Tree::Id, float>> vars;
+
         while (!scm_is_null(result))
         {
             if (scm_is_tree(scm_cdar(result)))
             {
+                if (vars.get() == nullptr)
+                {
+                    vars.reset(new std::map<Kernel::Tree::Id, float>);
+                }
                 auto tree = scm_to_tree(scm_cdar(result));
-                auto shape = new Shape(*tree);
+                auto shape = new Shape(*tree, vars);
                 shape->moveToThread(QApplication::instance()->thread());
                 shapes.push_back(shape);
             }
             result = scm_cdr(result);
+        }
+        if (shapes.size())
+        {
+
         }
         emit(gotShapes(shapes));
     }

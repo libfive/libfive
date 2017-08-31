@@ -20,9 +20,10 @@ public:
     /*
      *  Fully-specified render function
      */
-    static std::unique_ptr<Mesh> render(const Tree t, const Region<3>& r,
-                                        double min_feature, double max_err,
-                                        std::atomic_bool& cancel);
+    static std::unique_ptr<Mesh> render(
+            const Tree t, const std::map<Tree::Id, float>& vars,
+            const Region<3>& r, double min_feature, double max_err,
+            std::atomic_bool& cancel);
 
     /*
      *  Writes the mesh to a file

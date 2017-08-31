@@ -82,15 +82,18 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    double min_feature, double max_err)
 {
     std::atomic_bool cancel;
-    return render(t, r, min_feature, max_err, cancel);
+    std::map<Tree::Id, float> vars;
+    return render(t, vars, r, min_feature, max_err, cancel);
 }
 
-std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
-                                   double min_feature, double max_err,
-                                   std::atomic_bool& cancel)
+std::unique_ptr<Mesh> Mesh::render(
+            const Tree t, const std::map<Tree::Id, float>& vars,
+            const Region<3>& r, double min_feature, double max_err,
+            std::atomic_bool& cancel)
 {
     // Create the octree (multithreaded and cancellable)
-    auto xtree = XTree<3>::build(t, r, min_feature, max_err, true, cancel);
+    auto xtree = XTree<3>::build(
+            t, vars, r, min_feature, max_err, true, cancel);
 
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());

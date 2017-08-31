@@ -14,7 +14,8 @@ class Shape : public QObject, QOpenGLFunctions
 {
     Q_OBJECT
 public:
-    Shape(Kernel::Tree t);
+    Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
+                                                   float>> vars);
 
     /*  Constructs OpenGL objects as needed  */
     void draw(const QMatrix4x4& M);
@@ -55,6 +56,8 @@ protected:
     std::atomic_bool cancel;
 
     Kernel::Tree tree;
+    std::shared_ptr<std::map<Kernel::Tree::Id, float>> vars;
+
     QScopedPointer<Kernel::Mesh> mesh;
     Settings next;
 

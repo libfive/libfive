@@ -1,8 +1,9 @@
 #include "gui/shape.hpp"
 #include "gui/shader.hpp"
 
-Shape::Shape(Kernel::Tree t)
-    : tree(t), vert_vbo(QOpenGLBuffer::VertexBuffer),
+Shape::Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
+                                                      float>> vars)
+    : tree(t), vars(vars), vert_vbo(QOpenGLBuffer::VertexBuffer),
       tri_vbo(QOpenGLBuffer::IndexBuffer)
 {
     connect(&mesh_watcher, &decltype(mesh_watcher)::finished,
@@ -101,7 +102,7 @@ Kernel::Mesh* Shape::renderMesh(Settings s)
     cancel.store(false);
     Kernel::Region<3> r({s.min.x(), s.min.y(), s.min.z()},
                         {s.max.x(), s.max.y(), s.max.z()});
-    auto m = Kernel::Mesh::render(tree, r, 1 / (s.res / (1 << s.div)),
+    auto m = Kernel::Mesh::render(tree, *vars, r, 1 / (s.res / (1 << s.div)),
                                   pow(10, -s.quality), cancel);
     return m.release();
 }

@@ -28,7 +28,8 @@ public:
      *  Fully-specified XTree builder (stoppable through cancel)
      */
     static std::unique_ptr<const XTree> build(
-            Tree t, Region<N> region, double min_feature,
+            Tree t, const std::map<Tree::Id, float>& vars,
+            Region<N> region, double min_feature,
             double max_err, bool multithread,
             std::atomic_bool& cancel);
 

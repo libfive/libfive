@@ -25,14 +25,16 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         double max_err, bool multithread)
 {
     std::atomic_bool cancel(false);
-    return build(t, region, min_feature, max_err, multithread, cancel);
+    const std::map<Tree::Id, float> vars;
+    return build(t, vars, region, min_feature, max_err, multithread, cancel);
 }
 
 template <unsigned N>
 std::unique_ptr<const XTree<N>> XTree<N>::build(
-        Tree t, Region<N> region, double min_feature,
-        double max_err, bool multithread,
-        std::atomic_bool& cancel)
+            Tree t, const std::map<Tree::Id, float>& vars,
+            Region<N> region, double min_feature,
+            double max_err, bool multithread,
+            std::atomic_bool& cancel)
 {
     // Lazy initialization of marching squares / cubes table
     if (mt.get() == nullptr)
@@ -47,13 +49,13 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         es.reserve(1 << N);
         for (unsigned i=0; i < (1 << N); ++i)
         {
-            es.emplace_back(Evaluator(t));
+            es.emplace_back(Evaluator(t, vars));
         }
         out = new XTree(es.data(), region, min_feature, max_err, true, cancel);
     }
     else
     {
-        Evaluator e(t);
+        Evaluator e(t, vars);
         out = new XTree(&e, region, min_feature, max_err, false, cancel);
     }
 
