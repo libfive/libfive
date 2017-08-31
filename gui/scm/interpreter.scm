@@ -6,7 +6,7 @@
   (map (lambda (i) (integer->char (+ i (char->integer #\0))))
        (iota 10)))
 
-(define vars '())
+(define-public vars '())
 (map (lambda (c)
   (eval `(read-hash-extend ,c
     (lambda (chr port)

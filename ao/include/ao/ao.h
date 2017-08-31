@@ -76,14 +76,14 @@ ao_tree ao_tree_z();
 
 ao_tree ao_tree_var();
 
-bool ao_tree_is_var(ao_tree t);
-
 ao_tree ao_tree_const(float f);
 float ao_tree_get_const(ao_tree t, bool* success);
 
 ao_tree ao_tree_nonary(int op);
 ao_tree ao_tree_unary(int op, ao_tree a);
 ao_tree ao_tree_binary(int op, ao_tree a, ao_tree b);
+
+const void* ao_tree_id(ao_tree t);
 
 float ao_tree_eval_f(ao_tree t, ao_vec3 p);
 

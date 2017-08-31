@@ -51,11 +51,6 @@ ao_tree ao_tree_z() { return new Tree(Tree::Z()); }
 ao_tree ao_tree_const(float f) { return new Tree(f); }
 ao_tree ao_tree_var() { return new Tree(Tree::var()); }
 
-bool ao_tree_is_var(ao_tree t)
-{
-    return (*t)->op == Opcode::VAR;
-}
-
 float ao_tree_get_const(ao_tree t, bool* success)
 {
     if ((*t)->op == Opcode::CONST)
@@ -79,6 +74,11 @@ ao_tree ao_tree_unary(int op, ao_tree a)
 ao_tree ao_tree_binary(int op, ao_tree a, ao_tree b)
 {
     return new Tree(Opcode::Opcode(op), *a, *b);
+}
+
+const void* ao_tree_id(ao_tree t)
+{
+    return static_cast<const void*>(t->id());
 }
 
 void ao_tree_delete(ao_tree ptr)

@@ -151,7 +151,15 @@ void _Interpreter::eval()
             {
                 if (vars.get() == nullptr)
                 {
+                    auto vs = scm_c_eval_string("(use-modules (interpreter)) vars");
                     vars.reset(new std::map<Kernel::Tree::Id, float>);
+                    scm_simple_format(SCM_BOOL_T, scm_from_locale_string("vars: ~A\n"), scm_list_1(vs));
+                    for (auto v = vs; !scm_is_null(v); v = scm_cdr(v))
+                    {
+                        auto id = ao_tree_id(scm_to_tree(scm_caar(v)));
+                        auto value = scm_to_double(scm_cdar(v));
+                        (*vars)[(Kernel::Tree::Id)id] = value;
+                    }
                 }
                 auto tree = scm_to_tree(scm_cdar(result));
                 auto shape = new Shape(*tree, vars);
@@ -159,10 +167,6 @@ void _Interpreter::eval()
                 shapes.push_back(shape);
             }
             result = scm_cdr(result);
-        }
-        if (shapes.size())
-        {
-
         }
         emit(gotShapes(shapes));
     }
