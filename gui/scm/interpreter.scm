@@ -1,6 +1,27 @@
 (use-modules (ice-9 sandbox) (ice-9 textual-ports) (ao kernel))
 
-(define my-bindings (append (list (cons '(ao kernel) ao-bindings)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define integer-chars
+  (map (lambda (i) (integer->char (+ i (char->integer #\0))))
+       (iota 10)))
+
+(define vars '())
+(map (lambda (c)
+  (eval `(read-hash-extend ,c
+    (lambda (chr port)
+      (unget-char port ,c)
+      (let* ((var (make-var))
+             (value (read port))
+             (pair (cons var value)))
+        (set! vars (cons pair vars))
+        var)))
+    (interaction-environment)))
+  (cons #\- integer-chars))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-public sandbox-bindings (append (list (cons '(ao kernel) ao-bindings)
     (cons '(ao shapes)
         (module-map (lambda (n . a) n) (resolve-interface '(ao shapes))))
     (cons '(ao csg)
@@ -9,20 +30,9 @@
         (module-map (lambda (n . a) n) (resolve-interface '(ao transforms)))))
     all-pure-bindings))
 
-(define integer-chars
-  (map (lambda (i) (integer->char (+ i (char->integer #\0))))
-       (iota 10)))
-
-(map (lambda (c)
-  (eval `(read-hash-extend ,c
-    (lambda (chr port)
-      (unget-char port ,c)
-      (make-var (read port))))
-    (interaction-environment)))
-  (cons #\- integer-chars))
-
-(define (eval-sandboxed str)
-  (let ((mod (make-sandbox-module my-bindings))
+(define-public (eval-sandboxed str)
+  (set! vars '())
+  (let ((mod (make-sandbox-module sandbox-bindings))
         (in (open-input-string str))
         (failed #f))
     (let loop ()
@@ -64,4 +74,3 @@
               (if (not failed)
                   (cons result (loop))
                   (list result)))))))))
-eval-sandboxed

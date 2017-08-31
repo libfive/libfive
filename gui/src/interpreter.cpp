@@ -9,6 +9,13 @@ _Interpreter::_Interpreter()
     moveToThread(&thread);
 }
 
+static void init_interpreter(void*)
+{
+    QFile i(":/scm/interpreter.scm");
+    i.open(QIODevice::ReadOnly);
+    scm_c_eval_string(i.readAll().constData());
+}
+
 void _Interpreter::init()
 {
     // Modify environmental variables to use local Guile path
@@ -22,11 +29,14 @@ void _Interpreter::init()
     scm_init_ao_kernel_module();
     scm_c_use_module("ao kernel");
 
-    {   // Load eval-sandboxed from a separate file
-        QFile i(":/scm/interpreter.scm");
-        i.open(QIODevice::ReadOnly);
-        scm_eval_sandboxed = scm_c_eval_string(i.readAll().constData());
-    }
+    // Initialize the interpreter module, which includes a variety of
+    // helpful functions (including eval-sandboxed)
+    scm_c_define_module("interpreter", init_interpreter, NULL);
+
+    scm_eval_sandboxed = scm_c_eval_string(R"(
+(use-modules (interpreter))
+eval-sandboxed
+)");
 
     scm_port_eof_p = scm_c_eval_string(R"(
 (use-modules (rnrs io ports))
@@ -51,7 +61,7 @@ port-eof?
 
     auto kws = scm_to_locale_string(scm_c_eval_string(R"(
 (string-drop (string-drop-right
-    (format #f "~A" (apply append (map cdr my-bindings))) 1) 1)
+    (format #f "~A" (apply append (map cdr sandbox-bindings))) 1) 1)
 )"));
     emit(keywords(kws));
     free(kws);
@@ -138,7 +148,7 @@ void _Interpreter::eval()
             if (scm_is_tree(scm_cdar(result)))
             {
                 auto tree = scm_to_tree(scm_cdar(result));
-                auto shape = new Shape(*(tree->t));
+                auto shape = new Shape(*tree);
                 shape->moveToThread(QApplication::instance()->thread());
                 shapes.push_back(shape);
             }

@@ -8,11 +8,7 @@
 
 void del_tree(void* t)
 {
-    auto s = (scm_ao_tree*)t;
-
-    ao_tree_delete(s->t);
-    delete [] s->tree_pos;
-    delete s;
+    ao_tree_delete((ao_tree)t);
 }
 
 // Raw Scheme functions
@@ -27,20 +23,14 @@ SCM scm_tree_p(SCM ptr)         { return scm_call_1(scm_tree_p_, ptr); }
 
 // C-flavored bindings
 bool scm_is_tree(SCM t) { return scm_is_true(scm_tree_p(t)); }
-scm_ao_tree* scm_to_tree(SCM t)
+ao_tree scm_to_tree(SCM t)
 {
-    return (scm_ao_tree*)scm_to_pointer(scm_unwrap_tree(t));
+    return (ao_tree)scm_to_pointer(scm_unwrap_tree(t));
 }
 
 SCM scm_from_tree(ao_tree t)
 {
-    auto s = new scm_ao_tree;
-
-    s->t = t;
-    s->tree_pos = nullptr;
-    s->value = 0.0f;
-
-    return scm_wrap_tree(scm_from_pointer(s, del_tree));
+    return scm_wrap_tree(scm_from_pointer(t, del_tree));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -56,26 +46,18 @@ SCM scm_tree_equal_p(SCM a, SCM b)
     SCM_ASSERT_TYPE(scm_is_tree(a), a, 0, "scm_tree_equal_p", "tree");
     SCM_ASSERT_TYPE(scm_is_tree(b), b, 1, "scm_tree_equal_p", "tree");
 
-    return ao_tree_eq(scm_to_tree(a)->t, scm_to_tree(b)->t)
+    return ao_tree_eq(scm_to_tree(a), scm_to_tree(b))
         ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
-SCM scm_var(SCM value)
+SCM scm_var()
 {
-    SCM_ASSERT_TYPE(scm_is_number(value), value, 0, "scm_var", "number");
-
-    auto out = new scm_ao_tree;
-
-    out->t = ao_tree_var();
-    out->tree_pos = nullptr;
-    out->value = scm_to_double(value);
-
-    return scm_wrap_tree(scm_from_pointer(out, del_tree));
+    return scm_from_tree(ao_tree_var());
 }
 
 SCM scm_var_p(SCM a)
 {
-    return scm_is_tree(a) && ao_tree_is_var(scm_to_tree(a)->t)
+    return scm_is_tree(a) && ao_tree_is_var(scm_to_tree(a))
         ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
@@ -128,9 +110,9 @@ SCM scm_tree(SCM op, SCM a, SCM b)
     switch (args)
     {
         case 0: out = ao_tree_nonary(opcode);                   break;
-        case 1: out = ao_tree_unary(opcode, scm_to_tree(a)->t); break;
-        case 2: out = ao_tree_binary(opcode, scm_to_tree(a)->t,
-                                     scm_to_tree(b)->t);        break;
+        case 1: out = ao_tree_unary(opcode, scm_to_tree(a));    break;
+        case 2: out = ao_tree_binary(opcode, scm_to_tree(a),
+                                             scm_to_tree(b));   break;
         default: assert(false);
     }
 
@@ -149,13 +131,13 @@ SCM scm_tree_eval(SCM t, SCM x, SCM y, SCM z)
                     z, 3, "scm_tree_eval", "number");
 
     auto x_ = scm_is_number(x) ? ao_tree_const(scm_to_double(x))
-                               : scm_to_tree(x)->t;
+                               : scm_to_tree(x);
     auto y_ = scm_is_number(y) ? ao_tree_const(scm_to_double(y))
-                               : scm_to_tree(y)->t;
+                               : scm_to_tree(y);
     auto z_ = scm_is_number(z) ? ao_tree_const(scm_to_double(z))
-                               : scm_to_tree(z)->t;
+                               : scm_to_tree(z);
 
-    auto out = ao_tree_remap(scm_to_tree(t)->t, x_, y_, z_);
+    auto out = ao_tree_remap(scm_to_tree(t), x_, y_, z_);
 
     bool is_const = false;
     auto val = ao_tree_get_const(out, &is_const);
@@ -186,7 +168,7 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
     }
 
     auto filename = scm_to_locale_string(f);
-    auto out = ao_tree_save_mesh(scm_to_tree(t)->t,
+    auto out = ao_tree_save_mesh(scm_to_tree(t),
             {{rs[0], rs[1]}, {rs[2], rs[3]}, {rs[4], rs[5]}},
             scm_to_double(res), filename);
     free(filename);
@@ -211,7 +193,7 @@ void init_ao_kernel(void*)
     scm_unwrap_tree_ = scm_c_eval_string("unwrap-tree");
 
     scm_c_define_gsubr("make-tree", 1, 2, 0, (void*)scm_tree);
-    scm_c_define_gsubr("make-var", 1, 0, 0, (void*)scm_var);
+    scm_c_define_gsubr("make-var", 0, 0, 0, (void*)scm_var);
     scm_c_define_gsubr("var?", 1, 0, 0, (void*)scm_var_p);
     scm_c_define_gsubr("number->tree", 1, 0, 0, (void*)scm_number_to_tree);
     scm_c_define_gsubr("tree-equal?", 2, 0, 0, (void*)scm_tree_equal_p);
