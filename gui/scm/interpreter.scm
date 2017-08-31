@@ -6,15 +6,14 @@
   (map (lambda (i) (integer->char (+ i (char->integer #\0))))
        (iota 10)))
 
-(define-public vars '())
+(define-public vars (make-hash-table))
 (map (lambda (c)
   (eval `(read-hash-extend ,c
     (lambda (chr port)
       (unget-char port ,c)
       (let* ((var (make-var))
-             (value (read port))
-             (pair (cons var value)))
-        (set! vars (cons pair vars))
+             (value (read port)))
+        (hash-set! vars (tree-id var) (cons var value))
         var)))
     (interaction-environment)))
   (cons #\- integer-chars))
@@ -31,7 +30,7 @@
     all-pure-bindings))
 
 (define-public (eval-sandboxed str)
-  (set! vars '())
+  (hash-clear! vars)
   (let ((mod (make-sandbox-module sandbox-bindings))
         (in (open-input-string str))
         (failed #f))
