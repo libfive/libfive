@@ -158,8 +158,8 @@ void _Interpreter::eval()
                     scm_simple_format(SCM_BOOL_T, scm_from_locale_string("vars: ~A\n"), scm_list_1(vs));
                     for (auto v = vs; !scm_is_null(v); v = scm_cdr(v))
                     {
-                        auto id = ao_tree_id(scm_to_tree(scm_caar(v)));
-                        auto value = scm_to_double(scm_cdar(v));
+                        auto id = ao_tree_id(scm_to_tree(scm_cadar(v)));
+                        auto value = scm_to_double(scm_caddar(v));
                         (*vars)[(Kernel::Tree::Id)id] = value;
                     }
                 }
