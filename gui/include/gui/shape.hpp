@@ -40,6 +40,18 @@ public:
      */
     Kernel::Tree::Id id() const { return tree.id(); }
 
+    /*
+     *  Updates variables from another Shape
+     *  (which must point to the same Tree)
+     */
+    void updateFrom(const Shape* other);
+
+    /*
+     *  Updates variables in the Evaluator, scheduling a new
+     *  (min-resolution) render if things have changed
+     */
+    void updateVars(const std::map<Kernel::Tree::Id, float>& vars);
+
 signals:
     void gotMesh();
 

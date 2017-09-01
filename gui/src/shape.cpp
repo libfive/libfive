@@ -17,6 +17,27 @@ Shape::Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
             this, &Shape::onFutureFinished);
 }
 
+void Shape::updateFrom(const Shape* other)
+{
+    assert(other->id() == id());
+    updateVars(*(other->vars));
+}
+
+void Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vars)
+{
+    bool changed = false;
+    for (auto& e : es)
+    {
+        changed |= e.updateVars(vars);
+    }
+
+    if (changed)
+    {
+        std::cout << "Re-render!" << std::endl;
+        // TODO: start new render here
+    }
+}
+
 void Shape::draw(const QMatrix4x4& M)
 {
     if (mesh && !gl_ready)
