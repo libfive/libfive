@@ -34,6 +34,16 @@ public:
             std::atomic_bool& cancel);
 
     /*
+     *  XTree builder that re-uses existing evaluators
+     *  If multithread is true, es must be a pointer to an array of evaluators
+     */
+    static std::unique_ptr<const XTree> build(
+            Evaluator* es,
+            Region<N> region, double min_feature,
+            double max_err, bool multithread,
+            std::atomic_bool& cancel);
+
+    /*
      *  Checks whether this tree splits
      */
     bool isBranch() const { return children[0].get() != nullptr; }

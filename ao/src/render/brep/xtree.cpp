@@ -36,13 +36,6 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
             double max_err, bool multithread,
             std::atomic_bool& cancel)
 {
-    // Lazy initialization of marching squares / cubes table
-    if (mt.get() == nullptr)
-    {
-        mt = Marching::buildTable<N>();
-    }
-
-    XTree<N>* out = nullptr;
     if (multithread)
     {
         std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
@@ -51,13 +44,29 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         {
             es.emplace_back(Evaluator(t, vars));
         }
-        out = new XTree(es.data(), region, min_feature, max_err, true, cancel);
+        return build(es.data(), region, min_feature, max_err, true, cancel);
     }
     else
     {
         Evaluator e(t, vars);
-        out = new XTree(&e, region, min_feature, max_err, false, cancel);
+        return build(&e, region, min_feature, max_err, false, cancel);
     }
+}
+
+template <unsigned N>
+std::unique_ptr<const XTree<N>> XTree<N>::build(
+        Evaluator* es,
+        Region<N> region, double min_feature,
+        double max_err, bool multithread,
+        std::atomic_bool& cancel)
+{
+    // Lazy initialization of marching squares / cubes table
+    if (mt.get() == nullptr)
+    {
+        mt = Marching::buildTable<N>();
+    }
+
+    auto out = new XTree(es, region, min_feature, max_err, multithread, cancel);
 
     // Return an empty XTree when cancelled
     // (to avoid potentially ambiguous or mal-constructed trees situations)

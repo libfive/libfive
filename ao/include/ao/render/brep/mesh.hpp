@@ -26,6 +26,15 @@ public:
             std::atomic_bool& cancel);
 
     /*
+     *  Render function that re-uses evaluators
+     *  es must be a pointer to at least eight Evaluators
+     */
+    static std::unique_ptr<Mesh> render(
+            Evaluator* es,
+            const Region<3>& r, double min_feature, double max_err,
+            std::atomic_bool& cancel);
+
+    /*
      *  Writes the mesh to a file
      */
     bool saveSTL(const std::string& filename);
@@ -43,6 +52,10 @@ public:
     void load(const std::array<const XTree<3>*, 4>& ts);
 
 protected:
+    /*  Walks an XTree, returning a mesh  */
+    static std::unique_ptr<Mesh> mesh(std::unique_ptr<const XTree<3>> tree,
+                                      std::atomic_bool& cancel);
+
     /*
      *  Inserts a line into the mesh as a zero-size triangle
      *  (used for debugging)
