@@ -20,13 +20,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public sandbox-bindings (append (list (cons '(ao kernel) ao-bindings)
-    (cons '(ao shapes)
-        (module-map (lambda (n . a) n) (resolve-interface '(ao shapes))))
-    (cons '(ao csg)
-        (module-map (lambda (n . a) n) (resolve-interface '(ao csg))))
-    (cons '(ao transforms)
-        (module-map (lambda (n . a) n) (resolve-interface '(ao transforms)))))
+(define (get-bindings mod)
+  (cons mod (module-map (lambda (n . a) n) (resolve-interface mod))))
+
+(define-public sandbox-bindings
+  (append (list (cons '(ao kernel) ao-bindings)
+          (get-bindings '(ao shapes))
+          (get-bindings '(ao csg))
+          (get-bindings '(ao transforms)))
     all-pure-bindings))
 
 (define-public (eval-sandboxed str)
