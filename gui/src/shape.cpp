@@ -6,6 +6,13 @@ Shape::Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
     : tree(t), vars(vars), vert_vbo(QOpenGLBuffer::VertexBuffer),
       tri_vbo(QOpenGLBuffer::IndexBuffer)
 {
+    // Construct evaluators to run meshing (in parallel)
+    es.reserve(8);
+    for (unsigned i=0; i < es.capacity(); ++i)
+    {
+        es.emplace_back(Kernel::Evaluator(t, *vars));
+    }
+
     connect(&mesh_watcher, &decltype(mesh_watcher)::finished,
             this, &Shape::onFutureFinished);
 }
@@ -102,7 +109,7 @@ Kernel::Mesh* Shape::renderMesh(Settings s)
     cancel.store(false);
     Kernel::Region<3> r({s.min.x(), s.min.y(), s.min.z()},
                         {s.max.x(), s.max.y(), s.max.z()});
-    auto m = Kernel::Mesh::render(tree, *vars, r, 1 / (s.res / (1 << s.div)),
+    auto m = Kernel::Mesh::render(es.data(), r, 1 / (s.res / (1 << s.div)),
                                   pow(10, -s.quality), cancel);
     return m.release();
 }

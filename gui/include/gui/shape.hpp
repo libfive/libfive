@@ -57,6 +57,8 @@ protected:
 
     Kernel::Tree tree;
     std::shared_ptr<std::map<Kernel::Tree::Id, float>> vars;
+    std::vector<Kernel::Evaluator,
+                Eigen::aligned_allocator<Kernel::Evaluator>> es;
 
     QScopedPointer<Kernel::Mesh> mesh;
     Settings next;
