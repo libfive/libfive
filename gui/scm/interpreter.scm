@@ -30,26 +30,31 @@
           (get-bindings '(ao transforms)))
     all-pure-bindings))
 
-(define (tag-var-addresses! d addr)
+(define (tag-var-addresses! d addr prev)
   (cond
     ((list? d)
       (let loop ((d d) (i 0))
         (when (not (nil? d))
-          (tag-var-addresses! (car d) (cons i addr))
+          (tag-var-addresses! (car d) (cons i addr) prev)
           (loop (cdr d) (1+ i)))))
     ((vector? d)
      (let loop ((i 0))
        (when (< i (vector-length d))
-         (tag-var-addresses! (vector-ref d i) (cons i addr))
+         (tag-var-addresses! (vector-ref d i) (cons i addr) prev)
          (loop (1+ i)))))
-    ((and (tree? d) (var? d)) (set-car! (hash-ref vars (tree-id d)) addr))
+    ((and (tree? d) (var? d))
+      (when (hash-ref prev addr) (format #t "Found matching var\n"))
+      (set-car! (hash-ref vars (tree-id d)) addr))
 ))
 
 (define-public (eval-sandboxed str)
-  (hash-clear! vars)
   (let ((mod (make-sandbox-module sandbox-bindings))
         (in (open-input-string str))
-        (failed #f))
+        (failed #f)
+        (prev-vars (make-hash-table)))
+    (hash-map->list (lambda (k v) (hash-set! prev-vars (car v) (cadr v))) vars)
+    (format #t "prev vars: ~A\n" (hash-map->list cons prev-vars))
+    (hash-clear! vars)
     (let loop ((i 0))
       ;; Attempt to read the next clause, storing text location
       (let ((before (cons (port-line in) (port-column in)))
@@ -69,7 +74,7 @@
 
           ;; Otherwise, attempt to evaluate
           (else
-            (tag-var-addresses! clause (list i))
+            (tag-var-addresses! clause (list i) prev-vars)
             (let ((result
               (catch #t
                 ;; Evaluation thunk
