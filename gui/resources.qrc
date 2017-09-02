@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>gl/basic.vert</file>
         <file>gl/flat.frag</file>
+        <file>gl/monochrome.frag</file>
         <file>gl/shaded.frag</file>
         <file>gl/busy.frag</file>
         <file>gl/bars.frag</file>

@@ -4,6 +4,7 @@ namespace Shader
 {
 
 QOpenGLShaderProgram* flat;
+QOpenGLShaderProgram* monochrome;
 QOpenGLShaderProgram* shaded;
 QOpenGLShaderProgram* busy;
 QOpenGLShaderProgram* bars;
@@ -16,6 +17,13 @@ void initializeGL()
     flat->addShaderFromSourceFile(
             QOpenGLShader::Fragment, ":/gl/flat.frag");
     flat->link();
+
+    monochrome = new QOpenGLShaderProgram;
+    monochrome->addShaderFromSourceFile(
+            QOpenGLShader::Vertex, ":/gl/basic.vert");
+    monochrome->addShaderFromSourceFile(
+            QOpenGLShader::Fragment, ":/gl/monochrome.frag");
+    monochrome->link();
 
     shaded = new QOpenGLShaderProgram;
     shaded->addShaderFromSourceFile(
