@@ -21,6 +21,12 @@ public:
     void draw(const QMatrix4x4& M);
 
     /*
+     *  Draws with a monochrome shader (for pick buffer)
+     *  This is a no-op if the mesh and OpenGL buffers aren't ready
+     */
+    void drawMonochrome(const QMatrix4x4& M, QColor color);
+
+    /*
      *  Kicks off a mesh rendering operation in a separate thread
      */
     void startRender(Settings s);
