@@ -23,18 +23,26 @@ void Shape::updateFrom(const Shape* other)
     updateVars(*(other->vars));
 }
 
-void Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vars)
+void Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
 {
     bool changed = false;
-    for (auto& e : es)
+    for (auto& v : vs)
     {
-        changed |= e.updateVars(vars);
+        auto va = vars->find(v.first);
+        if (va != vars->end() && va->second != v.second)
+        {
+            changed = true;
+            va->second = v.second;
+        }
     }
 
     if (changed)
     {
-        std::cout << "Re-render!" << std::endl;
-        // TODO: start new render here
+        cancel.store(true);
+
+        // Start a special render operation that uses a flag in the div
+        // field that tells the system load new var values before starting
+        startRender(Settings(next, MESH_DIV_NEW_VARS));
     }
 }
 
@@ -107,13 +115,21 @@ void Shape::startRender(Settings s)
 {
     if (mesh_future.isRunning())
     {
-        if (next.res != MESH_RES_ABORT)
+        if (next.div != MESH_DIV_ABORT)
         {
             next = s;
         }
     }
     else
     {
+        if (s.div == MESH_DIV_NEW_VARS)
+        {
+            for (auto& e : es)
+            {
+                e.updateVars(*vars);
+            }
+            s = s.base();
+        }
         mesh_future = QtConcurrent::run(this, &Shape::renderMesh, s);
         mesh_watcher.setFuture(mesh_future);
         next = s.next();
@@ -122,7 +138,7 @@ void Shape::startRender(Settings s)
 
 bool Shape::done() const
 {
-    return next.res == MESH_RES_EMPTY && mesh_future.isFinished();
+    return next.div == MESH_DIV_EMPTY && mesh_future.isFinished();
 }
 
 Kernel::Mesh* Shape::renderMesh(Settings s)
@@ -139,7 +155,7 @@ void Shape::deleteLater()
 {
     if (mesh_future.isRunning())
     {
-        next.res = MESH_RES_ABORT;
+        next.div = MESH_DIV_ABORT;
         cancel.store(true);
     }
     else
@@ -154,14 +170,12 @@ void Shape::onFutureFinished()
     gl_ready = false;
     emit(gotMesh());
 
-    if (next.res == MESH_RES_ABORT)
+    if (next.div == MESH_DIV_ABORT)
     {
         QObject::deleteLater();
     }
-    else if (next.res > 0)
+    else if (next.div >= 0 || next.div == MESH_DIV_NEW_VARS)
     {
-        auto s = next;
-        next.res = MESH_RES_EMPTY;
-        startRender(s);
+        startRender(next);
     }
 }

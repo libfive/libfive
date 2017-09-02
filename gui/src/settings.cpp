@@ -12,7 +12,7 @@ QString Settings::settings_fmt(
         "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 / %8 !#");
 
 Settings::Settings()
-    : res(-1)
+    : div(-1)
 {
     // Nothing to do here
 }
@@ -41,7 +41,13 @@ Settings::Settings(const Settings& other, int div)
 
 Settings Settings::next() const
 {
-    return div > 0 ? Settings(*this, div - 1) : Settings();
+    assert(div >= 0);
+    return Settings(*this, div - 1);
+}
+
+Settings Settings::base() const
+{
+    return Settings(min, max, res, quality);
 }
 
 bool Settings::operator==(const Settings& other) const

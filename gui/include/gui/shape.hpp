@@ -80,6 +80,7 @@ protected:
     QOpenGLBuffer vert_vbo;
     QOpenGLBuffer tri_vbo;
 
-    const static int MESH_RES_ABORT=-2;
-    const static int MESH_RES_EMPTY=-1;
+    const static int MESH_DIV_EMPTY=-1;
+    const static int MESH_DIV_ABORT=-2;
+    const static int MESH_DIV_NEW_VARS=-3;
 };
