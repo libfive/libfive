@@ -113,8 +113,7 @@ SettingsPane::SettingsPane(Settings s)
 
     for (auto t : {xmin, xmax, ymin, ymax, zmin, zmax, res, quality})
     {
-        connect(t, static_cast<void (QDoubleSpinBox::*)(double)>
-                    (&QDoubleSpinBox::valueChanged),
+        connect(t, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
                 this, [=](double){
                     emit(this->changed(Settings(
                         QVector3D(xmin->value(), ymin->value(), zmin->value()),
