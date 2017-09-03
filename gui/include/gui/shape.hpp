@@ -58,6 +58,12 @@ public:
      */
     void updateVars(const std::map<Kernel::Tree::Id, float>& vars);
 
+    /*
+     *  Checks to see whether this shape has attached vars
+     *  (which determines whether it's draggable)
+     */
+    bool hasVars() const { return vars->size(); }
+
 signals:
     void gotMesh();
 

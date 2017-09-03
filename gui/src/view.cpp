@@ -169,15 +169,13 @@ void View::redrawPicker()
     glViewport(0, 0, camera.size.width(), camera.size.height());
 
     auto m = camera.M();
-    QRgb color = 255;
+    QRgb color = 1;
     for (auto& s : shapes)
     {
-        s->drawMonochrome(m, color);
-        color = color << 8;
+        s->drawMonochrome(m, color++);
     }
 
-    auto i = pick_fbo->toImage();
-
+    pick_img = pick_fbo->toImage();
     pick_fbo->release();
 }
 
@@ -254,7 +252,16 @@ void View::mousePressEvent(QMouseEvent* event)
         }
         else if (event->button() == Qt::LeftButton)
         {
-            mouse.state = mouse.DRAG_ROT;
+            auto picked = (pick_img.pixel(event->pos()) & 0xFFFFFF);
+            if (picked && shapes.at(picked - 1)->hasVars())
+            {
+                qDebug() << "Begin drag";
+                // TODO: begin drag here
+            }
+            else
+            {
+                mouse.state = mouse.DRAG_ROT;
+            }
         }
         else if (event->button() == Qt::RightButton)
         {
