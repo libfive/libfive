@@ -3,6 +3,8 @@
 #include "gui/view.hpp"
 #include "gui/shader.hpp"
 
+#include "ao/solve/solver.hpp"
+
 View::View(QWidget* parent)
     : QOpenGLWidget(parent), camera(size()),
       settings({-10, -10, -10}, {10, 10, 10}, 10, 8)
@@ -232,6 +234,36 @@ void View::mouseMoveEvent(QMouseEvent* event)
         camera.panIncremental(event->pos() - mouse.pos);
         update();
     }
+    else if (mouse.state == mouse.DRAG_EVAL)
+    {
+        auto Mi = camera.M().inverted();
+        QVector3D cursor_pos(
+                (event->pos().x() * 2.0) / pick_img.width() - 1,
+                1 - (event->pos().y() * 2.0) / pick_img.height(), 0);
+        QVector3D pos = Mi * cursor_pos;
+        QVector3D ray = (pos - Mi * (cursor_pos + QVector3D(0, 0, 1)))
+            .normalized();
+
+        // Slide pos down the ray to minimize distance to drag start
+        pos += ray * QVector3D::dotProduct(drag_start - pos, ray);
+
+        // Solve for the point on the normal ray that is closest to the cursor ray
+        // https://en.wikipedia.org/wiki/Skew_lines#Distance_between_two_skew_lines
+        const auto n = QVector3D::crossProduct(drag_dir, ray);
+        const auto n2 = QVector3D::crossProduct(ray, n);
+        const auto nearest = drag_start +
+            drag_dir * QVector3D::dotProduct(cursor_pos - drag_start, n2) /
+            QVector3D::dotProduct(drag_dir, n2);
+
+        auto sol = Kernel::Solver::findRoot(*drag_eval, *drag_vars,
+                {nearest.x(), nearest.y(), nearest.z()});
+        for (auto& s : sol.second)
+        {
+            qDebug() << s.first << s.second;
+        }
+
+        qDebug() << pos << ray;
+    }
     else if (bars.hover(event->pos().x() > camera.size.width() - bars.side &&
                         event->pos().y() < bars.side))
     {
@@ -263,7 +295,8 @@ void View::mousePressEvent(QMouseEvent* event)
         else if (event->button() == Qt::LeftButton)
         {
             auto picked = (pick_img.pixel(event->pos()) & 0xFFFFFF);
-            if (picked && shapes.at(picked - 1)->hasVars())
+            Shape* target = picked ? shapes.at(picked - 1) : nullptr;
+            if (picked && target->hasVars())
             {
                 QVector3D pt(
                         (event->pos().x() * 2.0) / pick_img.width() - 1,
@@ -273,12 +306,13 @@ void View::mousePressEvent(QMouseEvent* event)
                                 (pick_img.height() - event->pos().y())) - 1);
 
                 drag_start = camera.M().inverted() * pt;
-                drag_eval.reset(shapes.at(picked - 1)->dragFrom(drag_start));
+                drag_eval.reset(target->dragFrom(drag_start));
 
                 auto norm = drag_eval->derivs(1).d.col(0);
                 drag_dir = {norm.x(), norm.y(), norm.z()};
 
                 qDebug() << "Begin drag from" << drag_start << "towards" << drag_dir;
+                drag_vars = target->getVars();
 
                 mouse.state = mouse.DRAG_EVAL;
             }

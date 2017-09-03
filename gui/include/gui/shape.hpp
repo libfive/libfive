@@ -71,6 +71,12 @@ public:
      */
     Kernel::Evaluator* dragFrom(const QVector3D& pt);
 
+    /*
+     *  Returns another pointer to the solution map
+     */
+    std::shared_ptr<std::map<Kernel::Tree::Id, float>> getVars() const
+    { return vars; }
+
 signals:
     void gotMesh();
 
