@@ -17,8 +17,10 @@ View::View(QWidget* parent)
     connect(&camera, &Camera::changed, this, &View::update);
 
     connect(&camera, &Camera::animDone, this, &View::redrawPicker);
-    connect(this, &View::sizeChanged, this, &View::redrawPicker,
-            Qt::QueuedConnection);
+
+    pick_timer.setSingleShot(true);
+    pick_timer.setInterval(250);
+    connect(&pick_timer, &QTimer::timeout, this, &View::redrawPicker);
 }
 
 void View::setShapes(QList<Shape*> new_shapes)
@@ -205,7 +207,7 @@ void View::paintGL()
 void View::resizeGL(int width, int height)
 {
     camera.size = {width, height};
-    emit(sizeChanged());
+    pick_timer.start();
 }
 
 void View::mouseMoveEvent(QMouseEvent* event)
@@ -233,6 +235,15 @@ void View::mouseMoveEvent(QMouseEvent* event)
 void View::mousePressEvent(QMouseEvent* event)
 {
     QOpenGLWidget::mousePressEvent(event);
+
+    // Force update of pick buffer if the timer is running
+    // e.g. if the user resizes the window, then immediately
+    // clicks, we should handle it correctly.
+    if (pick_timer.isActive())
+    {
+        pick_timer.stop();
+        redrawPicker();
+    }
 
     if (mouse.state == mouse.RELEASED)
     {
@@ -267,6 +278,7 @@ void View::wheelEvent(QWheelEvent *event)
     QOpenGLWidget::wheelEvent(event);
     camera.zoomIncremental(event->angleDelta().y(), mouse.pos);
     update();
+    pick_timer.start();
 }
 
 void View::leaveEvent(QEvent* event)

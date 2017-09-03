@@ -63,12 +63,6 @@ signals:
      */
     void meshesReady(QList<const Kernel::Mesh*> shapes) const;
 
-    /*
-     *  Emitted when the window size changes
-     *  (used to redraw picker through a queued connection)
-     */
-    void sizeChanged();
-
 protected slots:
     void update() { QOpenGLWidget::update(); }
     void redrawPicker();
@@ -104,4 +98,5 @@ protected:
 
     /*  Framebuffer to render pick data  */
     QScopedPointer<QOpenGLFramebufferObject> pick_fbo;
+    QTimer pick_timer;
 };
