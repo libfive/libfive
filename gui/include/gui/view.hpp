@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QOpenGLWidget>
+#include <QOpenGLFramebufferObject>
 
 #include "gui/axes.hpp"
 #include "gui/background.hpp"
@@ -94,4 +95,7 @@ protected:
     QPointer<SettingsPane> pane;
     Settings settings;
     bool show_axes=true;
+
+    /*  Framebuffer to render pick data  */
+    QScopedPointer<QOpenGLFramebufferObject> pick_fbo;
 };

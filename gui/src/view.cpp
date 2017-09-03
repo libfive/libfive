@@ -132,6 +132,8 @@ void View::initializeGL()
     background.initializeGL();
     busy.initializeGL();
     bars.initializeGL();
+
+    pick_fbo.reset(new QOpenGLFramebufferObject(size()));
 }
 
 void View::redrawPicker()
@@ -165,6 +167,7 @@ void View::paintGL()
 void View::resizeGL(int width, int height)
 {
     camera.size = {width, height};
+    pick_fbo.reset(new QOpenGLFramebufferObject(width, height));
 }
 
 void View::mouseMoveEvent(QMouseEvent* event)
