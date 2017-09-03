@@ -271,8 +271,16 @@ void View::mousePressEvent(QMouseEvent* event)
                         2 * pick_depth.at(
                                 event->pos().x() + pick_img.width() *
                                 (pick_img.height() - event->pos().y())) - 1);
-                qDebug() << "Begin drag from" << pt;
-                // TODO: begin drag here
+
+                drag_start = camera.M().inverted() * pt;
+                drag_eval.reset(shapes.at(picked - 1)->dragFrom(drag_start));
+
+                auto norm = drag_eval->derivs(1).d.col(0);
+                drag_dir = {norm.x(), norm.y(), norm.z()};
+
+                qDebug() << "Begin drag from" << drag_start << "towards" << drag_dir;
+
+                mouse.state = mouse.DRAG_EVAL;
             }
             else
             {

@@ -167,6 +167,13 @@ Kernel::Mesh* Shape::renderMesh(Settings s)
     return m.release();
 }
 
+Kernel::Evaluator* Shape::dragFrom(const QVector3D& v)
+{
+    auto e = new Kernel::Evaluator(tree, *vars);
+    e->specialize({v.x(), v.y(), v.z()});
+    return e;
+}
+
 void Shape::deleteLater()
 {
     if (mesh_future.isRunning())

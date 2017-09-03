@@ -87,7 +87,7 @@ protected:
     Camera camera;
 
     struct {
-        enum { RELEASED, DRAG_ROT, DRAG_PAN } state = RELEASED;
+        enum { RELEASED, DRAG_ROT, DRAG_PAN, DRAG_EVAL } state = RELEASED;
         QPoint pos;
     } mouse;
 
@@ -101,4 +101,9 @@ protected:
     QTimer pick_timer;
     QImage pick_img;
     QVector<float> pick_depth;
+
+    /*  Data to handle direct modification of shapes */
+    QVector3D drag_start;
+    QVector3D drag_dir;
+    QScopedPointer<Kernel::Evaluator> drag_eval;
 };

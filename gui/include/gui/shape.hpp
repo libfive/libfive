@@ -64,6 +64,13 @@ public:
      */
     bool hasVars() const { return vars->size(); }
 
+    /*
+     *  Returns a new evaluator specialized at the given drag position
+     *  Ownership is transfered, so the caller is responsible for deleting
+     *  the evaluator (or storing it in an owned structure)
+     */
+    Kernel::Evaluator* dragFrom(const QVector3D& pt);
+
 signals:
     void gotMesh();
 
