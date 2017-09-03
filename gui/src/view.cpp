@@ -15,7 +15,10 @@ View::View(QWidget* parent)
     connect(this, &View::meshesReady, &busy,
             [&](QList<const Kernel::Mesh*>){ busy.hide(); });
     connect(&camera, &Camera::changed, this, &View::update);
+
     connect(&camera, &Camera::animDone, this, &View::redrawPicker);
+    connect(this, &View::sizeChanged, this, &View::redrawPicker,
+            Qt::QueuedConnection);
 }
 
 void View::setShapes(QList<Shape*> new_shapes)
@@ -133,13 +136,47 @@ void View::initializeGL()
     background.initializeGL();
     busy.initializeGL();
     bars.initializeGL();
-
-    pick_fbo.reset(new QOpenGLFramebufferObject(size()));
 }
 
 void View::redrawPicker()
 {
-    qDebug() << "render picker here";
+    // Rebuild buffer if it is not present or is the wrong size
+    if (!pick_fbo.data() ||  pick_fbo->size() != camera.size)
+    {
+        bool needs_gl = (context() == QOpenGLContext::currentContext());
+        if (needs_gl)
+        {
+            makeCurrent();
+        }
+
+        pick_fbo.reset(new QOpenGLFramebufferObject(
+                    camera.size, QOpenGLFramebufferObject::Depth));
+
+        if (needs_gl)
+        {
+            doneCurrent();
+        }
+    }
+
+    pick_fbo->bind();
+
+    glClearColor(0, 0, 0, 1);
+    glClearDepthf(1);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glViewport(0, 0, camera.size.width(), camera.size.height());
+
+    auto m = camera.M();
+    QRgb color = 255;
+    for (auto& s : shapes)
+    {
+        s->drawMonochrome(m, color);
+        color = color << 8;
+    }
+
+    auto i = pick_fbo->toImage();
+
+    pick_fbo->release();
 }
 
 void View::paintGL()
@@ -168,7 +205,7 @@ void View::paintGL()
 void View::resizeGL(int width, int height)
 {
     camera.size = {width, height};
-    pick_fbo.reset(new QOpenGLFramebufferObject(width, height));
+    emit(sizeChanged());
 }
 
 void View::mouseMoveEvent(QMouseEvent* event)
