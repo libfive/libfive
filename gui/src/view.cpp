@@ -123,6 +123,8 @@ void View::onSettingsFromScript(Settings s)
 
 void View::initializeGL()
 {
+    initializeOpenGLFunctions();
+
     Shader::initializeGL();
 
     axes.initializeGL();

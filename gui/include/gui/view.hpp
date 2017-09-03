@@ -10,7 +10,7 @@
 #include "gui/shape.hpp"
 #include "gui/settings.hpp"
 
-class View : public QOpenGLWidget
+class View : public QOpenGLWidget, QOpenGLFunctions
 {
     Q_OBJECT
 public:
