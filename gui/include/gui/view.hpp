@@ -64,6 +64,7 @@ signals:
 
 protected slots:
     void update() { QOpenGLWidget::update(); }
+    void redrawPicker();
 
 protected:
     void initializeGL() override;

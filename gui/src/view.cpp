@@ -57,6 +57,7 @@ void View::setShapes(QList<Shape*> new_shapes)
         {
             connect(s, &Shape::gotMesh, this, &View::update);
             connect(s, &Shape::gotMesh, this, &View::checkMeshes);
+            connect(s, &Shape::gotMesh, this, &View::redrawPicker);
             connect(this, &View::startRender,
                     s, &Shape::startRender);
             s->startRender(settings);
@@ -131,6 +132,11 @@ void View::initializeGL()
     background.initializeGL();
     busy.initializeGL();
     bars.initializeGL();
+}
+
+void View::redrawPicker()
+{
+    qDebug() << "render picker here";
 }
 
 void View::paintGL()
@@ -208,6 +214,10 @@ void View::mousePressEvent(QMouseEvent* event)
 void View::mouseReleaseEvent(QMouseEvent* event)
 {
     QOpenGLWidget::mouseReleaseEvent(event);
+    if (mouse.state != mouse.RELEASED)
+    {
+        redrawPicker();
+    }
     mouse.state = mouse.RELEASED;
 }
 
