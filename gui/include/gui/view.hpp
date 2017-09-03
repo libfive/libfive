@@ -100,4 +100,5 @@ protected:
     QScopedPointer<QOpenGLFramebufferObject> pick_fbo;
     QTimer pick_timer;
     QImage pick_img;
+    QVector<float> pick_depth;
 };

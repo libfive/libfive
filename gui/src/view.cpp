@@ -176,6 +176,16 @@ void View::redrawPicker()
     }
 
     pick_img = pick_fbo->toImage();
+
+    // There's no utility function to get the depth buffer, so we manually
+    // read it with glReadPixels here.
+    if (pick_depth.size() != camera.size.width() * camera.size.height())
+    {
+        pick_depth.resize(camera.size.width() * camera.size.height());
+    }
+    glReadPixels(0, 0, camera.size.width(), camera.size.height(),
+                 GL_DEPTH_COMPONENT, GL_FLOAT, pick_depth.data());
+
     pick_fbo->release();
 }
 
@@ -255,7 +265,13 @@ void View::mousePressEvent(QMouseEvent* event)
             auto picked = (pick_img.pixel(event->pos()) & 0xFFFFFF);
             if (picked && shapes.at(picked - 1)->hasVars())
             {
-                qDebug() << "Begin drag";
+                QVector3D pt(
+                        (event->pos().x() * 2.0) / pick_img.width() - 1,
+                        1 - (event->pos().y() * 2.0) / pick_img.height(),
+                        2 * pick_depth.at(
+                                event->pos().x() + pick_img.width() *
+                                (pick_img.height() - event->pos().y())) - 1);
+                qDebug() << "Begin drag from" << pt;
                 // TODO: begin drag here
             }
             else
