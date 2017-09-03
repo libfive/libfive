@@ -15,6 +15,7 @@ View::View(QWidget* parent)
     connect(this, &View::meshesReady, &busy,
             [&](QList<const Kernel::Mesh*>){ busy.hide(); });
     connect(&camera, &Camera::changed, this, &View::update);
+    connect(&camera, &Camera::animDone, this, &View::redrawPicker);
 }
 
 void View::setShapes(QList<Shape*> new_shapes)

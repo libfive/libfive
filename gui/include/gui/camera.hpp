@@ -43,6 +43,7 @@ public:
 
 signals:
     void changed();
+    void animDone();
 
 protected:
 

@@ -5,6 +5,7 @@ Camera::Camera(QSize size)
     : size(size), anim(this, "perspective")
 {
     anim.setDuration(100);
+    connect(&anim, &QPropertyAnimation::finished, this, &Camera::animDone);
 }
 
 QMatrix4x4 Camera::proj() const
