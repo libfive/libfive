@@ -1,5 +1,5 @@
-#include <QDebug>
 #include <array>
+#include <set>
 #include <cassert>
 
 #include <QVBoxLayout>
@@ -219,20 +219,53 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
 {
     QTextCursor c(script_doc);
 
-    c.beginEditBlock();
+    // Build an ordered set so that we can walk through variables
+    // in sorted line / column order, making offsets as textual positions
+    // shift due to earlier variables in the same line
+    auto comp = [&](Kernel::Tree::Id a, Kernel::Tree::Id b){
+        auto& pa = vars[a];
+        auto& pb = vars[b];
+        return (pa.line != pb.line) ? (pa.line < pb.line)
+                                    : (pa.start < pb.start);
+    };
+    std::set<Kernel::Tree::Id, decltype(comp)> ordered(comp);
     for (auto v=vs.begin(); v != vs.end(); ++v)
     {
+        ordered.insert(v.key());
+    }
+
+    c.beginEditBlock();
+    int line = -1;
+    int offset = 0;
+    for (auto t : ordered)
+    {
+        auto v = vs.find(t);
+        assert(v != vs.end());
+
+        // Apply an offset to compensate for other variables that may have
+        // changed already in this line
         auto pos = vars.find(v.key());
         assert(pos != vars.end());
+        if (pos.value().line == line)
+        {
+            pos.value().start += offset;
+            pos.value().end += offset;
+        }
+        else
+        {
+            line = pos.value().line;
+            offset = 0;
+        }
+
         c.movePosition(QTextCursor::Start);
         c.movePosition(
                 QTextCursor::Down, QTextCursor::MoveAnchor, pos.value().line);
         c.movePosition(
                 QTextCursor::Right, QTextCursor::MoveAnchor, pos.value().start);
 
+        const auto length_before = pos.value().end - pos.value().start;
         c.movePosition(
-                QTextCursor::Right, QTextCursor::KeepAnchor,
-                pos.value().end - pos.value().start);
+                QTextCursor::Right, QTextCursor::KeepAnchor, length_before);
         c.removeSelectedText();
 
         QString str;
@@ -241,7 +274,7 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
         auto length_after = str.length();
 
         pos.value().end = pos.value().start + length_after;
+        offset += length_after - length_before;
     }
-    qDebug() << "done";
     c.endEditBlock();
 }
