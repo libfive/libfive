@@ -42,7 +42,11 @@ void Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
 
     if (changed)
     {
-        cancel.store(true);
+        // Only abort non-default renders
+        if (target_div != default_div)
+        {
+            cancel.store(true);
+        }
 
         // Start a special render operation that uses a flag in the div
         // field that tells the system load new var values before starting
@@ -138,7 +142,12 @@ void Shape::startRender(Settings s)
 
 void Shape::startRender(QPair<Settings, int> s)
 {
-    if (mesh_future.isRunning())
+    if (default_div == MESH_DIV_EMPTY)
+    {
+        default_div = s.second;
+    }
+
+    if (running)
     {
         if (next.second != MESH_DIV_ABORT)
         {
@@ -153,10 +162,16 @@ void Shape::startRender(QPair<Settings, int> s)
             {
                 e.updateVars(*vars);
             }
-            s.second = s.first.defaultDiv();
+            s.second = default_div;
         }
+
+        target_div = s.second;
+
+        timer.start();
+        running = true;
         mesh_future = QtConcurrent::run(this, &Shape::renderMesh, s);
         mesh_watcher.setFuture(mesh_future);
+
         next = {s.first, s.second - 1};
     }
 }
@@ -175,7 +190,7 @@ Kernel::Evaluator* Shape::dragFrom(const QVector3D& v)
 
 void Shape::deleteLater()
 {
-    if (mesh_future.isRunning())
+    if (running)
     {
         next.second = MESH_DIV_ABORT;
         cancel.store(true);
@@ -188,12 +203,28 @@ void Shape::deleteLater()
 
 void Shape::onFutureFinished()
 {
+    running = false;
+
     auto m = mesh_future.result();
     if (m != nullptr)
     {
         mesh.reset(mesh_future.result());
         gl_ready = false;
         emit(gotMesh());
+
+        auto t = timer.elapsed();
+
+        if (target_div == default_div)
+        {
+            if (t < 20 && default_div > 0)
+            {
+                default_div--;
+            }
+            else if (t > 100)
+            {
+                default_div++;
+            }
+        }
     }
 
     if (next.second == MESH_DIV_ABORT)

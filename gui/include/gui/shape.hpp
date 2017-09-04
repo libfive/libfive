@@ -102,12 +102,23 @@ protected:
     QScopedPointer<Kernel::Mesh> mesh;
     QPair<Settings, int> next;
 
+    /*  running marks not just whether the future has finished, but whether
+     *  the main thread has handled it.  This prevents situations where the
+     *  mesh_future.isRunning() == false but onFutureFinished hasn't yet
+     *  been called.  */
+    bool running=false;
+
     bool gl_ready=false;
     QOpenGLVertexArrayObject vao;
     QOpenGLBuffer vert_vbo;
     QOpenGLBuffer tri_vbo;
 
+    QTime timer;
+
     const static int MESH_DIV_EMPTY=-1;
     const static int MESH_DIV_ABORT=-2;
     const static int MESH_DIV_NEW_VARS=-3;
+
+    int default_div=MESH_DIV_EMPTY;
+    int target_div=MESH_DIV_EMPTY;
 };
