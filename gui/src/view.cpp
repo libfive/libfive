@@ -65,7 +65,8 @@ void View::setShapes(QList<Shape*> new_shapes)
         {
             connect(s, &Shape::gotMesh, this, &View::update);
             connect(s, &Shape::gotMesh, this, &View::checkMeshes);
-            connect(s, &Shape::gotMesh, this, &View::redrawPicker);
+            connect(s, &Shape::gotMesh, &pick_timer,
+                    QOverload<>::of(&QTimer::start));
             connect(this, &View::startRender,
                     s, &Shape::startRender);
             s->startRender(settings);
