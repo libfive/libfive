@@ -129,6 +129,16 @@ Syntax::Syntax(QTextDocument* doc)
         rules << Rule(R"((?:\\.|[^"\\])+)", string_format, STRING, STRING);
     }
 
+    {   // Variables (float and integer)
+        QTextCharFormat var_format;
+        var_format.setForeground(Color::orange);
+
+        rules << Rule(R"(\B\#(?:-|)\d+\.\d*e\d+)", var_format);
+        rules << Rule(R"(\B\#(?:-|)\d+\.\d*)", var_format);
+        rules << Rule(R"(\B\#(?:-|)\d+e\d+)", var_format);
+        rules << Rule(R"(\B\#(?:-|)\d+\b)", var_format);
+    }
+
     {   // Numbers (float and integer)
         QTextCharFormat num_format;
         num_format.setForeground(Color::orange);
