@@ -1,3 +1,5 @@
+#pragma once
+
 #include <QTextEdit>
 #include <QPlainTextEdit>
 #include <QTimer>
