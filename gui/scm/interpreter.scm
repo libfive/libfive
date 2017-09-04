@@ -75,7 +75,6 @@
         (failed #f)
         (prev-vars (make-hash-table)))
     (hash-map->list (lambda (k v) (hash-set! prev-vars (car v) (cadr v))) vars)
-    (format #t "prev vars: ~A\n" (hash-map->list cons prev-vars))
     (hash-clear! vars)
     (let loop ((i 0))
       ;; Attempt to read the next clause, storing text location

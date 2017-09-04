@@ -158,7 +158,6 @@ void _Interpreter::eval()
                         (use-modules (interpreter))
                         (hash-map->list (lambda (k v) v) vars) )");
 
-                    scm_simple_format(SCM_BOOL_T, scm_from_locale_string("vars: ~A\n"), scm_list_1(vs));
                     for (auto v = vs; !scm_is_null(v); v = scm_cdr(v))
                     {
                         auto data = scm_cdar(v);
