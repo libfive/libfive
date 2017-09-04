@@ -225,23 +225,22 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
         assert(pos != vars.end());
         c.movePosition(QTextCursor::Start);
         c.movePosition(
-                QTextCursor::Down, QTextCursor::MoveAnchor, pos->first);
+                QTextCursor::Down, QTextCursor::MoveAnchor, pos.value().line);
         c.movePosition(
-                QTextCursor::Right, QTextCursor::MoveAnchor, pos->second);
+                QTextCursor::Right, QTextCursor::MoveAnchor, pos.value().start);
 
-        // Find the longest possible readable-as-float string
-        bool ok = true;
-        while (ok)
-        {
-            c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
-            c.selectedText().toFloat(&ok);
-        }
-        c.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
+        c.movePosition(
+                QTextCursor::Right, QTextCursor::KeepAnchor,
+                pos.value().end - pos.value().start);
         c.removeSelectedText();
 
         QString str;
         str.setNum(v.value());
         c.insertText(str);
+        auto length_after = str.length();
+
+        pos.value().end = pos.value().start + length_after;
     }
+    qDebug() << "done";
     c.endEditBlock();
 }

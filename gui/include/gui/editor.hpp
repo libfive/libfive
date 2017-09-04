@@ -18,6 +18,13 @@ public:
     QString getScript() const;
     void setModified(bool m);
 
+    struct Position
+    {
+        int line;
+        int start;
+        int end;
+    };
+
 public slots:
     void onResult(QString result);
     void onError(QString result, QPair<uint32_t, uint32_t> begin,
@@ -40,7 +47,7 @@ public slots:
     /*
      *  Stores the textual positions of variables
      */
-    void setVarPositions(QMap<Kernel::Tree::Id, QPair<int, int>> vs)
+    void setVarPositions(QMap<Kernel::Tree::Id, Position> vs)
     { vars = vs; }
 
     /*
@@ -77,5 +84,5 @@ protected:
     QTextCharFormat error_format;
     QTimer spinner;
 
-    QMap<Kernel::Tree::Id, QPair<int, int>> vars;
+    QMap<Kernel::Tree::Id, Position> vars;
 };

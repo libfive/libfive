@@ -2,6 +2,7 @@
 #include <QSurfaceFormat>
 
 #include "gui/app.hpp"
+#include "gui/editor.hpp"
 #include "gui/window.hpp"
 #include "gui/settings.hpp"
 #include "gui/shape.hpp"
@@ -20,8 +21,8 @@ int main(int argc, char** argv)
     qRegisterMetaType<Settings>("Settings");
     qRegisterMetaType<QList<Shape*>>("QList<Shape*>");
     qRegisterMetaType<QPair<uint32_t,uint32_t>>("QPair<uint32_t,uint32_t>");
-    qRegisterMetaType<QMap<Kernel::Tree::Id,QPair<int,int>>>(
-            "QMap<Kernel::Tree::Id,QPair<int,int>>");
+    qRegisterMetaType<QMap<Kernel::Tree::Id,Editor::Position>>(
+            "QMap<Kernel::Tree::Id,Editor::Position>");
 
     App a(argc, argv);
     a.exec();

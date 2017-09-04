@@ -6,6 +6,7 @@
 #include <libguile.h>
 
 #include "gui/shape.hpp"
+#include "gui/editor.hpp"
 
 /*
  *  _Interpreter is a child object that lives in a secondary thread
@@ -43,7 +44,7 @@ signals:
     /*
      *  Emitted to tell the editor about textual positions
      */
-    void gotVars(QMap<Kernel::Tree::Id, QPair<int, int>> vs);
+    void gotVars(QMap<Kernel::Tree::Id, Editor::Position> vs);
 
 protected slots:
     /*  Initializes everything that Scheme needs */
@@ -105,7 +106,7 @@ signals:
                                  QPair<uint32_t, uint32_t> end);
     void keywords(QString kws);
     void gotShapes(QList<Shape*> s);
-    void gotVars(QMap<Kernel::Tree::Id, QPair<int, int>> vs);
+    void gotVars(QMap<Kernel::Tree::Id, Editor::Position> vs);
 
     /*
      *  Emitted when the interpreter starts evaluation

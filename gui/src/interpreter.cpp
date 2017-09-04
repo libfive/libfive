@@ -144,7 +144,7 @@ void _Interpreter::eval()
     {
         QList<Shape*> shapes;
         std::shared_ptr<std::map<Kernel::Tree::Id, float>> vars;
-        QMap<Kernel::Tree::Id, QPair<int, int>> var_pos;
+        QMap<Kernel::Tree::Id, Editor::Position> var_pos;
 
         while (!scm_is_null(result))
         {
@@ -167,8 +167,10 @@ void _Interpreter::eval()
                         auto value = scm_to_double(scm_cadr(data));
                         (*vars)[id] = value;
 
-                        var_pos[id] = {scm_to_int32(scm_caaddr(data)),
-                                       scm_to_int32(scm_cdaddr(data))};
+                        auto vp = scm_caddr(data);
+                        var_pos[id] = {scm_to_int32(scm_car(vp)),
+                                       scm_to_int32(scm_cadr(vp)),
+                                       scm_to_int32(scm_caddr(vp))};
                     }
                 }
                 auto tree = scm_to_tree(scm_cdar(result));
