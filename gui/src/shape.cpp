@@ -157,16 +157,6 @@ bool Shape::done() const
     return next.div == MESH_DIV_EMPTY && mesh_future.isFinished();
 }
 
-Kernel::Mesh* Shape::renderMesh(Settings s)
-{
-    cancel.store(false);
-    Kernel::Region<3> r({s.min.x(), s.min.y(), s.min.z()},
-                        {s.max.x(), s.max.y(), s.max.z()});
-    auto m = Kernel::Mesh::render(es.data(), r, 1 / (s.res / (1 << s.div)),
-                                  pow(10, -s.quality), cancel);
-    return m.release();
-}
-
 Kernel::Evaluator* Shape::dragFrom(const QVector3D& v)
 {
     auto e = new Kernel::Evaluator(tree, *vars);
@@ -201,4 +191,16 @@ void Shape::onFutureFinished()
     {
         startRender(next);
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// This function is called in a separate thread:
+Kernel::Mesh* Shape::renderMesh(Settings s)
+{
+    cancel.store(false);
+    Kernel::Region<3> r({s.min.x(), s.min.y(), s.min.z()},
+                        {s.max.x(), s.max.y(), s.max.z()});
+    auto m = Kernel::Mesh::render(es.data(), r, 1 / (s.res / (1 << s.div)),
+                                  pow(10, -s.quality), cancel);
+    return m.release();
 }
