@@ -179,9 +179,13 @@ void Shape::deleteLater()
 
 void Shape::onFutureFinished()
 {
-    mesh.reset(mesh_future.result());
-    gl_ready = false;
-    emit(gotMesh());
+    auto m = mesh_future.result();
+    if (m != nullptr)
+    {
+        mesh.reset(mesh_future.result());
+        gl_ready = false;
+        emit(gotMesh());
+    }
 
     if (next.div == MESH_DIV_ABORT)
     {
