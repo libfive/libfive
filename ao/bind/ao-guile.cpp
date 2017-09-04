@@ -417,8 +417,6 @@ void init_ao_shapes(void*)
 (define-public (rectangle a b)
     "rectangle '(xmin ymin) '(xmax ymax)
     Constructs a rectangle from its corners"
-    (when (< (.x b) (.x a)) (error "xmax must be >= xmin"))
-    (when (< (.y b) (.y a)) (error "ymax must be >= ymin"))
     (lambda-shape (x y z)
         (max (- (.x a) x) (- x (.x b)) (- (.y a) y) (- y (.y b)))))
 
@@ -429,7 +427,6 @@ void init_ao_shapes(void*)
 (define-public (extrude-z shape zmin zmax)
     "extrude-z shape zmin zmax
     Extrudes a 2D shape between za and zb"
-    (when (< zmax zmin) (error "zmax must be >= zmin"))
     (max shape (lambda-shape (x y z) (max (- zmin z) (- z zmax)))))
 
 (define-public (cylinder center r zmin zmax)
