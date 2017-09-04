@@ -106,5 +106,5 @@ protected:
     QVector3D drag_start;
     QVector3D drag_dir;
     QScopedPointer<Kernel::Evaluator> drag_eval;
-    std::shared_ptr<std::map<Kernel::Tree::Id, float>> drag_vars;
+    Shape* drag_target;
 };

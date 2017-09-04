@@ -252,17 +252,13 @@ void View::mouseMoveEvent(QMouseEvent* event)
         const auto n = QVector3D::crossProduct(drag_dir, ray);
         const auto n2 = QVector3D::crossProduct(ray, n);
         const auto nearest = drag_start +
-            drag_dir * QVector3D::dotProduct(cursor_pos - drag_start, n2) /
+            drag_dir * QVector3D::dotProduct(pos - drag_start, n2) /
             QVector3D::dotProduct(drag_dir, n2);
 
-        auto sol = Kernel::Solver::findRoot(*drag_eval, *drag_vars,
+        auto sol = Kernel::Solver::findRoot(*drag_eval, *drag_target->getVars(),
                 {nearest.x(), nearest.y(), nearest.z()});
-        for (auto& s : sol.second)
-        {
-            qDebug() << s.first << s.second;
-        }
 
-        qDebug() << pos << ray;
+        drag_target->updateVars(sol.second);
     }
     else if (bars.hover(event->pos().x() > camera.size.width() - bars.side &&
                         event->pos().y() < bars.side))
@@ -295,8 +291,8 @@ void View::mousePressEvent(QMouseEvent* event)
         else if (event->button() == Qt::LeftButton)
         {
             auto picked = (pick_img.pixel(event->pos()) & 0xFFFFFF);
-            Shape* target = picked ? shapes.at(picked - 1) : nullptr;
-            if (picked && target->hasVars())
+            drag_target = picked ? shapes.at(picked - 1) : nullptr;
+            if (picked && drag_target->hasVars())
             {
                 QVector3D pt(
                         (event->pos().x() * 2.0) / pick_img.width() - 1,
@@ -306,13 +302,12 @@ void View::mousePressEvent(QMouseEvent* event)
                                 (pick_img.height() - event->pos().y())) - 1);
 
                 drag_start = camera.M().inverted() * pt;
-                drag_eval.reset(target->dragFrom(drag_start));
+                drag_eval.reset(drag_target->dragFrom(drag_start));
 
                 auto norm = drag_eval->derivs(1).d.col(0);
                 drag_dir = {norm.x(), norm.y(), norm.z()};
 
                 qDebug() << "Begin drag from" << drag_start << "towards" << drag_dir;
-                drag_vars = target->getVars();
 
                 mouse.state = mouse.DRAG_EVAL;
             }
