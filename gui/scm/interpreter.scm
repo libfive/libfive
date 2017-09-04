@@ -53,9 +53,11 @@
       (let ((id (tree-id d))
             (var (hash-ref prev addr)))
         (if var ; If there's a matching previous var, use it
-          (let ((value (caddr (hash-ref vars id))))
-            (hash-remove! vars (tree-id d))
-            (hash-set! vars (tree-id var) (list addr var value))
+          (let* ((prev (hash-ref vars id))
+                 (value (caddr prev))
+                 (pos (cadddr prev)))
+            (hash-remove! vars id)
+            (hash-set! vars (tree-id var) (list addr var value pos))
             var)
           (begin
             (set-car! (hash-ref vars id) addr)
