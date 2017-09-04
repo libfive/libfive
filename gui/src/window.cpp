@@ -111,6 +111,9 @@ Window::Window(const QString& target)
     connect(interpreter, &Interpreter::gotError, editor, &Editor::onError);
     connect(interpreter, &Interpreter::keywords, editor, &Editor::setKeywords);
     connect(interpreter, &Interpreter::gotShapes, view, &View::setShapes);
+    connect(interpreter, &Interpreter::gotVars,
+            editor, &Editor::setVarPositions);
+
 
     interpreter->start();
 

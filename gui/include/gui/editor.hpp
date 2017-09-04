@@ -3,6 +3,7 @@
 #include <QTimer>
 
 #include "gui/settings.hpp"
+#include "ao/tree/tree.hpp"
 
 class Syntax;
 
@@ -34,6 +35,12 @@ public slots:
      */
     void onScriptChanged();
 
+    /*
+     *  Stores the textual positions of variables
+     */
+    void setVarPositions(QMap<Kernel::Tree::Id, QPair<int, int>> vs)
+    { vars = vs; }
+
 signals:
     void scriptChanged(QString s);
     void modificationChanged(bool m);
@@ -62,4 +69,6 @@ protected:
 
     QTextCharFormat error_format;
     QTimer spinner;
+
+    QMap<Kernel::Tree::Id, QPair<int, int>> vars;
 };

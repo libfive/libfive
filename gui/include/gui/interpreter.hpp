@@ -40,6 +40,11 @@ signals:
      */
     void gotShapes(QList<Shape*> s);
 
+    /*
+     *  Emitted to tell the editor about textual positions
+     */
+    void gotVars(QMap<Kernel::Tree::Id, QPair<int, int>> vs);
+
 protected slots:
     /*  Initializes everything that Scheme needs */
     void init();
@@ -100,6 +105,7 @@ signals:
                                  QPair<uint32_t, uint32_t> end);
     void keywords(QString kws);
     void gotShapes(QList<Shape*> s);
+    void gotVars(QMap<Kernel::Tree::Id, QPair<int, int>> vs);
 
     /*
      *  Emitted when the interpreter starts evaluation

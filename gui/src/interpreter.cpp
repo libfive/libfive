@@ -144,6 +144,7 @@ void _Interpreter::eval()
     {
         QList<Shape*> shapes;
         std::shared_ptr<std::map<Kernel::Tree::Id, float>> vars;
+        QMap<Kernel::Tree::Id, QPair<int, int>> var_pos;
 
         while (!scm_is_null(result))
         {
@@ -151,16 +152,23 @@ void _Interpreter::eval()
             {
                 if (vars.get() == nullptr)
                 {
+                    vars.reset(new std::map<Kernel::Tree::Id, float>);
+
                     auto vs = scm_c_eval_string(R"(
                         (use-modules (interpreter))
                         (hash-map->list (lambda (k v) v) vars) )");
-                    vars.reset(new std::map<Kernel::Tree::Id, float>);
+
                     scm_simple_format(SCM_BOOL_T, scm_from_locale_string("vars: ~A\n"), scm_list_1(vs));
                     for (auto v = vs; !scm_is_null(v); v = scm_cdr(v))
                     {
-                        auto id = ao_tree_id(scm_to_tree(scm_cadar(v)));
-                        auto value = scm_to_double(scm_caddar(v));
-                        (*vars)[(Kernel::Tree::Id)id] = value;
+                        auto data = scm_cdar(v);
+                        auto id = static_cast<Kernel::Tree::Id>(
+                                ao_tree_id(scm_to_tree(scm_car(data))));
+                        auto value = scm_to_double(scm_cadr(data));
+                        (*vars)[id] = value;
+
+                        var_pos[id] = {scm_to_int32(scm_caaddr(data)),
+                                       scm_to_int32(scm_cdaddr(data))};
                     }
                 }
                 auto tree = scm_to_tree(scm_cdar(result));
@@ -171,6 +179,7 @@ void _Interpreter::eval()
             result = scm_cdr(result);
         }
         emit(gotShapes(shapes));
+        emit(gotVars(var_pos));
     }
 }
 
@@ -210,6 +219,8 @@ Interpreter::Interpreter()
             this, &Interpreter::keywords);
     connect(&interpreter, &_Interpreter::gotShapes,
             this, &Interpreter::gotShapes);
+    connect(&interpreter, &_Interpreter::gotVars,
+            this, &Interpreter::gotVars);
 }
 
 void Interpreter::start()
