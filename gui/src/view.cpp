@@ -258,7 +258,7 @@ void View::mouseMoveEvent(QMouseEvent* event)
 
         auto sol = Kernel::Solver::findRoot(*drag_eval, *drag_target->getVars(),
                 {nearest.x(), nearest.y(), nearest.z()});
-
+        emit(varsDragged(QMap<Kernel::Tree::Id, float>(sol.second)));
         drag_target->updateVars(sol.second);
     }
     else if (bars.hover(event->pos().x() > camera.size.width() - bars.side &&

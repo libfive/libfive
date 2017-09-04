@@ -63,6 +63,11 @@ signals:
      */
     void meshesReady(QList<const Kernel::Mesh*> shapes) const;
 
+    /*
+     *  Emitted when a drag operation has changed variables
+     */
+    void varsDragged(QMap<Kernel::Tree::Id, float> vs);
+
 protected slots:
     void update() { QOpenGLWidget::update(); }
     void redrawPicker();

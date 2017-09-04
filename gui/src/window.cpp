@@ -113,7 +113,7 @@ Window::Window(const QString& target)
     connect(interpreter, &Interpreter::gotShapes, view, &View::setShapes);
     connect(interpreter, &Interpreter::gotVars,
             editor, &Editor::setVarPositions);
-
+    connect(view, &View::varsDragged, editor, &Editor::setVarValues);
 
     interpreter->start();
 

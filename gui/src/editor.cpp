@@ -1,4 +1,5 @@
 #include <array>
+#include <cassert>
 
 #include <QVBoxLayout>
 
@@ -211,4 +212,36 @@ void Editor::onScriptChanged()
             emit(settingsChanged(s));
         }
     }
+}
+
+void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
+{
+    QTextCursor c(script_doc);
+
+    c.beginEditBlock();
+    for (auto v=vs.begin(); v != vs.end(); ++v)
+    {
+        auto pos = vars.find(v.key());
+        assert(pos != vars.end());
+        c.movePosition(QTextCursor::Start);
+        c.movePosition(
+                QTextCursor::Down, QTextCursor::MoveAnchor, pos->first);
+        c.movePosition(
+                QTextCursor::Right, QTextCursor::MoveAnchor, pos->second);
+
+        // Find the longest possible readable-as-float string
+        bool ok = true;
+        while (ok)
+        {
+            c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
+            c.selectedText().toFloat(&ok);
+        }
+        c.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
+        c.removeSelectedText();
+
+        QString str;
+        str.setNum(v.value());
+        c.insertText(str);
+    }
+    c.endEditBlock();
 }

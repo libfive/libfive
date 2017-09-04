@@ -41,6 +41,11 @@ public slots:
     void setVarPositions(QMap<Kernel::Tree::Id, QPair<int, int>> vs)
     { vars = vs; }
 
+    /*
+     *  Modifies the textual values of variables
+     */
+    void setVarValues(QMap<Kernel::Tree::Id, float> vs);
+
 signals:
     void scriptChanged(QString s);
     void modificationChanged(bool m);
