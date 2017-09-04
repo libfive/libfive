@@ -130,21 +130,13 @@ Syntax::Syntax(QTextDocument* doc)
     }
 
     {   // Numbers (float and integer)
-        {   // All the possible float formats
-            QTextCharFormat float_format;
-            float_format.setForeground(Color::orange);
+        QTextCharFormat num_format;
+        num_format.setForeground(Color::orange);
 
-            rules << Rule(R"(\b(?:-|)\d+\.\d*e\d+)", float_format);
-            rules << Rule(R"(\b(?:-|)\d+\.\d*)", float_format);
-            rules << Rule(R"(\b(?:-|)\d+e\d+)", float_format);
-        }
-
-        {   // Integers
-            QTextCharFormat int_format;
-            int_format.setForeground(Color::red);
-
-            rules << Rule(R"(\b(?:-|)\d+\b)", int_format);
-        }
+        rules << Rule(R"(\b(?:-|)\d+\.\d*e\d+)", num_format);
+        rules << Rule(R"(\b(?:-|)\d+\.\d*)", num_format);
+        rules << Rule(R"(\b(?:-|)\d+e\d+)", num_format);
+        rules << Rule(R"(\b(?:-|)\d+\b)", num_format);
     }
 
     {   // Comments!
