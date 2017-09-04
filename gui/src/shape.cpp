@@ -220,7 +220,7 @@ void Shape::onFutureFinished()
             {
                 default_div--;
             }
-            else if (t > 100)
+            else if (t > 50)
             {
                 default_div++;
             }
