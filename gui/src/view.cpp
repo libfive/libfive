@@ -308,8 +308,6 @@ void View::mousePressEvent(QMouseEvent* event)
                 auto norm = drag_eval->derivs(1).d.col(0);
                 drag_dir = {norm.x(), norm.y(), norm.z()};
 
-                qDebug() << "Begin drag from" << drag_start << "towards" << drag_dir;
-
                 mouse.state = mouse.DRAG_EVAL;
             }
             else
