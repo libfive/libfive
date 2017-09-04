@@ -1,4 +1,5 @@
-(use-modules (ice-9 sandbox) (ice-9 textual-ports) (ao kernel))
+(use-modules (ice-9 sandbox) (ice-9 textual-ports) (ao kernel)
+             (rnrs io ports))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

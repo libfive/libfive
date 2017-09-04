@@ -1,3 +1,4 @@
+#include <QDebug>
 #include <array>
 #include <cassert>
 
