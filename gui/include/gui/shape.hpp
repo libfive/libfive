@@ -87,7 +87,9 @@ protected slots:
     void onFutureFinished();
 
 protected:
-    Kernel::Mesh* renderMesh(Settings s);
+    void startRender(QPair<Settings, int> s);
+
+    Kernel::Mesh* renderMesh(QPair<Settings, int> s);
     QFuture<Kernel::Mesh*> mesh_future;
     QFutureWatcher<Kernel::Mesh*> mesh_watcher;
     std::atomic_bool cancel;
@@ -98,7 +100,7 @@ protected:
                 Eigen::aligned_allocator<Kernel::Evaluator>> es;
 
     QScopedPointer<Kernel::Mesh> mesh;
-    Settings next;
+    QPair<Settings, int> next;
 
     bool gl_ready=false;
     QOpenGLVertexArrayObject vao;

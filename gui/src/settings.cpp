@@ -11,14 +11,13 @@ QRegularExpression Settings::settings_regex(
 QString Settings::settings_fmt(
         "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 / %8 !#");
 
-Settings::Settings()
-    : div(-1)
+Settings::Settings(QVector3D min, QVector3D max, float res, float quality)
+    : min(min), max(max), res(res), quality(quality)
 {
     // Nothing to do here
 }
 
-Settings::Settings(QVector3D min, QVector3D max, float res, float quality)
-    : min(min), max(max), res(res), quality(quality)
+int Settings::defaultDiv() const
 {
     const float volume = (max.x() - min.x()) *
                          (max.y() - min.y()) *
@@ -28,26 +27,8 @@ Settings::Settings(QVector3D min, QVector3D max, float res, float quality)
     const float target_res = pow((1 << 22) / volume, 0.33) / 2.52;
 
     // More magic numbers
-    div = (target_res > res) ? 0
+    return (target_res > res) ? 0
         : int(log(res / target_res) / log(2) + 0.5);
-}
-
-Settings::Settings(const Settings& other, int div)
-    : min(other.min), max(other.max), res(other.res),
-      quality(other.quality), div(div)
-{
-    // Nothing to do here
-}
-
-Settings Settings::next() const
-{
-    assert(div >= 0);
-    return Settings(*this, div - 1);
-}
-
-Settings Settings::base() const
-{
-    return Settings(min, max, res, quality);
 }
 
 bool Settings::operator==(const Settings& other) const

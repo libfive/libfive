@@ -9,36 +9,24 @@
 struct Settings
 {
     /*
-     *  Default constructor estimates initial div using heuristic
+     *  Useful constructor
      */
     Settings(QVector3D min, QVector3D max, float res, float quality);
 
     /*
-     *  The empty Settings object has div = -1
+     *  Default constructor (produces an object that shouldn't be used)
      */
-    Settings();
+    Settings() : res(-1), quality(-1) { /* Nothing to do here */ }
 
     /*
-     *  Construct a new Setting object with a different division
+     *  Estimates a reasonable resolution scale for incremental rendering
      */
-    Settings(const Settings& other, int div);
-
-    /*
-     *  Returns an object with the same bounds, res, and quality
-     *  but a smaller div.  This must only be called with div >= 0
-     */
-    Settings next() const;
-
-    /*
-     *  Returns the original (higher-div) Settings object
-     */
-    Settings base() const;
+    int defaultDiv() const;
 
     QVector3D min;
     QVector3D max;
     float res;
     float quality;
-    int div;
 
     // Used to read and write to scripts
     static QRegularExpression settings_regex;

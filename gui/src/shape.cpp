@@ -46,7 +46,7 @@ void Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
 
         // Start a special render operation that uses a flag in the div
         // field that tells the system load new var values before starting
-        startRender(Settings(next, MESH_DIV_NEW_VARS));
+        startRender({next.first, MESH_DIV_NEW_VARS});
     }
 }
 
@@ -133,32 +133,37 @@ void Shape::drawMonochrome(const QMatrix4x4& M, QColor color)
 
 void Shape::startRender(Settings s)
 {
+    startRender(QPair<Settings, int>(s, s.defaultDiv()));
+}
+
+void Shape::startRender(QPair<Settings, int> s)
+{
     if (mesh_future.isRunning())
     {
-        if (next.div != MESH_DIV_ABORT)
+        if (next.second != MESH_DIV_ABORT)
         {
             next = s;
         }
     }
     else
     {
-        if (s.div == MESH_DIV_NEW_VARS)
+        if (s.second == MESH_DIV_NEW_VARS)
         {
             for (auto& e : es)
             {
                 e.updateVars(*vars);
             }
-            s = s.base();
+            s.second = s.first.defaultDiv();
         }
         mesh_future = QtConcurrent::run(this, &Shape::renderMesh, s);
         mesh_watcher.setFuture(mesh_future);
-        next = s.next();
+        next = {s.first, s.second - 1};
     }
 }
 
 bool Shape::done() const
 {
-    return next.div == MESH_DIV_EMPTY && mesh_future.isFinished();
+    return next.second == MESH_DIV_EMPTY && mesh_future.isFinished();
 }
 
 Kernel::Evaluator* Shape::dragFrom(const QVector3D& v)
@@ -172,7 +177,7 @@ void Shape::deleteLater()
 {
     if (mesh_future.isRunning())
     {
-        next.div = MESH_DIV_ABORT;
+        next.second = MESH_DIV_ABORT;
         cancel.store(true);
     }
     else
@@ -191,11 +196,11 @@ void Shape::onFutureFinished()
         emit(gotMesh());
     }
 
-    if (next.div == MESH_DIV_ABORT)
+    if (next.second == MESH_DIV_ABORT)
     {
         QObject::deleteLater();
     }
-    else if (next.div >= 0 || next.div == MESH_DIV_NEW_VARS)
+    else if (next.second >= 0 || next.second == MESH_DIV_NEW_VARS)
     {
         startRender(next);
     }
@@ -203,12 +208,13 @@ void Shape::onFutureFinished()
 
 ////////////////////////////////////////////////////////////////////////////////
 // This function is called in a separate thread:
-Kernel::Mesh* Shape::renderMesh(Settings s)
+Kernel::Mesh* Shape::renderMesh(QPair<Settings, int> s)
 {
     cancel.store(false);
-    Kernel::Region<3> r({s.min.x(), s.min.y(), s.min.z()},
-                        {s.max.x(), s.max.y(), s.max.z()});
-    auto m = Kernel::Mesh::render(es.data(), r, 1 / (s.res / (1 << s.div)),
-                                  pow(10, -s.quality), cancel);
+    Kernel::Region<3> r({s.first.min.x(), s.first.min.y(), s.first.min.z()},
+                        {s.first.max.x(), s.first.max.y(), s.first.max.z()});
+    auto m = Kernel::Mesh::render(es.data(), r,
+            1 / (s.first.res / (1 << s.second)),
+            pow(10, -s.first.quality), cancel);
     return m.release();
 }
