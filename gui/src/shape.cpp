@@ -1,6 +1,10 @@
 #include "gui/shape.hpp"
 #include "gui/shader.hpp"
 
+const int Shape::MESH_DIV_EMPTY;
+const int Shape::MESH_DIV_ABORT;
+const int Shape::MESH_DIV_NEW_VARS;
+
 Shape::Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
                                                       float>> vars)
     : tree(t), vars(vars), vert_vbo(QOpenGLBuffer::VertexBuffer),
