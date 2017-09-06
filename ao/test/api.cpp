@@ -137,3 +137,22 @@ TEST_CASE("ao_tree_save/load")
 
     REQUIRE(f == nullptr);
 }
+
+TEST_CASE("ao_tree_render_pixels")
+{
+    auto x = ao_tree_x();
+    auto y = ao_tree_y();
+    auto z = ao_tree_z();
+    auto x2 = ao_tree_unary(Opcode::SQUARE, x);
+    auto y2 = ao_tree_unary(Opcode::SQUARE, y);
+    auto z2 = ao_tree_unary(Opcode::SQUARE, z);
+    auto r_ = ao_tree_binary(Opcode::ADD, x2, y2);
+    auto r = ao_tree_binary(Opcode::ADD, r_, z2);
+    auto one = ao_tree_const(1.0f);
+    auto d = ao_tree_binary(Opcode::SUB, r, one);
+
+    auto m = ao_tree_render_pixels(d, {{-2, 2}, {-2, 2}}, 0, 10);
+    ao_pixels_delete(m);
+
+    REQUIRE(true); // No crash!
+}

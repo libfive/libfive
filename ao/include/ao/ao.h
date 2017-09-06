@@ -34,6 +34,12 @@ struct ao_mesh {
     uint32_t vert_count;
 };
 
+struct ao_pixels {
+    bool* pixels;
+    uint32_t width;
+    uint32_t height;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
@@ -45,6 +51,11 @@ void ao_contours_delete(ao_contours* cs);
  *  Frees an ao_mesh data structure
  */
 void ao_mesh_delete(ao_mesh* m);
+
+/*
+ *  Frees an ao_pixels data structure
+ */
+void ao_pixels_delete(ao_pixels* ps);
 
 /*
  *  Takes a string description of an op-code ('min', 'max', etc) and
@@ -154,6 +165,14 @@ ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res);
  *  See argument details in ao_tree_render_mesh
  */
 bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f);
+
+/*
+ *  Renders a 2D slice of pixels at the given Z height
+ *
+ *  The returned struct must be freed with ao_pixels_delete
+ */
+ao_pixels* ao_tree_render_pixels(ao_tree tree, ao_region2 R,
+                                 float z, float res);
 
 #ifdef __cplusplus
 }

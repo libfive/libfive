@@ -6,9 +6,13 @@
 #include "ao/tree/opcode.hpp"
 #include "ao/tree/tree.hpp"
 #include "ao/tree/template.hpp"
+
 #include "ao/render/brep/region.hpp"
 #include "ao/render/brep/contours.hpp"
 #include "ao/render/brep/mesh.hpp"
+
+#include "ao/render/discrete/voxels.hpp"
+#include "ao/render/discrete/heightmap.hpp"
 
 using namespace Kernel;
 
@@ -26,6 +30,12 @@ void ao_mesh_delete(ao_mesh* m)
 {
     delete [] m->verts;
     delete [] m->tris;
+    delete m;
+}
+
+void ao_pixels_delete(ao_pixels* m)
+{
+    delete [] m->pixels;
     delete m;
 }
 
@@ -211,6 +221,31 @@ bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f)
                      {R.X.upper, R.Y.upper, R.Z.upper});
     auto ms = Mesh::render(*tree, region, 1/res);
     return ms->saveSTL(f);
+}
+
+ao_pixels* ao_tree_render_pixels(ao_tree tree, ao_region2 R,
+                                 float z, float res)
+{
+    Voxels v({R.X.lower, R.Y.lower, z},
+             {R.X.upper, R.Y.upper, z}, res);
+    std::atomic_bool abort(false);
+    auto h = Heightmap::render(*tree, v, abort);
+
+    ao_pixels* out = new ao_pixels;
+    out->width = h->depth.cols();
+    out->height = h->depth.cols();
+    out->pixels = new bool[out->width * out->height];
+
+    size_t i=0;
+    for (unsigned x=0; x < out->width; ++x)
+    {
+        for (unsigned y=0; y < out->height; ++y)
+        {
+            out->pixels[i++] = !std::isinf(h->depth(y, x));
+        }
+    }
+
+    return out;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
