@@ -436,7 +436,7 @@ void init_ao_shapes(void*)
 )");
 }
 
-void scm_init_ao_kernel_module()
+void scm_init_ao_modules()
 {
     scm_c_define_module("ao kernel", init_ao_kernel, NULL);
     scm_c_define_module("ao csg", init_ao_csg, NULL);

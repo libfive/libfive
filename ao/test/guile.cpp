@@ -21,7 +21,7 @@ static SCM handler(void*, SCM key, SCM args)
 
 static std::string eval(std::string input) {
     scm_init_guile();
-    scm_init_ao_kernel_module();
+    scm_init_ao_modules();
     scm_c_use_module("ao kernel");
 
     auto str = scm_to_locale_string(

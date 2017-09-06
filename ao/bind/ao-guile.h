@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void scm_init_ao_kernel_module();
+void scm_init_ao_modules();
 
 bool scm_is_tree(SCM t);
 ao_tree scm_to_tree(SCM t);

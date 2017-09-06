@@ -26,7 +26,7 @@ void _Interpreter::init()
 
     scm_init_guile();
 
-    scm_init_ao_kernel_module();
+    scm_init_ao_modules();
     scm_c_use_module("ao kernel");
 
     // Initialize the interpreter module, which includes a variety of
