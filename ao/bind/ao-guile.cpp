@@ -321,119 +321,21 @@ void init_ao_kernel(void*)
             NULL);
 }
 
+// This functions include keywords that are replaced at compile-time
+// by the contents of scripts in separate .scm files
 void init_ao_csg(void*)
 {
-    scm_c_eval_string(R"(
-(use-modules (ao kernel))
-
-(define-public (union . args)
-    "union a [b [c [...]]]
-    Returns the union of any number of shapes"
-    (apply min args))
-
-(define-public (intersection . args)
-    "intersection a [b [c [...]]]
-    Returns the intersection of any number of shapes"
-    (apply max args))
-
-(define-public (inverse a)
-    "inverse a
-    Returns a shape that's the inverse of the input shape"
-    (- a))
-
-(define-public (difference a . bs)
-    "difference a b [c [d [...]]]
-    Subtracts any number of shapes from the first argument"
-    (intersection a (inverse (apply union bs))))
-
-(define-public (offset s o)
-    "offset shape o
-    Expand or contract a given shape by an offset"
-    (+ s o))
-
-(define-public (clearance a b o)
-    "clearance a b o
-    Expands shape b by the given offset then subtracts it from shape a"
-    (difference a (offset b o)))
-
-(define-public (shell shape o)
-    "shell shape o
-    Returns a shell of a shape with the given offset"
-    (clearance shape shape o))
-
-(define-public (blend a b m)
-    "blend a b m
-    Blends two shapes by the given amount"
-    (union a b (- (+ (sqrt (abs a)) (sqrt (abs b))) m)))
-
-(define-public (morph a b m)
-    "morph a b m
-    Morphs between two shapes.
-    m = 0 produces a, m = 1 produces b"
-    (+ (* (a x y z) (- 1 m)) (* (b x y z) m)))
-)");
+    scm_c_eval_string(R"(AO_GUILE_CSG)");
 }
 
 void init_ao_transforms(void*)
 {
-    scm_c_eval_string(R"(
-(use-modules (ao kernel))
-
-(define-public (move shape delta)
-    "move shape #(dx dy [dz])
-    Moves the given shape in 2D or 3D space"
-    (remap-shape (shape x y z)
-        (- x (.x delta))
-        (- y (.y delta))
-        (- z (catch #t (lambda ()(.z delta)) (lambda (. _) 0)))))
-
-(define-public (reflect-xy shape)
-    "reflect-xy shape
-    Moves the given shape across the plane Y=X"
-    (remap-shape (shape x y z) y x z))
-
-(define-public (reflect-yz shape)
-    "reflect-xy shape
-    Moves the given shape across the plane Y=Z"
-    (remap-shape (shape x y z) x z y))
-)");
+    scm_c_eval_string(R"(AO_GUILE_TRANSFORMS)");
 }
 
 void init_ao_shapes(void*)
 {
-    scm_c_eval_string(R"(
-(use-modules (ao kernel) (ao csg) (ao transforms))
-
-(define-public (circle center r)
-    "circle #(x y) r"
-    (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y))) r))
-        center))
-
-(define-public (sphere center r)
-    "sphere #(x y z) r"
-    (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y) (square z))) r))
-        center))
-
-(define-public (rectangle a b)
-    "rectangle '(xmin ymin) '(xmax ymax)
-    Constructs a rectangle from its corners"
-    (lambda-shape (x y z)
-        (max (- (.x a) x) (- x (.x b)) (- (.y a) y) (- y (.y b)))))
-
-(define-public (box a b)
-    "box #(xmin ymin zmin) #(xmax ymax zmax)\\"
-    (extrude-z (rectangle a b) (.z a) (.z b)))
-
-(define-public (extrude-z shape zmin zmax)
-    "extrude-z shape zmin zmax
-    Extrudes a 2D shape between za and zb"
-    (max shape (lambda-shape (x y z) (max (- zmin z) (- z zmax)))))
-
-(define-public (cylinder center r zmin zmax)
-    "cylinder '(x0 y0) r zmin zmax
-    A cylinder (oriented along the Z axis) "
-    (extrude-z (circle center r) zmin zmax))
-)");
+    scm_c_eval_string(R"(AO_GUILE_SHAPES)");
 }
 
 void scm_init_ao_modules()
