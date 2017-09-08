@@ -18,6 +18,8 @@
              (value (read port))
              (end (port-column port))
              (pos (list line start end)))
+        (when (not (number? value))
+          (error "Invalid variable literal" value))
         (hash-set! vars (tree-id var) (list '() var value pos))
         var)))
     (interaction-environment)))
