@@ -144,7 +144,7 @@ void _Interpreter::eval()
     {
         QList<Shape*> shapes;
         std::shared_ptr<std::map<Kernel::Tree::Id, float>> vars;
-        QMap<Kernel::Tree::Id, Editor::Position> var_pos;
+        QMap<Kernel::Tree::Id, Editor::Range> var_pos;
 
         while (!scm_is_null(result))
         {
@@ -208,7 +208,7 @@ Interpreter::Interpreter()
     connect(&interpreter, &_Interpreter::gotResult,
             &busy_timer, [&](QString){ busy_timer.stop(); });
     connect(&interpreter, &_Interpreter::gotError, &busy_timer,
-            [&](QString, Editor::Position){ busy_timer.stop(); });
+            [&](QString, Editor::Range){ busy_timer.stop(); });
 
     // Forward all signals from _Interpreter (running in its own thread)
     connect(&interpreter, &_Interpreter::gotResult,

@@ -76,7 +76,7 @@ void Editor::onResult(QString result)
     clearError();
 }
 
-void Editor::onError(QString result, Position p)
+void Editor::onError(QString result, Range p)
 {
     spinner.stop();
     setResult(Color::red, result);
@@ -109,7 +109,7 @@ QList<QTextEdit::ExtraSelection> Editor::clearError(bool set)
     return selections;
 }
 
-void Editor::setError(Position p)
+void Editor::setError(Range p)
 {
     auto selections = clearError(false);
 

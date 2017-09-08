@@ -27,7 +27,7 @@ signals:
      *  Emitted when an error should be drawn in the GUI
      *  start and end are pairs of line, column
      */
-    void gotError(QString error, Editor::Position pos);
+    void gotError(QString error, Editor::Range pos);
 
     /*
      *  Emitted to pass a set of keywords (space-delimited) to
@@ -43,7 +43,7 @@ signals:
     /*
      *  Emitted to tell the editor about textual positions
      */
-    void gotVars(QMap<Kernel::Tree::Id, Editor::Position> vs);
+    void gotVars(QMap<Kernel::Tree::Id, Editor::Range> vs);
 
 protected slots:
     /*  Initializes everything that Scheme needs */
@@ -101,10 +101,10 @@ signals:
      *  Forwarded signals from _Interpreter
      */
     void gotResult(QString result);
-    void gotError(QString error, Editor::Position p);
+    void gotError(QString error, Editor::Range p);
     void keywords(QString kws);
     void gotShapes(QList<Shape*> s);
-    void gotVars(QMap<Kernel::Tree::Id, Editor::Position> vs);
+    void gotVars(QMap<Kernel::Tree::Id, Editor::Range> vs);
 
     /*
      *  Emitted when the interpreter starts evaluation
