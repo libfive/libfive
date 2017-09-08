@@ -20,15 +20,19 @@ public:
 
     struct Position
     {
-        int line;
-        int start;
-        int end;
+        Position() : Position(-1, -1, -1, -1) {}
+        Position(int sr, int er, int sc, int ec) :
+            start_row(sr), end_row(er), start_col(sc), end_col(ec) {}
+
+        int start_row;
+        int end_row;
+        int start_col;
+        int end_col;
     };
 
 public slots:
     void onResult(QString result);
-    void onError(QString result, QPair<uint32_t, uint32_t> begin,
-                                 QPair<uint32_t, uint32_t> end);
+    void onError(QString result, Position p);
     void onBusy();
     void setKeywords(QString kws);
 
@@ -70,8 +74,7 @@ protected slots:
 
 protected:
     void setResult(QColor color, QString result);
-    void setError(QPair<uint32_t, uint32_t> begin,
-                  QPair<uint32_t, uint32_t> end);
+    void setError(Position p);
     QList<QTextEdit::ExtraSelection> clearError(bool set=true);
 
     QTextEdit* script;

@@ -76,12 +76,11 @@ void Editor::onResult(QString result)
     clearError();
 }
 
-void Editor::onError(QString result, QPair<uint32_t, uint32_t> start,
-                                     QPair<uint32_t, uint32_t> end)
+void Editor::onError(QString result, Position p)
 {
     spinner.stop();
     setResult(Color::red, result);
-    setError(start, end);
+    setError(p);
 }
 
 void Editor::onBusy()
@@ -110,17 +109,16 @@ QList<QTextEdit::ExtraSelection> Editor::clearError(bool set)
     return selections;
 }
 
-void Editor::setError(QPair<uint32_t, uint32_t> begin,
-                      QPair<uint32_t, uint32_t> end)
+void Editor::setError(Position p)
 {
     auto selections = clearError(false);
 
     QTextCursor c(script_doc);
-    c.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, begin.first);
-    c.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, begin.second);
-    c.movePosition(QTextCursor::Down, QTextCursor::KeepAnchor, end.first - begin.first);
+    c.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, p.start_row);
+    c.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, p.start_col);
+    c.movePosition(QTextCursor::Down, QTextCursor::KeepAnchor, p.end_row - p.start_row);
     c.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
-    c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, end.second);
+    c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, p.end_col);
 
     QTextEdit::ExtraSelection s;
     s.cursor = c;
@@ -225,8 +223,8 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
     auto comp = [&](Kernel::Tree::Id a, Kernel::Tree::Id b){
         auto& pa = vars[a];
         auto& pb = vars[b];
-        return (pa.line != pb.line) ? (pa.line < pb.line)
-                                    : (pa.start < pb.start);
+        return (pa.start_row != pb.start_row) ? (pa.start_row < pb.start_row)
+                                              : (pa.start_col < pb.start_col);
     };
     std::set<Kernel::Tree::Id, decltype(comp)> ordered(comp);
     for (auto v=vs.begin(); v != vs.end(); ++v)
@@ -246,24 +244,24 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
         // changed already in this line
         auto pos = vars.find(v.key());
         assert(pos != vars.end());
-        if (pos.value().line == line)
+        if (pos.value().start_row == line)
         {
-            pos.value().start += offset;
-            pos.value().end += offset;
+            pos.value().start_col += offset;
+            pos.value().end_col += offset;
         }
         else
         {
-            line = pos.value().line;
+            line = pos.value().start_row;
             offset = 0;
         }
 
         c.movePosition(QTextCursor::Start);
         c.movePosition(
-                QTextCursor::Down, QTextCursor::MoveAnchor, pos.value().line);
+                QTextCursor::Down, QTextCursor::MoveAnchor, pos.value().start_row);
         c.movePosition(
-                QTextCursor::Right, QTextCursor::MoveAnchor, pos.value().start);
+                QTextCursor::Right, QTextCursor::MoveAnchor, pos.value().start_col);
 
-        const auto length_before = pos.value().end - pos.value().start;
+        const auto length_before = pos.value().end_col - pos.value().start_col;
         c.movePosition(
                 QTextCursor::Right, QTextCursor::KeepAnchor, length_before);
         c.removeSelectedText();
@@ -273,7 +271,7 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
         c.insertText(str);
         auto length_after = str.length();
 
-        pos.value().end = pos.value().start + length_after;
+        pos.value().end_col = pos.value().start_col + length_after;
         offset += length_after - length_before;
     }
     c.endEditBlock();

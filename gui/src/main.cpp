@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     // Register settings and shape meta-types to be sent across threads
     qRegisterMetaType<Settings>("Settings");
     qRegisterMetaType<QList<Shape*>>("QList<Shape*>");
-    qRegisterMetaType<QPair<uint32_t,uint32_t>>("QPair<uint32_t,uint32_t>");
+    qRegisterMetaType<Editor::Position>("Editor::Position");
     qRegisterMetaType<QMap<Kernel::Tree::Id,Editor::Position>>(
             "QMap<Kernel::Tree::Id,Editor::Position>");
 

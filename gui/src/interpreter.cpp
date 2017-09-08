@@ -120,10 +120,10 @@ void _Interpreter::eval()
         }
         auto str = scm_to_locale_string(_str);
         emit(gotError(QString(str),
-                    {scm_to_uint32(scm_car(before)),
-                     scm_to_uint32(scm_cdr(before))},
-                    {scm_to_uint32(scm_car(after)),
-                     scm_to_uint32(scm_cdr(after))}));
+                    {scm_to_int(scm_car(before)),
+                     scm_to_int(scm_car(after)),
+                     scm_to_int(scm_cdr(before)),
+                     scm_to_int(scm_cdr(after))}));
         free(str);
     }
     else if (last)
@@ -167,9 +167,9 @@ void _Interpreter::eval()
                         (*vars)[id] = value;
 
                         auto vp = scm_caddr(data);
-                        var_pos[id] = {scm_to_int32(scm_car(vp)),
-                                       scm_to_int32(scm_cadr(vp)),
-                                       scm_to_int32(scm_caddr(vp))};
+                        var_pos[id] = {scm_to_int(scm_car(vp)), 0,
+                                       scm_to_int(scm_cadr(vp)),
+                                       scm_to_int(scm_caddr(vp))};
                     }
                 }
                 auto tree = scm_to_tree(scm_cdar(result));
@@ -208,8 +208,7 @@ Interpreter::Interpreter()
     connect(&interpreter, &_Interpreter::gotResult,
             &busy_timer, [&](QString){ busy_timer.stop(); });
     connect(&interpreter, &_Interpreter::gotError, &busy_timer,
-            [&](QString, QPair<uint32_t, uint32_t>,
-                         QPair<uint32_t, uint32_t>){ busy_timer.stop(); });
+            [&](QString, Editor::Position){ busy_timer.stop(); });
 
     // Forward all signals from _Interpreter (running in its own thread)
     connect(&interpreter, &_Interpreter::gotResult,

@@ -27,8 +27,7 @@ signals:
      *  Emitted when an error should be drawn in the GUI
      *  start and end are pairs of line, column
      */
-    void gotError(QString error, QPair<uint32_t, uint32_t> start,
-                                 QPair<uint32_t, uint32_t> end);
+    void gotError(QString error, Editor::Position pos);
 
     /*
      *  Emitted to pass a set of keywords (space-delimited) to
@@ -102,8 +101,7 @@ signals:
      *  Forwarded signals from _Interpreter
      */
     void gotResult(QString result);
-    void gotError(QString error, QPair<uint32_t, uint32_t> start,
-                                 QPair<uint32_t, uint32_t> end);
+    void gotError(QString error, Editor::Position p);
     void keywords(QString kws);
     void gotShapes(QList<Shape*> s);
     void gotVars(QMap<Kernel::Tree::Id, Editor::Position> vs);
