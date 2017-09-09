@@ -8,7 +8,7 @@
 ;; Shapes are defined in this pane, and rendered
 ;; on the left.  You can start with shapes from
 ;; the standard library, e.g.
-(box '(-1 -1 -1) '(1 1 0))
+(box #[-1 -1 -1] #[1 1 0])
 
 ;; Any top-level expression that evaluates to a
 ;; shape will be rendered as a mesh.  You can
