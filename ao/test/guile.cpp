@@ -41,7 +41,7 @@ TEST_CASE("make-tree")
     {
         auto result = eval("(make-tree 'var-x)");
         CAPTURE(result);
-        REQUIRE(boost::algorithm::starts_with(result, "#<tree "));
+        REQUIRE(boost::algorithm::starts_with(result, "#<<tree> "));
     }
 
     SECTION("Invalid opcode")
@@ -74,7 +74,7 @@ TEST_CASE("make-var")
 {
     auto result = eval("(make-var)");
     CAPTURE(result);
-    REQUIRE(boost::algorithm::starts_with(result, "#<tree "));
+    REQUIRE(boost::algorithm::starts_with(result, "#<<tree> "));
 }
 
 TEST_CASE("var?")
@@ -100,7 +100,7 @@ TEST_CASE("Guile overloads")
     {
         auto result = eval("(min (make-tree 'var-x) 1 2 3)");
         CAPTURE(result);
-        REQUIRE(boost::algorithm::starts_with(result, "#<tree "));
+        REQUIRE(boost::algorithm::starts_with(result, "#<<tree> "));
 
         auto err = eval("(min)");
         CAPTURE(err);

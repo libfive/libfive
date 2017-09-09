@@ -185,13 +185,18 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
 void init_ao_kernel(void*)
 {
     scm_c_eval_string(R"(
-(use-modules (system foreign))
+(use-modules (system foreign) (oop goops))
 
 (define-wrapped-pointer-type
-    tree tree? wrap-tree unwrap-tree
+    tree-ptr tree-ptr? wrap-tree-ptr unwrap-tree-ptr
     (lambda (o p)
-        (format p "#<tree 0x~x>"
-        (pointer-address (unwrap-tree o)))))
+        (format p "#<tree-ptr 0x~x>"
+        (pointer-address (unwrap-tree-ptr o)))))
+
+(define-class <tree> (<number>) (ptr #:init-value #f #:init-keyword #:ptr))
+(define (tree? t) (is-a? t <tree>))
+(define (wrap-tree t) (make <tree> #:ptr (wrap-tree-ptr t)))
+(define (unwrap-tree t) (unwrap-tree-ptr (slot-ref t 'ptr)))
 )");
 
     scm_tree_p_ = scm_c_eval_string("tree?");
