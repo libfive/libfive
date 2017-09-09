@@ -76,10 +76,10 @@ void Editor::onResult(QString result)
     clearError();
 }
 
-void Editor::onError(QString result, Range p)
+void Editor::onError(QString result, QString stack, Range p)
 {
     spinner.stop();
-    setResult(Color::red, result);
+    setResult(Color::red, result + "\n" + stack);
     setError(p);
 }
 

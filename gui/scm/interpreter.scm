@@ -1,5 +1,5 @@
 (use-modules (ice-9 sandbox) (ice-9 textual-ports) (ao kernel)
-             (rnrs io ports))
+             (rnrs io ports) (system vm frame))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -36,6 +36,19 @@
           (get-bindings '(ao csg))
           (get-bindings '(ao transforms)))
     all-pure-bindings))
+
+(define (sandbox-backtrace stack)
+  (define parent-frame
+    (let recurse ((i 4))
+      (define src (frame-source (stack-ref stack i)))
+      (if (and src (equal? (cadr src) "ice-9/sandbox.scm"))
+        i (recurse (1+ i)))))
+  (define lowest-frame
+    (let recurse ((i (1- parent-frame)))
+      (format #t "frame ~A: src ~A\n" i (frame-source (stack-ref stack i)))
+      (if (not (frame-source (stack-ref stack i)))
+        (recurse (1- i)) i)))
+  (format #t "frames: ~A to ~A\n" lowest-frame parent-frame))
 
 (define (tag-var-addresses! d addr prev)
   (cond
@@ -75,6 +88,7 @@
   (let ((mod (make-sandbox-module sandbox-bindings))
         (in (open-input-string str))
         (failed #f)
+        (stack #f)
         (prev-vars (make-hash-table)))
     (hash-map->list (lambda (k v) (hash-set! prev-vars (car v) (cadr v))) vars)
     (hash-clear! vars)
@@ -89,7 +103,7 @@
 
         (cond
           ;; If we've failed, then record a failed tag
-          (failed (list (append (list 'error before after) clause)))
+          (failed (list (append (list 'error before after) clause (list ""))))
 
           ;; If we're at the end of the stream, then sever module
           ;; and return the end of the list
@@ -108,12 +122,23 @@
                 ;; Error handling thunk
                 (lambda (key . params)
                   (set! failed #t)
-                  (list 'error before after key params))
+                  (list 'error before after key params stack))
+
                 ;; Pre-unwind handler to capture stack
                 (lambda (key . parameters)
-                  (define p (standard-output-port))
-                  (display-backtrace (make-stack #t) p 4)
-                  (flush-output-port p))
+                  (define s (make-stack #t))
+
+                  (define str (call-with-output-string (lambda (p)
+                    (display-backtrace s p 0 (- (stack-length s) 13))
+                    (flush-output-port p))))
+
+                  (sandbox-backtrace s)
+                  (newline)
+                  (display-backtrace s (current-output-port))
+                  (newline)
+                  (flush-output-port (current-output-port))
+                  (set! stack str))
+
                 )))
               (if (not failed)
                   (cons result (loop (1+ i)))

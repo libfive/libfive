@@ -32,7 +32,7 @@ public:
 
 public slots:
     void onResult(QString result);
-    void onError(QString result, Range p);
+    void onError(QString result, QString stack, Range p);
     void onBusy();
     void setKeywords(QString kws);
 

@@ -101,7 +101,9 @@ void _Interpreter::eval()
         auto key = scm_caddr(last);
         auto params = scm_cadddr(last);
 
+        auto _stack = scm_car(scm_cddddr(last));
         SCM _str = nullptr;
+
         if (scm_is_eq(key, scm_syntax_error_sym))
         {
             _str = scm_simple_format(SCM_BOOL_F, scm_syntax_error_fmt,
@@ -119,12 +121,14 @@ void _Interpreter::eval()
                         SCM_BOOL_F, scm_cadr(params), scm_caddr(params))));
         }
         auto str = scm_to_locale_string(_str);
-        emit(gotError(QString(str),
+        auto stack = scm_to_locale_string(_stack);
+        emit(gotError(QString(str), QString(stack),
                     {scm_to_int(scm_car(before)),
                      scm_to_int(scm_car(after)),
                      scm_to_int(scm_cdr(before)),
                      scm_to_int(scm_cdr(after))}));
         free(str);
+        free(stack);
     }
     else if (last)
     {
@@ -208,7 +212,7 @@ Interpreter::Interpreter()
     connect(&interpreter, &_Interpreter::gotResult,
             &busy_timer, [&](QString){ busy_timer.stop(); });
     connect(&interpreter, &_Interpreter::gotError, &busy_timer,
-            [&](QString, Editor::Range){ busy_timer.stop(); });
+            [&](QString, QString, Editor::Range){ busy_timer.stop(); });
 
     // Forward all signals from _Interpreter (running in its own thread)
     connect(&interpreter, &_Interpreter::gotResult,
