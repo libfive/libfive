@@ -23,6 +23,7 @@ static std::string eval(std::string input) {
     scm_init_guile();
     scm_init_ao_modules();
     scm_c_use_module("ao kernel");
+    scm_c_use_module("ao vec");
 
     auto str = scm_to_locale_string(
             scm_internal_catch(SCM_BOOL_T, eval_inner, &input, handler, NULL));
@@ -108,4 +109,10 @@ TEST_CASE("Guile overloads")
         auto num = eval("(min 1 2 3)");
         REQUIRE(num == "1");
     }
+}
+
+TEST_CASE("#[vector notation]")
+{
+    auto result = eval("#[  1  2.1  ]");
+    REQUIRE(result == "#[1 2.1]");
 }

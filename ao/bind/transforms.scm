@@ -1,7 +1,7 @@
-(use-modules (ao kernel))
+(use-modules (ao kernel) (ao vec))
 
 (define-public (move shape delta)
-    "move shape #(dx dy [dz])
+    "move shape #[dx dy [dz]]
     Moves the given shape in 2D or 3D space"
     (remap-shape (shape x y z)
         (- x (.x delta))
@@ -19,7 +19,7 @@
     (remap-shape (shape x y z) x z y))
 
 (define* (rotate-x shape angle #:optional center)
-    "rotate-x shape angle [#(x0 y0 z0)]
+    "rotate-x shape angle [#[x0 y0 z0]]
     Rotate the given shape by an angle in radians
     The center of rotation is 0,0,0 or specified by the optional argument"
     (when (not center) (set! center #(0 0 0)))

@@ -2,7 +2,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-class <vec2> () x y)
+(define-class <vec2> () (x #:getter .x) (y #:getter .y))
 
 (define-method (vec2 (x <number>) (y <number>))
   (let ((v (make <vec2>)))
@@ -27,6 +27,69 @@
         (* (slot-ref a 'y) b)))
 (define-method (* (a <number>) (b <vec2>)) (* b a))
 
+(define-method (- (a <vec2>) (b <vec2>))
+  (vec3 (- (slot-ref a 'x) (slot-ref b 'x))
+        (- (slot-ref a 'y) (slot-ref b 'y))))
+(define-method (- (a <vec2>) (b <number>))
+  (vec2 (- (slot-ref a 'x) b)
+        (- (slot-ref a 'y) b)))
+
+(define-method (/ (a <vec2>) (b <number>))
+  (vec2 (/ (slot-ref a 'x) b)
+        (/ (slot-ref a 'y) b)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <vec3> () (x #:getter .x) (y #:getter .y) (z #:getter .z))
+
+(define-method (write (self <vec3>) port)
+  (format port "#[~a ~a ~a]"
+    (slot-ref self 'x)(slot-ref self 'y) (slot-ref self 'z)))
+
+(define-method (vec3 (x <number>) (y <number>) (z <number>))
+  (let ((v (make <vec3>)))
+    (slot-set! v 'x x)
+    (slot-set! v 'y y)
+    (slot-set! v 'z z)
+    v))
+(define-method (vec3 (a <vec2>) (z <number>))
+  (let ((v (make <vec3>)))
+    (slot-set! v 'x (slot-ref a 'x))
+    (slot-set! v 'y (slot-ref a 'y))
+    (slot-set! v 'z z)
+    v))
+(export vec3)
+
+(define-method (+ (a <vec3>) (b <vec3>))
+  (vec3 (+ (slot-ref a 'x) (slot-ref b 'x))
+        (+ (slot-ref a 'y) (slot-ref b 'y))
+        (+ (slot-ref a 'z) (slot-ref b 'z))))
+(define-method (+ (a <vec3>) (b <number>))
+  (vec3 (+ (slot-ref a 'x) b)
+        (+ (slot-ref a 'y) b)
+        (+ (slot-ref a 'z) b)))
+(define-method (+ (a <number>) (b <vec3>)) (+ b a))
+
+(define-method (* (a <vec3>) (b <number>))
+  (vec3 (* (slot-ref a 'x) b)
+        (* (slot-ref a 'y) b)
+        (* (slot-ref a 'z) b)))
+(define-method (* (a <number>) (b <vec3>)) (* b a))
+
+(define-method (- (a <vec3>) (b <vec3>))
+  (vec3 (- (slot-ref a 'x) (slot-ref b 'x))
+        (- (slot-ref a 'y) (slot-ref b 'y))
+        (- (slot-ref a 'z) (slot-ref b 'z))))
+(define-method (- (a <vec3>) (b <number>))
+  (vec3 (- (slot-ref a 'x) b)
+        (- (slot-ref a 'y) b)
+        (- (slot-ref a 'z) b)))
+
+(define-method (/ (a <vec3>) (b <number>))
+  (vec3 (/ (slot-ref a 'x) b)
+        (/ (slot-ref a 'y) b)
+        (/ (slot-ref a 'z) b)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (read-hash-extend #\[
@@ -47,3 +110,5 @@
         (if (eq? (lookahead-char port) #\])
           (begin (read-char port) `(vec3 ,x ,y ,z))
           (error "Expected terminating #\\]"))))))
+
+(export .x .y .z)
