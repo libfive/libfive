@@ -37,18 +37,30 @@
           (get-bindings '(ao transforms)))
     all-pure-bindings))
 
-(define (sandbox-backtrace stack)
-  (define parent-frame
+(define* (sandbox-backtrace stack #:optional (port #t))
+  "Prints a clipped backtrace of an error stack
+  The error stack must be from a call to eval-sandboxed, as the
+  location of ice-9/sandbox.scm in the stack is used to filter."
+  (define parent-frame (1-
     (let recurse ((i 4))
       (define src (frame-source (stack-ref stack i)))
       (if (and src (equal? (cadr src) "ice-9/sandbox.scm"))
-        i (recurse (1+ i)))))
-  (define lowest-frame
-    (let recurse ((i (1- parent-frame)))
-      (format #t "frame ~A: src ~A\n" i (frame-source (stack-ref stack i)))
+        i (recurse (1+ i))))))
+  (define lowest-frame (1+
+    (let recurse ((i parent-frame))
       (if (not (frame-source (stack-ref stack i)))
-        (recurse (1- i)) i)))
-  (format #t "frames: ~A to ~A\n" lowest-frame parent-frame))
+        (recurse (1- i)) i))))
+  (let recurse ((i lowest-frame))
+    (if (= i parent-frame)
+      (format port "~A: ~A\n" (- i lowest-frame)
+              (car (frame-arguments (stack-ref stack i))))
+      (begin
+        (let ((s (stack-ref stack i)))
+        (format port "~A: (~A ~A)\n" (- i lowest-frame)
+                (frame-procedure-name s)
+                (frame-arguments s)))
+        (recurse (1+ i))
+        ))))
 
 (define (tag-var-addresses! d addr prev)
   (cond
@@ -126,17 +138,8 @@
 
                 ;; Pre-unwind handler to capture stack
                 (lambda (key . parameters)
-                  (define s (make-stack #t))
-
                   (define str (call-with-output-string (lambda (p)
-                    (display-backtrace s p 0 (- (stack-length s) 13))
-                    (flush-output-port p))))
-
-                  (sandbox-backtrace s)
-                  (newline)
-                  (display-backtrace s (current-output-port))
-                  (newline)
-                  (flush-output-port (current-output-port))
+                    (sandbox-backtrace (make-stack #t) p))))
                   (set! stack str))
 
                 )))

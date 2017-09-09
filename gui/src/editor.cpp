@@ -79,7 +79,7 @@ void Editor::onResult(QString result)
 void Editor::onError(QString result, QString stack, Range p)
 {
     spinner.stop();
-    setResult(Color::red, result + "\n" + stack);
+    setResult(Color::red, result + "\n\nStack trace:\n" + stack);
     setError(p);
 }
 
