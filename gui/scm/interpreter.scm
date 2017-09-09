@@ -32,6 +32,7 @@
 
 (define-public sandbox-bindings
   (append (list (cons '(ao kernel) ao-bindings)
+          (get-bindings '(ao vec))
           (get-bindings '(ao shapes))
           (get-bindings '(ao csg))
           (get-bindings '(ao transforms)))
