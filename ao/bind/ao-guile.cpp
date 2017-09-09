@@ -338,10 +338,16 @@ void init_ao_shapes(void*)
     scm_c_eval_string(R"(AO_GUILE_SHAPES)");
 }
 
+void init_ao_vec(void*)
+{
+    scm_c_eval_string(R"(AO_GUILE_VEC)");
+}
+
 void scm_init_ao_modules()
 {
     scm_c_define_module("ao kernel", init_ao_kernel, NULL);
     scm_c_define_module("ao csg", init_ao_csg, NULL);
     scm_c_define_module("ao transforms", init_ao_transforms, NULL);
     scm_c_define_module("ao shapes", init_ao_shapes, NULL);
+    scm_c_define_module("ao vec", init_ao_vec, NULL);
 }
