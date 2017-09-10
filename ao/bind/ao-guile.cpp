@@ -214,89 +214,51 @@ void init_ao_kernel(void*)
 
     // Overload all of the arithmetic operations with tree-based substitutes!
     scm_c_eval_string(R"(
-(use-modules (srfi srfi-1))
+(define (ensure-tree t)
+  (cond ((tree? t) t)
+        ((number? t) (number->tree t))
+        (else (scm-error 'wrong-type-arg #f
+               "Wrong argument ~A for ensure-tree" (list t) t))))
 
-(define (make-commutative func sym default)
-    (lambda (. args)
-        (define (folder default args)
-            (fold (lambda (e p) (make-tree sym e p)) default args))
-        (cond ((not (any tree? args)) (apply func args))
-              ((nil? default)
-                (when (= 0 (length args))
-                    (scm-error 'wrong-number-of-args #f
-                         "Wrong number of arguments to ~A"
-                         (list sym) #f))
-                (folder (car args) (cdr args)))
-                (else (folder default args)))))
+(define-macro (overload func sym) `(begin
+  (define-method (,func (a <number>) (b <tree>)) (,func (ensure-tree a) b))
+  (define-method (,func (a <tree>) (b <number>)) (,func a (ensure-tree b)))
+  (define-method (,func (a <tree>) (b <tree>)) (make-tree ,sym a b)))
+)
 
-(define (make-semicommutative func sym inverse)
-    (lambda (. args)
-        (if (any tree? args)
-            (if (> (length args) 1)
-                (make-tree sym (car args) (apply inverse (cdr args)))
-                (make-tree sym (inverse) (car args)))
-            (apply func args))))
+(overload + 'add)
+(overload * 'mul)
+(overload min 'min)
+(overload max 'max)
+(overload - 'sub)
+(overload / 'div)
+(overload atan 'atan2)
+(overload modulo 'mod)
 
-(define (make-unary func sym)
-    (lambda (a) (if (number? a) (func a) (make-tree sym a))))
+(define-method (expt (a <tree>) (b <fraction>))
+  (when (not (rational? b))
+    (scm-error 'wrong-type-arg #f
+        "RHS of exponentiation must be rational, not ~A"
+        (list b) #f))
+  (make-tree 'nth-root (make-tree 'pow a (numerator b))
+                       (denominator b)))
 
-(define-syntax-rule (overload-commutative func sym default)
-    (define func (make-commutative func sym default)))
-
-(define-syntax-rule (overload-semicommutative func sym inverse)
-    (define func (make-semicommutative func sym inverse)))
-
-(define-syntax-rule (overload-unary func sym)
-    (define func (make-unary func sym)))
-
-(overload-commutative + 'add 0)
-(overload-commutative * 'mul 1)
-(overload-commutative min 'min #nil)
-(overload-commutative max 'max #nil)
-
-(overload-semicommutative - 'sub +)
-(overload-semicommutative / 'div *)
-
-(overload-unary sqrt 'sqrt)
-(overload-unary sin 'sin)
-(overload-unary cos 'cos)
-(overload-unary tan 'tan)
-(overload-unary asin 'asin)
-(overload-unary acos 'acos)
-(overload-unary exp 'exp)
+(define-method (/ (a <tree>)) (make-tree 'div (ensure-tree 1) a))
+(define-method (- (a <tree>)) (make-tree 'neg a))
+(define-method (sqrt (a <tree>)) (make-tree 'sqrt a))
+(define-method (sin (a <tree>)) (make-tree 'sin a))
+(define-method (cos (a <tree>)) (make-tree 'cos a))
+(define-method (tan (a <tree>)) (make-tree 'tan a))
+(define-method (asin (a <tree>)) (make-tree 'asin a))
+(define-method (acos (a <tree>)) (make-tree 'acos a))
+(define-method (exp (a <tree>)) (make-tree 'exp a))
+(define-method (abs (a <tree>)) (max a (- a)))
+(define-method (atan (a <tree>)) (make-tree 'atan a))
 
 (define (square f)
     (if (number? f) (* f f) (make-tree 'square f)))
 
-(define $abs abs)
-(define* (abs a)
-  (if (number? a) ($abs a) (max a (- a))))
-
-(define $atan atan)
-(define* (atan a #:optional b)
-    (if b
-        (if (every number? (list a b))
-            ($atan a b)
-            (make-tree 'atan2 a b))
-        (if (number? a) ($atan a) (make-tree 'atan a))))
-
-(define $expt expt)
-(define (expt a b)
-    (if (tree? a)
-        (begin
-            (when (not (rational? b))
-                (scm-error 'wrong-type-arg #f
-                    "RHS of exponentiation must be rational, not ~A"
-                    (list b) #f))
-            (make-tree 'nth-root (make-tree 'pow a (numerator b))
-                                 (denominator b)))
-        ($expt a b)))
-
-(define $modulo modulo)
-(define (modulo a b)
-    (if (every number? (list a b))
-        ($modulo a b)
-        (make-tree 'mod a b)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-syntax-rule (lambda-shape vars ...)
   ((lambda vars ...) (make-tree 'var-x) (make-tree 'var-y) (make-tree 'var-z)))
@@ -310,10 +272,8 @@ void init_ao_kernel(void*)
                   (lambda-shape vars z)))
 
 ;; These are "safe" bindings that can be used in the sandbox
-(define ao-bindings '(+ * min max - /
-                      sqrt abs sin cos tan asin acos exp square atan expt mod
-                      lambda-shape define-shape ao-bindings remap-shape))
-(eval (cons 'export! ao-bindings) (interaction-environment))
+(define ao-bindings '(square lambda-shape define-shape ao-bindings remap-shape))
+(eval (cons 'export ao-bindings) (interaction-environment))
  )");
 
     scm_c_export(

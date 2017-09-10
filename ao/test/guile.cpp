@@ -104,7 +104,7 @@ TEST_CASE("Guile overloads")
 
         auto err = eval("(min)");
         CAPTURE(err);
-        REQUIRE(boost::algorithm::starts_with(err, "wrong-number-of-args"));
+        REQUIRE(boost::algorithm::starts_with(err, "goops-error"));
 
         auto num = eval("(min 1 2 3)");
         REQUIRE(num == "1");
