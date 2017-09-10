@@ -1,5 +1,7 @@
 (use-modules (ao kernel) (ao vec))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Translation
 (define-public (move shape delta)
     "move shape #[dx dy [dz]]
     Moves the given shape in 2D or 3D space"
@@ -8,28 +10,129 @@
         (- y (.y delta))
         (- z (catch #t (lambda ()(.z delta)) (lambda (. _) 0)))))
 
-(define-public (reflect-xy shape)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Reflections
+(define* (reflect-x shape #:optional (x0 0))
+    "reflect-x shape [x0]
+    Reflect the given shape about the x origin or an optional offset"
+    (remap-shape (shape x y z) (- (* 2 x0) x) y z))
+
+(define* (reflect-y shape #:optional (y0 0))
+    "reflect-y shape [y0]
+    Reflect the given shape about the y origin or an optional offset"
+    (remap-shape (shape x y z) x (- (* 2 y0) y) z))
+
+(define* (reflect-z shape #:optional (z0 0))
+    "reflect-z shape [z0]
+    Reflect the given shape about the z origin or an optional offset"
+    (remap-shape (shape x y z) x y (- (* 2 z0) z)))
+
+(define* (reflect-xy shape)
     "reflect-xy shape
     Moves the given shape across the plane Y=X"
     (remap-shape (shape x y z) y x z))
 
-(define-public (reflect-yz shape)
+(define* (reflect-yz shape)
     "reflect-xy shape
     Moves the given shape across the plane Y=Z"
     (remap-shape (shape x y z) x z y))
 
-(define* (rotate-x shape angle #:optional center)
+(export reflect-x reflect-y reflect-z reflect-xy reflect-yz)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Scaling
+(define* (scale-x shape sx #:optional (x0 0))
+    "scale-x shape sx [x0]
+    Scales a shape by sx on the x axis about 0 or an optional offset"
+    (remap-shape (shape x y z) (+ x0 (/ (- x x0) sx)) y z))
+
+(define* (scale-y shape sy #:optional (y0 0))
+    "scale-y shape sy [y0]
+    Scales a shape by sy on the y axis about 0 or an optional offset"
+    (remap-shape (shape x y z) x (+ y0 (/ (- y y0) sy)) z))
+
+(define* (scale-z shape sz #:optional (z0 0))
+    "scale-z shape sz [z0]
+    Scales a shape by sz on the z axis about 0 or an optional offset"
+    (remap-shape (shape x y z) x y (+ z0 (/ (- z z0) sz))))
+
+(export scale-x scale-y scale-z)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Rotation
+(define* (rotate-x shape angle #:optional (center #[0 0 0]))
     "rotate-x shape angle [#[x0 y0 z0]]
     Rotate the given shape by an angle in radians
-    The center of rotation is 0,0,0 or specified by the optional argument"
+    The center of rotation is #[0 0 0] or specified by the optional argument"
     (when (not center) (set! center #(0 0 0)))
-    (let ((centered (move shape (list (- (.x center))
-                                      (- (.y center))
-                                      (- (.z center)))))
+    (let ((centered (move shape (- center)))
           (ca (cos angle))
           (sa (sin angle)))
       (move (remap-shape (centered x y z)
             x
             (+ (* ca y) (* sa z))
             (+ (* (- sa) y) (* ca z))) center)))
-(export rotate-x)
+
+(define* (rotate-y shape angle #:optional (center #[0 0 0]))
+    "rotate-y shape angle [#[x0 y0 z0]]
+    Rotate the given shape by an angle in radians
+    The center of rotation is #[0 0 0] or specified by the optional argument"
+    (when (not center) (set! center #(0 0 0)))
+    (let ((centered (move shape (- center)))
+          (ca (cos angle))
+          (sa (sin angle)))
+      (move (remap-shape (centered x y z)
+            (+ (* ca x) (* sa z))
+            y
+            (+ (* (- sa) x) (* ca z))) center)))
+
+(define* (rotate-z shape angle #:optional (center #[0 0 0]))
+    "rotate-z shape angle [#[x0 y0 z0]]
+    Rotate the given shape by an angle in radians
+    The center of rotation is #[0 0 0] or specified by the optional argument"
+    (when (not center) (set! center #(0 0 0)))
+    (let ((centered (move shape (- center)))
+          (ca (cos angle))
+          (sa (sin angle)))
+      (move (remap-shape (centered x y z)
+            (+ (* ca x) (* sa y))
+            (+ (* (- sa) x) (* ca y))
+            z) center)))
+
+(define rotate rotate-z)
+(export rotate-x rotate-y rotate-z rotate)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Distortions
+(define* (taper-x-y shape base h scale #:optional (base-scale 1))
+    "taper-x-y shape #[x0 y0] height scale [base-scale]
+    Tapers a shape along the x axis as a function of y
+    width = base-scale at base
+    width = scale at base + #[0 h]"
+    (move (remap-shape ((move shape (- base)) x y z)
+        (* x (/ h (+ (* scale y) (* base-scale (- h y)))))
+         y z) base))
+(export taper-x-y)
+
+(define* (taper-xy-z shape base h scale #:optional (base-scale 1))
+    "taper-xy-z shape #[x0 y0 z0] height scale [base-scale]
+    Tapers a shape in the xy plane as a function of z
+    width = base-scale at base
+    width = scale at base + #[0 0 h]"
+    (define (s z) (/ h (+ (* scale z) (* base-scale (- h z)))))
+    (move (remap-shape ((move shape (- base)) x y z)
+        (* x (s z))
+        (* y (s z))
+        z) base))
+(export taper-xy-z)
+
+(define* (shear-x-y shape base h offset #:optional (base-offset 0))
+    "shear-x-y shape #[x0 y0] height offset [base-offset]
+    Shears a shape on the x axis as a function of y
+    offset = base-offset at base.y
+    offset = offset = base.y + h"
+    (remap-shape (shape x y z)
+        (let ((f (/ (- y (.y base)) h)))
+          (- x (* base-offset (- 1 f)) (* offset f)))
+        y z))
+(export shear-x-y)

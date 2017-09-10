@@ -33,6 +33,9 @@
 (define-method (- (a <vec2>) (b <number>))
   (vec2 (- (slot-ref a 'x) b)
         (- (slot-ref a 'y) b)))
+(define-method (- (a <vec2>))
+  (vec2 (- (slot-ref a 'x))
+        (- (slot-ref a 'y))))
 
 (define-method (/ (a <vec2>) (b <number>))
   (vec2 (/ (slot-ref a 'x) b)
@@ -84,6 +87,10 @@
   (vec3 (- (slot-ref a 'x) b)
         (- (slot-ref a 'y) b)
         (- (slot-ref a 'z) b)))
+(define-method (- (a <vec3>))
+  (vec3 (- (slot-ref a 'x))
+        (- (slot-ref a 'y))
+        (- (slot-ref a 'z))))
 
 (define-method (/ (a <vec3>) (b <number>))
   (vec3 (/ (slot-ref a 'x) b)
