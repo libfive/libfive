@@ -28,7 +28,7 @@
 (define-method (* (a <number>) (b <vec2>)) (* b a))
 
 (define-method (- (a <vec2>) (b <vec2>))
-  (vec3 (- (slot-ref a 'x) (slot-ref b 'x))
+  (vec2 (- (slot-ref a 'x) (slot-ref b 'x))
         (- (slot-ref a 'y) (slot-ref b 'y))))
 (define-method (- (a <vec2>) (b <number>))
   (vec2 (- (slot-ref a 'x) b)
@@ -89,6 +89,12 @@
   (vec3 (/ (slot-ref a 'x) b)
         (/ (slot-ref a 'y) b)
         (/ (slot-ref a 'z) b)))
+
+(define-method (cross (a <vec3>) (b <vec3>))
+  (vec3 (- (* (.y a) (.z b)) (* (.z a) (.y b)))
+        (- (* (.z a) (.x b)) (* (.x a) (.z b)))
+        (- (* (.x a) (.y b)) (* (.y a) (.x b)))))
+(export cross)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
