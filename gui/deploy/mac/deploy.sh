@@ -2,15 +2,19 @@
 set -x -e
 
 EXE=Studio
-APP=gui/$EXE.app
+APP=$EXE.app
 
 VERSION=`git describe --exact-match --tags || echo "($(git rev-parse --abbrev-ref HEAD))"`
 VERSION=`echo $VERSION|sed s:/:-:g`
 
 cd ../../../build
-rm -rf $APP
+rm -rf $APP gui/$APP
 ninja clean
 ninja
+
+# Copy to a new location before modifying, so that the built app doesn't
+# get modified and future builds don't misbehave due to duplicate frameworks
+cp -r gui/$APP $APP
 
 # Pull out framework paths info with otool
 MACDEPLOYQT=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:\(.*\)lib/QtCore.*:\1/bin/macdeployqt:gp"`
@@ -56,7 +60,7 @@ cp -r $GUILE_SCM guile/scm/
 cp -r $GUILE_CCACHE guile/ccache/
 
 # Update release number in Info.plist
-cd ../../../..
+cd ../../..
 cp ../gui/deploy/mac/Info.plist $APP/Contents/Info.plist
 sed -i "" "s:0\.0\.0:$VERSION:g" $APP/Contents/Info.plist
 
@@ -75,8 +79,8 @@ rm -rf $EXE $EXE.dmg
 mkdir $EXE
 cp ../README.md ./$EXE/README.txt
 cp -r ../gui/examples ./$EXE/examples
-cp -R $APP ./$EXE
-touch $EXE/.Trash
+mv $APP ./$EXE
+mkdir $EXE/.Trash
 hdiutil create $EXE.dmg -volname "$EXE $VERSION" -srcfolder $EXE
 rm -rf $EXE
 mv $EXE.dmg ..
