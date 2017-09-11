@@ -15,7 +15,7 @@ cd build
 cmake -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt5/5.7.0  ..
 make
 ```
-Adjust based on your Qt installation path, and use `ninja` for faster builds.
+Adjust based on your Qt installation path, and consider using [`ninja`](https://ninja-build.org/) for faster builds.
 
 # License
 (c) 2015-2017 Matthew Keeter; all rights reserved.
