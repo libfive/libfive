@@ -20,7 +20,7 @@
 
 (define cutout (recurse 0 0 2/3 2))
 (define menger
-  (difference (box '(-2 -2 -2) '(2 2 2))
+  (difference (box #[-2 -2 -2] #[2 2 2])
     cutout
     (reflect-yz cutout)
     (reflect-xy (reflect-yz cutout))
