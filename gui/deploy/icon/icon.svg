@@ -21,25 +21,13 @@
      id="defs4">
     <linearGradient
        inkscape:collect="always"
-       id="linearGradient4363">
-      <stop
-         style="stop-color:#ffffff;stop-opacity:1;"
-         offset="0"
-         id="stop4365" />
-      <stop
-         style="stop-color:#d9d9d9;stop-opacity:1"
-         offset="1"
-         id="stop4367" />
-    </linearGradient>
-    <linearGradient
-       inkscape:collect="always"
        id="linearGradient4281">
       <stop
-         style="stop-color:#1c40b7;stop-opacity:1;"
+         style="stop-color:#073642;stop-opacity:1"
          offset="0"
          id="stop4283" />
       <stop
-         style="stop-color:#193388;stop-opacity:1"
+         style="stop-color:#002b36;stop-opacity:1"
          offset="1"
          id="stop4285" />
     </linearGradient>
@@ -80,11 +68,11 @@
        inkscape:collect="always"
        id="linearGradient4371">
       <stop
-         style="stop-color:#ffdd3c;stop-opacity:1;"
+         style="stop-color:#fdf6e3;stop-opacity:1"
          offset="0"
          id="stop4373" />
       <stop
-         style="stop-color:#e5c736;stop-opacity:1"
+         style="stop-color:#eee8d5;stop-opacity:1"
          offset="1"
          id="stop4375" />
     </linearGradient>
@@ -116,12 +104,12 @@
     </filter>
     <linearGradient
        inkscape:collect="always"
-       xlink:href="#linearGradient4363"
+       xlink:href="#linearGradient4371"
        id="linearGradient4483"
-       x1="15.22285"
-       y1="776.73889"
-       x2="477.45639"
-       y2="776.73889"
+       x1="254.31374"
+       y1="611.01099"
+       x2="305.93466"
+       y2="955.21509"
        gradientUnits="userSpaceOnUse" />
   </defs>
   <sodipodi:namedview
@@ -132,7 +120,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.828125"
-     inkscape:cx="229.59587"
+     inkscape:cx="53.293983"
      inkscape:cy="229.79504"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
