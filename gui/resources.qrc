@@ -8,7 +8,6 @@
         <file>gl/bars.frag</file>
 
         <file>examples/tutorial.ao</file>
-        <file>scm/interpreter.scm</file>
     </qresource>
 </RCC>
 

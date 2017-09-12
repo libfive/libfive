@@ -9,13 +9,6 @@ _Interpreter::_Interpreter()
     moveToThread(&thread);
 }
 
-static void init_interpreter(void*)
-{
-    QFile i(":/scm/interpreter.scm");
-    i.open(QIODevice::ReadOnly);
-    scm_c_eval_string(i.readAll().constData());
-}
-
 void _Interpreter::init()
 {
     // Modify environmental variables to use local Guile path
@@ -29,12 +22,8 @@ void _Interpreter::init()
     scm_init_ao_modules();
     scm_c_use_module("ao kernel");
 
-    // Initialize the interpreter module, which includes a variety of
-    // helpful functions (including eval-sandboxed)
-    scm_c_define_module("interpreter", init_interpreter, NULL);
-
     scm_eval_sandboxed = scm_c_eval_string(R"(
-(use-modules (interpreter))
+(use-modules (ao sandbox))
 eval-sandboxed
 )");
 
@@ -159,7 +148,7 @@ void _Interpreter::eval()
                     vars.reset(new std::map<Kernel::Tree::Id, float>);
 
                     auto vs = scm_c_eval_string(R"(
-                        (use-modules (interpreter))
+                        (use-modules (ao sandbox))
                         (hash-map->list (lambda (k v) v) vars) )");
 
                     for (auto v = vs; !scm_is_null(v); v = scm_cdr(v))
