@@ -133,4 +133,12 @@ TEST_CASE("eval-sandboxed")
         REQUIRE(boost::algorithm::starts_with(result,
             "((valid . #<unspecified>) (valid . #<<tree>"));
     }
+
+    SECTION("Error on single line")
+    {
+        auto result = eval("(eval-sandboxed \"(+ 1 2 'omg)\")");
+        CAPTURE(result);
+        REQUIRE(boost::algorithm::starts_with(result,
+            "((error (0 . 0)"));
+    }
 }
