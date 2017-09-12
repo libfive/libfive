@@ -1,7 +1,7 @@
 (define (recurse x y scale i)
   (define base
-    (rectangle (list (- x scale) (- y scale))
-               (list (+ x scale) (+ y scale))))
+    (rectangle (vec2 (- x scale) (- y scale))
+               (vec2 (+ x scale) (+ y scale))))
   (if (= i 0)
     base
     (let ((j (- i 1))
