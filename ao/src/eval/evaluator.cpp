@@ -310,11 +310,11 @@ Feature Evaluator::push(const Feature& f)
             {
                 if (f.hasEpsilon(c.id))
                 {
-                    out.push_raw(*itr, f.getEpsilon(c.id));
+                    out.pushRaw(*itr, f.getEpsilon(c.id));
                 }
                 else
                 {
-                    out.push_choice_raw(*itr);
+                    out.pushChoiceRaw(*itr);
                 }
 
                 if (itr->choice == 0)
@@ -502,7 +502,7 @@ std::list<Feature> Evaluator::featuresAt(const Eigen::Vector3f& p)
                 if (itr->a == itr->b)
                 {
                     auto fa = f_;
-                    fa.push_choice({itr->id, 0});
+                    fa.pushChoice({itr->id, 0});
                     todo.push_back(fa);
                     ambiguous = true;
                 }

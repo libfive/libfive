@@ -46,18 +46,18 @@ public:
     /*
      *  Inserts a choice without any checking
      */
-    void push_raw(Choice c, Eigen::Vector3d v);
+    void pushRaw(Choice c, Eigen::Vector3d v);
 
     /*
      *  Inserts a choice without an associated direction
      *  This is useful to collapse cases like min(a, a)
      */
-    void push_choice(Choice c);
+    void pushChoice(Choice c);
 
     /*
      *  Appends a choice to the end of the list
      */
-    void push_choice_raw(Choice c);
+    void pushChoiceRaw(Choice c);
 
     /*
      *  Returns the epsilon associated with a particular choice
@@ -71,6 +71,12 @@ public:
         { return _epsilons.find(i) != _epsilons.end(); }
 
 protected:
+    /*
+     *  Versions of isCompatible and push when e is known to be normalized
+     */
+    bool isCompatibleNorm(Eigen::Vector3d e) const;
+    bool pushNorm(Eigen::Vector3d e, Choice choice);
+
     typedef enum { NOT_PLANAR, PLANAR_FAIL, PLANAR_SUCCESS } PlanarResult;
     PlanarResult checkPlanar(Eigen::Vector3d v) const;
 

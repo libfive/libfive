@@ -4,15 +4,12 @@ namespace Kernel {
 
 bool Feature::isCompatible(Eigen::Vector3d e) const
 {
-    {   // Normalize based on vector length
-        const auto norm = e.norm();
-        if (norm == 0)
-        {
-            return false;
-        }
-        e /= norm;
-    }
+    const auto norm = e.norm();
+    return (norm == 0) ? false : isCompatibleNorm(e / norm);
+}
 
+bool Feature::isCompatibleNorm(Eigen::Vector3d e) const
+{
     if (epsilons.size() == 0)
     {
         return true;
@@ -25,7 +22,7 @@ bool Feature::isCompatible(Eigen::Vector3d e) const
     // Return early if the epsilon is already in the list
     for (const auto& i : epsilons)
     {
-        if (e == i)
+        if (e.dot(i) > 1 - 1e-8)
         {
             return true;
         }
@@ -89,7 +86,7 @@ bool Feature::isCompatible(Eigen::Vector3d e) const
     return false;
 }
 
-void Feature::push_raw(Choice c, Eigen::Vector3d v)
+void Feature::pushRaw(Choice c, Eigen::Vector3d v)
 {
     v.normalize();
 
@@ -98,28 +95,33 @@ void Feature::push_raw(Choice c, Eigen::Vector3d v)
     _epsilons[c.id] = v;
 }
 
-void Feature::push_choice_raw(Choice c)
+void Feature::pushChoiceRaw(Choice c)
 {
     choices.push_back(c);
 }
 
-void Feature::push_choice(Choice c)
+void Feature::pushChoice(Choice c)
 {
     choices.push_front(c);
 }
 
 bool Feature::push(Eigen::Vector3d e, Choice choice)
 {
-    if (isCompatible(e))
+    const auto norm = e.norm();
+    return (norm == 0) ? false : pushNorm(e / norm, choice);
+}
+
+bool Feature::pushNorm(Eigen::Vector3d e, Choice choice)
+{
+    if (isCompatibleNorm(e))
     {
         choices.push_front(choice);
         _epsilons[choice.id] = e;
 
         // Store the epsilon if it isn't already present
-        e.normalize();
-        for (auto i : epsilons)
+        for (auto& i : epsilons)
         {
-            if (e == i)
+            if (e.dot(i) > 1 - 1e-8)
             {
                 return true;
             }

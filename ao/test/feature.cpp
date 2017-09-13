@@ -35,6 +35,15 @@ TEST_CASE("Feature::push")
         REQUIRE(b.push({-1, 1, 1}) == false);
         REQUIRE(b.push({1, -1, -1}) == true);
     }
+
+    SECTION("Fun with numerical instability")
+    {
+        Feature a;
+        auto s = sqrt(2);
+        REQUIRE(a.push({s,  0, -s}) == true);
+        REQUIRE(a.push({s,  0,  s}) == true);
+        REQUIRE(a.push({1, 0, -1}) == true);
+    }
 }
 
 TEST_CASE("Feature::isCompatible")
