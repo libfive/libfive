@@ -1,3 +1,30 @@
+# Disclaimer
+This generation of Ao is not yet ready for mass consumption.
+
+Please enjoy it responsibly and refrain from posting it to the wider web.
+
+# About
+Ao is a framework for solid modeling using
+[functional representations](https://en.wikipedia.org/wiki/Function_representation).
+
+It includes several layers, ranging from infrastructure to GUI:
+
+- `libao-kernel` is a shared library to build, manipulate, and render f-reps.
+A great deal of work has gone into the meshing algorithm,
+which produces watertight, manifold,
+hierarchical, feature-preserving triangle meshes.
+The library is written in C++ and exposes a C API in `ao/ao.h`.
+- `libao-guile` is a [Guile](https://www.gnu.org/software/guile/)
+binding to `libao-kernel`.
+It exposes a high-level API to construct shapes,
+and includes a standard library
+of shapes, transforms, and CSG operations.
+- Studio is a GUI application in the style of
+[OpenSCAD](http://www.openscad.org/)
+which wraps `libao-guile` and allows for live-coding of solid models.
+It also includes direct modeling-style interactions, where the user can push and
+pull on the model's surface to change variables in the script.
+
 # Building
 ## Dependencies
 ### Geometry Kernel
@@ -23,14 +50,14 @@ Adjust based on your Qt installation path, and consider using [`ninja`](https://
 This project will eventually be released under an open-source license,
 something like
 - LGPL for `ao-kernel`,
-- GPL for `guile-ao-kernel` and `Studio`
+- GPL for `guile-ao` and `Studio`
 and an option for commercial licensing.
 
 Stay tuned for further details.
 
 # Using the standalone Guile module
 ```
-scheme@(guile-user)> (load-extension "ao/bind/libguile-ao-kernel" "scm_init_ao_modules")
+scheme@(guile-user)> (load-extension "ao/bind/libguile-ao" "scm_init_ao_modules")
 scheme@(guile-user)> (use-modules (ao csg) (ao transforms) (ao shapes))
 ```
 

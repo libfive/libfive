@@ -19,7 +19,7 @@ set(LIBS ao-kernel)
 
 if (GUILE_FOUND)
     set(SRCS ${SRCS} guile.cpp)
-    set(LIBS ${LIBS} guile-ao-kernel)
+    set(LIBS ${LIBS} guile-ao)
 endif(GUILE_FOUND)
 
 add_executable(ao-test ${SRCS})

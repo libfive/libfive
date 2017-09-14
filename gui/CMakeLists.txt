@@ -52,7 +52,7 @@ else()
 endif()
 
 target_include_directories(Studio PUBLIC include)
-target_link_libraries(Studio guile-ao-kernel
+target_link_libraries(Studio guile-ao
     Qt5::Widgets
     Qt5::Gui
     Qt5::OpenGL
