@@ -4,6 +4,7 @@
 const int Shape::MESH_DIV_EMPTY;
 const int Shape::MESH_DIV_ABORT;
 const int Shape::MESH_DIV_NEW_VARS;
+const int Shape::MESH_DIV_NEW_VARS_SMALL;
 
 Shape::Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
                                                       float>> vars)
@@ -31,11 +32,23 @@ bool Shape::updateFrom(const Shape* other)
 bool Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
 {
     bool changed = false;
+
+    // If all of the variable changes are small (< 1e-6), then this is
+    // probably an update caused by a script re-evaluation, where the
+    // textual form of the float is slightly different from the dragged
+    // value.  In this case, we want to render at div = 0; otherwise, we
+    // see a visual glitch when the script re-evaluates after a drag.
+    int div = MESH_DIV_NEW_VARS_SMALL;
+
     for (auto& v : vs)
     {
         auto va = vars->find(v.first);
         if (va != vars->end() && va->second != v.second)
         {
+            if (fabs(va->second - v.second) > 1e-6)
+            {
+                div = MESH_DIV_NEW_VARS;
+            }
             changed = true;
             va->second = v.second;
         }
@@ -51,7 +64,7 @@ bool Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
 
         // Start a special render operation that uses a flag in the div
         // field that tells the system load new var values before starting
-        startRender({next.first, MESH_DIV_NEW_VARS});
+        startRender({next.first, div});
     }
 
     return changed;
@@ -164,13 +177,14 @@ void Shape::startRender(QPair<Settings, int> s)
     }
     else
     {
-        if (s.second == MESH_DIV_NEW_VARS)
+        if (s.second == MESH_DIV_NEW_VARS ||
+            s.second == MESH_DIV_NEW_VARS_SMALL)
         {
             for (auto& e : es)
             {
                 e.updateVars(*vars);
             }
-            s.second = default_div;
+            s.second = (s.second == MESH_DIV_NEW_VARS) ? default_div : 0;
         }
 
         target_div = s.second;
@@ -263,7 +277,8 @@ void Shape::onFutureFinished()
     {
         QObject::deleteLater();
     }
-    else if (next.second >= 0 || next.second == MESH_DIV_NEW_VARS)
+    else if (next.second >= 0 || next.second == MESH_DIV_NEW_VARS
+                              || next.second == MESH_DIV_NEW_VARS_SMALL)
     {
         startRender(next);
     }

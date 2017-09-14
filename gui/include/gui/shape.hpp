@@ -136,6 +136,7 @@ protected:
     const static int MESH_DIV_EMPTY=-1;
     const static int MESH_DIV_ABORT=-2;
     const static int MESH_DIV_NEW_VARS=-3;
+    const static int MESH_DIV_NEW_VARS_SMALL=-4;
 
     int default_div=MESH_DIV_EMPTY;
     int target_div=MESH_DIV_EMPTY;
