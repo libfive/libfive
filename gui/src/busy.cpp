@@ -38,12 +38,15 @@ void Busy::initializeGL()
 
 void Busy::show()
 {
-    timer.start(1000/60);
-    auto anim = new QPropertyAnimation(this, "fade");
-    anim->setDuration(100);
-    anim->setStartValue(0.0);
-    anim->setEndValue(1.0);
-    anim->start(QPropertyAnimation::DeleteWhenStopped);
+    if (!timer.isActive())
+    {
+        timer.start(1000/60);
+        auto anim = new QPropertyAnimation(this, "fade");
+        anim->setDuration(100);
+        anim->setStartValue(0.0);
+        anim->setEndValue(1.0);
+        anim->start(QPropertyAnimation::DeleteWhenStopped);
+    }
 }
 
 void Busy::hide()
