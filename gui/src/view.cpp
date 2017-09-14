@@ -35,6 +35,7 @@ void View::setShapes(QList<Shape*> new_shapes)
     }
 
     // Erase all existing shapes that aren't in the new_shapes list
+    bool vars_changed = false;
     for (auto itr=shapes.begin(); itr != shapes.end(); /* no update */ )
     {
         auto n = new_shapes_map.find((*itr)->id());
@@ -46,14 +47,14 @@ void View::setShapes(QList<Shape*> new_shapes)
         }
         else
         {
-            (*itr)->updateFrom(n->second);
+            vars_changed |= (*itr)->updateFrom(n->second);
             new_shapes_map.erase(n);
             ++itr;
         }
     }
 
     // Start up the busy spinner
-    if (new_shapes_map.size())
+    if (new_shapes_map.size() || vars_changed)
     {
         busy.show();
     }

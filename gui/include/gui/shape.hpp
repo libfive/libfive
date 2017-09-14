@@ -49,14 +49,18 @@ public:
     /*
      *  Updates variables from another Shape
      *  (which must point to the same Tree)
+     *
+     *  Returns true if variable values have changed.
      */
-    void updateFrom(const Shape* other);
+    bool updateFrom(const Shape* other);
 
     /*
      *  Updates variables in the Evaluator, scheduling a new
      *  (min-resolution) render if things have changed
+     *
+     *  Returns true if variable values have changed.
      */
-    void updateVars(const std::map<Kernel::Tree::Id, float>& vars);
+    bool updateVars(const std::map<Kernel::Tree::Id, float>& vars);
 
     /*
      *  Checks to see whether this shape has attached vars
