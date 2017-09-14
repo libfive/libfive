@@ -111,5 +111,5 @@ protected:
     QVector3D drag_start;
     QVector3D drag_dir;
     QScopedPointer<Kernel::Evaluator> drag_eval;
-    Shape* drag_target;
+    Shape* drag_target=nullptr;
 };

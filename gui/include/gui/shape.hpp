@@ -81,8 +81,19 @@ public:
     std::shared_ptr<std::map<Kernel::Tree::Id, float>> getVars() const
     { return vars; }
 
+    /*
+     *  Sets drag state and redraws as necessary
+     */
+    void setDragValid(bool happy);
+
+    /*
+     *  Sets grabbed and redraws as necessary
+     */
+    void setGrabbed(bool g);
+
 signals:
     void gotMesh();
+    void redraw();
 
 public slots:
     void deleteLater();
@@ -92,6 +103,9 @@ protected slots:
 
 protected:
     void startRender(QPair<Settings, int> s);
+
+    bool grabbed=false;
+    bool drag_valid=true;
 
     Kernel::Mesh* renderMesh(QPair<Settings, int> s);
     QFuture<Kernel::Mesh*> mesh_future;

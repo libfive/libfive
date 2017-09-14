@@ -2,10 +2,11 @@
 
 in vec3 ec_pos;
 out vec4 fragColor;
+uniform vec3 shade;
 
 void main() {
-    vec3 base3 = vec3(0.99, 0.96, 0.89);
-    vec3 base02 = vec3(0.03, 0.21, 0.26);
+    vec3 base3 = vec3(0.99, 0.96, 0.89) * shade;
+    vec3 base02 = vec3(0.03, 0.21, 0.26) * shade;
 
     // Per-face flat normals
     vec3 ec_normal = cross(dFdx(ec_pos), dFdy(ec_pos));

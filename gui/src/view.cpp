@@ -41,7 +41,7 @@ void View::setShapes(QList<Shape*> new_shapes)
         auto n = new_shapes_map.find((*itr)->id());
         if (n == new_shapes_map.end())
         {
-            disconnect(*itr, &Shape::gotMesh, this, &View::update);
+            disconnect(*itr, &Shape::redraw, this, &View::update);
             (*itr)->deleteLater();
             itr = shapes.erase(itr);
         }
@@ -64,7 +64,7 @@ void View::setShapes(QList<Shape*> new_shapes)
     {
         if (new_shapes_map.find(s->id()) != new_shapes_map.end())
         {
-            connect(s, &Shape::gotMesh, this, &View::update);
+            connect(s, &Shape::redraw, this, &View::update);
             connect(s, &Shape::gotMesh, this, &View::checkMeshes);
             connect(s, &Shape::gotMesh, &pick_timer,
                     QOverload<>::of(&QTimer::start));
@@ -260,6 +260,8 @@ void View::mouseMoveEvent(QMouseEvent* event)
         auto sol = Kernel::Solver::findRoot(*drag_eval, *drag_target->getVars(),
                 {nearest.x(), nearest.y(), nearest.z()});
         emit(varsDragged(QMap<Kernel::Tree::Id, float>(sol.second)));
+
+        drag_target->setDragValid(fabs(sol.first) < 1e-6);
         if (drag_target->updateVars(sol.second))
         {
             busy.show();
@@ -299,6 +301,9 @@ void View::mousePressEvent(QMouseEvent* event)
             drag_target = picked ? shapes.at(picked - 1) : nullptr;
             if (picked && drag_target->hasVars())
             {
+                drag_target->setGrabbed(true);
+                drag_target->setDragValid(true);
+
                 QVector3D pt(
                         (event->pos().x() * 2.0) / pick_img.width() - 1,
                         1 - (event->pos().y() * 2.0) / pick_img.height(),
@@ -332,6 +337,11 @@ void View::mouseReleaseEvent(QMouseEvent* event)
     if (mouse.state != mouse.RELEASED)
     {
         redrawPicker();
+        if (drag_target)
+        {
+            drag_target->setGrabbed(false);
+            drag_target = nullptr;
+        }
     }
     mouse.state = mouse.RELEASED;
 }

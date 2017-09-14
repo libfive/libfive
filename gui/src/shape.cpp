@@ -17,6 +17,7 @@ Shape::Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
         es.emplace_back(Kernel::Evaluator(t, *vars));
     }
 
+    connect(this, &Shape::gotMesh, this, &Shape::redraw);
     connect(&mesh_watcher, &decltype(mesh_watcher)::finished,
             this, &Shape::onFutureFinished);
 }
@@ -112,7 +113,12 @@ void Shape::draw(const QMatrix4x4& M)
 
     if (gl_ready)
     {
+        QVector3D shade = (grabbed == true && drag_valid == false) ?
+            QVector3D(1.0, 0.78, 0.70) : QVector3D(1.0, 1.0, 1.0);
+
         Shader::shaded->bind();
+        glUniform3f(Shader::shaded->uniformLocation("shade"),
+                    shade.x(), shade.y(), shade.z());
         glUniformMatrix4fv(Shader::shaded->uniformLocation("M"), 1, GL_FALSE, M.data());
         vao.bind();
         glDrawElements(GL_TRIANGLES, mesh->branes.size() * 3, GL_UNSIGNED_INT, NULL);
@@ -182,6 +188,30 @@ bool Shape::done() const
 {
     return next.second == MESH_DIV_EMPTY && mesh_future.isFinished();
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+void Shape::setDragValid(bool happy)
+{
+    bool changed = happy != drag_valid;
+    drag_valid = happy;
+    if (changed)
+    {
+        emit(redraw());
+    }
+}
+
+void Shape::setGrabbed(bool g)
+{
+    bool changed = grabbed != g;
+    grabbed = g;
+    if (changed)
+    {
+        emit(redraw());
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 Kernel::Evaluator* Shape::dragFrom(const QVector3D& v)
 {
