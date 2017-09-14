@@ -235,6 +235,11 @@ void init_ao_kernel(void*)
 (overload atan 'atan2)
 (overload modulo 'mod)
 
+(define-method (+ (a <tree>)) a)
+(define-method (* (a <tree>)) a)
+(define-method (min (a <tree>)) a)
+(define-method (max (a <tree>)) a)
+
 (define-method (expt (a <tree>) (b <fraction>))
   (when (not (rational? b))
     (scm-error 'wrong-type-arg #f
