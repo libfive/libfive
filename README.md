@@ -19,11 +19,12 @@ binding to `libao-kernel`.
 It exposes a high-level API to construct shapes,
 and includes a standard library
 of shapes, transforms, and CSG operations.
-- Studio is a GUI application in the style of
-[OpenSCAD](http://www.openscad.org/)
-which wraps `libao-guile` and allows for live-coding of solid models.
-It also includes direct modeling-style interactions, where the user can push and
-pull on the model's surface to change variables in the script.
+- *Studio* is a GUI application in the style of
+[OpenSCAD](http://www.openscad.org/).
+It wraps `libao-guile` and allows for live-coding of solid models.
+The interface also includes direct modeling,
+where the user can push and pull on the model's surface
+to change variables in the script.
 
 # Building
 ## Dependencies
