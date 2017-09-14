@@ -24,6 +24,8 @@ static std::string eval(std::string input) {
     scm_init_ao_modules();
     scm_c_use_module("ao kernel");
     scm_c_use_module("ao vec");
+    scm_c_use_module("ao csg");
+    scm_c_use_module("ao shapes");
     scm_c_use_module("ao sandbox");
 
     auto str = scm_to_locale_string(
@@ -141,4 +143,16 @@ TEST_CASE("eval-sandboxed")
         REQUIRE(boost::algorithm::starts_with(result,
             "((error (0 . 0)"));
     }
+}
+
+TEST_CASE("ao-guile CSG")
+{
+    auto result = eval(R"(
+        (difference
+            (box #[0 0 0] #[10 10 10])
+            (box #[5 5 5] #[11 11 11])
+        ) )");
+
+    CAPTURE(result);
+    REQUIRE(boost::algorithm::starts_with(result, "#<<tree> "));
 }
