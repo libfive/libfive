@@ -641,6 +641,10 @@ Interval::I Evaluator::eval_clause_interval(
             return boost::numeric::atan(a);
         case Opcode::EXP:
             return boost::numeric::exp(a);
+        case Opcode::ABS:
+            return boost::numeric::abs(a);
+        case Opcode::RECIP:
+            return Interval::I(1,1) / a;
 
         case Opcode::CONST_VAR:
             return a;
@@ -739,6 +743,12 @@ const float* Evaluator::values(Result::Index count)
                 break;
             case Opcode::EXP:
                 out = exp(a);
+                break;
+            case Opcode::ABS:
+                out = abs(a);
+                break;
+            case Opcode::RECIP:
+                out = 1 / a;
                 break;
 
             case Opcode::CONST_VAR:
@@ -857,6 +867,13 @@ Evaluator::Derivs Evaluator::derivs(Result::Index count)
             case Opcode::EXP:
                 od = ad.rowwise() * exp(av);
                 break;
+            case Opcode::ABS:
+                for (unsigned i=0; i < od.rows(); ++i)
+                    od.row(i) = (av > 0).select(ad.row(i), -ad.row(i));
+                break;
+            case Opcode::RECIP:
+                od = ad.rowwise() / -av.pow(2);
+                break;
 
             case Opcode::CONST_VAR:
                 od = ad;
@@ -970,6 +987,12 @@ std::map<Tree::Id, float> Evaluator::gradient(const Eigen::Vector3f& p)
                 break;
             case Opcode::EXP:
                 oj = exp(av) * aj;
+                break;
+            case Opcode::ABS:
+                oj = (av > 0 ? 1 : -1) * aj;
+                break;
+            case Opcode::RECIP:
+                oj = -aj / pow(av, 2);
                 break;
 
             case Opcode::CONST_VAR:

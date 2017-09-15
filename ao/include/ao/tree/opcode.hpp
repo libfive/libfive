@@ -7,7 +7,9 @@ namespace Kernel {
 
 namespace Opcode
 {
-
+// To create a new opcode, add it to the relevant section with the
+// next-highest value and increment LAST_OP by one.  This is necessary
+// to avoid changing the meanings of opcodes in previously saved files.
 #define OPCODES \
     OPCODE(INVALID, 0)      \
                             \
@@ -28,6 +30,8 @@ namespace Opcode
     OPCODE(ACOS, 14)        \
     OPCODE(ATAN, 15)        \
     OPCODE(EXP, 16)         \
+    OPCODE(ABS, 28)         \
+    OPCODE(RECIP, 29)       \
                             \
     OPCODE(ADD, 17)         \
     OPCODE(MUL, 18)         \
@@ -45,7 +49,7 @@ enum Opcode {
 #define OPCODE(s, i) s=i,
     OPCODES
 #undef OPCODE
-    LAST_OP,
+    LAST_OP=30,
 };
 
 size_t args(Opcode op);

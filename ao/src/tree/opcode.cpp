@@ -29,6 +29,8 @@ size_t Opcode::args(Opcode op)
         case ATAN:
         case EXP:
         case CONST_VAR:
+        case ABS:
+        case RECIP:
             return 1;
 
         case ADD: // fallthrough
@@ -51,14 +53,28 @@ size_t Opcode::args(Opcode op)
     return -1;
 }
 
-const static std::string opcode_names[Opcode::LAST_OP] = {
-#define OPCODE(s, i) #s,
+const static std::map<Opcode::Opcode, std::string> _opcode_names = {
+#define OPCODE(s, i) {Opcode::s, #s},
     OPCODES
 #undef OPCODE
 };
+static std::string opcode_names[Opcode::LAST_OP];
+
+static void buildNames()
+{
+    if (opcode_names[0].empty())
+    {
+        for (auto& o : _opcode_names)
+        {
+            opcode_names[o.first] = o.second;
+        }
+    }
+}
 
 std::string Opcode::toString(Opcode op)
 {
+    buildNames();
+
     if (op >= LAST_OP || op < 0)
     {
         std::cerr << "Opcode::toString: Invalid opcode " << op << std::endl;
@@ -69,6 +85,8 @@ std::string Opcode::toString(Opcode op)
 
 std::string Opcode::toScmString(Opcode op)
 {
+    buildNames();
+
     if (op >= LAST_OP || op < 0)
     {
         std::cerr << "Opcode::toString: Invalid opcode " << op << std::endl;
@@ -126,6 +144,7 @@ std::string Opcode::toOpString(Opcode op)
         case NTH_ROOT:
         case MOD:
         case NANFILL:
+        case ABS:
             return toScmString(op);
 
 
@@ -133,6 +152,7 @@ std::string Opcode::toOpString(Opcode op)
         case MUL:   return "*";
         case NEG:   // FALLTHROUGH
         case SUB:   return "-";
+        case RECIP: // FALLTHROUGH
         case DIV:   return "/";
 
         case INVALID: // fallthrough
@@ -168,7 +188,9 @@ bool Opcode::isCommutative(Opcode op)
         case MOD:
         case NANFILL:
         case INVALID:
-        case CONST_VAR: // fallthrough
+        case ABS:
+        case RECIP:
+        case CONST_VAR:
         case LAST_OP:
             return false;
 
