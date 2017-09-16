@@ -259,9 +259,8 @@ void init_ao_kernel(void*)
 (define-method (exp (a <tree>)) (make-tree 'exp a))
 (define-method (abs (a <tree>)) (make-tree 'abs a))
 (define-method (atan (a <tree>)) (make-tree 'atan a))
-
-(define (square f)
-    (if (number? f) (* f f) (make-tree 'square f)))
+(define-method (constant (a <tree>)) (make-tree 'const-var a))
+(define (square f) (if (tree? f) (make-tree 'square f) (* f f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -277,7 +276,8 @@ void init_ao_kernel(void*)
                   (lambda-shape vars z)))
 
 ;; These are "safe" bindings that can be used in the sandbox
-(define ao-bindings '(square lambda-shape define-shape ao-bindings remap-shape))
+(define ao-bindings '(square constant lambda-shape define-shape remap-shape
+                      ao-bindings))
 (eval (cons 'export ao-bindings) (interaction-environment))
  )");
 

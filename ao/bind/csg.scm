@@ -45,3 +45,12 @@
   Morphs between two shapes.
   m = 0 produces a, m = 1 produces b"
   (+ (* (a x y z) (- 1 m)) (* (b x y z) m)))
+
+(define-public (loft a b zmin zmax)
+  "loft a b zmin zmax
+  Produces a blended loft between a (at zmin) and b (at zmax)
+  a and b should be 2D shapes (i.e. invariant along the z axis) "
+  (lambda-shape (x y z)
+    (max (- z zmax) (- zmin z)
+      (/ (+ (* (- z zmin) b) (* (- zmax z) a))
+         (- zmax zmin)))))

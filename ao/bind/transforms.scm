@@ -27,17 +27,22 @@
   Reflect the given shape about the z origin or an optional offset"
   (remap-shape (shape x y z) x y (- (* 2 z0) z)))
 
-(define* (reflect-xy shape)
+(define-public (reflect-xy shape)
   "reflect-xy shape
   Moves the given shape across the plane Y=X"
   (remap-shape (shape x y z) y x z))
 
-(define* (reflect-yz shape)
+(define-public (reflect-yz shape)
   "reflect-xy shape
   Moves the given shape across the plane Y=Z"
   (remap-shape (shape x y z) x z y))
 
-(export reflect-x reflect-y reflect-z reflect-xy reflect-yz)
+(define-public (reflect-xz shape)
+  "reflect-xx shape
+  Moves the given shape across the plane X=Z"
+  (remap-shape (shape x y z) z y x))
+
+(export reflect-x reflect-y reflect-z)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Scaling
