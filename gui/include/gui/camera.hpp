@@ -47,10 +47,10 @@ signals:
 
 protected:
 
-    float scale=1;
+    float scale=0.5;
     QVector3D center={0,0,0};
     float pitch=128;
-    float yaw=-109;
+    float yaw=-59;
 
     float perspective=0.25;
     Q_PROPERTY(float perspective MEMBER perspective NOTIFY changed)
