@@ -18,7 +18,7 @@
          (circle (+ a r) r)
          (circle (- b r) r)
          (circle (vec2 (+ (.x a) r) (- (.y b) r)) r)
-         (circle (vec2 (- (.x b) r) (+ (.x a) r)) r)))
+         (circle (vec2 (- (.x b) r) (+ (.y a) r)) r)))
 
 (define-public (triangle a b c)
   "triangle #[x0 y0] #[x1 y1] #[x2 y2]
