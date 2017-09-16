@@ -301,6 +301,7 @@ void View::mousePressEvent(QMouseEvent* event)
             drag_target = picked ? shapes.at(picked - 1) : nullptr;
             if (picked && drag_target->hasVars())
             {
+                emit(dragStart());
                 drag_target->setGrabbed(true);
                 drag_target->setDragValid(true);
 
@@ -341,6 +342,7 @@ void View::mouseReleaseEvent(QMouseEvent* event)
         {
             drag_target->setGrabbed(false);
             drag_target = nullptr;
+            emit(dragEnd());
         }
     }
     mouse.state = mouse.RELEASED;

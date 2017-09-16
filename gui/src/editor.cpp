@@ -11,7 +11,7 @@
 Editor::Editor(QWidget* parent)
     : QWidget(parent), script(new QTextEdit), script_doc(script->document()),
       syntax(new Syntax(script_doc)), err(new QPlainTextEdit),
-      err_doc(err->document())
+      err_doc(err->document()), drag_cursor(script_doc)
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
@@ -213,9 +213,22 @@ void Editor::onScriptChanged()
     }
 }
 
+void Editor::onDragStart()
+{
+    script->setEnabled(false);
+    drag_cursor.beginEditBlock();
+}
+
+void Editor::onDragEnd()
+{
+    script->setEnabled(true);
+    drag_cursor.endEditBlock();
+}
+
 void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
 {
-    QTextCursor c(script_doc);
+    // Temporarily enable the script so that we can edit the variable value
+    script->setEnabled(true);
 
     // Build an ordered set so that we can walk through variables
     // in sorted line / column order, making offsets as textual positions
@@ -232,7 +245,6 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
         ordered.insert(v.key());
     }
 
-    c.beginEditBlock();
     int line = -1;
     int offset = 0;
     for (auto t : ordered)
@@ -255,24 +267,28 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
             offset = 0;
         }
 
-        c.movePosition(QTextCursor::Start);
-        c.movePosition(
+        drag_cursor.movePosition(QTextCursor::Start);
+        drag_cursor.movePosition(
                 QTextCursor::Down, QTextCursor::MoveAnchor, pos.value().start_row);
-        c.movePosition(
+        drag_cursor.movePosition(
                 QTextCursor::Right, QTextCursor::MoveAnchor, pos.value().start_col);
 
         const auto length_before = pos.value().end_col - pos.value().start_col;
-        c.movePosition(
+        drag_cursor.movePosition(
                 QTextCursor::Right, QTextCursor::KeepAnchor, length_before);
-        c.removeSelectedText();
+        drag_cursor.removeSelectedText();
 
         QString str;
         str.setNum(v.value());
-        c.insertText(str);
+        drag_cursor.insertText(str);
         auto length_after = str.length();
 
         pos.value().end_col = pos.value().start_col + length_after;
         offset += length_after - length_before;
     }
-    c.endEditBlock();
+
+    // Disable the script again (because this is only called when we're
+    // doing a drag operation in the 3D viewport, and the script should
+    // be locked).
+    script->setEnabled(false);
 }

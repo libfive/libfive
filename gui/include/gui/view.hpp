@@ -64,6 +64,12 @@ signals:
     void meshesReady(QList<const Kernel::Mesh*> shapes) const;
 
     /*
+     *  Indicates when a drag operation begins and ends
+     */
+    void dragStart();
+    void dragEnd();
+
+    /*
      *  Emitted when a drag operation has changed variables
      */
     void varsDragged(QMap<Kernel::Tree::Id, float> vs);

@@ -46,6 +46,11 @@ Window::Window(const QString& target)
     connect(editor, &Editor::settingsChanged,
             view, &View::onSettingsFromScript);
 
+    // Connect drag start + end signals, so the user can't edit
+    // the script while dragging in the 3D viewport
+    connect(view, &View::dragStart, editor, &Editor::onDragStart);
+    connect(view, &View::dragEnd, editor, &Editor::onDragEnd);
+
     // File menu
     auto file_menu = menuBar()->addMenu("&File");
 

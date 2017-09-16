@@ -59,6 +59,14 @@ public slots:
      */
     void setVarValues(QMap<Kernel::Tree::Id, float> vs);
 
+    /*
+     *  While a drag is taking place, the text field is frozen to user editing
+     *  and drag_cursor is engaged in an edit session (so the entire drag
+     *  operation can be undone at once).
+     */
+    void onDragStart();
+    void onDragEnd();
+
 signals:
     void scriptChanged(QString s);
     void modificationChanged(bool m);
@@ -86,6 +94,8 @@ protected:
 
     QTextCharFormat error_format;
     QTimer spinner;
+
+    QTextCursor drag_cursor;
 
     QMap<Kernel::Tree::Id, Range> vars;
 };
