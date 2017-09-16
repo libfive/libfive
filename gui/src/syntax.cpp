@@ -186,7 +186,7 @@ void Syntax::setKeywords(QString kws)
     for (auto k : kws.split(' ', QString::SkipEmptyParts))
     {
         auto esc = QRegularExpression::escape(k);
-        rules << Rule("\\b" + esc + "\\b", kw_format);
+        rules << Rule("(?<=[^\\w-]|^)" + esc + "(?=[^\\w-]|$)", kw_format);
     }
 }
 
