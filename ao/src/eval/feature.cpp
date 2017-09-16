@@ -91,18 +91,13 @@ void Feature::pushRaw(Choice c, Eigen::Vector3d v)
     v.normalize();
 
     epsilons.push_back(v);
-    choices.push_back(c);
+    choices.insert(c);
     _epsilons[c.id] = v;
-}
-
-void Feature::pushChoiceRaw(Choice c)
-{
-    choices.push_back(c);
 }
 
 void Feature::pushChoice(Choice c)
 {
-    choices.push_front(c);
+    choices.insert(c);
 }
 
 bool Feature::push(Eigen::Vector3d e, Choice choice)
@@ -115,7 +110,7 @@ bool Feature::pushNorm(Eigen::Vector3d e, Choice choice)
 {
     if (isCompatibleNorm(e))
     {
-        choices.push_front(choice);
+        choices.insert(choice);
         _epsilons[choice.id] = e;
 
         // Store the epsilon if it isn't already present

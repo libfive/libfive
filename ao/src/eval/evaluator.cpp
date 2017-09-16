@@ -314,7 +314,7 @@ Feature Evaluator::push(const Feature& f)
                 }
                 else
                 {
-                    out.pushChoiceRaw(*itr);
+                    out.pushChoice(*itr);
                 }
 
                 if (itr->choice == 0)
@@ -467,7 +467,7 @@ std::list<Feature> Evaluator::featuresAt(const Eigen::Vector3f& p)
     Feature f;
     std::list<Feature> todo = {f};
     std::list<Feature> done;
-    std::set<std::list<Feature::Choice>> seen;
+    std::set<std::set<Feature::Choice>> seen;
 
     // Load the location into the first results slot and evaluate
     specialize(p);

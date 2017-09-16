@@ -2,6 +2,7 @@
 
 #include <list>
 #include <map>
+#include <set>
 
 #include <Eigen/Eigen>
 
@@ -17,6 +18,7 @@ public:
     {
         const Clause::Id id;
         const int choice;
+        bool operator<(const Choice& other) { return id < other.id; }
     };
 
     /*
@@ -36,7 +38,7 @@ public:
     /*
      *  Accessor method for the choice list
      */
-    const std::list<Choice>& getChoices() const { return choices; }
+    const std::set<Choice>& getChoices() const { return choices; }
 
     /*
      *  Top-level derivative (set manually)
@@ -53,11 +55,6 @@ public:
      *  This is useful to collapse cases like min(a, a)
      */
     void pushChoice(Choice c);
-
-    /*
-     *  Appends a choice to the end of the list
-     */
-    void pushChoiceRaw(Choice c);
 
     /*
      *  Returns the epsilon associated with a particular choice
@@ -81,7 +78,7 @@ protected:
     PlanarResult checkPlanar(Eigen::Vector3d v) const;
 
     /*  Per-clause decisions  */
-    std::list<Choice> choices;
+    std::set<Choice> choices;
 
     /*  Deduplicated list of epsilons  */
     std::list<Eigen::Vector3d> epsilons;
