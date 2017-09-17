@@ -172,6 +172,7 @@ ao_contours* ao_tree_render_slice(ao_tree tree,
         {
             out->cs[i].pts[j++] = {pt.x(), pt.y()};
         }
+        i++;
     }
 
     return out;
