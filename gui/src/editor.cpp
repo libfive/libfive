@@ -50,6 +50,12 @@ Editor::Editor(QWidget* parent)
     connect(script_doc, &QTextDocument::modificationChanged,
             this, &Editor::modificationChanged);
 
+    // Emit undo / redo signals to keep window's menu in sync
+    connect(script_doc, &QTextDocument::undoAvailable,
+            this, &Editor::undoAvailable);
+    connect(script_doc, &QTextDocument::redoAvailable,
+            this, &Editor::redoAvailable);
+
     auto layout = new QVBoxLayout;
     layout->addWidget(script);
     layout->addWidget(err);
@@ -87,6 +93,16 @@ void Editor::onBusy()
 {
     spinner.start();
     onSpinner();
+}
+
+void Editor::undo()
+{
+    script_doc->undo();
+}
+
+void Editor::redo()
+{
+    script_doc->redo();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

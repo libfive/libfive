@@ -77,6 +77,20 @@ Window::Window(const QString& target)
     auto export_action = file_menu->addAction("Export...");
     connect(export_action, &QAction::triggered, this, &Window::onExport);
 
+    // Edit menu
+    auto edit_menu = menuBar()->addMenu("&Edit");
+    auto undo_action = edit_menu->addAction("Undo");
+    undo_action->setEnabled(false);
+    undo_action->setShortcut(QKeySequence::Undo);
+    connect(undo_action, &QAction::triggered, editor, &Editor::undo);
+    connect(editor, &Editor::undoAvailable, undo_action, &QAction::setEnabled);
+
+    auto redo_action = edit_menu->addAction("Redo");
+    redo_action->setEnabled(false);
+    redo_action->setShortcut(QKeySequence::Redo);
+    connect(redo_action, &QAction::triggered, editor, &Editor::redo);
+    connect(editor, &Editor::redoAvailable, redo_action, &QAction::setEnabled);
+
     // Settings menu
     auto view_menu = menuBar()->addMenu("&View");
     auto show_axes_action = view_menu->addAction("Show axes");

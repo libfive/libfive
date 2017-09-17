@@ -34,6 +34,10 @@ public slots:
     void onResult(QString result);
     void onError(QString result, QString stack, Range p);
     void onBusy();
+
+    void undo();
+    void redo();
+
     void setKeywords(QString kws);
 
     /*
@@ -70,6 +74,8 @@ public slots:
 signals:
     void scriptChanged(QString s);
     void modificationChanged(bool m);
+    void undoAvailable(bool a);
+    void redoAvailable(bool a);
 
     /*
      *  Invoked when a script defines settings using specially-formatted
