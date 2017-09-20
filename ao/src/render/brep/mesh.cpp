@@ -81,7 +81,7 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    double min_feature, double max_err)
 {
-    std::atomic_bool cancel;
+    std::atomic_bool cancel(false);
     std::map<Tree::Id, float> vars;
     return render(t, vars, r, min_feature, max_err, cancel);
 }
