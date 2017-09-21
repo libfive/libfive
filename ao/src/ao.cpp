@@ -234,13 +234,13 @@ ao_pixels* ao_tree_render_pixels(ao_tree tree, ao_region2 R,
 
     ao_pixels* out = new ao_pixels;
     out->width = h->depth.cols();
-    out->height = h->depth.cols();
+    out->height = h->depth.rows();
     out->pixels = new bool[out->width * out->height];
 
     size_t i=0;
-    for (unsigned x=0; x < out->width; ++x)
+    for (unsigned y=0; y < out->height; ++y)
     {
-        for (unsigned y=0; y < out->height; ++y)
+        for (unsigned x=0; x < out->width; ++x)
         {
             out->pixels[i++] = !std::isinf(h->depth(y, x));
         }
