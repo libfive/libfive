@@ -223,7 +223,7 @@ TEST_CASE("XTree<3> cancellation")
     REQUIRE(result.get() == nullptr);
 }
 
-TEST_CASE("XTree<3>::render (vertex positioning with vertices on octree walls)")
+TEST_CASE("XTree<3>::build (vertex positioning with vertices on octree walls)")
 {
     auto t = max(max(-Tree::Z(), max(circle(1), -circle(0.5))),
                       Tree::Z() - 1);
@@ -256,7 +256,7 @@ TEST_CASE("XTree<3>::render (vertex positioning with vertices on octree walls)")
         {
             CAPTURE(p.first->vert(0));
             CAPTURE(p.second->vert(0));
-            REQUIRE((p.first->vert(0) - p.second->vert(0)).norm() < 1e-6);
+            REQUIRE((p.first->vert(0) - p.second->vert(0)).norm() < 1e-3);
         }
     }
 }
