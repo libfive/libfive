@@ -49,6 +49,3 @@ add_subdirectory(ao)
 if(GUILE_FOUND AND Qt5Core_FOUND)
     add_subdirectory(gui)
 endif(GUILE_FOUND AND Qt5Core_FOUND)
-
-add_executable(failing tst.cpp)
-target_link_libraries(failing guile-ao)
