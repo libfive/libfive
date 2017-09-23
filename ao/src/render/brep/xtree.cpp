@@ -329,6 +329,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             // Iterate over edges in this patch, storing [inside, outside]
             unsigned target_count;
             std::array<std::pair<Vec, Vec>, _edges(N)> targets;
+            std::array<int, _edges(N)> ranks;
+            std::fill(ranks.begin(), ranks.end(), -1);
+
             for (target_count=0; target_count < ps[vertex_count].size() &&
                           ps[vertex_count][target_count].first != -1; ++target_count)
             {
@@ -408,13 +411,6 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             static_assert(_edges(N) * 2 <= Result::N, "Too many results");
             for (unsigned i=0; i < target_count; ++i)
             {
-                // Accumulate this intersection in the mass point
-                Eigen::Matrix<double, N + 1, 1> mp;
-                mp << targets[i].first, 1;
-                _mass_point += mp;
-                mp << targets[i].second, 1;
-                _mass_point += mp;
-
                 set(targets[i].first, 2*i);
                 set(targets[i].second, 2*i + 1);
             }
@@ -480,6 +476,25 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                                         : targets[i/2].first, dv});
                         }
                         eval->pop();
+                    }
+                }
+            }
+
+
+            {   // Build the mass point from max-rank intersections
+                const int max_rank = *std::max_element(
+                        ranks.begin(), ranks.end());
+                for (unsigned i=0; i < target_count; ++i)
+                {
+                    //assert(ranks[i] != -1);
+                    if (ranks[i] == max_rank)
+                    {
+                        // Accumulate this intersection in the mass point
+                        Eigen::Matrix<double, N + 1, 1> mp;
+                        mp << targets[i].first, 1;
+                        _mass_point += mp;
+                        mp << targets[i].second, 1;
+                        _mass_point += mp;
                     }
                 }
             }
