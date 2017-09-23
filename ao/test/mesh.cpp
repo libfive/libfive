@@ -75,7 +75,7 @@ TEST_CASE("Mesh::render (performance)")
     WARN(log);
 }
 
-TEST_CASE("Mesh::Render (face count in rectangular prism)")
+TEST_CASE("Mesh::render (face count in rectangular prism)")
 {
     auto t = max(max(max(-Tree::X(), Tree::X() - 4),
                      max(-Tree::Y(), Tree::Y() - 1)),
