@@ -39,9 +39,38 @@ add_definitions(-D'GITREV="${GITREV}${GITDIFF}"'
                 -D'GITBRANCH="${GITBRANCH}"')
 
 ################################################################################
-
+# Find all packages here at the top level so we can print debugging info
 find_package(Guile 2.2 QUIET)
 find_package(Qt5Core QUIET)
+
+find_package(Boost QUIET REQUIRED)
+find_package(PNG REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+################################################################################
+# Inform the user which subsystems will be built and any missing deps
+message("Checking dependencies:")
+message("  libao-kernel: ✓")
+
+if (GUILE_FOUND)
+    message("  guile-ao:     ✓")
+else ()
+    message("  guile-ao:     ✘   (needs Guile 2.2 or later)")
+endif()
+
+if (Qt5Core_FOUND AND GUILE_FOUND)
+    message("  Studio:       ✓")
+else ()
+    if (Qt5Core_FOUND)
+        message("  Studio:       ✘   (needs Guile 2.2 or later)")
+    elseif (GUILE_FOUND)
+        message("  Studio:       ✘   (Qt 5.7 or later)")
+    else()
+        message("  Studio:       ✘   (needs Guile 2.2 or later and Qt 5.7 or later)")
+    endif()
+endif()
+
+################################################################################
 
 # Always build the kernel and test suite
 add_subdirectory(ao)

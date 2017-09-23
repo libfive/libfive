@@ -1,9 +1,3 @@
-find_package(Boost QUIET REQUIRED)
-find_package(PNG REQUIRED)
-find_package(Eigen3 REQUIRED)
-
-################################################################################
-
 add_library(ao-kernel SHARED
     eval/evaluator.cpp
     eval/result.cpp
