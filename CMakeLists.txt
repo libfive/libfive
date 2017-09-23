@@ -41,13 +41,14 @@ add_definitions(-D'GITREV="${GITREV}${GITDIFF}"'
 ################################################################################
 
 find_package(Guile 2.2 QUIET)
+find_package(Qt5Core QUIET)
 
 # Always build the kernel and test suite
 add_subdirectory(ao)
 
-if(GUILE_FOUND)
+if(GUILE_FOUND AND Qt5Core_FOUND)
     add_subdirectory(gui)
-endif(GUILE_FOUND)
+endif(GUILE_FOUND AND Qt5Core_FOUND)
 
 add_executable(failing tst.cpp)
 target_link_libraries(failing guile-ao)
