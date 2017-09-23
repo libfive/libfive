@@ -20,13 +20,18 @@ static SCM handler(void*, SCM key, SCM args)
 }
 
 static std::string eval(std::string input) {
-    scm_init_guile();
-    scm_init_ao_modules();
-    scm_c_use_module("ao kernel");
-    scm_c_use_module("ao vec");
-    scm_c_use_module("ao csg");
-    scm_c_use_module("ao shapes");
-    scm_c_use_module("ao sandbox");
+    static bool initialized = false;
+    if (!initialized)
+    {
+        scm_init_guile();
+        scm_init_ao_modules();
+        scm_c_use_module("ao kernel");
+        scm_c_use_module("ao vec");
+        scm_c_use_module("ao csg");
+        scm_c_use_module("ao shapes");
+        scm_c_use_module("ao sandbox");
+        initialized = true;
+    }
 
     auto str = scm_to_locale_string(
             scm_internal_catch(SCM_BOOL_T, eval_inner, &input, handler, NULL));
