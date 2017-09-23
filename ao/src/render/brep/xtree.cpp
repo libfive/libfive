@@ -415,22 +415,39 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 set(targets[i].second, 2*i + 1);
             }
 
-            auto ds = eval->derivs(2 * target_count);
+            // Immediately copy values and derivatives to a local array
+            // to avoid invalidating them when checking ambiguous nodes
+            Eigen::Array<float, Eigen::Dynamic, 1> vs(2 * target_count);
+            Eigen::Array<float, N, Eigen::Dynamic> ds(N, 2 * target_count);
+            {
+                auto result = eval->derivs(2 * target_count);
+                memcpy(vs.data(), result.v, 2 * target_count * sizeof(float));
+                ds = result.d.topLeftCorner(N, 2 * target_count);
+            }
+
             auto ambig = eval->getAmbiguous(2 * target_count);
 
-            // Handle unambiguous nodes first, which were evaluated in bulk
+            // Iterate over all inside-outside pairs, storing the number
+            // of intersections before each inside node (in prev_size), then
+            // checking the rank of the pair after each outside node based
+            // on the accumulated intersections.
+            size_t prev_size;
             for (unsigned i=0; i < 2 * target_count; ++i)
             {
+                if (!(i & 1))
+                {
+                    prev_size = intersections.size();
+                }
+
                 if (!ambig(i))
                 {
-                    const Eigen::Array<double, N, 1> derivs = ds.d.col(i)
-                        .template head<N>()
+                    const Eigen::Array<double, N, 1> derivs = ds.col(i)
                         .template cast<double>();
                     const double norm = derivs.matrix().norm();
 
                     // Find normalized derivatives and distance value
                     Eigen::Matrix<double, N + 1, 1> dv;
-                    dv << derivs / norm, ds.v[i] / norm;
+                    dv << derivs / norm, vs(i) / norm;
                     if (!dv.array().isNaN().any())
                     {
                         intersections.push_back({
@@ -438,12 +455,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                             dv});
                     }
                 }
-            }
-
-            // Special-case checking for ambiguous nodes
-            for (unsigned i=0; i < 2 * target_count; ++i)
-            {
-                if (ambig(i))
+                else
                 {
                     // Load the ambiguous position and find its features
                     Eigen::Vector3d pos;
@@ -478,15 +490,40 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                         eval->pop();
                     }
                 }
-            }
 
+                if (i & 1)
+                {
+                    // If every intersection was NaN (?!), use rank 0;
+                    // otherwise, figure out how many normals diverge
+                    if (prev_size == intersections.size())
+                    {
+                        ranks[i / 2] = 0;
+                    }
+                    else
+                    {
+                        ranks[i / 2] = 1;
+                        Vec prev_normal = intersections[prev_size]
+                            .second
+                            .template head<N>();
+                        for (unsigned p=prev_size + 1;
+                                      p < intersections.size(); ++p)
+                        {
+                            // Accumulate rank based on cosine distance
+                            ranks[i / 2] += intersections[p]
+                                .second
+                                .template head<N>()
+                                .dot(prev_normal) < 0.9;
+                        }
+                    }
+                }
+            }
 
             {   // Build the mass point from max-rank intersections
                 const int max_rank = *std::max_element(
                         ranks.begin(), ranks.end());
                 for (unsigned i=0; i < target_count; ++i)
                 {
-                    //assert(ranks[i] != -1);
+                    assert(ranks[i] != -1);
                     if (ranks[i] == max_rank)
                     {
                         // Accumulate this intersection in the mass point
