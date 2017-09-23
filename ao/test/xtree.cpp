@@ -3,6 +3,7 @@
 #include "catch.hpp"
 
 #include "ao/render/brep/xtree.hpp"
+#include "ao/render/axes.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;
@@ -220,4 +221,42 @@ TEST_CASE("XTree<3> cancellation")
     // The cancelled computation must return nullptr
     // (rather than a partially-constructed or invalid tree)
     REQUIRE(result.get() == nullptr);
+}
+
+TEST_CASE("XTree<3>::render (vertex positioning with vertices on octree walls)")
+{
+    auto t = max(max(-Tree::Z(), max(circle(1), -circle(0.5))),
+                      Tree::Z() - 1);
+
+    auto x = XTree<3>::build(t, Region<3>({-2, -2, -2}, {2, 2, 2}), 0.4);
+
+    std::list<std::pair<const XTree<3>*, const XTree<3>*>> targets = {
+        {x->child(0),       x->child(Axis::Z)},
+        {x->child(Axis::Y), x->child(Axis::Y|Axis::Z)},
+        {x->child(Axis::X), x->child(Axis::X|Axis::Z)},
+        {x->child(Axis::Y), x->child(Axis::Y|Axis::Z)},
+        {x->child(Axis::X|Axis::Y), x->child(Axis::X|Axis::Y|Axis::Z)}
+    };
+
+    while (targets.size())
+    {
+        auto p = targets.front();
+        targets.pop_front();
+        if (p.first->isBranch())
+        {
+            assert(p.second->isBranch());
+            targets.push_back({p.first->child(Axis::Z), p.second->child(0)});
+            targets.push_back({p.first->child(Axis::Y|Axis::Z), p.second->child(Axis::Y)});
+            targets.push_back({p.first->child(Axis::X|Axis::Z), p.second->child(Axis::X)});
+            targets.push_back({p.first->child(Axis::Y|Axis::Z), p.second->child(Axis::Y)});
+            targets.push_back({p.first->child(Axis::X|Axis::Y|Axis::Z), p.second->child(Axis::X|Axis::Y)});
+        }
+        else if (!p.second->isBranch() && p.first->vertex_count == 1 &&
+                                          p.second->vertex_count == 1)
+        {
+            CAPTURE(p.first->vert(0));
+            CAPTURE(p.second->vert(0));
+            REQUIRE((p.first->vert(0) - p.second->vert(0)).norm() < 1e-6);
+        }
+    }
 }
