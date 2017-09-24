@@ -86,5 +86,27 @@ void Camera::toPerspective()
 
 void Camera::zoomTo(const Settings& s)
 {
-    qDebug() << "Zooming!";
+    QVector3D center_start = center;
+    QVector3D center_end = (s.min + s.max) / -2;
+
+    float scale_start = scale;
+    float scale_end = 2 / (s.max - s.min).length();
+
+    auto a = new QVariantAnimation(this);
+    a->setStartValue(0);
+    a->setEndValue(1000);
+    a->setDuration(100);
+    a->setEasingCurve(QEasingCurve::InOutSine);
+
+    connect(a, &QVariantAnimation::valueChanged,
+            this, [=](QVariant _v){
+                auto v = _v.toFloat() / a->endValue().toFloat();
+                scale = scale_end * v + scale_start * (1 - v);
+                v = pow(v, 6);
+                center = center_end * v + center_start * (1 - v);
+                emit(changed());
+            });
+    connect(a, &QPropertyAnimation::finished, this, &Camera::animDone);
+    connect(a, &QPropertyAnimation::finished, this, []() { qDebug() << "Done"; });
+    a->start(a->DeleteWhenStopped);
 }
