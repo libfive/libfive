@@ -272,6 +272,21 @@ void View::mouseMoveEvent(QMouseEvent* event)
     {
         update();
     }
+    else
+    {
+        auto picked = (pick_img.pixel(event->pos()) & 0xFFFFFF);
+        auto target = picked ? shapes.at(picked - 1) : nullptr;
+        if (target && target->hasVars())
+        {
+            hover_target = target;
+            hover_target->setHover(true);
+        }
+        else if (hover_target)
+        {
+            hover_target->setHover(false);
+            hover_target = nullptr;
+        }
+    }
     mouse.pos = event->pos();
 }
 

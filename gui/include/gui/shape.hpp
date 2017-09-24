@@ -91,6 +91,11 @@ public:
      */
     void setGrabbed(bool g);
 
+    /*
+     *  Sets hover and redraws as necessary
+     */
+    void setHover(bool h);
+
 signals:
     void gotMesh();
     void redraw();
@@ -106,6 +111,7 @@ protected:
 
     bool grabbed=false;
     bool drag_valid=true;
+    bool hover=false;
 
     Kernel::Mesh* renderMesh(QPair<Settings, int> s);
     QFuture<Kernel::Mesh*> mesh_future;

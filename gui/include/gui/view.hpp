@@ -118,4 +118,5 @@ protected:
     QVector3D drag_dir;
     QScopedPointer<Kernel::Evaluator> drag_eval;
     Shape* drag_target=nullptr;
+    Shape* hover_target=nullptr;
 };
