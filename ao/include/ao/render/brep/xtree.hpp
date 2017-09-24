@@ -1,8 +1,11 @@
 #pragma once
-#include <iostream>
 
 #include <array>
+#include <atomic>
+#include <iostream>
+
 #include <cstdint>
+
 #include <Eigen/Eigen>
 
 #include "ao/render/brep/region.hpp"
