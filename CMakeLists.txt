@@ -48,6 +48,11 @@ find_package(PNG REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 ################################################################################
+if (UNIX)
+    set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
+endif(UNIX)
+
+################################################################################
 # Inform the user which subsystems will be built and any missing deps
 message("Checking dependencies:")
 message("  libao-kernel: ✓")
