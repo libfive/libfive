@@ -238,6 +238,7 @@ void Editor::onDragStart()
 void Editor::onDragEnd()
 {
     script->setEnabled(true);
+    script->setFocus();
 }
 
 void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
