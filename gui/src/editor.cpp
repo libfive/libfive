@@ -157,6 +157,7 @@ void Editor::setResult(QColor color, QString result)
 
 void Editor::setScript(const QString& s)
 {
+    first_change = true;
     script->setPlainText(s);
 }
 
@@ -224,9 +225,10 @@ void Editor::onScriptChanged()
             Settings s({out[0], out[1], out[2]},
                        {out[3], out[4], out[5]}, out[6], out[7]);
 
-            emit(settingsChanged(s));
+            emit(settingsChanged(s, first_change));
         }
     }
+    first_change = false;
 }
 
 void Editor::onDragStart()

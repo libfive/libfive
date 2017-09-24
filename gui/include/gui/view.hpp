@@ -30,6 +30,7 @@ public slots:
 
     void toOrthographic(bool=false) { camera.toOrthographic();  }
     void toPerspective(bool=false)  { camera.toPerspective();   }
+    void zoomTo(bool=false) { camera.zoomTo(settings); }
 
     /*
      *  Emits shapesReady if all the shapes being drawn
@@ -39,8 +40,9 @@ public slots:
 
     /*
      *  Called when the script changes settings
+     *  If first is true, then the camera zooms to the new bounds.
      */
-    void onSettingsFromScript(Settings s);
+    void onSettingsFromScript(Settings s, bool first);
 
     /*
      *  Called when the settings pane is edited

@@ -115,6 +115,11 @@ Window::Window(const QString& target)
     connect(ortho_action, &QAction::triggered,
             view, &View::toOrthographic);
 
+    view_menu->addSeparator();
+    auto zoom_to_action = new QAction("Zoom to bounds");
+    view_menu->addAction(zoom_to_action);
+    connect(zoom_to_action, &QAction::triggered, view, &View::zoomTo);
+
     // Help menu
     auto help_menu = menuBar()->addMenu("Help");
     connect(help_menu->addAction("About"), &QAction::triggered,

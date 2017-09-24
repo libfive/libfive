@@ -79,9 +79,10 @@ signals:
 
     /*
      *  Invoked when a script defines settings using specially-formatted
-     *  comment blocks
+     *  comment blocks.  first is true if this is the first time this script
+     *  has been evaluated, false otherwise.
      */
-    void settingsChanged(Settings s);
+    void settingsChanged(Settings s, bool first);
 
 protected slots:
     void onSpinner();
@@ -102,6 +103,7 @@ protected:
     QTimer spinner;
 
     bool drag_should_join=false;
+    bool first_change=false;
 
     QMap<Kernel::Tree::Id, Range> vars;
 };

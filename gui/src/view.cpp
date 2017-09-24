@@ -115,7 +115,7 @@ void View::onSettingsFromPane(Settings s)
     emit(settingsChanged(s));
 }
 
-void View::onSettingsFromScript(Settings s)
+void View::onSettingsFromScript(Settings s, bool first)
 {
     if (settings != s)
     {
@@ -129,6 +129,11 @@ void View::onSettingsFromScript(Settings s)
             // This ends up calling onSettingsFromPane if anything has changed
             pane->set(s);
         }
+    }
+
+    if (first)
+    {
+        camera.zoomTo(s);
     }
 }
 

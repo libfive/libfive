@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QPropertyAnimation>
 
+#include "gui/settings.hpp"
+
 class Camera : public QObject
 {
     Q_OBJECT
@@ -15,6 +17,11 @@ public:
      */
     void toOrthographic();
     void toPerspective();
+
+    /*
+     *  Triggers an animation to zoom to the given setting
+     */
+    void zoomTo(const Settings& s);
 
     /*
      *  Returns the projection matrix

@@ -83,3 +83,8 @@ void Camera::toPerspective()
     anim.setEndValue(0.25);
     anim.start();
 }
+
+void Camera::zoomTo(const Settings& s)
+{
+    qDebug() << "Zooming!";
+}
