@@ -16,7 +16,7 @@ public:
      *  Check if the given point is in the region (inclusive)
      */
     bool contains(Pt p) const
-    { return (p >= lower).all() && (p <= upper).all(); }
+    { return (p >= (lower - 1e-8)).all() && (p <= (upper + 1e-8)).all(); }
 
     /*
      *  Helper function to get center of region
