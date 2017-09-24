@@ -48,7 +48,7 @@ if(APPLE)
            MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/deploy/mac/Info.plist
     )
 else()
-    add_executable(Studio ${SRCS})
+    add_executable(Studio ${SRCS} ${QOBJECTS})
 endif()
 
 target_include_directories(Studio PUBLIC include)
