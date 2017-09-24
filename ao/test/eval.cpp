@@ -3,6 +3,7 @@
 #include "catch.hpp"
 
 #include "ao/tree/tree.hpp"
+#include "ao/render/brep/region.hpp"
 #include "ao/eval/evaluator.hpp"
 
 #include "util/shapes.hpp"
@@ -168,6 +169,44 @@ TEST_CASE("Push / pop behavior")
 
     // Require that the evaluation gets 1
     REQUIRE(e.eval({1.0f, 2.0f, 0.0f}) == 2);
+}
+
+TEST_CASE("Evaluator::push (with NaNs)")
+{
+    auto x = Tree::X();
+    auto y = Tree::Y();
+    auto r = sqrt(x*x + y*y);
+    auto t = atan(y / x);
+    auto tree = max(-Tree::Z(), r - (2 + t));
+
+    Region<3> ra({-0.3125, -3.4375, -0.3125}, {0, -3.125, 0});
+    Region<3> rb({-0.3125, -3.4375, 0}, {0, -3.125, 0.3125});
+    Eigen::Vector3f target(0, -3.4375, 0);
+
+    // Initial sanity-checking
+    REQUIRE(ra.contains(target.template cast<double>()));
+    REQUIRE(rb.contains(target.template cast<double>()));
+
+    Evaluator eval(tree);
+    eval.set(ra.lower.template cast<float>(), ra.upper.template cast<float>());
+    auto ia = eval.interval();
+    CAPTURE(ia.lower());
+    CAPTURE(ia.upper());
+    eval.push();
+    CAPTURE(eval.utilization());
+    auto ea = eval.eval(target);
+    eval.pop();
+
+    eval.set(rb.lower.template cast<float>(), rb.upper.template cast<float>());
+    auto ib = eval.interval();
+    CAPTURE(ib.lower());
+    CAPTURE(ib.upper());
+    eval.push();
+    CAPTURE(eval.utilization());
+    auto eb = eval.eval(target);
+    eval.pop();
+
+    REQUIRE(ea == eb);
 }
 
 TEST_CASE("Evaluator::derivs")
