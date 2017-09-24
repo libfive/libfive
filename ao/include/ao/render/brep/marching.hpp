@@ -19,11 +19,6 @@ static constexpr int _verts(unsigned N)
 static constexpr int _edges(unsigned N)
 { return (N == 0) ? 0 : (_edges(N - 1) * 2 + _verts(N - 1)); }
 
-/*  Returns the number of neighbors touching an N-dimensional cube
- *  (including the cube itself) */
-static constexpr int _neighbors(unsigned N)
-{ return _pow(3, N); }
-
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace Marching
@@ -53,27 +48,12 @@ using VertsToPatches = std::array<Patches<N>, _pow(2, _verts(N))>;
 template <unsigned N>
 using VertsToEdge = std::array<std::array<int, _verts(N)>, _verts(N)>;
 
-// EdgeToVertex is indexed by [mask][edge] where mask is a corner bitmask and
+// EdgeToPatch is indexed by [mask][edge] where mask is a corner bitmask and
 // edge is from VertsToEdge.  It returns a patch index (0-3 for 3D case,
 // 0-1 for 2D case)
 template <unsigned N>
 using EdgeToPatch = std::array<std::array<int, _edges(N) * 2>,
                                _pow(2, _verts(N))>;
-
-////////////////////////////////////////////////////////////////////////////////
-
-// EdgeNeighbor is indexed by [edge] (from VertsToEdge), returning an array of
-// pairs representing [neighbor index, neighbor edge] that are shared with the
-// target edge
-template <unsigned N>
-using EdgeNeighbor = std::array<
-    std::array<std::pair<int, int>, _pow(2, N) - 1>, 2 * _edges(N)>;
-
-// Neighbor is indexed by child cell index and returns an array of pairs
-// representing [neighbor index, neighbor child cell index].  It is used
-// when recursing to keep track of neighbor arrays
-template <unsigned N>
-using Neighbor = std::array<std::array<std::pair<int, int>, _neighbors(N)>, _pow(2, N)>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
