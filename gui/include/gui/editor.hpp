@@ -101,7 +101,7 @@ protected:
     QTextCharFormat error_format;
     QTimer spinner;
 
-    QTextCursor drag_cursor;
+    bool drag_should_join=false;
 
     QMap<Kernel::Tree::Id, Range> vars;
 };

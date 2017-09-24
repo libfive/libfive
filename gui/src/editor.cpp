@@ -11,7 +11,7 @@
 Editor::Editor(QWidget* parent)
     : QWidget(parent), script(new QTextEdit), script_doc(script->document()),
       syntax(new Syntax(script_doc)), err(new QPlainTextEdit),
-      err_doc(err->document()), drag_cursor(script_doc)
+      err_doc(err->document())
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
@@ -232,19 +232,28 @@ void Editor::onScriptChanged()
 void Editor::onDragStart()
 {
     script->setEnabled(false);
-    drag_cursor.beginEditBlock();
+    drag_should_join = false;
 }
 
 void Editor::onDragEnd()
 {
     script->setEnabled(true);
-    drag_cursor.endEditBlock();
 }
 
 void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
 {
     // Temporarily enable the script so that we can edit the variable value
     script->setEnabled(true);
+    QTextCursor drag_cursor(script_doc);
+    if (drag_should_join)
+    {
+        drag_cursor.joinPreviousEditBlock();
+    }
+    else
+    {
+        drag_cursor.beginEditBlock();
+    }
+    drag_should_join = true;
 
     // Build an ordered set so that we can walk through variables
     // in sorted line / column order, making offsets as textual positions
@@ -306,5 +315,6 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
     // Disable the script again (because this is only called when we're
     // doing a drag operation in the 3D viewport, and the script should
     // be locked).
+    drag_cursor.endEditBlock();
     script->setEnabled(false);
 }
