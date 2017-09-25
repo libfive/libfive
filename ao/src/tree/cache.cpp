@@ -126,7 +126,7 @@ void Cache::del(float v)
 
 void Cache::del(Opcode::Opcode op, Node lhs, Node rhs)
 {
-    auto o = ops.find({op, lhs.get(), rhs.get()});
+    auto o = ops.find(Key(op, lhs.get(), rhs.get()));
     assert(o != ops.end());
     assert(o->second.expired());
     ops.erase(o);

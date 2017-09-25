@@ -85,7 +85,9 @@ template <unsigned N>
 XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 double min_feature, double max_err, bool multithread,
                 std::atomic_bool& cancel)
-    : region(region)
+    : region(region), _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
+      AtA(Eigen::Matrix<double, N, N>::Zero()),
+      AtB(Eigen::Matrix<double, N, 1>::Zero())
 {
     if (cancel.load())
     {

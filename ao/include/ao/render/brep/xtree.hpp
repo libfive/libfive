@@ -196,12 +196,11 @@ protected:
 
     /*  Mass point is the average intersection location *
      *  (the last coordinate is number of points summed) */
-    Eigen::Matrix<double, N + 1, 1> _mass_point=
-        Eigen::Matrix<double, N + 1, 1>::Zero();
+    Eigen::Matrix<double, N + 1, 1> _mass_point;
 
     /*  QEF matrices */
-    Eigen::Matrix<double, N, N> AtA=Eigen::Matrix<double, N, N>::Zero();
-    Eigen::Matrix<double, N, 1> AtB=Eigen::Matrix<double, N, 1>::Zero();
+    Eigen::Matrix<double, N, N> AtA;
+    Eigen::Matrix<double, N, 1> AtB;
     double BtB=0;
 
     /*  Eigenvalue threshold for determining feature rank  */
