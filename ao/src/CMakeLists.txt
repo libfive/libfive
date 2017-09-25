@@ -25,4 +25,10 @@ target_include_directories(ao-kernel PUBLIC
     ${EIGEN3_INCLUDE_DIR} # Eigen::Vector3f is used in APIs
 )
 
-target_link_libraries(ao-kernel ${PNG_LIBRARIES})
+set(LIBS ${PNG_LIBRARIES})
+
+if(UNIX)
+    set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT})
+endif(UNIX)
+
+target_link_libraries(ao-kernel ${LIBS})

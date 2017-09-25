@@ -47,9 +47,8 @@ find_package(Boost QUIET REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-################################################################################
 if (UNIX)
-    set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
+    find_package(Threads REQUIRED QUIET)
 endif(UNIX)
 
 ################################################################################
