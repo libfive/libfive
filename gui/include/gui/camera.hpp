@@ -45,6 +45,8 @@ public:
     void panIncremental(QPoint delta);
     void zoomIncremental(float ds, QPoint c);
 
+    float getScale() const { return scale; }
+
     /*  Window size  */
     QSize size;
 

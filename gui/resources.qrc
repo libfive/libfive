@@ -6,6 +6,8 @@
         <file>gl/shaded.frag</file>
         <file>gl/busy.frag</file>
         <file>gl/bars.frag</file>
+        <file>gl/bbox.vert</file>
+        <file>gl/bbox.frag</file>
 
         <file>examples/tutorial.ao</file>
     </qresource>

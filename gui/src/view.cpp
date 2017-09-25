@@ -114,6 +114,11 @@ void View::onSettingsFromPane(Settings s)
     settings = s;
     startRender(s);
     emit(settingsChanged(s));
+
+    if (show_bbox)
+    {
+        update();
+    }
 }
 
 void View::onSettingsFromScript(Settings s, bool first)
@@ -146,6 +151,7 @@ void View::initializeGL()
 
     axes.initializeGL();
     background.initializeGL();
+    bbox.initializeGL();
     busy.initializeGL();
     bars.initializeGL();
 }
@@ -213,6 +219,11 @@ void View::paintGL()
     {
         axes.drawSolid(m);
         axes.drawWire(m);
+    }
+
+    if (show_bbox)
+    {
+        bbox.draw(settings.min, settings.max, m, camera.getScale());
     }
 
     // This is a no-op if the spinner is hidden
@@ -391,6 +402,12 @@ void View::leaveEvent(QEvent* event)
 void View::showAxes(bool a)
 {
     show_axes = a;
+    update();
+}
+
+void View::showBBox(bool b)
+{
+    show_bbox = b;
     update();
 }
 

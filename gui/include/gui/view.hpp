@@ -5,6 +5,7 @@
 
 #include "gui/axes.hpp"
 #include "gui/background.hpp"
+#include "gui/bbox.hpp"
 #include "gui/bars.hpp"
 #include "gui/busy.hpp"
 #include "gui/camera.hpp"
@@ -27,6 +28,7 @@ public slots:
     void setShapes(QList<Shape*> shapes);
     void openSettings();
     void showAxes(bool a);
+    void showBBox(bool b);
 
     void toOrthographic(bool=false) { camera.toOrthographic();  }
     void toPerspective(bool=false)  { camera.toPerspective();   }
@@ -88,6 +90,7 @@ protected:
     /*  Background items to render  */
     Axes axes;
     Background background;
+    BBox bbox;
     Busy busy;
     Bars bars;
 
@@ -114,6 +117,7 @@ protected:
     QPointer<SettingsPane> pane;
     Settings settings;
     bool show_axes=true;
+    bool show_bbox=false;
 
     /*  Framebuffer to render pick data  */
     QScopedPointer<QOpenGLFramebufferObject> pick_fbo;

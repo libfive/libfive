@@ -99,6 +99,10 @@ Window::Window(const QString& target)
     connect(show_axes_action, &QAction::triggered,
             view, &View::showAxes);
 
+    auto show_bbox_action = view_menu->addAction("Show bounding box(es)");
+    show_bbox_action->setCheckable(true);
+    connect(show_bbox_action, &QAction::triggered, view, &View::showBBox);
+
     auto perspective_action = new QAction("Perspective");
     auto ortho_action = new QAction("Orthographic");
     view_menu->addSection("Projection");
