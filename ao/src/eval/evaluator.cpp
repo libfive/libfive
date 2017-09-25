@@ -638,7 +638,14 @@ Interval::I Evaluator::eval_clause_interval(
         case Opcode::ACOS:
             return boost::numeric::acos(a);
         case Opcode::ATAN:
-            return boost::numeric::atan(a);
+            // If the interval has an infinite bound, then return the largest
+            // possible output interval (of +/- pi/2).  This rescues us from
+            // situations where we do atan(y / x) and the behavior of the
+            // interval changes if you're approaching x = 0 from below versus
+            // from above.
+            return (std::isinf(a.lower()) || std::isinf(a.upper()))
+                ? Interval::I(-M_PI/2, M_PI/2)
+                : boost::numeric::atan(a);
         case Opcode::EXP:
             return boost::numeric::exp(a);
         case Opcode::ABS:
