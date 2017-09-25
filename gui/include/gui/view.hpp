@@ -32,7 +32,7 @@ public slots:
 
     void toOrthographic(bool=false) { camera.toOrthographic();  }
     void toPerspective(bool=false)  { camera.toPerspective();   }
-    void zoomTo(bool=false) { camera.zoomTo(settings); }
+    void zoomTo(bool=false) { camera.zoomTo(settings.min, settings.max); }
 
     /*
      *  Emits shapesReady if all the shapes being drawn

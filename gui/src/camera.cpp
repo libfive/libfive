@@ -1,4 +1,5 @@
 #include <cmath>
+
 #include "gui/camera.hpp"
 
 Camera::Camera(QSize size)
@@ -84,13 +85,13 @@ void Camera::toPerspective()
     anim.start();
 }
 
-void Camera::zoomTo(const Settings& s)
+void Camera::zoomTo(const QVector3D& min, const QVector3D& max)
 {
     QVector3D center_start = center;
-    QVector3D center_end = (s.min + s.max) / -2;
+    QVector3D center_end = (min + max) / -2;
 
     float scale_start = scale;
-    float scale_end = 2 / (s.max - s.min).length();
+    float scale_end = 2 / (max - min).length();
 
     auto a = new QVariantAnimation(this);
     a->setStartValue(0);
@@ -107,6 +108,5 @@ void Camera::zoomTo(const Settings& s)
                 emit(changed());
             });
     connect(a, &QPropertyAnimation::finished, this, &Camera::animDone);
-    connect(a, &QPropertyAnimation::finished, this, []() { qDebug() << "Done"; });
     a->start(a->DeleteWhenStopped);
 }

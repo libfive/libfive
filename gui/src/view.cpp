@@ -139,7 +139,7 @@ void View::onSettingsFromScript(Settings s, bool first)
 
     if (first)
     {
-        camera.zoomTo(s);
+        camera.zoomTo(s.min, s.max);
     }
 }
 

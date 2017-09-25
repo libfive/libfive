@@ -4,8 +4,6 @@
 #include <QObject>
 #include <QPropertyAnimation>
 
-#include "gui/settings.hpp"
-
 class Camera : public QObject
 {
     Q_OBJECT
@@ -21,7 +19,7 @@ public:
     /*
      *  Triggers an animation to zoom to the given setting
      */
-    void zoomTo(const Settings& s);
+    void zoomTo(const QVector3D& min, const QVector3D& max);
 
     /*
      *  Returns the projection matrix
