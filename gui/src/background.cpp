@@ -2,11 +2,6 @@
 #include "gui/color.hpp"
 #include "gui/shader.hpp"
 
-Background::Background()
-{
-    // Nothing to do here
-}
-
 void Background::initializeGL()
 {
     initializeOpenGLFunctions();

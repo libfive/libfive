@@ -7,7 +7,6 @@
 class Background : public QOpenGLFunctions
 {
 public:
-    Background();
     void draw();
     void initializeGL();
 
