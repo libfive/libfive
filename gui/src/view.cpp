@@ -44,6 +44,7 @@ void View::setShapes(QList<Shape*> new_shapes)
             disconnect(*itr, &Shape::redraw, this, &View::update);
             (*itr)->deleteLater();
             itr = shapes.erase(itr);
+            pick_timer.start();
         }
         else
         {
@@ -227,6 +228,15 @@ void View::resizeGL(int width, int height)
     pick_timer.start();
 }
 
+void View::syncPicker()
+{
+    if (pick_timer.isActive())
+    {
+        pick_timer.stop();
+        redrawPicker();
+    }
+}
+
 void View::mouseMoveEvent(QMouseEvent* event)
 {
     QOpenGLWidget::mouseMoveEvent(event);
@@ -279,6 +289,7 @@ void View::mouseMoveEvent(QMouseEvent* event)
     }
     else
     {
+        syncPicker();
         auto picked = (pick_img.pixel(event->pos()) & 0xFFFFFF);
         auto target = picked ? shapes.at(picked - 1) : nullptr;
         if (target && target->hasVars())
@@ -299,15 +310,6 @@ void View::mousePressEvent(QMouseEvent* event)
 {
     QOpenGLWidget::mousePressEvent(event);
 
-    // Force update of pick buffer if the timer is running
-    // e.g. if the user resizes the window, then immediately
-    // clicks, we should handle it correctly.
-    if (pick_timer.isActive())
-    {
-        pick_timer.stop();
-        redrawPicker();
-    }
-
     if (mouse.state == mouse.RELEASED)
     {
         if (event->pos().x() > camera.size.width() - bars.side &&
@@ -317,6 +319,7 @@ void View::mousePressEvent(QMouseEvent* event)
         }
         else if (event->button() == Qt::LeftButton)
         {
+            syncPicker();
             auto picked = (pick_img.pixel(event->pos()) & 0xFFFFFF);
             drag_target = picked ? shapes.at(picked - 1) : nullptr;
             if (picked && drag_target->hasVars())

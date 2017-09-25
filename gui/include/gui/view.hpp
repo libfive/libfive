@@ -97,6 +97,12 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
     void leaveEvent(QEvent* event) override;
 
+    /*
+     *  Ensures that the pick buffer is synced, forcing a pick render
+     *  if the timer is currently running.
+     */
+    void syncPicker();
+
     Camera camera;
 
     struct {
