@@ -3,7 +3,7 @@
 
 #include "gui/app.hpp"
 
-App::App(int argc, char** argv)
+App::App(int& argc, char** argv)
     : QApplication(argc, argv),
       window(argc > 1 ? argv[1] : ":/examples/tutorial.ao")
 {
