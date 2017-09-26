@@ -2,9 +2,9 @@
 
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
-#include <QOpenGLFunctions>
+#include <QOpenGLExtraFunctions>
 
-class BBox : public QOpenGLFunctions
+class BBox : public QOpenGLExtraFunctions
 {
 public:
     void draw(const QVector3D& min, const QVector3D& max,

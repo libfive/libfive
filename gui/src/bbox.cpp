@@ -1,3 +1,6 @@
+#include <QTime>
+#include <cmath>
+
 #include "gui/bbox.hpp"
 #include "gui/shader.hpp"
 
@@ -5,95 +8,98 @@ void BBox::initializeGL()
 {
     initializeOpenGLFunctions();
 
+    QVector<GLfloat> data;
+    auto push = [&](GLfloat x, GLfloat y){
+        data.push_back(x);
+        data.push_back(y);
+    };
+
+    // Build a capsule shape out of triangles
+    const int res = 32;
+    for (unsigned i=0; i < 32; ++i)
     {
-        // Data is arranged  x   y   z   i
-        GLfloat data[] = {   /********************/
-                            0, 0, 0, 1, // XY
-                            1, 0, 0, 0,
-                            1, 1, 0, 2,
-
-                            0, 0, 0, 1,
-                            1, 1, 0, 2,
-                            0, 1, 0, 0,
-
-                            0, 0, 1, 1,
-                            1, 1, 1, 2,
-                            1, 0, 1, 0,
-
-                            0, 0, 1, 1,
-                            0, 1, 1, 0,
-                            1, 1, 1, 2,
-
-                            0, 0, 0, 1, // XZ
-                            1, 0, 0, 0,
-                            1, 0, 1, 2,
-
-                            0, 0, 0, 1,
-                            1, 0, 1, 2,
-                            0, 0, 1, 0,
-
-                            0, 1, 0, 1,
-                            1, 1, 1, 2,
-                            1, 1, 0, 0,
-
-                            0, 1, 0, 1,
-                            0, 1, 1, 0,
-                            1, 1, 1, 2,
-
-                            0, 0, 0, 1, // YZ
-                            0, 1, 0, 0,
-                            0, 1, 1, 2,
-
-                            0, 0, 0, 1,
-                            0, 1, 1, 2,
-                            0, 0, 1, 0,
-
-                            1, 0, 0, 1,
-                            1, 1, 1, 2,
-                            1, 1, 0, 0,
-
-                            1, 0, 0, 1,
-                            1, 0, 1, 0,
-                            1, 1, 1, 2,
-        };
-        vbo.create();
-        vbo.bind();
-        vbo.allocate(data, sizeof(data));
-
-        vao.create();
-        vao.bind();
-
-        // Data stored in VAO
-        glVertexAttribPointer(
-                0, 3, GL_FLOAT, GL_FALSE,
-                4 * sizeof(GLfloat), (GLvoid*)0);
-        glVertexAttribPointer(
-                1, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat),
-                (GLvoid*)(3 * sizeof(GLfloat)));
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-
-        vbo.release();
-        vao.release();
+        push(cos(M_PI * i / (res - 1.0)), -sin(M_PI * i / (res - 1.0)));
+        push(cos(M_PI * (i + 1) / (res - 1.0)), -sin(M_PI * (i + 1) / (res - 1.0)));
+        push(0, 0);
     }
+
+    push(1, 0);
+    push(1, 1);
+    push(-1, 0);
+
+    push(-1, 0);
+    push(1, 1);
+    push(-1, 1);
+
+    for (unsigned i=0; i < 32; ++i)
+    {
+        push(cos(M_PI * i / (res - 1.0)), 1 + sin(M_PI * i / (res - 1.0)));
+        push(cos(M_PI * (i + 1) / (res - 1.0)), 1 + sin(M_PI * (i + 1) / (res - 1.0)));
+        push(0, 1);
+    }
+
+    vbo.create();
+    vbo.bind();
+    vbo.allocate(data.data(), data.size() * sizeof(GLfloat));
+
+    vao.create();
+    vao.bind();
+
+    // Data stored in VAO
+    glVertexAttribPointer(
+            0, 2, GL_FLOAT, GL_FALSE,
+            2 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
+
+    vbo.release();
+    vao.release();
 }
 
 void BBox::draw(const QVector3D& min, const QVector3D& max,
                 const QMatrix4x4& M, float scale)
 {
+    QTime timer;
+    timer.start();
+
     Shader::bbox->bind();
-    glUniformMatrix4fv(Shader::bbox->uniformLocation("M"), 1, GL_FALSE, M.data());
-    glUniform3f(Shader::bbox->uniformLocation("corner_min"), min.x(), min.y(), min.z());
-    glUniform3f(Shader::bbox->uniformLocation("corner_max"), max.x(), max.y(), max.z());
-    glUniform1f(Shader::bbox->uniformLocation("scale"), scale);
+    glUniform1f(Shader::bbox->uniformLocation("thickness"), 0.01);
 
     vao.bind();
-    glEnable(GL_BLEND);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDrawArrays(GL_TRIANGLES, 0, 12*3);
-    glDisable(GL_BLEND);
+
+    QList<QPair<QVector3D, QVector3D>> edges = {
+        {min, {min.x(), min.y(), max.z()}},
+        {min, {min.x(), max.y(), min.z()}},
+        {min, {max.x(), min.y(), min.z()}},
+
+        {max, {max.x(), max.y(), min.z()}},
+        {max, {max.x(), min.y(), max.z()}},
+        {max, {min.x(), max.y(), max.z()}},
+
+        {{min.x(), min.y(), max.z()}, {min.x(), max.y(), max.z()}},
+        {{min.x(), min.y(), max.z()}, {max.x(), min.y(), max.z()}},
+
+        {{max.x(), max.y(), min.z()}, {min.x(), max.y(), min.z()}},
+        {{max.x(), max.y(), min.z()}, {max.x(), min.y(), min.z()}},
+
+        {{max.x(), min.y(), min.z()}, {max.x(), min.y(), max.z()}},
+        {{min.x(), max.y(), min.z()}, {min.x(), max.y(), max.z()}},
+    };
+
+    auto a_loc = Shader::bbox->uniformLocation("a");
+    auto b_loc = Shader::bbox->uniformLocation("b");
+    for (auto& e : edges)
+    {
+        auto a = M * e.first;
+        auto b = M * e.second;
+
+        glUniform3f(a_loc, a.x(), a.y(), a.z());
+        glUniform3f(b_loc, b.x(), b.y(), b.z());
+
+        glDrawArrays(GL_TRIANGLES, 0, 198);
+    }
     vao.release();
 
     Shader::flat->release();
+    qDebug() << timer.elapsed();
 }
 

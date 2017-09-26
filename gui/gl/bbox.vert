@@ -1,20 +1,36 @@
 #version 330
 
-layout(location=0) in vec3 vertex_position;
-layout(location=1) in float vertex_i;
+layout(location=0) in vec2 vertex_position;
 
-uniform mat4 M;
-uniform vec3 corner_min;
-uniform vec3 corner_max;
-
-out vec3 frag_bary;
+uniform vec3 a;
+uniform vec3 b;
+uniform float thickness;
 
 void main()
 {
-    vec3 scale = corner_max - corner_min;
-    gl_Position = M * vec4(vertex_position * scale + corner_min, 1.0f);
+    vec2 delta = (b - a).xy;
+    float scale = length(delta);
 
-    frag_bary = vec3(0.0f, 0.0f, 0.0f);
-    frag_bary[int(vertex_i)] = 1.0f;
+    // Adjust line thickness
+    float z = 0.0f;
+    vec2 v = vertex_position;
+    if (v.y < 0)
+    {
+        v.y *= thickness;
+        z = a.z;
+    }
+    else
+    {
+        v.y = (v.y - 1.0f) * thickness + scale;
+        z = b.z;
+    }
+    v.x *= thickness;
+
+    float angle = atan(delta.x, delta.y);
+
+    mat2 rot = mat2(cos(angle), -sin(angle),
+                    sin(angle), cos(angle));
+
+    gl_Position = vec4(rot * v + a.xy, z, 1.0f);
 }
 
