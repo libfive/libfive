@@ -8,7 +8,7 @@ QOpenGLShaderProgram* monochrome;
 QOpenGLShaderProgram* shaded;
 QOpenGLShaderProgram* busy;
 QOpenGLShaderProgram* bars;
-QOpenGLShaderProgram* bbox;
+QOpenGLShaderProgram* line;
 
 void initializeGL()
 {
@@ -47,12 +47,12 @@ void initializeGL()
             QOpenGLShader::Fragment, ":/gl/bars.frag");
     bars->link();
 
-    bbox = new QOpenGLShaderProgram;
-    bbox->addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/bbox.vert");
-    bbox->addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/bbox.frag");
-    bbox->link();
+    line = new QOpenGLShaderProgram;
+    line->addShaderFromSourceFile(
+            QOpenGLShader::Vertex, ":/gl/line.vert");
+    line->addShaderFromSourceFile(
+            QOpenGLShader::Fragment, ":/gl/line.frag");
+    line->link();
 }
 
 }

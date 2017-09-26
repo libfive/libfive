@@ -1,4 +1,3 @@
-#include <QTime>
 #include <cmath>
 
 #include "gui/bbox.hpp"
@@ -58,11 +57,8 @@ void BBox::initializeGL()
 void BBox::draw(const QVector3D& min, const QVector3D& max,
                 const QMatrix4x4& M, float scale)
 {
-    QTime timer;
-    timer.start();
-
-    Shader::bbox->bind();
-    glUniform1f(Shader::bbox->uniformLocation("thickness"), 0.01);
+    Shader::line->bind();
+    glUniform1f(Shader::line->uniformLocation("thickness"), 0.01);
 
     vao.bind();
 
@@ -85,8 +81,8 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
         {{min.x(), max.y(), min.z()}, {min.x(), max.y(), max.z()}},
     };
 
-    auto a_loc = Shader::bbox->uniformLocation("a");
-    auto b_loc = Shader::bbox->uniformLocation("b");
+    auto a_loc = Shader::line->uniformLocation("a");
+    auto b_loc = Shader::line->uniformLocation("b");
     for (auto& e : edges)
     {
         auto a = M * e.first;
@@ -100,6 +96,5 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
     vao.release();
 
     Shader::flat->release();
-    qDebug() << timer.elapsed();
 }
 
