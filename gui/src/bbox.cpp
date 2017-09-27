@@ -1,6 +1,7 @@
 #include <cmath>
 
 #include "gui/bbox.hpp"
+#include "gui/camera.hpp"
 #include "gui/shader.hpp"
 
 void BBox::initializeGL()
@@ -55,10 +56,13 @@ void BBox::initializeGL()
 }
 
 void BBox::draw(const QVector3D& min, const QVector3D& max,
-                const QMatrix4x4& M, float scale)
+                const Camera& camera)
 {
+    auto M = camera.M();
+
     Shader::line->bind();
     glUniform1f(Shader::line->uniformLocation("thickness"), 0.01);
+    glUniform1f(Shader::line->uniformLocation("aspect"), camera.getAspect());
 
     vao.bind();
 

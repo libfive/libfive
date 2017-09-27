@@ -223,7 +223,7 @@ void View::paintGL()
 
     if (show_bbox)
     {
-        bbox.draw(settings.min, settings.max, m, camera.getScale());
+        bbox.draw(settings.min, settings.max, camera);
     }
 
     // This is a no-op if the spinner is hidden

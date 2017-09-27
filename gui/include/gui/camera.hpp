@@ -38,6 +38,11 @@ public:
      */
     QMatrix4x4 M() const { return proj() * view(); }
 
+    /*
+     *  Returns aspect ratio
+     */
+    float getAspect() const { return size.width() / float(size.height()); }
+
     /*  All QPoint coordinates are in window pixels  */
     void rotateIncremental(QPoint delta);
     void panIncremental(QPoint delta);

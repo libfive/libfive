@@ -5,6 +5,7 @@ layout(location=0) in vec2 vertex_position;
 uniform vec3 a;
 uniform vec3 b;
 uniform float thickness;
+uniform float aspect;
 
 void main()
 {
@@ -14,15 +15,18 @@ void main()
     // Adjust line thickness
     float z = 0.0f;
     vec2 v = vertex_position;
-    if (v.y < 0)
+    vec2 base;
+    if (v.y <= 0)
     {
         v.y *= thickness;
         z = a.z;
+        base = vec2(0, 0);
     }
     else
     {
         v.y = (v.y - 1.0f) * thickness + scale;
         z = b.z;
+        base = vec2(0, scale);
     }
     v.x *= thickness;
 
@@ -31,6 +35,18 @@ void main()
     mat2 rot = mat2(cos(angle), -sin(angle),
                     sin(angle), cos(angle));
 
-    gl_Position = vec4(rot * v + a.xy, z, 1.0f);
+    base = rot * base + a.xy;
+    v = rot * v + a.xy;
+
+    if (aspect > 1.0f)
+    {
+        v.y = (v.y - base.y) / aspect + base.y;
+    }
+    else
+    {
+        v.x = (v.x - base.x) / aspect + base.x;
+    }
+
+    gl_Position = vec4(v, z, 1.0f);
 }
 
