@@ -300,19 +300,7 @@ void View::mouseMoveEvent(QMouseEvent* event)
     }
     else
     {
-        syncPicker();
-        auto picked = (pick_img.pixel(event->pos()) & 0xFFFFFF);
-        auto target = picked ? shapes.at(picked - 1) : nullptr;
-        if (target && target->hasVars())
-        {
-            hover_target = target;
-            hover_target->setHover(true);
-        }
-        else if (hover_target)
-        {
-            hover_target->setHover(false);
-            hover_target = nullptr;
-        }
+        checkHoverTarget(event->pos());
     }
     mouse.pos = event->pos();
 }
@@ -377,6 +365,7 @@ void View::mouseReleaseEvent(QMouseEvent* event)
             drag_target->setGrabbed(false);
             drag_target = nullptr;
             emit(dragEnd());
+            checkHoverTarget(event->pos());
         }
     }
     mouse.state = mouse.RELEASED;
@@ -396,6 +385,28 @@ void View::leaveEvent(QEvent* event)
     if (bars.hover(false))
     {
         update();
+    }
+}
+
+void View::checkHoverTarget(QPoint pos)
+{
+    syncPicker();
+
+    auto picked = (pick_img.pixel(pos) & 0xFFFFFF);
+    auto target = picked ? shapes.at(picked - 1) : nullptr;
+    if (target && target->hasVars())
+    {
+        if (hover_target)
+        {
+            hover_target->setHover(false);
+        }
+        hover_target = target;
+        hover_target->setHover(true);
+    }
+    else if (hover_target)
+    {
+        hover_target->setHover(false);
+        hover_target = nullptr;
     }
 }
 

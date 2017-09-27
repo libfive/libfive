@@ -64,7 +64,7 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
 
     Shader::line->bind();
     glEnable(GL_BLEND);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glUniform1f(Shader::line->uniformLocation("thickness"), 0.005);
     glUniform1f(Shader::line->uniformLocation("aspect"), camera.getAspect());
 

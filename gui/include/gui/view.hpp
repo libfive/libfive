@@ -101,6 +101,11 @@ protected:
     void leaveEvent(QEvent* event) override;
 
     /*
+     *  Updates hover_target based on mouse cursor position
+     */
+    void checkHoverTarget(QPoint pos);
+
+    /*
      *  Ensures that the pick buffer is synced, forcing a pick render
      *  if the timer is currently running.
      */
