@@ -9,44 +9,38 @@ uniform float aspect;
 
 void main()
 {
-    vec2 delta = (b - a).xy;
-    float scale = length(delta);
+    vec2 offset;
+    vec3 target;
 
-    // Adjust line thickness
-    float z = 0.0f;
-    vec2 v = vertex_position;
-    vec2 base;
-    if (v.y <= 0)
+    if (vertex_position.y < 0.5)
     {
-        v.y *= thickness;
-        z = a.z;
-        base = vec2(0, 0);
+        offset = vertex_position;
+        target = a;
     }
     else
     {
-        v.y = (v.y - 1.0f) * thickness + scale;
-        z = b.z;
-        base = vec2(0, scale);
+        offset = vertex_position - vec2(0, 1);
+        target = b;
     }
-    v.x *= thickness;
 
-    float angle = atan(delta.x, delta.y);
+    // Adjust for line thickness
+    offset *= thickness;
+
+    float angle = atan((b - a).x, (b - a).y);
 
     mat2 rot = mat2(cos(angle), -sin(angle),
                     sin(angle), cos(angle));
-
-    base = rot * base + a.xy;
-    v = rot * v + a.xy;
+    offset = rot * offset;
 
     if (aspect > 1.0f)
     {
-        v.y = (v.y - base.y) / aspect + base.y;
+        offset.y *= aspect;
     }
     else
     {
-        v.x = (v.x - base.x) / aspect + base.x;
+        offset.x /= aspect;
     }
 
-    gl_Position = vec4(v, z, 1.0f);
+    gl_Position = vec4(target.xy + offset, target.z, 1.0f);
 }
 

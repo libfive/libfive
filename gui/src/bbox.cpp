@@ -18,8 +18,17 @@ void BBox::initializeGL()
     const int res = 32;
     for (unsigned i=0; i < 32; ++i)
     {
-        push(cos(M_PI * i / (res - 1.0)), -sin(M_PI * i / (res - 1.0)));
-        push(cos(M_PI * (i + 1) / (res - 1.0)), -sin(M_PI * (i + 1) / (res - 1.0)));
+        auto x0 = cos(M_PI * i / float(res));
+        auto x1 = cos(M_PI * (i + 1) / float(res));
+        auto y0 = sin(M_PI * i / float(res));
+        auto y1 = sin(M_PI * (i + 1) / float(res));
+
+        push(x0, 1 + y0);
+        push(x1, 1 + y1);
+        push(0, 1);
+
+        push(x0, -y0);
+        push(x1, -y1);
         push(0, 0);
     }
 
@@ -30,13 +39,6 @@ void BBox::initializeGL()
     push(-1, 0);
     push(1, 1);
     push(-1, 1);
-
-    for (unsigned i=0; i < 32; ++i)
-    {
-        push(cos(M_PI * i / (res - 1.0)), 1 + sin(M_PI * i / (res - 1.0)));
-        push(cos(M_PI * (i + 1) / (res - 1.0)), 1 + sin(M_PI * (i + 1) / (res - 1.0)));
-        push(0, 1);
-    }
 
     vbo.create();
     vbo.bind();
@@ -61,6 +63,8 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
     auto M = camera.M();
 
     Shader::line->bind();
+    glEnable(GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glUniform1f(Shader::line->uniformLocation("thickness"), 0.005);
     glUniform1f(Shader::line->uniformLocation("aspect"), camera.getAspect());
 
@@ -85,6 +89,15 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
         {{min.x(), max.y(), min.z()}, {min.x(), max.y(), max.z()}},
     };
 
+    // Do a reverse Z sorting to prevent transparency from overlapping
+    std::sort(edges.begin(), edges.end(),
+            [&](const QPair<QVector3D, QVector3D>& a,
+                const QPair<QVector3D, QVector3D>& b)
+            {
+                return fmax((M * a.first).z(), (M * a.second).z()) <
+                       fmax((M * b.first).z(), (M * b.second).z());
+            });
+
     auto a_loc = Shader::line->uniformLocation("a");
     auto b_loc = Shader::line->uniformLocation("b");
     for (auto& e : edges)
@@ -100,5 +113,6 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
     vao.release();
 
     Shader::flat->release();
+    glDisable(GL_BLEND);
 }
 
