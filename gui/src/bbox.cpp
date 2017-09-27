@@ -61,7 +61,7 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
     auto M = camera.M();
 
     Shader::line->bind();
-    glUniform1f(Shader::line->uniformLocation("thickness"), 0.01);
+    glUniform1f(Shader::line->uniformLocation("thickness"), 0.005);
     glUniform1f(Shader::line->uniformLocation("aspect"), camera.getAspect());
 
     vao.bind();
