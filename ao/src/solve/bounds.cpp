@@ -76,7 +76,7 @@ Region<3> findBounds(Evaluator* eval)
                 }
                 step /= 2;
             }
-            out[s](axis) = r[s](axis);
+            out[!s](axis) = r[s](axis);
         }
     }
     return out;
