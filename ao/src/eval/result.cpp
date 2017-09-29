@@ -2,16 +2,16 @@
 
 namespace Kernel {
 
-constexpr Result::Index Result::N;
+constexpr size_t Result::N;
 
-Result::Result(Index clauses, Index vars)
+Result::Result(size_t clauses, size_t vars)
     : f(clauses, N), d(clauses, 1), j(clauses, vars)
 {
     i.resize(clauses);
     j = 0;
 }
 
-void Result::fill(float v, Index clause)
+void Result::fill(float v, Clause::Id clause)
 {
     // Load a constant into the value row
     setValue(v, clause);
@@ -20,7 +20,7 @@ void Result::fill(float v, Index clause)
     j.row(clause) = 0;
 }
 
-void Result::setValue(float v, Index clause)
+void Result::setValue(float v, Clause::Id clause)
 {
     for (unsigned i=0; i < N; ++i)
     {
@@ -31,13 +31,13 @@ void Result::setValue(float v, Index clause)
     i[clause] = Interval::I(v, v);
 }
 
-void Result::setGradient(Index clause, Index var)
+void Result::setGradient(Clause::Id clause, size_t var)
 {
     // Drop a 1 in the Jacobian row at the var index
     j(clause, var) = 1;
 }
 
-void Result::setDeriv(Eigen::Vector3f deriv, Index clause)
+void Result::setDeriv(Eigen::Vector3f deriv, Clause::Id clause)
 {
     for (size_t i=0; i < N; ++i)
     {

@@ -14,7 +14,7 @@ struct Clause
     /*
      *  Clause constructor
      */
-    Clause(Opcode::Opcode op, uint32_t id, uint32_t a, uint32_t b)
+    Clause(Opcode::Opcode op, Id id, Id a, Id b)
         : op(op), id(id), a(a), b(b) {}
 
     /*  Opcode for this clause  */

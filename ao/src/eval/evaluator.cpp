@@ -570,7 +570,7 @@ bool Evaluator::isAmbiguous()
     return false;
 }
 
-const Eigen::Array<bool, Result::N, 1>& Evaluator::getAmbiguous(Result::Index i)
+const Eigen::Array<bool, Result::N, 1>& Evaluator::getAmbiguous(size_t i)
 {
     result->ambig = 0;
 
@@ -669,7 +669,7 @@ Interval::I Evaluator::eval_clause_interval(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const float* Evaluator::values(Result::Index count)
+const float* Evaluator::values(size_t count)
 {
     for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
     {
@@ -779,7 +779,7 @@ const float* Evaluator::values(Result::Index count)
     return &result->f(tape->i, 0);
 }
 
-Evaluator::Derivs Evaluator::derivs(Result::Index count)
+Evaluator::Derivs Evaluator::derivs(size_t count)
 {
     values(count);
 

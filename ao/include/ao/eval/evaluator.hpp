@@ -49,7 +49,7 @@ public:
      *  Evaluates a set of floating-point results
      *  (which have been loaded with set)
      */
-    const float* values(Result::Index count);
+    const float* values(size_t count);
 
     /*
      *  Helper struct when returning derivatives
@@ -65,7 +65,7 @@ public:
      *
      *  Values must have been previously loaded by set
      */
-    Derivs derivs(Result::Index count);
+    Derivs derivs(size_t count);
 
     /*
      *  Returns the gradient with respect to all VAR nodes
@@ -81,7 +81,7 @@ public:
      *  Stores the given value in the result arrays
      *  (inlined for efficiency)
      */
-    void set(const Eigen::Vector3f& p, Result::Index index)
+    void set(const Eigen::Vector3f& p, size_t index)
     {
         result->f(X, index) = p.x();
         result->f(Y, index) = p.y();
@@ -160,7 +160,7 @@ public:
     /*
      *  Returns a list of ambiguous items from indices 0 to i
      */
-    const Eigen::Array<bool, Result::N, 1>& getAmbiguous(Result::Index i);
+    const Eigen::Array<bool, Result::N, 1>& getAmbiguous(size_t i);
 
     /*
      *  Checks whether the given position is ambiguous

@@ -12,12 +12,10 @@ namespace Kernel {
 
 
 struct Result {
-    typedef Clause::Id Index;
-
     /*
      *  Constructs a result object with appropriate array sizes
      */
-    Result(Index clauses, Index vars=0);
+    Result(size_t clauses, size_t vars=0);
 
     /*
      *  Sets all of the values to the given constant float
@@ -26,26 +24,26 @@ struct Result {
      *  Gradients are set to {0, 0, 0}
      *  Gradient is set to 0
      */
-    void fill(float v, Index clause);
+    void fill(float v, Clause::Id clause);
 
     /*
      *  Sets all of the values to the given constant float
      *  (across the Interval, and float / __m256 arrays)
      */
-    void setValue(float v, Index clause);
+    void setValue(float v, Clause::Id clause);
 
     /*
-     *  Marks that j[clause][var] = 1
+     *  Marks that j(clause, var) = 1
      */
-    void setGradient(Index clause, Index var);
+    void setGradient(Clause::Id clause, size_t var);
 
     /*
      *  Fills the derivative arrays with the given values
      */
-    void setDeriv(Eigen::Vector3f d, Index clause);
+    void setDeriv(Eigen::Vector3f d, Clause::Id clause);
 
     // This is the number of samples that we can process in one pass
-    static constexpr Index N = 256;
+    static constexpr size_t N = 256;
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
