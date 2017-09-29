@@ -23,4 +23,46 @@ TEST_CASE("findBounds")
         REQUIRE(r.upper.y() == Approx(0.5).epsilon(0.001));
         REQUIRE(r.upper.z() == Approx(0.5).epsilon(0.001));
     }
+
+    SECTION("Rotated shape")
+    {
+        auto s = rotate2d(circle(0.5), M_PI/2);
+        auto r = findBounds(s);
+
+        CAPTURE(r.lower);
+        CAPTURE(r.upper);
+
+        REQUIRE(!std::isinf(r.lower.x()));
+        REQUIRE(!std::isinf(r.lower.y()));
+        REQUIRE(r.lower.x() <= -0.5);
+        REQUIRE(r.lower.y() <= -0.5);
+        REQUIRE(std::isinf(r.lower.z()));
+
+        REQUIRE(!std::isinf(r.upper.x()));
+        REQUIRE(!std::isinf(r.upper.y()));
+        REQUIRE(r.upper.x() >= 0.5);
+        REQUIRE(r.upper.y() >= 0.5);
+        REQUIRE(std::isinf(r.upper.z()));
+    }
+
+    SECTION("Reflected shape")
+    {
+        auto s = circle(0.5).remap(Tree::Y(), Tree::X(), Tree::Z());
+        auto r = findBounds(s);
+
+        CAPTURE(r.lower);
+        CAPTURE(r.upper);
+
+        REQUIRE(!std::isinf(r.lower.x()));
+        REQUIRE(!std::isinf(r.lower.y()));
+        REQUIRE(r.lower.x() <= -0.5);
+        REQUIRE(r.lower.y() <= -0.5);
+        REQUIRE(std::isinf(r.lower.z()));
+
+        REQUIRE(!std::isinf(r.upper.x()));
+        REQUIRE(!std::isinf(r.upper.y()));
+        REQUIRE(r.upper.x() >= 0.5);
+        REQUIRE(r.upper.y() >= 0.5);
+        REQUIRE(std::isinf(r.upper.z()));
+    }
 }

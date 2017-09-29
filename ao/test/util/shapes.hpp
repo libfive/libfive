@@ -10,3 +10,4 @@ Kernel::Tree menger(int i);
 Kernel::Tree circle(float r);
 Kernel::Tree sphere(float r, Eigen::Vector3f center=Eigen::Vector3f::Zero());
 Kernel::Tree box(Eigen::Vector3f lower, Eigen::Vector3f upper);
+Kernel::Tree rotate2d(Kernel::Tree t, float angle);

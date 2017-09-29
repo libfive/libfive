@@ -13,6 +13,13 @@ Tree rectangle(float xmin, float xmax, float ymin, float ymax,
     return max(max(xmin - x, x - xmax), max(ymin - y, y - ymax));
 }
 
+Tree rotate2d(Tree t, float angle)
+{
+    return t.remap( cos(angle) * Tree::X() + sin(angle) * Tree::Y(),
+                   -sin(angle) * Tree::X() + cos(angle) * Tree::Y(),
+                   Tree::Z());
+}
+
 Tree recurse(float x, float y, float scale, Eigen::Matrix4f M, int i)
 {
     auto base = rectangle(x - scale/2, x + scale/2,

@@ -1,4 +1,5 @@
 #include "ao/solve/bounds.hpp"
+#include "ao/render/axes.hpp"
 
 namespace Kernel {
 
@@ -20,10 +21,30 @@ Region<3> findBounds(Evaluator* eval)
     Region<3> out({-inf, -inf, -inf}, {inf, inf, inf});
 
     // Helper function to load and evaluate an interval
-    auto check = [=](const Region<3>& r){
+    auto testRegion = [=](const Region<3>& r){
         eval->set(r.lower.template cast<float>(),
                   r.upper.template cast<float>());
         return eval->interval().lower(); };
+
+    // Helper function to check a particular [axis + sign + value] by breaking
+    // the semi-infinite half-space into four semi-infinite eighth-spaces.
+    //
+    // This correctly handles cases like rotation, where otherwise things go
+    // infinite where they don't need to.
+    auto check = [&](unsigned axis, unsigned s, double d){
+        int q = Axis::toIndex(Axis::Q(Axis::toAxis(axis)));
+        int r = Axis::toIndex(Axis::R(Axis::toAxis(axis)));
+        float out = std::numeric_limits<float>::infinity();
+        for (unsigned i=0; i < 4; ++i)
+        {
+            Region<3> target({-inf, -inf, -inf}, {inf, inf, inf});
+            target[s](axis) = d;
+            target[(i & 1) == 0](q) = 0;
+            target[(i & 2) == 0](r) = 0;
+            out = fmin(out, testRegion(target));
+        }
+        return out;
+    };
 
     // Iterate over axes
     for (unsigned axis=0; axis < 3; ++axis)
@@ -31,27 +52,26 @@ Region<3> findBounds(Evaluator* eval)
         // Iterate over positive vs negative
         for (unsigned s=0; s <= 1; ++s)
         {
-            Region<3> r({-inf, -inf, -inf}, {inf, inf, inf});
+            double pos = 0;
             double sign = s ? -1 : 1;
 
             // First, walk back on the given axis until you find the shape
-            r[s](axis) = 0;
             double step = sign;
             do
             {
-                r[s](axis) -= sign;
+                pos -= sign;
                 step *= 2;
             }
-            while (check(r) > 0 && !std::isinf(step));
+            while (check(axis, s, pos) > 0 && !std::isinf(step));
 
             // Then walk forward until you are outside of the shape
             step = sign;
             do
             {
-                r[s](axis) += step;
+                pos += step;
                 step *= 2;
             }
-            while (check(r) <= 0 && !std::isinf(step));
+            while (check(axis, s, pos) <= 0 && !std::isinf(step));
 
             // If we can't get a bound on this axis, keep going
             if (std::isinf(step))
@@ -59,14 +79,14 @@ Region<3> findBounds(Evaluator* eval)
                 continue;
             }
 
-            double outside = r[s](axis);
-            double inside = r[s](axis) - step / 2;
+            double outside = pos;
+            double inside = pos - step / 2;
             double frac = 0.5;
             step = 0.25;
             for (unsigned i=0; i < 16; ++i)
             {
-                r[s](axis) = outside * frac + inside * (1 - frac);
-                if (check(r) <= 0)
+                pos = outside * frac + inside * (1 - frac);
+                if (check(axis, s, pos) <= 0)
                 {
                     frac += step;
                 }
@@ -76,7 +96,7 @@ Region<3> findBounds(Evaluator* eval)
                 }
                 step /= 2;
             }
-            out[!s](axis) = r[s](axis);
+            out[!s](axis) = pos;
         }
     }
     return out;
