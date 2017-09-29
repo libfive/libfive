@@ -39,6 +39,16 @@ public:
      */
     Region() : lower(0), upper(0) {}
 
+    Pt& operator[](std::size_t idx)
+    {
+        switch(idx)
+        {
+            case 0: return lower;
+            case 1: return upper;
+            default: assert(false);
+        }
+    }
+
     /*
      *  Splits along all axes
      */
