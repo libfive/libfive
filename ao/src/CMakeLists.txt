@@ -8,6 +8,7 @@ add_library(ao-kernel SHARED
     render/brep/contours.cpp
     render/brep/mesh.cpp
     render/brep/marching.cpp
+    solve/bounds.cpp
     solve/solver.cpp
     tree/cache.cpp
     tree/opcode.cpp
