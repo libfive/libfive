@@ -52,8 +52,8 @@ Region<3> findBounds(Evaluator* eval)
         // Iterate over positive vs negative
         for (unsigned s=0; s <= 1; ++s)
         {
-            double pos = 0;
             double sign = s ? -1 : 1;
+            double pos = -sign;
 
             // First, walk back on the given axis until you find the shape
             double step = sign;
