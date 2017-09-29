@@ -20,5 +20,19 @@ namespace Axis {
                               : Axis::Y;
     }
 
+    inline constexpr int toIndex(Axis a)
+    {
+        return (a == Axis::X) ? 0 :
+               (a == Axis::Y) ? 1 :
+               (a == Axis::Z) ? 2 : -1;
+    }
+    inline constexpr Axis toAxis(int i)
+    {
+        return (i == 0) ? Axis::X :
+               (i == 1) ? Axis::Y :
+               (i == 2) ? Axis::Z :
+               static_cast<Axis>(-1);
+    }
+
 }   // namespace Axis
 }   // namespace Kernel
