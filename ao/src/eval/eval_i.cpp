@@ -47,28 +47,19 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void IntervalEvaluator::setVar(Tree::Id var, float value)
+bool IntervalEvaluator::setVar(Tree::Id var, float value)
 {
     auto v = tape.vars.right.find(var);
     if (v != tape.vars.right.end())
     {
+        bool changed = i[v->second] != value;
         i[v->second] = value;
+        return changed;
     }
-}
-
-bool IntervalEvaluator::updateVars(const std::map<Kernel::Tree::Id, float>& vars_)
-{
-    bool changed = false;
-    for (const auto& v : tape.vars.left)
+    else
     {
-        auto val = vars_.at(v.second);
-        if (val != i[v.first].lower())
-        {
-            i[v.first] = val;
-            changed = true;
-        }
+        return false;
     }
-    return changed;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -6,6 +6,7 @@ set(SRCS main.cpp
     dual.cpp
     eval.cpp
     eval_i.cpp
+    eval_a.cpp
     feature.cpp
     heightmap.cpp
     marching.cpp

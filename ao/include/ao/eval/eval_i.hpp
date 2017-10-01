@@ -31,13 +31,9 @@ public:
      *  Changes a variable's value
      *
      *  If the variable isn't present in the tree, does nothing
+     *  Returns true if the variable's value changes
      */
-    void setVar(Tree::Id var, float value);
-
-    /*
-     *  Updates variable values, return true if changed
-     */
-    bool updateVars(const std::map<Kernel::Tree::Id, float>& vars);
+    bool setVar(Tree::Id var, float value);
 
     /*
      *  Per-clause evaluation, used in tape walking

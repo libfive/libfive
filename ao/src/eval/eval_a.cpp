@@ -12,7 +12,7 @@ ArrayEvaluator::ArrayEvaluator(Tape& t)
 
 ArrayEvaluator::ArrayEvaluator(
         Tape& t, const std::map<Tree::Id, float>& vars)
-    : tape(t), f(t.num_clauses, N)
+    : tape(t), f(t.num_clauses + 1, N)
 {
     // Unpack variables into result array
     for (auto& v : vars)
@@ -53,28 +53,19 @@ const float* ArrayEvaluator::values(size_t _count)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ArrayEvaluator::setVar(Tree::Id var, float value)
+bool ArrayEvaluator::setVar(Tree::Id var, float value)
 {
     auto v = tape.vars.right.find(var);
     if (v != tape.vars.right.end())
     {
+        bool changed = f(v->second, 0) != value;
         f.row(v->second) = value;
+        return changed;
     }
-}
-
-bool ArrayEvaluator::updateVars(const std::map<Kernel::Tree::Id, float>& vars_)
-{
-    bool changed = false;
-    for (const auto& v : tape.vars.left)
+    else
     {
-        auto val = vars_.at(v.second);
-        if (val != f(v.first, 0))
-        {
-            f.row(v.first) = val;
-            changed = true;
-        }
+        return false;
     }
-    return changed;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
