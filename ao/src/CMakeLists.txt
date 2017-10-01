@@ -1,6 +1,8 @@
 add_library(ao-kernel SHARED
     eval/evaluator.cpp
+    eval/eval_i.cpp
     eval/result.cpp
+    eval/tape.cpp
     eval/feature.cpp
     render/discrete/heightmap.cpp
     render/discrete/voxels.cpp

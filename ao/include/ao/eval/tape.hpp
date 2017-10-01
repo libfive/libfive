@@ -32,6 +32,21 @@ public:
      */
     double utilization() const;
 
+    /*  Indices of X, Y, Z coordinates */
+    Clause::Id X, Y, Z;
+
+    /*  Constants, unpacked from the tree at construction */
+    std::map<Clause::Id, float> constants;
+
+    /*  Map of variables (in terms of where they live in this Evaluator) to
+     *  their ids in their respective Tree (e.g. what you get when calling
+     *  Tree::var().id() */
+    boost::bimap<Clause::Id, Tree::Id> vars;
+
+    /*  Returns the total number of clauses (including X/Y/Z, variables, and
+     *  constants, which aren't explicitly in the tape )  */
+    size_t num_clauses;
+
 protected:
 
     struct Subtape
@@ -47,20 +62,9 @@ protected:
         Type type;
     };
 
-    /*  Indices of X, Y, Z coordinates */
-    Clause::Id X, Y, Z;
-
-    /*  Constants, unpacked from the tree at construction */
-    std::map<Clause::Id, float> constants;
-
     /*  Tape containing our opcodes in reverse order */
     std::list<Subtape> tapes;
     std::list<Subtape>::iterator tape;
-
-    /*  Map of variables (in terms of where they live in this Evaluator) to
-     *  their ids in their respective Tree (e.g. what you get when calling
-     *  Tree::var().id() */
-    boost::bimap<Clause::Id, Tree::Id> vars;
 
     /*  Used when pushing into the tape  */
     std::vector<uint8_t> disabled;
@@ -71,9 +75,10 @@ public:
     /*
      *  Pushes a new tape onto the stack, storing it in tape
      *
-     *  E must include a function check(Clause::Id) ->  Keep
+     *  E must include a function
+     *      check(Opcode, Clause::Id, Clause::Id) ->  Keep
      *  E::TapeType must be a member of Type
-     *  E must include a function bounds(Interval& X, Interval& Y, Interval& Z)
+     *  E must include a function getBounds(Interval& X, Interval& Y, Interval& Z)
      *  which records its last known bounds (used for the tape push)
      */
     template <class E>
@@ -91,7 +96,7 @@ public:
         {
             if (!disabled[c.id])
             {
-                switch (e.check(c.id))
+                switch (e.check(c.op, c.a, c.b))
                 {
                     case KEEP_A:    disabled[c.a] = false;
                                     remap[c.id] = c.a;
@@ -158,21 +163,21 @@ public:
         assert(tape->t.size() <= prev_tape->t.size());
 
         // Store X / Y / Z bounds (may be irrelevant)
-        e.setBounds(tape->X, tape->Y, tape->Z);
+        e.getBounds(tape->X, tape->Y, tape->Z);
     }
 
     /*
      *  Walks the tape in bottom-to-top order
      *  Returns the clause id of the root.
      *
-     *  E must expose evalClause(Opcode, Clause::Id, Clause::Id)
+     *  E must expose evalClause(Opcode, Clause::Id, Clause::Id, Clause::Id)
      */
     template <class E>
     Clause::Id walk(E& e)
     {
         for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
         {
-            e.evalClause(itr->op, itr->a, itr->b);
+            e.evalClause(itr->op, itr->id, itr->a, itr->b);
         }
         return tape->i;
     }
