@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <boost/bimap.hpp>
+#include <Eigen/Eigen>
 
 #include "ao/eval/clause.hpp"
 #include "ao/eval/interval.hpp"
@@ -180,6 +181,38 @@ public:
             e.evalClause(itr->op, itr->id, itr->a, itr->b);
         }
         return tape->i;
+    }
+
+    /*
+     *  Walks up the tree until p is within the tape's region, then
+     *  calls e.eval(p).  This is useful for evaluating a point when
+     *  the tape may be pushed into a deeper interval.
+     */
+    template <class E, class T>
+    T baseEval(E& e, const Eigen::Vector3f& p)
+    {
+        auto prev_tape = tape;
+
+        // Walk up the tape stack until we find an interval-type tape
+        // that contains the given point, or we hit the start of the stack
+        while (tape != tapes.begin())
+        {
+            if (tape->type == Tape::INTERVAL &&
+                p.x() >= tape->X.lower() && p.x() <= tape->X.upper() &&
+                p.y() >= tape->Y.lower() && p.y() <= tape->Y.upper() &&
+                p.z() >= tape->Z.lower() && p.z() <= tape->Z.upper())
+            {
+                break;
+            }
+            else
+            {
+                tape--;
+            }
+        }
+
+        auto out = e.eval(p);
+        tape = prev_tape;
+        return out;
     }
 };
 

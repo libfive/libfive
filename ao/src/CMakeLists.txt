@@ -1,6 +1,7 @@
 add_library(ao-kernel SHARED
     eval/evaluator.cpp
     eval/eval_i.cpp
+    eval/eval_a.cpp
     eval/result.cpp
     eval/tape.cpp
     eval/feature.cpp
