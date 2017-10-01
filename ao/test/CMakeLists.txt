@@ -5,12 +5,14 @@ set(SRCS main.cpp
     contours.cpp
     dual.cpp
     eval.cpp
+    eval_i.cpp
+    feature.cpp
     heightmap.cpp
     marching.cpp
     mesh.cpp
-    feature.cpp
-    solver.cpp
     region.cpp
+    solver.cpp
+    tape.cpp
     template.cpp
     tree.cpp
     voxels.cpp

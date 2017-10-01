@@ -13,10 +13,6 @@ Tape::Tape(const Tree root)
     std::unordered_map<Tree::Id, Clause::Id> clauses = {{nullptr, 0}};
     Clause::Id id = flat.size();
 
-    // Store the total number of clauses plus one,
-    // because the clause with id = 0 is a dummy clause (?)
-    num_clauses = id + 1;
-
     // Helper function to make a new function
     std::list<Clause> tape_;
     auto newClause = [&clauses, &id, &tape_](const Tree::Id t)
@@ -74,9 +70,14 @@ Tape::Tape(const Tree root)
         }
     }
 
+    // Store the total number of clauses
+    // Remember, evaluators need to allocate one more than this
+    // amount of space, as the clause with id = 0 is a placeholder
+    num_clauses = clauses.size() - 1;
+
     // Allocate enough memory for all the clauses
-    disabled.resize(clauses.size() + 1);
-    remap.resize(clauses.size() + 1);
+    disabled.resize(clauses.size());
+    remap.resize(clauses.size());
 
     // Save X, Y, Z ids
     X = clauses.at(axes[0].id());

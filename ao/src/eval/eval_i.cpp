@@ -12,11 +12,18 @@ IntervalEvaluator::IntervalEvaluator(
         Tape& t, const std::map<Tree::Id, float>& vars)
     : tape(t)
 {
-    i.resize(t.num_clauses);
+    i.resize(t.num_clauses + 1);
 
+    // Unpack variables into result array
     for (auto& v : vars)
     {
         i[tape.vars.right.at(v.first)] = v.second;
+    }
+
+    // Unpack constants into result array
+    for (auto& c : t.constants)
+    {
+        i[c.first] = c.second;
     }
 }
 
