@@ -37,10 +37,25 @@ public:
         f(tape.Z, index) = p.z();
     }
 
+
+    /*  This is the number of samples that we can process in one pass */
+    static constexpr size_t N=256;
+
+protected:
+    Tape& tape;
+
+    /*  Stored in values() and used in evalClause() to decide how much of the
+     *  array we're addressing at once  */
+    size_t count;
+
+    /*  f(clause, index) is a specific data point */
+    Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> f;
+
+public:
     /*
      *  Multi-point evaluation (values must be stored with set)
      */
-    const float* values(size_t count);
+    Eigen::Block<decltype(f), 1, Eigen::Dynamic> values(size_t count);
 
     /*
      *  Pops the tape
@@ -69,22 +84,9 @@ public:
     void getBounds(Interval::I& X, Interval::I& Y, Interval::I& Z) const;
     static Tape::Type TapeType;
 
-    /*  This is the number of samples that we can process in one pass */
-    static constexpr size_t N=256;
-
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-protected:
-    Tape& tape;
-
-    /*  Stored in values() and used in evalClause() to decide how much of the
-     *  array we're addressing at once  */
-    size_t count;
-
-    /*  f(clause, index) is a specific data point */
-    Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> f;
 };
 
 }   // namespace Kernel

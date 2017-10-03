@@ -30,7 +30,7 @@ ArrayEvaluator::ArrayEvaluator(
 float ArrayEvaluator::eval(const Eigen::Vector3f& pt)
 {
     set(pt, 0);
-    return *values(1);
+    return values(1)(0);
 }
 
 float ArrayEvaluator::evalAndPush(const Eigen::Vector3f& pt)
@@ -45,10 +45,11 @@ float ArrayEvaluator::baseEval(const Eigen::Vector3f& pt)
     return tape.baseEval<ArrayEvaluator, float>(*this, pt);
 }
 
-const float* ArrayEvaluator::values(size_t _count)
+Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
+ArrayEvaluator::values(size_t _count)
 {
     count = _count;
-    return &f(tape.walk(*this), 0);
+    return f.block<1, Eigen::Dynamic>(tape.walk(*this), 0, 1, count);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
