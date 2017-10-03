@@ -1,6 +1,13 @@
 # Disclaimer
 This generation of Ao is not yet ready for mass consumption.
 
+It's coming along nicely –
+and if you've found your way here,
+you should try it out! –
+but there's very little documentation,
+no stability guarantees,
+and limited support.
+
 Please enjoy it responsibly and refrain from posting it to the wider web.
 
 # About
