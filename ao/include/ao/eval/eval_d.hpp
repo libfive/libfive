@@ -13,10 +13,11 @@ public:
     DerivArrayEvaluator(Tape& t, const std::map<Tree::Id, float>& vars);
 
 protected:
-    typedef Eigen::Array<float, 4, N> ResultArray;
+    /*  d(clause).col(index) is a set of partial derivatives [dx, dy, dz] */
+    Eigen::Array<Eigen::Array<float, 3, N>, Eigen::Dynamic, 1> d;
 
-    /*  d(clause).col(index) is a set of partial derivatives [dx, dy, dz, w] */
-    Eigen::Array<Eigen::Array<float, 4, N>, Eigen::Dynamic, 1> d;
+    /*  out(col) is a result [dx, dy, dz, w] */
+    Eigen::Array<float, 4, N> out;
 
 public:
     /*
@@ -27,7 +28,7 @@ public:
     /*
      *  Multi-point evaluation (values must be stored with set)
      */
-    Eigen::Block<ResultArray, 4, Eigen::Dynamic> derivs(size_t count);
+    Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(size_t count);
 
     /*
      *  Per-clause evaluation, used in tape walking

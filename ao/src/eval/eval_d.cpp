@@ -10,9 +10,15 @@ DerivArrayEvaluator::DerivArrayEvaluator(Tape& t)
 
 DerivArrayEvaluator::DerivArrayEvaluator(
         Tape& t, const std::map<Tree::Id, float>& vars)
-    : ArrayEvaluator(t, vars), d(t.num_clauses, 1)
+    : ArrayEvaluator(t, vars), d(t.num_clauses + 1, 1)
 {
-    // Load immutable derivatives for X / Y / Z
+    // Initialize all derivatives to zero
+    for (unsigned i=0; i < d.rows(); ++i)
+    {
+        d(i) = 0;
+    }
+
+    // Load immutable derivatives for X, Y, Z
     d(tape.X).row(0) = 1;
     d(tape.Y).row(1) = 1;
     d(tape.Z).row(2) = 1;
@@ -24,33 +30,29 @@ Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt)
     return derivs(1).col(0);
 }
 
-Eigen::Block<DerivArrayEvaluator::ResultArray, 4, Eigen::Dynamic>
+Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
 DerivArrayEvaluator::derivs(size_t count)
 {
-    // Perform value evaluation and store to the result array (f)
-    values(count);
+    // Perform value evaluation, copying results into the 4th row of out
+    out.row(3).head(count) = values(count);
 
-    // For every clause, copy over the result into the bottom slot
-    // of the 4-row derivatives array.  This lets us keep results
-    // together and makes evaluation cheaper (maybe)
-    for (long i=0; i < d.rows(); ++i)
-    {
-        d(i).row(3) = f.row(i);
-    }
+    // Perform derivative evaluation, copying results into the out array
+    out.topLeftCorner(3, count) = d(tape.walk(*this)).leftCols(count);
 
-    return d(tape.walk(*this)).block<4, Eigen::Dynamic>(0, 0, 4, count);
+    // Return a block of valid results from the out array
+    return out.block<4, Eigen::Dynamic>(0, 0, 4, count);
 }
 
 void DerivArrayEvaluator::evalClause(Opcode::Opcode op, Clause::Id id,
                                      Clause::Id a, Clause::Id b)
 {
-#define ov d(id).row(3).head(count)
+#define ov f.row(id).head(count)
 #define od d(id).leftCols(count)
 
-#define av d(a).row(3).head(count)
+#define av f.row(a).head(count)
 #define ad d(a).leftCols(count)
 
-#define bv d(b).row(3).head(count)
+#define bv f.row(b).head(count)
 #define bd d(b).leftCols(count)
 
     switch (op) {
