@@ -1,7 +1,7 @@
 #include "catch.hpp"
 
 #include "ao/tree/tree.hpp"
-#include "ao/eval/eval_f.hpp"
+#include "ao/eval/eval_feature.hpp"
 
 #include "util/shapes.hpp"
 

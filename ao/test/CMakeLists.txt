@@ -5,10 +5,10 @@ set(SRCS main.cpp
     contours.cpp
     dual.cpp
     eval.cpp
-    eval_i.cpp
-    eval_a.cpp
-    eval_d.cpp
-    eval_f.cpp
+    eval_interval.cpp
+    eval_array.cpp
+    eval_deriv_array.cpp
+    eval_feature.cpp
     feature.cpp
     heightmap.cpp
     marching.cpp

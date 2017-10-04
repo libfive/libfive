@@ -3,8 +3,8 @@
 #include "catch.hpp"
 
 #include "ao/tree/tree.hpp"
-#include "ao/eval/eval_i.hpp"
-#include "ao/eval/eval_a.hpp"
+#include "ao/eval/eval_interval.hpp"
+#include "ao/eval/eval_array.hpp"
 #include "ao/render/brep/region.hpp"
 
 using namespace Kernel;

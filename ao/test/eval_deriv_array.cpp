@@ -1,7 +1,7 @@
 #include "catch.hpp"
 
 #include "ao/tree/tree.hpp"
-#include "ao/eval/eval_d.hpp"
+#include "ao/eval/eval_deriv_array.hpp"
 
 using namespace Kernel;
 

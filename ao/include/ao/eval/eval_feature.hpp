@@ -2,7 +2,7 @@
 
 #include <Eigen/Eigen>
 
-#include "ao/eval/eval_d.hpp"
+#include "ao/eval/eval_deriv_array.hpp"
 #include "ao/eval/feature.hpp"
 
 namespace Kernel {
