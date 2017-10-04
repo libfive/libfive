@@ -4,6 +4,7 @@ add_library(ao-kernel SHARED
     eval/eval_array.cpp
     eval/eval_deriv_array.cpp
     eval/eval_feature.cpp
+    eval/eval_point.cpp
     eval/result.cpp
     eval/tape.cpp
     eval/feature.cpp
