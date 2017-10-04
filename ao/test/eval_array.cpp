@@ -104,3 +104,24 @@ TEST_CASE("ArrayEvaluator::evalAndPush")
     REQUIRE(e.eval({4, 5, 0}) == 5);
     REQUIRE(e.eval({10, 5, 0}) == 5);
 }
+
+TEST_CASE("ArrayEvaluator::getAmbiguous")
+{
+    Tape t(min(Tree::X(), -Tree::X()));
+    ArrayEvaluator e(t);
+    e.set({0, 0, 0}, 0);
+    e.set({1, 0, 0}, 1);
+    e.set({2, 0, 0}, 2);
+    e.set({0, 0, 0}, 3);
+
+    e.values(4);
+
+    auto a = e.getAmbiguous(3);
+    REQUIRE(a.count() == 1);
+    REQUIRE(a(0) == 1);
+
+    auto b = e.getAmbiguous(4);
+    REQUIRE(b.count() == 2);
+    REQUIRE(b(0) == 1);
+    REQUIRE(b(3) == 1);
+}

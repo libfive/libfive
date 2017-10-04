@@ -44,25 +44,6 @@ TEST_CASE("FeatureEvaluator::isInside")
     }
 }
 
-TEST_CASE("FeatureEvaluator::isAmbiguous")
-{
-    SECTION("Single feature")
-    {
-        Tape t(Tree::X());
-        FeatureEvaluator e(t);
-        REQUIRE(e.isAmbiguous({0, 0, 0}) == false);
-        REQUIRE(e.isAmbiguous({1, 0, 0}) == false);
-    }
-
-    SECTION("Two features (min)")
-    {
-        Tape t(min(Tree::X(), -Tree::X()));
-        FeatureEvaluator e(t);
-        REQUIRE(e.isAmbiguous({0, 0, 0}) == true);
-        REQUIRE(e.isAmbiguous({1, 0, 0}) == false);
-    }
-}
-
 TEST_CASE("FeatureEvaluator::featuresAt")
 {
     SECTION("Single feature")
@@ -166,27 +147,6 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         FeatureEvaluator e(t);
         REQUIRE(e.featuresAt({0, 0, 6}).size() == 1);
     }
-}
-
-TEST_CASE("FeatureEvaluator::getAmbiguous")
-{
-    Tape t(min(Tree::X(), -Tree::X()));
-    FeatureEvaluator e(t);
-    e.set({0, 0, 0}, 0);
-    e.set({1, 0, 0}, 1);
-    e.set({2, 0, 0}, 2);
-    e.set({0, 0, 0}, 3);
-
-    e.values(4);
-
-    auto a = e.getAmbiguous(3);
-    REQUIRE(a.count() == 1);
-    REQUIRE(a(0) == 1);
-
-    auto b = e.getAmbiguous(4);
-    REQUIRE(b.count() == 2);
-    REQUIRE(b(0) == 1);
-    REQUIRE(b(3) == 1);
 }
 
 TEST_CASE("FeatureEvaluator::push(Feature)")

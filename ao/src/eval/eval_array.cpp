@@ -103,6 +103,29 @@ bool ArrayEvaluator::setVar(Tree::Id var, float value)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+Eigen::Block<decltype(ArrayEvaluator::ambig), 1, Eigen::Dynamic>
+ArrayEvaluator::getAmbiguous(size_t i)
+{
+    // Reset the ambiguous array to all false
+    ambig = false;
+
+    bool abort = false;
+    tape.walk(
+        [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
+        {
+            if (op == Opcode::MIN || op == Opcode::MAX)
+            {
+                ambig.head(i) = ambig.head(i) ||
+                    (f.block(a, 0, 1, i) ==
+                     f.block(b, 0, 1, i));
+            }
+        }, abort);
+
+    return ambig.head(i);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void ArrayEvaluator::evalClause(Opcode::Opcode op, Clause::Id id,
                                 Clause::Id a, Clause::Id b)
 {

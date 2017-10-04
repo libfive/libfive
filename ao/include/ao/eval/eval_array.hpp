@@ -37,7 +37,6 @@ public:
         f(tape.Z, index) = p.z();
     }
 
-
     /*  This is the number of samples that we can process in one pass */
     static constexpr size_t N=256;
 
@@ -50,6 +49,9 @@ protected:
 
     /*  f(clause, index) is a specific data point */
     Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> f;
+
+    /*  ambig(index) returns whether a particular slot is ambiguous */
+    Eigen::Array<bool, 1, N> ambig;
 
 public:
     /*
@@ -76,6 +78,13 @@ public:
      */
     void evalClause(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
+
+    /*
+     *  Returns a list of ambiguous items from indices 0 to i
+     *
+     *  This call performs O(i) work to set up the ambig array
+     */
+    Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(size_t i);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */

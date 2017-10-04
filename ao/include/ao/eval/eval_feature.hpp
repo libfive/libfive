@@ -2,20 +2,16 @@
 
 #include <Eigen/Eigen>
 
-#include "ao/eval/eval_deriv_array.hpp"
+#include "ao/eval/eval_deriv.hpp"
 #include "ao/eval/feature.hpp"
 
 namespace Kernel {
 
-class FeatureEvaluator : public DerivArrayEvaluator
+class FeatureEvaluator : public DerivEvaluator
 {
 public:
     FeatureEvaluator(Tape& t);
     FeatureEvaluator(Tape& t, const std::map<Tree::Id, float>& vars);
-
-protected:
-    /*  ambig(index) returns whether a particular slot is ambiguous */
-    Eigen::Array<bool, 1, N> ambig;
 
 public:
     /*
@@ -42,18 +38,6 @@ public:
      *  Checks for features at the given position
      */
     std::list<Feature> featuresAt(const Eigen::Vector3f& p);
-
-    /*
-     *  Returns a list of ambiguous items from indices 0 to i
-     *
-     *  This call performs O(i) work to set up the ambig array
-     */
-    Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(size_t i);
-
-    /*
-     *  Checks whether the given position is ambiguous
-     */
-    bool isAmbiguous(const Eigen::Vector3f& p);
 };
 
 }   // namespace Kernel

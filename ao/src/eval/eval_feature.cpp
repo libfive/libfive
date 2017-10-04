@@ -10,7 +10,7 @@ FeatureEvaluator::FeatureEvaluator(Tape& t)
 
 FeatureEvaluator::FeatureEvaluator(
         Tape& t, const std::map<Tree::Id, float>& vars)
-    : DerivArrayEvaluator(t, vars)
+    : DerivEvaluator(t, vars)
 {
     // Nothing to do here
 }
@@ -74,9 +74,19 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
     // Special case to save time on non-ambiguous features: we can get both
     // positive and negative values out if there's a non-zero gradient
     // (same as single-feature case below).
-    if (!getAmbiguous(1)(0))
     {
-        return (ds.col(0).template head<3>().array() != 0).any();
+        bool ambig = false;
+        tape.walk(
+            [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
+            {
+                ambig |= (op == Opcode::MIN || op == Opcode::MAX) &&
+                         (f(a) == f(b));
+            }, ambig);
+
+        if (!ambig)
+        {
+            return (ds.col(0).template head<3>().array() != 0).any();
+        }
     }
 
     // Otherwise, we need to handle the zero-crossing case!
@@ -134,7 +144,7 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
         // Run a single evaluation of the value + derivatives
         // The value will be the same, but derivatives may change
         // depending on which feature we've pushed ourselves into
-        const auto ds = derivs(1);
+        const Eigen::Vector3f ds = deriv(p).template head<3>();
 
         bool ambiguous = false;
         tape.rwalk(
@@ -156,9 +166,9 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
                     {
                         // Check both branches of the ambiguity
                         const Eigen::Vector3d rhs(
-                                d(b).col(0).template cast<double>());
+                                d.col(b).template cast<double>());
                         const Eigen::Vector3d lhs(
-                                d(a).col(0).template cast<double>());
+                                d.col(a).template cast<double>());
                         const auto epsilon = (op == Opcode::MIN) ? (rhs - lhs)
                                                                       : (lhs - rhs);
 
@@ -195,33 +205,6 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
     assert(done.size() > 0);
     return done;
 
-}
-
-Eigen::Block<decltype(FeatureEvaluator::ambig), 1, Eigen::Dynamic>
-FeatureEvaluator::getAmbiguous(size_t i)
-{
-    // Reset the ambiguous array to all false
-    ambig = false;
-
-    bool abort = false;
-    tape.walk(
-        [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
-        {
-            if (op == Opcode::MIN || op == Opcode::MAX)
-            {
-                ambig.head(i) = ambig.head(i) ||
-                    (f.block(a, 0, 1, i) ==
-                     f.block(b, 0, 1, i));
-            }
-        }, abort);
-
-    return ambig.head(i);
-}
-
-bool FeatureEvaluator::isAmbiguous(const Eigen::Vector3f& p)
-{
-    eval(p);
-    return getAmbiguous(1)(0);
 }
 
 }   // namespace Kernel
