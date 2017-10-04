@@ -37,7 +37,11 @@ DerivArrayEvaluator::derivs(size_t count)
     out.row(3).head(count) = values(count);
 
     // Perform derivative evaluation, copying results into the out array
-    out.topLeftCorner(3, count) = d(tape.walk(*this)).leftCols(count);
+    out.topLeftCorner(3, count) = d(tape.rwalk(
+        [=](Opcode::Opcode op, Clause::Id id,
+            Clause::Id a, Clause::Id b)
+            { evalClause(op, id, a, b); }
+    )).leftCols(count);
 
     // Return a block of valid results from the out array
     return out.block<4, Eigen::Dynamic>(0, 0, 4, count);

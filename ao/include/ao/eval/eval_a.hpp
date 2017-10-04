@@ -77,13 +77,6 @@ public:
     void evalClause(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
 
-    /*
-     *  Used when pushing tape
-     */
-    Tape::Keep check(Opcode::Opcode op, Clause::Id a, Clause::Id b) const;
-    void getBounds(Interval::I& X, Interval::I& Y, Interval::I& Z) const;
-    static Tape::Type TapeType;
-
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

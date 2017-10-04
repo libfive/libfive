@@ -100,4 +100,110 @@ double Tape::utilization() const
     return tape->t.size() / double(tapes.front().t.size());
 }
 
+
+Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
+                                          Clause::Id, Clause::Id)> fn)
+{
+    bool abort = false;
+    return rwalk(fn, abort);
+}
+
+Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
+                                          Clause::Id, Clause::Id)> fn,
+                       bool& abort)
+{
+    for (auto itr = tape->t.rbegin(); itr != tape->t.rend() && !abort; ++itr)
+    {
+        fn(itr->op, itr->id, itr->a, itr->b);
+    }
+    return tape->i;
+}
+
+void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id, Clause::Id)> fn,
+                Type t, Region<3> r)
+{
+    // Since we'll be figuring out which clauses are disabled and
+    // which should be remapped, we reset those arrays here
+    std::fill(disabled.begin(), disabled.end(), true);
+    std::fill(remap.begin(), remap.end(), 0);
+
+    // Mark the root node as active
+    disabled[tape->i] = false;
+
+    for (const auto& c : tape->t)
+    {
+        if (!disabled[c.id])
+        {
+            switch (fn(c.op, c.a, c.b))
+            {
+                case KEEP_A:    disabled[c.a] = false;
+                                remap[c.id] = c.a;
+                                break;
+                case KEEP_B:    disabled[c.b] = false;
+                                remap[c.id] = c.b;
+                                break;
+                case KEEP_BOTH: break;
+
+            }
+
+            if (!remap[c.id])
+            {
+                disabled[c.a] = false;
+                disabled[c.b] = false;
+            }
+            else
+            {
+                disabled[c.id] = true;
+            }
+        }
+    }
+
+    auto prev_tape = tape;
+
+    // Add another tape to the top of the tape stack if one doesn't already
+    // exist (we never erase them, to avoid re-allocating memory during
+    // nested evaluations).
+    if (++tape == tapes.end())
+    {
+        tape = tapes.insert(tape, Subtape());
+        tape->t.reserve(tapes.front().t.size());
+    }
+    else
+    {
+        // We may be reusing an existing tape, so resize to 0
+        // (preserving allocated storage)
+        tape->t.clear();
+    }
+
+    assert(tape != tapes.end());
+    assert(tape != tapes.begin());
+    assert(tape->t.capacity() >= prev_tape->t.size());
+
+    // Reset tape type
+    tape->type = t;
+
+    // Now, use the data in disabled and remap to make the new tape
+    for (const auto& c : prev_tape->t)
+    {
+        if (!disabled[c.id])
+        {
+            Clause::Id ra, rb;
+            for (ra = c.a; remap[ra]; ra = remap[ra]);
+            for (rb = c.b; remap[rb]; rb = remap[rb]);
+            tape->t.push_back({c.op, c.id, ra, rb});
+        }
+    }
+
+    // Remap the tape root index
+    for (tape->i = prev_tape->i; remap[tape->i]; tape->i = remap[tape->i]);
+
+    // Make sure that the tape got shorter
+    assert(tape->t.size() <= prev_tape->t.size());
+
+    // Store X / Y / Z bounds (may be irrelevant)
+    tape->X = {r.lower.x(), r.upper.x()};
+    tape->Y = {r.lower.y(), r.upper.y()};
+    tape->Z = {r.lower.z(), r.upper.z()};
+}
+
 }   // namespace Kernel

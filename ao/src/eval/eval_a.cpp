@@ -36,7 +36,34 @@ float ArrayEvaluator::eval(const Eigen::Vector3f& pt)
 float ArrayEvaluator::evalAndPush(const Eigen::Vector3f& pt)
 {
     auto out = eval(pt);
-    tape.push(*this);
+    tape.push([&](Opcode::Opcode op, Clause::Id a, Clause::Id b)
+    {
+        // For min and max operations, we may only need to keep one branch
+        // active if it is decisively above or below the other branch.
+        if (op == Opcode::MAX)
+        {
+            if (f(a, 0) > f(b, 0))
+            {
+                return Tape::KEEP_A;
+            }
+            else if (f(b, 0) > f(a, 0))
+            {
+                return Tape::KEEP_B;
+            }
+        }
+        else if (op == Opcode::MIN)
+        {
+            if (f(a, 0) > f(b, 0))
+            {
+                return Tape::KEEP_B;
+            }
+            else if (f(b, 0) > f(a, 0))
+            {
+                return Tape::KEEP_A;
+            }
+        }
+        return Tape::KEEP_BOTH;
+    }, Tape::SPECIALIZED);
     return out;
 }
 
@@ -49,7 +76,11 @@ Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t _count)
 {
     count = _count;
-    return f.block<1, Eigen::Dynamic>(tape.walk(*this), 0, 1, count);
+    return f.block<1, Eigen::Dynamic>(tape.rwalk(
+        [=](Opcode::Opcode op, Clause::Id id,
+            Clause::Id a, Clause::Id b)
+            { evalClause(op, id, a, b); }),
+        0, 1, count);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -68,49 +99,6 @@ bool ArrayEvaluator::setVar(Tree::Id var, float value)
         return false;
     }
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-Tape::Keep ArrayEvaluator::check(Opcode::Opcode op,
-                                 Clause::Id a, Clause::Id b) const
-{
-    // For min and max operations, we may only need to keep one branch
-    // active if it is decisively above or below the other branch.
-    if (op == Opcode::MAX)
-    {
-        if (f(a, 0) > f(b, 0))
-        {
-            return Tape::KEEP_A;
-        }
-        else if (f(b, 0) > f(a, 0))
-        {
-            return Tape::KEEP_B;
-        }
-    }
-    else if (op == Opcode::MIN)
-    {
-        if (f(a, 0) > f(b, 0))
-        {
-            return Tape::KEEP_B;
-        }
-        else if (f(b, 0) > f(a, 0))
-        {
-            return Tape::KEEP_A;
-        }
-    }
-    return Tape::KEEP_BOTH;
-}
-
-void ArrayEvaluator::getBounds(
-        Interval::I& X, Interval::I& Y, Interval::I& Z) const
-{
-    // This is not meaningful, but must be implemented
-    X = {0,0};
-    Y = {0,0};
-    Z = {0,0};
-}
-
-Tape::Type ArrayEvaluator::TapeType = Tape::SPECIALIZED;
 
 ////////////////////////////////////////////////////////////////////////////////
 

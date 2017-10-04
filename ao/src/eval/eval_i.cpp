@@ -34,14 +34,47 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     i[tape.Y] = {lower.y(), upper.y()};
     i[tape.Z] = {lower.z(), upper.z()};
 
-    return i[tape.walk(*this)];
+    return i[tape.rwalk([=](Opcode::Opcode op, Clause::Id id,
+                            Clause::Id a, Clause::Id b)
+            { evalClause(op, id, a, b); })];
 }
 
 Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
                                            const Eigen::Vector3f& upper)
 {
     auto out = eval(lower, upper);
-    tape.push(*this);
+
+    tape.push([&](Opcode::Opcode op, Clause::Id a, Clause::Id b)
+    {
+        // For min and max operations, we may only need to keep one branch
+        // active if it is decisively above or below the other branch.
+        if (op == Opcode::MAX)
+        {
+            if (i[a].lower() > i[b].upper())
+            {
+                return Tape::KEEP_A;
+            }
+            else if (i[b].lower() > i[a].upper())
+            {
+                return Tape::KEEP_B;
+            }
+        }
+        else if (op == Opcode::MIN)
+        {
+            if (i[a].lower() > i[b].upper())
+            {
+                return Tape::KEEP_B;
+            }
+            else if (i[b].lower() > i[a].upper())
+            {
+                return Tape::KEEP_A;
+            }
+        }
+        return Tape::KEEP_BOTH;
+    },
+        Tape::INTERVAL,
+        {{i[tape.X].lower(), i[tape.Y].lower(), i[tape.Z].lower()},
+         {i[tape.X].upper(), i[tape.Y].upper(), i[tape.Z].upper()}});
     return out;
 }
 
@@ -61,48 +94,6 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
         return false;
     }
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-Tape::Keep IntervalEvaluator::check(Opcode::Opcode op,
-                                    Clause::Id a, Clause::Id b) const
-{
-    // For min and max operations, we may only need to keep one branch
-    // active if it is decisively above or below the other branch.
-    if (op == Opcode::MAX)
-    {
-        if (i[a].lower() > i[b].upper())
-        {
-            return Tape::KEEP_A;
-        }
-        else if (i[b].lower() > i[a].upper())
-        {
-            return Tape::KEEP_B;
-        }
-    }
-    else if (op == Opcode::MIN)
-    {
-        if (i[a].lower() > i[b].upper())
-        {
-            return Tape::KEEP_B;
-        }
-        else if (i[b].lower() > i[a].upper())
-        {
-            return Tape::KEEP_A;
-        }
-    }
-    return Tape::KEEP_BOTH;
-}
-
-void IntervalEvaluator::getBounds(
-        Interval::I& X, Interval::I& Y, Interval::I& Z) const
-{
-    X = i[tape.X];
-    Y = i[tape.Y];
-    Z = i[tape.Z];
-}
-
-Tape::Type IntervalEvaluator::TapeType = Tape::INTERVAL;
 
 ////////////////////////////////////////////////////////////////////////////////
 
