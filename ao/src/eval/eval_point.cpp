@@ -15,13 +15,13 @@ PointEvaluator::PointEvaluator(
     // Unpack variables into result array
     for (auto& v : vars)
     {
-        f.row(tape.vars.right.at(v.first)) = v.second;
+        f(tape.vars.right.at(v.first)) = v.second;
     }
 
     // Unpack constants into result array
     for (auto& c : t.constants)
     {
-        f.row(c.first) = c.second;
+        f(c.first) = c.second;
     }
 }
 
