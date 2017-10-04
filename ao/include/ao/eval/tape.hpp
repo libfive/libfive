@@ -82,7 +82,8 @@ public:
      *  t is a tape type
      *  r is the relevant region (or an empty region by default)
      */
-    void push(std::function<Keep(Opcode::Opcode, Clause::Id, Clause::Id)> fn,
+    void push(std::function<Keep(Opcode::Opcode, Clause::Id,
+                                 Clause::Id, Clause::Id)> fn,
               Type t, Region<3> r=Region<3>());
 
     /*

@@ -8,6 +8,7 @@ set(SRCS main.cpp
     eval_i.cpp
     eval_a.cpp
     eval_d.cpp
+    eval_f.cpp
     feature.cpp
     heightmap.cpp
     marching.cpp

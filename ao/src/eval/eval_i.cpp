@@ -44,7 +44,8 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
 {
     auto out = eval(lower, upper);
 
-    tape.push([&](Opcode::Opcode op, Clause::Id a, Clause::Id b)
+    tape.push([&](Opcode::Opcode op, Clause::Id /* id */,
+                  Clause::Id a, Clause::Id b)
     {
         // For min and max operations, we may only need to keep one branch
         // active if it is decisively above or below the other branch.

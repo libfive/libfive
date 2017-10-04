@@ -36,7 +36,8 @@ float ArrayEvaluator::eval(const Eigen::Vector3f& pt)
 float ArrayEvaluator::evalAndPush(const Eigen::Vector3f& pt)
 {
     auto out = eval(pt);
-    tape.push([&](Opcode::Opcode op, Clause::Id a, Clause::Id b)
+    tape.push([&](Opcode::Opcode op, Clause::Id /* id */,
+                  Clause::Id a, Clause::Id b)
     {
         // For min and max operations, we may only need to keep one branch
         // active if it is decisively above or below the other branch.

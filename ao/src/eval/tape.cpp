@@ -119,7 +119,17 @@ Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
     return tape->i;
 }
 
-void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id, Clause::Id)> fn,
+void Tape::walk(std::function<void(Opcode::Opcode, Clause::Id,
+                                   Clause::Id, Clause::Id)> fn, bool& abort)
+{
+    for (auto itr = tape->t.begin(); itr != tape->t.end() && !abort; ++itr)
+    {
+        fn(itr->op, itr->id, itr->a, itr->b);
+    }
+}
+
+void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
+                                   Clause::Id, Clause::Id)> fn,
                 Type t, Region<3> r)
 {
     // Since we'll be figuring out which clauses are disabled and
@@ -134,7 +144,7 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id, Clause::Id)> fn,
     {
         if (!disabled[c.id])
         {
-            switch (fn(c.op, c.a, c.b))
+            switch (fn(c.op, c.id, c.a, c.b))
             {
                 case KEEP_A:    disabled[c.a] = false;
                                 remap[c.id] = c.a;
