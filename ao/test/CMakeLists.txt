@@ -7,6 +7,7 @@ set(SRCS main.cpp
     eval.cpp
     eval_interval.cpp
     eval_array.cpp
+    eval_deriv.cpp
     eval_deriv_array.cpp
     eval_feature.cpp
     eval_point.cpp

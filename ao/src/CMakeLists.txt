@@ -3,6 +3,7 @@ add_library(ao-kernel SHARED
     eval/eval_interval.cpp
     eval/eval_array.cpp
     eval/eval_deriv_array.cpp
+    eval/eval_deriv.cpp
     eval/eval_feature.cpp
     eval/eval_point.cpp
     eval/result.cpp
