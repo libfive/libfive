@@ -3,11 +3,11 @@
 #include <Eigen/Eigen>
 
 #include "ao/tree/tree.hpp"
-#include "ao/eval/eval_point.hpp"
+#include "ao/eval/eval_deriv.hpp"
 
 namespace Kernel {
 
-class JacobianEvaluator : public PointEvaluator
+class JacobianEvaluator : public DerivEvaluator
 {
 public:
     JacobianEvaluator(std::shared_ptr<Tape> t);

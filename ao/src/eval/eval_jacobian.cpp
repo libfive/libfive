@@ -10,7 +10,7 @@ JacobianEvaluator::JacobianEvaluator(std::shared_ptr<Tape> t)
 
 JacobianEvaluator::JacobianEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : PointEvaluator(t, vars), j(tape->num_clauses + 1, tape->vars.size())
+    : DerivEvaluator(t, vars), j(tape->num_clauses + 1, tape->vars.size())
 {
     // Initialize Jacobian array to all zeros
     j = 0;
