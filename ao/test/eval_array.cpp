@@ -11,21 +11,21 @@ TEST_CASE("ArrayEvaluator::eval")
 {
     SECTION("X")
     {
-        Tape t(Tree::X());
+        auto t = std::make_shared<Tape>(Tree::X());
         ArrayEvaluator e(t);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 1.0);
     }
 
     SECTION("Y")
     {
-        Tape t(Tree::Y());
+        auto t = std::make_shared<Tape>(Tree::Y());
         ArrayEvaluator e(t);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("Constant")
     {
-        Tape t(Tree(3.14));
+        auto t = std::make_shared<Tape>(Tree(3.14));
         ArrayEvaluator e(t);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == Approx(3.14));
     }
@@ -33,21 +33,21 @@ TEST_CASE("ArrayEvaluator::eval")
     SECTION("Secondary variable")
     {
         auto v = Tree::var();
-        Tape t(v);
+        auto t = std::make_shared<Tape>(v);
         ArrayEvaluator e(t, {{v.id(), 3.14}});
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
     SECTION("X + 1")
     {
-        Tape t(Tree::X() + 1);
+        auto t = std::make_shared<Tape>(Tree::X() + 1);
         ArrayEvaluator e(t);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("X + Z")
     {
-        Tape t(Tree::X() + Tree::Z());
+        auto t = std::make_shared<Tape>(Tree::X() + Tree::Z());
         ArrayEvaluator e(t);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 4.0);
     }
@@ -59,7 +59,7 @@ TEST_CASE("ArrayEvaluator::eval")
             auto op = (Kernel::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
-            Tape p(t);
+            auto p = std::make_shared<Tape>(t);
             ArrayEvaluator e(p);
             e.eval({0, 0, 0});
             REQUIRE(true /* No crash! */ );
@@ -74,7 +74,7 @@ TEST_CASE("ArrayEvaluator::setVar")
     auto c = Tree::var();
     auto b = Tree::var();
 
-    Tape t(a*1 + b*2 + c*3);
+    auto t = std::make_shared<Tape>(a*1 + b*2 + c*3);
     ArrayEvaluator e(t, {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
     REQUIRE(e.eval({0, 0, 0}) == Approx(34));
 
@@ -88,7 +88,7 @@ TEST_CASE("ArrayEvaluator::setVar")
 
 TEST_CASE("ArrayEvaluator::evalAndPush")
 {
-    Tape t(min(Tree::X(), Tree::Y()));
+    auto t = std::make_shared<Tape>(min(Tree::X(), Tree::Y()));
     ArrayEvaluator e(t);
 
     e.evalAndPush({-1, 0, 0}); // specialize to just "X"
@@ -107,7 +107,7 @@ TEST_CASE("ArrayEvaluator::evalAndPush")
 
 TEST_CASE("ArrayEvaluator::getAmbiguous")
 {
-    Tape t(min(Tree::X(), -Tree::X()));
+    auto t = std::make_shared<Tape>(min(Tree::X(), -Tree::X()));
     ArrayEvaluator e(t);
     e.set({0, 0, 0}, 0);
     e.set({1, 0, 0}, 1);

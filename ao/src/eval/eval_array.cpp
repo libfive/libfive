@@ -4,24 +4,24 @@ namespace Kernel {
 
 constexpr size_t ArrayEvaluator::N;
 
-ArrayEvaluator::ArrayEvaluator(Tape& t)
+ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Tape> t)
     : ArrayEvaluator(t, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 ArrayEvaluator::ArrayEvaluator(
-        Tape& t, const std::map<Tree::Id, float>& vars)
-    : tape(t), f(t.num_clauses + 1, N)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
+    : tape(t), f(tape->num_clauses + 1, N)
 {
     // Unpack variables into result array
     for (auto& v : vars)
     {
-        f.row(tape.vars.right.at(v.first)) = v.second;
+        f.row(tape->vars.right.at(v.first)) = v.second;
     }
 
     // Unpack constants into result array
-    for (auto& c : t.constants)
+    for (auto& c : tape->constants)
     {
         f.row(c.first) = c.second;
     }
@@ -36,7 +36,7 @@ float ArrayEvaluator::eval(const Eigen::Vector3f& pt)
 float ArrayEvaluator::evalAndPush(const Eigen::Vector3f& pt)
 {
     auto out = eval(pt);
-    tape.push([&](Opcode::Opcode op, Clause::Id /* id */,
+    tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
                   Clause::Id a, Clause::Id b)
     {
         // For min and max operations, we may only need to keep one branch
@@ -68,16 +68,11 @@ float ArrayEvaluator::evalAndPush(const Eigen::Vector3f& pt)
     return out;
 }
 
-float ArrayEvaluator::baseEval(const Eigen::Vector3f& pt)
-{
-    return tape.baseEval<ArrayEvaluator, float>(*this, pt);
-}
-
 Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t _count)
 {
     count = _count;
-    return f.block<1, Eigen::Dynamic>(tape.rwalk(
+    return f.block<1, Eigen::Dynamic>(tape->rwalk(
         [=](Opcode::Opcode op, Clause::Id id,
             Clause::Id a, Clause::Id b)
             { evalClause(op, id, a, b); }),
@@ -88,8 +83,8 @@ ArrayEvaluator::values(size_t _count)
 
 bool ArrayEvaluator::setVar(Tree::Id var, float value)
 {
-    auto v = tape.vars.right.find(var);
-    if (v != tape.vars.right.end())
+    auto v = tape->vars.right.find(var);
+    if (v != tape->vars.right.end())
     {
         bool changed = f(v->second, 0) != value;
         f.row(v->second) = value;
@@ -110,7 +105,7 @@ ArrayEvaluator::getAmbiguous(size_t i)
     ambig = false;
 
     bool abort = false;
-    tape.walk(
+    tape->walk(
         [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
         {
             if (op == Opcode::MIN || op == Opcode::MAX)

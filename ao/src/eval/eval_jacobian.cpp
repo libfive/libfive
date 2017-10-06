@@ -2,22 +2,22 @@
 
 namespace Kernel {
 
-JacobianEvaluator::JacobianEvaluator(Tape& t)
+JacobianEvaluator::JacobianEvaluator(std::shared_ptr<Tape> t)
     : JacobianEvaluator(t, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 JacobianEvaluator::JacobianEvaluator(
-        Tape& t, const std::map<Tree::Id, float>& vars)
-    : PointEvaluator(t, vars), j(t.num_clauses + 1, t.vars.size())
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
+    : PointEvaluator(t, vars), j(tape->num_clauses + 1, tape->vars.size())
 {
     // Initialize Jacobian array to all zeros
     j = 0;
 
     // Then drop a 1 at each var's position
     size_t index = 0;
-    for (auto& v : t.vars.left)
+    for (auto& v : tape->vars.left)
     {
         j(v.first, index++) = 1;
     }
@@ -29,7 +29,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(const Eigen::Vector3f& p)
     eval(p);
 
     // Everybody do the tape walk!
-    auto ti = tape.rwalk(
+    auto ti = tape->rwalk(
         [=](Opcode::Opcode op, Clause::Id id,
             Clause::Id a, Clause::Id b)
             { evalClause(op, id, a, b); });
@@ -38,7 +38,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(const Eigen::Vector3f& p)
     // (to allow correlating back to VARs in Tree)
     std::map<Tree::Id, float> out;
     size_t index = 0;
-    for (auto v : tape.vars.left)
+    for (auto v : tape->vars.left)
     {
         out[v.second] = j(ti, index++);
     }

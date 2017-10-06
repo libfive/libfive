@@ -10,8 +10,9 @@ namespace Kernel {
 class ArrayEvaluator
 {
 public:
-    ArrayEvaluator(Tape& t);
-    ArrayEvaluator(Tape& t, const std::map<Tree::Id, float>& vars);
+    ArrayEvaluator(std::shared_ptr<Tape> t);
+    ArrayEvaluator(std::shared_ptr<Tape> t,
+                   const std::map<Tree::Id, float>& vars);
 
     /*
      *  Single-point evaluation
@@ -20,28 +21,21 @@ public:
     float evalAndPush(const Eigen::Vector3f& pt);
 
     /*
-     *  Evaluates the given point using whichever tape in the tape stack
-     *  contains the point in its region (this is useful when we're not
-     *  sure about which region the points fits into)
-     */
-    float baseEval(const Eigen::Vector3f& p);
-
-    /*
      *  Stores the given value in the result arrays
      *  (inlined for efficiency)
      */
     void set(const Eigen::Vector3f& p, size_t index)
     {
-        f(tape.X, index) = p.x();
-        f(tape.Y, index) = p.y();
-        f(tape.Z, index) = p.z();
+        f(tape->X, index) = p.x();
+        f(tape->Y, index) = p.y();
+        f(tape->Z, index) = p.z();
     }
 
     /*  This is the number of samples that we can process in one pass */
     static constexpr size_t N=256;
 
 protected:
-    Tape& tape;
+    std::shared_ptr<Tape> tape;
 
     /*  Stored in values() and used in evalClause() to decide how much of the
      *  array we're addressing at once  */
@@ -63,7 +57,7 @@ public:
      *  Pops the tape
      *  (must be paired against evalAndPush)
      */
-    void pop() { tape.pop(); }
+    void pop() { tape->pop(); }
 
     /*
      *  Changes a variable's value

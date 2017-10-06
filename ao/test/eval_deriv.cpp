@@ -14,7 +14,7 @@ TEST_CASE("DerivEvaluator::deriv")
             auto op = (Kernel::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
-            Tape tape(t);
+            auto tape = std::make_shared<Tape>(t);
             DerivEvaluator e(tape);
             e.deriv({0, 0, 0});
             REQUIRE(true /* No crash! */ );
@@ -24,7 +24,7 @@ TEST_CASE("DerivEvaluator::deriv")
     SECTION("var + 2*X")
     {
         auto v = Tree::var();
-        Tape t(v + 2 * Tree::X());
+        auto t = std::make_shared<Tape>(v + 2 * Tree::X());
         DerivEvaluator e(t);
 
         auto out = e.deriv({2, 0, 0});

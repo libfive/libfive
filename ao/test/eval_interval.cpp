@@ -13,7 +13,7 @@ TEST_CASE("IntervalEvaluator::eval")
 {
     SECTION("Basic math")
     {
-        Tape t(Tree::X() + 1);
+        auto t = std::make_shared<Tape>(Tree::X() + 1);
         IntervalEvaluator e(t);
 
         auto out = e.eval({1,1,1}, {2,2,2});
@@ -29,7 +29,7 @@ TEST_CASE("IntervalEvaluator::eval")
             auto op = (Kernel::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
-            Tape p(t);
+            auto p = std::make_shared<Tape>(t);
             IntervalEvaluator e(p);
             e.eval({0, 0, 0}, {1, 1, 1});
             REQUIRE(true /* No crash! */ );
@@ -41,7 +41,8 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 {
     SECTION("Basic")
     {
-        Tape t(min(Tree::X() + 1, Tree::Y() + 1));
+        auto t = std::make_shared<Tape>(
+                min(Tree::X() + 1, Tree::Y() + 1));
         IntervalEvaluator e(t);
 
         // Store -3 in the rhs's value
@@ -56,8 +57,8 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         REQUIRE(i.upper() == -3);
 
         // Check to make sure that the push disabled something
-        CAPTURE(t.utilization());
-        REQUIRE(t.utilization() < 1);
+        CAPTURE(t->utilization());
+        REQUIRE(t->utilization() < 1);
 
         // Require that the evaluation gets 1
         o = e.eval({1, 2, 0}, {1, 2, 0});
@@ -81,7 +82,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         REQUIRE(ra.contains(target.template cast<double>()));
         REQUIRE(rb.contains(target.template cast<double>()));
 
-        Tape tape(tree);
+        auto tape = std::make_shared<Tape>(tree);
         IntervalEvaluator eval(tape);
         ArrayEvaluator eval_(tape);
 
@@ -89,7 +90,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
                                    ra.upper.template cast<float>());
         CAPTURE(ia.lower());
         CAPTURE(ia.upper());
-        CAPTURE(tape.utilization());
+        CAPTURE(tape->utilization());
         auto ea = eval_.eval(target);
         eval.pop();
 
@@ -97,7 +98,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
                                    rb.upper.template cast<float>());
         CAPTURE(ib.lower());
         CAPTURE(ib.upper());
-        CAPTURE(tape.utilization());
+        CAPTURE(tape->utilization());
         auto eb = eval_.eval(target);
         eval.pop();
 

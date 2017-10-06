@@ -2,24 +2,24 @@
 
 namespace Kernel {
 
-PointEvaluator::PointEvaluator(Tape& t)
+PointEvaluator::PointEvaluator(std::shared_ptr<Tape> t)
     : PointEvaluator(t, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 PointEvaluator::PointEvaluator(
-        Tape& t, const std::map<Tree::Id, float>& vars)
-    : tape(t), f(t.num_clauses + 1, 1)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
+    : tape(t), f(tape->num_clauses + 1, 1)
 {
     // Unpack variables into result array
     for (auto& v : vars)
     {
-        f(tape.vars.right.at(v.first)) = v.second;
+        f(tape->vars.right.at(v.first)) = v.second;
     }
 
     // Unpack constants into result array
-    for (auto& c : t.constants)
+    for (auto& c : tape->constants)
     {
         f(c.first) = c.second;
     }
@@ -27,11 +27,11 @@ PointEvaluator::PointEvaluator(
 
 float PointEvaluator::eval(const Eigen::Vector3f& pt)
 {
-    f(tape.X) = pt.x();
-    f(tape.Y) = pt.y();
-    f(tape.Z) = pt.z();
+    f(tape->X) = pt.x();
+    f(tape->Y) = pt.y();
+    f(tape->Z) = pt.z();
 
-    return f(tape.rwalk(
+    return f(tape->rwalk(
         [=](Opcode::Opcode op, Clause::Id id,
             Clause::Id a, Clause::Id b)
             { evalClause(op, id, a, b); }));
@@ -40,7 +40,7 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt)
 float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
 {
     auto out = eval(pt);
-    tape.push([&](Opcode::Opcode op, Clause::Id /* id */,
+    tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
                   Clause::Id a, Clause::Id b)
     {
         // For min and max operations, we may only need to keep one branch
@@ -74,15 +74,15 @@ float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
 
 float PointEvaluator::baseEval(const Eigen::Vector3f& pt)
 {
-    return tape.baseEval<PointEvaluator, float>(*this, pt);
+    return tape->baseEval<PointEvaluator, float>(*this, pt);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 bool PointEvaluator::setVar(Tree::Id var, float value)
 {
-    auto v = tape.vars.right.find(var);
-    if (v != tape.vars.right.end())
+    auto v = tape->vars.right.find(var);
+    if (v != tape->vars.right.end())
     {
         bool changed = f(v->second) != value;
         f.row(v->second) = value;

@@ -10,8 +10,9 @@ namespace Kernel {
 class PointEvaluator
 {
 public:
-    PointEvaluator(Tape& t);
-    PointEvaluator(Tape& t, const std::map<Tree::Id, float>& vars);
+    PointEvaluator(std::shared_ptr<Tape> t);
+    PointEvaluator(std::shared_ptr<Tape> t,
+                   const std::map<Tree::Id, float>& vars);
 
     /*
      *  Single-point evaluation
@@ -27,17 +28,23 @@ public:
     float baseEval(const Eigen::Vector3f& p);
 
 protected:
-    Tape& tape;
+    std::shared_ptr<Tape> tape;
 
     /*  f(clause) is a specific data point */
     Eigen::Array<float, Eigen::Dynamic, 1> f;
+
+    /*
+     *  Per-clause evaluation, used in tape walking
+     */
+    void evalClause(Opcode::Opcode op, Clause::Id id,
+                    Clause::Id a, Clause::Id b);
 
 public:
     /*
      *  Pops the tape
      *  (must be paired against evalAndPush)
      */
-    void pop() { tape.pop(); }
+    void pop() { tape->pop(); }
 
     /*
      *  Changes a variable's value
@@ -46,12 +53,6 @@ public:
      *  Returns true if the variable's value changes
      */
     bool setVar(Tree::Id var, float value);
-
-    /*
-     *  Per-clause evaluation, used in tape walking
-     */
-    void evalClause(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */

@@ -2,15 +2,15 @@
 
 namespace Kernel {
 
-DerivArrayEvaluator::DerivArrayEvaluator(Tape& t)
+DerivArrayEvaluator::DerivArrayEvaluator(std::shared_ptr<Tape> t)
     : DerivArrayEvaluator(t, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 DerivArrayEvaluator::DerivArrayEvaluator(
-        Tape& t, const std::map<Tree::Id, float>& vars)
-    : ArrayEvaluator(t, vars), d(t.num_clauses + 1, 1)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
+    : ArrayEvaluator(t, vars), d(tape->num_clauses + 1, 1)
 {
     // Initialize all derivatives to zero
     for (unsigned i=0; i < d.rows(); ++i)
@@ -19,9 +19,9 @@ DerivArrayEvaluator::DerivArrayEvaluator(
     }
 
     // Load immutable derivatives for X, Y, Z
-    d(tape.X).row(0) = 1;
-    d(tape.Y).row(1) = 1;
-    d(tape.Z).row(2) = 1;
+    d(tape->X).row(0) = 1;
+    d(tape->Y).row(1) = 1;
+    d(tape->Z).row(2) = 1;
 }
 
 Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt)
@@ -37,7 +37,7 @@ DerivArrayEvaluator::derivs(size_t count)
     out.row(3).head(count) = values(count);
 
     // Perform derivative evaluation, copying results into the out array
-    out.topLeftCorner(3, count) = d(tape.rwalk(
+    out.topLeftCorner(3, count) = d(tape->rwalk(
         [=](Opcode::Opcode op, Clause::Id id,
             Clause::Id a, Clause::Id b)
             { evalClause(op, id, a, b); }

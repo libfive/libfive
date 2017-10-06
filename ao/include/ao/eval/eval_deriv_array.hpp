@@ -9,8 +9,9 @@ namespace Kernel {
 class DerivArrayEvaluator : public ArrayEvaluator
 {
 public:
-    DerivArrayEvaluator(Tape& t);
-    DerivArrayEvaluator(Tape& t, const std::map<Tree::Id, float>& vars);
+    DerivArrayEvaluator(std::shared_ptr<Tape> t);
+    DerivArrayEvaluator(std::shared_ptr<Tape> t,
+                        const std::map<Tree::Id, float>& vars);
 
 protected:
     /*  d(clause).col(index) is a set of partial derivatives [dx, dy, dz] */

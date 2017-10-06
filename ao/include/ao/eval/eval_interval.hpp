@@ -10,8 +10,9 @@ namespace Kernel {
 class IntervalEvaluator
 {
 public:
-    IntervalEvaluator(Tape& t);
-    IntervalEvaluator(Tape& t, const std::map<Tree::Id, float>& vars);
+    IntervalEvaluator(std::shared_ptr<Tape> t);
+    IntervalEvaluator(std::shared_ptr<Tape> t,
+                      const std::map<Tree::Id, float>& vars);
 
     /*
      *  Interval evaluation
@@ -25,7 +26,7 @@ public:
      *  Pops the tape
      *  (must be paired against evalAndPush)
      */
-    void pop() { tape.pop(); }
+    void pop() { tape->pop(); }
 
     /*
      *  Changes a variable's value
@@ -42,7 +43,7 @@ public:
                     Clause::Id a, Clause::Id b);
 
 protected:
-    Tape& tape;
+    std::shared_ptr<Tape> tape;
 
     /*  i[clause] is the interval result for that clause */
     std::vector<Interval::I> i;

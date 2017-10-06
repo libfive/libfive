@@ -2,26 +2,26 @@
 
 namespace Kernel {
 
-IntervalEvaluator::IntervalEvaluator(Tape& t)
+IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Tape> t)
     : IntervalEvaluator(t, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 IntervalEvaluator::IntervalEvaluator(
-        Tape& t, const std::map<Tree::Id, float>& vars)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
     : tape(t)
 {
-    i.resize(t.num_clauses + 1);
+    i.resize(tape->num_clauses + 1);
 
     // Unpack variables into result array
     for (auto& v : vars)
     {
-        i[tape.vars.right.at(v.first)] = v.second;
+        i[tape->vars.right.at(v.first)] = v.second;
     }
 
     // Unpack constants into result array
-    for (auto& c : t.constants)
+    for (auto& c : tape->constants)
     {
         i[c.first] = c.second;
     }
@@ -30,11 +30,11 @@ IntervalEvaluator::IntervalEvaluator(
 Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
                                     const Eigen::Vector3f& upper)
 {
-    i[tape.X] = {lower.x(), upper.x()};
-    i[tape.Y] = {lower.y(), upper.y()};
-    i[tape.Z] = {lower.z(), upper.z()};
+    i[tape->X] = {lower.x(), upper.x()};
+    i[tape->Y] = {lower.y(), upper.y()};
+    i[tape->Z] = {lower.z(), upper.z()};
 
-    return i[tape.rwalk([=](Opcode::Opcode op, Clause::Id id,
+    return i[tape->rwalk([=](Opcode::Opcode op, Clause::Id id,
                             Clause::Id a, Clause::Id b)
             { evalClause(op, id, a, b); })];
 }
@@ -44,7 +44,7 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
 {
     auto out = eval(lower, upper);
 
-    tape.push([&](Opcode::Opcode op, Clause::Id /* id */,
+    tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
                   Clause::Id a, Clause::Id b)
     {
         // For min and max operations, we may only need to keep one branch
@@ -74,8 +74,8 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
         return Tape::KEEP_BOTH;
     },
         Tape::INTERVAL,
-        {{i[tape.X].lower(), i[tape.Y].lower(), i[tape.Z].lower()},
-         {i[tape.X].upper(), i[tape.Y].upper(), i[tape.Z].upper()}});
+        {{i[tape->X].lower(), i[tape->Y].lower(), i[tape->Z].lower()},
+         {i[tape->X].upper(), i[tape->Y].upper(), i[tape->Z].upper()}});
     return out;
 }
 
@@ -83,8 +83,8 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
 
 bool IntervalEvaluator::setVar(Tree::Id var, float value)
 {
-    auto v = tape.vars.right.find(var);
-    if (v != tape.vars.right.end())
+    auto v = tape->vars.right.find(var);
+    if (v != tape->vars.right.end())
     {
         bool changed = i[v->second] != value;
         i[v->second] = value;

@@ -9,8 +9,9 @@ namespace Kernel {
 class DerivEvaluator : public PointEvaluator
 {
 public:
-    DerivEvaluator(Tape& t);
-    DerivEvaluator(Tape& t, const std::map<Tree::Id, float>& vars);
+    DerivEvaluator(std::shared_ptr<Tape> t);
+    DerivEvaluator(std::shared_ptr<Tape> t,
+                   const std::map<Tree::Id, float>& vars);
 
 protected:
     /*  d(axis, clause) is a set of partial derivatives [dx, dy, dz] */

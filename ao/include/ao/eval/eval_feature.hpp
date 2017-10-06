@@ -10,8 +10,9 @@ namespace Kernel {
 class FeatureEvaluator : public DerivEvaluator
 {
 public:
-    FeatureEvaluator(Tape& t);
-    FeatureEvaluator(Tape& t, const std::map<Tree::Id, float>& vars);
+    FeatureEvaluator(std::shared_ptr<Tape> t);
+    FeatureEvaluator(std::shared_ptr<Tape> t,
+                     const std::map<Tree::Id, float>& vars);
 
 public:
     /*

@@ -2,23 +2,23 @@
 
 namespace Kernel {
 
-DerivEvaluator::DerivEvaluator(Tape& t)
+DerivEvaluator::DerivEvaluator(std::shared_ptr<Tape> t)
     : DerivEvaluator(t, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 DerivEvaluator::DerivEvaluator(
-        Tape& t, const std::map<Tree::Id, float>& vars)
-    : PointEvaluator(t, vars), d(3, t.num_clauses + 1)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
+    : PointEvaluator(t, vars), d(3, tape->num_clauses + 1)
 {
     // Initialize all derivatives to zero
     d = 0;
 
     // Load immutable derivatives for X, Y, Z
-    d(0, tape.X) = 1;
-    d(1, tape.Y) = 1;
-    d(2, tape.Z) = 1;
+    d(0, tape->X) = 1;
+    d(1, tape->Y) = 1;
+    d(2, tape->Z) = 1;
 }
 
 Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt)
@@ -26,7 +26,7 @@ Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt)
     // Perform value evaluation, saving results
     auto w = eval(pt);
 
-    auto xyz = d.col(tape.rwalk(
+    auto xyz = d.col(tape->rwalk(
         [=](Opcode::Opcode op, Clause::Id id,
             Clause::Id a, Clause::Id b)
             { evalClause(op, id, a, b); }));

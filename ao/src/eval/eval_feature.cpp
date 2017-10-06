@@ -2,14 +2,14 @@
 
 namespace Kernel {
 
-FeatureEvaluator::FeatureEvaluator(Tape& t)
+FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Tape> t)
     : FeatureEvaluator(t, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 FeatureEvaluator::FeatureEvaluator(
-        Tape& t, const std::map<Tree::Id, float>& vars)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
     : DerivEvaluator(t, vars)
 {
     // Nothing to do here
@@ -23,7 +23,7 @@ Feature FeatureEvaluator::push(const Feature& feature)
     const auto& choices = feature.getChoices();
     auto itr = choices.begin();
 
-    tape.push([&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
+    tape->push([&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
     {
         // First, check whether this is an ambiguous operation
         // If it is, then there may be a choice for it in the feature
@@ -76,7 +76,7 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
     // (same as single-feature case below).
     {
         bool ambig = false;
-        tape.walk(
+        tape->walk(
             [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
             {
                 ambig |= (op == Opcode::MIN || op == Opcode::MAX) &&
@@ -147,7 +147,7 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
         const Eigen::Vector3f ds = deriv(p).template head<3>();
 
         bool ambiguous = false;
-        tape.rwalk(
+        tape->rwalk(
             [&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
             {
                 if ((op == Opcode::MIN || op == Opcode::MAX))
