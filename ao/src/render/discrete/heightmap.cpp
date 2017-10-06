@@ -9,7 +9,6 @@
 
 #include "ao/render/discrete/heightmap.hpp"
 #include "ao/eval/result.hpp"
-#include "ao/eval/evaluator.hpp"
 
 namespace Kernel {
 

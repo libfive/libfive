@@ -4,7 +4,6 @@ set(SRCS main.cpp
     cache.cpp
     contours.cpp
     dual.cpp
-    eval.cpp
     eval_interval.cpp
     eval_jacobian.cpp
     eval_array.cpp
