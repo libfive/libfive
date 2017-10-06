@@ -25,7 +25,7 @@ TEST_CASE("DerivEvaluator::deriv")
     {
         auto v = Tree::var();
         auto t = std::make_shared<Tape>(v + 2 * Tree::X());
-        DerivEvaluator e(t);
+        DerivEvaluator e(t, {{v.id(), 0}});
 
         auto out = e.deriv({2, 0, 0});
         REQUIRE(out == Eigen::Vector4f(2, 0, 0, 4));
