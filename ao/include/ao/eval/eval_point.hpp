@@ -2,12 +2,11 @@
 
 #include <Eigen/Eigen>
 
-#include "ao/eval/interval.hpp"
-#include "ao/eval/tape.hpp"
+#include "ao/eval/base.hpp"
 
 namespace Kernel {
 
-class PointEvaluator
+class PointEvaluator : public BaseEvaluator
 {
 public:
     PointEvaluator(std::shared_ptr<Tape> t);
@@ -27,25 +26,6 @@ public:
      */
     float baseEval(const Eigen::Vector3f& p);
 
-protected:
-    std::shared_ptr<Tape> tape;
-
-    /*  f(clause) is a specific data point */
-    Eigen::Array<float, Eigen::Dynamic, 1> f;
-
-    /*
-     *  Per-clause evaluation, used in tape walking
-     */
-    void evalClause(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
-
-public:
-    /*
-     *  Pops the tape
-     *  (must be paired against evalAndPush)
-     */
-    void pop() { tape->pop(); }
-
     /*
      *  Changes a variable's value
      *
@@ -57,6 +37,16 @@ public:
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+protected:
+    /*  f(clause) is a specific data point */
+    Eigen::Array<float, Eigen::Dynamic, 1> f;
+
+    /*
+     *  Per-clause evaluation, used in tape walking
+     */
+    void evalClause(Opcode::Opcode op, Clause::Id id,
+                    Clause::Id a, Clause::Id b);
 };
 
 }   // namespace Kernel

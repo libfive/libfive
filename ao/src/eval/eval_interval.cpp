@@ -10,14 +10,15 @@ IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Tape> t)
 
 IntervalEvaluator::IntervalEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : tape(t)
+    : BaseEvaluator(t, vars)
 {
     i.resize(tape->num_clauses + 1);
 
     // Unpack variables into result array
-    for (auto& v : vars)
+    for (auto& v : t->vars.right)
     {
-        i[tape->vars.right.at(v.first)] = v.second;
+        auto var = vars.find(v.first);
+        i[v.second] = (var != vars.end()) ? var->second : 0;
     }
 
     // Unpack constants into result array

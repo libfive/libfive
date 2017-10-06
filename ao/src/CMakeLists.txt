@@ -1,4 +1,5 @@
 add_library(ao-kernel SHARED
+    eval/base.cpp
     eval/eval_interval.cpp
     eval/eval_jacobian.cpp
     eval/eval_array.cpp

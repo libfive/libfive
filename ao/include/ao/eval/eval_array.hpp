@@ -2,12 +2,11 @@
 
 #include <Eigen/Eigen>
 
-#include "ao/eval/interval.hpp"
-#include "ao/eval/tape.hpp"
+#include "ao/eval/base.hpp"
 
 namespace Kernel {
 
-class ArrayEvaluator
+class ArrayEvaluator : public BaseEvaluator
 {
 public:
     ArrayEvaluator(std::shared_ptr<Tape> t);
@@ -35,8 +34,6 @@ public:
     static constexpr size_t N=256;
 
 protected:
-    std::shared_ptr<Tape> tape;
-
     /*  Stored in values() and used in evalClause() to decide how much of the
      *  array we're addressing at once  */
     size_t count;
@@ -47,17 +44,16 @@ protected:
     /*  ambig(index) returns whether a particular slot is ambiguous */
     Eigen::Array<bool, 1, N> ambig;
 
+    /*
+     *  Per-clause evaluation, used in tape walking
+     */
+    void evalClause(Opcode::Opcode op, Clause::Id id,
+                    Clause::Id a, Clause::Id b);
 public:
     /*
      *  Multi-point evaluation (values must be stored with set)
      */
     Eigen::Block<decltype(f), 1, Eigen::Dynamic> values(size_t count);
-
-    /*
-     *  Pops the tape
-     *  (must be paired against evalAndPush)
-     */
-    void pop() { tape->pop(); }
 
     /*
      *  Changes a variable's value
@@ -66,12 +62,6 @@ public:
      *  Returns true if the variable's value changes
      */
     bool setVar(Tree::Id var, float value);
-
-    /*
-     *  Per-clause evaluation, used in tape walking
-     */
-    void evalClause(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
 
     /*
      *  Returns a list of ambiguous items from indices 0 to i

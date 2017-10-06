@@ -12,12 +12,13 @@ ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Tape> t)
 
 ArrayEvaluator::ArrayEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : tape(t), f(tape->num_clauses + 1, N)
+    : BaseEvaluator(t, vars), f(tape->num_clauses + 1, N)
 {
     // Unpack variables into result array
-    for (auto& v : vars)
+    for (auto& v : t->vars.right)
     {
-        f.row(tape->vars.right.at(v.first)) = v.second;
+        auto var = vars.find(v.first);
+        f.row(v.second) = (var != vars.end()) ? var->second : 0;
     }
 
     // Unpack constants into result array
