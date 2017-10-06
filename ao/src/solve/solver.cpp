@@ -2,7 +2,7 @@
 
 #include "ao/solve/solver.hpp"
 #include "ao/tree/tree.hpp"
-#include "ao/eval/evaluator.hpp"
+#include "ao/eval/eval_jacobian.hpp"
 
 namespace Kernel {
 
@@ -10,29 +10,31 @@ namespace Solver
 {
 
 static std::pair<float, Solution> findRoot(
-        Evaluator& e, const Eigen::Vector3f pos, const Mask& mask, unsigned gas)
+        JacobianEvaluator& e, const Eigen::Vector3f pos,
+        Solution vars, unsigned gas)
 {
     const float EPSILON = 1e-6;
 
-    auto filter = [&](std::map<Tree::Id, float>& vs){
-        for (const auto& v : mask)
-        {
-            vs.erase(v);
-        }
-    };
-    // Find our initial variables and residual
-    auto vars = e.varValues();
-    filter(vars);
+    // Create a static map for all of our derivatives
+    std::map<Tree::Id, float> ds;
+    for (auto& v : vars)
+    {
+        ds.insert({v.first, 0});
+    }
 
     float r = e.eval(pos);
-
     bool converged = false;
-
     while (!converged && fabs(r) >= EPSILON && --gas)
     {
-        // Vars should be set from the most recent evaluation
-        auto ds = e.gradient(pos);
-        filter(ds);
+        // Evaluate and update our local gradient
+        for (auto& d : e.gradient(pos))
+        {
+            auto v = ds.find(d.first);
+            if (v != ds.end())
+            {
+                v->second = d.second;
+            }
+        }
 
         // Break if all of our gradients are nearly zero
         if (std::all_of(ds.begin(), ds.end(),
@@ -45,12 +47,12 @@ static std::pair<float, Solution> findRoot(
 
         // Solve for step size using a backtracking line search
         const float slope = std::accumulate(ds.begin(), ds.end(), 0.0f,
-                [](float v, const decltype(ds)::value_type& itr) {
-                    return v + pow(itr.second, 2); });
+                [](float d, const decltype(ds)::value_type& itr) {
+                    return d + pow(itr.second, 2); });
 
         for (float step = r / slope; true; step /= 2)
         {
-            for (const auto& v : vars)
+            for (auto& v : vars)
             {
                 e.setVar(v.first, v.second - step * ds.at(v.first));
             }
@@ -69,13 +71,15 @@ static std::pair<float, Solution> findRoot(
                 // If residuals are converging, then exit outer loop too
                 converged = fabs(diff) < EPSILON;
                 r = r_;
+
+                // Store new variable values in our map
+                for (auto& v : vars)
+                {
+                    v.second -= step * ds.at(v.first);
+                }
                 break;
             }
         }
-
-        // Extract new variable table
-        vars = e.varValues();
-        filter(vars);
     }
     return {r, vars};
 }
@@ -86,12 +90,13 @@ std::pair<float, Solution> findRoot(
         const Tree& t, const std::map<Tree::Id, float>& vars,
         const Eigen::Vector3f pos, const Mask& mask, unsigned gas)
 {
-    Evaluator e(t, vars);
-    return findRoot(e, pos, mask, gas);
+    auto tape = std::make_shared<Tape>(t);
+    JacobianEvaluator e(tape, vars);
+    return findRoot(e, vars, pos, mask, gas);
 }
 
 std::pair<float, Solution> findRoot(
-        Evaluator& e, const std::map<Tree::Id, float>& vars,
+        JacobianEvaluator& e, std::map<Tree::Id, float> vars,
         const Eigen::Vector3f pos, const Mask& mask, unsigned gas)
 {
     // Load initial variable values here
@@ -99,7 +104,14 @@ std::pair<float, Solution> findRoot(
     {
         e.setVar(v.first, v.second);
     }
-    return findRoot(e, pos, mask, gas);
+
+    // Ignore masked variables
+    for (const auto& v : mask)
+    {
+        vars.erase(v);
+    }
+
+    return findRoot(e, pos, vars, gas);
 }
 
 } // namespace Solver

@@ -335,9 +335,11 @@ void View::mousePressEvent(QMouseEvent* event)
                                 (pick_img.height() - event->pos().y())) - 1);
 
                 drag_start = camera.M().inverted() * pt;
+
                 drag_eval.reset(drag_target->dragFrom(drag_start));
 
-                auto norm = drag_eval->derivs(1).d.col(0);
+                auto norm = drag_eval->deriv(
+                        {drag_start.x(), drag_start.y(), drag_start.z()});
                 drag_dir = {norm.x(), norm.y(), norm.z()};
 
                 mouse.state = mouse.DRAG_EVAL;

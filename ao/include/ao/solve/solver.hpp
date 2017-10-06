@@ -4,7 +4,7 @@
 #include <Eigen/Eigen>
 
 #include "ao/tree/cache.hpp"
-#include "ao/eval/evaluator.hpp"
+#include "ao/eval/eval_jacobian.hpp"
 
 namespace Kernel {
 
@@ -26,7 +26,7 @@ namespace Solver
             const Eigen::Vector3f pos={0,0,0}, const Mask& mask=Mask(),
             unsigned gas=25000);
     std::pair<float, Solution> findRoot(
-            Evaluator& t, const std::map<Tree::Id, float>& vars,
+            JacobianEvaluator& e, std::map<Tree::Id, float> vars,
             const Eigen::Vector3f pos={0,0,0}, const Mask& mask=Mask(),
             unsigned gas=25000);
 

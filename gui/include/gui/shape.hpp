@@ -8,6 +8,8 @@
 
 #include "ao/tree/tree.hpp"
 #include "ao/render/brep/mesh.hpp"
+#include "ao/eval/eval_jacobian.hpp"
+
 #include "gui/settings.hpp"
 
 class Shape : public QObject, QOpenGLFunctions
@@ -70,10 +72,11 @@ public:
 
     /*
      *  Returns a new evaluator specialized at the given drag position
+     *
      *  Ownership is transfered, so the caller is responsible for deleting
      *  the evaluator (or storing it in an owned structure)
      */
-    Kernel::Evaluator* dragFrom(const QVector3D& pt);
+    Kernel::JacobianEvaluator* dragFrom(const QVector3D& pt);
 
     /*
      *  Returns another pointer to the solution map

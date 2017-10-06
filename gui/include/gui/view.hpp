@@ -12,6 +12,8 @@
 #include "gui/shape.hpp"
 #include "gui/settings.hpp"
 
+#include "ao/eval/eval_jacobian.hpp"
+
 class View : public QOpenGLWidget, QOpenGLFunctions
 {
     Q_OBJECT
@@ -133,7 +135,7 @@ protected:
     /*  Data to handle direct modification of shapes */
     QVector3D drag_start;
     QVector3D drag_dir;
-    QScopedPointer<Kernel::Evaluator> drag_eval;
+    QScopedPointer<Kernel::JacobianEvaluator> drag_eval;
     Shape* drag_target=nullptr;
     Shape* hover_target=nullptr;
 };

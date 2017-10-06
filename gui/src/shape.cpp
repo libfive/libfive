@@ -251,10 +251,11 @@ void Shape::setHover(bool h)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Kernel::Evaluator* Shape::dragFrom(const QVector3D& v)
+Kernel::JacobianEvaluator* Shape::dragFrom(const QVector3D& v)
 {
-    auto e = new Kernel::Evaluator(tree, *vars);
-    e->specialize({v.x(), v.y(), v.z()});
+    auto e = new Kernel::JacobianEvaluator(
+            std::make_shared<Kernel::Tape>(tree), *vars);
+    e->evalAndPush({v.x(), v.y(), v.z()});
     return e;
 }
 
