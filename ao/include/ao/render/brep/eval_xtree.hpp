@@ -18,6 +18,21 @@ public:
           interval(tape, vars), feature(tape, vars)
     { /* Nothing to do here */ }
 
+    /*
+     *  Updates variable values, return true if changed
+     */
+    bool updateVars(const std::map<Kernel::Tree::Id, float>& vars)
+    {
+        bool changed = false;
+        for (auto& v : vars)
+        {
+            changed |= array.setVar(v.first, v.second);
+            changed |= interval.setVar(v.first, v.second);
+            changed |= feature.setVar(v.first, v.second);
+        }
+        return changed;
+    }
+
 protected:
     std::shared_ptr<Tape> tape;
 

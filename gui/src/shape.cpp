@@ -15,7 +15,7 @@ Shape::Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
     es.reserve(8);
     for (unsigned i=0; i < es.capacity(); ++i)
     {
-        es.emplace_back(Kernel::Evaluator(t, *vars));
+        es.emplace_back(Kernel::XTreeEvaluator(t, *vars));
     }
 
     connect(this, &Shape::gotMesh, this, &Shape::redraw);

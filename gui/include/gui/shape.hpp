@@ -123,8 +123,8 @@ protected:
 
     Kernel::Tree tree;
     std::shared_ptr<std::map<Kernel::Tree::Id, float>> vars;
-    std::vector<Kernel::Evaluator,
-                Eigen::aligned_allocator<Kernel::Evaluator>> es;
+    std::vector<Kernel::XTreeEvaluator,
+                Eigen::aligned_allocator<Kernel::XTreeEvaluator>> es;
 
     QScopedPointer<Kernel::Mesh> mesh;
     QPair<Settings, int> next;
