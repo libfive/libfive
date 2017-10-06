@@ -10,7 +10,7 @@
 
 #include "ao/render/brep/region.hpp"
 #include "ao/render/brep/marching.hpp"
-#include "ao/eval/evaluator.hpp"
+#include "ao/render/brep/eval_xtree.hpp"
 #include "ao/eval/interval.hpp"
 
 namespace Kernel {
@@ -41,7 +41,7 @@ public:
      *  If multithread is true, es must be a pointer to an array of evaluators
      */
     static std::unique_ptr<const XTree> build(
-            Evaluator* es,
+            XTreeEvaluator* es,
             Region<N> region, double min_feature,
             double max_err, bool multithread,
             std::atomic_bool& cancel);
@@ -153,7 +153,7 @@ protected:
      *  If multiple evaluators are provided, then tree construction will
      *  be distributed across multiple threads.
      */
-    XTree(Evaluator* eval, Region<N> region,
+    XTree(XTreeEvaluator* eval, Region<N> region,
           double min_feature, double max_err, bool multithread,
           std::atomic_bool& cancel);
 

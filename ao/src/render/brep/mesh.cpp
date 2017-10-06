@@ -97,7 +97,7 @@ std::unique_ptr<Mesh> Mesh::render(
 }
 
 std::unique_ptr<Mesh> Mesh::render(
-        Evaluator* es,
+        XTreeEvaluator* es,
         const Region<3>& r, double min_feature, double max_err,
         std::atomic_bool& cancel)
 {
