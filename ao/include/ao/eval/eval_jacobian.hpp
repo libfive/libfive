@@ -23,11 +23,13 @@ protected:
     /*
      *  Raw clause evaluation is done here!
      */
-    void evalClause(Opcode::Opcode op, Clause::Id id,
+    void operator()(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
 
     /*  j(clause, var) = dclause / dvar */
     Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> j;
+
+    friend class Tape; // for rwalk<JacobianEvaluator>
 };
 
 }   // namespace Kernel

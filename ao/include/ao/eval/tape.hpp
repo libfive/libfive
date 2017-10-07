@@ -94,10 +94,20 @@ public:
      */
     Clause::Id rwalk(
             std::function<void(Opcode::Opcode, Clause::Id,
-                               Clause::Id, Clause::Id)> fn);
-    Clause::Id rwalk(
-            std::function<void(Opcode::Opcode, Clause::Id,
                                Clause::Id, Clause::Id)> fn, bool& abort);
+
+    /*
+     *  Inlined, faster version of rwalk
+     */
+    template <class T>
+    Clause::Id rwalk(T& t)
+    {
+        for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
+        {
+            t(itr->op, itr->id, itr->a, itr->b);
+        }
+        return tape->i;
+    }
 
     void  walk(std::function<void(Opcode::Opcode, Clause::Id,
                                   Clause::Id, Clause::Id)> fn, bool& abort);

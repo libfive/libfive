@@ -9,7 +9,6 @@
 
 #include "ao/render/discrete/heightmap.hpp"
 #include "ao/eval/result.hpp"
-#include "ao/eval/evaluator.hpp"
 
 namespace Kernel {
 
@@ -20,7 +19,8 @@ namespace Kernel {
  */
 struct NormalRenderer
 {
-    NormalRenderer(Evaluator* e, const Voxels::View& r, Heightmap::Normal& norm)
+    NormalRenderer(HeightmapEvaluator* e, const Voxels::View& r,
+                   Heightmap::Normal& norm)
         : e(e), r(r), norm(norm) {}
 
     /*
@@ -34,13 +34,13 @@ struct NormalRenderer
     void run()
     {
         // Get derivative array pointers
-        auto ds = e->derivs(count);
+        auto ds = e->array.derivs(count).topRows(3).eval();
 
         for (size_t i=0; i < count; ++i)
         {
             // Map a scaled normal into the range 0 - 255
             Eigen::Array3i n = (255 *
-                (ds.d.col(i) / (2 * ds.d.col(i).matrix().norm()) + 0.5))
+                (ds.col(i) / (2 * ds.col(i).matrix().norm()) + 0.5))
                 .cast<int>();
 
             // Pack the normals and a dummy alpha byte into the image
@@ -62,7 +62,7 @@ struct NormalRenderer
     {
         xs[count] = r.corner.x() + i;
         ys[count] = r.corner.y() + j;
-        e->set({r.pts.x()[i], r.pts.y()[j], z}, count++);
+        e->array.set({r.pts.x()[i], r.pts.y()[j], z}, count++);
 
         // If the gradient array is completely full, execute a
         // calculation that finds normals and blits them to the image
@@ -72,7 +72,7 @@ struct NormalRenderer
         }
     }
 
-    Evaluator* e;
+    HeightmapEvaluator* e;
     const Voxels::View& r;
     Heightmap::Normal& norm;
 
@@ -95,7 +95,7 @@ for (int i=0; i < r.size.x(); ++i)           \
 /*
  *  Helper functions that evaluates a region of pixels
  */
-void Heightmap::pixels(Evaluator* e, const Voxels::View& r)
+void Heightmap::pixels(HeightmapEvaluator* e, const Voxels::View& r)
 {
     size_t index = 0;
 
@@ -103,11 +103,12 @@ void Heightmap::pixels(Evaluator* e, const Voxels::View& r)
     // (which needs to be obeyed by anything unflattening results)
     VIEW_ITERATE_XYZ(r)
     {
-        e->set({r.pts.x()[i], r.pts.y()[j], r.pts.z()[r.size.z() - k - 1]},
-                index++);
+        e->array.set(
+            {r.pts.x()[i], r.pts.y()[j], r.pts.z()[r.size.z() - k - 1]},
+            index++);
     }
 
-    const float* out = e->values(index);
+    auto out = e->array.values(index);
 
     index = 0;
 
@@ -148,7 +149,7 @@ void Heightmap::pixels(Evaluator* e, const Voxels::View& r)
  *
  *  This function is used when marking an Interval as filled
  */
-void Heightmap::fill(Evaluator* e, const Voxels::View& r)
+void Heightmap::fill(HeightmapEvaluator* e, const Voxels::View& r)
 {
     // Store the maximum z position (which is what we're flooding into
     // the depth image)
@@ -179,7 +180,7 @@ void Heightmap::fill(Evaluator* e, const Voxels::View& r)
 * Helper function that reduces a particular matrix block
 * Returns true if finished, false if aborted
 */
-bool Heightmap::recurse(Evaluator* e, const Voxels::View& r,
+bool Heightmap::recurse(HeightmapEvaluator* e, const Voxels::View& r,
                         const std::atomic_bool& abort)
 {
     // Stop rendering if the abort flag is set
@@ -206,7 +207,7 @@ bool Heightmap::recurse(Evaluator* e, const Voxels::View& r,
     }
 
     // Do the interval evaluation
-    Interval::I out = e->eval(r.lower, r.upper);
+    Interval::I out = e->interval.evalAndPush(r.lower, r.upper);
 
     // If strictly negative, fill up the block and return
     if (Interval::isFilled(out))
@@ -217,26 +218,24 @@ bool Heightmap::recurse(Evaluator* e, const Voxels::View& r,
     else if (!Interval::isEmpty(out))
     {
         // Disable inactive nodes in the tree
-        e->push();
-
         auto rs = r.split();
 
         // Since the higher Z region is in the second item of the
         // split, evaluate rs.second then rs.first
         if (!recurse(e, rs.second, abort))
         {
-            e->pop();
+            e->interval.pop();
             return false;
         }
         if (!recurse(e, rs.first, abort))
         {
-            e->pop();
+            e->interval.pop();
             return false;
         }
-
-        // Re-enable disabled nodes from the tree
-        e->pop();
     }
+
+    // Re-enable disabled nodes from the tree
+    e->interval.pop();
     return true;
 }
 
@@ -252,10 +251,10 @@ std::unique_ptr<Heightmap> Heightmap::render(
     const Tree t, Voxels r, const std::atomic_bool& abort,
     size_t workers)
 {
-    std::vector<Evaluator*> es;
+    std::vector<HeightmapEvaluator*> es;
     for (size_t i=0; i < workers; ++i)
     {
-        es.push_back(new Evaluator(t));
+        es.push_back(new HeightmapEvaluator(t));
     }
 
     auto out = render(es, r, abort);
@@ -268,7 +267,7 @@ std::unique_ptr<Heightmap> Heightmap::render(
 }
 
 std::unique_ptr<Heightmap> Heightmap::render(
-        const std::vector<Evaluator*>& es, Voxels r,
+        const std::vector<HeightmapEvaluator*>& es, Voxels r,
         const std::atomic_bool& abort)
 {
     auto out = new Heightmap(r.pts[1].size(), r.pts[0].size());

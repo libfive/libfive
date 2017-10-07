@@ -34,12 +34,14 @@ public:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void evalClause(Opcode::Opcode op, Clause::Id id,
+    void operator()(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    friend class Tape; // for rwalk<DerivArrayEvaluator>
 };
 
 }   // namespace Kernel

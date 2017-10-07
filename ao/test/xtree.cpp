@@ -74,7 +74,6 @@ TEST_CASE("XTree<2>::isBranch")
 
     SECTION("Containing shape")
     {
-        Evaluator e = circle(0.5);
         auto t = XTree<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
         REQUIRE(t->isBranch());
     }
@@ -110,7 +109,8 @@ TEST_CASE("XTree<2>::vertex_count")
     {
         Tree a = min(max(Tree::X(), Tree::Y()),
                      max(1 - Tree::X(), 1 - Tree::Y()));
-        Evaluator eval(a);
+        auto tape = std::make_shared<Tape>(a);
+        PointEvaluator eval(tape);
         auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
         REQUIRE(ta->level == 0);
         REQUIRE(ta->vertex_count == 2);
@@ -127,7 +127,7 @@ TEST_CASE("XTree<2>::vertex_count")
 TEST_CASE("XTree<3>::vert")
 {
     auto walk = [](std::unique_ptr<const XTree<3>>& xtree,
-                   Evaluator& eval, float err=0.001)
+                   XTreeEvaluator& eval, float err=0.001)
     {
         std::list<const XTree<3>*> todo = {xtree.get()};
         while (todo.size())
@@ -154,7 +154,7 @@ TEST_CASE("XTree<3>::vert")
                     CAPTURE((int)t->corner_mask);
                     CAPTURE(t->region.lower.transpose());
                     CAPTURE(t->region.upper.transpose());
-                    REQUIRE(eval.eval(t->vert3(i).template cast<float>())
+                    REQUIRE(eval.feature.eval(t->vert3(i).template cast<float>())
                             == Approx(0).epsilon(err));
                 }
             }
@@ -165,7 +165,7 @@ TEST_CASE("XTree<3>::vert")
     {
         auto b = max(box({0, 0, 0}, {1, 1, 1}),
                 Tree::X() + Tree::Y() + Tree::Z() - 1.3);
-        Evaluator eval(b);
+        XTreeEvaluator eval(b);
         Region<3> r({-2, -2, -2}, {2, 2, 2});
         auto xtree = XTree<3>::build(b, r, 0.1);
         walk(xtree, eval);
@@ -175,7 +175,7 @@ TEST_CASE("XTree<3>::vert")
     {
         auto b = max(box({0, 0, 0}, {1, 1, 1}),
                 Tree::X() + Tree::Y() + Tree::Z() - 1.2);
-        Evaluator eval(b);
+        XTreeEvaluator eval(b);
         Region<3> r({-10, -10, -10}, {10, 10, 10});
         auto xtree = XTree<3>::build(b, r, 0.1);
         walk(xtree, eval);
@@ -186,7 +186,7 @@ TEST_CASE("XTree<3>::vert")
         auto s = max(sphere(1), -circle(0.5));
         Region<3> r({-5, -5, -5}, {5, 5, 5});
         auto xtree = XTree<3>::build(s, r, 1/9.0f);
-        Evaluator eval(s);
+        XTreeEvaluator eval(s);
         walk(xtree, eval, 0.01);
     }
 }

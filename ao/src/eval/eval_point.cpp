@@ -10,12 +10,13 @@ PointEvaluator::PointEvaluator(std::shared_ptr<Tape> t)
 
 PointEvaluator::PointEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : tape(t), f(tape->num_clauses + 1, 1)
+    : BaseEvaluator(t, vars), f(tape->num_clauses + 1, 1)
 {
     // Unpack variables into result array
-    for (auto& v : vars)
+    for (auto& v : t->vars.right)
     {
-        f(tape->vars.right.at(v.first)) = v.second;
+        auto var = vars.find(v.first);
+        f(v.second) = (var != vars.end()) ? var->second : 0;
     }
 
     // Unpack constants into result array
@@ -31,10 +32,7 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt)
     f(tape->Y) = pt.y();
     f(tape->Z) = pt.z();
 
-    return f(tape->rwalk(
-        [=](Opcode::Opcode op, Clause::Id id,
-            Clause::Id a, Clause::Id b)
-            { evalClause(op, id, a, b); }));
+    return f(tape->rwalk(*this));
 }
 
 float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
@@ -96,7 +94,7 @@ bool PointEvaluator::setVar(Tree::Id var, float value)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void PointEvaluator::evalClause(Opcode::Opcode op, Clause::Id id,
+void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                 Clause::Id a, Clause::Id b)
 {
 #define out f(id)

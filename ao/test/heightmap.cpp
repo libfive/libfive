@@ -3,7 +3,6 @@
 #include "catch.hpp"
 
 #include "ao/render/discrete/heightmap.hpp"
-#include "ao/eval/evaluator.hpp"
 
 #include "util/shapes.hpp"
 

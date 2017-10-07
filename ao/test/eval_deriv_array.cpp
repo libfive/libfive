@@ -25,7 +25,7 @@ TEST_CASE("DerivArrayEvaluator::deriv")
     {
         auto v = Tree::var();
         auto t = std::make_shared<Tape>(v + 2 * Tree::X());
-        DerivArrayEvaluator e(t);
+        DerivArrayEvaluator e(t, {{v.id(), 0}});
 
         auto out = e.deriv({2, 0, 0});
         REQUIRE(out.col(0) == Eigen::Vector4f(2, 0, 0, 4));

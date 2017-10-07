@@ -29,10 +29,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(const Eigen::Vector3f& p)
     eval(p);
 
     // Everybody do the tape walk!
-    auto ti = tape->rwalk(
-        [=](Opcode::Opcode op, Clause::Id id,
-            Clause::Id a, Clause::Id b)
-            { evalClause(op, id, a, b); });
+    auto ti = tape->rwalk(*this);
 
     // Unpack from flat array into map
     // (to allow correlating back to VARs in Tree)
@@ -45,7 +42,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(const Eigen::Vector3f& p)
     return out;
 }
 
-void JacobianEvaluator::evalClause(Opcode::Opcode op, Clause::Id id,
+void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                    Clause::Id a, Clause::Id b)
 {
 #define ov f(id)

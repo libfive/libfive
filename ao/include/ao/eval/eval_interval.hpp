@@ -2,12 +2,12 @@
 
 #include <Eigen/Eigen>
 
+#include "ao/eval/base.hpp"
 #include "ao/eval/interval.hpp"
-#include "ao/eval/tape.hpp"
 
 namespace Kernel {
 
-class IntervalEvaluator
+class IntervalEvaluator : public BaseEvaluator
 {
 public:
     IntervalEvaluator(std::shared_ptr<Tape> t);
@@ -23,12 +23,6 @@ public:
                             const Eigen::Vector3f& upper);
 
     /*
-     *  Pops the tape
-     *  (must be paired against evalAndPush)
-     */
-    void pop() { tape->pop(); }
-
-    /*
      *  Changes a variable's value
      *
      *  If the variable isn't present in the tree, does nothing
@@ -36,17 +30,17 @@ public:
      */
     bool setVar(Tree::Id var, float value);
 
+protected:
+    /*  i[clause] is the interval result for that clause */
+    std::vector<Interval::I> i;
+
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void evalClause(Opcode::Opcode op, Clause::Id id,
+    void operator()(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
 
-protected:
-    std::shared_ptr<Tape> tape;
-
-    /*  i[clause] is the interval result for that clause */
-    std::vector<Interval::I> i;
+    friend class Tape; // for rwalk<IntervalEvaluator>
 };
 
 }   // namespace Kernel

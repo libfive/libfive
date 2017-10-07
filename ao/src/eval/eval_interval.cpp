@@ -10,14 +10,15 @@ IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Tape> t)
 
 IntervalEvaluator::IntervalEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : tape(t)
+    : BaseEvaluator(t, vars)
 {
     i.resize(tape->num_clauses + 1);
 
     // Unpack variables into result array
-    for (auto& v : vars)
+    for (auto& v : t->vars.right)
     {
-        i[tape->vars.right.at(v.first)] = v.second;
+        auto var = vars.find(v.first);
+        i[v.second] = (var != vars.end()) ? var->second : 0;
     }
 
     // Unpack constants into result array
@@ -34,9 +35,7 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     i[tape->Y] = {lower.y(), upper.y()};
     i[tape->Z] = {lower.z(), upper.z()};
 
-    return i[tape->rwalk([=](Opcode::Opcode op, Clause::Id id,
-                            Clause::Id a, Clause::Id b)
-            { evalClause(op, id, a, b); })];
+    return i[tape->rwalk(*this)];
 }
 
 Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
@@ -98,67 +97,94 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static Interval::I interval_math_dispatcher(Opcode::Opcode op,
-        Interval::I a, Interval::I b)
+void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
+                                   Clause::Id a, Clause::Id b)
 {
+#define out i[id]
+#define a i[a]
+#define b i[b]
     switch (op) {
         case Opcode::ADD:
-            return a + b;
+            out = a + b;
+            break;
         case Opcode::MUL:
-            return a * b;
+            out = a * b;
+            break;
         case Opcode::MIN:
-            return boost::numeric::min(a, b);
+            out = boost::numeric::min(a, b);
+            break;
         case Opcode::MAX:
-            return boost::numeric::max(a, b);
+            out = boost::numeric::max(a, b);
+            break;
         case Opcode::SUB:
-            return a - b;
+            out = a - b;
+            break;
         case Opcode::DIV:
-            return a / b;
+            out = a / b;
+            break;
         case Opcode::ATAN2:
-            return atan2(a, b);
+            out = atan2(a, b);
+            break;
         case Opcode::POW:
-            return boost::numeric::pow(a, b.lower());
+            out = boost::numeric::pow(a, b.lower());
+            break;
         case Opcode::NTH_ROOT:
-            return boost::numeric::nth_root(a, b.lower());
+            out = boost::numeric::nth_root(a, b.lower());
+            break;
         case Opcode::MOD:
-            return Interval::I(0.0f, b.upper()); // YOLO
+            out = Interval::I(0.0f, b.upper()); // YOLO
+            break;
         case Opcode::NANFILL:
-            return (std::isnan(a.lower()) || std::isnan(a.upper())) ? b : a;
+            out = (std::isnan(a.lower()) || std::isnan(a.upper())) ? b : a;
+            break;
 
         case Opcode::SQUARE:
-            return boost::numeric::square(a);
+            out = boost::numeric::square(a);
+            break;
         case Opcode::SQRT:
-            return boost::numeric::sqrt(a);
+            out = boost::numeric::sqrt(a);
+            break;
         case Opcode::NEG:
-            return -a;
+            out = -a;
+            break;
         case Opcode::SIN:
-            return boost::numeric::sin(a);
+            out = boost::numeric::sin(a);
+            break;
         case Opcode::COS:
-            return boost::numeric::cos(a);
+            out = boost::numeric::cos(a);
+            break;
         case Opcode::TAN:
-            return boost::numeric::tan(a);
+            out = boost::numeric::tan(a);
+            break;
         case Opcode::ASIN:
-            return boost::numeric::asin(a);
+            out = boost::numeric::asin(a);
+            break;
         case Opcode::ACOS:
-            return boost::numeric::acos(a);
+            out = boost::numeric::acos(a);
+            break;
         case Opcode::ATAN:
             // If the interval has an infinite bound, then return the largest
             // possible output interval (of +/- pi/2).  This rescues us from
             // situations where we do atan(y / x) and the behavior of the
             // interval changes if you're approaching x = 0 from below versus
             // from above.
-            return (std::isinf(a.lower()) || std::isinf(a.upper()))
+            out = (std::isinf(a.lower()) || std::isinf(a.upper()))
                 ? Interval::I(-M_PI/2, M_PI/2)
                 : boost::numeric::atan(a);
+            break;
         case Opcode::EXP:
-            return boost::numeric::exp(a);
+            out = boost::numeric::exp(a);
+            break;
         case Opcode::ABS:
-            return boost::numeric::abs(a);
+            out = boost::numeric::abs(a);
+            break;
         case Opcode::RECIP:
-            return Interval::I(1,1) / a;
+            out = Interval::I(1,1) / a;
+            break;
 
         case Opcode::CONST_VAR:
-            return a;
+            out = a;
+            break;
 
         case Opcode::INVALID:
         case Opcode::CONST:
@@ -168,13 +194,9 @@ static Interval::I interval_math_dispatcher(Opcode::Opcode op,
         case Opcode::VAR:
         case Opcode::LAST_OP: assert(false);
     }
-    return Interval::I();
-}
-
-void IntervalEvaluator::evalClause(Opcode::Opcode op, Clause::Id id,
-                                   Clause::Id a, Clause::Id b)
-{
-    i[id] = interval_math_dispatcher(op, i[a], i[b]);
+#undef out
+#undef a
+#undef b
 }
 
 }   // namespace Kernel

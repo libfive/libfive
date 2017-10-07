@@ -5,7 +5,7 @@
 #include "ao/render/discrete/voxels.hpp"
 #include "ao/tree/tree.hpp"
 
-#include "ao/eval/evaluator.hpp"
+#include "ao/render/discrete/eval_height.hpp"
 
 namespace Kernel {
 
@@ -27,7 +27,7 @@ public:
      *  Render an image using pre-allocated evaluators
      */
     static std::unique_ptr<Heightmap> render(
-            const std::vector<Evaluator*>& es, Voxels r,
+            const std::vector<HeightmapEvaluator*>& es, Voxels r,
             const std::atomic_bool& abort);
 
     /*
@@ -46,18 +46,18 @@ protected:
      *  Recurses down into a rendering operation
      *  Returns true if aborted, false otherwise
      */
-    bool recurse(Evaluator* e, const Voxels::View& r,
+    bool recurse(HeightmapEvaluator* e, const Voxels::View& r,
                  const std::atomic_bool& abort);
 
     /*
      *  Evaluates a set of voxels on a pixel-by-pixel basis
      */
-    void pixels(Evaluator* e, const Voxels::View& v);
+    void pixels(HeightmapEvaluator* e, const Voxels::View& v);
 
     /*
      *  Fills a region of voxels, marking them as at the top of the view
      */
-    void fill(Evaluator* e, const Voxels::View& v);
+    void fill(HeightmapEvaluator* e, const Voxels::View& v);
 
 };
 }   // namespace Kernel

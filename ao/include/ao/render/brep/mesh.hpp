@@ -30,7 +30,7 @@ public:
      *  es must be a pointer to at least eight Evaluators
      */
     static std::unique_ptr<Mesh> render(
-            Evaluator* es,
+            XTreeEvaluator* es,
             const Region<3>& r, double min_feature, double max_err,
             std::atomic_bool& cancel);
 

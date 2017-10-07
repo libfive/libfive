@@ -11,20 +11,19 @@ Region<3> findBounds(const Tree& t)
 
 Region<3> findBounds(const Tree& t, const std::map<Tree::Id, float>& vars)
 {
-    Evaluator e(t, vars);
+    IntervalEvaluator e(std::make_shared<Tape>(t), vars);
     return findBounds(&e);
 }
 
-Region<3> findBounds(Evaluator* eval)
+Region<3> findBounds(IntervalEvaluator* eval)
 {
     const auto inf = std::numeric_limits<double>::infinity();
     Region<3> out({-inf, -inf, -inf}, {inf, inf, inf});
 
     // Helper function to load and evaluate an interval
     auto testRegion = [=](const Region<3>& r){
-        eval->set(r.lower.template cast<float>(),
-                  r.upper.template cast<float>());
-        return eval->interval().lower(); };
+        return eval->eval(r.lower.template cast<float>(),
+                          r.upper.template cast<float>()).lower(); };
 
     // Helper function to check a particular [axis + sign + value] by breaking
     // the semi-infinite half-space into four semi-infinite eighth-spaces.

@@ -1,7 +1,7 @@
 #include <cassert>
 
 #include "ao/tree/cache.hpp"
-#include "ao/eval/evaluator.hpp"
+#include "ao/eval/eval_point.hpp"
 
 namespace Kernel {
 
@@ -89,8 +89,8 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
         {
             // Here, we construct a Tree manually to avoid a recursive loop,
             // then pass it immediately into a dummy Evaluator
-            Evaluator e((Tree(out)));
-            return constant(e.values(1)[0]);
+            PointEvaluator e(std::make_shared<Tape>(Tree(out)));
+            return constant(e.eval({0,0,0}));
         }
         else
         {

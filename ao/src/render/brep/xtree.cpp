@@ -38,24 +38,24 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
 {
     if (multithread)
     {
-        std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
+        std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
         es.reserve(1 << N);
         for (unsigned i=0; i < (1 << N); ++i)
         {
-            es.emplace_back(Evaluator(t, vars));
+            es.emplace_back(XTreeEvaluator(t, vars));
         }
         return build(es.data(), region, min_feature, max_err, true, cancel);
     }
     else
     {
-        Evaluator e(t, vars);
+        XTreeEvaluator e(t, vars);
         return build(&e, region, min_feature, max_err, false, cancel);
     }
 }
 
 template <unsigned N>
 std::unique_ptr<const XTree<N>> XTree<N>::build(
-        Evaluator* es,
+        XTreeEvaluator* es,
         Region<N> region, double min_feature,
         double max_err, bool multithread,
         std::atomic_bool& cancel)
@@ -82,7 +82,7 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(Evaluator* eval, Region<N> region,
+XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 double min_feature, double max_err, bool multithread,
                 std::atomic_bool& cancel)
     : region(region), _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
@@ -98,10 +98,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
     std::fill(index.begin(), index.end(), 0);
 
     // Do a preliminary evaluation to prune the tree
-    auto i = eval->eval(region.lower3().template cast<float>(),
-                        region.upper3().template cast<float>());
+    auto i = eval->interval.evalAndPush(region.lower3().template cast<float>(),
+                                        region.upper3().template cast<float>());
 
-    eval->push();
     if (Interval::isFilled(i))
     {
         type = Interval::FILLED;
@@ -157,7 +156,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             // by an early cancel operation
             if (cancel.load())
             {
-                eval->pop();
+                eval->interval.pop();
                 return;
             }
 
@@ -180,22 +179,22 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             {
                 pos[i] << cornerPos(i).template cast<float>(),
                           region.perp.template cast<float>();
-                eval->set(pos[i], i);
+                eval->array.set(pos[i], i);
             }
 
             // Evaluate the region's corners and check their states
-            auto ds = eval->derivs(children.size());
-            auto ambig = eval->getAmbiguous(children.size());
+            auto ds = eval->array.derivs(children.size());
+            auto ambig = eval->array.getAmbiguous(children.size());
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 // Handle inside, outside, and (non-ambiguous) on-boundary
-                if (ds.v[i] < 0)      { corners[i] = Interval::FILLED; }
-                else if (ds.v[i] > 0) { corners[i] = Interval::EMPTY; }
+                if (ds.col(i).w() < 0)      { corners[i] = Interval::FILLED; }
+                else if (ds.col(i).w() > 0) { corners[i] = Interval::EMPTY; }
                 else if (!ambig(i))
                 {
                     // Optimization for non-ambiguous features
-                    // (see explanation in Evaluator::isInside)
-                    corners[i] = (ds.d.col(i) != 0).any()
+                    // (see explanation in FeatureEvaluator::isInside)
+                    corners[i] = (ds.col(i).template head<3>() != 0).any()
                         ? Interval::FILLED : Interval::EMPTY;
                 }
             }
@@ -203,9 +202,9 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             // Separate pass for handling ambiguous corners
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                if (ds.v[i] == 0 && ambig(i))
+                if (ds.col(i).w() == 0 && ambig(i))
                 {
-                    corners[i] = eval->isInside(pos[i])
+                    corners[i] = eval->feature.isInside(pos[i])
                         ? Interval::FILLED : Interval::EMPTY;
                 }
             }
@@ -287,8 +286,8 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 // is well-placed in the distance field, then convert into
                 // a leaf by erasing all of the child branches
                 if (findVertex(vertex_count++) < max_err &&
-                    fabs(eval->baseEval(vert3().template cast<float>())) <
-                        max_err)
+                    fabs(eval->feature.baseEval(vert3().template cast<float>()))
+                        < max_err)
                 {
                     std::for_each(children.begin(), children.end(),
                         [](std::unique_ptr<const XTree<N>>& o) { o.reset(); });
@@ -321,7 +320,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
         _pos.template tail<3 - N>() = region.perp.template cast<float>();
         auto set = [&](const Vec& v, size_t i){
             _pos.template head<N>() = v.template cast<float>();
-            eval->set(_pos, i);
+            eval->array.set(_pos, i);
         };
 
         // Iterate over manifold patches for this corner case
@@ -351,7 +350,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             // We do an N-fold reduction at each stage
             constexpr int SEARCH_COUNT = 4;
             constexpr int POINTS_PER_SEARCH = 16;
-            static_assert(_edges(N) * POINTS_PER_SEARCH <= Result::N,
+            static_assert(_edges(N) * POINTS_PER_SEARCH <= ArrayEvaluator::N,
                           "Potential overflow");
 
             // Multi-stage binary search for intersection
@@ -373,13 +372,8 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
 
                 // Evaluate, then search for the first outside point
                 // and adjust inside / outside to their new positions
-                //
-                // We copy to a temporary array here to avoid invalidating
-                // out if we need to call eval->isInside (e.g. when out[i]
-                // is exactly 0 so we're not sure about the boundary)
-                std::array<float, POINTS_PER_SEARCH * _edges(N)> out;
-                std::copy_n(eval->values(POINTS_PER_SEARCH * target_count),
-                            POINTS_PER_SEARCH * target_count, out.data());
+                auto out = eval->array.values(
+                        POINTS_PER_SEARCH * target_count);
 
                 for (unsigned e=0; e < target_count; ++e)
                 {
@@ -395,7 +389,8 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                         {
                             Eigen::Vector3d pos;
                             pos << ps.col(i), region.perp;
-                            if (!eval->isInside(pos.template cast<float>()))
+                            if (!eval->feature.isInside(
+                                        pos.template cast<float>()))
                             {
                                 targets[e] = {ps.col(i - 1), ps.col(i)};
                                 break;
@@ -410,24 +405,17 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
             intersections.clear();
 
             // Store mass point and prepare for a bulk evaluation
-            static_assert(_edges(N) * 2 <= Result::N, "Too many results");
+            static_assert(_edges(N) * 2 <= ArrayEvaluator::N,
+                          "Too many results");
             for (unsigned i=0; i < target_count; ++i)
             {
                 set(targets[i].first, 2*i);
                 set(targets[i].second, 2*i + 1);
             }
 
-            // Immediately copy values and derivatives to a local array
-            // to avoid invalidating them when checking ambiguous nodes
-            Eigen::Array<float, Eigen::Dynamic, 1> vs(2 * target_count);
-            Eigen::Array<float, N, Eigen::Dynamic> ds(N, 2 * target_count);
-            {
-                auto result = eval->derivs(2 * target_count);
-                memcpy(vs.data(), result.v, 2 * target_count * sizeof(float));
-                ds = result.d.topLeftCorner(N, 2 * target_count);
-            }
-
-            auto ambig = eval->getAmbiguous(2 * target_count);
+            // Evaluate values and derivatives
+            auto ds = eval->array.derivs(2 * target_count);
+            auto ambig = eval->array.getAmbiguous(2 * target_count);
 
             // Iterate over all inside-outside pairs, storing the number
             // of intersections before each inside node (in prev_size), then
@@ -444,12 +432,12 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 if (!ambig(i))
                 {
                     const Eigen::Array<double, N, 1> derivs = ds.col(i)
-                        .template cast<double>();
+                        .template cast<double>().template head<N>();
                     const double norm = derivs.matrix().norm();
 
                     // Find normalized derivatives and distance value
                     Eigen::Matrix<double, N + 1, 1> dv;
-                    dv << derivs / norm, vs(i) / norm;
+                    dv << derivs / norm, ds.col(i).w() / norm;
                     if (!dv.array().isNaN().any())
                     {
                         intersections.push_back({
@@ -460,36 +448,37 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
                 else
                 {
                     // Load the ambiguous position and find its features
-                    Eigen::Vector3d pos;
-                    pos << ((i & 1) ? targets[i/2].second : targets[i/2].first),
-                           region.perp;
-                    const auto fs = eval->featuresAt(pos.template cast<float>());
+                    Eigen::Vector3f pos;
+                    pos << ((i & 1) ? targets[i/2].second : targets[i/2].first)
+                                .template cast<float>(),
+                           region.perp.template cast<float>();
+                    const auto fs = eval->feature.featuresAt(pos);
 
                     for (auto& f : fs)
                     {
                         // Evaluate feature-specific distance and
                         // derivatives value at this particular point
-                        eval->push(f);
+                        eval->feature.push(f);
 
-                        const auto ds = eval->derivs(1);
+                        const auto ds = eval->feature.deriv(pos);
 
                         // Unpack 3D derivatives into XTree-specific
                         // dimensionality, and find normal.
-                        const Eigen::Array<double, N, 1> derivs = ds.d.col(0)
+                        const Eigen::Array<double, N, 1> derivs = ds
                             .template head<N>()
                             .template cast<double>();
                         const double norm = derivs.matrix().norm();
 
                         // Find normalized derivatives and distance value
                         Eigen::Matrix<double, N + 1, 1> dv;
-                        dv << derivs / norm, ds.v[0] / norm;
+                        dv << derivs / norm, ds.w() / norm;
                         if (!dv.array().isNaN().any())
                         {
                             intersections.push_back({
                                 (i & 1) ? targets[i/2].second
                                         : targets[i/2].first, dv});
                         }
-                        eval->pop();
+                        eval->feature.pop();
                     }
                 }
 
@@ -584,7 +573,7 @@ XTree<N>::XTree(Evaluator* eval, Region<N> region,
     }
 
     // ...and we're done.
-    eval->pop();
+    eval->interval.pop();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
