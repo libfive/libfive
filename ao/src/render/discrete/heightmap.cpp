@@ -8,7 +8,6 @@
 #include <png.h>
 
 #include "ao/render/discrete/heightmap.hpp"
-#include "ao/eval/result.hpp"
 
 namespace Kernel {
 
@@ -77,7 +76,7 @@ struct NormalRenderer
     Heightmap::Normal& norm;
 
     // Store the x, y coordinates of rendered points for normal calculations
-    static constexpr size_t NUM_POINTS = Result::N;
+    static constexpr size_t NUM_POINTS = ArrayEvaluator::N;
     size_t xs[NUM_POINTS];
     size_t ys[NUM_POINTS];
     size_t count = 0;
@@ -200,7 +199,7 @@ bool Heightmap::recurse(HeightmapEvaluator* e, const Voxels::View& r,
     }
 
     // If we're below a certain size, render pixel-by-pixel
-    if (r.voxels() <= Result::N)
+    if (r.voxels() <= ArrayEvaluator::N)
     {
         pixels(e, r);
         return true;

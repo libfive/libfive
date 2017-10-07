@@ -7,7 +7,6 @@ add_library(ao-kernel SHARED
     eval/eval_deriv.cpp
     eval/eval_feature.cpp
     eval/eval_point.cpp
-    eval/result.cpp
     eval/tape.cpp
     eval/feature.cpp
     render/discrete/heightmap.cpp
