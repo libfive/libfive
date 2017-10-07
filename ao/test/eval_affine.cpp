@@ -42,10 +42,24 @@ TEST_CASE("AffineEvaluator::eval")
                 min(Tree::X() + 1, Tree::Y() + 1));
         AffineEvaluator e(t);
 
-        // Store -3 in the rhs's value
         auto o = e.eval({1, -3, 0}, {1, -3, 0});
         REQUIRE(o.lower() == -2);
         REQUIRE(o.upper() == -2);
+    }
+
+    SECTION("Better than interval")
+    {
+        AffineEvaluator e(std::make_shared<Tape>(
+            (Tree::X() + Tree::Y()) * (Tree::X() - Tree::Y())));
+
+        auto o = e.eval({0, 0, 0}, {1, 1, 1});
+
+        // The two multiplication branches are [0,2] and [-1,1], so the
+        // worst-case interval bounds are [-2, 2], while the actual bounds
+        // are [-1,1].  Here, we check to see if the bounds are tighter
+        // than they would be with interval math.
+        REQUIRE(o.lower() == -1);
+        REQUIRE(o.upper() == 1);
     }
 }
 
