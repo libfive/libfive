@@ -25,18 +25,14 @@ Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt)
 {
     // Perform value evaluation, saving results
     auto w = eval(pt);
-
-    auto xyz = d.col(tape->rwalk(
-        [=](Opcode::Opcode op, Clause::Id id,
-            Clause::Id a, Clause::Id b)
-            { evalClause(op, id, a, b); }));
+    auto xyz = d.col(tape->rwalk(*this));
 
     Eigen::Vector4f out;
     out << xyz, w;
     return out;
 }
 
-void DerivEvaluator::evalClause(Opcode::Opcode op, Clause::Id id,
+void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                 Clause::Id a, Clause::Id b)
 {
 #define ov f(id)

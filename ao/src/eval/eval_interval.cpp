@@ -35,9 +35,7 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     i[tape->Y] = {lower.y(), upper.y()};
     i[tape->Z] = {lower.z(), upper.z()};
 
-    return i[tape->rwalk([=](Opcode::Opcode op, Clause::Id id,
-                            Clause::Id a, Clause::Id b)
-            { evalClause(op, id, a, b); })];
+    return i[tape->rwalk(*this)];
 }
 
 Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
@@ -172,7 +170,7 @@ static Interval::I interval_math_dispatcher(Opcode::Opcode op,
     return Interval::I();
 }
 
-void IntervalEvaluator::evalClause(Opcode::Opcode op, Clause::Id id,
+void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                    Clause::Id a, Clause::Id b)
 {
     i[id] = interval_math_dispatcher(op, i[a], i[b]);

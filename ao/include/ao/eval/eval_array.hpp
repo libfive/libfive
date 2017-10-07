@@ -34,7 +34,7 @@ public:
     static constexpr size_t N=256;
 
 protected:
-    /*  Stored in values() and used in evalClause() to decide how much of the
+    /*  Stored in values() and used in operator() to decide how much of the
      *  array we're addressing at once  */
     size_t count;
 
@@ -47,7 +47,7 @@ protected:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void evalClause(Opcode::Opcode op, Clause::Id id,
+    void operator()(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
 public:
     /*
@@ -73,6 +73,8 @@ public:
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    friend class Tape; // for rwalk<ArrayEvaluator>
 };
 
 }   // namespace Kernel

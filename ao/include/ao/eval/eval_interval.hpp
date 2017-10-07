@@ -37,8 +37,10 @@ protected:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void evalClause(Opcode::Opcode op, Clause::Id id,
+    void operator()(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
+
+    friend class Tape; // for rwalk<IntervalEvaluator>
 };
 
 }   // namespace Kernel

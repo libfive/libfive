@@ -73,11 +73,7 @@ Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t _count)
 {
     count = _count;
-    return f.block<1, Eigen::Dynamic>(tape->rwalk(
-        [=](Opcode::Opcode op, Clause::Id id,
-            Clause::Id a, Clause::Id b)
-            { evalClause(op, id, a, b); }),
-        0, 1, count);
+    return f.block<1, Eigen::Dynamic>(tape->rwalk(*this), 0, 1, count);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +118,7 @@ ArrayEvaluator::getAmbiguous(size_t i)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ArrayEvaluator::evalClause(Opcode::Opcode op, Clause::Id id,
+void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                 Clause::Id a, Clause::Id b)
 {
 #define out f.row(id).head(count)

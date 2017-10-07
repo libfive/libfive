@@ -32,10 +32,7 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt)
     f(tape->Y) = pt.y();
     f(tape->Z) = pt.z();
 
-    return f(tape->rwalk(
-        [=](Opcode::Opcode op, Clause::Id id,
-            Clause::Id a, Clause::Id b)
-            { evalClause(op, id, a, b); }));
+    return f(tape->rwalk(*this));
 }
 
 float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
@@ -97,7 +94,7 @@ bool PointEvaluator::setVar(Tree::Id var, float value)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void PointEvaluator::evalClause(Opcode::Opcode op, Clause::Id id,
+void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                 Clause::Id a, Clause::Id b)
 {
 #define out f(id)

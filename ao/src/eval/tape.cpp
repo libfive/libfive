@@ -102,13 +102,6 @@ double Tape::utilization() const
 
 
 Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
-                                          Clause::Id, Clause::Id)> fn)
-{
-    bool abort = false;
-    return rwalk(fn, abort);
-}
-
-Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
                                           Clause::Id, Clause::Id)> fn,
                        bool& abort)
 {
