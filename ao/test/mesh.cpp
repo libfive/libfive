@@ -145,9 +145,9 @@ TEST_CASE("Mesh::export (.stl)") {
   auto c = CylinderYAxis({ 0.f,0.f,0.f }, 1.f);
 
   auto cyl = max(-c, cube2);
-  Region<3> r({ -5.5, -5.5, -5.5 }, { 5.5, 5.5, 5.5 });
+  Region<3> r2({ -5.5, -5.5, -5.5 }, { 5.5, 5.5, 5.5 });
 
-  auto cylinderMesh = Mesh::render(cyl, r, .1);
+  auto cylinderMesh = Mesh::render(cyl, r2, .1);
 
   Mesh::saveSTLASCII("cylinderMeshA.stl", cylinderMesh.get());
   cylinderMesh->saveSTL("cylinderMeshX.stl");
