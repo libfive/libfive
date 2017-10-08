@@ -184,7 +184,7 @@ bool Mesh::saveSTL(const std::string& filename,
     }
 
     // Write the rest of the 80-char header
-    for (char h = 0; h < 80; h++)
+    for (auto h = header.size(); h < 80; h++)
     {
       char o = '_';
       fwrite(&o, sizeof(char), 1, stl_file);
