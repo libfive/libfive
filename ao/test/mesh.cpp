@@ -52,8 +52,6 @@ TEST_CASE("Mesh::render (cylinder)")
   Region<3> r({ -5.5, -5.5, -5.5 }, { 5.5, 5.5, 5.5 });
 
   auto mesh = Mesh::render(cyl, r, .1);
-
-  Mesh::saveSTLASCII("cylinder.stl", mesh.get());
 }
 
 TEST_CASE("Mesh::render (cube)")
@@ -71,17 +69,6 @@ TEST_CASE("Mesh::render (cube)")
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
 
     auto mesh = Mesh::render(cube, r,.1);
-
-    Eigen::Matrix3f m;
-    m = Eigen::AngleAxisf(float(M_PI / 4), Eigen::Vector3f::UnitY()) *
-      Eigen::AngleAxisf(float(atan(1 / sqrt(2))), Eigen::Vector3f::UnitX());
-
-//     auto mesh_ = mesh->remap(
-//       m(0, 0)*Tree::X() + m(0, 1)*Tree::Y() + m(0, 2)*Tree::Z(),
-//       m(1, 0)*Tree::X() + m(1, 1)*Tree::Y() + m(1, 2)*Tree::Z(),
-//       m(2, 0)*Tree::X() + m(2, 1)*Tree::Y() + m(2, 2)*Tree::Z());
-
-    Mesh::saveSTLASCII("blnSphere.stl",mesh.get());
 }
 
 TEST_CASE("Mesh::render (performance)")
@@ -92,10 +79,6 @@ TEST_CASE("Mesh::render (performance)")
     auto spheres = sphere(1, { 1.5, 1.5, 1.5 });
     Tree sponge = max(menger(2), -spheres);
 
-    spheres = sphere(1.5, { 0.f, 1.5, 1.5 });
-    sponge = max(sponge, -spheres);
-
-    spheres = sphere(1.6, { 0.f, -.5, 1.5 });
     sponge = max(sponge, -spheres);
 
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
@@ -107,7 +90,6 @@ TEST_CASE("Mesh::render (performance)")
 
     elapsed = end - start;
 
-    Mesh::saveSTLASCII("spongeMeshSpheres.stl",mesh.get());
     auto elapsed_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
 
@@ -124,4 +106,49 @@ TEST_CASE("Mesh::render (face count in rectangular prism)")
     auto m = Mesh::render(t, Region<3>({-1, -1, -1}, {5, 2, 1.25}), 0.125);
     REQUIRE(m->verts.size() == 9); // index 0 is unused
     REQUIRE(m->branes.size() == 12);
+}
+
+TEST_CASE("Mesh::export (.stl)") {
+  auto cube = max(max(
+    max(-(Tree::X() + 1.5),
+      Tree::X() - 1.5),
+    max(-(Tree::Y() + 1.5),
+      Tree::Y() - 1.5)),
+    max(-(Tree::Z() + 1.5),
+      Tree::Z() - 1.5));
+  auto s = sphere(1.95f);
+
+  cube = max(-s, cube);
+  Region<3> r({ -2.5, -2.5, -2.5 }, { 2.5, 2.5, 2.5 });
+
+  auto mesh = Mesh::render(cube, r, .1);
+
+  Eigen::Matrix3f m;
+  m = Eigen::AngleAxisf(float(M_PI / 4), Eigen::Vector3f::UnitY()) *
+    Eigen::AngleAxisf(float(atan(1 / sqrt(2))), Eigen::Vector3f::UnitX());
+
+  //     auto mesh_ = mesh->remap(
+  //       m(0, 0)*Tree::X() + m(0, 1)*Tree::Y() + m(0, 2)*Tree::Z(),
+  //       m(1, 0)*Tree::X() + m(1, 1)*Tree::Y() + m(1, 2)*Tree::Z(),
+  //       m(2, 0)*Tree::X() + m(2, 1)*Tree::Y() + m(2, 2)*Tree::Z());
+
+  Mesh::saveSTLASCII("cubeSphereA.stl", mesh.get());
+  mesh->saveSTL("cubeSphereX.stl");
+
+  auto cube2 = max(max(
+    max(-(Tree::X() + 1.5),
+      Tree::X() - 1.5),
+    max(-(Tree::Y() + 4.5),
+      Tree::Y() - 4.5)),
+    max(-(Tree::Z() + 1.5),
+      Tree::Z() - 1.5));
+  auto c = CylinderYAxis({ 0.f,0.f,0.f }, 1.f);
+
+  auto cyl = max(-c, cube2);
+  Region<3> r({ -5.5, -5.5, -5.5 }, { 5.5, 5.5, 5.5 });
+
+  auto cylinderMesh = Mesh::render(cyl, r, .1);
+
+  Mesh::saveSTLASCII("cylinderMeshA.stl", cylinderMesh.get());
+  cylinderMesh->saveSTL("cylinderMeshX.stl");
 }

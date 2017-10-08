@@ -167,57 +167,65 @@ bool Mesh::saveSTL(const std::string& filename,
         std::cerr << "Mesh::saveSTL: filename \"" << filename
                   << "\" does not end in .stl" << std::endl;
     }
-    std::ofstream file;
-    file.open(filename, std::ios::out);
-    if (!file.is_open())
+
+    FILE * stl_file = fopen(filename.c_str(), "wb");
+    if (stl_file == NULL)
     {
-        std::cout << "Mesh::saveSTL: could not open " << filename
-                  << std::endl;
-        return false;
+      std::cout << "IOError: " << filename << " could not be opened for writing." << std::endl;
+      return false;
     }
 
-    // File header (giving human-readable info about file type)
+
     std::string header = "This is a binary STL exported from Ao.";
-    file.write(header.c_str(), header.length());
-
-    // Pad the rest of the header to 80 bytes
-    for (int i=header.length(); i < 80; ++i)
+    // Write unused 80-char header
+    for (auto h : header)
     {
-        file.put(' ');
+      fwrite(&h, sizeof(char), 1, stl_file);
     }
 
-    // Write the triangle count to the file
-    uint32_t num = std::accumulate(meshes.begin(), meshes.end(), (uint32_t)0,
-            [](uint32_t i, const Mesh* m){ return i + m->branes.size(); });
-    file.write(reinterpret_cast<char*>(&num), sizeof(num));
+    // Write the rest of the 80-char header
+    for (char h = 0; h < 80; h++)
+    {
+      char o = '_';
+      fwrite(&o, sizeof(char), 1, stl_file);
+    }
+    
+    // Write number of triangles
+    unsigned int num_tri = std::accumulate(meshes.begin(), meshes.end(), 0,
+                   [](unsigned int i, const Mesh* m)
+    { 
+      return i + m->branes.size(); 
+    });
+    fwrite(&num_tri, sizeof(unsigned int), 1, stl_file);
 
+    
     for (const auto& m : meshes)
     {
         for (const auto& t : m->branes)
         {
             // Write out the normal vector for this face (all zeros)
-            float norm[3] = {0, 0, 0};
-            file.write(reinterpret_cast<char*>(&norm), sizeof(norm));
+          std::vector<float> n(3, 0);
+          fwrite(&n[0], sizeof(float), 3, stl_file);    
 
-            // Iterate over vertices (which are indices into the verts list)
-            for (unsigned i=0; i < 3; ++i)
-            {
-                auto v = m->verts[t[i]];
-                if (std::isnan(v.x())
-                  || std::isnan(v.y())
-                  || std::isnan(v.z())) {
-                  std::cout << "BAD VERTEX" << std::endl;
-                }
-                float vert[3] = {v.x(), v.y(), v.z()};
-                file.write(reinterpret_cast<char*>(&vert), sizeof(vert));
-            }
+          // Iterate over vertices (which are indices into the verts list)
+          for (unsigned i=0; i < 3; ++i)
+          {
+              auto vert = m->verts[t[i]];
 
-            // Write out this face's attribute short
-            uint16_t attrib = 0;
-            file.write(reinterpret_cast<char*>(&attrib), sizeof(attrib));
+              std::vector<float> v(3);
+              v[0] = vert.x();
+              v[1] = vert.y();
+              v[2] = vert.z();
+              fwrite(&v[0], sizeof(float), 3, stl_file);
+          }    
+
+          // Write out this face's attribute short
+          unsigned short att_count = 0;
+          fwrite(&att_count, sizeof(unsigned short), 1, stl_file);
         }
     }
 
+    fclose(stl_file);
     return true;
 }
 
