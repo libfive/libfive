@@ -53,15 +53,15 @@ make
 Adjust based on your Qt installation path, and consider using [`ninja`](https://ninja-build.org/) for faster builds.
 
 # License
-(c) 2015-2017 Matthew Keeter; all rights reserved.
+(c) 2015-2017 Matthew Keeter
 
-This project will eventually be released under an open-source license,
-something like
-- LGPL for `ao-kernel`,
-- GPL for `guile-ao` and `Studio`
-and an option for commercial licensing.
+Different layers of this project are released under different licenses:
+- `ao-kernel` is released under the LGPL, version 2 or later.
+- `guile-ao` and `Studio` are released under the GPL, version 2 or later.
 
-Stay tuned for further details.
+Contact me to discuss custom development,
+integration,
+or commercial support.
 
 # Using the standalone Guile module
 ```
