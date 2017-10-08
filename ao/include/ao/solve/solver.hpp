@@ -1,10 +1,13 @@
 #pragma once
 #include <map>
+#include <numeric>
 
 #include <Eigen/Eigen>
 
 #include "ao/tree/cache.hpp"
 #include "ao/eval/eval_jacobian.hpp"
+
+#include <set>
 
 namespace Kernel {
 

@@ -37,6 +37,25 @@ TEST_CASE("Mesh::render (sphere normals)")
     REQUIRE(dot > 0.9);
 }
 
+TEST_CASE("Mesh::render (cylinder)")
+{
+  auto cube = max(max(
+    max(-(Tree::X() + 1.5),
+      Tree::X() - 1.5),
+    max(-(Tree::Y() + 4.5),
+      Tree::Y() - 4.5)),
+    max(-(Tree::Z() + 1.5),
+      Tree::Z() - 1.5));
+  auto c = CylinderYAxis({ 0.f,0.f,0.f }, 1.f);
+
+  auto cyl = max(-c,cube);
+  Region<3> r({ -5.5, -5.5, -5.5 }, { 5.5, 5.5, 5.5 });
+
+  auto mesh = Mesh::render(cyl, r, .1);
+
+  Mesh::saveSTLASCII("cylinder.stl", mesh.get());
+}
+
 TEST_CASE("Mesh::render (cube)")
 {
     auto cube = max(max(
@@ -46,9 +65,23 @@ TEST_CASE("Mesh::render (cube)")
                           Tree::Y() - 1.5)),
                     max(-(Tree::Z() + 1.5),
                           Tree::Z() - 1.5));
+    auto s = sphere(1.95f);
+
+    cube = max(-s, cube);
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
 
-    auto mesh = Mesh::render(cube, r);
+    auto mesh = Mesh::render(cube, r,.1);
+
+    Eigen::Matrix3f m;
+    m = Eigen::AngleAxisf(float(M_PI / 4), Eigen::Vector3f::UnitY()) *
+      Eigen::AngleAxisf(float(atan(1 / sqrt(2))), Eigen::Vector3f::UnitX());
+
+//     auto mesh_ = mesh->remap(
+//       m(0, 0)*Tree::X() + m(0, 1)*Tree::Y() + m(0, 2)*Tree::Z(),
+//       m(1, 0)*Tree::X() + m(1, 1)*Tree::Y() + m(1, 2)*Tree::Z(),
+//       m(2, 0)*Tree::X() + m(2, 1)*Tree::Y() + m(2, 2)*Tree::Z());
+
+    Mesh::saveSTLASCII("blnSphere.stl",mesh.get());
 }
 
 TEST_CASE("Mesh::render (performance)")
@@ -56,17 +89,25 @@ TEST_CASE("Mesh::render (performance)")
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed;
 
-    Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
+    auto spheres = sphere(1, { 1.5, 1.5, 1.5 });
+    Tree sponge = max(menger(2), -spheres);
+
+    spheres = sphere(1.5, { 0.f, 1.5, 1.5 });
+    sponge = max(sponge, -spheres);
+
+    spheres = sphere(1.6, { 0.f, -.5, 1.5 });
+    sponge = max(sponge, -spheres);
 
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
 
     // Begin timekeeping
     start = std::chrono::system_clock::now();
-    auto mesh = Mesh::render(sponge, r, 0.02);
+    auto mesh = Mesh::render(sponge, r, 0.1);
     end = std::chrono::system_clock::now();
 
     elapsed = end - start;
 
+    Mesh::saveSTLASCII("spongeMeshSpheres.stl",mesh.get());
     auto elapsed_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
 

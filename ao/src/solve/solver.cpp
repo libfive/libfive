@@ -1,4 +1,3 @@
-#include <numeric>
 
 #include "ao/solve/solver.hpp"
 #include "ao/tree/tree.hpp"

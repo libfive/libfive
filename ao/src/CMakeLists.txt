@@ -1,4 +1,4 @@
-add_library(ao-kernel SHARED
+add_library(ao-kernel STATIC
     eval/base.cpp
     eval/eval_affine.cpp
     eval/eval_interval.cpp
@@ -25,7 +25,7 @@ add_library(ao-kernel SHARED
     ao.cpp
 )
 
-target_include_directories(ao-kernel SYSTEM PRIVATE
+target_include_directories(ao-kernel PUBLIC
     ${BOOST_INCLUDE_DIR}
     ${PNG_INCLUDE_DIR}
 )

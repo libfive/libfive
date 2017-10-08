@@ -57,9 +57,10 @@ void Template::serializeString(const std::string& s, std::vector<uint8_t>& out)
 
 Template Template::deserialize(const std::vector<uint8_t>& data)
 {
-    const uint8_t* pos = &*data.begin();
-    const uint8_t* end = &*data.end();
-
+    auto cData = data;
+    const uint8_t* pos = &(*cData.begin());
+    const uint8_t* end = &(cData.back());
+    end++;
     Template out(Tree::Invalid());
 
 #define REQUIRE(cond) \

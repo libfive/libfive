@@ -149,9 +149,9 @@ std::unique_ptr<Mesh> Mesh::mesh(std::unique_ptr<const XTree<3>> xtree,
 
 void Mesh::line(Eigen::Vector3f a, Eigen::Vector3f b)
 {
-    auto a_ = verts.size();
+    auto a_ = (unsigned)verts.size();
     verts.push_back(a);
-    auto b_ = verts.size();
+    auto b_ = (unsigned)verts.size();
     verts.push_back(b);
 
     branes.push_back({a_, a_, b_});
@@ -203,6 +203,11 @@ bool Mesh::saveSTL(const std::string& filename,
             for (unsigned i=0; i < 3; ++i)
             {
                 auto v = m->verts[t[i]];
+                if (std::isnan(v.x())
+                  || std::isnan(v.y())
+                  || std::isnan(v.z())) {
+                  std::cout << "BAD VERTEX" << std::endl;
+                }
                 float vert[3] = {v.x(), v.y(), v.z()};
                 file.write(reinterpret_cast<char*>(&vert), sizeof(vert));
             }
@@ -219,6 +224,48 @@ bool Mesh::saveSTL(const std::string& filename,
 bool Mesh::saveSTL(const std::string& filename)
 {
     return saveSTL(filename, {this});
+}
+
+bool Mesh::saveSTLASCII(const std::string& filename, Mesh* mesh)
+{
+  auto* stl_file = fopen(filename.c_str(), "w");
+  if (stl_file == NULL)
+  {
+    std::cout << "IOError: " << filename << " could not be opened for writing." << std::endl;
+    return false;
+  }
+  fprintf(stl_file, "solid %s\n", filename.c_str());
+
+
+  for (const auto& t : mesh->branes)
+  {
+    // Write out the normal vector for this face (all zeros)
+    fprintf(stl_file, "facet normal ");
+    fprintf(stl_file, "0 0 0\n");
+
+    fprintf(stl_file, "outer loop\n");
+    // Iterate over vertices (which are indices into the verts list)
+    for (unsigned i = 0; i < 3; ++i)
+    {
+      auto v = mesh->verts[t[i]];
+      if (std::isnan(v.x())
+        || std::isnan(v.y())
+        || std::isnan(v.z())) {
+        std::cout << "BAD VERTEX" << std::endl;
+      }
+      float vert[3] = { v.x(), v.y(), v.z() };
+      fprintf(stl_file, "vertex %e %e %e\n",
+        (float)v.x(),
+        (float)v.y(),
+        (float)v.z());
+    }
+    fprintf(stl_file, "endloop\n");
+    fprintf(stl_file, "endfacet\n");
+  }
+
+
+  fprintf(stl_file, "endsolid %s\n", filename.c_str());
+  fclose(stl_file);
 }
 
 }   // namespace Kernel

@@ -20,7 +20,7 @@ TEST_CASE("Voxels::pts values")
 
     SECTION("Expanding interval")
     {
-        auto a = Voxels({0, 0, 0}, {1.2, 1.2, 1.2}, 1);
+        auto a = Voxels({0, 0, 0}, {1.2f, 1.2f, 1.2f}, 1);
         REQUIRE(a.lower.x() == Approx(-0.4));
         REQUIRE(a.upper.x() == Approx(1.6));
         REQUIRE(a.pts[0][0] == Approx(0.1f));
@@ -49,7 +49,7 @@ TEST_CASE("Voxels::pts size")
 
     SECTION("Expanding interval")
     {
-        auto r = Voxels({0, 0, 0}, {1.1, 2.1, 3.1}, 1.0f);
+        auto r = Voxels({0, 0, 0}, {1.1f, 2.1f, 3.1f}, 1.0f);
         REQUIRE(r.pts[0].size() == 2);
         REQUIRE(r.pts[1].size() == 3);
         REQUIRE(r.pts[2].size() == 4);

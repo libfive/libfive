@@ -45,6 +45,8 @@ public:
     static bool saveSTL(const std::string& filename,
                         const std::list<const Mesh*>& meshes);
 
+    static bool saveSTLASCII(const std::string& filename, Mesh* mesh);
+
     /*
      *  Called by Dual::walk to construct the triangle mesh
      */

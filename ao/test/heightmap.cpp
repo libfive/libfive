@@ -24,6 +24,8 @@ TEST_CASE("Heightmap::render: 2D interval Z values")
     Voxels r({-1, -1, -1}, {1, 1, 1}, {25, 25, 0});
 
     auto out = render(t, r)->depth;
+    
+    render(t, r)->savePNG("circle.png");
     CAPTURE(out);
     REQUIRE((out == 0 ||
              out == -std::numeric_limits<float>::infinity()).all());
@@ -35,6 +37,8 @@ TEST_CASE("Heightmap::render: 3D interval Z values")
     Voxels r({-1, -1, -1}, {1, 1, 1}, {25, 25, 25});
 
     auto out = render(t, r)->depth;
+    render(t, r)->savePNG("circle3D.png");
+
     CAPTURE(out);
     REQUIRE((out == r.pts[2].back() ||
              out == -std::numeric_limits<float>::infinity()).all());
@@ -62,6 +66,8 @@ TEST_CASE("Heightmap::render: 2D circle ")
     {
         Voxels r({-1, -1, 0}, {1, 1, 0}, {5, 5, 0});
         auto out = render(t, r)->depth;
+        render(t, r)->savePNG("circle3D_EZ.png");
+
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
@@ -70,6 +76,8 @@ TEST_CASE("Heightmap::render: 2D circle ")
     {
         Voxels r({-1, -1, -1}, {1, 1, 1}, {5, 5, 0});
         auto out = render(t, r)->depth;
+        render(t, r)->savePNG("circle3D_0Z.png");
+
         CAPTURE(out);
         REQUIRE((comp == out).all());
     }
@@ -81,6 +89,8 @@ TEST_CASE("Heightmap::render: 2D circle at non-zero Z ")
 
     Voxels r({-1, -1, 1}, {1, 1, 1}, 5);
     auto out = render(t, r)->depth;
+    render(t, r)->savePNG("circle2D_zonZero.png");
+
     CAPTURE(out);
 
     Heightmap::Depth comp(10, 10);
@@ -282,9 +292,11 @@ TEST_CASE("Heightmap::render: Performance")
             m(1,0)*Tree::X() + m(1,1)*Tree::Y() + m(1,2)*Tree::Z(),
             m(2,0)*Tree::X() + m(2,1)*Tree::Y() + m(2,2)*Tree::Z());
 
+        auto s = sphere(2.0f);
+        auto blnSponge =  max(sponge_, s);
         // Begin timekeeping
         start = std::chrono::system_clock::now();
-        auto heightmap = render(sponge_, r);
+        auto heightmap = render(blnSponge, r);
         end = std::chrono::system_clock::now();
 
         elapsed = end - start;
@@ -294,6 +306,8 @@ TEST_CASE("Heightmap::render: Performance")
 
         log += "\nRendered sponge in " +
                std::to_string(elapsed.count()) + " sec";
+        heightmap->savePNG("blnMenger.png");
+
     }
 
     WARN(log);
