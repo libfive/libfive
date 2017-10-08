@@ -44,7 +44,7 @@
   "morph a b m
   Morphs between two shapes.
   m = 0 produces a, m = 1 produces b"
-  (+ (* (a x y z) (- 1 m)) (* (b x y z) m)))
+  (+ (* a (- 1 m)) (* b m)))
 
 (define-public (loft a b zmin zmax)
   "loft a b zmin zmax

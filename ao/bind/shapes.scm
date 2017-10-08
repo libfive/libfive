@@ -79,7 +79,7 @@
   Iterates a part in a 1D array.
   i is the number of repetitions
   dx is the offset on the X axis"
-  (apply union (map (lambda (i) (move a (* (vec2 dx 0) i))) (iota i))))
+  (apply union (map (lambda (i) (move shape (* (vec2 dx 0) i))) (iota i))))
 
 (define-public (array-xy shape i j dxy)
   "array-xy shape i j #[dx dy]
