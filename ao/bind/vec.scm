@@ -59,6 +59,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (vec2 (/ (slot-ref a 'x) b)
         (/ (slot-ref a 'y) b)))
 
+(define-method (norm (a <vec2>))
+  (sqrt (+ (expt (.x a) 2)
+           (expt (.y a) 2))))
+(export norm)
+
+(define-method (dot (a <vec2>) (b <vec2>))
+  (+ (* (.x a) (.x b))
+     (* (.y a) (.y b))))
+(export dot)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-class <vec3> () (x #:getter .x) (y #:getter .y) (z #:getter .z))
@@ -120,6 +130,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
         (- (* (.z a) (.x b)) (* (.x a) (.z b)))
         (- (* (.x a) (.y b)) (* (.y a) (.x b)))))
 (export cross)
+
+(define-method (norm (a <vec3>))
+  (sqrt (+ (expt (.x a) 2)
+           (expt (.y a) 2)
+           (expt (.z a) 2))))
+(export norm)
+
+(define-method (dot (a <vec3>) (b <vec3>))
+  (+ (* (.x a) (.x b))
+     (* (.y a) (.y b))
+     (* (.z a) (.z b))))
+(export dot)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
