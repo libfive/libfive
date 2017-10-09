@@ -37,15 +37,14 @@ public:
     /*
      *  Writes the mesh to a file
      */
-    bool saveSTL(const std::string& filename);
+    bool saveSTL(const std::string& filename, bool isBinary = true);
 
     /*
      *  Merge multiple bodies and write them to a single file
      */
     static bool saveSTL(const std::string& filename,
-                        const std::list<const Mesh*>& meshes);
-
-    static bool saveSTLASCII(const std::string& filename, Mesh* mesh);
+                        const std::list<const Mesh*>& meshes,
+                        bool isBinary);
 
     /*
      *  Called by Dual::walk to construct the triangle mesh

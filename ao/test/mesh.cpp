@@ -132,8 +132,8 @@ TEST_CASE("Mesh::export (.stl)") {
   //       m(1, 0)*Tree::X() + m(1, 1)*Tree::Y() + m(1, 2)*Tree::Z(),
   //       m(2, 0)*Tree::X() + m(2, 1)*Tree::Y() + m(2, 2)*Tree::Z());
 
-  Mesh::saveSTLASCII("cubeSphereA.stl", mesh.get());
   mesh->saveSTL("cubeSphereX.stl");
+  mesh->saveSTL("cubeSphereA.stl",false);
 
   auto cube2 = max(max(
     max(-(Tree::X() + 1.5),
@@ -149,6 +149,6 @@ TEST_CASE("Mesh::export (.stl)") {
 
   auto cylinderMesh = Mesh::render(cyl, r2, .1);
 
-  Mesh::saveSTLASCII("cylinderMeshA.stl", cylinderMesh.get());
   cylinderMesh->saveSTL("cylinderMeshX.stl");
+  cylinderMesh->saveSTL("cylinderMeshA.stl",false);
 }
