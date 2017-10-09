@@ -18,10 +18,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
 
-#include <QTextEdit>
 #include <QPlainTextEdit>
 #include <QTimer>
 
+#include "gui/script.hpp"
 #include "gui/settings.hpp"
 #include "ao/tree/tree.hpp"
 
@@ -110,7 +110,7 @@ protected:
     void setError(Range p);
     QList<QTextEdit::ExtraSelection> clearError(bool set=true);
 
-    QTextEdit* script;
+    Script* script;
     QTextDocument* script_doc;
     Syntax* syntax;
 

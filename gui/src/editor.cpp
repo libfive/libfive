@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "gui/color.hpp"
 
 Editor::Editor(QWidget* parent)
-    : QWidget(parent), script(new QTextEdit), script_doc(script->document()),
+    : QWidget(parent), script(new Script), script_doc(script->document()),
       syntax(new Syntax(script_doc)), err(new QPlainTextEdit),
       err_doc(err->document())
 {
