@@ -266,6 +266,14 @@ void View::paintGL()
 
         painter.setBrush(Qt::NoBrush);
         painter.setPen(Color::base1);
+        if (drag_target)
+        {
+            painter.drawText(QPointF(10, camera.size.height() - 55), "Target:");
+        }
+        else
+        {
+            painter.drawText(QPointF(10, camera.size.height() - 55), "Cursor:");
+        }
         painter.drawText(QPointF(10, camera.size.height() - 40),
                          QString("%1%2").arg(hover_pos.x() < 0 ? "" : " ").arg(hover_pos.x()));
         painter.drawText(QPointF(10, camera.size.height() - 25),
