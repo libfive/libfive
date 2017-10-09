@@ -1,5 +1,3 @@
-#lang racket
-
 (use-modules (ao kernel) (ao vec) (ao csg) (ao transforms))
 
 (define-public (circle center r)
