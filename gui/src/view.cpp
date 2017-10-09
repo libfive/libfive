@@ -17,7 +17,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <QMouseEvent>
+#include <QPainter>
 
+#include "gui/color.hpp"
 #include "gui/view.hpp"
 #include "gui/shader.hpp"
 
@@ -225,9 +227,13 @@ void View::redrawPicker()
 
 void View::paintGL()
 {
+    QPainter painter(this);
+
+    painter.beginNativePainting();
     background.draw();
 
     auto m = camera.M();
+    glEnable(GL_DEPTH_TEST);
     for (auto& s : shapes)
     {
         s->draw(m);
@@ -249,6 +255,24 @@ void View::paintGL()
 
     // Draw hamburger menu
     bars.draw(camera.size);
+    glDisable(GL_DEPTH_TEST);
+    painter.endNativePainting();
+
+    if (hover_target)
+    {
+        QFont font = painter.font();
+        font.setFamily("Courier");
+        painter.setFont(font);
+
+        painter.setBrush(Qt::NoBrush);
+        painter.setPen(Color::base1);
+        painter.drawText(QPointF(10, camera.size.height() - 40),
+                         QString("%1%2").arg(hover_pos.x() < 0 ? "" : " ").arg(hover_pos.x()));
+        painter.drawText(QPointF(10, camera.size.height() - 25),
+                         QString("%1%2").arg(hover_pos.y() < 0 ? "" : " ").arg(hover_pos.y()));
+        painter.drawText(QPointF(10, camera.size.height() - 10),
+                         QString("%1%2").arg(hover_pos.z() < 0 ? "" : " ").arg(hover_pos.z()));
+    }
 }
 
 void View::resizeGL(int width, int height)
@@ -301,6 +325,8 @@ void View::mouseMoveEvent(QMouseEvent* event)
             drag_dir * QVector3D::dotProduct(pos - drag_start, n2) /
             QVector3D::dotProduct(drag_dir, n2);
 
+        hover_pos = nearest;
+
         auto sol = Kernel::Solver::findRoot(*drag_eval, *drag_target->getVars(),
                 {nearest.x(), nearest.y(), nearest.z()});
         emit(varsDragged(QMap<Kernel::Tree::Id, float>(sol.second)));
@@ -321,6 +347,16 @@ void View::mouseMoveEvent(QMouseEvent* event)
         checkHoverTarget(event->pos());
     }
     mouse.pos = event->pos();
+}
+
+QVector3D View::toModelPos(QPoint pt) const
+{
+    return camera.M().inverted() * QVector3D(
+            (pt.x() * 2.0) / pick_img.width() - 1,
+            1 - (pt.y() * 2.0) / pick_img.height(),
+            2 * pick_depth.at(
+                    pt.x() + pick_img.width() *
+                    (pick_img.height() - pt.y())) - 1);
 }
 
 void View::mousePressEvent(QMouseEvent* event)
@@ -345,15 +381,7 @@ void View::mousePressEvent(QMouseEvent* event)
                 drag_target->setGrabbed(true);
                 drag_target->setDragValid(true);
 
-                QVector3D pt(
-                        (event->pos().x() * 2.0) / pick_img.width() - 1,
-                        1 - (event->pos().y() * 2.0) / pick_img.height(),
-                        2 * pick_depth.at(
-                                event->pos().x() + pick_img.width() *
-                                (pick_img.height() - event->pos().y())) - 1);
-
-                drag_start = camera.M().inverted() * pt;
-
+                drag_start = toModelPos(event->pos());
                 drag_eval.reset(drag_target->dragFrom(drag_start));
 
                 auto norm = drag_eval->deriv(
@@ -420,6 +448,8 @@ void View::checkHoverTarget(QPoint pos)
         {
             hover_target->setHover(false);
         }
+
+        hover_pos = toModelPos(pos);
         hover_target = target;
         hover_target->setHover(true);
     }

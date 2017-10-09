@@ -107,6 +107,11 @@ protected:
     void paintGL() override;
     void resizeGL(int width, int height) override;
 
+    /*
+     *  Converts from mouse event coordinates to model coordinates
+     */
+    QVector3D toModelPos(QPoint pt) const;
+
     /*  Background items to render  */
     Axes axes;
     Background background;
@@ -156,4 +161,5 @@ protected:
     QScopedPointer<Kernel::JacobianEvaluator> drag_eval;
     Shape* drag_target=nullptr;
     Shape* hover_target=nullptr;
+    QVector3D hover_pos;
 };
