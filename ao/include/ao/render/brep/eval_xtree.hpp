@@ -58,6 +58,8 @@ public:
     DerivArrayEvaluator array;
     IntervalEvaluator interval;
     FeatureEvaluator feature;
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 }   // namespace Kernel

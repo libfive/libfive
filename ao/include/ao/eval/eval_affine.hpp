@@ -71,6 +71,7 @@ protected:
      */
     void setAffine(Clause::Id id, Interval::I i);
 
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     friend class Tape; // for rwalk<IntervalEvaluator>
 };
 

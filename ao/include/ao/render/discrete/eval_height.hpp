@@ -37,6 +37,8 @@ protected:
 public:
     DerivArrayEvaluator array;
     IntervalEvaluator interval;
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 }   // namespace Kernel

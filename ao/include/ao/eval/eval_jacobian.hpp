@@ -37,6 +37,7 @@ public:
      */
     std::map<Tree::Id, float> gradient(const Eigen::Vector3f& p);
 
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 protected:
     /*
      *  Raw clause evaluation is done here!
