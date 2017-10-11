@@ -118,7 +118,6 @@ double Tape::utilization() const
     return tape->t.size() / double(tapes.front().t.size());
 }
 
-
 Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
                                           Clause::Id, Clause::Id)> fn,
                        bool& abort)
