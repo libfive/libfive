@@ -37,7 +37,7 @@ void Script::keyPressEvent(QKeyEvent* e)
         }
         else
         {
-            insertPlainText("  ");
+            insertPlainText((c.columnNumber() & 1) ? " " : "  ");
         }
     }
     else if (e->key() == Qt::Key_Backtab && c.hasSelection())
@@ -71,8 +71,6 @@ void Script::keyPressEvent(QKeyEvent* e)
     }
     else if (e->key() == Qt::Key_Return && !c.hasSelection())
     {
-        auto c = textCursor();
-
         // Count the number of leading spaces on this line
         c.movePosition(QTextCursor::StartOfLine);
         c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
@@ -83,6 +81,14 @@ void Script::keyPressEvent(QKeyEvent* e)
 
         // Then match the number of leading spaces
         insertPlainText("\n" + QString(c.selectedText().length() - 1, ' '));
+    }
+    else if (e->key() == Qt::Key_Backspace && !c.hasSelection())
+    {
+        c.deletePreviousChar();
+        if (c.columnNumber() & 1 && c.columnNumber() != 0)
+        {
+            c.deletePreviousChar();
+        }
     }
     else
     {
