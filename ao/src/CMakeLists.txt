@@ -36,8 +36,8 @@ target_include_directories(ao-kernel PUBLIC
 
 set(LIBS ${PNG_LIBRARIES})
 
-if(UNIX)
+if(UNIX AND NOT(APPLE))
     set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT})
-endif(UNIX)
+endif(UNIX AND NOT(APPLE))
 
 target_link_libraries(ao-kernel ${LIBS})

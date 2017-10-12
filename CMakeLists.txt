@@ -47,9 +47,9 @@ find_package(Boost REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-if (UNIX)
+if (UNIX AND NOT(APPLE))
     find_package(Threads REQUIRED)
-endif(UNIX)
+endif(UNIX AND NOT(APPLE))
 
 ################################################################################
 # Inform the user which subsystems will be built and any missing deps
