@@ -26,7 +26,7 @@ add_library(ao-kernel SHARED
 )
 
 target_include_directories(ao-kernel SYSTEM PUBLIC
-    ${BOOST_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIRS}
     ${PNG_INCLUDE_DIR}
     ${EIGEN3_INCLUDE_DIR}
 )
