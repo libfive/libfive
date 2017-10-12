@@ -33,8 +33,12 @@ The interface also includes direct modeling,
 where the user can push and pull on the model's surface
 to change variables in the script.
 
-# Building
+# Compiling from source
 ## Dependencies
+### Build system
+- [`cmake`](https://cmake.org/)
+- [`pkg-config`](https://www.freedesktop.org/wiki/Software/pkg-config/)
+
 ### Geometry Kernel
 - [Eigen 3.x](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
