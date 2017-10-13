@@ -84,7 +84,7 @@ Tape::Tape(const Tree root)
     {
         if (clauses.find(a.id()) == clauses.end())
         {
-            clauses[a.id()] = clauses.size();
+            clauses.insert({a.id(), clauses.size()});
         }
     }
 
