@@ -109,8 +109,15 @@ protected:
 
     /*
      *  Converts from mouse event coordinates to model coordinates
+     *  using the z depth from the pick buffer
      */
     QVector3D toModelPos(QPoint pt) const;
+
+    /*
+     *  Converts from mouse event coordinates to model coordinates
+     *  using a user-provided z depth
+     */
+    QVector3D toModelPos(QPoint pt, float z) const;
 
     /*  Background items to render  */
     Axes axes;
@@ -161,5 +168,7 @@ protected:
     QScopedPointer<Kernel::JacobianEvaluator> drag_eval;
     Shape* drag_target=nullptr;
     Shape* hover_target=nullptr;
-    QVector3D hover_pos;
+
+    QVector3D cursor_pos;
+    bool cursor_pos_valid=false;
 };

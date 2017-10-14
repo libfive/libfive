@@ -258,7 +258,7 @@ void View::paintGL()
     glDisable(GL_DEPTH_TEST);
     painter.endNativePainting();
 
-    if (hover_target)
+    if (cursor_pos_valid)
     {
         QFont font = painter.font();
         font.setFamily("Courier");
@@ -275,11 +275,11 @@ void View::paintGL()
             painter.drawText(QPointF(10, camera.size.height() - 55), "Cursor:");
         }
         painter.drawText(QPointF(10, camera.size.height() - 40),
-                         QString("%1%2").arg(hover_pos.x() < 0 ? "" : " ").arg(hover_pos.x()));
+                         QString("%1%2").arg(cursor_pos.x() < 0 ? "" : " ").arg(cursor_pos.x()));
         painter.drawText(QPointF(10, camera.size.height() - 25),
-                         QString("%1%2").arg(hover_pos.y() < 0 ? "" : " ").arg(hover_pos.y()));
+                         QString("%1%2").arg(cursor_pos.y() < 0 ? "" : " ").arg(cursor_pos.y()));
         painter.drawText(QPointF(10, camera.size.height() - 10),
-                         QString("%1%2").arg(hover_pos.z() < 0 ? "" : " ").arg(hover_pos.z()));
+                         QString("%1%2").arg(cursor_pos.z() < 0 ? "" : " ").arg(cursor_pos.z()));
     }
 }
 
@@ -314,29 +314,24 @@ void View::mouseMoveEvent(QMouseEvent* event)
     }
     else if (mouse.state == mouse.DRAG_EVAL)
     {
-        auto Mi = camera.M().inverted();
-        QVector3D cursor_pos(
-                (event->pos().x() * 2.0) / pick_img.width() - 1,
-                1 - (event->pos().y() * 2.0) / pick_img.height(), 0);
-        QVector3D pos = Mi * cursor_pos;
-        QVector3D ray = (pos - Mi * (cursor_pos + QVector3D(0, 0, 1)))
-            .normalized();
+        // Convert to 3D coordinates, then find the 3D ray that's
+        // represented by the mouse position + viewing angle
+        cursor_pos = toModelPos(event->pos(), 0);
+        auto ray = cursor_pos - toModelPos(event->pos(), 1);
 
         // Slide pos down the ray to minimize distance to drag start
-        pos += ray * QVector3D::dotProduct(drag_start - pos, ray);
+        cursor_pos += ray * QVector3D::dotProduct(drag_start - cursor_pos, ray);
 
         // Solve for the point on the normal ray that is closest to the cursor ray
         // https://en.wikipedia.org/wiki/Skew_lines#Distance_between_two_skew_lines
         const auto n = QVector3D::crossProduct(drag_dir, ray);
         const auto n2 = QVector3D::crossProduct(ray, n);
-        const auto nearest = drag_start +
-            drag_dir * QVector3D::dotProduct(pos - drag_start, n2) /
+        cursor_pos = drag_start +
+            drag_dir * QVector3D::dotProduct(cursor_pos - drag_start, n2) /
             QVector3D::dotProduct(drag_dir, n2);
 
-        hover_pos = nearest;
-
         auto sol = Kernel::Solver::findRoot(*drag_eval, *drag_target->getVars(),
-                {nearest.x(), nearest.y(), nearest.z()});
+                {cursor_pos.x(), cursor_pos.y(), cursor_pos.z()});
         emit(varsDragged(QMap<Kernel::Tree::Id, float>(sol.second)));
 
         drag_target->setDragValid(fabs(sol.first) < 1e-6);
@@ -359,12 +354,16 @@ void View::mouseMoveEvent(QMouseEvent* event)
 
 QVector3D View::toModelPos(QPoint pt) const
 {
+    return toModelPos(pt, 2 * pick_depth.at(
+                            pt.x() + pick_img.width() *
+                            (pick_img.height() - pt.y())) - 1);
+}
+
+QVector3D View::toModelPos(QPoint pt, float z) const
+{
     return camera.M().inverted() * QVector3D(
             (pt.x() * 2.0) / pick_img.width() - 1,
-            1 - (pt.y() * 2.0) / pick_img.height(),
-            2 * pick_depth.at(
-                    pt.x() + pick_img.width() *
-                    (pick_img.height() - pt.y())) - 1);
+            1 - (pt.y() * 2.0) / pick_img.height(), z);
 }
 
 void View::mousePressEvent(QMouseEvent* event)
@@ -385,6 +384,7 @@ void View::mousePressEvent(QMouseEvent* event)
             drag_target = picked ? shapes.at(picked - 1) : nullptr;
             if (picked && drag_target->hasVars())
             {
+                this->setCursor(Qt::ClosedHandCursor);
                 emit(dragStart());
                 drag_target->setGrabbed(true);
                 drag_target->setDragValid(true);
@@ -457,7 +457,6 @@ void View::checkHoverTarget(QPoint pos)
             hover_target->setHover(false);
         }
 
-        hover_pos = toModelPos(pos);
         hover_target = target;
         hover_target->setHover(true);
     }
@@ -466,6 +465,16 @@ void View::checkHoverTarget(QPoint pos)
         hover_target->setHover(false);
         hover_target = nullptr;
     }
+
+    bool changed = (cursor_pos_valid != (bool)target);
+    cursor_pos_valid = target;
+    cursor_pos = toModelPos(pos);
+    if (cursor_pos_valid || changed)
+    {
+        update();
+    }
+
+    this->setCursor(hover_target ? Qt::OpenHandCursor : Qt::ArrowCursor);
 }
 
 void View::showAxes(bool a)
