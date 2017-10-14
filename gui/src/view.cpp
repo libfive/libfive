@@ -236,12 +236,6 @@ void View::paintGL()
     auto m = camera.M();
     glEnable(GL_DEPTH_TEST);
 
-    if (drag_target)
-    {
-        ico.draw(m, cursor_pos, 0.025 / camera.getScale(),
-                 drag_valid ? Color::green : Color::red);
-    }
-
     for (auto& s : shapes)
     {
         s->draw(m);
@@ -256,6 +250,12 @@ void View::paintGL()
     if (show_bbox)
     {
         bbox.draw(settings.min, settings.max, camera);
+    }
+
+    if (drag_target)
+    {
+        ico.draw(m, cursor_pos, 0.025 / camera.getScale(),
+                 drag_valid ? Color::green : Color::red);
     }
 
     // This is a no-op if the spinner is hidden
@@ -384,7 +384,7 @@ void View::mousePressEvent(QMouseEvent* event)
             drag_target = picked ? shapes.at(picked - 1) : nullptr;
             if (picked && drag_target->hasVars())
             {
-                this->setCursor(Qt::BlankCursor);
+                this->setCursor(Qt::ClosedHandCursor);
                 emit(dragStart());
                 drag_target->setGrabbed(true);
                 drag_valid = true;

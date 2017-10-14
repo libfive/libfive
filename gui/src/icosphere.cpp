@@ -136,19 +136,29 @@ void Icosphere::initializeGL(int subdiv)
 
 void Icosphere::draw(QMatrix4x4 M, QVector3D pos, float r, QColor color)
 {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     M.translate(pos);
     M.scale(r);
 
     Shader::point->bind();
     glUniformMatrix4fv(Shader::point->uniformLocation("M"), 1, GL_FALSE, M.data());
-    glUniform3f(Shader::point->uniformLocation("color"),
-                color.redF(), color.greenF(), color.blueF());
+    glUniform4f(Shader::point->uniformLocation("frag_color"),
+                color.redF(), color.greenF(), color.blueF(), 0.2f);
 
+    glDisable(GL_DEPTH_TEST);
     vao.bind();
     tri_vbo.bind();
     glDrawElements(GL_TRIANGLES, tri_count * 3, GL_UNSIGNED_INT, NULL);
+
+    glDisable(GL_BLEND);
+
+    glEnable(GL_DEPTH_TEST);
+    glUniform4f(Shader::point->uniformLocation("frag_color"),
+                color.redF(), color.greenF(), color.blueF(), 0.8f);
+    glDrawElements(GL_TRIANGLES, tri_count * 3, GL_UNSIGNED_INT, NULL);
+
     vao.release();
-
     Shader::point->release();
-
 }

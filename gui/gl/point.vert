@@ -3,10 +3,10 @@
 layout(location=0) in vec3 vertex_position;
 
 uniform mat4 M;
-uniform vec3 color;
+uniform vec4 color;
 
 out vec3 frag_pos;
-out vec3 frag_color;
+out vec4 frag_color;
 
 void main()
 {

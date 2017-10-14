@@ -77,7 +77,7 @@ void initializeGL()
     point->addShaderFromSourceFile(
             QOpenGLShader::Vertex, ":/gl/point.vert");
     point->addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/flat.frag");
+            QOpenGLShader::Fragment, ":/gl/monochrome.frag");
     point->link();
 }
 
