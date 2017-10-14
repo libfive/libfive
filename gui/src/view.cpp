@@ -238,7 +238,8 @@ void View::paintGL()
 
     if (drag_target)
     {
-        ico.draw(m, cursor_pos, 0.025, drag_valid ? Color::green : Color::red);
+        ico.draw(m, cursor_pos, 0.025 / camera.getScale(),
+                 drag_valid ? Color::green : Color::red);
     }
 
     for (auto& s : shapes)
