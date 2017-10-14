@@ -22,7 +22,7 @@ namespace Shader
 {
 
 QOpenGLShaderProgram* flat;
-QOpenGLShaderProgram* ico;
+QOpenGLShaderProgram* point;
 QOpenGLShaderProgram* monochrome;
 QOpenGLShaderProgram* shaded;
 QOpenGLShaderProgram* busy;
@@ -73,12 +73,12 @@ void initializeGL()
             QOpenGLShader::Fragment, ":/gl/line.frag");
     line->link();
 
-    ico = new QOpenGLShaderProgram;
-    ico->addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/ico.vert");
-    ico->addShaderFromSourceFile(
+    point = new QOpenGLShaderProgram;
+    point->addShaderFromSourceFile(
+            QOpenGLShader::Vertex, ":/gl/point.vert");
+    point->addShaderFromSourceFile(
             QOpenGLShader::Fragment, ":/gl/flat.frag");
-    ico->link();
+    point->link();
 }
 
 }

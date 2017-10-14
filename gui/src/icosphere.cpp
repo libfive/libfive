@@ -133,21 +133,19 @@ void Icosphere::initializeGL(int subdiv)
     vao.release();
 }
 
-void Icosphere::draw(QMatrix4x4 M)
+void Icosphere::draw(QMatrix4x4 M, QVector3D pos, float r)
 {
-    qDebug() << "a: " << glGetError();
-    Shader::ico->bind();
-    qDebug() << "b: " << glGetError();
-    glUniformMatrix4fv(Shader::ico->uniformLocation("M"), 1, GL_FALSE, M.data());
-    qDebug() << "c: " << glGetError();
+    M.translate(pos);
+    M.scale(r);
 
-    qDebug() << "Drawing " << tri_count*3 << "elements";
+    Shader::point->bind();
+    glUniformMatrix4fv(Shader::point->uniformLocation("M"), 1, GL_FALSE, M.data());
+
     vao.bind();
-    qDebug() << "d: " << glGetError();
+    tri_vbo.bind();
     glDrawElements(GL_TRIANGLES, tri_count * 3, GL_UNSIGNED_INT, NULL);
-    qDebug() << "e: " << glGetError();
     vao.release();
 
-    Shader::ico->release();
+    Shader::point->release();
 
 }

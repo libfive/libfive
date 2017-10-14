@@ -236,6 +236,11 @@ void View::paintGL()
     auto m = camera.M();
     glEnable(GL_DEPTH_TEST);
 
+    if (drag_target)
+    {
+        ico.draw(m, cursor_pos, 0.1);
+    }
+
     for (auto& s : shapes)
     {
         s->draw(m);
@@ -268,20 +273,12 @@ void View::paintGL()
 
         painter.setBrush(Qt::NoBrush);
         painter.setPen(Color::base1);
-        if (drag_target)
-        {
-            painter.drawText(QPointF(10, camera.size.height() - 55), "Target:");
-        }
-        else
-        {
-            painter.drawText(QPointF(10, camera.size.height() - 55), "Cursor:");
-        }
         painter.drawText(QPointF(10, camera.size.height() - 40),
-                         QString("%1%2").arg(cursor_pos.x() < 0 ? "" : " ").arg(cursor_pos.x()));
+                         QString("X: %1%2").arg(cursor_pos.x() < 0 ? "" : " ").arg(cursor_pos.x()));
         painter.drawText(QPointF(10, camera.size.height() - 25),
-                         QString("%1%2").arg(cursor_pos.y() < 0 ? "" : " ").arg(cursor_pos.y()));
+                         QString("Y: %1%2").arg(cursor_pos.y() < 0 ? "" : " ").arg(cursor_pos.y()));
         painter.drawText(QPointF(10, camera.size.height() - 10),
-                         QString("%1%2").arg(cursor_pos.z() < 0 ? "" : " ").arg(cursor_pos.z()));
+                         QString("Z: %1%2").arg(cursor_pos.z() < 0 ? "" : " ").arg(cursor_pos.z()));
     }
 }
 
@@ -386,7 +383,7 @@ void View::mousePressEvent(QMouseEvent* event)
             drag_target = picked ? shapes.at(picked - 1) : nullptr;
             if (picked && drag_target->hasVars())
             {
-                this->setCursor(Qt::ClosedHandCursor);
+                this->setCursor(Qt::BlankCursor);
                 emit(dragStart());
                 drag_target->setGrabbed(true);
                 drag_target->setDragValid(true);
