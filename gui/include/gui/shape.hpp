@@ -103,11 +103,6 @@ public:
     { return vars; }
 
     /*
-     *  Sets drag state and redraws as necessary
-     */
-    void setDragValid(bool happy);
-
-    /*
      *  Sets grabbed and redraws as necessary
      */
     void setGrabbed(bool g);
@@ -131,7 +126,6 @@ protected:
     void startRender(QPair<Settings, int> s);
 
     bool grabbed=false;
-    bool drag_valid=true;
     bool hover=false;
 
     Kernel::Mesh* renderMesh(QPair<Settings, int> s);

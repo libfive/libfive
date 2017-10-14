@@ -238,7 +238,7 @@ void View::paintGL()
 
     if (drag_target)
     {
-        ico.draw(m, cursor_pos, 0.1);
+        ico.draw(m, cursor_pos, 0.025, drag_valid ? Color::green : Color::red);
     }
 
     for (auto& s : shapes)
@@ -333,7 +333,7 @@ void View::mouseMoveEvent(QMouseEvent* event)
                 {cursor_pos.x(), cursor_pos.y(), cursor_pos.z()});
         emit(varsDragged(QMap<Kernel::Tree::Id, float>(sol.second)));
 
-        drag_target->setDragValid(fabs(sol.first) < 1e-6);
+        drag_valid = fabs(sol.first) < 1e-6;
         if (drag_target->updateVars(sol.second))
         {
             busy.show();
@@ -386,7 +386,7 @@ void View::mousePressEvent(QMouseEvent* event)
                 this->setCursor(Qt::BlankCursor);
                 emit(dragStart());
                 drag_target->setGrabbed(true);
-                drag_target->setDragValid(true);
+                drag_valid = true;
 
                 drag_start = toModelPos(event->pos());
                 drag_eval.reset(drag_target->dragFrom(drag_start));

@@ -169,6 +169,7 @@ protected:
     QVector3D drag_dir;
     QScopedPointer<Kernel::JacobianEvaluator> drag_eval;
     Shape* drag_target=nullptr;
+    bool drag_valid=false;
     Shape* hover_target=nullptr;
 
     QVector3D cursor_pos;

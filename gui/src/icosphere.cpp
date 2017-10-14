@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+#include <QColor>
 #include <Eigen/StdVector>
 #include <boost/math/constants/constants.hpp>
 
@@ -133,13 +134,15 @@ void Icosphere::initializeGL(int subdiv)
     vao.release();
 }
 
-void Icosphere::draw(QMatrix4x4 M, QVector3D pos, float r)
+void Icosphere::draw(QMatrix4x4 M, QVector3D pos, float r, QColor color)
 {
     M.translate(pos);
     M.scale(r);
 
     Shader::point->bind();
     glUniformMatrix4fv(Shader::point->uniformLocation("M"), 1, GL_FALSE, M.data());
+    glUniform3f(Shader::point->uniformLocation("color"),
+                color.redF(), color.greenF(), color.blueF());
 
     vao.bind();
     tri_vbo.bind();

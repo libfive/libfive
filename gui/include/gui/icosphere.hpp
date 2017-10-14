@@ -27,7 +27,7 @@ class Icosphere : public QOpenGLFunctions
 public:
     Icosphere();
 
-    void draw(QMatrix4x4 M, QVector3D pos, float r);
+    void draw(QMatrix4x4 M, QVector3D pos, float r, QColor color);
     void initializeGL(int subdiv=4);
 
 protected:

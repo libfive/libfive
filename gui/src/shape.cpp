@@ -144,22 +144,8 @@ void Shape::draw(const QMatrix4x4& M)
 
     if (gl_ready)
     {
-        QVector3D shade(0.9, 0.9, 0.9);
-        if (grabbed == true)
-        {
-            if (drag_valid == false)
-            {
-                shade = QVector3D(1.0, 0.78, 0.70);
-            }
-            else
-            {
-                shade = QVector3D(1, 1, 1);
-            }
-        }
-        else if (hover == true)
-        {
-            shade = QVector3D(1, 1, 1);
-        }
+        auto shade = (grabbed || hover) ? QVector3D(1, 1, 1)
+                                        : QVector3D(0.9, 0.9, 0.9);
 
         Shader::shaded->bind();
         glUniform3f(Shader::shaded->uniformLocation("shade"),
@@ -236,16 +222,6 @@ bool Shape::done() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-void Shape::setDragValid(bool happy)
-{
-    bool changed = happy != drag_valid;
-    drag_valid = happy;
-    if (changed)
-    {
-        emit(redraw());
-    }
-}
 
 void Shape::setGrabbed(bool g)
 {
