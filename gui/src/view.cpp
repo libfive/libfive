@@ -174,6 +174,7 @@ void View::initializeGL()
     bbox.initializeGL();
     busy.initializeGL();
     bars.initializeGL();
+    ico.initializeGL();
 }
 
 void View::redrawPicker()
@@ -234,6 +235,7 @@ void View::paintGL()
 
     auto m = camera.M();
     glEnable(GL_DEPTH_TEST);
+
     for (auto& s : shapes)
     {
         s->draw(m);

@@ -8,6 +8,7 @@
         <file>gl/bars.frag</file>
         <file>gl/line.vert</file>
         <file>gl/line.frag</file>
+        <file>gl/ico.vert</file>
 
         <file>examples/tutorial.ao</file>
     </qresource>

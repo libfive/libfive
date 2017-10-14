@@ -18,17 +18,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
 
-#include <QOpenGLShaderProgram>
+#include <QOpenGLBuffer>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLFunctions>
 
-namespace Shader
+class Icosphere : public QOpenGLFunctions
 {
-    void initializeGL();
+public:
+    Icosphere();
 
-    extern QOpenGLShaderProgram* flat;
-    extern QOpenGLShaderProgram* monochrome;
-    extern QOpenGLShaderProgram* shaded;
-    extern QOpenGLShaderProgram* busy;
-    extern QOpenGLShaderProgram* bars;
-    extern QOpenGLShaderProgram* ico;
-    extern QOpenGLShaderProgram* line;
-}
+    void draw(QMatrix4x4 M);
+    void initializeGL(int subdiv=0);
+
+protected:
+    QOpenGLBuffer vert_vbo;
+    QOpenGLBuffer tri_vbo;
+    QOpenGLVertexArrayObject vao;
+
+    unsigned tri_count=0;
+};
