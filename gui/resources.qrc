@@ -7,7 +7,6 @@
         <file>gl/busy.frag</file>
         <file>gl/bars.frag</file>
         <file>gl/line.vert</file>
-        <file>gl/line.frag</file>
         <file>gl/point.vert</file>
 
         <file>examples/tutorial.ao</file>

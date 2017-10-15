@@ -70,7 +70,7 @@ void initializeGL()
     line->addShaderFromSourceFile(
             QOpenGLShader::Vertex, ":/gl/line.vert");
     line->addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/line.frag");
+            QOpenGLShader::Fragment, ":/gl/monochrome.frag");
     line->link();
 
     point = new QOpenGLShaderProgram;

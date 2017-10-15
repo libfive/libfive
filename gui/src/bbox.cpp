@@ -85,6 +85,8 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glUniform1f(Shader::line->uniformLocation("thickness"), 0.005);
     glUniform1f(Shader::line->uniformLocation("aspect"), camera.getAspect());
+    glUniform4f(Shader::line->uniformLocation("frag_color"),
+                1.0f, 1.0f, 1.0f, 0.5f);
 
     vao.bind();
 
