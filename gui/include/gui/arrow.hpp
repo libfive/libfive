@@ -18,18 +18,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
 
-#include <QOpenGLShaderProgram>
+#include <QOpenGLBuffer>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLFunctions>
 
-namespace Shader
+class Arrow : public QOpenGLFunctions
 {
-    void initializeGL();
+public:
+    Arrow();
 
-    extern QOpenGLShaderProgram* flat;
-    extern QOpenGLShaderProgram* monochrome;
-    extern QOpenGLShaderProgram* shaded;
-    extern QOpenGLShaderProgram* busy;
-    extern QOpenGLShaderProgram* bars;
-    extern QOpenGLShaderProgram* point;
-    extern QOpenGLShaderProgram* line;
-    extern QOpenGLShaderProgram* arrow;
-}
+    void draw(QMatrix4x4 M, QVector3D pos, float scale,
+              QVector3D norm, QColor color);
+    void initializeGL(int res=32);
+
+protected:
+    QOpenGLBuffer vbo;
+    QOpenGLVertexArrayObject vao;
+
+    unsigned tri_count=0;
+};
+

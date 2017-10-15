@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QOpenGLWidget>
 #include <QOpenGLFramebufferObject>
 
+#include "gui/arrow.hpp"
 #include "gui/axes.hpp"
 #include "gui/background.hpp"
 #include "gui/bbox.hpp"
@@ -121,6 +122,7 @@ protected:
     QVector3D toModelPos(QPoint pt, float z) const;
 
     /*  Background items to render  */
+    Arrow arrow;
     Axes axes;
     Background background;
     BBox bbox;
