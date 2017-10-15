@@ -8,7 +8,7 @@ out vec4 fragColor;
 
 void main() {
     vec3 base3 = shade.rgb;
-    vec3 base02 = 0.5 * shade.rgb;
+    vec3 base02 = 0.8 * shade.rgb;
 
     // Per-fragment shading
     vec3 dpos = normalize(vec3(1.0, -1.0, 4.0) - frag_pos);

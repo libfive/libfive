@@ -44,6 +44,7 @@ void Arrow::initializeGL(int res)
     const float pi = boost::math::constants::pi<float>();
     const float ro = 0.2;
     const float ri = 0.1;
+    const float ah = 0.4;
     for (int i=0; i < res; ++i)
     {
         float a0 = pi * 2 * i / (res - 1.0);
@@ -56,20 +57,20 @@ void Arrow::initializeGL(int res)
         // Each row is a triangle, with per-vertex values for
         //                 Position                 Normal
         vs.row(8*i + 0) << 0,0,1,                   (x0 + x1),(y0 + y1),0,
-                           x0*ro, y0*ro, 1 - ro,    x0, y0, 0,
-                           x1*ro, y1*ro, 1 - ro,    x1, y1, 0;
-        vs.row(8*i + 1) << x0*ro, y0*ro, 1 - ro,    0, 0, -1,
-                           x1*ro, y1*ro, 1 - ro,    0, 0, -1,
-                           x1*ri, y1*ri, 1 - ro,    0, 0, -1;
-        vs.row(8*i + 2) << x0*ro, y0*ro, 1 - ro,    0, 0, -1,
-                           x1*ri, y1*ri, 1 - ro,    0, 0, -1,
-                           x0*ri, y0*ri, 1 - ro,    0, 0, -1;
-        vs.row(8*i + 3) << x1*ri, y1*ri, 1 - ro,    x1, y1, 0,
-                           x0*ri, y0*ri, 1 - ro,    x0, y0, 0,
-                           x0*ri, y0*ri, ro - 1,    x0, y0, 0;
-        vs.row(8*i + 4) << x1*ri, y1*ri, 1 - ro,    x1, y1, 0,
-                           x0*ri, y0*ri, ro - 1,    x0, y0, 0,
-                           x1*ri, y1*ri, ro - 1,    x0, y0, 0;
+                           x0*ro, y0*ro, 1 - ah,    x0, y0, 0,
+                           x1*ro, y1*ro, 1 - ah,    x1, y1, 0;
+        vs.row(8*i + 1) << x0*ro, y0*ro, 1 - ah,    0, 0, -1,
+                           x1*ro, y1*ro, 1 - ah,    0, 0, -1,
+                           x1*ri, y1*ri, 1 - ah,    0, 0, -1;
+        vs.row(8*i + 2) << x0*ro, y0*ro, 1 - ah,    0, 0, -1,
+                           x1*ri, y1*ri, 1 - ah,    0, 0, -1,
+                           x0*ri, y0*ri, 1 - ah,    0, 0, -1;
+        vs.row(8*i + 3) << x1*ri, y1*ri, 1 - ah,    x1, y1, 0,
+                           x0*ri, y0*ri, 1 - ah,    x0, y0, 0,
+                           x0*ri, y0*ri, ah - 1,    x0, y0, 0;
+        vs.row(8*i + 4) << x1*ri, y1*ri, 1 - ah,    x1, y1, 0,
+                           x0*ri, y0*ri, ah - 1,    x0, y0, 0,
+                           x1*ri, y1*ri, ah - 1,    x0, y0, 0;
 
         vs.row(8*i + 5) = vs.row(8*i + 0) * zflip;
         vs.row(8*i + 6) = vs.row(8*i + 1) * zflip;
@@ -129,6 +130,5 @@ void Arrow::draw(QMatrix4x4 M, QVector3D pos, float scale,
     glDrawArrays(GL_TRIANGLES, 0, tri_count * 3);
     vao.release();
     Shader::arrow->release();
-    qDebug() << glGetError();
 }
 
