@@ -31,54 +31,23 @@ QOpenGLShaderProgram* line;
 
 void initializeGL()
 {
-    flat = new QOpenGLShaderProgram;
-    flat->addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/basic.vert");
-    flat->addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/flat.frag");
-    flat->link();
+    auto build = [](QString vert, QString frag) {
+        auto s = new QOpenGLShaderProgram;
+        s->addShaderFromSourceFile(
+                QOpenGLShader::Vertex, ":/gl/" + vert + ".vert");
+        s->addShaderFromSourceFile(
+                QOpenGLShader::Fragment, ":/gl/" + frag + ".frag");
+        s->link();
+        return s;
+    };
 
-    monochrome = new QOpenGLShaderProgram;
-    monochrome->addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/basic.vert");
-    monochrome->addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/monochrome.frag");
-    monochrome->link();
-
-    shaded = new QOpenGLShaderProgram;
-    shaded->addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/basic.vert");
-    shaded->addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/shaded.frag");
-    shaded->link();
-
-    busy = new QOpenGLShaderProgram;
-    busy->addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/basic.vert");
-    busy->addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/busy.frag");
-    busy->link();
-
-    bars = new QOpenGLShaderProgram;
-    bars->addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/basic.vert");
-    bars->addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/bars.frag");
-    bars->link();
-
-    line = new QOpenGLShaderProgram;
-    line->addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/line.vert");
-    line->addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/monochrome.frag");
-    line->link();
-
-    point = new QOpenGLShaderProgram;
-    point->addShaderFromSourceFile(
-            QOpenGLShader::Vertex, ":/gl/point.vert");
-    point->addShaderFromSourceFile(
-            QOpenGLShader::Fragment, ":/gl/monochrome.frag");
-    point->link();
+    flat = build("basic", "flat");
+    monochrome = build("basic", "monochrome");
+    shaded = build("basic", "shaded");
+    busy = build("basic", "busy");
+    bars = build("basic", "bars");
+    line = build("line", "monochrome");
+    point = build("point", "monochrome");
 }
 
 }
