@@ -123,11 +123,24 @@ void Arrow::draw(QMatrix4x4 M, QVector3D pos, float scale,
     Shader::arrow->bind();
     glUniformMatrix4fv(Shader::arrow->uniformLocation("M"),
                        1, GL_FALSE, M.data());
-    glUniform4f(Shader::arrow->uniformLocation("shade"),
-                color.redF(), color.greenF(), color.blueF(), 1.0f);
 
     vao.bind();
+
+    // Draw once at 20% opacity but without depth culling
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST);
+    glUniform4f(Shader::arrow->uniformLocation("shade"),
+                color.redF(), color.greenF(), color.blueF(), 0.3f);
     glDrawArrays(GL_TRIANGLES, 0, tri_count * 3);
+
+    // Then draw in full color, with depth culling on
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glUniform4f(Shader::arrow->uniformLocation("shade"),
+                color.redF(), color.greenF(), color.blueF(), 1.0f);
+    glDrawArrays(GL_TRIANGLES, 0, tri_count * 3);
+
     vao.release();
     Shader::arrow->release();
 }

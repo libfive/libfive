@@ -255,8 +255,6 @@ void View::paintGL()
 
     if (drag_target)
     {
-        ico.draw(m, cursor_pos, 0.025 / camera.getScale(),
-                 drag_valid ? Color::green : Color::red);
         arrow.draw(m, cursor_pos, 0.1 / camera.getScale(),
                    drag_dir, drag_valid ? Color::green : Color::red);
     }
