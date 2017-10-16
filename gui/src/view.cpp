@@ -230,6 +230,7 @@ void View::redrawPicker()
 void View::paintGL()
 {
     QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
 
     painter.beginNativePainting();
     background.draw();
