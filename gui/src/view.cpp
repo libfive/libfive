@@ -202,7 +202,8 @@ void View::redrawPicker()
 
     glClearColor(0, 0, 0, 1);
     glClearDepthf(1);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glClearStencil(0);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, camera.size.width(), camera.size.height());
 

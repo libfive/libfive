@@ -38,6 +38,7 @@ void Arrow::initializeGL(int res)
     Eigen::Array<float, 1, 18> zflip = Eigen::Array<float, 1, 18>::Ones();
     for (unsigned i=2; i < 18; i += 3)
     {
+        zflip(i - 1) = -1;
         zflip(i) = -1;
     }
 
@@ -60,11 +61,11 @@ void Arrow::initializeGL(int res)
                            x0*ro, y0*ro, 1 - ah,    x0, y0, 0,
                            x1*ro, y1*ro, 1 - ah,    x1, y1, 0;
         vs.row(8*i + 1) << x0*ro, y0*ro, 1 - ah,    0, 0, -1,
-                           x1*ro, y1*ro, 1 - ah,    0, 0, -1,
-                           x1*ri, y1*ri, 1 - ah,    0, 0, -1;
-        vs.row(8*i + 2) << x0*ro, y0*ro, 1 - ah,    0, 0, -1,
                            x1*ri, y1*ri, 1 - ah,    0, 0, -1,
-                           x0*ri, y0*ri, 1 - ah,    0, 0, -1;
+                           x1*ro, y1*ro, 1 - ah,    0, 0, -1;
+        vs.row(8*i + 2) << x0*ro, y0*ro, 1 - ah,    0, 0, -1,
+                           x0*ri, y0*ri, 1 - ah,    0, 0, -1,
+                           x1*ri, y1*ri, 1 - ah,    0, 0, -1;
         vs.row(8*i + 3) << x1*ri, y1*ri, 1 - ah,    x1, y1, 0,
                            x0*ri, y0*ri, 1 - ah,    x0, y0, 0,
                            x0*ri, y0*ri, ah - 1,    x0, y0, 0;
@@ -130,6 +131,11 @@ void Arrow::draw(QMatrix4x4 M, QVector3D pos, float scale,
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+    glStencilFuncSeparate(GL_FRONT, GL_GREATER, 1, 0xFF);
+    glStencilFuncSeparate(GL_BACK, GL_NEVER, 0, 0xFF);
+    glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_INCR, GL_INCR);
+    glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR, GL_INCR);
     glUniform4f(Shader::arrow->uniformLocation("shade"),
                 color.redF(), color.greenF(), color.blueF(), 0.3f);
     glDrawArrays(GL_TRIANGLES, 0, tri_count * 3);
@@ -137,6 +143,7 @@ void Arrow::draw(QMatrix4x4 M, QVector3D pos, float scale,
     // Then draw in full color, with depth culling on
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
     glUniform4f(Shader::arrow->uniformLocation("shade"),
                 color.redF(), color.greenF(), color.blueF(), 1.0f);
     glDrawArrays(GL_TRIANGLES, 0, tri_count * 3);
