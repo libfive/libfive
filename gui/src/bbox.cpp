@@ -17,6 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <cmath>
+#include <boost/math/constants/constants.hpp>
 
 #include "gui/bbox.hpp"
 #include "gui/camera.hpp"
@@ -34,12 +35,13 @@ void BBox::initializeGL()
 
     // Build a capsule shape out of triangles
     const int res = 32;
+    const float pi = boost::math::constants::pi<float>();
     for (unsigned i=0; i < 32; ++i)
     {
-        auto x0 = cos(M_PI * i / float(res));
-        auto x1 = cos(M_PI * (i + 1) / float(res));
-        auto y0 = sin(M_PI * i / float(res));
-        auto y1 = sin(M_PI * (i + 1) / float(res));
+        auto x0 = cos(pi * i / float(res));
+        auto x1 = cos(pi * (i + 1) / float(res));
+        auto y0 = sin(pi * i / float(res));
+        auto y1 = sin(pi * (i + 1) / float(res));
 
         push(x0, 1 + y0);
         push(x1, 1 + y1);
@@ -83,6 +85,13 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
     Shader::line->bind();
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_STENCIL_TEST);
+    glStencilFuncSeparate(GL_FRONT, GL_GREATER, 1, 0xFF);
+    glStencilFuncSeparate(GL_BACK, GL_NEVER, 0, 0xFF);
+    glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_INCR, GL_INCR);
+    glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR, GL_INCR);
+
     glUniform1f(Shader::line->uniformLocation("thickness"), 0.005);
     glUniform1f(Shader::line->uniformLocation("aspect"), camera.getAspect());
     glUniform4f(Shader::line->uniformLocation("frag_color"),
@@ -134,5 +143,6 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
 
     Shader::flat->release();
     glDisable(GL_BLEND);
+    glDisable(GL_STENCIL_TEST);
 }
 
