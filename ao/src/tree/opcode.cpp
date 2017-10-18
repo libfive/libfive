@@ -164,7 +164,6 @@ std::string Opcode::toOpString(Opcode op)
         case MOD:
         case NANFILL:
         case LOG:
-        case LOG10:
         case ABS:
             return toScmString(op);
 
@@ -210,7 +209,6 @@ bool Opcode::isCommutative(Opcode op)
         case NANFILL:
         case INVALID:
         case LOG:
-        case LOG10:
         case ABS:
         case RECIP:
         case CONST_VAR:
