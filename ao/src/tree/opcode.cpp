@@ -48,6 +48,7 @@ size_t Opcode::args(Opcode op)
         case EXP:
         case CONST_VAR:
         case ABS:
+        case LOG:
         case RECIP:
             return 1;
 
@@ -162,6 +163,8 @@ std::string Opcode::toOpString(Opcode op)
         case NTH_ROOT:
         case MOD:
         case NANFILL:
+        case LOG:
+        case LOG10:
         case ABS:
             return toScmString(op);
 
@@ -206,6 +209,8 @@ bool Opcode::isCommutative(Opcode op)
         case MOD:
         case NANFILL:
         case INVALID:
+        case LOG:
+        case LOG10:
         case ABS:
         case RECIP:
         case CONST_VAR:
