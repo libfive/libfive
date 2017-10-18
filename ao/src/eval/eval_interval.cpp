@@ -193,6 +193,9 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::EXP:
             out = boost::numeric::exp(a);
             break;
+        case Opcode::LOG:
+            out = boost::numeric::log(a);
+            break;
         case Opcode::ABS:
             out = boost::numeric::abs(a);
             break;

@@ -215,6 +215,9 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::ATAN:
             out = atan(a);
             break;
+        case Opcode::LOG:
+            out = log(a);
+            break;
         case Opcode::EXP:
             out = exp(a);
             break;
