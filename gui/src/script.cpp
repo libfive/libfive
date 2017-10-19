@@ -87,7 +87,11 @@ void Script::keyPressEvent(QKeyEvent* e)
         c.deletePreviousChar();
         if (c.columnNumber() & 1 && c.columnNumber() != 0)
         {
-            c.deletePreviousChar();
+            c.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
+            if (c.selectedText() == " ")
+            {
+                c.deletePreviousChar();
+            }
         }
     }
     else
