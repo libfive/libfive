@@ -132,7 +132,7 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
     }
     vao.release();
 
-    Shader::flat->release();
+    Shader::line->release();
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
 }
