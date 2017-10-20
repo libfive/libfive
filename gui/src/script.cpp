@@ -73,14 +73,21 @@ void Script::keyPressEvent(QKeyEvent* e)
     {
         // Count the number of leading spaces on this line
         c.movePosition(QTextCursor::StartOfLine);
+        auto prev_pos = c.position();
         c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
-        while (*c.selectedText().rbegin() == ' ')
+        while (*c.selectedText().rbegin() == ' ' && c.position() > prev_pos)
         {
+            prev_pos = c.position();
             c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
         }
 
+        // Figure out if we stopped searching due to a non-space character
+        // or hitting the end of the document
+        auto length = c.selectedText().length() - 1;
+        length += (*c.selectedText().rbegin() == ' ');
+
         // Then match the number of leading spaces
-        insertPlainText("\n" + QString(c.selectedText().length() - 1, ' '));
+        insertPlainText("\n" + QString(length, ' '));
     }
     else if (e->key() == Qt::Key_Backspace && !c.hasSelection())
     {
