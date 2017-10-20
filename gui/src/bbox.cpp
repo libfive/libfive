@@ -118,21 +118,12 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
         {{min.x(), max.y(), min.z()}, {min.x(), max.y(), max.z()}},
     };
 
-    // Do a reverse Z sorting to prevent transparency from overlapping
-    std::sort(edges.begin(), edges.end(),
-            [&](const QPair<QVector3D, QVector3D>& a,
-                const QPair<QVector3D, QVector3D>& b)
-            {
-                return fmax((M * a.first).z(), (M * a.second).z()) <
-                       fmax((M * b.first).z(), (M * b.second).z());
-            });
-
     auto a_loc = Shader::line->uniformLocation("a");
     auto b_loc = Shader::line->uniformLocation("b");
     for (auto& e : edges)
     {
-        auto a = M * e.first;
-        auto b = M * e.second;
+        auto a = M * QVector4D(e.first, 1);
+        auto b = M * QVector4D(e.second, 1);
 
         glUniform3f(a_loc, a.x(), a.y(), a.z());
         glUniform3f(b_loc, b.x(), b.y(), b.z());
