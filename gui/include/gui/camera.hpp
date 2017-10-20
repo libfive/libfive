@@ -40,21 +40,25 @@ public:
     void zoomTo(const QVector3D& min, const QVector3D& max);
 
     /*
-     *  Returns the projection matrix
-     *  (which compensates for window aspect ratio)
+     *  Returns a matrix which compensates for window aspect ratio
+     *  and applies a Z-flattening effect.
      */
-    QMatrix4x4 proj() const;
+    QMatrix4x4 projToScreen() const;
 
     /*
-     *  Returns the view matrix
-     *  (with rotation, scale, and center applied)
+     *  Returns a matrix with perspective and Z-flattening
      */
-    QMatrix4x4 view() const;
+    QMatrix4x4 worldToProj() const;
+
+    /*
+     *  Returns a matrix with rotation, scale, and center applied
+     */
+    QMatrix4x4 modelToWorld() const;
 
     /*
      *  Complete transform matrix
      */
-    QMatrix4x4 M() const { return proj() * view(); }
+    QMatrix4x4 M() const;
 
     /*
      *  Returns aspect ratio
