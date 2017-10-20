@@ -84,8 +84,15 @@ void Script::keyPressEvent(QKeyEvent* e)
     }
     else if (e->key() == Qt::Key_Backspace && !c.hasSelection())
     {
+        bool was_space;
+        {
+            auto c_ = textCursor();
+            c_.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
+            was_space = (c_.selectedText() == " ");
+        }
+
         c.deletePreviousChar();
-        if (c.columnNumber() & 1 && c.columnNumber() != 0)
+        if (was_space && (c.columnNumber() & 1) && c.columnNumber() != 0)
         {
             c.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
             if (c.selectedText() == " ")
