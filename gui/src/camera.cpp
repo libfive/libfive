@@ -27,37 +27,28 @@ Camera::Camera(QSize size)
     connect(&anim, &QPropertyAnimation::finished, this, &Camera::animDone);
 }
 
-QMatrix4x4 Camera::projToScreen() const
+QMatrix4x4 Camera::proj() const
 {
     QMatrix4x4 m;
 
     //  Compress the Z axis to avoid clipping.  The exact value is arbitrary,
     //  but seems to work well for common model aspect ratios.
     const float frac = size.width() / float(size.height());
+    const float Z_COMPRESS = 8;
     if (frac > 1)
     {
-        m.scale(1/frac, -1, 1);
+        m.scale(1/frac, -1, 1 / Z_COMPRESS);
     }
     else
     {
-        m.scale(1, -frac, 1);
+        m.scale(1, -frac, 1 / Z_COMPRESS);
     }
-
-    return m;
-}
-
-QMatrix4x4 Camera::worldToProj() const
-{
-    QMatrix4x4 m;
-
-    const float Z_COMPRESS = 8;
-    m.scale(1, 1, 1 / Z_COMPRESS);
 
     m(3, 2) = perspective;
     return m;
 }
 
-QMatrix4x4 Camera::modelToWorld() const
+QMatrix4x4 Camera::view() const
 {
     QMatrix4x4 m;
     m.scale(scale, scale, scale);
@@ -70,7 +61,7 @@ QMatrix4x4 Camera::modelToWorld() const
 
 QMatrix4x4 Camera::M() const
 {
-    return projToScreen() * worldToProj() * modelToWorld();
+    return proj() * view();
 }
 
 void Camera::rotateIncremental(QPoint delta)
