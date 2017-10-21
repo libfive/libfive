@@ -127,8 +127,8 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
 
         a.setW(fmax(0, a.w()));
         b.setW(fmax(0, b.w()));
-        glUniform3f(a_loc, a.x() / a.w(), a.y() / a.w(), a.z());
-        glUniform3f(b_loc, b.x() / b.w(), b.y() / b.w(), b.z());
+        glUniform3f(a_loc, a.x() / a.w(), a.y() / a.w(), a.z() / a.w());
+        glUniform3f(b_loc, b.x() / b.w(), b.y() / b.w(), b.z() / b.w());
 
         glDrawArrays(GL_TRIANGLES, 0, 198);
     }
