@@ -403,6 +403,7 @@ void View::mousePressEvent(QMouseEvent* event)
             }
             else
             {
+                drag_target = nullptr;
                 mouse.state = mouse.DRAG_ROT;
             }
         }
