@@ -13,6 +13,8 @@ void main()
 {
     frag_pos = vertex_position;
     gl_Position = M * vec4(vertex_position, 1.0f);
-    ec_pos = gl_Position.xyz;
+    gl_Position.w = max(0, gl_Position.w);
+
+    ec_pos = gl_Position.xyz / gl_Position.w;
     frag_color = vec4(vertex_color, 1.0f);
 }

@@ -11,7 +11,8 @@ out vec3 frag_pos;
 void main()
 {
     gl_Position = M * vec4(vertex_position, 1.0f);
-    frag_pos = gl_Position.xyz;
+    gl_Position.w = max(0, gl_Position.w);
+    frag_pos = gl_Position.xyz / gl_Position.w;
 
     frag_norm = (M * vec4(vertex_position + vertex_norm, 1.0f)).xyz - frag_pos;
     frag_norm.z *= -8;

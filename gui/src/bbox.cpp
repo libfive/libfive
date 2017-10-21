@@ -122,11 +122,13 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
     auto b_loc = Shader::line->uniformLocation("b");
     for (auto& e : edges)
     {
-        auto a = (M * QVector4D(e.first, 1)).toVector3DAffine();
-        auto b = (M * QVector4D(e.second, 1)).toVector3DAffine();
+        auto a = (M * QVector4D(e.first, 1));
+        auto b = (M * QVector4D(e.second, 1));
 
-        glUniform3f(a_loc, a.x(), a.y(), a.z());
-        glUniform3f(b_loc, b.x(), b.y(), b.z());
+        a.setW(fmax(0, a.w()));
+        b.setW(fmax(0, b.w()));
+        glUniform3f(a_loc, a.x() / a.w(), a.y() / a.w(), a.z());
+        glUniform3f(b_loc, b.x() / b.w(), b.y() / b.w(), b.z());
 
         glDrawArrays(GL_TRIANGLES, 0, 198);
     }
