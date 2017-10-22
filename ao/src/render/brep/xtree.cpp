@@ -395,11 +395,15 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
 
                 for (unsigned e=0; e < target_count; ++e)
                 {
-                    for (unsigned j=0; j < POINTS_PER_SEARCH; ++j)
+                    // Skip one point, because the very first point is
+                    // already known to be inside the shape (but sometimes,
+                    // due to numerical issues, it registers as outside!)
+                    for (unsigned j=1; j < POINTS_PER_SEARCH; ++j)
                     {
                         const unsigned i = j + e*POINTS_PER_SEARCH;
                         if (out[i] > 0)
                         {
+                            assert(i > 0);
                             targets[e] = {ps.col(i - 1), ps.col(i)};
                             break;
                         }
@@ -410,9 +414,18 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                             if (!eval->feature.isInside(
                                         pos.template cast<float>()))
                             {
+                                assert(i > 0);
                                 targets[e] = {ps.col(i - 1), ps.col(i)};
                                 break;
                             }
+                        }
+                        // Special-case for final point in the search, working
+                        // around numerical issues where different evaluators
+                        // disagree with whether points are inside or outside.
+                        else if (j == POINTS_PER_SEARCH - 1)
+                        {
+                            targets[e] = {ps.col(i - 1), ps.col(i)};
+                            break;
                         }
                     }
                 }

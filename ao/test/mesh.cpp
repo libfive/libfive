@@ -102,3 +102,11 @@ TEST_CASE("Mesh::render (face count in rectangular prism)")
     REQUIRE(m->verts.size() == 9); // index 0 is unused
     REQUIRE(m->branes.size() == 12);
 }
+
+TEST_CASE("Mesh::render (sphere)")
+{
+    auto s = sphere(1);
+    auto m = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
+                          1/32.0f, pow(10, -3));
+    REQUIRE(true);
+}
