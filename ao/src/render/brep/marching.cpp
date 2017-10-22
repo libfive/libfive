@@ -383,7 +383,7 @@ void loadCases<3>(VertsToPatches<3>& t)
  *  returning a new vertex (by id)
  */
 template <unsigned N>
-static int rotateVertex(int vert, Eigen::Matrix<double, N, N> rot)
+static int rotateVertex(int vert, const Eigen::Matrix<double, N, N>& rot)
 {
     assert(vert < _verts(N));
 
@@ -408,7 +408,7 @@ static int rotateVertex(int vert, Eigen::Matrix<double, N, N> rot)
  *  returning a new bitmasked set of vertices.
  */
 template <unsigned N>
-static unsigned rotateMask(unsigned mask, Eigen::Matrix<double, N, N> rot)
+static unsigned rotateMask(unsigned mask, const Eigen::Matrix<double, N, N>& rot)
 {
     assert(mask < _pow(2, _verts(N)));
 

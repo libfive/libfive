@@ -104,7 +104,7 @@ Tree sphere(float r, Eigen::Vector3f center)
                 square(Tree::Z() - center.z())) - r;
 }
 
-Tree box(Eigen::Vector3f lower, Eigen::Vector3f upper)
+Tree box(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
 {
     return max(max(
                max(lower.x() - Tree::X(),

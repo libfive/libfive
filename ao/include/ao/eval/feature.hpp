@@ -45,13 +45,13 @@ public:
      *  This is a slow (worst-case O(n^3)) operation, but it should be called
      *  rarely and so doesn't need to be optimized yet.
      */
-    bool isCompatible(Eigen::Vector3d e) const;
+    bool isCompatible(const Eigen::Vector3d& e) const;
 
     /*
      *  If incompatible, does nothing and returns false
      *  Otherwise, pushes to the front of the choice list and returns true
      */
-    bool push(Eigen::Vector3d e, Choice c={0, 0});
+    bool push(const Eigen::Vector3d& e, Choice c={0, 0});
 
     /*
      *  Accessor method for the choice list
@@ -66,7 +66,7 @@ public:
     /*
      *  Inserts a choice without any checking
      */
-    void pushRaw(Choice c, Eigen::Vector3d v);
+    void pushRaw(Choice c, const Eigen::Vector3d& v);
 
     /*
      *  Inserts a choice without an associated direction
@@ -89,11 +89,11 @@ protected:
     /*
      *  Versions of isCompatible and push when e is known to be normalized
      */
-    bool isCompatibleNorm(Eigen::Vector3d e) const;
-    bool pushNorm(Eigen::Vector3d e, Choice choice);
+    bool isCompatibleNorm(const Eigen::Vector3d& e) const;
+    bool pushNorm(const Eigen::Vector3d& e, Choice choice);
 
     typedef enum { NOT_PLANAR, PLANAR_FAIL, PLANAR_SUCCESS } PlanarResult;
-    PlanarResult checkPlanar(Eigen::Vector3d v) const;
+    PlanarResult checkPlanar(const Eigen::Vector3d& v) const;
 
     /*  Per-clause decisions  */
     std::set<Choice> choices;

@@ -40,7 +40,7 @@ public:
      *  expanded about their centers to include a unit number of voxels at the
      *  specified resolution.
      */
-    Voxels(Eigen::Vector3f lower, Eigen::Vector3f upper, float res);
+    Voxels(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper, float res);
 
     /*
      *  Constructs a region with the given bounds and per-axis resolution
@@ -49,7 +49,8 @@ public:
      *  expanded about their centers to include a unit number of voxels at the
      *  specified resolution.
      */
-    Voxels(Eigen::Vector3f lower, Eigen::Vector3f upper, Eigen::Vector3f res);
+    Voxels(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper,
+           const Eigen::Vector3f& res);
 
     /*  Bounding box of the region  */
     Eigen::Vector3f lower, upper;
@@ -144,9 +145,9 @@ public:
         /*
          *  Private constructor, used when subdividing
          */
-        View(Eigen::Vector3f lower, Eigen::Vector3f upper,
-             Eigen::Vector3i size, Eigen::Vector3i corner,
-             Eigen::Matrix<const float*, 3, 1> pts);
+        View(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper,
+             const Eigen::Vector3i& size, const Eigen::Vector3i& corner,
+             const Eigen::Matrix<const float*, 3, 1>& pts);
 
         View();
     };

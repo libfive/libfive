@@ -22,14 +22,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-Voxels::Voxels(Eigen::Vector3f lower, Eigen::Vector3f upper, float res)
+Voxels::Voxels(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper,
+               float res)
     : Voxels(lower, upper, {res, res, res})
 {
     // Nothing to do here
 }
 
-Voxels::Voxels(Eigen::Vector3f _lower, Eigen::Vector3f _upper,
-               Eigen::Vector3f res)
+Voxels::Voxels(const Eigen::Vector3f& _lower, const Eigen::Vector3f& _upper,
+               const Eigen::Vector3f& res)
 {
     Eigen::Array3i size = (res.array() * (_upper - _lower).array()).ceil().max(1).cast<int>();
 
@@ -67,9 +68,9 @@ Voxels::View::View(const Voxels& r)
     // Nothing to do here
 }
 
-Voxels::View::View(Eigen::Vector3f lower, Eigen::Vector3f upper,
-                   Eigen::Vector3i size, Eigen::Vector3i corner,
-                   Eigen::Matrix<const float*, 3, 1> pts)
+Voxels::View::View(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper,
+                   const Eigen::Vector3i& size, const Eigen::Vector3i& corner,
+                   const Eigen::Matrix<const float*, 3, 1>& pts)
     : lower(lower), upper(upper), size(size), corner(corner),
       pts(pts)
 {

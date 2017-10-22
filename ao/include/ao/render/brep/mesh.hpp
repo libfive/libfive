@@ -78,7 +78,7 @@ protected:
      *  Inserts a line into the mesh as a zero-size triangle
      *  (used for debugging)
      */
-    void line(Eigen::Vector3f a, Eigen::Vector3f b);
+    void line(const Eigen::Vector3f& a, const Eigen::Vector3f& b);
 };
 
 }   // namespace Kernel

@@ -20,13 +20,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-bool Feature::isCompatible(Eigen::Vector3d e) const
+bool Feature::isCompatible(const Eigen::Vector3d& e) const
 {
     const auto norm = e.norm();
     return (norm == 0) ? false : isCompatibleNorm(e / norm);
 }
 
-bool Feature::isCompatibleNorm(Eigen::Vector3d e) const
+bool Feature::isCompatibleNorm(const Eigen::Vector3d& e) const
 {
     if (epsilons.size() == 0)
     {
@@ -104,9 +104,9 @@ bool Feature::isCompatibleNorm(Eigen::Vector3d e) const
     return false;
 }
 
-void Feature::pushRaw(Choice c, Eigen::Vector3d v)
+void Feature::pushRaw(Choice c, const Eigen::Vector3d& _v)
 {
-    v.normalize();
+    Eigen::Vector3d v = _v.normalized();
 
     epsilons.push_back(v);
     choices.insert(c);
@@ -118,13 +118,13 @@ void Feature::pushChoice(Choice c)
     choices.insert(c);
 }
 
-bool Feature::push(Eigen::Vector3d e, Choice choice)
+bool Feature::push(const Eigen::Vector3d& e, Choice choice)
 {
     const auto norm = e.norm();
     return (norm == 0) ? false : pushNorm(e / norm, choice);
 }
 
-bool Feature::pushNorm(Eigen::Vector3d e, Choice choice)
+bool Feature::pushNorm(const Eigen::Vector3d& e, Choice choice)
 {
     if (isCompatibleNorm(e))
     {
@@ -157,14 +157,14 @@ bool operator<(const Feature::Choice& a, const Feature::Choice& b)
     return a.choice < b.choice;
 }
 
-Feature::PlanarResult Feature::checkPlanar(Eigen::Vector3d v) const
+Feature::PlanarResult Feature::checkPlanar(const Eigen::Vector3d& _v) const
 {
     if (epsilons.size() < 2)
     {
         return NOT_PLANAR;
     }
 
-    v.normalize();
+    Eigen::Vector3d v = _v.normalized();
 
     auto itr = epsilons.begin();
     const auto cross = itr->cross(v);
