@@ -357,9 +357,12 @@ void View::mouseMoveEvent(QMouseEvent* event)
 
 QVector3D View::toModelPos(QPoint pt) const
 {
-    return toModelPos(pt, 2 * pick_depth.at(
-                            pt.x() + pick_img.width() *
-                            (pick_img.height() - pt.y())) - 1);
+    return toModelPos(pt,
+        pick_img.valid(pt)
+            ? (2 * pick_depth.at(
+                pt.x() + pick_img.width() *
+                (pick_img.height() - pt.y())) - 1)
+            : 0);
 }
 
 QVector3D View::toModelPos(QPoint pt, float z) const
