@@ -182,6 +182,7 @@ void Editor::setScript(const QString& s)
     // it after a timer fires.
     syntax->disable();
     auto timer = new QTimer;
+    timer->setSingleShot(true);
     connect(timer, &QTimer::timeout, syntax, &Syntax::enable);
     connect(timer, &QTimer::timeout, timer, &QTimer::deleteLater);
 
