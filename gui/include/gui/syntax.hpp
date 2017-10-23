@@ -31,6 +31,8 @@ public:
 
 public slots:
     void setKeywords(QString kws);
+    void enable();
+    void disable();
 
 protected:
     QPoint matchedParen(int pos);
@@ -60,4 +62,7 @@ protected:
     };
     QList<Rule> rules;
     QTextCharFormat parens_highlight;
+
+    /*  Used as temporary storage when syntax highlighting is disabled */
+    QTextDocument* doc=nullptr;
 };

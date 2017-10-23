@@ -178,14 +178,11 @@ void Editor::setScript(const QString& s)
     first_change = true;
 
     // This is an terrible hack to work around QTBUG-20354:
-    // We temporary move the syntax highlighter onto a decoy document,
-    // then swap it back after a timer fires.
-    auto decoy = new QTextDocument;
-    syntax->setDocument(decoy);
+    // We temporary disable the syntax highlighter, then re-enable
+    // it after a timer fires.
+    syntax->disable();
     auto timer = new QTimer;
-    connect(timer, &QTimer::timeout, syntax,
-            [=](){ syntax->setDocument(script_doc); });
-    connect(timer, &QTimer::timeout, decoy, &QTextDocument::deleteLater);
+    connect(timer, &QTimer::timeout, syntax, &Syntax::enable);
     connect(timer, &QTimer::timeout, timer, &QTimer::deleteLater);
 
     script->setPlainText(s);

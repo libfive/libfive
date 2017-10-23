@@ -299,3 +299,18 @@ void Syntax::highlightBlock(const QString& text)
     setCurrentBlockState(state);
     setCurrentBlockUserData(data);
 }
+
+void Syntax::enable()
+{
+    assert(doc != nullptr);
+    document()->deleteLater();
+    setDocument(doc);
+    doc = nullptr;
+}
+
+void Syntax::disable()
+{
+    assert(doc == nullptr);
+    doc = document();
+    setDocument(new QTextDocument);
+}
