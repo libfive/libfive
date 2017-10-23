@@ -360,8 +360,9 @@ QVector3D View::toModelPos(QPoint pt) const
     return toModelPos(pt,
         pick_img.valid(pt)
             ? (2 * pick_depth.at(
-                pt.x() + pick_img.width() *
-                (pick_img.height() - pt.y())) - 1)
+                    pt.x() + pick_img.width() *
+                        (pick_img.height() - pt.y() - 1))
+                - 1)
             : 0);
 }
 
