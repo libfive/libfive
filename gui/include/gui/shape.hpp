@@ -37,6 +37,12 @@ public:
     Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
                                                    float>> vars);
 
+    /*
+     *  In destructor, wait for computation to finish
+     *  (otherwise XTreeEvaluators may be destroyed early)
+     */
+    ~Shape();
+
     /*  Constructs OpenGL objects as needed  */
     void draw(const QMatrix4x4& M);
 

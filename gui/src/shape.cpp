@@ -41,6 +41,14 @@ Shape::Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
             this, &Shape::onFutureFinished);
 }
 
+Shape::~Shape()
+{
+    if (mesh_future.isRunning())
+    {
+        mesh_future.waitForFinished();
+    }
+}
+
 bool Shape::updateFrom(const Shape* other)
 {
     assert(other->id() == id());
