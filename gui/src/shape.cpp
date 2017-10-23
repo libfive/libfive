@@ -303,6 +303,18 @@ void Shape::onFutureFinished()
     }
 }
 
+void Shape::freeGL()
+{
+    if (gl_ready)
+    {
+        vao.destroy();
+        vert_vbo.destroy();
+        tri_vbo.destroy();
+
+        gl_ready = false;
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // This function is called in a separate thread:
 Kernel::Mesh* Shape::renderMesh(QPair<Settings, int> s)

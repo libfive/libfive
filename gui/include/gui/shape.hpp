@@ -112,6 +112,15 @@ public:
      */
     void setHover(bool h);
 
+    /*
+     *  Destroys all OpenGL objects associated with this shape
+     *
+     *  This must be called when the context is current, and must
+     *  be called before the context is destroyed (otherwise, the Shape
+     *  destructor may try to use a now-destroyed context)
+     */
+    void freeGL();
+
 signals:
     void gotMesh();
     void redraw();

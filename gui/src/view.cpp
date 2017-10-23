@@ -45,6 +45,16 @@ View::View(QWidget* parent)
     connect(&pick_timer, &QTimer::timeout, this, &View::redrawPicker);
 }
 
+View::~View()
+{
+    makeCurrent();
+    for (auto s : findChildren<Shape*>())
+    {
+        s->freeGL();
+    }
+    doneCurrent();
+}
+
 void View::setShapes(QList<Shape*> new_shapes)
 {
     // Pack tree IDs into a pair of sets for fast checking

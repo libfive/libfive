@@ -46,6 +46,15 @@ public:
      */
     void cancelShapes();
 
+    /*
+     *  In the destructor, free the OpenGL data associated with
+     *  all children Shapes (because there could be shapes that
+     *  aren't explicitly stored in the object, which will be freed
+     *  by the QObject destructor, which runs after the OpenGL context
+     *  is gone).
+     */
+    ~View();
+
 public slots:
     void setShapes(QList<Shape*> shapes);
     void openSettings();
