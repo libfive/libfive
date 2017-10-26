@@ -118,6 +118,10 @@ SettingsPane::SettingsPane(Settings s)
                         QVector3D(xmin->value(), ymin->value(), zmin->value()),
                         QVector3D(xmax->value(), ymax->value(), zmax->value()),
                         res->value(), quality->value()))); } );
+        connect(this, &SettingsPane::enable,
+                t, [=](){ t->setReadOnly(false); });
+        connect(this, &SettingsPane::disable,
+                t, [=](){ t->setReadOnly(true); });
     }
 
     setLayout(layout);

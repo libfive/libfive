@@ -132,6 +132,10 @@ void View::openSettings()
                 this, &View::onSettingsFromPane);
         pane->show();
         pane->setFixedSize(pane->size());
+        if (!settings_enabled)
+        {
+            pane->disable();
+        }
     }
     else
     {
@@ -171,6 +175,24 @@ void View::onSettingsFromScript(Settings s, bool first)
     {
         camera.zoomTo(s.min, s.max);
     }
+}
+
+void View::enableSettings()
+{
+    if (pane)
+    {
+        pane->enable();
+    }
+    settings_enabled = true;
+}
+
+void View::disableSettings()
+{
+    if (pane)
+    {
+        pane->disable();
+    }
+    settings_enabled = false;
 }
 
 void View::initializeGL()

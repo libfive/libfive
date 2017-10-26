@@ -67,6 +67,9 @@ public:
 signals:
     void changed(Settings s);
 
+    void disable();
+    void enable();
+
 protected:
     QDoubleSpinBox* xmin;
     QDoubleSpinBox* xmax;

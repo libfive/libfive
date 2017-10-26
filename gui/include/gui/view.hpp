@@ -82,6 +82,13 @@ public slots:
      */
     void onSettingsFromPane(Settings s);
 
+    /*
+     *  Enable and disable settings pane
+     *  (used when exporting)
+     */
+    void disableSettings();
+    void enableSettings();
+
 signals:
     /*
      *  Called to kick off a render and start the busy spinner running
@@ -165,6 +172,7 @@ protected:
 
     QList<Shape*> shapes;
     QPointer<SettingsPane> pane;
+    bool settings_enabled=true;
     Settings settings;
     bool show_axes=true;
     bool show_bbox=false;
