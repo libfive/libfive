@@ -101,7 +101,7 @@ void Arrow::draw(QMatrix4x4 M, QVector3D pos, float scale,
 {
     // Build an orthonormal basis, per Duff 2017
     QMatrix4x4 rot;
-    rot.setColumn(2, norm.toVector4D());
+    rot.setColumn(2, norm.normalized().toVector4D());
     if (norm.z() < 0.)
     {
         const float a = 1.0f / (1.0f - norm.z());
