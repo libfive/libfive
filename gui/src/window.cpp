@@ -399,15 +399,28 @@ void Window::onExport(bool)
     }
 
     connect(view, &View::meshesReady, this, &Window::onExportReady);
+    view->disableSettings();
 
     auto p = new QProgressDialog(this);
     p->setCancelButton(nullptr);
     p->setWindowModality(Qt::WindowModal);
     p->setLabelText("Exporting...");
     p->setMaximum(0);
-    connect(this, &Window::exportDone, p, &QProgressDialog::reset);
-    p->show();
 
+    // If we cancel the export (by pressing escape), then we shouldn't
+    // run the final export step (of actually saving the meshes)
+    connect(p, &QProgressDialog::rejected, this, [=](){
+            disconnect(view, &View::meshesReady, this, &Window::onExportReady);
+            this->export_filename = ""; });
+
+    // Delete the progress dialog when we finish or cancel the export
+    connect(this, &Window::exportDone, p, &QProgressDialog::deleteLater);
+    connect(p, &QProgressDialog::rejected, p, &QProgressDialog::deleteLater);
+
+    // When the progress dialog is destroyed, re-enable settings
+    connect(p, &QProgressDialog::destroyed, view, &View::enableSettings);
+
+    p->show();
     view->checkMeshes();
 }
 
