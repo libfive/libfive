@@ -64,6 +64,8 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
             ts[i]->index[vi] = verts.size();
 
             verts.push_back(ts[i]->vert(vi).template cast<float>());
+            norms.push_back(ts[i]->norm(vi).template cast<float>());
+            ranks.push_back(ts[i]->rank(vi));
         }
         vs[i] = ts[i]->index[vi];
     }
