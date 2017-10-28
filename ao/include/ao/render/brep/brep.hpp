@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <vector>
 #include <Eigen/Eigen>
+#include <Eigen/StdVector>
 
 namespace Kernel {
 
@@ -31,10 +32,12 @@ public:
 
     /*  Flat array of point positions
      *  The 0th position is reserved as a marker */
-    std::vector<Eigen::Matrix<float, N, 1>> verts;
+    std::vector<Eigen::Matrix<float, N, 1>,
+                Eigen::aligned_allocator<Eigen::Matrix<float, N, 1>>> verts;
 
     /*  [N-1]-dimensional objects (line segments, triangles) */
-    std::vector<Eigen::Matrix<uint32_t, N, 1>> branes;
+    std::vector<Eigen::Matrix<uint32_t, N, 1>,
+                Eigen::aligned_allocator<Eigen::Matrix<uint32_t, N, 1>>> branes;
 };
 
 }   // namespace Kernel
