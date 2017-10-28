@@ -607,6 +607,30 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         }
     }
 
+    // Finally, populate normals for every vertex with a minimal rank
+    if (vertex_count)
+    {
+        unsigned i=0;
+        for (unsigned v=0; v < vertex_count; ++v)
+        {
+            if (ranks(v) == 1)
+            {
+                eval->array.set(vert3(v).template cast<float>(), i++);
+            }
+        }
+        auto ds = eval->array.derivs(i);
+
+        i = 0;
+        for (unsigned v=0; v < vertex_count; ++v)
+        {
+            if (ranks(v) == 1)
+            {
+                norms.col(v) = ds.col(i++).template head<N>()
+                                          .template cast<double>();
+            }
+        }
+    }
+
     // ...and we're done.
     eval->interval.pop();
 }
