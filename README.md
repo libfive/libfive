@@ -26,7 +26,7 @@ binding to `libao-kernel`.
 It exposes a high-level API to construct shapes,
 and includes a standard library
 of shapes, transforms, and CSG operations.
-- *Studio* is a GUI application in the style of
+- **Studio** is a GUI application in the style of
 [OpenSCAD](http://www.openscad.org/).
 It wraps `libao-guile` and allows for live-coding of solid models.
 The interface also includes direct modeling,
@@ -34,6 +34,12 @@ where the user can push and pull on the model's surface
 to change variables in the script.
 
 # Compiling from source
+The full system (`libao` + `libao-guile` + **Studio**)
+has been successfully compiled on Mac and Linux.
+There's also a third-party fork
+[here](https://github.com/bradrothenberg/ao/tree/win64)
+that builds `libao` on Windows with MSVC.
+
 ## Dependencies
 ### Build system
 - [`cmake`](https://cmake.org/)
