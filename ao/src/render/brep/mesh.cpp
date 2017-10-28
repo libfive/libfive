@@ -167,9 +167,9 @@ std::unique_ptr<Mesh> Mesh::mesh(std::unique_ptr<const XTree<3>> xtree,
 
 void Mesh::line(const Eigen::Vector3f& a, const Eigen::Vector3f& b)
 {
-    auto a_ = verts.size();
+    uint32_t a_ = verts.size();
     verts.push_back(a);
-    auto b_ = verts.size();
+    uint32_t b_ = verts.size();
     verts.push_back(b);
 
     branes.push_back({a_, a_, b_});

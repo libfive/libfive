@@ -131,7 +131,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto t = std::make_shared<Tape>(r);
         FeatureEvaluator e(t);
 
-        REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
+        REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
     }
 
     SECTION("One feature (duplicated)")
@@ -140,7 +140,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto t = std::make_shared<Tape>(r);
         FeatureEvaluator e(t);
 
-        REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
+        REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
     }
 
     SECTION("One feature (duplicated multiple times)")
@@ -149,7 +149,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto t = std::make_shared<Tape>(r);
         FeatureEvaluator e(t);
 
-        REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
+        REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
     }
 
     SECTION("One feature (duplicated even more times)")
@@ -157,7 +157,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto r = max(max(Tree::X(), Tree::X()), max(Tree::X(), Tree::X()));
         auto t = std::make_shared<Tape>(r);
         FeatureEvaluator e(t);
-        REQUIRE(e.featuresAt({0, 0.2, 0}).size() == 1);
+        REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
     }
 
     SECTION("Coincident planes with same normal")
