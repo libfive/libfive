@@ -25,7 +25,7 @@ QOpenGLShaderProgram* arrow;
 QOpenGLShaderProgram* flat;
 QOpenGLShaderProgram* point;
 QOpenGLShaderProgram* monochrome;
-QOpenGLShaderProgram* shaded;
+QOpenGLShaderProgram* shape;
 QOpenGLShaderProgram* busy;
 QOpenGLShaderProgram* bars;
 QOpenGLShaderProgram* line;
@@ -44,7 +44,7 @@ void initializeGL()
 
     flat = build("basic", "flat");
     monochrome = build("basic", "monochrome");
-    shaded = build("basic", "shaded");
+    shape = build("shape", "shape");
     busy = build("basic", "busy");
     bars = build("basic", "bars");
     line = build("line", "monochrome");

@@ -102,16 +102,20 @@ void Shape::draw(const QMatrix4x4& M)
     {
         initializeOpenGLFunctions();
 
-        GLfloat* verts = new GLfloat[mesh->verts.size() * 6];
+        GLfloat* verts = new GLfloat[mesh->verts.size() * 7];
         unsigned i = 0;
-        for (auto& v : mesh->verts)
+        for (unsigned j=0; j < mesh->verts.size(); ++j)
         {
+            auto& v = mesh->verts[j];
+            auto& n = mesh->norms[j];
+            auto& r = mesh->ranks[j];
             verts[i++] = v.x();
             verts[i++] = v.y();
             verts[i++] = v.z();
-            verts[i++] = 1;
-            verts[i++] = 1;
-            verts[i++] = 1;
+            verts[i++] = n.x();
+            verts[i++] = n.y();
+            verts[i++] = n.z();
+            verts[i++] = (r > 1) ? 1.0f : 0.0f;
         }
         vert_vbo.create();
         vert_vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
@@ -140,12 +144,23 @@ void Shape::draw(const QMatrix4x4& M)
         vao.bind();
         vert_vbo.bind();
         tri_vbo.bind();
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), NULL);
+
+        // Position
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7*sizeof(GLfloat), NULL);
+
+        // Normal
         glVertexAttribPointer(
-                1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat),
+                1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat),
                 (GLvoid*)(3 * sizeof(GLfloat)));
+
+        // Sharp
+        glVertexAttribPointer(
+                2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat),
+                (GLvoid*)(6 * sizeof(GLfloat)));
+
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
 
         gl_ready = true;
     }
@@ -155,14 +170,14 @@ void Shape::draw(const QMatrix4x4& M)
         auto shade = (grabbed || hover) ? QVector3D(1, 1, 1)
                                         : QVector3D(0.9, 0.9, 0.9);
 
-        Shader::shaded->bind();
-        glUniform3f(Shader::shaded->uniformLocation("shade"),
+        Shader::shape->bind();
+        glUniform3f(Shader::shape->uniformLocation("shade"),
                     shade.x(), shade.y(), shade.z());
-        glUniformMatrix4fv(Shader::shaded->uniformLocation("M"), 1, GL_FALSE, M.data());
+        glUniformMatrix4fv(Shader::shape->uniformLocation("M"), 1, GL_FALSE, M.data());
         vao.bind();
         glDrawElements(GL_TRIANGLES, mesh->branes.size() * 3, GL_UNSIGNED_INT, NULL);
         vao.release();
-        Shader::shaded->release();
+        Shader::shape->release();
     }
 }
 

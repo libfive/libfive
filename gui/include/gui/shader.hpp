@@ -26,7 +26,7 @@ namespace Shader
 
     extern QOpenGLShaderProgram* flat;
     extern QOpenGLShaderProgram* monochrome;
-    extern QOpenGLShaderProgram* shaded;
+    extern QOpenGLShaderProgram* shape;
     extern QOpenGLShaderProgram* busy;
     extern QOpenGLShaderProgram* bars;
     extern QOpenGLShaderProgram* point;

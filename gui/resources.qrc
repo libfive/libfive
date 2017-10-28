@@ -5,7 +5,8 @@
         <file>gl/basic.vert</file>
         <file>gl/flat.frag</file>
         <file>gl/monochrome.frag</file>
-        <file>gl/shaded.frag</file>
+        <file>gl/shape.frag</file>
+        <file>gl/shape.vert</file>
         <file>gl/busy.frag</file>
         <file>gl/bars.frag</file>
         <file>gl/line.vert</file>
