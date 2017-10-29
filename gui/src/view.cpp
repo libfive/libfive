@@ -365,12 +365,17 @@ void View::mouseMoveEvent(QMouseEvent* event)
             drag_dir * QVector3D::dotProduct(cursor_pos - drag_start, n2) /
             QVector3D::dotProduct(drag_dir, n2);
 
-        auto sol = Kernel::Solver::findRoot(*drag_eval, *drag_target->getVars(),
+        auto sol = Kernel::Solver::findRoot(*drag_eval, drag_target->getVars(),
                 {cursor_pos.x(), cursor_pos.y(), cursor_pos.z()});
         emit(varsDragged(QMap<Kernel::Tree::Id, float>(sol.second)));
 
         drag_valid = fabs(sol.first) < 1e-6;
-        if (drag_target->updateVars(sol.second))
+        bool changed = false;
+        for (auto& s : shapes)
+        {
+            changed |= s->updateVars(sol.second);
+        }
+        if (changed)
         {
             busy.show();
         }

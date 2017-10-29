@@ -34,8 +34,7 @@ class Shape : public QObject, QOpenGLFunctions
 {
     Q_OBJECT
 public:
-    Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
-                                                   float>> vars);
+    Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, float> vars);
 
     /*
      *  In destructor, wait for computation to finish
@@ -86,13 +85,13 @@ public:
      *
      *  Returns true if variable values have changed.
      */
-    bool updateVars(const std::map<Kernel::Tree::Id, float>& vars);
+    bool updateVars(const std::map<Kernel::Tree::Id, float>& vs);
 
     /*
      *  Checks to see whether this shape has attached vars
      *  (which determines whether it's draggable)
      */
-    bool hasVars() const { return vars->size(); }
+    bool hasVars() const { return vars.size(); }
 
     /*
      *  Returns a new evaluator specialized at the given drag position
@@ -105,7 +104,7 @@ public:
     /*
      *  Returns another pointer to the solution map
      */
-    std::shared_ptr<std::map<Kernel::Tree::Id, float>> getVars() const
+    const std::map<Kernel::Tree::Id, float>& getVars() const
     { return vars; }
 
     /*
@@ -149,7 +148,7 @@ protected:
     std::atomic_bool cancel;
 
     Kernel::Tree tree;
-    std::shared_ptr<std::map<Kernel::Tree::Id, float>> vars;
+    std::map<Kernel::Tree::Id, float> vars;
     std::vector<Kernel::XTreeEvaluator,
                 Eigen::aligned_allocator<Kernel::XTreeEvaluator>> es;
 

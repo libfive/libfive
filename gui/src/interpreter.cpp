@@ -154,35 +154,33 @@ void _Interpreter::eval()
     if (valid)
     {
         QList<Shape*> shapes;
-        std::shared_ptr<std::map<Kernel::Tree::Id, float>> vars;
+
+        // Initialize variables and their textual positions
+        std::map<Kernel::Tree::Id, float> vars;
         QMap<Kernel::Tree::Id, Editor::Range> var_pos;
+
+        auto vs = scm_c_eval_string(R"(
+            (use-modules (ao sandbox))
+            (hash-map->list (lambda (k v) v) vars) )");
+
+        for (auto v = vs; !scm_is_null(v); v = scm_cdr(v))
+        {
+            auto data = scm_cdar(v);
+            auto id = static_cast<Kernel::Tree::Id>(
+                    ao_tree_id(scm_to_tree(scm_car(data))));
+            auto value = scm_to_double(scm_cadr(data));
+            vars[id] = value;
+
+            auto vp = scm_caddr(data);
+            var_pos[id] = {scm_to_int(scm_car(vp)), 0,
+                           scm_to_int(scm_cadr(vp)),
+                           scm_to_int(scm_caddr(vp))};
+        }
 
         while (!scm_is_null(result))
         {
             if (scm_is_tree(scm_cdar(result)))
             {
-                if (vars.get() == nullptr)
-                {
-                    vars.reset(new std::map<Kernel::Tree::Id, float>);
-
-                    auto vs = scm_c_eval_string(R"(
-                        (use-modules (ao sandbox))
-                        (hash-map->list (lambda (k v) v) vars) )");
-
-                    for (auto v = vs; !scm_is_null(v); v = scm_cdr(v))
-                    {
-                        auto data = scm_cdar(v);
-                        auto id = static_cast<Kernel::Tree::Id>(
-                                ao_tree_id(scm_to_tree(scm_car(data))));
-                        auto value = scm_to_double(scm_cadr(data));
-                        (*vars)[id] = value;
-
-                        auto vp = scm_caddr(data);
-                        var_pos[id] = {scm_to_int(scm_car(vp)), 0,
-                                       scm_to_int(scm_cadr(vp)),
-                                       scm_to_int(scm_caddr(vp))};
-                    }
-                }
                 auto tree = scm_to_tree(scm_cdar(result));
                 auto shape = new Shape(*tree, vars);
                 shape->moveToThread(QApplication::instance()->thread());

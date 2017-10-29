@@ -24,8 +24,7 @@ const int Shape::MESH_DIV_ABORT;
 const int Shape::MESH_DIV_NEW_VARS;
 const int Shape::MESH_DIV_NEW_VARS_SMALL;
 
-Shape::Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
-                                                      float>> vars)
+Shape::Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, float> vars)
     : tree(t), vars(vars), vert_vbo(QOpenGLBuffer::VertexBuffer),
       tri_vbo(QOpenGLBuffer::IndexBuffer)
 {
@@ -33,7 +32,7 @@ Shape::Shape(Kernel::Tree t, std::shared_ptr<std::map<Kernel::Tree::Id,
     es.reserve(8);
     for (unsigned i=0; i < es.capacity(); ++i)
     {
-        es.emplace_back(Kernel::XTreeEvaluator(t, *vars));
+        es.emplace_back(Kernel::XTreeEvaluator(t, vars));
     }
 
     connect(this, &Shape::gotMesh, this, &Shape::redraw);
@@ -52,7 +51,7 @@ Shape::~Shape()
 bool Shape::updateFrom(const Shape* other)
 {
     assert(other->id() == id());
-    return updateVars(*(other->vars));
+    return updateVars(other->vars);
 }
 
 bool Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
@@ -68,8 +67,8 @@ bool Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
 
     for (auto& v : vs)
     {
-        auto va = vars->find(v.first);
-        if (va != vars->end() && va->second != v.second)
+        auto va = vars.find(v.first);
+        if (va != vars.end() && va->second != v.second)
         {
             if (fabs(va->second - v.second) > 1e-6)
             {
@@ -208,7 +207,7 @@ void Shape::startRender(QPair<Settings, int> s)
         {
             for (auto& e : es)
             {
-                e.updateVars(*vars);
+                e.updateVars(vars);
             }
             s.second = (s.second == MESH_DIV_NEW_VARS) ? default_div : 0;
         }
@@ -256,7 +255,7 @@ void Shape::setHover(bool h)
 Kernel::JacobianEvaluator* Shape::dragFrom(const QVector3D& v)
 {
     auto e = new Kernel::JacobianEvaluator(
-            std::make_shared<Kernel::Tape>(tree), *vars);
+            std::make_shared<Kernel::Tape>(tree), vars);
     e->evalAndPush({v.x(), v.y(), v.z()});
     return e;
 }
