@@ -384,7 +384,15 @@ QMessageBox::StandardButton Window::checkUnsaved()
 void Window::setFilename(const QString& f)
 {
     filename = f;
-    setWindowFilePath(f);
+    if (filename.startsWith(":/"))
+    {
+        setWindowTitle(QFileInfo(filename).fileName() + " (read-only)");
+    }
+    else
+    {
+        setWindowTitle(QString());
+        setWindowFilePath(f);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
