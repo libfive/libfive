@@ -80,6 +80,16 @@ Window::Window(const QString& target)
     open_action->setShortcut(QKeySequence::Open);
     connect(open_action, &QAction::triggered, this, &Window::onOpen);
 
+    // Add a "Revert to saved" item, which is only enabled if there are
+    // unsaved changes and there's an existing filename to load from.
+    auto revert_action = file_menu->addAction("Revert to saved");
+    connect(revert_action, &QAction::triggered, this, &Window::onRevert);
+    connect(editor, &Editor::modificationChanged,
+            revert_action, [=](bool changed){
+                revert_action->setEnabled(
+                        changed && !this->filename.isEmpty()); });
+    revert_action->setEnabled(false);
+
     file_menu->addSeparator();
 
     auto save_action = file_menu->addAction("Save");
@@ -192,6 +202,13 @@ void Window::onOpen(bool)
     {
         setFilename(f);
     }
+}
+
+void Window::onRevert(bool)
+{
+    CHECK_UNSAVED();
+    Q_ASSERT(!filename.isEmpty());
+    loadFile(filename);
 }
 
 bool Window::loadFile(QString f)
