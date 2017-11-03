@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 App::App(int& argc, char** argv)
     : QApplication(argc, argv),
-      window(argc > 1 ? argv[1] : ":/examples/tutorial.ao")
+      window(argc > 1 ? argv[1] : QString())
 {
     // Nothing to do here
 }

@@ -39,7 +39,7 @@ switch (checkUnsaved())                                         \
     default:    assert(false);                                  \
 }
 
-Window::Window(const QString& target)
+Window::Window(QString target)
     : QMainWindow(), editor(new Editor), view(new View)
 {
     resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
@@ -156,6 +156,8 @@ Window::Window(const QString& target)
     auto help_menu = menuBar()->addMenu("Help");
     connect(help_menu->addAction("About"), &QAction::triggered,
             this, &Window::onAbout);
+    connect(help_menu->addAction("Load tutorial"), &QAction::triggered,
+            this, &Window::onLoadTutorial);
 
     // Start embedded Guile interpreter
     auto interpreter = new Interpreter();
@@ -175,7 +177,18 @@ Window::Window(const QString& target)
 
     show();
 
-    if (loadFile(target))
+    {   //  Load the tutorial file on first run if there's no target
+        QSettings settings("impraxical", "Studio");
+        if (settings.contains("first-run") &&
+            settings.value("first-run").toBool() &&
+            target.isNull())
+        {
+            target = ":/examples/tutorial.ao";
+        }
+        settings.setValue("first-run", false);
+    }
+
+    if (!target.isEmpty() && loadFile(target))
     {
         setFilename(target);
     }
@@ -469,4 +482,15 @@ void Window::onAbout(bool)
 #else
     QMessageBox::about(this, "Studio",info);
 #endif
+}
+
+void Window::onLoadTutorial(bool)
+{
+    CHECK_UNSAVED();
+
+    QString target = ":/examples/tutorial.ao";
+    if (loadFile(target))
+    {
+        setFilename(target);
+    }
 }

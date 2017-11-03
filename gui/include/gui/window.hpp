@@ -30,7 +30,11 @@ class Window : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit Window(const QString& target);
+    /*
+     *  If target is the null QString, then loads the tutorial file
+     *  on first run.
+     */
+    explicit Window(QString target);
 
     /*
      *  Loads a file by path, properly checking if the existing document
@@ -46,6 +50,7 @@ protected slots:
     void onNew(bool=false);
     void onExport(bool=false);
     void onAbout(bool=false);
+    void onLoadTutorial(bool=false);
 
 signals:
     void exportDone();
