@@ -22,6 +22,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   "circle #[x y] r"
   (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y))) r)) center))
 
+(define-public (polygon center r n)
+  "polygon #[x y] r n
+  Constructs a polygon with center-to-vertex distance r and n sides"
+  (let* ((r (* r (cos (/ pi n))))
+         (half (lambda-shape (x y z) (- y r))))
+    (move (apply intersection
+      (map (lambda (i) (rotate-z half (* 2 pi i (/ n))))
+           (iota n))) center)))
+
 (define-public (rectangle a b)
   "rectangle #[xmin ymin] #[xmax ymax]
   Constructs a rectangle from its corners"
