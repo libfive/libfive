@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <QTextEdit>
 #include <QVBoxLayout>
 
@@ -21,16 +23,39 @@ DocumentationPane::DocumentationPane()
     auto txt = new QTextEdit();
 
     txt->setFontFamily("Courier");
+
+    // Flatten documentation into a single-level map
+    QMap<QString, QString> fs;
     for (auto mod : docs->docs.keys())
     {
         for (auto f : docs->docs[mod].keys())
         {
-            txt->setFontWeight(14);
-            txt->insertPlainText(f + "\n");
-            txt->setFontWeight(12);
-            txt->insertPlainText(docs->docs[mod][f].doc + "\n");
+            fs[f] = docs->docs[mod][f].doc;
         }
     }
+
+    for (auto f : fs.keys())
+    {
+        const auto doc = fs[f];
+
+        auto f_ = doc.count(" ") ? doc.split(" ")[0] : "";
+        if (f_ != f)
+        {
+            if (fs.count(f_) != 1)
+            {
+                std::cerr << "DocumentationPane: missing alias "
+                          << f_.toStdString() << " for " << f.toStdString()
+                          << std::endl;
+            }
+            txt->insertPlainText(f);
+            txt->insertPlainText(": alias for " + f_ + "\n\n");
+        }
+        else
+        {
+            txt->insertPlainText(doc + "\n\n");
+        }
+    }
+
     layout->addWidget(txt);
 
     setLayout(layout);
