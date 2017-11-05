@@ -23,8 +23,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QTimer>
 #include <libguile.h>
 
-#include "gui/shape.hpp"
 #include "gui/editor.hpp"
+
+struct Documentation;
+class Shape;
 
 /*
  *  _Interpreter is a child object that lives in a secondary thread
@@ -52,6 +54,12 @@ signals:
      *  the syntax highlighter
      */
     void keywords(QString kws);
+
+    /*
+     *  Emitted to pass documentation to the main window
+     *  (for use in Documentation panes)
+     */
+    void docs(Documentation* docs);
 
     /*
      *  Emitted to return a list of Shapes for the renderer
@@ -121,6 +129,7 @@ signals:
     void gotResult(QString result);
     void gotError(QString error, QString stack, Editor::Range p);
     void keywords(QString kws);
+    void docs(Documentation* docs);
     void gotShapes(QList<Shape*> s);
     void gotVars(QMap<Kernel::Tree::Id, Editor::Range> vs);
 

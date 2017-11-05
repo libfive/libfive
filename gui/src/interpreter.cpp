@@ -19,6 +19,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QApplication>
 
 #include "gui/interpreter.hpp"
+#include "gui/documentation.hpp"
+#include "gui/shape.hpp"
+
 #include "ao-guile.h"
 
 _Interpreter::_Interpreter()
@@ -66,12 +69,34 @@ port-eof?
         scm_permanent_object(s);
     }
 
+    //  Extract a list of keywords from our list of sandbox-safe symbols
     auto kws = scm_to_locale_string(scm_c_eval_string(R"(
 (string-drop (string-drop-right
     (format #f "~A" (apply append (map cdr sandbox-bindings))) 1) 1)
 )"));
     emit(keywords(kws));
     free(kws);
+
+    // Extract a list of function names + docstrings
+    QList<QString> modules = {"(ao shapes)", "(ao csg)", "(ao transforms)"};
+    Documentation* ds = new Documentation;
+    for (auto mod : modules)
+    {
+        auto f = scm_c_eval_string((R"(
+        (module-map (lambda (sym var)
+            (cons (symbol->string sym)
+                  (procedure-documentation (variable-ref var))))
+          (resolve-interface ')" + mod + "))").toLocal8Bit().constData());
+        for (; !scm_is_null(f); f = scm_cdr(f))
+        {
+            auto name = scm_to_locale_string(scm_caar(f));
+            auto doc = scm_to_locale_string(scm_cdar(f));
+            ds->insert(mod, name, doc);
+            free(name);
+            free(doc);
+        }
+    }
+    emit(docs(ds));
 }
 
 void _Interpreter::eval()
@@ -226,6 +251,8 @@ Interpreter::Interpreter()
             this, &Interpreter::gotError);
     connect(&interpreter, &_Interpreter::keywords,
             this, &Interpreter::keywords);
+    connect(&interpreter, &_Interpreter::docs,
+            this, &Interpreter::docs);
     connect(&interpreter, &_Interpreter::gotShapes,
             this, &Interpreter::gotShapes);
     connect(&interpreter, &_Interpreter::gotVars,

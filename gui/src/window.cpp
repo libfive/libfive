@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QMessageBox>
 
 #include "gui/window.hpp"
+#include "gui/documentation.hpp"
 #include "gui/editor.hpp"
 #include "gui/interpreter.hpp"
 #include "gui/view.hpp"
@@ -158,6 +159,8 @@ Window::Window(QString target)
             this, &Window::onAbout);
     connect(help_menu->addAction("Load tutorial"), &QAction::triggered,
             this, &Window::onLoadTutorial);
+    connect(help_menu->addAction("Shape reference"), &QAction::triggered,
+            this, &Window::onShowDocs);
 
     // Start embedded Guile interpreter
     auto interpreter = new Interpreter();
@@ -168,6 +171,7 @@ Window::Window(QString target)
     connect(interpreter, &Interpreter::gotResult, editor, &Editor::onResult);
     connect(interpreter, &Interpreter::gotError, editor, &Editor::onError);
     connect(interpreter, &Interpreter::keywords, editor, &Editor::setKeywords);
+    connect(interpreter, &Interpreter::docs, this, &Window::setDocs);
     connect(interpreter, &Interpreter::gotShapes, view, &View::setShapes);
     connect(interpreter, &Interpreter::gotVars,
             editor, &Editor::setVarPositions);
@@ -492,5 +496,18 @@ void Window::onLoadTutorial(bool)
     if (loadFile(target))
     {
         setFilename(target);
+    }
+}
+
+void Window::setDocs(Documentation* docs)
+{
+    DocumentationPane::setDocs(docs);
+}
+
+void Window::onShowDocs(bool)
+{
+    if (DocumentationPane::hasDocs())
+    {
+        (new DocumentationPane())->show();
     }
 }

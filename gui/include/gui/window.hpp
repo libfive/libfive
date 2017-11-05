@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class Editor;
 class View;
+struct Documentation;
 namespace Kernel { class Mesh; }
 
 class Window : public QMainWindow
@@ -51,6 +52,10 @@ protected slots:
     void onExport(bool=false);
     void onAbout(bool=false);
     void onLoadTutorial(bool=false);
+    void onShowDocs(bool=false);
+
+    void onExportReady(QList<const Kernel::Mesh*> shapes);
+    void setDocs(Documentation* docs);
 
 signals:
     void exportDone();
@@ -65,8 +70,6 @@ protected:
 
     bool loadFile(QString f);
     bool saveFile(QString f);
-
-    void onExportReady(QList<const Kernel::Mesh*> shapes);
 
     /*  Filename of the current file, or empty string */
     QString filename;

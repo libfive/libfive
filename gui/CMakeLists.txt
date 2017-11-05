@@ -19,6 +19,7 @@ set(SRCS src/main.cpp
     src/bars.cpp
     src/busy.cpp
     src/camera.cpp
+    src/documentation.cpp
     src/icosphere.cpp
     src/script.cpp
     src/settings.cpp
@@ -37,6 +38,7 @@ set(QOBJECTS
     include/gui/app.hpp
     include/gui/busy.hpp
     include/gui/camera.hpp
+    include/gui/documentation.hpp
     include/gui/settings.hpp
     include/gui/syntax.hpp
     include/gui/shape.hpp
