@@ -56,7 +56,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (remap-shape (shape x y z) x z y))
 
 (define-public (reflect-xz shape)
-  "reflect-xx shape
+  "reflect-xz shape
   Moves the given shape across the plane X=Z"
   (remap-shape (shape x y z) z y x))
 

@@ -19,12 +19,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (use-modules (ao kernel) (ao vec) (ao csg) (ao transforms))
 
 (define-public (circle center r)
-  "circle #[x y] r"
+  "circle #[x y] r
+  A 2D circle with the given center and radius"
   (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y))) r)) center))
 
 (define-public (polygon center r n)
   "polygon #[x y] r n
-  Constructs a polygon with center-to-vertex distance r and n sides"
+  A polygon with center-to-vertex distance r and n sides"
   (let* ((r (* r (cos (/ pi n))))
          (half (lambda-shape (x y z) (- y r))))
     (move (apply intersection
@@ -33,13 +34,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public (rectangle a b)
   "rectangle #[xmin ymin] #[xmax ymax]
-  Constructs a rectangle from its corners"
+  A rectangle with the given bounding corners"
   (lambda-shape (x y z)
                 (max (- (.x a) x) (- x (.x b)) (- (.y a) y) (- y (.y b)))))
 
 (define-public (rounded-rectangle a b r)
   "rounded-rectangle #[xmin ymin] #[xmax ymax] r
-  Constructs a rectangle with rounded corners"
+  A rectangle with rounded corners"
   (union (rectangle (+ a (vec2 0 r)) (- b (vec2 0 r)))
          (rectangle (+ a (vec2 r 0)) (- b (vec2 r 0)))
          (circle (+ a r) r)
@@ -49,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public (triangle a b c)
   "triangle #[x0 y0] #[x1 y1] #[x2 y2]
-  Returns a 2D triangle"
+  A 2D triangle"
   (define (half-plane a b)
     (lambda-shape (x y z)
       (- (* (- (.y b) (.y a)) (- x (.x a)))
@@ -63,11 +64,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public (box a b)
-  "box #[xmin ymin zmin] #[xmax ymax zmax]\\"
+  "box #[xmin ymin zmin] #[xmax ymax zmax]
+  A box with the given bounds"
   (extrude-z (rectangle a b) (.z a) (.z b)))
 
 (define-public (sphere center r)
-  "sphere #[x y z] r"
+  "sphere #[x y z] r
+  A sphere with the given center and radius"
   (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y) (square z))) r))
         center))
 
@@ -133,7 +136,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define* (array-polar shape n #:optional (c #[0 0]))
   "array-polar shape n [#[x y]]
-  Iterate a shape about an optional center position"
+  Iterates a shape about an optional center position"
   (define pi 3.1415926)
   (apply union (map (lambda (i) (rotate-z shape (* 2 pi (/ i n)) c)) (iota n))))
 (export array-polar)
