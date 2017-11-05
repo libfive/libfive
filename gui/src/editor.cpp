@@ -42,7 +42,7 @@ Editor::Editor(QWidget* parent)
         QFont font;
         font.setFamily("Courier");
         QFontMetrics fm(font);
-        script->setTabStopWidth(fm.width("    "));
+        script->setTabStopWidth(fm.width("  "));
         script_doc->setDefaultFont(font);
         err_doc->setDefaultFont(font);
         err->setFixedHeight(fm.height());
