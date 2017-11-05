@@ -18,8 +18,6 @@ DocumentationPane::DocumentationPane()
 {
     Q_ASSERT(docs.data());
 
-    auto layout = new QVBoxLayout();
-
     // Flatten documentation into a single-level map
     QMap<QString, QString> fs;
     QMap<QString, QString> tags;
@@ -64,11 +62,22 @@ DocumentationPane::DocumentationPane()
         }
     }
     txt->setReadOnly(true);
-    txt->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
 
+    {
+        int max_width = 0;
+        QFontMetrics fm(txt->font());
+        for (auto line : txt->toPlainText().split("\n"))
+        {
+            max_width = std::max(max_width, fm.width(line));
+        }
+        txt->setMinimumWidth(max_width + 40);
+    }
+
+    auto layout = new QVBoxLayout();
     layout->addWidget(txt);
-
+    layout->setMargin(0);
     setLayout(layout);
+
     setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint |
                    Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     setAttribute(Qt::WA_DeleteOnClose);
