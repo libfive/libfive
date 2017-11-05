@@ -77,7 +77,14 @@ DocumentationPane::DocumentationPane()
             txt->insertPlainText("\n");
         }
     }
+    {   // Erase the two trailing newlines
+        auto cursor = QTextCursor(txt->document());
+        cursor.movePosition(QTextCursor::End);
+        cursor.deletePreviousChar();
+        cursor.deletePreviousChar();
+    }
     txt->setReadOnly(true);
+    txt->scrollToAnchor("#i1");
 
     {
         int max_width = 0;
