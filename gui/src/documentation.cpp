@@ -21,6 +21,7 @@ DocumentationPane::DocumentationPane()
     // Flatten documentation into a single-level map
     QMap<QString, QString> fs;
     QMap<QString, QString> tags;
+    QMap<QString, QString> mods;
     for (auto mod : docs->docs.keys())
     {
         for (auto f : docs->docs[mod].keys())
@@ -28,6 +29,7 @@ DocumentationPane::DocumentationPane()
             fs[f] = docs->docs[mod][f].doc;
             tags.insert(f, "i" + QString::fromStdString(
                         std::to_string(tags.size())));
+            mods.insert(f, mod);
         }
     }
 
@@ -38,27 +40,41 @@ DocumentationPane::DocumentationPane()
         const auto doc = fs[f];
 
         auto f_ = doc.count(" ") ? doc.split(" ")[0] : "";
-        txt->insertHtml("<a name=\"" + tags[f] + "\" href=\"#" + tags[f] + "\">" + f + "</a><br>");
+        txt->insertHtml(
+                "<tt><a name=\"" + tags[f] +
+                "\" href=\"#" + tags[f] + "\">" + f + "</a>" +
+                "&nbsp;&nbsp;&nbsp;&nbsp;" +
+                "<font color=\"silver\">" + mods[f] + "</font>" +
+                "</tt><br>");
         if (f_ != f)
         {
-            txt->insertPlainText(f);
-            txt->insertPlainText(": alias for ");
+            txt->insertHtml("<tt>" + f + "</tt>");
+            txt->insertHtml(": alias for ");
             if (fs.count(f_) != 1)
             {
                 std::cerr << "DocumentationPane: missing alias "
                           << f_.toStdString() << " for " << f.toStdString()
                           << std::endl;
-                txt->insertPlainText(f_ + " (missing)\n");
+                txt->insertHtml("<tt>" + f_ + "</tt> (missing)\n");
             }
             else
             {
-                txt->insertHtml("<a href=\"#" + tags[f_] + "\">" + f_ + "</a><br>");
+                txt->insertHtml("<tt><a href=\"#" + tags[f_] + "\">" + f_ + "</a></tt><br>");
             }
             txt->insertPlainText("\n");
         }
         else
         {
-            txt->insertPlainText(doc + "\n\n");
+            auto lines = doc.split("\n");
+            if (lines.size() > 0)
+            {
+                txt->insertHtml("<tt>" + lines[0] + "</tt><br>");
+            }
+            for (int i=1; i < lines.size(); ++i)
+            {
+                txt->insertPlainText(lines[i] + "\n");
+            }
+            txt->insertPlainText("\n");
         }
     }
     txt->setReadOnly(true);
