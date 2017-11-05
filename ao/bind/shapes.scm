@@ -75,26 +75,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
         center))
 
 (define-public (cylinder-z base r h)
-  "cylinder #[x0 y0 z0] r h
+  "cylinder-z #[x0 y0 z0] r h
   A cylinder (oriented along the Z axis) "
   (extrude-z (circle base r) (.z base) (+ h (.z base))))
 (define-public cylinder cylinder-z)
 
 (define-public (cone-z base r height)
-  "cone #[x y z] r height
+  "cone-z #[x y z] r height
   Creates a cone from a base location, radius, and height"
   (taper-xy-z (cylinder-z base r height) base height 0))
 (define-public cone cone-z)
 
 (define-public (pyramid-z a b zmin height)
-  "pyramid #[xmin ymin] #[xmax ymax] zmin dz
+  "pyramid-z #[xmin ymin] #[xmax ymax] zmin dz
   Creates a pyramid from a base rectangle, lower z value and height"
   (taper-xy-z (extrude-z (rectangle a b) zmin (+ zmin height))
               (vec3 (/ (+ a b) 2) zmin) height 0))
 (define-public pyramid pyramid-z)
 
 (define-public (torus-z center R r)
-  "torus #[x y z] R r
+  "torus-z #[x y z] R r
   Create a torus from the given center, outer radius, and inner radius"
   (define (c a b) (sqrt (+ (square a) (square b))))
   (move (lambda-shape (x y z) (- (c (- R (c x y)) z) r))
