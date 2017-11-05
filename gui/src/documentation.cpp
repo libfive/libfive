@@ -125,7 +125,9 @@ DocumentationPane::DocumentationPane()
     auto layout = new QVBoxLayout();
     auto row = new QHBoxLayout;
     layout->addWidget(txt);
+    row->addSpacing(5);
     row->addWidget(new QLabel("🔍  "));
+    row->addSpacing(5);
     row->addWidget(edit);
     layout->addItem(row);
     layout->setMargin(0);
