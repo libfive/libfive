@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <QLabel>
 #include <QLineEdit>
 #include <QCompleter>
 #include <QTextBrowser>
@@ -98,6 +99,7 @@ DocumentationPane::DocumentationPane()
         txt->setMinimumWidth(max_width + 40);
     }
 
+    // Build a search bar
     auto edit = new QLineEdit;
     auto completer = new QCompleter(fs.keys());
     completer->setCaseSensitivity(Qt::CaseInsensitive);
@@ -121,8 +123,11 @@ DocumentationPane::DocumentationPane()
             });
 
     auto layout = new QVBoxLayout();
+    auto row = new QHBoxLayout;
     layout->addWidget(txt);
-    layout->addWidget(edit);
+    row->addWidget(new QLabel("🔍  "));
+    row->addWidget(edit);
+    layout->addItem(row);
     layout->setMargin(0);
     layout->setSpacing(0);
     setLayout(layout);
