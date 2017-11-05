@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <QLineEdit>
+#include <QCompleter>
 #include <QTextBrowser>
 #include <QVBoxLayout>
 
@@ -96,14 +98,42 @@ DocumentationPane::DocumentationPane()
         txt->setMinimumWidth(max_width + 40);
     }
 
+    auto edit = new QLineEdit;
+    auto completer = new QCompleter(fs.keys());
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    edit->setCompleter(completer);
+    connect(completer, QOverload<const QString&>::of(&QCompleter::highlighted),
+            txt, [=](const QString& str){
+                if (tags.count(str))
+                {
+                    txt->scrollToAnchor(tags[str]);
+                }
+            });
+    connect(edit, &QLineEdit::textChanged, txt, [=](const QString& str){
+                for (auto& t : tags.keys())
+                {
+                    if (t.startsWith(str))
+                    {
+                        txt->scrollToAnchor(tags[t]);
+                        return;
+                    }
+                }
+            });
+
     auto layout = new QVBoxLayout();
     layout->addWidget(txt);
+    layout->addWidget(edit);
     layout->setMargin(0);
+    layout->setSpacing(0);
     setLayout(layout);
 
+    setWindowTitle("Shape reference");
     setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint |
                    Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     setAttribute(Qt::WA_DeleteOnClose);
+
+    show();
+    edit->setFocus();
 }
 
 void DocumentationPane::setDocs(Documentation* ds)
