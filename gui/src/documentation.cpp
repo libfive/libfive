@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <QEvent>
+#include <QKeyEvent>
 #include <QPointer>
 #include <QLabel>
 #include <QCompleter>
@@ -90,6 +92,7 @@ DocumentationPane::DocumentationPane()
     }
     txt->setReadOnly(true);
     txt->scrollToAnchor("#i1");
+    txt->installEventFilter(this);
 
     {
         int max_width = 0;
@@ -122,6 +125,7 @@ DocumentationPane::DocumentationPane()
                     }
                 }
             });
+    search->installEventFilter(this);
 
     auto layout = new QVBoxLayout();
     auto row = new QHBoxLayout;
@@ -164,5 +168,20 @@ void DocumentationPane::open()
     {
         instance->show();
         instance->search->setFocus();
+    }
+}
+bool DocumentationPane::eventFilter(QObject* object, QEvent* event)
+{
+    Q_UNUSED(object);
+
+    if (event->type() == QEvent::KeyPress &&
+        static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape)
+    {
+        deleteLater();
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }

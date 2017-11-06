@@ -48,6 +48,11 @@ public:
     static void open();
 
 protected:
+    /*
+     *  Special-case handling of escape (closes window)
+     */
+    bool eventFilter(QObject* object, QEvent* event) override;
+
     /*  Take ownership of the documentation  */
     static QScopedPointer<Documentation> docs;
     static QPointer<DocumentationPane> instance;
