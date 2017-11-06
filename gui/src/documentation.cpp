@@ -40,6 +40,12 @@ DocumentationPane::DocumentationPane()
         }
     }
 
+    int max_name = 0;
+    for (auto& f : fs.keys())
+    {
+        max_name = std::max(f.length(), max_name);
+    }
+
     // Unpack documentation into a text box
     auto txt = new QTextBrowser();
     for (auto f : fs.keys())
@@ -47,10 +53,18 @@ DocumentationPane::DocumentationPane()
         const auto doc = fs[f];
 
         auto f_ = doc.count(" ") ? doc.split(" ")[0] : "";
+
+        // Add padding so that the module names all line up
+        QString padding;
+        for (int i=0; i < max_name - f.length() + 4; ++i)
+        {
+            padding += "&nbsp;";
+        }
+
         txt->insertHtml(
                 "<tt><a name=\"" + tags[f] +
                 "\" href=\"#" + tags[f] + "\">" + f + "</a>" +
-                "&nbsp;&nbsp;&nbsp;&nbsp;" +
+                padding +
                 "<font color=\"silver\">" + mods[f] + "</font>" +
                 "</tt><br>");
         if (f_ != f)
