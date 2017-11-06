@@ -508,6 +508,6 @@ void Window::onShowDocs(bool)
 {
     if (DocumentationPane::hasDocs())
     {
-        new DocumentationPane();
+        DocumentationPane::open();
     }
 }

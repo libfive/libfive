@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include <QLineEdit>
 #include <QString>
 #include <QMap>
 
@@ -44,8 +45,12 @@ public:
 
     static void setDocs(Documentation* ds);
     static bool hasDocs();
+    static void open();
 
 protected:
     /*  Take ownership of the documentation  */
     static QScopedPointer<Documentation> docs;
+    static QPointer<DocumentationPane> instance;
+
+    QLineEdit* search;
 };

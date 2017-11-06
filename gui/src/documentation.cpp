@@ -1,7 +1,7 @@
 #include <iostream>
 
+#include <QPointer>
 #include <QLabel>
-#include <QLineEdit>
 #include <QCompleter>
 #include <QTextBrowser>
 #include <QVBoxLayout>
@@ -16,8 +16,10 @@ void Documentation::insert(QString module, QString name, QString doc)
 ////////////////////////////////////////////////////////////////////////////////
 
 QScopedPointer<Documentation> DocumentationPane::docs;
+QPointer<DocumentationPane> DocumentationPane::instance;
 
 DocumentationPane::DocumentationPane()
+    : search(new QLineEdit)
 {
     Q_ASSERT(docs.data());
 
@@ -100,10 +102,9 @@ DocumentationPane::DocumentationPane()
     }
 
     // Build a search bar
-    auto edit = new QLineEdit;
     auto completer = new QCompleter(fs.keys());
     completer->setCaseSensitivity(Qt::CaseInsensitive);
-    edit->setCompleter(completer);
+    search->setCompleter(completer);
     connect(completer, QOverload<const QString&>::of(&QCompleter::highlighted),
             txt, [=](const QString& str){
                 if (tags.count(str))
@@ -111,7 +112,7 @@ DocumentationPane::DocumentationPane()
                     txt->scrollToAnchor(tags[str]);
                 }
             });
-    connect(edit, &QLineEdit::textChanged, txt, [=](const QString& str){
+    connect(search, &QLineEdit::textChanged, txt, [=](const QString& str){
                 for (auto& t : tags.keys())
                 {
                     if (t.startsWith(str))
@@ -128,7 +129,7 @@ DocumentationPane::DocumentationPane()
     row->addSpacing(5);
     row->addWidget(new QLabel("🔍  "));
     row->addSpacing(5);
-    row->addWidget(edit);
+    row->addWidget(search);
     layout->addItem(row);
     layout->setMargin(0);
     layout->setSpacing(0);
@@ -140,7 +141,7 @@ DocumentationPane::DocumentationPane()
     setAttribute(Qt::WA_DeleteOnClose);
 
     show();
-    edit->setFocus();
+    search->setFocus();
 }
 
 void DocumentationPane::setDocs(Documentation* ds)
@@ -151,4 +152,17 @@ void DocumentationPane::setDocs(Documentation* ds)
 bool DocumentationPane::hasDocs()
 {
     return docs.data();
+}
+
+void DocumentationPane::open()
+{
+    if (instance.isNull())
+    {
+        instance = new DocumentationPane();
+    }
+    else
+    {
+        instance->show();
+        instance->search->setFocus();
+    }
 }
