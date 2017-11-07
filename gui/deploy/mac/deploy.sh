@@ -7,7 +7,11 @@ APP=$EXE.app
 VERSION=`git describe --exact-match --tags || echo "($(git rev-parse --abbrev-ref HEAD))"`
 VERSION=`echo $VERSION|sed s:/:-:g`
 
-cd ../../../build
+cd ../../..
+rm -r build
+mkdir build
+cd build
+cmake -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt/5.9.2 -GNinja -DCMAKE_OSX_DEPLOYMENT_TARGET=10.10 ..
 rm -rf $APP gui/$APP
 ninja clean
 ninja
