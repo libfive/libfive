@@ -130,6 +130,9 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::ATAN:
             od = ad / (pow(av, 2) + 1);
             break;
+        case Opcode::LOG:
+            od = ad * log(av);
+            break;
         case Opcode::EXP:
             od = ad * exp(av);
             break;

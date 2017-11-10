@@ -49,6 +49,7 @@ namespace Opcode
     OPCODE(ATAN, 15)        \
     OPCODE(EXP, 16)         \
     OPCODE(ABS, 28)         \
+    OPCODE(LOG, 30)         \
     OPCODE(RECIP, 29)       \
                             \
     OPCODE(ADD, 17)         \
@@ -67,7 +68,7 @@ enum Opcode {
 #define OPCODE(s, i) s=i,
     OPCODES
 #undef OPCODE
-    LAST_OP=30,
+    LAST_OP=31,
 };
 
 size_t args(Opcode op);

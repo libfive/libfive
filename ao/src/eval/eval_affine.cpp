@@ -259,6 +259,8 @@ void AffineEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 ? Interval::I(-M_PI/2, M_PI/2)
                 : boost::numeric::atan(ai));
             break;
+        case Opcode::LOG:
+            setAffine(id, boost::numeric::log(ai));
         case Opcode::EXP:
             setAffine(id, boost::numeric::exp(ai));
             break;
