@@ -141,6 +141,9 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             case Opcode::ATAN:
                 oj = aj / (pow(av, 2) + 1);
                 break;
+            case Opcode::LOG:
+                oj = aj / av;
+                break;
             case Opcode::EXP:
                 oj = exp(av) * aj;
                 break;

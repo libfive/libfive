@@ -277,6 +277,7 @@ void init_ao_kernel(void*)
 (define-method (exp (a <tree>)) (make-tree 'exp a))
 (define-method (abs (a <tree>)) (make-tree 'abs a))
 (define-method (atan (a <tree>)) (make-tree 'atan a))
+(define-method (log (a <tree>)) (make-tree 'log a))
 (define-method (constant (a <tree>)) (make-tree 'const-var a))
 (define (square f) (if (tree? f) (make-tree 'square f) (* f f)))
 

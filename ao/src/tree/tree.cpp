@@ -237,6 +237,7 @@ OP_UNARY(tan,       Kernel::Opcode::TAN)
 OP_UNARY(asin,      Kernel::Opcode::ASIN)
 OP_UNARY(acos,      Kernel::Opcode::ACOS)
 OP_UNARY(atan,      Kernel::Opcode::ATAN)
+OP_UNARY(log,       Kernel::Opcode::LOG)
 OP_UNARY(exp,       Kernel::Opcode::EXP)
 #undef OP_UNARY
 
