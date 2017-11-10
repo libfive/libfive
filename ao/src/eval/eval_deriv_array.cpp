@@ -150,7 +150,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = ad.rowwise() / (pow(av, 2) + 1);
             break;
         case Opcode::LOG:
-            od = ad.rowwise() * log(av);
+            od = ad.rowwise() / av;
             break;
         case Opcode::EXP:
             od = ad.rowwise() * exp(av);
