@@ -45,31 +45,37 @@ Feature FeatureEvaluator::push(const Feature& feature)
     {
         // First, check whether this is an ambiguous operation
         // If it is, then there may be a choice for it in the feature
-        if ((op == Opcode::MAX || op == Opcode::MIN) &&
-            (f(a, 0) == f(b, 0) || a == b))
+        if (op == Opcode::MAX || op == Opcode::MIN)
         {
-            // Walk the iterator forwards until we find a match by id
-            // or hit the end of the feature
-            while (itr != choices.end() && itr->id < id) { itr++; }
-
-            // Push either the choice + epsilon or the bare cohice to the
-            // output feature, effectively pruning it to contain only the
-            // choices that are actually significant in this subtree.
-            if (itr != choices.end() && itr->id == id)
+            if (f(a, 0) == f(b, 0) || a == b)
             {
-                if (feature.hasEpsilon(id))
-                {
-                    out.pushRaw(*itr, feature.getEpsilon(id));
-                }
-                else
-                {
-                    out.pushChoice(*itr);
-                }
+                // Walk the iterator forwards until we find a match by id
+                // or hit the end of the feature
+                while (itr != choices.end() && itr->id < id) { itr++; }
 
-                return (itr->choice == 0) ? Tape::KEEP_A : Tape::KEEP_B;
+                // Push either the choice + epsilon or the bare choice to the
+                // output feature, effectively pruning it to contain only the
+                // choices that are actually significant in this subtree.
+                if (itr != choices.end() && itr->id == id)
+                {
+                    if (feature.hasEpsilon(id))
+                    {
+                        out.pushRaw(*itr, feature.getEpsilon(id));
+                    }
+                    else
+                    {
+                        out.pushChoice(*itr);
+                    }
+
+                    return (itr->choice == 0) ? Tape::KEEP_A : Tape::KEEP_B;
+                }
             }
+            return Tape::KEEP_BOTH;
         }
-        return Tape::KEEP_BOTH;
+        else
+        {
+            return Tape::KEEP_ALWAYS;
+        }
     }, Tape::FEATURE);
 
     return out;

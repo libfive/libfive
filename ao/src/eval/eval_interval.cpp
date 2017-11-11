@@ -76,6 +76,10 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
             {
                 return Tape::KEEP_B;
             }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
         }
         else if (op == Opcode::MIN)
         {
@@ -87,8 +91,12 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
             {
                 return Tape::KEEP_A;
             }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
         }
-        return Tape::KEEP_BOTH;
+        return Tape::KEEP_ALWAYS;
     },
         Tape::INTERVAL,
         {{i[tape->X].lower(), i[tape->Y].lower(), i[tape->Z].lower()},

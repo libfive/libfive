@@ -70,6 +70,10 @@ float ArrayEvaluator::evalAndPush(const Eigen::Vector3f& pt)
             {
                 return Tape::KEEP_B;
             }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
         }
         else if (op == Opcode::MIN)
         {
@@ -81,8 +85,12 @@ float ArrayEvaluator::evalAndPush(const Eigen::Vector3f& pt)
             {
                 return Tape::KEEP_A;
             }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
         }
-        return Tape::KEEP_BOTH;
+        return Tape::KEEP_ALWAYS;
     }, Tape::SPECIALIZED);
     return out;
 }

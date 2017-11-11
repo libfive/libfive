@@ -36,8 +36,15 @@ class Tape
 public:
     Tape(const Tree root);
 
-    /*  Returned by evaluator types when pushing  */
-    enum Keep { KEEP_BOTH, KEEP_A, KEEP_B };
+    /*  Returned by evaluator types when pushing
+     *  KEEP_BOTH is returned when that function call could have returned
+     *      KEEP_A or KEEP_B (if the values were different);
+     *  KEEP_ALWAYS is returned when no set of values would return KEEP_A/B
+     *
+     *  This distinction lets us track whether a tape has any selective
+     *  clauses (e.g. min and max) left; when no such clauses exist, then
+     *  pushing can be faster */
+    enum Keep { KEEP_BOTH, KEEP_A, KEEP_B, KEEP_ALWAYS };
 
     /*  Different kind of tape pushes  */
     enum Type { UNKNOWN, INTERVAL, SPECIALIZED, FEATURE };

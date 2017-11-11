@@ -162,6 +162,7 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
                 case KEEP_B:    disabled[c.b] = false;
                                 remap[c.id] = c.b;
                                 break;
+                case KEEP_ALWAYS: // fallthrough
                 case KEEP_BOTH: break;
 
             }
