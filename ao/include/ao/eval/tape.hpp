@@ -88,6 +88,14 @@ protected:
         /*  These bounds are only valid if type == INTERVAL  */
         Interval::I X, Y, Z;
         Type type;
+
+        /*  When dummy = 0, this is a usual tape push.
+         *
+         *  When dummy is >= 1, this is a subtape that doesn't
+         *  contain any min / max nodes, so pushing isn't useful any more;
+         *  instead, we increment dummy on push and decrement on pop (until
+         *  it equals 1, at which point we pop as usual). */
+        unsigned dummy=0;
     };
 
     /*  Tape containing our opcodes in reverse order */

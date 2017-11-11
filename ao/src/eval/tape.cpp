@@ -110,7 +110,15 @@ Tape::Tape(const Tree root)
 void Tape::pop()
 {
     assert(tape != tapes.begin());
-    tape--;
+
+    if (tape->dummy > 1)
+    {
+        tape->dummy--;
+    }
+    else
+    {
+        tape--;
+    }
 }
 
 double Tape::utilization() const
@@ -142,6 +150,14 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
                                    Clause::Id, Clause::Id)> fn,
                 Type t, Region<3> r)
 {
+    // Special-case: if this is a dummy tape, then increment the
+    // tape's depth and return immediately.
+    if (tape->dummy)
+    {
+        tape->dummy++;
+        return;
+    }
+
     // Since we'll be figuring out which clauses are disabled and
     // which should be remapped, we reset those arrays here
     std::fill(disabled.begin(), disabled.end(), true);
@@ -149,6 +165,7 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
 
     // Mark the root node as active
     disabled[tape->i] = false;
+    bool has_choices = false;
 
     for (const auto& c : tape->t)
     {
@@ -156,15 +173,15 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
         {
             switch (fn(c.op, c.id, c.a, c.b))
             {
-                case KEEP_A:    disabled[c.a] = false;
-                                remap[c.id] = c.a;
-                                break;
-                case KEEP_B:    disabled[c.b] = false;
-                                remap[c.id] = c.b;
-                                break;
-                case KEEP_ALWAYS: // fallthrough
-                case KEEP_BOTH: break;
-
+                case KEEP_A:        disabled[c.a] = false;
+                                    remap[c.id] = c.a;
+                                    break;
+                case KEEP_B:        disabled[c.b] = false;
+                                    remap[c.id] = c.b;
+                                    break;
+                case KEEP_BOTH:     has_choices = true;
+                                    break;
+                case KEEP_ALWAYS:   break;
             }
 
             if (!remap[c.id])
@@ -202,6 +219,7 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
 
     // Reset tape type
     tape->type = t;
+    tape->dummy = has_choices ? 0 : 1;
 
     // Now, use the data in disabled and remap to make the new tape
     for (const auto& c : prev_tape->t)
