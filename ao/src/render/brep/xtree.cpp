@@ -622,7 +622,7 @@ double XTree<N>::findVertex(unsigned index)
     Eigen::Matrix<double, N, N> D = Eigen::Matrix<double, N, N>::Zero();
     for (unsigned i=0; i < N; ++i)
     {
-        D.diagonal()[i] = (std::abs(eigenvalues[i]) < EIGENVALUE_CUTOFF)
+        D.diagonal()[i] = (fabs(eigenvalues[i]) < EIGENVALUE_CUTOFF)
             ? 0 : (1 / eigenvalues[i]);
     }
 
