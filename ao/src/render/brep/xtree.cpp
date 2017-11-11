@@ -208,8 +208,14 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 // Handle inside, outside, and (non-ambiguous) on-boundary
-                if (ds.col(i).w() < 0)      { corners[i] = Interval::FILLED; }
-                else if (ds.col(i).w() > 0) { corners[i] = Interval::EMPTY; }
+                if (ds.col(i).w() > 0 || std::isnan(ds.col(i).w()))
+                {
+                    corners[i] = Interval::EMPTY;
+                }
+                else if (ds.col(i).w() < 0)
+                {
+                    corners[i] = Interval::FILLED;
+                }
                 else if (!ambig(i))
                 {
                     // Optimization for non-ambiguous features
