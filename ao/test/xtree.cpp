@@ -97,19 +97,19 @@ TEST_CASE("XTree<2>::isBranch")
     }
 }
 
-TEST_CASE("XTree<2>::rank")
+TEST_CASE("XTree<2>::rank()")
 {
     SECTION("Containing line")
     {
         auto e = XTree<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}));
-        REQUIRE(e->rank == 1);
+        REQUIRE(e->rank() == 1);
     }
 
     SECTION("Containing corner")
     {
         Tree a = min(Tree::X(), Tree::Y());
         auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {1, 1}));
-        REQUIRE(ta->rank == 2);
+        REQUIRE(ta->rank() == 2);
     }
 }
 
@@ -119,7 +119,7 @@ TEST_CASE("XTree<2>::vertex_count")
     {
         Tree a = min(Tree::X(), Tree::Y());
         auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
-        REQUIRE(ta->rank == 2);
+        REQUIRE(ta->rank() == 2);
         REQUIRE(ta->level == 0);
         REQUIRE(ta->vertex_count == 1);
     }
@@ -164,7 +164,7 @@ TEST_CASE("XTree<3>::vert")
                 for (unsigned i=0; i < t->vertex_count; ++i)
                 {
                     CAPTURE(t->vert(i).transpose());
-                    CAPTURE(t->rank);
+                    CAPTURE(t->rank());
                     CAPTURE(t->level);
                     CAPTURE(t->vertex_count);
                     CAPTURE(i);

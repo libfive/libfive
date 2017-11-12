@@ -123,11 +123,24 @@ public:
      *  leaf; see writeup in marching.cpp for details  */
     Eigen::Matrix<double, N, _pow(2, N - 1)> verts;
 
+    /*  Feature rank for the cell's vertex, where                    *
+     *      1 is face, 2 is edge, 3 is corner                        *
+     *                                                               *
+     *  This value is populated in find{Leaf|Branch}Matrices and     *
+     *  used when merging intersections from lower-ranked children   */
+    Eigen::Matrix<unsigned, 1, _pow(2, N - 1)> ranks;
+
     /*
      *  Look up a particular vertex by index
      */
     Eigen::Matrix<double, N, 1> vert(unsigned i=0) const
     { assert(i < vertex_count); return verts.col(i); }
+
+    /*
+     *  Look up a particular vertex rank by index
+     */
+    unsigned rank(unsigned i=0) const
+    { assert(i < vertex_count); return ranks(i); }
 
     /*  Array of filled states for the cell's corners
      *  (must only be FILLEd / EMPTY, not UNKNOWN or AMBIGUOUS ) */
@@ -135,13 +148,6 @@ public:
 
     /*  Leaf cell state, when known  */
     Interval::State type=Interval::UNKNOWN;
-
-    /*  Feature rank for the cell's vertex, where                    *
-     *      1 is face, 2 is edge, 3 is corner                        *
-     *                                                               *
-     *  This value is populated in find{Leaf|Branch}Matrices and     *
-     *  used when merging intersections from lower-ranked children   */
-    unsigned rank=0;
 
     /* Used as a unique per-vertex index when unpacking into a b-rep;   *
      * this is cheaper than storing a map of XTree* -> uint32_t         */

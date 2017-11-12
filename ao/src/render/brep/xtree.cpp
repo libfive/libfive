@@ -105,7 +105,8 @@ template <unsigned N>
 XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 double min_feature, double max_err, bool multithread,
                 std::atomic_bool& cancel)
-    : region(region), _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
+    : region(region), ranks(Eigen::Matrix<unsigned, 1, _pow(2, N - 1)>::Zero()),
+      _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
       AtA(Eigen::Matrix<double, N, N>::Zero()),
       AtB(Eigen::Matrix<double, N, 1>::Zero())
 {
@@ -290,15 +291,18 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             {
                 // Populate the feature rank as the maximum of all children
                 // feature ranks (as seen in DC: The Secret Sauce)
-                rank = std::accumulate(
+                // We only accumulate the 0th vertex rank, because any cell
+                // with more than one vertex is non-mainfold.
+                ranks(0) = std::accumulate(
                         children.begin(), children.end(), (unsigned)0,
                         [](unsigned a, const std::unique_ptr<const XTree<N>>& b)
-                            { return std::max(a, b->rank);} );
+                            { return b->vertex_count
+                                ? std::max(a, b->rank()) : a;} );
 
                 // Accumulate the mass point and QEF matrices
                 for (const auto& c : children)
                 {
-                    if (c->rank == rank)
+                    if (c->vertex_count && c->rank() == ranks(0))
                     {
                         _mass_point += c->_mass_point;
                     }
@@ -356,8 +360,8 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             // Iterate over edges in this patch, storing [inside, outside]
             unsigned target_count;
             std::array<std::pair<Vec, Vec>, _edges(N)> targets;
-            std::array<int, _edges(N)> ranks;
-            std::fill(ranks.begin(), ranks.end(), -1);
+            std::array<int, _edges(N)> edge_ranks;
+            std::fill(edge_ranks.begin(), edge_ranks.end(), -1);
 
             for (target_count=0; target_count < ps[vertex_count].size() &&
                           ps[vertex_count][target_count].first != -1; ++target_count)
@@ -527,11 +531,11 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                     // otherwise, figure out how many normals diverge
                     if (prev_size == intersections.size())
                     {
-                        ranks[i / 2] = 0;
+                        edge_ranks[i / 2] = 0;
                     }
                     else
                     {
-                        ranks[i / 2] = 1;
+                        edge_ranks[i / 2] = 1;
                         Vec prev_normal = intersections[prev_size]
                             .second
                             .template head<N>();
@@ -539,7 +543,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                                       p < intersections.size(); ++p)
                         {
                             // Accumulate rank based on cosine distance
-                            ranks[i / 2] += intersections[p]
+                            edge_ranks[i / 2] += intersections[p]
                                 .second
                                 .template head<N>()
                                 .dot(prev_normal) < 0.9;
@@ -550,11 +554,11 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
 
             {   // Build the mass point from max-rank intersections
                 const int max_rank = *std::max_element(
-                        ranks.begin(), ranks.end());
+                        edge_ranks.begin(), edge_ranks.end());
                 for (unsigned i=0; i < target_count; ++i)
                 {
-                    assert(ranks[i] != -1);
-                    if (ranks[i] == max_rank)
+                    assert(edge_ranks[i] != -1);
+                    if (edge_ranks[i] == max_rank)
                     {
                         // Accumulate this intersection in the mass point
                         Eigen::Matrix<double, N + 1, 1> mp;
@@ -637,8 +641,8 @@ double XTree<N>::findVertex(unsigned index)
     // Get rank from eigenvalues
     if (!isBranch())
     {
-        assert(index > 0 || rank == 0);
-        rank = D.diagonal().count();
+        assert(index > 0 || ranks(index) == 0);
+        ranks(index) = D.diagonal().count();
     }
 
     // SVD matrices
