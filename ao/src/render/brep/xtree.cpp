@@ -628,7 +628,7 @@ double XTree<N>::findVertex(unsigned index)
     assert(_mass_point(N) > 0);
 
     // We need to find the pseudo-inverse of AtA.
-    auto eigenvalues = es.eigenvalues().real();
+    auto eigenvalues = es.eigenvalues().real().eval();
 
     // Truncate near-singular eigenvalues in the SVD's diagonal matrix
     Eigen::Matrix<double, N, N> D = Eigen::Matrix<double, N, N>::Zero();
@@ -657,6 +657,15 @@ double XTree<N>::findVertex(unsigned index)
 
     // Store this specific vertex in the verts matrix
     verts.col(index) = v;
+
+    // Pick out the largest eigenvectors and store them as normals
+    for (unsigned i=0; i < ranks(index); ++i)
+    {
+        size_t index;
+        eigenvalues.maxCoeff(&index);
+        norms(index, i) = U.col(index);
+        eigenvalues(index) = -std::numeric_limits<double>::infinity();
+    }
 
     // Return the QEF error
     return (v.transpose() * AtA * v - 2*v.transpose() * AtB)[0] + BtB;

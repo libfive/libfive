@@ -130,6 +130,16 @@ public:
      *  used when merging intersections from lower-ranked children   */
     Eigen::Matrix<unsigned, 1, _pow(2, N - 1)> ranks;
 
+    /*  Normal values for leaf vertices
+     *
+     *  Each leaf can contain multiple vertices, and each vertex
+     *  can contain multiple normals (depending on rank), so this ends
+     *  up being a nested matrix.
+     *
+     *  norms is indexed by (vertex-id, rank), returning a column vector.
+     *  The normal may be negated from the automatic differentiation result */
+    Eigen::Matrix<Eigen::Matrix<double, N, 1>, _pow(2, N - 1), N> norms;
+
     /*
      *  Look up a particular vertex by index
      */
