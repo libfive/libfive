@@ -72,12 +72,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (let recurse ((i lowest-frame))
     (if (= i parent-frame)
       (format port "~A: ~A\n" (- i lowest-frame)
+              ;; The parent frame is always a call in the form
+              ;; (eval (actual code we care about) ...), so we
+              ;; snip out that actual code
               (car (frame-arguments (stack-ref stack i))))
       (begin
         (let ((s (stack-ref stack i)))
-        (format port "~A: (~A ~A)\n" (- i lowest-frame)
-                (frame-procedure-name s)
-                (frame-arguments s)))
+        (format port "~A: ~A\n" (- i lowest-frame)
+                (frame-call-representation s)))
         (recurse (1+ i))
         ))))
 
