@@ -59,12 +59,14 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
     if (multithread)
     {
         std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
-        es.reserve(1 << N);
-        for (unsigned i=0; i < (1 << N); ++i)
+        const int ts = 2;
+        const int eval_count = 1 << (ts * N);
+        es.reserve(eval_count);
+        for (unsigned i=0; i < eval_count; ++i)
         {
             es.emplace_back(XTreeEvaluator(t, vars));
         }
-        return build(es.data(), region, min_feature, max_err, true, cancel);
+        return build(es.data(), region, min_feature, max_err, ts, cancel);
     }
     else
     {
@@ -77,7 +79,7 @@ template <unsigned N>
 std::unique_ptr<const XTree<N>> XTree<N>::build(
         XTreeEvaluator* es,
         Region<N> region, double min_feature,
-        double max_err, bool multithread,
+        double max_err, int ts,
         std::atomic_bool& cancel)
 {
     // Lazy initialization of marching squares / cubes table
@@ -86,7 +88,7 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         mt = Marching::buildTable<N>();
     }
 
-    auto out = new XTree(es, region, min_feature, max_err, multithread, cancel);
+    auto out = new XTree(es, region, min_feature, max_err, ts, cancel);
 
     // Return an empty XTree when cancelled
     // (to avoid potentially ambiguous or mal-constructed trees situations)
@@ -103,7 +105,7 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
 
 template <unsigned N>
 XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
-                double min_feature, double max_err, bool multithread,
+                double min_feature, double max_err, int ts,
                 std::atomic_bool& cancel)
     : region(region), _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
       AtA(Eigen::Matrix<double, N, N>::Zero()),
@@ -140,21 +142,24 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         {
             auto rs = region.subdivide();
 
-            if (multithread)
+            if (ts)
             {
                 // Evaluate every child in a separate thread
                 std::array<std::future<XTree<N>*>, 1 << N> futures;
 
                 assert(children.size() == futures.size());
 
+                const int stride = pow(ts, N);
+                // Start all of the threads
                 for (unsigned i=0; i < children.size(); ++i)
                 {
                     futures[i] = std::async(std::launch::async,
-                        [&eval, &rs, i, min_feature, max_err, &cancel]()
+                        [=, &rs, &cancel]()
                         { return new XTree(
-                                eval + i, rs[i], min_feature, max_err,
-                                false, cancel); });
+                                eval + i * stride, rs[i], min_feature, max_err,
+                                ts - 1, cancel); });
                 }
+                // Then collect all of the threads into child pointers
                 for (unsigned i=0; i < children.size(); ++i)
                 {
                     children[i].reset(futures[i].get());

@@ -56,12 +56,14 @@ public:
 
     /*
      *  XTree builder that re-uses existing evaluators
-     *  If multithread is true, es must be a pointer to an array of evaluators
+     *
+     *  es must be a pointer to an array of (ts << N) evaluators
+     *  (so if ts is 0, it can be a single evaluator)
      */
     static std::unique_ptr<const XTree> build(
             XTreeEvaluator* es,
             Region<N> region, double min_feature,
-            double max_err, bool multithread,
+            double max_err, int ts,
             std::atomic_bool& cancel);
 
     /*
@@ -168,11 +170,12 @@ protected:
     /*
      *  Private constructor for XTree
      *
-     *  If multiple evaluators are provided, then tree construction will
-     *  be distributed across multiple threads.
+     *  eval must be a pointer to an array of (ts << N) evaluators, and
+     *  if ts > 0, then tree construction will be distributed across
+     *  multiple threads.
      */
     XTree(XTreeEvaluator* eval, Region<N> region,
-          double min_feature, double max_err, bool multithread,
+          double min_feature, double max_err, int ts,
           std::atomic_bool& cancel);
 
     /*
