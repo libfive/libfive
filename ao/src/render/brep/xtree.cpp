@@ -106,6 +106,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 double min_feature, double max_err, bool multithread,
                 std::atomic_bool& cancel)
     : region(region), ranks(Eigen::Matrix<unsigned, 1, _pow(2, N - 1)>::Zero()),
+      index(Eigen::Matrix<uint32_t, _pow(2, N - 1), N>::Zero()),
       _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
       AtA(Eigen::Matrix<double, N, N>::Zero()),
       AtB(Eigen::Matrix<double, N, 1>::Zero())

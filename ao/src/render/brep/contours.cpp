@@ -59,14 +59,14 @@ public:
             // Sanity-checking manifoldness of collapsed cells
             assert(ts[i]->level == 0 || ts[i]->vertex_count == 1);
 
-            if (ts[i]->index[vi] == 0)
+            if (ts[i]->index(vi, 0) == 0)
             {
-                ts[i]->index[vi] = verts.size();
+                ts[i]->index(vi, 0) = verts.size();
 
                 // Look up the appropriate vertex id
                 verts.push_back(ts[i]->vert(vi).template cast<float>());
             }
-            vs[i] = ts[i]->index[vi];
+            vs[i] = ts[i]->index(vi, 0);
         }
         // Handle contour winding direction
         branes.push_back({vs[!D], vs[D]});
