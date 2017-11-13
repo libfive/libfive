@@ -77,6 +77,10 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
         // Sanity-checking manifoldness of collapsed cells
         assert(ts[i]->level == 0 || ts[i]->vertex_count == 1);
 
+        // Sanity-check the rank of collapsed cells
+        assert(ts[i]->rank(vi) > 0);
+        assert(ts[i]->rank(vi) <= 3);
+
         // Figure out which normal id best matches this vertex
         auto match = (ts[i]->norms[vi].leftCols(ts[i]->rank(vi))
                 .transpose() * norm)
