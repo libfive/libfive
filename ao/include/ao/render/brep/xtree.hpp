@@ -162,7 +162,7 @@ public:
     /* Used as a unique per-vertex index when unpacking into a b-rep;
      * this is cheaper than storing a map of XTree* -> uint32_t
      *
-     * Index with vertex-id, rank, with 0 as a non-set (dummy) slot */
+     * Index with (vertex-id, norm-id), with 0 as a non-set (dummy) slot */
     mutable Eigen::Matrix<uint32_t, _pow(2, N - 1), N> index;
 
     /*  Bitfield marking which corners are set */
