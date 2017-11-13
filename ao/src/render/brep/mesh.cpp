@@ -84,16 +84,21 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
         // Figure out which normal id best matches this vertex
         auto match = (ts[i]->norms[vi].leftCols(ts[i]->rank(vi))
                 .transpose() * norm)
-                .cwiseAbs().eval();
+                .eval();
         size_t r;
-        match.maxCoeff(&r);
+        match.cwiseAbs().maxCoeff(&r);
 
         // Store a new vertex if this one is unpopulated
         if (ts[i]->index(vi, r) == 0)
         {
             ts[i]->index(vi, r) = verts.size();
+
+            // Store the vertex position
             verts.push_back(ts[i]->vert(vi).template cast<float>());
-            norms.push_back(ts[i]->norms[vi].col(r).template cast<float>());
+
+            // Store the normal, flipping as needed
+            float sign = (match(r) < 0) ? -1.0f : 1.0f;
+            norms.push_back(sign * ts[i]->norms[vi].col(r).template cast<float>());
         }
         vs[i] = ts[i]->index(vi, r);
     }
