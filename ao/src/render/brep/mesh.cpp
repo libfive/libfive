@@ -38,7 +38,7 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
             {r, r|A},
             {q, q|A},
             {0, A}};
-        for (unsigned i=0; i < 4; ++i)
+        for (unsigned i=0; i < ts.size(); ++i)
         {
             es[i] = XTree<3>::mt->e[D ? ev[i].first  : ev[i].second]
                                    [D ? ev[i].second : ev[i].first];
