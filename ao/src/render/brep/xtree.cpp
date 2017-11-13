@@ -116,9 +116,6 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         return;
     }
 
-    // Clear all indices
-    std::fill(index.begin(), index.end(), 0);
-
     // Do a preliminary evaluation to prune the tree
     auto i = eval->interval.evalAndPush(region.lower3().template cast<float>(),
                                         region.upper3().template cast<float>());
