@@ -113,3 +113,17 @@ TEST_CASE("Mesh::render (sphere)")
                           1/32.0f, pow(10, -3));
     REQUIRE(true);
 }
+
+TEST_CASE("Mesh::norm")
+{
+    auto s = sphere(1);
+    auto m = Mesh::render(s, Region<3>({-2, -2, -2}, {2, 2, 2}), 0.1);
+
+    for (unsigned i=0; i < m->verts.size(); ++i)
+    {
+        auto diff = (m->verts[i] - m->norms[i]).eval();
+        CAPTURE(m->verts[i].transpose());
+        CAPTURE(m->norms[i].transpose());
+        REQUIRE(diff.cwiseAbs().maxCoeff() < 0.01);
+    }
+}
