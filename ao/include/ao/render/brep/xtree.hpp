@@ -136,9 +136,9 @@ public:
      *  can contain multiple normals (depending on rank), so this ends
      *  up being a nested matrix.
      *
-     *  norms is indexed by (vertex-id, rank), returning a column vector.
+     *  norms is indexed by [vertex-id].col(norm-id), returning a column vector.
      *  The normal may be negated from the automatic differentiation result */
-    Eigen::Matrix<Eigen::Matrix<double, N, 1>, _pow(2, N - 1), N> norms;
+    std::array<Eigen::Matrix<double, N, N>, _pow(2, N - 1)> norms;
 
     /*
      *  Look up a particular vertex by index

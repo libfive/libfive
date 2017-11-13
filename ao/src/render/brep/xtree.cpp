@@ -659,10 +659,10 @@ double XTree<N>::findVertex(unsigned index)
     // Pick out the largest eigenvectors and store them as normals
     for (unsigned i=0; i < ranks(index); ++i)
     {
-        size_t index;
-        eigenvalues.maxCoeff(&index);
-        norms(index, i) = U.col(index);
-        eigenvalues(index) = -std::numeric_limits<double>::infinity();
+        size_t ei;
+        eigenvalues.maxCoeff(&ei);
+        norms[index].col(i) = U.col(ei);
+        eigenvalues(ei) = -std::numeric_limits<double>::infinity();
     }
 
     // Return the QEF error
