@@ -99,7 +99,10 @@ TEST_CASE("Mesh::render (face count in rectangular prism)")
                      max(-Tree::Y(), Tree::Y() - 1)),
                      max(-Tree::Z(), Tree::Z() - 0.25));
     auto m = Mesh::render(t, Region<3>({-1, -1, -1}, {5, 2, 1.25}), 0.125);
-    REQUIRE(m->verts.size() == 9); // index 0 is unused
+
+    // Each vertex is split into 3 (due to sharp normals),
+    // plus the unused index 0
+    REQUIRE(m->verts.size() == 25);
     REQUIRE(m->branes.size() == 12);
 }
 

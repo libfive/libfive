@@ -46,6 +46,24 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
         }
     }
 
+    /*  Find the approximate normal of this polygon in an order-agnostic
+     *  way, by the generalized expansion of (b - a) x (c - a) */
+    Eigen::Matrix<double, 3, 1> norm(0, 0, 0);
+    for (unsigned i=0; i < ts.size(); ++i)
+    {
+        auto j = (i + 1) % ts.size();
+
+        auto va = ts[i]->level > 0
+            ? 0
+            : XTree<3>::mt->p[ts[i]->corner_mask][es[i]];
+        auto vb = ts[j]->level > 0
+            ? 0
+            : XTree<3>::mt->p[ts[j]->corner_mask][es[j]];
+
+        norm += ts[i]->vert(va).cross(ts[j]->vert(vb));
+    }
+    norm.normalize();
+
     uint32_t vs[4];
     for (unsigned i=0; i < ts.size(); ++i)
     {
@@ -59,13 +77,21 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
         // Sanity-checking manifoldness of collapsed cells
         assert(ts[i]->level == 0 || ts[i]->vertex_count == 1);
 
-        if (ts[i]->index(vi, 0) == 0)
-        {
-            ts[i]->index(vi, 0) = verts.size();
+        // Figure out which normal id best matches this vertex
+        auto match = (ts[i]->norms[vi].leftCols(ts[i]->rank(vi))
+                .transpose() * norm)
+                .cwiseAbs().eval();
+        size_t r;
+        match.maxCoeff(&r);
 
+        // Store a new vertex if this one is unpopulated
+        if (ts[i]->index(vi, r) == 0)
+        {
+            ts[i]->index(vi, r) = verts.size();
             verts.push_back(ts[i]->vert(vi).template cast<float>());
+            norms.push_back(ts[i]->norms[vi].col(r).template cast<float>());
         }
-        vs[i] = ts[i]->index(vi, 0);
+        vs[i] = ts[i]->index(vi, r);
     }
 
     // Handle polarity-based windings

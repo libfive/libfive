@@ -69,7 +69,16 @@ public:
     template <Axis::Axis A, bool D>
     void load(const std::array<const XTree<3>*, 4>& ts);
 
+    /*  Array of per-vertex normals (must be the same size as verts)  */
+    std::vector<Eigen::Matrix<float, 3, 1>,
+                Eigen::aligned_allocator<Eigen::Matrix<float, 3, 1>>> norms;
+
 protected:
+    /*
+     *  Default constructor: reserve slot 0 for the normals vector
+     */
+    Mesh() : BRep<3>() { norms.push_back(Eigen::Matrix<float, 3, 1>::Zero()); }
+
     /*  Walks an XTree, returning a mesh  */
     static std::unique_ptr<Mesh> mesh(std::unique_ptr<const XTree<3>> tree,
                                       std::atomic_bool& cancel);
