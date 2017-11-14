@@ -159,3 +159,42 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
       (- x (* base-offset (- 1 f)) (* offset f)))
     y z))
 (export shear-x-y)
+
+
+(define* (repel shape locus r)
+"repel shape #[x0 y0 z0] radius
+Repels the shape away from a point based upon a radius r
+"
+  (define (falloff point)
+    (- 1 (exp (- (/ (norm point) r)))))
+  (let ((shapep (move shape (- locus))))
+    (move
+     (remap-shape
+      (shapep x y z)
+      (* x (falloff (vec3 x y z)))
+      (* y (falloff (vec3 x y z)))
+      (* z (falloff (vec3 x y z)))
+      )
+     locus)
+    )
+  )
+(export repel)
+
+(define* (attract shape locus r)
+"attract shape #[x0 y0 z0] radius
+Attracts the shape towards a point based upon a radius r
+"
+  (define (falloff point)
+    (+ 1 (exp (- (/ (norm point) r)))))
+  (let ((shapep (move shape (- locus))))
+    (move
+     (remap-shape
+      (shapep x y z)
+      (* x (falloff (vec3 x y z)))
+      (* y (falloff (vec3 x y z)))
+      (* z (falloff (vec3 x y z)))
+      )
+     locus)
+    )
+  )
+(export attract)
