@@ -217,6 +217,8 @@ void Mesh::line(const Eigen::Vector3f& a, const Eigen::Vector3f& b)
     verts.push_back(a);
     uint32_t b_ = verts.size();
     verts.push_back(b);
+    norms.push_back({0,0,0});
+    norms.push_back({0,0,0});
 
     branes.push_back({a_, a_, b_});
 }
