@@ -101,6 +101,33 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
         center))
 (define-public torus torus-z)
 
+(define-public (gyroid period thickness)
+  "gyroid #[x_period y_period z_period] thickness
+Create a volume filling gyroid with the given periods and thickness"
+  (let* (
+         (pi 3.14159265359)
+         (tau (* 2 pi))
+         (x_factor (/ tau (.x period)))
+         (y_factor (/ tau (.y period)))
+         (z_factor (/ tau (.z period)))
+         )
+    (shell (lambda-shape (x y z)
+                         (+
+                          (* (sin (/ x x_factor))
+                             (cos (/ y y_factor))
+                             )
+                          (* (sin (/ y y_factor))
+                             (cos (/ z z_factor))
+                             )
+                          (* (sin (/ z z_factor))
+                             (cos (/ x x_factor))
+                             )
+                          )
+                         ) thickness
+                           )
+    ))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Higher-order shapes
 
