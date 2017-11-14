@@ -112,7 +112,6 @@ void Shape::draw(const QMatrix4x4& M)
             verts[i*6 + 3] = mesh->norms[i].x();
             verts[i*6 + 4] = mesh->norms[i].y();
             verts[i*6 + 5] = mesh->norms[i].z();
-            std::cout << mesh->verts[i].transpose() << "\n" << mesh->norms[i].transpose() << "\n\n";
         }
         vert_vbo.create();
         vert_vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
