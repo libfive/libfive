@@ -67,7 +67,7 @@ public:
      *  Called by Dual::walk to construct the triangle mesh
      */
     template <Axis::Axis A, bool D>
-    void load(const std::array<const XTree<3>*, 4>& ts);
+    void load(std::array<const XTree<3>*, 4> ts);
 
     /*  Array of per-vertex normals (must be the same size as verts)  */
     std::vector<Eigen::Matrix<float, 3, 1>,

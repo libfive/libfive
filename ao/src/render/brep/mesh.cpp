@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 namespace Kernel {
 
 template <Axis::Axis A, bool D>
-void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
+void Mesh::load(std::array<const XTree<3>*, 4> ts)
 {
     int es[4];
     {   // Unpack edge vertex pairs into edge indices
@@ -38,6 +38,13 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
             {r, r|A},
             {q, q|A},
             {0, A}};
+
+        // Handle polarity-based windings
+        if (!D)
+        {
+            std::swap(ts[1], ts[2]);
+            std::swap(ev[1], ev[2]);
+        }
         for (unsigned i=0; i < ts.size(); ++i)
         {
             es[i] = XTree<3>::mt->e[D ? ev[i].first  : ev[i].second]
@@ -47,8 +54,14 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
     }
 
     /*  Find the approximate normal of this polygon in an order-agnostic
-     *  way, by the generalized expansion of (b - a) x (c - a) */
+     *  way, by the generalized expansion of (b - a) x (c - a)
+     *
+     *  We'll need to swap items 2 and 3 in our lists because the original
+     *  ordering is something like [0,X,Y,X|Y] but we want a good winding
+     *  [0,X,X|Y,Y] */
     Eigen::Matrix<double, 3, 1> norm(0, 0, 0);
+    std::swap(ts[3], ts[2]);
+    std::swap(es[3], es[2]);
     for (unsigned i=0; i < ts.size(); ++i)
     {
         auto j = (i + 1) % ts.size();
@@ -62,6 +75,9 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 
         norm += ts[i]->vert(va).cross(ts[j]->vert(vb));
     }
+    // Unswap to revert to original winding
+    std::swap(ts[3], ts[2]);
+    std::swap(es[3], es[2]);
     norm.normalize();
 
     uint32_t vs[4];
@@ -91,6 +107,7 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
         // Store a new vertex if this one is unpopulated
         if (ts[i]->index(vi, r) == 0)
         {
+            // Mark the new vertex's index
             ts[i]->index(vi, r) = verts.size();
 
             // Store the vertex position
@@ -101,12 +118,6 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
             norms.push_back(sign * ts[i]->norms[vi].col(r).template cast<float>());
         }
         vs[i] = ts[i]->index(vi, r);
-    }
-
-    // Handle polarity-based windings
-    if (!D)
-    {
-        std::swap(vs[1], vs[2]);
     }
 
     // Pick a triangulation that prevents triangles from folding back
