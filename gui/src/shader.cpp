@@ -44,7 +44,7 @@ void initializeGL()
 
     flat = build("basic", "flat");
     monochrome = build("basic", "monochrome");
-    shaded = build("basic", "shaded");
+    shaded = build("arrow", "shaded");
     busy = build("basic", "busy");
     bars = build("basic", "bars");
     line = build("line", "monochrome");

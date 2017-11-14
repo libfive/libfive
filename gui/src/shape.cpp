@@ -101,21 +101,23 @@ void Shape::draw(const QMatrix4x4& M)
     {
         initializeOpenGLFunctions();
 
+        assert(mesh->verts.size() == mesh->norms.size());
         GLfloat* verts = new GLfloat[mesh->verts.size() * 6];
-        unsigned i = 0;
-        for (auto& v : mesh->verts)
+        unsigned i;
+        for (i=0; i < mesh->verts.size(); ++i)
         {
-            verts[i++] = v.x();
-            verts[i++] = v.y();
-            verts[i++] = v.z();
-            verts[i++] = 1;
-            verts[i++] = 1;
-            verts[i++] = 1;
+            verts[i*6 + 0] = mesh->verts[i].x();
+            verts[i*6 + 1] = mesh->verts[i].y();
+            verts[i*6 + 2] = mesh->verts[i].z();
+            verts[i*6 + 3] = mesh->norms[i].x();
+            verts[i*6 + 4] = mesh->norms[i].y();
+            verts[i*6 + 5] = mesh->norms[i].z();
+            std::cout << mesh->verts[i].transpose() << "\n" << mesh->norms[i].transpose() << "\n\n";
         }
         vert_vbo.create();
         vert_vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
         vert_vbo.bind();
-        vert_vbo.allocate(verts, i*sizeof(*verts));
+        vert_vbo.allocate(verts, i*6*sizeof(*verts));
         delete [] verts;
 
         uint32_t* tris = new uint32_t[mesh->branes.size() * 3];
