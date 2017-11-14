@@ -103,21 +103,22 @@ void Mesh::load(std::array<const XTree<3>*, 4> ts)
                 .eval();
         size_t r;
         match.cwiseAbs().maxCoeff(&r);
+        float sign = (match(r) < 0) ? -1.0f : 1.0f;
+        auto ri = r * 2 + (match(r) < 0);
 
         // Store a new vertex if this one is unpopulated
-        if (ts[i]->index(vi, r) == 0)
+        if (ts[i]->index(vi, ri) == 0)
         {
             // Mark the new vertex's index
-            ts[i]->index(vi, r) = verts.size();
+            ts[i]->index(vi, ri) = verts.size();
 
             // Store the vertex position
             verts.push_back(ts[i]->vert(vi).template cast<float>());
 
             // Store the normal, flipping as needed
-            float sign = (match(r) < 0) ? -1.0f : 1.0f;
             norms.push_back(sign * ts[i]->norms[vi].col(r).template cast<float>());
         }
-        vs[i] = ts[i]->index(vi, r);
+        vs[i] = ts[i]->index(vi, ri);
     }
 
     // Pick a triangulation that prevents triangles from folding back

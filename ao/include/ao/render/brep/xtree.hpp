@@ -163,7 +163,7 @@ public:
      * this is cheaper than storing a map of XTree* -> uint32_t
      *
      * Index with (vertex-id, norm-id), with 0 as a non-set (dummy) slot */
-    mutable Eigen::Matrix<uint32_t, _pow(2, N - 1), N> index;
+    mutable Eigen::Matrix<uint32_t, _pow(2, N - 1), 2 * N> index;
 
     /*  Bitfield marking which corners are set */
     uint8_t corner_mask=0;
