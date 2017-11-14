@@ -111,13 +111,13 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 
     // Pick a triangulation that prevents triangles from folding back
     // on each other by checking normals.
-    std::array<Eigen::Vector3f, 4> norms;
-    for (unsigned i=0; i < norms.size(); ++i)
+    std::array<Eigen::Vector3f, 4> ns;
+    for (unsigned i=0; i < ns.size(); ++i)
     {
-        norms[i] = (verts[vs[(i + 3) % 4]] - verts[vs[i]]).cross
-                   (verts[vs[(i + 1) % 4]] - verts[vs[i]]).normalized();
+        ns[i] = (verts[vs[(i + 3) % 4]] - verts[vs[i]]).cross
+                (verts[vs[(i + 1) % 4]] - verts[vs[i]]).normalized();
     }
-    if (norms[0].dot(norms[3]) > norms[1].dot(norms[2]))
+    if (ns[0].dot(ns[3]) > ns[1].dot(ns[2]))
     {
         branes.push_back({vs[0], vs[1], vs[2]});
         branes.push_back({vs[2], vs[1], vs[3]});
