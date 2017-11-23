@@ -61,6 +61,22 @@ TEST_CASE("FeatureEvaluator::isInside")
         FeatureEvaluator d(t);
         REQUIRE(d.isInside({0, 0, 0}) == true);
     }
+
+    SECTION("Cube-sphere intersection")
+    {
+        auto t = std::make_shared<Tape>(
+                min(sphere(0.5, {0, 0, 1}),
+                    box({-1, -1, -1}, {1, 1, 1})));
+        FeatureEvaluator d(t);
+        REQUIRE(d.isInside({0, 0, 0}) == true);
+        REQUIRE(d.isInside({0.5, 0, 1}) == true);
+        REQUIRE(d.isInside({-0.5, 0, 1}) == true);
+        REQUIRE(d.isInside({0, 0.5, 1}) == true);
+        REQUIRE(d.isInside({0, -0.5, 1}) == true);
+        REQUIRE(d.isInside({0, 0, 1.5}) == true);
+
+        REQUIRE(d.isInside({0, 0, 2}) == false);
+    }
 }
 
 TEST_CASE("FeatureEvaluator::featuresAt")
