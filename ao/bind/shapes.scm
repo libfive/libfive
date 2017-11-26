@@ -67,6 +67,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   "box #[xmin ymin zmin] #[xmax ymax zmax]
   A box with the given bounds"
   (extrude-z (rectangle a b) (.z a) (.z b)))
+(define-public cube box)
 
 (define-public (sphere center r)
   "sphere #[x y z] r
@@ -103,7 +104,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public (gyroid period thickness)
   "gyroid #[x_period y_period z_period] thickness
-Create a volume0filling gyroid with the given periods and thickness"
+Create a volume-filling gyroid with the given periods and thickness"
   (let* (
          (pi 3.14159265359)
          (tau (* 2 pi))
@@ -170,6 +171,7 @@ Create a volume0filling gyroid with the given periods and thickness"
     (extrude-z (rectangle (+ a r') (- b r'))
       (.z a) (.z b))
   ))
+(define-public rounded-cube rounded-box)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Higher-order shapes
