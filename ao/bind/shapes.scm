@@ -127,6 +127,49 @@ Create a volume0filling gyroid with the given periods and thickness"
                            )
     ))
 
+(define-public (rounded-box a b r)
+  "rounded-box #[xmin ymin zmin] #[xmax ymax zmax] r
+  Rounded box with the given bounds and radius (as a 0-1 fraction) "
+  (define d (- b a))
+  (define r' (* r (min (.x d) (.y d) (.z d)) (/ 2)))
+
+  (define corners (apply union
+    (map (lambda (i) (sphere #[
+        (if (logbit? 0 i) (+ (.x a) r') (- (.x b) r'))
+        (if (logbit? 1 i) (+ (.y a) r') (- (.y b) r'))
+        (if (logbit? 2 i) (+ (.z a) r') (- (.z b) r'))] r'))
+      (iota 8))))
+
+  ;; Constructs a set of 4 edges for the given lengths
+  (define (edges x y z)
+    (apply union
+      (map (lambda (i) (cylinder-z #[
+          (if (logbit? 0 i) r' (- x r'))
+          (if (logbit? 1 i) r' (- y r'))
+          r'] r' (- z (* 2 r'))))
+        (iota 4))))
+
+  (define edges-x (reflect-xz
+    (edges (.z d) (.y d) (.x d))))
+
+  (define edges-y (reflect-yz
+    (edges (.x d) (.z d) (.y d))))
+
+  (define edges-z
+    (edges (.x d) (.y d) (.z d)))
+
+  (union
+    corners
+    (move (union edges-z edges-y edges-x) a)
+    (extrude-z
+      (union (rectangle #[(+ (.x a) r') (.y a)]
+                        #[(- (.x b) r') (.y b)])
+             (rectangle #[(.x a) (+ (.y a) r')]
+                        #[(.x b) (- (.y b) r')]))
+      (+ (.z a) r') (- (.z b) r'))
+    (extrude-z (rectangle (+ a r') (- b r'))
+      (.z a) (.z b))
+  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Higher-order shapes
