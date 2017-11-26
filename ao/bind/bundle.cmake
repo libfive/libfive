@@ -5,12 +5,12 @@ file(READ ${CMAKE_CURRENT_LIST_DIR}/transforms.scm TRANSFORMS)
 file(READ ${CMAKE_CURRENT_LIST_DIR}/vec.scm VEC)
 file(READ ${CMAKE_CURRENT_LIST_DIR}/sandbox.scm SANDBOX)
 
-# Escape any strings that look like a termination sequence )"
-string(REPLACE ")\"" ")\\\"" SHAPES "${SHAPES}")
-string(REPLACE ")\"" ")\\\"" CSG "${CSG}")
-string(REPLACE ")\"" ")\\\"" TRANSFORMS "${TRANSFORMS}")
-string(REPLACE ")\"" ")\\\"" VEC "${VEC}")
-string(REPLACE ")\"" ")\\\"" SANDBOX "${SANDBOX}")
+# Modify any substrings that look like a termination sequence )"
+string(REPLACE ")\"" ") \"" SHAPES "${SHAPES}")
+string(REPLACE ")\"" ") \"" CSG "${CSG}")
+string(REPLACE ")\"" ") \"" TRANSFORMS "${TRANSFORMS}")
+string(REPLACE ")\"" ") \"" VEC "${VEC}")
+string(REPLACE ")\"" ") \"" SANDBOX "${SANDBOX}")
 
 # Read in the main C++ file
 file(READ ${CMAKE_CURRENT_LIST_DIR}/ao-guile.cpp AO_GUILE)

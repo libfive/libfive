@@ -67,7 +67,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (define-public (loft a b zmin zmax)
   "loft a b zmin zmax
   Produces a blended loft between a (at zmin) and b (at zmax)
-  a and b should be 2D shapes (i.e. invariant along the z axis) "
+  a and b should be 2D shapes (i.e. invariant along the z axis)"
   (lambda-shape (x y z)
     (max (- z zmax) (- zmin z)
       (/ (+ (* (- z zmin) b) (* (- zmax z) a))

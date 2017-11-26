@@ -77,7 +77,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public (cylinder-z base r h)
   "cylinder-z #[x0 y0 z0] r h
-  A cylinder (oriented along the Z axis) "
+  A cylinder (oriented along the Z axis)"
   (extrude-z (circle base r) (.z base) (+ h (.z base))))
 (define-public cylinder cylinder-z)
 
@@ -130,7 +130,7 @@ Create a volume-filling gyroid with the given periods and thickness"
 
 (define-public (rounded-box a b r)
   "rounded-box #[xmin ymin zmin] #[xmax ymax zmax] r
-  Rounded box with the given bounds and radius (as a 0-1 fraction) "
+  Rounded box with the given bounds and radius (as a 0-1 fraction)"
   (define d (- b a))
   (define r' (* r (min (.x d) (.y d) (.z d)) (/ 2)))
 

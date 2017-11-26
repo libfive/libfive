@@ -160,7 +160,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     y z))
 (export shear-x-y)
 
-
 (define* (repel shape locus r)
 "repel shape #[x0 y0 z0] radius
 Repels the shape away from a point based upon a radius r
