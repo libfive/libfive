@@ -234,7 +234,7 @@ TEST_CASE("XTree<3> cancellation")
     elapsed = end - start;
     auto elapsed_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
-    REQUIRE(elapsed_ms.count() < 50);
+    REQUIRE(elapsed_ms.count() < 150);
 
     // The cancelled computation must return nullptr
     // (rather than a partially-constructed or invalid tree)
