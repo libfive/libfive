@@ -160,10 +160,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     y z))
 (export shear-x-y)
 
-(define* (repel shape locus r)
-"repel shape #[x0 y0 z0] radius
-Repels the shape away from a point based upon a radius r
-"
+(define-public (repel shape locus r)
+  "repel shape #[x0 y0 z0] radius
+  Repels the shape away from a point based upon a radius r"
   (define (falloff point)
     (- 1 (exp (- (/ (norm point) r)))))
   (let ((shapep (move shape (- locus))))
@@ -177,12 +176,10 @@ Repels the shape away from a point based upon a radius r
      locus)
     )
   )
-(export repel)
 
-(define* (attract shape locus r)
-"attract shape #[x0 y0 z0] radius
-Attracts the shape towards a point based upon a radius r
-"
+(define-public (attract shape locus r)
+  "attract shape #[x0 y0 z0] radius
+  Attracts the shape towards a point based upon a radius r"
   (define (falloff point)
     (+ 1 (exp (- (/ (norm point) r)))))
   (let ((shapep (move shape (- locus))))
