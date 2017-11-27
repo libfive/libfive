@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
-(use-modules (ao kernel) (ao vec))
+(use-modules (ao kernel) (ao vec) (ao csg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Translation
@@ -196,4 +196,15 @@ Attracts the shape towards a point based upon a radius r
      locus)
     )
   )
-(export attract)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define* (revolve-y shape #:optional (x0 0))
+  "revolve-y shape [x0]
+  Revolves a 2D (xy) shape around the vertical line x=x0"
+  (union
+    (remap-shape (shape x y z)
+      (sqrt (+ (square x) (square z))) y z)
+    (remap-shape (shape x y z)
+      (- (sqrt (+ (square x) (square z)))) y z)))
+(export revolve-y)
