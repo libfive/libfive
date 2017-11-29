@@ -345,7 +345,7 @@ void scm_init_ao_modules()
     scm_c_define_module("ao vec", init_ao_vec, NULL);
     scm_c_define_module("ao csg", init_ao_csg, NULL);
     scm_c_define_module("ao transforms", init_ao_transforms, NULL);
-    scm_c_define_module("ao text", init_ao_text, NULL);
     scm_c_define_module("ao shapes", init_ao_shapes, NULL);
+    scm_c_define_module("ao text", init_ao_text, NULL);
     scm_c_define_module("ao sandbox", init_ao_sandbox, NULL);
 }
