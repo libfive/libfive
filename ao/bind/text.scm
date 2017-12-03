@@ -28,20 +28,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   "text txt #[x y]
   Draws text at the given position"
   (define (line txt pt)
+    (format #t "Got point ~A ~A\n" txt pt)
     (apply union
       (let recurse ((chars (string->list txt)) (pt pt))
         (if (null? chars)
           '()
           (let ((r (hash-ref glyphs (car chars))))
             (if r
-              (cons (move (car r) pt) (recurse (cdr chars) (+ pt #[(cdr r) 0])))
+              (cons (move (car r) pt)
+                    (recurse (cdr chars) (+ pt #[0.1 0] #[(cdr r) 0])))
               (recurse (cdr chars) pt)))))))
-  (define lines (string-split (string-upcase txt) #\space))
+  (define lines (string-split (string-upcase txt) #\newline))
+  (format #t "lines: ~A\n" lines)
   (apply union
     (let recurse ((lines lines) (pt pt))
       (if (null? lines)
         '()
-        (cons (line (car lines) pt) (recurse (cdr lines) (+ pt #[0 1])))))))
+        (cons (line (car lines) pt) (recurse (cdr lines) (- pt #[0 1.1])))))))
 (export text)
 
 ;; Glyphs are stored as (shape . width) pairs
@@ -182,22 +185,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                      (triangle #[0.35 0] #[0.25 0] #[0 1]))))
     (union half (reflect-x half 0.3))))
 
-(make-glyph! #\W 0.8
+(make-glyph! #\W (- (* 2 (glyph-width #\V)) 0.1)
   (union (glyph-shape #\V)
          (move (glyph-shape #\V) #[(- (glyph-width #\V) 0.1) 0])))
 
 (make-glyph! #\X 0.8
   (let ((half (union (triangle #[0 1] #[0.125 1] #[0.8 0])
-                     (triangle #[0.8 0] #[0 0.675] #[0 1]))))
-    (union half (reflect-x half))))
+                     (triangle #[0.8 0] #[0.675 0] #[0 1]))))
+    (union half (reflect-x half 0.4))))
 
 (make-glyph! #\Y 0.8
-  (let ((half (union (triangle #[0 1] #[0.1 1] #[0.45 0.5])
-                     (triangle #[0.45 5] #[0.35 0.5] #[0 1]))))
-    (union half (reflect-x half 0.4) (rectangle #[0.35 0.45] #[0 0.5]))))
+  (union (difference (triangle #[0 1] #[0.4 0.5] #[0.8 1])
+                     (triangle #[0.1 1] #[0.4 0.65] #[0.7 1]))
+         (rectangle #[0.35 0] #[0.45 0.6])))
 
 (make-glyph! #\Z 0.6
-  (difference (rectangle #[0 0.6] #[0 1])
+  (difference (rectangle #[0 0] #[0.6 1])
               (triangle #[0 0.1] #[0 0.9] #[0.45 0.9])
               (triangle #[0.6 0.1] #[0.15 0.1] #[0.6 0.9])))
 
