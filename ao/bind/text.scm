@@ -53,8 +53,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
            (rectangle #[0.2 0.3] #[0.6 0.4])))
 
 (make-glyph! #\B 0.575
-    (union (intersection (union (ring #[0.3 0.725] 0.225 0.1)
-                                (ring #[0.3 0.275] 0.225 0.1))
+    (union (intersection (union (ring #[0.3 0.725] 0.275 0.175)
+                                (ring #[0.3 0.275] 0.275 0.175))
                          (rectangle #[0.3 0] #[1 1]))
                  ;; Bars connecting to the semicircles
                  (rectangle #[0.1 0] #[0.3 0.1])
@@ -65,16 +65,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                  (rectangle #[0 0] #[0.1 1])))
 
 (make-glyph! #\C 0.57
-    (union (difference (union (ring #[0.3 0.7] 0.25 0.1)
-                              (ring #[0.3 0.3] 0.25 0.1))
+    (union (difference (union (ring #[0.3 0.7] 0.275 0.175)
+                              (ring #[0.3 0.3] 0.275 0.175))
                        (rectangle #[0 0.3] #[0.6 0.7])
                        (triangle #[0.3 0.5] #[1 1.5] #[1 -0.5]))
-           (rectangle #[0 0.3] #[0.1 0.7])))
+           (rectangle #[0.025 0.3] #[0.125 0.7])))
 
 (make-glyph! #\D 0.6
     (union (rectangle #[0 0] #[0.1 1])
            (intersection (rectangle #[0 0] #[1 1])
-                         (ring #[0.1 0.5] 0.45 0.1))))
+                         (ring #[0.1 0.5] 0.5 0.4))))
 
 (make-glyph! #\E 0.6
   (union (rectangle #[0 0] #[0.1 1])
@@ -91,8 +91,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (union (rectangle #[0 0.3] #[0.1 0.7])
          (rectangle #[0.5 0.3] #[0.6 0.4])
          (rectangle #[0.3 0.4] #[0.6 0.5])
-         (difference (union (ring #[0.3 0.7] 0.25 0.1)
-                            (ring #[0.3 0.3] 0.25 0.1))
+         (difference (union (ring #[0.3 0.7] 0.3 0.2)
+                            (ring #[0.3 0.3] 0.3 0.2))
                      (rectangle #[0 0.3] #[0.6 0.7]))))
 
 (make-glyph! #\H 0.6
@@ -106,8 +106,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
          (rectangle #[0 0.9] #[0.5 1])))
 
 (make-glyph! #\J 0.55
-  (union (rectangle #[0.45 0.275] #[0.55 1])
-         (intersection (ring #[0.275 0.275] 0.225 0.1)
+  (union (rectangle #[0.4 0.275] #[0.5 1])
+         (intersection (ring #[0.275 0.275] 0.225 0.125)
                        (rectangle #[0 0] #[0.55 0.275]))))
 
 (make-glyph! #\K 0.6
@@ -137,12 +137,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (make-glyph! #\O 0.6
   (union (rectangle #[0 0.3] #[0.1 0.7])
          (rectangle #[0.5 0.3] #[0.6 0.7])
-         (difference (union (ring #[0.3 0.7] 0.25 0.1)
-                            (ring #[0.3 0.3] 0.25 0.1))
+         (difference (union (ring #[0.3 0.7] 0.3 0.2)
+                            (ring #[0.3 0.3] 0.3 0.2))
                      (rectangle #[0 0.3] #[0.6 0.7]))))
 
 (make-glyph! #\P 0.575
-  (union (difference (ring #[0.3 0.725] 0.225 0.1)
+  (union (difference (ring #[0.3 0.725] 0.275 0.175)
                      (rectangle #[0 0] #[0.3 1]))
          (rectangle #[0 0] #[0.1 1])
          (rectangle #[0.1 0.45] #[0.3 0.55])
@@ -151,23 +151,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (make-glyph! #\Q 0.6
   (union (rectangle #[0 0.3] #[0.1 0.7])
          (rectangle #[0.5 0.3] #[0.6 0.7])
-         (difference (union (ring #[0.3 0.7] 0.25 0.1)
-                            (ring #[0.3 0.3] 0.25 0.1))
+         (difference (union (ring #[0.3 0.7] 0.3 0.2)
+                            (ring #[0.3 0.3] 0.3 0.2))
                      (rectangle #[0 0.3] #[0.6 0.7]))
          (triangle #[0.5 0.1] #[0.6 0.1] #[0.6 0])
          (triangle #[0.5 0.1] #[0.5 0.3] #[0.6 0.1])))
 
 (make-glyph! #\R 0.575
-  (union (difference (ring #[0.3 0.725] 0.225 0.1)
-                     (rectangle #[0 0] #[0.3 1]))
-         (rectangle #[0 0] #[0.1 1])
-         (rectangle #[0.1 0.45] #[0.3 0.55])
-         (rectangle #[0.1 0.9] #[0.3 1])
+  (union (glyph-shape #\P)
          (triangle #[0.3 0.5] #[0.4 0.5] #[0.575 0])
          (triangle #[0.475 0] #[0.3 0.5] #[0.575 0])))
 
 (make-glyph! #\S 0.55
-  (let ((half (difference (ring #[0.275 0.725] 0.225 0.1)
+  (let ((half (difference (ring #[0.275 0.725] 0.275 0.175)
                           (rectangle #[0.275 0.45] #[0.55 0.725]))))
     (union half (reflect-x (reflect-y half 0.5) 0.275))))
 
@@ -178,7 +174,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (make-glyph! #\U 0.6
   (union (rectangle #[0 0.3] #[0.1 1])
          (rectangle #[0.5 0.3] #[0.6 1])
-         (difference (ring #[0.3 0.3] 0.25 0.1)
+         (difference (ring #[0.3 0.3] 0.3 0.2)
                      (rectangle #[0 0.3] #[0.6 0.7]))))
 
 (make-glyph! #\V 0.6
@@ -187,10 +183,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     (union half (reflect-x half 0.3))))
 
 (make-glyph! #\W 0.8
-  (union (triangle #[0 1] #[0.1 1] #[0.25 0])
-         (triangle #[0.25 0] #[0.15 0] #[0 1])
-         (triangle #[0.15 0] #[0.35 1] #[0.45 1])
-         (triangle #[0.45 1] #[0.25 0] #[0.15 0])))
+  (union (glyph-shape #\V)
+         (move (glyph-shape #\V) #[(- (glyph-width #\V) 0.1) 0])))
 
 (make-glyph! #\X 0.8
   (let ((half (union (triangle #[0 1] #[0.125 1] #[0.8 0])
