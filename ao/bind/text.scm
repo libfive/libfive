@@ -24,6 +24,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (define (glyph-shape char) (car (hash-ref glyphs char)))
 (define (glyph-width char) (cdr (hash-ref glyphs char)))
 
+(define (text txt pt)
+  "text txt #[x y]
+  Draws text at the given position"
+  (define (line txt pt)
+    (apply union
+      (let recurse ((chars (string->list txt)) (pt pt))
+        (if (null? chars)
+          '()
+          (let ((r (hash-ref glyphs (car chars))))
+            (if r
+              (cons (move (car r) pt) (recurse (cdr chars) (+ pt #[(cdr r) 0])))
+              (recurse (cdr chars) pt)))))))
+  (define lines (string-split (string-upcase txt) #\space))
+  (apply union
+    (let recurse ((lines lines) (pt pt))
+      (if (null? lines)
+        '()
+        (cons (line (car lines) pt) (recurse (cdr lines) (+ pt #[0 1])))))))
+(export text)
+
 ;; Glyphs are stored as (shape . width) pairs
 (make-glyph! #\A 0.8
     (union (triangle #[0 0] #[0.35 1] #[0.1 0])
