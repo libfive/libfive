@@ -237,9 +237,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (make-glyph! #\- 0.45 (rectangle #[0.05 0.4] #[0.35 0.5]))
 
 (make-glyph! #\) 0.3
-  (scale-x (intersection (circle #[0 0.4] 0.6)
-                         (inverse (scale-x (circle #[0 0.4] 0.5) 0.7))
-                         (rectangle #[0 -0.2] #[0.6 1])) 0.5))
+  (scale-x (intersection (circle #[0 0.5] 0.6)
+                         (inverse (scale-x (circle #[0 0.5] 0.5) 0.7))
+                         (rectangle #[0 0] #[0.6 1])) 0.5))
 
 (make-glyph! #\( 0.3
   (reflect-x (glyph-shape #\)) (/ (glyph-width #\)) 2)))
