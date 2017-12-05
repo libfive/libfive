@@ -23,6 +23,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   A 2D circle with the given center and radius"
   (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y))) r)) center))
 
+(define-public (ring center ro ri)
+  "ring #[x y] ro ri
+  A 2D ring with the given center and outer/inner radii"
+  (difference (circle center ro) (circle center ri)))
+
 (define-public (polygon center r n)
   "polygon #[x y] r n
   A polygon with center-to-vertex distance r and n sides"

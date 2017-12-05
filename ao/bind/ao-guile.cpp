@@ -284,7 +284,10 @@ void init_ao_kernel(void*)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-syntax-rule (lambda-shape vars ...)
-  ((lambda vars ...) (make-tree 'var-x) (make-tree 'var-y) (make-tree 'var-z)))
+  (ensure-tree
+    ((lambda vars ...) (make-tree 'var-x)
+                       (make-tree 'var-y)
+                       (make-tree 'var-z))))
 
 (define-syntax-rule (define-shape (name . vars) body ...)
   (define name (lambda-shape vars body ...)))
@@ -319,6 +322,11 @@ void init_ao_transforms(void*)
     scm_c_eval_string(R"(AO_GUILE_TRANSFORMS)");
 }
 
+void init_ao_text(void*)
+{
+    scm_c_eval_string(R"(AO_GUILE_TEXT)");
+}
+
 void init_ao_shapes(void*)
 {
     scm_c_eval_string(R"(AO_GUILE_SHAPES)");
@@ -341,5 +349,6 @@ void scm_init_ao_modules()
     scm_c_define_module("ao csg", init_ao_csg, NULL);
     scm_c_define_module("ao transforms", init_ao_transforms, NULL);
     scm_c_define_module("ao shapes", init_ao_shapes, NULL);
+    scm_c_define_module("ao text", init_ao_text, NULL);
     scm_c_define_module("ao sandbox", init_ao_sandbox, NULL);
 }

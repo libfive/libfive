@@ -53,7 +53,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
           (get-bindings '(ao vec))
           (get-bindings '(ao shapes))
           (get-bindings '(ao csg))
-          (get-bindings '(ao transforms)))
+          (get-bindings '(ao transforms))
+          (get-bindings '(ao text)))
     all-pure-bindings))
 
 (define* (sandbox-backtrace stack #:optional (port #t))
