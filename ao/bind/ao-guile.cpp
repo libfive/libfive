@@ -284,7 +284,10 @@ void init_ao_kernel(void*)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-syntax-rule (lambda-shape vars ...)
-  ((lambda vars ...) (make-tree 'var-x) (make-tree 'var-y) (make-tree 'var-z)))
+  (ensure-tree
+    ((lambda vars ...) (make-tree 'var-x)
+                       (make-tree 'var-y)
+                       (make-tree 'var-z))))
 
 (define-syntax-rule (define-shape (name . vars) body ...)
   (define name (lambda-shape vars body ...)))
