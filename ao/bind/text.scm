@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   "text txt #[x y]
   Draws text at the given position"
   (define (line txt pt)
-    (format #t "Got point ~A ~A\n" txt pt)
     (apply union
       (let recurse ((chars (string->list txt)) (pt pt))
         (if (null? chars)
@@ -39,7 +38,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                     (recurse (cdr chars) (+ pt #[0.1 0] #[(cdr r) 0])))
               (recurse (cdr chars) pt)))))))
   (define lines (string-split (string-upcase txt) #\newline))
-  (format #t "lines: ~A\n" lines)
   (apply union
     (let recurse ((lines lines) (pt pt))
       (if (null? lines)
@@ -78,7 +76,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     (union (rectangle #[0 0] #[0.1 1])
            (intersection (rectangle #[0 0] #[1 1])
                          (ring #[0.1 0.5] 0.5 0.4))))
-
 (make-glyph! #\E 0.6
   (union (rectangle #[0 0] #[0.1 1])
          (rectangle #[0 0] #[0.6 0.1])
@@ -208,18 +205,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (make-glyph! #\, 0.175
   (union (circle #[0.1 0.075] 0.075)
-    (intersection (circle #[0.075 0.075] 0.075)
-                  (rectangle #[0 0.15] #[-0.15 0.075])
+    (intersection (scale-y (circle #[0.075 0.075] 0.075) 3 0.075)
+                  (rectangle #[0 -0.15] #[0.15 0.075])
                   (inverse (triangle #[0.075 0.075] #[0 -0.15] #[-0.5 0.075])))
 ))
 
 (make-glyph! #\. 0.175 (circle #[0.075 0.075] 0.075))
 
-(make-glyph! #\' 0.1 (rectangle #[0 0.1] #[0.55 0.8]))
+(make-glyph! #\' 0.1 (rectangle #[0 0.55] #[0.1 0.8]))
 
 (make-glyph! #\" 0.3
-  (union (rectangle #[0 0.1] #[0.55 0.8])
-         (rectangle #[0.2 0.3] #[0.55 0.8])))
+  (union (rectangle #[0 0.55] #[0.1 0.8])
+         (rectangle #[0.2 0.55] #[0.3 0.8])))
 
 (make-glyph! #\: 0.15
   (union (circle #[0.075 0.15] 0.075)
@@ -227,31 +224,29 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (make-glyph! #\; 0.15
   (union
+    (move (glyph-shape #\,) #[0 0.075])
     (intersection (scale-y (circle #[0.075 0.15] 0.074) 3 0.015)
                   (rectangle #[0 0.15] #[-0.075 0.15])
                   (inverse (triangle #[0.075 0.15] #[0 -0.075] #[-0.5 0.15])))
-    (circle #[0.075 0.45] 0.075)
-    (circle #[0.1 0.15] 0.075)))
+    (circle #[0.075 0.45] 0.075)))
 
 (make-glyph! #\! 0.1
-  (union (rectangle #[0.025 0.125] #[0.3 1])
+  (union (rectangle #[0.025 0.3] #[0.125 1])
          (circle #[0.075 0.075] 0.075)))
 
-(make-glyph! #\- 0.45 (rectangle #[0.05 0.4] #[0.35 0.45]))
+(make-glyph! #\- 0.45 (rectangle #[0.05 0.4] #[0.35 0.5]))
 
 (make-glyph! #\) 0.3
   (scale-x (intersection (circle #[0 0.4] 0.6)
                          (inverse (scale-x (circle #[0 0.4] 0.5) 0.7))
-                         (rectangle #[0 0.6] #[-0.2 1])) 0.5))
+                         (rectangle #[0 -0.2] #[0.6 1])) 0.5))
 
 (make-glyph! #\( 0.3
-  (scale-x (intersection (circle #[0.6 0.4] 0.6)
-                         (inverse (scale-x (circle #[0.6 0.4] 0.5) 0.7 0.6))
-                         (rectangle #[0 0.6] #[-0.2 1])) 0.5))
+  (reflect-x (glyph-shape #\)) (/ (glyph-width #\)) 2)))
 
 (make-glyph! #\1 0.3
   (difference (rectangle #[0 0] #[0.3 1])
-              (rectangle #[0 0] #[0.2 1])
+              (rectangle #[0 0] #[0.2 0.75])
               (circle #[0 1] 0.2)))
 
 (make-glyph! #\2 0.55
@@ -278,7 +273,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                      (rectangle #[0 0.325] #[0.325 0.65]))
          (rectangle #[0 0.55] #[0.325 0.65])
          (rectangle #[0 0.55] #[0.1 1])
-         (rectangle #[0.1 0.65] #[0.9 1])))
+         (rectangle #[0.1 0.9] #[0.65 1])))
 
 (make-glyph! #\6 0.55
   (let ((hook
@@ -286,7 +281,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
       (circle #[0.275 0.725] 0.275)
       (inverse (scale-y (circle #[0.275 0.725] 0.175) 1.2 0.725))
       (rectangle #[0 0.725] #[0.55 1])
-      (inverse (triangle #[0.275 0.925] #[0.55 0.9] #[0.55 0.725])))))
+      (inverse (triangle #[0.275 0.925] #[0.55 0.9] #[0.55 0.525])))))
   (union (ring #[0.275 0.275] 0.275 0.175)
          (rectangle #[0 0.275] #[0.1 0.45])
          (difference (scale-x (scale-y hook 2 1) 1.1)
