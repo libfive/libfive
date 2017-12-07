@@ -197,6 +197,7 @@ void Shape::startRender(QPair<Settings, int> s)
     {
         if (next.second != MESH_DIV_ABORT)
         {
+            cancel.store(true);
             next = s;
         }
     }
