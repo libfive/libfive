@@ -38,6 +38,11 @@ Tree rotate2d(Tree t, float angle)
                    Tree::Z());
 }
 
+Tree move(Tree t, Eigen::Vector3f m)
+{
+    return t.remap(Tree::X() - m.x(), Tree::Y() - m.y(), Tree::Z() - m.z());
+}
+
 Tree recurse(float x, float y, float scale, Eigen::Matrix4f M, int i)
 {
     auto base = rectangle(x - scale/2, x + scale/2,
