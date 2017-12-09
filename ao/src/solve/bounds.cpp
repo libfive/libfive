@@ -53,70 +53,75 @@ Region<3> findBounds(IntervalEvaluator* eval)
     auto check = [&](unsigned axis, unsigned s, double d){
         int q = Axis::toIndex(Axis::Q(Axis::toAxis(axis)));
         int r = Axis::toIndex(Axis::R(Axis::toAxis(axis)));
-        float out = std::numeric_limits<float>::infinity();
+        float o = std::numeric_limits<float>::infinity();
         for (unsigned i=0; i < 4; ++i)
         {
-            Region<3> target({-inf, -inf, -inf}, {inf, inf, inf});
+            Region<3> target = out;
             target[s](axis) = d;
             target[(i & 1) == 0](q) = 0;
             target[(i & 2) == 0](r) = 0;
-            out = fmin(out, testRegion(target));
+            o = fmin(o, testRegion(target));
         }
-        return out;
+        return o;
     };
 
-    // Iterate over axes
-    for (unsigned axis=0; axis < 3; ++axis)
+    for (unsigned iter=0; iter < 8; ++iter)
     {
-        // Iterate over positive vs negative
-        for (unsigned s=0; s <= 1; ++s)
+        Region<3> next = out;
+        // Iterate over axes
+        for (unsigned axis=0; axis < 3; ++axis)
         {
-            double sign = s ? -1 : 1;
-            double pos = -sign;
-
-            // First, walk back on the given axis until you find the shape
-            double step = sign;
-            do
+            // Iterate over positive vs negative
+            for (unsigned s=0; s <= 1; ++s)
             {
-                pos -= sign;
-                step *= 2;
-            }
-            while (check(axis, s, pos) > 0 && !std::isinf(step));
+                double sign = s ? -1 : 1;
+                double pos = -sign;
 
-            // Then walk forward until you are outside of the shape
-            step = sign;
-            do
-            {
-                pos += step;
-                step *= 2;
-            }
-            while (check(axis, s, pos) <= 0 && !std::isinf(step));
-
-            // If we can't get a bound on this axis, keep going
-            if (std::isinf(step))
-            {
-                continue;
-            }
-
-            double outside = pos;
-            double inside = pos - step / 2;
-            double frac = 0.5;
-            step = 0.25;
-            for (unsigned i=0; i < 16; ++i)
-            {
-                pos = outside * frac + inside * (1 - frac);
-                if (check(axis, s, pos) <= 0)
+                // First, walk back on the given axis until you find the shape
+                double step = sign;
+                do
                 {
-                    frac += step;
+                    pos -= sign;
+                    step *= 2;
                 }
-                else
+                while (check(axis, s, pos) > 0 && !std::isinf(step));
+
+                // Then walk forward until you are outside of the shape
+                step = sign;
+                do
                 {
-                    frac -= step;
+                    pos += step;
+                    step *= 2;
                 }
-                step /= 2;
+                while (check(axis, s, pos) <= 0 && !std::isinf(step));
+
+                // If we can't get a bound on this axis, keep going
+                if (std::isinf(step))
+                {
+                    continue;
+                }
+
+                double outside = pos;
+                double inside = pos - step / 2;
+                double frac = 0.5;
+                step = 0.25;
+                for (unsigned i=0; i < 16; ++i)
+                {
+                    pos = outside * frac + inside * (1 - frac);
+                    if (check(axis, s, pos) <= 0)
+                    {
+                        frac += step;
+                    }
+                    else
+                    {
+                        frac -= step;
+                    }
+                    step /= 2;
+                }
+                next[!s](axis) = pos;
             }
-            out[!s](axis) = pos;
         }
+        out = next;
     }
     return out;
 }
