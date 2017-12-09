@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     (slot-set! v 'x x)
     (slot-set! v 'y y)
     v))
-(export vec2)
+(export vec2 <vec2>)
 
 (define-method (write (self <vec2>) port)
   (format port "#[~a ~a]" (slot-ref self 'x) (slot-ref self 'y)))
@@ -89,7 +89,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     (slot-set! v 'y (slot-ref a 'y))
     (slot-set! v 'z z)
     v))
-(export vec3)
+(export vec3 <vec3>)
 
 (define-method (+ (a <vec3>) (b <vec3>))
   (vec3 (+ (slot-ref a 'x) (slot-ref b 'x))

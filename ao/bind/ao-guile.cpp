@@ -143,16 +143,16 @@ SCM scm_tree(SCM op, SCM a, SCM b)
     return scm_from_tree(out);
 }
 
-SCM scm_tree_eval(SCM t, SCM x, SCM y, SCM z)
+SCM scm_tree_eval_f(SCM t, SCM x, SCM y, SCM z)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_eval", "tree");
+    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_eval_f", "tree");
 
     SCM_ASSERT_TYPE(scm_is_number(x) || scm_is_tree(t),
-                    x, 1, "scm_tree_eval", "number");
+                    x, 1, "scm_tree_eval_f", "number");
     SCM_ASSERT_TYPE(scm_is_number(y) || scm_is_tree(t),
-                    y, 2, "scm_tree_eval", "number");
+                    y, 2, "scm_tree_eval_f", "number");
     SCM_ASSERT_TYPE(scm_is_number(z) || scm_is_tree(t),
-                    z, 3, "scm_tree_eval", "number");
+                    z, 3, "scm_tree_eval_f", "number");
 
     auto x_ = scm_is_number(x) ? ao_tree_const(scm_to_double(x))
                                : scm_to_tree(x);
@@ -167,6 +167,33 @@ SCM scm_tree_eval(SCM t, SCM x, SCM y, SCM z)
     auto val = ao_tree_get_const(out, &is_const);
 
     return is_const ? scm_from_double(val) : scm_from_tree(out);
+}
+
+SCM scm_tree_eval_i(SCM t, SCM xmin, SCM xmax,
+                           SCM ymin, SCM ymax,
+                           SCM zmin, SCM zmax)
+{
+    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_eval_f", "tree");
+
+    SCM_ASSERT_TYPE(scm_is_number(xmin), xmin, 1, "scm_tree_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(xmax), xmax, 2, "scm_tree_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(ymin), ymin, 3, "scm_tree_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(ymax), ymax, 4, "scm_tree_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(zmin), zmin, 5, "scm_tree_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(zmax), zmax, 6, "scm_tree_eval_r", "number");
+
+    float xmin_ = scm_to_double(xmin);
+    float ymin_ = scm_to_double(ymin);
+    float zmin_ = scm_to_double(zmin);
+
+    float xmax_ = scm_to_double(xmax);
+    float ymax_ = scm_to_double(ymax);
+    float zmax_ = scm_to_double(zmax);
+
+    ao_region3 r = {{xmin_, xmax_}, {ymin_, ymax_}, {zmin_, zmax_}};
+    auto i = ao_tree_eval_r(scm_to_tree(t), r);
+
+    return scm_cons(scm_from_double(i.lower), scm_from_double(i.upper));
 }
 
 SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
@@ -203,7 +230,7 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
 void init_ao_kernel(void*)
 {
     scm_c_eval_string(R"(
-(use-modules (system foreign) (oop goops))
+(use-modules (system foreign) (oop goops) (ao vec))
 
 (define-wrapped-pointer-type
     tree-ptr tree-ptr? wrap-tree-ptr unwrap-tree-ptr
@@ -217,20 +244,24 @@ void init_ao_kernel(void*)
 (define (unwrap-tree t) (unwrap-tree-ptr (slot-ref t 'ptr)))
 )");
 
+    // Extract tree wrapping and unwrapping from local environment
     scm_tree_p_ = scm_c_eval_string("tree?");
     scm_wrap_tree_ = scm_c_eval_string("wrap-tree");
     scm_unwrap_tree_ = scm_c_eval_string("unwrap-tree");
 
+    // Inject all of our compiled functions into the module environment
     scm_c_define_gsubr("make-tree", 1, 2, 0, (void*)scm_tree);
     scm_c_define_gsubr("make-var", 0, 0, 0, (void*)scm_var);
     scm_c_define_gsubr("var?", 1, 0, 0, (void*)scm_var_p);
     scm_c_define_gsubr("tree-id", 1, 0, 0, (void*)scm_tree_id);
     scm_c_define_gsubr("number->tree", 1, 0, 0, (void*)scm_number_to_tree);
     scm_c_define_gsubr("tree-equal?", 2, 0, 0, (void*)scm_tree_equal_p);
-    scm_c_define_gsubr("tree-eval", 4, 0, 0, (void*)scm_tree_eval);
+    scm_c_define_gsubr("tree-eval-f", 4, 0, 0, (void*)scm_tree_eval_f);
+    scm_c_define_gsubr("tree-eval-i", 7, 0, 0, (void*)scm_tree_eval_i);
     scm_c_define_gsubr("tree->mesh", 4, 0, 0, (void*)scm_tree_to_mesh);
 
-    // Overload all of the arithmetic operations with tree-based substitutes!
+    // Overload all of arithmetic operations with tree-based methods,
+    // then add a handful of other useful functions to the module.
     scm_c_eval_string(R"(
 (define (ensure-tree t)
   (cond ((tree? t) t)
@@ -283,6 +314,15 @@ void init_ao_kernel(void*)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define-method (tree-eval (a <tree>) (pt <vec3>))
+    (tree-eval-f a (.x pt) (.y pt) (.z pt)))
+
+(define-method (tree-eval (a <tree>) (lower <vec3>) (upper <vec3>))
+    (tree-eval-i a (.x lower) (.x upper)
+                   (.y lower) (.y upper)
+                   (.z lower) (.z upper)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define-syntax-rule (lambda-shape vars ...)
   (ensure-tree
     ((lambda vars ...) (make-tree 'var-x)
@@ -293,9 +333,9 @@ void init_ao_kernel(void*)
   (define name (lambda-shape vars body ...)))
 
 (define-syntax-rule (remap-shape (tree . vars) x y z)
-  (tree-eval tree (lambda-shape vars x)
-                  (lambda-shape vars y)
-                  (lambda-shape vars z)))
+  (tree-eval tree #[(lambda-shape vars x)
+                    (lambda-shape vars y)
+                    (lambda-shape vars z)]))
 
 ;; These are "safe" bindings that can be used in the sandbox
 (define ao-bindings '(square constant lambda-shape define-shape remap-shape
@@ -344,8 +384,9 @@ void init_ao_sandbox(void*)
 
 void scm_init_ao_modules()
 {
-    scm_c_define_module("ao kernel", init_ao_kernel, NULL);
+    // Listed in order of dependencies
     scm_c_define_module("ao vec", init_ao_vec, NULL);
+    scm_c_define_module("ao kernel", init_ao_kernel, NULL);
     scm_c_define_module("ao csg", init_ao_csg, NULL);
     scm_c_define_module("ao transforms", init_ao_transforms, NULL);
     scm_c_define_module("ao shapes", init_ao_shapes, NULL);
