@@ -34,6 +34,8 @@ SCM scm_wrap_tree_ = NULL;
 SCM scm_unwrap_tree_= NULL;
 SCM scm_tree_p_= NULL;
 
+SCM scm_vec3_ = NULL;
+
 // Scheme-flavored bindings
 SCM scm_wrap_tree(SCM ptr)      { return scm_call_1(scm_wrap_tree_, ptr); }
 SCM scm_unwrap_tree(SCM ptr)    { return scm_call_1(scm_unwrap_tree_, ptr); }
@@ -50,6 +52,14 @@ SCM scm_from_tree(ao_tree t)
 {
     return scm_wrap_tree(scm_from_pointer(t, del_tree));
 }
+
+SCM scm_vec3(float x, float y, float z)
+{
+    return scm_call_3(scm_vec3_, scm_from_double(x),
+                                 scm_from_double(y),
+                                 scm_from_double(z));
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -227,6 +237,14 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
     return out ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
+SCM scm_shape_bounds(SCM t)
+{
+    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_to_mesh", "tree");
+    auto b = ao_tree_bounds(scm_to_tree(t));
+    return scm_cons(scm_vec3(b.X.lower, b.Y.lower, b.Z.lower),
+                    scm_vec3(b.X.lower, b.Y.lower, b.Z.lower));
+}
+
 void init_ao_kernel(void*)
 {
     scm_c_eval_string(R"(
@@ -249,6 +267,9 @@ void init_ao_kernel(void*)
     scm_wrap_tree_ = scm_c_eval_string("wrap-tree");
     scm_unwrap_tree_ = scm_c_eval_string("unwrap-tree");
 
+    // Extract vec3 constructor from local environment
+    scm_vec3_ = scm_c_eval_string("vec3");
+
     // Inject all of our compiled functions into the module environment
     scm_c_define_gsubr("make-tree", 1, 2, 0, (void*)scm_tree);
     scm_c_define_gsubr("make-var", 0, 0, 0, (void*)scm_var);
@@ -259,6 +280,7 @@ void init_ao_kernel(void*)
     scm_c_define_gsubr("tree-eval-f", 4, 0, 0, (void*)scm_tree_eval_f);
     scm_c_define_gsubr("tree-eval-i", 7, 0, 0, (void*)scm_tree_eval_i);
     scm_c_define_gsubr("tree->mesh", 4, 0, 0, (void*)scm_tree_to_mesh);
+    scm_c_define_gsubr("shape-bounds", 1, 0, 0, (void*)scm_shape_bounds);
 
     // Overload all of arithmetic operations with tree-based methods,
     // then add a handful of other useful functions to the module.
@@ -339,7 +361,7 @@ void init_ao_kernel(void*)
 
 ;; These are "safe" bindings that can be used in the sandbox
 (define ao-bindings '(square constant lambda-shape define-shape remap-shape
-                      ao-bindings))
+                      shape-bounds ao-bindings))
 (eval (cons 'export ao-bindings) (interaction-environment))
  )");
 
