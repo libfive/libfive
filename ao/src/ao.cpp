@@ -32,6 +32,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ao/render/discrete/voxels.hpp"
 #include "ao/render/discrete/heightmap.hpp"
 
+#include "ao/solve/bounds.hpp"
+
 using namespace Kernel;
 
 void ao_contours_delete(ao_contours* cs)
@@ -172,6 +174,14 @@ ao_interval ao_tree_eval_r(ao_tree t, ao_region3 r)
 bool ao_tree_eq(ao_tree a, ao_tree b)
 {
     return *a == *b;
+}
+
+ao_region3 ao_tree_bounds(ao_tree a)
+{
+    auto bs = findBounds(*a);
+    return {{float(bs.lower.x()), float(bs.upper.x())},
+            {float(bs.lower.y()), float(bs.upper.y())},
+            {float(bs.lower.z()), float(bs.upper.z())}};
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -127,6 +127,8 @@ ao_tree ao_tree_load(const char* filename);
 
 ao_tree ao_tree_remap(ao_tree p, ao_tree x, ao_tree y, ao_tree z);
 
+ao_region3 ao_tree_bounds(ao_tree p);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 struct ao_args;
