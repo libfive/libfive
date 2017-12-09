@@ -59,8 +59,6 @@ TEST_CASE("IntervalEvaluator::eval")
         IntervalEvaluator e(std::make_shared<Tape>(
             (Tree::X() + Tree::Y()) * (Tree::X() - Tree::Y())));
 
-        // This test has a partner in eval_affine, which asserts that the
-        // AffineEvaluator maintains tighter bounds.
         auto o = e.eval({0, 0, 0}, {1, 1, 1});
         REQUIRE(o.lower() == -2);
         REQUIRE(o.upper() == 2);
