@@ -57,6 +57,20 @@ TEST_CASE("findBounds")
         REQUIRE(r.upper.z() == Approx(5.5).epsilon(0.001));
     }
 
+    SECTION("Moved circle")
+    {
+        auto s = move(circle(0.3), {0.3, 0.3, 0});
+
+        auto r = findBounds(s);
+        CAPTURE(r.lower);
+        CAPTURE(r.upper);
+        REQUIRE(r.lower.x() == Approx(0).epsilon(0.001));
+        REQUIRE(r.lower.y() == Approx(0.6).epsilon(0.001));
+
+        REQUIRE(r.upper.x() == Approx(0).epsilon(0.001));
+        REQUIRE(r.upper.y() == Approx(0.6).epsilon(0.001));
+    }
+
     SECTION("Rotated shape")
     {
         auto s = rotate2d(circle(0.5), M_PI/4);
