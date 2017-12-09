@@ -242,7 +242,7 @@ SCM scm_shape_bounds(SCM t)
     SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_to_mesh", "tree");
     auto b = ao_tree_bounds(scm_to_tree(t));
     return scm_cons(scm_vec3(b.X.lower, b.Y.lower, b.Z.lower),
-                    scm_vec3(b.X.lower, b.Y.lower, b.Z.lower));
+                    scm_vec3(b.X.upper, b.Y.upper, b.Z.upper));
 }
 
 void init_ao_kernel(void*)
