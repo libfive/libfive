@@ -161,6 +161,14 @@ float ao_tree_eval_f(ao_tree t, ao_vec3 p)
     return e.eval({p.x, p.y, p.z});
 }
 
+ao_interval ao_tree_eval_r(ao_tree t, ao_region3 r)
+{
+    IntervalEvaluator e(std::make_shared<Tape>(*t));
+    auto i = e.eval({r.X.lower, r.Y.lower, r.Z.lower},
+                    {r.X.upper, r.Y.upper, r.Z.upper});
+    return {i.lower(), i.upper()};
+}
+
 bool ao_tree_eq(ao_tree a, ao_tree b)
 {
     return *a == *b;

@@ -63,6 +63,22 @@ TEST_CASE("ao_tree_eval_f")
     ao_tree_delete(c);
 }
 
+TEST_CASE("ao_tree_eval_r")
+{
+    auto a = ao_tree_x();
+    auto b = ao_tree_y();
+
+    auto c = ao_tree_binary(Opcode::SUB, a, b);
+
+    auto r1 = ao_tree_eval_r(c, {{1,2}, {2,3}, {0,0}});
+    REQUIRE(r1.lower == -2);
+    REQUIRE(r1.upper == 0);
+
+    ao_tree_delete(a);
+    ao_tree_delete(b);
+    ao_tree_delete(c);
+}
+
 TEST_CASE("ao_tree_render_slice")
 {
     auto x = ao_tree_x();
