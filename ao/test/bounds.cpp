@@ -65,9 +65,9 @@ TEST_CASE("findBounds")
         CAPTURE(r.lower);
         CAPTURE(r.upper);
         REQUIRE(r.lower.x() == Approx(0).epsilon(0.001));
-        REQUIRE(r.lower.y() == Approx(0.6).epsilon(0.001));
+        REQUIRE(r.lower.y() == Approx(0).epsilon(0.001));
 
-        REQUIRE(r.upper.x() == Approx(0).epsilon(0.001));
+        REQUIRE(r.upper.x() == Approx(0.6).epsilon(0.001));
         REQUIRE(r.upper.y() == Approx(0.6).epsilon(0.001));
     }
 
