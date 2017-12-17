@@ -1,28 +1,26 @@
-(define (recurse x y scale i)
+(define (recurse center scale i)
   (define base
-    (rectangle (vec2 (- x scale) (- y scale))
-               (vec2 (+ x scale) (+ y scale))))
+    (rectangle (- center scale) (+ center scale)))
   (if (= i 0)
     base
-    (let ((j (- i 1))
-          (s (* scale 2))
-          (t (/ scale 3)))
-      (min base
-        (recurse (+ x s) y t j)
-        (recurse (- x s) y t j)
-        (recurse x (+ y s) t j)
-        (recurse x (- y s) t j)
-        (recurse (+ x s) (+ y s) t j)
-        (recurse (+ x s) (- y s) t j)
-        (recurse (- x s) (+ y s) t j)
-        (recurse (- x s) (- y s) t j)
-))))
+    (apply union (cons base
+      (map (lambda (o)
+        (recurse (+ center (* 2 o scale))
+                 (/ scale 3)
+                 (1- i)))
+          (list
+            #[1 0] #[-1 0]
+            #[0 1] #[0 -1]
+            #[1 1] #[1 -1]
+            #[-1 1] #[-1 -1]
+          ))))
+))
 
-(define cutout (recurse 0 0 2/3 2))
-(define menger
-  (difference (box #[-2 -2 -2] #[2 2 2])
+;; Build the 2D cutout
+(define cutout (recurse #[0 0] 2/3 2))
+
+;; Then reflect and cut it from a cube on all axes
+(difference (box #[-2 -2 -2] #[2 2 2])
     cutout
     (reflect-yz cutout)
-    (reflect-xy (reflect-yz cutout))
-))
-menger
+    (reflect-xz cutout))
