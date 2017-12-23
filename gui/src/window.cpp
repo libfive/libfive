@@ -476,7 +476,7 @@ void Window::onAbout(bool)
 #ifdef Q_OS_MAC
     QWidget a;
     QIcon icon(QCoreApplication::applicationDirPath() +
-               "/../Resources/ao.icns");
+               "/../Resources/studio.icns");
     QMessageBox m(this);
     auto px = icon.pixmap(128);
     px.setDevicePixelRatio(devicePixelRatio());
