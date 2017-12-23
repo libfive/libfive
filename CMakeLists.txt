@@ -23,22 +23,6 @@ if(APPLE)
 endif()
 
 ################################################################################
-
-execute_process(COMMAND git log --pretty=format:'%h' -n 1
-                OUTPUT_VARIABLE GITREV)
-execute_process(COMMAND bash -c "git diff --quiet --exit-code || echo +"
-                OUTPUT_VARIABLE GITDIFF)
-execute_process(COMMAND git describe --exact-match --tags
-                OUTPUT_VARIABLE GITTAG
-                ERROR_QUIET)
-execute_process(COMMAND git rev-parse --abbrev-ref HEAD
-                OUTPUT_VARIABLE GITBRANCH)
-
-add_definitions(-D'GITREV="${GITREV}${GITDIFF}"'
-                -D'GITTAG="${GITTAG}"'
-                -D'GITBRANCH="${GITBRANCH}"')
-
-################################################################################
 # Find all packages here at the top level so we can print debugging info
 find_package(Qt5Core)
 find_package(Boost REQUIRED)

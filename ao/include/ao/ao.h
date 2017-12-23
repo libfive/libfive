@@ -195,6 +195,23 @@ bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f);
 ao_pixels* ao_tree_render_pixels(ao_tree tree, ao_region2 R,
                                  float z, float res);
 
+/*
+ *  Returns the human-readable tag associated with this build,
+ *  or the empty string if there is no such tag
+ */
+const char* ao_git_version(void);
+
+/*
+ *  Returns the 7-character git hash associated with this build,
+ *  with a trailing '+' if there are local (uncommitted) modifications
+ */
+const char* ao_git_revision(void);
+
+/*
+ *  Returns the name of the branch associated with this build
+ */
+const char* ao_git_branch(void);
+
 #ifdef __cplusplus
 }
 #endif

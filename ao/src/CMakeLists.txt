@@ -1,3 +1,11 @@
+# Add a custom command that produces version.cpp, plus
+# a dummy output that's not actually produced, in order
+# to force version.cmake to always be re-run before the build
+ADD_CUSTOM_COMMAND(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+           ${CMAKE_CURRENT_BINARY_DIR}/_version.cpp
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake)
+
 add_library(ao-kernel SHARED
     eval/base.cpp
     eval/eval_interval.cpp
@@ -22,6 +30,8 @@ add_library(ao-kernel SHARED
     tree/template.cpp
     tree/tree.cpp
     ao.cpp
+
+    ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 
 target_include_directories(ao-kernel SYSTEM PUBLIC
