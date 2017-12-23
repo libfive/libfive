@@ -493,7 +493,7 @@ void Window::onAbout(bool)
     m.setInformativeText(info);
     m.exec();
 #else
-    QMessageBox::about(this, "Studio",info);
+    QMessageBox::about(this, "Studio", info);
 #endif
 }
 
