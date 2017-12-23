@@ -30,6 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "gui/interpreter.hpp"
 #include "gui/view.hpp"
 
+#include "ao/ao.h"
+
 #define CHECK_UNSAVED() \
 switch (checkUnsaved())                                         \
 {                                                               \
@@ -471,8 +473,14 @@ void Window::onExport(bool)
 
 void Window::onAbout(bool)
 {
-    QString info = "A Scheme-based GUI for<br>the Ao CAD kernel<br><br>"
-                   "<a href=\"https://github.com/mkeeter/ao\">Source on Github</a>";
+    QString info = "A Scheme-based GUI for<br>the Ao CAD kernel<br><br>";
+
+    info += strlen(ao_git_version())
+        ? "Version: <code>" + QString(ao_git_version()) + "</code><br>"
+        : "Branch: <code>" + QString(ao_git_branch()) + "</code><br>";
+    info += "Revision: <code>" + QString(ao_git_revision()) + "</code><br><br>";
+
+    info += "<a href=\"https://github.com/mkeeter/ao\">Source on Github</a>";
 #ifdef Q_OS_MAC
     QWidget a;
     QIcon icon(QCoreApplication::applicationDirPath() +
