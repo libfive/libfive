@@ -1,28 +1,24 @@
-# Read in all of the Scheme files
-file(READ ${CMAKE_CURRENT_LIST_DIR}/shapes.scm SHAPES)
-file(READ ${CMAKE_CURRENT_LIST_DIR}/csg.scm CSG)
-file(READ ${CMAKE_CURRENT_LIST_DIR}/transforms.scm TRANSFORMS)
-file(READ ${CMAKE_CURRENT_LIST_DIR}/text.scm TEXT)
-file(READ ${CMAKE_CURRENT_LIST_DIR}/vec.scm VEC)
-file(READ ${CMAKE_CURRENT_LIST_DIR}/sandbox.scm SANDBOX)
-
-# Modify any substrings that look like a termination sequence )"
-string(REPLACE ")\"" ") \"" SHAPES "${SHAPES}")
-string(REPLACE ")\"" ") \"" CSG "${CSG}")
-string(REPLACE ")\"" ") \"" TRANSFORMS "${TRANSFORMS}")
-string(REPLACE ")\"" ") \"" TEXT "${TEXT}")
-string(REPLACE ")\"" ") \"" VEC "${VEC}")
-string(REPLACE ")\"" ") \"" SANDBOX "${SANDBOX}")
-
 # Read in the main C++ file
 file(READ ${CMAKE_CURRENT_LIST_DIR}/ao-guile.cpp AO_GUILE)
 
-# Perform string substitution to splice the Scheme text into the C++ source
-string(REPLACE "AO_GUILE_SHAPES" "${SHAPES}" AO_GUILE "${AO_GUILE}")
-string(REPLACE "AO_GUILE_CSG" "${CSG}" AO_GUILE "${AO_GUILE}")
-string(REPLACE "AO_GUILE_TRANSFORMS" "${TRANSFORMS}" AO_GUILE "${AO_GUILE}")
-string(REPLACE "AO_GUILE_TEXT" "${TEXT}" AO_GUILE "${AO_GUILE}")
-string(REPLACE "AO_GUILE_VEC" "${VEC}" AO_GUILE "${AO_GUILE}")
-string(REPLACE "AO_GUILE_SANDBOX" "${SANDBOX}" AO_GUILE "${AO_GUILE}")
+# LOAD is a macro that automatically drops a SCM file into the AO_GUILE source
+macro(LOAD TARGET)
+    # Read in the target Scheme file
+    string(TOLOWER "${CMAKE_CURRENT_LIST_DIR}/${TARGET}.scm" FILENAME)
+    file(READ ${FILENAME} SCM)
+
+    # Modify any substrings that look like a termination sequence )"
+    string(REPLACE ")\"" ") \"" SCM "${SCM}")
+
+    # Perform string substitution to splice the Scheme text into the C++ source
+    string(REPLACE "AO_GUILE_${TARGET}" "${SCM}" AO_GUILE "${AO_GUILE}")
+endmacro(LOAD)
+
+LOAD(SHAPES)
+LOAD(CSG)
+LOAD(TRANSFORMS)
+LOAD(TEXT)
+LOAD(VEC)
+LOAD(SANDBOX)
 
 file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/bundle.cpp "${AO_GUILE}")
