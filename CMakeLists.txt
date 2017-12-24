@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.3)
-project(Ao)
+project(libfive)
 
 # Properly distinguish between Apple and upstream Clang
 cmake_policy(SET CMP0025 NEW)
@@ -39,15 +39,15 @@ endif(UNIX AND NOT(APPLE))
 ################################################################################
 # Inform the user which subsystems will be built and any missing deps
 message("Checking dependencies:")
-message("  libao-kernel: ✓")
+message("  libfive: ✓")
 
 if (GUILE_FOUND)
-    message("  guile-ao:     ✓")
+    message("  guile-libfive:     ✓")
 
     # Sadly, this is a global setting (there's no target_link_directories)
     link_directories(${GUILE_LIBRARY_DIRS})
 else ()
-    message("  guile-ao:     ✘   (needs Guile 2.2 or later)")
+    message("  guile-libfive:     ✘   (needs Guile 2.2 or later)")
 endif()
 
 if (Qt5Core_FOUND AND GUILE_FOUND)
@@ -65,8 +65,8 @@ endif()
 ################################################################################
 
 # Always build the kernel and test suite
-add_subdirectory(ao)
+add_subdirectory(libfive)
 
 if(GUILE_FOUND AND Qt5Core_FOUND)
-    add_subdirectory(gui)
+    add_subdirectory(studio)
 endif(GUILE_FOUND AND Qt5Core_FOUND)

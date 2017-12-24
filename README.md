@@ -1,5 +1,5 @@
 # Disclaimer
-This generation of Ao is not yet ready for mass consumption.
+This generation of `libfive` is not yet ready for mass consumption.
 
 It's coming along nicely –
 and if you've found your way here,
@@ -11,34 +11,34 @@ and limited support.
 Please enjoy it responsibly and refrain from posting it to the wider web.
 
 # About
-Ao is a framework for solid modeling using
+`libfive` is a framework for solid modeling using
 [functional representations](https://en.wikipedia.org/wiki/Function_representation).
 
 It includes several layers, ranging from infrastructure to GUI:
 
-- `libao-kernel` is a shared library to build, manipulate, and render f-reps.
+- `libfive` is a shared library to build, manipulate, and render f-reps.
 A great deal of work has gone into the meshing algorithm,
 which produces watertight, manifold,
 hierarchical, feature-preserving triangle meshes.
-The library is written in C++ and exposes a C API in `ao/ao.h`.
-- `libao-guile` is a [Guile](https://www.gnu.org/software/guile/)
-binding to `libao-kernel`.
+The library is written in C++ and exposes a C API in `libfive.h`.
+- `libfive-guile` is a [Guile](https://www.gnu.org/software/guile/)
+binding to `libfive`.
 It exposes a high-level API to construct shapes,
 and includes a standard library
 of shapes, transforms, and CSG operations.
 - **Studio** is a GUI application in the style of
 [OpenSCAD](http://www.openscad.org/).
-It wraps `libao-guile` and allows for live-coding of solid models.
+It wraps `libfive-guile` and allows for live-coding of solid models.
 The interface also includes direct modeling,
 where the user can push and pull on the model's surface
 to change variables in the script.
 
 # Compiling from source
-The full system (`libao` + `libao-guile` + **Studio**)
+The full system (`libfive` + `libfive-guile` + **Studio**)
 has been successfully compiled on Mac and Linux.
 There's also a third-party fork
 [here](https://github.com/bradrothenberg/ao/tree/win64)
-that builds `libao` on Windows with MSVC.
+that builds `libfive` on Windows with MSVC.
 
 ## Dependencies
 ### Build system
@@ -66,8 +66,8 @@ Adjust based on your Qt installation path, and consider using [`ninja`](https://
 (c) 2015-2017 Matthew Keeter
 
 Different layers of this project are released under different licenses:
-- `ao-kernel` is released under the LGPL, version 2 or later.
-- `guile-ao` and `Studio` are released under the GPL, version 2 or later.
+- `libfive` (the core shared library) is released under the LGPL, version 2 or later.
+- `libfive-guile` and `Studio` are released under the GPL, version 2 or later.
 
 Contact me to discuss custom development,
 integration,
@@ -75,8 +75,8 @@ or commercial support.
 
 # Using the standalone Guile module
 ```
-scheme@(guile-user)> (load-extension "ao/bind/libguile-ao" "scm_init_ao_modules")
-scheme@(guile-user)> (use-modules (ao csg) (ao transforms) (ao shapes))
+scheme@(guile-user)> (load-extension "libfive/bind/libfive-guile" "scm_init_libfive_modules")
+scheme@(guile-user)> (use-modules (libfive csg) (libfive transforms) (libfive shapes))
 ```
 
 Note that the standalong module does not include
