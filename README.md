@@ -83,4 +83,4 @@ Note that the standalong module does not include
 the minimal OpenGL-based GUI described
 [here](https://mattkeeter.com/projects/ao).
 That GUI is no longer maintained,
-but can be found in the [`ao-guile-repl` branch](https://github.com/mkeeter/ao/tree/ao-guile-repl).
+but can be found in the [`ao-guile-repl` repo](https://github.com/mkeeter/ao-guile-repl).
