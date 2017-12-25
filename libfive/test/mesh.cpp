@@ -1,5 +1,5 @@
 /*
-Ao: a CAD kernel for modeling with implicit functions
+libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2017  Matt Keeter
 
 This library is free software; you can redistribute it and/or

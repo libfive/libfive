@@ -1,5 +1,5 @@
 /*
-Ao: a CAD kernel for modeling with implicit functions
+libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2017  Matt Keeter
 
 This library is free software; you can redistribute it and/or
@@ -25,71 +25,71 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 using namespace Kernel;
 
-TEST_CASE("ao_opcode_enum")
+TEST_CASE("libfive_opcode_enum")
 {
-    REQUIRE(ao_opcode_enum("min") == Opcode::MIN);
-    REQUIRE(ao_opcode_enum("max") == Opcode::MAX);
-    REQUIRE(ao_opcode_enum("VAR-X") == Opcode::VAR_X);
+    REQUIRE(libfive_opcode_enum("min") == Opcode::MIN);
+    REQUIRE(libfive_opcode_enum("max") == Opcode::MAX);
+    REQUIRE(libfive_opcode_enum("VAR-X") == Opcode::VAR_X);
 
-    REQUIRE(ao_opcode_enum("wat") == -1);
-    REQUIRE(ao_opcode_enum("") == -1);
+    REQUIRE(libfive_opcode_enum("wat") == -1);
+    REQUIRE(libfive_opcode_enum("") == -1);
 }
 
-TEST_CASE("ao_tree")
+TEST_CASE("libfive_tree")
 {
-    auto a = ao_tree_x();
-    auto b = ao_tree_x();
-    auto c = ao_tree_y();
+    auto a = libfive_tree_x();
+    auto b = libfive_tree_x();
+    auto c = libfive_tree_y();
     REQUIRE(a->id() == b->id());
     REQUIRE(b->id() != c->id());
 
-    ao_tree_delete(a);
-    ao_tree_delete(b);
-    ao_tree_delete(c);
+    libfive_tree_delete(a);
+    libfive_tree_delete(b);
+    libfive_tree_delete(c);
 }
 
-TEST_CASE("ao_tree_eval_f")
+TEST_CASE("libfive_tree_eval_f")
 {
-    auto a = ao_tree_x();
-    auto b = ao_tree_y();
-    auto c = ao_tree_binary(Opcode::DIV, a, b);
+    auto a = libfive_tree_x();
+    auto b = libfive_tree_y();
+    auto c = libfive_tree_binary(Opcode::DIV, a, b);
 
-    REQUIRE(ao_tree_eval_f(c, {1,2,3}) == 0.5);
-    REQUIRE(ao_tree_eval_f(c, {1,4,3}) == 0.25);
-    REQUIRE(ao_tree_eval_f(c, {1,-1,3}) == -1);
+    REQUIRE(libfive_tree_eval_f(c, {1,2,3}) == 0.5);
+    REQUIRE(libfive_tree_eval_f(c, {1,4,3}) == 0.25);
+    REQUIRE(libfive_tree_eval_f(c, {1,-1,3}) == -1);
 
-    ao_tree_delete(a);
-    ao_tree_delete(b);
-    ao_tree_delete(c);
+    libfive_tree_delete(a);
+    libfive_tree_delete(b);
+    libfive_tree_delete(c);
 }
 
-TEST_CASE("ao_tree_eval_r")
+TEST_CASE("libfive_tree_eval_r")
 {
-    auto a = ao_tree_x();
-    auto b = ao_tree_y();
+    auto a = libfive_tree_x();
+    auto b = libfive_tree_y();
 
-    auto c = ao_tree_binary(Opcode::SUB, a, b);
+    auto c = libfive_tree_binary(Opcode::SUB, a, b);
 
-    auto r1 = ao_tree_eval_r(c, {{1,2}, {2,3}, {0,0}});
+    auto r1 = libfive_tree_eval_r(c, {{1,2}, {2,3}, {0,0}});
     REQUIRE(r1.lower == -2);
     REQUIRE(r1.upper == 0);
 
-    ao_tree_delete(a);
-    ao_tree_delete(b);
-    ao_tree_delete(c);
+    libfive_tree_delete(a);
+    libfive_tree_delete(b);
+    libfive_tree_delete(c);
 }
 
-TEST_CASE("ao_tree_render_slice")
+TEST_CASE("libfive_tree_render_slice")
 {
-    auto x = ao_tree_x();
-    auto y = ao_tree_y();
-    auto x2 = ao_tree_unary(Opcode::SQUARE, x);
-    auto y2 = ao_tree_unary(Opcode::SQUARE, y);
-    auto r = ao_tree_binary(Opcode::ADD, x2, y2);
-    auto one = ao_tree_const(1.0f);
-    auto d = ao_tree_binary(Opcode::SUB, r, one);
+    auto x = libfive_tree_x();
+    auto y = libfive_tree_y();
+    auto x2 = libfive_tree_unary(Opcode::SQUARE, x);
+    auto y2 = libfive_tree_unary(Opcode::SQUARE, y);
+    auto r = libfive_tree_binary(Opcode::ADD, x2, y2);
+    auto one = libfive_tree_const(1.0f);
+    auto d = libfive_tree_binary(Opcode::SUB, r, one);
 
-    auto cs = ao_tree_render_slice(d, {{-2, 2}, {-2, 2}}, 0, 10);
+    auto cs = libfive_tree_render_slice(d, {{-2, 2}, {-2, 2}}, 0, 10);
     REQUIRE(cs->count == 1);
     REQUIRE(cs->cs[0].count > 0);
     float rmin = 2;
@@ -106,25 +106,25 @@ TEST_CASE("ao_tree_render_slice")
 
     for (auto t : {x, y, x2, y2, r, one, d})
     {
-        ao_tree_delete(t);
+        libfive_tree_delete(t);
     }
-    ao_contours_delete(cs);
+    libfive_contours_delete(cs);
 }
 
-TEST_CASE("ao_tree_render_mesh")
+TEST_CASE("libfive_tree_render_mesh")
 {
-    auto x = ao_tree_x();
-    auto y = ao_tree_y();
-    auto z = ao_tree_z();
-    auto x2 = ao_tree_unary(Opcode::SQUARE, x);
-    auto y2 = ao_tree_unary(Opcode::SQUARE, y);
-    auto z2 = ao_tree_unary(Opcode::SQUARE, z);
-    auto r_ = ao_tree_binary(Opcode::ADD, x2, y2);
-    auto r = ao_tree_binary(Opcode::ADD, r_, z2);
-    auto one = ao_tree_const(1.0f);
-    auto d = ao_tree_binary(Opcode::SUB, r, one);
+    auto x = libfive_tree_x();
+    auto y = libfive_tree_y();
+    auto z = libfive_tree_z();
+    auto x2 = libfive_tree_unary(Opcode::SQUARE, x);
+    auto y2 = libfive_tree_unary(Opcode::SQUARE, y);
+    auto z2 = libfive_tree_unary(Opcode::SQUARE, z);
+    auto r_ = libfive_tree_binary(Opcode::ADD, x2, y2);
+    auto r = libfive_tree_binary(Opcode::ADD, r_, z2);
+    auto one = libfive_tree_const(1.0f);
+    auto d = libfive_tree_binary(Opcode::SUB, r, one);
 
-    auto m = ao_tree_render_mesh(d, {{-2, 2}, {-2, 2}, {-2, 2}}, 10);
+    auto m = libfive_tree_render_mesh(d, {{-2, 2}, {-2, 2}, {-2, 2}}, 10);
 
     float rmin = 2;
     float rmax = 0;
@@ -147,46 +147,46 @@ TEST_CASE("ao_tree_render_mesh")
 
     for (auto t : {x, y, z, x2, y2, z2, r_, r, one, d})
     {
-        ao_tree_delete(t);
+        libfive_tree_delete(t);
     }
-    ao_mesh_delete(m);
+    libfive_mesh_delete(m);
 }
 
-TEST_CASE("ao_tree_save/load")
+TEST_CASE("libfive_tree_save/load")
 {
-    auto a = ao_tree_x();
-    auto b = ao_tree_y();
-    auto c = ao_tree_binary(Opcode::DIV, a, b);
+    auto a = libfive_tree_x();
+    auto b = libfive_tree_y();
+    auto c = libfive_tree_binary(Opcode::DIV, a, b);
 
-    ao_tree_save(c, ".ao_tree.tmp");
-    auto c_ = ao_tree_load(".ao_tree.tmp");
+    libfive_tree_save(c, ".libfive_tree.tmp");
+    auto c_ = libfive_tree_load(".libfive_tree.tmp");
     REQUIRE(c_ != nullptr);
-    REQUIRE(ao_tree_eq(c, c_));
+    REQUIRE(libfive_tree_eq(c, c_));
 
     // Redirect stderr to avoid spurious print statements
     std::stringstream buffer;
     std::streambuf* old = std::cerr.rdbuf(buffer.rdbuf());
-    auto f = ao_tree_load(".not_ao_tree.tmp");
+    auto f = libfive_tree_load(".not_libfive_tree.tmp");
     std::cerr.rdbuf(old);
 
     REQUIRE(f == nullptr);
 }
 
-TEST_CASE("ao_tree_render_pixels")
+TEST_CASE("libfive_tree_render_pixels")
 {
-    auto x = ao_tree_x();
-    auto y = ao_tree_y();
-    auto z = ao_tree_z();
-    auto x2 = ao_tree_unary(Opcode::SQUARE, x);
-    auto y2 = ao_tree_unary(Opcode::SQUARE, y);
-    auto z2 = ao_tree_unary(Opcode::SQUARE, z);
-    auto r_ = ao_tree_binary(Opcode::ADD, x2, y2);
-    auto r = ao_tree_binary(Opcode::ADD, r_, z2);
-    auto one = ao_tree_const(1.0f);
-    auto d = ao_tree_binary(Opcode::SUB, r, one);
+    auto x = libfive_tree_x();
+    auto y = libfive_tree_y();
+    auto z = libfive_tree_z();
+    auto x2 = libfive_tree_unary(Opcode::SQUARE, x);
+    auto y2 = libfive_tree_unary(Opcode::SQUARE, y);
+    auto z2 = libfive_tree_unary(Opcode::SQUARE, z);
+    auto r_ = libfive_tree_binary(Opcode::ADD, x2, y2);
+    auto r = libfive_tree_binary(Opcode::ADD, r_, z2);
+    auto one = libfive_tree_const(1.0f);
+    auto d = libfive_tree_binary(Opcode::SUB, r, one);
 
-    auto m = ao_tree_render_pixels(d, {{-2, 2}, {-2, 2}}, 0, 10);
-    ao_pixels_delete(m);
+    auto m = libfive_tree_render_pixels(d, {{-2, 2}, {-2, 2}}, 0, 10);
+    libfive_pixels_delete(m);
 
     REQUIRE(true); // No crash!
 }

@@ -1,8 +1,8 @@
-;; Studio / Ao demo
+;; Studio demo
 ;; ================
 ;;
 ;; Welcome to Studio, a Scheme-based GUI
-;; for the Ao CAD kernel.
+;; for the libfive CAD kernel.
 
 
 ;; Shapes are defined in this pane, and rendered
@@ -43,4 +43,4 @@
 
 ;; To learn more, dig into the source code;
 ;; documentation is sparse at the moment, but
-;; ao-guile.cpp should be informative.
+;; libfive-guile.cpp should be informative.

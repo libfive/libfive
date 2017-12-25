@@ -1,5 +1,5 @@
 /*
-Ao: a CAD kernel for modeling with implicit functions
+libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2017  Matt Keeter
 
 This library is free software; you can redistribute it and/or
@@ -42,12 +42,12 @@ static std::string eval(std::string input) {
     if (!initialized)
     {
         scm_init_guile();
-        scm_init_ao_modules();
-        scm_c_use_module("ao kernel");
-        scm_c_use_module("ao vec");
-        scm_c_use_module("ao csg");
-        scm_c_use_module("ao shapes");
-        scm_c_use_module("ao sandbox");
+        scm_init_libfive_modules();
+        scm_c_use_module("libfive kernel");
+        scm_c_use_module("libfive vec");
+        scm_c_use_module("libfive csg");
+        scm_c_use_module("libfive shapes");
+        scm_c_use_module("libfive sandbox");
         initialized = true;
     }
 
@@ -168,7 +168,7 @@ TEST_CASE("eval-sandboxed")
     }
 }
 
-TEST_CASE("ao-guile CSG")
+TEST_CASE("libfive-guile CSG")
 {
     auto result = eval(R"(
         (difference

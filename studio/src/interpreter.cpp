@@ -40,11 +40,11 @@ void _Interpreter::init()
 
     scm_init_guile();
 
-    scm_init_ao_modules();
-    scm_c_use_module("ao kernel");
+    scm_init_libfive_modules();
+    scm_c_use_module("libfive kernel");
 
     scm_eval_sandboxed = scm_c_eval_string(R"(
-(use-modules (ao sandbox))
+(use-modules (libfive sandbox))
 eval-sandboxed
 )");
 
@@ -78,7 +78,9 @@ port-eof?
     free(kws);
 
     // Extract a list of function names + docstrings
-    QList<QString> modules = {"(ao shapes)", "(ao csg)", "(ao transforms)"};
+    QList<QString> modules = {"(libfive shapes)",
+                              "(libfive csg)",
+                              "(libfive transforms)"};
     Documentation* ds = new Documentation;
     for (auto mod : modules)
     {
@@ -202,14 +204,14 @@ void _Interpreter::eval()
 
         {   // Walk through the global variable map
             auto vs = scm_c_eval_string(R"(
-                (use-modules (ao sandbox))
+                (use-modules (libfive sandbox))
                 (hash-map->list (lambda (k v) v) vars) )");
 
             for (auto v = vs; !scm_is_null(v); v = scm_cdr(v))
             {
                 auto data = scm_cdar(v);
                 auto id = static_cast<Kernel::Tree::Id>(
-                        ao_tree_id(scm_to_tree(scm_car(data))));
+                        libfive_tree_id(scm_to_tree(scm_car(data))));
                 auto value = scm_to_double(scm_cadr(data));
                 vars[id] = value;
 

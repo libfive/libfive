@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 using namespace Kernel;
 
-void ao_contours_delete(ao_contours* cs)
+void libfive_contours_delete(libfive_contours* cs)
 {
     for (unsigned i=0; i < cs->count; ++i)
     {
@@ -46,26 +46,26 @@ void ao_contours_delete(ao_contours* cs)
     delete cs;
 }
 
-void ao_mesh_delete(ao_mesh* m)
+void libfive_mesh_delete(libfive_mesh* m)
 {
     delete [] m->verts;
     delete [] m->tris;
     delete m;
 }
 
-void ao_pixels_delete(ao_pixels* m)
+void libfive_pixels_delete(libfive_pixels* m)
 {
     delete [] m->pixels;
     delete m;
 }
 
-int ao_opcode_enum(const char* op)
+int libfive_opcode_enum(const char* op)
 {
     auto o = Opcode::fromScmString(op);
     return (o == Opcode::INVALID || o == Opcode::LAST_OP) ? -1 : o;
 }
 
-int ao_opcode_args(int op)
+int libfive_opcode_args(int op)
 {
     return (op >= 0 && op < Opcode::LAST_OP)
         ? Opcode::args(Opcode::Opcode(op))
@@ -74,19 +74,19 @@ int ao_opcode_args(int op)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ao_tree ao_tree_x() { return new Tree(Tree::X()); }
-ao_tree ao_tree_y() { return new Tree(Tree::Y()); }
-ao_tree ao_tree_z() { return new Tree(Tree::Z()); }
+libfive_tree libfive_tree_x() { return new Tree(Tree::X()); }
+libfive_tree libfive_tree_y() { return new Tree(Tree::Y()); }
+libfive_tree libfive_tree_z() { return new Tree(Tree::Z()); }
 
-ao_tree ao_tree_const(float f) { return new Tree(f); }
-ao_tree ao_tree_var() { return new Tree(Tree::var()); }
+libfive_tree libfive_tree_const(float f) { return new Tree(f); }
+libfive_tree libfive_tree_var() { return new Tree(Tree::var()); }
 
-bool ao_tree_is_var(ao_tree t)
+bool libfive_tree_is_var(libfive_tree t)
 {
     return (*t)->op == Opcode::VAR;
 }
 
-float ao_tree_get_const(ao_tree t, bool* success)
+float libfive_tree_get_const(libfive_tree t, bool* success)
 {
     if ((*t)->op == Opcode::CONST)
     {
@@ -97,31 +97,31 @@ float ao_tree_get_const(ao_tree t, bool* success)
     return 0;
 }
 
-ao_tree ao_tree_nonary(int op)
+libfive_tree libfive_tree_nonary(int op)
 {
     return new Tree(Opcode::Opcode(op));
 }
 
-ao_tree ao_tree_unary(int op, ao_tree a)
+libfive_tree libfive_tree_unary(int op, libfive_tree a)
 {
     return new Tree(Opcode::Opcode(op), *a);
 }
-ao_tree ao_tree_binary(int op, ao_tree a, ao_tree b)
+libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b)
 {
     return new Tree(Opcode::Opcode(op), *a, *b);
 }
 
-const void* ao_tree_id(ao_tree t)
+const void* libfive_tree_id(libfive_tree t)
 {
     return static_cast<const void*>(t->id());
 }
 
-void ao_tree_delete(ao_tree ptr)
+void libfive_tree_delete(libfive_tree ptr)
 {
     delete ptr;
 }
 
-bool ao_tree_save(ao_tree ptr, const char* filename)
+bool libfive_tree_save(libfive_tree ptr, const char* filename)
 {
     auto data = ptr->serialize();
     std::ofstream out;
@@ -133,12 +133,12 @@ bool ao_tree_save(ao_tree ptr, const char* filename)
     }
     else
     {
-        std::cerr << "ao_tree_save: could not open file" << std::endl;
+        std::cerr << "libfive_tree_save: could not open file" << std::endl;
         return false;
     }
 }
 
-ao_tree ao_tree_load(const char* filename)
+libfive_tree libfive_tree_load(const char* filename)
 {
     auto t = Tree::load(filename);
     if (t.id())
@@ -147,23 +147,23 @@ ao_tree ao_tree_load(const char* filename)
     }
     else
     {
-        std::cerr <<  "ao_tree_load: could not open file" << std::endl;
+        std::cerr <<  "libfive_tree_load: could not open file" << std::endl;
         return nullptr;
     }
 }
 
-ao_tree ao_tree_remap(ao_tree p, ao_tree x, ao_tree y, ao_tree z)
+libfive_tree libfive_tree_remap(libfive_tree p, libfive_tree x, libfive_tree y, libfive_tree z)
 {
     return new Tree(p->remap(*x, *y, *z));
 }
 
-float ao_tree_eval_f(ao_tree t, ao_vec3 p)
+float libfive_tree_eval_f(libfive_tree t, libfive_vec3 p)
 {
     PointEvaluator e(std::make_shared<Tape>(*t));
     return e.eval({p.x, p.y, p.z});
 }
 
-ao_interval ao_tree_eval_r(ao_tree t, ao_region3 r)
+libfive_interval libfive_tree_eval_r(libfive_tree t, libfive_region3 r)
 {
     IntervalEvaluator e(std::make_shared<Tape>(*t));
     auto i = e.eval({r.X.lower, r.Y.lower, r.Z.lower},
@@ -171,19 +171,19 @@ ao_interval ao_tree_eval_r(ao_tree t, ao_region3 r)
     return {i.lower(), i.upper()};
 }
 
-ao_vec3 ao_tree_eval_d(ao_tree t, ao_vec3 p)
+libfive_vec3 libfive_tree_eval_d(libfive_tree t, libfive_vec3 p)
 {
     DerivEvaluator e(std::make_shared<Tape>(*t));
     auto v = e.deriv({p.x, p.y, p.z});
     return {v.x(), v.y(), v.z()};
 }
 
-bool ao_tree_eq(ao_tree a, ao_tree b)
+bool libfive_tree_eq(libfive_tree a, libfive_tree b)
 {
     return *a == *b;
 }
 
-ao_region3 ao_tree_bounds(ao_tree a)
+libfive_region3 libfive_tree_bounds(libfive_tree a)
 {
     auto bs = findBounds(*a);
     return {{float(bs.lower.x()), float(bs.upper.x())},
@@ -193,22 +193,22 @@ ao_region3 ao_tree_bounds(ao_tree a)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ao_contours* ao_tree_render_slice(ao_tree tree,
-        ao_region2 R, float z, float res)
+libfive_contours* libfive_tree_render_slice(libfive_tree tree,
+        libfive_region2 R, float z, float res)
 {
     Region<2> region({R.X.lower, R.Y.lower}, {R.X.upper, R.Y.upper},
             Region<2>::Perp(z));
     auto cs = Contours::render(*tree, region, 1/res);
 
-    auto out = new ao_contours;
+    auto out = new libfive_contours;
     out->count = cs->contours.size();
-    out->cs = new ao_contour[out->count];
+    out->cs = new libfive_contour[out->count];
 
     size_t i=0;
     for (auto& c : cs->contours)
     {
         out->cs[i].count = c.size();
-        out->cs[i].pts = new ao_vec2[c.size()];
+        out->cs[i].pts = new libfive_vec2[c.size()];
 
         size_t j=0;
         for (auto& pt : c)
@@ -221,7 +221,7 @@ ao_contours* ao_tree_render_slice(ao_tree tree,
     return out;
 }
 
-void ao_tree_save_slice(ao_tree tree, ao_region2 R, float z, float res,
+void libfive_tree_save_slice(libfive_tree tree, libfive_region2 R, float z, float res,
                         const char* f)
 {
     Region<2> region({R.X.lower, R.Y.lower}, {R.X.upper, R.Y.upper},
@@ -230,16 +230,16 @@ void ao_tree_save_slice(ao_tree tree, ao_region2 R, float z, float res,
     cs->saveSVG(f);
 }
 
-ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
+libfive_mesh* libfive_tree_render_mesh(libfive_tree tree, libfive_region3 R, float res)
 {
     Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
                      {R.X.upper, R.Y.upper, R.Z.upper});
     auto ms = Mesh::render(*tree, region, 1/res);
 
-    auto out = new ao_mesh;
-    out->verts = new ao_vec3[ms->verts.size()];
+    auto out = new libfive_mesh;
+    out->verts = new libfive_vec3[ms->verts.size()];
     out->vert_count = ms->verts.size();
-    out->tris = new ao_tri[ms->branes.size()];
+    out->tris = new libfive_tri[ms->branes.size()];
     out->tri_count = ms->branes.size();
 
     size_t i;
@@ -259,7 +259,7 @@ ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res)
     return out;
 }
 
-bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f)
+bool libfive_tree_save_mesh(libfive_tree tree, libfive_region3 R, float res, const char* f)
 {
     Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
                      {R.X.upper, R.Y.upper, R.Z.upper});
@@ -267,7 +267,7 @@ bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f)
     return ms->saveSTL(f);
 }
 
-ao_pixels* ao_tree_render_pixels(ao_tree tree, ao_region2 R,
+libfive_pixels* libfive_tree_render_pixels(libfive_tree tree, libfive_region2 R,
                                  float z, float res)
 {
     Voxels v({R.X.lower, R.Y.lower, z},
@@ -275,7 +275,7 @@ ao_pixels* ao_tree_render_pixels(ao_tree tree, ao_region2 R,
     std::atomic_bool abort(false);
     auto h = Heightmap::render(*tree, v, abort);
 
-    ao_pixels* out = new ao_pixels;
+    libfive_pixels* out = new libfive_pixels;
     out->width = h->depth.cols();
     out->height = h->depth.rows();
     out->pixels = new bool[out->width * out->height];
@@ -294,21 +294,21 @@ ao_pixels* ao_tree_render_pixels(ao_tree tree, ao_region2 R,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef Tree::Id ao_id;
+typedef Tree::Id libfive_id;
 
-struct ao_args {
+struct libfive_args {
     char** names;
-    ao_id* ids;
-    ao_tree* bindings;
+    libfive_id* ids;
+    libfive_tree* bindings;
     uint32_t count;
 };
 
-void ao_args_delete(ao_args* a)
+void libfive_args_delete(libfive_args* a)
 {
     for (unsigned i=0; i < a->count; ++i)
     {
         delete [] a->names[i];
-        ao_tree_delete(a->bindings[i]);
+        libfive_tree_delete(a->bindings[i]);
     }
     delete [] a->names;
     delete [] a->ids;
@@ -316,25 +316,25 @@ void ao_args_delete(ao_args* a)
     delete a;
 }
 
-ao_args* ao_args_new(uint32_t count)
+libfive_args* libfive_args_new(uint32_t count)
 {
-    auto a = new ao_args;
+    auto a = new libfive_args;
     a->count = count;
     a->names = new char*[count];
-    a->bindings = new ao_tree[count];
+    a->bindings = new libfive_tree[count];
     a->ids = new Tree::Id[count];
 
     return a;
 }
 
-typedef Kernel::Template* ao_template;
+typedef Kernel::Template* libfive_template;
 
-const char* ao_arg_name(ao_args* a, uint32_t i)
+const char* libfive_arg_name(libfive_args* a, uint32_t i)
 {
     return (i >= a->count) ? nullptr : a->names[i];
 }
 
-void ao_set_arg_name(ao_args* a, uint32_t i, const char* name)
+void libfive_set_arg_name(libfive_args* a, uint32_t i, const char* name)
 {
     if (i < a->count)
     {
@@ -349,7 +349,7 @@ void ao_set_arg_name(ao_args* a, uint32_t i, const char* name)
     }
 }
 
-void ao_set_arg_id(ao_args* a, uint32_t i, ao_id id)
+void libfive_set_arg_id(libfive_args* a, uint32_t i, libfive_id id)
 {
     if (i < a->count)
     {
@@ -357,20 +357,20 @@ void ao_set_arg_id(ao_args* a, uint32_t i, ao_id id)
     }
 }
 
-ao_template ao_tree_to_template(ao_tree t)
+libfive_template libfive_tree_to_template(libfive_tree t)
 {
     return new Template(*t);
 }
 
-ao_args* ao_template_args(ao_template t)
+libfive_args* libfive_template_args(libfive_template t)
 {
-    auto a = ao_args_new(t->vars.size());
+    auto a = libfive_args_new(t->vars.size());
     uint32_t i=0;
 
     for (auto v : t->vars)
     {
-        ao_set_arg_name(a, i, v.second.c_str());
-        ao_set_arg_id(a, i, v.first);
+        libfive_set_arg_name(a, i, v.second.c_str());
+        libfive_set_arg_id(a, i, v.first);
         i++;
     }
 
@@ -388,17 +388,17 @@ extern "C"
     extern const char* GIT_BRANCH;
 }
 
-const char* ao_git_version(void)
+const char* libfive_git_version(void)
 {
     return GIT_TAG;
 }
 
-const char* ao_git_revision(void)
+const char* libfive_git_revision(void)
 {
     return GIT_REV;
 }
 
-const char* ao_git_branch(void)
+const char* libfive_git_branch(void)
 {
     return GIT_BRANCH;
 }

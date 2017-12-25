@@ -193,7 +193,7 @@ Window::Window(QString target)
             settings.value("first-run").toBool() &&
             target.isNull())
         {
-            target = ":/examples/tutorial.ao";
+            target = ":/examples/tutorial.io";
         }
         settings.setValue("first-run", false);
     }
@@ -221,7 +221,7 @@ void Window::onOpen(bool)
     CHECK_UNSAVED();
 
     QString f = QFileDialog::getOpenFileName(nullptr, "Open",
-            workingDirectory(), "*.ao");
+            workingDirectory(), "*.io;;*.ao");
     if (!f.isEmpty() && loadFile(f))
     {
         setFilename(f);
@@ -310,13 +310,13 @@ bool Window::onSave(bool)
 bool Window::onSaveAs(bool)
 {
     QString f = QFileDialog::getSaveFileName(nullptr, "Save as",
-            workingDirectory(), "*.ao");
+            workingDirectory(), "*.io");
     if (!f.isEmpty())
     {
 #ifdef Q_OS_LINUX
-        if (!f.endsWith(".ao"))
+        if (!f.endsWith(".io"))
         {
-            f += ".ao";
+            f += ".io";
         }
 #endif
         if (saveFile(f))
@@ -368,10 +368,13 @@ void Window::closeEvent(QCloseEvent* event)
 void Window::dragEnterEvent(QDragEnterEvent* event)
 {
     if (event->mimeData()->hasUrls() &&
-        event->mimeData()->urls().size() == 1 &&
-        event->mimeData()->urls().front().fileName().toLower().endsWith(".ao"))
+        event->mimeData()->urls().size())
     {
-        event->acceptProposedAction();
+        const auto f = event->mimeData()->urls().front().fileName().toLower();
+        if (f.endsWith(".io") || f.endsWith(".ao"))
+        {
+            event->acceptProposedAction();
+        }
     }
 }
 
@@ -487,14 +490,14 @@ void Window::onExport(bool)
 
 void Window::onAbout(bool)
 {
-    QString info = "A Scheme-based GUI for<br>the Ao CAD kernel<br><br>";
+    QString info = "A Scheme-based GUI for<br>the libfive CAD kernel<br><br>";
 
-    info += strlen(ao_git_version())
-        ? "Version: <code>" + QString(ao_git_version()) + "</code><br>"
-        : "Branch: <code>" + QString(ao_git_branch()) + "</code><br>";
-    info += "Revision: <code>" + QString(ao_git_revision()) + "</code><br><br>";
+    info += strlen(libfive_git_version())
+        ? "Version: <code>" + QString(libfive_git_version()) + "</code><br>"
+        : "Branch: <code>" + QString(libfive_git_branch()) + "</code><br>";
+    info += "Revision: <code>" + QString(libfive_git_revision()) + "</code><br><br>";
 
-    info += "<a href=\"https://github.com/mkeeter/ao\">Source on Github</a>";
+    info += "<a href=\"https://github.com/libfive/libfive\">Source on Github</a>";
 #ifdef Q_OS_MAC
     QWidget a;
     QIcon icon(QCoreApplication::applicationDirPath() +
@@ -515,7 +518,7 @@ void Window::onLoadTutorial(bool)
 {
     CHECK_UNSAVED();
 
-    QString target = ":/examples/tutorial.ao";
+    QString target = ":/examples/tutorial.io";
     if (loadFile(target))
     {
         setFilename(target);

@@ -26,33 +26,33 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 extern "C" {
 #endif
 
-struct ao_interval  { float lower; float upper; };
-struct ao_region2   { ao_interval X; ao_interval Y; };
-struct ao_region3   { ao_interval X; ao_interval Y; ao_interval Z; };
+struct libfive_interval  { float lower; float upper; };
+struct libfive_region2   { libfive_interval X, Y; };
+struct libfive_region3   { libfive_interval X, Y, Z; };
 
-struct ao_vec2      { float x; float y; };
-struct ao_vec3      { float x; float y; float z; };
-struct ao_vec4      { float x; float y; float z; float w; };
-struct ao_tri       { uint32_t a; uint32_t b; uint32_t c; };
+struct libfive_vec2      { float x, y; };
+struct libfive_vec3      { float x, y, z; };
+struct libfive_vec4      { float x, y, z, w; };
+struct libfive_tri       { uint32_t a, b, c; };
 
-struct ao_contour {
-    ao_vec2* pts;
+struct libfive_contour {
+    libfive_vec2* pts;
     uint32_t count;
 };
 
-struct ao_contours {
-    ao_contour* cs;
+struct libfive_contours {
+    libfive_contour* cs;
     uint32_t count;
 };
 
-struct ao_mesh {
-    ao_vec3* verts;
-    ao_tri* tris;
+struct libfive_mesh {
+    libfive_vec3* verts;
+    libfive_tri* tris;
     uint32_t tri_count;
     uint32_t vert_count;
 };
 
-struct ao_pixels {
+struct libfive_pixels {
     bool* pixels;
     uint32_t width;
     uint32_t height;
@@ -61,87 +61,88 @@ struct ao_pixels {
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
- *  Frees an ao_contours data structure
+ *  Frees an libfive_contours data structure
  */
-void ao_contours_delete(ao_contours* cs);
+void libfive_contours_delete(libfive_contours* cs);
 
 /*
- *  Frees an ao_mesh data structure
+ *  Frees an libfive_mesh data structure
  */
-void ao_mesh_delete(ao_mesh* m);
+void libfive_mesh_delete(libfive_mesh* m);
 
 /*
- *  Frees an ao_pixels data structure
+ *  Frees an libfive_pixels data structure
  */
-void ao_pixels_delete(ao_pixels* ps);
+void libfive_pixels_delete(libfive_pixels* ps);
 
 /*
  *  Takes a string description of an op-code ('min', 'max', etc) and
  *  returns the Kernel::Opcode value, or -1 if no such value exists.
  */
-int ao_opcode_enum(const char* op);
+int libfive_opcode_enum(const char* op);
 
 /*
  *  Returns the number of arguments for the given opcode
  *  (either 0, 1, 2, or -1 if the opcode is invalid)
  */
-int ao_opcode_args(int op);
+int libfive_opcode_args(int op);
 
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef __cplusplus
-typedef Kernel::Tree* ao_tree;
-typedef Kernel::Tree::Id ao_id;
-typedef Kernel::Template* ao_template;
+typedef Kernel::Tree* libfive_tree;
+typedef Kernel::Tree::Id libfive_id;
+typedef Kernel::Template* libfive_template;
 #else
-typedef void* ao_tree;
-typedef void* ao_id;
-typedef void* ao_template;
+typedef void* libfive_tree;
+typedef void* libfive_id;
+typedef void* libfive_template;
 #endif
 
-ao_tree ao_tree_x();
-ao_tree ao_tree_y();
-ao_tree ao_tree_z();
+libfive_tree libfive_tree_x();
+libfive_tree libfive_tree_y();
+libfive_tree libfive_tree_z();
 
-ao_tree ao_tree_var();
-bool ao_tree_is_var(ao_tree t);
+libfive_tree libfive_tree_var();
+bool libfive_tree_is_var(libfive_tree t);
 
-ao_tree ao_tree_const(float f);
-float ao_tree_get_const(ao_tree t, bool* success);
+libfive_tree libfive_tree_const(float f);
+float libfive_tree_get_const(libfive_tree t, bool* success);
 
-ao_tree ao_tree_nonary(int op);
-ao_tree ao_tree_unary(int op, ao_tree a);
-ao_tree ao_tree_binary(int op, ao_tree a, ao_tree b);
+libfive_tree libfive_tree_nonary(int op);
+libfive_tree libfive_tree_unary(int op, libfive_tree a);
+libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b);
 
-const void* ao_tree_id(ao_tree t);
+const void* libfive_tree_id(libfive_tree t);
 
-float ao_tree_eval_f(ao_tree t, ao_vec3 p);
-ao_interval ao_tree_eval_r(ao_tree t, ao_region3 r);
-ao_vec3 ao_tree_eval_d(ao_tree t, ao_vec3 p);
+float libfive_tree_eval_f(libfive_tree t, libfive_vec3 p);
+libfive_interval libfive_tree_eval_r(libfive_tree t, libfive_region3 r);
+libfive_vec3 libfive_tree_eval_d(libfive_tree t, libfive_vec3 p);
 
-bool ao_tree_eq(ao_tree a, ao_tree b);
+bool libfive_tree_eq(libfive_tree a, libfive_tree b);
 
-void ao_tree_delete(ao_tree ptr);
+void libfive_tree_delete(libfive_tree ptr);
 
-bool ao_tree_save(ao_tree ptr, const char* filename);
-ao_tree ao_tree_load(const char* filename);
+bool libfive_tree_save(libfive_tree ptr, const char* filename);
+libfive_tree libfive_tree_load(const char* filename);
 
-ao_tree ao_tree_remap(ao_tree p, ao_tree x, ao_tree y, ao_tree z);
+libfive_tree libfive_tree_remap(libfive_tree p,
+        libfive_tree x, libfive_tree y, libfive_tree z);
 
-ao_region3 ao_tree_bounds(ao_tree p);
+libfive_region3 libfive_tree_bounds(libfive_tree p);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct ao_args;
-void ao_set_arg_name(ao_args* a, uint32_t i, const char* name);
-void ao_args_delete(ao_args* a);
-ao_args* ao_args_new(uint32_t count);
-const char* ao_arg_name(ao_args* a, uint32_t i);
-void ao_set_arg_name(ao_args* a, uint32_t i, const char* name);
-void ao_set_arg_id(ao_args* a, uint32_t i, ao_id id);
+struct libfive_args;
+void libfive_set_arg_name(libfive_args* a, uint32_t i, const char* name);
+void libfive_args_delete(libfive_args* a);
+libfive_args* libfive_args_new(uint32_t count);
+const char* libfive_arg_name(libfive_args* a, uint32_t i);
+void libfive_set_arg_name(libfive_args* a, uint32_t i, const char* name);
+void libfive_set_arg_id(libfive_args* a, uint32_t i, libfive_id id);
 
-ao_template ao_tree_to_template(ao_tree t);
-ao_args* ao_template_args(ao_template t);
+libfive_template libfive_tree_to_template(libfive_tree t);
+libfive_args* libfive_template_args(libfive_template t);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -154,18 +155,19 @@ ao_args* ao_template_args(ao_template t);
  *  res should be approximately half the model's smallest feature size;
  *  subdivision halts when all sides of the region are below it.
  *
- *  The returned struct must be freed with ao_contours_delete
+ *  The returned struct must be freed with libfive_contours_delete
  */
-ao_contours* ao_tree_render_slice(ao_tree tree, ao_region2 R,
-                                  float z, float res);
+libfive_contours* libfive_tree_render_slice(libfive_tree tree,
+                                            libfive_region2 R,
+                                            float z, float res);
 
 /*
  *  Renders and saves a slice to a file
  *
- *  See argument details in ao_tree_render_slice
+ *  See argument details in libfive_tree_render_slice
  */
-void ao_tree_save_slice(ao_tree tree, ao_region2 R, float z, float res,
-                        const char* f);
+void libfive_tree_save_slice(libfive_tree tree, libfive_region2 R,
+                             float z, float res, const char* f);
 
 /*
  *  Renders a tree to a set of triangles
@@ -176,42 +178,45 @@ void ao_tree_save_slice(ao_tree tree, ao_region2 R, float z, float res,
  *  res should be approximately half the model's smallest feature size;
  *  subdivision halts when all sides of the region are below it.
  *
- *  The returned struct must be freed with ao_mesh_delete
+ *  The returned struct must be freed with libfive_mesh_delete
  */
-ao_mesh* ao_tree_render_mesh(ao_tree tree, ao_region3 R, float res);
+libfive_mesh* libfive_tree_render_mesh(libfive_tree tree,
+                                       libfive_region3 R, float res);
 
 /*
  *  Renders and saves a mesh to a file
  *
  *  Returns true on success, false otherwise
- *  See argument details in ao_tree_render_mesh
+ *  See argument details in libfive_tree_render_mesh
  */
-bool ao_tree_save_mesh(ao_tree tree, ao_region3 R, float res, const char* f);
+bool libfive_tree_save_mesh(libfive_tree tree, libfive_region3 R,
+                            float res, const char* f);
 
 /*
  *  Renders a 2D slice of pixels at the given Z height
  *
- *  The returned struct must be freed with ao_pixels_delete
+ *  The returned struct must be freed with libfive_pixels_delete
  */
-ao_pixels* ao_tree_render_pixels(ao_tree tree, ao_region2 R,
-                                 float z, float res);
+libfive_pixels* libfive_tree_render_pixels(libfive_tree tree,
+                                           libfive_region2 R,
+                                           float z, float res);
 
 /*
  *  Returns the human-readable tag associated with this build,
  *  or the empty string if there is no such tag
  */
-const char* ao_git_version(void);
+const char* libfive_git_version(void);
 
 /*
  *  Returns the 7-character git hash associated with this build,
  *  with a trailing '+' if there are local (uncommitted) modifications
  */
-const char* ao_git_revision(void);
+const char* libfive_git_revision(void);
 
 /*
  *  Returns the name of the branch associated with this build
  */
-const char* ao_git_branch(void);
+const char* libfive_git_branch(void);
 
 #ifdef __cplusplus
 }

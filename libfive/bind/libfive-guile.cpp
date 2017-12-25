@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 void del_tree(void* t)
 {
-    ao_tree_delete((ao_tree)t);
+    libfive_tree_delete((libfive_tree)t);
 }
 
 // Raw Scheme functions
@@ -43,12 +43,12 @@ SCM scm_tree_p(SCM ptr)         { return scm_call_1(scm_tree_p_, ptr); }
 
 // C-flavored bindings
 bool scm_is_tree(SCM t) { return scm_is_true(scm_tree_p(t)); }
-ao_tree scm_to_tree(SCM t)
+libfive_tree scm_to_tree(SCM t)
 {
-    return (ao_tree)scm_to_pointer(scm_unwrap_tree(t));
+    return (libfive_tree)scm_to_pointer(scm_unwrap_tree(t));
 }
 
-SCM scm_from_tree(ao_tree t)
+SCM scm_from_tree(libfive_tree t)
 {
     return scm_wrap_tree(scm_from_pointer(t, del_tree));
 }
@@ -66,7 +66,7 @@ SCM scm_vec3(float x, float y, float z)
 SCM scm_number_to_tree(SCM n)
 {
     SCM_ASSERT_TYPE(scm_is_number(n), n, 0, "scm_number_to_tree", "number");
-    return scm_from_tree(ao_tree_const(scm_to_double(n)));
+    return scm_from_tree(libfive_tree_const(scm_to_double(n)));
 }
 
 SCM scm_tree_equal_p(SCM a, SCM b)
@@ -74,25 +74,25 @@ SCM scm_tree_equal_p(SCM a, SCM b)
     SCM_ASSERT_TYPE(scm_is_tree(a), a, 0, "scm_tree_equal_p", "tree");
     SCM_ASSERT_TYPE(scm_is_tree(b), b, 1, "scm_tree_equal_p", "tree");
 
-    return ao_tree_eq(scm_to_tree(a), scm_to_tree(b))
+    return libfive_tree_eq(scm_to_tree(a), scm_to_tree(b))
         ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
 SCM scm_var()
 {
-    return scm_from_tree(ao_tree_var());
+    return scm_from_tree(libfive_tree_var());
 }
 
 SCM scm_var_p(SCM a)
 {
     SCM_ASSERT_TYPE(scm_is_tree(a), a, 0, "scm_var_p", "tree");
-    return ao_tree_is_var(scm_to_tree(a)) ? SCM_BOOL_T : SCM_BOOL_F;
+    return libfive_tree_is_var(scm_to_tree(a)) ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
 SCM scm_tree_id(SCM a)
 {
     SCM_ASSERT_TYPE(scm_is_tree(a), a, 0, "scm_tree_id", "tree");
-    return scm_from_uintptr_t((uintptr_t)ao_tree_id(scm_to_tree(a)));
+    return scm_from_uintptr_t((uintptr_t)libfive_tree_id(scm_to_tree(a)));
 }
 
 SCM scm_tree(SCM op, SCM a, SCM b)
@@ -100,11 +100,11 @@ SCM scm_tree(SCM op, SCM a, SCM b)
     SCM_ASSERT_TYPE(scm_is_symbol(op), op, 0, "scm_tree", "symbol");
 
     auto str = scm_to_locale_string(scm_symbol_to_string(op));
-    auto opcode = ao_opcode_enum(str);
+    auto opcode = libfive_opcode_enum(str);
     free(str);
 
     SCM_ASSERT_TYPE(opcode != -1, op, 0, "scm_tree", "opcode");
-    auto args = ao_opcode_args(opcode);
+    auto args = libfive_opcode_args(opcode);
 
     if (args == 0)
     {
@@ -140,13 +140,13 @@ SCM scm_tree(SCM op, SCM a, SCM b)
         if (scm_is_number(b)) { b = scm_number_to_tree(b); }
     }
 
-    ao_tree out = nullptr;
+    libfive_tree out = nullptr;
     switch (args)
     {
-        case 0: out = ao_tree_nonary(opcode);                   break;
-        case 1: out = ao_tree_unary(opcode, scm_to_tree(a));    break;
-        case 2: out = ao_tree_binary(opcode, scm_to_tree(a),
-                                             scm_to_tree(b));   break;
+        case 0: out = libfive_tree_nonary(opcode);                   break;
+        case 1: out = libfive_tree_unary(opcode, scm_to_tree(a));    break;
+        case 2: out = libfive_tree_binary(opcode, scm_to_tree(a),
+                                          scm_to_tree(b));   break;
         default: assert(false);
     }
 
@@ -164,17 +164,17 @@ SCM scm_tree_eval_f(SCM t, SCM x, SCM y, SCM z)
     SCM_ASSERT_TYPE(scm_is_number(z) || scm_is_tree(t),
                     z, 3, "scm_tree_eval_f", "number");
 
-    auto x_ = scm_is_number(x) ? ao_tree_const(scm_to_double(x))
+    auto x_ = scm_is_number(x) ? libfive_tree_const(scm_to_double(x))
                                : scm_to_tree(x);
-    auto y_ = scm_is_number(y) ? ao_tree_const(scm_to_double(y))
+    auto y_ = scm_is_number(y) ? libfive_tree_const(scm_to_double(y))
                                : scm_to_tree(y);
-    auto z_ = scm_is_number(z) ? ao_tree_const(scm_to_double(z))
+    auto z_ = scm_is_number(z) ? libfive_tree_const(scm_to_double(z))
                                : scm_to_tree(z);
 
-    auto out = ao_tree_remap(scm_to_tree(t), x_, y_, z_);
+    auto out = libfive_tree_remap(scm_to_tree(t), x_, y_, z_);
 
     bool is_const = false;
-    auto val = ao_tree_get_const(out, &is_const);
+    auto val = libfive_tree_get_const(out, &is_const);
 
     return is_const ? scm_from_double(val) : scm_from_tree(out);
 }
@@ -217,8 +217,8 @@ SCM scm_tree_eval_i(SCM t, SCM xmin, SCM xmax,
     float ymax_ = scm_to_double(ymax);
     float zmax_ = scm_to_double(zmax);
 
-    ao_region3 r = {{xmin_, xmax_}, {ymin_, ymax_}, {zmin_, zmax_}};
-    auto i = ao_tree_eval_r(scm_to_tree(t), r);
+    libfive_region3 r = {{xmin_, xmax_}, {ymin_, ymax_}, {zmin_, zmax_}};
+    auto i = libfive_tree_eval_r(scm_to_tree(t), r);
 
     return scm_cons(scm_from_double(i.lower), scm_from_double(i.upper));
 }
@@ -246,7 +246,7 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
     }
 
     auto filename = scm_to_locale_string(f);
-    auto out = ao_tree_save_mesh(scm_to_tree(t),
+    auto out = libfive_tree_save_mesh(scm_to_tree(t),
             {{rs[0], rs[1]}, {rs[2], rs[3]}, {rs[4], rs[5]}},
             scm_to_double(res), filename);
     free(filename);
@@ -257,15 +257,15 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
 SCM scm_shape_bounds(SCM t)
 {
     SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_to_mesh", "tree");
-    auto b = ao_tree_bounds(scm_to_tree(t));
+    auto b = libfive_tree_bounds(scm_to_tree(t));
     return scm_cons(scm_vec3(b.X.lower, b.Y.lower, b.Z.lower),
                     scm_vec3(b.X.upper, b.Y.upper, b.Z.upper));
 }
 
-void init_ao_kernel(void*)
+void init_libfive_kernel(void*)
 {
     scm_c_eval_string(R"(
-(use-modules (system foreign) (oop goops) (ao vec))
+(use-modules (system foreign) (oop goops) (libfive vec))
 
 (define-wrapped-pointer-type
     tree-ptr tree-ptr? wrap-tree-ptr unwrap-tree-ptr
@@ -406,11 +406,11 @@ void init_ao_kernel(void*)
                     (apply append (vs->list a)))))
 
 ;; These are "safe" bindings that can be used in the sandbox
-(define ao-bindings '(square constant lambda-shape define-shape remap-shape
+(define libfive-bindings '(square constant lambda-shape define-shape remap-shape
                       shape-bounds tree-eval tree-derivs sequence values-from
                       values->list
                       ao-bindings))
-(eval (cons 'export ao-bindings) (interaction-environment))
+(eval (cons 'export libfive-bindings) (interaction-environment))
  )");
 
     scm_c_export(
@@ -422,44 +422,44 @@ void init_ao_kernel(void*)
 
 // This functions include keywords that are replaced at compile-time
 // by the contents of scripts in separate .scm files
-void init_ao_csg(void*)
+void init_libfive_csg(void*)
 {
-    scm_c_eval_string(R"(AO_GUILE_CSG)");
+    scm_c_eval_string(R"(LIBFIVE_GUILE_CSG)");
 }
 
-void init_ao_transforms(void*)
+void init_libfive_transforms(void*)
 {
-    scm_c_eval_string(R"(AO_GUILE_TRANSFORMS)");
+    scm_c_eval_string(R"(LIBFIVE_GUILE_TRANSFORMS)");
 }
 
-void init_ao_text(void*)
+void init_libfive_text(void*)
 {
-    scm_c_eval_string(R"(AO_GUILE_TEXT)");
+    scm_c_eval_string(R"(LIBFIVE_GUILE_TEXT)");
 }
 
-void init_ao_shapes(void*)
+void init_libfive_shapes(void*)
 {
-    scm_c_eval_string(R"(AO_GUILE_SHAPES)");
+    scm_c_eval_string(R"(LIBFIVE_GUILE_SHAPES)");
 }
 
-void init_ao_vec(void*)
+void init_libfive_vec(void*)
 {
-    scm_c_eval_string(R"(AO_GUILE_VEC)");
+    scm_c_eval_string(R"(LIBFIVE_GUILE_VEC)");
 }
 
-void init_ao_sandbox(void*)
+void init_libfive_sandbox(void*)
 {
-    scm_c_eval_string(R"(AO_GUILE_SANDBOX)");
+    scm_c_eval_string(R"(LIBFIVE_GUILE_SANDBOX)");
 }
 
-void scm_init_ao_modules()
+void scm_init_libfive_modules()
 {
     // Listed in order of dependencies
-    scm_c_define_module("ao vec", init_ao_vec, NULL);
-    scm_c_define_module("ao kernel", init_ao_kernel, NULL);
-    scm_c_define_module("ao csg", init_ao_csg, NULL);
-    scm_c_define_module("ao transforms", init_ao_transforms, NULL);
-    scm_c_define_module("ao shapes", init_ao_shapes, NULL);
-    scm_c_define_module("ao text", init_ao_text, NULL);
-    scm_c_define_module("ao sandbox", init_ao_sandbox, NULL);
+    scm_c_define_module("libfive vec", init_libfive_vec, NULL);
+    scm_c_define_module("libfive kernel", init_libfive_kernel, NULL);
+    scm_c_define_module("libfive csg", init_libfive_csg, NULL);
+    scm_c_define_module("libfive transforms", init_libfive_transforms, NULL);
+    scm_c_define_module("libfive shapes", init_libfive_shapes, NULL);
+    scm_c_define_module("libfive text", init_libfive_text, NULL);
+    scm_c_define_module("libfive sandbox", init_libfive_sandbox, NULL);
 }

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
-(use-modules (ice-9 sandbox) (ice-9 textual-ports) (ao kernel)
+(use-modules (ice-9 sandbox) (ice-9 textual-ports) (libfive kernel)
              (rnrs io ports) (system vm frame))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -49,12 +49,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (cons mod (module-map (lambda (n . a) n) (resolve-interface mod))))
 
 (define-public sandbox-bindings
-  (append (list (cons '(ao kernel) ao-bindings)
-          (get-bindings '(ao vec))
-          (get-bindings '(ao shapes))
-          (get-bindings '(ao csg))
-          (get-bindings '(ao transforms))
-          (get-bindings '(ao text)))
+  (append (list (cons '(libfive kernel) libfive-bindings)
+          (get-bindings '(libfive vec))
+          (get-bindings '(libfive shapes))
+          (get-bindings '(libfive csg))
+          (get-bindings '(libfive transforms))
+          (get-bindings '(libfive text)))
     all-pure-bindings))
 
 (define* (sandbox-backtrace stack #:optional (port #t))

@@ -25,10 +25,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 extern "C" {
 #endif
 
-void scm_init_ao_modules();
+void scm_init_libfive_modules();
 
 bool scm_is_tree(SCM t);
-ao_tree scm_to_tree(SCM t);
+libfive_tree scm_to_tree(SCM t);
 
 #ifdef __cplusplus
 }
