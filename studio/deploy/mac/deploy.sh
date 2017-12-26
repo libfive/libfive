@@ -12,13 +12,13 @@ rm -r build
 mkdir build
 cd build
 cmake -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt/5.9.2 -GNinja -DCMAKE_OSX_DEPLOYMENT_TARGET=10.10 ..
-rm -rf $APP gui/$APP
+rm -rf $APP studio/$APP
 ninja clean
 ninja
 
 # Copy to a new location before modifying, so that the built app doesn't
 # get modified and future builds don't misbehave due to duplicate frameworks
-cp -r gui/$APP $APP
+cp -r studio/$APP $APP
 
 # Pull out framework paths info with otool
 MACDEPLOYQT=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:\(.*\)lib/QtCore.*:\1/bin/macdeployqt:gp"`
@@ -65,11 +65,11 @@ cp -r $GUILE_CCACHE guile/ccache/
 
 # Update release number in Info.plist
 cd ../../..
-cp ../gui/deploy/mac/Info.plist $APP/Contents/Info.plist
+cp ../studio/deploy/mac/Info.plist $APP/Contents/Info.plist
 sed -i "" "s:0\.0\.0:$VERSION:g" $APP/Contents/Info.plist
 
 # Build icon and deploy into bundle
-convert -background none ../gui/deploy/icon/icon.svg -resize 512x512 icon512.png
+convert -background none ../studio/deploy/icon/icon.svg -resize 512x512 icon512.png
 convert icon512.png -resize 256x256 icon256.png
 convert icon512.png -resize 128x128 icon128.png
 convert icon512.png -resize 32x32 icon32.png
@@ -82,7 +82,7 @@ rm icon512.png icon256.png icon128.png icon32.png icon16.png
 rm -rf $EXE $EXE.dmg
 mkdir $EXE
 cp ../README.md ./$EXE/README.txt
-cp -r ../gui/examples ./$EXE/examples
+cp -r ../studio/examples ./$EXE/examples
 mv $APP ./$EXE
 mkdir $EXE/.Trash
 hdiutil create $EXE.dmg -volname "$EXE $VERSION" -srcfolder $EXE
