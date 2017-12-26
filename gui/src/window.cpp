@@ -151,6 +151,9 @@ Window::Window(QString target)
             view, &View::toOrthographic);
 
     view_menu->addSeparator();
+    auto edit_bounds_action = new QAction("Edit bounds");
+    view_menu->addAction(edit_bounds_action);
+    connect(edit_bounds_action, &QAction::triggered, view, &View::openSettings);
     auto zoom_to_action = new QAction("Zoom to bounds");
     view_menu->addAction(zoom_to_action);
     connect(zoom_to_action, &QAction::triggered, view, &View::zoomTo);
