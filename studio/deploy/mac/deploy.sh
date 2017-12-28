@@ -79,12 +79,12 @@ mv studio.icns $APP/Contents/Resources/studio.icns
 rm icon512.png icon256.png icon128.png icon32.png icon16.png
 
 # Create the disk image
-rm -rf $EXE $EXE.dmg
-mkdir $EXE
-cp ../README.md ./$EXE/README.txt
-cp -r ../studio/examples ./$EXE/examples
-mv $APP ./$EXE
-mkdir $EXE/.Trash
-hdiutil create $EXE.dmg -volname "$EXE $VERSION" -srcfolder $EXE
-rm -rf $EXE
+rm -rf deploy $EXE.dmg
+mkdir deploy
+cp ../README.md ./deploy/README.txt
+cp -r ../studio/examples ./deploy/examples
+mv $APP ./deploy
+mkdir deploy/.Trash
+hdiutil create $EXE.dmg -volname "$EXE $VERSION" -srcfolder deploy
+rm -rf deploy
 mv $EXE.dmg ..
