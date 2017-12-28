@@ -284,6 +284,17 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
     else
     {
         drag_cursor.beginEditBlock();
+
+        // There's a Qt bug where if you have a multiline selection,
+        // editing the text within that selection causes it to be
+        // rendered strangely until the pane is resized.  To work around this,
+        // we clear selections when beginning a drag.
+        auto cursor = script->textCursor();
+        if (cursor.hasSelection())
+        {
+            cursor.clearSelection();
+            script->setTextCursor(cursor);
+        }
     }
     drag_should_join = true;
 
