@@ -179,6 +179,23 @@ SCM scm_tree_eval_f(SCM t, SCM x, SCM y, SCM z)
     return is_const ? scm_from_double(val) : scm_from_tree(out);
 }
 
+SCM scm_tree_eval_d(SCM t, SCM x, SCM y, SCM z)
+{
+    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_eval_d", "tree");
+
+    SCM_ASSERT_TYPE(scm_is_number(x), x, 1, "scm_tree_eval_d", "number");
+    SCM_ASSERT_TYPE(scm_is_number(y), y, 2, "scm_tree_eval_d", "number");
+    SCM_ASSERT_TYPE(scm_is_number(z), z, 3, "scm_tree_eval_d", "number");
+
+    float x_ = scm_to_double(x);
+    float y_ = scm_to_double(y);
+    float z_ = scm_to_double(z);
+
+    auto out = ao_tree_eval_d(scm_to_tree(t), {x_, y_, z_});
+
+    return scm_vec3(out.x, out.y, out.z);
+}
+
 SCM scm_tree_eval_i(SCM t, SCM xmin, SCM xmax,
                            SCM ymin, SCM ymax,
                            SCM zmin, SCM zmax)
@@ -279,6 +296,7 @@ void init_ao_kernel(void*)
     scm_c_define_gsubr("tree-equal?", 2, 0, 0, (void*)scm_tree_equal_p);
     scm_c_define_gsubr("tree-eval-f", 4, 0, 0, (void*)scm_tree_eval_f);
     scm_c_define_gsubr("tree-eval-i", 7, 0, 0, (void*)scm_tree_eval_i);
+    scm_c_define_gsubr("tree-eval-d", 4, 0, 0, (void*)scm_tree_eval_d);
     scm_c_define_gsubr("tree->mesh", 4, 0, 0, (void*)scm_tree_to_mesh);
     scm_c_define_gsubr("shape-bounds", 1, 0, 0, (void*)scm_shape_bounds);
 
@@ -344,6 +362,9 @@ void init_ao_kernel(void*)
                    (.y lower) (.y upper)
                    (.z lower) (.z upper)))
 
+(define-method (tree-derivs (a <tree>) (pt <vec3>))
+    (tree-eval-d a (.x pt) (.y pt) (.z pt)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define-syntax-rule (lambda-shape vars ...)
   (ensure-tree
@@ -368,14 +389,14 @@ void init_ao_kernel(void*)
 
 ;; These are "safe" bindings that can be used in the sandbox
 (define ao-bindings '(square constant lambda-shape define-shape remap-shape
-                      sequence ao-bindings))
+                      shape-bounds tree-eval tree-derivs sequence ao-bindings))
 (eval (cons 'export ao-bindings) (interaction-environment))
  )");
 
     scm_c_export(
             "tree?", "tree", "wrap-tree", "unwrap-tree",
             "make-tree", "make-var", "var?", "tree-id", "number->tree",
-            "tree-equal?", "tree-eval", "tree->mesh", "shape-bounds",
+            "tree-equal?", "tree-eval", "tree->mesh",
             NULL);
 }
 

@@ -117,6 +117,7 @@ const void* ao_tree_id(ao_tree t);
 
 float ao_tree_eval_f(ao_tree t, ao_vec3 p);
 ao_interval ao_tree_eval_r(ao_tree t, ao_region3 r);
+ao_vec3 ao_tree_eval_d(ao_tree t, ao_vec3 p);
 
 bool ao_tree_eq(ao_tree a, ao_tree b);
 

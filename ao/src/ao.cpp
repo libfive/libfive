@@ -171,6 +171,13 @@ ao_interval ao_tree_eval_r(ao_tree t, ao_region3 r)
     return {i.lower(), i.upper()};
 }
 
+ao_vec3 ao_tree_eval_d(ao_tree t, ao_vec3 p)
+{
+    DerivEvaluator e(std::make_shared<Tape>(*t));
+    auto v = e.deriv({p.x, p.y, p.z});
+    return {v.x(), v.y(), v.z()};
+}
+
 bool ao_tree_eq(ao_tree a, ao_tree b)
 {
     return *a == *b;
