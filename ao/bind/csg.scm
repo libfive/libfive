@@ -58,6 +58,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Blends two shapes by the given amount"
   (union a b (- (+ (sqrt (abs a)) (sqrt (abs b))) m)))
 
+(define-public (blend-difference a b m)
+  "blend-difference a b m
+  Blends the subtraction of b from a"
+  (blend (- 0 a) b m))
+
 (define-public (morph a b m)
   "morph a b m
   Morphs between two shapes.
