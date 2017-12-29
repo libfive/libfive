@@ -8,7 +8,7 @@ void Script::keyPressEvent(QKeyEvent* e)
     // By default, we'll accept the event here.
     // If it doesn't meet any of our conditions, then we'll set it as
     // ignored in the final else statement, then call the default key
-    // press handler for QTextEdit.
+    // press handler for QPlainTextEdit.
     e->setAccepted(true);
 
     auto c = textCursor();
@@ -111,6 +111,6 @@ void Script::keyPressEvent(QKeyEvent* e)
     else
     {
         e->setAccepted(false);
-        QTextEdit::keyPressEvent(e);
+        QPlainTextEdit::keyPressEvent(e);
     }
 }

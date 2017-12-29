@@ -18,9 +18,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
 
-#include <QTextEdit>
+#include <QPlainTextEdit>
 
-class Script : public QTextEdit
+class Script : public QPlainTextEdit
 {
 protected:
     void keyPressEvent(QKeyEvent* e) override;

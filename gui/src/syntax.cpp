@@ -208,7 +208,7 @@ void Syntax::setKeywords(QString kws)
     }
 }
 
-void Syntax::matchParens(QTextEdit* text, int cursor_pos)
+void Syntax::matchParens(QPlainTextEdit* text, int cursor_pos)
 {
     // Erase previous parens-matching selections, leaving other
     // extra selections intact (e.g. for error highlighting)
@@ -298,19 +298,4 @@ void Syntax::highlightBlock(const QString& text)
 
     setCurrentBlockState(state);
     setCurrentBlockUserData(data);
-}
-
-void Syntax::enable()
-{
-    assert(doc != nullptr);
-    document()->deleteLater();
-    setDocument(doc);
-    doc = nullptr;
-}
-
-void Syntax::disable()
-{
-    assert(doc == nullptr);
-    doc = document();
-    setDocument(new QTextDocument);
 }

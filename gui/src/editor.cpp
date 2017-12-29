@@ -34,8 +34,7 @@ Editor::Editor(QWidget* parent)
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
 
-    script->setAcceptRichText(false);
-    script->setLineWrapMode(QTextEdit::NoWrap);
+    script->setLineWrapMode(QPlainTextEdit::NoWrap);
     err->setReadOnly(true);
 
     {   // Use Courier as our default font
@@ -55,14 +54,14 @@ Editor::Editor(QWidget* parent)
         "}").arg(Color::base3.name())
             .arg(Color::base00.name());
 
-    setStyleSheet("QTextEdit {" + style + "QPlainTextEdit { " + style);
+    setStyleSheet("QPlainTextEdit { " + style);
 
     // Do parenthesis highlighting when the cursor moves
-    connect(script, &QTextEdit::cursorPositionChanged, syntax,
+    connect(script, &QPlainTextEdit::cursorPositionChanged, syntax,
             [=](){ syntax->matchParens(script, script->textCursor().position()); });
 
     // Emit the script whenever text changes
-    connect(script, &QTextEdit::textChanged, this, &Editor::onScriptChanged);
+    connect(script, &QPlainTextEdit::textChanged, this, &Editor::onScriptChanged);
 
     // Emit modificationChanged to keep window in sync
     connect(script_doc, &QTextDocument::modificationChanged,
@@ -176,18 +175,7 @@ void Editor::setResult(QColor color, QString result)
 void Editor::setScript(const QString& s)
 {
     first_change = true;
-
-    // This is an terrible hack to work around QTBUG-20354:
-    // We temporary disable the syntax highlighter, then re-enable
-    // it after a timer fires.
-    syntax->disable();
-    auto timer = new QTimer;
-    timer->setSingleShot(true);
-    connect(timer, &QTimer::timeout, syntax, &Syntax::enable);
-    connect(timer, &QTimer::timeout, timer, &QTimer::deleteLater);
-
     script->setPlainText(s);
-    timer->start(0);
 }
 
 QString Editor::getScript() const

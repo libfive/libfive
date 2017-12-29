@@ -27,12 +27,10 @@ class Syntax : public QSyntaxHighlighter
     Q_OBJECT
 public:
     Syntax(QTextDocument* doc);
-    void matchParens(QTextEdit* text, int cursor_pos);
+    void matchParens(QPlainTextEdit* text, int cursor_pos);
 
 public slots:
     void setKeywords(QString kws);
-    void enable();
-    void disable();
 
 protected:
     QPoint matchedParen(int pos);
