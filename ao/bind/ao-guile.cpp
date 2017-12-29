@@ -359,16 +359,23 @@ void init_ao_kernel(void*)
                     (lambda-shape vars y)
                     (lambda-shape vars z)]))
 
+(define-syntax sequence
+  (syntax-rules ()
+   ((sequence a) a)
+   ((sequence a (t . args) . rest)
+      (sequence (t a . args) . rest))
+))
+
 ;; These are "safe" bindings that can be used in the sandbox
 (define ao-bindings '(square constant lambda-shape define-shape remap-shape
-                      shape-bounds ao-bindings))
+                      sequence ao-bindings))
 (eval (cons 'export ao-bindings) (interaction-environment))
  )");
 
     scm_c_export(
             "tree?", "tree", "wrap-tree", "unwrap-tree",
             "make-tree", "make-var", "var?", "tree-id", "number->tree",
-            "tree-equal?", "tree-eval", "tree->mesh",
+            "tree-equal?", "tree-eval", "tree->mesh", "shape-bounds",
             NULL);
 }
 
