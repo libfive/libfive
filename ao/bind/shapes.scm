@@ -18,6 +18,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
 (use-modules (ao kernel) (ao vec) (ao csg) (ao transforms))
 
+(define-public pi 3.14159265359)
+
 (define-public (circle center r)
   "circle #[x y] r
   A 2D circle with the given center and radius"
@@ -111,7 +113,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   "gyroid #[x_period y_period z_period] thickness
 Create a volume-filling gyroid with the given periods and thickness"
   (let* (
-         (pi 3.14159265359)
          (tau (* 2 pi))
          (x_factor (/ tau (.x period)))
          (y_factor (/ tau (.y period)))
@@ -214,6 +215,5 @@ Create a volume-filling gyroid with the given periods and thickness"
 (define* (array-polar shape n #:optional (c #[0 0]))
   "array-polar shape n [#[x y]]
   Iterates a shape about an optional center position"
-  (define pi 3.1415926)
   (apply union (map (lambda (i) (rotate-z shape (* 2 pi (/ i n)) c)) (iota n))))
 (export array-polar)
