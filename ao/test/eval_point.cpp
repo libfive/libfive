@@ -71,6 +71,13 @@ TEST_CASE("PointEvaluator::eval")
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 4.0);
     }
 
+    SECTION("nth-root")
+    {
+        auto t = std::make_shared<Tape>(nth_root(Tree::X(), 3));
+        PointEvaluator e(t);
+        REQUIRE(e.eval({-0.5, 0.0, 0.0}) == Approx(-0.7937));
+    }
+
     SECTION("Every operation")
     {
         for (unsigned i=7; i < Kernel::Opcode::LAST_OP; ++i)

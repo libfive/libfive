@@ -16,6 +16,8 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
+#include <boost/numeric/interval.hpp>
+
 #include "ao/eval/eval_point.hpp"
 
 namespace Kernel {
@@ -153,7 +155,12 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = pow(a, b);
             break;
         case Opcode::NTH_ROOT:
-            out = pow(a, 1.0f/b);
+            // Work around a limitation in pow by using boost's nth-root
+            // function on a single-point interval
+            if (a < 0)
+                out = boost::numeric::nth_root(Interval::I(a, a), b).lower();
+            else
+                out = pow(a, 1.0f/b);
             break;
         case Opcode::MOD:
             out = std::fmod(a, b);

@@ -180,7 +180,16 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = a.pow(b);
             break;
         case Opcode::NTH_ROOT:
-            out = pow(a, 1.0f/b);
+            for (auto i=0; i < a.size(); ++i)
+            {
+                // Work around a limitation in pow by using boost's nth-root
+                // function on a single-point interval
+                if (a(i) < 0)
+                    out(i) = boost::numeric::nth_root(
+                            Interval::I(a(i), a(i)), b(i)).lower();
+                else
+                    out(i) = pow(a(i), 1.0f/b(i));
+            }
             break;
         case Opcode::MOD:
             for (auto i=0; i < a.size(); ++i)
