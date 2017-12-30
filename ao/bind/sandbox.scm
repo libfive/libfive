@@ -150,9 +150,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
               (catch #t
                 ;; Evaluation thunk
                 (lambda () (cons 'valid
-                  (eval-in-sandbox clause #:module mod #:sever-module? #f
-                                          #:time-limit 10
-                                          #:allocation-limit #e10e8)))
+                  (call-with-values (lambda ()
+                    (eval-in-sandbox clause #:module mod #:sever-module? #f
+                                            #:time-limit 10
+                                            #:allocation-limit #e10e8))
+                    (lambda (. args) args))))
                 ;; Error handling thunk
                 (lambda (key . params)
                   (set! failed #t)

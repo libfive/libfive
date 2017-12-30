@@ -387,9 +387,21 @@ void init_ao_kernel(void*)
       (sequence (t a . args) . rest))
 ))
 
+(define-syntax-rule (values->list a)
+  (call-with-values (lambda () a) (lambda (. args) args)))
+
+(define-syntax vs->list
+  (syntax-rules ()
+    ((vs->list a) (list (values->list a)))
+    ((vs->list a . rest) (cons (values->list a) (vs->list . rest)))))
+
+(define-syntax-rule (values-from . vs)
+  (apply values (apply append (vs->list . vs))))
+
 ;; These are "safe" bindings that can be used in the sandbox
 (define ao-bindings '(square constant lambda-shape define-shape remap-shape
-                      shape-bounds tree-eval tree-derivs sequence ao-bindings))
+                      shape-bounds tree-eval tree-derivs sequence values-from
+                      ao-bindings))
 (eval (cons 'export ao-bindings) (interaction-environment))
  )");
 
