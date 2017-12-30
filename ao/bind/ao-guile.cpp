@@ -380,11 +380,11 @@ void init_ao_kernel(void*)
                     (lambda-shape vars y)
                     (lambda-shape vars z)]))
 
-(define-syntax sequence
+(define-syntax sequence_
   (syntax-rules ()
-   ((sequence a) a)
-   ((sequence a (t . args) . rest)
-      (sequence (t a . args) . rest))
+   ((sequence_ a) a)
+   ((sequence_ a (t . args) . rest)
+      (sequence_ (t a . args) . rest))
 ))
 
 (define-syntax-rule (values->list a)
@@ -397,6 +397,10 @@ void init_ao_kernel(void*)
 
 (define-syntax-rule (values-from . vs)
   (apply values (apply append (vs->list . vs))))
+
+(define-syntax-rule (sequence a . args)
+ (apply values (map (lambda (q) (sequence_ q . args))
+                    (apply append (vs->list a)))))
 
 ;; These are "safe" bindings that can be used in the sandbox
 (define ao-bindings '(square constant lambda-shape define-shape remap-shape
