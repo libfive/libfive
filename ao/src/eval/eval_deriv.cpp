@@ -94,7 +94,7 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::NTH_ROOT:
-            od = ad * pow(av, 1.0f / bv - 1) / bv;
+            od = (ad == 0).select(0, ad * pow(av, 1.0f / bv - 1) / bv);
             break;
         case Opcode::MOD:
             od = ad;

@@ -109,7 +109,9 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::NTH_ROOT:
-            od = ad.rowwise() * (av.pow(1.0f / bv - 1) / bv);
+            for (unsigned i=0; i < od.cols(); ++i)
+                od.col(i) = (ad.col(i) == 0)
+                    .select(0, ad.col(i) * (pow(av(i), 1.0f / bv(i) - 1) / bv(i)));
             break;
         case Opcode::MOD:
             od = ad;

@@ -16,6 +16,8 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
+#include <cmath>
+
 #include "catch.hpp"
 
 #include "ao/tree/tree.hpp"
@@ -73,8 +75,25 @@ TEST_CASE("DerivArrayEvaluator::derivs")
         e.set({1, 2, 3}, 1);
         auto d = e.derivs(2);
 
-
         REQUIRE(d.col(0).matrix() == Eigen::Vector4f(1, 0, 1, 2));
         REQUIRE(d.col(1).matrix() == Eigen::Vector4f(1, 0, 1, 4));
+    }
+
+    SECTION("X^(1/3)")
+    {
+        auto t = std::make_shared<Tape>(nth_root(Tree::X(), 3));
+        DerivArrayEvaluator e(t);
+
+        e.set({0, 0, 0}, 0);
+        e.set({1, 2, 3}, 1);
+        auto d = e.derivs(2);
+
+        CAPTURE(d.col(0));
+        REQUIRE(std::isinf(d.col(0)(0)));
+        REQUIRE(d.col(0).bottomRows(3).matrix() == Eigen::Vector3f(0, 0, 0));
+
+        CAPTURE(d.col(1));
+        REQUIRE(d.col(1)(0) == Approx(0.33333));
+        REQUIRE(d.col(1).bottomRows(3).matrix() == Eigen::Vector3f(0, 0, 1));
     }
 }
