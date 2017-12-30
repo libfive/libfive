@@ -85,13 +85,18 @@ port-eof?
         auto f = scm_c_eval_string((R"(
         (module-map (lambda (sym var)
             (cons (symbol->string sym)
-                  (procedure-documentation (variable-ref var))))
+                  (if (procedure? (variable-ref var))
+                    (procedure-documentation (variable-ref var))
+                    "")))
           (resolve-interface ')" + mod + "))").toLocal8Bit().constData());
         for (; !scm_is_null(f); f = scm_cdr(f))
         {
             auto name = scm_to_locale_string(scm_caar(f));
             auto doc = scm_to_locale_string(scm_cdar(f));
-            ds->insert(mod, name, doc);
+            if (strlen(doc))
+            {
+                ds->insert(mod, name, doc);
+            }
             free(name);
             free(doc);
         }
