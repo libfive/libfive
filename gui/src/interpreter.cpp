@@ -127,7 +127,7 @@ void _Interpreter::eval()
     }
 
     // If there is at least one result, then we'll convert the last one
-    // into a string (with special cases for various erorr forms)
+    // into a string (with special cases for various error forms)
     auto last = scm_is_null(result) ? nullptr
                                     : scm_cdr(scm_car(scm_last_pair(result)));
     if (!valid)
