@@ -79,7 +79,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Scales a shape by sz on the z axis about 0 or an optional offset"
   (remap-shape (shape x y z) x y (+ z0 (/ (- z z0) sz))))
 
-(export scale-x scale-y scale-z)
+(define* (scale-xyz shape s #:optional (center #[0 0 0]))
+  "scale-xyz shape #[sx sy sz] [#[x0 y0 z0]]
+  Scales a shape on all three axes, about 0 or an optional offset"
+  (remap-shape (shape x y z) (+ (.x center) (/ (- x (.x center)) (.x s))) (+ (.y center) (/ (- y (.y center)) (.y s))) (+ (.z center) (/ (- z (.z center)) (.z s)))))
+
+(export scale-x scale-y scale-z scale-xyz)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Rotation
