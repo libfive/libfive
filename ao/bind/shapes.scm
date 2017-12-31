@@ -20,24 +20,27 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public pi 3.14159265359)
 
-(define-public (circle center r)
-  "circle #[x y] r
-  A 2D circle with the given center and radius"
+(define* (circle r #:optional (center #[0 0]))
+  "circle r [#[x y]]
+  A 2D circle with the given radius and optional center"
   (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y))) r)) center))
+(export circle)
 
-(define-public (ring center ro ri)
-  "ring #[x y] ro ri
-  A 2D ring with the given center and outer/inner radii"
-  (difference (circle center ro) (circle center ri)))
+(define* (ring ro ri #:optional (center #[0 0]))
+  "ring ro ri [#[x y]]
+  A 2D ring with the given outer/inner radii and optional center"
+  (difference (circle ro center) (circle ri center)))
+(export ring)
 
-(define-public (polygon center r n)
-  "polygon #[x y] r n
+(define* (polygon r n #:optional (center #[0 0]))
+  "polygon r n [#[x y]]
   A polygon with center-to-vertex distance r and n sides"
   (let* ((r (* r (cos (/ pi n))))
          (half (lambda-shape (x y z) (- y r))))
     (move (apply intersection
       (map (lambda (i) (rotate-z half (* 2 pi i (/ n))))
            (iota n))) center)))
+(export polygon)
 
 (define-public (rectangle a b)
   "rectangle #[xmin ymin] #[xmax ymax]
@@ -50,10 +53,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   A rectangle with rounded corners"
   (union (rectangle (+ a (vec2 0 r)) (- b (vec2 0 r)))
          (rectangle (+ a (vec2 r 0)) (- b (vec2 r 0)))
-         (circle (+ a r) r)
-         (circle (- b r) r)
-         (circle (vec2 (+ (.x a) r) (- (.y b) r)) r)
-         (circle (vec2 (- (.x b) r) (+ (.y a) r)) r)))
+         (circle r (+ a r))
+         (circle r (- b r))
+         (circle r (vec2 (+ (.x a) r) (- (.y b) r)))
+         (circle r (vec2 (- (.x b) r) (+ (.y a) r)))))
 
 (define-public (triangle a b c)
   "triangle #[x0 y0] #[x1 y1] #[x2 y2]
@@ -76,22 +79,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (extrude-z (rectangle a b) (.z a) (.z b)))
 (define-public cube box)
 
-(define-public (sphere center r)
-  "sphere #[x y z] r
-  A sphere with the given center and radius"
+(define* (sphere r #:optional (center #[0 0 0]))
+  "sphere r [#[x y z]]
+  A sphere with the given radius and optional center"
   (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y) (square z))) r))
         center))
+(export sphere)
 
-(define-public (cylinder-z base r h)
-  "cylinder-z #[x0 y0 z0] r h
+(define* (cylinder-z r h #:optional (base #[0 0 0]))
+  "cylinder-z r h [#[x0 y0 z0]]
   A cylinder (oriented along the Z axis)"
-  (extrude-z (circle base r) (.z base) (+ h (.z base))))
+  (extrude-z (circle r base) (.z base) (+ h (.z base))))
+(export cylinder-z)
 (define-public cylinder cylinder-z)
 
-(define-public (cone-z base r height)
-  "cone-z #[x y z] r height
-  Creates a cone from a base location, radius, and height"
-  (taper-xy-z (cylinder-z base r height) base height 0))
+(define* (cone-z r height #:optional (base #[0 0 0]))
+  "cone-z r height [#[x y z]]
+  Creates a cone from a radius, height, and optional base location"
+  (taper-xy-z (cylinder-z r height base) base height 0))
+(export cone-z)
 (define-public cone cone-z)
 
 (define-public (pyramid-z a b zmin height)
@@ -101,12 +107,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
               (vec3 (/ (+ a b) 2) zmin) height 0))
 (define-public pyramid pyramid-z)
 
-(define-public (torus-z center R r)
-  "torus-z #[x y z] R r
-  Create a torus from the given center, outer radius, and inner radius"
+(define* (torus-z R r #:optional (center #[0 0 0]))
+  "torus-z R r [#[x y z]]
+  Create a torus from the given outer radius, inner radius, and optional center"
   (define (c a b) (sqrt (+ (square a) (square b))))
   (move (lambda-shape (x y z) (- (c (- R (c x y)) z) r))
         center))
+(export torus-z)
 (define-public torus torus-z)
 
 (define-public (gyroid period thickness)
@@ -141,19 +148,19 @@ Create a volume-filling gyroid with the given periods and thickness"
   (define r' (* r (min (.x d) (.y d) (.z d)) (/ 2)))
 
   (define corners (apply union
-    (map (lambda (i) (sphere #[
+    (map (lambda (i) (sphere r' #[
         (if (logbit? 0 i) (+ (.x a) r') (- (.x b) r'))
         (if (logbit? 1 i) (+ (.y a) r') (- (.y b) r'))
-        (if (logbit? 2 i) (+ (.z a) r') (- (.z b) r'))] r'))
+        (if (logbit? 2 i) (+ (.z a) r') (- (.z b) r'))]))
       (iota 8))))
 
   ;; Constructs a set of 4 edges for the given lengths
   (define (edges x y z)
     (apply union
-      (map (lambda (i) (cylinder-z #[
+      (map (lambda (i) (cylinder-z r' (- z (* 2 r')) #[
           (if (logbit? 0 i) r' (- x r'))
           (if (logbit? 1 i) r' (- y r'))
-          r'] r' (- z (* 2 r'))))
+          r']))
         (iota 4))))
 
   (define edges-x (reflect-xz

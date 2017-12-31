@@ -7,4 +7,4 @@
     (/ y (scale z))
     z))
 
-(taper-z (sphere #[0 0 0] 1) -1 1.1)
+(taper-z (sphere 1) -1 1.1)
