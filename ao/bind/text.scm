@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (define (glyph-shape char) (car (hash-ref glyphs char)))
 (define (glyph-width char) (cdr (hash-ref glyphs char)))
 
-(define (text txt pt)
+(define* (text txt #:optional (pt #[0 0]))
   "text txt #[x y]
   Draws text at the given position"
   (define (line txt pt)
