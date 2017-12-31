@@ -20,24 +20,27 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public pi 3.14159265359)
 
-(define-public (circle r #:optional (center #[0 0]))
-  "circle r #[x y]
+(define* (circle r #:optional (center #[0 0]))
+  "circle r [#[x y]]
   A 2D circle with the given radius and optional center"
   (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y))) r)) center))
+(export circle)
 
-(define-public (ring ro ri #:optional (center #[0 0]))
-  "ring ro ri #[x y]
+(define* (ring ro ri #:optional (center #[0 0]))
+  "ring ro ri [#[x y]]
   A 2D ring with the given outer/inner radii and optional center"
   (difference (circle ro center) (circle ri center)))
+(export ring)
 
-(define-public (polygon r n #:optional (center #[0 0]))
-  "polygon r n #[x y]
+(define* (polygon r n #:optional (center #[0 0]))
+  "polygon r n [#[x y]]
   A polygon with center-to-vertex distance r and n sides"
   (let* ((r (* r (cos (/ pi n))))
          (half (lambda-shape (x y z) (- y r))))
     (move (apply intersection
       (map (lambda (i) (rotate-z half (* 2 pi i (/ n))))
            (iota n))) center)))
+(export polygon)
 
 (define-public (rectangle a b)
   "rectangle #[xmin ymin] #[xmax ymax]
@@ -76,22 +79,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (extrude-z (rectangle a b) (.z a) (.z b)))
 (define-public cube box)
 
-(define-public (sphere r #:optional (center #[0 0 0]))
-  "sphere r #[x y z]
+(define* (sphere r #:optional (center #[0 0 0]))
+  "sphere r [#[x y z]]
   A sphere with the given radius and optional center"
   (move (lambda-shape (x y z) (- (sqrt (+ (square x) (square y) (square z))) r))
         center))
+(export sphere)
 
-(define-public (cylinder-z r h #:optional (base #[0 0 0]))
-  "cylinder-z r h #[x0 y0 z0]
+(define* (cylinder-z r h #:optional (base #[0 0 0]))
+  "cylinder-z r h [#[x0 y0 z0]]
   A cylinder (oriented along the Z axis)"
   (extrude-z (circle r base) (.z base) (+ h (.z base))))
+(export cylinder-z)
 (define-public cylinder cylinder-z)
 
-(define-public (cone-z r height #:optional (base #[0 0 0]))
-  "cone-z #[x y z] r height
+(define* (cone-z r height #:optional (base #[0 0 0]))
+  "cone-z r height [#[x y z]]
   Creates a cone from a radius, height, and optional base location"
   (taper-xy-z (cylinder-z r height base) base height 0))
+(export cone-z)
 (define-public cone cone-z)
 
 (define-public (pyramid-z a b zmin height)
@@ -101,12 +107,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
               (vec3 (/ (+ a b) 2) zmin) height 0))
 (define-public pyramid pyramid-z)
 
-(define-public (torus-z R r #:optional (center #[0 0 0]))
-  "torus-z #[x y z] R r
+(define* (torus-z R r #:optional (center #[0 0 0]))
+  "torus-z R r [#[x y z]]
   Create a torus from the given outer radius, inner radius, and optional center"
   (define (c a b) (sqrt (+ (square a) (square b))))
   (move (lambda-shape (x y z) (- (c (- R (c x y)) z) r))
         center))
+(export torus-z)
 (define-public torus torus-z)
 
 (define-public (gyroid period thickness)
