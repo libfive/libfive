@@ -67,6 +67,7 @@ protected:
 
     QMessageBox::StandardButton checkUnsaved();
     void setFilename(const QString& str);
+    QString workingDirectory() const;
 
     bool loadFile(QString f);
     bool saveFile(QString f);

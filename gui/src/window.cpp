@@ -220,7 +220,8 @@ void Window::onOpen(bool)
 {
     CHECK_UNSAVED();
 
-    QString f = QFileDialog::getOpenFileName(nullptr, "Open", "", "*.ao");
+    QString f = QFileDialog::getOpenFileName(nullptr, "Open",
+            workingDirectory(), "*.ao");
     if (!f.isEmpty() && loadFile(f))
     {
         setFilename(f);
@@ -308,7 +309,8 @@ bool Window::onSave(bool)
 
 bool Window::onSaveAs(bool)
 {
-    QString f = QFileDialog::getSaveFileName(nullptr, "Save as", "", "*.ao");
+    QString f = QFileDialog::getSaveFileName(nullptr, "Save as",
+            workingDirectory(), "*.ao");
     if (!f.isEmpty())
     {
 #ifdef Q_OS_LINUX
@@ -420,6 +422,13 @@ void Window::setFilename(const QString& f)
     }
 }
 
+QString Window::workingDirectory() const
+{
+    return (filename.startsWith(":/") || filename.isEmpty())
+        ? QDir::homePath()
+        : QFileInfo(filename).dir().absolutePath();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void Window::onExportReady(QList<const Kernel::Mesh*> shapes)
@@ -442,7 +451,7 @@ void Window::onExportReady(QList<const Kernel::Mesh*> shapes)
 void Window::onExport(bool)
 {
     export_filename = QFileDialog::getSaveFileName(
-            nullptr, "Export", "", "*.stl");
+            nullptr, "Export", workingDirectory(), "*.stl");
     if (export_filename.isEmpty())
     {
         return;
