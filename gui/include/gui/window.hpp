@@ -46,8 +46,8 @@ public:
 protected slots:
     void onOpen(bool=false);
     void onRevert(bool=false);
-    void onSave(bool=false);
-    void onSaveAs(bool=false);
+    bool onSave(bool=false);
+    bool onSaveAs(bool=false);
     void onNew(bool=false);
     void onExport(bool=false);
     void onAbout(bool=false);

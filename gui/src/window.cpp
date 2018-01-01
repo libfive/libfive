@@ -33,13 +33,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ao/ao.h"
 
 #define CHECK_UNSAVED() \
-switch (checkUnsaved())                                         \
-{                                                               \
-    case QMessageBox::Save:     onSave();   /* FALLTHROUGH */   \
-    case QMessageBox::Ok:                   /* FALLTHROUGH */   \
-    case QMessageBox::Discard:  break;                          \
-    case QMessageBox::Cancel:   return;                         \
-    default:    assert(false);                                  \
+switch (checkUnsaved())                                                     \
+{                                                                           \
+    case QMessageBox::Save:     if (!onSave()) return;  /* FALLTHROUGH */   \
+    case QMessageBox::Ok:                               /* FALLTHROUGH */   \
+    case QMessageBox::Discard:  break;                                      \
+    case QMessageBox::Cancel:   return;                                     \
+    default:    assert(false);                                              \
 }
 
 Window::Window(QString target)
@@ -294,19 +294,19 @@ bool Window::saveFile(QString f)
     }
 }
 
-void Window::onSave(bool)
+bool Window::onSave(bool)
 {
     if (filename.isEmpty() || filename.startsWith(":/"))
     {
-        onSaveAs();
+        return onSaveAs();
     }
     else
     {
-        saveFile(filename);
+        return saveFile(filename);
     }
 }
 
-void Window::onSaveAs(bool)
+bool Window::onSaveAs(bool)
 {
     QString f = QFileDialog::getSaveFileName(nullptr, "Save as", "", "*.ao");
     if (!f.isEmpty())
@@ -320,8 +320,10 @@ void Window::onSaveAs(bool)
         if (saveFile(f))
         {
             setFilename(f);
+            return true;
         }
     }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
