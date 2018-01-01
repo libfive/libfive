@@ -148,7 +148,7 @@ TEST_CASE("eval-sandboxed")
     SECTION("Single line")
     {
         auto result = eval("(eval-sandboxed \"(+ 1 2 3)\")");
-        REQUIRE(result == "((valid . 6))");
+        REQUIRE(result == "((valid 6))");
     }
 
     SECTION("Multi-line")
@@ -156,7 +156,7 @@ TEST_CASE("eval-sandboxed")
         auto result = eval("(eval-sandboxed \"(define-shape (f x y z) (+ x y))(+ f 12)\")");
         CAPTURE(result);
         REQUIRE(boost::algorithm::starts_with(result,
-            "((valid . #<unspecified>) (valid . #<<tree>"));
+            "((valid #<unspecified>) (valid #<<tree>"));
     }
 
     SECTION("Error on single line")
