@@ -191,7 +191,7 @@ SCM scm_tree_eval_d(SCM t, SCM x, SCM y, SCM z)
     float y_ = scm_to_double(y);
     float z_ = scm_to_double(z);
 
-    auto out = ao_tree_eval_d(scm_to_tree(t), {x_, y_, z_});
+    auto out = libfive_tree_eval_d(scm_to_tree(t), {x_, y_, z_});
 
     return scm_vec3(out.x, out.y, out.z);
 }
@@ -409,7 +409,7 @@ void init_libfive_kernel(void*)
 (define libfive-bindings '(square constant lambda-shape define-shape remap-shape
                       shape-bounds tree-eval tree-derivs sequence values-from
                       values->list
-                      ao-bindings))
+                      libfive-bindings))
 (eval (cons 'export libfive-bindings) (interaction-environment))
  )");
 
