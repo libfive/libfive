@@ -1,5 +1,5 @@
 # Disclaimer
-This generation of Ao is not yet ready for mass consumption.
+This generation of `libfive` is not yet ready for mass consumption.
 
 It's coming along nicely –
 and if you've found your way here,
@@ -11,47 +11,61 @@ and limited support.
 Please enjoy it responsibly and refrain from posting it to the wider web.
 
 # About
-Ao is a framework for solid modeling using
+- [Project homepage](https://libfive.com) (with demo videos!)
+- [API Examples](https://libfive.com/examples)
+- [Downloads](https://libfive.com/download)
+
+`libfive` is a framework for solid modeling using
 [functional representations](https://en.wikipedia.org/wiki/Function_representation).
 
 It includes several layers, ranging from infrastructure to GUI:
 
-- `libao-kernel` is a shared library to build, manipulate, and render f-reps.
+- The `libfive` shared library contains functions to build, manipulate, and render f-reps.
 A great deal of work has gone into the meshing algorithm,
 which produces watertight, manifold,
 hierarchical, feature-preserving triangle meshes.
-The library is written in C++ and exposes a C API in `ao/ao.h`.
-- `libao-guile` is a [Guile](https://www.gnu.org/software/guile/)
-binding to `libao-kernel`.
+The library is written in C++ and exposes a C API in `libfive.h`.
+- `libfive-guile` is a [Guile](https://www.gnu.org/software/guile/)
+binding to `libfive`.
 It exposes a high-level API to construct shapes,
 and includes a standard library
 of shapes, transforms, and CSG operations.
 - **Studio** is a GUI application in the style of
 [OpenSCAD](http://www.openscad.org/).
-It wraps `libao-guile` and allows for live-coding of solid models.
+It wraps `libfive-guile` and allows for live-coding of solid models.
 The interface also includes direct modeling,
 where the user can push and pull on the model's surface
 to change variables in the script.
 
 # Compiling from source
-The full system (`libao` + `libao-guile` + **Studio**)
+The full system (`libfive` + `libfive-guile` + **Studio**)
 has been successfully compiled on Mac and Linux.
 There's also a third-party fork
 [here](https://github.com/bradrothenberg/ao/tree/win64)
-that builds `libao` on Windows with MSVC.
+that builds `libfive` on Windows with MSVC.
 
 ## Dependencies
-### Build system
 - [`cmake`](https://cmake.org/)
 - [`pkg-config`](https://www.freedesktop.org/wiki/Software/pkg-config/)
-
-### Geometry Kernel
 - [Eigen 3.x](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
-
-### Bindings and GUI
 - [Qt 5.7 or later](https://www.qt.io)
 - [Guile 2.2 or later](https://www.gnu.org/software/guile/)
+
+On a Mac with `homebrew` installed, run
+```
+brew install cmake pkg-config eigen libpng qt guile
+```
+
+On a Ubuntu machine, run
+```
+sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev qtbase5-dev guile-2.2-dev
+```
+(untested; open an issue or PR if this doesn't work for you)
+
+Qt and Guile are optional; if they aren't present, then
+the Guile bindings and Studio will not be included in the build
+(and `cmake` will print a message to that effect).
 
 ## Invocation
 ```
@@ -66,21 +80,9 @@ Adjust based on your Qt installation path, and consider using [`ninja`](https://
 (c) 2015-2017 Matthew Keeter
 
 Different layers of this project are released under different licenses:
-- `ao-kernel` is released under the LGPL, version 2 or later.
-- `guile-ao` and `Studio` are released under the GPL, version 2 or later.
+- The `libfive` dynamic library is released under the LGPL, version 2 or later.
+- `libfive-guile` and `Studio` are released under the GPL, version 2 or later.
 
 Contact me to discuss custom development,
 integration,
 or commercial support.
-
-# Using the standalone Guile module
-```
-scheme@(guile-user)> (load-extension "ao/bind/libguile-ao" "scm_init_ao_modules")
-scheme@(guile-user)> (use-modules (ao csg) (ao transforms) (ao shapes))
-```
-
-Note that the standalong module does not include
-the minimal OpenGL-based GUI described
-[here](https://mattkeeter.com/projects/ao).
-That GUI is no longer maintained,
-but can be found in the [`ao-guile-repl` repo](https://github.com/mkeeter/ao-guile-repl).
