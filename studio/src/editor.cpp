@@ -197,17 +197,11 @@ void Editor::setKeywords(QString kws)
 
 void Editor::onSettingsChanged(Settings s)
 {
-    auto txt = script_doc->toPlainText();
-
-    auto render_str = s.settings_fmt
-        .arg(s.min.x()).arg(s.min.y()).arg(s.min.z())
-        .arg(s.max.x()).arg(s.max.y()).arg(s.max.z())
-        .arg(s.res).arg(s.quality);
+    const auto render_str = s.toString();
 
     QTextCursor c(script_doc);
-
     c.beginEditBlock();
-    auto match = s.settings_regex.match(txt);
+    auto match = s.settings_regex.match(script_doc->toPlainText());
     if (!match.hasMatch())
     {
         c.insertText(render_str);
@@ -228,22 +222,11 @@ void Editor::onScriptChanged()
     auto txt = script_doc->toPlainText();
     emit(scriptChanged(txt));
 
-    auto match = Settings::settings_regex.match(txt);
-    if (match.hasMatch())
+    bool okay = true;
+    const auto s = Settings::fromString(txt, &okay);
+    if (okay)
     {
-        bool ok = true;
-        std::vector<float> out;
-        for (int i=1; i <= match.lastCapturedIndex() && ok; ++i)
-        {
-            out.push_back(match.captured(i).toFloat(&ok));
-        }
-        if (ok)
-        {
-            Settings s({out[0], out[1], out[2]},
-                       {out[3], out[4], out[5]}, out[6], out[7]);
-
-            emit(settingsChanged(s, first_change));
-        }
+        emit(settingsChanged(s, first_change));
     }
     first_change = false;
 }

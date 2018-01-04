@@ -25,14 +25,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/settings.hpp"
 
 QRegularExpression Settings::settings_regex(
-        "#! RENDER (.*) (.*) (.*) / (.*) (.*) (.*) / (.*) / (.*) !#");
+        "#! RENDER (.*) (.*) (.*) / (.*) (.*) (.*) / (.*) / (.*) / ([01]) !#");
 QString Settings::settings_fmt(
-        "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 / %8 !#");
+        "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 / %8 / %9 !#");
 
-Settings::Settings(QVector3D min, QVector3D max, float res, float quality)
-    : min(min), max(max), res(res), quality(quality)
+Settings::Settings(QVector3D min, QVector3D max, float res,
+                   float quality, bool autobounds)
+    : min(min), max(max), res(res), quality(quality), autobounds(autobounds)
 {
     // Nothing to do here
+}
+
+Settings Settings::defaultSettings()
+{
+    return Settings({-10, -10, -10}, {10, 10, 10}, 10, 8, true);
 }
 
 int Settings::defaultDiv() const
@@ -49,10 +55,45 @@ int Settings::defaultDiv() const
         : int(log(res / target_res) / log(2) + 0.5);
 }
 
+QString Settings::toString() const
+{
+    return settings_fmt
+        .arg(min.x()).arg(min.y()).arg(min.z())
+        .arg(max.x()).arg(max.y()).arg(max.z())
+        .arg(res).arg(quality).arg(autobounds ? 1 : 0);
+}
+
+Settings Settings::fromString(QString txt, bool* okay)
+{
+    auto match = Settings::settings_regex.match(txt);
+    *okay = match.hasMatch();
+
+    const QVector3D min(match.captured(1).toFloat(okay),
+                        match.captured(2).toFloat(okay),
+                        match.captured(3).toFloat(okay));
+    const QVector3D max(match.captured(4).toFloat(okay),
+                        match.captured(5).toFloat(okay),
+                        match.captured(6).toFloat(okay));
+
+    const float res = match.captured(7).toFloat(okay);
+    const float quality = match.captured(8).toFloat(okay);
+    const float autobounds = (match.captured(9) == "1");
+
+    if (*okay)
+    {
+        return Settings(min, max, res, quality, autobounds);
+    }
+    else
+    {
+        return Settings();
+    }
+}
+
 bool Settings::operator==(const Settings& other) const
 {
     return min == other.min && max == other.max &&
-           res == other.res && quality == other.quality;
+           res == other.res && quality == other.quality &&
+           autobounds == other.autobounds;
 }
 
 bool Settings::operator!=(const Settings& other) const
@@ -70,7 +111,8 @@ SettingsPane::SettingsPane(Settings s)
       zmin(new QDoubleSpinBox),
       zmax(new QDoubleSpinBox),
       res(new QDoubleSpinBox),
-      quality(new QDoubleSpinBox)
+      quality(new QDoubleSpinBox),
+      autobounds(new QCheckBox)
 {
     auto layout = new QGridLayout();
 
@@ -113,16 +155,20 @@ SettingsPane::SettingsPane(Settings s)
     for (auto t : {xmin, xmax, ymin, ymax, zmin, zmax, res, quality})
     {
         connect(t, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-                this, [=](double){
-                    emit(this->changed(Settings(
-                        QVector3D(xmin->value(), ymin->value(), zmin->value()),
-                        QVector3D(xmax->value(), ymax->value(), zmax->value()),
-                        res->value(), quality->value()))); } );
+                this, [=](double){ emit(this->changed(settings())); });
         connect(this, &SettingsPane::enable,
                 t, [=](){ t->setReadOnly(false); });
         connect(this, &SettingsPane::disable,
                 t, [=](){ t->setReadOnly(true); });
     }
+
+    // Set up similar connections for the autobounds checkbox
+    connect(autobounds, &QCheckBox::clicked,
+            this, [=](bool){ emit(this->changed(settings())); });
+    connect(this, &SettingsPane::enable,
+            autobounds, [=](){ autobounds->setEnabled(true); });
+    connect(this, &SettingsPane::disable,
+            autobounds, [=](){ autobounds->setEnabled(false); });
 
     setLayout(layout);
     setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint |
@@ -140,4 +186,11 @@ void SettingsPane::set(Settings s)
     zmax->setValue(s.max.z());
     res->setValue(s.res);
     quality->setValue(s.quality);
+}
+
+Settings SettingsPane::settings() const
+{
+    return Settings(QVector3D(xmin->value(), ymin->value(), zmin->value()),
+                    QVector3D(xmax->value(), ymax->value(), zmax->value()),
+                    res->value(), quality->value(), autobounds->isChecked());
 }
