@@ -1,16 +1,9 @@
-# Disclaimer
-This generation of `libfive` is not yet ready for mass consumption.
+# libfive
+*Infrastructure for solid modeling.*
 
-It's coming along nicely –
-and if you've found your way here,
-you should try it out! –
-but there's very little documentation,
-no stability guarantees,
-and limited support.
+(formerly known as [mkeeter/ao](https://github.com/mkeeter/ao))
 
-Please enjoy it responsibly and refrain from posting it to the wider web.
-
-# About
+## About
 - [Project homepage](https://libfive.com) (with demo videos!)
 - [API Examples](https://libfive.com/examples)
 - [Downloads](https://libfive.com/download)
@@ -37,14 +30,14 @@ The interface also includes direct modeling,
 where the user can push and pull on the model's surface
 to change variables in the script.
 
-# Compiling from source
+## Compiling from source
 The full system (`libfive` + `libfive-guile` + **Studio**)
 has been successfully compiled on Mac and Linux.
 There's also a third-party fork
 [here](https://github.com/bradrothenberg/ao/tree/win64)
 that builds `libfive` on Windows with MSVC.
 
-## Dependencies
+### Dependencies
 - [`cmake`](https://cmake.org/)
 - [`pkg-config`](https://www.freedesktop.org/wiki/Software/pkg-config/)
 - [Eigen 3.x](http://eigen.tuxfamily.org/index.php?title=Main_Page)
@@ -67,7 +60,7 @@ Qt and Guile are optional; if they aren't present, then
 the Guile bindings and Studio will not be included in the build
 (and `cmake` will print a message to that effect).
 
-## Invocation
+### Invocation
 ```
 mkdir build
 cd build
@@ -76,7 +69,7 @@ make
 ```
 Adjust based on your Qt installation path, and consider using [`ninja`](https://ninja-build.org/) for faster builds.
 
-# License
+## License
 (c) 2015-2017 Matthew Keeter
 
 Different layers of this project are released under different licenses:
