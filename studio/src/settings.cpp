@@ -127,17 +127,20 @@ SettingsPane::SettingsPane(Settings s)
     layout->addWidget(zmin, 3, 1);
     layout->addWidget(zmax, 3, 2);
 
+    layout->addWidget(new QLabel("Auto-bounding:"), 4, 0, 1, 2);
+    layout->addWidget(autobounds, 4, 2);
+
     QFrame* line;
     line = new QFrame();
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Raised);
-    layout->addWidget(line, 4, 0, 1, 3);
+    layout->addWidget(line, 5, 0, 1, 3);
 
-    layout->addWidget(new QLabel("Resolution:"), 5, 0, 1, 2, Qt::AlignCenter);
-    layout->addWidget(res, 5, 2);
+    layout->addWidget(new QLabel("Resolution:"), 6, 0, 1, 2, Qt::AlignCenter);
+    layout->addWidget(res, 6, 2);
 
-    layout->addWidget(new QLabel("Quality:"), 6, 0, 1, 2, Qt::AlignCenter);
-    layout->addWidget(quality, 6, 2);
+    layout->addWidget(new QLabel("Quality:"), 7, 0, 1, 2, Qt::AlignCenter);
+    layout->addWidget(quality, 7, 2);
 
     layout->setMargin(10);
     layout->setSpacing(4);
@@ -186,6 +189,7 @@ void SettingsPane::set(Settings s)
     zmax->setValue(s.max.z());
     res->setValue(s.res);
     quality->setValue(s.quality);
+    autobounds->setChecked(s.autobounds);
 }
 
 Settings SettingsPane::settings() const
