@@ -514,7 +514,7 @@ void View::checkHoverTarget(QPoint pos)
 {
     syncPicker();
 
-    auto picked = (pick_img.pixel(pos) & 0xFFFFFF);
+    auto picked = pick_img.valid(pos) ? (pick_img.pixel(pos) & 0xFFFFFF) : 0;
     auto target = picked ? shapes.at(picked - 1) : nullptr;
     if (target && target->hasVars())
     {
