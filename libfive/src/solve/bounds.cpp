@@ -45,22 +45,50 @@ Region<3> findBounds(IntervalEvaluator* eval)
         return eval->eval(r.lower.template cast<float>(),
                           r.upper.template cast<float>()).lower(); };
 
-    // Helper function to check a particular [axis + sign + value] by breaking
-    // the semi-infinite half-space into four semi-infinite eighth-spaces.
+    // Helper function to check a particular [axis + sign + value].
     //
-    // This correctly handles cases like rotation, where otherwise things go
-    // infinite where they don't need to.
-    auto check = [&](unsigned axis, unsigned s, double d){
-        int q = Axis::toIndex(Axis::Q(Axis::toAxis(axis)));
-        int r = Axis::toIndex(Axis::R(Axis::toAxis(axis)));
+    // Semi-infinite half-spaces are broken into four semi-infinite
+    // eighth-spaces.  This correctly handles cases like rotation,
+    // where otherwise things go infinite where they don't need to.
+    //
+    // Non-infinite spaces are split into a bunch of sub-intervals
+    // to do a better job of getting the bounds.
+    auto check = [&](unsigned axis, unsigned s, double d, unsigned n){
+        const int q = Axis::toIndex(Axis::Q(Axis::toAxis(axis)));
+        const int r = Axis::toIndex(Axis::R(Axis::toAxis(axis)));
         float o = std::numeric_limits<float>::infinity();
-        for (unsigned i=0; i < 4; ++i)
+
+        if (out.lower.isInf().any() || out.upper.isInf().any())
         {
-            Region<3> target = out;
-            target[s](axis) = d;
-            target[(i & 1) == 0](q) = 0;
-            target[(i & 2) == 0](r) = 0;
-            o = fmin(o, testRegion(target));
+            for (unsigned i=0; i < 4; ++i)
+            {
+                Region<3> target = out;
+                target[s](axis) = d;
+                target[(i & 1) == 0](q) = 0;
+                target[(i & 2) == 0](r) = 0;
+                o = fmin(o, testRegion(target));
+            }
+        }
+        else
+        {
+            for (unsigned i=0; i < n; ++i)
+            {
+                Region<3> target = out;
+                target[s](axis) = d;
+                target.lower(q) = (out.lower(q) * (n - i) / float(n)) +
+                                  (out.upper(q) * i / float(n));
+                target.upper(q) = (out.lower(q) * (n - i - 1) / float(n)) +
+                                  (out.upper(q) * (i + 1) / float(n));
+
+                for (unsigned j=0; j < n; ++j)
+                {
+                    target.lower(r) = (out.lower(r) * (n - i) / float(n)) +
+                                      (out.upper(r) * i / float(n));
+                    target.upper(r) = (out.lower(r) * (n - i - 1) / float(n)) +
+                                      (out.upper(r) * (i + 1) / float(n));
+                    o = fmin(o, testRegion(target));
+                }
+            }
         }
         return o;
     };
@@ -68,6 +96,12 @@ Region<3> findBounds(IntervalEvaluator* eval)
     for (unsigned iter=0; iter < 8; ++iter)
     {
         Region<3> next = out;
+
+        // This value is chosen experimentally as a subdivision scaling
+        // that does a reasonable job of converging on bounds without
+        // being too expensive.
+        const int n = iter * 2;
+
         // Iterate over axes
         for (unsigned axis=0; axis < 3; ++axis)
         {
@@ -84,7 +118,7 @@ Region<3> findBounds(IntervalEvaluator* eval)
                     pos -= sign;
                     step *= 2;
                 }
-                while (check(axis, s, pos) > 0 && !std::isinf(step));
+                while (check(axis, s, pos, n) > 0 && !std::isinf(step));
 
                 // Then walk forward until you are outside of the shape
                 step = sign;
@@ -93,7 +127,7 @@ Region<3> findBounds(IntervalEvaluator* eval)
                     pos += step;
                     step *= 2;
                 }
-                while (check(axis, s, pos) <= 0 && !std::isinf(step));
+                while (check(axis, s, pos, n) <= 0 && !std::isinf(step));
 
                 // If we can't get a bound on this axis, keep going
                 if (std::isinf(step))
@@ -108,7 +142,7 @@ Region<3> findBounds(IntervalEvaluator* eval)
                 for (unsigned i=0; i < 16; ++i)
                 {
                     pos = outside * frac + inside * (1 - frac);
-                    if (check(axis, s, pos) <= 0)
+                    if (check(axis, s, pos, n) <= 0)
                     {
                         frac += step;
                     }
