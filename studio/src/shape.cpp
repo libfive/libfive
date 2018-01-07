@@ -280,10 +280,12 @@ void Shape::onFutureFinished()
 {
     running = false;
 
-    auto m = mesh_future.result();
-    if (m != nullptr)
+    auto bm = mesh_future.result();
+    if (bm.first != nullptr)
     {
-        mesh.reset(mesh_future.result());
+        mesh.reset(bm.first);
+        bounds = bm.second;
+
         gl_ready = false;
         emit(gotMesh());
 
@@ -327,7 +329,7 @@ void Shape::freeGL()
 
 ////////////////////////////////////////////////////////////////////////////////
 // This function is called in a separate thread:
-Kernel::Mesh* Shape::renderMesh(QPair<Settings, int> s)
+Shape::BoundedMesh Shape::renderMesh(QPair<Settings, int> s)
 {
     cancel.store(false);
 
@@ -354,5 +356,5 @@ Kernel::Mesh* Shape::renderMesh(QPair<Settings, int> s)
     auto m = Kernel::Mesh::render(es.data(), r,
             1 / (s.first.res / (1 << s.second)),
             pow(10, -s.first.quality), cancel);
-    return m.release();
+    return {m.release(), r};
 }

@@ -108,6 +108,11 @@ public:
     { return vars; }
 
     /*
+     *  Looks up the shape's bounds
+     */
+    const Kernel::Region<3>& getBounds() const { return bounds; }
+
+    /*
      *  Sets grabbed and redraws as necessary
      */
     void setGrabbed(bool g);
@@ -142,9 +147,10 @@ protected:
     bool grabbed=false;
     bool hover=false;
 
-    Kernel::Mesh* renderMesh(QPair<Settings, int> s);
-    QFuture<Kernel::Mesh*> mesh_future;
-    QFutureWatcher<Kernel::Mesh*> mesh_watcher;
+    typedef QPair<Kernel::Mesh*, Kernel::Region<3>> BoundedMesh;
+    BoundedMesh renderMesh(QPair<Settings, int> s);
+    QFuture<BoundedMesh> mesh_future;
+    QFutureWatcher<BoundedMesh> mesh_watcher;
     std::atomic_bool cancel;
 
     Kernel::Tree tree;
@@ -153,6 +159,7 @@ protected:
                 Eigen::aligned_allocator<Kernel::XTreeEvaluator>> es;
 
     QScopedPointer<Kernel::Mesh> mesh;
+    Kernel::Region<3> bounds;
     QPair<Settings, int> next;
 
     /*  running marks not just whether the future has finished, but whether
