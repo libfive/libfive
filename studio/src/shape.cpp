@@ -19,6 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/shape.hpp"
 #include "studio/shader.hpp"
 
+#include "libfive/solve/bounds.hpp"
+
 const int Shape::MESH_DIV_EMPTY;
 const int Shape::MESH_DIV_ABORT;
 const int Shape::MESH_DIV_NEW_VARS;
@@ -278,10 +280,12 @@ void Shape::onFutureFinished()
 {
     running = false;
 
-    auto m = mesh_future.result();
-    if (m != nullptr)
+    auto bm = mesh_future.result();
+    if (bm.first != nullptr)
     {
-        mesh.reset(mesh_future.result());
+        mesh.reset(bm.first);
+        bounds = bm.second;
+
         gl_ready = false;
         emit(gotMesh());
 
@@ -325,13 +329,32 @@ void Shape::freeGL()
 
 ////////////////////////////////////////////////////////////////////////////////
 // This function is called in a separate thread:
-Kernel::Mesh* Shape::renderMesh(QPair<Settings, int> s)
+Shape::BoundedMesh Shape::renderMesh(QPair<Settings, int> s)
 {
     cancel.store(false);
+
+    // Use the global bounds settings by default, but try to solve for more
+    // precise bounds if autobounds is true.
     Kernel::Region<3> r({s.first.min.x(), s.first.min.y(), s.first.min.z()},
                         {s.first.max.x(), s.first.max.y(), s.first.max.z()});
+    if (s.first.autobounds)
+    {
+        auto r_ = Kernel::findBounds(&es[0].interval);
+        if (!r_.lower.isNaN().any() &&
+            !r_.upper.isNaN().any() &&
+            ((r_.upper - r_.lower).array() / (r.upper - r.lower).array())
+                .abs().maxCoeff() < 1000)
+        {
+            r = r_;
+
+            // Add a little padding for numerical safety
+            Kernel::Region<3>::Pt diff = r.upper - r.lower;
+            r.lower -= diff / 10;
+            r.upper += diff / 10;
+        }
+    }
     auto m = Kernel::Mesh::render(es.data(), r,
             1 / (s.first.res / (1 << s.second)),
             pow(10, -s.first.quality), cancel);
-    return m.release();
+    return {m.release(), r};
 }
