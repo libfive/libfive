@@ -4,8 +4,8 @@ file(READ ${CMAKE_CURRENT_LIST_DIR}/libfive-guile.cpp LIBFIVE_GUILE)
 # LOAD is a macro that automatically drops a SCM file into the LIBFIVE_GUILE source
 macro(LOAD TARGET)
     # Read in the target Scheme file
-    string(TOLOWER "${CMAKE_CURRENT_LIST_DIR}/${TARGET}.scm" FILENAME)
-    file(READ ${FILENAME} SCM)
+    string(TOLOWER "${TARGET}.scm" FILENAME)
+    file(READ "${CMAKE_CURRENT_LIST_DIR}/${FILENAME}" SCM)
 
     # Modify any substrings that look like a termination sequence )"
     string(REPLACE ")\"" ") \"" SCM "${SCM}")
