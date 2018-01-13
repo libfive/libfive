@@ -29,7 +29,7 @@ find_package(Boost REQUIRED)
 find_package(PNG REQUIRED)
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(GUILE REQUIRED guile-2.2)
+pkg_check_modules(GUILE guile-2.2)
 pkg_check_modules(EIGEN REQUIRED eigen3)
 
 if (UNIX AND NOT(APPLE))
