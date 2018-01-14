@@ -64,6 +64,7 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
 #define CHECK_RETURN(func) { auto t = func(op, lhs, rhs); if (t.get() != nullptr) { return t; }}
         CHECK_RETURN(checkIdentity);
         CHECK_RETURN(checkCommutative);
+        CHECK_RETURN(checkAffine);
     }
 
     Key k(op, lhs.get(), rhs.get());
@@ -399,6 +400,41 @@ Cache::Node Cache::checkCommutative(Opcode::Opcode op, Cache::Node a, Cache::Nod
         }
     }
     return 0;
+}
+
+Cache::Node Cache::checkAffine(Opcode::Opcode op, Node a_, Node b_)
+{
+    if (op != Opcode::ADD && op != Opcode::SUB)
+    {
+        return Node();
+    }
+
+    auto a = asAffine(a_);
+    const auto b = asAffine(b_);
+
+    bool overlap = false;
+    for (auto& k : b)
+    {
+        auto itr = a.find(k.first);
+        if (itr != a.end())
+        {
+            if (op == Opcode::ADD)
+            {
+                a.at(k.first) += k.second;
+            }
+            else
+            {
+                a.at(k.first) -= k.second;
+            }
+            overlap = true;
+        }
+        else
+        {
+            a.insert(k);
+        }
+    }
+
+    return overlap ? fromAffine(a) : Node();
 }
 
 }   // namespace Kernel
