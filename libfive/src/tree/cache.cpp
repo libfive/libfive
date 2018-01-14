@@ -344,6 +344,10 @@ Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b
                 {
                     return b;
                 }
+                else if (a->value == -1)
+                {
+                    return operation(Opcode::NEG, b);
+                }
             }
             if (op_b == Opcode::CONST)
             {
@@ -354,6 +358,10 @@ Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b
                 else if (b->value == 1)
                 {
                     return a;
+                }
+                else if (b->value == -1)
+                {
+                    return operation(Opcode::NEG, a);
                 }
             }
             else if (a == b)

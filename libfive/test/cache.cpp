@@ -69,6 +69,10 @@ TEST_CASE("Collapsing of identites")
 
         auto ob = t->operation(Opcode::ADD, t->constant(0), t->X());
         REQUIRE(ob == t->X());
+
+        auto oc = t->operation(Opcode::ADD, t->Y(),
+                t->operation(Opcode::NEG, t->X()));
+        REQUIRE(oc == t->operation(Opcode::SUB, t->Y(), t->X()));
     }
 
     SECTION("Subtraction")
@@ -96,6 +100,14 @@ TEST_CASE("Collapsing of identites")
         auto od = t->operation(Opcode::MUL, t->constant(0), t->X());
         REQUIRE(od->op == Opcode::CONST);
         REQUIRE(od->value == 0);
+
+        auto oe = t->operation(Opcode::MUL, t->constant(-1), t->X());
+        REQUIRE(oe->op == Opcode::NEG);
+        REQUIRE(oe->lhs == t->X());
+
+        auto of = t->operation(Opcode::MUL, t->X(), t->constant(-1));
+        REQUIRE(of->op == Opcode::NEG);
+        REQUIRE(of->lhs == t->X());
     }
 
     SECTION("Exponentiation")
