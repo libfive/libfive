@@ -150,6 +150,146 @@ void Cache::del(Opcode::Opcode op, Node lhs, Node rhs)
     ops.erase(o);
 }
 
+std::map<Cache::Node, float> Cache::asAffine(Node n) const
+{
+    std::map<Node, float> out;
+
+    if (n->op == Opcode::ADD)
+    {
+        for (const auto& m : {asAffine(n->lhs), asAffine(n->rhs)})
+        {
+            for (const auto& i : m)
+            {
+                if (out.find(i.first) == out.end())
+                {
+                    out.insert(i);
+                }
+                else
+                {
+                    out[i.first] += i.second;
+                }
+            }
+        }
+    }
+    else if (n->op == Opcode::SUB)
+    {
+        auto a = asAffine(n->lhs);
+        auto b = asAffine(n->rhs);
+
+        for (const auto& i : a)
+        {
+            if (out.find(i.first) == out.end())
+            {
+                out.insert(i);
+            }
+            else
+            {
+                out[i.first] += i.second;
+            }
+        }
+
+        for (const auto& i : b)
+        {
+            if (out.find(i.first) == out.end())
+            {
+                out.insert({i.first, -i.second});
+            }
+            else
+            {
+                out[i.first] -= i.second;
+            }
+        }
+    }
+    else if (n->op == Opcode::MUL)
+    {
+        if (n->lhs->op == Opcode::CONST)
+        {
+            for (const auto& i : asAffine(n->rhs))
+            {
+                out.insert({i.first, i.second * n->lhs->value});
+            }
+        }
+        else if (n->rhs->op == Opcode::CONST)
+        {
+            for (const auto& i : asAffine(n->lhs))
+            {
+                out.insert({i.first, i.second * n->rhs->value});
+            }
+        }
+        else
+        {
+            out.insert({n, 1});
+        }
+    }
+    else if (n->op == Opcode::DIV)
+    {
+        if (n->rhs->op == Opcode::CONST)
+        {
+            for (const auto& i : asAffine(n->lhs))
+            {
+                out.insert({i.first, i.second / n->rhs->value});
+            }
+        }
+        else
+        {
+            out.insert({n, 1});
+        }
+    }
+    else
+    {
+        out.insert({n, 1});
+    }
+
+    return out;
+}
+
+Cache::Node Cache::fromAffine(const std::map<Node, float>& ns)
+{
+    std::map<float, std::list<Node>> cs;
+    for (const auto& n : ns)
+    {
+        if (cs.find(n.second) == cs.end())
+        {
+            cs.insert({n.second, {}});
+        }
+        cs.at(n.second).push_back(n.first);
+    }
+
+    std::list<std::pair<float, std::list<Node>>> pos;
+    std::list<std::pair<float, std::list<Node>>> neg;
+    for (const auto& c : cs)
+    {
+        if (c.first < 0)
+        {
+            neg.push_back(c);
+        }
+        else if (c.first > 0)
+        {
+            pos.push_back(c);
+        }
+    }
+
+    auto accumulate =
+        [this](const std::list<std::pair<float, std::list<Node>>>& vs)
+        {
+            Node out = constant(0);
+            for (const auto& v : vs)
+            {
+                Node cur = constant(0);
+                for (const auto& n : v.second)
+                {
+                    cur = operation(Opcode::ADD, cur, n);
+                }
+                out = operation(Opcode::ADD, out,
+                        operation(Opcode::MUL, cur, constant(v.first)));
+            }
+            return out;
+        };
+
+    return operation(Opcode::SUB, accumulate(pos), accumulate(neg));
+}
+
+
 Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b)
 {
     if (Opcode::args(op) != 2)
