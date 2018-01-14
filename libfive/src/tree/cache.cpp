@@ -266,7 +266,7 @@ Cache::Node Cache::fromAffine(const std::map<Node, float>& ns)
     {
         if (c.first < 0)
         {
-            neg.push_back(c);
+            neg.push_back({-c.first, c.second});
         }
         else if (c.first > 0)
         {
