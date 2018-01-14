@@ -262,6 +262,15 @@ SCM scm_shape_bounds(SCM t)
                     scm_vec3(b.X.upper, b.Y.upper, b.Z.upper));
 }
 
+SCM scm_shape_to_string(SCM t)
+{
+    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_shape_to_string", "tree");
+    auto c = libfive_tree_print(scm_to_tree(t));
+    auto out = scm_from_locale_string(c);
+    free(c);
+    return out;
+}
+
 void init_libfive_kernel(void*)
 {
     scm_c_eval_string(R"(
@@ -299,6 +308,7 @@ void init_libfive_kernel(void*)
     scm_c_define_gsubr("tree-eval-d", 4, 0, 0, (void*)scm_tree_eval_d);
     scm_c_define_gsubr("tree->mesh", 4, 0, 0, (void*)scm_tree_to_mesh);
     scm_c_define_gsubr("shape-bounds", 1, 0, 0, (void*)scm_shape_bounds);
+    scm_c_define_gsubr("shape->string", 1, 0, 0, (void*)scm_shape_to_string);
 
     // Overload all of arithmetic operations with tree-based methods,
     // then add a handful of other useful functions to the module.
@@ -407,8 +417,8 @@ void init_libfive_kernel(void*)
 
 ;; These are "safe" bindings that can be used in the sandbox
 (define libfive-bindings '(square constant lambda-shape define-shape remap-shape
-                      shape-bounds tree-eval tree-derivs sequence values-from
-                      values->list
+                      shape-bounds shape->string tree-eval tree-derivs sequence
+                      values-from values->list
                       libfive-bindings))
 (eval (cons 'export libfive-bindings) (interaction-environment))
  )");
