@@ -134,8 +134,8 @@ Window::Window(QString target)
     show_bbox_action->setCheckable(true);
     connect(show_bbox_action, &QAction::triggered, view, &View::showBBox);
 
-    auto perspective_action = new QAction("Perspective");
-    auto ortho_action = new QAction("Orthographic");
+    auto perspective_action = new QAction("Perspective", nullptr);
+    auto ortho_action = new QAction("Orthographic", nullptr);
     view_menu->addSection("Projection");
     view_menu->addAction(perspective_action);
     view_menu->addAction(ortho_action);
@@ -151,10 +151,10 @@ Window::Window(QString target)
             view, &View::toOrthographic);
 
     view_menu->addSeparator();
-    auto edit_bounds_action = new QAction("Edit bounds");
+    auto edit_bounds_action = new QAction("Edit bounds", nullptr);
     view_menu->addAction(edit_bounds_action);
     connect(edit_bounds_action, &QAction::triggered, view, &View::openSettings);
-    auto zoom_to_action = new QAction("Zoom to bounds");
+    auto zoom_to_action = new QAction("Zoom to bounds", nullptr);
     view_menu->addAction(zoom_to_action);
     connect(zoom_to_action, &QAction::triggered, view, &View::zoomTo);
 
