@@ -223,6 +223,28 @@ TEST_CASE("Cache::asAffine")
         REQUIRE(m.at(t->X()) == Approx(2.0f/3.0f));
         REQUIRE(m.at(t->Y()) == Approx(1.0f/3.0f));
     }
+
+    SECTION("X + 3")
+    {
+        auto a = t->operation(Opcode::ADD, t->constant(3), t->X());
+        auto m = t->asAffine(a);
+        REQUIRE(m.size() == 2);
+        REQUIRE(m.at(t->X()) == 1.0f);
+        REQUIRE(m.at(t->constant(1.0f)) == 3.0f);
+    }
+
+    SECTION("4 + 3 * (X + 2)")
+    {
+        auto a = t->operation(Opcode::ADD, t->constant(4),
+                t->operation(Opcode::MUL, t->constant(3),
+                t->operation(Opcode::ADD, t->X(), t->constant(2), false),
+                false), false);
+
+        auto m = t->asAffine(a);
+        REQUIRE(m.size() == 2);
+        REQUIRE(m.at(t->X()) == 3.0f);
+        REQUIRE(m.at(t->constant(1.0f)) == 10.0f);
+    }
 }
 
 TEST_CASE("Cache::fromAffine")

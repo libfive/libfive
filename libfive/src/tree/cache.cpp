@@ -150,7 +150,7 @@ void Cache::del(Opcode::Opcode op, Node lhs, Node rhs)
     ops.erase(o);
 }
 
-std::map<Cache::Node, float> Cache::asAffine(Node n) const
+std::map<Cache::Node, float> Cache::asAffine(Node n)
 {
     std::map<Node, float> out;
 
@@ -234,6 +234,10 @@ std::map<Cache::Node, float> Cache::asAffine(Node n) const
         {
             out.insert({n, 1});
         }
+    }
+    else if (n->op == Opcode::CONST)
+    {
+        out.insert({constant(1), n->value});
     }
     else
     {
