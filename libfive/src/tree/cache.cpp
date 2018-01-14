@@ -352,6 +352,10 @@ Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b
                     return a;
                 }
             }
+            else if (a == b)
+            {
+                return operation(Opcode::SQUARE, a);
+            }
             break;
         case Opcode::POW:   // FALLTHROUGH
         case Opcode::NTH_ROOT:
