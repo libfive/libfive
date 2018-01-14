@@ -318,6 +318,10 @@ Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b
             {
                 return a;
             }
+            else if (op_b == Opcode::NEG)
+            {
+                return operation(Opcode::SUB, a, b->lhs);
+            }
             break;
         case Opcode::SUB:
             if (op_a == Opcode::CONST && a->value == 0)
