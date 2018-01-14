@@ -258,6 +258,13 @@ TEST_CASE("Cache::fromAffine")
         REQUIRE(a_->value == 0.0f);
     }
 
+    SECTION("{1: 5}")
+    {
+        auto a_ = t->fromAffine({{t->constant(1.0f), 5.0f}});
+        REQUIRE(a_->op == Opcode::CONST);
+        REQUIRE(a_->value == 5.0f);
+    }
+
     SECTION("(X * 2 + Y) / 3")
     {
         auto a = t->operation(Opcode::DIV,
