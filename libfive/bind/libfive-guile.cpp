@@ -256,7 +256,7 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
 
 SCM scm_shape_bounds(SCM t)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_to_mesh", "tree");
+    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_shape_bounds", "tree");
     auto b = libfive_tree_bounds(scm_to_tree(t));
     return scm_cons(scm_vec3(b.X.lower, b.Y.lower, b.Z.lower),
                     scm_vec3(b.X.upper, b.Y.upper, b.Z.upper));
