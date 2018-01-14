@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
-(use-modules (libfive kernel))
+(use-modules (libfive kernel) (libfive vec))
 
 (define-public (union . args)
   "union a [b [c [...]]]
@@ -77,3 +77,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     (max (- z zmax) (- zmin z)
       (/ (+ (* (- z zmin) b) (* (- zmax z) a))
          (- zmax zmin)))))
+
+(define-public (loft-between a b lower upper)
+  "loft a b #[xa ya zmin] #[xb yb zmax]
+  Produces a blended loft between a (at zmin) and b (at zmax), with XY
+  coordinates remapped to slide between the two centers #[xa ya] and #[xb yb].
+  a and b should be 2D shapes (i.e. invariant along the z axis)"
+  (define (f z) (/ (- z (.z lower)) (- (.z upper) (.z lower))))
+  (define (g z) (/ (- (.z upper) z) (- (.z upper) (.z lower))))
+  (let ((a (remap-shape (a x y z)
+          (+ x (* (f z) (- (.x lower) (.x upper))))
+          (+ y (* (f z) (- (.y lower) (.y upper))))
+          z))
+        (b (remap-shape (b x y z)
+          (+ x (* (g z) (- (.x upper) (.x lower))))
+          (+ y (* (g z) (- (.y upper) (.y lower))))
+          z)))
+    (loft a b (.z lower) (.z upper))))
