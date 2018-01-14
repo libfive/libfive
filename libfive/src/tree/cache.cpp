@@ -64,7 +64,7 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
 #define CHECK_RETURN(func) { auto t = func(op, lhs, rhs); if (t.get() != nullptr) { return t; }}
         CHECK_RETURN(checkIdentity);
         CHECK_RETURN(checkCommutative);
-        CHECK_RETURN(checkAffine);
+        //CHECK_RETURN(checkAffine);
     }
 
     Key k(op, lhs.get(), rhs.get());
