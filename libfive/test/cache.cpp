@@ -58,7 +58,7 @@ TEST_CASE("Deduplication of operations")
     REQUIRE(oa != oc);
 }
 
-TEST_CASE("Collapsing of identites")
+TEST_CASE("Cache::checkIdentity")
 {
     auto t = Cache::instance();
 
