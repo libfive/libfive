@@ -191,6 +191,17 @@ libfive_region3 libfive_tree_bounds(libfive_tree a)
             {float(bs.lower.z()), float(bs.upper.z())}};
 }
 
+char* libfive_tree_print(libfive_tree t)
+{
+    std::stringstream ss;
+    (*t)->print(ss);
+    const auto str = ss.str();
+
+    auto out = static_cast<char*>(malloc(str.size() + 1 * sizeof(char)));
+    memcpy(out, str.c_str(), str.size() + 1);
+    return out;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 libfive_contours* libfive_tree_render_slice(libfive_tree tree,

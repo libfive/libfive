@@ -131,6 +131,14 @@ libfive_tree libfive_tree_remap(libfive_tree p,
 
 libfive_region3 libfive_tree_bounds(libfive_tree p);
 
+/*
+ *  Returns a C string representing the tree in Scheme style
+ *  (e.g. "(+ 1 2 x y)" )
+ *
+ *  The caller is responsible for freeing the string with free()
+ */
+char* libfive_tree_print(libfive_tree t);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 struct libfive_args;

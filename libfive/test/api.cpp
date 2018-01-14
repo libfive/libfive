@@ -190,3 +190,20 @@ TEST_CASE("libfive_tree_render_pixels")
 
     REQUIRE(true); // No crash!
 }
+
+TEST_CASE("libfive_tree_print")
+{
+    auto x = libfive_tree_x();
+    auto y = libfive_tree_y();
+    auto z = libfive_tree_z();
+    auto x2 = libfive_tree_unary(Opcode::SQUARE, x);
+    auto y2 = libfive_tree_unary(Opcode::SQUARE, y);
+    auto z2 = libfive_tree_unary(Opcode::SQUARE, z);
+    auto r_ = libfive_tree_binary(Opcode::ADD, x2, y2);
+    auto r = libfive_tree_binary(Opcode::ADD, r_, z2);
+    auto one = libfive_tree_const(1.0f);
+    auto d = libfive_tree_binary(Opcode::SUB, r, one);
+
+    std::string s = libfive_tree_print(d);
+    REQUIRE(s == "(- (+ (square x) (square y) (square z)) 1)");
+}
