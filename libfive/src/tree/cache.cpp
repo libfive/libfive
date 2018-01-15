@@ -201,6 +201,13 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
             }
         }
     }
+    else if (n->op == Opcode::NEG)
+    {
+        for (const auto& i : asAffine(n->lhs))
+        {
+            out.insert({i.first, -i.second});
+        }
+    }
     else if (n->op == Opcode::MUL)
     {
         if (n->lhs->op == Opcode::CONST)
