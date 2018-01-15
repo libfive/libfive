@@ -44,6 +44,7 @@ that builds `libfive` on Windows with MSVC.
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
 - [Qt 5.7 or later](https://www.qt.io)
 - [Guile 2.2 or later](https://www.gnu.org/software/guile/)
+- [`boost`](http://www.boost.com)
 
 On a Mac with `homebrew` installed, run
 ```
