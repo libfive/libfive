@@ -157,27 +157,8 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
 
     if (n->op == Opcode::ADD)
     {
-        for (const auto& m : {asAffine(n->lhs), asAffine(n->rhs)})
-        {
-            for (const auto& i : m)
-            {
-                if (out.find(i.first) == out.end())
-                {
-                    out.insert(i);
-                }
-                else
-                {
-                    out[i.first] += i.second;
-                }
-            }
-        }
-    }
-    else if (n->op == Opcode::SUB)
-    {
-        auto a = asAffine(n->lhs);
-        auto b = asAffine(n->rhs);
-
-        for (const auto& i : a)
+        out = asAffine(n->lhs);
+        for (const auto& i : asAffine(n->rhs))
         {
             if (out.find(i.first) == out.end())
             {
@@ -188,8 +169,11 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
                 out[i.first] += i.second;
             }
         }
-
-        for (const auto& i : b)
+    }
+    else if (n->op == Opcode::SUB)
+    {
+        out = asAffine(n->lhs);
+        for (const auto& i : asAffine(n->rhs))
         {
             if (out.find(i.first) == out.end())
             {
