@@ -44,15 +44,16 @@ that builds `libfive` on Windows with MSVC.
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
 - [Qt 5.7 or later](https://www.qt.io)
 - [Guile 2.2 or later](https://www.gnu.org/software/guile/)
+- [Boost](https://www.boost.org)
 
 On a Mac with `homebrew` installed, run
 ```
-brew install cmake pkg-config eigen libpng qt guile
+brew install cmake pkg-config eigen libpng qt guile boost
 ```
 
 On a Ubuntu machine, run
 ```
-sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev qtbase5-dev guile-2.2-dev
+sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev qtbase5-dev guile-2.2-dev libboost-all-dev
 ```
 (untested; open an issue or PR if this doesn't work for you)
 
