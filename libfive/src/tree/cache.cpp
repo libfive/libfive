@@ -446,7 +446,7 @@ Cache::Node Cache::checkAffine(Opcode::Opcode op, Node a_, Node b_)
         }
         else
         {
-            a.insert(k);
+            a.insert({k.first, op == Opcode::ADD ? k.second : -k.second});
         }
     }
 

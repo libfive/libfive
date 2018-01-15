@@ -345,4 +345,19 @@ TEST_CASE("Cache::checkAffine")
         REQUIRE(a->lhs->rhs->value == 2.0f);
         REQUIRE(a->rhs->op == Opcode::VAR_Y);
     }
+
+    SECTION("0.4 * (X - 0.1) - 0.4 * (Y - 0.6)")
+    {
+        auto a = t->operation(Opcode::SUB,
+                t->operation(Opcode::MUL, t->constant(0.4),
+                    t->operation(Opcode::SUB, t->X(), t->constant(0.1))),
+                t->operation(Opcode::MUL, t->constant(0.4),
+                    t->operation(Opcode::SUB, t->Y(), t->constant(0.6))));
+
+        auto m = t->asAffine(a);
+        REQUIRE(m.size() == 3);
+        REQUIRE(m.at(t->X()) == Approx(0.4f));
+        REQUIRE(m.at(t->Y()) == Approx(-0.4f));
+        REQUIRE(m.at(t->constant(1)) == Approx(0.2f));
+    }
 }
