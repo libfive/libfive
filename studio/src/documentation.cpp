@@ -140,7 +140,7 @@ DocumentationPane::DocumentationPane()
     auto completer = new QCompleter(fs.keys());
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     search->setCompleter(completer);
-    connect(completer, QOverload<const QString&>::of(&QCompleter::highlighted),
+    connect(completer, static_cast<void (QCompleter::*)(const QString&)>(&QCompleter::highlighted),
             txt, [=](const QString& str){
                 if (tags.count(str))
                 {
