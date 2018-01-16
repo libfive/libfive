@@ -44,3 +44,9 @@
 ;; To learn more, dig into the source code;
 ;; documentation is sparse at the moment, but
 ;; libfive-guile.cpp should be informative.
+
+;; Additional examples can be found in the source
+;; repository--locally or online:
+;;
+;;   <https://github.com/libfive/libfive/tree/master/studio/examples>
+;;
