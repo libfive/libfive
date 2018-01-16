@@ -261,7 +261,7 @@ Interpreter::Interpreter()
     busy_timer.setSingleShot(true);
     busy_timer.setInterval(100);
     connect(&eval_timer, &QTimer::timeout, &busy_timer,
-            QOverload<>::of(&QTimer::start));
+            static_cast<void (QTimer::*)()>(&QTimer::start));
     connect(&busy_timer, &QTimer::timeout, this, &Interpreter::busy);
     connect(&interpreter, &_Interpreter::gotResult,
             &busy_timer, [&](QString){ busy_timer.stop(); });

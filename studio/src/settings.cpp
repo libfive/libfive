@@ -157,7 +157,7 @@ SettingsPane::SettingsPane(Settings s)
 
     for (auto t : {xmin, xmax, ymin, ymax, zmin, zmax, res, quality})
     {
-        connect(t, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+        connect(t, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
                 this, [=](double){ emit(this->changed(settings())); });
         connect(this, &SettingsPane::enable,
                 t, [=](){ t->setReadOnly(false); });

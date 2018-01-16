@@ -98,9 +98,9 @@ void View::setShapes(QList<Shape*> new_shapes)
             connect(s, &Shape::redraw, this, &View::update);
             connect(s, &Shape::gotMesh, this, &View::checkMeshes);
             connect(s, &Shape::gotMesh, &pick_timer,
-                    QOverload<>::of(&QTimer::start));
+                    static_cast<void (QTimer::*)()>(&QTimer::start));
             connect(this, &View::startRender,
-                    s, QOverload<Settings>::of(&Shape::startRender));
+                    s, static_cast<void (Shape::*)(Settings)>(&Shape::startRender));
             s->startRender(settings);
             s->setParent(this);
 
