@@ -27,3 +27,6 @@ If this is a behavior issue, does the test suite (`libfive/test/libfive-test`) p
 
 If this is a graphics issue on Linux, report the results of updating your graphics drivers.
 (and switching to binary graphics drivers if applicable).
+
+If there are error messages in the console,
+have you searched for them and followed up on any promising leads?
