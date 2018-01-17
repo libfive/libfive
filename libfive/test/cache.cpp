@@ -276,7 +276,8 @@ TEST_CASE("Cache::fromAffine")
 
     SECTION("Empty")
     {
-        auto a_ = t->fromAffine({});
+        std::map<std::shared_ptr<Tree::Tree_>, float> empty;
+        auto a_ = t->fromAffine(empty);
         REQUIRE(a_->op == Opcode::CONST);
         REQUIRE(a_->value == 0.0f);
     }
