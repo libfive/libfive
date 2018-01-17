@@ -22,6 +22,11 @@ if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
 endif()
 
+# Work around an issue with Boost::Interval on OpenBSD
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__USE_ISOC99")
+endif()
+
 ################################################################################
 # Find all packages here at the top level so we can print debugging info
 find_package(Qt5Core)
