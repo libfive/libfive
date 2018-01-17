@@ -25,8 +25,6 @@ Any additional information, configuration or data that might be necessary to rep
 
 If this is a behavior issue, does the test suite (`libfive/test/libfive-test`) pass?
 
-If this is a graphics issue on Linux, report the results of updating your graphics drivers.
-(and switching to binary graphics drivers if applicable).
+If this is a graphics issue on Linux, report the results of updating your graphics drivers (and switching to binary graphics drivers if applicable).
 
-If there are error messages in the console,
-have you searched for them and followed up on any promising leads?
+If there are error messages in the console, have you searched for them and followed up on any promising leads?
