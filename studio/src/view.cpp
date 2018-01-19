@@ -17,6 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <QMouseEvent>
+#include <QMessageBox>
 #include <QPainter>
 
 #include "studio/color.hpp"
@@ -212,6 +213,14 @@ void View::initializeGL()
 
 void View::redrawPicker()
 {
+    // Only begin redrawing the pick buffer once we've been drawn once
+    // and confirmed that the OpenGL context is new enough to work.
+    if (!gl_checked)
+    {
+        pick_timer.start();
+        return;
+    }
+
     // Rebuild buffer if it is not present or is the wrong size
     if (!pick_fbo.data() ||  pick_fbo->size() != camera.size)
     {
@@ -262,6 +271,30 @@ void View::redrawPicker()
 
 void View::paintGL()
 {
+    if (!gl_checked)
+    {
+        auto def = QSurfaceFormat::defaultFormat();
+        auto fmt = context()->format();
+        if (fmt.majorVersion() < def.majorVersion() ||
+                (fmt.majorVersion() == def.majorVersion() &&
+                 fmt.minorVersion() < def.minorVersion()))
+        {
+            auto err = QString(
+                    "Error:<br><br>"
+                    "OpenGL context is too old<br>"
+                    "(got %1.%2, need %3.%4)<br><br>"
+                    "The application will now exit.<br>")
+                    .arg(fmt.majorVersion())
+                    .arg(fmt.minorVersion())
+                    .arg(def.majorVersion())
+                    .arg(def.minorVersion());
+
+            QMessageBox::critical(this, "Studio", err);
+            exit(1);
+        }
+        gl_checked = true;
+    }
+
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 

@@ -193,4 +193,7 @@ protected:
 
     QVector3D cursor_pos;
     bool cursor_pos_valid=false;
+
+    /*  Set to true on the first draw, if the OpenGL version is new enough */
+    bool gl_checked=false;
 };
