@@ -85,8 +85,8 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
     //     |         |
     //     0---------1
     auto saveNorm = [&](int a, int b, int c){
-        norms[a] = (verts[b] - verts[a]).cross
-                   (verts[c] - verts[a]).normalized();
+        norms[a] = (verts[vs[b]] - verts[vs[a]]).cross
+                   (verts[vs[c]] - verts[vs[a]]).normalized();
     };
     saveNorm(0, 1, 2);
     saveNorm(1, 3, 0);
