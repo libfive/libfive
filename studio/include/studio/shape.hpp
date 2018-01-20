@@ -110,7 +110,7 @@ public:
     /*
      *  Looks up the shape's bounds
      */
-    const Kernel::Region<3>& getBounds() const { return bounds; }
+    const Kernel::Region<3>& getRenderBounds() const { return render_bounds; }
 
     /*
      *  Sets grabbed and redraws as necessary
@@ -159,7 +159,8 @@ protected:
                 Eigen::aligned_allocator<Kernel::XTreeEvaluator>> es;
 
     QScopedPointer<Kernel::Mesh> mesh;
-    Kernel::Region<3> bounds;
+    Kernel::Region<3> render_bounds;
+    Kernel::Region<3> mesh_bounds;
     QPair<Settings, int> next;
 
     /*  running marks not just whether the future has finished, but whether

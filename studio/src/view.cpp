@@ -330,7 +330,7 @@ void View::paintGL()
         };
         for (auto& s : shapes)
         {
-            auto b = s->getBounds();
+            auto b = s->getRenderBounds();
             draw_bbox(QVector3D(b.lower.x(), b.lower.y(), b.lower.z()),
                       QVector3D(b.upper.x(), b.upper.y(), b.upper.z()));
         }

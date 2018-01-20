@@ -103,13 +103,32 @@ void Shape::draw(const QMatrix4x4& M)
     {
         initializeOpenGLFunctions();
 
+        mesh_bounds = Kernel::Region<3>({0,0,0}, {0,0,0});
         GLfloat* verts = new GLfloat[mesh->verts.size() * 6];
         unsigned i = 0;
+
+        // Unpack vertices into a flat array that will loaded into OpenGL
         for (auto& v : mesh->verts)
         {
+            const auto v_ = v.template cast<double>().array().eval();
+            // Track mesh's bounding box
+            if (i == 0)
+            {
+                mesh_bounds.lower = v_;
+                mesh_bounds.upper = v_;
+            }
+            else
+            {
+                mesh_bounds.lower = mesh_bounds.lower.array().cwiseMin(v_);
+                mesh_bounds.upper = mesh_bounds.upper.array().cwiseMax(v_);
+            }
+
+            // Position
             verts[i++] = v.x();
             verts[i++] = v.y();
             verts[i++] = v.z();
+
+            // Color
             verts[i++] = 1;
             verts[i++] = 1;
             verts[i++] = 1;
@@ -284,7 +303,7 @@ void Shape::onFutureFinished()
     if (bm.first != nullptr)
     {
         mesh.reset(bm.first);
-        bounds = bm.second;
+        render_bounds = bm.second;
 
         gl_ready = false;
         emit(gotMesh());
