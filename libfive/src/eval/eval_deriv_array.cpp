@@ -31,7 +31,7 @@ DerivArrayEvaluator::DerivArrayEvaluator(
     : ArrayEvaluator(t, vars), d(tape->num_clauses + 1, 1)
 {
     // Initialize all derivatives to zero
-    for (unsigned i=0; i < d.rows(); ++i)
+    for (Eigen::Index i=0; i < d.rows(); ++i)
     {
         d(i) = 0;
     }
@@ -82,11 +82,11 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = bd.rowwise()*av + ad.rowwise()*bv;
             break;
         case Opcode::MIN:
-            for (unsigned i=0; i < od.rows(); ++i)
+            for (Eigen::Index i=0; i < od.rows(); ++i)
                 od.row(i) = (av < bv).select(ad.row(i), bd.row(i));
             break;
         case Opcode::MAX:
-            for (unsigned i=0; i < od.rows(); ++i)
+            for (Eigen::Index i=0; i < od.rows(); ++i)
                 od.row(i) = (av < bv).select(bd.row(i), ad.row(i));
             break;
         case Opcode::SUB:
@@ -109,7 +109,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::NTH_ROOT:
-            for (unsigned i=0; i < od.cols(); ++i)
+            for (Eigen::Index i=0; i < od.cols(); ++i)
                 od.col(i) = (ad.col(i) == 0)
                     .select(0, ad.col(i) * (pow(av(i), 1.0f / bv(i) - 1) / bv(i)));
             break;
@@ -117,7 +117,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = ad;
             break;
         case Opcode::NANFILL:
-            for (unsigned i=0; i < od.rows(); ++i)
+            for (Eigen::Index i=0; i < od.rows(); ++i)
                 od.row(i) = av.isNaN().select(bd.row(i), ad.row(i));
             break;
 
@@ -125,7 +125,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = ad.rowwise() * av * 2;
             break;
         case Opcode::SQRT:
-            for (unsigned i=0; i < od.rows(); ++i)
+            for (Eigen::Index i=0; i < od.rows(); ++i)
                 od.row(i) = (av < 0).select(
                     Eigen::Array<float, 1, Eigen::Dynamic>::Zero(1, count),
                     ad.row(i) / (2 * ov));
@@ -158,7 +158,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = ad.rowwise() * exp(av);
             break;
         case Opcode::ABS:
-            for (unsigned i=0; i < od.rows(); ++i)
+            for (Eigen::Index i=0; i < od.rows(); ++i)
                 od.row(i) = (av > 0).select(ad.row(i), -ad.row(i));
             break;
         case Opcode::RECIP:
