@@ -7,4 +7,8 @@ if (GUILE_FOUND)
     add_library(five-guile SHARED ${CMAKE_CURRENT_BINARY_DIR}/bundle.cpp)
     target_link_libraries(five-guile five ${GUILE_LIBRARIES})
     target_include_directories(five-guile PUBLIC . ${GUILE_INCLUDE_DIRS})
+
+    if(UNIX AND NOT(APPLE))
+        install(TARGETS five-guile DESTINATION lib)
+    endif(UNIX AND NOT(APPLE))
 endif(GUILE_FOUND)
