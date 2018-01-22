@@ -24,33 +24,47 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void del_tree(void* t)
+struct scm_shape {
+    libfive_tree tree;
+    SCM meta;
+};
+
+void del_shape(void* s)
 {
-    libfive_tree_delete((libfive_tree)t);
+    libfive_tree_delete(((scm_shape*)s)->tree);
+    scm_gc_unprotect_object(((scm_shape*)s)->meta);
+    delete (scm_shape*)s;
 }
 
 // Raw Scheme functions
-SCM scm_wrap_tree_ = NULL;
-SCM scm_unwrap_tree_= NULL;
-SCM scm_tree_p_= NULL;
+SCM scm_wrap_shape_ = NULL;
+SCM scm_unwrap_shape_= NULL;
+SCM scm_shape_p_= NULL;
 
 SCM scm_vec3_ = NULL;
 
 // Scheme-flavored bindings
-SCM scm_wrap_tree(SCM ptr)      { return scm_call_1(scm_wrap_tree_, ptr); }
-SCM scm_unwrap_tree(SCM ptr)    { return scm_call_1(scm_unwrap_tree_, ptr); }
-SCM scm_tree_p(SCM ptr)         { return scm_call_1(scm_tree_p_, ptr); }
+SCM scm_wrap_shape(SCM ptr)      { return scm_call_1(scm_wrap_shape_, ptr); }
+SCM scm_unwrap_shape(SCM ptr)    { return scm_call_1(scm_unwrap_shape_, ptr); }
+SCM scm_shape_p(SCM ptr)         { return scm_call_1(scm_shape_p_, ptr); }
 
 // C-flavored bindings
-bool scm_is_tree(SCM t) { return scm_is_true(scm_tree_p(t)); }
-libfive_tree scm_to_tree(SCM t)
+bool scm_is_shape(SCM t) { return scm_is_true(scm_shape_p(t)); }
+libfive_tree scm_get_tree(SCM t)
 {
-    return (libfive_tree)scm_to_pointer(scm_unwrap_tree(t));
+    return ((scm_shape*)scm_to_pointer(scm_unwrap_shape(t)))->tree;
 }
 
 SCM scm_from_tree(libfive_tree t)
 {
-    return scm_wrap_tree(scm_from_pointer(t, del_tree));
+    static SCM hash_new =  scm_c_eval_string("make-hash-table");
+
+    auto s = new scm_shape;
+    s->tree = t;
+    s->meta = scm_call_0(hash_new);
+    scm_gc_protect_object(s->meta);
+
+    return scm_wrap_shape(scm_from_pointer(s, del_shape));
 }
 
 SCM scm_vec3(float x, float y, float z)
@@ -63,18 +77,18 @@ SCM scm_vec3(float x, float y, float z)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-SCM scm_number_to_tree(SCM n)
+SCM scm_number_to_shape(SCM n)
 {
-    SCM_ASSERT_TYPE(scm_is_number(n), n, 0, "scm_number_to_tree", "number");
+    SCM_ASSERT_TYPE(scm_is_number(n), n, 0, "scm_number_to_shape", "number");
     return scm_from_tree(libfive_tree_const(scm_to_double(n)));
 }
 
-SCM scm_tree_equal_p(SCM a, SCM b)
+SCM scm_shape_equal_p(SCM a, SCM b)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(a), a, 0, "scm_tree_equal_p", "tree");
-    SCM_ASSERT_TYPE(scm_is_tree(b), b, 1, "scm_tree_equal_p", "tree");
+    SCM_ASSERT_TYPE(scm_is_shape(a), a, 0, "scm_shape_equal_p", "shape");
+    SCM_ASSERT_TYPE(scm_is_shape(b), b, 1, "scm_shape_equal_p", "shape");
 
-    return libfive_tree_eq(scm_to_tree(a), scm_to_tree(b))
+    return libfive_tree_eq(scm_get_tree(a), scm_get_tree(b))
         ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
@@ -85,93 +99,94 @@ SCM scm_var()
 
 SCM scm_var_p(SCM a)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(a), a, 0, "scm_var_p", "tree");
-    return libfive_tree_is_var(scm_to_tree(a)) ? SCM_BOOL_T : SCM_BOOL_F;
+    SCM_ASSERT_TYPE(scm_is_shape(a), a, 0, "scm_var_p", "shape");
+    return libfive_tree_is_var(scm_get_tree(a)) ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
-SCM scm_tree_id(SCM a)
+SCM scm_shape_tree_id(SCM a)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(a), a, 0, "scm_tree_id", "tree");
-    return scm_from_uintptr_t((uintptr_t)libfive_tree_id(scm_to_tree(a)));
+    SCM_ASSERT_TYPE(scm_is_shape(a), a, 0, "scm_shape_tree_id", "shape");
+    return scm_from_uintptr_t((uintptr_t)libfive_tree_id(scm_get_tree(a)));
 }
 
-SCM scm_tree(SCM op, SCM a, SCM b)
+SCM scm_shape(SCM op, SCM a, SCM b)
 {
-    SCM_ASSERT_TYPE(scm_is_symbol(op), op, 0, "scm_tree", "symbol");
+    SCM_ASSERT_TYPE(scm_is_symbol(op), op, 0, "scm_shape", "symbol");
+    static const auto scm_shape_str = scm_from_locale_string("scm_shape");
 
     auto str = scm_to_locale_string(scm_symbol_to_string(op));
     auto opcode = libfive_opcode_enum(str);
     free(str);
 
-    SCM_ASSERT_TYPE(opcode != -1, op, 0, "scm_tree", "opcode");
+    SCM_ASSERT_TYPE(opcode != -1, op, 0, "scm_shape", "opcode");
     auto args = libfive_opcode_args(opcode);
 
     if (args == 0)
     {
         if (a != SCM_UNDEFINED || b != SCM_UNDEFINED)
         {
-            scm_wrong_num_args(scm_from_locale_string("scm_tree"));
+            scm_wrong_num_args(scm_shape_str);
             return SCM_UNDEFINED;
         }
     }
     else if (args == 1)
     {
-        SCM_ASSERT_TYPE(scm_is_number(a) || scm_is_tree(a),
-                        a, 1, "scm_tree", "number or tree");
+        SCM_ASSERT_TYPE(scm_is_number(a) || scm_is_shape(a),
+                        a, 1, "scm_shape", "number or shape");
         if (b != SCM_UNDEFINED)
         {
-            scm_wrong_num_args(scm_from_locale_string("scm_tree"));
+            scm_wrong_num_args(scm_shape_str);
             return SCM_UNDEFINED;
         }
-        if (scm_is_number(a)) { a = scm_number_to_tree(a); }
+        if (scm_is_number(a)) { a = scm_number_to_shape(a); }
     }
     else if (args == 2)
     {
         if (a == SCM_UNDEFINED || b == SCM_UNDEFINED)
         {
-            scm_wrong_num_args(scm_from_locale_string("scm_tree"));
+            scm_wrong_num_args(scm_shape_str);
             return SCM_UNDEFINED;
         }
-        SCM_ASSERT_TYPE(scm_is_number(a) || scm_is_tree(a),
-                        a, 1, "scm_tree", "number or tree");
-        SCM_ASSERT_TYPE(scm_is_number(b) || scm_is_tree(b),
-                        b, 2, "scm_tree", "number or tree");
-        if (scm_is_number(a)) { a = scm_number_to_tree(a); }
-        if (scm_is_number(b)) { b = scm_number_to_tree(b); }
+        SCM_ASSERT_TYPE(scm_is_number(a) || scm_is_shape(a),
+                        a, 1, "scm_shape", "number or shape");
+        SCM_ASSERT_TYPE(scm_is_number(b) || scm_is_shape(b),
+                        b, 2, "scm_shape", "number or shape");
+        if (scm_is_number(a)) { a = scm_number_to_shape(a); }
+        if (scm_is_number(b)) { b = scm_number_to_shape(b); }
     }
 
     libfive_tree out = nullptr;
     switch (args)
     {
-        case 0: out = libfive_tree_nonary(opcode);                   break;
-        case 1: out = libfive_tree_unary(opcode, scm_to_tree(a));    break;
-        case 2: out = libfive_tree_binary(opcode, scm_to_tree(a),
-                                          scm_to_tree(b));   break;
+        case 0: out = libfive_tree_nonary(opcode);                  break;
+        case 1: out = libfive_tree_unary(opcode, scm_get_tree(a));  break;
+        case 2: out = libfive_tree_binary(opcode, scm_get_tree(a),
+                                          scm_get_tree(b));   break;
         default: assert(false);
     }
 
     return scm_from_tree(out);
 }
 
-SCM scm_tree_eval_f(SCM t, SCM x, SCM y, SCM z)
+SCM scm_shape_eval_f(SCM t, SCM x, SCM y, SCM z)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_eval_f", "tree");
+    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_eval_f", "shape");
 
-    SCM_ASSERT_TYPE(scm_is_number(x) || scm_is_tree(t),
-                    x, 1, "scm_tree_eval_f", "number");
-    SCM_ASSERT_TYPE(scm_is_number(y) || scm_is_tree(t),
-                    y, 2, "scm_tree_eval_f", "number");
-    SCM_ASSERT_TYPE(scm_is_number(z) || scm_is_tree(t),
-                    z, 3, "scm_tree_eval_f", "number");
+    SCM_ASSERT_TYPE(scm_is_number(x) || scm_is_shape(t),
+                    x, 1, "scm_shape_eval_f", "number");
+    SCM_ASSERT_TYPE(scm_is_number(y) || scm_is_shape(t),
+                    y, 2, "scm_shape_eval_f", "number");
+    SCM_ASSERT_TYPE(scm_is_number(z) || scm_is_shape(t),
+                    z, 3, "scm_shape_eval_f", "number");
 
     auto x_ = scm_is_number(x) ? libfive_tree_const(scm_to_double(x))
-                               : scm_to_tree(x);
+                               : scm_get_tree(x);
     auto y_ = scm_is_number(y) ? libfive_tree_const(scm_to_double(y))
-                               : scm_to_tree(y);
+                               : scm_get_tree(y);
     auto z_ = scm_is_number(z) ? libfive_tree_const(scm_to_double(z))
-                               : scm_to_tree(z);
+                               : scm_get_tree(z);
 
-    auto out = libfive_tree_remap(scm_to_tree(t), x_, y_, z_);
+    auto out = libfive_tree_remap(scm_get_tree(t), x_, y_, z_);
 
     bool is_const = false;
     auto val = libfive_tree_get_const(out, &is_const);
@@ -179,35 +194,35 @@ SCM scm_tree_eval_f(SCM t, SCM x, SCM y, SCM z)
     return is_const ? scm_from_double(val) : scm_from_tree(out);
 }
 
-SCM scm_tree_eval_d(SCM t, SCM x, SCM y, SCM z)
+SCM scm_shape_eval_d(SCM t, SCM x, SCM y, SCM z)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_eval_d", "tree");
+    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_eval_d", "shape");
 
-    SCM_ASSERT_TYPE(scm_is_number(x), x, 1, "scm_tree_eval_d", "number");
-    SCM_ASSERT_TYPE(scm_is_number(y), y, 2, "scm_tree_eval_d", "number");
-    SCM_ASSERT_TYPE(scm_is_number(z), z, 3, "scm_tree_eval_d", "number");
+    SCM_ASSERT_TYPE(scm_is_number(x), x, 1, "scm_shape_eval_d", "number");
+    SCM_ASSERT_TYPE(scm_is_number(y), y, 2, "scm_shape_eval_d", "number");
+    SCM_ASSERT_TYPE(scm_is_number(z), z, 3, "scm_shape_eval_d", "number");
 
     float x_ = scm_to_double(x);
     float y_ = scm_to_double(y);
     float z_ = scm_to_double(z);
 
-    auto out = libfive_tree_eval_d(scm_to_tree(t), {x_, y_, z_});
+    auto out = libfive_tree_eval_d(scm_get_tree(t), {x_, y_, z_});
 
     return scm_vec3(out.x, out.y, out.z);
 }
 
-SCM scm_tree_eval_i(SCM t, SCM xmin, SCM xmax,
-                           SCM ymin, SCM ymax,
-                           SCM zmin, SCM zmax)
+SCM scm_shape_eval_i(SCM t, SCM xmin, SCM xmax,
+                            SCM ymin, SCM ymax,
+                            SCM zmin, SCM zmax)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_eval_f", "tree");
+    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_eval_f", "shape");
 
-    SCM_ASSERT_TYPE(scm_is_number(xmin), xmin, 1, "scm_tree_eval_r", "number");
-    SCM_ASSERT_TYPE(scm_is_number(xmax), xmax, 2, "scm_tree_eval_r", "number");
-    SCM_ASSERT_TYPE(scm_is_number(ymin), ymin, 3, "scm_tree_eval_r", "number");
-    SCM_ASSERT_TYPE(scm_is_number(ymax), ymax, 4, "scm_tree_eval_r", "number");
-    SCM_ASSERT_TYPE(scm_is_number(zmin), zmin, 5, "scm_tree_eval_r", "number");
-    SCM_ASSERT_TYPE(scm_is_number(zmax), zmax, 6, "scm_tree_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(xmin), xmin, 1, "scm_shape_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(xmax), xmax, 2, "scm_shape_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(ymin), ymin, 3, "scm_shape_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(ymax), ymax, 4, "scm_shape_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(zmin), zmin, 5, "scm_shape_eval_r", "number");
+    SCM_ASSERT_TYPE(scm_is_number(zmax), zmax, 6, "scm_shape_eval_r", "number");
 
     float xmin_ = scm_to_double(xmin);
     float ymin_ = scm_to_double(ymin);
@@ -218,19 +233,19 @@ SCM scm_tree_eval_i(SCM t, SCM xmin, SCM xmax,
     float zmax_ = scm_to_double(zmax);
 
     libfive_region3 r = {{xmin_, xmax_}, {ymin_, ymax_}, {zmin_, zmax_}};
-    auto i = libfive_tree_eval_r(scm_to_tree(t), r);
+    auto i = libfive_tree_eval_r(scm_get_tree(t), r);
 
     return scm_cons(scm_from_double(i.lower), scm_from_double(i.upper));
 }
 
-SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
+SCM scm_shape_to_mesh(SCM t, SCM f, SCM res, SCM region)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_tree_to_mesh", "tree");
-    SCM_ASSERT_TYPE(scm_is_string(f), f, 1, "scm_tree_to_mesh", "string");
-    SCM_ASSERT_TYPE(scm_is_number(res), res, 2, "scm_tree_to_mesh", "number");
+    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_to_mesh", "shape");
+    SCM_ASSERT_TYPE(scm_is_string(f), f, 1, "scm_shape_to_mesh", "string");
+    SCM_ASSERT_TYPE(scm_is_number(res), res, 2, "scm_shape_to_mesh", "number");
     SCM_ASSERT_TYPE(scm_is_true(scm_list_p(region)) &&
                     scm_to_int(scm_length(region)) == 3, region, 3,
-                    "scm_tree_to_mesh", "three-element list");
+                    "scm_shape_to_mesh", "three-element list");
 
     float rs[6];
     for (int i=0; i < 3; ++i)
@@ -239,14 +254,14 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
                 scm_is_number(scm_caar(region)) &&
                 scm_is_number(scm_cdar(region)),
                 scm_car(region), 3,
-                "scm_tree_to_mesh", "pair of numbers");
+                "scm_shape_to_mesh", "pair of numbers");
         rs[i*2 + 0] = scm_to_double(scm_caar(region));
         rs[i*2 + 1] = scm_to_double(scm_cdar(region));
         region = scm_cdr(region);
     }
 
     auto filename = scm_to_locale_string(f);
-    auto out = libfive_tree_save_mesh(scm_to_tree(t),
+    auto out = libfive_tree_save_mesh(scm_get_tree(t),
             {{rs[0], rs[1]}, {rs[2], rs[3]}, {rs[4], rs[5]}},
             scm_to_double(res), filename);
     free(filename);
@@ -256,19 +271,25 @@ SCM scm_tree_to_mesh(SCM t, SCM f, SCM res, SCM region)
 
 SCM scm_shape_bounds(SCM t)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_shape_bounds", "tree");
-    auto b = libfive_tree_bounds(scm_to_tree(t));
+    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_bounds", "shape");
+    auto b = libfive_tree_bounds(scm_get_tree(t));
     return scm_cons(scm_vec3(b.X.lower, b.Y.lower, b.Z.lower),
                     scm_vec3(b.X.upper, b.Y.upper, b.Z.upper));
 }
 
 SCM scm_shape_to_string(SCM t)
 {
-    SCM_ASSERT_TYPE(scm_is_tree(t), t, 0, "scm_shape_to_string", "tree");
-    auto c = libfive_tree_print(scm_to_tree(t));
+    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_to_string", "shape");
+    auto c = libfive_tree_print(scm_get_tree(t));
     auto out = scm_from_locale_string(c);
     free(c);
     return out;
+}
+
+SCM scm_shape_get_meta(SCM t)
+{
+    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_to_string", "shape");
+    return ((struct scm_shape*)scm_to_pointer(scm_unwrap_shape(t)))->meta;
 }
 
 void init_libfive_kernel(void*)
@@ -277,52 +298,53 @@ void init_libfive_kernel(void*)
 (use-modules (system foreign) (oop goops) (libfive vec))
 
 (define-wrapped-pointer-type
-    tree-ptr tree-ptr? wrap-tree-ptr unwrap-tree-ptr
+    shape-ptr shape-ptr? wrap-shape-ptr unwrap-shape-ptr
     (lambda (o p)
-        (format p "#<tree-ptr 0x~x>"
-        (pointer-address (unwrap-tree-ptr o)))))
+        (format p "#<shape-ptr 0x~x>"
+        (pointer-address (unwrap-shape-ptr o)))))
 
-(define-class <tree> (<number>) (ptr #:init-value #f #:init-keyword #:ptr))
-(define (tree? t) (is-a? t <tree>))
-(define (wrap-tree t) (make <tree> #:ptr (wrap-tree-ptr t)))
-(define (unwrap-tree t) (unwrap-tree-ptr (slot-ref t 'ptr)))
+(define-class <shape> (<number>) (ptr #:init-value #f #:init-keyword #:ptr))
+(define (shape? t) (is-a? t <shape>))
+(define (wrap-shape t) (make <shape> #:ptr (wrap-shape-ptr t)))
+(define (unwrap-shape t) (unwrap-shape-ptr (slot-ref t 'ptr)))
 )");
 
-    // Extract tree wrapping and unwrapping from local environment
-    scm_tree_p_ = scm_c_eval_string("tree?");
-    scm_wrap_tree_ = scm_c_eval_string("wrap-tree");
-    scm_unwrap_tree_ = scm_c_eval_string("unwrap-tree");
+    // Extract shape wrapping and unwrapping from local environment
+    scm_shape_p_ = scm_c_eval_string("shape?");
+    scm_wrap_shape_ = scm_c_eval_string("wrap-shape");
+    scm_unwrap_shape_ = scm_c_eval_string("unwrap-shape");
 
     // Extract vec3 constructor from local environment
     scm_vec3_ = scm_c_eval_string("vec3");
 
     // Inject all of our compiled functions into the module environment
-    scm_c_define_gsubr("make-tree", 1, 2, 0, (void*)scm_tree);
+    scm_c_define_gsubr("make-shape", 1, 2, 0, (void*)scm_shape);
     scm_c_define_gsubr("make-var", 0, 0, 0, (void*)scm_var);
     scm_c_define_gsubr("var?", 1, 0, 0, (void*)scm_var_p);
-    scm_c_define_gsubr("tree-id", 1, 0, 0, (void*)scm_tree_id);
-    scm_c_define_gsubr("number->tree", 1, 0, 0, (void*)scm_number_to_tree);
-    scm_c_define_gsubr("tree-equal?", 2, 0, 0, (void*)scm_tree_equal_p);
-    scm_c_define_gsubr("tree-eval-f", 4, 0, 0, (void*)scm_tree_eval_f);
-    scm_c_define_gsubr("tree-eval-i", 7, 0, 0, (void*)scm_tree_eval_i);
-    scm_c_define_gsubr("tree-eval-d", 4, 0, 0, (void*)scm_tree_eval_d);
-    scm_c_define_gsubr("tree->mesh", 4, 0, 0, (void*)scm_tree_to_mesh);
-    scm_c_define_gsubr("shape-bounds", 1, 0, 0, (void*)scm_shape_bounds);
+    scm_c_define_gsubr("shape-tree-id", 1, 0, 0, (void*)scm_shape_tree_id);
+    scm_c_define_gsubr("number->shape", 1, 0, 0, (void*)scm_number_to_shape);
+    scm_c_define_gsubr("shape-equal?", 2, 0, 0, (void*)scm_shape_equal_p);
+    scm_c_define_gsubr("shape-eval-f", 4, 0, 0, (void*)scm_shape_eval_f);
+    scm_c_define_gsubr("shape-eval-i", 7, 0, 0, (void*)scm_shape_eval_i);
+    scm_c_define_gsubr("shape-eval-d", 4, 0, 0, (void*)scm_shape_eval_d);
+    scm_c_define_gsubr("shape->mesh", 4, 0, 0, (void*)scm_shape_to_mesh);
+    scm_c_define_gsubr("shape-find-bounds", 1, 0, 0, (void*)scm_shape_bounds);
     scm_c_define_gsubr("shape->string", 1, 0, 0, (void*)scm_shape_to_string);
+    scm_c_define_gsubr("shape-meta", 1, 0, 0, (void*)scm_shape_get_meta);
 
-    // Overload all of arithmetic operations with tree-based methods,
+    // Overload all of arithmetic operations with shape-based methods,
     // then add a handful of other useful functions to the module.
     scm_c_eval_string(R"(
-(define (ensure-tree t)
-  (cond ((tree? t) t)
-        ((number? t) (number->tree t))
+(define (ensure-shape t)
+  (cond ((shape? t) t)
+        ((number? t) (number->shape t))
         (else (scm-error 'wrong-type-arg #f
-               "Wrong argument ~A for ensure-tree" (list t) t))))
+               "Wrong argument ~A for ensure-shape" (list t) t))))
 
 (define-macro (overload func sym) `(begin
-  (define-method (,func (a <number>) (b <tree>)) (,func (ensure-tree a) b))
-  (define-method (,func (a <tree>) (b <number>)) (,func a (ensure-tree b)))
-  (define-method (,func (a <tree>) (b <tree>)) (make-tree ,sym a b)))
+  (define-method (,func (a <number>) (b <shape>)) (,func (ensure-shape a) b))
+  (define-method (,func (a <shape>) (b <number>)) (,func a (ensure-shape b)))
+  (define-method (,func (a <shape>) (b <shape>)) (make-shape ,sym a b)))
 )
 
 (overload + 'add)
@@ -334,61 +356,61 @@ void init_libfive_kernel(void*)
 (overload atan 'atan2)
 (overload modulo 'mod)
 
-(define-method (+ (a <tree>)) a)
-(define-method (* (a <tree>)) a)
-(define-method (min (a <tree>)) a)
-(define-method (max (a <tree>)) a)
+(define-method (+ (a <shape>)) a)
+(define-method (* (a <shape>)) a)
+(define-method (min (a <shape>)) a)
+(define-method (max (a <shape>)) a)
 
-(define-method (expt (a <tree>) (b <fraction>))
+(define-method (expt (a <shape>) (b <fraction>))
   (when (not (rational? b))
     (scm-error 'wrong-type-arg #f
         "RHS of exponentiation must be rational, not ~A"
         (list b) #f))
-  (make-tree 'nth-root (make-tree 'pow a (numerator b))
-                       (denominator b)))
+  (make-shape 'nth-root (make-tree 'pow a (numerator b))
+                        (denominator b)))
 
-(define-method (/ (a <tree>)) (make-tree 'recip a))
-(define-method (- (a <tree>)) (make-tree 'neg a))
-(define-method (sqrt (a <tree>)) (make-tree 'sqrt a))
-(define-method (sin (a <tree>)) (make-tree 'sin a))
-(define-method (cos (a <tree>)) (make-tree 'cos a))
-(define-method (tan (a <tree>)) (make-tree 'tan a))
-(define-method (asin (a <tree>)) (make-tree 'asin a))
-(define-method (acos (a <tree>)) (make-tree 'acos a))
-(define-method (exp (a <tree>)) (make-tree 'exp a))
-(define-method (abs (a <tree>)) (make-tree 'abs a))
-(define-method (atan (a <tree>)) (make-tree 'atan a))
-(define-method (log (a <tree>)) (make-tree 'log a))
-(define-method (constant (a <tree>)) (make-tree 'const-var a))
-(define (square f) (if (tree? f) (make-tree 'square f) (* f f)))
+(define-method (/ (a <shape>)) (make-shape 'recip a))
+(define-method (- (a <shape>)) (make-shape 'neg a))
+(define-method (sqrt (a <shape>)) (make-shape 'sqrt a))
+(define-method (sin (a <shape>)) (make-shape 'sin a))
+(define-method (cos (a <shape>)) (make-shape 'cos a))
+(define-method (tan (a <shape>)) (make-shape 'tan a))
+(define-method (asin (a <shape>)) (make-shape 'asin a))
+(define-method (acos (a <shape>)) (make-shape 'acos a))
+(define-method (exp (a <shape>)) (make-shape 'exp a))
+(define-method (abs (a <shape>)) (make-shape 'abs a))
+(define-method (atan (a <shape>)) (make-shape 'atan a))
+(define-method (log (a <shape>)) (make-shape 'log a))
+(define-method (constant (a <shape>)) (make-shape 'const-var a))
+(define (square f) (if (shape? f) (make-shape 'square f) (* f f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-method (tree-eval (a <tree>) (pt <vec3>))
-    (tree-eval-f a (.x pt) (.y pt) (.z pt)))
+(define-method (shape-eval (a <shape>) (pt <vec3>))
+    (shape-eval-f a (.x pt) (.y pt) (.z pt)))
 
-(define-method (tree-eval (a <tree>) (lower <vec3>) (upper <vec3>))
-    (tree-eval-i a (.x lower) (.x upper)
+(define-method (shape-eval (a <shape>) (lower <vec3>) (upper <vec3>))
+    (shape-eval-i a (.x lower) (.x upper)
                    (.y lower) (.y upper)
                    (.z lower) (.z upper)))
 
-(define-method (tree-derivs (a <tree>) (pt <vec3>))
-    (tree-eval-d a (.x pt) (.y pt) (.z pt)))
+(define-method (shape-derivs (a <shape>) (pt <vec3>))
+    (shape-eval-d a (.x pt) (.y pt) (.z pt)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define-syntax-rule (lambda-shape vars ...)
-  (ensure-tree
-    ((lambda vars ...) (make-tree 'var-x)
-                       (make-tree 'var-y)
-                       (make-tree 'var-z))))
+  (ensure-shape
+    ((lambda vars ...) (make-shape 'var-x)
+                       (make-shape 'var-y)
+                       (make-shape 'var-z))))
 
 (define-syntax-rule (define-shape (name . vars) body ...)
   (define name (lambda-shape vars body ...)))
 
-(define-syntax-rule (remap-shape (tree . vars) x y z)
-  (tree-eval tree #[(lambda-shape vars x)
-                    (lambda-shape vars y)
-                    (lambda-shape vars z)]))
+(define-syntax-rule (remap-shape (shape . vars) x y z)
+  (shape-eval shape #[(lambda-shape vars x)
+                      (lambda-shape vars y)
+                      (lambda-shape vars z)]))
 
 (define-syntax sequence_
   (syntax-rules ()
@@ -417,16 +439,16 @@ void init_libfive_kernel(void*)
 
 ;; These are "safe" bindings that can be used in the sandbox
 (define libfive-bindings '(square constant lambda-shape define-shape remap-shape
-                      shape-bounds shape->string tree-eval tree-derivs sequence
+                      shape-find-bounds shape->string shape-eval shape-derivs sequence
                       values-from values->list
                       libfive-bindings))
 (eval (cons 'export libfive-bindings) (interaction-environment))
  )");
 
     scm_c_export(
-            "tree?", "tree", "wrap-tree", "unwrap-tree",
-            "make-tree", "make-var", "var?", "tree-id", "number->tree",
-            "tree-equal?", "tree-eval", "tree->mesh",
+            "shape?", "shape", "wrap-shape", "unwrap-shape",
+            "make-shape", "make-var", "var?", "shape-tree-id", "number->shape",
+            "shape-equal?", "shape-eval", "shape->mesh", "shape-meta",
             NULL);
 }
 

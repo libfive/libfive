@@ -211,7 +211,7 @@ void _Interpreter::eval()
             {
                 auto data = scm_cdar(v);
                 auto id = static_cast<Kernel::Tree::Id>(
-                        libfive_tree_id(scm_to_tree(scm_car(data))));
+                        libfive_tree_id(scm_get_tree(scm_car(data))));
                 auto value = scm_to_double(scm_cadr(data));
                 vars[id] = value;
 
@@ -227,9 +227,9 @@ void _Interpreter::eval()
         {
             for (auto r = scm_cdar(result); !scm_is_null(r); r = scm_cdr(r))
             {
-                if (scm_is_tree(scm_car(r)))
+                if (scm_is_shape(scm_car(r)))
                 {
-                    auto tree = scm_to_tree(scm_car(r));
+                    auto tree = scm_get_tree(scm_car(r));
                     auto shape = new Shape(*tree, vars);
                     shape->moveToThread(QApplication::instance()->thread());
                     shapes.push_back(shape);

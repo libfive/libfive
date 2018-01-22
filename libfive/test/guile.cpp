@@ -61,36 +61,36 @@ static std::string eval(std::string input) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TEST_CASE("make-tree")
+TEST_CASE("make-shape")
 {
     SECTION("Valid")
     {
-        auto result = eval("(make-tree 'var-x)");
+        auto result = eval("(make-shape 'var-x)");
         CAPTURE(result);
-        REQUIRE(boost::algorithm::starts_with(result, "#<<tree> "));
+        REQUIRE(boost::algorithm::starts_with(result, "#<<shape> "));
     }
 
     SECTION("Invalid opcode")
     {
-        auto result = eval("(make-tree 'lol)");
+        auto result = eval("(make-shape 'lol)");
         CAPTURE(result);
         REQUIRE(boost::algorithm::starts_with(result, "wrong-type-arg:"));
     }
 
     SECTION("Invalid argument count")
     {
-        auto a = eval("(make-tree 'var-x 12)");
+        auto a = eval("(make-shape 'var-x 12)");
         CAPTURE(a);
         REQUIRE(boost::algorithm::starts_with(a, "wrong-number-of-args:"));
 
-        auto b = eval("(make-tree 'add 12)");
+        auto b = eval("(make-shape 'add 12)");
         CAPTURE(b);
         REQUIRE(boost::algorithm::starts_with(b, "wrong-number-of-args:"));
     }
 
     SECTION("Invalid argument type")
     {
-        auto a = eval("(make-tree 'sin \"hi\")");
+        auto a = eval("(make-shape 'sin \"hi\")");
         CAPTURE(a);
         REQUIRE(boost::algorithm::starts_with(a, "wrong-type-arg:"));
     }
@@ -100,7 +100,7 @@ TEST_CASE("make-var")
 {
     auto result = eval("(make-var)");
     CAPTURE(result);
-    REQUIRE(boost::algorithm::starts_with(result, "#<<tree> "));
+    REQUIRE(boost::algorithm::starts_with(result, "#<<shape> "));
 }
 
 TEST_CASE("var?")
@@ -114,7 +114,7 @@ TEST_CASE("var?")
 
     SECTION("#f")
     {
-        auto result = eval("(var? (make-tree 'var-x))");
+        auto result = eval("(var? (make-shape 'var-x))");
         CAPTURE(result);
         REQUIRE(result == "#f");
     }
@@ -124,9 +124,9 @@ TEST_CASE("Guile overloads")
 {
     SECTION("min")
     {
-        auto result = eval("(min (make-tree 'var-x) 1 2 3)");
+        auto result = eval("(min (make-shape 'var-x) 1 2 3)");
         CAPTURE(result);
-        REQUIRE(boost::algorithm::starts_with(result, "#<<tree> "));
+        REQUIRE(boost::algorithm::starts_with(result, "#<<shape> "));
 
         auto err = eval("(min)");
         CAPTURE(err);
@@ -156,7 +156,7 @@ TEST_CASE("eval-sandboxed")
         auto result = eval("(eval-sandboxed \"(define-shape (f x y z) (+ x y))(+ f 12)\")");
         CAPTURE(result);
         REQUIRE(boost::algorithm::starts_with(result,
-            "((valid #<unspecified>) (valid #<<tree>"));
+            "((valid #<unspecified>) (valid #<<shape>"));
     }
 
     SECTION("Error on single line")
@@ -177,5 +177,5 @@ TEST_CASE("libfive-guile CSG")
         ) )");
 
     CAPTURE(result);
-    REQUIRE(boost::algorithm::starts_with(result, "#<<tree> "));
+    REQUIRE(boost::algorithm::starts_with(result, "#<<shape> "));
 }
