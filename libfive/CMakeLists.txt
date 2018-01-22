@@ -1,3 +1,6 @@
 add_subdirectory(src)
 add_subdirectory(test)
-add_subdirectory(bind)
+
+if (GUILE_FOUND)
+    add_subdirectory(bind)
+endif(GUILE_FOUND)

@@ -57,6 +57,10 @@ else()
     add_executable(Studio ${SRCS} ${QOBJECTS})
 endif()
 
+if(UNIX AND NOT(APPLE))
+    install(TARGETS Studio DESTINATION bin RENAME studio)
+endif(UNIX AND NOT(APPLE))
+
 target_include_directories(Studio PUBLIC include)
 target_link_libraries(Studio five-guile
     Qt5::Widgets

@@ -49,4 +49,9 @@ if(UNIX AND NOT(APPLE))
     set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT})
 endif(UNIX AND NOT(APPLE))
 
+if (UNIX)
+    install(TARGETS five DESTINATION lib)
+    install(FILES ../include/libfive.h DESTINATION include)
+endif(UNIX)
+
 target_link_libraries(five ${LIBS})
