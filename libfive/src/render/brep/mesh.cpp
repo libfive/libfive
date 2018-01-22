@@ -107,21 +107,22 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 ////////////////////////////////////////////////////////////////////////////////
 
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
-                                   double min_feature, double max_err)
+                                   double min_feature, double max_err,
+                                   bool multithread)
 {
     std::atomic_bool cancel(false);
     std::map<Tree::Id, float> vars;
-    return render(t, vars, r, min_feature, max_err, cancel);
+    return render(t, vars, r, min_feature, max_err, multithread, cancel);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
-            std::atomic_bool& cancel)
+            bool multithread, std::atomic_bool& cancel)
 {
     // Create the octree (multithreaded and cancellable)
     return mesh(XTree<3>::build(
-            t, vars, r, min_feature, max_err, true, cancel), cancel);
+            t, vars, r, min_feature, max_err, multithread, cancel), cancel);
 }
 
 std::unique_ptr<Mesh> Mesh::render(

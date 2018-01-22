@@ -33,7 +33,9 @@ public:
      *  Blocking, unstoppable render function
      */
     static std::unique_ptr<Mesh> render(const Tree t, const Region<3>& r,
-                                        double min_feature=0.1, double max_err=1e-8);
+                                        double min_feature=0.1,
+                                        double max_err=1e-8,
+                                        bool multithread=true);
 
     /*
      *  Fully-specified render function
@@ -41,7 +43,7 @@ public:
     static std::unique_ptr<Mesh> render(
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
-            std::atomic_bool& cancel);
+            bool multithread, std::atomic_bool& cancel);
 
     /*
      *  Render function that re-uses evaluators
