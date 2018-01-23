@@ -52,6 +52,7 @@ endif(UNIX AND NOT(APPLE))
 if (UNIX)
     install(TARGETS five DESTINATION lib)
     install(FILES ../include/libfive.h DESTINATION include)
+    install(DIRECTORY ../include/libfive DESTINATION include)
 endif(UNIX)
 
 target_link_libraries(five ${LIBS})
