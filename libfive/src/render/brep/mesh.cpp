@@ -197,7 +197,7 @@ bool Mesh::saveSTL(const std::string& filename,
                   << "\" does not end in .stl" << std::endl;
     }
     std::ofstream file;
-    file.open(filename, std::ios::out);
+    file.open(filename, std::ios::out | std::ios::binary);
     if (!file.is_open())
     {
         std::cout << "Mesh::saveSTL: could not open " << filename
