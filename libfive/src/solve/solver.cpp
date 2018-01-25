@@ -31,7 +31,7 @@ static std::pair<float, Solution> findRoot(
         JacobianEvaluator& e, const Eigen::Vector3f pos,
         Solution vars, unsigned gas)
 {
-    const float EPSILON = 1e-6;
+    const float EPSILON = 1e-6f;
 
     // Create a static map for all of our derivatives
     std::map<Tree::Id, float> ds;

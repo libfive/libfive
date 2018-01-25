@@ -76,7 +76,7 @@ void Template::serializeString(const std::string& s, std::vector<uint8_t>& out)
 Template Template::deserialize(const std::vector<uint8_t>& data)
 {
     const uint8_t* pos = &*data.begin();
-    const uint8_t* end = &*data.end();
+    const uint8_t* end = pos + data.size();
 
     Template out(Tree::Invalid());
 
