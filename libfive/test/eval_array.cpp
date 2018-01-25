@@ -143,10 +143,10 @@ TEST_CASE("ArrayEvaluator::getAmbiguous")
 
     auto a = e.getAmbiguous(3);
     REQUIRE(a.count() == 1);
-    REQUIRE(a(0) == 1);
+    REQUIRE(a(0) == true);
 
     auto b = e.getAmbiguous(4);
     REQUIRE(b.count() == 2);
-    REQUIRE(b(0) == 1);
-    REQUIRE(b(3) == 1);
+    REQUIRE(b(0) == true);
+    REQUIRE(b(3) == true);
 }

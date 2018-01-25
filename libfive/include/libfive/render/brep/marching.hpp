@@ -29,6 +29,9 @@ namespace Kernel {
 static constexpr int _pow(unsigned P, unsigned N)
 { return (N == 0) ? 1 : P * _pow(P, N - 1); }
 
+static constexpr unsigned _upow(unsigned P, unsigned N)
+{ return (N == 0) ? 1 : P * _upow(P, N - 1); }
+
 /*  Returns the number of vertices in an N-dimensional cube */
 static constexpr int _verts(unsigned N)
 { return _pow(2, N); }
