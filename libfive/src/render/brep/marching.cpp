@@ -410,10 +410,10 @@ static int rotateVertex(int vert, const Eigen::Matrix<double, N, N>& rot)
 template <unsigned N>
 static unsigned rotateMask(unsigned mask, const Eigen::Matrix<double, N, N>& rot)
 {
-    assert(mask < _upow(2, _verts(N)));
+    assert(mask < _pow(2, _verts(N)));
 
     unsigned mask_ = 0;
-    for (unsigned i=0; i < _upow(2, N); ++i)
+    for (unsigned i=0; i < _pow(2, N); ++i)
     {
         if (mask & (1 << i))
         {

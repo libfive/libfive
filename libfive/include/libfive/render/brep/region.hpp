@@ -65,7 +65,8 @@ public:
             case 1: return upper;
             default: assert(false);
         }
-        throw std::runtime_error("Range: Index out of range");
+        assert(false);
+        return lower;
     }
 
     /*
