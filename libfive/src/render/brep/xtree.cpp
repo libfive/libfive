@@ -238,8 +238,8 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             // Pack corners into filled / empty arrays
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                all_full  &=  corners[i];
-                all_empty &= !corners[i];
+                all_full  = all_full && corners[i];
+                all_empty = all_empty && !corners[i];
             }
         }
         type = all_empty ? Interval::EMPTY
