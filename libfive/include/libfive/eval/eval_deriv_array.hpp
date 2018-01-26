@@ -47,7 +47,7 @@ public:
     /*
      *  Multi-point evaluation (values must be stored with set)
      */
-    Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(size_t count);
+    Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(Eigen::Index count);
 
     /*
      *  Per-clause evaluation, used in tape walking

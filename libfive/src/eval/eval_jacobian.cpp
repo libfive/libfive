@@ -34,7 +34,7 @@ JacobianEvaluator::JacobianEvaluator(
     j = 0;
 
     // Then drop a 1 at each var's position
-    size_t index = 0;
+    Eigen::Index index = 0;
     for (auto& v : tape->vars.left)
     {
         j(v.first, index++) = 1;
@@ -52,7 +52,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(const Eigen::Vector3f& p)
     // Unpack from flat array into map
     // (to allow correlating back to VARs in Tree)
     std::map<Tree::Id, float> out;
-    size_t index = 0;
+    Eigen::Index index = 0;
     for (auto v : tape->vars.left)
     {
         out[v.second] = j(ti, index++);

@@ -49,7 +49,7 @@ Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt)
 }
 
 Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
-DerivArrayEvaluator::derivs(size_t count)
+DerivArrayEvaluator::derivs(Eigen::Index count)
 {
     // Perform value evaluation, copying results into the 4th row of out
     out.row(3).head(count) = values(count);

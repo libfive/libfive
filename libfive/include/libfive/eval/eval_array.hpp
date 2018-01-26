@@ -41,7 +41,7 @@ public:
      *  Stores the given value in the result arrays
      *  (inlined for efficiency)
      */
-    void set(const Eigen::Vector3f& p, size_t index)
+    void set(const Eigen::Vector3f& p, Eigen::Index index)
     {
         f(tape->X, index) = p.x();
         f(tape->Y, index) = p.y();
@@ -49,12 +49,12 @@ public:
     }
 
     /*  This is the number of samples that we can process in one pass */
-    static constexpr size_t N=256;
+    static constexpr Eigen::Index N=256;
 
 protected:
     /*  Stored in values() and used in operator() to decide how much of the
      *  array we're addressing at once  */
-    size_t count;
+    Eigen::Index count;
 
     /*  f(clause, index) is a specific data point */
     Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> f;
@@ -71,7 +71,7 @@ public:
     /*
      *  Multi-point evaluation (values must be stored with set)
      */
-    Eigen::Block<decltype(f), 1, Eigen::Dynamic> values(size_t count);
+    Eigen::Block<decltype(f), 1, Eigen::Dynamic> values(Eigen::Index count);
 
     /*
      *  Changes a variable's value
@@ -86,7 +86,7 @@ public:
      *
      *  This call performs O(i) work to set up the ambig array
      */
-    Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(size_t i);
+    Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(Eigen::Index i);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */

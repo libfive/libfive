@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-constexpr size_t ArrayEvaluator::N;
+constexpr Eigen::Index ArrayEvaluator::N;
 
 ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Tape> t)
     : ArrayEvaluator(t, std::map<Tree::Id, float>())
@@ -96,7 +96,7 @@ float ArrayEvaluator::evalAndPush(const Eigen::Vector3f& pt)
 }
 
 Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
-ArrayEvaluator::values(size_t _count)
+ArrayEvaluator::values(Eigen::Index _count)
 {
     count = _count;
     return f.block<1, Eigen::Dynamic>(tape->rwalk(*this), 0, 1, count);
@@ -122,7 +122,7 @@ bool ArrayEvaluator::setVar(Tree::Id var, float value)
 ////////////////////////////////////////////////////////////////////////////////
 
 Eigen::Block<decltype(ArrayEvaluator::ambig), 1, Eigen::Dynamic>
-ArrayEvaluator::getAmbiguous(size_t i)
+ArrayEvaluator::getAmbiguous(Eigen::Index i)
 {
     // Reset the ambiguous array to all false
     ambig = false;

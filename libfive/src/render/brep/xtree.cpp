@@ -344,7 +344,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         // into the evaluator (which requires a Vector3f)
         Eigen::Vector3f _pos;
         _pos.template tail<3 - N>() = region.perp.template cast<float>();
-        auto set = [&](const Vec& v, size_t i){
+        auto set = [&](const Vec& v, Eigen::Index i){
             _pos.template head<N>() = v.template cast<float>();
             eval->array.set(_pos, i);
         };

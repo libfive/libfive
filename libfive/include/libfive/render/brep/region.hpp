@@ -57,7 +57,7 @@ public:
      */
     Region() : lower(0), upper(0) {}
 
-    Pt& operator[](std::size_t idx)
+    Pt& operator[](Eigen::Index idx)
     {
         switch(idx)
         {
