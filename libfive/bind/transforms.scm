@@ -166,8 +166,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (export shear-x-y)
 
 (define* (repel shape locus r #:optional (e 1))
-  "repel shape #[x0 y0 z0] radius
-  Repels the shape away from a point based upon a radius r, with optional exaggeration e"
+  "repel shape #[x0 y0 z0] radius exaggeration
+  Repels the shape away from a point based upon a radius r,
+  with optional exaggeration e"
   (define (falloff point)
     (- 1 (* e (exp (- (/ (norm point) r))))))
   (let ((shapep (move shape (- locus))))
@@ -185,7 +186,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define* (attract shape locus r #:optional (e 1))
   "attract shape #[x0 y0 z0] radius exaggeration
-  Attracts the shape towards a point based upon a radius r, with optional exaggeration e"
+  Attracts the shape towards a point based upon a radius r,
+  with optional exaggeration e"
   (define (falloff point)
     (+ 1 (* e (exp (- (/ (norm point) r))))))
   (let ((shapep (move shape (- locus))))
