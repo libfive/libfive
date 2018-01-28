@@ -61,7 +61,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (define-public (blend-difference a b m)
   "blend-difference a b m
   Blends the subtraction of b from a"
-  (blend (- 0 a) b m))
+  (- (blend (- a) b m)))
 
 (define-public (morph a b m)
   "morph a b m
