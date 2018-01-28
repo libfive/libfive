@@ -83,10 +83,10 @@ Region<3> findBounds(IntervalEvaluator* eval)
 
                 for (unsigned j=0; j < n; ++j)
                 {
-                    target.lower(r) = (out.lower(r) * (n - i) / float(n)) +
-                                      (out.upper(r) * i / float(n));
-                    target.upper(r) = (out.lower(r) * (n - i - 1) / float(n)) +
-                                      (out.upper(r) * (i + 1) / float(n));
+                    target.lower(r) = (out.lower(r) * (n - j) / float(n)) +
+                                      (out.upper(r) * j / float(n));
+                    target.upper(r) = (out.lower(r) * (n - j - 1) / float(n)) +
+                                      (out.upper(r) * (j + 1) / float(n));
                     o = fmin(o, testRegion(target));
                 }
             }
