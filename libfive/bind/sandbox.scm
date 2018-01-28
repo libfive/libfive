@@ -54,7 +54,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
           (get-bindings '(libfive shapes))
           (get-bindings '(libfive csg))
           (get-bindings '(libfive transforms))
-          (get-bindings '(libfive text)))
+          (get-bindings '(libfive text))
+          (get-bindings '(libfive util)))
     all-pure-bindings))
 
 (define* (sandbox-backtrace stack #:optional (port #t))

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
-(use-modules (libfive kernel) (libfive vec))
+(use-modules (libfive kernel) (libfive vec) (libfive util))
 
 (define-public (union . args)
   "union a [b [c [...]]]
@@ -53,10 +53,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Returns a shell of a shape with the given offset"
   (clearance shape shape o))
 
-(define-public (blend a b m)
+(define-public (blend-poly a b k)
+  "blend-poly a b m
+  Blends two shapes by the given amount using a polynomial"
+  (lambda-shape (x y z)
+    (let ((h (clamp (+ 0.5 (* 0.5 (- b a) (/ k))) 0 1)))
+      (- (mix b a h)
+         (* k h (- 1 h))))))
+
+(define-public (blend-rough a b m)
   "blend a b m
-  Blends two shapes by the given amount"
+  Blends two shapes by the given amount, using a fast-but-rough
+  CSG approximation that may not preserve gradients"
   (union a b (- (+ (sqrt (abs a)) (sqrt (abs b))) m)))
+
+(define-public blend blend-poly)
 
 (define* (blend-difference a b m #:optional (o 0))
   "blend-difference a b m [o]

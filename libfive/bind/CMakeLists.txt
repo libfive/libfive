@@ -1,6 +1,6 @@
 ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bundle.cpp
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/bundle.cmake
-    DEPENDS libfive-guile.cpp shapes.scm csg.scm transforms.scm text.scm vec.scm
+    DEPENDS libfive-guile.cpp shapes.scm csg.scm transforms.scm text.scm util.scm vec.scm
             sandbox.scm ${CMAKE_CURRENT_SOURCE_DIR}/bundle.cmake)
 
 add_library(five-guile SHARED ${CMAKE_CURRENT_BINARY_DIR}/bundle.cpp)

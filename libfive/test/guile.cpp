@@ -47,6 +47,7 @@ static std::string eval(std::string input) {
         scm_c_use_module("libfive vec");
         scm_c_use_module("libfive csg");
         scm_c_use_module("libfive shapes");
+        scm_c_use_module("libfive util");
         scm_c_use_module("libfive sandbox");
         initialized = true;
     }

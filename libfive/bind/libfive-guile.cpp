@@ -484,10 +484,16 @@ void init_libfive_sandbox(void*)
     scm_c_eval_string(R"(LIBFIVE_GUILE_SANDBOX)");
 }
 
+void init_libfive_util(void*)
+{
+    scm_c_eval_string(R"(LIBFIVE_GUILE_UTIL)");
+}
+
 void scm_init_libfive_modules()
 {
     // Listed in order of dependencies
     scm_c_define_module("libfive vec", init_libfive_vec, NULL);
+    scm_c_define_module("libfive util", init_libfive_util, NULL);
     scm_c_define_module("libfive kernel", init_libfive_kernel, NULL);
     scm_c_define_module("libfive csg", init_libfive_csg, NULL);
     scm_c_define_module("libfive transforms", init_libfive_transforms, NULL);
