@@ -48,6 +48,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Expands shape b by the given offset then subtracts it from shape a"
   (difference a (offset b o)))
 
+(define-public (blend-clearance-inset a b o s)
+	"blend-clearance-inset a b o s
+	Smooth-subtracts (with smoothness s)
+	the offset (by o) of shape b, from shape a,
+	then includes shape b as well"
+	(values
+		(blend-difference a (offset b o) s)
+		b
+	)
+)
+
 (define-public (shell shape o)
   "shell shape o
   Returns a shell of a shape with the given offset"
