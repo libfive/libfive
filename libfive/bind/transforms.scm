@@ -166,7 +166,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (export shear-x-y)
 
 (define* (repel shape locus r #:optional (e 1))
-  "repel shape #[x0 y0 z0] radius exaggeration
+  "repel shape #[x0 y0 z0] radius [exaggeration]
   Repels the shape away from a point based upon a radius r,
   with optional exaggeration e"
   (define (falloff point)
@@ -185,7 +185,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (export repel)
 
 (define* (attract shape locus r #:optional (e 1))
-  "attract shape #[x0 y0 z0] radius exaggeration
+  "attract shape #[x0 y0 z0] radius [exaggeration]
   Attracts the shape towards a point based upon a radius r,
   with optional exaggeration e"
   (define (falloff point)
