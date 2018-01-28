@@ -58,10 +58,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Blends two shapes by the given amount"
   (union a b (- (+ (sqrt (abs a)) (sqrt (abs b))) m)))
 
-(define-public (blend-difference a b m)
-  "blend-difference a b m
-  Blends the subtraction of b from a"
-  (- (blend (- a) b m)))
+(define* (blend-difference a b m #:optional (o 0))
+  "blend-difference a b m [o]
+  Blends the subtraction of b, with optional offset o,
+  from a, with smoothness m"
+  (- (blend (- a) (offset b o) m)))
+(export blend-difference)
 
 (define-public (morph a b m)
   "morph a b m
