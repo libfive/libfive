@@ -87,10 +87,10 @@ void Arrow::initializeGL(int res)
     vbo.allocate(vs.data(), vs.size() * sizeof(*vs.data()));
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), NULL);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat),
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat),
                           (GLvoid*)(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
     vbo.release();
     vao.release();

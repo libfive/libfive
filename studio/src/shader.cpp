@@ -21,8 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 namespace Shader
 {
 
+QOpenGLShaderProgram* basic;
 QOpenGLShaderProgram* arrow;
-QOpenGLShaderProgram* flat;
 QOpenGLShaderProgram* point;
 QOpenGLShaderProgram* monochrome;
 QOpenGLShaderProgram* shaded;
@@ -42,13 +42,13 @@ void initializeGL()
         return s;
     };
 
-    flat = build("basic", "flat");
+    basic = build("basic", "basic");
     monochrome = build("basic", "monochrome");
     shaded = build("basic", "shaded");
     busy = build("basic", "busy");
     bars = build("basic", "bars");
     line = build("line", "monochrome");
-    arrow = build("arrow", "arrow");
+    arrow = build("basic", "arrow");
 }
 
 }

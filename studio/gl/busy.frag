@@ -1,6 +1,6 @@
 #version 330
 
-in vec3 frag_pos;
+in vec3 base_pos;
 uniform float time;
 uniform float fade;
 
@@ -23,7 +23,7 @@ float pellet(vec2 pos)
 
 void main()
 {
-    vec2 pos = frag_pos.xy;
+    vec2 pos = base_pos.xy;
 
     float d = 1.0f;
     int count = 16;

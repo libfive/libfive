@@ -24,7 +24,7 @@ namespace Shader
 {
     void initializeGL();
 
-    extern QOpenGLShaderProgram* flat;
+    extern QOpenGLShaderProgram* basic;
     extern QOpenGLShaderProgram* monochrome;
     extern QOpenGLShaderProgram* shaded;
     extern QOpenGLShaderProgram* busy;
