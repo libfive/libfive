@@ -28,11 +28,9 @@ JacobianEvaluator::JacobianEvaluator(std::shared_ptr<Tape> t)
 
 JacobianEvaluator::JacobianEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : DerivEvaluator(t, vars), j(tape->num_clauses + 1, tape->vars.size())
+    : DerivEvaluator(t, vars),
+      j(Eigen::ArrayXXf::Zero(tape->num_clauses + 1, tape->vars.size()))
 {
-    // Initialize Jacobian array to all zeros
-    j = 0;
-
     // Then drop a 1 at each var's position
     size_t index = 0;
     for (auto& v : tape->vars.left)
@@ -117,7 +115,7 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 oj = 2 * av * aj;
                 break;
             case Opcode::SQRT:
-                if (av < 0) oj = 0.0;
+                if (av < 0) oj.setZero();
                 else        oj = (aj / (2 * sqrt(av)));
                 break;
             case Opcode::NEG:
@@ -155,7 +153,7 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 break;
 
             case Opcode::CONST_VAR:
-                oj = 0;
+                oj.setZero();
                 break;
 
             case Opcode::INVALID:
