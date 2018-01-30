@@ -48,7 +48,6 @@ void initializeGL()
     busy = build("basic", "busy");
     bars = build("basic", "bars");
     line = build("line", "monochrome");
-    point = build("point", "monochrome");
     arrow = build("arrow", "arrow");
 }
 

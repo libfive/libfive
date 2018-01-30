@@ -208,7 +208,6 @@ void View::initializeGL()
     bbox.initializeGL();
     busy.initializeGL();
     bars.initializeGL();
-    ico.initializeGL();
 }
 
 void View::redrawPicker()

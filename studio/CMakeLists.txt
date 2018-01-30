@@ -20,7 +20,6 @@ set(SRCS src/main.cpp
     src/busy.cpp
     src/camera.cpp
     src/documentation.cpp
-    src/icosphere.cpp
     src/script.cpp
     src/settings.cpp
     src/shader.cpp
