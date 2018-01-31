@@ -7,6 +7,11 @@ uniform vec3 b;
 uniform float thickness;
 uniform float aspect;
 
+// For compatability with base shader
+out vec3 frag_norm;
+out vec3 frag_pos;
+out vec4 frag_color;
+
 void main()
 {
     vec2 offset;
@@ -42,5 +47,9 @@ void main()
     }
 
     gl_Position = vec4(target.xy + offset, target.z, 1.0f);
+
+    frag_norm = vec3(0.0f);
+    frag_pos = vec3(0.0f);
+    frag_color = vec4(0.0f);
 }
 
