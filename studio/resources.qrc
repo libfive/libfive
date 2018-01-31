@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>gl/arrow.frag</file>
         <file>gl/basic.vert</file>
         <file>gl/basic.frag</file>
         <file>gl/monochrome.frag</file>

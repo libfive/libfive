@@ -22,7 +22,6 @@ namespace Shader
 {
 
 QOpenGLShaderProgram* basic;
-QOpenGLShaderProgram* arrow;
 QOpenGLShaderProgram* point;
 QOpenGLShaderProgram* monochrome;
 QOpenGLShaderProgram* shaded;
@@ -47,8 +46,6 @@ void initializeGL()
     shaded = build("basic", "shaded");
     busy = build("basic", "busy");
     bars = build("basic", "bars");
-    line = build("line", "monochrome");
-    arrow = build("basic", "arrow");
 }
 
 }

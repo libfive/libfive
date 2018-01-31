@@ -165,10 +165,11 @@ void Axes::initializeGL()
 void Axes::bindShader(QMatrix4x4 M)
 {
     Shader::basic->bind();
-    glUniformMatrix4fv(Shader::basic->uniformLocation("M"), 1, GL_FALSE, M.data());
     glUniform1i(Shader::basic->uniformLocation("shading"), 0); // flat shading
     glUniform4f(Shader::basic->uniformLocation("color_mul"), 1, 1, 1, 1);
     glUniform4f(Shader::basic->uniformLocation("color_add"), 0, 0, 0, 0);
+    glUniformMatrix4fv(Shader::basic->uniformLocation("M"),
+                       1, GL_FALSE, M.data());
 }
 
 void Axes::drawSolid(QMatrix4x4 M)

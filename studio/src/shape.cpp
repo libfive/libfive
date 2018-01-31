@@ -178,7 +178,8 @@ void Shape::draw(const QMatrix4x4& M)
         Shader::shaded->bind();
         glUniform3f(Shader::shaded->uniformLocation("shade"),
                     shade.x(), shade.y(), shade.z());
-        glUniformMatrix4fv(Shader::shaded->uniformLocation("M"), 1, GL_FALSE, M.data());
+        glUniformMatrix4fv(Shader::shaded->uniformLocation("M"),
+                           1, GL_FALSE, M.data());
         vao.bind();
         glDrawElements(GL_TRIANGLES, mesh->branes.size() * 3, GL_UNSIGNED_INT, NULL);
         vao.release();
@@ -190,15 +191,18 @@ void Shape::drawMonochrome(const QMatrix4x4& M, QColor color)
 {
     if (gl_ready)
     {
-        Shader::monochrome->bind();
-        glUniformMatrix4fv(Shader::monochrome->uniformLocation("M"),
+        Shader::basic->bind();
+        glUniformMatrix4fv(Shader::basic->uniformLocation("M"),
                            1, GL_FALSE, M.data());
-        glUniform4f(Shader::monochrome->uniformLocation("frag_color"),
+        glUniform1i(Shader::basic->uniformLocation("shading"), 0);
+        glUniform4f(Shader::basic->uniformLocation("color_add"),
                 color.redF(), color.greenF(), color.blueF(), 1.0f);
+        glUniform4f(Shader::basic->uniformLocation("color_mul"), 0, 0, 0, 0);
+
         vao.bind();
         glDrawElements(GL_TRIANGLES, mesh->branes.size() * 3, GL_UNSIGNED_INT, NULL);
         vao.release();
-        Shader::monochrome->release();
+        Shader::basic->release();
     }
 }
 

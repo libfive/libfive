@@ -30,5 +30,4 @@ namespace Shader
     extern QOpenGLShaderProgram* busy;
     extern QOpenGLShaderProgram* bars;
     extern QOpenGLShaderProgram* line;
-    extern QOpenGLShaderProgram* arrow;
 }
