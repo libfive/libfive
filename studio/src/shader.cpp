@@ -23,7 +23,6 @@ namespace Shader
 
 QOpenGLShaderProgram* basic;
 QOpenGLShaderProgram* point;
-QOpenGLShaderProgram* shaded;
 QOpenGLShaderProgram* busy;
 QOpenGLShaderProgram* bars;
 QOpenGLShaderProgram* line;
@@ -41,7 +40,6 @@ void initializeGL()
     };
 
     basic = build("basic", "basic");
-    shaded = build("basic", "shaded");
     busy = build("basic", "busy");
     bars = build("basic", "bars");
     line = build("line", "basic");
