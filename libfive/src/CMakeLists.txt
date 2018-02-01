@@ -19,7 +19,8 @@ add_library(five SHARED
     eval/feature.cpp
     render/discrete/heightmap.cpp
     render/discrete/voxels.cpp
-    render/brep/xtree.cpp
+    render/brep/xtree2.cpp
+    render/brep/xtree3.cpp
     render/brep/contours.cpp
     render/brep/mesh.cpp
     render/brep/marching.cpp
