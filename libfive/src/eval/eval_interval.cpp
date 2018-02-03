@@ -96,6 +96,36 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
                 return Tape::KEEP_BOTH;
             }
         }
+        else if (op == Opcode::ADD)
+        {
+            if (i[a].lower() == 0 && i[a].upper() == 0)
+            {
+                return Tape::KEEP_B;
+            }
+            else if (i[b].lower() == 0 && i[b].upper() == 0)
+            {
+                return Tape::KEEP_A;
+            }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
+        }
+        else if (op == Opcode::MUL)
+        {
+            if (i[a].lower() == 1 && i[a].upper() == 1)
+            {
+                return Tape::KEEP_B;
+            }
+            else if (i[b].lower() == 1 && i[b].upper() == 1)
+            {
+                return Tape::KEEP_A;
+            }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
+        }
         return Tape::KEEP_ALWAYS;
     },
         Tape::INTERVAL,
