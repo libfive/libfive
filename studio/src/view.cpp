@@ -220,22 +220,19 @@ void View::redrawPicker()
         return;
     }
 
+    // We may not have the OpenGL context, so we claim it here
+    // (and release it at the bottom if it was claimed)
+    const bool needs_gl = (context() == QOpenGLContext::currentContext());
+    if (needs_gl)
+    {
+        makeCurrent();
+    }
+
     // Rebuild buffer if it is not present or is the wrong size
     if (!pick_fbo.data() ||  pick_fbo->size() != camera.size)
     {
-        bool needs_gl = (context() == QOpenGLContext::currentContext());
-        if (needs_gl)
-        {
-            makeCurrent();
-        }
-
         pick_fbo.reset(new QOpenGLFramebufferObject(
                     camera.size, QOpenGLFramebufferObject::Depth));
-
-        if (needs_gl)
-        {
-            doneCurrent();
-        }
     }
 
     pick_fbo->bind();
@@ -266,6 +263,11 @@ void View::redrawPicker()
                  GL_DEPTH_COMPONENT, GL_FLOAT, pick_depth.data());
 
     pick_fbo->release();
+
+    if (needs_gl)
+    {
+        doneCurrent();
+    }
 }
 
 void View::paintGL()
