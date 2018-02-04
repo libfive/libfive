@@ -368,12 +368,12 @@ void init_libfive_kernel(void*)
 (define-method (max (a <shape>)) a)
 
 (define-method (expt (a <shape>) (b <fraction>))
-  (when (not (rational? b))
-    (scm-error 'wrong-type-arg #f
-        "RHS of exponentiation must be rational, not ~A"
-        (list b) #f))
-  (make-shape 'nth-root (make-tree 'pow a (numerator b))
+  (make-shape 'nth-root (make-shape 'pow a (numerator b))
                         (denominator b)))
+(define-method (expt (a <shape>) (b <number>))
+  (scm-error 'wrong-type-arg #f
+      "RHS of exponentiation must be rational, not ~A"
+      (list b) #f))
 
 (define-method (/ (a <shape>)) (make-shape 'recip a))
 (define-method (- (a <shape>)) (make-shape 'neg a))
