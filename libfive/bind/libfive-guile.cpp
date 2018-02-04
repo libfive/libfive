@@ -358,8 +358,8 @@ void init_libfive_kernel(void*)
 
 (overload compare 'compare)
 (define-method (compare (a <number>) (b <number>))
-  (cond ((< a b) -0.5)
-        ((> a b)  0.5)
+  (cond ((< a b) -1)
+        ((> a b)  1)
         ( else    0)))
 
 (define-method (+ (a <shape>)) a)
