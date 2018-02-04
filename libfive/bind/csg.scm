@@ -53,21 +53,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Returns a shell of a shape with the given offset"
   (clearance shape shape o))
 
-(define-public (blend-poly a b k)
-  "blend-poly a b m
-  Blends two shapes by the given amount using a polynomial"
-  (lambda-shape (x y z)
-    (let ((h (clamp (+ 0.5 (* 0.5 (- b a) (/ k))) 0 1)))
-      (- (mix b a h)
-         (* k h (- 1 h))))))
+(define-public (blend-expt a b m)
+  "blend-expt a b m
+  Blends two shapes by the given amount using exponents"
+  (/
+    (- (log (+
+      (exp (* (- m) a ) )
+      (exp (* (- m) b ) )
+    )))
+    m
+  )
+)
+
+(define-public (blend-expt-unit a b m)
+  "blend-expt-unit a b m
+  Blends two shapes by the given amount using exponents,
+  with the blend term adjusted to produce results approximately
+  resembling blend-rough for values between 0 and 1."
+  (blend-expt a b
+    (/ 2.75 (expt m 2))
+  )
+)
 
 (define-public (blend-rough a b m)
-  "blend a b m
+  "blend-rough a b m
   Blends two shapes by the given amount, using a fast-but-rough
   CSG approximation that may not preserve gradients"
   (union a b (- (+ (sqrt (abs a)) (sqrt (abs b))) m)))
 
-(define-public blend blend-poly)
+(define-public blend blend-expt-unit)
 
 (define* (blend-difference a b m #:optional (o 0))
   "blend-difference a b m [o]
