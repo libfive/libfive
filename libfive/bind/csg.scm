@@ -71,7 +71,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   with the blend term adjusted to produce results approximately
   resembling blend-rough for values between 0 and 1."
   (blend-expt a b
-    (/ 2 (expt m 2))
+    (/ 2.75 (expt m 2))
   )
 )
 
