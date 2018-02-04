@@ -76,7 +76,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 )
 
 (define-public (blend-rough a b m)
-  "blend a b m
+  "blend-rough a b m
   Blends two shapes by the given amount, using a fast-but-rough
   CSG approximation that may not preserve gradients"
   (union a b (- (+ (sqrt (abs a)) (sqrt (abs b))) m)))
