@@ -170,7 +170,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Repels the shape away from a point based upon a radius r,
   with optional exaggeration e"
   (define (falloff point)
-    (- 1 (* e (exp (- (/ (norm point) r))))))
+    (- 1 (* e (exp (- (/ (len point) r))))))
   (let ((shapep (move shape (- locus))))
     (move
      (remap-shape
@@ -189,7 +189,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Attracts the shape towards a point based upon a radius r,
   with optional exaggeration e"
   (define (falloff point)
-    (+ 1 (* e (exp (- (/ (norm point) r))))))
+    (+ 1 (* e (exp (- (/ (len point) r))))))
   (let ((shapep (move shape (- locus))))
     (move
      (remap-shape
