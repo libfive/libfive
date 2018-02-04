@@ -262,6 +262,7 @@ void View::redrawPicker()
     glReadPixels(0, 0, camera.size.width(), camera.size.height(),
                  GL_DEPTH_COMPONENT, GL_FLOAT, pick_depth.data());
 
+    glDisable(GL_DEPTH_TEST);
     pick_fbo->release();
 
     if (needs_gl)
