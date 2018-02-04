@@ -202,6 +202,11 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::NANFILL:
             out = std::isnan(a) ? b : a;
             break;
+        case Opcode::COMPARE:
+            if      (a < b)     out = -0.5f;
+            else if (a > b)     out =  0.5f;
+            else                out =  0.0f;
+            break;
 
         case Opcode::SQUARE:
             out = a * a;

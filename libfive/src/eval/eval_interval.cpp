@@ -193,6 +193,11 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::NANFILL:
             out = (std::isnan(a.lower()) || std::isnan(a.upper())) ? b : a;
             break;
+        case Opcode::COMPARE:
+            if      (a.upper() < b.lower()) out = Interval::I(-0.5f, -0.5f);
+            else if (a.lower() > b.upper()) out = Interval::I( 0.5f,  0.5f);
+            else                            out = Interval::I(-0.5f,  0.5f);
+            break;
 
         case Opcode::SQUARE:
             out = boost::numeric::square(a);
