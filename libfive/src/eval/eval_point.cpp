@@ -93,6 +93,36 @@ float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
                 return Tape::KEEP_BOTH;
             }
         }
+        else if (op == Opcode::ADD)
+        {
+            if (f(a) == 0)
+            {
+                return Tape::KEEP_B;
+            }
+            else if (f(b) == 0)
+            {
+                return Tape::KEEP_A;
+            }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
+        }
+        else if (op == Opcode::MUL)
+        {
+            if (f(a) == 1)
+            {
+                return Tape::KEEP_B;
+            }
+            else if (f(b) == 1)
+            {
+                return Tape::KEEP_A;
+            }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
+        }
         return Tape::KEEP_ALWAYS;
     }, Tape::SPECIALIZED);
     return out;
