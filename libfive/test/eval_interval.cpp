@@ -132,46 +132,4 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
         REQUIRE(ea == eb);
     }
-
-    SECTION("Addition identity")
-    {
-        auto tree = Tree::X() + Tree::Y();
-        auto tape = std::make_shared<Tape>(tree);
-        IntervalEvaluator eval(tape);
-        REQUIRE(tape->utilization() == 1.0f);
-
-        Region<3> ra({0, -1, -1}, {0, 1, 1});
-        Region<3> rb({0, -1, -1}, {1, 1, 1});
-
-        eval.evalAndPush(ra.lower.template cast<float>(),
-                         ra.upper.template cast<float>());
-        REQUIRE(tape->utilization() == 0.0f);
-        eval.pop();
-
-        eval.evalAndPush(rb.lower.template cast<float>(),
-                         rb.upper.template cast<float>());
-        REQUIRE(tape->utilization() == 1.0f);
-        eval.pop();
-    }
-
-    SECTION("Multiplication identity")
-    {
-        auto tree = Tree::X() * Tree::Y();
-        auto tape = std::make_shared<Tape>(tree);
-        IntervalEvaluator eval(tape);
-        REQUIRE(tape->utilization() == 1.0f);
-
-        Region<3> ra({1, -1, -1}, {1, 1, 1});
-        Region<3> rb({0, -1, -1}, {1, 1, 1});
-
-        eval.evalAndPush(ra.lower.template cast<float>(),
-                         ra.upper.template cast<float>());
-        REQUIRE(tape->utilization() == 0.0f);
-        eval.pop();
-
-        eval.evalAndPush(rb.lower.template cast<float>(),
-                         rb.upper.template cast<float>());
-        REQUIRE(tape->utilization() == 1.0f);
-        eval.pop();
-    }
 }
