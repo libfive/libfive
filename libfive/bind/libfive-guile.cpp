@@ -356,6 +356,12 @@ void init_libfive_kernel(void*)
 (overload atan 'atan2)
 (overload modulo 'mod)
 
+(overload compare 'compare)
+(define-method (compare (a <number>) (b <number>))
+  (cond ((< a b) -0.5)
+        ((> a b)  0.5)
+        ( else    0)))
+
 (define-method (+ (a <shape>)) a)
 (define-method (* (a <shape>)) a)
 (define-method (min (a <shape>)) a)
@@ -438,10 +444,10 @@ void init_libfive_kernel(void*)
                     (apply append (vs->list a)))))
 
 ;; These are "safe" bindings that can be used in the sandbox
-(define libfive-bindings '(square constant lambda-shape define-shape remap-shape
-                      shape-find-bounds shape->string shape-eval shape-derivs sequence
-                      values-from values->list
-                      libfive-bindings))
+(define libfive-bindings '(
+    square constant compare lambda-shape define-shape remap-shape
+    shape-find-bounds shape->string shape-eval shape-derivs sequence
+    values-from values->list libfive-bindings))
 (eval (cons 'export libfive-bindings) (interaction-environment))
  )");
 
