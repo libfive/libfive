@@ -79,6 +79,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (extrude-z (rectangle a b) (.z a) (.z b)))
 (define-public cube box)
 
+(define* (box-centered s #:optional (m #[0 0 0]))
+  "box #[xsize ysize zsize] [#[x0 y0 z0]]
+  A box with the given size, centered around the given point"
+  (box
+    #[
+      (- (.x m) (/ (.x s) 2))
+      (- (.y m) (/ (.y s) 2))
+      (- (.z m) (/ (.z s) 2))
+    ]
+    #[
+      (+ (.x m) (/ (.x s) 2))
+      (+ (.y m) (/ (.y s) 2))
+      (+ (.z m) (/ (.z s) 2))
+    ]
+  )
+)
+(export box-centered)
+
 (define* (sphere r #:optional (center #[0 0 0]))
   "sphere r [#[x y z]]
   A sphere with the given radius and optional center"
