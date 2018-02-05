@@ -86,6 +86,14 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         mt = Marching::buildTable<N>();
     }
 
+    // Sanity-checking of min_feature argument
+    if (!(min_feature > 0))
+    {
+        std::cerr << "XTree<" << N << ">::build: min_feature must be > 0 (not "
+                  << min_feature << ")" << std::endl;
+        return nullptr;
+    }
+
     auto out = new XTree(es, region, min_feature, max_err, multithread, cancel);
 
     // Return an empty XTree when cancelled

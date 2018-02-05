@@ -246,6 +246,11 @@ libfive_mesh* libfive_tree_render_mesh(libfive_tree tree, libfive_region3 R, flo
     Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
                      {R.X.upper, R.Y.upper, R.Z.upper});
     auto ms = Mesh::render(*tree, region, 1/res);
+    if (ms.get() == nullptr)
+    {
+        fprintf(stderr, "libfive_tree_render_mesh: got empty mesh\n");
+        return nullptr;
+    }
 
     auto out = new libfive_mesh;
     out->verts = new libfive_vec3[ms->verts.size()];

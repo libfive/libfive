@@ -31,6 +31,7 @@ class Mesh : public BRep<3> {
 public:
     /*
      *  Blocking, unstoppable render function
+     *  Returns nullptr if min_feature is invalid (i.e. <= 0)
      */
     static std::unique_ptr<Mesh> render(const Tree t, const Region<3>& r,
                                         double min_feature=0.1,
@@ -39,6 +40,8 @@ public:
 
     /*
      *  Fully-specified render function
+     *  Returns nullptr if min_feature is invalid or cancel is set to true
+     *  partway through the computation.
      */
     static std::unique_ptr<Mesh> render(
             const Tree t, const std::map<Tree::Id, float>& vars,
@@ -48,6 +51,8 @@ public:
     /*
      *  Render function that re-uses evaluators
      *  es must be a pointer to at least eight Evaluators
+     *  Returns nullptr if min_feature is invalid or cancel is set to true
+     *  partway through the computation.
      */
     static std::unique_ptr<Mesh> render(
             XTreeEvaluator* es,

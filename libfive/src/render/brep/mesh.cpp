@@ -140,7 +140,7 @@ std::unique_ptr<Mesh> Mesh::mesh(std::unique_ptr<const XTree<3>> xtree,
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());
 
-    if (cancel.load())
+    if (cancel.load() || xtree.get() == nullptr)
     {
         return nullptr;
     }
