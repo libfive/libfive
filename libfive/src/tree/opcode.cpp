@@ -63,6 +63,7 @@ size_t Opcode::args(Opcode op)
         case NTH_ROOT:
         case MOD:
         case NANFILL:
+        case COMPARE:
             return 2;
 
         case INVALID: // fallthrough
@@ -163,6 +164,7 @@ std::string Opcode::toOpString(Opcode op)
         case NTH_ROOT:
         case MOD:
         case NANFILL:
+        case COMPARE:
         case LOG:
         case ABS:
             return toScmString(op);
@@ -179,7 +181,7 @@ std::string Opcode::toOpString(Opcode op)
         case CONST:
         case LAST_OP: return "";
     }
-    assert(0);
+    assert(false);
     return "";
 }
 
@@ -209,6 +211,7 @@ bool Opcode::isCommutative(Opcode op)
         case NTH_ROOT:
         case MOD:
         case NANFILL:
+        case COMPARE:
         case INVALID:
         case LOG:
         case ABS:
@@ -223,7 +226,7 @@ bool Opcode::isCommutative(Opcode op)
         case MAX:
             return true;
     }
-    assert(0);
+    assert(false);
     return false;
 }
 

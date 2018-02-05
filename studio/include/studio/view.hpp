@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/bars.hpp"
 #include "studio/busy.hpp"
 #include "studio/camera.hpp"
-#include "studio/icosphere.hpp"
 #include "studio/shape.hpp"
 #include "studio/settings.hpp"
 
@@ -144,7 +143,6 @@ protected:
     BBox bbox;
     Busy busy;
     Bars bars;
-    Icosphere ico;
 
     void mouseMoveEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;

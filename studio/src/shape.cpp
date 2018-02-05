@@ -172,17 +172,20 @@ void Shape::draw(const QMatrix4x4& M)
 
     if (gl_ready)
     {
-        auto shade = (grabbed || hover) ? QVector3D(1, 1, 1)
-                                        : QVector3D(0.9, 0.9, 0.9);
+        auto s = (grabbed || hover) ? 1 : 0.9;
 
-        Shader::shaded->bind();
-        glUniform3f(Shader::shaded->uniformLocation("shade"),
-                    shade.x(), shade.y(), shade.z());
-        glUniformMatrix4fv(Shader::shaded->uniformLocation("M"), 1, GL_FALSE, M.data());
+        Shader::basic->bind();
+        glUniform4f(Shader::basic->uniformLocation("color_mul"),
+                    0.96 * s, 0.75 * s, 0.63 * s, 1.0f);
+        glUniform4f(Shader::basic->uniformLocation("color_add"),
+                    0.03 * s, 0.21 * s, 0.26 * s, 0.0f);
+        glUniform1i(Shader::basic->uniformLocation("shading"), 2);
+        glUniformMatrix4fv(Shader::basic->uniformLocation("M"),
+                           1, GL_FALSE, M.data());
         vao.bind();
         glDrawElements(GL_TRIANGLES, mesh->branes.size() * 3, GL_UNSIGNED_INT, NULL);
         vao.release();
-        Shader::shaded->release();
+        Shader::basic->release();
     }
 }
 
@@ -190,15 +193,18 @@ void Shape::drawMonochrome(const QMatrix4x4& M, QColor color)
 {
     if (gl_ready)
     {
-        Shader::monochrome->bind();
-        glUniformMatrix4fv(Shader::monochrome->uniformLocation("M"),
+        Shader::basic->bind();
+        glUniformMatrix4fv(Shader::basic->uniformLocation("M"),
                            1, GL_FALSE, M.data());
-        glUniform4f(Shader::monochrome->uniformLocation("frag_color"),
+        glUniform1i(Shader::basic->uniformLocation("shading"), 0);
+        glUniform4f(Shader::basic->uniformLocation("color_add"),
                 color.redF(), color.greenF(), color.blueF(), 1.0f);
+        glUniform4f(Shader::basic->uniformLocation("color_mul"), 0, 0, 0, 0);
+
         vao.bind();
         glDrawElements(GL_TRIANGLES, mesh->branes.size() * 3, GL_UNSIGNED_INT, NULL);
         vao.release();
-        Shader::monochrome->release();
+        Shader::basic->release();
     }
 }
 

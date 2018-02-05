@@ -165,11 +165,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     y z))
 (export shear-x-y)
 
-(define-public (repel shape locus r)
-  "repel shape #[x0 y0 z0] radius
-  Repels the shape away from a point based upon a radius r"
+(define* (repel shape locus r #:optional (e 1))
+  "repel shape #[x0 y0 z0] radius [exaggeration]
+  Repels the shape away from a point based upon a radius r,
+  with optional exaggeration e"
   (define (falloff point)
-    (- 1 (exp (- (/ (norm point) r)))))
+    (- 1 (* e (exp (- (/ (norm point) r))))))
   (let ((shapep (move shape (- locus))))
     (move
      (remap-shape
@@ -181,12 +182,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
      locus)
     )
   )
+(export repel)
 
-(define-public (attract shape locus r)
-  "attract shape #[x0 y0 z0] radius
-  Attracts the shape towards a point based upon a radius r"
+(define* (attract shape locus r #:optional (e 1))
+  "attract shape #[x0 y0 z0] radius [exaggeration]
+  Attracts the shape towards a point based upon a radius r,
+  with optional exaggeration e"
   (define (falloff point)
-    (+ 1 (exp (- (/ (norm point) r)))))
+    (+ 1 (* e (exp (- (/ (norm point) r))))))
   (let ((shapep (move shape (- locus))))
     (move
      (remap-shape
@@ -198,6 +201,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
      locus)
     )
   )
+(export attract)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

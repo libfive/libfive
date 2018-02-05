@@ -87,10 +87,10 @@ void Arrow::initializeGL(int res)
     vbo.allocate(vs.data(), vs.size() * sizeof(*vs.data()));
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), NULL);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat),
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat),
                           (GLvoid*)(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
     vbo.release();
     vao.release();
@@ -121,10 +121,12 @@ void Arrow::draw(QMatrix4x4 M, QVector3D pos, float scale,
     M.scale(scale);
     M *= rot;
 
-    Shader::arrow->bind();
-    glUniformMatrix4fv(Shader::arrow->uniformLocation("M"),
+    Shader::basic->bind();
+    glUniformMatrix4fv(Shader::basic->uniformLocation("M"),
                        1, GL_FALSE, M.data());
-
+    glUniform1i(Shader::basic->uniformLocation("shading"), 1); // per-triangle
+    glUniform4f(Shader::basic->uniformLocation("color_add"),
+                color.redF()*0.6, color.greenF()*0.6, color.blueF()*0.6, 0.0f);
     vao.bind();
 
     // Draw once at 20% opacity but without depth culling
@@ -136,19 +138,21 @@ void Arrow::draw(QMatrix4x4 M, QVector3D pos, float scale,
     glStencilFuncSeparate(GL_BACK, GL_NEVER, 0, 0xFF);
     glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_INCR, GL_INCR);
     glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR, GL_INCR);
-    glUniform4f(Shader::arrow->uniformLocation("shade"),
-                color.redF(), color.greenF(), color.blueF(), 0.3f);
+
+    glUniform4f(Shader::basic->uniformLocation("color_mul"),
+                color.redF()/2, color.greenF()/2, color.blueF()/2, 0.3f);
     glDrawArrays(GL_TRIANGLES, 0, tri_count * 3);
 
     // Then draw in full color, with depth culling on
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
-    glUniform4f(Shader::arrow->uniformLocation("shade"),
-                color.redF(), color.greenF(), color.blueF(), 1.0f);
+
+    glUniform4f(Shader::basic->uniformLocation("color_mul"),
+                color.redF()/2, color.greenF()/2, color.blueF()/2, 1.0f);
     glDrawArrays(GL_TRIANGLES, 0, tri_count * 3);
 
     vao.release();
-    Shader::arrow->release();
+    Shader::basic->release();
 }
 

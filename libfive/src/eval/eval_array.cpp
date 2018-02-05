@@ -204,6 +204,14 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::NANFILL:
             out = a.isNaN().select(b, a);
             break;
+        case Opcode::COMPARE:
+            for (auto i=0; i < a.size(); ++i)
+            {
+                if      (a(i) < b(i))   out(i) = -1;
+                else if (a(i) > b(i))   out(i) =  1;
+                else                    out(i) =  0;
+            }
+            break;
 
         case Opcode::SQUARE:
             out = a * a;

@@ -56,13 +56,17 @@ void Background::initializeGL()
 
 void Background::draw()
 {
-    Shader::flat->bind();
+    Shader::basic->bind();
     QMatrix4x4 M;
-    glUniformMatrix4fv(Shader::flat->uniformLocation("M"), 1, GL_FALSE, M.data());
+    glUniform1i(Shader::basic->uniformLocation("shading"), 0); // flat shading
+    glUniform4f(Shader::basic->uniformLocation("color_mul"), 1, 1, 1, 1);
+    glUniform4f(Shader::basic->uniformLocation("color_add"), 0, 0, 0, 0);
+    glUniformMatrix4fv(Shader::basic->uniformLocation("M"),
+                       1, GL_FALSE, M.data());
 
     vao.bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     vao.release();
 
-    Shader::flat->release();
+    Shader::basic->release();
 }

@@ -120,6 +120,10 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             for (Eigen::Index i=0; i < od.rows(); ++i)
                 od.row(i) = av.isNaN().select(bd.row(i), ad.row(i));
             break;
+        case Opcode::COMPARE:
+            for (Eigen::Index i=0; i < od.rows(); ++i)
+                od.row(i).setZero();
+            break;
 
         case Opcode::SQUARE:
             od = ad.rowwise() * av * 2;

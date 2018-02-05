@@ -102,6 +102,9 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::NANFILL:
             od = std::isnan(av) ? bd : ad;
             break;
+        case Opcode::COMPARE:
+            od.setZero();
+            break;
 
         case Opcode::SQUARE:
             od = ad * av * 2;

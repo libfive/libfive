@@ -255,6 +255,7 @@ OP_BINARY(pow,          Kernel::Opcode::POW)
 OP_BINARY(nth_root,     Kernel::Opcode::NTH_ROOT)
 OP_BINARY(mod,          Kernel::Opcode::MOD)
 OP_BINARY(nanfill,      Kernel::Opcode::NANFILL)
+OP_BINARY(compare,      Kernel::Opcode::COMPARE)
 #undef OP_BINARY
 
 

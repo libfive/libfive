@@ -1,5 +1,5 @@
-/*
-Studio: a simple GUI for the libfive CAD kernel
+#|
+Guile bindings to the libfive CAD kernel
 Copyright (C) 2017  Matt Keeter
 
 This program is free software; you can redistribute it and/or
@@ -15,25 +15,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
-#pragma once
+|#
 
-#include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
-#include <QOpenGLFunctions>
+(define-public (clamp a lower upper)
+  "clamp a lower upper
+  Clamps the given value into a particular range"
+  (max lower (min upper a)))
 
-class Icosphere : public QOpenGLFunctions
-{
-public:
-    Icosphere();
-
-    void draw(QMatrix4x4 M, QVector3D pos, float r, QColor color);
-    void initializeGL(int subdiv=4);
-
-protected:
-    QOpenGLBuffer vert_vbo;
-    QOpenGLBuffer tri_vbo;
-    QOpenGLVertexArrayObject vao;
-
-    unsigned tri_count=0;
-};
+(define-public (mix a b h)
+  "mix a b h
+  Mixes the two values based on h (which should be in the 0-1 range)
+  When h = 0, returns a; when h = 1, returns b"
+  (+ (* b h) (* a (- 1 h))))

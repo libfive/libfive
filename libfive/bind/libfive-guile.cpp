@@ -356,18 +356,24 @@ void init_libfive_kernel(void*)
 (overload atan 'atan2)
 (overload modulo 'mod)
 
+(overload compare 'compare)
+(define-method (compare (a <number>) (b <number>))
+  (cond ((< a b) -1)
+        ((> a b)  1)
+        ( else    0)))
+
 (define-method (+ (a <shape>)) a)
 (define-method (* (a <shape>)) a)
 (define-method (min (a <shape>)) a)
 (define-method (max (a <shape>)) a)
 
 (define-method (expt (a <shape>) (b <fraction>))
-  (when (not (rational? b))
-    (scm-error 'wrong-type-arg #f
-        "RHS of exponentiation must be rational, not ~A"
-        (list b) #f))
-  (make-shape 'nth-root (make-tree 'pow a (numerator b))
+  (make-shape 'nth-root (make-shape 'pow a (numerator b))
                         (denominator b)))
+(define-method (expt (a <shape>) (b <number>))
+  (scm-error 'wrong-type-arg #f
+      "RHS of exponentiation must be rational, not ~A"
+      (list b) #f))
 
 (define-method (/ (a <shape>)) (make-shape 'recip a))
 (define-method (- (a <shape>)) (make-shape 'neg a))
@@ -438,10 +444,10 @@ void init_libfive_kernel(void*)
                     (apply append (vs->list a)))))
 
 ;; These are "safe" bindings that can be used in the sandbox
-(define libfive-bindings '(square constant lambda-shape define-shape remap-shape
-                      shape-find-bounds shape->string shape-eval shape-derivs sequence
-                      values-from values->list
-                      libfive-bindings))
+(define libfive-bindings '(
+    square constant compare lambda-shape define-shape remap-shape
+    shape-find-bounds shape->string shape-eval shape-derivs sequence
+    values-from values->list libfive-bindings))
 (eval (cons 'export libfive-bindings) (interaction-environment))
  )");
 
@@ -484,10 +490,16 @@ void init_libfive_sandbox(void*)
     scm_c_eval_string(R"(LIBFIVE_GUILE_SANDBOX)");
 }
 
+void init_libfive_util(void*)
+{
+    scm_c_eval_string(R"(LIBFIVE_GUILE_UTIL)");
+}
+
 void scm_init_libfive_modules()
 {
     // Listed in order of dependencies
     scm_c_define_module("libfive vec", init_libfive_vec, NULL);
+    scm_c_define_module("libfive util", init_libfive_util, NULL);
     scm_c_define_module("libfive kernel", init_libfive_kernel, NULL);
     scm_c_define_module("libfive csg", init_libfive_csg, NULL);
     scm_c_define_module("libfive transforms", init_libfive_transforms, NULL);

@@ -26,7 +26,7 @@ namespace Kernel {
 ////////////////////////////////////////////////////////////////////////////////
 
 /*  Compile-time power */
-static constexpr int _pow(unsigned P, unsigned N)
+static constexpr unsigned _pow(unsigned P, unsigned N)
 { return (N == 0) ? 1 : P * _pow(P, N - 1); }
 
 static constexpr unsigned _upow(unsigned P, unsigned N)

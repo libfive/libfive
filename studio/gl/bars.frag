@@ -1,6 +1,6 @@
 #version 330
 
-in vec3 frag_pos;
+in vec3 base_pos;
 uniform float fade;
 
 out vec4 frag_color;
@@ -26,7 +26,7 @@ float bar(vec2 pos)
 
 void main()
 {
-    vec2 pos = frag_pos.xy;
+    vec2 pos = base_pos.xy;
 
     float r = 0.05;
     vec3 base = vec3(1.0, 1.0, 1.0);

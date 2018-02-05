@@ -31,6 +31,8 @@ public:
     void initializeGL();
 
 protected:
+    void bindShader(QMatrix4x4 M);
+
     QOpenGLBuffer solid_vbo;
     QOpenGLVertexArrayObject solid_vao;
 

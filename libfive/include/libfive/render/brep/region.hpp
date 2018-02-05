@@ -44,7 +44,8 @@ public:
     /*
      *  Constructs a region with the given bounds
      */
-    Region(Pt lower, Pt upper) : lower(lower), upper(upper), perp(0) {}
+    Region(Pt lower, Pt upper) : lower(lower), upper(upper),
+                                 perp(Perp::Zero()) {}
 
     /*
      *  Construct a region with the given bounds
@@ -65,7 +66,8 @@ public:
             case 1: return upper;
             default: assert(false);
         }
-        throw std::runtime_error("Range: Index out of range");
+        assert(false);
+        return lower;
     }
 
     /*
