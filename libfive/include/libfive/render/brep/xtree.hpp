@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <Eigen/Eigen>
 
+#include "libfive/export.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/marching.hpp"
 #include "libfive/render/brep/eval_xtree.hpp"
@@ -106,7 +107,7 @@ public:
      *  Unpack the vertex into a 3-element array
      *  (using the region's perpendicular coordinates)
      */
-    Eigen::Vector3d vert3(unsigned index=0) const;
+    FIVE_EXPORT Eigen::Vector3d vert3(unsigned index=0) const;
 
     /*  The region filled by this XTree */
     const Region<N> region;
