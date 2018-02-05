@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <Eigen/StdVector>
 
+#include "libfive/export.hpp"
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/axes.hpp"
 
