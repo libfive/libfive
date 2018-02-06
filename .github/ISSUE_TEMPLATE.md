@@ -14,6 +14,7 @@ Please read through this template to preempt common question.
 
 - Operating system: [here]
 - `libfive` commit hash: [here]
+  - Is this the latest commit to `master`?  [yes]
 - Qt version (if applicable): [here]
 
 ### Additional Information
