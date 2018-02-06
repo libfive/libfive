@@ -27,9 +27,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 int main(int argc, char** argv)
 {
-    {   // Configure default OpenGL as 3.3 Core
+    {   // Configure default OpenGL as 3.2 Core
         QSurfaceFormat format;
-        format.setVersion(3, 3);
+        format.setVersion(3, 2);
         format.setProfile(QSurfaceFormat::CoreProfile);
         format.setSamples(8);
         QSurfaceFormat::setDefaultFormat(format);
