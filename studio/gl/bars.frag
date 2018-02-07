@@ -1,4 +1,4 @@
-#version 330
+#version 150
 
 in vec3 base_pos;
 uniform float fade;
