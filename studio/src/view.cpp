@@ -222,7 +222,7 @@ void View::redrawPicker()
 
     // We may not have the OpenGL context, so we claim it here
     // (and release it at the bottom if it was claimed)
-    const bool needs_gl = !(context() == QOpenGLContext::currentContext());
+    const bool needs_gl = (context() != QOpenGLContext::currentContext());
     if (needs_gl)
     {
         makeCurrent();
