@@ -165,3 +165,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
           (error "Expected terminating #\\]"))))))
 
 (export .x .y .z)
+
+(define-public (vec-constructor . args)
+  (cond ((= 2 (length args)) (apply vec2 args))
+        ((= 3 (length args)) (apply vec3 args))
+        (else (error "Wrong number of arguments for vector"))))

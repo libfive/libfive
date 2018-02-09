@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
 (use-modules (ice-9 sandbox) (ice-9 textual-ports) (libfive kernel)
-             (rnrs io ports) (system vm frame))
+             (libfive vec) (rnrs io ports) (system vm frame))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -121,6 +121,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ))
 
 (define-public (eval-sandboxed str)
+  (read-enable 'curly-infix)
+  (read-disable 'square-brackets)
   (let ((mod (make-sandbox-module sandbox-bindings))
         (in (open-input-string str))
         (failed #f)
@@ -128,6 +130,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
         (prev-vars (make-hash-table)))
     (hash-map->list (lambda (k v) (hash-set! prev-vars (car v) (cadr v))) vars)
     (hash-clear! vars)
+    (eval '(define $bracket-list$ vec-constructor) mod)
     (let loop ((i 0))
       ;; Attempt to read the next clause, storing text location
       (let ((before (cons (port-line in) (port-column in)))
