@@ -413,10 +413,14 @@ void init_libfive_kernel(void*)
 (define-syntax-rule (define-shape (name . vars) body ...)
   (define name (lambda-shape vars body ...)))
 
-(define-syntax-rule (remap-shape (shape . vars) x y z)
-  (shape-eval shape #[(lambda-shape vars x)
-                      (lambda-shape vars y)
-                      (lambda-shape vars z)]))
+(define-syntax remap-shape
+  (syntax-rules ()
+    ((remap-shape (shape . vars) x y z)
+        (remap-shape shape vars x y z))
+    ((remap-shape shape (. vars) x y z)
+        (shape-eval shape #[(lambda-shape vars x)
+                            (lambda-shape vars y)
+                            (lambda-shape vars z)]))))
 
 (define-syntax sequence_
   (syntax-rules ()
