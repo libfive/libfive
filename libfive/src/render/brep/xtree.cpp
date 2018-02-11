@@ -238,7 +238,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 // Handle inside, outside, and (non-ambiguous) on-boundary
-                if (vs(i) > 0 || std::isnan(vs(i)))
+                if (vs(i) > 0 || !std::isfinite(vs(i)))
                 {
                     corners[i] = Interval::EMPTY;
                     ambig(i) = false;
@@ -521,7 +521,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                     // Find normalized derivatives and distance value
                     Eigen::Matrix<double, N + 1, 1> dv;
                     dv << derivs / norm, ds.col(i).w() / norm;
-                    if (!dv.array().isNaN().any())
+                    if (!dv.array().isFinite().all())
                     {
                         intersections.push_back({
                             (i & 1) ? targets[i/2].second : targets[i/2].first,
@@ -555,7 +555,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                         // Find normalized derivatives and distance value
                         Eigen::Matrix<double, N + 1, 1> dv;
                         dv << derivs / norm, ds.w() / norm;
-                        if (!dv.array().isNaN().any())
+                        if (!dv.array().isFinite().all())
                         {
                             intersections.push_back({
                                 (i & 1) ? targets[i/2].second
