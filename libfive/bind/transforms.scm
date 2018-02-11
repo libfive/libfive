@@ -214,3 +214,141 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     (remap-shape (shape x y z)
       (- (sqrt (+ (square x) (square z)))) y z)))
 (export revolve-y)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Twirls
+
+(define* (twirl-x shape a r #:optional (center #[0 0 0]))
+  "twirl-x shape amount radius [center]
+  Twirls the shape in the x axis
+  around the optional center point"
+  (define (falloff point) (exp (- (/ (norm point) r))) )
+  (define (fa op a point) (op (* a (falloff point))) )
+  (move
+    (remap-shape ((move shape (- center)) x y z)
+      x
+      (+
+        (* (fa cos a (vec3 x y z)) y)
+        (* (fa sin a (vec3 x y z)) z)
+      )
+      (+
+        (* (- (fa sin a (vec3 x y z))) y)
+        (*    (fa cos a (vec3 x y z))  z)
+      )
+    )
+  center)
+)
+(export twirl-x)
+
+(define* (twirl-axis-x shape a r #:optional (center #[0 0 0]))
+  "twirl-axis-x shape amount radius [center]
+  Twirls the shape in the x axis
+  around the line extending from
+  the center point"
+  (define (falloff point) (exp (- (/ (norm point) r))) )
+  (define (fa op a point) (op (* a (falloff point))) )
+  (move
+    (remap-shape ((move shape (- center)) x y z)
+      x
+      (+
+        (* (fa cos a (vec2 y z)) y)
+        (* (fa sin a (vec2 y z)) z)
+      )
+      (+
+        (* (- (fa sin a (vec2 y z))) y)
+        (*    (fa cos a (vec2 y z))  z)
+      )
+    )
+  center)
+)
+(export twirl-axis-x)
+
+(define* (twirl-y shape a r #:optional (center #[0 0 0]))
+  "twirl-y shape amount radius [center]
+  Twirls the shape in the y axis
+  around the optional center point"
+  (define (falloff point) (exp (- (/ (norm point) r))) )
+  (define (fa op a point) (op (* a (falloff point))) )
+  (move
+    (remap-shape ((move shape (- center)) x y z)
+      (+
+        (* (fa cos a (vec3 x y z)) x)
+        (* (fa sin a (vec3 x y z)) z)
+      )
+      y
+      (+
+        (* (- (fa sin a (vec3 x y z))) x)
+        (*    (fa cos a (vec3 x y z))  z)
+      )
+    )
+  center)
+)
+(export twirl-y)
+
+(define* (twirl-axis-y shape a r #:optional (center #[0 0 0]))
+  "twirl-axis-y shape amount radius [center]
+  Twirls the shape in the y axis
+  around the line extending from
+  the center point"
+  (define (falloff point) (exp (- (/ (norm point) r))) )
+  (define (fa op a point) (op (* a (falloff point))) )
+  (move
+    (remap-shape ((move shape (- center)) x y z)
+      (+
+        (* (fa cos a (vec2 x z)) x)
+        (* (fa sin a (vec2 x z)) z)
+      )
+      y
+      (+
+        (* (- (fa sin a (vec2 x z))) x)
+        (*    (fa cos a (vec2 x z))  z)
+      )
+    )
+  center)
+)
+(export twirl-axis-y)
+
+(define* (twirl-z shape a r #:optional (center #[0 0 0]))
+  "twirl-z shape amount radius [center]
+  Twirls the shape in the z axis
+  around the optional center point"
+  (define (falloff point) (exp (- (/ (norm point) r))) )
+  (define (fa op a point) (op (* a (falloff point))) )
+  (move
+    (remap-shape ((move shape (- center)) x y z)
+      (+
+        (* (fa cos a (vec3 x y z)) x)
+        (* (fa sin a (vec3 x y z)) y)
+      )
+      (+
+        (* (- (fa sin a (vec3 x y z))) x)
+        (*    (fa cos a (vec3 x y z))  y)
+      )
+      z
+    )
+  center)
+)
+(export twirl-z)
+
+(define* (twirl-axis-z shape a r #:optional (center #[0 0 0]))
+  "twirl-axis-z shape amount radius [center]
+  Twirls the shape in the y axis
+  around the line extending from
+  the center point"
+  (define (falloff point) (exp (- (/ (norm point) r))) )
+  (define (fa op a point) (op (* a (falloff point))) )
+  (move
+    (remap-shape ((move shape (- center)) x y z)
+      (+
+        (* (fa cos a (vec2 x y)) x)
+        (* (fa sin a (vec2 x y)) y)
+      )
+      (+
+        (* (- (fa sin a (vec2 x y))) x)
+        (*    (fa cos a (vec2 x y))  y)
+      )
+      z
+    )
+  center)
+)
+(export twirl-axis-z)
