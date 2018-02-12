@@ -218,25 +218,58 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Twirls
 
+(define (generic-centered-twirl-x shape a r vecmaker)
+  (define (falloff point) (exp (- (/ (norm point) r))) )
+  (define (fa op a point) (op (* a (falloff point))) )
+  (remap-shape shape (x y z)
+    x
+    (+
+      (* (fa cos a (vecmaker x y z)) y)
+      (* (fa sin a (vecmaker x y z)) z)
+    )
+    (+
+      (* (- (fa sin a (vecmaker x y z))) y)
+      (*    (fa cos a (vecmaker x y z))  z)
+    )
+  )
+)
+
+(define (centered-twirl-x shape a r)
+  (generic-centered-twirl-x shape a r (lambda (x y z) (vec3 x y z)))
+)
+
+(define (centered-twirl-axis-x shape a r)
+  (generic-centered-twirl-x shape a r (lambda (x y z) (vec2 y z)))
+)
+
+(define (generic-twirl-n shape a r center method axisremap)
+  (sequence
+    shape
+    (move (- center))
+    (axisremap)
+    (method a r)
+    (axisremap)
+    (move center)
+  )
+)
+
+(define (generic-twirl-x shape a r center method)
+  (generic-twirl-n shape a r center method (lambda (subshape) (remap-shape subshape (x y z) x y z)))
+)
+
+(define (generic-twirl-y shape a r center method)
+  (generic-twirl-n shape a r center method (lambda (subshape) (remap-shape subshape (x y z) y x z)))
+)
+
+(define (generic-twirl-z shape a r center method)
+  (generic-twirl-n shape a r center method (lambda (subshape) (remap-shape subshape (x y z) z y x)))
+)
+
 (define* (twirl-x shape a r #:optional (center #[0 0 0]))
   "twirl-x shape amount radius [center]
   Twirls the shape in the x axis
   around the optional center point"
-  (define (falloff point) (exp (- (/ (norm point) r))) )
-  (define (fa op a point) (op (* a (falloff point))) )
-  (move
-    (remap-shape ((move shape (- center)) x y z)
-      x
-      (+
-        (* (fa cos a (vec3 x y z)) y)
-        (* (fa sin a (vec3 x y z)) z)
-      )
-      (+
-        (* (- (fa sin a (vec3 x y z))) y)
-        (*    (fa cos a (vec3 x y z))  z)
-      )
-    )
-  center)
+  (generic-twirl-x shape a r center centered-twirl-x)
 )
 (export twirl-x)
 
@@ -245,21 +278,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Twirls the shape in the x axis
   around the line extending from
   the center point"
-  (define (falloff point) (exp (- (/ (norm point) r))) )
-  (define (fa op a point) (op (* a (falloff point))) )
-  (move
-    (remap-shape ((move shape (- center)) x y z)
-      x
-      (+
-        (* (fa cos a (vec2 y z)) y)
-        (* (fa sin a (vec2 y z)) z)
-      )
-      (+
-        (* (- (fa sin a (vec2 y z))) y)
-        (*    (fa cos a (vec2 y z))  z)
-      )
-    )
-  center)
+  (generic-twirl-x shape a r center centered-twirl-axis-x)
 )
 (export twirl-axis-x)
 
@@ -267,21 +286,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   "twirl-y shape amount radius [center]
   Twirls the shape in the y axis
   around the optional center point"
-  (define (falloff point) (exp (- (/ (norm point) r))) )
-  (define (fa op a point) (op (* a (falloff point))) )
-  (move
-    (remap-shape ((move shape (- center)) x y z)
-      (+
-        (* (fa cos a (vec3 x y z)) x)
-        (* (fa sin a (vec3 x y z)) z)
-      )
-      y
-      (+
-        (* (- (fa sin a (vec3 x y z))) x)
-        (*    (fa cos a (vec3 x y z))  z)
-      )
-    )
-  center)
+  (generic-twirl-y shape a r center centered-twirl-x)
 )
 (export twirl-y)
 
@@ -290,21 +295,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Twirls the shape in the y axis
   around the line extending from
   the center point"
-  (define (falloff point) (exp (- (/ (norm point) r))) )
-  (define (fa op a point) (op (* a (falloff point))) )
-  (move
-    (remap-shape ((move shape (- center)) x y z)
-      (+
-        (* (fa cos a (vec2 x z)) x)
-        (* (fa sin a (vec2 x z)) z)
-      )
-      y
-      (+
-        (* (- (fa sin a (vec2 x z))) x)
-        (*    (fa cos a (vec2 x z))  z)
-      )
-    )
-  center)
+  (generic-twirl-y shape a r center centered-twirl-axis-x)
 )
 (export twirl-axis-y)
 
@@ -312,21 +303,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   "twirl-z shape amount radius [center]
   Twirls the shape in the z axis
   around the optional center point"
-  (define (falloff point) (exp (- (/ (norm point) r))) )
-  (define (fa op a point) (op (* a (falloff point))) )
-  (move
-    (remap-shape ((move shape (- center)) x y z)
-      (+
-        (* (fa cos a (vec3 x y z)) x)
-        (* (fa sin a (vec3 x y z)) y)
-      )
-      (+
-        (* (- (fa sin a (vec3 x y z))) x)
-        (*    (fa cos a (vec3 x y z))  y)
-      )
-      z
-    )
-  center)
+  (generic-twirl-z shape a r center centered-twirl-x)
 )
 (export twirl-z)
 
@@ -335,20 +312,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Twirls the shape in the y axis
   around the line extending from
   the center point"
-  (define (falloff point) (exp (- (/ (norm point) r))) )
-  (define (fa op a point) (op (* a (falloff point))) )
-  (move
-    (remap-shape ((move shape (- center)) x y z)
-      (+
-        (* (fa cos a (vec2 x y)) x)
-        (* (fa sin a (vec2 x y)) y)
-      )
-      (+
-        (* (- (fa sin a (vec2 x y))) x)
-        (*    (fa cos a (vec2 x y))  y)
-      )
-      z
-    )
-  center)
+  (generic-twirl-z shape a r center centered-twirl-axis-x)
 )
 (export twirl-axis-z)
