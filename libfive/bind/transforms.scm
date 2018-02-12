@@ -235,7 +235,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 )
 
 (define (centered-twirl-x shape a r)
-  (generic-centered-twirl-x shape a r (lambda (x y z) (vec3 x y z)))
+  (generic-centered-twirl-x shape a r vec3)
 )
 
 (define (centered-twirl-axis-x shape a r)
@@ -254,15 +254,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 )
 
 (define (generic-twirl-x shape a r center method)
-  (generic-twirl-n shape a r center method (lambda (subshape) (remap-shape subshape (x y z) x y z)))
+  (generic-twirl-n shape a r center method (lambda (subshape) subshape))
 )
 
 (define (generic-twirl-y shape a r center method)
-  (generic-twirl-n shape a r center method (lambda (subshape) (remap-shape subshape (x y z) y x z)))
+  (generic-twirl-n shape a r center method reflect-xy)
 )
 
 (define (generic-twirl-z shape a r center method)
-  (generic-twirl-n shape a r center method (lambda (subshape) (remap-shape subshape (x y z) z y x)))
+  (generic-twirl-n shape a r center method reflect-xz)
 )
 
 (define* (twirl-x shape a r #:optional (center #[0 0 0]))
