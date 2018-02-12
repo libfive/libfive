@@ -6,6 +6,10 @@ ADD_CUSTOM_COMMAND(
            ${CMAKE_CURRENT_BINARY_DIR}/_version.c
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake)
 
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DFIVE_DLL")
+endif()
+
 add_library(five SHARED
     eval/base.cpp
     eval/eval_interval.cpp
