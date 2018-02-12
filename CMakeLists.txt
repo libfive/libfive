@@ -9,15 +9,23 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 ################################################################################
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -g -fPIC -pedantic -Werror=switch -march=native")
-if (APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -g -fPIC -pedantic -Werror=switch -march=native")
+    if (APPLE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")
+    endif()
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    set(CMAKE_CXX_FLAGS "/EHsc /WX /D_USE_MATH_DEFINES")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267 /wd4244 /wd4305")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
 
-set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -DRELEASE -DEIGEN_NO_DEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG    "-O0")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DRELEASE -DEIGEN_NO_DEBUG")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,13 +43,17 @@ endif()
 
 ################################################################################
 # Find all packages here at the top level so we can print debugging info
+if(NOT MSVC)
 find_package(Qt5Core)
 find_package(Boost REQUIRED)
-find_package(PNG REQUIRED)
-
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GUILE guile-2.2)
 pkg_check_modules(EIGEN REQUIRED eigen3)
+else()
+find_package(eigen3 REQUIRED)
+find_package(boost REQUIRED)
+endif()
+find_package(PNG REQUIRED)
 
 if (UNIX AND NOT(APPLE))
     find_package(Threads REQUIRED)

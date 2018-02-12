@@ -57,6 +57,17 @@ sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev qtbase5-dev guile
 ```
 (untested; open an issue or PR if this doesn't work for you)
 
+On Windows + Visual Studio 2017, run from libfive folder
+```
+git clone https://github.com/Microsoft/vcpkg.git
+vcpkg\bootstrap-vcpkg.bat
+vcpkg\vcpkg install eigen3:x86-windows-static boost:x86-windows-static libpng:x86-windows-static
+md build
+cd build
+cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
+```
+Now open `build\libfiv.sln` and build the solution. Check that `libfive-test` runs correctly.
+
 Qt and Guile are optional; if they aren't present, then
 the Guile bindings and Studio will not be included in the build
 (and `cmake` will print a message to that effect).
