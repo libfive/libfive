@@ -55,6 +55,7 @@ else()
     find_package(eigen3 REQUIRED)
     find_package(boost REQUIRED)
 endif()
+
 find_package(PNG REQUIRED)
 
 if (UNIX AND NOT(APPLE))
