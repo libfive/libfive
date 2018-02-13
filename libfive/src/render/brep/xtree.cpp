@@ -212,32 +212,68 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             }
 
             // Evaluate the region's corners and check their states
-            auto ds = eval->array.derivs(children.size());
+            // We handle evaluation in three phases:
+            // 1)  Evaluate the distance field at corners, mark < 0 or > 0
+            //     as filled or empty.
+            // 2)  For values that are == 0 but not ambiguous (i.e. do not
+            //     have a min / max where both branches are possible),
+            //     evaluate the derivatives and mark the corner as filled if
+            //     there are non-zero derivatives (because that means that we
+            //     can find an inside-outside transition).
+            // 3)  For values that are == 0 and ambiguous, call isInside
+            //     (the heavy hitter of inside-outside checking).
+            auto vs = eval->array.values(children.size());
+
+            // We store ambiguity here, but clear it if the point is inside
+            // or outside (so after the loop below, ambig(i) is only set if
+            // pos[i] is both == 0 and ambiguous).
             auto ambig = eval->array.getAmbiguous(children.size());
+
+            // This is a count of how many points there are that == 0
+            // but are unambiguous; unambig_remap[z] returns the index
+            // into the pos[] array for a particular unambiguous zero.
+            uint8_t unambiguous_zeros = 0;
+            std::array<int, 1 << N> unambig_remap;
+
+            // This is phase 1, as described above
             for (uint8_t i=0; i < children.size(); ++i)
             {
                 // Handle inside, outside, and (non-ambiguous) on-boundary
-                if (ds.col(i).w() > 0 || std::isnan(ds.col(i).w()))
+                if (vs(i) > 0 || !std::isfinite(vs(i)))
                 {
                     corners[i] = Interval::EMPTY;
+                    ambig(i) = false;
                 }
-                else if (ds.col(i).w() < 0)
+                else if (vs(i) < 0)
                 {
                     corners[i] = Interval::FILLED;
+                    ambig(i) = false;
                 }
                 else if (!ambig(i))
                 {
-                    // Optimization for non-ambiguous features
-                    // (see explanation in FeatureEvaluator::isInside)
-                    corners[i] = (ds.col(i).template head<3>() != 0).any()
-                        ? Interval::FILLED : Interval::EMPTY;
+                    eval->array.set(pos[i], unambiguous_zeros);
+                    unambig_remap[unambiguous_zeros] = i;
+                    unambiguous_zeros++;
                 }
             }
 
-            // Separate pass for handling ambiguous corners
+            // Phase 2: Optimization for non-ambiguous features
+            // (see explanation in FeatureEvaluator::isInside)
+            if (unambiguous_zeros)
+            {
+                auto ds = eval->array.derivs(unambiguous_zeros);
+                for (unsigned i=0; i < unambiguous_zeros; ++i)
+                {
+                    corners[unambig_remap[i]] =
+                        (ds.col(i).template head<3>() != 0).any()
+                            ? Interval::FILLED : Interval::EMPTY;
+                }
+            }
+
+            // Phase 3: One last pass for handling ambiguous corners
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                if (ds.col(i).w() == 0 && ambig(i))
+                if (ambig(i))
                 {
                     corners[i] = eval->feature.isInside(pos[i])
                         ? Interval::FILLED : Interval::EMPTY;
@@ -486,7 +522,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                     // Find normalized derivatives and distance value
                     Eigen::Matrix<double, N + 1, 1> dv;
                     dv << derivs / norm, ds.col(i).w() / norm;
-                    if (!dv.array().isNaN().any())
+                    if (dv.array().isFinite().all())
                     {
                         intersections.push_back({
                             (i & 1) ? targets[i/2].second : targets[i/2].first,
@@ -520,7 +556,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                         // Find normalized derivatives and distance value
                         Eigen::Matrix<double, N + 1, 1> dv;
                         dv << derivs / norm, ds.w() / norm;
-                        if (!dv.array().isNaN().any())
+                        if (dv.array().isFinite().all())
                         {
                             intersections.push_back({
                                 (i & 1) ? targets[i/2].second
