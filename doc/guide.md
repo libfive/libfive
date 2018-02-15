@@ -178,4 +178,33 @@ The `remap-shape` macro also works in this context:
 
 ## Working with `values`
 
-# Working from the command line
+# Working from the Guile command line
+If you run `make install` on a Mac or Linux system,
+`libfive-guile.{dylib,so}` will be copied to your library folder
+(e.g. `/usr/local/lib`).
+
+You can then load it as an extension from the Guile command line:
+```
+bash-4.4$ guile
+GNU Guile 2.2.3
+Copyright (C) 1995-2017 Free Software Foundation, Inc.
+
+Guile comes with ABSOLUTELY NO WARRANTY; for details type `,show w'.
+This program is free software, and you are welcome to redistribute it
+under certain conditions; type `,show c' for details.
+
+Enter `,help' for help.
+scheme@(guile-user)> (load-extension "libfive-guile" "scm_init_libfive_modules")
+scheme@(guile-user)> (use-modules (libfive kernel) (libfive vec) (libfive csg) (libfive shapes))
+scheme@(guile-user)> (circle 1)
+$1 = #<<shape> 102275140>
+scheme@(guile-user)> (shape->mesh $1 "out.stl" 10 '((-2 . 2) (-2 . 2) (-2 . 2)))
+$2 = #t
+scheme@(guile-user)> (quit)
+bash-4.4$ open out.stl
+```
+
+You can also do this from the `build` directory, loading the extension with
+```
+scheme@(guile-user)> (load-extension "libfive/bind/libfive-guile" "scm_init_libfive_modules")
+```
