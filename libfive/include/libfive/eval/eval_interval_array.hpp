@@ -79,7 +79,7 @@ public:
     /*
      *  Get a particular evaluated value
      */
-    Interval::I get(size_t i);
+    Interval::I get(size_t j) { return i(j); }
 
     /*
      *  Changes a variable's value
