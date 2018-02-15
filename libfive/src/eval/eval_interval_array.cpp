@@ -57,12 +57,12 @@ Interval::I IntervalArrayEvaluator::eval(const Eigen::Vector3f& lower,
     const Eigen::Vector3f center = (lower + upper) / 2;
     for (unsigned j=0; j < N; ++j)
     {
-        i(tape->X, j) = (j & Axis::X) ? Interval::I(lower.x(),  center.x())
-                                      : Interval::I(center.x(), upper.x());
-        i(tape->Y, j) = (j & Axis::Y) ? Interval::I(lower.y(),  center.y())
-                                      : Interval::I(center.y(), upper.y());
-        i(tape->Z, j) = (j & Axis::Z) ? Interval::I(lower.z(),  center.z())
-                                      : Interval::I(center.z(), upper.z());
+        i(tape->X, j) = (j & Axis::X) ? Interval::I(center.x(), upper.x())
+                                      : Interval::I(lower.x(),  center.x());
+        i(tape->Y, j) = (j & Axis::Y) ? Interval::I(center.y(), upper.y())
+                                      : Interval::I(lower.y(),  center.y());
+        i(tape->Z, j) = (j & Axis::Z) ? Interval::I(center.z(), upper.z())
+                                      : Interval::I(lower.z(),  center.z());
     }
 
     auto index = tape->rwalk(*this);
