@@ -28,10 +28,54 @@ FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Tape> t)
 
 FeatureEvaluator::FeatureEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : DerivEvaluator(t, vars)
+    : DerivEvaluator(t, vars), dOrAll(tape->num_clauses + 1)
 {
     // Nothing to do here
 }
+
+Eigen::Vector4f FeatureEvaluator::deriv(const Eigen::Vector3f& pt)
+{
+    // Load gradients of oracles; only use the first gradient of each here 
+    // (following precedent for min and max evaluation).  
+    for (auto or : tape->oracles)
+    {
+        // Other than this line, it's the same as the DerivEvaluator version.
+        dOrAll(or.first) = or.second.first->getGradients(pt); 
+        d.col(or .first) = or.second.first->getGradients(pt).begin()->first;
+    }
+    // Perform value evaluation, saving results
+    auto w = eval(pt);
+    auto xyz = d.col(tape->rwalk(*this));
+
+    Eigen::Vector4f out;
+    out << xyz, w;
+    return out;
+}
+
+Eigen::Vector4f FeatureEvaluator::deriv(
+    const Eigen::Vector3f& pt, const Feature& feature)
+{
+    if (feature.getOracleChoices().empty())
+    {
+        return deriv(pt);
+    }
+    // Load gradients of ambiguous primitives (non-ambiguous ones are 
+    // assumed to have already been loaded). 
+    for (auto or : feature.getOracleChoices()) 
+    {
+        d.col(or.id) = or.choice;
+    }
+    
+    // Perform derivative evaluation, saving results 
+    // (value evaluation is assumed to have already been done.) 
+
+    auto w = eval(pt);
+    auto xyz = d.col(tape->rwalk(*this));
+
+    Eigen::Vector4f out;
+    out << xyz, w;
+    return out;
+    }
 
 Feature FeatureEvaluator::push(const Feature& feature)
 {
@@ -101,10 +145,11 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
     {
         bool ambig = false;
         tape->walk(
-            [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
+            [&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
             {
                 ambig |= (op == Opcode::MIN || op == Opcode::MAX) &&
                          (f(a) == f(b));
+                ambig |= (op == Opcode::ORACLE && dOrAll(id).size() > 1);
             }, ambig);
 
         if (!ambig)
@@ -146,7 +191,9 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
     Feature feature;
     std::list<Feature> todo = {feature};
     std::list<Feature> done;
-    std::set<std::set<Feature::Choice>> seen;
+    std::set<std::pair<std::set<Feature::Choice>, 
+        std::set<Feature::OracleChoice>>> seen;
+    bool derivsGathered = false; //Set to true when deriv is first called.
 
     // Load the location into the first results slot and evaluate
     evalAndPush(p);
@@ -165,16 +212,56 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
         // (storing a minimized version of the feature)
         auto f_ = push(feature);
 
-        // Run a single evaluation of the value + derivatives
-        // The value will be the same, but derivatives may change
-        // depending on which feature we've pushed ourselves into
-        const Eigen::Vector3f ds = deriv(p).template head<3>();
+        // Evaluate the derivatives at this point for this feature. 
+        // The value will be the same throughout, but derivatives may change
+        // depending on which feature we're in.
+
+        // The first call has a blank feature, so it populates non-ambiguous 
+        // oracles and gets and stores all gradients for all oracles.
+
+        const Eigen::Vector4f ds = derivsGathered
+            ? deriv(p, feature) 
+            : deriv(p);
+        derivsGathered = true;
 
         bool ambiguous = false;
         tape->rwalk(
             [&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
             {
-                if ((op == Opcode::MIN || op == Opcode::MAX))
+                if (op == Opcode::ORACLE && dOrAll(id).size() > 1)
+                {
+                    const auto& choices = feature.getChoices();
+                    const auto& location = std::find_if(
+                        choices.begin(), choices.end(),
+                        [id](auto choice) {return choice.id == id; });
+                    if (location == choices.end())
+                    {
+                        for (auto choice : dOrAll(id))
+                        {
+                            auto fNew = f_;
+                            for (auto choice2 : dOrAll(id)) 
+                            {
+                                if (choice != choice2) 
+                                {
+                                    Eigen::Vector3f epsilon =
+                                        choice.second - choice2.second;
+                                    if (!fNew.push(
+                                        epsilon.template cast<double>(), 
+                                        { id, choice.first }))
+                                    { 
+                                        goto continueOuterLoop;
+                                    }
+                                }
+                            }
+                            ambiguous = true;
+                            todo.push_back(fNew);
+                            continueOuterLoop:
+                            ambiguous = ambiguous; 
+                                //Because labels require statements
+                        }
+                    }
+                }
+                else if ((op == Opcode::MIN || op == Opcode::MAX))
                 {
                     // If we've ended up with a non-selection, then collapse
                     // it to a single choice
@@ -212,13 +299,12 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
                     }
                 }
             }, ambiguous);
-
         if (!ambiguous)
         {
             f_.deriv = ds.col(0).template head<3>().template cast<double>();
-            if (seen.find(f_.getChoices()) == seen.end())
+            if (seen.find({ f_.getChoices(), f_.getOracleChoices() }) == seen.end())
             {
-                seen.insert(f_.getChoices());
+                seen.insert({ f_.getChoices(), f_.getOracleChoices() });
                 done.push_back(f_);
             }
         }

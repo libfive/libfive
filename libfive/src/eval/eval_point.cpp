@@ -51,7 +51,9 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt)
     f(tape->X) = pt.x();
     f(tape->Y) = pt.y();
     f(tape->Z) = pt.z();
-
+    for (auto or : tape->oracles) {
+        f(or.first) = or.second.first->getValue(pt);
+    }
     return f(tape->rwalk(*this));
 }
 
@@ -228,6 +230,7 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR:
+        case Opcode::ORACLE:
         case Opcode::LAST_OP: assert(false);
     }
 #undef out

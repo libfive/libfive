@@ -250,7 +250,6 @@ TEST_CASE("XTree<3>::build (vertex positioning with vertices on octree walls)")
 
     std::list<std::pair<const XTree<3>*, const XTree<3>*>> targets = {
         {x->child(0),       x->child(Axis::Z)},
-        {x->child(Axis::Y), x->child(Axis::Y|Axis::Z)},
         {x->child(Axis::X), x->child(Axis::X|Axis::Z)},
         {x->child(Axis::Y), x->child(Axis::Y|Axis::Z)},
         {x->child(Axis::X|Axis::Y), x->child(Axis::X|Axis::Y|Axis::Z)}
@@ -264,7 +263,6 @@ TEST_CASE("XTree<3>::build (vertex positioning with vertices on octree walls)")
         {
             assert(p.second->isBranch());
             targets.push_back({p.first->child(Axis::Z), p.second->child(0)});
-            targets.push_back({p.first->child(Axis::Y|Axis::Z), p.second->child(Axis::Y)});
             targets.push_back({p.first->child(Axis::X|Axis::Z), p.second->child(Axis::X)});
             targets.push_back({p.first->child(Axis::Y|Axis::Z), p.second->child(Axis::Y)});
             targets.push_back({p.first->child(Axis::X|Axis::Y|Axis::Z), p.second->child(Axis::X|Axis::Y)});
@@ -272,6 +270,8 @@ TEST_CASE("XTree<3>::build (vertex positioning with vertices on octree walls)")
         else if (!p.second->isBranch() && p.first->vertex_count == 1 &&
                                           p.second->vertex_count == 1)
         {
+            CAPTURE(p.first->cornerPos(0));
+            CAPTURE(p.second->cornerPos(0));
             CAPTURE(p.first->vert(0));
             CAPTURE(p.second->vert(0));
             REQUIRE((p.first->vert(0) - p.second->vert(0)).norm() < 1e-3);

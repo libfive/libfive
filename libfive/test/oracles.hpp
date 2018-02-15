@@ -1,0 +1,152 @@
+/*
+libfive: a CAD kernel for modeling with implicit functions
+Copyright (C) 2017  Matt Keeter
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+
+#pragma once
+
+#include <algorithm>
+#include "libfive/render/brep/brep.hpp"
+#include "libfive/tree/oracle.hpp"
+
+/*  The following classes and function are used to test both the oracle
+ *  interface and the transformed_oracle instantiation.
+ */
+
+namespace Kernel
+{
+
+class XAsOracle : public Oracle
+{
+    Interval::I getRange(Region<2> region) const override
+    {
+        return { region.lower.x(), region.upper.x() };
+    }
+
+    Interval::I getRange(Region<3> region) const override
+    {
+        return { region.lower.x(), region.upper.x() };
+    }
+
+    boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
+        getGradients(Eigen::Vector3f point) const override
+    {
+        return { { {1.f, 0.f, 0.f}, {0.f, 0.f, 0.f} } };
+    }
+
+    float getValue(Eigen::Vector3f point) const override
+    {
+        return point.x();
+    }
+};
+
+class YAsOracle : public Oracle
+{
+    Interval::I getRange(Region<2> region) const override
+    {
+        return { region.lower.y(), region.upper.y() };
+    }
+
+    Interval::I getRange(Region<3> region) const override
+    {
+        return { region.lower.y(), region.upper.y() };
+    }
+
+    boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
+        getGradients(Eigen::Vector3f point) const override
+    {
+        return { { { 0.f, 1.f, 0.f },{ 0.f, 0.f, 0.f } } };
+    }
+
+    float getValue(Eigen::Vector3f point) const override
+    {
+        return point.y();
+    }
+};
+
+class ZAsOracle : public Oracle
+{
+    Interval::I getRange(Region<2> region) const override
+    {
+        return { region.perp(0), region.perp(0) };
+    }
+
+    Interval::I getRange(Region<3> region) const override
+    {
+        return { region.lower.z(), region.upper.z() };
+    }
+
+    boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
+        getGradients(Eigen::Vector3f point) const override
+    {
+        return { { { 0.f, 0.f, 1.f },{ 0.f, 0.f, 0.f } } };
+    }
+
+    float getValue(Eigen::Vector3f point) const override
+    {
+        return point.z();
+    }
+};
+
+Tree convertToOracleAxes(Tree t)
+{
+    return t.remap(Tree(std::make_unique<const XAsOracle>()), 
+        Tree(std::make_unique<const YAsOracle>()), Tree(std::make_unique<const ZAsOracle>()));
+}
+
+template <unsigned N>
+bool operator==(const BRep<N>& first, const BRep<N>& second)
+{
+    auto vertsEqual = [](
+        const Eigen::Matrix<float, N, 1>& first, 
+        const Eigen::Matrix<float, N, 1>& second)
+    {
+        for (auto i = 0; i < N; ++i)
+        {
+            if (first(i) != second(i))
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+    auto branesEqual = [](
+        const Eigen::Matrix<uint32_t, N, 1>& first,
+        const Eigen::Matrix<uint32_t, N, 1>& second)
+    {
+        for (auto i = 0; i < N; ++i)
+        {
+            if (first(i) != second(i))
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+    if (!std::equal(
+        first.verts.begin(), first.verts.end(), 
+        second.verts.begin(), vertsEqual) ||
+        !std::equal(
+            first.verts.begin(), first.verts.end(), 
+            second.verts.begin(), vertsEqual))
+    {
+        return false;
+    }
+    return true;
+}
+
+} //namespace Kernel
