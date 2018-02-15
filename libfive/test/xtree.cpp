@@ -270,8 +270,6 @@ TEST_CASE("XTree<3>::build (vertex positioning with vertices on octree walls)")
         else if (!p.second->isBranch() && p.first->vertex_count == 1 &&
                                           p.second->vertex_count == 1)
         {
-            CAPTURE(p.first->cornerPos(0));
-            CAPTURE(p.second->cornerPos(0));
             CAPTURE(p.first->vert(0));
             CAPTURE(p.second->vert(0));
             REQUIRE((p.first->vert(0) - p.second->vert(0)).norm() < 1e-3);

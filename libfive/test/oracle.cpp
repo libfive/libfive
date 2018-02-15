@@ -42,7 +42,7 @@ TEST_CASE("Oracle::Render and compare (sphere)")
   auto mesh = Mesh::render(sOracle, r);
   auto comparisonMesh = Mesh::render(s, r);
 
-  REQUIRE(*mesh == *comparisonMesh);
+  requireEquality(*mesh, *comparisonMesh);
 }
 
 TEST_CASE("Oracle::Render and compare (cube)")
@@ -60,7 +60,7 @@ TEST_CASE("Oracle::Render and compare (cube)")
   auto mesh = Mesh::render(cubeOracle, r);
   auto comparisonMesh = Mesh::render(cube, r);
 
-  REQUIRE(*mesh == *comparisonMesh);
+  requireEquality(*mesh, *comparisonMesh);
 }
 
 /*  In order to test handling of multiple-gradient points, a cube oracle
@@ -113,63 +113,35 @@ public:
         getGradients(Eigen::Vector3f point) const override
     {
         boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1> out;
-        if (abs(point.x()) <= 1.5f &&
-            abs(point.y()) <= 1.5f &&
-            abs(point.z()) <= 1.5f) //If it's inside or on the cube
-        {
-            if (abs(point.x()) >= std::max(abs(point.y()), abs(point.z()))) {
-                if (point.x() >= 0.f)
-                {
-                    out.push_back({ { 1.f, 0.f, 0.f }, {1.f, 0.f, 0.f} });
-                }
-                if (point.x() <= 0.f)
-                {
-                    out.push_back({ { -1.f, 0.f, 0.f },{ -1.f, 0.f, 0.f } });
-                }
+        if (abs(point.x()) >= std::max(abs(point.y()), abs(point.z()))) {
+            if (point.x() >= 0.f)
+            {
+                out.push_back({ { 1.f, 0.f, 0.f }, {1.f, 0.f, 0.f} });
             }
-            if (abs(point.y()) >= std::max(abs(point.x()), abs(point.z()))) {
-                if (point.y() >= 0.f)
-                {
-                    out.push_back({ { 0.f, 1.f, 0.f },{ 0.f, 1.f, 0.f } });
-                }
-                if (point.y() <= 0.f)
-                {
-                    out.push_back({ { 0.f, -1.f, 0.f },{ 0.f, -1.f, 0.f } });
-                }
-            }
-            if (abs(point.z()) >= std::max(abs(point.y()), abs(point.x()))) {
-                if (point.z() >= 0.f)
-                {
-                    out.push_back({ { 0.f, 0.f, 1.f },{ 0.f, 0.f, 1.f } });
-                }
-                if (point.z() <= 0.f)
-                {
-                    out.push_back({ { 0.f, 0.f, -1.f },{ 0.f, 0.f, -1.f } });
-                }
+            if (point.x() <= 0.f)
+            {
+                out.push_back({ { -1.f, 0.f, 0.f },{ -1.f, 0.f, 0.f } });
             }
         }
-        if (abs(point.x()) >= 1.5f ||
-            abs(point.y()) >= 1.5f ||
-            abs(point.z()) >= 1.5f) //If it's outside or on the cube
-        {
-            //Find the vector from the cube to the point.
-            auto xDistance = (abs(point.x()) <= 1.5f)
-                ? 0.f
-                : std::min(
-                    point.x() - 1.5f, point.x() + 1.5f,
-                    [](float a, float b) {return abs(a) < abs(b); });
-            auto yDistance = (abs(point.y()) <= 1.5f)
-                ? 0.f
-                : std::min(
-                    point.y() - 1.5f, point.y() + 1.5f,
-                    [](float a, float b) {return abs(a) < abs(b); });
-            auto zDistance = (abs(point.z()) <= 1.5f)
-                ? 0.f
-                : std::min(
-                    point.z() - 1.5f, point.z() + 1.5f,
-                    [](float a, float b) {return abs(a) < abs(b); });
-            Eigen::Vector3f totalVector(xDistance, yDistance, zDistance);
-            out.push_back({ totalVector, totalVector });
+        if (abs(point.y()) >= std::max(abs(point.x()), abs(point.z()))) {
+            if (point.y() >= 0.f)
+            {
+                out.push_back({ { 0.f, 1.f, 0.f },{ 0.f, 1.f, 0.f } });
+            }
+            if (point.y() <= 0.f)
+            {
+                out.push_back({ { 0.f, -1.f, 0.f },{ 0.f, -1.f, 0.f } });
+            }
+        }
+        if (abs(point.z()) >= std::max(abs(point.y()), abs(point.x()))) {
+            if (point.z() >= 0.f)
+            {
+                out.push_back({ { 0.f, 0.f, 1.f },{ 0.f, 0.f, 1.f } });
+            }
+            if (point.z() <= 0.f)
+            {
+                out.push_back({ { 0.f, 0.f, -1.f },{ 0.f, 0.f, -1.f } });
+            }
         }
         return out;
     }
@@ -197,5 +169,5 @@ TEST_CASE("Oracle::Render and compare (cube as oracle)")
     auto mesh = Mesh::render(cubeOracle, r);
     auto comparisonMesh = Mesh::render(cube, r);
 
-    REQUIRE(*mesh == *comparisonMesh);
+    requireEquality(*mesh, *comparisonMesh);
 }

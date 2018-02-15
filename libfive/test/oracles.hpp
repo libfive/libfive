@@ -109,7 +109,7 @@ Tree convertToOracleAxes(Tree t)
 }
 
 template <unsigned N>
-bool operator==(const BRep<N>& first, const BRep<N>& second)
+void requireEquality(const BRep<N>& first, const BRep<N>& second)
 {
     auto vertsEqual = [](
         const Eigen::Matrix<float, N, 1>& first, 
@@ -137,16 +137,18 @@ bool operator==(const BRep<N>& first, const BRep<N>& second)
         }
         return true;
     };
-    if (!std::equal(
-        first.verts.begin(), first.verts.end(), 
-        second.verts.begin(), vertsEqual) ||
-        !std::equal(
-            first.verts.begin(), first.verts.end(), 
-            second.verts.begin(), vertsEqual))
-    {
-        return false;
+    REQUIRE(first.verts.size() == second.verts.size());
+    for (auto i = 0; i < first.verts.size(); ++i) {
+        CAPTURE(i);
+        REQUIRE(vertsEqual(first.verts[i], second.verts[i]));
     }
-    return true;
+    CAPTURE(first.branes.size());
+    CAPTURE(second.branes.size());
+    REQUIRE(first.branes.size() == second.branes.size());
+    for (auto i = 0; i < first.branes.size(); ++i) {
+        CAPTURE(i);
+        REQUIRE(branesEqual(first.branes[i], second.branes[i]));
+    }
 }
 
 } //namespace Kernel
