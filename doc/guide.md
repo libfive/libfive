@@ -204,7 +204,9 @@ scheme@(guile-user)> (quit)
 bash-4.4$ open out.stl
 ```
 
-You can also do this from the `build` directory, loading the extension with
+You can also do this from the `build` directory
+(without running `make install`),
+loading the extension with
 ```
 scheme@(guile-user)> (load-extension "libfive/bind/libfive-guile" "scm_init_libfive_modules")
 ```
