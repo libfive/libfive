@@ -46,18 +46,40 @@ that builds `libfive` on Windows with MSVC.
 - [Guile 2.2 or later](https://www.gnu.org/software/guile/)
 - [Boost](https://www.boost.org)
 
-On a Mac with `homebrew` installed, run
+#### Mac
+With `homebrew` installed, run
 ```
 brew install cmake pkg-config eigen libpng qt guile boost
 ```
 
-On a Ubuntu machine, run
-```
-sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev qtbase5-dev guile-2.2-dev libboost-all-dev
-```
-(untested; open an issue or PR if this doesn't work for you)
+#### Ubuntu
 
-On Windows + Visual Studio 2017, run from libfive folder
+Ubuntu __18.04 or later__ should have all dependencies available through the package manager
+```
+sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev qtbase5-dev guile-2.2-dev 
+```
+
+Ubuntu releases __before 18.04__ do not provide `guile-2.2-dev`, so omit that from the above package install command.
+To build guile 2.2.3 from source, run
+```
+sudo apt-get install libgmp-dev libltdl-dev libunistring-dev libgc-dev libffi-dev pkg-config
+wget https://ftp.gnu.org/gnu/guile/guile-2.2.3.tar.gz 
+tar -xf guile-2.2.3.tar.gz
+cd guile-2.2.3
+./configure
+make -j4
+sudo make install
+```
+
+Ubuntu releases __before 17.04__ do not have high enough Qt versions, so also omit `qtbase5-dev` from the above package install command.
+To install Qt 5.7 or later, use the Qt provided Online Installer: https://www.qt.io/download
+The installer will prompt for the install path, which defaults to `$HOME/Qt`.  During __Invocation__ steps detailed below, the path should then be set as follows:
+```
+cmake -DCMAKE_PREFIX_PATH=<Qt Install Path>/5.7/gcc_64 ..
+```
+
+#### Windows
+With Visual Studio 2017 installed, run from libfive folder
 ```
 git clone https://github.com/Microsoft/vcpkg.git
 vcpkg\bootstrap-vcpkg.bat
