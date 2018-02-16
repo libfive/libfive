@@ -225,6 +225,12 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
         derivsGathered = true;
 
         bool ambiguous = false;
+
+        //Any time there is a branching choice, at least one choice should have
+        //an epsilon compatible with all previous epsilons; this variable
+        //is used in an assert to ensure this is actually the case.
+        bool completeFeature = true;
+                                       
         tape->rwalk(
             [&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
             {
@@ -238,26 +244,28 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
                     {
                         for (auto choice : dOrAll(id))
                         {
+                            auto rejected = false;
                             auto fNew = f_;
                             for (auto choice2 : dOrAll(id)) 
                             {
                                 if (choice != choice2) 
                                 {
+                                    completeFeature = false;
                                     Eigen::Vector3f epsilon =
                                         choice.second - choice2.second;
                                     if (!fNew.push(
                                         epsilon.template cast<double>(), 
                                         { id, choice.first }))
                                     { 
-                                        goto continueOuterLoop;
+                                        rejected = true;
+                                        break;
                                     }
                                 }
                             }
-                            ambiguous = true;
-                            todo.push_back(fNew);
-                            continueOuterLoop:
-                            ambiguous = ambiguous; 
-                                //Because labels require statements
+                            if (!rejected) {
+                                ambiguous = true;
+                                todo.push_back(fNew);
+                            }
                         }
                     }
                 }
@@ -284,6 +292,7 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
                                                                       : (lhs - rhs);
 
                         auto fa = f_;
+                        completeFeature = false;
                         if (fa.push(epsilon, {id, 0}))
                         {
                             ambiguous = true;
@@ -301,6 +310,7 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
             }, ambiguous);
         if (!ambiguous)
         {
+            assert(completeFeature);
             f_.deriv = ds.col(0).template head<3>().template cast<double>();
             if (seen.find({ f_.getChoices(), f_.getOracleChoices() }) == seen.end())
             {
