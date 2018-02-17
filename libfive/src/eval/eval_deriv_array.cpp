@@ -28,8 +28,8 @@ DerivArrayEvaluator::DerivArrayEvaluator(std::shared_ptr<Tape> t)
 
 DerivArrayEvaluator::DerivArrayEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : ArrayEvaluator(t, vars), d(tape->num_clauses + 1, 1), 
-    ambiguousOracles(tape->num_clauses + 1, N)
+    : ArrayEvaluator(t, vars), d(tape->num_clauses + 1, 1),
+      ambiguousOracles(tape->num_clauses + 1, N)
 {
     // Initialize all derivatives to zero
     for (Eigen::Index i=0; i < d.rows(); ++i)

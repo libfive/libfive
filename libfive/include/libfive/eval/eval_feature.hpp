@@ -64,11 +64,11 @@ public:
     */
     Eigen::Vector4f deriv(const Eigen::Vector3f& pt);
 
-    /*  Uses gradients for oracles from a feature, where they exist, rather 
-     *  than just taking the first one.  Does not recalculate non-ambiguous 
+    /*  Uses gradients for oracles from a feature, where they exist, rather
+     *  than just taking the first one.  Does not recalculate non-ambiguous
      *  oracle results; the one-argument version of deriv needs to be called
      *  first to populate those values (this is done in the process of getting
-     *  features from featuresAt).  If feature has no non-ambiguous oracle 
+     *  features from featuresAt).  If feature has no non-ambiguous oracle
      *  results, functions as the one-argument version.
      */
     Eigen::Vector4f deriv(const Eigen::Vector3f& pt, const Feature& feature);
@@ -79,7 +79,7 @@ protected:
      */
     Eigen::Array<
         boost::container::small_vector<
-        std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>, 
+        std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>,
         1, Eigen::Dynamic> dOrAll;
 };
 

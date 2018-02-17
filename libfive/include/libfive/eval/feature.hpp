@@ -66,7 +66,7 @@ public:
      *  Accessor method for the choice list
      */
     const std::set<Choice>& getChoices() const { return choices; }
-    const std::set<OracleChoice>& getOracleChoices() const 
+    const std::set<OracleChoice>& getOracleChoices() const
         { return oracleChoices; }
 
     /*

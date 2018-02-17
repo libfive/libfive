@@ -51,8 +51,8 @@ Tree::Tree(std::unique_ptr<const Oracle> o)
     nullptr,
     nullptr }))
 {
-    // Nothing to do here either.  ptr is constructed directly (without using 
-    // the cache), since using  a unique_ptr to the oracle already precludes 
+    // Nothing to do here either.  ptr is constructed directly (without using
+    // the cache), since using  a unique_ptr to the oracle already precludes
     // duplication.
 }
 

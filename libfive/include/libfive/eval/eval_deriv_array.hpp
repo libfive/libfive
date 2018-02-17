@@ -52,7 +52,7 @@ protected:
     /*  d(clause).col(index) is a set of partial derivatives [dx, dy, dz] */
     Eigen::Array<Eigen::Array<float, 3, N>, Eigen::Dynamic, 1> d;
 
-    /*  Indicates the points at which each oracle is ambiguous; 
+    /*  Indicates the points at which each oracle is ambiguous;
      *  this is set when calculating derivatives.
      */
     Eigen::Array<bool, Eigen::Dynamic, N> ambiguousOracles;
@@ -67,8 +67,8 @@ public:
     Eigen::Vector4f deriv(const Eigen::Vector3f& pt);
 
     /*
-     *  Multi-point evaluation (values, and derivatives in case of nonlinear 
-     *  oracles, must be stored with set) 
+     *  Multi-point evaluation (values, and derivatives in case of nonlinear
+     *  oracles, must be stored with set)
      */
     Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(size_t count);
 

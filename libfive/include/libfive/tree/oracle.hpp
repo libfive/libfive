@@ -25,11 +25,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-/*The oracle is an interface class for the use of externally defined oracles 
- *as primitives in trees.
+/* The oracle is an interface class for the use of externally defined oracles
+ * as primitives in trees.
  */
 
-class Oracle 
+class Oracle
 {
 public:
     /*  Both forms of getRange are used for interval optimization; as such, an
@@ -43,7 +43,7 @@ public:
      *  is returned; in each entry of the vector, the first element of the pair
      *  represents the gradient in some area adjoining the passed point.  The
      *  second element of the pair represents a normalized epsilon indicating
-     *  the domain of this gradient: for small scalar e and normalized vector 
+     *  the domain of this gradient: for small scalar e and normalized vector
      *  n, the gradient at point + en is the one whose associated epsilon is
      *  closest to n.
      */

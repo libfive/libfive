@@ -216,9 +216,9 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             //     as filled or empty.
             // 2)  For values that are == 0 but not ambiguous (i.e. do not
             //     have a min / max where both branches are possible, and do
-            //     not use an oracle that returns more than one valid 
-            //     gradient), evaluate the derivatives and mark the corner as 
-            //     filled if there are non-zero derivatives (because that 
+            //     not use an oracle that returns more than one valid
+            //     gradient), evaluate the derivatives and mark the corner as
+            //     filled if there are non-zero derivatives (because that
             //     means that we can find an inside-outside transition).
             // 3)  For values that are == 0 and ambiguous, call isInside
             //     (the heavy hitter of inside-outside checking).

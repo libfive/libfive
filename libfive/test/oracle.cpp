@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 using namespace Kernel;
 
-/*  In order to test the primitives system, we take some basic shapes and 
+/*  In order to test the primitives system, we take some basic shapes and
  *  ensure that the meshing is completely unchanged when X, Y, and Z are
  *  replaced by their oracle equivalents.
  */

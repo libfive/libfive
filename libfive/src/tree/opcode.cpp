@@ -148,7 +148,7 @@ std::string Opcode::toOpString(Opcode op)
         case VAR_Z: return "z";
 
         case VAR:  // fallthrough
-        case SQUARE: 
+        case SQUARE:
         case SQRT:
         case SIN:
         case COS:

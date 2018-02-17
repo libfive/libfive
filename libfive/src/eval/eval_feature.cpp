@@ -191,8 +191,8 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
     Feature feature;
     std::list<Feature> todo = {feature};
     std::list<Feature> done;
-    std::set<std::pair<std::set<Feature::Choice>, 
-        std::set<Feature::OracleChoice>>> seen;
+    std::set<std::pair<std::set<Feature::Choice>,
+             std::set<Feature::OracleChoice>>> seen;
     bool derivsGathered = false; //Set to true when deriv is first called.
 
     // Load the location into the first results slot and evaluate
