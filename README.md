@@ -33,26 +33,41 @@ to change variables in the script.
 ## Compiling from source
 The full system (`libfive` + `libfive-guile` + **Studio**)
 has been successfully compiled on Mac and Linux.
-There's also a third-party fork
-[here](https://github.com/bradrothenberg/ao/tree/win64)
-that builds `libfive` on Windows with MSVC.
+
+The `libfive` kernel builds on MSVC,
+and should also build with MinGW (though this is untested).
 
 ### Dependencies
 - [`cmake`](https://cmake.org/)
 - [`pkg-config`](https://www.freedesktop.org/wiki/Software/pkg-config/)
 - [Eigen 3.x](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
+- [Boost](https://www.boost.org)
 - [Qt 5.7 or later](https://www.qt.io)
 - [Guile 2.2 or later](https://www.gnu.org/software/guile/)
-- [Boost](https://www.boost.org)
 
-#### Mac
+Qt and Guile are optional; if they aren't present, then
+the Guile bindings and Studio will not be included in the build
+(and `cmake` will print a message to that effect).
+
+### Mac
 With `homebrew` installed, run
 ```
 brew install cmake pkg-config eigen libpng qt guile boost
 ```
 
-#### Ubuntu
+Then, from the `libfive` folder, run something like:
+```
+mkdir build
+cd build
+cmake -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt5/5.7.0  ..
+make
+```
+(adjust based on your Qt installation,
+and consider using [`ninja`](https://ninja-build.org/) for faster builds.
+
+
+### Ubuntu
 
 Ubuntu __18.04 or later__ should have all dependencies available through the package manager
 ```
@@ -73,12 +88,18 @@ sudo make install
 
 Ubuntu releases __before 17.04__ do not have high enough Qt versions, so also omit `qtbase5-dev` from the above package install command.
 To install Qt 5.7 or later, use the Qt provided Online Installer: https://www.qt.io/download
-The installer will prompt for the install path, which defaults to `$HOME/Qt`.  During __Invocation__ steps detailed below, the path should then be set as follows:
-```
-cmake -DCMAKE_PREFIX_PATH=<Qt Install Path>/5.7/gcc_64 ..
-```
+The installer will prompt for the install path, which defaults to `$HOME/Qt`.
 
-#### Windows
+Building is similar as on Mac: clone the repository, then run something like
+```
+mkdir build
+cd build
+cmake -DCMAKE_PREFIX_PATH=<Qt Install Path>/5.7/gcc_64 ..
+make -j4
+```
+(adjusting the Qt path to your install location)
+
+### Windows (MSVC)
 With Visual Studio 2017 installed, run from libfive folder
 ```
 git clone https://github.com/Microsoft/vcpkg.git
@@ -90,21 +111,8 @@ cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG
 ```
 Now open `build\libfiv.sln` and build the solution. Check that `libfive-test` runs correctly.
 
-Qt and Guile are optional; if they aren't present, then
-the Guile bindings and Studio will not be included in the build
-(and `cmake` will print a message to that effect).
-
-### Invocation
-```
-mkdir build
-cd build
-cmake -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt5/5.7.0  ..
-make
-```
-Adjust based on your Qt installation path, and consider using [`ninja`](https://ninja-build.org/) for faster builds.
-
 ## License
-(c) 2015-2017 Matthew Keeter
+(c) 2015-2018 Matthew Keeter
 
 Different layers of this project are released under different licenses:
 - The `libfive` dynamic library is released under the LGPL, version 2 or later.
