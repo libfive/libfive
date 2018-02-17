@@ -45,6 +45,7 @@ class XAsOracle : public Oracle
     boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
         getGradients(Eigen::Vector3f point) const override
     {
+        (void)point;
         return { { {1.f, 0.f, 0.f}, {0.f, 0.f, 0.f} } };
     }
 
@@ -69,6 +70,7 @@ class YAsOracle : public Oracle
     boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
         getGradients(Eigen::Vector3f point) const override
     {
+        (void)point;
         return { { { 0.f, 1.f, 0.f },{ 0.f, 0.f, 0.f } } };
     }
 
@@ -93,6 +95,7 @@ class ZAsOracle : public Oracle
     boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
         getGradients(Eigen::Vector3f point) const override
     {
+        (void)point;
         return { { { 0.f, 0.f, 1.f },{ 0.f, 0.f, 0.f } } };
     }
 
@@ -104,18 +107,20 @@ class ZAsOracle : public Oracle
 
 Tree convertToOracleAxes(Tree t)
 {
-    return t.remap(Tree(std::make_unique<const XAsOracle>()), 
-        Tree(std::make_unique<const YAsOracle>()), Tree(std::make_unique<const ZAsOracle>()));
+    return t.remap(
+        Tree(std::unique_ptr<const XAsOracle>(new XAsOracle())),
+        Tree(std::unique_ptr<const YAsOracle>(new YAsOracle())),
+        Tree(std::unique_ptr<const ZAsOracle>(new ZAsOracle())));
 }
 
 template <unsigned N>
 void requireEquality(const BRep<N>& first, const BRep<N>& second)
 {
     auto vertsEqual = [](
-        const Eigen::Matrix<float, N, 1>& first, 
+        const Eigen::Matrix<float, N, 1>& first,
         const Eigen::Matrix<float, N, 1>& second)
     {
-        for (auto i = 0; i < N; ++i)
+        for (unsigned i=0; i < N; ++i)
         {
             if (first(i) != second(i))
             {
@@ -128,7 +133,7 @@ void requireEquality(const BRep<N>& first, const BRep<N>& second)
         const Eigen::Matrix<uint32_t, N, 1>& first,
         const Eigen::Matrix<uint32_t, N, 1>& second)
     {
-        for (auto i = 0; i < N; ++i)
+        for (unsigned i=0; i < N; ++i)
         {
             if (first(i) != second(i))
             {
@@ -138,14 +143,14 @@ void requireEquality(const BRep<N>& first, const BRep<N>& second)
         return true;
     };
     REQUIRE(first.verts.size() == second.verts.size());
-    for (auto i = 0; i < first.verts.size(); ++i) {
+    for (unsigned i=0; i < first.verts.size(); ++i) {
         CAPTURE(i);
         REQUIRE(vertsEqual(first.verts[i], second.verts[i]));
     }
     CAPTURE(first.branes.size());
     CAPTURE(second.branes.size());
     REQUIRE(first.branes.size() == second.branes.size());
-    for (auto i = 0; i < first.branes.size(); ++i) {
+    for (unsigned i=0; i < first.branes.size(); ++i) {
         CAPTURE(i);
         REQUIRE(branesEqual(first.branes[i], second.branes[i]));
     }

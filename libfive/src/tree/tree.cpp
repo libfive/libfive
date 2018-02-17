@@ -41,13 +41,13 @@ Tree::Tree(float v)
     // Nothing to do here
 }
 
-Tree::Tree(std::unique_ptr<const Oracle> or )
+Tree::Tree(std::unique_ptr<const Oracle> o)
     : ptr(std::shared_ptr<Tree_>(new Tree_{
     Opcode::ORACLE,
     0, // flags
     0, // rank
     std::nanf(""), // value
-    std::move(or ), // oracle
+    std::move(o), // oracle
     nullptr,
     nullptr }))
 {

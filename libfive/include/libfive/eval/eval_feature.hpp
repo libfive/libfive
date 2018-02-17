@@ -19,7 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #pragma once
 
 #include <Eigen/Eigen>
-#include <boost\container\small_vector.hpp>
+#include <boost/container/small_vector.hpp>
 
 #include "libfive/eval/eval_deriv.hpp"
 #include "libfive/eval/feature.hpp"

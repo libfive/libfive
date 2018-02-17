@@ -35,13 +35,13 @@ FeatureEvaluator::FeatureEvaluator(
 
 Eigen::Vector4f FeatureEvaluator::deriv(const Eigen::Vector3f& pt)
 {
-    // Load gradients of oracles; only use the first gradient of each here 
-    // (following precedent for min and max evaluation).  
-    for (auto or : tape->oracles)
+    // Load gradients of oracles; only use the first gradient of each here
+    // (following precedent for min and max evaluation).
+    for (auto o : tape->oracles)
     {
         // Other than this line, it's the same as the DerivEvaluator version.
-        dOrAll(or.first) = or.second.first->getGradients(pt); 
-        d.col(or .first) = or.second.first->getGradients(pt).begin()->first;
+        dOrAll(o.first) = o.second.first->getGradients(pt);
+        d.col(o.first) = o.second.first->getGradients(pt).begin()->first;
     }
     // Perform value evaluation, saving results
     auto w = eval(pt);
@@ -59,15 +59,15 @@ Eigen::Vector4f FeatureEvaluator::deriv(
     {
         return deriv(pt);
     }
-    // Load gradients of ambiguous primitives (non-ambiguous ones are 
-    // assumed to have already been loaded). 
-    for (auto or : feature.getOracleChoices()) 
+    // Load gradients of ambiguous primitives (non-ambiguous ones are
+    // assumed to have already been loaded).
+    for (auto o : feature.getOracleChoices())
     {
-        d.col(or.id) = or.choice;
+        d.col(o.id) = o.choice;
     }
-    
-    // Perform derivative evaluation, saving results 
-    // (value evaluation is assumed to have already been done.) 
+
+    // Perform derivative evaluation, saving results
+    // (value evaluation is assumed to have already been done.)
 
     auto w = eval(pt);
     auto xyz = d.col(tape->rwalk(*this));
@@ -75,7 +75,7 @@ Eigen::Vector4f FeatureEvaluator::deriv(
     Eigen::Vector4f out;
     out << xyz, w;
     return out;
-    }
+}
 
 Feature FeatureEvaluator::push(const Feature& feature)
 {
@@ -230,7 +230,7 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
         //an epsilon compatible with all previous epsilons; this variable
         //is used in an assert to ensure this is actually the case.
         bool completeFeature = true;
-                                       
+
         tape->rwalk(
             [&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
             {
@@ -239,24 +239,25 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
                     const auto& choices = feature.getChoices();
                     const auto& location = std::find_if(
                         choices.begin(), choices.end(),
-                        [id](auto choice) {return choice.id == id; });
+                        [id](Feature::Choice choice)
+                            {return choice.id == id; });
                     if (location == choices.end())
                     {
                         for (auto choice : dOrAll(id))
                         {
                             auto rejected = false;
                             auto fNew = f_;
-                            for (auto choice2 : dOrAll(id)) 
+                            for (auto choice2 : dOrAll(id))
                             {
-                                if (choice != choice2) 
+                                if (choice != choice2)
                                 {
                                     completeFeature = false;
                                     Eigen::Vector3f epsilon =
                                         choice.second - choice2.second;
                                     if (!fNew.push(
-                                        epsilon.template cast<double>(), 
+                                        epsilon.template cast<double>(),
                                         { id, choice.first }))
-                                    { 
+                                    {
                                         rejected = true;
                                         break;
                                     }

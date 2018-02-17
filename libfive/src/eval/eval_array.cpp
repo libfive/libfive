@@ -134,10 +134,10 @@ ArrayEvaluator::getAmbiguous(size_t i)
             if (op == Opcode::ORACLE)
             {
                 assert(tape->oracles.find(id) != tape->oracles.end());
-                auto or = tape->oracles.find(id)->second.first;
-                for (size_t j = 0; j < i; ++j)
+                auto o = tape->oracles.find(id)->second.first;
+                for (size_t j=0; j < i; ++j)
                 {
-                    if (!ambig(j) && or->getGradients(points(j)).size() > 1)
+                    if (!ambig(j) && o->getGradients(points(j)).size() > 1)
                     ambig(j) = true;
                 }
             }

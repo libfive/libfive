@@ -47,9 +47,9 @@ public:
         f(tape->Y, index) = p.y();
         f(tape->Z, index) = p.z();
         points(index) = p;
-        for (auto or : tape->oracles) 
+        for (auto oracle : tape->oracles)
         {
-            f(or.first, index) = or.second.first->getValue(p);
+            f(oracle.first, index) = oracle.second.first->getValue(p);
         }
     }
 
@@ -64,7 +64,7 @@ protected:
     /*  f(clause, index) is a specific data point */
     Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> f;
 
-    //Stores the points evaluated at each index. 
+    /*  Stores the points evaluated at each index. */
     Eigen::Array<Eigen::Vector3f, 1, N> points;
 
     /*  ambig(index) returns whether a particular slot is ambiguous */

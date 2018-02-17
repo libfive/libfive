@@ -162,9 +162,11 @@ TEST_CASE("Oracle::Render and compare (cube as oracle)")
             Tree::Y() - 1.5)),
         max(-(Tree::Z() + 1.5),
             Tree::Z() - 1.5));
-    Region<3> r({ -3., -3., -3. }, { 3., 3., 3. }); 
-        //The region is set so we hit where the interesting stuff happens.
-    Tree cubeOracle(std::make_unique<cubeAsOracle>());
+
+    // Pick a region where the interesting stuff happens.
+    Region<3> r({ -3., -3., -3. }, { 3., 3., 3. });
+
+    Tree cubeOracle(std::unique_ptr<cubeAsOracle>(new cubeAsOracle));
 
     auto mesh = Mesh::render(cubeOracle, r);
     auto comparisonMesh = Mesh::render(cube, r);

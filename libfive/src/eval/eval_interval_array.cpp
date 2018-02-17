@@ -289,6 +289,8 @@ void IntervalArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR:
+#warning "Opcode::ORACLE isn't defined for eval_interval_array"
+        case Opcode::ORACLE:
         case Opcode::LAST_OP: assert(false);
     }
 #undef out

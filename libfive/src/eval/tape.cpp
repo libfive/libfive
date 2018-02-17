@@ -60,11 +60,11 @@ Tape::Tape(const Tree root)
         {
             vars.left.insert({id, m.id()});
         }
-        // For oracles, record their pointers so that 
-        // they can be used when calculating a point. 
+        // For oracles, record their pointers so that
+        // they can be used when calculating a point.
         else if (m->op == Opcode::ORACLE) {
-            assert(m->or); //Should not be a null pointer. 
-            oracles.insert({ id, { m-> or .get(), m } });
+            assert(m->oracle); //Should not be a null pointer.
+            oracles.insert({ id, { m->oracle.get(), m } });
         }
         else
         {

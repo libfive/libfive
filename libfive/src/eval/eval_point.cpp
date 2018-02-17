@@ -51,8 +51,8 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt)
     f(tape->X) = pt.x();
     f(tape->Y) = pt.y();
     f(tape->Z) = pt.z();
-    for (auto or : tape->oracles) {
-        f(or.first) = or.second.first->getValue(pt);
+    for (auto oracle : tape->oracles) {
+        f(oracle.first) = oracle.second.first->getValue(pt);
     }
     return f(tape->rwalk(*this));
 }

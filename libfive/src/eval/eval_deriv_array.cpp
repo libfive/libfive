@@ -45,16 +45,16 @@ DerivArrayEvaluator::DerivArrayEvaluator(
 
 void DerivArrayEvaluator::set(const Eigen::Vector3f& p, size_t index)
 {
-    //First, set the values: 
+    // First, set the values:
     ArrayEvaluator::set(p, index);
-    
-    //Then the gradients. 
-    for (auto or : tape->oracles) 
+
+    // Then the gradients.
+    for (auto oracle : tape->oracles)
     {
-        auto allGradients = or.second.first->getGradients(p);
+        auto allGradients = oracle.second.first->getGradients(p);
         assert(allGradients.size() > 0);
-        ambiguousOracles(or.first, index) = allGradients.size() > 1;
-        d(or.first).col(index) = allGradients[0].first;
+        ambiguousOracles(oracle.first, index) = allGradients.size() > 1;
+        d(oracle.first).col(index) = allGradients[0].first;
     }
 }
 
@@ -64,7 +64,7 @@ Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt)
     return derivs(1).col(0);
 }
 
-Eigen::Block<decltype(ArrayEvaluator::ambig), 1, Eigen::Dynamic>
+Eigen::Block<Eigen::Array<bool, 1, ArrayEvaluator::N>, 1, Eigen::Dynamic>
 DerivArrayEvaluator::getAmbiguous(size_t i)
 {
     // Reset the ambiguous array to all false
@@ -214,6 +214,10 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::CONST_VAR:
             od = ad;
+            break;
+
+        case Opcode::ORACLE:
+            // Already handled
             break;
 
         case Opcode::INVALID:

@@ -41,12 +41,13 @@ DerivEvaluator::DerivEvaluator(
 
 Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt)
 {
-    //Load gradients of oracles; only use the first gradient of each here 
-    //(following precedent for min and max evaluation).  
-    for (auto or : tape->oracles) 
+    // Load gradients of oracles; only use the first gradient of each here
+    // (following precedent for min and max evaluation).
+    for (auto o : tape->oracles)
     {
-        d.col(or.first) = or.second.first->getGradients(pt).begin()->first;
+        d.col(o.first) = o.second.first->getGradients(pt).begin()->first;
     }
+
     // Perform value evaluation, saving results
     auto w = eval(pt);
     auto xyz = d.col(tape->rwalk(*this));
