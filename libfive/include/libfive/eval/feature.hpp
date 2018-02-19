@@ -78,6 +78,7 @@ public:
      *  Inserts a choice without any checking
      */
     void pushRaw(Choice c, const Eigen::Vector3d& v);
+    void pushRaw(OracleChoice c, const Eigen::Vector3d& v);
 
     /*
      *  Inserts a choice without an associated direction
@@ -122,7 +123,7 @@ protected:
 
 /*  Defining operator< lets us store Choices in std::set, etc */
 bool operator<(const Feature::Choice& a, const Feature::Choice& b);
-bool operator<(const Feature::OracleChoice& a, \
-    const Feature::OracleChoice& b);
+bool operator<(const Feature::OracleChoice& a,
+               const Feature::OracleChoice& b);
 
 }   // namespace Kernel

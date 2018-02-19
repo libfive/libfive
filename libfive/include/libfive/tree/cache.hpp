@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <mutex>
 
 #include "libfive/export.hpp"
-#include "libfive/tree/oracle.hpp"
 #include "libfive/tree/tree.hpp"
 
 namespace Kernel {
@@ -121,8 +120,7 @@ protected:
 
     /*  Oracles do not need to use the cache to be deduplicated, since they
      *  are created from unique_ptr's, and therefore are already impossible
-     *  to duplicate.
-     */
+     *  to duplicate.  */
 
     static FIVE_EXPORT std::recursive_mutex mut;
     static FIVE_EXPORT Cache _instance;

@@ -41,7 +41,7 @@ Tree::Tree(float v)
     // Nothing to do here
 }
 
-Tree::Tree(std::unique_ptr<const Oracle> o)
+Tree::Tree(std::unique_ptr<const OracleClause> o)
     : ptr(std::shared_ptr<Tree_>(new Tree_{
     Opcode::ORACLE,
     0, // flags

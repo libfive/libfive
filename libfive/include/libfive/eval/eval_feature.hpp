@@ -59,28 +59,6 @@ public:
      *  derivatives, allowing the two-argument version of deriv to be called.
      */
     std::list<Feature> featuresAt(const Eigen::Vector3f& p);
-
-    /*  Non-virtual override that writes to dOrAll as well.
-    */
-    Eigen::Vector4f deriv(const Eigen::Vector3f& pt);
-
-    /*  Uses gradients for oracles from a feature, where they exist, rather
-     *  than just taking the first one.  Does not recalculate non-ambiguous
-     *  oracle results; the one-argument version of deriv needs to be called
-     *  first to populate those values (this is done in the process of getting
-     *  features from featuresAt).  If feature has no non-ambiguous oracle
-     *  results, functions as the one-argument version.
-     */
-    Eigen::Vector4f deriv(const Eigen::Vector3f& pt, const Feature& feature);
-
-protected:
-    /*  Stores all derivatives of oracle results, and where to use them, rather
-     *  than just the first.
-     */
-    Eigen::Array<
-        boost::container::small_vector<
-        std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>,
-        1, Eigen::Dynamic> dOrAll;
 };
 
 }   // namespace Kernel

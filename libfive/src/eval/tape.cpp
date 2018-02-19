@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <unordered_map>
 
 #include "libfive/eval/tape.hpp"
+#include "libfive/eval/oracle.hpp"
 
 namespace Kernel {
 
@@ -60,11 +61,15 @@ Tape::Tape(const Tree root)
         {
             vars.left.insert({id, m.id()});
         }
-        // For oracles, record their pointers so that
-        // they can be used when calculating a point.
+        // For oracles, store their position in the oracles vector
+        // as the LHS of the clause, so that we can find them during
+        // tape evaluation.
         else if (m->op == Opcode::ORACLE) {
-            assert(m->oracle); //Should not be a null pointer.
-            oracles.insert({ id, { m->oracle.get(), m } });
+            assert(m->oracle);
+
+            tape_.push_front({Opcode::ORACLE, id,
+                    static_cast<unsigned int>(oracles.size()), 0});
+            oracles.push_back(m->oracle->getOracle());
         }
         else
         {
@@ -175,6 +180,8 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
 
     for (const auto& c : tape->t)
     {
+        // We skip over disabled clauses, which means their lhs + rhs remain
+        // disabled (unless some other clause has marked them as active).
         if (!disabled[c.id])
         {
             switch (fn(c.op, c.id, c.a, c.b))
@@ -192,8 +199,15 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
 
             if (!remap[c.id])
             {
-                disabled[c.a] = false;
-                disabled[c.b] = false;
+                // Oracle nodes are special-cased here.  They should always
+                // return either KEEP_BOTH or KEEP_ALWAYS, but have no children
+                // to disable (and c.a is a dummy index into the oracles[]
+                // array, so we shouldn't mis-interpret it as a clause index).
+                if (c.op != Opcode::ORACLE)
+                {
+                    disabled[c.a] = false;
+                    disabled[c.b] = false;
+                }
             }
             else
             {

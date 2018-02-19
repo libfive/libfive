@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <map>
 
 #include "libfive/tree/opcode.hpp"
-#include "libfive/tree/oracle.hpp"
+#include "libfive/tree/oracle_clause.hpp"
 
 namespace Kernel {
 
@@ -46,7 +46,7 @@ public:
     /*
      *  Returns a Tree for the given oracle, taking ownership
      */
-    Tree(std::unique_ptr<const Oracle> oracle);
+    Tree(std::unique_ptr<const OracleClause> oracle);
 
     /*
      *  Constructors for individual axes
@@ -99,7 +99,7 @@ public:
         const float value;
 
         /* Only populated for oracles */
-        const std::unique_ptr<const Oracle> oracle;
+        const std::unique_ptr<const OracleClause> oracle;
 
         /*  Only populated for operations  */
         const std::shared_ptr<Tree_> lhs;

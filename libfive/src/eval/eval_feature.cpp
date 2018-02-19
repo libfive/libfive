@@ -28,53 +28,9 @@ FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Tape> t)
 
 FeatureEvaluator::FeatureEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : DerivEvaluator(t, vars), dOrAll(tape->num_clauses + 1)
+    : DerivEvaluator(t, vars)
 {
     // Nothing to do here
-}
-
-Eigen::Vector4f FeatureEvaluator::deriv(const Eigen::Vector3f& pt)
-{
-    // Load gradients of oracles; only use the first gradient of each here
-    // (following precedent for min and max evaluation).
-    for (auto o : tape->oracles)
-    {
-        // Other than this line, it's the same as the DerivEvaluator version.
-        dOrAll(o.first) = o.second.first->getGradients(pt);
-        d.col(o.first) = o.second.first->getGradients(pt).begin()->first;
-    }
-    // Perform value evaluation, saving results
-    auto w = eval(pt);
-    auto xyz = d.col(tape->rwalk(*this));
-
-    Eigen::Vector4f out;
-    out << xyz, w;
-    return out;
-}
-
-Eigen::Vector4f FeatureEvaluator::deriv(
-    const Eigen::Vector3f& pt, const Feature& feature)
-{
-    if (feature.getOracleChoices().empty())
-    {
-        return deriv(pt);
-    }
-    // Load gradients of ambiguous primitives (non-ambiguous ones are
-    // assumed to have already been loaded).
-    for (auto o : feature.getOracleChoices())
-    {
-        d.col(o.id) = o.choice;
-    }
-
-    // Perform derivative evaluation, saving results
-    // (value evaluation is assumed to have already been done.)
-
-    auto w = eval(pt);
-    auto xyz = d.col(tape->rwalk(*this));
-
-    Eigen::Vector4f out;
-    out << xyz, w;
-    return out;
 }
 
 Feature FeatureEvaluator::push(const Feature& feature)
@@ -84,6 +40,9 @@ Feature FeatureEvaluator::push(const Feature& feature)
 
     const auto& choices = feature.getChoices();
     auto itr = choices.begin();
+
+    const auto& oracle_choices = feature.getOracleChoices();
+    auto oracle_itr = oracle_choices.begin();
 
     tape->push([&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
     {
@@ -112,6 +71,22 @@ Feature FeatureEvaluator::push(const Feature& feature)
                     }
 
                     return (itr->choice == 0) ? Tape::KEEP_A : Tape::KEEP_B;
+                }
+            }
+            return Tape::KEEP_BOTH;
+        }
+        else if (op == Opcode::ORACLE)
+        {
+            if (tape->oracles[a]->isAmbiguous())
+            {
+                // Walk the iterator forwards until we find a match by id
+                // or hit the end of the feature
+                while (oracle_itr != oracle_choices.end() && oracle_itr->id < id) { itr++; }
+
+                if (oracle_itr != oracle_choices.end() && oracle_itr->id == id)
+                {
+                    assert(feature.hasEpsilon(id));
+                    out.pushRaw(*oracle_itr, feature.getEpsilon(id));
                 }
             }
             return Tape::KEEP_BOTH;
@@ -145,11 +120,12 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
     {
         bool ambig = false;
         tape->walk(
-            [&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
+            [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
             {
                 ambig |= (op == Opcode::MIN || op == Opcode::MAX) &&
                          (f(a) == f(b));
-                ambig |= (op == Opcode::ORACLE && dOrAll(id).size() > 1);
+                ambig |= (op == Opcode::ORACLE &&
+                          tape->oracles[a]->isAmbiguous());
             }, ambig);
 
         if (!ambig)

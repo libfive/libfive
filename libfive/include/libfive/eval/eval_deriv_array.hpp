@@ -31,31 +31,9 @@ public:
     DerivArrayEvaluator(std::shared_ptr<Tape> t,
                         const std::map<Tree::Id, float>& vars);
 
-    /*  Non-virtual override; set() sets only values if the
-    *  DerivArrayEvaluator is upcast to an ArrayEvaluator
-    *  (or corresponding pointer/reference) first.
-    */
-    void set(const Eigen::Vector3f& p, size_t index);
-
-    /*
-    *  Storing the gradients lets us determine ambiguous members without
-    *  calling getGradients again.  Calling getAmbiguous after upcasting will
-    *  recalculate (and therefore can be used without calling the
-    *  DerivArrayEvaluator version of set first.)  Calling getAmbiguous when
-    *  some points were set using ArrayEvaluator::set has undefined result
-    *  for those points, but does not affect the result for points that were
-    *  set using DerivArrayEvaluator::set.
-    */
-    Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(size_t i);
-
 protected:
     /*  d(clause).col(index) is a set of partial derivatives [dx, dy, dz] */
     Eigen::Array<Eigen::Array<float, 3, N>, Eigen::Dynamic, 1> d;
-
-    /*  Indicates the points at which each oracle is ambiguous;
-     *  this is set when calculating derivatives.
-     */
-    Eigen::Array<bool, Eigen::Dynamic, N> ambiguousOracles;
 
     /*  out(col) is a result [dx, dy, dz, w] */
     Eigen::Array<float, 4, N> out;

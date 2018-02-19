@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/numeric/interval.hpp>
 
 #include "libfive/eval/eval_point.hpp"
+#include "libfive/eval/oracle.hpp"
 
 namespace Kernel {
 
@@ -51,9 +52,6 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt)
     f(tape->X) = pt.x();
     f(tape->Y) = pt.y();
     f(tape->Z) = pt.z();
-    for (auto oracle : tape->oracles) {
-        f(oracle.first) = oracle.second.first->getValue(pt);
-    }
     return f(tape->rwalk(*this));
 }
 
@@ -125,11 +123,11 @@ bool PointEvaluator::setVar(Tree::Id var, float value)
 ////////////////////////////////////////////////////////////////////////////////
 
 void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                Clause::Id a, Clause::Id b)
+                                Clause::Id a_, Clause::Id b_)
 {
 #define out f(id)
-#define a f(a)
-#define b f(b)
+#define a f(a_)
+#define b f(b_)
     switch (op)
     {
         case Opcode::ADD:
@@ -224,13 +222,16 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = a;
             break;
 
+        case Opcode::ORACLE:
+            tape->oracles[a_]->evalPoint(out);
+            break;
+
         case Opcode::INVALID:
         case Opcode::CONST:
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR:
-        case Opcode::ORACLE:
         case Opcode::LAST_OP: assert(false);
     }
 #undef out

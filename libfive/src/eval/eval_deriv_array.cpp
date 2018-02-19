@@ -28,8 +28,7 @@ DerivArrayEvaluator::DerivArrayEvaluator(std::shared_ptr<Tape> t)
 
 DerivArrayEvaluator::DerivArrayEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : ArrayEvaluator(t, vars), d(tape->num_clauses + 1, 1),
-      ambiguousOracles(tape->num_clauses + 1, N)
+    : ArrayEvaluator(t, vars), d(tape->num_clauses + 1, 1)
 {
     // Initialize all derivatives to zero
     for (Eigen::Index i=0; i < d.rows(); ++i)
@@ -43,53 +42,11 @@ DerivArrayEvaluator::DerivArrayEvaluator(
     d(tape->Z).row(2) = 1;
 }
 
-void DerivArrayEvaluator::set(const Eigen::Vector3f& p, size_t index)
-{
-    // First, set the values:
-    ArrayEvaluator::set(p, index);
-
-    // Then the gradients.
-    for (auto oracle : tape->oracles)
-    {
-        auto allGradients = oracle.second.first->getGradients(p);
-        assert(allGradients.size() > 0);
-        ambiguousOracles(oracle.first, index) = allGradients.size() > 1;
-        d(oracle.first).col(index) = allGradients[0].first;
-    }
-}
-
 Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt)
 {
     set(pt, 0);
     return derivs(1).col(0);
 }
-
-Eigen::Block<Eigen::Array<bool, 1, ArrayEvaluator::N>, 1, Eigen::Dynamic>
-DerivArrayEvaluator::getAmbiguous(size_t i)
-{
-    // Reset the ambiguous array to all false
-    ambig = false;
-
-    bool abort = false;
-    tape->walk(
-        [&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
-    {
-        if (op == Opcode::ORACLE)
-        {
-            ambig.head(i) = ambig.head(i) ||
-                ambiguousOracles.block(id, 0, 1, i);
-        }
-        else if (op == Opcode::MIN || op == Opcode::MAX)
-        {
-            ambig.head(i) = ambig.head(i) ||
-                (f.block(a, 0, 1, i) ==
-                    f.block(b, 0, 1, i));
-        }
-    }, abort);
-
-    return ambig.head(i);
-}
-
 
 Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
 DerivArrayEvaluator::derivs(size_t count)

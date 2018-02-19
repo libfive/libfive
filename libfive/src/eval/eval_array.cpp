@@ -17,6 +17,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "libfive/eval/eval_array.hpp"
+#include "libfive/eval/oracle.hpp"
 
 namespace Kernel {
 
@@ -129,17 +130,11 @@ ArrayEvaluator::getAmbiguous(size_t i)
 
     bool abort = false;
     tape->walk(
-        [&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
+        [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
         {
             if (op == Opcode::ORACLE)
             {
-                assert(tape->oracles.find(id) != tape->oracles.end());
-                auto o = tape->oracles.find(id)->second.first;
-                for (size_t j=0; j < i; ++j)
-                {
-                    if (!ambig(j) && o->getGradients(points(j)).size() > 1)
-                    ambig(j) = true;
-                }
+                tape->oracles[a]->checkAmbiguous(ambig.head(i));
             }
             else if (op == Opcode::MIN || op == Opcode::MAX)
             {
@@ -155,11 +150,11 @@ ArrayEvaluator::getAmbiguous(size_t i)
 ////////////////////////////////////////////////////////////////////////////////
 
 void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                Clause::Id a, Clause::Id b)
+                                Clause::Id a_, Clause::Id b_)
 {
-#define out f.row(id).head(count)
-#define a f.row(a).head(count)
-#define b f.row(b).head(count)
+#define out f.block<1, Eigen::Dynamic>(id, 0, 1, count)
+#define a f.row(a_).head(count)
+#define b f.row(b_).head(count)
     switch (op)
     {
         case Opcode::ADD:
@@ -267,13 +262,17 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = a;
             break;
 
+
+        case Opcode::ORACLE:
+            tape->oracles[a_]->evalArray(out);
+            break;
+
         case Opcode::INVALID:
         case Opcode::CONST:
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR:
-        case Opcode::ORACLE:
         case Opcode::LAST_OP: assert(false);
     }
 #undef out
