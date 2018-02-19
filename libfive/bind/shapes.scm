@@ -80,7 +80,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (define-public cube box)
 
 (define* (box-centered s #:optional (m #[0 0 0]))
-  "box #[xsize ysize zsize] [#[x0 y0 z0]]
+  "box-centered #[xsize ysize zsize] [#[x0 y0 z0]]
   A box with the given size, centered around the given point"
   (box (- m (/ s 2)) (+ m (/ s 2)))
 )
