@@ -40,8 +40,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public (offset s o)
   "offset shape o
-  Expand or contract a given shape by an offset"
-  (+ s o))
+  Expand or contract a given shape by an offset
+  Positive offsets expand the shape; negative offsets shrink it"
+  (- s o))
 
 (define-public (clearance a b o)
   "clearance a b o
