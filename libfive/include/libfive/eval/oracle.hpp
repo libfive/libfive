@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/eval/eval_array_size.hpp"
 #include "libfive/eval/interval.hpp"
+#include "libfive/eval/feature.hpp"
 
 namespace Kernel {
 
@@ -94,10 +95,33 @@ public:
                          3, 1, true> v)=0;
 
     /*
+     *  Block-level floating-point evaluation.
+     *  By default, this simply calls evalDerivArray multiple times; overload it with
+     *  a more efficient implementation if possible.
+     */
+    virtual void evalDerivArray(
+            Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
+                         3, Eigen::Dynamic, true> out)
+    {
+        Eigen::Array<float, 3, Eigen::Dynamic> dummy(3, out.cols());
+        for (unsigned i=0; i < out.cols(); ++i)
+        {
+            evalDerivs(dummy.col(i));
+        }
+        out = dummy;
+    }
+
+    /*
      *  Sets a particular position value, for use in evalArray or evalDerivs
      *  This should be O(1) for best performance.
      */
     virtual void set(const Eigen::Vector3f& p, size_t index=0)=0;
+
+    /*
+     *  Pushes into a feature.
+     */
+    virtual void pushFeature(const Feature::OracleChoice& choice)=0;
+    virtual void popFeature()=0;
 
     /*  Since the gradient may be discontinuous at the queried point, a vector
      *  is returned; in each entry of the vector, the first element of the pair

@@ -19,7 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/numeric/interval.hpp>
 
 #include "libfive/eval/eval_point.hpp"
-#include "libfive/eval/oracle.hpp"
 
 namespace Kernel {
 

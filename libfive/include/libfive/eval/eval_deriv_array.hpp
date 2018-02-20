@@ -45,8 +45,7 @@ public:
     Eigen::Vector4f deriv(const Eigen::Vector3f& pt);
 
     /*
-     *  Multi-point evaluation (values, and derivatives in case of nonlinear
-     *  oracles, must be stored with set)
+     *  Multi-point evaluation (values must be stored with set)
      */
     Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(size_t count);
 

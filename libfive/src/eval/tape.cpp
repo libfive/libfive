@@ -122,6 +122,18 @@ void Tape::pop()
 {
     assert(tape != tapes.begin());
 
+    // Handle nested popping of oracle clauses within the tape
+    if (tape->type == FEATURE)
+    {
+        for (auto& c : tape->t)
+        {
+            if (c.op == Opcode::ORACLE)
+            {
+                oracles[c.a]->popFeature();
+            }
+        }
+    }
+
     if (tape->dummy > 1)
     {
         tape->dummy--;

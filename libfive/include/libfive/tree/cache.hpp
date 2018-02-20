@@ -80,7 +80,6 @@ public:
      */
     Node fromAffine(const std::map<Node, float>& ns);
 
-
 protected:
     /*
      *  Cache constructor is private so outsiders must use instance()

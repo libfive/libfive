@@ -19,7 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #pragma once
 
 #include <Eigen/Eigen>
-#include <boost/container/small_vector.hpp>
 
 #include "libfive/eval/eval_deriv.hpp"
 #include "libfive/eval/feature.hpp"
@@ -55,8 +54,7 @@ public:
     bool isInside(const Eigen::Vector3f& p);
 
     /*
-     *  Checks for features at the given position.  Also sets non-ambiguous
-     *  derivatives, allowing the two-argument version of deriv to be called.
+     *  Checks for features at the given position.
      */
     std::list<Feature> featuresAt(const Eigen::Vector3f& p);
 };

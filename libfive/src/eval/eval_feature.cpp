@@ -86,6 +86,7 @@ Feature FeatureEvaluator::push(const Feature& feature)
                 if (oracle_itr != oracle_choices.end() && oracle_itr->id == id)
                 {
                     assert(feature.hasEpsilon(id));
+                    tape->oracles[a]->pushFeature(*oracle_itr);
                     out.pushRaw(*oracle_itr, feature.getEpsilon(id));
                 }
             }
@@ -266,7 +267,7 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
                         const Eigen::Vector3d lhs(
                                 d.col(a).template cast<double>());
                         const auto epsilon = (op == Opcode::MIN) ? (rhs - lhs)
-                                                                      : (lhs - rhs);
+                                                                 : (lhs - rhs);
 
                         auto fa = f_;
                         completeFeature = false;
@@ -285,6 +286,7 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
                     }
                 }
             }, ambiguous);
+
         if (!ambiguous)
         {
             assert(completeFeature);

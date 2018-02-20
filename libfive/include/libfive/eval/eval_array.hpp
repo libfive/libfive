@@ -65,9 +65,6 @@ protected:
     /*  f(clause, index) is a specific data point */
     Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> f;
 
-    /*  Stores the points evaluated at each index. */
-    Eigen::Array<Eigen::Vector3f, 1, N> points;
-
     /*  ambig(index) returns whether a particular slot is ambiguous */
     Eigen::Array<bool, 1, N> ambig;
 

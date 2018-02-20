@@ -207,7 +207,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             {
                 pos[i] << cornerPos(i).template cast<float>(),
                           region.perp.template cast<float>();
-                eval->array.ArrayEvaluator::set(pos[i], i);
+                eval->array.set(pos[i], i);
             }
 
             // Evaluate the region's corners and check their states
@@ -226,18 +226,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
 
             // We store ambiguity here, but clear it if the point is inside
             // or outside (so after the loop below, ambig(i) is only set if
-            // pos[i] is both == 0 and ambiguous).  In order to determine
-            // ambiguity, we need to find derivatives of primitives by calling
-            // DerivArray::set, but this only needs to be done when the value
-            // was 0; otherwise, the result will get discarded anyway.
-            for (uint8_t i = 0; i < children.size(); ++i)
-            {
-                if (vs(i) == 0.f)
-                {
-                    eval->array.set(pos[i], i);
-                }
-            }
-
+            // pos[i] is both == 0 and ambiguous).
             auto ambig = eval->array.getAmbiguous(children.size());
 
             // This is a count of how many points there are that == 0
@@ -402,10 +391,6 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         _pos.template tail<3 - N>() = region.perp.template cast<float>();
         auto set = [&](const Vec& v, size_t i){
             _pos.template head<N>() = v.template cast<float>();
-            eval->array.ArrayEvaluator::set(_pos, i);
-        };
-        auto setWithDerivs = [&](const Vec& v, size_t i) {
-            _pos.template head<N>() = v.template cast<float>();
             eval->array.set(_pos, i);
         };
 
@@ -508,8 +493,8 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                           "Too many results");
             for (unsigned i=0; i < target_count; ++i)
             {
-                setWithDerivs(targets[i].first, 2*i);
-                setWithDerivs(targets[i].second, 2*i + 1);
+                set(targets[i].first, 2*i);
+                set(targets[i].second, 2*i + 1);
             }
 
             // Evaluate values and derivatives
@@ -559,7 +544,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                         // derivatives value at this particular point
                         eval->feature.push(f);
 
-                        const auto ds = eval->feature.deriv(pos, f);
+                        const auto ds = eval->feature.deriv(pos);
 
                         // Unpack 3D derivatives into XTree-specific
                         // dimensionality, and find normal.
