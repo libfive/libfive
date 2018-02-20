@@ -38,7 +38,7 @@ Settings::Settings(QVector3D min, QVector3D max, float res,
 
 Settings Settings::defaultSettings()
 {
-    return Settings({-10, -10, -10}, {10, 10, 10}, 10, 8, true);
+    return Settings({-10, -10, -10}, {10, 10, 10}, 10, 8, false);
 }
 
 int Settings::defaultDiv() const
