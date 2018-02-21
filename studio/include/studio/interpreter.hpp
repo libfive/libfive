@@ -104,6 +104,7 @@ protected:
     SCM scm_numerical_overflow_fmt;
     SCM scm_other_error_fmt;
     SCM scm_result_fmt;
+    SCM scm_in_function_fmt;
 
     friend class Interpreter;
 };
