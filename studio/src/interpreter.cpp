@@ -65,7 +65,8 @@ port-eof?
     for (auto s : {scm_eval_sandboxed, scm_port_eof_p, scm_valid_sym,
                    scm_syntax_error_sym, scm_numerical_overflow_sym,
                    scm_result_fmt, scm_syntax_error_fmt,
-                   scm_numerical_overflow_fmt, scm_other_error_fmt})
+                   scm_numerical_overflow_fmt, scm_other_error_fmt,
+                   scm_in_function_fmt})
     {
         scm_permanent_object(s);
     }
