@@ -542,7 +542,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                     {
                         // Unpack 3D derivatives into XTree-specific
                         // dimensionality, and find normal.
-                        const Eigen::Array<double, N, 1> derivs = f.deriv
+                        const Eigen::Array<double, N, 1> derivs = f
                             .template head<N>()
                             .template cast<double>();
                         const double norm = derivs.matrix().norm();

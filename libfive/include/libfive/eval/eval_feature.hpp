@@ -50,10 +50,17 @@ public:
     bool isInside(const Eigen::Vector3f& p);
 
     /*
-     *  Checks for features at the given position
+     *  Checks for features at the given position, returning a list
+     *  of unique feature normals.
+     */
+    std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p);
+
+    /*
+     *  Checks for features at the given position, returning a list
+     *  of the raw features themselves
      */
     const boost::container::small_vector<Feature, 4>&
-        features(const Eigen::Vector3f& p);
+        features_(const Eigen::Vector3f& p);
 
 protected:
     /*

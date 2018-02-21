@@ -32,8 +32,8 @@ FeatureEvaluator::FeatureEvaluator(
 {
     // Load the default derivatives
     d(tape->X).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
-    d(tape->Y).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
-    d(tape->Z).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
+    d(tape->Y).push_back(Feature(Eigen::Vector3f(0, 1, 0)));
+    d(tape->Z).push_back(Feature(Eigen::Vector3f(0, 0, 1)));
 
     // Set variables to have a single all-zero derivative
     for (auto& v : t->vars.right)
@@ -65,7 +65,7 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
     // Otherwise, we need to handle the zero-crossing case!
 
     // First, we extract all of the features
-    auto fs = features(p);
+    auto fs = features_(p);
 
     // If there's only a single feature, we can get both positive and negative
     // values out if it's got a non-zero gradient
@@ -89,8 +89,8 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
 
 }
 
-const boost::container::small_vector<Feature, 4>& FeatureEvaluator::features(
-        const Eigen::Vector3f& p)
+const boost::container::small_vector<Feature, 4>&
+    FeatureEvaluator::features_(const Eigen::Vector3f& p)
 {
     // Load the location into the results slot and evaluate point-wise
     evalAndPush(p);
@@ -101,8 +101,21 @@ const boost::container::small_vector<Feature, 4>& FeatureEvaluator::features(
     // Pop out of point-wise specialization
     pop();
 
-    // And return the results
     return d(index);
+}
+
+std::list<Eigen::Vector3f> FeatureEvaluator::features(const Eigen::Vector3f& p)
+{
+    // Deduplicate and return the result
+    std::list<Eigen::Vector3f> out;
+    for (auto& o : features_(p))
+    {
+        if (std::find(out.begin(), out.end(), o.deriv) == out.end())
+        {
+            out.push_back(o.deriv);
+        }
+    }
+    return out;
 }
 
 void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
@@ -119,13 +132,16 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #define _bds d(b)
 #define bd _bd.deriv
 
-#define LOOP2(expr) \
-    for (auto& _ad : _ads) \
-        for (auto& _bd : _bds) \
-            if (_ad.check(_bd)) \
-                od.push_back(Feature(expr, _ad, _bd));
 
-#define LOOP1(expr) \
+#define LOOP2 \
+    for (auto& _ad : _ads) \
+        for (auto& _bd : _bds)
+
+#define STORE2(expr) LOOP2 \
+    if (_ad.check(_bd)) \
+        od.push_back(Feature(expr, _ad, _bd));
+
+#define STORE1(expr) \
     for (auto& _ad : _ads) \
         od.push_back(Feature(expr, _ad));
 
@@ -133,37 +149,97 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
     switch (op) {
         case Opcode::ADD:
-            LOOP2(ad + bd);
+            STORE2(ad + bd);
             break;
         case Opcode::MUL:
             // Product rule
-            LOOP2(bd*av + ad*bv);
+            STORE2(bd*av + ad*bv);
             break;
         case Opcode::MIN:
-            od = (av < bv) ? _ads : _bds;
+            if (av < bv || a == b)
+            {
+                od = _ads;
+            }
+            else if (av > bv)
+            {
+                od = _bds;
+            }
+            else LOOP2
+            {
+                Eigen::Vector3f epsilon = bd - ad;
+                if (epsilon.norm() == 0)
+                {
+                    od.push_back(_ad);
+                }
+                else
+                {
+                    auto fa = _ad;
+                    if (fa.push(epsilon))
+                    {
+                        od.push_back(fa);
+                    }
+                    auto fb = _bd;
+                    if (fb.push(-epsilon))
+                    {
+                        od.push_back(fb);
+                    }
+                }
+            }
             break;
         case Opcode::MAX:
-            od = (av < bv) ? _bds : _ads;
+            if (av < bv || a == b)
+            {
+                od = _bds;
+            }
+            else if (av > bv)
+            {
+                od = _ads;
+            }
+            else if (a == b)
+            {
+                od = _ads;
+            }
+            else LOOP2
+            {
+                Eigen::Vector3f epsilon = ad - bd;
+                if (epsilon.norm() == 0)
+                {
+                    od.push_back(_ad);
+                }
+                else
+                {
+                    auto fa = _ad;
+                    if (fa.push(epsilon))
+                    {
+                        od.push_back(fa);
+                    }
+                    auto fb = _bd;
+                    if (fb.push(-epsilon))
+                    {
+                        od.push_back(fb);
+                    }
+                }
+            }
             break;
         case Opcode::SUB:
-            LOOP2(ad - bd);
+            STORE2(ad - bd);
             break;
         case Opcode::DIV:
-            LOOP2((ad*bv - bd*av) / pow(bv, 2));
+            STORE2((ad*bv - bd*av) / pow(bv, 2));
             break;
         case Opcode::ATAN2:
-            LOOP2((ad*bv - bd*av) / (pow(av, 2) + pow(bv, 2)));
+            STORE2((ad*bv - bd*av) / (pow(av, 2) + pow(bv, 2)));
             break;
         case Opcode::POW:
             // The full form of the derivative is
             // od = m * (bv * ad + av * log(av) * bd))
             // However, log(av) is often NaN and bd is always zero,
             // (since it must be CONST), so we skip that part.
-            LOOP2(ad * bv * pow(av, bv - 1));
+            STORE2(ad * bv * pow(av, bv - 1));
             break;
 
         case Opcode::NTH_ROOT:
-            LOOP2((ad.array() == 0)
+            STORE2((ad.array() == 0)
                     .select(0, ad * pow(av, 1.0f / bv - 1) / bv));
             break;
         case Opcode::MOD:
@@ -177,43 +253,43 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::SQUARE:
-            LOOP1(ad * av * 2);
+            STORE1(ad * av * 2);
             break;
         case Opcode::SQRT:
-            LOOP1(av < 0 ? Eigen::Vector3f::Zero().eval() : (ad / (2 * ov)));
+            STORE1(av < 0 ? Eigen::Vector3f::Zero().eval() : (ad / (2 * ov)));
             break;
         case Opcode::NEG:
-            LOOP1(-ad);
+            STORE1(-ad);
             break;
         case Opcode::SIN:
-            LOOP1(ad * cos(av));
+            STORE1(ad * cos(av));
             break;
         case Opcode::COS:
-            LOOP1(ad * -sin(av));
+            STORE1(ad * -sin(av));
             break;
         case Opcode::TAN:
-            LOOP1(ad * pow(1/cos(av), 2));
+            STORE1(ad * pow(1/cos(av), 2));
             break;
         case Opcode::ASIN:
-            LOOP1(ad / sqrt(1 - pow(av, 2)));
+            STORE1(ad / sqrt(1 - pow(av, 2)));
             break;
         case Opcode::ACOS:
-            LOOP1(ad / -sqrt(1 - pow(av, 2)));
+            STORE1(ad / -sqrt(1 - pow(av, 2)));
             break;
         case Opcode::ATAN:
-            LOOP1(ad / (pow(av, 2) + 1));
+            STORE1(ad / (pow(av, 2) + 1));
             break;
         case Opcode::LOG:
-            LOOP1(ad / av);
+            STORE1(ad / av);
             break;
         case Opcode::EXP:
-            LOOP1(ad * exp(av));
+            STORE1(ad * exp(av));
             break;
         case Opcode::ABS:
-            LOOP1(av > 0 ? ad : (-ad).eval());
+            STORE1(av > 0 ? ad : (-ad).eval());
             break;
         case Opcode::RECIP:
-            LOOP1(ad / -pow(av, 2));
+            STORE1(ad / -pow(av, 2));
             break;
 
         case Opcode::CONST_VAR:
@@ -239,8 +315,8 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #undef _bds
 #undef bd
 
-#undef LOOP1
-#undef LOOP2
+#undef STORE1
+#undef STORE2
 
 }
 
