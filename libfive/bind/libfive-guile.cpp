@@ -338,8 +338,8 @@ void init_libfive_kernel(void*)
 (define (ensure-shape t)
   (cond ((shape? t) t)
         ((number? t) (number->shape t))
-        (else (scm-error 'wrong-type-arg #f
-               "Wrong argument ~A for ensure-shape" (list t) t))))
+        (else (scm-error 'wrong-type-arg ensure-shape
+               "Wrong argument ~A (should be number or shape) " (list t) (list t)))))
 
 (define-macro (overload func sym) `(begin
   (define-method (,func (a <number>) (b <shape>)) (,func (ensure-shape a) b))
@@ -371,9 +371,9 @@ void init_libfive_kernel(void*)
   (make-shape 'nth-root (make-shape 'pow a (numerator b))
                         (denominator b)))
 (define-method (expt (a <shape>) (b <number>))
-  (scm-error 'wrong-type-arg #f
+  (scm-error 'wrong-type-arg 'expt
       "RHS of exponentiation must be rational, not ~A"
-      (list b) #f))
+      (list b) (list b)))
 
 (define-method (/ (a <shape>)) (make-shape 'recip a))
 (define-method (- (a <shape>)) (make-shape 'neg a))
