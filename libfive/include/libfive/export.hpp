@@ -18,7 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #pragma once
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && !defined FIVE_STATIC
 #ifdef FIVE_DLL
 #define FIVE_EXPORT __declspec(dllexport)
 #else
