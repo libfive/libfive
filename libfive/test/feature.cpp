@@ -26,25 +26,25 @@ TEST_CASE("Feature::push")
 {
     SECTION("Pushing zero-length epsilon")
     {
-        Feature f;
+        Feature f(Eigen::Vector3f::Zero());
         REQUIRE(f.push({0, 0, 0}) == false);
     }
     SECTION("Separated by exactly 180 degrees")
     {
-        Feature f;
+        Feature f(Eigen::Vector3f::Zero());
         REQUIRE(f.push({1, 0, 0}) == true);
         REQUIRE(f.push({-1, 0, 0}) == false);
     }
     SECTION("Separability testing")
     {
-        Feature a;
+        Feature a(Eigen::Vector3f::Zero());
         REQUIRE(a.push({1, 0, 0}) == true);
         REQUIRE(a.push({0, 1, 0}) == true);
         REQUIRE(a.push({0, 0, 1}) == true);
         REQUIRE(a.push({1, 1, 1}) == true);
         REQUIRE(a.push({-1, -1, -1}) == false);
 
-        Feature b;
+        Feature b(Eigen::Vector3f::Zero());
         REQUIRE(b.push({1, 0, 0}) == true);
         REQUIRE(b.push({0, -1, 0}) == true);
         REQUIRE(b.push({0, 0, -1}) == true);
@@ -56,7 +56,7 @@ TEST_CASE("Feature::push")
 
     SECTION("Fun with numerical instability")
     {
-        Feature a;
+        Feature a(Eigen::Vector3f::Zero());
         auto s = sqrt(2);
         REQUIRE(a.push({s,  0, -s}) == true);
         REQUIRE(a.push({s,  0,  s}) == true);
@@ -64,17 +64,17 @@ TEST_CASE("Feature::push")
     }
 }
 
-TEST_CASE("Feature::isCompatible")
+TEST_CASE("Feature::check")
 {
     SECTION("Flat plane")
     {
-        Feature a;
+        Feature a(Eigen::Vector3f::Zero());
         REQUIRE(a.push({-1, 1, 0}) == true);
         REQUIRE(a.push({-1, -1, 0}) == true);
-        REQUIRE(a.isCompatible({0, -1, 0}));
-        REQUIRE(a.isCompatible({0, 1, 0}));
+        REQUIRE(a.check({0, -1, 0}));
+        REQUIRE(a.check({0, 1, 0}));
 
         REQUIRE(a.push({0, 1, 0}));
-        REQUIRE(!a.isCompatible({0, -1, 0}));
+        REQUIRE(!a.check({0, -1, 0}));
     }
 }

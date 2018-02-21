@@ -25,24 +25,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-class FeatureEvaluator : public DerivEvaluator
+/*
+ *  FeatureEvaluator is an enhanced version of DerivEvaluator.
+ *
+ *  Instead of recording one derivative in ambiguous cases
+ *  (e.g. min(x, y) at 0,0), it stores and returns all of them.
+ *
+ *  This is more expensive, but also more awesome.
+ */
+class FeatureEvaluator : public PointEvaluator
 {
 public:
     FeatureEvaluator(std::shared_ptr<Tape> t);
     FeatureEvaluator(std::shared_ptr<Tape> t,
                      const std::map<Tree::Id, float>& vars);
-
-public:
-    /*
-     *  Pushes into a tree based on the given feature
-     *
-     *  The result data f[][0] must contain evaluation results with a matching
-     *  number of ambiguous min/max nodes as the given feature (or more, if
-     *  the feature is partial)
-     *
-     *  Returns the feature f with non-relevant choices removed
-     */
-    Feature push(const Feature& f);
 
     /*
      *  Checks to see if the given point is inside the solid body.
@@ -56,7 +52,20 @@ public:
     /*
      *  Checks for features at the given position
      */
-    std::list<Feature> featuresAt(const Eigen::Vector3f& p);
+    const boost::container::small_vector<Feature, 4>&
+        features(const Eigen::Vector3f& p);
+
+protected:
+    /*
+     *  Per-clause evaluation, used in tape walking
+     */
+    void operator()(Opcode::Opcode op, Clause::Id id,
+                    Clause::Id a, Clause::Id b);
+
+    Eigen::Array<boost::container::small_vector<Feature, 4>,
+                 1, Eigen::Dynamic> d;
+
+    friend class Tape; // for rwalk<DerivEvaluator>
 };
 
 }   // namespace Kernel

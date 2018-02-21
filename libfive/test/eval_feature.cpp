@@ -79,15 +79,15 @@ TEST_CASE("FeatureEvaluator::isInside")
     }
 }
 
-TEST_CASE("FeatureEvaluator::featuresAt")
+TEST_CASE("FeatureEvaluator::features")
 {
     SECTION("Single feature")
     {
         auto t = std::make_shared<Tape>(Tree::X());
         FeatureEvaluator e(t);
-        auto fs = e.featuresAt({0, 0, 0});
+        auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 1);
-        REQUIRE(fs.front().deriv == Eigen::Vector3d(1, 0, 0));
+        REQUIRE(fs.front().deriv == Eigen::Vector3f(1, 0, 0));
     }
 
     SECTION("Two features (min)")
@@ -95,11 +95,11 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto t = std::make_shared<Tape>(min(Tree::X(), -Tree::X()));
         FeatureEvaluator e(t);
 
-        auto fs = e.featuresAt({0, 0, 0});
+        auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 2);
         auto i = fs.begin();
-        REQUIRE((i++)->deriv == Eigen::Vector3d(1, 0, 0));
-        REQUIRE((i++)->deriv == Eigen::Vector3d(-1, 0, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3f(1, 0, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3f(-1, 0, 0));
     }
 
     SECTION("Two features (max)")
@@ -107,11 +107,11 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto t = std::make_shared<Tape>(max(Tree::X(), -Tree::X()));
         FeatureEvaluator e(t);
 
-        auto fs = e.featuresAt({0, 0, 0});
+        auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 2);
         auto i = fs.begin();
-        REQUIRE((i++)->deriv == Eigen::Vector3d(1, 0, 0));
-        REQUIRE((i++)->deriv == Eigen::Vector3d(-1, 0, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3f(1, 0, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3f(-1, 0, 0));
     }
 
     SECTION("Three features")
@@ -120,13 +120,13 @@ TEST_CASE("FeatureEvaluator::featuresAt")
                 min(Tree::X(), min(Tree::Y(), Tree::Z())));
         FeatureEvaluator e(t);
 
-        auto fs = e.featuresAt({0, 0, 0});
+        auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 3);
 
         auto i = fs.begin();
-        REQUIRE((i++)->deriv == Eigen::Vector3d(1, 0, 0));
-        REQUIRE((i++)->deriv == Eigen::Vector3d(0, 1, 0));
-        REQUIRE((i++)->deriv == Eigen::Vector3d(0, 0, 1));
+        REQUIRE((i++)->deriv == Eigen::Vector3f(1, 0, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3f(0, 1, 0));
+        REQUIRE((i++)->deriv == Eigen::Vector3f(0, 0, 1));
     }
 
     SECTION("Buried ambiguity")
@@ -136,7 +136,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto t = std::make_shared<Tape>(rectangle(-1, 0, -1, 1));
         FeatureEvaluator e(t);
 
-        REQUIRE(e.featuresAt({-0.5, -1, 0}).size() == 1);
+        REQUIRE(e.features({-0.5, -1, 0}).size() == 1);
     }
 
     SECTION("One feature (nested)")
@@ -147,7 +147,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto t = std::make_shared<Tape>(r);
         FeatureEvaluator e(t);
 
-        REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
+        REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
     }
 
     SECTION("One feature (duplicated)")
@@ -156,7 +156,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto t = std::make_shared<Tape>(r);
         FeatureEvaluator e(t);
 
-        REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
+        REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
     }
 
     SECTION("One feature (duplicated multiple times)")
@@ -165,7 +165,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto t = std::make_shared<Tape>(r);
         FeatureEvaluator e(t);
 
-        REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
+        REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
     }
 
     SECTION("One feature (duplicated even more times)")
@@ -173,7 +173,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto r = max(max(Tree::X(), Tree::X()), max(Tree::X(), Tree::X()));
         auto t = std::make_shared<Tape>(r);
         FeatureEvaluator e(t);
-        REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
+        REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
     }
 
     SECTION("Coincident planes with same normal")
@@ -181,30 +181,6 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         auto r = max(Tree::Z() - 6, Tree::Z() + -6);
         auto t = std::make_shared<Tape>(r);
         FeatureEvaluator e(t);
-        REQUIRE(e.featuresAt({0, 0, 6}).size() == 1);
-    }
-}
-
-TEST_CASE("FeatureEvaluator::push(Feature)")
-{
-    auto t = std::make_shared<Tape>(min(Tree::X(), -Tree::X()));
-    FeatureEvaluator e(t);
-    REQUIRE(e.eval({0, 0, 0}) == 0); // Force an ambiguous evaluation
-    Feature f;
-
-    SECTION("LHS")
-    {   // Use a dummy feature to select the first branch
-        REQUIRE(f.push({1, 0, 0}, {1, 0}));
-        e.push(f);
-        REQUIRE(e.eval({1, 0, 0}) == 1);
-        REQUIRE(t->utilization() < 1);
-    }
-
-    SECTION("RHS")
-    {   // Use a dummy feature to select the second branch
-        REQUIRE(f.push({-1, 0, 0}, {1, 1}));
-        e.push(f);
-        REQUIRE(e.eval({-2, 0, 0}) == 2);
-        REQUIRE(t->utilization() < 1);
+        REQUIRE(e.features({0, 0, 6}).size() == 1);
     }
 }
