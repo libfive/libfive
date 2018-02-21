@@ -37,6 +37,7 @@ namespace Opcode
     OPCODE(VAR_Z, 4)        \
     OPCODE(VAR, 5)          \
     OPCODE(CONST_VAR, 6)    \
+    OPCODE(ORACLE, 32)      \
                             \
     OPCODE(SQUARE, 7)       \
     OPCODE(SQRT, 8)         \
@@ -69,7 +70,7 @@ enum Opcode {
 #define OPCODE(s, i) s=i,
     OPCODES
 #undef OPCODE
-    LAST_OP=32,
+    LAST_OP=33,
 };
 
 size_t args(Opcode op);

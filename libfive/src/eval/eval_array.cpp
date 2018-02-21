@@ -129,9 +129,21 @@ ArrayEvaluator::getAmbiguous(size_t i)
 
     bool abort = false;
     tape->walk(
-        [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
+        [&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
         {
-            if (op == Opcode::MIN || op == Opcode::MAX)
+            if (op == Opcode::ORACLE)
+            {
+                assert(tape->oracles.find(id) != tape->oracles.end());
+                auto or = tape->oracles.find(id)->second.first;
+                for (size_t j = 0; j < i; ++j)
+                {
+                    if (!ambig(j) && or ->isAmbiguous(points(j)))
+                    {
+                        ambig(j) = true;
+                    }
+                }
+            }
+            else if (op == Opcode::MIN || op == Opcode::MAX)
             {
                 ambig.head(i) = ambig.head(i) ||
                     (f.block(a, 0, 1, i) ==
@@ -263,6 +275,7 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR:
+        case Opcode::ORACLE:
         case Opcode::LAST_OP: assert(false);
     }
 #undef out

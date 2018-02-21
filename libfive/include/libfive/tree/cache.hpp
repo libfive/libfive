@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <mutex>
 
 #include "libfive/export.hpp"
+#include "libfive/tree/oracle.hpp"
 #include "libfive/tree/tree.hpp"
 
 namespace Kernel {
@@ -80,6 +81,7 @@ public:
      */
     Node fromAffine(const std::map<Node, float>& ns);
 
+
 protected:
     /*
      *  Cache constructor is private so outsiders must use instance()
@@ -116,6 +118,11 @@ protected:
 
     /*  Constants in the tree are uniquely identified by their value  */
     std::map<float, std::weak_ptr<Tree::Tree_>> constants;
+
+    /*  Oracles do not need to use the cache to be deduplicated, since they 
+     *  are created from unique_ptr's, and therefore are already impossible
+     *  to duplicate.
+     */
 
     static FIVE_EXPORT std::recursive_mutex mut;
     static FIVE_EXPORT Cache _instance;

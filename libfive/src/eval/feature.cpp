@@ -124,11 +124,41 @@ bool Feature::push(const Eigen::Vector3d& e, Choice choice)
     return (norm == 0) ? false : pushNorm(e / norm, choice);
 }
 
+bool Feature::push(const Eigen::Vector3d& e, OracleChoice choice)
+{
+    const auto norm = e.norm();
+    return (norm == 0) ? false : pushNorm(e / norm, choice);
+}
+
 bool Feature::pushNorm(const Eigen::Vector3d& e, Choice choice)
 {
     if (isCompatibleNorm(e))
     {
         choices.insert(choice);
+        _epsilons[choice.id] = e;
+
+        // Store the epsilon if it isn't already present
+        for (auto& i : epsilons)
+        {
+            if (e.dot(i) > 1 - 1e-8)
+            {
+                return true;
+            }
+        }
+        epsilons.push_back(e);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Feature::pushNorm(const Eigen::Vector3d& e, OracleChoice choice)
+{
+    if (isCompatibleNorm(e))
+    {
+        oracleChoices.insert(choice);
         _epsilons[choice.id] = e;
 
         // Store the epsilon if it isn't already present
@@ -155,6 +185,23 @@ bool operator<(const Feature::Choice& a, const Feature::Choice& b)
         return a.id < b.id;
     }
     return a.choice < b.choice;
+}
+
+bool operator<(const Feature::OracleChoice& a, const Feature::OracleChoice& b)
+{
+    if (a.id != b.id)
+    {
+        return a.id < b.id;
+    }
+    else if (a.choice(0) != b.choice(0))
+    {
+        return a.choice(0) < b.choice(0);
+    }
+    else if (a.choice(1) != b.choice(1))
+    {
+        return a.choice(1) < b.choice(1);
+    }
+    return a.choice(2) < b.choice(2);
 }
 
 Feature::PlanarResult Feature::checkPlanar(const Eigen::Vector3d& _v) const

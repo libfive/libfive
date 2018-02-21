@@ -33,6 +33,7 @@ add_library(five SHARED
     solve/solver.cpp
     tree/cache.cpp
     tree/opcode.cpp
+    tree/oracle.cpp
     tree/template.cpp
     tree/tree.cpp
     libfive.cpp

@@ -165,6 +165,7 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             case Opcode::VAR_Y:
             case Opcode::VAR_Z:
             case Opcode::VAR:
+            case Opcode::ORACLE:
             case Opcode::LAST_OP: assert(false);
         }
 #undef ov

@@ -41,6 +41,13 @@ DerivEvaluator::DerivEvaluator(
 
 Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt)
 {
+    //Load gradients of oracles; only use the first gradient of each here 
+    //(following precedent for min and max evaluation).  
+    for (auto or : tape->oracles) 
+    {
+        d.col(or.first) = 
+            or.second.first->getGradients(pt).getData().front().first;
+    }
     // Perform value evaluation, saving results
     auto w = eval(pt);
     auto xyz = d.col(tape->rwalk(*this));
@@ -156,6 +163,7 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR:
+        case Opcode::ORACLE:
         case Opcode::LAST_OP: assert(false);
     }
 #undef ov

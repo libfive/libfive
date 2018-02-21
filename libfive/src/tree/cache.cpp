@@ -35,8 +35,9 @@ Cache::Node Cache::constant(float v)
         Node out(new Tree::Tree_ {
             Opcode::CONST,
             Tree::FLAG_LOCATION_AGNOSTIC,
-            0, // rank
-            v, // value
+            0,       // rank
+            v,       // value
+            nullptr, //oracle
             nullptr,
             nullptr });
         constants.insert({v, out});
@@ -55,6 +56,7 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
     // These are opcodes that you're not allowed to use here
     assert(op != Opcode::CONST &&
            op != Opcode::INVALID &&
+           op != Opcode::ORACLE &&
            op != Opcode::LAST_OP);
 
     // See if we can simplify the expression, either because it's an identity
@@ -82,7 +84,8 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
               (!rhs.get() || (rhs->flags & Tree::FLAG_LOCATION_AGNOSTIC)) &&
                op != Opcode::VAR_X &&
                op != Opcode::VAR_Y &&
-               op != Opcode::VAR_Z)
+               op != Opcode::VAR_Z &&
+               op != Opcode::ORACLE)
                   ? Tree::FLAG_LOCATION_AGNOSTIC : 0),
 
             // Rank
@@ -91,6 +94,9 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
 
             // Value
             std::nanf(""),
+
+            //Oracle
+            nullptr,
 
             // Arguments
             lhs,
@@ -131,6 +137,7 @@ Cache::Node Cache::var()
         Tree::FLAG_LOCATION_AGNOSTIC,
         0, // rank
         std::nanf(""), // value
+        nullptr, // oracle
         nullptr,
         nullptr});
 }
