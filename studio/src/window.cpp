@@ -220,7 +220,7 @@ void Window::onOpen(bool)
 {
     CHECK_UNSAVED();
 
-    QString f = QFileDialog::getOpenFileName(nullptr, "Open",
+    QString f = QFileDialog::getOpenFileName(this, "Open",
             workingDirectory(), "*.io;;*.ao");
     if (!f.isEmpty() && loadFile(f))
     {
@@ -309,7 +309,7 @@ bool Window::onSave(bool)
 
 bool Window::onSaveAs(bool)
 {
-    QString f = QFileDialog::getSaveFileName(nullptr, "Save as",
+    QString f = QFileDialog::getSaveFileName(this, "Save as",
             workingDirectory(), "*.io");
     if (!f.isEmpty())
     {
@@ -454,7 +454,7 @@ void Window::onExportReady(QList<const Kernel::Mesh*> shapes)
 void Window::onExport(bool)
 {
     export_filename = QFileDialog::getSaveFileName(
-            nullptr, "Export", workingDirectory(), "*.stl");
+            this, "Export", workingDirectory(), "*.stl");
     if (export_filename.isEmpty())
     {
         return;
