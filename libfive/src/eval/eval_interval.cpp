@@ -52,6 +52,10 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     i[tape->X] = {lower.x(), upper.x()};
     i[tape->Y] = {lower.y(), upper.y()};
     i[tape->Z] = {lower.z(), upper.z()};
+    Region<3> region(lower.template cast<double>(), upper.template cast<double>());
+    for (auto or : tape->oracles) {
+        i[or.first] = or.second.first->getRange(region);
+    }
 
     return i[tape->rwalk(*this)];
 }
@@ -226,6 +230,7 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR:
+        case Opcode::ORACLE:
         case Opcode::LAST_OP: assert(false);
     }
 #undef out

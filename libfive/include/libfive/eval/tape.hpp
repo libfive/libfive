@@ -69,9 +69,15 @@ public:
     /*  Map of variables (in terms of where they live in this Evaluator) to
      *  their ids in their respective Tree (e.g. what you get when calling
      *  Tree::var().id() */
-    boost::bimap<Clause::Id, Tree::Id> vars;
+    boost::bimap<Clause::Id, Tree::Id> vars;    
+    
+    /*  Oracles are also unpacked from the tree at construction, but a copy of
+     *  the corresponding Tree is also stored, in order to ensure that the Tree
+     *  (and thus the oracle) is not destroyed before we're done with the tape.
+     */
+    std::map<Clause::Id, std::pair<const Oracle* const, Tree>> oracles;
 
-    /*  Returns the total number of clauses (including X/Y/Z, variables, and
+    /*  Returns the total number of clauses (including X/Y/Z, oracles, variables, and
      *  constants, which aren't explicitly in the tape )  */
     size_t num_clauses;
 

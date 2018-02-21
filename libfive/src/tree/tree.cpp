@@ -41,6 +41,21 @@ Tree::Tree(float v)
     // Nothing to do here
 }
 
+Tree::Tree(std::unique_ptr<const Oracle> or )
+    : ptr(std::shared_ptr<Tree_>(new Tree_{
+    Opcode::ORACLE,
+    0, // flags
+    0, // rank
+    std::nanf(""), // value
+    std::move(or ), // oracle
+    nullptr,
+    nullptr }))
+{
+    // Nothing to do here either.  ptr is constructed directly (without using 
+    // the cache), since using  a unique_ptr to the oracle already precludes 
+    // duplication.
+}
+
 Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
     : ptr(Cache::instance()->operation(op, a.ptr, b.ptr))
 {
@@ -74,7 +89,7 @@ Tree::Tree_::~Tree_()
     {
         Cache::instance()->del(value);
     }
-    else if (op != Opcode::VAR)
+    else if (op != Opcode::VAR && op != Opcode::ORACLE)
     {
         Cache::instance()->del(op, lhs, rhs);
     }
