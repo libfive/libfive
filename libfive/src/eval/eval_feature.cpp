@@ -40,8 +40,8 @@ Eigen::Vector4f FeatureEvaluator::deriv(const Eigen::Vector3f& pt)
     for (auto or : tape->oracles)
     {
         // Other than this line, it's the same as the DerivEvaluator version.
-        dOrAll(or.first) = or.second.first->getGradients(pt); 
-        d.col(or .first) = or.second.first->getGradients(pt).begin()->first;
+        dOrAll(or.first) = or.second.first->getGradients(pt).moveData(); 
+        d.col(or.first) = dOrAll(or.first).begin()->first;
     }
     // Perform value evaluation, saving results
     auto w = eval(pt);
@@ -246,20 +246,15 @@ std::list<Feature> FeatureEvaluator::featuresAt(const Eigen::Vector3f& p)
                         {
                             auto rejected = false;
                             auto fNew = f_;
-                            for (auto choice2 : dOrAll(id)) 
+                            completeFeature = false;
+                            for (auto epsilon : choice.second) 
                             {
-                                if (choice != choice2) 
+                                if (!fNew.push(
+                                    epsilon.template cast<double>(),
+                                    { id, choice.first }))
                                 {
-                                    completeFeature = false;
-                                    Eigen::Vector3f epsilon =
-                                        choice.second - choice2.second;
-                                    if (!fNew.push(
-                                        epsilon.template cast<double>(), 
-                                        { id, choice.first }))
-                                    { 
-                                        rejected = true;
-                                        break;
-                                    }
+                                    rejected = true;
+                                    break;
                                 }
                             }
                             if (!rejected) {

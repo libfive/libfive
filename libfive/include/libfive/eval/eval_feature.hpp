@@ -79,7 +79,7 @@ protected:
      */
     Eigen::Array<
         boost::container::small_vector<
-        std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>, 
+        std::pair<Eigen::Vector3f, std::vector<Eigen::Vector3f>>, 1>, 
         1, Eigen::Dynamic> dOrAll;
 };
 

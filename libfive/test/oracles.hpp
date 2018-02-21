@@ -42,10 +42,14 @@ class XAsOracle : public Oracle
         return { region.lower.x(), region.upper.x() };
     }
 
-    boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
-        getGradients(Eigen::Vector3f point) const override
+    GradientsWithEpsilons getGradients(Eigen::Vector3f point) const override
     {
-        return { { {1.f, 0.f, 0.f}, {0.f, 0.f, 0.f} } };
+        return { { {1.f, 0.f, 0.f } }, GradientsWithEpsilons::USECLOSEST };
+    }
+
+    bool isAmbiguous(Eigen::Vector3f point) const override
+    {
+        return false;
     }
 
     float getValue(Eigen::Vector3f point) const override
@@ -66,10 +70,14 @@ class YAsOracle : public Oracle
         return { region.lower.y(), region.upper.y() };
     }
 
-    boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
-        getGradients(Eigen::Vector3f point) const override
+    GradientsWithEpsilons getGradients(Eigen::Vector3f point) const override
     {
-        return { { { 0.f, 1.f, 0.f },{ 0.f, 0.f, 0.f } } };
+        return { { { 0.f, 1.f, 0.f } }, GradientsWithEpsilons::USECLOSEST };
+    }
+
+    bool isAmbiguous(Eigen::Vector3f point) const override
+    {
+        return false;
     }
 
     float getValue(Eigen::Vector3f point) const override
@@ -90,10 +98,14 @@ class ZAsOracle : public Oracle
         return { region.lower.z(), region.upper.z() };
     }
 
-    boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
-        getGradients(Eigen::Vector3f point) const override
+    GradientsWithEpsilons getGradients(Eigen::Vector3f point) const override
     {
-        return { { { 0.f, 0.f, 1.f },{ 0.f, 0.f, 0.f } } };
+        return { { { 0.f, 0.f, 1.f } }, GradientsWithEpsilons::USECLOSEST };
+    }
+
+    bool isAmbiguous(Eigen::Vector3f point) const override
+    {
+        return false;
     }
 
     float getValue(Eigen::Vector3f point) const override
@@ -105,7 +117,8 @@ class ZAsOracle : public Oracle
 Tree convertToOracleAxes(Tree t)
 {
     return t.remap(Tree(std::make_unique<const XAsOracle>()), 
-        Tree(std::make_unique<const YAsOracle>()), Tree(std::make_unique<const ZAsOracle>()));
+        Tree(std::make_unique<const YAsOracle>()), 
+        Tree(std::make_unique<const ZAsOracle>()));
 }
 
 template <unsigned N>

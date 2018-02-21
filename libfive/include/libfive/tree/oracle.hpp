@@ -32,24 +32,70 @@ namespace Kernel {
 class Oracle 
 {
 public:
+    class GradientsWithEpsilons
+    {
+    public:
+        enum PriorityType {USEFURTHEST, USECLOSEST};
+
+        GradientsWithEpsilons(
+            boost::container::small_vector<Eigen::Vector3f, 1> gradients,
+            PriorityType priority);
+
+        const boost::container::small_vector<
+            std::pair<Eigen::Vector3f/*gradient*/,
+            std::vector<Eigen::Vector3f>/*epsilons*/>,
+            1>& getData() const { return data; }
+
+        /*  Move-constructor equivalent; invalidates the object.  
+         *  Use responsibly.
+         */
+        boost::container::small_vector<
+            std::pair<Eigen::Vector3f/*gradient*/,
+            std::vector<Eigen::Vector3f>/*epsilons*/>,
+            1>&& moveData() { return std::move(data); }
+    protected:
+        /*  It is the derived class's responsibility to ensure that the data 
+         *  fulfills the necessary invariants:
+         *  1.  For any entry in data, there must be at least one vector that 
+         *          has positive dot product with all epsilons for that entry;
+         *          equivalently, all epsilons of a single entry must be 
+         *          compatible.
+         *  2.  Any nonzero vector must fulfill the above condition (the 
+         *	        positive dot product) for exactly one entry in data; that
+         *          is, this condition must partition R3/{0} (or, equivalently, 
+         *          S2) into disjoint regions.  The corresponding gradient
+         *          should be the correct one to use at that point plus some
+         *          sufficiently small positive multiple of any vector in that 
+         *          region.
+         *  3.  If two entries in data have epsilons such that their respective
+         *          regions are adjacent, the difference between their 
+         *          gradients must be a scalar multiple (possibly 0) of the 
+         *          epsilons producing the boundary between them.
+         */
+        GradientsWithEpsilons(
+            boost::container::small_vector<
+            std::pair<Eigen::Vector3f, std::vector<Eigen::Vector3f>>, 1> data)
+            : data(data) { ; }
+    private:
+        boost::container::small_vector<
+            std::pair<Eigen::Vector3f/*gradient*/,
+            std::vector<Eigen::Vector3f>/*epsilons*/>,
+            1> data;
+    };
+
     /*  Both forms of getRange are used for interval optimization; as such, an
      *  overly large range will affect performance but not precision.
      */
     virtual Interval::I getRange(Region<2> region) const = 0;
     virtual Interval::I getRange(Region<3> region) const = 0;
 
-
-    /*  Since the gradient may be discontinuous at the queried point, a vector
-     *  is returned; in each entry of the vector, the first element of the pair
-     *  represents the gradient in some area adjoining the passed point.  The
-     *  second element of the pair represents a normalized epsilon indicating
-     *  the domain of this gradient: for small scalar e and normalized vector 
-     *  n, the gradient at point + en is the one whose associated epsilon is
-     *  closest to n.
-     */
-    virtual boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
+    virtual GradientsWithEpsilons
         getGradients(Eigen::Vector3f point) const = 0;
 
+    /*  Should return true iff getGradients returns more than one gradient for
+     *  the same point, but may optimize.
+     */
+    virtual bool isAmbiguous(Eigen::Vector3f point) const = 0;
 
     virtual float getValue(Eigen::Vector3f point) const = 0;
 

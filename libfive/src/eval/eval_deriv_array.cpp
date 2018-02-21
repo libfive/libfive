@@ -52,9 +52,9 @@ void DerivArrayEvaluator::set(const Eigen::Vector3f& p, size_t index)
     for (auto or : tape->oracles) 
     {
         auto allGradients = or.second.first->getGradients(p);
-        assert(allGradients.size() > 0);
-        ambiguousOracles(or.first, index) = allGradients.size() > 1;
-        d(or.first).col(index) = allGradients[0].first;
+        assert(allGradients.getData().size() > 0);
+        ambiguousOracles(or.first, index) = allGradients.getData().size() > 1;
+        d(or.first).col(index) = allGradients.getData().front().first;
     }
 }
 

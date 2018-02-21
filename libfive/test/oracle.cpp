@@ -109,41 +109,58 @@ public:
         return { std::max({ minX, minY, minZ }),std::max({ maxX, maxY, maxZ }) };
     }
 
-    boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1>
+    GradientsWithEpsilons
         getGradients(Eigen::Vector3f point) const override
     {
-        boost::container::small_vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>, 1> out;
-        if (abs(point.x()) >= std::max(abs(point.y()), abs(point.z()))) {
+        boost::container::small_vector<Eigen::Vector3f, 1> out;
+        if (abs(point.x()) >= std::max(abs(point.y()), abs(point.z()))) 
+        {
             if (point.x() >= 0.f)
             {
-                out.push_back({ { 1.f, 0.f, 0.f }, {1.f, 0.f, 0.f} });
+                out.push_back({ 1.f, 0.f, 0.f });
             }
             if (point.x() <= 0.f)
             {
-                out.push_back({ { -1.f, 0.f, 0.f },{ -1.f, 0.f, 0.f } });
+                out.push_back({ -1.f, 0.f, 0.f });
             }
         }
-        if (abs(point.y()) >= std::max(abs(point.x()), abs(point.z()))) {
+        if (abs(point.y()) >= std::max(abs(point.x()), abs(point.z()))) 
+        {
             if (point.y() >= 0.f)
             {
-                out.push_back({ { 0.f, 1.f, 0.f },{ 0.f, 1.f, 0.f } });
+                out.push_back({ 0.f, 1.f, 0.f });
             }
             if (point.y() <= 0.f)
             {
-                out.push_back({ { 0.f, -1.f, 0.f },{ 0.f, -1.f, 0.f } });
+                out.push_back({ 0.f, -1.f, 0.f });
             }
         }
-        if (abs(point.z()) >= std::max(abs(point.y()), abs(point.x()))) {
+        if (abs(point.z()) >= std::max(abs(point.y()), abs(point.x()))) 
+        {
             if (point.z() >= 0.f)
             {
-                out.push_back({ { 0.f, 0.f, 1.f },{ 0.f, 0.f, 1.f } });
+                out.push_back({ 0.f, 0.f, 1.f });
             }
             if (point.z() <= 0.f)
             {
-                out.push_back({ { 0.f, 0.f, -1.f },{ 0.f, 0.f, -1.f } });
+                out.push_back({ 0.f, 0.f, -1.f });
             }
         }
-        return out;
+        return { out, GradientsWithEpsilons::USECLOSEST};
+    }
+
+    bool isAmbiguous(Eigen::Vector3f point) const override
+    {
+        if (abs(point.x()) == abs(point.y()))
+        {
+            return abs(point.x()) >= abs(point.z());
+            //If true, this can return 3 or 6 gradients, depending on whether
+            //it's 0, but is ambiguous either way.
+        }
+        else
+        {
+            return std::max(abs(point.x()), abs(point.y())) == abs(point.z());
+        }
     }
 
     float getValue(Eigen::Vector3f point) const override

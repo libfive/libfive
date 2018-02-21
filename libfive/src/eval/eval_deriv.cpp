@@ -45,7 +45,8 @@ Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt)
     //(following precedent for min and max evaluation).  
     for (auto or : tape->oracles) 
     {
-        d.col(or.first) = or.second.first->getGradients(pt).begin()->first;
+        d.col(or.first) = 
+            or.second.first->getGradients(pt).getData().front().first;
     }
     // Perform value evaluation, saving results
     auto w = eval(pt);
