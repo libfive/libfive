@@ -56,7 +56,7 @@ public:
     /*
      *  Default constructor for an empty region
      */
-    Region() : lower(0), upper(0) {}
+    Region() : lower(Pt::Zero()), upper(Pt::Zero()) {}
 
     Pt& operator[](std::size_t idx)
     {
