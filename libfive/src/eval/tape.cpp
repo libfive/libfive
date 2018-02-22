@@ -240,10 +240,20 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     {
         if (!disabled[c.id])
         {
-            Clause::Id ra, rb;
-            for (ra = c.a; remap[ra]; ra = remap[ra]);
-            for (rb = c.b; remap[rb]; rb = remap[rb]);
-            tape->t.push_back({c.op, c.id, ra, rb});
+            // Oracle nodes use c.a as an index into tape->oracles,
+            // rather than the address of an lhs / rhs expression,
+            // so we special-case them here to avoid bad remapping.
+            if (c.op == Opcode::ORACLE)
+            {
+                tape->t.push_back({c.op, c.id, c.a, c.b});
+            }
+            else
+            {
+                Clause::Id ra, rb;
+                for (ra = c.a; remap[ra]; ra = remap[ra]);
+                for (rb = c.b; remap[rb]; rb = remap[rb]);
+                tape->t.push_back({c.op, c.id, ra, rb});
+            }
         }
     }
 
