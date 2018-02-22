@@ -88,19 +88,19 @@ template <unsigned N>
 void BRepCompare(const BRep<N>& first, const BRep<N>& second)
 {
     REQUIRE(first.verts.size() == second.verts.size());
-    for (auto i = 0; i < first.verts.size(); ++i) {
+    for (unsigned i = 0; i < first.verts.size(); ++i) {
         CAPTURE(i);
         CAPTURE(first.verts[i]);
         CAPTURE(second.verts[i]);
-        REQUIRE((first.verts[i] == second.verts[i]).all());
+        REQUIRE(first.verts[i] == second.verts[i]);
     }
 
     REQUIRE(first.branes.size() == second.branes.size());
-    for (auto i = 0; i < first.branes.size(); ++i) {
+    for (unsigned i = 0; i < first.branes.size(); ++i) {
         CAPTURE(i);
         CAPTURE(first.branes[i]);
         CAPTURE(second.branes[i]);
-        REQUIRE((first.branes[i] == second.branes[i]).all());
+        REQUIRE(first.branes[i] == second.branes[i]);
     }
 }
 

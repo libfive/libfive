@@ -42,6 +42,10 @@ public:
         upper = _upper;
     }
 
+    /*  Make an aligned new operator, as this class has Eigen structs
+     *  inside of it (which are aligned for SSE) */
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 protected:
     /* Local storage for set(Vector3f) */
     Eigen::Array<Eigen::Vector3f, 1, N> points;
@@ -49,10 +53,6 @@ protected:
     /* Local storage for set(Interval) */
     Eigen::Vector3f lower;
     Eigen::Vector3f upper;
-
-    /*  Make an aligned new operator, as this class has Eigen structs
-     *  inside of it (which are aligned for SSE) */
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 }   // namespace Kernel
