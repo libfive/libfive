@@ -27,17 +27,20 @@ using namespace Kernel;
 
 TEST_CASE("DerivEvaluator::deriv")
 {
-    SECTION("Every operator")
+    SECTION("Every operator that takes at least one argument")
     {
-        for (unsigned i=7; i < Kernel::Opcode::LAST_OP; ++i)
+        for (unsigned i = 0; i < Kernel::Opcode::LAST_OP; ++i)
         {
             auto op = (Kernel::Opcode::Opcode)i;
-            Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
-                                            : Tree(op, Tree::X()));
-            auto tape = std::make_shared<Tape>(t);
-            DerivEvaluator e(tape);
-            e.deriv({0, 0, 0});
-            REQUIRE(true /* No crash! */ );
+            if (Opcode::args(op) == 1 || Opcode::args(op) == 2)
+            {
+                Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
+                    : Tree(op, Tree::X()));
+                auto tape = std::make_shared<Tape>(t);
+                DerivEvaluator e(tape, 0);
+                e.deriv({ 0, 0, 0 });
+                REQUIRE(true /* No crash! */);
+            }
         }
     }
 
@@ -45,7 +48,7 @@ TEST_CASE("DerivEvaluator::deriv")
     {
         auto v = Tree::var();
         auto t = std::make_shared<Tape>(v + 2 * Tree::X());
-        DerivEvaluator e(t, {{v.id(), 0}});
+        DerivEvaluator e(t, {{v.id(), 0}}, 0);
 
         auto out = e.deriv({2, 0, 0});
         REQUIRE(out == Eigen::Vector4f(2, 0, 0, 4));
@@ -54,7 +57,7 @@ TEST_CASE("DerivEvaluator::deriv")
     SECTION("X^(1/3)")
     {
         auto t = std::make_shared<Tape>(nth_root(Tree::X(), 3));
-        DerivEvaluator e(t);
+        DerivEvaluator e(t, 0);
 
         {
             auto out = e.deriv({0, 0, 0});

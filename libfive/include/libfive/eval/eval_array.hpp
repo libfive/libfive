@@ -27,9 +27,10 @@ namespace Kernel {
 class ArrayEvaluator : public BaseEvaluator
 {
 public:
-    ArrayEvaluator(std::shared_ptr<Tape> t);
+    ArrayEvaluator(std::shared_ptr<Tape> t, int threadNo);
     ArrayEvaluator(std::shared_ptr<Tape> t,
-                   const std::map<Tree::Id, float>& vars);
+                   const std::map<Tree::Id, float>& vars,
+                   int threadNo);
 
     /*
      *  Single-point evaluation
@@ -49,7 +50,7 @@ public:
         points(index) = p;
         for (auto or : tape->oracles) 
         {
-            f(or.first, index) = or.second.first->getValue(p);
+            f(or.first, index) = or.second.first->getValue(p, threadNo);
         }
     }
 

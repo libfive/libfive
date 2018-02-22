@@ -29,9 +29,10 @@ namespace Kernel {
 class FeatureEvaluator : public DerivEvaluator
 {
 public:
-    FeatureEvaluator(std::shared_ptr<Tape> t);
+    FeatureEvaluator(std::shared_ptr<Tape> t, int threadNo);
     FeatureEvaluator(std::shared_ptr<Tape> t,
-                     const std::map<Tree::Id, float>& vars);
+                     const std::map<Tree::Id, float>& vars,
+                     int threadNo);
 
 public:
     /*
@@ -79,7 +80,7 @@ protected:
      */
     Eigen::Array<
         boost::container::small_vector<
-        std::pair<Eigen::Vector3f, std::vector<Eigen::Vector3f>>, 1>, 
+        std::pair<Eigen::Vector3d, std::vector<Eigen::Vector3d>>, 1>, 
         1, Eigen::Dynamic> dOrAll;
 };
 

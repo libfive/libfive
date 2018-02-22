@@ -20,15 +20,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Tape> t)
-    : FeatureEvaluator(t, std::map<Tree::Id, float>())
+FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Tape> t, int threadNo)
+    : FeatureEvaluator(t, std::map<Tree::Id, float>(), threadNo)
 {
     // Nothing to do here
 }
 
 FeatureEvaluator::FeatureEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : DerivEvaluator(t, vars), dOrAll(tape->num_clauses + 1)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars, 
+    int threadNo)
+    : DerivEvaluator(t, vars, threadNo), dOrAll(tape->num_clauses + 1)
 {
     // Nothing to do here
 }
@@ -39,9 +40,12 @@ Eigen::Vector4f FeatureEvaluator::deriv(const Eigen::Vector3f& pt)
     // (following precedent for min and max evaluation).  
     for (auto or : tape->oracles)
     {
-        // Other than this line, it's the same as the DerivEvaluator version.
-        dOrAll(or.first) = or.second.first->getGradients(pt).moveData(); 
-        d.col(or.first) = dOrAll(or.first).begin()->first;
+        // Other than storing to dOrAll, it's the same as the DerivEvaluator 
+        // version.
+        dOrAll(or.first) = 
+            or.second.first->getGradients(pt, threadNo).moveData();
+        d.col(or.first) = 
+            dOrAll(or.first).begin()->first.template cast<float>();
     }
     // Perform value evaluation, saving results
     auto w = eval(pt);
@@ -63,7 +67,7 @@ Eigen::Vector4f FeatureEvaluator::deriv(
     // assumed to have already been loaded). 
     for (auto or : feature.getOracleChoices()) 
     {
-        d.col(or.id) = or.choice;
+        d.col(or.id) = or.choice.template cast<float>();
     }
     
     // Perform derivative evaluation, saving results 

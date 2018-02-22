@@ -62,13 +62,13 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         es.reserve(1 << N);
         for (unsigned i=0; i < (1 << N); ++i)
         {
-            es.emplace_back(XTreeEvaluator(t, vars));
+            es.emplace_back(XTreeEvaluator(t, vars, i));
         }
         return build(es.data(), region, min_feature, max_err, true, cancel);
     }
     else
     {
-        XTreeEvaluator e(t, vars);
+        XTreeEvaluator e(t, vars, 0);
         return build(&e, region, min_feature, max_err, false, cancel);
     }
 }

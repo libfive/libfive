@@ -27,8 +27,8 @@ namespace Kernel {
 class HeightmapEvaluator
 {
 public:
-    HeightmapEvaluator(const Tree t)
-        : tape(new Tape(t)), array(tape), interval(tape)
+    HeightmapEvaluator(const Tree t, int threadNo)
+        : tape(new Tape(t)), array(tape, threadNo), interval(tape, threadNo)
     { /* Nothing to do here */ }
 
 protected:

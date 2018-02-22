@@ -20,15 +20,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-DerivArrayEvaluator::DerivArrayEvaluator(std::shared_ptr<Tape> t)
-    : DerivArrayEvaluator(t, std::map<Tree::Id, float>())
+DerivArrayEvaluator::DerivArrayEvaluator(std::shared_ptr<Tape> t, int threadNo)
+    : DerivArrayEvaluator(t, std::map<Tree::Id, float>(), threadNo)
 {
     // Nothing to do here
 }
 
 DerivArrayEvaluator::DerivArrayEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : ArrayEvaluator(t, vars), d(tape->num_clauses + 1, 1), 
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars, 
+    int threadNo)
+    : ArrayEvaluator(t, vars, threadNo), d(tape->num_clauses + 1, 1), 
     ambiguousOracles(tape->num_clauses + 1, N)
 {
     // Initialize all derivatives to zero
@@ -51,10 +52,11 @@ void DerivArrayEvaluator::set(const Eigen::Vector3f& p, size_t index)
     //Then the gradients. 
     for (auto or : tape->oracles) 
     {
-        auto allGradients = or.second.first->getGradients(p);
+        auto allGradients = or.second.first->getGradients(p, threadNo);
         assert(allGradients.getData().size() > 0);
         ambiguousOracles(or.first, index) = allGradients.getData().size() > 1;
-        d(or.first).col(index) = allGradients.getData().front().first;
+        d(or.first).col(index) = 
+            allGradients.getData().front().first.template cast<float>();
     }
 }
 

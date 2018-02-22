@@ -30,7 +30,7 @@ TEST_CASE("FeatureEvaluator::isInside")
     SECTION("Single plane edge")
     {
         auto t = std::make_shared<Tape>(Tree::X());
-        FeatureEvaluator a(t);
+        FeatureEvaluator a(t, 0);
         REQUIRE(a.isInside({0, 0, 0}) == true);
         REQUIRE(a.isInside({-1, 0, 0}) == true);
         REQUIRE(a.isInside({1, 0, 0}) == false);
@@ -39,7 +39,7 @@ TEST_CASE("FeatureEvaluator::isInside")
     SECTION("2D plane-to-plane (full)")
     {
         auto t = std::make_shared<Tape>(min(Tree::X(), -Tree::X()));
-        FeatureEvaluator b(t);
+        FeatureEvaluator b(t, 0);
         REQUIRE(b.isInside({0, 0, 0}) == true);
         REQUIRE(b.isInside({1, 0, 0}) == true);
         REQUIRE(b.isInside({-1, 0, 0}) == true);
@@ -48,7 +48,7 @@ TEST_CASE("FeatureEvaluator::isInside")
     SECTION("2D plane-to-plane (empty)")
     {
         auto t = std::make_shared<Tape>(max(Tree::X(), -Tree::X()));
-        FeatureEvaluator c(t);
+        FeatureEvaluator c(t, 0);
         REQUIRE(c.isInside({0, 0, 0}) == false);
         REQUIRE(c.isInside({1, 0, 0}) == false);
         REQUIRE(c.isInside({-1, 0, 0}) == false);
@@ -58,7 +58,7 @@ TEST_CASE("FeatureEvaluator::isInside")
     {
         auto t = std::make_shared<Tape>(
                 min(min(Tree::X(), -Tree::X()), min(Tree::Y(), -Tree::Y())));
-        FeatureEvaluator d(t);
+        FeatureEvaluator d(t, 0);
         REQUIRE(d.isInside({0, 0, 0}) == true);
     }
 
@@ -67,7 +67,7 @@ TEST_CASE("FeatureEvaluator::isInside")
         auto t = std::make_shared<Tape>(
                 min(sphere(0.5, {0, 0, 1}),
                     box({-1, -1, -1}, {1, 1, 1})));
-        FeatureEvaluator d(t);
+        FeatureEvaluator d(t, 0);
         REQUIRE(d.isInside({0, 0, 0}) == true);
         REQUIRE(d.isInside({0.5, 0, 1}) == true);
         REQUIRE(d.isInside({-0.5, 0, 1}) == true);
@@ -84,7 +84,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
     SECTION("Single feature")
     {
         auto t = std::make_shared<Tape>(Tree::X());
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(t, 0);
         auto fs = e.featuresAt({0, 0, 0});
         REQUIRE(fs.size() == 1);
         REQUIRE(fs.front().deriv == Eigen::Vector3d(1, 0, 0));
@@ -93,7 +93,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
     SECTION("Two features (min)")
     {
         auto t = std::make_shared<Tape>(min(Tree::X(), -Tree::X()));
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(t, 0);
 
         auto fs = e.featuresAt({0, 0, 0});
         REQUIRE(fs.size() == 2);
@@ -105,7 +105,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
     SECTION("Two features (max)")
     {
         auto t = std::make_shared<Tape>(max(Tree::X(), -Tree::X()));
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(t, 0);
 
         auto fs = e.featuresAt({0, 0, 0});
         REQUIRE(fs.size() == 2);
@@ -118,7 +118,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
     {
         auto t = std::make_shared<Tape>(
                 min(Tree::X(), min(Tree::Y(), Tree::Z())));
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(t, 0);
 
         auto fs = e.featuresAt({0, 0, 0});
         REQUIRE(fs.size() == 3);
@@ -134,7 +134,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
         // The ambiguity here (in max(-1 - X, X) is irrelevant, as
         // it ends up being masked by the Y clause)
         auto t = std::make_shared<Tape>(rectangle(-1, 0, -1, 1));
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(t, 0);
 
         REQUIRE(e.featuresAt({-0.5, -1, 0}).size() == 1);
     }
@@ -145,7 +145,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
                          max(-Tree::Y(), Tree::Y() - 1)),
                     -Tree::X());
         auto t = std::make_shared<Tape>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(t, 0);
 
         REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
     }
@@ -154,7 +154,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
     {
         auto r = max(Tree::X(), Tree::X());
         auto t = std::make_shared<Tape>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(t, 0);
 
         REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
     }
@@ -163,7 +163,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
     {
         auto r = max(Tree::X(), max(Tree::X(), Tree::X()));
         auto t = std::make_shared<Tape>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(t, 0);
 
         REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
     }
@@ -172,7 +172,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
     {
         auto r = max(max(Tree::X(), Tree::X()), max(Tree::X(), Tree::X()));
         auto t = std::make_shared<Tape>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(t, 0);
         REQUIRE(e.featuresAt({0, 0.2f, 0}).size() == 1);
     }
 
@@ -180,7 +180,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
     {
         auto r = max(Tree::Z() - 6, Tree::Z() + -6);
         auto t = std::make_shared<Tape>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(t, 0);
         REQUIRE(e.featuresAt({0, 0, 6}).size() == 1);
     }
 }
@@ -188,7 +188,7 @@ TEST_CASE("FeatureEvaluator::featuresAt")
 TEST_CASE("FeatureEvaluator::push(Feature)")
 {
     auto t = std::make_shared<Tape>(min(Tree::X(), -Tree::X()));
-    FeatureEvaluator e(t);
+    FeatureEvaluator e(t, 0);
     REQUIRE(e.eval({0, 0, 0}) == 0); // Force an ambiguous evaluation
     Feature f;
 

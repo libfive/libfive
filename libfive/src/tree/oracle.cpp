@@ -21,13 +21,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 Oracle::GradientsWithEpsilons::GradientsWithEpsilons(
-    boost::container::small_vector<Eigen::Vector3f, 1> gradients,
+    boost::container::small_vector<Eigen::Vector3d, 1> gradients,
     PriorityType priority)
     :data()
 {
     for (auto& gradient1 : gradients)
     {
-        std::pair<Eigen::Vector3f, std::vector<Eigen::Vector3f>>
+        std::pair<Eigen::Vector3d, std::vector<Eigen::Vector3d>>
             newEntry(gradient1, {});
         newEntry.second.reserve(gradients.size() - 1);
         auto duplicateGradient = false;

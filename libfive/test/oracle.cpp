@@ -33,7 +33,7 @@ using namespace Kernel;
  *  replaced by their oracle equivalents.
  */
 
-TEST_CASE("Oracle::Render and compare (sphere)")
+TEST_CASE("Oracle: Render and compare (sphere)")
 {
   Tree s = sphere(0.5);
   Region<3> r({ -1, -1, -1 }, { 1, 1, 1 });
@@ -45,7 +45,7 @@ TEST_CASE("Oracle::Render and compare (sphere)")
   requireEquality(*mesh, *comparisonMesh);
 }
 
-TEST_CASE("Oracle::Render and compare (cube)")
+TEST_CASE("Oracle: Render and compare (cube)")
 {
   auto cube = max(max(
     max(-(Tree::X() + 1.5),
@@ -63,114 +63,7 @@ TEST_CASE("Oracle::Render and compare (cube)")
   requireEquality(*mesh, *comparisonMesh);
 }
 
-/*  In order to test handling of multiple-gradient points, a cube oracle
- *  is also created (ranging in each dimension from -1.5 to 1.5), and compared
- *  to an ordinary cube.
- */
-
-namespace Kernel {
-
-class cubeAsOracle : public Oracle
-{
-public:
-    Interval::I getRange(Region<2> region) const override
-    {
-        auto minX = (region.lower.x() < 0 && region.upper.x() > 0)
-            ? -1.5
-            : std::min(abs(region.lower.x()) - 1.5, abs(region.upper.x()) - 1.5);
-        auto maxX = std::max(
-            abs(region.lower.x()) - 1.5, abs(region.upper.x()) - 1.5);
-        auto minY = (region.lower.y() < 0 && region.upper.y() > 0)
-            ? -1.5
-            : std::min(abs(region.lower.y()) - 1.5, abs(region.upper.y()) - 1.5);
-        auto maxY = std::max(
-            abs(region.lower.y()) - 1.5, abs(region.upper.y()) - 1.5);
-        auto z = abs(region.perp(0)) - 1.5;
-        return { std::max({minX, minY, z}),std::max({ maxX, maxY, z }) };
-    }
-
-    Interval::I getRange(Region<3> region) const override
-    {
-        auto minX = (region.lower.x() < 0 && region.upper.x() > 0)
-            ? -1.5
-            : std::min(abs(region.lower.x()) - 1.5, abs(region.upper.x()) - 1.5);
-        auto maxX = std::max(
-            abs(region.lower.x()) - 1.5, abs(region.upper.x()) - 1.5);
-        auto minY = (region.lower.y() < 0 && region.upper.y() > 0)
-            ? -1.5
-            : std::min(abs(region.lower.y()) - 1.5, abs(region.upper.y()) - 1.5);
-        auto maxY = std::max(
-            abs(region.lower.y()) - 1.5, abs(region.upper.y()) - 1.5);
-        auto minZ = (region.lower.z() < 0 && region.upper.z() > 0)
-            ? -1.5
-            : std::min(abs(region.lower.z()) - 1.5, abs(region.upper.z()) - 1.5);
-        auto maxZ = std::max(
-            abs(region.lower.z()) - 1.5, abs(region.upper.z()) - 1.5);
-        return { std::max({ minX, minY, minZ }),std::max({ maxX, maxY, maxZ }) };
-    }
-
-    GradientsWithEpsilons
-        getGradients(Eigen::Vector3f point) const override
-    {
-        boost::container::small_vector<Eigen::Vector3f, 1> out;
-        if (abs(point.x()) >= std::max(abs(point.y()), abs(point.z()))) 
-        {
-            if (point.x() >= 0.f)
-            {
-                out.push_back({ 1.f, 0.f, 0.f });
-            }
-            if (point.x() <= 0.f)
-            {
-                out.push_back({ -1.f, 0.f, 0.f });
-            }
-        }
-        if (abs(point.y()) >= std::max(abs(point.x()), abs(point.z()))) 
-        {
-            if (point.y() >= 0.f)
-            {
-                out.push_back({ 0.f, 1.f, 0.f });
-            }
-            if (point.y() <= 0.f)
-            {
-                out.push_back({ 0.f, -1.f, 0.f });
-            }
-        }
-        if (abs(point.z()) >= std::max(abs(point.y()), abs(point.x()))) 
-        {
-            if (point.z() >= 0.f)
-            {
-                out.push_back({ 0.f, 0.f, 1.f });
-            }
-            if (point.z() <= 0.f)
-            {
-                out.push_back({ 0.f, 0.f, -1.f });
-            }
-        }
-        return { out, GradientsWithEpsilons::USECLOSEST};
-    }
-
-    bool isAmbiguous(Eigen::Vector3f point) const override
-    {
-        if (abs(point.x()) == abs(point.y()))
-        {
-            return abs(point.x()) >= abs(point.z());
-            //If true, this can return 3 or 6 gradients, depending on whether
-            //it's 0, but is ambiguous either way.
-        }
-        else
-        {
-            return std::max(abs(point.x()), abs(point.y())) == abs(point.z());
-        }
-    }
-
-    float getValue(Eigen::Vector3f point) const override
-    {
-        return std::max({ abs(point.x()), abs(point.y()), abs(point.z()) }) - 1.5f;
-    }
-};
-} //namespace Kernel
-
-TEST_CASE("Oracle::Render and compare (cube as oracle)")
+TEST_CASE("Oracle: Render and compare (cube as oracle)")
 {
     auto cube = max(max(
         max(-(Tree::X() + 1.5),

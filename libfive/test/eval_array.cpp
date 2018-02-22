@@ -30,21 +30,21 @@ TEST_CASE("ArrayEvaluator::eval")
     SECTION("X")
     {
         auto t = std::make_shared<Tape>(Tree::X());
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(t, 0);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 1.0);
     }
 
     SECTION("Y")
     {
         auto t = std::make_shared<Tape>(Tree::Y());
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(t, 0);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("Constant")
     {
         auto t = std::make_shared<Tape>(Tree(3.14));
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(t, 0);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
@@ -52,42 +52,45 @@ TEST_CASE("ArrayEvaluator::eval")
     {
         auto v = Tree::var();
         auto t = std::make_shared<Tape>(v);
-        ArrayEvaluator e(t, {{v.id(), 3.14}});
+        ArrayEvaluator e(t, {{v.id(), 3.14}}, 0);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
     SECTION("X + 1")
     {
         auto t = std::make_shared<Tape>(Tree::X() + 1);
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(t, 0);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("X + Z")
     {
         auto t = std::make_shared<Tape>(Tree::X() + Tree::Z());
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(t, 0);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 4.0);
     }
 
     SECTION("nth-root")
     {
         auto t = std::make_shared<Tape>(nth_root(Tree::X(), 3));
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(t, 0);
         REQUIRE(e.eval({-0.5, 0.0, 0.0}) == Approx(-0.7937));
     }
 
-    SECTION("Every operation")
+    SECTION("Every operation that takes at least one argument")
     {
-        for (unsigned i=7; i < Kernel::Opcode::LAST_OP; ++i)
+        for (unsigned i=0; i < Kernel::Opcode::LAST_OP; ++i)
         {
             auto op = (Kernel::Opcode::Opcode)i;
-            Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
-                                            : Tree(op, Tree::X()));
-            auto p = std::make_shared<Tape>(t);
-            ArrayEvaluator e(p);
-            e.eval({0, 0, 0});
-            REQUIRE(true /* No crash! */ );
+            if (Opcode::args(op) == 1 || Opcode::args(op) == 2)
+            {
+                Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
+                    : Tree(op, Tree::X()));
+                auto p = std::make_shared<Tape>(t);
+                ArrayEvaluator e(p, 0);
+                e.eval({ 0, 0, 0 });
+                REQUIRE(true /* No crash! */);
+            }
         }
     }
 }
@@ -100,7 +103,7 @@ TEST_CASE("ArrayEvaluator::setVar")
     auto b = Tree::var();
 
     auto t = std::make_shared<Tape>(a*1 + b*2 + c*3);
-    ArrayEvaluator e(t, {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
+    ArrayEvaluator e(t, {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}}, 0);
     REQUIRE(e.eval({0, 0, 0}) == Approx(34));
 
     e.setVar(a.id(), 5);
@@ -114,7 +117,7 @@ TEST_CASE("ArrayEvaluator::setVar")
 TEST_CASE("ArrayEvaluator::evalAndPush")
 {
     auto t = std::make_shared<Tape>(min(Tree::X(), Tree::Y()));
-    ArrayEvaluator e(t);
+    ArrayEvaluator e(t, 0);
 
     e.evalAndPush({-1, 0, 0}); // specialize to just "X"
     REQUIRE(e.eval({-2, 0, 0}) == -2);
@@ -133,7 +136,7 @@ TEST_CASE("ArrayEvaluator::evalAndPush")
 TEST_CASE("ArrayEvaluator::getAmbiguous")
 {
     auto t = std::make_shared<Tape>(min(Tree::X(), -Tree::X()));
-    ArrayEvaluator e(t);
+    ArrayEvaluator e(t, 0);
     e.set({0, 0, 0}, 0);
     e.set({1, 0, 0}, 1);
     e.set({2, 0, 0}, 2);

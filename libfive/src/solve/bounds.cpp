@@ -31,7 +31,7 @@ Region<3> findBounds(const Tree& t)
 
 Region<3> findBounds(const Tree& t, const std::map<Tree::Id, float>& vars)
 {
-    IntervalEvaluator e(std::make_shared<Tape>(t), vars);
+    IntervalEvaluator e(std::make_shared<Tape>(t), vars, 0);
     return findBounds(&e);
 }
 

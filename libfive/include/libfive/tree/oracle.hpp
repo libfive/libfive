@@ -38,20 +38,20 @@ public:
         enum PriorityType {USEFURTHEST, USECLOSEST};
 
         GradientsWithEpsilons(
-            boost::container::small_vector<Eigen::Vector3f, 1> gradients,
+            boost::container::small_vector<Eigen::Vector3d, 1> gradients,
             PriorityType priority);
 
         const boost::container::small_vector<
-            std::pair<Eigen::Vector3f/*gradient*/,
-            std::vector<Eigen::Vector3f>/*epsilons*/>,
+            std::pair<Eigen::Vector3d/*gradient*/,
+            std::vector<Eigen::Vector3d>/*epsilons*/>,
             1>& getData() const { return data; }
 
         /*  Move-constructor equivalent; invalidates the object.  
          *  Use responsibly.
          */
         boost::container::small_vector<
-            std::pair<Eigen::Vector3f/*gradient*/,
-            std::vector<Eigen::Vector3f>/*epsilons*/>,
+            std::pair<Eigen::Vector3d/*gradient*/,
+            std::vector<Eigen::Vector3d>/*epsilons*/>,
             1>&& moveData() { return std::move(data); }
     protected:
         /*  It is the derived class's responsibility to ensure that the data 
@@ -61,43 +61,47 @@ public:
          *          equivalently, all epsilons of a single entry must be 
          *          compatible.
          *  2.  Any nonzero vector must fulfill the above condition (the 
-         *	        positive dot product) for exactly one entry in data; that
+         *	        positive dot product) for exactly one gradient; that
          *          is, this condition must partition R3/{0} (or, equivalently, 
-         *          S2) into disjoint regions.  The corresponding gradient
+         *          S2) into regions that are disjoint except where they have
+         *          the same gradient (in which case overlap is discouraged
+         *          when easily avoidable but is permissible).  Said gradient
          *          should be the correct one to use at that point plus some
          *          sufficiently small positive multiple of any vector in that 
          *          region.
          *  3.  If two entries in data have epsilons such that their respective
          *          regions are adjacent, the difference between their 
-         *          gradients must be a scalar multiple (possibly 0) of the 
-         *          epsilons producing the boundary between them.
+         *          gradients must be a scalar multiple of the 
+         *          epsilons producing the boundary between them.  (If they
+         *          overlap, said difference must be 0 as per rule 2, and thus
+         *          is a scalar multiple of any vectors.)
          */
         GradientsWithEpsilons(
             boost::container::small_vector<
-            std::pair<Eigen::Vector3f, std::vector<Eigen::Vector3f>>, 1> data)
+            std::pair<Eigen::Vector3d, std::vector<Eigen::Vector3d>>, 1> data)
             : data(data) { ; }
     private:
         boost::container::small_vector<
-            std::pair<Eigen::Vector3f/*gradient*/,
-            std::vector<Eigen::Vector3f>/*epsilons*/>,
+            std::pair<Eigen::Vector3d/*gradient*/,
+            std::vector<Eigen::Vector3d>/*epsilons*/>,
             1> data;
     };
 
     /*  Both forms of getRange are used for interval optimization; as such, an
      *  overly large range will affect performance but not precision.
      */
-    virtual Interval::I getRange(Region<2> region) const = 0;
-    virtual Interval::I getRange(Region<3> region) const = 0;
+    virtual Interval::I getRange(Region<2> region, int threadNo) const = 0;
+    virtual Interval::I getRange(Region<3> region, int threadNo) const = 0;
 
     virtual GradientsWithEpsilons
-        getGradients(Eigen::Vector3f point) const = 0;
+        getGradients(Eigen::Vector3f point, int threadNo) const = 0;
 
     /*  Should return true iff getGradients returns more than one gradient for
      *  the same point, but may optimize.
      */
-    virtual bool isAmbiguous(Eigen::Vector3f point) const = 0;
+    virtual bool isAmbiguous(Eigen::Vector3f point, int threadNo) const = 0;
 
-    virtual float getValue(Eigen::Vector3f point) const = 0;
+    virtual float getValue(Eigen::Vector3f point, int threadNo) const = 0;
 
     virtual ~Oracle() = default;
 };

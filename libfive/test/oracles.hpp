@@ -32,27 +32,28 @@ namespace Kernel
 
 class XAsOracle : public Oracle
 {
-    Interval::I getRange(Region<2> region) const override
+    Interval::I getRange(Region<2> region, int threadNo) const override
     {
         return { region.lower.x(), region.upper.x() };
     }
 
-    Interval::I getRange(Region<3> region) const override
+    Interval::I getRange(Region<3> region, int threadNo) const override
     {
         return { region.lower.x(), region.upper.x() };
     }
 
-    GradientsWithEpsilons getGradients(Eigen::Vector3f point) const override
+    GradientsWithEpsilons getGradients(
+        Eigen::Vector3f point, int threadNo) const override
     {
-        return { { {1.f, 0.f, 0.f } }, GradientsWithEpsilons::USECLOSEST };
+        return { { {1., 0., 0. } }, GradientsWithEpsilons::USECLOSEST };
     }
 
-    bool isAmbiguous(Eigen::Vector3f point) const override
+    bool isAmbiguous(Eigen::Vector3f point, int threadNo) const override
     {
         return false;
     }
 
-    float getValue(Eigen::Vector3f point) const override
+    float getValue(Eigen::Vector3f point, int threadNo) const override
     {
         return point.x();
     }
@@ -60,27 +61,28 @@ class XAsOracle : public Oracle
 
 class YAsOracle : public Oracle
 {
-    Interval::I getRange(Region<2> region) const override
+    Interval::I getRange(Region<2> region, int threadNo) const override
     {
         return { region.lower.y(), region.upper.y() };
     }
 
-    Interval::I getRange(Region<3> region) const override
+    Interval::I getRange(Region<3> region, int threadNo) const override
     {
         return { region.lower.y(), region.upper.y() };
     }
 
-    GradientsWithEpsilons getGradients(Eigen::Vector3f point) const override
+    GradientsWithEpsilons getGradients(
+        Eigen::Vector3f point, int threadNo) const override
     {
-        return { { { 0.f, 1.f, 0.f } }, GradientsWithEpsilons::USECLOSEST };
+        return { { { 0., 1., 0. } }, GradientsWithEpsilons::USECLOSEST };
     }
 
-    bool isAmbiguous(Eigen::Vector3f point) const override
+    bool isAmbiguous(Eigen::Vector3f point, int threadNo) const override
     {
         return false;
     }
 
-    float getValue(Eigen::Vector3f point) const override
+    float getValue(Eigen::Vector3f point, int threadNo) const override
     {
         return point.y();
     }
@@ -88,41 +90,143 @@ class YAsOracle : public Oracle
 
 class ZAsOracle : public Oracle
 {
-    Interval::I getRange(Region<2> region) const override
+    Interval::I getRange(Region<2> region, int threadNo) const override
     {
         return { region.perp(0), region.perp(0) };
     }
 
-    Interval::I getRange(Region<3> region) const override
+    Interval::I getRange(Region<3> region, int threadNo) const override
     {
         return { region.lower.z(), region.upper.z() };
     }
 
-    GradientsWithEpsilons getGradients(Eigen::Vector3f point) const override
+    GradientsWithEpsilons getGradients(
+        Eigen::Vector3f point, int threadNo) const override
     {
-        return { { { 0.f, 0.f, 1.f } }, GradientsWithEpsilons::USECLOSEST };
+        return { { { 0., 0., 1. } }, GradientsWithEpsilons::USECLOSEST };
     }
 
-    bool isAmbiguous(Eigen::Vector3f point) const override
+    bool isAmbiguous(Eigen::Vector3f point, int threadNo) const override
     {
         return false;
     }
 
-    float getValue(Eigen::Vector3f point) const override
+    float getValue(Eigen::Vector3f point, int threadNo) const override
     {
         return point.z();
     }
 };
 
-Tree convertToOracleAxes(Tree t)
+inline Tree convertToOracleAxes(Tree t)
 {
     return t.remap(Tree(std::make_unique<const XAsOracle>()), 
         Tree(std::make_unique<const YAsOracle>()), 
         Tree(std::make_unique<const ZAsOracle>()));
 }
 
+//We also want something to test cases where the gradients are not continuous.
+
+class cubeAsOracle : public Oracle
+{
+    public:
+    Interval::I getRange(Region<2> region, int threadNo) const override
+    {
+        auto minX = (region.lower.x() < 0 && region.upper.x() > 0)
+            ? -1.5
+            : std::min(abs(region.lower.x()) - 1.5, abs(region.upper.x()) - 1.5);
+        auto maxX = std::max(
+            abs(region.lower.x()) - 1.5, abs(region.upper.x()) - 1.5);
+        auto minY = (region.lower.y() < 0 && region.upper.y() > 0)
+            ? -1.5
+            : std::min(abs(region.lower.y()) - 1.5, abs(region.upper.y()) - 1.5);
+        auto maxY = std::max(
+            abs(region.lower.y()) - 1.5, abs(region.upper.y()) - 1.5);
+        auto z = abs(region.perp(0)) - 1.5;
+        return { std::max({ minX, minY, z }),std::max({ maxX, maxY, z }) };
+    }
+
+    Interval::I getRange(Region<3> region, int threadNo) const override
+    {
+        auto minX = (region.lower.x() < 0 && region.upper.x() > 0)
+            ? -1.5
+            : std::min(abs(region.lower.x()) - 1.5, abs(region.upper.x()) - 1.5);
+        auto maxX = std::max(
+            abs(region.lower.x()) - 1.5, abs(region.upper.x()) - 1.5);
+        auto minY = (region.lower.y() < 0 && region.upper.y() > 0)
+            ? -1.5
+            : std::min(abs(region.lower.y()) - 1.5, abs(region.upper.y()) - 1.5);
+        auto maxY = std::max(
+            abs(region.lower.y()) - 1.5, abs(region.upper.y()) - 1.5);
+        auto minZ = (region.lower.z() < 0 && region.upper.z() > 0)
+            ? -1.5
+            : std::min(abs(region.lower.z()) - 1.5, abs(region.upper.z()) - 1.5);
+        auto maxZ = std::max(
+            abs(region.lower.z()) - 1.5, abs(region.upper.z()) - 1.5);
+        return { std::max({ minX, minY, minZ }),std::max({ maxX, maxY, maxZ }) };
+    }
+
+    GradientsWithEpsilons
+        getGradients(Eigen::Vector3f point, int threadNo) const override
+    {
+        boost::container::small_vector<Eigen::Vector3d, 1> out;
+        if (abs(point.x()) >= std::max(abs(point.y()), abs(point.z())))
+        {
+            if (point.x() >= 0.f)
+            {
+                out.push_back({ 1., 0., 0. });
+            }
+            if (point.x() <= 0.f)
+            {
+                out.push_back({ -1., 0., 0. });
+            }
+        }
+        if (abs(point.y()) >= std::max(abs(point.x()), abs(point.z())))
+        {
+            if (point.y() >= 0.f)
+            {
+                out.push_back({ 0., 1., 0. });
+            }
+            if (point.y() <= 0.f)
+            {
+                out.push_back({ 0., -1., 0. });
+            }
+        }
+        if (abs(point.z()) >= std::max(abs(point.y()), abs(point.x())))
+        {
+            if (point.z() >= 0.f)
+            {
+                out.push_back({ 0., 0., 1. });
+            }
+            if (point.z() <= 0.f)
+            {
+                out.push_back({ 0., 0., -1. });
+            }
+        }
+        return { out, GradientsWithEpsilons::USECLOSEST };
+    }
+
+    bool isAmbiguous(Eigen::Vector3f point, int threadNo) const override
+    {
+        if (abs(point.x()) == abs(point.y()))
+        {
+            return abs(point.x()) >= abs(point.z());
+            //If true, this can return 3 or 6 gradients, depending on whether
+            //it's 0, but is ambiguous either way.
+        }
+        else
+        {
+            return std::max(abs(point.x()), abs(point.y())) == abs(point.z());
+        }
+    }
+
+    float getValue(Eigen::Vector3f point, int threadNo) const override
+    {
+        return std::max({ abs(point.x()), abs(point.y()), abs(point.z()) }) - 1.5f;
+    }
+};
+
 template <unsigned N>
-void requireEquality(const BRep<N>& first, const BRep<N>& second)
+inline void requireEquality(const BRep<N>& first, const BRep<N>& second)
 {
     auto vertsEqual = [](
         const Eigen::Matrix<float, N, 1>& first, 
@@ -153,6 +257,8 @@ void requireEquality(const BRep<N>& first, const BRep<N>& second)
     REQUIRE(first.verts.size() == second.verts.size());
     for (auto i = 0; i < first.verts.size(); ++i) {
         CAPTURE(i);
+        CAPTURE(first.verts[i]);
+        CAPTURE(second.verts[i]);
         REQUIRE(vertsEqual(first.verts[i], second.verts[i]));
     }
     CAPTURE(first.branes.size());
@@ -160,6 +266,8 @@ void requireEquality(const BRep<N>& first, const BRep<N>& second)
     REQUIRE(first.branes.size() == second.branes.size());
     for (auto i = 0; i < first.branes.size(); ++i) {
         CAPTURE(i);
+        CAPTURE(first.branes[i]);
+        CAPTURE(second.branes[i]);
         REQUIRE(branesEqual(first.branes[i], second.branes[i]));
     }
 }

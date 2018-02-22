@@ -31,7 +31,7 @@ TEST_CASE("JacobianEvaluator::gradient")
     {
         auto v = Tree::var();
         auto t = std::make_shared<Tape>(v + 1.0);
-        JacobianEvaluator e(t, {{v.id(), 3.14}});
+        JacobianEvaluator e(t, {{v.id(), 3.14}}, 0);
 
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == Approx(4.14));
         auto g = e.gradient({1, 2, 3});
@@ -44,7 +44,7 @@ TEST_CASE("JacobianEvaluator::gradient")
     {
         auto v = Tree::var();
         auto t = std::make_shared<Tape>(Tree::X() * v);
-        JacobianEvaluator e(t, {{v.id(), 1}});
+        JacobianEvaluator e(t, {{v.id(), 1}}, 0);
         {
             auto g = e.gradient({2, 0, 0});
             REQUIRE(g.size() == 1);
@@ -65,7 +65,7 @@ TEST_CASE("JacobianEvaluator::gradient")
 
         auto t = std::make_shared<Tape>(a*1 + b*2 + c*3);
         JacobianEvaluator e(t,
-                {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
+                {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}}, 0);
 
         REQUIRE(e.eval({0, 0, 0}) == Approx(34));
 

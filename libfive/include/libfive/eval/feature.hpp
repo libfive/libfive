@@ -42,7 +42,7 @@ public:
     struct OracleChoice
     {
         const Clause::Id id;
-        const Eigen::Vector3f choice;
+        const Eigen::Vector3d choice;
         bool operator<(const OracleChoice& other) { return id < other.id; }
     };
 
@@ -95,6 +95,9 @@ public:
      */
     bool hasEpsilon(Clause::Id i) const
         { return _epsilons.find(i) != _epsilons.end(); }
+
+    std::list<Eigen::Vector3d> getEpsilons() const
+        { return epsilons; }
 
 protected:
     /*

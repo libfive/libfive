@@ -35,6 +35,7 @@ add_library(five SHARED
     tree/opcode.cpp
     tree/oracle.cpp
     tree/template.cpp
+    tree/transformed_oracle.cpp
     tree/tree.cpp
     libfive.cpp
 

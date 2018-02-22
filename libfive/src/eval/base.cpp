@@ -23,8 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 namespace Kernel {
 
 BaseEvaluator::BaseEvaluator(std::shared_ptr<Tape> t,
-                             const std::map<Tree::Id, float>& vars)
-    : tape(t)
+                             const std::map<Tree::Id, float>& vars, int threadNo)
+    : tape(t), threadNo(threadNo)
 {
     for (auto& v : t->vars.right)
     {

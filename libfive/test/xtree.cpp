@@ -128,7 +128,7 @@ TEST_CASE("XTree<2>::vertex_count")
         Tree a = min(max(Tree::X(), Tree::Y()),
                      max(1 - Tree::X(), 1 - Tree::Y()));
         auto tape = std::make_shared<Tape>(a);
-        PointEvaluator eval(tape);
+        PointEvaluator eval(tape, 0);
         auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
         REQUIRE(ta->level == 0);
         REQUIRE(ta->vertex_count == 2);
@@ -183,7 +183,7 @@ TEST_CASE("XTree<3>::vert")
     {
         auto b = max(box({0, 0, 0}, {1, 1, 1}),
                 Tree::X() + Tree::Y() + Tree::Z() - 1.3);
-        XTreeEvaluator eval(b);
+        XTreeEvaluator eval(b, 0);
         Region<3> r({-2, -2, -2}, {2, 2, 2});
         auto xtree = XTree<3>::build(b, r, 0.1);
         walk(xtree, eval);
@@ -193,7 +193,7 @@ TEST_CASE("XTree<3>::vert")
     {
         auto b = max(box({0, 0, 0}, {1, 1, 1}),
                 Tree::X() + Tree::Y() + Tree::Z() - 1.2);
-        XTreeEvaluator eval(b);
+        XTreeEvaluator eval(b, 0);
         Region<3> r({-10, -10, -10}, {10, 10, 10});
         auto xtree = XTree<3>::build(b, r, 0.1);
         walk(xtree, eval);
@@ -204,7 +204,7 @@ TEST_CASE("XTree<3>::vert")
         auto s = max(sphere(1), -circle(0.5));
         Region<3> r({-5, -5, -5}, {5, 5, 5});
         auto xtree = XTree<3>::build(s, r, 1/9.0f);
-        XTreeEvaluator eval(s);
+        XTreeEvaluator eval(s, 0);
         walk(xtree, eval, 0.01);
     }
 }

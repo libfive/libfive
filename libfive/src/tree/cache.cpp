@@ -114,7 +114,7 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
         {
             // Here, we construct a Tree manually to avoid a recursive loop,
             // then pass it immediately into a dummy Evaluator
-            PointEvaluator e(std::make_shared<Tape>(Tree(out)));
+            PointEvaluator e(std::make_shared<Tape>(Tree(out)), 0);
             return constant(e.eval({0,0,0}));
         }
         else
@@ -142,12 +142,47 @@ Cache::Node Cache::var()
         nullptr});
 }
 
+Cache::Node Cache::oracle(const std::shared_ptr<const Oracle> or) {
+    if (!or ) //The passed shared_ptr is empty
+    {
+        return Node(); //Returns an empty shared_ptr, same as Tree::Invalid();
+    }
+
+    auto found = oracles.find(or.get());
+    if (found == oracles.end())
+    {
+        Node out(new Tree::Tree_{
+            Opcode::ORACLE,
+            0,
+            0, // rank
+            0, // value
+            or, //primitive
+            nullptr,
+            nullptr });
+        oracles.insert({ or.get(), out });
+        return out;
+    }
+    else
+    {
+        assert(!found->second.expired());
+        return found->second.lock();
+    }
+}
+
 void Cache::del(float v)
 {
     auto c = constants.find(v);
     assert(c != constants.end());
     assert(c->second.expired());
     constants.erase(c);
+}
+
+void Cache::del(const Oracle* or)
+{
+    auto o = oracles.find(or);
+    assert(o != oracles.end());
+    assert(o->second.expired());
+    oracles.erase(or);
 }
 
 void Cache::del(Opcode::Opcode op, Node lhs, Node rhs)

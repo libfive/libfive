@@ -28,9 +28,10 @@ namespace Kernel {
 class IntervalEvaluator : public BaseEvaluator
 {
 public:
-    IntervalEvaluator(std::shared_ptr<Tape> t);
+    IntervalEvaluator(std::shared_ptr<Tape> t, int threadNo);
     IntervalEvaluator(std::shared_ptr<Tape> t,
-                      const std::map<Tree::Id, float>& vars);
+                      const std::map<Tree::Id, float>& vars,
+                      int threadNo);
 
     /*
      *  Interval evaluation

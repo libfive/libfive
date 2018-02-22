@@ -109,7 +109,7 @@ std::pair<float, Solution> findRoot(
         const Eigen::Vector3f pos, const Mask& mask, unsigned gas)
 {
     auto tape = std::make_shared<Tape>(t);
-    JacobianEvaluator e(tape, vars);
+    JacobianEvaluator e(tape, vars, 0);
     return findRoot(e, vars, pos, mask, gas);
 }
 

@@ -22,15 +22,16 @@ namespace Kernel {
 
 constexpr size_t ArrayEvaluator::N;
 
-ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Tape> t)
-    : ArrayEvaluator(t, std::map<Tree::Id, float>())
+ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Tape> t, int threadNo)
+    : ArrayEvaluator(t, std::map<Tree::Id, float>(), threadNo)
 {
     // Nothing to do here
 }
 
 ArrayEvaluator::ArrayEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : BaseEvaluator(t, vars), f(tape->num_clauses + 1, N)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars, 
+    int threadNo)
+    : BaseEvaluator(t, vars, threadNo), f(tape->num_clauses + 1, N)
 {
     // Unpack variables into result array
     for (auto& v : t->vars.right)
@@ -137,7 +138,7 @@ ArrayEvaluator::getAmbiguous(size_t i)
                 auto or = tape->oracles.find(id)->second.first;
                 for (size_t j = 0; j < i; ++j)
                 {
-                    if (!ambig(j) && or ->isAmbiguous(points(j)))
+                    if (!ambig(j) && or ->isAmbiguous(points(j), threadNo))
                     {
                         ambig(j) = true;
                     }

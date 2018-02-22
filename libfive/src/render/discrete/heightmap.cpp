@@ -271,7 +271,7 @@ std::unique_ptr<Heightmap> Heightmap::render(
     std::vector<HeightmapEvaluator*> es;
     for (size_t i=0; i < workers; ++i)
     {
-        es.push_back(new HeightmapEvaluator(t));
+        es.push_back(new HeightmapEvaluator(t, i));
     }
 
     auto out = render(es, r, abort);

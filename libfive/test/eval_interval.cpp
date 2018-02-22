@@ -32,7 +32,7 @@ TEST_CASE("IntervalEvaluator::eval")
     SECTION("Basic math")
     {
         auto t = std::make_shared<Tape>(Tree::X() + 1);
-        IntervalEvaluator e(t);
+        IntervalEvaluator e(t, 0);
 
         auto out = e.eval({1,1,1}, {2,2,2});
 
@@ -40,24 +40,27 @@ TEST_CASE("IntervalEvaluator::eval")
         REQUIRE(out.upper() == 3.0);
     }
 
-    SECTION("Every operation")
+    SECTION("Every operation that takes at least one argument")
     {
-        for (unsigned i=7; i < Kernel::Opcode::LAST_OP; ++i)
+        for (unsigned i=0; i < Kernel::Opcode::LAST_OP; ++i)
         {
             auto op = (Kernel::Opcode::Opcode)i;
-            Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
-                                            : Tree(op, Tree::X()));
-            auto p = std::make_shared<Tape>(t);
-            IntervalEvaluator e(p);
-            e.eval({0, 0, 0}, {1, 1, 1});
-            REQUIRE(true /* No crash! */ );
+            if (Opcode::args(op) == 1 || Opcode::args(op) == 2)
+            {
+                Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
+                    : Tree(op, Tree::X()));
+                auto p = std::make_shared<Tape>(t);
+                IntervalEvaluator e(p, 0);
+                e.eval({ 0, 0, 0 }, { 1, 1, 1 });
+                REQUIRE(true /* No crash! */);
+            }
         }
     }
 
     SECTION("Bounds growth")
     {
         IntervalEvaluator e(std::make_shared<Tape>(
-            (Tree::X() + Tree::Y()) * (Tree::X() - Tree::Y())));
+            (Tree::X() + Tree::Y()) * (Tree::X() - Tree::Y())), 0);
 
         auto o = e.eval({0, 0, 0}, {1, 1, 1});
         REQUIRE(o.lower() == -2);
@@ -71,7 +74,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
     {
         auto t = std::make_shared<Tape>(
                 min(Tree::X() + 1, Tree::Y() + 1));
-        IntervalEvaluator e(t);
+        IntervalEvaluator e(t, 0);
 
         // Store -3 in the rhs's value
         auto o = e.eval({1, -3, 0}, {1, -3, 0});
@@ -111,8 +114,8 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         REQUIRE(rb.contains(target.template cast<double>()));
 
         auto tape = std::make_shared<Tape>(tree);
-        IntervalEvaluator eval(tape);
-        ArrayEvaluator eval_(tape);
+        IntervalEvaluator eval(tape, 0);
+        ArrayEvaluator eval_(tape, 0);
 
         auto ia = eval.evalAndPush(ra.lower.template cast<float>(),
                                    ra.upper.template cast<float>());

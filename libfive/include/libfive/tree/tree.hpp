@@ -46,7 +46,7 @@ public:
     /*
      *  Returns a Tree for the given oracle
      */
-    Tree(std::unique_ptr<const Oracle> or);
+    Tree(std::shared_ptr<const Oracle> or);
 
     /*
      *  Constructors for individual axes
@@ -99,7 +99,7 @@ public:
         const float value;
 
         /* Only populated for oracles */
-        const std::unique_ptr<const Oracle> or;
+        const std::shared_ptr<const Oracle> or;
 
         /*  Only populated for operations  */
         const std::shared_ptr<Tree_> lhs;

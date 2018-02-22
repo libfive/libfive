@@ -62,11 +62,14 @@ public:
 
     Node var();
 
+    Node oracle(const std::shared_ptr<const Oracle> or);
+
     /*
      *  Called when the last Tree_ is destroyed
      */
     void del(float v);
     void del(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr);
+    void del(const Oracle* or );
 
     /*
      *  Returns the given node as an affine sum-of-multiplications
@@ -81,6 +84,8 @@ public:
      */
     Node fromAffine(const std::map<Node, float>& ns);
 
+    const std::map<const Oracle*, std::weak_ptr<Tree::Tree_>> 
+        getOracles() const { return oracles; }
 
 protected:
     /*
@@ -119,10 +124,8 @@ protected:
     /*  Constants in the tree are uniquely identified by their value  */
     std::map<float, std::weak_ptr<Tree::Tree_>> constants;
 
-    /*  Oracles do not need to use the cache to be deduplicated, since they 
-     *  are created from unique_ptr's, and therefore are already impossible
-     *  to duplicate.
-     */
+    /* And oracles by their memory address */
+    std::map<const Oracle*, std::weak_ptr<Tree::Tree_>> oracles;
 
     static FIVE_EXPORT std::recursive_mutex mut;
     static FIVE_EXPORT Cache _instance;

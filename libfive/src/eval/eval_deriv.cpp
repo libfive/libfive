@@ -20,15 +20,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-DerivEvaluator::DerivEvaluator(std::shared_ptr<Tape> t)
-    : DerivEvaluator(t, std::map<Tree::Id, float>())
+DerivEvaluator::DerivEvaluator(std::shared_ptr<Tape> t, int threadNo)
+    : DerivEvaluator(t, std::map<Tree::Id, float>(), threadNo)
 {
     // Nothing to do here
 }
 
 DerivEvaluator::DerivEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : PointEvaluator(t, vars), d(3, tape->num_clauses + 1)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars, 
+    int threadNo)
+    : PointEvaluator(t, vars, threadNo), d(3, tape->num_clauses + 1)
 {
     // Initialize all derivatives to zero
     d = 0;
@@ -46,7 +47,8 @@ Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt)
     for (auto or : tape->oracles) 
     {
         d.col(or.first) = 
-            or.second.first->getGradients(pt).getData().front().first;
+            or.second.first->getGradients(pt, threadNo).getData().front().first
+            .template cast<float>();
     }
     // Perform value evaluation, saving results
     auto w = eval(pt);

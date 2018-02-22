@@ -27,9 +27,10 @@ namespace Kernel {
 class DerivArrayEvaluator : public ArrayEvaluator
 {
 public:
-    DerivArrayEvaluator(std::shared_ptr<Tape> t);
+    DerivArrayEvaluator(std::shared_ptr<Tape> t, int threadNo);
     DerivArrayEvaluator(std::shared_ptr<Tape> t,
-                        const std::map<Tree::Id, float>& vars);
+                        const std::map<Tree::Id, float>& vars,
+                        int threadNo);
 
     /*  Non-virtual override; set() sets only values if the
     *  DerivArrayEvaluator is upcast to an ArrayEvaluator

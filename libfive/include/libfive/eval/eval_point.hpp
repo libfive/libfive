@@ -27,9 +27,10 @@ namespace Kernel {
 class PointEvaluator : public BaseEvaluator
 {
 public:
-    PointEvaluator(std::shared_ptr<Tape> t);
+    PointEvaluator(std::shared_ptr<Tape> t, int threadNo);
     PointEvaluator(std::shared_ptr<Tape> t,
-                   const std::map<Tree::Id, float>& vars);
+                   const std::map<Tree::Id, float>& vars,
+                   int threadNo);
 
     /*
      *  Single-point evaluation

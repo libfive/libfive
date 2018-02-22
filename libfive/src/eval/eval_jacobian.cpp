@@ -20,15 +20,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-JacobianEvaluator::JacobianEvaluator(std::shared_ptr<Tape> t)
-    : JacobianEvaluator(t, std::map<Tree::Id, float>())
+JacobianEvaluator::JacobianEvaluator(std::shared_ptr<Tape> t, int threadNo)
+    : JacobianEvaluator(t, std::map<Tree::Id, float>(), threadNo)
 {
     // Nothing to do here
 }
 
 JacobianEvaluator::JacobianEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : DerivEvaluator(t, vars),
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars, 
+    int threadNo)
+    : DerivEvaluator(t, vars, threadNo),
       j(Eigen::ArrayXXf::Zero(tape->num_clauses + 1, tape->vars.size()))
 {
     // Then drop a 1 at each var's position

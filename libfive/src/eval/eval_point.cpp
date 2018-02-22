@@ -22,15 +22,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-PointEvaluator::PointEvaluator(std::shared_ptr<Tape> t)
-    : PointEvaluator(t, std::map<Tree::Id, float>())
+PointEvaluator::PointEvaluator(std::shared_ptr<Tape> t, int threadNo)
+    : PointEvaluator(t, std::map<Tree::Id, float>(), threadNo)
 {
     // Nothing to do here
 }
 
 PointEvaluator::PointEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : BaseEvaluator(t, vars), f(tape->num_clauses + 1, 1)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars, 
+    int threadNo)
+    : BaseEvaluator(t, vars, threadNo), f(tape->num_clauses + 1, 1)
 {
     // Unpack variables into result array
     for (auto& v : t->vars.right)
@@ -52,7 +53,7 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt)
     f(tape->Y) = pt.y();
     f(tape->Z) = pt.z();
     for (auto or : tape->oracles) {
-        f(or.first) = or.second.first->getValue(pt);
+        f(or.first) = or.second.first->getValue(pt, threadNo);
     }
     return f(tape->rwalk(*this));
 }

@@ -25,7 +25,8 @@ class BaseEvaluator
 {
 public:
     BaseEvaluator(std::shared_ptr<Tape> t,
-                  const std::map<Tree::Id, float>& vars);
+                  const std::map<Tree::Id, float>& vars,
+                  int threadNo);
 
     /*
      *  Pops the tape
@@ -35,6 +36,7 @@ public:
 
 protected:
     std::shared_ptr<Tape> tape;
+    const int threadNo;
 
 };
 

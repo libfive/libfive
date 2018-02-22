@@ -28,9 +28,10 @@ namespace Kernel {
 class JacobianEvaluator : public DerivEvaluator
 {
 public:
-    JacobianEvaluator(std::shared_ptr<Tape> t);
+    JacobianEvaluator(std::shared_ptr<Tape> t, int threadNo);
     JacobianEvaluator(std::shared_ptr<Tape> t,
-                      const std::map<Tree::Id, float>& vars);
+                      const std::map<Tree::Id, float>& vars,
+                      int threadNo);
 
     /*
      *  Returns the gradient with respect to all VAR nodes

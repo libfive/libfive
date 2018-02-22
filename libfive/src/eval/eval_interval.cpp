@@ -20,15 +20,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Tape> t)
-    : IntervalEvaluator(t, std::map<Tree::Id, float>())
+IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Tape> t, int threadNo)
+    : IntervalEvaluator(t, std::map<Tree::Id, float>(), threadNo)
 {
     // Nothing to do here
 }
 
 IntervalEvaluator::IntervalEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : BaseEvaluator(t, vars)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars, 
+    int threadNo)
+    : BaseEvaluator(t, vars, threadNo)
 {
     i.resize(tape->num_clauses + 1);
 
@@ -54,7 +55,7 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     i[tape->Z] = {lower.z(), upper.z()};
     Region<3> region(lower.template cast<double>(), upper.template cast<double>());
     for (auto or : tape->oracles) {
-        i[or.first] = or.second.first->getRange(region);
+        i[or.first] = or.second.first->getRange(region, threadNo);
     }
 
     return i[tape->rwalk(*this)];
