@@ -40,8 +40,15 @@ public:
     /*
      *  Sets a particular position value, for use in any of the eval functions.
      *  This should be O(1) for best performance.
+     *  The oracle must accept 0 <= index < LIBFIVE_EVAL_ARRAY_SIZE.
      */
     virtual void set(const Eigen::Vector3f& p, size_t index=0)=0;
+
+    /*
+     *  Sets a region for interval evaluation
+     */
+    virtual void set(const Eigen::Vector3f& lower,
+                     const Eigen::Vector3f& upper)=0;
 
     /*
      *  Return the result of interval arithmetic over the range
@@ -129,7 +136,7 @@ public:
      *  associated epsilon is closest to n.
      */
     virtual void evalFeatures(
-            boost::container::small_vector<Feature, 4>& point) const=0;
+            boost::container::small_vector<Feature, 4>& point)=0;
 };
 
 } //Namespace Kernel

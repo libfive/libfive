@@ -15,6 +15,7 @@ set(SRCS main.cpp
     heightmap.cpp
     marching.cpp
     mesh.cpp
+    oracle.cpp
     region.cpp
     solver.cpp
     tape.cpp
