@@ -58,9 +58,9 @@ public:
 
     /*
      *  Returns the result of pointwise arithemetic on the value
-     *  previously defined with set(Eigen::Vector3f)
+     *  previously defined with set(Eigen::Vector3f, index)
      */
-    virtual void evalPoint(float& out)=0;
+    virtual void evalPoint(float& out, size_t index=0)=0;
 
     /*
      *  Block-level floating-point evaluation.
@@ -75,7 +75,7 @@ public:
     {
         for (unsigned i=0; i < out.cols(); ++i)
         {
-            evalPoint(out(i));
+            evalPoint(out(i), i);
         }
     }
 
@@ -107,7 +107,7 @@ public:
      */
     virtual void evalDerivs(
             Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-                         3, 1, true> out)=0;
+                         3, 1, true> out, size_t index=0)=0;
 
     /*
      *  Block-level floating-point evaluation.
@@ -121,7 +121,7 @@ public:
         Eigen::Array<float, 3, Eigen::Dynamic> dummy(3, out.cols());
         for (unsigned i=0; i < out.cols(); ++i)
         {
-            evalDerivs(dummy.col(i));
+            evalDerivs(dummy.col(i), i);
         }
         out = dummy;
     }
