@@ -54,13 +54,13 @@ public:
      *  Return the result of interval arithmetic over the range
      *  previously defined with set(Interval::I)
      */
-    virtual void evalInterval(Interval::I& i)=0;
+    virtual void evalInterval(Interval::I& out)=0;
 
     /*
      *  Returns the result of pointwise arithemetic on the value
      *  previously defined with set(Eigen::Vector3f)
      */
-    virtual void evalPoint(float& i)=0;
+    virtual void evalPoint(float& out)=0;
 
     /*
      *  Block-level floating-point evaluation.
@@ -100,14 +100,14 @@ public:
      *  Returns the result of gradient arithemetic on the value
      *  previously defined with set(Eigen::Vector3f).
      *
-     *  Note that v is the output, not an input, for parallel structure
-     *  with other functions within this class.
+     *  Note that the argument is the output, not an input, for parallel
+     *  structure with other functions within this class.
      *
      *  In the case of ambiguous points, only one gradient is returned.
      */
     virtual void evalDerivs(
             Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-                         3, 1, true> v)=0;
+                         3, 1, true> out)=0;
 
     /*
      *  Block-level floating-point evaluation.
@@ -136,7 +136,7 @@ public:
      *  associated epsilon is closest to n.
      */
     virtual void evalFeatures(
-            boost::container::small_vector<Feature, 4>& point)=0;
+            boost::container::small_vector<Feature, 4>& out)=0;
 };
 
 } //Namespace Kernel

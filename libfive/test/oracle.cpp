@@ -56,11 +56,11 @@ class AxisOracle : public OracleStorage<>
     }
 
     void evalFeatures(
-            boost::container::small_vector<Feature, 4>& point) override
+            boost::container::small_vector<Feature, 4>& out) override
     {
         Eigen::Vector3f v = Eigen::Vector3f::Zero();
         v(A) = 1;
-        point.push_back(Feature(v));
+        out.push_back(Feature(v));
     }
 };
 
