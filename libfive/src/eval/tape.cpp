@@ -194,21 +194,18 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
                 case KEEP_ALWAYS:   break;
             }
 
-            if (!remap[c.id])
-            {
-                // Oracle nodes are special-cased here.  They should always
-                // return either KEEP_BOTH or KEEP_ALWAYS, but have no children
-                // to disable (and c.a is a dummy index into the oracles[]
-                // array, so we shouldn't mis-interpret it as a clause index).
-                if (c.op != Opcode::ORACLE)
-                {
-                    disabled[c.a] = false;
-                    disabled[c.b] = false;
-                }
-            }
-            else
+            if (remap[c.id])
             {
                 disabled[c.id] = true;
+            }
+            // Oracle nodes are special-cased here.  They should always
+            // return either KEEP_BOTH or KEEP_ALWAYS, but have no children
+            // to disable (and c.a is a dummy index into the oracles[]
+            // array, so we shouldn't mis-interpret it as a clause index).
+            else if (c.op != Opcode::ORACLE)
+            {
+                disabled[c.a] = false;
+                disabled[c.b] = false;
             }
         }
     }
