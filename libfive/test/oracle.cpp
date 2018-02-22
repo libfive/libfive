@@ -37,8 +37,8 @@ class AxisOracle : public OracleStorage<>
         out = {lower(A), upper(A)};
     }
 
-    void evalPoint(float& i) override {
-        i = points(0)(A);
+    void evalPoint(float& out) override {
+        out = points(0)(A);
     }
 
     void checkAmbiguous(
@@ -108,7 +108,7 @@ void BRepCompare(const BRep<N>& first, const BRep<N>& second)
  *  ensure that the meshing is completely unchanged when X, Y, and Z are
  *  replaced by their oracle equivalents.
  */
-TEST_CASE("Oracle::Render and compare (sphere)")
+TEST_CASE("Oracle: render and compare (sphere)")
 {
   Tree s = sphere(0.5);
   Region<3> r({ -1, -1, -1 }, { 1, 1, 1 });
@@ -120,7 +120,7 @@ TEST_CASE("Oracle::Render and compare (sphere)")
   BRepCompare(*mesh, *comparisonMesh);
 }
 
-TEST_CASE("Oracle::Render and compare (cube)")
+TEST_CASE("Oracle: render and compare (cube)")
 {
   auto cube = max(max(
     max(-(Tree::X() + 1.5),
