@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <Eigen/Eigen>
 
 #include "libfive/eval/clause.hpp"
+#include "libfive/eval/oracle.hpp"
 #include "libfive/eval/interval.hpp"
 #include "libfive/tree/tree.hpp"
 
@@ -71,8 +72,13 @@ public:
      *  Tree::var().id() */
     boost::bimap<Clause::Id, Tree::Id> vars;
 
-    /*  Returns the total number of clauses (including X/Y/Z, variables, and
-     *  constants, which aren't explicitly in the tape )  */
+    /*  Oracles are also unpacked from the tree at construction, and
+     *  stored in this flat list.  The ORACLE opcode takes an index into
+     *  this list and an index into the results array. */
+    std::vector<std::unique_ptr<Oracle>> oracles;
+
+    /*  Returns the total number of clauses (including X/Y/Z, oracles,
+     *  variables, and constants, which aren't explicitly in the tape )  */
     size_t num_clauses;
 
 protected:

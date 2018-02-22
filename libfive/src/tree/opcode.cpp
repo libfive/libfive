@@ -34,6 +34,7 @@ size_t Opcode::args(Opcode op)
         case VAR_Y:
         case VAR_Z:
         case VAR:
+        case ORACLE:
             return 0;
 
         case SQUARE: // fallthrough
@@ -179,6 +180,7 @@ std::string Opcode::toOpString(Opcode op)
 
         case INVALID: // fallthrough
         case CONST:
+        case ORACLE:
         case LAST_OP: return "";
     }
     assert(false);
@@ -194,6 +196,7 @@ bool Opcode::isCommutative(Opcode op)
         case VAR_Y:
         case VAR_Z:
         case VAR:
+        case ORACLE:
         case SQUARE:
         case SQRT:
         case NEG:

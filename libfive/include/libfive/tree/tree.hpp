@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <map>
 
 #include "libfive/tree/opcode.hpp"
+#include "libfive/tree/oracle_clause.hpp"
 
 namespace Kernel {
 
@@ -43,6 +44,11 @@ public:
     Tree(float v);
 
     /*
+     *  Returns a Tree for the given oracle, taking ownership
+     */
+    Tree(std::unique_ptr<const OracleClause> oracle);
+
+    /*
      *  Constructors for individual axes
      */
     static Tree X() { return Tree(Opcode::VAR_X); }
@@ -52,7 +58,7 @@ public:
     /*
      *  Used to mark a bad parse, among other things
      */
-    static Tree Invalid() { return Tree(nullptr); }
+    static Tree Invalid() { return Tree(std::shared_ptr<Tree_>(nullptr)); }
 
     /*
      *  Returns a token for the given operation
@@ -74,7 +80,7 @@ public:
     /*  Bitfield enum for node flags */
     enum Flags {
         /*  Does this Id only contain constants and variables
-         *  (no VAR_X, VAR_Y, or VAR_Z opcodes allowed) */
+         *  (no VAR_X, VAR_Y, VAR_Z, or ORACLE opcodes allowed) */
         FLAG_LOCATION_AGNOSTIC  = (1<<1),
     };
 
@@ -91,6 +97,9 @@ public:
 
         /*  Only populated for constants  */
         const float value;
+
+        /* Only populated for oracles */
+        const std::unique_ptr<const OracleClause> oracle;
 
         /*  Only populated for operations  */
         const std::shared_ptr<Tree_> lhs;

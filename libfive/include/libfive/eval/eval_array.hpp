@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <Eigen/Eigen>
 
 #include "libfive/eval/base.hpp"
+#include "libfive/eval/eval_array_size.hpp"
 
 namespace Kernel {
 
@@ -49,7 +50,7 @@ public:
     }
 
     /*  This is the number of samples that we can process in one pass */
-    static constexpr size_t N=256;
+    static constexpr size_t N=LIBFIVE_EVAL_ARRAY_SIZE;
 
 protected:
     /*  Stored in values() and used in operator() to decide how much of the

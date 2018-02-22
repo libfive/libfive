@@ -296,6 +296,10 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = _ads;
             break;
 
+        case Opcode::ORACLE:
+            tape->oracles[a]->evalFeatures(od);
+            break;
+
         case Opcode::INVALID:
         case Opcode::CONST:
         case Opcode::VAR_X:
