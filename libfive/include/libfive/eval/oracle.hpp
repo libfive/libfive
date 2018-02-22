@@ -38,6 +38,12 @@ public:
     virtual ~Oracle()=default;
 
     /*
+     *  Sets a particular position value, for use in any of the eval functions.
+     *  This should be O(1) for best performance.
+     */
+    virtual void set(const Eigen::Vector3f& p, size_t index=0)=0;
+
+    /*
      *  Return the result of interval arithmetic over the range
      *  previously defined with set(Interval::I)
      */
@@ -55,7 +61,9 @@ public:
      *  a more efficient implementation if possible.
      */
     virtual void evalArray(
-            Eigen::Block<Eigen::Array<float, Eigen::Dynamic, LIBFIVE_EVAL_ARRAY_SIZE, Eigen::RowMajor>,
+            Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
+                                      LIBFIVE_EVAL_ARRAY_SIZE,
+                                      Eigen::RowMajor>,
                          1, Eigen::Dynamic> out)
     {
         for (unsigned i=0; i < out.cols(); ++i)
@@ -122,13 +130,6 @@ public:
      */
     virtual void evalFeatures(
             boost::container::small_vector<Feature, 4>& point) const=0;
-
-    /*
-     *  Sets a particular position value, for use in evalArray or evalDerivs
-     *  This should be O(1) for best performance.
-     */
-    virtual void set(const Eigen::Vector3f& p, size_t index=0)=0;
-
 };
 
 } //Namespace Kernel
