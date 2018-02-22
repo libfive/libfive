@@ -53,6 +53,11 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     i[tape->Y] = {lower.y(), upper.y()};
     i[tape->Z] = {lower.z(), upper.z()};
 
+    for (auto& o : tape->oracles)
+    {
+        o->set(lower, upper);
+    }
+
     return i[tape->rwalk(*this)];
 }
 

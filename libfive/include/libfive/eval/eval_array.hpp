@@ -47,6 +47,11 @@ public:
         f(tape->X, index) = p.x();
         f(tape->Y, index) = p.y();
         f(tape->Z, index) = p.z();
+
+        for (auto& o : tape->oracles)
+        {
+            o->set(p, index);
+        }
     }
 
     /*  This is the number of samples that we can process in one pass */
