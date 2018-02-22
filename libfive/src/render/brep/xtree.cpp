@@ -257,7 +257,8 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             }
 
             // Phase 2: Optimization for non-ambiguous features
-            // (see explanation in FeatureEvaluator::isInside)
+            // We can get both positive and negative values out if
+            // there's a non-zero gradient.
             if (unambiguous_zeros)
             {
                 auto ds = eval->array.derivs(unambiguous_zeros);
@@ -535,33 +536,27 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                     pos << ((i & 1) ? targets[i/2].second : targets[i/2].first)
                                 .template cast<float>(),
                            region.perp.template cast<float>();
-                    const auto fs = eval->feature.featuresAt(pos);
+                    const auto fs = eval->feature.features(pos);
 
                     for (auto& f : fs)
                     {
-                        // Evaluate feature-specific distance and
-                        // derivatives value at this particular point
-                        eval->feature.push(f);
-
-                        const auto ds = eval->feature.deriv(pos);
-
                         // Unpack 3D derivatives into XTree-specific
                         // dimensionality, and find normal.
-                        const Eigen::Array<double, N, 1> derivs = ds
+                        const Eigen::Array<double, N, 1> derivs = f
                             .template head<N>()
                             .template cast<double>();
                         const double norm = derivs.matrix().norm();
 
                         // Find normalized derivatives and distance value
+                        // (from the earlier evaluation)
                         Eigen::Matrix<double, N + 1, 1> dv;
-                        dv << derivs / norm, ds.w() / norm;
+                        dv << derivs / norm, ds.col(i).w() / norm;
                         if (dv.array().isFinite().all())
                         {
                             intersections.push_back({
                                 (i & 1) ? targets[i/2].second
                                         : targets[i/2].first, dv});
                         }
-                        eval->feature.pop();
                     }
                 }
 
