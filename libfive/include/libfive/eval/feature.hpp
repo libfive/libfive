@@ -59,8 +59,8 @@ public:
      *  Checks to see whether the given epsilon is compatible with
      *  the existing epsilon vector.
      */
-    bool check(const Eigen::Vector3f& e, bool* dup=nullptr);
-    bool check(const Feature& other);
+    bool check(const Eigen::Vector3f& e, bool* dup=nullptr) const;
+    bool check(const Feature& other) const;
 
     Eigen::Vector3f deriv;
 

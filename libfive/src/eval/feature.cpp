@@ -80,14 +80,14 @@ bool Feature::push(const Eigen::Vector3f& e_)
     }
 }
 
-bool Feature::check(const Feature& other)
+bool Feature::check(const Feature& other) const
 {
     auto temp = *this;
     return std::all_of(other.epsilons.begin(), other.epsilons.end(),
             [&](const Eigen::Vector3f& e){ return temp.push(e); });
 }
 
-bool Feature::check(const Eigen::Vector3f& e, bool* duplicate)
+bool Feature::check(const Eigen::Vector3f& e, bool* duplicate) const
 {
     // Return early if the epsilon is already in the list
     for (const auto& i : epsilons)
