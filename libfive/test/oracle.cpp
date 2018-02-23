@@ -33,11 +33,13 @@ using namespace Kernel;
 template <int A>
 class AxisOracle : public OracleStorage<>
 {
-    void evalInterval(Interval::I& out) override {
+    void evalInterval(Interval::I& out) override
+    {
         out = {lower(A), upper(A)};
     }
 
-    void evalPoint(float& out, size_t index) override {
+    void evalPoint(float& out, size_t index) override
+    {
         out = points(index)(A);
     }
 
