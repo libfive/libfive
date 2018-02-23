@@ -82,8 +82,9 @@ bool Feature::push(const Eigen::Vector3f& e_)
 
 bool Feature::check(const Feature& other)
 {
+    auto temp = *this;
     return std::all_of(other.epsilons.begin(), other.epsilons.end(),
-                       [=](const Eigen::Vector3f& e){ return check(e); });
+            [&](const Eigen::Vector3f& e){ return temp.push(e); });
 }
 
 bool Feature::check(const Eigen::Vector3f& e, bool* duplicate)
