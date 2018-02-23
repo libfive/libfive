@@ -78,3 +78,19 @@ TEST_CASE("Feature::check")
         REQUIRE(!a.check({0, -1, 0}));
     }
 }
+
+TEST_CASE("Feature::check(Feature)")
+{
+    SECTION("Tetrahedron")
+    {
+        Feature a(Eigen::Vector3f::Zero());
+        REQUIRE(a.push({0, 0,  1}) == true);
+        REQUIRE(a.push({1, 0, -1}) == true);
+
+        Feature b(Eigen::Vector3f::Zero());
+        REQUIRE(b.push({-1,  1, -1}) == true);
+        REQUIRE(b.push({-1, -1, -1}) == true);
+
+        REQUIRE(!a.check(b));
+    }
+}
