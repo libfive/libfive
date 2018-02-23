@@ -116,8 +116,8 @@ bool Feature::check(const Eigen::Vector3f& e, bool* duplicate)
         const auto cross_ = cross.normalized();
 
         const auto angle = asin(cross.norm());
-        auto angle_min = std::min(0.0, angle);
-        auto angle_max = std::max(0.0, angle);
+        auto angle_min = fmin(0.0, angle);
+        auto angle_max = fmax(0.0, angle);
 
         while (++itr != epsilons.end())
         {
@@ -131,8 +131,8 @@ bool Feature::check(const Eigen::Vector3f& e, bool* duplicate)
             }
 
             const auto angle = asin(c.norm());
-            angle_min = std::min(angle, angle_min);
-            angle_max = std::max(angle, angle_max);
+            angle_min = fmin(angle, angle_min);
+            angle_max = fmax(angle, angle_max);
         }
 
         if (itr == epsilons.end())
