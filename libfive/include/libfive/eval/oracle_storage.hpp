@@ -32,7 +32,7 @@ class OracleStorage : public Oracle
 public:
     void set(const Eigen::Vector3f& p, size_t index=0) override
     {
-        points(index) = p;
+        points.col(index) = p;
     }
 
     void set(const Eigen::Vector3f& _lower,
@@ -42,13 +42,33 @@ public:
         upper = _upper;
     }
 
+
+    /*
+     *  Inefficient-but-correct implementation of evalDerivs
+     *  (delegates work to evalFeatures)
+     */
+    void evalDerivs(
+            Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
+                         3, 1, true> out, size_t index=0) override
+    {
+        Eigen::Vector3f before = points.col(0);
+        points.col(0) = points.col(index);
+
+        boost::container::small_vector<Feature, 4> fs;
+        evalFeatures(fs);
+        assert(fs.size() > 0);
+        out = fs[0].deriv;
+
+        points.col(0) = before;
+    }
+
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 protected:
     /* Local storage for set(Vector3f) */
-    Eigen::Array<Eigen::Vector3f, 1, N> points;
+    Eigen::Array<float, 3, N> points;
 
     /* Local storage for set(Interval) */
     Eigen::Vector3f lower;

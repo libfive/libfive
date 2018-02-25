@@ -40,7 +40,7 @@ class AxisOracle : public OracleStorage<>
 
     void evalPoint(float& out, size_t index) override
     {
-        out = points(index)(A);
+        out = points(index, A);
     }
 
     void checkAmbiguous(
@@ -48,13 +48,6 @@ class AxisOracle : public OracleStorage<>
                          1, Eigen::Dynamic> /* out */) override
     {
         // Nothing to do here
-    }
-
-    void evalDerivs(Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-                                 3, 1, true> v, size_t /* index */) override
-    {
-        v = Eigen::Vector3f::Zero();
-        v(A) = 1;
     }
 
     void evalFeatures(
