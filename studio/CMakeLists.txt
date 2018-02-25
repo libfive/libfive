@@ -1,3 +1,8 @@
+# Sanity-checking to make sure CMake was run against the correct directory
+if (NOT DEFINED LIBFIVE_BUILD_FROM_ROOT)
+    message(FATAL_ERROR "CMake must be called against top-level directory")
+endif()
+
 # Instruct CMake to run moc, uic, and rrc automatically when needed.
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)

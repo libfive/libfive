@@ -90,6 +90,9 @@ endif()
 
 ################################################################################
 
+# Set a flag to detect the case where users run CMake in the wrong directory
+set(LIBFIVE_BUILD_FROM_ROOT true)
+
 # Always build the kernel and test suite
 add_subdirectory(libfive)
 
