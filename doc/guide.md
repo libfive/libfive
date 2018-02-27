@@ -28,13 +28,13 @@ In the visualization below, between the two shapes,
 both distance fields are positive (i.e. outside the shape),
 so no amount of blending will make the shape exist there.
 
-![Bad loft](bad_loft.png)
+![Bad loft](loft_bad.png)
 
 `loft-between` is designed to work around these limitations.
 It combines a loft operation with an XY skew,
 to keep the distance fields well-behaved.
 
-![Good loft](good_loft.png)
+![Good loft](loft_good.png)
 
 # Working directly with f-reps
 ## `lambda-shape` and `define-shape`
