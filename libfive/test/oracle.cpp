@@ -40,7 +40,7 @@ class AxisOracle : public OracleStorage<>
 
     void evalPoint(float& out, size_t index) override
     {
-        out = points(index, A);
+        out = points(A, index);
     }
 
     void checkAmbiguous(
