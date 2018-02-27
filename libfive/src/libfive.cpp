@@ -97,6 +97,11 @@ float libfive_tree_get_const(libfive_tree t, bool* success)
     return 0;
 }
 
+libfive_tree libfive_tree_constant_vars(libfive_tree t)
+{
+    return new Tree(t->makeVarsConstant());
+}
+
 libfive_tree libfive_tree_nonary(int op)
 {
     return new Tree(Opcode::Opcode(op));

@@ -129,3 +129,23 @@ TEST_CASE("Tree: operator<<")
     ss << (Tree::X() + 5);
     REQUIRE(ss.str() == "(+ x 5)");
 }
+
+TEST_CASE("Tree::makeVarsConstant")
+{
+    auto v = Tree::var();
+    auto w = Tree::var();
+    auto a = 2 * v + 5 * w;
+    auto b = a.makeVarsConstant();
+
+    {
+        std::stringstream ss;
+        ss << a;
+        REQUIRE(ss.str() == "(+ (* 2 var) (* 5 var))");
+
+    }
+    {
+        std::stringstream ss;
+        ss << b;
+        REQUIRE(ss.str() == "(+ (* 2 (const-var var)) (* 5 (const-var var)))");
+    }
+}

@@ -103,6 +103,12 @@ SCM scm_var_p(SCM a)
     return libfive_tree_is_var(scm_get_tree(a)) ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
+SCM scm_shape_constant_vars(SCM a)
+{
+    SCM_ASSERT_TYPE(scm_is_shape(a), a, 0, "scm_shape_constant_vars", "shape");
+    return scm_from_tree(libfive_tree_constant_vars(scm_get_tree(a)));
+}
+
 SCM scm_shape_tree_id(SCM a)
 {
     SCM_ASSERT_TYPE(scm_is_shape(a), a, 0, "scm_shape_tree_id", "shape");
@@ -321,6 +327,7 @@ void init_libfive_kernel(void*)
     scm_c_define_gsubr("make-shape", 1, 2, 0, (void*)scm_shape);
     scm_c_define_gsubr("make-var", 0, 0, 0, (void*)scm_var);
     scm_c_define_gsubr("var?", 1, 0, 0, (void*)scm_var_p);
+    scm_c_define_gsubr("constant", 1, 0, 0, (void*)scm_shape_constant_vars);
     scm_c_define_gsubr("shape-tree-id", 1, 0, 0, (void*)scm_shape_tree_id);
     scm_c_define_gsubr("number->shape", 1, 0, 0, (void*)scm_number_to_shape);
     scm_c_define_gsubr("shape-equal?", 2, 0, 0, (void*)scm_shape_equal_p);
@@ -387,7 +394,6 @@ void init_libfive_kernel(void*)
 (define-method (abs (a <shape>)) (make-shape 'abs a))
 (define-method (atan (a <shape>)) (make-shape 'atan a))
 (define-method (log (a <shape>)) (make-shape 'log a))
-(define-method (constant (a <shape>)) (make-shape 'const-var a))
 (define (square f) (if (shape? f) (make-shape 'square f) (* f f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -109,6 +109,8 @@ bool libfive_tree_is_var(libfive_tree t);
 libfive_tree libfive_tree_const(float f);
 float libfive_tree_get_const(libfive_tree t, bool* success);
 
+libfive_tree libfive_tree_constant_vars(libfive_tree t);
+
 libfive_tree libfive_tree_nonary(int op);
 libfive_tree libfive_tree_unary(int op, libfive_tree a);
 libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b);

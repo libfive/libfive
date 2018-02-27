@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Pre-release]
+### Fixed
+- In Scheme, `constant` did not behave correctly under remapping transforms.
 ### Added
 - Added `Oracle` interface, for embedding arbitrary black-box functions in math expressions.
 - Changes to how ambiguous features are handled in meshing (should have no user-visible impact).

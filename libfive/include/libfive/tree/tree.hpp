@@ -149,6 +149,14 @@ public:
     Tree remap(std::map<Id, std::shared_ptr<Tree_>> m) const;
 
     /*
+     *  Returns a tree in which all VAR clauses are wrapped in a
+     *  CONST_VAR clause.  This effectively disables their contribution
+     *  to Jacobian (per-variable gradient) evaluation, which is useful
+     *  for making direct modeling more nuanced.
+     */
+    Tree makeVarsConstant() const;
+
+    /*
      *  Walks the tree in rank order, from lowest to highest
      *  The last item in the list will be the tree this is called on
      */

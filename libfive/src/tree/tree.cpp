@@ -180,6 +180,20 @@ Tree Tree::remap(std::map<Id, std::shared_ptr<Tree_>> m) const
     return r == m.end() ? *this : Tree(r->second);
 }
 
+Tree Tree::makeVarsConstant() const
+{
+    std::map<Id, std::shared_ptr<Tree_>> vars;
+    for (auto& o : ordered())
+    {
+        if (o->op == Opcode::VAR)
+        {
+            vars.insert({o.id(),
+                    Cache::instance()->operation(Opcode::CONST_VAR, o.ptr)});
+        }
+    }
+    return remap(vars);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
