@@ -42,7 +42,7 @@ TEST_CASE("IntervalEvaluator::eval")
 
     SECTION("Every operation")
     {
-        for (unsigned i=7; i < Kernel::Opcode::LAST_OP; ++i)
+        for (unsigned i=7; i < Kernel::Opcode::ORACLE; ++i)
         {
             auto op = (Kernel::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))

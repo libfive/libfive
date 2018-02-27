@@ -60,6 +60,16 @@ Tape::Tape(const Tree root)
         {
             vars.left.insert({id, m.id()});
         }
+        // For oracles, store their position in the oracles vector
+        // as the LHS of the clause, so that we can find them during
+        // tape evaluation.
+        else if (m->op == Opcode::ORACLE) {
+            assert(m->oracle);
+
+            tape_.push_front({Opcode::ORACLE, id,
+                    static_cast<unsigned int>(oracles.size()), 0});
+            oracles.push_back(m->oracle->getOracle());
+        }
         else
         {
             assert(m->op == Opcode::VAR_X ||
@@ -184,14 +194,18 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
                 case KEEP_ALWAYS:   break;
             }
 
-            if (!remap[c.id])
+            if (remap[c.id])
+            {
+                disabled[c.id] = true;
+            }
+            // Oracle nodes are special-cased here.  They should always
+            // return either KEEP_BOTH or KEEP_ALWAYS, but have no children
+            // to disable (and c.a is a dummy index into the oracles[]
+            // array, so we shouldn't mis-interpret it as a clause index).
+            else if (c.op != Opcode::ORACLE)
             {
                 disabled[c.a] = false;
                 disabled[c.b] = false;
-            }
-            else
-            {
-                disabled[c.id] = true;
             }
         }
     }
@@ -226,10 +240,20 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     {
         if (!disabled[c.id])
         {
-            Clause::Id ra, rb;
-            for (ra = c.a; remap[ra]; ra = remap[ra]);
-            for (rb = c.b; remap[rb]; rb = remap[rb]);
-            tape->t.push_back({c.op, c.id, ra, rb});
+            // Oracle nodes use c.a as an index into tape->oracles,
+            // rather than the address of an lhs / rhs expression,
+            // so we special-case them here to avoid bad remapping.
+            if (c.op == Opcode::ORACLE)
+            {
+                tape->t.push_back({c.op, c.id, c.a, c.b});
+            }
+            else
+            {
+                Clause::Id ra, rb;
+                for (ra = c.a; remap[ra]; ra = remap[ra]);
+                for (rb = c.b; remap[rb]; rb = remap[rb]);
+                tape->t.push_back({c.op, c.id, ra, rb});
+            }
         }
     }
 

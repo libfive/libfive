@@ -53,6 +53,11 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     i[tape->Y] = {lower.y(), upper.y()};
     i[tape->Z] = {lower.z(), upper.z()};
 
+    for (auto& o : tape->oracles)
+    {
+        o->set(lower, upper);
+    }
+
     return i[tape->rwalk(*this)];
 }
 
@@ -124,11 +129,11 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
 ////////////////////////////////////////////////////////////////////////////////
 
 void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                   Clause::Id a, Clause::Id b)
+                                   Clause::Id a_, Clause::Id b_)
 {
 #define out i[id]
-#define a i[a]
-#define b i[b]
+#define a i[a_]
+#define b i[b_]
     switch (op) {
         case Opcode::ADD:
             out = a + b;
@@ -218,6 +223,10 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::CONST_VAR:
             out = a;
+            break;
+
+        case Opcode::ORACLE:
+            tape->oracles[a_]->evalInterval(out);
             break;
 
         case Opcode::INVALID:

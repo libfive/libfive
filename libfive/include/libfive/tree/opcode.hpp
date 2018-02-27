@@ -63,13 +63,14 @@ namespace Opcode
     OPCODE(NTH_ROOT, 25)    \
     OPCODE(MOD, 26)         \
     OPCODE(NANFILL, 27)     \
-    OPCODE(COMPARE, 31)
+    OPCODE(COMPARE, 31)     \
+    OPCODE(ORACLE, 32)      \
 
 enum Opcode {
 #define OPCODE(s, i) s=i,
     OPCODES
 #undef OPCODE
-    LAST_OP=32,
+    LAST_OP=33,
 };
 
 size_t args(Opcode op);

@@ -62,16 +62,16 @@ DerivArrayEvaluator::derivs(size_t count)
 }
 
 void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                     Clause::Id a, Clause::Id b)
+                                     Clause::Id a_, Clause::Id b_)
 {
 #define ov f.row(id).head(count)
 #define od d(id).leftCols(count)
 
-#define av f.row(a).head(count)
-#define ad d(a).leftCols(count)
+#define av f.row(a_).head(count)
+#define ad d(a_).leftCols(count)
 
-#define bv f.row(b).head(count)
-#define bd d(b).leftCols(count)
+#define bv f.row(b_).head(count)
+#define bd d(b_).leftCols(count)
 
     switch (op) {
         case Opcode::ADD:
@@ -171,6 +171,10 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::CONST_VAR:
             od = ad;
+            break;
+
+        case Opcode::ORACLE:
+            tape->oracles[a_]->evalDerivArray(od);
             break;
 
         case Opcode::INVALID:

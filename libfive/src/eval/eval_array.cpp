@@ -131,7 +131,11 @@ ArrayEvaluator::getAmbiguous(size_t i)
     tape->walk(
         [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
         {
-            if (op == Opcode::MIN || op == Opcode::MAX)
+            if (op == Opcode::ORACLE)
+            {
+                tape->oracles[a]->checkAmbiguous(ambig.head(i));
+            }
+            else if (op == Opcode::MIN || op == Opcode::MAX)
             {
                 ambig.head(i) = ambig.head(i) ||
                     (f.block(a, 0, 1, i) ==
@@ -145,11 +149,11 @@ ArrayEvaluator::getAmbiguous(size_t i)
 ////////////////////////////////////////////////////////////////////////////////
 
 void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                Clause::Id a, Clause::Id b)
+                                Clause::Id a_, Clause::Id b_)
 {
-#define out f.row(id).head(count)
-#define a f.row(a).head(count)
-#define b f.row(b).head(count)
+#define out f.block<1, Eigen::Dynamic>(id, 0, 1, count)
+#define a f.row(a_).head(count)
+#define b f.row(b_).head(count)
     switch (op)
     {
         case Opcode::ADD:
@@ -255,6 +259,10 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::CONST_VAR:
             out = a;
+            break;
+
+        case Opcode::ORACLE:
+            tape->oracles[a_]->evalArray(out);
             break;
 
         case Opcode::INVALID:

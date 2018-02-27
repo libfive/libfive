@@ -283,6 +283,7 @@ void IntervalArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = a;
             break;
 
+        case Opcode::ORACLE: // TODO
         case Opcode::INVALID:
         case Opcode::CONST:
         case Opcode::VAR_X:

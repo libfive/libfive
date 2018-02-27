@@ -159,6 +159,10 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 oj.setZero();
                 break;
 
+            case Opcode::ORACLE:
+                oj.setZero();
+                break;
+
             case Opcode::INVALID:
             case Opcode::CONST:
             case Opcode::VAR_X:

@@ -52,6 +52,11 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt)
     f(tape->Y) = pt.y();
     f(tape->Z) = pt.z();
 
+    for (auto& o : tape->oracles)
+    {
+        o->set(pt);
+    }
+
     return f(tape->rwalk(*this));
 }
 
@@ -123,11 +128,11 @@ bool PointEvaluator::setVar(Tree::Id var, float value)
 ////////////////////////////////////////////////////////////////////////////////
 
 void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                Clause::Id a, Clause::Id b)
+                                Clause::Id a_, Clause::Id b_)
 {
 #define out f(id)
-#define a f(a)
-#define b f(b)
+#define a f(a_)
+#define b f(b_)
     switch (op)
     {
         case Opcode::ADD:
@@ -220,6 +225,10 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::CONST_VAR:
             out = a;
+            break;
+
+        case Opcode::ORACLE:
+            tape->oracles[a_]->evalPoint(out);
             break;
 
         case Opcode::INVALID:

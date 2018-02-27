@@ -296,6 +296,10 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = _ads;
             break;
 
+        case Opcode::ORACLE:
+            tape->oracles[a]->evalFeatures(od);
+            break;
+
         case Opcode::INVALID:
         case Opcode::CONST:
         case Opcode::VAR_X:
@@ -317,83 +321,6 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
 #undef STORE1
 #undef STORE2
-
 }
-
-#if 0
-
-    {
-        // Take the most recent feature and scan for ambiguous min/max nodes
-        // (from the bottom up).  If we find such an ambiguous node, then push
-        // both versions to the feature (if compatible) and re-insert the
-        // augmented feature in the todo list; otherwise, move the feature
-        // to the done list.
-        auto feature = todo.front();
-        todo.pop_front();
-
-        // Then, push into this feature
-        // (storing a minimized version of the feature)
-        auto f_ = push(feature);
-
-        // Run a single evaluation of the value + derivatives
-        // The value will be the same, but derivatives may change
-        // depending on which feature we've pushed ourselves into
-        const Eigen::Vector3f ds = deriv(p).template head<3>();
-
-        bool ambiguous = false;
-        tape->rwalk(
-            [&](Opcode::Opcode op, Clause::Id id, Clause::Id a, Clause::Id b)
-            {
-                if ((op == Opcode::MIN || op == Opcode::MAX))
-                {
-                    // If we've ended up with a non-selection, then collapse
-                    // it to a single choice
-                    if (a == b)
-                    {
-                        auto fa = f_;
-                        fa.pushChoice({id, 0});
-                        todo.push_back(fa);
-                        ambiguous = true;
-                    }
-                    // Check for ambiguity here
-                    else if (f(a, 0) == f(b, 0))
-                    {
-                        // Check both branches of the ambiguity
-                        const Eigen::Vector3d rhs(
-                                d.col(b).template cast<double>());
-                        const Eigen::Vector3d lhs(
-                                d.col(a).template cast<double>());
-                        const auto epsilon = (op == Opcode::MIN) ? (rhs - lhs)
-                                                                      : (lhs - rhs);
-
-                        auto fa = f_;
-                        if (fa.push(epsilon, {id, 0}))
-                        {
-                            ambiguous = true;
-                            todo.push_back(fa);
-                        }
-
-                        auto fb = f_;
-                        if (fb.push(-epsilon, {id, 1}))
-                        {
-                            ambiguous = true;
-                            todo.push_back(fb);
-                        }
-                    }
-                }
-            }, ambiguous);
-
-        if (!ambiguous)
-        {
-            f_.deriv = ds.col(0).template head<3>().template cast<double>();
-            if (seen.find(f_.getChoices()) == seen.end())
-            {
-                seen.insert(f_.getChoices());
-                done.push_back(f_);
-            }
-        }
-        pop(); // push(Feature)
-    }
-#endif
 
 }   // namespace Kernel
