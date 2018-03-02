@@ -46,55 +46,6 @@ ArrayEvaluator::ArrayEvaluator(
     }
 }
 
-float ArrayEvaluator::eval(const Eigen::Vector3f& pt)
-{
-    set(pt, 0);
-    return values(1)(0);
-}
-
-float ArrayEvaluator::evalAndPush(const Eigen::Vector3f& pt)
-{
-    auto out = eval(pt);
-    tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
-                  Clause::Id a, Clause::Id b)
-    {
-        // For min and max operations, we may only need to keep one branch
-        // active if it is decisively above or below the other branch.
-        if (op == Opcode::MAX)
-        {
-            if (f(a, 0) > f(b, 0))
-            {
-                return Tape::KEEP_A;
-            }
-            else if (f(b, 0) > f(a, 0))
-            {
-                return Tape::KEEP_B;
-            }
-            else
-            {
-                return Tape::KEEP_BOTH;
-            }
-        }
-        else if (op == Opcode::MIN)
-        {
-            if (f(a, 0) > f(b, 0))
-            {
-                return Tape::KEEP_B;
-            }
-            else if (f(b, 0) > f(a, 0))
-            {
-                return Tape::KEEP_A;
-            }
-            else
-            {
-                return Tape::KEEP_BOTH;
-            }
-        }
-        return Tape::KEEP_ALWAYS;
-    }, Tape::SPECIALIZED);
-    return out;
-}
-
 Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t _count)
 {

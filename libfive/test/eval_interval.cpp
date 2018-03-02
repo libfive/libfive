@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_interval.hpp"
-#include "libfive/eval/eval_array.hpp"
+#include "libfive/eval/eval_point.hpp"
 #include "libfive/render/brep/region.hpp"
 
 using namespace Kernel;
@@ -112,7 +112,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
         auto tape = std::make_shared<Tape>(tree);
         IntervalEvaluator eval(tape);
-        ArrayEvaluator eval_(tape);
+        PointEvaluator eval_(tape);
 
         auto ia = eval.evalAndPush(ra.lower.template cast<float>(),
                                    ra.upper.template cast<float>());

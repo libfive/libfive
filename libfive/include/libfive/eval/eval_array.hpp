@@ -33,12 +33,6 @@ public:
                    const std::map<Tree::Id, float>& vars);
 
     /*
-     *  Single-point evaluation
-     */
-    float eval(const Eigen::Vector3f& pt);
-    float evalAndPush(const Eigen::Vector3f& pt);
-
-    /*
      *  Stores the given value in the result arrays
      *  (inlined for efficiency)
      */
