@@ -25,6 +25,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 using namespace Kernel;
 
+
+Eigen::Vector4f deriv(DerivArrayEvaluator& d, const Eigen::Vector3f& pt)
+{
+    d.set(pt, 0);
+    return d.derivs(1).col(0);
+}
+
 TEST_CASE("DerivArrayEvaluator::deriv")
 {
     SECTION("Every operator")
@@ -36,7 +43,7 @@ TEST_CASE("DerivArrayEvaluator::deriv")
                                             : Tree(op, Tree::X()));
             auto tape = std::make_shared<Tape>(t);
             DerivArrayEvaluator e(tape);
-            e.deriv({0, 0, 0});
+            deriv(e, {0, 0, 0});
             REQUIRE(true /* No crash! */ );
         }
     }
@@ -47,7 +54,7 @@ TEST_CASE("DerivArrayEvaluator::deriv")
         auto t = std::make_shared<Tape>(v + 2 * Tree::X());
         DerivArrayEvaluator e(t, {{v.id(), 0}});
 
-        auto out = e.deriv({2, 0, 0});
+        auto out = deriv(e, {2, 0, 0});
         REQUIRE(out.col(0) == Eigen::Vector4f(2, 0, 0, 4));
     }
 }

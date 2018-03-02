@@ -42,12 +42,6 @@ DerivArrayEvaluator::DerivArrayEvaluator(
     d(tape->Z).row(2) = 1;
 }
 
-Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt)
-{
-    set(pt, 0);
-    return derivs(1).col(0);
-}
-
 Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
 DerivArrayEvaluator::derivs(size_t count)
 {

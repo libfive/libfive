@@ -40,11 +40,6 @@ protected:
 
 public:
     /*
-     *  Single-point evaluation (return dx, dy, dz, distance)
-     */
-    Eigen::Vector4f deriv(const Eigen::Vector3f& pt);
-
-    /*
      *  Multi-point evaluation (values must be stored with set)
      */
     Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(size_t count);
