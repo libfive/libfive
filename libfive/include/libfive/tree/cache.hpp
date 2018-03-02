@@ -53,7 +53,7 @@ public:
 
     Node constant(float v);
     Node operation(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr,
-                   bool simplify=true);
+                   Node cond=nullptr, bool simplify=true);
 
     Node X() { return operation(Opcode::VAR_X); }
     Node Y() { return operation(Opcode::VAR_Y); }
@@ -65,7 +65,8 @@ public:
      *  Called when the last Tree_ is destroyed
      */
     void del(float v);
-    void del(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr);
+    void del(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr,
+             Node cond=nullptr);
 
     /*
      *  Returns the given node as an affine sum-of-multiplications
@@ -110,8 +111,9 @@ protected:
      *  deduplicate based on opcode  and arguments
      */
     typedef std::tuple<Opcode::Opcode,  /* opcode */
-                       Tree::Id,        /* lhs */
-                       Tree::Id         /* rhs */ > Key;
+                       Tree::Id,        /* lhs  */
+                       Tree::Id,        /* rhs  */
+                       Tree::Id         /* cond */ > Key;
     std::map<Key, std::weak_ptr<Tree::Tree_>> ops;
 
     /*  Constants in the tree are uniquely identified by their value  */

@@ -32,8 +32,8 @@ struct Clause
     /*
      *  Clause constructor
      */
-    Clause(Opcode::Opcode op, Id id, Id a, Id b)
-        : op(op), id(id), a(a), b(b) {}
+    Clause(Opcode::Opcode op, Id id, Id a, Id b, Id cond)
+        : op(op), id(id), a(a), b(b), cond(cond) {}
 
     /*  Opcode for this clause  */
     const Opcode::Opcode op;
@@ -42,6 +42,9 @@ struct Clause
     Id const id;
     Id const a;
     Id const b;
+
+    /*  Populated for conditional operator only */
+    Id const cond;
 };
 
 }   // namespace Kernel

@@ -67,7 +67,7 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
     auto out = eval(lower, upper);
 
     tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
-                  Clause::Id a, Clause::Id b)
+                   Clause::Id a, Clause::Id b, Clause::Id cond)
     {
         // For min and max operations, we may only need to keep one branch
         // active if it is decisively above or below the other branch.
@@ -95,6 +95,21 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
             else if (i[b].lower() > i[a].upper())
             {
                 return Tape::KEEP_A;
+            }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
+        }
+        else if (op == Opcode::CHOOSE)
+        {
+            if (i[cond].lower() == 1 && i[cond].upper() == 1)
+            {
+                return Tape::KEEP_A;
+            }
+            else if (i[cond].lower() == 0 && i[cond].upper() == 0)
+            {
+                return Tape::KEEP_B;
             }
             else
             {
@@ -129,11 +144,13 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
 ////////////////////////////////////////////////////////////////////////////////
 
 void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                   Clause::Id a_, Clause::Id b_)
+                                   Clause::Id a_, Clause::Id b_,
+                                   Clause::Id cond_)
 {
 #define out i[id]
 #define a i[a_]
 #define b i[b_]
+#define cond i[cond_]
     switch (op) {
         case Opcode::ADD:
             out = a + b;
@@ -224,6 +241,23 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::CONST_VAR:
             out = a;
             break;
+
+        case Opcode::CHOOSE:
+            if (cond.upper() == 0)
+            {
+                out = a;
+            }
+            else if (cond.lower() == 1)
+            {
+                out = b;
+            }
+            else
+            {
+                out = Interval::I(fmin(a.lower(), b.lower()),
+                                  fmax(a.upper(), b.upper()));
+            }
+            break;
+
 
         case Opcode::ORACLE:
             tape->oracles[a_]->evalInterval(out);

@@ -39,7 +39,8 @@ Tape::Tape(const Tree root)
                 {t->op,
                  id,
                  clauses.at(t->lhs.get()),
-                 clauses.at(t->rhs.get())});
+                 clauses.at(t->rhs.get()),
+                 clauses.at(t->cond.get())});
     };
 
     // Write the flattened tree into the tape!
@@ -67,7 +68,7 @@ Tape::Tape(const Tree root)
             assert(m->oracle);
 
             tape_.push_front({Opcode::ORACLE, id,
-                    static_cast<unsigned int>(oracles.size()), 0});
+                    static_cast<unsigned int>(oracles.size()), 0, 0});
             oracles.push_back(m->oracle->getOracle());
         }
         else
@@ -136,13 +137,14 @@ double Tape::utilization() const
     return tape->t.size() / double(tapes.front().t.size());
 }
 
-Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
-                                          Clause::Id, Clause::Id)> fn,
-                       bool& abort)
+Clause::Id Tape::rwalk(
+        std::function<void(Opcode::Opcode, Clause::Id,
+                           Clause::Id, Clause::Id, Clause::Id)> fn,
+        bool& abort)
 {
     for (auto itr = tape->t.rbegin(); itr != tape->t.rend() && !abort; ++itr)
     {
-        fn(itr->op, itr->id, itr->a, itr->b);
+        fn(itr->op, itr->id, itr->a, itr->b, itr->cond);
     }
     return tape->i;
 }
@@ -157,7 +159,7 @@ void Tape::walk(std::function<void(Opcode::Opcode, Clause::Id,
 }
 
 void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
-                                   Clause::Id, Clause::Id)> fn,
+                                   Clause::Id, Clause::Id, Clause::Id)> fn,
                 Type t, Region<3> r)
 {
     // Special-case: if this is a dummy tape, then increment the
@@ -181,7 +183,7 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     {
         if (!disabled[c.id])
         {
-            switch (fn(c.op, c.id, c.a, c.b))
+            switch (fn(c.op, c.id, c.a, c.b, c.cond))
             {
                 case KEEP_A:        disabled[c.a] = false;
                                     remap[c.id] = c.a;
@@ -206,6 +208,7 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
             {
                 disabled[c.a] = false;
                 disabled[c.b] = false;
+                disabled[c.cond] = false;
             }
         }
     }
@@ -245,14 +248,15 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
             // so we special-case them here to avoid bad remapping.
             if (c.op == Opcode::ORACLE)
             {
-                tape->t.push_back({c.op, c.id, c.a, c.b});
+                tape->t.push_back({c.op, c.id, c.a, c.b, c.cond});
             }
             else
             {
-                Clause::Id ra, rb;
+                Clause::Id ra, rb, rc;
                 for (ra = c.a; remap[ra]; ra = remap[ra]);
                 for (rb = c.b; remap[rb]; rb = remap[rb]);
-                tape->t.push_back({c.op, c.id, ra, rb});
+                for (rc = c.cond; remap[rb]; rc = remap[rc]);
+                tape->t.push_back({c.op, c.id, ra, rb, rc});
             }
         }
     }

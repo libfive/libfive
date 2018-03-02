@@ -64,7 +64,7 @@ float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
 {
     auto out = eval(pt);
     tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
-                  Clause::Id a, Clause::Id b)
+                  Clause::Id a, Clause::Id b, Clause::Id cond)
     {
         // For min and max operations, we may only need to keep one branch
         // active if it is decisively above or below the other branch.
@@ -92,6 +92,21 @@ float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
             else if (f(b) > f(a))
             {
                 return Tape::KEEP_A;
+            }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
+        }
+        else if (op == Opcode::CHOOSE)
+        {
+            if (f(cond) == 1)
+            {
+                return Tape::KEEP_A;
+            }
+            else if (f(cond) == 0)
+            {
+                return Tape::KEEP_B;
             }
             else
             {
@@ -128,11 +143,12 @@ bool PointEvaluator::setVar(Tree::Id var, float value)
 ////////////////////////////////////////////////////////////////////////////////
 
 void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                Clause::Id a_, Clause::Id b_)
+                                Clause::Id a_, Clause::Id b_, Clause::Id cond_)
 {
 #define out f(id)
 #define a f(a_)
 #define b f(b_)
+#define cond f(cond_)
     switch (op)
     {
         case Opcode::ADD:
@@ -225,6 +241,10 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::CONST_VAR:
             out = a;
+            break;
+
+        case Opcode::CHOOSE:
+            out = (cond > 0.5) ? a : b;
             break;
 
         case Opcode::ORACLE:

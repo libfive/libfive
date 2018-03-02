@@ -122,7 +122,7 @@ public:
      *  r is the relevant region (or an empty region by default)
      */
     void push(std::function<Keep(Opcode::Opcode, Clause::Id,
-                                 Clause::Id, Clause::Id)> fn,
+                                 Clause::Id, Clause::Id, Clause::Id)> fn,
               Type t, Region<3> r=Region<3>());
 
     /*
@@ -133,7 +133,8 @@ public:
      */
     Clause::Id rwalk(
             std::function<void(Opcode::Opcode, Clause::Id,
-                               Clause::Id, Clause::Id)> fn, bool& abort);
+                               Clause::Id, Clause::Id, Clause::Id)> fn,
+            bool& abort);
 
     /*
      *  Inlined, faster version of rwalk
@@ -143,7 +144,7 @@ public:
     {
         for (auto itr = tape->t.rbegin(); itr != tape->t.rend(); ++itr)
         {
-            t(itr->op, itr->id, itr->a, itr->b);
+            t(itr->op, itr->id, itr->a, itr->b, itr->cond);
         }
         return tape->i;
     }

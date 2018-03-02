@@ -66,7 +66,7 @@ protected:
      *  Per-clause evaluation, used in tape walking
      */
     void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+                    Clause::Id a, Clause::Id b, Clause::Id c);
 public:
     /*
      *  Multi-point evaluation (values must be stored with set)

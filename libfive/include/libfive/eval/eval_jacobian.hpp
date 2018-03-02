@@ -43,7 +43,7 @@ protected:
      *  Raw clause evaluation is done here!
      */
     void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+                    Clause::Id a, Clause::Id b, Clause::Id cond);
 
     /*  j(clause, var) = dclause / dvar */
     Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> j;

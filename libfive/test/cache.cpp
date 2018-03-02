@@ -192,7 +192,7 @@ TEST_CASE("Cache::asAffine")
     {
         auto a = t->operation(Opcode::ADD,
                 t->operation(Opcode::MUL, t->X(), t->constant(2)),
-                t->Y(), false);
+                t->Y(), nullptr, false);
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
         REQUIRE(m.at(t->X()) == 2.0f);
@@ -203,7 +203,7 @@ TEST_CASE("Cache::asAffine")
     {
         auto a = t->operation(Opcode::ADD,
                 t->operation(Opcode::MUL, t->constant(2), t->X()),
-                t->Y(), false);
+                t->Y(), nullptr, false);
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
         REQUIRE(m.at(t->X()) == 2.0f);
@@ -215,8 +215,8 @@ TEST_CASE("Cache::asAffine")
         auto a = t->operation(Opcode::MUL,
                 t->operation(Opcode::ADD,
                     t->operation(Opcode::MUL, t->constant(2), t->X()),
-                    t->Y(), false),
-                t->constant(3), false);
+                    t->Y(), nullptr, false),
+                t->constant(3), nullptr, false);
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
         REQUIRE(m.at(t->X()) == 6.0f);
@@ -228,8 +228,8 @@ TEST_CASE("Cache::asAffine")
         auto a = t->operation(Opcode::DIV,
                 t->operation(Opcode::ADD,
                     t->operation(Opcode::MUL, t->constant(2), t->X()),
-                    t->Y(), false),
-                t->constant(3), false);
+                    t->Y(), nullptr, false),
+                t->constant(3), nullptr, false);
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
         REQUIRE(m.at(t->X()) == Approx(2.0f/3.0f));
@@ -249,8 +249,9 @@ TEST_CASE("Cache::asAffine")
     {
         auto a = t->operation(Opcode::ADD, t->constant(4),
                 t->operation(Opcode::MUL, t->constant(3),
-                t->operation(Opcode::ADD, t->X(), t->constant(2), false),
-                false), false);
+                t->operation(Opcode::ADD, t->X(), t->constant(2),
+                             nullptr, false),
+                nullptr, false), nullptr, false);
 
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
@@ -261,7 +262,8 @@ TEST_CASE("Cache::asAffine")
     SECTION("X + (X - Y)")
     {
         auto a = t->operation(Opcode::ADD, t->X(),
-                t->operation(Opcode::SUB, t->X(), t->Y(), false), false);
+                t->operation(Opcode::SUB, t->X(), t->Y(), nullptr, false),
+                nullptr, false);
 
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
@@ -294,8 +296,8 @@ TEST_CASE("Cache::fromAffine")
         auto a = t->operation(Opcode::DIV,
                 t->operation(Opcode::ADD,
                     t->operation(Opcode::MUL, t->constant(2), t->X()),
-                    t->Y(), false),
-                t->constant(3), false);
+                    t->Y(), nullptr, false),
+                t->constant(3), nullptr, false);
         auto m = t->asAffine(a);
         auto a_ = t->fromAffine(m);
 

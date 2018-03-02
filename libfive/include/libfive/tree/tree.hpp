@@ -73,6 +73,12 @@ public:
     explicit Tree(Opcode::Opcode op, Tree a=Tree(), Tree b=Tree());
 
     /*
+     *  Ternary / conditional operation: cond ? a : b
+     *  (both branches will still be evaluated)
+     */
+    static Tree cond(Tree cond, Tree a, Tree b);
+
+    /*
      *  Returns a new unique variable
      */
     static Tree var();
@@ -104,6 +110,9 @@ public:
         /*  Only populated for operations  */
         const std::shared_ptr<Tree_> lhs;
         const std::shared_ptr<Tree_> rhs;
+
+        /*  Only populated for conditionals */
+        const std::shared_ptr<Tree_> cond;
 
         /*
          *  Pushes a Scheme-format serialization to an ostream

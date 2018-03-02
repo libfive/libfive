@@ -100,11 +100,12 @@ ArrayEvaluator::getAmbiguous(size_t i)
 ////////////////////////////////////////////////////////////////////////////////
 
 void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                Clause::Id a_, Clause::Id b_)
+                                Clause::Id a_, Clause::Id b_, Clause::Id cond_)
 {
 #define out f.block<1, Eigen::Dynamic>(id, 0, 1, count)
 #define a f.row(a_).head(count)
 #define b f.row(b_).head(count)
+#define cond f.row(cond_).head(count)
     switch (op)
     {
         case Opcode::ADD:
@@ -210,6 +211,10 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::CONST_VAR:
             out = a;
+            break;
+
+        case Opcode::CHOOSE:
+            out = (cond > 0.5).select(a, b);
             break;
 
         case Opcode::ORACLE:

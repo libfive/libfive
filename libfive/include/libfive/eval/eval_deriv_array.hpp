@@ -48,7 +48,7 @@ public:
      *  Per-clause evaluation, used in tape walking
      */
     void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+                    Clause::Id a, Clause::Id b, Clause::Id cond);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */

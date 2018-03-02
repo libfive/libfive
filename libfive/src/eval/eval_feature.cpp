@@ -119,7 +119,7 @@ std::list<Eigen::Vector3f> FeatureEvaluator::features(const Eigen::Vector3f& p)
 }
 
 void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                  Clause::Id a, Clause::Id b)
+                                  Clause::Id a, Clause::Id b, Clause::Id cond)
 {
 #define ov f(id)
 #define od d(id)
@@ -131,6 +131,8 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #define bv f(b)
 #define _bds d(b)
 #define bd _bd.deriv
+
+#define cond f(cond)
 
 
 #define LOOP2 \
@@ -294,6 +296,38 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::CONST_VAR:
             od = _ads;
+            break;
+
+        case Opcode::CHOOSE:
+            if (cond == 1)
+            {
+                od = _ads;
+            }
+            else if (cond == 0)
+            {
+                od = _bds;
+            }
+            else LOOP2
+            {
+                Eigen::Vector3f epsilon = ad - bd;
+                if (epsilon.norm() == 0)
+                {
+                    od.push_back(_ad);
+                }
+                else
+                {
+                    auto fa = _ad;
+                    if (fa.push(epsilon))
+                    {
+                        od.push_back(fa);
+                    }
+                    auto fb = _bd;
+                    if (fb.push(-epsilon))
+                    {
+                        od.push_back(fb);
+                    }
+                }
+            }
             break;
 
         case Opcode::ORACLE:

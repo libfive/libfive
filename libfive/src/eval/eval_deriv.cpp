@@ -51,7 +51,7 @@ Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt)
 }
 
 void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                Clause::Id a_, Clause::Id b_)
+                                Clause::Id a_, Clause::Id b_, Clause::Id cond_)
 {
 #define ov f(id)
 #define od d.col(id)
@@ -61,6 +61,8 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
 #define bv f(b_)
 #define bd d.col(b_)
+
+#define cond f(cond_)
 
     switch (op) {
         case Opcode::ADD:
@@ -149,6 +151,9 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::CONST_VAR:
             od = ad;
             break;
+
+        case Opcode::CHOOSE:
+            od = (cond > 0.5) ? ad : bd;
 
         case Opcode::ORACLE:
             tape->oracles[a_]->evalDerivs(od);

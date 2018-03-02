@@ -67,7 +67,7 @@ protected:
      *  Per-clause evaluation, used in tape walking
      */
     void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+                    Clause::Id a, Clause::Id b, Clause::Id cond);
 
     Eigen::Array<boost::container::small_vector<Feature, 4>,
                  1, Eigen::Dynamic> d;

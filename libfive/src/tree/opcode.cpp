@@ -67,6 +67,9 @@ size_t Opcode::args(Opcode op)
         case COMPARE:
             return 2;
 
+        case CHOOSE:
+            return 3;
+
         case INVALID: // fallthrough
         case LAST_OP: return -1;
     }
@@ -168,6 +171,7 @@ std::string Opcode::toOpString(Opcode op)
         case COMPARE:
         case LOG:
         case ABS:
+        case CHOOSE:
             return toScmString(op);
 
 
@@ -220,6 +224,7 @@ bool Opcode::isCommutative(Opcode op)
         case ABS:
         case RECIP:
         case CONST_VAR:
+        case CHOOSE:
         case LAST_OP:
             return false;
 

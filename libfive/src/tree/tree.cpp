@@ -43,6 +43,7 @@ Tree::Tree(std::unique_ptr<const OracleClause> o)
         std::nanf(""), // value
         std::move(o), // oracle
         nullptr,
+        nullptr,
         nullptr }))
 {
     // Nothing to do here either.  ptr is constructed directly (without using
@@ -76,6 +77,12 @@ Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
                b->value == std::round(b->value) &&
                b->value > 0);
     }
+}
+
+Tree Tree::cond(Tree c, Tree a, Tree b)
+{
+    return Tree(Cache::instance()->operation(
+                Opcode::CHOOSE, a.ptr, b.ptr, c.ptr));
 }
 
 Tree Tree::var()

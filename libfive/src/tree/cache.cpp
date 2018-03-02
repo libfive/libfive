@@ -39,6 +39,7 @@ Cache::Node Cache::constant(float v)
             v, // value
             nullptr, // oracle
             nullptr,
+            nullptr,
             nullptr });
         constants.insert({v, out});
         return out;
@@ -51,7 +52,7 @@ Cache::Node Cache::constant(float v)
 }
 
 Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
-                             Cache::Node rhs, bool simplify)
+                             Cache::Node rhs, Cache::Node cond, bool simplify)
 {
     // These are opcodes that you're not allowed to use here
     assert(op != Opcode::CONST &&
@@ -69,7 +70,7 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
         CHECK_RETURN(checkAffine);
     }
 
-    Key k(op, lhs.get(), rhs.get());
+    Key k(op, lhs.get(), rhs.get(), cond.get());
 
     auto found = ops.find(k);
     if (found == ops.end())
@@ -100,7 +101,8 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
 
             // Arguments
             lhs,
-            rhs });
+            rhs,
+            cond });
 
         // Store a weak pointer to this new Node
         ops.insert({k, out});
@@ -139,6 +141,7 @@ Cache::Node Cache::var()
         std::nanf(""), // value
         nullptr, // oracle
         nullptr,
+        nullptr,
         nullptr});
 }
 
@@ -150,9 +153,9 @@ void Cache::del(float v)
     constants.erase(c);
 }
 
-void Cache::del(Opcode::Opcode op, Node lhs, Node rhs)
+void Cache::del(Opcode::Opcode op, Node lhs, Node rhs, Node cond)
 {
-    auto o = ops.find(Key(op, lhs.get(), rhs.get()));
+    auto o = ops.find(Key(op, lhs.get(), rhs.get(), cond.get()));
     assert(o != ops.end());
     assert(o->second.expired());
     ops.erase(o);

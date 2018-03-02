@@ -59,7 +59,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(const Eigen::Vector3f& p)
 }
 
 void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                   Clause::Id a, Clause::Id b)
+                                   Clause::Id a, Clause::Id b, Clause::Id cond)
 {
 #define ov f(id)
 #define oj j.row(id)
@@ -69,6 +69,8 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
 #define bv f(b)
 #define bj j.row(b)
+
+#define cond f(cond)
 
         switch (op) {
             case Opcode::ADD:
@@ -157,6 +159,10 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
             case Opcode::CONST_VAR:
                 oj.setZero();
+                break;
+
+            case Opcode::CHOOSE:
+                oj = (cond > 0.5) ? aj : bj;
                 break;
 
             case Opcode::ORACLE:

@@ -39,7 +39,7 @@ protected:
      *  Per-clause evaluation, used in tape walking
      */
     void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+                    Clause::Id a, Clause::Id b, Clause::Id cond);
 public:
     /*
      *  Single-point evaluation (return dx, dy, dz, distance)
