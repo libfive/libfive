@@ -209,6 +209,38 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = 1 / a;
             break;
 
+        case Opcode::CMP_LT:
+            out = (a < b).select(
+                    Eigen::ArrayXf::Constant(count, 1.0f),
+                    (a <= b).select(
+                        Eigen::ArrayXf::Constant(count, 0.25f),
+                        Eigen::ArrayXf::Zero(count)));
+            break;
+        case Opcode::CMP_LEQ:
+            out = (a < b).select(
+                    Eigen::ArrayXf::Constant(count, 1.0f),
+                    (a <= b).select(
+                        Eigen::ArrayXf::Constant(count, 0.75f),
+                        Eigen::ArrayXf::Zero(count)));
+            break;
+        case Opcode::CMP_GT:
+            out = (a > b).select(
+                    Eigen::ArrayXf::Constant(count, 1.0f),
+                    (a >= b).select(
+                        Eigen::ArrayXf::Constant(count, 0.25f),
+                        Eigen::ArrayXf::Zero(count)));
+            break;
+        case Opcode::CMP_GEQ:
+            out = (a > b).select(
+                    Eigen::ArrayXf::Constant(count, 1.0f),
+                    (a >= b).select(
+                        Eigen::ArrayXf::Constant(count, 0.75f),
+                        Eigen::ArrayXf::Zero(count)));
+            break;
+        case Opcode::CMP_NOT:
+            out = 1 - a;
+            break;
+
         case Opcode::CONST_VAR:
             out = a;
             break;

@@ -80,11 +80,17 @@ TEST_CASE("PointEvaluator::eval")
 
     SECTION("Every operation")
     {
-        for (unsigned i=7; i < Kernel::Opcode::ORACLE; ++i)
+        for (unsigned i=0; i < Kernel::Opcode::LAST_OP; ++i)
         {
             auto op = (Kernel::Opcode::Opcode)i;
-            Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
-                                            : Tree(op, Tree::X()));
+            Tree t(0.0f);
+            switch (Opcode::args(op))
+            {
+                case 1: t = Tree(op, Tree::X()); break;
+                case 2: t = Tree(op, Tree::X(), Tree(1)); break;
+                case 3: t = Tree(op, Tree::X(), Tree::Y(), Tree::Z()); break;
+                default: continue;
+            }
             auto p = std::make_shared<Tape>(t);
             PointEvaluator e(p);
             e.eval({0, 0, 0});

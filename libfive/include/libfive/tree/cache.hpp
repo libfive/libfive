@@ -108,7 +108,7 @@ protected:
 
     /*
      *  A Key uniquely identifies an operation Node, so that we can
-     *  deduplicate based on opcode  and arguments
+     *  deduplicate based on opcode and arguments
      */
     typedef std::tuple<Opcode::Opcode,  /* opcode */
                        Tree::Id,        /* lhs  */

@@ -165,6 +165,14 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 oj = (cond > 0.5) ? aj : bj;
                 break;
 
+            case Opcode::CMP_LT: // FALLTHROUGH
+            case Opcode::CMP_LEQ:
+            case Opcode::CMP_GT:
+            case Opcode::CMP_GEQ:
+            case Opcode::CMP_NOT:
+                oj.setZero();
+                break;
+
             case Opcode::ORACLE:
                 oj.setZero();
                 break;

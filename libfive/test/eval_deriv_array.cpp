@@ -39,8 +39,14 @@ TEST_CASE("DerivArrayEvaluator::deriv")
         for (unsigned i=7; i < Kernel::Opcode::ORACLE; ++i)
         {
             auto op = (Kernel::Opcode::Opcode)i;
-            Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
-                                            : Tree(op, Tree::X()));
+            Tree t(0.0f);
+            switch (Opcode::args(op))
+            {
+                case 1: t = Tree(op, Tree::X()); break;
+                case 2: t = Tree(op, Tree::X(), Tree(2)); break;
+                case 3: t = Tree(op, Tree::X(), Tree::Y(), Tree::Z()); break;
+                default: continue;
+            }
             auto tape = std::make_shared<Tape>(t);
             DerivArrayEvaluator e(tape);
             deriv(e, {0, 0, 0});

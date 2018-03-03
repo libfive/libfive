@@ -238,6 +238,42 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = Interval::I(1,1) / a;
             break;
 
+        case Opcode::CMP_LT:
+            if (a.upper() < b.lower())
+                out = Interval::I(1, 1);
+            else if (a.upper() <= b.lower())
+                out = Interval::I(0, 0.25);
+            else
+                out = Interval::I(0, 0);
+            break;
+        case Opcode::CMP_LEQ:
+            if (a.upper() < b.lower())
+                out = Interval::I(1, 1);
+            else if (a.upper() <= b.lower())
+                out = Interval::I(0.75, 1);
+            else
+                out = Interval::I(0, 0);
+            break;
+        case Opcode::CMP_GT:
+            if (a.lower() > b.upper())
+                out = Interval::I(1, 1);
+            else if (a.lower() >= b.upper())
+                out = Interval::I(0, 0.25);
+            else
+                out = Interval::I(0, 0);
+            break;
+        case Opcode::CMP_GEQ:
+            if (a.lower() > b.upper())
+                out = Interval::I(1, 1);
+            else if (a.lower() >= b.upper())
+                out = Interval::I(0.75, 1);
+            else
+                out = Interval::I(0, 0);
+            break;
+        case Opcode::CMP_NOT:
+            out = Interval::I(1, 1) - a;
+            break;
+
         case Opcode::CONST_VAR:
             out = a;
             break;

@@ -117,7 +117,12 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             for (Eigen::Index i=0; i < od.rows(); ++i)
                 od.row(i) = av.isNaN().select(bd.row(i), ad.row(i));
             break;
-        case Opcode::COMPARE:
+
+        case Opcode::COMPARE:   // FALLTHROUGH
+        case Opcode::CMP_LT:
+        case Opcode::CMP_GT:
+        case Opcode::CMP_GEQ:
+        case Opcode::CMP_LEQ:
             for (Eigen::Index i=0; i < od.rows(); ++i)
                 od.row(i).setZero();
             break;
@@ -164,6 +169,9 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
         case Opcode::RECIP:
             od = ad.rowwise() / -av.pow(2);
+            break;
+        case Opcode::CMP_NOT:
+            od = -ad;
             break;
 
         case Opcode::CONST_VAR:

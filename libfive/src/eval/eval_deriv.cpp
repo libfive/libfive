@@ -104,7 +104,11 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::NANFILL:
             od = std::isnan(av) ? bd : ad;
             break;
-        case Opcode::COMPARE:
+        case Opcode::COMPARE: // FALLTHROUGH
+        case Opcode::CMP_LT:
+        case Opcode::CMP_GT:
+        case Opcode::CMP_GEQ:
+        case Opcode::CMP_LEQ:
             od.setZero();
             break;
 
@@ -147,6 +151,9 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::RECIP:
             od = ad / -pow(av, 2);
             break;
+        case Opcode::CMP_NOT:
+            od = -ad;
+            break;
 
         case Opcode::CONST_VAR:
             od = ad;
@@ -154,6 +161,7 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::CHOOSE:
             od = (cond > 0.5) ? ad : bd;
+            break;
 
         case Opcode::ORACLE:
             tape->oracles[a_]->evalDerivs(od);

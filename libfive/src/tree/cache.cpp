@@ -35,12 +35,13 @@ Cache::Node Cache::constant(float v)
         Node out(new Tree::Tree_ {
             Opcode::CONST,
             Tree::FLAG_LOCATION_AGNOSTIC,
-            0, // rank
-            v, // value
-            nullptr, // oracle
-            nullptr,
-            nullptr,
-            nullptr });
+            0,          // rank
+            v,          // value
+            nullptr,    // oracle
+            nullptr,    // lhs
+            nullptr,    // rhs
+            nullptr     // cond
+        });
         constants.insert({v, out});
         return out;
     }
@@ -81,8 +82,9 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
 
             // Flags
             (uint8_t)
-            (((!lhs.get() || (lhs->flags & Tree::FLAG_LOCATION_AGNOSTIC)) &&
-              (!rhs.get() || (rhs->flags & Tree::FLAG_LOCATION_AGNOSTIC)) &&
+            (((!lhs.get()  || (lhs->flags  & Tree::FLAG_LOCATION_AGNOSTIC)) &&
+              (!rhs.get()  || (rhs->flags  & Tree::FLAG_LOCATION_AGNOSTIC)) &&
+              (!cond.get() || (cond->flags & Tree::FLAG_LOCATION_AGNOSTIC)) &&
                op != Opcode::VAR_X &&
                op != Opcode::VAR_Y &&
                op != Opcode::VAR_Z &&
@@ -90,8 +92,9 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
                   ? Tree::FLAG_LOCATION_AGNOSTIC : 0),
 
             // Rank
-            std::max(lhs.get() ? lhs->rank + 1 : 0,
-                     rhs.get() ? rhs->rank + 1 : 0),
+            std::max(std::max(lhs.get() ? lhs->rank + 1 : 0,
+                              rhs.get() ? rhs->rank + 1 : 0),
+                              cond.get() ? cond->rank + 1 : 0),
 
             // Value
             std::nanf(""),
@@ -110,9 +113,10 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
         // If both sides of the operation are constant, then build up a
         // temporary Evaluator in order to get a constant value out
         // (out will be GC'd immediately when it goes out of scope)
-        if ((lhs.get() || rhs.get()) &&
-            (!lhs.get() || lhs->op == Opcode::CONST) &&
-            (!rhs.get() || rhs->op == Opcode::CONST))
+        if (lhs.get() &&
+            (!lhs.get()  || lhs->op  == Opcode::CONST) &&
+            (!rhs.get()  || rhs->op  == Opcode::CONST) &&
+            (!cond.get() || cond->op == Opcode::CONST))
         {
             // Here, we construct a Tree manually to avoid a recursive loop,
             // then pass it immediately into a dummy Evaluator
@@ -156,6 +160,7 @@ void Cache::del(float v)
 void Cache::del(Opcode::Opcode op, Node lhs, Node rhs, Node cond)
 {
     auto o = ops.find(Key(op, lhs.get(), rhs.get(), cond.get()));
+
     assert(o != ops.end());
     assert(o->second.expired());
     ops.erase(o);

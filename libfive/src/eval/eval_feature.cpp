@@ -250,7 +250,11 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::NANFILL:
             od = std::isnan(av) ? _bds : _ads;
             break;
-        case Opcode::COMPARE:
+        case Opcode::COMPARE:    // FALLTHROUGH
+        case Opcode::CMP_LT:
+        case Opcode::CMP_GT:
+        case Opcode::CMP_LEQ:
+        case Opcode::CMP_GEQ:
             od.push_back(Feature(Eigen::Vector3f::Zero()));
             break;
 
@@ -292,6 +296,9 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
         case Opcode::RECIP:
             STORE1(ad / -pow(av, 2));
+            break;
+        case Opcode::CMP_NOT:
+            STORE1(-ad);
             break;
 
         case Opcode::CONST_VAR:

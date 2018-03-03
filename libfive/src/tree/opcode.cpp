@@ -51,6 +51,7 @@ size_t Opcode::args(Opcode op)
         case ABS:
         case LOG:
         case RECIP:
+        case CMP_NOT:
             return 1;
 
         case ADD: // fallthrough
@@ -65,6 +66,10 @@ size_t Opcode::args(Opcode op)
         case MOD:
         case NANFILL:
         case COMPARE:
+        case CMP_LT:
+        case CMP_LEQ:
+        case CMP_GT:
+        case CMP_GEQ:
             return 2;
 
         case CHOOSE:
@@ -172,6 +177,7 @@ std::string Opcode::toOpString(Opcode op)
         case LOG:
         case ABS:
         case CHOOSE:
+        case CMP_NOT:
             return toScmString(op);
 
 
@@ -181,6 +187,11 @@ std::string Opcode::toOpString(Opcode op)
         case SUB:   return "-";
         case RECIP: // FALLTHROUGH
         case DIV:   return "/";
+
+        case CMP_LT:    return "<";
+        case CMP_LEQ:   return "<=";
+        case CMP_GT:    return ">";
+        case CMP_GEQ:   return ">=";
 
         case INVALID: // fallthrough
         case CONST:
@@ -225,6 +236,11 @@ bool Opcode::isCommutative(Opcode op)
         case RECIP:
         case CONST_VAR:
         case CHOOSE:
+        case CMP_LT:
+        case CMP_LEQ:
+        case CMP_GT:
+        case CMP_GEQ:
+        case CMP_NOT:
         case LAST_OP:
             return false;
 

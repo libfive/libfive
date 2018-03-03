@@ -65,13 +65,18 @@ namespace Opcode
     OPCODE(NANFILL, 27)     \
     OPCODE(COMPARE, 31)     \
     OPCODE(ORACLE, 32)      \
-    OPCODE(CHOOSE, 33)        \
+    OPCODE(CHOOSE, 33)      \
+    OPCODE(CMP_LT, 34)      \
+    OPCODE(CMP_LEQ, 35)     \
+    OPCODE(CMP_GT, 36)      \
+    OPCODE(CMP_GEQ, 37)     \
+    OPCODE(CMP_NOT, 38)     \
 
 enum Opcode {
 #define OPCODE(s, i) s=i,
     OPCODES
 #undef OPCODE
-    LAST_OP=34,
+    LAST_OP=39,
 };
 
 size_t args(Opcode op);

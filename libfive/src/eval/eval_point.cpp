@@ -239,6 +239,23 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = 1 / a;
             break;
 
+
+        case Opcode::CMP_LT:
+            out = (a < b) ? 1.0f : (a <= b) ? 0.25f : 0.0f;
+            break;
+        case Opcode::CMP_LEQ:
+            out = (a < b) ? 1.0f : (a <= b) ? 0.75f : 0.0f;
+            break;
+        case Opcode::CMP_GT:
+            out = (a > b) ? 1.0f : (a >= b) ? 0.25f : 0.0f;
+            break;
+        case Opcode::CMP_GEQ:
+            out = (a > b) ? 1.0f : (a >= b) ? 0.75f : 0.0f;
+            break;
+        case Opcode::CMP_NOT:
+            out = 1 - a;
+            break;
+
         case Opcode::CONST_VAR:
             out = a;
             break;

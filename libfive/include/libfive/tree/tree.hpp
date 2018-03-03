@@ -70,13 +70,8 @@ public:
      *  (otherwise an assertion will be triggered).
      *  If the opcode is NTH_ROOT, b must be > 0.
      */
-    explicit Tree(Opcode::Opcode op, Tree a=Tree(), Tree b=Tree());
-
-    /*
-     *  Ternary / conditional operation: cond ? a : b
-     *  (both branches will still be evaluated)
-     */
-    static Tree cond(Tree cond, Tree a, Tree b);
+    explicit Tree(Opcode::Opcode op, Tree a=Tree(), Tree b=Tree(),
+                  Tree cond=Tree());
 
     /*
      *  Returns a new unique variable

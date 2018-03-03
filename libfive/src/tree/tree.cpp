@@ -57,13 +57,17 @@ Tree::Tree(float v)
     // Nothing to do here
 }
 
-Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
-    : ptr(Cache::instance()->operation(op, a.ptr, b.ptr))
+Tree::Tree(Opcode::Opcode op, Tree a, Tree b, Tree cond)
+    : ptr(Cache::instance()->operation(op, a.ptr, b.ptr, cond.ptr))
 {
-    // Aggressive sanity-checking
-    assert((Opcode::args(op) == 0 && a.ptr.get() == 0 && b.ptr.get() == 0) ||
-           (Opcode::args(op) == 1 && a.ptr.get() != 0 && b.ptr.get() == 0) ||
-           (Opcode::args(op) == 2 && a.ptr.get() != 0 && b.ptr.get() != 0));
+    // Sanity-checking on argument count
+    switch (Opcode::args(op))
+    {
+        case 0: assert(!a.ptr.get()); // fallthrough
+        case 1: assert(!b.ptr.get()); // fallthrough
+        case 2: assert(!cond.ptr.get()); // fallthrough
+        default: break;
+    }
 
     // POW only accepts integral values as its second argument
     if (op == Opcode::POW)
@@ -79,12 +83,6 @@ Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
     }
 }
 
-Tree Tree::cond(Tree c, Tree a, Tree b)
-{
-    return Tree(Cache::instance()->operation(
-                Opcode::CHOOSE, a.ptr, b.ptr, c.ptr));
-}
-
 Tree Tree::var()
 {
     return Tree(Cache::instance()->var());
@@ -98,7 +96,7 @@ Tree::Tree_::~Tree_()
     }
     else if (op != Opcode::VAR && op != Opcode::ORACLE)
     {
-        Cache::instance()->del(op, lhs, rhs);
+        Cache::instance()->del(op, lhs, rhs, cond);
     }
 }
 
@@ -117,6 +115,7 @@ std::list<Tree> Tree::ordered() const
         {
             todo.push_back(t->lhs);
             todo.push_back(t->rhs);
+            todo.push_back(t->cond);
             found.insert(t.get());
             ranks[t->rank].push_back(t);
         }
@@ -176,9 +175,11 @@ Tree Tree::remap(std::map<Id, std::shared_ptr<Tree_>> m) const
         {
             auto lhs = m.find(t->lhs.get());
             auto rhs = m.find(t->rhs.get());
+            auto cond = m.find(t->cond.get());
             m.insert({t.id(), Cache::instance()->operation(t->op,
                         lhs == m.end() ? t->lhs : lhs->second,
-                        rhs == m.end() ? t->rhs : rhs->second)});
+                        rhs == m.end() ? t->rhs : rhs->second,
+                        cond == m.end() ? t->cond : cond->second)});
         }
     }
 
@@ -239,6 +240,12 @@ void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
     const auto op_ = Opcode::isCommutative(op) ? op : Opcode::INVALID;
     switch (args)
     {
+        case 3:     cond->print(stream, op_);
+                    stream << " ";
+                    lhs->print(stream, op_);
+                    stream << " ";
+                    rhs->print(stream, op_);
+                    break;
         case 2:     lhs->print(stream, op_);
                     stream << " ";
                     rhs->print(stream, op_);
