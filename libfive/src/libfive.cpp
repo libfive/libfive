@@ -116,6 +116,12 @@ libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b)
     return new Tree(Opcode::Opcode(op), *a, *b);
 }
 
+libfive_tree libfive_tree_ternary(int op, libfive_tree a, libfive_tree b,
+                                   libfive_tree cond)
+{
+    return new Tree(Opcode::Opcode(op), *a, *b, *cond);
+}
+
 const void* libfive_tree_id(libfive_tree t)
 {
     return static_cast<const void*>(t->id());

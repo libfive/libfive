@@ -139,7 +139,7 @@ SCM scm_shape(SCM op, SCM a, SCM b)
     {
         SCM_ASSERT_TYPE(scm_is_number(a) || scm_is_shape(a),
                         a, 1, "scm_shape", "number or shape");
-        if (b != SCM_UNDEFINED)
+        if (b != SCM_UNDEFINED || cond != SCM_UNDEFINED)
         {
             scm_wrong_num_args(scm_shape_str);
             return SCM_UNDEFINED;
@@ -148,7 +148,7 @@ SCM scm_shape(SCM op, SCM a, SCM b)
     }
     else if (args == 2)
     {
-        if (a == SCM_UNDEFINED || b == SCM_UNDEFINED)
+        if (a == SCM_UNDEFINED || b == SCM_UNDEFINED || cond != SCM_UNDEFINED)
         {
             scm_wrong_num_args(scm_shape_str);
             return SCM_UNDEFINED;
@@ -160,6 +160,23 @@ SCM scm_shape(SCM op, SCM a, SCM b)
         if (scm_is_number(a)) { a = scm_number_to_shape(a); }
         if (scm_is_number(b)) { b = scm_number_to_shape(b); }
     }
+    else if (args == 3)
+    {
+        if (a == SCM_UNDEFINED || b == SCM_UNDEFINED || cond == SCM_UNDEFINED)
+        {
+            scm_wrong_num_args(scm_shape_str);
+            return SCM_UNDEFINED;
+        }
+        SCM_ASSERT_TYPE(scm_is_number(a) || scm_is_shape(a),
+                        a, 1, "scm_shape", "number or shape");
+        SCM_ASSERT_TYPE(scm_is_number(b) || scm_is_shape(b),
+                        b, 2, "scm_shape", "number or shape");
+        SCM_ASSERT_TYPE(scm_is_number(cond) || scm_is_shape(cond),
+                        cond, 3, "scm_shape", "number or shape");
+        if (scm_is_number(a)) { a = scm_number_to_shape(a); }
+        if (scm_is_number(b)) { b = scm_number_to_shape(b); }
+        if (scm_is_number(cond)) { cond = scm_number_to_shape(cond); }
+    }
 
     libfive_tree out = nullptr;
     switch (args)
@@ -167,7 +184,10 @@ SCM scm_shape(SCM op, SCM a, SCM b)
         case 0: out = libfive_tree_nonary(opcode);                  break;
         case 1: out = libfive_tree_unary(opcode, scm_get_tree(a));  break;
         case 2: out = libfive_tree_binary(opcode, scm_get_tree(a),
-                                          scm_get_tree(b));   break;
+                                          scm_get_tree(b));         break;
+        case 3: out = libfive_tree_ternary(opcode, scm_get_tree(a),
+                                           scm_get_tree(b), scm_get_tree(cond));
+                break;
         default: assert(false);
     }
 
@@ -324,7 +344,7 @@ void init_libfive_kernel(void*)
     scm_vec3_ = scm_c_eval_string("vec3");
 
     // Inject all of our compiled functions into the module environment
-    scm_c_define_gsubr("make-shape", 1, 2, 0, (void*)scm_shape);
+    scm_c_define_gsubr("make-shape", 1, 3, 0, (void*)scm_shape);
     scm_c_define_gsubr("make-var", 0, 0, 0, (void*)scm_var);
     scm_c_define_gsubr("var?", 1, 0, 0, (void*)scm_var_p);
     scm_c_define_gsubr("constant", 1, 0, 0, (void*)scm_shape_constant_vars);
@@ -362,6 +382,18 @@ void init_libfive_kernel(void*)
 (overload / 'div)
 (overload atan 'atan2)
 (overload modulo 'mod)
+
+(overload shape<? 'cmp-lt)
+(overload shape<=? 'cmp-leq)
+(overload shape>? 'cmp-gt)
+(overload shape>=? 'cmp-geq)
+(define-method (shape-not (a <shape>)) (make-shape 'cmp-not a))
+
+(define-method (choose cond a b)
+  "choose condition a b
+  Chooses a if condition is true, b otherwise
+  Condition should be built with shape<?, shape<=?, etc."
+  (make-shape 'choose a b cond))
 
 (overload compare 'compare)
 (define-method (compare (a <number>) (b <number>))
@@ -457,6 +489,7 @@ void init_libfive_kernel(void*)
 (define libfive-bindings '(
     square constant compare lambda-shape define-shape remap-shape
     shape-find-bounds shape->string shape-eval shape-derivs sequence
+    shape<? shape<=? shape>? shape>=? shape-not choose
     values-from values->list libfive-bindings))
 (eval (cons 'export libfive-bindings) (interaction-environment))
  )");

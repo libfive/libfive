@@ -114,6 +114,8 @@ libfive_tree libfive_tree_constant_vars(libfive_tree t);
 libfive_tree libfive_tree_nonary(int op);
 libfive_tree libfive_tree_unary(int op, libfive_tree a);
 libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b);
+libfive_tree libfive_tree_ternary(int op, libfive_tree a, libfive_tree b,
+                                  libfive_tree cond);
 
 const void* libfive_tree_id(libfive_tree t);
 
