@@ -213,6 +213,7 @@ void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
     {
         switch (args)
         {
+            case 3:
             case 2:
             case 1: stream << "(" <<  Opcode::toOpString(op) << " ";
                     break;
