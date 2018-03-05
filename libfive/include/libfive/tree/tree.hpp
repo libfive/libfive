@@ -44,9 +44,12 @@ public:
     Tree(float v);
 
     /*
-     *  Returns a Tree for the given oracle, taking ownership
+     *  Returns a Tree for the given oracle, taking shared ownership.
+     *  (Does not take complete ownership, in order to allow implementations
+     *  of OracleClause to apply their own deduplication techniques if 
+     *  necessary.)
      */
-    Tree(std::unique_ptr<const OracleClause> oracle);
+    Tree(std::shared_ptr<const OracleClause> oracle);
 
     /*
      *  Constructors for individual axes
@@ -99,7 +102,7 @@ public:
         const float value;
 
         /* Only populated for oracles */
-        const std::unique_ptr<const OracleClause> oracle;
+        const std::shared_ptr<const OracleClause> oracle;
 
         /*  Only populated for operations  */
         const std::shared_ptr<Tree_> lhs;

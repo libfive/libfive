@@ -56,6 +56,15 @@ Feature::Feature(const Eigen::Vector3f& d, const Feature& a, const Feature& b)
     }
 }
 
+Feature::Feature(const Feature& a, const Eigen::Matrix3f& transform)
+    : deriv(transform * a.deriv), epsilons(a.epsilons)
+{
+    for (auto& e : epsilons)
+    {
+        e = transform * e;
+    }
+}
+
 bool Feature::push(const Eigen::Vector3f& e_)
 {
     const auto norm = e_.norm();
