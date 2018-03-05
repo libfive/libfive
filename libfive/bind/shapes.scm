@@ -144,8 +144,8 @@ Create a volume-filling gyroid with the given periods and thickness"
                              (cos (/ x x_factor))
                              )
                           )
-                         ) thickness
-                           )
+                         ) (- thickness)
+                       )
     ))
 
 (define-public (rounded-box a b r)
