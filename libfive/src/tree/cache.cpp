@@ -50,6 +50,29 @@ Cache::Node Cache::constant(float v)
     }
 }
 
+Cache::Node Cache::oracle(std::shared_ptr<const OracleClause> o)
+{
+    auto f = oracles.find(o.get());
+    if (f == oracles.end())
+    {
+        Node out(new Tree::Tree_{
+            Opcode::ORACLE,
+            0, // flags
+            0, // rank
+            std::nanf(""), // value
+            std::move(o), // oracle
+            nullptr,
+            nullptr });
+        oracles.insert({ o.get(), out });
+        return out;
+    }
+    else
+    {
+        assert(!f->second.expired());
+        return f->second.lock();
+    }
+}
+
 Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
                              Cache::Node rhs, bool simplify)
 {
@@ -148,6 +171,14 @@ void Cache::del(float v)
     assert(c != constants.end());
     assert(c->second.expired());
     constants.erase(c);
+}
+
+void Cache::del(std::shared_ptr<const OracleClause> o)
+{
+    auto c = oracles.find(o.get());
+    assert(c != oracles.end());
+    assert(c->second.expired());
+    oracles.erase(c);
 }
 
 void Cache::del(Opcode::Opcode op, Node lhs, Node rhs)
