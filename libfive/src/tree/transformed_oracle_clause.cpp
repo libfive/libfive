@@ -73,4 +73,7 @@ TransformedOracleClause::TransformedOracleClause(
     //nothing to do here
 }
 
+std::map<TransformedOracleClause::Key, std::weak_ptr<TransformedOracleClause>> 
+    TransformedOracleClause::transformedOracles;
+
 }; //namespace Kernel
