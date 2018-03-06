@@ -54,6 +54,12 @@ public:
      */
     Feature(const Feature& a, const Eigen::Matrix3f& transform);
 
+    static boost::container::small_vector<Feature, 4> asMin(
+        const boost::container::small_vector<Eigen::Vector3f, 4>& derivs);
+
+    static boost::container::small_vector<Feature, 4> asMax(
+        const boost::container::small_vector<Eigen::Vector3f, 4>& derivs);
+
     /*
      *  If incompatible, does nothing and returns false
      *  Otherwise, pushes to the front of the choice list and returns true
@@ -71,6 +77,11 @@ public:
 
 protected:
     boost::container::small_vector<Eigen::Vector3f, 4> epsilons;
+
+private:
+    static boost::container::small_vector<Feature, 4> asMinOrMax(
+        const boost::container::small_vector<Eigen::Vector3f, 4>& derivs,
+        bool asMax);
 };
 
 }   // namespace Kernel
