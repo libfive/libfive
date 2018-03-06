@@ -20,6 +20,7 @@ set(SRCS main.cpp
     solver.cpp
     tape.cpp
     template.cpp
+    transformed_oracle.cpp
     tree.cpp
     voxels.cpp
     xtree.cpp
