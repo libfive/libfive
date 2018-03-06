@@ -55,6 +55,7 @@ Cache::Node Cache::oracle(std::shared_ptr<const OracleClause> o)
     auto f = oracles.find(o.get());
     if (f == oracles.end())
     {
+        auto ptr = o.get();
         Node out(new Tree::Tree_{
             Opcode::ORACLE,
             0, // flags
@@ -63,7 +64,7 @@ Cache::Node Cache::oracle(std::shared_ptr<const OracleClause> o)
             std::move(o), // oracle
             nullptr,
             nullptr });
-        oracles.insert({ o.get(), out });
+        oracles.insert({ ptr, out });
         return out;
     }
     else
