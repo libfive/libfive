@@ -49,6 +49,11 @@ public:
      */
     Feature(const Eigen::Vector3f& d, const Feature& a, const Feature& b);
 
+    /*  Transforms the derivative and all epsilons 
+     *  according to the given transformation.
+     */
+    Feature(const Feature& a, const Eigen::Matrix3f& transform);
+
     /*
      *  If incompatible, does nothing and returns false
      *  Otherwise, pushes to the front of the choice list and returns true
