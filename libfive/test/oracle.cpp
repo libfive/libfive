@@ -70,7 +70,7 @@ class AxisOracleClause : public OracleClause
 };
 
 // Replaces X, Y, and Z with oracles that pretend to be them
-Tree convertToOracleAxes(Tree t)
+inline Tree convertToOracleAxes(Tree t)
 {
     return t.remap(
             Tree(std::unique_ptr<OracleClause>(new AxisOracleClause<0>)),

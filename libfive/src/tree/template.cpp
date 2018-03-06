@@ -17,13 +17,13 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include <iostream>
-
+#include <stdexcept>
 #include "libfive/tree/template.hpp"
 
 namespace Kernel
 {
 
-std::vector<uint8_t> Template::serialize() const
+std::vector<uint8_t> Template::serialize(OracleSerializer oracleHandler) const
 {
     static_assert(Opcode::LAST_OP <= 255, "Too many opcodes");
 
@@ -49,6 +49,19 @@ std::vector<uint8_t> Template::serialize() const
             auto a = vars.find(n.id());
             serializeString(a == vars.end() ? "" : a->second, out);
         }
+        else if (n->op == Opcode::ORACLE)
+        {
+            if (oracleHandler)
+            {
+                (*oracleHandler)(n->oracle.get(), out);
+            }
+            else
+            {
+                std::cout << "A tree containing oracles must be "
+                    "serialized passing an oracle serializer.";
+                return std::vector<uint8_t>();
+            }
+        }
         switch (Opcode::args(n->op))
         {
             case 2:  serializeBytes(ids.at(n->rhs.get()), out);    // FALLTHROUGH
@@ -73,7 +86,8 @@ void Template::serializeString(const std::string& s, std::vector<uint8_t>& out)
     out.push_back('"');
 }
 
-Template Template::deserialize(const std::vector<uint8_t>& data)
+Template Template::deserialize(const std::vector<uint8_t>& data, 
+    OracleDeserializer oracleHandler)
 {
     const uint8_t* pos = &*data.begin();
     const uint8_t* end = pos + data.size();
@@ -121,6 +135,19 @@ Template Template::deserialize(const std::vector<uint8_t>& data)
             auto v = Tree(op);
             out.vars.insert({v.id(), var});
             ts.insert({next, v});
+        }
+        else if (op == Opcode::ORACLE)
+        {
+            if (oracleHandler)
+            {
+                ts.insert({next, Tree((*oracleHandler)(pos, end))});
+            }
+            else
+            {
+                std::cout << "A tree containing oracles must be "
+                    "deserialized passing an oracle deserializer.";
+                return Tree::Invalid();
+            }
         }
         else if (args == 2)
         {

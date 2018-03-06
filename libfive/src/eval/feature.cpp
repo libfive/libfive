@@ -56,6 +56,74 @@ Feature::Feature(const Eigen::Vector3f& d, const Feature& a, const Feature& b)
     }
 }
 
+Feature::Feature(const Feature& a, const Eigen::Matrix3f& transform)
+    : deriv(transform * a.deriv), epsilons(a.epsilons)
+{
+    for (auto& e : epsilons)
+    {
+        e = transform * e;
+    }
+}
+
+boost::container::small_vector<Feature, 4> Feature::asMin(
+    const boost::container::small_vector<Eigen::Vector3f, 4>& derivs)
+{
+    return asMinOrMax(derivs, false);
+}
+
+boost::container::small_vector<Feature, 4> Feature::asMax(
+    const boost::container::small_vector<Eigen::Vector3f, 4>& derivs)
+{
+    return asMinOrMax(derivs, true);
+}
+
+boost::container::small_vector<Feature, 4> Feature::asMinOrMax(
+    const boost::container::small_vector<Eigen::Vector3f, 4>& derivs,
+    bool asMax)
+{
+    boost::container::small_vector<Feature, 4> out;
+    out.reserve(derivs.size());
+    for (auto& deriv1 : derivs)
+    {
+        Feature f(deriv1);
+        auto valid = true;
+        for (auto& deriv2 : derivs)
+        {
+            if (deriv1 == deriv2)
+            {
+                if (&deriv1 == &deriv2)
+                {
+                    continue;
+                }
+                else if (&deriv1 < &deriv2)
+                    /* It's even ok if this isn't their vector order,
+                     *  as long as it's consistent.
+                     */
+                {
+                    valid = false; //it's a duplicate.
+                    break;
+                }
+            }
+            else
+            {
+                auto epsilon = asMax ?
+                    deriv1 - deriv2 : 
+                    deriv2 - deriv1;
+                if (!f.push(epsilon))
+                {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        if (valid)
+        {
+            out.push_back(f);
+        }
+    }
+    return out;
+}
+
 bool Feature::push(const Eigen::Vector3f& e_)
 {
     const auto norm = e_.norm();

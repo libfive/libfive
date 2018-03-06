@@ -23,9 +23,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <list>
 #include <cmath>
 #include <cassert>
+#include <array>
 
 #include "libfive/tree/cache.hpp"
 #include "libfive/tree/template.hpp"
+#include "libfive/tree/transformed_oracle_clause.hpp"
 
 namespace Kernel {
 
@@ -35,19 +37,10 @@ Tree::Tree()
     // Nothing to do here
 }
 
-Tree::Tree(std::unique_ptr<const OracleClause> o)
-    : ptr(std::shared_ptr<Tree_>(new Tree_{
-        Opcode::ORACLE,
-        0, // flags
-        0, // rank
-        std::nanf(""), // value
-        std::move(o), // oracle
-        nullptr,
-        nullptr }))
+Tree::Tree(std::shared_ptr<const OracleClause> o)
+    : ptr(Cache::instance()->oracle(o))
 {
-    // Nothing to do here either.  ptr is constructed directly (without using
-    // the cache), since using  a unique_ptr to the oracle already precludes
-    // duplication.
+    // Nothing to do here either.
 }
 
 Tree::Tree(float v)
@@ -89,6 +82,10 @@ Tree::Tree_::~Tree_()
     {
         Cache::instance()->del(value);
     }
+    else if (op == Opcode::ORACLE)
+    {
+        Cache::instance()->del(oracle);
+    }
     else if (op != Opcode::VAR && op != Opcode::ORACLE)
     {
         Cache::instance()->del(op, lhs, rhs);
@@ -126,14 +123,15 @@ std::list<Tree> Tree::ordered() const
     return out;
 }
 
-std::vector<uint8_t> Tree::serialize() const
+std::vector<uint8_t> Tree::serialize(OracleSerializer oracleHandler) const
 {
-    return Template(*this).serialize();
+    return Template(*this).serialize(oracleHandler);
 }
 
-Tree Tree::deserialize(const std::vector<uint8_t>& data)
+Tree Tree::deserialize(
+    const std::vector<uint8_t>& data, OracleDeserializer oracleHandler)
 {
-    return Template::deserialize(data).tree;
+    return Template::deserialize(data, oracleHandler).tree;
 }
 
 Tree Tree::load(const std::string& filename)
@@ -163,6 +161,15 @@ Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const
 
 Tree Tree::remap(std::map<Id, std::shared_ptr<Tree_>> m) const
 {
+    std::array<Tree, 3> axisMaps{ Tree::X(), Tree::Y(), Tree::Z() };
+    for (auto i = 0; i < 3; ++i)
+    {
+        auto location = m.find(axisMaps[i].id());
+        if (location != m.end())
+        {
+            axisMaps[i] = Tree(location->second);
+        }
+    }
     for (const auto& t : ordered())
     {
         if (Opcode::args(t->op) >= 1)
@@ -172,6 +179,13 @@ Tree Tree::remap(std::map<Id, std::shared_ptr<Tree_>> m) const
             m.insert({t.id(), Cache::instance()->operation(t->op,
                         lhs == m.end() ? t->lhs : lhs->second,
                         rhs == m.end() ? t->rhs : rhs->second)});
+        }
+        else if (t->op == Opcode::ORACLE)
+        {
+            m.insert({ t.id(), Cache::instance()->oracle(
+                TransformedOracleClause::transform(
+                    t-> oracle, axisMaps[0], axisMaps[1], axisMaps[2])) });
+
         }
     }
 
