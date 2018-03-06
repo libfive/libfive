@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #pragma once
 
 #include <map>
+#include <functional>
 #include "libfive/tree/tree.hpp"
 
 namespace Kernel {
@@ -27,15 +28,32 @@ struct Template
 {
     Template(Tree t) : tree(t) { /* Nothing to do here */ }
 
+    /* Takes the oracle clause, and pushes back the appropriate serialization 
+     * to the passed vector.
+     */
+    typedef std::function<void(const OracleClause*, std::vector<uint8_t>&)>*
+        OracleSerializer;
+
+    /* Takes pos pointing to the appropriate serialization for 
+     * the oracle clause and end to the end of the serialization, and returns 
+     * a shared pointer to the corresponding OracleClause, leaving pos
+     * pointing to the next item in the serialization.
+     */
+    typedef std::function<std::shared_ptr<OracleClause>(
+            const uint8_t*& /*pos*/, const uint8_t* /*end*/)>* 
+        OracleDeserializer;
+
     /*
      *  Serialize to a set of raw bytes
      */
-    std::vector<uint8_t> serialize() const;
+    std::vector<uint8_t> serialize(OracleSerializer oracleHandler = nullptr) 
+        const;
 
     /*
      *  Deserialize from a set of raw bytes
      */
-    static Template deserialize(const std::vector<uint8_t>& data);
+    static Template deserialize(const std::vector<uint8_t>& data, 
+        OracleDeserializer oracleHandler = nullptr);
 
     /*
      *  Serialize a string, wrapping in quotes and escaping with backslash

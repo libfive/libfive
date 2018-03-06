@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <list>
 #include <vector>
 #include <map>
+#include <functional>
 
 #include "libfive/tree/opcode.hpp"
 #include "libfive/tree/oracle_clause.hpp"
@@ -165,15 +166,32 @@ public:
      */
     std::list<Tree> ordered() const;
 
+    /* Takes the oracle clause, and pushes back the appropriate serialization
+     * to the passed vector.  Duplicate of Template::OracleSerializer.
+     */
+    typedef std::function<void(const OracleClause*, std::vector<uint8_t>&)>*
+        OracleSerializer;
+
+    /* Takes pos pointing to the appropriate serialization for
+     * the oracle clause and end to the end of the serialization, and returns
+     * a shared pointer to the corresponding OracleClause, leaving pos
+     * pointing to the next item in the serialization.  Duplicate of 
+     * Template::OracleDeserializer
+     */
+    typedef std::function<std::shared_ptr<OracleClause>(
+        const uint8_t*& /*pos*/, const uint8_t* /*end*/)>*
+        OracleDeserializer;
+
     /*
      *  Serializes to a vector of bytes
      */
-    std::vector<uint8_t> serialize() const;
+    std::vector<uint8_t> serialize(OracleSerializer = nullptr) const;
 
     /*
      *  Deserialize a tree from a set of bytes
      */
-    static Tree deserialize(const std::vector<uint8_t>& data);
+    static Tree deserialize(const std::vector<uint8_t>& data,
+        OracleDeserializer = nullptr);
 
     /*
      *  Loads a tree from a file

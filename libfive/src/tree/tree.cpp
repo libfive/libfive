@@ -123,14 +123,15 @@ std::list<Tree> Tree::ordered() const
     return out;
 }
 
-std::vector<uint8_t> Tree::serialize() const
+std::vector<uint8_t> Tree::serialize(OracleSerializer oracleHandler) const
 {
-    return Template(*this).serialize();
+    return Template(*this).serialize(oracleHandler);
 }
 
-Tree Tree::deserialize(const std::vector<uint8_t>& data)
+Tree Tree::deserialize(
+    const std::vector<uint8_t>& data, OracleDeserializer oracleHandler)
 {
-    return Template::deserialize(data).tree;
+    return Template::deserialize(data, oracleHandler).tree;
 }
 
 Tree Tree::load(const std::string& filename)
