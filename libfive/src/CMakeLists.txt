@@ -22,6 +22,7 @@ add_library(five SHARED
     eval/eval_point.cpp
     eval/tape.cpp
     eval/feature.cpp
+    eval/transformed_oracle.cpp
     render/discrete/heightmap.cpp
     render/discrete/voxels.cpp
     render/brep/xtree2.cpp
@@ -35,6 +36,7 @@ add_library(five SHARED
     tree/opcode.cpp
     tree/template.cpp
     tree/tree.cpp
+    tree/transformed_oracle_clause.cpp
     libfive.cpp
 
     ${CMAKE_CURRENT_BINARY_DIR}/version.c
