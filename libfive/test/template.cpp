@@ -19,8 +19,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "catch.hpp"
 
 #include "libfive/tree/template.hpp"
+#include "libfive/tree/oracle_clause.hpp"
+#include "libfive/eval/oracle.hpp"
 
 using namespace Kernel;
+
+class SerdeOracleClause : public OracleClause
+{
+public:
+    std::string name() const override { return "ST"; }
+    std::unique_ptr<Oracle> getOracle() const override { return nullptr; }
+
+    bool serialize(std::vector<uint8_t>& data) const
+    {
+        Template::serializeString("hi", data);
+        return true;
+    }
+
+    static std::unique_ptr<const OracleClause> deserialize(
+            const uint8_t*& pos, const uint8_t* end)
+    {
+        auto out = Template::deserializeString(pos, end);
+        if (out != "hi")
+        {
+            return nullptr;
+        }
+        return std::unique_ptr<const OracleClause>(new SerdeOracleClause());
+    }
+
+};
 
 TEST_CASE("Template::serialize")
 {
@@ -43,5 +70,34 @@ TEST_CASE("Template::serialize")
         std::vector<uint8_t> expected =
             {'T', '"', 'h', 'i', '"', '"', '\\', '"', '\\', '\\', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::MIN, 1, 0, 0, 0, 0, 0, 0, 0};
         REQUIRE(out == expected);
+    }
+
+    SECTION("With an oracle")
+    {
+        auto a = Template(Tree(std::unique_ptr<OracleClause>(
+                        new SerdeOracleClause())));
+        a.name = "";
+        a.doc = "";
+        OracleClause::install<SerdeOracleClause>("ST");
+        auto out = a.serialize();
+        std::vector<uint8_t> expected =
+            {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"'};
+        REQUIRE(out == expected);
+    }
+}
+
+TEST_CASE("Template::deserialize")
+{
+    OracleClause::install<SerdeOracleClause>("ST");
+
+    SECTION("Valid")
+    {
+        std::vector<uint8_t> in =
+                {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"'};
+        auto t = Template::deserialize(in);
+        REQUIRE(t.tree.id() != nullptr);
+        REQUIRE(t.tree->op == Opcode::ORACLE);
+        REQUIRE(dynamic_cast<const SerdeOracleClause*>(t.tree->oracle.get())
+                != nullptr);
     }
 }

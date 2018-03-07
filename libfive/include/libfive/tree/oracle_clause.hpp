@@ -18,7 +18,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #pragma once
 
+#include <functional>
 #include <memory>
+#include <map>
+#include <string>
+#include <iostream>
 
 namespace Kernel {
 
@@ -36,6 +40,59 @@ class OracleClause
 public:
     virtual ~OracleClause()=default;
     virtual std::unique_ptr<Oracle> getOracle() const=0;
+    virtual std::string name() const=0;
+
+    /*
+     *  Installs a particular class's serializer / deserializer pair
+     *  T must be a subclass of OracleClause, and install must be called
+     *  with the class's name().
+     *
+     *  In addition, T must declare
+     *      bool T::serialize(std::vector<uint8_t>& data) const
+     *      static std::unique_ptr<const OracleClause> deserialize(
+     *          const uint8_t*& pos, const uint8_t* end);
+     */
+    template <class T>
+    static void install(const std::string& name)
+    {
+        Serializer ser = [](const OracleClause* c, std::vector<uint8_t>& data)
+        {
+            auto o = dynamic_cast<const T*>(c);
+            if (o == nullptr)
+            {
+                std::cerr << "OracleClause: Could not cast to specified type";
+                return false;
+            }
+            return o->serialize(data);
+        };
+        Deserializer de = T::deserialize;
+        installed[name] = { ser, de };
+    }
+
+    /*
+     *  Serializes an oracle clause by looking up an installed serializer.
+     *      data is pushed back into the data vector
+     *      returns false on failure
+     */
+    static bool serialize(const std::string& name,
+            const OracleClause*, std::vector<uint8_t>& data);
+
+    /*
+     *  Deserializes an oracle clause by looking up an installed deserializer.
+     *      pos is adjusted as the data is read.
+     *      returns a null pointer on failure.
+     */
+    static std::unique_ptr<const OracleClause> deserialize
+        (const std::string& name, const uint8_t*& pos, const uint8_t* end);
+
+protected:
+    typedef std::function<bool(const OracleClause*, std::vector<uint8_t>&)>
+        Serializer;
+    typedef std::function<std::unique_ptr<const OracleClause>
+                          (const uint8_t*& pos, const uint8_t* end)>
+        Deserializer;
+
+    static std::map<std::string, std::pair<Serializer, Deserializer>> installed;
 };
 
 };
