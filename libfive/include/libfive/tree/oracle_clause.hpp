@@ -96,3 +96,16 @@ protected:
 };
 
 };
+
+/*
+ *  Use this macro in the .cpp file for classes derived from OracleClause
+ *  to automatically register them for serialization / deserialization.
+ */
+#define REGISTER_ORACLE_CLAUSE(T) \
+class T_Installer { \
+public: \
+    T_Installer() { \
+        OracleClause::install<T>(#T); \
+    }\
+};\
+static T_Installer T_Installer_Instance;

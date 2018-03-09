@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 using namespace Kernel;
 
-class SerdeOracleClause : public OracleClause
+class ST : public OracleClause
 {
 public:
     std::string name() const override { return "ST"; }
@@ -44,10 +44,12 @@ public:
         {
             return nullptr;
         }
-        return std::unique_ptr<const OracleClause>(new SerdeOracleClause());
+        return std::unique_ptr<const OracleClause>(new ST());
     }
-
 };
+REGISTER_ORACLE_CLAUSE(ST);
+
+////////////////////////////////////////////////////////////////////////////////
 
 TEST_CASE("Template::serialize")
 {
@@ -75,10 +77,9 @@ TEST_CASE("Template::serialize")
     SECTION("With an oracle")
     {
         auto a = Template(Tree(std::unique_ptr<OracleClause>(
-                        new SerdeOracleClause())));
+                        new ST())));
         a.name = "";
         a.doc = "";
-        OracleClause::install<SerdeOracleClause>("ST");
         auto out = a.serialize();
         std::vector<uint8_t> expected =
             {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"'};
@@ -88,8 +89,6 @@ TEST_CASE("Template::serialize")
 
 TEST_CASE("Template::deserialize")
 {
-    OracleClause::install<SerdeOracleClause>("ST");
-
     SECTION("Valid")
     {
         std::vector<uint8_t> in =
@@ -97,7 +96,7 @@ TEST_CASE("Template::deserialize")
         auto t = Template::deserialize(in);
         REQUIRE(t.tree.id() != nullptr);
         REQUIRE(t.tree->op == Opcode::ORACLE);
-        REQUIRE(dynamic_cast<const SerdeOracleClause*>(t.tree->oracle.get())
+        REQUIRE(dynamic_cast<const ST*>(t.tree->oracle.get())
                 != nullptr);
     }
 }
