@@ -57,7 +57,7 @@ TEST_CASE("Feature::push")
     SECTION("Fun with numerical instability")
     {
         Feature a(Eigen::Vector3f::Zero());
-        auto s = sqrt(2);
+        auto s = sqrt(2.f);
         REQUIRE(a.push({s,  0, -s}) == true);
         REQUIRE(a.push({s,  0,  s}) == true);
         REQUIRE(a.push({1, 0, -1}) == true);
