@@ -158,7 +158,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 for (unsigned i=0; i < children.size(); ++i)
                 {
                     futures[i] = std::async(std::launch::async,
-                        [&eval, &rs, i, min_feature, max_err, &cancel]()
+                        [&eval, &rs, &cancel, i, min_feature, max_err]()
                         { return new XTree(
                                 eval + i, rs[i], min_feature, max_err,
                                 false, cancel); });
