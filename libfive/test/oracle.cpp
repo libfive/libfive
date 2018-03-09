@@ -67,6 +67,11 @@ class AxisOracleClause : public OracleClause
     {
         return std::unique_ptr<Oracle>(new AxisOracle<A>());
     }
+
+    std::string name() const override
+    {
+        return "AxisOracle" + std::to_string(A);
+    }
 };
 
 // Replaces X, Y, and Z with oracles that pretend to be them
@@ -223,6 +228,11 @@ class CubeOracleClause : public OracleClause
     std::unique_ptr<Oracle> getOracle() const override
     {
         return std::unique_ptr<Oracle>(new CubeOracle());
+    }
+
+    std::string name() const override
+    {
+        return "CubeOracle";
     }
 };
 

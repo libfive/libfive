@@ -17,6 +17,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include <iostream>
+#include <cassert>
 
 #include "libfive/tree/template.hpp"
 
@@ -48,6 +49,12 @@ std::vector<uint8_t> Template::serialize() const
         {
             auto a = vars.find(n.id());
             serializeString(a == vars.end() ? "" : a->second, out);
+        }
+        else if (n->op == Opcode::ORACLE)
+        {
+            assert(n->oracle.get() != nullptr);
+            serializeString(n->oracle->name(), out);
+            OracleClause::serialize(n->oracle->name(), n->oracle.get(), out);
         }
         switch (Opcode::args(n->op))
         {
@@ -121,6 +128,20 @@ Template Template::deserialize(const std::vector<uint8_t>& data)
             auto v = Tree(op);
             out.vars.insert({v.id(), var});
             ts.insert({next, v});
+        }
+        else if (op == Opcode::ORACLE)
+        {
+            std::string name = deserializeString(pos, end);
+            CHECK_POS();
+            auto o = OracleClause::deserialize(name, pos, end);
+            if (o.get() == nullptr)
+            {
+                std::cerr
+                    << "Template::deserialize: failed to deserialize Oracle \""
+                    << name << "\"" << std::endl;
+                return out;
+            }
+            ts.insert({next, Tree(std::move(o))});
         }
         else if (args == 2)
         {
