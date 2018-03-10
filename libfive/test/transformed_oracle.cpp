@@ -31,7 +31,7 @@ using namespace Kernel;
 
 /*  In order to test the transformed primitives, we can't test that the meshing
  *  is identical when they're used, since numeric error can cause them not to
- *  be.  So instead, the evaluators are tested to ensure they return the same 
+ *  be.  So instead, the evaluators are tested to ensure they return the same
  *  results, up to numeric error.
  */
 
@@ -57,7 +57,7 @@ void compareUnderTransformation(Tree oracleTree, Tree controlTree,
             c.set(testPoints[i], i);
         }
         /*  getAmbiguous is numerically unstable, so unfortunately it
-         *  cannot be tested.  We still calculate it, though, since 
+         *  cannot be tested.  We still calculate it, though, since
          *  when either is ambiguous that means the derivatives cannot be
          *  tested either except via features, since there is more than one
          *  possible correct answer.
@@ -194,7 +194,7 @@ TEST_CASE("Abs and skew applied to Oracle: "
     Tree cubeOracle = convertToOracleAxes(cube);
     compareUnderTransformation(cubeOracle, cube,
         [](Tree t) {
-        return t.remap(Tree::Y(), Tree::X(), 
+        return t.remap(Tree::Y(), Tree::X(),
             abs(Tree::Z() + Tree::X() * 0.2f));},
         { { 1.5f, 1.5f, 1.8f },{ -1.5f, -1.5f, 1.8f},
         { -1.5f, 1.5f, -1.8f },{ 1.5f, -1.5f, -1.8f }, { 0.f, 0.f, 0.f } });

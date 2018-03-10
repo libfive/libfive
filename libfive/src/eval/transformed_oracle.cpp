@@ -127,9 +127,11 @@ void TransformedOracle::evalFeatures(
         xEvaluator.feature.eval(pt),
         yEvaluator.feature.eval(pt),
         zEvaluator.feature.eval(pt) };
+
     auto xFeatures = xEvaluator.feature.features_(pt);
     auto yFeatures = yEvaluator.feature.features_(pt);
     auto zFeatures = zEvaluator.feature.features_(pt);
+
     boost::container::small_vector<Feature, 4> underlyingOut;
     underlying->set(transformedPoint);
     underlying->evalFeatures(underlyingOut);
