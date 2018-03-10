@@ -33,11 +33,11 @@ public:
         std::unique_ptr<Oracle> underlying, Tree X_, Tree Y_, Tree Z_);
 
     //Sets not only OracleStorage's points, but also the array evaluators.
-    void set(const Eigen::Vector3f& p, size_t index = 0) override;
+    void set(const Eigen::Vector3f& p, size_t index=0) override;
 
     void evalInterval(Interval::I& out) override;
 
-    void evalPoint(float& out, size_t index = 0) override;
+    void evalPoint(float& out, size_t index=0) override;
 
     void evalArray(
         Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
@@ -49,16 +49,16 @@ public:
         Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
         1, Eigen::Dynamic> out) override;
 
-    virtual void evalDerivs(
+    void evalDerivs(
         Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-        3, 1, true> out, size_t index = 0);
+        3, 1, true> out, size_t index = 0) override;
 
-    virtual void evalDerivArray(
+    void evalDerivArray(
         Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
-        3, Eigen::Dynamic, true> out);
+        3, Eigen::Dynamic, true> out) override;
 
-    virtual void evalFeatures(
-        boost::container::small_vector<Feature, 4>& out);
+    void evalFeatures(
+        boost::container::small_vector<Feature, 4>& out) override;
 
 private:
     void setUnderlyingArrayValues(int count);

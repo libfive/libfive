@@ -16,8 +16,6 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#pragma once
-
 #include "libfive/tree/transformed_oracle_clause.hpp" 
 #include "libfive/eval/transformed_oracle.hpp"
 
@@ -25,11 +23,11 @@ namespace Kernel {
 
 std::unique_ptr<Oracle> TransformedOracleClause::getOracle() const
 {
-    return std::make_unique<TransformedOracle>(
-        underlying->getOracle(), X_, Y_, Z_);
+    return std::unique_ptr<TransformedOracle>(
+        new TransformedOracle(underlying->getOracle(), X_, Y_, Z_));
 }
 
-std::shared_ptr<const TransformedOracleClause> 
+std::shared_ptr<const TransformedOracleClause>
 TransformedOracleClause::transform(
     const std::shared_ptr<const OracleClause> underlying,
     Tree X_, Tree Y_, Tree Z_)

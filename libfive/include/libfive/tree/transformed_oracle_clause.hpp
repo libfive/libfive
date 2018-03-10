@@ -43,6 +43,8 @@ public:
         const std::shared_ptr<const OracleClause> underlying,
         Tree X_, Tree Y_, Tree Z_);
 
+    std::string name() const override { return "TransformedOracleClause"; }
+
 private:
     TransformedOracleClause(const std::shared_ptr<const OracleClause> underlying,
         Tree X_, Tree Y_, Tree Z_);

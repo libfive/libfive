@@ -16,16 +16,14 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#pragma once
-
 #include "libfive/eval/transformed_oracle.hpp"
 
 namespace Kernel {
 
 TransformedOracle::TransformedOracle(
-    std::unique_ptr<Oracle> underlying, Tree X_, Tree Y_, Tree Z_)
-    :underlying(std::move(underlying)), 
-    xEvaluator(X_), yEvaluator(Y_), zEvaluator(Z_)
+        std::unique_ptr<Oracle> underlying, Tree X_, Tree Y_, Tree Z_)
+    : underlying(std::move(underlying)),
+      xEvaluator(X_), yEvaluator(Y_), zEvaluator(Z_)
 {
     //nothing more to do here.
 }
