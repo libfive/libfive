@@ -24,9 +24,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <map>
 
 #include "libfive/tree/opcode.hpp"
-#include "libfive/tree/oracle_clause.hpp"
 
 namespace Kernel {
+
+// Forward declaration
+class OracleClause;
 
 /*
  *  A Tree represents a tree of math expressions.
@@ -44,12 +46,9 @@ public:
     Tree(float v);
 
     /*
-     *  Returns a Tree for the given oracle, taking shared ownership.
-     *  (Does not take complete ownership, in order to allow implementations
-     *  of OracleClause to apply their own deduplication techniques if 
-     *  necessary.)
+     *  Returns a Tree for the given oracle, taking ownership.
      */
-    Tree(std::shared_ptr<const OracleClause> oracle);
+    Tree(std::unique_ptr<const OracleClause>&& oracle);
 
     /*
      *  Constructors for individual axes
@@ -102,7 +101,7 @@ public:
         const float value;
 
         /* Only populated for oracles */
-        const std::shared_ptr<const OracleClause> oracle;
+        const std::unique_ptr<const OracleClause> oracle;
 
         /*  Only populated for operations  */
         const std::shared_ptr<Tree_> lhs;
@@ -149,7 +148,7 @@ public:
     /*
      *  Executes an arbitrary remapping
      */
-    Tree remap(std::map<Id, std::shared_ptr<Tree_>> m) const;
+    Tree remap(std::map<Id, Tree> m) const;
 
     /*
      *  Returns a tree in which all VAR clauses are wrapped in a
@@ -234,3 +233,6 @@ OP_BINARY(compare);
  *  Deserialize with Scheme-style syntax
  */
 std::ostream& operator<<(std::ostream& stream, const Kernel::Tree& tree);
+
+// This include goes at the bottom to work around circular ordering
+#include "libfive/tree/oracle_clause.hpp"

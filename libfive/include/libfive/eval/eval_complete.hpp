@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 namespace Kernel {
 
 /*  This evaluator contains all specific types once inheritance is considered,
- *  and so is suitable foruses such as oracles that are based on evaluators 
+ *  and so is suitable for uses such as oracles that are based on evaluators
  *  and need to use all types.
  */
 
@@ -35,14 +35,12 @@ class CompleteEvaluator
 public:
     CompleteEvaluator(const Tree t)
         : CompleteEvaluator(t, std::map<Tree::Id, float>())
-    { /* Nothing to do here */
-    }
+    { /* Nothing to do here */ }
 
     CompleteEvaluator(const Tree t, const std::map<Tree::Id, float>& vars)
         : tape(new Tape(t)), array(tape, vars),
-        interval(tape, vars), feature(tape, vars), deriv(tape, vars)
-    { /* Nothing to do here */
-    }
+          interval(tape, vars), feature(tape, vars), deriv(tape, vars)
+    { /* Nothing to do here */ }
 
     /*
     *  Updates variable values, return true if changed

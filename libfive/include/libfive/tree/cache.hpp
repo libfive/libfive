@@ -52,7 +52,6 @@ public:
     static Handle instance() { return Handle(); }
 
     Node constant(float v);
-    Node oracle(std::shared_ptr<const OracleClause> o);
     Node operation(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr,
                    bool simplify=true);
 
@@ -66,7 +65,6 @@ public:
      *  Called when the last Tree_ is destroyed
      */
     void del(float v);
-    void del(std::shared_ptr<const OracleClause> o);
     void del(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr);
 
     /*
@@ -118,13 +116,6 @@ protected:
 
     /*  Constants in the tree are uniquely identified by their value  */
     std::map<float, std::weak_ptr<Tree::Tree_>> constants;
-
-    /*  And oracles by a pointer to them.  */
-    std::map<const OracleClause*, std::weak_ptr<Tree::Tree_>> oracles;
-
-    /*  Oracles do not need to use the cache to be deduplicated, since they
-     *  are created from unique_ptr's, and therefore are already impossible
-     *  to duplicate.  */
 
     static FIVE_EXPORT std::recursive_mutex mut;
     static FIVE_EXPORT Cache _instance;

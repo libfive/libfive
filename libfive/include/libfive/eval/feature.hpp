@@ -49,7 +49,8 @@ public:
      */
     Feature(const Eigen::Vector3f& d, const Feature& a, const Feature& b);
 
-    /*  Transforms the derivative and all epsilons 
+    /*
+     *  Transforms the derivative and all epsilons
      *  according to the given transformation.
      */
     Feature(const Feature& a, const Eigen::Matrix3f& transform);

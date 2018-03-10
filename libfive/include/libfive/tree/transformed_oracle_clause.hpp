@@ -23,38 +23,29 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-/*  Forward declaration */
-class TransformedOracle;
-
 /*
-*  TransformedOracleClause is the result of remapping an OracleClause.
+*  TransformedOracleClause is used for implementing remap on OracleClauses
 */
 class TransformedOracleClause: public OracleClause
 {
 public:
-    std::unique_ptr<Oracle> getOracle() const override;
-    /* TransformedOracle may require deduplication if the same transformation
-     * is applied to the same oracle on two separate occasions, so this is 
-     * handled via a static member of the class.  This also allows multiple
-     * transformations to be combined into one if no other operations are
-     * in between.
+    /*
+     *  underlying must be an OracleClause, but is stored in a Tree to
+     *  keep track of ownership, since that's handled at the Tree level.
      */
-    static std::shared_ptr<const TransformedOracleClause> transform(
-        const std::shared_ptr<const OracleClause> underlying,
-        Tree X_, Tree Y_, Tree Z_);
+    TransformedOracleClause(Tree underlying, Tree X_, Tree Y_, Tree Z_);
 
+    std::unique_ptr<Oracle> getOracle() const override;
     std::string name() const override { return "TransformedOracleClause"; }
 
+    /*
+     *  More efficient remap implementation that remaps the underlying Trees
+     */
+    std::unique_ptr<const OracleClause> remap(
+            Tree self, Tree X_, Tree Y_, Tree Z_) const override;
+
 private:
-    TransformedOracleClause(const std::shared_ptr<const OracleClause> underlying,
-        Tree X_, Tree Y_, Tree Z_);
-
-    //For deduplication purposes:
-    typedef std::pair<std::array<Tree::Id, 3>, const OracleClause*> Key;
-    static std::map<Key, std::weak_ptr<TransformedOracleClause>> 
-        transformedOracles;
-
-    const std::shared_ptr<const OracleClause> underlying;
+    Tree underlying;
     Tree X_;
     Tree Y_;
     Tree Z_;

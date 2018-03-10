@@ -32,7 +32,10 @@ public:
     TransformedOracle(
         std::unique_ptr<Oracle> underlying, Tree X_, Tree Y_, Tree Z_);
 
-    //Sets not only OracleStorage's points, but also the array evaluators.
+    /*
+     *  Sets not only OracleStorage's points,
+     *  but also the array evaluators.
+     */
     void set(const Eigen::Vector3f& p, size_t index=0) override;
 
     void evalInterval(Interval::I& out) override;
@@ -62,6 +65,7 @@ public:
 
 private:
     void setUnderlyingArrayValues(int count);
+
     const std::unique_ptr<Oracle> underlying;
     CompleteEvaluator xEvaluator;
     CompleteEvaluator yEvaluator;

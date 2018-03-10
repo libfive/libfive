@@ -1,6 +1,8 @@
 #include <iostream>
+#include <cassert>
 
 #include "libfive/tree/oracle_clause.hpp"
+#include "libfive/tree/transformed_oracle_clause.hpp"
 
 namespace Kernel {
 
@@ -42,6 +44,16 @@ bool OracleClause::serialize(const std::string& name,
     {
         return (*itr).second.first(clause, data);
     }
+}
+
+std::unique_ptr<const OracleClause> OracleClause::remap(
+            Tree self, Tree X_, Tree Y_, Tree Z_) const
+{
+    assert(self->op == Opcode::ORACLE);
+    assert(self->oracle.get() == this);
+
+    return std::unique_ptr<const OracleClause>(
+        new TransformedOracleClause(self, X_, Y_, Z_));
 }
 
 }   // namespace Kernel

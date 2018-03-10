@@ -16,62 +16,34 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "libfive/tree/transformed_oracle_clause.hpp" 
+#include "libfive/tree/transformed_oracle_clause.hpp"
 #include "libfive/eval/transformed_oracle.hpp"
 
 namespace Kernel {
 
+TransformedOracleClause::TransformedOracleClause(
+        Tree underlying, Tree X_, Tree Y_, Tree Z_)
+    : underlying(underlying), X_(X_), Y_(Y_), Z_(Z_)
+{
+    // Nothing to do here
+}
+
 std::unique_ptr<Oracle> TransformedOracleClause::getOracle() const
 {
     return std::unique_ptr<TransformedOracle>(
-        new TransformedOracle(underlying->getOracle(), X_, Y_, Z_));
+        new TransformedOracle(underlying->oracle->getOracle(), X_, Y_, Z_));
 }
 
-std::shared_ptr<const TransformedOracleClause>
-TransformedOracleClause::transform(
-    const std::shared_ptr<const OracleClause> underlying,
-    Tree X_, Tree Y_, Tree Z_)
+std::unique_ptr<const OracleClause>
+TransformedOracleClause::remap(Tree self, Tree X_, Tree Y_, Tree Z_) const
 {
-    auto underlyingAsTransformed =
-        dynamic_cast<const TransformedOracleClause*>(underlying.get());
-    if (underlyingAsTransformed != nullptr) //We can simplify.
-    {
-        return transform(underlyingAsTransformed->underlying,
-            X_.remap(underlyingAsTransformed->X_, underlyingAsTransformed->Y_,
-                underlyingAsTransformed->Z_),
-            Y_.remap(underlyingAsTransformed->X_, underlyingAsTransformed->Y_,
-                underlyingAsTransformed->Z_),
-            Z_.remap(underlyingAsTransformed->X_, underlyingAsTransformed->Y_,
-                underlyingAsTransformed->Z_));
-    }
-    else {
-        Key k{ { X_.id(), Y_.id(), Z_.id() }, underlying.get() };
-        auto found = transformedOracles.find(k);
-        if (found == transformedOracles.end())
-        {
-            auto transformed = 
-                new TransformedOracleClause(underlying, X_, Y_, Z_);
-            auto out = std::shared_ptr<TransformedOracleClause>(transformed);
-            transformedOracles.insert({ k, out });
-            return out;
-        }
-        else
-        {
-            assert(!found->second.expired());
-            return found->second.lock();
-        }
-    }
-}
+    (void)self; // unused, as we execute the remap on the underlying oracle
 
-TransformedOracleClause::TransformedOracleClause(
-    const std::shared_ptr<const OracleClause> underlying,
-    Tree X_, Tree Y_, Tree Z_) :
-    underlying(underlying), X_(X_), Y_(Y_), Z_(Z_)
-{
-    //nothing to do here
+    return std::unique_ptr<const OracleClause>(
+        new TransformedOracleClause(underlying,
+            this->X_.remap(X_, Y_, Z_),
+            this->Y_.remap(X_, Y_, Z_),
+            this->Z_.remap(X_, Y_, Z_)));
 }
-
-std::map<TransformedOracleClause::Key, std::weak_ptr<TransformedOracleClause>> 
-    TransformedOracleClause::transformedOracles;
 
 }; //namespace Kernel

@@ -37,8 +37,15 @@ Tree::Tree()
     // Nothing to do here
 }
 
-Tree::Tree(std::shared_ptr<const OracleClause> o)
-    : ptr(Cache::instance()->oracle(o))
+Tree::Tree(std::unique_ptr<const OracleClause>&& o)
+    : ptr(std::shared_ptr<Tree_>(new Tree_{
+        Opcode::ORACLE,
+        0, // flags
+        0, // rank
+        std::nanf(""), // value
+        std::move(o), // oracle
+        nullptr,
+        nullptr }))
 {
     // Nothing to do here either.
 }
@@ -81,10 +88,6 @@ Tree::Tree_::~Tree_()
     if (op == Opcode::CONST)
     {
         Cache::instance()->del(value);
-    }
-    else if (op == Opcode::ORACLE)
-    {
-        Cache::instance()->del(oracle);
     }
     else if (op != Opcode::VAR && op != Opcode::ORACLE)
     {
@@ -152,39 +155,36 @@ Tree Tree::load(const std::string& filename)
 
 Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const
 {
-    std::map<Tree::Id, std::shared_ptr<Tree_>> m = {
-        {X().id(), X_.ptr}, {Y().id(), Y_.ptr}, {Z().id(), Z_.ptr}};
+    std::map<Tree::Id, Tree> m = {
+        {X().id(), X_}, {Y().id(), Y_}, {Z().id(), Z_}};
 
     return remap(m);
 }
 
-Tree Tree::remap(std::map<Id, std::shared_ptr<Tree_>> m) const
+Tree Tree::remap(std::map<Id, Tree> m) const
 {
-    std::array<Tree, 3> axisMaps{ Tree::X(), Tree::Y(), Tree::Z() };
-    for (auto i = 0; i < 3; ++i)
-    {
-        auto location = m.find(axisMaps[i].id());
-        if (location != m.end())
-        {
-            axisMaps[i] = Tree(location->second);
-        }
-    }
+    // Oracles only care about remapping X/Y/Z, so we extract them here.
+    auto get_remapped = [&](Tree target) {
+        auto itr = m.find(target.id());
+        return (itr == m.end()) ? target : Tree(itr->second);
+    };
+    auto X_ = get_remapped(Tree::X());
+    auto Y_ = get_remapped(Tree::Y());
+    auto Z_ = get_remapped(Tree::Z());
+
     for (const auto& t : ordered())
     {
         if (Opcode::args(t->op) >= 1)
         {
             auto lhs = m.find(t->lhs.get());
             auto rhs = m.find(t->rhs.get());
-            m.insert({t.id(), Cache::instance()->operation(t->op,
-                        lhs == m.end() ? t->lhs : lhs->second,
-                        rhs == m.end() ? t->rhs : rhs->second)});
+            m.insert({t.id(), Tree(Cache::instance()->operation(t->op,
+                        lhs == m.end() ? t->lhs : lhs->second.ptr,
+                        rhs == m.end() ? t->rhs : rhs->second.ptr))});
         }
         else if (t->op == Opcode::ORACLE)
         {
-            m.insert({ t.id(), Cache::instance()->oracle(
-                TransformedOracleClause::transform(
-                    t-> oracle, axisMaps[0], axisMaps[1], axisMaps[2])) });
-
+            m.insert({ t.id(), t->oracle->remap(t, X_, Y_, Z_) });
         }
     }
 
@@ -195,13 +195,13 @@ Tree Tree::remap(std::map<Id, std::shared_ptr<Tree_>> m) const
 
 Tree Tree::makeVarsConstant() const
 {
-    std::map<Id, std::shared_ptr<Tree_>> vars;
+    std::map<Id, Tree> vars;
     for (auto& o : ordered())
     {
         if (o->op == Opcode::VAR)
         {
             vars.insert({o.id(),
-                    Cache::instance()->operation(Opcode::CONST_VAR, o.ptr)});
+                    Tree(Cache::instance()->operation(Opcode::CONST_VAR, o.ptr))});
         }
     }
     return remap(vars);

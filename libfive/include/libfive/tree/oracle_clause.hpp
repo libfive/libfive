@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <string>
 #include <iostream>
 
+#include "libfive/tree/tree.hpp"
+
 namespace Kernel {
 
 /*  Forward declaration */
@@ -84,6 +86,18 @@ public:
      */
     static std::unique_ptr<const OracleClause> deserialize
         (const std::string& name, const uint8_t*& pos, const uint8_t* end);
+
+    /*
+     *  Executes a coordinate transform on the underlying oracle.
+     *  The default implementation uses TransformedOracleClause, but subclasses
+     *  could specialize to take advantage of any unique structures.
+     *
+     *  self is a Tree that contains the OracleClause; it is passed in to
+     *  handle cases where the underlying OracleClause needs to be cloned,
+     *  as ownership is handled at the Tree level.
+     */
+    virtual std::unique_ptr<const OracleClause> remap(
+            Tree self, Tree X_, Tree Y_, Tree Z_) const;
 
 protected:
     typedef std::function<bool(const OracleClause*, std::vector<uint8_t>&)>

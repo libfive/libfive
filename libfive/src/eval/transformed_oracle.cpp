@@ -41,10 +41,12 @@ void TransformedOracle::evalInterval(Interval::I& out)
     auto xRange = xEvaluator.interval.eval(lower, upper);
     auto yRange = yEvaluator.interval.eval(lower, upper);
     auto zRange = zEvaluator.interval.eval(lower, upper);
-    Eigen::Vector3f rangeLower{ 
+
+    Eigen::Vector3f rangeLower{
         xRange.lower(), yRange.lower(), zRange.lower() };
-    Eigen::Vector3f rangeUpper{ 
+    Eigen::Vector3f rangeUpper{
         xRange.upper(), yRange.lower(), zRange.lower() };
+
     underlying->set(rangeLower, rangeUpper);
     underlying->evalInterval(out);
 }
@@ -55,6 +57,7 @@ void TransformedOracle::evalPoint(float& out, size_t index)
         xEvaluator.feature.eval(points.col(index)),
         yEvaluator.feature.eval(points.col(index)),
         zEvaluator.feature.eval(points.col(index)) };
+
     underlying->set(transformedPoint, index);
     underlying->evalPoint(out, index);
 }
@@ -100,11 +103,13 @@ void TransformedOracle::evalDerivArray(
     3, Eigen::Dynamic, true> out)
 {
     TransformedOracle::setUnderlyingArrayValues(out.cols());
+
     auto xDerivs = xEvaluator.array.derivs(out.cols());
     auto yDerivs = yEvaluator.array.derivs(out.cols());
     auto zDerivs = zEvaluator.array.derivs(out.cols());
-    Eigen::Array<Eigen::Matrix3f, 1, LIBFIVE_EVAL_ARRAY_SIZE> Jacobians;
+
     underlying->evalDerivArray(out);
+
     for (auto i = 0; i < out.cols(); ++i)
     {
         Eigen::Matrix3f Jacobian;
