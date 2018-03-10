@@ -88,15 +88,6 @@ public:
                          1, Eigen::Dynamic> out)=0;
 
     /*
-     *  Check if the index-0 result is ambiguous
-     */
-    virtual bool isAmbiguous() {
-        Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE> out;
-        checkAmbiguous(out.head(1));
-        return out(0);
-    }
-
-    /*
      *  Returns the result of gradient arithemetic on the value
      *  previously defined with set(Eigen::Vector3f).
      *
@@ -126,15 +117,7 @@ public:
         out = dummy;
     }
 
-    /*
-     *  Returns the set of features at the point stored in slot 0.
-     *
-     *  Since the gradient may be discontinuous at the queried point, a vector
-     *  is returned; each element contains the gradient and a second vector
-     *  of epsilons indicating the domain of the gradient: for small scalar e
-     *  and normalized vector n, the gradient at point + e*n is the one whose
-     *  associated epsilon is closest to n.
-     */
+    /*  Returns the set of features at the point stored in slot 0.  */
     virtual void evalFeatures(
             boost::container::small_vector<Feature, 4>& out)=0;
 };
