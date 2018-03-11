@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/tree/opcode.hpp"
 #include "libfive/tree/tree.hpp"
+#include "libfive/tree/archive.hpp"
+#include "libfive/tree/sweep.hpp"
 
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/contours.hpp"
@@ -204,6 +206,15 @@ char* libfive_tree_print(libfive_tree t)
     auto out = static_cast<char*>(malloc(str.size() + 1 * sizeof(char)));
     memcpy(out, str.c_str(), str.size() + 1);
     return out;
+}
+
+
+libfive_tree libfive_tree_sweep_quadratic(libfive_tree p,
+    libfive_vec3 a, libfive_vec3 b, libfive_vec3 c)
+{
+    return new Tree(sweep(*p, {a.x, a.y, a.z},
+                              {b.x, b.y, b.z},
+                              {c.x, c.y, c.z}));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -29,4 +29,5 @@ namespace Kernel {
 Tree sweep(Tree input, const Eigen::Vector3f& a,
                        const Eigen::Vector3f& b,
                        const Eigen::Vector3f& c);
-}
+
+}   // namespace Kernel

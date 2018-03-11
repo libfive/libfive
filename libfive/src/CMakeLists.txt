@@ -39,6 +39,7 @@ add_library(five SHARED
     tree/oracle_clause.cpp
     tree/oracle_clause_bezier.cpp
     tree/transformed_oracle_clause.cpp
+    tree/sweep.cpp
     libfive.cpp
 
     ${CMAKE_CURRENT_BINARY_DIR}/version.c

@@ -141,6 +141,12 @@ libfive_region3 libfive_tree_bounds(libfive_tree p);
  */
 char* libfive_tree_print(libfive_tree t);
 
+/*
+ *  Sweeps the given tree along a quadratic Bezier curve
+ */
+libfive_tree libfive_tree_sweep_quadratic(libfive_tree p,
+    libfive_vec3 a, libfive_vec3 b, libfive_vec3 c);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 /*

@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/tree/sweep.hpp"
 #include "libfive/tree/oracle_clause_bezier.hpp"
 
-using namespace Kernel;
+namespace Kernel {
 
 Tree sweep(Tree input, const Eigen::Vector3f& a,
                        const Eigen::Vector3f& b,
@@ -40,3 +40,5 @@ Tree sweep(Tree input, const Eigen::Vector3f& a,
 
     return input.remap(remapped[0], remapped[1], remapped[2]);
 }
+
+}   // namespace Kernel
