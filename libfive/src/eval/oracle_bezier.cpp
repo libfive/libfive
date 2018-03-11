@@ -42,6 +42,9 @@ void BezierClosestPointOracle::evalInterval(Interval::I& out)
     Interval::I Y(lower(1), upper(1));
     Interval::I Z(lower(2), upper(2));
 
+    float out_lower =  std::numeric_limits<float>::infinity();
+    float out_upper = -std::numeric_limits<float>::infinity();
+
     for (unsigned i=0; i < lower.rows(); ++i)
     {
         const Eigen::Vector3f u = lower.row(i);
@@ -54,7 +57,24 @@ void BezierClosestPointOracle::evalInterval(Interval::I& out)
         Interval::I proj = (X - u.x()) * delta.x() / len +
                            (Y - u.y()) * delta.y() / len +
                            (Z - u.z()) * delta.z() / len;
+
+        // This is not the best strategy, but it's conservatively
+        // correct (probably?)
+        if (i == 0 && proj.lower() <= 0)
+        {
+            out_lower = 0;
+        }
+        else if (i == lower.rows() - 1 && proj.upper() >= 1)
+        {
+            out_upper = 1;
+        }
+        else if (proj >= 0 && proj <= 1)
+        {
+            out_lower = fmin(out_lower, lower_t(i));
+            out_upper = fmax(out_upper, upper_t(i));
+        }
     }
+    out = Interval::I(out_lower, out_upper);
 }
 
 void BezierClosestPointOracle::evalPoint(float& out, size_t index)
@@ -84,7 +104,7 @@ void BezierClosestPointOracle::evalPoint(float& out, size_t index)
         if (i == 0 && proj <= 0)
         {
             d_suggested = (pt - u).norm();
-            t_suggested = 1;
+            t_suggested = 0;
         }
         else if (i == lower.rows() - 1 && proj >= 1)
         {
@@ -117,22 +137,33 @@ void BezierClosestPointOracle::evalDerivs(
             Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
                          3, 1, true> out, size_t index)
 {
-    Eigen::Vector3f pt = points.col(index);
+    const Eigen::Vector3f pt = points.col(index);
     const float epsilon = 0.001f;
 
     float r0, rx, ry, rz;
-    evalPoint(r0);
+    evalPoint(r0, index);
 
     points.col(index) = pt + Eigen::Vector3f(epsilon, 0, 0);
-    evalPoint(rx);
+    evalPoint(rx, index);
 
     points.col(index) = pt + Eigen::Vector3f(0, epsilon, 0);
-    evalPoint(ry);
+    evalPoint(ry, index);
 
     points.col(index) = pt + Eigen::Vector3f(0, 0, epsilon);
-    evalPoint(rz);
+    evalPoint(rz, index);
 
     out(0) = (r0 - rx) / epsilon;
     out(1) = (r0 - ry) / epsilon;
     out(2) = (r0 - rz) / epsilon;
+
+    // Restore point to its previous value
+    points.col(index) = pt;
+}
+
+void BezierClosestPointOracle::evalFeatures(
+        boost::container::small_vector<Feature, 4>& out)
+{
+    Eigen::Array<float, 3, Eigen::Dynamic> ds(3, 1);
+    evalDerivs(ds.col(0), 0);
+    out.push_back(Feature(ds.col(0)));
 }
