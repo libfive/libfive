@@ -111,3 +111,28 @@ Eigen::Vector3f BezierClosestPointOracle::at(float t) const
            2 * (1 - t) * t * b +
            pow(t, 2) * c;
 }
+
+// Numerically solve for the gradient
+void BezierClosestPointOracle::evalDerivs(
+            Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
+                         3, 1, true> out, size_t index)
+{
+    Eigen::Vector3f pt = points.col(index);
+    const float epsilon = 0.001f;
+
+    float r0, rx, ry, rz;
+    evalPoint(r0);
+
+    points.col(index) = pt + Eigen::Vector3f(epsilon, 0, 0);
+    evalPoint(rx);
+
+    points.col(index) = pt + Eigen::Vector3f(0, epsilon, 0);
+    evalPoint(ry);
+
+    points.col(index) = pt + Eigen::Vector3f(0, 0, epsilon);
+    evalPoint(rz);
+
+    out(0) = (r0 - rx) / epsilon;
+    out(1) = (r0 - ry) / epsilon;
+    out(2) = (r0 - rz) / epsilon;
+}

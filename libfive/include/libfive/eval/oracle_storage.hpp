@@ -42,7 +42,6 @@ public:
         upper = _upper;
     }
 
-
     /*
      *  Inefficient-but-correct implementation of evalDerivs
      *  (delegates work to evalFeatures)
