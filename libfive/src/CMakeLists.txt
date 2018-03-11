@@ -22,6 +22,7 @@ add_library(five SHARED
     eval/tape.cpp
     eval/feature.cpp
     eval/transformed_oracle.cpp
+    eval/oracle_bezier.cpp
     render/discrete/heightmap.cpp
     render/discrete/voxels.cpp
     render/brep/xtree2.cpp
@@ -36,6 +37,7 @@ add_library(five SHARED
     tree/archive.cpp
     tree/tree.cpp
     tree/oracle_clause.cpp
+    tree/oracle_clause_bezier.cpp
     tree/transformed_oracle_clause.cpp
     libfive.cpp
 
