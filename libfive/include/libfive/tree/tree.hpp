@@ -179,11 +179,12 @@ public:
      */
     static Tree load(const std::string& filename);
 
-protected:
     /*
-     *  Empty tree constructor
-     */
+    *  Empty tree constructor.
+    */
     explicit Tree();
+
+protected:
 
     /*
      *  Private constructor
