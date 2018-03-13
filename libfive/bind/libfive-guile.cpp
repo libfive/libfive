@@ -362,6 +362,7 @@ void init_libfive_kernel(void*)
 (overload / 'div)
 (overload atan 'atan2)
 (overload modulo 'mod)
+(overload nan-fill 'nanfill)
 
 (overload compare 'compare)
 (define-method (compare (a <number>) (b <number>))
@@ -395,6 +396,8 @@ void init_libfive_kernel(void*)
 (define-method (atan (a <shape>)) (make-shape 'atan a))
 (define-method (log (a <shape>)) (make-shape 'log a))
 (define (square f) (if (shape? f) (make-shape 'square f) (* f f)))
+
+(define-method (nan-fill (a <number>) (b <number>)) (if (nan? a) b a))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -455,7 +458,7 @@ void init_libfive_kernel(void*)
 
 ;; These are "safe" bindings that can be used in the sandbox
 (define libfive-bindings '(
-    square constant compare lambda-shape define-shape remap-shape
+    square nan-fill constant compare lambda-shape define-shape remap-shape
     shape-find-bounds shape->string shape-eval shape-derivs sequence
     values-from values->list libfive-bindings))
 (eval (cons 'export libfive-bindings) (interaction-environment))
