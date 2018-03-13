@@ -17,6 +17,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include <cassert>
+#include <cmath>
 
 #include "libfive/tree/cache.hpp"
 #include "libfive/eval/eval_point.hpp"
@@ -29,6 +30,25 @@ Cache Cache::_instance;
 
 Cache::Node Cache::constant(float v)
 {
+    // Special-case for NaN, which can't be stored in the usual map
+    if (std::isnan(v))
+    {
+        auto out = nan_constant.lock();
+        if (out.get() == nullptr)
+        {
+            out.reset(new Tree::Tree_ {
+                    Opcode::CONST,
+                    Tree::FLAG_LOCATION_AGNOSTIC,
+                    0, // rank
+                    v, // value
+                    nullptr, // oracle
+                    nullptr,
+                    nullptr });
+            nan_constant = out;
+        }
+        return out;
+    }
+
     auto f = constants.find(v);
     if (f == constants.end())
     {
@@ -115,12 +135,10 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
             // Here, we construct a Tree manually to avoid a recursive loop,
             // then pass it immediately into a dummy Evaluator
             PointEvaluator e(std::make_shared<Tape>(Tree(out)));
-            return constant(e.eval({0,0,0}));
+            auto result = e.eval({0,0,0});
+            return constant(result);
         }
-        else
-        {
-            return out;
-        }
+        return out;
     }
     else
     {
@@ -144,10 +162,18 @@ Cache::Node Cache::var()
 
 void Cache::del(float v)
 {
-    auto c = constants.find(v);
-    assert(c != constants.end());
-    assert(c->second.expired());
-    constants.erase(c);
+    if (std::isnan(v))
+    {
+        assert(nan_constant.expired());
+        nan_constant.reset();
+    }
+    else
+    {
+        auto c = constants.find(v);
+        assert(c != constants.end());
+        assert(c->second.expired());
+        constants.erase(c);
+    }
 }
 
 void Cache::del(Opcode::Opcode op, Node lhs, Node rhs)
