@@ -26,9 +26,9 @@ TEST_CASE("Joining two trees")
 {
     auto t = Tree::X() + 1;
 
-    REQUIRE(t->op == Opcode::ADD);
+    REQUIRE(t->op == Opcode::OP_ADD);
     REQUIRE(t->lhs->op == Opcode::VAR_X);
-    REQUIRE(t->rhs->op == Opcode::CONST);
+    REQUIRE(t->rhs->op == Opcode::CONSTANT);
     REQUIRE(t->rhs->value == 1);
 }
 
@@ -54,7 +54,7 @@ TEST_CASE("Tree::serialize")
         auto a = min(Tree::X(), Tree::Y());
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::MIN, 1, 0, 0, 0, 0, 0, 0, 0};
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0};
         REQUIRE(out == expected);
     }
 
@@ -63,7 +63,7 @@ TEST_CASE("Tree::serialize")
         auto a = min(Tree::X(), Tree::X());
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::MIN, 0, 0, 0, 0, 0, 0, 0, 0};
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::OP_MIN, 0, 0, 0, 0, 0, 0, 0, 0};
         REQUIRE(out == expected);
     }
 }
@@ -74,7 +74,7 @@ TEST_CASE("Tree::deserialize")
     {
         auto a = Tree::deserialize(min(Tree::X(), Tree::Y()).serialize());
         REQUIRE(a.id() != nullptr);
-        REQUIRE(a->op == Opcode::MIN);
+        REQUIRE(a->op == Opcode::OP_MIN);
         REQUIRE(a->lhs->op == Opcode::VAR_X);
         REQUIRE(a->rhs->op == Opcode::VAR_Y);
     }
@@ -83,9 +83,9 @@ TEST_CASE("Tree::deserialize")
     {
         auto a = Tree::deserialize(min(Tree::X(), Tree(2.5f)).serialize());
         REQUIRE(a.id() != nullptr);
-        REQUIRE(a->op == Opcode::MIN);
+        REQUIRE(a->op == Opcode::OP_MIN);
         REQUIRE(a->lhs->op == Opcode::VAR_X);
-        REQUIRE(a->rhs->op == Opcode::CONST);
+        REQUIRE(a->rhs->op == Opcode::CONSTANT);
         REQUIRE(a->rhs->value == 2.5f);
     }
 
@@ -93,9 +93,9 @@ TEST_CASE("Tree::deserialize")
     {
         auto a = Tree::deserialize(min(Tree::X(), Tree::var()).serialize());
         REQUIRE(a.id() != nullptr);
-        REQUIRE(a->op == Opcode::MIN);
+        REQUIRE(a->op == Opcode::OP_MIN);
         REQUIRE(a->lhs->op == Opcode::VAR_X);
-        REQUIRE(a->rhs->op == Opcode::VAR);
+        REQUIRE(a->rhs->op == Opcode::VAR_FREE);
     }
 }
 
@@ -140,12 +140,12 @@ TEST_CASE("Tree::makeVarsConstant")
     {
         std::stringstream ss;
         ss << a;
-        REQUIRE(ss.str() == "(+ (* 2 var) (* 5 var))");
+        REQUIRE(ss.str() == "(+ (* 2 var-free) (* 5 var-free))");
 
     }
     {
         std::stringstream ss;
         ss << b;
-        REQUIRE(ss.str() == "(+ (* 2 (const-var var)) (* 5 (const-var var)))");
+        REQUIRE(ss.str() == "(+ (* 2 (const-var var-free)) (* 5 (const-var var-free)))");
     }
 }

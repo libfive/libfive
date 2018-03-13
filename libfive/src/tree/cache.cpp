@@ -37,7 +37,7 @@ Cache::Node Cache::constant(float v)
         if (out.get() == nullptr)
         {
             out.reset(new Tree::Tree_ {
-                    Opcode::CONST,
+                    Opcode::CONSTANT,
                     Tree::FLAG_LOCATION_AGNOSTIC,
                     0, // rank
                     v, // value
@@ -53,7 +53,7 @@ Cache::Node Cache::constant(float v)
     if (f == constants.end())
     {
         Node out(new Tree::Tree_ {
-            Opcode::CONST,
+            Opcode::CONSTANT,
             Tree::FLAG_LOCATION_AGNOSTIC,
             0, // rank
             v, // value
@@ -74,7 +74,7 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
                              Cache::Node rhs, bool simplify)
 {
     // These are opcodes that you're not allowed to use here
-    assert(op != Opcode::CONST &&
+    assert(op != Opcode::CONSTANT &&
            op != Opcode::INVALID &&
            op != Opcode::ORACLE &&
            op != Opcode::LAST_OP);
@@ -129,8 +129,8 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
         // temporary Evaluator in order to get a constant value out
         // (out will be GC'd immediately when it goes out of scope)
         if ((lhs.get() || rhs.get()) &&
-            (!lhs.get() || lhs->op == Opcode::CONST) &&
-            (!rhs.get() || rhs->op == Opcode::CONST))
+            (!lhs.get() || lhs->op == Opcode::CONSTANT) &&
+            (!rhs.get() || rhs->op == Opcode::CONSTANT))
         {
             // Here, we construct a Tree manually to avoid a recursive loop,
             // then pass it immediately into a dummy Evaluator
@@ -151,7 +151,7 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
 Cache::Node Cache::var()
 {
     return Node(new Tree::Tree_ {
-        Opcode::VAR,
+        Opcode::VAR_FREE,
         Tree::FLAG_LOCATION_AGNOSTIC,
         0, // rank
         std::nanf(""), // value
@@ -188,7 +188,7 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
 {
     std::map<Node, float> out;
 
-    if (n->op == Opcode::ADD)
+    if (n->op == Opcode::OP_ADD)
     {
         out = asAffine(n->lhs);
         for (const auto& i : asAffine(n->rhs))
@@ -203,7 +203,7 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
             }
         }
     }
-    else if (n->op == Opcode::SUB)
+    else if (n->op == Opcode::OP_SUB)
     {
         out = asAffine(n->lhs);
         for (const auto& i : asAffine(n->rhs))
@@ -218,23 +218,23 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
             }
         }
     }
-    else if (n->op == Opcode::NEG)
+    else if (n->op == Opcode::OP_NEG)
     {
         for (const auto& i : asAffine(n->lhs))
         {
             out.insert({i.first, -i.second});
         }
     }
-    else if (n->op == Opcode::MUL)
+    else if (n->op == Opcode::OP_MUL)
     {
-        if (n->lhs->op == Opcode::CONST)
+        if (n->lhs->op == Opcode::CONSTANT)
         {
             for (const auto& i : asAffine(n->rhs))
             {
                 out.insert({i.first, i.second * n->lhs->value});
             }
         }
-        else if (n->rhs->op == Opcode::CONST)
+        else if (n->rhs->op == Opcode::CONSTANT)
         {
             for (const auto& i : asAffine(n->lhs))
             {
@@ -246,9 +246,9 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
             out.insert({n, 1});
         }
     }
-    else if (n->op == Opcode::DIV)
+    else if (n->op == Opcode::OP_DIV)
     {
-        if (n->rhs->op == Opcode::CONST)
+        if (n->rhs->op == Opcode::CONSTANT)
         {
             for (const auto& i : asAffine(n->lhs))
             {
@@ -260,7 +260,7 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
             out.insert({n, 1});
         }
     }
-    else if (n->op == Opcode::CONST)
+    else if (n->op == Opcode::CONSTANT)
     {
         out.insert({constant(1), n->value});
     }
@@ -307,15 +307,15 @@ Cache::Node Cache::fromAffine(const std::map<Node, float>& ns)
                 Node cur = constant(0);
                 for (const auto& n : v.second)
                 {
-                    cur = operation(Opcode::ADD, cur, n);
+                    cur = operation(Opcode::OP_ADD, cur, n);
                 }
-                out = operation(Opcode::ADD, out,
-                        operation(Opcode::MUL, cur, constant(v.first)));
+                out = operation(Opcode::OP_ADD, out,
+                        operation(Opcode::OP_MUL, cur, constant(v.first)));
             }
             return out;
         };
 
-    return operation(Opcode::SUB, accumulate(pos), accumulate(neg));
+    return operation(Opcode::OP_SUB, accumulate(pos), accumulate(neg));
 }
 
 
@@ -333,32 +333,32 @@ Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b
     // Special cases to handle identity operations
     switch (op)
     {
-        case Opcode::ADD:
-            if (op_a == Opcode::CONST && a->value == 0)
+        case Opcode::OP_ADD:
+            if (op_a == Opcode::CONSTANT && a->value == 0)
             {
                 return b;
             }
-            else if (op_b == Opcode::CONST && b->value == 0)
+            else if (op_b == Opcode::CONSTANT && b->value == 0)
             {
                 return a;
             }
-            else if (op_b == Opcode::NEG)
+            else if (op_b == Opcode::OP_NEG)
             {
-                return operation(Opcode::SUB, a, b->lhs);
+                return operation(Opcode::OP_SUB, a, b->lhs);
             }
             break;
-        case Opcode::SUB:
-            if (op_a == Opcode::CONST && a->value == 0)
+        case Opcode::OP_SUB:
+            if (op_a == Opcode::CONSTANT && a->value == 0)
             {
-                return operation(Opcode::NEG, b);
+                return operation(Opcode::OP_NEG, b);
             }
-            else if (op_b == Opcode::CONST && b->value == 0)
+            else if (op_b == Opcode::CONSTANT && b->value == 0)
             {
                 return a;
             }
             break;
-        case Opcode::MUL:
-            if (op_a == Opcode::CONST)
+        case Opcode::OP_MUL:
+            if (op_a == Opcode::CONSTANT)
             {
                 if (a->value == 0)
                 {
@@ -370,10 +370,10 @@ Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b
                 }
                 else if (a->value == -1)
                 {
-                    return operation(Opcode::NEG, b);
+                    return operation(Opcode::OP_NEG, b);
                 }
             }
-            if (op_b == Opcode::CONST)
+            if (op_b == Opcode::CONSTANT)
             {
                 if (b->value == 0)
                 {
@@ -385,17 +385,17 @@ Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b
                 }
                 else if (b->value == -1)
                 {
-                    return operation(Opcode::NEG, a);
+                    return operation(Opcode::OP_NEG, a);
                 }
             }
             else if (a == b)
             {
-                return operation(Opcode::SQUARE, a);
+                return operation(Opcode::OP_SQUARE, a);
             }
             break;
-        case Opcode::POW:   // FALLTHROUGH
-        case Opcode::NTH_ROOT:
-            if (op_b == Opcode::CONST && b->value == 1)
+        case Opcode::OP_POW:   // FALLTHROUGH
+        case Opcode::OP_NTH_ROOT:
+            if (op_b == Opcode::CONSTANT && b->value == 1)
             {
                 return a;
             }
@@ -444,7 +444,7 @@ Cache::Node Cache::checkCommutative(Opcode::Opcode op, Cache::Node a, Cache::Nod
 
 Cache::Node Cache::checkAffine(Opcode::Opcode op, Node a_, Node b_)
 {
-    if (op != Opcode::ADD && op != Opcode::SUB)
+    if (op != Opcode::OP_ADD && op != Opcode::OP_SUB)
     {
         return Node();
     }
@@ -458,7 +458,7 @@ Cache::Node Cache::checkAffine(Opcode::Opcode op, Node a_, Node b_)
         auto itr = a.find(k.first);
         if (itr != a.end())
         {
-            if (op == Opcode::ADD)
+            if (op == Opcode::OP_ADD)
             {
                 a.at(k.first) += k.second;
             }
@@ -470,7 +470,7 @@ Cache::Node Cache::checkAffine(Opcode::Opcode op, Node a_, Node b_)
         }
         else
         {
-            a.insert({k.first, op == Opcode::ADD ? k.second : -k.second});
+            a.insert({k.first, op == Opcode::OP_ADD ? k.second : -k.second});
         }
     }
 
