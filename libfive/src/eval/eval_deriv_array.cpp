@@ -124,7 +124,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
         case Opcode::SQRT:
             for (Eigen::Index i=0; i < od.rows(); ++i)
-                od.row(i) = (av < 0).select(
+                od.row(i) = (av < 0 || ad.row(i) == 0).select(
                     Eigen::Array<float, 1, Eigen::Dynamic>::Zero(1, count),
                     ad.row(i) / (2 * ov));
             break;

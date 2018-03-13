@@ -110,7 +110,9 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = ad * av * 2;
             break;
         case Opcode::SQRT:
-            od = av < 0 ? Eigen::Vector3f::Zero().eval() : (ad / (2 * ov));
+            od = av < 0 ? Eigen::Vector3f::Zero().eval()
+                        : (ad == 0).select(Eigen::Vector3f::Zero(),
+                                           (ad / (2 * ov)));
             break;
         case Opcode::NEG:
             od = -ad;

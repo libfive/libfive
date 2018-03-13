@@ -256,7 +256,9 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             STORE1(ad * av * 2);
             break;
         case Opcode::SQRT:
-            STORE1(av < 0 ? Eigen::Vector3f::Zero().eval() : (ad / (2 * ov)));
+            STORE1(av < 0 ? Eigen::Vector3f::Zero().eval()
+                          : (ad.array() == 0).select(Eigen::Vector3f::Zero(),
+                                                     (ad / (2 * ov))));
             break;
         case Opcode::NEG:
             STORE1(-ad);
