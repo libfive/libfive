@@ -110,6 +110,8 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = ad * av * 2;
             break;
         case Opcode::SQRT:
+            // This is not technically correct (the derivative goes to
+            // infinity as ad goes to 0), but saves us from NaNs.
             od = av < 0 ? Eigen::Vector3f::Zero().eval()
                         : (ad == 0).select(Eigen::Vector3f::Zero(),
                                            (ad / (2 * ov)));
