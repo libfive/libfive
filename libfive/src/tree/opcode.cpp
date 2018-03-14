@@ -29,42 +29,42 @@ size_t Opcode::args(Opcode op)
 {
     switch (op)
     {
-        case CONST: // fallthrough
+        case CONSTANT: // fallthrough
         case VAR_X:
         case VAR_Y:
         case VAR_Z:
-        case VAR:
+        case VAR_FREE:
         case ORACLE:
             return 0;
 
-        case SQUARE: // fallthrough
-        case SQRT:
-        case NEG:
-        case SIN:
-        case COS:
-        case TAN:
-        case ASIN:
-        case ACOS:
-        case ATAN:
-        case EXP:
+        case OP_SQUARE: // fallthrough
+        case OP_SQRT:
+        case OP_NEG:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+        case OP_EXP:
+        case OP_ABS:
+        case OP_LOG:
+        case OP_RECIP:
         case CONST_VAR:
-        case ABS:
-        case LOG:
-        case RECIP:
             return 1;
 
-        case ADD: // fallthrough
-        case MUL:
-        case MIN:
-        case MAX:
-        case SUB:
-        case DIV:
-        case ATAN2:
-        case POW:
-        case NTH_ROOT:
-        case MOD:
-        case NANFILL:
-        case COMPARE:
+        case OP_ADD: // fallthrough
+        case OP_MUL:
+        case OP_MIN:
+        case OP_MAX:
+        case OP_SUB:
+        case OP_DIV:
+        case OP_ATAN2:
+        case OP_POW:
+        case OP_NTH_ROOT:
+        case OP_MOD:
+        case OP_NANFILL:
+        case OP_COMPARE:
             return 2;
 
         case INVALID: // fallthrough
@@ -87,7 +87,10 @@ static void buildNames()
     {
         for (auto& o : _opcode_names)
         {
-            opcode_names[o.first] = o.second;
+            opcode_names[o.first] =
+                boost::algorithm::starts_with(o.second, "OP_")
+                    ? o.second.substr(3)
+                    : o.second;
         }
     }
 }
@@ -147,39 +150,39 @@ std::string Opcode::toOpString(Opcode op)
         case VAR_Y: return "y";
         case VAR_Z: return "z";
 
-        case VAR: // fallthrough
-        case SQUARE:
-        case SQRT:
-        case SIN:
-        case COS:
-        case TAN:
-        case ASIN:
-        case ACOS:
-        case ATAN:
-        case ATAN2:
-        case EXP:
+        case VAR_FREE: // fallthrough
+        case OP_SQUARE:
+        case OP_SQRT:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+        case OP_ATAN2:
+        case OP_EXP:
         case CONST_VAR:
-        case MIN:
-        case MAX:
-        case POW:
-        case NTH_ROOT:
-        case MOD:
-        case NANFILL:
-        case COMPARE:
-        case LOG:
-        case ABS:
+        case OP_MIN:
+        case OP_MAX:
+        case OP_POW:
+        case OP_NTH_ROOT:
+        case OP_MOD:
+        case OP_NANFILL:
+        case OP_COMPARE:
+        case OP_LOG:
+        case OP_ABS:
             return toScmString(op);
 
 
-        case ADD:   return "+";
-        case MUL:   return "*";
-        case NEG:   // FALLTHROUGH
-        case SUB:   return "-";
-        case RECIP: // FALLTHROUGH
-        case DIV:   return "/";
+        case OP_ADD:   return "+";
+        case OP_MUL:   return "*";
+        case OP_NEG:   // FALLTHROUGH
+        case OP_SUB:   return "-";
+        case OP_RECIP: // FALLTHROUGH
+        case OP_DIV:   return "/";
 
         case INVALID: // fallthrough
-        case CONST:
+        case CONSTANT:
         case ORACLE:
         case LAST_OP: return "";
     }
@@ -191,42 +194,42 @@ bool Opcode::isCommutative(Opcode op)
 {
     switch (op)
     {
-        case CONST: // fallthrough
+        case CONSTANT: // fallthrough
         case VAR_X:
         case VAR_Y:
         case VAR_Z:
-        case VAR:
+        case VAR_FREE:
         case ORACLE:
-        case SQUARE:
-        case SQRT:
-        case NEG:
-        case SIN:
-        case COS:
-        case TAN:
-        case ASIN:
-        case ACOS:
-        case ATAN:
-        case EXP:
-        case SUB:
-        case DIV:
-        case ATAN2:
-        case POW:
-        case NTH_ROOT:
-        case MOD:
-        case NANFILL:
-        case COMPARE:
+        case OP_SQUARE:
+        case OP_SQRT:
+        case OP_NEG:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+        case OP_EXP:
+        case OP_SUB:
+        case OP_DIV:
+        case OP_ATAN2:
+        case OP_POW:
+        case OP_NTH_ROOT:
+        case OP_MOD:
+        case OP_NANFILL:
+        case OP_COMPARE:
         case INVALID:
-        case LOG:
-        case ABS:
-        case RECIP:
+        case OP_LOG:
+        case OP_ABS:
+        case OP_RECIP:
         case CONST_VAR:
         case LAST_OP:
             return false;
 
-        case ADD: // fallthrough
-        case MUL:
-        case MIN:
-        case MAX:
+        case OP_ADD: // fallthrough
+        case OP_MUL:
+        case OP_MIN:
+        case OP_MAX:
             return true;
     }
     assert(false);

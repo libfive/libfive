@@ -86,7 +86,7 @@ ArrayEvaluator::getAmbiguous(size_t i)
             {
                 tape->oracles[a]->checkAmbiguous(ambig.head(i));
             }
-            else if (op == Opcode::MIN || op == Opcode::MAX)
+            else if (op == Opcode::OP_MIN || op == Opcode::OP_MAX)
             {
                 ambig.head(i) = ambig.head(i) ||
                     (f.block(a, 0, 1, i) ==
@@ -107,34 +107,34 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #define b f.row(b_).head(count)
     switch (op)
     {
-        case Opcode::ADD:
+        case Opcode::OP_ADD:
             out = a + b;
             break;
-        case Opcode::MUL:
+        case Opcode::OP_MUL:
             out = a * b;
             break;
-        case Opcode::MIN:
+        case Opcode::OP_MIN:
             out = a.cwiseMin(b);
             break;
-        case Opcode::MAX:
+        case Opcode::OP_MAX:
             out = a.cwiseMax(b);
             break;
-        case Opcode::SUB:
+        case Opcode::OP_SUB:
             out = a - b;
             break;
-        case Opcode::DIV:
+        case Opcode::OP_DIV:
             out = a / b;
             break;
-        case Opcode::ATAN2:
+        case Opcode::OP_ATAN2:
             for (auto i=0; i < a.size(); ++i)
             {
                 out(i) = atan2(a(i), b(i));
             }
             break;
-        case Opcode::POW:
+        case Opcode::OP_POW:
             out = a.pow(b);
             break;
-        case Opcode::NTH_ROOT:
+        case Opcode::OP_NTH_ROOT:
             for (auto i=0; i < a.size(); ++i)
             {
                 // Work around a limitation in pow by using boost's nth-root
@@ -146,7 +146,7 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                     out(i) = pow(a(i), 1.0f/b(i));
             }
             break;
-        case Opcode::MOD:
+        case Opcode::OP_MOD:
             for (auto i=0; i < a.size(); ++i)
             {
                 out(i) = std::fmod(a(i), b(i));
@@ -156,10 +156,10 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 }
             }
             break;
-        case Opcode::NANFILL:
+        case Opcode::OP_NANFILL:
             out = a.isNaN().select(b, a);
             break;
-        case Opcode::COMPARE:
+        case Opcode::OP_COMPARE:
             for (auto i=0; i < a.size(); ++i)
             {
                 if      (a(i) < b(i))   out(i) = -1;
@@ -168,43 +168,43 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             }
             break;
 
-        case Opcode::SQUARE:
+        case Opcode::OP_SQUARE:
             out = a * a;
             break;
-        case Opcode::SQRT:
+        case Opcode::OP_SQRT:
             out = sqrt(a);
             break;
-        case Opcode::NEG:
+        case Opcode::OP_NEG:
             out = -a;
             break;
-        case Opcode::SIN:
+        case Opcode::OP_SIN:
             out = sin(a);
             break;
-        case Opcode::COS:
+        case Opcode::OP_COS:
             out = cos(a);
             break;
-        case Opcode::TAN:
+        case Opcode::OP_TAN:
             out = tan(a);
             break;
-        case Opcode::ASIN:
+        case Opcode::OP_ASIN:
             out = asin(a);
             break;
-        case Opcode::ACOS:
+        case Opcode::OP_ACOS:
             out = acos(a);
             break;
-        case Opcode::ATAN:
+        case Opcode::OP_ATAN:
             out = atan(a);
             break;
-        case Opcode::LOG:
+        case Opcode::OP_LOG:
             out = log(a);
             break;
-        case Opcode::EXP:
+        case Opcode::OP_EXP:
             out = exp(a);
             break;
-        case Opcode::ABS:
+        case Opcode::OP_ABS:
             out = abs(a);
             break;
-        case Opcode::RECIP:
+        case Opcode::OP_RECIP:
             out = 1 / a;
             break;
 
@@ -217,11 +217,11 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::INVALID:
-        case Opcode::CONST:
+        case Opcode::CONSTANT:
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
-        case Opcode::VAR:
+        case Opcode::VAR_FREE:
         case Opcode::LAST_OP: assert(false);
     }
 #undef out

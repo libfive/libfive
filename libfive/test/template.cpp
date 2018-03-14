@@ -59,7 +59,7 @@ TEST_CASE("Template::serialize")
         a.name = "hi";
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', 'h', 'i', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::MIN, 1, 0, 0, 0, 0, 0, 0, 0};
+            {'T', '"', 'h', 'i', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0};
         REQUIRE(out == expected);
     }
 
@@ -70,7 +70,7 @@ TEST_CASE("Template::serialize")
         a.doc = "\"\\";
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', 'h', 'i', '"', '"', '\\', '"', '\\', '\\', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::MIN, 1, 0, 0, 0, 0, 0, 0, 0};
+            {'T', '"', 'h', 'i', '"', '"', '\\', '"', '\\', '\\', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0};
         REQUIRE(out == expected);
     }
 

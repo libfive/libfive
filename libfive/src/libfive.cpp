@@ -83,12 +83,12 @@ libfive_tree libfive_tree_var() { return new Tree(Tree::var()); }
 
 bool libfive_tree_is_var(libfive_tree t)
 {
-    return (*t)->op == Opcode::VAR;
+    return (*t)->op == Opcode::VAR_FREE;
 }
 
 float libfive_tree_get_const(libfive_tree t, bool* success)
 {
-    if ((*t)->op == Opcode::CONST)
+    if ((*t)->op == Opcode::CONSTANT)
     {
         if (success) { *success = true; }
         return (*t)->value;

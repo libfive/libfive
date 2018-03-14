@@ -27,8 +27,8 @@ using namespace Kernel;
 
 TEST_CASE("libfive_opcode_enum")
 {
-    REQUIRE(libfive_opcode_enum("min") == Opcode::MIN);
-    REQUIRE(libfive_opcode_enum("max") == Opcode::MAX);
+    REQUIRE(libfive_opcode_enum("min") == Opcode::OP_MIN);
+    REQUIRE(libfive_opcode_enum("max") == Opcode::OP_MAX);
     REQUIRE(libfive_opcode_enum("VAR-X") == Opcode::VAR_X);
 
     REQUIRE(libfive_opcode_enum("wat") == -1);
@@ -52,7 +52,7 @@ TEST_CASE("libfive_tree_eval_f")
 {
     auto a = libfive_tree_x();
     auto b = libfive_tree_y();
-    auto c = libfive_tree_binary(Opcode::DIV, a, b);
+    auto c = libfive_tree_binary(Opcode::OP_DIV, a, b);
 
     REQUIRE(libfive_tree_eval_f(c, {1,2,3}) == 0.5);
     REQUIRE(libfive_tree_eval_f(c, {1,4,3}) == 0.25);
@@ -68,7 +68,7 @@ TEST_CASE("libfive_tree_eval_r")
     auto a = libfive_tree_x();
     auto b = libfive_tree_y();
 
-    auto c = libfive_tree_binary(Opcode::SUB, a, b);
+    auto c = libfive_tree_binary(Opcode::OP_SUB, a, b);
 
     auto r1 = libfive_tree_eval_r(c, {{1,2}, {2,3}, {0,0}});
     REQUIRE(r1.lower == -2);
@@ -83,11 +83,11 @@ TEST_CASE("libfive_tree_render_slice")
 {
     auto x = libfive_tree_x();
     auto y = libfive_tree_y();
-    auto x2 = libfive_tree_unary(Opcode::SQUARE, x);
-    auto y2 = libfive_tree_unary(Opcode::SQUARE, y);
-    auto r = libfive_tree_binary(Opcode::ADD, x2, y2);
+    auto x2 = libfive_tree_unary(Opcode::OP_SQUARE, x);
+    auto y2 = libfive_tree_unary(Opcode::OP_SQUARE, y);
+    auto r = libfive_tree_binary(Opcode::OP_ADD, x2, y2);
     auto one = libfive_tree_const(1.0f);
-    auto d = libfive_tree_binary(Opcode::SUB, r, one);
+    auto d = libfive_tree_binary(Opcode::OP_SUB, r, one);
 
     auto cs = libfive_tree_render_slice(d, {{-2, 2}, {-2, 2}}, 0, 10);
     REQUIRE(cs->count == 1);
@@ -116,13 +116,13 @@ TEST_CASE("libfive_tree_render_mesh")
     auto x = libfive_tree_x();
     auto y = libfive_tree_y();
     auto z = libfive_tree_z();
-    auto x2 = libfive_tree_unary(Opcode::SQUARE, x);
-    auto y2 = libfive_tree_unary(Opcode::SQUARE, y);
-    auto z2 = libfive_tree_unary(Opcode::SQUARE, z);
-    auto r_ = libfive_tree_binary(Opcode::ADD, x2, y2);
-    auto r = libfive_tree_binary(Opcode::ADD, r_, z2);
+    auto x2 = libfive_tree_unary(Opcode::OP_SQUARE, x);
+    auto y2 = libfive_tree_unary(Opcode::OP_SQUARE, y);
+    auto z2 = libfive_tree_unary(Opcode::OP_SQUARE, z);
+    auto r_ = libfive_tree_binary(Opcode::OP_ADD, x2, y2);
+    auto r = libfive_tree_binary(Opcode::OP_ADD, r_, z2);
     auto one = libfive_tree_const(1.0f);
-    auto d = libfive_tree_binary(Opcode::SUB, r, one);
+    auto d = libfive_tree_binary(Opcode::OP_SUB, r, one);
 
     auto m = libfive_tree_render_mesh(d, {{-2, 2}, {-2, 2}, {-2, 2}}, 10);
 
@@ -156,7 +156,7 @@ TEST_CASE("libfive_tree_save/load")
 {
     auto a = libfive_tree_x();
     auto b = libfive_tree_y();
-    auto c = libfive_tree_binary(Opcode::DIV, a, b);
+    auto c = libfive_tree_binary(Opcode::OP_DIV, a, b);
 
     libfive_tree_save(c, ".libfive_tree.tmp");
     auto c_ = libfive_tree_load(".libfive_tree.tmp");
@@ -177,13 +177,13 @@ TEST_CASE("libfive_tree_render_pixels")
     auto x = libfive_tree_x();
     auto y = libfive_tree_y();
     auto z = libfive_tree_z();
-    auto x2 = libfive_tree_unary(Opcode::SQUARE, x);
-    auto y2 = libfive_tree_unary(Opcode::SQUARE, y);
-    auto z2 = libfive_tree_unary(Opcode::SQUARE, z);
-    auto r_ = libfive_tree_binary(Opcode::ADD, x2, y2);
-    auto r = libfive_tree_binary(Opcode::ADD, r_, z2);
+    auto x2 = libfive_tree_unary(Opcode::OP_SQUARE, x);
+    auto y2 = libfive_tree_unary(Opcode::OP_SQUARE, y);
+    auto z2 = libfive_tree_unary(Opcode::OP_SQUARE, z);
+    auto r_ = libfive_tree_binary(Opcode::OP_ADD, x2, y2);
+    auto r = libfive_tree_binary(Opcode::OP_ADD, r_, z2);
     auto one = libfive_tree_const(1.0f);
-    auto d = libfive_tree_binary(Opcode::SUB, r, one);
+    auto d = libfive_tree_binary(Opcode::OP_SUB, r, one);
 
     auto m = libfive_tree_render_pixels(d, {{-2, 2}, {-2, 2}}, 0, 10);
     libfive_pixels_delete(m);
@@ -196,13 +196,13 @@ TEST_CASE("libfive_tree_print")
     auto x = libfive_tree_x();
     auto y = libfive_tree_y();
     auto z = libfive_tree_z();
-    auto x2 = libfive_tree_unary(Opcode::SQUARE, x);
-    auto y2 = libfive_tree_unary(Opcode::SQUARE, y);
-    auto z2 = libfive_tree_unary(Opcode::SQUARE, z);
-    auto r_ = libfive_tree_binary(Opcode::ADD, x2, y2);
-    auto r = libfive_tree_binary(Opcode::ADD, r_, z2);
+    auto x2 = libfive_tree_unary(Opcode::OP_SQUARE, x);
+    auto y2 = libfive_tree_unary(Opcode::OP_SQUARE, y);
+    auto z2 = libfive_tree_unary(Opcode::OP_SQUARE, z);
+    auto r_ = libfive_tree_binary(Opcode::OP_ADD, x2, y2);
+    auto r = libfive_tree_binary(Opcode::OP_ADD, r_, z2);
     auto one = libfive_tree_const(1.0f);
-    auto d = libfive_tree_binary(Opcode::SUB, r, one);
+    auto d = libfive_tree_binary(Opcode::OP_SUB, r, one);
 
     std::string s = libfive_tree_print(d);
     REQUIRE(s == "(- (+ (square x) (square y) (square z)) 1)");

@@ -41,11 +41,11 @@ std::vector<uint8_t> Template::serialize() const
         ids.insert({n.id(), ids.size()});
 
         // Write constants as raw bytes
-        if (n->op == Opcode::CONST)
+        if (n->op == Opcode::CONSTANT)
         {
             serializeBytes(n->value, out);
         }
-        else if (n->op == Opcode::VAR)
+        else if (n->op == Opcode::VAR_FREE)
         {
             auto a = vars.find(n.id());
             serializeString(a == vars.end() ? "" : a->second, out);
@@ -117,12 +117,12 @@ Template Template::deserialize(const std::vector<uint8_t>& data)
 
         auto args = Opcode::args(op);
         auto next = ts.size();
-        if (op == Opcode::CONST)
+        if (op == Opcode::CONSTANT)
         {
             float v = deserializeBytes<float>(pos, end);
             ts.insert({next, Tree(v)});
         }
-        else if (op == Opcode::VAR)
+        else if (op == Opcode::VAR_FREE)
         {
             std::string var = deserializeString(pos, end);
             auto v = Tree(op);

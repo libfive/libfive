@@ -122,6 +122,9 @@ protected:
     /*  Constants in the tree are uniquely identified by their value  */
     std::map<float, std::weak_ptr<Tree::Tree_>> constants;
 
+    /*  nan cannot be stored in the usual map, so the nan constant lives here */
+    std::weak_ptr<Tree::Tree_> nan_constant;
+
     /*  Oracles do not need to use the cache to be deduplicated, since they
      *  are created from unique_ptr's, and therefore are already impossible
      *  to duplicate.  */

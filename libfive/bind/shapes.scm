@@ -58,6 +58,30 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
          (circle r (vec2 (+ (.x a) r) (- (.y b) r)))
          (circle r (vec2 (- (.x b) r) (+ (.y a) r)))))
 
+(define* (rectangle-centered-exact b #:optional (c #[0 0 0]))
+  "rectangle-centered-exact #[width height]
+  Constructs an exact-field rectangle at the origin"
+  (move
+    (lambda-shape (x y z)
+      (let ((d (- #[(abs x) (abs y)] (/ b 2))))
+           (+ (min (max (.x d) (.y d)) 0)
+              (norm #[(max (.x d) 0) (max (.y d) 0)]))))
+  c)
+)
+(export rectangle-centered-exact)
+
+(define-public (rectangle-exact a b)
+  "rectangle-exact #[xmin ymin] #[xmax ymax]
+  Constructs a rectangle from an exact distance field"
+  (let ((size (- b a))
+        (center (/ (+ a b) 2)))
+    (rectangle-centered-exact size center)))
+
+(define-public (rounded-rectangle-exact a b r)
+  "rounded-rectangle-exact #[xmin ymin] #[xmax ymax] r
+  A rectangle with rounded corners, with an exact distance field"
+  (offset (rectangle-exact (+ a r) (- b r)) r))
+
 (define-public (triangle a b c)
   "triangle #[x0 y0] #[x1 y1] #[x2 y2]
   A 2D triangle"

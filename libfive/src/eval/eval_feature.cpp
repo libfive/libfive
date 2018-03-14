@@ -148,14 +148,14 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
     od.clear();
 
     switch (op) {
-        case Opcode::ADD:
+        case Opcode::OP_ADD:
             STORE2(ad + bd);
             break;
-        case Opcode::MUL:
+        case Opcode::OP_MUL:
             // Product rule
             STORE2(bd*av + ad*bv);
             break;
-        case Opcode::MIN:
+        case Opcode::OP_MIN:
             if (av < bv || a == b)
             {
                 od = _ads;
@@ -186,7 +186,7 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 }
             }
             break;
-        case Opcode::MAX:
+        case Opcode::OP_MAX:
             if (av < bv || a == b)
             {
                 od = _bds;
@@ -221,16 +221,16 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 }
             }
             break;
-        case Opcode::SUB:
+        case Opcode::OP_SUB:
             STORE2(ad - bd);
             break;
-        case Opcode::DIV:
+        case Opcode::OP_DIV:
             STORE2((ad*bv - bd*av) / pow(bv, 2));
             break;
-        case Opcode::ATAN2:
+        case Opcode::OP_ATAN2:
             STORE2((ad*bv - bd*av) / (pow(av, 2) + pow(bv, 2)));
             break;
-        case Opcode::POW:
+        case Opcode::OP_POW:
             // The full form of the derivative is
             // od = m * (bv * ad + av * log(av) * bd))
             // However, log(av) is often NaN and bd is always zero,
@@ -238,57 +238,59 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             STORE2(ad * bv * pow(av, bv - 1));
             break;
 
-        case Opcode::NTH_ROOT:
+        case Opcode::OP_NTH_ROOT:
             STORE2((ad.array() == 0)
                     .select(0, ad * pow(av, 1.0f / bv - 1) / bv));
             break;
-        case Opcode::MOD:
+        case Opcode::OP_MOD:
             od = _ads;
             break;
-        case Opcode::NANFILL:
+        case Opcode::OP_NANFILL:
             od = std::isnan(av) ? _bds : _ads;
             break;
-        case Opcode::COMPARE:
+        case Opcode::OP_COMPARE:
             od.push_back(Feature(Eigen::Vector3f::Zero()));
             break;
 
-        case Opcode::SQUARE:
+        case Opcode::OP_SQUARE:
             STORE1(ad * av * 2);
             break;
-        case Opcode::SQRT:
-            STORE1(av < 0 ? Eigen::Vector3f::Zero().eval() : (ad / (2 * ov)));
+        case Opcode::OP_SQRT:
+            STORE1(av < 0 ? Eigen::Vector3f::Zero().eval()
+                          : (ad.array() == 0).select(Eigen::Vector3f::Zero(),
+                                                     (ad / (2 * ov))));
             break;
-        case Opcode::NEG:
+        case Opcode::OP_NEG:
             STORE1(-ad);
             break;
-        case Opcode::SIN:
+        case Opcode::OP_SIN:
             STORE1(ad * cos(av));
             break;
-        case Opcode::COS:
+        case Opcode::OP_COS:
             STORE1(ad * -sin(av));
             break;
-        case Opcode::TAN:
+        case Opcode::OP_TAN:
             STORE1(ad * pow(1/cos(av), 2));
             break;
-        case Opcode::ASIN:
+        case Opcode::OP_ASIN:
             STORE1(ad / sqrt(1 - pow(av, 2)));
             break;
-        case Opcode::ACOS:
+        case Opcode::OP_ACOS:
             STORE1(ad / -sqrt(1 - pow(av, 2)));
             break;
-        case Opcode::ATAN:
+        case Opcode::OP_ATAN:
             STORE1(ad / (pow(av, 2) + 1));
             break;
-        case Opcode::LOG:
+        case Opcode::OP_LOG:
             STORE1(ad / av);
             break;
-        case Opcode::EXP:
+        case Opcode::OP_EXP:
             STORE1(ad * exp(av));
             break;
-        case Opcode::ABS:
+        case Opcode::OP_ABS:
             STORE1(av > 0 ? ad : (-ad).eval());
             break;
-        case Opcode::RECIP:
+        case Opcode::OP_RECIP:
             STORE1(ad / -pow(av, 2));
             break;
 
@@ -301,11 +303,11 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::INVALID:
-        case Opcode::CONST:
+        case Opcode::CONSTANT:
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
-        case Opcode::VAR:
+        case Opcode::VAR_FREE:
         case Opcode::LAST_OP: assert(false);
     }
 #undef ov
