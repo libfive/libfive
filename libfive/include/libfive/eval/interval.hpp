@@ -82,7 +82,7 @@ inline Kernel::Interval::I atan2(const Kernel::Interval::I& y,
         }
         else
         {   // Branch cut
-            return Kernel::Interval::I(-M_PI, M_PI);
+            return Kernel::Interval::I(-float(M_PI), float(M_PI));
         }
     }
     else
@@ -101,7 +101,7 @@ inline Kernel::Interval::I atan2(const Kernel::Interval::I& y,
         else
         {
             // Contains the origin
-            return Kernel::Interval::I(-M_PI, M_PI);
+            return Kernel::Interval::I(-float(M_PI), float(M_PI));
         }
     }
 }
