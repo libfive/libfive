@@ -52,11 +52,11 @@ Tape::Tape(const Tree root)
         }
         // For constants and variables, record their values so
         // that we can store those values in the result array
-        else if (m->op == Opcode::CONST)
+        else if (m->op == Opcode::CONSTANT)
         {
             constants[id] = m->value;
         }
-        else if (m->op == Opcode::VAR)
+        else if (m->op == Opcode::VAR_FREE)
         {
             vars.left.insert({id, m.id()});
         }

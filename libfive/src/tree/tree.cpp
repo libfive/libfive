@@ -67,14 +67,14 @@ Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
            (Opcode::args(op) == 2 && a.ptr.get() != 0 && b.ptr.get() != 0));
 
     // POW only accepts integral values as its second argument
-    if (op == Opcode::POW)
+    if (op == Opcode::OP_POW)
     {
-        assert(b->op == Opcode::CONST &&
+        assert(b->op == Opcode::CONSTANT &&
                b->value == std::round(b->value));
     }
-    else if (op == Opcode::NTH_ROOT)
+    else if (op == Opcode::OP_NTH_ROOT)
     {
-        assert(b->op == Opcode::CONST &&
+        assert(b->op == Opcode::CONSTANT &&
                b->value == std::round(b->value) &&
                b->value > 0);
     }
@@ -87,11 +87,11 @@ Tree Tree::var()
 
 Tree::Tree_::~Tree_()
 {
-    if (op == Opcode::CONST)
+    if (op == Opcode::CONSTANT)
     {
         Cache::instance()->del(value);
     }
-    else if (op != Opcode::VAR && op != Opcode::ORACLE)
+    else if (op != Opcode::VAR_FREE && op != Opcode::ORACLE)
     {
         Cache::instance()->del(op, lhs, rhs);
     }
@@ -200,7 +200,7 @@ Tree Tree::makeVarsConstant() const
     std::map<Id, Tree> vars;
     for (auto& o : ordered())
     {
-        if (o->op == Opcode::VAR)
+        if (o->op == Opcode::VAR_FREE)
         {
             vars.insert({o.id(),
                     Tree(Cache::instance()->operation(Opcode::CONST_VAR, o.ptr))});
@@ -224,7 +224,7 @@ void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
             case 1: stream << "(" <<  Opcode::toOpString(op) << " ";
                     break;
             case 0:
-                if (op == Opcode::CONST)
+                if (op == Opcode::CONSTANT)
                 {
                     if (value == int(value))
                     {
@@ -270,36 +270,36 @@ void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
 // Mass-produce definitions for overloaded operations
 #define OP_UNARY(name, opcode) \
 Kernel::Tree name(const Kernel::Tree& a) { return Kernel::Tree(opcode, a); }
-OP_UNARY(square,    Kernel::Opcode::SQUARE)
-OP_UNARY(sqrt,      Kernel::Opcode::SQRT)
+OP_UNARY(square,    Kernel::Opcode::OP_SQUARE)
+OP_UNARY(sqrt,      Kernel::Opcode::OP_SQRT)
 Kernel::Tree Kernel::Tree::operator-() const
-    { return Kernel::Tree(Kernel::Opcode::NEG, *this); }
-OP_UNARY(abs,       Kernel::Opcode::ABS)
-OP_UNARY(sin,       Kernel::Opcode::SIN)
-OP_UNARY(cos,       Kernel::Opcode::COS)
-OP_UNARY(tan,       Kernel::Opcode::TAN)
-OP_UNARY(asin,      Kernel::Opcode::ASIN)
-OP_UNARY(acos,      Kernel::Opcode::ACOS)
-OP_UNARY(atan,      Kernel::Opcode::ATAN)
-OP_UNARY(log,       Kernel::Opcode::LOG)
-OP_UNARY(exp,       Kernel::Opcode::EXP)
+    { return Kernel::Tree(Kernel::Opcode::OP_NEG, *this); }
+OP_UNARY(abs,       Kernel::Opcode::OP_ABS)
+OP_UNARY(sin,       Kernel::Opcode::OP_SIN)
+OP_UNARY(cos,       Kernel::Opcode::OP_COS)
+OP_UNARY(tan,       Kernel::Opcode::OP_TAN)
+OP_UNARY(asin,      Kernel::Opcode::OP_ASIN)
+OP_UNARY(acos,      Kernel::Opcode::OP_ACOS)
+OP_UNARY(atan,      Kernel::Opcode::OP_ATAN)
+OP_UNARY(log,       Kernel::Opcode::OP_LOG)
+OP_UNARY(exp,       Kernel::Opcode::OP_EXP)
 #undef OP_UNARY
 
 #define OP_BINARY(name, opcode) \
 Kernel::Tree name(const Kernel::Tree& a, const Kernel::Tree& b) \
     { return Kernel::Tree(opcode, a, b); }
-OP_BINARY(operator+,    Kernel::Opcode::ADD)
-OP_BINARY(operator*,    Kernel::Opcode::MUL)
-OP_BINARY(min,          Kernel::Opcode::MIN)
-OP_BINARY(max,          Kernel::Opcode::MAX)
-OP_BINARY(operator-,    Kernel::Opcode::SUB)
-OP_BINARY(operator/,    Kernel::Opcode::DIV)
-OP_BINARY(atan2,        Kernel::Opcode::ATAN2)
-OP_BINARY(pow,          Kernel::Opcode::POW)
-OP_BINARY(nth_root,     Kernel::Opcode::NTH_ROOT)
-OP_BINARY(mod,          Kernel::Opcode::MOD)
-OP_BINARY(nanfill,      Kernel::Opcode::NANFILL)
-OP_BINARY(compare,      Kernel::Opcode::COMPARE)
+OP_BINARY(operator+,    Kernel::Opcode::OP_ADD)
+OP_BINARY(operator*,    Kernel::Opcode::OP_MUL)
+OP_BINARY(min,          Kernel::Opcode::OP_MIN)
+OP_BINARY(max,          Kernel::Opcode::OP_MAX)
+OP_BINARY(operator-,    Kernel::Opcode::OP_SUB)
+OP_BINARY(operator/,    Kernel::Opcode::OP_DIV)
+OP_BINARY(atan2,        Kernel::Opcode::OP_ATAN2)
+OP_BINARY(pow,          Kernel::Opcode::OP_POW)
+OP_BINARY(nth_root,     Kernel::Opcode::OP_NTH_ROOT)
+OP_BINARY(mod,          Kernel::Opcode::OP_MOD)
+OP_BINARY(nanfill,      Kernel::Opcode::OP_NANFILL)
+OP_BINARY(compare,      Kernel::Opcode::OP_COMPARE)
 #undef OP_BINARY
 
 
