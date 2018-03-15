@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef __cplusplus
 #include "libfive/tree/tree.hpp"
-#include "libfive/tree/template.hpp"
+#include "libfive/tree/archive.hpp"
 
 extern "C" {
 #endif
@@ -92,11 +92,11 @@ int libfive_opcode_args(int op);
 #ifdef __cplusplus
 typedef Kernel::Tree* libfive_tree;
 typedef Kernel::Tree::Id libfive_id;
-typedef Kernel::Template* libfive_template;
+typedef Kernel::Archive* libfive_archive;
 #else
 typedef void* libfive_tree;
 typedef void* libfive_id;
-typedef void* libfive_template;
+typedef void* libfive_archive;
 #endif
 
 libfive_tree libfive_tree_x();
@@ -140,19 +140,6 @@ libfive_region3 libfive_tree_bounds(libfive_tree p);
  *  The caller is responsible for freeing the string with free()
  */
 char* libfive_tree_print(libfive_tree t);
-
-////////////////////////////////////////////////////////////////////////////////
-
-struct libfive_args;
-void libfive_set_arg_name(libfive_args* a, uint32_t i, const char* name);
-void libfive_args_delete(libfive_args* a);
-libfive_args* libfive_args_new(uint32_t count);
-const char* libfive_arg_name(libfive_args* a, uint32_t i);
-void libfive_set_arg_name(libfive_args* a, uint32_t i, const char* name);
-void libfive_set_arg_id(libfive_args* a, uint32_t i, libfive_id id);
-
-libfive_template libfive_tree_to_template(libfive_tree t);
-libfive_args* libfive_template_args(libfive_template t);
 
 ////////////////////////////////////////////////////////////////////////////////
 

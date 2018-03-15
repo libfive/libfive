@@ -18,7 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "catch.hpp"
 
-#include "libfive/tree/template.hpp"
+#include "libfive/tree/archive.hpp"
 #include "libfive/tree/oracle_clause.hpp"
 #include "libfive/eval/oracle.hpp"
 
@@ -32,14 +32,14 @@ public:
 
     bool serialize(std::vector<uint8_t>& data) const
     {
-        Template::serializeString("hi", data);
+        Archive::serializeString("hi", data);
         return true;
     }
 
     static std::unique_ptr<const OracleClause> deserialize(
             const uint8_t*& pos, const uint8_t* end)
     {
-        auto out = Template::deserializeString(pos, end);
+        auto out = Archive::deserializeString(pos, end);
         if (out != "hi")
         {
             return nullptr;
@@ -51,49 +51,46 @@ REGISTER_ORACLE_CLAUSE(ST);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TEST_CASE("Template::serialize")
+TEST_CASE("Archive::serialize")
 {
     SECTION("With a name")
     {
-        auto a = Template(min(Tree::X(), Tree::Y()));
-        a.name = "hi";
+        auto a = Archive();
+        a.addShape(min(Tree::X(), Tree::Y()), "hi");
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', 'h', 'i', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0};
+            {'T', '"', 'h', 'i', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF};
         REQUIRE(out == expected);
     }
 
     SECTION("String escaping")
     {
-        auto a = Template(min(Tree::X(), Tree::Y()));
-        a.name = "hi";
-        a.doc = "\"\\";
+        auto a = Archive();
+        a.addShape(min(Tree::X(), Tree::Y()), "hi", "\"\\");
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', 'h', 'i', '"', '"', '\\', '"', '\\', '\\', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0};
+            {'T', '"', 'h', 'i', '"', '"', '\\', '"', '\\', '\\', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF};
         REQUIRE(out == expected);
     }
 
     SECTION("With an oracle")
     {
-        auto a = Template(Tree(std::unique_ptr<OracleClause>(
+        auto a = Archive(Tree(std::unique_ptr<OracleClause>(
                         new ST())));
-        a.name = "";
-        a.doc = "";
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"'};
+            {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"', 0xFF};
         REQUIRE(out == expected);
     }
 }
 
-TEST_CASE("Template::deserialize")
+TEST_CASE("Archive::deserialize")
 {
-    SECTION("Valid")
+    SECTION("Oracle")
     {
         std::vector<uint8_t> in =
                 {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"'};
-        auto t = Template::deserialize(in);
+        auto t = Archive::deserialize(in).shapes.front();
         REQUIRE(t.tree.id() != nullptr);
         REQUIRE(t.tree->op == Opcode::ORACLE);
         REQUIRE(dynamic_cast<const ST*>(t.tree->oracle.get())
