@@ -78,6 +78,21 @@ TEST_CASE("Archive::serialize")
         REQUIRE(out == expected);
     }
 
+    SECTION("Trees with already-stored root")
+    {
+        auto a = Archive();
+        a.addShape(min(Tree::X(), Tree::Y()));
+        a.addShape(Tree::X());
+        auto out = a.serialize();
+        std::vector<uint8_t> expected =
+            {'T', '"', '"', '"', '"',
+                Opcode::VAR_X, Opcode::VAR_Y,
+                Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF,
+             't', '"', '"', '"', '"',
+                0, 0, 0, 0};
+        REQUIRE(out == expected);
+    }
+
     SECTION("String escaping")
     {
         auto a = Archive();
