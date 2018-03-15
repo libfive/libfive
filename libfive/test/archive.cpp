@@ -126,4 +126,29 @@ TEST_CASE("Archive::deserialize")
         REQUIRE(dynamic_cast<const ST*>(t.tree->oracle.get())
                 != nullptr);
     }
+
+    SECTION("Complicated")
+    {
+        auto a = Archive();
+        a.addShape(min(Tree::X(), Tree::Y()), "I'm a tree!",
+                "With a \"docstring\"");
+        a.addShape(Tree::X(), "HELLO");
+        a.addShape(Tree::Z() + Tree::X() + min(Tree::X(), Tree::Y()));
+        auto out = a.serialize();
+
+        auto b = Archive::deserialize(out);
+        REQUIRE(b.shapes.size() == a.shapes.size());
+
+        auto a_itr = a.shapes.begin();
+        auto b_itr = b.shapes.begin();
+        while(a_itr != a.shapes.end())
+        {
+            REQUIRE(a_itr->tree == b_itr->tree);
+            REQUIRE(a_itr->name == b_itr->name);
+            REQUIRE(a_itr->doc == b_itr->doc);
+
+            ++a_itr;
+            ++b_itr;
+        }
+    }
 }
