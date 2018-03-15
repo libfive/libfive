@@ -71,6 +71,11 @@ void Archive::serializeShape(const Shape& s, std::vector<uint8_t>& out,
     {
         for (auto& n : s.tree.ordered())
         {
+            // Skip this id, as it has already been stored
+            if (ids.find(n.id()) != ids.end())
+            {
+                continue;
+            }
             out.push_back(n->op);
             ids.insert({n.id(), ids.size()});
 
