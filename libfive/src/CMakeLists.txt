@@ -33,7 +33,7 @@ add_library(five SHARED
     solve/solver.cpp
     tree/cache.cpp
     tree/opcode.cpp
-    tree/template.cpp
+    tree/archive.cpp
     tree/tree.cpp
     tree/oracle_clause.cpp
     tree/transformed_oracle_clause.cpp

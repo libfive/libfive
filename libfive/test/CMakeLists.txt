@@ -1,5 +1,6 @@
 set(SRCS main.cpp
     api.cpp
+    archive.cpp
     bounds.cpp
     cache.cpp
     contours.cpp
@@ -19,7 +20,6 @@ set(SRCS main.cpp
     region.cpp
     solver.cpp
     tape.cpp
-    template.cpp
     transformed_oracle.cpp
     tree.cpp
     voxels.cpp
