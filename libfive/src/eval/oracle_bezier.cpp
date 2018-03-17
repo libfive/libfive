@@ -38,6 +38,8 @@ BezierClosestPointOracle::BezierClosestPointOracle(const Eigen::Vector3f& a,
 
 void BezierClosestPointOracle::evalInterval(Interval::I& out)
 {
+    out = Interval::I(0, 1);
+    /*
     Interval::I X(lower(0), upper(0));
     Interval::I Y(lower(1), upper(1));
     Interval::I Z(lower(2), upper(2));
@@ -75,6 +77,7 @@ void BezierClosestPointOracle::evalInterval(Interval::I& out)
         }
     }
     out = Interval::I(out_lower, out_upper);
+    */
 }
 
 void BezierClosestPointOracle::evalPoint(float& out, size_t index)

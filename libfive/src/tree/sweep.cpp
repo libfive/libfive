@@ -30,12 +30,13 @@ Tree sweep(Tree input, const Eigen::Vector3f& a,
     Tree t(std::unique_ptr<BezierClosestPointOracleClause>(
             new BezierClosestPointOracleClause(a, b, c)));
 
-    std::vector<Tree> remapped;
+    std::array<Tree, 3> remapped = {{ Tree::X(), Tree::Y(), Tree::Z() }};
     for (unsigned i=0; i < 3; ++i)
     {
-        remapped.push_back(pow(1 - t, 2) * a(i) +
-                           2 * (1 - t) * t * b(i) +
-                           pow(t, 2) * c(i));
+        remapped[i] = remapped[i] -
+            (pow(1 - t, 2) * a(i) +
+            2 * (1 - t) * t * b(i) +
+            pow(t, 2) * c(i));
     }
 
     return input.remap(remapped[0], remapped[1], remapped[2]);
