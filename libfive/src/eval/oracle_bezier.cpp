@@ -43,9 +43,12 @@ void BezierClosestPointOracle::evalInterval(Interval::I& out)
 
 void BezierClosestPointOracle::evalPoint(float& out, size_t index)
 {
-    Eigen::Vector3f pt = points.col(index);
+    const Eigen::Vector3f pt = points.col(index);
 
+    // Initialize out to an invalid value, so we can check it afterwards
+    out = -1;
     float closest = std::numeric_limits<float>::infinity();
+
     for (unsigned i=0; i < lower.rows(); ++i)
     {
         const Eigen::Vector3f u = lower.row(i);
@@ -59,15 +62,15 @@ void BezierClosestPointOracle::evalPoint(float& out, size_t index)
 
         float d_suggested = std::numeric_limits<float>::infinity();
         float t_suggested = std::nanf("");
-        if (i == 0 && proj <= 0)
+        if (proj <= 0)
         {
             d_suggested = (pt - u).norm();
-            t_suggested = 0;
+            t_suggested = lower_t(i);
         }
-        else if (i == lower.rows() - 1 && proj >= 1)
+        else if (proj >= 1)
         {
             d_suggested = (pt - v).norm();
-            t_suggested = 1;
+            t_suggested = upper_t(i);
         }
         else if (proj >= 0 && proj <= 1)
         {
@@ -75,13 +78,15 @@ void BezierClosestPointOracle::evalPoint(float& out, size_t index)
             t_suggested = lower_t(i) * (1 - proj) +
                           upper_t(i) * proj;
         }
+
         if (d_suggested < closest)
         {
             closest = d_suggested;
             out = t_suggested;
         }
     }
-    assert(!std::isinf(out));
+
+    assert(out >= 0 && out <= 1);
 }
 
 Eigen::Vector3f BezierClosestPointOracle::at(float t) const
