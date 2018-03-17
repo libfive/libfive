@@ -1,3 +1,4 @@
+#include <iostream>
 /*
 libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2017  Matt Keeter
@@ -29,55 +30,17 @@ BezierClosestPointOracle::BezierClosestPointOracle(const Eigen::Vector3f& a,
 {
     for (unsigned i=0; i < n; ++i)
     {
-        lower_t(i) = i / n;
-        upper_t(i) = (i + 1) / n;
+        lower_t(i) = i / float(n);
+        upper_t(i) = (i + 1) / float(n);
         lower.row(i) = at(lower_t(i));
-        upper.row(i) = at(lower_t(i));
+        upper.row(i) = at(upper_t(i));
+        std::cout << lower.row(i) << "\n" << upper.row(i) << "\n\n";
     }
 }
 
 void BezierClosestPointOracle::evalInterval(Interval::I& out)
 {
     out = Interval::I(0, 1);
-    /*
-    Interval::I X(lower(0), upper(0));
-    Interval::I Y(lower(1), upper(1));
-    Interval::I Z(lower(2), upper(2));
-
-    float out_lower =  std::numeric_limits<float>::infinity();
-    float out_upper = -std::numeric_limits<float>::infinity();
-
-    for (unsigned i=0; i < lower.rows(); ++i)
-    {
-        const Eigen::Vector3f u = lower.row(i);
-        const Eigen::Vector3f v = upper.row(i);
-        const Eigen::Vector3f delta = u - v;
-        const float len = delta.norm();
-
-        // This is the projected distance of the interval
-        // onto a particular line segment.
-        Interval::I proj = (X - u.x()) * delta.x() / len +
-                           (Y - u.y()) * delta.y() / len +
-                           (Z - u.z()) * delta.z() / len;
-
-        // This is not the best strategy, but it's conservatively
-        // correct (probably?)
-        if (i == 0 && proj.lower() <= 0)
-        {
-            out_lower = 0;
-        }
-        else if (i == lower.rows() - 1 && proj.upper() >= 1)
-        {
-            out_upper = 1;
-        }
-        else if (proj >= 0 && proj <= 1)
-        {
-            out_lower = fmin(out_lower, lower_t(i));
-            out_upper = fmax(out_upper, upper_t(i));
-        }
-    }
-    out = Interval::I(out_lower, out_upper);
-    */
 }
 
 void BezierClosestPointOracle::evalPoint(float& out, size_t index)
@@ -89,21 +52,15 @@ void BezierClosestPointOracle::evalPoint(float& out, size_t index)
     {
         const Eigen::Vector3f u = lower.row(i);
         const Eigen::Vector3f v = upper.row(i);
-        const Eigen::Vector3f delta = u - v;
+        const Eigen::Vector3f delta = v - u;
         const float len = delta.norm();
 
         // This is the projected distance of the interval
-        // onto a particular line segment.
-        float proj = (pt.x() - u.x()) * delta.x() / len +
-                     (pt.y() - u.y()) * delta.y() / len +
-                     (pt.z() - u.z()) * delta.z() / len;
+        // onto a particular line segment, as a scale from 0-to-1
+        float proj = (pt - u).dot(delta) / pow(len, 2);
 
         float d_suggested = std::numeric_limits<float>::infinity();
         float t_suggested = std::nanf("");
-
-        // Convert proj to a 0-to-1 value that represents a sitance
-        // along this particular line segment.
-        proj /= len;
         if (i == 0 && proj <= 0)
         {
             d_suggested = (pt - u).norm();
@@ -126,6 +83,7 @@ void BezierClosestPointOracle::evalPoint(float& out, size_t index)
             out = t_suggested;
         }
     }
+    assert(!std::isinf(out));
 }
 
 Eigen::Vector3f BezierClosestPointOracle::at(float t) const
@@ -155,9 +113,9 @@ void BezierClosestPointOracle::evalDerivs(
     points.col(index) = pt + Eigen::Vector3f(0, 0, epsilon);
     evalPoint(rz, index);
 
-    out(0) = (r0 - rx) / epsilon;
-    out(1) = (r0 - ry) / epsilon;
-    out(2) = (r0 - rz) / epsilon;
+    out(0) = (rx - r0) / epsilon;
+    out(1) = (ry - r0) / epsilon;
+    out(2) = (rz - r0) / epsilon;
 
     // Restore point to its previous value
     points.col(index) = pt;

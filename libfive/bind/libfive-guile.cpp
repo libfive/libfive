@@ -42,6 +42,9 @@ SCM scm_unwrap_shape_= NULL;
 SCM scm_shape_p_= NULL;
 
 SCM scm_vec3_ = NULL;
+SCM scm_vec3_x_ = NULL;
+SCM scm_vec3_y_ = NULL;
+SCM scm_vec3_z_ = NULL;
 
 // Scheme-flavored bindings
 SCM scm_wrap_shape(SCM ptr)      { return scm_call_1(scm_wrap_shape_, ptr); }
@@ -57,7 +60,7 @@ libfive_tree scm_get_tree(SCM t)
 
 SCM scm_from_tree(libfive_tree t)
 {
-    static SCM hash_new =  scm_c_eval_string("make-hash-table");
+    static SCM hash_new = scm_c_eval_string("make-hash-table");
 
     auto s = new scm_shape;
     s->tree = t;
@@ -72,6 +75,13 @@ SCM scm_vec3(float x, float y, float z)
     return scm_call_3(scm_vec3_, scm_from_double(x),
                                  scm_from_double(y),
                                  scm_from_double(z));
+}
+
+libfive_vec3 scm_from_vec3(SCM v)
+{
+    return libfive_vec3{(float)scm_to_double(scm_call_1(scm_vec3_x_, v)),
+                        (float)scm_to_double(scm_call_1(scm_vec3_y_, v)),
+                        (float)scm_to_double(scm_call_1(scm_vec3_z_, v))};
 }
 
 
@@ -298,6 +308,16 @@ SCM scm_shape_get_meta(SCM t)
     return ((struct scm_shape*)scm_to_pointer(scm_unwrap_shape(t)))->meta;
 }
 
+SCM scm_shape_sweep(SCM t, SCM a, SCM b, SCM c)
+{
+    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_sweep", "shape");
+    return scm_from_tree(
+            libfive_tree_sweep_quadratic(scm_get_tree(t),
+                                         scm_from_vec3(a),
+                                         scm_from_vec3(b),
+                                         scm_from_vec3(c)));
+}
+
 void init_libfive_kernel(void*)
 {
     scm_c_eval_string(R"(
@@ -323,6 +343,11 @@ void init_libfive_kernel(void*)
     // Extract vec3 constructor from local environment
     scm_vec3_ = scm_c_eval_string("vec3");
 
+    // On the other side, extract the components of vec3s
+    scm_vec3_x_ = scm_c_eval_string(".x");
+    scm_vec3_y_ = scm_c_eval_string(".y");
+    scm_vec3_z_ = scm_c_eval_string(".z");
+
     // Inject all of our compiled functions into the module environment
     scm_c_define_gsubr("make-shape", 1, 2, 0, (void*)scm_shape);
     scm_c_define_gsubr("make-var", 0, 0, 0, (void*)scm_var);
@@ -338,6 +363,7 @@ void init_libfive_kernel(void*)
     scm_c_define_gsubr("shape-find-bounds", 1, 0, 0, (void*)scm_shape_bounds);
     scm_c_define_gsubr("shape->string", 1, 0, 0, (void*)scm_shape_to_string);
     scm_c_define_gsubr("shape-meta", 1, 0, 0, (void*)scm_shape_get_meta);
+    scm_c_define_gsubr("shape-sweep", 4, 0, 0, (void*)scm_shape_sweep);
 
     // Overload all of arithmetic operations with shape-based methods,
     // then add a handful of other useful functions to the module.
@@ -459,7 +485,7 @@ void init_libfive_kernel(void*)
 ;; These are "safe" bindings that can be used in the sandbox
 (define libfive-bindings '(
     square nan-fill constant compare lambda-shape define-shape remap-shape
-    shape-find-bounds shape->string shape-eval shape-derivs sequence
+    shape-sweep shape-find-bounds shape->string shape-eval shape-derivs sequence
     values-from values->list libfive-bindings))
 (eval (cons 'export libfive-bindings) (interaction-environment))
  )");
@@ -468,6 +494,7 @@ void init_libfive_kernel(void*)
             "shape?", "shape", "wrap-shape", "unwrap-shape",
             "make-shape", "make-var", "var?", "shape-tree-id", "number->shape",
             "shape-equal?", "shape-eval", "shape->mesh", "shape-meta",
+            "shape-sweep",
             NULL);
 }
 
