@@ -4,7 +4,7 @@ project(libfive)
 # Properly distinguish between Apple and upstream Clang
 cmake_policy(SET CMP0025 NEW)
 
-set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_BUILD_TYPE RELEASE)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 ################################################################################
@@ -16,7 +16,7 @@ if(NOT MSVC)
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")
     endif()
-    set(CMAKE_CXX_FLAGS_DEBUG "-O1")
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 else()
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Output/Debug)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Output/Release)

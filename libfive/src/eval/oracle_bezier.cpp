@@ -1,4 +1,3 @@
-#include <iostream>
 /*
 libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2017  Matt Keeter
@@ -34,7 +33,6 @@ BezierClosestPointOracle::BezierClosestPointOracle(const Eigen::Vector3f& a,
         upper_t(i) = (i + 1) / float(n);
         lower.row(i) = at(lower_t(i));
         upper.row(i) = at(upper_t(i));
-        std::cout << lower.row(i) << "\n" << upper.row(i) << "\n\n";
     }
 }
 
