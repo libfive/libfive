@@ -7,6 +7,7 @@
 ### Removed
 - `libfive_template*` and `libfive_args*` APIs
 ### Added
+- `Archive` class, allowing multiple shapes can be serialized together.
 - A few more shapes, like `rounded-rectangle-exact`
 - Added `nan-fill` to Scheme interface.
 - Added `Oracle` interface, for embedding arbitrary black-box functions in math expressions.
