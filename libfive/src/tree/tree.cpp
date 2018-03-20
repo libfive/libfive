@@ -236,6 +236,10 @@ void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
                         stream << value;
                     }
                 }
+                else if (op == Opcode::ORACLE)
+                {
+                    stream << "'" << oracle->name();
+                }
                 else
                 {
                     stream << Opcode::toOpString(op);
