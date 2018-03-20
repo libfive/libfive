@@ -92,27 +92,19 @@ void BezierClosestPointOracle::evalDerivs(
             Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
                          3, 1, true> out, size_t index)
 {
-    const Eigen::Vector3f pt = points.col(index);
-    const float epsilon = 0.001f;
+    float t;
+    evalPoint(t, index);
 
-    float r0, rx, ry, rz;
-    evalPoint(r0, index);
-
-    points.col(index) = pt + Eigen::Vector3f(epsilon, 0, 0);
-    evalPoint(rx, index);
-
-    points.col(index) = pt + Eigen::Vector3f(0, epsilon, 0);
-    evalPoint(ry, index);
-
-    points.col(index) = pt + Eigen::Vector3f(0, 0, epsilon);
-    evalPoint(rz, index);
-
-    out(0) = (rx - r0) / epsilon;
-    out(1) = (ry - r0) / epsilon;
-    out(2) = (rz - r0) / epsilon;
-
-    // Restore point to its previous value
-    points.col(index) = pt;
+    if (t == 0 || t == 1)
+    {
+        out = Eigen::Vector3f(0,0,0);
+    }
+    else
+    {
+        Eigen::Vector3f dt_dxyz = bezier.derivs(t);
+        const Eigen::Vector3f pt = points.col(index);
+        out = (pt - bezier.at(t)).dot(dt_dxyz) * dt_dxyz;
+    }
 }
 
 void BezierClosestPointOracle::evalFeatures(

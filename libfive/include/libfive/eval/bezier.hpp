@@ -42,6 +42,21 @@ struct Bezier
         return {at(t, 0), at(t, 1), at(t, 2)};
     }
 
+    /*
+     *  Returns {dx, dy, dz} / dt
+     */
+    template <class T>
+    T derivs(T t, int axis) const {
+        return 2 * (-a(axis) * (1 - t) -
+                    2 * b(axis) * t + b(axis)
+                    + c(axis) * t);
+    }
+
+    template <class T>
+    Eigen::Matrix<T, 3, 1> derivs(T t) const {
+        return {derivs(t, 0), derivs(t, 1), derivs(t, 2)};
+    }
+
     const Eigen::Vector3f a;
     const Eigen::Vector3f b;
     const Eigen::Vector3f c;
