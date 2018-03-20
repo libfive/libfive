@@ -21,18 +21,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 using namespace Kernel;
 
-BezierClosestPointOracle::BezierClosestPointOracle(const Eigen::Vector3f& a,
-                                                   const Eigen::Vector3f& b,
-                                                   const Eigen::Vector3f& c,
+BezierClosestPointOracle::BezierClosestPointOracle(const Bezier& bezier,
                                                    unsigned n)
-    : a(a), b(b), c(c), lower(n, 3), upper(n, 3), lower_t(n, 1), upper_t(n, 1)
+    : bezier(bezier), lower(n, 3), upper(n, 3), lower_t(n, 1), upper_t(n, 1)
 {
     for (unsigned i=0; i < n; ++i)
     {
         lower_t(i) = i / float(n);
         upper_t(i) = (i + 1) / float(n);
-        lower.row(i) = at(lower_t(i));
-        upper.row(i) = at(upper_t(i));
+        lower.row(i) = bezier.at(lower_t(i));
+        upper.row(i) = bezier.at(upper_t(i));
     }
 }
 
@@ -87,13 +85,6 @@ void BezierClosestPointOracle::evalPoint(float& out, size_t index)
     }
 
     assert(out >= 0 && out <= 1);
-}
-
-Eigen::Vector3f BezierClosestPointOracle::at(float t) const
-{
-    return pow(1 - t, 2) * a +
-           2 * (1 - t) * t * b +
-           pow(t, 2) * c;
 }
 
 // Numerically solve for the gradient

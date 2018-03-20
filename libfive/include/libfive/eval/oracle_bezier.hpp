@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #pragma once
 
 #include "libfive/eval/oracle_storage.hpp"
+#include "libfive/eval/bezier.hpp"
 
 namespace Kernel {
 
@@ -34,9 +35,7 @@ public:
      *  Constructs a Bezier curve from a (at t=0) to c (at t=1).
      *  n is the number of segments to use in the linear approximation.
      */
-    BezierClosestPointOracle(const Eigen::Vector3f& a,
-                             const Eigen::Vector3f& b,
-                             const Eigen::Vector3f& c, unsigned n=32);
+    BezierClosestPointOracle(const Bezier& bezier, unsigned n=32);
 
     void evalInterval(Interval::I& out) override;
     void evalPoint(float& out, size_t index=0) override;
@@ -57,9 +56,7 @@ public:
             boost::container::small_vector<Feature, 4>& out) override;
 
 protected:
-    const Eigen::Vector3f a;
-    const Eigen::Vector3f b;
-    const Eigen::Vector3f c;
+    const Bezier bezier;
 
     /*
      *  [lower(i), upper(i)] is a line segment in the piecewise approximation
@@ -74,8 +71,6 @@ protected:
      */
     Eigen::Matrix<float, Eigen::Dynamic, 1> lower_t;
     Eigen::Matrix<float, Eigen::Dynamic, 1> upper_t;
-
-    Eigen::Vector3f at(float t) const;
 };
 
 }   // namespace Kernel

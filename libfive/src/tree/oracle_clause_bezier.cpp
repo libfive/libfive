@@ -23,16 +23,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 using namespace Kernel;
 
 BezierClosestPointOracleClause::BezierClosestPointOracleClause(
-        const Eigen::Vector3f a,
-        const Eigen::Vector3f b,
-        const Eigen::Vector3f c)
-    : a(a), b(b), c(c)
+        const Bezier& bezier)
+    : bezier(bezier)
 {
     // Nothing to do here
 }
 
 std::unique_ptr<Oracle> BezierClosestPointOracleClause::getOracle() const
 {
-    auto o = new BezierClosestPointOracle(a, b, c);
+    auto o = new BezierClosestPointOracle(bezier);
     return std::unique_ptr<Oracle>(o);
 }

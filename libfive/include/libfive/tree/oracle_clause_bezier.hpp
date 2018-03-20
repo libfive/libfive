@@ -21,22 +21,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <Eigen/Eigen>
 
 #include "libfive/tree/oracle_clause.hpp"
+#include "libfive/eval/bezier.hpp"
 
 namespace Kernel {
 
 class BezierClosestPointOracleClause : public OracleClause
 {
 public:
-    BezierClosestPointOracleClause(const Eigen::Vector3f a,
-                                   const Eigen::Vector3f b,
-                                   const Eigen::Vector3f c);
+    BezierClosestPointOracleClause(const Bezier& bezier);
     std::unique_ptr<Oracle> getOracle() const override;
     std::string name() const override { return "SweepClause"; }
 
 protected:
-    Eigen::Vector3f a;
-    Eigen::Vector3f b;
-    Eigen::Vector3f c;
+    const Bezier bezier;
 };
 
 }   // namespace Kernel

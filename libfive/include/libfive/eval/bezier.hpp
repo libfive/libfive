@@ -16,28 +16,35 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include <array>
+#pragma once
 
-#include "libfive/tree/sweep.hpp"
-#include "libfive/tree/oracle_clause_bezier.hpp"
+#include <Eigen/Eigen>
 
 namespace Kernel {
 
-Tree sweep(Tree input, const Eigen::Vector3f& a,
-                       const Eigen::Vector3f& b,
-                       const Eigen::Vector3f& c)
+struct Bezier
 {
-    Bezier bezier(a, b, c);
-    Tree t(std::unique_ptr<BezierClosestPointOracleClause>(
-            new BezierClosestPointOracleClause(bezier)));
+    Bezier(const Eigen::Vector3f& a,
+           const Eigen::Vector3f& b,
+           const Eigen::Vector3f& c)
+        : a(a), b(b), c(c)
+    {   /* Nothing to do here */ }
 
-    std::array<Tree, 3> remapped = {{ Tree::X(), Tree::Y(), Tree::Z() }};
-    for (unsigned i=0; i < 3; ++i)
-    {
-        remapped[i] = remapped[i] - bezier.at(t, i);
+    template <class T>
+    T at(T t, int axis) const {
+       return pow(1 - t, 2) * a(axis) +
+              2 * (1 - t) * t * b(axis) +
+              pow(t, 2) * c(axis);
     }
 
-    return input.remap(remapped[0], remapped[1], remapped[2]);
-}
+    template <class T>
+    Eigen::Matrix<T, 3, 1> at(T t) const {
+        return {at(t, 0), at(t, 1), at(t, 2)};
+    }
+
+    const Eigen::Vector3f a;
+    const Eigen::Vector3f b;
+    const Eigen::Vector3f c;
+};
 
 }   // namespace Kernel
