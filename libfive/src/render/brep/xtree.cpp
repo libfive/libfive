@@ -125,9 +125,15 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
     // Clear all indices
     std::fill(index.begin(), index.end(), 0);
 
+    const bool do_recurse = ((region.upper - region.lower) > min_feature).any();
+
     // Do a preliminary evaluation to prune the tree
-    auto i = eval->interval.evalAndPush(region.lower3().template cast<float>(),
-                                        region.upper3().template cast<float>());
+    Interval::I i(-1, 1);
+    if (do_recurse)
+    {
+        i = eval->interval.evalAndPush(region.lower3().template cast<float>(),
+                                       region.upper3().template cast<float>());
+    }
 
     if (Interval::isFilled(i))
     {
@@ -144,7 +150,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         bool all_full  = true;
 
         // Recurse until volume is too small
-        if (((region.upper - region.lower) > min_feature).any())
+        if (do_recurse)
         {
             auto rs = region.subdivide();
 
@@ -651,7 +657,10 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
     }
 
     // ...and we're done.
-    eval->interval.pop();
+    if (do_recurse)
+    {
+        eval->interval.pop();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
