@@ -199,6 +199,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             {
                 // Grab corner values from children
                 corners[i] = children[i]->corners[i];
+                corner_positions.row(i) = children[i]->corner_positions.row(i);
 
                 all_empty &= children[i]->type == Interval::EMPTY;
                 all_full  &= children[i]->type == Interval::FILLED;
@@ -207,6 +208,18 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         // Terminate recursion here
         else
         {
+            // Store the corner positions
+            for (unsigned i=0; i < (1 << N); ++i)
+            {
+                Eigen::Array<double, 1, N> out;
+                for (unsigned axis=0; axis < N; ++axis)
+                {
+                    out(axis) = (i & (1 << axis)) ? region.upper(axis)
+                                                  : region.lower(axis);
+                }
+                corner_positions.row(i) = out;
+            }
+
             // Pack corners into evaluator
             std::array<Eigen::Vector3f, 1 << N> pos;
             for (uint8_t i=0; i < children.size(); ++i)

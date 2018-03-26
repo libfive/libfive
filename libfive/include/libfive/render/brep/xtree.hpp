@@ -86,13 +86,7 @@ public:
      */
     Eigen::Array<double, N, 1> cornerPos(uint8_t i) const
     {
-        Eigen::Array<double, N, 1> out;
-        for (unsigned axis=0; axis < N; ++axis)
-        {
-            out(axis) = (i & (1 << axis)) ? region.upper(axis)
-                                          : region.lower(axis);
-        }
-        return out;
+        return corner_positions.row(i);
     }
 
     /*
@@ -131,8 +125,12 @@ public:
     { assert(i < vertex_count); return verts.col(i); }
 
     /*  Array of filled states for the cell's corners
-     *  (must only be FILLEd / EMPTY, not UNKNOWN or AMBIGUOUS ) */
+     *  (must only be FILLED / EMPTY, not UNKNOWN or AMBIGUOUS ) */
     std::array<Interval::State, 1 << N> corners;
+
+    /*  Array of precomputed corner positions, stored once at the
+     *  beginning of the constructor and looked up with cornerPos() */
+    Eigen::Matrix<double, 1 << N, N> corner_positions;
 
     /*  Leaf cell state, when known  */
     Interval::State type=Interval::UNKNOWN;
