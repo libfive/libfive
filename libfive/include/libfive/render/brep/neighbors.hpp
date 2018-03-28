@@ -81,9 +81,11 @@ public:
      */
     static int withinTreeIndex(uint8_t child, uint8_t neighbor)
     {
+        populatePositions();
+
         assert(child < (1 << N));
         assert(neighbor < _pow(3, N) - 1);
-        return ((fixed[neighbor]^ child) == invert(floating[neighbor]))
+        return (((fixed[neighbor] ^ child) & invert(floating[neighbor])) == invert(floating[neighbor]))
             ? (fixed[neighbor] | (floating[neighbor] & child))
             : -1;
     }
@@ -108,6 +110,8 @@ public:
     static std::pair<int, int> neighborTargetIndex(uint8_t child,
                                                    uint8_t neighbor)
     {
+        populatePositions();
+
         // Figure out which higher-level neighbor we should index into
         auto target_floating = floating[neighbor] | (child ^ fixed[neighbor]);
         auto target_fixed = child & invert(target_floating);
@@ -166,7 +170,7 @@ protected:
                 switch (j % 3) {
                     case 1: fixed[i]    |= (1 << axis); break;
                     case 2: floating[i] |= (1 << axis); break;
-                    default: continue;
+                    default: break;
                 }
                 j /= 3;
             }
@@ -187,10 +191,10 @@ protected:
     /*  bitfield representing direction for non-floating axes
      *  floating axes have their relevant bit set to 0, but you
      *  need to use the floating field to decode */
-    static std::array<bool, _pow(3, N) - 1> fixed;
+    static std::array<uint8_t, _pow(3, N) - 1> fixed;
 
     /*  bitfield representing which axes are floating  */
-    static std::array<bool, _pow(3, N) - 1> floating;
+    static std::array<uint8_t, _pow(3, N) - 1> floating;
 
     static bool loaded;
 

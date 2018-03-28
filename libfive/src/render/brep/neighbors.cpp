@@ -21,8 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 namespace Kernel {
 
 // Here are all of our static variables
-template <unsigned N> std::array<bool, _pow(3, N) - 1> Neighbors<N>::fixed;
-template <unsigned N> std::array<bool, _pow(3, N) - 1> Neighbors<N>::floating;
+template <unsigned N> std::array<uint8_t, _pow(3, N)-1> Neighbors<N>::fixed;
+template <unsigned N> std::array<uint8_t, _pow(3, N)-1> Neighbors<N>::floating;
 template <unsigned N> bool Neighbors<N>::loaded = false;
 template <unsigned N> std::array<uint8_t, 1 << (2 * N)> Neighbors<N>::remap;
 
