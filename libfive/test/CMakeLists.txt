@@ -16,6 +16,7 @@ set(SRCS main.cpp
     heightmap.cpp
     marching.cpp
     mesh.cpp
+    neighbors.cpp
     oracle.cpp
     region.cpp
     solver.cpp

@@ -63,6 +63,65 @@ public:
         return Interval::AMBIGUOUS;
     }
 
+    /*
+     *  Given an XTree child index, returns the XTree child index of the
+     *  given neighbor (if it is within the same XTree), or -1 otherwise.
+     *
+     *  For example, in 2D:
+     *
+     *  -------------
+     *  |     |     |
+     *  -------------
+     *  |  0  |     |
+     *  -------------
+     *
+     *  Calling withinTreeIndex(0b00, 0t11) should return 0b11,
+     *  since that's the XTree child index that contains the neighbor
+     *  0t11 (i.e. 11 in ternary).
+     */
+    static int withinTreeIndex(uint8_t child, uint8_t neighbor)
+    {
+        assert(child < (1 << N));
+        assert(neighbor < _pow(3, N) - 1);
+        return ((fixed[neighbor]^ child) == invert(floating[neighbor]))
+            ? (fixed[neighbor] | (floating[neighbor] & child))
+            : -1;
+    }
+
+    /*
+     *  Given an XTree child index, returns a pair of
+     *      [neighbor index, XTree child index]
+     *  for the given neighbor (if it is within the same XTree)
+     *
+     *  For example, in 2D:
+     *
+     *  ------------------------
+     *  |     :    |     |     |
+     *  | - - - -  -------------
+     *  |     : !  |  0  |     |
+     *  ------------------------
+     *
+     *  Calling withinTreeIndex(0b00, 0t20) should return {0t20, 0b01}
+     *  since that's the XTree child index that contains the neighbor
+     *  0t11 (i.e. 11 in ternary).
+     */
+    static std::pair<int, int> neighborTargetIndex(uint8_t child,
+                                                   uint8_t neighbor)
+    {
+        // Figure out which higher-level neighbor we should index into
+        auto target_floating = floating[neighbor] | (child ^ fixed[neighbor]);
+        auto target_fixed = child & invert(target_floating);
+
+        // Look up the index of this higher-level neighbor
+        auto index = (target_fixed << N) | target_floating;
+        int j = remap[index];
+        assert(j != 0xFF);
+
+        return {j, (invert(child) & invert(floating[neighbor])) |
+                   (child         &        floating[neighbor])};
+    }
+
+
     Neighbors<N> push(uint8_t child,
             const std::array<std::unique_ptr<const XTree<N>>, 1 << N>&
                 children)
@@ -72,34 +131,19 @@ public:
         {
             // If the neighbor is destined to come from within the array
             // of children, then pick it out in this conditional.
-            if ((fixed[i]^ child) == invert(floating[i]))
-            {
-                out.neighbors[i] = children[
-                    fixed[i] | (floating[i] & child)];
+            auto within = withinTreeIndex(child, i);
+            if (within != -1) {
+                out.neighbors[i] = children[within].get();
             }
-            // Otherwise, it is destined to come from one of the higher-level
-            // neighbors, calculated in this branch.
             else
             {
-                // Figure out which higher-level neighbor we should index into
-                auto target_floating = floating[i] | (child ^ fixed[i]);
-                auto target_fixed = child & invert(target_floating);
-
-                // Look up the index of this higher-level neighbor
-                auto index = (target_fixed << N) | target_floating;
-                unsigned j = remap[index];
-                assert(j != 0xFF);
-
-                // Check to see if the neighbor has children
-                // If so, pick the correct child using bitmask operations.
-                if (neighbors[j])
+                auto target = neighborTargetIndex(child, i);
+                if (neighbors[target.first])
                 {
-                    out.neighbors[i] = neighbors[j]->children[
-                        (invert(child) & invert(floating[i])) |
-                        (child         &        floating[i])];
+                    out.neighbors[i] = neighbors[target.first]->
+                           children[target.second].get();
                 }
             }
-
         }
         return out;
     }
@@ -154,7 +198,11 @@ protected:
      *  the fixed/floating arrays with the given bitfields.  */
     static std::array<uint8_t, 1 << (2 * N)> remap;
 
-    std::array<XTree<N>*, _pow(3, N) - 1> neighbors;
+    std::array<const XTree<N>*, _pow(3, N) - 1> neighbors;
 };
+
+//  We explicitly instantiate the Neighbors classes in neighbors.cpp
+extern template class Neighbors<2>;
+extern template class Neighbors<3>;
 
 }   // namespace Kernel

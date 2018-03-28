@@ -1,6 +1,6 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
-Copyright (C) 2018  Matt Keeter
+Copyright (C) 2017  Matt Keeter
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -16,18 +16,13 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
+#include "catch.hpp"
+
 #include "libfive/render/brep/neighbors.hpp"
 
-namespace Kernel {
+using namespace Kernel;
 
-// Here are all of our static variables
-template <unsigned N> std::array<bool, _pow(3, N) - 1> Neighbors<N>::fixed;
-template <unsigned N> std::array<bool, _pow(3, N) - 1> Neighbors<N>::floating;
-template <unsigned N> bool Neighbors<N>::loaded = false;
-template <unsigned N> std::array<uint8_t, 1 << (2 * N)> Neighbors<N>::remap;
-
-// Explicit initialization of template
-template class Neighbors<2>;
-template class Neighbors<3>;
-
-}   // namespace Kernel
+TEST_CASE("Neighbors<2>::withinTreeIndex")
+{
+    REQUIRE(Neighbors<2>::withinTreeIndex(0, 0) == -1);
+}
