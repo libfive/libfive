@@ -25,6 +25,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
+/*
+ *  Hopefully, the bitmask operations are correct and no one ever needs
+ *  to debug this file ever.  To generate the bitmasks, I drew out a lot
+ *  of pictures of the 2D case, then thought really hard about whether
+ *  it generalized to 3D.
+ */
 template <unsigned N>
 class Neighbors
 {
@@ -47,8 +53,7 @@ public:
         for (unsigned i=0; i < _pow(i, 3) - 1; ++i)
         {
             if (neighbors[i] != nullptr &&
-                invert(floating[i]) ==
-                (fixed[i]^ invert(corner)))
+                invert(floating[i]) == (fixed[i] ^ invert(corner)))
             {
                 return neighbors[i]->corners[
                     (invert(corner) & (~floating[i])) |
@@ -69,8 +74,8 @@ public:
             // of children, then pick it out in this conditional.
             if ((fixed[i]^ child) == invert(floating[i]))
             {
-                out.neighbors[i] = children[fixed[i]|
-                                (floating[i] & child)];
+                out.neighbors[i] = children[
+                    fixed[i] | (floating[i] & child)];
             }
             // Otherwise, it is destined to come from one of the higher-level
             // neighbors, calculated in this branch.
@@ -78,7 +83,7 @@ public:
             {
                 // Figure out which higher-level neighbor we should index into
                 auto target_floating = floating[i] | (child ^ fixed[i]);
-                auto target_fixed = child & target_floating;
+                auto target_fixed = child & invert(target_floating);
 
                 // Look up the index of this higher-level neighbor
                 auto index = (target_fixed << N) | target_floating;
@@ -86,10 +91,12 @@ public:
                 assert(j != 0xFF);
 
                 // Check to see if the neighbor has children
+                // If so, pick the correct child using bitmask operations.
                 if (neighbors[j])
                 {
-                    uint8_t c = 0; // TODO
-                    out.neighbors[i] = neighbors[j]->children[c];
+                    out.neighbors[i] = neighbors[j]->children[
+                        (invert(child) & invert(floating[i])) |
+                        (child         &        floating[i])];
                 }
             }
 
