@@ -55,10 +55,15 @@ public:
      */
     static int cornerCheckIndex(uint8_t corner, uint8_t neighbor)
     {
+        populatePositions();
+
         assert(corner < (1 << N));
-        return (invert(floating[neighbor]) == (fixed[neighbor] ^ invert(corner)))
-            ?   ((invert(corner) & (~floating[neighbor])) |
-                 (corner         &   floating[neighbor]))
+        assert(neighbor < _pow(3, N) - 1);
+
+        return ((fixed[neighbor] & invert(floating[neighbor])) ==
+                (corner & invert(floating[neighbor])))
+            ? ((invert(corner) & (~floating[neighbor])) |
+               (corner         &   floating[neighbor]))
             : -1;
     }
 
