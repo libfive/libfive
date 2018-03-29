@@ -34,13 +34,58 @@ Neighbor numbers are as follows (it makes sense in ternary)
    | 0 | 2 | 1 |
    -------------
 
-And XTree nnumbers are as follows (based on counting in binary):
+XTree children are as follows (based on counting in binary):
   ---------
   | 2 | 3 |
   ---------
   | 0 | 1 |
   ---------
+
+XTree cell corners are as follows (based on counting in binary):
+  2-------3
+  |       |
+  |       |
+  |       |
+  0-------1
 */
+TEST_CASE("Neighbors<2>::cornerCheckIndex")
+{
+    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 0) == 3);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 1) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 2) == 2);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 3) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 4) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 5) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 6) == 1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 7) == -1);
+
+    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 0) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 1) == 2);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 2) == 3);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 3) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 4) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 5) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 6) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 7) == 0);
+
+    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 0) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 1) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 2) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 3) == 1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 4) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 5) == 0);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 6) == 3);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 7) == -1);
+
+    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 0) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 1) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 2) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 3) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 4) == 0);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 5) == 1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 6) == -1);
+    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 7) == 2);
+}
 
 TEST_CASE("Neighbors<2>::withinTreeIndex")
 {

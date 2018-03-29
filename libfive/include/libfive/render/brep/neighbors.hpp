@@ -21,15 +21,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <array>
 
 #include "libfive/render/brep/marching.hpp"
-#include "libfive/render/brep/xtree.hpp"
+#include "libfive/eval/interval.hpp"
 
 namespace Kernel {
+
+// Forward declaration
+template <unsigned N> class XTree;
 
 /*
  *  Hopefully, the bitmask operations are correct and no one ever needs
  *  to debug this file ever.  To generate the bitmasks, I drew out a lot
  *  of pictures of the 2D case, then thought really hard about whether
  *  it generalized to 3D.
+ *
+ *  There are more details in the unit tests, including numbering out
+ *  all of the 2D cases.
  */
 template <unsigned N>
 class Neighbors
@@ -44,23 +50,37 @@ public:
     }
 
     /*
+     *  Returns the XTree corner index that matches the given corner index
+     *  in the given neighbor, or -1 if no such match is possible.
+     */
+    static int cornerCheckIndex(uint8_t corner, uint8_t neighbor)
+    {
+        assert(corner < (1 << N));
+        return (invert(floating[neighbor]) == (fixed[neighbor] ^ invert(corner)))
+            ?   ((invert(corner) & (~floating[neighbor])) |
+                 (corner         &   floating[neighbor]))
+            : -1;
+    }
+
+    /*
      *  Looks up the given corner to see if it has already been calculated
      *  by any of the neighbors, returning FILLED / EMPTY if that is the case
-     *  and AMBIGUOUS otherwise.
+     *  and UNKNOWN otherwise.
      */
     Interval::State check(uint8_t corner)
     {
         for (unsigned i=0; i < _pow(i, 3) - 1; ++i)
         {
-            if (neighbors[i] != nullptr &&
-                invert(floating[i]) == (fixed[i] ^ invert(corner)))
+            if (neighbors[i] != nullptr)
             {
-                return neighbors[i]->corners[
-                    (invert(corner) & (~floating[i])) |
-                    (corner         &   floating[i])];
+                auto index = cornerCheckIndex(corner, i);
+                if (index != -1)
+                {
+                    return neighbors[i]->corners[index];
+                }
             }
         }
-        return Interval::AMBIGUOUS;
+        return Interval::UNKNOWN;
     }
 
     /*

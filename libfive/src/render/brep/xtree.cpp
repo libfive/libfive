@@ -94,7 +94,8 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         return nullptr;
     }
 
-    auto out = new XTree(es, region, min_feature, max_err, multithread, cancel);
+    auto out = new XTree(es, region, min_feature, max_err, multithread, cancel,
+            Neighbors<N>());
 
     // Return an empty XTree when cancelled
     // (to avoid potentially ambiguous or mal-constructed trees situations)
@@ -112,7 +113,7 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
 template <unsigned N>
 XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 double min_feature, double max_err, bool multithread,
-                std::atomic_bool& cancel)
+                std::atomic_bool& cancel, Neighbors<N> neighbors)
     : region(region), _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
       AtA(Eigen::Matrix<double, N, N>::Zero()),
       AtB(Eigen::Matrix<double, N, 1>::Zero())
@@ -167,7 +168,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                         [&eval, &rs, &cancel, i, min_feature, max_err]()
                         { return new XTree(
                                 eval + i, rs[i], min_feature, max_err,
-                                false, cancel); });
+                                false, cancel, Neighbors<N>()); });
                 }
                 for (unsigned i=0; i < children.size(); ++i)
                 {
@@ -182,7 +183,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                     // Populate child recursively
                     children[i].reset(new XTree<N>(
                                 eval, rs[i], min_feature, max_err,
-                                false, cancel));
+                                false, cancel, neighbors.push(i, children)));
                 }
             }
 

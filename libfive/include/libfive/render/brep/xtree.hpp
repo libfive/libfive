@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/marching.hpp"
 #include "libfive/render/brep/eval_xtree.hpp"
+#include "libfive/render/brep/neighbors.hpp"
 #include "libfive/eval/interval.hpp"
 
 namespace Kernel {
@@ -172,7 +173,7 @@ protected:
      */
     XTree(XTreeEvaluator* eval, Region<N> region,
           double min_feature, double max_err, bool multithread,
-          std::atomic_bool& cancel);
+          std::atomic_bool& cancel, Neighbors<N> neighbors);
 
     /*
      *  Searches for a vertex within the XTree cell, using the QEF matrices
