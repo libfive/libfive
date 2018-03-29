@@ -94,8 +94,8 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         return nullptr;
     }
 
-    auto out = new XTree(es, region, min_feature, max_err, multithread, cancel,
-            Neighbors<N>());
+    auto out = new XTree(es, region, min_feature, max_err,
+                         multithread, cancel, Neighbors<N>());
 
     // Return an empty XTree when cancelled
     // (to avoid potentially ambiguous or mal-constructed trees situations)
