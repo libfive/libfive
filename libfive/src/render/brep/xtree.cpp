@@ -222,12 +222,12 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             }
 
             // Pack corners into evaluator
-            std::array<Eigen::Vector3f, 1 << N> pos;
+            Eigen::Matrix<float, 3, 1 << N> pos;
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                pos[i] << cornerPos(i).template cast<float>(),
-                          region.perp.template cast<float>();
-                eval->array.set(pos[i], i);
+                pos.col(i) << cornerPos(i).template cast<float>(),
+                              region.perp.template cast<float>();
+                eval->array.set(pos.col(i), i);
             }
 
             // Evaluate the region's corners and check their states
@@ -270,7 +270,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 }
                 else if (!ambig(i))
                 {
-                    eval->array.set(pos[i], unambiguous_zeros);
+                    eval->array.set(pos.col(i), unambiguous_zeros);
                     unambig_remap[unambiguous_zeros] = i;
                     unambiguous_zeros++;
                 }
@@ -295,7 +295,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             {
                 if (ambig(i))
                 {
-                    corners[i] = eval->feature.isInside(pos[i])
+                    corners[i] = eval->feature.isInside(pos.col(i))
                         ? Interval::FILLED : Interval::EMPTY;
                 }
             }
