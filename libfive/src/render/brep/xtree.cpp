@@ -223,11 +223,30 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
 
             // Pack corners into evaluator
             Eigen::Matrix<float, 3, 1 << N> pos;
+
+            // Track how many corners have to be evaluated here
+            // (if they can be looked up from a neighbor, they don't have
+            //  to be evaluated here, which can save time)
+            size_t count = 0;
+
+            // Remap from a value in the range [0, count) to a corner index
+            // in the range [0, 1 <<N).
+            std::array<int, 1 << N> corner_indices;
+
             for (uint8_t i=0; i < children.size(); ++i)
             {
-                pos.col(i) << cornerPos(i).template cast<float>(),
-                              region.perp.template cast<float>();
-                eval->array.set(pos.col(i), i);
+                auto c = neighbors.check(i);
+                if (c == Interval::UNKNOWN)
+                {
+                    pos.col(count) << cornerPos(i).template cast<float>(),
+                                      region.perp.template cast<float>();
+                    eval->array.set(pos.col(count), count);
+                    corner_indices[count++] = i;
+                }
+                else
+                {
+                    corners[i] = c;
+                }
             }
 
             // Evaluate the region's corners and check their states
@@ -241,12 +260,12 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             //     can find an inside-outside transition).
             // 3)  For values that are == 0 and ambiguous, call isInside
             //     (the heavy hitter of inside-outside checking).
-            auto vs = eval->array.values(children.size());
+            auto vs = eval->array.values(count);
 
             // We store ambiguity here, but clear it if the point is inside
             // or outside (so after the loop below, ambig(i) is only set if
             // pos[i] is both == 0 and ambiguous).
-            auto ambig = eval->array.getAmbiguous(children.size());
+            auto ambig = eval->array.getAmbiguous(count);
 
             // This is a count of how many points there are that == 0
             // but are unambiguous; unambig_remap[z] returns the index
@@ -255,23 +274,23 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             std::array<int, 1 << N> unambig_remap;
 
             // This is phase 1, as described above
-            for (uint8_t i=0; i < children.size(); ++i)
+            for (uint8_t i=0; i < count; ++i)
             {
                 // Handle inside, outside, and (non-ambiguous) on-boundary
                 if (vs(i) > 0 || !std::isfinite(vs(i)))
                 {
-                    corners[i] = Interval::EMPTY;
+                    corners[corner_indices[i]] = Interval::EMPTY;
                     ambig(i) = false;
                 }
                 else if (vs(i) < 0)
                 {
-                    corners[i] = Interval::FILLED;
+                    corners[corner_indices[i]] = Interval::FILLED;
                     ambig(i) = false;
                 }
                 else if (!ambig(i))
                 {
                     eval->array.set(pos.col(i), unambiguous_zeros);
-                    unambig_remap[unambiguous_zeros] = i;
+                    unambig_remap[unambiguous_zeros] = corner_indices[i];
                     unambiguous_zeros++;
                 }
             }
@@ -291,12 +310,14 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             }
 
             // Phase 3: One last pass for handling ambiguous corners
-            for (uint8_t i=0; i < children.size(); ++i)
+            for (uint8_t i=0; i < count; ++i)
             {
                 if (ambig(i))
                 {
-                    corners[i] = eval->feature.isInside(pos.col(i))
-                        ? Interval::FILLED : Interval::EMPTY;
+                    corners[corner_indices[i]] =
+                        eval->feature.isInside(pos.col(i))
+                            ? Interval::FILLED
+                            : Interval::EMPTY;
                 }
             }
 
