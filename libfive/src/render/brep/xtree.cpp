@@ -573,11 +573,11 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 else
                 {
                     // Load the ambiguous position and find its features
-                    Eigen::Vector3f pos;
-                    pos << ((i & 1) ? targets[i/2].second : targets[i/2].first)
-                                .template cast<float>(),
-                           region.perp.template cast<float>();
-                    const auto fs = eval->feature.features(pos);
+                    Eigen::Vector3d pos;
+                    pos << ((i & 1) ? targets[i/2].second : targets[i/2].first),
+                           region.perp;
+                    const auto fs = eval->feature.features(
+                            pos.template cast<float>());
 
                     for (auto& f : fs)
                     {
@@ -594,9 +594,8 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                         dv << derivs / norm, ds.col(i).w() / norm;
                         if (dv.array().isFinite().all())
                         {
-                            intersections.push_back({
-                                (i & 1) ? targets[i/2].second
-                                        : targets[i/2].first, dv});
+                            intersections.push_back({pos.template head<N>(),
+                                                     dv});
                         }
                     }
                 }
