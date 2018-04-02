@@ -87,6 +87,16 @@ TEST_CASE("Neighbors<2>::cornerCheckIndex")
     REQUIRE(Neighbors<2>::cornerCheckIndex(3, 7) == 2);
 }
 
+TEST_CASE("Neighbors<2>::edgeCheckIndex")
+{
+    // Just a few spot checks, since we exhaustively test the building blocks
+    // in the test above for cornerCheckIndex.
+    REQUIRE(Neighbors<2>::edgeCheckIndex({0, 2}, 6) == std::make_pair(1, 3));
+    REQUIRE(Neighbors<2>::edgeCheckIndex({2, 0}, 6) == std::make_pair(3, 1));
+    REQUIRE(Neighbors<2>::edgeCheckIndex({0, 3}, 6) == std::make_pair(-1, -1));
+    REQUIRE(Neighbors<2>::edgeCheckIndex({0, 2}, 1) == std::make_pair(-1, -1));
+}
+
 TEST_CASE("Neighbors<2>::withinTreeIndex")
 {
     // These test cases are hand-constructed by drawing them out on paper
