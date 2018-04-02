@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/export.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/intersection.hpp"
 #include "libfive/render/brep/marching.hpp"
 #include "libfive/render/brep/eval_xtree.hpp"
 #include "libfive/render/brep/neighbors.hpp"
@@ -141,17 +142,7 @@ public:
      * for every crossing and feature.  RAM is cheap, so we allocated
      * enough space for at least two inside-outside intersection pairs
      * on each edge; more pairs resize the small_vector */
-    struct Intersection {
-        Vec pos;
-        Vec deriv;
-        double value;
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    };
-    std::array<
-        boost::container::small_vector<Intersection, 4,
-            Eigen::aligned_allocator<Intersection>>,
-        _edges(N) * 2>
-        intersections;
+    std::array<IntersectionVec<N>, _edges(N) * 2> intersections;
 
     /*  Leaf cell state, when known  */
     Interval::State type=Interval::UNKNOWN;
