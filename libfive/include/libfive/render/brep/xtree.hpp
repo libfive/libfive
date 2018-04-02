@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <cstdint>
 
 #include <Eigen/Eigen>
+#include <Eigen/StdVector>
 
 #include "libfive/export.hpp"
 #include "libfive/render/brep/region.hpp"
@@ -104,6 +105,9 @@ public:
      */
     FIVE_EXPORT Eigen::Vector3d vert3(unsigned index=0) const;
 
+    /*  Helper typedef for N-dimensional column vector */
+    typedef Eigen::Matrix<double, N, 1> Vec;
+
     /*  The region filled by this XTree */
     const Region<N> region;
 
@@ -132,6 +136,22 @@ public:
     /*  Array of precomputed corner positions, stored once at the
      *  beginning of the constructor and looked up with cornerPos() */
     Eigen::Matrix<double, 1 << N, N> corner_positions;
+
+    /* Here, we'll prepare to store position, {normal, value} pairs
+     * for every crossing and feature.  RAM is cheap, so we allocated
+     * enough space for at least two inside-outside intersection pairs
+     * on each edge; more pairs resize the small_vector */
+    struct Intersection {
+        Vec pos;
+        Vec deriv;
+        double value;
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    };
+    std::array<
+        boost::container::small_vector<Intersection, 4,
+            Eigen::aligned_allocator<Intersection>>,
+        _edges(N) * 2>
+        intersections;
 
     /*  Leaf cell state, when known  */
     Interval::State type=Interval::UNKNOWN;
@@ -162,17 +182,6 @@ public:
     static std::unique_ptr<const Marching::MarchingTable<N>> mt;
 
 protected:
-    /*  Helper typedef for N-dimensional column vector */
-    typedef Eigen::Matrix<double, N, 1> Vec;
-
-    struct Intersection {
-        Vec pos;
-        Vec deriv;
-        double value;
-
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    };
-
     /*
      *  Private constructor for XTree
      *

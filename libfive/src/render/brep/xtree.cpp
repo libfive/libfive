@@ -416,20 +416,6 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         // Figure out if the leaf is manifold
         manifold = cornersAreManifold();
 
-        // Here, we'll prepare to store position, {normal, value} pairs
-        // for every crossing and feature
-        std::array<
-            boost::container::small_vector<Intersection, 4, Eigen::aligned_allocator<Intersection>>,
-            _edges(N) * 2>
-            intersections;
-
-        // RAM is cheap, so reserve a bunch of space here to avoid
-        // the need for re-allocating later on
-        for (auto& i : intersections)
-        {
-            i.reserve(4);
-        }
-
         // We'll use this vector anytime we need to pass something
         // into the evaluator (which requires a Vector3f)
         Eigen::Vector3f _pos;
