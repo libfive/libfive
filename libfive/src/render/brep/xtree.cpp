@@ -419,7 +419,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         // Here, we'll prepare to store position, {normal, value} pairs
         // for every crossing and feature
         std::array<
-            std::vector<Intersection, Eigen::aligned_allocator<Intersection>>,
+            boost::container::small_vector<Intersection, 4, Eigen::aligned_allocator<Intersection>>,
             _edges(N) * 2>
             intersections;
 
