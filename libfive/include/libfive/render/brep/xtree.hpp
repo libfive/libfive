@@ -165,6 +165,14 @@ protected:
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;
 
+    struct Intersection {
+        Vec pos;
+        Vec deriv;
+        double value;
+
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    };
+
     /*
      *  Private constructor for XTree
      *

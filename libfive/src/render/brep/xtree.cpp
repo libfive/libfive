@@ -418,13 +418,17 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
 
         // Here, we'll prepare to store position, {normal, value} pairs
         // for every crossing and feature
-        typedef std::pair<Vec, Eigen::Matrix<double, N + 1, 1>> Intersection;
-        std::vector<Intersection, Eigen::aligned_allocator<Intersection>>
+        std::array<
+            std::vector<Intersection, Eigen::aligned_allocator<Intersection>>,
+            _edges(N) * 2>
             intersections;
 
         // RAM is cheap, so reserve a bunch of space here to avoid
         // the need for re-allocating later on
-        intersections.reserve(_edges(N) * 2);
+        for (auto& i : intersections)
+        {
+            i.reserve(4);
+        }
 
         // We'll use this vector anytime we need to pass something
         // into the evaluator (which requires a Vector3f)
@@ -435,18 +439,18 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             eval->array.set(_pos, i);
         };
 
-        // Iterate over manifold patches for this corner case
+        // Iterate over manifold patches, storing one vertex per patch
         const auto& ps = mt->v[corner_mask];
         while (vertex_count < ps.size() && ps[vertex_count][0].first != -1)
         {
             // Iterate over edges in this patch, storing [inside, outside]
             unsigned target_count;
             std::array<std::pair<Vec, Vec>, _edges(N)> targets;
-            std::array<int, _edges(N)> ranks;
-            std::fill(ranks.begin(), ranks.end(), -1);
+            std::array<size_t, _edges(N)> target_edges;
 
             for (target_count=0; target_count < ps[vertex_count].size() &&
-                          ps[vertex_count][target_count].first != -1; ++target_count)
+                                 ps[vertex_count][target_count].first != -1;
+                             ++target_count)
             {
                 // Sanity-checking
                 assert(corners[ps[vertex_count][target_count].first]
@@ -455,11 +459,20 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                        == Interval::EMPTY);
 
                 // Store inside / outside in targets array
-                targets[target_count] = {cornerPos(ps[vertex_count][target_count].first),
-                                  cornerPos(ps[vertex_count][target_count].second)};
+                targets[target_count] =
+                        {cornerPos(ps[vertex_count][target_count].first),
+                         cornerPos(ps[vertex_count][target_count].second)};
+
+                // Store the edge index associated with this target
+                target_edges[target_count] = mt->e
+                    [ps[vertex_count][target_count].first]
+                    [ps[vertex_count][target_count].second];
+                assert(target_edges[target_count] < intersections.size());
             }
 
-            // We do an N-fold reduction at each stage
+            // Next, we search over the target edges, doing an
+            // N-fold reduction at each stage to home in on the
+            // exact intersection position
             constexpr int SEARCH_COUNT = 4;
             constexpr int POINTS_PER_SEARCH = 16;
             static_assert(_edges(N) * POINTS_PER_SEARCH <= ArrayEvaluator::N,
@@ -525,11 +538,8 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 }
             }
 
-            // Reset mass point and intersections
-            _mass_point = _mass_point.Zero();
-            intersections.clear();
-
-            // Store mass point and prepare for a bulk evaluation
+            // Now, we evaluate the distance field (value + derivatives) at
+            // each intersection (which is associated with a particular edge).
             static_assert(_edges(N) * 2 <= ArrayEvaluator::N,
                           "Too many results");
             for (unsigned i=0; i < target_count; ++i)
@@ -537,8 +547,6 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 set(targets[i].first, 2*i);
                 set(targets[i].second, 2*i + 1);
             }
-
-            // Evaluate values and derivatives
             auto ds = eval->array.derivs(2 * target_count);
             auto ambig = eval->array.getAmbiguous(2 * target_count);
 
@@ -546,14 +554,16 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             // of intersections before each inside node (in prev_size), then
             // checking the rank of the pair after each outside node based
             // on the accumulated intersections.
-            size_t prev_size;
             for (unsigned i=0; i < 2 * target_count; ++i)
             {
-                if (!(i & 1))
-                {
-                    prev_size = intersections.size();
-                }
+                // This is the position associated with the intersection
+                // being investigated.
+                Eigen::Vector3d pos;
+                pos << ((i & 1) ? targets[i/2].second : targets[i/2].first),
+                       region.perp;
 
+                // If this position is unambiguous, then we can use the
+                // derivatives value calculated and stored in ds.
                 if (!ambig(i))
                 {
                     const Eigen::Array<double, N, 1> derivs = ds.col(i)
@@ -561,21 +571,18 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                     const double norm = derivs.matrix().norm();
 
                     // Find normalized derivatives and distance value
-                    Eigen::Matrix<double, N + 1, 1> dv;
-                    dv << derivs / norm, ds.col(i).w() / norm;
+                    Eigen::Matrix<double, N, 1> dv = derivs / norm;
                     if (dv.array().isFinite().all())
                     {
-                        intersections.push_back({
-                            (i & 1) ? targets[i/2].second : targets[i/2].first,
-                            dv});
+                        intersections[target_edges[i/2]]
+                            .push_back({pos.template head<N>(),
+                                        dv, ds.col(i).w() / norm});
                     }
                 }
+                // Otherwise, we need to use the feature-finding special case
+                // to find all possible derivatives at this point.
                 else
                 {
-                    // Load the ambiguous position and find its features
-                    Eigen::Vector3d pos;
-                    pos << ((i & 1) ? targets[i/2].second : targets[i/2].first),
-                           region.perp;
                     const auto fs = eval->feature.features(
                             pos.template cast<float>());
 
@@ -590,50 +597,49 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
 
                         // Find normalized derivatives and distance value
                         // (from the earlier evaluation)
-                        Eigen::Matrix<double, N + 1, 1> dv;
-                        dv << derivs / norm, ds.col(i).w() / norm;
+                        Eigen::Matrix<double, N, 1> dv = derivs / norm;
                         if (dv.array().isFinite().all())
                         {
-                            intersections.push_back({pos.template head<N>(),
-                                                     dv});
-                        }
-                    }
-                }
-
-                if (i & 1)
-                {
-                    // If every intersection was NaN (?!), use rank 0;
-                    // otherwise, figure out how many normals diverge
-                    if (prev_size == intersections.size())
-                    {
-                        ranks[i / 2] = 0;
-                    }
-                    else
-                    {
-                        ranks[i / 2] = 1;
-                        Vec prev_normal = intersections[prev_size]
-                            .second
-                            .template head<N>();
-                        for (unsigned p=prev_size + 1;
-                                      p < intersections.size(); ++p)
-                        {
-                            // Accumulate rank based on cosine distance
-                            ranks[i / 2] += intersections[p]
-                                .second
-                                .template head<N>()
-                                .dot(prev_normal) < 0.9;
+                            intersections[target_edges[i/2]]
+                                .push_back({pos.template head<N>(),
+                                        dv, ds.col(i).w() / norm});
                         }
                     }
                 }
             }
 
+            // Each edge, which contains one or more intersections, is assigned
+            // a rank based on the normals of those intersections.
+            std::array<int, _edges(N)> edge_ranks;
+            std::fill(edge_ranks.begin(), edge_ranks.end(), -1);
+            for (unsigned i=0; i < target_count; ++i)
+            {
+                // If every intersection was NaN (?!), use rank 0;
+                // otherwise, figure out how many normals diverge
+                Vec prev_normal = Vec::Zero();
+                if (intersections[target_edges[i]].size())
+                {
+                    edge_ranks[i] = 1;
+                    prev_normal = intersections[target_edges[i]][0].deriv;
+                }
+                else
+                {
+                    edge_ranks[i] = 0;
+                }
+                for (auto t : intersections[target_edges[i]]) {
+                    edge_ranks[i] += t.deriv.dot(prev_normal) < 0.9;
+                }
+            }
+            _mass_point = _mass_point.Zero();
+
+
             {   // Build the mass point from max-rank intersections
                 const int max_rank = *std::max_element(
-                        ranks.begin(), ranks.end());
+                        edge_ranks.begin(), edge_ranks.end());
                 for (unsigned i=0; i < target_count; ++i)
                 {
-                    assert(ranks[i] != -1);
-                    if (ranks[i] == max_rank)
+                    assert(edge_ranks[i] != -1);
+                    if (edge_ranks[i] == max_rank)
                     {
                         // Accumulate this intersection in the mass point
                         Eigen::Matrix<double, N + 1, 1> mp;
@@ -645,6 +651,15 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 }
             }
 
+
+            // Count how many intersections are stored, across all of the
+            // relevant edges for this vertex.
+            size_t rows = 0;
+            for (unsigned i=0; i < target_count; ++i)
+            {
+                rows += intersections[target_edges[i]].size();
+            }
+
             // Now, we'll unpack into A and b matrices
             //
             //  The A matrix is of the form
@@ -653,7 +668,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             //  [n3x, n3y, n3z]
             //  ...
             //  (with one row for each sampled point's normal)
-            Eigen::Matrix<double, Eigen::Dynamic, N> A(intersections.size(), N);
+            Eigen::Matrix<double, Eigen::Dynamic, N> A(rows, N);
 
             //  The b matrix is of the form
             //  [p1 . n1]
@@ -661,20 +676,24 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             //  [p3 . n3]
             //  ...
             //  (with one row for each sampled point)
-            Eigen::Matrix<double, Eigen::Dynamic, 1> b(intersections.size(), 1);
+            Eigen::Matrix<double, Eigen::Dynamic, 1> b(rows, 1);
 
             // Load samples into the QEF arrays
             //
             // Since we're deliberately sampling on either side of the
             // intersection, we subtract out the distance-field value
             // to make the math work out.
-            for (unsigned i=0; i < intersections.size(); ++i)
+            unsigned r=0;
+            for (unsigned i=0; i < target_count; ++i)
             {
-                A.row(i) << intersections[i].second
-                                            .template head<N>()
-                                            .transpose();
-                b(i) = A.row(i).dot(intersections[i].first) -
-                       intersections[i].second(N);
+                for (unsigned j=0; j < intersections[target_edges[i]].size(); ++j)
+                {
+                    A.row(r) << intersections[target_edges[i]][j].deriv
+                                                .transpose();
+                    b(r) = A.row(r).dot(intersections[target_edges[i]][j].pos) -
+                           intersections[target_edges[i]][j].value;
+                    r++;
+                }
             }
 
             // Save compact QEF matrices
