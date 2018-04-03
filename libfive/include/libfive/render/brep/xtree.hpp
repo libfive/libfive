@@ -130,6 +130,15 @@ public:
     Eigen::Matrix<double, N, 1> vert(unsigned i=0) const
     { assert(i < vertex_count); return verts.col(i); }
 
+    /*
+     *  Looks up a particular intersection array by corner indices
+     */
+    const IntersectionVec<N>& intersection(unsigned a, unsigned b) const
+    {
+        assert(mt->e[a][b] != -1);
+        return intersections[mt->e[a][b]];
+    }
+
     /*  Array of filled states for the cell's corners
      *  (must only be FILLED / EMPTY, not UNKNOWN or AMBIGUOUS ) */
     std::array<Interval::State, 1 << N> corners;

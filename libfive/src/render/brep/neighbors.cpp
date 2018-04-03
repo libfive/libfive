@@ -165,6 +165,24 @@ Interval::State Neighbors<N>::check(uint8_t corner)
     return Interval::UNKNOWN;
 }
 
+template <unsigned N>
+void Neighbors<N>::check(uint8_t a, uint8_t b, const IntersectionVec<N>* out)
+{
+    out = nullptr;
+    for (unsigned i=0; i < _pow(i, 3) - 1; ++i)
+    {
+        if (neighbors[i] != nullptr)
+        {
+            auto index = edgeCheckIndex({a, b}, i);
+            if (index.first != -1)
+            {
+                out = &neighbors[i]->intersection(a, b);
+                return;
+            }
+        }
+    }
+}
+
 
 // Explicit initialization of template
 template class Neighbors<2>;
