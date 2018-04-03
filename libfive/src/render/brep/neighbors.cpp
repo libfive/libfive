@@ -24,12 +24,11 @@ namespace Kernel {
 // Here are all of our static variables
 template <unsigned N> std::array<uint8_t, _pow(3, N)-1> Neighbors<N>::fixed;
 template <unsigned N> std::array<uint8_t, _pow(3, N)-1> Neighbors<N>::floating;
-template <unsigned N> bool Neighbors<N>::loaded = false;
 template <unsigned N> std::array<uint8_t, 1 << (2 * N)> Neighbors<N>::remap;
+template <unsigned N> bool Neighbors<N>::loaded = Neighbors<N>::populatePositions();
 
 template <unsigned N>
 Neighbors<N>::Neighbors() {
-    populatePositions();
     std::fill(neighbors.begin(), neighbors.end(), nullptr);
 }
 
@@ -38,8 +37,6 @@ Neighbors<N>::Neighbors() {
 template <unsigned N>
 int Neighbors<N>::cornerCheckIndex(uint8_t corner, uint8_t neighbor)
 {
-    populatePositions();
-
     assert(corner < (1 << N));
     assert(neighbor < _pow(3, N) - 1);
 
@@ -71,8 +68,6 @@ std::pair<int, int> Neighbors<N>::edgeCheckIndex(
 template <unsigned N>
 int Neighbors<N>::withinTreeIndex(uint8_t child, uint8_t neighbor)
 {
-    populatePositions();
-
     assert(child < (1 << N));
     assert(neighbor < _pow(3, N) - 1);
     return (((fixed[neighbor] ^ child) & invert(floating[neighbor])) == invert(floating[neighbor]))
@@ -84,8 +79,6 @@ template <unsigned N>
 std::pair<int, int> Neighbors<N>::neighborTargetIndex(uint8_t child,
                                                       uint8_t neighbor)
 {
-    populatePositions();
-
     // Figure out which higher-level neighbor we should index into
     auto target_floating = floating[neighbor] | (child ^ fixed[neighbor]);
     auto target_fixed = child & invert(target_floating);
@@ -100,12 +93,8 @@ std::pair<int, int> Neighbors<N>::neighborTargetIndex(uint8_t child,
 }
 
 template <unsigned N>
-void Neighbors<N>::populatePositions() {
+bool Neighbors<N>::populatePositions() {
     // Early exit if already populated
-    if (loaded)
-    {
-        return;
-    }
     std::fill(remap.begin(), remap.end(), 0xFF);
 
     for (unsigned i=0; i < _pow(3, N) - 1; ++i)
@@ -125,7 +114,7 @@ void Neighbors<N>::populatePositions() {
         // Store the remapping lookup here as well
         remap[(fixed[i] << N) | floating[i]] = i;
     }
-    loaded = true;
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

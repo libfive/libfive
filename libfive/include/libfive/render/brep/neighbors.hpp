@@ -124,9 +124,9 @@ public:
 
 protected:
     /*
-     *  Performs the initial loading of the static arrays
+     *  Populates fixed, floating, and remap arrays; returns true.
      */
-    static void populatePositions();
+    static bool populatePositions();
 
     static constexpr uint8_t invert(uint8_t in) {
         return (~in) & mask();
@@ -143,13 +143,14 @@ protected:
     /*  bitfield representing which axes are floating  */
     static std::array<uint8_t, _pow(3, N) - 1> floating;
 
-    static bool loaded;
-
     /*  remap[(fixed << N) | floating] returns the index into
      *  the fixed/floating arrays with the given bitfields.  */
     static std::array<uint8_t, 1 << (2 * N)> remap;
 
     std::array<const XTree<N>*, _pow(3, N) - 1> neighbors;
+
+    /*  Used as a flag to trigger population of the static arrays */
+    static bool loaded;
 };
 
 //  We explicitly instantiate the Neighbors classes in neighbors.cpp
