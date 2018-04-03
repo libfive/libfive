@@ -151,7 +151,7 @@ Neighbors<N> Neighbors<N>::push(uint8_t child,
 template <unsigned N>
 Interval::State Neighbors<N>::check(uint8_t corner)
 {
-    for (unsigned i=0; i < _pow(i, 3) - 1; ++i)
+    for (unsigned i=0; i < _pow(N, 3) - 1; ++i)
     {
         if (neighbors[i] != nullptr)
         {
@@ -166,21 +166,20 @@ Interval::State Neighbors<N>::check(uint8_t corner)
 }
 
 template <unsigned N>
-void Neighbors<N>::check(uint8_t a, uint8_t b, const IntersectionVec<N>* out)
+const IntersectionVec<N>* Neighbors<N>::check(uint8_t a, uint8_t b)
 {
-    out = nullptr;
-    for (unsigned i=0; i < _pow(i, 3) - 1; ++i)
+    for (unsigned i=0; i < _pow(N, 3) - 1; ++i)
     {
         if (neighbors[i] != nullptr)
         {
             auto index = edgeCheckIndex({a, b}, i);
             if (index.first != -1)
             {
-                out = &neighbors[i]->intersection(a, b);
-                return;
+                return &neighbors[i]->intersection(a, b);
             }
         }
     }
+    return nullptr;
 }
 
 

@@ -155,7 +155,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         {
             auto rs = region.subdivide();
 
-            if (multithread)
+            if (multithread && 0)
             {
                 // Evaluate every child in a separate thread
                 std::array<std::future<XTree<N>*>, 1 << N> futures;
@@ -433,6 +433,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             unsigned target_count;
             std::array<std::pair<Vec, Vec>, _edges(N)> targets;
             std::array<size_t, _edges(N)> target_edges;
+            std::array<std::pair<size_t, size_t>, _edges(N)> target_corners;
 
             for (target_count=0; target_count < ps[vertex_count].size() &&
                                  ps[vertex_count][target_count].first != -1;
@@ -449,10 +450,13 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                         {cornerPos(ps[vertex_count][target_count].first),
                          cornerPos(ps[vertex_count][target_count].second)};
 
+                // Store the corners associated with this target
+                target_corners[target_count] = ps[vertex_count][target_count];
+
                 // Store the edge index associated with this target
                 target_edges[target_count] = mt->e
-                    [ps[vertex_count][target_count].first]
-                    [ps[vertex_count][target_count].second];
+                    [target_corners[target_count].first]
+                    [target_corners[target_count].second];
                 assert(target_edges[target_count] < intersections.size());
             }
 
@@ -614,6 +618,13 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 }
                 for (auto t : intersections[target_edges[i]]) {
                     edge_ranks[i] += t.deriv.dot(prev_normal) < 0.9;
+                }
+
+                auto compare = neighbors.check(target_corners[i].first, target_corners[i].second);
+                if (compare != nullptr)
+                {
+                    std::cout << compare->size() << " " << intersections[target_edges[i]].size() << std::endl;
+                    assert(compare->size() == intersections[target_edges[i]].size());
                 }
             }
             _mass_point = _mass_point.Zero();
