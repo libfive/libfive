@@ -429,202 +429,230 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         const auto& ps = mt->v[corner_mask];
         while (vertex_count < ps.size() && ps[vertex_count][0].first != -1)
         {
-            // Iterate over edges in this patch, storing [inside, outside]
-            unsigned target_count;
-            std::array<std::pair<Vec, Vec>, _edges(N)> targets;
-            std::array<size_t, _edges(N)> target_edges;
-            std::array<std::pair<size_t, size_t>, _edges(N)> target_corners;
+            // Number of edges, total
+            unsigned edge_count;
 
-            for (target_count=0; target_count < ps[vertex_count].size() &&
-                                 ps[vertex_count][target_count].first != -1;
-                             ++target_count)
-            {
-                // Sanity-checking
-                assert(corners[ps[vertex_count][target_count].first]
-                       == Interval::FILLED);
-                assert(corners[ps[vertex_count][target_count].second]
-                       == Interval::EMPTY);
+            // Edge indices (as found with mt->e[a][b]) for all edges,
+            // with edge_count valid entries.
+            std::array<size_t, _edges(N)> edges;
 
-                // Store inside / outside in targets array
-                targets[target_count] =
-                        {cornerPos(ps[vertex_count][target_count].first),
-                         cornerPos(ps[vertex_count][target_count].second)};
+            {   // Within this block, we calculate all edges that haven't
+                // already been calculated by neighbors and store them in
+                // the appropriate slot of the intersections array.
 
-                // Store the corners associated with this target
-                target_corners[target_count] = ps[vertex_count][target_count];
+                // Numbers of edges that need evaluation
+                unsigned eval_count;
 
-                // Store the edge index associated with this target
-                target_edges[target_count] = mt->e
-                    [target_corners[target_count].first]
-                    [target_corners[target_count].second];
-                assert(target_edges[target_count] < intersections.size());
-            }
+                // Inside-outside pairs, with eval_count valid pairs
+                std::array<std::pair<Vec, Vec>, _edges(N)> targets;
 
-            // Next, we search over the target edges, doing an
-            // N-fold reduction at each stage to home in on the
-            // exact intersection position
-            constexpr int SEARCH_COUNT = 4;
-            constexpr int POINTS_PER_SEARCH = 16;
-            static_assert(_edges(N) * POINTS_PER_SEARCH <= ArrayEvaluator::N,
-                          "Potential overflow");
+                // Edge indices (as found with mt->e[a][b]) for edges under
+                // evaluation, with eval_count valid values.
+                std::array<size_t, _edges(N)> eval_edges;
 
-            // Multi-stage binary search for intersection
-            for (int s=0; s < SEARCH_COUNT; ++s)
-            {
-                // Load search points into evaluator
-                Eigen::Array<double, N, POINTS_PER_SEARCH * _edges(N)> ps;
-                for (unsigned e=0; e < target_count; ++e)
+                // Iterate over edges in this patch, storing [inside, outside]
+                // in the targets array if the list of intersections can't be
+                // re-used from a neighbor.
+                for (edge_count=0, eval_count=0;
+                     edge_count < ps[vertex_count].size() &&
+                         ps[vertex_count][edge_count].first != -1;
+                     ++edge_count)
                 {
-                    for (int j=0; j < POINTS_PER_SEARCH; ++j)
+                    // Sanity-checking
+                    assert(corners[ps[vertex_count][edge_count].first]
+                           == Interval::FILLED);
+                    assert(corners[ps[vertex_count][edge_count].second]
+                           == Interval::EMPTY);
+
+                    // Store the edge index associated with this target
+                    auto c = ps[vertex_count][edge_count];
+                    edges[edge_count] = mt->e[c.first][c.second];
+
+                    auto compare = neighbors.check(c.first, c.second);
+                    // TODO
+                    // Enable this to turn on sharing of results with neighbors
+                    if (false /*compare != nullptr && compare->size() > 0 */)
                     {
-                        const double frac = j / (POINTS_PER_SEARCH - 1.0);
-                        const unsigned i = j + e*POINTS_PER_SEARCH;
-                        ps.col(i) = (targets[e].first * (1 - frac)) +
-                                    (targets[e].second * frac);
-                        set(ps.col(i), i);
+                        intersections[edges[edge_count]] = *compare;
                     }
+                    else
+                    {
+                        // Store inside / outside in targets array, and the edge
+                        // index in the eval_edges array.
+                        targets[eval_count] = {cornerPos(c.first),
+                                               cornerPos(c.second)};
+                        eval_edges[eval_count] = edges[edge_count];
+
+                        assert(eval_edges[eval_count] < intersections.size());
+                        eval_count++;
+                    }
+
+                    assert(edges[edge_count] < intersections.size());
                 }
 
-                // Evaluate, then search for the first outside point
-                // and adjust inside / outside to their new positions
-                auto out = eval->array.values(
-                        POINTS_PER_SEARCH * target_count);
+                // Next, we search over the target edges, doing an
+                // N-fold reduction at each stage to home in on the
+                // exact intersection position
+                constexpr int SEARCH_COUNT = 4;
+                constexpr int POINTS_PER_SEARCH = 16;
+                static_assert(_edges(N) * POINTS_PER_SEARCH <= ArrayEvaluator::N,
+                              "Potential overflow");
 
-                for (unsigned e=0; e < target_count; ++e)
+                // Multi-stage binary search for intersection
+                for (int s=0; s < SEARCH_COUNT; ++s)
                 {
-                    // Skip one point, because the very first point is
-                    // already known to be inside the shape (but sometimes,
-                    // due to numerical issues, it registers as outside!)
-                    for (unsigned j=1; j < POINTS_PER_SEARCH; ++j)
+                    // Load search points into evaluator
+                    Eigen::Array<double, N, POINTS_PER_SEARCH * _edges(N)> ps;
+                    for (unsigned e=0; e < eval_count; ++e)
                     {
-                        const unsigned i = j + e*POINTS_PER_SEARCH;
-                        if (out[i] > 0)
+                        for (int j=0; j < POINTS_PER_SEARCH; ++j)
                         {
-                            assert(i > 0);
-                            targets[e] = {ps.col(i - 1), ps.col(i)};
-                            break;
+                            const double frac = j / (POINTS_PER_SEARCH - 1.0);
+                            const unsigned i = j + e*POINTS_PER_SEARCH;
+                            ps.col(i) = (targets[e].first * (1 - frac)) +
+                                        (targets[e].second * frac);
+                            set(ps.col(i), i);
                         }
-                        else if (out[i] == 0)
+                    }
+
+                    // Evaluate, then search for the first outside point
+                    // and adjust inside / outside to their new positions
+                    auto out = eval->array.values(
+                            POINTS_PER_SEARCH * eval_count);
+
+                    for (unsigned e=0; e < eval_count; ++e)
+                    {
+                        // Skip one point, because the very first point is
+                        // already known to be inside the shape (but sometimes,
+                        // due to numerical issues, it registers as outside!)
+                        for (unsigned j=1; j < POINTS_PER_SEARCH; ++j)
                         {
-                            Eigen::Vector3d pos;
-                            pos << ps.col(i), region.perp;
-                            if (!eval->feature.isInside(
-                                        pos.template cast<float>()))
+                            const unsigned i = j + e*POINTS_PER_SEARCH;
+                            if (out[i] > 0)
                             {
                                 assert(i > 0);
                                 targets[e] = {ps.col(i - 1), ps.col(i)};
                                 break;
                             }
-                        }
-                        // Special-case for final point in the search, working
-                        // around numerical issues where different evaluators
-                        // disagree with whether points are inside or outside.
-                        else if (j == POINTS_PER_SEARCH - 1)
-                        {
-                            targets[e] = {ps.col(i - 1), ps.col(i)};
-                            break;
+                            else if (out[i] == 0)
+                            {
+                                Eigen::Vector3d pos;
+                                pos << ps.col(i), region.perp;
+                                if (!eval->feature.isInside(
+                                            pos.template cast<float>()))
+                                {
+                                    assert(i > 0);
+                                    targets[e] = {ps.col(i - 1), ps.col(i)};
+                                    break;
+                                }
+                            }
+                            // Special-case for final point in the search, working
+                            // around numerical issues where different evaluators
+                            // disagree with whether points are inside or outside.
+                            else if (j == POINTS_PER_SEARCH - 1)
+                            {
+                                targets[e] = {ps.col(i - 1), ps.col(i)};
+                                break;
+                            }
                         }
                     }
                 }
-            }
 
-            // Now, we evaluate the distance field (value + derivatives) at
-            // each intersection (which is associated with a particular edge).
-            static_assert(_edges(N) * 2 <= ArrayEvaluator::N,
-                          "Too many results");
-            for (unsigned i=0; i < target_count; ++i)
-            {
-                set(targets[i].first, 2*i);
-                set(targets[i].second, 2*i + 1);
-            }
-            auto ds = eval->array.derivs(2 * target_count);
-            auto ambig = eval->array.getAmbiguous(2 * target_count);
-
-            // Iterate over all inside-outside pairs, storing the number
-            // of intersections before each inside node (in prev_size), then
-            // checking the rank of the pair after each outside node based
-            // on the accumulated intersections.
-            for (unsigned i=0; i < 2 * target_count; ++i)
-            {
-                // This is the position associated with the intersection
-                // being investigated.
-                Eigen::Vector3d pos;
-                pos << ((i & 1) ? targets[i/2].second : targets[i/2].first),
-                       region.perp;
-
-                // If this position is unambiguous, then we can use the
-                // derivatives value calculated and stored in ds.
-                if (!ambig(i))
+                // Now, we evaluate the distance field (value + derivatives) at
+                // each intersection (which is associated with a particular edge).
+                static_assert(_edges(N) * 2 <= ArrayEvaluator::N,
+                              "Too many results");
+                for (unsigned i=0; i < eval_count; ++i)
                 {
-                    const Eigen::Array<double, N, 1> derivs = ds.col(i)
-                        .template cast<double>().template head<N>();
-                    const double norm = derivs.matrix().norm();
-
-                    // Find normalized derivatives and distance value
-                    Eigen::Matrix<double, N, 1> dv = derivs / norm;
-                    if (dv.array().isFinite().all())
-                    {
-                        intersections[target_edges[i/2]]
-                            .push_back({pos.template head<N>(),
-                                        dv, ds.col(i).w() / norm});
-                    }
+                    set(targets[i].first, 2*i);
+                    set(targets[i].second, 2*i + 1);
                 }
-                // Otherwise, we need to use the feature-finding special case
-                // to find all possible derivatives at this point.
-                else
-                {
-                    const auto fs = eval->feature.features(
-                            pos.template cast<float>());
+                auto ds = eval->array.derivs(2 * eval_count);
+                auto ambig = eval->array.getAmbiguous(2 * eval_count);
 
-                    for (auto& f : fs)
+                // Iterate over all inside-outside pairs, storing the number
+                // of intersections before each inside node (in prev_size), then
+                // checking the rank of the pair after each outside node based
+                // on the accumulated intersections.
+                for (unsigned i=0; i < 2 * eval_count; ++i)
+                {
+                    // This is the position associated with the intersection
+                    // being investigated.
+                    Eigen::Vector3d pos;
+                    pos << ((i & 1) ? targets[i/2].second : targets[i/2].first),
+                           region.perp;
+
+                    // If this position is unambiguous, then we can use the
+                    // derivatives value calculated and stored in ds.
+                    if (!ambig(i))
                     {
-                        // Unpack 3D derivatives into XTree-specific
-                        // dimensionality, and find normal.
-                        const Eigen::Array<double, N, 1> derivs = f
-                            .template head<N>()
-                            .template cast<double>();
+                        const Eigen::Array<double, N, 1> derivs = ds.col(i)
+                            .template cast<double>().template head<N>();
                         const double norm = derivs.matrix().norm();
 
                         // Find normalized derivatives and distance value
-                        // (from the earlier evaluation)
                         Eigen::Matrix<double, N, 1> dv = derivs / norm;
                         if (dv.array().isFinite().all())
                         {
-                            intersections[target_edges[i/2]]
+                            intersections[eval_edges[i/2]]
                                 .push_back({pos.template head<N>(),
-                                        dv, ds.col(i).w() / norm});
+                                            dv, ds.col(i).w() / norm});
+                        }
+                    }
+                    // Otherwise, we need to use the feature-finding special case
+                    // to find all possible derivatives at this point.
+                    else
+                    {
+                        const auto fs = eval->feature.features(
+                                pos.template cast<float>());
+
+                        for (auto& f : fs)
+                        {
+                            // Unpack 3D derivatives into XTree-specific
+                            // dimensionality, and find normal.
+                            const Eigen::Array<double, N, 1> derivs = f
+                                .template head<N>()
+                                .template cast<double>();
+                            const double norm = derivs.matrix().norm();
+
+                            // Find normalized derivatives and distance value
+                            // (from the earlier evaluation)
+                            Eigen::Matrix<double, N, 1> dv = derivs / norm;
+                            if (dv.array().isFinite().all())
+                            {
+                                intersections[eval_edges[i/2]]
+                                    .push_back({pos.template head<N>(),
+                                            dv, ds.col(i).w() / norm});
+                            }
                         }
                     }
                 }
             }
+            // At this point, every [intersections[e] for e in edges] should be
+            // populated with a list of Intersection objects, whether taken
+            // from a neighbor or calculated in the code above.
 
             // Each edge, which contains one or more intersections, is assigned
             // a rank based on the normals of those intersections.
             std::array<int, _edges(N)> edge_ranks;
             std::fill(edge_ranks.begin(), edge_ranks.end(), -1);
-            for (unsigned i=0; i < target_count; ++i)
+            for (unsigned i=0; i < edge_count; ++i)
             {
                 // If every intersection was NaN (?!), use rank 0;
                 // otherwise, figure out how many normals diverge
                 Vec prev_normal = Vec::Zero();
-                if (intersections[target_edges[i]].size())
+                if (intersections[edges[i]].size())
                 {
                     edge_ranks[i] = 1;
-                    prev_normal = intersections[target_edges[i]][0].deriv;
+                    prev_normal = intersections[edges[i]][0].deriv;
                 }
                 else
                 {
                     edge_ranks[i] = 0;
                 }
-                for (auto t : intersections[target_edges[i]]) {
-                    edge_ranks[i] += t.deriv.dot(prev_normal) < 0.9;
-                }
-
-                auto compare = neighbors.check(target_corners[i].first, target_corners[i].second);
-                if (compare != nullptr)
+                for (auto t : intersections[edges[i]])
                 {
-                    std::cout << compare->size() << " " << intersections[target_edges[i]].size() << std::endl;
-                    assert(compare->size() == intersections[target_edges[i]].size());
+                    edge_ranks[i] += t.deriv.dot(prev_normal) < 0.9;
                 }
             }
             _mass_point = _mass_point.Zero();
@@ -633,28 +661,36 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             {   // Build the mass point from max-rank intersections
                 const int max_rank = *std::max_element(
                         edge_ranks.begin(), edge_ranks.end());
-                for (unsigned i=0; i < target_count; ++i)
+                for (unsigned i=0; i < edge_count; ++i)
                 {
                     assert(edge_ranks[i] != -1);
                     if (edge_ranks[i] == max_rank)
                     {
                         // Accumulate this intersection in the mass point
+                        // by storing the first and last intersection position
+                        // (which are guaranteed by construction to be a
+                        // just-inside and just-outside position, respectively)
                         Eigen::Matrix<double, N + 1, 1> mp;
-                        mp << targets[i].first, 1;
-                        _mass_point += mp;
-                        mp << targets[i].second, 1;
-                        _mass_point += mp;
+                        const auto& inter = intersections[edges[i]];
+                        const auto size = inter.size();
+                        if (size >= 1)
+                        {
+                            mp << intersections[edges[i]][0].pos, 1;
+                            _mass_point += mp;
+                            mp << intersections[edges[i]][size - 1].pos, 1;
+                            _mass_point += mp;
+                        }
                     }
                 }
             }
 
-
             // Count how many intersections are stored, across all of the
-            // relevant edges for this vertex.
+            // relevant edges for this vertex.  We use this data to determine
+            // the size of the arrays for QEF solving.
             size_t rows = 0;
-            for (unsigned i=0; i < target_count; ++i)
+            for (unsigned i=0; i < edge_count; ++i)
             {
-                rows += intersections[target_edges[i]].size();
+                rows += intersections[edges[i]].size();
             }
 
             // Now, we'll unpack into A and b matrices
@@ -681,14 +717,14 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             // intersection, we subtract out the distance-field value
             // to make the math work out.
             unsigned r=0;
-            for (unsigned i=0; i < target_count; ++i)
+            for (unsigned i=0; i < edge_count; ++i)
             {
-                for (unsigned j=0; j < intersections[target_edges[i]].size(); ++j)
+                for (unsigned j=0; j < intersections[edges[i]].size(); ++j)
                 {
-                    A.row(r) << intersections[target_edges[i]][j].deriv
+                    A.row(r) << intersections[edges[i]][j].deriv
                                                 .transpose();
-                    b(r) = A.row(r).dot(intersections[target_edges[i]][j].pos) -
-                           intersections[target_edges[i]][j].value;
+                    b(r) = A.row(r).dot(intersections[edges[i]][j].pos) -
+                           intersections[edges[i]][j].value;
                     r++;
                 }
             }
