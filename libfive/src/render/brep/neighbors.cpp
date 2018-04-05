@@ -175,7 +175,7 @@ const IntersectionVec<N>* Neighbors<N>::check(uint8_t a, uint8_t b)
             auto index = edgeCheckIndex({a, b}, i);
             if (index.first != -1)
             {
-                return &neighbors[i]->intersection(a, b);
+                return &neighbors[i]->intersection(index.first, index.second);
             }
         }
     }
