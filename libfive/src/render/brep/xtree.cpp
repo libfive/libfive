@@ -155,7 +155,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         {
             auto rs = region.subdivide();
 
-            if (multithread && 0)
+            if (multithread)
             {
                 // Evaluate every child in a separate thread
                 std::array<std::future<XTree<N>*>, 1 << N> futures;
@@ -469,9 +469,8 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                     edges[edge_count] = mt->e[c.first][c.second];
 
                     auto compare = neighbors.check(c.first, c.second);
-                    // TODO
                     // Enable this to turn on sharing of results with neighbors
-                    if (false /*compare != nullptr && compare->size() > 0 */)
+                    if (compare != nullptr && compare->size() > 0)
                     {
                         intersections[edges[edge_count]] = *compare;
                     }
