@@ -607,8 +607,8 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                                                 dv, ds.col(i).w() / norm});
                             }
                         }
-                        // Otherwise, we need to use the feature-finding special case
-                        // to find all possible derivatives at this point.
+                        // Otherwise, we need to use the feature-finding special
+                        // case to find all possible derivatives at this point.
                         else
                         {
                             const auto fs = eval->feature.features(
