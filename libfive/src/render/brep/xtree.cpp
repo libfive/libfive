@@ -649,19 +649,21 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             {
                 // If every intersection was NaN (?!), use rank 0;
                 // otherwise, figure out how many normals diverge
-                Vec prev_normal = Vec::Zero();
-                if (intersections[edges[i]].size())
+                IntersectionVec<N> prev_normals;
+                edge_ranks[i] = 0;
+
+                for (const auto& t : intersections[edges[i]])
                 {
-                    edge_ranks[i] = 1;
-                    prev_normal = intersections[edges[i]][0].deriv;
-                }
-                else
-                {
-                    edge_ranks[i] = 0;
-                }
-                for (auto t : intersections[edges[i]])
-                {
-                    edge_ranks[i] += t.deriv.dot(prev_normal) < 0.9;
+                    bool matched = false;
+                    for (auto& v : prev_normals)
+                    {
+                        matched |= (t.deriv.dot(v.deriv) >= 0.9);
+                    }
+                    if (!matched)
+                    {
+                        edge_ranks[i]++;
+                        prev_normals.push_back(t);
+                    }
                 }
             }
             _mass_point = _mass_point.Zero();
