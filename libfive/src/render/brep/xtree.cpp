@@ -190,7 +190,10 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             // by an early cancel operation
             if (cancel.load())
             {
-                eval->interval.pop();
+                if (do_recurse)
+                {
+                    eval->interval.pop();
+                }
                 return;
             }
 
