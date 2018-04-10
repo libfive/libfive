@@ -407,8 +407,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                      (* pi 1.5))
            #[0 0.75] )))
 
-(make-glyph! #\° 0.4
-  (ring 0.175 0.075 #[0.2 0.8]))
+;(make-glyph! #\° 0.4
+;  (ring 0.175 0.075 #[0.2 0.8]))
 
 (make-glyph! #\# 0.55
   (move (shear-x-y  (union (rectangle #[0.1 0.05] #[0.2 0.75])
