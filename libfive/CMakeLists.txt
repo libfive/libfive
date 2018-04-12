@@ -15,3 +15,6 @@ if(UNIX AND NOT(APPLE))
     CONFIGURE_FILE("libfive.pc.in" "libfive.pc" @ONLY)
     install(FILES ${CMAKE_BINARY_DIR}/libfive/libfive.pc DESTINATION lib/pkgconfig)
 endif(UNIX AND NOT(APPLE))
+
+add_executable(leaker leak.cpp)
+target_link_libraries(leaker five)
