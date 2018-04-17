@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/tree/opcode.hpp"
 #include "libfive/tree/tree.hpp"
-#include "libfive/tree/template.hpp"
 
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/contours.hpp"
@@ -311,91 +310,6 @@ libfive_pixels* libfive_tree_render_pixels(libfive_tree tree, libfive_region2 R,
     }
 
     return out;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-typedef Tree::Id libfive_id;
-
-struct libfive_args {
-    char** names;
-    libfive_id* ids;
-    libfive_tree* bindings;
-    uint32_t count;
-};
-
-void libfive_args_delete(libfive_args* a)
-{
-    for (unsigned i=0; i < a->count; ++i)
-    {
-        delete [] a->names[i];
-        libfive_tree_delete(a->bindings[i]);
-    }
-    delete [] a->names;
-    delete [] a->ids;
-    delete [] a->bindings;
-    delete a;
-}
-
-libfive_args* libfive_args_new(uint32_t count)
-{
-    auto a = new libfive_args;
-    a->count = count;
-    a->names = new char*[count];
-    a->bindings = new libfive_tree[count];
-    a->ids = new Tree::Id[count];
-
-    return a;
-}
-
-typedef Kernel::Template* libfive_template;
-
-const char* libfive_arg_name(libfive_args* a, uint32_t i)
-{
-    return (i >= a->count) ? nullptr : a->names[i];
-}
-
-void libfive_set_arg_name(libfive_args* a, uint32_t i, const char* name)
-{
-    if (i < a->count)
-    {
-        if (a->names[i] != nullptr)
-        {
-            delete [] a->names[i];
-        }
-        auto len = strlen(name);
-        a->names[i] = new char[len + 1];
-        memcpy(a->names[i], name, len);
-        a->names[i][len] = 0; // apply null termination
-    }
-}
-
-void libfive_set_arg_id(libfive_args* a, uint32_t i, libfive_id id)
-{
-    if (i < a->count)
-    {
-        a->ids[i] = id;
-    }
-}
-
-libfive_template libfive_tree_to_template(libfive_tree t)
-{
-    return new Template(*t);
-}
-
-libfive_args* libfive_template_args(libfive_template t)
-{
-    auto a = libfive_args_new(t->vars.size());
-    uint32_t i=0;
-
-    for (auto v : t->vars)
-    {
-        libfive_set_arg_name(a, i, v.second.c_str());
-        libfive_set_arg_id(a, i, v.first);
-        i++;
-    }
-
-    return a;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
