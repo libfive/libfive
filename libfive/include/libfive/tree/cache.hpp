@@ -80,6 +80,18 @@ public:
      */
     Node fromAffine(const std::map<Node, float>& ns);
 
+    std::map<float, std::weak_ptr<Tree::Tree_>> getConstants() { 
+      return constants; }
+
+    /*
+    *  A Key uniquely identifies an operation Node, so that we can
+    *  deduplicate based on opcode  and arguments
+    */
+    typedef std::tuple<Opcode::Opcode,  /* opcode */
+      Tree::Id,        /* lhs */
+      Tree::Id         /* rhs */ > Key;
+    std::map<Key, std::weak_ptr<Tree::Tree_>> getOps() { return ops; }
+
 protected:
     /*
      *  Cache constructor is private so outsiders must use instance()
@@ -105,13 +117,6 @@ protected:
      */
     Node checkAffine(Opcode::Opcode op, Node a, Node b);
 
-    /*
-     *  A Key uniquely identifies an operation Node, so that we can
-     *  deduplicate based on opcode  and arguments
-     */
-    typedef std::tuple<Opcode::Opcode,  /* opcode */
-                       Tree::Id,        /* lhs */
-                       Tree::Id         /* rhs */ > Key;
     std::map<Key, std::weak_ptr<Tree::Tree_>> ops;
 
     /*  Constants in the tree are uniquely identified by their value  */
