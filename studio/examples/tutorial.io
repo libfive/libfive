@@ -10,9 +10,19 @@
 ;; the standard library, e.g.
 (box #[-1 -1 -1] #[1 1 0])
 
+
 ;; Any top-level expression that evaluates to a
 ;; shape will be rendered as a mesh.  You can
 ;; control bounds and resolution in the View menu.
+
+
+;; Constructive solid geometry (CSG) 
+;; operations can be peformed using the libfive
+;; standard library functions e.g. this difference
+;; operation:
+;;(box #[-4 -1 -1] #[-2 1 0]) 
+;;(box #[-3 -1 -0.5] #[-2 0.5 0])
+(difference (box #[-4 -1 -1] #[-2 1 0]) (box #[-3 -1 -0.5] #[-2 0.5 0]))
 
 
 ;; Shapes can also be defined as arbitrary distance
