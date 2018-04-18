@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "catch.hpp"
 
 #include "libfive/tree/tree.hpp"
+#include "util/oracles.hpp"
 
 using namespace Kernel;
 
@@ -54,7 +55,7 @@ TEST_CASE("Tree::serialize")
         auto a = min(Tree::X(), Tree::Y());
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0};
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF};
         REQUIRE(out == expected);
     }
 
@@ -63,7 +64,7 @@ TEST_CASE("Tree::serialize")
         auto a = min(Tree::X(), Tree::X());
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::OP_MIN, 0, 0, 0, 0, 0, 0, 0, 0};
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::OP_MIN, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF};
         REQUIRE(out == expected);
     }
 }
@@ -125,9 +126,20 @@ TEST_CASE("Tree::remap")
 
 TEST_CASE("Tree: operator<<")
 {
-    std::stringstream ss;
-    ss << (Tree::X() + 5);
-    REQUIRE(ss.str() == "(+ x 5)");
+    SECTION("Basic")
+    {
+        std::stringstream ss;
+        ss << (Tree::X() + 5);
+        REQUIRE(ss.str() == "(+ x 5)");
+    }
+
+    SECTION("With oracle")
+    {
+        std::stringstream ss;
+        auto o = Tree(std::unique_ptr<OracleClause>(new CubeOracleClause));
+        ss << (Tree::X() + 5 + o);
+        REQUIRE(ss.str() == "(+ x 5 'CubeOracle)");
+    }
 }
 
 TEST_CASE("Tree::makeVarsConstant")

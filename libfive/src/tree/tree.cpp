@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <array>
 
 #include "libfive/tree/cache.hpp"
-#include "libfive/tree/template.hpp"
+#include "libfive/tree/archive.hpp"
 #include "libfive/tree/transformed_oracle_clause.hpp"
 
 namespace Kernel {
@@ -130,12 +130,14 @@ std::list<Tree> Tree::ordered() const
 
 std::vector<uint8_t> Tree::serialize() const
 {
-    return Template(*this).serialize();
+    return Archive(*this).serialize();
 }
 
 Tree Tree::deserialize(const std::vector<uint8_t>& data)
 {
-    return Template::deserialize(data).tree;
+    auto s = Archive::deserialize(data).shapes;
+    assert(s.size() == 1);
+    return s.front().tree;
 }
 
 Tree Tree::load(const std::string& filename)
@@ -149,8 +151,7 @@ Tree Tree::load(const std::string& filename)
         in.seekg(0, std::ios::beg);
         in.read((char*)&data[0], data.size());
 
-        auto t = Template::deserialize(data);
-        return t.tree;
+        return deserialize(data);
     }
     return Tree();
 }
@@ -234,6 +235,10 @@ void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
                     {
                         stream << value;
                     }
+                }
+                else if (op == Opcode::ORACLE)
+                {
+                    stream << "'" << oracle->name();
                 }
                 else
                 {

@@ -29,11 +29,12 @@ add_library(five SHARED
     render/brep/contours.cpp
     render/brep/mesh.cpp
     render/brep/marching.cpp
+    render/brep/neighbors.cpp
     solve/bounds.cpp
     solve/solver.cpp
     tree/cache.cpp
     tree/opcode.cpp
-    tree/template.cpp
+    tree/archive.cpp
     tree/tree.cpp
     tree/oracle_clause.cpp
     tree/transformed_oracle_clause.cpp

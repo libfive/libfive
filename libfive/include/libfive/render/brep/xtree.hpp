@@ -25,11 +25,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <cstdint>
 
 #include <Eigen/Eigen>
+#include <Eigen/StdVector>
 
 #include "libfive/export.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/intersection.hpp"
 #include "libfive/render/brep/marching.hpp"
 #include "libfive/render/brep/eval_xtree.hpp"
+#include "libfive/render/brep/neighbors.hpp"
 #include "libfive/eval/interval.hpp"
 
 namespace Kernel {
@@ -86,13 +89,7 @@ public:
      */
     Eigen::Array<double, N, 1> cornerPos(uint8_t i) const
     {
-        Eigen::Array<double, N, 1> out;
-        for (unsigned axis=0; axis < N; ++axis)
-        {
-            out(axis) = (i & (1 << axis)) ? region.upper(axis)
-                                          : region.lower(axis);
-        }
-        return out;
+        return corner_positions.row(i);
     }
 
     /*
@@ -108,6 +105,9 @@ public:
      *  (using the region's perpendicular coordinates)
      */
     FIVE_EXPORT Eigen::Vector3d vert3(unsigned index=0) const;
+
+    /*  Helper typedef for N-dimensional column vector */
+    typedef Eigen::Matrix<double, N, 1> Vec;
 
     /*  The region filled by this XTree */
     const Region<N> region;
@@ -130,9 +130,28 @@ public:
     Eigen::Matrix<double, N, 1> vert(unsigned i=0) const
     { assert(i < vertex_count); return verts.col(i); }
 
+    /*
+     *  Looks up a particular intersection array by corner indices
+     */
+    const IntersectionVec<N>& intersection(unsigned a, unsigned b) const
+    {
+        assert(mt->e[a][b] != -1);
+        return intersections[mt->e[a][b]];
+    }
+
     /*  Array of filled states for the cell's corners
-     *  (must only be FILLEd / EMPTY, not UNKNOWN or AMBIGUOUS ) */
+     *  (must only be FILLED / EMPTY, not UNKNOWN or AMBIGUOUS ) */
     std::array<Interval::State, 1 << N> corners;
+
+    /*  Array of precomputed corner positions, stored once at the
+     *  beginning of the constructor and looked up with cornerPos() */
+    Eigen::Matrix<double, 1 << N, N> corner_positions;
+
+    /* Here, we'll prepare to store position, {normal, value} pairs
+     * for every crossing and feature.  RAM is cheap, so we allocated
+     * enough space for at least two inside-outside intersection pairs
+     * on each edge; more pairs resize the small_vector */
+    std::array<IntersectionVec<N>, _edges(N) * 2> intersections;
 
     /*  Leaf cell state, when known  */
     Interval::State type=Interval::UNKNOWN;
@@ -163,9 +182,6 @@ public:
     static std::unique_ptr<const Marching::MarchingTable<N>> mt;
 
 protected:
-    /*  Helper typedef for N-dimensional column vector */
-    typedef Eigen::Matrix<double, N, 1> Vec;
-
     /*
      *  Private constructor for XTree
      *
@@ -174,7 +190,7 @@ protected:
      */
     XTree(XTreeEvaluator* eval, Region<N> region,
           double min_feature, double max_err, bool multithread,
-          std::atomic_bool& cancel);
+          std::atomic_bool& cancel, Neighbors<N> neighbors);
 
     /*
      *  Searches for a vertex within the XTree cell, using the QEF matrices
