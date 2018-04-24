@@ -21,17 +21,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <memory>
 #include <set>
 
+#include "libfive/render/ipow.hpp"
+
 namespace Kernel {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/*  Compile-time power */
-static constexpr unsigned _pow(unsigned P, unsigned N)
-{ return (N == 0) ? 1 : P * _pow(P, N - 1); }
-
 /*  Returns the number of vertices in an N-dimensional cube */
 static constexpr int _verts(unsigned N)
-{ return _pow(2, N); }
+{ return ipow(2, N); }
 
 /*  Returns the number of edges in an N-dimensional cube */
 static constexpr int _edges(unsigned N)
@@ -54,11 +52,11 @@ using PatchEdges = std::array<Edge, _edges(N)>;
 /*  Represents a full set of patches
  *  Use an empty patch (-1) to terminate */
 template <unsigned N>
-using Patches = std::array<PatchEdges<N>, _pow(2, N - 1)>;
+using Patches = std::array<PatchEdges<N>, ipow(2, N - 1)>;
 
 /*  Represents a full Marching cubes or squares table  */
 template <unsigned N>
-using VertsToPatches = std::array<Patches<N>, _pow(2, _verts(N))>;
+using VertsToPatches = std::array<Patches<N>, ipow(2, _verts(N))>;
 
 // VertsToEdge is indexed by [a][b] where a and b are vertices, and
 // returns an edge index (0 to 2*_edges(N) - 1)
@@ -71,7 +69,7 @@ using VertsToEdge = std::array<std::array<int, _verts(N)>, _verts(N)>;
 // 0-1 for 2D case)
 template <unsigned N>
 using EdgeToPatch = std::array<std::array<int, _edges(N) * 2>,
-                               _pow(2, _verts(N))>;
+                               ipow(2, _verts(N))>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
