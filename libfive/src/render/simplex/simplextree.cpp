@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/render/simplex/simplextree.hpp"
 #include "libfive/render/simplex/ternary.hpp"
+#include "libfive/render/simplex/qef.hpp"
 
 namespace Kernel {
 
@@ -58,6 +59,8 @@ SimplexTree<N>::SimplexTree(
         // Find the number of corners in this simplex
         const unsigned rows = std::accumulate(t.begin(), t.end(), 1,
                 [](unsigned prod, int i) { return prod * (i ? 1 : 2); });
+        const unsigned cols = std::accumulate(t.begin(), t.end(), 0,
+                [](unsigned sum, int i) { return sum + (i ? 0 : 1); });
 
         //  The A matrix is of the form
         //  [n1x, n1y, n1z, -1]
@@ -65,7 +68,7 @@ SimplexTree<N>::SimplexTree(
         //  [n3x, n3y, n3z, -1]
         //  ...
         //  (with one row for each sampled point's normal)
-        Eigen::Matrix<double, Eigen::Dynamic, N + 1> A(rows, N + 1);
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> A(rows, cols + 1);
 
         //  The b matrix is of the form
         //  [(p1 - center, w1) . (n1, -1)]
@@ -83,13 +86,22 @@ SimplexTree<N>::SimplexTree(
         {
             if (isInSimplex(j, t))
             {
-                A.row(r) << ds.col(j).template head<N>()
-                                     .template cast<double>()
-                                     .transpose(),
-                            -1;
+                Eigen::Matrix<double, Eigen::Dynamic, 1> p;
+                unsigned c = 0;
+                for (unsigned a=0; a < N; ++a)
+                {
+                    if (t[a] == 0)
+                    {
+                        A(r, c) = ds(a, j);
+                        p(c) = region.corner(j)(a);
 
-                Eigen::Matrix<double, N + 1, 1> p;
-                p << region.corner(j), ds(3, j);
+                        c++;
+                    }
+                }
+                assert(c == cols);
+                A(r, c) = -1;
+
+                p(c) = ds(3, j);
                 b(r) = A.row(r) * p;
 
                 r++;
@@ -97,7 +109,33 @@ SimplexTree<N>::SimplexTree(
         }
         assert(r == rows);
 
-        // Solve QEF here, storing the result in vertices
+        // Solve QEF here
+        const auto result = solveQEF(A, b);
+
+        // Store the error
+        errors[i] = (A * result - b).squaredNorm();;
+
+        // Unpack the QEF solution into the vertex array
+        unsigned c = 0;
+        bool bounded = true;
+        for (unsigned a=0; a < N; ++a)
+        {
+            if (t[a] == 0)
+            {
+                vertices(r, a) = result(c++);
+                bounded &= (vertices(r, a) > region.lower(a));
+                bounded &= (vertices(r, a) < region.upper(a));
+            }
+            else if (t[a] == -1)
+            {
+                vertices(r, a) = region.lower(a);
+            }
+            else if (t[a] == 1)
+            {
+                vertices(r, a) = region.upper(a);
+            }
+        }
+        // Leave vertices(r, N) set to zero, because we'll refine it below
 
         // If the result is outside the boundary, loop from 0 to j,
         // picking out sub-simplices and using the one with minimum error
