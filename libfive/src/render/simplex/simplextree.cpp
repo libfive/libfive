@@ -50,8 +50,6 @@ SimplexTree<N>::SimplexTree(
 
     // Total QEF error (used to decide whether to recurse
     std::array<double, ipow(3, N)> errors;
-    std::array<bool, ipow(3, N)> done;
-    std::fill(done.begin(), done.end(), false);
 
     for (unsigned i=0; i < vertices.cols(); ++i)
     {
@@ -98,12 +96,30 @@ SimplexTree<N>::SimplexTree(
             }
         }
         assert(r == rows);
+
+        // Solve QEF here, storing the result in vertices
+
+        // If the result is outside the boundary, loop from 0 to j,
+        // picking out sub-simplices and using the one with minimum error
     }
 
+    // If the errors are too large, then recurse here
     if (std::accumulate(errors.begin(), errors.end(), 0.0) > max_err)
     {
         recurse(eval, region, min_feature, max_err);
+        return;
     }
+
+    // Otherwise, do a second evaluation pass to refine the values of F(p)
+    // at the simplex corners, turning them from estimates to true evaluations.
+    for (unsigned i=0; i < children.size(); ++i)
+    {
+        Eigen::Vector3f p;
+        p << vertices.row(i).template head<N>().template cast<float>(),
+             Eigen::Array<float, 3 - N, 1>::Zero();
+        eval->set(p, i);
+    }
+    vertices.row(N) = eval->values(children.size()).template cast<double>();
 }
 
 template <unsigned N>
