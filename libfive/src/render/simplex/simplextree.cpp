@@ -122,23 +122,41 @@ SimplexTree<N>::SimplexTree(
         {
             if (t[a] == 0)
             {
-                vertices(r, a) = result(c++);
-                bounded &= (vertices(r, a) > region.lower(a));
-                bounded &= (vertices(r, a) < region.upper(a));
+                vertices(a, i) = result(c++);
+                bounded &= (vertices(a, i) > region.lower(a));
+                bounded &= (vertices(a, i) < region.upper(a));
             }
             else if (t[a] == -1)
             {
-                vertices(r, a) = region.lower(a);
+                vertices(a, i) = region.lower(a);
             }
             else if (t[a] == 1)
             {
-                vertices(r, a) = region.upper(a);
+                vertices(a, i) = region.upper(a);
             }
         }
         // Leave vertices(r, N) set to zero, because we'll refine it below
 
-        // If the result is outside the boundary, loop from 0 to j,
+        // If the result is outside the boundary, loop from 0 to i,
         // picking out sub-simplices and using the one with minimum error
+        if (!bounded)
+        {
+            double best_error = std::numeric_limits<double>::infinity();
+            for (unsigned j=0; j < i; ++j)
+            {
+                const auto t_ = ternary<N>(j);
+                bool is_sub_simplex = true;
+                for (unsigned a=0; a < N; ++a)
+                {
+                    is_sub_simplex &= !t[a] || (t[a] == t_[a]);
+                }
+                if (is_sub_simplex && errors[j] < best_error)
+                {
+                    vertices.col(i) = vertices.col(j);
+                    best_error = errors[j];
+                }
+            }
+        }
     }
 
     // If the errors are too large, then recurse here
