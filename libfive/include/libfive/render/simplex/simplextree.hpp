@@ -55,6 +55,12 @@ protected:
      */
     SimplexTree(DerivArrayEvaluator* eval, Simplex<N, (1 << N) - 1> region,
                 double min_feature, double max_err);
+
+    /*
+     *  Populates the children array
+     */
+    void recurse(DerivArrayEvaluator* eval, Simplex<N, (1 << N) - 1> region,
+                 double min_feature, double max_err);
 };
 
 extern template class SimplexTree<2>;
