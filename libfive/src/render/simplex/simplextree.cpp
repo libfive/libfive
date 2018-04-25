@@ -83,20 +83,7 @@ SimplexTree<N>::SimplexTree(
         unsigned r=0;
         for (unsigned j=0; j < children.size(); ++j)
         {
-            // Check if this corner is in the simplex
-            bool included = true;
-            for (unsigned a=0; a < t.size(); ++a)
-            {
-                switch (t[a])
-                {
-                    case  0:    break;
-                    case -1:    included &= !(j & (1 << a)); break;
-                    case  1:    included &=  (j & (1 << a)); break;
-                    default:    assert(false); break;
-                }
-            }
-
-            if (included)
+            if (isInSimplex(j, t))
             {
                 A.row(r) << ds.col(j).template head<N>()
                                      .template cast<double>()
@@ -130,6 +117,26 @@ void SimplexTree<N>::recurse(
         children[i].reset(
                 new SimplexTree<N>(eval, rs[i], min_feature, max_err));
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+bool SimplexTree<N>::isInSimplex(unsigned corner,
+                                 const std::array<int, N> simplex)
+{
+    bool included = true;
+    for (unsigned a=0; a < simplex.size(); ++a)
+    {
+        switch (simplex[a])
+        {
+            case  0:    break;
+            case -1:    included &= !(corner & (1 << a)); break;
+            case  1:    included &=  (corner & (1 << a)); break;
+            default:    assert(false); break;
+        }
+    }
+    return included;
 }
 
 }   // namespace Kernel

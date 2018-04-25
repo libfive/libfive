@@ -61,6 +61,12 @@ protected:
      */
     void recurse(DerivArrayEvaluator* eval, Simplex<N, (1 << N) - 1> region,
                  double min_feature, double max_err);
+
+    /*
+     *  Checks whether the given corner is in a particular simplex,
+     *  which is represented as a ternary array.
+     */
+    static bool isInSimplex(unsigned corner, const std::array<int, N> simplex);
 };
 
 extern template class SimplexTree<2>;
