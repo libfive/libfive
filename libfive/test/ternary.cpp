@@ -1,6 +1,6 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2018  Matt Keeter
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -16,28 +16,42 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#pragma once
+#include "catch.hpp"
 
-#include <array>
+#include "libfive/render/simplex/ternary.hpp"
 
-namespace Kernel {
+using namespace Kernel;
 
-/*  Converts a ternary index into an array of -1/0/+1 values */
-template <unsigned N>
-std::array<int, N> ternary(unsigned i)
+TEST_CASE("ternary<3>")
 {
-    std::array<int, N> out;
-    for (unsigned j=0; j < N; ++j)
-    {
-        switch (i % 3)
-        {
-            case 0: out[j] = -1; break;
-            case 1: out[j] =  1; break;
-            case 2: out[j] =  0; break;
-        }
-        i /= 3;
-    }
-    return out;
+    std::array<int, 3> i;
+
+    i = {{-1, -1, -1}};
+    REQUIRE(ternary<3>(0) == i);
+
+    i = {{1, -1, -1}};
+    REQUIRE(ternary<3>(1) == i);
+
+    i = {{0, -1, -1}};
+    REQUIRE(ternary<3>(2) == i);
+
+    i = {{0, 0, 0}};
+    REQUIRE(ternary<3>(26) == i);
 }
 
+TEST_CASE("ternary<2>")
+{
+    std::array<int, 2> i;
+
+    i = {{-1, -1}};
+    REQUIRE(ternary<2>(0) == i);
+
+    i = {{1, -1}};
+    REQUIRE(ternary<2>(1) == i);
+
+    i = {{0, -1}};
+    REQUIRE(ternary<2>(2) == i);
+
+    i = {{0, 0}};
+    REQUIRE(ternary<2>(8) == i);
 }

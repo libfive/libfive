@@ -21,6 +21,7 @@ set(SRCS main.cpp
     region.cpp
     solver.cpp
     tape.cpp
+    ternary.cpp
     transformed_oracle.cpp
     tree.cpp
     voxels.cpp
