@@ -90,7 +90,7 @@ SimplexTree<N>::SimplexTree(
                     if (t[a] == 0)
                     {
                         A(r, c) = ds(a, j);
-                        p(c) = region.corner(j)(a);
+                        p(c) = region.corner(j)(a) - region.center()(a);
 
                         c++;
                     }
@@ -120,9 +120,10 @@ SimplexTree<N>::SimplexTree(
         {
             if (t[a] == 0)
             {
-                vertices(a, i) = result(c++);
+                vertices(a, i) = result(c) + region.center()(a);
                 bounded &= (vertices(a, i) > region.lower(a));
                 bounded &= (vertices(a, i) < region.upper(a));
+                c++;
             }
             else if (t[a] == -1)
             {
