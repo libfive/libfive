@@ -55,12 +55,6 @@ public:
     SimplexTree(DerivArrayEvaluator* eval, Region<N> region,
                 double min_feature, double max_err);
 
-    /*
-     *  Checks whether the given corner is in a particular simplex,
-     *  which is represented as a ternary array.
-     */
-    static bool isInSimplex(unsigned corner, const std::array<int, N> simplex);
-
 protected:
     /*
      *  Populates the children array

@@ -42,9 +42,3 @@ TEST_CASE("SimplexTree<2>::SimplexTree")
                             0.5, 0.1);
     REQUIRE(true);
 }
-
-TEST_CASE("SimplexTree::isInSimplex")
-{
-    std::array<int, 3> simplex = {{-1, 1, -1}};
-    REQUIRE(SimplexTree<3>::isInSimplex(2, simplex));
-}

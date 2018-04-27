@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <numeric>
 
 #include "libfive/render/simplex/simplextree.hpp"
-#include "libfive/render/simplex/ternary.hpp"
+#include "libfive/render/simplex/simplex.hpp"
 
 namespace Kernel {
 
@@ -53,13 +53,11 @@ SimplexTree<N>::SimplexTree(
 
     for (unsigned i=0; i < vertices.cols(); ++i)
     {
-        const auto t = ternary<N>(i);
+        const auto t = Simplex<N>(i);
 
-        // Find the number of corners in this simplex
-        const unsigned rows = std::accumulate(t.begin(), t.end(), 1,
-                [](unsigned prod, int i) { return prod * (i ? 1 : 2); });
-        const unsigned cols = std::accumulate(t.begin(), t.end(), 0,
-                [](unsigned sum, int i) { return sum + (i ? 0 : 1); });
+        // Find the shape of the A matrix
+        const unsigned cols = t.freeAxes();
+        const unsigned rows = pow(2, cols);
 
         //  The A matrix is of the form
         //  [n1x, n1y, n1z, -1]
@@ -83,7 +81,7 @@ SimplexTree<N>::SimplexTree(
         unsigned r=0;
         for (unsigned j=0; j < children.size(); ++j)
         {
-            if (isInSimplex(j, t))
+            if (t.containsCorner(j))
             {
                 Eigen::Matrix<double, Eigen::Dynamic, 1> p(cols + 1, 1);
                 unsigned c = 0;
@@ -144,13 +142,7 @@ SimplexTree<N>::SimplexTree(
             double best_error = std::numeric_limits<double>::infinity();
             for (unsigned j=0; j < i; ++j)
             {
-                const auto t_ = ternary<N>(j);
-                bool is_sub_simplex = true;
-                for (unsigned a=0; a < N; ++a)
-                {
-                    is_sub_simplex &= !t[a] || (t[a] == t_[a]);
-                }
-                if (is_sub_simplex && errors[j] < best_error)
+                if (t.containsSimplex(j) && errors[j] < best_error)
                 {
                     vertices.col(i) = vertices.col(j);
                     best_error = errors[j];
@@ -190,26 +182,6 @@ void SimplexTree<N>::recurse(
         children[i].reset(
                 new SimplexTree<N>(eval, rs[i], min_feature, max_err));
     }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <unsigned N>
-bool SimplexTree<N>::isInSimplex(unsigned corner,
-                                 const std::array<int, N> simplex)
-{
-    bool included = true;
-    for (unsigned a=0; a < simplex.size(); ++a)
-    {
-        switch (simplex[a])
-        {
-            case  0:    break;
-            case -1:    included &= (corner & (1 << a)) == 0; break;
-            case  1:    included &= (corner & (1 << a)) != 0; break;
-            default:    assert(false); break;
-        }
-    }
-    return included;
 }
 
 }   // namespace Kernel

@@ -20,9 +20,9 @@ set(SRCS main.cpp
     oracle.cpp
     region.cpp
     simplextree.cpp
+    simplex.cpp
     solver.cpp
     tape.cpp
-    ternary.cpp
     transformed_oracle.cpp
     tree.cpp
     voxels.cpp

@@ -1,6 +1,6 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2018  Matt Keeter
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -16,28 +16,24 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#pragma once
+#include "catch.hpp"
 
-#include <array>
+#include "libfive/render/simplex/simplex.hpp"
+#include "util/shapes.hpp"
 
-namespace Kernel {
+using namespace Kernel;
 
-/*  Converts a ternary index into an array of -1/0/+1 values */
-template <unsigned N>
-std::array<int, N> ternary(unsigned i)
+TEST_CASE("Simplex::containsCorner")
 {
-    std::array<int, N> out;
-    for (unsigned j=0; j < N; ++j)
-    {
-        switch (i % 3)
-        {
-            case 0: out[j] = -1; break;
-            case 1: out[j] =  1; break;
-            case 2: out[j] =  0; break;
-        }
-        i /= 3;
-    }
-    return out;
+    Simplex<3> s(2);
+    REQUIRE(s.containsCorner(0));
+    REQUIRE(s.containsCorner(1));
 }
 
+TEST_CASE("Simplex<3>::containsSimplex")
+{
+    Simplex<3> s(2);
+    REQUIRE(s.containsSimplex(0));
+    REQUIRE(s.containsSimplex(1));
+    REQUIRE(s.containsSimplex(2));
 }
