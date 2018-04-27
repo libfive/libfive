@@ -18,6 +18,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "catch.hpp"
 
+#include <fstream>
+
 #include "libfive/render/simplex/simplextree.hpp"
 #include "util/shapes.hpp"
 
@@ -40,5 +42,92 @@ TEST_CASE("SimplexTree<2>::SimplexTree")
 
     auto t = SimplexTree<2>(&eval, Region<2>({-2, -2}, {2, 2}),
                             0.5, 0.1);
+}
+
+#include "libfive/render/discrete/heightmap.hpp"
+#include "libfive/render/simplex/simplex.hpp"
+TEST_CASE("SimplexTree<2>: SVG debugging")
+{
+    auto s = move(menger(0), {0, 0, -1.4});
+    auto eval = DerivArrayEvaluator(std::shared_ptr<Tape>(new Tape(s)));
+    Region<2> r({-2, -2}, {2, 2});
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.01);
+
+    std::ofstream file;
+    file.open("out.svg", std::ios::out);
+    file << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"\n"
+      " width=\"" << r.upper.x() - r.lower.x() <<
+    "\" height=\"" << r.upper.y() - r.lower.y() <<
+    "\" id=\"libfive\">\n";
+    file << "<image xlink:href=\"out.png\" x=\"0\" y=\"0\" "
+        << " width=\"" << r.upper.x() - r.lower.x()
+        << "\" height=\"" << r.upper.y() - r.lower.y() << " />\n";
+
+    std::list<const SimplexTree<2>*> todo = {&t};
+    while (todo.size())
+    {
+        auto next = todo.front();
+        todo.pop_front();
+        if (next->children[0])
+        {
+            for (auto& n : next->children)
+            {
+                todo.push_back(n.get());
+            }
+        }
+        else
+        {
+            for (unsigned i=0; i < next->vertices.cols(); ++i)
+            {
+                auto v = next->vertices.col(i).eval();
+                std::string fill;
+                switch (Simplex<2>(i).freeAxes())
+                {
+                    case 0: fill = "red"; break;
+                    case 1: fill = "yellow"; break;
+                    case 2: fill = "green"; break;
+                    default: fill = "white"; break;
+                }
+                file << "<circle cx=\"" << v.x() - r.lower.x() << "\" "
+                     << "cy=\"" << r.upper.y() - v.y() << "\" "
+                     << "r=\"0.05\" stroke=\"black\" stroke-width=\"0.001\" "
+                     << "fill=\"" << fill << "\" />\n";
+            }
+
+            for (unsigned i : {0, 1, 4, 3})
+            {
+                auto v = next->vertices.col(i).eval();
+                if (i == 0)
+                {
+                    file << "<path d=\"M ";
+                }
+                else
+                {
+                    file << "L ";
+                }
+                file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
+            }
+            file << "Z\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.01\"/>\n";
+
+            auto center = next->vertices.col(8);
+            for (unsigned i : {0, 1, 4, 3})
+            {
+                auto v = next->vertices.col(i).eval();
+                file << "<path d=\"M ";
+                file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
+                file << center.x() - r.lower.x() << " " << r.upper.y() - center.y() << " ";
+                file << "\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.01\"/>\n";
+            }
+        }
+    }
+    file << "</svg>";
+
+
+    Voxels v(r.lower3().template cast<float>(),
+             r.upper3().template cast<float>(), {50, 50, 0});
+    std::atomic_bool abort(false);
+    Heightmap::render(s, v, abort)->savePNG("out.png");
+
     REQUIRE(true);
 }
