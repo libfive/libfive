@@ -124,6 +124,16 @@ public:
         return out;
     }
 
+    Eigen::Array<double, N, 1> corner(unsigned i) const
+    {
+        Eigen::Array<double, N, 1> out;
+        for (unsigned j=0; j < N; ++j)
+        {
+            out(j) = (i & (1 << j)) ? upper(j) : lower(j);
+        }
+        return out;
+    }
+
     /*  Lower and upper bounds for the region  */
     Pt lower, upper;
 

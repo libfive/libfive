@@ -21,14 +21,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/render/simplex/simplextree.hpp"
 #include "libfive/render/simplex/ternary.hpp"
-#include "libfive/render/simplex/qef.hpp"
 
 namespace Kernel {
 
 template <unsigned N>
 SimplexTree<N>::SimplexTree(
         DerivArrayEvaluator* eval,
-        Simplex<N, (1 << N) - 1> region,
+        Region<N> region,
         double min_feature, double max_err)
 {
     if (((region.upper - region.lower) > min_feature).any())
@@ -182,7 +181,7 @@ SimplexTree<N>::SimplexTree(
 
 template <unsigned N>
 void SimplexTree<N>::recurse(
-        DerivArrayEvaluator* eval, Simplex<N, (1 << N) - 1> region,
+        DerivArrayEvaluator* eval, Region<N> region,
         double min_feature, double max_err)
 {
     auto rs = region.subdivide();

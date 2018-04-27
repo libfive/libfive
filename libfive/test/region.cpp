@@ -130,3 +130,12 @@ TEST_CASE("Region<3>::subdivide")
         }
     }
 }
+
+TEST_CASE("Region<3>::corner")
+{
+    Region<3> r({-1, -1, -1}, {1, 1, 1});
+    REQUIRE((r.corner(0) == Eigen::Array<double, 3, 1>(-1, -1, -1)).all());
+    REQUIRE((r.corner(1) == Eigen::Array<double, 3, 1>(1, -1, -1)).all());
+    REQUIRE((r.corner(2) == Eigen::Array<double, 3, 1>(-1, 1, -1)).all());
+    REQUIRE((r.corner(7) == Eigen::Array<double, 3, 1>(1, 1, 1)).all());
+}

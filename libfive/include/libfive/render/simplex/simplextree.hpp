@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <Eigen/Eigen>
 
 #include "libfive/render/ipow.hpp"
-#include "libfive/render/simplex/simplex.hpp"
+#include "libfive/render/brep/region.hpp"
 
 #include "libfive/eval/eval_deriv_array.hpp"
 
@@ -52,7 +52,7 @@ public:
      *  If multiple evaluators are provided, then tree construction will
      *  be distributed across multiple threads.
      */
-    SimplexTree(DerivArrayEvaluator* eval, Simplex<N, (1 << N) - 1> region,
+    SimplexTree(DerivArrayEvaluator* eval, Region<N> region,
                 double min_feature, double max_err);
 
     /*
@@ -65,7 +65,7 @@ protected:
     /*
      *  Populates the children array
      */
-    void recurse(DerivArrayEvaluator* eval, Simplex<N, (1 << N) - 1> region,
+    void recurse(DerivArrayEvaluator* eval, Region<N> region,
                  double min_feature, double max_err);
 };
 

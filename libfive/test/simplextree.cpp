@@ -28,7 +28,7 @@ TEST_CASE("SimplexTree<3>::SimplexTree")
     auto s = sphere(1);
     auto eval = DerivArrayEvaluator(std::shared_ptr<Tape>(new Tape(s)));
 
-    auto t = SimplexTree<3>(&eval, Simplex<3, 7>({-2, -2, -2}, {2, 2, 2}),
+    auto t = SimplexTree<3>(&eval, Region<3>({-2, -2, -2}, {2, 2, 2}),
                             0.5, 0.1);
     REQUIRE(true);
 }
@@ -38,7 +38,7 @@ TEST_CASE("SimplexTree<2>::SimplexTree")
     auto s = circle(1);
     auto eval = DerivArrayEvaluator(std::shared_ptr<Tape>(new Tape(s)));
 
-    auto t = SimplexTree<2>(&eval, Simplex<2, 3>({-2, -2}, {2, 2}),
+    auto t = SimplexTree<2>(&eval, Region<2>({-2, -2}, {2, 2}),
                             0.5, 0.1);
     REQUIRE(true);
 }
