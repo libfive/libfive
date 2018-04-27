@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <fstream>
 
 #include "libfive/render/simplex/simplextree.hpp"
+#include "libfive/render/simplex/simplex.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;
@@ -44,11 +45,70 @@ TEST_CASE("SimplexTree<2>::SimplexTree")
                             0.5, 0.1);
 }
 
+template <unsigned N>
+std::list<const SimplexTree<N>*> leafs(SimplexTree<N>* root)
+{
+    std::list<const SimplexTree<N>*> todo = {root};
+    std::list<const SimplexTree<N>*> out;
+    while (todo.size())
+    {
+        auto next = todo.front();
+        todo.pop_front();
+        if (next->children[0])
+        {
+            for (auto& n : next->children)
+            {
+                todo.push_back(n.get());
+            }
+        }
+        else
+        {
+            out.push_back(next);
+        }
+    }
+    return out;
+}
+
+TEST_CASE("SimplexTree<2>: Vertex placement")
+{
+    // This shape has no sharp features in the distance field, so every vertex
+    // should be at the center of its respective simplex.
+    auto s = Tree::X();
+    auto eval = DerivArrayEvaluator(std::shared_ptr<Tape>(new Tape(s)));
+    Region<2> r({-2, -2}, {2, 2});
+
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.01);
+
+    for (auto t : leafs(&t))
+    {
+        for (unsigned i=0; i < t->vertices.cols(); ++i)
+        {
+            Eigen::Vector2d center = Eigen::Vector2d::Zero();
+            int count = 0;
+            for (auto c : {0, 1, 3, 4})
+            {
+                if (Simplex<2>(i).containsSimplex(Simplex<2>(c)))
+                {
+                    center += t->vertices.col(c).head<2>();
+                    count++;
+                }
+            }
+            assert(count);
+            center /= count;
+
+            auto v = t->vertices.col(i).head<2>().eval();
+            auto err = v - center;
+            CAPTURE(v.transpose());
+            CAPTURE(center.transpose());
+            REQUIRE(err.norm() < 1e-6);
+        }
+    }
+}
+
 #include "libfive/render/discrete/heightmap.hpp"
-#include "libfive/render/simplex/simplex.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
-    auto s = move(menger(0), {0, 0, -1.4});
+    auto s = Tree::X();//move(menger(1), {0, 0, -1.4});
     auto eval = DerivArrayEvaluator(std::shared_ptr<Tape>(new Tape(s)));
     Region<2> r({-2, -2}, {2, 2});
     auto t = SimplexTree<2>(&eval, r, 0.5, 0.01);
@@ -65,60 +125,48 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
         << "\" height=\"" << r.upper.y() - r.lower.y() << " />\n";
 
     std::list<const SimplexTree<2>*> todo = {&t};
-    while (todo.size())
+    for (auto next : leafs(&t))
     {
-        auto next = todo.front();
-        todo.pop_front();
-        if (next->children[0])
+        for (unsigned i=0; i < next->vertices.cols(); ++i)
         {
-            for (auto& n : next->children)
+            auto v = next->vertices.col(i).eval();
+            std::string fill;
+            switch (Simplex<2>(i).freeAxes())
             {
-                todo.push_back(n.get());
+                case 0: fill = "red"; break;
+                case 1: fill = "yellow"; break;
+                case 2: fill = "green"; break;
+                default: fill = "white"; break;
             }
+            file << "<circle cx=\"" << v.x() - r.lower.x() << "\" "
+                 << "cy=\"" << r.upper.y() - v.y() << "\" "
+                 << "r=\"0.05\" stroke=\"black\" stroke-width=\"0.001\" "
+                 << "fill=\"" << fill << "\" />\n";
         }
-        else
+
+        for (unsigned i : {0, 1, 4, 3})
         {
-            for (unsigned i=0; i < next->vertices.cols(); ++i)
+            auto v = next->vertices.col(i).eval();
+            if (i == 0)
             {
-                auto v = next->vertices.col(i).eval();
-                std::string fill;
-                switch (Simplex<2>(i).freeAxes())
-                {
-                    case 0: fill = "red"; break;
-                    case 1: fill = "yellow"; break;
-                    case 2: fill = "green"; break;
-                    default: fill = "white"; break;
-                }
-                file << "<circle cx=\"" << v.x() - r.lower.x() << "\" "
-                     << "cy=\"" << r.upper.y() - v.y() << "\" "
-                     << "r=\"0.05\" stroke=\"black\" stroke-width=\"0.001\" "
-                     << "fill=\"" << fill << "\" />\n";
-            }
-
-            for (unsigned i : {0, 1, 4, 3})
-            {
-                auto v = next->vertices.col(i).eval();
-                if (i == 0)
-                {
-                    file << "<path d=\"M ";
-                }
-                else
-                {
-                    file << "L ";
-                }
-                file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
-            }
-            file << "Z\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.01\"/>\n";
-
-            auto center = next->vertices.col(8);
-            for (unsigned i : {0, 1, 4, 3})
-            {
-                auto v = next->vertices.col(i).eval();
                 file << "<path d=\"M ";
-                file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
-                file << center.x() - r.lower.x() << " " << r.upper.y() - center.y() << " ";
-                file << "\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.01\"/>\n";
             }
+            else
+            {
+                file << "L ";
+            }
+            file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
+        }
+        file << "Z\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.01\"/>\n";
+
+        auto center = next->vertices.col(8);
+        for (unsigned i : {0, 1, 4, 3})
+        {
+            auto v = next->vertices.col(i).eval();
+            file << "<path d=\"M ";
+            file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
+            file << center.x() - r.lower.x() << " " << r.upper.y() - center.y() << " ";
+            file << "\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.01\"/>\n";
         }
     }
     file << "</svg>";
