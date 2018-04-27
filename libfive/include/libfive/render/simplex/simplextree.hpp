@@ -41,7 +41,6 @@ public:
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-protected:
     /*
      *  Private constructor for SimplexTree
      *
@@ -57,16 +56,17 @@ protected:
                 double min_feature, double max_err);
 
     /*
-     *  Populates the children array
-     */
-    void recurse(DerivArrayEvaluator* eval, Simplex<N, (1 << N) - 1> region,
-                 double min_feature, double max_err);
-
-    /*
      *  Checks whether the given corner is in a particular simplex,
      *  which is represented as a ternary array.
      */
     static bool isInSimplex(unsigned corner, const std::array<int, N> simplex);
+
+protected:
+    /*
+     *  Populates the children array
+     */
+    void recurse(DerivArrayEvaluator* eval, Simplex<N, (1 << N) - 1> region,
+                 double min_feature, double max_err);
 };
 
 extern template class SimplexTree<2>;

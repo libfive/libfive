@@ -19,6 +19,7 @@ set(SRCS main.cpp
     neighbors.cpp
     oracle.cpp
     region.cpp
+    simplextree.cpp
     solver.cpp
     tape.cpp
     ternary.cpp

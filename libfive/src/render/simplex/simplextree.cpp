@@ -86,7 +86,7 @@ SimplexTree<N>::SimplexTree(
         {
             if (isInSimplex(j, t))
             {
-                Eigen::Matrix<double, Eigen::Dynamic, 1> p;
+                Eigen::Matrix<double, Eigen::Dynamic, 1> p(cols + 1, 1);
                 unsigned c = 0;
                 for (unsigned a=0; a < N; ++a)
                 {
@@ -107,13 +107,15 @@ SimplexTree<N>::SimplexTree(
                 r++;
             }
         }
+        std::cout << "i: " << i << "\trows: " << rows << "\tr: " << r << "\n";
         assert(r == rows);
 
         // Solve QEF here
-        const auto result = solveQEF(A, b);
+        const Eigen::Matrix<double, Eigen::Dynamic, 1> result =
+            A.colPivHouseholderQr().solve(b);
 
         // Store the error
-        errors[i] = (A * result - b).squaredNorm();;
+        errors[i] = (A * result - b).squaredNorm();
 
         // Unpack the QEF solution into the vertex array
         unsigned c = 0;
@@ -168,14 +170,15 @@ SimplexTree<N>::SimplexTree(
 
     // Otherwise, do a second evaluation pass to refine the values of F(p)
     // at the simplex corners, turning them from estimates to true evaluations.
-    for (unsigned i=0; i < children.size(); ++i)
+    for (unsigned i=0; i < vertices.cols(); ++i)
     {
         Eigen::Vector3f p;
-        p << vertices.row(i).template head<N>().template cast<float>(),
+        p << vertices.col(i).template head<N>().template cast<float>(),
              Eigen::Array<float, 3 - N, 1>::Zero();
         eval->set(p, i);
     }
-    vertices.row(N) = eval->values(children.size()).template cast<double>();
+
+    vertices.row(N) = eval->values(vertices.cols()).template cast<double>();
 }
 
 template <unsigned N>
@@ -203,8 +206,8 @@ bool SimplexTree<N>::isInSimplex(unsigned corner,
         switch (simplex[a])
         {
             case  0:    break;
-            case -1:    included &= !(corner & (1 << a)); break;
-            case  1:    included &=  (corner & (1 << a)); break;
+            case -1:    included &= (corner & (1 << a)) == 0; break;
+            case  1:    included &= (corner & (1 << a)) != 0; break;
             default:    assert(false); break;
         }
     }
