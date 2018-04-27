@@ -107,7 +107,6 @@ SimplexTree<N>::SimplexTree(
                 r++;
             }
         }
-        std::cout << "i: " << i << "\trows: " << rows << "\tr: " << r << "\n";
         assert(r == rows);
 
         // Solve QEF here
