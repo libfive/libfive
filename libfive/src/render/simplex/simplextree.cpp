@@ -68,14 +68,22 @@ SimplexTree<N>::SimplexTree(
         Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> A(rows, cols + 1);
 
         //  The b matrix is of the form
-        //  [(p1 - center, w1) . (n1, -1)]
-        //  [(p2 - center, w2) . (n2, -1)]
-        //  [(p3 - center, w3) . (n3, -1)]
+        //  [(p1 - center, w1 - w_mean) . (n1, -1)]
+        //  [(p2 - center, w2 - w_mean) . (n2, -1)]
+        //  [(p3 - center, w3 - w_mean) . (n3, -1)]
         //  ...
         //  (with one row for each sampled point)
         Eigen::Matrix<double, Eigen::Dynamic, 1> b(rows, 1);
 
-        // Write the appropriate corner values to the A and B matrices.
+        //  In order the construct the b matrix, we first construct the matrix
+        //  [p1, w1]
+        //  [p2, w2]
+        //  [p3, w3]
+        //  ...
+        //  then take the average and bias it before multiplying product with A
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b_(rows, cols + 1);
+
+        // Write the appropriate corner values to the A and b_ matrices.
         // We loop over every corner, filter which ones are in this particular
         // simplex, and only store their values.
         unsigned r=0;
@@ -83,28 +91,30 @@ SimplexTree<N>::SimplexTree(
         {
             if (t.containsCorner(j))
             {
-                Eigen::Matrix<double, Eigen::Dynamic, 1> p(cols + 1, 1);
                 unsigned c = 0;
                 for (unsigned a=0; a < N; ++a)
                 {
                     if (t[a] == 0)
                     {
                         A(r, c) = ds(a, j);
-                        p(c) = region.corner(j)(a) - region.center()(a);
-
+                        b_(r, c) = region.corner(j)(a);
                         c++;
                     }
                 }
                 assert(c == cols);
                 A(r, c) = -1;
-
-                p(c) = ds(3, j);
-                b(r) = A.row(r) * p;
-
+                b_(r, c) = ds(3, j);
                 r++;
             }
         }
         assert(r == rows);
+
+        Eigen::Matrix<double, Eigen::Dynamic, 1> center(cols + 1, 1);
+        center = b_.colwise().mean();
+        b_.rowwise() -= center.transpose();
+
+        // Construct the b matrix as discussed above
+        b = (b_.array() * A.array()).matrix().rowwise().sum();
 
         // Solve QEF here
         const Eigen::Matrix<double, Eigen::Dynamic, 1> result =
@@ -120,7 +130,7 @@ SimplexTree<N>::SimplexTree(
         {
             if (t[a] == 0)
             {
-                vertices(a, i) = result(c) + region.center()(a);
+                vertices(a, i) = result(c) + center(c);
                 bounded &= (vertices(a, i) > region.lower(a));
                 bounded &= (vertices(a, i) < region.upper(a));
                 c++;
