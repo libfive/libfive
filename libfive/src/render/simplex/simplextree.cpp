@@ -64,16 +64,28 @@ SimplexTree<N>::SimplexTree(
         //  [n2x, n2y, n2z, -1]
         //  [n3x, n3y, n3z, -1]
         //  ...
-        //  (with one row for each sampled point's normal)
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> A(rows, cols + 1);
+        //  [1, 0, 0, 0]
+        //  [0, 1, 0, 0]
+        //  [0, 0, 1, 0]
+        //
+        //  (with one row for each sampled point's normal, and one row
+        //  for each active axis in this simple).
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> A(rows + cols, cols + 1);
+        A.array() = 0.0;
 
         //  The b matrix is of the form
-        //  [(p1 - center, w1 - w_mean) . (n1, -1)]
-        //  [(p2 - center, w2 - w_mean) . (n2, -1)]
-        //  [(p3 - center, w3 - w_mean) . (n3, -1)]
+        //  [(p1, w1) . (n1, -1)]
+        //  [(p2, w2) . (n2, -1)]
+        //  [(p3, w3) . (n3, -1)]
         //  ...
-        //  (with one row for each sampled point)
-        Eigen::Matrix<double, Eigen::Dynamic, 1> b(rows, 1);
+        //  [x_center]
+        //  [y_center]
+        //  [z_center]
+        //
+        //  (with one row for each sampled point, and one row for each
+        //  active axis in this simplex)
+        Eigen::Matrix<double, Eigen::Dynamic, 1> b(rows + cols, 1);
+        b.array() = 0.0;
 
         //  In order the construct the b matrix, we first construct the matrix
         //  [p1, w1]
@@ -111,17 +123,29 @@ SimplexTree<N>::SimplexTree(
 
         Eigen::Matrix<double, Eigen::Dynamic, 1> center(cols + 1, 1);
         center = b_.colwise().mean();
-        b_.rowwise() -= center.transpose();
 
         // Construct the b matrix as discussed above
-        b = (b_.array() * A.array()).matrix().rowwise().sum();
+        b.topRows(rows) = (b_.array() * A.topRows(rows).array())
+            .matrix().rowwise().sum();
+
+        for (unsigned a=0; a < N; ++a)
+        {
+            if (t[a] == 0)
+            {
+                const unsigned c = r - rows;
+                A(r, c) = 1e-6;
+                b(r) = center(c) * 1e-6;
+                r++;
+            }
+        }
+        assert(r == rows + cols);
 
         // Solve QEF here
-        const Eigen::Matrix<double, Eigen::Dynamic, 1> result =
+        Eigen::Matrix<double, Eigen::Dynamic, 1> result =
             A.colPivHouseholderQr().solve(b);
 
         // Store the error
-        errors[i] = (A * result - b).squaredNorm();
+        errors[i] = (A.topRows(rows) * result - b.topRows(rows)).squaredNorm();
 
         // Unpack the QEF solution into the vertex array
         unsigned c = 0;
@@ -130,7 +154,7 @@ SimplexTree<N>::SimplexTree(
         {
             if (t[a] == 0)
             {
-                vertices(a, i) = result(c) + center(c);
+                vertices(a, i) = result(c); // + center(c);
                 bounded &= (vertices(a, i) > region.lower(a));
                 bounded &= (vertices(a, i) < region.upper(a));
                 c++;
