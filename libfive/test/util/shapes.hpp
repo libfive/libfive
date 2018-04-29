@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 Kernel::Tree rectangle(float xmin, float xmax, float ymin, float ymax,
                        Eigen::Matrix4f M=Eigen::Matrix4f::Identity());
 Kernel::Tree menger(int i);
+Kernel::Tree menger2d(int i);
 Kernel::Tree circle(float r);
 Kernel::Tree sphere(float r, Eigen::Vector3f center=Eigen::Vector3f::Zero());
 Kernel::Tree box(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper);

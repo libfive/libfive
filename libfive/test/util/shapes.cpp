@@ -97,6 +97,22 @@ Tree menger(int i)
     return max(cube, cutout);
 }
 
+Tree menger2d(int i)
+{
+    Eigen::Matrix3f m = Eigen::Matrix3f::Identity();
+    Eigen::Matrix4f M = Eigen::Matrix4f::Zero();
+    M.block<3,3>(0,0) = m;
+    Tree a = recurse(0, 0, 1, M, i);
+
+    auto square = max(
+                    max(-(Tree::X() + 1.5),
+                          Tree::X() - 1.5),
+                    max(-(Tree::Y() + 1.5),
+                          Tree::Y() - 1.5));
+
+    return max(square, -a);
+}
+
 Tree circle(float r)
 {
     return sqrt(square(Tree::X()) + square(Tree::Y())) - r;
