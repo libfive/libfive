@@ -82,6 +82,10 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
 
     for (auto t : leafs(&t))
     {
+        if (t->type != Interval::AMBIGUOUS)
+        {
+            continue;
+        }
         for (unsigned i=0; i < t->vertices.cols(); ++i)
         {
             Eigen::Vector2d center = Eigen::Vector2d::Zero();
@@ -109,10 +113,14 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
 #include "libfive/render/discrete/heightmap.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
-    auto s = move(circle(1), {0.0, 0.1, 0.0}); //move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});//move(menger(1), {0.1, 0.2, 1.4}); //
+    //auto s = move(circle(1), {0.0, 0.1, 0.0});
+    //auto s = move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
+    auto s = move(menger(0), {0.1, 0.2, 1.4});
+    //auto s = Tree::X();
+
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
-    auto t = SimplexTree<2>(&eval, r, 0.125, 1);
+    auto t = SimplexTree<2>(&eval, r, 0.5, 25);
 
     std::ofstream file;
     file.open("out.svg", std::ios::out);

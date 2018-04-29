@@ -26,6 +26,27 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 namespace Kernel {
 
 template <unsigned N>
+Eigen::VectorXd solveCenteredQEF(Eigen::MatrixXd A, Eigen::VectorXd b,
+                                 Eigen::VectorXd center, double weight)
+{
+    assert(A.cols() >= center.rows());
+    assert(A.rows() == b.rows());
+
+    Eigen::MatrixXd A_(A.rows() + center.rows(), A.cols());
+    A_.topRows(A.rows()) = A;
+    A_.bottomLeftCorner(center.rows(), center.rows()) =
+        Eigen::MatrixXd::Identity(center.rows(), center.rows()) * weight;
+    A_.bottomRightCorner(center.rows(), A.cols() - center.rows()).array() = 0.0;
+
+    Eigen::VectorXd b_(b.rows() + center.rows());
+    b_.topRows(b.rows()) = b;
+    b_.bottomRows(center.rows()) = center * weight;
+
+    // Solve QEF here
+    return A_.colPivHouseholderQr().solve(b_);
+}
+
+template <unsigned N>
 SimplexTree<N>::SimplexTree(
         XTreeEvaluator* eval,
         Region<N> region,
@@ -80,35 +101,22 @@ SimplexTree<N>::SimplexTree(
         //  [n2x, n2y, n2z, -1]
         //  [n3x, n3y, n3z, -1]
         //  ...
-        //  [1, 0, 0, 0]
-        //  [0, 1, 0, 0]
-        //  [0, 0, 1, 0]
         //
-        //  (with one row for each sampled point's normal, and one row
-        //  for each active axis in this simple).
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> A(rows + cols, cols + 1);
-        A.array() = 0.0;
+        //  (with one row for each sampled point's normal)
+        Eigen::MatrixXd A(rows, cols + 1);
 
         //  The b matrix is of the form
         //  [(p1, w1) . (n1, -1)]
         //  [(p2, w2) . (n2, -1)]
         //  [(p3, w3) . (n3, -1)]
         //  ...
-        //  [x_center]
-        //  [y_center]
-        //  [z_center]
         //
-        //  (with one row for each sampled point, and one row for each
-        //  active axis in this simplex)
-        Eigen::Matrix<double, Eigen::Dynamic, 1> b(rows + cols, 1);
-        b.array() = 0.0;
+        //  (with one row for each sampled point)
+        Eigen::VectorXd b(rows, 1);
 
-        //  In order the construct the b matrix, we first construct the matrix
-        //  [p1, w1]
-        //  [p2, w2]
-        //  [p3, w3]
-        //  ...
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b_(rows, cols + 1);
+        // We'll also keep track of the average position, which we'll
+        // use to bias the solver later on.
+        Eigen::VectorXd center = Eigen::VectorXd::Zero(cols, 1);
 
         // Write the appropriate corner values to the A and b_ matrices.
         // We loop over every corner, filter which ones are in this particular
@@ -116,55 +124,39 @@ SimplexTree<N>::SimplexTree(
         unsigned r=0;
         for (unsigned j=0; j < children.size(); ++j)
         {
-            if (t.containsCorner(j))
+            if (!t.containsCorner(j))
             {
-                unsigned c = 0;
-                for (unsigned a=0; a < N; ++a)
-                {
-                    if (t[a] == 0)
-                    {
-                        A(r, c) = ds(a, j);
-                        b_(r, c) = region.corner(j)(a);
-                        c++;
-                    }
-                }
-                assert(c == cols);
-                A(r, c) = -1;
-                b_(r, c) = ds(3, j);
-                r++;
+                continue;
             }
+
+            Eigen::VectorXd p(cols + 1, 1);
+            unsigned c = 0;
+            for (unsigned a=0; a < N; ++a)
+            {
+                if (t[a] == 0)
+                {
+                    A(r, c) = ds(a, j);
+                    p(c) = region.corner(j)(a);
+                    c++;
+                }
+            }
+            assert(c == cols);
+            p(c) = ds(3, j);
+
+            A(r, c) = -1;
+            b(r) = A.row(r) * p;
+            center += p.head(cols);
+            r++;
         }
         assert(r == rows);
-
-        // Construct the b matrix as discussed above
-        b.topRows(rows) = (b_.array() * A.topRows(rows).array())
-            .matrix().rowwise().sum();
-
-        // Add a few extra rows to A and b to bias the solution towards
-        // the center of the cell, but with a much weaker strength than
-        // the rest of the constraints.
-        Eigen::Matrix<double, Eigen::Dynamic, 1> center(cols + 1, 1);
-        center = b_.colwise().mean();
-        for (unsigned a=0; a < N; ++a)
-        {
-            if (t[a] == 0)
-            {
-                const unsigned c = r - rows;
-                A(r, c) = 1e-6;
-                b(r) = center(c) * 1e-6;
-                r++;
-            }
-        }
-        assert(r == rows + cols);
+        center /= rows;
 
         // Solve QEF here
-        Eigen::Matrix<double, Eigen::Dynamic, 1> result =
-            A.colPivHouseholderQr().solve(b);
+        Eigen::VectorXd result = solveCenteredQEF<N>(A, b, center, 1e-6);
         assert(result.rows() == cols + 1);
 
-        // Store the error, only considering the plane/normal constraints
-        // (and ignoring any error due to the centering constraint)
-        errors[i] = (A.topRows(rows) * result - b.topRows(rows)).squaredNorm();
+        // Store the error
+        errors[i] = (A * result - b).squaredNorm();
 
         // Unpack the QEF solution into the vertex array
         unsigned c = 0;
@@ -175,8 +167,8 @@ SimplexTree<N>::SimplexTree(
             {
                 case SIMPLEX_CORNER_SPANS:
                     vertices(a, i) = result(c);
-                    bounded &= (vertices(a, i) > region.lower(a));
-                    bounded &= (vertices(a, i) < region.upper(a));
+                    bounded &= (vertices(a, i) >= region.lower(a));
+                    bounded &= (vertices(a, i) <= region.upper(a));
                     c++;
                     break;
                 case SIMPLEX_CORNER_LOWER:
@@ -190,10 +182,11 @@ SimplexTree<N>::SimplexTree(
         // Leave vertices(r, N) set to zero, because we'll refine it below
 
         // If the result is outside the boundary, loop from 0 to i,
-        // picking out sub-simplices and using the one with minimum error
+        // picking out sub-simplices, solving the same QEF (constrainted based
+        // on the available free axes), and using the one with minimum error.
         if (!bounded)
         {
-            double best_error = std::numeric_limits<double>::infinity();
+            errors[i] = std::numeric_limits<double>::infinity();
             for (unsigned j=0; j < i; ++j)
             {
                 if (!t.containsSimplex(j))
@@ -204,78 +197,73 @@ SimplexTree<N>::SimplexTree(
                 Simplex<N> t_(j);
                 const unsigned cols_ = t_.freeAxes();
 
-                Eigen::MatrixXd A_(rows + cols_, cols_ + 1);
-                A_.array() = 0.0;
-                Eigen::VectorXd b_(rows + cols_, 1);
-                b_.array() = 0.0;
-                b_.topRows(rows) = b.topRows(rows);
+                // We cull axes from A_ based on which axes are free in the
+                // sub-simplex t_, and apply the fixed change to b in b_.
+                Eigen::MatrixXd A_(rows, cols_ + 1);
+                Eigen::VectorXd b_(b);
+                Eigen::VectorXd center_(cols_);
 
                 // Unpack the relevant axes
                 unsigned c=0;
                 unsigned c_=0;
                 for (unsigned a=0; a < N; ++a)
                 {
-                    // If this axis is spanning in the child simplex,
-                    // then it must also be spanning in the parent simplex;
-                    // copy the column over.
-                    if (t_[a] == SIMPLEX_CORNER_SPANS)
+                    // Only pay attention to axes that are spanning the parent
+                    if (t[a] != SIMPLEX_CORNER_SPANS)
                     {
-                        assert(t[a] == SIMPLEX_CORNER_SPANS);
-                        A_.topRows(rows).col(c_++) = A.topRows(rows).col(c++);
+                        continue;
                     }
-                    // If this axis is spanning in the parent simplex but
-                    // not spanning in the child simplex, then apply
-                    // the error to the b matrix
-                    else if (t[a] == SIMPLEX_CORNER_SPANS)
-                    {
-                        b.topRows(rows) -= A.topRows(rows).col(c++) *
-                            (t_[a] == SIMPLEX_CORNER_LOWER ?
-                             region.lower(a) : region.upper(a));
-                    }
-                }
 
-                // Add the centering constraint
-                r = rows;
-                for (unsigned a=0; a < N; ++a)
-                {
-                    if (t_[a] == 0)
+                    switch (t_[a])
                     {
-                        const unsigned c = r - rows;
-                        A_(r, c) = 1e-6;
-                        b_(r) = center(c) * 1e-6;
-                        r++;
+                        // If this axis is also spanning in the child, then
+                        // copy the whole column over.
+                        case SIMPLEX_CORNER_SPANS:
+                            A_.col(c_) = A.col(c);
+                            center_(c_) = center(c);
+                            c_++;
+                            break;
+                        // If this axis is spanning in the parent simplex
+                        // but not spanning in the child simplex, then apply
+                        // an offset to the new b_ matrix
+                        case SIMPLEX_CORNER_LOWER:
+                            b_ += A.col(c) * region.lower(a); break;
+                        case SIMPLEX_CORNER_UPPER:
+                            b_ += A.col(c) * region.upper(a); break;
                     }
+                    c++;
                 }
-                assert(r == rows + cols_);
+                assert(c_ == cols_);
+                assert(c == cols);
+                A_.col(cols_).array() = -1.0;
 
                 // Solve QEF here
-                Eigen::Matrix<double, Eigen::Dynamic, 1> result_ =
-                    A_.colPivHouseholderQr().solve(b_);
+                Eigen::VectorXd result_ = solveCenteredQEF<N>(
+                        A_, b_, center_, 1e-6);
                 assert(result_.rows() == cols_ + 1);
 
                 // Reinflate into a vertex that fits the parent simplex
                 Eigen::VectorXd result(cols + 1);
-                c = 0;
+                c_ = 0;
                 for (unsigned a=0; a < N; ++a)
                 {
-                    if (t_[a] == SIMPLEX_CORNER_SPANS)
+                    switch (t_[a])
                     {
-                        std::cout << "?";
-                        result(a) = result_(c++);
-                    }
-                    else if (t[a] == SIMPLEX_CORNER_SPANS)
-                    {
-                        std::cout << "!";
-                        result(a) = (t_[a] == SIMPLEX_CORNER_LOWER) ?
-                                     region.lower(a) : region.upper(a);
+                        case SIMPLEX_CORNER_SPANS:
+                            result(a) = result_(c_++); break;
+                        case SIMPLEX_CORNER_LOWER:
+                            result(a) = region.lower(a); break;
+                        case SIMPLEX_CORNER_UPPER:
+                            result(a) = region.upper(a); break;
                     }
                 }
+                assert(c_ == cols_);
 
+                // Calculate error given the original QEF
+                double this_error = (A * result - b).squaredNorm();
 
-                // Store the error, only considering the plane/normal constraints
-                // (and ignoring any error due to the centering constraint)
-                double this_error = (A.topRows(rows) * result - b.topRows(rows)).squaredNorm();
-
+                // Then inflate all the way up to normal vertex size
+                // and check to see whether the vertex is bounded.
                 Eigen::Matrix<double, N + 1, 1> vert;
                 c=0;
                 bounded = true;
@@ -296,14 +284,12 @@ SimplexTree<N>::SimplexTree(
                             break;
                     }
                 }
-                std::cout << bounded << " " << this_error << " " << best_error << " " << cols_ << "\n";
+                assert(c == cols);
 
-                if (bounded && this_error < best_error)
+                if (bounded && this_error < errors[i])
                 {
-                    std::cout << "GOOOOOOOOAAAAL\n";
                     vertices.col(i) = vert;
                     errors[i] = this_error;
-                    best_error = this_error;
                 }
             }
         }
