@@ -179,7 +179,9 @@ SimplexTree<N>::SimplexTree(
                     break;
             }
         }
-        // Leave vertices(r, N) set to zero, because we'll refine it below
+        // We'll refine vertices(N, i) below, but use the QEF solution for now
+        assert(c == cols);
+        vertices(N, i) = result(c);
 
         // If the result is outside the boundary, loop from 0 to i,
         // picking out sub-simplices, solving the same QEF (constrainted based
@@ -244,20 +246,31 @@ SimplexTree<N>::SimplexTree(
 
                 // Reinflate into a vertex that fits the parent simplex
                 Eigen::VectorXd result(cols + 1);
+                c = 0;
                 c_ = 0;
                 for (unsigned a=0; a < N; ++a)
                 {
+                    // Only pay attention to axes that are spanning the parent
+                    if (t[a] != SIMPLEX_CORNER_SPANS)
+                    {
+                        continue;
+                    }
+
                     switch (t_[a])
                     {
                         case SIMPLEX_CORNER_SPANS:
-                            result(a) = result_(c_++); break;
+                            result(c) = result_(c_++); break;
                         case SIMPLEX_CORNER_LOWER:
-                            result(a) = region.lower(a); break;
+                            result(c) = region.lower(a); break;
                         case SIMPLEX_CORNER_UPPER:
-                            result(a) = region.upper(a); break;
+                            result(c) = region.upper(a); break;
                     }
+                    c++;
                 }
+                assert(c == cols);
                 assert(c_ == cols_);
+                // Copy over the solution's distance-field value.
+                result(c) = result_(c_);
 
                 // Calculate error given the original QEF
                 double this_error = (A * result - b).squaredNorm();
@@ -285,6 +298,7 @@ SimplexTree<N>::SimplexTree(
                     }
                 }
                 assert(c == cols);
+                vert(N) = result(c);
 
                 if (bounded && this_error < errors[i])
                 {
