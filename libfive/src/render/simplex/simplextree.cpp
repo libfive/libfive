@@ -121,13 +121,15 @@ SimplexTree<N>::SimplexTree(
         }
         assert(r == rows);
 
-        Eigen::Matrix<double, Eigen::Dynamic, 1> center(cols + 1, 1);
-        center = b_.colwise().mean();
-
         // Construct the b matrix as discussed above
         b.topRows(rows) = (b_.array() * A.topRows(rows).array())
             .matrix().rowwise().sum();
 
+        // Add a few extra rows to A and b to bias the solution towards
+        // the center of the cell, but with a much weaker strength than
+        // the rest of the constraints.
+        Eigen::Matrix<double, Eigen::Dynamic, 1> center(cols + 1, 1);
+        center = b_.colwise().mean();
         for (unsigned a=0; a < N; ++a)
         {
             if (t[a] == 0)
@@ -144,7 +146,8 @@ SimplexTree<N>::SimplexTree(
         Eigen::Matrix<double, Eigen::Dynamic, 1> result =
             A.colPivHouseholderQr().solve(b);
 
-        // Store the error
+        // Store the error, only considering the plane/normal constraints
+        // (and ignoring any error due to the centering constraint)
         errors[i] = (A.topRows(rows) * result - b.topRows(rows)).squaredNorm();
 
         // Unpack the QEF solution into the vertex array
@@ -152,20 +155,20 @@ SimplexTree<N>::SimplexTree(
         bool bounded = true;
         for (unsigned a=0; a < N; ++a)
         {
-            if (t[a] == 0)
+            switch (t[a])
             {
-                vertices(a, i) = result(c); // + center(c);
-                bounded &= (vertices(a, i) > region.lower(a));
-                bounded &= (vertices(a, i) < region.upper(a));
-                c++;
-            }
-            else if (t[a] == -1)
-            {
-                vertices(a, i) = region.lower(a);
-            }
-            else if (t[a] == 1)
-            {
-                vertices(a, i) = region.upper(a);
+                case SIMPLEX_CORNER_SPANS:
+                    vertices(a, i) = result(c);
+                    bounded &= (vertices(a, i) > region.lower(a));
+                    bounded &= (vertices(a, i) < region.upper(a));
+                    c++;
+                    break;
+                case SIMPLEX_CORNER_LOWER:
+                    vertices(a, i) = region.lower(a);
+                    break;
+                case SIMPLEX_CORNER_UPPER:
+                    vertices(a, i) = region.upper(a);
+                    break;
             }
         }
         // Leave vertices(r, N) set to zero, because we'll refine it below
@@ -177,12 +180,28 @@ SimplexTree<N>::SimplexTree(
             double best_error = std::numeric_limits<double>::infinity();
             for (unsigned j=0; j < i; ++j)
             {
-                if (t.containsSimplex(j) && errors[j] < best_error)
+                if (t.containsSimplex(j))
                 {
-                    vertices.col(i) = vertices.col(j);
-                    best_error = errors[j];
+                    // Unpack the relevant axes
+                    unsigned c=0;
+                    for (unsigned a=0; a < N; ++a)
+                    {
+                        if (t[a] == 0)
+                        {
+                            result(c++) = vertices(a, j);
+                        }
+                    }
+                    double this_error =
+                        (A.topRows(rows) * result - b.topRows(rows)).squaredNorm();
+
+                    if (this_error < best_error)
+                    {
+                        vertices.col(i) = vertices.col(j);
+                        best_error = this_error;
+                    }
                 }
             }
+            errors[i] = best_error;
         }
     }
 

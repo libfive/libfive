@@ -108,10 +108,10 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
 #include "libfive/render/discrete/heightmap.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
-    auto s = Tree::X();//move(menger(1), {0, 0, -1.4});
+    auto s = move(menger(2), {0.1, 0.2, 1.4}); //move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
     auto eval = DerivArrayEvaluator(std::shared_ptr<Tape>(new Tape(s)));
     Region<2> r({-2, -2}, {2, 2});
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.01);
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.001);
 
     std::ofstream file;
     file.open("out.svg", std::ios::out);
@@ -140,7 +140,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
             }
             file << "<circle cx=\"" << v.x() - r.lower.x() << "\" "
                  << "cy=\"" << r.upper.y() - v.y() << "\" "
-                 << "r=\"0.05\" stroke=\"black\" stroke-width=\"0.001\" "
+                 << "r=\"0.02\" stroke=\"black\" stroke-width=\"0.001\" "
                  << "fill=\"" << fill << "\" />\n";
         }
 
