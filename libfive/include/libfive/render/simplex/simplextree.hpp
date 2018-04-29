@@ -53,20 +53,22 @@ public:
      *  This constructor recurses until the minimum dimension of region
      *  is less than min_feature, subdividing regions evenly into 2^N
      *  subregions at each step.  Then, regions are subdivided until
-     *  the summed QEF error is less than max_error.
+     *  the summed QEF error is less than max_error, or the depth is
+     *  greater than max_depth (which only starts counting after we
+     *  finish recursing due to min_feature).
      *
      *  If multiple evaluators are provided, then tree construction will
      *  be distributed across multiple threads.
      */
     SimplexTree(XTreeEvaluator* eval, Region<N> region,
-                double min_feature, double max_err);
+                double min_feature, double max_err, unsigned max_depth);
 
 protected:
     /*
      *  Populates the children array
      */
     void recurse(XTreeEvaluator* eval, Region<N> region,
-                 double min_feature, double max_err);
+                 double min_feature, double max_err, unsigned max_depth);
 };
 
 extern template class SimplexTree<2>;

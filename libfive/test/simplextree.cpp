@@ -33,7 +33,7 @@ TEST_CASE("SimplexTree<3>::SimplexTree")
     auto eval = XTreeEvaluator(s);
 
     auto t = SimplexTree<3>(&eval, Region<3>({-2, -2, -2}, {2, 2, 2}),
-                            0.5, 0.1);
+                            0.5, 0.1, 4);
     REQUIRE(true);
 }
 
@@ -43,7 +43,7 @@ TEST_CASE("SimplexTree<2>::SimplexTree")
     auto eval = XTreeEvaluator(s);
 
     auto t = SimplexTree<2>(&eval, Region<2>({-2, -2}, {2, 2}),
-                            0.5, 0.1);
+                            0.5, 0.1, 4);
 }
 
 template <unsigned N>
@@ -78,7 +78,7 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
 
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.01);
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.01, 4);
 
     for (auto t : leafs(&t))
     {
@@ -113,14 +113,14 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
 #include "libfive/render/discrete/heightmap.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
-    auto s = move(circle(1), {0.0, 0.1, 0.0});
+    //auto s = move(circle(1), {0.0, 0.1, 0.0});
     //auto s = move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
-    //auto s = move(menger2d(2), {0.01, 0.2, 0.0});
+    auto s = move(menger2d(2), {0.01, 0.2, 0.0});
     //auto s = Tree::X();
 
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.001);
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.001, 4);
 
     std::ofstream file;
     file.open("out.svg", std::ios::out);
@@ -183,7 +183,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
 
 
     Voxels v(r.lower3().template cast<float>(),
-             r.upper3().template cast<float>(), {50, 50, 0});
+             r.upper3().template cast<float>(), {150, 150, 0});
     std::atomic_bool abort(false);
     Heightmap::render(s, v, abort)->savePNG("out.png");
 
