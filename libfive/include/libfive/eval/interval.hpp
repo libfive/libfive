@@ -38,6 +38,12 @@ inline State state(const Interval::I& i)
     return isEmpty(i)  ? EMPTY :
            isFilled(i) ? FILLED : AMBIGUOUS;
 }
+template <typename T>
+inline State state(const T v)
+{
+    return (v > 0) ? FILLED :
+           (v < 0) ? EMPTY : AMBIGUOUS;
+}
 
 }   // namespace Interval
 }   // namespace Kernel

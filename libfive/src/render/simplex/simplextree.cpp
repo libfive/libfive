@@ -21,18 +21,34 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/render/simplex/simplextree.hpp"
 #include "libfive/render/simplex/simplex.hpp"
+#include "libfive/render/brep/eval_xtree.hpp"
 
 namespace Kernel {
 
 template <unsigned N>
 SimplexTree<N>::SimplexTree(
-        DerivArrayEvaluator* eval,
+        XTreeEvaluator* eval,
         Region<N> region,
         double min_feature, double max_err)
 {
+    // Early exit based on interval evaluation
+    type = Interval::state(
+            eval->interval.evalAndPush(
+                region.lower3().template cast<float>(),
+                region.upper3().template cast<float>()));
+    switch (type)
+    {
+        case Interval::EMPTY:       // fallthrough
+        case Interval::FILLED:      eval->interval.pop(); return;
+        case Interval::AMBIGUOUS:   break;
+        case Interval::UNKNOWN:     assert(false); break;
+    }
+
+    // Top-down construction: we recurse down to a minimum size
     if (((region.upper - region.lower) > min_feature).any())
     {
         recurse(eval, region, min_feature, max_err);
+        eval->interval.pop();
         return;
     }
 
@@ -41,12 +57,12 @@ SimplexTree<N>::SimplexTree(
     {
         Eigen::Vector3f p;
         p << region.corner(i).template cast<float>(),
-             Eigen::Array<float, 3 - N, 1>::Zero();
-        eval->set(p, i);
+             region.perp.template cast<float>();
+        eval->array.set(p, i);
     }
 
     // Find the values + derivatives
-    auto ds = eval->derivs(children.size());
+    auto ds = eval->array.derivs(children.size());
 
     // Total QEF error (used to decide whether to recurse
     std::array<double, ipow(3, N)> errors;
@@ -209,6 +225,7 @@ SimplexTree<N>::SimplexTree(
     if (std::accumulate(errors.begin(), errors.end(), 0.0) > max_err)
     {
         recurse(eval, region, min_feature, max_err);
+        eval->interval.pop();
         return;
     }
 
@@ -219,15 +236,49 @@ SimplexTree<N>::SimplexTree(
         Eigen::Vector3f p;
         p << vertices.col(i).template head<N>().template cast<float>(),
              Eigen::Array<float, 3 - N, 1>::Zero();
-        eval->set(p, i);
+        eval->array.set(p, i);
+    }
+    vertices.row(N) = eval->array.values(vertices.cols())
+        .template cast<double>();
+
+    // Then, tag this tree as filled, empty, or ambiguous based on simplex
+    // values (using the feature evaluator to tie-break in ambiguous cases).
+    for (unsigned v=0; v < inside.size(); ++v)
+    {
+        switch (Interval::state<double>(vertices(N, v)))
+        {
+            case Interval::EMPTY:   inside[v] = false; break;
+            case Interval::FILLED:  inside[v] = true; break;
+            case Interval::AMBIGUOUS:
+            {
+                Eigen::Vector3f vert3;
+                vert3 << vertices.col(v)
+                            .template topRows<N>()
+                            .template cast<float>(),
+                         region.perp.template cast<float>();
+                inside[v] = eval->feature.isInside(vert3);
+                break;
+            }
+            case Interval::UNKNOWN: assert(false); break;
+        }
     }
 
-    vertices.row(N) = eval->values(vertices.cols()).template cast<double>();
+    bool all_filled = true;
+    bool all_empty = true;
+    for (auto& b : inside)
+    {
+        all_filled &=  b;
+        all_empty  &= !b;
+    }
+    type = all_filled ? Interval::FILLED :
+           all_empty  ? Interval::EMPTY  : Interval::AMBIGUOUS;
+
+    eval->interval.pop();
 }
 
 template <unsigned N>
 void SimplexTree<N>::recurse(
-        DerivArrayEvaluator* eval, Region<N> region,
+        XTreeEvaluator* eval, Region<N> region,
         double min_feature, double max_err)
 {
     auto rs = region.subdivide();
@@ -235,6 +286,24 @@ void SimplexTree<N>::recurse(
     {
         children[i].reset(
                 new SimplexTree<N>(eval, rs[i], min_feature, max_err));
+    }
+
+    bool all_filled = true;
+    bool all_empty = true;
+    for (const auto& c : children)
+    {
+        all_filled &= (c->type == Interval::FILLED);
+        all_empty  &= (c->type == Interval::EMPTY);
+    }
+    type = all_filled ? Interval::FILLED :
+           all_empty  ? Interval::EMPTY  : Interval::AMBIGUOUS;
+
+    if (type != Interval::AMBIGUOUS)
+    {
+        for (auto& c : children)
+        {
+            c.reset();
+        }
     }
 }
 

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/render/simplex/simplextree.hpp"
 #include "libfive/render/simplex/simplex.hpp"
+#include "libfive/render/brep/eval_xtree.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;
@@ -29,7 +30,7 @@ using namespace Kernel;
 TEST_CASE("SimplexTree<3>::SimplexTree")
 {
     auto s = sphere(1);
-    auto eval = DerivArrayEvaluator(std::shared_ptr<Tape>(new Tape(s)));
+    auto eval = XTreeEvaluator(s);
 
     auto t = SimplexTree<3>(&eval, Region<3>({-2, -2, -2}, {2, 2, 2}),
                             0.5, 0.1);
@@ -39,7 +40,7 @@ TEST_CASE("SimplexTree<3>::SimplexTree")
 TEST_CASE("SimplexTree<2>::SimplexTree")
 {
     auto s = circle(1);
-    auto eval = DerivArrayEvaluator(std::shared_ptr<Tape>(new Tape(s)));
+    auto eval = XTreeEvaluator(s);
 
     auto t = SimplexTree<2>(&eval, Region<2>({-2, -2}, {2, 2}),
                             0.5, 0.1);
@@ -74,7 +75,7 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
     // This shape has no sharp features in the distance field, so every vertex
     // should be at the center of its respective simplex.
     auto s = Tree::X();
-    auto eval = DerivArrayEvaluator(std::shared_ptr<Tape>(new Tape(s)));
+    auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
 
     auto t = SimplexTree<2>(&eval, r, 0.5, 0.01);
@@ -108,10 +109,10 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
 #include "libfive/render/discrete/heightmap.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
-    auto s = move(menger(2), {0.1, 0.2, 1.4}); //move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
-    auto eval = DerivArrayEvaluator(std::shared_ptr<Tape>(new Tape(s)));
+    auto s = move(circle(1), {0.0, 0.1, 0.0}); //move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});//move(menger(1), {0.1, 0.2, 1.4}); //
+    auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.001);
+    auto t = SimplexTree<2>(&eval, r, 0.125, 1);
 
     std::ofstream file;
     file.open("out.svg", std::ios::out);
@@ -122,11 +123,12 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     "\" id=\"libfive\">\n";
     file << "<image xlink:href=\"out.png\" x=\"0\" y=\"0\" "
         << " width=\"" << r.upper.x() - r.lower.x()
-        << "\" height=\"" << r.upper.y() - r.lower.y() << " />\n";
+        << "\" height=\"" << r.upper.y() - r.lower.y() << "\" />\n";
 
     std::list<const SimplexTree<2>*> todo = {&t};
     for (auto next : leafs(&t))
     {
+        if (next->type != Interval::AMBIGUOUS) continue;
         for (unsigned i=0; i < next->vertices.cols(); ++i)
         {
             auto v = next->vertices.col(i).eval();

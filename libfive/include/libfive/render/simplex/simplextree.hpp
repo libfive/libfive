@@ -22,21 +22,27 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/render/ipow.hpp"
 #include "libfive/render/brep/region.hpp"
-
-#include "libfive/eval/eval_deriv_array.hpp"
+#include "libfive/eval/interval.hpp"
 
 namespace Kernel {
+
+// Forward declaration
+class XTreeEvaluator;
 
 template <unsigned N>
 class SimplexTree
 {
 public:
-    /*  Per-simplex vertex positions.
+    /*  Per-simplex vertex positions and inside / outside state.
      *  These are indexed using the ternary scheme described in neighbors.hpp */
     Eigen::Matrix<double, N + 1, ipow(3, N)> vertices;
+    std::array<bool, ipow(3, N)> inside;
 
     /*  Children pointers, if this is a branch  */
     std::array<std::unique_ptr<const SimplexTree<N>>, 1 << N> children;
+
+    /*  Empty / filled / ambiguous */
+    Interval::State type = Interval::UNKNOWN;
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -52,14 +58,14 @@ public:
      *  If multiple evaluators are provided, then tree construction will
      *  be distributed across multiple threads.
      */
-    SimplexTree(DerivArrayEvaluator* eval, Region<N> region,
+    SimplexTree(XTreeEvaluator* eval, Region<N> region,
                 double min_feature, double max_err);
 
 protected:
     /*
      *  Populates the children array
      */
-    void recurse(DerivArrayEvaluator* eval, Region<N> region,
+    void recurse(XTreeEvaluator* eval, Region<N> region,
                  double min_feature, double max_err);
 };
 
