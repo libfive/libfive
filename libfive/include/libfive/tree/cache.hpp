@@ -103,12 +103,7 @@ protected:
      *  Checks whether a `op` b can be replaced by a simpler affine
      *  form, e.g. (2*x + y) - (4*y) --> 2*x - 3*y
      */
-
     Node checkAffine(Opcode::Opcode op, Node a, Node b);
-
-    std::map<float, std::weak_ptr<Tree::Tree_>> getConstants() {
-      return constants;
-    }
 
     /*
      *  A Key uniquely identifies an operation Node, so that we can

@@ -181,7 +181,7 @@ public:
 
 protected:
     /*
-     *  Empty tree constructor.
+     *  Empty tree constructor
      */
     explicit Tree();
 
