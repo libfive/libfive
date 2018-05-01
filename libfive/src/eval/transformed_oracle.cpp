@@ -45,7 +45,7 @@ void TransformedOracle::evalInterval(Interval::I& out)
     Eigen::Vector3f rangeLower{
         xRange.lower(), yRange.lower(), zRange.lower() };
     Eigen::Vector3f rangeUpper{
-        xRange.upper(), yRange.lower(), zRange.lower() };
+        xRange.upper(), yRange.upper(), zRange.upper() };
 
     underlying->set(rangeLower, rangeUpper);
     underlying->evalInterval(out);
