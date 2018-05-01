@@ -155,7 +155,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
         {
             auto rs = region.subdivide();
 
-            if (multithread)
+            if (multithread && false)
             {
                 // Evaluate every child in a separate thread
                 std::array<std::future<XTree<N>*>, 1 << N> futures;
