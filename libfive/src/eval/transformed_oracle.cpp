@@ -86,9 +86,9 @@ void TransformedOracle::evalDerivs(
     3, 1, true> out, size_t index)
 {
     Eigen::Matrix3f Jacobian;
-    Jacobian << xEvaluator.deriv.deriv(points.col(index)),
-        yEvaluator.deriv.deriv(points.col(index)),
-        zEvaluator.deriv.deriv(points.col(index));
+    Jacobian << xEvaluator.deriv.deriv(points.col(index)).template head<3>(),
+        yEvaluator.deriv.deriv(points.col(index)).template head<3>(),
+        zEvaluator.deriv.deriv(points.col(index)).template head<3>();
     Eigen::Vector3f transformedPoint{
         xEvaluator.deriv.eval(points.col(index)),
         yEvaluator.deriv.eval(points.col(index)),
@@ -113,7 +113,9 @@ void TransformedOracle::evalDerivArray(
     for (auto i = 0; i < out.cols(); ++i)
     {
         Eigen::Matrix3f Jacobian;
-        Jacobian << xDerivs.col(i), yDerivs.col(i), zDerivs.col(i);
+        Jacobian << xDerivs.col(i).template head<3>(), 
+                    yDerivs.col(i).template head<3>(),
+                    zDerivs.col(i).template head<3>();
         out.col(i) = Jacobian * out.col(i).matrix();
     }
 }
