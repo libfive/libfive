@@ -1,0 +1,50 @@
+/*
+libfive: a CAD kernel for modeling with implicit functions
+Copyright (C) 2018  Matt Keeter
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+#pragma once
+
+#include "libfive/render/simplex/simplex.hpp"
+
+namespace Kernel {
+
+template <unsigned N> class SimplexTree;
+
+/*
+ *  Class to walk a dual grid for a quad or octree
+ *  t needs operator(const std::array<XTree<N>*, N>& trees) defined
+ */
+template <unsigned N>
+class SimplexDual
+{
+public:
+    template<typename V>
+    static void walk(const SimplexTree<N>* tree, V& v);
+
+    struct Corner
+    {
+        unsigned index;
+        Simplex<N> simplex;
+    };
+
+    struct Prim
+    {
+        std::array<Corner, N + 1> corners;
+    };
+};
+
+}   // namespace Kernel

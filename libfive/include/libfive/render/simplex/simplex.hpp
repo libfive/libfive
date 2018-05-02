@@ -136,6 +136,19 @@ struct Simplex : std::array<SimplexCorner, N>
         return out;
     }
 
+    /*
+     *  Returns the union of two simplexes
+     */
+    static Simplex<N> merge(const Simplex<N>& a, const Simplex<N>& b)
+    {
+        Simplex<N> out;
+        for (unsigned i=0; i < N; ++i)
+        {
+            out[i] = (a[i] == b[i]) ? a[i] : SIMPLEX_CORNER_SPANS;
+        }
+        return out;
+    }
+
 };
 
 }   // namespace Kernel
