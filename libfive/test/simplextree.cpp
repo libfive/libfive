@@ -55,7 +55,7 @@ std::list<const SimplexTree<N>*> leafs(SimplexTree<N>* root)
     {
         auto next = todo.front();
         todo.pop_front();
-        if (next->children[0])
+        if (next->isBranch())
         {
             for (auto& n : next->children)
             {
@@ -92,7 +92,8 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
             int count = 0;
             for (auto c : {0, 1, 3, 4})
             {
-                if (Simplex<2>(i).containsSimplex(Simplex<2>(c)))
+                if (Simplex<2>::fromIndex(i).containsSimplex(
+                            Simplex<2>::fromIndex(c)))
                 {
                     center += t->vertices.col(c).head<2>();
                     count++;
@@ -113,14 +114,14 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
 #include "libfive/render/discrete/heightmap.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
-    //auto s = move(circle(1), {0.0, 0.1, 0.0});
+    auto s = move(circle(1), {0.0, 0.1, 0.0});
     //auto s = move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
-    auto s = move(menger2d(2), {0.01, 0.2, 0.0});
+    //auto s = move(menger2d(1), {0.01, 0.2, 1.4});
     //auto s = Tree::X();
 
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.001, 4);
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.001, 1);
 
     std::ofstream file;
     file.open("out.svg", std::ios::out);
@@ -141,7 +142,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
         {
             auto v = next->vertices.col(i).eval();
             std::string fill;
-            switch (Simplex<2>(i).freeAxes())
+            switch (Simplex<2>::fromIndex(i).freeAxes())
             {
                 case 0: fill = "red"; break;
                 case 1: fill = "yellow"; break;

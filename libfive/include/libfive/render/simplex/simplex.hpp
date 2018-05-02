@@ -32,19 +32,21 @@ enum SimplexCorner {
 template <unsigned N>
 struct Simplex : std::array<SimplexCorner, N>
 {
-    Simplex(unsigned index)
+    static Simplex fromIndex(unsigned index)
     {
+        Simplex<N> out;
         assert(index < ipow(3, N));
         for (unsigned j=0; j < N; ++j)
         {
             switch (index % 3)
             {
-                case 0: (*this)[j] = SIMPLEX_CORNER_LOWER; break;
-                case 1: (*this)[j] = SIMPLEX_CORNER_UPPER; break;
-                case 2: (*this)[j] = SIMPLEX_CORNER_SPANS; break;
+                case 0: out[j] = SIMPLEX_CORNER_LOWER; break;
+                case 1: out[j] = SIMPLEX_CORNER_UPPER; break;
+                case 2: out[j] = SIMPLEX_CORNER_SPANS; break;
             }
             index /= 3;
         }
+        return out;
     }
 
     unsigned toIndex() const
@@ -59,6 +61,22 @@ struct Simplex : std::array<SimplexCorner, N>
                 case SIMPLEX_CORNER_SPANS: out += 2; break;
             }
             out *= 3;
+        }
+        return out;
+    }
+
+    static Simplex fromCorner(unsigned corner)
+    {
+        Simplex<N> out;
+        assert(corner < ipow(2, N));
+        for (unsigned j=0; j < N; ++j)
+        {
+            switch (corner % 2)
+            {
+                case 0: out[j] = SIMPLEX_CORNER_LOWER; break;
+                case 1: out[j] = SIMPLEX_CORNER_UPPER; break;
+            }
+            corner /= 3;
         }
         return out;
     }

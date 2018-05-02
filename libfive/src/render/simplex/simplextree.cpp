@@ -50,6 +50,16 @@ template <unsigned N>
 SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
                             double min_feature, double max_err,
                             unsigned max_depth)
+    : SimplexTree(eval, region, min_feature, max_err, max_depth, 0)
+{
+    // Nothing to do here (delegating constructor)
+}
+
+template <unsigned N>
+SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
+                            double min_feature, double max_err,
+                            unsigned max_depth, unsigned depth)
+    : depth(depth)
 {
     // Early exit based on interval evaluation
     type = Interval::state(
@@ -59,7 +69,10 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
     switch (type)
     {
         case Interval::EMPTY:       // fallthrough
-        case Interval::FILLED:      eval->interval.pop(); return;
+        case Interval::FILLED:
+            std::fill(inside.begin(), inside.end(), type == Interval::FILLED);
+            eval->interval.pop();
+            return;
         case Interval::AMBIGUOUS:   break;
         case Interval::UNKNOWN:     assert(false); break;
     }
@@ -89,7 +102,7 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
 
     for (unsigned i=0; i < vertices.cols(); ++i)
     {
-        const auto t = Simplex<N>(i);
+        const auto t = Simplex<N>::fromIndex(i);
 
         // Find the shape of the A matrix
         const unsigned cols = t.freeAxes();
@@ -190,12 +203,12 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
             errors[i] = std::numeric_limits<double>::infinity();
             for (unsigned j=0; j < i; ++j)
             {
-                if (!t.containsSimplex(j))
+                if (!t.containsSimplex(Simplex<N>::fromIndex(j)))
                 {
                     continue;
                 }
 
-                Simplex<N> t_(j);
+                Simplex<N> t_ = Simplex<N>::fromIndex(j);
                 const unsigned cols_ = t_.freeAxes();
 
                 // We cull axes from A_ based on which axes are free in the
@@ -373,7 +386,8 @@ void SimplexTree<N>::recurse(
     for (unsigned i=0; i < children.size(); ++i)
     {
         children[i].reset(new SimplexTree<N>(
-                    eval, rs[i], min_feature, max_err, max_depth));
+                    eval, rs[i], min_feature, max_err, max_depth,
+                    depth + 1));
     }
 
     bool all_filled = true;

@@ -25,15 +25,15 @@ using namespace Kernel;
 
 TEST_CASE("Simplex::containsCorner")
 {
-    Simplex<3> s(2);
+    Simplex<3> s = Simplex<3>::fromIndex(2);
     REQUIRE(s.containsCorner(0));
     REQUIRE(s.containsCorner(1));
 }
 
 TEST_CASE("Simplex<3>::containsSimplex")
 {
-    Simplex<3> s(2);
-    REQUIRE(s.containsSimplex(0));
-    REQUIRE(s.containsSimplex(1));
-    REQUIRE(s.containsSimplex(2));
+    Simplex<3> s = Simplex<3>::fromIndex(2);
+    REQUIRE(s.containsSimplex(Simplex<3>::fromIndex(0)));
+    REQUIRE(s.containsSimplex(Simplex<3>::fromIndex(1)));
+    REQUIRE(s.containsSimplex(Simplex<3>::fromIndex(2)));
 }

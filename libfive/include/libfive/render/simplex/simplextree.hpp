@@ -44,6 +44,9 @@ public:
     /*  Empty / filled / ambiguous */
     Interval::State type = Interval::UNKNOWN;
 
+    /*  Depth within the tree structure (0 is the root) */
+    const unsigned depth=0;
+
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -63,7 +66,25 @@ public:
     SimplexTree(XTreeEvaluator* eval, Region<N> region,
                 double min_feature, double max_err, unsigned max_depth);
 
+    /*
+     *  Checks whether this tree splits
+     */
+    bool isBranch() const { return children[0].get() != nullptr; }
+
+    /*
+     *  Looks up a child, returning *this if this isn't a branch
+     */
+    const SimplexTree<N>* child(unsigned i) const
+    { return isBranch() ? children[i].get() : this; }
+
 protected:
+    /*
+     *  Private constructor that stores depth
+     */
+    SimplexTree(XTreeEvaluator* eval, Region<N> region,
+                double min_feature, double max_err, unsigned max_depth,
+                unsigned depth);
+
     /*
      *  Populates the children array
      */
