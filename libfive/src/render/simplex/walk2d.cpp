@@ -93,15 +93,15 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
          *  a list of pairs of edges between which we draw lines,
          *  with {-1,-1} as the null edge
          */
-        const std::array<std::array<int, 4>, 8> table = {{
-            {{-1, -1, -1, -1}}, // All empty
+        const std::array<std::array<unsigned, 4>, 8> table = {{
+            {{0, 0, 0, 0}}, // All empty (invalid)
             {{0, 1, 0, 2}}, // 0
             {{1, 2, 1, 0}}, // 1
             {{1, 2, 0, 2}}, // 1 + 0
             {{2, 0, 2, 1}}, // 2
             {{0, 1, 2, 1}}, // 2 + 0
             {{2, 0, 1, 0}}, // 2 + 1
-            {{-1, -1, -1, -1}} // All filled
+            {{0, 0, 0, 0}} // All filled (invalid)
         }};
 
         for (const auto& t : tris)
@@ -121,19 +121,24 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
 
             // Pick out the two edges to search, storing their start + end
             // vertices in an matrix here.
+            assert(mask <= table.size());
             const auto entry = table[mask];
             Eigen::Matrix<double, 3, 4> es;
             for (unsigned i=0; i < 4; ++i)
             {
+                assert(entry[i] < t.size());
+                assert(t[entry[i]] < corners.size());
+
                 auto c = corners[t[entry[i]]];
                 es.col(i) = ts[c.index]->vertices.col(c.simplex.toIndex());
             }
 
             // Confirm the inside / outside state of the vertices
-            assert(es(2, 0) <= 0);
-            assert(es(2, 1) >= 0);
-            assert(es(2, 2) <= 0);
-            assert(es(2, 3) >= 0);
+            std::cout << es << "\n";
+            assert(es(2, 0) >= 0);
+            assert(es(2, 1) <= 0);
+            assert(es(2, 2) >= 0);
+            assert(es(2, 3) <= 0);
 
             // Do a linear search along both edges to find the intersection
             auto t0 = es(2, 1) / (es(2, 1) - es(2, 0));

@@ -115,10 +115,10 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
 #include "libfive/render/simplex/walk2d.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
-    auto s = move(circle(1), {0.0, 0.1, 0.0});
+    //auto s = move(circle(1), {0.0, 0.1, 0.0});
     //auto s = move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
     //auto s = move(menger2d(1), {0.01, 0.2, 1.4});
-    //auto s = Tree::X();
+    auto s = Tree::X();
 
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
@@ -183,6 +183,18 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
             file << "\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.01\"/>\n";
         }
     }
+
+    for (auto& e : contours.branes)
+    {
+        file << "<path d=\"M ";
+        auto a = contours.verts[e(0)];
+        auto b = contours.verts[e(1)];
+
+        file << a.x() - r.lower.x() << " " << r.upper.y() - a.y() << " ";
+        file << b.x() - r.lower.x() << " " << r.upper.y() - b.y() << " ";
+        file << "\" fill=\"none\" stroke=\"red\" stroke-width=\"0.01\"/>\n";
+    }
+
     file << "</svg>";
 
 
