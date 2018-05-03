@@ -1,6 +1,6 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
-Copyright (C) 2018  Matt Keeter
+Copyright (C) 2018 Matt Keeter
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -16,38 +16,41 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#pragma once
-
 #include "libfive/render/simplex/simplextree.hpp"
 #include "libfive/render/simplex/simplex.hpp"
-#include "libfive/render/simplex/dual.hpp"
+#include "libfive/render/simplex/walk2d.hpp"
 #include "libfive/render/axes.hpp"
 
-namespace Kernel {
+using namespace Kernel;
 
-typedef SimplexDual<2>::Corner  Corner;
-typedef SimplexDual<2>::Prim    Prim;
+struct Corner
+{
+    unsigned index;
+    Simplex<2> simplex;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // 2D Implementation
-template <typename V, Axis::Axis A>
-void edge2(const std::array<const SimplexTree<2>*, 2>& ts, V& v)
+template <Axis::Axis A>
+void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
 {
     constexpr uint8_t perp = (Axis::X | Axis::Y) ^ A;
 
     if (std::any_of(ts.begin(), ts.end(),
         [](const SimplexTree<2>* t){ return t->isBranch(); }))
     {
-        edge2<V, A>({{ts[0]->child(perp), ts[1]->child(0)}}, v);
-        edge2<V, A>({{ts[0]->child(A|perp), ts[1]->child(A)}}, v);
+        edge2<A>({{ts[0]->child(perp), ts[1]->child(0)}}, out);
+        edge2<A>({{ts[0]->child(A|perp), ts[1]->child(A)}}, out);
     }
-    else
+    else if (std::any_of(ts.begin(), ts.end(),
+        [](const SimplexTree<2>* t){ return t->type == Interval::AMBIGUOUS; }))
     {
         // Pick the index of the minimum edge, which is the one that we'll
         // use to build the four triangles to run marching triangles over.
-        const auto index = std::max_element(ts.begin(), ts.end(),
+        const unsigned index = std::max_element(ts.begin(), ts.end(),
                 [](const SimplexTree<2>* a, const SimplexTree<2>* b)
-                { return a->depth < b->depth; }) - ts.begin();
+                { return a->depth < b->depth &&
+                         b->type == Interval::AMBIGUOUS; }) - ts.begin();
 
         /*
          *      Given two adjacent squares, here's how we order points:
@@ -139,10 +142,10 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, V& v)
             Eigen::Vector2d a = (t0 * es.col(0) + (1 - t0) * es.col(1))
                 .head<2>();
 
-            auto t1 = es(2, 3) / (es(2, 3) - es(2, 2));
-            assert(t1 >= 0);
-            assert(t1 <= 1);
-            Eigen::Vector2d b = t1 * es.col(0) + (1 - t1) * es.col(1)
+            double t1 = es(2, 3) / (es(2, 3) - es(2, 2));
+            assert(t1 >= 0.0);
+            assert(t1 <= 1.0);
+            Eigen::Vector2d b = (t1 * es.col(0) + (1 - t1) * es.col(1))
                 .head<2>();
 
             (void)a;
@@ -151,9 +154,7 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, V& v)
     }
 }
 
-template <>
-template <typename V>
-void SimplexDual<2>::walk(const SimplexTree<2>* t, V& v)
+void vert2d(const SimplexTree<2>* t, BRep<2>& out)
 {
     if (t->isBranch())
     {
@@ -163,16 +164,21 @@ void SimplexDual<2>::walk(const SimplexTree<2>* t, V& v)
             auto c = t->child(i);
             if (c != t)
             {
-                walk(c, v);
+                vert2d(c, out);
             }
         }
 
         //  Then, call edge on every pair of cells
-        edge2<V, Axis::Y>({{t->child(0), t->child(Axis::X)}}, v);
-        edge2<V, Axis::Y>({{t->child(Axis::Y), t->child(Axis::Y | Axis::X)}}, v);
-        edge2<V, Axis::X>({{t->child(0), t->child(Axis::Y)}}, v);
-        edge2<V, Axis::X>({{t->child(Axis::X), t->child(Axis::X | Axis::Y)}}, v);
+        edge2<Axis::Y>({{t->child(0), t->child(Axis::X)}}, out);
+        edge2<Axis::Y>({{t->child(Axis::Y), t->child(Axis::Y | Axis::X)}}, out);
+        edge2<Axis::X>({{t->child(0), t->child(Axis::Y)}}, out);
+        edge2<Axis::X>({{t->child(Axis::X), t->child(Axis::X | Axis::Y)}}, out);
     }
 }
 
-}   // namespace Kernel
+BRep<2> walk2d(const SimplexTree<2>* t)
+{
+    BRep<2> out;
+    vert2d(t, out);
+    return out;
+}

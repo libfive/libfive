@@ -18,33 +18,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #pragma once
 
-#include "libfive/render/simplex/simplex.hpp"
+#include "libfive/render/brep/brep.hpp"
 
 namespace Kernel {
-
 template <unsigned N> class SimplexTree;
 
-/*
- *  Class to walk a dual grid for a quad or octree
- *  t needs operator(const std::array<XTree<N>*, N>& trees) defined
- */
-template <unsigned N>
-class SimplexDual
-{
-public:
-    template<typename V>
-    static void walk(const SimplexTree<N>* tree, V& v);
-
-    struct Corner
-    {
-        unsigned index;
-        Simplex<N> simplex;
-    };
-
-    struct Prim
-    {
-        std::array<Corner, N + 1> corners;
-    };
-};
+BRep<2> walk2d(const SimplexTree<2>* t);
 
 }   // namespace Kernel

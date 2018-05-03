@@ -51,7 +51,7 @@ struct Simplex : std::array<SimplexCorner, N>
 
     unsigned toIndex() const
     {
-        unsigned out;
+        unsigned out = 0;
         for (unsigned j=0; j < N; ++j)
         {
             switch ((*this)[j])

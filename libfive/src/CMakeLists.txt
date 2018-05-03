@@ -32,6 +32,7 @@ add_library(five SHARED
     render/brep/neighbors.cpp
     render/simplex/simplextree2.cpp
     render/simplex/simplextree3.cpp
+    render/simplex/walk2d.cpp
     solve/bounds.cpp
     solve/solver.cpp
     tree/cache.cpp
