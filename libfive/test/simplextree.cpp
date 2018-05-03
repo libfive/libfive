@@ -112,6 +112,7 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
 }
 
 #include "libfive/render/discrete/heightmap.hpp"
+#include "libfive/render/simplex/walk2d.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
     auto s = move(circle(1), {0.0, 0.1, 0.0});
@@ -122,6 +123,8 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
     auto t = SimplexTree<2>(&eval, r, 0.5, 0.001, 1);
+
+    auto contours = walk2d(&t);
 
     std::ofstream file;
     file.open("out.svg", std::ios::out);

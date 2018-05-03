@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/render/simplex/walk2d.hpp"
 #include "libfive/render/axes.hpp"
 
-using namespace Kernel;
+namespace Kernel {
 
 struct Corner
 {
@@ -148,8 +148,11 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
             Eigen::Vector2d b = (t1 * es.col(0) + (1 - t1) * es.col(1))
                 .head<2>();
 
-            (void)a;
-            (void)b;
+            auto ai = out.verts.size();
+            out.verts.push_back(a.cast<float>());
+            auto bi = out.verts.size();
+            out.verts.push_back(b.cast<float>());
+            out.branes.push_back({ai, bi});
         }
     }
 }
@@ -182,3 +185,5 @@ BRep<2> walk2d(const SimplexTree<2>* t)
     vert2d(t, out);
     return out;
 }
+
+}   // namespace Kernel
