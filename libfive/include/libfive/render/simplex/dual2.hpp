@@ -79,6 +79,28 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, V& v)
         const std::array<std::array<unsigned, 3>, 4> tris =
             {{{{2,1,3}}, {{2,4,1}}, {{2,0,4}}, {{2,3,0}}}};
 
+        /*
+         *  Given a triangle with corners
+         *      2
+         *     /|
+         *    / |
+         *   0--1
+         *
+         *  We encode the 8 possible bitfield patterns and
+         *  a list of pairs of edges between which we draw lines,
+         *  with {-1,-1} as the null edge
+         */
+        const std::array<std::array<int, 4>, 8> table = {{
+            {{-1, -1, -1, -1}}, // All empty
+            {{0, 1, 0, 2}}, // 0
+            {{1, 2, 1, 0}}, // 1
+            {{1, 2, 0, 2}}, // 1 + 0
+            {{2, 0, 2, 1}}, // 2
+            {{0, 1, 2, 1}}, // 2 + 0
+            {{2, 0, 1, 0}}, // 2 + 1
+            {{-1, -1, -1, -1}} // All filled
+        }};
+
         for (const auto& t : tris)
         {
             unsigned mask = 0;
@@ -87,7 +109,44 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, V& v)
                 auto c = corners[t[i]];
                 mask |= ts[c.index]->inside[c.simplex.toIndex()] ? (1 << i) : 0;
             }
-            // Then run marching triangles based on the mask.  Easy!
+
+            // Skip the empty or filled triangles
+            if (mask == 0 || mask == 7)
+            {
+                continue;
+            }
+
+            // Pick out the two edges to search, storing their start + end
+            // vertices in an matrix here.
+            const auto entry = table[mask];
+            Eigen::Matrix<double, 3, 4> es;
+            for (unsigned i=0; i < 4; ++i)
+            {
+                auto c = corners[t[entry[i]]];
+                es.col(i) = ts[c.index]->vertices.col(c.simplex.toIndex());
+            }
+
+            // Confirm the inside / outside state of the vertices
+            assert(es(2, 0) <= 0);
+            assert(es(2, 1) >= 0);
+            assert(es(2, 2) <= 0);
+            assert(es(2, 3) >= 0);
+
+            // Do a linear search along both edges to find the intersection
+            auto t0 = es(2, 1) / (es(2, 1) - es(2, 0));
+            assert(t0 >= 0);
+            assert(t0 <= 1);
+            Eigen::Vector2d a = (t0 * es.col(0) + (1 - t0) * es.col(1))
+                .head<2>();
+
+            auto t1 = es(2, 3) / (es(2, 3) - es(2, 2));
+            assert(t1 >= 0);
+            assert(t1 <= 1);
+            Eigen::Vector2d b = t1 * es.col(0) + (1 - t1) * es.col(1)
+                .head<2>();
+
+            (void)a;
+            (void)b;
         }
     }
 }
