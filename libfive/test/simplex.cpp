@@ -30,6 +30,22 @@ TEST_CASE("Simplex::containsCorner")
     REQUIRE(s.containsCorner(1));
 }
 
+TEST_CASE("Simplex<2>::to/fromSimplex")
+{
+    for (unsigned i=0; i < 8; ++i)
+    {
+        REQUIRE(Simplex<2>::fromIndex(i).toIndex() == i);
+    }
+}
+
+TEST_CASE("Simplex<3>::to/fromSimplex")
+{
+    for (unsigned i=0; i < 26; ++i)
+    {
+        REQUIRE(Simplex<3>::fromIndex(i).toIndex() == i);
+    }
+}
+
 TEST_CASE("Simplex<3>::containsSimplex")
 {
     Simplex<3> s = Simplex<3>::fromIndex(2);

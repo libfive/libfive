@@ -54,13 +54,13 @@ struct Simplex : std::array<SimplexCorner, N>
         unsigned out = 0;
         for (unsigned j=0; j < N; ++j)
         {
-            switch ((*this)[j])
+            out *= 3;
+            switch ((*this)[N - j - 1])
             {
                 case SIMPLEX_CORNER_LOWER: out += 0; break;
                 case SIMPLEX_CORNER_UPPER: out += 1; break;
                 case SIMPLEX_CORNER_SPANS: out += 2; break;
             }
-            out *= 3;
         }
         return out;
     }
