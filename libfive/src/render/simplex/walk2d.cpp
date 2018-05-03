@@ -150,7 +150,7 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
             double t1 = es(2, 3) / (es(2, 3) - es(2, 2));
             assert(t1 >= 0.0);
             assert(t1 <= 1.0);
-            Eigen::Vector2d b = (t1 * es.col(0) + (1 - t1) * es.col(1))
+            Eigen::Vector2d b = (t1 * es.col(2) + (1 - t1) * es.col(3))
                 .head<2>();
 
             auto ai = out.verts.size();
