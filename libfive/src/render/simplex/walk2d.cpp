@@ -141,14 +141,14 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
                 es.col(i) = ts[c.index]->vertices.col(c.simplex.toIndex());
             }
 
-            std::cout << "ts[0].vertices:\n" << ts[0]->vertices << "(" << ts[0]->type << ")\n";
-            std::cout << "ts[1].vertices:\n" << ts[1]->vertices << "(" << ts[1]->type << ")\n";
+            std::cout << "ts[0].vertices (" << ts[0]->type << "):\n" << ts[0]->vertices << "\n";
+            std::cout << "ts[1].vertices (" << ts[1]->type << "):\n" << ts[1]->vertices << "\n";
             // Confirm the inside / outside state of the vertices
             std::cout << "es:\n" << es << "\n";
-            assert(es(2, 0) >= 0);
-            assert(es(2, 1) <= 0);
-            assert(es(2, 2) >= 0);
-            assert(es(2, 3) <= 0);
+            assert(es(2, 0) <= 0);
+            assert(es(2, 1) >= 0);
+            assert(es(2, 2) <= 0);
+            assert(es(2, 3) >= 0);
 
             // Do a linear search along both edges to find the intersection
             auto t0 = es(2, 1) / (es(2, 1) - es(2, 0));

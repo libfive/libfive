@@ -14,6 +14,7 @@ set(SRCS main.cpp
     eval_point.cpp
     feature.cpp
     heightmap.cpp
+    interval.cpp
     marching.cpp
     mesh.cpp
     neighbors.cpp

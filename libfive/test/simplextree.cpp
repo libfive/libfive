@@ -117,8 +117,8 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
 {
     //auto s = move(circle(1), {0.0, 0.1, 0.0});
     //auto s = move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
-    //auto s = move(menger2d(1), {0.01, 0.2, 1.4});
-    auto s = Tree::Y();
+    auto s = move(menger2d(1), {0.01, 0.2, 1.4});
+    //auto s = Tree::Y();
 
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});

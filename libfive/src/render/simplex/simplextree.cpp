@@ -414,6 +414,7 @@ void SimplexTree<N>::recurse(
         {
             c.reset();
         }
+        std::fill(inside.begin(), inside.end(), type == Interval::FILLED);
     }
 }
 
