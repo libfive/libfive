@@ -129,6 +129,12 @@ void Tape::pop()
     {
         tape--;
     }
+    rwalk([this](Opcode::Opcode op, Clause::Id id,
+        Clause::Id a_, Clause::Id /*b_*/){
+    if (op == Opcode::ORACLE) {
+        oracles[a_]->pop();
+    }
+    });
 }
 
 double Tape::utilization() const

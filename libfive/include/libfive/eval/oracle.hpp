@@ -63,6 +63,33 @@ public:
     virtual void evalPoint(float& out, size_t index=0)=0;
 
     /*
+     *  Evaluates an interval as above, but also performs the equivalent
+     *  (if any) of a tape push.  
+     */
+    virtual void evalAndPushInterval(Interval::I& out) { 
+        evalInterval(out); 
+    }
+
+    /*
+    *  Evaluates an point as above, but also performs the equivalent
+    *  (if any) of a tape push.
+    */
+    virtual void evalAndPushPoint(float& out, size_t index = 0) { 
+        evalPoint(out, index); 
+    }
+
+    /*
+     *  Evaluates an point, regardless of whether it is contained in the
+     *  region the oracle has been pushed into.
+     */
+    virtual void baseEvalPoint(float& out, size_t index = 0) {
+      evalPoint(out, index);
+    }
+
+    /*  Performs the equivalent (if any) of a tape pop.  */
+    virtual void pop() {}
+
+    /*
      *  Block-level floating-point evaluation.
      *  By default, this simply calls evalPoint multiple times; overload it with
      *  a more efficient implementation if possible.

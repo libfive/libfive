@@ -61,6 +61,13 @@ protected:
     Eigen::Array<float, Eigen::Dynamic, 1> f;
 
     /*
+     *  Indicate whether the current operation is to use
+     *  evalAndPush, baseEval, or regular eval for oracles
+     */
+    bool pushing = false;
+    bool evalBase = false;
+
+    /*
      *  Per-clause evaluation, used in tape walking
      */
     void operator()(Opcode::Opcode op, Clause::Id id,

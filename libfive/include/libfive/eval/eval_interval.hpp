@@ -52,6 +52,12 @@ protected:
     /*  i[clause] is the interval result for that clause */
     std::vector<Interval::I> i;
 
+    /*  
+     *  Indicates whether the current operation is to use 
+     *  evalAndPush methods for oracles
+     */
+    bool pushing = false;
+
     /*
      *  Per-clause evaluation, used in tape walking
      */

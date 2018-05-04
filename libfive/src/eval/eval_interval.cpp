@@ -64,6 +64,7 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
 Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
                                            const Eigen::Vector3f& upper)
 {
+    pushing = true;
     auto out = eval(lower, upper);
 
     tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
@@ -106,6 +107,7 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
         Tape::INTERVAL,
         {{i[tape->X].lower(), i[tape->Y].lower(), i[tape->Z].lower()},
          {i[tape->X].upper(), i[tape->Y].upper(), i[tape->Z].upper()}});
+    pushing = false;
     return out;
 }
 
@@ -226,7 +228,8 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            tape->oracles[a_]->evalInterval(out);
+            if (pushing) tape->oracles[a_]->evalAndPushInterval(out);
+            else tape->oracles[a_]->evalInterval(out);
             break;
 
         case Opcode::INVALID:
