@@ -42,6 +42,12 @@ public:
 
     void evalPoint(float& out, size_t index=0) override;
 
+    void evalAndPushInterval(Interval::I& out) override;
+
+    void evalAndPushPoint(float& out, size_t index = 0) override;
+
+    void baseEvalPoint(float& out, size_t index = 0) override;
+
     void evalArray(
         Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
         LIBFIVE_EVAL_ARRAY_SIZE,
