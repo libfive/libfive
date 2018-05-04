@@ -42,12 +42,6 @@ public:
 
     void evalPoint(float& out, size_t index=0) override;
 
-    void evalAndPushInterval(Interval::I& out) override;
-
-    void evalAndPushPoint(float& out, size_t index = 0) override;
-
-    void baseEvalPoint(float& out, size_t index = 0) override;
-
     void evalArray(
         Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
         LIBFIVE_EVAL_ARRAY_SIZE,
@@ -68,6 +62,19 @@ public:
 
     void evalFeatures(
         boost::container::small_vector<Feature, 4>& out) override;
+
+
+    void evalAndPushInterval(Interval::I& out) override;
+
+    void evalAndPushPoint(float& out, size_t index = 0) override;
+
+    void baseEvalPoint(float& out, size_t index = 0) override;
+
+    void baseEvalDerivs(
+        Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
+        3, 1, true> out, size_t index = 0) override;
+
+    void pop() override;
 
 private:
     void setUnderlyingArrayValues(int count);

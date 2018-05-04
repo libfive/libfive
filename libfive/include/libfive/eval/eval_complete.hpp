@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/eval/eval_deriv_array.hpp"
 #include "libfive/eval/eval_interval.hpp"
 #include "libfive/eval/eval_feature.hpp"
-#include "libfive/eval/eval_deriv.hpp"
+#include "libfive/eval/eval_base_deriv.hpp"
 
 namespace Kernel {
 
@@ -39,7 +39,8 @@ public:
 
     CompleteEvaluator(const Tree t, const std::map<Tree::Id, float>& vars)
         : tape(new Tape(t)), array(tape, vars),
-          interval(tape, vars), feature(tape, vars), deriv(tape, vars)
+          interval(tape, vars), feature(tape, vars), deriv(tape, vars),
+          baseDeriv(tape, vars)
     { /* Nothing to do here */ }
 
     /*
@@ -65,7 +66,8 @@ public:
     DerivArrayEvaluator array;
     IntervalEvaluator interval;
     FeatureEvaluator feature;
-    DerivEvaluator deriv;
+    DerivEvaluator deriv; //for backward compatibility
+    BaseDerivEvaluator baseDeriv;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
