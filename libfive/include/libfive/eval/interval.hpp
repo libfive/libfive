@@ -41,8 +41,8 @@ inline State state(const Interval::I& i)
 template <typename T>
 inline State state(const T v)
 {
-    return (v > 0) ? FILLED :
-           (v < 0) ? EMPTY : AMBIGUOUS;
+    return (v > 0) ? EMPTY :
+           (v < 0) ? FILLED : AMBIGUOUS;
 }
 
 }   // namespace Interval
