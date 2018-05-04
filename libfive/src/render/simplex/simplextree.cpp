@@ -68,21 +68,6 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
             eval->interval.evalAndPush(
                 region.lower3().template cast<float>(),
                 region.upper3().template cast<float>()));
-    switch (type)
-    {
-        case Interval::EMPTY:       // fallthrough
-        case Interval::FILLED:
-            std::fill(inside.begin(), inside.end(), type == Interval::FILLED);
-            for (unsigned i=0; i < ipow(2, N); ++i)
-            {
-                vertices.col(Simplex<2>::fromCorner(i).toIndex())
-                        .template head<N>() = region.corner(i);
-            }
-            eval->interval.pop();
-            return;
-        case Interval::AMBIGUOUS:   break;
-        case Interval::UNKNOWN:     assert(false); break;
-    }
 
     // Top-down construction: we recurse down to a minimum size
     if (((region.upper - region.lower) > min_feature).any())
@@ -410,10 +395,6 @@ void SimplexTree<N>::recurse(
 
     if (type != Interval::AMBIGUOUS)
     {
-        for (auto& c : children)
-        {
-            c.reset();
-        }
         std::fill(inside.begin(), inside.end(), type == Interval::FILLED);
     }
 }

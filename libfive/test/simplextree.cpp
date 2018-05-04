@@ -122,7 +122,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
 
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.001, 1);
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.001, 2);
 
     auto contours = walk2d(&t);
 
@@ -192,7 +192,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
 
         file << a.x() - r.lower.x() << " " << r.upper.y() - a.y() << " ";
         file << b.x() - r.lower.x() << " " << r.upper.y() - b.y() << " ";
-        file << "\" fill=\"none\" stroke=\"red\" stroke-width=\"0.01\"/>\n";
+        file << "\" fill=\"none\" stroke=\"red\" stroke-width=\"0.02\"/>\n";
     }
 
     file << "</svg>";
