@@ -76,7 +76,7 @@ struct Simplex : std::array<SimplexCorner, N>
                 case 0: out[j] = SIMPLEX_CORNER_LOWER; break;
                 case 1: out[j] = SIMPLEX_CORNER_UPPER; break;
             }
-            corner /= 3;
+            corner /= 2;
         }
         return out;
     }

@@ -53,3 +53,23 @@ TEST_CASE("Simplex<3>::containsSimplex")
     REQUIRE(s.containsSimplex(Simplex<3>::fromIndex(1)));
     REQUIRE(s.containsSimplex(Simplex<3>::fromIndex(2)));
 }
+
+TEST_CASE("Simplex<2>::fromCorner")
+{
+    REQUIRE(Simplex<2>::fromCorner(0).toIndex() == 0);
+    REQUIRE(Simplex<2>::fromCorner(1).toIndex() == 1);
+    REQUIRE(Simplex<2>::fromCorner(2).toIndex() == 3);
+    REQUIRE(Simplex<2>::fromCorner(3).toIndex() == 4);
+}
+
+TEST_CASE("Simplex<3>::fromCorner")
+{
+    REQUIRE(Simplex<3>::fromCorner(0).toIndex() == 0);
+    REQUIRE(Simplex<3>::fromCorner(1).toIndex() == 1);
+    REQUIRE(Simplex<3>::fromCorner(2).toIndex() == 3);
+    REQUIRE(Simplex<3>::fromCorner(3).toIndex() == 4);
+    REQUIRE(Simplex<3>::fromCorner(4).toIndex() == 9);
+    REQUIRE(Simplex<3>::fromCorner(5).toIndex() == 10);
+    REQUIRE(Simplex<3>::fromCorner(6).toIndex() == 12);
+    REQUIRE(Simplex<3>::fromCorner(7).toIndex() == 13);
+}
