@@ -336,7 +336,7 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
     {
         Eigen::Vector3f p;
         p << vertices.col(i).template head<N>().template cast<float>(),
-             Eigen::Array<float, 3 - N, 1>::Zero();
+             region.perp.template cast<float>();
         eval->array.set(p, i);
     }
     vertices.row(N) = eval->array.values(vertices.cols())
