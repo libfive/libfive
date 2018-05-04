@@ -61,6 +61,8 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
                             unsigned max_depth, unsigned depth)
     : depth(depth)
 {
+    vertices.array()  = 0.0/0.0;
+
     // Early exit based on interval evaluation
     type = Interval::state(
             eval->interval.evalAndPush(
@@ -71,6 +73,11 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
         case Interval::EMPTY:       // fallthrough
         case Interval::FILLED:
             std::fill(inside.begin(), inside.end(), type == Interval::FILLED);
+            for (unsigned i=0; i < ipow(2, N); ++i)
+            {
+                vertices.col(Simplex<2>::fromCorner(i).toIndex())
+                        .template head<N>() = region.corner(i);
+            }
             eval->interval.pop();
             return;
         case Interval::AMBIGUOUS:   break;
@@ -358,6 +365,7 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
                             .template cast<float>(),
                          region.perp.template cast<float>();
                 inside[v] = eval->feature.isInside(vert3);
+
                 break;
             }
             case Interval::UNKNOWN: assert(false); break;

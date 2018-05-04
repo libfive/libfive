@@ -1,3 +1,4 @@
+#include <iostream>
 /*
 libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2018 Matt Keeter
@@ -49,34 +50,39 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
         // use to build the four triangles to run marching triangles over.
         const unsigned index = std::max_element(ts.begin(), ts.end(),
                 [](const SimplexTree<2>* a, const SimplexTree<2>* b)
-                { return a->depth < b->depth &&
-                         b->type == Interval::AMBIGUOUS; }) - ts.begin();
+                { return a->depth < b->depth ||
+                         (b->type == Interval::AMBIGUOUS &&
+                          a->type != Interval::AMBIGUOUS); }) - ts.begin();
+        std::cout << "index: " << index << " axis: " << A << "\n";
+        std::cout << ts[0]->depth << " " << ts[1]->depth << "\n";
 
         /*
-         *      Given two adjacent squares, here's how we order points:
-         *
-         *      -------b-------
-         *      |    / | \    |
-         *      |  c0--e--c1  |
-         *      |    \ | /    |
-         *      -------a-------
-         *
-         *      or, packed into an array,
+         *      Given two adjacent squares, here's how we order points
+         *      (on simplex vertices) and triangles (between points):
          *
          *      -------1-------
-         *      |    / | \    |
-         *      |   3--2--4   |
-         *      |    \ | /    |
-         *      -------0-------
+         *      |    /0|1\    |   ^
+         *      |   3--2--4   |   | A
+         *      |    \3|2/    |   |
+         *      -------0-------   ----> perp
+         *
          */
-        Corner a = {index, Simplex<2>::fromCorner(index ? 0 : perp)};
-        Corner b = {index, Simplex<2>::fromCorner((index ? 0 : perp) | A)};
-        Corner e = {index, Simplex<2>::merge(a.simplex, b.simplex)};
-        Corner c0 = {0, Simplex<2>::fromIndex(7)};
-        Corner c1 = {0, Simplex<2>::fromIndex(7)};
+        std::array<Corner, 5> corners = {{
+            {index, Simplex<2>::fromCorner(index ? 0 : perp)},
+            {index, Simplex<2>::fromCorner((index ? 0 : perp) | A)},
+            {index, Simplex<2>::merge(
+                    Simplex<2>::fromCorner(index ? 0 : perp),
+                    Simplex<2>::fromCorner((index ? 0 : perp) | A))},
+            {0, Simplex<2>::fromIndex(8)},
+            {1, Simplex<2>::fromIndex(8)}
+        }};
 
-        // Pack these corners into an array for ease of indexing
-        std::array<Corner, 5> corners = {{a, b, e, c0, c1}};
+        std::cout << "corners:\n";
+        for (auto& c : corners)
+        {
+            std::cout << ts[c.index]->vertices.col(c.simplex.toIndex()).transpose() << "    " << ts[c.index]->inside[c.simplex.toIndex()] << "\n";
+        }
+        std::cout << "\n";
 
         // This hardcodes the four triangles to run MT over
         const std::array<std::array<unsigned, 3>, 4> tris =
@@ -113,6 +119,7 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
                 mask |= ts[c.index]->inside[c.simplex.toIndex()] ? (1 << i) : 0;
             }
 
+            std::cout << "mask: " << (unsigned)mask << "  tri: " << (&t - tris.data()) << "\n";
             // Skip the empty or filled triangles
             if (mask == 0 || mask == 7)
             {
@@ -130,11 +137,14 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
                 assert(t[entry[i]] < corners.size());
 
                 auto c = corners[t[entry[i]]];
+                std::cout << entry[i] << " " << t[entry[i]] << " " << c.index << " " << c.simplex.toIndex() << "\n";
                 es.col(i) = ts[c.index]->vertices.col(c.simplex.toIndex());
             }
 
+            std::cout << "ts[0].vertices:\n" << ts[0]->vertices << "(" << ts[0]->type << ")\n";
+            std::cout << "ts[1].vertices:\n" << ts[1]->vertices << "(" << ts[1]->type << ")\n";
             // Confirm the inside / outside state of the vertices
-            std::cout << es << "\n";
+            std::cout << "es:\n" << es << "\n";
             assert(es(2, 0) >= 0);
             assert(es(2, 1) <= 0);
             assert(es(2, 2) >= 0);
@@ -158,7 +168,10 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
             auto bi = out.verts.size();
             out.verts.push_back(b.cast<float>());
             out.branes.push_back({ai, bi});
+            std::cout << "\n";
         }
+
+        std::cout << "----------------------------------------------------------------------\n";
     }
 }
 
