@@ -108,8 +108,9 @@ float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
 float PointEvaluator::baseEval(const Eigen::Vector3f& pt)
 {
     evalBase = true;
-    return tape->baseEval<PointEvaluator, float>(*this, pt);
+    auto out = tape->baseEval<PointEvaluator, float>(*this, pt);
     evalBase = false;
+    return out;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
