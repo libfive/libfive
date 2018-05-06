@@ -152,9 +152,10 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
                 case 2: fill = "green"; break;
                 default: fill = "white"; break;
             }
+            std::string stroke = next->inside[i] ? "white" : "black";
             file << "<circle cx=\"" << v.x() - r.lower.x() << "\" "
                  << "cy=\"" << r.upper.y() - v.y() << "\" "
-                 << "r=\"0.02\" stroke=\"black\" stroke-width=\"0.001\" "
+                 << "r=\"0.02\" stroke=\"" << stroke << "\" stroke-width=\"0.01\" "
                  << "fill=\"" << fill << "\" />\n";
         }
 
@@ -180,7 +181,15 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
             file << "<path d=\"M ";
             file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
             file << center.x() - r.lower.x() << " " << r.upper.y() - center.y() << " ";
-            file << "\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.01\"/>\n";
+            file << "\" fill=\"none\" stroke=\"green\" stroke-width=\"0.01\"/>\n";
+        }
+        for (unsigned i : {2, 5, 6, 7})
+        {
+            auto v = next->vertices.col(i).eval();
+            file << "<path d=\"M ";
+            file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
+            file << center.x() - r.lower.x() << " " << r.upper.y() - center.y() << " ";
+            file << "\" fill=\"none\" stroke=\"yellow\" stroke-width=\"0.01\"/>\n";
         }
     }
 

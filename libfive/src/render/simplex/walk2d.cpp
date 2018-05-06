@@ -50,9 +50,7 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
         // use to build the four triangles to run marching triangles over.
         const unsigned index = std::max_element(ts.begin(), ts.end(),
                 [](const SimplexTree<2>* a, const SimplexTree<2>* b)
-                { return a->depth < b->depth ||
-                         (b->type == Interval::AMBIGUOUS &&
-                          a->type != Interval::AMBIGUOUS); }) - ts.begin();
+                { return a->depth < b->depth; }) - ts.begin();
         std::cout << "index: " << index << " axis: " << A << "\n";
         std::cout << ts[0]->depth << " " << ts[1]->depth << "\n";
 
@@ -65,6 +63,16 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
          *      |   3--2--4   |   | A
          *      |    \3|2/    |   |
          *      -------0-------   ----> perp
+         *
+         *      Or, along the other axis:
+         *
+         *      ---------
+         *      |   4   |
+         *      | /2|1\ |   ^
+         *      0---2---1   | perp
+         *      | \3|0/ |   |
+         *      |   3   |   ----> A
+         *      ---------
          *
          */
         std::array<Corner, 5> corners = {{
@@ -80,13 +88,18 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
         std::cout << "corners:\n";
         for (auto& c : corners)
         {
+            std::cout << "index: " << c.index << " simplex: " << c.simplex.toIndex() << "\n\t";
             std::cout << ts[c.index]->vertices.col(c.simplex.toIndex()).transpose() << "    " << ts[c.index]->inside[c.simplex.toIndex()] << "\n";
         }
         std::cout << "\n";
 
         // This hardcodes the four triangles to run MT over
-        const std::array<std::array<unsigned, 3>, 4> tris =
-            {{{{2,1,3}}, {{2,4,1}}, {{2,0,4}}, {{2,3,0}}}};
+        const std::array<std::array<unsigned, 3>, 4> tris = {{
+            {{2,1,3}},
+            {{2,4,1}},
+            {{2,0,4}},
+            {{2,3,0}},
+        }};
 
         /*
          *  Given a triangle with corners
