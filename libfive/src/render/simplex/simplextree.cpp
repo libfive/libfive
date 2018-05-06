@@ -162,30 +162,11 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
         // Store the error
         errors[i] = (A * result - b).squaredNorm();
 
-        // Unpack the QEF solution into the vertex array
-        unsigned c = 0;
-        bool bounded = true;
-        for (unsigned a=0; a < N; ++a)
-        {
-            switch (t[a])
-            {
-                case SIMPLEX_CORNER_SPANS:
-                    vertices(a, i) = result(c);
-                    bounded &= (vertices(a, i) >= region.lower(a));
-                    bounded &= (vertices(a, i) <= region.upper(a));
-                    c++;
-                    break;
-                case SIMPLEX_CORNER_LOWER:
-                    vertices(a, i) = region.lower(a);
-                    break;
-                case SIMPLEX_CORNER_UPPER:
-                    vertices(a, i) = region.upper(a);
-                    break;
-            }
-        }
-        // We'll refine vertices(N, i) below, but use the QEF solution for now
-        assert(c == cols);
-        vertices(N, i) = result(c);
+        // Then inflate all the way up to normal vertex size
+        // and check to see whether the vertex is bounded.
+        auto unpacked = unpack(t, result, region);
+        bool bounded = unpacked.first;
+        vertices.col(i) = unpacked.second;
 
         // If the result is outside the boundary, loop from 0 to i,
         // picking out sub-simplices, solving the same QEF (constrainted based
@@ -281,28 +262,9 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
 
                 // Then inflate all the way up to normal vertex size
                 // and check to see whether the vertex is bounded.
-                Eigen::Matrix<double, N + 1, 1> vert;
-                c=0;
-                bounded = true;
-                for (unsigned a=0; a < N; ++a)
-                {
-                    switch (t[a])
-                    {
-                        case SIMPLEX_CORNER_SPANS:
-                            vert(a) = result(c++);
-                            bounded &= (vert(a) >= region.lower(a));
-                            bounded &= (vert(a) <= region.upper(a));
-                            break;
-                        case SIMPLEX_CORNER_LOWER:
-                            vert(a) = region.lower(a);
-                            break;
-                        case SIMPLEX_CORNER_UPPER:
-                            vert(a) = region.upper(a);
-                            break;
-                    }
-                }
-                assert(c == cols);
-                vert(N) = result(c);
+                auto unpacked = unpack(t, result, region);
+                bounded = unpacked.first;
+                auto vert = unpacked.second;
 
                 if (bounded && this_error < errors[i])
                 {
@@ -397,6 +359,37 @@ void SimplexTree<N>::recurse(
     {
         std::fill(inside.begin(), inside.end(), type == Interval::FILLED);
     }
+}
+
+template <unsigned N>
+std::pair<bool, Eigen::Matrix<double, N + 1, 1>> SimplexTree<N>::unpack(
+    const Simplex<N>& t, const Eigen::VectorXd& result,
+    const Region<N>& region)
+{
+    Eigen::Matrix<double, N + 1, 1> vert;
+    unsigned c=0;
+    bool bounded = true;
+
+    for (unsigned a=0; a < N; ++a)
+    {
+        switch (t[a])
+        {
+            case SIMPLEX_CORNER_SPANS:
+                vert(a) = result(c++);
+                bounded &= (vert(a) >= region.lower(a));
+                bounded &= (vert(a) <= region.upper(a));
+                break;
+            case SIMPLEX_CORNER_LOWER:
+                vert(a) = region.lower(a);
+                break;
+            case SIMPLEX_CORNER_UPPER:
+                vert(a) = region.upper(a);
+                break;
+        }
+    }
+    assert(c == result.rows() - 1);
+    vert(N) = result(c);
+    return std::make_pair(bounded, vert);
 }
 
 }   // namespace Kernel

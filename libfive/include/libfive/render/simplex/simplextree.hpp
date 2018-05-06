@@ -28,6 +28,7 @@ namespace Kernel {
 
 // Forward declaration
 class XTreeEvaluator;
+template <unsigned N> struct Simplex;
 
 template <unsigned N>
 class SimplexTree
@@ -90,6 +91,10 @@ protected:
      */
     void recurse(XTreeEvaluator* eval, Region<N> region,
                  double min_feature, double max_err, unsigned max_depth);
+
+    std::pair<bool, Eigen::Matrix<double, N + 1, 1>> unpack(
+        const Simplex<N>& t, const Eigen::VectorXd& result,
+        const Region<N>& region);
 };
 
 extern template class SimplexTree<2>;
