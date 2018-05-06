@@ -1,4 +1,3 @@
-#include <iostream>
 /*
 libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2018 Matt Keeter
@@ -51,8 +50,6 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
         const unsigned index = std::max_element(ts.begin(), ts.end(),
                 [](const SimplexTree<2>* a, const SimplexTree<2>* b)
                 { return a->depth < b->depth; }) - ts.begin();
-        std::cout << "index: " << index << " axis: " << A << "\n";
-        std::cout << ts[0]->depth << " " << ts[1]->depth << "\n";
 
         /*
          *      Given two adjacent squares, here's how we order points
@@ -84,14 +81,6 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
             {0, Simplex<2>::fromIndex(8)},
             {1, Simplex<2>::fromIndex(8)}
         }};
-
-        std::cout << "corners:\n";
-        for (auto& c : corners)
-        {
-            std::cout << "index: " << c.index << " simplex: " << c.simplex.toIndex() << "\n\t";
-            std::cout << ts[c.index]->vertices.col(c.simplex.toIndex()).transpose() << "    " << ts[c.index]->inside[c.simplex.toIndex()] << "\n";
-        }
-        std::cout << "\n";
 
         // This hardcodes the four triangles to run MT over
         const std::array<std::array<unsigned, 3>, 4> tris = {{
@@ -132,7 +121,6 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
                 mask |= ts[c.index]->inside[c.simplex.toIndex()] ? (1 << i) : 0;
             }
 
-            std::cout << "mask: " << (unsigned)mask << "  tri: " << (&t - tris.data()) << "\n";
             // Skip the empty or filled triangles
             if (mask == 0 || mask == 7)
             {
@@ -150,14 +138,10 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
                 assert(t[entry[i]] < corners.size());
 
                 auto c = corners[t[entry[i]]];
-                std::cout << entry[i] << " " << t[entry[i]] << " " << c.index << " " << c.simplex.toIndex() << "\n";
                 es.col(i) = ts[c.index]->vertices.col(c.simplex.toIndex());
             }
 
-            std::cout << "ts[0].vertices (" << ts[0]->type << "):\n" << ts[0]->vertices << "\n";
-            std::cout << "ts[1].vertices (" << ts[1]->type << "):\n" << ts[1]->vertices << "\n";
             // Confirm the inside / outside state of the vertices
-            std::cout << "es:\n" << es << "\n";
             assert(es(2, 0) <= 0);
             assert(es(2, 1) >= 0);
             assert(es(2, 2) <= 0);
@@ -181,10 +165,7 @@ void edge2(const std::array<const SimplexTree<2>*, 2>& ts, BRep<2>& out)
             auto bi = out.verts.size();
             out.verts.push_back(b.cast<float>());
             out.branes.push_back({ai, bi});
-            std::cout << "\n";
         }
-
-        std::cout << "----------------------------------------------------------------------\n";
     }
 }
 

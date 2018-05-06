@@ -135,3 +135,15 @@ Tree box(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
                max(lower.z() - Tree::Z(),
                    Tree::Z() - upper.z()));
 }
+
+Tree gyroid2d(float period, float thickness)
+{
+    auto tau = 3.14159 * 2;
+    auto x_factor = tau / period;
+    auto y_factor = tau / period;
+
+    auto x = Tree::X();
+    auto y = Tree::Y();
+
+    return sin(x / x_factor) * cos(y / y_factor) - thickness;
+}

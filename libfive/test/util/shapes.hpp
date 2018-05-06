@@ -31,3 +31,4 @@ Kernel::Tree sphere(float r, Eigen::Vector3f center=Eigen::Vector3f::Zero());
 Kernel::Tree box(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper);
 Kernel::Tree rotate2d(Kernel::Tree t, float angle);
 Kernel::Tree move(Kernel::Tree t, Eigen::Vector3f d);
+Kernel::Tree gyroid2d(float period, float thickness);
