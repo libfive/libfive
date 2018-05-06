@@ -33,7 +33,7 @@ TEST_CASE("SimplexTree<3>::SimplexTree")
     auto eval = XTreeEvaluator(s);
 
     auto t = SimplexTree<3>(&eval, Region<3>({-2, -2, -2}, {2, 2, 2}),
-                            0.5, 0.1, 4);
+                            0.5, 0.1, 0.1);
     REQUIRE(true);
 }
 
@@ -43,7 +43,7 @@ TEST_CASE("SimplexTree<2>::SimplexTree")
     auto eval = XTreeEvaluator(s);
 
     auto t = SimplexTree<2>(&eval, Region<2>({-2, -2}, {2, 2}),
-                            0.5, 0.1, 4);
+                            0.5, 0.1, 0.1);
 }
 
 template <unsigned N>
@@ -78,7 +78,7 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
 
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.01, 4);
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.05, 0.01);
 
     for (auto t : leafs(&t))
     {
@@ -123,7 +123,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
 
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.001, 3);
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.1, 0.0001);
 
     auto contours = walk2d(&t);
 
@@ -153,10 +153,9 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
                 case 2: fill = "green"; break;
                 default: fill = "white"; break;
             }
-            std::string stroke = next->inside[i] ? "white" : "black";
             file << "<circle cx=\"" << v.x() - r.lower.x() << "\" "
                  << "cy=\"" << r.upper.y() - v.y() << "\" "
-                 << "r=\"0.02\" stroke=\"" << stroke << "\" stroke-width=\"0.01\" "
+                 << "r=\"0.02\" stroke-width=\"none\" "
                  << "fill=\"" << fill << "\" />\n";
         }
 

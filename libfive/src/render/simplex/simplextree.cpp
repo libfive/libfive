@@ -48,17 +48,17 @@ Eigen::VectorXd solveCenteredQEF(Eigen::MatrixXd A, Eigen::VectorXd b,
 
 template <unsigned N>
 SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
-                            double min_feature, double max_err,
-                            unsigned max_depth)
-    : SimplexTree(eval, region, min_feature, max_err, max_depth, 0)
+                            double max_feature, double min_feature,
+                            double max_err)
+    : SimplexTree(eval, region, 0, max_feature, min_feature, max_err)
 {
     // Nothing to do here (delegating constructor)
 }
 
 template <unsigned N>
-SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
-                            double min_feature, double max_err,
-                            unsigned max_depth, unsigned depth)
+SimplexTree<N>::SimplexTree(
+        XTreeEvaluator* eval, Region<N> region, unsigned depth,
+        double max_feature, double min_feature, double max_err)
     : depth(depth)
 {
     vertices.array()  = 0.0/0.0;
@@ -70,9 +70,9 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
                 region.upper3().template cast<float>()));
 
     // Top-down construction: we recurse down to a minimum size
-    if (((region.upper - region.lower) > min_feature).any())
+    if (((region.upper - region.lower) > max_feature).any())
     {
-        recurse(eval, region, min_feature, max_err, max_depth);
+        recurse(eval, region, max_feature, min_feature, max_err);
         eval->interval.pop();
         return;
     }
@@ -276,10 +276,10 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
     }
 
     // If the errors are too large, then recurse here
-    if (max_depth &&
+    if (((region.upper - region.lower) > min_feature).any() &&
         std::accumulate(errors.begin(), errors.end(), 0.0) > max_err)
     {
-        recurse(eval, region, min_feature, max_err, max_depth - 1);
+        recurse(eval, region, max_feature, min_feature, max_err);
         eval->interval.pop();
         return;
     }
@@ -335,14 +335,14 @@ SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
 template <unsigned N>
 void SimplexTree<N>::recurse(
         XTreeEvaluator* eval, Region<N> region,
-        double min_feature, double max_err, unsigned max_depth)
+        double max_feature, double min_feature, double max_err)
 {
     auto rs = region.subdivide();
     for (unsigned i=0; i < children.size(); ++i)
     {
         children[i].reset(new SimplexTree<N>(
-                    eval, rs[i], min_feature, max_err, max_depth,
-                    depth + 1));
+                    eval, rs[i], depth + 1,
+                    max_feature, min_feature, max_err));
     }
 
     bool all_filled = true;

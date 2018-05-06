@@ -65,7 +65,7 @@ public:
      *  be distributed across multiple threads.
      */
     SimplexTree(XTreeEvaluator* eval, Region<N> region,
-                double min_feature, double max_err, unsigned max_depth);
+                double max_feature, double min_feature, double max_err);
 
     /*
      *  Checks whether this tree splits
@@ -82,15 +82,14 @@ protected:
     /*
      *  Private constructor that stores depth
      */
-    SimplexTree(XTreeEvaluator* eval, Region<N> region,
-                double min_feature, double max_err, unsigned max_depth,
-                unsigned depth);
+    SimplexTree(XTreeEvaluator* eval, Region<N> region, unsigned depth,
+                double max_feature, double min_feature, double max_err);
 
     /*
      *  Populates the children array
      */
     void recurse(XTreeEvaluator* eval, Region<N> region,
-                 double min_feature, double max_err, unsigned max_depth);
+                 double max_feature, double min_feature, double max_err);
 
     std::pair<bool, Eigen::Matrix<double, N + 1, 1>> unpack(
         const Simplex<N>& t, const Eigen::VectorXd& result,
