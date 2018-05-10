@@ -113,19 +113,33 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
 
 #include "libfive/render/discrete/heightmap.hpp"
 #include "libfive/render/simplex/walk2d.hpp"
+#include "libfive/render/brep/contours.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
     //auto s = move(circle(1), {0.0, 0.1, 0.0});
     //auto s = move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
-    //auto s = max(circle(1), gyroid2d(10, 0.1));
+    //auto s = max(circle(1), gyroid2d(50, 0.1));
     auto s = max(circle(1), -circle(0.9));
     //auto s = Tree::Y();
 
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.1, 0.0001);
 
+
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> elapsed;
+
+    start = std::chrono::system_clock::now();
+
+    for (unsigned i=0; i < 20; ++i)
+    {
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.2, 0.0001);
     auto contours = walk2d(&t);
+    }
+    auto t = SimplexTree<2>(&eval, r, 0.5, 0.2, 0.0001);
+    auto contours = walk2d(&t);
+    end = std::chrono::system_clock::now();
+    std::cout << "Ran in " << (end - start).count() << "\n";
 
     std::ofstream file;
     file.open("out.svg", std::ios::out);
@@ -141,7 +155,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     std::list<const SimplexTree<2>*> todo = {&t};
     for (auto next : leafs(&t))
     {
-        if (next->type != Interval::AMBIGUOUS) continue;
+        //if (next->type != Interval::AMBIGUOUS) continue;
         for (unsigned i=0; i < next->vertices.cols(); ++i)
         {
             auto v = next->vertices.col(i).eval();
@@ -213,4 +227,14 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     Heightmap::render(s, v, abort)->savePNG("out.png");
 
     REQUIRE(true);
+
+    start = std::chrono::system_clock::now();
+    for (unsigned i=0; i < 20; ++i)
+    {
+        auto c = Contours::render(s, r, 0.2);
+    }
+    auto c = Contours::render(s, r, 0.2);
+    end = std::chrono::system_clock::now();
+    std::cout << "Ran in " << (end - start).count() << "\n";
+    c->saveSVG("out2.svg");
 }
