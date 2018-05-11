@@ -185,6 +185,9 @@ Window::Window(QString target)
 
     interpreter->start();
 
+    #ifdef Q_OS_LINUX
+        setWindowTitle("Studio[*]");
+    #endif
     show();
 
     {   //  Load the tutorial file on first run if there's no target
@@ -335,6 +338,9 @@ void Window::onNew(bool)
     CHECK_UNSAVED();
 
     setFilename("");
+    #ifdef Q_OS_LINUX
+        setWindowTitle("Studio[*]");
+    #endif
     editor->setScript("");
     editor->setModified(false);
 }
@@ -416,11 +422,20 @@ void Window::setFilename(const QString& f)
     filename = f;
     if (filename.startsWith(":/"))
     {
-        setWindowTitle(QFileInfo(filename).fileName() + " (read-only)");
+        QString title = QFileInfo(filename).fileName() + " (read-only)";
+        #ifdef Q_OS_LINUX
+            setWindowTitle(title+"[*]");
+        #else
+            setWindowTitle(title);
+        #endif
     }
     else
     {
-        setWindowTitle(QString());
+        #ifdef Q_OS_LINUX
+            setWindowTitle(QFileInfo(filename).fileName() + "[*]");
+        #else
+            setWindowTitle(QString());
+        #endif
         setWindowFilePath(f);
     }
 }
