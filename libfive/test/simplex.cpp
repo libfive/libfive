@@ -40,7 +40,7 @@ TEST_CASE("Simplex<2>::to/fromSimplex")
 
 TEST_CASE("Simplex<3>::to/fromSimplex")
 {
-    for (unsigned i=0; i < 26; ++i)
+    for (unsigned i=0; i < 27; ++i)
     {
         REQUIRE(Simplex<3>::fromIndex(i).toIndex() == i);
     }
@@ -72,4 +72,13 @@ TEST_CASE("Simplex<3>::fromCorner")
     REQUIRE(Simplex<3>::fromCorner(5).toIndex() == 10);
     REQUIRE(Simplex<3>::fromCorner(6).toIndex() == 12);
     REQUIRE(Simplex<3>::fromCorner(7).toIndex() == 13);
+}
+
+TEST_CASE("Simplex<3>::freeAxesFromIndex")
+{
+    for (unsigned i=0; i < 27; ++i)
+    {
+        REQUIRE(Simplex<3>::fromIndex(i).freeAxes() ==
+                Simplex<3>::freeAxesFromIndex(i));
+    }
 }

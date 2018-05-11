@@ -136,6 +136,12 @@ struct Simplex : std::array<SimplexCorner, N>
         return out;
     }
 
+    constexpr static unsigned freeAxesFromIndex(unsigned index)
+    {
+        return index ? (((index % 3) == 2) + freeAxesFromIndex(index / 3))
+                     : 0;
+    }
+
     /*
      *  Returns the union of two simplexes
      */

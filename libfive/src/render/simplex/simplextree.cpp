@@ -46,6 +46,207 @@ Eigen::VectorXd solveCenteredQEF(Eigen::MatrixXd A, Eigen::VectorXd b,
     return A_.colPivHouseholderQr().solve(b_);
 }
 
+template <unsigned N  /* Number of dimensions */
+         ,unsigned index  /* Index of the parent simplex */
+          >
+Eigen::Matrix<double, Simplex<N>::fromIndex(index).freeAxes() + 1, 1>
+lolol(const Eigen::Matrix<double, ipow(Simplex<N>::fromIndex(index), 2),
+                          Simplex<N>::fromIndex(index).freeAxes() + 1>& A,
+      const Eigen::Matrix<double, ipow(Simplex<N>::fromIndex(index), 2), 1>& b)
+{
+    (void)A;
+    (void) b;
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+typedef Eigen::Array<float, 4, LIBFIVE_EVAL_ARRAY_SIZE> DerivArray;
+typedef Eigen::Block<DerivArray, 4, Eigen::Dynamic> DerivArrayBlock;
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+constexpr unsigned cols(unsigned index)
+{
+    return Simplex<N>::freeAxesFromIndex(index);
+}
+
+template <unsigned N>
+constexpr unsigned rows(unsigned index)
+{
+    return ipow(2, cols<N>(index));
+}
+
+template <unsigned N, unsigned index>
+using A_matrix = Eigen::Matrix<double, rows<N>(index), cols<N>(index) + 1>;
+
+template <unsigned N, unsigned index>
+using B_matrix = Eigen::Matrix<double, rows<N>(index), 1>;
+template <unsigned N, unsigned index>
+using Center = Eigen::Matrix<double, cols<N>(index), 1>;
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N, unsigned index, unsigned checking, unsigned dims>
+struct VertexPositioner
+{
+    static void call(const A_matrix<N, index>& A,
+                     const B_matrix<N, index>& b,
+                     const Center<N, index>& center,
+                     const Region<N>& region, bool& bounded)
+    {
+        // Continue unrolling
+        VertexPositioner<N, index, checking + 1, dims>::call(A, b, center, region, bounded);
+    }
+};
+
+/*
+ *  One termination condition for the unrolling:
+ *  If we've reached past the last simplex and are still unbounded,
+ *  then drop a dimension and restart the loop.
+ */
+template <unsigned N, unsigned index, unsigned dims>
+struct VertexPositioner<N, index, ipow(3, N), dims>
+{
+    static void call(const A_matrix<N, index>& A,
+                     const B_matrix<N, index>& b,
+                     const Center<N, index>& center,
+                     const Region<N>& region, bool& bounded)
+    {
+        VertexPositioner<N, index, 0, dims - 1>::call(A, b, center, region, bounded);
+    }
+};
+
+/*
+ *  The second termination condition:
+ *  If we've reached past the last simplex at a dimensionality of 0,
+ *  then we must be done unrolling forever.
+ */
+template <unsigned N, unsigned index>
+struct VertexPositioner<N, index, ipow(3, N), 0>
+{
+    static void call(const A_matrix<N, index>& A,
+                     const B_matrix<N, index>& b,
+                     const Center<N, index>& center,
+                     const Region<N>& region, bool& bounded)
+    {
+        // Terminate
+        (void)A;
+        (void)b;
+        (void)center;
+        (void)region;
+        assert(bounded);
+    }
+};
+
+template <unsigned N, unsigned index>
+void positionVertex(const A_matrix<N, index>& A,
+                    const B_matrix<N, index>& b,
+                    const Center<N, index>& center,
+                    const Region<N>& region)
+{
+    bool bounded = false;
+    VertexPositioner<N, index, 0, cols<N>(index)>::call(A, b, center, region, bounded);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N, unsigned index>  /* Number of dimensions */
+struct Unroller
+{
+    static void call(DerivArrayBlock ds, const Region<N>& region,
+                     std::array<double, ipow(3, N)>& errors)
+    {
+        constexpr unsigned cols = Simplex<N>::freeAxesFromIndex(index);
+        constexpr unsigned rows = ipow(2, cols);
+
+        //  The A matrix is of the form
+        //  [n1x, n1y, n1z, -1]
+        //  [n2x, n2y, n2z, -1]
+        //  [n3x, n3y, n3z, -1]
+        //  ...
+        //
+        //  (with one row for each sampled point's normal)
+        Eigen::Matrix<double, rows, cols + 1> A;
+
+        //  The b matrix is of the form
+        //  [(p1, w1) . (n1, -1)]
+        //  [(p2, w2) . (n2, -1)]
+        //  [(p3, w3) . (n3, -1)]
+        //  ...
+        //
+        //  (with one row for each sampled point)
+        Eigen::Matrix<double, rows, 1> b;
+
+        // We'll also keep track of the average position, which we'll
+        // use to bias the solver later on.
+        Eigen::Matrix<double, cols, 1> center;
+
+        auto t = Simplex<N>::fromIndex(index);
+
+        // Write the appropriate corner values to the A and b matrices.
+        // We loop over every corner, filter which ones are in this particular
+        // simplex, and only store their values.
+        unsigned r=0;
+        for (unsigned j=0; j < ipow(2, N); ++j)
+        {
+            if (!t.containsCorner(j))
+            {
+                continue;
+            }
+
+            Eigen::VectorXd p(cols + 1, 1);
+            unsigned c = 0;
+            for (unsigned a=0; a < N; ++a)
+            {
+                if (t[a] == SIMPLEX_CORNER_SPANS)
+                {
+                    A(r, c) = ds(a, j);
+                    p(c) = region.corner(j)(a);
+                    c++;
+                }
+            }
+            assert(c == cols);
+            p(c) = ds(3, j);
+
+            A(r, c) = -1;
+            b(r) = A.row(r) * p;
+            center += p.head(cols);
+            r++;
+        }
+        assert(r == rows);
+        center /= rows;
+
+        positionVertex<N, index>(A, b, center, region);
+
+        // And keep looping
+        Unroller<N, index + 1>::call(ds, region, errors);
+    }
+};
+
+template <unsigned N>  /* Number of dimensions */
+struct Unroller<N, ipow(N, 3)>
+{
+    static void call(DerivArrayBlock derivs, const Region<N>& region,
+                     std::array<double, ipow(3, N)>& errors)
+    {
+        // Terminates static unrolling
+        (void)derivs;
+        (void)region;
+        (void)errors;
+    }
+};
+
+template <unsigned N>  /* Number of dimensions */
+void unrollLoop(DerivArrayBlock derivs, const Region<N>& region,
+                std::array<double, ipow(3, N)>& errors)
+{
+    Unroller<N, 0>::call(derivs, region, errors);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 template <unsigned N>
 SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
                             double max_feature, double min_feature,
@@ -91,6 +292,8 @@ SimplexTree<N>::SimplexTree(
 
     // Total QEF error (used to decide whether to recurse
     std::array<double, ipow(3, N)> errors;
+
+    unrollLoop<N>(ds, region, errors);
 
     for (unsigned i=0; i < vertices.cols(); ++i)
     {
