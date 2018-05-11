@@ -79,6 +79,11 @@ public:
      */
     static Tree var();
 
+    /*
+     *  Destructor to ensure thread-safety while manipulating the Cache
+     */
+    ~Tree();
+
     /*  Bitfield enum for node flags */
     enum Flags {
         /*  Does this Id only contain constants and variables
