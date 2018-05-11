@@ -46,45 +46,27 @@ Eigen::VectorXd solveCenteredQEF(Eigen::MatrixXd A, Eigen::VectorXd b,
     return A_.colPivHouseholderQr().solve(b_);
 }
 
-template <unsigned N  /* Number of dimensions */
-         ,unsigned index  /* Index of the parent simplex */
-          >
-Eigen::Matrix<double, Simplex<N>::fromIndex(index).freeAxes() + 1, 1>
-lolol(const Eigen::Matrix<double, ipow(Simplex<N>::fromIndex(index), 2),
-                          Simplex<N>::fromIndex(index).freeAxes() + 1>& A,
-      const Eigen::Matrix<double, ipow(Simplex<N>::fromIndex(index), 2), 1>& b)
-{
-    (void)A;
-    (void) b;
-
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-typedef Eigen::Array<float, 4, LIBFIVE_EVAL_ARRAY_SIZE> DerivArray;
-typedef Eigen::Block<DerivArray, 4, Eigen::Dynamic> DerivArrayBlock;
-
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-constexpr unsigned cols(unsigned index)
+constexpr unsigned Cols(unsigned index)
 {
     return Simplex<N>::freeAxesFromIndex(index);
 }
 
 template <unsigned N>
-constexpr unsigned rows(unsigned index)
+constexpr unsigned Rows(unsigned index)
 {
-    return ipow(2, cols<N>(index));
+    return ipow(2, Cols<N>(index));
 }
 
 template <unsigned N, unsigned index>
-using A_matrix = Eigen::Matrix<double, rows<N>(index), cols<N>(index) + 1>;
+using A_matrix = Eigen::Matrix<double, Rows<N>(index), Cols<N>(index) + 1>;
 
 template <unsigned N, unsigned index>
-using B_matrix = Eigen::Matrix<double, rows<N>(index), 1>;
+using B_matrix = Eigen::Matrix<double, Rows<N>(index), 1>;
 template <unsigned N, unsigned index>
-using Center = Eigen::Matrix<double, cols<N>(index), 1>;
+using Center = Eigen::Matrix<double, Cols<N>(index), 1>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -94,17 +76,138 @@ struct VertexPositioner
     static void call(const A_matrix<N, index>& A,
                      const B_matrix<N, index>& b,
                      const Center<N, index>& center,
-                     const Region<N>& region, bool& bounded)
+                     const Region<N>& region,
+                     /*  Outputs */
+                     bool& bounded, double& error,
+                     Eigen::Matrix<double, N, 1>& vert)
     {
+        constexpr unsigned rows = Rows<N>(index);
+        constexpr unsigned cols = Cols<N>(index);
+
+        auto t = Simplex<N>::fromIndex(index);
+        auto t_ = Simplex<N>::fromIndex(checking);
+        if (t.containsSimplex(t_))
+        {
+            constexpr unsigned cols_ = Cols<N>(checking);
+            Eigen::Matrix<double, rows, cols_> A_;
+            B_matrix<N, index> b_;
+            Eigen::Matrix<double, cols_, 1> center_;
+
+            // Unpack the relevant axes
+            unsigned c=0;
+            unsigned c_=0;
+            for (unsigned a=0; a < N; ++a)
+            {
+                // Only pay attention to axes that are spanning the parent
+                if (t[a] != SIMPLEX_CORNER_SPANS)
+                {
+                    continue;
+                }
+
+                switch (t_[a])
+                {
+                    // If this axis is also spanning in the child, then
+                    // copy the whole column over.
+                    case SIMPLEX_CORNER_SPANS:
+                        A_.col(c_) = A.col(c);
+                        center_(c_) = center(c);
+                        c_++;
+                        break;
+                    // If this axis is spanning in the parent simplex
+                    // but not spanning in the child simplex, then apply
+                    // an offset to the new b_ matrix
+                    case SIMPLEX_CORNER_LOWER:
+                        b_ += A.col(c) * region.lower(a); break;
+                    case SIMPLEX_CORNER_UPPER:
+                        b_ += A.col(c) * region.upper(a); break;
+                }
+                c++;
+            }
+            assert(c_ == cols_);
+            assert(c == cols);
+            A_.col(cols_).array() = -1.0;
+
+            // Solve QEF here
+            Eigen::VectorXd result_ = solveCenteredQEF<N>(
+                    A_, b_, center_, 1e-6);
+            assert(result_.rows() == cols_ + 1);
+
+            // Reinflate into a vertex that fits the parent simplex
+            Eigen::VectorXd result(cols + 1);
+            c = 0;
+            c_ = 0;
+            for (unsigned a=0; a < N; ++a)
+            {
+                // Only pay attention to axes that are spanning the parent
+                if (t[a] != SIMPLEX_CORNER_SPANS)
+                {
+                    continue;
+                }
+
+                switch (t_[a])
+                {
+                    case SIMPLEX_CORNER_SPANS:
+                        result(c) = result_(c_++); break;
+                    case SIMPLEX_CORNER_LOWER:
+                        result(c) = region.lower(a); break;
+                    case SIMPLEX_CORNER_UPPER:
+                        result(c) = region.upper(a); break;
+                }
+                c++;
+            }
+            assert(c == cols);
+            assert(c_ == cols_);
+
+            // Copy over the solution's distance-field value.
+            result(c) = result_(c_);
+
+            // Calculate error given the original QEF
+            double this_error = (A * result - b).squaredNorm();
+
+            // If the error is less than our best-case result so far,
+            // then inflate all the way up to normal vertex size
+            // and save the vertex if it is bounded.
+            if (this_error < error)
+            {
+                Eigen::Matrix<double, N + 1, 1> this_vert;
+                c=0;
+                bool this_bounded = true;
+                for (unsigned a=0; a < N; ++a)
+                {
+                    switch (t[a])
+                    {
+                        case SIMPLEX_CORNER_SPANS:
+                            this_vert(a) = result(c++);
+                            bounded &= (this_vert(a) >= region.lower(a));
+                            bounded &= (this_vert(a) <= region.upper(a));
+                            break;
+                        case SIMPLEX_CORNER_LOWER:
+                            this_vert(a) = region.lower(a);
+                            break;
+                        case SIMPLEX_CORNER_UPPER:
+                            this_vert(a) = region.upper(a);
+                            break;
+                    }
+                }
+                assert(c == result.rows() - 1);
+                this_vert(N) = result(c);
+                if (this_bounded)
+                {
+                    vert = this_vert;
+                    error = this_error;
+                    bounded = true;
+                }
+            }
+        }
         // Continue unrolling
-        VertexPositioner<N, index, checking + 1, dims>::call(A, b, center, region, bounded);
+        VertexPositioner<N, index, checking + 1, dims>::call(
+                A, b, center, region, bounded, error, vert);
     }
 };
 
 /*
- *  One termination condition for the unrolling:
- *  If we've reached past the last simplex and are still unbounded,
- *  then drop a dimension and restart the loop.
+ *  If we've reached past the last simplex and are now bounded, then
+ *  stop looping; otherwise, continue unrolling with one fewer dimension.
  */
 template <unsigned N, unsigned index, unsigned dims>
 struct VertexPositioner<N, index, ipow(3, N), dims>
@@ -112,9 +215,16 @@ struct VertexPositioner<N, index, ipow(3, N), dims>
     static void call(const A_matrix<N, index>& A,
                      const B_matrix<N, index>& b,
                      const Center<N, index>& center,
-                     const Region<N>& region, bool& bounded)
+                     const Region<N>& region,
+                     /* Outputs */
+                     bool& bounded, double& error,
+                     Eigen::Matrix<double, N, 1>& vert)
     {
-        VertexPositioner<N, index, 0, dims - 1>::call(A, b, center, region, bounded);
+        if (!bounded)
+        {
+            VertexPositioner<N, index, 0, dims - 1>::call(
+                    A, b, center, region, bounded, error, vert);
+        }
     }
 };
 
@@ -126,16 +236,17 @@ struct VertexPositioner<N, index, ipow(3, N), dims>
 template <unsigned N, unsigned index>
 struct VertexPositioner<N, index, ipow(3, N), 0>
 {
-    static void call(const A_matrix<N, index>& A,
-                     const B_matrix<N, index>& b,
-                     const Center<N, index>& center,
-                     const Region<N>& region, bool& bounded)
+    static void call(const A_matrix<N, index>&,
+                     const B_matrix<N, index>&,
+                     const Center<N, index>&,
+                     const Region<N>&,
+                     /* Outputs */
+                     bool& bounded, double&,
+                     Eigen::Matrix<double, N, 1>&)
     {
-        // Terminate
-        (void)A;
-        (void)b;
-        (void)center;
-        (void)region;
+        // Terminate unrolling with an assertion that we found at
+        // least one acceptable vertex.
+        (void)bounded;
         assert(bounded);
     }
 };
@@ -147,8 +258,16 @@ void positionVertex(const A_matrix<N, index>& A,
                     const Region<N>& region)
 {
     bool bounded = false;
-    VertexPositioner<N, index, 0, cols<N>(index)>::call(A, b, center, region, bounded);
+    double error;
+    Eigen::Matrix<double, N, 1> vert;
+    VertexPositioner<N, index, 0, Cols<N>(index)>::call(
+            A, b, center, region, bounded, error, vert);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+typedef Eigen::Array<float, 4, LIBFIVE_EVAL_ARRAY_SIZE> DerivArray;
+typedef Eigen::Block<DerivArray, 4, Eigen::Dynamic> DerivArrayBlock;
 
 ////////////////////////////////////////////////////////////////////////////////
 
