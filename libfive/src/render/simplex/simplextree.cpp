@@ -79,17 +79,22 @@ struct VertexPositioner
                      const Region<N>& region,
                      /*  Outputs */
                      bool& bounded, double& error,
-                     Eigen::Matrix<double, N, 1>& vert)
+                     Eigen::Matrix<double, N + 1, 1>& vert)
     {
         constexpr unsigned rows = Rows<N>(index);
         constexpr unsigned cols = Cols<N>(index);
 
         auto t = Simplex<N>::fromIndex(index);
         auto t_ = Simplex<N>::fromIndex(checking);
-        if (t.containsSimplex(t_))
+        if (dims == Simplex<N>::freeAxesFromIndex(checking) &&
+            t.containsSimplex(t_))
         {
             constexpr unsigned cols_ = Cols<N>(checking);
-            Eigen::Matrix<double, rows, cols_> A_;
+
+            /*  We work around a limitation in Eigen's handling of 0-column
+             *  matrices by making the minimum cols of A_ to be 1, even
+             *  though we'll never use it in that situation */
+            Eigen::Matrix<double, rows, cols_ == 0 ? 1 : cols_> A_;
             B_matrix<N, index> b_;
             Eigen::Matrix<double, cols_, 1> center_;
 
@@ -129,7 +134,7 @@ struct VertexPositioner
 
             // Solve QEF here
             Eigen::VectorXd result_ = solveCenteredQEF<N>(
-                    A_, b_, center_, 1e-6);
+                    A_.template leftCols<cols_>(), b_, center_, 1e-6);
             assert(result_.rows() == cols_ + 1);
 
             // Reinflate into a vertex that fits the parent simplex
@@ -218,7 +223,7 @@ struct VertexPositioner<N, index, ipow(3, N), dims>
                      const Region<N>& region,
                      /* Outputs */
                      bool& bounded, double& error,
-                     Eigen::Matrix<double, N, 1>& vert)
+                     Eigen::Matrix<double, N + 1, 1>& vert)
     {
         if (!bounded)
         {
@@ -242,7 +247,7 @@ struct VertexPositioner<N, index, ipow(3, N), 0>
                      const Region<N>&,
                      /* Outputs */
                      bool& bounded, double&,
-                     Eigen::Matrix<double, N, 1>&)
+                     Eigen::Matrix<double, N + 1, 1>&)
     {
         // Terminate unrolling with an assertion that we found at
         // least one acceptable vertex.
@@ -259,7 +264,7 @@ void positionVertex(const A_matrix<N, index>& A,
 {
     bool bounded = false;
     double error;
-    Eigen::Matrix<double, N, 1> vert;
+    Eigen::Matrix<double, N + 1, 1> vert;
     VertexPositioner<N, index, 0, Cols<N>(index)>::call(
             A, b, center, region, bounded, error, vert);
 }
