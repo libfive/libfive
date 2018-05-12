@@ -275,14 +275,6 @@ SCM scm_shape_to_mesh(SCM t, SCM f, SCM res, SCM region)
     return out ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
-SCM scm_shape_bounds(SCM t)
-{
-    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_bounds", "shape");
-    auto b = libfive_tree_bounds(scm_get_tree(t));
-    return scm_cons(scm_vec3(b.X.lower, b.Y.lower, b.Z.lower),
-                    scm_vec3(b.X.upper, b.Y.upper, b.Z.upper));
-}
-
 SCM scm_shape_to_string(SCM t)
 {
     SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_to_string", "shape");
@@ -335,7 +327,6 @@ void init_libfive_kernel(void*)
     scm_c_define_gsubr("shape-eval-i", 7, 0, 0, (void*)scm_shape_eval_i);
     scm_c_define_gsubr("shape-eval-d", 4, 0, 0, (void*)scm_shape_eval_d);
     scm_c_define_gsubr("shape->mesh", 4, 0, 0, (void*)scm_shape_to_mesh);
-    scm_c_define_gsubr("shape-find-bounds", 1, 0, 0, (void*)scm_shape_bounds);
     scm_c_define_gsubr("shape->string", 1, 0, 0, (void*)scm_shape_to_string);
     scm_c_define_gsubr("shape-meta", 1, 0, 0, (void*)scm_shape_get_meta);
 

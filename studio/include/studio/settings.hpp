@@ -30,8 +30,7 @@ struct Settings
     /*
      *  Useful constructor
      */
-    Settings(QVector3D min, QVector3D max, float res, float quality,
-             bool autobounds);
+    Settings(QVector3D min, QVector3D max, float res, float quality);
 
     /*
      *  Default constructor (produces an object that shouldn't be used)
@@ -63,7 +62,6 @@ struct Settings
     QVector3D max;
     float res;
     float quality;
-    bool autobounds;
 
     // Used to read and write to scripts
     static QRegularExpression settings_regex;
@@ -99,5 +97,4 @@ protected:
     QDoubleSpinBox* zmax;
     QDoubleSpinBox* res;
     QDoubleSpinBox* quality;
-    QCheckBox* autobounds;
 };

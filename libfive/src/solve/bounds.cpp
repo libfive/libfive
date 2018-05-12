@@ -18,6 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include <cmath>
 
+#define ENABLE_FIND_BOUNDS_EXPERIMENTAL
 #include "libfive/solve/bounds.hpp"
 #include "libfive/render/axes.hpp"
 
