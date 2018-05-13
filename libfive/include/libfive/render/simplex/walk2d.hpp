@@ -19,10 +19,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #pragma once
 
 #include "libfive/render/brep/brep.hpp"
+#include "libfive/render/brep/region.hpp"
+#include "libfive/render/simplex/simplextree.hpp"
 
 namespace Kernel {
-template <unsigned N> class SimplexTree;
+class XTreeEvaluator;
 
-BRep<2> walk2d(const SimplexTree<2>* t);
+std::pair<BRep<2>, std::unique_ptr<SimplexTree<2>>> walk2d(
+        XTreeEvaluator* eval, Region<2> region,
+        unsigned min_depth, unsigned max_depth, double max_err);
 
 }   // namespace Kernel

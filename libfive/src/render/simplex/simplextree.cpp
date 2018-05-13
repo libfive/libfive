@@ -371,35 +371,23 @@ void unrollLoop(DerivArrayBlock derivs, const Region<N>& region,
 
 template <unsigned N>
 SimplexTree<N>::SimplexTree(XTreeEvaluator* eval, Region<N> region,
-                            double max_feature, double min_feature,
-                            double max_err)
-    : SimplexTree(eval, region, 0, max_feature, min_feature, max_err)
+                            unsigned depth)
+    : depth(depth), region(region)
 {
-    // Nothing to do here (delegating constructor)
-}
+    // Assign vertices as NaN to detect if we ever fail to
+    // populate the array.
+    vertices.array() = 0.0/0.0;
 
-template <unsigned N>
-SimplexTree<N>::SimplexTree(
-        XTreeEvaluator* eval, Region<N> region, unsigned depth,
-        double max_feature, double min_feature, double max_err)
-    : depth(depth)
-{
-    vertices.array()  = 0.0/0.0;
-
-    // Early exit based on interval evaluation
+    // Store the interval result.
     type = Interval::state(
             eval->interval.evalAndPush(
                 region.lower3().template cast<float>(),
                 region.upper3().template cast<float>()));
+}
 
-    // Top-down construction: we recurse down to a minimum size
-    if (((region.upper - region.lower) > max_feature).any())
-    {
-        recurse(eval, region, max_feature, min_feature, max_err);
-        eval->interval.pop();
-        return;
-    }
-
+template <unsigned N>
+double SimplexTree<N>::findVertices(XTreeEvaluator* eval)
+{
     // Store values for the cell corner evaluation
     for (unsigned i=0; i < children.size(); ++i)
     {
@@ -418,17 +406,14 @@ SimplexTree<N>::SimplexTree(
     // Compile-time unrolled vertex positioner!
     unrollLoop<N>(ds, region, vertices, errors);
 
-    // If the errors are too large, then recurse here
-    if (((region.upper - region.lower) > min_feature).any() &&
-        std::accumulate(errors.begin(), errors.end(), 0.0) > max_err)
-    {
-        recurse(eval, region, max_feature, min_feature, max_err);
-        eval->interval.pop();
-        return;
-    }
+    return std::accumulate(errors.begin(), errors.end(), 0.0);
+}
 
-    // Otherwise, do a second evaluation pass to refine the values of F(p)
-    // at the simplex corners, turning them from estimates to true evaluations.
+template <unsigned N>
+void SimplexTree<N>::checkVertices(XTreeEvaluator* eval)
+{
+    // Do a second evaluation pass to refine the values of F(p) at the
+    // simplex corners, turning them from estimates to true evaluations.
     for (unsigned i=0; i < vertices.cols(); ++i)
     {
         Eigen::Vector3f p;
@@ -439,8 +424,8 @@ SimplexTree<N>::SimplexTree(
     vertices.row(N) = eval->array.values(vertices.cols())
         .template cast<double>();
 
-    // Then, tag this tree as filled, empty, or ambiguous based on simplex
-    // values (using the feature evaluator to tie-break in ambiguous cases).
+    // Then, mark the corners as filled or empty, using the feature
+    // evaluator to tie-break in ambiguous cases.
     for (unsigned v=0; v < inside.size(); ++v)
     {
         switch (Interval::state<double>(vertices(N, v)))
@@ -461,47 +446,7 @@ SimplexTree<N>::SimplexTree(
             case Interval::UNKNOWN: assert(false); break;
         }
     }
-
-    bool all_filled = true;
-    bool all_empty = true;
-    for (auto& b : inside)
-    {
-        all_filled &=  b;
-        all_empty  &= !b;
-    }
-    type = all_filled ? Interval::FILLED :
-           all_empty  ? Interval::EMPTY  : Interval::AMBIGUOUS;
-
-    eval->interval.pop();
 }
 
-template <unsigned N>
-void SimplexTree<N>::recurse(
-        XTreeEvaluator* eval, Region<N> region,
-        double max_feature, double min_feature, double max_err)
-{
-    auto rs = region.subdivide();
-    for (unsigned i=0; i < children.size(); ++i)
-    {
-        children[i].reset(new SimplexTree<N>(
-                    eval, rs[i], depth + 1,
-                    max_feature, min_feature, max_err));
-    }
-
-    bool all_filled = true;
-    bool all_empty = true;
-    for (const auto& c : children)
-    {
-        all_filled &= (c->type == Interval::FILLED);
-        all_empty  &= (c->type == Interval::EMPTY);
-    }
-    type = all_filled ? Interval::FILLED :
-           all_empty  ? Interval::EMPTY  : Interval::AMBIGUOUS;
-
-    if (type != Interval::AMBIGUOUS)
-    {
-        std::fill(inside.begin(), inside.end(), type == Interval::FILLED);
-    }
-}
 
 }   // namespace Kernel

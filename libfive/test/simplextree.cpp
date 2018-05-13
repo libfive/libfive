@@ -32,8 +32,11 @@ TEST_CASE("SimplexTree<3>::SimplexTree")
     auto s = sphere(1);
     auto eval = XTreeEvaluator(s);
 
-    auto t = SimplexTree<3>(&eval, Region<3>({-2, -2, -2}, {2, 2, 2}),
-                            0.5, 0.1, 0.1);
+    auto t = SimplexTree<3>(&eval, Region<3>({-2, -2, -2}, {2, 2, 2}));
+    REQUIRE(t.type == Interval::AMBIGUOUS);
+    t.findVertices(&eval);
+    t.checkVertices(&eval);
+
     REQUIRE(true);
 }
 
@@ -42,8 +45,12 @@ TEST_CASE("SimplexTree<2>::SimplexTree")
     auto s = circle(1);
     auto eval = XTreeEvaluator(s);
 
-    auto t = SimplexTree<2>(&eval, Region<2>({-2, -2}, {2, 2}),
-                            0.5, 0.1, 0.1);
+    auto t = SimplexTree<2>(&eval, Region<2>({-2, -2}, {2, 2}));
+    REQUIRE(t.type == Interval::AMBIGUOUS);
+
+    t.findVertices(&eval);
+    t.checkVertices(&eval);
+    REQUIRE(true);
 }
 
 template <unsigned N>
@@ -78,7 +85,9 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
 
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.05, 0.01);
+    auto t = SimplexTree<2>(&eval, r);
+    t.findVertices(&eval);
+    t.checkVertices(&eval);
 
     for (auto t : leafs(&t))
     {
@@ -133,11 +142,11 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
 
     for (unsigned i=0; i < 20; ++i)
     {
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.2, 0.0001);
-    auto contours = walk2d(&t);
+        auto contours = walk2d(&eval, r, 2, 4, 0.0001);
     }
-    auto t = SimplexTree<2>(&eval, r, 0.5, 0.2, 0.0001);
-    auto contours = walk2d(&t);
+    auto out = walk2d(&eval, r, 2, 4, 0.0001);
+    auto contours = out.first;
+    auto& t = out.second;
     end = std::chrono::system_clock::now();
     std::cout << "Ran in " << (end - start).count() << "\n";
 
@@ -152,10 +161,9 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
         << " width=\"" << r.upper.x() - r.lower.x()
         << "\" height=\"" << r.upper.y() - r.lower.y() << "\" />\n";
 
-    std::list<const SimplexTree<2>*> todo = {&t};
-    for (auto next : leafs(&t))
+    for (auto next : leafs(t.get()))
     {
-        //if (next->type != Interval::AMBIGUOUS) continue;
+        if (!next->complete) continue;
         for (unsigned i=0; i < next->vertices.cols(); ++i)
         {
             auto v = next->vertices.col(i).eval();
