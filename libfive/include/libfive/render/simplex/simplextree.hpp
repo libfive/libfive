@@ -91,9 +91,6 @@ protected:
     void recurse(XTreeEvaluator* eval, Region<N> region,
                  double max_feature, double min_feature, double max_err);
 
-    std::pair<bool, Eigen::Matrix<double, N + 1, 1>> unpack(
-        const Simplex<N>& t, const Eigen::VectorXd& result,
-        const Region<N>& region);
 };
 
 extern template class SimplexTree<2>;

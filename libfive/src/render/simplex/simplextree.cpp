@@ -25,27 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-template <unsigned N>
-Eigen::VectorXd solveCenteredQEF(Eigen::MatrixXd A, Eigen::VectorXd b,
-                                 Eigen::VectorXd center, double weight)
-{
-    assert(A.cols() >= center.rows());
-    assert(A.rows() == b.rows());
-
-    Eigen::MatrixXd A_(A.rows() + center.rows(), A.cols());
-    A_.topRows(A.rows()) = A;
-    A_.bottomLeftCorner(center.rows(), center.rows()) =
-        Eigen::MatrixXd::Identity(center.rows(), center.rows()) * weight;
-    A_.bottomRightCorner(center.rows(), A.cols() - center.rows()).array() = 0.0;
-
-    Eigen::VectorXd b_(b.rows() + center.rows());
-    b_.topRows(b.rows()) = b;
-    b_.bottomRows(center.rows()) = center * weight;
-
-    // Solve QEF here
-    return A_.colPivHouseholderQr().solve(b_);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
@@ -84,19 +63,29 @@ struct VertexPositioner
         constexpr unsigned rows = Rows<N>(index);
         constexpr unsigned cols = Cols<N>(index);
 
-        auto t = Simplex<N>::fromIndex(index);
-        auto t_ = Simplex<N>::fromIndex(checking);
+        const auto t = Simplex<N>::fromIndex(index);
+        const auto t_ = Simplex<N>::fromIndex(checking);
         if (dims == Simplex<N>::freeAxesFromIndex(checking) &&
             t.containsSimplex(t_))
         {
             constexpr unsigned cols_ = Cols<N>(checking);
 
-            /*  We work around a limitation in Eigen's handling of 0-column
-             *  matrices by making the minimum cols of A_ to be 1, even
-             *  though we'll never use it in that situation */
-            Eigen::Matrix<double, rows, cols_ == 0 ? 1 : cols_> A_;
-            B_matrix<N, index> b_;
-            Eigen::Matrix<double, cols_, 1> center_;
+            /*  The A_ matrix is a two-part modification of the A input:
+             *  - Columns (axes) that are constrained in this subsimplex
+             *    are removed, and their value is subtracted from b_
+             *  - We add rows to the bottom of A_ and b_ to bias the solver
+             *    towards the center of the cell. */
+            Eigen::Matrix<double, rows + cols_, cols_ + 1> A_;
+            Eigen::Matrix<double, rows + cols_, 1> b_;
+
+            const double CENTERING_WEIGHT = 1e-6;
+
+            //  Initialize both arrays to 0, to begin
+            A_.array() = 0.0;
+            b_.array() = 0.0;
+
+            // Initialize b_; we'll modify it later on.
+            b_.template topRows<rows>() = b;
 
             // Unpack the relevant axes
             unsigned c=0;
@@ -112,33 +101,36 @@ struct VertexPositioner
                 switch (t_[a])
                 {
                     // If this axis is also spanning in the child, then
-                    // copy the whole column over.
+                    // copy the whole column over and add the centering
+                    // constraint.
                     case SIMPLEX_CORNER_SPANS:
-                        A_.col(c_) = A.col(c);
-                        center_(c_) = center(c);
+                        A_.template topRows<rows>().col(c_) = A.col(c);
+                        A_(rows + c_, c_) = CENTERING_WEIGHT;
+                        b_(rows + c_) = center(c) * CENTERING_WEIGHT;
                         c_++;
                         break;
                     // If this axis is spanning in the parent simplex
                     // but not spanning in the child simplex, then apply
                     // an offset to the new b_ matrix
                     case SIMPLEX_CORNER_LOWER:
-                        b_ += A.col(c) * region.lower(a); break;
+                        b_.template topRows<rows>() +=
+                            A.col(c) * region.lower(a); break;
                     case SIMPLEX_CORNER_UPPER:
-                        b_ += A.col(c) * region.upper(a); break;
+                        b_.template  topRows<rows>() +=
+                            A.col(c) * region.upper(a); break;
                 }
                 c++;
             }
             assert(c_ == cols_);
             assert(c == cols);
-            A_.col(cols_).array() = -1.0;
+            A_.template topRows<rows>().col(cols_).array() = -1.0;
 
             // Solve QEF here
-            Eigen::VectorXd result_ = solveCenteredQEF<N>(
-                    A_.template leftCols<cols_>(), b_, center_, 1e-6);
-            assert(result_.rows() == cols_ + 1);
+            Eigen::Matrix<double, cols_ + 1, 1> result_ =
+                A_.colPivHouseholderQr().solve(b_);
 
             // Reinflate into a vertex that fits the parent simplex
-            Eigen::VectorXd result(cols + 1);
+            Eigen::Matrix<double, cols + 1, 1> result;
             c = 0;
             c_ = 0;
             for (unsigned a=0; a < N; ++a)
@@ -183,8 +175,8 @@ struct VertexPositioner
                     {
                         case SIMPLEX_CORNER_SPANS:
                             this_vert(a) = result(c++);
-                            bounded &= (this_vert(a) >= region.lower(a));
-                            bounded &= (this_vert(a) <= region.upper(a));
+                            this_bounded &= (this_vert(a) >= region.lower(a));
+                            this_bounded &= (this_vert(a) <= region.upper(a));
                             break;
                         case SIMPLEX_CORNER_LOWER:
                             this_vert(a) = region.lower(a);
@@ -257,16 +249,18 @@ struct VertexPositioner<N, index, ipow(3, N), 0>
 };
 
 template <unsigned N, unsigned index>
-void positionVertex(const A_matrix<N, index>& A,
-                    const B_matrix<N, index>& b,
-                    const Center<N, index>& center,
-                    const Region<N>& region)
+std::pair<Eigen::Matrix<double, N + 1, 1>, double> positionVertex(
+        const A_matrix<N, index>& A,
+        const B_matrix<N, index>& b,
+        const Center<N, index>& center,
+        const Region<N>& region)
 {
     bool bounded = false;
-    double error;
+    double error = std::numeric_limits<double>::infinity();
     Eigen::Matrix<double, N + 1, 1> vert;
     VertexPositioner<N, index, 0, Cols<N>(index)>::call(
             A, b, center, region, bounded, error, vert);
+    return std::make_pair(vert, error);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -280,6 +274,8 @@ template <unsigned N, unsigned index>  /* Number of dimensions */
 struct Unroller
 {
     static void call(DerivArrayBlock ds, const Region<N>& region,
+                     /* Outputs */
+                     Eigen::Matrix<double, N + 1, ipow(3, N)>& vertices,
                      std::array<double, ipow(3, N)>& errors)
     {
         constexpr unsigned cols = Simplex<N>::freeAxesFromIndex(index);
@@ -342,31 +338,33 @@ struct Unroller
         assert(r == rows);
         center /= rows;
 
-        positionVertex<N, index>(A, b, center, region);
+        auto out = positionVertex<N, index>(A, b, center, region);
+        vertices.col(index) = out.first;
+        errors[index] = out.second;
 
         // And keep looping
-        Unroller<N, index + 1>::call(ds, region, errors);
+        Unroller<N, index + 1>::call(ds, region, vertices, errors);
     }
 };
 
 template <unsigned N>  /* Number of dimensions */
-struct Unroller<N, ipow(N, 3)>
+struct Unroller<N, ipow(3, N)>
 {
-    static void call(DerivArrayBlock derivs, const Region<N>& region,
-                     std::array<double, ipow(3, N)>& errors)
+    static void call(DerivArrayBlock, const Region<N>&,
+                     Eigen::Matrix<double, N + 1, ipow(3, N)>&,
+                     std::array<double, ipow(3, N)>&)
     {
         // Terminates static unrolling
-        (void)derivs;
-        (void)region;
-        (void)errors;
     }
 };
 
 template <unsigned N>  /* Number of dimensions */
 void unrollLoop(DerivArrayBlock derivs, const Region<N>& region,
+                /* outputs */
+                Eigen::Matrix<double, N + 1, ipow(3, N)>& vertices,
                 std::array<double, ipow(3, N)>& errors)
 {
-    Unroller<N, 0>::call(derivs, region, errors);
+    Unroller<N, 0>::call(derivs, region, vertices, errors);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -417,190 +415,8 @@ SimplexTree<N>::SimplexTree(
     // Total QEF error (used to decide whether to recurse
     std::array<double, ipow(3, N)> errors;
 
-    unrollLoop<N>(ds, region, errors);
-
-    for (unsigned i=0; i < vertices.cols(); ++i)
-    {
-        const auto t = Simplex<N>::fromIndex(i);
-
-        // Find the shape of the A matrix
-        const unsigned cols = t.freeAxes();
-        const unsigned rows = pow(2, cols);
-
-        //  The A matrix is of the form
-        //  [n1x, n1y, n1z, -1]
-        //  [n2x, n2y, n2z, -1]
-        //  [n3x, n3y, n3z, -1]
-        //  ...
-        //
-        //  (with one row for each sampled point's normal)
-        Eigen::MatrixXd A(rows, cols + 1);
-
-        //  The b matrix is of the form
-        //  [(p1, w1) . (n1, -1)]
-        //  [(p2, w2) . (n2, -1)]
-        //  [(p3, w3) . (n3, -1)]
-        //  ...
-        //
-        //  (with one row for each sampled point)
-        Eigen::VectorXd b(rows, 1);
-
-        // We'll also keep track of the average position, which we'll
-        // use to bias the solver later on.
-        Eigen::VectorXd center = Eigen::VectorXd::Zero(cols, 1);
-
-        // Write the appropriate corner values to the A and b_ matrices.
-        // We loop over every corner, filter which ones are in this particular
-        // simplex, and only store their values.
-        unsigned r=0;
-        for (unsigned j=0; j < children.size(); ++j)
-        {
-            if (!t.containsCorner(j))
-            {
-                continue;
-            }
-
-            Eigen::VectorXd p(cols + 1, 1);
-            unsigned c = 0;
-            for (unsigned a=0; a < N; ++a)
-            {
-                if (t[a] == 0)
-                {
-                    A(r, c) = ds(a, j);
-                    p(c) = region.corner(j)(a);
-                    c++;
-                }
-            }
-            assert(c == cols);
-            p(c) = ds(3, j);
-
-            A(r, c) = -1;
-            b(r) = A.row(r) * p;
-            center += p.head(cols);
-            r++;
-        }
-        assert(r == rows);
-        center /= rows;
-
-        // Solve QEF here
-        Eigen::VectorXd result = solveCenteredQEF<N>(A, b, center, 1e-6);
-        assert(result.rows() == cols + 1);
-
-        // Store the error
-        errors[i] = (A * result - b).squaredNorm();
-
-        // Then inflate all the way up to normal vertex size
-        // and check to see whether the vertex is bounded.
-        auto unpacked = unpack(t, result, region);
-        bool bounded = unpacked.first;
-        vertices.col(i) = unpacked.second;
-
-        // If the result is outside the boundary, loop from 0 to i,
-        // picking out sub-simplices, solving the same QEF (constrainted based
-        // on the available free axes), and using the one with minimum error.
-        if (!bounded)
-        {
-            errors[i] = std::numeric_limits<double>::infinity();
-            for (unsigned j=0; j < i; ++j)
-            {
-                if (!t.containsSimplex(Simplex<N>::fromIndex(j)))
-                {
-                    continue;
-                }
-
-                Simplex<N> t_ = Simplex<N>::fromIndex(j);
-                const unsigned cols_ = t_.freeAxes();
-
-                // We cull axes from A_ based on which axes are free in the
-                // sub-simplex t_, and apply the fixed change to b in b_.
-                Eigen::MatrixXd A_(rows, cols_ + 1);
-                Eigen::VectorXd b_(b);
-                Eigen::VectorXd center_(cols_);
-
-                // Unpack the relevant axes
-                unsigned c=0;
-                unsigned c_=0;
-                for (unsigned a=0; a < N; ++a)
-                {
-                    // Only pay attention to axes that are spanning the parent
-                    if (t[a] != SIMPLEX_CORNER_SPANS)
-                    {
-                        continue;
-                    }
-
-                    switch (t_[a])
-                    {
-                        // If this axis is also spanning in the child, then
-                        // copy the whole column over.
-                        case SIMPLEX_CORNER_SPANS:
-                            A_.col(c_) = A.col(c);
-                            center_(c_) = center(c);
-                            c_++;
-                            break;
-                        // If this axis is spanning in the parent simplex
-                        // but not spanning in the child simplex, then apply
-                        // an offset to the new b_ matrix
-                        case SIMPLEX_CORNER_LOWER:
-                            b_ += A.col(c) * region.lower(a); break;
-                        case SIMPLEX_CORNER_UPPER:
-                            b_ += A.col(c) * region.upper(a); break;
-                    }
-                    c++;
-                }
-                assert(c_ == cols_);
-                assert(c == cols);
-                A_.col(cols_).array() = -1.0;
-
-                // Solve QEF here
-                Eigen::VectorXd result_ = solveCenteredQEF<N>(
-                        A_, b_, center_, 1e-6);
-                assert(result_.rows() == cols_ + 1);
-
-                // Reinflate into a vertex that fits the parent simplex
-                Eigen::VectorXd result(cols + 1);
-                c = 0;
-                c_ = 0;
-                for (unsigned a=0; a < N; ++a)
-                {
-                    // Only pay attention to axes that are spanning the parent
-                    if (t[a] != SIMPLEX_CORNER_SPANS)
-                    {
-                        continue;
-                    }
-
-                    switch (t_[a])
-                    {
-                        case SIMPLEX_CORNER_SPANS:
-                            result(c) = result_(c_++); break;
-                        case SIMPLEX_CORNER_LOWER:
-                            result(c) = region.lower(a); break;
-                        case SIMPLEX_CORNER_UPPER:
-                            result(c) = region.upper(a); break;
-                    }
-                    c++;
-                }
-                assert(c == cols);
-                assert(c_ == cols_);
-                // Copy over the solution's distance-field value.
-                result(c) = result_(c_);
-
-                // Calculate error given the original QEF
-                double this_error = (A * result - b).squaredNorm();
-
-                // Then inflate all the way up to normal vertex size
-                // and check to see whether the vertex is bounded.
-                auto unpacked = unpack(t, result, region);
-                bounded = unpacked.first;
-                auto vert = unpacked.second;
-
-                if (bounded && this_error < errors[i])
-                {
-                    vertices.col(i) = vert;
-                    errors[i] = this_error;
-                }
-            }
-        }
-    }
+    // Compile-time unrolled vertex positioner!
+    unrollLoop<N>(ds, region, vertices, errors);
 
     // If the errors are too large, then recurse here
     if (((region.upper - region.lower) > min_feature).any() &&
@@ -686,37 +502,6 @@ void SimplexTree<N>::recurse(
     {
         std::fill(inside.begin(), inside.end(), type == Interval::FILLED);
     }
-}
-
-template <unsigned N>
-std::pair<bool, Eigen::Matrix<double, N + 1, 1>> SimplexTree<N>::unpack(
-    const Simplex<N>& t, const Eigen::VectorXd& result,
-    const Region<N>& region)
-{
-    Eigen::Matrix<double, N + 1, 1> vert;
-    unsigned c=0;
-    bool bounded = true;
-
-    for (unsigned a=0; a < N; ++a)
-    {
-        switch (t[a])
-        {
-            case SIMPLEX_CORNER_SPANS:
-                vert(a) = result(c++);
-                bounded &= (vert(a) >= region.lower(a));
-                bounded &= (vert(a) <= region.upper(a));
-                break;
-            case SIMPLEX_CORNER_LOWER:
-                vert(a) = region.lower(a);
-                break;
-            case SIMPLEX_CORNER_UPPER:
-                vert(a) = region.upper(a);
-                break;
-        }
-    }
-    assert(c == result.rows() - 1);
-    vert(N) = result(c);
-    return std::make_pair(bounded, vert);
 }
 
 }   // namespace Kernel
