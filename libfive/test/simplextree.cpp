@@ -163,6 +163,17 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
 
     for (auto next : leafs(t.get()))
     {
+        if (next->type == Interval::FILLED || next->type == Interval::EMPTY)
+        {
+            auto v = next->region.center();
+            auto fill = (next->type == Interval::FILLED ? "white" : "black");
+            auto stroke = (next->type == Interval::FILLED ? "black" : "white");
+            file << "<circle cx=\"" << v.x() - r.lower.x() << "\" "
+                 << "cy=\"" << r.upper.y() - v.y() << "\" "
+                 << "r=\"0.04\" stroke-width=\"0.01\" stroke=\"" << stroke << "\" "
+                 << "fill=\"" << fill << "\" />\n";
+        }
+
         if (!next->complete) continue;
         for (unsigned i=0; i < next->vertices.cols(); ++i)
         {
@@ -239,7 +250,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     start = std::chrono::system_clock::now();
     for (unsigned i=0; i < 20; ++i)
     {
-        auto c = Contours::render(s, r, 0.2);
+        auto c = Contours::render(s, r, 0.26);
     }
     auto c = Contours::render(s, r, 0.2);
     end = std::chrono::system_clock::now();
