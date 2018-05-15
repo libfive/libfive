@@ -164,7 +164,7 @@ void edge2(const std::array<SimplexTree<2>*, 2>& ts, RunData& data)
         {{2, 0, 2, 1}}, // 2
         {{0, 1, 2, 1}}, // 2 + 0
         {{2, 0, 1, 0}}, // 2 + 1
-        {{0, 0, 0, 0}} // All filled (invalid)
+        {{0, 0, 0, 0}}  // All filled (invalid)
     }};
 
     for (const auto& t : tris)
