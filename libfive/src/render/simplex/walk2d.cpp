@@ -51,7 +51,6 @@ void cell(std::unique_ptr<SimplexTree<2>>& t, Region<2> region, unsigned depth,
 template <Axis::Axis A>
 void edge2(const std::array<SimplexTree<2>*, 2>& ts, RunData& data)
 {
-
     if (A == Axis::X)
     {
         assert(ts[0]->region.upper.y() == ts[1]->region.lower.y());
@@ -60,8 +59,6 @@ void edge2(const std::array<SimplexTree<2>*, 2>& ts, RunData& data)
     {
         assert(ts[0]->region.upper.x() == ts[1]->region.lower.x());
     }
-
-
     assert(ts[0]->type != Interval::UNKNOWN);
     assert(ts[1]->type != Interval::UNKNOWN);
 
