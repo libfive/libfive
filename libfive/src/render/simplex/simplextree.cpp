@@ -406,13 +406,23 @@ double SimplexTree<N>::findVertices(XTreeEvaluator* eval)
     // Find the values + derivatives
     auto ds = eval->array.derivs(children.size());
 
+    // Store whether any derivatives were ambiguous, and return an
+    // artificially-high error in this case.
+    const auto ambig = eval->array.getAmbiguous(children.size());
+    bool any_ambig = false;
+    for (unsigned a=0; a < children.size() && !any_ambig; ++a)
+    {
+        any_ambig |= ambig[a];
+    }
+
     // Total QEF error (used to decide whether to recurse
     std::array<double, ipow(3, N)> errors;
 
     // Compile-time unrolled vertex positioner!
     unrollLoop<N>(ds, region, vertices, errors);
 
-    return std::accumulate(errors.begin(), errors.end(), 0.0);
+    return any_ambig ? std::numeric_limits<double>::infinity()
+                     : std::accumulate(errors.begin(), errors.end(), 0.0);
 }
 
 template <unsigned N>
