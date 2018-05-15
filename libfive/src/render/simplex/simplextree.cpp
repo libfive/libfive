@@ -63,6 +63,12 @@ struct VertexPositioner
         constexpr unsigned rows = Rows<N>(index);
         constexpr unsigned cols = Cols<N>(index);
 
+        // This is a per-region gap that we put between the vertex and
+        // the simplex walls, e.g. if we're flatting a center vertex
+        // to lie on an edge, we instead put it on that edge plus an
+        // offset of epsilon.  This is based on the original paper, p4.
+        double epsilon = (region.upper - region.lower).maxCoeff() / 10.0;
+
         const auto t = Simplex<N>::fromIndex(index);
         const auto t_ = Simplex<N>::fromIndex(checking);
         if (dims == Simplex<N>::freeAxesFromIndex(checking) &&
@@ -114,10 +120,10 @@ struct VertexPositioner
                     // an offset to the new b_ matrix
                     case SIMPLEX_CORNER_LOWER:
                         b_.template topRows<rows>() +=
-                            A.col(c) * region.lower(a); break;
+                            A.col(c) * (region.lower(a) + epsilon); break;
                     case SIMPLEX_CORNER_UPPER:
                         b_.template  topRows<rows>() +=
-                            A.col(c) * region.upper(a); break;
+                            A.col(c) * (region.upper(a) - epsilon); break;
                 }
                 c++;
             }
@@ -146,9 +152,9 @@ struct VertexPositioner
                     case SIMPLEX_CORNER_SPANS:
                         result(c) = result_(c_++); break;
                     case SIMPLEX_CORNER_LOWER:
-                        result(c) = region.lower(a); break;
+                        result(c) = region.lower(a) + epsilon; break;
                     case SIMPLEX_CORNER_UPPER:
-                        result(c) = region.upper(a); break;
+                        result(c) = region.upper(a) - epsilon; break;
                 }
                 c++;
             }
