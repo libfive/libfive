@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/render/simplex/simplextree.hpp"
 #include "libfive/render/simplex/simplex.hpp"
 #include "libfive/render/brep/eval_xtree.hpp"
+#include "libfive/render/simplex/walk2d.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;
@@ -85,11 +86,9 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
 
-    auto t = SimplexTree<2>(&eval, r);
-    t.findVertices(&eval);
-    t.checkVertices(&eval);
+    auto contours = walk2d(&eval, r, 2, 4, 0.0001);
 
-    for (auto t : leafs(&t))
+    for (auto t : leafs(contours.second.get()))
     {
         if (t->type != Interval::AMBIGUOUS)
         {
@@ -120,16 +119,58 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
     }
 }
 
+
+TEST_CASE("SimplexTree<2>: Vertex error")
+{
+    auto s = circle(1);
+    auto eval = XTreeEvaluator(s);
+
+    {   // Any point on the circle that doesn't contain the center
+        // will be error-full.
+        auto t = SimplexTree<2>(&eval, {{1, 1}, {2, 2}});
+        auto err = t.findVertices(&eval);
+        CAPTURE(err);
+        REQUIRE(err > 1e-6);
+    }
+
+    {   // A circle can have low error at the center
+        auto t = SimplexTree<2>(&eval, {{-1, -1}, {2, 2}});
+        auto err = t.findVertices(&eval);
+        CAPTURE(err);
+        REQUIRE(err < 1e-6);
+    }
+}
+
+TEST_CASE("SimplexTree<2>: Max depth")
+{
+    auto s = circle(1);
+    auto eval = XTreeEvaluator(s);
+
+
+    auto contours = walk2d(&eval, {{-2, -2}, {2, 2}}, 2, 4, 0.0001);
+    unsigned max_depth = 0;
+
+    for (auto t : leafs(contours.second.get()))
+    {
+        if (t->type != Interval::AMBIGUOUS)
+        {
+            continue;
+        }
+        max_depth = std::max(max_depth, t->depth);
+    }
+    REQUIRE(max_depth == 4);
+}
+
 #include "libfive/render/discrete/heightmap.hpp"
-#include "libfive/render/simplex/walk2d.hpp"
 #include "libfive/render/brep/contours.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
-    //auto s = move(circle(1), {0.0, 0.1, 0.0});
+    auto s = move(circle(1), {0.0, 0.1, 0.0});
     //auto s = move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
     //auto s = max(circle(1), gyroid2d(50, 0.1));
-    auto s = max(circle(1), -circle(0.9));
+    //auto s = max(circle(1), -circle(0.9));
     //auto s = Tree::Y();
+    //auto s = menger2d(2);
 
     auto eval = XTreeEvaluator(s);
     Region<2> r({-2, -2}, {2, 2});
