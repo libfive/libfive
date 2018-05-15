@@ -173,7 +173,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     //auto s = menger2d(2);
 
     auto eval = XTreeEvaluator(s);
-    Region<2> r({-2, -2}, {2, 2});
+    Region<2> r({0, -2}, {2, 0});
 
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -183,9 +183,9 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
 
     for (unsigned i=0; i < 20; ++i)
     {
-        auto contours = walk2d(&eval, r, 2, 4, 0.0001);
+        //auto contours = walk2d(&eval, r, 2, 4, 0.0001);
     }
-    auto out = walk2d(&eval, r, 2, 4, 0.0001);
+    auto out = walk2d(&eval, r, 1, 2, 0.0001);
     auto contours = out.first;
     auto& t = out.second;
     end = std::chrono::system_clock::now();
@@ -282,7 +282,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
 
 
     Voxels v(r.lower3().template cast<float>(),
-             r.upper3().template cast<float>(), {150, 150, 0});
+             r.upper3().template cast<float>(), {350, 350, 0});
     std::atomic_bool abort(false);
     Heightmap::render(s, v, abort)->savePNG("out.png");
 
