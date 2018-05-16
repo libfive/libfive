@@ -165,15 +165,15 @@ TEST_CASE("SimplexTree<2>: Max depth")
 #include "libfive/render/brep/contours.hpp"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
-    auto s = move(circle(1), {0.0, 0.1, 0.0});
+    //auto s = move(circle(1), {0.0, 0.1, 0.0});
     //auto s = move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
     //auto s = max(circle(1), gyroid2d(50, 0.1));
     //auto s = max(circle(1), -circle(0.9));
     //auto s = Tree::Y();
-    //auto s = menger2d(2);
+    auto s = menger2d(1);
 
     auto eval = XTreeEvaluator(s);
-    Region<2> r({0, -2}, {2, 0});
+    Region<2> r({-2.1, -2.1}, {2, 2});
 
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -185,7 +185,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     {
         //auto contours = walk2d(&eval, r, 2, 4, 0.0001);
     }
-    auto out = walk2d(&eval, r, 1, 2, 0.0001);
+    auto out = walk2d(&eval, r, 2, 5, 0.0001);
     auto contours = out.first;
     auto& t = out.second;
     end = std::chrono::system_clock::now();
