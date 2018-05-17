@@ -94,6 +94,22 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         REQUIRE(o.upper() == 2);
     }
 
+    SECTION("Multi-min trees")
+    {
+        auto t = std::make_shared<Tape>(min(Tree::X(), min(
+                min(Tree::X(), Tree::Y()),
+                min(Tree::X(), Tree::Y() + 3))));
+
+        IntervalEvaluator e(t);
+
+        // Do an interval evaluation that should lead to both sides
+        // picking X, then collapsing min(X, X) into just X.
+        auto i = e.evalAndPush({-5, 0, 0}, {-4, 1, 0});
+        auto u1 = t->utilization();
+
+        REQUIRE(u1 == Approx(1/5.0));
+    }
+
     SECTION("With NaNs")
     {
         auto x = Tree::X();
