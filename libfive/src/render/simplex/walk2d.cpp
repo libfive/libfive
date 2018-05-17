@@ -200,17 +200,43 @@ void edge2(const std::array<SimplexTree<2>*, 2>& ts, RunData& data)
         assert(es(2, 3) >= 0);
 
         // Do a linear search along both edges to find the intersection
-        auto t0 = es(2, 1) / (es(2, 1) - es(2, 0));
-        assert(t0 >= 0);
-        assert(t0 <= 1);
-        Eigen::Vector2d a = (t0 * es.col(0) + (1 - t0) * es.col(1))
-            .head<2>();
+        constexpr unsigned count=32;
+        static_assert(2 * count < LIBFIVE_EVAL_ARRAY_SIZE, "Bad search size");
+        for (unsigned i=0; i < count; ++i)
+        {
+            Eigen::Vector3f tmp;
+            tmp << ((es.col(0) * (1 - i / double(count - 1))) +
+                    (es.col(1) * i / double(count - 1))).head<2>().cast<float>(),
+                ts[0]->region.perp.cast<float>();
+            data.eval->array.set(tmp, i);
+            tmp << ((es.col(2) * (1 - i / double(count - 1))) +
+                    (es.col(3) * i / double(count - 1))).head<2>().cast<float>(),
+                ts[1]->region.perp.cast<float>();
+            data.eval->array.set(tmp, i + count);
+        }
+        auto r = data.eval->array.values(2 * count);
 
-        double t1 = es(2, 3) / (es(2, 3) - es(2, 2));
-        assert(t1 >= 0.0);
-        assert(t1 <= 1.0);
-        Eigen::Vector2d b = (t1 * es.col(2) + (1 - t1) * es.col(3))
-            .head<2>();
+        Eigen::Vector2d a, b;
+        for (unsigned i=0; i < count - 1; ++i)
+        {
+            if (r[i] <= 0 && r[i + 1] >= 0 &&
+               (r[i] < 0 || r[i + 1] > 0))
+            {
+                a = ((es.col(0) * (1 - i / double(count - 1))) +
+                    (es.col(1) * i / double(count - 1))).head<2>();
+                break;
+            }
+        }
+        for (unsigned i=0; i < count - 1; ++i)
+        {
+            if (r[i + count] <= 0 && r[i + count + 1] >= 0 &&
+               (r[i + count] < 0 || r[i + count + 1] > 0))
+            {
+                b = ((es.col(2) * (1 - i / double(count - 1))) +
+                     (es.col(3) * i / double(count - 1))).head<2>();
+                break;
+            }
+        }
 
         auto ai = data.out.verts.size();
         data.out.verts.push_back(a.cast<float>());
