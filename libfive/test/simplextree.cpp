@@ -193,7 +193,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     {
         //auto contours = walk2d(&eval, r, 2, 4, 0.0001);
     }
-    auto out = walk2d(&eval, r, 2, 6, 0.0001);
+    auto out = walk2d(&eval, r, 4, 6, 0.0001);
     auto contours = out.first;
     auto& t = out.second;
     end = std::chrono::system_clock::now();

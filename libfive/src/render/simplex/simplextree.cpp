@@ -409,15 +409,20 @@ double SimplexTree<N>::findVertices(XTreeEvaluator* eval)
     // Store whether any derivatives were ambiguous, and return an
     // artificially-high error in this case.
     const auto ambig = eval->array.getAmbiguous(children.size());
-    bool any_ambig = false;
-    for (unsigned a=0; a < children.size(); ++a)
+    bool force_recurse = false;
+    for (unsigned i=0; i < children.size(); ++i)
     {
-        if (ambig[a])
+        if (ambig[i])
         {
-            printf("Corner %u is ambiguous\n\t", a);
-            std::cout << "[" << region.corner(a).transpose() << "]\n";
+            Eigen::Vector3f p;
+            p << region.corner(i).template cast<float>(),
+                 region.perp.template cast<float>();
+            if (eval->feature.features_(p).size() > 1)
+            {
+                force_recurse = true;
+                printf("FORCUING RECURSION\n");
+            }
         }
-        any_ambig |= ambig[a];
     }
 
     // Total QEF error (used to decide whether to recurse
@@ -426,8 +431,8 @@ double SimplexTree<N>::findVertices(XTreeEvaluator* eval)
     // Compile-time unrolled vertex positioner!
     unrollLoop<N>(ds, region, vertices, errors);
 
-    return any_ambig ? std::numeric_limits<double>::infinity()
-                     : std::accumulate(errors.begin(), errors.end(), 0.0);
+    return force_recurse ? std::numeric_limits<double>::infinity()
+                         : std::accumulate(errors.begin(), errors.end(), 0.0);
 }
 
 template <unsigned N>
