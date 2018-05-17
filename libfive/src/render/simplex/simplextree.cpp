@@ -410,8 +410,13 @@ double SimplexTree<N>::findVertices(XTreeEvaluator* eval)
     // artificially-high error in this case.
     const auto ambig = eval->array.getAmbiguous(children.size());
     bool any_ambig = false;
-    for (unsigned a=0; a < children.size() && !any_ambig; ++a)
+    for (unsigned a=0; a < children.size(); ++a)
     {
+        if (ambig[a])
+        {
+            printf("Corner %u is ambiguous\n\t", a);
+            std::cout << "[" << region.corner(a).transpose() << "]\n";
+        }
         any_ambig |= ambig[a];
     }
 

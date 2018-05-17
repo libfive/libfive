@@ -119,7 +119,6 @@ TEST_CASE("SimplexTree<2>: Vertex placement")
     }
 }
 
-
 TEST_CASE("SimplexTree<2>: Vertex error")
 {
     auto s = circle(1);
@@ -146,7 +145,6 @@ TEST_CASE("SimplexTree<2>: Max depth")
     auto s = circle(1);
     auto eval = XTreeEvaluator(s);
 
-
     auto contours = walk2d(&eval, {{-2, -2}, {2, 2}}, 2, 4, 0.0001);
     unsigned max_depth = 0;
 
@@ -163,6 +161,7 @@ TEST_CASE("SimplexTree<2>: Max depth")
 
 #include "libfive/render/discrete/heightmap.hpp"
 #include "libfive/render/brep/contours.hpp"
+#include "libfive.h"
 TEST_CASE("SimplexTree<2>: SVG debugging")
 {
     //auto s = move(circle(1), {0.0, 0.1, 0.0});
@@ -170,11 +169,20 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     //auto s = max(circle(1), gyroid2d(50, 0.1));
     //auto s = max(circle(1), -circle(0.9));
     //auto s = Tree::Y();
-    auto s = menger2d(1);
+    /*
+    auto s = move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
+    */
 
+    auto s = *libfive_tree_load("hello.frep");
+    Region<2> r({-0.51, -1.9}, {3.41, 2.1});
+    s = move(s, {0.03, 0.07, 0.0});
+
+        /*
+    auto s = max(max(-Tree::X() - 0.45, Tree::X() - 0.65),
+                 max(-Tree::Y() - 0.15, Tree::Y() - 1.15));
+    Region<2> r({0, 0}, {2, 2});
+    */
     auto eval = XTreeEvaluator(s);
-    Region<2> r({-2.1, -2.1}, {2, 2});
-
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed;
@@ -185,7 +193,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     {
         //auto contours = walk2d(&eval, r, 2, 4, 0.0001);
     }
-    auto out = walk2d(&eval, r, 2, 5, 0.0001);
+    auto out = walk2d(&eval, r, 2, 6, 0.0001);
     auto contours = out.first;
     auto& t = out.second;
     end = std::chrono::system_clock::now();
