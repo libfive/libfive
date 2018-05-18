@@ -408,7 +408,7 @@ double SimplexTree<N>::findVertices(XTreeEvaluator* eval)
 
     // Store whether any derivatives were ambiguous, and return an
     // artificially-high error in this case.
-    const auto ambig = eval->array.getAmbiguous(children.size());
+    const auto ambig = eval->array.getAmbiguousDerivs(children.size());
     bool force_recurse = false;
     for (unsigned i=0; i < children.size(); ++i)
     {
@@ -436,7 +436,7 @@ double SimplexTree<N>::findVertices(XTreeEvaluator* eval)
 }
 
 template <unsigned N>
-void SimplexTree<N>::checkVertices(XTreeEvaluator* eval)
+double SimplexTree<N>::checkVertices(XTreeEvaluator* eval)
 {
     // Do a second evaluation pass to refine the values of F(p) at the
     // simplex corners, turning them from estimates to true evaluations.
@@ -447,8 +447,12 @@ void SimplexTree<N>::checkVertices(XTreeEvaluator* eval)
              region.perp.template cast<float>();
         eval->array.set(p, i);
     }
-    vertices.row(N) = eval->array.values(vertices.cols())
-        .template cast<double>();
+    auto vs = eval->array.values(vertices.cols())
+        .matrix()
+        .template cast<double>()
+        .eval();
+    const double err = (vertices.row(N) - vs).squaredNorm();
+    vertices.row(N) = vs;
 
     // Then, mark the corners as filled or empty, using the feature
     // evaluator to tie-break in ambiguous cases.
@@ -472,6 +476,7 @@ void SimplexTree<N>::checkVertices(XTreeEvaluator* eval)
             case Interval::UNKNOWN: assert(false); break;
         }
     }
+    return err;
 }
 
 

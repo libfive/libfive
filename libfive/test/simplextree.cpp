@@ -173,9 +173,8 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     auto s = move(max(Tree::X(), Tree::Y()), {0.0, 0.1, 0});
     */
 
-    auto s = *libfive_tree_load("hello.frep");
-    Region<2> r({-0.51, -1.9}, {3.41, 2.1});
-    s = move(s, {0.03, 0.07, 0.0});
+    auto s = *libfive_tree_load("magic.frep");
+    Region<2> r({-1, -10}, {19, 20});
 
         /*
     auto s = max(max(-Tree::X() - 0.45, Tree::X() - 0.65),
@@ -193,7 +192,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
     {
         //auto contours = walk2d(&eval, r, 2, 4, 0.0001);
     }
-    auto out = walk2d(&eval, r, 4, 6, 0.0001);
+    auto out = walk2d(&eval, r, 4, 8, 0.0001);
     auto contours = out.first;
     auto& t = out.second;
     end = std::chrono::system_clock::now();
@@ -210,16 +209,18 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
         << " width=\"" << r.upper.x() - r.lower.x()
         << "\" height=\"" << r.upper.y() - r.lower.y() << "\" />\n";
 
+    /*
     for (auto next : leafs(t.get()))
     {
-        if (next->type == Interval::FILLED || next->type == Interval::EMPTY)
+        if ((next->type == Interval::FILLED || next->type == Interval::EMPTY) &&
+                !next->complete)
         {
             auto v = next->region.center();
             auto fill = (next->type == Interval::FILLED ? "white" : "black");
             auto stroke = (next->type == Interval::FILLED ? "black" : "white");
             file << "<circle cx=\"" << v.x() - r.lower.x() << "\" "
                  << "cy=\"" << r.upper.y() - v.y() << "\" "
-                 << "r=\"0.04\" stroke-width=\"0.01\" stroke=\"" << stroke << "\" "
+                 << "r=\"0.01\" stroke-width=\"0.005\" stroke=\"" << stroke << "\" "
                  << "fill=\"" << fill << "\" />\n";
         }
 
@@ -237,7 +238,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
             }
             file << "<circle cx=\"" << v.x() - r.lower.x() << "\" "
                  << "cy=\"" << r.upper.y() - v.y() << "\" "
-                 << "r=\"0.02\" stroke-width=\"none\" "
+                 << "r=\"0.01\" stroke-width=\"none\" "
                  << "fill=\"" << fill << "\" />\n";
         }
 
@@ -254,7 +255,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
             }
             file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
         }
-        file << "Z\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.01\"/>\n";
+        file << "Z\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.005\"/>\n";
 
         auto center = next->vertices.col(8);
         for (unsigned i : {0, 1, 4, 3})
@@ -263,7 +264,7 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
             file << "<path d=\"M ";
             file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
             file << center.x() - r.lower.x() << " " << r.upper.y() - center.y() << " ";
-            file << "\" fill=\"none\" stroke=\"green\" stroke-width=\"0.01\"/>\n";
+            file << "\" fill=\"none\" stroke=\"green\" stroke-width=\"0.005\"/>\n";
         }
         for (unsigned i : {2, 5, 6, 7})
         {
@@ -271,9 +272,10 @@ TEST_CASE("SimplexTree<2>: SVG debugging")
             file << "<path d=\"M ";
             file << v.x() - r.lower.x() << " " << r.upper.y() - v.y() << " ";
             file << center.x() - r.lower.x() << " " << r.upper.y() - center.y() << " ";
-            file << "\" fill=\"none\" stroke=\"yellow\" stroke-width=\"0.01\"/>\n";
+            file << "\" fill=\"none\" stroke=\"yellow\" stroke-width=\"0.005\"/>\n";
         }
     }
+    */
 
     for (auto& e : contours.branes)
     {

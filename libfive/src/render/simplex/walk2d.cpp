@@ -279,15 +279,14 @@ void recurse(SimplexTree<2>* t, RunData& data)
 
 void refine(SimplexTree<2>* t, RunData& data)
 {
-    const auto err = t->findVertices(data.eval);
-    std::cout << "GOt error " << err << std::endl;
-    if (err > data.max_err && t->depth < data.max_depth && !t->isBranch())
+    const bool can_recurse = (t->depth < data.max_depth && !t->isBranch());
+    if (t->findVertices(data.eval) > data.max_err && can_recurse)
     {
         recurse(t, data);
     }
-    else
+    else if (t->checkVertices(data.eval) > data.max_err && can_recurse)
     {
-        t->checkVertices(data.eval);
+        recurse(t, data);
     }
     t->complete = true;
 }

@@ -85,9 +85,10 @@ public:
 
     /*
      *  Populates vertices.col(N) with the true vertex position, and
-     *  populates inside[] with correct results.
+     *  populates inside[] with correct results.  Returns the error
+     *  between predicted distance field values and actual.
      */
-    void checkVertices(XTreeEvaluator* eval);
+    double checkVertices(XTreeEvaluator* eval);
 };
 
 extern template class SimplexTree<2>;
