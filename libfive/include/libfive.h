@@ -131,8 +131,6 @@ libfive_tree libfive_tree_load(const char* filename);
 libfive_tree libfive_tree_remap(libfive_tree p,
         libfive_tree x, libfive_tree y, libfive_tree z);
 
-libfive_region3 libfive_tree_bounds(libfive_tree p);
-
 /*
  *  Returns a C string representing the tree in Scheme style
  *  (e.g. "(+ 1 2 x y)" )

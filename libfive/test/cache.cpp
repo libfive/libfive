@@ -132,6 +132,29 @@ TEST_CASE("Cache::checkIdentity")
         auto ob = t->operation(Opcode::OP_NTH_ROOT, t->X(), t->constant(1));
         REQUIRE(ob == t->X());
     }
+
+    SECTION("Double negative")
+    {
+        auto oa = t->operation(Opcode::OP_MUL, t->X(), t->constant(-1));
+        REQUIRE(oa->op == Opcode::OP_NEG);
+        REQUIRE(oa->lhs == t->X());
+
+        auto ob = t->operation(Opcode::OP_MUL, oa, t->constant(-1));
+        std::stringstream ss;
+        ob->print(ss);
+        CAPTURE(ss.str());
+        REQUIRE(ob == t->X());
+    }
+
+    SECTION("Idempotent unary operators")
+    {
+        auto oa = t->operation(Opcode::OP_ABS, t->X());
+        REQUIRE(oa->op == Opcode::OP_ABS);
+        REQUIRE(oa->lhs == t->X());
+
+        auto ob = t->operation(Opcode::OP_ABS, oa);
+        REQUIRE(ob == oa);
+    }
 }
 
 TEST_CASE("Collapsing constants")

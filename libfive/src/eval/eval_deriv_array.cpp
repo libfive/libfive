@@ -42,6 +42,33 @@ DerivArrayEvaluator::DerivArrayEvaluator(
     d(tape->Z).row(2) = 1;
 }
 
+Eigen::Block<decltype(DerivArrayEvaluator::ambig), 1, Eigen::Dynamic>
+DerivArrayEvaluator::getAmbiguousDerivs(size_t i)
+{
+    // Reset the ambiguous array to all false
+    ambig = false;
+
+    bool abort = false;
+    tape->walk(
+        [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
+        {
+            if (op == Opcode::ORACLE)
+            {
+                tape->oracles[a]->checkAmbiguous(ambig.head(i));
+            }
+            else if (op == Opcode::OP_MIN || op == Opcode::OP_MAX)
+            {
+                ambig.head(i) = ambig.head(i) ||
+                    ((f.block(a, 0, 1, i) ==
+                      f.block(b, 0, 1, i)) &&
+                      (d(a).leftCols(i) != d(b).leftCols(i)).colwise().sum());
+            }
+        }, abort);
+
+    return ambig.head(i);
+
+}
+
 Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
 DerivArrayEvaluator::derivs(size_t count)
 {

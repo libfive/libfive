@@ -18,6 +18,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "catch.hpp"
 
+#include <array>
+#include <future>
+
 #include "libfive/tree/tree.hpp"
 #include "util/oracles.hpp"
 
@@ -160,4 +163,29 @@ TEST_CASE("Tree::makeVarsConstant")
         ss << b;
         REQUIRE(ss.str() == "(+ (* 2 (const-var var-free)) (* 5 (const-var var-free)))");
     }
+}
+
+TEST_CASE("Tree thread safety")
+{
+    // This test is only valid in debug builds, because it checks an
+    // assertion in Cache::del.
+    std::array<std::future<void>, 2> futures;
+    for (unsigned i=0; i < futures.size(); ++i)
+    {
+        futures[i] = std::async(std::launch::async,
+            [](){
+                for (unsigned j=0; j < 100000; ++j)
+                {
+                    auto x = new Tree(Tree::X());
+                    delete x;
+                }
+            });
+    }
+
+    for (auto& f : futures)
+    {
+        f.get();
+    }
+
+    REQUIRE(true);
 }

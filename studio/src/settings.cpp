@@ -25,20 +25,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/settings.hpp"
 
 QRegularExpression Settings::settings_regex(
-        "#! RENDER (.*) (.*) (.*) / (.*) (.*) (.*) / (.*) / (.*) / ([01]) !#");
+        "#! RENDER (.*) (.*) (.*) / (.*) (.*) (.*) / (.*) / (.*) !#");
 QString Settings::settings_fmt(
-        "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 / %8 / %9 !#");
+        "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 / %8 !#");
 
-Settings::Settings(QVector3D min, QVector3D max, float res,
-                   float quality, bool autobounds)
-    : min(min), max(max), res(res), quality(quality), autobounds(autobounds)
+Settings::Settings(QVector3D min, QVector3D max, float res, float quality)
+    : min(min), max(max), res(res), quality(quality)
 {
     // Nothing to do here
 }
 
 Settings Settings::defaultSettings()
 {
-    return Settings({-10, -10, -10}, {10, 10, 10}, 10, 8, false);
+    return Settings({-10, -10, -10}, {10, 10, 10}, 10, 8);
 }
 
 int Settings::defaultDiv() const
@@ -60,7 +59,7 @@ QString Settings::toString() const
     return settings_fmt
         .arg(min.x()).arg(min.y()).arg(min.z())
         .arg(max.x()).arg(max.y()).arg(max.z())
-        .arg(res).arg(quality).arg(autobounds ? 1 : 0);
+        .arg(res).arg(quality);
 }
 
 Settings Settings::fromString(QString txt, bool* okay)
@@ -77,11 +76,10 @@ Settings Settings::fromString(QString txt, bool* okay)
 
     const float res = match.captured(7).toFloat(okay);
     const float quality = match.captured(8).toFloat(okay);
-    const float autobounds = (match.captured(9) == "1");
 
     if (*okay)
     {
-        return Settings(min, max, res, quality, autobounds);
+        return Settings(min, max, res, quality);
     }
     else
     {
@@ -92,8 +90,7 @@ Settings Settings::fromString(QString txt, bool* okay)
 bool Settings::operator==(const Settings& other) const
 {
     return min == other.min && max == other.max &&
-           res == other.res && quality == other.quality &&
-           autobounds == other.autobounds;
+           res == other.res && quality == other.quality;
 }
 
 bool Settings::operator!=(const Settings& other) const
@@ -111,8 +108,7 @@ SettingsPane::SettingsPane(Settings s)
       zmin(new QDoubleSpinBox),
       zmax(new QDoubleSpinBox),
       res(new QDoubleSpinBox),
-      quality(new QDoubleSpinBox),
-      autobounds(new QCheckBox)
+      quality(new QDoubleSpinBox)
 {
     auto layout = new QGridLayout();
 
@@ -126,9 +122,6 @@ SettingsPane::SettingsPane(Settings s)
     layout->addWidget(new QLabel("Z:"), 3, 0);
     layout->addWidget(zmin, 3, 1);
     layout->addWidget(zmax, 3, 2);
-
-    layout->addWidget(new QLabel("Auto-bounding:"), 4, 0, 1, 2);
-    layout->addWidget(autobounds, 4, 2);
 
     QFrame* line;
     line = new QFrame();
@@ -165,14 +158,6 @@ SettingsPane::SettingsPane(Settings s)
                 t, [=](){ t->setReadOnly(true); });
     }
 
-    // Set up similar connections for the autobounds checkbox
-    connect(autobounds, &QCheckBox::clicked,
-            this, [=](bool){ emit(this->changed(settings())); });
-    connect(this, &SettingsPane::enable,
-            autobounds, [=](){ autobounds->setEnabled(true); });
-    connect(this, &SettingsPane::disable,
-            autobounds, [=](){ autobounds->setEnabled(false); });
-
     setLayout(layout);
     setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint |
                    Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
@@ -189,12 +174,11 @@ void SettingsPane::set(Settings s)
     zmax->setValue(s.max.z());
     res->setValue(s.res);
     quality->setValue(s.quality);
-    autobounds->setChecked(s.autobounds);
 }
 
 Settings SettingsPane::settings() const
 {
     return Settings(QVector3D(xmin->value(), ymin->value(), zmin->value()),
                     QVector3D(xmax->value(), ymax->value(), zmax->value()),
-                    res->value(), quality->value(), autobounds->isChecked());
+                    res->value(), quality->value());
 }
