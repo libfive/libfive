@@ -420,7 +420,6 @@ double SimplexTree<N>::findVertices(XTreeEvaluator* eval)
             if (eval->feature.features_(p).size() > 1)
             {
                 force_recurse = true;
-                printf("FORCUING RECURSION\n");
             }
         }
     }
