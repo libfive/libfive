@@ -42,8 +42,8 @@ switch (checkUnsaved())                                                     \
     default:    assert(false);                                              \
 }
 
-Window::Window(QString target)
-    : QMainWindow(), editor(new Editor), view(new View)
+Window::Window(Arguments args)
+    : QMainWindow(), editor(new Editor(nullptr, args.do_syntax)), view(new View)
 {
     resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
 
@@ -194,16 +194,16 @@ Window::Window(QString target)
         QSettings settings("impraxical", "Studio");
         if (settings.contains("first-run") &&
             settings.value("first-run").toBool() &&
-            target.isNull())
+            args.filename.isEmpty())
         {
-            target = ":/examples/tutorial.io";
+            args.filename = ":/examples/tutorial.io";
         }
         settings.setValue("first-run", false);
     }
 
-    if (!target.isEmpty() && loadFile(target))
+    if (!args.filename.isEmpty() && loadFile(args.filename))
     {
-        setFilename(target);
+        setFilename(args.filename);
     }
 }
 
