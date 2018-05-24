@@ -51,17 +51,6 @@ void TransformedOracle::evalInterval(Interval::I& out)
     underlying->evalInterval(out);
 }
 
-void TransformedOracle::evalPoint(float& out, size_t index)
-{
-    Eigen::Vector3f transformedPoint{
-        xEvaluator.feature.eval(points.col(index)),
-        yEvaluator.feature.eval(points.col(index)),
-        zEvaluator.feature.eval(points.col(index)) };
-
-    underlying->set(transformedPoint, index);
-    underlying->evalPoint(out, index);
-}
-
 void TransformedOracle::evalArray(
     Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
     LIBFIVE_EVAL_ARRAY_SIZE, Eigen::RowMajor>, 1, Eigen::Dynamic> out)
@@ -169,6 +158,77 @@ void TransformedOracle::evalFeatures(
             }
         }
     }
+}
+
+void TransformedOracle::evalAndPushInterval(Interval::I& out)
+{
+    auto xRange = xEvaluator.interval.evalAndPush(lower, upper);
+    auto yRange = yEvaluator.interval.evalAndPush(lower, upper);
+    auto zRange = zEvaluator.interval.evalAndPush(lower, upper);
+
+    Eigen::Vector3f rangeLower{
+        xRange.lower(), yRange.lower(), zRange.lower() };
+    Eigen::Vector3f rangeUpper{
+        xRange.upper(), yRange.lower(), zRange.lower() };
+
+    underlying->set(rangeLower, rangeUpper);
+    underlying->evalAndPushInterval(out);
+}
+
+void TransformedOracle::evalPoint(float& out, size_t index)
+{
+    Eigen::Vector3f transformedPoint{
+        xEvaluator.feature.eval(points.col(index)),
+        yEvaluator.feature.eval(points.col(index)),
+        zEvaluator.feature.eval(points.col(index)) };
+
+    underlying->set(transformedPoint, index);
+    underlying->evalPoint(out, index);
+}
+
+void TransformedOracle::evalAndPushPoint(float& out, size_t index)
+{
+    Eigen::Vector3f transformedPoint{
+        xEvaluator.feature.evalAndPush(points.col(index)),
+        yEvaluator.feature.evalAndPush(points.col(index)),
+        zEvaluator.feature.evalAndPush(points.col(index)) };
+
+    underlying->set(transformedPoint, index);
+    underlying->evalAndPushPoint(out, index);
+}
+
+void TransformedOracle::baseEvalPoint(float& out, size_t index)
+{
+    Eigen::Vector3f transformedPoint{
+        xEvaluator.feature.baseEval(points.col(index)),
+        yEvaluator.feature.baseEval(points.col(index)),
+        zEvaluator.feature.baseEval(points.col(index)) };
+
+    underlying->set(transformedPoint, index);
+    underlying->baseEvalPoint(out, index);
+}
+
+void TransformedOracle::baseEvalDerivs(
+    Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
+    3, 1, true> out, size_t index) {
+    Eigen::Matrix3f Jacobian;
+    Jacobian << xEvaluator.baseDeriv.baseDeriv(points.col(index)),
+        yEvaluator.baseDeriv.baseDeriv(points.col(index)),
+        zEvaluator.baseDeriv.baseDeriv(points.col(index));
+    Eigen::Vector3f transformedPoint{
+        xEvaluator.deriv.baseEval(points.col(index)),
+        yEvaluator.deriv.baseEval(points.col(index)),
+        zEvaluator.deriv.baseEval(points.col(index))};
+    underlying->set(transformedPoint, index);
+    underlying->baseEvalDerivs(out, index);
+    out = Jacobian * out.matrix();
+}
+
+void TransformedOracle::pop() {
+  xEvaluator.deriv.pop();
+  yEvaluator.deriv.pop();
+  zEvaluator.deriv.pop();
+  underlying->pop();
 }
 
 void TransformedOracle::setUnderlyingArrayValues(int count)

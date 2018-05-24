@@ -155,7 +155,11 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            tape->oracles[a_]->evalDerivs(od);
+          // evalBase might be set during derivative evaluation by a derived
+          // class; if so, we want to evaluate the derivatives properly as 
+          // well.
+            if (evalBase) tape->oracles[a_]->baseEvalDerivs(od);
+            else tape->oracles[a_]->evalDerivs(od);
             break;
 
         case Opcode::INVALID:

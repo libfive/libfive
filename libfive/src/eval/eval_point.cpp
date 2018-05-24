@@ -62,6 +62,7 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt)
 
 float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
 {
+    pushing = true;
     auto out = eval(pt);
     tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
                   Clause::Id a, Clause::Id b)
@@ -100,12 +101,16 @@ float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
         }
         return Tape::KEEP_ALWAYS;
     }, Tape::SPECIALIZED);
+    pushing = false;
     return out;
 }
 
 float PointEvaluator::baseEval(const Eigen::Vector3f& pt)
 {
-    return tape->baseEval<PointEvaluator, float>(*this, pt);
+    evalBase = true;
+    auto out = tape->baseEval<PointEvaluator, float>(*this, pt);
+    evalBase = false;
+    return out;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -228,7 +233,9 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            tape->oracles[a_]->evalPoint(out);
+            if (pushing) tape->oracles[a_]->evalAndPushPoint(out);
+            else if (evalBase) tape->oracles[a_]->baseEvalPoint(out);
+            else tape->oracles[a_]->evalPoint(out);
             break;
 
         case Opcode::INVALID:

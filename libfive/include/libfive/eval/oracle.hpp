@@ -120,6 +120,43 @@ public:
     /*  Returns the set of features at the point stored in slot 0.  */
     virtual void evalFeatures(
             boost::container::small_vector<Feature, 4>& out)=0;
+
+    /*
+    *  Evaluates an interval as above, but also performs the equivalent
+    *  (if any) of a tape push.
+    */
+    virtual void evalAndPushInterval(Interval::I& out) {
+      evalInterval(out);
+    }
+
+    /*
+    *  Evaluates an point as above, but also performs the equivalent
+    *  (if any) of a tape push.
+    */
+    virtual void evalAndPushPoint(float& out, size_t index = 0) {
+      evalPoint(out, index);
+    }
+
+    /*
+    *  Evaluates an point, regardless of whether it is contained in the
+    *  region the oracle has been pushed into.
+    */
+    virtual void baseEvalPoint(float& out, size_t index = 0) {
+      evalPoint(out, index);
+    }
+
+    /*
+    *  Evaluates the gradient, regardless of whether the point is contained 
+    *  in the region the oracle has been pushed into.
+    */
+    virtual void baseEvalDerivs(
+      Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
+      3, 1, true> out, size_t index = 0) {
+      evalDerivs(out, index);
+    }
+
+    /*  Performs the equivalent (if any) of a tape pop.  */
+    virtual void pop() {}
 };
 
 } //Namespace Kernel
