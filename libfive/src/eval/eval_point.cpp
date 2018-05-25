@@ -60,10 +60,11 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt)
     return f(tape->rwalk(*this));
 }
 
-float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
+std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
+        const Eigen::Vector3f& pt)
 {
     auto out = eval(pt);
-    tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
+    auto p = tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
                   Clause::Id a, Clause::Id b)
     {
         // For min and max operations, we may only need to keep one branch
@@ -100,7 +101,7 @@ float PointEvaluator::evalAndPush(const Eigen::Vector3f& pt)
         }
         return Tape::KEEP_ALWAYS;
     }, Tape::SPECIALIZED);
-    return out;
+    return std::make_pair(out, std::move(p));
 }
 
 float PointEvaluator::baseEval(const Eigen::Vector3f& pt)

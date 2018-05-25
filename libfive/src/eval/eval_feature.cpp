@@ -93,13 +93,10 @@ const boost::container::small_vector<Feature, 4>&
     FeatureEvaluator::features_(const Eigen::Vector3f& p)
 {
     // Load the location into the results slot and evaluate point-wise
-    evalAndPush(p);
+    auto handle = evalAndPush(p);
 
     // Evaluate feature-wise
     auto index = tape->rwalk(*this);
-
-    // Pop out of point-wise specialization
-    pop();
 
     return d(index);
 }

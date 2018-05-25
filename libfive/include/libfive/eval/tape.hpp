@@ -51,11 +51,6 @@ public:
     enum Type { UNKNOWN, INTERVAL, SPECIALIZED, FEATURE };
 
     /*
-     *  Pops one tape off the stack, re-enabling disabled nodes
-     */
-    void pop();
-
-    /*
      *  Returns the fraction active / total nodes
      *  (to check how well disabling is working)
      */
@@ -112,7 +107,31 @@ protected:
     std::vector<uint8_t> disabled;
     std::vector<Clause::Id> remap;
 
+    /*
+     *  Pops one tape off the stack, re-enabling disabled nodes
+     *  This is private because it will only be called by the Handle destructor
+     */
+    void pop();
+
 public:
+    /*
+     *  A Handle is an RAII object that undoes a push
+     */
+    class Handle
+    {
+    public:
+        Handle() { /* Nothing to do here */ }
+        Handle(Tape* tape) : tape(tape), type(PUSH) {}
+
+        /*  Handles must be moved, not copy-constructed or assigned */
+        Handle(Handle&&);
+        Handle& operator=(Handle&&);
+
+        ~Handle();
+    protected:
+        Tape* tape=nullptr;
+        enum { NONE, PUSH, } type=NONE;
+    };
 
     /*
      *  Pushes a new tape onto the stack, storing it in tape
@@ -121,9 +140,9 @@ public:
      *  t is a tape type
      *  r is the relevant region (or an empty region by default)
      */
-    void push(std::function<Keep(Opcode::Opcode, Clause::Id,
-                                 Clause::Id, Clause::Id)> fn,
-              Type t, Region<3> r=Region<3>());
+    Handle push(std::function<Keep(Opcode::Opcode, Clause::Id,
+                                   Clause::Id, Clause::Id)> fn,
+                Type t, Region<3> r=Region<3>());
 
     /*
      *  Walks through the tape in bottom-to-top (reverse) order,

@@ -128,12 +128,17 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
 
     const bool do_recurse = ((region.upper - region.lower) > min_feature).any();
 
-    // Do a preliminary evaluation to prune the tree
+    // Do a preliminary evaluation to prune the tree, storing the interval
+    // result and an RAII handle that will pop the tape on destruction.
     Interval::I i(-1, 1);
+    Tape::Handle p;
     if (do_recurse)
     {
-        i = eval->interval.evalAndPush(region.lower3().template cast<float>(),
-                                       region.upper3().template cast<float>());
+        auto o = eval->interval.evalAndPush(
+                region.lower3().template cast<float>(),
+                region.upper3().template cast<float>());
+        i = o.first;
+        p = std::move(o.second);
     }
 
     if (Interval::isFilled(i))
@@ -191,10 +196,6 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             // by an early cancel operation
             if (cancel.load())
             {
-                if (do_recurse)
-                {
-                    eval->interval.pop();
-                }
                 return;
             }
 
@@ -757,10 +758,6 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
     }
 
     // ...and we're done.
-    if (do_recurse)
-    {
-        eval->interval.pop();
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

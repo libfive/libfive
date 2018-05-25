@@ -80,7 +80,8 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
         // Do an interval evaluation that will lead to disabling the rhs
         // Pushing should disable the rhs of min
-        auto i = e.evalAndPush({-5, 8, 0}, {-4, 9, 0});
+        auto p = e.evalAndPush({-5, 8, 0}, {-4, 9, 0});
+        auto i = p.first;
         REQUIRE(i.lower() == -4);
         REQUIRE(i.upper() == -3);
 
@@ -130,21 +131,24 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         IntervalEvaluator eval(tape);
         PointEvaluator eval_(tape);
 
-        auto ia = eval.evalAndPush(ra.lower.template cast<float>(),
-                                   ra.upper.template cast<float>());
-        CAPTURE(ia.lower());
-        CAPTURE(ia.upper());
-        CAPTURE(tape->utilization());
-        auto ea = eval_.eval(target);
-        eval.pop();
+        float ea, eb;
+        {
+            auto ia = eval.evalAndPush(ra.lower.template cast<float>(),
+                                       ra.upper.template cast<float>());
+            CAPTURE(ia.first.lower());
+            CAPTURE(ia.first.upper());
+            CAPTURE(tape->utilization());
+            ea = eval_.eval(target);
+        }
 
-        auto ib = eval.evalAndPush(rb.lower.template cast<float>(),
-                                   rb.upper.template cast<float>());
-        CAPTURE(ib.lower());
-        CAPTURE(ib.upper());
-        CAPTURE(tape->utilization());
-        auto eb = eval_.eval(target);
-        eval.pop();
+        {
+            auto ib = eval.evalAndPush(rb.lower.template cast<float>(),
+                                       rb.upper.template cast<float>());
+            CAPTURE(ib.first.lower());
+            CAPTURE(ib.first.upper());
+            CAPTURE(tape->utilization());
+            eb = eval_.eval(target);
+        }
 
         REQUIRE(ea == eb);
     }

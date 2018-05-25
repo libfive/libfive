@@ -61,12 +61,13 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     return i[tape->rwalk(*this)];
 }
 
-Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
-                                           const Eigen::Vector3f& upper)
+std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
+        const Eigen::Vector3f& lower,
+        const Eigen::Vector3f& upper)
 {
     auto out = eval(lower, upper);
 
-    tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
+    auto p = tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
                    Clause::Id a, Clause::Id b)
     {
         // For min and max operations, we may only need to keep one branch
@@ -114,7 +115,7 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
         Tape::INTERVAL,
         {{i[tape->X].lower(), i[tape->Y].lower(), i[tape->Z].lower()},
          {i[tape->X].upper(), i[tape->Y].upper(), i[tape->Z].upper()}});
-    return out;
+    return std::make_pair(out, std::move(p));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

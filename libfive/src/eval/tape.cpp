@@ -156,16 +156,16 @@ void Tape::walk(std::function<void(Opcode::Opcode, Clause::Id,
     }
 }
 
-void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
-                                   Clause::Id, Clause::Id)> fn,
-                Type t, Region<3> r)
+Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
+                                           Clause::Id, Clause::Id)> fn,
+                        Type t, Region<3> r)
 {
     // Special-case: if this is a dummy tape, then increment the
     // tape's depth and return immediately.
     if (tape->dummy)
     {
         tape->dummy++;
-        return;
+        return Handle(this);
     }
 
     // Since we'll be figuring out which clauses are disabled and
@@ -267,6 +267,34 @@ void Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     tape->X = {r.lower.x(), r.upper.x()};
     tape->Y = {r.lower.y(), r.upper.y()};
     tape->Z = {r.lower.z(), r.upper.z()};
+
+    return Handle(this);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+Tape::Handle::~Handle()
+{
+    switch (type)
+    {
+        case NONE: break;
+        case PUSH: assert(tape); tape->pop(); break;
+    }
+}
+
+Tape::Handle::Handle(Handle&& other)
+    : tape(other.tape), type(other.type)
+{
+    other.type = NONE;
+}
+
+Tape::Handle& Tape::Handle::operator=(Handle&& other)
+{
+    tape = other.tape;
+    type = other.type;
+
+    other.type = NONE;
+    return *this;
 }
 
 }   // namespace Kernel
