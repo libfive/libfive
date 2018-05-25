@@ -106,7 +106,8 @@ std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
 
 float PointEvaluator::baseEval(const Eigen::Vector3f& pt)
 {
-    return tape->baseEval<PointEvaluator, float>(*this, pt);
+    auto handle = tape->getBase(pt); // automatically pops
+    return eval(pt);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

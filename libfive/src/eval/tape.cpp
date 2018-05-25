@@ -271,6 +271,30 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     return Handle(this);
 }
 
+Tape::Handle Tape::getBase(const Eigen::Vector3f& p)
+{
+    auto prev_tape = tape;
+
+    // Walk up the tape stack until we find an interval-type tape
+    // that contains the given point, or we hit the start of the stack
+    while (tape != tapes.begin())
+    {
+        if (tape->type == Tape::INTERVAL &&
+            p.x() >= tape->X.lower() && p.x() <= tape->X.upper() &&
+            p.y() >= tape->Y.lower() && p.y() <= tape->Y.upper() &&
+            p.z() >= tape->Z.lower() && p.z() <= tape->Z.upper())
+        {
+            break;
+        }
+        else
+        {
+            tape--;
+        }
+    }
+
+    return Handle(this, prev_tape);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 Tape::Handle::~Handle()
@@ -278,12 +302,13 @@ Tape::Handle::~Handle()
     switch (type)
     {
         case NONE: break;
+        case BASE: assert(tape); tape->tape = prev; break;
         case PUSH: assert(tape); tape->pop(); break;
     }
 }
 
 Tape::Handle::Handle(Handle&& other)
-    : tape(other.tape), type(other.type)
+    : tape(other.tape), type(other.type), prev(other.prev)
 {
     other.type = NONE;
 }
@@ -292,6 +317,7 @@ Tape::Handle& Tape::Handle::operator=(Handle&& other)
 {
     tape = other.tape;
     type = other.type;
+    prev = other.prev;
 
     other.type = NONE;
     return *this;

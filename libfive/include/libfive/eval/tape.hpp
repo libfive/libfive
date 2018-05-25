@@ -122,6 +122,8 @@ public:
     public:
         Handle() { /* Nothing to do here */ }
         Handle(Tape* tape) : tape(tape), type(PUSH) {}
+        Handle(Tape* tape, std::list<Subtape>::iterator prev)
+            : tape(tape), type(BASE), prev(prev) {}
 
         /*  Handles must be moved, not copy-constructed or assigned */
         Handle(Handle&&);
@@ -130,7 +132,10 @@ public:
         ~Handle();
     protected:
         Tape* tape=nullptr;
-        enum { NONE, PUSH, } type=NONE;
+        enum { NONE, PUSH, BASE, } type=NONE;
+
+        /*  Used in BASE Handles as the value to reset the tape to */
+        std::list<Subtape>::iterator prev;
     };
 
     /*
@@ -171,36 +176,14 @@ public:
                                   Clause::Id, Clause::Id)> fn, bool& abort);
 
     /*
-     *  Walks up the tree until p is within the tape's region, then
-     *  calls e.eval(p).  This is useful for evaluating a point when
-     *  the tape may be pushed into a deeper interval.
+     *  Walks up the tape list until p is within the tape's region, then
+     *  returns a Handle that restores the original tape.
+     *
+     *  This is useful for evaluating a point when  the tape may be pushed
+     *  into a deeper interval, e.g. in dual contouring where points can
+     *  be positioned outside of their parent cells.
      */
-    template <class E, class T>
-    T baseEval(E& e, const Eigen::Vector3f& p)
-    {
-        auto prev_tape = tape;
-
-        // Walk up the tape stack until we find an interval-type tape
-        // that contains the given point, or we hit the start of the stack
-        while (tape != tapes.begin())
-        {
-            if (tape->type == Tape::INTERVAL &&
-                p.x() >= tape->X.lower() && p.x() <= tape->X.upper() &&
-                p.y() >= tape->Y.lower() && p.y() <= tape->Y.upper() &&
-                p.z() >= tape->Z.lower() && p.z() <= tape->Z.upper())
-            {
-                break;
-            }
-            else
-            {
-                tape--;
-            }
-        }
-
-        auto out = e.eval(p);
-        tape = prev_tape;
-        return out;
-    }
+    Handle getBase(const Eigen::Vector3f& p);
 };
 
 }   // namespace Kernel
