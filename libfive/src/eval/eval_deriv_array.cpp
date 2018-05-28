@@ -195,13 +195,19 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::VAR_X:
             od.row(0) = 1.0f;
+            od.row(1) = 0.0f;
+            od.row(2) = 0.0f;
             break;
 
         case Opcode::VAR_Y:
+            od.row(0) = 0.0f;
             od.row(1) = 1.0f;
+            od.row(2) = 0.0f;
             break;
 
         case Opcode::VAR_Z:
+            od.row(0) = 0.0f;
+            od.row(1) = 0.0f;
             od.row(2) = 1.0f;
             break;
 
