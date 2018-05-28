@@ -29,6 +29,7 @@ class BaseEvaluator
 public:
     BaseEvaluator(std::shared_ptr<Tape> t,
                   const std::map<Tree::Id, float>& vs)
+        : tape(t)
     {
         for (auto& v : t->vars)
         {

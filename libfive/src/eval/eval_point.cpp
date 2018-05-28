@@ -205,12 +205,27 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             tape->oracles[a_]->evalPoint(out);
             break;
 
-        case Opcode::INVALID:
         case Opcode::CONSTANT:
+            out = tape->constants[a_];
+            break;
+
         case Opcode::VAR_X:
+            out = x;
+            break;
+
         case Opcode::VAR_Y:
+            out = y;
+            break;
+
         case Opcode::VAR_Z:
+            out = z;
+            break;
+
         case Opcode::VAR_FREE:
+            out = vars[a_];
+            break;
+
+        case Opcode::INVALID:
         case Opcode::LAST_OP: assert(false);
     }
 #undef out
