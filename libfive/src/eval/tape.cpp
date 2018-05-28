@@ -26,6 +26,62 @@ Tape::Tape(const Tree root)
 {
     auto flat = root.ordered();
 
+    std::unordered_map<Tree::Id, std::pair<unsigned, unsigned>> ranges;
+    ranges[nullptr] = std::make_pair(0, 0);
+    unsigned i=0;
+    for (const auto& m : flat)
+    {
+        ranges[m.id()] = std::make_pair(i, i + 1);
+        for (auto ptr : {m->lhs.get(), m->rhs.get()})
+        {
+            auto itr = ranges.find(ptr);
+            assert(itr != ranges.end());
+            itr->second.second = i;
+        }
+        i++;
+    }
+    enum RegOp { DROP, LOAD };
+    std::multimap<std::pair<unsigned, RegOp>, Tree::Id> reg_ops;
+    for (const auto& r : ranges)
+    {
+        reg_ops.insert({{r.second.first, LOAD}, r.first});
+        reg_ops.insert({{r.second.second, DROP}, r.first});
+    }
+    std::map<Tree::Id, unsigned> active;
+    std::map<Tree::Id, unsigned> assigned;
+    std::set<unsigned> inactive;
+    for (auto& r : reg_ops)
+    {
+        // Skip the dummy slot
+        if (r.second == nullptr)
+        {
+            continue;
+        }
+        // Return the register to the free list
+        if (r.first.second == DROP)
+        {
+            auto itr = active.find(r.second);
+            assert(itr != active.end());
+            inactive.insert(itr->second);
+            active.erase(itr);
+        }
+        // Otherwise, assign a new register, expanding the number as needed
+        else if (r.first.second == LOAD)
+        {
+            unsigned chosen;
+            if (inactive.size())
+            {
+                chosen = *inactive.begin();
+            }
+            else
+            {
+                chosen = active.size();
+            }
+            active.insert({r.second, chosen});
+            assigned.insert({r.second, chosen});
+        }
+    }
+
     // Helper function to create a new clause in the data array
     // The dummy clause (0) is mapped to the first result slot
     std::unordered_map<Tree::Id, Clause::Id> clauses = {{nullptr, 0}};
@@ -102,6 +158,9 @@ Tape::Tape(const Tree root)
     // Remember, evaluators need to allocate one more than this
     // amount of space, as the clause with id = 0 is a placeholder
     num_clauses = clauses.size() - 1;
+
+    std::cout << "space savings: " << inactive.size() / float(num_clauses) << " (on "
+        << num_clauses << " clauses)\n";
 
     // Allocate enough memory for all the clauses
     disabled.resize(clauses.size());
