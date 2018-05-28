@@ -208,6 +208,10 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = vars.at(a_);
             break;
 
+        case Opcode::OP_COPY:
+            out = a;
+            break;
+
         case Opcode::INVALID:
         case Opcode::LAST_OP: assert(false);
     }

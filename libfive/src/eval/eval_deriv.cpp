@@ -153,12 +153,31 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             tape->oracles[a_]->evalDerivs(od);
             break;
 
-        case Opcode::INVALID:
         case Opcode::CONSTANT:
+            od = tape->constants[a_];
+            break;
+
         case Opcode::VAR_X:
+            od = Eigen::Vector3f(1.0f, 0.0f, 0.0f);
+            break;
+
         case Opcode::VAR_Y:
+            od = Eigen::Vector3f(0.0f, 1.0f, 0.0f);
+            break;
+
         case Opcode::VAR_Z:
+            od = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+            break;
+
         case Opcode::VAR_FREE:
+            od = Eigen::Vector3f::Zero();
+            break;
+
+        case Opcode::OP_COPY:
+            od = ad;
+            break;
+
+        case Opcode::INVALID:
         case Opcode::LAST_OP: assert(false);
     }
 #undef ov

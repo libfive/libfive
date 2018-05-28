@@ -51,6 +51,7 @@ size_t Opcode::args(Opcode op)
         case OP_LOG:
         case OP_RECIP:
         case CONST_VAR:
+        case OP_COPY:
             return 1;
 
         case OP_ADD: // fallthrough
@@ -171,6 +172,7 @@ std::string Opcode::toOpString(Opcode op)
         case OP_COMPARE:
         case OP_LOG:
         case OP_ABS:
+        case OP_COPY:
             return toScmString(op);
 
 
@@ -223,6 +225,7 @@ bool Opcode::isCommutative(Opcode op)
         case OP_ABS:
         case OP_RECIP:
         case CONST_VAR:
+        case OP_COPY:
         case LAST_OP:
             return false;
 

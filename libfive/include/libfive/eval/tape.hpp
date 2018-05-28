@@ -111,6 +111,13 @@ protected:
      */
     void pop();
 
+    /*
+     *  Certain types of clauses (e.g. ORACLES) use their lhs to store
+     *  an index into a secondary array, rather than as a slot identifier.
+     *  These clauses are handled differently in tape pushing.
+     */
+    static bool hasDummyChildren(Opcode::Opcode op);
+
 public:
     /*
      *  A Handle is an RAII object that undoes a push

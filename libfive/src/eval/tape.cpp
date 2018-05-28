@@ -229,23 +229,13 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
                 case KEEP_B:        disabled[c.b] = false;
                                     remap[c.id] = c.b;
                                     break;
-                case KEEP_BOTH:     has_choices = true;
+                case KEEP_BOTH:     has_choices = true; // fallthrough
+                case KEEP_ALWAYS:   if (!hasDummyChildren(c.op))
+                                    {
+                                        disabled[c.a] = false;
+                                        disabled[c.b] = false;
+                                    }
                                     break;
-                case KEEP_ALWAYS:   break;
-            }
-
-            if (remap[c.id])
-            {
-                disabled[c.id] = true;
-            }
-            // Oracle nodes are special-cased here.  They should always
-            // return either KEEP_BOTH or KEEP_ALWAYS, but have no children
-            // to disable (and c.a is a dummy index into the oracles[]
-            // array, so we shouldn't mis-interpret it as a clause index).
-            else if (c.op != Opcode::ORACLE)
-            {
-                disabled[c.a] = false;
-                disabled[c.b] = false;
             }
         }
     }
@@ -280,25 +270,17 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     {
         if (!disabled[c.id])
         {
-            // Oracle nodes use c.a as an index into tape->oracles,
-            // rather than the address of an lhs / rhs expression,
-            // so we special-case them here to avoid bad remapping.
-            if (c.op == Opcode::ORACLE)
+            if (remap[c.id])
             {
-                tape->t.push_back({c.op, c.id, c.a, c.b});
+                tape->t.push_back({Opcode::OP_COPY, c.id, remap[c.id], 0});
             }
             else
             {
-                Clause::Id ra, rb;
-                for (ra = c.a; remap[ra]; ra = remap[ra]);
-                for (rb = c.b; remap[rb]; rb = remap[rb]);
-                tape->t.push_back({c.op, c.id, ra, rb});
+                tape->t.push_back(c);
             }
         }
     }
-
-    // Remap the tape root index
-    for (tape->i = prev_tape->i; remap[tape->i]; tape->i = remap[tape->i]);
+    tape->i = prev_tape->i;
 
     // Make sure that the tape got shorter
     assert(tape->t.size() <= prev_tape->t.size());
@@ -333,6 +315,13 @@ Tape::Handle Tape::getBase(const Eigen::Vector3f& p)
     }
 
     return Handle(this, prev_tape);
+}
+
+bool Tape::hasDummyChildren(Opcode::Opcode op)
+{
+    return (op == Opcode::CONSTANT)
+        || (op == Opcode::VAR_FREE)
+        || (op == Opcode::ORACLE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

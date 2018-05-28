@@ -164,6 +164,10 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 oj(a) = 1.0f;
                 break;
 
+            case Opcode::OP_COPY:
+                oj = aj;
+                break;
+
             case Opcode::INVALID:
             case Opcode::LAST_OP: assert(false);
         }

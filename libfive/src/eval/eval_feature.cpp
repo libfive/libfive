@@ -304,6 +304,10 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             STORE1(Eigen::Vector3f::Zero());
             break;
 
+        case Opcode::OP_COPY:
+            od = _ads;
+            break;
+
         case Opcode::INVALID:
         case Opcode::LAST_OP: assert(false);
     }
