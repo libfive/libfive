@@ -77,7 +77,9 @@ Tape::Tape(const Tree root)
             unsigned chosen;
             if (inactive.size())
             {
-                chosen = *inactive.begin();
+                auto itr = inactive.begin();
+                chosen = *itr;
+                inactive.erase(itr);
             }
             else
             {
