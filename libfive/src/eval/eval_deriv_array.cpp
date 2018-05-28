@@ -30,16 +30,7 @@ DerivArrayEvaluator::DerivArrayEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
     : ArrayEvaluator(t, vars), d(tape->num_clauses + 1, 1)
 {
-    // Initialize all derivatives to zero
-    for (Eigen::Index i=0; i < d.rows(); ++i)
-    {
-        d(i) = 0;
-    }
-
-    // Load immutable derivatives for X, Y, Z
-    d(tape->X).row(0) = 1;
-    d(tape->Y).row(1) = 1;
-    d(tape->Z).row(2) = 1;
+    // Nothing to do here
 }
 
 Eigen::Block<decltype(DerivArrayEvaluator::ambig), 1, Eigen::Dynamic>
@@ -198,12 +189,27 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             tape->oracles[a_]->evalDerivArray(od);
             break;
 
-        case Opcode::INVALID:
         case Opcode::CONSTANT:
+            od = 0.0f;
+            break;
+
         case Opcode::VAR_X:
+            od.row(0) = 1.0f;
+            break;
+
         case Opcode::VAR_Y:
+            od.row(1) = 1.0f;
+            break;
+
         case Opcode::VAR_Z:
+            od.row(2) = 1.0f;
+            break;
+
         case Opcode::VAR_FREE:
+            od = 0.0f;
+            break;
+
+        case Opcode::INVALID:
         case Opcode::LAST_OP: assert(false);
     }
 #undef ov

@@ -56,24 +56,22 @@ public:
      */
     double utilization() const;
 
-    /*  Indices of X, Y, Z coordinates */
-    Clause::Id X, Y, Z;
-
-    /*  Constants, unpacked from the tree at construction */
-    std::map<Clause::Id, float> constants;
+    /*  Constants, indexed by lhs in CONSTANT nodes */
+    std::vector<float> constants;
 
     /*  Map of variables (in terms of where they live in this Evaluator) to
      *  their ids in their respective Tree (e.g. what you get when calling
      *  Tree::var().id() */
-    boost::bimap<Clause::Id, Tree::Id> vars;
+    std::vector<Tree::Id> vars;
 
     /*  Oracles are also unpacked from the tree at construction, and
      *  stored in this flat list.  The ORACLE opcode takes an index into
      *  this list and an index into the results array. */
     std::vector<std::unique_ptr<Oracle>> oracles;
 
-    /*  Returns the total number of clauses (including X/Y/Z, oracles,
-     *  variables, and constants, which aren't explicitly in the tape )  */
+    /*  Returns the maximum number of active clauses at once, which is
+     *  used to decide how much space to allocate for intermediate results
+     *  in Evaluators.  Think of this has a register count for evaluation. */
     size_t num_clauses;
 
 protected:

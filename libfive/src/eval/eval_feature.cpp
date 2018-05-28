@@ -30,22 +30,7 @@ FeatureEvaluator::FeatureEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
     : PointEvaluator(t, vars), d(1, tape->num_clauses + 1)
 {
-    // Load the default derivatives
-    d(tape->X).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
-    d(tape->Y).push_back(Feature(Eigen::Vector3f(0, 1, 0)));
-    d(tape->Z).push_back(Feature(Eigen::Vector3f(0, 0, 1)));
-
-    // Set variables to have a single all-zero derivative
-    for (auto& v : t->vars.right)
-    {
-        d(v.second).push_back(Feature(Eigen::Vector3f::Zero()));
-    }
-
-    // Set constants to have a single all-zero derivative
-    for (auto& c : tape->constants)
-    {
-        d(c.first).push_back(Feature(Eigen::Vector3f::Zero()));
-    }
+    // Nothing to do here
 }
 
 bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
@@ -299,12 +284,27 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             tape->oracles[a]->evalFeatures(od);
             break;
 
-        case Opcode::INVALID:
         case Opcode::CONSTANT:
+            STORE1(Eigen::Vector3f::Zero());
+            break;
+
         case Opcode::VAR_X:
+            STORE1(Eigen::Vector3f(1.0f, 0.0f, 0.0f));
+            break;
+
         case Opcode::VAR_Y:
+            STORE1(Eigen::Vector3f(0.0f, 1.0f, 0.0f));
+            break;
+
         case Opcode::VAR_Z:
+            STORE1(Eigen::Vector3f(0.0f, 0.0f, 1.0f));
+            break;
+
         case Opcode::VAR_FREE:
+            STORE1(Eigen::Vector3f::Zero());
+            break;
+
+        case Opcode::INVALID:
         case Opcode::LAST_OP: assert(false);
     }
 #undef ov

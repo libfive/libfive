@@ -31,12 +31,7 @@ JacobianEvaluator::JacobianEvaluator(
     : DerivEvaluator(t, vars),
       j(Eigen::ArrayXXf::Zero(tape->num_clauses + 1, tape->vars.size()))
 {
-    // Then drop a 1 at each var's position
-    size_t index = 0;
-    for (auto& v : tape->vars.left)
-    {
-        j(v.first, index++) = 1;
-    }
+    // Nothing to do here
 }
 
 std::map<Tree::Id, float> JacobianEvaluator::gradient(const Eigen::Vector3f& p)
@@ -51,9 +46,9 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(const Eigen::Vector3f& p)
     // (to allow correlating back to VARs in Tree)
     std::map<Tree::Id, float> out;
     size_t index = 0;
-    for (auto v : tape->vars.left)
+    for (auto v : tape->vars)
     {
-        out[v.second] = j(ti, index++);
+        out[v] = j(ti, index++);
     }
     return out;
 }
@@ -155,20 +150,21 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 oj = -aj / pow(av, 2);
                 break;
 
-            case Opcode::CONST_VAR:
+            case Opcode::CONST_VAR: // fallthrough
+            case Opcode::ORACLE:    // fallthrough
+            case Opcode::CONSTANT:  // fallthrough
+            case Opcode::VAR_X:     // fallthrough
+            case Opcode::VAR_Y:     // fallthrough
+            case Opcode::VAR_Z:
                 oj.setZero();
                 break;
 
-            case Opcode::ORACLE:
+            case Opcode::VAR_FREE:
                 oj.setZero();
+                oj(a) = 1.0f;
                 break;
 
             case Opcode::INVALID:
-            case Opcode::CONSTANT:
-            case Opcode::VAR_X:
-            case Opcode::VAR_Y:
-            case Opcode::VAR_Z:
-            case Opcode::VAR_FREE:
             case Opcode::LAST_OP: assert(false);
         }
 #undef ov

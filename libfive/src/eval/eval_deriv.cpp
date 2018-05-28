@@ -32,11 +32,6 @@ DerivEvaluator::DerivEvaluator(
 {
     // Initialize all derivatives to zero
     d = 0;
-
-    // Load immutable derivatives for X, Y, Z
-    d(0, tape->X) = 1;
-    d(1, tape->Y) = 1;
-    d(2, tape->Z) = 1;
 }
 
 Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt)

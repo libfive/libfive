@@ -32,25 +32,14 @@ PointEvaluator::PointEvaluator(
         std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
     : BaseEvaluator(t, vars), f(tape->num_clauses + 1, 1)
 {
-    // Unpack variables into result array
-    for (auto& v : t->vars.right)
-    {
-        auto var = vars.find(v.first);
-        f(v.second) = (var != vars.end()) ? var->second : 0;
-    }
-
-    // Unpack constants into result array
-    for (auto& c : tape->constants)
-    {
-        f(c.first) = c.second;
-    }
+    // Nothing to do here
 }
 
 float PointEvaluator::eval(const Eigen::Vector3f& pt)
 {
-    f(tape->X) = pt.x();
-    f(tape->Y) = pt.y();
-    f(tape->Z) = pt.z();
+    x = pt.x();
+    y = pt.y();
+    z = pt.z();
 
     for (auto& o : tape->oracles)
     {
@@ -108,23 +97,6 @@ float PointEvaluator::baseEval(const Eigen::Vector3f& pt)
 {
     auto handle = tape->getBase(pt); // automatically pops
     return eval(pt);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-bool PointEvaluator::setVar(Tree::Id var, float value)
-{
-    auto v = tape->vars.right.find(var);
-    if (v != tape->vars.right.end())
-    {
-        bool changed = f(v->second) != value;
-        f.row(v->second) = value;
-        return changed;
-    }
-    else
-    {
-        return false;
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

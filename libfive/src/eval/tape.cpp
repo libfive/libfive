@@ -26,6 +26,7 @@ Tape::Tape(const Tree root)
 {
     auto flat = root.ordered();
 
+    // Store the active ranges of various variables
     std::unordered_map<Tree::Id, std::pair<unsigned, unsigned>> ranges;
     ranges[nullptr] = std::make_pair(0, 0);
     unsigned i=0;
@@ -40,6 +41,8 @@ Tape::Tape(const Tree root)
         }
         i++;
     }
+
+    // Construct a simple sorted tape of LOAD, DROP pairs (one per clause)
     enum RegOp { DROP, LOAD };
     std::multimap<std::pair<unsigned, RegOp>, Tree::Id> reg_ops;
     for (const auto& r : ranges)
@@ -47,6 +50,8 @@ Tape::Tape(const Tree root)
         reg_ops.insert({{r.second.first, LOAD}, r.first});
         reg_ops.insert({{r.second.second, DROP}, r.first});
     }
+
+    // Walk the LOAD/DROP tape, assigning Trees to data slots
     std::map<Tree::Id, unsigned> active;
     std::map<Tree::Id, unsigned> assigned;
     std::set<unsigned> inactive;
@@ -81,40 +86,36 @@ Tape::Tape(const Tree root)
             assigned.insert({r.second, chosen});
         }
     }
-
-    // Helper function to create a new clause in the data array
-    // The dummy clause (0) is mapped to the first result slot
-    std::unordered_map<Tree::Id, Clause::Id> clauses = {{nullptr, 0}};
-    Clause::Id id = flat.size();
-
-    // Helper function to make a new function
-    std::list<Clause> tape_;
-    auto newClause = [&clauses, &id, &tape_](const Tree::Id t)
-    {
-        tape_.push_front(
-                {t->op,
-                 id,
-                 clauses.at(t->lhs.get()),
-                 clauses.at(t->rhs.get())});
-    };
+    assigned.insert({nullptr, 0}); // Dummy assignment
 
     // Write the flattened tree into the tape!
+    std::list<Clause> tape_;
     for (const auto& m : flat)
     {
         // Normal clauses end up in the tape
         if (m->rank > 0)
         {
-            newClause(m.id());
+            tape_.push_front(
+                    {m->op,
+                     assigned.at(m.id()),
+                     assigned.at(m->lhs.get()),
+                     assigned.at(m->rhs.get())});
         }
         // For constants and variables, record their values so
         // that we can store those values in the result array
         else if (m->op == Opcode::CONSTANT)
         {
-            constants[id] = m->value;
+            tape_.push_front(
+                    {m->op, assigned.at(m.id()),
+                     static_cast<unsigned>(constants.size()), 0});
+            constants.push_back(m->value);
         }
         else if (m->op == Opcode::VAR_FREE)
         {
-            vars.left.insert({id, m.id()});
+            tape_.push_front(
+                    {m->op, assigned.at(m.id()),
+                     static_cast<unsigned>(vars.size()), 0});
+            vars.push_back(m.id());
         }
         // For oracles, store their position in the oracles vector
         // as the LHS of the clause, so that we can find them during
@@ -122,7 +123,7 @@ Tape::Tape(const Tree root)
         else if (m->op == Opcode::ORACLE) {
             assert(m->oracle);
 
-            tape_.push_front({Opcode::ORACLE, id,
+            tape_.push_front({Opcode::ORACLE, assigned.at(m.id()),
                     static_cast<unsigned int>(oracles.size()), 0});
             oracles.push_back(m->oracle->getOracle());
         }
@@ -131,10 +132,9 @@ Tape::Tape(const Tree root)
             assert(m->op == Opcode::VAR_X ||
                    m->op == Opcode::VAR_Y ||
                    m->op == Opcode::VAR_Z);
+            tape_.push_front({m->op, assigned.at(m.id()), 0, 0});
         }
-        clauses[m.id()] = id--;
     }
-    assert(id == 0);
 
     //  Move from the list tape to a more-compact vector tape
     tapes.push_back(Subtape());
@@ -144,36 +144,17 @@ Tape::Tape(const Tree root)
         tape->t.push_back(t);
     }
 
-    // Make sure that X, Y, Z have been allocated space
-    std::vector<Tree> axes = {Tree::X(), Tree::Y(), Tree::Z()};
-    for (auto a : axes)
-    {
-        if (clauses.find(a.id()) == clauses.end())
-        {
-            clauses.insert({a.id(), clauses.size()});
-        }
-    }
-
     // Store the total number of clauses
     // Remember, evaluators need to allocate one more than this
     // amount of space, as the clause with id = 0 is a placeholder
-    num_clauses = clauses.size() - 1;
-
-    std::cout << "space savings: " << inactive.size() / float(num_clauses) << " (on "
-        << num_clauses << " clauses)\n";
+    num_clauses = inactive.size() - 1;
 
     // Allocate enough memory for all the clauses
-    disabled.resize(clauses.size());
-    remap.resize(clauses.size());
-
-    // Save X, Y, Z ids
-    X = clauses.at(axes[0].id());
-    Y = clauses.at(axes[1].id());
-    Z = clauses.at(axes[2].id());
+    disabled.resize(flat.size());
+    remap.resize(flat.size());
 
     // Store the index of the tree's root
-    assert(clauses.at(root.id()) == 1);
-    tape->i = clauses.at(root.id());
+    tape->i = assigned.at(root.id());
 };
 
 void Tape::pop()

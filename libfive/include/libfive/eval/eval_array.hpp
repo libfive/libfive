@@ -25,7 +25,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-class ArrayEvaluator : public BaseEvaluator
+class ArrayEvaluator :
+    public BaseEvaluator<Eigen::Array<float, 1, LIBFIVE_EVAL_ARRAY_SIZE>>
 {
 public:
     ArrayEvaluator(std::shared_ptr<Tape> t);
@@ -38,9 +39,9 @@ public:
      */
     void set(const Eigen::Vector3f& p, size_t index)
     {
-        f(tape->X, index) = p.x();
-        f(tape->Y, index) = p.y();
-        f(tape->Z, index) = p.z();
+        x(index) = p.x();
+        y(index) = p.y();
+        z(index) = p.z();
 
         for (auto& o : tape->oracles)
         {
@@ -72,14 +73,6 @@ public:
      *  Multi-point evaluation (values must be stored with set)
      */
     Eigen::Block<decltype(f), 1, Eigen::Dynamic> values(size_t count);
-
-    /*
-     *  Changes a variable's value
-     *
-     *  If the variable isn't present in the tree, does nothing
-     *  Returns true if the variable's value changes
-     */
-    bool setVar(Tree::Id var, float value);
 
     /*
      *  Returns a list of ambiguous items from indices 0 to i

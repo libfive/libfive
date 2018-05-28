@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-class PointEvaluator : public BaseEvaluator
+class PointEvaluator : public BaseEvaluator<float>
 {
 public:
     PointEvaluator(std::shared_ptr<Tape> t);
@@ -43,14 +43,6 @@ public:
      *  sure about which region the points fits into)
      */
     float baseEval(const Eigen::Vector3f& p);
-
-    /*
-     *  Changes a variable's value
-     *
-     *  If the variable isn't present in the tree, does nothing
-     *  Returns true if the variable's value changes
-     */
-    bool setVar(Tree::Id var, float value);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */

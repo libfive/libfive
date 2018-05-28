@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-class IntervalEvaluator : public BaseEvaluator
+class IntervalEvaluator : public BaseEvaluator<Interval::I>
 {
 public:
     IntervalEvaluator(std::shared_ptr<Tape> t);
@@ -40,14 +40,6 @@ public:
     std::pair<Interval::I, Tape::Handle> evalAndPush(
                      const Eigen::Vector3f& lower,
                      const Eigen::Vector3f& upper);
-
-    /*
-     *  Changes a variable's value
-     *
-     *  If the variable isn't present in the tree, does nothing
-     *  Returns true if the variable's value changes
-     */
-    bool setVar(Tree::Id var, float value);
 
 protected:
     /*  i[clause] is the interval result for that clause */

@@ -31,27 +31,14 @@ IntervalEvaluator::IntervalEvaluator(
     : BaseEvaluator(t, vars)
 {
     i.resize(tape->num_clauses + 1);
-
-    // Unpack variables into result array
-    for (auto& v : t->vars.right)
-    {
-        auto var = vars.find(v.first);
-        i[v.second] = (var != vars.end()) ? var->second : 0;
-    }
-
-    // Unpack constants into result array
-    for (auto& c : tape->constants)
-    {
-        i[c.first] = c.second;
-    }
 }
 
 Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
                                     const Eigen::Vector3f& upper)
 {
-    i[tape->X] = {lower.x(), upper.x()};
-    i[tape->Y] = {lower.y(), upper.y()};
-    i[tape->Z] = {lower.z(), upper.z()};
+    x = {lower.x(), upper.x()};
+    y = {lower.y(), upper.y()};
+    z = {lower.z(), upper.z()};
 
     for (auto& o : tape->oracles)
     {
@@ -113,26 +100,9 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
         return Tape::KEEP_ALWAYS;
     },
         Tape::INTERVAL,
-        {{i[tape->X].lower(), i[tape->Y].lower(), i[tape->Z].lower()},
-         {i[tape->X].upper(), i[tape->Y].upper(), i[tape->Z].upper()}});
+        {{x.lower(), y.lower(), z.lower()},
+         {x.upper(), y.upper(), z.upper()}});
     return std::make_pair(out, std::move(p));
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-bool IntervalEvaluator::setVar(Tree::Id var, float value)
-{
-    auto v = tape->vars.right.find(var);
-    if (v != tape->vars.right.end())
-    {
-        bool changed = i[v->second] != value;
-        i[v->second] = value;
-        return changed;
-    }
-    else
-    {
-        return false;
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -238,12 +208,27 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             tape->oracles[a_]->evalInterval(out);
             break;
 
-        case Opcode::INVALID:
         case Opcode::CONSTANT:
+            out = tape->constants[a_];
+            break;
+
         case Opcode::VAR_X:
+            out = x;
+            break;
+
         case Opcode::VAR_Y:
+            out = y;
+            break;
+
         case Opcode::VAR_Z:
+            out = z;
+            break;
+
         case Opcode::VAR_FREE:
+            out = vars[a_];
+            break;
+
+        case Opcode::INVALID:
         case Opcode::LAST_OP: assert(false);
     }
 #undef out

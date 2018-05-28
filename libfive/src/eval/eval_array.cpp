@@ -29,21 +29,10 @@ ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Tape> t)
 }
 
 ArrayEvaluator::ArrayEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : BaseEvaluator(t, vars), f(tape->num_clauses + 1, N)
+        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vs)
+    : BaseEvaluator(t, vs), f(tape->num_clauses + 1, N)
 {
-    // Unpack variables into result array
-    for (auto& v : t->vars.right)
-    {
-        auto var = vars.find(v.first);
-        f.row(v.second) = (var != vars.end()) ? var->second : 0;
-    }
-
-    // Unpack constants into result array
-    for (auto& c : tape->constants)
-    {
-        f.row(c.first) = c.second;
-    }
+    // Nothing to do here
 }
 
 Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
@@ -51,23 +40,6 @@ ArrayEvaluator::values(size_t _count)
 {
     count = _count;
     return f.block<1, Eigen::Dynamic>(tape->rwalk(*this), 0, 1, count);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-bool ArrayEvaluator::setVar(Tree::Id var, float value)
-{
-    auto v = tape->vars.right.find(var);
-    if (v != tape->vars.right.end())
-    {
-        bool changed = f(v->second, 0) != value;
-        f.row(v->second) = value;
-        return changed;
-    }
-    else
-    {
-        return false;
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -216,12 +188,27 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             tape->oracles[a_]->evalArray(out);
             break;
 
-        case Opcode::INVALID:
         case Opcode::CONSTANT:
+            out = tape->constants.at(a_);
+            break;
+
         case Opcode::VAR_X:
+            out = x.head(count);
+            break;
+
         case Opcode::VAR_Y:
+            out = y.head(count);
+            break;
+
         case Opcode::VAR_Z:
+            out = z.head(count);
+            break;
+
         case Opcode::VAR_FREE:
+            out = vars.at(a_);
+            break;
+
+        case Opcode::INVALID:
         case Opcode::LAST_OP: assert(false);
     }
 #undef out
