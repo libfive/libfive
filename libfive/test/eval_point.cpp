@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_point.hpp"
+#include "util/shapes.hpp"
 
 using namespace Kernel;
 
@@ -90,6 +91,15 @@ TEST_CASE("PointEvaluator::eval")
             e.eval({0, 0, 0});
             REQUIRE(true /* No crash! */ );
         }
+    }
+
+    SECTION("Sphere")
+    {
+        auto t = std::make_shared<Tape>(sphere(1));
+        PointEvaluator e(t);
+
+        REQUIRE(e.eval({0, 0, 0}) == Approx(-1));
+        REQUIRE(e.eval({2, 3, 4}) == Approx(4.385164));
     }
 }
 

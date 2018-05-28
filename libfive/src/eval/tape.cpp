@@ -24,20 +24,21 @@ namespace Kernel {
 
 Tape::Tape(const Tree root)
 {
+    std::cout << "\n";
     auto flat = root.ordered();
 
     // Store the active ranges of various variables
     std::unordered_map<Tree::Id, std::pair<unsigned, unsigned>> ranges;
-    ranges[nullptr] = std::make_pair(0, 0);
+    ranges.insert({nullptr, std::make_pair(0, 0)});
     unsigned i=0;
     for (const auto& m : flat)
     {
-        ranges[m.id()] = std::make_pair(i, i + 1);
+        ranges.insert({m.id(), std::make_pair(i, i + 1)});
         for (auto ptr : {m->lhs.get(), m->rhs.get()})
         {
             auto itr = ranges.find(ptr);
             assert(itr != ranges.end());
-            itr->second.second = i;
+            itr->second.second = i + 1;
         }
         i++;
     }
@@ -63,7 +64,7 @@ Tape::Tape(const Tree root)
             continue;
         }
         // Return the register to the free list
-        if (r.first.second == DROP)
+        else if (r.first.second == DROP)
         {
             auto itr = active.find(r.second);
             assert(itr != active.end());
@@ -145,16 +146,14 @@ Tape::Tape(const Tree root)
     }
 
     // Store the total number of clauses
-    // Remember, evaluators need to allocate one more than this
-    // amount of space, as the clause with id = 0 is a placeholder
-    num_clauses = inactive.size() - 1;
+    num_clauses = inactive.size();
 
     // Allocate enough memory for all the clauses
     disabled.resize(flat.size());
     remap.resize(flat.size());
 
     // Store the index of the tree's root
-    tape->i = assigned.at(root.id());
+    this->root = assigned.at(root.id());
 };
 
 void Tape::pop()
@@ -184,7 +183,7 @@ Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
     {
         fn(itr->op, itr->id, itr->a, itr->b);
     }
-    return tape->i;
+    return root;
 }
 
 void Tape::walk(std::function<void(Opcode::Opcode, Clause::Id,
@@ -214,7 +213,7 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     std::fill(remap.begin(), remap.end(), 0);
 
     // Mark the root node as active
-    disabled[tape->i] = false;
+    disabled[root] = false;
     bool has_choices = false;
 
     for (const auto& c : tape->t)
@@ -223,12 +222,16 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
         {
             switch (fn(c.op, c.id, c.a, c.b))
             {
+                /*
                 case KEEP_A:        disabled[c.a] = false;
                                     remap[c.id] = c.a;
                                     break;
                 case KEEP_B:        disabled[c.b] = false;
                                     remap[c.id] = c.b;
                                     break;
+                                    */
+                case KEEP_A:    // fallthrough TODO
+                case KEEP_B:    // fallthrough TODO
                 case KEEP_BOTH:     has_choices = true; // fallthrough
                 case KEEP_ALWAYS:   if (!hasDummyChildren(c.op))
                                     {
@@ -280,7 +283,6 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
             }
         }
     }
-    tape->i = prev_tape->i;
 
     // Make sure that the tape got shorter
     assert(tape->t.size() <= prev_tape->t.size());

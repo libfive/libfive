@@ -81,9 +81,6 @@ protected:
         /*  The tape itself, as a vector of clauses  */
         std::vector<Clause> t;
 
-        /*  Root clause of the tape  */
-        Clause::Id i;
-
         /*  These bounds are only valid if type == INTERVAL  */
         Interval::I X, Y, Z;
         Type type;
@@ -117,6 +114,11 @@ protected:
      *  These clauses are handled differently in tape pushing.
      */
     static bool hasDummyChildren(Opcode::Opcode op);
+
+    /*
+     *  Memory slot that holds the result after an evaluator
+     */
+    Clause::Id root;
 
 public:
     /*
@@ -174,7 +176,7 @@ public:
         {
             t(itr->op, itr->id, itr->a, itr->b);
         }
-        return tape->i;
+        return root;
     }
 
     void  walk(std::function<void(Opcode::Opcode, Clause::Id,
