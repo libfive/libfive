@@ -63,6 +63,16 @@ TEST_CASE("IntervalEvaluator::eval")
         REQUIRE(o.lower() == -2);
         REQUIRE(o.upper() == 2);
     }
+
+    SECTION("Min test case")
+    {
+        auto t = std::make_shared<Tape>(
+                min(Tree::X() + 1, Tree::Y() + 1));
+        IntervalEvaluator e(t);
+        auto i = e.eval({-5, 8, 0}, {-4, 9, 0});
+        REQUIRE(i.lower() == -4);
+        REQUIRE(i.upper() == -3);
+    }
 }
 
 TEST_CASE("IntervalEvaluator::evalAndPush")
