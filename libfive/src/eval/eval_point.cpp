@@ -227,6 +227,7 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::OP_COPY:
             out = a;
+            break;
 
         case Opcode::INVALID:
         case Opcode::LAST_OP: assert(false);

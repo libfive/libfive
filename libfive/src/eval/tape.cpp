@@ -249,7 +249,7 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     {
         if (!disabled[c.id])
         {
-            // This id will be reused later, so mark it as disabled now
+            // This id may be reused later, so mark it as disabled now
             disabled[c.id] = true;
             switch (fn(c.op, c.id, c.a, c.b))
             {
