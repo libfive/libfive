@@ -285,23 +285,23 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::CONSTANT:
-            STORE1(Eigen::Vector3f::Zero());
+            od.push_back(Feature(Eigen::Vector3f::Zero()));
             break;
 
         case Opcode::VAR_X:
-            STORE1(Eigen::Vector3f(1.0f, 0.0f, 0.0f));
+            od.push_back(Feature(Eigen::Vector3f(1.0f, 0.0f, 0.0f)));
             break;
 
         case Opcode::VAR_Y:
-            STORE1(Eigen::Vector3f(0.0f, 1.0f, 0.0f));
+            od.push_back(Feature(Eigen::Vector3f(0.0f, 1.0f, 0.0f)));
             break;
 
         case Opcode::VAR_Z:
-            STORE1(Eigen::Vector3f(0.0f, 0.0f, 1.0f));
+            od.push_back(Feature(Eigen::Vector3f(0.0f, 0.0f, 1.0f)));
             break;
 
         case Opcode::VAR_FREE:
-            STORE1(Eigen::Vector3f::Zero());
+            od.push_back(Feature(Eigen::Vector3f::Zero()));
             break;
 
         case Opcode::OP_COPY:
