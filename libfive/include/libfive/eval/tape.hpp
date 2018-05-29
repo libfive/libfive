@@ -100,7 +100,6 @@ protected:
 
     /*  Used when pushing into the tape  */
     std::vector<uint8_t> disabled;
-    std::vector<Clause::Id> remap;
 
     /*
      *  Pops one tape off the stack, re-enabling disabled nodes

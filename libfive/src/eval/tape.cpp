@@ -147,12 +147,11 @@ Tape::Tape(const Tree root)
         tape->t.push_back(t);
     }
 
-    // Store the total number of clauses
+    // Store the total number of memory slots
     num_clauses = inactive.size();
 
-    // Allocate enough memory for all the clauses
-    disabled.resize(flat.size());
-    remap.resize(flat.size());
+    // Allocate enough memory for all the slots
+    disabled.resize(num_clauses);
 
     // Store the index of the tree's root
     this->root = assigned.at(root.id());
@@ -212,44 +211,15 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     // Since we'll be figuring out which clauses are disabled and
     // which should be remapped, we reset those arrays here
     std::fill(disabled.begin(), disabled.end(), true);
-    std::fill(remap.begin(), remap.end(), 0);
 
     // Mark the root node as active
     disabled[root] = false;
     bool has_choices = false;
 
-    for (const auto& c : tape->t)
-    {
-        if (!disabled[c.id])
-        {
-            switch (fn(c.op, c.id, c.a, c.b))
-            {
-                /*
-                case KEEP_A:        disabled[c.a] = false;
-                                    remap[c.id] = c.a;
-                                    break;
-                case KEEP_B:        disabled[c.b] = false;
-                                    remap[c.id] = c.b;
-                                    break;
-                                    */
-                case KEEP_A:    // fallthrough TODO
-                case KEEP_B:    // fallthrough TODO
-                case KEEP_BOTH:     has_choices = true; // fallthrough
-                case KEEP_ALWAYS:   if (!hasDummyChildren(c.op))
-                                    {
-                                        disabled[c.a] = false;
-                                        disabled[c.b] = false;
-                                    }
-                                    break;
-            }
-        }
-    }
-
-    auto prev_tape = tape;
-
     // Add another tape to the top of the tape stack if one doesn't already
     // exist (we never erase them, to avoid re-allocating memory during
     // nested evaluations).
+    auto prev_tape = tape;
     if (++tape == tapes.end())
     {
         tape = tapes.insert(tape, Subtape());
@@ -270,29 +240,39 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     tape->type = t;
     tape->dummy = has_choices ? 0 : 1;
 
-    // Now, use the data in disabled and remap to make the new tape
+    // Store X / Y / Z bounds (may be irrelevant)
+    tape->X = {r.lower.x(), r.upper.x()};
+    tape->Y = {r.lower.y(), r.upper.y()};
+    tape->Z = {r.lower.z(), r.upper.z()};
+
     for (const auto& c : prev_tape->t)
     {
         if (!disabled[c.id])
         {
-            if (remap[c.id])
+            // This id will be reused later, so mark it as disabled now
+            disabled[c.id] = true;
+            switch (fn(c.op, c.id, c.a, c.b))
             {
-                tape->t.push_back({Opcode::OP_COPY, c.id, remap[c.id], 0});
-            }
-            else
-            {
-                tape->t.push_back(c);
+                case KEEP_A:        disabled[c.a] = false;
+                                    tape->t.push_back({Opcode::OP_COPY, c.id, c.a, 0});
+                                    break;
+                case KEEP_B:        disabled[c.b] = false;
+                                    tape->t.push_back({Opcode::OP_COPY, c.id, c.b, 0});
+                                    break;
+                case KEEP_BOTH:     has_choices = true; // fallthrough
+                case KEEP_ALWAYS:   if (!hasDummyChildren(c.op))
+                                    {
+                                        disabled[c.a] = false;
+                                        disabled[c.b] = false;
+                                    }
+                                    tape->t.push_back(c);
+                                    break;
             }
         }
     }
 
     // Make sure that the tape got shorter
     assert(tape->t.size() <= prev_tape->t.size());
-
-    // Store X / Y / Z bounds (may be irrelevant)
-    tape->X = {r.lower.x(), r.upper.x()};
-    tape->Y = {r.lower.y(), r.upper.y()};
-    tape->Z = {r.lower.z(), r.upper.z()};
 
     return Handle(this);
 }
