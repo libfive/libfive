@@ -24,7 +24,6 @@ namespace Kernel {
 
 Tape::Tape(const Tree root)
 {
-    std::cout << "\n";
     auto flat = root.ordered();
 
     // Store the active ranges of various variables
