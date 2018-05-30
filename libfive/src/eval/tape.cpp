@@ -152,8 +152,6 @@ Tape::Tape(const Tree root)
     // Allocate enough memory for all the slots
     disabled.resize(num_clauses);
 
-    // Store the index of the tree's root
-    this->root = assigned.at(root.id());
 };
 
 void Tape::pop()
@@ -183,7 +181,8 @@ Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
     {
         fn(itr->op, itr->id, itr->a, itr->b);
     }
-    return root;
+    assert(tape->t.size() > 0);
+    return tape->t.begin()->id;
 }
 
 void Tape::walk(std::function<void(Opcode::Opcode, Clause::Id,
@@ -212,7 +211,8 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     std::fill(disabled.begin(), disabled.end(), true);
 
     // Mark the root node as active
-    disabled[root] = false;
+    assert(tape->t.size() > 0);
+    disabled[tape->t.begin()->id] = false;
     bool has_choices = false;
 
     // Add another tape to the top of the tape stack if one doesn't already
@@ -244,27 +244,27 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     tape->Y = {r.lower.y(), r.upper.y()};
     tape->Z = {r.lower.z(), r.upper.z()};
 
-    for (const auto& c : prev_tape->t)
+    for (auto itr=prev_tape->t.begin(); itr != prev_tape->t.end(); ++itr)
     {
-        if (!disabled[c.id])
+        if (!disabled[itr->id])
         {
             // This id may be reused later, so mark it as disabled now
-            disabled[c.id] = true;
-            switch (fn(c.op, c.id, c.a, c.b))
+            disabled[itr->id] = true;
+            switch (fn(itr->op, itr->id, itr->a, itr->b))
             {
-                case KEEP_A:        disabled[c.a] = false;
-                                    tape->t.push_back({Opcode::OP_COPY, c.id, c.a, 0});
+                case KEEP_A:        disabled[itr->a] = false;
+                                    remap(tape->t.rbegin(), itr->id, itr->a);
                                     break;
-                case KEEP_B:        disabled[c.b] = false;
-                                    tape->t.push_back({Opcode::OP_COPY, c.id, c.b, 0});
+                case KEEP_B:        disabled[itr->b] = false;
+                                    remap(tape->t.rbegin(), itr->id, itr->b);
                                     break;
                 case KEEP_BOTH:     has_choices = true; // fallthrough
-                case KEEP_ALWAYS:   if (!hasDummyChildren(c.op))
+                case KEEP_ALWAYS:   if (!hasDummyChildren(itr->op))
                                     {
-                                        disabled[c.a] = false;
-                                        disabled[c.b] = false;
+                                        disabled[itr->a] = false;
+                                        disabled[itr->b] = false;
                                     }
-                                    tape->t.push_back(c);
+                                    tape->t.push_back(*itr);
                                     break;
             }
         }
@@ -306,6 +306,37 @@ bool Tape::hasDummyChildren(Opcode::Opcode op)
         || (op == Opcode::VAR_FREE)
         || (op == Opcode::ORACLE);
 }
+
+void Tape::remap(std::vector<Clause>::reverse_iterator rev,
+                 Clause::Id id, Clause::Id alt)
+{
+    auto next = tape->t.rend();
+    Clause::Id next_id, next_alt;
+
+    while (rev != tape->t.rend())
+    {
+        if (rev->a == id)   rev->a = alt;
+        if (rev->b == id)   rev->b = alt;
+
+        if (rev->id == alt) {
+            next = rev + 1;
+            next_id = rev->id;
+            next_alt = id;
+            rev->id = id;
+        }
+
+        // If we've reached a node that re-uses the remapped id,
+        // then we can stop remapping (because the meaning of that
+        // slot changes from here on out).
+        if (rev->id != id) break;
+        rev++;
+    }
+    if (next != tape->t.rend())
+    {
+        remap(next, next_id, next_alt);
+    }
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 

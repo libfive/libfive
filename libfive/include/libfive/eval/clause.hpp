@@ -39,9 +39,9 @@ struct Clause
     const Opcode::Opcode op;
 
     /*  Populated for operators with arguments */
-    Id const id;
-    Id const a;
-    Id const b;
+    Id id;
+    Id a;
+    Id b;
 };
 
 }   // namespace Kernel

@@ -115,9 +115,11 @@ protected:
     static bool hasDummyChildren(Opcode::Opcode op);
 
     /*
-     *  Memory slot that holds the result after an evaluator
+     *  Walk from rev to tape->t.rbegin(), doing a complicated remapping
+     *  that causes pushing to correctly rename the memory slots.
      */
-    Clause::Id root;
+    void remap(std::vector<Clause>::reverse_iterator rev,
+               Clause::Id id, Clause::Id alt);
 
 public:
     /*
@@ -175,7 +177,8 @@ public:
         {
             t(itr->op, itr->id, itr->a, itr->b);
         }
-        return root;
+        assert(tape->t.size() > 0);
+        return tape->t.begin()->id;
     }
 
     void  walk(std::function<void(Opcode::Opcode, Clause::Id,
