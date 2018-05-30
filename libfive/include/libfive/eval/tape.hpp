@@ -69,10 +69,14 @@ public:
      *  this list and an index into the results array. */
     std::vector<std::unique_ptr<Oracle>> oracles;
 
+    /*  Returns the total number of clauses (including X/Y/Z, oracles,
+     *  variables, and constants)  */
+    size_t num_clauses;
+
     /*  Returns the maximum number of active clauses at once, which is
      *  used to decide how much space to allocate for intermediate results
      *  in Evaluators.  Think of this has a register count for evaluation. */
-    size_t num_clauses;
+    size_t num_slots;
 
 protected:
 
@@ -80,6 +84,9 @@ protected:
     {
         /*  The tape itself, as a vector of clauses  */
         std::vector<Clause> t;
+
+        /*  Memory mapping from Clause::Ids to slots */
+        std::vector<unsigned> m;
 
         /*  These bounds are only valid if type == INTERVAL  */
         Interval::I X, Y, Z;
@@ -100,6 +107,7 @@ protected:
 
     /*  Used when pushing into the tape  */
     std::vector<uint8_t> disabled;
+    std::vector<Clause::Id> remap;
 
     /*
      *  Pops one tape off the stack, re-enabling disabled nodes
@@ -115,11 +123,9 @@ protected:
     static bool hasDummyChildren(Opcode::Opcode op);
 
     /*
-     *  Walk from rev to tape->t.rbegin(), doing a complicated remapping
-     *  that causes pushing to correctly rename the memory slots.
+     *  Populates tape->m with memory slot assignments
      */
-    void remap(std::vector<Clause>::reverse_iterator rev,
-               Clause::Id id, Clause::Id alt);
+    void assignSlots();
 
 public:
     /*

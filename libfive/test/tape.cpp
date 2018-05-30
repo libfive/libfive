@@ -28,7 +28,7 @@ using namespace Kernel;
 TEST_CASE("Tape::num_clauses")
 {
     Tape t(Tree::X() + 1);
-    REQUIRE(t.num_clauses == 5); // X, Y, Z, 1, +
+    REQUIRE(t.num_clauses == 4); // dummy, X, 1, +
 }
 
 TEST_CASE("Tape::constants")

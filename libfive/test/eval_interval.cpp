@@ -77,7 +77,6 @@ TEST_CASE("IntervalEvaluator::eval")
 
 TEST_CASE("IntervalEvaluator::evalAndPush")
 {
-    /*
     SECTION("Basic")
     {
         auto t = std::make_shared<Tape>(
@@ -105,7 +104,6 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         REQUIRE(o.lower() == 2);
         REQUIRE(o.upper() == 2);
     }
-    */
 
     SECTION("Multi-min trees")
     {
