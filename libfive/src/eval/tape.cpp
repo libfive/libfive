@@ -152,6 +152,14 @@ Tape::Tape(const Tree root)
     // Allocate enough memory for all the slots
     disabled.resize(num_clauses);
 
+    /*
+    std::cout << "Tape:\n";
+    for (auto& t : tape->t)
+    {
+        std::cout << Opcode::toScmString(t.op) << " " << t.id << " " << t.a << " " << t.b << "\n";
+    }
+    std::cout << "\n";
+    */
 };
 
 void Tape::pop()
@@ -254,9 +262,11 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
             {
                 case KEEP_A:        disabled[itr->a] = false;
                                     remap(tape->t.rbegin(), itr->id, itr->a);
+                                    //std::cout << "keeping a\n";
                                     break;
                 case KEEP_B:        disabled[itr->b] = false;
                                     remap(tape->t.rbegin(), itr->id, itr->b);
+                                    //std::cout << "keeping b\n";
                                     break;
                 case KEEP_BOTH:     has_choices = true; // fallthrough
                 case KEEP_ALWAYS:   if (!hasDummyChildren(itr->op))
@@ -264,15 +274,33 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
                                         disabled[itr->a] = false;
                                         disabled[itr->b] = false;
                                     }
+                                    //std::cout << "keeping both\n";
                                     tape->t.push_back(*itr);
                                     break;
             }
+
+            /*
+            std::cout << "Tape:\n";
+            for (auto& t : tape->t)
+            {
+                std::cout << Opcode::toScmString(t.op) << " " << t.id << " " << t.a << " " << t.b << "\n";
+            }
+            std::cout << "\n";
+            */
         }
     }
 
     // Make sure that the tape got shorter
     assert(tape->t.size() <= prev_tape->t.size());
 
+    /*
+    std::cout << "Tape:\n";
+    for (auto& t : tape->t)
+    {
+        std::cout << Opcode::toScmString(t.op) << " " << t.id << " " << t.a << " " << t.b << "\n";
+    }
+    std::cout << "\n";
+    */
     return Handle(this);
 }
 

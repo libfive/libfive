@@ -89,6 +89,7 @@ TEST_CASE("libfive_tree_render_slice")
     auto one = libfive_tree_const(1.0f);
     auto d = libfive_tree_binary(Opcode::OP_SUB, r, one);
 
+    libfive_tree_save_slice(d, {{-2, 2}, {-2, 2}}, 0, 10, "out.svg");
     auto cs = libfive_tree_render_slice(d, {{-2, 2}, {-2, 2}}, 0, 10);
     REQUIRE(cs->count == 1);
     REQUIRE(cs->cs[0].count > 0);
