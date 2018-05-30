@@ -154,7 +154,7 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::CONSTANT:
-            od = tape->constants[a_];
+            od.setZero();
             break;
 
         case Opcode::VAR_X:
@@ -170,7 +170,7 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::VAR_FREE:
-            od = Eigen::Vector3f::Zero();
+            od.setZero();
             break;
 
         case Opcode::OP_COPY:
