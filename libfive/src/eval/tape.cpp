@@ -297,11 +297,14 @@ void Tape::assignSlots()
     {
         assert(itr->id != 0);
         ranges.insert({itr->id, std::make_pair(i, i + 1)});
-        for (auto ptr : {itr->a, itr->b})
+        if (!hasDummyChildren(itr->op))
         {
-            auto itr = ranges.find(ptr);
-            assert(itr != ranges.end());
-            itr->second.second = i + 1;
+            for (auto ptr : {itr->a, itr->b})
+            {
+                auto itr = ranges.find(ptr);
+                assert(itr != ranges.end());
+                itr->second.second = i + 1;
+            }
         }
         i++;
     }
