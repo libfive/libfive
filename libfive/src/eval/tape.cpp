@@ -253,6 +253,8 @@ Tape::Handle Tape::push(std::function<Keep(Opcode::Opcode, Clause::Id,
     tape->Y = {r.lower.y(), r.upper.y()};
     tape->Z = {r.lower.z(), r.upper.z()};
 
+    assignSlots();
+
     return Handle(this);
 }
 
