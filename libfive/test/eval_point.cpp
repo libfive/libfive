@@ -120,17 +120,17 @@ TEST_CASE("PointEvaluator::evalAndPush")
 
     {
         auto h = e.evalAndPush({-1, 0, 0}); // specialize to just "X"
-        REQUIRE(e.eval({-2, 0, 0}) == -2);
-        REQUIRE(e.eval({4, 0, 0}) == 4);
-        REQUIRE(e.eval({4, 5, 0}) == 4);
-        REQUIRE(e.eval({10, 5, 0}) == 10);
+        REQUIRE(e.eval({-2, 0, 0}, h.second) == -2);
+        REQUIRE(e.eval({4, 0, 0}, h.second) == 4);
+        REQUIRE(e.eval({4, 5, 0}, h.second) == 4);
+        REQUIRE(e.eval({10, 5, 0}, h.second) == 10);
     }
 
     {
         auto h = e.evalAndPush({0, -1, 0}); // specialize to just "Y"
-        REQUIRE(e.eval({-2, 0, 0}) == 0);
-        REQUIRE(e.eval({4, 0, 0}) == 0);
-        REQUIRE(e.eval({4, 5, 0}) == 5);
-        REQUIRE(e.eval({10, 5, 0}) == 5);
+        REQUIRE(e.eval({-2, 0, 0}, h.second) == 0);
+        REQUIRE(e.eval({4, 0, 0}, h.second) == 0);
+        REQUIRE(e.eval({4, 5, 0}, h.second) == 5);
+        REQUIRE(e.eval({10, 5, 0}, h.second) == 5);
     }
 }
