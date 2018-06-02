@@ -87,7 +87,7 @@ Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
 DerivArrayEvaluator::derivs(size_t count, Tape::Handle tape)
 {
     // Perform value evaluation, copying results into the 4th row of out
-    out.row(3).head(count) = values(count);
+    out.row(3).head(count) = values(count, tape);
 
     // Perform derivative evaluation, copying results into the out array
     out.topLeftCorner(3, count) = d(tape->rwalk(*this)).leftCols(count);

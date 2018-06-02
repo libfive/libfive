@@ -50,7 +50,7 @@ Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt,
         Tape::Handle tape)
 {
     // Perform value evaluation, saving results
-    auto w = eval(pt);
+    auto w = eval(pt, tape);
     auto xyz = d.col(tape->rwalk(*this));
 
     Eigen::Vector4f out;

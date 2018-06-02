@@ -79,7 +79,7 @@ std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
 std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
         const Eigen::Vector3f& pt, Tape::Handle tape)
 {
-    auto out = eval(pt);
+    auto out = eval(pt, tape);
     auto p = Tape::push(tape, *deck,
         [&](Opcode::Opcode op, Clause::Id /* id */,
             Clause::Id a, Clause::Id b)

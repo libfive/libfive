@@ -51,7 +51,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
         std::shared_ptr<Tape> tape)
 {
     // Perform value evaluation, to make sure the f array is correct
-    eval(p);
+    eval(p, tape);
 
     // Everybody do the tape walk!
     auto ti = tape->rwalk(*this);
