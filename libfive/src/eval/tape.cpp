@@ -116,7 +116,7 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
     }
 
     // Remap the tape root index
-    for (out->i = tape->i; deck.remap[out->i]; out->i = deck.remap[tape->i]);
+    for (out->i = tape->i; deck.remap[out->i]; out->i = deck.remap[out->i]);
 
     // Make sure that the tape got shorter
     assert(out->t.size() <= tape->t.size());
