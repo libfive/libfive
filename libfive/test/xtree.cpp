@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/axes.hpp"
+#include "libfive/eval/deck.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;
@@ -127,8 +128,8 @@ TEST_CASE("XTree<2>::vertex_count")
     {
         Tree a = min(max(Tree::X(), Tree::Y()),
                      max(1 - Tree::X(), 1 - Tree::Y()));
-        auto tape = std::make_shared<Tape>(a);
-        PointEvaluator eval(tape);
+        auto deck = std::make_shared<Deck>(a);
+        PointEvaluator eval(deck);
         auto ta = XTree<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
         REQUIRE(ta->level == 0);
         REQUIRE(ta->vertex_count == 2);

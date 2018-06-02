@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/render/brep/region.hpp"
 #include "libfive/tree/oracle_clause.hpp"
 #include "libfive/eval/oracle_storage.hpp"
+#include "libfive/eval/deck.hpp"
 
 #include "util/shapes.hpp"
 #include "util/oracles.hpp"
@@ -41,16 +42,16 @@ void compareUnderTransformation(Tree oracleTree, Tree controlTree,
 {
     auto transformedOracle = transformation(oracleTree);
     auto transformedControl = transformation(controlTree);
-    auto oTape = std::make_shared<Tape>(transformedOracle);
-    auto cTape = std::make_shared<Tape>(transformedControl);
+    auto oDeck = std::make_shared<Deck>(transformedOracle);
+    auto cDeck = std::make_shared<Deck>(transformedControl);
     /* If a point is ambiguous in either tree, we can't compare
      * individual derivatives, since there is more than one valid
      * result and no guarantee both trees will give the same one.
      */
     Eigen::Array<bool, 1, 256> ambigPoints(testPoints.size());
     {
-        DerivArrayEvaluator o(oTape);
-        DerivArrayEvaluator c(cTape);
+        DerivArrayEvaluator o(oDeck);
+        DerivArrayEvaluator c(cDeck);
         for (unsigned i = 0; i < testPoints.size(); ++i)
         {
             o.set(testPoints[i], i);
@@ -88,8 +89,8 @@ void compareUnderTransformation(Tree oracleTree, Tree controlTree,
         }
     }
     {
-        FeatureEvaluator o(oTape);
-        FeatureEvaluator c(cTape);
+        FeatureEvaluator o(oDeck);
+        FeatureEvaluator c(cDeck);
 
         for (auto point : testPoints)
         {
@@ -116,8 +117,8 @@ void compareUnderTransformation(Tree oracleTree, Tree controlTree,
          */
     }
     {
-        DerivEvaluator o(oTape);
-        DerivEvaluator c(cTape);
+        DerivEvaluator o(oDeck);
+        DerivEvaluator c(cDeck);
         for (unsigned i = 0; i < testPoints.size(); ++i)
         {
             auto oDeriv = o.deriv(testPoints[i]);

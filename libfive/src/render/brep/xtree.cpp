@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/axes.hpp"
+#include "libfive/eval/tape.hpp"
 
 namespace Kernel {
 
@@ -402,7 +403,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 // is well-placed in the distance field, then convert into
                 // a leaf by erasing all of the child branches
                 if (findVertex(vertex_count++) < max_err &&
-                    fabs(eval->feature.baseEval(vert3().template cast<float>()))
+                    fabs(eval->feature.eval(vert3().template cast<float>())) // TODO
                         < max_err)
                 {
                     std::for_each(children.begin(), children.end(),

@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/eval/eval_deriv_array.hpp"
 #include "libfive/eval/eval_interval.hpp"
-#include "libfive/eval/tape.hpp"
 
 namespace Kernel {
 
@@ -28,11 +27,11 @@ class HeightmapEvaluator
 {
 public:
     HeightmapEvaluator(const Tree t)
-        : tape(new Tape(t)), array(tape), interval(tape)
+        : deck(new Deck(t)), array(deck), interval(deck)
     { /* Nothing to do here */ }
 
 protected:
-    std::shared_ptr<Tape> tape;
+    std::shared_ptr<Deck> deck;
 
 public:
     DerivArrayEvaluator array;

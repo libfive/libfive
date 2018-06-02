@@ -17,30 +17,32 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "libfive/eval/eval_interval.hpp"
+#include "libfive/eval/deck.hpp"
+#include "libfive/eval/tape.hpp"
 
 namespace Kernel {
 
-IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Tape> t)
-    : IntervalEvaluator(t, std::map<Tree::Id, float>())
+IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Deck> d)
+    : IntervalEvaluator(d, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 IntervalEvaluator::IntervalEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : BaseEvaluator(t, vars)
+        std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
+    : BaseEvaluator(d, vars)
 {
-    i.resize(tape->num_clauses + 1);
+    i.resize(d->num_clauses + 1);
 
     // Unpack variables into result array
-    for (auto& v : t->vars.right)
+    for (auto& v : d->vars.right)
     {
         auto var = vars.find(v.first);
         i[v.second] = (var != vars.end()) ? var->second : 0;
     }
 
     // Unpack constants into result array
-    for (auto& c : tape->constants)
+    for (auto& c : d->constants)
     {
         i[c.first] = c.second;
     }
@@ -49,11 +51,18 @@ IntervalEvaluator::IntervalEvaluator(
 Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
                                     const Eigen::Vector3f& upper)
 {
-    i[tape->X] = {lower.x(), upper.x()};
-    i[tape->Y] = {lower.y(), upper.y()};
-    i[tape->Z] = {lower.z(), upper.z()};
+    return eval(lower, upper, deck->tape);
+}
 
-    for (auto& o : tape->oracles)
+Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
+                                    const Eigen::Vector3f& upper,
+                                    Tape::Handle tape)
+{
+    i[deck->X] = {lower.x(), upper.x()};
+    i[deck->Y] = {lower.y(), upper.y()};
+    i[deck->Z] = {lower.z(), upper.z()};
+
+    for (auto& o : deck->oracles)
     {
         o->set(lower, upper);
     }
@@ -65,10 +74,19 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
         const Eigen::Vector3f& lower,
         const Eigen::Vector3f& upper)
 {
+    return evalAndPush(lower, upper, deck->tape);
+}
+
+std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
+        const Eigen::Vector3f& lower,
+        const Eigen::Vector3f& upper,
+        Tape::Handle tape)
+{
     auto out = eval(lower, upper);
 
-    auto p = tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
-                   Clause::Id a, Clause::Id b)
+    auto p = Tape::push(tape, *deck,
+        [&](Opcode::Opcode op, Clause::Id /* id */,
+            Clause::Id a, Clause::Id b)
     {
         // For min and max operations, we may only need to keep one branch
         // active if it is decisively above or below the other branch.
@@ -113,8 +131,8 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
         return Tape::KEEP_ALWAYS;
     },
         Tape::INTERVAL,
-        {{i[tape->X].lower(), i[tape->Y].lower(), i[tape->Z].lower()},
-         {i[tape->X].upper(), i[tape->Y].upper(), i[tape->Z].upper()}});
+        {{i[deck->X].lower(), i[deck->Y].lower(), i[deck->Z].lower()},
+         {i[deck->X].upper(), i[deck->Y].upper(), i[deck->Z].upper()}});
     return std::make_pair(out, std::move(p));
 }
 
@@ -122,8 +140,8 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
 
 bool IntervalEvaluator::setVar(Tree::Id var, float value)
 {
-    auto v = tape->vars.right.find(var);
-    if (v != tape->vars.right.end())
+    auto v = deck->vars.right.find(var);
+    if (v != deck->vars.right.end())
     {
         bool changed = i[v->second] != value;
         i[v->second] = value;
@@ -235,7 +253,7 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            tape->oracles[a_]->evalInterval(out);
+            deck->oracles[a_]->evalInterval(out);
             break;
 
         case Opcode::INVALID:

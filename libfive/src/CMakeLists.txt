@@ -12,6 +12,7 @@ endif()
 
 add_library(five SHARED
     eval/base.cpp
+    eval/deck.cpp
     eval/eval_interval.cpp
     eval/eval_jacobian.cpp
     eval/eval_array.cpp

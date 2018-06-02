@@ -17,23 +17,25 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "libfive/eval/eval_feature.hpp"
+#include "libfive/eval/deck.hpp"
+#include "libfive/eval/tape.hpp"
 
 namespace Kernel {
 
-FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Tape> t)
-    : FeatureEvaluator(t, std::map<Tree::Id, float>())
+FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Deck> d)
+    : FeatureEvaluator(d, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 FeatureEvaluator::FeatureEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : PointEvaluator(t, vars), d(1, tape->num_clauses + 1)
+        std::shared_ptr<Deck> t, const std::map<Tree::Id, float>& vars)
+    : PointEvaluator(t, vars), d(1, deck->num_clauses + 1)
 {
     // Load the default derivatives
-    d(tape->X).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
-    d(tape->Y).push_back(Feature(Eigen::Vector3f(0, 1, 0)));
-    d(tape->Z).push_back(Feature(Eigen::Vector3f(0, 0, 1)));
+    d(deck->X).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
+    d(deck->Y).push_back(Feature(Eigen::Vector3f(0, 1, 0)));
+    d(deck->Z).push_back(Feature(Eigen::Vector3f(0, 0, 1)));
 
     // Set variables to have a single all-zero derivative
     for (auto& v : t->vars.right)
@@ -42,7 +44,7 @@ FeatureEvaluator::FeatureEvaluator(
     }
 
     // Set constants to have a single all-zero derivative
-    for (auto& c : tape->constants)
+    for (auto& c : deck->constants)
     {
         d(c.first).push_back(Feature(Eigen::Vector3f::Zero()));
     }
@@ -50,7 +52,13 @@ FeatureEvaluator::FeatureEvaluator(
 
 bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
 {
-    auto v = eval(p);
+    return isInside(p, deck->tape);
+}
+
+bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
+                                Tape::Handle tape)
+{
+    auto v = eval(p, tape);
 
     // Unambiguous cases
     if (v < 0)
@@ -65,7 +73,7 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
     // Otherwise, we need to handle the zero-crossing case!
 
     // First, we extract all of the features
-    auto fs = features_(p);
+    auto fs = features_(p, tape);
 
     // If there's only a single feature, we can get both positive and negative
     // values out if it's got a non-zero gradient
@@ -86,26 +94,39 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
         neg |= f.check(-f.deriv);
     }
     return !(pos && !neg);
-
 }
 
 const boost::container::small_vector<Feature, 4>&
     FeatureEvaluator::features_(const Eigen::Vector3f& p)
 {
+    return features_(p, deck->tape);
+}
+
+const boost::container::small_vector<Feature, 4>&
+    FeatureEvaluator::features_(const Eigen::Vector3f& p,
+                                Tape::Handle tape)
+{
     // Load the location into the results slot and evaluate point-wise
-    auto handle = evalAndPush(p);
+    auto handle = evalAndPush(p, tape);
 
     // Evaluate feature-wise
-    auto index = tape->rwalk(*this);
+    auto index = handle.second->rwalk(*this);
 
     return d(index);
 }
 
 std::list<Eigen::Vector3f> FeatureEvaluator::features(const Eigen::Vector3f& p)
 {
+    return features(p, deck->tape);
+}
+
+std::list<Eigen::Vector3f> FeatureEvaluator::features(
+        const Eigen::Vector3f& p,
+        Tape::Handle tape)
+{
     // Deduplicate and return the result
     std::list<Eigen::Vector3f> out;
-    for (auto& o : features_(p))
+    for (auto& o : features_(p, tape))
     {
         if (std::find(out.begin(), out.end(), o.deriv) == out.end())
         {
@@ -296,7 +317,7 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            tape->oracles[a]->evalFeatures(od);
+            deck->oracles[a]->evalFeatures(od);
             break;
 
         case Opcode::INVALID:

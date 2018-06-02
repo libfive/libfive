@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/solve/solver.hpp"
 #include "libfive/tree/tree.hpp"
+#include "libfive/eval/deck.hpp"
 #include "libfive/eval/eval_jacobian.hpp"
 
 namespace Kernel {
@@ -108,8 +109,8 @@ std::pair<float, Solution> findRoot(
         const Tree& t, const std::map<Tree::Id, float>& vars,
         const Eigen::Vector3f pos, const Mask& mask, unsigned gas)
 {
-    auto tape = std::make_shared<Tape>(t);
-    JacobianEvaluator e(tape, vars);
+    auto deck = std::make_shared<Deck>(t);
+    JacobianEvaluator e(deck, vars);
     return findRoot(e, vars, pos, mask, gas);
 }
 

@@ -21,28 +21,29 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <Eigen/Eigen>
 
 #include "libfive/eval/base.hpp"
+#include "libfive/eval/clause.hpp"
 
 namespace Kernel {
+class Tape; /* Forward declaration */
 
 class PointEvaluator : public BaseEvaluator
 {
 public:
-    PointEvaluator(std::shared_ptr<Tape> t);
-    PointEvaluator(std::shared_ptr<Tape> t,
+    PointEvaluator(std::shared_ptr<Deck> t);
+    PointEvaluator(std::shared_ptr<Deck> t,
                    const std::map<Tree::Id, float>& vars);
 
     /*
      *  Single-point evaluation
      */
     float eval(const Eigen::Vector3f& pt);
-    std::pair<float, Tape::Handle> evalAndPush(const Eigen::Vector3f& pt);
+    float eval(const Eigen::Vector3f& pt, std::shared_ptr<Tape> tape);
 
-    /*
-     *  Evaluates the given point using whichever tape in the tape stack
-     *  contains the point in its region (this is useful when we're not
-     *  sure about which region the points fits into)
-     */
-    float baseEval(const Eigen::Vector3f& p);
+    std::pair<float, std::shared_ptr<Tape>> evalAndPush(
+            const Eigen::Vector3f& pt);
+    std::pair<float, std::shared_ptr<Tape>> evalAndPush(
+            const Eigen::Vector3f& pt,
+            std::shared_ptr<Tape> tape);
 
     /*
      *  Changes a variable's value

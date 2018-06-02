@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <Eigen/Eigen>
 
 #include "libfive/eval/base.hpp"
+#include "libfive/eval/deck.hpp"
 #include "libfive/eval/eval_array_size.hpp"
 
 namespace Kernel {
@@ -28,8 +29,8 @@ namespace Kernel {
 class ArrayEvaluator : public BaseEvaluator
 {
 public:
-    ArrayEvaluator(std::shared_ptr<Tape> t);
-    ArrayEvaluator(std::shared_ptr<Tape> t,
+    ArrayEvaluator(std::shared_ptr<Deck> t);
+    ArrayEvaluator(std::shared_ptr<Deck> t,
                    const std::map<Tree::Id, float>& vars);
 
     /*
@@ -38,11 +39,11 @@ public:
      */
     void set(const Eigen::Vector3f& p, size_t index)
     {
-        f(tape->X, index) = p.x();
-        f(tape->Y, index) = p.y();
-        f(tape->Z, index) = p.z();
+        f(deck->X, index) = p.x();
+        f(deck->Y, index) = p.y();
+        f(deck->Z, index) = p.z();
 
-        for (auto& o : tape->oracles)
+        for (auto& o : deck->oracles)
         {
             o->set(p, index);
         }
@@ -72,6 +73,8 @@ public:
      *  Multi-point evaluation (values must be stored with set)
      */
     Eigen::Block<decltype(f), 1, Eigen::Dynamic> values(size_t count);
+    Eigen::Block<decltype(f), 1, Eigen::Dynamic> values(
+            size_t count, std::shared_ptr<Tape> tape);
 
     /*
      *  Changes a variable's value
@@ -87,6 +90,8 @@ public:
      *  This call performs O(i) work to set up the ambig array
      */
     Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(size_t i);
+    Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(
+            size_t i, std::shared_ptr<Tape> tape);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */

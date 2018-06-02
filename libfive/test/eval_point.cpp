@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_point.hpp"
+#include "libfive/eval/deck.hpp"
 
 using namespace Kernel;
 
@@ -30,21 +31,21 @@ TEST_CASE("PointEvaluator::eval")
 {
     SECTION("X")
     {
-        auto t = std::make_shared<Tape>(Tree::X());
+        auto t = std::make_shared<Deck>(Tree::X());
         PointEvaluator e(t);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 1.0);
     }
 
     SECTION("Y")
     {
-        auto t = std::make_shared<Tape>(Tree::Y());
+        auto t = std::make_shared<Deck>(Tree::Y());
         PointEvaluator e(t);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("Constant")
     {
-        auto t = std::make_shared<Tape>(Tree(3.14));
+        auto t = std::make_shared<Deck>(Tree(3.14));
         PointEvaluator e(t);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == Approx(3.14));
     }
@@ -52,28 +53,28 @@ TEST_CASE("PointEvaluator::eval")
     SECTION("Secondary variable")
     {
         auto v = Tree::var();
-        auto t = std::make_shared<Tape>(v);
+        auto t = std::make_shared<Deck>(v);
         PointEvaluator e(t, {{v.id(), 3.14}});
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
     SECTION("X + 1")
     {
-        auto t = std::make_shared<Tape>(Tree::X() + 1);
+        auto t = std::make_shared<Deck>(Tree::X() + 1);
         PointEvaluator e(t);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("X + Z")
     {
-        auto t = std::make_shared<Tape>(Tree::X() + Tree::Z());
+        auto t = std::make_shared<Deck>(Tree::X() + Tree::Z());
         PointEvaluator e(t);
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == 4.0);
     }
 
     SECTION("nth-root")
     {
-        auto t = std::make_shared<Tape>(nth_root(Tree::X(), 3));
+        auto t = std::make_shared<Deck>(nth_root(Tree::X(), 3));
         PointEvaluator e(t);
         REQUIRE(e.eval({-0.5, 0.0, 0.0}) == Approx(-0.7937));
     }
@@ -85,7 +86,7 @@ TEST_CASE("PointEvaluator::eval")
             auto op = (Kernel::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
-            auto p = std::make_shared<Tape>(t);
+            auto p = std::make_shared<Deck>(t);
             PointEvaluator e(p);
             e.eval({0, 0, 0});
             REQUIRE(true /* No crash! */ );
@@ -100,7 +101,7 @@ TEST_CASE("PointEvaluator::setVar")
     auto c = Tree::var();
     auto b = Tree::var();
 
-    auto t = std::make_shared<Tape>(a*1 + b*2 + c*3);
+    auto t = std::make_shared<Deck>(a*1 + b*2 + c*3);
     PointEvaluator e(t, {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
     REQUIRE(e.eval({0, 0, 0}) == Approx(34));
 
@@ -114,7 +115,7 @@ TEST_CASE("PointEvaluator::setVar")
 
 TEST_CASE("PointEvaluator::evalAndPush")
 {
-    auto t = std::make_shared<Tape>(min(Tree::X(), Tree::Y()));
+    auto t = std::make_shared<Deck>(min(Tree::X(), Tree::Y()));
     PointEvaluator e(t);
 
     {
