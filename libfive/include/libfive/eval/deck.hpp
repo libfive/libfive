@@ -73,10 +73,16 @@ public:
     /*  This is the top-level tape associated with this Deck. */
     std::shared_ptr<Tape> tape;
 
+    /*  Moves this tape into the spares bin, so it can be reused later */
+    void claim(std::shared_ptr<Tape> tape) { spares.push_back(tape); }
+
 protected:
     /*  Temporary storage, used when pushing into a Tape  */
     std::vector<uint8_t> disabled;
     std::vector<Clause::Id> remap;
+
+    /*  We can keep spare tapes around, to avoid reallocating their data */
+    std::vector<std::shared_ptr<Tape>> spares;
 
     friend class Tape;
 };

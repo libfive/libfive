@@ -89,9 +89,19 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
         }
     }
 
-    std::shared_ptr<Tape> out(new Tape);
+    std::shared_ptr<Tape> out;
+    if (deck.spares.size())
+    {
+        out = deck.spares.back();
+        deck.spares.pop_back();
+    }
+    else
+    {
+        out.reset(new Tape);
+    }
     out->type = t;
     out->parent = tape;
+    out->t.clear(); // preserves capacity
 
     // Now, use the data in disabled and remap to make the new tape
     for (const auto& c : tape->t)

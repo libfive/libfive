@@ -231,6 +231,7 @@ bool Heightmap::recurse(HeightmapEvaluator* e, Tape::Handle tape,
     auto result = e->interval.evalAndPush(r.lower, r.upper, tape);
     Interval::I out = result.first;
 
+    bool ret = true;
     // If strictly negative, fill up the block and return
     if (Interval::isFilled(out))
     {
@@ -244,16 +245,11 @@ bool Heightmap::recurse(HeightmapEvaluator* e, Tape::Handle tape,
 
         // Since the higher Z region is in the second item of the
         // split, evaluate rs.second then rs.first
-        if (!recurse(e, result.second, rs.second, abort))
-        {
-            return false;
-        }
-        if (!recurse(e, result.second, rs.first, abort))
-        {
-            return false;
-        }
+        ret &= recurse(e, result.second, rs.second, abort) &&
+               recurse(e, result.second, rs.first, abort);
     }
-    return true;
+    e->deck->claim(result.second);
+    return ret;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
