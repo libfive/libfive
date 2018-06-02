@@ -82,7 +82,7 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
         const Eigen::Vector3f& upper,
         Tape::Handle tape)
 {
-    auto out = eval(lower, upper);
+    auto out = eval(lower, upper, tape);
 
     auto p = Tape::push(tape, *deck,
         [&](Opcode::Opcode op, Clause::Id /* id */,
