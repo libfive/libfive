@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <png.h>
 
 #include "libfive/render/discrete/heightmap.hpp"
+#include "libfive/eval/tape.hpp"
 
 namespace Kernel {
 
@@ -36,9 +37,9 @@ namespace Kernel {
  */
 struct NormalRenderer
 {
-    NormalRenderer(HeightmapEvaluator* e, const Voxels::View& r,
-                   Heightmap::Normal& norm)
-        : e(e), r(r), norm(norm) {}
+    NormalRenderer(HeightmapEvaluator* e, Tape::Handle tape,
+                   const Voxels::View& r, Heightmap::Normal& norm)
+        : e(e), tape(tape), r(r), norm(norm) {}
 
     /*
      *  Assert on destruction that the normals were flushed
@@ -51,7 +52,7 @@ struct NormalRenderer
     void run()
     {
         // Get derivative array pointers
-        auto ds = e->array.derivs(count).topRows(3).eval();
+        auto ds = e->array.derivs(count, tape).topRows(3).eval();
 
         for (size_t i=0; i < count; ++i)
         {
@@ -90,6 +91,7 @@ struct NormalRenderer
     }
 
     HeightmapEvaluator* e;
+    Tape::Handle tape;
     const Voxels::View& r;
     Heightmap::Normal& norm;
 
@@ -112,7 +114,8 @@ for (int i=0; i < r.size.x(); ++i)           \
 /*
  *  Helper functions that evaluates a region of pixels
  */
-void Heightmap::pixels(HeightmapEvaluator* e, const Voxels::View& r)
+void Heightmap::pixels(HeightmapEvaluator* e, Tape::Handle tape,
+                       const Voxels::View& r)
 {
     size_t index = 0;
 
@@ -125,12 +128,12 @@ void Heightmap::pixels(HeightmapEvaluator* e, const Voxels::View& r)
             index++);
     }
 
-    auto out = e->array.values(index);
+    auto out = e->array.values(index, tape);
 
     index = 0;
 
     // Helper struct to render normals
-    NormalRenderer nr(e, r, norm);
+    NormalRenderer nr(e, tape, r, norm);
 
     // Unflatten results into the image, breaking out of loops early when a pixel
     // is written (because all subsequent pixels will be below it).
@@ -166,14 +169,15 @@ void Heightmap::pixels(HeightmapEvaluator* e, const Voxels::View& r)
  *
  *  This function is used when marking an Interval as filled
  */
-void Heightmap::fill(HeightmapEvaluator* e, const Voxels::View& r)
+void Heightmap::fill(HeightmapEvaluator* e, Tape::Handle tape,
+                     const Voxels::View& r)
 {
     // Store the maximum z position (which is what we're flooding into
     // the depth image)
     const float z = r.pts.z()[r.size.z() - 1];
 
     // Helper struct to handle normal rendering
-    NormalRenderer nr(e, r, norm);
+    NormalRenderer nr(e, tape, r, norm);
 
     // Iterate over every pixel in the region
     for (int i=0; i < r.size.x(); ++i)
@@ -197,8 +201,8 @@ void Heightmap::fill(HeightmapEvaluator* e, const Voxels::View& r)
 * Helper function that reduces a particular matrix block
 * Returns true if finished, false if aborted
 */
-bool Heightmap::recurse(HeightmapEvaluator* e, const Voxels::View& r,
-                        const std::atomic_bool& abort)
+bool Heightmap::recurse(HeightmapEvaluator* e, Tape::Handle tape,
+                        const Voxels::View& r, const std::atomic_bool& abort)
 {
     // Stop rendering if the abort flag is set
     if (abort.load())
@@ -219,18 +223,18 @@ bool Heightmap::recurse(HeightmapEvaluator* e, const Voxels::View& r,
     // If we're below a certain size, render pixel-by-pixel
     if (r.voxels() <= ArrayEvaluator::N)
     {
-        pixels(e, r);
+        pixels(e, tape, r);
         return true;
     }
 
     // Do the interval evaluation, storing an tape-popping handle
-    auto result = e->interval.evalAndPush(r.lower, r.upper);
+    auto result = e->interval.evalAndPush(r.lower, r.upper, tape);
     Interval::I out = result.first;
 
     // If strictly negative, fill up the block and return
     if (Interval::isFilled(out))
     {
-        fill(e, r);
+        fill(e, tape, r);
     }
     // Otherwise, recurse if the output interval is ambiguous
     else if (!Interval::isEmpty(out))
@@ -240,11 +244,11 @@ bool Heightmap::recurse(HeightmapEvaluator* e, const Voxels::View& r,
 
         // Since the higher Z region is in the second item of the
         // split, evaluate rs.second then rs.first
-        if (!recurse(e, rs.second, abort))
+        if (!recurse(e, result.second, rs.second, abort))
         {
             return false;
         }
-        if (!recurse(e, rs.first, abort))
+        if (!recurse(e, result.second, rs.first, abort))
         {
             return false;
         }
@@ -306,7 +310,7 @@ std::unique_ptr<Heightmap> Heightmap::render(
     {
         futures.push_back(std::async(std::launch::async,
             [itr, region, &out, &abort](){
-                out->recurse(*itr, region, abort);
+                out->recurse(*itr, (*itr)->deck->tape, region, abort);
             }));
         ++itr;
     }

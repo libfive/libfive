@@ -30,10 +30,9 @@ public:
         : deck(new Deck(t)), array(deck), interval(deck)
     { /* Nothing to do here */ }
 
-protected:
+public:
     std::shared_ptr<Deck> deck;
 
-public:
     DerivArrayEvaluator array;
     IntervalEvaluator interval;
 

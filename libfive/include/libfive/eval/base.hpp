@@ -34,7 +34,6 @@ public:
 
 protected:
     std::shared_ptr<Deck> deck;
-
 };
 
 }   // namespace Kernel
