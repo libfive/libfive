@@ -188,7 +188,7 @@ protected:
      *  If multiple evaluators are provided, then tree construction will
      *  be distributed across multiple threads.
      */
-    XTree(XTreeEvaluator* eval, Region<N> region,
+    XTree(XTreeEvaluator* eval, std::shared_ptr<Tape> tape, Region<N> region,
           double min_feature, double max_err, bool multithread,
           std::atomic_bool& cancel, Neighbors<N> neighbors);
 

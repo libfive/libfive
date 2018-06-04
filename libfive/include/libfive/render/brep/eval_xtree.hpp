@@ -51,10 +51,9 @@ public:
         return changed;
     }
 
-protected:
+public:
     std::shared_ptr<Deck> deck;
 
-public:
     DerivArrayEvaluator array;
     IntervalEvaluator interval;
     FeatureEvaluator feature;

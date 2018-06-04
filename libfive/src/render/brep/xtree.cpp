@@ -95,7 +95,8 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         return nullptr;
     }
 
-    auto out = new XTree(es, region, min_feature, max_err,
+    auto out = new XTree(es, es[0].deck->tape,
+                         region, min_feature, max_err,
                          multithread, cancel, Neighbors<N>());
 
     // Return an empty XTree when cancelled
@@ -112,7 +113,7 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
+XTree<N>::XTree(XTreeEvaluator* eval, Tape::Handle tape, Region<N> region,
                 double min_feature, double max_err, bool multithread,
                 std::atomic_bool& cancel, Neighbors<N> neighbors)
     : region(region), _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
@@ -130,16 +131,16 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
     const bool do_recurse = ((region.upper - region.lower) > min_feature).any();
 
     // Do a preliminary evaluation to prune the tree, storing the interval
-    // result and an RAII handle that will pop the tape on destruction.
+    // result and an handle to the pushed tape (which we'll use when recursing)
     Interval::I i(-1, 1);
-    Tape::Handle p;
     if (do_recurse)
     {
         auto o = eval->interval.evalAndPush(
                 region.lower3().template cast<float>(),
-                region.upper3().template cast<float>());
+                region.upper3().template cast<float>(),
+                tape);
         i = o.first;
-        p = std::move(o.second);
+        tape = o.second;
     }
 
     if (Interval::isFilled(i))
@@ -171,9 +172,9 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 for (unsigned i=0; i < children.size(); ++i)
                 {
                     futures[i] = std::async(std::launch::async,
-                        [&eval, &rs, &cancel, i, min_feature, max_err]()
+                        [&eval, &rs, &cancel, tape, i, min_feature, max_err]()
                         { return new XTree(
-                                eval + i, rs[i], min_feature, max_err,
+                                eval + i, tape, rs[i], min_feature, max_err,
                                 false, cancel, Neighbors<N>()); });
                 }
                 for (unsigned i=0; i < children.size(); ++i)
@@ -188,7 +189,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 {
                     // Populate child recursively
                     children[i].reset(new XTree<N>(
-                                eval, rs[i], min_feature, max_err,
+                                eval, tape, rs[i], min_feature, max_err,
                                 false, cancel, neighbors.push(i, children)));
                 }
             }
@@ -265,12 +266,12 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             //     can find an inside-outside transition).
             // 3)  For values that are == 0 and ambiguous, call isInside
             //     (the heavy hitter of inside-outside checking).
-            auto vs = eval->array.values(count);
+            auto vs = eval->array.values(count, tape);
 
             // We store ambiguity here, but clear it if the point is inside
             // or outside (so after the loop below, ambig(i) is only set if
             // pos[i] is both == 0 and ambiguous).
-            auto ambig = eval->array.getAmbiguous(count);
+            auto ambig = eval->array.getAmbiguous(count, tape);
 
             // This is a count of how many points there are that == 0
             // but are unambiguous; unambig_remap[z] returns the index
@@ -305,7 +306,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             // there's a non-zero gradient.
             if (unambiguous_zeros)
             {
-                auto ds = eval->array.derivs(unambiguous_zeros);
+                auto ds = eval->array.derivs(unambiguous_zeros, tape);
                 for (unsigned i=0; i < unambiguous_zeros; ++i)
                 {
                     corners[unambig_remap[i]] =
@@ -320,7 +321,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 if (ambig(i))
                 {
                     corners[corner_indices[i]] =
-                        eval->feature.isInside(pos.col(i))
+                        eval->feature.isInside(pos.col(i), tape)
                             ? Interval::FILLED
                             : Interval::EMPTY;
                 }
@@ -403,7 +404,9 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                 // is well-placed in the distance field, then convert into
                 // a leaf by erasing all of the child branches
                 if (findVertex(vertex_count++) < max_err &&
-                    fabs(eval->feature.eval(vert3().template cast<float>())) // TODO
+                    fabs(eval->feature.eval(
+                            vert3().template cast<float>(),
+                            Tape::getBase(tape, vert3().template cast<float>())))
                         < max_err)
                 {
                     std::for_each(children.begin(), children.end(),
@@ -525,7 +528,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                     if (eval_count)
                     {
                         auto out = eval->array.values(
-                                POINTS_PER_SEARCH * eval_count);
+                                POINTS_PER_SEARCH * eval_count, tape);
 
                         for (unsigned e=0; e < eval_count; ++e)
                         {
@@ -547,7 +550,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                                     Eigen::Vector3d pos;
                                     pos << ps.col(i), region.perp;
                                     if (!eval->feature.isInside(
-                                                pos.template cast<float>()))
+                                                pos.template cast<float>(), tape))
                                     {
                                         assert(i > 0);
                                         targets[e] = {ps.col(i - 1), ps.col(i)};
@@ -579,8 +582,8 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                         set(targets[i].first, 2*i);
                         set(targets[i].second, 2*i + 1);
                     }
-                    auto ds = eval->array.derivs(2 * eval_count);
-                    auto ambig = eval->array.getAmbiguous(2 * eval_count);
+                    auto ds = eval->array.derivs(2 * eval_count, tape);
+                    auto ambig = eval->array.getAmbiguous(2 * eval_count, tape);
 
                     // Iterate over all inside-outside pairs, storing the number
                     // of intersections before each inside node (in prev_size),
@@ -617,7 +620,7 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
                         else
                         {
                             const auto fs = eval->feature.features(
-                                    pos.template cast<float>());
+                                    pos.template cast<float>(), tape);
 
                             for (auto& f : fs)
                             {
