@@ -420,7 +420,9 @@ void View::mouseMoveEvent(QMouseEvent* event)
             drag_dir * QVector3D::dotProduct(cursor_pos - drag_start, n2) /
             QVector3D::dotProduct(drag_dir, n2);
 
-        auto sol = Kernel::Solver::findRoot(*drag_eval, drag_target->getVars(),
+        auto sol = Kernel::Solver::findRoot(
+                *drag_eval.first, drag_eval.second,
+                drag_target->getVars(),
                 {cursor_pos.x(), cursor_pos.y(), cursor_pos.z()});
         emit(varsDragged(QMap<Kernel::Tree::Id, float>(sol.second)));
 
@@ -490,10 +492,13 @@ void View::mousePressEvent(QMouseEvent* event)
                 drag_valid = true;
 
                 drag_start = toModelPos(event->pos());
-                drag_eval.reset(drag_target->dragFrom(drag_start));
+                auto df = drag_target->dragFrom(drag_start);
+                drag_eval.first.reset(df.first);
+                drag_eval.second = df.second;
 
-                auto norm = drag_eval->deriv(
-                        {drag_start.x(), drag_start.y(), drag_start.z()});
+                auto norm = drag_eval.first->deriv(
+                        {drag_start.x(), drag_start.y(), drag_start.z()},
+                        df.second);
                 drag_dir = {norm.x(), norm.y(), norm.z()};
 
                 mouse.state = mouse.DRAG_EVAL;

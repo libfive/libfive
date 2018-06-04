@@ -19,6 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/shape.hpp"
 #include "studio/shader.hpp"
 
+#include "libfive/eval/tape.hpp"
+
 const int Shape::MESH_DIV_EMPTY;
 const int Shape::MESH_DIV_ABORT;
 const int Shape::MESH_DIV_NEW_VARS;
@@ -278,12 +280,13 @@ void Shape::setHover(bool h)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Kernel::JacobianEvaluator* Shape::dragFrom(const QVector3D& v)
+std::pair<Kernel::JacobianEvaluator*, Kernel::Tape::Handle>
+Shape::dragFrom(const QVector3D& v)
 {
     auto e = new Kernel::JacobianEvaluator(
-            std::make_shared<Kernel::Tape>(tree), vars);
-    e->evalAndPush({v.x(), v.y(), v.z()});
-    return e;
+            std::make_shared<Kernel::Deck>(tree), vars);
+    auto o = e->evalAndPush({v.x(), v.y(), v.z()});
+    return std::make_pair(e, o.second);
 }
 
 void Shape::deleteLater()
