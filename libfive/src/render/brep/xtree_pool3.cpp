@@ -1,6 +1,6 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2018  Matt Keeter
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -16,36 +16,12 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#pragma once
-
-#include "libfive/tree/tree.hpp"
-#include "libfive/render/brep/region.hpp"
+#include "xtree_pool.cpp"
 
 namespace Kernel {
 
-class Contours {
-public:
-    /*
-     *  Basic render function
-     */
-    static std::unique_ptr<Contours> render(
-            const Tree t, const Region<2>& r,
-            double max_err=1e-8, double min_feature=0.1,
-            bool multithread=true);
-
-    /*
-     *  Saves the contours to an SVG file
-     */
-    bool saveSVG(const std::string& filename);
-
-    /*  Contours in 2D space  */
-    std::vector<std::vector<Eigen::Vector2f>> contours;
-
-    /*  Optional bounding box */
-    Region<2> bbox;
-
-protected:
-    Contours(Region<2> bbox) : bbox(bbox) {}
-};
+// Explicit initialization of template
+template struct XTreePool<3>;
 
 }   // namespace Kernel
+

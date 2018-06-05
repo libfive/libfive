@@ -42,42 +42,49 @@ class XTree
 {
 public:
     /*
-     *  Constructs an octree or quadtree by subdividing a region
-     *  (unstoppable)
+     *  Simple constructor
      */
-    static std::unique_ptr<const XTree> build(
-            Tree t, Region<N> region, double min_feature=0.1,
-            double max_err=1e-8, bool multithread=true);
+    explicit XTree(XTree<N>* parent, Region<N> region);
 
     /*
-     *  Fully-specified XTree builder (stoppable through cancel)
+     *  Populates type, setting corners and manifold if this region is
+     *  unambiguous.  Returns a shorter version of the tape that ignores
+     *  unambiguous clauses.
      */
-    static std::unique_ptr<const XTree> build(
-            Tree t, const std::map<Tree::Id, float>& vars,
-            Region<N> region, double min_feature,
-            double max_err, bool multithread,
-            std::atomic_bool& cancel);
+    std::shared_ptr<Tape> evalInterval(IntervalEvaluator& eval,
+                                       std::shared_ptr<Tape> tape);
 
     /*
-     *  XTree builder that re-uses existing evaluators
-     *  If multithread is true, es must be a pointer to an array of evaluators
+     *  Evaluates and stores a result at every corner of the cell.
+     *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
+     *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
-    static std::unique_ptr<const XTree> build(
-            XTreeEvaluator* es,
-            Region<N> region, double min_feature,
-            double max_err, bool multithread,
-            std::atomic_bool& cancel);
+    void evalLeaf(XTreeEvaluator* eval, std::shared_ptr<Tape> tape);
+
+    /*
+     *  If all children are present, then collapse based on the error
+     *  metrics from the combined QEF (or interval filled / empty state).
+     *
+     *  Returns false if any children are yet to come, true otherwise.
+     */
+    bool collectChildren(XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
+                         double max_err);
+
+    /*
+     *  Deletes all of the children
+     */
+    ~XTree();
 
     /*
      *  Checks whether this tree splits
      */
-    bool isBranch() const { return children[0].get() != nullptr; }
+    bool isBranch() const { return children[0] != nullptr; }
 
     /*
      *  Looks up a child, returning *this if this isn't a branch
      */
     const XTree<N>* child(unsigned i) const
-    { return isBranch() ? children[i].get() : this; }
+    { return isBranch() ? children[i].load() : this; }
 
     /*
      *  Returns the filled / empty state for the ith corner
@@ -109,11 +116,14 @@ public:
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;
 
+    /*  Parent tree, or nullptr if this is the root */
+    XTree<N>* parent;
+
     /*  The region filled by this XTree */
     const Region<N> region;
 
     /*  Children pointers, if this is a branch  */
-    std::array<std::unique_ptr<const XTree<N>>, 1 << N> children;
+    std::array<std::atomic<XTree<N>*>, 1 << N> children;
 
     /*  level = max(map(level, children)) + 1  */
     unsigned level=0;
@@ -183,16 +193,6 @@ public:
 
 protected:
     /*
-     *  Private constructor for XTree
-     *
-     *  If multiple evaluators are provided, then tree construction will
-     *  be distributed across multiple threads.
-     */
-    XTree(XTreeEvaluator* eval, std::shared_ptr<Tape> tape, Region<N> region,
-          double min_feature, double max_err, bool multithread,
-          std::atomic_bool& cancel, Neighbors<N> neighbors);
-
-    /*
      *  Searches for a vertex within the XTree cell, using the QEF matrices
      *  that are pre-populated in AtA, AtB, etc.
      *
@@ -228,6 +228,16 @@ protected:
      *  (with respect to the leaves)
      */
     bool leafsAreManifold() const;
+
+    /*
+     *  Sets corner_mask based on corner[] values
+     */
+    void buildCornerMask();
+
+    /*
+     *  Deletes all children branches, setting the children array to nulls
+     */
+    void deleteBranches();
 
     /*  Mass point is the average intersection location *
      *  (the last coordinate is number of points summed) */

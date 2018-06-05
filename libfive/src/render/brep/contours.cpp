@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "libfive/render/brep/contours.hpp"
-#include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/xtree_pool.hpp"
 #include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/brep.hpp"
 
@@ -73,11 +73,25 @@ public:
     }
 };
 
-std::unique_ptr<Contours> Contours::render(const Tree t, const Region<2>& r,
-                                           double min_feature)
+std::unique_ptr<Contours> Contours::render(
+        const Tree t, const Region<2>& r,
+        double max_err, double min_feature,
+        bool multithread)
 {
+    const unsigned workers = multithread ? 8 : 1;
+    std::atomic_bool cancel(false);
+
+    std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
+    es.reserve(workers);
+    for (unsigned i=0; i < workers; ++i)
+    {
+        es.emplace_back(XTreeEvaluator(t));
+    }
+
     // Create the quadtree on the scaffold
-    auto xtree = XTree<2>::build(t, r, min_feature);
+    auto xtree = XTreePool<2>::build(
+        es.data(), r, min_feature, max_err,
+        workers, cancel);
 
     // Perform marching squares
     Segments segs;
