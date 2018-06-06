@@ -53,13 +53,14 @@ void XTreePool<N>::run(
         auto tape = task->tape;
         auto t = task->target;
 
-        std::cout << "Got task\n\t[" << t->region.lower.transpose() << "]\n\t["
-            << t->region.upper.transpose() << "]\n";
+        // We store the parent here, because otherwise it's possible for
+        // another thread to delete t after evalInterval or evalLeaf
+        // by calling parent->collectChildren().
+        auto parent = t->parent;
 
         if (((t->region.upper - t->region.lower) > min_feature).any())
         {
             tape = t->evalInterval(eval->interval, task->tape);
-            std::cout << "\tGot interval result " << t->type << "\n";
 
             // If this Tree is ambiguous, then push the children to the queue
             // and keep going (because all the useful work will be done
@@ -77,25 +78,25 @@ void XTreePool<N>::run(
                     tasks.push(next);
                 }
 
-                std::cout << "\tPushing children to tape\n";
                 continue;
             }
             // First termination condition: if the root of the XTree is
             // empty or filled, then return right away.
-            else if (t->parent == nullptr)
+            else if (parent == nullptr)
             {
-                std::cout << "\tEarly termination (interval)!\n";
                 done.store(true);
                 continue;
             }
         }
         else
         {
-            std::cout << "\tEvaluated leaf\n";
             t->evalLeaf(eval, tape);
-            if (t->parent == nullptr)
+
+            // Second termination condition: if we did a leaf evaluation
+            // on the root of the XTree, then we've been passed a large
+            // min_feature and this is the end.
+            if (parent == nullptr)
             {
-                std::cout << "\tEarly termination (leaf)!\n";
                 done.store(true);
                 continue;
             }
@@ -103,25 +104,15 @@ void XTreePool<N>::run(
 
         // If all of the children are done, then ask the parent to collect them
         // (recursively, merging the trees on the way up)
-        auto target = t->parent;
-        while(target && target->collectChildren(eval, tape, max_err))
+        while(parent && parent->collectChildren(eval, tape, max_err))
         {
-            std::cout << "\tcollected children from\n\t\t[" << target->region.lower.transpose() << "]\n\t\t["
-                << target->region.upper.transpose() << "]\n";
-
-            target = target->parent;
-            // The second termination condition: if we successfully call
+            parent = parent->parent;
+            // The third termination condition: if we successfully call
             // collectChildren on the root of the XTree, then we're done.
-            if (target == nullptr)
+            if (parent == nullptr)
             {
-                std::cout << "\tGot to root of tree; terminating now\n";
                 done.store(true);
             }
-        }
-        if (target)
-        {
-            std::cout << "\tfailed to collect children from\n\t\t[" << target->region.lower.transpose() << "]\n\t\t["
-                << target->region.upper.transpose() << "]\n";
         }
     }
 }
@@ -175,6 +166,11 @@ std::unique_ptr<const XTree<N>> XTreePool<N>::build(
         f.get();
     }
 
+    if (cancel.load())
+    {
+        auto ptr = root.exchange(nullptr);
+        delete ptr;
+    }
     return std::unique_ptr<XTree<N>>(root.load());
 }
 

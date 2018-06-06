@@ -699,9 +699,7 @@ template <unsigned N>
 void XTree<N>::deleteBranches()
 {
     std::for_each(children.begin(), children.end(),
-        [](std::atomic<XTree<N>*>& o) {
-            auto ptr = o.exchange(nullptr);
-            delete ptr; });
+        [](std::atomic<XTree<N>*>& o) { delete o.exchange(nullptr); });
 }
 
 ////////////////////////////////////////////////////////////////////////////////
