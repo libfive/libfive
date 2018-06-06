@@ -46,7 +46,6 @@ public:
     std::atomic_bool cancel;
 
 protected:
-    std::atomic_int count;
     std::mutex mut;
     std::list<XTreeEvaluator*> data;
 };

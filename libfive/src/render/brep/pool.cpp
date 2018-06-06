@@ -21,10 +21,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-Pool::Pool(const Tree& tree, unsigned c)
-    : cancel(false), count(1)
+Pool::Pool(const Tree& tree, unsigned count)
+    : cancel(false)
 {
-    for (int i=0; i < count; ++i)
+    for (unsigned i=0; i < count; ++i)
     {
         data.push_back(new XTreeEvaluator(tree));
     }
@@ -32,41 +32,33 @@ Pool::Pool(const Tree& tree, unsigned c)
 
 Pool::~Pool()
 {
-    count.store(0);
+    std::lock_guard<std::mutex> lock(mut);
+    while (data.size())
     {
-        std::lock_guard<std::mutex> lock(mut);
-        for (auto& e : data)
-        {
-            delete e;
-        }
-        data.clear();
+        delete data.front();
+        data.pop_front();
     }
 }
 
 XTreeEvaluator* Pool::get()
 {
-    if (count-- > 0)
+    std::lock_guard<std::mutex> lock(mut);
+    if (data.size() > 0)
     {
-        std::lock_guard<std::mutex> lock(mut);
-        assert(data.size() > 0);
         auto out = data.back();
         data.pop_back();
         return out;
     }
     else
     {
-        count++;
         return nullptr;
     }
 }
 
 void Pool::put(XTreeEvaluator* eval)
 {
-    {
-        std::lock_guard<std::mutex> lock(mut);
-        data.push_back(eval);
-    }
-    count++;
+    std::lock_guard<std::mutex> lock(mut);
+    data.push_back(eval);
 }
 
 }   // namespace Kernel
