@@ -47,9 +47,10 @@ public:
     explicit XTree(XTree<N>* parent, Region<N> region);
 
     /*
-     *  Populates type, setting corners and manifold if this region is
-     *  unambiguous.  Returns a shorter version of the tape that ignores
-     *  unambiguous clauses.
+     *  Populates type, setting corners, manifold, and done if this region is
+     *  fully inside or outside the mode.
+     *
+     *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
     std::shared_ptr<Tape> evalInterval(IntervalEvaluator& eval,
                                        std::shared_ptr<Tape> tape);
@@ -247,6 +248,9 @@ protected:
     Eigen::Matrix<double, N, N> AtA;
     Eigen::Matrix<double, N, 1> AtB;
     double BtB=0;
+
+    /*  Marks whether this tree is fully constructed */
+    std::atomic_bool done;
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;

@@ -53,9 +53,13 @@ void XTreePool<N>::run(
         auto tape = task->tape;
         auto t = task->target;
 
+        std::cout << "Got task\n\t[" << t->region.lower.transpose() << "]\n\t["
+            << t->region.upper.transpose() << "]\n";
+
         if (((t->region.upper - t->region.lower) > min_feature).any())
         {
             tape = t->evalInterval(eval->interval, task->tape);
+            std::cout << "\tGot interval result " << t->type << "\n";
 
             // If this Tree is ambiguous, then push the children to the queue
             // and keep going (because all the useful work will be done
@@ -72,18 +76,29 @@ void XTreePool<N>::run(
 
                     tasks.push(next);
                 }
+
+                std::cout << "\tPushing children to tape\n";
                 continue;
             }
             // First termination condition: if the root of the XTree is
             // empty or filled, then return right away.
             else if (t->parent == nullptr)
             {
+                std::cout << "\tEarly termination (interval)!\n";
                 done.store(true);
+                continue;
             }
         }
         else
         {
+            std::cout << "\tEvaluated leaf\n";
             t->evalLeaf(eval, tape);
+            if (t->parent == nullptr)
+            {
+                std::cout << "\tEarly termination (leaf)!\n";
+                done.store(true);
+                continue;
+            }
         }
 
         // If all of the children are done, then ask the parent to collect them
@@ -91,13 +106,22 @@ void XTreePool<N>::run(
         auto target = t->parent;
         while(target && target->collectChildren(eval, tape, max_err))
         {
+            std::cout << "\tcollected children from\n\t\t[" << target->region.lower.transpose() << "]\n\t\t["
+                << target->region.upper.transpose() << "]\n";
+
             target = target->parent;
             // The second termination condition: if we successfully call
             // collectChildren on the root of the XTree, then we're done.
             if (target == nullptr)
             {
+                std::cout << "\tGot to root of tree; terminating now\n";
                 done.store(true);
             }
+        }
+        if (target)
+        {
+            std::cout << "\tfailed to collect children from\n\t\t[" << target->region.lower.transpose() << "]\n\t\t["
+                << target->region.upper.transpose() << "]\n";
         }
     }
 }
@@ -118,10 +142,16 @@ std::unique_ptr<const XTree<N>> XTreePool<N>::build(
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel)
 {
+    // Lazy initialization of marching squares / cubes table
+    if (XTree<N>::mt.get() == nullptr)
+    {
+        XTree<N>::mt = Marching::buildTable<N>();
+    }
+
     std::atomic<XTree<N>*> root(new XTree<N>(nullptr, region));
     std::atomic_bool done(false);
 
-    boost::lockfree::queue<Task<N>*> tasks;
+    boost::lockfree::queue<Task<N>*> tasks(256);
     auto task = new Task<N>;
     task->target = root;
     task->tape = eval->deck->tape;
