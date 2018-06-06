@@ -229,18 +229,17 @@ TEST_CASE("XTree<3> cancellation")
 
     Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
-    std::atomic_bool cancel(false);
 
     // Start a long render operation, then cancel it immediately
-    Pool p(sponge, 8);
+    Pool pool(sponge, 8);
     auto future = std::async(std::launch::async, [&](){
-        return XTree<3>::build(p, r, 0.02, 8); });
+        return XTree<3>::build(pool, r, 0.02, 8); });
 
     // Record how long it takes betwen triggering the cancel
     // and the future finishing, so we can check that the cancelling
     // ended the computation within some short amount of time.
     start = std::chrono::system_clock::now();
-    cancel.store(true);
+    pool.cancel.store(true);
     auto result = future.get();
     end = std::chrono::system_clock::now();
 
