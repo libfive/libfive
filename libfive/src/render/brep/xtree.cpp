@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <Eigen/StdVector>
 
 #include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/pool.hpp"
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
 
@@ -43,43 +44,17 @@ std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
 template <unsigned N>
 std::unique_ptr<const XTree<N>> XTree<N>::build(
         Tree t, Region<N> region, double min_feature,
-        double max_err, bool multithread)
+        double max_err, unsigned workers)
 {
-    std::atomic_bool cancel(false);
-    const std::map<Tree::Id, float> vars;
-    return build(t, vars, region, min_feature, max_err, multithread, cancel);
+    Pool p(t, workers);
+    return build(p, region, min_feature, max_err);
 }
+
 
 template <unsigned N>
 std::unique_ptr<const XTree<N>> XTree<N>::build(
-            Tree t, const std::map<Tree::Id, float>& vars,
-            Region<N> region, double min_feature,
-            double max_err, bool multithread,
-            std::atomic_bool& cancel)
-{
-    if (multithread)
-    {
-        std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
-        es.reserve(1 << N);
-        for (unsigned i=0; i < (1 << N); ++i)
-        {
-            es.emplace_back(XTreeEvaluator(t, vars));
-        }
-        return build(es.data(), region, min_feature, max_err, true, cancel);
-    }
-    else
-    {
-        XTreeEvaluator e(t, vars);
-        return build(&e, region, min_feature, max_err, false, cancel);
-    }
-}
-
-template <unsigned N>
-std::unique_ptr<const XTree<N>> XTree<N>::build(
-        XTreeEvaluator* es,
-        Region<N> region, double min_feature,
-        double max_err, bool multithread,
-        std::atomic_bool& cancel)
+        Pool& pool, Region<N> region,
+        double min_feature, double max_err)
 {
     // Lazy initialization of marching squares / cubes table
     if (mt.get() == nullptr)
@@ -95,13 +70,15 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
         return nullptr;
     }
 
-    auto out = new XTree(es, es[0].deck->tape,
+    auto e = pool.get();
+    assert(e);
+    auto out = new XTree(e, e->deck->tape,
                          region, min_feature, max_err,
-                         multithread, cancel, Neighbors<N>());
+                         pool, Neighbors<N>());
 
     // Return an empty XTree when cancelled
     // (to avoid potentially ambiguous or mal-constructed trees situations)
-    if (cancel.load())
+    if (pool.cancel.load())
     {
         delete out;
         out = nullptr;
@@ -114,13 +91,13 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
 
 template <unsigned N>
 XTree<N>::XTree(XTreeEvaluator* eval, Tape::Handle tape, Region<N> region,
-                double min_feature, double max_err, bool multithread,
-                std::atomic_bool& cancel, Neighbors<N> neighbors)
+                double min_feature, double max_err, Pool& pool,
+                Neighbors<N> neighbors)
     : region(region), _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
       AtA(Eigen::Matrix<double, N, N>::Zero()),
       AtB(Eigen::Matrix<double, N, 1>::Zero())
 {
-    if (cancel.load())
+    if (pool.cancel.load())
     {
         return;
     }
@@ -162,41 +139,46 @@ XTree<N>::XTree(XTreeEvaluator* eval, Tape::Handle tape, Region<N> region,
         {
             auto rs = region.subdivide();
 
-            if (multithread)
+            // Evaluate every child in a separate thread if available
+            std::array<std::future<std::pair<XTreeEvaluator*, XTree<N>*>>,
+                1 << N> futures;
+
+            for (unsigned i=0; i < children.size(); ++i)
             {
-                // Evaluate every child in a separate thread
-                std::array<std::future<XTree<N>*>, 1 << N> futures;
-
-                assert(children.size() == futures.size());
-
-                for (unsigned i=0; i < children.size(); ++i)
+                auto e = pool.get();
+                if (e)
                 {
                     futures[i] = std::async(std::launch::async,
-                        [&eval, &rs, &cancel, tape, i, min_feature, max_err]()
-                        { return new XTree(
-                                eval + i, tape, rs[i], min_feature, max_err,
-                                false, cancel, Neighbors<N>()); });
+                        [&rs, &pool, tape, e, i, min_feature, max_err]()
+                        { return std::make_pair(e, new XTree(
+                                e, tape, rs[i], min_feature, max_err,
+                                pool, Neighbors<N>())); });
                 }
-                for (unsigned i=0; i < children.size(); ++i)
+                else
                 {
-                    children[i].reset(futures[i].get());
-                }
-            }
-            // Single-threaded recursive construction
-            else
-            {
-                for (uint8_t i=0; i < children.size(); ++i)
-                {
-                    // Populate child recursively
                     children[i].reset(new XTree<N>(
                                 eval, tape, rs[i], min_feature, max_err,
-                                false, cancel, neighbors.push(i, children)));
+                                pool, neighbors.push(i, children)));
+                }
+            }
+            // Wait for and claim any children that were evaluated in threads
+            // Since this could be blocking, we release our own evaluator,
+            // trusting that we will be able to claim the evaluator from the
+            // thread.
+            for (unsigned i=0; i < children.size(); ++i)
+            {
+                if (children[i].get() == nullptr)
+                {
+                    pool.put(eval);
+                    auto result = futures[i].get();
+                    eval = result.first;
+                    children[i].reset(result.second);
                 }
             }
 
             // Abort early if children could have been mal-constructed
             // by an early cancel operation
-            if (cancel.load())
+            if (pool.cancel.load())
             {
                 return;
             }

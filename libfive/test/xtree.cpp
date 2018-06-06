@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "catch.hpp"
 
 #include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/pool.hpp"
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/deck.hpp"
 #include "util/shapes.hpp"
@@ -229,11 +230,11 @@ TEST_CASE("XTree<3> cancellation")
     Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
     std::atomic_bool cancel(false);
-    std::map<Tree::Id, float> vars;
 
     // Start a long render operation, then cancel it immediately
+    Pool p(sponge, 8);
     auto future = std::async(std::launch::async, [&](){
-        return XTree<3>::build(sponge, vars, r, 0.02, 8, true, cancel); });
+        return XTree<3>::build(p, r, 0.02, 8); });
 
     // Record how long it takes betwen triggering the cancel
     // and the future finishing, so we can check that the cancelling

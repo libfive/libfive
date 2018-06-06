@@ -31,6 +31,7 @@ add_library(five SHARED
     render/brep/mesh.cpp
     render/brep/marching.cpp
     render/brep/neighbors.cpp
+    render/brep/pool.cpp
     solve/bounds.cpp
     solve/solver.cpp
     tree/cache.cpp

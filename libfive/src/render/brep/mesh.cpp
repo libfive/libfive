@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "libfive/render/brep/mesh.hpp"
+#include "libfive/render/brep/pool.hpp"
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/dual.hpp"
 
@@ -106,32 +107,21 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
-                                   double min_feature, double max_err,
-                                   bool multithread)
+std::unique_ptr<Mesh> Mesh::render(
+            const Tree t, const Region<3>& r,
+            double min_feature, double max_err,
+            unsigned workers)
 {
-    std::atomic_bool cancel(false);
-    std::map<Tree::Id, float> vars;
-    return render(t, vars, r, min_feature, max_err, multithread, cancel);
+    Pool pool(t, workers);
+    return render(pool, r, min_feature, max_err);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
-            const Tree t, const std::map<Tree::Id, float>& vars,
-            const Region<3>& r, double min_feature, double max_err,
-            bool multithread, std::atomic_bool& cancel)
+        Pool& pool, const Region<3>& r,
+        double min_feature, double max_err)
 {
-    // Create the octree (multithreaded and cancellable)
-    return mesh(XTree<3>::build(
-            t, vars, r, min_feature, max_err, multithread, cancel), cancel);
-}
-
-std::unique_ptr<Mesh> Mesh::render(
-        XTreeEvaluator* es,
-        const Region<3>& r, double min_feature, double max_err,
-        std::atomic_bool& cancel)
-{
-    return mesh(XTree<3>::build(es, r, min_feature, max_err, true, cancel),
-                cancel);
+    return mesh(XTree<3>::build(pool, r, min_feature, max_err),
+                pool.cancel);
 }
 
 std::unique_ptr<Mesh> Mesh::mesh(std::unique_ptr<const XTree<3>> xtree,

@@ -36,6 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/eval/interval.hpp"
 
 namespace Kernel {
+class Pool; /*  Forward declaration */
 
 template <unsigned N>
 class XTree
@@ -47,26 +48,15 @@ public:
      */
     static std::unique_ptr<const XTree> build(
             Tree t, Region<N> region, double min_feature=0.1,
-            double max_err=1e-8, bool multithread=true);
+            double max_err=1e-8, unsigned workers=8);
 
     /*
-     *  Fully-specified XTree builder (stoppable through cancel)
+     *  XTree builder that re-uses an existing evaluator pool
+     *  (with multithreading).
      */
     static std::unique_ptr<const XTree> build(
-            Tree t, const std::map<Tree::Id, float>& vars,
-            Region<N> region, double min_feature,
-            double max_err, bool multithread,
-            std::atomic_bool& cancel);
-
-    /*
-     *  XTree builder that re-uses existing evaluators
-     *  If multithread is true, es must be a pointer to an array of evaluators
-     */
-    static std::unique_ptr<const XTree> build(
-            XTreeEvaluator* es,
-            Region<N> region, double min_feature,
-            double max_err, bool multithread,
-            std::atomic_bool& cancel);
+            Pool& pool, Region<N> region,
+            double min_feature, double max_err);
 
     /*
      *  Checks whether this tree splits
@@ -189,8 +179,8 @@ protected:
      *  be distributed across multiple threads.
      */
     XTree(XTreeEvaluator* eval, std::shared_ptr<Tape> tape, Region<N> region,
-          double min_feature, double max_err, bool multithread,
-          std::atomic_bool& cancel, Neighbors<N> neighbors);
+          double min_feature, double max_err, Pool& pool,
+          Neighbors<N> neighbors);
 
     /*
      *  Searches for a vertex within the XTree cell, using the QEF matrices
