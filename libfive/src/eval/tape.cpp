@@ -99,6 +99,8 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
     {
         out.reset(new Tape);
     }
+    out->t.reserve(tape->t.size());
+
     out->type = t;
     out->parent = tape;
     out->t.clear(); // preserves capacity
