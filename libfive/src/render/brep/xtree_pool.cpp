@@ -42,6 +42,7 @@ void XTreePool<N>::run(
     std::unique_ptr<Task<N>> task;
     bool idle = false;
     std::stack<Task<N>*, std::vector<Task<N>*>> local;
+
     while (!done.load() && !cancel.load())
     {
         {   // Prioritize picking up a local task before going to
@@ -107,13 +108,12 @@ void XTreePool<N>::run(
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
-                    if (slots-- > 0)
+                    if (slots.load() > 0)
                     {
                         tasks.push(next);
                     }
                     else
                     {
-                        slots++;
                         local.push(next);
                     }
                 }
@@ -188,7 +188,7 @@ std::unique_ptr<const XTree<N>> XTreePool<N>::build(
     task->tape = eval->deck->tape;
 
     tasks.push(task);
-    std::atomic_int slots(workers);
+    std::atomic_int slots(0);
 
     std::vector<std::future<void>> futures;
     futures.resize(workers);
