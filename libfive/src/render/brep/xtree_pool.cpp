@@ -38,9 +38,9 @@ void XTreePool<N>::run(
         const float min_feature, const float max_err,
         std::atomic_bool& done, std::atomic_bool& cancel)
 {
+    std::unique_ptr<Task<N>> task;
     while (!done.load() && !cancel.load())
     {
-        std::unique_ptr<Task<N>> task;
         {   // Store the task in an RAII handle
             Task<N>* task_;
             if (!tasks.pop(task_))
