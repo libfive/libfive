@@ -69,4 +69,14 @@ void Pool::put(XTreeEvaluator* eval)
     count++;
 }
 
+bool Pool::updateVars(const std::map<Kernel::Tree::Id, float>& vars)
+{
+    bool out = false;
+    for (auto& e : data)
+    {
+        out |= e->updateVars(vars);
+    }
+    return out;
+}
+
 }   // namespace Kernel

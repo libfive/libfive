@@ -19,8 +19,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #pragma once
 
 #include <list>
+#include <map>
 #include <atomic>
 #include <mutex>
+
+#include "libfive/tree/tree.hpp"
 
 namespace Kernel {
 class Tree;
@@ -31,6 +34,11 @@ class Pool
 public:
     Pool(const Tree& source, unsigned count);
     ~Pool();
+
+    /*
+     *  Updates variables, return true if they change
+     */
+    bool updateVars(const std::map<Kernel::Tree::Id, float>& vars);
 
     /*
      *  Returns an evaluator if any are available, otherwise nullptr

@@ -27,16 +27,10 @@ const int Shape::MESH_DIV_NEW_VARS;
 const int Shape::MESH_DIV_NEW_VARS_SMALL;
 
 Shape::Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, float> vars)
-    : tree(t), vars(vars), vert_vbo(QOpenGLBuffer::VertexBuffer),
+    : tree(t), vars(vars), pool(t, 8),
+      vert_vbo(QOpenGLBuffer::VertexBuffer),
       tri_vbo(QOpenGLBuffer::IndexBuffer)
 {
-    // Construct evaluators to run meshing (in parallel)
-    es.reserve(8);
-    for (unsigned i=0; i < es.capacity(); ++i)
-    {
-        es.emplace_back(Kernel::XTreeEvaluator(t, vars));
-    }
-
     connect(this, &Shape::gotMesh, this, &Shape::redraw);
     connect(&mesh_watcher, &decltype(mesh_watcher)::finished,
             this, &Shape::onFutureFinished);
@@ -86,7 +80,7 @@ bool Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
         // Only abort non-default renders
         if (target_div != default_div)
         {
-            cancel.store(true);
+            pool.cancel.store(true);
         }
 
         // Start a special render operation that uses a flag in the div
@@ -224,7 +218,7 @@ void Shape::startRender(QPair<Settings, int> s)
     {
         if (next.second != MESH_DIV_ABORT)
         {
-            cancel.store(true);
+            pool.cancel.store(true);
             next = s;
         }
     }
@@ -233,10 +227,7 @@ void Shape::startRender(QPair<Settings, int> s)
         if (s.second == MESH_DIV_NEW_VARS ||
             s.second == MESH_DIV_NEW_VARS_SMALL)
         {
-            for (auto& e : es)
-            {
-                e.updateVars(vars);
-            }
+            pool.updateVars(vars);
             s.second = (s.second == MESH_DIV_NEW_VARS) ? default_div : 0;
         }
 
@@ -294,7 +285,7 @@ void Shape::deleteLater()
     if (running)
     {
         next.second = MESH_DIV_ABORT;
-        cancel.store(true);
+        pool.cancel.store(true);
     }
     else
     {
@@ -357,13 +348,13 @@ void Shape::freeGL()
 // This function is called in a separate thread:
 Shape::BoundedMesh Shape::renderMesh(QPair<Settings, int> s)
 {
-    cancel.store(false);
+    pool.cancel.store(false);
 
     // Use the global bounds settings
     Kernel::Region<3> r({s.first.min.x(), s.first.min.y(), s.first.min.z()},
                         {s.first.max.x(), s.first.max.y(), s.first.max.z()});
-    auto m = Kernel::Mesh::render(es.data(), r,
+    auto m = Kernel::Mesh::render(pool, r,
             1 / (s.first.res / (1 << s.second)),
-            pow(10, -s.first.quality), cancel);
+            pow(10, -s.first.quality));
     return {m.release(), r};
 }

@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/render/brep/mesh.hpp"
+#include "libfive/render/brep/pool.hpp"
 #include "libfive/eval/eval_jacobian.hpp"
 
 namespace Kernel { class Tape; /*  forward declaration */ }
@@ -154,12 +155,10 @@ protected:
     BoundedMesh renderMesh(QPair<Settings, int> s);
     QFuture<BoundedMesh> mesh_future;
     QFutureWatcher<BoundedMesh> mesh_watcher;
-    std::atomic_bool cancel;
 
     Kernel::Tree tree;
     std::map<Kernel::Tree::Id, float> vars;
-    std::vector<Kernel::XTreeEvaluator,
-                Eigen::aligned_allocator<Kernel::XTreeEvaluator>> es;
+    Kernel::Pool pool;
 
     QScopedPointer<Kernel::Mesh> mesh;
     Kernel::Region<3> render_bounds;
