@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <numeric>
 #include <functional>
 #include <limits>
+#include <stack>
 
 #include <cmath>
 
@@ -35,19 +36,40 @@ namespace Kernel {
 template <unsigned N>
 void XTreePool<N>::run(
         XTreeEvaluator* eval, boost::lockfree::queue<Task<N>*>& tasks,
-        const float min_feature, const float max_err,
+        const float min_feature, const float max_err, std::atomic_int& slots,
         std::atomic_bool& done, std::atomic_bool& cancel)
 {
     std::unique_ptr<Task<N>> task;
+    bool waiting = false;
+    std::stack<Task<N>*, std::vector<Task<N>*>> local;
     while (!done.load() && !cancel.load())
     {
-        {   // Store the task in an RAII handle
+        {   // Prioritize picking up a local task before going to
+            // the MPMC queue, to keep things in this thread for
+            // as long as possible.
             Task<N>* task_;
-            if (!tasks.pop(task_))
+            if (local.size())
             {
+                task_ = local.top();
+                local.pop();
+            }
+            else if (!tasks.pop(task_))
+            {
+                if (!waiting)
+                {
+                    waiting = true;
+                    slots++;
+                }
                 continue;
             }
             task.reset(task_);
+        }
+
+        // Mark that this thread is no longer available
+        if (waiting)
+        {
+            waiting = false;
+            slots--;
         }
 
         auto tape = task->tape;
@@ -62,7 +84,7 @@ void XTreePool<N>::run(
         {
             tape = t->evalInterval(eval->interval, task->tape);
 
-            // If this Tree is ambiguous, then push the children to the queue
+            // If this Tree is ambiguous, then push the children to the stack
             // and keep going (because all the useful work will be done
             // by collectChildren eventually).
             if (t->type == Interval::AMBIGUOUS || t->type == Interval::UNKNOWN)
@@ -75,7 +97,15 @@ void XTreePool<N>::run(
                     next->target = t->children[i];
                     next->tape = tape;
 
-                    tasks.push(next);
+                    if (slots-- > 0)
+                    {
+                        tasks.push(next);
+                    }
+                    else
+                    {
+                        slots++;
+                        local.push(next);
+                    }
                 }
 
                 continue;
@@ -148,15 +178,17 @@ std::unique_ptr<const XTree<N>> XTreePool<N>::build(
     task->tape = eval->deck->tape;
 
     tasks.push(task);
+    std::atomic_int slots(workers);
 
     std::vector<std::future<void>> futures;
     futures.resize(workers);
     for (unsigned i=0; i < workers; ++i)
     {
         futures[i] = std::async(std::launch::async,
-                [&eval, &tasks, &cancel, &done, min_feature, max_err, i](){
+                [&eval, &tasks, &slots, &cancel, &done,
+                 min_feature, max_err, i](){
                     run(eval + i, tasks, min_feature, max_err,
-                        done, cancel);
+                        slots, done, cancel);
                     });
     }
 

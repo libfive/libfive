@@ -59,7 +59,8 @@ protected:
     static void run(
             XTreeEvaluator* eval, boost::lockfree::queue<Task<N>*>& tasks,
             const float min_feature, const float max_err,
-            std::atomic_bool& done, std::atomic_bool& cancel);
+            std::atomic_int& slots, std::atomic_bool& done,
+            std::atomic_bool& cancel);
 };
 
 extern template struct XTreePool<2>;
