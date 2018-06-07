@@ -50,7 +50,7 @@ XTree<N>::XTree(XTree<N>* parent, Region<N> region)
       _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
       AtA(Eigen::Matrix<double, N, N>::Zero()),
       AtB(Eigen::Matrix<double, N, 1>::Zero()),
-      done(false)
+      pending((1 << N) - 1)
 {
     std::fill(index.begin(), index.end(), 0);
     std::fill(corners.begin(), corners.end(), Interval::UNKNOWN);
@@ -83,7 +83,6 @@ Tape::Handle XTree<N>::evalInterval(IntervalEvaluator& eval, Tape::Handle tape)
         std::fill(corners.begin(), corners.end(), type);
         manifold = true;
         buildCornerMask();
-        done.store(true);
     }
     return o.second;
 }
@@ -561,8 +560,6 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, Tape::Handle tape)
         // this is the bottom of the recursion)
         findVertex(vertex_count++);
     }
-
-    done.store(true);
 }
 
 template <unsigned N>
@@ -579,19 +576,8 @@ template <unsigned N>
 bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
                                double max_err)
 {
-    // Check all the children, returning false if we're not done
-    for (unsigned i=0; i < children.size(); ++i)
-    {
-        auto ptr = children[i].load();
-        if (!ptr || !ptr->done.load())
-        {
-            return false;
-        }
-    }
-    // If we've made it this far but done is already set, then another
-    // thread is partway through running collectChildren and we
-    // shouldn't interfere.
-    if (done.exchange(true))
+    // Wait for collectChildren to have been called N times
+    if (pending-- != 0)
     {
         return false;
     }

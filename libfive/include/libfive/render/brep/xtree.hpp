@@ -250,7 +250,7 @@ protected:
     double BtB=0;
 
     /*  Marks whether this tree is fully constructed */
-    std::atomic_bool done;
+    std::atomic_int pending;
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;
