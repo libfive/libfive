@@ -55,8 +55,8 @@ public:
      *  partway through the computation.
      */
     static std::unique_ptr<Mesh> render(
-            XTreeEvaluator* es,
-            const Region<3>& r, double min_feature, double max_err,
+            XTreeEvaluator* es, const Region<3>& r,
+            double min_feature, double max_err,
             int workers, std::atomic_bool& cancel);
 
     /*

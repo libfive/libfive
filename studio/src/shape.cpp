@@ -364,6 +364,6 @@ Shape::BoundedMesh Shape::renderMesh(QPair<Settings, int> s)
                         {s.first.max.x(), s.first.max.y(), s.first.max.z()});
     auto m = Kernel::Mesh::render(es.data(), r,
             1 / (s.first.res / (1 << s.second)),
-            pow(10, -s.first.quality), cancel);
+            pow(10, -s.first.quality), es.size(), cancel);
     return {m.release(), r};
 }
