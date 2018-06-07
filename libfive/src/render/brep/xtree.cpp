@@ -90,7 +90,7 @@ std::unique_ptr<const XTree<N>> XTree<N>::build(
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(XTreeEvaluator* eval, Tape::Handle tape, Region<N> region,
+XTree<N>::XTree(XTreeEvaluator*& eval, Tape::Handle tape, Region<N> region,
                 double min_feature, double max_err, Pool& pool,
                 Neighbors<N> neighbors)
     : region(region), _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
@@ -150,9 +150,11 @@ XTree<N>::XTree(XTreeEvaluator* eval, Tape::Handle tape, Region<N> region,
                 {
                     futures[i] = std::async(std::launch::async,
                         [&rs, &pool, tape, e, i, min_feature, max_err]()
-                        { return std::make_pair(e, new XTree(
-                                e, tape, rs[i], min_feature, max_err,
-                                pool, Neighbors<N>())); });
+                        {   XTreeEvaluator* e_mut = e;
+                            auto out = new XTree(
+                                e_mut, tape, rs[i], min_feature, max_err,
+                                pool, Neighbors<N>());
+                            return std::make_pair(e_mut, out); });
                 }
                 else
                 {

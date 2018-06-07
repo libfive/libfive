@@ -175,10 +175,13 @@ protected:
     /*
      *  Private constructor for XTree
      *
-     *  If multiple evaluators are provided, then tree construction will
+     *  If the pool has spare resources, then tree construction will
      *  be distributed across multiple threads.
+     *
+     *  The incoming eval pointer may be mutated if it is released to
+     *  the pool (and replaced by another pointer).  Don't worry about it.
      */
-    XTree(XTreeEvaluator* eval, std::shared_ptr<Tape> tape, Region<N> region,
+    XTree(XTreeEvaluator*& eval, std::shared_ptr<Tape> tape, Region<N> region,
           double min_feature, double max_err, Pool& pool,
           Neighbors<N> neighbors);
 
