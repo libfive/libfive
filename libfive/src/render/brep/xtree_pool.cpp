@@ -40,7 +40,7 @@ void XTreePool<N>::run(
         std::atomic_bool& done, std::atomic_bool& cancel)
 {
     std::unique_ptr<Task<N>> task;
-    bool waiting = false;
+    bool idle = false;
     std::stack<Task<N>*, std::vector<Task<N>*>> local;
     while (!done.load() && !cancel.load())
     {
@@ -55,20 +55,27 @@ void XTreePool<N>::run(
             }
             else if (!tasks.pop(task_))
             {
-                if (!waiting)
-                {
-                    waiting = true;
-                    slots++;
-                }
-                continue;
+                task_ = nullptr;
             }
             task.reset(task_);
         }
 
-        // Mark that this thread is no longer available
-        if (waiting)
+        // If we failed to get a task, then mark this thread as idle
+        // and keep looping (so that we terminate when either of the
+        // flags are set).
+        if (task.get() == nullptr)
         {
-            waiting = false;
+            if (!idle)
+            {
+                slots++;
+                idle = true;
+            }
+            continue;
+        }
+        // Otherwise, mark that this thread is no longer available
+        else if (idle)
+        {
+            idle = false;
             slots--;
         }
 
@@ -97,6 +104,9 @@ void XTreePool<N>::run(
                     next->target = t->children[i];
                     next->tape = tape;
 
+                    // If there are available slots, then pass this work
+                    // to the queue; otherwise, undo the decrement and
+                    // assign it to be evaluated locally.
                     if (slots-- > 0)
                     {
                         tasks.push(next);
@@ -172,7 +182,7 @@ std::unique_ptr<const XTree<N>> XTreePool<N>::build(
     std::atomic<XTree<N>*> root(new XTree<N>(nullptr, region));
     std::atomic_bool done(false);
 
-    boost::lockfree::queue<Task<N>*> tasks(256);
+    boost::lockfree::queue<Task<N>*> tasks(workers * 2);
     auto task = new Task<N>;
     task->target = root;
     task->tape = eval->deck->tape;
