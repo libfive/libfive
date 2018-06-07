@@ -82,7 +82,7 @@ Tape::Handle XTree<N>::evalInterval(IntervalEvaluator& eval, Tape::Handle tape)
     {
         std::fill(corners.begin(), corners.end(), type);
         manifold = true;
-        buildCornerMask();
+        corner_mask = (type == Interval::FILLED) ? ((1 << (1 << N)) - 1) : 0;
     }
     return o.second;
 }
