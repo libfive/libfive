@@ -75,7 +75,7 @@ public:
 
 std::unique_ptr<Contours> Contours::render(
         const Tree t, const Region<2>& r,
-        double max_err, double min_feature,
+        double min_feature, double max_err,
         bool multithread)
 {
     const unsigned workers = multithread ? 8 : 1;
