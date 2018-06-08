@@ -58,22 +58,23 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
 bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
                                 Tape::Handle tape)
 {
-    auto v = eval(p, tape);
+    auto handle = evalAndPush(p, tape);
 
     // Unambiguous cases
-    if (v < 0)
+    if (handle.first < 0)
     {
         return true;
     }
-    else if (v > 0)
+    else if (handle.first > 0)
     {
         return false;
     }
 
     // Otherwise, we need to handle the zero-crossing case!
 
-    // First, we extract all of the features
-    auto fs = features_(p, tape);
+    // First, we evaluate and extract all of the features, saving
+    // time by re-using the shortened tape from evalAndPush
+    auto fs = d(handle.second->rwalk(*this));
 
     // If there's only a single feature, we can get both positive and negative
     // values out if it's got a non-zero gradient
