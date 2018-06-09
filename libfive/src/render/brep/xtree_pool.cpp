@@ -101,8 +101,8 @@ void XTreePool<N>::run(
                 for (unsigned i=0; i < t->children.size(); ++i)
                 {
                     auto next = new Task<N>();
-                    t->children[i].store(new XTree<N>(t, rs[i]));
-                    next->target = t->children[i];
+                    auto target = new XTree<N>(t, i, rs[i]);
+                    next->target = target;
                     next->tape = tape;
 
                     // If there are available slots, then pass this work
@@ -179,7 +179,7 @@ std::unique_ptr<const XTree<N>> XTreePool<N>::build(
         XTree<N>::mt = Marching::buildTable<N>();
     }
 
-    std::atomic<XTree<N>*> root(new XTree<N>(nullptr, region));
+    std::atomic<XTree<N>*> root(new XTree<N>(nullptr, 0, region));
     std::atomic_bool done(false);
 
     boost::lockfree::queue<Task<N>*> tasks(workers * 2);

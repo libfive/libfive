@@ -44,7 +44,7 @@ public:
     /*
      *  Simple constructor
      */
-    explicit XTree(XTree<N>* parent, Region<N> region);
+    explicit XTree(XTree<N>* parent, unsigned index, Region<N> region);
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
@@ -119,6 +119,11 @@ public:
 
     /*  Parent tree, or nullptr if this is the root */
     XTree<N>* parent;
+
+    /*  Index into the parent tree's children array.  We only store the tree
+     *  in the children array when it is complete, so it needs to know its
+     *  index for when that time comes.  */
+    unsigned parent_index;
 
     /*  The region filled by this XTree */
     const Region<N> region;
@@ -239,6 +244,12 @@ protected:
      *  Deletes all children branches, setting the children array to nulls
      */
     void deleteBranches();
+
+    /*
+     *  Call this when construction is complete; it will atomically install
+     *  this tree into the parent's array of children pointers.
+     */
+    void done();
 
     /*  Mass point is the average intersection location *
      *  (the last coordinate is number of points summed) */

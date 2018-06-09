@@ -44,8 +44,8 @@ std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(XTree<N>* parent, Region<N> region)
-    : parent(parent), region(region),
+XTree<N>::XTree(XTree<N>* parent, unsigned parent_index, Region<N> region)
+    : parent(parent), parent_index(parent_index), region(region),
       type(Interval::UNKNOWN),
       _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
       AtA(Eigen::Matrix<double, N, N>::Zero()),
@@ -83,6 +83,7 @@ Tape::Handle XTree<N>::evalInterval(IntervalEvaluator& eval, Tape::Handle tape)
         std::fill(corners.begin(), corners.end(), type);
         manifold = true;
         corner_mask = (type == Interval::FILLED) ? ((1 << (1 << N)) - 1) : 0;
+        done();
     }
     return o.second;
 }
@@ -560,6 +561,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, Tape::Handle tape)
         // this is the bottom of the recursion)
         findVertex(vertex_count++);
     }
+    done();
 }
 
 template <unsigned N>
@@ -609,6 +611,7 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
     {
         deleteBranches();
         manifold = true;
+        done();
         return true;
     }
 
@@ -622,6 +625,7 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
                     [](const std::atomic<XTree<N>*>& o)
                     { return o.load()->isBranch(); }))
     {
+        done();
         return true;
     }
 
@@ -637,6 +641,7 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
     // If we're not manifold, then we can't collapse
     if (!manifold)
     {
+        done();
         return true;
     }
 
@@ -678,6 +683,7 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
         vertex_count = 0;
     }
 
+    done();
     return true;
 }
 
@@ -686,6 +692,15 @@ void XTree<N>::deleteBranches()
 {
     std::for_each(children.begin(), children.end(),
         [](std::atomic<XTree<N>*>& o) { delete o.exchange(nullptr); });
+}
+
+template <unsigned N>
+void XTree<N>::done()
+{
+    if (parent)
+    {
+        parent->children[parent_index].store(this);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
