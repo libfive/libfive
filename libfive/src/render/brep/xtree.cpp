@@ -201,8 +201,8 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, Tape::Handle tape)
     // Pack corners into filled / empty arrays
     for (uint8_t i=0; i < children.size(); ++i)
     {
-        all_full  = all_full && corners[i];
-        all_empty = all_empty && !corners[i];
+        all_full  &= (corners[i] == Interval::FILLED);
+        all_empty &= (corners[i] == Interval::EMPTY);
     }
 
     type = all_empty ? Interval::EMPTY
