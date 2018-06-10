@@ -72,11 +72,6 @@ public:
                          double max_err);
 
     /*
-     *  Deletes all of the children
-     */
-    ~XTree();
-
-    /*
      *  Checks whether this tree splits
      */
     bool isBranch() const { return children[0] != nullptr; }
@@ -85,7 +80,7 @@ public:
      *  Looks up a child, returning *this if this isn't a branch
      */
     const XTree<N>* child(unsigned i) const
-    { return isBranch() ? children[i].load() : this; }
+    { return isBranch() ? children[i].get() : this; }
 
     /*
      *  Returns the filled / empty state for the ith corner
@@ -129,7 +124,7 @@ public:
     const Region<N> region;
 
     /*  Children pointers, if this is a branch  */
-    std::array<std::atomic<XTree<N>*>, 1 << N> children;
+    std::array<std::unique_ptr<XTree<N>>, 1 << N> children;
 
     /*  level = max(map(level, children)) + 1  */
     unsigned level=0;
@@ -239,11 +234,6 @@ protected:
      *  Sets corner_mask based on corner[] values
      */
     void buildCornerMask();
-
-    /*
-     *  Deletes all children branches, setting the children array to nulls
-     */
-    void deleteBranches();
 
     /*
      *  Call this when construction is complete; it will atomically install

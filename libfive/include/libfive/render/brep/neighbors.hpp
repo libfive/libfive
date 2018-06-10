@@ -119,7 +119,7 @@ public:
      *  given the child's index and the array of other children.
      */
     Neighbors<N> push(uint8_t child,
-            const std::array<std::atomic<const XTree<N>*>, 1 << N>&
+            const std::array<std::unique_ptr<XTree<N>>, 1 << N>&
                 children);
 
 protected:
