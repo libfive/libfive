@@ -64,6 +64,10 @@ protected:
     Interval::I X, Y, Z;
     Type type;
 
+    /*  If terminal is true, then the tape contains no min/max clauses
+     *  so cannot be specialized further */
+    bool terminal=false;
+
     /*  This is the parent tape, used in getBase() when we need
      *  to traverse up through the tape. */
     Handle parent;

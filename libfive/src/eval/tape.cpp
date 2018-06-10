@@ -49,6 +49,12 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
                               Clause::Id, Clause::Id)> fn,
            Type t, Region<3> r)
 {
+    // If this tape has no min/max clauses, then return it right away
+    if (tape->terminal)
+    {
+        return tape;
+    }
+
     // Since we'll be figuring out which clauses are disabled and
     // which should be remapped, we reset those arrays here
     std::fill(deck.disabled.begin(), deck.disabled.end(), true);
@@ -57,6 +63,7 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
     // Mark the root node as active
     deck.disabled[tape->i] = false;
 
+    bool terminal = true;
     for (const auto& c : tape->t)
     {
         if (!deck.disabled[c.id])
@@ -69,7 +76,7 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
                 case KEEP_B:        deck.disabled[c.b] = false;
                                     deck.remap[c.id] = c.b;
                                     break;
-                case KEEP_BOTH:     break;
+                case KEEP_BOTH:     terminal = false; // fallthrough
                 case KEEP_ALWAYS:   break;
             }
 
@@ -103,6 +110,7 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
 
     out->type = t;
     out->parent = tape;
+    out->terminal = terminal;
     out->t.clear(); // preserves capacity
 
     // Now, use the data in disabled and remap to make the new tape
