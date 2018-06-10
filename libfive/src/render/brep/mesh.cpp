@@ -136,11 +136,13 @@ std::unique_ptr<Mesh> Mesh::render(
         const Region<3>& r, double min_feature, double max_err,
         int workers, std::atomic_bool& cancel)
 {
-    return mesh(XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel),
-                cancel);
+    auto t = XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel);
+    auto out = mesh(t, cancel);
+    t->fastDelete();
+    return out;
 }
 
-std::unique_ptr<Mesh> Mesh::mesh(std::unique_ptr<const XTree<3>> xtree,
+std::unique_ptr<Mesh> Mesh::mesh(std::unique_ptr<XTree<3>>& xtree,
                                  std::atomic_bool& cancel)
 {
     // Perform marching squares

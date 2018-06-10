@@ -41,7 +41,7 @@ struct XTreePool
     /*
      *  Simplified construction with fewer arguments, used in unit testing
      */
-    static std::unique_ptr<const XTree<N>> build(
+    static std::unique_ptr<XTree<N>> build(
             const Tree t, Region<N> region,
             double min_feature=0.1, double max_err=1e-8);
 
@@ -50,7 +50,7 @@ struct XTreePool
      *
      *  eval must be the first item in an array of at least `workers` items
      */
-    static std::unique_ptr<const XTree<N>> build(
+    static std::unique_ptr<XTree<N>> build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel);

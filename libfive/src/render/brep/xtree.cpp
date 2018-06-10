@@ -746,4 +746,24 @@ typename XTree<N>::Vec XTree<N>::massPoint() const
     return _mass_point.template head<N>() / _mass_point(N);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+void XTree<N>::fastDelete()
+{
+    std::vector<std::future<void>> futures;
+    futures.resize(children.size());
+    for (unsigned i=0; i < children.size(); ++i)
+    {
+        futures[i] = std::async(std::launch::async,
+                [this, i](){ this->children[i].reset(); });
+    }
+
+    // Wait on all of the futures
+    for (auto& f : futures)
+    {
+        f.get();
+    }
+}
+
 }   // namespace Kernel

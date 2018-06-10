@@ -78,7 +78,7 @@ public:
 
 protected:
     /*  Walks an XTree, returning a mesh  */
-    static std::unique_ptr<Mesh> mesh(std::unique_ptr<const XTree<3>> tree,
+    static std::unique_ptr<Mesh> mesh(std::unique_ptr<XTree<3>>& tree,
                                       std::atomic_bool& cancel);
 
     /*

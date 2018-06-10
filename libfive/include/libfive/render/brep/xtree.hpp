@@ -100,6 +100,9 @@ public:
      */
     Eigen::Matrix<double, N, 1> massPoint() const;
 
+    /*  Deletes children using multiple threads */
+    void fastDelete();
+
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
