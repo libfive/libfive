@@ -115,24 +115,10 @@ void XTreePool<N>::run(
 
                 continue;
             }
-            // First termination condition: if the root of the XTree is
-            // empty or filled, then return right away.
-            else if (t->parent == nullptr)
-            {
-                break;
-            }
         }
         else
         {
             t->evalLeaf(eval, tape);
-
-            // Second termination condition: if we did a leaf evaluation
-            // on the root of the XTree, then we've been passed a large
-            // min_feature and this is the end.
-            if (t->parent == nullptr)
-            {
-                break;
-            }
         }
 
         // If all of the children are done, then ask the parent to collect them
@@ -140,9 +126,8 @@ void XTreePool<N>::run(
         for (t = t->parent; t && t->collectChildren(eval, tape, max_err);
              t = t->parent);
 
-        // Third termination condition:  If we just collected children at the
-        // root of the tree (then moved to point at its parent, which is
-        // nullptr), then we're done.
+        // Termination condition:  if we've ended up pointing at the parent
+        // of the tree's root (which is nullptr), then we're done and break
         if (t == nullptr)
         {
             break;
