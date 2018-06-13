@@ -111,21 +111,14 @@ TEST_CASE("Solver::findRoot")
 
         auto sos = square(r1) + square(r2) + square(r3) + square(r4) + square(r5);
 
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-        std::chrono::duration<double> elapsed;
-        start = std::chrono::system_clock::now();
-        auto out = Solver::findRoot(sos,
-                {{ax.id(), -3}, {ay.id(), 3},
-                 {bx.id(), 1}, {by.id(), 0},
-                 {cx.id(), 3}, {cy.id(), 2}});
-        end = std::chrono::system_clock::now();
-
-        elapsed = end - start;
-        auto elapsed_ms =
-            std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
-
-        WARN("Solved SOS root in " +
-             std::to_string(elapsed.count()) + " sec");
+        std::pair<float, Solver::Solution> out;
+        BENCHMARK("SOS root")
+        {
+            out = Solver::findRoot(sos,
+                    {{ax.id(), -3}, {ay.id(), 3},
+                     {bx.id(), 1}, {by.id(), 0},
+                     {cx.id(), 3}, {cy.id(), 2}});
+        }
 
         auto res = out.first;
         auto vals = out.second;
