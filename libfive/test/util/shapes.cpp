@@ -119,3 +119,21 @@ Tree box(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
                max(lower.z() - Tree::Z(),
                    Tree::Z() - upper.z()));
 }
+
+Tree shell(Tree t, float offset)
+{
+    return max(t, t - offset);
+}
+
+Tree blend(Tree a, Tree b, float r)
+{
+    auto vc0 = r - a;
+    auto vc1 = r - b;
+
+    auto u0 = max(vc0, 0.f);
+    auto u1 = max(vc1, 0.f);
+
+    auto len = sqrt(square(u0) + square(u1));
+
+    return max(r, min(a, b)) - len;
+}
