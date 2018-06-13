@@ -280,6 +280,17 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             // This is phase 1, as described above
             for (uint8_t i=0; i < count; ++i)
             {
+                // The Eigen evaluator occasionally disagrees with the
+                // feature (single-point) evaluator, because it has SSE
+                // implementations of transcendental functions that can
+                // return subtly different results.  If we get a result that
+                // is sufficiently close to zero, then fall back to the
+                // canonical single-point evaluator to avoid inconsistency.
+                if (fabs(vs(i)) < 1e-6)
+                {
+                    vs(i) = eval->feature.eval(pos.col(i));
+                }
+
                 // Handle inside, outside, and (non-ambiguous) on-boundary
                 if (vs(i) > 0 || !std::isfinite(vs(i)))
                 {
