@@ -35,13 +35,13 @@ TEST_CASE("findBounds")
         auto r = findBounds(s);
         CAPTURE(r.lower);
         CAPTURE(r.upper);
-        REQUIRE(r.lower.x() == Approx(-0.5).epsilon(0.001));
-        REQUIRE(r.lower.y() == Approx(-0.5).epsilon(0.001));
-        REQUIRE(r.lower.z() == Approx(-0.5).epsilon(0.001));
+        REQUIRE(r.lower.x() == Approx(-0.5).margin(0.001));
+        REQUIRE(r.lower.y() == Approx(-0.5).margin(0.001));
+        REQUIRE(r.lower.z() == Approx(-0.5).margin(0.001));
 
-        REQUIRE(r.upper.x() == Approx(0.5).epsilon(0.001));
-        REQUIRE(r.upper.y() == Approx(0.5).epsilon(0.001));
-        REQUIRE(r.upper.z() == Approx(0.5).epsilon(0.001));
+        REQUIRE(r.upper.x() == Approx(0.5).margin(0.001));
+        REQUIRE(r.upper.y() == Approx(0.5).margin(0.001));
+        REQUIRE(r.upper.z() == Approx(0.5).margin(0.001));
     }
 
     SECTION("Moved sphere")
@@ -50,13 +50,13 @@ TEST_CASE("findBounds")
         auto r = findBounds(s);
         CAPTURE(r.lower);
         CAPTURE(r.upper);
-        REQUIRE(r.lower.x() == Approx(2.5).epsilon(0.001));
-        REQUIRE(r.lower.y() == Approx(3.5).epsilon(0.001));
-        REQUIRE(r.lower.z() == Approx(4.5).epsilon(0.001));
+        REQUIRE(r.lower.x() == Approx(2.5).margin(0.001));
+        REQUIRE(r.lower.y() == Approx(3.5).margin(0.001));
+        REQUIRE(r.lower.z() == Approx(4.5).margin(0.001));
 
-        REQUIRE(r.upper.x() == Approx(3.5).epsilon(0.001));
-        REQUIRE(r.upper.y() == Approx(4.5).epsilon(0.001));
-        REQUIRE(r.upper.z() == Approx(5.5).epsilon(0.001));
+        REQUIRE(r.upper.x() == Approx(3.5).margin(0.001));
+        REQUIRE(r.upper.y() == Approx(4.5).margin(0.001));
+        REQUIRE(r.upper.z() == Approx(5.5).margin(0.001));
     }
 
     SECTION("Moved circle")
@@ -66,11 +66,11 @@ TEST_CASE("findBounds")
         auto r = findBounds(s);
         CAPTURE(r.lower);
         CAPTURE(r.upper);
-        REQUIRE(r.lower.x() == Approx(0).epsilon(0.001));
-        REQUIRE(r.lower.y() == Approx(0).epsilon(0.001));
+        REQUIRE(r.lower.x() == Approx(0).margin(0.001));
+        REQUIRE(r.lower.y() == Approx(0).margin(0.001));
 
-        REQUIRE(r.upper.x() == Approx(0.6).epsilon(0.001));
-        REQUIRE(r.upper.y() == Approx(0.6).epsilon(0.001));
+        REQUIRE(r.upper.x() == Approx(0.6).margin(0.001));
+        REQUIRE(r.upper.y() == Approx(0.6).margin(0.001));
     }
 
     SECTION("Rotated shape (2D)")

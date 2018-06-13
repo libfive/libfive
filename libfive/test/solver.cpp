@@ -124,9 +124,8 @@ TEST_CASE("Solver::findRoot")
         auto elapsed_ms =
             std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
 
-        std::string log = "\nSolved SOS root in " +
-               std::to_string(elapsed.count()) + " sec";
-        WARN(log);
+        WARN("Solved SOS root in " +
+             std::to_string(elapsed.count()) + " sec");
 
         auto res = out.first;
         auto vals = out.second;

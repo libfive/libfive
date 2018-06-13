@@ -89,9 +89,8 @@ TEST_CASE("Mesh::render (performance)")
     auto elapsed_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
 
-    std::string log = "\nMade sponge mesh in " +
-           std::to_string(elapsed.count()) + " sec";
-    WARN(log);
+    WARN("Made sponge mesh in " +
+         std::to_string(elapsed.count()) + " sec");
 }
 
 TEST_CASE("Mesh::render (face count in rectangular prism)")
