@@ -142,11 +142,18 @@ void XTreePool<N>::run(
 template <unsigned N>
 std::unique_ptr<XTree<N>> XTreePool<N>::build(
             const Tree t, Region<N> region,
-            double min_feature, double max_err)
+            double min_feature, double max_err,
+            unsigned workers)
 {
-    auto eval = XTreeEvaluator(t);
+    std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
+    es.reserve(workers);
+    for (unsigned i=0; i < workers; ++i)
+    {
+        es.emplace_back(XTreeEvaluator(t));
+    }
     std::atomic_bool cancel(false);
-    return XTreePool<N>::build(&eval, region, min_feature, max_err, 1, cancel);
+    return XTreePool<N>::build(es.data(), region, min_feature,
+                               max_err, workers, cancel);
 }
 
 template <unsigned N>

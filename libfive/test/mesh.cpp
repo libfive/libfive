@@ -159,7 +159,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
     std::unique_ptr<XTree<3>> t;
     BENCHMARK("XTree construction")
     {
-        t = XTreePool<3>::build(sphereGyroid, r, 0.025, 1e-8);
+        t = XTreePool<3>::build(sphereGyroid, r, 0.025, 1e-8, 8);
     }
 
     std::unique_ptr<Mesh> m;
