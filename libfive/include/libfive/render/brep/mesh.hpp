@@ -76,11 +76,10 @@ public:
     template <Axis::Axis A, bool D>
     void load(const std::array<const XTree<3>*, 4>& ts);
 
-protected:
     /*  Walks an XTree, returning a mesh  */
-    static std::unique_ptr<Mesh> mesh(std::unique_ptr<const XTree<3>> tree,
+    static std::unique_ptr<Mesh> mesh(std::unique_ptr<const XTree<3>>& tree,
                                       std::atomic_bool& cancel);
-
+protected:
     /*
      *  Inserts a line into the mesh as a zero-size triangle
      *  (used for debugging)

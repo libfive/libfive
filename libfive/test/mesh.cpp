@@ -111,25 +111,70 @@ TEST_CASE("Mesh::render (performance)", "[!benchmark]")
 
     BENCHMARK("Sphere / gyroid intersection")
     {
-      auto scale = 0.5f;
-      auto radius = 1.5f;
-      auto thickness = 0.5;
+        auto scale = 0.5f;
+        auto radius = 1.5f;
+        auto thickness = 0.5;
 
-      auto gyroidSrf =
+        auto gyroidSrf =
         sin(Kernel::Tree::X() / scale) * cos(Kernel::Tree::Y() / scale) +
         sin(Kernel::Tree::Y() / scale) * cos(Kernel::Tree::Z() / scale) +
         sin(Kernel::Tree::Z() / scale) * cos(Kernel::Tree::X() / scale);
 
-      auto gyroid = shell(gyroidSrf, thickness);
-      auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
+        auto gyroid = shell(gyroidSrf, thickness);
+        auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
 
-      auto sphereGyroid = max(sphere1, gyroid);
-      sphereGyroid = min(sphereGyroid,
+        auto sphereGyroid = max(sphere1, gyroid);
+        sphereGyroid = min(sphereGyroid,
                          min(sphereGyroid ,
                          (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
 
-      Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
+        Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
-      auto mesh = Mesh::render(sphereGyroid, r, 0.025);
+        auto mesh = Mesh::render(sphereGyroid, r, 0.025);
+    }
+}
+
+TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
+{
+    auto scale = 0.5f;
+    auto radius = 1.5f;
+    auto thickness = 0.5;
+
+    auto gyroidSrf =
+    sin(Kernel::Tree::X() / scale) * cos(Kernel::Tree::Y() / scale) +
+    sin(Kernel::Tree::Y() / scale) * cos(Kernel::Tree::Z() / scale) +
+    sin(Kernel::Tree::Z() / scale) * cos(Kernel::Tree::X() / scale);
+
+    auto gyroid = shell(gyroidSrf, thickness);
+    auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
+
+    auto sphereGyroid = max(sphere1, gyroid);
+    sphereGyroid = min(sphereGyroid,
+                     min(sphereGyroid ,
+                     (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
+
+    Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
+
+    std::unique_ptr<const XTree<3>> t;
+    BENCHMARK("XTree construction")
+    {
+        t = XTree<3>::build(sphereGyroid, r, 0.025, 1e-8, true);
+    }
+
+    std::unique_ptr<Mesh> m;
+    std::atomic_bool cancel(false);
+    BENCHMARK("Mesh building")
+    {
+        m = Mesh::mesh(t, cancel);
+    }
+
+    BENCHMARK("XTree deletion")
+    {
+        t.reset();
+    }
+
+    BENCHMARK("Mesh deletion")
+    {
+        m.reset();
     }
 }
