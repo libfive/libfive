@@ -175,7 +175,7 @@ TEST_CASE("XTree<3>::vert")
                     CAPTURE(t->region.lower.transpose());
                     CAPTURE(t->region.upper.transpose());
                     REQUIRE(eval.feature.eval(t->vert3(i).template cast<float>())
-                            == Approx(0).epsilon(err));
+                            == Approx(0.0f).margin(err));
                 }
             }
         }
