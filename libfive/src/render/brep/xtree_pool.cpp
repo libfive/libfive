@@ -32,15 +32,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
+template <unsigned N>
+using LockFreeStack =
+    boost::lockfree::stack<Task<N>, boost::lockfree::fixed_sized<true>>;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
 static void run(
-        XTreeEvaluator* eval, boost::lockfree::stack<Task<N>>& tasks,
-        const float min_feature, const float max_err, std::atomic_int& slots,
+        XTreeEvaluator* eval, LockFreeStack<N>& tasks,
+        const float min_feature, const float max_err,
         std::atomic_bool& done, std::atomic_bool& cancel)
 {
-    bool idle = false;
     std::stack<Task<N>, std::vector<Task<N>>> local;
 
     while (!done.load() && !cancel.load())
@@ -61,23 +64,11 @@ static void run(
             }
         }
 
-        // If we failed to get a task, then mark this thread as idle
-        // and keep looping (so that we terminate when either of the
-        // flags are set).
+        // If we failed to get a task, keep looping
+        // (so that we terminate when either of the flags are set).
         if (task.target == nullptr)
         {
-            if (!idle)
-            {
-                slots++;
-                idle = true;
-            }
             continue;
-        }
-        // Otherwise, mark that this thread is no longer available
-        else if (idle)
-        {
-            idle = false;
-            slots--;
         }
 
         auto tape = task.tape;
@@ -103,11 +94,7 @@ static void run(
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
-                    if (slots.load() > 0)
-                    {
-                        tasks.push(next);
-                    }
-                    else
+                    if (!tasks.bounded_push(next))
                     {
                         local.push(next);
                     }
@@ -171,23 +158,22 @@ std::unique_ptr<XTree<N>> XTreePool<N>::build(
     auto root(new XTree<N>(nullptr, 0, region));
     std::atomic_bool done(false);
 
-    boost::lockfree::stack<Task<N>> tasks(workers * 2);
+    LockFreeStack<N> tasks(workers);
     Task<N> task;
     task.target = root;
     task.tape = eval->deck->tape;
 
     tasks.push(task);
-    std::atomic_int slots(0);
 
     std::vector<std::future<void>> futures;
     futures.resize(workers);
     for (unsigned i=0; i < workers; ++i)
     {
         futures[i] = std::async(std::launch::async,
-                [&eval, &tasks, &slots, &cancel, &done,
+                [&eval, &tasks, &cancel, &done,
                  min_feature, max_err, i](){
                     run(eval + i, tasks, min_feature, max_err,
-                        slots, done, cancel);
+                        done, cancel);
                     });
     }
 
