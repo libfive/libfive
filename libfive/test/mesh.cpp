@@ -171,6 +171,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
 
     BENCHMARK("XTree deletion")
     {
+        t->fastDelete();
         t.reset();
     }
 
