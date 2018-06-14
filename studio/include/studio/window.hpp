@@ -22,9 +22,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QMainWindow>
 #include <QMessageBox>
 
+#include "studio/args.hpp"
+
 class Editor;
 class View;
 struct Documentation;
+
 namespace Kernel { class Mesh; }
 
 class Window : public QMainWindow
@@ -35,7 +38,7 @@ public:
      *  If target is the null QString, then loads the tutorial file
      *  on first run.
      */
-    explicit Window(QString target);
+    explicit Window(Arguments args);
 
     /*
      *  Loads a file by path, properly checking if the existing document

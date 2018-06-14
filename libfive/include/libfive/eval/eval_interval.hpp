@@ -37,8 +37,9 @@ public:
      */
     Interval::I eval(const Eigen::Vector3f& lower,
                      const Eigen::Vector3f& upper);
-    Interval::I evalAndPush(const Eigen::Vector3f& lower,
-                            const Eigen::Vector3f& upper);
+    std::pair<Interval::I, Tape::Handle> evalAndPush(
+                     const Eigen::Vector3f& lower,
+                     const Eigen::Vector3f& upper);
 
     /*
      *  Changes a variable's value

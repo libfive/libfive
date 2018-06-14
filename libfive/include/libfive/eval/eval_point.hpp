@@ -35,7 +35,7 @@ public:
      *  Single-point evaluation
      */
     float eval(const Eigen::Vector3f& pt);
-    float evalAndPush(const Eigen::Vector3f& pt);
+    std::pair<float, Tape::Handle> evalAndPush(const Eigen::Vector3f& pt);
 
     /*
      *  Evaluates the given point using whichever tape in the tape stack

@@ -61,19 +61,24 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     return i[tape->rwalk(*this)];
 }
 
-Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
-                                           const Eigen::Vector3f& upper)
+std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
+        const Eigen::Vector3f& lower,
+        const Eigen::Vector3f& upper)
 {
     auto out = eval(lower, upper);
 
-    tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
-                  Clause::Id a, Clause::Id b)
+    auto p = tape->push([&](Opcode::Opcode op, Clause::Id /* id */,
+                   Clause::Id a, Clause::Id b)
     {
         // For min and max operations, we may only need to keep one branch
         // active if it is decisively above or below the other branch.
         if (op == Opcode::OP_MAX)
         {
-            if (i[a].lower() > i[b].upper())
+            if (a == b)
+            {
+                return Tape::KEEP_A;
+            }
+            else if (i[a].lower() > i[b].upper() || a == b)
             {
                 return Tape::KEEP_A;
             }
@@ -88,7 +93,11 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
         }
         else if (op == Opcode::OP_MIN)
         {
-            if (i[a].lower() > i[b].upper())
+            if (a == b)
+            {
+                return Tape::KEEP_A;
+            }
+            else if (i[a].lower() > i[b].upper())
             {
                 return Tape::KEEP_B;
             }
@@ -106,7 +115,7 @@ Interval::I IntervalEvaluator::evalAndPush(const Eigen::Vector3f& lower,
         Tape::INTERVAL,
         {{i[tape->X].lower(), i[tape->Y].lower(), i[tape->Z].lower()},
          {i[tape->X].upper(), i[tape->Y].upper(), i[tape->Z].upper()}});
-    return out;
+    return std::make_pair(out, std::move(p));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

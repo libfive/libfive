@@ -128,12 +128,17 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
 
     const bool do_recurse = ((region.upper - region.lower) > min_feature).any();
 
-    // Do a preliminary evaluation to prune the tree
+    // Do a preliminary evaluation to prune the tree, storing the interval
+    // result and an RAII handle that will pop the tape on destruction.
     Interval::I i(-1, 1);
+    Tape::Handle p;
     if (do_recurse)
     {
-        i = eval->interval.evalAndPush(region.lower3().template cast<float>(),
-                                       region.upper3().template cast<float>());
+        auto o = eval->interval.evalAndPush(
+                region.lower3().template cast<float>(),
+                region.upper3().template cast<float>());
+        i = o.first;
+        p = std::move(o.second);
     }
 
     if (Interval::isFilled(i))
@@ -191,10 +196,6 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             // by an early cancel operation
             if (cancel.load())
             {
-                if (do_recurse)
-                {
-                    eval->interval.pop();
-                }
                 return;
             }
 
@@ -279,6 +280,17 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
             // This is phase 1, as described above
             for (uint8_t i=0; i < count; ++i)
             {
+                // The Eigen evaluator occasionally disagrees with the
+                // feature (single-point) evaluator, because it has SSE
+                // implementations of transcendental functions that can
+                // return subtly different results.  If we get a result that
+                // is sufficiently close to zero, then fall back to the
+                // canonical single-point evaluator to avoid inconsistency.
+                if (fabs(vs(i)) < 1e-6)
+                {
+                    vs(i) = eval->feature.eval(pos.col(i));
+                }
+
                 // Handle inside, outside, and (non-ambiguous) on-boundary
                 if (vs(i) > 0 || !std::isfinite(vs(i)))
                 {
@@ -757,10 +769,6 @@ XTree<N>::XTree(XTreeEvaluator* eval, Region<N> region,
     }
 
     // ...and we're done.
-    if (do_recurse)
-    {
-        eval->interval.pop();
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

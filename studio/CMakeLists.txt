@@ -16,6 +16,7 @@ find_package(Qt5Network REQUIRED)
 find_package(Qt5Concurrent REQUIRED)
 
 set(SRCS src/main.cpp
+    src/args.cpp
     src/app.cpp
     src/arrow.cpp
     src/axes.cpp

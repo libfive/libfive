@@ -85,6 +85,12 @@ Tree Tree::var()
     return Tree(Cache::instance()->var());
 }
 
+Tree::~Tree()
+{
+    auto lock = Cache::instance();
+    ptr.reset();
+}
+
 Tree::Tree_::~Tree_()
 {
     if (op == Opcode::CONSTANT)

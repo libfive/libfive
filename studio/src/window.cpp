@@ -42,8 +42,8 @@ switch (checkUnsaved())                                                     \
     default:    assert(false);                                              \
 }
 
-Window::Window(QString target)
-    : QMainWindow(), editor(new Editor), view(new View)
+Window::Window(Arguments args)
+    : QMainWindow(), editor(new Editor(nullptr, args.do_syntax)), view(new View)
 {
     resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
 
@@ -185,22 +185,25 @@ Window::Window(QString target)
 
     interpreter->start();
 
+    #ifdef Q_OS_LINUX
+        setWindowTitle("Studio[*]");
+    #endif
     show();
 
     {   //  Load the tutorial file on first run if there's no target
         QSettings settings("impraxical", "Studio");
         if (settings.contains("first-run") &&
             settings.value("first-run").toBool() &&
-            target.isNull())
+            args.filename.isEmpty())
         {
-            target = ":/examples/tutorial.io";
+            args.filename = ":/examples/tutorial.io";
         }
         settings.setValue("first-run", false);
     }
 
-    if (!target.isEmpty() && loadFile(target))
+    if (!args.filename.isEmpty() && loadFile(args.filename))
     {
-        setFilename(target);
+        setFilename(args.filename);
     }
 }
 
@@ -335,6 +338,9 @@ void Window::onNew(bool)
     CHECK_UNSAVED();
 
     setFilename("");
+    #ifdef Q_OS_LINUX
+        setWindowTitle("Studio[*]");
+    #endif
     editor->setScript("");
     editor->setModified(false);
 }
@@ -416,11 +422,20 @@ void Window::setFilename(const QString& f)
     filename = f;
     if (filename.startsWith(":/"))
     {
-        setWindowTitle(QFileInfo(filename).fileName() + " (read-only)");
+        QString title = QFileInfo(filename).fileName() + " (read-only)";
+        #ifdef Q_OS_LINUX
+            setWindowTitle(title+"[*]");
+        #else
+            setWindowTitle(title);
+        #endif
     }
     else
     {
-        setWindowTitle(QString());
+        #ifdef Q_OS_LINUX
+            setWindowTitle(QFileInfo(filename).fileName() + "[*]");
+        #else
+            setWindowTitle(QString());
+        #endif
         setWindowFilePath(f);
     }
 }

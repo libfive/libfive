@@ -16,6 +16,8 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
+#include <sstream>
+
 #include "catch.hpp"
 
 #include "libfive/tree/cache.hpp"
@@ -131,6 +133,29 @@ TEST_CASE("Cache::checkIdentity")
 
         auto ob = t->operation(Opcode::OP_NTH_ROOT, t->X(), t->constant(1));
         REQUIRE(ob == t->X());
+    }
+
+    SECTION("Double negative")
+    {
+        auto oa = t->operation(Opcode::OP_MUL, t->X(), t->constant(-1));
+        REQUIRE(oa->op == Opcode::OP_NEG);
+        REQUIRE(oa->lhs == t->X());
+
+        auto ob = t->operation(Opcode::OP_MUL, oa, t->constant(-1));
+        std::stringstream ss;
+        ob->print(ss);
+        CAPTURE(ss.str());
+        REQUIRE(ob == t->X());
+    }
+
+    SECTION("Idempotent unary operators")
+    {
+        auto oa = t->operation(Opcode::OP_ABS, t->X());
+        REQUIRE(oa->op == Opcode::OP_ABS);
+        REQUIRE(oa->lhs == t->X());
+
+        auto ob = t->operation(Opcode::OP_ABS, oa);
+        REQUIRE(ob == oa);
     }
 }
 

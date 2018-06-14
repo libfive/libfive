@@ -31,8 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/render/discrete/voxels.hpp"
 #include "libfive/render/discrete/heightmap.hpp"
 
-#include "libfive/solve/bounds.hpp"
-
 using namespace Kernel;
 
 void libfive_contours_delete(libfive_contours* cs)
@@ -185,14 +183,6 @@ libfive_vec3 libfive_tree_eval_d(libfive_tree t, libfive_vec3 p)
 bool libfive_tree_eq(libfive_tree a, libfive_tree b)
 {
     return *a == *b;
-}
-
-libfive_region3 libfive_tree_bounds(libfive_tree a)
-{
-    auto bs = findBounds(*a);
-    return {{float(bs.lower.x()), float(bs.upper.x())},
-            {float(bs.lower.y()), float(bs.upper.y())},
-            {float(bs.lower.z()), float(bs.upper.z())}};
 }
 
 char* libfive_tree_print(libfive_tree t)

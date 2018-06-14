@@ -97,18 +97,48 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (box a b)
-  "box #[xmin ymin zmin] #[xmax ymax zmax]
-  A box with the given bounds"
+(define-public (box-mitred a b)
+  "box-mitred #[xmin ymin zmin] #[xmax ymax zmax]
+  A box with the given bounds, that will stay creased
+  as it's expanded by other functions"
   (extrude-z (rectangle a b) (.z a) (.z b)))
-(define-public cube box)
+(define-public cube box-mitred)
+(define-public box box-mitred)
 
-(define* (box-centered s #:optional (m #[0 0 0]))
-  "box-centered #[xsize ysize zsize] [#[x0 y0 z0]]
-  A box with the given size, centered around the given point"
-  (box (- m (/ s 2)) (+ m (/ s 2)))
+(define* (box-mitred-centered s #:optional (m #[0 0 0]))
+  "box-mitred-centered #[xsize ysize zsize] [#[x0 y0 z0]]
+  A box with the given size, centered around the given point,
+  that will stay creased as it's expanded by other functions"
+  (box-mitred (- m (/ s 2)) (+ m (/ s 2)))
 )
-(export box-centered)
+(export box-mitred-centered)
+(define-public box-centered box-mitred-centered)
+
+(define* (box-exact-centered size #:optional (orig #[0 0 0]))
+  "box-exact-centered #[xsize ysize zsize] [#[x0 y0 z0]]
+  A box with the given size, centered around the given point,
+  that will become rounder as it's expanded by other functions"
+  (lambda-shape (x y z)
+    (let (
+      (dx (- (abs (- x (.x orig))) (/ (.x size) 2)))
+      (dy (- (abs (- y (.y orig))) (/ (.y size) 2)))
+      (dz (- (abs (- z (.z orig))) (/ (.z size) 2)))
+    )
+      (+
+        (min 0 (max dx dy dz))
+        (norm #[(max dx 0) (max dy 0) (max dz 0)])
+      )
+    )
+  )
+)
+(export box-exact-centered)
+
+(define-public (box-exact bmin bmax)
+  "box-exact #[xmin ymin zmin] #[xmax ymax zmax]
+  A box with the given bounds, that will become rounder
+  as it's expanded by other functions"
+  (box-exact-centered (- bmax bmin) (/ (+ bmax bmin) 2))
+)
 
 (define* (sphere r #:optional (center #[0 0 0]))
   "sphere r [#[x y z]]

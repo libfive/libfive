@@ -26,10 +26,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/syntax.hpp"
 #include "studio/color.hpp"
 
-Editor::Editor(QWidget* parent)
+Editor::Editor(QWidget* parent, bool do_syntax)
     : QWidget(parent), script(new Script), script_doc(script->document()),
-      syntax(new Syntax(script_doc)), err(new QPlainTextEdit),
-      err_doc(err->document())
+      syntax(do_syntax ? new Syntax(script_doc) : nullptr),
+      err(new QPlainTextEdit), err_doc(err->document())
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
@@ -57,8 +57,12 @@ Editor::Editor(QWidget* parent)
     setStyleSheet("QPlainTextEdit { " + style);
 
     // Do parenthesis highlighting when the cursor moves
-    connect(script, &QPlainTextEdit::cursorPositionChanged, syntax,
-            [=](){ syntax->matchParens(script, script->textCursor().position()); });
+    if (syntax)
+    {
+        connect(script, &QPlainTextEdit::cursorPositionChanged, syntax,
+                [=](){ syntax->matchParens(
+                    script, script->textCursor().position()); });
+    }
 
     // Emit the script whenever text changes
     connect(script, &QPlainTextEdit::textChanged, this, &Editor::onScriptChanged);
@@ -191,8 +195,11 @@ void Editor::setModified(bool m)
 
 void Editor::setKeywords(QString kws)
 {
-    syntax->setKeywords(kws);
-    script_doc->contentsChange(0, 0, script_doc->toPlainText().length());
+    if (syntax)
+    {
+        syntax->setKeywords(kws);
+        script_doc->contentsChange(0, 0, script_doc->toPlainText().length());
+    }
 }
 
 void Editor::onSettingsChanged(Settings s)

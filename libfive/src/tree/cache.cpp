@@ -321,18 +321,29 @@ Cache::Node Cache::fromAffine(const std::map<Node, float>& ns)
 
 Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b)
 {
-    if (Opcode::args(op) != 2)
-    {
-        return Node();
-    }
-
-    // Pull op-codes from both branches
-    const auto op_a = a->op;
-    const auto op_b = b->op;
+    // Pull op-codes from both branches (if present)
+    const auto op_a = a.get() ? a->op : Opcode::INVALID;
+    const auto op_b = b.get() ? b->op : Opcode::INVALID;
 
     // Special cases to handle identity operations
     switch (op)
     {
+        // Double-negative returns the original value
+        case Opcode::OP_NEG:
+            if (op_a == Opcode::OP_NEG)
+            {
+                return a->lhs;
+            }
+            break;
+
+        // ABS is idempotent
+        case Opcode::OP_ABS:
+            if (op_a == Opcode::OP_ABS)
+            {
+                return a;
+            }
+            break;
+
         case Opcode::OP_ADD:
             if (op_a == Opcode::CONSTANT && a->value == 0)
             {

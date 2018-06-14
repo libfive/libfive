@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2018  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -16,25 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-#include <QFileOpenEvent>
-#include <QDebug>
 
-#include "studio/app.hpp"
+#include <QCommandLineParser>
+
 #include "studio/args.hpp"
 
-App::App(int& argc, char** argv)
-    : QApplication(argc, argv),
-      window(Arguments(this))
+Arguments::Arguments(QCoreApplication* app)
 {
-    // Nothing to do here
-}
+    QCommandLineParser parser;
+    parser.setApplicationDescription("A simple GUI for the libfive kernel");
+    parser.addHelpOption();
+    parser.addPositionalArgument("filename", "File to load");
 
-bool App::event(QEvent *event)
-{
-    if (event->type() == QEvent::FileOpen) {
-        QFileOpenEvent *openEvent = static_cast<QFileOpenEvent*>(event);
-        window.openFile(openEvent->file());
-    }
+    QCommandLineOption no_syntax("no-syntax", "Turn off syntax highlighting");
+    parser.addOption(no_syntax);
 
-    return QApplication::event(event);
+    parser.process(*app);
+
+    const QStringList ps = parser.positionalArguments();
+    filename = ps.isEmpty() ? "" : ps[0];
+
+    do_syntax = !parser.isSet(no_syntax);
 }

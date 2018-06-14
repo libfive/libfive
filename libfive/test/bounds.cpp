@@ -19,6 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "catch.hpp"
 
 #include "libfive/tree/tree.hpp"
+
+#define ENABLE_FIND_BOUNDS_EXPERIMENTAL
 #include "libfive/solve/bounds.hpp"
 
 #include "util/shapes.hpp"
@@ -33,13 +35,13 @@ TEST_CASE("findBounds")
         auto r = findBounds(s);
         CAPTURE(r.lower);
         CAPTURE(r.upper);
-        REQUIRE(r.lower.x() == Approx(-0.5).epsilon(0.001));
-        REQUIRE(r.lower.y() == Approx(-0.5).epsilon(0.001));
-        REQUIRE(r.lower.z() == Approx(-0.5).epsilon(0.001));
+        REQUIRE(r.lower.x() == Approx(-0.5).margin(0.001));
+        REQUIRE(r.lower.y() == Approx(-0.5).margin(0.001));
+        REQUIRE(r.lower.z() == Approx(-0.5).margin(0.001));
 
-        REQUIRE(r.upper.x() == Approx(0.5).epsilon(0.001));
-        REQUIRE(r.upper.y() == Approx(0.5).epsilon(0.001));
-        REQUIRE(r.upper.z() == Approx(0.5).epsilon(0.001));
+        REQUIRE(r.upper.x() == Approx(0.5).margin(0.001));
+        REQUIRE(r.upper.y() == Approx(0.5).margin(0.001));
+        REQUIRE(r.upper.z() == Approx(0.5).margin(0.001));
     }
 
     SECTION("Moved sphere")
@@ -48,13 +50,13 @@ TEST_CASE("findBounds")
         auto r = findBounds(s);
         CAPTURE(r.lower);
         CAPTURE(r.upper);
-        REQUIRE(r.lower.x() == Approx(2.5).epsilon(0.001));
-        REQUIRE(r.lower.y() == Approx(3.5).epsilon(0.001));
-        REQUIRE(r.lower.z() == Approx(4.5).epsilon(0.001));
+        REQUIRE(r.lower.x() == Approx(2.5).margin(0.001));
+        REQUIRE(r.lower.y() == Approx(3.5).margin(0.001));
+        REQUIRE(r.lower.z() == Approx(4.5).margin(0.001));
 
-        REQUIRE(r.upper.x() == Approx(3.5).epsilon(0.001));
-        REQUIRE(r.upper.y() == Approx(4.5).epsilon(0.001));
-        REQUIRE(r.upper.z() == Approx(5.5).epsilon(0.001));
+        REQUIRE(r.upper.x() == Approx(3.5).margin(0.001));
+        REQUIRE(r.upper.y() == Approx(4.5).margin(0.001));
+        REQUIRE(r.upper.z() == Approx(5.5).margin(0.001));
     }
 
     SECTION("Moved circle")
@@ -64,11 +66,11 @@ TEST_CASE("findBounds")
         auto r = findBounds(s);
         CAPTURE(r.lower);
         CAPTURE(r.upper);
-        REQUIRE(r.lower.x() == Approx(0).epsilon(0.001));
-        REQUIRE(r.lower.y() == Approx(0).epsilon(0.001));
+        REQUIRE(r.lower.x() == Approx(0).margin(0.001));
+        REQUIRE(r.lower.y() == Approx(0).margin(0.001));
 
-        REQUIRE(r.upper.x() == Approx(0.6).epsilon(0.001));
-        REQUIRE(r.upper.y() == Approx(0.6).epsilon(0.001));
+        REQUIRE(r.upper.x() == Approx(0.6).margin(0.001));
+        REQUIRE(r.upper.y() == Approx(0.6).margin(0.001));
     }
 
     SECTION("Rotated shape (2D)")

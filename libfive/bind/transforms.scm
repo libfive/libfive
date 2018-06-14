@@ -62,6 +62,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (export reflect-x reflect-y reflect-z)
 
+(define-public (symmetric-x shape)
+  "symmetric-x shape
+  Clip the given shape at the x origin,
+  and duplicate the remaining shape reflected
+  on the other side of the origin"
+  (remap-shape (shape x y z) (abs x) y z)
+)
+(define-public (symmetric-y shape)
+  "symmetric-y shape
+  Clip the given shape at the y origin,
+  and duplicate the remaining shape reflected
+  on the other side of the origin"
+  (remap-shape (shape x y z) x (abs y) z)
+)
+(define-public (symmetric-z shape)
+  "symmetric-z shape
+  Clip the given shape at the z origin,
+  and duplicate the remaining shape reflected
+  on the other side of the origin"
+  (remap-shape (shape x y z) x y (abs z))
+)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Scaling
 (define* (scale-x shape sx #:optional (x0 0))

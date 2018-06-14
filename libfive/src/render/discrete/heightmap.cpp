@@ -223,8 +223,9 @@ bool Heightmap::recurse(HeightmapEvaluator* e, const Voxels::View& r,
         return true;
     }
 
-    // Do the interval evaluation
-    Interval::I out = e->interval.evalAndPush(r.lower, r.upper);
+    // Do the interval evaluation, storing an tape-popping handle
+    auto result = e->interval.evalAndPush(r.lower, r.upper);
+    Interval::I out = result.first;
 
     // If strictly negative, fill up the block and return
     if (Interval::isFilled(out))
@@ -241,18 +242,13 @@ bool Heightmap::recurse(HeightmapEvaluator* e, const Voxels::View& r,
         // split, evaluate rs.second then rs.first
         if (!recurse(e, rs.second, abort))
         {
-            e->interval.pop();
             return false;
         }
         if (!recurse(e, rs.first, abort))
         {
-            e->interval.pop();
             return false;
         }
     }
-
-    // Re-enable disabled nodes from the tree
-    e->interval.pop();
     return true;
 }
 

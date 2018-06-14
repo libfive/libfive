@@ -104,3 +104,23 @@ TEST_CASE("DerivArrayEvaluator::derivs")
         REQUIRE(d.col(1).bottomRows(3).matrix() == Eigen::Vector3f(0, 0, 1));
     }
 }
+
+TEST_CASE("DerivArrayEvaluator::getAmbiguousDerivs")
+{
+    auto t = std::make_shared<Tape>(min(min(Tree::X(), Tree::Y()),
+                                        min(Tree::X(), 4 + 0.2 * Tree::Y())));
+    DerivArrayEvaluator e(t);
+    e.set({0, 0, 0}, 0); // True ambiguity
+    e.set({0, 1, 0}, 1); // False ambiguity, since it's doing min(X, X)
+    e.set({5, 5, 0}, 2); // True ambiguity
+    e.set({0, 5, 0}, 3); // False ambiguity
+
+    e.derivs(4);
+
+    auto a = e.getAmbiguousDerivs(4);
+    REQUIRE(a.count() == 2);
+    REQUIRE(a(0) == true);
+    REQUIRE(a(1) == false);
+    REQUIRE(a(2) == true);
+    REQUIRE(a(3) == false);
+}

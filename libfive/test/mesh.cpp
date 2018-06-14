@@ -69,31 +69,6 @@ TEST_CASE("Mesh::render (cube)")
     auto mesh = Mesh::render(cube, r);
 }
 
-TEST_CASE("Mesh::render (performance)")
-{
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    std::chrono::duration<double> elapsed;
-
-    Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
-
-    Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
-
-    // Begin timekeeping
-    start = std::chrono::system_clock::now();
-    auto mesh = Mesh::render(sponge, r, 0.02);
-    mesh->saveSTL("out.stl");
-    end = std::chrono::system_clock::now();
-
-    elapsed = end - start;
-
-    auto elapsed_ms =
-        std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
-
-    std::string log = "\nMade sponge mesh in " +
-           std::to_string(elapsed.count()) + " sec";
-    WARN(log);
-}
-
 TEST_CASE("Mesh::render (face count in rectangular prism)")
 {
     auto t = max(max(max(-Tree::X(), Tree::X() - 4),
@@ -110,4 +85,51 @@ TEST_CASE("Mesh::render (sphere)")
     auto m = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
                           1/32.0f, pow(10, -3));
     REQUIRE(true);
+}
+
+TEST_CASE("Mesh::render (performance)", "[!benchmark]")
+{
+    BENCHMARK("Menger sponge")
+    {
+        Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
+        Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
+        auto mesh = Mesh::render(sponge, r, 0.02);
+    }
+
+    BENCHMARK("Gradient blended-round spheres")
+    {
+        float blendAmt = 0.125f;
+
+        auto boxB = box({ -2,-2,0 }, { 2,2,1 });
+        auto sphereB = sphere(2.f, {2.f,2.f,0.f});
+        auto blendObj = blend(boxB, sphereB, blendAmt);
+
+        Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
+
+        auto mesh = Mesh::render(blendObj, r, 0.025);
+    }
+
+    BENCHMARK("Sphere / gyroid intersection")
+    {
+      auto scale = 0.5f;
+      auto radius = 1.5f;
+      auto thickness = 0.5;
+
+      auto gyroidSrf =
+        sin(Kernel::Tree::X() / scale) * cos(Kernel::Tree::Y() / scale) +
+        sin(Kernel::Tree::Y() / scale) * cos(Kernel::Tree::Z() / scale) +
+        sin(Kernel::Tree::Z() / scale) * cos(Kernel::Tree::X() / scale);
+
+      auto gyroid = shell(gyroidSrf, thickness);
+      auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
+
+      auto sphereGyroid = max(sphere1, gyroid);
+      sphereGyroid = min(sphereGyroid,
+                         min(sphereGyroid ,
+                         (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
+
+      Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
+
+      auto mesh = Mesh::render(sphereGyroid, r, 0.025);
+    }
 }
