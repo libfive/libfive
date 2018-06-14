@@ -20,8 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <memory>
 
-#include <boost/lockfree/queue.hpp>
-
 #include "libfive/tree/tree.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/xtree.hpp"
@@ -55,13 +53,6 @@ struct XTreePool
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel);
-
-protected:
-    static void run(
-            XTreeEvaluator* eval, boost::lockfree::queue<Task<N>*>& tasks,
-            const float min_feature, const float max_err,
-            std::atomic_int& slots, std::atomic_bool& done,
-            std::atomic_bool& cancel);
 };
 
 extern template struct XTreePool<2>;

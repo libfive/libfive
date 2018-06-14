@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <cmath>
 
+#include <boost/lockfree/queue.hpp>
 
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/xtree_pool.hpp"
@@ -34,7 +35,7 @@ namespace Kernel {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-void XTreePool<N>::run(
+static void run(
         XTreeEvaluator* eval, boost::lockfree::queue<Task<N>*>& tasks,
         const float min_feature, const float max_err, std::atomic_int& slots,
         std::atomic_bool& done, std::atomic_bool& cancel)
