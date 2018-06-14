@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <cmath>
 
-#include <boost/lockfree/queue.hpp>
+#include <boost/lockfree/stack.hpp>
 
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/xtree_pool.hpp"
@@ -36,36 +36,35 @@ namespace Kernel {
 
 template <unsigned N>
 static void run(
-        XTreeEvaluator* eval, boost::lockfree::queue<Task<N>*>& tasks,
+        XTreeEvaluator* eval, boost::lockfree::stack<Task<N>>& tasks,
         const float min_feature, const float max_err, std::atomic_int& slots,
         std::atomic_bool& done, std::atomic_bool& cancel)
 {
-    std::unique_ptr<Task<N>> task;
     bool idle = false;
-    std::stack<Task<N>*, std::vector<Task<N>*>> local;
+    std::stack<Task<N>, std::vector<Task<N>>> local;
 
     while (!done.load() && !cancel.load())
     {
+        Task<N> task;
+
         {   // Prioritize picking up a local task before going to
             // the MPMC queue, to keep things in this thread for
             // as long as possible.
-            Task<N>* task_;
             if (local.size())
             {
-                task_ = local.top();
+                task = local.top();
                 local.pop();
             }
-            else if (!tasks.pop(task_))
+            else if (!tasks.pop(task))
             {
-                task_ = nullptr;
+                task.target = nullptr;
             }
-            task.reset(task_);
         }
 
         // If we failed to get a task, then mark this thread as idle
         // and keep looping (so that we terminate when either of the
         // flags are set).
-        if (task.get() == nullptr)
+        if (task.target == nullptr)
         {
             if (!idle)
             {
@@ -81,12 +80,12 @@ static void run(
             slots--;
         }
 
-        auto tape = task->tape;
-        auto t = task->target;
+        auto tape = task.tape;
+        auto t = task.target;
 
         if (((t->region.upper - t->region.lower) > min_feature).any())
         {
-            tape = t->evalInterval(eval->interval, task->tape);
+            tape = t->evalInterval(eval->interval, task.tape);
 
             // If this Tree is ambiguous, then push the children to the stack
             // and keep going (because all the useful work will be done
@@ -96,10 +95,10 @@ static void run(
                 auto rs = t->region.subdivide();
                 for (unsigned i=0; i < t->children.size(); ++i)
                 {
-                    auto next = new Task<N>();
+                    Task<N> next;
                     auto target = new XTree<N>(t, i, rs[i]);
-                    next->target = target;
-                    next->tape = tape;
+                    next.target = target;
+                    next.tape = tape;
 
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
@@ -172,10 +171,10 @@ std::unique_ptr<XTree<N>> XTreePool<N>::build(
     auto root(new XTree<N>(nullptr, 0, region));
     std::atomic_bool done(false);
 
-    boost::lockfree::queue<Task<N>*> tasks(workers * 2);
-    auto task = new Task<N>;
-    task->target = root;
-    task->tape = eval->deck->tape;
+    boost::lockfree::stack<Task<N>> tasks(workers * 2);
+    Task<N> task;
+    task.target = root;
+    task.tape = eval->deck->tape;
 
     tasks.push(task);
     std::atomic_int slots(0);
