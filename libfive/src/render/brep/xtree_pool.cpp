@@ -45,6 +45,7 @@ static void run(
         std::atomic_bool& done, std::atomic_bool& cancel)
 {
     std::stack<Task<N>, std::vector<Task<N>>> local;
+    std::stack<XTree<N>*, std::vector<XTree<N>*>> spares;
 
     while (!done.load() && !cancel.load())
     {
@@ -96,8 +97,16 @@ static void run(
                 for (unsigned i=0; i < t->children.size(); ++i)
                 {
                     Task<N> next;
-                    auto target = new XTree<N>(t, i, rs[i]);
-                    next.target = target;
+                    if (spares.size())
+                    {
+                        next.target = spares.top();
+                        next.target->reset(t, i, rs[i]);
+                        spares.pop();
+                    }
+                    else
+                    {
+                        next.target = new XTree<N>(t, i, rs[i]);
+                    }
                     next.tape = tape;
                     next.parent_neighbors = neighbors;
 
@@ -120,7 +129,8 @@ static void run(
 
         // If all of the children are done, then ask the parent to collect them
         // (recursively, merging the trees on the way up)
-        for (t = t->parent; t && t->collectChildren(eval, tape, max_err);
+        for (t = t->parent;
+             t && t->collectChildren(eval, tape, max_err, spares);
              t = t->parent);
 
         // Termination condition:  if we've ended up pointing at the parent
@@ -129,6 +139,13 @@ static void run(
         {
             break;
         }
+    }
+
+    // Destroy all spare XTrees.
+    while (spares.size())
+    {
+        delete spares.top();
+        spares.pop();
     }
 
     // If we've broken out of the loop, then we should set the done flag

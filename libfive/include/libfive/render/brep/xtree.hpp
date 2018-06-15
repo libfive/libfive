@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <array>
 #include <atomic>
 #include <iostream>
+#include <stack>
 
 #include <cstdint>
 
@@ -48,6 +49,11 @@ public:
     ~XTree();
 
     /*
+     *  Resets this tree to a freshly-constructed state
+     */
+    void reset(XTree<N>* p, unsigned i, Region<N> r);
+
+    /*
      *  Populates type, setting corners, manifold, and done if this region is
      *  fully inside or outside the mode.
      *
@@ -70,8 +76,9 @@ public:
      *
      *  Returns false if any children are yet to come, true otherwise.
      */
-    bool collectChildren(XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
-                         double max_err);
+    bool collectChildren(
+            XTreeEvaluator* eval, std::shared_ptr<Tape> tape, double max_err,
+            std::stack<XTree<N>*, std::vector<XTree<N>*>>& spares);
 
     /*
      *  Checks whether this tree splits
@@ -126,13 +133,13 @@ public:
     unsigned parent_index;
 
     /*  The region filled by this XTree */
-    const Region<N> region;
+    Region<N> region;
 
     /*  Children pointers, if this is a branch  */
     std::array<std::atomic<XTree<N>*>, 1 << N> children;
 
     /*  level = max(map(level, children)) + 1  */
-    unsigned level=0;
+    unsigned level;
 
     /*  Vertex locations, if this is a leaf
      *
@@ -177,21 +184,21 @@ public:
      *                                                               *
      *  This value is populated in find{Leaf|Branch}Matrices and     *
      *  used when merging intersections from lower-ranked children   */
-    unsigned rank=0;
+    unsigned rank;
 
     /* Used as a unique per-vertex index when unpacking into a b-rep;   *
      * this is cheaper than storing a map of XTree* -> uint32_t         */
     mutable std::array<uint32_t, _pow(2, N - 1)> index;
 
     /*  Bitfield marking which corners are set */
-    uint8_t corner_mask=0;
+    uint8_t corner_mask;
 
     /*  Stores the number of patches / vertices in this cell
      *  (which could be more than one to keep the surface manifold */
-    unsigned vertex_count=0;
+    unsigned vertex_count;
 
     /*  Marks whether this cell is manifold or not  */
-    bool manifold=false;
+    bool manifold;
 
     /*  Single copy of the marching squares / cubes table, lazily
      *  initialized when needed */
@@ -253,7 +260,7 @@ protected:
     /*  QEF matrices */
     Eigen::Matrix<double, N, N> AtA;
     Eigen::Matrix<double, N, 1> AtB;
-    double BtB=0;
+    double BtB;
 
     /*  Marks whether this tree is fully constructed */
     std::atomic_int pending;

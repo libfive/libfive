@@ -43,19 +43,37 @@ std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
 
 template <unsigned N>
 XTree<N>::XTree(XTree<N>* parent, unsigned parent_index, Region<N> region)
-    : parent(parent), parent_index(parent_index), region(region),
-      type(Interval::UNKNOWN),
-      _mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
-      AtA(Eigen::Matrix<double, N, N>::Zero()),
-      AtB(Eigen::Matrix<double, N, 1>::Zero()),
-      pending((1 << N) - 1)
 {
+    reset(parent, parent_index, region);
+}
+
+template <unsigned N>
+void XTree<N>::reset(XTree<N>* p, unsigned i, Region<N> r)
+{
+    parent = p;
+    parent_index = i;
+    region = r;
+    type = Interval::UNKNOWN;
+    level = 0;
+    rank = 0;
+    corner_mask = 0;
+    vertex_count = 0;
+    manifold = false;
+
     std::fill(index.begin(), index.end(), 0);
     std::fill(corners.begin(), corners.end(), Interval::UNKNOWN);
     for (auto& c : children)
     {
+        assert(c.load() == nullptr);
         c.store(nullptr);
     }
+
+    _mass_point.setZero();
+    AtA.setZero();
+    AtB.setZero();
+    BtB = 0;
+
+    pending.store((1 << N) - 1);
 }
 
 template <unsigned N>
@@ -584,8 +602,9 @@ void XTree<N>::buildCornerMask()
 }
 
 template <unsigned N>
-bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
-                               double max_err)
+bool XTree<N>::collectChildren(
+        XTreeEvaluator* eval, Tape::Handle tape, double max_err,
+        std::stack<XTree<N>*, std::vector<XTree<N>*>>& spares)
 {
     // Wait for collectChildren to have been called N times
     if (pending-- != 0)
@@ -618,7 +637,7 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
     // If this cell is unambiguous, then forget all its branches and return
     if (type == Interval::FILLED || type == Interval::EMPTY)
     {
-        for (auto& c : children) { delete c.exchange(nullptr); }
+        for (auto& c : children) { spares.push(c.exchange(nullptr)); }
         manifold = true;
         done();
         return true;
@@ -687,7 +706,7 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
                 Tape::getBase(tape, vert3().template cast<float>())))
             < max_err)
     {
-        for (auto& c : children) { delete c.exchange(nullptr); }
+        for (auto& c : children) { spares.push(c.exchange(nullptr)); }
     }
     else
     {
