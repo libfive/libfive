@@ -121,7 +121,7 @@ bool Neighbors<N>::populatePositions() {
 
 template <unsigned N>
 Neighbors<N> Neighbors<N>::push(uint8_t child,
-        const std::array<std::unique_ptr<XTree<N>>, 1 << N>&
+        const std::array<std::atomic<XTree<N>*>, 1 << N>&
             children)
 {
     Neighbors out;
@@ -131,7 +131,7 @@ Neighbors<N> Neighbors<N>::push(uint8_t child,
         // of children, then pick it out in this conditional.
         auto within = withinTreeIndex(child, i);
         if (within != -1) {
-            out.neighbors[i] = children[within].get();
+            out.neighbors[i] = children[within].load();
         }
         else
         {
@@ -139,7 +139,7 @@ Neighbors<N> Neighbors<N>::push(uint8_t child,
             if (neighbors[target.first])
             {
                 out.neighbors[i] = neighbors[target.first]->
-                       children[target.second].get();
+                       children[target.second].load();
             }
         }
     }
@@ -149,7 +149,7 @@ Neighbors<N> Neighbors<N>::push(uint8_t child,
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-Interval::State Neighbors<N>::check(uint8_t corner)
+Interval::State Neighbors<N>::check(uint8_t corner) const
 {
     for (unsigned i=0; i < _pow(N, 3) - 1; ++i)
     {
@@ -166,7 +166,7 @@ Interval::State Neighbors<N>::check(uint8_t corner)
 }
 
 template <unsigned N>
-const IntersectionVec<N>* Neighbors<N>::check(uint8_t a, uint8_t b)
+const IntersectionVec<N>* Neighbors<N>::check(uint8_t a, uint8_t b) const
 {
     for (unsigned i=0; i < _pow(N, 3) - 1; ++i)
     {

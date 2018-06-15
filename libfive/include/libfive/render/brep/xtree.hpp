@@ -45,6 +45,7 @@ public:
      *  Simple constructor
      */
     explicit XTree(XTree<N>* parent, unsigned index, Region<N> region);
+    ~XTree();
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
@@ -60,7 +61,8 @@ public:
      *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
-    void evalLeaf(XTreeEvaluator* eval, std::shared_ptr<Tape> tape);
+    void evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
+                  std::shared_ptr<Tape> tape);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -80,7 +82,7 @@ public:
      *  Looks up a child, returning *this if this isn't a branch
      */
     const XTree<N>* child(unsigned i) const
-    { return isBranch() ? children[i].get() : this; }
+    { return isBranch() ? children[i].load() : this; }
 
     /*
      *  Returns the filled / empty state for the ith corner
@@ -127,7 +129,7 @@ public:
     const Region<N> region;
 
     /*  Children pointers, if this is a branch  */
-    std::array<std::unique_ptr<XTree<N>>, 1 << N> children;
+    std::array<std::atomic<XTree<N>*>, 1 << N> children;
 
     /*  level = max(map(level, children)) + 1  */
     unsigned level=0;

@@ -48,20 +48,18 @@ static void run(
 
     while (!done.load() && !cancel.load())
     {
+        // Prioritize picking up a local task before going to
+        // the MPMC queue, to keep things in this thread for
+        // as long as possible.
         Task<N> task;
-
-        {   // Prioritize picking up a local task before going to
-            // the MPMC queue, to keep things in this thread for
-            // as long as possible.
-            if (local.size())
-            {
-                task = local.top();
-                local.pop();
-            }
-            else if (!tasks.pop(task))
-            {
-                task.target = nullptr;
-            }
+        if (local.size())
+        {
+            task = local.top();
+            local.pop();
+        }
+        else if (!tasks.pop(task))
+        {
+            task.target = nullptr;
         }
 
         // If we failed to get a task, keep looping
@@ -74,6 +72,17 @@ static void run(
         auto tape = task.tape;
         auto t = task.target;
 
+        // Find our local neighbors.  We do this at the last minute to
+        // give other threads the chance to populate more pointers.
+        Neighbors<N> neighbors;
+        if (t->parent)
+        {
+            neighbors = task.parent_neighbors.push(
+                t->parent_index, t->parent->children);
+        }
+
+        // If this tree is larger than the minimum size, then it will either
+        // be unambiguously filled/empty, or we'll need to recurse.
         if (((t->region.upper - t->region.lower) > min_feature).any())
         {
             tape = t->evalInterval(eval->interval, task.tape);
@@ -90,6 +99,7 @@ static void run(
                     auto target = new XTree<N>(t, i, rs[i]);
                     next.target = target;
                     next.tape = tape;
+                    next.parent_neighbors = neighbors;
 
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
@@ -105,7 +115,7 @@ static void run(
         }
         else
         {
-            t->evalLeaf(eval, tape);
+            t->evalLeaf(eval, neighbors, tape);
         }
 
         // If all of the children are done, then ask the parent to collect them

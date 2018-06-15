@@ -41,8 +41,6 @@ std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-
 template <unsigned N>
 XTree<N>::XTree(XTree<N>* parent, unsigned parent_index, Region<N> region)
     : parent(parent), parent_index(parent_index), region(region),
@@ -54,6 +52,19 @@ XTree<N>::XTree(XTree<N>* parent, unsigned parent_index, Region<N> region)
 {
     std::fill(index.begin(), index.end(), 0);
     std::fill(corners.begin(), corners.end(), Interval::UNKNOWN);
+    for (auto& c : children)
+    {
+        c.store(nullptr);
+    }
+}
+
+template <unsigned N>
+XTree<N>::~XTree()
+{
+    for (auto& c : children)
+    {
+        delete c.exchange(nullptr);
+    }
 }
 
 template <unsigned N>
@@ -79,7 +90,8 @@ Tape::Handle XTree<N>::evalInterval(IntervalEvaluator& eval, Tape::Handle tape)
 }
 
 template <unsigned N>
-void XTree<N>::evalLeaf(XTreeEvaluator* eval, Tape::Handle tape)
+void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
+                        Tape::Handle tape)
 {
     // Store the corner positions
     for (unsigned i=0; i < (1 << N); ++i)
@@ -107,20 +119,18 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, Tape::Handle tape)
 
     for (uint8_t i=0; i < children.size(); ++i)
     {
-        //auto c = neighbors.check(i);
-        //if (c == Interval::UNKNOWN)
+        auto c = neighbors.check(i);
+        if (c == Interval::UNKNOWN)
         {
             pos.col(count) << cornerPos(i).template cast<float>(),
                               region.perp.template cast<float>();
             eval->array.set(pos.col(count), count);
             corner_indices[count++] = i;
         }
-        /*
         else
         {
             corners[i] = c;
         }
-        */
     }
 
     // Evaluate the region's corners and check their states
@@ -277,7 +287,6 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, Tape::Handle tape)
                 auto c = ps[vertex_count][edge_count];
                 edges[edge_count] = mt->e[c.first][c.second];
 
-                /*
                 auto compare = neighbors.check(c.first, c.second);
                 // Enable this to turn on sharing of results with neighbors
                 if (compare != nullptr && compare->size() > 0)
@@ -285,7 +294,6 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, Tape::Handle tape)
                     intersections[edges[edge_count]] = *compare;
                 }
                 else
-                */
                 {
                     // Store inside / outside in targets array, and the edge
                     // index in the eval_edges array.
@@ -591,7 +599,7 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
     // Update corner and filled / empty state from children
     for (uint8_t i=0; i < children.size(); ++i)
     {
-        auto c = children[i].get();
+        auto c = children[i].load();
         assert(c != nullptr);
 
         // Grab corner values from children
@@ -610,21 +618,26 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
     // If this cell is unambiguous, then forget all its branches and return
     if (type == Interval::FILLED || type == Interval::EMPTY)
     {
-        for (auto& c : children) { c.reset(); }
+        for (auto& c : children) { delete c.exchange(nullptr); }
         manifold = true;
         done();
         return true;
     }
 
+    std::array<XTree<N>*, 1 << N> cs;
+    for (unsigned i=0; i < children.size(); ++i)
+    {
+        cs[i] = children[i].load();
+    }
+
     // Store this tree's depth as a function of its children
-    level = std::accumulate(children.begin(), children.end(), (unsigned)0,
-        [](const unsigned& a, const std::unique_ptr<XTree<N>>& b)
+    level = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
+        [](const unsigned& a, XTree<N>* b)
         { return std::max(a, b->level);} ) + 1;
 
     // If any children are branches, then we can't collapse
-    if (std::any_of(children.begin(), children.end(),
-                    [](const std::unique_ptr<XTree<N>>& o)
-                    { return o->isBranch(); }))
+    if (std::any_of(cs.begin(), cs.end(),
+                    [](XTree<N>* o){ return o->isBranch(); }))
     {
         done();
         return true;
@@ -634,9 +647,8 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
     //  [Ju et al, 2002] in the section titled
     //      "Simplification with topology safety"
     manifold = cornersAreManifold() &&
-        std::all_of(children.begin(), children.end(),
-                [](const std::unique_ptr<XTree<N>>& o)
-                { return o->manifold; }) &&
+        std::all_of(cs.begin(), cs.end(),
+                [](XTree<N>* o){ return o->manifold; }) &&
         leafsAreManifold();
 
     // If we're not manifold, then we can't collapse
@@ -648,15 +660,13 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
 
     // Populate the feature rank as the maximum of all children
     // feature ranks (as seen in DC: The Secret Sauce)
-    rank = std::accumulate(
-            children.begin(), children.end(), (unsigned)0,
-            [](unsigned a, const std::unique_ptr<XTree<N>>& b)
-                { return std::max(a, b->rank);} );
+    rank = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
+            [](unsigned a, XTree<N>* b){ return std::max(a, b->rank);} );
 
     // Accumulate the mass point and QEF matrices
-    for (const auto& c : children)
+    for (const auto& c : cs)
     {
-        assert(c.get() != nullptr);
+        assert(c != nullptr);
 
         if (c->rank == rank)
         {
@@ -677,7 +687,7 @@ bool XTree<N>::collectChildren(XTreeEvaluator* eval, Tape::Handle tape,
                 Tape::getBase(tape, vert3().template cast<float>())))
             < max_err)
     {
-        for (auto& c : children) { c.reset(); }
+        for (auto& c : children) { delete c.exchange(nullptr); }
     }
     else
     {
@@ -693,8 +703,8 @@ void XTree<N>::done()
 {
     if (parent)
     {
-        assert(parent->children[parent_index].get() == nullptr);
-        parent->children[parent_index].reset(this);
+        assert(parent->children[parent_index].load() == nullptr);
+        parent->children[parent_index].store(this);
     }
 }
 
@@ -767,7 +777,7 @@ void XTree<N>::fastDelete()
     for (unsigned i=0; i < children.size(); ++i)
     {
         futures[i] = std::async(std::launch::async,
-                [this, i](){ this->children[i].reset(); });
+                [this, i](){ delete this->children[i].exchange(nullptr); });
     }
 
     // Wait on all of the futures

@@ -158,7 +158,7 @@ TEST_CASE("XTree<3>::vert")
             {
                 for (auto& c : t->children)
                 {
-                    todo.push_back(c.get());
+                    todo.push_back(c.load());
                 }
             }
             if (!t->isBranch() && t->type == Interval::AMBIGUOUS)

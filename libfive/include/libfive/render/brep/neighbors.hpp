@@ -66,14 +66,14 @@ public:
      *  by any of the neighbors, returning FILLED / EMPTY if that is the case
      *  and UNKNOWN otherwise.
      */
-    Interval::State check(uint8_t corner);
+    Interval::State check(uint8_t corner) const;
 
     /*
      *  Looks up the given edge to see if it has been calculated by any
      *  of the neighbors, assigning the pointer if that is the case
      *  and setting it to nullptr otherwise.
      */
-    const IntersectionVec<N>* check(uint8_t a, uint8_t b);
+    const IntersectionVec<N>* check(uint8_t a, uint8_t b) const;
 
     /*
      *  Given an XTree child index, returns the XTree child index of the
@@ -119,7 +119,7 @@ public:
      *  given the child's index and the array of other children.
      */
     Neighbors<N> push(uint8_t child,
-            const std::array<std::unique_ptr<XTree<N>>, 1 << N>&
+            const std::array<std::atomic<XTree<N>*>, 1 << N>&
                 children);
 
 protected:
