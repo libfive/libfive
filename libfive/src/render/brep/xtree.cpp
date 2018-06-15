@@ -46,7 +46,7 @@ XTree<N>::XTree(XTree<N>* parent, unsigned parent_index, Region<N> region)
 {
     for (auto& c : children)
     {
-        c.store(nullptr);
+        c.store(nullptr, std::memory_order_relaxed);
     }
     reset(parent, parent_index, region);
 }
@@ -94,7 +94,7 @@ XTree<N>::~XTree()
 {
     for (auto& c : children)
     {
-        delete c.exchange(nullptr);
+        delete c.load(std::memory_order_relaxed);
     }
 }
 
@@ -629,7 +629,7 @@ bool XTree<N>::collectChildren(
     std::array<XTree<N>*, 1 << N> cs;
     for (unsigned i=0; i < children.size(); ++i)
     {
-        cs[i] = children[i].load();
+        cs[i] = children[i].load(std::memory_order_relaxed);
     }
 
     // Update corner and filled / empty state from children
@@ -736,7 +736,7 @@ void XTree<N>::done()
     if (parent)
     {
         assert(parent->children[parent_index].load() == nullptr);
-        parent->children[parent_index].store(this);
+        parent->children[parent_index].store(this, std::memory_order_relaxed);
     }
 }
 

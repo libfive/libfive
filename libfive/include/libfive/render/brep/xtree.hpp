@@ -89,7 +89,7 @@ public:
      *  Looks up a child, returning *this if this isn't a branch
      */
     const XTree<N>* child(unsigned i) const
-    { return isBranch() ? children[i].load() : this; }
+    { return isBranch() ? children[i].load(std::memory_order_relaxed) : this; }
 
     /*
      *  Returns the filled / empty state for the ith corner
