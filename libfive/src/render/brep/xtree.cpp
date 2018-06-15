@@ -44,6 +44,10 @@ std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
 template <unsigned N>
 XTree<N>::XTree(XTree<N>* parent, unsigned parent_index, Region<N> region)
 {
+    for (auto& c : children)
+    {
+        c.store(nullptr);
+    }
     reset(parent, parent_index, region);
 }
 
@@ -62,12 +66,21 @@ void XTree<N>::reset(XTree<N>* p, unsigned i, Region<N> r)
 
     std::fill(index.begin(), index.end(), 0);
     std::fill(corners.begin(), corners.end(), Interval::UNKNOWN);
+
+    // By design, a tree that is being reset must have no children
     for (auto& c : children)
     {
         assert(c.load() == nullptr);
-        c.store(nullptr);
+        (void)c;
     }
 
+    for (auto& i : intersections)
+    {
+        i.clear();
+    }
+
+    corner_positions.setZero();
+    verts.setZero();
     _mass_point.setZero();
     AtA.setZero();
     AtB.setZero();
@@ -612,13 +625,19 @@ bool XTree<N>::collectChildren(
         return false;
     }
 
-    bool all_empty = true;
-    bool all_full  = true;
+    // Load the children here, to avoid atomics
+    std::array<XTree<N>*, 1 << N> cs;
+    for (unsigned i=0; i < children.size(); ++i)
+    {
+        cs[i] = children[i].load();
+    }
 
     // Update corner and filled / empty state from children
-    for (uint8_t i=0; i < children.size(); ++i)
+    bool all_empty = true;
+    bool all_full  = true;
+    for (uint8_t i=0; i < cs.size(); ++i)
     {
-        auto c = children[i].load();
+        auto c = cs[i];
         assert(c != nullptr);
 
         // Grab corner values from children
@@ -641,12 +660,6 @@ bool XTree<N>::collectChildren(
         manifold = true;
         done();
         return true;
-    }
-
-    std::array<XTree<N>*, 1 << N> cs;
-    for (unsigned i=0; i < children.size(); ++i)
-    {
-        cs[i] = children[i].load();
     }
 
     // Store this tree's depth as a function of its children
