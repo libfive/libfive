@@ -138,7 +138,10 @@ std::unique_ptr<Mesh> Mesh::render(
 {
     auto t = XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel);
     auto out = mesh(t, cancel);
-    t->fastDelete();
+    if (t.get())
+    {
+        t->fastDelete();
+    }
     return out;
 }
 
