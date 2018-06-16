@@ -39,7 +39,7 @@ void BRepCompare(const BRep<N>& first, const BRep<N>& second)
         CAPTURE(i);
         CAPTURE(first.verts[i]);
         CAPTURE(second.verts[i]);
-        REQUIRE(first.verts[i] == second.verts[i]);
+        REQUIRE((first.verts[i] - second.verts[i]).norm() < 1e-6);
     }
 
     REQUIRE(first.branes.size() == second.branes.size());
