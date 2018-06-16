@@ -72,7 +72,7 @@ static void run(
 
         auto tape = task.tape;
         auto t = task.target;
-        auto region = task.region;
+        const auto& region = task.region;
 
         // Find our local neighbors.  We do this at the last minute to
         // give other threads the chance to populate more pointers.
@@ -97,20 +97,18 @@ static void run(
                 auto rs = region.subdivide();
                 for (unsigned i=0; i < t->children.size(); ++i)
                 {
-                    Task<N> next;
+                    XTree<N>* ptr;
                     if (spares.size())
                     {
-                        next.target = spares.top();
-                        next.target->reset(t, i);
+                        ptr = spares.top();
+                        ptr->reset(t, i);
                         spares.pop();
                     }
                     else
                     {
-                        next.target = new XTree<N>(t, i);
+                        ptr = new XTree<N>(t, i);
                     }
-                    next.tape = tape;
-                    next.parent_neighbors = neighbors;
-                    next.region = rs[i];
+                    Task<N> next(ptr, tape, rs[i], neighbors);
 
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
@@ -188,12 +186,7 @@ std::unique_ptr<XTree<N>> XTreePool<N>::build(
     std::atomic_bool done(false);
 
     LockFreeStack<N> tasks(workers);
-    Task<N> task;
-    task.target = root;
-    task.tape = eval->deck->tape;
-    task.region = region;
-
-    tasks.push(task);
+    tasks.push(Task<N>(root, eval->deck->tape, region, Neighbors<N>()));
 
     std::vector<std::future<void>> futures;
     futures.resize(workers);
