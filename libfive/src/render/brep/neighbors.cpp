@@ -158,7 +158,7 @@ Interval::State Neighbors<N>::check(uint8_t corner) const
             auto index = cornerCheckIndex(corner, i);
             if (index != -1)
             {
-                return neighbors[i]->corners[index];
+                return neighbors[i]->cornerState(index);
             }
         }
     }

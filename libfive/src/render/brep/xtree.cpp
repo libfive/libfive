@@ -57,6 +57,21 @@ void XTree<N>::reset(XTree<N>* p, unsigned i)
     parent = p;
     parent_index = i;
     type = Interval::UNKNOWN;
+
+    // By design, a tree that is being reset must have no children
+    for (auto& c : children)
+    {
+        assert(c.load() == nullptr);
+        (void)c;
+    }
+
+    leaf.reset();
+    pending.store((1 << N) - 1);
+}
+
+template <unsigned N>
+XTree<N>::Leaf::Leaf()
+{
     level = 0;
     rank = 0;
     corner_mask = 0;
@@ -66,25 +81,16 @@ void XTree<N>::reset(XTree<N>* p, unsigned i)
     std::fill(index.begin(), index.end(), 0);
     std::fill(corners.begin(), corners.end(), Interval::UNKNOWN);
 
-    // By design, a tree that is being reset must have no children
-    for (auto& c : children)
-    {
-        assert(c.load() == nullptr);
-        (void)c;
-    }
-
     for (auto& i : intersections)
     {
         i.reset();
     }
 
     verts.setZero();
-    _mass_point.setZero();
+    mass_point.setZero();
     AtA.setZero();
     AtB.setZero();
     BtB = 0;
-
-    pending.store((1 << N) - 1);
 }
 
 template <unsigned N>
@@ -111,9 +117,6 @@ Tape::Handle XTree<N>::evalInterval(
 
     if (type == Interval::FILLED || type == Interval::EMPTY)
     {
-        std::fill(corners.begin(), corners.end(), type);
-        manifold = true;
-        corner_mask = (type == Interval::FILLED) ? ((1 << (1 << N)) - 1) : 0;
         done();
     }
     return o.second;
@@ -132,6 +135,8 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     // in the range [0, 1 <<N).
     std::array<int, 1 << N> corner_indices;
 
+    leaf.reset(new Leaf);
+
     // Pack corners into evaluator
     Eigen::Matrix<float, 3, 1 << N> pos;
     for (uint8_t i=0; i < children.size(); ++i)
@@ -145,7 +150,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         }
         else
         {
-            corners[i] = c;
+            leaf->corners[i] = c;
         }
     }
 
@@ -190,12 +195,12 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         // Handle inside, outside, and (non-ambiguous) on-boundary
         if (vs(i) > 0 || !std::isfinite(vs(i)))
         {
-            corners[corner_indices[i]] = Interval::EMPTY;
+            leaf->corners[corner_indices[i]] = Interval::EMPTY;
             ambig(i) = false;
         }
         else if (vs(i) < 0)
         {
-            corners[corner_indices[i]] = Interval::FILLED;
+            leaf->corners[corner_indices[i]] = Interval::FILLED;
             ambig(i) = false;
         }
         else if (!ambig(i))
@@ -214,7 +219,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         auto ds = eval->array.derivs(unambiguous_zeros, tape);
         for (unsigned i=0; i < unambiguous_zeros; ++i)
         {
-            corners[unambig_remap[i]] =
+            leaf->corners[unambig_remap[i]] =
                 (ds.col(i).template head<3>() != 0).any()
                     ? Interval::FILLED : Interval::EMPTY;
         }
@@ -225,7 +230,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     {
         if (ambig(i))
         {
-            corners[corner_indices[i]] =
+            leaf->corners[corner_indices[i]] =
                 eval->feature.isInside(pos.col(i), tape)
                     ? Interval::FILLED
                     : Interval::EMPTY;
@@ -238,18 +243,26 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     // Pack corners into filled / empty arrays
     for (uint8_t i=0; i < children.size(); ++i)
     {
-        all_full  &= (corners[i] == Interval::FILLED);
-        all_empty &= (corners[i] == Interval::EMPTY);
+        all_full  &= (leaf->corners[i] == Interval::FILLED);
+        all_empty &= (leaf->corners[i] == Interval::EMPTY);
     }
 
     type = all_empty ? Interval::EMPTY
          : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
 
+    // Early exit if this leaf is unambiguous
+    if (type != Interval::AMBIGUOUS)
+    {
+        leaf.reset();
+        done();
+        return;
+    }
+
     buildCornerMask();
 
     // Now, for the fun part of actually placing vertices!
     // Figure out if the leaf is manifold
-    manifold = cornersAreManifold();
+    leaf->manifold = cornersAreManifold();
 
     // We'll use this vector anytime we need to pass something
     // into the evaluator (which requires a Vector3f)
@@ -261,8 +274,9 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     };
 
     // Iterate over manifold patches, storing one vertex per patch
-    const auto& ps = mt->v[corner_mask];
-    while (vertex_count < ps.size() && ps[vertex_count][0].first != -1)
+    const auto& ps = mt->v[leaf->corner_mask];
+    while (leaf->vertex_count < ps.size() &&
+           ps[leaf->vertex_count][0].first != -1)
     {
         // Number of edges, total
         unsigned edge_count;
@@ -289,18 +303,18 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
             // in the targets array if the list of intersections can't be
             // re-used from a neighbor.
             for (edge_count=0, eval_count=0;
-                 edge_count < ps[vertex_count].size() &&
-                     ps[vertex_count][edge_count].first != -1;
+                 edge_count < ps[leaf->vertex_count].size() &&
+                     ps[leaf->vertex_count][edge_count].first != -1;
                  ++edge_count)
             {
                 // Sanity-checking
-                assert(corners[ps[vertex_count][edge_count].first]
+                assert(leaf->corners[ps[leaf->vertex_count][edge_count].first]
                        == Interval::FILLED);
-                assert(corners[ps[vertex_count][edge_count].second]
+                assert(leaf->corners[ps[leaf->vertex_count][edge_count].second]
                        == Interval::EMPTY);
 
                 // Store the edge index associated with this target
-                auto c = ps[vertex_count][edge_count];
+                auto c = ps[leaf->vertex_count][edge_count];
                 edges[edge_count] = mt->e[c.first][c.second];
 
                 auto compare = neighbors.check(c.first, c.second);
@@ -308,7 +322,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                 if (compare.get() != nullptr)
                 {
                     assert(compare->size() > 0);
-                    intersections[edges[edge_count]] = compare;
+                    leaf->intersections[edges[edge_count]] = compare;
                 }
                 else
                 {
@@ -318,11 +332,11 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                                            region.corner(c.second)};
                     eval_edges[eval_count] = edges[edge_count];
 
-                    assert(eval_edges[eval_count] < intersections.size());
+                    assert(eval_edges[eval_count] < leaf->intersections.size());
                     eval_count++;
                 }
 
-                assert(edges[edge_count] < intersections.size());
+                assert(edges[edge_count] < leaf->intersections.size());
             }
 
             // Next, we search over the target edges, doing an
@@ -438,12 +452,12 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                         Eigen::Matrix<double, N, 1> dv = derivs / norm;
                         if (dv.array().isFinite().all())
                         {
-                            if (intersections[eval_edges[i/2]] == nullptr)
+                            if (leaf->intersections[eval_edges[i/2]] == nullptr)
                             {
-                                intersections[eval_edges[i/2]].reset(
+                                leaf->intersections[eval_edges[i/2]].reset(
                                         new IntersectionVec<N>);
                             }
-                            intersections[eval_edges[i/2]]->
+                            leaf->intersections[eval_edges[i/2]]->
                                  push_back({pos.template head<N>(),
                                             dv, ds.col(i).w() / norm});
                         }
@@ -469,12 +483,12 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                             Eigen::Matrix<double, N, 1> dv = derivs / norm;
                             if (dv.array().isFinite().all())
                             {
-                                if (intersections[eval_edges[i/2]] == nullptr)
+                                if (leaf->intersections[eval_edges[i/2]] == nullptr)
                                 {
-                                    intersections[eval_edges[i/2]].reset(
+                                    leaf->intersections[eval_edges[i/2]].reset(
                                             new IntersectionVec<N>);
                                 }
-                                intersections[eval_edges[i/2]]->
+                                leaf->intersections[eval_edges[i/2]]->
                                      push_back({pos.template head<N>(),
                                             dv, ds.col(i).w() / norm});
                             }
@@ -498,9 +512,9 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
             IntersectionVec<N> prev_normals;
             edge_ranks[i] = 0;
 
-            if (intersections[edges[i]].get())
+            if (leaf->intersections[edges[i]].get())
             {
-                for (const auto& t : *intersections[edges[i]])
+                for (const auto& t : *leaf->intersections[edges[i]])
                 {
                     bool matched = false;
                     for (auto& v : prev_normals)
@@ -515,8 +529,10 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                 }
             }
         }
-        _mass_point = _mass_point.Zero();
 
+        // Reset the mass point, since we may have used it for the previous
+        // vertex.
+        leaf->mass_point = leaf->mass_point.Zero();
 
         {   // Build the mass point from max-rank intersections
             const int max_rank = *std::max_element(
@@ -531,13 +547,13 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                     // (which are guaranteed by construction to be a
                     // just-inside and just-outside position, respectively)
                     Eigen::Matrix<double, N + 1, 1> mp;
-                    const auto& ns = intersections[edges[i]];
+                    const auto& ns = leaf->intersections[edges[i]];
                     if (ns.get() && ns->size() > 1)
                     {
                         mp << (*ns).front().pos, 1;
-                        _mass_point += mp;
+                        leaf->mass_point += mp;
                         mp << (*ns).back().pos, 1;
-                        _mass_point += mp;
+                        leaf->mass_point += mp;
                     }
                 }
             }
@@ -549,8 +565,8 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         size_t rows = 0;
         for (unsigned i=0; i < edge_count; ++i)
         {
-            rows += intersections[edges[i]]
-                ? intersections[edges[i]]->size() : 0;
+            rows += leaf->intersections[edges[i]]
+                ? leaf->intersections[edges[i]]->size() : 0;
         }
 
         // Now, we'll unpack into A and b matrices
@@ -579,9 +595,9 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         unsigned r=0;
         for (unsigned i=0; i < edge_count; ++i)
         {
-            if (intersections[edges[i]])
+            if (leaf->intersections[edges[i]])
             {
-                for (auto& n : *intersections[edges[i]])
+                for (auto& n : *leaf->intersections[edges[i]])
                 {
                     A.row(r) << n.deriv.transpose();
                     b(r) = A.row(r).dot(n.pos) - n.value;
@@ -592,14 +608,14 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 
         // Save compact QEF matrices
         auto At = A.transpose().eval();
-        AtA = At * A;
-        AtB = At * b;
-        BtB = b.transpose() * b;
+        leaf->AtA = At * A;
+        leaf->AtB = At * b;
+        leaf->BtB = b.transpose() * b;
 
         // Find the vertex position, storing into the appropriate column
         // of the vertex array and ignoring the error result (because
         // this is the bottom of the recursion)
-        findVertex(vertex_count++);
+        findVertex(leaf->vertex_count++);
     }
     done();
 }
@@ -607,10 +623,11 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 template <unsigned N>
 void XTree<N>::buildCornerMask()
 {
+    assert(leaf.get() != nullptr);
     for (unsigned i=0; i < children.size(); ++i)
     {
-        assert(corners[i] != Interval::UNKNOWN);
-        corner_mask |= (corners[i] == Interval::FILLED) << i;
+        assert(leaf->corners[i] != Interval::UNKNOWN);
+        leaf->corner_mask |= (leaf->corners[i] == Interval::FILLED) << i;
     }
 }
 
@@ -633,6 +650,18 @@ bool XTree<N>::collectChildren(
         cs[i] = children[i].load(std::memory_order_relaxed);
     }
 
+    // If any children are branches, then we can't collapse.
+    // We do this check first, to avoid allocating then freeing a Leaf
+    if (std::any_of(cs.begin(), cs.end(),
+                    [](XTree<N>* o){ return o->isBranch(); }))
+    {
+        done();
+        return true;
+    }
+
+    assert(leaf.get() == nullptr);
+    leaf.reset(new Leaf);
+
     // Update corner and filled / empty state from children
     bool all_empty = true;
     bool all_full  = true;
@@ -642,10 +671,10 @@ bool XTree<N>::collectChildren(
         assert(c != nullptr);
 
         // Grab corner values from children
-        corners[i] = c->corners[i];
+        leaf->corners[i] = c->cornerState(i);
 
-        all_empty &= c->type == Interval::EMPTY;
-        all_full  &= c->type == Interval::FILLED;
+        all_empty &= (c->type == Interval::EMPTY);
+        all_full  &= (c->type == Interval::FILLED);
     }
 
     type = all_empty ? Interval::EMPTY
@@ -657,56 +686,57 @@ bool XTree<N>::collectChildren(
     if (type == Interval::FILLED || type == Interval::EMPTY)
     {
         for (auto& c : children) { spares.push(c.exchange(nullptr)); }
-        manifold = true;
+        leaf.reset();
         done();
         return true;
     }
 
     // Store this tree's depth as a function of its children
-    level = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
+    leaf->level = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
         [](const unsigned& a, XTree<N>* b)
-        { return std::max(a, b->level);} ) + 1;
-
-    // If any children are branches, then we can't collapse
-    if (std::any_of(cs.begin(), cs.end(),
-                    [](XTree<N>* o){ return o->isBranch(); }))
-    {
-        done();
-        return true;
-    }
+        { return std::max(a, b->level());} ) + 1;
 
     //  This conditional implements the three checks described in
     //  [Ju et al, 2002] in the section titled
     //      "Simplification with topology safety"
-    manifold = cornersAreManifold() &&
+    leaf->manifold = cornersAreManifold() &&
         std::all_of(cs.begin(), cs.end(),
-                [](XTree<N>* o){ return o->manifold; }) &&
+                [](XTree<N>* o){ return o->isManifold(); }) &&
         leafsAreManifold();
 
     // If we're not manifold, then we can't collapse
-    if (!manifold)
+    if (!leaf->manifold)
     {
+        leaf.reset();
         done();
         return true;
     }
 
     // Populate the feature rank as the maximum of all children
     // feature ranks (as seen in DC: The Secret Sauce)
-    rank = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
-            [](unsigned a, XTree<N>* b){ return std::max(a, b->rank);} );
+    leaf->rank = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
+            [](unsigned a, XTree<N>* b){ return std::max(a, b->rank());} );
 
     // Accumulate the mass point and QEF matrices
     for (const auto& c : cs)
     {
         assert(c != nullptr);
 
-        if (c->rank == rank)
+        if (c->type == Interval::AMBIGUOUS)
         {
-            _mass_point += c->_mass_point;
+            assert(c->leaf.get() != nullptr);
+            if (c->leaf->rank == leaf->rank)
+            {
+                leaf->mass_point += c->leaf->mass_point;
+            }
+            leaf->AtA += c->leaf->AtA;
+            leaf->AtB += c->leaf->AtB;
+            leaf->BtB += c->leaf->BtB;
         }
-        AtA += c->AtA;
-        AtB += c->AtB;
-        BtB += c->BtB;
+        else
+        {
+            assert(c->leaf.get() == nullptr);
+        }
     }
 
     // If the vertex error is below a threshold, and the vertex
@@ -714,7 +744,7 @@ bool XTree<N>::collectChildren(
     // a leaf by erasing all of the child branches
     {
         bool collapsed = false;
-        if (findVertex(vertex_count++) < max_err)
+        if (findVertex(leaf->vertex_count++) < max_err)
         {
             Eigen::Vector3f v;
             v << vert(0).template cast<float>(),
@@ -727,7 +757,7 @@ bool XTree<N>::collectChildren(
         }
         if (!collapsed)
         {
-            vertex_count = 0;
+            leaf.reset();
         }
     }
 
@@ -750,8 +780,9 @@ void XTree<N>::done()
 template <unsigned N>
 double XTree<N>::findVertex(unsigned index)
 {
-    Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(AtA);
-    assert(_mass_point(N) > 0);
+    assert(leaf.get() != nullptr);
+    Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(leaf->AtA);
+    assert(leaf->mass_point(N) > 0);
 
     // We need to find the pseudo-inverse of AtA.
     auto eigenvalues = es.eigenvalues().real();
@@ -767,8 +798,8 @@ double XTree<N>::findVertex(unsigned index)
     // Get rank from eigenvalues
     if (!isBranch())
     {
-        assert(index > 0 || rank == 0);
-        rank = D.diagonal().count();
+        assert(index > 0 || leaf->rank == 0);
+        leaf->rank = D.diagonal().count();
     }
 
     // SVD matrices
@@ -778,22 +809,126 @@ double XTree<N>::findVertex(unsigned index)
     auto AtAp = (U * D * U.transpose()).eval();
 
     // Solve for vertex position (minimizing distance to center)
-    auto center = massPoint();
-    Vec v = AtAp * (AtB - (AtA * center)) + center;
+    Vec center = leaf->mass_point.template head<N>() /
+                 leaf->mass_point(N);
+    Vec v = AtAp * (leaf->AtB - (leaf->AtA * center)) + center;
 
     // Store this specific vertex in the verts matrix
-    verts.col(index) = v;
+    leaf->verts.col(index) = v;
 
     // Return the QEF error
-    return (v.transpose() * AtA * v - 2*v.transpose() * AtB)[0] + BtB;
+    return (v.transpose() * leaf->AtA * v - 2*v.transpose() * leaf->AtB)[0]
+            + leaf->BtB;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-typename XTree<N>::Vec XTree<N>::massPoint() const
+typename XTree<N>::Vec XTree<N>::vert(unsigned i) const
 {
-    return _mass_point.template head<N>() / _mass_point(N);
+    assert(leaf.get() != nullptr);
+    assert(i < leaf->vertex_count);
+    return leaf->verts.col(i);
+}
+
+template <unsigned N>
+std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
+        unsigned a, unsigned b) const
+{
+    assert(leaf.get() != nullptr);
+    assert(mt->e[a][b] != -1);
+    return leaf->intersections[mt->e[a][b]];
+}
+
+template <unsigned N>
+Interval::State XTree<N>::cornerState(uint8_t i) const
+{
+    // assert(!isBranch()); TODO
+    switch (type)
+    {
+        case Interval::AMBIGUOUS:
+            assert(leaf.get() != nullptr);
+            return leaf->corners[i];
+
+        case Interval::UNKNOWN: assert(false);
+
+        case Interval::FILLED:  // fallthrough
+        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+                                return type;
+    };
+}
+
+template <unsigned N>
+bool XTree<N>::isManifold() const
+{
+    assert(!isBranch());
+    switch (type)
+    {
+        case Interval::AMBIGUOUS:
+            assert(leaf.get() != nullptr);
+            return leaf->manifold;
+
+        case Interval::UNKNOWN: assert(false);
+
+        case Interval::FILLED:  // fallthrough
+        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+                                return true;
+    };
+}
+
+template <unsigned N>
+uint8_t XTree<N>::cornerMask() const
+{
+    assert(!isBranch());
+    switch (type)
+    {
+        case Interval::AMBIGUOUS:
+            assert(leaf.get() != nullptr);
+            return leaf->corner_mask;
+
+        case Interval::UNKNOWN: assert(false);
+
+        case Interval::FILLED:  assert(leaf.get() == nullptr);
+                                return ((1 << (1 << N)) - 1);
+        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+                                return 0;
+    };
+}
+
+template <unsigned N>
+unsigned XTree<N>::level() const
+{
+    assert(!isBranch());
+    switch (type)
+    {
+        case Interval::AMBIGUOUS:
+            assert(leaf.get() != nullptr);
+            return leaf->level;
+
+        case Interval::UNKNOWN: assert(false);
+
+        case Interval::FILLED:  // fallthrough
+        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+                                return 0;
+    };
+}
+
+template <unsigned N>
+unsigned XTree<N>::rank() const
+{
+    assert(!isBranch());
+    switch (type)
+    {
+        case Interval::AMBIGUOUS:
+            assert(leaf.get() != nullptr);
+            return leaf->rank;
+
+        case Interval::UNKNOWN: assert(false);
+
+        case Interval::FILLED:  // fallthrough
+        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+                                return 0;
+    };
 }
 
 ////////////////////////////////////////////////////////////////////////////////

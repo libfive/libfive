@@ -139,7 +139,20 @@ bool XTree<3>::cornersAreManifold() const
          1,0,1,1,0,0,0,0,1,0,1,1,1,0,1,1,1,1,1,1,0,0,0,0,1,0,1,1,0,0,0,1,
          1,0,0,0,1,1,0,0,1,0,1,0,1,1,1,1,1,1,0,0,1,1,0,0,1,0,0,0,1,1,0,1,
          1,0,1,0,1,0,0,0,1,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1};
-    return corner_table[corner_mask];
+
+    // assert(!isBranch()); TODO
+    switch (type)
+    {
+        case Interval::AMBIGUOUS:
+            assert(leaf.get() != nullptr);
+            return corner_table[leaf->corner_mask];
+
+        case Interval::UNKNOWN: assert(false);
+
+        case Interval::FILLED:  // fallthrough
+        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+                                return true;
+    };
 }
 
 template <>

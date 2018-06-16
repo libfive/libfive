@@ -96,12 +96,40 @@ public:
     /*
      *  Returns the filled / empty state for the ith corner
      */
-    Interval::State cornerState(uint8_t i) const { return corners[i]; }
+    Interval::State cornerState(uint8_t i) const;
 
     /*
-     *  Returns the averaged mass point
+     *  Checks whether this cell is manifold.
+     *  This must only be called on non-branching cells.
      */
-    Eigen::Matrix<double, N, 1> massPoint() const;
+    bool isManifold() const;
+
+    /*
+     *  Looks up this cell's corner mask (used in various tables)
+     *  This must only be called on non-branching cells.
+     */
+    uint8_t cornerMask() const;
+
+    /*  Looks up the cell's level.
+     *
+     *  This must only be called on non-branching cells.
+     *
+     *  level is defined as 0 for EMPTY or FILLED terminal cells;
+     *  for ambiguous leaf cells, it is the number of leafs that
+     *  were merged into this cell.
+     */
+    unsigned level() const;
+
+    /*
+     *  Looks up this cell's feature rank.
+     *
+     *  This must only be called on non-branching cells.
+     *
+     *  rank is defined as 0 for EMPTY and FILLED cells;
+     *  otherwise, it is 1 for a plane, 2 for an edge,
+     *  3 for a vertex (in the 3D case).
+     */
+    unsigned rank() const;
 
     /*  Deletes children using multiple threads */
     void fastDelete();
@@ -123,65 +151,80 @@ public:
     /*  Children pointers, if this is a branch  */
     std::array<std::atomic<XTree<N>*>, 1 << N> children;
 
-    /*  level = max(map(level, children)) + 1  */
-    unsigned level;
-
-    /*  Vertex locations, if this is a leaf
-     *
-     *  To make cells manifold, we may store multiple vertices in a single
-     *  leaf; see writeup in marching.cpp for details  */
-    Eigen::Matrix<double, N, _pow(2, N - 1)> verts;
-
     /*
      *  Look up a particular vertex by index
      */
-    Eigen::Matrix<double, N, 1> vert(unsigned i=0) const
-    { assert(i < vertex_count); return verts.col(i); }
+    Vec vert(unsigned i=0) const;
 
     /*
      *  Looks up a particular intersection array by corner indices
      */
     std::shared_ptr<IntersectionVec<N>> intersection(
-            unsigned a, unsigned b) const
-    {
-        assert(mt->e[a][b] != -1);
-        return intersections[mt->e[a][b]];
-    }
-
-    /*  Array of filled states for the cell's corners
-     *  (must only be FILLED / EMPTY, not UNKNOWN or AMBIGUOUS ) */
-    std::array<Interval::State, 1 << N> corners;
-
-    /* Here, we'll prepare to store position, {normal, value} pairs
-     * for every crossing and feature.  RAM is cheap, so we allocated
-     * enough space for at least two inside-outside intersection pairs
-     * on each edge; more pairs resize the small_vector */
-    std::array<std::shared_ptr<IntersectionVec<N>>, _edges(N) * 2>
-        intersections;
+            unsigned a, unsigned b) const;
 
     /*  Leaf cell state, when known  */
-    Interval::State type=Interval::UNKNOWN;
+    Interval::State type;
 
-    /*  Feature rank for the cell's vertex, where                    *
-     *      1 is face, 2 is edge, 3 is corner                        *
-     *                                                               *
-     *  This value is populated in find{Leaf|Branch}Matrices and     *
-     *  used when merging intersections from lower-ranked children   */
-    unsigned rank;
+    /*  AMBIGUOUS leaf cells have more data, which we heap-allocate in
+     *  this struct to keep the overall tree smaller. */
+    struct Leaf
+    {
+        Leaf();
 
-    /* Used as a unique per-vertex index when unpacking into a b-rep;   *
-     * this is cheaper than storing a map of XTree* -> uint32_t         */
-    mutable std::array<uint32_t, _pow(2, N - 1)> index;
+        /*  level = max(map(level, children)) + 1  */
+        unsigned level;
 
-    /*  Bitfield marking which corners are set */
-    uint8_t corner_mask;
+        /*  Vertex locations, if this is a leaf
+         *
+         *  To make cells manifold, we may store multiple vertices in a single
+         *  leaf; see writeup in marching.cpp for details  */
+        Eigen::Matrix<double, N, _pow(2, N - 1)> verts;
 
-    /*  Stores the number of patches / vertices in this cell
-     *  (which could be more than one to keep the surface manifold */
-    unsigned vertex_count;
+        /*  Array of filled states for the cell's corners
+         *  (must only be FILLED / EMPTY, not UNKNOWN or AMBIGUOUS ) */
+        std::array<Interval::State, 1 << N> corners;
 
-    /*  Marks whether this cell is manifold or not  */
-    bool manifold;
+        /* This array allows us to store position, normal, and value where
+         * the mesh crosses a cell edge.  IntersectionVec is small_vec that
+         * has enough space for a few intersections, and will move to the
+         * heap for pathological cases. */
+        std::array<std::shared_ptr<IntersectionVec<N>>, _edges(N) * 2>
+            intersections;
+
+        /*  Feature rank for the cell's vertex, where                    *
+         *      1 is face, 2 is edge, 3 is corner                        *
+         *                                                               *
+         *  This value is populated in evalLeaf and used when merging    *
+         *  from lower-ranked children                                   */
+        unsigned rank;
+
+        /* Used as a unique per-vertex index when unpacking into a b-rep;   *
+         * this is cheaper than storing a map of XTree* -> uint32_t         */
+        mutable std::array<uint32_t, _pow(2, N - 1)> index;
+
+        /*  Bitfield marking which corners are set */
+        uint8_t corner_mask;
+
+        /*  Stores the number of patches / vertices in this cell
+         *  (which could be more than one to keep the surface manifold */
+        unsigned vertex_count;
+
+        /*  Marks whether this cell is manifold or not  */
+        bool manifold;
+
+        /*  Mass point is the average intersection location *
+         *  (the last coordinate is number of points summed) */
+        Eigen::Matrix<double, N + 1, 1> mass_point;
+
+        /*  QEF matrices */
+        Eigen::Matrix<double, N, N> AtA;
+        Eigen::Matrix<double, N, 1> AtB;
+        double BtB;
+
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    };
+
+    std::unique_ptr<Leaf> leaf;
 
     /*  Single copy of the marching squares / cubes table, lazily
      *  initialized when needed */
@@ -235,15 +278,6 @@ protected:
      *  this tree into the parent's array of children pointers.
      */
     void done();
-
-    /*  Mass point is the average intersection location *
-     *  (the last coordinate is number of points summed) */
-    Eigen::Matrix<double, N + 1, 1> _mass_point;
-
-    /*  QEF matrices */
-    Eigen::Matrix<double, N, N> AtA;
-    Eigen::Matrix<double, N, 1> AtB;
-    double BtB;
 
     /*  Marks whether this tree is fully constructed */
     std::atomic_int pending;
