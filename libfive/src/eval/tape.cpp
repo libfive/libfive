@@ -64,6 +64,7 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
     deck.disabled[tape->i] = false;
 
     bool terminal = true;
+    bool changed = false;
     for (const auto& c : tape->t)
     {
         if (!deck.disabled[c.id])
@@ -72,9 +73,11 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
             {
                 case KEEP_A:        deck.disabled[c.a] = false;
                                     deck.remap[c.id] = c.a;
+                                    changed = true;
                                     break;
                 case KEEP_B:        deck.disabled[c.b] = false;
                                     deck.remap[c.id] = c.b;
+                                    changed = true;
                                     break;
                 case KEEP_BOTH:     terminal = false; // fallthrough
                 case KEEP_ALWAYS:   break;
@@ -94,6 +97,11 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
                 deck.disabled[c.b] = false;
             }
         }
+    }
+
+    if (!changed)
+    {
+        return tape;
     }
 
     std::shared_ptr<Tape> out;
