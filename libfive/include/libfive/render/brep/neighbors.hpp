@@ -73,7 +73,7 @@ public:
      *  of the neighbors, assigning the pointer if that is the case
      *  and setting it to nullptr otherwise.
      */
-    const IntersectionVec<N>* check(uint8_t a, uint8_t b) const;
+    std::shared_ptr<IntersectionVec<N>> check(uint8_t a, uint8_t b) const;
 
     /*
      *  Given an XTree child index, returns the XTree child index of the

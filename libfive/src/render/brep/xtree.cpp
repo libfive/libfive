@@ -76,7 +76,7 @@ void XTree<N>::reset(XTree<N>* p, unsigned i, Region<N> r)
 
     for (auto& i : intersections)
     {
-        i.clear();
+        i.reset();
     }
 
     corner_positions.setZero();
@@ -320,9 +320,10 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 
                 auto compare = neighbors.check(c.first, c.second);
                 // Enable this to turn on sharing of results with neighbors
-                if (compare != nullptr && compare->size() > 0)
+                if (compare.get() != nullptr)
                 {
-                    intersections[edges[edge_count]] = *compare;
+                    assert(compare->size() > 0);
+                    intersections[edges[edge_count]] = compare;
                 }
                 else
                 {
@@ -452,8 +453,13 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                         Eigen::Matrix<double, N, 1> dv = derivs / norm;
                         if (dv.array().isFinite().all())
                         {
-                            intersections[eval_edges[i/2]]
-                                .push_back({pos.template head<N>(),
+                            if (intersections[eval_edges[i/2]] == nullptr)
+                            {
+                                intersections[eval_edges[i/2]].reset(
+                                        new IntersectionVec<N>);
+                            }
+                            intersections[eval_edges[i/2]]->
+                                 push_back({pos.template head<N>(),
                                             dv, ds.col(i).w() / norm});
                         }
                     }
@@ -478,8 +484,13 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                             Eigen::Matrix<double, N, 1> dv = derivs / norm;
                             if (dv.array().isFinite().all())
                             {
-                                intersections[eval_edges[i/2]]
-                                    .push_back({pos.template head<N>(),
+                                if (intersections[eval_edges[i/2]] == nullptr)
+                                {
+                                    intersections[eval_edges[i/2]].reset(
+                                            new IntersectionVec<N>);
+                                }
+                                intersections[eval_edges[i/2]]->
+                                     push_back({pos.template head<N>(),
                                             dv, ds.col(i).w() / norm});
                             }
                         }
@@ -502,17 +513,20 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
             IntersectionVec<N> prev_normals;
             edge_ranks[i] = 0;
 
-            for (const auto& t : intersections[edges[i]])
+            if (intersections[edges[i]].get())
             {
-                bool matched = false;
-                for (auto& v : prev_normals)
+                for (const auto& t : *intersections[edges[i]])
                 {
-                    matched |= (t.deriv.dot(v.deriv) >= 0.9);
-                }
-                if (!matched)
-                {
-                    edge_ranks[i]++;
-                    prev_normals.push_back(t);
+                    bool matched = false;
+                    for (auto& v : prev_normals)
+                    {
+                        matched |= (t.deriv.dot(v.deriv) >= 0.9);
+                    }
+                    if (!matched)
+                    {
+                        edge_ranks[i]++;
+                        prev_normals.push_back(t);
+                    }
                 }
             }
         }
@@ -532,13 +546,12 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                     // (which are guaranteed by construction to be a
                     // just-inside and just-outside position, respectively)
                     Eigen::Matrix<double, N + 1, 1> mp;
-                    const auto& inter = intersections[edges[i]];
-                    const auto size = inter.size();
-                    if (size >= 1)
+                    const auto& ns = intersections[edges[i]];
+                    if (ns.get() && ns->size() > 1)
                     {
-                        mp << intersections[edges[i]][0].pos, 1;
+                        mp << (*ns).front().pos, 1;
                         _mass_point += mp;
-                        mp << intersections[edges[i]][size - 1].pos, 1;
+                        mp << (*ns).back().pos, 1;
                         _mass_point += mp;
                     }
                 }
@@ -551,7 +564,8 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         size_t rows = 0;
         for (unsigned i=0; i < edge_count; ++i)
         {
-            rows += intersections[edges[i]].size();
+            rows += intersections[edges[i]]
+                ? intersections[edges[i]]->size() : 0;
         }
 
         // Now, we'll unpack into A and b matrices
@@ -580,13 +594,14 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         unsigned r=0;
         for (unsigned i=0; i < edge_count; ++i)
         {
-            for (unsigned j=0; j < intersections[edges[i]].size(); ++j)
+            if (intersections[edges[i]])
             {
-                A.row(r) << intersections[edges[i]][j].deriv
-                                            .transpose();
-                b(r) = A.row(r).dot(intersections[edges[i]][j].pos) -
-                       intersections[edges[i]][j].value;
-                r++;
+                for (auto& n : *intersections[edges[i]])
+                {
+                    A.row(r) << n.deriv.transpose();
+                    b(r) = A.row(r).dot(n.pos) - n.value;
+                    r++;
+                }
             }
         }
 

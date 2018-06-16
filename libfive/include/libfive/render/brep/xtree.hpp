@@ -156,7 +156,8 @@ public:
     /*
      *  Looks up a particular intersection array by corner indices
      */
-    const IntersectionVec<N>& intersection(unsigned a, unsigned b) const
+    std::shared_ptr<IntersectionVec<N>> intersection(
+            unsigned a, unsigned b) const
     {
         assert(mt->e[a][b] != -1);
         return intersections[mt->e[a][b]];
@@ -174,7 +175,8 @@ public:
      * for every crossing and feature.  RAM is cheap, so we allocated
      * enough space for at least two inside-outside intersection pairs
      * on each edge; more pairs resize the small_vector */
-    std::array<IntersectionVec<N>, _edges(N) * 2> intersections;
+    std::array<std::shared_ptr<IntersectionVec<N>>, _edges(N) * 2>
+        intersections;
 
     /*  Leaf cell state, when known  */
     Interval::State type=Interval::UNKNOWN;

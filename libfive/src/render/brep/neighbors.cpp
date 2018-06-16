@@ -166,7 +166,8 @@ Interval::State Neighbors<N>::check(uint8_t corner) const
 }
 
 template <unsigned N>
-const IntersectionVec<N>* Neighbors<N>::check(uint8_t a, uint8_t b) const
+std::shared_ptr<IntersectionVec<N>> Neighbors<N>::check(
+        uint8_t a, uint8_t b) const
 {
     for (unsigned i=0; i < _pow(N, 3) - 1; ++i)
     {
@@ -175,7 +176,7 @@ const IntersectionVec<N>* Neighbors<N>::check(uint8_t a, uint8_t b) const
             auto index = edgeCheckIndex({a, b}, i);
             if (index.first != -1)
             {
-                return &neighbors[i]->intersection(index.first, index.second);
+                return neighbors[i]->intersection(index.first, index.second);
             }
         }
     }
