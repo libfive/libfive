@@ -134,8 +134,6 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     // in the range [0, 1 <<N).
     std::array<int, 1 << N> corner_indices;
 
-    leaf.reset(new Leaf);
-
     // Local array of corners
     std::array<Interval::State, 1 << N> corners;
 
@@ -255,11 +253,11 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     // Early exit if this leaf is unambiguous
     if (type != Interval::AMBIGUOUS)
     {
-        leaf.reset();
         done();
         return;
     }
 
+    leaf.reset(new Leaf);
     buildCornerMask(corners);
 
     // Now, for the fun part of actually placing vertices!
