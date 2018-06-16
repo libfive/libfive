@@ -45,13 +45,13 @@ public:
     /*
      *  Simple constructor
      */
-    explicit XTree(XTree<N>* parent, unsigned index, Region<N> region);
+    explicit XTree(XTree<N>* parent, unsigned index);
     ~XTree();
 
     /*
      *  Resets this tree to a freshly-constructed state
      */
-    void reset(XTree<N>* p, unsigned i, Region<N> r);
+    void reset(XTree<N>* p, unsigned i);
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
@@ -59,8 +59,9 @@ public:
      *
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
-    std::shared_ptr<Tape> evalInterval(IntervalEvaluator& eval,
-                                       std::shared_ptr<Tape> tape);
+    std::shared_ptr<Tape> evalInterval(
+            IntervalEvaluator& eval, const Region<N>& region,
+            std::shared_ptr<Tape> tape);
 
     /*
      *  Evaluates and stores a result at every corner of the cell.
@@ -68,7 +69,7 @@ public:
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
     void evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
-                  std::shared_ptr<Tape> tape);
+                  const Region<N>& region, std::shared_ptr<Tape> tape);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -77,7 +78,8 @@ public:
      *  Returns false if any children are yet to come, true otherwise.
      */
     bool collectChildren(
-            XTreeEvaluator* eval, std::shared_ptr<Tape> tape, double max_err,
+            XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
+            double max_err, const typename Region<N>::Perp& perp,
             std::stack<XTree<N>*, std::vector<XTree<N>*>>& spares);
 
     /*
@@ -97,14 +99,6 @@ public:
     Interval::State cornerState(uint8_t i) const { return corners[i]; }
 
     /*
-     *  Returns the corner position for the ith corner
-     */
-    Eigen::Array<double, N, 1> cornerPos(uint8_t i) const
-    {
-        return corner_positions.row(i);
-    }
-
-    /*
      *  Returns the averaged mass point
      */
     Eigen::Matrix<double, N, 1> massPoint() const;
@@ -114,12 +108,6 @@ public:
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-    /*
-     *  Unpack the vertex into a 3-element array
-     *  (using the region's perpendicular coordinates)
-     */
-    FIVE_EXPORT Eigen::Vector3d vert3(unsigned index=0) const;
 
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;
@@ -131,9 +119,6 @@ public:
      *  in the children array when it is complete, so it needs to know its
      *  index for when that time comes.  */
     unsigned parent_index;
-
-    /*  The region filled by this XTree */
-    Region<N> region;
 
     /*  Children pointers, if this is a branch  */
     std::array<std::atomic<XTree<N>*>, 1 << N> children;
@@ -166,10 +151,6 @@ public:
     /*  Array of filled states for the cell's corners
      *  (must only be FILLED / EMPTY, not UNKNOWN or AMBIGUOUS ) */
     std::array<Interval::State, 1 << N> corners;
-
-    /*  Array of precomputed corner positions, stored once at the
-     *  beginning of the constructor and looked up with cornerPos() */
-    Eigen::Matrix<double, 1 << N, N> corner_positions;
 
     /* Here, we'll prepare to store position, {normal, value} pairs
      * for every crossing and feature.  RAM is cheap, so we allocated

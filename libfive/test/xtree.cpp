@@ -136,10 +136,12 @@ TEST_CASE("XTree<2>::vertex_count")
         REQUIRE(ta->vertex_count == 2);
         for (unsigned i=0; i < ta->vertex_count; ++i)
         {
-            auto pt = ta->vert3(i).template cast<float>().eval();
+            auto pt = ta->vert(i).template cast<float>().eval();
             CAPTURE(i);
             CAPTURE(pt.transpose());
-            REQUIRE(fabs(eval.eval(pt)) < 1e-6);
+            Eigen::Vector3f v;
+            v << pt, 0.0f;
+            REQUIRE(fabs(eval.eval(v)) < 1e-6);
         }
     }
 }
@@ -172,9 +174,7 @@ TEST_CASE("XTree<3>::vert")
                     CAPTURE(i);
                     CAPTURE(t->manifold);
                     CAPTURE((int)t->corner_mask);
-                    CAPTURE(t->region.lower.transpose());
-                    CAPTURE(t->region.upper.transpose());
-                    REQUIRE(eval.feature.eval(t->vert3(i).template cast<float>())
+                    REQUIRE(eval.feature.eval(t->vert(i).template cast<float>())
                             == Approx(0.0f).margin(err));
                 }
             }

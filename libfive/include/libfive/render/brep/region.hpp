@@ -124,6 +124,29 @@ public:
         return out;
     }
 
+    Eigen::Vector3d corner3(unsigned i) const
+    {
+        Eigen::Vector3d out;
+        out << corner(i), perp;
+        return out;
+    }
+
+    Eigen::Vector3f corner3f(unsigned i) const
+    {
+        return corner3(i).template cast<float>();
+    }
+
+    Eigen::Matrix<double, N, 1> corner(unsigned i) const
+    {
+        Eigen::Matrix<double, N, 1> out;
+        for (unsigned axis=0; axis < N; ++axis)
+        {
+            out(axis) = (i & (1 << axis)) ? upper(axis)
+                                          : lower(axis);
+        }
+        return out;
+    }
+
     /*  Lower and upper bounds for the region  */
     Pt lower, upper;
 

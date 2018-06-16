@@ -42,21 +42,20 @@ std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(XTree<N>* parent, unsigned parent_index, Region<N> region)
+XTree<N>::XTree(XTree<N>* parent, unsigned parent_index)
 {
     for (auto& c : children)
     {
         c.store(nullptr, std::memory_order_relaxed);
     }
-    reset(parent, parent_index, region);
+    reset(parent, parent_index);
 }
 
 template <unsigned N>
-void XTree<N>::reset(XTree<N>* p, unsigned i, Region<N> r)
+void XTree<N>::reset(XTree<N>* p, unsigned i)
 {
     parent = p;
     parent_index = i;
-    region = r;
     type = Interval::UNKNOWN;
     level = 0;
     rank = 0;
@@ -79,7 +78,6 @@ void XTree<N>::reset(XTree<N>* p, unsigned i, Region<N> r)
         i.reset();
     }
 
-    corner_positions.setZero();
     verts.setZero();
     _mass_point.setZero();
     AtA.setZero();
@@ -99,7 +97,8 @@ XTree<N>::~XTree()
 }
 
 template <unsigned N>
-Tape::Handle XTree<N>::evalInterval(IntervalEvaluator& eval, Tape::Handle tape)
+Tape::Handle XTree<N>::evalInterval(
+        IntervalEvaluator& eval, const Region<N>& region, Tape::Handle tape)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -122,23 +121,8 @@ Tape::Handle XTree<N>::evalInterval(IntervalEvaluator& eval, Tape::Handle tape)
 
 template <unsigned N>
 void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
-                        Tape::Handle tape)
+                        const Region<N>& region, Tape::Handle tape)
 {
-    // Store the corner positions
-    for (unsigned i=0; i < (1 << N); ++i)
-    {
-        Eigen::Array<double, 1, N> out;
-        for (unsigned axis=0; axis < N; ++axis)
-        {
-            out(axis) = (i & (1 << axis)) ? region.upper(axis)
-                                          : region.lower(axis);
-        }
-        corner_positions.row(i) = out;
-    }
-
-    // Pack corners into evaluator
-    Eigen::Matrix<float, 3, 1 << N> pos;
-
     // Track how many corners have to be evaluated here
     // (if they can be looked up from a neighbor, they don't have
     //  to be evaluated here, which can save time)
@@ -148,13 +132,14 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     // in the range [0, 1 <<N).
     std::array<int, 1 << N> corner_indices;
 
+    // Pack corners into evaluator
+    Eigen::Matrix<float, 3, 1 << N> pos;
     for (uint8_t i=0; i < children.size(); ++i)
     {
         auto c = neighbors.check(i);
         if (c == Interval::UNKNOWN)
         {
-            pos.col(count) << cornerPos(i).template cast<float>(),
-                              region.perp.template cast<float>();
+            pos.col(count) = region.corner3f(i);
             eval->array.set(pos.col(count), count);
             corner_indices[count++] = i;
         }
@@ -329,8 +314,8 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                 {
                     // Store inside / outside in targets array, and the edge
                     // index in the eval_edges array.
-                    targets[eval_count] = {cornerPos(c.first),
-                                           cornerPos(c.second)};
+                    targets[eval_count] = {region.corner(c.first),
+                                           region.corner(c.second)};
                     eval_edges[eval_count] = edges[edge_count];
 
                     assert(eval_edges[eval_count] < intersections.size());
@@ -631,7 +616,8 @@ void XTree<N>::buildCornerMask()
 
 template <unsigned N>
 bool XTree<N>::collectChildren(
-        XTreeEvaluator* eval, Tape::Handle tape, double max_err,
+        XTreeEvaluator* eval, Tape::Handle tape,
+        double max_err, const typename Region<N>::Perp& perp,
         std::stack<XTree<N>*, std::vector<XTree<N>*>>& spares)
 {
     // Wait for collectChildren to have been called N times
@@ -657,7 +643,6 @@ bool XTree<N>::collectChildren(
 
         // Grab corner values from children
         corners[i] = c->corners[i];
-        corner_positions.row(i) = c->corner_positions.row(i);
 
         all_empty &= c->type == Interval::EMPTY;
         all_full  &= c->type == Interval::FILLED;
@@ -723,22 +708,27 @@ bool XTree<N>::collectChildren(
         AtB += c->AtB;
         BtB += c->BtB;
     }
-    assert(region.contains(massPoint()));
 
     // If the vertex error is below a threshold, and the vertex
     // is well-placed in the distance field, then convert into
     // a leaf by erasing all of the child branches
-    if (findVertex(vertex_count++) < max_err &&
-        fabs(eval->feature.eval(
-                vert3().template cast<float>(),
-                Tape::getBase(tape, vert3().template cast<float>())))
-            < max_err)
     {
-        for (auto& c : children) { spares.push(c.exchange(nullptr)); }
-    }
-    else
-    {
-        vertex_count = 0;
+        bool collapsed = false;
+        if (findVertex(vertex_count++) < max_err)
+        {
+            Eigen::Vector3f v;
+            v << vert(0).template cast<float>(),
+                 perp.template cast<float>();
+            if (fabs(eval->feature.eval(v, Tape::getBase(tape, v))) < max_err)
+            {
+                for (auto& c : children) { spares.push(c.exchange(nullptr)); }
+                collapsed = true;
+            }
+        }
+        if (!collapsed)
+        {
+            vertex_count = 0;
+        }
     }
 
     done();
@@ -799,14 +789,6 @@ double XTree<N>::findVertex(unsigned index)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-template <unsigned N>
-Eigen::Vector3d XTree<N>::vert3(unsigned index) const
-{
-    Eigen::Vector3d out;
-    out << vert(index), region.perp.template cast<double>();
-    return out;
-}
 
 template <unsigned N>
 typename XTree<N>::Vec XTree<N>::massPoint() const

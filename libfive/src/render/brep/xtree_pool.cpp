@@ -72,6 +72,7 @@ static void run(
 
         auto tape = task.tape;
         auto t = task.target;
+        auto region = task.region;
 
         // Find our local neighbors.  We do this at the last minute to
         // give other threads the chance to populate more pointers.
@@ -84,31 +85,32 @@ static void run(
 
         // If this tree is larger than the minimum size, then it will either
         // be unambiguously filled/empty, or we'll need to recurse.
-        if (((t->region.upper - t->region.lower) > min_feature).any())
+        if (((region.upper - region.lower) > min_feature).any())
         {
-            tape = t->evalInterval(eval->interval, task.tape);
+            tape = t->evalInterval(eval->interval, region, task.tape);
 
             // If this Tree is ambiguous, then push the children to the stack
             // and keep going (because all the useful work will be done
             // by collectChildren eventually).
             if (t->type == Interval::AMBIGUOUS || t->type == Interval::UNKNOWN)
             {
-                auto rs = t->region.subdivide();
+                auto rs = region.subdivide();
                 for (unsigned i=0; i < t->children.size(); ++i)
                 {
                     Task<N> next;
                     if (spares.size())
                     {
                         next.target = spares.top();
-                        next.target->reset(t, i, rs[i]);
+                        next.target->reset(t, i);
                         spares.pop();
                     }
                     else
                     {
-                        next.target = new XTree<N>(t, i, rs[i]);
+                        next.target = new XTree<N>(t, i);
                     }
                     next.tape = tape;
                     next.parent_neighbors = neighbors;
+                    next.region = rs[i];
 
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
@@ -124,13 +126,13 @@ static void run(
         }
         else
         {
-            t->evalLeaf(eval, neighbors, tape);
+            t->evalLeaf(eval, neighbors, region, tape);
         }
 
         // If all of the children are done, then ask the parent to collect them
         // (recursively, merging the trees on the way up)
         for (t = t->parent;
-             t && t->collectChildren(eval, tape, max_err, spares);
+             t && t->collectChildren(eval, tape, max_err, region.perp, spares);
              t = t->parent);
 
         // Termination condition:  if we've ended up pointing at the parent
@@ -182,13 +184,14 @@ std::unique_ptr<XTree<N>> XTreePool<N>::build(
         XTree<N>::mt = Marching::buildTable<N>();
     }
 
-    auto root(new XTree<N>(nullptr, 0, region));
+    auto root(new XTree<N>(nullptr, 0));
     std::atomic_bool done(false);
 
     LockFreeStack<N> tasks(workers);
     Task<N> task;
     task.target = root;
     task.tape = eval->deck->tape;
+    task.region = region;
 
     tasks.push(task);
 

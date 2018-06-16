@@ -31,6 +31,7 @@ struct Task
 {
     XTree<N>* target;
     std::shared_ptr<Tape> tape;
+    Region<N> region;
     Neighbors<N> parent_neighbors;
 };
 
