@@ -345,7 +345,8 @@ void View::paintGL()
     if (drag_target)
     {
         arrow.draw(m, cursor_pos, 0.1 / camera.getScale(),
-                   drag_dir, drag_valid ? Color::green : Color::red);
+                   drag_dir.normalized(),
+                   drag_valid ? Color::green : Color::red);
     }
 
     // This is a no-op if the spinner is hidden
