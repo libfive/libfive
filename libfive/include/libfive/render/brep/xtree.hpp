@@ -180,10 +180,6 @@ public:
          *  leaf; see writeup in marching.cpp for details  */
         Eigen::Matrix<double, N, _pow(2, N - 1)> verts;
 
-        /*  Array of filled states for the cell's corners
-         *  (must only be FILLED / EMPTY, not UNKNOWN or AMBIGUOUS ) */
-        std::array<Interval::State, 1 << N> corners;
-
         /* This array allows us to store position, normal, and value where
          * the mesh crosses a cell edge.  IntersectionVec is small_vec that
          * has enough space for a few intersections, and will move to the
@@ -269,9 +265,9 @@ protected:
     bool leafsAreManifold() const;
 
     /*
-     *  Sets corner_mask based on corner[] values
+     *  Sets corner_mask based on the given array
      */
-    void buildCornerMask();
+    void buildCornerMask(const std::array<Interval::State, 1 << N>& corners);
 
     /*
      *  Call this when construction is complete; it will atomically install

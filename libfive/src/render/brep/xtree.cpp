@@ -79,7 +79,6 @@ XTree<N>::Leaf::Leaf()
     manifold = false;
 
     std::fill(index.begin(), index.end(), 0);
-    std::fill(corners.begin(), corners.end(), Interval::UNKNOWN);
 
     for (auto& i : intersections)
     {
@@ -137,6 +136,9 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 
     leaf.reset(new Leaf);
 
+    // Local array of corners
+    std::array<Interval::State, 1 << N> corners;
+
     // Pack corners into evaluator
     Eigen::Matrix<float, 3, 1 << N> pos;
     for (uint8_t i=0; i < children.size(); ++i)
@@ -150,7 +152,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         }
         else
         {
-            leaf->corners[i] = c;
+            corners[i] = c;
         }
     }
 
@@ -195,12 +197,12 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         // Handle inside, outside, and (non-ambiguous) on-boundary
         if (vs(i) > 0 || !std::isfinite(vs(i)))
         {
-            leaf->corners[corner_indices[i]] = Interval::EMPTY;
+            corners[corner_indices[i]] = Interval::EMPTY;
             ambig(i) = false;
         }
         else if (vs(i) < 0)
         {
-            leaf->corners[corner_indices[i]] = Interval::FILLED;
+            corners[corner_indices[i]] = Interval::FILLED;
             ambig(i) = false;
         }
         else if (!ambig(i))
@@ -219,7 +221,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         auto ds = eval->array.derivs(unambiguous_zeros, tape);
         for (unsigned i=0; i < unambiguous_zeros; ++i)
         {
-            leaf->corners[unambig_remap[i]] =
+            corners[unambig_remap[i]] =
                 (ds.col(i).template head<3>() != 0).any()
                     ? Interval::FILLED : Interval::EMPTY;
         }
@@ -230,7 +232,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     {
         if (ambig(i))
         {
-            leaf->corners[corner_indices[i]] =
+            corners[corner_indices[i]] =
                 eval->feature.isInside(pos.col(i), tape)
                     ? Interval::FILLED
                     : Interval::EMPTY;
@@ -243,8 +245,8 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     // Pack corners into filled / empty arrays
     for (uint8_t i=0; i < children.size(); ++i)
     {
-        all_full  &= (leaf->corners[i] == Interval::FILLED);
-        all_empty &= (leaf->corners[i] == Interval::EMPTY);
+        all_full  &= (corners[i] == Interval::FILLED);
+        all_empty &= (corners[i] == Interval::EMPTY);
     }
 
     type = all_empty ? Interval::EMPTY
@@ -258,7 +260,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         return;
     }
 
-    buildCornerMask();
+    buildCornerMask(corners);
 
     // Now, for the fun part of actually placing vertices!
     // Figure out if the leaf is manifold
@@ -308,9 +310,9 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                  ++edge_count)
             {
                 // Sanity-checking
-                assert(leaf->corners[ps[leaf->vertex_count][edge_count].first]
+                assert(corners[ps[leaf->vertex_count][edge_count].first]
                        == Interval::FILLED);
-                assert(leaf->corners[ps[leaf->vertex_count][edge_count].second]
+                assert(corners[ps[leaf->vertex_count][edge_count].second]
                        == Interval::EMPTY);
 
                 // Store the edge index associated with this target
@@ -621,13 +623,14 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 }
 
 template <unsigned N>
-void XTree<N>::buildCornerMask()
+void XTree<N>::buildCornerMask(
+        const std::array<Interval::State, 1 << N>& corners)
 {
     assert(leaf.get() != nullptr);
     for (unsigned i=0; i < children.size(); ++i)
     {
-        assert(leaf->corners[i] != Interval::UNKNOWN);
-        leaf->corner_mask |= (leaf->corners[i] == Interval::FILLED) << i;
+        assert(corners[i] != Interval::UNKNOWN);
+        leaf->corner_mask |= (corners[i] == Interval::FILLED) << i;
     }
 }
 
@@ -665,13 +668,14 @@ bool XTree<N>::collectChildren(
     // Update corner and filled / empty state from children
     bool all_empty = true;
     bool all_full  = true;
+    std::array<Interval::State, 1 << N> corners;
     for (uint8_t i=0; i < cs.size(); ++i)
     {
         auto c = cs[i];
         assert(c != nullptr);
 
         // Grab corner values from children
-        leaf->corners[i] = c->cornerState(i);
+        corners[i] = c->cornerState(i);
 
         all_empty &= (c->type == Interval::EMPTY);
         all_full  &= (c->type == Interval::FILLED);
@@ -680,7 +684,7 @@ bool XTree<N>::collectChildren(
     type = all_empty ? Interval::EMPTY
          : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
 
-    buildCornerMask();
+    buildCornerMask(corners);
 
     // If this cell is unambiguous, then forget all its branches and return
     if (type == Interval::FILLED || type == Interval::EMPTY)
@@ -848,7 +852,8 @@ Interval::State XTree<N>::cornerState(uint8_t i) const
     {
         case Interval::AMBIGUOUS:
             assert(leaf.get() != nullptr);
-            return leaf->corners[i];
+            return (leaf->corner_mask & (1 << i))
+                ? Interval::FILLED : Interval::EMPTY;
 
         case Interval::UNKNOWN: assert(false);
 
