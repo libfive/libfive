@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/settings.hpp"
 
 QRegularExpression Settings::settings_regex(
-        "#! RENDER (.*) (.*) (.*) / (.*) (.*) (.*) / (.*) / (.*) !#");
+        "#! RENDER ([^/]*) ([^/]*) ([^/]*) / ([^/]*) ([^/]*) ([^/]*) / ([^/]*) / ([^/]*) !#");
 QString Settings::settings_fmt(
         "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 / %8 !#");
 

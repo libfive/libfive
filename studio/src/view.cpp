@@ -72,6 +72,13 @@ void View::setShapes(QList<Shape*> new_shapes)
         auto n = new_shapes_map.find((*itr)->id());
         if (n == new_shapes_map.end())
         {
+            if (*itr == drag_target)
+            {
+                drag_target->setGrabbed(false);
+                drag_target = nullptr;
+                emit(dragEnd());
+                mouse.state = mouse.RELEASED;
+            }
             disconnect(*itr, &Shape::redraw, this, &View::update);
             (*itr)->deleteLater();
             itr = shapes.erase(itr);
@@ -345,7 +352,8 @@ void View::paintGL()
     if (drag_target)
     {
         arrow.draw(m, cursor_pos, 0.1 / camera.getScale(),
-                   drag_dir, drag_valid ? Color::green : Color::red);
+                   drag_dir.normalized(),
+                   drag_valid ? Color::green : Color::red);
     }
 
     // This is a no-op if the spinner is hidden
