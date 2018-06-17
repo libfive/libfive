@@ -258,11 +258,11 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     }
 
     leaf.reset(new Leaf);
-    buildCornerMask(corners);
+    leaf->corner_mask = buildCornerMask(corners);
 
     // Now, for the fun part of actually placing vertices!
     // Figure out if the leaf is manifold
-    leaf->manifold = cornersAreManifold();
+    leaf->manifold = cornersAreManifold(leaf->corner_mask);
 
     // We'll use this vector anytime we need to pass something
     // into the evaluator (which requires a Vector3f)
@@ -621,15 +621,17 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 }
 
 template <unsigned N>
-void XTree<N>::buildCornerMask(
+uint8_t XTree<N>::buildCornerMask(
         const std::array<Interval::State, 1 << N>& corners)
 {
+    uint8_t corner_mask = 0;
     assert(leaf.get() != nullptr);
-    for (unsigned i=0; i < children.size(); ++i)
+    for (unsigned i=0; i < (1 << N); ++i)
     {
         assert(corners[i] != Interval::UNKNOWN);
-        leaf->corner_mask |= (corners[i] == Interval::FILLED) << i;
+        corner_mask |= (corners[i] == Interval::FILLED) << i;
     }
+    return corner_mask;
 }
 
 template <unsigned N>
@@ -660,9 +662,6 @@ bool XTree<N>::collectChildren(
         return true;
     }
 
-    assert(leaf.get() == nullptr);
-    leaf.reset(new Leaf);
-
     // Update corner and filled / empty state from children
     bool all_empty = true;
     bool all_full  = true;
@@ -682,37 +681,37 @@ bool XTree<N>::collectChildren(
     type = all_empty ? Interval::EMPTY
          : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
 
-    buildCornerMask(corners);
-
     // If this cell is unambiguous, then forget all its branches and return
     if (type == Interval::FILLED || type == Interval::EMPTY)
     {
         for (auto& c : children) { spares.push(c.exchange(nullptr)); }
-        leaf.reset();
         done();
         return true;
     }
 
-    // Store this tree's depth as a function of its children
-    leaf->level = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
-        [](const unsigned& a, XTree<N>* b)
-        { return std::max(a, b->level());} ) + 1;
+    auto corner_mask = buildCornerMask(corners);
 
     //  This conditional implements the three checks described in
     //  [Ju et al, 2002] in the section titled
     //      "Simplification with topology safety"
-    leaf->manifold = cornersAreManifold() &&
+    bool manifold = cornersAreManifold(corner_mask) &&
         std::all_of(cs.begin(), cs.end(),
                 [](XTree<N>* o){ return o->isManifold(); }) &&
-        leafsAreManifold();
+        leafsAreManifold(cs, corners);
 
     // If we're not manifold, then we can't collapse
-    if (!leaf->manifold)
+    if (!manifold)
     {
-        leaf.reset();
         done();
         return true;
     }
+
+    // We've now passed all of our opportunities to exit without
+    // allocating a Leaf, so create one here.
+    assert(leaf.get() == nullptr);
+    leaf.reset(new Leaf);
+    leaf->manifold = true;
+    leaf->corner_mask = corner_mask;
 
     // Populate the feature rank as the maximum of all children
     // feature ranks (as seen in DC: The Secret Sauce)
@@ -753,6 +752,12 @@ bool XTree<N>::collectChildren(
                  perp.template cast<float>();
             if (fabs(eval->feature.eval(v, Tape::getBase(tape, v))) < max_err)
             {
+                // Store this tree's depth as a function of its children
+                leaf->level = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
+                    [](const unsigned& a, XTree<N>* b)
+                    { return std::max(a, b->level());} ) + 1;
+
+                // Then, erase all of the children and mark that we collapsed
                 for (auto& c : children) { spares.push(c.exchange(nullptr)); }
                 collapsed = true;
             }

@@ -252,7 +252,7 @@ protected:
      *  This implements the test from [Gerstner et al, 2000], as
      *  described in [Ju et al, 2002].
      */
-    bool cornersAreManifold() const;
+    static bool cornersAreManifold(const uint8_t corner_mask);
 
     /*
      *  Checks to make sure that the fine contour is topologically equivalent
@@ -262,12 +262,15 @@ protected:
      *  Returns true if the cell can be collapsed without changing topology
      *  (with respect to the leaves)
      */
-    bool leafsAreManifold() const;
+    static bool leafsAreManifold(
+            const std::array<XTree<N>*, 1 << N>& children,
+            const std::array<Interval::State, 1 << N>& corners);
 
     /*
-     *  Sets corner_mask based on the given array
+     *  Returns a corner mask bitfield from the given array
      */
-    void buildCornerMask(const std::array<Interval::State, 1 << N>& corners);
+    static uint8_t buildCornerMask(
+            const std::array<Interval::State, 1 << N>& corners);
 
     /*
      *  Call this when construction is complete; it will atomically install
@@ -283,11 +286,15 @@ protected:
 };
 
 // Explicit template instantiation declarations
-template <> bool XTree<2>::cornersAreManifold() const;
-template <> bool XTree<3>::cornersAreManifold() const;
+template <> bool XTree<2>::cornersAreManifold(const uint8_t corner_mask);
+template <> bool XTree<3>::cornersAreManifold(const uint8_t corner_mask);
 
-template <> bool XTree<2>::leafsAreManifold() const;
-template <> bool XTree<3>::leafsAreManifold() const;
+template <> bool XTree<2>::leafsAreManifold(
+            const std::array<XTree<2>*, 1 << 2>& children,
+            const std::array<Interval::State, 1 << 2>& corners);
+template <> bool XTree<3>::leafsAreManifold(
+            const std::array<XTree<3>*, 1 << 3>& children,
+            const std::array<Interval::State, 1 << 3>& corners);
 
 template <> const std::vector<std::pair<uint8_t, uint8_t>>& XTree<2>::edges() const;
 template <> const std::vector<std::pair<uint8_t, uint8_t>>& XTree<3>::edges() const;

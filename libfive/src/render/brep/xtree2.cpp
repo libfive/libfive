@@ -3,47 +3,36 @@
 namespace Kernel {
 
 template <>
-bool XTree<2>::cornersAreManifold() const
+bool XTree<2>::cornersAreManifold(const uint8_t corner_mask)
 {
     const static bool corner_table[] =
         {1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1};
-
-    // assert(!isBranch()); TODO
-    switch (type)
-    {
-        case Interval::AMBIGUOUS:
-            assert(leaf.get() != nullptr);
-            return corner_table[leaf->corner_mask];
-
-        case Interval::UNKNOWN: assert(false);
-
-        case Interval::FILLED:  // fallthrough
-        case Interval::EMPTY:   assert(leaf.get() == nullptr);
-                                return true;
-    };
+    return corner_table[corner_mask];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Specializations for quadtree
 template <>
-bool XTree<2>::leafsAreManifold() const
+bool XTree<2>::leafsAreManifold(
+        const std::array<XTree<2>*, 1 << 2>& cs,
+        const std::array<Interval::State, 1 << 2>& corners)
 {
-    /*  See detailed comment in Octree::leafTopology */
+    /*  See detailed comment in Octree::leafsAreManifold */
     const bool edges_safe =
-        (child(0)->cornerState(Axis::X) == cornerState(0) ||
-         child(0)->cornerState(Axis::X) == cornerState(Axis::X))
-    &&  (child(0)->cornerState(Axis::Y) == cornerState(0) ||
-         child(0)->cornerState(Axis::Y) == cornerState(Axis::Y))
-    &&  (child(Axis::X)->cornerState(Axis::X|Axis::Y) == cornerState(Axis::X) ||
-         child(Axis::X)->cornerState(Axis::X|Axis::Y) == cornerState(Axis::X|Axis::Y))
-    &&  (child(Axis::Y)->cornerState(Axis::Y|Axis::X) == cornerState(Axis::Y) ||
-         child(Axis::Y)->cornerState(Axis::Y|Axis::X) == cornerState(Axis::Y|Axis::X));
+        (cs[0]->cornerState(Axis::X) == corners[0] ||
+         cs[0]->cornerState(Axis::X) == corners[Axis::X])
+    &&  (cs[0]->cornerState(Axis::Y) == corners[0] ||
+         cs[0]->cornerState(Axis::Y) == corners[Axis::Y])
+    &&  (cs[Axis::X]->cornerState(Axis::X|Axis::Y) == corners[Axis::X] ||
+         cs[Axis::X]->cornerState(Axis::X|Axis::Y) == corners[Axis::X|Axis::Y])
+    &&  (cs[Axis::Y]->cornerState(Axis::Y|Axis::X) == corners[Axis::Y] ||
+         cs[Axis::Y]->cornerState(Axis::Y|Axis::X) == corners[Axis::Y|Axis::X]);
 
     const bool faces_safe =
-        (child(0)->cornerState(Axis::Y|Axis::X) == cornerState(0) ||
-         child(0)->cornerState(Axis::Y|Axis::X) == cornerState(Axis::Y) ||
-         child(0)->cornerState(Axis::Y|Axis::X) == cornerState(Axis::X) ||
-         child(0)->cornerState(Axis::Y|Axis::X) == cornerState(Axis::Y|Axis::X));
+        (cs[0]->cornerState(Axis::Y|Axis::X) == corners[0] ||
+         cs[0]->cornerState(Axis::Y|Axis::X) == corners[Axis::Y] ||
+         cs[0]->cornerState(Axis::Y|Axis::X) == corners[Axis::X] ||
+         cs[0]->cornerState(Axis::Y|Axis::X) == corners[Axis::Y|Axis::X]);
 
     return edges_safe && faces_safe;
 }
