@@ -42,6 +42,8 @@ public:
         {
             auto out = d.top();
             d.pop();
+
+            assert(out != nullptr);
             out->reset(args...);
             return out;
         }
@@ -53,6 +55,7 @@ public:
 
     void put(T* t)
     {
+        assert(t != nullptr);
         d.push(t);
     }
 

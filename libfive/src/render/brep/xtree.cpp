@@ -66,12 +66,20 @@ void XTree<N>::reset(XTree<N>* p, unsigned i)
         (void)c;
     }
 
-    leaf.reset();
+    // By design, a tree that is being reset also has no leaf.
+    assert(leaf.get() == nullptr);
+
     pending.store((1 << N) - 1);
 }
 
 template <unsigned N>
 XTree<N>::Leaf::Leaf()
+{
+    reset();
+}
+
+template <unsigned N>
+void XTree<N>::Leaf::reset()
 {
     level = 0;
     rank = 0;
@@ -124,7 +132,8 @@ Tape::Handle XTree<N>::evalInterval(
 
 template <unsigned N>
 void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
-                        const Region<N>& region, Tape::Handle tape)
+                        const Region<N>& region, Tape::Handle tape,
+                        Pool<Leaf>& spare_leafs)
 {
     // Track how many corners have to be evaluated here
     // (if they can be looked up from a neighbor, they don't have
@@ -258,7 +267,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         return;
     }
 
-    leaf.reset(new Leaf);
+    leaf.reset(spare_leafs.get());
     leaf->corner_mask = buildCornerMask(corners);
 
     // Now, for the fun part of actually placing vertices!
@@ -626,7 +635,6 @@ uint8_t XTree<N>::buildCornerMask(
         const std::array<Interval::State, 1 << N>& corners)
 {
     uint8_t corner_mask = 0;
-    assert(leaf.get() != nullptr);
     for (unsigned i=0; i < (1 << N); ++i)
     {
         assert(corners[i] != Interval::UNKNOWN);
@@ -639,7 +647,7 @@ template <unsigned N>
 bool XTree<N>::collectChildren(
         XTreeEvaluator* eval, Tape::Handle tape,
         double max_err, const typename Region<N>::Perp& perp,
-        Pool<XTree<N>>& spare_trees)
+        Pool<XTree<N>>& spare_trees, Pool<Leaf>& spare_leafs)
 {
     // Wait for collectChildren to have been called N times
     if (pending-- != 0)
@@ -685,7 +693,19 @@ bool XTree<N>::collectChildren(
     // If this cell is unambiguous, then forget all its branches and return
     if (type == Interval::FILLED || type == Interval::EMPTY)
     {
-        for (auto& c : children) { spare_trees.put(c.exchange(nullptr)); }
+        for (auto& c : children)
+        {
+            auto ptr = c.exchange(nullptr);
+            assert(ptr != nullptr);
+
+            auto leaf = ptr->leaf.release();
+
+            spare_trees.put(ptr);
+            if (leaf != nullptr)
+            {
+                spare_leafs.put(leaf);
+            }
+        }
         done();
         return true;
     }
@@ -710,7 +730,7 @@ bool XTree<N>::collectChildren(
     // We've now passed all of our opportunities to exit without
     // allocating a Leaf, so create one here.
     assert(leaf.get() == nullptr);
-    leaf.reset(new Leaf);
+    leaf.reset(spare_leafs.get());
     leaf->manifold = true;
     leaf->corner_mask = corner_mask;
 
@@ -761,14 +781,23 @@ bool XTree<N>::collectChildren(
                 // Then, erase all of the children and mark that we collapsed
                 for (auto& c : children)
                 {
-                    spare_trees.put(c.exchange(nullptr));
+                    auto ptr = c.exchange(nullptr);
+                    assert(ptr != nullptr);
+
+                    auto leaf = ptr->leaf.release();
+
+                    spare_trees.put(ptr);
+                    if (leaf != nullptr)
+                    {
+                        spare_leafs.put(leaf);
+                    }
                 }
                 collapsed = true;
             }
         }
         if (!collapsed)
         {
-            leaf.reset();
+            spare_leafs.put(leaf.release());
         }
     }
 

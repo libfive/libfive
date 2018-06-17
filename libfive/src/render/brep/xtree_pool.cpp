@@ -47,6 +47,7 @@ static void run(
 {
     std::stack<Task<N>, std::vector<Task<N>>> local;
     Pool<XTree<N>> spare_trees;
+    Pool<typename XTree<N>::Leaf> spare_leafs;
 
     while (!done.load() && !cancel.load())
     {
@@ -113,13 +114,14 @@ static void run(
         }
         else
         {
-            t->evalLeaf(eval, neighbors, region, tape);
+            t->evalLeaf(eval, neighbors, region, tape, spare_leafs);
         }
 
         // If all of the children are done, then ask the parent to collect them
         // (recursively, merging the trees on the way up)
         for (t = t->parent;
-             t && t->collectChildren(eval, tape, max_err, region.perp, spare_trees);
+             t && t->collectChildren(eval, tape, max_err, region.perp,
+                                     spare_trees, spare_leafs);
              t = t->parent);
 
         // Termination condition:  if we've ended up pointing at the parent
