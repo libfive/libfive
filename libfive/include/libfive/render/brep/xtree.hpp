@@ -38,6 +38,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
+template <typename T> class Pool; /* Forward declaration */
+
 template <unsigned N>
 class XTree
 {
@@ -80,7 +82,7 @@ public:
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const typename Region<N>::Perp& perp,
-            std::stack<XTree<N>*, std::vector<XTree<N>*>>& spares);
+            Pool<XTree<N>>& spare_trees);
 
     /*
      *  Checks whether this tree splits

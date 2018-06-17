@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/lockfree/queue.hpp>
 
 #include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/pool.hpp"
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
 
@@ -638,7 +639,7 @@ template <unsigned N>
 bool XTree<N>::collectChildren(
         XTreeEvaluator* eval, Tape::Handle tape,
         double max_err, const typename Region<N>::Perp& perp,
-        std::stack<XTree<N>*, std::vector<XTree<N>*>>& spares)
+        Pool<XTree<N>>& spare_trees)
 {
     // Wait for collectChildren to have been called N times
     if (pending-- != 0)
@@ -684,7 +685,7 @@ bool XTree<N>::collectChildren(
     // If this cell is unambiguous, then forget all its branches and return
     if (type == Interval::FILLED || type == Interval::EMPTY)
     {
-        for (auto& c : children) { spares.push(c.exchange(nullptr)); }
+        for (auto& c : children) { spare_trees.put(c.exchange(nullptr)); }
         done();
         return true;
     }
@@ -758,7 +759,10 @@ bool XTree<N>::collectChildren(
                     { return std::max(a, b->level());} ) + 1;
 
                 // Then, erase all of the children and mark that we collapsed
-                for (auto& c : children) { spares.push(c.exchange(nullptr)); }
+                for (auto& c : children)
+                {
+                    spare_trees.put(c.exchange(nullptr));
+                }
                 collapsed = true;
             }
         }

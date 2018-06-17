@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/xtree_pool.hpp"
+#include "libfive/render/brep/pool.hpp"
 #include "libfive/eval/tape.hpp"
 
 namespace Kernel {
@@ -45,7 +46,7 @@ static void run(
         std::atomic_bool& done, std::atomic_bool& cancel)
 {
     std::stack<Task<N>, std::vector<Task<N>>> local;
-    std::stack<XTree<N>*, std::vector<XTree<N>*>> spares;
+    Pool<XTree<N>> spare_trees;
 
     while (!done.load() && !cancel.load())
     {
@@ -97,22 +98,10 @@ static void run(
                 auto rs = region.subdivide();
                 for (unsigned i=0; i < t->children.size(); ++i)
                 {
-                    XTree<N>* ptr;
-                    if (spares.size())
-                    {
-                        ptr = spares.top();
-                        ptr->reset(t, i);
-                        spares.pop();
-                    }
-                    else
-                    {
-                        ptr = new XTree<N>(t, i);
-                    }
-                    Task<N> next(ptr, tape, rs[i], neighbors);
-
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
+                    Task<N> next(spare_trees.get(t, i), tape, rs[i], neighbors);
                     if (!tasks.bounded_push(next))
                     {
                         local.push(next);
@@ -130,7 +119,7 @@ static void run(
         // If all of the children are done, then ask the parent to collect them
         // (recursively, merging the trees on the way up)
         for (t = t->parent;
-             t && t->collectChildren(eval, tape, max_err, region.perp, spares);
+             t && t->collectChildren(eval, tape, max_err, region.perp, spare_trees);
              t = t->parent);
 
         // Termination condition:  if we've ended up pointing at the parent
@@ -139,13 +128,6 @@ static void run(
         {
             break;
         }
-    }
-
-    // Destroy all spare XTrees.
-    while (spares.size())
-    {
-        delete spares.top();
-        spares.pop();
     }
 
     // If we've broken out of the loop, then we should set the done flag
