@@ -79,6 +79,11 @@ void View::setShapes(QList<Shape*> new_shapes)
                 emit(dragEnd());
                 mouse.state = mouse.RELEASED;
             }
+            if (*itr == hover_target)
+            {
+                hover_target->setHover(false);
+                hover_target = nullptr;
+            }
             disconnect(*itr, &Shape::redraw, this, &View::update);
             (*itr)->deleteLater();
             itr = shapes.erase(itr);
