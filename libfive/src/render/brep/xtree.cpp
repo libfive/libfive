@@ -627,10 +627,6 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         // this is the bottom of the recursion)
         findVertex(leaf->vertex_count);
 
-        // If this vertex was placed outside of the cell, then mark this
-        // leaf as non-manifold to avoid collapsing it on the way up.
-        leaf->manifold &= region.contains(leaf->verts.col(leaf->vertex_count));
-
         // Move on to the next vertex
         leaf->vertex_count++;
     }
