@@ -890,7 +890,6 @@ std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
 template <unsigned N>
 Interval::State XTree<N>::cornerState(uint8_t i) const
 {
-    // assert(!isBranch()); TODO
     switch (type)
     {
         case Interval::AMBIGUOUS:
