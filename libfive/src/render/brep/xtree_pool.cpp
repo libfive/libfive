@@ -43,11 +43,12 @@ template <unsigned N>
 static void run(
         XTreeEvaluator* eval, LockFreeStack<N>& tasks,
         const float min_feature, const float max_err,
-        std::atomic_bool& done, std::atomic_bool& cancel)
+        std::atomic_bool& done, std::atomic_bool& cancel,
+        typename XTree<N>::Root& root, std::mutex& root_lock)
 {
     std::stack<Task<N>, std::vector<Task<N>>> local;
-    Pool<XTree<N>> spare_trees;
-    Pool<typename XTree<N>::Leaf> spare_leafs;
+    Pool<XTree<N>, 512> spare_trees;
+    Pool<typename XTree<N>::Leaf, 512> spare_leafs;
 
     while (!done.load() && !cancel.load())
     {
@@ -135,10 +136,16 @@ static void run(
     // If we've broken out of the loop, then we should set the done flag
     // so that other worker threads also terminate.
     done.store(true);
+
+    {   // Release the pooled objects to the root
+        std::lock_guard<std::mutex> lock(root_lock);
+        root.claim(spare_leafs);
+        root.claim(spare_trees);
+    }
 }
 
 template <unsigned N>
-std::unique_ptr<XTree<N>> XTreePool<N>::build(
+typename XTree<N>::Root XTreePool<N>::build(
             const Tree t, Region<N> region,
             double min_feature, double max_err,
             unsigned workers)
@@ -155,7 +162,7 @@ std::unique_ptr<XTree<N>> XTreePool<N>::build(
 }
 
 template <unsigned N>
-std::unique_ptr<XTree<N>> XTreePool<N>::build(
+typename XTree<N>::Root XTreePool<N>::build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel)
@@ -174,13 +181,16 @@ std::unique_ptr<XTree<N>> XTreePool<N>::build(
 
     std::vector<std::future<void>> futures;
     futures.resize(workers);
+
+    typename XTree<N>::Root out(root);
+    std::mutex root_lock;
     for (unsigned i=0; i < workers; ++i)
     {
         futures[i] = std::async(std::launch::async,
-                [&eval, &tasks, &cancel, &done,
+                [&eval, &tasks, &cancel, &done, &out, &root_lock,
                  min_feature, max_err, i](){
                     run(eval + i, tasks, min_feature, max_err,
-                        done, cancel);
+                        done, cancel, out, root_lock);
                     });
     }
 
@@ -192,10 +202,12 @@ std::unique_ptr<XTree<N>> XTreePool<N>::build(
 
     if (cancel.load())
     {
-        delete root;
-        root = nullptr;
+        return typename XTree<N>::Root();
     }
-    return std::unique_ptr<XTree<N>>(root);
+    else
+    {
+        return out;
+    }
 }
 
 }   // namespace Kernel

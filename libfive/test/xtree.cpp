@@ -123,7 +123,7 @@ TEST_CASE("XTree<2>::vertex_count")
         auto ta = XTreePool<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
         REQUIRE(ta->rank() == 2);
         REQUIRE(ta->level() == 0);
-        REQUIRE(ta->leaf.get() != nullptr);
+        REQUIRE(ta->leaf != nullptr);
         REQUIRE(ta->leaf->vertex_count == 1);
     }
     SECTION("Diagonally opposite corners")
@@ -134,7 +134,7 @@ TEST_CASE("XTree<2>::vertex_count")
         PointEvaluator eval(deck);
         auto ta = XTreePool<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
         REQUIRE(ta->level() == 0);
-        REQUIRE(ta->leaf.get() != nullptr);
+        REQUIRE(ta->leaf != nullptr);
         REQUIRE(ta->leaf->vertex_count == 2);
         for (unsigned i=0; i < ta->leaf->vertex_count; ++i)
         {
@@ -150,7 +150,7 @@ TEST_CASE("XTree<2>::vertex_count")
 
 TEST_CASE("XTree<3>::vert")
 {
-    auto walk = [](std::unique_ptr<XTree<3>>& xtree,
+    auto walk = [](XTree<3>::Root& xtree,
                    XTreeEvaluator& eval, float err=0.001)
     {
         std::list<const XTree<3>*> todo = {xtree.get()};
@@ -169,7 +169,7 @@ TEST_CASE("XTree<3>::vert")
             {
                 for (unsigned i=0; i < t->leaf->vertex_count; ++i)
                 {
-                    REQUIRE(t->leaf.get() != nullptr);
+                    REQUIRE(t->leaf != nullptr);
 
                     CAPTURE(t->vert(i).transpose());
                     CAPTURE(t->rank());

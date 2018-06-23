@@ -20,37 +20,44 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <stack>
 #include <vector>
+#include <list>
 
 namespace Kernel {
 
 /*
  *  This is a simple object pool container, to avoid allocation churn.
  *
+ *  It owns all objects allocated under it, and allocates in blocks
+ *  of N (by default 512).
+ *
  *  It is not thread-safe; you should create one Pool per thread.
  *
- *  The target class must include a reset(...) function, which takes
- *  identical arguments as the constructor.
+ *  The target class must include a reset(...) function, and the
+ *  constructor must take zero arguments.
  */
-template <typename T>
+template <typename T, unsigned N>
 class Pool
 {
 public:
     template <typename... Args>
     T* get(Args... args)
     {
-        if (d.size())
+        if (!d.size())
         {
-            auto out = d.top();
-            d.pop();
+            auto ptr = new T[N];
+            alloc.push_back(ptr);
+            for (unsigned i=0; i < N; ++i)
+            {
+                d.push(ptr + i);
+            }
+        }
+        assert(d.size());
+        auto out = d.top();
+        d.pop();
 
-            assert(out != nullptr);
-            out->reset(args...);
-            return out;
-        }
-        else
-        {
-            return new T(args...);
-        }
+        assert(out != nullptr);
+        out->reset(args...);
+        return out;
     }
 
     void put(T* t)
@@ -61,15 +68,24 @@ public:
 
     ~Pool()
     {
-        while (d.size())
+        for (auto& t : alloc)
         {
-            delete d.top();
-            d.pop();
+            delete [] t;
         }
+    }
+
+    void release(std::list<T*>& out)
+    {
+        for (auto& t : alloc)
+        {
+            out.push_back(t);
+        }
+        alloc.clear();
     }
 
 protected:
     std::stack<T*, std::vector<T*>> d;
+    std::list<T*> alloc;
 };
 
 }   // namespace Kernel

@@ -139,27 +139,23 @@ std::unique_ptr<Mesh> Mesh::render(
         int workers, std::atomic_bool& cancel)
 {
     auto t = XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel);
-    auto out = mesh(t, cancel);
-    if (t.get())
-    {
-        t->fastDelete();
-    }
+    auto out = mesh(t.get(), cancel);
     return out;
 }
 
-std::unique_ptr<Mesh> Mesh::mesh(std::unique_ptr<XTree<3>>& xtree,
+std::unique_ptr<Mesh> Mesh::mesh(const XTree<3>* xtree,
                                  std::atomic_bool& cancel)
 {
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());
 
-    if (cancel.load() || xtree.get() == nullptr)
+    if (cancel.load() || xtree == nullptr)
     {
         return nullptr;
     }
     else
     {
-        Dual<3>::walk(xtree.get(), *m);
+        Dual<3>::walk(xtree, *m);
 
 #if DEBUG_OCTREE_CELLS
         // Store octree cells as lines

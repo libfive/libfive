@@ -77,7 +77,7 @@ public:
     void load(const std::array<const XTree<3>*, 4>& ts);
 
     /*  Walks an XTree, returning a mesh  */
-    static std::unique_ptr<Mesh> mesh(std::unique_ptr<XTree<3>>& tree,
+    static std::unique_ptr<Mesh> mesh(const XTree<3>* tree,
                                       std::atomic_bool& cancel);
 protected:
     /*

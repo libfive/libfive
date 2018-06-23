@@ -43,13 +43,20 @@ std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(XTree<N>* parent, unsigned parent_index)
+XTree<N>::XTree(XTree<N>* parent, unsigned index)
+    : XTree()
+{
+    reset(parent, index);
+}
+
+template <unsigned N>
+XTree<N>::XTree()
 {
     for (auto& c : children)
     {
         c.store(nullptr, std::memory_order_relaxed);
     }
-    reset(parent, parent_index);
+    leaf = nullptr;
 }
 
 template <unsigned N>
@@ -67,7 +74,7 @@ void XTree<N>::reset(XTree<N>* p, unsigned i)
     }
 
     // By design, a tree that is being reset also has no leaf.
-    assert(leaf.get() == nullptr);
+    assert(leaf == nullptr);
 
     pending.store((1 << N) - 1);
 }
@@ -102,15 +109,6 @@ void XTree<N>::Leaf::reset()
 }
 
 template <unsigned N>
-XTree<N>::~XTree()
-{
-    for (auto& c : children)
-    {
-        delete c.load(std::memory_order_relaxed);
-    }
-}
-
-template <unsigned N>
 Tape::Handle XTree<N>::evalInterval(
         IntervalEvaluator& eval, const Region<N>& region, Tape::Handle tape)
 {
@@ -133,7 +131,7 @@ Tape::Handle XTree<N>::evalInterval(
 template <unsigned N>
 void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                         const Region<N>& region, Tape::Handle tape,
-                        Pool<Leaf>& spare_leafs)
+                        Pool<Leaf, 512>& spare_leafs)
 {
     // Track how many corners have to be evaluated here
     // (if they can be looked up from a neighbor, they don't have
@@ -267,7 +265,8 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         return;
     }
 
-    leaf.reset(spare_leafs.get());
+    assert(leaf == nullptr);
+    leaf = spare_leafs.get();
     leaf->corner_mask = buildCornerMask(corners);
 
     // Now, for the fun part of actually placing vertices!
@@ -634,6 +633,26 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 }
 
 template <unsigned N>
+void XTree<N>::releaseChildren(Pool<XTree, 512>& spare_trees,
+                               Pool<Leaf, 512>& spare_leafs)
+{
+    for (auto& c : children)
+    {
+        auto ptr = c.exchange(nullptr);
+        assert(ptr != nullptr);
+
+        auto leaf = ptr->leaf;
+
+        spare_trees.put(ptr);
+        if (leaf != nullptr)
+        {
+            ptr->leaf = nullptr;
+            spare_leafs.put(leaf);
+        }
+    }
+}
+
+template <unsigned N>
 uint8_t XTree<N>::buildCornerMask(
         const std::array<Interval::State, 1 << N>& corners)
 {
@@ -650,7 +669,7 @@ template <unsigned N>
 bool XTree<N>::collectChildren(
         XTreeEvaluator* eval, Tape::Handle tape,
         double max_err, const typename Region<N>::Perp& perp,
-        Pool<XTree<N>>& spare_trees, Pool<Leaf>& spare_leafs)
+        Pool<XTree<N>, 512>& spare_trees, Pool<Leaf, 512>& spare_leafs)
 {
     // Wait for collectChildren to have been called N times
     if (pending-- != 0)
@@ -696,19 +715,7 @@ bool XTree<N>::collectChildren(
     // If this cell is unambiguous, then forget all its branches and return
     if (type == Interval::FILLED || type == Interval::EMPTY)
     {
-        for (auto& c : children)
-        {
-            auto ptr = c.exchange(nullptr);
-            assert(ptr != nullptr);
-
-            auto leaf = ptr->leaf.release();
-
-            spare_trees.put(ptr);
-            if (leaf != nullptr)
-            {
-                spare_leafs.put(leaf);
-            }
-        }
+        releaseChildren(spare_trees, spare_leafs);
         done();
         return true;
     }
@@ -732,8 +739,8 @@ bool XTree<N>::collectChildren(
 
     // We've now passed all of our opportunities to exit without
     // allocating a Leaf, so create one here.
-    assert(leaf.get() == nullptr);
-    leaf.reset(spare_leafs.get());
+    assert(leaf == nullptr);
+    leaf = spare_leafs.get();
     leaf->manifold = true;
     leaf->corner_mask = corner_mask;
 
@@ -749,7 +756,7 @@ bool XTree<N>::collectChildren(
 
         if (c->type == Interval::AMBIGUOUS)
         {
-            assert(c->leaf.get() != nullptr);
+            assert(c->leaf != nullptr);
             if (c->leaf->rank == leaf->rank)
             {
                 leaf->mass_point += c->leaf->mass_point;
@@ -782,25 +789,14 @@ bool XTree<N>::collectChildren(
                     { return std::max(a, b->level());} ) + 1;
 
                 // Then, erase all of the children and mark that we collapsed
-                for (auto& c : children)
-                {
-                    auto ptr = c.exchange(nullptr);
-                    assert(ptr != nullptr);
-
-                    auto leaf = ptr->leaf.release();
-
-                    spare_trees.put(ptr);
-                    if (leaf != nullptr)
-                    {
-                        spare_leafs.put(leaf);
-                    }
-                }
+                releaseChildren(spare_trees, spare_leafs);
                 collapsed = true;
             }
         }
         if (!collapsed)
         {
-            spare_leafs.put(leaf.release());
+            spare_leafs.put(leaf);
+            leaf = nullptr;
         }
     }
 
@@ -972,26 +968,6 @@ unsigned XTree<N>::rank() const
         case Interval::EMPTY:   assert(leaf.get() == nullptr);
                                 return 0;
     };
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <unsigned N>
-void XTree<N>::fastDelete()
-{
-    std::vector<std::future<void>> futures;
-    futures.resize(children.size());
-    for (unsigned i=0; i < children.size(); ++i)
-    {
-        futures[i] = std::async(std::launch::async,
-                [this, i](){ delete this->children[i].exchange(nullptr); });
-    }
-
-    // Wait on all of the futures
-    for (auto& f : futures)
-    {
-        f.get();
-    }
 }
 
 }   // namespace Kernel

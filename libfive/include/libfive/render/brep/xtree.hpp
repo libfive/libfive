@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-template <typename T> class Pool; /* Forward declaration */
+template <typename T, unsigned N> class Pool; /* Forward declaration */
 
 template <unsigned N>
 class XTree
@@ -101,10 +101,61 @@ public:
     };
 
     /*
-     *  Simple constructor
+     *  This is a handle for both the XTree and the object pool data
+     *  that were used to allocate all of its memory.
      */
+    class Root
+    {
+    public:
+        Root() : ptr(nullptr) {}
+        Root(XTree<N>* ptr) : ptr(ptr) {}
+
+        Root(Root&& other)
+        {
+            *this = std::move(other);
+        }
+
+        Root& operator=(Root&& other) {
+            ptr = other.ptr;
+            other.ptr = nullptr;
+            trees = std::move(other.trees);
+            leafs = std::move(other.leafs);
+            return *this;
+        }
+
+        void reset()
+        {
+            ptr = nullptr;
+            for (auto& t : trees)   delete [] t;
+            for (auto& f : leafs)   delete [] f;
+            trees.clear();
+            leafs.clear();
+        }
+
+        const XTree<N>* operator->() { return ptr; }
+        const XTree<N>* get() { return ptr; }
+        ~Root()
+        {
+            reset();
+        }
+
+        void claim(Pool<XTree<N>, 512>& pool)       { pool.release(trees); }
+        void claim(Pool<XTree<N>::Leaf, 512>& pool) { pool.release(leafs); }
+
+    protected:
+        XTree<N>* ptr;
+        std::list<XTree<N>*> trees;
+        std::list<XTree<N>::Leaf*> leafs;
+    };
+
+    /*
+     *  Simple constructor
+     *
+     *  Pointers are initialized to nullptr, but other members
+     *  are invalid until reset() is called.
+     */
+    explicit XTree();
     explicit XTree(XTree<N>* parent, unsigned index);
-    ~XTree();
 
     /*
      *  Resets this tree to a freshly-constructed state
@@ -128,7 +179,7 @@ public:
      */
     void evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                   const Region<N>& region, std::shared_ptr<Tape> tape,
-                  Pool<Leaf>& spare_leafs);
+                  Pool<Leaf, 512>& spare_leafs);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -139,7 +190,7 @@ public:
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const typename Region<N>::Perp& perp,
-            Pool<XTree<N>>& spare_trees, Pool<Leaf>& spare_leafs);
+            Pool<XTree<N>, 512>& spare_trees, Pool<Leaf, 512>& spare_leafs);
 
     /*
      *  Checks whether this tree splits
@@ -190,9 +241,6 @@ public:
      */
     unsigned rank() const;
 
-    /*  Deletes children using multiple threads */
-    void fastDelete();
-
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -224,7 +272,8 @@ public:
     /*  Leaf cell state, when known  */
     Interval::State type;
 
-    std::unique_ptr<Leaf> leaf;
+    /*  Optional leaf data, owned by a parent Pool<Leaf> */
+    Leaf* leaf;
 
     /*  Single copy of the marching squares / cubes table, lazily
      *  initialized when needed */
@@ -247,6 +296,12 @@ protected:
      */
     const std::vector<std::pair<uint8_t, uint8_t>>& edges() const;
 
+    /*
+     *  Releases the children (and their Leaf pointers, if present)
+     *  into the given object pools.
+     */
+    void releaseChildren(Pool<XTree<N>, 512>& spare_trees,
+                         Pool<Leaf, 512>& spare_leafs);
     /*
      *  Returns a table such that looking up a particular corner
      *  configuration returns whether that configuration is safe to
