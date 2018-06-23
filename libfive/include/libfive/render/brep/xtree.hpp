@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-template <typename T, unsigned N> class Pool; /* Forward declaration */
+template <typename T> class Pool; /* Forward declaration */
 
 template <unsigned N>
 class XTree
@@ -139,8 +139,8 @@ public:
             reset();
         }
 
-        void claim(Pool<XTree<N>, 512>& pool)       { pool.release(trees); }
-        void claim(Pool<XTree<N>::Leaf, 512>& pool) { pool.release(leafs); }
+        void claim(Pool<XTree<N>>& pool)       { pool.release(trees); }
+        void claim(Pool<XTree<N>::Leaf>& pool) { pool.release(leafs); }
 
     protected:
         XTree<N>* ptr;
@@ -179,7 +179,7 @@ public:
      */
     void evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                   const Region<N>& region, std::shared_ptr<Tape> tape,
-                  Pool<Leaf, 512>& spare_leafs);
+                  Pool<Leaf>& spare_leafs);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -190,7 +190,7 @@ public:
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const typename Region<N>::Perp& perp,
-            Pool<XTree<N>, 512>& spare_trees, Pool<Leaf, 512>& spare_leafs);
+            Pool<XTree<N>>& spare_trees, Pool<Leaf>& spare_leafs);
 
     /*
      *  Checks whether this tree splits
@@ -300,8 +300,8 @@ protected:
      *  Releases the children (and their Leaf pointers, if present)
      *  into the given object pools.
      */
-    void releaseChildren(Pool<XTree<N>, 512>& spare_trees,
-                         Pool<Leaf, 512>& spare_leafs);
+    void releaseChildren(Pool<XTree<N>>& spare_trees,
+                         Pool<Leaf>& spare_leafs);
     /*
      *  Returns a table such that looking up a particular corner
      *  configuration returns whether that configuration is safe to

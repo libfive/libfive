@@ -35,10 +35,12 @@ namespace Kernel {
  *  The target class must include a reset(...) function, and the
  *  constructor must take zero arguments.
  */
-template <typename T, unsigned N>
+template <typename T>
 class Pool
 {
 public:
+    Pool(unsigned N=512) : N(N) { /* Nothing to do here */ }
+
     template <typename... Args>
     T* get(Args... args)
     {
@@ -86,6 +88,7 @@ public:
 protected:
     std::stack<T*, std::vector<T*>> d;
     std::list<T*> alloc;
+    const unsigned N;
 };
 
 }   // namespace Kernel

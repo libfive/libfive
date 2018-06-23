@@ -131,7 +131,7 @@ Tape::Handle XTree<N>::evalInterval(
 template <unsigned N>
 void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                         const Region<N>& region, Tape::Handle tape,
-                        Pool<Leaf, 512>& spare_leafs)
+                        Pool<Leaf>& spare_leafs)
 {
     // Track how many corners have to be evaluated here
     // (if they can be looked up from a neighbor, they don't have
@@ -633,8 +633,8 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 }
 
 template <unsigned N>
-void XTree<N>::releaseChildren(Pool<XTree, 512>& spare_trees,
-                               Pool<Leaf, 512>& spare_leafs)
+void XTree<N>::releaseChildren(Pool<XTree>& spare_trees,
+                               Pool<Leaf>& spare_leafs)
 {
     for (auto& c : children)
     {
@@ -669,7 +669,7 @@ template <unsigned N>
 bool XTree<N>::collectChildren(
         XTreeEvaluator* eval, Tape::Handle tape,
         double max_err, const typename Region<N>::Perp& perp,
-        Pool<XTree<N>, 512>& spare_trees, Pool<Leaf, 512>& spare_leafs)
+        Pool<XTree<N>>& spare_trees, Pool<Leaf>& spare_leafs)
 {
     // Wait for collectChildren to have been called N times
     if (pending-- != 0)

@@ -47,8 +47,8 @@ static void run(
         typename XTree<N>::Root& root, std::mutex& root_lock)
 {
     std::stack<Task<N>, std::vector<Task<N>>> local;
-    Pool<XTree<N>, 512> spare_trees;
-    Pool<typename XTree<N>::Leaf, 512> spare_leafs;
+    Pool<XTree<N>> spare_trees;
+    Pool<typename XTree<N>::Leaf> spare_leafs;
 
     while (!done.load() && !cancel.load())
     {
