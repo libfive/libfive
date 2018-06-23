@@ -767,7 +767,7 @@ bool XTree<N>::collectChildren(
         }
         else
         {
-            assert(c->leaf.get() == nullptr);
+            assert(c->leaf == nullptr);
         }
     }
 
@@ -819,7 +819,7 @@ void XTree<N>::done()
 template <unsigned N>
 double XTree<N>::findVertex(unsigned index)
 {
-    assert(leaf.get() != nullptr);
+    assert(leaf != nullptr);
     Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(leaf->AtA);
     assert(leaf->mass_point(N) > 0);
 
@@ -865,7 +865,7 @@ double XTree<N>::findVertex(unsigned index)
 template <unsigned N>
 typename XTree<N>::Vec XTree<N>::vert(unsigned i) const
 {
-    assert(leaf.get() != nullptr);
+    assert(leaf != nullptr);
     assert(i < leaf->vertex_count);
     return leaf->verts.col(i);
 }
@@ -874,7 +874,7 @@ template <unsigned N>
 std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
         unsigned a, unsigned b) const
 {
-    assert(leaf.get() != nullptr);
+    assert(leaf != nullptr);
     assert(mt->e[a][b] != -1);
     return leaf->intersections[mt->e[a][b]];
 }
@@ -885,14 +885,14 @@ Interval::State XTree<N>::cornerState(uint8_t i) const
     switch (type)
     {
         case Interval::AMBIGUOUS:
-            assert(leaf.get() != nullptr);
+            assert(leaf != nullptr);
             return (leaf->corner_mask & (1 << i))
                 ? Interval::FILLED : Interval::EMPTY;
 
         case Interval::UNKNOWN: assert(false);
 
         case Interval::FILLED:  // fallthrough
-        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+        case Interval::EMPTY:   assert(leaf == nullptr);
                                 return type;
     };
 }
@@ -904,13 +904,13 @@ bool XTree<N>::isManifold() const
     switch (type)
     {
         case Interval::AMBIGUOUS:
-            assert(leaf.get() != nullptr);
+            assert(leaf != nullptr);
             return leaf->manifold;
 
         case Interval::UNKNOWN: assert(false);
 
         case Interval::FILLED:  // fallthrough
-        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+        case Interval::EMPTY:   assert(leaf == nullptr);
                                 return true;
     };
 }
@@ -922,14 +922,14 @@ uint8_t XTree<N>::cornerMask() const
     switch (type)
     {
         case Interval::AMBIGUOUS:
-            assert(leaf.get() != nullptr);
+            assert(leaf != nullptr);
             return leaf->corner_mask;
 
         case Interval::UNKNOWN: assert(false);
 
-        case Interval::FILLED:  assert(leaf.get() == nullptr);
+        case Interval::FILLED:  assert(leaf == nullptr);
                                 return ((1 << (1 << N)) - 1);
-        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+        case Interval::EMPTY:   assert(leaf == nullptr);
                                 return 0;
     };
 }
@@ -941,13 +941,13 @@ unsigned XTree<N>::level() const
     switch (type)
     {
         case Interval::AMBIGUOUS:
-            assert(leaf.get() != nullptr);
+            assert(leaf != nullptr);
             return leaf->level;
 
         case Interval::UNKNOWN: assert(false);
 
         case Interval::FILLED:  // fallthrough
-        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+        case Interval::EMPTY:   assert(leaf == nullptr);
                                 return 0;
     };
 }
@@ -959,13 +959,13 @@ unsigned XTree<N>::rank() const
     switch (type)
     {
         case Interval::AMBIGUOUS:
-            assert(leaf.get() != nullptr);
+            assert(leaf != nullptr);
             return leaf->rank;
 
         case Interval::UNKNOWN: assert(false);
 
         case Interval::FILLED:  // fallthrough
-        case Interval::EMPTY:   assert(leaf.get() == nullptr);
+        case Interval::EMPTY:   assert(leaf == nullptr);
                                 return 0;
     };
 }

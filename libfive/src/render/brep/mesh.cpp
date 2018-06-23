@@ -49,7 +49,7 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
     uint32_t vs[4];
     for (unsigned i=0; i < ts.size(); ++i)
     {
-        assert(ts[i]->leaf.get() != nullptr);
+        assert(ts[i]->leaf != nullptr);
 
         // Load either a patch-specific vertex (if this is a lowest-level,
         // potentially non-manifold cell) or the default vertex

@@ -51,7 +51,7 @@ public:
         uint32_t vs[2];
         for (unsigned i=0; i < ts.size(); ++i)
         {
-            assert(ts[i]->leaf.get() != nullptr);
+            assert(ts[i]->leaf != nullptr);
 
             auto vi = ts[i]->leaf->level > 0
                 ? 0

@@ -55,7 +55,7 @@ void edge2(const std::array<const XTree<2>*, 2>& ts, V& v)
         // Sanity-checking that all cells have a Leaf struct allocated
         for (auto& t : ts)
         {
-            assert(t->leaf.get() != nullptr);
+            assert(t->leaf != nullptr);
             (void)t;
         }
 
@@ -129,7 +129,7 @@ void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
         // Sanity-checking that all cells have a Leaf struct allocated
         for (auto& t : ts)
         {
-            assert(t->leaf.get() != nullptr);
+            assert(t->leaf != nullptr);
             (void)t;
         }
         /*  We need to check the values on the shared edge to see whether we need
