@@ -453,23 +453,10 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                     // derivatives value calculated and stored in ds.
                     if (!ambig(i))
                     {
-                        const Eigen::Array<double, N, 1> derivs = ds.col(i)
-                            .template cast<double>().template head<N>();
-                        const double norm = derivs.matrix().norm();
-
-                        // Find normalized derivatives and distance value
-                        Eigen::Matrix<double, N, 1> dv = derivs / norm;
-                        if (dv.array().isFinite().all())
-                        {
-                            if (leaf->intersections[eval_edges[i/2]] == nullptr)
-                            {
-                                leaf->intersections[eval_edges[i/2]].reset(
-                                        new IntersectionVec<N>);
-                            }
-                            leaf->intersections[eval_edges[i/2]]->
-                                 push_back({pos.template head<N>(),
-                                            dv, ds.col(i).w() / norm});
-                        }
+                        saveIntersection(pos.template head<N>(),
+                                         ds.col(i).template cast<double>()
+                                                  .template head<N>(),
+                                         ds.col(i).w(), eval_edges[i/2]);
                     }
                     // Otherwise, we need to use the feature-finding special
                     // case to find all possible derivatives at this point.
@@ -480,27 +467,10 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 
                         for (auto& f : fs)
                         {
-                            // Unpack 3D derivatives into XTree-specific
-                            // dimensionality, and find normal.
-                            const Eigen::Array<double, N, 1> derivs = f
-                                .template head<N>()
-                                .template cast<double>();
-                            const double norm = derivs.matrix().norm();
-
-                            // Find normalized derivatives and distance
-                            // value (from the earlier evaluation)
-                            Eigen::Matrix<double, N, 1> dv = derivs / norm;
-                            if (dv.array().isFinite().all())
-                            {
-                                if (leaf->intersections[eval_edges[i/2]] == nullptr)
-                                {
-                                    leaf->intersections[eval_edges[i/2]].reset(
-                                            new IntersectionVec<N>);
-                                }
-                                leaf->intersections[eval_edges[i/2]]->
-                                     push_back({pos.template head<N>(),
-                                            dv, ds.col(i).w() / norm});
-                            }
+                            saveIntersection(pos.template head<N>(),
+                                             f.template head<N>()
+                                              .template cast<double>(),
+                                             ds.col(i).w(), eval_edges[i/2]);
                         }
                     }
                 }
@@ -650,6 +620,27 @@ void XTree<N>::releaseChildren(Pool<XTree>& spare_trees,
             spare_leafs.put(leaf);
         }
     }
+}
+
+template <unsigned N>
+void XTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
+                                const double value, const size_t edge)
+{
+    const double norm = derivs.matrix().norm();
+
+    // Find normalized derivatives and distance value
+    Eigen::Matrix<double, N, 1> dv = derivs / norm;
+    if (dv.array().isFinite().all())
+    {
+        if (leaf->intersections[edge] == nullptr)
+        {
+            leaf->intersections[edge].reset(
+                    new IntersectionVec<N>);
+        }
+        leaf->intersections[edge]->
+             push_back({pos, dv, value / norm});
+    }
+
 }
 
 template <unsigned N>
