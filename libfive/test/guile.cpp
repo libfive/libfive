@@ -144,6 +144,13 @@ TEST_CASE("#[vector notation]")
     REQUIRE(result == "#[1 2.1]");
 }
 
+TEST_CASE("shape-eval", "[!mayfail]")
+{
+    auto result = eval(
+            "(shape-eval (lambda-shape (x y z) (* x (/ 1 z))) #[0 0 0])");
+    REQUIRE(result == "nan");
+}
+
 TEST_CASE("eval-sandboxed")
 {
     SECTION("Single line")
