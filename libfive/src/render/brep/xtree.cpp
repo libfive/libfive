@@ -201,7 +201,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         }
 
         // Handle inside, outside, and (non-ambiguous) on-boundary
-        if (vs(i) > 0 || !std::isfinite(vs(i)))
+        if (vs(i) > 0 || std::isnan(vs(i)))
         {
             corners[corner_indices[i]] = Interval::EMPTY;
             ambig(i) = false;
