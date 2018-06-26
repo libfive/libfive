@@ -196,7 +196,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         // is sufficiently close to zero, then fall back to the
         // canonical single-point evaluator to avoid inconsistency.
         if (fabs(vs(i)) < 1e-6)
-         {
+        {
             vs(i) = eval->feature.eval(pos.col(i));
         }
 
