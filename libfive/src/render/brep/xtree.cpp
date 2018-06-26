@@ -495,15 +495,18 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
             {
                 for (const auto& t : *leaf->intersections[edges[i]])
                 {
-                    bool matched = false;
-                    for (auto& v : prev_normals)
+                    if (t.deriv != Vec::Zero())
                     {
-                        matched |= (t.deriv.dot(v.deriv) >= 0.9);
-                    }
-                    if (!matched)
-                    {
-                        edge_ranks[i]++;
-                        prev_normals.push_back(t);
+                        bool matched = false;
+                        for (auto& v : prev_normals)
+                        {
+                            matched |= (t.deriv.dot(v.deriv) >= 0.9);
+                        }
+                        if (!matched)
+                        {
+                            edge_ranks[i]++;
+                            prev_normals.push_back(t);
+                        }
                     }
                 }
             }
@@ -544,8 +547,13 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         size_t rows = 0;
         for (unsigned i=0; i < edge_count; ++i)
         {
-            rows += leaf->intersections[edges[i]]
-                ? leaf->intersections[edges[i]]->size() : 0;
+            for (const auto& n : *leaf->intersections[edges[i]])
+            {
+                if (n.deriv != Vec::Zero())
+                {
+                    rows++;
+                }
+            }
         }
 
         // Now, we'll unpack into A and b matrices
@@ -578,12 +586,16 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
             {
                 for (auto& n : *leaf->intersections[edges[i]])
                 {
-                    A.row(r) << n.deriv.transpose();
-                    b(r) = A.row(r).dot(n.pos) - n.value;
-                    r++;
+                    if (n.deriv != Vec::Zero())
+                    {
+                        A.row(r) << n.deriv.transpose();
+                        b(r) = A.row(r).dot(n.pos) - n.value;
+                        r++;
+                    }
                 }
             }
         }
+        assert(r == rows);
 
         // Save compact QEF matrices
         auto At = A.transpose().eval();
@@ -630,17 +642,27 @@ void XTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
 
     // Find normalized derivatives and distance value
     Eigen::Matrix<double, N, 1> dv = derivs / norm;
+
+
+    // Just-in-time allocation of intersections array
+    if (leaf->intersections[edge] == nullptr)
+    {
+        leaf->intersections[edge].reset(
+                new IntersectionVec<N>);
+    }
+
+    // If the point has a valid normal, then store it
     if (dv.array().isFinite().all())
     {
-        if (leaf->intersections[edge] == nullptr)
-        {
-            leaf->intersections[edge].reset(
-                    new IntersectionVec<N>);
-        }
         leaf->intersections[edge]->
              push_back({pos, dv, value / norm});
     }
-
+    // Otherwise, store an intersection with a zero normal
+    else
+    {
+        leaf->intersections[edge]->
+             push_back({pos, Vec::Zero(), 0});
+    }
 }
 
 template <unsigned N>
