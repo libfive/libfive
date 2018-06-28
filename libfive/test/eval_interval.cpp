@@ -156,3 +156,34 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         REQUIRE(ea == eb);
     }
 }
+
+TEST_CASE("IntervalEvaluator::isSafe")
+{
+    SECTION("Division")
+    {
+        auto t = std::make_shared<Deck>(Tree::X() / Tree::Y());
+        IntervalEvaluator e(t);
+
+        e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(e.isSafe());
+
+        e.eval({-1, 0, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(!e.isSafe());
+
+        e.eval({-1, -1, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(!e.isSafe());
+    }
+
+    SECTION("Empty tape")
+    {
+        auto t = std::make_shared<Deck>(Tree::X());
+        IntervalEvaluator e(t);
+
+        e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(e.isSafe());
+
+        e.eval({-std::numeric_limits<float>::infinity(), 0, 0},
+                {1, 2, 0}, t->tape);
+        REQUIRE(!e.isSafe());
+    }
+}

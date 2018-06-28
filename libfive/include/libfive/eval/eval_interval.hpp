@@ -59,9 +59,15 @@ public:
      */
     bool setVar(Tree::Id var, float value);
 
+    bool isSafe() const { return safe; }
+
 protected:
     /*  i[clause] is the interval result for that clause */
     std::vector<Interval::I> i;
+
+    /*  Marks whether the most recent evaluation had any NaN or inf
+     *  results (which can behave differently for intervals vs points */
+    bool safe;
 
     /*
      *  Per-clause evaluation, used in tape walking

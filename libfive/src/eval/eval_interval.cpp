@@ -67,6 +67,19 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
         o->set(lower, upper);
     }
 
+    // Mark initial safety based on the starting values
+    safe = true;
+    for (auto a : {deck->X, deck->Y, deck->Z})
+    {
+        const auto lower = i[a].lower();
+        const auto upper = i[a].lower();
+        if (std::isnan(lower) || std::isinf(lower) ||
+            std::isnan(upper) || std::isinf(upper))
+        {
+            safe = false;
+        }
+    }
+
     return i[tape->rwalk(*this)];
 }
 
@@ -264,6 +277,19 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_FREE:
         case Opcode::LAST_OP: assert(false);
     }
+
+    // Track the safety of the evaluation
+    if (safe)
+    {
+        const auto lower = out.lower();
+        const auto upper = out.upper();
+        if (std::isnan(lower) || std::isinf(lower) ||
+            std::isnan(upper) || std::isinf(upper))
+        {
+            safe = false;
+        }
+    }
+
 #undef out
 #undef a
 #undef b
