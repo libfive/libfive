@@ -120,6 +120,11 @@ Tape::Handle XTree<N>::evalInterval(
             tape);
 
     type = Interval::state(o.first);
+    if (!eval.isSafe())
+    {
+        type = Interval::AMBIGUOUS;
+        return tape;
+    }
 
     if (type == Interval::FILLED || type == Interval::EMPTY)
     {
