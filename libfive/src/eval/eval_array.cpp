@@ -56,10 +56,39 @@ ArrayEvaluator::values(size_t _count)
 }
 
 Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
-ArrayEvaluator::values(size_t _count, Tape::Handle tape)
+ArrayEvaluator::values(size_t count, Tape::Handle tape)
 {
-    count = _count;
+    setCount(count);
     return f.block<1, Eigen::Dynamic>(tape->rwalk(*this), 0, 1, count);
+}
+
+void ArrayEvaluator::setCount(size_t count)
+{
+#if defined EIGEN_VECTORIZE_AVX512
+    #define LIBFIVE_SIMD_SIZE 16
+#elif defined EIGEN_VECTORIZE_AVX
+    #define LIBFIVE_SIMD_SIZE 8
+#elif defined EIGEN_VECTORIZE_SSE
+    #define LIBFIVE_SIMD_SIZE 4
+#elif defined EIGEN_VECTORIZE
+    #warning "EIGEN_VECTORIZE is set but no vectorization flag is found"
+    #define LIBFIVE_SIMD_SIZE 0
+#else
+    #warning "No SIMD flags detected"
+    #define LIBFIVE_SIMD_SIZE 0
+#endif
+    // If we have SIMD instructions, then round the evaluation size up
+    // to the nearest block, to avoid issues where Eigen's SIMD and
+    // non-SIMD paths produce different results.
+    if (LIBFIVE_SIMD_SIZE)
+    {
+        this->count = ((count + LIBFIVE_SIMD_SIZE - 1) / LIBFIVE_SIMD_SIZE)
+                * LIBFIVE_SIMD_SIZE;
+    }
+    else
+    {
+        this->count = count;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -68,6 +68,14 @@ protected:
      */
     void operator()(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
+
+    /*
+     *  Sets this->count to count, rounding up to the appropriate SIMD
+     *  block size (because Eigen sometimes returns different results
+     *  depending on whether it took the SIMD or non-SIMD path).
+     */
+    void setCount(size_t count);
+
 public:
     /*
      *  Multi-point evaluation (values must be stored with set)
