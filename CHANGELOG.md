@@ -11,6 +11,7 @@
 - `libfive_template*` and `libfive_args*` APIs
 - `findBounds` API (due to unpredictability)
 ### Added
+- Much faster meshing, which uses thread more effectively
 - `Archive` class, allowing multiple shapes can be serialized together.
 - A few more shapes, like `rounded-rectangle-exact`
 - Added `nan-fill` to Scheme interface.
