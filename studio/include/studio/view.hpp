@@ -184,7 +184,8 @@ protected:
     /*  Data to handle direct modification of shapes */
     QVector3D drag_start;
     QVector3D drag_dir;
-    QScopedPointer<Kernel::JacobianEvaluator> drag_eval;
+    std::pair<std::unique_ptr<Kernel::JacobianEvaluator>,
+              std::shared_ptr<Kernel::Tape>> drag_eval;
     Shape* drag_target=nullptr;
     bool drag_valid=false;
     Shape* hover_target=nullptr;

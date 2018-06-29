@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ENABLE_FIND_BOUNDS_EXPERIMENTAL
 #include "libfive/solve/bounds.hpp"
 #include "libfive/render/axes.hpp"
+#include "libfive/eval/deck.hpp"
 
 namespace Kernel {
 
@@ -32,7 +33,7 @@ Region<3> findBounds(const Tree& t)
 
 Region<3> findBounds(const Tree& t, const std::map<Tree::Id, float>& vars)
 {
-    IntervalEvaluator e(std::make_shared<Tape>(t), vars);
+    IntervalEvaluator e(std::make_shared<Deck>(t), vars);
     return findBounds(&e);
 }
 

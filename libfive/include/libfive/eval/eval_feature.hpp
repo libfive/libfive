@@ -36,8 +36,8 @@ namespace Kernel {
 class FeatureEvaluator : public PointEvaluator
 {
 public:
-    FeatureEvaluator(std::shared_ptr<Tape> t);
-    FeatureEvaluator(std::shared_ptr<Tape> t,
+    FeatureEvaluator(std::shared_ptr<Deck> d);
+    FeatureEvaluator(std::shared_ptr<Deck> d,
                      const std::map<Tree::Id, float>& vars);
 
     /*
@@ -48,12 +48,16 @@ public:
      *      eval(x, y, z) == 0 => further checking is performed
      */
     bool isInside(const Eigen::Vector3f& p);
+    bool isInside(const Eigen::Vector3f& p,
+                  std::shared_ptr<Tape> tape);
 
     /*
      *  Checks for features at the given position, returning a list
      *  of unique feature normals.
      */
     std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p);
+    std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p,
+                                        std::shared_ptr<Tape> tape);
 
     /*
      *  Checks for features at the given position, returning a list
@@ -61,6 +65,8 @@ public:
      */
     const boost::container::small_vector<Feature, 4>&
         features_(const Eigen::Vector3f& p);
+    const boost::container::small_vector<Feature, 4>&
+        features_(const Eigen::Vector3f& p, std::shared_ptr<Tape> tape);
 
 protected:
     /*

@@ -12,6 +12,7 @@ endif()
 
 add_library(five SHARED
     eval/base.cpp
+    eval/deck.cpp
     eval/eval_interval.cpp
     eval/eval_jacobian.cpp
     eval/eval_array.cpp
@@ -26,6 +27,8 @@ add_library(five SHARED
     render/discrete/voxels.cpp
     render/brep/xtree2.cpp
     render/brep/xtree3.cpp
+    render/brep/xtree_pool2.cpp
+    render/brep/xtree_pool3.cpp
     render/brep/contours.cpp
     render/brep/mesh.cpp
     render/brep/marching.cpp

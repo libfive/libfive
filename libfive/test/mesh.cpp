@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "catch.hpp"
 
 #include "libfive/render/brep/mesh.hpp"
+#include "libfive/render/brep/xtree_pool.hpp"
 #include "libfive/render/brep/region.hpp"
 
 #include "util/shapes.hpp"
@@ -84,6 +85,16 @@ TEST_CASE("Mesh::render (sphere)")
     auto s = sphere(1);
     auto m = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
                           1/32.0f, pow(10, -3));
+    REQUIRE(true);
+}
+
+TEST_CASE("Mesh::render (cone)")
+{
+    auto z = Tree::Z();
+    auto s = 1 / (-z);
+    auto r = sqrt(square(Tree::X() * s) + square(Tree::Y() * s));
+    auto cone = max(r - 1, max(Tree::Z(), -1 - z));
+    auto m = Mesh::render(cone, Region<3>({-10, -10, -10}, {10, 10, 10}), 0.1);
     REQUIRE(true);
 }
 
@@ -155,17 +166,17 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
 
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
-    std::unique_ptr<const XTree<3>> t;
+    XTree<3>::Root t;
     BENCHMARK("XTree construction")
     {
-        t = XTree<3>::build(sphereGyroid, r, 0.025, 1e-8, true);
+        t = XTreePool<3>::build(sphereGyroid, r, 0.025, 1e-8, 8);
     }
 
     std::unique_ptr<Mesh> m;
     std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Mesh::mesh(t, cancel);
+        m = Mesh::mesh(t.get(), cancel);
     }
 
     BENCHMARK("XTree deletion")

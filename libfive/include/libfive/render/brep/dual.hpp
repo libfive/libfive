@@ -52,9 +52,16 @@ void edge2(const std::array<const XTree<2>*, 2>& ts, V& v)
         [](const XTree<2>* t){ return t->type == Interval::AMBIGUOUS &&
                                       !t->isBranch(); }))
     {
+        // Sanity-checking that all cells have a Leaf struct allocated
+        for (auto& t : ts)
+        {
+            assert(t->leaf != nullptr);
+            (void)t;
+        }
+
         const auto index = std::min_element(ts.begin(), ts.end(),
                 [](const XTree<2>* a, const XTree<2>* b)
-                { return a->level < b->level; }) - ts.begin();
+                { return a->leaf->level < b->leaf->level; }) - ts.begin();
 
         constexpr std::array<uint8_t, 2> corners = {{perp, 0}};
 
@@ -119,6 +126,12 @@ void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
         [](const XTree<3>* t){ return t->type == Interval::AMBIGUOUS &&
                                       !t->isBranch(); }))
     {
+        // Sanity-checking that all cells have a Leaf struct allocated
+        for (auto& t : ts)
+        {
+            assert(t->leaf != nullptr);
+            (void)t;
+        }
         /*  We need to check the values on the shared edge to see whether we need
          *  to add a face.  However, this is tricky when the edge spans multiple
          *  octree levels.
@@ -137,7 +150,7 @@ void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
          */
         const auto index = std::min_element(ts.begin(), ts.end(),
                 [](const XTree<3>* a, const XTree<3>* b)
-                { return a->level < b->level; }) - ts.begin();
+                { return a->leaf->level < b->leaf->level; }) - ts.begin();
 
         constexpr std::array<uint8_t, 4> corners = {{Q|R, R, Q, 0}};
 

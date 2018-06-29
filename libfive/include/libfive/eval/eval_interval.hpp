@@ -22,14 +22,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/eval/base.hpp"
 #include "libfive/eval/interval.hpp"
+#include "libfive/eval/clause.hpp"
 
 namespace Kernel {
+class Tape; /* Forward declaration */
 
 class IntervalEvaluator : public BaseEvaluator
 {
 public:
-    IntervalEvaluator(std::shared_ptr<Tape> t);
-    IntervalEvaluator(std::shared_ptr<Tape> t,
+    IntervalEvaluator(std::shared_ptr<Deck> d);
+    IntervalEvaluator(std::shared_ptr<Deck> d,
                       const std::map<Tree::Id, float>& vars);
 
     /*
@@ -37,9 +39,17 @@ public:
      */
     Interval::I eval(const Eigen::Vector3f& lower,
                      const Eigen::Vector3f& upper);
-    std::pair<Interval::I, Tape::Handle> evalAndPush(
+    Interval::I eval(const Eigen::Vector3f& lower,
+                     const Eigen::Vector3f& upper,
+                     std::shared_ptr<Tape> tape);
+
+    std::pair<Interval::I, std::shared_ptr<Tape>> evalAndPush(
                      const Eigen::Vector3f& lower,
                      const Eigen::Vector3f& upper);
+    std::pair<Interval::I, std::shared_ptr<Tape>> evalAndPush(
+                     const Eigen::Vector3f& lower,
+                     const Eigen::Vector3f& upper,
+                     std::shared_ptr<Tape> tape);
 
     /*
      *  Changes a variable's value
@@ -49,9 +59,15 @@ public:
      */
     bool setVar(Tree::Id var, float value);
 
+    bool isSafe() const { return safe; }
+
 protected:
     /*  i[clause] is the interval result for that clause */
     std::vector<Interval::I> i;
+
+    /*  Marks whether the most recent evaluation had any NaN or inf
+     *  results (which can behave differently for intervals vs points */
+    bool safe;
 
     /*
      *  Per-clause evaluation, used in tape walking

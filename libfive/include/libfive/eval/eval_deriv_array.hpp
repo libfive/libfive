@@ -27,8 +27,8 @@ namespace Kernel {
 class DerivArrayEvaluator : public ArrayEvaluator
 {
 public:
-    DerivArrayEvaluator(std::shared_ptr<Tape> t);
-    DerivArrayEvaluator(std::shared_ptr<Tape> t,
+    DerivArrayEvaluator(std::shared_ptr<Deck> t);
+    DerivArrayEvaluator(std::shared_ptr<Deck> t,
                         const std::map<Tree::Id, float>& vars);
 
 protected:
@@ -43,6 +43,8 @@ public:
      *  Multi-point evaluation (values must be stored with set)
      */
     Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(size_t count);
+    Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(
+            size_t count, std::shared_ptr<Tape> tape);
 
     /*
      *  Per-clause evaluation, used in tape walking
@@ -60,8 +62,10 @@ public:
      *
      *  This call performs O(i) work to set up the ambig array
      */
-    Eigen::Block<decltype(ambig), 1, Eigen::Dynamic>
-        getAmbiguousDerivs(size_t i);
+    Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguousDerivs(
+            size_t count, std::shared_ptr<Tape> tape);
+    Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguousDerivs(
+            size_t count);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */

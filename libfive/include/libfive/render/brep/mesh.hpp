@@ -33,10 +33,10 @@ public:
      *  Blocking, unstoppable render function
      *  Returns nullptr if min_feature is invalid (i.e. <= 0)
      */
-    static std::unique_ptr<Mesh> render(const Tree t, const Region<3>& r,
-                                        double min_feature=0.1,
-                                        double max_err=1e-8,
-                                        bool multithread=true);
+    static std::unique_ptr<Mesh> render(
+            const Tree t, const Region<3>& r,
+            double min_feature=0.1, double max_err=1e-8,
+            bool multithread=true);
 
     /*
      *  Fully-specified render function
@@ -46,18 +46,18 @@ public:
     static std::unique_ptr<Mesh> render(
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
-            bool multithread, std::atomic_bool& cancel);
+            unsigned workers, std::atomic_bool& cancel);
 
     /*
      *  Render function that re-uses evaluators
-     *  es must be a pointer to at least eight Evaluators
+     *  es must be a pointer to at least workers Evaluators
      *  Returns nullptr if min_feature is invalid or cancel is set to true
      *  partway through the computation.
      */
     static std::unique_ptr<Mesh> render(
-            XTreeEvaluator* es,
-            const Region<3>& r, double min_feature, double max_err,
-            std::atomic_bool& cancel);
+            XTreeEvaluator* es, const Region<3>& r,
+            double min_feature, double max_err,
+            int workers, std::atomic_bool& cancel);
 
     /*
      *  Writes the mesh to a file
@@ -77,7 +77,7 @@ public:
     void load(const std::array<const XTree<3>*, 4>& ts);
 
     /*  Walks an XTree, returning a mesh  */
-    static std::unique_ptr<Mesh> mesh(std::unique_ptr<const XTree<3>>& tree,
+    static std::unique_ptr<Mesh> mesh(const XTree<3>* tree,
                                       std::atomic_bool& cancel);
 protected:
     /*
