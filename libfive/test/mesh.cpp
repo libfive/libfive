@@ -88,7 +88,7 @@ TEST_CASE("Mesh::render (sphere)")
     REQUIRE(true);
 }
 
-TEST_CASE("Mesh::render (cone)", "[!mayfail]") // TODO
+TEST_CASE("Mesh::render (cone)")
 {
     auto z = Tree::Z();
     auto s = 1 / (-z);
