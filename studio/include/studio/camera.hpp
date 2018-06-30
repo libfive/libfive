@@ -35,6 +35,12 @@ public:
     void toPerspective();
 
     /*
+     *  Triggers an animation of the axis member variable
+     */
+    void toTurnZ();
+    void toTurnY();
+
+    /*
      *  Triggers an animation to zoom to the given setting
      */
     void zoomTo(const QVector3D& min, const QVector3D& max);
@@ -75,6 +81,7 @@ signals:
     void animDone();
 
 protected:
+    void animateAxis(QQuaternion end);
 
     float scale=0.5;
     QVector3D center={0,0,0};
@@ -83,6 +90,9 @@ protected:
 
     float perspective=0.25;
     Q_PROPERTY(float perspective MEMBER perspective NOTIFY changed)
+
+    QQuaternion axis;
+    Q_PROPERTY(QQuaternion axis MEMBER axis NOTIFY changed)
 
     QPropertyAnimation anim;
 };

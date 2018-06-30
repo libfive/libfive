@@ -62,6 +62,8 @@ public slots:
 
     void toOrthographic(bool=false) { camera.toOrthographic();  }
     void toPerspective(bool=false)  { camera.toPerspective();   }
+    void toTurnZ(bool=false) { camera.toTurnZ();  }
+    void toTurnY(bool=false)  { camera.toTurnY();   }
     void zoomTo(bool=false) { camera.zoomTo(settings.min, settings.max); }
 
     /*

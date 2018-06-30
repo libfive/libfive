@@ -136,19 +136,35 @@ Window::Window(Arguments args)
 
     auto perspective_action = new QAction("Perspective", nullptr);
     auto ortho_action = new QAction("Orthographic", nullptr);
-    view_menu->addSection("Projection");
-    view_menu->addAction(perspective_action);
-    view_menu->addAction(ortho_action);
+    auto proj_menu = new QMenu("Projection");
+    proj_menu->addAction(perspective_action);
+    proj_menu->addAction(ortho_action);
     perspective_action->setCheckable(true);
     perspective_action->setChecked(true);
     ortho_action->setCheckable(true);
-    auto projection = new QActionGroup(view_menu);
+    auto projection = new QActionGroup(proj_menu);
     projection->addAction(perspective_action);
     projection->addAction(ortho_action);
     connect(perspective_action, &QAction::triggered,
             view, &View::toPerspective);
     connect(ortho_action, &QAction::triggered,
             view, &View::toOrthographic);
+    view_menu->addMenu(proj_menu);
+
+    auto turn_z_up = new QAction("Turntable (Z up)", nullptr);
+    auto turn_y_up = new QAction("Turntable (Y up)", nullptr);
+    auto rotation_menu = new QMenu("Rotation mode");
+    rotation_menu->addAction(turn_z_up);
+    rotation_menu->addAction(turn_y_up);
+    turn_z_up->setCheckable(true);
+    turn_z_up->setChecked(true);
+    turn_y_up->setCheckable(true);
+    auto rot_mode = new QActionGroup(rotation_menu);
+    rot_mode->addAction(turn_z_up);
+    rot_mode->addAction(turn_y_up);
+    connect(turn_z_up, &QAction::triggered, view, &View::toTurnZ);
+    connect(turn_y_up, &QAction::triggered, view, &View::toTurnY);
+    view_menu->addMenu(rotation_menu);
 
     view_menu->addSeparator();
     auto edit_bounds_action = new QAction("Edit bounds", nullptr);
