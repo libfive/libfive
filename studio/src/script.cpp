@@ -32,6 +32,7 @@ void Script::keyPressEvent(QKeyEvent* e)
     auto c = textCursor();
     if (e->key() == Qt::Key_Tab)
     {
+        // Tab does block-level indentation if we've selected text
         if (c.hasSelection())
         {
             auto a = c.selectionStart();
@@ -53,6 +54,7 @@ void Script::keyPressEvent(QKeyEvent* e)
             }
             c.endEditBlock();
         }
+        // Otherwise, it does aligned 2-space indentation
         else
         {
             insertPlainText((c.columnNumber() & 1) ? " " : "  ");
@@ -107,6 +109,8 @@ void Script::keyPressEvent(QKeyEvent* e)
         // Then match the number of leading spaces
         insertPlainText("\n" + QString(length, ' '));
     }
+    // Backspace does 2-space aligned deletion of spaces, and deletes
+    // a single character otherwise.
     else if (e->key() == Qt::Key_Backspace && !c.hasSelection())
     {
         bool was_space;
