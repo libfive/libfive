@@ -174,6 +174,13 @@ TEST_CASE("eval-sandboxed")
         REQUIRE(boost::algorithm::starts_with(result,
             "((error (0 . 0)"));
     }
+
+    SECTION("Parsing variables")
+    {
+        auto a = eval("(eval-sandboxed \"#123\")");
+        CAPTURE(a);
+        REQUIRE(boost::algorithm::starts_with(a, "((valid #<<shape>"));
+    }
 }
 
 TEST_CASE("libfive-guile CSG")
