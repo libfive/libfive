@@ -25,6 +25,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/settings.hpp"
 #include "studio/shape.hpp"
 
+#ifdef Q_OS_MAC
+#include "studio/platform_darwin.hpp"
+#endif
+
 int main(int argc, char** argv)
 {
     {   // Configure default OpenGL as 3.2 Core
@@ -41,6 +45,10 @@ int main(int argc, char** argv)
     qRegisterMetaType<Editor::Range>("Editor::Range");
     qRegisterMetaType<QMap<Kernel::Tree::Id,Editor::Range>>(
             "QMap<Kernel::Tree::Id,Editor::Range>");
+
+#ifdef Q_OS_MAC
+    PlatformDarwin::disableWindowTabbing();
+#endif
 
     App a(argc, argv);
     a.exec();
