@@ -11,6 +11,7 @@
 - `libfive_template*` and `libfive_args*` APIs
 - `findBounds` API (due to unpredictability)
 ### Added
+- Y-up rotation mode (in the View menu)
 - Much faster meshing, which uses thread more effectively
 - `Archive` class, allowing multiple shapes can be serialized together.
 - A few more shapes, like `rounded-rectangle-exact`
