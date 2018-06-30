@@ -32,11 +32,13 @@ _Interpreter::_Interpreter()
 
 void _Interpreter::init()
 {
+#ifdef Q_OS_MAC
     // Modify environmental variables to use local Guile path
     auto path = QCoreApplication::applicationDirPath().toLocal8Bit() +
                 "/../Resources/guile/";
     qputenv("GUILE_LOAD_COMPILED_PATH", path + "ccache/");
     qputenv("GUILE_LOAD_PATH", path + "scm/");
+#endif
 
     scm_init_guile();
 
