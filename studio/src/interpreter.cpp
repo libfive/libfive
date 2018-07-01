@@ -368,6 +368,8 @@ Interpreter::Interpreter()
             this, &Interpreter::gotShapes);
     connect(&interpreter, &_Interpreter::gotVars,
             this, &Interpreter::gotVars);
+    connect(&interpreter, &_Interpreter::gotSettings,
+            this, &Interpreter::gotSettings);
 }
 
 void Interpreter::start()

@@ -68,14 +68,14 @@ public slots:
     void setKeywords(QString kws);
 
     /*
-     *  When settings are changed, add specially-formatted comment blocks
-     *  to the script to control settings
+     *  When settings are changed in the script, re-emit them, using the
+     *  first_change flag to indicate if this is a brand model (in which
+     *  case the viewport should zoom to fit it)
      */
     void onSettingsChanged(Settings s);
 
     /*
-     *  When script changes, emit scriptChanged and check for settings
-     *  embedded in the script
+     *  When script changes, emit scriptChanged
      */
     void onScriptChanged();
 

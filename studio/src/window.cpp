@@ -59,11 +59,7 @@ Window::Window(Arguments args)
     connect(editor, &Editor::modificationChanged,
             this, &QWidget::setWindowModified);
 
-    // Sync settings with script and vice versa
-    // (the editor breaks the loop by not re-emitting the signal
-    // if no changes are necessary to the block comment)
-    connect(view, &View::settingsChanged,
-            editor, &Editor::onSettingsChanged);
+    // Sync settings from script to viewport
     connect(editor, &Editor::settingsChanged,
             view, &View::onSettingsFromScript);
 
@@ -167,9 +163,6 @@ Window::Window(Arguments args)
     view_menu->addMenu(rotation_menu);
 
     view_menu->addSeparator();
-    auto edit_bounds_action = new QAction("Edit bounds", nullptr);
-    view_menu->addAction(edit_bounds_action);
-    connect(edit_bounds_action, &QAction::triggered, view, &View::openSettings);
     auto zoom_to_action = new QAction("Zoom to bounds", nullptr);
     view_menu->addAction(zoom_to_action);
     connect(zoom_to_action, &QAction::triggered, view, &View::zoomTo);
@@ -199,6 +192,8 @@ Window::Window(Arguments args)
     connect(interpreter, &Interpreter::gotShapes, view, &View::setShapes);
     connect(interpreter, &Interpreter::gotVars,
             editor, &Editor::setVarPositions);
+    connect(interpreter, &Interpreter::gotSettings,
+            editor, &Editor::onSettingsChanged);
     connect(view, &View::varsDragged, editor, &Editor::setVarValues);
 
     interpreter->start();
@@ -494,7 +489,6 @@ void Window::onExport(bool)
     }
 
     connect(view, &View::meshesReady, this, &Window::onExportReady);
-    view->disableSettings();
 
     auto p = new QProgressDialog(this);
     p->setCancelButton(nullptr);
@@ -511,9 +505,6 @@ void Window::onExport(bool)
     // Delete the progress dialog when we finish or cancel the export
     connect(this, &Window::exportDone, p, &QProgressDialog::deleteLater);
     connect(p, &QProgressDialog::rejected, p, &QProgressDialog::deleteLater);
-
-    // When the progress dialog is destroyed, re-enable settings
-    connect(p, &QProgressDialog::destroyed, view, &View::enableSettings);
 
     p->show();
     view->checkMeshes();

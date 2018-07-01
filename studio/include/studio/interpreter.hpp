@@ -57,6 +57,12 @@ signals:
     void gotWarnings(QList<QPair<QString, QString>> warnings);
 
     /*
+     *  Emitted whenever the script is done running, to send new
+     *  settings to the rendering window.
+     */
+    void gotSettings(Settings s);
+
+    /*
      *  Emitted to pass a set of keywords (space-delimited) to
      *  the syntax highlighter
      */
@@ -141,6 +147,7 @@ signals:
     void docs(Documentation* docs);
     void gotShapes(QList<Shape*> s);
     void gotVars(QMap<Kernel::Tree::Id, Editor::Range> vs);
+    void gotSettings(Settings s);
 
     /*
      *  Emitted when the interpreter starts evaluation

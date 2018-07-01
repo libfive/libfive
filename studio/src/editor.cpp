@@ -255,39 +255,15 @@ void Editor::setKeywords(QString kws)
     }
 }
 
-void Editor::onSettingsChanged(Settings s)
-{
-    const auto render_str = s.toString();
-
-    QTextCursor c(script_doc);
-    c.beginEditBlock();
-    auto match = s.settings_regex.match(script_doc->toPlainText());
-    if (!match.hasMatch())
-    {
-        c.insertText(render_str);
-        c.insertText("\n");
-    }
-    else if (match.captured(0) != render_str)
-    {
-        c.setPosition(match.capturedStart());
-        c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
-        c.removeSelectedText();
-        c.insertText(render_str);
-    }
-    c.endEditBlock();
-}
-
 void Editor::onScriptChanged()
 {
     auto txt = script_doc->toPlainText();
     emit(scriptChanged(txt));
+}
 
-    bool okay = true;
-    const auto s = Settings::fromString(txt, &okay);
-    if (okay)
-    {
-        emit(settingsChanged(s, first_change));
-    }
+void Editor::onSettingsChanged(Settings s)
+{
+    emit(settingsChanged(s, first_change));
     first_change = false;
 }
 

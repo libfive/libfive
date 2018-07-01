@@ -47,54 +47,11 @@ struct Settings
      */
     int defaultDiv() const;
 
-    /*
-     *  Converts to a string using settings_fmt
-     */
-    QString toString() const;
-
-    /*
-     *  Converts from a string to a Settings object using settings_regex
-     *  Returns default Settings and sets *okay to false on failure
-     */
-    static Settings fromString(QString s, bool* okay=nullptr);
-
     QVector3D min;
     QVector3D max;
     float res;
     float quality;
 
-    // Used to read and write to scripts
-    static QRegularExpression settings_regex;
-    static QString settings_fmt;
-
     bool operator==(const Settings& other) const;
     bool operator!=(const Settings& other) const;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class SettingsPane : public QWidget
-{
-    Q_OBJECT
-public:
-    SettingsPane(Settings s);
-    void set(Settings s);
-
-signals:
-    void changed(Settings s);
-
-    void disable();
-    void enable();
-
-protected:
-    Settings settings() const;
-
-    QDoubleSpinBox* xmin;
-    QDoubleSpinBox* xmax;
-    QDoubleSpinBox* ymin;
-    QDoubleSpinBox* ymax;
-    QDoubleSpinBox* zmin;
-    QDoubleSpinBox* zmax;
-    QDoubleSpinBox* res;
-    QDoubleSpinBox* quality;
 };
