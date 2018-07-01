@@ -30,6 +30,32 @@ _Interpreter::_Interpreter()
     moveToThread(&thread);
 }
 
+static void init_studio_gui(void*)
+{
+    scm_c_eval_string(R"(
+(define-public global-bounds #f)
+(define-public (set-bounds! lower upper)
+  "set-bounds! [xmin ymin zmin] [xmax ymax zmax]
+  Sets the global render bounds"
+  (set! global-bounds (cons lower upper)))
+
+(define-public global-resolution #f)
+(define-public (set-resolution! res)
+  "set-resolution! res
+  Sets the global render resolution, which is the
+  reciprocal of minimum feature size"
+  (set! global-resolution res))
+
+(define-public global-quality #f)
+(define-public (set-quality! q)
+  "set-quality! q
+  Sets the global render quality, which is a metric
+  from 1 to 11 that determines how enthusiastically
+  triangles are collapsed in the mesh"
+  (set! global-quality q))
+)");
+}
+
 void _Interpreter::init()
 {
 #ifdef Q_OS_MAC
@@ -43,6 +69,14 @@ void _Interpreter::init()
     scm_init_guile();
 
     scm_init_libfive_modules();
+    scm_c_define_module("studio gui", init_studio_gui, NULL);
+
+    scm_c_eval_string(R"(
+(use-modules (libfive sandbox))
+(set! sandbox-bindings (append! sandbox-bindings
+    '(((studio gui) set-bounds! set-resolution! set-quality!))))
+    )");
+
     scm_c_use_module("libfive kernel");
 
     scm_eval_sandboxed = scm_c_eval_string(R"(
@@ -119,6 +153,12 @@ void _Interpreter::eval()
         script = _script;
     }
 
+    // Clear global bounds, so we can detect if they were set in the script
+    scm_c_eval_string(R"(
+    (use-modules (studio gui))
+    (set! global-bounds #f)
+    )");
+
     auto result = scm_call_1(scm_eval_sandboxed,
             scm_from_locale_string(script.toLocal8Bit().data()));
 
@@ -177,6 +217,7 @@ void _Interpreter::eval()
                      scm_to_int(scm_cdr(after))}));
         free(str);
         free(stack);
+        emit(gotWarnings({}));
     }
     else if (last)
     {
@@ -248,6 +289,41 @@ void _Interpreter::eval()
         }
         emit(gotShapes(shapes));
         emit(gotVars(var_pos));
+
+        // Detect variables that should be set in the script but were not,
+        // and emit warnings for them (as well as storing reasonable defaults)
+        auto bounds = scm_c_eval_string(R"(
+        (use-modules (studio gui)) global-bounds
+        )");
+
+        auto resolution = scm_c_eval_string(R"(
+        (use-modules (studio gui)) global-resolution
+        )");
+
+        auto quality = scm_c_eval_string(R"(
+        (use-modules (studio gui)) global-quality
+        )");
+
+        QList<QPair<QString, QString>> warnings;
+        if (scm_is_false(bounds))
+        {
+            warnings.append({"<b>Warning:</b> Using default bounds for shapes<br>"
+                             "    Use <code>set-bounds!</code> to specify.",
+                    "(set-bounds! [-10 -10 -10] [10 10 10])\n"});
+        }
+        if (scm_is_false(resolution))
+        {
+            warnings.append({"<b>Warning:</b> Using default resolution for shapes.<br>"
+                             "    Use <code>set-resolution!</code> to specify.",
+                    "(set-resolution! 10)\n"});
+        }
+        if (scm_is_false(quality))
+        {
+            warnings.append({"<b>Warning:</b> Using default quality for shapes.<br>"
+                             "    Use <code>set-quality!</code> to specify.",
+                    "(set-quality! 8)\n"});
+        }
+        emit(gotWarnings(warnings));
     }
 }
 

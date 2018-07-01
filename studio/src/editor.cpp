@@ -136,6 +136,11 @@ void Editor::setWarnings(QList<QPair<QString, QString>> warnings)
         }
     }
 
+    if (warnings.size() == 0)
+    {
+        return;
+    }
+
     QStringList fixes;
 
     auto v = new QVBoxLayout();
