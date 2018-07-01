@@ -192,6 +192,8 @@ Window::Window(Arguments args)
     connect(interpreter, &Interpreter::busy, editor, &Editor::onBusy);
     connect(interpreter, &Interpreter::gotResult, editor, &Editor::onResult);
     connect(interpreter, &Interpreter::gotError, editor, &Editor::onError);
+    connect(interpreter, &Interpreter::gotWarnings,
+            editor, &Editor::setWarnings);
     connect(interpreter, &Interpreter::keywords, editor, &Editor::setKeywords);
     connect(interpreter, &Interpreter::docs, this, &Window::setDocs);
     connect(interpreter, &Interpreter::gotShapes, view, &View::setShapes);

@@ -282,6 +282,8 @@ Interpreter::Interpreter()
             this, &Interpreter::gotResult);
     connect(&interpreter, &_Interpreter::gotError,
             this, &Interpreter::gotError);
+    connect(&interpreter, &_Interpreter::gotWarnings,
+            this, &Interpreter::gotWarnings);
     connect(&interpreter, &_Interpreter::keywords,
             this, &Interpreter::keywords);
     connect(&interpreter, &_Interpreter::docs,

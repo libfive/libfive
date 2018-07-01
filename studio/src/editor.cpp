@@ -20,7 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <set>
 #include <cassert>
 
-#include <QVBoxLayout>
+#include <QLabel>
+#include <QPushButton>
 
 #include "studio/editor.hpp"
 #include "studio/syntax.hpp"
@@ -29,7 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 Editor::Editor(QWidget* parent, bool do_syntax)
     : QWidget(parent), script(new Script), script_doc(script->document()),
       syntax(do_syntax ? new Syntax(script_doc) : nullptr),
-      err(new QPlainTextEdit), err_doc(err->document())
+      err(new QPlainTextEdit), err_doc(err->document()),
+      layout(new QVBoxLayout)
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
@@ -77,7 +79,6 @@ Editor::Editor(QWidget* parent, bool do_syntax)
     connect(script_doc, &QTextDocument::redoAvailable,
             this, &Editor::redoAvailable);
 
-    auto layout = new QVBoxLayout;
     layout->addWidget(script);
     layout->addWidget(err);
     layout->setMargin(0);
@@ -114,6 +115,53 @@ void Editor::onBusy()
 {
     spinner.start();
     onSpinner();
+}
+
+void Editor::setWarnings(QList<QPair<QString, QString>> warnings)
+{
+    for (auto& w : findChildren<QVBoxLayout*>())
+    {
+        if (w != layout)
+        {
+            for (int i=0; w != layout && i < w->count(); ++i)
+            {
+                auto item = w->itemAt(i)->widget();
+                if (item)
+                {
+                    item->deleteLater();
+                }
+            }
+            layout->removeItem(w);
+            w->deleteLater();
+        }
+    }
+
+    QStringList fixes;
+
+    auto v = new QVBoxLayout();
+    v->setMargin(10);
+    for (auto& f : warnings)
+    {
+        v->addWidget(new QLabel(f.first, this));
+        if (!f.second.isEmpty())
+        {
+            fixes.push_back(f.second);
+        }
+    }
+
+    if (fixes.size())
+    {
+        auto button = new QPushButton("Fix All", this);
+        connect(button, &QPushButton::pressed, this, [=](){
+            QTextCursor c(script_doc);
+            for (auto& f : fixes)
+            {
+                c.movePosition(QTextCursor::Start);
+                c.insertText(f);
+            }});
+        v->addWidget(button, 0, Qt::AlignHCenter);
+    }
+    layout->addLayout(v);
 }
 
 void Editor::undo()
