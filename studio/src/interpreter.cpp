@@ -33,10 +33,24 @@ _Interpreter::_Interpreter()
 static void init_studio_gui(void*)
 {
     scm_c_eval_string(R"(
+(use-modules (libfive vec) (oop goops))
+
+(define (vec3? v)
+    (eq? (class-name (class-of v)) '<vec3>))
+
 (define-public global-bounds #f)
 (define-public (set-bounds! lower upper)
   "set-bounds! [xmin ymin zmin] [xmax ymax zmax]
   Sets the global render bounds"
+  (when (not (and (vec3? lower) (vec3? upper)))
+    (error "Arguments must be vec3"))
+  (when (not (and (number? (.x lower))
+                  (number? (.y lower))
+                  (number? (.z lower))
+                  (number? (.x upper))
+                  (number? (.y upper))
+                  (number? (.z upper))))
+    (error "vec3 values must be numbers"))
   (set! global-bounds (cons lower upper)))
 
 (define-public global-resolution #f)
@@ -44,7 +58,9 @@ static void init_studio_gui(void*)
   "set-resolution! res
   Sets the global render resolution, which is the
   reciprocal of minimum feature size"
-  (set! global-resolution res))
+  (if (number? res)
+    (set! global-resolution res)
+    (error "resolution must be a number")))
 
 (define-public global-quality #f)
 (define-public (set-quality! q)
@@ -52,6 +68,12 @@ static void init_studio_gui(void*)
   Sets the global render quality, which is a metric
   from 1 to 11 that determines how enthusiastically
   triangles are collapsed in the mesh"
+  (when (not (number? q))
+    (error "quality must be a number"))
+  (when (< q 1)
+    (error "quality must be >= 1"))
+  (when (> q 11)
+    (error "quality must be <= 11"))
   (set! global-quality q))
 )");
 }
