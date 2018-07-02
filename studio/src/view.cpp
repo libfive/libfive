@@ -140,6 +140,7 @@ void View::onSettingsFromScript(Settings s, bool first)
 {
     if (settings != s)
     {
+        settings = s;
         startRender(s);
     }
 

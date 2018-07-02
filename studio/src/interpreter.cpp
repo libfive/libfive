@@ -33,7 +33,7 @@ _Interpreter::_Interpreter()
 static void init_studio_gui(void*)
 {
     scm_c_eval_string(R"(
-(use-modules (libfive vec) (oop goops))
+(use-modules (libfive vec) (oop goops) (srfi srfi-1))
 
 (define (vec3? v)
     (eq? (class-name (class-of v)) '<vec3>))
@@ -44,14 +44,11 @@ static void init_studio_gui(void*)
   Sets the global render bounds"
   (when (not (and (vec3? lower) (vec3? upper)))
     (error "Arguments must be vec3"))
-  (when (not (and (number? (.x lower))
-                  (number? (.y lower))
-                  (number? (.z lower))
-                  (number? (.x upper))
-                  (number? (.y upper))
-                  (number? (.z upper))))
-    (error "vec3 values must be numbers"))
-  (set! global-bounds (cons lower upper)))
+  (let ((result (list (.x lower) (.y lower) (.z lower)
+                      (.x upper) (.y upper) (.z upper))))
+    (if (every number? result)
+      (set! global-bounds result)
+      (error "All values must be numbers"))))
 
 (define-public global-resolution #f)
 (define-public (set-resolution! res)
@@ -179,6 +176,8 @@ void _Interpreter::eval()
     scm_c_eval_string(R"(
     (use-modules (studio gui))
     (set! global-bounds #f)
+    (set! global-quality #f)
+    (set! global-resolution #f)
     )");
 
     auto result = scm_call_1(scm_eval_sandboxed,
@@ -327,25 +326,49 @@ void _Interpreter::eval()
         )");
 
         QList<QPair<QString, QString>> warnings;
+        auto settings = Settings::defaultSettings();
         if (scm_is_false(bounds))
         {
             warnings.append({"<b>Warning:</b> Using default bounds for shapes<br>"
                              "    Use <code>set-bounds!</code> to specify.",
                     "(set-bounds! [-10 -10 -10] [10 10 10])\n"});
         }
+        else
+        {
+            auto lower = bounds;
+            settings.min = QVector3D(scm_to_double(scm_car(lower)),
+                                     scm_to_double(scm_cadr(lower)),
+                                     scm_to_double(scm_caddr(lower)));
+            auto upper = scm_cdddr(bounds);
+            settings.max = QVector3D(scm_to_double(scm_car(upper)),
+                                     scm_to_double(scm_cadr(upper)),
+                                     scm_to_double(scm_caddr(upper)));
+        }
+
         if (scm_is_false(resolution))
         {
             warnings.append({"<b>Warning:</b> Using default resolution for shapes.<br>"
                              "    Use <code>set-resolution!</code> to specify.",
                     "(set-resolution! 10)\n"});
         }
+        else
+        {
+            settings.res = scm_to_double(resolution);
+        }
+
         if (scm_is_false(quality))
         {
             warnings.append({"<b>Warning:</b> Using default quality for shapes.<br>"
                              "    Use <code>set-quality!</code> to specify.",
                     "(set-quality! 8)\n"});
         }
+        else
+        {
+            settings.quality = scm_to_double(quality);
+        }
+
         emit(gotWarnings(warnings));
+        emit(gotSettings(settings));
     }
 }
 
