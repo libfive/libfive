@@ -332,7 +332,12 @@ void _Interpreter::eval()
             warnings.append({"<b>Warning:</b> Using default bounds for shapes<br>"
                              "&nbsp;&nbsp;&nbsp;&nbsp;"
                              "Use <code>set-bounds!</code> to specify.",
-                    "(set-bounds! [-10 -10 -10] [10 10 10])\n"});
+                    Interpreter::SET_BOUNDS.arg(settings.min.x())
+                                           .arg(settings.min.y())
+                                           .arg(settings.min.z())
+                                           .arg(settings.max.x())
+                                           .arg(settings.max.y())
+                                           .arg(settings.max.z())});
         }
         else
         {
@@ -351,7 +356,7 @@ void _Interpreter::eval()
             warnings.append({"<b>Warning:</b> Using default resolution for shapes.<br>"
                              "&nbsp;&nbsp;&nbsp;&nbsp;"
                              "Use <code>set-resolution!</code> to specify.",
-                    "(set-resolution! 10)\n"});
+                    Interpreter::SET_RESOLUTION.arg(settings.res)});
         }
         else
         {
@@ -363,7 +368,7 @@ void _Interpreter::eval()
             warnings.append({"<b>Warning:</b> Using default quality for shapes.<br>"
                              "&nbsp;&nbsp;&nbsp;&nbsp;"
                              "Use <code>set-quality!</code> to specify.",
-                    "(set-quality! 8)\n"});
+                    Interpreter::SET_QUALITY.arg(settings.quality)});
         }
         else
         {
@@ -377,6 +382,10 @@ void _Interpreter::eval()
 
 
 ////////////////////////////////////////////////////////////////////////////////
+
+const QString Interpreter::SET_QUALITY = "(set-quality! %1)\n";
+const QString Interpreter::SET_RESOLUTION = "(set-resolution! %1)\n";
+const QString Interpreter::SET_BOUNDS = "(set-bounds! [%1 %2 %3] [%4 %5 %6])\n";
 
 Interpreter::Interpreter()
 {

@@ -144,7 +144,7 @@ void View::onSettingsFromScript(Settings s, bool first)
         emit(startRender(s));
     }
 
-    if (first)
+    if (first && shapes.size())
     {
         camera.zoomTo(s.min, s.max);
     }

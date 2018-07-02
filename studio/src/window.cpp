@@ -214,9 +214,7 @@ Window::Window(Arguments args)
         settings.setValue("first-run", false);
     }
 
-    editor->setScript("(set-quality! 8)\n"
-                      "(set-resolution! 10)\n"
-                      "(set-bounds! [-1 -1 -1] [1 1 1])");
+    onNew();
     if (!args.filename.isEmpty() && loadFile(args.filename))
     {
         setFilename(args.filename);
@@ -357,7 +355,21 @@ void Window::onNew(bool)
     #ifdef Q_OS_LINUX
         setWindowTitle("Studio[*]");
     #endif
-    editor->setScript("");
+
+    {   // Construct a starter script that uses the default settings for
+        // bounds, quality and resolution.
+        QString script;
+        auto default_settings = Settings::defaultSettings();
+        script += Interpreter::SET_BOUNDS.arg(default_settings.min.x())
+                                         .arg(default_settings.min.y())
+                                         .arg(default_settings.min.z())
+                                         .arg(default_settings.max.x())
+                                         .arg(default_settings.max.y())
+                                         .arg(default_settings.max.z());
+        script += Interpreter::SET_QUALITY.arg(default_settings.quality);
+        script += Interpreter::SET_RESOLUTION.arg(default_settings.res);
+        editor->setScript(script);
+    }
     editor->setModified(false);
 }
 

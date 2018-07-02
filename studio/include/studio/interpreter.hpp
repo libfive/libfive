@@ -133,6 +133,10 @@ public:
     Interpreter();
     void start();
 
+    static const QString SET_BOUNDS;
+    static const QString SET_QUALITY;
+    static const QString SET_RESOLUTION;
+
 public slots:
     void onScriptChanged(QString s);
 
