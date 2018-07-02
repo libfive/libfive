@@ -330,7 +330,8 @@ void _Interpreter::eval()
         if (scm_is_false(bounds))
         {
             warnings.append({"<b>Warning:</b> Using default bounds for shapes<br>"
-                             "    Use <code>set-bounds!</code> to specify.",
+                             "&nbsp;&nbsp;&nbsp;&nbsp;"
+                             "Use <code>set-bounds!</code> to specify.",
                     "(set-bounds! [-10 -10 -10] [10 10 10])\n"});
         }
         else
@@ -348,7 +349,8 @@ void _Interpreter::eval()
         if (scm_is_false(resolution))
         {
             warnings.append({"<b>Warning:</b> Using default resolution for shapes.<br>"
-                             "    Use <code>set-resolution!</code> to specify.",
+                             "&nbsp;&nbsp;&nbsp;&nbsp;"
+                             "Use <code>set-resolution!</code> to specify.",
                     "(set-resolution! 10)\n"});
         }
         else
@@ -359,7 +361,8 @@ void _Interpreter::eval()
         if (scm_is_false(quality))
         {
             warnings.append({"<b>Warning:</b> Using default quality for shapes.<br>"
-                             "    Use <code>set-quality!</code> to specify.",
+                             "&nbsp;&nbsp;&nbsp;&nbsp;"
+                             "Use <code>set-quality!</code> to specify.",
                     "(set-quality! 8)\n"});
         }
         else
