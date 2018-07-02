@@ -214,6 +214,9 @@ Window::Window(Arguments args)
         settings.setValue("first-run", false);
     }
 
+    editor->setScript("(set-quality! 8)\n"
+                      "(set-resolution! 10)\n"
+                      "(set-bounds! [-1 -1 -1] [1 1 1])");
     if (!args.filename.isEmpty() && loadFile(args.filename))
     {
         setFilename(args.filename);
