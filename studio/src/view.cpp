@@ -34,7 +34,7 @@ View::View(QWidget* parent)
 
     connect(&busy, &Busy::redraw, this, &View::update);
     connect(this, &View::startRender, &busy,
-            [&](Settings){ busy.show(); });
+            [&](Settings){ if (shapes.size()) busy.show(); });
     connect(this, &View::meshesReady, &busy,
             [&](QList<const Kernel::Mesh*>){ busy.hide(); });
     connect(&camera, &Camera::changed, this, &View::update);
