@@ -51,6 +51,18 @@ signals:
     void gotError(QString error, QString stack, Editor::Range pos);
 
     /*
+     *  Emitted when warnings should be drawn in the GUI
+     *  (as formated text labels, below the results box)
+     */
+    void gotWarnings(QList<QPair<QString, QString>> warnings);
+
+    /*
+     *  Emitted whenever the script is done running, to send new
+     *  settings to the rendering window.
+     */
+    void gotSettings(Settings s);
+
+    /*
      *  Emitted to pass a set of keywords (space-delimited) to
      *  the syntax highlighter
      */
@@ -121,6 +133,10 @@ public:
     Interpreter();
     void start();
 
+    static const QString SET_BOUNDS;
+    static const QString SET_QUALITY;
+    static const QString SET_RESOLUTION;
+
 public slots:
     void onScriptChanged(QString s);
 
@@ -130,10 +146,12 @@ signals:
      */
     void gotResult(QString result);
     void gotError(QString error, QString stack, Editor::Range p);
+    void gotWarnings(QList<QPair<QString, QString>> warnings);
     void keywords(QString kws);
     void docs(Documentation* docs);
     void gotShapes(QList<Shape*> s);
     void gotVars(QMap<Kernel::Tree::Id, Editor::Range> vs);
+    void gotSettings(Settings s);
 
     /*
      *  Emitted when the interpreter starts evaluation

@@ -25,7 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/axes.hpp"
 #include "studio/background.hpp"
 #include "studio/bbox.hpp"
-#include "studio/bars.hpp"
 #include "studio/busy.hpp"
 #include "studio/camera.hpp"
 #include "studio/shape.hpp"
@@ -56,7 +55,6 @@ public:
 
 public slots:
     void setShapes(QList<Shape*> shapes);
-    void openSettings();
     void showAxes(bool a);
     void showBBox(bool b);
 
@@ -78,28 +76,11 @@ public slots:
      */
     void onSettingsFromScript(Settings s, bool first);
 
-    /*
-     *  Called when the settings pane is edited
-     */
-    void onSettingsFromPane(Settings s);
-
-    /*
-     *  Enable and disable settings pane
-     *  (used when exporting)
-     */
-    void disableSettings();
-    void enableSettings();
-
 signals:
     /*
      *  Called to kick off a render and start the busy spinner running
      */
     void startRender(Settings s);
-
-    /*
-     *  Emitted whenever settings are changed in the pane
-     */
-    void settingsChanged(Settings s);
 
     /*
      *  Emitted when all shapes are done rendering at their highest resolution
@@ -144,13 +125,11 @@ protected:
     Background background;
     BBox bbox;
     Busy busy;
-    Bars bars;
 
     void mouseMoveEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
-    void leaveEvent(QEvent* event) override;
 
     /*
      *  Updates hover_target based on mouse cursor position
@@ -171,7 +150,6 @@ protected:
     } mouse;
 
     QList<Shape*> shapes;
-    QPointer<SettingsPane> pane;
     bool settings_enabled=true;
     Settings settings;
     bool show_axes=true;

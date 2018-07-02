@@ -22,7 +22,6 @@ set(SRCS src/main.cpp
     src/axes.cpp
     src/background.cpp
     src/bbox.cpp
-    src/bars.cpp
     src/busy.cpp
     src/camera.cpp
     src/documentation.cpp

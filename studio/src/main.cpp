@@ -45,6 +45,8 @@ int main(int argc, char** argv)
     qRegisterMetaType<Editor::Range>("Editor::Range");
     qRegisterMetaType<QMap<Kernel::Tree::Id,Editor::Range>>(
             "QMap<Kernel::Tree::Id,Editor::Range>");
+    qRegisterMetaType<QList<QPair<QString, QString>>>(
+            "QList<QPair<QString,QString>>");
 
 #ifdef Q_OS_MAC
     PlatformDarwin::disableWindowTabbing();

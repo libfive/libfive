@@ -34,7 +34,7 @@ View::View(QWidget* parent)
 
     connect(&busy, &Busy::redraw, this, &View::update);
     connect(this, &View::startRender, &busy,
-            [&](Settings){ busy.show(); });
+            [&](Settings){ if (shapes.size()) busy.show(); });
     connect(this, &View::meshesReady, &busy,
             [&](QList<const Kernel::Mesh*>){ busy.hide(); });
     connect(&camera, &Camera::changed, this, &View::update);
@@ -136,76 +136,18 @@ void View::cancelShapes()
     shapes.clear();
 }
 
-void View::openSettings()
-{
-    if (pane.isNull())
-    {
-        pane = new SettingsPane(settings);
-        connect(pane, &SettingsPane::changed,
-                this, &View::onSettingsFromPane);
-        pane->show();
-        pane->setFixedSize(pane->size());
-        if (!settings_enabled)
-        {
-            pane->disable();
-        }
-    }
-    else
-    {
-        pane->setFocus();
-    }
-}
-
-void View::onSettingsFromPane(Settings s)
-{
-    settings = s;
-    startRender(s);
-    emit(settingsChanged(s));
-
-    if (show_bbox)
-    {
-        update();
-    }
-}
-
 void View::onSettingsFromScript(Settings s, bool first)
 {
     if (settings != s)
     {
-        if (pane.isNull())
-        {
-            settings = s;
-            startRender(s);
-        }
-        else
-        {
-            // This ends up calling onSettingsFromPane if anything has changed
-            pane->set(s);
-        }
+        settings = s;
+        emit(startRender(s));
     }
 
-    if (first)
+    if (first && shapes.size())
     {
         camera.zoomTo(s.min, s.max);
     }
-}
-
-void View::enableSettings()
-{
-    if (pane)
-    {
-        pane->enable();
-    }
-    settings_enabled = true;
-}
-
-void View::disableSettings()
-{
-    if (pane)
-    {
-        pane->disable();
-    }
-    settings_enabled = false;
 }
 
 void View::initializeGL()
@@ -219,7 +161,6 @@ void View::initializeGL()
     background.initializeGL();
     bbox.initializeGL();
     busy.initializeGL();
-    bars.initializeGL();
 }
 
 void View::redrawPicker()
@@ -364,8 +305,6 @@ void View::paintGL()
     // This is a no-op if the spinner is hidden
     busy.draw(camera.size);
 
-    // Draw hamburger menu
-    bars.draw(camera.size);
     glDisable(GL_DEPTH_TEST);
     painter.endNativePainting();
 
@@ -450,11 +389,6 @@ void View::mouseMoveEvent(QMouseEvent* event)
             busy.show();
         }
     }
-    else if (bars.hover(event->pos().x() > camera.size.width() - bars.side &&
-                        event->pos().y() < bars.side))
-    {
-        update();
-    }
     else
     {
         checkHoverTarget(event->pos());
@@ -487,12 +421,7 @@ void View::mousePressEvent(QMouseEvent* event)
 
     if (mouse.state == mouse.RELEASED)
     {
-        if (event->pos().x() > camera.size.width() - bars.side &&
-            event->pos().y() < bars.side)
-        {
-            openSettings();
-        }
-        else if (event->button() == Qt::LeftButton)
+        if (event->button() == Qt::LeftButton)
         {
             syncPicker();
             auto picked = (pick_img.pixel(event->pos()) & 0xFFFFFF);
@@ -552,15 +481,6 @@ void View::wheelEvent(QWheelEvent *event)
     camera.zoomIncremental(event->angleDelta().y(), mouse.pos);
     update();
     pick_timer.start();
-}
-
-void View::leaveEvent(QEvent* event)
-{
-    QOpenGLWidget::leaveEvent(event);
-    if (bars.hover(false))
-    {
-        update();
-    }
 }
 
 void View::checkHoverTarget(QPoint pos)
