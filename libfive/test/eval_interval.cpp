@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_interval.hpp"
 #include "libfive/eval/eval_point.hpp"
+#include "libfive/eval/deck.hpp"
+#include "libfive/eval/tape.hpp"
 #include "libfive/render/brep/region.hpp"
 
 using namespace Kernel;
@@ -31,7 +33,7 @@ TEST_CASE("IntervalEvaluator::eval")
 {
     SECTION("Basic math")
     {
-        auto t = std::make_shared<Tape>(Tree::X() + 1);
+        auto t = std::make_shared<Deck>(Tree::X() + 1);
         IntervalEvaluator e(t);
 
         auto out = e.eval({1,1,1}, {2,2,2});
@@ -47,7 +49,7 @@ TEST_CASE("IntervalEvaluator::eval")
             auto op = (Kernel::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
-            auto p = std::make_shared<Tape>(t);
+            auto p = std::make_shared<Deck>(t);
             IntervalEvaluator e(p);
             e.eval({0, 0, 0}, {1, 1, 1});
             REQUIRE(true /* No crash! */ );
@@ -56,7 +58,7 @@ TEST_CASE("IntervalEvaluator::eval")
 
     SECTION("Bounds growth")
     {
-        IntervalEvaluator e(std::make_shared<Tape>(
+        IntervalEvaluator e(std::make_shared<Deck>(
             (Tree::X() + Tree::Y()) * (Tree::X() - Tree::Y())));
 
         auto o = e.eval({0, 0, 0}, {1, 1, 1});
@@ -69,7 +71,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 {
     SECTION("Basic")
     {
-        auto t = std::make_shared<Tape>(
+        auto t = std::make_shared<Deck>(
                 min(Tree::X() + 1, Tree::Y() + 1));
         IntervalEvaluator e(t);
 
@@ -86,8 +88,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         REQUIRE(i.upper() == -3);
 
         // Check to make sure that the push disabled something
-        CAPTURE(t->utilization());
-        REQUIRE(t->utilization() < 1);
+        REQUIRE(p.second->size() < t->tape->size());
 
         // Require that the evaluation gets 1
         o = e.eval({1, 2, 0}, {1, 2, 0});
@@ -97,7 +98,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
     SECTION("Multi-min trees")
     {
-        auto t = std::make_shared<Tape>(min(Tree::X(), min(
+        auto t = std::make_shared<Deck>(min(Tree::X(), min(
                 min(Tree::X(), Tree::Y()),
                 min(Tree::X(), Tree::Y() + 3))));
 
@@ -106,9 +107,11 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         // Do an interval evaluation that should lead to both sides
         // picking X, then collapsing min(X, X) into just X.
         auto i = e.evalAndPush({-5, 0, 0}, {-4, 1, 0});
-        auto u1 = t->utilization();
+        CAPTURE(i.second->size());
+        CAPTURE(t->tape->size());
 
-        REQUIRE(u1 == Approx(1/5.0));
+        auto ratio = i.second->size() / (float)t->tape->size();
+        REQUIRE(ratio == Approx(1/5.0));
     }
 
     SECTION("With NaNs")
@@ -127,9 +130,9 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         REQUIRE(ra.contains(target.template cast<double>()));
         REQUIRE(rb.contains(target.template cast<double>()));
 
-        auto tape = std::make_shared<Tape>(tree);
-        IntervalEvaluator eval(tape);
-        PointEvaluator eval_(tape);
+        auto deck = std::make_shared<Deck>(tree);
+        IntervalEvaluator eval(deck);
+        PointEvaluator eval_(deck);
 
         float ea, eb;
         {
@@ -137,7 +140,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
                                        ra.upper.template cast<float>());
             CAPTURE(ia.first.lower());
             CAPTURE(ia.first.upper());
-            CAPTURE(tape->utilization());
+            CAPTURE(ia.second->size() / (float)deck->tape->size());
             ea = eval_.eval(target);
         }
 
@@ -146,10 +149,41 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
                                        rb.upper.template cast<float>());
             CAPTURE(ib.first.lower());
             CAPTURE(ib.first.upper());
-            CAPTURE(tape->utilization());
+            CAPTURE(ib.second->size() / (float)deck->tape->size());
             eb = eval_.eval(target);
         }
 
         REQUIRE(ea == eb);
+    }
+}
+
+TEST_CASE("IntervalEvaluator::isSafe")
+{
+    SECTION("Division")
+    {
+        auto t = std::make_shared<Deck>(Tree::X() / Tree::Y());
+        IntervalEvaluator e(t);
+
+        e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(e.isSafe());
+
+        e.eval({-1, 0, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(!e.isSafe());
+
+        e.eval({-1, -1, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(!e.isSafe());
+    }
+
+    SECTION("Empty tape")
+    {
+        auto t = std::make_shared<Deck>(Tree::X());
+        IntervalEvaluator e(t);
+
+        e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(e.isSafe());
+
+        e.eval({-std::numeric_limits<float>::infinity(), 0, 0},
+                {1, 2, 0}, t->tape);
+        REQUIRE(!e.isSafe());
     }
 }

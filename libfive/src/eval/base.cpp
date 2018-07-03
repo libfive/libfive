@@ -19,14 +19,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <iostream>
 
 #include "libfive/eval/base.hpp"
+#include "libfive/eval/deck.hpp"
 
 namespace Kernel {
 
-BaseEvaluator::BaseEvaluator(std::shared_ptr<Tape> t,
+BaseEvaluator::BaseEvaluator(std::shared_ptr<Deck> deck,
                              const std::map<Tree::Id, float>& vars)
-    : tape(t)
+    : deck(deck)
 {
-    for (auto& v : t->vars.right)
+    for (auto& v : deck->vars.right)
     {
         if (vars.find(v.first) == vars.end())
         {

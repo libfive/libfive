@@ -147,6 +147,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
         center))
 (export sphere)
 
+(define* (half-space norm #:optional (pos #[0 0 0]))
+  "half-space #[nx ny nz] [#[px py pz]]
+  A plane that divides the world into inside and outside
+  Arguments are the plane normal and optional position"
+  (lambda-shape (x y z)
+    (dot (- #[x y z] pos) norm)))
+(export half-space)
+
 (define* (cylinder-z r h #:optional (base #[0 0 0]))
   "cylinder-z r h [#[x0 y0 z0]]
   A cylinder (oriented along the Z axis)"

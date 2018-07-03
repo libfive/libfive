@@ -6,10 +6,13 @@
 - Fixed an issue with normals of expressions containing `sqrt`
 - Linux window title now shows an `*` if files is modified (thanks, @niffler)
 - Thread-unsafety in `Kernel::Tree` destructor
+- Various bugs when dragging shapes with free variables
 ### Removed
 - `libfive_template*` and `libfive_args*` APIs
 - `findBounds` API (due to unpredictability)
 ### Added
+- Y-up rotation mode (in the View menu)
+- Much faster meshing, which uses thread more effectively
 - `Archive` class, allowing multiple shapes can be serialized together.
 - A few more shapes, like `rounded-rectangle-exact`
 - Added `nan-fill` to Scheme interface.

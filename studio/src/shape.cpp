@@ -19,6 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/shape.hpp"
 #include "studio/shader.hpp"
 
+#include "libfive/eval/tape.hpp"
+
 const int Shape::MESH_DIV_EMPTY;
 const int Shape::MESH_DIV_ABORT;
 const int Shape::MESH_DIV_NEW_VARS;
@@ -278,12 +280,13 @@ void Shape::setHover(bool h)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Kernel::JacobianEvaluator* Shape::dragFrom(const QVector3D& v)
+std::pair<Kernel::JacobianEvaluator*, Kernel::Tape::Handle>
+Shape::dragFrom(const QVector3D& v)
 {
     auto e = new Kernel::JacobianEvaluator(
-            std::make_shared<Kernel::Tape>(tree), vars);
-    e->evalAndPush({v.x(), v.y(), v.z()});
-    return e;
+            std::make_shared<Kernel::Deck>(tree), vars);
+    auto o = e->evalAndPush({v.x(), v.y(), v.z()});
+    return std::make_pair(e, o.second);
 }
 
 void Shape::deleteLater()
@@ -361,6 +364,6 @@ Shape::BoundedMesh Shape::renderMesh(QPair<Settings, int> s)
                         {s.first.max.x(), s.first.max.y(), s.first.max.z()});
     auto m = Kernel::Mesh::render(es.data(), r,
             1 / (s.first.res / (1 << s.second)),
-            pow(10, -s.first.quality), cancel);
+            pow(10, -s.first.quality), es.size(), cancel);
     return {m.release(), r};
 }

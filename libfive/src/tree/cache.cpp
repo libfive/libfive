@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/tree/cache.hpp"
 #include "libfive/eval/eval_point.hpp"
+#include "libfive/eval/deck.hpp"
 
 namespace Kernel {
 
@@ -134,7 +135,7 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
         {
             // Here, we construct a Tree manually to avoid a recursive loop,
             // then pass it immediately into a dummy Evaluator
-            PointEvaluator e(std::make_shared<Tape>(Tree(out)));
+            PointEvaluator e(std::make_shared<Deck>(Tree(out)));
             auto result = e.eval({0,0,0});
             return constant(result);
         }

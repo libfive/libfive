@@ -17,32 +17,41 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "libfive/eval/eval_jacobian.hpp"
+#include "libfive/eval/deck.hpp"
+#include "libfive/eval/tape.hpp"
 
 namespace Kernel {
 
-JacobianEvaluator::JacobianEvaluator(std::shared_ptr<Tape> t)
-    : JacobianEvaluator(t, std::map<Tree::Id, float>())
+JacobianEvaluator::JacobianEvaluator(std::shared_ptr<Deck> d)
+    : JacobianEvaluator(d, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 JacobianEvaluator::JacobianEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : DerivEvaluator(t, vars),
-      j(Eigen::ArrayXXf::Zero(tape->num_clauses + 1, tape->vars.size()))
+        std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
+    : DerivEvaluator(d, vars),
+      j(Eigen::ArrayXXf::Zero(deck->num_clauses + 1, deck->vars.size()))
 {
     // Then drop a 1 at each var's position
     size_t index = 0;
-    for (auto& v : tape->vars.left)
+    for (auto& v : deck->vars.left)
     {
         j(v.first, index++) = 1;
     }
 }
 
-std::map<Tree::Id, float> JacobianEvaluator::gradient(const Eigen::Vector3f& p)
+std::map<Tree::Id, float> JacobianEvaluator::gradient(
+        const Eigen::Vector3f& p)
+{
+    return gradient(p, deck->tape);
+}
+std::map<Tree::Id, float> JacobianEvaluator::gradient(
+        const Eigen::Vector3f& p,
+        std::shared_ptr<Tape> tape)
 {
     // Perform value evaluation, to make sure the f array is correct
-    eval(p);
+    eval(p, tape);
 
     // Everybody do the tape walk!
     auto ti = tape->rwalk(*this);
@@ -51,7 +60,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(const Eigen::Vector3f& p)
     // (to allow correlating back to VARs in Tree)
     std::map<Tree::Id, float> out;
     size_t index = 0;
-    for (auto v : tape->vars.left)
+    for (auto v : deck->vars.left)
     {
         out[v.second] = j(ti, index++);
     }

@@ -178,12 +178,31 @@ SCM scm_shape_eval_f(SCM t, SCM x, SCM y, SCM z)
 {
     SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_eval_f", "shape");
 
-    SCM_ASSERT_TYPE(scm_is_number(x) || scm_is_shape(t),
+    SCM_ASSERT_TYPE(scm_is_number(x),
                     x, 1, "scm_shape_eval_f", "number");
-    SCM_ASSERT_TYPE(scm_is_number(y) || scm_is_shape(t),
+    SCM_ASSERT_TYPE(scm_is_number(y),
                     y, 2, "scm_shape_eval_f", "number");
-    SCM_ASSERT_TYPE(scm_is_number(z) || scm_is_shape(t),
+    SCM_ASSERT_TYPE(scm_is_number(z),
                     z, 3, "scm_shape_eval_f", "number");
+
+    float x_ = scm_to_double(x);
+    float y_ = scm_to_double(y);
+    float z_ = scm_to_double(z);
+
+    auto val = libfive_tree_eval_f(scm_get_tree(t), {x_, y_, z_});
+    return scm_from_double(val);
+}
+
+SCM scm_shape_remap(SCM t, SCM x, SCM y, SCM z)
+{
+    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_eval_f", "shape");
+
+    SCM_ASSERT_TYPE(scm_is_number(x) || scm_is_shape(t),
+                    x, 1, "scm_shape_remap", "number");
+    SCM_ASSERT_TYPE(scm_is_number(y) || scm_is_shape(t),
+                    y, 2, "scm_shape_remap", "number");
+    SCM_ASSERT_TYPE(scm_is_number(z) || scm_is_shape(t),
+                    z, 3, "scm_shape_remap", "number");
 
     auto x_ = scm_is_number(x) ? libfive_tree_const(scm_to_double(x))
                                : scm_get_tree(x);
@@ -193,11 +212,7 @@ SCM scm_shape_eval_f(SCM t, SCM x, SCM y, SCM z)
                                : scm_get_tree(z);
 
     auto out = libfive_tree_remap(scm_get_tree(t), x_, y_, z_);
-
-    bool is_const = false;
-    auto val = libfive_tree_get_const(out, &is_const);
-
-    return is_const ? scm_from_double(val) : scm_from_tree(out);
+    return scm_from_tree(out);
 }
 
 SCM scm_shape_eval_d(SCM t, SCM x, SCM y, SCM z)
@@ -343,9 +358,10 @@ void init_libfive_kernel(void*)
     scm_c_define_gsubr("shape-tree-id", 1, 0, 0, (void*)scm_shape_tree_id);
     scm_c_define_gsubr("number->shape", 1, 0, 0, (void*)scm_number_to_shape);
     scm_c_define_gsubr("shape-equal?", 2, 0, 0, (void*)scm_shape_equal_p);
-    scm_c_define_gsubr("shape-eval-f", 4, 0, 0, (void*)scm_shape_eval_f);
-    scm_c_define_gsubr("shape-eval-i", 7, 0, 0, (void*)scm_shape_eval_i);
-    scm_c_define_gsubr("shape-eval-d", 4, 0, 0, (void*)scm_shape_eval_d);
+    scm_c_define_gsubr("_shape-eval-f", 4, 0, 0, (void*)scm_shape_eval_f);
+    scm_c_define_gsubr("_shape-remap", 4, 0, 0, (void*)scm_shape_remap);
+    scm_c_define_gsubr("_shape-eval-i", 7, 0, 0, (void*)scm_shape_eval_i);
+    scm_c_define_gsubr("_shape-eval-d", 4, 0, 0, (void*)scm_shape_eval_d);
     scm_c_define_gsubr("shape->mesh", 4, 0, 0, (void*)scm_shape_to_mesh);
     scm_c_define_gsubr("shape->string", 1, 0, 0, (void*)scm_shape_to_string);
     scm_c_define_gsubr("shape-meta", 1, 0, 0, (void*)scm_shape_get_meta);
@@ -415,15 +431,15 @@ void init_libfive_kernel(void*)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-method (shape-eval (a <shape>) (pt <vec3>))
-    (shape-eval-f a (.x pt) (.y pt) (.z pt)))
+    (_shape-eval-f a (.x pt) (.y pt) (.z pt)))
 
 (define-method (shape-eval (a <shape>) (lower <vec3>) (upper <vec3>))
-    (shape-eval-i a (.x lower) (.x upper)
+    (_shape-eval-i a (.x lower) (.x upper)
                    (.y lower) (.y upper)
                    (.z lower) (.z upper)))
 
 (define-method (shape-derivs (a <shape>) (pt <vec3>))
-    (shape-eval-d a (.x pt) (.y pt) (.z pt)))
+    (_shape-eval-d a (.x pt) (.y pt) (.z pt)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define-syntax-rule (lambda-shape vars ...)
@@ -440,9 +456,9 @@ void init_libfive_kernel(void*)
     ((remap-shape (shape . vars) x y z)
         (remap-shape shape vars x y z))
     ((remap-shape shape (. vars) x y z)
-        (shape-eval shape #[(lambda-shape vars x)
+        (_shape-remap shape (lambda-shape vars x)
                             (lambda-shape vars y)
-                            (lambda-shape vars z)]))))
+                            (lambda-shape vars z)))))
 
 (define-syntax sequence_
   (syntax-rules ()
@@ -471,9 +487,21 @@ void init_libfive_kernel(void*)
 
 ;; These are "safe" bindings that can be used in the sandbox
 (define libfive-bindings '(
-    square nan-fill constant compare lambda-shape define-shape remap-shape
-    shape-find-bounds shape->string shape-eval shape-derivs sequence
-    values-from values->list libfive-bindings))
+    square
+    nan-fill
+    constant
+    compare
+    lambda-shape
+    define-shape
+    remap-shape
+    shape-find-bounds
+    shape->string
+    shape-eval
+    shape-derivs
+    sequence
+    values-from
+    values->list
+    libfive-bindings))
 (eval (cons 'export libfive-bindings) (interaction-environment))
  )");
 

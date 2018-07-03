@@ -30,17 +30,72 @@ _Interpreter::_Interpreter()
     moveToThread(&thread);
 }
 
+static void init_studio_gui(void*)
+{
+    scm_c_eval_string(R"(
+(use-modules (libfive vec) (oop goops) (srfi srfi-1))
+
+(define (vec3? v)
+    (eq? (class-name (class-of v)) '<vec3>))
+
+(define-public global-bounds #f)
+(define-public (set-bounds! lower upper)
+  "set-bounds! [xmin ymin zmin] [xmax ymax zmax]
+  Sets the global render bounds"
+  (when (not (and (vec3? lower) (vec3? upper)))
+    (error "Arguments must be vec3"))
+  (let ((result (list (.x lower) (.y lower) (.z lower)
+                      (.x upper) (.y upper) (.z upper))))
+    (if (every number? result)
+      (set! global-bounds result)
+      (error "All values must be numbers"))))
+
+(define-public global-resolution #f)
+(define-public (set-resolution! res)
+  "set-resolution! res
+  Sets the global render resolution, which is the
+  reciprocal of minimum feature size"
+  (if (number? res)
+    (set! global-resolution res)
+    (error "resolution must be a number")))
+
+(define-public global-quality #f)
+(define-public (set-quality! q)
+  "set-quality! q
+  Sets the global render quality, which is a metric
+  from 1 to 11 that determines how enthusiastically
+  triangles are collapsed in the mesh"
+  (when (not (number? q))
+    (error "quality must be a number"))
+  (when (< q 1)
+    (error "quality must be >= 1"))
+  (when (> q 11)
+    (error "quality must be <= 11"))
+  (set! global-quality q))
+)");
+}
+
 void _Interpreter::init()
 {
+#ifdef Q_OS_MAC
     // Modify environmental variables to use local Guile path
     auto path = QCoreApplication::applicationDirPath().toLocal8Bit() +
                 "/../Resources/guile/";
     qputenv("GUILE_LOAD_COMPILED_PATH", path + "ccache/");
     qputenv("GUILE_LOAD_PATH", path + "scm/");
+#endif
 
     scm_init_guile();
 
     scm_init_libfive_modules();
+    scm_c_define_module("studio gui", init_studio_gui, NULL);
+
+    scm_c_eval_string(R"(
+(use-modules (libfive sandbox))
+(set! sandbox-bindings (append! sandbox-bindings
+    '(((studio gui) set-bounds! set-resolution! set-quality!))))
+    )");
+
     scm_c_use_module("libfive kernel");
 
     scm_eval_sandboxed = scm_c_eval_string(R"(
@@ -117,6 +172,14 @@ void _Interpreter::eval()
         script = _script;
     }
 
+    // Clear global bounds, so we can detect if they were set in the script
+    scm_c_eval_string(R"(
+    (use-modules (studio gui))
+    (set! global-bounds #f)
+    (set! global-quality #f)
+    (set! global-resolution #f)
+    )");
+
     auto result = scm_call_1(scm_eval_sandboxed,
             scm_from_locale_string(script.toLocal8Bit().data()));
 
@@ -175,6 +238,7 @@ void _Interpreter::eval()
                      scm_to_int(scm_cdr(after))}));
         free(str);
         free(stack);
+        emit(gotWarnings({}));
     }
     else if (last)
     {
@@ -246,11 +310,82 @@ void _Interpreter::eval()
         }
         emit(gotShapes(shapes));
         emit(gotVars(var_pos));
+
+        // Detect variables that should be set in the script but were not,
+        // and emit warnings for them (as well as storing reasonable defaults)
+        auto bounds = scm_c_eval_string(R"(
+        (use-modules (studio gui)) global-bounds
+        )");
+
+        auto resolution = scm_c_eval_string(R"(
+        (use-modules (studio gui)) global-resolution
+        )");
+
+        auto quality = scm_c_eval_string(R"(
+        (use-modules (studio gui)) global-quality
+        )");
+
+        QList<QPair<QString, QString>> warnings;
+        auto settings = Settings::defaultSettings();
+        if (scm_is_false(bounds))
+        {
+            warnings.append({"<b>Warning:</b> Using default bounds for shapes<br>"
+                             "&nbsp;&nbsp;&nbsp;&nbsp;"
+                             "Use <code>set-bounds!</code> to specify.",
+                    Interpreter::SET_BOUNDS.arg(settings.min.x())
+                                           .arg(settings.min.y())
+                                           .arg(settings.min.z())
+                                           .arg(settings.max.x())
+                                           .arg(settings.max.y())
+                                           .arg(settings.max.z())});
+        }
+        else
+        {
+            auto lower = bounds;
+            settings.min = QVector3D(scm_to_double(scm_car(lower)),
+                                     scm_to_double(scm_cadr(lower)),
+                                     scm_to_double(scm_caddr(lower)));
+            auto upper = scm_cdddr(bounds);
+            settings.max = QVector3D(scm_to_double(scm_car(upper)),
+                                     scm_to_double(scm_cadr(upper)),
+                                     scm_to_double(scm_caddr(upper)));
+        }
+
+        if (scm_is_false(resolution))
+        {
+            warnings.append({"<b>Warning:</b> Using default resolution for shapes.<br>"
+                             "&nbsp;&nbsp;&nbsp;&nbsp;"
+                             "Use <code>set-resolution!</code> to specify.",
+                    Interpreter::SET_RESOLUTION.arg(settings.res)});
+        }
+        else
+        {
+            settings.res = scm_to_double(resolution);
+        }
+
+        if (scm_is_false(quality))
+        {
+            warnings.append({"<b>Warning:</b> Using default quality for shapes.<br>"
+                             "&nbsp;&nbsp;&nbsp;&nbsp;"
+                             "Use <code>set-quality!</code> to specify.",
+                    Interpreter::SET_QUALITY.arg(settings.quality)});
+        }
+        else
+        {
+            settings.quality = scm_to_double(quality);
+        }
+
+        emit(gotWarnings(warnings));
+        emit(gotSettings(settings));
     }
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
+
+const QString Interpreter::SET_QUALITY = "(set-quality! %1)\n";
+const QString Interpreter::SET_RESOLUTION = "(set-resolution! %1)\n";
+const QString Interpreter::SET_BOUNDS = "(set-bounds! [%1 %2 %3] [%4 %5 %6])\n";
 
 Interpreter::Interpreter()
 {
@@ -280,6 +415,8 @@ Interpreter::Interpreter()
             this, &Interpreter::gotResult);
     connect(&interpreter, &_Interpreter::gotError,
             this, &Interpreter::gotError);
+    connect(&interpreter, &_Interpreter::gotWarnings,
+            this, &Interpreter::gotWarnings);
     connect(&interpreter, &_Interpreter::keywords,
             this, &Interpreter::keywords);
     connect(&interpreter, &_Interpreter::docs,
@@ -288,6 +425,8 @@ Interpreter::Interpreter()
             this, &Interpreter::gotShapes);
     connect(&interpreter, &_Interpreter::gotVars,
             this, &Interpreter::gotVars);
+    connect(&interpreter, &_Interpreter::gotSettings,
+            this, &Interpreter::gotSettings);
 }
 
 void Interpreter::start()

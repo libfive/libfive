@@ -59,11 +59,7 @@ Window::Window(Arguments args)
     connect(editor, &Editor::modificationChanged,
             this, &QWidget::setWindowModified);
 
-    // Sync settings with script and vice versa
-    // (the editor breaks the loop by not re-emitting the signal
-    // if no changes are necessary to the block comment)
-    connect(view, &View::settingsChanged,
-            editor, &Editor::onSettingsChanged);
+    // Sync settings from script to viewport
     connect(editor, &Editor::settingsChanged,
             view, &View::onSettingsFromScript);
 
@@ -136,24 +132,37 @@ Window::Window(Arguments args)
 
     auto perspective_action = new QAction("Perspective", nullptr);
     auto ortho_action = new QAction("Orthographic", nullptr);
-    view_menu->addSection("Projection");
-    view_menu->addAction(perspective_action);
-    view_menu->addAction(ortho_action);
+    auto proj_menu = new QMenu("Projection");
+    proj_menu->addAction(perspective_action);
+    proj_menu->addAction(ortho_action);
     perspective_action->setCheckable(true);
     perspective_action->setChecked(true);
     ortho_action->setCheckable(true);
-    auto projection = new QActionGroup(view_menu);
+    auto projection = new QActionGroup(proj_menu);
     projection->addAction(perspective_action);
     projection->addAction(ortho_action);
     connect(perspective_action, &QAction::triggered,
             view, &View::toPerspective);
     connect(ortho_action, &QAction::triggered,
             view, &View::toOrthographic);
+    view_menu->addMenu(proj_menu);
+
+    auto turn_z_up = new QAction("Turntable (Z up)", nullptr);
+    auto turn_y_up = new QAction("Turntable (Y up)", nullptr);
+    auto rotation_menu = new QMenu("Rotation mode");
+    rotation_menu->addAction(turn_z_up);
+    rotation_menu->addAction(turn_y_up);
+    turn_z_up->setCheckable(true);
+    turn_z_up->setChecked(true);
+    turn_y_up->setCheckable(true);
+    auto rot_mode = new QActionGroup(rotation_menu);
+    rot_mode->addAction(turn_z_up);
+    rot_mode->addAction(turn_y_up);
+    connect(turn_z_up, &QAction::triggered, view, &View::toTurnZ);
+    connect(turn_y_up, &QAction::triggered, view, &View::toTurnY);
+    view_menu->addMenu(rotation_menu);
 
     view_menu->addSeparator();
-    auto edit_bounds_action = new QAction("Edit bounds", nullptr);
-    view_menu->addAction(edit_bounds_action);
-    connect(edit_bounds_action, &QAction::triggered, view, &View::openSettings);
     auto zoom_to_action = new QAction("Zoom to bounds", nullptr);
     view_menu->addAction(zoom_to_action);
     connect(zoom_to_action, &QAction::triggered, view, &View::zoomTo);
@@ -176,11 +185,15 @@ Window::Window(Arguments args)
     connect(interpreter, &Interpreter::busy, editor, &Editor::onBusy);
     connect(interpreter, &Interpreter::gotResult, editor, &Editor::onResult);
     connect(interpreter, &Interpreter::gotError, editor, &Editor::onError);
+    connect(interpreter, &Interpreter::gotWarnings,
+            editor, &Editor::setWarnings);
     connect(interpreter, &Interpreter::keywords, editor, &Editor::setKeywords);
     connect(interpreter, &Interpreter::docs, this, &Window::setDocs);
     connect(interpreter, &Interpreter::gotShapes, view, &View::setShapes);
     connect(interpreter, &Interpreter::gotVars,
             editor, &Editor::setVarPositions);
+    connect(interpreter, &Interpreter::gotSettings,
+            editor, &Editor::onSettingsChanged);
     connect(view, &View::varsDragged, editor, &Editor::setVarValues);
 
     interpreter->start();
@@ -201,6 +214,7 @@ Window::Window(Arguments args)
         settings.setValue("first-run", false);
     }
 
+    onNew();
     if (!args.filename.isEmpty() && loadFile(args.filename))
     {
         setFilename(args.filename);
@@ -341,7 +355,21 @@ void Window::onNew(bool)
     #ifdef Q_OS_LINUX
         setWindowTitle("Studio[*]");
     #endif
-    editor->setScript("");
+
+    {   // Construct a starter script that uses the default settings for
+        // bounds, quality and resolution.
+        QString script;
+        auto default_settings = Settings::defaultSettings();
+        script += Interpreter::SET_BOUNDS.arg(default_settings.min.x())
+                                         .arg(default_settings.min.y())
+                                         .arg(default_settings.min.z())
+                                         .arg(default_settings.max.x())
+                                         .arg(default_settings.max.y())
+                                         .arg(default_settings.max.z());
+        script += Interpreter::SET_QUALITY.arg(default_settings.quality);
+        script += Interpreter::SET_RESOLUTION.arg(default_settings.res);
+        editor->setScript(script);
+    }
     editor->setModified(false);
 }
 
@@ -476,7 +504,6 @@ void Window::onExport(bool)
     }
 
     connect(view, &View::meshesReady, this, &Window::onExportReady);
-    view->disableSettings();
 
     auto p = new QProgressDialog(this);
     p->setCancelButton(nullptr);
@@ -493,9 +520,6 @@ void Window::onExport(bool)
     // Delete the progress dialog when we finish or cancel the export
     connect(this, &Window::exportDone, p, &QProgressDialog::deleteLater);
     connect(p, &QProgressDialog::rejected, p, &QProgressDialog::deleteLater);
-
-    // When the progress dialog is destroyed, re-enable settings
-    connect(p, &QProgressDialog::destroyed, view, &View::enableSettings);
 
     p->show();
     view->checkMeshes();

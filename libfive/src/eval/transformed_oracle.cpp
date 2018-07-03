@@ -113,7 +113,7 @@ void TransformedOracle::evalDerivArray(
     for (auto i = 0; i < out.cols(); ++i)
     {
         Eigen::Matrix3f Jacobian;
-        Jacobian << xDerivs.col(i).template head<3>(), 
+        Jacobian << xDerivs.col(i).template head<3>(),
                     yDerivs.col(i).template head<3>(),
                     zDerivs.col(i).template head<3>();
         out.col(i) = Jacobian * out.col(i).matrix();

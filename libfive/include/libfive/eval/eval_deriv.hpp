@@ -27,8 +27,8 @@ namespace Kernel {
 class DerivEvaluator : public PointEvaluator
 {
 public:
-    DerivEvaluator(std::shared_ptr<Tape> t);
-    DerivEvaluator(std::shared_ptr<Tape> t,
+    DerivEvaluator(std::shared_ptr<Deck> t);
+    DerivEvaluator(std::shared_ptr<Deck> t,
                    const std::map<Tree::Id, float>& vars);
 
 protected:
@@ -45,6 +45,8 @@ public:
      *  Single-point evaluation (return dx, dy, dz, distance)
      */
     Eigen::Vector4f deriv(const Eigen::Vector3f& pt);
+    Eigen::Vector4f deriv(const Eigen::Vector3f& pt,
+                          std::shared_ptr<Tape> tape);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */

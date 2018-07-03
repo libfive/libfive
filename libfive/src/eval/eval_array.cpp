@@ -17,48 +17,86 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "libfive/eval/eval_array.hpp"
+#include "libfive/eval/tape.hpp"
+#include "libfive/eval/deck.hpp"
 
 namespace Kernel {
 
 constexpr size_t ArrayEvaluator::N;
 
-ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Tape> t)
-    : ArrayEvaluator(t, std::map<Tree::Id, float>())
+ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Deck> d)
+    : ArrayEvaluator(d, std::map<Tree::Id, float>())
 {
     // Nothing to do here
 }
 
 ArrayEvaluator::ArrayEvaluator(
-        std::shared_ptr<Tape> t, const std::map<Tree::Id, float>& vars)
-    : BaseEvaluator(t, vars), f(tape->num_clauses + 1, N)
+        std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
+    : BaseEvaluator(d, vars), f(deck->num_clauses + 1, N)
 {
     // Unpack variables into result array
-    for (auto& v : t->vars.right)
+    for (auto& v : deck->vars.right)
     {
         auto var = vars.find(v.first);
         f.row(v.second) = (var != vars.end()) ? var->second : 0;
     }
 
     // Unpack constants into result array
-    for (auto& c : tape->constants)
+    for (auto& c : deck->constants)
     {
         f.row(c.first) = c.second;
     }
 }
 
+
 Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t _count)
 {
-    count = _count;
+    return values(_count, deck->tape);
+}
+
+Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
+ArrayEvaluator::values(size_t count, Tape::Handle tape)
+{
+    setCount(count);
     return f.block<1, Eigen::Dynamic>(tape->rwalk(*this), 0, 1, count);
+}
+
+void ArrayEvaluator::setCount(size_t count)
+{
+#if defined EIGEN_VECTORIZE_AVX512
+    #define LIBFIVE_SIMD_SIZE 16
+#elif defined EIGEN_VECTORIZE_AVX
+    #define LIBFIVE_SIMD_SIZE 8
+#elif defined EIGEN_VECTORIZE_SSE
+    #define LIBFIVE_SIMD_SIZE 4
+#elif defined EIGEN_VECTORIZE
+    #warning "EIGEN_VECTORIZE is set but no vectorization flag is found"
+    #define LIBFIVE_SIMD_SIZE 0
+#else
+    #warning "No SIMD flags detected"
+    #define LIBFIVE_SIMD_SIZE 0
+#endif
+    // If we have SIMD instructions, then round the evaluation size up
+    // to the nearest block, to avoid issues where Eigen's SIMD and
+    // non-SIMD paths produce different results.
+    if (LIBFIVE_SIMD_SIZE)
+    {
+        this->count = ((count + LIBFIVE_SIMD_SIZE - 1) / LIBFIVE_SIMD_SIZE)
+                * LIBFIVE_SIMD_SIZE;
+    }
+    else
+    {
+        this->count = count;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 bool ArrayEvaluator::setVar(Tree::Id var, float value)
 {
-    auto v = tape->vars.right.find(var);
-    if (v != tape->vars.right.end())
+    auto v = deck->vars.right.find(var);
+    if (v != deck->vars.right.end())
     {
         bool changed = f(v->second, 0) != value;
         f.row(v->second) = value;
@@ -75,6 +113,12 @@ bool ArrayEvaluator::setVar(Tree::Id var, float value)
 Eigen::Block<decltype(ArrayEvaluator::ambig), 1, Eigen::Dynamic>
 ArrayEvaluator::getAmbiguous(size_t i)
 {
+    return getAmbiguous(i, deck->tape);
+}
+
+Eigen::Block<decltype(ArrayEvaluator::ambig), 1, Eigen::Dynamic>
+ArrayEvaluator::getAmbiguous(size_t i, Tape::Handle tape)
+{
     // Reset the ambiguous array to all false
     ambig = false;
 
@@ -84,7 +128,7 @@ ArrayEvaluator::getAmbiguous(size_t i)
         {
             if (op == Opcode::ORACLE)
             {
-                tape->oracles[a]->checkAmbiguous(ambig.head(i));
+                deck->oracles[a]->checkAmbiguous(ambig.head(i));
             }
             else if (op == Opcode::OP_MIN || op == Opcode::OP_MAX)
             {
@@ -213,7 +257,7 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            tape->oracles[a_]->evalArray(out);
+            deck->oracles[a_]->evalArray(out);
             break;
 
         case Opcode::INVALID:

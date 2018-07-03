@@ -54,6 +54,7 @@ QMatrix4x4 Camera::view() const
     m.scale(scale, scale, scale);
     m.rotate(pitch, {1, 0, 0});
     m.rotate(yaw,   {0, 0, 1});
+    m.rotate(axis);
     m.translate(center);
 
     return m;
@@ -106,6 +107,36 @@ void Camera::toPerspective()
     anim.setStartValue(perspective);
     anim.setEndValue(0.25);
     anim.start();
+}
+
+void Camera::animateAxis(QQuaternion end)
+{
+    auto a = new QVariantAnimation(this);
+    a->setStartValue(0);
+    a->setEndValue(1000);
+    a->setDuration(200);
+    a->setEasingCurve(QEasingCurve::InOutSine);
+
+    const QQuaternion start = axis;
+
+    connect(a, &QVariantAnimation::valueChanged,
+            this, [=](QVariant _v){
+                auto v = _v.toFloat() / a->endValue().toFloat();
+                axis = QQuaternion::slerp(start, end, v);
+                emit(changed());
+            });
+    connect(a, &QPropertyAnimation::finished, this, &Camera::animDone);
+    a->start(a->DeleteWhenStopped);
+}
+
+void Camera::toTurnZ()
+{
+    animateAxis(QQuaternion::fromDirection({0, 0, 1}, {0, 1, 0}));
+}
+
+void Camera::toTurnY()
+{
+    animateAxis(QQuaternion::fromDirection({0, 1, 0}, {1, 0, 0}));
 }
 
 void Camera::zoomTo(const QVector3D& min, const QVector3D& max)

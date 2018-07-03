@@ -28,14 +28,16 @@ namespace Kernel {
 class JacobianEvaluator : public DerivEvaluator
 {
 public:
-    JacobianEvaluator(std::shared_ptr<Tape> t);
-    JacobianEvaluator(std::shared_ptr<Tape> t,
+    JacobianEvaluator(std::shared_ptr<Deck> t);
+    JacobianEvaluator(std::shared_ptr<Deck> t,
                       const std::map<Tree::Id, float>& vars);
 
     /*
      *  Returns the gradient with respect to all VAR nodes
      */
     std::map<Tree::Id, float> gradient(const Eigen::Vector3f& p);
+    std::map<Tree::Id, float> gradient(const Eigen::Vector3f& p,
+            std::shared_ptr<Tape> tape);
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 protected:

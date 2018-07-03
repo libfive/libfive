@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "libfive/render/brep/mesh.hpp"
-#include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/xtree_pool.hpp"
 #include "libfive/render/brep/dual.hpp"
 
 namespace Kernel {
@@ -49,23 +49,25 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
     uint32_t vs[4];
     for (unsigned i=0; i < ts.size(); ++i)
     {
+        assert(ts[i]->leaf != nullptr);
+
         // Load either a patch-specific vertex (if this is a lowest-level,
         // potentially non-manifold cell) or the default vertex
-        auto vi = ts[i]->level > 0
+        auto vi = ts[i]->leaf->level > 0
             ? 0
-            : XTree<3>::mt->p[ts[i]->corner_mask][es[i]];
+            : XTree<3>::mt->p[ts[i]->leaf->corner_mask][es[i]];
         assert(vi != -1);
 
         // Sanity-checking manifoldness of collapsed cells
-        assert(ts[i]->level == 0 || ts[i]->vertex_count == 1);
+        assert(ts[i]->leaf->level == 0 || ts[i]->leaf->vertex_count == 1);
 
-        if (ts[i]->index[vi] == 0)
+        if (ts[i]->leaf->index[vi] == 0)
         {
-            ts[i]->index[vi] = verts.size();
+            ts[i]->leaf->index[vi] = verts.size();
 
             verts.push_back(ts[i]->vert(vi).template cast<float>());
         }
-        vs[i] = ts[i]->index[vi];
+        vs[i] = ts[i]->leaf->index[vi];
     }
 
     // Handle polarity-based windings
@@ -112,41 +114,48 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
 {
     std::atomic_bool cancel(false);
     std::map<Tree::Id, float> vars;
-    return render(t, vars, r, min_feature, max_err, multithread, cancel);
+    return render(t, vars, r, min_feature, max_err,
+                  multithread ? 8 : 1, cancel);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
-            bool multithread, std::atomic_bool& cancel)
+            unsigned workers, std::atomic_bool& cancel)
 {
-    // Create the octree (multithreaded and cancellable)
-    return mesh(XTree<3>::build(
-            t, vars, r, min_feature, max_err, multithread, cancel), cancel);
+    std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
+    es.reserve(workers);
+    for (unsigned i=0; i < workers; ++i)
+    {
+        es.emplace_back(XTreeEvaluator(t, vars));
+    }
+
+    return render(es.data(), r, min_feature, max_err, workers, cancel);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
         XTreeEvaluator* es,
         const Region<3>& r, double min_feature, double max_err,
-        std::atomic_bool& cancel)
+        int workers, std::atomic_bool& cancel)
 {
-    return mesh(XTree<3>::build(es, r, min_feature, max_err, true, cancel),
-                cancel);
+    auto t = XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel);
+    auto out = mesh(t.get(), cancel);
+    return out;
 }
 
-std::unique_ptr<Mesh> Mesh::mesh(std::unique_ptr<const XTree<3>> xtree,
+std::unique_ptr<Mesh> Mesh::mesh(const XTree<3>* xtree,
                                  std::atomic_bool& cancel)
 {
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());
 
-    if (cancel.load() || xtree.get() == nullptr)
+    if (cancel.load() || xtree == nullptr)
     {
         return nullptr;
     }
     else
     {
-        Dual<3>::walk(xtree.get(), *m);
+        Dual<3>::walk(xtree, *m);
 
 #if DEBUG_OCTREE_CELLS
         // Store octree cells as lines

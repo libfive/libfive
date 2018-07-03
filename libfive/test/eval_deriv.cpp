@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_deriv.hpp"
+#include "libfive/eval/deck.hpp"
 
 using namespace Kernel;
 
@@ -34,7 +35,7 @@ TEST_CASE("DerivEvaluator::deriv")
             auto op = (Kernel::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
-            auto tape = std::make_shared<Tape>(t);
+            auto tape = std::make_shared<Deck>(t);
             DerivEvaluator e(tape);
             e.deriv({0, 0, 0});
             REQUIRE(true /* No crash! */ );
@@ -44,7 +45,7 @@ TEST_CASE("DerivEvaluator::deriv")
     SECTION("var + 2*X")
     {
         auto v = Tree::var();
-        auto t = std::make_shared<Tape>(v + 2 * Tree::X());
+        auto t = std::make_shared<Deck>(v + 2 * Tree::X());
         DerivEvaluator e(t, {{v.id(), 0}});
 
         auto out = e.deriv({2, 0, 0});
@@ -53,7 +54,7 @@ TEST_CASE("DerivEvaluator::deriv")
 
     SECTION("X^(1/3)")
     {
-        auto t = std::make_shared<Tape>(nth_root(Tree::X(), 3));
+        auto t = std::make_shared<Deck>(nth_root(Tree::X(), 3));
         DerivEvaluator e(t);
 
         {

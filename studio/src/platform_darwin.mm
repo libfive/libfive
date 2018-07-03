@@ -16,34 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-#pragma once
+#include <Cocoa/Cocoa.h>
 
-#include <QOpenGLVertexArrayObject>
-#include <QOpenGLBuffer>
-#include <QOpenGLFunctions>
-#include <QTimer>
+#include "studio/platform_darwin.hpp"
 
-class Bars : public QOpenGLFunctions
+void PlatformDarwin::disableWindowTabbing()
 {
-public:
-    Bars();
+    [NSWindow setAllowsAutomaticWindowTabbing: false];
+    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NSFullScreenMenuItemEverywhere"];
 
-    void draw(const QSize& size);
-    void initializeGL();
-
-    /*
-     *  Sets whether we're hovering (and thus should highlight)
-     *  Returns true if changed
-     */
-    bool hover(bool over);
-
-    /*  Drawn size (used in mouse-over calculations) */
-    const static int side=30;
-
-protected:
-    bool hovered=false;
-
-    QOpenGLVertexArrayObject vao;
-    QOpenGLBuffer vbo;
-};
-
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NSDisabledDictationMenuItem"];
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NSDisabledCharacterPaletteMenuItem"];
+}

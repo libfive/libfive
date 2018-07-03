@@ -64,18 +64,20 @@ protected:
      *  Recurses down into a rendering operation
      *  Returns true if aborted, false otherwise
      */
-    bool recurse(HeightmapEvaluator* e, const Voxels::View& r,
-                 const std::atomic_bool& abort);
+    bool recurse(HeightmapEvaluator* e, std::shared_ptr<Tape> tape,
+                 const Voxels::View& r, const std::atomic_bool& abort);
 
     /*
      *  Evaluates a set of voxels on a pixel-by-pixel basis
      */
-    void pixels(HeightmapEvaluator* e, const Voxels::View& v);
+    void pixels(HeightmapEvaluator* e, std::shared_ptr<Tape> tape,
+                const Voxels::View& v);
 
     /*
      *  Fills a region of voxels, marking them as at the top of the view
      */
-    void fill(HeightmapEvaluator* e, const Voxels::View& v);
+    void fill(HeightmapEvaluator* e, std::shared_ptr<Tape> tape,
+              const Voxels::View& v);
 
 };
 }   // namespace Kernel
