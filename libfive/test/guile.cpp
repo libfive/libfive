@@ -144,6 +144,13 @@ TEST_CASE("#[vector notation]")
     REQUIRE(result == "#[1 2.1]");
 }
 
+TEST_CASE("shape-eval")
+{
+    auto result = eval(
+            "(shape-eval (lambda-shape (x y z) (* x (/ 1 z))) #[0 0 0])");
+    REQUIRE(result == "+nan.0");
+}
+
 TEST_CASE("eval-sandboxed")
 {
     SECTION("Single line")
@@ -166,6 +173,13 @@ TEST_CASE("eval-sandboxed")
         CAPTURE(result);
         REQUIRE(boost::algorithm::starts_with(result,
             "((error (0 . 0)"));
+    }
+
+    SECTION("Parsing variables")
+    {
+        auto a = eval("(eval-sandboxed \"#123\")");
+        CAPTURE(a);
+        REQUIRE(boost::algorithm::starts_with(a, "((valid #<<shape>"));
     }
 }
 

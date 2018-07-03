@@ -22,7 +22,6 @@ set(SRCS src/main.cpp
     src/axes.cpp
     src/background.cpp
     src/bbox.cpp
-    src/bars.cpp
     src/busy.cpp
     src/camera.cpp
     src/documentation.cpp
@@ -54,10 +53,12 @@ set(QOBJECTS
 )
 
 if(APPLE)
-    add_executable(Studio MACOSX_BUNDLE ${SRCS} ${QOBJECTS})
+    add_executable(Studio MACOSX_BUNDLE ${SRCS} src/platform_darwin.mm ${QOBJECTS})
     set_target_properties(Studio PROPERTIES
            MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/deploy/mac/Info.plist
     )
+    find_library(COCOA_LIBRARY Cocoa)
+    set(EXTRA_LIBS ${COCOA_LIBRARY})
 else()
     add_executable(Studio ${SRCS} ${QOBJECTS})
 endif()
@@ -72,4 +73,5 @@ target_link_libraries(Studio five-guile
     Qt5::Gui
     Qt5::OpenGL
     Qt5::Concurrent
+    ${EXTRA_LIBS}
 )

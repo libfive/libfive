@@ -20,7 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <set>
 #include <cassert>
 
-#include <QVBoxLayout>
+#include <QLabel>
+#include <QPushButton>
 
 #include "studio/editor.hpp"
 #include "studio/syntax.hpp"
@@ -29,7 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 Editor::Editor(QWidget* parent, bool do_syntax)
     : QWidget(parent), script(new Script), script_doc(script->document()),
       syntax(do_syntax ? new Syntax(script_doc) : nullptr),
-      err(new QPlainTextEdit), err_doc(err->document())
+      err(new QPlainTextEdit), err_doc(err->document()),
+      layout(new QVBoxLayout)
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
@@ -77,7 +79,6 @@ Editor::Editor(QWidget* parent, bool do_syntax)
     connect(script_doc, &QTextDocument::redoAvailable,
             this, &Editor::redoAvailable);
 
-    auto layout = new QVBoxLayout;
     layout->addWidget(script);
     layout->addWidget(err);
     layout->setMargin(0);
@@ -114,6 +115,58 @@ void Editor::onBusy()
 {
     spinner.start();
     onSpinner();
+}
+
+void Editor::setWarnings(QList<QPair<QString, QString>> warnings)
+{
+    for (auto& w : findChildren<QVBoxLayout*>())
+    {
+        if (w != layout)
+        {
+            for (int i=0; w != layout && i < w->count(); ++i)
+            {
+                auto item = w->itemAt(i)->widget();
+                if (item)
+                {
+                    item->deleteLater();
+                }
+            }
+            layout->removeItem(w);
+            w->deleteLater();
+        }
+    }
+
+    if (warnings.size() == 0)
+    {
+        return;
+    }
+
+    QStringList fixes;
+
+    auto v = new QVBoxLayout();
+    v->setMargin(10);
+    for (auto& f : warnings)
+    {
+        v->addWidget(new QLabel(f.first, this));
+        if (!f.second.isEmpty())
+        {
+            fixes.push_back(f.second);
+        }
+    }
+
+    if (fixes.size())
+    {
+        auto button = new QPushButton("Fix All", this);
+        connect(button, &QPushButton::pressed, this, [=](){
+            QTextCursor c(script_doc);
+            for (auto& f : fixes)
+            {
+                c.movePosition(QTextCursor::Start);
+                c.insertText(f);
+            }});
+        v->addWidget(button, 0, Qt::AlignHCenter);
+    }
+    layout->addLayout(v);
 }
 
 void Editor::undo()
@@ -202,39 +255,15 @@ void Editor::setKeywords(QString kws)
     }
 }
 
-void Editor::onSettingsChanged(Settings s)
-{
-    const auto render_str = s.toString();
-
-    QTextCursor c(script_doc);
-    c.beginEditBlock();
-    auto match = s.settings_regex.match(script_doc->toPlainText());
-    if (!match.hasMatch())
-    {
-        c.insertText(render_str);
-        c.insertText("\n");
-    }
-    else if (match.captured(0) != render_str)
-    {
-        c.setPosition(match.capturedStart());
-        c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
-        c.removeSelectedText();
-        c.insertText(render_str);
-    }
-    c.endEditBlock();
-}
-
 void Editor::onScriptChanged()
 {
     auto txt = script_doc->toPlainText();
     emit(scriptChanged(txt));
+}
 
-    bool okay = true;
-    const auto s = Settings::fromString(txt, &okay);
-    if (okay)
-    {
-        emit(settingsChanged(s, first_change));
-    }
+void Editor::onSettingsChanged(Settings s)
+{
+    emit(settingsChanged(s, first_change));
     first_change = false;
 }
 

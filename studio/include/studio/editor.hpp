@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #pragma once
 
 #include <QPlainTextEdit>
+#include <QVBoxLayout>
 #include <QTimer>
 
 #include "studio/script.hpp"
@@ -53,20 +54,28 @@ public slots:
     void onError(QString result, QString stack, Range p);
     void onBusy();
 
+    /*
+     *  Adds a set of warnings to the GUI, below the result / error pane
+     *  If a second string is non-empty, then the UI also includes a
+     *  "Fix" button that prepends the second string to the script,
+     *  e.g. to fix missing defaults
+     */
+    void setWarnings(QList<QPair<QString, QString>> warnings);
+
     void undo();
     void redo();
 
     void setKeywords(QString kws);
 
     /*
-     *  When settings are changed, add specially-formatted comment blocks
-     *  to the script to control settings
+     *  When settings are changed in the script, re-emit them, using the
+     *  first_change flag to indicate if this is a brand model (in which
+     *  case the viewport should zoom to fit it)
      */
     void onSettingsChanged(Settings s);
 
     /*
-     *  When script changes, emit scriptChanged and check for settings
-     *  embedded in the script
+     *  When script changes, emit scriptChanged
      */
     void onScriptChanged();
 
@@ -116,6 +125,8 @@ protected:
 
     QPlainTextEdit* err;
     QTextDocument* err_doc;
+
+    QVBoxLayout* layout;
 
     QTextCharFormat error_format;
     QTimer spinner;

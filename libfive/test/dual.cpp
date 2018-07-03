@@ -18,7 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "catch.hpp"
 
-#include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/xtree_pool.hpp"
 #include "libfive/render/brep/dual.hpp"
 
 #include "util/shapes.hpp"
@@ -75,7 +75,7 @@ struct Walker3
 
 TEST_CASE("Dual<2>::walk")
 {
-    auto ta = XTree<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
+    auto ta = XTreePool<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
 
     Walker2 c;
     Dual<2>::walk(ta.get(), c);
@@ -88,7 +88,7 @@ TEST_CASE("Dual<2>::walk")
 
 TEST_CASE("Dual<3>::walk")
 {
-    auto ta = XTree<3>::build(sphere(0.5), Region<3>({-1, -1, -1}, {1, 1, 1}));
+    auto ta = XTreePool<3>::build(sphere(0.5), Region<3>({-1, -1, -1}, {1, 1, 1}));
 
     Walker3 c;
     Dual<3>::walk(ta.get(), c);

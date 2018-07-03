@@ -32,8 +32,8 @@ public:
     { /* Nothing to do here */ }
 
     XTreeEvaluator(const Tree t, const std::map<Tree::Id, float>& vars)
-        : tape(new Tape(t)), array(tape, vars),
-          interval(tape, vars), feature(tape, vars)
+        : deck(new Deck(t)), array(deck, vars),
+          interval(deck, vars), feature(deck, vars)
     { /* Nothing to do here */ }
 
     /*
@@ -51,10 +51,9 @@ public:
         return changed;
     }
 
-protected:
-    std::shared_ptr<Tape> tape;
-
 public:
+    std::shared_ptr<Deck> deck;
+
     DerivArrayEvaluator array;
     IntervalEvaluator interval;
     FeatureEvaluator feature;

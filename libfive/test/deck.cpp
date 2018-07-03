@@ -21,27 +21,27 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "catch.hpp"
 
 #include "libfive/tree/tree.hpp"
-#include "libfive/eval/tape.hpp"
+#include "libfive/eval/deck.hpp"
 
 using namespace Kernel;
 
-TEST_CASE("Tape::num_clauses")
+TEST_CASE("Deck::num_clauses")
 {
-    Tape t(Tree::X() + 1);
+    Deck t(Tree::X() + 1);
     REQUIRE(t.num_clauses == 5); // X, Y, Z, 1, +
 }
 
-TEST_CASE("Tape::XYZ")
+TEST_CASE("Deck::XYZ")
 {
-    Tape t(Tree::X() + 1);
+    Deck t(Tree::X() + 1);
     REQUIRE(t.X == 3);
     REQUIRE(t.Y == 4);
     REQUIRE(t.Z == 5);
 }
 
-TEST_CASE("Tape::constants")
+TEST_CASE("Deck::constants")
 {
-    Tape t(Tree::X() + 5);
+    Deck t(Tree::X() + 5);
     REQUIRE(t.constants.size() == 1);
 
     CAPTURE(t.constants.begin()->first);

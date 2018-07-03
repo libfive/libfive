@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_jacobian.hpp"
+#include "libfive/eval/deck.hpp"
 
 #include "util/shapes.hpp"
 
@@ -30,7 +31,7 @@ TEST_CASE("JacobianEvaluator::gradient")
     SECTION("constant + variable")
     {
         auto v = Tree::var();
-        auto t = std::make_shared<Tape>(v + 1.0);
+        auto t = std::make_shared<Deck>(v + 1.0);
         JacobianEvaluator e(t, {{v.id(), 3.14}});
 
         REQUIRE(e.eval({1.0, 2.0, 3.0}) == Approx(4.14));
@@ -43,7 +44,7 @@ TEST_CASE("JacobianEvaluator::gradient")
     SECTION("x * variable")
     {
         auto v = Tree::var();
-        auto t = std::make_shared<Tape>(Tree::X() * v);
+        auto t = std::make_shared<Deck>(Tree::X() * v);
         JacobianEvaluator e(t, {{v.id(), 1}});
         {
             auto g = e.gradient({2, 0, 0});
@@ -63,7 +64,7 @@ TEST_CASE("JacobianEvaluator::gradient")
         auto c = Tree::var();
         auto b = Tree::var();
 
-        auto t = std::make_shared<Tape>(a*1 + b*2 + c*3);
+        auto t = std::make_shared<Deck>(a*1 + b*2 + c*3);
         JacobianEvaluator e(t,
                 {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
 

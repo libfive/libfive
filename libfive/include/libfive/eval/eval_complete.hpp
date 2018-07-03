@@ -38,8 +38,8 @@ public:
     { /* Nothing to do here */ }
 
     CompleteEvaluator(const Tree t, const std::map<Tree::Id, float>& vars)
-        : tape(new Tape(t)), array(tape, vars),
-          interval(tape, vars), feature(tape, vars), deriv(tape, vars)
+        : deck(new Deck(t)), array(deck, vars),
+          interval(deck, vars), feature(deck, vars), deriv(deck, vars)
     { /* Nothing to do here */ }
 
     /*
@@ -59,7 +59,7 @@ public:
     }
 
 protected:
-    std::shared_ptr<Tape> tape;
+    std::shared_ptr<Deck> deck;
 
 public:
     DerivArrayEvaluator array;

@@ -24,20 +24,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "studio/settings.hpp"
 
-QRegularExpression Settings::settings_regex(
-        "#! RENDER (.*) (.*) (.*) / (.*) (.*) (.*) / (.*) / (.*) !#");
-QString Settings::settings_fmt(
-        "#! RENDER %1 %2 %3 / %4 %5 %6 / %7 / %8 !#");
-
 Settings::Settings(QVector3D min, QVector3D max, float res, float quality)
     : min(min), max(max), res(res), quality(quality)
 {
     // Nothing to do here
-}
-
-Settings Settings::defaultSettings()
-{
-    return Settings({-10, -10, -10}, {10, 10, 10}, 10, 8);
 }
 
 int Settings::defaultDiv() const
@@ -54,37 +44,9 @@ int Settings::defaultDiv() const
         : int(log(res / target_res) / log(2) + 0.5);
 }
 
-QString Settings::toString() const
+Settings Settings::defaultSettings()
 {
-    return settings_fmt
-        .arg(min.x()).arg(min.y()).arg(min.z())
-        .arg(max.x()).arg(max.y()).arg(max.z())
-        .arg(res).arg(quality);
-}
-
-Settings Settings::fromString(QString txt, bool* okay)
-{
-    auto match = Settings::settings_regex.match(txt);
-    *okay = match.hasMatch();
-
-    const QVector3D min(match.captured(1).toFloat(okay),
-                        match.captured(2).toFloat(okay),
-                        match.captured(3).toFloat(okay));
-    const QVector3D max(match.captured(4).toFloat(okay),
-                        match.captured(5).toFloat(okay),
-                        match.captured(6).toFloat(okay));
-
-    const float res = match.captured(7).toFloat(okay);
-    const float quality = match.captured(8).toFloat(okay);
-
-    if (*okay)
-    {
-        return Settings(min, max, res, quality);
-    }
-    else
-    {
-        return Settings();
-    }
+    return Settings({-10, -10, -10}, {10, 10, 10}, 10, 8);
 }
 
 bool Settings::operator==(const Settings& other) const
@@ -96,89 +58,4 @@ bool Settings::operator==(const Settings& other) const
 bool Settings::operator!=(const Settings& other) const
 {
     return !(*this == other);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-SettingsPane::SettingsPane(Settings s)
-    : xmin(new QDoubleSpinBox),
-      xmax(new QDoubleSpinBox),
-      ymin(new QDoubleSpinBox),
-      ymax(new QDoubleSpinBox),
-      zmin(new QDoubleSpinBox),
-      zmax(new QDoubleSpinBox),
-      res(new QDoubleSpinBox),
-      quality(new QDoubleSpinBox)
-{
-    auto layout = new QGridLayout();
-
-    layout->addWidget(new QLabel("<b>Bounds:</b>"), 0, 1);
-    layout->addWidget(new QLabel("X:"), 1, 0);
-    layout->addWidget(xmin, 1, 1);
-    layout->addWidget(xmax, 1, 2);
-    layout->addWidget(new QLabel("Y:"), 2, 0);
-    layout->addWidget(ymin, 2, 1);
-    layout->addWidget(ymax, 2, 2);
-    layout->addWidget(new QLabel("Z:"), 3, 0);
-    layout->addWidget(zmin, 3, 1);
-    layout->addWidget(zmax, 3, 2);
-
-    QFrame* line;
-    line = new QFrame();
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Raised);
-    layout->addWidget(line, 5, 0, 1, 3);
-
-    layout->addWidget(new QLabel("Resolution:"), 6, 0, 1, 2, Qt::AlignCenter);
-    layout->addWidget(res, 6, 2);
-
-    layout->addWidget(new QLabel("Quality:"), 7, 0, 1, 2, Qt::AlignCenter);
-    layout->addWidget(quality, 7, 2);
-
-    layout->setMargin(10);
-    layout->setSpacing(4);
-
-    for (auto t : {xmin, xmax, ymin, ymax, zmin, zmax})
-    {
-        t->setMinimum(-100);
-        t->setMaximum(100);
-    }
-    res->setMaximum(100);
-    quality->setMaximum(11);
-
-    set(s);
-
-    for (auto t : {xmin, xmax, ymin, ymax, zmin, zmax, res, quality})
-    {
-        connect(t, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
-                this, [=](double){ emit(this->changed(settings())); });
-        connect(this, &SettingsPane::enable,
-                t, [=](){ t->setReadOnly(false); });
-        connect(this, &SettingsPane::disable,
-                t, [=](){ t->setReadOnly(true); });
-    }
-
-    setLayout(layout);
-    setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint |
-                   Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
-    setAttribute(Qt::WA_DeleteOnClose);
-}
-
-void SettingsPane::set(Settings s)
-{
-    xmin->setValue(s.min.x());
-    ymin->setValue(s.min.y());
-    zmin->setValue(s.min.z());
-    xmax->setValue(s.max.x());
-    ymax->setValue(s.max.y());
-    zmax->setValue(s.max.z());
-    res->setValue(s.res);
-    quality->setValue(s.quality);
-}
-
-Settings SettingsPane::settings() const
-{
-    return Settings(QVector3D(xmin->value(), ymin->value(), zmin->value()),
-                    QVector3D(xmax->value(), ymax->value(), zmax->value()),
-                    res->value(), quality->value());
 }

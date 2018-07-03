@@ -26,6 +26,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
        (iota 10)))
 
 (define-public vars (make-hash-table))
+
+;; Install a hash reader for every integer, so that #0..., #1..., #2...
+;; all call a special handler that tracks the variable position.  This
+;; tagging means that we can edit the script later on and change them.
 (map (lambda (c)
   (eval `(read-hash-extend ,c
     (lambda (chr port)
@@ -87,6 +91,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
         ))))
 
 (define (tag-var-addresses! d addr prev)
+  "Recursively walks a clause d, ensuring that vars that have already
+  been seen will re-using the same tree (but with a new associated value).
+
+  This is useful because vars are unique clauses, so a tree that's
+  [X + $VAR1] is different from [X + $VAR2].  The var reader constructs a
+  new variable clause each time the script is evaluated; if we didn't remap
+  vars to their previous clauses, then dragging wouldn't work, because the
+  top-level tree's clause id would constantly be changing as the vars below
+  it changed.
+
+    addr is be a list that contains d's address within a tree
+
+    prev is a map from var addresses to tree objects, which is used
+    to detect variables that already exist.
+  "
   (cond
     ((list? d)
       (let loop ((e d) (i 0))
