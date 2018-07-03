@@ -24,3 +24,7 @@
     cutout
     (reflect-yz cutout)
     (reflect-xz cutout))
+
+(set-quality! 8)
+(set-resolution! 10)
+(set-bounds! [-10 -10 -10] [10 10 10])
