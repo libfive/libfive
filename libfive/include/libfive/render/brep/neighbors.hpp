@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #pragma once
 
 #include <array>
+#include <atomic>
 
 #include "libfive/render/brep/marching.hpp"
 #include "libfive/render/brep/intersection.hpp"
