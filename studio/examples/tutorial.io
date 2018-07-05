@@ -59,3 +59,7 @@
 ;; To learn more, dig into the source code;
 ;; documentation is sparse at the moment, but
 ;; libfive-guile.cpp should be informative.
+
+(set-quality! 8)
+(set-resolution! 10)
+(set-bounds! [-10 -10 -10] [10 10 10])

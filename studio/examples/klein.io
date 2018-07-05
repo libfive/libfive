@@ -10,3 +10,7 @@
        (* 16 x z b))))
 
 klein
+
+(set-quality! 8)
+(set-resolution! 10)
+(set-bounds! [-10 -10 -10] [10 10 10])

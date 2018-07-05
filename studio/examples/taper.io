@@ -1,5 +1,3 @@
-#! RENDER -10 -10 -10 / 10 10 10 / 60 !#
-
 (define (taper-z shape zmin zmax)
   (define (scale z) (/ (- z zmax) (- zmax zmin)))
   (remap-shape (shape x y z)
@@ -8,3 +6,7 @@
     z))
 
 (taper-z (sphere 1) -1 1.1)
+
+(set-quality! 8)
+(set-resolution! 60)
+(set-bounds! [-10 -10 -10] [10 10 10])

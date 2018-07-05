@@ -28,3 +28,6 @@
      (- cutout)
      (- (sphere 0.8)))
 
+(set-quality! 8)
+(set-resolution! 10)
+(set-bounds! [-10 -10 -10] [10 10 10])
