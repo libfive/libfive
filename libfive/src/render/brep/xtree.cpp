@@ -913,6 +913,7 @@ Interval::State XTree<N>::cornerState(uint8_t i) const
         case Interval::EMPTY:   assert(leaf == nullptr);
                                 return type;
     };
+    return type;
 }
 
 template <unsigned N>
@@ -931,6 +932,7 @@ bool XTree<N>::isManifold() const
         case Interval::EMPTY:   assert(leaf == nullptr);
                                 return true;
     };
+    return true;
 }
 
 template <unsigned N>
@@ -950,6 +952,7 @@ uint8_t XTree<N>::cornerMask() const
         case Interval::EMPTY:   assert(leaf == nullptr);
                                 return 0;
     };
+    return 0;
 }
 
 template <unsigned N>
@@ -968,6 +971,7 @@ unsigned XTree<N>::level() const
         case Interval::EMPTY:   assert(leaf == nullptr);
                                 return 0;
     };
+    return 0;
 }
 
 template <unsigned N>
@@ -986,6 +990,7 @@ unsigned XTree<N>::rank() const
         case Interval::EMPTY:   assert(leaf == nullptr);
                                 return 0;
     };
+    return 0;
 }
 
 }   // namespace Kernel
