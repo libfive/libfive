@@ -68,6 +68,8 @@ public:
     bool check(const Eigen::Vector3f& e, bool* dup=nullptr) const;
     bool check(const Feature& other) const;
 
+    bool hasEpsilons() const { return epsilons.size(); }
+
     Eigen::Vector3f deriv;
 
 protected:

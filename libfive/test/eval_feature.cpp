@@ -78,6 +78,17 @@ TEST_CASE("FeatureEvaluator::isInside")
 
         REQUIRE(d.isInside({0, 0, 2}) == false);
     }
+
+    SECTION("Hollow cylinder")
+    {
+        auto shape = max(box({-50, -50, 0}, {50, 50, 10}),
+            max(cylinder(10, 100), -cylinder(5, 100)));
+        auto t = std::make_shared<Deck>(shape);
+        FeatureEvaluator e(t);
+        auto fs = e.features_({0.1, 0.1, 0});
+        CAPTURE(fs.size());
+        REQUIRE(!e.isInside({0, 0, 0}));
+    }
 }
 
 TEST_CASE("FeatureEvaluator::features")
