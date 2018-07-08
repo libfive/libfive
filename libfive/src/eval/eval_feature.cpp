@@ -188,7 +188,18 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 Eigen::Vector3f epsilon = bd - ad;
                 if (epsilon.norm() == 0)
                 {
-                    od.push_back(_ad);
+                    if (_ad.hasEpsilons())
+                    {
+                        od.push_back(_ad);
+                    }
+                    if (_bd.hasEpsilons())
+                    {
+                        od.push_back(_bd);
+                    }
+                    if (!_ad.hasEpsilons() && !_bd.hasEpsilons())
+                    {
+                        od.push_back(_ad);
+                    }
                 }
                 else
                 {
@@ -223,7 +234,18 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 Eigen::Vector3f epsilon = ad - bd;
                 if (epsilon.norm() == 0)
                 {
-                    od.push_back(_ad);
+                    if (_ad.hasEpsilons())
+                    {
+                        od.push_back(_ad);
+                    }
+                    if (_bd.hasEpsilons())
+                    {
+                        od.push_back(_bd);
+                    }
+                    if (!_ad.hasEpsilons() && !_bd.hasEpsilons())
+                    {
+                        od.push_back(_ad);
+                    }
                 }
                 else
                 {

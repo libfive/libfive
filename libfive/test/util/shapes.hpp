@@ -32,3 +32,6 @@ Kernel::Tree rotate2d(Kernel::Tree t, float angle);
 Kernel::Tree move(Kernel::Tree t, Eigen::Vector3f d);
 Kernel::Tree shell(Kernel::Tree t, float offset);
 Kernel::Tree blend(Kernel::Tree a, Kernel::Tree b, float r);
+Kernel::Tree cylinder(float r, float h, Eigen::Vector3f base=
+                                        Eigen::Vector3f::Zero());
+Kernel::Tree extrude(Kernel::Tree t, float lower, float upper);
