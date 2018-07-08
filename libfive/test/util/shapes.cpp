@@ -137,3 +137,13 @@ Tree blend(Tree a, Tree b, float r)
 
     return max(r, min(a, b)) - len;
 }
+
+Tree cylinder(float r, float h, Eigen::Vector3f base)
+{
+    return extrude(move(circle(r), base), base.z(), base.z() + h);
+}
+
+Tree extrude(Tree a, float lower, float upper)
+{
+    return max(a, max(lower - Tree::Z(), Tree::Z() - upper));
+}
