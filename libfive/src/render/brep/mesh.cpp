@@ -123,8 +123,6 @@ std::unique_ptr<Mesh> Mesh::render(
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel)
 {
-  if(min_feature <= 0.0){ return std::make_unique<Mesh>(); }
-
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
     for (unsigned i=0; i < workers; ++i)
@@ -140,8 +138,6 @@ std::unique_ptr<Mesh> Mesh::render(
         const Region<3>& r, double min_feature, double max_err,
         int workers, std::atomic_bool& cancel)
 {
-    if(min_feature <= 0.0){ return std::make_unique<Mesh>(); }
-
     auto t = XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel);
     auto out = mesh(t.get(), cancel);
     return out;

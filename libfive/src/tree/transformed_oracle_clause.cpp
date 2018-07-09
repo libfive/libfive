@@ -18,8 +18,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "libfive/tree/transformed_oracle_clause.hpp"
 #include "libfive/eval/transformed_oracle.hpp"
+#include "libfive/tree/archive.hpp"
 
 namespace Kernel {
+
+REGISTER_ORACLE_CLAUSE(TransformedOracleClause);
 
 TransformedOracleClause::TransformedOracleClause(
         Tree underlying, Tree X_, Tree Y_, Tree Z_)
@@ -45,6 +48,44 @@ TransformedOracleClause::remap(Tree self, Tree X_, Tree Y_, Tree Z_) const
             this->X_.remap(X_, Y_, Z_),
             this->Y_.remap(X_, Y_, Z_),
             this->Z_.remap(X_, Y_, Z_)));
+}
+
+std::vector<Kernel::Tree> TransformedOracleClause::dependencies() const
+{
+    return { underlying, X_, Y_, Z_ };
+}
+
+bool TransformedOracleClause::serialize(std::vector<uint8_t>& data,
+     std::map<Tree::Id, uint32_t>& ids) const
+{
+    auto serializeId = [&data, &ids](Tree t)
+    {
+      assert(ids.find(t.id()) != ids.end());
+      Archive::serializeBytes(ids[t.id()], data);
+    };
+    serializeId(underlying);
+    serializeId(X_);
+    serializeId(Y_);
+    serializeId(Z_);
+    return true;
+}
+
+std::unique_ptr<const OracleClause> TransformedOracleClause::deserialize(
+    const uint8_t*& pos, const uint8_t* end,
+    std::map<uint32_t, Tree>& ts)
+{
+    auto deserializeId = [&pos, &end, &ts]()
+    {
+        auto idx = Archive::deserializeBytes<uint32_t>(pos, end);
+        auto location = ts.find(idx);
+        assert(location != ts.end());
+        return location->second;
+    };
+    auto underlying = deserializeId();
+    auto X_ = deserializeId();
+    auto Y_ = deserializeId();
+    auto Z_ = deserializeId();
+    return std::make_unique<TransformedOracleClause>(underlying, X_, Y_, Z_);
 }
 
 }; //namespace Kernel
