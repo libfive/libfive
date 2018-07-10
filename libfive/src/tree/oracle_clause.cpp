@@ -11,7 +11,8 @@ std::map<std::string, std::pair<OracleClause::Serializer,
     OracleClause::installed;
 
 std::unique_ptr<const OracleClause> OracleClause::deserialize(
-        const std::string& name, const uint8_t*& pos, const uint8_t* end)
+        const std::string& name, const uint8_t*& pos, const uint8_t* end,
+        std::map<uint32_t, Tree>& ts)
 {
     auto itr = installed.find(name);
     if (itr == installed.end())
@@ -24,12 +25,13 @@ std::unique_ptr<const OracleClause> OracleClause::deserialize(
     }
     else
     {
-        return (*itr).second.second(pos, end);
+        return (*itr).second.second(pos, end, ts);
     }
 }
 
 bool OracleClause::serialize(const std::string& name,
-        const OracleClause* clause, std::vector<uint8_t>& data)
+        const OracleClause* clause, std::vector<uint8_t>& data,
+         std::map<Tree::Id, uint32_t>& ids)
 {
     auto itr = installed.find(name);
     if (itr == installed.end())
@@ -42,7 +44,7 @@ bool OracleClause::serialize(const std::string& name,
     }
     else
     {
-        return (*itr).second.first(clause, data);
+        return (*itr).second.first(clause, data, ids);
     }
 }
 
