@@ -58,7 +58,7 @@ TEST_CASE("Tree::serialize")
         auto a = min(Tree::X(), Tree::Y());
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF};
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
         REQUIRE(out == expected);
     }
 
@@ -67,7 +67,7 @@ TEST_CASE("Tree::serialize")
         auto a = min(Tree::X(), Tree::X());
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::OP_MIN, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF};
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::OP_MIN, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
         REQUIRE(out == expected);
     }
 }

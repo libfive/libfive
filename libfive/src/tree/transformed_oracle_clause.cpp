@@ -85,7 +85,8 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::deserialize(
     auto X_ = deserializeId();
     auto Y_ = deserializeId();
     auto Z_ = deserializeId();
-    return std::make_unique<TransformedOracleClause>(underlying, X_, Y_, Z_);
+    return std::unique_ptr<TransformedOracleClause>(
+            new TransformedOracleClause(underlying, X_, Y_, Z_));
 }
 
 }; //namespace Kernel
