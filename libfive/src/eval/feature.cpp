@@ -204,4 +204,45 @@ bool Feature::check(const Eigen::Vector3f& e, bool* duplicate) const
     return false;
 }
 
+bool Feature::operator<(const Feature& other) const
+{
+  auto EigenCompare =
+    [](const Eigen::Vector3f& a, const Eigen::Vector3f& b)
+  {
+    for (auto i = 0; i < 3; ++i)
+    {
+      if (a(i) < b(i))
+      {
+        return -1;
+      }
+      else if (a(i) > b(i))
+      {
+        return 1;
+      }
+    }
+    return 0;
+  };
+  auto i = 0;
+  for (; i < epsilons.size() && i < other.epsilons.size(); ++i)
+  {
+    auto comp = EigenCompare(epsilons[i], other.epsilons[i]);
+    if (comp != 0)
+    {
+      return comp < 0;
+    }
+  }
+  if (i < epsilons.size())
+  {
+      return false;
+  }
+  else if (i < other.epsilons.size())
+  {
+      return true;
+  }
+  else
+  {
+      return EigenCompare(deriv, other.deriv) < 0;
+  }
+}
+
 }   // namespace Kernel

@@ -70,6 +70,13 @@ public:
 
     bool hasEpsilons() const { return epsilons.size(); }
 
+    bool operator<(const Feature& other) const;
+
+    bool hasSameEpsilons(const Feature& other) const
+    {
+        return epsilons == other.epsilons;
+    }
+
     Eigen::Vector3f deriv;
 
 protected:
