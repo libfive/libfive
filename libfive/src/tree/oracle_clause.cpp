@@ -6,16 +6,12 @@
 
 namespace Kernel {
 
-std::map<std::string, std::pair<OracleClause::Serializer,
-                                       OracleClause::Deserializer>>
-    OracleClause::installed;
-
 std::unique_ptr<const OracleClause> OracleClause::deserialize(
         const std::string& name, const uint8_t*& pos, const uint8_t* end,
         std::map<uint32_t, Tree>& ts)
 {
-    auto itr = installed.find(name);
-    if (itr == installed.end())
+    auto itr = installed().find(name);
+    if (itr == installed().end())
     {
         std::cerr << "OracleClause::deserialize: no installed \""
                   << name << "\"\n"
@@ -33,8 +29,8 @@ bool OracleClause::serialize(const std::string& name,
         const OracleClause* clause, std::vector<uint8_t>& data,
          std::map<Tree::Id, uint32_t>& ids)
 {
-    auto itr = installed.find(name);
-    if (itr == installed.end())
+    auto itr = installed().find(name);
+    if (itr == installed().end())
     {
         std::cerr << "OracleClause::serialize: no installed \""
                   << name << "\"\n"

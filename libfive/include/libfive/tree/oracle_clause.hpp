@@ -77,7 +77,7 @@ public:
             return o->serialize(data, ids);
         };
         Deserializer de = T::deserialize;
-        installed[name] = { ser, de };
+        installed()[name] = { ser, de };
     }
 
     /*
@@ -115,11 +115,21 @@ protected:
                                std::map<Tree::Id, uint32_t>& ids)>
         Serializer;
     typedef std::function<std::unique_ptr<const OracleClause>
-                          (const uint8_t*& pos, const uint8_t* end, 
+                          (const uint8_t*& pos, const uint8_t* end,
                            std::map<uint32_t, Tree>& ts)>
         Deserializer;
 
-    static std::map<std::string, std::pair<Serializer, Deserializer>> installed;
+    /*
+     *  We use this function to work around static initialization
+     *  order dependencies.
+     *  https://isocpp.org/wiki/faq/ctors#construct-on-first-use-v2
+     */
+    static std::map<std::string, std::pair<Serializer, Deserializer>>&
+        installed()
+    {
+        static std::map<std::string, std::pair<Serializer, Deserializer>> m;
+        return m;
+    }
 };
 
 };
