@@ -51,7 +51,7 @@ protected:
     /*
      *  Deserializes a Shape
      */
-    Archive::Shape deserializeShape();
+    Archive::Shape deserializeShape(char tag);
 
     std::istream& in;
     Archive archive;

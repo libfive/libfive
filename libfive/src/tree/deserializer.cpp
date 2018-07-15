@@ -28,14 +28,24 @@ Archive Deserializer::run()
 {
     Archive out;
 
-    while (!in.eof())
+    while(1)
     {
-        out.shapes.push_back(deserializeShape());
+        char tag;
+        in.get(tag);
+
+        if (!in.eof())
+        {
+            out.shapes.push_back(deserializeShape(tag));
+        }
+        else
+        {
+            break;
+        }
     }
     return out;
 }
 
-Archive::Shape Deserializer::deserializeShape()
+Archive::Shape Deserializer::deserializeShape(char tag)
 {
 #define REQUIRE(cond) \
     if (!(cond)) \
@@ -46,10 +56,7 @@ Archive::Shape Deserializer::deserializeShape()
 #define CHECK_POS() REQUIRE(!in.eof())
 
     CHECK_POS();
-    char tag;
-    in.get(tag);
     REQUIRE(tag == 'T' || tag == 't');
-    CHECK_POS();
 
     Archive::Shape out;
     out.name = deserializeString();

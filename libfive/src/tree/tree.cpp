@@ -148,7 +148,7 @@ Tree Tree::deserialize(std::istream& in)
 
 Tree Tree::load(const std::string& filename)
 {
-    std::ifstream in(filename, std::ios::in|std::ios::binary|std::ios::ate);
+    std::ifstream in(filename, std::ios::in|std::ios::binary);
     return in.is_open() ? deserialize(in) : Tree();
 }
 
