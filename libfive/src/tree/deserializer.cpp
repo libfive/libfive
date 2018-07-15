@@ -40,8 +40,8 @@ Archive::Shape Deserializer::deserializeShape()
 #define REQUIRE(cond) \
     if (!(cond)) \
     { \
-        std::cerr << "Archive::deserialize: expected " << #cond \
-                  << " at " << __LINE__ << std::endl; \
+        std::cerr << "Error: expected " << #cond \
+                  << " at deserializer.cpp:" << __LINE__ << std::endl; \
     }
 #define CHECK_POS() REQUIRE(!in.eof())
 
@@ -120,7 +120,7 @@ Archive::Shape Deserializer::deserializeShape()
         }
         out.tree = trees.at(trees.size() - 1);
     }
-    while (in.eof())
+    while (!in.eof())
     {
         CHECK_POS();
 
