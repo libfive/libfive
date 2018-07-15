@@ -40,7 +40,7 @@ Archive::Shape Deserializer::deserializeShape()
 #define REQUIRE(cond) \
     if (!(cond)) \
     { \
-        std::cerr << "Error: expected " << #cond \
+        std::cerr << "Deserializer: expected " << #cond \
                   << " at deserializer.cpp:" << __LINE__ << std::endl; \
     }
 #define CHECK_POS() REQUIRE(!in.eof())
@@ -96,7 +96,7 @@ Archive::Shape Deserializer::deserializeShape()
                 if (o.get() == nullptr)
                 {
                     std::cerr
-                        << "Archive::deserialize: failed to deserialize Oracle \""
+                        << "Deserializer: failed to deserialize Oracle \""
                         << name << "\"" << std::endl;
                     return out;
                 }
@@ -146,12 +146,12 @@ std::string Deserializer::deserializeString()
     std::string out;
     if (in.eof())
     {
-        std::cerr << "Archive::deserializeString: EOF at beginning of string"
+        std::cerr << "Deserializer::deserializeString: EOF at beginning of string"
                   << std::endl;
     }
     else if (in.get() != '"')
     {
-        std::cerr << "Archive::deserializeString: expected opening \""
+        std::cerr << "Deserializer::deserializeString: expected opening \""
                   << std::endl;
     }
     else
