@@ -56,19 +56,22 @@ TEST_CASE("Tree::serialize")
     SECTION("Basic")
     {
         auto a = min(Tree::X(), Tree::Y());
-        auto out = a.serialize();
-        std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
-        REQUIRE(out == expected);
+        std::stringstream out;
+        a.serialize(out);
+
+        std::string expected =
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF};
+        REQUIRE(out.str() == expected);
     }
 
     SECTION("With local references")
     {
         auto a = min(Tree::X(), Tree::X());
-        auto out = a.serialize();
-        std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::OP_MIN, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
-        REQUIRE(out == expected);
+        std::stringstream out;
+        a.serialize(out);
+        std::string expected =
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::OP_MIN, 0, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF};
+        REQUIRE(out.str() == expected);
     }
 }
 
@@ -76,7 +79,12 @@ TEST_CASE("Tree::deserialize")
 {
     SECTION("Simple")
     {
-        auto a = Tree::deserialize(min(Tree::X(), Tree::Y()).serialize());
+        std::stringstream out;
+        min(Tree::X(), Tree::Y()).serialize(out);
+
+        std::stringstream in(out.str());
+        auto a = Tree::deserialize(in);
+
         REQUIRE(a.id() != nullptr);
         REQUIRE(a->op == Opcode::OP_MIN);
         REQUIRE(a->lhs->op == Opcode::VAR_X);
@@ -85,7 +93,12 @@ TEST_CASE("Tree::deserialize")
 
     SECTION("With constant")
     {
-        auto a = Tree::deserialize(min(Tree::X(), Tree(2.5f)).serialize());
+        std::stringstream out;
+        min(Tree::X(), Tree(2.5f)).serialize(out);
+
+        std::stringstream in(out.str());
+        auto a = Tree::deserialize(in);
+
         REQUIRE(a.id() != nullptr);
         REQUIRE(a->op == Opcode::OP_MIN);
         REQUIRE(a->lhs->op == Opcode::VAR_X);
@@ -95,7 +108,12 @@ TEST_CASE("Tree::deserialize")
 
     SECTION("With variable")
     {
-        auto a = Tree::deserialize(min(Tree::X(), Tree::var()).serialize());
+        std::stringstream out;
+        min(Tree::X(), Tree::var()).serialize(out);
+
+        std::stringstream in(out.str());
+        auto a = Tree::deserialize(in);
+
         REQUIRE(a.id() != nullptr);
         REQUIRE(a->op == Opcode::OP_MIN);
         REQUIRE(a->lhs->op == Opcode::VAR_X);
