@@ -1,6 +1,6 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2018  Matt Keeter
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -17,37 +17,44 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include <iostream>
-#include <cassert>
+#include <map>
 
 #include "libfive/tree/archive.hpp"
-#include "libfive/tree/serializer.hpp"
-#include "libfive/tree/deserializer.hpp"
 
-namespace Kernel
+namespace Kernel {
+
+class Deserializer
 {
-void Archive::addShape(Tree tree, std::string name, std::string doc,
-                       std::map<Tree::Id, std::string> vars)
-{
-    Shape s;
-    s.tree = tree;
-    s.name = name;
-    s.doc = doc;
-    s.vars = vars;
+public:
+    Deserializer(std::istream& in)
+        : in(in)
+    { /* Nothing to do here */ }
 
-    shapes.push_back(s);
-}
+    /*
+     *  Main deserialization function
+     */
+    Archive run();
 
-////////////////////////////////////////////////////////////////////////////////
+    /*  Helper functions */
+    std::string deserializeString();
+    template <typename T> T deserializeBytes()
+    {
+        T t;
+        in.read(reinterpret_cast<char*>(&t), sizeof(t));
+        return t;
+    }
 
-void Archive::serialize(std::ostream& out)
-{
-    Serializer(out).run(*this);
-}
+    /*  This is the parallel map to Serializer::ids */
+    std::map<uint32_t, Tree> trees;
 
-Archive Archive::deserialize(std::istream& data)
-{
-    return Deserializer(data).run();
-}
+protected:
+    /*
+     *  Deserializes a Shape
+     */
+    Archive::Shape deserializeShape();
 
+    std::istream& in;
+    Archive archive;
+};
 
 }   // namespace Kernel
