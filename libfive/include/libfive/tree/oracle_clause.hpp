@@ -139,10 +139,10 @@ protected:
  *  to automatically register them for serialization / deserialization.
  */
 #define REGISTER_ORACLE_CLAUSE(T) \
-class T_Installer { \
+class T##_Installer { \
 public: \
-    T_Installer() { \
+    T##_Installer() { \
         OracleClause::install<T>(#T); \
     }\
 };\
-static T_Installer T_Installer_Instance;
+static T##_Installer T##_Installer_Instance;
