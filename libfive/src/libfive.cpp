@@ -125,12 +125,11 @@ void libfive_tree_delete(libfive_tree ptr)
 
 bool libfive_tree_save(libfive_tree ptr, const char* filename)
 {
-    auto data = ptr->serialize();
     std::ofstream out;
     out.open(filename, std::ios::out|std::ios::binary);
     if (out.is_open())
     {
-        out.write((const char*)&data[0], data.size());
+        ptr->serialize(out);
         return true;
     }
     else

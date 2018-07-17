@@ -46,12 +46,8 @@ public:
 
     std::vector<Kernel::Tree> dependencies() const override;
 
-    bool serialize(std::vector<uint8_t>& data,
-                   std::map<Tree::Id, uint32_t>& ids) const;
-    static std::unique_ptr<const OracleClause> deserialize(
-      const uint8_t*& pos, const uint8_t* end,
-      std::map<uint32_t, Tree>& ts);
-protected:
+    bool serialize(Serializer& out) const;
+    static std::unique_ptr<const OracleClause> deserialize(Deserializer& in);
 
 private:
     Tree underlying;

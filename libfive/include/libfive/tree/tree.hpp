@@ -169,15 +169,8 @@ public:
      */
     std::list<Tree> ordered() const;
 
-    /*
-     *  Serializes to a vector of bytes
-     */
-    std::vector<uint8_t> serialize() const;
-
-    /*
-     *  Deserialize a tree from a set of bytes
-     */
-    static Tree deserialize(const std::vector<uint8_t>& data);
+    void serialize(std::ostream& out) const;
+    static Tree deserialize(std::istream& in);
 
     /*
      *  Loads a tree from a file

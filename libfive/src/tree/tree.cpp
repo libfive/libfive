@@ -134,32 +134,22 @@ std::list<Tree> Tree::ordered() const
     return out;
 }
 
-std::vector<uint8_t> Tree::serialize() const
+void Tree::serialize(std::ostream& out) const
 {
-    return Archive(*this).serialize();
+    return Archive(*this).serialize(out);
 }
 
-Tree Tree::deserialize(const std::vector<uint8_t>& data)
+Tree Tree::deserialize(std::istream& in)
 {
-    auto s = Archive::deserialize(data).shapes;
+    auto s = Archive::deserialize(in).shapes;
     assert(s.size() == 1);
     return s.front().tree;
 }
 
 Tree Tree::load(const std::string& filename)
 {
-    std::ifstream in(filename, std::ios::in|std::ios::binary|std::ios::ate);
-    if (in.is_open())
-    {
-        std::vector<uint8_t> data;
-        data.resize(in.tellg());
-
-        in.seekg(0, std::ios::beg);
-        in.read((char*)&data[0], data.size());
-
-        return deserialize(data);
-    }
-    return Tree();
+    std::ifstream in(filename, std::ios::in|std::ios::binary);
+    return in.is_open() ? deserialize(in) : Tree();
 }
 
 Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const

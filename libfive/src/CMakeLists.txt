@@ -38,6 +38,8 @@ add_library(five SHARED
     tree/cache.cpp
     tree/opcode.cpp
     tree/archive.cpp
+    tree/deserializer.cpp
+    tree/serializer.cpp
     tree/tree.cpp
     tree/oracle_clause.cpp
     tree/transformed_oracle_clause.cpp
