@@ -30,15 +30,20 @@ public:
     std::string name() const override { return "ST"; }
     std::unique_ptr<Oracle> getOracle() const override { return nullptr; }
 
-    bool serialize(std::vector<uint8_t>& data) const
+    bool serialize(std::vector<uint8_t>& data,
+                   std::map<Tree::Id, uint32_t>& ids) const
     {
+        (void)ids;
         Archive::serializeString("hi", data);
         return true;
     }
 
     static std::unique_ptr<const OracleClause> deserialize(
-            const uint8_t*& pos, const uint8_t* end)
+            const uint8_t*& pos, const uint8_t* end,
+            std::map<uint32_t, Tree>& ts)
     {
+        (void)ts;
+
         auto out = Archive::deserializeString(pos, end);
         if (out != "hi")
         {
@@ -59,7 +64,7 @@ TEST_CASE("Archive::serialize")
         a.addShape(min(Tree::X(), Tree::Y()), "hi");
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', 'h', 'i', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF};
+            {'T', '"', 'h', 'i', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
         REQUIRE(out == expected);
     }
 
@@ -72,9 +77,9 @@ TEST_CASE("Archive::serialize")
         std::vector<uint8_t> expected =
             {'T', '"', '"', '"', '"',
                 Opcode::VAR_X, Opcode::VAR_Y,
-                Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF,
+                Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF,
              'T', '"', '"', '"', '"',
-                Opcode::OP_MAX, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF};
+                Opcode::OP_MAX, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
         REQUIRE(out == expected);
     }
 
@@ -87,9 +92,9 @@ TEST_CASE("Archive::serialize")
         std::vector<uint8_t> expected =
             {'T', '"', '"', '"', '"',
                 Opcode::VAR_X, Opcode::VAR_Y,
-                Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF,
+                Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF,
              't', '"', '"', '"', '"',
-                0, 0, 0, 0};
+                0, 0, 0, 0, 0xFF};
         REQUIRE(out == expected);
     }
 
@@ -99,7 +104,7 @@ TEST_CASE("Archive::serialize")
         a.addShape(min(Tree::X(), Tree::Y()), "hi", "\"\\");
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', 'h', 'i', '"', '"', '\\', '"', '\\', '\\', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF};
+            {'T', '"', 'h', 'i', '"', '"', '\\', '"', '\\', '\\', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
         REQUIRE(out == expected);
     }
 
@@ -109,7 +114,7 @@ TEST_CASE("Archive::serialize")
                         new ST())));
         auto out = a.serialize();
         std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"', 0xFF};
+            {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"', 0xFF, 0xFF};
         REQUIRE(out == expected);
     }
 }

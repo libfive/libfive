@@ -43,6 +43,10 @@ public:
     virtual ~OracleClause()=default;
     virtual std::unique_ptr<Oracle> getOracle() const=0;
     virtual std::string name() const=0;
+    virtual std::vector<Kernel::Tree> dependencies() const
+    {
+        return {};
+    }
 
     /*
      *  Installs a particular class's serializer / deserializer pair
@@ -50,14 +54,19 @@ public:
      *  with the class's name().
      *
      *  In addition, T must declare
-     *      bool T::serialize(std::vector<uint8_t>& data) const
+     *      bool T::serialize(std::vector<uint8_t>& data,
+     *          std::map<Tree::Id, uint32_t>& ids) const
      *      static std::unique_ptr<const OracleClause> deserialize(
-     *          const uint8_t*& pos, const uint8_t* end);
+     *          const uint8_t*& pos, const uint8_t* end,
+     *          std::map<uint32_t, Tree>& ts);
+     *  If it depends on other trees having been serialized first, it should
+     *      override dependencies.
      */
     template <class T>
     static void install(const std::string& name)
     {
-        Serializer ser = [](const OracleClause* c, std::vector<uint8_t>& data)
+        Serializer ser = [](const OracleClause* c, std::vector<uint8_t>& data,
+                            std::map<Tree::Id, uint32_t>& ids)
         {
             auto o = dynamic_cast<const T*>(c);
             if (o == nullptr)
@@ -65,10 +74,10 @@ public:
                 std::cerr << "OracleClause: Could not cast to specified type";
                 return false;
             }
-            return o->serialize(data);
+            return o->serialize(data, ids);
         };
         Deserializer de = T::deserialize;
-        installed[name] = { ser, de };
+        installed()[name] = { ser, de };
     }
 
     /*
@@ -77,7 +86,8 @@ public:
      *      returns false on failure
      */
     static bool serialize(const std::string& name,
-            const OracleClause*, std::vector<uint8_t>& data);
+            const OracleClause*, std::vector<uint8_t>& data,
+                          std::map<Tree::Id, uint32_t>& ids);
 
     /*
      *  Deserializes an oracle clause by looking up an installed deserializer.
@@ -85,7 +95,8 @@ public:
      *      returns a null pointer on failure.
      */
     static std::unique_ptr<const OracleClause> deserialize
-        (const std::string& name, const uint8_t*& pos, const uint8_t* end);
+        (const std::string& name, const uint8_t*& pos, const uint8_t* end,
+         std::map<uint32_t, Tree>& ts);
 
     /*
      *  Executes a coordinate transform on the underlying oracle.
@@ -100,13 +111,25 @@ public:
             Tree self, Tree X_, Tree Y_, Tree Z_) const;
 
 protected:
-    typedef std::function<bool(const OracleClause*, std::vector<uint8_t>&)>
+    typedef std::function<bool(const OracleClause*, std::vector<uint8_t>&,
+                               std::map<Tree::Id, uint32_t>& ids)>
         Serializer;
     typedef std::function<std::unique_ptr<const OracleClause>
-                          (const uint8_t*& pos, const uint8_t* end)>
+                          (const uint8_t*& pos, const uint8_t* end,
+                           std::map<uint32_t, Tree>& ts)>
         Deserializer;
 
-    static std::map<std::string, std::pair<Serializer, Deserializer>> installed;
+    /*
+     *  We use this function to work around static initialization
+     *  order dependencies.
+     *  https://isocpp.org/wiki/faq/ctors#construct-on-first-use-v2
+     */
+    static std::map<std::string, std::pair<Serializer, Deserializer>>&
+        installed()
+    {
+        static std::map<std::string, std::pair<Serializer, Deserializer>> m;
+        return m;
+    }
 };
 
 };
@@ -116,10 +139,10 @@ protected:
  *  to automatically register them for serialization / deserialization.
  */
 #define REGISTER_ORACLE_CLAUSE(T) \
-class T_Installer { \
+class T##_Installer { \
 public: \
-    T_Installer() { \
+    T##_Installer() { \
         OracleClause::install<T>(#T); \
     }\
 };\
-static T_Installer T_Installer_Instance;
+static T##_Installer T##_Installer_Instance;

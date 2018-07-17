@@ -107,6 +107,13 @@ public:
     }
 
 protected:
+
+    /*
+     *  Serialize a Tree and all of its dependencies.
+     */
+    static void serializeTree(Tree t, std::vector<uint8_t>& out,
+                            std::map<Tree::Id, uint32_t>& ids);
+
     /*
      *  Writes a tree to the given output stream.
      *
@@ -124,7 +131,10 @@ protected:
     static Shape deserializeShape(const uint8_t*& pos, const uint8_t* end,
                                   std::map<uint32_t, Tree>& ts);
 
-    /*  We use this flag to end a data stream */
+    /*  
+     *  We use this flag to end a data stream, either of 
+     *  the tree of a shape or its vars.
+     */
     static const uint8_t END_OF_ITEM;
 };
 

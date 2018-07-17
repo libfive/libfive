@@ -52,6 +52,48 @@ std::vector<uint8_t> Archive::serialize() const
     return out;
 }
 
+void Archive::serializeTree(Tree t, std::vector<uint8_t>& out,
+                            std::map<Tree::Id, uint32_t>& ids)
+{
+  for (auto& n : t.ordered())
+  {
+    // Skip this id, as it has already been stored
+    if (ids.find(n.id()) != ids.end())
+    {
+        continue;
+    }
+    if (n->op == Opcode::ORACLE)
+    {
+        assert(n->oracle.get() != nullptr);
+        for (auto& d : n->oracle->dependencies())
+        {
+            serializeTree(d, out, ids);
+        }
+    }
+    out.push_back(n->op);
+    ids.insert({ n.id(), ids.size() });
+
+    // Write constants as raw bytes
+    if (n->op == Opcode::CONSTANT)
+    {
+        serializeBytes(n->value, out);
+    }
+    else if (n->op == Opcode::ORACLE)
+    {
+        assert(n->oracle.get() != nullptr);
+        serializeString(n->oracle->name(), out);
+        OracleClause::serialize(n->oracle->name(), n->oracle.get(),
+                                out, ids);
+    }
+    switch (Opcode::args(n->op))
+    {
+    case 2:  serializeBytes(ids.at(n->rhs.get()), out); // FALLTHRU
+    case 1:  serializeBytes(ids.at(n->lhs.get()), out); // FALLTHRU
+    default: break;
+    }
+  }
+}
+
 void Archive::serializeShape(const Shape& s, std::vector<uint8_t>& out,
                              std::map<Tree::Id, uint32_t>& ids) const
 {
@@ -69,42 +111,23 @@ void Archive::serializeShape(const Shape& s, std::vector<uint8_t>& out,
     }
     else
     {
-        for (auto& n : s.tree.ordered())
-        {
-            // Skip this id, as it has already been stored
-            if (ids.find(n.id()) != ids.end())
-            {
-                continue;
-            }
-            out.push_back(n->op);
-            ids.insert({n.id(), ids.size()});
-
-            // Write constants as raw bytes
-            if (n->op == Opcode::CONSTANT)
-            {
-                serializeBytes(n->value, out);
-            }
-            else if (n->op == Opcode::VAR_FREE)
-            {
-                auto a = s.vars.find(n.id());
-                serializeString(a == s.vars.end() ? "" : a->second, out);
-            }
-            else if (n->op == Opcode::ORACLE)
-            {
-                assert(n->oracle.get() != nullptr);
-                serializeString(n->oracle->name(), out);
-                OracleClause::serialize(n->oracle->name(), n->oracle.get(),
-                                        out);
-            }
-            switch (Opcode::args(n->op))
-            {
-                case 2:  serializeBytes(ids.at(n->rhs.get()), out); // FALLTHRU
-                case 1:  serializeBytes(ids.at(n->lhs.get()), out); // FALLTHRU
-                default: break;
-            }
-        }
+        serializeTree(s.tree, out, ids);
         out.push_back(END_OF_ITEM);
     }
+    for (auto& v : s.vars)
+    {
+        auto a = ids.find(v.first);
+        if (a == ids.end())
+        {
+            std::cerr << "Archive::serialize: named variable not found.";
+        }
+        else 
+        {
+            serializeString(v.second, out);
+            serializeBytes(a->second, out);
+        }
+    }
+    out.push_back(END_OF_ITEM);
 }
 
 void Archive::serializeString(const std::string& s, std::vector<uint8_t>& out)
@@ -171,7 +194,8 @@ Archive::Shape Archive::deserializeShape(const uint8_t*& pos, const uint8_t* end
         {
             CHECK_POS();
 
-            // Check for END_OF_ITEM as a demarcation between Shapes
+            // Check for END_OF_ITEM as a demarcation between the Tree
+            // and the vars
             uint8_t op_ = *pos++;
             if (op_ == END_OF_ITEM)
             {
@@ -191,18 +215,11 @@ Archive::Shape Archive::deserializeShape(const uint8_t*& pos, const uint8_t* end
                 float v = deserializeBytes<float>(pos, end);
                 ts.insert({next, Tree(v)});
             }
-            else if (op == Opcode::VAR_FREE)
-            {
-                std::string var = deserializeString(pos, end);
-                auto v = Tree(op);
-                out.vars.insert({v.id(), var});
-                ts.insert({next, v});
-            }
             else if (op == Opcode::ORACLE)
             {
                 std::string name = deserializeString(pos, end);
                 CHECK_POS();
-                auto o = OracleClause::deserialize(name, pos, end);
+                auto o = OracleClause::deserialize(name, pos, end, ts);
                 if (o.get() == nullptr)
                 {
                     std::cerr
@@ -230,7 +247,24 @@ Archive::Shape Archive::deserializeShape(const uint8_t*& pos, const uint8_t* end
         }
         out.tree = ts.at(ts.size() - 1);
     }
+    while (pos != end)
+    {
+        CHECK_POS();
 
+        // Check for END_OF_ITEM as a demarcation between Shapes
+        uint8_t op_ = *pos++;
+        if (op_ == END_OF_ITEM)
+        {
+            break;
+        }
+
+        auto varName = deserializeString(pos, end);
+        auto idx = deserializeBytes<uint32_t>(pos, end);
+        auto t = ts.find(idx);
+        REQUIRE(t != ts.end());
+        REQUIRE(out.vars.find(t->second.id()) == out.vars.end());
+        out.vars[t->second.id()] = varName;
+    }
     return out;
 }
 
