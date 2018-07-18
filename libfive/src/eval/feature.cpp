@@ -222,7 +222,7 @@ bool Feature::operator<(const Feature& other) const
     }
     return 0;
   };
-  auto i = 0;
+  size_t i = 0;
   for (; i < epsilons.size() && i < other.epsilons.size(); ++i)
   {
     auto comp = EigenCompare(epsilons[i], other.epsilons[i]);
