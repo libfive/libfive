@@ -195,4 +195,12 @@ TEST_CASE("FeatureEvaluator::features")
         FeatureEvaluator e(t);
         REQUIRE(e.features({0, 0, 6}).size() == 1);
     }
+
+    SECTION("Feature deduplication")
+    {
+        auto r = max(Tree::X(), Tree::X() + Tree::Y() * 1e-8);
+        auto t = std::make_shared<Deck>(r);
+        FeatureEvaluator e(t);
+        REQUIRE(e.features({0, 0, 0}).size() == 1);
+    }
 }
