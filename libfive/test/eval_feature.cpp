@@ -122,8 +122,8 @@ TEST_CASE("FeatureEvaluator::features")
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 2);
         auto i = fs.begin();
-        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
         REQUIRE(*(i++) == Eigen::Vector3f(-1, 0, 0));
+        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
     }
 
     SECTION("Three features")

@@ -82,6 +82,8 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     }
 
     auto root = tape->rwalk(*this);
+
+    safe = !i[root].second;
     return i[root].first;
 }
 
@@ -179,20 +181,20 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #define outN i[id].second
 #define aN i[a_].second
 #define bN i[b_].second
-#define nCond outN = aN || bN ||
-  safe = true;
+#define SET_UNSAFE(cond) outN = aN || bN || cond
   switch (op) {
         case Opcode::OP_ADD:
             out = a + b;
-            nCond a.lower() == -INFINITY && b.upper() == INFINITY ||
-                b.lower() == -INFINITY && a.upper() == INFINITY;
+            SET_UNSAFE((a.lower() == -INFINITY && b.upper() == INFINITY) ||
+                       (b.lower() == -INFINITY && a.upper() == INFINITY));
             break;
         case Opcode::OP_MUL:
             out = a * b;
-            nCond(a.lower() == -INFINITY || a.upper() == INFINITY)
-                && b.lower() <= 0.f && b.upper() >= 0.f ||
-                (b.lower() == -INFINITY || b.upper() == INFINITY)
-                && a.lower() <= 0.f && a.upper() >= 0.f;
+            SET_UNSAFE(
+                ((a.lower() == -INFINITY || a.upper() == INFINITY)
+                    && b.lower() <= 0.f && b.upper() >= 0.f) ||
+                ((b.lower() == -INFINITY || b.upper() == INFINITY)
+                    && a.lower() <= 0.f && a.upper() >= 0.f));
             break;
         case Opcode::OP_MIN:
             out = boost::numeric::min(a, b);
@@ -222,8 +224,8 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
         case Opcode::OP_SUB:
             out = a - b;
-            nCond a.lower() == -INFINITY && b.lower() == -INFINITY ||
-                  a.upper() == -INFINITY && b.upper() == -INFINITY;
+            SET_UNSAFE((a.lower() == -INFINITY && b.lower() == -INFINITY) ||
+                       (a.upper() == -INFINITY && b.upper() == -INFINITY));
             break;
         case Opcode::OP_DIV:
             out = a / b;
@@ -231,7 +233,7 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             {
                 // In this case, out gives us the empty interval, but point
                 // evaluation might give us an infinite value.
-                if (a.lower() <= 0.f && a.upper() >= 0.f ||
+                if ((a.lower() <= 0.f && a.upper() >= 0.f) ||
                     std::signbit(b.lower()) != std::signbit(b.upper()))
                 {
                     out = { -INFINITY, INFINITY };
@@ -245,21 +247,21 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                     out = { -INFINITY, -INFINITY };
                 }
             }
-            nCond (a.lower() == -INFINITY || a.upper() == INFINITY) && 
-                  (b.lower() == -INFINITY || b.upper() == INFINITY) ||
-                  a.lower() <= 0.f && a.upper() >= 0.f && 
-                  b.lower() <= 0.f && b.upper() >= 0.f;
+            SET_UNSAFE(((a.lower() == -INFINITY || a.upper() == INFINITY) &&
+                        (b.lower() == -INFINITY || b.upper() == INFINITY)) ||
+                        (a.lower() <= 0.f && a.upper() >= 0.f &&
+                         b.lower() <= 0.f && b.upper() >= 0.f));
             break;
         case Opcode::OP_ATAN2:
             out = atan2(a, b);
-            nCond a.lower() <= 0.f && a.upper() >= 0.f &&
-                  b.lower() <= 0.f && b.upper() >= 0.f;
+            SET_UNSAFE(a.lower() <= 0.f && a.upper() >= 0.f &&
+                       b.lower() <= 0.f && b.upper() >= 0.f);
             break;
         case Opcode::OP_POW:
         {
             auto bPt = b.lower();
             out = boost::numeric::pow(a, bPt);
-            // The behavior of raising zero to a negative power is 
+            // The behavior of raising zero to a negative power is
             // implementation-defined; it may raise a domain error (and thus
             // return NaN) or a pole error (and thus return an infinite value);
             // We can use a static const variable to test for this.
@@ -269,27 +271,29 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             // considered an integer as far as std::pow is concerned.
             static const auto nanOnZeroToNegative =
                 std::isnan(std::pow(0.f, -1.f));
-            nCond a.lower() <= 0.f &&
-                (a.upper() >= 0.f &&
-                (bPt == 0.f || bPt < 0.f && nanOnZeroToNegative)) ||
-                isnan(std::pow(-1.f, bPt));
-            break; 
+            SET_UNSAFE(
+                (a.lower() <= 0.f &&
+                     a.upper() >= 0.f &&
+                    (bPt == 0.f || bPt < 0.f && nanOnZeroToNegative)) ||
+                isnan(std::pow(-1.f, bPt)));
+            break;
         }
         case Opcode::OP_NTH_ROOT:
         {
             int bPt = b.lower();
             out = boost::numeric::nth_root(a, bPt);
-            nCond a.lower() <= 0.f && !(bPt & 2);
+            // We can only take multiples-of-two nth roots on negative values
+            SET_UNSAFE(a.lower() <= 0.f && !(bPt & 2));
             break;
         }
         case Opcode::OP_MOD:
         {
-            auto maxMag = std::max(std::abs(b.lower()), std::abs(b.upper()));
+            auto maxMag = fmax(fabs(b.lower()), fabs(b.upper()));
             out = { a.lower() >= 0.f ? 0.f : -maxMag,
                     a.upper() <= 0.f ? 0.f : maxMag };
             if (std::isfinite(a.upper()) && std::isfinite(a.lower()))
             {
-                // We may be able to do better: Divide into cases, based on whether 
+                // We may be able to do better: Divide into cases, based on whether
                 // b is above, below, or crossing 0.
                 auto position = (b.upper() >= 0.f) + 2 * (b.lower() <= 0.f);
                 switch (position)
@@ -301,9 +305,9 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                     auto minMagB = position == 1 ? b.lower() : -b.upper();
                     auto highestQuotientB = a.upper() > 0 ? minMagB : maxMagB;
                     auto lowestQuotientB = a.lower() < 0 ? maxMagB : minMagB;
-                    auto highestQuotientInt = 
+                    auto highestQuotientInt =
                       static_cast<int>(a.upper() / highestQuotientB);
-                    auto lowestQuotientInt = 
+                    auto lowestQuotientInt =
                       static_cast<int>(a.lower() / lowestQuotientB);
                     if (highestQuotientInt == lowestQuotientInt)
                     {
@@ -321,8 +325,8 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 }
             }
 
-            nCond a.upper() >= 0.f && a.lower() <= 0.f && 
-                b.upper() >= 0.f && b.lower() <= 0.f;
+            SET_UNSAFE(a.upper() >= 0.f && a.lower() <= 0.f &&
+                       b.upper() >= 0.f && b.lower() <= 0.f);
             break;
         }
         case Opcode::OP_NANFILL:
@@ -422,18 +426,6 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_Z:
         case Opcode::VAR_FREE:
         case Opcode::LAST_OP: assert(false);
-    }
-
-    // Track the safety of the evaluation
-    if (safe)
-    {
-      const auto lower = out.lower();
-      const auto upper = out.upper();
-      if (std::isnan(lower) || std::isinf(lower) ||
-          std::isnan(upper) || std::isinf(upper))
-      {
-        safe = false;
-      }
     }
 
 #undef out
