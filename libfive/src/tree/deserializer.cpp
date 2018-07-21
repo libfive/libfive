@@ -52,7 +52,6 @@ Archive::Shape Deserializer::deserializeShape(char tag)
     { \
         std::cerr << "Deserializer: expected " << #cond \
                   << " at deserializer.cpp:" << __LINE__ << std::endl; \
-        throw std::to_string(__LINE__);\
     }
 #define CHECK_POS() REQUIRE(!in.eof())
 
