@@ -61,7 +61,7 @@ bool TransformedOracleClause::serialize(Serializer& out) const
 {
     auto serializeId = [&out](Tree t)
     {
-      assert(out.ids.find(t.id()) != ids.end());
+      assert(out.ids.find(t.id()) != out.ids.end());
       out.serializeBytes(out.ids[t.id()]);
     };
     serializeId(underlying);
@@ -78,7 +78,7 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::deserialize(
     {
         auto idx = in.deserializeBytes<uint32_t>();
         auto location = in.trees.find(idx);
-        assert(location != ts.end());
+        assert(location != in.trees.end());
         return location->second;
     };
     auto underlying = deserializeId();

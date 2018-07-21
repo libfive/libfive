@@ -85,9 +85,9 @@ TEST_CASE("FeatureEvaluator::isInside")
             max(cylinder(10, 100), -cylinder(5, 100)));
         auto t = std::make_shared<Deck>(shape);
         FeatureEvaluator e(t);
-        auto fs = e.features_({0.1, 0.1, 0});
+        auto fs = e.features_({0.1f, 0.1f, 0.0f});
         CAPTURE(fs.size());
-        REQUIRE(!e.isInside({0, 0, 0}));
+        REQUIRE(!e.isInside({0.0f, 0.0f, 0.0f}));
     }
 }
 
