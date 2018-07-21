@@ -174,16 +174,21 @@ TEST_CASE("IntervalEvaluator::isSafe")
         REQUIRE(!e.isSafe());
     }
 
-    SECTION("Empty tape")
+    SECTION("Multiplication of zero and infinity")
     {
-        auto t = std::make_shared<Deck>(Tree::X());
+        auto t = std::make_shared<Deck>(Tree::Z() * (Tree::X() / Tree::Y()));
         IntervalEvaluator e(t);
 
         e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
         REQUIRE(e.isSafe());
 
-        e.eval({-std::numeric_limits<float>::infinity(), 0, 0},
-                {1, 2, 0}, t->tape);
+        e.eval({-1, 0, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(!e.isSafe());
+
+        e.eval({-1, -1, 1}, {1, 2, 2}, t->tape);
+        REQUIRE(!e.isSafe());
+
+        e.eval({-1, -1, -1}, {1, 2, 1}, t->tape);
         REQUIRE(!e.isSafe());
     }
 }
