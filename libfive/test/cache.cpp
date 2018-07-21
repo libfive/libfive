@@ -53,7 +53,7 @@ TEST_CASE("Deduplication of NaN")
     auto t = Cache::instance();
 
     auto cx = t->constant(1);
-    auto ca = t->constant(0.0f / 0.0f);
+    auto ca = t->constant(NAN);
     auto cb = t->constant(std::nanf(""));
     auto cy = t->constant(2);
 
