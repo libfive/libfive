@@ -57,6 +57,16 @@ public:
     virtual void evalInterval(Interval::I& out)=0;
 
     /*
+     *  Returns whether interval arithmetic over the previously defined range
+     *  can result in a NaN.
+     */
+
+    virtual void evalIntervalNaN(bool& out)
+    {
+      out = false;
+    }
+
+    /*
      *  Returns the result of pointwise arithemetic on the value
      *  previously defined with set(Eigen::Vector3f, index)
      */
