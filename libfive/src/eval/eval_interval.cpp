@@ -271,11 +271,13 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             // considered an integer as far as std::pow is concerned.
             static const auto nanOnZeroToNegative =
                 std::isnan(std::pow(0.f, -1.f));
+
+            // Store whether a contains 0, to simplify the expression below.
+            const bool a_zero = a.lower() <= 0.f && a.upper() >= 0.f;
+
             SET_UNSAFE(
-                (a.lower() <= 0.f &&
-                     a.upper() >= 0.f &&
-                    (bPt == 0.f || bPt < 0.f && nanOnZeroToNegative)) ||
-                isnan(std::pow(-1.f, bPt)));
+               (a_zero && (bPt == 0.f || (bPt < 0.f && nanOnZeroToNegative))) ||
+               (a.lower() < 0 && isnan(std::pow(-1.f, bPt))));
             break;
         }
         case Opcode::OP_NTH_ROOT:
