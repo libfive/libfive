@@ -121,3 +121,7 @@ Different layers of this project are released under different licenses:
 Contact me to discuss custom development,
 integration,
 or commercial support.
+
+## Projects using `libfive`
+- [Tovero](https://common-lisp.net/project/tovero/): A 3D modeling system for Common Lisp
+- Unpublished [Stanza](http://lbstanza.org/) bindings (email for details)
