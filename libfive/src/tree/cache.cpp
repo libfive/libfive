@@ -413,6 +413,20 @@ Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b
             }
             break;
 
+        case Opcode::OP_MIN:
+            if (a == b)
+            {
+                return a;
+            }
+            break;
+
+        case Opcode::OP_MAX:
+            if (a == b)
+            {
+                return a;
+            }
+            break;
+
         default:
             break;
     }

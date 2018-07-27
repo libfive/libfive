@@ -66,11 +66,11 @@ TEST_CASE("Tree::serialize")
 
     SECTION("With local references")
     {
-        auto a = min(Tree::X(), Tree::X());
+        auto a = min(Tree::X(), Tree::Y() + Tree::X());
         std::stringstream out;
         a.serialize(out);
         std::string expected =
-            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::OP_MIN, 0, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF};
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_ADD, 0, 0, 0, 0, 1, 0, 0, 0, Opcode::OP_MIN, 2, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF};
         REQUIRE(out.str() == expected);
     }
 }
