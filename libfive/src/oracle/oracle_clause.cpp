@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cassert>
 
-#include "libfive/tree/oracle_clause.hpp"
-#include "libfive/tree/transformed_oracle_clause.hpp"
+#include "libfive/oracle/oracle_clause.hpp"
+#include "libfive/oracle/transformed_oracle_clause.hpp"
 
 namespace Kernel {
 

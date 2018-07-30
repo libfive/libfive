@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <Eigen/Eigen>
 
-#include "libfive/eval/oracle.hpp"
+#include "libfive/oracle/oracle.hpp"
 #include "libfive/eval/eval_array_size.hpp"
 
 namespace Kernel {
