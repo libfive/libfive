@@ -36,8 +36,11 @@ void TransformedOracle::set(const Eigen::Vector3f& p, size_t index)
     zEvaluator.array.set(p, index);
 }
 
-void TransformedOracle::evalInterval(Interval::I& out)
+void TransformedOracle::evalInterval(Interval::I& out,
+                                     std::shared_ptr<OracleContext> context)
 {
+    (void)context;
+
     auto xRange = xEvaluator.interval.eval(lower, upper);
     auto yRange = yEvaluator.interval.eval(lower, upper);
     auto zRange = zEvaluator.interval.eval(lower, upper);
@@ -51,8 +54,11 @@ void TransformedOracle::evalInterval(Interval::I& out)
     underlying->evalInterval(out);
 }
 
-void TransformedOracle::evalPoint(float& out, size_t index)
+void TransformedOracle::evalPoint(float& out, size_t index,
+                                  std::shared_ptr<OracleContext> context)
 {
+    (void)context;
+
     Eigen::Vector3f transformedPoint{
         xEvaluator.feature.eval(points.col(index)),
         yEvaluator.feature.eval(points.col(index)),
@@ -64,15 +70,18 @@ void TransformedOracle::evalPoint(float& out, size_t index)
 
 void TransformedOracle::evalArray(
     Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
-    LIBFIVE_EVAL_ARRAY_SIZE, Eigen::RowMajor>, 1, Eigen::Dynamic> out)
+                 LIBFIVE_EVAL_ARRAY_SIZE, Eigen::RowMajor>, 1, Eigen::Dynamic> out,
+    std::shared_ptr<OracleContext> context)
 {
+    (void)context;
+
     setUnderlyingArrayValues(out.cols());
     underlying->evalArray(out);
 }
 
 void TransformedOracle::checkAmbiguous(
     Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
-    1, Eigen::Dynamic> out)
+                 1, Eigen::Dynamic> out)
 {
     setUnderlyingArrayValues(out.cols());
     underlying->checkAmbiguous(out);
@@ -83,8 +92,11 @@ void TransformedOracle::checkAmbiguous(
 
 void TransformedOracle::evalDerivs(
     Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-    3, 1, true> out, size_t index)
+                 3, 1, true> out, size_t index,
+    std::shared_ptr<OracleContext> context)
 {
+    (void)context;
+
     Eigen::Matrix3f Jacobian;
     Jacobian << xEvaluator.deriv.deriv(points.col(index)).template head<3>(),
         yEvaluator.deriv.deriv(points.col(index)).template head<3>(),
@@ -100,8 +112,11 @@ void TransformedOracle::evalDerivs(
 
 void TransformedOracle::evalDerivArray(
     Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
-    3, Eigen::Dynamic, true> out)
+                 3, Eigen::Dynamic, true> out,
+    std::shared_ptr<OracleContext> context)
 {
+    (void)context;
+
     TransformedOracle::setUnderlyingArrayValues(out.cols());
 
     auto xDerivs = xEvaluator.array.derivs(out.cols());
@@ -121,8 +136,11 @@ void TransformedOracle::evalDerivArray(
 }
 
 void TransformedOracle::evalFeatures(
-    boost::container::small_vector<Feature, 4>& out)
+    boost::container::small_vector<Feature, 4>& out,
+    std::shared_ptr<OracleContext> context)
 {
+    (void)context;
+
     out.clear();
     auto pt = points.col(0);
     Eigen::Vector3f transformedPoint{

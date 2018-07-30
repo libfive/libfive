@@ -49,13 +49,14 @@ public:
      */
     void evalDerivs(
             Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-                         3, 1, true> out, size_t index=0) override
+                         3, 1, true> out, size_t index,
+            std::shared_ptr<OracleContext> context) override
     {
         Eigen::Vector3f before = points.col(0);
         points.col(0) = points.col(index);
 
         boost::container::small_vector<Feature, 4> fs;
-        evalFeatures(fs);
+        evalFeatures(fs, context);
         assert(fs.size() > 0);
         out = fs[0].deriv;
 
