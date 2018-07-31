@@ -52,6 +52,15 @@ public:
                      std::shared_ptr<Tape> tape);
 
     /*
+     *  Returns a shortened tape based on the most recent evaluation.
+     *
+     *  Normally, this is invoked through evalAndPush, but in some cases,
+     *  we need to call it as a standalone function.  If you're not using
+     *  Oracles, then you probably don't need to call it.
+     */
+    std::shared_ptr<Tape> push(std::shared_ptr<Tape> tape);
+
+    /*
      *  Changes a variable's value
      *
      *  If the variable isn't present in the tree, does nothing

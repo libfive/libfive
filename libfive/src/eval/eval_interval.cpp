@@ -106,8 +106,12 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
         Tape::Handle tape)
 {
     auto out = eval(lower, upper, tape);
+    return std::make_pair(out, push(tape));
+}
 
-    auto p = Tape::push(tape, *deck,
+std::shared_ptr<Tape> IntervalEvaluator::push(std::shared_ptr<Tape> tape)
+{
+    return Tape::push(tape, *deck,
         [&](Opcode::Opcode op, Clause::Id /* id */,
             Clause::Id a, Clause::Id b)
     {
@@ -156,7 +160,6 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
         Tape::INTERVAL,
         {{i[deck->X].first.lower(), i[deck->Y].first.lower(), i[deck->Z].first.lower()},
          {i[deck->X].first.upper(), i[deck->Y].first.upper(), i[deck->Z].first.upper()}});
-    return std::make_pair(out, std::move(p));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
