@@ -81,6 +81,14 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
         o->set(lower, upper);
     }
 
+    if (tape->hasContext())
+    {
+        for (unsigned i=0; i < deck->oracles.size(); ++i)
+        {
+            deck->oracles[i]->bind(tape->getContext(i));
+        }
+    }
+
     auto root = tape->rwalk(*this);
 
     safe = !i[root].second;

@@ -154,6 +154,12 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
     out->Y = {r.lower.y(), r.upper.y()};
     out->Z = {r.lower.z(), r.upper.z()};
 
+    // Finally, store the Oracle contexts
+    for (auto& o : deck.oracles)
+    {
+        out->contexts.push_back(o->push());
+    }
+
     return out;
 }
 

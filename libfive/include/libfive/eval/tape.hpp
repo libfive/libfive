@@ -53,6 +53,20 @@ public:
     /*  Returns tape length (used in unit tests to check for shrinkage) */
     size_t size() const { return t.size(); }
 
+    /*  Returns the assigned context from this tape */
+    std::shared_ptr<OracleContext> getContext(unsigned i) const
+    {
+        assert(i < contexts.size());
+        return contexts[i];
+    }
+
+    /*  Checks to see whether we have oracle contexts assigned */
+    bool hasContext() const
+    {
+        return contexts.size() > 0;
+    }
+
+
 protected:
     /*  The tape itself, as a vector of clauses  */
     std::vector<Clause> t;
