@@ -158,6 +158,13 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
         Tape::INTERVAL,
         {{i[deck->X].first.lower(), i[deck->Y].first.lower(), i[deck->Z].first.lower()},
          {i[deck->X].first.upper(), i[deck->Y].first.upper(), i[deck->Z].first.upper()}});
+
+    // Finally, store the Oracle contexts
+    for (auto& o : deck->oracles)
+    {
+        p->pushContext(o->push());
+    }
+
     return std::make_pair(out, std::move(p));
 }
 

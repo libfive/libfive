@@ -60,6 +60,12 @@ public:
         return contexts[i];
     }
 
+    /*  Stores a context */
+    void pushContext(std::shared_ptr<OracleContext> c)
+    {
+        contexts.push_back(c);
+    }
+
     /*  Checks to see whether we have oracle contexts assigned */
     bool hasContext() const
     {
