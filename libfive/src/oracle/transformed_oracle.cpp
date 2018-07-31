@@ -189,6 +189,28 @@ void TransformedOracle::evalFeatures(
     }
 }
 
+std::shared_ptr<OracleContext> TransformedOracle::push(
+            Tape::Type t, std::shared_ptr<OracleContext> context_)
+{
+    if (t != Tape::INTERVAL)
+    {
+        return nullptr;
+    }
+
+    auto context = dynamic_cast<Context*>(context_.get());
+    assert(context_ == nullptr || context != nullptr);
+
+    auto out = std::shared_ptr<Context>(new Context);
+
+    out->tx = xEvaluator.interval.push(context ? context->tx : nullptr);
+    out->ty = yEvaluator.interval.push(context ? context->ty : nullptr);
+    out->tz = zEvaluator.interval.push(context ? context->tz : nullptr);
+    out->u = underlying->push(t, context ? context->u : nullptr);
+
+    return out;
+}
+
+
 void TransformedOracle::setUnderlyingArrayValues(int count)
 {
     auto xPoints = xEvaluator.array.values(count);

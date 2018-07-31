@@ -68,7 +68,22 @@ public:
         boost::container::small_vector<Feature, 4>& out,
         std::shared_ptr<OracleContext> context) override;
 
+    /*
+     *  Returns a context that pushes into each evaluator and the underlying
+     *  oracle.  The returned object is an instance of Context (defined below).
+     */
+    std::shared_ptr<OracleContext> push(
+            Tape::Type t, std::shared_ptr<OracleContext> context) override;
+
 private:
+    class Context : public OracleContext {
+    public:
+        Tape::Handle tx;
+        Tape::Handle ty;
+        Tape::Handle tz;
+        std::shared_ptr<OracleContext> u;
+    };
+
     void setUnderlyingArrayValues(int count);
 
     const std::unique_ptr<Oracle> underlying;
