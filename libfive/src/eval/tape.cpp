@@ -106,10 +106,15 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
             }
             else if (c.op == Opcode::ORACLE)
             {
-                // Store the context for this oracle
-                contexts[c.a] = deck.oracles[c.a]->push(t);
-                changed |= (tape->contexts.size() <= c.a) ||
-                           (contexts[c.a] != tape->contexts[c.a]);
+                // Get the previous context, then use it to store
+                // a new context for the oracle, marking whether it
+                // has changed.
+                auto prev = tape->contexts.size() <= c.a
+                    ? std::shared_ptr<OracleContext>(nullptr)
+                    : tape->contexts[c.a];
+
+                contexts[c.a] = deck.oracles[c.a]->push(t, prev);
+                changed |= (contexts[c.a] != prev);
 
                 terminal = false; // TODO: refine this check
             }

@@ -84,6 +84,11 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
 
     auto root = tape->rwalk(*this);
 
+    for (auto& o : deck->oracles)
+    {
+        o->unbind();
+    }
+
     safe = !i[root].second;
     return i[root].first;
 }
@@ -151,7 +156,6 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
         Tape::INTERVAL,
         {{i[deck->X].first.lower(), i[deck->Y].first.lower(), i[deck->Z].first.lower()},
          {i[deck->X].first.upper(), i[deck->Y].first.upper(), i[deck->Z].first.upper()}});
-
     return std::make_pair(out, std::move(p));
 }
 

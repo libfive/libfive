@@ -67,9 +67,11 @@ public:
      *  the oracle for operations on the most recent interval region, which
      *  must have been assigned with set() and evaluated with evalInterval.
      */
-    virtual std::shared_ptr<OracleContext> push(Tape::Type t)
+    virtual std::shared_ptr<OracleContext> push(
+            Tape::Type t, std::shared_ptr<OracleContext> context)
     {
         (void)t;
+        (void)context;
         return std::shared_ptr<OracleContext>(nullptr);
     }
 
@@ -135,7 +137,8 @@ public:
     }
 
     /*  Returns the set of features at the point stored in slot 0.  */
-    void evalFeatures(boost::container::small_vector<Feature, 4>& out) {
+    void evalFeatures(boost::container::small_vector<Feature, 4>& out)
+    {
         evalFeatures(out, context);
     }
 
@@ -148,6 +151,11 @@ public:
     void bind(std::shared_ptr<OracleContext> context)
     {
         this->context = context;
+    }
+
+    void unbind()
+    {
+        this->context = nullptr;
     }
 
     /*
