@@ -63,6 +63,14 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
     // Mark the root node as active
     deck.disabled[tape->i] = false;
 
+    // We'll store a temporary vector of Oracle contexts here.
+    //
+    // By default, these contexts will be the same as the previous tape,
+    // but we'll call push on each Oracle to see if we should refine it
+    // any further.
+    std::vector<std::shared_ptr<OracleContext>> contexts = tape->contexts;
+    contexts.resize(deck.oracles.size()); // In case the parent has no contexts
+
     bool terminal = true;
     bool changed = false;
     for (const auto& c : tape->t)
@@ -96,8 +104,18 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
                 deck.disabled[c.a] = false;
                 deck.disabled[c.b] = false;
             }
+            else if (c.op == Opcode::ORACLE)
+            {
+                // Store the context for this oracle
+                contexts[c.a] = deck.oracles[c.a]->push(t);
+                changed |= (tape->contexts.size() <= c.a) ||
+                           (contexts[c.a] != tape->contexts[c.a]);
+
+                terminal = false; // TODO: refine this check
+            }
         }
     }
+
 
     if (!changed)
     {
@@ -153,6 +171,9 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
     out->X = {r.lower.x(), r.upper.x()};
     out->Y = {r.lower.y(), r.upper.y()};
     out->Z = {r.lower.z(), r.upper.z()};
+
+    // Store the Oracle contexts
+    out->contexts = std::move(contexts);
 
     return out;
 }

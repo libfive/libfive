@@ -56,8 +56,19 @@ public:
     /*  Returns the assigned context from this tape */
     std::shared_ptr<OracleContext> getContext(unsigned i) const
     {
-        assert(i < contexts.size());
-        return contexts[i];
+        if (contexts.size())
+        {
+            assert(i < contexts.size());
+            return contexts[i];
+        }
+        else if (parent)
+        {
+            return parent->getContext(i);
+        }
+        else
+        {
+            return nullptr;
+        }
     }
 
     /*  Stores a context */
@@ -65,13 +76,6 @@ public:
     {
         contexts.push_back(c);
     }
-
-    /*  Checks to see whether we have oracle contexts assigned */
-    bool hasContext() const
-    {
-        return contexts.size() > 0;
-    }
-
 
 protected:
     /*  The tape itself, as a vector of clauses  */

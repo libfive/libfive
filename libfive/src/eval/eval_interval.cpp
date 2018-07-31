@@ -76,17 +76,10 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     i[deck->Y] = { {lower.y(), upper.y()}, false };
     i[deck->Z] = { {lower.z(), upper.z()}, false };
 
-    for (auto& o : deck->oracles)
+    for (unsigned i=0; i < deck->oracles.size(); ++i)
     {
-        o->set(lower, upper);
-    }
-
-    if (tape->hasContext())
-    {
-        for (unsigned i=0; i < deck->oracles.size(); ++i)
-        {
-            deck->oracles[i]->bind(tape->getContext(i));
-        }
+        deck->oracles[i]->set(lower, upper);
+        deck->oracles[i]->bind(tape->getContext(i));
     }
 
     auto root = tape->rwalk(*this);
@@ -158,12 +151,6 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
         Tape::INTERVAL,
         {{i[deck->X].first.lower(), i[deck->Y].first.lower(), i[deck->Z].first.lower()},
          {i[deck->X].first.upper(), i[deck->Y].first.upper(), i[deck->Z].first.upper()}});
-
-    // Finally, store the Oracle contexts
-    for (auto& o : deck->oracles)
-    {
-        p->pushContext(o->push());
-    }
 
     return std::make_pair(out, std::move(p));
 }

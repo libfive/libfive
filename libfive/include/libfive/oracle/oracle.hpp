@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/eval/eval_array_size.hpp"
 #include "libfive/eval/interval.hpp"
 #include "libfive/eval/feature.hpp"
+#include "libfive/eval/tape.hpp"
 
 #include "libfive/oracle/oracle_context.hpp"
 
@@ -66,9 +67,10 @@ public:
      *  the oracle for operations on the most recent interval region, which
      *  must have been assigned with set() and evaluated with evalInterval.
      */
-    virtual std::shared_ptr<OracleContext> push()
+    virtual std::shared_ptr<OracleContext> push(Tape::Type t)
     {
-        return std::shared_ptr<OracleContext>();
+        (void)t;
+        return std::shared_ptr<OracleContext>(nullptr);
     }
 
     /*
