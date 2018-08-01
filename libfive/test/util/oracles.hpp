@@ -28,14 +28,12 @@ namespace Kernel {
 template <int A>
 class AxisOracle : public OracleStorage<>
 {
-    void evalInterval(Interval::I& out,
-                      std::shared_ptr<OracleContext>) override
+    void evalInterval(Interval::I& out) override
     {
         out = {lower(A), upper(A)};
     }
 
-    void evalPoint(float& out, size_t index,
-                   std::shared_ptr<OracleContext>) override
+    void evalPoint(float& out, size_t index) override
     {
         out = points(A, index);
     }
@@ -48,8 +46,7 @@ class AxisOracle : public OracleStorage<>
     }
 
     void evalFeatures(
-            boost::container::small_vector<Feature, 4>& out,
-            std::shared_ptr<OracleContext>) override
+            boost::container::small_vector<Feature, 4>& out) override
     {
         Eigen::Vector3f v = Eigen::Vector3f::Zero();
         v(A) = 1;
@@ -85,8 +82,7 @@ inline Tree convertToOracleAxes(Tree t)
 
 class CubeOracle : public OracleStorage<>
 {
-    void evalInterval(Interval::I& out,
-                      std::shared_ptr<OracleContext>) override
+    void evalInterval(Interval::I& out) override
     {
         using namespace boost::numeric; // for max
 
@@ -100,8 +96,7 @@ class CubeOracle : public OracleStorage<>
             max(-(Z + 1.5f), Z - 1.5f));
     }
 
-    void evalPoint(float& out, size_t index,
-                   std::shared_ptr<OracleContext>) override
+    void evalPoint(float& out, size_t index) override
     {
         float x = points(0, index);
         float y = points(1, index);
@@ -127,8 +122,7 @@ class CubeOracle : public OracleStorage<>
     }
 
     void evalFeatures(
-            boost::container::small_vector<Feature, 4>& out,
-            std::shared_ptr<OracleContext>) override
+            boost::container::small_vector<Feature, 4>& out) override
     {
         // We don't properly push epsilons, but that's okay for this
         // basic test (where we don't encounter other features).

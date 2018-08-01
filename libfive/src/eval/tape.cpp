@@ -109,11 +109,14 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
                 // Get the previous context, then use it to store
                 // a new context for the oracle, marking whether it
                 // has changed.
-                auto prev = tape->contexts.size() <= c.a
+                auto prev = (tape->contexts.size() <= c.a)
                     ? std::shared_ptr<OracleContext>(nullptr)
                     : tape->contexts[c.a];
 
-                contexts[c.a] = deck.oracles[c.a]->push(t, prev);
+                deck.oracles[c.a]->bind(prev);
+                contexts[c.a] = deck.oracles[c.a]->push(t);
+                deck.oracles[c.a]->unbind();
+
                 changed |= (contexts[c.a] != prev);
 
                 terminal = false; // TODO: refine this check

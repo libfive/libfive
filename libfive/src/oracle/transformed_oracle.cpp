@@ -36,11 +36,8 @@ void TransformedOracle::set(const Eigen::Vector3f& p, size_t index)
     zEvaluator.array.set(p, index);
 }
 
-void TransformedOracle::evalInterval(Interval::I& out,
-                                     std::shared_ptr<OracleContext> context)
+void TransformedOracle::evalInterval(Interval::I& out)
 {
-    (void)context;
-
     auto xRange = xEvaluator.interval.eval(lower, upper);
     auto yRange = yEvaluator.interval.eval(lower, upper);
     auto zRange = zEvaluator.interval.eval(lower, upper);
@@ -54,11 +51,8 @@ void TransformedOracle::evalInterval(Interval::I& out,
     underlying->evalInterval(out);
 }
 
-void TransformedOracle::evalPoint(float& out, size_t index,
-                                  std::shared_ptr<OracleContext> context)
+void TransformedOracle::evalPoint(float& out, size_t index)
 {
-    (void)context;
-
     Eigen::Vector3f transformedPoint{
         xEvaluator.feature.eval(points.col(index)),
         yEvaluator.feature.eval(points.col(index)),
@@ -70,11 +64,8 @@ void TransformedOracle::evalPoint(float& out, size_t index,
 
 void TransformedOracle::evalArray(
     Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
-                 LIBFIVE_EVAL_ARRAY_SIZE, Eigen::RowMajor>, 1, Eigen::Dynamic> out,
-    std::shared_ptr<OracleContext> context)
+                 LIBFIVE_EVAL_ARRAY_SIZE, Eigen::RowMajor>, 1, Eigen::Dynamic> out)
 {
-    (void)context;
-
     setUnderlyingArrayValues(out.cols());
     underlying->evalArray(out);
 }
@@ -92,38 +83,56 @@ void TransformedOracle::checkAmbiguous(
 
 void TransformedOracle::evalDerivs(
     Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-                 3, 1, true> out, size_t index,
-    std::shared_ptr<OracleContext> context)
+                 3, 1, true> out, size_t index)
 {
-    (void)context;
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
 
     Eigen::Matrix3f Jacobian;
-    Jacobian << xEvaluator.deriv.deriv(points.col(index)).template head<3>(),
-        yEvaluator.deriv.deriv(points.col(index)).template head<3>(),
-        zEvaluator.deriv.deriv(points.col(index)).template head<3>();
+    Jacobian <<
+        (ctx
+            ? xEvaluator.deriv.deriv(points.col(index), ctx->tx)
+            : xEvaluator.deriv.deriv(points.col(index))).template head<3>(),
+        (ctx
+            ? yEvaluator.deriv.deriv(points.col(index), ctx->ty)
+            : yEvaluator.deriv.deriv(points.col(index))).template head<3>(),
+        (ctx
+            ? zEvaluator.deriv.deriv(points.col(index), ctx->tz)
+            : zEvaluator.deriv.deriv(points.col(index))).template head<3>();
+
     Eigen::Vector3f transformedPoint{
         xEvaluator.deriv.eval(points.col(index)),
         yEvaluator.deriv.eval(points.col(index)),
         zEvaluator.deriv.eval(points.col(index))};
+
     underlying->set(transformedPoint, index);
+
+    underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalDerivs(out, index);
+    underlying->unbind();
+
     out = Jacobian * out.matrix();
 }
 
 void TransformedOracle::evalDerivArray(
     Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
-                 3, Eigen::Dynamic, true> out,
-    std::shared_ptr<OracleContext> context)
+                 3, Eigen::Dynamic, true> out)
 {
-    (void)context;
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
 
     TransformedOracle::setUnderlyingArrayValues(out.cols());
 
-    auto xDerivs = xEvaluator.array.derivs(out.cols());
-    auto yDerivs = yEvaluator.array.derivs(out.cols());
-    auto zDerivs = zEvaluator.array.derivs(out.cols());
+    auto xDerivs = ctx ? xEvaluator.array.derivs(out.cols(), ctx->tx)
+                           : xEvaluator.array.derivs(out.cols());
+    auto yDerivs = ctx ? yEvaluator.array.derivs(out.cols(), ctx->ty)
+                           : yEvaluator.array.derivs(out.cols());
+    auto zDerivs = ctx ? zEvaluator.array.derivs(out.cols(), ctx->tz)
+                           : zEvaluator.array.derivs(out.cols());
 
+    underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalDerivArray(out);
+    underlying->unbind();
 
     for (auto i = 0; i < out.cols(); ++i)
     {
@@ -136,17 +145,20 @@ void TransformedOracle::evalDerivArray(
 }
 
 void TransformedOracle::evalFeatures(
-    boost::container::small_vector<Feature, 4>& out,
-    std::shared_ptr<OracleContext> context)
+    boost::container::small_vector<Feature, 4>& out)
 {
-    (void)context;
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
 
     out.clear();
     auto pt = points.col(0);
-    Eigen::Vector3f transformedPoint{
-        xEvaluator.feature.eval(pt),
-        yEvaluator.feature.eval(pt),
-        zEvaluator.feature.eval(pt) };
+    Eigen::Vector3f transformedPoint = (context == nullptr)
+        ? Eigen::Vector3f(xEvaluator.feature.eval(pt),
+                          yEvaluator.feature.eval(pt),
+                          zEvaluator.feature.eval(pt))
+        : Eigen::Vector3f(xEvaluator.feature.eval(pt, ctx->tx),
+                          yEvaluator.feature.eval(pt, ctx->ty),
+                          zEvaluator.feature.eval(pt, ctx->ty));
 
     auto xFeatures = xEvaluator.feature.features_(pt);
     auto yFeatures = yEvaluator.feature.features_(pt);
@@ -154,7 +166,10 @@ void TransformedOracle::evalFeatures(
 
     boost::container::small_vector<Feature, 4> underlyingOut;
     underlying->set(transformedPoint);
+
+    underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalFeatures(underlyingOut);
+    underlying->unbind();
 
     /*  This O(n^4) loop should almost never have large values for all input
      *  sizes, barring intentionally pathological cases.
@@ -189,27 +204,28 @@ void TransformedOracle::evalFeatures(
     }
 }
 
-std::shared_ptr<OracleContext> TransformedOracle::push(
-            Tape::Type t, std::shared_ptr<OracleContext> context_)
+std::shared_ptr<OracleContext> TransformedOracle::push(Tape::Type t)
 {
     if (t != Tape::INTERVAL)
     {
         return nullptr;
     }
 
-    auto context = dynamic_cast<Context*>(context_.get());
-    assert(context_ == nullptr || context != nullptr);
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
 
     auto out = std::shared_ptr<Context>(new Context);
 
-    out->tx = context ? xEvaluator.interval.push(context->tx)
-                      : xEvaluator.interval.push();
-    out->ty = context ? yEvaluator.interval.push(context->ty)
-                      : yEvaluator.interval.push();
-    out->tz = context ? zEvaluator.interval.push(context->tz)
-                      : zEvaluator.interval.push();
+    out->tx = ctx ? xEvaluator.interval.push(ctx->tx)
+                  : xEvaluator.interval.push();
+    out->ty = ctx ? yEvaluator.interval.push(ctx->ty)
+                  : yEvaluator.interval.push();
+    out->tz = ctx ? zEvaluator.interval.push(ctx->tz)
+                  : zEvaluator.interval.push();
 
-    out->u = underlying->push(t, context ? context->u : nullptr);
+    underlying->bind(ctx ? ctx->u : nullptr);
+    out->u = underlying->push(t);
+    underlying->unbind();
 
     return out;
 }

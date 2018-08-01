@@ -57,10 +57,7 @@ public:
      *  Return the result of interval arithmetic over the range
      *  previously defined with set(Interval::I)
      */
-    void evalInterval(Interval::I& out)
-    {
-        evalInterval(out, context);
-    }
+    virtual void evalInterval(Interval::I& out)=0;
 
     /*
      *  Re-implemented by subclasses to return a context that specializes
@@ -69,11 +66,9 @@ public:
      *
      *  The 'context' argument represents the parent context, and may be null.
      */
-    virtual std::shared_ptr<OracleContext> push(
-            Tape::Type t, std::shared_ptr<OracleContext> context)
+    virtual std::shared_ptr<OracleContext> push(Tape::Type t)
     {
         (void)t;
-        (void)context;
         return std::shared_ptr<OracleContext>(nullptr);
     }
 
@@ -91,23 +86,23 @@ public:
      *  Returns the result of pointwise arithemetic on the value
      *  previously defined with set(Eigen::Vector3f, index)
      */
-    void evalPoint(float& out, size_t index=0)
-    {
-        evalPoint(out, index, context);
-    }
+    virtual void evalPoint(float& out, size_t index=0)=0;
 
     /*
      *  Block-level floating-point evaluation.
      *  By default, this simply calls evalPoint multiple times; overload it with
      *  a more efficient implementation if possible.
      */
-    void evalArray(
+    virtual void evalArray(
             Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
                                       LIBFIVE_EVAL_ARRAY_SIZE,
                                       Eigen::RowMajor>,
                          1, Eigen::Dynamic> out)
     {
-        evalArray(out, context);
+        for (unsigned i=0; i < out.cols(); ++i)
+        {
+            evalPoint(out(i), i);
+        }
     }
 
     /*
@@ -119,30 +114,30 @@ public:
      *
      *  In the case of ambiguous points, only one gradient is returned.
      */
-    void evalDerivs(
+    virtual void evalDerivs(
             Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-                         3, 1, true> out, size_t index=0)
-    {
-        evalDerivs(out, index, context);
-    }
+                         3, 1, true> out, size_t index=0)=0;
 
     /*
      *  Block-level floating-point evaluation.
      *  By default, this simply calls evalDerivArray multiple times; overload it with
      *  a more efficient implementation if possible.
      */
-    void evalDerivArray(
+    virtual void evalDerivArray(
             Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
                          3, Eigen::Dynamic, true> out)
     {
-        evalDerivArray(out, context);
+        Eigen::Array<float, 3, Eigen::Dynamic> dummy(3, out.cols());
+        for (unsigned i=0; i < out.cols(); ++i)
+        {
+            evalDerivs(dummy.col(i), i);
+        }
+        out = dummy;
     }
 
     /*  Returns the set of features at the point stored in slot 0.  */
-    void evalFeatures(boost::container::small_vector<Feature, 4>& out)
-    {
-        evalFeatures(out, context);
-    }
+    virtual void evalFeatures(
+            boost::container::small_vector<Feature, 4>& out)=0;
 
     /*
      *  Oracles are evaluated within a particular context,
@@ -169,47 +164,6 @@ public:
                          1, Eigen::Dynamic> out)=0;
 
 protected:
-    virtual void evalFeatures(
-            boost::container::small_vector<Feature, 4>& out,
-            std::shared_ptr<OracleContext> context)=0;
-
-    virtual void evalPoint(float& out, size_t index,
-                           std::shared_ptr<OracleContext> context)=0;
-
-    virtual void evalInterval(Interval::I& out,
-                              std::shared_ptr<OracleContext> context)=0;
-
-    virtual void evalDerivs(
-            Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-                         3, 1, true> out, size_t index,
-            std::shared_ptr<OracleContext> context)=0;
-
-    virtual void evalArray(
-            Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
-                                      LIBFIVE_EVAL_ARRAY_SIZE,
-                                      Eigen::RowMajor>,
-                         1, Eigen::Dynamic> out,
-            std::shared_ptr<OracleContext> context)
-    {
-        for (unsigned i=0; i < out.cols(); ++i)
-        {
-            evalPoint(out(i), i, context);
-        }
-    }
-
-    virtual void evalDerivArray(
-            Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
-                         3, Eigen::Dynamic, true> out,
-            std::shared_ptr<OracleContext> context)
-    {
-        Eigen::Array<float, 3, Eigen::Dynamic> dummy(3, out.cols());
-        for (unsigned i=0; i < out.cols(); ++i)
-        {
-            evalDerivs(dummy.col(i), i, context);
-        }
-        out = dummy;
-    }
-
     std::shared_ptr<OracleContext> context;
 };
 

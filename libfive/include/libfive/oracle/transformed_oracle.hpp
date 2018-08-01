@@ -38,17 +38,12 @@ public:
      */
     void set(const Eigen::Vector3f& p, size_t index=0) override;
 
-    void evalInterval(Interval::I& out,
-                      std::shared_ptr<OracleContext> context) override;
-
-    void evalPoint(float& out, size_t index,
-                   std::shared_ptr<OracleContext> context) override;
-
+    void evalInterval(Interval::I& out) override;
+    void evalPoint(float& out, size_t index) override;
     void evalArray(
         Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
                      LIBFIVE_EVAL_ARRAY_SIZE,Eigen::RowMajor>,
-                     1, Eigen::Dynamic> out,
-        std::shared_ptr<OracleContext> context) override;
+                     1, Eigen::Dynamic> out) override;
 
     void checkAmbiguous(
         Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
@@ -56,24 +51,20 @@ public:
 
     void evalDerivs(
         Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-                     3, 1, true> out, size_t index,
-        std::shared_ptr<OracleContext> context) override;
+                     3, 1, true> out, size_t index) override;
 
     void evalDerivArray(
         Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
-                     3, Eigen::Dynamic, true> out,
-        std::shared_ptr<OracleContext> context) override;
+                     3, Eigen::Dynamic, true> out) override;
 
     void evalFeatures(
-        boost::container::small_vector<Feature, 4>& out,
-        std::shared_ptr<OracleContext> context) override;
+        boost::container::small_vector<Feature, 4>& out) override;
 
     /*
      *  Returns a context that pushes into each evaluator and the underlying
      *  oracle.  The returned object is an instance of Context (defined below).
      */
-    std::shared_ptr<OracleContext> push(
-            Tape::Type t, std::shared_ptr<OracleContext> context) override;
+    std::shared_ptr<OracleContext> push(Tape::Type t) override;
 
 private:
     class Context : public OracleContext {
