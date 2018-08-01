@@ -27,7 +27,7 @@ using Pr = std::pair<Interval::I, bool>;
 // Turn a constant into an interval-and-NaN pair.
 Pr toPair(float inp)
 {
-  return isnan(inp)
+  return std::isnan(inp)
     ? Pr{Interval::I::empty(), true}
     : Pr{inp, false};
 }
@@ -277,7 +277,7 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
             SET_UNSAFE(
                (a_zero && (bPt == 0.f || (bPt < 0.f && nanOnZeroToNegative))) ||
-               (a.lower() < 0 && isnan(std::pow(-1.f, bPt))));
+               (a.lower() < 0 && std::isnan(std::pow(-1.f, bPt))));
             break;
         }
         case Opcode::OP_NTH_ROOT:
