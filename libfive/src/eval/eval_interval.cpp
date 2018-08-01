@@ -109,14 +109,14 @@ std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
     return std::make_pair(out, push(tape));
 }
 
+std::shared_ptr<Tape> IntervalEvaluator::push()
+{
+    return push(deck->tape);
+}
+
 std::shared_ptr<Tape> IntervalEvaluator::push(std::shared_ptr<Tape> tape)
 {
-    // This should only occur under special conditions when we're pushing
-    // in an Oracle (i.e. not through evalAndPush)
-    if (tape.get() == nullptr)
-    {
-        tape = deck->tape;
-    }
+    assert(tape.get() != nullptr);
 
     return Tape::push(tape, *deck,
         [&](Opcode::Opcode op, Clause::Id /* id */,

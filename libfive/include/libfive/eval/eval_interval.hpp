@@ -58,6 +58,7 @@ public:
      *  we need to call it as a standalone function.  If you're not using
      *  Oracles, then you probably don't need to call it.
      */
+    std::shared_ptr<Tape> push(/* uses top-level tape */);
     std::shared_ptr<Tape> push(std::shared_ptr<Tape> tape);
 
     /*

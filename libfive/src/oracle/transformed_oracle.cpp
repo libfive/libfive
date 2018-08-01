@@ -202,9 +202,13 @@ std::shared_ptr<OracleContext> TransformedOracle::push(
 
     auto out = std::shared_ptr<Context>(new Context);
 
-    out->tx = xEvaluator.interval.push(context ? context->tx : nullptr);
-    out->ty = yEvaluator.interval.push(context ? context->ty : nullptr);
-    out->tz = zEvaluator.interval.push(context ? context->tz : nullptr);
+    out->tx = context ? xEvaluator.interval.push(context->tx)
+                      : xEvaluator.interval.push();
+    out->ty = context ? yEvaluator.interval.push(context->ty)
+                      : yEvaluator.interval.push();
+    out->tz = context ? zEvaluator.interval.push(context->tz)
+                      : zEvaluator.interval.push();
+
     out->u = underlying->push(t, context ? context->u : nullptr);
 
     return out;
