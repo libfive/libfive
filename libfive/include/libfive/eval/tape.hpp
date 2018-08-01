@@ -54,28 +54,7 @@ public:
     size_t size() const { return t.size(); }
 
     /*  Returns the assigned context from this tape */
-    std::shared_ptr<OracleContext> getContext(unsigned i) const
-    {
-        if (contexts.size())
-        {
-            assert(i < contexts.size());
-            return contexts[i];
-        }
-        else if (parent)
-        {
-            return parent->getContext(i);
-        }
-        else
-        {
-            return nullptr;
-        }
-    }
-
-    /*  Stores a context */
-    void pushContext(std::shared_ptr<OracleContext> c)
-    {
-        contexts.push_back(c);
-    }
+    std::shared_ptr<OracleContext> getContext(unsigned i) const;
 
 protected:
     /*  The tape itself, as a vector of clauses  */

@@ -113,6 +113,9 @@ Deck::Deck(const Tree root)
     Y = clauses.at(axes[1].id());
     Z = clauses.at(axes[2].id());
 
+    // Add empty contexts for every oracle in the tape
+    tape->contexts.resize(oracles.size());
+
     // Store the index of the tree's root
     assert(clauses.at(root.id()) == 1);
     tape->i = clauses.at(root.id());

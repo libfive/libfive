@@ -183,6 +183,12 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
     return out;
 }
 
+std::shared_ptr<OracleContext> Tape::getContext(unsigned i) const
+{
+    assert(i < contexts.size());
+    return contexts[i];
+}
+
 std::shared_ptr<Tape> Tape::getBase(
         std::shared_ptr<Tape> tape,
         const Eigen::Vector3f& p)
