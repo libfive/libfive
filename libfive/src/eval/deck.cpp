@@ -121,4 +121,20 @@ Deck::Deck(const Tree root)
     tape->i = clauses.at(root.id());
 }
 
+void Deck::bindOracles(std::shared_ptr<Tape> tape)
+{
+    for (unsigned i=0; i < oracles.size(); ++i)
+    {
+        oracles[i]->bind(tape->getContext(i));
+    }
+}
+
+void Deck::unbindOracles()
+{
+    for (auto& o : oracles)
+    {
+        o->unbind();
+    }
+}
+
 }   // namespace Kernel

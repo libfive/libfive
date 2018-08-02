@@ -76,18 +76,14 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     i[deck->Y] = { {lower.y(), upper.y()}, false };
     i[deck->Z] = { {lower.z(), upper.z()}, false };
 
-    for (unsigned i=0; i < deck->oracles.size(); ++i)
-    {
-        deck->oracles[i]->set(lower, upper);
-        deck->oracles[i]->bind(tape->getContext(i));
-    }
-
-    auto root = tape->rwalk(*this);
-
     for (auto& o : deck->oracles)
     {
-        o->unbind();
+        o->set(lower, upper);
     }
+
+    deck->bindOracles(tape);
+    auto root = tape->rwalk(*this);
+    deck->unbindOracles();
 
     safe = !i[root].second;
     return i[root].first;

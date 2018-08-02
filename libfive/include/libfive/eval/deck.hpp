@@ -76,6 +76,16 @@ public:
     /*  Moves this tape into the spares bin, so it can be reused later */
     void claim(std::shared_ptr<Tape> tape) { spares.push_back(tape); }
 
+    /*
+     *  Binds all oracles to the contexts in the given tape
+     */
+    void bindOracles(std::shared_ptr<Tape> tape);
+
+    /*
+     *  Unbinds all oracles, setting their contexts to null
+     */
+    void unbindOracles();
+
 protected:
     /*  Temporary storage, used when pushing into a Tape  */
     std::vector<uint8_t> disabled;

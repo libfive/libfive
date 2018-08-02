@@ -90,7 +90,9 @@ DerivArrayEvaluator::derivs(size_t count, Tape::Handle tape)
     out.row(3).head(count) = values(count, tape);
 
     // Perform derivative evaluation, copying results into the out array
+    deck->bindOracles(tape);
     out.topLeftCorner(3, count) = d(tape->rwalk(*this)).leftCols(count);
+    deck->unbindOracles();
 
     // Return a block of valid results from the out array
     return out.block<4, Eigen::Dynamic>(0, 0, 4, count);

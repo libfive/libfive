@@ -67,7 +67,11 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt,
         o->set(pt);
     }
 
-    return f(tape->rwalk(*this));
+    deck->bindOracles(tape);
+    auto index = tape->rwalk(*this);
+    deck->unbindOracles();
+
+    return f(index);
 }
 
 std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(

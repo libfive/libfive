@@ -51,7 +51,10 @@ Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt,
 {
     // Perform value evaluation, saving results
     auto w = eval(pt, tape);
+
+    deck->bindOracles(tape);
     auto xyz = d.col(tape->rwalk(*this));
+    deck->unbindOracles();
 
     Eigen::Vector4f out;
     out << xyz, w;
