@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 namespace Kernel {
 
 /*
- *  A purely virtual class, used by Oracles for pushing
+ *  A virtual class, used by Oracles for pushing
  *  (in the same way that Evaluators use Tapes to evaluate a subset
  *  of their operations)
  */
@@ -29,6 +29,13 @@ class OracleContext
 {
 public:
     virtual ~OracleContext() { /* Nothing to do here */ }
+
+    /*
+     *  Checks whether any subsequent push operations on the parent
+     *  oracle can return a smaller context.  For example, a math
+     *  tree is terminal if there are no min / max nodes in it.
+     */
+    virtual bool isTerminal() { return false; }
 };
 
 }   // namespace Kernel

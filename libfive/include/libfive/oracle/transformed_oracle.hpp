@@ -73,6 +73,8 @@ private:
         Tape::Handle ty;
         Tape::Handle tz;
         std::shared_ptr<OracleContext> u;
+
+        bool isTerminal() override;
     };
 
     void setUnderlyingArrayValues(int count);

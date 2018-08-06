@@ -242,6 +242,13 @@ void TransformedOracle::setUnderlyingArrayValues(int count)
     }
 }
 
+bool TransformedOracle::Context::isTerminal()
+{
+    return tx->isTerminal() &&
+           ty->isTerminal() &&
+           tz->isTerminal() &&
+           u->isTerminal();
+}
 
 } //Namespace Kernel
 
