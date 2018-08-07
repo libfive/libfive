@@ -158,7 +158,7 @@ void TransformedOracle::evalFeatures(
                           zEvaluator.feature.eval(pt))
         : Eigen::Vector3f(xEvaluator.feature.eval(pt, ctx->tx),
                           yEvaluator.feature.eval(pt, ctx->ty),
-                          zEvaluator.feature.eval(pt, ctx->ty));
+                          zEvaluator.feature.eval(pt, ctx->tz));
 
     auto xFeatures = xEvaluator.feature.features_(pt);
     auto yFeatures = yEvaluator.feature.features_(pt);
