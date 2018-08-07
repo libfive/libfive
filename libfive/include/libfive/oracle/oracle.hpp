@@ -63,8 +63,6 @@ public:
      *  Re-implemented by subclasses to return a context that specializes
      *  the oracle for operations on the most recent interval region, which
      *  must have been assigned with set() and evaluated with evalInterval.
-     *
-     *  The 'context' argument represents the parent context, and may be null.
      */
     virtual std::shared_ptr<OracleContext> push(Tape::Type t)
     {
