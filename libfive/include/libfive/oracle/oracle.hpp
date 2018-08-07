@@ -106,6 +106,14 @@ public:
     }
 
     /*
+     *  Sets appropriate bits to 1 if the given point (as set with
+     *  set(Eigen::Vector3f, i) and evaluated with evaluArray) is ambiguous.
+     */
+    virtual void checkAmbiguous(
+            Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
+                         1, Eigen::Dynamic> out)=0;
+
+    /*
      *  Returns the result of gradient arithemetic on the value
      *  previously defined with set(Eigen::Vector3f).
      *
@@ -154,14 +162,6 @@ public:
     {
         this->context = nullptr;
     }
-
-    /*
-     *  Sets appropriate bits to 1 if the given point (as set with
-     *  set(Eigen::Vector3f, i) and evaluated with evaluArray) is ambiguous.
-     */
-    virtual void checkAmbiguous(
-            Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
-                         1, Eigen::Dynamic> out)=0;
 
 protected:
     std::shared_ptr<OracleContext> context;
