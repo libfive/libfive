@@ -49,7 +49,7 @@ public:
      */
     void evalDerivs(
             Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-                         3, 1, true> out, size_t index) override
+                         3, 1, true> out, size_t index=0) override
     {
         Eigen::Vector3f before = points.col(0);
         points.col(0) = points.col(index);

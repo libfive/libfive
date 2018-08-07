@@ -39,7 +39,9 @@ public:
     void set(const Eigen::Vector3f& p, size_t index=0) override;
 
     void evalInterval(Interval::I& out) override;
-    void evalPoint(float& out, size_t index) override;
+
+    void evalPoint(float& out, size_t index=0) override;
+
     void evalArray(
         Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
                      LIBFIVE_EVAL_ARRAY_SIZE,Eigen::RowMajor>,
@@ -51,7 +53,7 @@ public:
 
     void evalDerivs(
         Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-                     3, 1, true> out, size_t index) override;
+                     3, 1, true> out, size_t index=0) override;
 
     void evalDerivArray(
         Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,

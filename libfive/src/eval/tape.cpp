@@ -69,7 +69,7 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
     // but we'll call push on each Oracle to see if we should refine it
     // any further.
     std::vector<std::shared_ptr<OracleContext>> contexts = tape->contexts;
-    contexts.resize(deck.oracles.size()); // In case the parent has no contexts
+    assert(contexts.size() == deck.oracles.size());
 
     bool terminal = true;
     bool changed = false;
@@ -109,9 +109,8 @@ Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
                 // Get the previous context, then use it to store
                 // a new context for the oracle, marking whether it
                 // has changed.
-                auto prev = (tape->contexts.size() <= c.a)
-                    ? std::shared_ptr<OracleContext>(nullptr)
-                    : tape->contexts[c.a];
+                assert(c.a < tape->contexts.size());
+                auto prev = tape->contexts[c.a];
 
                 deck.oracles[c.a]->bind(prev);
                 contexts[c.a] = deck.oracles[c.a]->push(t);
