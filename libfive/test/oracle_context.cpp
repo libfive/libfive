@@ -43,3 +43,25 @@ TEST_CASE("OracleContext: TransformedOracle evaluation")
     auto mesh = Mesh::render(t, r, 0.1);
     REQUIRE(true);
 }
+
+TEST_CASE("OracleContext: TransformedOracle push/pop")
+{
+    // Construct a tree that is min(X, Y), but done with oracles
+    auto cube = Tree(std::unique_ptr<const OracleClause>(new AxisOracleClause<0>));
+    auto remapped = cube.remap(min(Tree::X(), Tree::Y()), Tree::Y(), Tree::Z());
+
+    auto deck = std::make_shared<Deck>(remapped);
+    PointEvaluator p(deck);
+    REQUIRE(p.eval({1.0, 2.0, 3.0}) == 1.0);
+    REQUIRE(p.eval({1.0, 0.0, 3.0}) == 0.0);
+
+    // Do an interval evaluation that selects the X branch of min(X, Y)
+    IntervalEvaluator i(deck);
+    auto o = i.evalAndPush({1.0, 2.0, 3.0}, {1.5, 2.5, 3.5});
+    REQUIRE(o.first.lower() == 1.0);
+    REQUIRE(o.first.upper() == 1.5);
+
+    // Check to make sure that the X branch is selected in the tape
+    REQUIRE(p.eval({1.0, 2.0, 3.0}, o.second) == 1.0);
+    REQUIRE(p.eval({1.0, 0.0, 3.0}, o.second) == 1.0);
+}
