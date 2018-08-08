@@ -53,13 +53,22 @@ void TransformedOracle::evalInterval(Interval::I& out)
 
 void TransformedOracle::evalPoint(float& out, size_t index)
 {
-    Eigen::Vector3f transformedPoint{
-        xEvaluator.feature.eval(points.col(index)),
-        yEvaluator.feature.eval(points.col(index)),
-        zEvaluator.feature.eval(points.col(index)) };
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
+
+    Eigen::Vector3f transformedPoint = (context == nullptr)
+        ? Eigen::Vector3f(xEvaluator.feature.eval(points.col(index)),
+                          yEvaluator.feature.eval(points.col(index)),
+                          zEvaluator.feature.eval(points.col(index)))
+        : Eigen::Vector3f(xEvaluator.feature.eval(points.col(index), ctx->tx),
+                          yEvaluator.feature.eval(points.col(index), ctx->ty),
+                          zEvaluator.feature.eval(points.col(index), ctx->tz));
 
     underlying->set(transformedPoint, index);
+
+    underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalPoint(out, index);
+    underlying->unbind();
 }
 
 void TransformedOracle::evalArray(
@@ -124,11 +133,11 @@ void TransformedOracle::evalDerivArray(
     TransformedOracle::setUnderlyingArrayValues(out.cols());
 
     auto xDerivs = ctx ? xEvaluator.array.derivs(out.cols(), ctx->tx)
-                           : xEvaluator.array.derivs(out.cols());
+                       : xEvaluator.array.derivs(out.cols());
     auto yDerivs = ctx ? yEvaluator.array.derivs(out.cols(), ctx->ty)
-                           : yEvaluator.array.derivs(out.cols());
+                       : yEvaluator.array.derivs(out.cols());
     auto zDerivs = ctx ? zEvaluator.array.derivs(out.cols(), ctx->tz)
-                           : zEvaluator.array.derivs(out.cols());
+                       : zEvaluator.array.derivs(out.cols());
 
     underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalDerivArray(out);
@@ -233,9 +242,16 @@ std::shared_ptr<OracleContext> TransformedOracle::push(Tape::Type t)
 
 void TransformedOracle::setUnderlyingArrayValues(int count)
 {
-    auto xPoints = xEvaluator.array.values(count);
-    auto yPoints = yEvaluator.array.values(count);
-    auto zPoints = zEvaluator.array.values(count);
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
+
+    auto xPoints = context ? xEvaluator.array.values(count)
+                           : xEvaluator.array.values(count, ctx->tx);
+    auto yPoints = context ? yEvaluator.array.values(count)
+                           : yEvaluator.array.values(count, ctx->ty);
+    auto zPoints = context ? zEvaluator.array.values(count)
+                           : zEvaluator.array.values(count, ctx->tz);
+
     for (auto i = 0; i < count; ++i)
     {
         underlying->set({ xPoints(i), yPoints(i), zPoints(i) }, i);
