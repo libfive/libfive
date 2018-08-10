@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QApplication>
 #include <QMainWindow>
 #include <QMessageBox>
+#include <QFileSystemWatcher>
 
 #include "studio/args.hpp"
 
@@ -56,6 +57,8 @@ protected slots:
     void onAbout(bool=false);
     void onLoadTutorial(bool=false);
     void onShowDocs(bool=false);
+    void onOpenAutoLoad(bool=false);
+    void onAutoLoad();
 
     void onExportReady(QList<const Kernel::Mesh*> shapes);
     void setDocs(Documentation* docs);
@@ -78,6 +81,8 @@ protected:
     /*  Filename of the current file, or empty string */
     QString filename;
 
+    /*  File watcher to check for changes to filename */
+    QFileSystemWatcher autoLoader;
     /*  Used to store the export target while meshes are being generated
      *  and the main event loop is blocked by a progress dialog */
     QString export_filename;

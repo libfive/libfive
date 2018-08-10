@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QSplitter>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QFileSystemWatcher>
 
 #include "studio/window.hpp"
 #include "studio/documentation.hpp"
@@ -78,6 +79,16 @@ Window::Window(Arguments args)
     auto open_action = file_menu->addAction("Open...");
     open_action->setShortcut(QKeySequence::Open);
     connect(open_action, &QAction::triggered, this, &Window::onOpen);
+
+    // Add an "auto-load from file" item, which works like open
+    // except it automatically detects changes in the file and reloads.
+    // TODO: automatically minimize editor (drag the editor-viewer border
+    // all the way to the left)
+    auto autoload_action = file_menu->addAction("autoload from file...");
+    connect(autoload_action, &QAction::triggered,
+            this, &Window::onOpenAutoLoad);
+    connect(&autoLoader, &QFileSystemWatcher::fileChanged,
+            this, &Window::onAutoLoad);
 
     // Add a "Revert to saved" item, which is only enabled if there are
     // unsaved changes and there's an existing filename to load from.
@@ -272,6 +283,44 @@ bool Window::loadFile(QString f)
         editor->setModified(false);
         return true;
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+// File auto-loading, as a short-term solution to adding interactive usage
+// with Emacs and other text editors.
+// TODO: add proper scheme bindings for native interop.
+void Window::onOpenAutoLoad(bool)
+{
+    CHECK_UNSAVED();
+
+    // Load as normal
+    QString f = QFileDialog::getOpenFileName(this, "Select file for autoload",
+                                             workingDirectory(), "*.io;;*.ao");
+    if (!f.isEmpty() && loadFile(f))
+    {
+        setFilename(f);
+    }
+    loadFile(f);
+    // Sanity check, there should be NO directories being watched
+    Q_ASSERT(!autoLoader.directories().isEmpty());
+
+    // Make sure there's only one path being watched for changes
+    if(!autoLoader.files().isEmpty())
+    {
+        autoLoader.removePaths(autoLoader.files());
+    }
+    autoLoader.addPath(filename);
+}
+
+void Window::onAutoLoad()
+{
+    // All checks were done in onOpenAutoLoad,
+    // so none should be needed here
+    Q_ASSERT(!filename.isEmpty());
+    loadFile(filename);
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
