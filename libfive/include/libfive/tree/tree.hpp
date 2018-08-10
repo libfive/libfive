@@ -233,4 +233,4 @@ OP_BINARY(compare);
 std::ostream& operator<<(std::ostream& stream, const Kernel::Tree& tree);
 
 // This include goes at the bottom to work around circular ordering
-#include "libfive/tree/oracle_clause.hpp"
+#include "libfive/oracle/oracle_clause.hpp"

@@ -19,6 +19,7 @@ set(SRCS main.cpp
     mesh.cpp
     neighbors.cpp
     oracle.cpp
+    oracle_context.cpp
     region.cpp
     solver.cpp
     transformed_oracle.cpp

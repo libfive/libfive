@@ -54,7 +54,9 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
     eval(p, tape);
 
     // Everybody do the tape walk!
+    deck->bindOracles(tape);
     auto ti = tape->rwalk(*this);
+    deck->unbindOracles();
 
     // Unpack from flat array into map
     // (to allow correlating back to VARs in Tree)

@@ -111,7 +111,9 @@ const boost::container::small_vector<Feature, 4>&
     auto handle = evalAndPush(p, tape);
 
     // Evaluate feature-wise
+    deck->bindOracles(handle.second);
     auto index = handle.second->rwalk(*this);
+    deck->unbindOracles();
 
     return d(index);
 }

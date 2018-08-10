@@ -18,8 +18,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #pragma once
 
-#include "libfive/eval/oracle_storage.hpp"
-#include "libfive/tree/oracle_clause.hpp"
+#include "libfive/oracle/oracle_storage.hpp"
+#include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/tree/tree.hpp"
 
 namespace Kernel {
@@ -110,7 +110,7 @@ class CubeOracle : public OracleStorage<>
 
     void checkAmbiguous(
             Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
-                         1, Eigen::Dynamic> out) override
+            1, Eigen::Dynamic> out) override
     {
         out = out ||
             (points.leftCols(out.cols()).row(0).cwiseAbs() ==

@@ -59,7 +59,12 @@ Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t count, Tape::Handle tape)
 {
     setCount(count);
-    return f.block<1, Eigen::Dynamic>(tape->rwalk(*this), 0, 1, count);
+
+    deck->bindOracles(tape);
+    auto index = tape->rwalk(*this);
+    deck->unbindOracles();
+
+    return f.block<1, Eigen::Dynamic>(index, 0, 1, count);
 }
 
 void ArrayEvaluator::setCount(size_t count)

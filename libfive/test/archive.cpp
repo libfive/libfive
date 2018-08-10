@@ -22,8 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/tree/serializer.hpp"
 #include "libfive/tree/deserializer.hpp"
 
-#include "libfive/tree/oracle_clause.hpp"
-#include "libfive/eval/oracle.hpp"
+#include "libfive/oracle/oracle_clause.hpp"
+#include "libfive/oracle/oracle.hpp"
 
 using namespace Kernel;
 
