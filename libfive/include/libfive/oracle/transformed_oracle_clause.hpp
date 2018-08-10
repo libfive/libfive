@@ -18,7 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #pragma once
 
-#include "libfive/tree/oracle_clause.hpp"
+#include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/tree/tree.hpp"
 
 namespace Kernel {

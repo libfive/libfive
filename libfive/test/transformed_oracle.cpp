@@ -21,8 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/region.hpp"
-#include "libfive/tree/oracle_clause.hpp"
-#include "libfive/eval/oracle_storage.hpp"
+#include "libfive/oracle/oracle_clause.hpp"
+#include "libfive/oracle/oracle_storage.hpp"
 #include "libfive/eval/deck.hpp"
 
 #include "util/shapes.hpp"

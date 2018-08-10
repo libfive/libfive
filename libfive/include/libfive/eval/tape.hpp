@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/tree/tree.hpp"
 
 #include "libfive/render/brep/region.hpp"
+#include "libfive/oracle/oracle_context.hpp"
 
 namespace Kernel {
 class Deck; /*  Foward declaration */
@@ -52,9 +53,23 @@ public:
     /*  Returns tape length (used in unit tests to check for shrinkage) */
     size_t size() const { return t.size(); }
 
+    /*  Returns the assigned context from this tape */
+    std::shared_ptr<OracleContext> getContext(unsigned i) const;
+
+    /*  Returns whether this tape is marked as terminal.
+     *
+     *  A terminal tape has no operations that can be simplified
+     *  (e.g. no min / max clauses), so pushing is a no-op.
+     */
+    bool isTerminal() const { return terminal; }
+
 protected:
     /*  The tape itself, as a vector of clauses  */
     std::vector<Clause> t;
+
+    /*  OracleContext handles used to speed up oracle evaluation
+     *  by letting them push into the tree as well. */
+    std::vector<std::shared_ptr<OracleContext>> contexts;
 
     /*  Root clause of the tape  */
     Clause::Id i;

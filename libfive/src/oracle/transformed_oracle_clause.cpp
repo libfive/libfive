@@ -16,8 +16,8 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "libfive/tree/transformed_oracle_clause.hpp"
-#include "libfive/eval/transformed_oracle.hpp"
+#include "libfive/oracle/transformed_oracle_clause.hpp"
+#include "libfive/oracle/transformed_oracle.hpp"
 
 #include "libfive/tree/serializer.hpp"
 #include "libfive/tree/deserializer.hpp"
