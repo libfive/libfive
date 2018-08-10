@@ -106,6 +106,9 @@ public:
     /*
      *  Sets appropriate bits to 1 if the given point (as set with
      *  set(Eigen::Vector3f, i) and evaluated with evaluArray) is ambiguous.
+     *
+     *  This function must only be called after evalArray is called
+     *  (with the same result block size)
      */
     virtual void checkAmbiguous(
             Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
@@ -126,8 +129,12 @@ public:
 
     /*
      *  Block-level floating-point evaluation.
+     *
      *  By default, this simply calls evalDerivArray multiple times; overload it with
      *  a more efficient implementation if possible.
+     *
+     *  This function must only be called after evalArray is called
+     *  (with the same output block size).
      */
     virtual void evalDerivArray(
             Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,

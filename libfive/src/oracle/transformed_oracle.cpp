@@ -56,13 +56,13 @@ void TransformedOracle::evalPoint(float& out, size_t index)
     auto ctx = dynamic_cast<Context*>(context.get());
     assert(context == nullptr || ctx != nullptr);
 
-    Eigen::Vector3f transformedPoint = (context == nullptr)
-        ? Eigen::Vector3f(xEvaluator.feature.eval(points.col(index)),
-                          yEvaluator.feature.eval(points.col(index)),
-                          zEvaluator.feature.eval(points.col(index)))
-        : Eigen::Vector3f(xEvaluator.feature.eval(points.col(index), ctx->tx),
+    Eigen::Vector3f transformedPoint = ctx
+        ? Eigen::Vector3f(xEvaluator.feature.eval(points.col(index), ctx->tx),
                           yEvaluator.feature.eval(points.col(index), ctx->ty),
-                          zEvaluator.feature.eval(points.col(index), ctx->tz));
+                          zEvaluator.feature.eval(points.col(index), ctx->tz))
+        : Eigen::Vector3f(xEvaluator.feature.eval(points.col(index)),
+                          yEvaluator.feature.eval(points.col(index)),
+                          zEvaluator.feature.eval(points.col(index)));
 
     underlying->set(transformedPoint, index);
 
@@ -75,15 +75,31 @@ void TransformedOracle::evalArray(
     Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
                  LIBFIVE_EVAL_ARRAY_SIZE, Eigen::RowMajor>, 1, Eigen::Dynamic> out)
 {
-    setUnderlyingArrayValues(out.cols());
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
+
+    const int count = out.cols();
+    auto xPoints = ctx ? xEvaluator.array.values(count, ctx->tx)
+                       : xEvaluator.array.values(count);
+    auto yPoints = ctx ? yEvaluator.array.values(count, ctx->ty)
+                       : yEvaluator.array.values(count);
+    auto zPoints = ctx ? zEvaluator.array.values(count, ctx->tz)
+                       : zEvaluator.array.values(count);
+
+    for (auto i = 0; i < count; ++i)
+    {
+        underlying->set({ xPoints(i), yPoints(i), zPoints(i) }, i);
+    }
+
+    underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalArray(out);
+    underlying->unbind();
 }
 
 void TransformedOracle::checkAmbiguous(
     Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
                  1, Eigen::Dynamic> out)
 {
-    setUnderlyingArrayValues(out.cols());
     underlying->checkAmbiguous(out);
     out = out || xEvaluator.array.getAmbiguous(out.cols())
               || yEvaluator.array.getAmbiguous(out.cols())
@@ -130,8 +146,6 @@ void TransformedOracle::evalDerivArray(
     auto ctx = dynamic_cast<Context*>(context.get());
     assert(context == nullptr || ctx != nullptr);
 
-    TransformedOracle::setUnderlyingArrayValues(out.cols());
-
     auto xDerivs = ctx ? xEvaluator.array.derivs(out.cols(), ctx->tx)
                        : xEvaluator.array.derivs(out.cols());
     auto yDerivs = ctx ? yEvaluator.array.derivs(out.cols(), ctx->ty)
@@ -161,13 +175,13 @@ void TransformedOracle::evalFeatures(
 
     out.clear();
     auto pt = points.col(0);
-    Eigen::Vector3f transformedPoint = (context == nullptr)
-        ? Eigen::Vector3f(xEvaluator.feature.eval(pt),
-                          yEvaluator.feature.eval(pt),
-                          zEvaluator.feature.eval(pt))
-        : Eigen::Vector3f(xEvaluator.feature.eval(pt, ctx->tx),
+    Eigen::Vector3f transformedPoint = ctx
+        ? Eigen::Vector3f(xEvaluator.feature.eval(pt, ctx->tx),
                           yEvaluator.feature.eval(pt, ctx->ty),
-                          zEvaluator.feature.eval(pt, ctx->tz));
+                          zEvaluator.feature.eval(pt, ctx->tz))
+        : Eigen::Vector3f(xEvaluator.feature.eval(pt),
+                          yEvaluator.feature.eval(pt),
+                          zEvaluator.feature.eval(pt));
 
     auto xFeatures = xEvaluator.feature.features_(pt);
     auto yFeatures = yEvaluator.feature.features_(pt);
@@ -239,24 +253,6 @@ std::shared_ptr<OracleContext> TransformedOracle::push(Tape::Type t)
     return out;
 }
 
-
-void TransformedOracle::setUnderlyingArrayValues(int count)
-{
-    auto ctx = dynamic_cast<Context*>(context.get());
-    assert(context == nullptr || ctx != nullptr);
-
-    auto xPoints = context ? xEvaluator.array.values(count)
-                           : xEvaluator.array.values(count, ctx->tx);
-    auto yPoints = context ? yEvaluator.array.values(count)
-                           : yEvaluator.array.values(count, ctx->ty);
-    auto zPoints = context ? zEvaluator.array.values(count)
-                           : zEvaluator.array.values(count, ctx->tz);
-
-    for (auto i = 0; i < count; ++i)
-    {
-        underlying->set({ xPoints(i), yPoints(i), zPoints(i) }, i);
-    }
-}
 
 bool TransformedOracle::Context::isTerminal()
 {

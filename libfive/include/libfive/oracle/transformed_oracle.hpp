@@ -79,8 +79,6 @@ private:
         bool isTerminal() override;
     };
 
-    void setUnderlyingArrayValues(int count);
-
     const std::unique_ptr<Oracle> underlying;
     CompleteEvaluator xEvaluator;
     CompleteEvaluator yEvaluator;
