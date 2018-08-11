@@ -57,7 +57,6 @@ protected slots:
     void onAbout(bool=false);
     void onLoadTutorial(bool=false);
     void onShowDocs(bool=false);
-    void onOpenAutoLoad(bool=false);
     void onAutoLoad();
 
     void onExportReady(QList<const Kernel::Mesh*> shapes);
@@ -82,7 +81,11 @@ protected:
     QString filename;
 
     /*  File watcher to check for changes to filename */
-    QFileSystemWatcher autoLoader;
+    QFileSystemWatcher watcher;
+
+    /*  True when we should automatically reload the file on changes */
+    bool autoreload=false;
+
     /*  Used to store the export target while meshes are being generated
      *  and the main event loop is blocked by a progress dialog */
     QString export_filename;
