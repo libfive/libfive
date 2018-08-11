@@ -77,7 +77,7 @@ protected:
     void setFilename(const QString& str);
     QString workingDirectory() const;
 
-    bool loadFile(QString f);
+    bool loadFile(QString f, bool reload=false);
     bool saveFile(QString f);
 
     /*  Filename of the current file, or empty string */

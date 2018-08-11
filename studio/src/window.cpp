@@ -287,7 +287,7 @@ bool Window::onRevert(bool)
     return loadFile(filename);
 }
 
-bool Window::loadFile(QString f)
+bool Window::loadFile(QString f, bool reload)
 {
     QFile file(f);
     if (!file.open(QIODevice::ReadOnly))
@@ -303,7 +303,7 @@ bool Window::loadFile(QString f)
     }
     else
     {
-        editor->setScript(file.readAll());
+        editor->setScript(file.readAll(), reload);
         editor->setModified(false);
         return true;
     }
@@ -311,12 +311,12 @@ bool Window::loadFile(QString f)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Window::onAutoLoad(const QString& s)
+void Window::onAutoLoad(const QString&)
 {
     if (autoreload)
     {
         Q_ASSERT(!filename.isEmpty());
-        loadFile(filename);
+        loadFile(filename, true);
     }
 }
 
