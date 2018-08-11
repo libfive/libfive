@@ -229,9 +229,9 @@ void Editor::setResult(QColor color, QString result)
     err->setFixedHeight(std::min(this->height()/3, lines * fm.lineSpacing()));
 }
 
-void Editor::setScript(const QString& s)
+void Editor::setScript(const QString& s, bool reload)
 {
-    first_change = true;
+    first_change = !reload;
     script->setPlainText(s);
 }
 

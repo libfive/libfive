@@ -33,7 +33,7 @@ class Editor : public QWidget
     Q_OBJECT
 public:
     Editor(QWidget* parent=nullptr, bool do_syntax=true);
-    void setScript(const QString& s);
+    void setScript(const QString& s, bool reload=false);
     QString getScript() const;
     void setModified(bool m);
 

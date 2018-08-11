@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QApplication>
 #include <QMainWindow>
 #include <QMessageBox>
+#include <QFileSystemWatcher>
 
 #include "studio/args.hpp"
 
@@ -44,39 +45,49 @@ public:
      *  Loads a file by path, properly checking if the existing document
      *  is unsaved and asking the user to save it in that case.
      */
-    void openFile(const QString& name);
+    bool openFile(const QString& name);
 
 protected slots:
-    void onOpen(bool=false);
-    void onRevert(bool=false);
+    bool onOpen(bool=false);
+    bool onOpenViewer(bool=false);
+    bool onRevert(bool=false);
     bool onSave(bool=false);
     bool onSaveAs(bool=false);
-    void onNew(bool=false);
+    bool onNew(bool=false);
     void onExport(bool=false);
     void onAbout(bool=false);
-    void onLoadTutorial(bool=false);
+    bool onLoadTutorial(bool=false);
     void onShowDocs(bool=false);
+    void onAutoLoad(const QString&);
 
     void onExportReady(QList<const Kernel::Mesh*> shapes);
     void setDocs(Documentation* docs);
 
 signals:
     void exportDone();
+    void setAutoload(bool);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
+    bool dropEvent_(QDropEvent *event);
     void closeEvent(QCloseEvent* event) override;
 
     QMessageBox::StandardButton checkUnsaved();
     void setFilename(const QString& str);
     QString workingDirectory() const;
 
-    bool loadFile(QString f);
+    bool loadFile(QString f, bool reload=false);
     bool saveFile(QString f);
 
     /*  Filename of the current file, or empty string */
     QString filename;
+
+    /*  File watcher to check for changes to filename */
+    QFileSystemWatcher watcher;
+
+    /*  True when we should automatically reload the file on changes */
+    bool autoreload=false;
 
     /*  Used to store the export target while meshes are being generated
      *  and the main event loop is blocked by a progress dialog */
