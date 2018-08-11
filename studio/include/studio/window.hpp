@@ -45,29 +45,32 @@ public:
      *  Loads a file by path, properly checking if the existing document
      *  is unsaved and asking the user to save it in that case.
      */
-    void openFile(const QString& name);
+    bool openFile(const QString& name);
 
 protected slots:
-    void onOpen(bool=false);
-    void onRevert(bool=false);
+    bool onOpen(bool=false);
+    bool onOpenViewer(bool=false);
+    bool onRevert(bool=false);
     bool onSave(bool=false);
     bool onSaveAs(bool=false);
-    void onNew(bool=false);
+    bool onNew(bool=false);
     void onExport(bool=false);
     void onAbout(bool=false);
-    void onLoadTutorial(bool=false);
+    bool onLoadTutorial(bool=false);
     void onShowDocs(bool=false);
-    void onAutoLoad();
+    void onAutoLoad(const QString&);
 
     void onExportReady(QList<const Kernel::Mesh*> shapes);
     void setDocs(Documentation* docs);
 
 signals:
     void exportDone();
+    void setAutoload(bool);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
+    bool dropEvent_(QDropEvent *event);
     void closeEvent(QCloseEvent* event) override;
 
     QMessageBox::StandardButton checkUnsaved();

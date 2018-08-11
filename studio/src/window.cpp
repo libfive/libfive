@@ -36,10 +36,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define CHECK_UNSAVED() \
 switch (checkUnsaved())                                                     \
 {                                                                           \
-    case QMessageBox::Save:     if (!onSave()) return;  /* FALLTHROUGH */   \
+    case QMessageBox::Save:     if (!onSave()) return false;                \
     case QMessageBox::Ok:                               /* FALLTHROUGH */   \
     case QMessageBox::Discard:  break;                                      \
-    case QMessageBox::Cancel:   return;                                     \
+    case QMessageBox::Cancel:   return false;                               \
     default:    assert(false);                                              \
 }
 
@@ -64,6 +64,12 @@ Window::Window(Arguments args)
     connect(editor, &Editor::settingsChanged,
             view, &View::onSettingsFromScript);
 
+    // Always run the autoload check, looking at the local
+    // variable to decide whether or not to actually
+    // reload the file.
+    connect(&watcher, &QFileSystemWatcher::fileChanged,
+            this, &Window::onAutoLoad);
+
     // Connect drag start + end signals, so the user can't edit
     // the script while dragging in the 3D viewport
     connect(view, &View::dragStart, editor, &Editor::onDragStart);
@@ -80,6 +86,9 @@ Window::Window(Arguments args)
     open_action->setShortcut(QKeySequence::Open);
     connect(open_action, &QAction::triggered, this, &Window::onOpen);
 
+    auto open_viewer = file_menu->addAction("Open as viewer...");
+    connect(open_viewer, &QAction::triggered, this, &Window::onOpenViewer);
+
     // Add a "Revert to saved" item, which is only enabled if there are
     // unsaved changes and there's an existing filename to load from.
     auto revert_action = file_menu->addAction("Revert to saved");
@@ -89,11 +98,6 @@ Window::Window(Arguments args)
                 revert_action->setEnabled(
                         changed && !this->filename.isEmpty()); });
     revert_action->setEnabled(false);
-
-    auto autoload_action = file_menu->addAction("Automatically reload changes");
-    connect(autoload_action, &QAction::triggered, this,
-            [&](bool b) { autoreload = b; });
-    autoload_action->setCheckable(true);
 
     file_menu->addSeparator();
 
@@ -123,6 +127,17 @@ Window::Window(Arguments args)
     redo_action->setShortcut(QKeySequence::Redo);
     connect(redo_action, &QAction::triggered, editor, &Editor::redo);
     connect(editor, &Editor::redoAvailable, redo_action, &QAction::setEnabled);
+
+    edit_menu->addSeparator();
+
+    auto autoload_action = edit_menu->addAction("Automatically reload changes");
+    connect(autoload_action, &QAction::triggered, this,
+            [&](bool b) { autoreload = b; });
+    autoload_action->setCheckable(true);
+
+    connect(this, &Window::setAutoload, autoload_action,
+            [=](bool b) { autoload_action->setChecked(b);
+                          this->autoreload = b; });
 
     // Settings menu
     auto view_menu = menuBar()->addMenu("&View");
@@ -229,33 +244,47 @@ Window::Window(Arguments args)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Window::openFile(const QString& name)
+bool Window::openFile(const QString& name)
 {
     CHECK_UNSAVED();
 
     if (loadFile(name))
     {
         setFilename(name);
+        return true;
     }
+    emit(setAutoload(false));
+    return false;
 }
 
-void Window::onOpen(bool)
+bool Window::onOpen(bool)
 {
     CHECK_UNSAVED();
 
     QString f = QFileDialog::getOpenFileName(this, "Open",
             workingDirectory(), "*.io;;*.ao");
-    if (!f.isEmpty() && loadFile(f))
+    if (!f.isEmpty())
     {
-        setFilename(f);
+        return openFile(f);
     }
+    return false;
 }
 
-void Window::onRevert(bool)
+bool Window::onOpenViewer(bool)
+{
+    auto result = onOpen();
+    if (result)
+    {
+        emit(setAutoload(true));
+    }
+    return result;
+}
+
+bool Window::onRevert(bool)
 {
     CHECK_UNSAVED();
     Q_ASSERT(!filename.isEmpty());
-    loadFile(filename);
+    return loadFile(filename);
 }
 
 bool Window::loadFile(QString f)
@@ -282,7 +311,7 @@ bool Window::loadFile(QString f)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Window::onAutoLoad()
+void Window::onAutoLoad(const QString& s)
 {
     if (autoreload)
     {
@@ -364,7 +393,7 @@ bool Window::onSaveAs(bool)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Window::onNew(bool)
+bool Window::onNew(bool)
 {
     CHECK_UNSAVED();
 
@@ -388,6 +417,8 @@ void Window::onNew(bool)
         editor->setScript(script);
     }
     editor->setModified(false);
+    emit(setAutoload(false));
+    return true;
 }
 
 void Window::closeEvent(QCloseEvent* event)
@@ -429,7 +460,7 @@ void Window::dragEnterEvent(QDragEnterEvent* event)
     }
 }
 
-void Window::dropEvent(QDropEvent* event)
+bool Window::dropEvent_(QDropEvent* event)
 {
     CHECK_UNSAVED();
 
@@ -437,7 +468,14 @@ void Window::dropEvent(QDropEvent* event)
     if (!f.isEmpty() && loadFile(f))
     {
         setFilename(f);
+        return true;
     }
+    return false;
+}
+
+void Window::dropEvent(QDropEvent* event)
+{
+    dropEvent_(event);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -582,7 +620,7 @@ void Window::onAbout(bool)
 #endif
 }
 
-void Window::onLoadTutorial(bool)
+bool Window::onLoadTutorial(bool)
 {
     CHECK_UNSAVED();
 
@@ -590,7 +628,9 @@ void Window::onLoadTutorial(bool)
     if (loadFile(target))
     {
         setFilename(target);
+        return true;
     }
+    return false;
 }
 
 void Window::setDocs(Documentation* docs)
