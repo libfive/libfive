@@ -217,29 +217,38 @@ typename XTree<N>::Root XTreePool<N>::build(
     typename XTree<N>::Root out(root);
     std::mutex root_lock;
 
-    const bool has_progress_callback =
-        *progress_callback.target<bool(*)(float)>() != EMPTY_PROGRESS_CALLBACK;
+    auto progress_cb_ptr = progress_callback.target<bool(*)(float)>();
+    const bool has_progress_callback = !progress_cb_ptr ||
+        (*progress_cb_ptr != EMPTY_PROGRESS_CALLBACK);
     boost::lockfree::stack<float> progress;
     auto progress_ptr = has_progress_callback ? &progress : nullptr;
 
     std::future<void> progress_task;
     if (has_progress_callback)
     {
+        auto vol = region.volume();
+
         progress_task = std::async(std::launch::async,
-            [&progress, &progress_callback, &done, &cancel]()
+            [&progress, &progress_callback, &done, &cancel, vol]()
             {
+                float accumulated = 0;
                 while (!done.load() && !cancel.load())
                 {
                     float next;
                     // Read values from the queue and progress them
                     while (progress.pop(next))
                     {
-                        std::cout << next << "\n";
+                        accumulated += next;
                     }
+
+                    // Report total progress so far
+                    progress_callback(accumulated / vol);
+
                     // Update the progress tracker at 20 Hz, to avoid
                     // using 100% of a core just to track progress.
                     std::this_thread::sleep_for(std::chrono::milliseconds(50));
                 }
+                // At the end of the tree building, report 100% completion.
                 if (!cancel.load())
                 {
                     progress_callback(1.0f);
