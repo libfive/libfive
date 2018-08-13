@@ -216,7 +216,8 @@ typename XTree<N>::Root XTreePool<N>::build(
     typename XTree<N>::Root out(root);
     std::mutex root_lock;
 
-    const bool has_progress_callback = progress_callback(0);
+    const bool has_progress_callback =
+        *progress_callback.target<bool(*)(float)>() != EMPTY_PROGRESS_CALLBACK;
     boost::lockfree::stack<float> progress;
     auto progress_ptr = has_progress_callback ? &progress : nullptr;
 

@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/tree/tree.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/progress.hpp"
 
 namespace Kernel {
 
@@ -41,8 +42,6 @@ struct Task
     Region<N> region;
     Neighbors<N> parent_neighbors;
 };
-
-static inline bool EMPTY_PROGRESS_CALLBACK(float) { return false; }
 
 template <unsigned N>
 struct XTreePool
