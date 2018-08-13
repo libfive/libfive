@@ -44,9 +44,13 @@ static void run(
         XTreeEvaluator* eval, LockFreeStack<N>& tasks,
         const float min_feature, const float max_err,
         std::atomic_bool& done, std::atomic_bool& cancel,
-        typename XTree<N>::Root& root, std::mutex& root_lock)
+        typename XTree<N>::Root& root, std::mutex& root_lock,
+        boost::lockfree::stack<float>* progress)
 {
+    // Tasks to be evaluated by this thread (populated when the
+    // MPMC stack is completely full).
     std::stack<Task<N>, std::vector<Task<N>>> local;
+
     Pool<XTree<N>> spare_trees;
     Pool<typename XTree<N>::Leaf> spare_leafs;
 
@@ -88,14 +92,17 @@ static void run(
 
         // If this tree is larger than the minimum size, then it will either
         // be unambiguously filled/empty, or we'll need to recurse.
-        if (((region.upper - region.lower) > min_feature).any())
+        const double min_dimension = (region.upper - region.lower).minCoeff();
+        const bool can_subdivide =  min_dimension > min_feature;
+        if (can_subdivide)
         {
             tape = t->evalInterval(eval->interval, region, task.tape);
 
             // If this Tree is ambiguous, then push the children to the stack
             // and keep going (because all the useful work will be done
             // by collectChildren eventually).
-            if (t->type == Interval::AMBIGUOUS || t->type == Interval::UNKNOWN)
+            assert(t->type != Interval::UNKNOWN);
+            if (t->type == Interval::AMBIGUOUS)
             {
                 auto rs = region.subdivide();
                 for (unsigned i=0; i < t->children.size(); ++i)
@@ -118,12 +125,35 @@ static void run(
             t->evalLeaf(eval, neighbors, region, tape, spare_leafs);
         }
 
+        if (progress)
+        {
+            if (can_subdivide)
+            {
+                // TODO: report progress based on skipping all children
+            }
+            else
+            {
+                progress->push(region.volume());
+            }
+        }
+
         // If all of the children are done, then ask the parent to collect them
-        // (recursively, merging the trees on the way up)
+        // (recursively, merging the trees on the way up, and reporting volumes
+        // to the progress tracker if present).
+        double volume = region.volume();
         for (t = t->parent;
              t && t->collectChildren(eval, tape, max_err, region.perp,
                                      spare_trees, spare_leafs);
-             t = t->parent);
+             t = t->parent)
+        {
+            // Report the volume of completed trees as we walk back
+            // up towards the root of the tree.
+            if (progress)
+            {
+                volume *= (1 << N);
+                progress->push(volume);
+            }
+        }
 
         // Termination condition:  if we've ended up pointing at the parent
         // of the tree's root (which is nullptr), then we're done and break
@@ -147,8 +177,8 @@ static void run(
 template <unsigned N>
 typename XTree<N>::Root XTreePool<N>::build(
             const Tree t, Region<N> region,
-            double min_feature, double max_err,
-            unsigned workers)
+            double min_feature, double max_err, unsigned workers,
+            std::function<bool(float)> progress_callback)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -158,14 +188,15 @@ typename XTree<N>::Root XTreePool<N>::build(
     }
     std::atomic_bool cancel(false);
     return XTreePool<N>::build(es.data(), region, min_feature,
-                               max_err, workers, cancel);
+                               max_err, workers, cancel, progress_callback);
 }
 
 template <unsigned N>
 typename XTree<N>::Root XTreePool<N>::build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
-            unsigned workers, std::atomic_bool& cancel)
+            unsigned workers, std::atomic_bool& cancel,
+            std::function<bool(float)> progress_callback)
 {
     // Lazy initialization of marching squares / cubes table
     if (XTree<N>::mt.get() == nullptr)
@@ -184,13 +215,18 @@ typename XTree<N>::Root XTreePool<N>::build(
 
     typename XTree<N>::Root out(root);
     std::mutex root_lock;
+
+    const bool has_progress_callback = progress_callback(0);
+    boost::lockfree::stack<float> progress;
+    auto progress_ptr = has_progress_callback ? &progress : nullptr;
+
     for (unsigned i=0; i < workers; ++i)
     {
         futures[i] = std::async(std::launch::async,
                 [&eval, &tasks, &cancel, &done, &out, &root_lock,
-                 min_feature, max_err, i](){
+                 min_feature, max_err, i, progress_ptr](){
                     run(eval + i, tasks, min_feature, max_err,
-                        done, cancel, out, root_lock);
+                        done, cancel, out, root_lock, progress_ptr);
                     });
     }
 
