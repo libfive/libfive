@@ -221,6 +221,26 @@ typename XTree<N>::Root XTreePool<N>::build(
     boost::lockfree::stack<float> progress;
     auto progress_ptr = has_progress_callback ? &progress : nullptr;
 
+    std::future<void> progress_task;
+    if (has_progress_callback)
+    {
+        progress_task = std::async(std::launch::async,
+            [&progress, &progress_callback, &done, &cancel]()
+            {
+                while (!done.load() && !cancel.load())
+                {
+                    float next;
+                    progress.pop(next);
+                    std::cout << next << "\n";
+                }
+                if (!cancel.load())
+                {
+                    progress_callback(1.0f);
+                }
+            }
+        );
+    }
+
     for (unsigned i=0; i < workers; ++i)
     {
         futures[i] = std::async(std::launch::async,
@@ -235,6 +255,16 @@ typename XTree<N>::Root XTreePool<N>::build(
     for (auto& f : futures)
     {
         f.get();
+    }
+
+    assert(done.load() || cancel.load());
+
+    // Wait for the progress bar to finish, pushing one value to it
+    // (which forces it to test the done and cancel conditions again)
+    if (has_progress_callback)
+    {
+        progress.push(0);
+        progress_task.wait();
     }
 
     if (cancel.load())
