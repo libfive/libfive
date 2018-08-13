@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <functional>
 #include <limits>
 #include <stack>
+#include <chrono>
 
 #include <cmath>
 
@@ -230,8 +231,14 @@ typename XTree<N>::Root XTreePool<N>::build(
                 while (!done.load() && !cancel.load())
                 {
                     float next;
-                    progress.pop(next);
-                    std::cout << next << "\n";
+                    // Read values from the queue and progress them
+                    while (progress.pop(next))
+                    {
+                        std::cout << next << "\n";
+                    }
+                    // Update the progress tracker at 20 Hz, to avoid
+                    // using 100% of a core just to track progress.
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
                 }
                 if (!cancel.load())
                 {
