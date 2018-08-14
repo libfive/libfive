@@ -130,7 +130,8 @@ static void run(
         {
             if (can_subdivide)
             {
-                // TODO: report progress based on skipping all children
+                progress->push(region.volume() *
+                        (1 + ceil(log(min_dimension / min_feature) / log(2))));
             }
             else
             {
@@ -220,13 +221,15 @@ typename XTree<N>::Root XTreePool<N>::build(
     auto progress_cb_ptr = progress_callback.target<bool(*)(float)>();
     const bool has_progress_callback = !progress_cb_ptr ||
         (*progress_cb_ptr != EMPTY_PROGRESS_CALLBACK);
-    boost::lockfree::stack<float> progress;
+    boost::lockfree::stack<float> progress(2 << N);
     auto progress_ptr = has_progress_callback ? &progress : nullptr;
 
     std::future<void> progress_task;
     if (has_progress_callback)
     {
-        auto vol = region.volume();
+        auto min_dimension = (region.upper - region.lower).minCoeff();
+        auto vol = region.volume() *
+            (1 + ceil(log(min_dimension / min_feature) / log(2)));
 
         progress_task = std::async(std::launch::async,
             [&progress, &progress_callback, &done, &cancel, vol]()
