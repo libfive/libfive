@@ -506,7 +506,7 @@ void init_libfive_kernel(void*)
  )");
 
     scm_c_export(
-            "shape?", "shape", "wrap-shape", "unwrap-shape",
+            "shape?", "<shape>", "wrap-shape", "unwrap-shape",
             "make-shape", "make-var", "var?", "shape-tree-id", "number->shape",
             "shape-equal?", "shape-eval", "shape->mesh", "shape-meta",
             "save-shape", "load-shape",
