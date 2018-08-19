@@ -224,6 +224,8 @@ typename XTree<N>::Root XTreePool<N>::build(
     boost::lockfree::stack<float> progress(2 << N);
     auto progress_ptr = has_progress_callback ? &progress : nullptr;
 
+    // Kick off the progress tracking thread, which reads in values
+    // from a queue at 50 millisecond intervals (20 Hz).
     std::future<void> progress_task;
     if (has_progress_callback)
     {
