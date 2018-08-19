@@ -120,6 +120,7 @@ public:
             other.ptr = nullptr;
             trees = std::move(other.trees);
             leafs = std::move(other.leafs);
+            tree_count = other.tree_count;
             return *this;
         }
 
@@ -139,13 +140,20 @@ public:
             reset();
         }
 
-        void claim(Pool<XTree<N>>& pool)       { pool.release(trees); }
+        void claim(Pool<XTree<N>>& pool) {
+            tree_count += pool.size();
+            pool.release(trees);
+        }
         void claim(Pool<XTree<N>::Leaf>& pool) { pool.release(leafs); }
+
+        ssize_t size() const { return tree_count; }
 
     protected:
         XTree<N>* ptr;
         std::list<XTree<N>*> trees;
         std::list<XTree<N>::Leaf*> leafs;
+
+        ssize_t tree_count=0; // Used for progress tracking
     };
 
     /*
