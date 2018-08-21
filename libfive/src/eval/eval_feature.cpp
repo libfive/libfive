@@ -111,7 +111,9 @@ const boost::container::small_vector<Feature, 4>&
     auto handle = evalAndPush(p, tape);
 
     // Evaluate feature-wise
+    deck->bindOracles(handle.second);
     auto index = handle.second->rwalk(*this);
+    deck->unbindOracles();
 
     return d(index);
 }
@@ -350,6 +352,38 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_Z:
         case Opcode::VAR_FREE:
         case Opcode::LAST_OP: assert(false);
+    }
+    // Now to deduplicate.
+    if (od.size() > 1)
+    {
+        std::sort(od.begin(), od.end());
+        // Now we walk through and remove any that are essentially the
+        // same as the last one we kept.  This may occasionally miss 
+        // near-duplicates despite sorting (e.g. 0,0,0 is followed by 1,0,0, 
+        // followed by 0, 1e-8, 0), but that should be rare enough to not be
+        // an issue.
+        auto newEnd = std::unique(od.begin(), od.end(),
+                                  [](const Feature& f1, const Feature& f2)
+        {
+            // Not an equivalence relation, so behavior of std::unique is 
+            // technically undefined.  Reasonable implementations should avoid
+            // problems for any remotely plausible feature lists, but consider
+            // replacing with an explicit implementation to make sure.
+            auto derivDiff = f1.deriv - f2.deriv;
+            return (derivDiff.dot(derivDiff) <= 1e-10 &&
+                    f1.hasSameEpsilons(f2));
+        });
+        od.erase(newEnd, od.end());
+        auto& firstDeriv = od.front().deriv;
+        if (std::all_of(od.begin(), od.end(), [&firstDeriv](const Feature& f)
+        {
+            auto derivDiff = f.deriv - firstDeriv;
+            return derivDiff.dot(derivDiff) < 1e-10;
+        }))
+        {
+            // Collapse into a single feature with no epsilons.
+            od = { firstDeriv };
+        }
     }
 #undef ov
 #undef od

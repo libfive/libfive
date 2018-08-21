@@ -19,8 +19,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "catch.hpp"
 
 #include "libfive/tree/archive.hpp"
-#include "libfive/tree/oracle_clause.hpp"
-#include "libfive/eval/oracle.hpp"
+#include "libfive/tree/serializer.hpp"
+#include "libfive/tree/deserializer.hpp"
+
+#include "libfive/oracle/oracle_clause.hpp"
+#include "libfive/oracle/oracle.hpp"
 
 using namespace Kernel;
 
@@ -30,21 +33,15 @@ public:
     std::string name() const override { return "ST"; }
     std::unique_ptr<Oracle> getOracle() const override { return nullptr; }
 
-    bool serialize(std::vector<uint8_t>& data,
-                   std::map<Tree::Id, uint32_t>& ids) const
+    bool serialize(Serializer& out) const
     {
-        (void)ids;
-        Archive::serializeString("hi", data);
+        out.serializeString("hi");
         return true;
     }
 
-    static std::unique_ptr<const OracleClause> deserialize(
-            const uint8_t*& pos, const uint8_t* end,
-            std::map<uint32_t, Tree>& ts)
+    static std::unique_ptr<const OracleClause> deserialize(Deserializer& in)
     {
-        (void)ts;
-
-        auto out = Archive::deserializeString(pos, end);
+        auto out = in.deserializeString();
         if (out != "hi")
         {
             return nullptr;
@@ -62,10 +59,11 @@ TEST_CASE("Archive::serialize")
     {
         auto a = Archive();
         a.addShape(min(Tree::X(), Tree::Y()), "hi");
-        auto out = a.serialize();
-        std::vector<uint8_t> expected =
-            {'T', '"', 'h', 'i', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
-        REQUIRE(out == expected);
+        std::stringstream out;
+        a.serialize(out);
+        std::string expected =
+            {'T', '"', 'h', 'i', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF};
+        REQUIRE(out.str() == expected);
     }
 
     SECTION("Multiple independent trees")
@@ -73,14 +71,16 @@ TEST_CASE("Archive::serialize")
         auto a = Archive();
         a.addShape(min(Tree::X(), Tree::Y()));
         a.addShape(max(Tree::X(), Tree::Y()));
-        auto out = a.serialize();
-        std::vector<uint8_t> expected =
+
+        std::stringstream out;
+        a.serialize(out);
+        std::string expected =
             {'T', '"', '"', '"', '"',
                 Opcode::VAR_X, Opcode::VAR_Y,
-                Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF,
+                Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF,
              'T', '"', '"', '"', '"',
-                Opcode::OP_MAX, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
-        REQUIRE(out == expected);
+                Opcode::OP_MAX, 1, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF};
+        REQUIRE(out.str() == expected);
     }
 
     SECTION("Trees with already-stored root")
@@ -88,34 +88,43 @@ TEST_CASE("Archive::serialize")
         auto a = Archive();
         a.addShape(min(Tree::X(), Tree::Y()));
         a.addShape(Tree::X());
-        auto out = a.serialize();
-        std::vector<uint8_t> expected =
+
+        std::stringstream out;
+        a.serialize(out);
+
+        std::string expected =
             {'T', '"', '"', '"', '"',
                 Opcode::VAR_X, Opcode::VAR_Y,
-                Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF,
+                Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF,
              't', '"', '"', '"', '"',
-                0, 0, 0, 0, 0xFF};
-        REQUIRE(out == expected);
+                0, 0, 0, 0, (char)0xFF};
+        REQUIRE(out.str() == expected);
     }
 
     SECTION("String escaping")
     {
         auto a = Archive();
         a.addShape(min(Tree::X(), Tree::Y()), "hi", "\"\\");
-        auto out = a.serialize();
-        std::vector<uint8_t> expected =
-            {'T', '"', 'h', 'i', '"', '"', '\\', '"', '\\', '\\', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
-        REQUIRE(out == expected);
+
+        std::stringstream out;
+        a.serialize(out);
+
+        std::string expected =
+            {'T', '"', 'h', 'i', '"', '"', '\\', '"', '\\', '\\', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF};
+        REQUIRE(out.str() == expected);
     }
 
     SECTION("With an oracle")
     {
         auto a = Archive(Tree(std::unique_ptr<OracleClause>(
                         new ST())));
-        auto out = a.serialize();
-        std::vector<uint8_t> expected =
-            {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"', 0xFF, 0xFF};
-        REQUIRE(out == expected);
+
+        std::stringstream out;
+        a.serialize(out);
+
+        std::string expected =
+            {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"', (char)0xFF, (char)0xFF};
+        REQUIRE(out.str() == expected);
     }
 }
 
@@ -123,8 +132,10 @@ TEST_CASE("Archive::deserialize")
 {
     SECTION("Oracle")
     {
-        std::vector<uint8_t> in =
+        std::string s =
                 {'T', '"', '"', '"', '"', Opcode::ORACLE, '"', 'S', 'T', '"', '"', 'h', 'i', '"'};
+
+        std::stringstream in(s);
         auto t = Archive::deserialize(in).shapes.front();
         REQUIRE(t.tree.id() != nullptr);
         REQUIRE(t.tree->op == Opcode::ORACLE);
@@ -139,9 +150,12 @@ TEST_CASE("Archive::deserialize")
                 "With a \"docstring\"");
         a.addShape(Tree::X(), "HELLO");
         a.addShape(Tree::Z() + Tree::X() + min(Tree::X(), Tree::Y()));
-        auto out = a.serialize();
 
-        auto b = Archive::deserialize(out);
+        std::stringstream out;
+        a.serialize(out);
+
+        std::stringstream in(out.str());
+        auto b = Archive::deserialize(in);
         REQUIRE(b.shapes.size() == a.shapes.size());
 
         auto a_itr = a.shapes.begin();

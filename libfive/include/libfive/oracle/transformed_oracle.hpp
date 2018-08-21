@@ -18,7 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #pragma once
 
-#include "libfive/eval/oracle_storage.hpp"
+#include "libfive/oracle/oracle_storage.hpp"
 #include "libfive/eval/eval_complete.hpp"
 
 namespace Kernel {
@@ -44,27 +44,40 @@ public:
 
     void evalArray(
         Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
-        LIBFIVE_EVAL_ARRAY_SIZE,
-        Eigen::RowMajor>,
-        1, Eigen::Dynamic> out) override;
+                     LIBFIVE_EVAL_ARRAY_SIZE,Eigen::RowMajor>,
+                     1, Eigen::Dynamic> out) override;
 
     void checkAmbiguous(
         Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
-        1, Eigen::Dynamic> out) override;
+                     1, Eigen::Dynamic> out) override;
 
     void evalDerivs(
         Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-        3, 1, true> out, size_t index = 0) override;
+                     3, 1, true> out, size_t index=0) override;
 
     void evalDerivArray(
         Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
-        3, Eigen::Dynamic, true> out) override;
+                     3, Eigen::Dynamic, true> out) override;
 
     void evalFeatures(
         boost::container::small_vector<Feature, 4>& out) override;
 
+    /*
+     *  Returns a context that pushes into each evaluator and the underlying
+     *  oracle.  The returned object is an instance of Context (defined below).
+     */
+    std::shared_ptr<OracleContext> push(Tape::Type t) override;
+
 private:
-    void setUnderlyingArrayValues(int count);
+    class Context : public OracleContext {
+    public:
+        Tape::Handle tx;
+        Tape::Handle ty;
+        Tape::Handle tz;
+        std::shared_ptr<OracleContext> u;
+
+        bool isTerminal() override;
+    };
 
     const std::unique_ptr<Oracle> underlying;
     CompleteEvaluator xEvaluator;

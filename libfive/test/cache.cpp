@@ -53,7 +53,7 @@ TEST_CASE("Deduplication of NaN")
     auto t = Cache::instance();
 
     auto cx = t->constant(1);
-    auto ca = t->constant(0.0f / 0.0f);
+    auto ca = t->constant(NAN);
     auto cb = t->constant(std::nanf(""));
     auto cy = t->constant(2);
 
@@ -156,6 +156,21 @@ TEST_CASE("Cache::checkIdentity")
 
         auto ob = t->operation(Opcode::OP_ABS, oa);
         REQUIRE(ob == oa);
+    }
+
+    SECTION("Min/max")
+    {
+        auto oa = t->operation(Opcode::OP_MIN, t->X(), t->X());
+        REQUIRE(oa->op == Opcode::VAR_X);
+
+        auto ia = t->operation(Opcode::OP_MIN, t->X(), t->Y());
+        REQUIRE(ia->op != Opcode::VAR_X);
+
+        auto ob = t->operation(Opcode::OP_MAX, t->X(), t->X());
+        REQUIRE(ob->op == Opcode::VAR_X);
+
+        auto ib = t->operation(Opcode::OP_MAX, t->X(), t->Y());
+        REQUIRE(ib->op != Opcode::VAR_Y);
     }
 }
 

@@ -1,14 +1,13 @@
 #include <iostream>
 #include <cassert>
 
-#include "libfive/tree/oracle_clause.hpp"
-#include "libfive/tree/transformed_oracle_clause.hpp"
+#include "libfive/oracle/oracle_clause.hpp"
+#include "libfive/oracle/transformed_oracle_clause.hpp"
 
 namespace Kernel {
 
 std::unique_ptr<const OracleClause> OracleClause::deserialize(
-        const std::string& name, const uint8_t*& pos, const uint8_t* end,
-        std::map<uint32_t, Tree>& ts)
+        const std::string& name, Deserializer& in)
 {
     auto itr = installed().find(name);
     if (itr == installed().end())
@@ -21,13 +20,12 @@ std::unique_ptr<const OracleClause> OracleClause::deserialize(
     }
     else
     {
-        return (*itr).second.second(pos, end, ts);
+        return (*itr).second.second(in);
     }
 }
 
 bool OracleClause::serialize(const std::string& name,
-        const OracleClause* clause, std::vector<uint8_t>& data,
-         std::map<Tree::Id, uint32_t>& ids)
+        const OracleClause* clause, Serializer& out)
 {
     auto itr = installed().find(name);
     if (itr == installed().end())
@@ -40,7 +38,7 @@ bool OracleClause::serialize(const std::string& name,
     }
     else
     {
-        return (*itr).second.first(clause, data, ids);
+        return (*itr).second.first(clause, out);
     }
 }
 

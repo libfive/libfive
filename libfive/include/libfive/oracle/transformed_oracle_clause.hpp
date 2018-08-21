@@ -18,7 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #pragma once
 
-#include "libfive/tree/oracle_clause.hpp"
+#include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/tree/tree.hpp"
 
 namespace Kernel {
@@ -46,12 +46,8 @@ public:
 
     std::vector<Kernel::Tree> dependencies() const override;
 
-    bool serialize(std::vector<uint8_t>& data,
-                   std::map<Tree::Id, uint32_t>& ids) const;
-    static std::unique_ptr<const OracleClause> deserialize(
-      const uint8_t*& pos, const uint8_t* end,
-      std::map<uint32_t, Tree>& ts);
-protected:
+    bool serialize(Serializer& out) const;
+    static std::unique_ptr<const OracleClause> deserialize(Deserializer& in);
 
 private:
     Tree underlying;

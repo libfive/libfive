@@ -85,9 +85,9 @@ TEST_CASE("FeatureEvaluator::isInside")
             max(cylinder(10, 100), -cylinder(5, 100)));
         auto t = std::make_shared<Deck>(shape);
         FeatureEvaluator e(t);
-        auto fs = e.features_({0.1, 0.1, 0});
+        auto fs = e.features_({0.1f, 0.1f, 0.0f});
         CAPTURE(fs.size());
-        REQUIRE(!e.isInside({0, 0, 0}));
+        REQUIRE(!e.isInside({0.0f, 0.0f, 0.0f}));
     }
 }
 
@@ -122,8 +122,8 @@ TEST_CASE("FeatureEvaluator::features")
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 2);
         auto i = fs.begin();
-        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
         REQUIRE(*(i++) == Eigen::Vector3f(-1, 0, 0));
+        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
     }
 
     SECTION("Three features")
@@ -194,5 +194,13 @@ TEST_CASE("FeatureEvaluator::features")
         auto t = std::make_shared<Deck>(r);
         FeatureEvaluator e(t);
         REQUIRE(e.features({0, 0, 6}).size() == 1);
+    }
+
+    SECTION("Feature deduplication")
+    {
+        auto r = max(Tree::X(), Tree::X() + Tree::Y() * 1e-8);
+        auto t = std::make_shared<Deck>(r);
+        FeatureEvaluator e(t);
+        REQUIRE(e.features({0, 0, 0}).size() == 1);
     }
 }

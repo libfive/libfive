@@ -25,6 +25,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/eval/eval_array_size.hpp"
 #include "libfive/eval/interval.hpp"
 #include "libfive/eval/feature.hpp"
+#include "libfive/eval/tape.hpp"
+
+#include "libfive/oracle/oracle_context.hpp"
 
 namespace Kernel {
 
@@ -57,6 +60,27 @@ public:
     virtual void evalInterval(Interval::I& out)=0;
 
     /*
+     *  Re-implemented by subclasses to return a context that specializes
+     *  the oracle for operations on the most recent interval region, which
+     *  must have been assigned with set() and evaluated with evalInterval.
+     */
+    virtual std::shared_ptr<OracleContext> push(Tape::Type t)
+    {
+        (void)t;
+        return std::shared_ptr<OracleContext>(nullptr);
+    }
+
+    /*
+     *  Returns whether interval arithmetic over the previously defined range
+     *  can result in a NaN.
+     */
+
+    virtual void evalIntervalNaN(bool& out)
+    {
+      out = false;
+    }
+
+    /*
      *  Returns the result of pointwise arithemetic on the value
      *  previously defined with set(Eigen::Vector3f, index)
      */
@@ -82,6 +106,9 @@ public:
     /*
      *  Sets appropriate bits to 1 if the given point (as set with
      *  set(Eigen::Vector3f, i) and evaluated with evaluArray) is ambiguous.
+     *
+     *  This function must only be called after evalArray is called
+     *  (with the same result block size)
      */
     virtual void checkAmbiguous(
             Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
@@ -102,8 +129,12 @@ public:
 
     /*
      *  Block-level floating-point evaluation.
+     *
      *  By default, this simply calls evalDerivArray multiple times; overload it with
      *  a more efficient implementation if possible.
+     *
+     *  This function must only be called after evalArray is called
+     *  (with the same output block size).
      */
     virtual void evalDerivArray(
             Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
@@ -120,6 +151,25 @@ public:
     /*  Returns the set of features at the point stored in slot 0.  */
     virtual void evalFeatures(
             boost::container::small_vector<Feature, 4>& out)=0;
+
+    /*
+     *  Oracles are evaluated within a particular context,
+     *  which is bound by this function.  This is used in cases where
+     *  the oracle evaluation can be simplified by knowing that it's
+     *  being evaluated within a particular spatial region.
+     */
+    void bind(std::shared_ptr<OracleContext> context)
+    {
+        this->context = context;
+    }
+
+    void unbind()
+    {
+        this->context = nullptr;
+    }
+
+protected:
+    std::shared_ptr<OracleContext> context;
 };
 
 } //Namespace Kernel

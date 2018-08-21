@@ -52,6 +52,16 @@ public:
                      std::shared_ptr<Tape> tape);
 
     /*
+     *  Returns a shortened tape based on the most recent evaluation.
+     *
+     *  Normally, this is invoked through evalAndPush, but in some cases,
+     *  we need to call it as a standalone function.  If you're not using
+     *  Oracles, then you probably don't need to call it.
+     */
+    std::shared_ptr<Tape> push(/* uses top-level tape */);
+    std::shared_ptr<Tape> push(std::shared_ptr<Tape> tape);
+
+    /*
      *  Changes a variable's value
      *
      *  If the variable isn't present in the tree, does nothing
@@ -62,12 +72,15 @@ public:
     bool isSafe() const { return safe; }
 
 protected:
-    /*  i[clause] is the interval result for that clause */
-    std::vector<Interval::I> i;
+    /*  i[clause].first is the interval result for that clause,
+     *  i[clause].second indicates whether the result might be NaN (which is
+     *  generally not included in interval evaluation) */
+    std::vector<std::pair<Interval::I, bool>> i;
 
-    /*  Marks whether the most recent evaluation had any NaN or inf
-     *  results (which can behave differently for intervals vs points */
-    bool safe;
+    /*  Marks whether the most recent evaluation could have any NaN in its
+     *  root clause.
+     */
+     bool safe;
 
     /*
      *  Per-clause evaluation, used in tape walking

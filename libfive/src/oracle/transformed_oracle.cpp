@@ -16,7 +16,7 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "libfive/eval/transformed_oracle.hpp"
+#include "libfive/oracle/transformed_oracle.hpp"
 
 namespace Kernel {
 
@@ -53,28 +53,53 @@ void TransformedOracle::evalInterval(Interval::I& out)
 
 void TransformedOracle::evalPoint(float& out, size_t index)
 {
-    Eigen::Vector3f transformedPoint{
-        xEvaluator.feature.eval(points.col(index)),
-        yEvaluator.feature.eval(points.col(index)),
-        zEvaluator.feature.eval(points.col(index)) };
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
+
+    Eigen::Vector3f transformedPoint = ctx
+        ? Eigen::Vector3f(xEvaluator.feature.eval(points.col(index), ctx->tx),
+                          yEvaluator.feature.eval(points.col(index), ctx->ty),
+                          zEvaluator.feature.eval(points.col(index), ctx->tz))
+        : Eigen::Vector3f(xEvaluator.feature.eval(points.col(index)),
+                          yEvaluator.feature.eval(points.col(index)),
+                          zEvaluator.feature.eval(points.col(index)));
 
     underlying->set(transformedPoint, index);
+
+    underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalPoint(out, index);
+    underlying->unbind();
 }
 
 void TransformedOracle::evalArray(
     Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
-    LIBFIVE_EVAL_ARRAY_SIZE, Eigen::RowMajor>, 1, Eigen::Dynamic> out)
+                 LIBFIVE_EVAL_ARRAY_SIZE, Eigen::RowMajor>, 1, Eigen::Dynamic> out)
 {
-    setUnderlyingArrayValues(out.cols());
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
+
+    const int count = out.cols();
+    auto xPoints = ctx ? xEvaluator.array.values(count, ctx->tx)
+                       : xEvaluator.array.values(count);
+    auto yPoints = ctx ? yEvaluator.array.values(count, ctx->ty)
+                       : yEvaluator.array.values(count);
+    auto zPoints = ctx ? zEvaluator.array.values(count, ctx->tz)
+                       : zEvaluator.array.values(count);
+
+    for (auto i = 0; i < count; ++i)
+    {
+        underlying->set({ xPoints(i), yPoints(i), zPoints(i) }, i);
+    }
+
+    underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalArray(out);
+    underlying->unbind();
 }
 
 void TransformedOracle::checkAmbiguous(
     Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
-    1, Eigen::Dynamic> out)
+                 1, Eigen::Dynamic> out)
 {
-    setUnderlyingArrayValues(out.cols());
     underlying->checkAmbiguous(out);
     out = out || xEvaluator.array.getAmbiguous(out.cols())
               || yEvaluator.array.getAmbiguous(out.cols())
@@ -83,32 +108,54 @@ void TransformedOracle::checkAmbiguous(
 
 void TransformedOracle::evalDerivs(
     Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
-    3, 1, true> out, size_t index)
+                 3, 1, true> out, size_t index)
 {
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
+
     Eigen::Matrix3f Jacobian;
-    Jacobian << xEvaluator.deriv.deriv(points.col(index)).template head<3>(),
-        yEvaluator.deriv.deriv(points.col(index)).template head<3>(),
-        zEvaluator.deriv.deriv(points.col(index)).template head<3>();
+    Jacobian <<
+        (ctx
+            ? xEvaluator.deriv.deriv(points.col(index), ctx->tx)
+            : xEvaluator.deriv.deriv(points.col(index))).template head<3>(),
+        (ctx
+            ? yEvaluator.deriv.deriv(points.col(index), ctx->ty)
+            : yEvaluator.deriv.deriv(points.col(index))).template head<3>(),
+        (ctx
+            ? zEvaluator.deriv.deriv(points.col(index), ctx->tz)
+            : zEvaluator.deriv.deriv(points.col(index))).template head<3>();
+
     Eigen::Vector3f transformedPoint{
         xEvaluator.deriv.eval(points.col(index)),
         yEvaluator.deriv.eval(points.col(index)),
         zEvaluator.deriv.eval(points.col(index))};
+
     underlying->set(transformedPoint, index);
+
+    underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalDerivs(out, index);
+    underlying->unbind();
+
     out = Jacobian * out.matrix();
 }
 
 void TransformedOracle::evalDerivArray(
     Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
-    3, Eigen::Dynamic, true> out)
+                 3, Eigen::Dynamic, true> out)
 {
-    TransformedOracle::setUnderlyingArrayValues(out.cols());
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
 
-    auto xDerivs = xEvaluator.array.derivs(out.cols());
-    auto yDerivs = yEvaluator.array.derivs(out.cols());
-    auto zDerivs = zEvaluator.array.derivs(out.cols());
+    auto xDerivs = ctx ? xEvaluator.array.derivs(out.cols(), ctx->tx)
+                       : xEvaluator.array.derivs(out.cols());
+    auto yDerivs = ctx ? yEvaluator.array.derivs(out.cols(), ctx->ty)
+                       : yEvaluator.array.derivs(out.cols());
+    auto zDerivs = ctx ? zEvaluator.array.derivs(out.cols(), ctx->tz)
+                       : zEvaluator.array.derivs(out.cols());
 
+    underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalDerivArray(out);
+    underlying->unbind();
 
     for (auto i = 0; i < out.cols(); ++i)
     {
@@ -123,12 +170,18 @@ void TransformedOracle::evalDerivArray(
 void TransformedOracle::evalFeatures(
     boost::container::small_vector<Feature, 4>& out)
 {
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
+
     out.clear();
     auto pt = points.col(0);
-    Eigen::Vector3f transformedPoint{
-        xEvaluator.feature.eval(pt),
-        yEvaluator.feature.eval(pt),
-        zEvaluator.feature.eval(pt) };
+    Eigen::Vector3f transformedPoint = ctx
+        ? Eigen::Vector3f(xEvaluator.feature.eval(pt, ctx->tx),
+                          yEvaluator.feature.eval(pt, ctx->ty),
+                          zEvaluator.feature.eval(pt, ctx->tz))
+        : Eigen::Vector3f(xEvaluator.feature.eval(pt),
+                          yEvaluator.feature.eval(pt),
+                          zEvaluator.feature.eval(pt));
 
     auto xFeatures = xEvaluator.feature.features_(pt);
     auto yFeatures = yEvaluator.feature.features_(pt);
@@ -136,7 +189,10 @@ void TransformedOracle::evalFeatures(
 
     boost::container::small_vector<Feature, 4> underlyingOut;
     underlying->set(transformedPoint);
+
+    underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalFeatures(underlyingOut);
+    underlying->unbind();
 
     /*  This O(n^4) loop should almost never have large values for all input
      *  sizes, barring intentionally pathological cases.
@@ -171,17 +227,40 @@ void TransformedOracle::evalFeatures(
     }
 }
 
-void TransformedOracle::setUnderlyingArrayValues(int count)
+std::shared_ptr<OracleContext> TransformedOracle::push(Tape::Type t)
 {
-    auto xPoints = xEvaluator.array.values(count);
-    auto yPoints = yEvaluator.array.values(count);
-    auto zPoints = zEvaluator.array.values(count);
-    for (auto i = 0; i < count; ++i)
+    if (t != Tape::INTERVAL)
     {
-        underlying->set({ xPoints(i), yPoints(i), zPoints(i) }, i);
+        return nullptr;
     }
+
+    auto ctx = dynamic_cast<Context*>(context.get());
+    assert(context == nullptr || ctx != nullptr);
+
+    auto out = std::shared_ptr<Context>(new Context);
+
+    out->tx = ctx ? xEvaluator.interval.push(ctx->tx)
+                  : xEvaluator.interval.push();
+    out->ty = ctx ? yEvaluator.interval.push(ctx->ty)
+                  : yEvaluator.interval.push();
+    out->tz = ctx ? zEvaluator.interval.push(ctx->tz)
+                  : zEvaluator.interval.push();
+
+    underlying->bind(ctx ? ctx->u : nullptr);
+    out->u = underlying->push(t);
+    underlying->unbind();
+
+    return out;
 }
 
+
+bool TransformedOracle::Context::isTerminal()
+{
+    return tx->isTerminal() &&
+           ty->isTerminal() &&
+           tz->isTerminal() &&
+           u->isTerminal();
+}
 
 } //Namespace Kernel
 

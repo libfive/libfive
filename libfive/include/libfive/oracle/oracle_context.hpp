@@ -1,6 +1,6 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2018  Matt Keeter
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -16,38 +16,26 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include <iostream>
-#include <cassert>
+#pragma once
 
-#include "libfive/tree/archive.hpp"
-#include "libfive/tree/serializer.hpp"
-#include "libfive/tree/deserializer.hpp"
+namespace Kernel {
 
-namespace Kernel
+/*
+ *  A virtual class, used by Oracles for pushing
+ *  (in the same way that Evaluators use Tapes to evaluate a subset
+ *  of their operations)
+ */
+class OracleContext
 {
-void Archive::addShape(Tree tree, std::string name, std::string doc,
-                       std::map<Tree::Id, std::string> vars)
-{
-    Shape s;
-    s.tree = tree;
-    s.name = name;
-    s.doc = doc;
-    s.vars = vars;
+public:
+    virtual ~OracleContext() { /* Nothing to do here */ }
 
-    shapes.push_back(s);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-void Archive::serialize(std::ostream& out)
-{
-    Serializer(out).run(*this);
-}
-
-Archive Archive::deserialize(std::istream& data)
-{
-    return Deserializer(data).run();
-}
-
+    /*
+     *  Checks whether any subsequent push operations on the parent
+     *  oracle can return a smaller context.  For example, a math
+     *  tree is terminal if there are no min / max nodes in it.
+     */
+    virtual bool isTerminal() { return false; }
+};
 
 }   // namespace Kernel

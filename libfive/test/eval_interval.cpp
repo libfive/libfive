@@ -98,20 +98,17 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
     SECTION("Multi-min trees")
     {
-        auto t = std::make_shared<Deck>(min(Tree::X(), min(
-                min(Tree::X(), Tree::Y()),
-                min(Tree::X(), Tree::Y() + 3))));
+        auto t = min(min(Tree::Y(), Tree::X()),
+                     min(Tree::X(), Tree::Y() + 3));
+        auto d = std::make_shared<Deck>(t);
 
-        IntervalEvaluator e(t);
+        IntervalEvaluator e(d);
 
         // Do an interval evaluation that should lead to both sides
         // picking X, then collapsing min(X, X) into just X.
         auto i = e.evalAndPush({-5, 0, 0}, {-4, 1, 0});
-        CAPTURE(i.second->size());
-        CAPTURE(t->tape->size());
-
-        auto ratio = i.second->size() / (float)t->tape->size();
-        REQUIRE(ratio == Approx(1/5.0));
+        CAPTURE(d->tape->size());
+        REQUIRE(i.second->size() == 1);
     }
 
     SECTION("With NaNs")
@@ -159,6 +156,19 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
 TEST_CASE("IntervalEvaluator::isSafe")
 {
+    SECTION("Input values")
+    {
+        auto t = std::make_shared<Deck>(Tree::X());
+        IntervalEvaluator e(t);
+
+        e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(e.isSafe());
+
+        e.eval({-std::numeric_limits<float>::infinity(), 1, 0},
+               {1, 2, 0}, t->tape);
+        REQUIRE(e.isSafe());
+    }
+
     SECTION("Division")
     {
         auto t = std::make_shared<Deck>(Tree::X() / Tree::Y());
@@ -172,18 +182,32 @@ TEST_CASE("IntervalEvaluator::isSafe")
 
         e.eval({-1, -1, 0}, {1, 2, 0}, t->tape);
         REQUIRE(!e.isSafe());
+
+        e.eval({1, -1, 0}, {2, 2, 0}, t->tape);
+        REQUIRE(e.isSafe());
     }
 
-    SECTION("Empty tape")
+    SECTION("Multiplication of zero and infinity")
     {
-        auto t = std::make_shared<Deck>(Tree::X());
+        auto t = std::make_shared<Deck>(Tree::Z() * (Tree::X() / Tree::Y()));
         IntervalEvaluator e(t);
 
         e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
         REQUIRE(e.isSafe());
 
-        e.eval({-std::numeric_limits<float>::infinity(), 0, 0},
-                {1, 2, 0}, t->tape);
+        e.eval({-1, 0, 0}, {1, 2, 0}, t->tape);
+        REQUIRE(!e.isSafe());
+
+        e.eval({-1, -1, 1}, {1, 2, 2}, t->tape);
+        REQUIRE(!e.isSafe());
+
+        e.eval({1, -1, -1}, {2, 2, 1}, t->tape);
+        REQUIRE(!e.isSafe());
+
+        e.eval({1, -1, 1}, {2, 2, 2}, t->tape);
+        REQUIRE(e.isSafe());
+
+        e.eval({1, -1, -1}, {2, 2, 2}, t->tape);
         REQUIRE(!e.isSafe());
     }
 }
