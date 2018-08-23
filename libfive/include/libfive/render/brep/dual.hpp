@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #pragma once
 
 #include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/progress.hpp"
 #include "libfive/render/axes.hpp"
 
 namespace Kernel {
@@ -32,7 +33,7 @@ class Dual
 {
 public:
     template<typename V>
-    static void walk(const XTree<N>* tree, V& v);
+    static void walk(const XTree<N>* tree, V& v, ProgressWatcher* p=nullptr);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -87,7 +88,7 @@ void edge2(const std::array<const XTree<2>*, 2>& ts, V& v)
 
 template <>
 template <typename V>
-void Dual<2>::walk(const XTree<2>* t, V& v)
+void Dual<2>::walk(const XTree<2>* t, V& v, ProgressWatcher* progress)
 {
     if (t->isBranch())
     {
@@ -97,7 +98,7 @@ void Dual<2>::walk(const XTree<2>* t, V& v)
             auto c = t->child(i);
             if (c != t)
             {
-                walk(c, v);
+                walk(c, v, progress);
             }
         }
 
@@ -106,6 +107,11 @@ void Dual<2>::walk(const XTree<2>* t, V& v)
         edge2<V, Axis::Y>({{t->child(Axis::Y), t->child(Axis::Y | Axis::X)}}, v);
         edge2<V, Axis::X>({{t->child(0), t->child(Axis::Y)}}, v);
         edge2<V, Axis::X>({{t->child(Axis::X), t->child(Axis::X | Axis::Y)}}, v);
+    }
+
+    if (progress != nullptr)
+    {
+        progress->tick();
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -220,7 +226,7 @@ void call_face3(const XTree<3>* t, V& v)
 
 template <>
 template <typename V>
-void Dual<3>::walk(const XTree<3>* t, V& v)
+void Dual<3>::walk(const XTree<3>* t, V& v, ProgressWatcher* progress)
 {
     if (t->isBranch())
     {
@@ -230,7 +236,7 @@ void Dual<3>::walk(const XTree<3>* t, V& v)
             auto c = t->child(i);
             if (c != t)
             {
-                walk(c, v);
+                walk(c, v, progress);
             }
         }
 
@@ -243,6 +249,10 @@ void Dual<3>::walk(const XTree<3>* t, V& v)
         call_edge3<V, Axis::X>(t, v);
         call_edge3<V, Axis::Y>(t, v);
         call_edge3<V, Axis::Z>(t, v);
+    }
+    if (progress != nullptr)
+    {
+        progress->tick();
     }
 }
 

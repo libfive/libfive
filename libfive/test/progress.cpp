@@ -30,28 +30,29 @@ TEST_CASE("XTreePool::build (progress callback)")
     Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
 
-    float progress = 0.0f;
-    float max_progress = 0.0f;
-    int cb_count = 0;
+    std::vector<float> ps;
     auto callback = [&](float f) {
-        progress = f;
-        max_progress = fmax(progress, max_progress);
-        cb_count++;
+        ps.push_back(f);
         return true;
     };
 
     XTreePool<3>::build(sponge, r, 0.02, 1e-8, 8, callback);
 
-    CAPTURE(cb_count);
-    CAPTURE(max_progress);
-    CAPTURE(progress);
+    CAPTURE(ps.size());
 
-    if (cb_count > 2)
+    REQUIRE(ps.size() >= 2);
+    REQUIRE(ps[0] == 0.0f);
+    REQUIRE(ps[ps.size() - 1] == 1.0f);
+
+    // Check that the values are monotonically increasing
+    float prev = -1;
+    for (auto& p : ps)
     {
-        REQUIRE(progress == Approx(1.0f));
-        REQUIRE(max_progress == Approx(1.0f));
+        REQUIRE(p > prev);
+        prev = p;
     }
-    else
+
+    if (ps.size() <= 2)
     {
         WARN("Callbacks not triggered (this is expected in debug builds)");
     }

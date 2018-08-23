@@ -46,7 +46,7 @@ static void run(
         const float min_feature, const float max_err,
         std::atomic_bool& done, std::atomic_bool& cancel,
         typename XTree<N>::Root& root, std::mutex& root_lock,
-        boost::lockfree::stack<float>* progress)
+        ProgressWatcher* progress)
 {
     // Tasks to be evaluated by this thread (populated when the
     // MPMC stack is completely full).
@@ -130,19 +130,27 @@ static void run(
         {
             if (can_subdivide)
             {
-                progress->push(region.volume() *
-                        (1 + ceil(log(min_dimension / min_feature) / log(2))));
+                // Accumulate all of the child XTree cells that would have been
+                // included if we continued to subdivide this tree, then pass
+                // all of them to the progress tracker
+                const unsigned levels =
+                    ceil(log(min_dimension / min_feature) / log(2));
+                uint32_t ticks = 0;
+                for (unsigned i=0; i <= levels; ++i)
+                {
+                    ticks = (ticks + 1) * (1 << N);
+                }
+                progress->tick(ticks);
             }
             else
             {
-                progress->push(region.volume());
+                progress->tick(1);
             }
         }
 
         // If all of the children are done, then ask the parent to collect them
-        // (recursively, merging the trees on the way up, and reporting volumes
-        // to the progress tracker if present).
-        double volume = region.volume();
+        // (recursively, merging the trees on the way up, and reporting
+        // completed tree cells to the progress tracker if present).
         for (t = t->parent;
              t && t->collectChildren(eval, tape, max_err, region.perp,
                                      spare_trees, spare_leafs);
@@ -152,8 +160,7 @@ static void run(
             // up towards the root of the tree.
             if (progress)
             {
-                volume *= (1 << N);
-                progress->push(volume);
+                progress->tick();
             }
         }
 
@@ -218,26 +225,25 @@ typename XTree<N>::Root XTreePool<N>::build(
     typename XTree<N>::Root out(root);
     std::mutex root_lock;
 
-    // Kick off the progress tracking thread, which reads in values
-    // from a queue at 50 millisecond intervals (20 Hz).
+    // Kick off the progress tracking thread, based on the number of
+    // octree levels and a fixed split per level
     auto min_dimension = (region.upper - region.lower).minCoeff();
-    auto vol = region.volume() *
-        (1 + ceil(log(min_dimension / min_feature) / log(2)));
-    boost::lockfree::stack<float> progress_io(2 << N);
-    bool has_progress_task = false;
-    std::future<void> progress_task = runProgressCallback<float>(
-            progress_callback, progress_io, vol, 0, done, cancel,
-            &has_progress_task);
-
-    auto progress_io_ptr = has_progress_task ? &progress_io : nullptr;
+    const unsigned levels = ceil(log(min_dimension / min_feature) / log(2));
+    uint32_t ticks = 0;
+    for (unsigned i=0; i <= levels; ++i)
+    {
+        ticks = (ticks + 1) * (1 << N);
+    }
+    auto progress_watcher = ProgressWatcher::build(ticks, 0, progress_callback,
+                                                   done, cancel);
 
     for (unsigned i=0; i < workers; ++i)
     {
         futures[i] = std::async(std::launch::async,
                 [&eval, &tasks, &cancel, &done, &out, &root_lock,
-                 min_feature, max_err, i, progress_io_ptr](){
+                 min_feature, max_err, i, progress_watcher](){
                     run(eval + i, tasks, min_feature, max_err,
-                        done, cancel, out, root_lock, progress_io_ptr);
+                        done, cancel, out, root_lock, progress_watcher);
                     });
     }
 
@@ -249,13 +255,8 @@ typename XTree<N>::Root XTreePool<N>::build(
 
     assert(done.load() || cancel.load());
 
-    // Wait for the progress bar to finish, pushing one value to it
-    // (which forces it to test the done and cancel conditions again)
-    if (has_progress_task)
-    {
-        progress_io.push(0);
-        progress_task.wait();
-    }
+    // Wait for the progress bar to finish, which happens in the destructor.
+    delete progress_watcher;
 
     if (cancel.load())
     {

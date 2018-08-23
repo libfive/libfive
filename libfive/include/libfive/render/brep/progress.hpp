@@ -20,67 +20,47 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <future>
 #include <boost/lockfree/stack.hpp>
 
+namespace Kernel {
+
 bool EMPTY_PROGRESS_CALLBACK(float);
 
-/*
- *  runProgressCallback checks whether the given callback is
- *  EMPTY_PROGRESS_CALLBACK.  If that is not the case, it starts
- *  a separate thread running to handle progress checking.
- *
- *  Values from io are accumulated, and their sum is divided by
- *  total and added to offset then passed into the callback.
- *
- *  The returned future holds this async thread.
- *  If the future is constructed, started is set to true; otherwise,
- *  it is set to false.
- */
-template <typename T>
-std::future<void> runProgressCallback(
-    std::function<bool(float)> cb, boost::lockfree::stack<T>& io,
-    T total, int offset, std::atomic_bool& done, std::atomic_bool& cancel,
-    bool* started)
+class ProgressWatcher
 {
-    auto progress_cb_ptr = cb.target<bool(*)(float)>();
-    const bool has_progress_callback = !progress_cb_ptr ||
-        (*progress_cb_ptr != EMPTY_PROGRESS_CALLBACK);
+public:
+    /*
+     *  If the callback is not EMPTY_PROGRESS_CALLBACK, constructs a new
+     *  ProgressWatcher and returns it.
+     */
+    static ProgressWatcher* build(uint32_t total, float offset,
+                                  std::function<bool(float)> callback,
+                                  std::atomic_bool& done,
+                                  std::atomic_bool& cancel);
 
-    std::future<void> progress_task;
+    void tick(uint32_t i=1);
 
-    if (has_progress_callback)
-    {
-        *started = true;
+    /*  On destruction, either done or cancel must be true.
+     *  The destructor waits for the worker thread to finish. */
+    ~ProgressWatcher();
 
-        progress_task = std::async(std::launch::async,
-            [&io, &cb, &done, &cancel, total, offset]()
-            {
-                T accumulated = 0;
-                while (!done.load() && !cancel.load())
-                {
-                    T next;
-                    // Read values from the queue and progress them
-                    while (io.pop(next))
-                    {
-                        accumulated += next;
-                    }
+protected:
+    ProgressWatcher(uint32_t total, float offset,
+                    std::function<bool(float)> callback,
+                    std::atomic_bool& done,
+                    std::atomic_bool& cancel);
 
-                    // Report total progress so far
-                    cb(accumulated / (float)total + offset);
+    std::function<bool(float)> callback;
+    std::atomic_bool& done;
+    std::atomic_bool& cancel;
 
-                    // Update the progress tracker at 20 Hz, to avoid
-                    // using 100% of a core just to track progress.
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                }
-                // At the end of the process building, report 100% completion.
-                if (!cancel.load())
-                {
-                    cb(1.0f + offset);
-                }
-            }
-        );
-    }
-    else
-    {
-        *started = false;
-    }
-    return progress_task;
-}
+    /*  Used to stop the worker thread early, since it otherwise only
+     *  updates at a fixed speed (e.g. 200 Hz). */
+    std::timed_mutex mut;
+
+    std::atomic_uint32_t counter;
+    const uint32_t total;
+    const float offset;
+
+    std::future<void> future;
+};
+
+}   // namespace Kernel
