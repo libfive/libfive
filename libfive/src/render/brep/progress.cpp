@@ -60,7 +60,10 @@ ProgressWatcher::ProgressWatcher(uint32_t total, float offset,
     future = std::async(std::launch::async,
         [this]()
         {
-            this->callback(0.0f);
+            if (this->offset == 0.0f)
+            {
+                this->callback(0.0f);
+            }
 
             uint32_t n = 0;
             while (!this->done.load() && !this->cancel.load())
