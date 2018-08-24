@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
+const float Mesh::MAX_PROGRESS = 3.0f;
+
 template <Axis::Axis A, bool D>
 void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 {
@@ -145,6 +147,8 @@ std::unique_ptr<Mesh> Mesh::render(
     auto t = XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel,
                                  progress_callback);
     auto out = mesh(t, cancel, progress_callback);
+    t.reset(progress_callback);
+
     return out;
 }
 

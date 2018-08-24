@@ -84,6 +84,7 @@ public:
             const XTree<3>::Root& tree, std::atomic_bool& cancel,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
+    static const float MAX_PROGRESS;
 protected:
     /*
      *  Inserts a line into the mesh as a zero-size triangle
