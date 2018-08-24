@@ -302,9 +302,7 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         }
         case Opcode::OP_MOD:
         {
-            auto maxMag = fmax(fabs(b.lower()), fabs(b.upper()));
-            out = { a.lower() >= 0.f ? 0.f : -maxMag,
-                    a.upper() <= 0.f ? 0.f : maxMag };
+            out = { 0.f , fmax(fabs(b.lower()), fabs(b.upper())) };
             if (std::isfinite(a.upper()) && std::isfinite(a.lower()))
             {
                 // We may be able to do better: Divide into cases, based on whether
@@ -319,10 +317,12 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                     auto minMagB = position == 1 ? b.lower() : -b.upper();
                     auto highestQuotientB = a.upper() > 0 ? minMagB : maxMagB;
                     auto lowestQuotientB = a.lower() < 0 ? maxMagB : minMagB;
-                    auto highestQuotientInt =
-                      static_cast<int>(a.upper() / highestQuotientB);
-                    auto lowestQuotientInt =
-                      static_cast<int>(a.lower() / lowestQuotientB);
+                    // Use std::floor to round to -INFINITY rather than to 0, 
+                    // in order to match the point evaluator behavior.
+                    auto highestQuotientInt = static_cast<int>
+                        (std::floor(a.upper() / highestQuotientB));
+                    auto lowestQuotientInt = static_cast<int>
+                        (std::floor(a.lower() / lowestQuotientB));
                     if (highestQuotientInt == lowestQuotientInt)
                     {
                       out = { a.lower() - lowestQuotientInt * lowestQuotientB,
