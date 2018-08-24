@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/brep.hpp"
 #include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/progress.hpp"
 
 namespace Kernel {
 
@@ -35,8 +36,8 @@ public:
      */
     static std::unique_ptr<Mesh> render(
             const Tree t, const Region<3>& r,
-            double min_feature=0.1, double max_err=1e-8,
-            bool multithread=true);
+            double min_feature=0.1, double max_err=1e-8, bool multithread=true,
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
     /*
      *  Fully-specified render function
@@ -46,7 +47,8 @@ public:
     static std::unique_ptr<Mesh> render(
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
-            unsigned workers, std::atomic_bool& cancel);
+            unsigned workers, std::atomic_bool& cancel,
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
     /*
      *  Render function that re-uses evaluators
@@ -57,7 +59,8 @@ public:
     static std::unique_ptr<Mesh> render(
             XTreeEvaluator* es, const Region<3>& r,
             double min_feature, double max_err,
-            int workers, std::atomic_bool& cancel);
+            int workers, std::atomic_bool& cancel,
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
     /*
      *  Writes the mesh to a file
@@ -77,8 +80,10 @@ public:
     void load(const std::array<const XTree<3>*, 4>& ts);
 
     /*  Walks an XTree, returning a mesh  */
-    static std::unique_ptr<Mesh> mesh(const XTree<3>* tree,
-                                      std::atomic_bool& cancel);
+    static std::unique_ptr<Mesh> mesh(
+            const XTree<3>::Root& tree, std::atomic_bool& cancel,
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
+
 protected:
     /*
      *  Inserts a line into the mesh as a zero-size triangle

@@ -134,7 +134,7 @@ public:
         }
 
         const XTree<N>* operator->() { return ptr; }
-        const XTree<N>* get() { return ptr; }
+        const XTree<N>* get() const { return ptr; }
         ~Root()
         {
             reset();

@@ -176,7 +176,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
     std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Mesh::mesh(t.get(), cancel);
+        m = Mesh::mesh(t, cancel);
     }
 
     BENCHMARK("XTree deletion")

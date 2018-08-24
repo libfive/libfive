@@ -24,6 +24,8 @@ namespace Kernel {
 
 bool EMPTY_PROGRESS_CALLBACK(float);
 
+typedef std::function<bool(float)> ProgressCallback;
+
 class ProgressWatcher
 {
 public:
