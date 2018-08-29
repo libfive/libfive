@@ -36,7 +36,6 @@ TEST_CASE("XTreePool::build (progress callback)")
         std::vector<float> ps;
         auto callback = [&](float f) {
             ps.push_back(f);
-            return true;
         };
 
         XTreePool<3>::build(sponge, r, res, 1e-8, 8, callback);
@@ -78,7 +77,6 @@ TEST_CASE("Mesh::render (progress callback)")
         std::vector<float> ps;
         auto callback = [&](float f) {
             ps.push_back(f);
-            return true;
         };
 
         Mesh::render(sponge, r, res, 1e-8, true, callback);

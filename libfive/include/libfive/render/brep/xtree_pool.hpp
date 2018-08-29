@@ -51,9 +51,8 @@ struct XTreePool
      */
     static typename XTree<N>::Root build(
             const Tree t, Region<N> region,
-            double min_feature=0.1, double max_err=1e-8,
-            unsigned workers=1, std::function<bool(float)> progress_callback=
-                EMPTY_PROGRESS_CALLBACK);
+            double min_feature=0.1, double max_err=1e-8, unsigned workers=1,
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
     /*
      *  Full-featured construction
@@ -64,7 +63,7 @@ struct XTreePool
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
-            std::function<bool(float)> callback=EMPTY_PROGRESS_CALLBACK);
+            ProgressCallback callback=EMPTY_PROGRESS_CALLBACK);
 };
 
 extern template struct XTreePool<2>;

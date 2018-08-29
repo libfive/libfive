@@ -22,9 +22,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-bool EMPTY_PROGRESS_CALLBACK(float);
+void EMPTY_PROGRESS_CALLBACK(float);
 
-typedef std::function<bool(float)> ProgressCallback;
+typedef std::function<void(float)> ProgressCallback;
 
 class ProgressWatcher
 {
@@ -34,7 +34,7 @@ public:
      *  ProgressWatcher and returns it.
      */
     static ProgressWatcher* build(uint32_t total, float offset,
-                                  std::function<bool(float)> callback,
+                                  ProgressCallback callback,
                                   std::atomic_bool& done,
                                   std::atomic_bool& cancel);
 
@@ -46,11 +46,11 @@ public:
 
 protected:
     ProgressWatcher(uint32_t total, float offset,
-                    std::function<bool(float)> callback,
+                    ProgressCallback callback,
                     std::atomic_bool& done,
                     std::atomic_bool& cancel);
 
-    std::function<bool(float)> callback;
+    ProgressCallback callback;
     std::atomic_bool& done;
     std::atomic_bool& cancel;
 

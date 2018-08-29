@@ -187,7 +187,7 @@ template <unsigned N>
 typename XTree<N>::Root XTreePool<N>::build(
             const Tree t, Region<N> region,
             double min_feature, double max_err, unsigned workers,
-            std::function<bool(float)> progress_callback)
+            ProgressCallback progress_callback)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -205,7 +205,7 @@ typename XTree<N>::Root XTreePool<N>::build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
-            std::function<bool(float)> progress_callback)
+            ProgressCallback progress_callback)
 {
     // Lazy initialization of marching squares / cubes table
     if (XTree<N>::mt.get() == nullptr)

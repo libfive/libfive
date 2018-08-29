@@ -23,14 +23,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
-bool EMPTY_PROGRESS_CALLBACK(float) { return true; }
+void EMPTY_PROGRESS_CALLBACK(float) { /* Nothing to do here */ }
 
 ProgressWatcher* ProgressWatcher::build(uint32_t total, float offset,
-                                        std::function<bool(float)> callback,
+                                        std::function<void(float)> callback,
                                         std::atomic_bool& done,
                                         std::atomic_bool& cancel)
 {
-    auto progress_cb_ptr = callback.target<bool(*)(float)>();
+    auto progress_cb_ptr = callback.target<void(*)(float)>();
     const bool has_progress_callback = !progress_cb_ptr ||
         (*progress_cb_ptr != EMPTY_PROGRESS_CALLBACK);
 
@@ -45,7 +45,7 @@ ProgressWatcher* ProgressWatcher::build(uint32_t total, float offset,
 }
 
 ProgressWatcher::ProgressWatcher(uint32_t total, float offset,
-                                 std::function<bool(float)> callback,
+                                 std::function<void(float)> callback,
                                  std::atomic_bool& done,
                                  std::atomic_bool& cancel)
     : callback(callback), done(done), cancel(cancel),

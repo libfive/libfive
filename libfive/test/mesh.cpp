@@ -185,7 +185,6 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
     auto progress_callback = [&](float f)
     {
         progress.push_back(f);
-        return true;
     };
 
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
