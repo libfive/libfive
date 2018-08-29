@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Kernel {
 
+const float Mesh::MAX_PROGRESS = 3.0f;
+
 template <Axis::Axis A, bool D>
 void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 {
@@ -110,18 +112,20 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    double min_feature, double max_err,
-                                   bool multithread)
+                                   bool multithread,
+                                   ProgressCallback progress_callback)
 {
     std::atomic_bool cancel(false);
     std::map<Tree::Id, float> vars;
     return render(t, vars, r, min_feature, max_err,
-                  multithread ? 8 : 1, cancel);
+                  multithread ? 8 : 1, cancel, progress_callback);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
-            unsigned workers, std::atomic_bool& cancel)
+            unsigned workers, std::atomic_bool& cancel,
+            ProgressCallback progress_callback)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -130,32 +134,46 @@ std::unique_ptr<Mesh> Mesh::render(
         es.emplace_back(XTreeEvaluator(t, vars));
     }
 
-    return render(es.data(), r, min_feature, max_err, workers, cancel);
+    return render(es.data(), r, min_feature, max_err, workers, cancel,
+                  progress_callback);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
         XTreeEvaluator* es,
         const Region<3>& r, double min_feature, double max_err,
-        int workers, std::atomic_bool& cancel)
+        int workers, std::atomic_bool& cancel,
+        ProgressCallback progress_callback)
 {
-    auto t = XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel);
-    auto out = mesh(t.get(), cancel);
+    auto t = XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel,
+                                 progress_callback);
+    auto out = mesh(t, cancel, progress_callback);
+    t.reset(progress_callback);
+
     return out;
 }
 
-std::unique_ptr<Mesh> Mesh::mesh(const XTree<3>* xtree,
-                                 std::atomic_bool& cancel)
+std::unique_ptr<Mesh> Mesh::mesh(const XTree<3>::Root& xtree,
+                                 std::atomic_bool& cancel,
+                                 ProgressCallback progress_callback)
 {
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());
 
-    if (cancel.load() || xtree == nullptr)
+    if (cancel.load() || xtree.get() == nullptr)
     {
         return nullptr;
     }
     else
     {
-        Dual<3>::walk(xtree, *m);
+        std::atomic_bool done(false);
+        auto progress_watcher = ProgressWatcher::build(
+                xtree.size(), 1.0f,
+                progress_callback, done, cancel);
+
+        Dual<3>::walk(xtree.get(), *m, progress_watcher);
+
+        done.store(true);
+        delete progress_watcher;
 
 #if DEBUG_OCTREE_CELLS
         // Store octree cells as lines
