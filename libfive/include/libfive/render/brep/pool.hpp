@@ -92,9 +92,9 @@ public:
      *  This could be a negative number, if we we're storing available
      *  trees that were allocated by pools in different threads.
      */
-    ssize_t size() const
+    int64_t size() const
     {
-        return (ssize_t)alloc.size() * N - d.size();
+        return (int64_t)alloc.size() * N - d.size();
     }
 
 protected:

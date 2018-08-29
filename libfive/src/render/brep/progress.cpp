@@ -25,7 +25,7 @@ namespace Kernel {
 
 void EMPTY_PROGRESS_CALLBACK(float) { /* Nothing to do here */ }
 
-ProgressWatcher* ProgressWatcher::build(uint32_t total, float offset,
+ProgressWatcher* ProgressWatcher::build(uint64_t total, float offset,
                                         std::function<void(float)> callback,
                                         std::atomic_bool& done,
                                         std::atomic_bool& cancel)
@@ -44,7 +44,7 @@ ProgressWatcher* ProgressWatcher::build(uint32_t total, float offset,
     }
 }
 
-ProgressWatcher::ProgressWatcher(uint32_t total, float offset,
+ProgressWatcher::ProgressWatcher(uint64_t total, float offset,
                                  std::function<void(float)> callback,
                                  std::atomic_bool& done,
                                  std::atomic_bool& cancel)
@@ -65,10 +65,10 @@ ProgressWatcher::ProgressWatcher(uint32_t total, float offset,
                 this->callback(0.0f);
             }
 
-            uint32_t n = 0;
+            uint64_t n = 0;
             while (!this->done.load() && !this->cancel.load())
             {
-                const uint32_t next = this->counter.load();
+                const uint64_t next = this->counter.load();
                 if (next != n)
                 {
                     n = next;
@@ -97,7 +97,7 @@ ProgressWatcher::~ProgressWatcher()
     future.wait();
 }
 
-void ProgressWatcher::tick(uint32_t i)
+void ProgressWatcher::tick(uint64_t i)
 {
     counter += i;
 }

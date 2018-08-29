@@ -124,14 +124,18 @@ public:
         void claim(Pool<XTree<N>>& pool);
         void claim(Pool<XTree<N>::Leaf>& pool);
 
-        ssize_t size() const { return tree_count; }
+        int64_t size() const { return tree_count; }
 
     protected:
         XTree<N>* ptr;
         std::list<XTree<N>*> trees;
         std::list<XTree<N>::Leaf*> leafs;
 
-        ssize_t tree_count=0; // Used for progress tracking
+        // Used for progress tracking.  We use a signed value here because,
+        // as we claim Pools of XTrees, it's possible for the intermediate
+        // result to go negative (if one pool has claimed many trees from
+        // another Pool, so it owns more trees than it has allocated)..
+        int64_t tree_count=0;
     };
 
     /*

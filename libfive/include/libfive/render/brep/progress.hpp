@@ -33,19 +33,19 @@ public:
      *  If the callback is not EMPTY_PROGRESS_CALLBACK, constructs a new
      *  ProgressWatcher and returns it.
      */
-    static ProgressWatcher* build(uint32_t total, float offset,
+    static ProgressWatcher* build(uint64_t total, float offset,
                                   ProgressCallback callback,
                                   std::atomic_bool& done,
                                   std::atomic_bool& cancel);
 
-    void tick(uint32_t i=1);
+    void tick(uint64_t i=1);
 
     /*  On destruction, either done or cancel must be true.
      *  The destructor waits for the worker thread to finish. */
     ~ProgressWatcher();
 
 protected:
-    ProgressWatcher(uint32_t total, float offset,
+    ProgressWatcher(uint64_t total, float offset,
                     ProgressCallback callback,
                     std::atomic_bool& done,
                     std::atomic_bool& cancel);
@@ -58,8 +58,8 @@ protected:
      *  updates at a fixed speed (e.g. 200 Hz). */
     std::timed_mutex mut;
 
-    std::atomic_uint32_t counter;
-    const uint32_t total;
+    std::atomic_uint64_t counter;
+    const uint64_t total;
     const float offset;
 
     std::future<void> future;
