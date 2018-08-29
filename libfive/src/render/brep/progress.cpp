@@ -76,7 +76,8 @@ ProgressWatcher::ProgressWatcher(uint64_t total, float offset,
                 }
                 // Sleep for 50 ms, returning early if the mutex is
                 // unlocked (which happens in the destructor)
-                this->mut.try_lock_for(std::chrono::milliseconds(50));
+                auto b = this->mut.try_lock_for(std::chrono::milliseconds(50));
+                (void)b; // Result is unused, but this prevents a warning
             }
 
             // Once evaluation is finished, report that we're completely done
