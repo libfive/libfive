@@ -126,7 +126,7 @@ static void run(
                 // all of them to the progress tracker
                 const unsigned levels =
                     ceil(log(min_dimension / min_feature) / log(2));
-                uint32_t ticks = 0;
+                uint64_t ticks = 0;
                 for (unsigned i=0; i <= levels; ++i)
                 {
                     ticks = (ticks + 1) * (1 << N);
@@ -220,7 +220,7 @@ typename XTree<N>::Root XTreePool<N>::build(
     // octree levels and a fixed split per level
     auto min_dimension = (region.upper - region.lower).minCoeff();
     const unsigned levels = ceil(log(min_dimension / min_feature) / log(2));
-    uint32_t ticks = 0;
+    uint64_t ticks = 0;
     for (unsigned i=0; i <= levels; ++i)
     {
         ticks = (ticks + 1) * (1 << N);
