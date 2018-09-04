@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "libfive/export.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/progress.hpp"
 #include "libfive/render/brep/intersection.hpp"
 #include "libfive/render/brep/marching.hpp"
 #include "libfive/render/brep/eval_xtree.hpp"
@@ -107,45 +108,34 @@ public:
     class Root
     {
     public:
-        Root() : ptr(nullptr) {}
-        Root(XTree<N>* ptr) : ptr(ptr) {}
+        Root();
+        Root(XTree<N>* ptr);
+        Root(Root&& other);
 
-        Root(Root&& other)
-        {
-            *this = std::move(other);
-        }
+        Root& operator=(Root&& other);
 
-        Root& operator=(Root&& other) {
-            ptr = other.ptr;
-            other.ptr = nullptr;
-            trees = std::move(other.trees);
-            leafs = std::move(other.leafs);
-            return *this;
-        }
+        ~Root() { reset(); }
 
-        void reset()
-        {
-            ptr = nullptr;
-            for (auto& t : trees)   delete [] t;
-            for (auto& f : leafs)   delete [] f;
-            trees.clear();
-            leafs.clear();
-        }
+        void reset(ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
         const XTree<N>* operator->() { return ptr; }
-        const XTree<N>* get() { return ptr; }
-        ~Root()
-        {
-            reset();
-        }
+        const XTree<N>* get() const { return ptr; }
 
-        void claim(Pool<XTree<N>>& pool)       { pool.release(trees); }
-        void claim(Pool<XTree<N>::Leaf>& pool) { pool.release(leafs); }
+        void claim(Pool<XTree<N>>& pool);
+        void claim(Pool<XTree<N>::Leaf>& pool);
+
+        int64_t size() const { return tree_count; }
 
     protected:
         XTree<N>* ptr;
         std::list<XTree<N>*> trees;
         std::list<XTree<N>::Leaf*> leafs;
+
+        // Used for progress tracking.  We use a signed value here because,
+        // as we claim Pools of XTrees, it's possible for the intermediate
+        // result to go negative (if one pool has claimed many trees from
+        // another Pool, so it owns more trees than it has allocated)..
+        int64_t tree_count=0;
     };
 
     /*

@@ -20,6 +20,7 @@ set(SRCS main.cpp
     neighbors.cpp
     oracle.cpp
     oracle_context.cpp
+    progress.cpp
     region.cpp
     solver.cpp
     transformed_oracle.cpp

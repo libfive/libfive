@@ -85,6 +85,18 @@ public:
         alloc.clear();
     }
 
+    /*
+     *  Returns the number of (assigned) items in the pool
+     *  (ignoring items that have been allocated but not used).
+     *
+     *  This could be a negative number, if we we're storing available
+     *  trees that were allocated by pools in different threads.
+     */
+    int64_t size() const
+    {
+        return (int64_t)alloc.size() * N - d.size();
+    }
+
 protected:
     std::stack<T*, std::vector<T*>> d;
     std::list<T*> alloc;

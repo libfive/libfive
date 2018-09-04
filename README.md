@@ -115,7 +115,7 @@ Now open `build\libfiv.sln` and build the solution. Check that `libfive-test` ru
 (c) 2015-2018 Matthew Keeter
 
 Different layers of this project are released under different licenses:
-- The `libfive` dynamic library is released under the LGPL, version 2 or later.
+- The `libfive` dynamic library is released under the MPL, version 2
 - `libfive-guile` and `Studio` are released under the GPL, version 2 or later.
 
 Contact me to discuss custom development,

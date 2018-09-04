@@ -1,20 +1,11 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
+
 Copyright (C) 2017  Matt Keeter
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this file,
+You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <chrono>
 
@@ -98,6 +89,30 @@ TEST_CASE("Mesh::render (cone)")
     REQUIRE(true);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+Kernel::Tree sphereGyroid()
+{
+    auto scale = 0.5f;
+    auto radius = 1.5f;
+    auto thickness = 0.5;
+
+    auto gyroidSrf =
+        sin(Kernel::Tree::X() / scale) * cos(Kernel::Tree::Y() / scale) +
+        sin(Kernel::Tree::Y() / scale) * cos(Kernel::Tree::Z() / scale) +
+        sin(Kernel::Tree::Z() / scale) * cos(Kernel::Tree::X() / scale);
+
+    auto gyroid = shell(gyroidSrf, thickness);
+    auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
+
+    auto sphereGyroid = max(sphere1, gyroid);
+    sphereGyroid = min(sphereGyroid,
+                     min(sphereGyroid ,
+                     (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
+
+    return sphereGyroid;
+}
+
 TEST_CASE("Mesh::render (performance)", "[!benchmark]")
 {
     BENCHMARK("Menger sponge")
@@ -122,61 +137,26 @@ TEST_CASE("Mesh::render (performance)", "[!benchmark]")
 
     BENCHMARK("Sphere / gyroid intersection")
     {
-        auto scale = 0.5f;
-        auto radius = 1.5f;
-        auto thickness = 0.5;
-
-        auto gyroidSrf =
-        sin(Kernel::Tree::X() / scale) * cos(Kernel::Tree::Y() / scale) +
-        sin(Kernel::Tree::Y() / scale) * cos(Kernel::Tree::Z() / scale) +
-        sin(Kernel::Tree::Z() / scale) * cos(Kernel::Tree::X() / scale);
-
-        auto gyroid = shell(gyroidSrf, thickness);
-        auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
-
-        auto sphereGyroid = max(sphere1, gyroid);
-        sphereGyroid = min(sphereGyroid,
-                         min(sphereGyroid ,
-                         (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
-
         Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
-
-        auto mesh = Mesh::render(sphereGyroid, r, 0.025);
+        auto mesh = Mesh::render(sphereGyroid(), r, 0.025);
     }
 }
 
 TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
 {
-    auto scale = 0.5f;
-    auto radius = 1.5f;
-    auto thickness = 0.5;
-
-    auto gyroidSrf =
-    sin(Kernel::Tree::X() / scale) * cos(Kernel::Tree::Y() / scale) +
-    sin(Kernel::Tree::Y() / scale) * cos(Kernel::Tree::Z() / scale) +
-    sin(Kernel::Tree::Z() / scale) * cos(Kernel::Tree::X() / scale);
-
-    auto gyroid = shell(gyroidSrf, thickness);
-    auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
-
-    auto sphereGyroid = max(sphere1, gyroid);
-    sphereGyroid = min(sphereGyroid,
-                     min(sphereGyroid ,
-                     (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
-
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
     XTree<3>::Root t;
     BENCHMARK("XTree construction")
     {
-        t = XTreePool<3>::build(sphereGyroid, r, 0.025, 1e-8, 8);
+        t = XTreePool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8);
     }
 
     std::unique_ptr<Mesh> m;
     std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Mesh::mesh(t.get(), cancel);
+        m = Mesh::mesh(t, cancel);
     }
 
     BENCHMARK("XTree deletion")
@@ -188,4 +168,45 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
     {
         m.reset();
     }
+}
+
+TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
+{
+    std::vector<float> progress;
+    auto progress_callback = [&](float f)
+    {
+        progress.push_back(f);
+    };
+
+    Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
+
+    XTree<3>::Root t;
+    BENCHMARK("XTree construction")
+    {
+        t = XTreePool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8,
+                                progress_callback);
+    }
+
+    std::unique_ptr<Mesh> m;
+    std::atomic_bool cancel(false);
+    BENCHMARK("Mesh building")
+    {
+        m = Mesh::mesh(t, cancel, progress_callback);
+    }
+
+    BENCHMARK("XTree deletion")
+    {
+        t.reset(progress_callback);
+    }
+
+    // Confirm that the progress counter is monotonically increasing
+    CAPTURE(progress);
+    float prev = -1;
+    for (auto& p : progress)
+    {
+        REQUIRE(p > prev);
+        prev = p;
+    }
+    REQUIRE(progress[0] == 0.0f);
+    REQUIRE(prev == 3.0f);
 }
