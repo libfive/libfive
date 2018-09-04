@@ -1,26 +1,18 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
+
 Copyright (C) 2018  Matt Keeter
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this file,
+You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <future>
 #include <numeric>
 #include <functional>
 #include <limits>
 #include <stack>
+#include <chrono>
 
 #include <cmath>
 
@@ -44,9 +36,13 @@ static void run(
         XTreeEvaluator* eval, LockFreeStack<N>& tasks,
         const float min_feature, const float max_err,
         std::atomic_bool& done, std::atomic_bool& cancel,
-        typename XTree<N>::Root& root, std::mutex& root_lock)
+        typename XTree<N>::Root& root, std::mutex& root_lock,
+        ProgressWatcher* progress)
 {
+    // Tasks to be evaluated by this thread (populated when the
+    // MPMC stack is completely full).
     std::stack<Task<N>, std::vector<Task<N>>> local;
+
     Pool<XTree<N>> spare_trees;
     Pool<typename XTree<N>::Leaf> spare_leafs;
 
@@ -88,14 +84,17 @@ static void run(
 
         // If this tree is larger than the minimum size, then it will either
         // be unambiguously filled/empty, or we'll need to recurse.
-        if (((region.upper - region.lower) > min_feature).any())
+        const double min_dimension = (region.upper - region.lower).minCoeff();
+        const bool can_subdivide =  min_dimension > min_feature;
+        if (can_subdivide)
         {
             tape = t->evalInterval(eval->interval, region, task.tape);
 
             // If this Tree is ambiguous, then push the children to the stack
             // and keep going (because all the useful work will be done
             // by collectChildren eventually).
-            if (t->type == Interval::AMBIGUOUS || t->type == Interval::UNKNOWN)
+            assert(t->type != Interval::UNKNOWN);
+            if (t->type == Interval::AMBIGUOUS)
             {
                 auto rs = region.subdivide();
                 for (unsigned i=0; i < t->children.size(); ++i)
@@ -118,12 +117,43 @@ static void run(
             t->evalLeaf(eval, neighbors, region, tape, spare_leafs);
         }
 
+        if (progress)
+        {
+            if (can_subdivide)
+            {
+                // Accumulate all of the child XTree cells that would have been
+                // included if we continued to subdivide this tree, then pass
+                // all of them to the progress tracker
+                const unsigned levels =
+                    ceil(log(min_dimension / min_feature) / log(2));
+                uint64_t ticks = 0;
+                for (unsigned i=0; i <= levels; ++i)
+                {
+                    ticks = (ticks + 1) * (1 << N);
+                }
+                progress->tick(ticks);
+            }
+            else
+            {
+                progress->tick(1);
+            }
+        }
+
         // If all of the children are done, then ask the parent to collect them
-        // (recursively, merging the trees on the way up)
+        // (recursively, merging the trees on the way up, and reporting
+        // completed tree cells to the progress tracker if present).
         for (t = t->parent;
              t && t->collectChildren(eval, tape, max_err, region.perp,
                                      spare_trees, spare_leafs);
-             t = t->parent);
+             t = t->parent)
+        {
+            // Report the volume of completed trees as we walk back
+            // up towards the root of the tree.
+            if (progress)
+            {
+                progress->tick();
+            }
+        }
 
         // Termination condition:  if we've ended up pointing at the parent
         // of the tree's root (which is nullptr), then we're done and break
@@ -147,8 +177,8 @@ static void run(
 template <unsigned N>
 typename XTree<N>::Root XTreePool<N>::build(
             const Tree t, Region<N> region,
-            double min_feature, double max_err,
-            unsigned workers)
+            double min_feature, double max_err, unsigned workers,
+            ProgressCallback progress_callback)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -158,14 +188,15 @@ typename XTree<N>::Root XTreePool<N>::build(
     }
     std::atomic_bool cancel(false);
     return XTreePool<N>::build(es.data(), region, min_feature,
-                               max_err, workers, cancel);
+                               max_err, workers, cancel, progress_callback);
 }
 
 template <unsigned N>
 typename XTree<N>::Root XTreePool<N>::build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
-            unsigned workers, std::atomic_bool& cancel)
+            unsigned workers, std::atomic_bool& cancel,
+            ProgressCallback progress_callback)
 {
     // Lazy initialization of marching squares / cubes table
     if (XTree<N>::mt.get() == nullptr)
@@ -184,13 +215,26 @@ typename XTree<N>::Root XTreePool<N>::build(
 
     typename XTree<N>::Root out(root);
     std::mutex root_lock;
+
+    // Kick off the progress tracking thread, based on the number of
+    // octree levels and a fixed split per level
+    auto min_dimension = (region.upper - region.lower).minCoeff();
+    const unsigned levels = ceil(log(min_dimension / min_feature) / log(2));
+    uint64_t ticks = 0;
+    for (unsigned i=0; i <= levels; ++i)
+    {
+        ticks = (ticks + 1) * (1 << N);
+    }
+    auto progress_watcher = ProgressWatcher::build(ticks, 0, progress_callback,
+                                                   done, cancel);
+
     for (unsigned i=0; i < workers; ++i)
     {
         futures[i] = std::async(std::launch::async,
                 [&eval, &tasks, &cancel, &done, &out, &root_lock,
-                 min_feature, max_err, i](){
+                 min_feature, max_err, i, progress_watcher](){
                     run(eval + i, tasks, min_feature, max_err,
-                        done, cancel, out, root_lock);
+                        done, cancel, out, root_lock, progress_watcher);
                     });
     }
 
@@ -199,6 +243,11 @@ typename XTree<N>::Root XTreePool<N>::build(
     {
         f.get();
     }
+
+    assert(done.load() || cancel.load());
+
+    // Wait for the progress bar to finish, which happens in the destructor.
+    delete progress_watcher;
 
     if (cancel.load())
     {

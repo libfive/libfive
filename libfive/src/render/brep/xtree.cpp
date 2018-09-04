@@ -1,20 +1,11 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
+
 Copyright (C) 2017  Matt Keeter
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this file,
+You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <future>
 #include <numeric>
@@ -991,6 +982,80 @@ unsigned XTree<N>::rank() const
                                 return 0;
     };
     return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+XTree<N>::Root::Root()
+    : ptr(nullptr)
+{
+    // Nothing to do here
+}
+
+template <unsigned N>
+XTree<N>::Root::Root(XTree<N>* ptr)
+    : ptr(ptr)
+{
+    // Nothing to do here
+}
+
+template <unsigned N>
+XTree<N>::Root::Root(Root&& other)
+{
+    *this = std::move(other);
+}
+
+template <unsigned N>
+typename XTree<N>::Root& XTree<N>::Root::operator=(Root&& other)
+{
+    ptr = other.ptr;
+    other.ptr = nullptr;
+    trees = std::move(other.trees);
+    leafs = std::move(other.leafs);
+    tree_count = other.tree_count;
+    return *this;
+}
+
+template <unsigned N>
+void XTree<N>::Root::reset(ProgressCallback progress_callback)
+{
+    ptr = nullptr;
+
+    std::atomic_bool done(false);
+    std::atomic_bool cancel(false);
+    auto progress_watcher = ProgressWatcher::build(
+            trees.size() + leafs.size(), 2.0f,
+            progress_callback, done, cancel);
+
+    for (auto& t : trees)
+    {
+        if (progress_watcher) progress_watcher->tick();
+        delete [] t;
+    }
+    for (auto& f : leafs)
+    {
+        if (progress_watcher) progress_watcher->tick();
+        delete [] f;
+    }
+    done.store(true);
+    delete progress_watcher;
+
+    trees.clear();
+    leafs.clear();
+}
+
+template <unsigned N>
+void XTree<N>::Root::claim(Pool<XTree<N>>& pool)
+{
+    tree_count += pool.size();
+    pool.release(trees);
+}
+
+template <unsigned N>
+void XTree<N>::Root::claim(Pool<XTree<N>::Leaf>& pool)
+{
+    pool.release(leafs);
 }
 
 }   // namespace Kernel

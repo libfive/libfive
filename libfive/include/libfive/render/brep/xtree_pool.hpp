@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/tree/tree.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/progress.hpp"
 
 namespace Kernel {
 
@@ -50,8 +51,8 @@ struct XTreePool
      */
     static typename XTree<N>::Root build(
             const Tree t, Region<N> region,
-            double min_feature=0.1, double max_err=1e-8,
-            unsigned workers=1);
+            double min_feature=0.1, double max_err=1e-8, unsigned workers=1,
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
     /*
      *  Full-featured construction
@@ -61,7 +62,8 @@ struct XTreePool
     static typename XTree<N>::Root build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
-            unsigned workers, std::atomic_bool& cancel);
+            unsigned workers, std::atomic_bool& cancel,
+            ProgressCallback callback=EMPTY_PROGRESS_CALLBACK);
 };
 
 extern template struct XTreePool<2>;
