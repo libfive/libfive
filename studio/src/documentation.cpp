@@ -172,8 +172,12 @@ DocumentationPane::DocumentationPane()
     setLayout(layout);
 
     setWindowTitle("Shape reference");
+#ifdef Q_OS_MAC
+    setWindowFlags(Qt::Tool);
+#else
     setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint |
                    Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+#endif
     setAttribute(Qt::WA_DeleteOnClose);
 
     show();
