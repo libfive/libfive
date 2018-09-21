@@ -53,7 +53,7 @@ if(NOT MSVC)
     pkg_check_modules(EIGEN REQUIRED eigen3>=3.2.92)
 else()
     find_package(eigen3 REQUIRED)
-    find_package(boost REQUIRED)
+    find_package(boost REQUIRED 1.65.0)
 endif()
 
 find_package(PNG REQUIRED)
