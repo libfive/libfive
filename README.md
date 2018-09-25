@@ -125,4 +125,5 @@ or commercial support.
 ## Projects using `libfive`
 - [Tovero](https://common-lisp.net/project/tovero/): A 3D modeling system for Common Lisp
 - [Inspekt3d](https://github.com/sjm-tl-gh/inspekt3d): Lightweight pure-Guile viewer
+- [Bindings for Unity](https://github.com/zalo/libfive-unity)
 - Unpublished [Stanza](http://lbstanza.org/) bindings (email for details)
