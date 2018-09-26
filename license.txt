@@ -1,0 +1,9 @@
+(c) 2015-2018 Matthew Keeter
+
+Different layers of this project are released under different licenses:
+- The `libfive` dynamic library is released under the MPL, version 2
+- `libfive-guile` and `Studio` are released under the GPL, version 2 or later.
+
+Contact me (matt.j.keeter@gmail.com) to discuss custom development,
+integration,
+or commercial support.
