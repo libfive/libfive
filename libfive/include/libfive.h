@@ -26,25 +26,66 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 extern "C" {
 #endif
 
+/*
+ *  libfive_interval is a range used in interval arithmetic
+ *  It usually represents either a spatial region (along a single axis)
+ *  or a range that is guaranteed to contain a value.
+ */
 struct libfive_interval  { float lower; float upper; };
+
+/*
+ *  libfive_region2:  A 2D region
+ */
 struct libfive_region2   { libfive_interval X, Y; };
+
+/*
+ *  libfive_region3:  A 3D region
+ */
 struct libfive_region3   { libfive_interval X, Y, Z; };
 
+/*
+ *  libfive_vec2:  A 2D point or vector
+ */
 struct libfive_vec2      { float x, y; };
+
+/*
+ *  libfive_vec3:  A 3D point or vector
+ */
 struct libfive_vec3      { float x, y, z; };
+
+/*
+ *  libfive_vec4:  A 4D point or vector
+ */
 struct libfive_vec4      { float x, y, z, w; };
+
+/*
+ *  libfive_tri:    A triangle, with corners stored as indices
+ *  into a separate vertex array
+ */
 struct libfive_tri       { uint32_t a, b, c; };
 
+/*
+ *  libfive_contour is a single 2D contour, consisting of a sequence of
+ *  2D points plus a count of how many points are stored
+ */
 struct libfive_contour {
     libfive_vec2* pts;
     uint32_t count;
 };
 
+/*
+ *  libfive_contour is a set of 2D contours, consisting of multiple
+ *  libfive_contour objects and a count of how many are stored
+ */
 struct libfive_contours {
     libfive_contour* cs;
     uint32_t count;
 };
 
+/*
+ *  libfive_contour is an indexed 3D mesh.
+ *  There are vert_count vertices, and tri_count triangles.
+ */
 struct libfive_mesh {
     libfive_vec3* verts;
     libfive_tri* tris;
@@ -52,6 +93,10 @@ struct libfive_mesh {
     uint32_t vert_count;
 };
 
+/*
+ *  libfive_pixels is a bitmap representing occupancy
+ *  There are width * height pixels, in row-major order
+ */
 struct libfive_pixels {
     bool* pixels;
     uint32_t width;
@@ -99,35 +144,114 @@ typedef void* libfive_id;
 typedef void* libfive_archive;
 #endif
 
+/*
+ *  Constructs a new tree that returns the X coordinate
+ */
 libfive_tree libfive_tree_x();
+
+/*
+ *  Constructs a new tree that returns the Y coordinate
+ */
 libfive_tree libfive_tree_y();
+
+/*
+ *  Constructs a new tree that returns the Z coordinate
+ */
 libfive_tree libfive_tree_z();
 
+/*
+ *  Constructs a new tree that contains a free variable
+ */
 libfive_tree libfive_tree_var();
+
+/*
+ *  Returns true if the given tree is a free variable
+ */
 bool libfive_tree_is_var(libfive_tree t);
 
+/*
+ *  Constructs a new tree that contains the given constant value
+ */
 libfive_tree libfive_tree_const(float f);
+
+/*
+ *  If t is a constant value, returns that value and sets *success to true.
+ *  Otherwise, sets success to false and returns 0. 
+ */
 float libfive_tree_get_const(libfive_tree t, bool* success);
 
+/*
+ *  Wraps a tree in an operation that sets the derivatives with respect to
+ *  all of its free variables to zero.
+ */
 libfive_tree libfive_tree_constant_vars(libfive_tree t);
 
+/*
+ *  Constructs a tree with the given no-argument opcode
+ *  TODO: returns NULL if the opcode is invalid
+ *      (right now, it will assertion-fail)
+ */
 libfive_tree libfive_tree_nonary(int op);
+
+/*
+ *  Constructs a tree with the given one-argument opcode
+ *  TODO: returns NULL if the opcode or argument is invalid
+ *      (right now, it will assertion-fail)
+ */
 libfive_tree libfive_tree_unary(int op, libfive_tree a);
+
+/*
+ *  Constructs a tree with the given two-argument opcode
+ *  TODO: returns NULL if the opcode or arguments is invalid
+ *      (right now, it will assertion-fail)
+ */
 libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b);
 
+/*
+ *  Returns a unique ID for the given tree.  This is post-deduplication,
+ *  e.g. all constant tree of value 1.0 will return the same id.
+ */
 const void* libfive_tree_id(libfive_tree t);
 
+/*
+ *  Evaluates the given math tree at the given position.
+ *  TODO:  Free variables are treated as zero
+ */
 float libfive_tree_eval_f(libfive_tree t, libfive_vec3 p);
+
+/*
+ *  Evaluates the given math tree over a spatial region, returning an interval
+ *  that is guaranteed to contain the result
+ *  TODO:  Free variables are treated as zero
+ */
 libfive_interval libfive_tree_eval_r(libfive_tree t, libfive_region3 r);
+
+/*
+ *  Evaluates the partial derivatives of a math tree at a specific point,
+ *  with respect to x, y, z.
+ */
 libfive_vec3 libfive_tree_eval_d(libfive_tree t, libfive_vec3 p);
 
+/*
+ *  Checks whether two trees are equal, taking deduplication into account
+ */
 bool libfive_tree_eq(libfive_tree a, libfive_tree b);
 
+/*
+ *  Deletes a tree.  If binding in a higher-level language, call this in
+ *  a destructor / finalizer to avoid leaking memory
+ */
 void libfive_tree_delete(libfive_tree ptr);
 
+/*  Serializes the given tree to a file, return true on success.
+ *  The file format is not archival, and may change without notice */
 bool libfive_tree_save(libfive_tree ptr, const char* filename);
+
+/*  Deserializes a tree from a file. */
 libfive_tree libfive_tree_load(const char* filename);
 
+/*  Executes the remapping operation returning a tree
+ *  q(x, y, z) = p(x'(x, y, z), y'(x, y, z), z'(x, y, z)) */
 libfive_tree libfive_tree_remap(libfive_tree p,
         libfive_tree x, libfive_tree y, libfive_tree z);
 
