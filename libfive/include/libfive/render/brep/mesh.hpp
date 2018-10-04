@@ -74,10 +74,12 @@ public:
                         const std::list<const Mesh*>& meshes);
 
     /*
-     *  Called by Dual::walk to construct the triangle mesh
+     *  Called by Dual::walk to construct the triangle mesh.  ts[index]
+     *  should be a minimal-level member of ts (though properly, it need
+     *  merely contain the edge being loaded as one of its edges).
      */
     template <Axis::Axis A, bool D>
-    void load(const std::array<const XTree<3>*, 4>& ts);
+    void load(const std::array<const XTree<3>*, 4>& ts, unsigned index);
 
     /*  Walks an XTree, returning a mesh  */
     static std::unique_ptr<Mesh> mesh(

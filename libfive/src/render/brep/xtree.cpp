@@ -758,9 +758,10 @@ bool XTree<N>::collectChildren(
     leaf->rank = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
             [](unsigned a, XTree<N>* b){ return std::max(a, b->rank());} );
 
-    // Accumulate the mass point and QEF matrices
-    for (const auto& c : cs)
+    // Accumulate the mass point, QEF matrices, and appropriate intersections.
+    for (auto i = 0; i < cs.size(); ++i)
     {
+        const auto& c = cs[i];
         assert(c != nullptr);
 
         if (c->type == Interval::AMBIGUOUS)
@@ -773,6 +774,15 @@ bool XTree<N>::collectChildren(
             leaf->AtA += c->leaf->AtA;
             leaf->AtB += c->leaf->AtB;
             leaf->BtB += c->leaf->BtB;
+
+            for (auto& edge : edgesFromChild(i))
+            {
+                if (c->leaf->intersections[edge])
+                {
+                    assert(!leaf->intersections[edge]);
+                    leaf->intersections[edge] = c->leaf->intersections[edge];
+                }
+            }
         }
         else
         {
@@ -883,9 +893,16 @@ template <unsigned N>
 std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
         unsigned a, unsigned b) const
 {
-    assert(leaf != nullptr);
     assert(mt->e[a][b] != -1);
-    return leaf->intersections[mt->e[a][b]];
+    return intersection(mt->e[a][b]);
+}
+
+template <unsigned N>
+std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
+        unsigned edge) const
+{
+    assert(leaf != nullptr);
+    return leaf->intersections[edge];
 }
 
 template <unsigned N>
@@ -1043,6 +1060,22 @@ void XTree<N>::Root::reset(ProgressCallback progress_callback)
 
     trees.clear();
     leafs.clear();
+}
+
+template <unsigned N>
+std::array<unsigned, 2 * N> XTree<N>::edgesFromChild(unsigned childIndex)
+{
+    assert(mt);
+    std::array<unsigned, 2 * N> out;
+    for (auto i = 0; i < N; ++i)
+    {
+        auto otherCorner = childIndex ^ (1 << i);
+        assert(mt->e[childIndex][otherCorner] >= 0);
+        assert(mt->e[otherCorner][childIndex] >= 0);
+        out[2 * i] = mt->e[childIndex][otherCorner];
+        out[2 * i + 1] = mt->e[otherCorner][childIndex];
+    }
+    return out;
 }
 
 template <unsigned N>
