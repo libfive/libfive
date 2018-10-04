@@ -249,6 +249,12 @@ public:
     std::shared_ptr<IntersectionVec<N>> intersection(
             unsigned a, unsigned b) const;
 
+    /*
+     *  Looks up a particular intersection array by (directed) edge index
+     */
+    std::shared_ptr<IntersectionVec<N>> intersection(
+            unsigned edge) const;
+
     /*  Leaf cell state, when known  */
     Interval::State type;
 
@@ -318,6 +324,14 @@ protected:
     static bool leafsAreManifold(
             const std::array<XTree<N>*, 1 << N>& children,
             const std::array<Interval::State, 1 << N>& corners);
+
+    /*
+     *  When collecting children and collapsing, each child can contribute the
+     *  intersections on the N edges (2*N directed edges) adjacent to the 
+     *  corner that it contributes.  This method uses mt, which therefore
+     *  must have been built first.
+     */
+    static std::array<unsigned, 2*N> edgesFromChild(unsigned childIndex);
 
     /*
      *  Returns a corner mask bitfield from the given array

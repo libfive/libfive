@@ -15,12 +15,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/xtree_pool.hpp"
 #include "libfive/render/brep/dual.hpp"
 
+#define TRIANGLE_FAN_MESHING 1
+
 namespace Kernel {
 
 const float Mesh::MAX_PROGRESS = 3.0f;
 
 template <Axis::Axis A, bool D>
-void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
+void Mesh::load(const std::array<const XTree<3>*, 4>& ts, unsigned index)
 {
     int es[4];
     {   // Unpack edge vertex pairs into edge indices
@@ -69,9 +71,44 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
         std::swap(vs[1], vs[2]);
     }
 
+#if TRIANGLE_FAN_MESHING
+    // Get the intersection vertex.  It should be the same
+    // position regardless of which vertex in the array we use
+    // (they should differ only by derivative).
+    assert(ts[index]->intersection(es[index]).get() != nullptr);
+    auto& intersectVec = *ts[index]->intersection(es[index]);
+    assert(!intersectVec.empty());
+    auto intersectPos = intersectVec[0].pos;
+    for (auto& inter : intersectVec)
+    {
+        (void)inter;
+        assert(inter.pos == intersectPos);
+    }
+
+    uint32_t vCenter = verts.size();
+    verts.push_back(intersectPos.template cast<float>());
+
+    // Rather than triangulating our quad into two triangles, we triangulate
+    // into four triangles, sharing a vertex at our computed intersection.  
+    // This gives us greater accuracy at no extra computation cost, and (more
+    // importantly) is the first step to ensuring that every triangle is
+    // contained in the cells that generated it, greatly reducing the 
+    // opportunities for self-intersection.
+    branes.push_back({ vs[0], vs[1], vCenter });
+    branes.push_back({ vs[1], vs[3], vCenter });
+    branes.push_back({ vs[3], vs[2], vCenter });
+    branes.push_back({ vs[2], vs[0], vCenter });
+
+#else
+    (void)index; // This variable is unused in non-fan meshing
+
     // Pick a triangulation that prevents triangles from folding back
     // on each other by checking normals.
     std::array<Eigen::Vector3f, 4> norms;
+    auto saveNorm = [&](int a, int b, int c){
+        norms[a] = (verts[vs[b]] - verts[vs[a]]).cross
+                   (verts[vs[c]] - verts[vs[a]]).normalized();
+    };
 
     // Computes and saves a corner normal.  a,b,c must be right-handed
     // according to the quad winding, which looks like
@@ -79,10 +116,7 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
     //     |         |
     //     |         |
     //     0---------1
-    auto saveNorm = [&](int a, int b, int c){
-        norms[a] = (verts[vs[b]] - verts[vs[a]]).cross
-                   (verts[vs[c]] - verts[vs[a]]).normalized();
-    };
+
     saveNorm(0, 1, 2);
     saveNorm(1, 3, 0);
     saveNorm(2, 0, 3);
@@ -106,6 +140,7 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
         push_triangle(vs[0], vs[1], vs[3]);
         push_triangle(vs[0], vs[3], vs[2]);
     }
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////
