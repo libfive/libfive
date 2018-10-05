@@ -28,10 +28,20 @@ namespace Kernel {
 template <unsigned N>
 struct Intersection {
     Eigen::Matrix<double, N, 1> pos;
-    Eigen::Matrix<double, N, 1>  deriv;
+    Eigen::Matrix<double, N, 1> deriv;
     double value;
+    uint32_t index; // Unique per-vertex index when unpacking into a b-rep.
+                    // Only used by the first intersection in each vec.
+                    // Not checked in equality comparison.
+    bool operator==(const Intersection& other) const;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
+
+template <unsigned N>
+bool inline Intersection<N>::operator==(const Intersection<N>& other) const
+{
+    return pos == other.pos && deriv == other.deriv && value == other.value;
+}
 
 template <size_t N>
 using IntersectionVec =

@@ -33,13 +33,12 @@ struct Task
     Task() : target(nullptr)
     { /* Nothing to do here */ }
 
-    Task(XTree<N>* t, std::shared_ptr<Tape> p, Region<N> r, Neighbors<N> n)
-        : target(t), tape(p), region(r), parent_neighbors(n)
+    Task(XTree<N>* t, std::shared_ptr<Tape> p, Neighbors<N> n)
+        : target(t), tape(p), parent_neighbors(n)
     { /* Nothing to do here */ }
 
     XTree<N>* target;
     std::shared_ptr<Tape> tape;
-    Region<N> region;
     Neighbors<N> parent_neighbors;
 };
 
