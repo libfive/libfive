@@ -34,10 +34,10 @@ std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(XTree<N>* parent, unsigned index)
+XTree<N>::XTree(XTree<N>* parent, unsigned index, Region<N> r)
     : XTree()
 {
-    reset(parent, index);
+    reset(parent, index, r);
 }
 
 template <unsigned N>
@@ -51,10 +51,11 @@ XTree<N>::XTree()
 }
 
 template <unsigned N>
-void XTree<N>::reset(XTree<N>* p, unsigned i)
+void XTree<N>::reset(XTree<N>* p, unsigned i, Region<N> r)
 {
     parent = p;
     parent_index = i;
+    region = r;
     type = Interval::UNKNOWN;
 
     // By design, a tree that is being reset must have no children
@@ -651,13 +652,13 @@ void XTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
     if (dv.array().isFinite().all())
     {
         leaf->intersections[edge]->
-             push_back({pos, dv, value / norm});
+             push_back({pos, dv, value / norm, 0});
     }
     // Otherwise, store an intersection with a zero normal
     else
     {
         leaf->intersections[edge]->
-             push_back({pos, Vec::Zero(), 0});
+             push_back({pos, Vec::Zero(), 0, 0});
     }
 }
 
@@ -757,6 +758,7 @@ bool XTree<N>::collectChildren(
     // feature ranks (as seen in DC: The Secret Sauce)
     leaf->rank = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
             [](unsigned a, XTree<N>* b){ return std::max(a, b->rank());} );
+
 
     // Accumulate the mass point, QEF matrices, and appropriate intersections.
     for (auto i = 0; i < cs.size(); ++i)
