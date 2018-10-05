@@ -30,6 +30,7 @@ add_library(five SHARED
     render/brep/xtree_pool2.cpp
     render/brep/xtree_pool3.cpp
     render/brep/contours.cpp
+    render/brep/intersection_aligner.cpp
     render/brep/mesh.cpp
     render/brep/marching.cpp
     render/brep/neighbors.cpp

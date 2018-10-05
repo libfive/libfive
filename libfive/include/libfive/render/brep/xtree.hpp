@@ -135,12 +135,12 @@ public:
      *  are invalid until reset() is called.
      */
     explicit XTree();
-    explicit XTree(XTree<N>* parent, unsigned index);
+    explicit XTree(XTree<N>* parent, unsigned index, Region<N> region);
 
     /*
      *  Resets this tree to a freshly-constructed state
      */
-    void reset(XTree<N>* p, unsigned i);
+    void reset(XTree<N>* p, unsigned i, Region<N> region);
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
@@ -205,8 +205,8 @@ public:
      *  This must only be called on non-branching cells.
      *
      *  level is defined as 0 for EMPTY or FILLED terminal cells;
-     *  for ambiguous leaf cells, it is the number of leafs that
-     *  were merged into this cell.
+     *  for ambiguous leaf cells, it is the depth of the largest 
+     *  chain of leafs that were merged into this cell.
      */
     unsigned level() const;
 
@@ -255,8 +255,20 @@ public:
     std::shared_ptr<IntersectionVec<N>> intersection(
             unsigned edge) const;
 
+    /*
+     *  Sets a particular intersection to a given value.  This method is 
+     *  const, so should only be called when the intersection is already set
+     *  to an object identical to ptr, and even then is not thread-safe.
+     */
+
+    void setIntersectionPtr(
+        unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const;
+
     /*  Leaf cell state, when known  */
     Interval::State type;
+
+    /*  The cell's region */
+    Region<N> region;
 
     /*  Optional leaf data, owned by a parent Pool<Leaf> */
     Leaf* leaf;
