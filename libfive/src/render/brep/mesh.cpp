@@ -87,15 +87,24 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
     saveNorm(1, 3, 0);
     saveNorm(2, 0, 3);
     saveNorm(3, 2, 1);
+
+    // Helper function to push triangles that aren't simply lines
+    auto push_triangle = [&](uint32_t a, uint32_t b, uint32_t c) {
+        if (a != b && b != c && a != c)
+        {
+            branes.push_back({a, b, c});
+        }
+    };
+
     if (norms[0].dot(norms[3]) > norms[1].dot(norms[2]))
     {
-        branes.push_back({vs[0], vs[1], vs[2]});
-        branes.push_back({vs[2], vs[1], vs[3]});
+        push_triangle(vs[0], vs[1], vs[2]);
+        push_triangle(vs[2], vs[1], vs[3]);
     }
     else
     {
-        branes.push_back({vs[0], vs[1], vs[3]});
-        branes.push_back({vs[0], vs[3], vs[2]});
+        push_triangle(vs[0], vs[1], vs[3]);
+        push_triangle(vs[0], vs[3], vs[2]);
     }
 }
 
