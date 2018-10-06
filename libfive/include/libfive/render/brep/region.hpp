@@ -147,6 +147,40 @@ public:
         return out;
     }
 
+    /*
+     *  Returns a Region that contains this region as a specific child
+     *
+     *  For example, if this Region is any of the four quadrants,
+     *  then calling parent(i) where i is the quadrant number
+     *  will return the full four-quadrant Region.
+     *
+     *  |----------|----------|
+     *  |          |          |
+     *  |     2    |     3    |
+     *  |          |          |
+     *  |----------|----------|
+     *  |          |          |
+     *  |     0    |     1    |
+     *  |          |          |
+     *  |----------|----------|
+     */
+    Region<N> parent(unsigned parent_index) const
+    {
+        Region<N> out = *this;
+        for (unsigned i=0; i < N; ++i)
+        {
+            if (parent_index & (1 << i))
+            {
+                out.lower(i) -= out.upper(i) - out.lower(i);
+            }
+            else
+            {
+                out.upper(i) += out.upper(i) - out.lower(i);
+            }
+        }
+        return out;
+    }
+
     /*  Lower and upper bounds for the region  */
     Pt lower, upper;
 
