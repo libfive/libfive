@@ -146,7 +146,7 @@ Kernel::Tree sphereGyroid()
 
     auto sphereGyroid = max(sphere1, gyroid);
     sphereGyroid = min(sphereGyroid,
-                     min(sphereGyroid ,
+                     min(sphereGyroid,
                      (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
 
     return sphereGyroid;
