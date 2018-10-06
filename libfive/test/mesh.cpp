@@ -89,6 +89,45 @@ TEST_CASE("Mesh::render (cone)")
     REQUIRE(true);
 }
 
+TEST_CASE("Mesh::render (checking for flipped triangles)")
+{
+    auto b = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+    auto mesh = Mesh::render(b, Region<3>({-10, -10, -10}, {10, 10, 10}), 0.25);
+
+    for (const auto& t : mesh->branes)
+    {
+        // Skip triangles that are actually collapsed into lines
+        // TODO: make this a test
+        if (t(0) == t(1) || t(0) == t(2) || t(1) == t(2))
+        {
+            continue;
+        }
+
+        // We're only looking at the top face triangles, since that's where
+        // flipped triangles are induced.
+        bool on_top_face = true;
+        for (unsigned i=0; i < 3; ++i)
+        {
+            on_top_face &= fabs(mesh->verts[t(i)].z() - 0.1) < 1e-3;
+        }
+        if (on_top_face)
+        {
+            auto norm = (mesh->verts[t(1)] - mesh->verts[t(0)])
+                .cross(mesh->verts[t(2)] - mesh->verts[t(0)])
+                .normalized();
+
+            CAPTURE(mesh->verts[t(0)]);
+            CAPTURE(mesh->verts[t(1)]);
+            CAPTURE(mesh->verts[t(2)]);
+            CAPTURE(norm);
+
+            REQUIRE(norm.x() == Approx(0.0f).margin(0.01));
+            REQUIRE(norm.y() == Approx(0.0f).margin(0.01));
+            REQUIRE(norm.z() == Approx(1.0f).margin(0.01));
+        }
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 Kernel::Tree sphereGyroid()
