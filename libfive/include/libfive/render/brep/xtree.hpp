@@ -179,7 +179,7 @@ public:
      */
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
-            double max_err, const typename Region<N>::Perp& perp,
+            double max_err, const Region<N>& region,
             Pool<XTree<N>>& spare_trees, Pool<Leaf>& spare_leafs);
 
     /*
