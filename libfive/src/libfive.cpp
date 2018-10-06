@@ -89,18 +89,31 @@ libfive_tree libfive_tree_constant_vars(libfive_tree t)
     return new Tree(t->makeVarsConstant());
 }
 
+static bool opcode_is_valid(int op, size_t expected_args)
+{
+    return op >= 0 &&
+           op < Opcode::LAST_OP &&
+           Opcode::args(Opcode::Opcode(op)) == expected_args;
+}
+
 libfive_tree libfive_tree_nonary(int op)
 {
-    return new Tree(Opcode::Opcode(op));
+    return opcode_is_valid(op, 0)
+        ? new Tree(Opcode::Opcode(op))
+        : nullptr;
 }
 
 libfive_tree libfive_tree_unary(int op, libfive_tree a)
 {
-    return new Tree(Opcode::Opcode(op), *a);
+    return (opcode_is_valid(op, 1) && a != nullptr)
+        ? new Tree(Opcode::Opcode(op), *a)
+        : nullptr;
 }
 libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b)
 {
-    return new Tree(Opcode::Opcode(op), *a, *b);
+    return (opcode_is_valid(op, 2) && a != nullptr && b != nullptr)
+        ? new Tree(Opcode::Opcode(op), *a, *b)
+        : nullptr;
 }
 
 const void* libfive_tree_id(libfive_tree t)

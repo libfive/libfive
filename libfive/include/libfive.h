@@ -180,22 +180,19 @@ libfive_tree libfive_tree_constant_vars(libfive_tree t);
 
 /*
  *  Constructs a tree with the given no-argument opcode
- *  TODO: returns NULL if the opcode is invalid
- *      (right now, it will assertion-fail)
+ *  Returns NULL if the opcode is invalid.
  */
 libfive_tree libfive_tree_nonary(int op);
 
 /*
  *  Constructs a tree with the given one-argument opcode
- *  TODO: returns NULL if the opcode or argument is invalid
- *      (right now, it will assertion-fail)
+ *  Returns NULL if the opcode or argument is invalid
  */
 libfive_tree libfive_tree_unary(int op, libfive_tree a);
 
 /*
  *  Constructs a tree with the given two-argument opcode
- *  TODO: returns NULL if the opcode or arguments is invalid
- *      (right now, it will assertion-fail)
+ *  Returns NULL if the opcode or arguments are invalid
  */
 libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b);
 
