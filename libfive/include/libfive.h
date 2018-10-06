@@ -17,13 +17,15 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #pragma once
-#include <cstdint>
 
 #ifdef __cplusplus
+#include <cstdint>
 #include "libfive/tree/tree.hpp"
 #include "libfive/tree/archive.hpp"
-
 extern "C" {
+#else
+#include <stdint.h>
+#include <stdbool.h>
 #endif
 
 /*
@@ -31,77 +33,77 @@ extern "C" {
  *  It usually represents either a spatial region (along a single axis)
  *  or a range that is guaranteed to contain a value.
  */
-struct libfive_interval  { float lower; float upper; };
+typedef struct libfive_interval  { float lower; float upper; } libfive_interval;
 
 /*
  *  libfive_region2:  A 2D region
  */
-struct libfive_region2   { libfive_interval X, Y; };
+typedef struct libfive_region2   { libfive_interval X, Y; } libfive_region2;
 
 /*
  *  libfive_region3:  A 3D region
  */
-struct libfive_region3   { libfive_interval X, Y, Z; };
+typedef struct libfive_region3   { libfive_interval X, Y, Z; } libfive_region3;
 
 /*
  *  libfive_vec2:  A 2D point or vector
  */
-struct libfive_vec2      { float x, y; };
+typedef struct libfive_vec2      { float x, y; } libfive_vec2;
 
 /*
  *  libfive_vec3:  A 3D point or vector
  */
-struct libfive_vec3      { float x, y, z; };
+typedef struct libfive_vec3      { float x, y, z; } libfive_vec3;
 
 /*
  *  libfive_vec4:  A 4D point or vector
  */
-struct libfive_vec4      { float x, y, z, w; };
+typedef struct libfive_vec4      { float x, y, z, w; } libfive_vec4;
 
 /*
  *  libfive_tri:    A triangle, with corners stored as indices
  *  into a separate vertex array
  */
-struct libfive_tri       { uint32_t a, b, c; };
+typedef struct libfive_tri       { uint32_t a, b, c; } libfive_tri;
 
 /*
  *  libfive_contour is a single 2D contour, consisting of a sequence of
  *  2D points plus a count of how many points are stored
  */
-struct libfive_contour {
+typedef struct libfive_contour {
     libfive_vec2* pts;
     uint32_t count;
-};
+} libfive_contour;
 
 /*
  *  libfive_contour is a set of 2D contours, consisting of multiple
  *  libfive_contour objects and a count of how many are stored
  */
-struct libfive_contours {
+typedef struct libfive_contours {
     libfive_contour* cs;
     uint32_t count;
-};
+} libfive_contours;
 
 /*
  *  libfive_contour is an indexed 3D mesh.
  *  There are vert_count vertices, and tri_count triangles.
  */
-struct libfive_mesh {
+typedef struct libfive_mesh {
     libfive_vec3* verts;
     libfive_tri* tris;
     uint32_t tri_count;
     uint32_t vert_count;
-};
+} libfive_mesh;
 
 /*
  *  libfive_pixels is a bitmap representing occupancy
  *  There are width * height pixels, in row-major order
  */
-struct libfive_pixels {
+typedef struct libfive_pixels {
     bool* pixels;
     uint32_t width;
     uint32_t height;
-};
+} libfive_pixels;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -176,7 +178,7 @@ libfive_tree libfive_tree_const(float f);
 
 /*
  *  If t is a constant value, returns that value and sets *success to true.
- *  Otherwise, sets success to false and returns 0. 
+ *  Otherwise, sets success to false and returns 0.
  */
 float libfive_tree_get_const(libfive_tree t, bool* success);
 
