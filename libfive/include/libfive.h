@@ -75,7 +75,7 @@ typedef struct libfive_contours {
 } libfive_contours;
 
 /*
- *  libfive_contour is an indexed 3D mesh.
+ *  libfive_mesh is an indexed 3D mesh.
  *  There are vert_count vertices, and tri_count triangles.
  */
 typedef struct libfive_mesh {
@@ -84,6 +84,20 @@ typedef struct libfive_mesh {
     uint32_t tri_count;
     uint32_t vert_count;
 } libfive_mesh;
+
+/*
+ *  libfive_mesh_coords is an indexed 3D mesh, similar to
+ *  libfive_mesh, with sets of vertex indices separated by -1 instead
+ *  of using triangle structs. There are vert_count vertices, and
+ *  coord_index_count coordinate indices (including the -1s), for
+ *  coord_index_count / 4 total triangles.
+ */
+typedef struct libfive_mesh_coords {
+    libfive_vec3* verts;
+    uint32_t vert_count;
+    int32_t* coord_indices;
+    uint32_t coord_index_count;
+} libfive_mesh_coords;
 
 /*
  *  libfive_pixels is a bitmap representing occupancy
@@ -290,6 +304,14 @@ void libfive_tree_save_slice(libfive_tree tree, libfive_region2 R,
  */
 libfive_mesh* libfive_tree_render_mesh(libfive_tree tree,
                                        libfive_region3 R, float res);
+/*
+ *  Renders to an alternate mesh format, see description of
+ *  libfive_mesh_coords above.  The returned struct must be freed with
+ *  libfive_mesh_delete
+ */
+libfive_mesh_coords* libfive_tree_render_mesh_coords(libfive_tree tree,
+                                                     libfive_region3 R,
+                                                     float res);
 
 /*
  *  Renders and saves a mesh to a file
