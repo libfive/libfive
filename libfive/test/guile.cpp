@@ -9,6 +9,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <libguile.h>
 #include <boost/algorithm/string/predicate.hpp>
+#include <clocale>
+
 #include "catch.hpp"
 
 #include "libfive-guile.h"
