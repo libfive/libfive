@@ -40,6 +40,13 @@ void libfive_mesh_delete(libfive_mesh* m)
     delete m;
 }
 
+void libfive_mesh_coords_delete(libfive_mesh_coords* m)
+{
+    delete [] m->verts;
+    delete [] m->coord_indices;
+    delete m;
+}
+
 void libfive_pixels_delete(libfive_pixels* m)
 {
     delete [] m->pixels;
@@ -266,6 +273,47 @@ libfive_mesh* libfive_tree_render_mesh(libfive_tree tree, libfive_region3 R, flo
     for (auto& t : ms->branes)
     {
         out->tris[i++] = {(uint32_t)t.x(), (uint32_t)t.y(), (uint32_t)t.z()};
+    }
+
+    return out;
+}
+
+libfive_mesh_coords* libfive_tree_render_mesh_coords(libfive_tree tree,
+                                                     libfive_region3 R,
+                                                     float res)
+{
+    Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
+                     {R.X.upper, R.Y.upper, R.Z.upper});
+    auto ms = Mesh::render(*tree, region, 1/res);
+    if (ms.get() == nullptr)
+    {
+        fprintf(stderr, "libfive_tree_render_mesh_coords: got empty mesh\n");
+        return nullptr;
+    }
+
+    auto out = new libfive_mesh_coords;
+    out->verts = new libfive_vec3[ms->verts.size()];
+    out->vert_count = ms->verts.size();
+    // need 4 times the count of triangles for coordinate indices
+    // (3 vertices separated by -1 for each triangle)
+    out->coord_indices = new int32_t[4 * ms->branes.size()];
+    out->coord_index_count = 4 * ms->branes.size();
+
+    size_t i;
+
+    i=0;
+    for (auto& v : ms->verts)
+    {
+        out->verts[i++] = {v.x(), v.y(), v.z()};
+    }
+
+    i=0;
+    for (auto& t : ms->branes)
+    {
+      out->coord_indices[i++] = (int32_t)t.x();
+      out->coord_indices[i++] = (int32_t)t.y();
+      out->coord_indices[i++] = (int32_t)t.z();
+      out->coord_indices[i++] = -1;
     }
 
     return out;
