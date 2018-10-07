@@ -786,7 +786,7 @@ bool XTree<N>::collectChildren(
     {
         bool collapsed = false;
         if (findVertex(leaf->vertex_count++) < max_err &&
-            region.contains(vert(0)))
+            region.contains(vert(0), 1e-6))
         {
             Eigen::Vector3f v;
             v << vert(0).template cast<float>(),
