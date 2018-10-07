@@ -33,6 +33,7 @@ static std::string eval(std::string input) {
     if (!initialized)
     {
         scm_init_guile();
+        std::setlocale(LC_CTYPE, "en_US.UTF-8");
         scm_init_libfive_modules();
         scm_c_use_module("libfive kernel");
         scm_c_use_module("libfive vec");
