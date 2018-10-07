@@ -61,6 +61,24 @@ TEST_CASE("Mesh::render (cube)")
     auto mesh = Mesh::render(cube, r);
 }
 
+TEST_CASE("Mesh::render (cube face count)")
+{
+    auto cube = max(max(
+        max(-(Tree::X() + 1.5),
+            Tree::X() - 1.5),
+        max(-(Tree::Y() + 1.5),
+            Tree::Y() - 1.5)),
+        max(-(Tree::Z() + 1.5),
+            Tree::Z() - 1.5));
+
+    //  The region is set so we hit where the interesting stuff happens.
+    Region<3> r({ -3., -3., -3. }, { 3., 3., 3. });
+
+    auto m = Mesh::render(cube, r, 2, false);
+    REQUIRE(m->branes.size() == 12);
+    REQUIRE(m->verts.size() == 9);
+}
+
 TEST_CASE("Mesh::render (face count in rectangular prism)")
 {
     auto t = max(max(max(-Tree::X(), Tree::X() - 4),
