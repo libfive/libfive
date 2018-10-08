@@ -30,6 +30,26 @@ The interface also includes direct modeling,
 where the user can push and pull on the model's surface
 to change variables in the script.
 
+## Other projects using `libfive`
+- [Tovero](https://common-lisp.net/project/tovero/): A 3D modeling system for Common Lisp
+- [Inspekt3d](https://github.com/sjm-tl-gh/inspekt3d): Lightweight pure-Guile viewer
+- [Bindings for Unity](https://github.com/zalo/libfive-unity)
+- Unpublished [Stanza](http://lbstanza.org/) bindings (email for details)
+
+## License
+(c) 2015-2018 Matthew Keeter
+
+Different layers of this project are released under different licenses:
+- The `libfive` dynamic library is released under the
+  [Mozilla Public License, version 2](https://www.mozilla.org/en-US/MPL/2.0/).
+- `libfive-guile` and `Studio` are released under the
+  [GNU General Public License, version 2](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html)
+  [or later](https://www.gnu.org/licenses/gpl-3.0-standalone.html).
+
+[Contact the author](matt.j.keeter@gmail.com)
+to discuss custom development, integration,
+or commercial support.
+
 ## Compiling from source
 The full system (`libfive` + `libfive-guile` + **Studio**)
 has been successfully compiled on Mac and Linux.
@@ -42,7 +62,7 @@ and should also build with MinGW (though this is untested).
 - [`pkg-config`](https://www.freedesktop.org/wiki/Software/pkg-config/)
 - [Eigen 3.3.x](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
-- [Boost](https://www.boost.org)
+- [Boost 1.65 or later](https://www.boost.org)
 - [Qt 5.7 or later](https://www.qt.io)
 - [Guile 2.2.1 or later](https://www.gnu.org/software/guile/)
 
@@ -110,18 +130,3 @@ cd build
 cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
 ```
 Now open `build\libfiv.sln` and build the solution. Check that `libfive-test` runs correctly.
-
-## License
-(c) 2015-2018 Matthew Keeter
-
-Different layers of this project are released under different licenses:
-- The `libfive` dynamic library is released under the MPL, version 2
-- `libfive-guile` and `Studio` are released under the GPL, version 2 or later.
-
-Contact me to discuss custom development,
-integration,
-or commercial support.
-
-## Projects using `libfive`
-- [Tovero](https://common-lisp.net/project/tovero/): A 3D modeling system for Common Lisp
-- Unpublished [Stanza](http://lbstanza.org/) bindings (email for details)

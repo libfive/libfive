@@ -2,19 +2,9 @@
 libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2017  Matt Keeter
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this file,
+You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <iostream>
 #include <fstream>
@@ -43,10 +33,27 @@ void libfive_contours_delete(libfive_contours* cs)
     delete cs;
 }
 
+void libfive_contours3_delete(libfive_contours3* cs)
+{
+    for (unsigned i=0; i < cs->count; ++i)
+    {
+        delete [] cs->cs[i].pts;
+    }
+    delete [] cs->cs;
+    delete cs;
+}
+
 void libfive_mesh_delete(libfive_mesh* m)
 {
     delete [] m->verts;
     delete [] m->tris;
+    delete m;
+}
+
+void libfive_mesh_coords_delete(libfive_mesh_coords* m)
+{
+    delete [] m->verts;
+    delete [] m->coord_indices;
     delete m;
 }
 
@@ -99,18 +106,31 @@ libfive_tree libfive_tree_constant_vars(libfive_tree t)
     return new Tree(t->makeVarsConstant());
 }
 
+static bool opcode_is_valid(int op, size_t expected_args)
+{
+    return op >= 0 &&
+           op < Opcode::LAST_OP &&
+           Opcode::args(Opcode::Opcode(op)) == expected_args;
+}
+
 libfive_tree libfive_tree_nonary(int op)
 {
-    return new Tree(Opcode::Opcode(op));
+    return opcode_is_valid(op, 0)
+        ? new Tree(Opcode::Opcode(op))
+        : nullptr;
 }
 
 libfive_tree libfive_tree_unary(int op, libfive_tree a)
 {
-    return new Tree(Opcode::Opcode(op), *a);
+    return (opcode_is_valid(op, 1) && a != nullptr)
+        ? new Tree(Opcode::Opcode(op), *a)
+        : nullptr;
 }
 libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b)
 {
-    return new Tree(Opcode::Opcode(op), *a, *b);
+    return (opcode_is_valid(op, 2) && a != nullptr && b != nullptr)
+        ? new Tree(Opcode::Opcode(op), *a, *b)
+        : nullptr;
 }
 
 const void* libfive_tree_id(libfive_tree t)
@@ -225,6 +245,36 @@ libfive_contours* libfive_tree_render_slice(libfive_tree tree,
     return out;
 }
 
+libfive_contours3* libfive_tree_render_slice3(libfive_tree tree,
+                                              libfive_region2 R, float z, float res)
+{
+    Region<2> region({R.X.lower, R.Y.lower}, {R.X.upper, R.Y.upper},
+            Region<2>::Perp(z));
+    auto cs = Contours::render(*tree, region, 1/res);
+
+    auto out = new libfive_contours3;
+    out->count = cs->contours.size();
+    out->cs = new libfive_contour3[out->count];
+
+    size_t i=0;
+    for (auto& c : cs->contours)
+    {
+        out->cs[i].count = c.size();
+        out->cs[i].pts = new libfive_vec3[c.size()];
+
+        size_t j=0;
+        for (auto& pt : c)
+        {
+          // each 2D contour point is converted to a 3D point (with
+          // this function's z argument as the Z coordinate)
+          out->cs[i].pts[j++] = {pt.x(), pt.y(), z};
+        }
+        i++;
+    }
+
+    return out;
+}
+
 void libfive_tree_save_slice(libfive_tree tree, libfive_region2 R, float z, float res,
                         const char* f)
 {
@@ -263,6 +313,47 @@ libfive_mesh* libfive_tree_render_mesh(libfive_tree tree, libfive_region3 R, flo
     for (auto& t : ms->branes)
     {
         out->tris[i++] = {(uint32_t)t.x(), (uint32_t)t.y(), (uint32_t)t.z()};
+    }
+
+    return out;
+}
+
+libfive_mesh_coords* libfive_tree_render_mesh_coords(libfive_tree tree,
+                                                     libfive_region3 R,
+                                                     float res)
+{
+    Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
+                     {R.X.upper, R.Y.upper, R.Z.upper});
+    auto ms = Mesh::render(*tree, region, 1/res);
+    if (ms.get() == nullptr)
+    {
+        fprintf(stderr, "libfive_tree_render_mesh_coords: got empty mesh\n");
+        return nullptr;
+    }
+
+    auto out = new libfive_mesh_coords;
+    out->verts = new libfive_vec3[ms->verts.size()];
+    out->vert_count = ms->verts.size();
+    // need 4 times the count of triangles for coordinate indices
+    // (3 vertices separated by -1 for each triangle)
+    out->coord_indices = new int32_t[4 * ms->branes.size()];
+    out->coord_index_count = 4 * ms->branes.size();
+
+    size_t i;
+
+    i=0;
+    for (auto& v : ms->verts)
+    {
+        out->verts[i++] = {v.x(), v.y(), v.z()};
+    }
+
+    i=0;
+    for (auto& t : ms->branes)
+    {
+      out->coord_indices[i++] = (int32_t)t.x();
+      out->coord_indices[i++] = (int32_t)t.y();
+      out->coord_indices[i++] = (int32_t)t.z();
+      out->coord_indices[i++] = -1;
     }
 
     return out;

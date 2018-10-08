@@ -18,6 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <cstdlib>
 #include <cassert>
+#include <clocale>
 
 #include "libfive-guile.h"
 #include "libfive.h"
@@ -552,6 +553,9 @@ void init_libfive_util(void*)
 
 void scm_init_libfive_modules()
 {
+    const auto locale = std::setlocale(LC_CTYPE, NULL);
+    std::setlocale(LC_CTYPE, "en_US.UTF-8");
+
     // Listed in order of dependencies
     scm_c_define_module("libfive vec", init_libfive_vec, NULL);
     scm_c_define_module("libfive util", init_libfive_util, NULL);
@@ -561,4 +565,6 @@ void scm_init_libfive_modules()
     scm_c_define_module("libfive shapes", init_libfive_shapes, NULL);
     scm_c_define_module("libfive text", init_libfive_text, NULL);
     scm_c_define_module("libfive sandbox", init_libfive_sandbox, NULL);
+
+    std::setlocale(LC_CTYPE, locale);
 }
