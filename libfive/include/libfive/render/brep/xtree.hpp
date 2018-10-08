@@ -135,12 +135,12 @@ public:
      *  are invalid until reset() is called.
      */
     explicit XTree();
-    explicit XTree(XTree<N>* parent, unsigned index);
+    explicit XTree(XTree<N>* parent, unsigned index, Region<N> region);
 
     /*
      *  Resets this tree to a freshly-constructed state
      */
-    void reset(XTree<N>* p, unsigned i);
+    void reset(XTree<N>* p, unsigned i, Region<N> region);
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
@@ -205,8 +205,8 @@ public:
      *  This must only be called on non-branching cells.
      *
      *  level is defined as 0 for EMPTY or FILLED terminal cells;
-     *  for ambiguous leaf cells, it is the number of leafs that
-     *  were merged into this cell.
+     *  for ambiguous leaf cells, it is the depth of the largest 
+     *  chain of leafs that were merged into this cell.
      */
     unsigned level() const;
 
@@ -249,8 +249,17 @@ public:
     std::shared_ptr<IntersectionVec<N>> intersection(
             unsigned a, unsigned b) const;
 
+    /*
+     *  Looks up a particular intersection array by (directed) edge index
+     */
+    std::shared_ptr<IntersectionVec<N>> intersection(
+            unsigned edge) const;
+
     /*  Leaf cell state, when known  */
     Interval::State type;
+
+    /*  The cell's region */
+    Region<N> region;
 
     /*  Optional leaf data, owned by a parent Pool<Leaf> */
     Leaf* leaf;
@@ -318,6 +327,14 @@ protected:
     static bool leafsAreManifold(
             const std::array<XTree<N>*, 1 << N>& children,
             const std::array<Interval::State, 1 << N>& corners);
+
+    /*
+     *  When collecting children and collapsing, each child can contribute the
+     *  intersections on the N edges (2*N directed edges) adjacent to the 
+     *  corner that it contributes.  This method uses mt, which therefore
+     *  must have been built first.
+     */
+    static std::array<unsigned, 2*N> edgesFromChild(unsigned childIndex);
 
     /*
      *  Returns a corner mask bitfield from the given array

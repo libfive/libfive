@@ -20,6 +20,8 @@ struct Intersection {
     Eigen::Matrix<double, N, 1> pos;
     Eigen::Matrix<double, N, 1>  deriv;
     double value;
+    uint32_t index; // Unique per-vertex index when unpacking into a b-rep.
+                    // Only used by the first intersection in each vec.
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 

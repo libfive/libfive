@@ -71,8 +71,8 @@ static void run(
 
         auto tape = task.tape;
         auto t = task.target;
-        Region<N> region = task.region;
-
+        const auto& region = t->region;
+      
         // Find our local neighbors.  We do this at the last minute to
         // give other threads the chance to populate more pointers.
         Neighbors<N> neighbors;
@@ -102,7 +102,7 @@ static void run(
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
-                    Task<N> next(spare_trees.get(t, i), tape, rs[i], neighbors);
+                    Task<N> next(spare_trees.get(t, i, rs[i]), tape, neighbors);
                     if (!tasks.bounded_push(next))
                     {
                         local.push(next);
@@ -204,11 +204,11 @@ typename XTree<N>::Root XTreePool<N>::build(
         XTree<N>::mt = Marching::buildTable<N>();
     }
 
-    auto root(new XTree<N>(nullptr, 0));
+    auto root(new XTree<N>(nullptr, 0, region));
     std::atomic_bool done(false);
 
     LockFreeStack<N> tasks(workers);
-    tasks.push(Task<N>(root, eval->deck->tape, region, Neighbors<N>()));
+    tasks.push(Task<N>(root, eval->deck->tape, Neighbors<N>()));
 
     std::vector<std::future<void>> futures;
     futures.resize(workers);
