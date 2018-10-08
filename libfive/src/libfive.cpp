@@ -33,6 +33,16 @@ void libfive_contours_delete(libfive_contours* cs)
     delete cs;
 }
 
+void libfive_contours3_delete(libfive_contours3* cs)
+{
+    for (unsigned i=0; i < cs->count; ++i)
+    {
+        delete [] cs->cs[i].pts;
+    }
+    delete [] cs->cs;
+    delete cs;
+}
+
 void libfive_mesh_delete(libfive_mesh* m)
 {
     delete [] m->verts;
@@ -228,6 +238,36 @@ libfive_contours* libfive_tree_render_slice(libfive_tree tree,
         for (auto& pt : c)
         {
             out->cs[i].pts[j++] = {pt.x(), pt.y()};
+        }
+        i++;
+    }
+
+    return out;
+}
+
+libfive_contours3* libfive_tree_render_slice3(libfive_tree tree,
+                                              libfive_region2 R, float z, float res)
+{
+    Region<2> region({R.X.lower, R.Y.lower}, {R.X.upper, R.Y.upper},
+            Region<2>::Perp(z));
+    auto cs = Contours::render(*tree, region, 1/res);
+
+    auto out = new libfive_contours3;
+    out->count = cs->contours.size();
+    out->cs = new libfive_contour3[out->count];
+
+    size_t i=0;
+    for (auto& c : cs->contours)
+    {
+        out->cs[i].count = c.size();
+        out->cs[i].pts = new libfive_vec3[c.size()];
+
+        size_t j=0;
+        for (auto& pt : c)
+        {
+          // each 2D contour point is converted to a 3D point (with
+          // this function's z argument as the Z coordinate)
+          out->cs[i].pts[j++] = {pt.x(), pt.y(), z};
         }
         i++;
     }
