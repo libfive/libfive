@@ -76,7 +76,7 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts, unsigned index)
     {
         auto intersectPos1 = intersectVec[0].pos;
         auto intersectPos2 = intersectVec[1].pos;
-        for (auto i = 2; i < intersectVec.size(); ++i)
+        for (unsigned i=2; i < intersectVec.size(); ++i)
         {
             assert(intersectVec[i].pos == intersectVec[i % 2].pos);
         }
@@ -88,11 +88,11 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts, unsigned index)
     assert(vCenter != 0);
 
     // Rather than triangulating our quad into two triangles, we triangulate
-    // into four triangles, sharing a vertex at our computed intersection.  
+    // into four triangles, sharing a vertex at our computed intersection.
     // This gives us greater accuracy at no extra computation cost, and (more
     // importantly) will allow us to ensure that every triangle is
     // contained in the cells that generated it (provided that its endpoints
-    // are in their proper cells), greatly reducing the 
+    // are in their proper cells), greatly reducing the
     // opportunities for self-intersection.
 
     // Handle polarity-based windings
@@ -167,7 +167,7 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
     // If either cell does not actually contain its vertex, there is no way
     // to make the resulting triangles be in only the generating cells, so we
     // go straight to adding the triangle (a,b,intersection).  Conversely, if
-    // the cells do contain their vertices and are the same size, adding 
+    // the cells do contain their vertices and are the same size, adding
     // (a,b,intersection) will always be sufficient, so again we can simply do
     // so.  Otherwise, more complicated steps are needed.
     const auto& aPos = verts[aIndex];
@@ -179,7 +179,7 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
         const auto& intersectionPos = verts[intersectionIndex];
         const auto& boundaryValue = intersectionPos[Axis::toIndex(A)];
 
-        // Find where the line between the vertices of a and b 
+        // Find where the line between the vertices of a and b
         // intersects the plane of the boundary between a and b.
         if (D)
         {
@@ -202,7 +202,6 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
         crossing[Axis::toIndex(A)] = intersectionPos[Axis::toIndex(A)];
 
         // Determine on which side(s) of the actual boundary the crossing is.
-        
         const auto aIsSmaller = a->level() < b->level();
         const auto smallerCell = aIsSmaller ? a : b;
         const auto& smallerRegion = (smallerCell)->region;
@@ -230,7 +229,7 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
         compareAndSet(R, RCompare);
 
         // If both are inside the region, the triangle (a,b,intersection) will
-        // be inside the appropriate cells, so we can skip to adding that.  
+        // be inside the appropriate cells, so we can skip to adding that.
         // Otherwise, more steps need to be taken.
 
         if (QCompare != 0 || RCompare != 0)
@@ -247,7 +246,7 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
                 // edge of the smaller cell that adjoins the larger cell.  We
                 // can find the intersection on that edge, if there is one.
                 auto getIntersection =
-                    [&aIsSmaller, &smallerCell, &aIndex, &bIndex, this]
+                    [&aIsSmaller, &smallerCell, &aIndex, &bIndex]
                 (Axis::Axis compAxis, int compared)->IntersectionVec<3>*
                 {
                     assert(compAxis != A);
@@ -274,12 +273,12 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
                             patch = XTree<3>::mt->
                                 p[smallerCell->leaf->corner_mask][edge];
                         }
-                        // We have a patch value (possibly -1), but we only 
-                        // want to use this edge if it's the patch of 
+                        // We have a patch value (possibly -1), but we only
+                        // want to use this edge if it's the patch of
                         // smallerCell that we're actually using.  (The bigger
-                        // cell can only have one patch, since it has positive 
+                        // cell can only have one patch, since it has positive
                         // level.)
-                        if (smallerCell->leaf->index[patch] == 
+                        if (smallerCell->leaf->index[patch] ==
                             (aIsSmaller ? aIndex : bIndex))
                         {
                             assert(smallerCell->intersection(edge));
@@ -296,10 +295,9 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
                 auto RIntersection = getIntersection(R, RCompare);
                 if ((QIntersection == nullptr) == (RIntersection == nullptr))
                 {
-                    // We have either no usable intersection or too many, 
-                    // so just use the point in our boundary closest 
+                    // We have either no usable intersection or too many,
+                    // so just use the point in our boundary closest
                     // to the intersection.
-
                     if (QCompare < 0)
                     {
                         crossing[Q] = smallerRegion.lower[Q];
@@ -330,12 +328,12 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
                         (*intersectionVec)[0].index = verts.size();
                         auto intersectPos1 = (*intersectionVec)[0].pos;
                         auto intersectPos2 = (*intersectionVec)[1].pos;
-                        for (auto i = 2; i < intersectionVec->size(); ++i)
+                        for (unsigned i=2; i < intersectionVec->size(); ++i)
                         {
                             assert((*intersectionVec)[i].pos ==
                                 (*intersectionVec)[i % 2].pos);
                         }
-                        auto intersectPos = 
+                        auto intersectPos =
                             (intersectPos1 + intersectPos2) / 2.;
                         verts.push_back(intersectPos.template cast<float>());
                     }

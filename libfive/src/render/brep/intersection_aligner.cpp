@@ -39,7 +39,7 @@ void IntersectionAligner::load(
     // use it.
     const auto& source = ts[index]->intersection(es[index]);
     auto noDuplicates = true;
-    auto setDest = [&source, &ts, &es, &index](int position)
+    auto setDest = [&source, &ts, &es](int position)
     {
         ts[position]->setIntersectionPtr(es[position], source);
     };

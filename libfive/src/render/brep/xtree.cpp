@@ -761,7 +761,7 @@ bool XTree<N>::collectChildren(
 
 
     // Accumulate the mass point, QEF matrices, and appropriate intersections.
-    for (auto i = 0; i < cs.size(); ++i)
+    for (unsigned i=0; i < cs.size(); ++i)
     {
         const auto& c = cs[i];
         assert(c != nullptr);
@@ -914,7 +914,7 @@ void XTree<N>::setIntersectionPtr(
 {
     assert(leaf != nullptr);
     auto& dest = leaf->intersections[edge];
-    assert(*dest == *ptr); 
+    assert(*dest == *ptr);
     if (dest != ptr)
     {
         dest = ptr;
@@ -1083,7 +1083,7 @@ std::array<unsigned, 2 * N> XTree<N>::edgesFromChild(unsigned childIndex)
 {
     assert(mt);
     std::array<unsigned, 2 * N> out;
-    for (auto i = 0; i < N; ++i)
+    for (unsigned i=0; i < N; ++i)
     {
         auto otherCorner = childIndex ^ (1 << i);
         assert(mt->e[childIndex][otherCorner] >= 0);
