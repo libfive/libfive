@@ -71,7 +71,7 @@ static void run(
 
         auto tape = task.tape;
         auto t = task.target;
-        Region<N> region = t->region;
+        auto region = t->region;
 
         // Find our local neighbors.  We do this at the last minute to
         // give other threads the chance to populate more pointers.
