@@ -75,6 +75,25 @@ typedef struct libfive_contours {
 } libfive_contours;
 
 /*
+ *  libfive_contour3 is a single 2D contour, consisting of a sequence of
+ *  3D points plus a count of how many points are stored
+ */
+typedef struct libfive_contour3 {
+    libfive_vec3* pts;
+    uint32_t count;
+} libfive_contour3;
+
+/*
+ *  libfive_contours3 is a set of 2D contours, consisting of multiple
+ *  libfive_contour3 objects and a count of how many are stored
+ */
+typedef struct libfive_contours3 {
+    libfive_contour3* cs;
+    uint32_t count;
+} libfive_contours3;
+
+
+/*
  *  libfive_mesh is an indexed 3D mesh.
  *  There are vert_count vertices, and tri_count triangles.
  */
@@ -115,6 +134,11 @@ typedef struct libfive_pixels {
  *  Frees an libfive_contours data structure
  */
 void libfive_contours_delete(libfive_contours* cs);
+
+/*
+ *  Frees an libfive_contours data structure
+ */
+void libfive_contours3_delete(libfive_contours3* cs);
 
 /*
  *  Frees an libfive_mesh data structure
@@ -282,6 +306,13 @@ char* libfive_tree_print(libfive_tree t);
 libfive_contours* libfive_tree_render_slice(libfive_tree tree,
                                             libfive_region2 R,
                                             float z, float res);
+/*
+ *  Renders a tree to a set of contours, similar to libfive_tree_render_slice,
+ *  except the contours are 3D points (see the libfive_contour3 struct) above.
+ */
+libfive_contours3* libfive_tree_render_slice3(libfive_tree tree,
+                                              libfive_region2 R,
+                                              float z, float res);
 
 /*
  *  Renders and saves a slice to a file
