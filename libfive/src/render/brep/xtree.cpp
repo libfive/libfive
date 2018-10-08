@@ -678,7 +678,7 @@ uint8_t XTree<N>::buildCornerMask(
 template <unsigned N>
 bool XTree<N>::collectChildren(
         XTreeEvaluator* eval, Tape::Handle tape,
-        double max_err, const typename Region<N>::Perp& perp,
+        double max_err, const Region<N>& region,
         Pool<XTree<N>>& spare_trees, Pool<Leaf>& spare_leafs)
 {
     // Wait for collectChildren to have been called N times
@@ -797,11 +797,12 @@ bool XTree<N>::collectChildren(
     // a leaf by erasing all of the child branches
     {
         bool collapsed = false;
-        if (findVertex(leaf->vertex_count++) < max_err)
+        if (findVertex(leaf->vertex_count++) < max_err &&
+            region.contains(vert(0), 1e-6))
         {
             Eigen::Vector3f v;
             v << vert(0).template cast<float>(),
-                 perp.template cast<float>();
+                 region.perp.template cast<float>();
             if (fabs(eval->feature.eval(v, Tape::getBase(tape, v))) < max_err)
             {
                 // Store this tree's depth as a function of its children

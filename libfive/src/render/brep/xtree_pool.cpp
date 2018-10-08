@@ -72,7 +72,7 @@ static void run(
         auto tape = task.tape;
         auto t = task.target;
         const auto& region = t->region;
-
+      
         // Find our local neighbors.  We do this at the last minute to
         // give other threads the chance to populate more pointers.
         Neighbors<N> neighbors;
@@ -142,10 +142,10 @@ static void run(
         // If all of the children are done, then ask the parent to collect them
         // (recursively, merging the trees on the way up, and reporting
         // completed tree cells to the progress tracker if present).
-        for (t = t->parent;
-             t && t->collectChildren(eval, tape, max_err, region.perp,
+        for (region = region.parent(t->parent_index), t = t->parent;
+             t && t->collectChildren(eval, tape, max_err, region,
                                      spare_trees, spare_leafs);
-             t = t->parent)
+             region = region.parent(t->parent_index), t = t->parent)
         {
             // Report the volume of completed trees as we walk back
             // up towards the root of the tree.

@@ -98,7 +98,7 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts, unsigned index)
     //     |         |
     //     |         |
     //     0---------1
-
+  
     // Handle polarity-based windings
     constexpr auto idx1 = D ? 1 : 2;
     constexpr auto idx2 = D ? 2 : 1;
@@ -130,8 +130,8 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
     const auto& aPos = verts[aIndex];
     const auto& bPos = verts[bIndex];
     if (a->level() != b->level() &&
-        a->region.contains(aPos.template cast<double>(), false) &&
-        b->region.contains(bPos.template cast<double>(), false))
+        a->region.contains(aPos.template cast<double>(), 0.) &&
+        b->region.contains(bPos.template cast<double>(), 0.))
     {
         const auto& intersectionPos = verts[intersectionIndex];
         const auto& boundaryValue = intersectionPos[Axis::toIndex(A)];
