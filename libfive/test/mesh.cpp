@@ -61,6 +61,24 @@ TEST_CASE("Mesh::render (cube)")
     auto mesh = Mesh::render(cube, r);
 }
 
+TEST_CASE("Mesh::render (cube face count)")
+{
+    auto cube = max(max(
+        max(-(Tree::X() + 1.5),
+            Tree::X() - 1.5),
+        max(-(Tree::Y() + 1.5),
+            Tree::Y() - 1.5)),
+        max(-(Tree::Z() + 1.5),
+            Tree::Z() - 1.5));
+
+    //  The region is set so we hit where the interesting stuff happens.
+    Region<3> r({ -3., -3., -3. }, { 3., 3., 3. });
+
+    auto m = Mesh::render(cube, r, 0.15, 1e-8, false);
+    REQUIRE(m->branes.size() == 12);
+    REQUIRE(m->verts.size() == 9);
+}
+
 TEST_CASE("Mesh::render (face count in rectangular prism)")
 {
     auto t = max(max(max(-Tree::X(), Tree::X() - 4),
@@ -89,7 +107,7 @@ TEST_CASE("Mesh::render (cone)")
     REQUIRE(true);
 }
 
-TEST_CASE("Mesh::render (checking for flipped triangles)")
+TEST_CASE("Mesh::render (checking for triangles that are lines)")
 {
     auto b = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
     auto mesh = Mesh::render(b, Region<3>({-10, -10, -10}, {10, 10, 10}), 0.25);
@@ -97,12 +115,19 @@ TEST_CASE("Mesh::render (checking for flipped triangles)")
     for (const auto& t : mesh->branes)
     {
         // Skip triangles that are actually collapsed into lines
-        // TODO: make this a test
-        if (t(0) == t(1) || t(0) == t(2) || t(1) == t(2))
-        {
-            continue;
-        }
+        REQUIRE(t(0) != t(1));
+        REQUIRE(t(0) != t(2));
+        REQUIRE(t(1) != t(2));
+    }
+}
 
+TEST_CASE("Mesh::render (checking for flipped triangles)")
+{
+    auto b = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+    auto mesh = Mesh::render(b, Region<3>({-10, -10, -10}, {10, 10, 10}), 0.25);
+
+    for (const auto& t : mesh->branes)
+    {
         // We're only looking at the top face triangles, since that's where
         // flipped triangles are induced.
         bool on_top_face = true;

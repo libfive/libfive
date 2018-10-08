@@ -4,13 +4,15 @@ project(libfive)
 # Properly distinguish between Apple and upstream Clang
 cmake_policy(SET CMP0025 NEW)
 
+option(BUILD_STUDIO_APP "Build Studio application" ON)
+
 set(CMAKE_BUILD_TYPE RELEASE)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 ################################################################################
 
 if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -g -fPIC -pedantic -Werror=switch -march=native")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -g -fPIC -pedantic -Werror=switch -march=native")
     if (APPLE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     else()
@@ -38,8 +40,8 @@ if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
 endif()
 
-# Work around an issue with Boost::Interval on OpenBSD
-if ("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
+# Work around an issue with Boost::Interval on OpenBSD and MinGW on Windows
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD" OR MINGW)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__USE_ISOC99")
 endif()
 
@@ -67,25 +69,28 @@ endif(UNIX AND NOT(APPLE))
 message("Checking dependencies:")
 message("  libfive: ✓")
 
-if (GUILE_FOUND)
+if (BUILD_STUDIO_APP)
+  if (GUILE_FOUND)
     message("  libfive-guile:     ✓")
 
     # Sadly, this is a global setting (there's no target_link_directories)
     link_directories(${GUILE_LIBRARY_DIRS})
-else ()
+  else ()
     message("  libfive-guile:     ✘   (needs Guile 2.2 or later)")
-endif()
+  endif()
 
-if (Qt5Core_FOUND AND GUILE_FOUND)
+
+  if (Qt5Core_FOUND AND GUILE_FOUND)
     message("  Studio:       ✓")
-else ()
+  else ()
     if (Qt5Core_FOUND)
-        message("  Studio:       ✘   (needs Guile 2.2 or later)")
+      message("  Studio:       ✘   (needs Guile 2.2 or later)")
     elseif (GUILE_FOUND)
-        message("  Studio:       ✘   (Qt 5.7 or later)")
+      message("  Studio:       ✘   (Qt 5.7 or later)")
     else()
-        message("  Studio:       ✘   (needs Guile 2.2 or later and Qt 5.7 or later)")
+      message("  Studio:       ✘   (needs Guile 2.2 or later and Qt 5.7 or later)")
     endif()
+  endif()
 endif()
 
 ################################################################################
@@ -96,6 +101,6 @@ set(LIBFIVE_BUILD_FROM_ROOT true)
 # Always build the kernel and test suite
 add_subdirectory(libfive)
 
-if(GUILE_FOUND AND Qt5Core_FOUND)
+if(BUILD_STUDIO_APP AND GUILE_FOUND AND Qt5Core_FOUND)
     add_subdirectory(studio)
-endif(GUILE_FOUND AND Qt5Core_FOUND)
+endif(BUILD_STUDIO_APP AND GUILE_FOUND AND Qt5Core_FOUND)
