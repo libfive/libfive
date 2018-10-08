@@ -3,12 +3,17 @@ if (NOT DEFINED LIBFIVE_BUILD_FROM_ROOT)
     message(FATAL_ERROR "CMake must be called against top-level directory")
 endif()
 
-add_subdirectory(src)
-add_subdirectory(test)
+option(BUILD_TESTS "Build test suite" ON)
 
-if (GUILE_FOUND)
+add_subdirectory(src)
+
+if (BUILD_TESTS)
+  add_subdirectory(test)
+endif(BUILD_TESTS)
+
+if (BUILD_GUILE_BINDINGS AND GUILE_FOUND)
     add_subdirectory(bind)
-endif(GUILE_FOUND)
+endif(BUILD_GUILE_BINDINGS AND GUILE_FOUND)
 
 if(UNIX AND NOT(APPLE))
     set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")
