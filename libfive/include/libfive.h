@@ -146,6 +146,11 @@ void libfive_contours3_delete(libfive_contours3* cs);
 void libfive_mesh_delete(libfive_mesh* m);
 
 /*
+ *  Frees an libfive_mesh_coords data structure
+ */
+void libfive_mesh_coords_delete(libfive_mesh_coords* m);
+
+/*
  *  Frees an libfive_pixels data structure
  */
 void libfive_pixels_delete(libfive_pixels* ps);
@@ -338,7 +343,7 @@ libfive_mesh* libfive_tree_render_mesh(libfive_tree tree,
 /*
  *  Renders to an alternate mesh format, see description of
  *  libfive_mesh_coords above.  The returned struct must be freed with
- *  libfive_mesh_delete
+ *  libfive_mesh_coords_delete.
  */
 libfive_mesh_coords* libfive_tree_render_mesh_coords(libfive_tree tree,
                                                      libfive_region3 R,
