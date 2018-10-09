@@ -16,7 +16,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/intersection_aligner.hpp"
 
-#define TRIANGLE_FAN_MESHING 1
+#ifndef LIBFIVE_TRIANGLE_FAN_MESHING
+#define LIBFIVE_TRIANGLE_FAN_MESHING 0
+#endif
 
 namespace Kernel {
 
@@ -66,7 +68,7 @@ void Mesh::load(const std::array<const XTree<3>*, 4>& ts, unsigned index)
         vs[i] = ts[i]->leaf->index[vi];
     }
 
-#if TRIANGLE_FAN_MESHING
+#if LIBFIVE_TRIANGLE_FAN_MESHING
     // Get the intersection vertex.  Intersections in the vector are paired
     // as inside/outside, so we'll take both and average them.
     assert(ts[index]->intersection(es[index]).get() != nullptr);
@@ -404,16 +406,16 @@ std::unique_ptr<Mesh> Mesh::mesh(const XTree<3>::Root& xtree,
                                  std::atomic_bool& cancel,
                                  ProgressCallback progress_callback)
 {
-    // Make sure each intersection has the same object in all cells.
     if (cancel.load() || xtree.get() == nullptr)
     {
         return nullptr;
     }
-    else
-    {
-        IntersectionAligner aligner;
-        Dual<3>::walk(xtree.get(), aligner, nullptr);
-    }
+
+#if LIBFIVE_TRIANGLE_FAN_MESHING
+    // Make sure each intersection has the same object in all cells.
+    IntersectionAligner aligner;
+    Dual<3>::walk(xtree.get(), aligner, nullptr);
+#endif
 
     // Perform marching squares
     auto m = std::unique_ptr<Mesh>(new Mesh());
