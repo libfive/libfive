@@ -21,10 +21,13 @@ public:
     typedef Eigen::Array<double, 3 - N, 1> Perp;
 
     /*
-     *  Check if the given point is in the region (inclusive)
+     *  Check if the given point is in the region
+     *  As epsilon gets larger, the test becomes more inclusive
      */
-    bool contains(Pt p, double epsilon=1e-8) const
-    { return (p >= (lower - epsilon)).all() && (p <= (upper + epsilon)).all(); }
+    bool contains(Pt p, double epsilon = 1e-8) const
+    {
+        return (p >= (lower - epsilon)).all() && (p <= (upper + epsilon)).all();
+    }
 
     /*
      *  Helper function to get center of region
