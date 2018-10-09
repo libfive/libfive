@@ -158,11 +158,11 @@ void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
         {
             if (a != Interval::FILLED)
             {
-                v.template load<A, 0>(ts);
+                v.template load<A, 0>(ts, index);
             }
             else
             {
-                v.template load<A, 1>(ts);
+                v.template load<A, 1>(ts, index);
             }
         }
     }

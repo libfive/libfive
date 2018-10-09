@@ -34,10 +34,10 @@ std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(XTree<N>* parent, unsigned index)
+XTree<N>::XTree(XTree<N>* parent, unsigned index, Region<N> r)
     : XTree()
 {
-    reset(parent, index);
+    reset(parent, index, r);
 }
 
 template <unsigned N>
@@ -51,10 +51,11 @@ XTree<N>::XTree()
 }
 
 template <unsigned N>
-void XTree<N>::reset(XTree<N>* p, unsigned i)
+void XTree<N>::reset(XTree<N>* p, unsigned i, Region<N> r)
 {
     parent = p;
     parent_index = i;
+    region = r;
     type = Interval::UNKNOWN;
 
     // By design, a tree that is being reset must have no children
@@ -651,13 +652,13 @@ void XTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
     if (dv.array().isFinite().all())
     {
         leaf->intersections[edge]->
-             push_back({pos, dv, value / norm});
+             push_back({pos, dv, value / norm, 0});
     }
     // Otherwise, store an intersection with a zero normal
     else
     {
         leaf->intersections[edge]->
-             push_back({pos, Vec::Zero(), 0});
+             push_back({pos, Vec::Zero(), 0, 0});
     }
 }
 
@@ -758,9 +759,11 @@ bool XTree<N>::collectChildren(
     leaf->rank = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
             [](unsigned a, XTree<N>* b){ return std::max(a, b->rank());} );
 
-    // Accumulate the mass point and QEF matrices
-    for (const auto& c : cs)
+
+    // Accumulate the mass point, QEF matrices, and appropriate intersections.
+    for (auto i = 0; i < cs.size(); ++i)
     {
+        const auto& c = cs[i];
         assert(c != nullptr);
 
         if (c->type == Interval::AMBIGUOUS)
@@ -773,6 +776,15 @@ bool XTree<N>::collectChildren(
             leaf->AtA += c->leaf->AtA;
             leaf->AtB += c->leaf->AtB;
             leaf->BtB += c->leaf->BtB;
+
+            for (auto& edge : edgesFromChild(i))
+            {
+                if (c->leaf->intersections[edge])
+                {
+                    assert(!leaf->intersections[edge]);
+                    leaf->intersections[edge] = c->leaf->intersections[edge];
+                }
+            }
         }
         else
         {
@@ -884,9 +896,29 @@ template <unsigned N>
 std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
         unsigned a, unsigned b) const
 {
-    assert(leaf != nullptr);
     assert(mt->e[a][b] != -1);
-    return leaf->intersections[mt->e[a][b]];
+    return intersection(mt->e[a][b]);
+}
+
+template <unsigned N>
+std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
+        unsigned edge) const
+{
+    assert(leaf != nullptr);
+    return leaf->intersections[edge];
+}
+
+template <unsigned N>
+void XTree<N>::setIntersectionPtr(
+    unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const
+{
+    assert(leaf != nullptr);
+    auto& dest = leaf->intersections[edge];
+    assert(*dest == *ptr); 
+    if (dest != ptr)
+    {
+        dest = ptr;
+    }
 }
 
 template <unsigned N>
@@ -1044,6 +1076,22 @@ void XTree<N>::Root::reset(ProgressCallback progress_callback)
 
     trees.clear();
     leafs.clear();
+}
+
+template <unsigned N>
+std::array<unsigned, 2 * N> XTree<N>::edgesFromChild(unsigned childIndex)
+{
+    assert(mt);
+    std::array<unsigned, 2 * N> out;
+    for (auto i = 0; i < N; ++i)
+    {
+        auto otherCorner = childIndex ^ (1 << i);
+        assert(mt->e[childIndex][otherCorner] >= 0);
+        assert(mt->e[otherCorner][childIndex] >= 0);
+        out[2 * i] = mt->e[childIndex][otherCorner];
+        out[2 * i + 1] = mt->e[otherCorner][childIndex];
+    }
+    return out;
 }
 
 template <unsigned N>
