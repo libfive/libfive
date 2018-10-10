@@ -35,6 +35,7 @@ to change variables in the script.
 - [Inspekt3d](https://github.com/sjm-tl-gh/inspekt3d): Lightweight pure-Guile viewer
 - [Bindings for Unity](https://github.com/zalo/libfive-unity)
 - Unpublished [Stanza](http://lbstanza.org/) bindings (email for details)
+- [libfivepy](https://gitlab.com/rcmz0/libfivepy): A python cad library
 
 ## License
 (c) 2015-2018 Matthew Keeter
