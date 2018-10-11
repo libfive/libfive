@@ -29,6 +29,11 @@ public:
         return (p >= (lower - epsilon)).all() && (p <= (upper + epsilon)).all();
     }
 
+    bool contains(Pt p, Pt epsilon) const
+    {
+        return (p >= (lower - epsilon)).all() && (p <= (upper + epsilon)).all();
+    }
+
     /*
      *  Helper function to get center of region
      */

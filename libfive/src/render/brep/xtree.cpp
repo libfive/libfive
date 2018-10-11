@@ -874,6 +874,73 @@ double XTree<N>::findVertex(unsigned index)
                  leaf->mass_point(N);
     Vec v = AtAp * (leaf->AtB - (leaf->AtA * center)) + center;
 
+    // Determine the co-rank of the AtA matrix.
+    auto corank = 0;
+    int nullIdx;
+    for (auto i = 0; i < N; ++i)
+    {
+        if (D.diagonal()[i] == 0)
+        {
+            if (corank == 0)
+            {
+                nullIdx = i;
+            }
+            ++corank;
+        }
+    }
+
+
+    auto epsilon = 
+        1e-6 * region.upper.abs().max(region.lower.abs()).maxCoeff();
+        // Fairly large for a double, but in the mesh we'll want to
+        // convert to floats and still have some epsilon.
+    auto epsilonVec = ((region.upper - region.lower) / 10.)
+        .min(epsilon).eval();
+    if (corank == N - 1)
+    {
+        // This means that, up to our eigenvalue cutoff, every normal is 
+        // parallel, meaning that our QEF should be linear and achieve its
+        // minimum at the average of all intersections.  It is still possible
+        // for v to not equal center, due to the eigenvalue cutoff or due to
+        // rank-based calculations causing center to not be the average of 
+        // all intersections, but if the calculated v is outside the cell, we
+        // can use center as our vertex without too many problems.
+        if (!region.contains(v, -epsilonVec))
+        {
+            v = center;
+        }
+    }
+    else if (corank == 1)
+    {
+        //  We can move v by any multiple of our null vector without affecting
+        //  the QEF.
+
+        auto nullVec = U.col(nullIdx);
+        auto lowerOffsets = (region.lower + epsilonVec - v.array());
+        auto upperOffsets = (region.upper - epsilonVec - v.array());
+        auto lowerScaledOffsets = (lowerOffsets / nullVec.array()).eval();
+        auto upperScaledOffsets = (upperOffsets / nullVec.array()).eval();
+        auto lowerBound =
+            lowerScaledOffsets.min(upperScaledOffsets).maxCoeff();
+        auto upperBound =
+            lowerScaledOffsets.max(upperScaledOffsets).minCoeff();
+        if (upperBound > lowerBound)
+        {
+            if (upperBound < 0)
+            {
+                v += upperBound * nullVec;
+            }
+            else if (lowerBound > 0)
+            {
+                v += lowerBound * nullVec;
+            }
+        }
+    }
+
+    // The other possibilities for coIndex don't allow for any adjustments:
+    // at coindex 0, any movement of v will affect the QEF, and at coindex N,
+    // our QEF is constant, so v is guaranteed to be at center.
+
     // Store this specific vertex in the verts matrix
     leaf->verts.col(index) = v;
 
