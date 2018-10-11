@@ -167,191 +167,232 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
         return;
     }
     // If either cell does not actually contain its vertex, there is no way
-    // to make the resulting triangles be in only the generating cells, so we
-    // go straight to adding the triangle (a,b,intersection).  Conversely, if
-    // the cells do contain their vertices and are the same size, adding
-    // (a,b,intersection) will always be sufficient, so again we can simply do
-    // so.  Otherwise, more complicated steps are needed.
-    const auto& aPos = verts[aIndex];
-    const auto& bPos = verts[bIndex];
-    if (a->level() != b->level() &&
-        a->region.contains(aPos.template cast<double>(), 0.) &&
-        b->region.contains(bPos.template cast<double>(), 0.))
+    // to make the resulting triangles be in only the generating cells;
+    // however, we can at least keep it from crossing more axes than the
+    // vertices of a and b force it to.  (If they force it to cross the
+    // plane between a and b in the wrong direction or not at all, though,
+    // things are likely hopeless and so we just add (a,b,intersection).
+
+    // If the cells are the same size, adding (a,b,intersection) will always
+    // be sufficient; otherwise, more complicated steps are needed to make
+    // that determination.
+
+    if (a->level() != b->level())
     {
+        const auto& aPos = verts[aIndex];
+        const auto& bPos = verts[bIndex];
         const auto& intersectionPos = verts[intersectionIndex];
         const auto& boundaryValue = intersectionPos[Axis::toIndex(A)];
 
-        // Find where the line between the vertices of a and b
-        // intersects the plane of the boundary between a and b.
-        if (D)
-        {
-            assert(aPos[Axis::toIndex(A)] < boundaryValue);
-            assert(bPos[Axis::toIndex(A)] > boundaryValue);
-        }
-        else
-        {
-            assert(aPos[Axis::toIndex(A)] > boundaryValue);
-            assert(bPos[Axis::toIndex(A)] < boundaryValue);
-        }
-        auto aWeight = std::abs(bPos[Axis::toIndex(A)] - boundaryValue);
-        auto bWeight = std::abs(aPos[Axis::toIndex(A)] - boundaryValue);
-        auto weightSum = aWeight + bWeight;
-        auto aFactor = aWeight / weightSum;
-        auto bFactor = bWeight / weightSum;
-        auto crossing = (aFactor * aPos + bFactor * bPos).eval();
-        assert(std::abs(crossing[Axis::toIndex(A)] -
-                        intersectionPos[Axis::toIndex(A)]) < 1e-6f);
-        crossing[Axis::toIndex(A)] = intersectionPos[Axis::toIndex(A)];
-
-        // Determine on which side(s) of the actual boundary the crossing is.
         const auto aIsSmaller = a->level() < b->level();
         const auto smallerCell = aIsSmaller ? a : b;
         const auto& smallerRegion = (smallerCell)->region;
-        int QCompare, RCompare;
-        auto compareAndSet = [&smallerRegion, &crossing]
-        (Axis::Axis compAxis, int& toSet)
+        const auto& smallerVertex = aIsSmaller ? aPos : bPos;
+        const auto& largerVertex = aIsSmaller ? bPos : aPos;
+        const auto largerDirection = (aIsSmaller == D) ? 1 : -1;
+        auto compareToBounds = [&smallerRegion]
+        (const Eigen::Vector3f& pt, Axis::Axis compAxis)
         {
             auto idx = Axis::toIndex(compAxis);
-            if (crossing[idx] < smallerRegion.lower[idx])
+            if (pt[idx] < smallerRegion.lower[idx])
             {
-                toSet = -1;
+                return -1;
             }
-            else if (crossing[idx] > smallerRegion.upper[idx])
+            else if (pt[idx] > smallerRegion.upper[idx])
             {
-                toSet = 1;
+                return 1;
             }
             else
             {
-                toSet = 0;
+                return 0;
             }
         };
-        auto Q = Axis::Q(A);
-        auto R = Axis::R(A);
-        compareAndSet(Q, QCompare);
-        compareAndSet(R, RCompare);
 
-        // If both are inside the region, the triangle (a,b,intersection) will
-        // be inside the appropriate cells, so we can skip to adding that.
-        // Otherwise, more steps need to be taken.
 
-        if (QCompare != 0 || RCompare != 0)
+        if (compareToBounds(smallerVertex, A) != largerDirection &&
+            compareToBounds(largerVertex, A) == largerDirection)
         {
-            // If we've already found the appropriate forced vertex for aIndex
-            // and bIndex, use it; otherwise, find it and add it.
 
-            const std::pair<uint32_t, uint32_t>
-                pair{ std::min(aIndex, bIndex), std::max(aIndex, bIndex) };
-            auto& forcedIndex = forcedVerts[pair];
-            if (forcedIndex == 0)
+            // Find where the line between the vertices of a and b
+            // intersects the plane of the boundary between a and b.
+            if (D)
             {
-                // Each comparison shows the crossing to be beyond at most one
-                // edge of the smaller cell that adjoins the larger cell.  We
-                // can find the intersection on that edge, if there is one.
-                auto getIntersection =
-                    [&aIsSmaller, &smallerCell, &aIndex, &bIndex]
-                (Axis::Axis compAxis, int compared)->IntersectionVec<3>*
+                assert(aPos[Axis::toIndex(A)] < boundaryValue);
+                assert(bPos[Axis::toIndex(A)] > boundaryValue);
+            }
+            else
+            {
+                assert(aPos[Axis::toIndex(A)] > boundaryValue);
+                assert(bPos[Axis::toIndex(A)] < boundaryValue);
+            }
+            auto aWeight = std::abs(bPos[Axis::toIndex(A)] - boundaryValue);
+            auto bWeight = std::abs(aPos[Axis::toIndex(A)] - boundaryValue);
+            auto weightSum = aWeight + bWeight;
+            auto aFactor = aWeight / weightSum;
+            auto bFactor = bWeight / weightSum;
+            auto crossing = (aFactor * aPos + bFactor * bPos).eval();
+            assert(std::abs(crossing[Axis::toIndex(A)] -
+                            intersectionPos[Axis::toIndex(A)]) < 1e-6f);
+            crossing[Axis::toIndex(A)] = intersectionPos[Axis::toIndex(A)];
+
+            // Determine on which side(s) of the actual boundary the crossing is.
+
+            auto Q = Axis::Q(A);
+            auto R = Axis::R(A);
+            auto compareCrossing =
+                [&, compareToBounds](Axis::Axis compAxis)
+            {
+                auto out = compareToBounds(crossing, compAxis);
+                auto getBound = [&out, &compAxis](const XTree<3>* cell)
                 {
-                    assert(compAxis != A);
-                    if (compared == 0)
-                    {
-                        return nullptr;
-                    }
-                    else
-                    {
-                        // Find the edge.
-                        auto boundaryTerm = (D == aIsSmaller) ? A : 0;
-                        auto compTerm = compared > 0 ? compAxis : 0;
-                        auto thirdTerm = 7 - A - compAxis;
-                        auto vert1 = boundaryTerm | compTerm;
-                        auto vert2 = boundaryTerm | compTerm | thirdTerm;
-                        auto edge = XTree<3>::mt->e[vert1][vert2];
-                        assert(edge != -1);
-                        auto patch = XTree<3>::mt->
-                            p[smallerCell->leaf->corner_mask][edge];
-                        if (patch == -1)
-                        {
-                            edge = XTree<3>::mt->e[vert2][vert1];
-                            assert(edge != -1);
-                            patch = XTree<3>::mt->
-                                p[smallerCell->leaf->corner_mask][edge];
-                        }
-                        // We have a patch value (possibly -1), but we only
-                        // want to use this edge if it's the patch of
-                        // smallerCell that we're actually using.  (The bigger
-                        // cell can only have one patch, since it has positive
-                        // level.)
-                        if (smallerCell->leaf->index[patch] ==
-                            (aIsSmaller ? aIndex : bIndex))
-                        {
-                            assert(smallerCell->intersection(edge));
-                            return smallerCell->intersection(edge)
-                                .get();
-                        }
-                        else
-                        {
-                            return nullptr;
-                        }
-                    }
+                    return out == 1
+                        ? cell->region.upper[Axis::toIndex(compAxis)]
+                        : cell->region.lower[Axis::toIndex(compAxis)];
                 };
-                auto QIntersection = getIntersection(Q, QCompare);
-                auto RIntersection = getIntersection(R, RCompare);
-                if ((QIntersection == nullptr) == (RIntersection == nullptr))
+                if (out != 0 &&
+                        (out == compareToBounds(smallerVertex, compAxis) ||
+                            (getBound(a) == getBound(b) &&
+                             out == compareToBounds(largerVertex, compAxis))))
                 {
-                    // We have either no usable intersection or too many,
-                    // so just use the point in our boundary closest
-                    // to the intersection.
-                    if (QCompare < 0)
-                    {
-                        crossing[Q] = smallerRegion.lower[Q];
-                    }
-                    else if (QCompare > 0)
-                    {
-                        crossing[Q] = smallerRegion.upper[Q];
-                    }
-                    if (RCompare < 0)
-                    {
-                        crossing[R] = smallerRegion.lower[R];
-                    }
-                    else if (RCompare > 0)
-                    {
-                        crossing[R] = smallerRegion.upper[R];
-                    }
-                    forcedIndex = verts.size();
-                    verts.push_back(crossing);
+                    return 0;
                 }
                 else
                 {
-                    auto intersectionVec =
-                        QIntersection ? QIntersection : RIntersection;
-                    assert(intersectionVec != nullptr);
-                    assert(intersectionVec->size() >= 2);
-                    if ((*intersectionVec)[0].index == 0)
+                    return out;
+                }
+            };
+
+            auto QCrossingSide = compareCrossing(Q);
+            auto RCrossingSide = compareCrossing(R);
+
+            // If both are inside the region, the triangle (a,b,intersection)
+            // will be inside the appropriate cells (or at least not cross
+            // more boundaries than necessary), so we can skip to adding
+            // that.  Otherwise, more steps need to be taken.
+
+            if (QCrossingSide != 0 || RCrossingSide != 0)
+            {
+                // If we've already found the appropriate forced vertex for aIndex
+                // and bIndex, use it; otherwise, find it and add it.
+
+                const std::pair<uint32_t, uint32_t>
+                    pair{ std::min(aIndex, bIndex), std::max(aIndex, bIndex) };
+                auto& forcedIndex = forcedVerts[pair];
+                if (forcedIndex == 0)
+                {
+                    // Each comparison shows the crossing to be beyond at most one
+                    // edge of the smaller cell that adjoins the larger cell.  We
+                    // can find the intersection on that edge, if there is one.
+                    auto getIntersection =
+                        [&aIsSmaller, &smallerCell, &aIndex, &bIndex]
+                    (Axis::Axis compAxis, int compared)->IntersectionVec<3>*
                     {
-                        (*intersectionVec)[0].index = verts.size();
-                        auto intersectPos1 = (*intersectionVec)[0].pos;
-                        auto intersectPos2 = (*intersectionVec)[1].pos;
-                        for (unsigned i=2; i < intersectionVec->size(); ++i)
+                        assert(compAxis != A);
+                        if (compared == 0)
                         {
-                            assert((*intersectionVec)[i].pos ==
-                                (*intersectionVec)[i % 2].pos);
+                            return nullptr;
                         }
-                        auto intersectPos =
-                            (intersectPos1 + intersectPos2) / 2.;
-                        verts.push_back(intersectPos.template cast<float>());
-                    }
-                    forcedIndex = (*intersectionVec)[0].index;
-                    if ((*intersectionVec)[0].index == intersectionIndex)
+                        else
+                        {
+                            // Find the edge.
+                            auto boundaryTerm = (D == aIsSmaller) ? A : 0;
+                            auto compTerm = compared > 0 ? compAxis : 0;
+                            auto thirdTerm = 7 - A - compAxis;
+                            auto vert1 = boundaryTerm | compTerm;
+                            auto vert2 = boundaryTerm | compTerm | thirdTerm;
+                            auto edge = XTree<3>::mt->e[vert1][vert2];
+                            assert(edge != -1);
+                            auto patch = XTree<3>::mt->
+                                p[smallerCell->leaf->corner_mask][edge];
+                            if (patch == -1)
+                            {
+                                edge = XTree<3>::mt->e[vert2][vert1];
+                                assert(edge != -1);
+                                patch = XTree<3>::mt->
+                                    p[smallerCell->leaf->corner_mask][edge];
+                            }
+                            // We have a patch value (possibly -1), but we only
+                            // want to use this edge if it's the patch of
+                            // smallerCell that we're actually using.  (The
+                            // bigger cell can only have one patch, since it
+                            // has positive level.)
+                            if (smallerCell->leaf->index[patch] ==
+                                (aIsSmaller ? aIndex : bIndex))
+                            {
+                                assert(smallerCell->intersection(edge));
+                                return smallerCell->intersection(edge)
+                                    .get();
+                            }
+                            else
+                            {
+                                return nullptr;
+                            }
+                        }
+                    };
+                    auto QIntersection = getIntersection(Q, QCrossingSide);
+                    auto RIntersection = getIntersection(R, RCrossingSide);
+                    if ((QIntersection == nullptr) ==
+                        (RIntersection == nullptr))
                     {
-                        // The resulting triangles will be degenerate,
-                        // so we return without adding them.
-                        return;
+                        // We have either no usable intersection or too many,
+                        // so just use the point in our boundary closest
+                        // to the intersection.
+                        if (QCrossingSide < 0)
+                        {
+                            crossing[Q] = smallerRegion.lower[Q];
+                        }
+                        else if (QCrossingSide > 0)
+                        {
+                            crossing[Q] = smallerRegion.upper[Q];
+                        }
+                        if (RCrossingSide < 0)
+                        {
+                            crossing[R] = smallerRegion.lower[R];
+                        }
+                        else if (RCrossingSide > 0)
+                        {
+                            crossing[R] = smallerRegion.upper[R];
+                        }
+                        forcedIndex = verts.size();
+                        verts.push_back(crossing);
+                    }
+                    else
+                    {
+                        auto intersectionVec =
+                            QIntersection ? QIntersection : RIntersection;
+                        assert(intersectionVec != nullptr);
+                        assert(intersectionVec->size() >= 2);
+                        if ((*intersectionVec)[0].index == 0)
+                        {
+                            (*intersectionVec)[0].index = verts.size();
+                            auto intersectPos1 = (*intersectionVec)[0].pos;
+                            auto intersectPos2 = (*intersectionVec)[1].pos;
+                            for (unsigned i = 2;
+                                 i < intersectionVec->size();
+                                 ++i)
+                            {
+                                assert((*intersectionVec)[i].pos ==
+                                    (*intersectionVec)[i % 2].pos);
+                            }
+                            auto intersectPos =
+                                (intersectPos1 + intersectPos2) / 2.;
+                            verts.push_back(intersectPos
+                                            .template cast<float>());
+                        }
+                        forcedIndex = (*intersectionVec)[0].index;
+                        if ((*intersectionVec)[0].index == intersectionIndex)
+                        {
+                            // The resulting triangles will be degenerate,
+                            // so we return without adding them.
+                            return;
+                        }
                     }
                 }
+                assert(forcedIndex != 0);
+                branes.push_back({ intersectionIndex, aIndex, forcedIndex });
+                branes.push_back({ bIndex, intersectionIndex, forcedIndex });
+                return;
             }
-            assert(forcedIndex != 0);
-            branes.push_back({ intersectionIndex, aIndex, forcedIndex });
-            branes.push_back({ bIndex, intersectionIndex, forcedIndex });
-            return;
         }
     }
     // Just add the triangle (a,b,intersection).
