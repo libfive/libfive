@@ -167,13 +167,13 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
         return;
     }
     // If either cell does not actually contain its vertex, there is no way
-    // to make the resulting triangles be in only the generating cells; 
+    // to make the resulting triangles be in only the generating cells;
     // however, we can at least keep it from crossing more axes than the
     // vertices of a and b force it to.  (If they force it to cross the
     // plane between a and b in the wrong direction or not at all, though,
     // things are likely hopeless and so we just add (a,b,intersection).
-    
-    // If the cells are the same size, adding (a,b,intersection) will always 
+
+    // If the cells are the same size, adding (a,b,intersection) will always
     // be sufficient; otherwise, more complicated steps are needed to make
     // that determination.
 
@@ -239,7 +239,7 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
 
             auto Q = Axis::Q(A);
             auto R = Axis::R(A);
-            auto compareCrossing = 
+            auto compareCrossing =
                 [&, compareToBounds](Axis::Axis compAxis)
             {
                 auto out = compareToBounds(crossing, compAxis);
@@ -249,10 +249,10 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
                         ? cell->region.upper[Axis::toIndex(compAxis)]
                         : cell->region.lower[Axis::toIndex(compAxis)];
                 };
-                if (out != 0 && 
+                if (out != 0 &&
                         (out == compareToBounds(smallerVertex, compAxis) ||
-                            getBound(a) == getBound(b) &&
-                            out == compareToBounds(largerVertex, compAxis)))
+                            (getBound(a) == getBound(b) &&
+                             out == compareToBounds(largerVertex, compAxis))))
                 {
                     return 0;
                 }
@@ -266,8 +266,8 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
             auto RCrossingSide = compareCrossing(R);
 
             // If both are inside the region, the triangle (a,b,intersection)
-            // will be inside the appropriate cells (or at least not cross 
-            // more boundaries than necessary), so we can skip to adding 
+            // will be inside the appropriate cells (or at least not cross
+            // more boundaries than necessary), so we can skip to adding
             // that.  Otherwise, more steps need to be taken.
 
             if (QCrossingSide != 0 || RCrossingSide != 0)
@@ -313,8 +313,8 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
                             }
                             // We have a patch value (possibly -1), but we only
                             // want to use this edge if it's the patch of
-                            // smallerCell that we're actually using.  (The 
-                            // bigger cell can only have one patch, since it 
+                            // smallerCell that we're actually using.  (The
+                            // bigger cell can only have one patch, since it
                             // has positive level.)
                             if (smallerCell->leaf->index[patch] ==
                                 (aIsSmaller ? aIndex : bIndex))
@@ -331,7 +331,7 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
                     };
                     auto QIntersection = getIntersection(Q, QCrossingSide);
                     auto RIntersection = getIntersection(R, RCrossingSide);
-                    if ((QIntersection == nullptr) == 
+                    if ((QIntersection == nullptr) ==
                         (RIntersection == nullptr))
                     {
                         // We have either no usable intersection or too many,
@@ -367,8 +367,8 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
                             (*intersectionVec)[0].index = verts.size();
                             auto intersectPos1 = (*intersectionVec)[0].pos;
                             auto intersectPos2 = (*intersectionVec)[1].pos;
-                            for (unsigned i = 2; 
-                                 i < intersectionVec->size(); 
+                            for (unsigned i = 2;
+                                 i < intersectionVec->size();
                                  ++i)
                             {
                                 assert((*intersectionVec)[i].pos ==
