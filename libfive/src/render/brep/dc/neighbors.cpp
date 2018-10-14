@@ -13,8 +13,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 // Here are all of our static variables
-template <unsigned N> std::array<uint8_t, _pow(3, N)-1> Neighbors<N>::fixed;
-template <unsigned N> std::array<uint8_t, _pow(3, N)-1> Neighbors<N>::floating;
+template <unsigned N> std::array<uint8_t, ipow(3, N)-1> Neighbors<N>::fixed;
+template <unsigned N> std::array<uint8_t, ipow(3, N)-1> Neighbors<N>::floating;
 template <unsigned N> std::array<uint8_t, 1 << (2 * N)> Neighbors<N>::remap;
 template <unsigned N> bool Neighbors<N>::loaded = Neighbors<N>::populatePositions();
 
@@ -29,7 +29,7 @@ template <unsigned N>
 int Neighbors<N>::cornerCheckIndex(uint8_t corner, uint8_t neighbor)
 {
     assert(corner < (1 << N));
-    assert(neighbor < _pow(3, N) - 1);
+    assert(neighbor < ipow(3, N) - 1);
 
     return ((fixed[neighbor] & invert(floating[neighbor])) ==
             (corner & invert(floating[neighbor])))
@@ -60,7 +60,7 @@ template <unsigned N>
 int Neighbors<N>::withinTreeIndex(uint8_t child, uint8_t neighbor)
 {
     assert(child < (1 << N));
-    assert(neighbor < _pow(3, N) - 1);
+    assert(neighbor < ipow(3, N) - 1);
     return (((fixed[neighbor] ^ child) & invert(floating[neighbor])) == invert(floating[neighbor]))
         ? (fixed[neighbor] | (floating[neighbor] & child))
         : -1;
@@ -88,7 +88,7 @@ bool Neighbors<N>::populatePositions() {
     // Early exit if already populated
     std::fill(remap.begin(), remap.end(), 0xFF);
 
-    for (unsigned i=0; i < _pow(3, N) - 1; ++i)
+    for (unsigned i=0; i < ipow(3, N) - 1; ++i)
     {
         // Ternary decoding loop
         unsigned j=i;
@@ -116,7 +116,7 @@ Neighbors<N> Neighbors<N>::push(uint8_t child,
             children)
 {
     Neighbors out;
-    for (unsigned i=0; i < _pow(3, N) - 1; ++i)
+    for (unsigned i=0; i < ipow(3, N) - 1; ++i)
     {
         // If the neighbor is destined to come from within the array
         // of children, then pick it out in this conditional.
@@ -142,7 +142,7 @@ Neighbors<N> Neighbors<N>::push(uint8_t child,
 template <unsigned N>
 Interval::State Neighbors<N>::check(uint8_t corner) const
 {
-    for (unsigned i=0; i < _pow(N, 3) - 1; ++i)
+    for (unsigned i=0; i < ipow(N, 3) - 1; ++i)
     {
         if (neighbors[i] != nullptr)
         {
@@ -160,7 +160,7 @@ template <unsigned N>
 std::shared_ptr<IntersectionVec<N>> Neighbors<N>::check(
         uint8_t a, uint8_t b) const
 {
-    for (unsigned i=0; i < _pow(N, 3) - 1; ++i)
+    for (unsigned i=0; i < ipow(N, 3) - 1; ++i)
     {
         if (neighbors[i] != nullptr)
         {

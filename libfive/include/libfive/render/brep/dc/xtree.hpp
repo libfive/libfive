@@ -51,7 +51,7 @@ public:
          *
          *  To make cells manifold, we may store multiple vertices in a single
          *  leaf; see writeup in marching.cpp for details  */
-        Eigen::Matrix<double, N, _pow(2, N - 1)> verts;
+        Eigen::Matrix<double, N, ipow(2, N - 1)> verts;
 
         /* This array allows us to store position, normal, and value where
          * the mesh crosses a cell edge.  IntersectionVec is small_vec that
@@ -69,7 +69,7 @@ public:
 
         /* Used as a unique per-vertex index when unpacking into a b-rep;   *
          * this is cheaper than storing a map of XTree* -> uint32_t         */
-        mutable std::array<uint32_t, _pow(2, N - 1)> index;
+        mutable std::array<uint32_t, ipow(2, N - 1)> index;
 
         /*  Bitfield marking which corners are set */
         uint8_t corner_mask;

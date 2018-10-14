@@ -401,10 +401,10 @@ static int rotateVertex(int vert, const Eigen::Matrix<double, N, N>& rot)
 template <unsigned N>
 static unsigned rotateMask(unsigned mask, const Eigen::Matrix<double, N, N>& rot)
 {
-    assert(mask < _pow(2, _verts(N)));
+    assert(mask < ipow(2, _verts(N)));
 
     unsigned mask_ = 0;
-    for (unsigned i=0; i < _pow(2, N); ++i)
+    for (unsigned i=0; i < ipow(2, N); ++i)
     {
         if (mask & (1 << i))
         {
@@ -438,7 +438,7 @@ std::unique_ptr<MarchingTable<N>> buildTable()
     auto rots = rigidRotations<N>();
 
     //  Start by marking the changed elements on the table
-    std::array<bool, _pow(2, _verts(N))> changed;
+    std::array<bool, ipow(2, _verts(N))> changed;
     for (unsigned i=0; i < table->v.size(); ++i)
     {
         changed[i] = table->v[i][0][0].first != -1;

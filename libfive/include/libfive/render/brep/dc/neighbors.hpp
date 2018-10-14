@@ -13,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/dc/marching.hpp"
 #include "libfive/render/brep/dc/intersection.hpp"
+#include "libfive/render/brep/ipow.hpp"
 #include "libfive/eval/interval.hpp"
 
 namespace Kernel {
@@ -129,16 +130,16 @@ protected:
     /*  bitfield representing direction for non-floating axes
      *  floating axes have their relevant bit set to 0, but you
      *  need to use the floating field to decode */
-    static std::array<uint8_t, _pow(3, N) - 1> fixed;
+    static std::array<uint8_t, ipow(3, N) - 1> fixed;
 
     /*  bitfield representing which axes are floating  */
-    static std::array<uint8_t, _pow(3, N) - 1> floating;
+    static std::array<uint8_t, ipow(3, N) - 1> floating;
 
     /*  remap[(fixed << N) | floating] returns the index into
      *  the fixed/floating arrays with the given bitfields.  */
     static std::array<uint8_t, 1 << (2 * N)> remap;
 
-    std::array<const XTree<N>*, _pow(3, N) - 1> neighbors;
+    std::array<const XTree<N>*, ipow(3, N) - 1> neighbors;
 
     /*  Used as a flag to trigger population of the static arrays */
     static bool loaded;
