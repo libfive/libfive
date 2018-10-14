@@ -37,46 +37,13 @@ public:
 
     struct Leaf
     {
+        Leaf();
+        void reset();
+
         Eigen::Matrix<double, ipow(3, N), N> vertices;
         std::array<bool, ipow(3, N)> inside;
         std::shared_ptr<Tape> tape;
-    };
-
-    /*
-     *  This is a handle for both the XTree and the object pool data
-     *  that were used to allocate all of its memory.
-     */
-    class Root
-    {
-    public:
-        Root();
-        Root(SimplexTree<N>* ptr);
-        Root(Root&& other);
-
-        Root& operator=(Root&& other);
-
-        ~Root() { reset(); }
-
-        void reset(ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
-
-        const SimplexTree<N>* operator->() { return ptr; }
-        const SimplexTree<N>* get() const { return ptr; }
-
-        void claim(ObjectPool<SimplexTree<N>>& pool);
-        void claim(ObjectPool<Leaf>& pool);
-
-        int64_t size() const { return tree_count; }
-
-    protected:
-        SimplexTree<N>* ptr;
-        std::list<SimplexTree<N>*> trees;
-        std::list<Leaf> leafs;
-
-        // Used for progress tracking.  We use a signed value here because,
-        // as we claim ObjectPools of SimplexTree, it's possible for the intermediate
-        // result to go negative (if one pool has claimed many trees from
-        // another ObjectPool, so it owns more trees than it has allocated)..
-        int64_t tree_count=0;
+        unsigned level;
     };
 
     /*

@@ -35,6 +35,7 @@ add_library(five SHARED
     render/brep/dc/xtree3.cpp
     render/brep/dc/xtree_pool2.cpp
     render/brep/dc/xtree_pool3.cpp
+    render/brep/simplex/simplextree.cpp
     solve/bounds.cpp
     solve/solver.cpp
     tree/cache.cpp
