@@ -52,8 +52,8 @@ static void run(
         XTreeEvaluator* eval, LockFreeStack<N>& tasks,
         const float min_feature, const float max_err,
         std::atomic_bool& done, std::atomic_bool& cancel,
-        typename XTree<N>::Root& root, std::mutex& root_lock,
-        ProgressWatcher* progress)
+        Root<XTree<N>, typename XTree<N>::Leaf>& root,
+        std::mutex& root_lock, ProgressWatcher* progress)
 {
     // Tasks to be evaluated by this thread (populated when the
     // MPMC stack is completely full).
@@ -191,7 +191,7 @@ static void run(
 }
 
 template <unsigned N>
-typename XTree<N>::Root XTreePool<N>::build(
+Root<XTree<N>, typename XTree<N>::Leaf> XTreePool<N>::build(
             const Tree t, Region<N> region,
             double min_feature, double max_err, unsigned workers,
             ProgressCallback progress_callback)
@@ -208,7 +208,7 @@ typename XTree<N>::Root XTreePool<N>::build(
 }
 
 template <unsigned N>
-typename XTree<N>::Root XTreePool<N>::build(
+Root<XTree<N>, typename XTree<N>::Leaf> XTreePool<N>::build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
@@ -229,7 +229,7 @@ typename XTree<N>::Root XTreePool<N>::build(
     std::vector<std::future<void>> futures;
     futures.resize(workers);
 
-    typename XTree<N>::Root out(root);
+    Root<XTree<N>, typename XTree<N>::Leaf> out(root);
     std::mutex root_lock;
 
     // Kick off the progress tracking thread, based on the number of
@@ -267,7 +267,7 @@ typename XTree<N>::Root XTreePool<N>::build(
 
     if (cancel.load())
     {
-        return typename XTree<N>::Root();
+        return Root<XTree<N>, typename XTree<N>::Leaf>();
     }
     else
     {

@@ -97,38 +97,6 @@ public:
      *  This is a handle for both the XTree and the object pool data
      *  that were used to allocate all of its memory.
      */
-    class Root
-    {
-    public:
-        Root();
-        Root(XTree<N>* ptr);
-        Root(Root&& other);
-
-        Root& operator=(Root&& other);
-
-        ~Root() { reset(); }
-
-        void reset(ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
-
-        const XTree<N>* operator->() { return ptr; }
-        const XTree<N>* get() const { return ptr; }
-
-        void claim(ObjectPool<XTree<N>>& pool);
-        void claim(ObjectPool<XTree<N>::Leaf>& pool);
-
-        int64_t size() const { return tree_count; }
-
-    protected:
-        XTree<N>* ptr;
-        std::list<XTree<N>*> trees;
-        std::list<XTree<N>::Leaf*> leafs;
-
-        // Used for progress tracking.  We use a signed value here because,
-        // as we claim Pools of XTrees, it's possible for the intermediate
-        // result to go negative (if one pool has claimed many trees from
-        // another Pool, so it owns more trees than it has allocated)..
-        int64_t tree_count=0;
-    };
 
     /*
      *  Simple constructor

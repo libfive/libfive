@@ -443,7 +443,7 @@ std::unique_ptr<Mesh> Mesh::render(
     return out;
 }
 
-std::unique_ptr<Mesh> Mesh::mesh(const XTree<3>::Root& xtree,
+std::unique_ptr<Mesh> Mesh::mesh(const Root<XTree<3>, XTree<3>::Leaf>& xtree,
                                  std::atomic_bool& cancel,
                                  ProgressCallback progress_callback)
 {

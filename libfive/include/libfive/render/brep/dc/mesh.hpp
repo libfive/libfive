@@ -12,6 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/axes.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/root.hpp"
 #include "libfive/render/brep/brep.hpp"
 #include "libfive/render/brep/progress.hpp"
 
@@ -74,7 +75,8 @@ public:
 
     /*  Walks an XTree, returning a mesh  */
     static std::unique_ptr<Mesh> mesh(
-            const XTree<3>::Root& tree, std::atomic_bool& cancel,
+            const Root<XTree<3>, XTree<3>::Leaf>& tree,
+            std::atomic_bool& cancel,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
     static const float MAX_PROGRESS;
