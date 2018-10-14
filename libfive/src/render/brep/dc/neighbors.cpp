@@ -7,8 +7,8 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#include "libfive/render/brep/neighbors.hpp"
-#include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/dc/neighbors.hpp"
+#include "libfive/render/brep/dc/xtree.hpp"
 
 namespace Kernel {
 

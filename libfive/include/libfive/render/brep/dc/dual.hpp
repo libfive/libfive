@@ -8,7 +8,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
-#include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/dc/xtree.hpp"
 #include "libfive/render/brep/progress.hpp"
 #include "libfive/render/axes.hpp"
 

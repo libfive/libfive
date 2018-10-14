@@ -17,8 +17,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/StdVector>
 #include <boost/lockfree/queue.hpp>
 
-#include "libfive/render/brep/xtree.hpp"
-#include "libfive/render/brep/pool.hpp"
+#include "libfive/render/brep/dc/xtree.hpp"
+#include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
 
@@ -128,7 +128,7 @@ Tape::Handle XTree<N>::evalInterval(
 template <unsigned N>
 void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                         const Region<N>& region, Tape::Handle tape,
-                        Pool<Leaf>& spare_leafs)
+                        ObjectPool<Leaf>& spare_leafs)
 {
     // Track how many corners have to be evaluated here
     // (if they can be looked up from a neighbor, they don't have
@@ -621,8 +621,8 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 }
 
 template <unsigned N>
-void XTree<N>::releaseChildren(Pool<XTree>& spare_trees,
-                               Pool<Leaf>& spare_leafs)
+void XTree<N>::releaseChildren(ObjectPool<XTree>& spare_trees,
+                               ObjectPool<Leaf>& spare_leafs)
 {
     for (auto& c : children)
     {
@@ -688,7 +688,7 @@ template <unsigned N>
 bool XTree<N>::collectChildren(
         XTreeEvaluator* eval, Tape::Handle tape,
         double max_err, const Region<N>& region,
-        Pool<XTree<N>>& spare_trees, Pool<Leaf>& spare_leafs)
+        ObjectPool<XTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs)
 {
     // Wait for collectChildren to have been called N times
     if (pending-- != 0)
@@ -1104,14 +1104,14 @@ std::array<unsigned, 2 * N> XTree<N>::edgesFromChild(unsigned childIndex)
 }
 
 template <unsigned N>
-void XTree<N>::Root::claim(Pool<XTree<N>>& pool)
+void XTree<N>::Root::claim(ObjectPool<XTree<N>>& pool)
 {
     tree_count += pool.size();
     pool.release(trees);
 }
 
 template <unsigned N>
-void XTree<N>::Root::claim(Pool<XTree<N>::Leaf>& pool)
+void XTree<N>::Root::claim(ObjectPool<XTree<N>::Leaf>& pool)
 {
     pool.release(leafs);
 }

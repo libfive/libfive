@@ -9,8 +9,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "catch.hpp"
 
-#include "libfive/render/brep/xtree_pool.hpp"
-#include "libfive/render/brep/dual.hpp"
+#include "libfive/render/brep/dc/xtree_pool.hpp"
+#include "libfive/render/brep/dc/dual.hpp"
 
 #include "util/shapes.hpp"
 

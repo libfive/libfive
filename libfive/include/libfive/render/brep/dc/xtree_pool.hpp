@@ -12,8 +12,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/render/brep/region.hpp"
-#include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/progress.hpp"
+#include "libfive/render/brep/dc/xtree.hpp"
 
 namespace Kernel {
 

@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <iostream>
 #include <Eigen/Eigen>
 
-#include "libfive/render/brep/marching.hpp"
+#include "libfive/render/brep/dc/marching.hpp"
 
 namespace Kernel {
 namespace Marching {

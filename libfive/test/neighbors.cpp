@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "catch.hpp"
 
-#include "libfive/render/brep/neighbors.hpp"
+#include "libfive/render/brep/dc/neighbors.hpp"
 
 using namespace Kernel;
 

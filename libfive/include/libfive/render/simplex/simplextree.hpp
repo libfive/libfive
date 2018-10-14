@@ -23,14 +23,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/progress.hpp"
-#include "libfive/render/brep/intersection.hpp"
-#include "libfive/render/brep/marching.hpp"
-#include "libfive/render/brep/neighbors.hpp"
 #include "libfive/eval/interval.hpp"
 
 namespace Kernel {
 
-template <typename T> class Pool; /* Forward declaration */
+template <typename T> class ObjectPool; /* Forward declaration */
 template <unsigned N> class Simplexes; /* Forward declaration */
 
 template <unsigned N>
@@ -58,8 +55,8 @@ public:
         const SimplexTree<N>* operator->() { return ptr; }
         const SimplexTree<N>* get() const { return ptr; }
 
-        void claim(Pool<SimplexTree<N>>& pool);
-        void claim(Pool<Simplexes<N>>& pool);
+        void claim(ObjectPool<SimplexTree<N>>& pool);
+        void claim(ObjectPool<Simplexes<N>>& pool);
 
         int64_t size() const { return tree_count; }
 
@@ -69,9 +66,9 @@ public:
         std::list<Simplexes<N>> leafs;
 
         // Used for progress tracking.  We use a signed value here because,
-        // as we claim Pools of SimplexTree, it's possible for the intermediate
+        // as we claim ObjectPools of SimplexTree, it's possible for the intermediate
         // result to go negative (if one pool has claimed many trees from
-        // another Pool, so it owns more trees than it has allocated)..
+        // another ObjectPool, so it owns more trees than it has allocated)..
         int64_t tree_count=0;
     };
 
@@ -106,7 +103,7 @@ public:
      */
     void evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                   const Region<N>& region, std::shared_ptr<Tape> tape,
-                  Pool<Simplexes<N>>& spare_simplexes);
+                  ObjectPool<Simplexes<N>>& spare_simplexes);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -117,8 +114,8 @@ public:
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const Region<N>& region,
-            Pool<SimplexTree<N>>& spare_trees,
-            Pool<Simplexes<N>>& spare_simplexes);
+            ObjectPool<SimplexTree<N>>& spare_trees,
+            ObjectPool<Simplexes<N>>& spare_simplexes);
 
     /*
      *  Checks whether this tree splits
@@ -172,7 +169,7 @@ public:
     /*  Leaf cell state, when known  */
     Interval::State type;
 
-    /*  Optional leaf data, owned by a parent Pool<Leaf> */
+    /*  Optional leaf data, owned by a parent ObjectPool<Leaf> */
     Simplexes<N>* simplexes;
 
 protected:
@@ -196,8 +193,8 @@ protected:
      *  Releases the children (and their Leaf pointers, if present)
      *  into the given object pools.
      */
-    void releaseChildren(Pool<XTree<N>>& spare_trees,
-                         Pool<Simplexes<N>>& spare_leafs);
+    void releaseChildren(ObjectPool<XTree<N>>& spare_trees,
+                         ObjectPool<Simplexes<N>>& spare_leafs);
 
     /*
      *  Writes the given intersection into the intersections list

@@ -20,17 +20,18 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/export.hpp"
 #include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/interval.hpp"
 
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/progress.hpp"
-#include "libfive/render/brep/intersection.hpp"
-#include "libfive/render/brep/marching.hpp"
-#include "libfive/render/brep/neighbors.hpp"
-#include "libfive/eval/interval.hpp"
+
+#include "libfive/render/brep/dc/intersection.hpp"
+#include "libfive/render/brep/dc/marching.hpp"
+#include "libfive/render/brep/dc/neighbors.hpp"
 
 namespace Kernel {
 
-template <typename T> class Pool; /* Forward declaration */
+template <typename T> class ObjectPool; /* Forward declaration */
 
 template <unsigned N>
 class XTree
@@ -112,8 +113,8 @@ public:
         const XTree<N>* operator->() { return ptr; }
         const XTree<N>* get() const { return ptr; }
 
-        void claim(Pool<XTree<N>>& pool);
-        void claim(Pool<XTree<N>::Leaf>& pool);
+        void claim(ObjectPool<XTree<N>>& pool);
+        void claim(ObjectPool<XTree<N>::Leaf>& pool);
 
         int64_t size() const { return tree_count; }
 
@@ -160,7 +161,7 @@ public:
      */
     void evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
                   const Region<N>& region, std::shared_ptr<Tape> tape,
-                  Pool<Leaf>& spare_leafs);
+                  ObjectPool<Leaf>& spare_leafs);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -171,7 +172,7 @@ public:
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const Region<N>& region,
-            Pool<XTree<N>>& spare_trees, Pool<Leaf>& spare_leafs);
+            ObjectPool<XTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs);
 
     /*
      *  Checks whether this tree splits
@@ -271,7 +272,7 @@ public:
     /*  The cell's region */
     Region<N> region;
 
-    /*  Optional leaf data, owned by a parent Pool<Leaf> */
+    /*  Optional leaf data, owned by a parent ObjectPool<Leaf> */
     Leaf* leaf;
 
     /*  Single copy of the marching squares / cubes table, lazily
@@ -299,8 +300,8 @@ protected:
      *  Releases the children (and their Leaf pointers, if present)
      *  into the given object pools.
      */
-    void releaseChildren(Pool<XTree<N>>& spare_trees,
-                         Pool<Leaf>& spare_leafs);
+    void releaseChildren(ObjectPool<XTree<N>>& spare_trees,
+                         ObjectPool<Leaf>& spare_leafs);
 
     /*
      *  Writes the given intersection into the intersections list

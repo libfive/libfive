@@ -18,9 +18,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <boost/lockfree/stack.hpp>
 
-#include "libfive/render/brep/xtree.hpp"
-#include "libfive/render/brep/xtree_pool.hpp"
-#include "libfive/render/brep/pool.hpp"
+#include "libfive/render/brep/dc/xtree.hpp"
+#include "libfive/render/brep/dc/xtree_pool.hpp"
+#include "libfive/render/brep/object_pool.hpp"
 #include "libfive/eval/tape.hpp"
 
 namespace Kernel {
@@ -43,8 +43,8 @@ static void run(
     // MPMC stack is completely full).
     std::stack<Task<N>, std::vector<Task<N>>> local;
 
-    Pool<XTree<N>> spare_trees;
-    Pool<typename XTree<N>::Leaf> spare_leafs;
+    ObjectPool<XTree<N>> spare_trees;
+    ObjectPool<typename XTree<N>::Leaf> spare_leafs;
 
     while (!done.load() && !cancel.load())
     {

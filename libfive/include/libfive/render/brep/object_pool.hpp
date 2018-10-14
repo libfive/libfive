@@ -26,10 +26,10 @@ namespace Kernel {
  *  constructor must take zero arguments.
  */
 template <typename T>
-class Pool
+class ObjectPool
 {
 public:
-    Pool(unsigned N=512) : N(N) { /* Nothing to do here */ }
+    ObjectPool(unsigned N=512) : N(N) { /* Nothing to do here */ }
 
     template <typename... Args>
     T* get(Args... args)
@@ -58,7 +58,7 @@ public:
         d.push(t);
     }
 
-    ~Pool()
+    ~ObjectPool()
     {
         for (auto& t : alloc)
         {

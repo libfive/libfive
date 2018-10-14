@@ -11,8 +11,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <array>
 #include <atomic>
 
-#include "libfive/render/brep/marching.hpp"
-#include "libfive/render/brep/intersection.hpp"
+#include "libfive/render/brep/dc/marching.hpp"
+#include "libfive/render/brep/dc/intersection.hpp"
 #include "libfive/eval/interval.hpp"
 
 namespace Kernel {

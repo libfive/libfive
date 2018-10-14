@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "catch.hpp"
 
-#include "libfive/render/brep/marching.hpp"
+#include "libfive/render/brep/dc/marching.hpp"
 
 using namespace Kernel;
 
