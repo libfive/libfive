@@ -19,11 +19,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/StdVector>
 
 #include "libfive/export.hpp"
+#include "libfive/eval/eval_xtree.hpp"
+
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/progress.hpp"
 #include "libfive/render/brep/intersection.hpp"
 #include "libfive/render/brep/marching.hpp"
-#include "libfive/render/brep/eval_xtree.hpp"
 #include "libfive/render/brep/neighbors.hpp"
 #include "libfive/eval/interval.hpp"
 
