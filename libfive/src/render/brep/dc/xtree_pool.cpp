@@ -26,6 +26,22 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 template <unsigned N>
+struct Task
+{
+    Task() : target(nullptr)
+    { /* Nothing to do here */ }
+
+    Task(XTree<N>* t, std::shared_ptr<Tape> p, Region<N> r, Neighbors<N> n)
+        : target(t), tape(p), region(r), parent_neighbors(n)
+    { /* Nothing to do here */ }
+
+    XTree<N>* target;
+    std::shared_ptr<Tape> tape;
+    Region<N> region;
+    Neighbors<N> parent_neighbors;
+};
+
+template <unsigned N>
 using LockFreeStack =
     boost::lockfree::stack<Task<N>, boost::lockfree::fixed_sized<true>>;
 
@@ -102,7 +118,7 @@ static void run(
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
-                    Task<N> next(spare_trees.get(t, i, rs[i]), tape, neighbors);
+                    Task<N> next(spare_trees.get(t, i, rs[i]), tape, rs[i], neighbors);
                     if (!tasks.bounded_push(next))
                     {
                         local.push(next);
@@ -208,7 +224,7 @@ typename XTree<N>::Root XTreePool<N>::build(
     std::atomic_bool done(false);
 
     LockFreeStack<N> tasks(workers);
-    tasks.push(Task<N>(root, eval->deck->tape, Neighbors<N>()));
+    tasks.push(Task<N>(root, eval->deck->tape, region, Neighbors<N>()));
 
     std::vector<std::future<void>> futures;
     futures.resize(workers);

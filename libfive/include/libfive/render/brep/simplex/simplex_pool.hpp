@@ -18,12 +18,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 template <unsigned N>
-struct XTreePool
+struct SimplexTreePool
 {
     /*
      *  Simplified construction with fewer arguments, used in unit testing
      */
-    static typename XTree<N>::Root build(
+    static typename SimplexTree<N>::Root build(
             const Tree t, Region<N> region,
             double min_feature=0.1, double max_err=1e-8, unsigned workers=1,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
@@ -33,14 +33,15 @@ struct XTreePool
      *
      *  eval must be the first item in an array of at least `workers` items
      */
-    static typename XTree<N>::Root build(
+    static typename SimplexTree<N>::Root build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
             ProgressCallback callback=EMPTY_PROGRESS_CALLBACK);
 };
 
-extern template struct XTreePool<2>;
-extern template struct XTreePool<3>;
+extern template struct SimplexTreePool<2>;
+extern template struct SimplexTreePool<3>;
 
 }   // namespace Kernel
+

@@ -20,20 +20,27 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/export.hpp"
 #include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/interval.hpp"
 
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/progress.hpp"
-#include "libfive/eval/interval.hpp"
+#include "libfive/render/brep/ipow.hpp"
 
 namespace Kernel {
 
 template <typename T> class ObjectPool; /* Forward declaration */
-template <unsigned N> class Simplexes; /* Forward declaration */
 
 template <unsigned N>
 class SimplexTree
 {
 public:
+
+    struct Leaf
+    {
+        Eigen::Matrix<double, ipow(3, N), N> vertices;
+        std::array<bool, ipow(3, N)> inside;
+        std::shared_ptr<Tape> tape;
+    };
 
     /*
      *  This is a handle for both the XTree and the object pool data
@@ -56,14 +63,14 @@ public:
         const SimplexTree<N>* get() const { return ptr; }
 
         void claim(ObjectPool<SimplexTree<N>>& pool);
-        void claim(ObjectPool<Simplexes<N>>& pool);
+        void claim(ObjectPool<Leaf>& pool);
 
         int64_t size() const { return tree_count; }
 
     protected:
         SimplexTree<N>* ptr;
         std::list<SimplexTree<N>*> trees;
-        std::list<Simplexes<N>> leafs;
+        std::list<Leaf> leafs;
 
         // Used for progress tracking.  We use a signed value here because,
         // as we claim ObjectPools of SimplexTree, it's possible for the intermediate
@@ -101,9 +108,9 @@ public:
      *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
-    void evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
+    void evalLeaf(XTreeEvaluator* eval,
                   const Region<N>& region, std::shared_ptr<Tape> tape,
-                  ObjectPool<Simplexes<N>>& spare_simplexes);
+                  ObjectPool<Leaf>& spare_leafs);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -115,7 +122,7 @@ public:
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const Region<N>& region,
             ObjectPool<SimplexTree<N>>& spare_trees,
-            ObjectPool<Simplexes<N>>& spare_simplexes);
+            ObjectPool<Leaf>& spare_leafs);
 
     /*
      *  Checks whether this tree splits
@@ -127,17 +134,6 @@ public:
      */
     const SimplexTree<N>* child(unsigned i) const
     { return isBranch() ? children[i].load(std::memory_order_relaxed) : this; }
-
-    /*
-     *  Returns the filled / empty state for the ith corner
-     */
-    Interval::State cornerState(uint8_t i) const;
-
-    /*
-     *  Checks whether this cell is manifold.
-     *  This must only be called on non-branching cells.
-     */
-    bool isManifold() const;
 
     /*  Looks up the cell's level.
      *
@@ -170,7 +166,7 @@ public:
     Interval::State type;
 
     /*  Optional leaf data, owned by a parent ObjectPool<Leaf> */
-    Simplexes<N>* simplexes;
+    Leaf* leaf;
 
 protected:
     /*
@@ -184,47 +180,11 @@ protected:
     double findVertex(unsigned i=0);
 
     /*
-     *  Returns edges (as indices into corners)
-     *  (must be specialized for a specific dimensionality)
-     */
-    const std::vector<std::pair<uint8_t, uint8_t>>& edges() const;
-
-    /*
      *  Releases the children (and their Leaf pointers, if present)
      *  into the given object pools.
      */
-    void releaseChildren(ObjectPool<XTree<N>>& spare_trees,
-                         ObjectPool<Simplexes<N>>& spare_leafs);
-
-    /*
-     *  Writes the given intersection into the intersections list
-     *  for the specified edge.  Allocates an interesections list
-     *  if none already exists.  The given set of derivatives is normalized
-     *  (to become a surface normal).  If the normal is invalid, then
-     *  we store an intersection with an all-zero normal.  This means we
-     *  can still use the intersection for mass-point calculation, but
-     *  can detect that the normal is invalid (and so will not use it for
-     *  building the A and b matrices).
-     */
-    void saveIntersection(const Vec& pos, const Vec& derivs,
-                          const double value, const size_t edge);
-
-    /*
-     *  Returns a table such that looking up a particular corner
-     *  configuration returns whether that configuration is safe to
-     *  collapse.
-     *  (must be specialized for a specific dimensionality)
-     *
-     *  This implements the test from [Gerstner et al, 2000], as
-     *  described in [Ju et al, 2002].
-     */
-    static bool cornersAreManifold(const uint8_t corner_mask);
-
-    /*
-     *  Returns a corner mask bitfield from the given array
-     */
-    static uint8_t buildCornerMask(
-            const std::array<Interval::State, 1 << N>& corners);
+    void releaseChildren(ObjectPool<SimplexTree<N>>& spare_trees,
+                         ObjectPool<Leaf>& spare_leafs);
 
     /*
      *  Call this when construction is complete; it will atomically install
