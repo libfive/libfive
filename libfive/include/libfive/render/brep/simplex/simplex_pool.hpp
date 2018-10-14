@@ -13,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/tree.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/progress.hpp"
+#include "libfive/render/brep/root.hpp"
 #include "libfive/render/brep/simplex/simplextree.hpp"
 
 namespace Kernel {
@@ -23,7 +24,7 @@ struct SimplexTreePool
     /*
      *  Simplified construction with fewer arguments, used in unit testing
      */
-    static typename SimplexTree<N>::Root build(
+    static Root<SimplexTree<N>, typename SimplexTree<N>::Leaf> build(
             const Tree t, Region<N> region,
             double min_feature=0.1, double max_err=1e-8, unsigned workers=1,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
@@ -33,7 +34,7 @@ struct SimplexTreePool
      *
      *  eval must be the first item in an array of at least `workers` items
      */
-    static typename SimplexTree<N>::Root build(
+    static Root<SimplexTree<N>, typename SimplexTree<N>::Leaf> build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
