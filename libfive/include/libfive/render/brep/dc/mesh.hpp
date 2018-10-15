@@ -66,11 +66,12 @@ public:
                         const std::list<const Mesh*>& meshes);
 
     /*
-     *  Called by Dual::walk to construct the triangle mesh.  ts[index]
-     *  should be a minimal-level member of ts (though properly, it need
-     *  merely contain the edge being loaded as one of its edges).
+     *  Called by Dual::walk to construct the triangle mesh
+     *
+     *  ts is an array of cells, index is the cell closest to the bottom
+     *  (which matters because it's the cell whose edge we're rotating around)
      */
-    template <Axis::Axis A, bool D>
+    template <Axis::Axis A>
     void load(const std::array<const XTree<3>*, 4>& ts, unsigned index);
 
     /*  Walks an XTree, returning a mesh  */
@@ -82,6 +83,9 @@ public:
     static const float MAX_PROGRESS;
 
 protected:
+    template <Axis::Axis A, bool D>
+    void load(const std::array<const XTree<3>*, 4>& ts);
+
     /*
      *  Inserts a line into the mesh as a zero-size triangle
      *  (used for debugging)

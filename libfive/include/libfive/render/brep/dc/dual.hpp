@@ -54,25 +54,7 @@ void edge2(const std::array<const XTree<2>*, 2>& ts, V& v)
                 [](const XTree<2>* a, const XTree<2>* b)
                 { return a->leaf->level < b->leaf->level; }) - ts.begin();
 
-        constexpr std::array<uint8_t, 2> corners = {{perp, 0}};
-
-        // If there is a sign change across the relevant edge, then call the
-        // watcher with the segment corners (with proper winding order)
-        auto a = ts[index]->cornerState(corners[index]);
-        auto b = ts[index]->cornerState(corners[index] | A);
-        if (a != b)
-        {
-            // Use either forward or reversed segment building
-            if ((a == Interval::FILLED && A == Axis::Y) ||
-                (b == Interval::FILLED && A == Axis::X))
-            {
-                v.template load<A, 0>(ts);
-            }
-            else
-            {
-                v.template load<A, 1>(ts);
-            }
-        }
+        v.template load<A>(ts, index);
     }
 }
 
@@ -148,23 +130,7 @@ void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
                 [](const XTree<3>* a, const XTree<3>* b)
                 { return a->leaf->level < b->leaf->level; }) - ts.begin();
 
-        constexpr std::array<uint8_t, 4> corners = {{Q|R, R, Q, 0}};
-
-        // If there is a sign change across the relevant edge, then call the
-        // watcher with the segment corners (with proper winding order)
-        auto a = ts[index]->cornerState(corners[index]);
-        auto b = ts[index]->cornerState(corners[index] | A);
-        if (a != b)
-        {
-            if (a != Interval::FILLED)
-            {
-                v.template load<A, 0>(ts, index);
-            }
-            else
-            {
-                v.template load<A, 1>(ts, index);
-            }
-        }
+        v.template load<A>(ts, index);
     }
 }
 

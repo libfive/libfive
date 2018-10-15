@@ -24,8 +24,33 @@ namespace Kernel {
 
 const float Mesh::MAX_PROGRESS = 3.0f;
 
-template <Axis::Axis A, bool D>
+template <Axis::Axis A>
 void Mesh::load(const std::array<const XTree<3>*, 4>& ts, unsigned index)
+{
+    constexpr auto Q = Axis::Q(A);
+    constexpr auto R = Axis::R(A);
+
+    constexpr std::array<uint8_t, 4> corners = {{Q|R, R, Q, 0}};
+
+    // If there is a sign change across the relevant edge, then call the
+    // watcher with the segment corners (with proper winding order)
+    auto a = ts[index]->cornerState(corners[index]);
+    auto b = ts[index]->cornerState(corners[index] | A);
+    if (a != b)
+    {
+        if (a != Interval::FILLED)
+        {
+            load<A, 0>(ts);
+        }
+        else
+        {
+            load<A, 1>(ts);
+        }
+    }
+}
+
+template <Axis::Axis A, bool D>
+void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 {
     int es[4];
     {   // Unpack edge vertex pairs into edge indices

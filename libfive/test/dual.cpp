@@ -18,6 +18,32 @@ using namespace Kernel;
 
 struct Walker2
 {
+    // Copied from contours.cpp (Segment class)
+    template <Axis::Axis A>
+    void load(const std::array<const XTree<2>*, 2>& ts, unsigned index)
+    {
+        constexpr uint8_t perp = (Axis::X | Axis::Y) ^ A;
+        constexpr std::array<uint8_t, 2> corners = {{perp, 0}};
+
+        // If there is a sign change across the relevant edge, then call the
+        // watcher with the segment corners (with proper winding order)
+        auto a = ts[index]->cornerState(corners[index]);
+        auto b = ts[index]->cornerState(corners[index] | A);
+        if (a != b)
+        {
+            // Use either forward or reversed segment building
+            if ((a == Interval::FILLED && A == Axis::Y) ||
+                (b == Interval::FILLED && A == Axis::X))
+            {
+                load<A, 0>(ts);
+            }
+            else
+            {
+                load<A, 1>(ts);
+            }
+        }
+    }
+
     // Check winding of contours
     template<Axis::Axis A, bool D>
     void load(const std::array<const XTree<2>*, 2>& ts)
@@ -50,10 +76,10 @@ struct Walker2
 
 struct Walker3
 {
-    template <Axis::Axis A, bool D>
-    void load(const std::array<const XTree<3>*, 4>& a, unsigned index)
+    template <Axis::Axis A>
+    void load(const std::array<const XTree<3>*, 4>& a, unsigned i)
     {
-        (void)index;
+        (void)i;
 
         for (auto t : a)
         {
