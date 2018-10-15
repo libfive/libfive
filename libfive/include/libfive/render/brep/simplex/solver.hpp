@@ -11,11 +11,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <cstdint>
 #include <Eigen/Eigen>
 
-#include "libfive/render/simplex/corner.hpp"
-#include "libfive/render/simplex/corner.hpp"
+#include "libfive/render/brep/simplex/corner.hpp"
+#include "libfive/render/brep/simplex/corner.hpp"
 #include "libfive/render/brep/region.hpp"
 
 namespace Kernel {
+namespace SimplexSolver {
 
 constexpr unsigned simplexDimension(unsigned simplex_number)
 {
@@ -49,10 +50,11 @@ void unpack(const Input& in, Output& out)
 // Finds a vertex on the given simplex, clamping to lower-dimensional
 // simplices if it tries to escape.
 template <unsigned BaseDimension, unsigned SimplexNumber>
-void findVertex(const CornerArray<BaseDimension>& corners,
+Eigen::Matrix<double, BaseDimension, 1>
+findVertex(const CornerArray<BaseDimension>& corners,
                 Region<BaseDimension> region)
 {
-    constexpr unsigned simplex_dimension = simplexDimension(SimplexNumber);
+    constexpr unsigned SimplexDimension = simplexDimension(SimplexNumber);
 
     unsigned samples = 0;
     for (unsigned i=0; i < corners.size(); ++i) {
@@ -68,8 +70,13 @@ void findVertex(const CornerArray<BaseDimension>& corners,
     //  ...
     //
     //  (with one row for each sampled point's normal)
-    Eigen::Matrix<double, Eigen::Dynamic, simplex_dimension + 1>
-        A(samples, simplex_dimension + 1);
+    Eigen::Matrix<double, Eigen::Dynamic, SimplexDimension + 1>
+        A(samples, SimplexDimension + 1);
+
+    // Store the center in space + evaluation result
+    Eigen::Matrix<double, BaseDimension + 1, 1> center =
+        Eigen::Matrix<double, BaseDimension + 1, 1>::Zero();
+    int center_count = 0;
 
     //  The b matrix is of the form
     //  [(p1, w1) . (n1, -1)]
@@ -89,22 +96,35 @@ void findVertex(const CornerArray<BaseDimension>& corners,
             continue;
         }
 
+        // Store the average position
+        decltype(center) c;
+        c << region.corner(i), corners[i].value;
+        center += c;
+        center_count++;
+
         // pos is of the form [x, y, z, w], where w is the
         // distance field evaluated at the specific point.
-        Eigen::Matrix<double, 1, simplex_dimension + 1> pos;
+        Eigen::Matrix<double, SimplexDimension + 1, 1> pos;
         unpack<SimplexNumber>(region.corner(i), pos);
-        pos(simplex_dimension) = corners[i].value;
+        pos(SimplexDimension) = corners[i].value;
 
         // Unpack each intersection, which share pos
         for (auto& d : corners[i].deriv)
         {
-            unpack<SimplexNumber>(d, A.row(sample));
-            A(sample, simplex_dimension) = -1;
+            Eigen::Matrix<double, 1, SimplexDimension> row;
+            unpack<SimplexNumber>(d, row);
+            A.row(sample) << row, -1;
+
             b(sample) = A.row(sample) * pos;
             sample++;
         }
     }
+
+    // TODO: Right now, we punt and simply return the center
+    center /= center_count;
+    return center.template head<BaseDimension>();
 };
 
 
+}   // namespace SimplexSolver
 }   // namespace Kernel

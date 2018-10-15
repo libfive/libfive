@@ -18,6 +18,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <boost/lockfree/queue.hpp>
 
 #include "libfive/render/brep/simplex/simplextree.hpp"
+#include "libfive/render/brep/simplex/solver.hpp"
+#include "libfive/render/brep/simplex/corner.hpp"
+
 #include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
@@ -76,6 +79,9 @@ template <unsigned N>
 void SimplexTree<N>::Leaf::reset()
 {
     level = 0;
+    std::fill(index.begin(), index.end(), 0);
+    tape.reset();
+    level = 0;
 }
 
 template <unsigned N>
@@ -103,17 +109,70 @@ Tape::Handle SimplexTree<N>::evalInterval(
     return o.second;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned BaseDimension, unsigned SimplexIndex>
+struct Unroller
+{
+    void operator()(typename SimplexTree<BaseDimension>::Leaf& leaf,
+                    const CornerArray<BaseDimension>& corners,
+                    const Region<BaseDimension>& region)
+    {
+        auto v = SimplexSolver::findVertex<BaseDimension, SimplexIndex>(
+                corners, region);
+        leaf.vertices.row(SimplexIndex) = v;
+
+        // Recurse!
+        Unroller<BaseDimension, SimplexIndex + 1>()(leaf, corners, region);
+    }
+};
+
+// Terminate static unrolling
+template <unsigned BaseDimension>
+struct Unroller<BaseDimension, ipow(3, BaseDimension)>
+{
+    void operator()(typename SimplexTree<BaseDimension>::Leaf&,
+                    const CornerArray<BaseDimension>&,
+                    const Region<BaseDimension>&)
+    {
+        // Nothing to do here
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
 template <unsigned N>
 void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
                               const Region<N>& region, Tape::Handle tape,
                               ObjectPool<Leaf>& spare_leafs)
 {
+    CornerArray<N> corners;
+
+    leaf = spare_leafs.get();
+    Unroller<N, 0>()(*leaf, corners, region);
+
+    for (unsigned i=0; i < ipow(3, N); ++i)
+    {
+        Eigen::Vector3f p;
+        p << leaf->vertices.row(i).template cast<float>(),
+             region.perp.template cast<float>();
+
+        eval->array.set(p, 0);
+        const auto out = eval->array.values(1)[0];
+        const bool inside = (out == 0)
+            ? eval->feature.isInside(p)
+            : (out < 0);
+
+        leaf->inside[i] = inside;
+        leaf->tape = tape;
+        leaf->level = 0;
+    }
     done();
 }
 
 template <unsigned N>
 void SimplexTree<N>::releaseChildren(ObjectPool<SimplexTree>& spare_trees,
-                               ObjectPool<Leaf>& spare_leafs)
+                                     ObjectPool<Leaf>& spare_leafs)
 {
     for (auto& c : children)
     {

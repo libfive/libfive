@@ -42,7 +42,14 @@ public:
 
         Eigen::Matrix<double, ipow(3, N), N> vertices;
         std::array<bool, ipow(3, N)> inside;
+
+        /*   Global indices for vertices  */
+        std::array<uint64_t, ipow(3, N)> index;
+
+        /*  Tape used for evaluation within this leaf */
         std::shared_ptr<Tape> tape;
+
+        /*  Represents how far from minimum-size leafs we are */
         unsigned level;
     };
 
