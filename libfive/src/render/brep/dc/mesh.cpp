@@ -11,9 +11,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <fstream>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/dc/mesh.hpp"
 #include "libfive/render/brep/dc/xtree_pool.hpp"
-#include "libfive/render/brep/dc/dual.hpp"
 #include "libfive/render/brep/dc/intersection_aligner.hpp"
 
 #ifndef LIBFIVE_TRIANGLE_FAN_MESHING
