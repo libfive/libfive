@@ -262,5 +262,10 @@ Root<SimplexTree<N>, typename SimplexTree<N>::Leaf> SimplexTreePool<N>::build(
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Explicit initialization of template
+template struct SimplexTreePool<2>;
+template struct SimplexTreePool<3>;
+
 }   // namespace Kernel
 

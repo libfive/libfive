@@ -22,6 +22,7 @@ set(SRCS main.cpp
     oracle_context.cpp
     progress.cpp
     region.cpp
+    simplex.cpp
     solver.cpp
     transformed_oracle.cpp
     tree.cpp
