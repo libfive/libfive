@@ -19,6 +19,6 @@ TEST_CASE("SimplexPool")
     auto c = circle(1);
     auto r = Region<2>({-1, -1}, {1, 1});
 
-    auto t = SimplexTreePool<2>::build(c, r);
+    auto t = SimplexTreePool<2>::build(c, r, 0.1, 1e-8, 1);
     REQUIRE(t.get() != nullptr);
 }

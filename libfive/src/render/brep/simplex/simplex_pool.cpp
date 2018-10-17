@@ -26,12 +26,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 template <unsigned N>
-struct Task
+struct SimplexTask
 {
-    Task() : target(nullptr)
+    SimplexTask() : target(nullptr), tape(nullptr)
     { /* Nothing to do here */ }
 
-    Task(SimplexTree<N>* t, std::shared_ptr<Tape> p, Region<N> r)
+    SimplexTask(SimplexTree<N>* t, std::shared_ptr<Tape> p, Region<N> r)
         : target(t), tape(p), region(r)
     { /* Nothing to do here */ }
 
@@ -42,7 +42,7 @@ struct Task
 
 template <unsigned N>
 using LockFreeStack =
-    boost::lockfree::stack<Task<N>, boost::lockfree::fixed_sized<true>>;
+    boost::lockfree::stack<SimplexTask<N>, boost::lockfree::fixed_sized<true>>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -56,7 +56,7 @@ static void run(
 {
     // Tasks to be evaluated by this thread (populated when the
     // MPMC stack is completely full).
-    std::stack<Task<N>, std::vector<Task<N>>> local;
+    std::stack<SimplexTask<N>, std::vector<SimplexTask<N>>> local;
 
     ObjectPool<SimplexTree<N>> spare_trees;
     ObjectPool<typename SimplexTree<N>::Leaf> spare_leafs;
@@ -66,7 +66,7 @@ static void run(
         // Prioritize picking up a local task before going to
         // the MPMC queue, to keep things in this thread for
         // as long as possible.
-        Task<N> task;
+        SimplexTask<N> task;
         if (local.size())
         {
             task = local.top();
@@ -111,7 +111,7 @@ static void run(
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
-                    Task<N> next(spare_trees.get(t, i), tape, rs[i]);
+                    SimplexTask<N> next(spare_trees.get(t, i), tape, rs[i]);
                     if (!tasks.bounded_push(next))
                     {
                         local.push(next);
@@ -211,7 +211,7 @@ Root<SimplexTree<N>, typename SimplexTree<N>::Leaf> SimplexTreePool<N>::build(
     std::atomic_bool done(false);
 
     LockFreeStack<N> tasks(workers);
-    tasks.push(Task<N>(root, eval->deck->tape, region));
+    tasks.push(SimplexTask<N>(root, eval->deck->tape, region));
 
     std::vector<std::future<void>> futures;
     futures.resize(workers);

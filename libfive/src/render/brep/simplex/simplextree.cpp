@@ -154,7 +154,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
     for (unsigned i=0; i < ipow(3, N); ++i)
     {
         Eigen::Vector3f p;
-        p << leaf->vertices.row(i).template cast<float>(),
+        p << leaf->vertices.row(i).template cast<float>().transpose(),
              region.perp.template cast<float>();
 
         eval->array.set(p, 0);
