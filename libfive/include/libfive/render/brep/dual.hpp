@@ -43,18 +43,7 @@ void edge2(const std::array<const T*, 2>& ts, V& v)
         [](const T* t){ return t->type == Interval::AMBIGUOUS &&
                                !t->isBranch(); }))
     {
-        // Sanity-checking that all cells have a Leaf struct allocated
-        for (auto& t : ts)
-        {
-            assert(t->leaf != nullptr);
-            (void)t;
-        }
-
-        const auto index = std::min_element(ts.begin(), ts.end(),
-                [](const T* a, const T* b)
-                { return a->leaf->level < b->leaf->level; }) - ts.begin();
-
-        v.template load<A>(ts, index);
+        v.template load<A>(ts);
     }
 }
 
@@ -110,27 +99,8 @@ void edge3(const std::array<const T*, 4> ts, V& v)
             assert(t->leaf != nullptr);
             (void)t;
         }
-        /*  We need to check the values on the shared edge to see whether we need
-         *  to add a face.  However, this is tricky when the edge spans multiple
-         *  octree levels.
-         *
-         * In the following diagram, the target edge is marked with an o
-         * (travelling out of the screen):
-         *      _________________
-         *      | 2 |           |
-         *      ----o   1, 3    |  ^ R
-         *      | 0 |           |  |
-         *      ----------------|  --> Q
-         *
-         *  If we were to look at corners of c or d, we wouldn't be looking at the
-         *  correct edge.  Instead, we need to look at corners for the smallest cell
-         *  among the function arguments.
-         */
-        const auto index = std::min_element(ts.begin(), ts.end(),
-                [](const T* a, const T* b)
-                { return a->leaf->level < b->leaf->level; }) - ts.begin();
 
-        v.template load<A>(ts, index);
+        v.template load<A>(ts);
     }
 }
 

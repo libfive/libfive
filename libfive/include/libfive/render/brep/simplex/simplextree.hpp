@@ -119,6 +119,12 @@ public:
      */
     unsigned level() const;
 
+    /*  Looks up the cell's level for purposes of vertex placement,
+     *  returning 0 or more for LEAF cells (depending on how many
+     *  other leafs were merged into them), and UINT32_MAX max for
+     *  EMPTY or FILLED cells */
+    uint32_t leafLevel() const;
+
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

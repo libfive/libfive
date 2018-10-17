@@ -21,8 +21,13 @@ class Segments : public BRep<2>
 {
 public:
     template <Axis::Axis A>
-    void load(const std::array<const XTree<2>*, 2>& ts, unsigned index)
+    void load(const std::array<const XTree<2>*, 2>& ts)
     {
+        /*  See comment in mesh.cpp about selecting a minimum edge */
+        const auto index = std::min_element(ts.begin(), ts.end(),
+                [](const XTree<2>* a, const XTree<2>* b)
+                { return a->leaf->level < b->leaf->level; }) - ts.begin();
+
         constexpr uint8_t perp = (Axis::X | Axis::Y) ^ A;
         constexpr std::array<uint8_t, 2> corners = {{perp, 0}};
 

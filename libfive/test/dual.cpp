@@ -20,8 +20,12 @@ struct Walker2
 {
     // Copied from contours.cpp (Segment class)
     template <Axis::Axis A>
-    void load(const std::array<const XTree<2>*, 2>& ts, unsigned index)
+    void load(const std::array<const XTree<2>*, 2>& ts)
     {
+        const auto index = std::min_element(ts.begin(), ts.end(),
+                [](const XTree<2>* a, const XTree<2>* b)
+                { return a->leaf->level < b->leaf->level; }) - ts.begin();
+
         constexpr uint8_t perp = (Axis::X | Axis::Y) ^ A;
         constexpr std::array<uint8_t, 2> corners = {{perp, 0}};
 
@@ -77,10 +81,8 @@ struct Walker2
 struct Walker3
 {
     template <Axis::Axis A>
-    void load(const std::array<const XTree<3>*, 4>& a, unsigned i)
+    void load(const std::array<const XTree<3>*, 4>& a)
     {
-        (void)i;
-
         for (auto t : a)
         {
             auto n = t->vert().norm();

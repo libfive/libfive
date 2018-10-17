@@ -10,9 +10,21 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "catch.hpp"
 
 #include "libfive/render/brep/simplex/simplex_pool.hpp"
+#include "libfive/render/brep/simplex/solver.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;
+using namespace Kernel::SimplexSolver;
+
+TEST_CASE("simplexDimension")
+{
+    REQUIRE(simplexDimension(0) == 0);
+    REQUIRE(simplexDimension(1) == 0);
+    REQUIRE(simplexDimension(2) == 1);
+    REQUIRE(simplexDimension(5) == 1);
+    REQUIRE(simplexDimension(6) == 1);
+    REQUIRE(simplexDimension(8) == 2);
+}
 
 TEST_CASE("SimplexPool")
 {

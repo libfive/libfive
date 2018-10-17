@@ -67,12 +67,9 @@ public:
 
     /*
      *  Called by Dual::walk to construct the triangle mesh
-     *
-     *  ts is an array of cells, index is the cell closest to the bottom
-     *  (which matters because it's the cell whose edge we're rotating around)
      */
     template <Axis::Axis A>
-    void load(const std::array<const XTree<3>*, 4>& ts, unsigned index);
+    void load(const std::array<const XTree<3>*, 4>& ts);
 
     /*  Walks an XTree, returning a mesh  */
     static std::unique_ptr<Mesh> mesh(

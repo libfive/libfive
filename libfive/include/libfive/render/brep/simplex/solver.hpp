@@ -35,6 +35,21 @@ constexpr bool simplexContains(unsigned simplex_number,
         : (corner_number == 0);
 }
 
+constexpr unsigned cornerToSimplex(unsigned corner_index)
+{
+    return corner_index
+        ? 3 * cornerToSimplex(corner_index >> 1) + (corner_index & 1) * 2
+        : 0;
+}
+
+constexpr unsigned simplexUnion(unsigned a, unsigned b)
+{
+    return (a || b)
+        ? 3 * simplexUnion(a / 3, b / 3) +
+            ((a % 3) != (b % 3) ? 2 : (a % 3))
+        : 0;
+}
+
 template <unsigned SimplexNumber, typename Input, typename Output>
 void unpack(const Input& in, Output& out)
 {

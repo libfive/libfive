@@ -25,8 +25,35 @@ namespace Kernel {
 const float Mesh::MAX_PROGRESS = 3.0f;
 
 template <Axis::Axis A>
-void Mesh::load(const std::array<const XTree<3>*, 4>& ts, unsigned index)
+void Mesh::load(const std::array<const XTree<3>*, 4>& ts)
 {
+    // Sanity-checking that all cells have a Leaf struct allocated
+    for (auto& t : ts)
+    {
+        assert(t->leaf != nullptr);
+        (void)t;
+    }
+
+    /*  We need to check the values on the shared edge to see whether we need
+     *  to add a face.  However, this is tricky when the edge spans multiple
+     *  octree levels.
+     *
+     * In the following diagram, the target edge is marked with an o
+     * (travelling out of the screen):
+     *      _________________
+     *      | 2 |           |
+     *      ----o   1, 3    |  ^ R
+     *      | 0 |           |  |
+     *      ----------------|  --> Q
+     *
+     *  If we were to look at corners of c or d, we wouldn't be looking at the
+     *  correct edge.  Instead, we need to look at corners for the smallest cell
+     *  among the function arguments.
+     */
+    const auto index = std::min_element(ts.begin(), ts.end(),
+            [](const XTree<3>* a, const XTree<3>* b)
+            { return a->leaf->level < b->leaf->level; }) - ts.begin();
+
     constexpr auto Q = Axis::Q(A);
     constexpr auto R = Axis::R(A);
 
