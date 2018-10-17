@@ -38,7 +38,7 @@ constexpr bool simplexContains(unsigned simplex_number,
 constexpr unsigned cornerToSimplex(unsigned corner_index)
 {
     return corner_index
-        ? 3 * cornerToSimplex(corner_index >> 1) + (corner_index & 1) * 2
+        ? 3 * cornerToSimplex(corner_index >> 1) + (corner_index & 1)
         : 0;
 }
 
