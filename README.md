@@ -31,11 +31,16 @@ where the user can push and pull on the model's surface
 to change variables in the script.
 
 ## Other projects using `libfive`
+### Language bindings
 - [Tovero](https://common-lisp.net/project/tovero/): A 3D modeling system for Common Lisp
-- [Inspekt3d](https://github.com/sjm-tl-gh/inspekt3d): Lightweight pure-Guile viewer
+- [`libfivepy`](https://gitlab.com/rcmz0/libfivepy): A Python CAD library (work in progress)
 - [Bindings for Unity](https://github.com/zalo/libfive-unity)
 - Unpublished [Stanza](http://lbstanza.org/) bindings (email for details)
-- [libfivepy](https://gitlab.com/rcmz0/libfivepy): A python cad library
+
+### Viewers
+- [Inspekt3D](https://github.com/sjm-tl-gh/inspekt3d): Lightweight pure-Guile viewer
+- [PyFive3D](https://github.com/sjm-tl-gh/pyfive3d): Lightweight pure-Python viewer (work in progress)
+- [C5H12 (Pentane)](https://github.com/sjm-tl-gh/C5H12): Lightweight C viewer
 
 ## License
 (c) 2015-2018 Matthew Keeter
