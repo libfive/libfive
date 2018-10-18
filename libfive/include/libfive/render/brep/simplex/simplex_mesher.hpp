@@ -16,7 +16,7 @@ namespace Kernel {
 // Forward declaration
 template <unsigned N> class SimplexTree;
 
-class SimplexMesh : public BRep<3>
+class SimplexMesher
 {
     /*
      *  Called by Dual::walk to construct the triangle mesh

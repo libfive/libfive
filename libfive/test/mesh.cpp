@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "catch.hpp"
 
-#include "libfive/render/brep/dc/mesh.hpp"
+#include "libfive/render/brep/dc/dc_mesher.hpp"
 #include "libfive/render/brep/dc/xtree_pool.hpp"
 #include "libfive/render/brep/region.hpp"
 
@@ -220,7 +220,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
     std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Mesh::mesh(t, cancel);
+        m = DCMesher::mesh(t, cancel);
     }
 
     BENCHMARK("XTree deletion")
@@ -255,7 +255,7 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
     std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Mesh::mesh(t, cancel, progress_callback);
+        m = DCMesher::mesh(t, cancel, progress_callback);
     }
 
     BENCHMARK("XTree deletion")

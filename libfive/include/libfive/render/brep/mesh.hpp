@@ -65,23 +65,9 @@ public:
     static bool saveSTL(const std::string& filename,
                         const std::list<const Mesh*>& meshes);
 
-    /*
-     *  Called by Dual::walk to construct the triangle mesh
-     */
-    template <Axis::Axis A>
-    void load(const std::array<const XTree<3>*, 4>& ts);
-
-    /*  Walks an XTree, returning a mesh  */
-    static std::unique_ptr<Mesh> mesh(
-            const Root<XTree<3>, XTree<3>::Leaf>& tree,
-            std::atomic_bool& cancel,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
-
     static const float MAX_PROGRESS;
 
 protected:
-    template <Axis::Axis A, bool D>
-    void load(const std::array<const XTree<3>*, 4>& ts);
 
     /*
      *  Inserts a line into the mesh as a zero-size triangle

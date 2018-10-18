@@ -27,9 +27,10 @@ add_library(five SHARED
     render/discrete/voxels.cpp
     render/brep/contours.cpp
     render/brep/progress.cpp
+    render/brep/mesh.cpp
     render/brep/dc/intersection_aligner.cpp
     render/brep/dc/marching.cpp
-    render/brep/dc/mesh.cpp
+    render/brep/dc/dc_mesher.cpp
     render/brep/dc/neighbors.cpp
     render/brep/dc/xtree2.cpp
     render/brep/dc/xtree3.cpp

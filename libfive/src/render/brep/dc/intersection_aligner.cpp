@@ -8,7 +8,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "libfive/render/brep/dc/mesh.hpp"
+#include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/dc/intersection_aligner.hpp"
 #include "libfive/render/axes.hpp"
 
