@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <numeric>
 #include <fstream>
 
-#include "libfive/render/brep/simplex/simplex_mesh.hpp"
+#include "libfive/render/brep/simplex/simplex_mesher.hpp"
 #include "libfive/render/brep/simplex/simplextree.hpp"
 #include "libfive/render/brep/simplex/solver.hpp"
 

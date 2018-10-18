@@ -44,6 +44,16 @@ TEST_CASE("cornerToSimplex")
     REQUIRE(cornerToSimplex(7) == 13);
 }
 
+TEST_CASE("simplexUnion")
+{
+    REQUIRE(simplexUnion(0, 1) == 2);
+    REQUIRE(simplexUnion(0, 2) == 2);
+    REQUIRE(simplexUnion(0, 4) == 8);
+    REQUIRE(simplexUnion(2, 4) == 8);
+    REQUIRE(simplexUnion(1, 4) == 7);
+    REQUIRE(simplexUnion(9, 0) == 18);
+}
+
 TEST_CASE("SimplexPool")
 {
     auto c = circle(1);
