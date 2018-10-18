@@ -289,6 +289,27 @@ unsigned SimplexTree<N>::level() const
     return 0;
 }
 
+template <unsigned N>
+void SimplexTree<N>::assignIndices()
+{
+    uint64_t i=1;
+    assignIndices(i);
+}
+
+template <unsigned N>
+void SimplexTree<N>::assignIndices(uint64_t& i)
+{
+    if (isBranch()) {
+        for (auto& c : children) {
+            c.load()->assignIndices(i);
+        }
+    } else if (leaf != nullptr) {
+        for (unsigned j=0; j < leaf->index.size(); ++j) {
+            leaf->index[j] = i++;
+        }
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Explicit initialization of template
 template class SimplexTree<2>;

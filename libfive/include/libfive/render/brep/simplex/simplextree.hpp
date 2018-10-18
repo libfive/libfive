@@ -125,6 +125,13 @@ public:
      *  EMPTY or FILLED cells */
     uint32_t leafLevel() const;
 
+    /*
+     *  Assigns leaf->index to a array of unique integers for every leaf
+     *  in the tree, starting at 1.  This provides a globally unique
+     *  identifier for every subspace vertex.
+     */
+    void assignIndices();
+
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -171,6 +178,11 @@ protected:
      *  this tree into the parent's array of children pointers.
      */
     void done();
+
+    /*
+     *  Helper function to assign leaf->index for all leafs in a tree
+     */
+    void assignIndices(uint64_t& i);
 
     /*  Marks whether this tree is fully constructed */
     std::atomic_int pending;
