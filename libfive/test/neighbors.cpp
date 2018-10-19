@@ -10,6 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "catch.hpp"
 
 #include "libfive/render/brep/dc/neighbors.hpp"
+#include "libfive/render/brep/neighbor_tables.hpp"
 
 using namespace Kernel;
 
@@ -76,6 +77,45 @@ TEST_CASE("Neighbors<2>::cornerCheckIndex")
     REQUIRE(Neighbors<2>::cornerCheckIndex(3, 5) == 1);
     REQUIRE(Neighbors<2>::cornerCheckIndex(3, 6) == -1);
     REQUIRE(Neighbors<2>::cornerCheckIndex(3, 7) == 2);
+}
+
+TEST_CASE("NeighborTables<2>::getCorner")
+{
+    REQUIRE(NeighborTables<2>::getCorner(0, 0).i == 3);
+    REQUIRE(NeighborTables<2>::getCorner(0, 1).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(0, 2).i == 2);
+    REQUIRE(NeighborTables<2>::getCorner(0, 3).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(0, 4).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(0, 5).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(0, 6).i == 1);
+    REQUIRE(NeighborTables<2>::getCorner(0, 7).i == -1);
+
+    REQUIRE(NeighborTables<2>::getCorner(1, 0).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(1, 1).i == 2);
+    REQUIRE(NeighborTables<2>::getCorner(1, 2).i == 3);
+    REQUIRE(NeighborTables<2>::getCorner(1, 3).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(1, 4).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(1, 5).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(1, 6).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(1, 7).i == 0);
+
+    REQUIRE(NeighborTables<2>::getCorner(2, 0).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(2, 1).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(2, 2).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(2, 3).i == 1);
+    REQUIRE(NeighborTables<2>::getCorner(2, 4).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(2, 5).i == 0);
+    REQUIRE(NeighborTables<2>::getCorner(2, 6).i == 3);
+    REQUIRE(NeighborTables<2>::getCorner(2, 7).i == -1);
+
+    REQUIRE(NeighborTables<2>::getCorner(3, 0).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(3, 1).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(3, 2).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(3, 3).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(3, 4).i == 0);
+    REQUIRE(NeighborTables<2>::getCorner(3, 5).i == 1);
+    REQUIRE(NeighborTables<2>::getCorner(3, 6).i == -1);
+    REQUIRE(NeighborTables<2>::getCorner(3, 7).i == 2);
 }
 
 TEST_CASE("Neighbors<2>::edgeCheckIndex")

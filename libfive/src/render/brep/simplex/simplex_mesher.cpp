@@ -16,6 +16,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+struct FacePair {
+    unsigned a;
+    unsigned b;
+    Axis::Axis axis;
+};
+
 template <Axis::Axis A>
 void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 {
@@ -51,16 +57,34 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 
     const unsigned corner_simplex_a = SimplexSolver::cornerToSimplex(corner_index_a);
     const unsigned corner_simplex_b = SimplexSolver::cornerToSimplex(corner_index_b);
+    const unsigned edge_simplex = SimplexSolver::simplexUnion(
+            corner_simplex_a, corner_simplex_b);
 
-    const Eigen::Vector3f vert_edge = ts[index]->leaf->verts.row(corner_simplex_a);
-    const Eigen::Vector3f vert_corner_a = ts[index]->leaf->verts.row(corner_simplex_b);
-    const Eigen::Vector3f vert_corner_b = ts[index]->leaf->verts.row(
-            SimplexSolver::simplexUnion(
-                corner_simplex_a, corner_simplex_b));
+    const Eigen::Vector3f vert_corner_a = ts[index]->leaf->verts.row(corner_simplex_a);
+    const Eigen::Vector3f vert_corner_b = ts[index]->leaf->verts.row(corner_simplex_b);
+    const Eigen::Vector3f vert_edge = ts[index]->leaf->verts.row(edge_simplex);
 
-    for (unsigned i=0; i < ts.size(); ++i)
+    std::array<FacePair, 4> face_pairs =
+        {{{0, 1, Q}, {0, 2, R}, {2, 3, Q}, {1, 3, R}}};
+
+    Eigen::Matrix<double, 4, 3> face_simplexes;
+
+    for (unsigned i=0; i < 4; ++i)
     {
-        unsigned simplex_edge_index
+        // Pull trees from the array
+        auto ta = ts[face_pairs[i].a];
+        auto tb = ts[face_pairs[i].b];
+
+        // Index of smaller tree
+        unsigned ti = 0;
+
+        if (ta->leafLevel() == UINT32_MAX && tb->leafLevel() == UINT32_MAX) {
+            continue;
+        } else if (ta->leafLevel() < tb->leafLevel()) {
+            ti = face_pairs[i].a;
+        } else {
+            ti = face_pairs[i].b;
+        }
     }
 
     constexpr std::array<uint8_t, 4> corners = {{Q|R, R, Q, 0}};
