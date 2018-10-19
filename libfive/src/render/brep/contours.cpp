@@ -122,10 +122,14 @@ protected:
 std::unique_ptr<Contours> Contours::render(
         const Tree t, const Region<2>& r,
         double min_feature, double max_err,
+        std::atomic_bool& cancel,
         bool multithread)
 {
-    const unsigned workers = multithread ? 8 : 1;
-    std::atomic_bool cancel(false);
+  auto maxT = std::thread::hardware_concurrency();
+  if (maxT == 0) {
+    maxT = 8;
+  }
+   const unsigned workers = multithread ? maxT : 1;
 
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -138,6 +142,7 @@ std::unique_ptr<Contours> Contours::render(
     auto xtree = DCPool<2>::build(
         es.data(), r, min_feature, max_err,
         workers, cancel);
+    if(cancel == true){return nullptr; }
 
     // Perform marching squares
     auto segs = Dual<2>::walk<DCSegments>(xtree, workers, cancel,
@@ -152,6 +157,9 @@ std::unique_ptr<Contours> Contours::render(
 
     for (auto& s : segs->branes)
     {
+      if (cancel == true) {
+        return nullptr;
+      }
         {   // Check to see whether we can attach to the back of a tail
             auto t = tails.find(s[0]);
             if (t != tails.end())
@@ -183,6 +191,9 @@ std::unique_ptr<Contours> Contours::render(
     std::vector<bool> processed(contours.size(), false);
     for (unsigned i=0; i < contours.size(); ++i)
     {
+      if (cancel == true) {
+        return nullptr;
+      }
         if (processed[i])
         {
             continue;
@@ -193,6 +204,9 @@ std::unique_ptr<Contours> Contours::render(
         unsigned target = i;
         while (true)
         {
+          if (cancel == true) {
+            return nullptr;
+          }
             for (const auto& pt : contours[target])
             {
                 c->contours.back().push_back(segs->verts[pt]);
@@ -216,6 +230,16 @@ std::unique_ptr<Contours> Contours::render(
     }
 
     return c;
+}
+
+std::unique_ptr<Kernel::Contours> Contours::render(const Tree t, 
+                                                   const Region<2>& r, 
+                                                   double min_feature /*= 0.1*/, 
+                                                   double max_err /*= 1e-8*/, 
+                                                   bool multithread /*= true*/)
+{
+  std::atomic_bool cancelled;
+ return render(t,r,min_feature,max_err,cancelled,multithread);
 }
 
 bool Contours::saveSVG(const std::string& filename)
