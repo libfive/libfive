@@ -66,6 +66,13 @@ struct NeighborIndex {
     constexpr uint8_t fixed() const { return ~floating(); }
 
     /*
+     *  Returns a bitfield representing which axes are fixed,
+     *  with extra-dimension axes masked.
+     */
+    template <unsigned N>
+    constexpr uint8_t fixed() const { return fixed() & ((1 << N) - 1); }
+
+    /*
      *  Returns a bitfield representing low vs high on fixed axes
      *  For floating axes, pos & axis == 0, but that's meaningless.
      */

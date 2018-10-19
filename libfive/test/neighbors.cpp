@@ -168,6 +168,46 @@ TEST_CASE("Neighbors<2>::withinTreeIndex")
     REQUIRE(Neighbors<2>::withinTreeIndex(3, 7) == -1);
 }
 
+TEST_CASE("NeighborTables<2>::withinTreeIndex")
+{
+    // These test cases are hand-constructed by drawing them out on paper
+    REQUIRE(NeighborTables<2>::withinTreeIndex(0, 0).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(0, 1).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(0, 2).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(0, 3).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(0, 4).i == 3);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(0, 5).i == 2);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(0, 6).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(0, 7).i == 1);
+
+    REQUIRE(NeighborTables<2>::withinTreeIndex(1, 0).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(1, 1).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(1, 2).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(1, 3).i == 2);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(1, 4).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(1, 5).i == 3);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(1, 6).i == 0);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(1, 7).i == -1);
+
+    REQUIRE(NeighborTables<2>::withinTreeIndex(2, 0).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(2, 1).i == 1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(2, 2).i == 0);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(2, 3).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(2, 4).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(2, 5).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(2, 6).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(2, 7).i == 3);
+
+    REQUIRE(NeighborTables<2>::withinTreeIndex(3, 0).i == 0);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(3, 1).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(3, 2).i == 1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(3, 3).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(3, 4).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(3, 5).i == -1);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(3, 6).i == 2);
+    REQUIRE(NeighborTables<2>::withinTreeIndex(3, 7).i == -1);
+}
+
 TEST_CASE("Neighbors<2>::neighborTargetIndex")
 {
     REQUIRE(Neighbors<2>::neighborTargetIndex(0, 0) == std::make_pair(0,3));

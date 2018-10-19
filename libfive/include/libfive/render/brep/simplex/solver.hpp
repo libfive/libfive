@@ -16,6 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/region.hpp"
 
 namespace Kernel {
+
 namespace SimplexSolver {
 
 constexpr unsigned simplexDimension(unsigned simplex_number)

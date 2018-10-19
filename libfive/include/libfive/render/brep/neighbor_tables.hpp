@@ -39,10 +39,8 @@ struct NeighborTables
 
         // If this is the case, then toggle the bits
         // on the fixed axis and keep the bits on the floating axis,
-            ? ((corner.i ^ neighbor.fixed()) |
+            ? ((corner.i ^ neighbor.fixed<N>()) |
                ( corner.i & neighbor.floating()))
-        // Then mask to the true number of active dimensions
-                & ((1 << N) - 1)
 
         // Otherwise, they're not compatible
             : -1;
@@ -87,7 +85,10 @@ struct NeighborTables
     static std::pair<NeighborIndex, CornerIndex>
     pushIndex(CornerIndex child, NeighborIndex neighbor);
 
-protected:
+////////////////////////////////////////////////////////////////////////////////
+//  FUNCTION BELOW ARE IMPLEMENTATION DETAILS USED FOR pushIndex
+//  They're not private so that we can still unit test them
+
     /*
      *  Given an quad/octree child index, returns the child index of the
      *  given neighbor (if it is within the same quad/octree), or -1 otherwise.
@@ -114,8 +115,14 @@ protected:
      *
      *  This is used when pushing into neighbor arrays.
      */
-    static CornerIndex withinTreeIndex(CornerIndex child,
-                                       NeighborIndex neighbor);
+    static constexpr CornerIndex withinTreeIndex(CornerIndex child,
+                                                 NeighborIndex neighbor)
+    {
+        return ((neighbor.pos() ^ child.i) & neighbor.fixed<N>())
+                    == neighbor.fixed<N>()
+            ? (neighbor.pos() | (neighbor.floating() & child.i))
+            : -1;
+    }
 
     /*
      *  Given an XTree child index, returns a pair of
