@@ -230,6 +230,11 @@ struct NeighborTables
         std::array<std::pair<NeighborIndex, CornerIndex>, ipow(3, N) - 1>,
         ipow(2, N)> pushIndexTable;
 
+    /*  Pre-calculated, expanded version of getCorner. */
+    static std::array<
+        std::array<std::pair<NeighborIndex, CornerIndex>, ipow(2, N) - 1>,
+        ipow(2, N)> cornerTable;
+
     /*  Used as a flag to trigger population of the static arrays */
     static bool buildTables();
     static bool loaded;

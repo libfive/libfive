@@ -80,16 +80,6 @@ TEST_CASE("NeighborTables<2>::getCorner")
     REQUIRE(NeighborTables<2>::getCorner(3, 7).i == 2);
 }
 
-TEST_CASE("Neighbors<2>::edgeCheckIndex")
-{
-    // Just a few spot checks, since we exhaustively test the building blocks
-    // in the test above for cornerCheckIndex.
-    REQUIRE(Neighbors<2>::edgeCheckIndex({0, 2}, 6) == std::make_pair(1, 3));
-    REQUIRE(Neighbors<2>::edgeCheckIndex({2, 0}, 6) == std::make_pair(3, 1));
-    REQUIRE(Neighbors<2>::edgeCheckIndex({0, 3}, 6) == std::make_pair(-1, -1));
-    REQUIRE(Neighbors<2>::edgeCheckIndex({0, 2}, 1) == std::make_pair(-1, -1));
-}
-
 TEST_CASE("NeighborTables<2>::withinTreeIndex")
 {
     // These test cases are hand-constructed by drawing them out on paper
@@ -183,32 +173,3 @@ TEST_CASE("NeighborTables<2>::whichNeighbor")
     REQUIRE(NeighborTables<2>::whichNeighbor(3, 5).i == 5);
     REQUIRE(NeighborTables<2>::whichNeighbor(3, 7).i == 7);
 }
-
-/*
-TEST_CASE("Neighbors<2>::neighborTargetIndex")
-{
-    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 0) == std::make_pair(0,3));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 1) == std::make_pair(2,3));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 2) == std::make_pair(2,2));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 3) == std::make_pair(6,3));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 6) == std::make_pair(6,1));
-
-    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 0) ==2);
-    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 1) ==1);
-    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 2) ==2);
-    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 4) ==7);
-    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 7) == std::make_pair(7,0));
-
-    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 0) == std::make_pair(6,1));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 3) == std::make_pair(3,1));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 4) == std::make_pair(5,1));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 5) == std::make_pair(5,0));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 6) == std::make_pair(6,3));
-
-    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 1) == std::make_pair(7,0));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 3) == std::make_pair(5,0));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 4) == std::make_pair(4,0));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 5) == std::make_pair(5,1));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 7) == std::make_pair(7,2));
-}
-*/

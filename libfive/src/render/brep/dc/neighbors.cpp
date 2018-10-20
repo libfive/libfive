@@ -21,23 +21,6 @@ Neighbors<N>::Neighbors() {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-std::pair<int, int> Neighbors<N>::edgeCheckIndex(
-    std::pair<int, int> edge, uint8_t neighbor)
-{
-    const auto a = NeighborTables<N>::getCorner(edge.first, neighbor);
-    const auto b = NeighborTables<N>::getCorner(edge.second, neighbor);
-
-    if (a.i == -1 || b.i == -1)
-    {
-        return {-1, -1};
-    }
-    else
-    {
-        return {a.i, b.i};
-    }
-}
-
-template <unsigned N>
 Neighbors<N> Neighbors<N>::push(uint8_t child,
         const std::array<std::atomic<XTree<N>*>, 1 << N>&
             children)
@@ -61,17 +44,13 @@ Neighbors<N> Neighbors<N>::push(uint8_t child,
 template <unsigned N>
 Interval::State Neighbors<N>::check(uint8_t corner) const
 {
-    for (unsigned i=0; i < ipow(N, 3) - 1; ++i)
+    for (const auto& t : NeighborTables<N>::cornerTable[corner])
     {
-        if (neighbors[i] != nullptr)
-        {
-            auto index = NeighborTables<N>::getCorner(corner, i);
-            if (index.i != -1)
-            {
-                return neighbors[i]->cornerState(index.i);
-            }
+        if (neighbors[t.first.i] != nullptr) {
+            return neighbors[t.first.i]->cornerState(t.second.i);
         }
     }
+
     return Interval::UNKNOWN;
 }
 
@@ -79,15 +58,35 @@ template <unsigned N>
 std::shared_ptr<IntersectionVec<N>> Neighbors<N>::check(
         uint8_t a, uint8_t b) const
 {
-    for (unsigned i=0; i < ipow(N, 3) - 1; ++i)
+    // This is actually quite beautiful:
+    //
+    // We walk through the possible corner tables for each corner,
+    // looking for a match where both potential corners are on the
+    // same neighbor and that neighbor is present.
+    //
+    // Because the cornerTable arrays are sorted based on neighbor,
+    // we can do this in a single pass through the two tables,
+    // using their iterators.
+    //
+    // This is admittedly code that took maximum cleverness to write,
+    // so think carefully about debugging it...
+    auto itr_a = NeighborTables<N>::cornerTable[a].begin();
+    auto itr_b = NeighborTables<N>::cornerTable[b].begin();
+
+    while (itr_a != NeighborTables<N>::cornerTable[a].end() &&
+           itr_b != NeighborTables<N>::cornerTable[b].end())
     {
-        if (neighbors[i] != nullptr)
-        {
-            auto index = edgeCheckIndex({a, b}, i);
-            if (index.first != -1)
-            {
-                return neighbors[i]->intersection(index.first, index.second);
-            }
+        if (itr_a->first.i < itr_b->first.i) {
+            itr_a++;
+        } else if (itr_b->first.i < itr_a->first.i) {
+            itr_b++;
+        }
+        else if (neighbors[itr_a->first.i] != nullptr) {
+            return neighbors[itr_a->first.i]->intersection(
+                    itr_a->second.i, itr_b->second.i);
+        } else {
+            itr_a++;
+            itr_b++;
         }
     }
     return nullptr;

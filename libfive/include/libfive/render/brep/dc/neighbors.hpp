@@ -40,14 +40,6 @@ public:
     Neighbors();
 
     /*
-     *  Returns the edge (defined as a pair of corner indices) of a particular
-     *  neighbor that matches the given edge.  If no such edge exists, returns
-     *  {-1, -1}
-     */
-    static std::pair<int, int> edgeCheckIndex(
-           std::pair<int, int> edge, uint8_t neighbor);
-
-    /*
      *  Looks up the given corner to see if it has already been calculated
      *  by any of the neighbors, returning FILLED / EMPTY if that is the case
      *  and UNKNOWN otherwise.
