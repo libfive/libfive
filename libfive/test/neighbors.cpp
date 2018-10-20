@@ -234,3 +234,59 @@ TEST_CASE("Neighbors<2>::neighborTargetIndex")
     REQUIRE(Neighbors<2>::neighborTargetIndex(3, 5) == std::make_pair(5,1));
     REQUIRE(Neighbors<2>::neighborTargetIndex(3, 7) == std::make_pair(7,2));
 }
+
+TEST_CASE("NeighborTables<2>::whichNeighbor")
+{
+    REQUIRE(NeighborTables<2>::whichNeighbor(0, 0).i == 0);
+    REQUIRE(NeighborTables<2>::whichNeighbor(0, 1).i == 2);
+    REQUIRE(NeighborTables<2>::whichNeighbor(0, 2).i == 2);
+    REQUIRE(NeighborTables<2>::whichNeighbor(0, 3).i == 6);
+    REQUIRE(NeighborTables<2>::whichNeighbor(0, 6).i == 6);
+
+    REQUIRE(NeighborTables<2>::whichNeighbor(1, 0).i == 2);
+    REQUIRE(NeighborTables<2>::whichNeighbor(1, 1).i == 1);
+    REQUIRE(NeighborTables<2>::whichNeighbor(1, 2).i == 2);
+    REQUIRE(NeighborTables<2>::whichNeighbor(1, 4).i == 7);
+    REQUIRE(NeighborTables<2>::whichNeighbor(1, 7).i == 7);
+
+    REQUIRE(NeighborTables<2>::whichNeighbor(2, 0).i == 6);
+    REQUIRE(NeighborTables<2>::whichNeighbor(2, 3).i == 3);
+    REQUIRE(NeighborTables<2>::whichNeighbor(2, 4).i ==5);
+    REQUIRE(NeighborTables<2>::whichNeighbor(2, 5).i == 5);
+    REQUIRE(NeighborTables<2>::whichNeighbor(2, 6).i == 6);
+
+    REQUIRE(NeighborTables<2>::whichNeighbor(3, 1).i == 7);
+    REQUIRE(NeighborTables<2>::whichNeighbor(3, 3).i == 5);
+    REQUIRE(NeighborTables<2>::whichNeighbor(3, 4).i == 4);
+    REQUIRE(NeighborTables<2>::whichNeighbor(3, 5).i == 5);
+    REQUIRE(NeighborTables<2>::whichNeighbor(3, 7).i == 7);
+}
+
+/*
+TEST_CASE("Neighbors<2>::neighborTargetIndex")
+{
+    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 0) == std::make_pair(0,3));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 1) == std::make_pair(2,3));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 2) == std::make_pair(2,2));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 3) == std::make_pair(6,3));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 6) == std::make_pair(6,1));
+
+    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 0) ==2);
+    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 1) ==1);
+    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 2) ==2);
+    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 4) ==7);
+    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 7) == std::make_pair(7,0));
+
+    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 0) == std::make_pair(6,1));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 3) == std::make_pair(3,1));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 4) == std::make_pair(5,1));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 5) == std::make_pair(5,0));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 6) == std::make_pair(6,3));
+
+    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 1) == std::make_pair(7,0));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 3) == std::make_pair(5,0));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 4) == std::make_pair(4,0));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 5) == std::make_pair(5,1));
+    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 7) == std::make_pair(7,2));
+}
+*/

@@ -38,7 +38,17 @@ struct NeighborIndex {
             : 0;
     }
 
+    // Defined below, after struct CornerIndex is defined
     constexpr bool contains(const CornerIndex& c) const;
+
+    constexpr bool contains(const NeighborIndex& n) const
+    {
+        return i
+            ?   ((i % 3) == 2 ||
+                 (i % 3) == (n.i % 3))
+                && NeighborIndex(i / 3).contains(NeighborIndex(n.i / 3))
+            : n.i == 0;
+    }
 
     NeighborIndex operator|(const NeighborIndex& other) const {
         return NeighborIndex(
@@ -80,6 +90,16 @@ struct NeighborIndex {
         return i
             ? (NeighborIndex(i / 3).pos() << 1) | ((i % 3) == 1)
             : 0;
+    }
+
+    /*
+     *  Builds a NeighborIndex from pos and fixed (described above)
+     */
+    constexpr static NeighborIndex fromPosAndFloating(uint8_t pos, uint8_t floating) {
+        return NeighborIndex(floating
+            ? (floating ? 2 : (pos & 1)) +
+                fromPosAndFloating(pos >> 1, floating >> 1).i * 3
+            : 0);
     }
     int i;
 };

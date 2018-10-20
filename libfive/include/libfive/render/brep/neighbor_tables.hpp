@@ -1,3 +1,4 @@
+#include <cstdio>
 /*
 libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2018  Matt Keeter
@@ -18,7 +19,7 @@ template <unsigned N>
 struct NeighborTables
 {
     /*
-     *  Returns the corner index (within a particular neighbor) that maches
+     *  Returns the corner index (within a particular neighbor) that matches
      *  the provided corner index.
      *
      *  For example, if we call it with neighbor = 6 and corner = 0,
@@ -50,7 +51,20 @@ struct NeighborTables
      *  Does the same operation as getCorner, but with a subcell
      */
     static NeighborIndex getNeighbor(
-            NeighborIndex subcell, NeighborIndex neighbor);
+            NeighborIndex subcell, NeighborIndex neighbor)
+    {
+        // The subcell must be a child of the neighbor
+        // (e.g. if this is a face-adjacent neighbor, then the subcell must
+        //  be that face, or one of its edges or corners).
+        return neighbor.contains(subcell)
+
+            // If that is the case, then toggle the subcell's fixed axes
+            ? NeighborIndex::fromPosAndFloating(
+                    subcell.pos() ^ subcell.fixed<N>(), subcell.floating())
+
+        // Otherwise, they're not compatible
+            : -1;
+    }
 
     /*
      *  When pushing into a particular child, this function returns
@@ -76,14 +90,19 @@ struct NeighborTables
      *      -------------
      *
      *  pushIndex(0b10, 0t20) -> {0t20, 3}
-     *      ------------|------------
+     *      - - - - - - |------------
      *      |  2  |  3  < 10  |     |
-     *      -----t20----|------------
+     *      - - -t20 - -|------------
      *      |  0  |  1  |     |     |
-     *      ------------|------------
+     *       - - - - - -|------------
      */
-    static std::pair<NeighborIndex, CornerIndex>
-    pushIndex(CornerIndex child, NeighborIndex neighbor);
+    static constexpr std::pair<NeighborIndex, CornerIndex>
+    pushIndex(CornerIndex c, NeighborIndex n)
+    {
+        return (withinTreeIndex(c, n).i != -1)
+            ?  std::make_pair(NeighborIndex(-1), withinTreeIndex(c, n))
+            :  neighborTargetIndex(c, n);
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 //  FUNCTION BELOW ARE IMPLEMENTATION DETAILS USED FOR pushIndex
@@ -125,24 +144,85 @@ struct NeighborTables
     }
 
     /*
-     *  Given an XTree child index, returns a pair of
-     *      [neighbor index, XTree child index]
-     *  for the given neighbor (if it is within the same XTree)
+     *  Given an quad/octree child index, returns a child index
+     *  for the given neighbor (if it is within the same quad/octree)
      *
      *  For example, in 2D:
      *
-     *  ------------------------
-     *  |     :    |     |     |
-     *  | - - - -  -------------
-     *  |     : !  |  0  |     |
-     *  ------------------------
+     *  Calling withinTreeIndex(0b00, 0t20) should return (0t20, 0b01)
+     *  since that's the child index that will form the new neighbor.
+     *  ------------|------------
+     *  |     :     |     |     |
+     *  | - - - -  t20-----------
+     *  |     : b01 < b00 |     |
+     *  ------------|------------
      *
-     *  Calling withinTreeIndex(0b00, 0t20) should return {0t20, 0b01}
-     *  since that's the neighbor index and child index that will form
-     *  the new neighbor.
+     *  Calling withinTreeIndex(0b00, 0t10) should return (0t20, 0b11)
+     *  since that's the child index that will form the new neighbor.
+     *  ------------|------------
+     *  |     : b11 |     |     |
+     *  | - - - -  -X------------
+     *  |     :     | b00 |     |
+     *  ------------|------------
+     *
+     *  If the corner isn't present on the neighbor, returns nonsense
      */
-    static std::pair<NeighborIndex, CornerIndex>
-    neighborTargetIndex(CornerIndex child, NeighborIndex neighbor);
+    static constexpr std::pair<NeighborIndex, CornerIndex>
+    neighborTargetIndex(CornerIndex child, NeighborIndex neighbor)
+    {
+        return std::make_pair(
+            whichNeighbor(child, neighbor),
+            (child.i ^ neighbor.fixed()) | (child.i & neighbor.floating()));
+    }
+
+    /*
+     *  For a given quad/octree quadrant and neighbor index, return the
+     *  index of the neighbor which will end up being our new neighbor
+     *  when we push.
+     *
+     *  This is only valid if the pair has a meaningful solution.
+     *
+     *  Here are the examples I worked through to derive this rule:
+     *
+     *  0b00 + 0t00 -> 0t00
+     *  0b00 + 0t01 -> 0t02
+     *  0b00 + 0t02 -> 0t02
+     *  0b00 + 0t10 -> 0t20
+     *  0b00 + 0b11 -> invalid (0t22)
+     *  0b00 + 0t20 -> 0t20
+     *  0b00 + 0b21 -> invalid (0t22)
+     *  0b00 + 0b22 -> invalid (0t22)
+     *
+     *  0b01 + 0t00 -> 0t02
+     *  0b01 + 0t01 -> 0t01
+     *  0b01 + 0t02 -> 0t02
+     *  0b01 + 0t10 -> invalid (0t22)
+     *  0b01 + 0t11 -> 0t21
+     *  0b01 + 0t12 -> invalid (0t22)
+     *  0b01 + 0t20 -> invalid (0t22)
+     *  0b01 + 0t21 -> 0t21
+     *  0b01 + 0t22 -> invalid (0t22)
+     *
+     *  Digit rule:
+     *     t0   1   2
+     *  b0  0   2   2
+     *   1  2   1   2
+     *
+     *  Don't worry about it.
+     */
+    static NeighborIndex whichNeighbor(CornerIndex c, NeighborIndex n)
+    {
+        printf("c: %i, n: %i\n", c.i, n.i);
+#define ci (c.i & 1)
+#define ni (n.i % 3)
+        return NeighborIndex(
+            (c.i || n.i)
+            ? (ci == ni ? ci : 2) +
+              3 * whichNeighbor(c.i >> 1, n.i / 3).i
+            : 0);
+#undef ci
+#undef ii
+    }
 };
 
 }   // namespace Kernel
