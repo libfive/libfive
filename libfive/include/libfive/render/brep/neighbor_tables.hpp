@@ -1,4 +1,3 @@
-#include <cstdio>
 /*
 libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2018  Matt Keeter
@@ -9,9 +8,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
+#include <array>
 #include <utility>
 
 #include "libfive/render/brep/types.hpp"
+#include "libfive/render/brep/ipow.hpp"
 
 namespace Kernel {
 
@@ -100,8 +101,8 @@ struct NeighborTables
     pushIndex(CornerIndex c, NeighborIndex n)
     {
         return (withinTreeIndex(c, n).i != -1)
-            ?  std::make_pair(NeighborIndex(-1), withinTreeIndex(c, n))
-            :  neighborTargetIndex(c, n);
+            ? std::make_pair(NeighborIndex(-1), withinTreeIndex(c, n))
+            : neighborTargetIndex(c, n);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -222,6 +223,20 @@ struct NeighborTables
 #undef ci
 #undef ii
     }
+
+    /*  Pre-calculated version of pushIndex(c, n)
+     *  (because compilers don't quite fold the constexpr far enough) */
+    static std::array<
+        std::array<std::pair<NeighborIndex, CornerIndex>, ipow(3, N) - 1>,
+        ipow(2, N)> pushIndexTable;
+
+    /*  Used as a flag to trigger population of the static arrays */
+    static bool buildTables();
+    static bool loaded;
 };
+
+//  We explicitly instantiate the NeighborTables classes in neighbors.cpp
+extern template struct NeighborTables<2>;
+extern template struct NeighborTables<3>;
 
 }   // namespace Kernel

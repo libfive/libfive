@@ -30,6 +30,7 @@ struct CornerIndex; // Forward declaration
  *    0---2---1      00---02---01
  */
 struct NeighborIndex {
+    constexpr NeighborIndex() : i(0) {}
     constexpr NeighborIndex(unsigned i) : i(i) {}
 
     constexpr unsigned dimension() const {
@@ -120,6 +121,7 @@ struct NeighborIndex {
  *    0-------1      00-------01
  */
 struct CornerIndex {
+    constexpr CornerIndex() : i(0) {}
     constexpr CornerIndex(unsigned i) : i(i) {}
 
     /*  Unpacks from a corner index to a neighbor index */

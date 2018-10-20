@@ -28,6 +28,7 @@ add_library(five SHARED
     render/brep/contours.cpp
     render/brep/progress.cpp
     render/brep/mesh.cpp
+    render/brep/neighbor_tables.cpp
     render/brep/dc/intersection_aligner.cpp
     render/brep/dc/marching.cpp
     render/brep/dc/dc_mesher.cpp

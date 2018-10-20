@@ -45,18 +45,12 @@ Neighbors<N> Neighbors<N>::push(uint8_t child,
     Neighbors out;
     for (unsigned i=0; i < ipow(3, N) - 1; ++i)
     {
-        // If the neighbor is destined to come from within the array
-        // of children, then pick it out in this conditional.
-        auto within = NeighborTables<N>::withinTreeIndex(child, i);
-        if (within.i != -1) {
-            out.neighbors[i] = children[within.i].load();
-        } else {
-            auto target = NeighborTables<N>::neighborTargetIndex(child, i);
-            if (neighbors[target.first.i])
-            {
-                out.neighbors[i] = neighbors[target.first.i]->
-                    children[target.second.i].load();
-            }
+        const auto q = NeighborTables<N>::pushIndexTable[child][i];
+        if (q.first.i == -1) {
+            out.neighbors[i] = children[q.second.i].load();
+        } else if (neighbors[q.first.i]) {
+            out.neighbors[i] = neighbors[q.first.i]->
+                children[q.second.i].load();
         }
     }
     return out;
