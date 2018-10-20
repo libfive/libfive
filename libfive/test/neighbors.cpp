@@ -176,5 +176,57 @@ TEST_CASE("NeighborTables<2>::whichNeighbor")
 
 TEST_CASE("NeighborTables<2>::getNeighbor")
 {
+    /*  In all of the ASCII art, the target cell is marked with an X,
+     *  and all other values are neighbor + subspace indices (in ternary)
+     *  relative to that marked cell.
+     *
+     *      -------------
+     *      |  6  |  X  |
+     *      ------0------
+     *      |  0  |  2  |
+     *      -------------  */
     REQUIRE(NeighborTables<2>::getNeighbor(0, 0).i == 4);
+    REQUIRE(NeighborTables<2>::getNeighbor(0, 2).i == 3);
+    REQUIRE(NeighborTables<2>::getNeighbor(0, 6).i == 1);
+    for (auto i: {1,3,4,5,7}) {
+        REQUIRE(NeighborTables<2>::getNeighbor(0, i).i == -1);
+    }
+
+    /*      -------------
+     *      |  X  |  7  |
+     *      ------1------
+     *      |  2  |  1  |
+     *      -------------  */
+    REQUIRE(NeighborTables<2>::getNeighbor(1, 2).i == 4);
+    REQUIRE(NeighborTables<2>::getNeighbor(1, 1).i == 3);
+    REQUIRE(NeighborTables<2>::getNeighbor(1, 7).i == 0);
+    for (auto i: {0,3,4,5,6}) {
+        REQUIRE(NeighborTables<2>::getNeighbor(1, i).i == -1);
+    }
+
+    /*      -------------
+     *      |     |  X  |
+     *      ---------2---
+     *      |     |  2  |
+     *      -------------  */
+    REQUIRE(NeighborTables<2>::getNeighbor(2, 2).i == 5);
+    for (auto i: {0,1,3,4,5,6,7}) {
+        REQUIRE(NeighborTables<2>::getNeighbor(2, i).i == -1);
+    }
+
+
+    /*      -------------
+     *      |     |  5  |
+     *      ---------5---
+     *      |     |  X  |
+     *      -------------  */
+    REQUIRE(NeighborTables<2>::getNeighbor(5, 5).i == 2);
+    for (auto i: {0,1,2,3,4,6,7}) {
+        REQUIRE(NeighborTables<2>::getNeighbor(5, i).i == -1);
+    }
+}
+
+TEST_CASE("NeighborTables<3>::getNeighbor")
+{
+    REQUIRE(NeighborTables<3>::getNeighbor(0, 0).i == 13);
 }

@@ -62,7 +62,7 @@ struct NeighborTables
 
             // If that is the case, then toggle the subcell's fixed axes
             ? NeighborIndex::fromPosAndFloating(
-                    ((1 << N) - 1) & (subcell.pos() ^ subcell.fixed<N>()),
+                    ((1 << N) - 1) & (subcell.pos() ^ neighbor.fixed<N>()),
                     subcell.floating())
 
             // Otherwise, they're not compatible
