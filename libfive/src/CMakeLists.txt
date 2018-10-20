@@ -32,7 +32,7 @@ add_library(five SHARED
     render/brep/dc/intersection_aligner.cpp
     render/brep/dc/marching.cpp
     render/brep/dc/dc_mesher.cpp
-    render/brep/dc/neighbors.cpp
+    render/brep/dc/dc_neighbors.cpp
     render/brep/dc/xtree2.cpp
     render/brep/dc/xtree3.cpp
     render/brep/dc/xtree_pool2.cpp

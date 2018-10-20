@@ -27,7 +27,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/dc/intersection.hpp"
 #include "libfive/render/brep/dc/marching.hpp"
-#include "libfive/render/brep/dc/neighbors.hpp"
+#include "libfive/render/brep/dc/dc_neighbors.hpp"
 
 namespace Kernel {
 
@@ -127,7 +127,7 @@ public:
      *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
-    void evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
+    void evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
                   const Region<N>& region, std::shared_ptr<Tape> tape,
                   ObjectPool<Leaf>& spare_leafs);
 

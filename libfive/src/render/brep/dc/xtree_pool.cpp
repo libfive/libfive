@@ -31,14 +31,14 @@ struct Task
     Task() : target(nullptr)
     { /* Nothing to do here */ }
 
-    Task(XTree<N>* t, std::shared_ptr<Tape> p, Region<N> r, Neighbors<N> n)
+    Task(XTree<N>* t, std::shared_ptr<Tape> p, Region<N> r, DCNeighbors<N> n)
         : target(t), tape(p), region(r), parent_neighbors(n)
     { /* Nothing to do here */ }
 
     XTree<N>* target;
     std::shared_ptr<Tape> tape;
     Region<N> region;
-    Neighbors<N> parent_neighbors;
+    DCNeighbors<N> parent_neighbors;
 };
 
 template <unsigned N>
@@ -91,7 +91,7 @@ static void run(
 
         // Find our local neighbors.  We do this at the last minute to
         // give other threads the chance to populate more pointers.
-        Neighbors<N> neighbors;
+        DCNeighbors<N> neighbors;
         if (t->parent)
         {
             neighbors = task.parent_neighbors.push(
@@ -224,7 +224,7 @@ Root<XTree<N>, typename XTree<N>::Leaf> XTreePool<N>::build(
     std::atomic_bool done(false);
 
     LockFreeStack<N> tasks(workers);
-    tasks.push(Task<N>(root, eval->deck->tape, region, Neighbors<N>()));
+    tasks.push(Task<N>(root, eval->deck->tape, region, DCNeighbors<N>()));
 
     std::vector<std::future<void>> futures;
     futures.resize(workers);

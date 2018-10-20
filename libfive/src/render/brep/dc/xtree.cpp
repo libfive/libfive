@@ -126,7 +126,7 @@ Tape::Handle XTree<N>::evalInterval(
 }
 
 template <unsigned N>
-void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
+void XTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
                         const Region<N>& region, Tape::Handle tape,
                         ObjectPool<Leaf>& spare_leafs)
 {
