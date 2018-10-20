@@ -21,6 +21,12 @@ std::array<
     std::array<std::pair<NeighborIndex, CornerIndex>, ipow(2, N) - 1>,
     ipow(2, N)> NeighborTables<N>::cornerTable;
 
+template <unsigned N>
+std::array<
+    boost::container::static_vector<std::pair<NeighborIndex, NeighborIndex>,
+                                    ipow(2, N)>,
+    ipow(3, N)> NeighborTables<N>::neighborTable;
+
 template <unsigned N> bool NeighborTables<N>::loaded =
     NeighborTables<N>::buildTables();
 
@@ -44,6 +50,17 @@ bool NeighborTables<N>::buildTables()
             }
         }
         assert(i == ipow(2, N) - 1);
+    }
+
+    for (unsigned s=0; s < ipow(3, N); ++s) {
+        for (unsigned n = 0; n < ipow(3, N) - 1; ++n) {
+            auto p = getNeighbor(s, n);
+            if (p.i != -1) {
+                neighborTable[s].push_back(std::make_pair(NeighborIndex(n), p));
+            }
+        }
+        assert(neighborTable[s].size() ==
+               ipow(2, N - NeighborIndex(s).dimension()) - 1);
     }
     return true;
 }

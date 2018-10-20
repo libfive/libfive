@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <array>
 #include <utility>
 
+#include <boost/container/static_vector.hpp>
 #include "libfive/render/brep/types.hpp"
 #include "libfive/render/brep/ipow.hpp"
 
@@ -51,7 +52,7 @@ struct NeighborTables
     /*
      *  Does the same operation as getCorner, but with a subcell
      */
-    static NeighborIndex getNeighbor(
+    static constexpr NeighborIndex getNeighbor(
             NeighborIndex subcell, NeighborIndex neighbor)
     {
         // The subcell must be a child of the neighbor
@@ -61,9 +62,10 @@ struct NeighborTables
 
             // If that is the case, then toggle the subcell's fixed axes
             ? NeighborIndex::fromPosAndFloating(
-                    subcell.pos() ^ subcell.fixed<N>(), subcell.floating())
+                    ((1 << N) - 1) & (subcell.pos() ^ subcell.fixed<N>()),
+                    subcell.floating())
 
-        // Otherwise, they're not compatible
+            // Otherwise, they're not compatible
             : -1;
     }
 
@@ -225,15 +227,33 @@ struct NeighborTables
     }
 
     /*  Pre-calculated version of pushIndex(c, n)
-     *  (because compilers don't quite fold the constexpr far enough) */
+     *  (because compilers don't quite fold the constexpr far enough)
+     *
+     *  Index it with a particular quad/octant index, and it will return a
+     *  list of neighbors + quad/octant indices that form the new neighbors
+     *  array.
+     */
     static std::array<
         std::array<std::pair<NeighborIndex, CornerIndex>, ipow(3, N) - 1>,
         ipow(2, N)> pushIndexTable;
 
-    /*  Pre-calculated, expanded version of getCorner. */
+    /*  Pre-calculated, expanded version of getCorner.
+     *
+     *  Index it with a particular corner, and it will return a list of
+     *  neighbor + corner indices that represent that same corner.
+     */
     static std::array<
         std::array<std::pair<NeighborIndex, CornerIndex>, ipow(2, N) - 1>,
         ipow(2, N)> cornerTable;
+
+    /*  Pre-calculated, expanded version of getCorner.
+     *
+     *  Index it with a particular subspace, and it will return a list of
+     *  neighbor + subspace (neighbor) indices that represent that subspace. */
+    static std::array<
+        boost::container::static_vector<std::pair<NeighborIndex, NeighborIndex>,
+                                        ipow(2, N)>,
+        ipow(3, N)> neighborTable;
 
     /*  Used as a flag to trigger population of the static arrays */
     static bool buildTables();
