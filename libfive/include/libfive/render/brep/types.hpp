@@ -97,8 +97,8 @@ struct NeighborIndex {
      *  Builds a NeighborIndex from pos and fixed (described above)
      */
     constexpr static NeighborIndex fromPosAndFloating(uint8_t pos, uint8_t floating) {
-        return NeighborIndex(floating
-            ? (floating ? 2 : (pos & 1)) +
+        return NeighborIndex((floating || pos)
+            ? ((floating & 1) ? 2 : (pos & 1)) +
                 fromPosAndFloating(pos >> 1, floating >> 1).i * 3
             : 0);
     }

@@ -107,6 +107,29 @@ TEST_CASE("simplexUnion")
     REQUIRE(simplexUnion(9, 0) == 18);
 }
 
+TEST_CASE("NeighborIndex::operator|")
+{
+    REQUIRE((NeighborIndex(0) | NeighborIndex(1)).i == 2);
+    REQUIRE((NeighborIndex(0)| NeighborIndex(2)).i == 2);
+    REQUIRE((NeighborIndex(0)| NeighborIndex(4)).i == 8);
+    REQUIRE((NeighborIndex(2)| NeighborIndex(4)).i == 8);
+    REQUIRE((NeighborIndex(1)| NeighborIndex(4)).i == 7);
+    REQUIRE((NeighborIndex(9)| NeighborIndex(0)).i == 18);
+}
+
+
+TEST_CASE("NeighborIndex::fromPosAndFloating")
+{
+    for (int i=0; i < pow(3, 3); ++i)
+    {
+        NeighborIndex n(i);
+        CAPTURE(n.pos())
+        CAPTURE(n.floating())
+        auto m = NeighborIndex::fromPosAndFloating(n.pos(), n.floating());
+        REQUIRE(i == m.i);
+    }
+}
+
 TEST_CASE("SimplexPool")
 {
     auto c = circle(1);

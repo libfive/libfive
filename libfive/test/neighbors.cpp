@@ -173,3 +173,8 @@ TEST_CASE("NeighborTables<2>::whichNeighbor")
     REQUIRE(NeighborTables<2>::whichNeighbor(3, 5).i == 5);
     REQUIRE(NeighborTables<2>::whichNeighbor(3, 7).i == 7);
 }
+
+TEST_CASE("NeighborTables<2>::getNeighbor")
+{
+    REQUIRE(NeighborTables<2>::getNeighbor(0, 0).i == 4);
+}
