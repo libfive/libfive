@@ -40,44 +40,6 @@ XTree cell corners are as follows (based on counting in binary):
   |       |
   0-------1
 */
-TEST_CASE("Neighbors<2>::cornerCheckIndex")
-{
-    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 0) == 3);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 1) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 2) == 2);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 3) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 4) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 5) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 6) == 1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(0, 7) == -1);
-
-    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 0) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 1) == 2);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 2) == 3);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 3) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 4) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 5) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 6) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(1, 7) == 0);
-
-    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 0) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 1) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 2) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 3) == 1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 4) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 5) == 0);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 6) == 3);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(2, 7) == -1);
-
-    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 0) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 1) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 2) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 3) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 4) == 0);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 5) == 1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 6) == -1);
-    REQUIRE(Neighbors<2>::cornerCheckIndex(3, 7) == 2);
-}
 
 TEST_CASE("NeighborTables<2>::getCorner")
 {
@@ -128,46 +90,6 @@ TEST_CASE("Neighbors<2>::edgeCheckIndex")
     REQUIRE(Neighbors<2>::edgeCheckIndex({0, 2}, 1) == std::make_pair(-1, -1));
 }
 
-TEST_CASE("Neighbors<2>::withinTreeIndex")
-{
-    // These test cases are hand-constructed by drawing them out on paper
-    REQUIRE(Neighbors<2>::withinTreeIndex(0, 0) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(0, 1) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(0, 2) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(0, 3) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(0, 4) == 3);
-    REQUIRE(Neighbors<2>::withinTreeIndex(0, 5) == 2);
-    REQUIRE(Neighbors<2>::withinTreeIndex(0, 6) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(0, 7) == 1);
-
-    REQUIRE(Neighbors<2>::withinTreeIndex(1, 0) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(1, 1) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(1, 2) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(1, 3) == 2);
-    REQUIRE(Neighbors<2>::withinTreeIndex(1, 4) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(1, 5) == 3);
-    REQUIRE(Neighbors<2>::withinTreeIndex(1, 6) == 0);
-    REQUIRE(Neighbors<2>::withinTreeIndex(1, 7) == -1);
-
-    REQUIRE(Neighbors<2>::withinTreeIndex(2, 0) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(2, 1) == 1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(2, 2) == 0);
-    REQUIRE(Neighbors<2>::withinTreeIndex(2, 3) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(2, 4) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(2, 5) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(2, 6) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(2, 7) == 3);
-
-    REQUIRE(Neighbors<2>::withinTreeIndex(3, 0) == 0);
-    REQUIRE(Neighbors<2>::withinTreeIndex(3, 1) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(3, 2) == 1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(3, 3) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(3, 4) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(3, 5) == -1);
-    REQUIRE(Neighbors<2>::withinTreeIndex(3, 6) == 2);
-    REQUIRE(Neighbors<2>::withinTreeIndex(3, 7) == -1);
-}
-
 TEST_CASE("NeighborTables<2>::withinTreeIndex")
 {
     // These test cases are hand-constructed by drawing them out on paper
@@ -208,31 +130,31 @@ TEST_CASE("NeighborTables<2>::withinTreeIndex")
     REQUIRE(NeighborTables<2>::withinTreeIndex(3, 7).i == -1);
 }
 
-TEST_CASE("Neighbors<2>::neighborTargetIndex")
+TEST_CASE("NeighborTables<2>::neighborTargetIndex")
 {
-    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 0) == std::make_pair(0,3));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 1) == std::make_pair(2,3));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 2) == std::make_pair(2,2));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 3) == std::make_pair(6,3));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(0, 6) == std::make_pair(6,1));
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(0, 0).second.i == 3);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(0, 1).second.i == 3);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(0, 2).second.i == 2);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(0, 3).second.i == 3);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(0, 6).second.i == 1);
 
-    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 0) == std::make_pair(2,2));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 1) == std::make_pair(1,2));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 2) == std::make_pair(2,3));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 4) == std::make_pair(7,2));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(1, 7) == std::make_pair(7,0));
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(1, 0).second.i == 2);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(1, 1).second.i == 2);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(1, 2).second.i == 3);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(1, 4).second.i == 2);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(1, 7).second.i == 0);
 
-    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 0) == std::make_pair(6,1));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 3) == std::make_pair(3,1));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 4) == std::make_pair(5,1));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 5) == std::make_pair(5,0));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(2, 6) == std::make_pair(6,3));
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(2, 0).second.i == 1);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(2, 3).second.i == 1);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(2, 4).second.i == 1);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(2, 5).second.i == 0);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(2, 6).second.i == 3);
 
-    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 1) == std::make_pair(7,0));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 3) == std::make_pair(5,0));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 4) == std::make_pair(4,0));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 5) == std::make_pair(5,1));
-    REQUIRE(Neighbors<2>::neighborTargetIndex(3, 7) == std::make_pair(7,2));
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(3, 1).second.i == 0);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(3, 3).second.i == 0);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(3, 4).second.i == 0);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(3, 5).second.i == 1);
+    REQUIRE(NeighborTables<2>::neighborTargetIndex(3, 7).second.i == 2);
 }
 
 TEST_CASE("NeighborTables<2>::whichNeighbor")

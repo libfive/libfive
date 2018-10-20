@@ -40,12 +40,6 @@ public:
     Neighbors();
 
     /*
-     *  Returns the XTree corner index that matches the given corner index
-     *  in the given neighbor, or -1 if no such match is possible.
-     */
-    static int cornerCheckIndex(uint8_t corner, uint8_t neighbor);
-
-    /*
      *  Returns the edge (defined as a pair of corner indices) of a particular
      *  neighbor that matches the given edge.  If no such edge exists, returns
      *  {-1, -1}
@@ -68,45 +62,6 @@ public:
     std::shared_ptr<IntersectionVec<N>> check(uint8_t a, uint8_t b) const;
 
     /*
-     *  Given an XTree child index, returns the XTree child index of the
-     *  given neighbor (if it is within the same XTree), or -1 otherwise.
-     *
-     *  For example, in 2D:
-     *
-     *  -------------
-     *  |     |     |
-     *  -------------
-     *  |  0  |     |
-     *  -------------
-     *
-     *  Calling withinTreeIndex(0b00, 0t11) should return 0b11,
-     *  since that's the XTree child index that contains the neighbor
-     *  0t11 (i.e. 11 in ternary).
-     */
-    static int withinTreeIndex(uint8_t child, uint8_t neighbor);
-
-    /*
-     *  Given an XTree child index, returns a pair of
-     *      [neighbor index, XTree child index]
-     *  for the given neighbor (if it is within the same XTree)
-     *
-     *  For example, in 2D:
-     *
-     *  ------------------------
-     *  |     :    |     |     |
-     *  | - - - -  -------------
-     *  |     : !  |  0  |     |
-     *  ------------------------
-     *
-     *  Calling withinTreeIndex(0b00, 0t20) should return {0t20, 0b01}
-     *  since that's the XTree child index that contains the neighbor
-     *  0t11 (i.e. 11 in ternary).
-     */
-    static std::pair<int, int> neighborTargetIndex(uint8_t child,
-                                                   uint8_t neighbor);
-
-
-    /*
      *  Returns the neighbors of a particular quad/octree child,
      *  given the child's index and the array of other children.
      */
@@ -115,34 +70,7 @@ public:
                 children);
 
 protected:
-    /*
-     *  Populates fixed, floating, and remap arrays; returns true.
-     */
-    static bool populatePositions();
-
-    static constexpr uint8_t invert(uint8_t in) {
-        return (~in) & mask();
-    }
-    static constexpr uint8_t mask() {
-        return (1 << N) - 1;
-    }
-
-    /*  bitfield representing direction for non-floating axes
-     *  floating axes have their relevant bit set to 0, but you
-     *  need to use the floating field to decode */
-    static std::array<uint8_t, ipow(3, N) - 1> fixed;
-
-    /*  bitfield representing which axes are floating  */
-    static std::array<uint8_t, ipow(3, N) - 1> floating;
-
-    /*  remap[(fixed << N) | floating] returns the index into
-     *  the fixed/floating arrays with the given bitfields.  */
-    static std::array<uint8_t, 1 << (2 * N)> remap;
-
     std::array<const XTree<N>*, ipow(3, N) - 1> neighbors;
-
-    /*  Used as a flag to trigger population of the static arrays */
-    static bool loaded;
 };
 
 //  We explicitly instantiate the Neighbors classes in neighbors.cpp

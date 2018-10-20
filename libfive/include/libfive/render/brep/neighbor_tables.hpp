@@ -172,7 +172,7 @@ struct NeighborTables
     {
         return std::make_pair(
             whichNeighbor(child, neighbor),
-            (child.i ^ neighbor.fixed()) | (child.i & neighbor.floating()));
+            ((1 << N) - 1) & ((child.i ^ neighbor.fixed()) | (child.i & neighbor.floating())));
     }
 
     /*
@@ -210,9 +210,8 @@ struct NeighborTables
      *
      *  Don't worry about it.
      */
-    static NeighborIndex whichNeighbor(CornerIndex c, NeighborIndex n)
+    static constexpr NeighborIndex whichNeighbor(CornerIndex c, NeighborIndex n)
     {
-        printf("c: %i, n: %i\n", c.i, n.i);
 #define ci (c.i & 1)
 #define ni (n.i % 3)
         return NeighborIndex(
