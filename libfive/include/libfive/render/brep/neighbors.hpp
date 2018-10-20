@@ -30,7 +30,7 @@ public:
      *  given the child's index and the array of other children.
      */
     C push(uint8_t child,
-        const std::array<std::atomic<T*>, 1 << N>& children)
+           const std::array<std::atomic<T*>, 1 << N>& children) const
     {
         C out;
         for (unsigned i=0; i < ipow(3, N) - 1; ++i)

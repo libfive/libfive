@@ -28,7 +28,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-template <typename T> class ObjectPool; /* Forward declaration */
+/* Forward declarations */
+template <typename T> class ObjectPool;
+template <unsigned N> class SimplexNeighbors;
 
 template <unsigned N>
 class SimplexTree
@@ -130,7 +132,7 @@ public:
      *  in the tree, starting at 1.  This provides a globally unique
      *  identifier for every subspace vertex.
      */
-    void assignIndices();
+    void assignIndices() const;
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -182,7 +184,7 @@ protected:
     /*
      *  Helper function to assign leaf->index for all leafs in a tree
      */
-    void assignIndices(uint64_t& i);
+    void assignIndices(uint64_t& i, const SimplexNeighbors<N>& neighbors) const;
 
     /*  Marks whether this tree is fully constructed */
     std::atomic_int pending;

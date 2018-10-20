@@ -18,6 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <boost/lockfree/queue.hpp>
 
 #include "libfive/render/brep/simplex/simplextree.hpp"
+#include "libfive/render/brep/simplex/simplex_neighbors.hpp"
 #include "libfive/render/brep/simplex/solver.hpp"
 #include "libfive/render/brep/simplex/corner.hpp"
 
@@ -290,22 +291,30 @@ unsigned SimplexTree<N>::level() const
 }
 
 template <unsigned N>
-void SimplexTree<N>::assignIndices()
+void SimplexTree<N>::assignIndices() const
 {
-    uint64_t i=1;
-    assignIndices(i);
+    uint64_t index = 1;
+    SimplexNeighbors<N> neighbors;
+    assignIndices(index, neighbors);
 }
 
 template <unsigned N>
-void SimplexTree<N>::assignIndices(uint64_t& i)
+void SimplexTree<N>::assignIndices(
+        uint64_t& index, const SimplexNeighbors<N>& neighbors) const
 {
     if (isBranch()) {
-        for (auto& c : children) {
-            c.load()->assignIndices(i);
+        for (unsigned i=0; i < children.size(); ++i) {
+            auto new_neighbors = neighbors.push(i, children);
+            children[i].load()->assignIndices(index, new_neighbors);
         }
     } else if (leaf != nullptr) {
-        for (unsigned j=0; j < leaf->index.size(); ++j) {
-            leaf->index[j] = i++;
+        for (unsigned i=0; i < leaf->index.size(); ++i) {
+            auto n = neighbors.getIndex(i);
+            if (n) {
+                leaf->index[i] = n;
+            } else {
+                leaf->index[i] = index++;
+            }
         }
     }
 }
