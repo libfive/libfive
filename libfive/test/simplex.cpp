@@ -140,3 +140,55 @@ TEST_CASE("SimplexPool")
 
     t->assignIndices();
 }
+
+TEST_CASE("SimplexTree<2>::assignIndices")
+{
+    auto c = circle(1);
+    auto r = Region<2>({-1, -1}, {1, 1});
+
+    auto t = SimplexTreePool<2>::build(c, r, 1.1, 1e-8, 1);
+    REQUIRE(t.get() != nullptr);
+
+    t->assignIndices();
+
+    REQUIRE(t->isBranch());
+    std::set<uint64_t> indices;
+    for (auto& c : t->children) {
+        REQUIRE(c.load() != nullptr);
+        REQUIRE(!c.load()->isBranch());
+        REQUIRE(c.load()->leaf != nullptr);
+        for (auto& i : c.load()->leaf->index)
+        {
+            indices.insert(i);
+        }
+    }
+    REQUIRE(indices.size() == 25);
+    REQUIRE(*indices.begin() == 1);
+    REQUIRE(*indices.rbegin() == 25);
+}
+
+TEST_CASE("SimplexTree<3>::assignIndices")
+{
+    auto c = sphere(0.5);
+    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+    auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
+    REQUIRE(t.get() != nullptr);
+
+    t->assignIndices();
+
+    REQUIRE(t->isBranch());
+    std::set<uint64_t> indices;
+    for (auto& c : t->children) {
+        REQUIRE(c.load() != nullptr);
+        REQUIRE(!c.load()->isBranch());
+        REQUIRE(c.load()->leaf != nullptr);
+        for (auto& i : c.load()->leaf->index)
+        {
+            indices.insert(i);
+        }
+    }
+    REQUIRE(indices.size() == 125);
+    REQUIRE(*indices.begin() == 1);
+    REQUIRE(*indices.rbegin() == 125);
+}
