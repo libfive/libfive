@@ -42,14 +42,25 @@ public:
         Leaf();
         void reset();
 
+        /*  Subspace vertex positions */
         Eigen::Matrix<double, ipow(3, N), N> vertices;
+
+        /*  Subspace vertex state */
         std::array<bool, ipow(3, N)> inside;
 
-        /*   Global indices for vertices  */
+        /*   Global indices for subspace vertices  */
         std::array<uint64_t, ipow(3, N)> index;
 
         /*  Tape used for evaluation within this leaf */
         std::shared_ptr<Tape> tape;
+
+        /*  Indices of surface vertices, populated when meshing.
+         *
+         *  The index is a pair of subspace vertex indices.
+         *
+         *  We can't simply store a fixed number of edges because of
+         *  how neighboring cells of varying sizes are meshed. */
+        std::map<std::pair<uint64_t, uint64_t>, uint64_t> surface;
 
         /*  Represents how far from minimum-size leafs we are */
         unsigned level;

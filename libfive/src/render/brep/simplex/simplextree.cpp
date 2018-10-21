@@ -82,6 +82,7 @@ void SimplexTree<N>::Leaf::reset()
     level = 0;
     std::fill(index.begin(), index.end(), 0);
     tape.reset();
+    surface.clear();
     level = 0;
 }
 
