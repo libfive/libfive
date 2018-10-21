@@ -10,7 +10,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <array>
 #include "libfive/render/axes.hpp"
-#include "libfive/render/axes.hpp"
 
 #include "libfive/render/brep/mesh.hpp"
 
