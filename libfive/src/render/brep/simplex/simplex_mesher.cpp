@@ -45,8 +45,8 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
      *  6: Face between ts[0] and ts[2]
      *  7: ts[0] cell
      *  8: ts[1] cell
-     *  9: ts[2] cell
-     *  10: ts[3] cell
+     *  9: ts[3] cell
+     *  10: ts[2] cell
      */
     struct SubspaceVertex {
         Eigen::Vector3d pos;
@@ -136,7 +136,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 
     // Finally, we'll save the cell vertices
     // There's only one option per cell, since they aren't shared
-    for (unsigned i=0; i < 4; ++i)
+    for (unsigned i : {0, 1, 3, 2})
     {
         saveSubspaceVertex(i, ipow(3, 3) - 1);
     }
