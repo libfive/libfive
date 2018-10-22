@@ -19,7 +19,7 @@ template <unsigned N> class SimplexTree;
 class SimplexMesher
 {
 public:
-    SimplexMesher(Mesh& m) : m(m) {}
+    SimplexMesher(Mesh& m, XTreeEvaluator* eval) : m(m), eval(eval) {}
 
     /*
      *  Called by Dual::walk to construct the triangle mesh

@@ -11,7 +11,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/simplex/simplex_pool.hpp"
 #include "libfive/render/brep/simplex/solver.hpp"
+#include "libfive/render/brep/simplex/simplex_mesher.hpp"
 #include "libfive/render/brep/types.hpp"
+#include "libfive/render/brep/dual.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;
@@ -191,4 +193,17 @@ TEST_CASE("SimplexTree<3>::assignIndices")
     REQUIRE(indices.size() == 125);
     REQUIRE(*indices.begin() == 1);
     REQUIRE(*indices.rbegin() == 125);
+}
+
+TEST_CASE("SimplexMesher (smoke test)")
+{
+    auto c = sphere(0.5);
+    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+    auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
+
+    Mesh m;
+    XTreeEvaluator eval(c);
+    auto mesher = SimplexMesher(m, &eval);
+    Dual<3>::walk(t.get(), mesher);
 }
