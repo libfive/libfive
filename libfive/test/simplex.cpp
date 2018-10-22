@@ -179,7 +179,7 @@ TEST_CASE("SimplexTree<3>: types")
 
     REQUIRE(t->isBranch());
     for (auto& c : t->children) {
-        REQUIRE(t->type == Interval::AMBIGUOUS);
+        REQUIRE(c.load()->type == Interval::AMBIGUOUS);
     }
 }
 
@@ -250,6 +250,18 @@ TEST_CASE("SimplexTree<3>::assignIndices")
     REQUIRE(*indices.rbegin() == 125);
 }
 
+TEST_CASE("SimplexTree<3>::leafLevel")
+{
+    auto c = sphere(0.5);
+    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+    auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
+    REQUIRE(t->isBranch());
+    for (auto& c : t->children) {
+        REQUIRE(c.load()->leafLevel() == 0);
+    }
+}
+
 TEST_CASE("SimplexMesher (smoke test)")
 {
     auto c = sphere(0.5);
@@ -257,6 +269,10 @@ TEST_CASE("SimplexMesher (smoke test)")
 
     auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
     REQUIRE(t->isBranch());
+    for (auto& c : t->children) {
+        REQUIRE(c.load()->type == Interval::AMBIGUOUS);
+    }
+    t->assignIndices();
 
     Mesh m;
     XTreeEvaluator eval(c);
@@ -265,4 +281,50 @@ TEST_CASE("SimplexMesher (smoke test)")
 
     REQUIRE(m.branes.size() > 0);
     REQUIRE(m.verts.size() > 1);
+    m.saveSTL("out.stl");
+}
+
+TEST_CASE("SimplexMesher: edge pairing")
+{
+    auto c = sphere(0.5);
+    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+    auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
+    REQUIRE(t->isBranch());
+    for (auto& c : t->children) {
+        REQUIRE(c.load()->type == Interval::AMBIGUOUS);
+    }
+    t->assignIndices();
+
+    Mesh m;
+    XTreeEvaluator eval(c);
+    auto mesher = SimplexMesher(m, &eval);
+    Dual<3>::walk(t.get(), mesher);
+
+    // Every edge must be shared by two triangles
+    // We build a bitfield here, counting forward and reverse edges
+    std::map<std::pair<int, int>, int> edges;
+    for (const auto& t : m.branes) {
+        for (unsigned i=0; i < 3; ++i) {
+            const auto a = t[i];
+            const auto b = t[(i + 1) % 3];
+            auto key = std::make_pair(std::min(a, b), std::max(a, b));
+            if (!edges.count(key)) {
+                edges.insert({key, 0});
+            }
+            if (a < b)
+            {
+                REQUIRE((edges[key] & 1) == 0);
+                edges[key] |= 1;
+            }
+            else
+            {
+                REQUIRE((edges[key] & 2) == 0);
+                edges[key] |= 2;
+            }
+        }
+    }
+    for (auto& p : edges) {
+        REQUIRE(p.second == 3);
+    }
 }

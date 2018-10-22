@@ -170,6 +170,8 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
         leaf->tape = tape;
         leaf->level = 0;
     }
+    type = Interval::AMBIGUOUS; // TODO: check corners afterwards and collapse
+
     done();
 }
 

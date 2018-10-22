@@ -20,8 +20,6 @@ namespace Kernel {
 template <Axis::Axis A>
 void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 {
-    printf("SimplexMesher::load called\n");
-
     // For each cell, we need to generate 4 tetrahedrons, which are
     //  edge, corner+, face A, center
     //  edge, corner+, face B, center
@@ -81,7 +79,6 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 
         // All cells are EMPTY or FILLED, so we return early
         if (ts.at(index)->leafLevel() == UINT32_MAX) {
-            printf("SimplexMesher: all cells are empty or filled\n");
             return;
         }
 
@@ -260,6 +257,16 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     };
     std::map<std::pair<uint64_t, uint64_t>, uint64_t> edge_search_cache;
 
+    // Store all of the per-leaf edge caches into our cache here,
+    // to prevent cases where we search an edge before getting to
+    // the leaf that has already searched that edge.
+    for (unsigned i=0; i < 4; ++i) {
+        if (ts.at(i)->leaf != nullptr) {
+            edge_search_cache.insert(ts.at(i)->leaf->surface.begin(),
+                                     ts.at(i)->leaf->surface.end());
+        }
+    }
+
     // Iterate over the four cells
     for (unsigned i=0; i < 4; ++i)
     {
@@ -280,7 +287,6 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             for (unsigned j=0; j < 4; ++j) {
                 mask |= subvs.at(vs.at(tet.at(j))).inside << j;
             }
-            printf("Got mask %u\n", mask);
 
             // Iterate over up-to-two triangles
             for (const auto& tri : tet_table.at(mask))
@@ -301,6 +307,11 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                     const auto& va = subvs.at(vs.at(tet.at(edge.first)));
                     const auto& vb = subvs.at(vs.at(tet.at(edge.second)));
 
+                    // Confirm that we've assigned indices
+                    assert(va.index != 0);
+                    assert(vb.index != 0);
+
+                    // Then build a globally unique key for this edge
                     const auto k = Key(va.index, vb.index);
 
                     // This edge could be precalculated within the cell (from
@@ -314,7 +325,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                     if (leaf_itr != this_cell->leaf->surface.end() &&
                         cache_itr != edge_search_cache.end())
                     {
-                        assert(*leaf_itr == *cache_itr);
+                        assert(leaf_itr->second == cache_itr->second);
                         tri_vert_indices[t] = leaf_itr->second;
                         continue;
                     }

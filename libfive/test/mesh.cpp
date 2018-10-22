@@ -274,3 +274,37 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
     REQUIRE(progress[0] == 0.0f);
     REQUIRE(prev == 3.0f);
 }
+
+TEST_CASE("Mesh::render (edge pairing)")
+{
+    auto c = sphere(0.5);
+    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+    auto m = Mesh::render(c, r, 1.1, 1e-8, 1);
+    // Every edge must be shared by two triangles
+    // We build a bitfield here, counting forward and reverse edges
+    std::map<std::pair<int, int>, int> edges;
+    for (const auto& t : m->branes) {
+        for (unsigned i=0; i < 3; ++i) {
+            const auto a = t[i];
+            const auto b = t[(i + 1) % 3];
+            auto key = std::make_pair(std::min(a, b), std::max(a, b));
+            if (!edges.count(key)) {
+                edges.insert({key, 0});
+            }
+            if (a < b)
+            {
+                REQUIRE((edges[key] & 1) == 0);
+                edges[key] |= 1;
+            }
+            else
+            {
+                REQUIRE((edges[key] & 2) == 0);
+                edges[key] |= 2;
+            }
+        }
+    }
+    for (auto& p : edges) {
+        REQUIRE(p.second == 3);
+    }
+}
