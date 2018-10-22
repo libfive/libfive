@@ -53,7 +53,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         uint64_t index;
         bool inside;
     };
-    std::array<SubspaceVertex, 11> subvs;
+    boost::container::static_vector<SubspaceVertex, 11> subvs;
     auto saveSubspaceVertex = [&subvs, &ts](unsigned index, NeighborIndex s) {
         if (ts.at(index)->leaf) {
             subvs.push_back(SubspaceVertex {
@@ -91,9 +91,9 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         const unsigned edge_simplex = SimplexSolver::simplexUnion(
                 corner_simplex_a, corner_simplex_b);
 
-        saveSubSpaceVertex(index, edge_simplex);
-        saveSubSpaceVertex(index, corner_simplex_a);
-        saveSubSpaceVertex(index, corner_simplex_b);
+        saveSubspaceVertex(index, edge_simplex);
+        saveSubspaceVertex(index, corner_simplex_a);
+        saveSubspaceVertex(index, corner_simplex_b);
     }
 
     {   // Next, we'll find the vertices shared by faces
@@ -253,7 +253,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 
     // Constructor for an ordered pair
     auto Key = [](uint64_t a, uint64_t b) {
-        std::make_pair(std::min(a, b), std::max(a, b));
+        return std::make_pair(std::min(a, b), std::max(a, b));
     };
     std::map<std::pair<uint64_t, uint64_t>, uint64_t> edge_search_cache;
 
@@ -275,7 +275,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             // Build the corner mask
             unsigned mask = 0;
             for (unsigned j=0; j < 4; ++j) {
-                mask |= subvs.at(vs.at(tet.at(j)))->inside << j;
+                mask |= subvs.at(vs.at(tet.at(j))).inside << j;
             }
 
             // Iterate over up-to-two triangles
@@ -294,8 +294,8 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                 for (unsigned t=0; t < tri.size(); ++t)
                 {
                     const auto& edge = tri.at(t);
-                    const auto& va = subvs.at(cell_vertices.at(tet.at(edge.first)));
-                    const auto& vb = subvs.at(cell_vertices.at(tet.at(edge.second)));
+                    const auto& va = subvs.at(vs.at(tet.at(edge.first)));
+                    const auto& vb = subvs.at(vs.at(tet.at(edge.second)));
 
                     const auto k = Key(va.index, vb.index);
 
@@ -311,19 +311,19 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                         cache_itr != edge_search_cache.end())
                     {
                         assert(*leaf_itr == *cache_itr);
-                        tri_vert_indices[t] = *leaf_itr;
+                        tri_vert_indices[t] = leaf_itr->second;
                         continue;
                     }
                     else if (leaf_itr != this_cell->leaf->surface.end())
                     {
-                        tri_vert_indices[t] = *leaf_itr;
-                        edge_search_cache.insert({k, *leaf_itr});
+                        tri_vert_indices[t] = leaf_itr->second;
+                        edge_search_cache.insert({k, leaf_itr->second});
                         continue;
                     }
                     else if (cache_itr != edge_search_cache.end())
                     {
-                        tri_vert_indices[t] = *cache_itr;
-                        this_cell->leaf->surface.insert({k, *cache_itr});
+                        tri_vert_indices[t] = cache_itr->second;
+                        this_cell->leaf->surface.insert({k, cache_itr->second});
                         continue;
                     }
 
@@ -347,5 +347,12 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//  Template initialization
+template void SimplexMesher::load<Axis::X>(
+        const std::array<const SimplexTree<3>*, 4>&);
+template void SimplexMesher::load<Axis::Y>(
+        const std::array<const SimplexTree<3>*, 4>&);
+template void SimplexMesher::load<Axis::Z>(
+        const std::array<const SimplexTree<3>*, 4>&);
 
 }   // namespace Kernel

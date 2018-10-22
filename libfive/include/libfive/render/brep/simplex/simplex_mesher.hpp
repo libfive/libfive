@@ -33,7 +33,8 @@ protected:
      *  provided tape.  Stores the resulting vertex into the Mesh m,
      *  and returns its index.
      */
-    uint64_t searchEdge(Eigen::Vector3d& inside, Eigen::Vector3d& outside,
+    uint64_t searchEdge(const Eigen::Vector3d& inside,
+                        const Eigen::Vector3d& outside,
                         std::shared_ptr<Tape> tape);
 
     Mesh& m;
