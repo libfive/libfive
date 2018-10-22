@@ -159,6 +159,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
         p << leaf->vertices.row(i).template cast<float>().transpose(),
              region.perp.template cast<float>();
 
+        // TODO:  Pull corners from neighbors when possible
         eval->array.set(p, 0);
         const auto out = eval->array.values(1)[0];
         const bool inside = (out == 0)
@@ -287,6 +288,24 @@ unsigned SimplexTree<N>::level() const
         case Interval::FILLED:  // fallthrough
         case Interval::EMPTY:   assert(leaf == nullptr);
                                 return 0;
+    };
+    return 0;
+}
+
+template <unsigned N>
+uint32_t SimplexTree<N>::leafLevel() const
+{
+    assert(!isBranch());
+    switch (type)
+    {
+        case Interval::AMBIGUOUS:
+            assert(leaf != nullptr);
+            return leaf->level;
+
+        case Interval::UNKNOWN: assert(false);
+
+        case Interval::FILLED:  // fallthrough
+        case Interval::EMPTY:   return UINT32_MAX;
     };
     return 0;
 }

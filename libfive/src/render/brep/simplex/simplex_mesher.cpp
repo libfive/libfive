@@ -346,6 +346,64 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     }
 }
 
+uint64_t SimplexMesher::searchEdge(Eigen::Vector3d inside,
+                                   Eigen::Vector3d outside,
+                                   std::shared_ptr<Tape> tape)
+{
+    // This code is based on xtree.cpp, but flattened to a signle pass
+
+    // There's an interesting question of precision + speed tradeoffs,
+    // which mostly depend on how well evaluation scales in the
+    // ArrayEaluator.  for now, we'll use the same value as XTree.
+    constexpr int SEARCH_COUNT = 4;
+    constexpr int POINTS_PER_SEARCH = 16;
+    static_assert(POINTS_PER_SEARCH <= ArrayEvaluator::N,
+                  "Overflowing ArrayEvaluator data array");
+
+    // Multi-stage binary search for intersection
+    for (int s=0; s < SEARCH_COUNT; ++s)
+    {
+        // Load search points into the evaluator
+        Eigen::Array<double, 3, POINTS_PER_SEARCH> ps;
+        for (int j=0; j < POINTS_PER_SEARCH; ++j)
+        {
+                const double frac = j / (POINTS_PER_SEARCH - 1.0);
+                ps.col(j) = (inside * (1 - frac)) +
+                            (outside * frac);
+                eval->array.set(ps.col(j).template cast<float>(), j);
+        }
+
+        auto out = eval->array.values(POINTS_PER_SEARCH, tape);
+
+        // Skip one point, because the very first point is
+        // already known to be inside the shape (but
+        // sometimes, due to numerical issues, it registers
+        // as outside!)
+        for (unsigned j=1; j < POINTS_PER_SEARCH; ++j)
+        {
+            // We're searching for the first point that's outside of the
+            // surface.  There's a special case for the final point in the
+            // search, working around  numerical issues where different
+            // evaluators disagree with whether points are inside or outside.
+            if (out[j] > 0 || j == POINTS_PER_SEARCH - 1 ||
+                (out[j] == 0 && !eval->feature.isInside(
+                            ps.col(j).template cast<float>(), tape)))
+
+            {
+                inside = ps.col(j - 1);
+                outside = ps.col(j);
+                break;
+            }
+        }
+    }
+
+    // TODO: we should weight the exact position based on values
+    Eigen::Vector3d vert = (inside + outside) / 2;
+    const uint64_t out = m.verts.size();
+    m.verts.push_back(vert.template cast<float>());
+    return out;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //  Template initialization
 template void SimplexMesher::load<Axis::X>(

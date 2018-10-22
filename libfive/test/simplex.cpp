@@ -206,4 +206,7 @@ TEST_CASE("SimplexMesher (smoke test)")
     XTreeEvaluator eval(c);
     auto mesher = SimplexMesher(m, &eval);
     Dual<3>::walk(t.get(), mesher);
+
+    REQUIRE(m.branes.size() > 0);
+    REQUIRE(m.verts.size() > 1);
 }
