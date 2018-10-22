@@ -40,9 +40,9 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
      *  0:  edge
      *  1, 2: corners
      *  3: Face between ts[0] and ts[1]
-     *  4: Face between ts[0] and ts[2]
+     *  4: Face between ts[1] and ts[3]
      *  5: Face between ts[2] and ts[3]
-     *  6: Face between ts[1] and ts[3]
+     *  6: Face between ts[0] and ts[2]
      *  7: ts[0] cell
      *  8: ts[1] cell
      *  9: ts[2] cell
@@ -103,13 +103,13 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             Axis::Axis axis;
         };
         const std::array<FacePair, 4> face_pairs =
-            {{{0, 1, Q}, {0, 2, R}, {2, 3, Q}, {1, 3, R}}};
+            {{{0, 1, Q}, {1, 3, R}, {2, 3, Q}, {0, 2, R}}};
 
-        for (unsigned i=0; i < 4; ++i)
+        for (const auto& p : face_pairs)
         {
             // Pull trees from the array
-            auto ta = ts.at(face_pairs.at(i).a);
-            auto tb = ts.at(face_pairs.at(i).b);
+            auto ta = ts.at(p.a);
+            auto tb = ts.at(p.b);
 
             // Index of smaller tree
             unsigned ti = 0;
@@ -117,18 +117,18 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 
             if (ta->leafLevel() < tb->leafLevel())
             {
-                ti = face_pairs.at(i).a;
+                ti = p.a;
                 si = SimplexSolver::simplexUnion(
-                        SimplexSolver::cornerToSimplex(face_pairs.at(i).axis),
+                        SimplexSolver::cornerToSimplex(p.axis),
                         SimplexSolver::cornerToSimplex(7));
             }
             else
             {   // This conditional includes the case where both faces are
                 // EMPTY or FILLED, which just pushes an empty vertex.
-                ti = face_pairs.at(i).b;
+                ti = p.b;
                 si = SimplexSolver::simplexUnion(
                         SimplexSolver::cornerToSimplex(0),
-                        SimplexSolver::cornerToSimplex(((Q | R) ^ face_pairs.at(i).axis) | A));
+                        SimplexSolver::cornerToSimplex(7 ^ p.axis));
             }
             saveSubspaceVertex(ti, si);
         }
@@ -154,19 +154,19 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     // 5:   cell
     //  (with faces ordered clockwise)
     const std::array<std::array<unsigned, 6>, 4> cell_vertices = {{
-        {{0, 1, 2, 4, 7, 3}}, // Cell 0
-        {{0, 1, 2, 3, 8, 6}}, // Cell 1
-        {{0, 1, 2, 5, 9, 4}}, // Cell 2
-        {{0, 1, 2, 6, 10, 5}}, // Cell 3
+        {{0, 1, 2, 6, 3, 7}}, // Cell 0
+        {{0, 1, 2, 3, 4, 8}}, // Cell 1
+        {{0, 1, 2, 4, 5, 9}}, // Cell 2
+        {{0, 1, 2, 5, 6, 10}}, // Cell 3
     }};
 
     //  Within each cell, indexing into the array above, here are the four
     //  tetrahedrons:
     const std::array<std::array<unsigned, 4>, 4> tet_vertices = {{
         {{0, 2, 3, 5}},
-        {{0, 2, 1, 5}},
-        {{0, 4, 2, 5}},
+        {{0, 3, 1, 5}},
         {{0, 1, 4, 5}},
+        {{0, 4, 2, 5}},
     }};
 
     // This is the marching tetrahedrons table.  For a given bitfield
@@ -199,8 +199,8 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         {{ {-1, -1}, {-1, -1}, {-1, -1} }}, }},
 
         {{ // 0b0011
-        {{ { 1,  2}, { 0,  2}, { 0,  3} }},
-        {{ { 0,  3}, { 1,  3}, { 1,  2} }}, }},
+        {{ { 1,  2}, { 0,  2}, { 1,  3} }},
+        {{ { 0,  3}, { 1,  3}, { 0,  2} }}, }},
 
         {{ // 0b0100
         {{ { 2,  0}, { 2,  1}, { 2,  3} }},
@@ -238,7 +238,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         {{ { 2,  0}, { 2,  1}, { 3,  1} }},
         {{ { 3,  0}, { 2,  0}, { 3,  1} }}, }},
 
-        {{ // 0b1110
+        {{ // 0b1101
         {{ { 2,  1}, { 3,  1}, { 0,  1} }},
         {{ {-1, -1}, {-1, -1}, {-1, -1} }}, }},
 

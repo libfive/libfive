@@ -301,6 +301,8 @@ TEST_CASE("SimplexMesher: edge pairing")
     auto mesher = SimplexMesher(m, &eval);
     Dual<3>::walk(t.get(), mesher);
 
+    m.saveSTL("out.stl");
+
     // Every edge must be shared by two triangles
     // We build a bitfield here, counting forward and reverse edges
     std::map<std::pair<int, int>, int> edges;
