@@ -169,6 +169,47 @@ TEST_CASE("SimplexTree<2>::assignIndices")
     REQUIRE(*indices.rbegin() == 25);
 }
 
+
+TEST_CASE("SimplexTree<3>: Corner positions")
+{
+    auto c = sphere(0.5);
+    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+    auto t = SimplexTreePool<3>::build(c, r);
+    REQUIRE(t.get() != nullptr);
+
+    std::list<std::pair<const SimplexTree<3>*, Region<3>>> todo;
+    todo.push_back({t.get(), r});
+
+    unsigned checked_count = 0;
+    while (todo.size())
+    {
+        auto task = todo.front();
+        todo.pop_front();
+
+        if (task.first->isBranch())
+        {
+            auto rs = task.second.subdivide();
+            for (unsigned i=0; i < 8; ++i) {
+                todo.push_back({task.first->children[i].load(), rs[i]});
+            }
+        }
+        else if (task.first->leaf)
+        {
+            for (unsigned i=0; i < 8; ++i) {
+                Eigen::Vector3d vt = task.first->leaf->vertices.row(
+                        CornerIndex(i).neighbor().i);
+                Eigen::Vector3d vr = task.second.corner(i);
+                CAPTURE(vt);
+                CAPTURE(vr);
+                REQUIRE((vt - vr).norm() < 1e-6);
+                checked_count++;
+            }
+        }
+    }
+    REQUIRE(checked_count > 0);
+}
+
 TEST_CASE("SimplexTree<3>::assignIndices")
 {
     auto c = sphere(0.5);
