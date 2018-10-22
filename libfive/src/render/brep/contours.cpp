@@ -238,7 +238,7 @@ std::unique_ptr<Kernel::Contours> Contours::render(const Tree t,
                                                    double max_err /*= 1e-8*/, 
                                                    bool multithread /*= true*/)
 {
-  std::atomic_bool cancelled;
+  std::atomic_bool cancelled(false);
  return render(t,r,min_feature,max_err,cancelled,multithread);
 }
 
