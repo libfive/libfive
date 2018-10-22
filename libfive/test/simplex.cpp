@@ -169,6 +169,20 @@ TEST_CASE("SimplexTree<2>::assignIndices")
     REQUIRE(*indices.rbegin() == 25);
 }
 
+TEST_CASE("SimplexTree<3>: types")
+{
+    auto c = sphere(0.5);
+    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+    auto t = SimplexTreePool<3>::build(c, r);
+    REQUIRE(t.get() != nullptr);
+
+    REQUIRE(t->isBranch());
+    for (auto& c : t->children) {
+        REQUIRE(t->type == Interval::AMBIGUOUS);
+    }
+}
+
 
 TEST_CASE("SimplexTree<3>: Corner positions")
 {

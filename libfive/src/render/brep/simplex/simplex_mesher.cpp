@@ -81,6 +81,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 
         // All cells are EMPTY or FILLED, so we return early
         if (ts.at(index)->leafLevel() == UINT32_MAX) {
+            printf("SimplexMesher: all cells are empty or filled\n");
             return;
         }
 
