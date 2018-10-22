@@ -286,7 +286,7 @@ TEST_CASE("SimplexMesher (smoke test)")
 
 TEST_CASE("SimplexMesher: edge pairing")
 {
-    auto c = sphere(0.5);
+    auto c = sphere(0.4);
     auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
     auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
