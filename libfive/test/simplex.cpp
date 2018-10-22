@@ -242,6 +242,7 @@ TEST_CASE("SimplexMesher (smoke test)")
     auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
     auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
+    REQUIRE(t->isBranch());
 
     Mesh m;
     XTreeEvaluator eval(c);

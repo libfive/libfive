@@ -23,6 +23,21 @@ public:
     template <Axis::Axis A>
     void load(const std::array<const XTree<2>*, 2>& ts)
     {
+        // Exit immediately if we can prove that there will be no
+        // face produced by this edge.
+        if (std::any_of(ts.begin(), ts.end(),
+            [](const XTree<2>* t){ return t->type != Interval::AMBIGUOUS; }))
+        {
+            return;
+        }
+
+        // Sanity-checking that all cells have a Leaf struct allocated
+        for (auto& t : ts)
+        {
+            assert(t->leaf != nullptr);
+            (void)t;
+        }
+
         /*  See comment in mesh.cpp about selecting a minimum edge */
         const auto index = std::min_element(ts.begin(), ts.end(),
                 [](const XTree<2>* a, const XTree<2>* b)

@@ -20,6 +20,8 @@ namespace Kernel {
 template <Axis::Axis A>
 void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 {
+    printf("SimplexMesher::load called\n");
+
     // For each cell, we need to generate 4 tetrahedrons, which are
     //  edge, corner+, face A, center
     //  edge, corner+, face B, center
@@ -277,6 +279,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             for (unsigned j=0; j < 4; ++j) {
                 mask |= subvs.at(vs.at(tet.at(j))).inside << j;
             }
+            printf("Got mask %u\n", mask);
 
             // Iterate over up-to-two triangles
             for (const auto& tri : tet_table.at(mask))

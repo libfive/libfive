@@ -22,6 +22,15 @@ struct Walker2
     template <Axis::Axis A>
     void load(const std::array<const XTree<2>*, 2>& ts)
     {
+        // TODO: consolidate this code into once place
+        // Exit immediately if we can prove that there will be no
+        // face produced by this edge.
+        if (std::any_of(ts.begin(), ts.end(),
+            [](const XTree<2>* t){ return t->type != Interval::AMBIGUOUS; }))
+        {
+            return;
+        }
+
         const auto index = std::min_element(ts.begin(), ts.end(),
                 [](const XTree<2>* a, const XTree<2>* b)
                 { return a->leaf->level < b->leaf->level; }) - ts.begin();
@@ -83,6 +92,15 @@ struct Walker3
     template <Axis::Axis A>
     void load(const std::array<const XTree<3>*, 4>& a)
     {
+        // TODO: consolidate this with DCMesher
+        // Exit immediately if we can prove that there will be no
+        // face produced by this edge.
+        if (std::any_of(a.begin(), a.end(),
+            [](const XTree<3>* t){ return t->type != Interval::AMBIGUOUS; }))
+        {
+            return;
+        }
+
         for (auto t : a)
         {
             auto n = t->vert().norm();

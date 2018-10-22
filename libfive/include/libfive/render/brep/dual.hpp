@@ -89,17 +89,8 @@ void edge3(const std::array<const T*, 4> ts, V& v)
         edge3<T, V, A>({{ts[0]->child(Q|R), ts[1]->child(R), ts[2]->child(Q), ts[3]->child(0)}}, v);
         edge3<T, V, A>({{ts[0]->child(Q|R|A), ts[1]->child(R|A), ts[2]->child(Q|A), ts[3]->child(A)}}, v);
     }
-    else if (std::all_of(ts.begin(), ts.end(),
-        [](const T* t){ return t->type == Interval::AMBIGUOUS &&
-                               !t->isBranch(); }))
+    else
     {
-        // Sanity-checking that all cells have a Leaf struct allocated
-        for (auto& t : ts)
-        {
-            assert(t->leaf != nullptr);
-            (void)t;
-        }
-
         v.template load<A>(ts);
     }
 }

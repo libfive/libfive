@@ -25,6 +25,14 @@ namespace Kernel {
 template <Axis::Axis A>
 void DCMesher::load(const std::array<const XTree<3>*, 4>& ts)
 {
+    // Exit immediately if we can prove that there will be no
+    // face produced by this edge.
+    if (std::any_of(ts.begin(), ts.end(),
+        [](const XTree<3>* t){ return t->type != Interval::AMBIGUOUS; }))
+    {
+        return;
+    }
+
     // Sanity-checking that all cells have a Leaf struct allocated
     for (auto& t : ts)
     {
