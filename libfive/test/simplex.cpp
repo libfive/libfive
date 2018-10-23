@@ -327,6 +327,10 @@ TEST_CASE("SimplexMesher: edge pairing")
         }
     }
     for (auto& p : edges) {
+        CAPTURE(p.first.first);
+        CAPTURE(p.first.second);
+        CAPTURE(m.verts[p.first.first]);
+        CAPTURE(m.verts[p.first.second]);
         REQUIRE(p.second == 3);
     }
 }
