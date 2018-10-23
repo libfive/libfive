@@ -17,6 +17,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+
 template <Axis::Axis A>
 void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 {
@@ -154,10 +155,10 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     // 5:   cell
     //  (with faces ordered clockwise)
     const std::array<std::array<unsigned, 6>, 4> cell_vertices = {{
-        {{0, 1, 2, 6, 3, 7}}, // Cell 0
-        {{0, 1, 2, 3, 4, 8}}, // Cell 1
-        {{0, 1, 2, 4, 5, 9}}, // Cell 2
+        {{0, 1, 2, 6, 3, 7}},  // Cell 0
+        {{0, 1, 2, 3, 4, 8}},  // Cell 1
         {{0, 1, 2, 5, 6, 10}}, // Cell 3
+        {{0, 1, 2, 4, 5, 9}},  // Cell 2
     }};
 
     //  Within each cell, indexing into the array above, here are the four
@@ -268,7 +269,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     }
 
     // Iterate over the four cells
-    for (unsigned i=0; i < 4; ++i)
+    for (unsigned i : {0, 1, 3, 2})
     {
         const auto this_cell = ts.at(i);
         // Skip empty or filled cells immediately
