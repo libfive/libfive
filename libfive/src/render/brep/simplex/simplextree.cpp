@@ -307,7 +307,7 @@ uint32_t SimplexTree<N>::leafLevel() const
         case Interval::UNKNOWN: assert(false);
 
         case Interval::FILLED:  // fallthrough
-        case Interval::EMPTY:   return UINT32_MAX;
+        case Interval::EMPTY:   return LEAF_LEVEL_INVALID;
     };
     return 0;
 }

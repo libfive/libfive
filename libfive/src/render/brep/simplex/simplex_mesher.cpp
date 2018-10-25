@@ -56,19 +56,20 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     };
     boost::container::static_vector<SubspaceVertex, 11> subvs;
     auto saveSubspaceVertex = [&subvs, &ts](unsigned index, NeighborIndex s) {
-        if (ts.at(index)->leaf) {
-            subvs.push_back(SubspaceVertex {
-                ts.at(index)->leaf->vertices.row(s.i),
-                ts.at(index)->leaf->index.at(s.i),
-                ts.at(index)->leaf->inside.at(s.i),
-            });
-        } else {
-            subvs.push_back(SubspaceVertex {
-                    Eigen::Vector3d::Zero(),
-                    0,
-                    false,
-            });
-        }
+        assert(ts.at(index)->leaf != nullptr);
+        assert(ts.at(index)->leaf->index.at(s.i) != 0);
+        subvs.push_back(SubspaceVertex {
+            ts.at(index)->leaf->vertices.row(s.i),
+            ts.at(index)->leaf->index.at(s.i),
+            ts.at(index)->leaf->inside.at(s.i),
+        });
+    };
+    auto saveDummyVertex = [&subvs, &ts]() {
+        subvs.push_back(SubspaceVertex {
+                Eigen::Vector3d::Zero(),
+                0,
+                false,
+        });
     };
 
     {   /* First, we pick out the vertices on the common edge.  There are
@@ -79,9 +80,10 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                 { return a->leafLevel() < b->leafLevel(); }) - ts.begin();
 
         // All cells are EMPTY or FILLED, so we return early
-        if (ts.at(index)->leafLevel() == UINT32_MAX) {
+        if (ts.at(index)->leafLevel() == SimplexTree<3>::LEAF_LEVEL_INVALID) {
             return;
         }
+        assert(index != SimplexTree<3>::LEAF_LEVEL_INVALID);
 
         const unsigned corner_index_a = index ^ (Q | R);
         const unsigned corner_index_b = corner_index_a ^ A;
@@ -112,26 +114,27 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             auto ta = ts.at(p.a);
             auto tb = ts.at(p.b);
 
-            // Index of smaller tree
-            unsigned ti = 0;
-            unsigned si = 0;
-
-            if (ta->leafLevel() < tb->leafLevel())
+            if (ta->leafLevel() == tb->leafLevel() &&
+                ta->leafLevel() == SimplexTree<3>::LEAF_LEVEL_INVALID)
             {
-                ti = p.a;
-                si = SimplexSolver::simplexUnion(
+                saveDummyVertex();
+            }
+            else if (ta->leafLevel() < tb->leafLevel())
+            {
+                assert(ta->leafLevel() != SimplexTree<3>::LEAF_LEVEL_INVALID);
+                saveSubspaceVertex(p.a, SimplexSolver::simplexUnion(
                         SimplexSolver::cornerToSimplex(p.axis),
-                        SimplexSolver::cornerToSimplex(7));
+                        SimplexSolver::cornerToSimplex(7)));
             }
             else
-            {   // This conditional includes the case where both faces are
-                // EMPTY or FILLED, which just pushes an empty vertex.
-                ti = p.b;
-                si = SimplexSolver::simplexUnion(
+            {
+                // This handles the case where both vertices are at the same
+                // level (and neither are EMPTY or FILLED).
+                assert(tb->leafLevel() != SimplexTree<3>::LEAF_LEVEL_INVALID);
+                saveSubspaceVertex(p.b, SimplexSolver::simplexUnion(
                         SimplexSolver::cornerToSimplex(0),
-                        SimplexSolver::cornerToSimplex(7 ^ p.axis));
+                        SimplexSolver::cornerToSimplex(7 ^ p.axis)));
             }
-            saveSubspaceVertex(ti, si);
         }
     }
 
@@ -139,7 +142,11 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     // There's only one option per cell, since they aren't shared
     for (unsigned i : {0, 1, 3, 2})
     {
-        saveSubspaceVertex(i, ipow(3, 3) - 1);
+        if (ts[i]->type == Interval::AMBIGUOUS) {
+            saveSubspaceVertex(i, ipow(3, 3) - 1);
+        } else {
+            saveDummyVertex();
+        }
     }
 
     // Now that we've populated our vertex table, we walk around the four cells

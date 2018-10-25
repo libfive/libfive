@@ -136,6 +136,7 @@ public:
      *  returning 0 or more for LEAF cells (depending on how many
      *  other leafs were merged into them), and UINT32_MAX max for
      *  EMPTY or FILLED cells */
+    constexpr static uint32_t LEAF_LEVEL_INVALID = UINT32_MAX;
     uint32_t leafLevel() const;
 
     /*

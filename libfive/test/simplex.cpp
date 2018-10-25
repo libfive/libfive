@@ -284,25 +284,7 @@ TEST_CASE("SimplexMesher (smoke test)")
     m.saveSTL("out.stl");
 }
 
-TEST_CASE("SimplexMesher: edge pairing")
-{
-    auto c = sphere(0.4);
-    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
-
-    auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
-    REQUIRE(t->isBranch());
-    for (auto& c : t->children) {
-        REQUIRE(c.load()->type == Interval::AMBIGUOUS);
-    }
-    t->assignIndices();
-
-    Mesh m;
-    XTreeEvaluator eval(c);
-    auto mesher = SimplexMesher(m, &eval);
-    Dual<3>::walk(t.get(), mesher);
-
-    m.saveSTL("out.stl");
-
+void test_edge_pairs(const Mesh& m) {
     // Every edge must be shared by two triangles
     // We build a bitfield here, counting forward and reverse edges
     std::map<std::pair<int, int>, int> edges;
@@ -332,5 +314,64 @@ TEST_CASE("SimplexMesher: edge pairing")
         CAPTURE(m.verts[p.first.first]);
         CAPTURE(m.verts[p.first.second]);
         REQUIRE(p.second == 3);
+    }
+}
+
+TEST_CASE("SimplexMesher: edge pairing")
+{
+    /*
+    SECTION("Sphere (low resolution)")
+    {
+        auto c = sphere(0.4);
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+        auto t = SimplexTreePool<3>::build(c, r, 1.1, 0, 1);
+        REQUIRE(t->isBranch());
+        for (auto& c : t->children) {
+            REQUIRE(c.load()->type == Interval::AMBIGUOUS);
+        }
+        t->assignIndices();
+
+        Mesh m;
+        XTreeEvaluator eval(c);
+        auto mesher = SimplexMesher(m, &eval);
+        Dual<3>::walk(t.get(), mesher);
+
+        test_edge_pairs(m);
+    }
+
+    SECTION("Sphere (higher-resolution)")
+    {
+        auto c = sphere(0.4);
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+        auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
+        t->assignIndices();
+
+        Mesh m;
+        XTreeEvaluator eval(c);
+        auto mesher = SimplexMesher(m, &eval);
+        Dual<3>::walk(t.get(), mesher);
+
+        test_edge_pairs(m);
+    }
+    */
+
+    SECTION("Box (low-resolution)")
+    {
+        auto c = box({-0.4, -0.4, -0.4}, {0.4, 0.4, 0.4});
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+        auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
+        t->assignIndices();
+
+        Mesh m;
+        XTreeEvaluator eval(c);
+        auto mesher = SimplexMesher(m, &eval);
+        Dual<3>::walk(t.get(), mesher);
+
+        m.saveSTL("out.stl");
+
+        test_edge_pairs(m);
     }
 }
