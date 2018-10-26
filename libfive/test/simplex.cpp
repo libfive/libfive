@@ -183,17 +183,10 @@ TEST_CASE("SimplexTree<3>: types")
     }
 }
 
-
-TEST_CASE("SimplexTree<3>: Corner positions")
+void test_corner_positions(const SimplexTree<3>* ptr, Region<3> r)
 {
-    auto c = sphere(0.5);
-    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
-
-    auto t = SimplexTreePool<3>::build(c, r);
-    REQUIRE(t.get() != nullptr);
-
     std::list<std::pair<const SimplexTree<3>*, Region<3>>> todo;
-    todo.push_back({t.get(), r});
+    todo.push_back({ptr, r});
 
     unsigned checked_count = 0;
     while (todo.size())
@@ -222,6 +215,28 @@ TEST_CASE("SimplexTree<3>: Corner positions")
         }
     }
     REQUIRE(checked_count > 0);
+}
+
+TEST_CASE("SimplexTree<3>: Corner positions")
+{
+    SECTION("Sphere")
+    {
+        auto c = sphere(0.5);
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+        auto t = SimplexTreePool<3>::build(c, r);
+        REQUIRE(t.get() != nullptr);
+        test_corner_positions(t.get(), r);
+    }
+
+    SECTION("Box (low-resolution)")
+    {
+        auto c = box({-0.4, -0.4, -0.4}, {0.4, 0.4, 0.4});
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+        auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
+        test_corner_positions(t.get(), r);
+    }
 }
 
 TEST_CASE("SimplexTree<3>::assignIndices")
