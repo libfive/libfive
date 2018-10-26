@@ -334,7 +334,6 @@ void test_edge_pairs(const Mesh& m) {
 
 TEST_CASE("SimplexMesher: edge pairing")
 {
-    /*
     SECTION("Sphere (low resolution)")
     {
         auto c = sphere(0.4);
@@ -370,7 +369,6 @@ TEST_CASE("SimplexMesher: edge pairing")
 
         test_edge_pairs(m);
     }
-    */
 
     SECTION("Box (low-resolution)")
     {
