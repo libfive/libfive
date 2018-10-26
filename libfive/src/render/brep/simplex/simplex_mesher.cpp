@@ -85,7 +85,8 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         }
         assert(index != SimplexTree<3>::LEAF_LEVEL_INVALID);
 
-        const unsigned corner_index_a = index ^ (Q | R);
+        const unsigned corner_index_a = ((index & 1) ? 0 : Q) |
+                                        ((index & 2) ? 0 : R);
         const unsigned corner_index_b = corner_index_a ^ A;
         assert(ts.at(index)->leaf != nullptr);
 
