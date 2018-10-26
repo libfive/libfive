@@ -32,7 +32,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     // Center vertices are unique to each cell.
     //
     // In all cases, if cells are different sizes, then we must select the
-    // minimum-level cell to pull the simplex vertex from.
+    // minimum-level cell to pull the subspace vertex from.
 
     constexpr auto Q = Axis::Q(A);
     constexpr auto R = Axis::R(A);
