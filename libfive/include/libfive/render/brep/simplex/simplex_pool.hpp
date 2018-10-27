@@ -26,7 +26,7 @@ struct SimplexTreePool
      */
     static Root<SimplexTree<N>, typename SimplexTree<N>::Leaf> build(
             const Tree t, Region<N> region,
-            double min_feature=0.1, double max_err=1e-8, unsigned workers=1,
+            double min_feature=0.1, double max_err=1e-8, unsigned workers=8,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
     /*

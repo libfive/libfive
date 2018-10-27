@@ -107,7 +107,6 @@ protected:
 
         while (!done.load() && !cancel.load())
         {
-
             // Prioritize picking up a local task before going to
             // the MPMC queue, to keep things in this thread for
             // as long as possible.
