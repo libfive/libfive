@@ -103,6 +103,7 @@ void DCMesher::load(const std::array<const XTree<3>*, 4>& ts)
     }
 
     uint32_t vs[4];
+    Eigen::Matrix<float, 3, 4> vert_positions;
     for (unsigned i=0; i < ts.size(); ++i)
     {
         assert(ts[i]->leaf != nullptr);
@@ -122,6 +123,11 @@ void DCMesher::load(const std::array<const XTree<3>*, 4>& ts)
             ts[i]->leaf->index[vi] = m.pushVertex(
                 ts[i]->vert(vi).template cast<float>());
         }
+
+        // Save the vertex position for normal calculations
+        vert_positions.col(i) = ts[i]->vert(vi).template cast<float>();
+
+        // Store the vertex index for pushing triangles
         vs[i] = ts[i]->leaf->index[vi];
     }
 
@@ -172,6 +178,10 @@ void DCMesher::load(const std::array<const XTree<3>*, 4>& ts)
     if (!D)
     {
         std::swap(vs[1], vs[2]);
+
+        const Eigen::Vector3f r = vert_positions.col(1);
+        vert_positions.col(1) = vert_positions.col(2);
+        vert_positions.col(2) = r;
     }
     // Pick a triangulation that prevents triangles from folding back
     // on each other by checking normals.
@@ -184,8 +194,8 @@ void DCMesher::load(const std::array<const XTree<3>*, 4>& ts)
     //     |         |
     //     0---------1
     auto saveNorm = [&](int a, int b, int c){
-        norms[a] = (m.verts[vs[b]] - m.verts[vs[a]]).cross
-                   (m.verts[vs[c]] - m.verts[vs[a]]).normalized();
+        norms[a] = (vert_positions.col(b) - vert_positions.col(a)).cross
+                   (vert_positions.col(c) - vert_positions.col(a)).normalized();
     };
     saveNorm(0, 1, 2);
     saveNorm(1, 3, 0);
