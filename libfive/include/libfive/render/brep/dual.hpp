@@ -148,13 +148,8 @@ void Dual<3>::walk(const T* t, V& v, ProgressWatcher* progress)
     if (t->isBranch())
     {
         // Recurse, calling the cell procedure for every child
-        for (unsigned i=0; i < t->children.size(); ++i)
-        {
-            auto c = t->child(i);
-            if (c != t)
-            {
-                walk(c, v, progress);
-            }
+        for (const auto& c : t->children) {
+            walk(c.load(), v, progress);
         }
 
         // Call the face procedure on every pair of cells (4x per axis)
