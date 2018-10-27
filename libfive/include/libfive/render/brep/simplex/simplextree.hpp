@@ -73,12 +73,13 @@ public:
      *  are invalid until reset() is called.
      */
     explicit SimplexTree();
-    explicit SimplexTree(SimplexTree<N>* parent, unsigned index);
+    explicit SimplexTree(SimplexTree<N>* parent, unsigned index,
+                         const Region<N>&);
 
     /*
      *  Resets this tree to a freshly-constructed state
      */
-    void reset(SimplexTree<N>* p, unsigned i);
+    void reset(SimplexTree<N>* p, unsigned i, const Region<N>&);
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
@@ -95,7 +96,7 @@ public:
      *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
-    void evalLeaf(XTreeEvaluator* eval,
+    void evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>& neighbors,
                   const Region<N>& region, std::shared_ptr<Tape> tape,
                   ObjectPool<Leaf>& spare_leafs);
 

@@ -34,10 +34,11 @@ template <unsigned N> constexpr double SimplexTree<N>::EIGENVALUE_CUTOFF;
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-SimplexTree<N>::SimplexTree(SimplexTree<N>* parent, unsigned index)
+SimplexTree<N>::SimplexTree(SimplexTree<N>* parent, unsigned index,
+                            const Region<N>& region)
     : SimplexTree()
 {
-    reset(parent, index);
+    reset(parent, index, region);
 }
 
 template <unsigned N>
@@ -51,8 +52,11 @@ SimplexTree<N>::SimplexTree()
 }
 
 template <unsigned N>
-void SimplexTree<N>::reset(SimplexTree<N>* p, unsigned i)
+void SimplexTree<N>::reset(SimplexTree<N>* p, unsigned i,
+                           const Region<N>& region)
 {
+    (void)region;
+
     parent = p;
     parent_index = i;
     type = Interval::UNKNOWN;
@@ -144,7 +148,7 @@ struct Unroller<BaseDimension, ipow(3, BaseDimension)>
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
+void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
                               const Region<N>& region, Tape::Handle tape,
                               ObjectPool<Leaf>& spare_leafs)
 {
