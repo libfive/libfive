@@ -19,22 +19,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 using namespace Kernel;
 using namespace Kernel::SimplexSolver;
 
-TEST_CASE("simplexDimension")
-{
-    REQUIRE(simplexDimension(0) == 0);
-    REQUIRE(simplexDimension(1) == 0);
-    REQUIRE(simplexDimension(2) == 1);
-    REQUIRE(simplexDimension(5) == 1);
-    REQUIRE(simplexDimension(6) == 1);
-    REQUIRE(simplexDimension(8) == 2);
-    REQUIRE(simplexDimension(9) == 0);
-    REQUIRE(simplexDimension(11) == 1);
-    REQUIRE(simplexDimension(17) == 2);
-    REQUIRE(simplexDimension(18) == 1);
-    REQUIRE(simplexDimension(20) == 2);
-    REQUIRE(simplexDimension(26) == 3);
-}
-
 TEST_CASE("NeighborIndex::dimension")
 {
     REQUIRE(NeighborIndex(0).dimension() == 0);
@@ -75,18 +59,6 @@ TEST_CASE("NeighborIndex::contains")
     }
 }
 
-TEST_CASE("cornerToSimplex")
-{
-    REQUIRE(cornerToSimplex(0) == 0);
-    REQUIRE(cornerToSimplex(1) == 1);
-    REQUIRE(cornerToSimplex(2) == 3);
-    REQUIRE(cornerToSimplex(3) == 4);
-    REQUIRE(cornerToSimplex(4) == 9);
-    REQUIRE(cornerToSimplex(5) == 10);
-    REQUIRE(cornerToSimplex(6) == 12);
-    REQUIRE(cornerToSimplex(7) == 13);
-}
-
 TEST_CASE("CornerIndex::neighbor")
 {
     REQUIRE(CornerIndex(0).neighbor().i == 0);
@@ -97,16 +69,6 @@ TEST_CASE("CornerIndex::neighbor")
     REQUIRE(CornerIndex(5).neighbor().i == 10);
     REQUIRE(CornerIndex(6).neighbor().i == 12);
     REQUIRE(CornerIndex(7).neighbor().i == 13);
-}
-
-TEST_CASE("simplexUnion")
-{
-    REQUIRE(simplexUnion(0, 1) == 2);
-    REQUIRE(simplexUnion(0, 2) == 2);
-    REQUIRE(simplexUnion(0, 4) == 8);
-    REQUIRE(simplexUnion(2, 4) == 8);
-    REQUIRE(simplexUnion(1, 4) == 7);
-    REQUIRE(simplexUnion(9, 0) == 18);
 }
 
 TEST_CASE("NeighborIndex::operator|")
@@ -387,4 +349,20 @@ TEST_CASE("SimplexMesher: edge pairing")
 
         test_edge_pairs(m);
     }
+}
+
+TEST_CASE("SimplexMesher: menger sponge")
+{
+    Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
+    Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
+
+    auto t = SimplexTreePool<3>::build(sponge, r, 0.1);
+    t->assignIndices();
+
+    Mesh m;
+    XTreeEvaluator eval(sponge);
+    auto mesher = SimplexMesher(m, &eval);
+    Dual<3>::walk(t.get(), mesher);
+
+    m.saveSTL("sponge.stl");
 }

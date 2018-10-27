@@ -14,42 +14,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/simplex/corner.hpp"
 #include "libfive/render/brep/simplex/corner.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/types.hpp"
 
 namespace Kernel {
 
 namespace SimplexSolver {
-
-constexpr unsigned simplexDimension(unsigned simplex_number)
-{
-    return simplex_number
-        ? ((simplex_number % 3) == 2) + simplexDimension(simplex_number / 3)
-        : 0;
-}
-
-constexpr bool simplexContains(unsigned simplex_number,
-                               unsigned corner_number)
-{
-    return simplex_number
-        ? ((simplex_number % 3) == 2 ||
-           (simplex_number % 3) == (corner_number & 1))
-            && simplexContains(simplex_number / 3, corner_number >> 1)
-        : (corner_number == 0);
-}
-
-constexpr unsigned cornerToSimplex(unsigned corner_index)
-{
-    return corner_index
-        ? 3 * cornerToSimplex(corner_index >> 1) + (corner_index & 1)
-        : 0;
-}
-
-constexpr unsigned simplexUnion(unsigned a, unsigned b)
-{
-    return (a || b)
-        ? 3 * simplexUnion(a / 3, b / 3) +
-            ((a % 3) != (b % 3) ? 2 : (a % 3))
-        : 0;
-}
 
 template <unsigned SimplexNumber, typename Input, typename Output>
 void unpack(const Input& in, Output& out)
@@ -65,16 +34,17 @@ void unpack(const Input& in, Output& out)
 
 // Finds a vertex on the given simplex, clamping to lower-dimensional
 // simplices if it tries to escape.
-template <unsigned BaseDimension, unsigned SimplexNumber>
+template <unsigned BaseDimension, unsigned _SimplexNumber>
 Eigen::Matrix<double, BaseDimension, 1>
 findVertex(const CornerArray<BaseDimension>& corners,
                 Region<BaseDimension> region)
 {
-    constexpr unsigned SimplexDimension = simplexDimension(SimplexNumber);
+    constexpr NeighborIndex SimplexNumber(_SimplexNumber);
+    constexpr unsigned SimplexDimension = SimplexNumber.dimension();
 
     unsigned samples = 0;
     for (unsigned i=0; i < corners.size(); ++i) {
-        if (simplexContains(SimplexNumber, i)) {
+        if (SimplexNumber.contains(CornerIndex(i))) {
             samples += corners[i].deriv.size();
         }
     }
@@ -108,7 +78,7 @@ findVertex(const CornerArray<BaseDimension>& corners,
     unsigned sample = 0;
     for (unsigned i=0; i < corners.size(); ++i)
     {
-        if (!simplexContains(SimplexNumber, i)) {
+        if (!SimplexNumber.contains(CornerIndex(i))) {
             continue;
         }
 
@@ -121,14 +91,14 @@ findVertex(const CornerArray<BaseDimension>& corners,
         // pos is of the form [x, y, z, w], where w is the
         // distance field evaluated at the specific point.
         Eigen::Matrix<double, SimplexDimension + 1, 1> pos;
-        unpack<SimplexNumber>(region.corner(i), pos);
+        unpack<SimplexNumber.i>(region.corner(i), pos);
         pos(SimplexDimension) = corners[i].value;
 
         // Unpack each intersection, which share pos
         for (auto& d : corners[i].deriv)
         {
             Eigen::Matrix<double, 1, SimplexDimension> row;
-            unpack<SimplexNumber>(d, row);
+            unpack<SimplexNumber.i>(d, row);
             A.row(sample) << row, -1;
 
             b(sample) = A.row(sample) * pos;

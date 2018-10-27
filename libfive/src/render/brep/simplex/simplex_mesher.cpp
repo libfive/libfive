@@ -85,17 +85,15 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         }
         assert(index != SimplexTree<3>::LEAF_LEVEL_INVALID);
 
-        const unsigned corner_index_a = ((index & 1) ? 0 : Q) |
-                                        ((index & 2) ? 0 : R);
-        const unsigned corner_index_b = corner_index_a ^ A;
+        const CornerIndex corner_index_a(((index & 1) ? 0 : Q) |
+                                         ((index & 2) ? 0 : R));
+        const CornerIndex corner_index_b(corner_index_a.i ^ A);
         assert(ts.at(index)->leaf != nullptr);
 
-        const unsigned corner_simplex_a = SimplexSolver::cornerToSimplex(corner_index_a);
-        const unsigned corner_simplex_b = SimplexSolver::cornerToSimplex(corner_index_b);
-        const unsigned edge_simplex = SimplexSolver::simplexUnion(
-                corner_simplex_a, corner_simplex_b);
+        const auto corner_simplex_a = corner_index_a.neighbor();
+        const auto corner_simplex_b = corner_index_b.neighbor();
 
-        saveSubspaceVertex(index, edge_simplex);
+        saveSubspaceVertex(index, corner_simplex_a | corner_simplex_b);
         saveSubspaceVertex(index, corner_simplex_a);
         saveSubspaceVertex(index, corner_simplex_b);
     }
@@ -123,18 +121,16 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             else if (ta->leafLevel() < tb->leafLevel())
             {
                 assert(ta->leafLevel() != SimplexTree<3>::LEAF_LEVEL_INVALID);
-                saveSubspaceVertex(p.a, SimplexSolver::simplexUnion(
-                        SimplexSolver::cornerToSimplex(p.axis),
-                        SimplexSolver::cornerToSimplex(7)));
+                saveSubspaceVertex(p.a, CornerIndex(p.axis).neighbor() |
+                                        CornerIndex(7).neighbor());
             }
             else
             {
                 // This handles the case where both vertices are at the same
                 // level (and neither are EMPTY or FILLED).
                 assert(tb->leafLevel() != SimplexTree<3>::LEAF_LEVEL_INVALID);
-                saveSubspaceVertex(p.b, SimplexSolver::simplexUnion(
-                        SimplexSolver::cornerToSimplex(0),
-                        SimplexSolver::cornerToSimplex(7 ^ p.axis)));
+                saveSubspaceVertex(p.b, CornerIndex(0).neighbor() |
+                                        CornerIndex(7 ^ p.axis).neighbor());
             }
         }
     }
