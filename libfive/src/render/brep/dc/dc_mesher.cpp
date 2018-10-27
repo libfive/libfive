@@ -119,9 +119,8 @@ void DCMesher::load(const std::array<const XTree<3>*, 4>& ts)
 
         if (ts[i]->leaf->index[vi] == 0)
         {
-            ts[i]->leaf->index[vi] = m.verts.size();
-
-            m.verts.push_back(ts[i]->vert(vi).template cast<float>());
+            ts[i]->leaf->index[vi] = m.pushVertex(
+                ts[i]->vert(vi).template cast<float>());
         }
         vs[i] = ts[i]->leaf->index[vi];
     }
@@ -458,8 +457,8 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
 }
 
 std::unique_ptr<Mesh> DCMesher::mesh(const Root<XTree<3>>& xtree,
-                                 std::atomic_bool& cancel,
-                                 ProgressCallback progress_callback)
+                                     std::atomic_bool& cancel,
+                                     ProgressCallback progress_callback)
 {
     if (cancel.load() || xtree.get() == nullptr)
     {

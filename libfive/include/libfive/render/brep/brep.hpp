@@ -28,6 +28,12 @@ public:
     /*  [N-1]-dimensional objects (line segments, triangles) */
     std::vector<Eigen::Matrix<uint32_t, N, 1>,
                 Eigen::aligned_allocator<Eigen::Matrix<uint32_t, N, 1>>> branes;
+
+    uint32_t pushVertex(const Eigen::Matrix<float, N, 1>& v) {
+        uint32_t out = verts.size();
+        verts.push_back(v);
+        return out;
+    }
 };
 
 }   // namespace Kernel

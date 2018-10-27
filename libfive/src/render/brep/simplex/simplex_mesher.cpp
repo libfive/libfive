@@ -419,9 +419,7 @@ uint64_t SimplexMesher::searchEdge(Eigen::Vector3d inside,
 
     // TODO: we should weight the exact position based on values
     Eigen::Vector3d vert = (inside + outside) / 2;
-    const uint64_t out = m.verts.size();
-    m.verts.push_back(vert.template cast<float>());
-    return out;
+    return m.pushVertex(vert.template cast<float>());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

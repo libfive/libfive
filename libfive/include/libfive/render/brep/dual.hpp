@@ -54,13 +54,9 @@ void Dual<2>::walk(const T* t, V& v, ProgressWatcher* progress)
     if (t->isBranch())
     {
         // Recurse down every subface in the quadtree
-        for (unsigned i=0; i < t->children.size(); ++i)
+        for (const auto& c : t->children)
         {
-            auto c = t->child(i);
-            if (c != t)
-            {
-                walk(c, v, progress);
-            }
+            walk(c.load(), v, progress);
         }
 
         //  Then, call edge on every pair of cells
