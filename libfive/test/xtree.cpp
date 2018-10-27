@@ -141,7 +141,7 @@ TEST_CASE("XTree<2>::vertex_count")
 
 TEST_CASE("XTree<3>::vert")
 {
-    auto walk = [](Root<XTree<3>, XTree<3>::Leaf>& xtree,
+    auto walk = [](Root<XTree<3>>& xtree,
                    XTreeEvaluator& eval, float err=0.001)
     {
         std::list<const XTree<3>*> todo = {xtree.get()};

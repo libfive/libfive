@@ -24,7 +24,7 @@ struct SimplexTreePool
     /*
      *  Simplified construction with fewer arguments, used in unit testing
      */
-    static Root<SimplexTree<N>, typename SimplexTree<N>::Leaf> build(
+    static Root<SimplexTree<N>> build(
             const Tree t, Region<N> region,
             double min_feature=0.1, double max_err=1e-8, unsigned workers=8,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
@@ -34,7 +34,7 @@ struct SimplexTreePool
      *
      *  eval must be the first item in an array of at least `workers` items
      */
-    static Root<SimplexTree<N>, typename SimplexTree<N>::Leaf> build(
+    static Root<SimplexTree<N>> build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,

@@ -17,11 +17,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-template <typename Tree, typename Leaf, typename Neighbors, unsigned N>
+template <typename Tree, typename Neighbors, unsigned N>
 class WorkerPool
 {
 public:
-    static Root<Tree, Leaf> build(XTreeEvaluator* eval,
+    static Root<Tree> build(XTreeEvaluator* eval,
             Region<N> region, double min_feature,
             double max_err, unsigned workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback)
@@ -35,7 +35,7 @@ public:
         std::vector<std::future<void>> futures;
         futures.resize(workers);
 
-        Root<Tree, Leaf> out(root);
+        Root<Tree> out(root);
         std::mutex root_lock;
 
         // Kick off the progress tracking thread, based on the number of
@@ -73,7 +73,7 @@ public:
 
         if (cancel.load())
         {
-            return Root<Tree, Leaf>();
+            return Root<Tree>();
         }
         else
         {
@@ -95,7 +95,7 @@ protected:
     static void run(XTreeEvaluator* eval, LockFreeStack& tasks,
                     const float min_feature, const float max_err,
                     std::atomic_bool& done, std::atomic_bool& cancel,
-                    Root<Tree, Leaf>& root, std::mutex& root_lock,
+                    Root<Tree>& root, std::mutex& root_lock,
                     ProgressWatcher* progress)
     {
         // Tasks to be evaluated by this thread (populated when the
@@ -103,7 +103,7 @@ protected:
         std::stack<Task, std::vector<Task>> local;
 
         ObjectPool<Tree> spare_trees;
-        ObjectPool<Leaf> spare_leafs;
+        ObjectPool<typename Tree::Leaf> spare_leafs;
 
         while (!done.load() && !cancel.load())
         {

@@ -27,7 +27,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 template <unsigned N>
-Root<XTree<N>, typename XTree<N>::Leaf> XTreePool<N>::build(
+Root<XTree<N>> XTreePool<N>::build(
             const Tree t, Region<N> region,
             double min_feature, double max_err, unsigned workers,
             ProgressCallback progress_callback)
@@ -44,7 +44,7 @@ Root<XTree<N>, typename XTree<N>::Leaf> XTreePool<N>::build(
 }
 
 template <unsigned N>
-Root<XTree<N>, typename XTree<N>::Leaf> XTreePool<N>::build(
+Root<XTree<N>> XTreePool<N>::build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
@@ -55,8 +55,7 @@ Root<XTree<N>, typename XTree<N>::Leaf> XTreePool<N>::build(
     {
         XTree<N>::mt = Marching::buildTable<N>();
     }
-    return WorkerPool<XTree<N>, typename XTree<N>::Leaf,
-                      DCNeighbors<N>, N>::build(
+    return WorkerPool<XTree<N>, DCNeighbors<N>, N>::build(
         eval, region, min_feature, max_err, workers, cancel, progress_callback);
 }
 

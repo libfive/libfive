@@ -457,7 +457,7 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
     branes.push_back({ aIndex, bIndex, intersectionIndex });
 }
 
-std::unique_ptr<Mesh> DCMesher::mesh(const Root<XTree<3>, XTree<3>::Leaf>& xtree,
+std::unique_ptr<Mesh> DCMesher::mesh(const Root<XTree<3>>& xtree,
                                  std::atomic_bool& cancel,
                                  ProgressCallback progress_callback)
 {

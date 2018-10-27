@@ -15,7 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-template <typename T, typename L> class Root;
+template <typename T> class Root;
 class Mesh;
 
 class DCMesher {
@@ -31,7 +31,7 @@ public:
 
     /*  Walks an XTree, returning a mesh  */
     static std::unique_ptr<Mesh> mesh(
-            const Root<XTree<3>, XTree<3>::Leaf>& tree,
+            const Root<XTree<3>>& tree,
             std::atomic_bool& cancel,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 

@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-template <typename Tree, typename Leaf>
+template <typename Tree>
 class Root
 {
 public:
@@ -66,14 +66,14 @@ public:
         tree_count += pool.size();
         pool.release(trees);
     }
-    void claim(ObjectPool<Leaf>& pool) { pool.release(leafs); }
+    void claim(ObjectPool<typename Tree::Leaf>& pool) { pool.release(leafs); }
 
     int64_t size() const { return tree_count; }
 
 protected:
     Tree* ptr;
     std::list<Tree*> trees;
-    std::list<Leaf*> leafs;
+    std::list<typename Tree::Leaf*> leafs;
 
     // Used for progress tracking.  We use a signed value here because,
     // as we claim Pools of XTrees, it's possible for the intermediate

@@ -24,7 +24,7 @@ struct XTreePool
     /*
      *  Simplified construction with fewer arguments, used in unit testing
      */
-    static Root<XTree<N>, typename XTree<N>::Leaf> build(
+    static Root<XTree<N>> build(
             const Tree t, Region<N> region,
             double min_feature=0.1, double max_err=1e-8, unsigned workers=1,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
@@ -34,7 +34,7 @@ struct XTreePool
      *
      *  eval must be the first item in an array of at least `workers` items
      */
-    static Root<XTree<N>, typename XTree<N>::Leaf> build(
+    static Root<XTree<N>> build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,

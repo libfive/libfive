@@ -210,7 +210,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
 {
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
-    Root<XTree<3>, XTree<3>::Leaf> t;
+    Root<XTree<3>> t;
     BENCHMARK("XTree construction")
     {
         t = XTreePool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8);
@@ -244,7 +244,7 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
 
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
-    Root<XTree<3>, XTree<3>::Leaf> t;
+    Root<XTree<3>> t;
     BENCHMARK("XTree construction")
     {
         t = XTreePool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8,
