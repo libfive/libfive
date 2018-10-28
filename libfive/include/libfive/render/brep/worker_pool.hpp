@@ -17,16 +17,16 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-template <typename Tree, typename Neighbors, unsigned N>
+template <typename T, typename Neighbors, unsigned N>
 class WorkerPool
 {
 public:
-    static Root<Tree> build(XTreeEvaluator* eval,
+    static Root<T> build(XTreeEvaluator* eval,
             Region<N> region, double min_feature,
             double max_err, unsigned workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback)
     {
-        auto root(new Tree(nullptr, 0, region));
+        auto root(new T(nullptr, 0, region));
         std::atomic_bool done(false);
 
         LockFreeStack tasks(workers);
@@ -35,7 +35,7 @@ public:
         std::vector<std::future<void>> futures;
         futures.resize(workers);
 
-        Root<Tree> out(root);
+        Root<T> out(root);
         std::mutex root_lock;
 
         // Kick off the progress tracking thread, based on the number of
@@ -73,7 +73,7 @@ public:
 
         if (cancel.load())
         {
-            return Root<Tree>();
+            return Root<T>();
         }
         else
         {
@@ -83,7 +83,7 @@ public:
 
 protected:
     struct Task {
-        Tree* target;
+        T* target;
         std::shared_ptr<Tape> tape;
         Region<N> region;
         Neighbors parent_neighbors;
@@ -95,15 +95,15 @@ protected:
     static void run(XTreeEvaluator* eval, LockFreeStack& tasks,
                     const float min_feature, const float max_err,
                     std::atomic_bool& done, std::atomic_bool& cancel,
-                    Root<Tree>& root, std::mutex& root_lock,
+                    Root<T>& root, std::mutex& root_lock,
                     ProgressWatcher* progress)
     {
         // Tasks to be evaluated by this thread (populated when the
         // MPMC stack is completely full).
         std::stack<Task, std::vector<Task>> local;
 
-        ObjectPool<Tree> spare_trees;
-        ObjectPool<typename Tree::Leaf> spare_leafs;
+        ObjectPool<T> spare_trees;
+        ObjectPool<typename T::Leaf> spare_leafs;
 
         while (!done.load() && !cancel.load())
         {

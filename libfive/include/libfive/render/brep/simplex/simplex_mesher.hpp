@@ -44,8 +44,10 @@ protected:
                         std::shared_ptr<Tape> tape);
 
     PerThreadBRep<3>& m;
-    XTreeEvaluator* eval;
+    std::unique_ptr<XTreeEvaluator> eval;
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 class SimplexMesherFactory
 {

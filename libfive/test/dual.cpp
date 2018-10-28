@@ -23,6 +23,7 @@ struct Walker2
     void load(const std::array<const XTree<2>*, 2>& ts)
     {
         // TODO: consolidate this code into once place
+
         // Exit immediately if we can prove that there will be no
         // face produced by this edge.
         if (std::any_of(ts.begin(), ts.end(),
@@ -93,6 +94,7 @@ struct Walker3
     void load(const std::array<const XTree<3>*, 4>& a)
     {
         // TODO: consolidate this with DCMesher
+
         // Exit immediately if we can prove that there will be no
         // face produced by this edge.
         if (std::any_of(a.begin(), a.end(),

@@ -13,12 +13,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-template <typename Tree>
+template <typename T>
 class Root
 {
 public:
     Root() : ptr(nullptr) {}
-    Root(Tree* ptr) : ptr(ptr) {}
+    Root(T* ptr) : ptr(ptr) {}
     Root(Root&& other) { *this = std::move(other); }
 
     Root& operator=(Root&& other) {
@@ -59,21 +59,21 @@ public:
         leafs.clear();
     }
 
-    const Tree* operator->() { return ptr; }
-    const Tree* get() const { return ptr; }
+    const T* operator->() { return ptr; }
+    const T* get() const { return ptr; }
 
-    void claim(ObjectPool<Tree>& pool) {
+    void claim(ObjectPool<T>& pool) {
         tree_count += pool.size();
         pool.release(trees);
     }
-    void claim(ObjectPool<typename Tree::Leaf>& pool) { pool.release(leafs); }
+    void claim(ObjectPool<typename T::Leaf>& pool) { pool.release(leafs); }
 
     int64_t size() const { return tree_count; }
 
 protected:
-    Tree* ptr;
-    std::list<Tree*> trees;
-    std::list<typename Tree::Leaf*> leafs;
+    T* ptr;
+    std::list<T*> trees;
+    std::list<typename T::Leaf*> leafs;
 
     // Used for progress tracking.  We use a signed value here because,
     // as we claim Pools of XTrees, it's possible for the intermediate
