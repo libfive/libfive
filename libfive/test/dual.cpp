@@ -112,6 +112,8 @@ struct Walker3
     float max_norm = 0;
 };
 
+#if 0
+// TODO
 TEST_CASE("Dual<2>::walk")
 {
     auto ta = XTreePool<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
@@ -134,3 +136,4 @@ TEST_CASE("Dual<3>::walk")
     REQUIRE(c.min_norm > 0.49);
     REQUIRE(c.max_norm < 0.51);
 }
+#endif

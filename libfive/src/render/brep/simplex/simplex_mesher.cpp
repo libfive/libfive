@@ -10,13 +10,28 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <numeric>
 #include <fstream>
 
+#include <boost/container/static_vector.hpp>
+
 #include "libfive/render/brep/simplex/simplex_mesher.hpp"
 #include "libfive/render/brep/simplex/simplextree.hpp"
 #include "libfive/render/brep/simplex/solver.hpp"
 #include "libfive/render/brep/types.hpp"
+#include "libfive/render/brep/per_thread_brep.hpp"
 
 namespace Kernel {
 
+SimplexMesherFactory::SimplexMesherFactory(Tree t)
+    : t(t)
+{
+    // Nothing to do here
+}
+
+SimplexMesher SimplexMesherFactory::operator()(PerThreadBRep<3>& m)
+{
+    return SimplexMesher(m, new XTreeEvaluator(t));
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 template <Axis::Axis A>
 void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)

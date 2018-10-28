@@ -17,9 +17,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-class Segments : public BRep<2>
+class DCSegments
 {
 public:
+    DCSegments(PerThreadBRep<2>& m) : m(m) {}
+
     template <Axis::Axis A>
     void load(const std::array<const XTree<2>*, 2>& ts)
     {
@@ -99,17 +101,26 @@ public:
 
             if (ts[i]->leaf->index[vi] == 0)
             {
-                ts[i]->leaf->index[vi] = verts.size();
-
-                // Look up the appropriate vertex id
-                verts.push_back(ts[i]->vert(vi).template cast<float>());
+                ts[i]->leaf->index[vi] = m.pushVertex(
+                    ts[i]->vert(vi).template cast<float>());
             }
             vs[i] = ts[i]->leaf->index[vi];
         }
         // Handle contour winding direction
-        branes.push_back({vs[!D], vs[D]});
+        m.branes.push_back({vs[!D], vs[D]});
     }
+
+protected:
+    PerThreadBRep<2>& m;
 };
+
+class DCSegmentsFactory
+{
+public:
+    DCSegments operator()(PerThreadBRep<2>& m) { return DCSegments(m); }
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 std::unique_ptr<Contours> Contours::render(
         const Tree t, const Region<2>& r,
@@ -132,8 +143,8 @@ std::unique_ptr<Contours> Contours::render(
         workers, cancel);
 
     // Perform marching squares
-    Segments segs;
-    Dual<2>::walk(xtree.get(), segs);
+    DCSegmentsFactory f;
+    auto segs = Dual<2>::walk<BRep<2>>(xtree.get(), f, 1);
 
     auto c = std::unique_ptr<Contours>(new Contours(r));
 

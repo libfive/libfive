@@ -22,6 +22,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+class DCMesherFactory
+{
+public:
+    DCMesher operator()(PerThreadBRep<3>& m) { return DCMesher(m); }
+};
+
 template <Axis::Axis A>
 void DCMesher::load(const std::array<const XTree<3>*, 4>& ts)
 {
@@ -482,9 +488,6 @@ std::unique_ptr<Mesh> DCMesher::mesh(const Root<XTree<3>>& xtree,
 #endif
 
     // Perform marching squares
-    auto m = std::unique_ptr<Mesh>(new Mesh());
-    DCMesher d(*m);
-
     if (cancel.load() || xtree.get() == nullptr)
     {
         return nullptr;
@@ -496,7 +499,9 @@ std::unique_ptr<Mesh> DCMesher::mesh(const Root<XTree<3>>& xtree,
                 xtree.size(), 1.0f,
                 progress_callback, done, cancel);
 
-        Dual<3>::walk(xtree.get(), d, progress_watcher);
+
+        DCMesherFactory f;
+        auto out = Dual<3>::walk<Mesh>(xtree.get(), f, 8, progress_watcher);
 
         done.store(true);
         delete progress_watcher;
@@ -525,7 +530,7 @@ std::unique_ptr<Mesh> DCMesher::mesh(const Root<XTree<3>>& xtree,
                         t->cornerPos(e.second).template cast<float>());
         }
 #endif
-        return m;
+        return std::unique_ptr<Mesh>(new Mesh(std::move(out)));
     }
 }
 

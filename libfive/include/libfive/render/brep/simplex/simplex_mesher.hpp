@@ -8,18 +8,25 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
+#include <array>
+
+#include <Eigen/Eigen>
+
 #include "libfive/render/axes.hpp"
-#include "libfive/render/brep/mesh.hpp"
+#include "libfive/eval/tape.hpp"
+#include "libfive/tree/tree.hpp"
 
 namespace Kernel {
 
-// Forward declaration
+// Forward declarations
 template <unsigned N> class SimplexTree;
+template <unsigned N> class PerThreadBRep;
+class XTreeEvaluator;
 
 class SimplexMesher
 {
 public:
-    SimplexMesher(Mesh& m, XTreeEvaluator* eval) : m(m), eval(eval) {}
+    SimplexMesher(PerThreadBRep<3>& m, XTreeEvaluator* eval) : m(m), eval(eval) {}
 
     /*
      *  Called by Dual::walk to construct the triangle mesh
@@ -36,8 +43,18 @@ protected:
     uint64_t searchEdge(Eigen::Vector3d inside, Eigen::Vector3d outside,
                         std::shared_ptr<Tape> tape);
 
-    Mesh& m;
+    PerThreadBRep<3>& m;
     XTreeEvaluator* eval;
 };
+
+class SimplexMesherFactory
+{
+public:
+    SimplexMesherFactory(Tree t);
+    SimplexMesher operator()(PerThreadBRep<3>& m);
+protected:
+    Tree t;
+};
+
 
 }   // namespace Kernel

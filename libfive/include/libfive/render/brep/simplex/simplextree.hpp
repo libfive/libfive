@@ -170,6 +170,9 @@ public:
     /*  Optional leaf data, owned by a parent ObjectPool<Leaf> */
     Leaf* leaf;
 
+    /*  Marks whether this tree is fully constructed */
+    mutable std::atomic_uint pending;
+
 protected:
     /*
      *  Searches for a vertex within the SimplexTree cell, using the QEF matrices
@@ -198,9 +201,6 @@ protected:
      *  Helper function to assign leaf->index for all leafs in a tree
      */
     void assignIndices(uint64_t& i, const SimplexNeighbors<N>& neighbors) const;
-
-    /*  Marks whether this tree is fully constructed */
-    std::atomic_int pending;
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;

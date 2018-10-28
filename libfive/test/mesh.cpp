@@ -14,6 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_mesher.hpp"
 #include "libfive/render/brep/dc/xtree_pool.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/mesh.hpp"
 
 #include "util/shapes.hpp"
 

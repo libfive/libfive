@@ -11,7 +11,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <array>
 #include "libfive/render/axes.hpp"
 
-#include "libfive/render/brep/mesh.hpp"
+#include "libfive/render/brep/per_thread_brep.hpp"
+#include "libfive/render/brep/dc/xtree.hpp"
 
 namespace Kernel {
 
@@ -20,7 +21,7 @@ class Mesh;
 
 class DCMesher {
 public:
-    DCMesher(Mesh& m) : m(m) {}
+    DCMesher(PerThreadBRep<3>& m) : m(m) {}
 
     /*
      *  Called by Dual::walk to construct the triangle mesh
@@ -39,7 +40,7 @@ protected:
     template <Axis::Axis A, bool D>
     void load(const std::array<const XTree<3>*, 4>& ts);
 
-    Mesh& m;
+    PerThreadBRep<3>& m;
 };
 
 }   // namespace Kernel

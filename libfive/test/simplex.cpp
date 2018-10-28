@@ -251,10 +251,8 @@ TEST_CASE("SimplexMesher (smoke test)")
     }
     t->assignIndices();
 
-    Mesh m;
-    XTreeEvaluator eval(c);
-    auto mesher = SimplexMesher(m, &eval);
-    Dual<3>::walk(t.get(), mesher);
+    SimplexMesherFactory f(c);
+    auto m = Dual<3>::walk<Mesh>(t.get(), f);
 
     REQUIRE(m.branes.size() > 0);
     REQUIRE(m.verts.size() > 1);
@@ -308,10 +306,8 @@ TEST_CASE("SimplexMesher: edge pairing")
         }
         t->assignIndices();
 
-        Mesh m;
-        XTreeEvaluator eval(c);
-        auto mesher = SimplexMesher(m, &eval);
-        Dual<3>::walk(t.get(), mesher);
+        SimplexMesherFactory f(c);
+        auto m = Dual<3>::walk<Mesh>(t.get(), f);
 
         test_edge_pairs(m);
     }
@@ -324,10 +320,8 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
         t->assignIndices();
 
-        Mesh m;
-        XTreeEvaluator eval(c);
-        auto mesher = SimplexMesher(m, &eval);
-        Dual<3>::walk(t.get(), mesher);
+        SimplexMesherFactory f(c);
+        auto m = Dual<3>::walk<Mesh>(t.get(), f);
 
         test_edge_pairs(m);
     }
@@ -340,10 +334,8 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
         t->assignIndices();
 
-        Mesh m;
-        XTreeEvaluator eval(c);
-        auto mesher = SimplexMesher(m, &eval);
-        Dual<3>::walk(t.get(), mesher);
+        auto f = SimplexMesherFactory(c);
+        auto m = Dual<3>::walk<Mesh>(t.get(), f);
 
         m.saveSTL("out.stl");
 
@@ -359,10 +351,8 @@ TEST_CASE("SimplexMesher: menger sponge")
     auto t = SimplexTreePool<3>::build(sponge, r, 0.1);
     t->assignIndices();
 
-    Mesh m;
-    XTreeEvaluator eval(sponge);
-    auto mesher = SimplexMesher(m, &eval);
-    Dual<3>::walk(t.get(), mesher);
+    SimplexMesherFactory f(sponge);
+    auto m = Dual<3>::walk<Mesh>(t.get(), f);
 
     m.saveSTL("sponge.stl");
 }

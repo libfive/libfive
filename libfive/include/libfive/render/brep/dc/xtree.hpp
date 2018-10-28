@@ -247,6 +247,9 @@ public:
      *  initialized when needed */
     static std::unique_ptr<const Marching::MarchingTable<N>> mt;
 
+    /*  Marks whether this tree is fully constructed */
+    mutable std::atomic_uint pending;
+
 protected:
     /*
      *  Searches for a vertex within the XTree cell, using the QEF matrices
@@ -326,9 +329,6 @@ protected:
      *  this tree into the parent's array of children pointers.
      */
     void done();
-
-    /*  Marks whether this tree is fully constructed */
-    std::atomic_int pending;
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;
