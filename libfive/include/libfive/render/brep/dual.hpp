@@ -29,7 +29,7 @@ public:
       *  Factory needs operator() defined, and should produce a mesher
       *  object when passed a PerThreadBRep<N> */
     template<typename Output, typename T, typename F>
-    static Output walk(const T* tree, F& factory, unsigned workers=1,
+    static Output walk(const T* tree, F& factory, unsigned workers=8,
                        ProgressWatcher* p=nullptr);
 
 protected:
