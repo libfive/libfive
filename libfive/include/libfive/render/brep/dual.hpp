@@ -26,11 +26,13 @@ class Dual
 public:
      /*  Mesher needs load(const std::array<T*, N>& trees) defined
       *
-      *  Factory needs operator() defined, and should produce a mesher
       *  object when passed a PerThreadBRep<N>. */
-    template<typename Output, typename T, typename F>
-    static Output walk(const T* tree, F& factory, unsigned workers=8,
-                       ProgressWatcher* p=nullptr);
+    template<typename Output, typename M, typename T, typename ... A>
+    static std::unique_ptr<Output> walk(
+            const Root<T>& t, unsigned workers,
+            std::atomic_bool& cancel,
+            ProgressCallback progress_callback,
+            A... args);
 
 protected:
     template<typename T, typename Mesher>
@@ -158,13 +160,15 @@ void Dual<3>::work(const T* t, V& v)
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-template <typename Output, typename T, typename Factory>
-Output Dual<N>::walk(const T* t, Factory& f, unsigned workers,
-                     ProgressWatcher* progress)
+template <typename Output, typename M, typename T, typename ... A>
+std::unique_ptr<Output> Dual<N>::walk(const Root<T>& t, unsigned workers,
+                     std::atomic_bool& cancel,
+                     ProgressCallback progress_callback,
+                     A... args)
 {
     boost::lockfree::stack<const T*, boost::lockfree::fixed_sized<true>>
         tasks(workers);
-    tasks.push(t);
+    tasks.push(t.get());
 
     std::atomic_uint32_t global_index(1);
     std::vector<PerThreadBRep<N>> breps;
@@ -173,14 +177,17 @@ Output Dual<N>::walk(const T* t, Factory& f, unsigned workers,
     }
 
     std::atomic_bool done(false);
-    std::atomic_bool cancel(false); // TODO: connect this from above
+
+    auto progress = ProgressWatcher::build(
+            t.size(), 1.0f,
+            progress_callback, done, cancel);
 
     std::vector<std::future<void>> futures;
     futures.resize(workers);
     for (unsigned i=0; i < workers; ++i) {
         futures[i] = std::async(std::launch::async,
-            [&breps, &done, &cancel, &tasks, &f, i, progress]() {
-                auto m = f(breps[i]);
+            [&breps, &done, &cancel, &tasks, &args..., i, progress]() {
+                auto m = M(breps[i], args...);
                 Dual<N>::run(m, progress, tasks, done, cancel);
             });
     }
@@ -192,8 +199,11 @@ Output Dual<N>::walk(const T* t, Factory& f, unsigned workers,
 
     assert(done.load() || cancel.load());
 
-    Output out;
-    out.collect(breps);
+    done.store(true);
+    delete progress;
+
+    auto out = std::unique_ptr<Output>(new Output);
+    out->collect(breps);
     return out;
 }
 

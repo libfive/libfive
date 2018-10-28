@@ -21,20 +21,14 @@ class Mesh;
 
 class DCMesher {
 public:
-    DCMesher(PerThreadBRep<3>& m) : m(m) {}
+    DCMesher(PerThreadBRep<3>& m) : m(m)
+        {   /* Nothing to do here */    }
 
     /*
      *  Called by Dual::walk to construct the triangle mesh
      */
     template <Axis::Axis A>
     void load(const std::array<const XTree<3>*, 4>& ts);
-
-
-    /*  Walks an XTree, returning a mesh  */
-    static std::unique_ptr<Mesh> mesh(
-            const Root<XTree<3>>& tree,
-            std::atomic_bool& cancel,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
 protected:
     template <Axis::Axis A, bool D>

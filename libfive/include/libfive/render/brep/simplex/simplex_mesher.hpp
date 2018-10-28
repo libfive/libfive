@@ -26,7 +26,7 @@ class XTreeEvaluator;
 class SimplexMesher
 {
 public:
-    SimplexMesher(PerThreadBRep<3>& m, XTreeEvaluator* eval) : m(m), eval(eval) {}
+    SimplexMesher(PerThreadBRep<3>& m, Tree t);
 
     /*
      *  Called by Dual::walk to construct the triangle mesh
@@ -48,15 +48,5 @@ protected:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-
-class SimplexMesherFactory
-{
-public:
-    SimplexMesherFactory(Tree t);
-    SimplexMesher operator()(PerThreadBRep<3>& m);
-protected:
-    Tree t;
-};
-
 
 }   // namespace Kernel

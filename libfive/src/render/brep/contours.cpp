@@ -114,12 +114,6 @@ protected:
     PerThreadBRep<2>& m;
 };
 
-class DCSegmentsFactory
-{
-public:
-    DCSegments operator()(PerThreadBRep<2>& m) { return DCSegments(m); }
-};
-
 ////////////////////////////////////////////////////////////////////////////////
 
 std::unique_ptr<Contours> Contours::render(
@@ -143,8 +137,8 @@ std::unique_ptr<Contours> Contours::render(
         workers, cancel);
 
     // Perform marching squares
-    DCSegmentsFactory f;
-    auto segs = Dual<2>::walk<BRep<2>>(xtree.get(), f, 1);
+    auto segs = Dual<2>::walk<BRep<2>, DCSegments>(xtree, workers, cancel,
+                                                   EMPTY_PROGRESS_CALLBACK);
 
     auto c = std::unique_ptr<Contours>(new Contours(r));
 
@@ -153,7 +147,7 @@ std::unique_ptr<Contours> Contours::render(
     std::map<uint32_t, uint32_t> tails;
     std::vector<std::list<uint32_t>> contours;
 
-    for (auto& s : segs.branes)
+    for (auto& s : segs->branes)
     {
         {   // Check to see whether we can attach to the back of a tail
             auto t = tails.find(s[0]);
@@ -198,7 +192,7 @@ std::unique_ptr<Contours> Contours::render(
         {
             for (const auto& pt : contours[target])
             {
-                c->contours.back().push_back(segs.verts[pt]);
+                c->contours.back().push_back(segs->verts[pt]);
             }
             processed[target] = true;
 

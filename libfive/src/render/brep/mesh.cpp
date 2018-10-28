@@ -14,6 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/dc/xtree_pool.hpp"
 #include "libfive/render/brep/dc/dc_mesher.hpp"
+#include "libfive/render/brep/dual.hpp"
 
 namespace Kernel {
 
@@ -56,7 +57,15 @@ std::unique_ptr<Mesh> Mesh::render(
     auto t = XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel,
                                  progress_callback);
 
-    auto out = DCMesher::mesh(t, cancel, progress_callback);
+
+    // Perform marching squares
+    if (cancel.load() || t.get() == nullptr) {
+        return nullptr;
+    }
+
+    auto out = Dual<3>::walk<Mesh, DCMesher>(t, workers, cancel, progress_callback);
+
+    // TODO: check for early return here again
     t.reset(progress_callback);
 
     return out;

@@ -251,12 +251,13 @@ TEST_CASE("SimplexMesher (smoke test)")
     }
     t->assignIndices();
 
-    SimplexMesherFactory f(c);
-    auto m = Dual<3>::walk<Mesh>(t.get(), f);
+    std::atomic_bool cancel(false);
+    auto m = Dual<3>::walk<Mesh, SimplexMesher>(t, 8,
+            cancel, EMPTY_PROGRESS_CALLBACK, c);
 
-    REQUIRE(m.branes.size() > 0);
-    REQUIRE(m.verts.size() > 1);
-    m.saveSTL("out.stl");
+    REQUIRE(m->branes.size() > 0);
+    REQUIRE(m->verts.size() > 1);
+    m->saveSTL("out.stl");
 }
 
 void test_edge_pairs(const Mesh& m) {
@@ -294,6 +295,9 @@ void test_edge_pairs(const Mesh& m) {
 
 TEST_CASE("SimplexMesher: edge pairing")
 {
+    std::atomic_bool cancel(false);
+    const unsigned workers = 8;
+
     SECTION("Sphere (low resolution)")
     {
         auto c = sphere(0.4);
@@ -306,10 +310,10 @@ TEST_CASE("SimplexMesher: edge pairing")
         }
         t->assignIndices();
 
-        SimplexMesherFactory f(c);
-        auto m = Dual<3>::walk<Mesh>(t.get(), f);
+        auto m = Dual<3>::walk<Mesh, SimplexMesher>(t, workers,
+                cancel, EMPTY_PROGRESS_CALLBACK, c);
 
-        test_edge_pairs(m);
+        test_edge_pairs(*m);
     }
 
     SECTION("Sphere (higher-resolution)")
@@ -320,10 +324,10 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
         t->assignIndices();
 
-        SimplexMesherFactory f(c);
-        auto m = Dual<3>::walk<Mesh>(t.get(), f);
+        auto m = Dual<3>::walk<Mesh, SimplexMesher>(t, workers,
+                cancel, EMPTY_PROGRESS_CALLBACK, c);
 
-        test_edge_pairs(m);
+        test_edge_pairs(*m);
     }
 
     SECTION("Box (low-resolution)")
@@ -334,12 +338,10 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
         t->assignIndices();
 
-        auto f = SimplexMesherFactory(c);
-        auto m = Dual<3>::walk<Mesh>(t.get(), f);
+        auto m = Dual<3>::walk<Mesh, SimplexMesher>(t, workers,
+                cancel, EMPTY_PROGRESS_CALLBACK, c);
 
-        m.saveSTL("out.stl");
-
-        test_edge_pairs(m);
+        test_edge_pairs(*m);
     }
 }
 
@@ -351,8 +353,9 @@ TEST_CASE("SimplexMesher: menger sponge")
     auto t = SimplexTreePool<3>::build(sponge, r, 0.1);
     t->assignIndices();
 
-    SimplexMesherFactory f(sponge);
-    auto m = Dual<3>::walk<Mesh>(t.get(), f);
+    std::atomic_bool cancel(false);
+    auto m = Dual<3>::walk<Mesh, SimplexMesher>(t,
+            8, cancel, EMPTY_PROGRESS_CALLBACK, sponge);
 
-    m.saveSTL("sponge.stl");
+    m->saveSTL("sponge.stl");
 }

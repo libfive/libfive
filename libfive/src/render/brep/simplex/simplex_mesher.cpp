@@ -20,18 +20,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-SimplexMesherFactory::SimplexMesherFactory(Tree t)
-    : t(t)
+SimplexMesher::SimplexMesher(PerThreadBRep<3>& m, Tree t)
+    : m(m), eval(new XTreeEvaluator(t))
 {
     // Nothing to do here
 }
-
-SimplexMesher SimplexMesherFactory::operator()(PerThreadBRep<3>& m)
-{
-    return SimplexMesher(m, new XTreeEvaluator(t));
-}
-
-////////////////////////////////////////////////////////////////////////////////
 
 template <Axis::Axis A>
 void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)

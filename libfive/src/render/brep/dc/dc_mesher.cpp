@@ -22,12 +22,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-class DCMesherFactory
-{
-public:
-    DCMesher operator()(PerThreadBRep<3>& m) { return DCMesher(m); }
-};
-
 template <Axis::Axis A>
 void DCMesher::load(const std::array<const XTree<3>*, 4>& ts)
 {
@@ -472,66 +466,11 @@ void Mesh::checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b,
     branes.push_back({ aIndex, bIndex, intersectionIndex });
 }
 
-std::unique_ptr<Mesh> DCMesher::mesh(const Root<XTree<3>>& xtree,
-                                     std::atomic_bool& cancel,
-                                     ProgressCallback progress_callback)
-{
-    if (cancel.load() || xtree.get() == nullptr)
-    {
-        return nullptr;
-    }
+////////////////////////////////////////////////////////////////////////////////
 
-#if LIBFIVE_TRIANGLE_FAN_MESHING
-    // Make sure each intersection has the same object in all cells.
-    IntersectionAligner aligner;
-    Dual<3>::walk(xtree.get(), aligner, nullptr);
-#endif
-
-    // Perform marching squares
-    if (cancel.load() || xtree.get() == nullptr)
-    {
-        return nullptr;
-    }
-    else
-    {
-        std::atomic_bool done(false);
-        auto progress_watcher = ProgressWatcher::build(
-                xtree.size(), 1.0f,
-                progress_callback, done, cancel);
-
-
-        DCMesherFactory f;
-        auto out = Dual<3>::walk<Mesh>(xtree.get(), f, 8, progress_watcher);
-
-        done.store(true);
-        delete progress_watcher;
-
-#if DEBUG_OCTREE_CELLS
-        // Store octree cells as lines
-        std::list<const XTree<3>*> todo = {xtree.get()};
-        while (todo.size())
-        {
-            auto t = todo.front();
-            todo.pop_front();
-            if (t->isBranch())
-                for (auto& c : t->children)
-                    todo.push_back(c.get());
-
-            static const std::vector<std::pair<uint8_t, uint8_t>> es =
-                {{0, Axis::X}, {0, Axis::Y}, {0, Axis::Z},
-                 {Axis::X, Axis::X|Axis::Y}, {Axis::X, Axis::X|Axis::Z},
-                 {Axis::Y, Axis::Y|Axis::X}, {Axis::Y, Axis::Y|Axis::Z},
-                 {Axis::X|Axis::Y, Axis::X|Axis::Y|Axis::Z},
-                 {Axis::Z, Axis::Z|Axis::X}, {Axis::Z, Axis::Z|Axis::Y},
-                 {Axis::Z|Axis::X, Axis::Z|Axis::X|Axis::Y},
-                 {Axis::Z|Axis::Y, Axis::Z|Axis::Y|Axis::X}};
-            for (auto e : es)
-                m->line(t->cornerPos(e.first).template cast<float>(),
-                        t->cornerPos(e.second).template cast<float>());
-        }
-#endif
-        return std::unique_ptr<Mesh>(new Mesh(std::move(out)));
-    }
-}
+// Explicit template instantiation
+template void DCMesher::load<Axis::X>(const std::array<const XTree<3>*, 4>&);
+template void DCMesher::load<Axis::Y>(const std::array<const XTree<3>*, 4>&);
+template void DCMesher::load<Axis::Z>(const std::array<const XTree<3>*, 4>&);
 
 }   // namespace Kernel
