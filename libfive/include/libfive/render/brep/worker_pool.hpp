@@ -17,6 +17,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+/*
+ *  A WorkerPool is used to construct a recursive tree (quadtree / octree)
+ *  by sharing the work among a pool of threads.
+ */
 template <typename T, typename Neighbors, unsigned N>
 class WorkerPool
 {
@@ -168,6 +172,12 @@ protected:
                         }
                     }
 
+                    // If we did an interval evaluation, then we either
+                    // (a) are done with this tree because it is empty / filled
+                    // (b) don't do anything until all of its children are done
+                    //
+                    // In both cases, we should keep looping; the latter case
+                    // is handled in collectChildren below.
                     continue;
                 }
             }
