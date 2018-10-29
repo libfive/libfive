@@ -18,8 +18,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <boost/lockfree/stack.hpp>
 
-#include "libfive/render/brep/dc/xtree.hpp"
-#include "libfive/render/brep/dc/xtree_pool.hpp"
+#include "libfive/render/brep/dc/dc_tree.hpp"
+#include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/worker_pool.hpp"
 #include "libfive/eval/tape.hpp"
@@ -27,7 +27,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 template <unsigned N>
-Root<XTree<N>> XTreePool<N>::build(
+Root<DCTree<N>> DCPool<N>::build(
             const Tree t, Region<N> region,
             double min_feature, double max_err, unsigned workers,
             ProgressCallback progress_callback)
@@ -39,23 +39,23 @@ Root<XTree<N>> XTreePool<N>::build(
         es.emplace_back(XTreeEvaluator(t));
     }
     std::atomic_bool cancel(false);
-    return XTreePool<N>::build(es.data(), region, min_feature,
-                               max_err, workers, cancel, progress_callback);
+    return DCPool<N>::build(es.data(), region, min_feature,
+                            max_err, workers, cancel, progress_callback);
 }
 
 template <unsigned N>
-Root<XTree<N>> XTreePool<N>::build(
+Root<DCTree<N>> DCPool<N>::build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback)
 {
     // Lazy initialization of marching squares / cubes table
-    if (XTree<N>::mt.get() == nullptr)
+    if (DCTree<N>::mt.get() == nullptr)
     {
-        XTree<N>::mt = Marching::buildTable<N>();
+        DCTree<N>::mt = Marching::buildTable<N>();
     }
-    return WorkerPool<XTree<N>, DCNeighbors<N>, N>::build(
+    return WorkerPool<DCTree<N>, DCNeighbors<N>, N>::build(
         eval, region, min_feature, max_err, workers, cancel, progress_callback);
 }
 

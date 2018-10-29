@@ -14,17 +14,17 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/root.hpp"
 #include "libfive/render/brep/progress.hpp"
-#include "libfive/render/brep/dc/xtree.hpp"
+#include "libfive/render/brep/dc/dc_tree.hpp"
 
 namespace Kernel {
 
 template <unsigned N>
-struct XTreePool
+struct DCPool
 {
     /*
      *  Simplified construction with fewer arguments, used in unit testing
      */
-    static Root<XTree<N>> build(
+    static Root<DCTree<N>> build(
             const Tree t, Region<N> region,
             double min_feature=0.1, double max_err=1e-8, unsigned workers=1,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
@@ -34,14 +34,14 @@ struct XTreePool
      *
      *  eval must be the first item in an array of at least `workers` items
      */
-    static Root<XTree<N>> build(
+    static Root<DCTree<N>> build(
             XTreeEvaluator* eval, Region<N> region,
             double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
             ProgressCallback callback=EMPTY_PROGRESS_CALLBACK);
 };
 
-extern template struct XTreePool<2>;
-extern template struct XTreePool<3>;
+extern template struct DCPool<2>;
+extern template struct DCPool<3>;
 
 }   // namespace Kernel

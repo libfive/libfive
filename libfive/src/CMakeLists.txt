@@ -33,10 +33,10 @@ add_library(five SHARED
     render/brep/dc/marching.cpp
     render/brep/dc/dc_mesher.cpp
     render/brep/dc/dc_neighbors.cpp
-    render/brep/dc/xtree2.cpp
-    render/brep/dc/xtree3.cpp
-    render/brep/dc/xtree_pool2.cpp
-    render/brep/dc/xtree_pool3.cpp
+    render/brep/dc/dc_tree2.cpp
+    render/brep/dc/dc_tree3.cpp
+    render/brep/dc/dc_pool2.cpp
+    render/brep/dc/dc_pool3.cpp
     render/brep/simplex/simplextree.cpp
     render/brep/simplex/simplex_pool.cpp
     render/brep/simplex/simplex_mesher.cpp

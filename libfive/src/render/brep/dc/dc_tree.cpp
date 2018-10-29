@@ -17,31 +17,32 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/StdVector>
 #include <boost/lockfree/queue.hpp>
 
-#include "libfive/render/brep/dc/xtree.hpp"
+#include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/object_pool.hpp"
+#include "libfive/render/brep/region.hpp"
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
 
 namespace Kernel {
 
 //  Here's our cutoff value (with a value set in the header)
-template <unsigned N> constexpr double XTree<N>::EIGENVALUE_CUTOFF;
+template <unsigned N> constexpr double DCTree<N>::EIGENVALUE_CUTOFF;
 
 //  Allocating static var for marching cubes table
 template <unsigned N>
-std::unique_ptr<const Marching::MarchingTable<N>> XTree<N>::mt;
+std::unique_ptr<const Marching::MarchingTable<N>> DCTree<N>::mt;
 
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-XTree<N>::XTree(XTree<N>* parent, unsigned index, Region<N> r)
-    : XTree()
+DCTree<N>::DCTree(DCTree<N>* parent, unsigned index, Region<N> r)
+    : DCTree()
 {
     reset(parent, index, r);
 }
 
 template <unsigned N>
-XTree<N>::XTree()
+DCTree<N>::DCTree()
 {
     for (auto& c : children)
     {
@@ -51,7 +52,7 @@ XTree<N>::XTree()
 }
 
 template <unsigned N>
-void XTree<N>::reset(XTree<N>* p, unsigned i, Region<N> r)
+void DCTree<N>::reset(DCTree<N>* p, unsigned i, Region<N> r)
 {
     parent = p;
     parent_index = i;
@@ -72,13 +73,13 @@ void XTree<N>::reset(XTree<N>* p, unsigned i, Region<N> r)
 }
 
 template <unsigned N>
-XTree<N>::Leaf::Leaf()
+DCTree<N>::Leaf::Leaf()
 {
     reset();
 }
 
 template <unsigned N>
-void XTree<N>::Leaf::reset()
+void DCTree<N>::Leaf::reset()
 {
     level = 0;
     rank = 0;
@@ -101,7 +102,7 @@ void XTree<N>::Leaf::reset()
 }
 
 template <unsigned N>
-Tape::Handle XTree<N>::evalInterval(
+Tape::Handle DCTree<N>::evalInterval(
         IntervalEvaluator& eval, const Region<N>& region, Tape::Handle tape)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
@@ -126,7 +127,7 @@ Tape::Handle XTree<N>::evalInterval(
 }
 
 template <unsigned N>
-void XTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
+void DCTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
                         const Region<N>& region, Tape::Handle tape,
                         ObjectPool<Leaf>& spare_leafs)
 {
@@ -621,7 +622,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
 }
 
 template <unsigned N>
-void XTree<N>::releaseChildren(ObjectPool<XTree>& spare_trees,
+void DCTree<N>::releaseChildren(ObjectPool<DCTree>& spare_trees,
                                ObjectPool<Leaf>& spare_leafs)
 {
     for (auto& c : children)
@@ -641,7 +642,7 @@ void XTree<N>::releaseChildren(ObjectPool<XTree>& spare_trees,
 }
 
 template <unsigned N>
-void XTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
+void DCTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
                                 const double value, const size_t edge)
 {
     const double norm = derivs.matrix().norm();
@@ -672,7 +673,7 @@ void XTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
 }
 
 template <unsigned N>
-uint8_t XTree<N>::buildCornerMask(
+uint8_t DCTree<N>::buildCornerMask(
         const std::array<Interval::State, 1 << N>& corners)
 {
     uint8_t corner_mask = 0;
@@ -685,10 +686,10 @@ uint8_t XTree<N>::buildCornerMask(
 }
 
 template <unsigned N>
-bool XTree<N>::collectChildren(
+bool DCTree<N>::collectChildren(
         XTreeEvaluator* eval, Tape::Handle tape,
         double max_err, const Region<N>& region,
-        ObjectPool<XTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs)
+        ObjectPool<DCTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs)
 {
     // Wait for collectChildren to have been called N times
     if (pending-- != 0)
@@ -697,7 +698,7 @@ bool XTree<N>::collectChildren(
     }
 
     // Load the children here, to avoid atomics
-    std::array<XTree<N>*, 1 << N> cs;
+    std::array<DCTree<N>*, 1 << N> cs;
     for (unsigned i=0; i < children.size(); ++i)
     {
         cs[i] = children[i].load(std::memory_order_relaxed);
@@ -706,7 +707,7 @@ bool XTree<N>::collectChildren(
     // If any children are branches, then we can't collapse.
     // We do this check first, to avoid allocating then freeing a Leaf
     if (std::any_of(cs.begin(), cs.end(),
-                    [](XTree<N>* o){ return o->isBranch(); }))
+                    [](DCTree<N>* o){ return o->isBranch(); }))
     {
         done();
         return true;
@@ -746,7 +747,7 @@ bool XTree<N>::collectChildren(
     //      "Simplification with topology safety"
     bool manifold = cornersAreManifold(corner_mask) &&
         std::all_of(cs.begin(), cs.end(),
-                [](XTree<N>* o){ return o->isManifold(); }) &&
+                [](DCTree<N>* o){ return o->isManifold(); }) &&
         leafsAreManifold(cs, corners);
 
     // If we're not manifold, then we can't collapse
@@ -766,7 +767,7 @@ bool XTree<N>::collectChildren(
     // Populate the feature rank as the maximum of all children
     // feature ranks (as seen in DC: The Secret Sauce)
     leaf->rank = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
-            [](unsigned a, XTree<N>* b){ return std::max(a, b->rank());} );
+            [](unsigned a, DCTree<N>* b){ return std::max(a, b->rank());} );
 
 
     // Accumulate the mass point, QEF matrices, and appropriate intersections.
@@ -816,7 +817,7 @@ bool XTree<N>::collectChildren(
             {
                 // Store this tree's depth as a function of its children
                 leaf->level = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
-                    [](const unsigned& a, XTree<N>* b)
+                    [](const unsigned& a, DCTree<N>* b)
                     { return std::max(a, b->level());} ) + 1;
 
                 // Then, erase all of the children and mark that we collapsed
@@ -836,7 +837,7 @@ bool XTree<N>::collectChildren(
 }
 
 template <unsigned N>
-void XTree<N>::done()
+void DCTree<N>::done()
 {
     if (parent)
     {
@@ -848,7 +849,7 @@ void XTree<N>::done()
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-double XTree<N>::findVertex(unsigned index)
+double DCTree<N>::findVertex(unsigned index)
 {
     assert(leaf != nullptr);
     Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(leaf->AtA);
@@ -894,7 +895,7 @@ double XTree<N>::findVertex(unsigned index)
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-typename XTree<N>::Vec XTree<N>::vert(unsigned i) const
+typename DCTree<N>::Vec DCTree<N>::vert(unsigned i) const
 {
     assert(leaf != nullptr);
     assert(i < leaf->vertex_count);
@@ -902,7 +903,7 @@ typename XTree<N>::Vec XTree<N>::vert(unsigned i) const
 }
 
 template <unsigned N>
-std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
+std::shared_ptr<IntersectionVec<N>> DCTree<N>::intersection(
         unsigned a, unsigned b) const
 {
     assert(mt->e[a][b] != -1);
@@ -910,7 +911,7 @@ std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
 }
 
 template <unsigned N>
-std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
+std::shared_ptr<IntersectionVec<N>> DCTree<N>::intersection(
         unsigned edge) const
 {
     assert(leaf != nullptr);
@@ -918,7 +919,7 @@ std::shared_ptr<IntersectionVec<N>> XTree<N>::intersection(
 }
 
 template <unsigned N>
-void XTree<N>::setIntersectionPtr(
+void DCTree<N>::setIntersectionPtr(
     unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const
 {
     assert(leaf != nullptr);
@@ -931,7 +932,7 @@ void XTree<N>::setIntersectionPtr(
 }
 
 template <unsigned N>
-Interval::State XTree<N>::cornerState(uint8_t i) const
+Interval::State DCTree<N>::cornerState(uint8_t i) const
 {
     switch (type)
     {
@@ -950,7 +951,7 @@ Interval::State XTree<N>::cornerState(uint8_t i) const
 }
 
 template <unsigned N>
-bool XTree<N>::isManifold() const
+bool DCTree<N>::isManifold() const
 {
     assert(!isBranch());
     switch (type)
@@ -969,7 +970,7 @@ bool XTree<N>::isManifold() const
 }
 
 template <unsigned N>
-uint8_t XTree<N>::cornerMask() const
+uint8_t DCTree<N>::cornerMask() const
 {
     assert(!isBranch());
     switch (type)
@@ -989,7 +990,7 @@ uint8_t XTree<N>::cornerMask() const
 }
 
 template <unsigned N>
-unsigned XTree<N>::level() const
+unsigned DCTree<N>::level() const
 {
     assert(!isBranch());
     switch (type)
@@ -1008,7 +1009,7 @@ unsigned XTree<N>::level() const
 }
 
 template <unsigned N>
-unsigned XTree<N>::rank() const
+unsigned DCTree<N>::rank() const
 {
     assert(!isBranch());
     switch (type)
@@ -1029,7 +1030,7 @@ unsigned XTree<N>::rank() const
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-std::array<unsigned, 2 * N> XTree<N>::edgesFromChild(unsigned childIndex)
+std::array<unsigned, 2 * N> DCTree<N>::edgesFromChild(unsigned childIndex)
 {
     assert(mt);
     std::array<unsigned, 2 * N> out;

@@ -7,12 +7,12 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#include "xtree_pool.cpp"
+#include "dc_pool.cpp"
 
 namespace Kernel {
 
 // Explicit initialization of template
-template struct XTreePool<3>;
+template struct DCPool<3>;
 
 }   // namespace Kernel
 

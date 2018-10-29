@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/brep.hpp"
 #include "libfive/render/brep/progress.hpp"
 
-#include "libfive/render/brep/dc/xtree.hpp"
+#include "libfive/render/brep/dc/dc_tree.hpp"
 
 namespace Kernel {
 
@@ -86,7 +86,7 @@ protected:
      *  is the proper winding for this triangle.
      */
     template <Axis::Axis A, bool D>
-    void checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b, 
+    void checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b, 
                              uint32_t aIndex, uint32_t bIndex, 
                              uint32_t intersectionIndex);
 

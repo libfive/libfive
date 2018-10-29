@@ -18,16 +18,16 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 // Forward declaration
-template <unsigned N> class XTree;
+template <unsigned N> class DCTree;
 
 template <unsigned N>
-class DCNeighbors : public Neighbors<N, XTree<N>, DCNeighbors<N>>
+class DCNeighbors : public Neighbors<N, DCTree<N>, DCNeighbors<N>>
 {
 public:
     /*
      *  Constructor, returning an empty neighbor array
      */
-    DCNeighbors() : Neighbors<N, XTree<N>, DCNeighbors<N>>() {}
+    DCNeighbors() : Neighbors<N, DCTree<N>, DCNeighbors<N>>() {}
 
     /*
      *  Looks up the given corner to see if it has already been calculated

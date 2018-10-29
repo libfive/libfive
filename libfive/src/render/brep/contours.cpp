@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/contours.hpp"
 #include "libfive/render/brep/brep.hpp"
-#include "libfive/render/brep/dc/xtree_pool.hpp"
+#include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/brep/dual.hpp"
 
 namespace Kernel {
@@ -21,17 +21,17 @@ class DCSegments
 {
 public:
     using Output = BRep<2>;
-    using Input = XTree<2>;
+    using Input = DCTree<2>;
 
     DCSegments(PerThreadBRep<2>& m) : m(m) {}
 
     template <Axis::Axis A>
-    void load(const std::array<const XTree<2>*, 2>& ts)
+    void load(const std::array<const DCTree<2>*, 2>& ts)
     {
         // Exit immediately if we can prove that there will be no
         // face produced by this edge.
         if (std::any_of(ts.begin(), ts.end(),
-            [](const XTree<2>* t){ return t->type != Interval::AMBIGUOUS; }))
+            [](const DCTree<2>* t){ return t->type != Interval::AMBIGUOUS; }))
         {
             return;
         }
@@ -45,7 +45,7 @@ public:
 
         /*  See comment in mesh.cpp about selecting a minimum edge */
         const auto index = std::min_element(ts.begin(), ts.end(),
-                [](const XTree<2>* a, const XTree<2>* b)
+                [](const DCTree<2>* a, const DCTree<2>* b)
                 { return a->leaf->level < b->leaf->level; }) - ts.begin();
 
         constexpr uint8_t perp = (Axis::X | Axis::Y) ^ A;
@@ -71,20 +71,20 @@ public:
     }
 
     template <Axis::Axis A, bool D>
-    void load(const std::array<const XTree<2>*, 2>& ts)
+    void load(const std::array<const DCTree<2>*, 2>& ts)
     {
         // From axis and contour direction, extract the relevant edge index
         // numbers for the two cells in ts
         int es[2];
         if (D ^ (A == Axis::X))
         {
-            es[0] = XTree<2>::mt->e[3][3^A];
-            es[1] = XTree<2>::mt->e[A][0];
+            es[0] = DCTree<2>::mt->e[3][3^A];
+            es[1] = DCTree<2>::mt->e[A][0];
         }
         else
         {
-            es[0] = XTree<2>::mt->e[3^A][3];
-            es[1] = XTree<2>::mt->e[0][A];
+            es[0] = DCTree<2>::mt->e[3^A][3];
+            es[1] = DCTree<2>::mt->e[0][A];
         }
         assert(es[0] != -1);
         assert(es[1] != -1);
@@ -96,7 +96,7 @@ public:
 
             auto vi = ts[i]->leaf->level > 0
                 ? 0
-                : XTree<2>::mt->p[ts[i]->leaf->corner_mask][es[i]];
+                : DCTree<2>::mt->p[ts[i]->leaf->corner_mask][es[i]];
             assert(vi != -1);
 
             // Sanity-checking manifoldness of collapsed cells
@@ -135,7 +135,7 @@ std::unique_ptr<Contours> Contours::render(
     }
 
     // Create the quadtree on the scaffold
-    auto xtree = XTreePool<2>::build(
+    auto xtree = DCPool<2>::build(
         es.data(), r, min_feature, max_err,
         workers, cancel);
 

@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "libfive/render/brep/mesh.hpp"
-#include "libfive/render/brep/dc/xtree_pool.hpp"
+#include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/brep/dc/dc_mesher.hpp"
 #include "libfive/render/brep/dual.hpp"
 
@@ -54,9 +54,8 @@ std::unique_ptr<Mesh> Mesh::render(
         int workers, std::atomic_bool& cancel,
         ProgressCallback progress_callback)
 {
-    auto t = XTreePool<3>::build(es, r, min_feature, max_err, workers, cancel,
-                                 progress_callback);
-
+    auto t = DCPool<3>::build(es, r, min_feature, max_err, workers, cancel,
+                              progress_callback);
 
     // Perform marching squares
     if (cancel.load() || t.get() == nullptr) {

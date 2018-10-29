@@ -34,7 +34,7 @@ namespace Kernel {
 template <typename T> class ObjectPool; /* Forward declaration */
 
 template <unsigned N>
-class XTree
+class DCTree
 {
 public:
     /*  AMBIGUOUS leaf cells have more data, which we heap-allocate in
@@ -68,7 +68,7 @@ public:
         unsigned rank;
 
         /* Used as a unique per-vertex index when unpacking into a b-rep;   *
-         * this is cheaper than storing a map of XTree* -> uint32_t         */
+         * this is cheaper than storing a map of DCTree* -> uint32_t         */
         mutable std::array<uint32_t, ipow(2, N - 1)> index;
 
         /*  Bitfield marking which corners are set */
@@ -94,7 +94,7 @@ public:
     };
 
     /*
-     *  This is a handle for both the XTree and the object pool data
+     *  This is a handle for both the DCTree and the object pool data
      *  that were used to allocate all of its memory.
      */
 
@@ -104,13 +104,13 @@ public:
      *  Pointers are initialized to nullptr, but other members
      *  are invalid until reset() is called.
      */
-    explicit XTree();
-    explicit XTree(XTree<N>* parent, unsigned index, Region<N> region);
+    explicit DCTree();
+    explicit DCTree(DCTree<N>* parent, unsigned index, Region<N> region);
 
     /*
      *  Resets this tree to a freshly-constructed state
      */
-    void reset(XTree<N>* p, unsigned i, Region<N> region);
+    void reset(DCTree<N>* p, unsigned i, Region<N> region);
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
@@ -140,7 +140,7 @@ public:
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const Region<N>& region,
-            ObjectPool<XTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs);
+            ObjectPool<DCTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs);
 
     /*
      *  Checks whether this tree splits
@@ -150,7 +150,7 @@ public:
     /*
      *  Looks up a child, returning *this if this isn't a branch
      */
-    const XTree<N>* child(unsigned i) const
+    const DCTree<N>* child(unsigned i) const
     { return isBranch() ? children[i].load(std::memory_order_relaxed) : this; }
 
     /*
@@ -198,7 +198,7 @@ public:
     typedef Eigen::Matrix<double, N, 1> Vec;
 
     /*  Parent tree, or nullptr if this is the root */
-    XTree<N>* parent;
+    DCTree<N>* parent;
 
     /*  Index into the parent tree's children array.  We only store the tree
      *  in the children array when it is complete, so it needs to know its
@@ -206,7 +206,7 @@ public:
     unsigned parent_index;
 
     /*  Children pointers, if this is a branch  */
-    std::array<std::atomic<XTree<N>*>, 1 << N> children;
+    std::array<std::atomic<DCTree<N>*>, 1 << N> children;
 
     /*
      *  Look up a particular vertex by index
@@ -252,7 +252,7 @@ public:
 
 protected:
     /*
-     *  Searches for a vertex within the XTree cell, using the QEF matrices
+     *  Searches for a vertex within the DCTree cell, using the QEF matrices
      *  that are pre-populated in AtA, AtB, etc.
      *
      *  Minimizes the QEF towards mass_point
@@ -271,7 +271,7 @@ protected:
      *  Releases the children (and their Leaf pointers, if present)
      *  into the given object pools.
      */
-    void releaseChildren(ObjectPool<XTree<N>>& spare_trees,
+    void releaseChildren(ObjectPool<DCTree<N>>& spare_trees,
                          ObjectPool<Leaf>& spare_leafs);
 
     /*
@@ -307,7 +307,7 @@ protected:
      *  (with respect to the leaves)
      */
     static bool leafsAreManifold(
-            const std::array<XTree<N>*, 1 << N>& children,
+            const std::array<DCTree<N>*, 1 << N>& children,
             const std::array<Interval::State, 1 << N>& corners);
 
     /*
@@ -335,20 +335,20 @@ protected:
 };
 
 // Explicit template instantiation declarations
-template <> bool XTree<2>::cornersAreManifold(const uint8_t corner_mask);
-template <> bool XTree<3>::cornersAreManifold(const uint8_t corner_mask);
+template <> bool DCTree<2>::cornersAreManifold(const uint8_t corner_mask);
+template <> bool DCTree<3>::cornersAreManifold(const uint8_t corner_mask);
 
-template <> bool XTree<2>::leafsAreManifold(
-            const std::array<XTree<2>*, 1 << 2>& children,
+template <> bool DCTree<2>::leafsAreManifold(
+            const std::array<DCTree<2>*, 1 << 2>& children,
             const std::array<Interval::State, 1 << 2>& corners);
-template <> bool XTree<3>::leafsAreManifold(
-            const std::array<XTree<3>*, 1 << 3>& children,
+template <> bool DCTree<3>::leafsAreManifold(
+            const std::array<DCTree<3>*, 1 << 3>& children,
             const std::array<Interval::State, 1 << 3>& corners);
 
-template <> const std::vector<std::pair<uint8_t, uint8_t>>& XTree<2>::edges() const;
-template <> const std::vector<std::pair<uint8_t, uint8_t>>& XTree<3>::edges() const;
+template <> const std::vector<std::pair<uint8_t, uint8_t>>& DCTree<2>::edges() const;
+template <> const std::vector<std::pair<uint8_t, uint8_t>>& DCTree<3>::edges() const;
 
-extern template class XTree<2>;
-extern template class XTree<3>;
+extern template class DCTree<2>;
+extern template class DCTree<3>;
 
 }   // namespace Kernel

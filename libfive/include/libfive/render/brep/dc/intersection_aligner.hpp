@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 namespace Kernel {
 
 template <unsigned N>
-class XTree; // Forward declaration
+class DCTree; // Forward declaration
 
 struct IntersectionAligner {
 
@@ -32,7 +32,7 @@ struct IntersectionAligner {
      *  Dual::walk on the Mesh class.
      */
     template <Axis::Axis A, bool D>
-    static void load(const std::array<const XTree<3>*, 4>& ts, unsigned index);
+    static void load(const std::array<const DCTree<3>*, 4>& ts, unsigned index);
 };
 
 }   // namespace Kernel

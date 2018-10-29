@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "catch.hpp"
 
-#include "libfive/render/brep/dc/xtree_pool.hpp"
+#include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/brep/dual.hpp"
 
 #include "util/shapes.hpp"
@@ -20,20 +20,20 @@ struct Walker2
 {
     // Copied from contours.cpp (Segment class)
     template <Axis::Axis A>
-    void load(const std::array<const XTree<2>*, 2>& ts)
+    void load(const std::array<const DCTree<2>*, 2>& ts)
     {
         // TODO: consolidate this code into once place
 
         // Exit immediately if we can prove that there will be no
         // face produced by this edge.
         if (std::any_of(ts.begin(), ts.end(),
-            [](const XTree<2>* t){ return t->type != Interval::AMBIGUOUS; }))
+            [](const DCTree<2>* t){ return t->type != Interval::AMBIGUOUS; }))
         {
             return;
         }
 
         const auto index = std::min_element(ts.begin(), ts.end(),
-                [](const XTree<2>* a, const XTree<2>* b)
+                [](const DCTree<2>* a, const DCTree<2>* b)
                 { return a->leaf->level < b->leaf->level; }) - ts.begin();
 
         constexpr uint8_t perp = (Axis::X | Axis::Y) ^ A;
@@ -60,7 +60,7 @@ struct Walker2
 
     // Check winding of contours
     template<Axis::Axis A, bool D>
-    void load(const std::array<const XTree<2>*, 2>& ts)
+    void load(const std::array<const DCTree<2>*, 2>& ts)
     {
         auto a = ts[!D];
         auto b = ts[D];
@@ -91,14 +91,14 @@ struct Walker2
 struct Walker3
 {
     template <Axis::Axis A>
-    void load(const std::array<const XTree<3>*, 4>& a)
+    void load(const std::array<const DCTree<3>*, 4>& a)
     {
         // TODO: consolidate this with DCMesher
 
         // Exit immediately if we can prove that there will be no
         // face produced by this edge.
         if (std::any_of(a.begin(), a.end(),
-            [](const XTree<3>* t){ return t->type != Interval::AMBIGUOUS; }))
+            [](const DCTree<3>* t){ return t->type != Interval::AMBIGUOUS; }))
         {
             return;
         }
@@ -118,7 +118,7 @@ struct Walker3
 // TODO
 TEST_CASE("Dual<2>::walk")
 {
-    auto ta = XTreePool<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
+    auto ta = DCPool<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
 
     Walker2 c;
     Dual<2>::walk(ta.get(), c);
@@ -131,7 +131,7 @@ TEST_CASE("Dual<2>::walk")
 
 TEST_CASE("Dual<3>::walk")
 {
-    auto ta = XTreePool<3>::build(sphere(0.5), Region<3>({-1, -1, -1}, {1, 1, 1}));
+    auto ta = DCPool<3>::build(sphere(0.5), Region<3>({-1, -1, -1}, {1, 1, 1}));
 
     Walker3 c;
     Dual<3>::walk(ta.get(), c);

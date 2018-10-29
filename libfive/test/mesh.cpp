@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "catch.hpp"
 
 #include "libfive/render/brep/dc/dc_mesher.hpp"
-#include "libfive/render/brep/dc/xtree_pool.hpp"
+#include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/mesh.hpp"
@@ -212,10 +212,10 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
 {
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
-    Root<XTree<3>> t;
-    BENCHMARK("XTree construction")
+    Root<DCTree<3>> t;
+    BENCHMARK("DCTree construction")
     {
-        t = XTreePool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8);
+        t = DCPool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8);
     }
 
     std::unique_ptr<Mesh> m;
@@ -225,7 +225,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
         m = Dual<3>::walk<DCMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK);
     }
 
-    BENCHMARK("XTree deletion")
+    BENCHMARK("DCTree deletion")
     {
         t.reset();
     }
@@ -246,11 +246,11 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
 
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
-    Root<XTree<3>> t;
-    BENCHMARK("XTree construction")
+    Root<DCTree<3>> t;
+    BENCHMARK("DCTree construction")
     {
-        t = XTreePool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8,
-                                progress_callback);
+        t = DCPool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8,
+                             progress_callback);
     }
 
     std::unique_ptr<Mesh> m;
@@ -260,7 +260,7 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
         m = Dual<3>::walk<DCMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK);
     }
 
-    BENCHMARK("XTree deletion")
+    BENCHMARK("DCTree deletion")
     {
         t.reset(progress_callback);
     }

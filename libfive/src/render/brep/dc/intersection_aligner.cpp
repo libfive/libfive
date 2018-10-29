@@ -16,7 +16,7 @@ namespace Kernel {
 
 template <Axis::Axis A, bool D>
 void IntersectionAligner::load(
-    const std::array<const XTree<3>*, 4>& ts, unsigned index)
+    const std::array<const DCTree<3>*, 4>& ts, unsigned index)
 {
     int es[4];
     {   // Unpack edge vertex pairs into edge indices
@@ -29,7 +29,7 @@ void IntersectionAligner::load(
             {0, A} };
         for (unsigned i = 0; i < 4; ++i)
         {
-            es[i] = XTree<3>::mt->e[D ? ev[i].first : ev[i].second]
+            es[i] = DCTree<3>::mt->e[D ? ev[i].first : ev[i].second]
                 [D ? ev[i].second : ev[i].first];
             assert(es[i] != -1);
         }
@@ -62,9 +62,9 @@ void IntersectionAligner::load(
 
 #define specializeLoad(axis)                               \
 template void IntersectionAligner::load<axis, true>(       \
-const std::array<const XTree<3>*, 4>& ts, unsigned index); \
+const std::array<const DCTree<3>*, 4>& ts, unsigned index); \
 template void IntersectionAligner::load<axis, false>(      \
-const std::array<const XTree<3>*, 4>& ts, unsigned index); \
+const std::array<const DCTree<3>*, 4>& ts, unsigned index); \
 
 specializeLoad(Axis::X)
 specializeLoad(Axis::Y)
