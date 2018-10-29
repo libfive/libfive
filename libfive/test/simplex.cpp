@@ -252,7 +252,7 @@ TEST_CASE("SimplexMesher (smoke test)")
     t->assignIndices();
 
     std::atomic_bool cancel(false);
-    auto m = Dual<3>::walk<Mesh, SimplexMesher>(t, 8,
+    auto m = Dual<3>::walk<SimplexMesher>(t, 8,
             cancel, EMPTY_PROGRESS_CALLBACK, c);
 
     REQUIRE(m->branes.size() > 0);
@@ -310,7 +310,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         }
         t->assignIndices();
 
-        auto m = Dual<3>::walk<Mesh, SimplexMesher>(t, workers,
+        auto m = Dual<3>::walk<SimplexMesher>(t, workers,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
 
         test_edge_pairs(*m);
@@ -324,7 +324,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
         t->assignIndices();
 
-        auto m = Dual<3>::walk<Mesh, SimplexMesher>(t, workers,
+        auto m = Dual<3>::walk<SimplexMesher>(t, workers,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
 
         test_edge_pairs(*m);
@@ -338,7 +338,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
         t->assignIndices();
 
-        auto m = Dual<3>::walk<Mesh, SimplexMesher>(t, workers,
+        auto m = Dual<3>::walk<SimplexMesher>(t, workers,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
 
         test_edge_pairs(*m);
@@ -354,7 +354,7 @@ TEST_CASE("SimplexMesher: menger sponge")
     t->assignIndices();
 
     std::atomic_bool cancel(false);
-    auto m = Dual<3>::walk<Mesh, SimplexMesher>(t,
+    auto m = Dual<3>::walk<SimplexMesher>(t,
             8, cancel, EMPTY_PROGRESS_CALLBACK, sponge);
 
     m->saveSTL("sponge.stl");

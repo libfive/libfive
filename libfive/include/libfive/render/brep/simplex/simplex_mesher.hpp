@@ -22,10 +22,14 @@ namespace Kernel {
 template <unsigned N> class SimplexTree;
 template <unsigned N> class PerThreadBRep;
 class XTreeEvaluator;
+class Mesh;
 
 class SimplexMesher
 {
 public:
+    using Output = Mesh;
+    using Input = SimplexTree<3>;
+
     SimplexMesher(PerThreadBRep<3>& m, Tree t);
 
     /*

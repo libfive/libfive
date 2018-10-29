@@ -20,6 +20,9 @@ namespace Kernel {
 class DCSegments
 {
 public:
+    using Output = BRep<2>;
+    using Input = XTree<2>;
+
     DCSegments(PerThreadBRep<2>& m) : m(m) {}
 
     template <Axis::Axis A>
@@ -137,8 +140,8 @@ std::unique_ptr<Contours> Contours::render(
         workers, cancel);
 
     // Perform marching squares
-    auto segs = Dual<2>::walk<BRep<2>, DCSegments>(xtree, workers, cancel,
-                                                   EMPTY_PROGRESS_CALLBACK);
+    auto segs = Dual<2>::walk<DCSegments>(xtree, workers, cancel,
+                                          EMPTY_PROGRESS_CALLBACK);
 
     auto c = std::unique_ptr<Contours>(new Contours(r));
 

@@ -24,12 +24,16 @@ template <unsigned N>
 class Dual
 {
 public:
-     /*  Mesher needs load(const std::array<T*, N>& trees) defined
-      *
-      *  object when passed a PerThreadBRep<N>. */
-    template<typename Output, typename M, typename T, typename ... A>
-    static std::unique_ptr<Output> walk(
-            const Root<T>& t, unsigned workers,
+     /*  The mesher type M needs
+      *     load(const std::array<T*, N>& trees)
+      *     Input (typename)
+      *     Output (typename)
+      *  and must have a constructor of the form
+      *     M(PerThreadBRep<N>, A...)
+      */
+    template<typename M, typename ... A>
+    static std::unique_ptr<typename M::Output> walk(
+            const Root<typename M::Input>& t, unsigned workers,
             std::atomic_bool& cancel,
             ProgressCallback progress_callback,
             A... args);
@@ -160,14 +164,15 @@ void Dual<3>::work(const T* t, V& v)
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-template <typename Output, typename M, typename T, typename ... A>
-std::unique_ptr<Output> Dual<N>::walk(const Root<T>& t, unsigned workers,
-                     std::atomic_bool& cancel,
-                     ProgressCallback progress_callback,
-                     A... args)
+template<typename M, typename ... A>
+std::unique_ptr<typename M::Output> Dual<N>::walk(
+            const Root<typename M::Input>& t, unsigned workers,
+            std::atomic_bool& cancel,
+            ProgressCallback progress_callback,
+            A... args)
 {
-    boost::lockfree::stack<const T*, boost::lockfree::fixed_sized<true>>
-        tasks(workers);
+    boost::lockfree::stack<const typename M::Input*,
+                           boost::lockfree::fixed_sized<true>> tasks(workers);
     tasks.push(t.get());
 
     std::atomic_uint32_t global_index(1);
@@ -202,7 +207,7 @@ std::unique_ptr<Output> Dual<N>::walk(const Root<T>& t, unsigned workers,
     done.store(true);
     delete progress;
 
-    auto out = std::unique_ptr<Output>(new Output);
+    auto out = std::unique_ptr<typename M::Output>(new typename M::Output);
     out->collect(breps);
     return out;
 }

@@ -21,6 +21,9 @@ class Mesh;
 
 class DCMesher {
 public:
+    using Output = Mesh;
+    using Input = XTree<3>;
+
     DCMesher(PerThreadBRep<3>& m) : m(m)
         {   /* Nothing to do here */    }
 

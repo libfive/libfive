@@ -63,7 +63,7 @@ std::unique_ptr<Mesh> Mesh::render(
         return nullptr;
     }
 
-    auto out = Dual<3>::walk<Mesh, DCMesher>(t, workers, cancel, progress_callback);
+    auto out = Dual<3>::walk<DCMesher>(t, workers, cancel, progress_callback);
 
     // TODO: check for early return here again
     t.reset(progress_callback);

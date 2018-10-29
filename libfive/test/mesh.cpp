@@ -222,7 +222,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
     std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Dual<3>::walk<Mesh, DCMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK);
+        m = Dual<3>::walk<DCMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK);
     }
 
     BENCHMARK("XTree deletion")
@@ -257,7 +257,7 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
     std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Dual<3>::walk<Mesh, DCMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK);
+        m = Dual<3>::walk<DCMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK);
     }
 
     BENCHMARK("XTree deletion")
