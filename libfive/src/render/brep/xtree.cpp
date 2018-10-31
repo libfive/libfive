@@ -179,7 +179,7 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
 
     // This is a count of how many points there are that == 0
     // but are unambiguous; unambig_remap[z] returns the index
-    // into the pos[] array for a particular unambiguous zero.
+    // into the corner_indices array for a particular unambiguous zero.
     uint8_t unambiguous_zeros = 0;
     std::array<int, 1 << N> unambig_remap;
 
@@ -187,14 +187,14 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
     for (uint8_t i=0; i < count; ++i)
     {
         // The Eigen evaluator occasionally disagrees with the
-        // feature (single-point) evaluator, because it has SSE
+        // deriv (single-point) evaluator, because it has SSE
         // implementations of transcendental functions that can
         // return subtly different results.  If we get a result that
         // is sufficiently close to zero, then fall back to the
         // canonical single-point evaluator to avoid inconsistency.
         if (fabs(vs(i)) < 1e-6)
         {
-            vs(i) = eval->feature.eval(pos.col(i));
+            vs(i) = eval->deriv.eval(pos.col(i));
         }
 
         // Handle inside, outside, and (non-ambiguous) on-boundary
@@ -211,22 +211,31 @@ void XTree<N>::evalLeaf(XTreeEvaluator* eval, const Neighbors<N>& neighbors,
         else if (!ambig(i))
         {
             eval->array.set(pos.col(i), unambiguous_zeros);
-            unambig_remap[unambiguous_zeros] = corner_indices[i];
+            unambig_remap[unambiguous_zeros] = i;
             unambiguous_zeros++;
         }
     }
 
     // Phase 2: Optimization for non-ambiguous features
     // We can get both positive and negative values out if
-    // there's a non-zero gradient.
+    // there's a non-zero gradient. Once again, we need to use
+    // single-point evaluation if it's sufficiently close to zero.
     if (unambiguous_zeros)
     {
         auto ds = eval->array.derivs(unambiguous_zeros, tape);
         for (unsigned i=0; i < unambiguous_zeros; ++i)
         {
-            corners[unambig_remap[i]] =
-                (ds.col(i).template head<3>() != 0).any()
+            if ((ds.col(i).head<3>().abs() < 1e-6f).any())
+            {
+                ds.col(i) = eval->deriv.deriv(pos.col(unambig_remap[i]));
+                corners[corner_indices[unambig_remap[i]]] =
+                    (ds.col(i).template head<3>() != 0).any()
                     ? Interval::FILLED : Interval::EMPTY;
+            }
+            else
+            {
+                corners[corner_indices[unambig_remap[i]]] = Interval::FILLED;
+            }
         }
     }
 
