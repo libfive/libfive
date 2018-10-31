@@ -200,3 +200,28 @@ TEST_CASE("libfive_tree_print")
     std::string s = libfive_tree_print(d);
     REQUIRE(s == "(- (+ (square x) (square y) (square z)) 1)");
 }
+
+TEST_CASE("libfive_tree_nonary")
+{
+    REQUIRE(libfive_tree_nonary(Opcode::OP_MIN) == NULL);
+    REQUIRE(libfive_tree_nonary(Opcode::VAR_X) != NULL);
+}
+
+TEST_CASE("libfive_tree_unary")
+{
+    auto x = libfive_tree_x();
+    REQUIRE(libfive_tree_unary(Opcode::OP_ADD, x) == NULL);
+    REQUIRE(libfive_tree_unary(Opcode::OP_COS, NULL) == NULL);
+    REQUIRE(libfive_tree_unary(Opcode::OP_ADD, NULL) == NULL);
+    REQUIRE(libfive_tree_unary(Opcode::OP_COS, x) != NULL);
+}
+
+TEST_CASE("libfive_tree_binary")
+{
+    auto x = libfive_tree_x();
+    auto y = libfive_tree_y();
+    REQUIRE(libfive_tree_binary(Opcode::OP_COS, x, y) == NULL);
+    REQUIRE(libfive_tree_binary(Opcode::OP_ADD, x, NULL) == NULL);
+    REQUIRE(libfive_tree_binary(Opcode::OP_ADD, NULL, y) == NULL);
+    REQUIRE(libfive_tree_binary(Opcode::OP_ADD, x, y) != NULL);
+}

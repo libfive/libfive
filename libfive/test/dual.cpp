@@ -51,8 +51,10 @@ struct Walker2
 struct Walker3
 {
     template <Axis::Axis A, bool D>
-    void load(const std::array<const XTree<3>*, 4>& a)
+    void load(const std::array<const XTree<3>*, 4>& a, unsigned index)
     {
+        (void)index;
+
         for (auto t : a)
         {
             auto n = t->vert().norm();

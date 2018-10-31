@@ -2,19 +2,9 @@
 libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2017  Matt Keeter
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this file,
+You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
@@ -31,10 +21,13 @@ public:
     typedef Eigen::Array<double, 3 - N, 1> Perp;
 
     /*
-     *  Check if the given point is in the region (inclusive)
+     *  Check if the given point is in the region
+     *  As epsilon gets larger, the test becomes more inclusive
      */
-    bool contains(Pt p) const
-    { return (p >= (lower - 1e-8)).all() && (p <= (upper + 1e-8)).all(); }
+    bool contains(Pt p, double epsilon = 1e-8) const
+    {
+        return (p >= (lower - epsilon)).all() && (p <= (upper + epsilon)).all();
+    }
 
     /*
      *  Helper function to get center of region
@@ -143,6 +136,40 @@ public:
         {
             out(axis) = (i & (1 << axis)) ? upper(axis)
                                           : lower(axis);
+        }
+        return out;
+    }
+
+    /*
+     *  Returns a Region that contains this region as a specific child
+     *
+     *  For example, if this Region is any of the four quadrants,
+     *  then calling parent(i) where i is the quadrant number
+     *  will return the full four-quadrant Region.
+     *
+     *  |----------|----------|
+     *  |          |          |
+     *  |     2    |     3    |
+     *  |          |          |
+     *  |----------|----------|
+     *  |          |          |
+     *  |     0    |     1    |
+     *  |          |          |
+     *  |----------|----------|
+     */
+    Region<N> parent(unsigned parent_index) const
+    {
+        Region<N> out = *this;
+        for (unsigned i=0; i < N; ++i)
+        {
+            if (parent_index & (1 << i))
+            {
+                out.lower(i) -= out.upper(i) - out.lower(i);
+            }
+            else
+            {
+                out.upper(i) += out.upper(i) - out.lower(i);
+            }
         }
         return out;
     }

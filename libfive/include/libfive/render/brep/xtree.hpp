@@ -2,19 +2,9 @@
 libfive: a CAD kernel for modeling with implicit functions
 Copyright (C) 2017  Matt Keeter
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this file,
+You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
@@ -145,12 +135,12 @@ public:
      *  are invalid until reset() is called.
      */
     explicit XTree();
-    explicit XTree(XTree<N>* parent, unsigned index);
+    explicit XTree(XTree<N>* parent, unsigned index, Region<N> region);
 
     /*
      *  Resets this tree to a freshly-constructed state
      */
-    void reset(XTree<N>* p, unsigned i);
+    void reset(XTree<N>* p, unsigned i, Region<N> region);
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
@@ -179,7 +169,7 @@ public:
      */
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
-            double max_err, const typename Region<N>::Perp& perp,
+            double max_err, const Region<N>& region,
             Pool<XTree<N>>& spare_trees, Pool<Leaf>& spare_leafs);
 
     /*
@@ -215,8 +205,8 @@ public:
      *  This must only be called on non-branching cells.
      *
      *  level is defined as 0 for EMPTY or FILLED terminal cells;
-     *  for ambiguous leaf cells, it is the number of leafs that
-     *  were merged into this cell.
+     *  for ambiguous leaf cells, it is the depth of the largest 
+     *  chain of leafs that were merged into this cell.
      */
     unsigned level() const;
 
@@ -259,8 +249,26 @@ public:
     std::shared_ptr<IntersectionVec<N>> intersection(
             unsigned a, unsigned b) const;
 
+    /*
+     *  Looks up a particular intersection array by (directed) edge index
+     */
+    std::shared_ptr<IntersectionVec<N>> intersection(
+            unsigned edge) const;
+
+    /*
+     *  Sets a particular intersection to a given value.  This method is 
+     *  const, so should only be called when the intersection is already set
+     *  to an object identical to ptr, and even then is not thread-safe.
+     */
+
+    void setIntersectionPtr(
+        unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const;
+
     /*  Leaf cell state, when known  */
     Interval::State type;
+
+    /*  The cell's region */
+    Region<N> region;
 
     /*  Optional leaf data, owned by a parent Pool<Leaf> */
     Leaf* leaf;
@@ -328,6 +336,14 @@ protected:
     static bool leafsAreManifold(
             const std::array<XTree<N>*, 1 << N>& children,
             const std::array<Interval::State, 1 << N>& corners);
+
+    /*
+     *  When collecting children and collapsing, each child can contribute the
+     *  intersections on the N edges (2*N directed edges) adjacent to the 
+     *  corner that it contributes.  This method uses mt, which therefore
+     *  must have been built first.
+     */
+    static std::array<unsigned, 2*N> edgesFromChild(unsigned childIndex);
 
     /*
      *  Returns a corner mask bitfield from the given array

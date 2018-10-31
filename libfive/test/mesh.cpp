@@ -61,6 +61,24 @@ TEST_CASE("Mesh::render (cube)")
     auto mesh = Mesh::render(cube, r);
 }
 
+TEST_CASE("Mesh::render (cube face count)")
+{
+    auto cube = max(max(
+        max(-(Tree::X() + 1.5),
+            Tree::X() - 1.5),
+        max(-(Tree::Y() + 1.5),
+            Tree::Y() - 1.5)),
+        max(-(Tree::Z() + 1.5),
+            Tree::Z() - 1.5));
+
+    //  The region is set so we hit where the interesting stuff happens.
+    Region<3> r({ -3., -3., -3. }, { 3., 3., 3. });
+
+    auto m = Mesh::render(cube, r, 0.15, 1e-8, false);
+    REQUIRE(m->branes.size() == 12);
+    REQUIRE(m->verts.size() == 9);
+}
+
 TEST_CASE("Mesh::render (face count in rectangular prism)")
 {
     auto t = max(max(max(-Tree::X(), Tree::X() - 4),
@@ -89,6 +107,52 @@ TEST_CASE("Mesh::render (cone)")
     REQUIRE(true);
 }
 
+TEST_CASE("Mesh::render (checking for triangles that are lines)")
+{
+    auto b = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+    auto mesh = Mesh::render(b, Region<3>({-10, -10, -10}, {10, 10, 10}), 0.25);
+
+    for (const auto& t : mesh->branes)
+    {
+        // Skip triangles that are actually collapsed into lines
+        REQUIRE(t(0) != t(1));
+        REQUIRE(t(0) != t(2));
+        REQUIRE(t(1) != t(2));
+    }
+}
+
+TEST_CASE("Mesh::render (checking for flipped triangles)")
+{
+    auto b = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+    auto mesh = Mesh::render(b, Region<3>({-10, -10, -10}, {10, 10, 10}), 0.25);
+
+    for (const auto& t : mesh->branes)
+    {
+        // We're only looking at the top face triangles, since that's where
+        // flipped triangles are induced.
+        bool on_top_face = true;
+        for (unsigned i=0; i < 3; ++i)
+        {
+            on_top_face &= fabs(mesh->verts[t(i)].z() - 0.1) < 1e-3;
+        }
+        if (on_top_face)
+        {
+            auto norm = (mesh->verts[t(1)] - mesh->verts[t(0)])
+                .cross(mesh->verts[t(2)] - mesh->verts[t(0)])
+                .normalized();
+
+            CAPTURE(mesh->verts[t(0)]);
+            CAPTURE(mesh->verts[t(1)]);
+            CAPTURE(mesh->verts[t(2)]);
+            CAPTURE(norm);
+
+            REQUIRE(norm.x() == Approx(0.0f).margin(0.01));
+            REQUIRE(norm.y() == Approx(0.0f).margin(0.01));
+            REQUIRE(norm.z() == Approx(1.0f).margin(0.01));
+        }
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 Kernel::Tree sphereGyroid()
@@ -107,7 +171,7 @@ Kernel::Tree sphereGyroid()
 
     auto sphereGyroid = max(sphere1, gyroid);
     sphereGyroid = min(sphereGyroid,
-                     min(sphereGyroid ,
+                     min(sphereGyroid,
                      (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
 
     return sphereGyroid;
