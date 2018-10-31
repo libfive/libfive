@@ -24,6 +24,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/progress.hpp"
+#include "libfive/render/brep/xtree.hpp"
 
 #include "libfive/render/brep/dc/intersection.hpp"
 #include "libfive/render/brep/dc/marching.hpp"
@@ -31,67 +32,68 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-template <typename T> class ObjectPool; /* Forward declaration */
+/*  AMBIGUOUS leaf cells have more data, which we heap-allocate in
+ *  this struct to keep the overall tree smaller. */
+template <unsigned N>
+struct DCLeaf
+{
+    DCLeaf();
+    void reset();
+
+    /*  level = max(map(level, children)) + 1  */
+    unsigned level;
+
+    /*  Vertex locations, if this is a leaf
+     *
+     *  To make cells manifold, we may store multiple vertices in a single
+     *  leaf; see writeup in marching.cpp for details  */
+    Eigen::Matrix<double, N, ipow(2, N - 1)> verts;
+
+    /* This array allows us to store position, normal, and value where
+     * the mesh crosses a cell edge.  IntersectionVec is small_vec that
+     * has enough space for a few intersections, and will move to the
+     * heap for pathological cases. */
+    std::array<std::shared_ptr<IntersectionVec<N>>, _edges(N) * 2>
+        intersections;
+
+    /*  Feature rank for the cell's vertex, where                    *
+     *      1 is face, 2 is edge, 3 is corner                        *
+     *                                                               *
+     *  This value is populated in evalLeaf and used when merging    *
+     *  from lower-ranked children                                   */
+    unsigned rank;
+
+    /* Used as a unique per-vertex index when unpacking into a b-rep;   *
+     * this is cheaper than storing a map of DCTree* -> uint32_t         */
+    mutable std::array<uint32_t, ipow(2, N - 1)> index;
+
+    /*  Bitfield marking which corners are set */
+    uint8_t corner_mask;
+
+    /*  Stores the number of patches / vertices in this cell
+     *  (which could be more than one to keep the surface manifold */
+    unsigned vertex_count;
+
+    /*  Marks whether this cell is manifold or not  */
+    bool manifold;
+
+    /*  Mass point is the average intersection location *
+     *  (the last coordinate is number of points summed) */
+    Eigen::Matrix<double, N + 1, 1> mass_point;
+
+    /*  QEF matrices */
+    Eigen::Matrix<double, N, N> AtA;
+    Eigen::Matrix<double, N, 1> AtB;
+    double BtB;
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
 
 template <unsigned N>
-class DCTree
+class DCTree : public XTree<N, DCTree<N>, DCLeaf<N>>
 {
 public:
-    /*  AMBIGUOUS leaf cells have more data, which we heap-allocate in
-     *  this struct to keep the overall tree smaller. */
-    struct Leaf
-    {
-        Leaf();
-        void reset();
-
-        /*  level = max(map(level, children)) + 1  */
-        unsigned level;
-
-        /*  Vertex locations, if this is a leaf
-         *
-         *  To make cells manifold, we may store multiple vertices in a single
-         *  leaf; see writeup in marching.cpp for details  */
-        Eigen::Matrix<double, N, ipow(2, N - 1)> verts;
-
-        /* This array allows us to store position, normal, and value where
-         * the mesh crosses a cell edge.  IntersectionVec is small_vec that
-         * has enough space for a few intersections, and will move to the
-         * heap for pathological cases. */
-        std::array<std::shared_ptr<IntersectionVec<N>>, _edges(N) * 2>
-            intersections;
-
-        /*  Feature rank for the cell's vertex, where                    *
-         *      1 is face, 2 is edge, 3 is corner                        *
-         *                                                               *
-         *  This value is populated in evalLeaf and used when merging    *
-         *  from lower-ranked children                                   */
-        unsigned rank;
-
-        /* Used as a unique per-vertex index when unpacking into a b-rep;   *
-         * this is cheaper than storing a map of DCTree* -> uint32_t         */
-        mutable std::array<uint32_t, ipow(2, N - 1)> index;
-
-        /*  Bitfield marking which corners are set */
-        uint8_t corner_mask;
-
-        /*  Stores the number of patches / vertices in this cell
-         *  (which could be more than one to keep the surface manifold */
-        unsigned vertex_count;
-
-        /*  Marks whether this cell is manifold or not  */
-        bool manifold;
-
-        /*  Mass point is the average intersection location *
-         *  (the last coordinate is number of points summed) */
-        Eigen::Matrix<double, N + 1, 1> mass_point;
-
-        /*  QEF matrices */
-        Eigen::Matrix<double, N, N> AtA;
-        Eigen::Matrix<double, N, 1> AtB;
-        double BtB;
-
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    };
+    using Leaf = DCLeaf<N>;
 
     /*
      *  This is a handle for both the DCTree and the object pool data
@@ -106,11 +108,6 @@ public:
      */
     explicit DCTree();
     explicit DCTree(DCTree<N>* parent, unsigned index, Region<N> region);
-
-    /*
-     *  Resets this tree to a freshly-constructed state
-     */
-    void reset(DCTree<N>* p, unsigned i, Region<N> region);
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
@@ -141,17 +138,6 @@ public:
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const Region<N>& region,
             ObjectPool<DCTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs);
-
-    /*
-     *  Checks whether this tree splits
-     */
-    bool isBranch() const { return children[0] != nullptr; }
-
-    /*
-     *  Looks up a child, returning *this if this isn't a branch
-     */
-    const DCTree<N>* child(unsigned i) const
-    { return isBranch() ? children[i].load(std::memory_order_relaxed) : this; }
 
     /*
      *  Returns the filled / empty state for the ith corner
@@ -197,17 +183,6 @@ public:
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;
 
-    /*  Parent tree, or nullptr if this is the root */
-    DCTree<N>* parent;
-
-    /*  Index into the parent tree's children array.  We only store the tree
-     *  in the children array when it is complete, so it needs to know its
-     *  index for when that time comes.  */
-    unsigned parent_index;
-
-    /*  Children pointers, if this is a branch  */
-    std::array<std::atomic<DCTree<N>*>, 1 << N> children;
-
     /*
      *  Look up a particular vertex by index
      */
@@ -234,21 +209,9 @@ public:
     void setIntersectionPtr(
         unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const;
 
-    /*  Leaf cell state, when known  */
-    Interval::State type;
-
-    /*  The cell's region */
-    Region<N> region;
-
-    /*  Optional leaf data, owned by a parent ObjectPool<Leaf> */
-    Leaf* leaf;
-
     /*  Single copy of the marching squares / cubes table, lazily
      *  initialized when needed */
     static std::unique_ptr<const Marching::MarchingTable<N>> mt;
-
-    /*  Marks whether this tree is fully constructed */
-    mutable std::atomic_uint pending;
 
 protected:
     /*
@@ -267,12 +230,6 @@ protected:
      */
     const std::vector<std::pair<uint8_t, uint8_t>>& edges() const;
 
-    /*
-     *  Releases the children (and their Leaf pointers, if present)
-     *  into the given object pools.
-     */
-    void releaseChildren(ObjectPool<DCTree<N>>& spare_trees,
-                         ObjectPool<Leaf>& spare_leafs);
 
     /*
      *  Writes the given intersection into the intersections list
@@ -323,12 +280,6 @@ protected:
      */
     static uint8_t buildCornerMask(
             const std::array<Interval::State, 1 << N>& corners);
-
-    /*
-     *  Call this when construction is complete; it will atomically install
-     *  this tree into the parent's array of children pointers.
-     */
-    void done();
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;

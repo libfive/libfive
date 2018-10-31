@@ -25,46 +25,48 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/progress.hpp"
 #include "libfive/render/brep/ipow.hpp"
+#include "libfive/render/brep/xtree.hpp"
 
 namespace Kernel {
 
 /* Forward declarations */
-template <typename T> class ObjectPool;
 template <unsigned N> class SimplexNeighbors;
 
 template <unsigned N>
-class SimplexTree
+struct SimplexLeaf
+{
+    SimplexLeaf();
+    void reset();
+
+    /*  Subspace vertex positions */
+    Eigen::Matrix<double, ipow(3, N), N> vertices;
+
+    /*  Subspace vertex state */
+    std::array<bool, ipow(3, N)> inside;
+
+    /*   Global indices for subspace vertices  */
+    std::array<uint64_t, ipow(3, N)> index;
+
+    /*  Tape used for evaluation within this leaf */
+    std::shared_ptr<Tape> tape;
+
+    /*  Indices of surface vertices, populated when meshing.
+     *
+     *  The index is a pair of subspace vertex indices.
+     *
+     *  We can't simply store a fixed number of edges because of
+     *  how neighboring cells of varying sizes are meshed. */
+    std::map<std::pair<uint64_t, uint64_t>, uint64_t> surface;
+
+    /*  Represents how far from minimum-size leafs we are */
+    unsigned level;
+};
+
+template <unsigned N>
+class SimplexTree : public XTree<N, SimplexTree<N>, SimplexLeaf<N>>
 {
 public:
-
-    struct Leaf
-    {
-        Leaf();
-        void reset();
-
-        /*  Subspace vertex positions */
-        Eigen::Matrix<double, ipow(3, N), N> vertices;
-
-        /*  Subspace vertex state */
-        std::array<bool, ipow(3, N)> inside;
-
-        /*   Global indices for subspace vertices  */
-        std::array<uint64_t, ipow(3, N)> index;
-
-        /*  Tape used for evaluation within this leaf */
-        std::shared_ptr<Tape> tape;
-
-        /*  Indices of surface vertices, populated when meshing.
-         *
-         *  The index is a pair of subspace vertex indices.
-         *
-         *  We can't simply store a fixed number of edges because of
-         *  how neighboring cells of varying sizes are meshed. */
-        std::map<std::pair<uint64_t, uint64_t>, uint64_t> surface;
-
-        /*  Represents how far from minimum-size leafs we are */
-        unsigned level;
-    };
+    using Leaf = SimplexLeaf<N>;
 
     /*
      *  Simple constructor
@@ -75,11 +77,6 @@ public:
     explicit SimplexTree();
     explicit SimplexTree(SimplexTree<N>* parent, unsigned index,
                          const Region<N>&);
-
-    /*
-     *  Resets this tree to a freshly-constructed state
-     */
-    void reset(SimplexTree<N>* p, unsigned i, const Region<N>&);
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
@@ -112,17 +109,6 @@ public:
             ObjectPool<SimplexTree<N>>& spare_trees,
             ObjectPool<Leaf>& spare_leafs);
 
-    /*
-     *  Checks whether this tree splits
-     */
-    bool isBranch() const { return children[0] != nullptr; }
-
-    /*
-     *  Looks up a child, returning *this if this isn't a branch
-     */
-    const SimplexTree<N>* child(unsigned i) const
-    { return isBranch() ? children[i].load(std::memory_order_relaxed) : this; }
-
     /*  Looks up the cell's level.
      *
      *  This must only be called on non-branching cells.
@@ -153,50 +139,7 @@ public:
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;
 
-    /*  Parent tree, or nullptr if this is the root */
-    SimplexTree<N>* parent;
-
-    /*  Index into the parent tree's children array.  We only store the tree
-     *  in the children array when it is complete, so it needs to know its
-     *  index for when that time comes.  */
-    unsigned parent_index;
-
-    /*  Children pointers, if this is a branch  */
-    std::array<std::atomic<SimplexTree<N>*>, 1 << N> children;
-
-    /*  Leaf cell state, when known  */
-    Interval::State type;
-
-    /*  Optional leaf data, owned by a parent ObjectPool<Leaf> */
-    Leaf* leaf;
-
-    /*  Marks whether this tree is fully constructed */
-    mutable std::atomic_uint pending;
-
 protected:
-    /*
-     *  Searches for a vertex within the SimplexTree cell, using the QEF matrices
-     *  that are pre-populated in AtA, AtB, etc.
-     *
-     *  Minimizes the QEF towards mass_point
-     *
-     *  Stores the vertex in vert and returns the QEF error
-     */
-    double findVertex(unsigned i=0);
-
-    /*
-     *  Releases the children (and their Leaf pointers, if present)
-     *  into the given object pools.
-     */
-    void releaseChildren(ObjectPool<SimplexTree<N>>& spare_trees,
-                         ObjectPool<Leaf>& spare_leafs);
-
-    /*
-     *  Call this when construction is complete; it will atomically install
-     *  this tree into the parent's array of children pointers.
-     */
-    void done();
-
     /*
      *  Helper function to assign leaf->index for all leafs in a tree
      */

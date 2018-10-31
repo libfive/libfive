@@ -36,52 +36,26 @@ template <unsigned N> constexpr double SimplexTree<N>::EIGENVALUE_CUTOFF;
 template <unsigned N>
 SimplexTree<N>::SimplexTree(SimplexTree<N>* parent, unsigned index,
                             const Region<N>& region)
-    : SimplexTree()
+    : XTree<N, SimplexTree<N>, SimplexLeaf<N>>(parent, index, region)
 {
-    reset(parent, index, region);
+    // Nothing to do here
 }
 
 template <unsigned N>
 SimplexTree<N>::SimplexTree()
+    : XTree<N, SimplexTree<N>, SimplexLeaf<N>>()
 {
-    for (auto& c : children)
-    {
-        c.store(nullptr, std::memory_order_relaxed);
-    }
-    leaf = nullptr;
+    // Nothing to do here
 }
 
 template <unsigned N>
-void SimplexTree<N>::reset(SimplexTree<N>* p, unsigned i,
-                           const Region<N>& region)
-{
-    (void)region;
-
-    parent = p;
-    parent_index = i;
-    type = Interval::UNKNOWN;
-
-    // By design, a tree that is being reset must have no children
-    for (auto& c : children)
-    {
-        assert(c.load() == nullptr);
-        (void)c;
-    }
-
-    // By design, a tree that is being reset also has no leaf.
-    assert(leaf == nullptr);
-
-    pending.store((1 << N) - 1);
-}
-
-template <unsigned N>
-SimplexTree<N>::Leaf::Leaf()
+SimplexLeaf<N>::SimplexLeaf()
 {
     reset();
 }
 
 template <unsigned N>
-void SimplexTree<N>::Leaf::reset()
+void SimplexLeaf<N>::reset()
 {
     level = 0;
     std::fill(index.begin(), index.end(), 0);
@@ -101,16 +75,16 @@ Tape::Handle SimplexTree<N>::evalInterval(
             region.upper3().template cast<float>(),
             tape);
 
-    type = Interval::state(o.first);
+    this->type = Interval::state(o.first);
     if (!eval.isSafe())
     {
-        type = Interval::AMBIGUOUS;
+        this->type = Interval::AMBIGUOUS;
         return tape;
     }
 
-    if (type == Interval::FILLED || type == Interval::EMPTY)
+    if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        done();
+        this->done();
     }
     return o.second;
 }
@@ -154,13 +128,13 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
 {
     CornerArray<N> corners;
 
-    leaf = spare_leafs.get();
-    Unroller<N, 0>()(*leaf, corners, region);
+    this->leaf = spare_leafs.get();
+    Unroller<N, 0>()(*this->leaf, corners, region);
 
     for (unsigned i=0; i < ipow(3, N); ++i)
     {
         Eigen::Vector3f p;
-        p << leaf->vertices.row(i).template cast<float>().transpose(),
+        p << this->leaf->vertices.row(i).template cast<float>().transpose(),
              region.perp.template cast<float>();
 
         // TODO:  Pull corners from neighbors when possible
@@ -170,33 +144,13 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
             ? eval->feature.isInside(p)
             : (out < 0);
 
-        leaf->inside[i] = inside;
-        leaf->tape = tape;
-        leaf->level = 0;
+        this->leaf->inside[i] = inside;
+        this->leaf->tape = tape;
+        this->leaf->level = 0;
     }
-    type = Interval::AMBIGUOUS; // TODO: check corners afterwards and collapse
+    this->type = Interval::AMBIGUOUS; // TODO: check corners afterwards and collapse
 
-    done();
-}
-
-template <unsigned N>
-void SimplexTree<N>::releaseChildren(ObjectPool<SimplexTree>& spare_trees,
-                                     ObjectPool<Leaf>& spare_leafs)
-{
-    for (auto& c : children)
-    {
-        auto ptr = c.exchange(nullptr);
-        assert(ptr != nullptr);
-
-        auto leaf = ptr->leaf;
-
-        spare_trees.put(ptr);
-        if (leaf != nullptr)
-        {
-            ptr->leaf = nullptr;
-            spare_leafs.put(leaf);
-        }
-    }
+    this->done();
 }
 
 template <unsigned N>
@@ -206,16 +160,16 @@ bool SimplexTree<N>::collectChildren(
         ObjectPool<SimplexTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs)
 {
     // Wait for collectChildren to have been called N times
-    if (pending-- != 0)
+    if (this->pending-- != 0)
     {
         return false;
     }
 
     // Load the children here, to avoid atomics
     std::array<SimplexTree<N>*, 1 << N> cs;
-    for (unsigned i=0; i < children.size(); ++i)
+    for (unsigned i=0; i < this->children.size(); ++i)
     {
-        cs[i] = children[i].load(std::memory_order_relaxed);
+        cs[i] = this->children[i].load(std::memory_order_relaxed);
     }
 
     // If any children are branches, then we can't collapse.
@@ -223,14 +177,13 @@ bool SimplexTree<N>::collectChildren(
     if (std::any_of(cs.begin(), cs.end(),
                     [](SimplexTree<N>* o){ return o->isBranch(); }))
     {
-        done();
+        this->done();
         return true;
     }
 
     // Update corner and filled / empty state from children
     bool all_empty = true;
     bool all_full  = true;
-    std::array<Interval::State, 1 << N> corners;
     for (uint8_t i=0; i < cs.size(); ++i)
     {
         auto c = cs[i];
@@ -240,41 +193,31 @@ bool SimplexTree<N>::collectChildren(
         all_full  &= (c->type == Interval::FILLED);
     }
 
-    type = all_empty ? Interval::EMPTY
-         : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
+    this->type = all_empty ? Interval::EMPTY
+               : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
 
     // If this cell is unambiguous, then forget all its branches and return
-    if (type == Interval::FILLED || type == Interval::EMPTY)
+    if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        releaseChildren(spare_trees, spare_leafs);
-        done();
+        this->releaseChildren(spare_trees, spare_leafs);
+        this->done();
         return true;
     }
 
     // We've now passed all of our opportunities to exit without
     // allocating a Leaf, so create one here.
-    assert(leaf == nullptr);
-    leaf = spare_leafs.get();
+    assert(this->leaf == nullptr);
+    this->leaf = spare_leafs.get();
 
     // TODO: attempt to collapse Leaf
     // For now, assume it failed
     {
-        spare_leafs.put(leaf);
-        leaf = nullptr;
+        spare_leafs.put(this->leaf);
+        this->leaf = nullptr;
     }
 
-    done();
+    this->done();
     return true;
-}
-
-template <unsigned N>
-void SimplexTree<N>::done()
-{
-    if (parent)
-    {
-        assert(parent->children[parent_index].load() == nullptr);
-        parent->children[parent_index].store(this, std::memory_order_relaxed);
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -282,17 +225,17 @@ void SimplexTree<N>::done()
 template <unsigned N>
 unsigned SimplexTree<N>::level() const
 {
-    assert(!isBranch());
-    switch (type)
+    assert(!this->isBranch());
+    switch (this->type)
     {
         case Interval::AMBIGUOUS:
-            assert(leaf != nullptr);
-            return leaf->level;
+            assert(this->leaf != nullptr);
+            return this->leaf->level;
 
         case Interval::UNKNOWN: assert(false);
 
         case Interval::FILLED:  // fallthrough
-        case Interval::EMPTY:   assert(leaf == nullptr);
+        case Interval::EMPTY:   assert(this->leaf == nullptr);
                                 return 0;
     };
     return 0;
@@ -301,12 +244,12 @@ unsigned SimplexTree<N>::level() const
 template <unsigned N>
 uint32_t SimplexTree<N>::leafLevel() const
 {
-    assert(!isBranch());
-    switch (type)
+    assert(!this->isBranch());
+    switch (this->type)
     {
         case Interval::AMBIGUOUS:
-            assert(leaf != nullptr);
-            return leaf->level;
+            assert(this->leaf != nullptr);
+            return this->leaf->level;
 
         case Interval::UNKNOWN: assert(false);
 
@@ -328,18 +271,18 @@ template <unsigned N>
 void SimplexTree<N>::assignIndices(
         uint64_t& index, const SimplexNeighbors<N>& neighbors) const
 {
-    if (isBranch()) {
-        for (unsigned i=0; i < children.size(); ++i) {
-            auto new_neighbors = neighbors.push(i, children);
-            children[i].load()->assignIndices(index, new_neighbors);
+    if (this->isBranch()) {
+        for (unsigned i=0; i < this->children.size(); ++i) {
+            auto new_neighbors = neighbors.push(i, this->children);
+            this->children[i].load()->assignIndices(index, new_neighbors);
         }
-    } else if (leaf != nullptr) {
-        for (unsigned i=0; i < leaf->index.size(); ++i) {
+    } else if (this->leaf != nullptr) {
+        for (unsigned i=0; i < this->leaf->index.size(); ++i) {
             auto n = neighbors.getIndex(i);
             if (n) {
-                leaf->index[i] = n;
+                this->leaf->index[i] = n;
             } else {
-                leaf->index[i] = index++;
+                this->leaf->index[i] = index++;
             }
         }
     }
