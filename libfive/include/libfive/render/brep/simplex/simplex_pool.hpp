@@ -10,39 +10,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <memory>
 
-#include "libfive/tree/tree.hpp"
-#include "libfive/render/brep/region.hpp"
-#include "libfive/render/brep/progress.hpp"
-#include "libfive/render/brep/root.hpp"
 #include "libfive/render/brep/simplex/simplextree.hpp"
+#include "libfive/render/brep/simplex/simplex_neighbors.hpp"
+#include "libfive/render/brep/worker_pool.hpp"
 
 namespace Kernel {
 
 template <unsigned N>
-struct SimplexTreePool
-{
-    /*
-     *  Simplified construction with fewer arguments, used in unit testing
-     */
-    static Root<SimplexTree<N>> build(
-            const Tree t, Region<N> region,
-            double min_feature=0.1, double max_err=1e-8, unsigned workers=8,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
-
-    /*
-     *  Full-featured construction
-     *
-     *  eval must be the first item in an array of at least `workers` items
-     */
-    static Root<SimplexTree<N>> build(
-            XTreeEvaluator* eval, Region<N> region,
-            double min_feature, double max_err,
-            unsigned workers, std::atomic_bool& cancel,
-            ProgressCallback callback=EMPTY_PROGRESS_CALLBACK);
-};
-
-extern template struct SimplexTreePool<2>;
-extern template struct SimplexTreePool<3>;
+using SimplexTreePool = WorkerPool<SimplexTree<N>, SimplexNeighbors<N>, N>;
 
 }   // namespace Kernel
 
