@@ -417,12 +417,12 @@ static unsigned rotateMask(unsigned mask, const Eigen::Matrix<double, N, N>& rot
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-std::unique_ptr<MarchingTable<N>> buildTable()
+MarchingTable<N> buildTable()
 {
-    std::unique_ptr<MarchingTable<N>> table(new MarchingTable<N>);
+    MarchingTable<N> table;
 
     // Mark every case as uninitialized
-    for (auto& t : table->v)
+    for (auto& t : table.v)
     {
         for (auto& p : t)
         {
@@ -431,7 +431,7 @@ std::unique_ptr<MarchingTable<N>> buildTable()
     }
 
     // Load the initial set of cases (specialized on a per-dimension basis)
-    loadCases<N>(table->v);
+    loadCases<N>(table.v);
 
     //  Load all possible rigid-body rotations, which we will use to populate
     //  the rest of the table
@@ -439,9 +439,9 @@ std::unique_ptr<MarchingTable<N>> buildTable()
 
     //  Start by marking the changed elements on the table
     std::array<bool, ipow(2, _verts(N))> changed;
-    for (unsigned i=0; i < table->v.size(); ++i)
+    for (unsigned i=0; i < table.v.size(); ++i)
     {
-        changed[i] = table->v[i][0][0].first != -1;
+        changed[i] = table.v[i][0][0].first != -1;
     }
 
     // Loop until the system stabilizes
@@ -449,7 +449,7 @@ std::unique_ptr<MarchingTable<N>> buildTable()
     while (any_changed)
     {
         any_changed = false;
-        for (unsigned i=0; i < table->v.size(); ++i)
+        for (unsigned i=0; i < table.v.size(); ++i)
         {
             // If this vertex bitmask has changed in the previous cycle,
             // then apply every possible rotation to fill out the table.
@@ -458,9 +458,9 @@ std::unique_ptr<MarchingTable<N>> buildTable()
                 changed[i] = false;
                 for (const auto& rot : rots)
                 {
-                    const Patches<N>& patches = table->v[i];
+                    const Patches<N>& patches = table.v[i];
                     auto i_ = rotateMask<N>(i, rot);
-                    Patches<N>& target = table->v[i_];
+                    Patches<N>& target = table.v[i_];
 
                     // If this new target is uninitialized, then populate it
                     // by applying the rigid rotation to all the patch edges
@@ -490,49 +490,54 @@ std::unique_ptr<MarchingTable<N>> buildTable()
     }
 
     // Mark every vertex-pair-to-edge and edge-to-patch mapping as invalid
-    for (unsigned i=0; i < table->e.size(); ++i)
+    for (unsigned i=0; i < table.e.size(); ++i)
     {
-        std::fill(table->e[i].begin(), table->e[i].end(), -1);
+        std::fill(table.e[i].begin(), table.e[i].end(), -1);
     }
-    for (unsigned i=0; i < table->p.size(); ++i)
+    for (unsigned i=0; i < table.p.size(); ++i)
     {
-        std::fill(table->p[i].begin(), table->p[i].end(), -1);
+        std::fill(table.p[i].begin(), table.p[i].end(), -1);
     }
 
     // Assign every vertex pair in the table to an edge id
     unsigned j=0;
-    for (unsigned i=0; i < table->v.size(); ++i)
+    for (unsigned i=0; i < table.v.size(); ++i)
     {
-        for (unsigned p=0; p < table->v[i].size() &&
-                           table->v[i][p][0].first != -1; ++p)
+        for (unsigned p=0; p < table.v[i].size() &&
+                           table.v[i][p][0].first != -1; ++p)
         {
-            for (unsigned e=0; e < table->v[i][p].size() &&
-                               table->v[i][p][e].first != -1; ++e)
+            for (unsigned e=0; e < table.v[i][p].size() &&
+                               table.v[i][p][e].first != -1; ++e)
             {
                 // Store verts-to-edge mapping if necessary
-                auto verts = table->v[i][p][e];
+                auto verts = table.v[i][p][e];
                 assert(verts.first != verts.second);
 
-                auto& edge = table->e[verts.first][verts.second];
+                auto& edge = table.e[verts.first][verts.second];
                 if (edge == -1)
                 {
                     edge = j++;
                 }
 
                 // Store edge-to-patch mapping
-                table->p[i][edge] = p;
+                table.p[i][edge] = p;
             }
         }
     }
     assert(j == 2*_edges(N));
-    assert(table->v[0][0][0].first == -1);
+    assert(table.v[0][0][0].first == -1);
 
     return table;
 }
 
-// Explicit instantiation of templates
-template std::unique_ptr<MarchingTable<2>> buildTable<2>();
-template std::unique_ptr<MarchingTable<3>> buildTable<3>();
-
 }   // namespace Marching
+
+// Static variables
+template <unsigned N>
+MarchingTable<N> MarchingTable<N>::mt = Marching::buildTable<N>();
+
+// Explicit initialization of template
+template struct MarchingTable<2>;
+template struct MarchingTable<3>;
+
 }   // namespace Kernel

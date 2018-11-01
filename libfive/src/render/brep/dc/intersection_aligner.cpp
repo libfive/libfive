@@ -29,7 +29,7 @@ void IntersectionAligner::load(
             {0, A} };
         for (unsigned i = 0; i < 4; ++i)
         {
-            es[i] = DCTree<3>::mt->e[D ? ev[i].first : ev[i].second]
+            es[i] = MarchingTable<3>::mt.e[D ? ev[i].first : ev[i].second]
                 [D ? ev[i].second : ev[i].first];
             assert(es[i] != -1);
         }

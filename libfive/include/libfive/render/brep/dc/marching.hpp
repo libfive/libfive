@@ -61,18 +61,24 @@ template <unsigned N>
 using EdgeToPatch = std::array<std::array<int, _edges(N) * 2>,
                                ipow(2, _verts(N))>;
 
+}   // namespace Marching
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
 struct MarchingTable
 {
-    VertsToPatches<N> v;
-    VertsToEdge<N> e;
-    EdgeToPatch<N> p;
+    Marching::VertsToPatches<N> v;
+    Marching::VertsToEdge<N> e;
+    Marching::EdgeToPatch<N> p;
+
+    static MarchingTable<N> mt;
+    /*  Used as a flag to trigger population of the static arrays */
+    static bool loaded;
 };
 
-template <unsigned N>
-std::unique_ptr<MarchingTable<N>> buildTable();
+//  We explicitly instantiate the MarchingTables classes in marching.cpp
+extern template struct MarchingTable<2>;
+extern template struct MarchingTable<3>;
 
-}   // namespace Marching
 }   // namespace Kernel

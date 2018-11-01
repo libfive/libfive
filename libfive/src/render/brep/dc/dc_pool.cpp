@@ -50,11 +50,6 @@ Root<DCTree<N>> DCPool<N>::build(
             unsigned workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback)
 {
-    // Lazy initialization of marching squares / cubes table
-    if (DCTree<N>::mt.get() == nullptr)
-    {
-        DCTree<N>::mt = Marching::buildTable<N>();
-    }
     return WorkerPool<DCTree<N>, DCNeighbors<N>, N>::build(
         eval, region, min_feature, max_err, workers, cancel, progress_callback);
 }

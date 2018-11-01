@@ -78,13 +78,13 @@ public:
         int es[2];
         if (D ^ (A == Axis::X))
         {
-            es[0] = DCTree<2>::mt->e[3][3^A];
-            es[1] = DCTree<2>::mt->e[A][0];
+            es[0] = MarchingTable<2>::mt.e[3][3^A];
+            es[1] = MarchingTable<2>::mt.e[A][0];
         }
         else
         {
-            es[0] = DCTree<2>::mt->e[3^A][3];
-            es[1] = DCTree<2>::mt->e[0][A];
+            es[0] = MarchingTable<2>::mt.e[3^A][3];
+            es[1] = MarchingTable<2>::mt.e[0][A];
         }
         assert(es[0] != -1);
         assert(es[1] != -1);
@@ -96,7 +96,7 @@ public:
 
             auto vi = ts[i]->leaf->level > 0
                 ? 0
-                : DCTree<2>::mt->p[ts[i]->leaf->corner_mask][es[i]];
+                : MarchingTable<2>::mt.p[ts[i]->leaf->corner_mask][es[i]];
             assert(vi != -1);
 
             // Sanity-checking manifoldness of collapsed cells
