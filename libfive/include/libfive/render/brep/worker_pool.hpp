@@ -25,10 +25,31 @@ template <typename T, typename Neighbors, unsigned N>
 class WorkerPool
 {
 public:
+    /*
+     *  Builder function with optional arguments, fewer features
+     */
+    static Root<T> build(const Tree t, Region<N> region,
+            double min_feature=0.1, double max_err=1e-8, unsigned workers=8,
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK)
+    {
+        std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
+        es.reserve(workers);
+        for (unsigned i=0; i < workers; ++i)
+        {
+            es.emplace_back(XTreeEvaluator(t));
+        }
+        std::atomic_bool cancel(false);
+        return build(es.data(), region, min_feature,
+                     max_err, workers, cancel, progress_callback);
+    }
+
+    /*
+     *  Full-featured builder function
+     */
     static Root<T> build(XTreeEvaluator* eval,
             Region<N> region, double min_feature,
             double max_err, unsigned workers, std::atomic_bool& cancel,
-            ProgressCallback progress_callback)
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK)
     {
         auto root(new T(nullptr, 0, region));
         std::atomic_bool done(false);

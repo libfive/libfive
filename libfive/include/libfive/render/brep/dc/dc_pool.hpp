@@ -10,38 +10,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <memory>
 
-#include "libfive/tree/tree.hpp"
-#include "libfive/render/brep/region.hpp"
-#include "libfive/render/brep/root.hpp"
-#include "libfive/render/brep/progress.hpp"
-#include "libfive/render/brep/dc/dc_tree.hpp"
+#include "libfive/render/brep/worker_pool.hpp"
+#include "libfive/render/brep/dc/dc_neighbors.hpp"
 
 namespace Kernel {
 
 template <unsigned N>
-struct DCPool
-{
-    /*
-     *  Simplified construction with fewer arguments, used in unit testing
-     */
-    static Root<DCTree<N>> build(
-            const Tree t, Region<N> region,
-            double min_feature=0.1, double max_err=1e-8, unsigned workers=1,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
-
-    /*
-     *  Full-featured construction
-     *
-     *  eval must be the first item in an array of at least `workers` items
-     */
-    static Root<DCTree<N>> build(
-            XTreeEvaluator* eval, Region<N> region,
-            double min_feature, double max_err,
-            unsigned workers, std::atomic_bool& cancel,
-            ProgressCallback callback=EMPTY_PROGRESS_CALLBACK);
-};
-
-extern template struct DCPool<2>;
-extern template struct DCPool<3>;
+using DCPool = WorkerPool<DCTree<N>, DCNeighbors<N>, N>;
 
 }   // namespace Kernel
