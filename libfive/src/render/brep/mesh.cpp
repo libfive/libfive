@@ -16,6 +16,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_mesher.hpp"
 #include "libfive/render/brep/dual.hpp"
 
+#if LIBFIVE_TRIANGLE_FAN_MESHING
+#include "libfive/render/brep/dc/intersection_aligner.hpp"
+#endif
+
 namespace Kernel {
 
 const float Mesh::MAX_PROGRESS = 3.0f;
@@ -61,6 +65,12 @@ std::unique_ptr<Mesh> Mesh::render(
     if (cancel.load() || t.get() == nullptr) {
         return nullptr;
     }
+
+#if LIBFIVE_TRIANGLE_FAN_MESHING
+    // Make sure each intersection has the same object in all cells.
+    Dual<3>::walk<IntersectionAligner>(t, 1, cancel, progress_callback);
+    workers = 1;    // The fan walker isn't thread-safe
+#endif
 
     auto out = Dual<3>::walk<DCMesher>(t, workers, cancel, progress_callback);
 

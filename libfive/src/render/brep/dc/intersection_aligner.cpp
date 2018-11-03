@@ -10,9 +10,27 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/dc/intersection_aligner.hpp"
+#include "libfive/render/brep/dc/dc_mesher.hpp"
 #include "libfive/render/axes.hpp"
 
 namespace Kernel {
+
+template <Axis::Axis A>
+void IntersectionAligner::load(const std::array<const DCTree<3>*, 4>& ts)
+{
+    auto index_sign = DCMesher::getIndexAndSign<A>(ts);
+    if (index_sign.first == -1) {
+        return;
+    } else {
+        assert(index_sign.first >= 0);
+    }
+
+    if (index_sign.second) {
+        load<A, 1>(ts, index_sign.first);
+    } else {
+        load<A, 0>(ts, index_sign.first);
+    }
+}
 
 template <Axis::Axis A, bool D>
 void IntersectionAligner::load(
@@ -60,14 +78,9 @@ void IntersectionAligner::load(
     }
 }
 
-#define specializeLoad(axis)                               \
-template void IntersectionAligner::load<axis, true>(       \
-const std::array<const DCTree<3>*, 4>& ts, unsigned index); \
-template void IntersectionAligner::load<axis, false>(      \
-const std::array<const DCTree<3>*, 4>& ts, unsigned index); \
-
-specializeLoad(Axis::X)
-specializeLoad(Axis::Y)
-specializeLoad(Axis::Z)
+// Explicit template instantiation
+template void IntersectionAligner::load<Axis::X>(const std::array<const DCTree<3>*, 4>&);
+template void IntersectionAligner::load<Axis::Y>(const std::array<const DCTree<3>*, 4>&);
+template void IntersectionAligner::load<Axis::Z>(const std::array<const DCTree<3>*, 4>&);
 
 }   // namespace Kernel

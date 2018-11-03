@@ -16,21 +16,18 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/brep/dc/intersection_aligner.hpp"
 
-#ifndef LIBFIVE_TRIANGLE_FAN_MESHING
-#define LIBFIVE_TRIANGLE_FAN_MESHING 0
-#endif
-
 namespace Kernel {
 
 template <Axis::Axis A>
-void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts)
+std::pair<int, bool> DCMesher::getIndexAndSign(
+            const std::array<const DCTree<3>*, 4>& ts)
 {
     // Exit immediately if we can prove that there will be no
     // face produced by this edge.
     if (std::any_of(ts.begin(), ts.end(),
         [](const DCTree<3>* t){ return t->type != Interval::AMBIGUOUS; }))
     {
-        return;
+        return {-1, false};
     }
 
     // Sanity-checking that all cells have a Leaf struct allocated
@@ -71,19 +68,35 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts)
     auto b = ts[index]->cornerState(corners[index] | A);
     if (a != b)
     {
-        if (a != Interval::FILLED)
-        {
-            load<A, 0>(ts);
+        if (a != Interval::FILLED) {
+            return {index, false};
+        } else {
+            return {index, true};
         }
-        else
-        {
-            load<A, 1>(ts);
-        }
+    }
+    return {-1, false};
+}
+
+
+template <Axis::Axis A>
+void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts)
+{
+    auto index_sign = getIndexAndSign<A>(ts);
+    if (index_sign.first == -1) {
+        return;
+    } else {
+        assert(index_sign.first >= 0);
+    }
+
+    if (index_sign.second) {
+        load<A, 1>(ts, index_sign.first);
+    } else {
+        load<A, 0>(ts, index_sign.first);
     }
 }
 
 template <Axis::Axis A, bool D>
-void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts)
+void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts, unsigned index)
 {
     int es[4];
     {   // Unpack edge vertex pairs into edge indices
@@ -146,8 +159,7 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts)
             assert(intersectVec[i].pos == intersectVec[i % 2].pos);
         }
         auto intersectPos = (intersectPos1 + intersectPos2) / 2.;
-        intersectVec[0].index = verts.size();
-        verts.push_back(intersectPos.template cast<float>());
+        intersectVec[0].index = m.pushVertex(intersectPos.template cast<float>());
     }
     auto vCenter = intersectVec[0].index;
     assert(vCenter != 0);
@@ -223,10 +235,11 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts)
 #endif
 }
 
+#if LIBFIVE_TRIANGLE_FAN_MESHING
 template <Axis::Axis A, bool D>
-void Mesh::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
-                               uint32_t aIndex, uint32_t bIndex,
-                               uint32_t intersectionIndex)
+void DCMesher::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
+                                   uint32_t aIndex, uint32_t bIndex,
+                                   uint32_t intersectionIndex)
 {
     if (a == b)
     {
@@ -246,9 +259,9 @@ void Mesh::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
 
     if (a->level() != b->level())
     {
-        const auto& aPos = verts[aIndex];
-        const auto& bPos = verts[bIndex];
-        const auto& intersectionPos = verts[intersectionIndex];
+        const auto& aPos = m.verts[aIndex];
+        const auto& bPos = m.verts[bIndex];
+        const auto& intersectionPos = m.verts[intersectionIndex];
         const auto& boundaryValue = intersectionPos[Axis::toIndex(A)];
 
         const auto aIsSmaller = a->level() < b->level();
@@ -420,8 +433,7 @@ void Mesh::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
                         {
                             crossing[R] = smallerRegion.upper[R];
                         }
-                        forcedIndex = verts.size();
-                        verts.push_back(crossing);
+                        forcedIndex = m.pushVertex(crossing);
                     }
                     else
                     {
@@ -431,7 +443,7 @@ void Mesh::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
                         assert(intersectionVec->size() >= 2);
                         if ((*intersectionVec)[0].index == 0)
                         {
-                            (*intersectionVec)[0].index = verts.size();
+                            (*intersectionVec)[0].index = m.verts.size();
                             auto intersectPos1 = (*intersectionVec)[0].pos;
                             auto intersectPos2 = (*intersectionVec)[1].pos;
                             for (unsigned i = 2;
@@ -443,7 +455,7 @@ void Mesh::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
                             }
                             auto intersectPos =
                                 (intersectPos1 + intersectPos2) / 2.;
-                            verts.push_back(intersectPos
+                            m.verts.push_back(intersectPos
                                             .template cast<float>());
                         }
                         forcedIndex = (*intersectionVec)[0].index;
@@ -456,15 +468,16 @@ void Mesh::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
                     }
                 }
                 assert(forcedIndex != 0);
-                branes.push_back({ intersectionIndex, aIndex, forcedIndex });
-                branes.push_back({ bIndex, intersectionIndex, forcedIndex });
+                m.branes.push_back({ intersectionIndex, aIndex, forcedIndex });
+                m.branes.push_back({ bIndex, intersectionIndex, forcedIndex });
                 return;
             }
         }
     }
     // Just add the triangle (a,b,intersection).
-    branes.push_back({ aIndex, bIndex, intersectionIndex });
+    m.branes.push_back({ aIndex, bIndex, intersectionIndex });
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 

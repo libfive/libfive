@@ -75,29 +75,6 @@ protected:
      */
     void line(const Eigen::Vector3f& a, const Eigen::Vector3f& b);
 
-
-    /*
-     *  It is possible for a triangle to escape the cells that generated it, 
-     *  if said cells are of different sizes.  This function adds branes in
-     *  such a way that, so long as the endpoints are in their proper cells,
-     *  the entire triangle will be as well.  The axis and direction are not
-     *  those of the load function that calls this, but rather from a to b.
-     *  a and b must be ordered such that aIndex, bIndex, intersectionIndex 
-     *  is the proper winding for this triangle.
-     */
-    template <Axis::Axis A, bool D>
-    void checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b, 
-                             uint32_t aIndex, uint32_t bIndex, 
-                             uint32_t intersectionIndex);
-
-    /*
-     *  Used to store the indices of vertices created by forcing triangles to
-     *  be inside the cells generating them.  The key values are the 
-     *  corresponding cell vertices in ascending order, and the resulting 
-     *  vertex may or may not be an intersection vertex.
-     */
-    std::map<std::pair<uint32_t, uint32_t>, uint32_t> forcedVerts;
-
 };
 
 }   // namespace Kernel

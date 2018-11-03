@@ -19,18 +19,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #pragma once
 #include <array>
 
+#include "libfive/render/axes.hpp"
+
 namespace Kernel {
 
-template <unsigned N>
-class DCTree; // Forward declaration
+// Forward declarations
+template <unsigned N> class DCTree;
+template <unsigned N> class PerThreadBRep;
 
 struct IntersectionAligner {
+    using Input = DCTree<3>;
+    struct Output {
+        void collect(const std::vector<PerThreadBRep<3>>& children)
+        {
+            (void)children;
+            /* This is a dummy function to meet the requirements for Dual::walk */
+        }
+    };
+
+    IntersectionAligner(PerThreadBRep<3>& m) { (void)m; }
 
     /*
-     *  Called by Dual::walk to ensure that all copies of the intersection 
-     *  common to ts use the same shared_ptr.  Should be called before calling 
-     *  Dual::walk on the Mesh class.
+     *  Called by Dual::walk to ensure that all copies of the intersection
+     *  common to ts use the same shared_ptr.  Should be called before calling
+     *  Dual::walk on the Mesh class when doing fan meshing.
      */
+    template <Axis::Axis A>
+    static void load(const std::array<const DCTree<3>*, 4>& ts);
+
+protected:
     template <Axis::Axis A, bool D>
     static void load(const std::array<const DCTree<3>*, 4>& ts, unsigned index);
 };
