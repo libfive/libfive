@@ -17,6 +17,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/mesh.hpp"
 
+#if LIBFIVE_TRIANGLE_FAN_MESHING
+#include "libfive/render/brep/dc/intersection_aligner.hpp"
+#endif
+
 #include "util/shapes.hpp"
 
 using namespace Kernel;
@@ -213,16 +217,26 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
     Root<DCTree<3>> t;
+    unsigned workers = 1;
+    std::atomic_bool cancel(false);
+
     BENCHMARK("DCTree construction")
     {
-        t = DCPool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8);
+        t = DCPool<3>::build(sphereGyroid(), r, 0.025, 1e-8, workers);
     }
 
+#if LIBFIVE_TRIANGLE_FAN_MESHING
+    BENCHMARK("Intersection alignment")
+    {
+        workers = 1;
+        Dual<3>::walk<IntersectionAligner>(t, workers, cancel, EMPTY_PROGRESS_CALLBACK);
+    }
+#endif
+
     std::unique_ptr<Mesh> m;
-    std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Dual<3>::walk<DCMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK);
+        m = Dual<3>::walk<DCMesher>(t, workers, cancel, EMPTY_PROGRESS_CALLBACK);
     }
 
     BENCHMARK("DCTree deletion")
