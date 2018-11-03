@@ -174,6 +174,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk(
     boost::lockfree::stack<const typename M::Input*,
                            boost::lockfree::fixed_sized<true>> tasks(workers);
     tasks.push(t.get());
+    t->resetPending();
 
     std::atomic_uint32_t global_index(1);
     std::vector<PerThreadBRep<N>> breps;
@@ -260,9 +261,7 @@ void Dual<N>::run(V& v, ProgressWatcher* progress,
             continue;
         }
 
-        for (t = t->parent;
-             t && t->pending.fetch_add(1) == t->children.size() - 2;
-             t = t->parent)
+        for (t = t->parent; t && t->pending-- == 0; t = t->parent)
         {
             // Do the actual DC work (specialized for N = 2 or 3)
             Dual<N>::work(t, v);

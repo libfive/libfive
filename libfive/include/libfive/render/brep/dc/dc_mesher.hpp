@@ -15,7 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_tree.hpp"
 
 #ifndef LIBFIVE_TRIANGLE_FAN_MESHING
-#define LIBFIVE_TRIANGLE_FAN_MESHING 1
+#define LIBFIVE_TRIANGLE_FAN_MESHING 0
 #endif
 
 namespace Kernel {

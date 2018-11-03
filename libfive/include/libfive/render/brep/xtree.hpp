@@ -81,6 +81,19 @@ public:
             : static_cast<const T*>(this);
     }
 
+    /*
+     *  Walks the tree, resetting pending to its initial value of (1 << N) - 1
+     */
+    void resetPending() const
+    {
+        pending.store((1 << N) - 1);
+        if (isBranch()) {
+            for (auto& c : children) {
+                c.load()->resetPending();
+            }
+        }
+    }
+
     /*  Parent tree, or nullptr if this is the root */
     T* parent;
 

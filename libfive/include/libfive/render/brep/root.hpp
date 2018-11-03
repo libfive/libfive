@@ -59,7 +59,7 @@ public:
         leafs.clear();
     }
 
-    const T* operator->() { return ptr; }
+    const T* operator->() const { return ptr; }
     const T* get() const { return ptr; }
 
     void claim(ObjectPool<T>& pool) {
