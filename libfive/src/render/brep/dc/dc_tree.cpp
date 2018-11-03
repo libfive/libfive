@@ -743,7 +743,7 @@ bool DCTree<N>::collectChildren(
             {
                 if (c->leaf->intersections[edge])
                 {
-                    assert(!leaf->intersections[edge]);
+                    assert(!this->leaf->intersections[edge]);
                     this->leaf->intersections[edge] = c->leaf->intersections[edge];
                 }
             }
@@ -858,7 +858,7 @@ template <unsigned N>
 std::shared_ptr<IntersectionVec<N>> DCTree<N>::intersection(
         unsigned edge) const
 {
-    assert(leaf != nullptr);
+    assert(this->leaf != nullptr);
     return this->leaf->intersections[edge];
 }
 
@@ -866,7 +866,7 @@ template <unsigned N>
 void DCTree<N>::setIntersectionPtr(
     unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const
 {
-    assert(leaf != nullptr);
+    assert(this->leaf != nullptr);
     auto& dest = this->leaf->intersections[edge];
     assert(*dest == *ptr);
     if (dest != ptr)
@@ -976,7 +976,6 @@ unsigned DCTree<N>::rank() const
 template <unsigned N>
 std::array<unsigned, 2 * N> DCTree<N>::edgesFromChild(unsigned childIndex)
 {
-    assert(mt);
     std::array<unsigned, 2 * N> out;
     for (unsigned i=0; i < N; ++i)
     {
