@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <utility>
 
 #include <boost/container/static_vector.hpp>
-#include "libfive/render/brep/types.hpp"
+#include "libfive/render/brep/indexes.hpp"
 #include "libfive/render/brep/ipow.hpp"
 
 namespace Kernel {

@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/simplex/corner.hpp"
 #include "libfive/render/brep/simplex/corner.hpp"
 #include "libfive/render/brep/region.hpp"
-#include "libfive/render/brep/types.hpp"
+#include "libfive/render/brep/indexes.hpp"
 
 namespace Kernel {
 

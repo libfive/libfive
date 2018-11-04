@@ -93,8 +93,6 @@ struct Walker3
     template <Axis::Axis A>
     void load(const std::array<const DCTree<3>*, 4>& a)
     {
-        // TODO: consolidate this with DCMesher
-
         // Exit immediately if we can prove that there will be no
         // face produced by this edge.
         if (std::any_of(a.begin(), a.end(),
