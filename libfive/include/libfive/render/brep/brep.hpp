@@ -50,6 +50,7 @@ public:
         // in the array as we go.
         while (true) {
             bool found = false;
+            // TODO: check whether a min-heap is faster here in practice
             for (unsigned i=0; i < children.size(); ++i)
             {
                 if (pos[i] != children[i].indices.size() &&
