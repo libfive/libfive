@@ -217,7 +217,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
     Root<DCTree<3>> t;
-    unsigned workers = 1;
+    unsigned workers = 8;
     std::atomic_bool cancel(false);
 
     BENCHMARK("DCTree construction")
