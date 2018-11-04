@@ -161,28 +161,6 @@ TEST_CASE("Mesh::render (checking for flipped triangles)")
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Kernel::Tree sphereGyroid()
-{
-    auto scale = 0.5f;
-    auto radius = 1.5f;
-    auto thickness = 0.5;
-
-    auto gyroidSrf =
-        sin(Kernel::Tree::X() / scale) * cos(Kernel::Tree::Y() / scale) +
-        sin(Kernel::Tree::Y() / scale) * cos(Kernel::Tree::Z() / scale) +
-        sin(Kernel::Tree::Z() / scale) * cos(Kernel::Tree::X() / scale);
-
-    auto gyroid = shell(gyroidSrf, thickness);
-    auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
-
-    auto sphereGyroid = max(sphere1, gyroid);
-    sphereGyroid = min(sphereGyroid,
-                     min(sphereGyroid,
-                     (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
-
-    return sphereGyroid;
-}
-
 TEST_CASE("Mesh::render (performance)", "[!benchmark]")
 {
     BENCHMARK("Menger sponge")

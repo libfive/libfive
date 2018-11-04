@@ -283,3 +283,42 @@ TEST_CASE("SimplexMesher: menger sponge")
 
     m->saveSTL("sponge.stl");
 }
+
+TEST_CASE("Simplex meshing (gyroid performance breakdown)", "[!benchmark]")
+{
+    Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
+
+    Root<SimplexTree<3>> t;
+    unsigned workers = 8;
+    std::atomic_bool cancel(false);
+
+    auto s = sphereGyroid();
+
+    BENCHMARK("SimplexTree construction")
+    {
+        t = SimplexTreePool<3>::build(s, r, 0.05, 1e-8, workers);
+    }
+
+    BENCHMARK("Assigning indices")
+    {
+        t->assignIndices();
+    }
+
+    std::unique_ptr<Mesh> m;
+    BENCHMARK("Mesh building")
+    {
+        m = Dual<3>::walk<SimplexMesher>(
+                t, workers, cancel, EMPTY_PROGRESS_CALLBACK, s);
+    }
+
+    BENCHMARK("SimplexTree deletion")
+    {
+        t.reset();
+    }
+    m->saveSTL("bench.stl");
+
+    BENCHMARK("Mesh deletion")
+    {
+        m.reset();
+    }
+}
