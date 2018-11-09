@@ -25,16 +25,18 @@ add_library(five SHARED
     oracle/transformed_oracle.cpp
     render/discrete/heightmap.cpp
     render/discrete/voxels.cpp
-    render/brep/xtree2.cpp
-    render/brep/xtree3.cpp
-    render/brep/xtree_pool2.cpp
-    render/brep/xtree_pool3.cpp
     render/brep/contours.cpp
-    render/brep/intersection_aligner.cpp
-    render/brep/mesh.cpp
-    render/brep/marching.cpp
-    render/brep/neighbors.cpp
     render/brep/progress.cpp
+    render/brep/mesh.cpp
+    render/brep/neighbor_tables.cpp
+    render/brep/dc/intersection_aligner.cpp
+    render/brep/dc/marching.cpp
+    render/brep/dc/dc_mesher.cpp
+    render/brep/dc/dc_neighbors.cpp
+    render/brep/dc/dc_tree2.cpp
+    render/brep/dc/dc_tree3.cpp
+    render/brep/simplex/simplextree.cpp
+    render/brep/simplex/simplex_mesher.cpp
     solve/bounds.cpp
     solve/solver.cpp
     tree/cache.cpp

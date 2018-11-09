@@ -9,15 +9,15 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "catch.hpp"
 
-#include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/dc/dc_tree.hpp"
+#include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/brep/mesh.hpp"
-#include "libfive/render/brep/xtree_pool.hpp"
 
 #include "util/shapes.hpp"
 
 using namespace Kernel;
 
-TEST_CASE("XTreePool::build (progress callback)")
+TEST_CASE("DCPool::build (progress callback)")
 {
     Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
@@ -29,7 +29,7 @@ TEST_CASE("XTreePool::build (progress callback)")
             ps.push_back(f);
         };
 
-        XTreePool<3>::build(sponge, r, res, 1e-8, 8, callback);
+        DCPool<3>::build(sponge, r, res, 1e-8, 8, callback);
 
         CAPTURE(ps.size());
         CAPTURE(ps);

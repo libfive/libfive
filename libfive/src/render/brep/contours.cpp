@@ -11,30 +11,80 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "libfive/render/brep/contours.hpp"
-#include "libfive/render/brep/xtree_pool.hpp"
-#include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/brep.hpp"
+#include "libfive/render/brep/dc/dc_pool.hpp"
+#include "libfive/render/brep/dual.hpp"
 
 namespace Kernel {
 
-class Segments : public BRep<2>
+class DCSegments
 {
 public:
+    using Output = BRep<2>;
+    using Input = DCTree<2>;
+
+    DCSegments(PerThreadBRep<2>& m) : m(m) {}
+
+    template <Axis::Axis A>
+    void load(const std::array<const DCTree<2>*, 2>& ts)
+    {
+        // Exit immediately if we can prove that there will be no
+        // face produced by this edge.
+        if (std::any_of(ts.begin(), ts.end(),
+            [](const DCTree<2>* t){ return t->type != Interval::AMBIGUOUS; }))
+        {
+            return;
+        }
+
+        // Sanity-checking that all cells have a Leaf struct allocated
+        for (auto& t : ts)
+        {
+            assert(t->leaf != nullptr);
+            (void)t;
+        }
+
+        /*  See comment in mesh.cpp about selecting a minimum edge */
+        const auto index = std::min_element(ts.begin(), ts.end(),
+                [](const DCTree<2>* a, const DCTree<2>* b)
+                { return a->leaf->level < b->leaf->level; }) - ts.begin();
+
+        constexpr uint8_t perp = (Axis::X | Axis::Y) ^ A;
+        constexpr std::array<uint8_t, 2> corners = {{perp, 0}};
+
+        // If there is a sign change across the relevant edge, then call the
+        // watcher with the segment corners (with proper winding order)
+        auto a = ts[index]->cornerState(corners[index]);
+        auto b = ts[index]->cornerState(corners[index] | A);
+        if (a != b)
+        {
+            // Use either forward or reversed segment building
+            if ((a == Interval::FILLED && A == Axis::Y) ||
+                (b == Interval::FILLED && A == Axis::X))
+            {
+                load<A, 0>(ts);
+            }
+            else
+            {
+                load<A, 1>(ts);
+            }
+        }
+    }
+
     template <Axis::Axis A, bool D>
-    void load(const std::array<const XTree<2>*, 2>& ts)
+    void load(const std::array<const DCTree<2>*, 2>& ts)
     {
         // From axis and contour direction, extract the relevant edge index
         // numbers for the two cells in ts
         int es[2];
         if (D ^ (A == Axis::X))
         {
-            es[0] = XTree<2>::mt->e[3][3^A];
-            es[1] = XTree<2>::mt->e[A][0];
+            es[0] = MarchingTable<2>::mt.e[3][3^A];
+            es[1] = MarchingTable<2>::mt.e[A][0];
         }
         else
         {
-            es[0] = XTree<2>::mt->e[3^A][3];
-            es[1] = XTree<2>::mt->e[0][A];
+            es[0] = MarchingTable<2>::mt.e[3^A][3];
+            es[1] = MarchingTable<2>::mt.e[0][A];
         }
         assert(es[0] != -1);
         assert(es[1] != -1);
@@ -46,7 +96,7 @@ public:
 
             auto vi = ts[i]->leaf->level > 0
                 ? 0
-                : XTree<2>::mt->p[ts[i]->leaf->corner_mask][es[i]];
+                : MarchingTable<2>::mt.p[ts[i]->leaf->corner_mask][es[i]];
             assert(vi != -1);
 
             // Sanity-checking manifoldness of collapsed cells
@@ -54,17 +104,20 @@ public:
 
             if (ts[i]->leaf->index[vi] == 0)
             {
-                ts[i]->leaf->index[vi] = verts.size();
-
-                // Look up the appropriate vertex id
-                verts.push_back(ts[i]->vert(vi).template cast<float>());
+                ts[i]->leaf->index[vi] = m.pushVertex(
+                    ts[i]->vert(vi).template cast<float>());
             }
             vs[i] = ts[i]->leaf->index[vi];
         }
         // Handle contour winding direction
-        branes.push_back({vs[!D], vs[D]});
+        m.branes.push_back({vs[!D], vs[D]});
     }
+
+protected:
+    PerThreadBRep<2>& m;
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 std::unique_ptr<Contours> Contours::render(
         const Tree t, const Region<2>& r,
@@ -82,13 +135,13 @@ std::unique_ptr<Contours> Contours::render(
     }
 
     // Create the quadtree on the scaffold
-    auto xtree = XTreePool<2>::build(
+    auto xtree = DCPool<2>::build(
         es.data(), r, min_feature, max_err,
         workers, cancel);
 
     // Perform marching squares
-    Segments segs;
-    Dual<2>::walk(xtree.get(), segs);
+    auto segs = Dual<2>::walk<DCSegments>(xtree, workers, cancel,
+                                          EMPTY_PROGRESS_CALLBACK);
 
     auto c = std::unique_ptr<Contours>(new Contours(r));
 
@@ -97,7 +150,7 @@ std::unique_ptr<Contours> Contours::render(
     std::map<uint32_t, uint32_t> tails;
     std::vector<std::list<uint32_t>> contours;
 
-    for (auto& s : segs.branes)
+    for (auto& s : segs->branes)
     {
         {   // Check to see whether we can attach to the back of a tail
             auto t = tails.find(s[0]);
@@ -142,7 +195,7 @@ std::unique_ptr<Contours> Contours::render(
         {
             for (const auto& pt : contours[target])
             {
-                c->contours.back().push_back(segs.verts[pt]);
+                c->contours.back().push_back(segs->verts[pt]);
             }
             processed[target] = true;
 

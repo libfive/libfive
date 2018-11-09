@@ -26,3 +26,4 @@ Kernel::Tree blend(Kernel::Tree a, Kernel::Tree b, float r);
 Kernel::Tree cylinder(float r, float h, Eigen::Vector3f base=
                                         Eigen::Vector3f::Zero());
 Kernel::Tree extrude(Kernel::Tree t, float lower, float upper);
+Kernel::Tree sphereGyroid();

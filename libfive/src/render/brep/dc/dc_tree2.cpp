@@ -1,9 +1,9 @@
-#include "xtree.cpp"
+#include "dc_tree.cpp"
 
 namespace Kernel {
 
 template <>
-bool XTree<2>::cornersAreManifold(const uint8_t corner_mask)
+bool DCTree<2>::cornersAreManifold(const uint8_t corner_mask)
 {
     const static bool corner_table[] =
         {1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1};
@@ -13,8 +13,8 @@ bool XTree<2>::cornersAreManifold(const uint8_t corner_mask)
 ////////////////////////////////////////////////////////////////////////////////
 // Specializations for quadtree
 template <>
-bool XTree<2>::leafsAreManifold(
-        const std::array<XTree<2>*, 1 << 2>& cs,
+bool DCTree<2>::leafsAreManifold(
+        const std::array<DCTree<2>*, 1 << 2>& cs,
         const std::array<Interval::State, 1 << 2>& corners)
 {
     /*  See detailed comment in Octree::leafsAreManifold */
@@ -38,7 +38,7 @@ bool XTree<2>::leafsAreManifold(
 }
 
 template <>
-const std::vector<std::pair<uint8_t, uint8_t>>& XTree<2>::edges() const
+const std::vector<std::pair<uint8_t, uint8_t>>& DCTree<2>::edges() const
 {
     static const std::vector<std::pair<uint8_t, uint8_t>> es =
         {{0, Axis::X}, {0, Axis::Y},
@@ -47,6 +47,6 @@ const std::vector<std::pair<uint8_t, uint8_t>>& XTree<2>::edges() const
 }
 
 // Explicit initialization of template
-template class XTree<2>;
+template class DCTree<2>;
 
 }   // namespace Kernel

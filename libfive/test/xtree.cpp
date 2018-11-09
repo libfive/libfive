@@ -11,107 +11,107 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "catch.hpp"
 
-#include "libfive/render/brep/xtree.hpp"
-#include "libfive/render/brep/xtree_pool.hpp"
+#include "libfive/render/brep/dc/dc_tree.hpp"
+#include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/deck.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;
 
-TEST_CASE("XTree<2>::vert")
+TEST_CASE("DCTree<2>::vert")
 {
     SECTION("Vertex positioning (with two planes)")
     {
         Tree a = min(Tree::X() + 0.1, Tree::Y() - 0.2);
-        auto ta = XTreePool<2>::build(a, Region<2>({-3, -3}, {1, 1}));
+        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {1, 1}));
         REQUIRE(ta->vert().x() == Approx(-0.1));
         REQUIRE(ta->vert().y() == Approx(0.2));
     }
 }
 
-TEST_CASE("XTree<2>::type")
+TEST_CASE("DCTree<2>::type")
 {
     SECTION("Empty")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = XTreePool<2>::build(a, Region<2>({1, 1}, {2, 2}));
+        auto e = DCPool<2>::build(a, Region<2>({1, 1}, {2, 2}));
         REQUIRE(e->type == Interval::EMPTY);
     }
 
     SECTION("Filled")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = XTreePool<2>::build(a, Region<2>({-3, -3}, {-1, -1}));
+        auto e = DCPool<2>::build(a, Region<2>({-3, -3}, {-1, -1}));
         REQUIRE(e->type == Interval::FILLED);
     }
 
     SECTION("Containing corner")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto ta = XTreePool<2>::build(a, Region<2>({-3, -3}, {1, 1}));
+        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {1, 1}));
         REQUIRE(ta->type == Interval::AMBIGUOUS);
     }
 }
 
-TEST_CASE("XTree<2>::isBranch")
+TEST_CASE("DCTree<2>::isBranch")
 {
     SECTION("Empty")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = XTreePool<2>::build(a, Region<2>({1, 1}, {2, 2}));
+        auto e = DCPool<2>::build(a, Region<2>({1, 1}, {2, 2}));
         REQUIRE(!e->isBranch());
     }
 
     SECTION("Filled")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = XTreePool<2>::build(a, Region<2>({-3, -3}, {-1, -1}));
+        auto e = DCPool<2>::build(a, Region<2>({-3, -3}, {-1, -1}));
         REQUIRE(!e->isBranch());
     }
 
     SECTION("Containing line")
     {
-        auto e = XTreePool<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}));
+        auto e = DCPool<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}));
         REQUIRE(!e->isBranch());
     }
 
     SECTION("Containing corner")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto ta = XTreePool<2>::build(a, Region<2>({-3, -3}, {1, 1}));
+        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {1, 1}));
         REQUIRE(!ta->isBranch());
     }
 
     SECTION("Containing shape")
     {
-        auto t = XTreePool<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
+        auto t = DCPool<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
         REQUIRE(t->isBranch());
     }
 }
 
-TEST_CASE("XTree<2>::rank()")
+TEST_CASE("DCTree<2>::rank()")
 {
     SECTION("Containing line")
     {
-        auto e = XTreePool<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}));
+        auto e = DCPool<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}));
         REQUIRE(e->rank() == 1);
     }
 
     SECTION("Containing corner")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto ta = XTreePool<2>::build(a, Region<2>({-3, -3}, {1, 1}));
+        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {1, 1}));
         REQUIRE(ta->rank() == 2);
     }
 }
 
-TEST_CASE("XTree<2>::vertex_count")
+TEST_CASE("DCTree<2>::vertex_count")
 {
     SECTION("Single corner")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto ta = XTreePool<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
+        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
         REQUIRE(ta->rank() == 2);
         REQUIRE(ta->level() == 0);
         REQUIRE(ta->leaf != nullptr);
@@ -123,7 +123,7 @@ TEST_CASE("XTree<2>::vertex_count")
                      max(1 - Tree::X(), 1 - Tree::Y()));
         auto deck = std::make_shared<Deck>(a);
         PointEvaluator eval(deck);
-        auto ta = XTreePool<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
+        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
         REQUIRE(ta->level() == 0);
         REQUIRE(ta->leaf != nullptr);
         REQUIRE(ta->leaf->vertex_count == 2);
@@ -139,12 +139,12 @@ TEST_CASE("XTree<2>::vertex_count")
     }
 }
 
-TEST_CASE("XTree<3>::vert")
+TEST_CASE("DCTree<3>::vert")
 {
-    auto walk = [](XTree<3>::Root& xtree,
+    auto walk = [](Root<DCTree<3>>& xtree,
                    XTreeEvaluator& eval, float err=0.001)
     {
-        std::list<const XTree<3>*> todo = {xtree.get()};
+        std::list<const DCTree<3>*> todo = {xtree.get()};
         while (todo.size())
         {
             auto t = todo.front();
@@ -182,7 +182,7 @@ TEST_CASE("XTree<3>::vert")
                 Tree::X() + Tree::Y() + Tree::Z() - 1.3);
         XTreeEvaluator eval(b);
         Region<3> r({-2, -2, -2}, {2, 2, 2});
-        auto xtree = XTreePool<3>::build(b, r, 0.1);
+        auto xtree = DCPool<3>::build(b, r, 0.1);
         walk(xtree, eval);
     }
 
@@ -192,7 +192,7 @@ TEST_CASE("XTree<3>::vert")
                 Tree::X() + Tree::Y() + Tree::Z() - 1.2);
         XTreeEvaluator eval(b);
         Region<3> r({-10, -10, -10}, {10, 10, 10});
-        auto xtree = XTreePool<3>::build(b, r, 0.1);
+        auto xtree = DCPool<3>::build(b, r, 0.1);
         walk(xtree, eval);
     }
 
@@ -200,7 +200,7 @@ TEST_CASE("XTree<3>::vert")
     {
         auto s = max(sphere(1), -circle(0.5));
         Region<3> r({-5, -5, -5}, {5, 5, 5});
-        auto xtree = XTreePool<3>::build(s, r, 1/9.0f);
+        auto xtree = DCPool<3>::build(s, r, 1/9.0f);
         XTreeEvaluator eval(s);
         walk(xtree, eval, 0.01);
     }
@@ -210,14 +210,14 @@ TEST_CASE("XTree<3>::vert")
         auto t = max(max(-Tree::Z(), max(circle(1), -circle(0.5))),
                           Tree::Z() - 1);
         Region<3> r({-2, -2, -2}, {2, 2, 2});
-        auto xtree = XTreePool<3>::build(t, r, 0.2);
+        auto xtree = DCPool<3>::build(t, r, 0.2);
 
         XTreeEvaluator eval(t);
         walk(xtree, eval, 0.01);
     }
 }
 
-TEST_CASE("XTree<3> cancellation")
+TEST_CASE("DCTree<3> cancellation")
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed;
@@ -229,7 +229,7 @@ TEST_CASE("XTree<3> cancellation")
 
     // Start a long render operation, then cancel it immediately
     auto future = std::async(std::launch::async, [&](){
-        return XTreePool<3>::build(&eval, r, 0.02, 8, 1, cancel); });
+        return DCPool<3>::build(&eval, r, 0.02, 8, 1, cancel); });
 
     // Record how long it takes betwen triggering the cancel
     // and the future finishing, so we can check that the cancelling

@@ -15,6 +15,7 @@ set(SRCS main.cpp
     eval_point.cpp
     feature.cpp
     heightmap.cpp
+    indexes.cpp
     marching.cpp
     mesh.cpp
     neighbors.cpp
@@ -22,6 +23,7 @@ set(SRCS main.cpp
     oracle_context.cpp
     progress.cpp
     region.cpp
+    simplex.cpp
     solver.cpp
     transformed_oracle.cpp
     tree.cpp

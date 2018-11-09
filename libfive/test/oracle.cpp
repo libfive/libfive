@@ -52,8 +52,10 @@ TEST_CASE("Oracle: render and compare (sphere)")
   Region<3> r({ -1, -1, -1 }, { 1, 1, 1 });
   Tree sOracle = convertToOracleAxes(s);
 
-  auto mesh = Mesh::render(sOracle, r);
-  auto comparisonMesh = Mesh::render(s, r);
+  // We can't use multithreading, because it causes triangles to be
+  // output in a non-deterministic order, which fails the comparison.
+  auto mesh = Mesh::render(sOracle, r, 0.1, 1e-8, false);
+  auto comparisonMesh = Mesh::render(s, r, 0.1, 1e-8, false);
 
   BRepCompare(*mesh, *comparisonMesh);
 }
@@ -70,8 +72,8 @@ TEST_CASE("Oracle: render and compare (cube)")
   Region<3> r({ -2.5, -2.5, -2.5 }, { 2.5, 2.5, 2.5 });
   Tree cubeOracle = convertToOracleAxes(cube);
 
-  auto mesh = Mesh::render(cubeOracle, r);
-  auto comparisonMesh = Mesh::render(cube, r);
+  auto mesh = Mesh::render(cubeOracle, r, 0.1, 1e-8, false);
+  auto comparisonMesh = Mesh::render(cube, r, 0.1, 1e-8, false);
 
   BRepCompare(*mesh, *comparisonMesh);
 }

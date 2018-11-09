@@ -1,12 +1,12 @@
-#include "xtree.cpp"
+#include "dc_tree.cpp"
 
 namespace Kernel {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Specializations for octree
 template <>
-bool XTree<3>::leafsAreManifold(
-        const std::array<XTree<3>*, 1 << 3>& cs,
+bool DCTree<3>::leafsAreManifold(
+        const std::array<DCTree<3>*, 1 << 3>& cs,
         const std::array<Interval::State, 1 << 3>& corners)
 {
     /*  - The sign in the middle of a coarse edge must agree with the sign of at
@@ -100,7 +100,7 @@ bool XTree<3>::leafsAreManifold(
 }
 
 template <>
-bool XTree<3>::cornersAreManifold(const uint8_t corner_mask)
+bool DCTree<3>::cornersAreManifold(const uint8_t corner_mask)
 {
     /* The code to generate the table is given below:
     def safe(index):
@@ -145,7 +145,7 @@ bool XTree<3>::cornersAreManifold(const uint8_t corner_mask)
 }
 
 template <>
-const std::vector<std::pair<uint8_t, uint8_t>>& XTree<3>::edges() const
+const std::vector<std::pair<uint8_t, uint8_t>>& DCTree<3>::edges() const
 {
     static const std::vector<std::pair<uint8_t, uint8_t>> es =
         {{0, Axis::X}, {0, Axis::Y}, {0, Axis::Z},
@@ -158,7 +158,7 @@ const std::vector<std::pair<uint8_t, uint8_t>>& XTree<3>::edges() const
     return es;
 }
 
-template class XTree<3>;
+template class DCTree<3>;
 
 }   // namespace Kernel
 // Explicit initialization of template
