@@ -10,6 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <array>
 #include <atomic>
+#include <memory>
 
 #include "libfive/render/brep/dc/intersection.hpp"
 #include "libfive/render/brep/neighbors.hpp"
