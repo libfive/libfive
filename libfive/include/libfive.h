@@ -174,9 +174,14 @@ typedef Kernel::Tree* libfive_tree;
 typedef Kernel::Tree::Id libfive_id;
 typedef Kernel::Archive* libfive_archive;
 #else
-typedef void* libfive_tree;
-typedef void* libfive_id;
-typedef void* libfive_archive;
+typedef struct libfive_tree_ libfive_tree_;
+typedef struct libfive_tree_* libfive_tree;
+
+typedef struct libfive_id_ libfive_id_;
+typedef struct libfive_id_* libfive_id;
+
+typedef struct libfive_archive_ libfive_archive_;
+typedef struct libfive_archive_* libfive_archive;
 #endif
 
 /*
