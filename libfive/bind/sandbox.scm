@@ -17,7 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
 (use-modules (ice-9 sandbox) (ice-9 textual-ports) (libfive kernel)
-             (libfive vec) (rnrs io ports) (system vm frame))
+             (libfive vec) (rnrs io ports) (system vm frame) (oop goops)
+             (srfi srfi-1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -48,20 +49,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (cons #\- integer-chars))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (get-bindings mod)
-  (cons mod (module-map (lambda (n . a) n) (resolve-interface mod))))
-
-(define-public sandbox-bindings
-  (append (list (cons '(libfive kernel) libfive-bindings)
-                (cons '(guile) '(inexact->exact))
-          (get-bindings '(libfive vec))
-          (get-bindings '(libfive shapes))
-          (get-bindings '(libfive csg))
-          (get-bindings '(libfive transforms))
-          (get-bindings '(libfive text))
-          (get-bindings '(libfive util)))
-    all-pure-bindings))
 
 (define* (sandbox-backtrace stack #:optional (port #t))
   "Prints a clipped backtrace of an error stack
@@ -195,3 +182,56 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                   (cons result (loop (1+ i)))
                   (list result)))))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-public global-bounds #f)
+(define-public (set-bounds! lower upper)
+  "set-bounds! [xmin ymin zmin] [xmax ymax zmax]
+  Sets the global render bounds"
+  (when (not (and (vec3? lower) (vec3? upper)))
+    (error "Arguments must be vec3"))
+  (let ((result (list (.x lower) (.y lower) (.z lower)
+                      (.x upper) (.y upper) (.z upper))))
+    (if (every number? result)
+      (set! global-bounds result)
+      (error "All values must be numbers"))))
+
+(define-public global-resolution #f)
+(define-public (set-resolution! res)
+  "set-resolution! res
+  Sets the global render resolution, which is the
+  reciprocal of minimum feature size"
+  (if (number? res)
+    (set! global-resolution res)
+    (error "resolution must be a number")))
+
+(define-public global-quality #f)
+(define-public (set-quality! q)
+  "set-quality! q
+  Sets the global render quality, which is a metric
+  from 1 to 11 that determines how enthusiastically
+  triangles are collapsed in the mesh"
+  (when (not (number? q))
+    (error "quality must be a number"))
+  (when (< q 1)
+    (error "quality must be >= 1"))
+  (when (> q 11)
+    (error "quality must be <= 11"))
+  (set! global-quality q))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (get-bindings mod)
+  (cons mod (module-map (lambda (n . a) n) (resolve-interface mod))))
+
+(define-public sandbox-bindings
+  (append (list (cons '(libfive kernel) libfive-bindings)
+                (cons '(guile) '(inexact->exact))
+          (get-bindings '(libfive vec))
+          (get-bindings '(libfive shapes))
+          (get-bindings '(libfive csg))
+          (get-bindings '(libfive transforms))
+          (get-bindings '(libfive text))
+          (get-bindings '(libfive util))
+          '((libfive sandbox) set-bounds! set-resolution! set-quality!))
+    all-pure-bindings))

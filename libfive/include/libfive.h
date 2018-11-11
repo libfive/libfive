@@ -359,6 +359,22 @@ bool libfive_tree_save_mesh(libfive_tree tree, libfive_region3 R,
                             float res, const char* f);
 
 /*
+ *  Renders and saves multiple meshes mesh to a file
+ *
+ *  Returns true on success, false otherwise
+ *
+ *  Arguments are equivalent to Studio's resolution and quality
+ *  settings.  In particular quality is a value q such that we
+ *  collapse cells when the QEF error is below 10**(-q)
+ *
+ *  trees is a null-terminated list (since libfive_tree is a pointer
+ *  under the hood).
+ */
+bool libfive_tree_save_meshes(
+        libfive_tree trees[], libfive_region3 R,
+        float res, float quality, const char* f);
+
+/*
  *  Renders a 2D slice of pixels at the given Z height
  *
  *  The returned struct must be freed with libfive_pixels_delete

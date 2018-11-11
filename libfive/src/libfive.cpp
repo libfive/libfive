@@ -367,6 +367,27 @@ bool libfive_tree_save_mesh(libfive_tree tree, libfive_region3 R, float res, con
     return ms->saveSTL(f);
 }
 
+bool libfive_tree_save_meshes(
+        libfive_tree trees[], libfive_region3 R,
+        float res, float quality, const char* f)
+{
+    Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
+                     {R.X.upper, R.Y.upper, R.Z.upper});
+
+    std::list<const Kernel::Mesh*> meshes;
+    for (unsigned i=0; trees[i] != nullptr; ++i){
+        auto ms = Mesh::render(*trees[i], region, 1 / res,
+                               pow(10, -quality));
+        meshes.push_back(ms.release());
+    }
+
+    const bool out = Mesh::saveSTL(f, meshes);
+    for (auto& m : meshes) {
+        delete m;
+    }
+    return out;
+}
+
 libfive_pixels* libfive_tree_render_pixels(libfive_tree tree, libfive_region2 R,
                                  float z, float res)
 {
