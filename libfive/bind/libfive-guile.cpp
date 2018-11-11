@@ -342,7 +342,8 @@ SCM scm_shapes_to_mesh(SCM ts, SCM filename, SCM lower, SCM upper,
     R.Z.upper = upper_.z;
 
     auto f = scm_to_locale_string(filename);
-    const auto out = libfive_tree_save_meshes(trees, R, scm_to_double(res), scm_to_double(quality), f);
+    const auto out = libfive_tree_save_meshes(
+            trees, R, scm_to_double(res), scm_to_double(quality), f);
     free(f);
 
     delete [] trees;
