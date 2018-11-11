@@ -535,7 +535,8 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
             }
         }
 
-        // Now, we'll unpack into A and b matrices
+        // Now, we'll (pretend to) unpack into A and b matrices,
+        // then immediately calculate AtA, AtB, and BtB
         //
         //  The A matrix is of the form
         //  [n1x, n1y, n1z]
@@ -543,22 +544,23 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
         //  [n3x, n3y, n3z]
         //  ...
         //  (with one row for each sampled point's normal)
-        Eigen::Matrix<double, Eigen::Dynamic, N> A(rows, N);
-
+        //
         //  The b matrix is of the form
         //  [p1 . n1]
         //  [p2 . n2]
         //  [p3 . n3]
         //  ...
         //  (with one row for each sampled point)
-        Eigen::Matrix<double, Eigen::Dynamic, 1> b(rows, 1);
-
-        // Load samples into the QEF arrays
         //
         // Since we're deliberately sampling on either side of the
         // intersection, we subtract out the distance-field value
         // to make the math work out.
-        unsigned r=0;
+        //
+        // Instead of actually populating these matrices, we'll immediately
+        // construct the compact results AtA, AtB, BtB
+        this->leaf->AtA.array() = 0;
+        this->leaf->AtB.array() = 0;
+        this->leaf->BtB = 0;
         for (unsigned i=0; i < edge_count; ++i)
         {
             if (this->leaf->intersections[edges[i]])
@@ -567,20 +569,14 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
                 {
                     if (n.deriv != Vec::Zero())
                     {
-                        A.row(r) << n.deriv.transpose();
-                        b(r) = A.row(r).dot(n.pos) - n.value;
-                        r++;
+                        this->leaf->AtA += n.deriv * n.deriv.transpose();
+                        const double b = n.deriv.dot(n.pos) - n.value;
+                        this->leaf->AtB += n.deriv * b;
+                        this->leaf->BtB += b * b;
                     }
                 }
             }
         }
-        assert(r == rows);
-
-        // Save compact QEF matrices
-        auto At = A.transpose().eval();
-        this->leaf->AtA = At * A;
-        this->leaf->AtB = At * b;
-        this->leaf->BtB = b.transpose() * b;
 
         // Find the vertex position, storing into the appropriate column
         // of the vertex array and ignoring the error result (because
