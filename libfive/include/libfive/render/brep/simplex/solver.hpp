@@ -56,14 +56,7 @@ findVertex(const CornerArray<BaseDimension>& corners,
     //  ...
     //
     //  (with one row for each sampled point's normal)
-    Eigen::Matrix<double, Eigen::Dynamic, SimplexDimension + 1>
-        A(samples, SimplexDimension + 1);
-
-    // Store the center in space + evaluation result
-    Eigen::Matrix<double, BaseDimension + 1, 1> center =
-        Eigen::Matrix<double, BaseDimension + 1, 1>::Zero();
-    int center_count = 0;
-
+    //
     //  The b matrix is of the form
     //  [(p1, w1) . (n1, -1)]
     //  [(p2, w2) . (n2, -1)]
@@ -71,11 +64,22 @@ findVertex(const CornerArray<BaseDimension>& corners,
     //  ...
     //
     //  (with one row for each sampled point)
-    Eigen::Matrix<double, Eigen::Dynamic, 1>
-        b(samples, 1);
+    //
+    //  Instead of actually populating these matrices, we'll immediately
+    //  construct the compact results AtA, AtB, BtB
+    Eigen::Matrix<double, SimplexDimension + 1, SimplexDimension + 1> AtA;
+    AtA.array() = 0.0;
+    Eigen::Matrix<double, SimplexDimension + 1, 1> AtB;
+    AtB.array() = 0.0;
+    double BtB = 0.0;
 
-    // Load every sample into the A and b matrices
-    unsigned sample = 0;
+    // We also store the center point as a n+1 dimensional point (where the
+    // last dimension is the average distance-field value)
+    Eigen::Matrix<double, BaseDimension + 1, 1> center =
+        Eigen::Matrix<double, BaseDimension + 1, 1>::Zero();
+    int center_count = 0;
+
+    // Load every sample into the matrices
     for (unsigned i=0; i < corners.size(); ++i)
     {
         if (!SimplexNumber.contains(CornerIndex(i))) {
@@ -95,14 +99,19 @@ findVertex(const CornerArray<BaseDimension>& corners,
         pos(SimplexDimension) = corners[i].value;
 
         // Unpack each intersection, which share pos
-        for (auto& d : corners[i].deriv)
+        // There's usually only one derivative per corner, but in some
+        // cases (where the field is C1-discontinuous) there are more.
+        for (const auto& deriv : corners[i].deriv)
         {
-            Eigen::Matrix<double, 1, SimplexDimension> row;
-            unpack<SimplexNumber.i>(d, row);
-            A.row(sample) << row, -1;
+            // d is of the form [dx, dy, dz, -1]
+            Eigen::Matrix<double, SimplexDimension + 1, 1> d;
+            unpack<SimplexNumber.i>(deriv, d);
+            d(SimplexDimension) = -1;
 
-            b(sample) = A.row(sample) * pos;
-            sample++;
+            AtA += d * d.transpose();
+            const double b = d.dot(pos);
+            AtB += d * b;
+            BtB += b * b;
         }
     }
 
