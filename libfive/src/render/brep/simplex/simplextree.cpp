@@ -91,25 +91,26 @@ Tape::Handle SimplexTree<N>::evalInterval(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <unsigned BaseDimension, unsigned SimplexIndex>
+template <unsigned BaseDimension, unsigned SimplexIndex_>
 struct Unroller
 {
     void operator()(typename SimplexTree<BaseDimension>::Leaf& leaf,
                     const CornerArray<BaseDimension>& corners,
                     const Region<BaseDimension>& region)
     {
+        constexpr auto SimplexIndex = ipow(BaseDimension, 3) - SimplexIndex_;
         auto v = SimplexSolver::findVertex<BaseDimension, SimplexIndex>(
                 corners, region);
         leaf.vertices.row(SimplexIndex) = v;
 
         // Recurse!
-        Unroller<BaseDimension, SimplexIndex + 1>()(leaf, corners, region);
+        Unroller<BaseDimension, SimplexIndex_ - 1>()(leaf, corners, region);
     }
 };
 
 // Terminate static unrolling
 template <unsigned BaseDimension>
-struct Unroller<BaseDimension, ipow(3, BaseDimension)>
+struct Unroller<BaseDimension, 0>
 {
     void operator()(typename SimplexTree<BaseDimension>::Leaf&,
                     const CornerArray<BaseDimension>&,
@@ -129,7 +130,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
     CornerArray<N> corners;
 
     this->leaf = spare_leafs.get();
-    Unroller<N, 0>()(*this->leaf, corners, region);
+    Unroller<N, ipow(N, 3)>()(*this->leaf, corners, region);
 
     for (unsigned i=0; i < ipow(3, N); ++i)
     {
