@@ -791,7 +791,8 @@ template <unsigned N>
 double DCTree<N>::findVertex(unsigned index)
 {
     assert(this->leaf != nullptr);
-    Eigen::EigenSolver<Eigen::Matrix<double, N, N>> es(this->leaf->AtA);
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, N, N>> es(
+            this->leaf->AtA);
     assert(this->leaf->mass_point(N) > 0);
 
     // We need to find the pseudo-inverse of AtA.
