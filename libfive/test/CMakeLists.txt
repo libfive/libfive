@@ -22,6 +22,7 @@ set(SRCS main.cpp
     oracle.cpp
     oracle_context.cpp
     progress.cpp
+    qef.cpp
     region.cpp
     simplex.cpp
     solver.cpp
