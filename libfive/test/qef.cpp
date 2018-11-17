@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace Kernel;
 
-TEST_CASE("QEF<2>::solve", "[!mayfail]")
+TEST_CASE("QEF::solve", "[!mayfail]")
 {
     SECTION("Underconstrained (flat surface)")
     {
@@ -29,6 +29,7 @@ TEST_CASE("QEF<2>::solve", "[!mayfail]")
             CAPTURE(sol.position);
             CAPTURE(sol.value);
             REQUIRE(sol.position == Eigen::Vector2d(0, 0));
+            REQUIRE(sol.error == Approx(0.0));
         }
 
         {
@@ -36,6 +37,49 @@ TEST_CASE("QEF<2>::solve", "[!mayfail]")
             CAPTURE(sol.position);
             CAPTURE(sol.value);
             REQUIRE(sol.position == Eigen::Vector2d(1, 0));
+            REQUIRE(sol.error == Approx(0.0));
+        }
+
+        {   // Here, we expect the solver to walk up on the Y
+            // axis by a small amount to meet the desire to
+            // drive the value term to 1
+            auto sol = q.solve(Eigen::Vector2d(1, 0), 1);
+            CAPTURE(sol.position);
+            CAPTURE(sol.value);
+            REQUIRE(sol.position(0) == Approx(1));
+            REQUIRE(sol.position(1) == Approx(0.5));
+            REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.value == Approx(0.5));
+        }
+    }
+
+    SECTION("Fully constrained (1D line)")
+    {
+        QEF<1> q;
+        q.insert(Eigen::Matrix<double, 1, 1>(1.0),
+                 Eigen::Matrix<double, 1, 1>(1.0),
+                 3.0);
+        q.insert(Eigen::Matrix<double, 1, 1>(4.0),
+                 Eigen::Matrix<double, 1, 1>(-0.5),
+                 3.0);
+
+        {
+            auto sol = q.solve();
+            CAPTURE(sol.position);
+            CAPTURE(sol.value);
+            REQUIRE(sol.position(0) == Approx(2));
+            REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.value == Approx(4));
+        }
+
+        {
+            auto sol = q.solve(Eigen::Matrix<double, 1, 1>(-97.0),
+                               103.0);
+            CAPTURE(sol.position);
+            CAPTURE(sol.value);
+            REQUIRE(sol.position(0) == Approx(2));
+            REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.value == Approx(4));
         }
     }
 }
