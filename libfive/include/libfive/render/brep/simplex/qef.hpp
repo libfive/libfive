@@ -27,41 +27,67 @@ public:
         double error;
     };
 
-    QEF() :
-        AtA(Eigen::Matrix<double, N + 1, N + 1>::Zero()),
-        AtBp(Eigen::Matrix<double, N + 1, N + 1>::Zero()),
-        BptBp(Eigen::Matrix<double, N + 1, N + 1>::Zero())
+    using Matrix = Eigen::Matrix<double, N + 1, N + 1>;
+    using RowVector = Eigen::Matrix<double, 1, N + 1>;
+    using Vector = Eigen::Matrix<double, N + 1, 1>;
+
+    QEF() : AtA(Matrix::Zero()), AtBp(Matrix::Zero()), BptBp(Matrix::Zero())
     {
         // Nothing to do here
     }
 
-    void insert(Eigen::Matrix<double, 1, N> normal,
-                Eigen::Matrix<double, 1, N> position,
+    void insert(Eigen::Matrix<double, 1, N> position,
+                Eigen::Matrix<double, 1, N> normal,
                 double value)
     {
-        Eigen::Matrix<double, 1, N + 1> ni;
-        Eigen::Matrix<double, 1, N + 1> pi;
+        RowVector ni;
+        RowVector pi;
 
         ni << normal, -1;
         pi << position, value;
 
-        Eigen::Matrix<double, 1, N + 1> Bp_row;
-            ni.cwiseProduct(pi);
+        RowVector Bp_row = ni.cwiseProduct(pi);
 
         AtA += ni.transpose() * ni;
         AtBp += ni.transpose() * Bp_row;
         BptBp += Bp_row.transpose() * Bp_row;
     }
 
-    Solution solve(const Eigen::Matrix<double, N + 1, 1> target=
-                         Eigen::Matrix<double, N + 1, 1>::Zero())
+    Solution solve(Eigen::Matrix<double, 1, N> target_pos=
+                        Eigen::Matrix<double, 1, N>::Zero(),
+                   double target_value=0.0)
     {
-        // TODO: solve QEF here
-        Eigen::Matrix<double, N + 1, 1> sol =
-            Eigen::Matrix<double, N + 1, 1>::Zero();
+        Vector target;
+        target << target_pos.transpose(), target_value;
 
-        // We hard-code the matrix size here so that Eigen checks
-        // that all of our types are correct.
+        // Our high-level goal here is to find the pseduo-inverse of AtA,
+        // with special handling for when it isn't of full rank.
+        Eigen::SelfAdjointEigenSolver<Matrix> es(AtA);
+        auto eigenvalues = es.eigenvalues().real();
+
+        // Build the SVD's diagonal matrix, truncating near-singular eigenvalues
+        Matrix D = Matrix::Zero();
+        const double max_eigenvalue = eigenvalues.cwiseAbs().maxCoeff();
+        const double EIGENVALUE_CUTOFF = 0.02;
+        unsigned rank = 0;
+        for (unsigned i=0; i < N + 1; ++i) {
+            if (fabs(eigenvalues[i]) / max_eigenvalue > EIGENVALUE_CUTOFF) {
+                D.diagonal()[i] = 1 / eigenvalues[i];
+                rank++;
+            }
+        }
+
+        // SVD matrices
+        auto U = es.eigenvectors().real().eval(); // = V
+
+        // Pseudo-inverse of A
+        auto AtA_inv = (U * D * U.transpose()).eval();
+
+        // Solve for vertex position (minimizing distance to target)
+        Vector sol = AtA_inv * (AtB() - (AtA * target)) + target;
+
+        // Calculate the resulting error, hard-code the matrix size here so
+        // that Eigen checks that all of our types are correct.
         Eigen::Matrix<double, 1, 1> err =
             sol.transpose() * AtA * sol - 2 * sol.transpose() * AtB() + BtB();
 
@@ -69,7 +95,7 @@ public:
         Solution out;
         out.position = sol.template head<N>();
         out.value = sol(N);
-        out.rank = 0;
+        out.rank = rank;
         out.error = err(0);
 
         return out;
