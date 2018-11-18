@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace Kernel;
 
-TEST_CASE("QEF::solve", "[!mayfail]")
+TEST_CASE("QEF::solve")
 {
     SECTION("Underconstrained (flat surface)")
     {
@@ -81,5 +81,33 @@ TEST_CASE("QEF::solve", "[!mayfail]")
             REQUIRE(sol.error == Approx(0.0));
             REQUIRE(sol.value == Approx(4));
         }
+    }
+}
+
+TEST_CASE("QEF::sub")
+{
+    SECTION("Underconstrained (flat surface)")
+    {
+        QEF<2> q;
+        q.insert({1, 0}, {0, 1}, 0);
+        q.insert({2, 0}, {0, 1}, 0);
+
+        // Keep all axes
+        QEF<2> q_full = q.sub<3>();
+
+        auto sol_full = q_full.solve(Eigen::Vector2d(1, 0), 0);
+        CAPTURE(sol_full.position);
+        CAPTURE(sol_full.value);
+        REQUIRE(sol_full.position == Eigen::Vector2d(1, 0));
+        REQUIRE(sol_full.error == Approx(0.0));
+
+        // Keep the X axis
+        QEF<1> q_x = q.sub<1>();
+
+        auto sol_x = q_x.solve(Eigen::Matrix<double, 1, 1>(10), 0);
+        CAPTURE(sol_x.position);
+        CAPTURE(sol_x.value);
+        REQUIRE(sol_x.position == Eigen::Matrix<double, 1, 1>(10));
+        REQUIRE(sol_x.error == Approx(0.0));
     }
 }

@@ -10,6 +10,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <Eigen/Eigen>
 
+#include "libfive/render/brep/util.hpp"
+
 namespace Kernel {
 
 /*
@@ -101,6 +103,36 @@ public:
         return out;
     }
 
+    /*
+     *  Returns a new QEF with the axes set in a bitfield mask preserved
+     */
+    template <unsigned mask>
+    QEF<bitcount(mask)> sub() const
+    {
+        static_assert(bitcount(mask) <= N, "Too many axes");
+
+        QEF<bitcount(mask)> out;
+        unsigned row_ = 0;
+        for (unsigned row=0; row <= N; ++row) {
+            unsigned col_ = 0;
+            if ((mask & (1 << row)) || row == N) {
+                for (unsigned col=0; col <= N; ++col) {
+                    if ((mask & (1 << col)) || col == N) {
+                        out.AtA(row_, col_) = AtA(row, col);
+                        out.AtBp(row_, col_) = AtBp(row, col);
+                        out.BptBp(row_, col_) = BptBp(row, col);
+                        col_++;
+                    }
+                }
+                assert(col_ == bitcount(mask) + 1);
+                row_++;
+            }
+        }
+        assert(row_ == bitcount(mask) + 1);
+
+        return out;
+    }
+
 protected:
     Eigen::Matrix<double, N + 1, 1> AtB() const {
         return AtBp * Eigen::Matrix<double, N + 1, 1>::Ones();
@@ -115,6 +147,11 @@ protected:
     Eigen::Matrix<double, N + 1, N + 1> AtA;
     Eigen::Matrix<double, N + 1, N + 1> AtBp;
     Eigen::Matrix<double, N + 1, N + 1> BptBp;
+
+    friend class QEF<0>;
+    friend class QEF<1>;
+    friend class QEF<2>;
+    friend class QEF<3>;
 };
 
 }   // namespace Kernel
