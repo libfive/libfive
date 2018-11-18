@@ -30,6 +30,7 @@ TEST_CASE("QEF::solve")
             CAPTURE(sol.value);
             REQUIRE(sol.position == Eigen::Vector2d(0, 0));
             REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.rank == 0);
         }
 
         {
@@ -38,6 +39,7 @@ TEST_CASE("QEF::solve")
             CAPTURE(sol.value);
             REQUIRE(sol.position == Eigen::Vector2d(1, 0));
             REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.rank == 0);
         }
 
         {   // Here, we expect the solver to walk up on the Y
@@ -50,6 +52,7 @@ TEST_CASE("QEF::solve")
             REQUIRE(sol.position(1) == Approx(0.5));
             REQUIRE(sol.error == Approx(0.0));
             REQUIRE(sol.value == Approx(0.5));
+            REQUIRE(sol.rank == 0);
         }
     }
 
@@ -70,6 +73,7 @@ TEST_CASE("QEF::solve")
             REQUIRE(sol.position(0) == Approx(2));
             REQUIRE(sol.error == Approx(0.0));
             REQUIRE(sol.value == Approx(4));
+            REQUIRE(sol.rank == 1);
         }
 
         {
@@ -80,6 +84,7 @@ TEST_CASE("QEF::solve")
             REQUIRE(sol.position(0) == Approx(2));
             REQUIRE(sol.error == Approx(0.0));
             REQUIRE(sol.value == Approx(4));
+            REQUIRE(sol.rank == 1);
         }
     }
 }
@@ -109,5 +114,54 @@ TEST_CASE("QEF::sub")
         CAPTURE(sol_x.value);
         REQUIRE(sol_x.position == Eigen::Matrix<double, 1, 1>(10));
         REQUIRE(sol_x.error == Approx(0.0));
+    }
+}
+
+
+TEST_CASE("QEF::solveConstrained")
+{
+    SECTION("Underconstrained (flat surface)")
+    {
+        QEF<2> q;
+        q.insert({1, 0}, {0, 1}, 0);
+        q.insert({2, 0}, {0, 1}, 0);
+
+        Region<2> r({1, 0}, {2, 1});
+
+        {   // Solve constrained to the lower-left corner
+            auto sol = q.solveConstrained<0>(r);
+            REQUIRE(sol.position == Eigen::Vector2d(1, 0));
+            REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.value == Approx(0.0));
+        }
+
+        {   // Solve constrained to the lower-right corner
+            auto sol = q.solveConstrained<1>(r);
+            REQUIRE(sol.position == Eigen::Vector2d(2, 0));
+            REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.value == Approx(0.0));
+        }
+
+        {   // Solve constrained to the lower edge
+            auto sol = q.solveConstrained<2>(r, Eigen::Vector2d(0.75, 0.0));
+            REQUIRE(sol.position == Eigen::Vector2d(0.75, 0));
+            REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.value == Approx(0.0));
+        }
+
+        {   // Solve constrained to the left edge, with a weird target position
+            auto sol = q.solveConstrained<6>(r, Eigen::Vector2d(0.75, 0.75), 0.75);
+            REQUIRE(sol.position == Eigen::Vector2d(1.0, 0.75));
+            REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.value == Approx(0.75));
+        }
+        {   // Solve constrained to the right edge, with a bad target position
+            // (where the solver should split the difference between Y target
+            // and value target)
+            auto sol = q.solveConstrained<7>(r, Eigen::Vector2d(0.75, 0.75), 0.25);
+            REQUIRE(sol.position == Eigen::Vector2d(2.0, 0.5));
+            REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.value == Approx(0.5));
+        }
     }
 }
