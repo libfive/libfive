@@ -11,3 +11,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 /*  Compile-time power */
 static constexpr unsigned ipow(unsigned p, unsigned n)
 { return (n == 0) ? 1 : p * ipow(p, n - 1); }
+
+static constexpr unsigned bitcount(unsigned p)
+{ return (p == 0) ? 0 : ((p & 1) + bitcount(p >> 1)); }

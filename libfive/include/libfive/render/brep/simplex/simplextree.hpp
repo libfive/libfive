@@ -24,7 +24,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/progress.hpp"
-#include "libfive/render/brep/ipow.hpp"
+#include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
 
 namespace Kernel {
