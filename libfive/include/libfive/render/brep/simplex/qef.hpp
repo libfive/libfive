@@ -64,14 +64,22 @@ public:
         Vector target;
         target << target_pos.transpose(), target_value;
 
+        const auto AtB_ = AtB();
         // Unpack from raw solution to position + value form
-        const auto sol = QEF<N>::solve(AtA, AtB(), BtB(), target);
+        const auto sol = QEF<N>::solve(AtA, AtB_, target);
 
         Solution out;
         out.position = sol.value.template head<N>();
         out.value = sol.value(N);
         out.rank = sol.rank - 1; // Skip the rank due to value
-        out.error = sol.error;
+
+        // Calculate the resulting error, hard-code the matrix size here so
+        // that Eigen checks that all of our types are correct.
+        Eigen::Matrix<double, 1, 1> err =
+            sol.value.transpose() * AtA * sol.value
+            - 2 * sol.value.transpose() * AtB_
+            + BtB();
+        out.error = err(0);
 
         return out;
     }
@@ -144,7 +152,8 @@ public:
 
         Eigen::Matrix<double, MatrixSize, 1> AtB_c =
             Eigen::Matrix<double, MatrixSize, 1>::Zero();
-        AtB_c.template head<N + 1>() = 2 * AtB();
+        const auto AtB_ = AtB();
+        AtB_c.template head<N + 1>() = 2 * AtB_;
 
         {   // Build up the constrained matrices, which are like AtA and AtB
             // with extra rows + columns to encode the constraints.
@@ -172,13 +181,23 @@ public:
         target_c(N) = target_value;
 
         auto sol = QEF<N + NumConstrainedAxes>::solve(
-                AtA_c, AtB_c, BtB(), target_c);
+                AtA_c, AtB_c, target_c);
 
         Solution out;
         out.position = sol.value.template head<N>();
         out.value = sol.value(N);
         out.rank = sol.rank - NumConstrainedAxes - 1;
-        out.error = sol.error;
+
+        // Calculate the resulting error, hard-coding the matrix size here so
+        // that Eigen checks that all of our types are correct.
+        // This error calculation uses the unconstrained matrices to return
+        // a true error, rather than a weird value that could be < 0.
+        Vector v = sol.value.template head<N + 1>();
+        Eigen::Matrix<double, 1, 1> err =
+            v.transpose() * AtA * v -
+            2 * v.transpose() * AtB_ +
+            BtB();
+        out.error = err(0);
 
         return out;
     }
@@ -284,6 +303,7 @@ protected:
 
                 // If this solution is an improvement, then store it
                 if (region.contains(sol.position) && out.error > sol.error) {
+                    assert(sol.error >= 0.0);
                     out = sol;
                 }
             }
@@ -307,7 +327,6 @@ protected:
     struct RawSolution {
         Vector value;
         unsigned rank;
-        double error;
     };
 
     /*
@@ -318,7 +337,6 @@ protected:
     static RawSolution solve(
             const Matrix& AtA,
             const Vector& AtB,
-            const Eigen::Matrix<double, 1, 1>& BtB,
             const Vector& target)
     {
         // Our high-level goal here is to find the pseduo-inverse of AtA,
@@ -347,16 +365,10 @@ protected:
         // Solve for vertex position (minimizing distance to target)
         Vector sol = AtA_inv * (AtB - (AtA * target)) + target;
 
-        // Calculate the resulting error, hard-code the matrix size here so
-        // that Eigen checks that all of our types are correct.
-        Eigen::Matrix<double, 1, 1> err =
-            sol.transpose() * AtA * sol - 2 * sol.transpose() * AtB + BtB;
-
         // Unpack these results into our solution struct
         RawSolution out;
         out.value = sol;
         out.rank = rank;
-        out.error = err(0);
 
         return out;
     }
