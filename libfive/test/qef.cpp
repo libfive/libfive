@@ -173,9 +173,13 @@ TEST_CASE("QEF::solveBounded")
         QEF<2> q;
         q.insert({1, 0}, {0, 1}, 0);
         q.insert({2, 0}, {0, 1}, 0);
+        std::array<double, 4> corners = {{0, 0, 1, 1}};
 
         Region<2> r({1, 0}, {2, 1});
 
-        auto sol = q.solveBounded(r);
+        auto sol = q.solveBounded(r, corners);
+        REQUIRE(sol.position == Eigen::Vector2d(1.5, 0.5));
+        REQUIRE(sol.error == Approx(0.0));
+        REQUIRE(sol.value == Approx(0.5));
     }
 }
