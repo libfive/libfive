@@ -88,9 +88,9 @@ Tree menger(int i)
     return max(cube, cutout);
 }
 
-Tree circle(float r)
+Tree circle(float r, Eigen::Vector2f center)
 {
-    return sqrt(square(Tree::X()) + square(Tree::Y())) - r;
+    return sqrt(square(Tree::X() - center.x()) + square(Tree::Y() - center.y())) - r;
 }
 
 Tree sphere(float r, Eigen::Vector3f center)

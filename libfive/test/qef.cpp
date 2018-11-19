@@ -10,6 +10,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "catch.hpp"
 
 #include "libfive/render/brep/simplex/qef.hpp"
+#include "libfive/eval/eval_deriv.hpp"
+#include "libfive/eval/deck.hpp"
+
+#include "util/shapes.hpp"
 
 using namespace Kernel;
 
@@ -166,6 +170,22 @@ TEST_CASE("QEF::solveConstrained")
     }
 }
 
+template <unsigned N>
+QEF<N> fromCorners(Region<N> r, Tree c)
+{
+    QEF<2> q;
+    DerivEvaluator d(std::make_shared<Deck>(c));
+
+    for (unsigned i=0; i < 4; ++i) {
+        const auto pos = r.corner(i);
+        const auto deriv = d.deriv(
+                Eigen::Vector3f(pos.x(), pos.y(), 0));
+
+        q.insert(pos, deriv.head<2>().cast<double>(), deriv(3));
+    }
+    return q;
+}
+
 TEST_CASE("QEF::solveBounded")
 {
     SECTION("Underconstrained (flat surface)")
@@ -180,5 +200,22 @@ TEST_CASE("QEF::solveBounded")
         REQUIRE(sol.position == Eigen::Vector2d(1.5, 0.25));
         REQUIRE(sol.error == Approx(0.0));
         REQUIRE(sol.value == Approx(0.25));
+    }
+
+    SECTION("Circle")
+    {
+        auto c = circle(1, Eigen::Vector2f(1.5, 2.7));
+        Region<2> r({1, 0}, {2, 1});
+
+        QEF<2> q = fromCorners(Region<2>({1, 0}, {2, 1}), c);
+
+        const auto sol = q.solveBounded(r);
+        CAPTURE(sol.position);
+        CAPTURE(sol.value);
+        CAPTURE(sol.rank);
+        CAPTURE(sol.error);
+        REQUIRE(sol.error > 0);
+        REQUIRE(sol.position.x() == Approx(1.5));
+        REQUIRE(sol.position.y() == Approx(1));
     }
 }
