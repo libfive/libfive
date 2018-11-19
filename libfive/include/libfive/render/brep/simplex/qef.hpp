@@ -59,7 +59,7 @@ public:
 
     Solution solve(Eigen::Matrix<double, 1, N> target_pos=
                         Eigen::Matrix<double, 1, N>::Zero(),
-                   double target_value=0.0)
+                   double target_value=0.0) const
     {
         Vector target;
         target << target_pos.transpose(), target_value;
@@ -127,7 +127,7 @@ public:
     Solution solveConstrained(Region<N> region,
                               Eigen::Matrix<double, 1, N> target_pos=
                                   Eigen::Matrix<double, 1, N>::Zero(),
-                              double target_value=0.0)
+                              double target_value=0.0) const
     {
         constexpr NeighborIndex Neighbor(Neighbor_);
 
@@ -183,8 +183,78 @@ public:
         return out;
     }
 
+    /*
+     *  Solves the given QEF, bounded to lie within the given region.
+     *
+     *  This is implemented by walking down in dimensionality from N to 0,
+     *  picking the lowest-error solution available that is within the bounds.
+     */
+    Solution solveBounded(Region<N> region,
+                          Eigen::Matrix<double, 1, N> target_pos=
+                              Eigen::Matrix<double, 1, N>::Zero(),
+                          double target_value=0.0) const
+    {
+        static_assert(N > 0, "Too few dimensions");
+
+        {   //  First, check the full-dimension, unconstrained solver
+            auto sol = solve(target_pos, target_value);
+            if (region.contains(sol.position)) {
+                return sol;
+            }
+        }
+
+        // Construct an empty solution object with infinite error
+        Solution out;
+        out.error = std::numeric_limits<double>::infinity();
+
+        // TODO: This doesn't do enough unrolling yet!
+        UnrollSubspace<N - 1, ipow(N, 3)>()(
+                *this, region, target_pos, target_value, out);
+
+        assert(!std::isinf(out.error));
+        return out;
+    }
+
 
 protected:
+    template <unsigned TargetDimension, unsigned TargetSubspace>
+    struct UnrollSubspace {
+        void operator()(const QEF<N>& qef, const Region<N>& region,
+                        const Eigen::Matrix<double, 1, N>& target_pos,
+                        double target_value,
+                        Solution& out)
+        {
+            // If this neighbor is of the target dimension, then check for
+            // an improved solution constrained to this neighbor.
+            if (TargetDimension ==
+                NeighborIndex(TargetSubspace - 1).dimension())
+            {
+                // Calculate the constrained solution, including error
+                const auto sol = qef.solveConstrained<TargetSubspace - 1>(
+                        region, target_pos, target_value);
+
+                // If this solution is an improvement, then store it
+                if (region.contains(sol.position) && out.error > sol.error) {
+                    out = sol;
+                }
+            }
+
+            // Statically unroll a loop, dropping in dimensionality loop
+            UnrollSubspace<TargetDimension, TargetSubspace - 1>()(
+                    qef, region, target_pos, target_value, out);
+        }
+    };
+
+    // Terminates static unrolling
+    template <unsigned TargetDimension>
+    struct UnrollSubspace<TargetDimension, 0> {
+        void operator()(const QEF<N>&, const Region<N>&,
+                        const Eigen::Matrix<double, 1, N>&, double, Solution&)
+        {
+            // Nothing to do here
+        }
+    };
+
     struct RawSolution {
         Vector value;
         unsigned rank;

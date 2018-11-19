@@ -165,3 +165,17 @@ TEST_CASE("QEF::solveConstrained")
         }
     }
 }
+
+TEST_CASE("QEF::solveBounded")
+{
+    SECTION("Underconstrained (flat surface)")
+    {
+        QEF<2> q;
+        q.insert({1, 0}, {0, 1}, 0);
+        q.insert({2, 0}, {0, 1}, 0);
+
+        Region<2> r({1, 0}, {2, 1});
+
+        auto sol = q.solveBounded(r);
+    }
+}
