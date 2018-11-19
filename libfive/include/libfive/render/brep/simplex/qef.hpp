@@ -207,8 +207,11 @@ public:
         Solution out;
         out.error = std::numeric_limits<double>::infinity();
 
-        // TODO: This doesn't do enough unrolling yet!
-        UnrollSubspace<N - 1, ipow(N, 3)>()(
+        // Do static loop unrolling to check every smaller dimension
+        // (e.g. for a cell, check every face, then every edge, then
+        //  every corner, picking the first case where the QEF solution
+        //  doesn't escape the bounds).
+        UnrollDimension<N - 1>()(
                 *this, region, target_pos, target_value, out);
 
         assert(!std::isinf(out.error));
@@ -217,6 +220,44 @@ public:
 
 
 protected:
+    /*
+     *  Unrolls constrained solving along dimensions
+     *
+     *  Dummy is a dummy parameter that prevents a warning about
+     *  specialization in a class scope; it has no effect
+     */
+    template <unsigned TargetDimension, unsigned Dummy=0>
+    struct UnrollDimension {
+        void operator()(const QEF<N>& qef, const Region<N>& region,
+                        const Eigen::Matrix<double, 1, N>& target_pos,
+                        double target_value,
+                        Solution& out)
+        {
+            UnrollSubspace<TargetDimension, ipow(N, 3)>()(
+                qef, region, target_pos, target_value, out);
+
+            // Continue unrolling if we haven't found a bounded position
+            if (std::isinf(out.error))
+            {
+                UnrollDimension<TargetDimension - 1, Dummy>()(qef, region,
+                        target_pos, target_value, out);
+            }
+        }
+    };
+
+    // For the 0-D case, just check every corner
+    // (without bothering to do the constrained QEF solving)
+    template <unsigned Dummy>
+    struct UnrollDimension<0, Dummy> {
+        void operator()(const QEF<N>& qef, const Region<N>& region,
+                        const Eigen::Matrix<double, 1, N>& target_pos,
+                        double target_value,
+                        Solution& out)
+        {
+            // TODO: check the corners
+        }
+    };
+
     template <unsigned TargetDimension, unsigned TargetSubspace>
     struct UnrollSubspace {
         void operator()(const QEF<N>& qef, const Region<N>& region,
