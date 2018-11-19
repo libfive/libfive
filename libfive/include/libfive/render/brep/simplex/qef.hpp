@@ -186,25 +186,21 @@ public:
     /*
      *  Solves the given QEF, bounded to lie within the given region.
      *
+     *  By default, minimizes towards the center of the region and value 0.0;
+     *  call the full-argument version of the function to minimize towards
+     *  a different point.
+     *
      *  This is implemented by walking down in dimensionality from N to 0,
      *  picking the lowest-error solution available that is within the bounds.
      */
-    Solution solveBounded(const Region<N>& region,
-                          const std::array<double, ipow(2, N)>& corners)
+    Solution solveBounded(const Region<N>& region)
     {
-        double value_target = 0.0;
-        for (auto& c : corners) {
-            value_target += c;
-        }
-        value_target /= corners.size();
-
-        return solveBounded(region, corners,
+        return solveBounded(region,
                             (region.lower + region.upper) / 2.0,
-                            value_target);
+                            0.0);
     }
 
     Solution solveBounded(const Region<N>& region,
-                          const std::array<double, ipow(2, N)>& corners,
                           Eigen::Matrix<double, 1, N> target_pos,
                           double target_value) const
     {
@@ -226,7 +222,7 @@ public:
         //  every corner, picking the first case where the QEF solution
         //  doesn't escape the bounds).
         UnrollDimension<N - 1>()(
-                *this, region, corners, target_pos, target_value, out);
+                *this, region, target_pos, target_value, out);
 
         assert(!std::isinf(out.error));
         return out;
@@ -243,7 +239,6 @@ protected:
     template <int TargetDimension, unsigned Dummy=0>
     struct UnrollDimension {
         void operator()(const QEF<N>& qef, const Region<N>& region,
-                        const std::array<double, ipow(2, N)>& corners,
                         const Eigen::Matrix<double, 1, N>& target_pos,
                         double target_value,
                         Solution& out)
@@ -255,22 +250,18 @@ protected:
             if (std::isinf(out.error))
             {
                 UnrollDimension<TargetDimension - 1, Dummy>()(
-                        qef, region, corners,
-                        target_pos, target_value, out);
+                        qef, region, target_pos, target_value, out);
             }
         }
     };
 
-    // For the 0-D case, just check every corner
-    // (without bothering to do the constrained QEF solving)
+    // We go all the way down to 0D, then terminate static unrolling at -1D
     template <unsigned Dummy>
-    struct UnrollDimension<0, Dummy> {
+    struct UnrollDimension<-1, Dummy> {
         void operator()(const QEF<N>&, const Region<N>&,
-                        const std::array<double, ipow(2, N)>&,
                         const Eigen::Matrix<double, 1, N>&,
                         double, Solution&)
         {
-            // TODO: check corners here
             // Terminate static unrolling here
         }
     };
