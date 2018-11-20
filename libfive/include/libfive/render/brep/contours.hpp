@@ -20,16 +20,16 @@ public:
     /*
      *  Basic render function
      */
-  static std::unique_ptr<Contours> render(
-    const Tree t, const Region<2>& r,
-    double min_feature = 0.1, double max_err = 1e-8,
-    bool multithread = true);
+    static std::unique_ptr<Contours> render(
+        const Tree t, const Region<2>& r,
+        double min_feature = 0.1, double max_err = 1e-8,
+        bool multithread = true);
 
     static std::unique_ptr<Contours> render(
-            const Tree t, const Region<2>& r,
-            double min_feature, double max_err,
-            std::atomic_bool& cancelled,
-            bool multithread=true);
+        const Tree t, const Region<2>& r,
+        double min_feature, double max_err,
+        std::atomic_bool& cancelled,
+        int workers);
 
     /*
      *  Saves the contours to an SVG file
