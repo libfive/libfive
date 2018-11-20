@@ -196,26 +196,57 @@ TEST_CASE("QEF::solveBounded")
 
         Region<2> r({1, 0}, {2, 1});
 
-        auto sol = q.solveBounded(r);
-        REQUIRE(sol.position == Eigen::Vector2d(1.5, 0.25));
-        REQUIRE(sol.error == Approx(0.0));
-        REQUIRE(sol.value == Approx(0.25));
+        {
+            auto sol = q.solveBounded(r);
+            REQUIRE(sol.position == Eigen::Vector2d(1.5, 0.25));
+            REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.value == Approx(0.25));
+        }
+
+        // We add two more points, to drag the average value to 0.5
+        // (which means the solver will position the point in the center
+        // of our region).
+        q.insert({1, 1}, {0, 1}, 1);
+        q.insert({2, 1}, {0, 1}, 1);
+
+        {
+            auto sol = q.solveBounded(r);
+            REQUIRE(sol.position == Eigen::Vector2d(1.5, 0.5));
+            REQUIRE(sol.error == Approx(0.0));
+            REQUIRE(sol.value == Approx(0.5));
+        }
     }
 
-    SECTION("Circle")
+    SECTION("Circle outside of region")
     {
         auto c = circle(1, Eigen::Vector2f(1.5, 2.7));
-        Region<2> r({1, 0}, {2, 1});
 
-        QEF<2> q = fromCorners(Region<2>({1, 0}, {2, 1}), c);
+        {
+            Region<2> r({1, 0}, {2, 1});
+            QEF<2> q = fromCorners(r, c);
+            const auto sol = q.solveBounded(r);
+            CAPTURE(sol.position);
+            CAPTURE(sol.value);
+            CAPTURE(sol.rank);
+            CAPTURE(sol.error);
+            REQUIRE(sol.error > 0);
+            REQUIRE(sol.position.x() == Approx(1.5));
 
-        const auto sol = q.solveBounded(r);
-        CAPTURE(sol.position);
-        CAPTURE(sol.value);
-        CAPTURE(sol.rank);
-        CAPTURE(sol.error);
-        REQUIRE(sol.error > 0);
-        REQUIRE(sol.position.x() == Approx(1.5));
-        REQUIRE(sol.position.y() == Approx(1));
+        }
+        {
+            Region<2> r({1, 2}, {2, 3});
+            QEF<2> q = fromCorners(r, c);
+            const auto sol = q.solveBounded(r);
+            CAPTURE(sol.position);
+            CAPTURE(sol.value);
+            CAPTURE(sol.rank);
+            CAPTURE(sol.error);
+            REQUIRE(sol.error > 0);
+            REQUIRE(sol.position.x() == Approx(1.5));
+            REQUIRE(sol.position.y() == Approx(2.7));
+            REQUIRE(sol.rank == 2);
+            REQUIRE(sol.error == Approx(0.0).epsilon(1e-9));
+            REQUIRE(sol.value == Approx(-1));
+        }
     }
 }

@@ -205,9 +205,9 @@ public:
     /*
      *  Solves the given QEF, bounded to lie within the given region.
      *
-     *  By default, minimizes towards the center of the region and value 0.0;
-     *  call the full-argument version of the function to minimize towards
-     *  a different point.
+     *  By default, minimizes towards the center of the region and
+     *  our average value.  Call the full-argument version of the function
+     *  to minimize towards a different point.
      *
      *  This is implemented by walking down in dimensionality from N to 0,
      *  picking the lowest-error solution available that is within the bounds.
@@ -216,7 +216,7 @@ public:
     {
         return solveBounded(region,
                             (region.lower + region.upper) / 2.0,
-                            0.0);
+                            AtBp(N, N) / AtA(N, N));
     }
 
     Solution solveBounded(const Region<N>& region,
