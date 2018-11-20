@@ -123,14 +123,8 @@ std::unique_ptr<Contours> Contours::render(
         const Tree t, const Region<2>& r,
         double min_feature, double max_err,
         std::atomic_bool& cancel,
-        bool multithread)
+        int workers)
 {
-  auto maxT = std::thread::hardware_concurrency();
-  if (maxT == 0) {
-    maxT = 8;
-  }
-   const unsigned workers = multithread ? maxT : 1;
-
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
     for (unsigned i=0; i < workers; ++i)
@@ -232,14 +226,14 @@ std::unique_ptr<Contours> Contours::render(
     return c;
 }
 
-std::unique_ptr<Kernel::Contours> Contours::render(const Tree t, 
-                                                   const Region<2>& r, 
-                                                   double min_feature /*= 0.1*/, 
-                                                   double max_err /*= 1e-8*/, 
-                                                   bool multithread /*= true*/)
+std::unique_ptr<Contours> Contours::render(const Tree t, 
+                                           const Region<2>& r, 
+                                           double min_feature /*= 0.1*/, 
+                                           double max_err /*= 1e-8*/, 
+                                           bool multithread /*= true*/)
 {
   std::atomic_bool cancelled(false);
- return render(t,r,min_feature,max_err,cancelled,multithread);
+  return render(t, r, min_feature, max_err, cancelled, multithread ? 1 : 8);
 }
 
 bool Contours::saveSVG(const std::string& filename)
