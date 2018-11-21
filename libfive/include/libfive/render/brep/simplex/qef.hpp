@@ -47,6 +47,8 @@ public:
         AtA += other.AtA;
         AtBp += other.AtBp;
         BptBp += other.BptBp;
+
+        return *this;
     }
 
     void reset() {
@@ -238,8 +240,6 @@ public:
                           Eigen::Matrix<double, 1, N> target_pos,
                           double target_value) const
     {
-        static_assert(N > 0, "Too few dimensions");
-
         {   //  First, check the full-dimension, unconstrained solver
             auto sol = solve(target_pos, target_value);
             if (region.contains(sol.position)) {
@@ -255,7 +255,7 @@ public:
         // (e.g. for a cell, check every face, then every edge, then
         //  every corner, picking the first case where the QEF solution
         //  doesn't escape the bounds).
-        UnrollDimension<N - 1>()(
+        UnrollDimension<(int)N - 1>()(
                 *this, region, target_pos, target_value, out);
 
         assert(!std::isinf(out.error));

@@ -95,29 +95,38 @@ Tape::Handle SimplexTree<N>::evalInterval(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <unsigned BaseDimension, unsigned SimplexIndex_>
+template <unsigned BaseDimension, int SubspaceIndex_>
 struct Unroller
 {
     void operator()(typename SimplexTree<BaseDimension>::Leaf& leaf,
-                    const CornerArray<BaseDimension>& corners,
                     const Region<BaseDimension>& region)
     {
-        constexpr auto SimplexIndex = ipow(BaseDimension, 3) - SimplexIndex_;
-        auto v = SimplexSolver::findVertex<BaseDimension, SimplexIndex>(
-                corners, region);
-        leaf.vertices.row(SimplexIndex) = v;
+        constexpr auto SubspaceIndex = NeighborIndex(SubspaceIndex_);
+        constexpr unsigned SubspaceDimension = SubspaceIndex.dimension();
+        constexpr unsigned SubspaceFloating = SubspaceIndex.floating();
+
+        // Collect all of the (non-inclusive) QEFs for this subspace
+        QEF<SubspaceDimension> qef;
+        for (unsigned i=0; i < ipow(3, BaseDimension); ++i) {
+            if (SubspaceIndex.contains(NeighborIndex(i))) {
+                qef += leaf.qefs[i].template sub<SubspaceFloating>();
+            }
+        }
+
+        const auto r = region.template subspace<SubspaceFloating>();
+        const auto sol = qef.solveBounded(r);
+        (void)sol; // TODO: use solution here
 
         // Recurse!
-        Unroller<BaseDimension, SimplexIndex_ - 1>()(leaf, corners, region);
+        Unroller<BaseDimension, SubspaceIndex_ - 1>()(leaf, region);
     }
 };
 
 // Terminate static unrolling
 template <unsigned BaseDimension>
-struct Unroller<BaseDimension, 0>
+struct Unroller<BaseDimension, -1>
 {
     void operator()(typename SimplexTree<BaseDimension>::Leaf&,
-                    const CornerArray<BaseDimension>&,
                     const Region<BaseDimension>&)
     {
         // Nothing to do here
@@ -131,8 +140,6 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
                               const Region<N>& region, Tape::Handle tape,
                               ObjectPool<Leaf>& spare_leafs)
 {
-    CornerArray<N> corners;
-
     this->leaf = spare_leafs.get();
 
     // TODO:  Pull fully-evaluated QEFs from neighbors when possible
@@ -147,16 +154,34 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
     }
     // Then unpack into the QEF arrays (which are guaranteed to be empty,
     // because SimplexLeaf::reset() clears them).
-    const auto ds = eval->array.derivs(ipow(2, N));
-    for (unsigned i=0; i < ipow(2, N); ++i) {
-        const auto neighbor = CornerIndex(i).neighbor();
-        this->leaf->qefs[neighbor.i].insert(
-                region.corner(i),
-                ds.col(i).template head<N>().template cast<double>(),
-                ds(3, i));
+    {
+        const auto ds = eval->array.derivs(ipow(2, N), tape);
+        const auto ambig = eval->array.getAmbiguous(ipow(2, N), tape);
+        for (unsigned i=0; i < ipow(2, N); ++i) {
+            const auto neighbor = CornerIndex(i).neighbor();
+
+            // If this corner was ambiguous, then use the FeatureEvaluator
+            // to get all of the possible derivatives, then add them to
+            // the corner's QEF.
+            if (ambig(i)) {
+                auto fs = eval->feature.features(region.corner3f(i), tape);
+                for (auto& f : fs) {
+                    this->leaf->qefs[neighbor.i].insert(
+                            region.corner(i),
+                            f.template head<N>().template cast<double>(),
+                            ds(3, i));
+                }
+            // Otherwise, use the normal found by the DerivArrayEvaluator
+            } else {
+                this->leaf->qefs[neighbor.i].insert(
+                        region.corner(i),
+                        ds.col(i).template head<N>().template cast<double>(),
+                        ds(3, i));
+            }
+        }
     }
 
-    Unroller<N, ipow(N, 3)>()(*this->leaf, corners, region);
+    Unroller<N, ipow(N, 3)>()(*this->leaf, region);
 
     for (unsigned i=0; i < ipow(3, N); ++i)
     {

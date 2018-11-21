@@ -142,3 +142,24 @@ TEST_CASE("Region<2>::parent")
     REQUIRE(d.lower.matrix() == Eigen::Vector2d(-1, -1));
     REQUIRE(d.upper.matrix() == Eigen::Vector2d(1, 1));
 }
+
+TEST_CASE("Region<3>::subspace")
+{
+    Region<3> r({-1, -2, -4}, {1, 2, 4});
+
+    auto a = r.subspace<0>();
+    REQUIRE(a.lower.size() == 0);
+    REQUIRE(a.upper.size() == 0);
+
+    auto b = r.subspace<1>();
+    REQUIRE(b.lower.matrix() == Eigen::Matrix<double, 1, 1>(-1));
+    REQUIRE(b.upper.matrix() == Eigen::Matrix<double, 1, 1>(1));
+
+    auto c = r.subspace<3>();
+    REQUIRE(c.lower.matrix() == Eigen::Matrix<double, 2, 1>(-1, -2));
+    REQUIRE(c.upper.matrix() == Eigen::Matrix<double, 2, 1>(1, 2));
+
+    auto d = r.subspace<5>();
+    REQUIRE(d.lower.matrix() == Eigen::Matrix<double, 2, 1>(-1, -4));
+    REQUIRE(d.upper.matrix() == Eigen::Matrix<double, 2, 1>(1, 4));
+}

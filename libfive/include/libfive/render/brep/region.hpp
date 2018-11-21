@@ -11,6 +11,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/Eigen>
 #include <array>
 
+#include "libfive/render/brep/util.hpp"
+
 namespace Kernel {
 
 template <unsigned int N>
@@ -171,6 +173,35 @@ public:
                 out.upper(i) += out.upper(i) - out.lower(i);
             }
         }
+        return out;
+    }
+
+    /*
+     *  Returns a region with only the masked axes present.
+     *
+     *  This is useful to reduce a 3D region into a region containing
+     *  a particular 2D space.  Axes are dropped in order, e.g. masking
+     *  X and Z from a 3D region would produce a region with [X, Z]
+     *  coordinates in lower and upper.
+     */
+    template <unsigned mask>
+    Region<bitcount(mask)> subspace() const
+    {
+        constexpr unsigned D = bitcount(mask);
+        static_assert(D <= N, "Too many dimensions");
+
+        Region<D> out;
+        unsigned j = 0;
+        for (unsigned i=0; i < N; ++i) {
+            if (mask & (1 << i)) {
+                out.lower[j] = lower[i];
+                out.upper[j] = upper[i];
+                j++;
+            }
+        }
+        out.perp.array() = 0.0;
+
+        assert(j == D);
         return out;
     }
 
