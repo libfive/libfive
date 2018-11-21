@@ -245,7 +245,7 @@ TEST_CASE("QEF::solveBounded")
             REQUIRE(sol.position.x() == Approx(1.5));
             REQUIRE(sol.position.y() == Approx(2.7));
             REQUIRE(sol.rank == 2);
-            REQUIRE(sol.error == Approx(0.0).epsilon(1e-9));
+            REQUIRE(sol.error == Approx(0.0).margin(1e-9));
             REQUIRE(sol.value == Approx(-1));
         }
     }
