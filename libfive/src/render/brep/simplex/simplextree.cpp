@@ -61,6 +61,10 @@ void SimplexLeaf<N>::reset()
     std::fill(index.begin(), index.end(), 0);
     tape.reset();
     surface.clear();
+
+    for (auto& qef : qefs) {
+        qef.reset();
+    }
     level = 0;
 }
 
@@ -130,6 +134,28 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
     CornerArray<N> corners;
 
     this->leaf = spare_leafs.get();
+
+    // TODO:  Pull fully-evaluated QEFs from neighbors when possible
+
+    // First, we evaluate the corners, finding position + normal and storing
+    // it in the corner QEFs (which are assumed to be empty)
+    static_assert(ipow(2, N) < LIBFIVE_EVAL_ARRAY_SIZE,
+                  "Too many points to evaluate");
+    // Pack values into the evaluator
+    for (unsigned i=0; i < ipow(2, N); ++i) {
+        eval->array.set(region.corner3f(i), i);
+    }
+    // Then unpack into the QEF arrays (which are guaranteed to be empty,
+    // because SimplexLeaf::reset() clears them).
+    const auto ds = eval->array.derivs(ipow(2, N));
+    for (unsigned i=0; i < ipow(2, N); ++i) {
+        const auto neighbor = CornerIndex(i).neighbor();
+        this->leaf->qefs[neighbor.i].insert(
+                region.corner(i),
+                ds.col(i).template head<N>().template cast<double>(),
+                ds(3, i));
+    }
+
     Unroller<N, ipow(N, 3)>()(*this->leaf, corners, region);
 
     for (unsigned i=0; i < ipow(3, N); ++i)
@@ -138,7 +164,6 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
         p << this->leaf->vertices.row(i).template cast<float>().transpose(),
              region.perp.template cast<float>();
 
-        // TODO:  Pull corners from neighbors when possible
         eval->array.set(p, 0);
         const auto out = eval->array.values(1)[0];
         const bool inside = (out == 0)

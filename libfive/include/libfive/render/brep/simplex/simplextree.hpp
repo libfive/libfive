@@ -26,6 +26,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/progress.hpp"
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/simplex/qef.hpp"
 
 namespace Kernel {
 
@@ -46,6 +47,9 @@ struct SimplexLeaf
 
     /*   Global indices for subspace vertices  */
     std::array<uint64_t, ipow(3, N)> index;
+
+    /*  Per-subspace QEFs */
+    std::array<QEF<N>, ipow(3, N)> qefs;
 
     /*  Tape used for evaluation within this leaf */
     std::shared_ptr<Tape> tape;
