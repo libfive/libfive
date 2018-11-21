@@ -11,17 +11,27 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/tree.hpp"
 #include "libfive/render/brep/region.hpp"
 
+#include <atomic>
+
 namespace Kernel {
 
 class Contours {
 public:
     /*
-     *  Basic render function
+     *  Basic render function, with sensible defaults
      */
     static std::unique_ptr<Contours> render(
-            const Tree t, const Region<2>& r,
-            double min_feature=0.1, double max_err=1e-8,
-            bool multithread=true);
+        const Tree t, const Region<2>& r,
+        double min_feature=0.1, double max_err=1e-8,
+        bool multithread=true);
+
+    /*
+     *  Full-featured render function, with all arguments required
+     */
+    static std::unique_ptr<Contours> render(
+        const Tree t, const Region<2>& r,
+        double min_feature, double max_err,
+        std::atomic_bool& cancel, unsigned workers);
 
     /*
      *  Saves the contours to an SVG file

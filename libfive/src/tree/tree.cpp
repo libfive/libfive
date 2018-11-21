@@ -182,6 +182,16 @@ Tree Tree::remap(std::map<Id, Tree> m) const
     return r == m.end() ? *this : Tree(r->second);
 }
 
+Tree Tree::lhs() const
+{
+    return Tree(ptr->lhs);
+}
+
+Tree Tree::rhs() const
+{
+    return Tree(ptr->rhs);
+}
+
 Tree Tree::makeVarsConstant() const
 {
     std::map<Id, Tree> vars;
