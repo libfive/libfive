@@ -104,6 +104,7 @@ struct Unroller
         constexpr auto SubspaceIndex = NeighborIndex(SubspaceIndex_);
         constexpr unsigned SubspaceDimension = SubspaceIndex.dimension();
         constexpr unsigned SubspaceFloating = SubspaceIndex.floating();
+        constexpr unsigned SubspaceFixed = SubspaceIndex.fixed();
 
         // Collect all of the (non-inclusive) QEFs for this subspace
         QEF<SubspaceDimension> qef;
@@ -115,7 +116,19 @@ struct Unroller
 
         const auto r = region.template subspace<SubspaceFloating>();
         const auto sol = qef.solveBounded(r);
-        (void)sol; // TODO: use solution here
+
+        // Unpack from the reduced-dimension solution to the leaf vertex
+        unsigned j = 0;
+        for (unsigned i=0; i < BaseDimension; ++i) {
+            if (SubspaceFloating & (1 << i)) {
+                leaf.vertices(SubspaceIndex_, i) = sol.position(j++);
+            } else if (SubspaceFixed & (1 << i)) {
+                leaf.vertices(SubspaceIndex_, i) = region.upper(i);
+            } else {
+                leaf.vertices(SubspaceIndex_, i) = region.lower(i);
+            }
+        }
+        assert(j == SubspaceDimension);
 
         // Recurse!
         Unroller<BaseDimension, SubspaceIndex_ - 1>()(leaf, region);
@@ -191,6 +204,9 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
 
         eval->array.set(p, 0);
         const auto out = eval->array.values(1)[0];
+
+        // TODO: make this case broader to deal with array vs non-array
+        // evaluation (see comment at dc_tree.cpp:162).
         const bool inside = (out == 0)
             ? eval->feature.isInside(p)
             : (out < 0);
