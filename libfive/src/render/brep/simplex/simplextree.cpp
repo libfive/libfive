@@ -194,6 +194,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
         }
     }
 
+    // Statically unroll a loop to position every vertex within their subspace.
     Unroller<N, ipow(N, 3) - 1>()(*this->leaf, region);
 
     for (unsigned i=0; i < ipow(3, N); ++i)
