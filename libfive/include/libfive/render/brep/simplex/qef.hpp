@@ -40,6 +40,21 @@ public:
         // Nothing to do here
     }
 
+    /*
+     *  Accumulate QEFs by summing
+     */
+    QEF& operator+=(const QEF& other) {
+        AtA += other.AtA;
+        AtBp += other.AtBp;
+        BptBp += other.BptBp;
+    }
+
+    void reset() {
+        AtA = Matrix::Zero();
+        AtBp = Matrix::Zero();
+        BptBp = Matrix::Zero();
+    }
+
     void insert(Eigen::Matrix<double, 1, N> position,
                 Eigen::Matrix<double, 1, N> normal,
                 double value)
