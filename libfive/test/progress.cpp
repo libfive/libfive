@@ -17,7 +17,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace Kernel;
 
-TEST_CASE("DCPool::build (progress callback)")
+TEST_CASE("DCPool::build (progress callback)", "[!mayfail]")
 {
     Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
