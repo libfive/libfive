@@ -318,7 +318,7 @@ protected:
 
                 // If this solution is an improvement, then store it
                 if (region.contains(sol.position) && out.error > sol.error) {
-                    assert(sol.error >= 0.0);
+                    assert(sol.error >= -1e-12);
                     out = sol;
                 }
             }
