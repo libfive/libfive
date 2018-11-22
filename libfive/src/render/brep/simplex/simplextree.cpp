@@ -104,7 +104,7 @@ struct Unroller
         constexpr auto SubspaceIndex = NeighborIndex(SubspaceIndex_);
         constexpr unsigned SubspaceDimension = SubspaceIndex.dimension();
         constexpr unsigned SubspaceFloating = SubspaceIndex.floating();
-        constexpr unsigned SubspaceFixed = SubspaceIndex.fixed();
+        constexpr unsigned SubspacePos = SubspaceIndex.pos();
 
         // Collect all of the (non-inclusive) QEFs for this subspace
         QEF<SubspaceDimension> qef;
@@ -122,7 +122,7 @@ struct Unroller
         for (unsigned i=0; i < BaseDimension; ++i) {
             if (SubspaceFloating & (1 << i)) {
                 leaf.vertices(SubspaceIndex_, i) = sol.position(j++);
-            } else if (SubspaceFixed & (1 << i)) {
+            } else if (SubspacePos & (1 << i)) {
                 leaf.vertices(SubspaceIndex_, i) = region.upper(i);
             } else {
                 leaf.vertices(SubspaceIndex_, i) = region.lower(i);

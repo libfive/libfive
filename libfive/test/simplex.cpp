@@ -116,6 +116,12 @@ TEST_CASE("SimplexTree<3>: Corner positions")
         REQUIRE(!t->isBranch());
         REQUIRE(t->leaf != nullptr);
 
+        for (unsigned i=0; i < 26; ++i) {
+            REQUIRE(t->leaf->inside[i] == false);
+        }
+        REQUIRE(t->leaf->inside[26] == true);
+
+        REQUIRE(t->leaf->vertices.row(0) ==  Eigen::RowVector3d(-1, -1, -1));
         REQUIRE(t->leaf->vertices.row(0) ==  Eigen::RowVector3d(-1, -1, -1));
         REQUIRE(t->leaf->vertices.row(1) ==  Eigen::RowVector3d( 1, -1, -1));
         REQUIRE(t->leaf->vertices.row(2) ==  Eigen::RowVector3d( 0, -1, -1));
