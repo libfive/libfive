@@ -167,13 +167,21 @@ public:
             Eigen::Matrix<double, MatrixSize, MatrixSize>::Zero();
         AtA_c.template topLeftCorner<N + 1, N + 1>() = 2 * AtA;
 
+        // The constrained matrices are like AtA and AtB, plus
+        // extra rows + columns to encode the constraints.
         Eigen::Matrix<double, MatrixSize, 1> AtB_c =
             Eigen::Matrix<double, MatrixSize, 1>::Zero();
         const auto AtB_ = AtB();
         AtB_c.template head<N + 1>() = 2 * AtB_;
 
-        {   // Build up the constrained matrices, which are like AtA and AtB
-            // with extra rows + columns to encode the constraints.
+        // The new target matrix is padded with the constrained
+        // rows and modified to target the constrained positions
+        Eigen::Matrix<double, MatrixSize, 1> target_c =
+            Eigen::Matrix<double, MatrixSize, 1>::Zero();
+        target_c.template head<N>() = target_pos;
+        target_c(N) = target_value;
+
+        {
             unsigned col = 0;
             for (unsigned j=0; j < N; ++j) {
                 if (Neighbor.fixed() & (1 << j)) {
@@ -184,18 +192,17 @@ public:
                     AtB_c(N + 1 + col) = (Neighbor.pos() & (1 << j))
                         ? region.upper(j)
                         : region.lower(j);
+
+                    target_c(col) = (Neighbor.pos() & (1 << j))
+                        ? region.upper(j)
+                        : region.lower(j);
+                    target_c(N + 1 + col) = target_c(col);
+
                     col++;
                 }
             }
             assert(col == NumConstrainedAxes);
         }
-
-        // Build the new target matrix, which is padded with zeros
-        // for the constrained rows.
-        Eigen::Matrix<double, MatrixSize, 1> target_c =
-            Eigen::Matrix<double, MatrixSize, 1>::Zero();
-        target_c.template head<N>() = target_pos;
-        target_c(N) = target_value;
 
         auto sol = QEF<N + NumConstrainedAxes>::solve(
                 AtA_c, AtB_c, target_c);
@@ -362,7 +369,7 @@ protected:
         // Build the SVD's diagonal matrix, truncating near-singular eigenvalues
         Matrix D = Matrix::Zero();
         const double max_eigenvalue = eigenvalues.cwiseAbs().maxCoeff();
-        const double EIGENVALUE_CUTOFF = 0.02;
+        const double EIGENVALUE_CUTOFF = 1e-9;
         unsigned rank = 0;
         for (unsigned i=0; i < N + 1; ++i) {
             if (fabs(eigenvalues[i]) / max_eigenvalue > EIGENVALUE_CUTOFF) {
