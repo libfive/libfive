@@ -222,20 +222,34 @@ TEST_CASE("SimplexMesher (smoke test)")
     auto c = sphere(0.5);
     auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
-    auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
-    REQUIRE(t->isBranch());
-    for (auto& c : t->children) {
-        REQUIRE(c.load()->type == Interval::AMBIGUOUS);
+    SECTION("High-resolution sphere")
+    {
+        auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
+        REQUIRE(t->isBranch());
+        for (auto& c : t->children) {
+            REQUIRE(c.load()->type == Interval::AMBIGUOUS);
+        }
+        t->assignIndices();
+
+        std::atomic_bool cancel(false);
+        auto m = Dual<3>::walk<SimplexMesher>(t, 8,
+                cancel, EMPTY_PROGRESS_CALLBACK, c);
+
+        REQUIRE(m->branes.size() > 0);
+        REQUIRE(m->verts.size() > 1);
     }
-    t->assignIndices();
 
-    std::atomic_bool cancel(false);
-    auto m = Dual<3>::walk<SimplexMesher>(t, 8,
-            cancel, EMPTY_PROGRESS_CALLBACK, c);
+    SECTION("Low-resolution sphere") {
+        auto t = SimplexTreePool<3>::build(c, r, 2);
+        t->assignIndices();
 
-    REQUIRE(m->branes.size() > 0);
-    REQUIRE(m->verts.size() > 1);
-    m->saveSTL("out.stl");
+        std::atomic_bool cancel(false);
+        auto m = Dual<3>::walk<SimplexMesher>(t, 8,
+                cancel, EMPTY_PROGRESS_CALLBACK, c);
+        REQUIRE(m->branes.size() == 4 * 6);
+        REQUIRE(m->verts.size() == 27);
+        m->saveSTL("sphere.stl");
+    }
 }
 
 void test_edge_pairs(const Mesh& m) {
