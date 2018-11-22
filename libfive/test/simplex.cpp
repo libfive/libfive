@@ -105,6 +105,54 @@ void test_corner_positions(const SimplexTree<3>* ptr, Region<3> r)
 
 TEST_CASE("SimplexTree<3>: Corner positions")
 {
+    SECTION("Single-cell sphere")
+    {
+        auto c = sphere(0.5);
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+        auto t = SimplexTreePool<3>::build(c, r, 2);
+
+        REQUIRE(t.get() != nullptr);
+        REQUIRE(t->type == Interval::AMBIGUOUS);
+        REQUIRE(!t->isBranch());
+        REQUIRE(t->leaf != nullptr);
+
+        REQUIRE(t->leaf->vertices.row(0) ==  Eigen::RowVector3d(-1, -1, -1));
+        REQUIRE(t->leaf->vertices.row(1) ==  Eigen::RowVector3d( 1, -1, -1));
+        REQUIRE(t->leaf->vertices.row(2) ==  Eigen::RowVector3d( 0, -1, -1));
+
+        REQUIRE(t->leaf->vertices.row(3) ==  Eigen::RowVector3d(-1,  1, -1));
+        REQUIRE(t->leaf->vertices.row(4) ==  Eigen::RowVector3d( 1,  1, -1));
+        REQUIRE(t->leaf->vertices.row(5) ==  Eigen::RowVector3d( 0,  1, -1));
+
+        REQUIRE(t->leaf->vertices.row(6) ==  Eigen::RowVector3d(-1,  0, -1));
+        REQUIRE(t->leaf->vertices.row(7) ==  Eigen::RowVector3d( 1,  0, -1));
+        REQUIRE(t->leaf->vertices.row(8) ==  Eigen::RowVector3d( 0,  0, -1));
+
+        REQUIRE(t->leaf->vertices.row(9) ==  Eigen::RowVector3d(-1, -1,  1));
+        REQUIRE(t->leaf->vertices.row(10) == Eigen::RowVector3d( 1, -1,  1));
+        REQUIRE(t->leaf->vertices.row(11) == Eigen::RowVector3d( 0, -1,  1));
+
+        REQUIRE(t->leaf->vertices.row(12) == Eigen::RowVector3d(-1,  1,  1));
+        REQUIRE(t->leaf->vertices.row(13) == Eigen::RowVector3d( 1,  1,  1));
+        REQUIRE(t->leaf->vertices.row(14) == Eigen::RowVector3d( 0,  1,  1));
+
+        REQUIRE(t->leaf->vertices.row(15) == Eigen::RowVector3d(-1,  0,  1));
+        REQUIRE(t->leaf->vertices.row(16) == Eigen::RowVector3d( 1,  0,  1));
+        REQUIRE(t->leaf->vertices.row(17) == Eigen::RowVector3d( 0,  0,  1));
+
+        REQUIRE(t->leaf->vertices.row(18) == Eigen::RowVector3d(-1, -1,  0));
+        REQUIRE(t->leaf->vertices.row(19) == Eigen::RowVector3d( 1, -1,  0));
+        REQUIRE(t->leaf->vertices.row(20) == Eigen::RowVector3d( 0, -1,  0));
+
+        REQUIRE(t->leaf->vertices.row(21) == Eigen::RowVector3d(-1,  1,  0));
+        REQUIRE(t->leaf->vertices.row(22) == Eigen::RowVector3d( 1,  1,  0));
+        REQUIRE(t->leaf->vertices.row(23) == Eigen::RowVector3d( 0,  1,  0));
+
+        REQUIRE(t->leaf->vertices.row(24) == Eigen::RowVector3d(-1,  0,  0));
+        REQUIRE(t->leaf->vertices.row(25) == Eigen::RowVector3d( 1,  0,  0));
+        REQUIRE(t->leaf->vertices.row(26) == Eigen::RowVector3d( 0,  0,  0));
+    }
+
     SECTION("Sphere")
     {
         auto c = sphere(0.5);
