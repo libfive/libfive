@@ -196,7 +196,7 @@ public:
                     target_c(j) = (Neighbor.pos() & (1 << j))
                         ? region.upper(j)
                         : region.lower(j);
-                    target_c(j + N + 1) = target_c(j);
+                    target_c(N + 1 + col) = target_c(j);
 
                     col++;
                 }

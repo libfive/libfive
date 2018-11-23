@@ -314,6 +314,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto t = SimplexTreePool<3>::build(c, r, 1.1, 0, 1);
         REQUIRE(t->isBranch());
         for (auto& c : t->children) {
+            REQUIRE(!c.load()->isBranch());
             REQUIRE(c.load()->type == Interval::AMBIGUOUS);
         }
         t->assignIndices();
