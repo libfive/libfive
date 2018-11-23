@@ -47,6 +47,9 @@ protected:
 
     template <typename T, typename Mesher>
     static void work(const T* t, Mesher& m);
+
+    template <typename T, typename Mesher>
+    static void handleTopEdges(T* t, Mesher& m);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,6 +81,15 @@ void Dual<2>::work(const T* t, V& v)
     edge2<T, V, Axis::Y>({{t->child(Axis::Y), t->child(Axis::Y | Axis::X)}}, v);
     edge2<T, V, Axis::X>({{t->child(0), t->child(Axis::Y)}}, v);
     edge2<T, V, Axis::X>({{t->child(Axis::X), t->child(Axis::X | Axis::Y)}}, v);
+}
+
+template <>
+template <typename T, typename Mesher>
+void Dual<2>::handleTopEdges(T* t, Mesher& m)
+{
+    // No one should be calling this yet, because simplex meshing
+    // isn't implemented in 2D.
+    assert(false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -161,6 +173,31 @@ void Dual<3>::work(const T* t, V& v)
     call_edge3<T, V, Axis::Z>(t, v);
 }
 
+template <>
+template <typename T, typename V>
+void Dual<3>::handleTopEdges(T* t, V& v)
+{
+    auto e = T::empty();
+
+    for (unsigned i=0; i < 4; ++i)
+    {
+        std::array<T*, 4> ts = {{e.get(), e.get(), e.get(), e.get()}};
+        ts[i] = t;
+        edge3<T, V, Axis::X>(ts, v);
+        edge3<T, V, Axis::Y>(ts, v);
+        edge3<T, V, Axis::Z>(ts, v);
+    }
+
+    for (unsigned i=0; i < 2; ++i)
+    {
+        std::array<T*, 2> ts = {{e.get(), e.get()}};
+        ts[i] = t;
+        face3<T, V, Axis::X>(ts, v);
+        face3<T, V, Axis::Y>(ts, v);
+        face3<T, V, Axis::Z>(ts, v);
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
@@ -205,6 +242,13 @@ std::unique_ptr<typename M::Output> Dual<N>::walk(
 
     assert(done.load() || cancel.load());
 
+    // Handle the top tree edges (only used for simplex meshing)
+    if (M::needsTopEdges()) {
+        auto m = M(breps[0], args...);
+        Dual<N>::handleTopEdges(t.get(), m);
+    }
+
+    // This causes the progress tracker to terminate
     done.store(true);
     delete progress;
 

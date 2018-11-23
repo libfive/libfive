@@ -81,6 +81,7 @@ public:
     explicit SimplexTree();
     explicit SimplexTree(SimplexTree<N>* parent, unsigned index,
                          const Region<N>&);
+    static std::unique_ptr<SimplexTree> empty();
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is

@@ -55,6 +55,14 @@ SimplexLeaf<N>::SimplexLeaf()
 }
 
 template <unsigned N>
+std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
+{
+    std::unique_ptr<SimplexTree> t(new SimplexTree);
+    t->type = Interval::EMPTY;
+    return std::move(t);
+}
+
+template <unsigned N>
 void SimplexLeaf<N>::reset()
 {
     level = 0;

@@ -48,6 +48,11 @@ public:
     static std::pair<int, bool> getIndexAndSign(
             const std::array<const DCTree<3>*, 4>& ts);
 
+    /*
+     *  DC meshing doesn't need to handle the top edges of the tree
+     */
+    static bool needsTopEdges() { return false; }
+
 protected:
     template <Axis::Axis A, bool D>
     void load(const std::array<const DCTree<3>*, 4>& ts, unsigned index);

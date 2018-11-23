@@ -30,6 +30,8 @@ public:
     template <Axis::Axis A>
     void load(const std::array<const DCTree<2>*, 2>& ts);
 
+    static bool needsTopEdges() { return false; }
+
 protected:
     template <Axis::Axis A, bool D>
     void load(const std::array<const DCTree<2>*, 2>& ts);
