@@ -11,16 +11,15 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <array>
 #include "libfive/render/axes.hpp"
 
-#include "libfive/render/brep/per_thread_brep.hpp"
-#include "libfive/render/brep/dc/dc_tree.hpp"
-
 #ifndef LIBFIVE_TRIANGLE_FAN_MESHING
 #define LIBFIVE_TRIANGLE_FAN_MESHING 0
 #endif
 
 namespace Kernel {
 
-template <typename T> class Root;
+/* Forward declarations */
+template <unsigned N> class PerThreadBRep;
+template <unsigned N> class DCTree;
 class Mesh;
 
 class DCMesher {
