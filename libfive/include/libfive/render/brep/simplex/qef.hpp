@@ -284,10 +284,12 @@ protected:
                         double target_value,
                         Solution& out)
         {
-            UnrollSubspace<TargetDimension, ipow(N, 3)>()(
+            UnrollSubspace<TargetDimension, ipow(3, N)>()(
                 qef, region, target_pos, target_value, out);
 
-            // Continue unrolling if we haven't found a bounded position
+            // Continue unrolling if we haven't found a bounded position,
+            // moving to the next-lowest dimension (cell to face, face to edge,
+            // edge to vertex, terminating at -1 dimensions)
             if (std::isinf(out.error))
             {
                 UnrollDimension<TargetDimension - 1, Dummy>()(
