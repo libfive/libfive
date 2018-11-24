@@ -173,6 +173,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
     for (unsigned i=0; i < ipow(2, N); ++i) {
         eval->array.set(region.corner3f(i), i);
     }
+
     // Then unpack into the QEF arrays (which are guaranteed to be empty,
     // because SimplexLeaf::reset() clears them).
     {
@@ -181,23 +182,29 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
         for (unsigned i=0; i < ipow(2, N); ++i) {
             const auto neighbor = CornerIndex(i).neighbor();
 
+            // Helper function to push a position + value + normal, swapping
+            // the normal to an all-zeros vector if any items are invalid.
+            auto push = [&](Eigen::Vector3f d) {
+                Eigen::Matrix<double, N, 1> d_ =
+                    d.template head<N>().template cast<double>();
+                if (!d_.array().isFinite().all()) {
+                    d_.array() = 0.0;
+                }
+                this->leaf->qefs[neighbor.i].insert(
+                        region.corner(i), d_, ds(3, i));
+            };
+
             // If this corner was ambiguous, then use the FeatureEvaluator
             // to get all of the possible derivatives, then add them to
             // the corner's QEF.
             if (ambig(i)) {
                 auto fs = eval->feature.features(region.corner3f(i), tape);
                 for (auto& f : fs) {
-                    this->leaf->qefs[neighbor.i].insert(
-                            region.corner(i),
-                            f.template head<N>().template cast<double>(),
-                            ds(3, i));
+                    push(f);
                 }
             // Otherwise, use the normal found by the DerivArrayEvaluator
             } else {
-                this->leaf->qefs[neighbor.i].insert(
-                        region.corner(i),
-                        ds.col(i).template head<N>().template cast<double>(),
-                        ds(3, i));
+                push(ds.col(i).template head<3>());
             }
         }
     }
