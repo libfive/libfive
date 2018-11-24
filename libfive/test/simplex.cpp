@@ -369,6 +369,47 @@ TEST_CASE("SimplexMesher: menger sponge")
     m->saveSTL("sponge.stl");
 }
 
+TEST_CASE("SimplexTreePool: gyroid-sphere intersection vertex positions")
+{
+    Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
+
+    unsigned workers = 8;
+
+    auto s = sphereGyroid();
+    auto t = SimplexTreePool<3>::build(s, r, 0.5, 1e-8, workers);
+
+    std::list<std::pair<const SimplexTree<3>*, Region<3>>> todo;
+    todo.push_back({t.get(), r});
+
+    unsigned checked_count = 0;
+    while (todo.size())
+    {
+        auto task = todo.front();
+        todo.pop_front();
+
+        if (task.first->isBranch())
+        {
+            auto rs = task.second.subdivide();
+            for (unsigned i=0; i < 8; ++i) {
+                todo.push_back({task.first->children[i].load(), rs[i]});
+            }
+        }
+        else if (task.first->leaf)
+        {
+            for (unsigned i=0; i < 27; ++i) {
+                Eigen::Vector3d vt = task.first->leaf->vertices.row(i);
+                CAPTURE(vt.transpose());
+                CAPTURE(task.second.lower);
+                CAPTURE(task.second.upper);
+                REQUIRE(task.second.contains(vt));
+                checked_count++;
+            }
+        }
+    }
+    REQUIRE(checked_count > 0);
+}
+
+
 TEST_CASE("Simplex meshing (gyroid performance breakdown)", "[!benchmark]")
 {
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
