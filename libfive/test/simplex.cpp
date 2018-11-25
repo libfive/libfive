@@ -373,10 +373,8 @@ TEST_CASE("SimplexTreePool: gyroid-sphere intersection vertex positions")
 {
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
-    unsigned workers = 8;
-
     auto s = sphereGyroid();
-    auto t = SimplexTreePool<3>::build(s, r, 0.5, 1e-8, workers);
+    auto t = SimplexTreePool<3>::build(s, r, 0.5, 1e-8, 1);
 
     std::list<std::pair<const SimplexTree<3>*, Region<3>>> todo;
     todo.push_back({t.get(), r});

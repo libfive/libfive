@@ -190,6 +190,12 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
                 if (!d_.array().isFinite().all()) {
                     d_.array() = 0.0;
                 }
+
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+                std::cout << "==============================================\n";
+                std::cout << region.corner(i).transpose() << " "
+                          << d_.transpose() << " " << ds(3, i) << "\n";
+#endif
                 this->leaf->qefs[neighbor.i].insert(
                         region.corner(i), d_, ds(3, i));
             };
