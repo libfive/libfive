@@ -195,7 +195,7 @@ public:
             unsigned col = 0;
             for (unsigned j=0; j < N; ++j) {
                 if (Neighbor.fixed() & (1 << j)) {
-                    // Add symmetric termps to AtA
+                    // Add symmetric terms to AtA
                     AtA_c(j, N + 1 + col) = scale;
                     AtA_c(N + 1 + col, j) = scale;
 
