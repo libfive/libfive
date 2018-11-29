@@ -205,6 +205,18 @@ public:
         return out;
     }
 
+    /*
+     *  Returns a region that is shrunk on all axes to a certain percent
+     *  of the original region.  For example, shrink(1) returns the same
+     *  Region; shrink(0.5) returns a region that is half the size.
+     */
+    Region shrink(double percentage) const
+    {
+        const Pt size = upper - lower;
+        const Pt d = (size * (1 - percentage)) / 2.0;
+        return Region(lower + d, upper - d);
+    }
+
     /*  Lower and upper bounds for the region  */
     Pt lower, upper;
 

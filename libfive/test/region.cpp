@@ -163,3 +163,17 @@ TEST_CASE("Region<3>::subspace")
     REQUIRE(d.lower.matrix() == Eigen::Matrix<double, 2, 1>(-1, -4));
     REQUIRE(d.upper.matrix() == Eigen::Matrix<double, 2, 1>(1, 4));
 }
+
+TEST_CASE("Region<3>::shrink")
+{
+    Region<3> r({-1, -2, -4}, {3, 4, 5});
+    auto s = r.shrink(0.7);
+    REQUIRE(s.lower.x() == Approx(-0.4));
+    REQUIRE(s.upper.x() == Approx(2.4));
+
+    REQUIRE(s.lower.y() == Approx(-1.1));
+    REQUIRE(s.upper.y() == Approx(3.1));
+
+    REQUIRE(s.lower.z() == Approx(-2.65));
+    REQUIRE(s.upper.z() == Approx(3.65));
+}
