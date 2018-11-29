@@ -219,10 +219,11 @@ TEST_CASE("SimplexTree<3>::leafLevel")
 
 TEST_CASE("SimplexMesher (smoke test)")
 {
-    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+    std::atomic_bool cancel(false);
 
     SECTION("High-resolution sphere")
     {
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
         auto c = sphere(0.5);
         auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
         REQUIRE(t->isBranch());
@@ -231,7 +232,6 @@ TEST_CASE("SimplexMesher (smoke test)")
         }
         t->assignIndices();
 
-        std::atomic_bool cancel(false);
         auto m = Dual<3>::walk<SimplexMesher>(t, 8,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
 
@@ -241,11 +241,11 @@ TEST_CASE("SimplexMesher (smoke test)")
 
     SECTION("Low-resolution sphere")
     {
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
         auto c = sphere(0.1);
         auto t = SimplexTreePool<3>::build(c, r, 1);
         t->assignIndices();
 
-        std::atomic_bool cancel(false);
         auto m = Dual<3>::walk<SimplexMesher>(t, 8,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
         REQUIRE(m->verts.size() > 1);
@@ -260,11 +260,54 @@ TEST_CASE("SimplexMesher (smoke test)")
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
         t->assignIndices();
 
-        std::atomic_bool cancel(false);
         auto m = Dual<3>::walk<SimplexMesher>(t, 8,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
         REQUIRE(m->verts.size() > 1);
         REQUIRE(m->branes.size() > 1);
+    }
+
+}
+
+TEST_CASE("SimplexMesher: sphere-box intersection vertex placement")
+{
+    auto c = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+    Region<3> r({-10, -10, -10}, {10, 10, 10});
+
+    auto t = SimplexTreePool<3>::build(c, r, 0.2, 0, 1);
+    t->assignIndices();
+
+    std::atomic_bool cancel(false);
+    auto m = Dual<3>::walk<SimplexMesher>(t, 8,
+            cancel, EMPTY_PROGRESS_CALLBACK, c);
+
+    // We pick out any triangle that's at the sphere-cube intersection,
+    // and check that the intersection vertices are at the sphere's radius.
+    auto is_top_surface = [&](uint32_t i) {
+        const auto z = m->verts[i].z();
+        return z > 0.099 && z < 0.101;
+    };
+    auto is_above_surface = [&](uint32_t i) {
+        return m->verts[i].z() > 0.101;
+    };
+    auto is_intersection_triangle = [&](Eigen::Matrix<uint32_t, 3, 1> tri)
+    {
+        return (is_top_surface(tri[0]) ||
+                is_top_surface(tri[1]) ||
+                is_top_surface(tri[2])) &&
+               (is_above_surface(tri[0]) ||
+                is_above_surface(tri[1]) ||
+                is_above_surface(tri[2]));
+    };
+    for (auto& tri : m->branes) {
+        if (is_intersection_triangle(tri)) {
+            for (unsigned i=0; i < 3; ++i) {
+                if (is_top_surface(tri[i])) {
+                    CAPTURE(m->verts[tri[i]]);
+                    REQUIRE(m->verts[tri[i]].head<2>().norm() ==
+                            Approx(0.7).margin(0.01));
+                }
+            }
+        }
     }
 }
 
