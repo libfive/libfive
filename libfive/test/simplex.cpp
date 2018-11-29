@@ -14,7 +14,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/simplex/simplex_mesher.hpp"
 #include "libfive/render/brep/indexes.hpp"
 #include "libfive/render/brep/dual.hpp"
+
 #include "util/shapes.hpp"
+#include "util/mesh_checks.hpp"
 
 using namespace Kernel;
 
@@ -69,7 +71,7 @@ TEST_CASE("SimplexTree<3>: types")
     }
 }
 
-void test_corner_positions(const SimplexTree<3>* ptr, Region<3> r)
+void CHECK_CORNER_POSITIONS(const SimplexTree<3>* ptr, Region<3> r)
 {
     std::list<std::pair<const SimplexTree<3>*, Region<3>>> todo;
     todo.push_back({ptr, r});
@@ -166,7 +168,7 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 
         auto t = SimplexTreePool<3>::build(c, r);
         REQUIRE(t.get() != nullptr);
-        test_corner_positions(t.get(), r);
+        CHECK_CORNER_POSITIONS(t.get(), r);
     }
 
     SECTION("Box (low-resolution)")
@@ -175,7 +177,7 @@ TEST_CASE("SimplexTree<3>: Corner positions")
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
-        test_corner_positions(t.get(), r);
+        CHECK_CORNER_POSITIONS(t.get(), r);
     }
 }
 
@@ -265,7 +267,6 @@ TEST_CASE("SimplexMesher (smoke test)")
         REQUIRE(m->verts.size() > 1);
         REQUIRE(m->branes.size() > 1);
     }
-
 }
 
 TEST_CASE("SimplexMesher: sphere-box intersection vertex placement")
@@ -311,39 +312,6 @@ TEST_CASE("SimplexMesher: sphere-box intersection vertex placement")
     }
 }
 
-void test_edge_pairs(const Mesh& m) {
-    // Every edge must be shared by two triangles
-    // We build a bitfield here, counting forward and reverse edges
-    std::map<std::pair<int, int>, int> edges;
-    for (const auto& t : m.branes) {
-        for (unsigned i=0; i < 3; ++i) {
-            const auto a = t[i];
-            const auto b = t[(i + 1) % 3];
-            auto key = std::make_pair(std::min(a, b), std::max(a, b));
-            if (!edges.count(key)) {
-                edges.insert({key, 0});
-            }
-            if (a < b)
-            {
-                REQUIRE((edges[key] & 1) == 0);
-                edges[key] |= 1;
-            }
-            else
-            {
-                REQUIRE((edges[key] & 2) == 0);
-                edges[key] |= 2;
-            }
-        }
-    }
-    for (auto& p : edges) {
-        CAPTURE(p.first.first);
-        CAPTURE(p.first.second);
-        CAPTURE(m.verts[p.first.first]);
-        CAPTURE(m.verts[p.first.second]);
-        REQUIRE(p.second == 3);
-    }
-}
-
 TEST_CASE("SimplexMesher: edge pairing")
 {
     std::atomic_bool cancel(false);
@@ -365,7 +333,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto m = Dual<3>::walk<SimplexMesher>(t, workers,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
 
-        test_edge_pairs(*m);
+        CHECK_EDGE_PAIRS(*m);
     }
 
     SECTION("Sphere (higher-resolution)")
@@ -379,7 +347,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto m = Dual<3>::walk<SimplexMesher>(t, workers,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
 
-        test_edge_pairs(*m);
+        CHECK_EDGE_PAIRS(*m);
     }
 
     SECTION("Box (low-resolution)")
@@ -393,7 +361,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto m = Dual<3>::walk<SimplexMesher>(t, workers,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
 
-        test_edge_pairs(*m);
+        CHECK_EDGE_PAIRS(*m);
     }
 }
 
