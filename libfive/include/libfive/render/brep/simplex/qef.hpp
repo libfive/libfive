@@ -365,7 +365,7 @@ protected:
 #endif
                 // Calculate the constrained solution, including error
                 const auto sol = qef.solveConstrained<TargetSubspace - 1>(
-                        region, target_pos, target_value);
+                        region.shrink(0.875), target_pos, target_value);
 
                 // If this solution is an improvement, then store it
                 if (region.contains(sol.position) && out.error > sol.error) {
