@@ -1,4 +1,4 @@
-#!/usr/bin/env guile --no-auto-compile -s
+#!/usr/bin/env -S guile --no-auto-compile -s
 
 This is a headless, minimal version of Studio.
 
