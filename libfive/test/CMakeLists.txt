@@ -30,6 +30,7 @@ set(SRCS main.cpp
     tree.cpp
     voxels.cpp
     xtree.cpp
+    util/mesh_checks.cpp
     util/shapes.cpp)
 set(LIBS five)
 
@@ -40,3 +41,4 @@ endif(GUILE_FOUND)
 
 add_executable(libfive-test ${SRCS})
 target_link_libraries(libfive-test ${LIBS})
+target_include_directories(libfive-test PRIVATE .)

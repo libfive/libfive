@@ -38,6 +38,12 @@ public:
     template <Axis::Axis A>
     void load(const std::array<const SimplexTree<3>*, 4>& ts);
 
+    /*
+     *  Simplex meshing needs to walk the top edges of the tree,
+     *  because those include tets that we have to run MT on.
+     */
+    static bool needsTopEdges() { return true; }
+
 protected:
     /*
      *  Performs a binary search along a particular edge using the

@@ -55,12 +55,24 @@ SimplexLeaf<N>::SimplexLeaf()
 }
 
 template <unsigned N>
+std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
+{
+    std::unique_ptr<SimplexTree> t(new SimplexTree);
+    t->type = Interval::EMPTY;
+    return std::move(t);
+}
+
+template <unsigned N>
 void SimplexLeaf<N>::reset()
 {
     level = 0;
     std::fill(index.begin(), index.end(), 0);
     tape.reset();
     surface.clear();
+
+    for (auto& qef : qefs) {
+        qef.reset();
+    }
     level = 0;
 }
 
@@ -91,29 +103,51 @@ Tape::Handle SimplexTree<N>::evalInterval(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <unsigned BaseDimension, unsigned SimplexIndex_>
+template <unsigned BaseDimension, int SubspaceIndex_>
 struct Unroller
 {
     void operator()(typename SimplexTree<BaseDimension>::Leaf& leaf,
-                    const CornerArray<BaseDimension>& corners,
                     const Region<BaseDimension>& region)
     {
-        constexpr auto SimplexIndex = ipow(BaseDimension, 3) - SimplexIndex_;
-        auto v = SimplexSolver::findVertex<BaseDimension, SimplexIndex>(
-                corners, region);
-        leaf.vertices.row(SimplexIndex) = v;
+        constexpr auto SubspaceIndex = NeighborIndex(SubspaceIndex_);
+        constexpr unsigned SubspaceDimension = SubspaceIndex.dimension();
+        constexpr unsigned SubspaceFloating = SubspaceIndex.floating();
+        constexpr unsigned SubspacePos = SubspaceIndex.pos();
+
+        // Collect all of the (non-inclusive) QEFs for this subspace
+        QEF<SubspaceDimension> qef;
+        for (unsigned i=0; i < ipow(3, BaseDimension); ++i) {
+            if (SubspaceIndex.contains(NeighborIndex(i))) {
+                qef += leaf.qefs[i].template sub<SubspaceFloating>();
+            }
+        }
+
+        const auto r = region.template subspace<SubspaceFloating>();
+        const auto sol = qef.solveBounded(r);
+
+        // Unpack from the reduced-dimension solution to the leaf vertex
+        unsigned j = 0;
+        for (unsigned i=0; i < BaseDimension; ++i) {
+            if (SubspaceFloating & (1 << i)) {
+                leaf.vertices(SubspaceIndex_, i) = sol.position(j++);
+            } else if (SubspacePos & (1 << i)) {
+                leaf.vertices(SubspaceIndex_, i) = region.upper(i);
+            } else {
+                leaf.vertices(SubspaceIndex_, i) = region.lower(i);
+            }
+        }
+        assert(j == SubspaceDimension);
 
         // Recurse!
-        Unroller<BaseDimension, SimplexIndex_ - 1>()(leaf, corners, region);
+        Unroller<BaseDimension, SubspaceIndex_ - 1>()(leaf, region);
     }
 };
 
 // Terminate static unrolling
 template <unsigned BaseDimension>
-struct Unroller<BaseDimension, 0>
+struct Unroller<BaseDimension, -1>
 {
     void operator()(typename SimplexTree<BaseDimension>::Leaf&,
-                    const CornerArray<BaseDimension>&,
                     const Region<BaseDimension>&)
     {
         // Nothing to do here
@@ -127,10 +161,62 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
                               const Region<N>& region, Tape::Handle tape,
                               ObjectPool<Leaf>& spare_leafs)
 {
-    CornerArray<N> corners;
-
     this->leaf = spare_leafs.get();
-    Unroller<N, ipow(N, 3)>()(*this->leaf, corners, region);
+
+    // TODO:  Pull fully-evaluated QEFs from neighbors when possible
+
+    // First, we evaluate the corners, finding position + normal and storing
+    // it in the corner QEFs (which are assumed to be empty)
+    static_assert(ipow(2, N) < LIBFIVE_EVAL_ARRAY_SIZE,
+                  "Too many points to evaluate");
+    // Pack values into the evaluator
+    for (unsigned i=0; i < ipow(2, N); ++i) {
+        eval->array.set(region.corner3f(i), i);
+    }
+
+    // Then unpack into the QEF arrays (which are guaranteed to be empty,
+    // because SimplexLeaf::reset() clears them).
+    {
+        const auto ds = eval->array.derivs(ipow(2, N), tape);
+        const auto ambig = eval->array.getAmbiguous(ipow(2, N), tape);
+        for (unsigned i=0; i < ipow(2, N); ++i) {
+            const auto neighbor = CornerIndex(i).neighbor();
+
+            // Helper function to push a position + value + normal, swapping
+            // the normal to an all-zeros vector if any items are invalid.
+            auto push = [&](Eigen::Vector3f d) {
+                Eigen::Matrix<double, N, 1> d_ =
+                    d.template head<N>().template cast<double>();
+                if (!d_.array().isFinite().all()) {
+                    d_.array() = 0.0;
+                }
+
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+                std::cout << "==============================================\n";
+                std::cout << region.corner(i).transpose() << " "
+                          << d_.transpose() << " " << ds(3, i) << "\n";
+#endif
+                this->leaf->qefs[neighbor.i].insert(
+                        region.corner(i), d_, ds(3, i));
+            };
+
+            // If this corner was ambiguous, then use the FeatureEvaluator
+            // to get all of the possible derivatives, then add them to
+            // the corner's QEF.
+            if (ambig(i)) {
+                auto fs = eval->feature.features(region.corner3f(i), tape);
+                for (auto& f : fs) {
+                    push(f);
+                }
+            // Otherwise, use the normal found by the DerivArrayEvaluator
+            } else {
+                push(ds.col(i).template head<3>());
+            }
+        }
+    }
+
+    // Statically unroll a loop to position every vertex within their subspace.
+    Unroller<N, ipow(N, 3) - 1>()(*this->leaf, region);
 
     for (unsigned i=0; i < ipow(3, N); ++i)
     {
@@ -138,9 +224,11 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
         p << this->leaf->vertices.row(i).template cast<float>().transpose(),
              region.perp.template cast<float>();
 
-        // TODO:  Pull corners from neighbors when possible
         eval->array.set(p, 0);
         const auto out = eval->array.values(1)[0];
+
+        // TODO: make this case broader to deal with array vs non-array
+        // evaluation (see comment at dc_tree.cpp:162).
         const bool inside = (out == 0)
             ? eval->feature.isInside(p)
             : (out < 0);

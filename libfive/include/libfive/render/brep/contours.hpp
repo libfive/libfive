@@ -15,6 +15,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+// Forward declaration
+template <unsigned N> class PerThreadBRep;
+
 class Contours {
 public:
     /*
@@ -38,11 +41,19 @@ public:
      */
     bool saveSVG(const std::string& filename);
 
+    /*
+     *  Merge together a set of contours, welding continuous paths
+     */
+    void collect(const std::vector<PerThreadBRep<2>>& children);
+
     /*  Contours in 2D space  */
     std::vector<std::vector<Eigen::Vector2f>> contours;
 
     /*  Optional bounding box */
     Region<2> bbox;
+
+    /*  Empty constructor, used prior to calling collect() */
+    Contours() { /* Nothing to do here */ }
 
 protected:
     Contours(Region<2> bbox) : bbox(bbox) {}

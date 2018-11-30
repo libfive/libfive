@@ -14,6 +14,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/indexes.hpp"
 
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+#include <iostream>
+#endif
+
 namespace Kernel {
 
 /*
@@ -38,6 +42,23 @@ public:
     QEF() : AtA(Matrix::Zero()), AtBp(Matrix::Zero()), BptBp(Matrix::Zero())
     {
         // Nothing to do here
+    }
+
+    /*
+     *  Accumulate QEFs by summing
+     */
+    QEF& operator+=(const QEF& other) {
+        AtA += other.AtA;
+        AtBp += other.AtBp;
+        BptBp += other.BptBp;
+
+        return *this;
+    }
+
+    void reset() {
+        AtA = Matrix::Zero();
+        AtBp = Matrix::Zero();
+        BptBp = Matrix::Zero();
     }
 
     void insert(Eigen::Matrix<double, 1, N> position,
@@ -145,43 +166,65 @@ public:
 
         constexpr unsigned MatrixSize = N + NumConstrainedAxes + 1;
 
+        // We'll use a scale factor to avoid throwing the matrix rank
+        // off.  For example adding a column that's [1 0 0 ...] when every
+        // other matrix term is large will produce an eigenvalue that's
+        // culled by the rank detection system.
+        const double scale = AtA.cwiseAbs().mean();
+
         // Build AtA, with extra rows and columns for constraints
         Eigen::Matrix<double, MatrixSize, MatrixSize> AtA_c =
             Eigen::Matrix<double, MatrixSize, MatrixSize>::Zero();
         AtA_c.template topLeftCorner<N + 1, N + 1>() = 2 * AtA;
 
+        // The constrained matrices are like AtA and AtB, plus
+        // extra rows + columns to encode the constraints.
         Eigen::Matrix<double, MatrixSize, 1> AtB_c =
             Eigen::Matrix<double, MatrixSize, 1>::Zero();
         const auto AtB_ = AtB();
         AtB_c.template head<N + 1>() = 2 * AtB_;
 
-        {   // Build up the constrained matrices, which are like AtA and AtB
-            // with extra rows + columns to encode the constraints.
+        // The new target matrix is padded with the constrained
+        // rows and modified to target the constrained positions
+        Eigen::Matrix<double, MatrixSize, 1> target_c =
+            Eigen::Matrix<double, MatrixSize, 1>::Zero();
+        target_c.template head<N>() = target_pos;
+        target_c(N) = target_value;
+
+        {
             unsigned col = 0;
             for (unsigned j=0; j < N; ++j) {
                 if (Neighbor.fixed() & (1 << j)) {
-                    // Add symmetric termps to AtA
-                    AtA_c(j, N + 1 + col) = 1.0;
-                    AtA_c(N + 1 + col, j) = 1.0;
+                    // Add symmetric terms to AtA
+                    AtA_c(j, N + 1 + col) = scale;
+                    AtA_c(N + 1 + col, j) = scale;
 
-                    AtB_c(N + 1 + col) = (Neighbor.pos() & (1 << j))
+                    const auto c = scale * ((Neighbor.pos() & (1 << j))
                         ? region.upper(j)
-                        : region.lower(j);
+                        : region.lower(j));
+
+                    AtB_c(N + 1 + col) = c;
+                    target_c(j) = c;
+                    target_c(N + 1 + col) = c;
+
                     col++;
                 }
             }
             assert(col == NumConstrainedAxes);
         }
 
-        // Build the new target matrix, which is padded with zeros
-        // for the constrained rows.
-        Eigen::Matrix<double, MatrixSize, 1> target_c =
-            Eigen::Matrix<double, MatrixSize, 1>::Zero();
-        target_c.template head<N>() = target_pos;
-        target_c(N) = target_value;
-
         auto sol = QEF<N + NumConstrainedAxes>::solve(
                 AtA_c, AtB_c, target_c);
+
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+        std::cout << "Solving constrained: AtA = [\n" << AtA_c <<
+            "]\nAtB = [\n" << AtB_c <<
+            "]\nBtB = [\n" << BtB() <<
+            "]\nTarget = [\n" << target_c << "\n";
+
+        std::cout << "Got solution with pos: [\n" <<
+            sol.value << "]\n rank = " << sol.rank << "\n";
+#endif
 
         Solution out;
         out.position = sol.value.template head<N>();
@@ -223,11 +266,19 @@ public:
                           Eigen::Matrix<double, 1, N> target_pos,
                           double target_value) const
     {
-        static_assert(N > 0, "Too few dimensions");
+
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+        std::cout << "------------------------------------------------------\n";
+        std::cout << "Solving bounded between \n[" << region.lower << "]\n["
+            << region.upper << "]\n";
+#endif
 
         {   //  First, check the full-dimension, unconstrained solver
             auto sol = solve(target_pos, target_value);
             if (region.contains(sol.position)) {
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+                std::cout << "Got full-dimension solution\n";
+#endif
                 return sol;
             }
         }
@@ -240,7 +291,7 @@ public:
         // (e.g. for a cell, check every face, then every edge, then
         //  every corner, picking the first case where the QEF solution
         //  doesn't escape the bounds).
-        UnrollDimension<N - 1>()(
+        UnrollDimension<(int)N - 1>()(
                 *this, region, target_pos, target_value, out);
 
         assert(!std::isinf(out.error));
@@ -262,10 +313,21 @@ protected:
                         double target_value,
                         Solution& out)
         {
-            UnrollSubspace<TargetDimension, ipow(N, 3)>()(
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+            std::cout << "UnrollDimension<" << TargetDimension
+                      << "> called with N = " << N <<"\n";
+#endif
+
+            UnrollSubspace<TargetDimension, ipow(3, N)>()(
                 qef, region, target_pos, target_value, out);
 
-            // Continue unrolling if we haven't found a bounded position
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+            std::cout << "Done unrolling subspace\n";
+#endif
+
+            // Continue unrolling if we haven't found a bounded position,
+            // moving to the next-lowest dimension (cell to face, face to edge,
+            // edge to vertex, terminating at -1 dimensions)
             if (std::isinf(out.error))
             {
                 UnrollDimension<TargetDimension - 1, Dummy>()(
@@ -297,16 +359,26 @@ protected:
             if (TargetDimension ==
                 NeighborIndex(TargetSubspace - 1).dimension())
             {
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+                std::cout << "  UnrollSubspace<" << TargetDimension << ", "
+                          << TargetSubspace << "> activated\n";
+#endif
                 // Calculate the constrained solution, including error
                 const auto sol = qef.solveConstrained<TargetSubspace - 1>(
-                        region, target_pos, target_value);
+                        region.shrink(0.875), target_pos, target_value);
 
                 // If this solution is an improvement, then store it
                 if (region.contains(sol.position) && out.error > sol.error) {
-                    assert(sol.error >= 0.0);
+                    assert(sol.error >= -1e-12);
                     out = sol;
                 }
             }
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+            else {
+                std::cout << "  UnrollSubspace<" << TargetDimension << ", "
+                          << TargetSubspace << "> skipped\n";
+            }
+#endif
 
             // Statically unroll a loop, dropping in dimensionality loop
             UnrollSubspace<TargetDimension, TargetSubspace - 1>()(
@@ -347,7 +419,8 @@ protected:
         // Build the SVD's diagonal matrix, truncating near-singular eigenvalues
         Matrix D = Matrix::Zero();
         const double max_eigenvalue = eigenvalues.cwiseAbs().maxCoeff();
-        const double EIGENVALUE_CUTOFF = 0.02;
+
+        const double EIGENVALUE_CUTOFF = 1e-12;
         unsigned rank = 0;
         for (unsigned i=0; i < N + 1; ++i) {
             if (fabs(eigenvalues[i]) / max_eigenvalue > EIGENVALUE_CUTOFF) {
@@ -358,6 +431,11 @@ protected:
 
         // SVD matrices
         auto U = es.eigenvectors().real().eval(); // = V
+
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+        std::cout << "Eigenvalues: [\n" << eigenvalues << "]\n";
+        std::cout << "Eigenvectors: [\n" << U << "]\n";
+#endif
 
         // Pseudo-inverse of A
         auto AtA_inv = (U * D * U.transpose()).eval();

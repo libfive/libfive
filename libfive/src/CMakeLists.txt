@@ -31,6 +31,7 @@ add_library(five SHARED
     render/brep/neighbor_tables.cpp
     render/brep/dc/intersection_aligner.cpp
     render/brep/dc/marching.cpp
+    render/brep/dc/dc_contourer.cpp
     render/brep/dc/dc_mesher.cpp
     render/brep/dc/dc_neighbors.cpp
     render/brep/dc/dc_tree2.cpp

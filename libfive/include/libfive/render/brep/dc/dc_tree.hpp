@@ -96,11 +96,6 @@ public:
     using Leaf = DCLeaf<N>;
 
     /*
-     *  This is a handle for both the DCTree and the object pool data
-     *  that were used to allocate all of its memory.
-     */
-
-    /*
      *  Simple constructor
      *
      *  Pointers are initialized to nullptr, but other members
@@ -108,6 +103,7 @@ public:
      */
     explicit DCTree();
     explicit DCTree(DCTree<N>* parent, unsigned index, Region<N> region);
+    static std::unique_ptr<DCTree<N>> empty();
 
     /*
      *  Populates type, setting corners, manifold, and done if this region is
