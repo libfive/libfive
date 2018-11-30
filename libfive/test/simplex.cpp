@@ -376,8 +376,7 @@ TEST_CASE("SimplexMesher: menger sponge")
     std::atomic_bool cancel(false);
     auto m = Dual<3>::walk<SimplexMesher>(t,
             8, cancel, EMPTY_PROGRESS_CALLBACK, sponge);
-
-    m->saveSTL("sponge.stl");
+    REQUIRE(true);
 }
 
 TEST_CASE("SimplexTreePool: gyroid-sphere intersection vertex positions")
@@ -450,7 +449,6 @@ TEST_CASE("Simplex meshing (gyroid performance breakdown)", "[!benchmark]")
     {
         t.reset();
     }
-    m->saveSTL("bench.stl");
 
     BENCHMARK("Mesh deletion")
     {
