@@ -157,30 +157,62 @@ struct Unroller<BaseDimension, -1>
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
+void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
+                              const SimplexNeighbors<N>& neighbors,
                               const Region<N>& region, Tape::Handle tape,
                               ObjectPool<Leaf>& spare_leafs)
 {
     this->leaf = spare_leafs.get();
+    this->leaf->tape = tape;
+    this->leaf->level = 0;
 
-    // TODO:  Pull fully-evaluated QEFs from neighbors when possible
+    // Track how many corners have to be evaluated here
+    // (if they can be looked up from a neighbor, they don't have
+    //  to be evaluated here, which can save time)
+    size_t count = 0;
+
+    // Marks which subspaces have already been solved
+    std::array<bool, ipow(3, N)> already_solved;
+    std::fill(already_solved.begin(), already_solved.end(), false);
+
+    // Remap from a value in the range [0, count) to a corner index
+    // in the range [0, 1 <<N).
+    std::array<int, 1 << N> corner_indices;
+
+    // First, borrow solved QEF + vertex position + inside / outside
+    // from our neighbors whenever possible.
+    for (unsigned i=0; i < ipow(3, N); ++i) {
+        const auto sub = NeighborIndex(i);
+        const auto c = neighbors.check(sub);
+        if (c.first != nullptr) {
+            this->leaf->vertices.row(sub.i) = c.first->vertices.row(c.second.i);
+            this->leaf->inside[sub.i] = c.first->inside[c.second.i];
+            this->leaf->qefs[sub.i] = c.first->qefs[c.second.i];
+            already_solved[sub.i] = true;
+        }
+    }
 
     // First, we evaluate the corners, finding position + normal and storing
     // it in the corner QEFs (which are assumed to be empty)
     static_assert(ipow(2, N) < LIBFIVE_EVAL_ARRAY_SIZE,
                   "Too many points to evaluate");
-    // Pack values into the evaluator
+    // Pack values into the evaluator, skipping when values have already been
+    // borrowed from neighbors
     for (unsigned i=0; i < ipow(2, N); ++i) {
-        eval->array.set(region.corner3f(i), i);
+        const auto sub = CornerIndex(i).neighbor();
+        if (!already_solved[sub.i]) {
+            eval->array.set(region.corner3f(i), count);
+            corner_indices[count++] = i;
+        }
     }
 
-    // Then unpack into the QEF arrays (which are guaranteed to be empty,
-    // because SimplexLeaf::reset() clears them).
+    // Then unpack into the corner QEF arrays (which are guaranteed to be
+    // empty, because SimplexLeaf::reset() clears them).
     {
-        const auto ds = eval->array.derivs(ipow(2, N), tape);
-        const auto ambig = eval->array.getAmbiguous(ipow(2, N), tape);
-        for (unsigned i=0; i < ipow(2, N); ++i) {
-            const auto neighbor = CornerIndex(i).neighbor();
+        const auto ds = eval->array.derivs(count, tape);
+        const auto ambig = eval->array.getAmbiguous(count, tape);
+        for (unsigned i=0; i < count; ++i) {
+            const auto sub = CornerIndex(corner_indices[i]).neighbor();
 
             // Helper function to push a position + value + normal, swapping
             // the normal to an all-zeros vector if any items are invalid.
@@ -196,15 +228,16 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
                 std::cout << region.corner(i).transpose() << " "
                           << d_.transpose() << " " << ds(3, i) << "\n";
 #endif
-                this->leaf->qefs[neighbor.i].insert(
-                        region.corner(i), d_, ds(3, i));
+                this->leaf->qefs[sub.i].insert(
+                        region.corner(corner_indices[i]), d_, ds(3, i));
             };
 
             // If this corner was ambiguous, then use the FeatureEvaluator
             // to get all of the possible derivatives, then add them to
             // the corner's QEF.
             if (ambig(i)) {
-                auto fs = eval->feature.features(region.corner3f(i), tape);
+                const auto fs = eval->feature.features(
+                        region.corner3f(corner_indices[i]), tape);
                 for (auto& f : fs) {
                     push(f);
                 }
@@ -216,10 +249,17 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
     }
 
     // Statically unroll a loop to position every vertex within their subspace.
+    // TODO: skip already-solved QEFs here somehow
     Unroller<N, ipow(N, 3) - 1>()(*this->leaf, region);
 
-    for (unsigned i=0; i < ipow(3, N); ++i)
+    // Finally, with every vertex positioned, solve for whether it is inside or outside.
+    for (unsigned i=0; i < ipow(N, 3); ++i)
     {
+        // Skip subspaces that have already been solved
+        if (already_solved[i]) {
+            continue;
+        }
+
         Eigen::Vector3f p;
         p << this->leaf->vertices.row(i).template cast<float>().transpose(),
              region.perp.template cast<float>();
@@ -234,8 +274,6 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>&,
             : (out < 0);
 
         this->leaf->inside[i] = inside;
-        this->leaf->tape = tape;
-        this->leaf->level = 0;
     }
     this->type = Interval::AMBIGUOUS; // TODO: check corners afterwards and collapse
 
