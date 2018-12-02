@@ -164,56 +164,49 @@ public:
         static_assert(NumConstrainedAxes <= N,
                       "Wrong number of constrained axes");
 
-        constexpr unsigned MatrixSize = N + NumConstrainedAxes + 1;
+        Eigen::Matrix<double, N + 1 - NumConstrainedAxes,
+                              N + 1 - NumConstrainedAxes> AtA_c;
+        Eigen::Matrix<double, N + 1 - NumConstrainedAxes, 1> AtB_c;
+        Eigen::Matrix<double, N + 1 - NumConstrainedAxes, 1> target_c;
 
-        // We'll use a scale factor to avoid throwing the matrix rank
-        // off.  For example adding a column that's [1 0 0 ...] when every
-        // other matrix term is large will produce an eigenvalue that's
-        // culled by the rank detection system.
-        const double scale = AtA.cwiseAbs().mean();
-
-        // Build AtA, with extra rows and columns for constraints
-        Eigen::Matrix<double, MatrixSize, MatrixSize> AtA_c =
-            Eigen::Matrix<double, MatrixSize, MatrixSize>::Zero();
-        AtA_c.template topLeftCorner<N + 1, N + 1>() = 2 * AtA;
-
-        // The constrained matrices are like AtA and AtB, plus
-        // extra rows + columns to encode the constraints.
-        Eigen::Matrix<double, MatrixSize, 1> AtB_c =
-            Eigen::Matrix<double, MatrixSize, 1>::Zero();
+        // Cache the AtB calculation so we only do it once
         const auto AtB_ = AtB();
-        AtB_c.template head<N + 1>() = 2 * AtB_;
 
-        // The new target matrix is padded with the constrained
-        // rows and modified to target the constrained positions
-        Eigen::Matrix<double, MatrixSize, 1> target_c =
-            Eigen::Matrix<double, MatrixSize, 1>::Zero();
-        target_c.template head<N>() = target_pos;
-        target_c(N) = target_value;
+        /*
+         *  This is a weird trick to do constrained matrix solving:
+         *
+         *  We recognize that we're solving (A^TA) x = (A^TB), with certain
+         *  rows of x fixed.  We drop those fixed rows + columns from A^TA and
+         *  A^TB, and subtract their value from A^TB to compensate.
+         *
+         *  A more detailed writeup is at
+         *  mattkeeter.com/projects/qef/#alternate-constraints
+         */
+        unsigned r = 0;
+        for (unsigned row=0; row < N + 1; ++row) {
+            if (row == N || !Neighbor.isAxisFixed(row)) {
+                AtB_c(r) = AtB_(row);
+                target_c(r) = (row == N) ? target_value : target_pos(row);
 
-        {
-            unsigned col = 0;
-            for (unsigned j=0; j < N; ++j) {
-                if (Neighbor.fixed() & (1 << j)) {
-                    // Add symmetric terms to AtA
-                    AtA_c(j, N + 1 + col) = scale;
-                    AtA_c(N + 1 + col, j) = scale;
-
-                    const auto c = scale * ((Neighbor.pos() & (1 << j))
-                        ? region.upper(j)
-                        : region.lower(j));
-
-                    AtB_c(N + 1 + col) = c;
-                    target_c(j) = c;
-                    target_c(N + 1 + col) = c;
-
-                    col++;
+                unsigned c = 0;
+                for (unsigned col=0; col < N + 1; ++col) {
+                    if (col == N || !Neighbor.isAxisFixed(col)) {
+                        AtA_c(r, c) = AtA(row, col);
+                        c++;
+                    } else {
+                        AtB_c(r) -= AtA(row, col) *
+                            ((Neighbor.pos() & (1 << col))
+                                ? region.upper(col)
+                                : region.lower(col));
+                    }
                 }
+                assert(c == N + 1 - NumConstrainedAxes);
+                r++;
             }
-            assert(col == NumConstrainedAxes);
         }
+        assert(r == N + 1 - NumConstrainedAxes);
 
-        auto sol = QEF<N + NumConstrainedAxes>::solve(
+        auto sol = QEF<N - NumConstrainedAxes>::solve(
                 AtA_c, AtB_c, target_c);
 
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
@@ -227,15 +220,25 @@ public:
 #endif
 
         Solution out;
-        out.position = sol.value.template head<N>();
-        out.value = sol.value(N);
-        out.rank = sol.rank - NumConstrainedAxes - 1;
+        r = 0;
+        for (unsigned i=0; i < N; ++i) {
+            if (Neighbor.isAxisFixed(i)) {
+                out.position(i) = (Neighbor.pos() & (1 << i))
+                    ? region.upper(i)
+                    : region.lower(i);
+            } else {
+                out.position(i) = sol.value(r++);
+            }
+        }
+        out.value = sol.value(r);
+        out.rank = sol.rank + NumConstrainedAxes;
 
         // Calculate the resulting error, hard-coding the matrix size here so
         // that Eigen checks that all of our types are correct.
         // This error calculation uses the unconstrained matrices to return
         // a true error, rather than a weird value that could be < 0.
-        Vector v = sol.value.template head<N + 1>();
+        Vector v;
+        v << out.position, out.value;
         Eigen::Matrix<double, 1, 1> err =
             v.transpose() * AtA * v -
             2 * v.transpose() * AtB_ +
