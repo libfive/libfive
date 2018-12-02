@@ -140,7 +140,7 @@ public:
 
     /*
      *  Solves this QEF with constraints applied so that the solution lies
-     *  in the subspace specified by NeighborIndex_
+     *  in the subspace specified by Neighbor_
      *
      *  Constrained axes are given values based on the evaluation region.
      *
