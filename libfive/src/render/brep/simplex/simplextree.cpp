@@ -106,40 +106,45 @@ Tape::Handle SimplexTree<N>::evalInterval(
 template <unsigned BaseDimension, int SubspaceIndex_>
 struct Unroller
 {
-    void operator()(typename SimplexTree<BaseDimension>::Leaf& leaf,
-                    const Region<BaseDimension>& region)
+    void operator()(
+            typename SimplexTree<BaseDimension>::Leaf& leaf,
+            const std::array<bool, ipow(3, BaseDimension)>& already_solved,
+            const Region<BaseDimension>& region)
     {
-        constexpr auto SubspaceIndex = NeighborIndex(SubspaceIndex_);
-        constexpr unsigned SubspaceDimension = SubspaceIndex.dimension();
-        constexpr unsigned SubspaceFloating = SubspaceIndex.floating();
-        constexpr unsigned SubspacePos = SubspaceIndex.pos();
+        if (!already_solved[SubspaceIndex_]) {
+            constexpr auto SubspaceIndex = NeighborIndex(SubspaceIndex_);
+            constexpr unsigned SubspaceDimension = SubspaceIndex.dimension();
+            constexpr unsigned SubspaceFloating = SubspaceIndex.floating();
+            constexpr unsigned SubspacePos = SubspaceIndex.pos();
 
-        // Collect all of the (non-inclusive) QEFs for this subspace
-        QEF<SubspaceDimension> qef;
-        for (unsigned i=0; i < ipow(3, BaseDimension); ++i) {
-            if (SubspaceIndex.contains(NeighborIndex(i))) {
-                qef += leaf.qefs[i].template sub<SubspaceFloating>();
+            // Collect all of the (non-inclusive) QEFs for this subspace
+            QEF<SubspaceDimension> qef;
+            for (unsigned i=0; i < ipow(3, BaseDimension); ++i) {
+                if (SubspaceIndex.contains(NeighborIndex(i))) {
+                    qef += leaf.qefs[i].template sub<SubspaceFloating>();
+                }
             }
-        }
 
-        const auto r = region.template subspace<SubspaceFloating>();
-        const auto sol = qef.solveBounded(r);
+            const auto r = region.template subspace<SubspaceFloating>();
+            const auto sol = qef.solveBounded(r);
 
-        // Unpack from the reduced-dimension solution to the leaf vertex
-        unsigned j = 0;
-        for (unsigned i=0; i < BaseDimension; ++i) {
-            if (SubspaceFloating & (1 << i)) {
-                leaf.vertices(SubspaceIndex_, i) = sol.position(j++);
-            } else if (SubspacePos & (1 << i)) {
-                leaf.vertices(SubspaceIndex_, i) = region.upper(i);
-            } else {
-                leaf.vertices(SubspaceIndex_, i) = region.lower(i);
+            // Unpack from the reduced-dimension solution to the leaf vertex
+            unsigned j = 0;
+            for (unsigned i=0; i < BaseDimension; ++i) {
+                if (SubspaceFloating & (1 << i)) {
+                    leaf.vertices(SubspaceIndex_, i) = sol.position(j++);
+                } else if (SubspacePos & (1 << i)) {
+                    leaf.vertices(SubspaceIndex_, i) = region.upper(i);
+                } else {
+                    leaf.vertices(SubspaceIndex_, i) = region.lower(i);
+                }
             }
+            assert(j == SubspaceDimension);
         }
-        assert(j == SubspaceDimension);
 
         // Recurse!
-        Unroller<BaseDimension, SubspaceIndex_ - 1>()(leaf, region);
+        Unroller<BaseDimension, SubspaceIndex_ - 1>()(
+                leaf, already_solved, region);
     }
 };
 
@@ -148,6 +153,7 @@ template <unsigned BaseDimension>
 struct Unroller<BaseDimension, -1>
 {
     void operator()(typename SimplexTree<BaseDimension>::Leaf&,
+                    const std::array<bool, ipow(3, BaseDimension)>&,
                     const Region<BaseDimension>&)
     {
         // Nothing to do here
@@ -250,7 +256,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
 
     // Statically unroll a loop to position every vertex within their subspace.
     // TODO: skip already-solved QEFs here somehow
-    Unroller<N, ipow(N, 3) - 1>()(*this->leaf, region);
+    Unroller<N, ipow(N, 3) - 1>()(*this->leaf, already_solved, region);
 
     // Finally, with every vertex positioned, solve for whether it is inside or outside.
     for (unsigned i=0; i < ipow(N, 3); ++i)
