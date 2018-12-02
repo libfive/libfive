@@ -18,6 +18,7 @@ namespace Kernel {
 
 // Forward declaration
 template <unsigned N> class SimplexTree;
+template <unsigned N> struct SimplexLeaf;
 
 template <unsigned N>
 class SimplexNeighbors :
@@ -46,6 +47,22 @@ public:
             }
         }
         return 0;
+    }
+
+    /*
+     *  Looks up the given corner to see if it has already been calculated
+     *  by any of the neighbors, returning FILLED / EMPTY if that is the case
+     *  and UNKNOWN otherwise.
+     */
+    std::pair<const SimplexLeaf<N>*, NeighborIndex> check(NeighborIndex i) const
+    {
+        for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
+            const auto n = this->neighbors[t.first.i];
+            if (n != nullptr && n->leaf != nullptr) {
+                return std::make_pair(n->leaf, t.second.i);
+            }
+        }
+        return std::make_pair(nullptr, 0);
     }
 };
 
