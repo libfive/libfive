@@ -78,6 +78,13 @@ struct NeighborIndex {
     constexpr uint8_t fixed() const { return ~floating(); }
 
     /*
+     *  Checks to see whether a particular axis is fixed
+     *  a is 1, 2, or 3 for X, Y, or Z axis respectively.
+     */
+    constexpr bool isAxisFixed(uint8_t a) const
+    { return fixed() & (1 << a); }
+
+    /*
      *  Returns a bitfield representing which axes are fixed,
      *  with extra-dimension axes masked.
      */

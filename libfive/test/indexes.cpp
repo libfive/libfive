@@ -87,3 +87,18 @@ TEST_CASE("NeighborIndex::fromPosAndFloating")
         REQUIRE(i == m.i);
     }
 }
+
+TEST_CASE("NeighborIndex::isAxisFixed")
+{
+    REQUIRE(NeighborIndex(0).isAxisFixed(0));
+    REQUIRE(NeighborIndex(0).isAxisFixed(1));
+    REQUIRE(NeighborIndex(0).isAxisFixed(2));
+
+    REQUIRE(!NeighborIndex(2).isAxisFixed(0));
+    REQUIRE(NeighborIndex(2).isAxisFixed(1));
+    REQUIRE(NeighborIndex(2).isAxisFixed(2));
+
+    REQUIRE(!NeighborIndex(8).isAxisFixed(0));
+    REQUIRE(!NeighborIndex(8).isAxisFixed(1));
+    REQUIRE(NeighborIndex(8).isAxisFixed(2));
+}
