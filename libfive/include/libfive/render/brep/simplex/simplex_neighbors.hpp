@@ -40,7 +40,7 @@ public:
         for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
             const auto n = this->neighbors[t.first.i];
             if (n != nullptr && n->leaf != nullptr) {
-                auto index = n->leaf->index[t.second.i];
+                auto index = n->leaf->sub[t.second.i]->index;
                 if (index != 0) {
                     return index;
                 }

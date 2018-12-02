@@ -34,22 +34,31 @@ namespace Kernel {
 template <unsigned N> class SimplexNeighbors;
 
 template <unsigned N>
+struct SimplexLeafSubspace {
+    SimplexLeafSubspace();
+
+    /*  Subspace vertex position */
+    Eigen::Matrix<double, 1, N> vert;
+
+    /*  Subspace vertex state */
+    bool inside;
+
+    /*   Global indices for subspace vertices  */
+    uint64_t index;
+
+    /*  Per-subspace QEF */
+    QEF<N> qef;
+};
+
+template <unsigned N>
 struct SimplexLeaf
 {
     SimplexLeaf();
     void reset();
 
-    /*  Subspace vertex positions */
-    Eigen::Matrix<double, ipow(3, N), N> vertices;
-
-    /*  Subspace vertex state */
-    std::array<bool, ipow(3, N)> inside;
-
-    /*   Global indices for subspace vertices  */
-    std::array<uint64_t, ipow(3, N)> index;
-
-    /*  Per-subspace QEFs */
-    std::array<QEF<N>, ipow(3, N)> qefs;
+    /*  One QEF structure per subspace in the leaf,
+     *  shared between neighbors */
+    std::array<std::shared_ptr<SimplexLeafSubspace<N>>, ipow(3, N)> sub;
 
     /*  Tape used for evaluation within this leaf */
     std::shared_ptr<Tape> tape;

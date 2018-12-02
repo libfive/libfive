@@ -30,6 +30,12 @@ namespace Kernel {
 template <unsigned N> constexpr double SimplexTree<N>::EIGENVALUE_CUTOFF;
 
 ////////////////////////////////////////////////////////////////////////////////
+template <unsigned N>
+SimplexLeafSubspace<N>::SimplexLeafSubspace()
+    : inside(false), index(0)
+{
+    /* (use default QEF constructor, which is all zeros) */
+}
 
 template <unsigned N>
 SimplexTree<N>::SimplexTree(SimplexTree<N>* parent, unsigned index,
@@ -64,14 +70,13 @@ template <unsigned N>
 void SimplexLeaf<N>::reset()
 {
     level = 0;
-    std::fill(index.begin(), index.end(), 0);
     tape.reset();
     surface.clear();
 
-    for (auto& qef : qefs) {
-        qef.reset();
+    // TODO: can we pool these as well?
+    for (auto& s : sub) {
+        s.reset(new SimplexLeafSubspace<N>());
     }
-    level = 0;
 }
 
 template <unsigned N>
@@ -119,7 +124,7 @@ struct Unroller
             QEF<SubspaceDimension> qef;
             for (unsigned i=0; i < ipow(3, BaseDimension); ++i) {
                 if (SubspaceIndex.contains(NeighborIndex(i))) {
-                    qef += leaf.qefs[i].template sub<SubspaceFloating>();
+                    qef += leaf.sub[i]->qef.template sub<SubspaceFloating>();
                 }
             }
 
@@ -130,11 +135,11 @@ struct Unroller
             unsigned j = 0;
             for (unsigned i=0; i < BaseDimension; ++i) {
                 if (SubspaceFloating & (1 << i)) {
-                    leaf.vertices(SubspaceIndex_, i) = sol.position(j++);
+                    leaf.sub[SubspaceIndex_]->vert(i) = sol.position(j++);
                 } else if (SubspacePos & (1 << i)) {
-                    leaf.vertices(SubspaceIndex_, i) = region.upper(i);
+                    leaf.sub[SubspaceIndex_]->vert(i) = region.upper(i);
                 } else {
-                    leaf.vertices(SubspaceIndex_, i) = region.lower(i);
+                    leaf.sub[SubspaceIndex_]->vert(i) = region.lower(i);
                 }
             }
             assert(j == SubspaceDimension);
@@ -189,9 +194,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
         const auto sub = NeighborIndex(i);
         const auto c = neighbors.check(sub);
         if (c.first != nullptr) {
-            this->leaf->vertices.row(sub.i) = c.first->vertices.row(c.second.i);
-            this->leaf->inside[sub.i] = c.first->inside[c.second.i];
-            this->leaf->qefs[sub.i] = c.first->qefs[c.second.i];
+            this->leaf->sub[sub.i] = c.first->sub[c.second.i];
             already_solved[sub.i] = true;
         }
     }
@@ -232,7 +235,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
                 std::cout << region.corner(i).transpose() << " "
                           << d_.transpose() << " " << ds(3, i) << "\n";
 #endif
-                this->leaf->qefs[sub.i].insert(
+                this->leaf->sub[sub.i]->qef.insert(
                         region.corner(corner_indices[i]), d_, ds(3, i));
             };
 
@@ -265,7 +268,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
         }
 
         Eigen::Vector3f p;
-        p << this->leaf->vertices.row(i).template cast<float>().transpose(),
+        p << this->leaf->sub[i]->vert.template cast<float>().transpose(),
              region.perp.template cast<float>();
 
         eval->array.set(p, 0);
@@ -277,7 +280,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
             ? eval->feature.isInside(p)
             : (out < 0);
 
-        this->leaf->inside[i] = inside;
+        this->leaf->sub[i]->inside = inside;
     }
     this->type = Interval::AMBIGUOUS; // TODO: check corners afterwards and collapse
 
@@ -414,12 +417,12 @@ void SimplexTree<N>::assignIndices(
             this->children[i].load()->assignIndices(index, new_neighbors);
         }
     } else if (this->leaf != nullptr) {
-        for (unsigned i=0; i < this->leaf->index.size(); ++i) {
+        for (unsigned i=0; i < ipow(3, N); ++i) {
             auto n = neighbors.getIndex(i);
             if (n) {
-                this->leaf->index[i] = n;
+                this->leaf->sub[i]->index = n;
             } else {
-                this->leaf->index[i] = index++;
+                this->leaf->sub[i]->index = index++;
             }
         }
     }

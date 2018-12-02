@@ -46,9 +46,9 @@ TEST_CASE("SimplexTree<2>::assignIndices")
         REQUIRE(c.load() != nullptr);
         REQUIRE(!c.load()->isBranch());
         REQUIRE(c.load()->leaf != nullptr);
-        for (auto& i : c.load()->leaf->index)
+        for (auto& i : c.load()->leaf->sub)
         {
-            indices.insert(i);
+            indices.insert(i->index);
         }
     }
     REQUIRE(indices.size() == 25);
@@ -91,8 +91,8 @@ void CHECK_CORNER_POSITIONS(const SimplexTree<3>* ptr, Region<3> r)
         else if (task.first->leaf)
         {
             for (unsigned i=0; i < 8; ++i) {
-                Eigen::Vector3d vt = task.first->leaf->vertices.row(
-                        CornerIndex(i).neighbor().i);
+                Eigen::Vector3d vt =
+                    task.first->leaf->sub[CornerIndex(i).neighbor().i]->vert;
                 Eigen::Vector3d vr = task.second.corner(i);
                 CAPTURE(vt);
                 CAPTURE(vr);
@@ -118,46 +118,45 @@ TEST_CASE("SimplexTree<3>: Corner positions")
         REQUIRE(t->leaf != nullptr);
 
         for (unsigned i=0; i < 26; ++i) {
-            REQUIRE(t->leaf->inside[i] == false);
+            REQUIRE(t->leaf->sub[i]->inside == false);
         }
-        REQUIRE(t->leaf->inside[26] == true);
+        REQUIRE(t->leaf->sub[26]->inside == true);
 
-        REQUIRE(t->leaf->vertices.row(0) ==  Eigen::RowVector3d(-1, -1, -1));
-        REQUIRE(t->leaf->vertices.row(0) ==  Eigen::RowVector3d(-1, -1, -1));
-        REQUIRE(t->leaf->vertices.row(1) ==  Eigen::RowVector3d( 1, -1, -1));
-        REQUIRE(t->leaf->vertices.row(2) ==  Eigen::RowVector3d( 0, -1, -1));
+        REQUIRE(t->leaf->sub[0]->vert ==  Eigen::RowVector3d(-1, -1, -1));
+        REQUIRE(t->leaf->sub[1]->vert ==  Eigen::RowVector3d( 1, -1, -1));
+        REQUIRE(t->leaf->sub[2]->vert ==  Eigen::RowVector3d( 0, -1, -1));
 
-        REQUIRE(t->leaf->vertices.row(3) ==  Eigen::RowVector3d(-1,  1, -1));
-        REQUIRE(t->leaf->vertices.row(4) ==  Eigen::RowVector3d( 1,  1, -1));
-        REQUIRE(t->leaf->vertices.row(5) ==  Eigen::RowVector3d( 0,  1, -1));
+        REQUIRE(t->leaf->sub[3]->vert ==  Eigen::RowVector3d(-1,  1, -1));
+        REQUIRE(t->leaf->sub[4]->vert ==  Eigen::RowVector3d( 1,  1, -1));
+        REQUIRE(t->leaf->sub[5]->vert ==  Eigen::RowVector3d( 0,  1, -1));
 
-        REQUIRE(t->leaf->vertices.row(6) ==  Eigen::RowVector3d(-1,  0, -1));
-        REQUIRE(t->leaf->vertices.row(7) ==  Eigen::RowVector3d( 1,  0, -1));
-        REQUIRE(t->leaf->vertices.row(8) ==  Eigen::RowVector3d( 0,  0, -1));
+        REQUIRE(t->leaf->sub[6]->vert ==  Eigen::RowVector3d(-1,  0, -1));
+        REQUIRE(t->leaf->sub[7]->vert ==  Eigen::RowVector3d( 1,  0, -1));
+        REQUIRE(t->leaf->sub[8]->vert ==  Eigen::RowVector3d( 0,  0, -1));
 
-        REQUIRE(t->leaf->vertices.row(9) ==  Eigen::RowVector3d(-1, -1,  1));
-        REQUIRE(t->leaf->vertices.row(10) == Eigen::RowVector3d( 1, -1,  1));
-        REQUIRE(t->leaf->vertices.row(11) == Eigen::RowVector3d( 0, -1,  1));
+        REQUIRE(t->leaf->sub[9]->vert ==  Eigen::RowVector3d(-1, -1,  1));
+        REQUIRE(t->leaf->sub[10]->vert == Eigen::RowVector3d( 1, -1,  1));
+        REQUIRE(t->leaf->sub[11]->vert == Eigen::RowVector3d( 0, -1,  1));
 
-        REQUIRE(t->leaf->vertices.row(12) == Eigen::RowVector3d(-1,  1,  1));
-        REQUIRE(t->leaf->vertices.row(13) == Eigen::RowVector3d( 1,  1,  1));
-        REQUIRE(t->leaf->vertices.row(14) == Eigen::RowVector3d( 0,  1,  1));
+        REQUIRE(t->leaf->sub[12]->vert == Eigen::RowVector3d(-1,  1,  1));
+        REQUIRE(t->leaf->sub[13]->vert == Eigen::RowVector3d( 1,  1,  1));
+        REQUIRE(t->leaf->sub[14]->vert == Eigen::RowVector3d( 0,  1,  1));
 
-        REQUIRE(t->leaf->vertices.row(15) == Eigen::RowVector3d(-1,  0,  1));
-        REQUIRE(t->leaf->vertices.row(16) == Eigen::RowVector3d( 1,  0,  1));
-        REQUIRE(t->leaf->vertices.row(17) == Eigen::RowVector3d( 0,  0,  1));
+        REQUIRE(t->leaf->sub[15]->vert == Eigen::RowVector3d(-1,  0,  1));
+        REQUIRE(t->leaf->sub[16]->vert == Eigen::RowVector3d( 1,  0,  1));
+        REQUIRE(t->leaf->sub[17]->vert == Eigen::RowVector3d( 0,  0,  1));
 
-        REQUIRE(t->leaf->vertices.row(18) == Eigen::RowVector3d(-1, -1,  0));
-        REQUIRE(t->leaf->vertices.row(19) == Eigen::RowVector3d( 1, -1,  0));
-        REQUIRE(t->leaf->vertices.row(20) == Eigen::RowVector3d( 0, -1,  0));
+        REQUIRE(t->leaf->sub[18]->vert == Eigen::RowVector3d(-1, -1,  0));
+        REQUIRE(t->leaf->sub[19]->vert == Eigen::RowVector3d( 1, -1,  0));
+        REQUIRE(t->leaf->sub[20]->vert == Eigen::RowVector3d( 0, -1,  0));
 
-        REQUIRE(t->leaf->vertices.row(21) == Eigen::RowVector3d(-1,  1,  0));
-        REQUIRE(t->leaf->vertices.row(22) == Eigen::RowVector3d( 1,  1,  0));
-        REQUIRE(t->leaf->vertices.row(23) == Eigen::RowVector3d( 0,  1,  0));
+        REQUIRE(t->leaf->sub[21]->vert == Eigen::RowVector3d(-1,  1,  0));
+        REQUIRE(t->leaf->sub[22]->vert == Eigen::RowVector3d( 1,  1,  0));
+        REQUIRE(t->leaf->sub[23]->vert == Eigen::RowVector3d( 0,  1,  0));
 
-        REQUIRE(t->leaf->vertices.row(24) == Eigen::RowVector3d(-1,  0,  0));
-        REQUIRE(t->leaf->vertices.row(25) == Eigen::RowVector3d( 1,  0,  0));
-        REQUIRE(t->leaf->vertices.row(26) == Eigen::RowVector3d( 0,  0,  0));
+        REQUIRE(t->leaf->sub[24]->vert == Eigen::RowVector3d(-1,  0,  0));
+        REQUIRE(t->leaf->sub[25]->vert == Eigen::RowVector3d( 1,  0,  0));
+        REQUIRE(t->leaf->sub[26]->vert == Eigen::RowVector3d( 0,  0,  0));
     }
 
     SECTION("Sphere")
@@ -196,9 +195,9 @@ TEST_CASE("SimplexTree<3>::assignIndices")
         REQUIRE(c.load() != nullptr);
         REQUIRE(!c.load()->isBranch());
         REQUIRE(c.load()->leaf != nullptr);
-        for (auto& i : c.load()->leaf->index)
+        for (auto& i : c.load()->leaf->sub)
         {
-            indices.insert(i);
+            indices.insert(i->index);
         }
     }
     REQUIRE(indices.size() == 125);
@@ -404,7 +403,7 @@ TEST_CASE("SimplexTreePool: gyroid-sphere intersection vertex positions")
         else if (task.first->leaf)
         {
             for (unsigned i=0; i < 27; ++i) {
-                Eigen::Vector3d vt = task.first->leaf->vertices.row(i);
+                Eigen::Vector3d vt = task.first->leaf->sub[i]->vert;
                 CAPTURE(vt.transpose());
                 CAPTURE(task.second.lower);
                 CAPTURE(task.second.upper);
