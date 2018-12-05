@@ -71,6 +71,7 @@ class SimplexTree : public XTree<N, SimplexTree<N>, SimplexLeaf<N>>
 {
 public:
     using Leaf = SimplexLeaf<N>;
+    using Pool = ObjectPool<SimplexTree<N>, Leaf>;
 
     /*
      *  Simple constructor
@@ -111,8 +112,7 @@ public:
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const Region<N>& region,
-            ObjectPool<SimplexTree<N>>& spare_trees,
-            ObjectPool<Leaf>& spare_leafs);
+            Pool& object_pool);
 
     /*  Looks up the cell's level.
      *

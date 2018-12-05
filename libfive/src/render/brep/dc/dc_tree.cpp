@@ -109,7 +109,7 @@ Tape::Handle DCTree<N>::evalInterval(
 template <unsigned N>
 void DCTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
                         const Region<N>& region, Tape::Handle tape,
-                        ObjectPool<Leaf>& spare_leafs)
+                        Pool& object_pool)
 {
     // Track how many corners have to be evaluated here
     // (if they can be looked up from a neighbor, they don't have
@@ -253,7 +253,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
     }
 
     assert(this->leaf == nullptr);
-    spare_leafs.get(&this->leaf);
+    object_pool.next().get(&this->leaf);
     this->leaf->corner_mask = buildCornerMask(corners);
 
     // Now, for the fun part of actually placing vertices!
@@ -645,7 +645,7 @@ template <unsigned N>
 bool DCTree<N>::collectChildren(
         XTreeEvaluator* eval, Tape::Handle tape,
         double max_err, const Region<N>& region,
-        ObjectPool<DCTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs)
+        Pool& object_pool)
 {
     // Wait for collectChildren to have been called N times
     if (this->pending-- != 0)
@@ -691,7 +691,7 @@ bool DCTree<N>::collectChildren(
     // If this cell is unambiguous, then forget all its branches and return
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        this->releaseChildren(spare_trees, spare_leafs);
+        this->releaseChildren(object_pool);
         this->done();
         return true;
     }
@@ -716,7 +716,7 @@ bool DCTree<N>::collectChildren(
     // We've now passed all of our opportunities to exit without
     // allocating a Leaf, so create one here.
     assert(this->leaf == nullptr);
-    spare_leafs.get(&this->leaf);
+    object_pool.next().get(&this->leaf);
     this->leaf->manifold = true;
     this->leaf->corner_mask = corner_mask;
 
@@ -778,13 +778,13 @@ bool DCTree<N>::collectChildren(
                     { return std::max(a, b->level());} ) + 1;
 
                 // Then, erase all of the children and mark that we collapsed
-                this->releaseChildren(spare_trees, spare_leafs);
+                this->releaseChildren(object_pool);
                 collapsed = true;
             }
         }
         if (!collapsed)
         {
-            spare_leafs.put(this->leaf);
+            object_pool.next().put(this->leaf);
             this->leaf = nullptr;
         }
     }

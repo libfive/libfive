@@ -12,6 +12,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <list>
 
+#include "libfive/render/brep/progress.hpp"
+
 namespace Kernel {
 
 /*
@@ -31,12 +33,24 @@ namespace Kernel {
  */
 template <typename... T>
 class ObjectPool
-{};
+{
+public:
+    void claim(ObjectPool<>&) {}
+    void reset(ProgressWatcher*) {}
+    int64_t total_size() const { return 0; }
+};
 
 template <typename T, typename... Ts>
 class ObjectPool<T, Ts...> : public ObjectPool<Ts...>
 {
 public:
+    ObjectPool<T, Ts...>& operator=(ObjectPool<T, Ts...>&& other) {
+        alloc = std::move(other.alloc);
+        other.alloc.clear();
+        d = other.d;
+        return *this;
+    }
+
     template <typename... Args>
     void get(T** t, Args... args)
     {
@@ -57,6 +71,17 @@ public:
         (*t)->reset(args...);
     }
 
+    /*
+     *  I'm not sure why these functions are necessary - I expected get()
+     *  to dispatch properly through the hierarchy.  Alas!
+     */
+    ObjectPool<Ts...>& next() {
+        return *static_cast<ObjectPool<Ts...>*>(this);
+    }
+    const ObjectPool<Ts...>& next() const {
+        return *static_cast<const ObjectPool<Ts...>*>(this);
+    }
+
     void put(T* t)
     {
         assert(t != nullptr);
@@ -71,13 +96,14 @@ public:
         }
     }
 
-    void release(std::list<T*>& out)
+    void claim(ObjectPool<T, Ts...>& other)
     {
-        for (auto& t : alloc)
+        for (auto& t : other.alloc)
         {
-            out.push_back(t);
+            alloc.push_back(t);
         }
-        alloc.clear();
+        other.alloc.clear();
+        next().claim(other.next());
     }
 
     /*
@@ -90,6 +116,28 @@ public:
     int64_t size() const
     {
         return (int64_t)alloc.size() * N - d.size();
+    }
+
+    int64_t total_size() const {
+        return size() + next().total_size();
+    }
+
+    /*
+     *  Deallocate everything stored in this object pool.
+     *
+     *  This may invalidate items stored in the available stack;
+     *  get() must not be called after a pool is reset.
+     *
+     *  (this is the same as the destructor, but includes a progress callback)
+     */
+    void reset(ProgressWatcher* progress_watcher=nullptr) {
+        for (auto& t : alloc)
+        {
+            if (progress_watcher) progress_watcher->tick();
+            delete [] t;
+        }
+        alloc.clear();
+        next().reset(progress_watcher);
     }
 
 private:

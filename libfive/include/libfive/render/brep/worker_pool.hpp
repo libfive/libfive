@@ -128,8 +128,7 @@ protected:
         // MPMC stack is completely full).
         std::stack<Task, std::vector<Task>> local;
 
-        ObjectPool<T> spare_trees;
-        ObjectPool<typename T::Leaf> spare_leafs;
+        typename T::Pool object_pool;
 
         while (!done.load() && !cancel.load())
         {
@@ -188,7 +187,7 @@ protected:
                         // to the queue; otherwise, undo the decrement and
                         // assign it to be evaluated locally.
                         T* next_tree;
-                        spare_trees.get(&next_tree, t, i, rs[i]);
+                        object_pool.get(&next_tree, t, i, rs[i]);
                         Task next{next_tree, tape, rs[i], neighbors};
                         if (!tasks.bounded_push(next))
                         {
@@ -207,7 +206,7 @@ protected:
             }
             else
             {
-                t->evalLeaf(eval, neighbors, region, tape, spare_leafs);
+                t->evalLeaf(eval, neighbors, region, tape, object_pool);
             }
 
             if (progress)
@@ -237,7 +236,7 @@ protected:
             // completed tree cells to the progress tracker if present).
             for (region = region.parent(t->parent_index), t = t->parent;
                  t && t->collectChildren(eval, tape, max_err, region,
-                                         spare_trees, spare_leafs);
+                                         object_pool);
                  region = region.parent(t->parent_index), t = t->parent)
             {
                 // Report the volume of completed trees as we walk back
@@ -262,8 +261,7 @@ protected:
 
         {   // Release the pooled objects to the root
             std::lock_guard<std::mutex> lock(root_lock);
-            root.claim(spare_leafs);
-            root.claim(spare_trees);
+            root.claim(object_pool);
         }
     }
 };

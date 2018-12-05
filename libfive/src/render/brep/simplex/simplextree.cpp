@@ -288,7 +288,7 @@ template <unsigned N>
 bool SimplexTree<N>::collectChildren(
         XTreeEvaluator* eval, Tape::Handle tape,
         double max_err, const Region<N>& region,
-        ObjectPool<SimplexTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs)
+        Pool& object_pool)
 {
     // TODO
     (void)eval;
@@ -336,7 +336,7 @@ bool SimplexTree<N>::collectChildren(
     // If this cell is unambiguous, then forget all its branches and return
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        this->releaseChildren(spare_trees, spare_leafs);
+        this->releaseChildren(object_pool);
         this->done();
         return true;
     }
@@ -344,12 +344,12 @@ bool SimplexTree<N>::collectChildren(
     // We've now passed all of our opportunities to exit without
     // allocating a Leaf, so create one here.
     assert(this->leaf == nullptr);
-    spare_leafs.get(&this->leaf);
+    object_pool.next().get(&this->leaf);
 
     // TODO: attempt to collapse Leaf
     // For now, assume it failed
     {
-        spare_leafs.put(this->leaf);
+        object_pool.next().put(this->leaf);
         this->leaf = nullptr;
     }
 

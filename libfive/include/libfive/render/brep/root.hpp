@@ -24,8 +24,7 @@ public:
     Root& operator=(Root&& other) {
         ptr = other.ptr;
         other.ptr = nullptr;
-        trees = std::move(other.trees);
-        leafs = std::move(other.leafs);
+        object_pool = std::move(other.object_pool);
         tree_count = other.tree_count;
         return *this;
     }
@@ -39,41 +38,27 @@ public:
         std::atomic_bool done(false);
         std::atomic_bool cancel(false);
         auto progress_watcher = ProgressWatcher::build(
-                trees.size() + leafs.size(), 2.0f,
+                object_pool.total_size(), 2.0f,
                 progress_callback, done, cancel);
 
-        for (auto& t : trees)
-        {
-            if (progress_watcher) progress_watcher->tick();
-            delete [] t;
-        }
-        for (auto& f : leafs)
-        {
-            if (progress_watcher) progress_watcher->tick();
-            delete [] f;
-        }
+        object_pool.reset(progress_watcher);
         done.store(true);
         delete progress_watcher;
-
-        trees.clear();
-        leafs.clear();
     }
 
     const T* operator->() const { return ptr; }
     const T* get() const { return ptr; }
 
-    void claim(ObjectPool<T>& pool) {
+    void claim(typename T::Pool& pool) {
         tree_count += pool.size();
-        pool.release(trees);
+        object_pool.claim(pool);
     }
-    void claim(ObjectPool<typename T::Leaf>& pool) { pool.release(leafs); }
 
     int64_t size() const { return tree_count; }
 
 protected:
     T* ptr;
-    std::list<T*> trees;
-    std::list<typename T::Leaf*> leafs;
+    typename T::Pool object_pool;
 
     // Used for progress tracking.  We use a signed value here because,
     // as we claim Pools of XTrees, it's possible for the intermediate
