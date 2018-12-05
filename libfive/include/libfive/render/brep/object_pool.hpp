@@ -15,7 +15,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 /*
- *  This is a simple object pool container, to avoid allocation churn.
+ *  This is a object pool container, to avoid allocation churn.
+ *
+ *  It uses a variadic template to contain pools for any number of
+ *  different classes, and dispatches based on the first argument
+ *  to get().
  *
  *  It owns all objects allocated under it, and allocates in blocks
  *  of N (by default 512).
@@ -25,14 +29,16 @@ namespace Kernel {
  *  The target class must include a reset(...) function, and the
  *  constructor must take zero arguments.
  */
-template <typename T>
+template <typename... T>
 class ObjectPool
+{};
+
+template <typename T, typename... Ts>
+class ObjectPool<T, Ts...> : public ObjectPool<Ts...>
 {
 public:
-    ObjectPool(unsigned N=512) : N(N) { /* Nothing to do here */ }
-
     template <typename... Args>
-    T* get(Args... args)
+    void get(T** t, Args... args)
     {
         if (!d.size())
         {
@@ -44,12 +50,11 @@ public:
             }
         }
         assert(d.size());
-        auto out = d.top();
+        *t = d.top();
         d.pop();
 
-        assert(out != nullptr);
-        out->reset(args...);
-        return out;
+        assert(*t != nullptr);
+        (*t)->reset(args...);
     }
 
     void put(T* t)
@@ -87,10 +92,14 @@ public:
         return (int64_t)alloc.size() * N - d.size();
     }
 
-protected:
+private:
+    /*  d stores available objects */
     std::stack<T*, std::vector<T*>> d;
+
+    /*  alloc is the master list of allocated blocks */
     std::list<T*> alloc;
-    const unsigned N;
+
+    static const unsigned N=512;
 };
 
 }   // namespace Kernel

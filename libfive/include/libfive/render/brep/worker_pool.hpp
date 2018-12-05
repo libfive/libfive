@@ -187,7 +187,9 @@ protected:
                         // If there are available slots, then pass this work
                         // to the queue; otherwise, undo the decrement and
                         // assign it to be evaluated locally.
-                        Task next{spare_trees.get(t, i, rs[i]), tape, rs[i], neighbors};
+                        T* next_tree;
+                        spare_trees.get(&next_tree, t, i, rs[i]);
+                        Task next{next_tree, tape, rs[i], neighbors};
                         if (!tasks.bounded_push(next))
                         {
                             local.push(next);

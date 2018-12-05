@@ -253,7 +253,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
     }
 
     assert(this->leaf == nullptr);
-    this->leaf = spare_leafs.get();
+    spare_leafs.get(&this->leaf);
     this->leaf->corner_mask = buildCornerMask(corners);
 
     // Now, for the fun part of actually placing vertices!
@@ -716,7 +716,7 @@ bool DCTree<N>::collectChildren(
     // We've now passed all of our opportunities to exit without
     // allocating a Leaf, so create one here.
     assert(this->leaf == nullptr);
-    this->leaf = spare_leafs.get();
+    spare_leafs.get(&this->leaf);
     this->leaf->manifold = true;
     this->leaf->corner_mask = corner_mask;
 

@@ -166,7 +166,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
                               const Region<N>& region, Tape::Handle tape,
                               ObjectPool<Leaf>& spare_leafs)
 {
-    this->leaf = spare_leafs.get();
+    spare_leafs.get(&this->leaf);
     this->leaf->tape = tape;
     this->leaf->level = 0;
 
@@ -344,7 +344,7 @@ bool SimplexTree<N>::collectChildren(
     // We've now passed all of our opportunities to exit without
     // allocating a Leaf, so create one here.
     assert(this->leaf == nullptr);
-    this->leaf = spare_leafs.get();
+    spare_leafs.get(&this->leaf);
 
     // TODO: attempt to collapse Leaf
     // For now, assume it failed
