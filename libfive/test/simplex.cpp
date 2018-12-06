@@ -10,7 +10,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "catch.hpp"
 
 #include "libfive/render/brep/simplex/simplex_pool.hpp"
-#include "libfive/render/brep/simplex/solver.hpp"
 #include "libfive/render/brep/simplex/simplex_mesher.hpp"
 #include "libfive/render/brep/indexes.hpp"
 #include "libfive/render/brep/dual.hpp"

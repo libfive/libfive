@@ -14,7 +14,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/simplex/simplex_mesher.hpp"
 #include "libfive/render/brep/simplex/simplextree.hpp"
-#include "libfive/render/brep/simplex/solver.hpp"
 #include "libfive/render/brep/indexes.hpp"
 #include "libfive/render/brep/per_thread_brep.hpp"
 
