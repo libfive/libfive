@@ -38,6 +38,7 @@ public:
     void claim(ObjectPool<>&) {}
     void reset(ProgressWatcher*) {}
     int64_t total_size() const { return 0; }
+    ObjectPool<>& operator=(ObjectPool<>&&) { return *this; }
 };
 
 template <typename T, typename... Ts>
@@ -48,6 +49,7 @@ public:
         alloc = std::move(other.alloc);
         other.alloc.clear();
         d = other.d;
+        next() = std::move(other.next());
         return *this;
     }
 
@@ -72,8 +74,8 @@ public:
     }
 
     /*
-     *  I'm not sure why these functions are necessary - I expected get()
-     *  to dispatch properly through the hierarchy.  Alas!
+     *  I'm not sure why these functions are necessary - I expected
+     *  put() and get() to dispatch properly through the hierarchy.  Alas!
      */
     ObjectPool<Ts...>& next() {
         return *static_cast<ObjectPool<Ts...>*>(this);
