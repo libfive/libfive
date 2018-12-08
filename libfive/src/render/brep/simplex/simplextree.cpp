@@ -290,6 +290,12 @@ bool SimplexTree<N>::collectChildren(
         double max_err, const Region<N>& region,
         ObjectPool<SimplexTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs)
 {
+    // TODO
+    (void)eval;
+    (void)tape;
+    (void)max_err;
+    (void)region;
+
     // Wait for collectChildren to have been called N times
     if (this->pending-- != 0)
     {
