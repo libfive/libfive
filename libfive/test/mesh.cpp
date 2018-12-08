@@ -96,12 +96,19 @@ TEST_CASE("Mesh::render (face count in rectangular prism)")
     REQUIRE(m->branes.size() == 12);
 }
 
-TEST_CASE("Mesh::render (sphere)")
+TEST_CASE("Mesh::render (different algorithms)")
 {
     auto s = sphere(1);
-    auto m = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
-                          1/32.0f, pow(10, -3));
-    REQUIRE(true);
+    auto a = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
+                          1/32.0f, pow(10, -3), true,
+                          EMPTY_PROGRESS_CALLBACK,
+                          Mesh::DUAL_CONTOURING);
+    auto b = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
+                          1/32.0f, pow(10, -3), true,
+                          EMPTY_PROGRESS_CALLBACK,
+                          Mesh::ISO_SIMPLEX);
+    REQUIRE(b->branes.size() > a->branes.size());
+    REQUIRE(b->verts.size() >  a->verts.size());
 }
 
 TEST_CASE("Mesh::render (cone)")

@@ -24,12 +24,15 @@ template <unsigned N>
 class Dual
 {
 public:
-     /*  The mesher type M needs
+     /*
+      *  Basic dual-walking function
+      *
+      *  The mesher type M needs
       *     load(const std::array<T*, N>& trees)
       *     Input (typename)
       *     Output (typename)
       *  and must have a constructor of the form
-      *     M(PerThreadBRep<N>, A...)
+      *     M(PerThreadBRep<N>&, A...)
       */
     template<typename M, typename ... A>
     static std::unique_ptr<typename M::Output> walk(
@@ -37,6 +40,24 @@ public:
             std::atomic_bool& cancel,
             ProgressCallback progress_callback,
             A... args);
+
+     /*
+      *  Flexible dual-walking function
+      *
+      *  The mesher type M needs
+      *     load(const std::array<T*, N>& trees)
+      *     Input (typename)
+      *     Output (typename)
+      *
+      *  The factory can be anything that spits out valid M objects,
+      *  given a PerThreadBRep and worker index.
+      */
+    template<typename M>
+    static std::unique_ptr<typename M::Output> walk_(
+            const Root<typename M::Input>& t, unsigned workers,
+            std::atomic_bool& cancel,
+            ProgressCallback progress_callback,
+            std::function<M(PerThreadBRep<N>&, int)> MesherFactory);
 
 protected:
     template<typename T, typename Mesher>
@@ -87,6 +108,10 @@ template <>
 template <typename T, typename Mesher>
 void Dual<2>::handleTopEdges(T* t, Mesher& m)
 {
+    (void)t;
+    (void)m;
+
+    // TODO
     // No one should be calling this yet, because simplex meshing
     // isn't implemented in 2D.
     assert(false);
@@ -208,6 +233,22 @@ std::unique_ptr<typename M::Output> Dual<N>::walk(
             ProgressCallback progress_callback,
             A... args)
 {
+    return Dual<N>::walk_<M>(t, workers, cancel, progress_callback,
+            [&args...](PerThreadBRep<N>& brep, int i) {
+                (void)i;
+                return M(brep, args...);
+                });
+
+}
+
+template <unsigned N>
+template<typename M>
+std::unique_ptr<typename M::Output> Dual<N>::walk_(
+            const Root<typename M::Input>& t, unsigned workers,
+            std::atomic_bool& cancel,
+            ProgressCallback progress_callback,
+            std::function<M(PerThreadBRep<N>&, int)> MesherFactory)
+{
     boost::lockfree::stack<const typename M::Input*,
                            boost::lockfree::fixed_sized<true>> tasks(workers);
     tasks.push(t.get());
@@ -229,8 +270,8 @@ std::unique_ptr<typename M::Output> Dual<N>::walk(
     futures.resize(workers);
     for (unsigned i=0; i < workers; ++i) {
         futures[i] = std::async(std::launch::async,
-            [&breps, &done, &cancel, &tasks, &args..., i, progress]() {
-                auto m = M(breps[i], args...);
+            [&breps, &done, &cancel, &tasks, &MesherFactory, i, progress]() {
+                auto m = MesherFactory(breps[i], i);
                 Dual<N>::run(m, progress, tasks, done, cancel);
             });
     }
@@ -244,7 +285,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk(
 
     // Handle the top tree edges (only used for simplex meshing)
     if (M::needsTopEdges()) {
-        auto m = M(breps[0], args...);
+        auto m = MesherFactory(breps[0], 0);
         Dual<N>::handleTopEdges(t.get(), m);
     }
 

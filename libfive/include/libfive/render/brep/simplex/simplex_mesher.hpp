@@ -30,7 +30,20 @@ public:
     using Output = Mesh;
     using Input = SimplexTree<3>;
 
+    /*
+     *  Constructs a mesher that owns an evaluator,
+     *  which is built from the given tree.
+     */
     SimplexMesher(PerThreadBRep<3>& m, Tree t);
+
+    /*
+     *  Constructs a mesher that has borrowed an evaluator,
+     *  which is useful in cases where constructing evaluators
+     *  is expensive and they should be re-used.
+     */
+    SimplexMesher(PerThreadBRep<3>& m, XTreeEvaluator* es);
+
+    ~SimplexMesher();
 
     /*
      *  Called by Dual::walk to construct the triangle mesh
@@ -54,7 +67,8 @@ protected:
                         std::shared_ptr<Tape> tape);
 
     PerThreadBRep<3>& m;
-    std::unique_ptr<XTreeEvaluator> eval;
+    XTreeEvaluator* eval;
+    bool owned;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

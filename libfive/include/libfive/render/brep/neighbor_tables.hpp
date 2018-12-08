@@ -223,7 +223,7 @@ struct NeighborTables
               3 * whichNeighbor(c.i >> 1, n.i / 3).i
             : 0);
 #undef ci
-#undef ii
+#undef ni
     }
 
     /*  Pre-calculated version of pushIndex(c, n)
