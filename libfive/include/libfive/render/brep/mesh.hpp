@@ -22,6 +22,11 @@ namespace Kernel {
 
 class Mesh : public BRep<3> {
 public:
+    enum Algorithm {
+        DUAL_CONTOURING,
+        ISO_SIMPLEX,
+    };
+
     /*
      *  Blocking, unstoppable render function
      *  Returns nullptr if min_feature is invalid (i.e. <= 0)
@@ -29,7 +34,8 @@ public:
     static std::unique_ptr<Mesh> render(
             const Tree t, const Region<3>& r,
             double min_feature=0.1, double max_err=1e-8, bool multithread=true,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
+            Algorithm=DUAL_CONTOURING);
 
     /*
      *  Fully-specified render function
@@ -40,7 +46,8 @@ public:
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
+            Algorithm=DUAL_CONTOURING);
 
     /*
      *  Render function that re-uses evaluators
@@ -52,7 +59,8 @@ public:
             XTreeEvaluator* es, const Region<3>& r,
             double min_feature, double max_err,
             int workers, std::atomic_bool& cancel,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
+            Algorithm=DUAL_CONTOURING);
 
     /*
      *  Writes the mesh to a file

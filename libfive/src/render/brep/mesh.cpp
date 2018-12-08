@@ -27,19 +27,21 @@ const float Mesh::MAX_PROGRESS = 3.0f;
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    double min_feature, double max_err,
                                    bool multithread,
-                                   ProgressCallback progress_callback)
+                                   ProgressCallback progress_callback,
+                                   Algorithm alg)
 {
     std::atomic_bool cancel(false);
     std::map<Tree::Id, float> vars;
     return render(t, vars, r, min_feature, max_err,
-                  multithread ? 8 : 1, cancel, progress_callback);
+                  multithread ? 8 : 1, cancel, progress_callback, alg);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
-            ProgressCallback progress_callback)
+            ProgressCallback progress_callback,
+            Algorithm alg)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -49,33 +51,51 @@ std::unique_ptr<Mesh> Mesh::render(
     }
 
     return render(es.data(), r, min_feature, max_err, workers, cancel,
-                  progress_callback);
+                  progress_callback, alg);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
         XTreeEvaluator* es,
         const Region<3>& r, double min_feature, double max_err,
         int workers, std::atomic_bool& cancel,
-        ProgressCallback progress_callback)
+        ProgressCallback progress_callback,
+        Algorithm alg)
 {
-    auto t = DCPool<3>::build(es, r, min_feature, max_err, workers, cancel,
-                              progress_callback);
+    std::unique_ptr<Mesh> out;
+    if (alg == DUAL_CONTOURING)
+    {
+        auto t = DCPool<3>::build(
+                es, r, min_feature, max_err, workers,
+                cancel, progress_callback);
 
-    // Perform marching squares
-    if (cancel.load() || t.get() == nullptr) {
-        return nullptr;
-    }
+        // Perform marching squares
+        if (cancel.load() || t.get() == nullptr) {
+            return nullptr;
+        }
 
 #if LIBFIVE_TRIANGLE_FAN_MESHING
-    // Make sure each intersection has the same object in all cells.
-    Dual<3>::walk<IntersectionAligner>(t, 1, cancel, progress_callback);
-    workers = 1;    // The fan walker isn't thread-safe
+        // Make sure each intersection has the same object in all cells.
+        Dual<3>::walk<IntersectionAligner>(t, 1, cancel, progress_callback);
+        workers = 1;    // The fan walker isn't thread-safe
 #endif
 
-    auto out = Dual<3>::walk<DCMesher>(t, workers, cancel, progress_callback);
+        out = Dual<3>::walk<DCMesher>(t, workers, cancel, progress_callback);
 
-    // TODO: check for early return here again
-    t.reset(progress_callback);
+        // TODO: check for early return here again
+        t.reset(progress_callback);
+    }
+    else if (alg == ISO_SIMPLEX)
+    {
+        auto t = SimplexTreePool<3>::build(
+                es, r, min_feature, max_err, workers,
+                cancel, progress_callback);
+        REQUIRE(t.get() != nullptr);
+        t->assignIndices();
+
+        out = Dual<3>::walk<SimplexMesher>(t, 8,
+                cancel, EMPTY_PROGRESS_CALLBACK, c);
+        t.reset(progress_callback);
+    }
 
     return out;
 }
