@@ -20,9 +20,21 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 SimplexMesher::SimplexMesher(PerThreadBRep<3>& m, Tree t)
-    : m(m), eval(new XTreeEvaluator(t))
+    : m(m), eval(new XTreeEvaluator(t)), owned(true)
 {
     // Nothing to do here
+}
+
+SimplexMesher::SimplexMesher(PerThreadBRep<3>& m, XTreeEvaluator* es)
+    : m(m), eval(es), owned(false)
+{
+    // Nothing to do here
+}
+
+SimplexMesher::~SimplexMesher() {
+    if (owned) {
+        delete eval;
+    }
 }
 
 template <Axis::Axis A>
