@@ -26,6 +26,11 @@ public:
         bool multithread = true);
 
     static std::unique_ptr<Contours> render(
+      const Tree t, const Region<2>& r,
+      double min_feature, double max_err,
+      int workers);
+
+    static std::unique_ptr<Contours> render(
         const Tree t, const Region<2>& r,
         double min_feature, double max_err,
         std::atomic_bool& cancelled,

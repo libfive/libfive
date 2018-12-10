@@ -173,16 +173,6 @@ std::unique_ptr<Contours> Contours::render(
     return c;
 }
 
-std::unique_ptr<Contours> Contours::render(const Tree t, 
-                                           const Region<2>& r, 
-                                           double min_feature /*= 0.1*/, 
-                                           double max_err /*= 1e-8*/, 
-                                           bool multithread /*= true*/)
-{
-  std::atomic_bool cancelled(false);
-  return render(t, r, min_feature, max_err, cancelled, multithread ? 1 : 8);
-}
-
 bool Contours::saveSVG(const std::string& filename)
 {
     if (!boost::algorithm::iends_with(filename, ".svg"))
@@ -239,6 +229,25 @@ bool Contours::saveSVG(const std::string& filename)
     }
     file << "\n</svg>";
     return true;
+}
+
+std::unique_ptr<Contours> Contours::render(const Tree t,
+                                           const Region<2>& r,
+                                           double min_feature /*= 0.1*/,
+                                           double max_err /*= 1e-8*/,
+                                           bool multithread /*= true*/)
+{
+  return render(t, r, min_feature, max_err, multithread ? 8 : 1);
+}
+
+std::unique_ptr<Contours> Contours::render(const Tree t,
+                                           const Region<2>& r,
+                                           double min_feature /*= 0.1*/,
+                                           double max_err /*= 1e-8*/,
+                                           int workers)
+{
+  std::atomic_bool cancelled(false);
+  return render(t, r, min_feature, max_err, cancelled, workers);
 }
 
 
