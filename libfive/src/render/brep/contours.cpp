@@ -190,8 +190,17 @@ std::unique_ptr<Contours> Contours::render(const Tree t,
                                            double max_err /*= 1e-8*/,
                                            bool multithread /*= true*/)
 {
-    std::atomic_bool cancel(false);
-    return render(t, r, min_feature, max_err, cancel, multithread ? 1 : 8);
+  return render(t, r, min_feature, max_err, multithread ? 8u : 1u);
+}
+
+std::unique_ptr<Contours> Contours::render(const Tree t,
+                                           const Region<2>& r,
+                                           double min_feature /*= 0.1*/,
+                                           double max_err /*= 1e-8*/,
+                                           unsigned workers)
+{
+  std::atomic_bool cancelled(false);
+  return render(t, r, min_feature, max_err, cancelled, workers);
 }
 
 }   // namespace Kernel

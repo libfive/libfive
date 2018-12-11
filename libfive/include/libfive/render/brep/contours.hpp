@@ -37,6 +37,16 @@ public:
         std::atomic_bool& cancel, unsigned workers);
 
     /*
+     *  Full-featured render function without cancel, to prevent
+     *  an accidentally-left-out cancel boolean from causing the
+     *  worker count to autoconvert to the multithreading boolean.
+     */
+    static std::unique_ptr<Contours> render(
+      const Tree t, const Region<2>& r,
+      double min_feature, double max_err,
+      unsigned workers);
+
+    /*
      *  Saves the contours to an SVG file
      */
     bool saveSVG(const std::string& filename);
