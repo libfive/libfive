@@ -138,6 +138,11 @@ public:
      */
     void assignIndices() const;
 
+    /*
+     *  Releases this tree and any leaf objects to the given object pool
+     */
+    void releaseTo(Pool& object_pool);
+
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

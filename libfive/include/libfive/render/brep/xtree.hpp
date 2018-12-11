@@ -132,16 +132,7 @@ protected:
         {
             auto ptr = c.exchange(nullptr);
             assert(ptr != nullptr);
-
-            auto leaf = ptr->leaf;
-
-            // TODO: delegate this to the objects themselves
-            object_pool.put(ptr);
-            if (leaf != nullptr)
-            {
-                ptr->leaf = nullptr;
-                object_pool.next().put(leaf);
-            }
+            ptr->releaseTo(object_pool);
         }
     }
 

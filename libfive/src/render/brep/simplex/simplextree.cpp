@@ -425,6 +425,15 @@ void SimplexTree<N>::assignIndices(
     }
 }
 
+template <unsigned N>
+void SimplexTree<N>::releaseTo(Pool& object_pool) {
+    if (this->leaf != nullptr) {
+        object_pool.next().put(this->leaf);
+        this->leaf = nullptr;
+    }
+
+    object_pool.put(this);
+}
 ////////////////////////////////////////////////////////////////////////////////
 // Explicit initialization of template
 template class SimplexTree<2>;

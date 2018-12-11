@@ -202,9 +202,13 @@ public:
      *  const, so should only be called when the intersection is already set
      *  to an object identical to ptr, and even then is not thread-safe.
      */
-
     void setIntersectionPtr(
         unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const;
+
+    /*
+     *  Releases this tree and any leaf objects to the given object pool
+     */
+    void releaseTo(Pool& object_pool);
 
 protected:
     /*

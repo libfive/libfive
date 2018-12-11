@@ -993,4 +993,14 @@ std::array<unsigned, 2 * N> DCTree<N>::edgesFromChild(unsigned childIndex)
     return out;
 }
 
+template <unsigned N>
+void DCTree<N>::releaseTo(Pool& object_pool) {
+    if (this->leaf != nullptr) {
+        object_pool.next().put(this->leaf);
+        this->leaf = nullptr;
+    }
+
+    object_pool.put(this);
+}
+
 }   // namespace Kernel
