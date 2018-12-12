@@ -15,6 +15,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+#if LIBFIVE_TRIANGLE_FAN_MESHING
+
 template <Axis::Axis A>
 void IntersectionAligner::load(const std::array<const DCTree<3>*, 4>& ts)
 {
@@ -82,5 +84,7 @@ void IntersectionAligner::load(
 template void IntersectionAligner::load<Axis::X>(const std::array<const DCTree<3>*, 4>&);
 template void IntersectionAligner::load<Axis::Y>(const std::array<const DCTree<3>*, 4>&);
 template void IntersectionAligner::load<Axis::Z>(const std::array<const DCTree<3>*, 4>&);
+
+#endif
 
 }   // namespace Kernel

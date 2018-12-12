@@ -20,8 +20,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <array>
 
 #include "libfive/render/axes.hpp"
+#include "libfive/render/brep/dc/dc_mesher.hpp"
 
 namespace Kernel {
+
+#if LIBFIVE_TRIANGLE_FAN_MESHING
 
 // Forward declarations
 template <unsigned N> class DCTree;
@@ -51,5 +54,7 @@ protected:
     template <Axis::Axis A, bool D>
     static void load(const std::array<const DCTree<3>*, 4>& ts, unsigned index);
 };
+
+#endif
 
 }   // namespace Kernel
