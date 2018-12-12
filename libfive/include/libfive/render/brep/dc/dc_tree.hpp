@@ -94,6 +94,7 @@ class DCTree : public XTree<N, DCTree<N>, DCLeaf<N>>
 {
 public:
     using Leaf = DCLeaf<N>;
+    using Pool = ObjectPool<DCTree<N>, Leaf>;
 
     /*
      *  Simple constructor
@@ -122,7 +123,7 @@ public:
      */
     void evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
                   const Region<N>& region, std::shared_ptr<Tape> tape,
-                  ObjectPool<Leaf>& spare_leafs);
+                  Pool& spare_leafs);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -133,7 +134,7 @@ public:
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const Region<N>& region,
-            ObjectPool<DCTree<N>>& spare_trees, ObjectPool<Leaf>& spare_leafs);
+            Pool& object_pool);
 
     /*
      *  Returns the filled / empty state for the ith corner
@@ -201,9 +202,13 @@ public:
      *  const, so should only be called when the intersection is already set
      *  to an object identical to ptr, and even then is not thread-safe.
      */
-
     void setIntersectionPtr(
         unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const;
+
+    /*
+     *  Releases this tree and any leaf objects to the given object pool
+     */
+    void releaseTo(Pool& object_pool);
 
 protected:
     /*

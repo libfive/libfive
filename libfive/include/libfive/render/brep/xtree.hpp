@@ -121,23 +121,18 @@ protected:
     /*
      *  Releases the children (and their Leaf pointers, if present)
      *  into the given object pools.
+     *
+     *  The template argument must be T::Pool, but that breaks
+     *  template expansion.
      */
-    void releaseChildren(ObjectPool<T>& spare_trees,
-                         ObjectPool<L>& spare_leafs)
+    template <typename Pool>
+    void releaseChildren(Pool& object_pool)
     {
         for (auto& c : children)
         {
             auto ptr = c.exchange(nullptr);
             assert(ptr != nullptr);
-
-            auto leaf = ptr->leaf;
-
-            spare_trees.put(ptr);
-            if (leaf != nullptr)
-            {
-                ptr->leaf = nullptr;
-                spare_leafs.put(leaf);
-            }
+            ptr->releaseTo(object_pool);
         }
     }
 

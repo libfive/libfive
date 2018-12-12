@@ -12,10 +12,16 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <list>
 
+#include "libfive/render/brep/progress.hpp"
+
 namespace Kernel {
 
 /*
- *  This is a simple object pool container, to avoid allocation churn.
+ *  This is a object pool container, to avoid allocation churn.
+ *
+ *  It uses a variadic template to contain pools for any number of
+ *  different classes, and dispatches based on the first argument
+ *  to get().
  *
  *  It owns all objects allocated under it, and allocates in blocks
  *  of N (by default 512).
@@ -25,14 +31,30 @@ namespace Kernel {
  *  The target class must include a reset(...) function, and the
  *  constructor must take zero arguments.
  */
-template <typename T>
+template <typename... T>
 class ObjectPool
 {
 public:
-    ObjectPool(unsigned N=512) : N(N) { /* Nothing to do here */ }
+    void claim(ObjectPool<>&) {}
+    void reset(ProgressWatcher*) {}
+    int64_t total_size() const { return 0; }
+    ObjectPool<>& operator=(ObjectPool<>&&) { return *this; }
+};
+
+template <typename T, typename... Ts>
+class ObjectPool<T, Ts...> : public ObjectPool<Ts...>
+{
+public:
+    ObjectPool<T, Ts...>& operator=(ObjectPool<T, Ts...>&& other) {
+        alloc = std::move(other.alloc);
+        other.alloc.clear();
+        d = other.d;
+        next() = std::move(other.next());
+        return *this;
+    }
 
     template <typename... Args>
-    T* get(Args... args)
+    void get(T** t, Args... args)
     {
         if (!d.size())
         {
@@ -44,12 +66,22 @@ public:
             }
         }
         assert(d.size());
-        auto out = d.top();
+        *t = d.top();
         d.pop();
 
-        assert(out != nullptr);
-        out->reset(args...);
-        return out;
+        assert(*t != nullptr);
+        (*t)->reset(args...);
+    }
+
+    /*
+     *  I'm not sure why these functions are necessary - I expected
+     *  put() and get() to dispatch properly through the hierarchy.  Alas!
+     */
+    ObjectPool<Ts...>& next() {
+        return *static_cast<ObjectPool<Ts...>*>(this);
+    }
+    const ObjectPool<Ts...>& next() const {
+        return *static_cast<const ObjectPool<Ts...>*>(this);
     }
 
     void put(T* t)
@@ -60,19 +92,17 @@ public:
 
     ~ObjectPool()
     {
-        for (auto& t : alloc)
-        {
-            delete [] t;
-        }
+        reset();
     }
 
-    void release(std::list<T*>& out)
+    void claim(ObjectPool<T, Ts...>& other)
     {
-        for (auto& t : alloc)
+        for (auto& t : other.alloc)
         {
-            out.push_back(t);
+            alloc.push_back(t);
         }
-        alloc.clear();
+        other.alloc.clear();
+        next().claim(other.next());
     }
 
     /*
@@ -87,10 +117,36 @@ public:
         return (int64_t)alloc.size() * N - d.size();
     }
 
-protected:
+    int64_t total_size() const {
+        return size() + next().total_size();
+    }
+
+    /*
+     *  Deallocate everything stored in this object pool.
+     *
+     *  This may invalidate items stored in the available stack;
+     *  get() must not be called after a pool is reset.
+     *
+     *  (this is the same as the destructor, but includes a progress callback)
+     */
+    void reset(ProgressWatcher* progress_watcher=nullptr) {
+        for (auto& t : alloc)
+        {
+            if (progress_watcher) progress_watcher->tick();
+            delete [] t;
+        }
+        alloc.clear();
+        next().reset(progress_watcher);
+    }
+
+private:
+    /*  d stores available objects */
     std::stack<T*, std::vector<T*>> d;
+
+    /*  alloc is the master list of allocated blocks */
     std::list<T*> alloc;
-    const unsigned N;
+
+    static const unsigned N=512;
 };
 
 }   // namespace Kernel

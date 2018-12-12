@@ -34,22 +34,33 @@ namespace Kernel {
 template <unsigned N> class SimplexNeighbors;
 
 template <unsigned N>
+struct SimplexLeafSubspace {
+    SimplexLeafSubspace();
+    void reset();
+
+    /*  Subspace vertex position */
+    Eigen::Matrix<double, 1, N> vert;
+
+    /*  Subspace vertex state */
+    bool inside;
+
+    /*   Global indices for subspace vertices  */
+    uint64_t index;
+
+    /*  Per-subspace QEF */
+    QEF<N> qef;
+};
+
+template <unsigned N>
 struct SimplexLeaf
 {
     SimplexLeaf();
     void reset();
 
-    /*  Subspace vertex positions */
-    Eigen::Matrix<double, ipow(3, N), N> vertices;
-
-    /*  Subspace vertex state */
-    std::array<bool, ipow(3, N)> inside;
-
-    /*   Global indices for subspace vertices  */
-    std::array<uint64_t, ipow(3, N)> index;
-
-    /*  Per-subspace QEFs */
-    std::array<QEF<N>, ipow(3, N)> qefs;
+    /*  One QEF structure per subspace in the leaf, shared between neighbors.
+     *  These pointers are owned by an object pool, for fast allocation
+     *  and re-use. */
+    std::array<SimplexLeafSubspace<N>*, ipow(3, N)> sub;
 
     /*  Tape used for evaluation within this leaf */
     std::shared_ptr<Tape> tape;
@@ -71,6 +82,7 @@ class SimplexTree : public XTree<N, SimplexTree<N>, SimplexLeaf<N>>
 {
 public:
     using Leaf = SimplexLeaf<N>;
+    using Pool = ObjectPool<SimplexTree<N>, Leaf, SimplexLeafSubspace<N>>;
 
     /*
      *  Simple constructor
@@ -100,7 +112,7 @@ public:
      */
     void evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>& neighbors,
                   const Region<N>& region, std::shared_ptr<Tape> tape,
-                  ObjectPool<Leaf>& spare_leafs);
+                  Pool& object_pool);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -111,8 +123,7 @@ public:
     bool collectChildren(
             XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
             double max_err, const Region<N>& region,
-            ObjectPool<SimplexTree<N>>& spare_trees,
-            ObjectPool<Leaf>& spare_leafs);
+            Pool& object_pool);
 
     /*  Looks up the cell's level.
      *
@@ -137,6 +148,11 @@ public:
      *  identifier for every subspace vertex.
      */
     void assignIndices() const;
+
+    /*
+     *  Releases this tree and any leaf objects to the given object pool
+     */
+    void releaseTo(Pool& object_pool);
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

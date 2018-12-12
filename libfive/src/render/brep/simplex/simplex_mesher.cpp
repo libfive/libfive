@@ -76,11 +76,11 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     boost::container::static_vector<SubspaceVertex, 11> subvs;
     auto saveSubspaceVertex = [&subvs, &ts](unsigned index, NeighborIndex s) {
         assert(ts.at(index)->leaf != nullptr);
-        assert(ts.at(index)->leaf->index.at(s.i) != 0);
+        assert(ts.at(index)->leaf->sub[s.i]->index != 0);
         subvs.push_back(SubspaceVertex {
-            ts.at(index)->leaf->vertices.row(s.i),
-            ts.at(index)->leaf->index.at(s.i),
-            ts.at(index)->leaf->inside.at(s.i),
+            ts.at(index)->leaf->sub[s.i]->vert,
+            ts.at(index)->leaf->sub[s.i]->index,
+            ts.at(index)->leaf->sub[s.i]->inside,
         });
     };
     auto saveDummyVertex = [&subvs]() {
