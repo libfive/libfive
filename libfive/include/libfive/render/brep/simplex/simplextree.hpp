@@ -36,6 +36,7 @@ template <unsigned N> class SimplexNeighbors;
 template <unsigned N>
 struct SimplexLeafSubspace {
     SimplexLeafSubspace();
+    void reset();
 
     /*  Subspace vertex position */
     Eigen::Matrix<double, 1, N> vert;
@@ -56,9 +57,10 @@ struct SimplexLeaf
     SimplexLeaf();
     void reset();
 
-    /*  One QEF structure per subspace in the leaf,
-     *  shared between neighbors */
-    std::array<std::shared_ptr<SimplexLeafSubspace<N>>, ipow(3, N)> sub;
+    /*  One QEF structure per subspace in the leaf, shared between neighbors.
+     *  These pointers are owned by an object pool, for fast allocation
+     *  and re-use. */
+    std::array<SimplexLeafSubspace<N>*, ipow(3, N)> sub;
 
     /*  Tape used for evaluation within this leaf */
     std::shared_ptr<Tape> tape;
@@ -80,7 +82,7 @@ class SimplexTree : public XTree<N, SimplexTree<N>, SimplexLeaf<N>>
 {
 public:
     using Leaf = SimplexLeaf<N>;
-    using Pool = ObjectPool<SimplexTree<N>, Leaf>;
+    using Pool = ObjectPool<SimplexTree<N>, Leaf, SimplexLeafSubspace<N>>;
 
     /*
      *  Simple constructor
@@ -110,7 +112,7 @@ public:
      */
     void evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>& neighbors,
                   const Region<N>& region, std::shared_ptr<Tape> tape,
-                  ObjectPool<Leaf>& spare_leafs);
+                  Pool& object_pool);
 
     /*
      *  If all children are present, then collapse based on the error

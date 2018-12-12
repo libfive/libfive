@@ -92,10 +92,7 @@ public:
 
     ~ObjectPool()
     {
-        for (auto& t : alloc)
-        {
-            delete [] t;
-        }
+        reset();
     }
 
     void claim(ObjectPool<T, Ts...>& other)

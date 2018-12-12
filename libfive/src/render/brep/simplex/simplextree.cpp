@@ -38,6 +38,15 @@ SimplexLeafSubspace<N>::SimplexLeafSubspace()
 }
 
 template <unsigned N>
+void SimplexLeafSubspace<N>::reset()
+{
+    inside = false;
+    index = 0;
+    vert.array() = 0.0;
+    qef.reset();
+}
+
+template <unsigned N>
 SimplexTree<N>::SimplexTree(SimplexTree<N>* parent, unsigned index,
                             const Region<N>& region)
     : XTree<N, SimplexTree<N>, SimplexLeaf<N>>(parent, index, region)
@@ -72,11 +81,7 @@ void SimplexLeaf<N>::reset()
     level = 0;
     tape.reset();
     surface.clear();
-
-    // TODO: can we pool these as well?
-    for (auto& s : sub) {
-        s.reset(new SimplexLeafSubspace<N>());
-    }
+    std::fill(sub.begin(), sub.end(), nullptr);
 }
 
 template <unsigned N>
@@ -169,9 +174,9 @@ template <unsigned N>
 void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
                               const SimplexNeighbors<N>& neighbors,
                               const Region<N>& region, Tape::Handle tape,
-                              ObjectPool<Leaf>& spare_leafs)
+                              Pool& object_pool)
 {
-    spare_leafs.get(&this->leaf);
+    object_pool.next().get(&this->leaf);
     this->leaf->tape = tape;
     this->leaf->level = 0;
 
@@ -191,11 +196,12 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
     // First, borrow solved QEF + vertex position + inside / outside
     // from our neighbors whenever possible.
     for (unsigned i=0; i < ipow(3, N); ++i) {
-        const auto sub = NeighborIndex(i);
-        const auto c = neighbors.check(sub);
+        const auto c = neighbors.check(NeighborIndex(i));
         if (c.first != nullptr) {
-            this->leaf->sub[sub.i] = c.first->sub[c.second.i];
-            already_solved[sub.i] = true;
+            this->leaf->sub[i] = c.first->sub[c.second.i];
+            already_solved[i] = true;
+        } else {
+            object_pool.next().next().get(&this->leaf->sub[i]);
         }
     }
 
@@ -431,6 +437,10 @@ void SimplexTree<N>::assignIndices(
 template <unsigned N>
 void SimplexTree<N>::releaseTo(Pool& object_pool) {
     if (this->leaf != nullptr) {
+        for (auto& s : this->leaf->sub) {
+            object_pool.next().next().put(s);
+            s = nullptr;
+        }
         object_pool.next().put(this->leaf);
         this->leaf = nullptr;
     }
