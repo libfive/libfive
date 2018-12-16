@@ -262,10 +262,10 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
     }
 
     // Statically unroll a loop to position every vertex within their subspace.
-    Unroller<N, ipow(N, 3) - 1>()(*this->leaf, already_solved, region);
+    Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
 
     // Finally, with every vertex positioned, solve for whether it is inside or outside.
-    for (unsigned i=0; i < ipow(N, 3); ++i)
+    for (unsigned i=0; i < ipow(3, N); ++i)
     {
         // Skip subspaces that have already been solved
         if (already_solved[i]) {
@@ -287,7 +287,36 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
 
         this->leaf->sub[i]->inside = inside;
     }
-    this->type = Interval::AMBIGUOUS; // TODO: check corners afterwards and collapse
+
+    // Check all subspace vertices to decide whether this leaf is
+    // completely empty or full.  This isn't as conclusive as the
+    // interval arithmetic, but if there were parts of the model
+    // within the cell, we'd expect at least one vertex to hit them.
+    bool all_inside = true;
+    bool all_outside = true;
+    for (unsigned i=0; i < ipow(3, N); ++i) {
+        all_inside  &=   this->leaf->sub[i]->inside;
+        all_outside &=  !this->leaf->sub[i]->inside;
+    }
+
+    // Store a tree type based on subspace vertex positions
+    if (all_inside) {
+        assert(!all_outside);
+        this->type = Interval::FILLED;
+    } else if (all_outside) {
+        assert(!all_inside);
+        this->type = Interval::EMPTY;
+    } else {
+        this->type = Interval::AMBIGUOUS;
+    }
+
+    // Release the leaf if it's completely empty or filed
+    // TODO: Does this actually matter?  It may make things slightly less
+    // efficient, because we don't get the benefits of neighbor sharing.
+    if (this->type != Interval::AMBIGUOUS) {
+        object_pool.next().put(this->leaf);
+        this->leaf = nullptr;
+    }
 
     this->done();
 }

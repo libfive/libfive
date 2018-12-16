@@ -43,6 +43,9 @@ TEST_CASE("SimplexTree<2>::assignIndices")
     REQUIRE(t->isBranch());
     std::set<uint64_t> indices;
     for (auto& c : t->children) {
+        CAPTURE(c.load()->region.lower);
+        CAPTURE(c.load()->region.upper);
+
         REQUIRE(c.load() != nullptr);
         REQUIRE(!c.load()->isBranch());
         REQUIRE(c.load()->leaf != nullptr);
