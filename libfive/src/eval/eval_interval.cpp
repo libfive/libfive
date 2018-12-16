@@ -184,7 +184,7 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #define outN i[id].second
 #define aN i[a_].second
 #define bN i[b_].second
-#define SET_UNSAFE(cond) outN = aN || bN || cond
+#define SET_UNSAFE(cond) outN = (aN) || (bN) || (cond)
   switch (op) {
         case Opcode::OP_ADD:
             out = a + b;
