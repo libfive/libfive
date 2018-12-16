@@ -49,6 +49,13 @@ struct SimplexLeafSubspace {
 
     /*  Per-subspace QEF */
     QEF<N> qef;
+
+    /*  SimplexLeafSubspace objects are allocated and released to an
+     *  object pool, but can be stored by more than one SubspaceLeaf
+     *  at a time (since they represent shared spaces).  We use a
+     *  homebrew reference counting system to avoid releasing them to
+     *  the pool while they're still in use.  */
+    std::atomic_uint32_t refcount;
 };
 
 template <unsigned N>

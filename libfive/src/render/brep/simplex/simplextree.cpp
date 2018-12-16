@@ -30,6 +30,7 @@ namespace Kernel {
 template <unsigned N> constexpr double SimplexTree<N>::EIGENVALUE_CUTOFF;
 
 ////////////////////////////////////////////////////////////////////////////////
+
 template <unsigned N>
 SimplexLeafSubspace<N>::SimplexLeafSubspace()
     : inside(false), index(0)
@@ -44,7 +45,27 @@ void SimplexLeafSubspace<N>::reset()
     index = 0;
     vert.array() = 0.0;
     qef.reset();
+    refcount.store(0);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+SimplexLeaf<N>::SimplexLeaf()
+{
+    reset();
+}
+
+template <unsigned N>
+void SimplexLeaf<N>::reset()
+{
+    level = 0;
+    tape.reset();
+    surface.clear();
+    std::fill(sub.begin(), sub.end(), nullptr);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
 SimplexTree<N>::SimplexTree(SimplexTree<N>* parent, unsigned index,
@@ -62,26 +83,11 @@ SimplexTree<N>::SimplexTree()
 }
 
 template <unsigned N>
-SimplexLeaf<N>::SimplexLeaf()
-{
-    reset();
-}
-
-template <unsigned N>
 std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
 {
     std::unique_ptr<SimplexTree> t(new SimplexTree);
     t->type = Interval::EMPTY;
     return std::move(t);
-}
-
-template <unsigned N>
-void SimplexLeaf<N>::reset()
-{
-    level = 0;
-    tape.reset();
-    surface.clear();
-    std::fill(sub.begin(), sub.end(), nullptr);
 }
 
 template <unsigned N>
@@ -203,6 +209,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
         } else {
             object_pool.next().next().get(&this->leaf->sub[i]);
         }
+        this->leaf->sub[i]->refcount++;
     }
 
     // First, we evaluate the corners, finding position + normal and storing
@@ -466,7 +473,9 @@ template <unsigned N>
 void SimplexTree<N>::releaseTo(Pool& object_pool) {
     if (this->leaf != nullptr) {
         for (auto& s : this->leaf->sub) {
-            object_pool.next().next().put(s);
+            if (--s->refcount == 0) {
+                object_pool.next().next().put(s);
+            }
             s = nullptr;
         }
         object_pool.next().put(this->leaf);
