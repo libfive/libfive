@@ -34,10 +34,14 @@ add_library(five SHARED
     render/brep/dc/dc_contourer.cpp
     render/brep/dc/dc_mesher.cpp
     render/brep/dc/dc_neighbors.cpp
+    render/brep/dc/dc_pool2.cpp
+    render/brep/dc/dc_pool3.cpp
     render/brep/dc/dc_tree2.cpp
     render/brep/dc/dc_tree3.cpp
     render/brep/dc/dc_xtree2.cpp
     render/brep/dc/dc_xtree3.cpp
+    render/brep/simplex/simplex_pool2.cpp
+    render/brep/simplex/simplex_pool3.cpp
     render/brep/simplex/simplex_tree2.cpp
     render/brep/simplex/simplex_tree3.cpp
     render/brep/simplex/simplex_xtree2.cpp
