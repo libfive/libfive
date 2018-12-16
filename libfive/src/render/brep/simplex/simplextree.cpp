@@ -262,7 +262,6 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
     }
 
     // Statically unroll a loop to position every vertex within their subspace.
-    // TODO: skip already-solved QEFs here somehow
     Unroller<N, ipow(N, 3) - 1>()(*this->leaf, already_solved, region);
 
     // Finally, with every vertex positioned, solve for whether it is inside or outside.
