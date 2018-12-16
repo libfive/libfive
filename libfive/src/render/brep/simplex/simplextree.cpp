@@ -310,7 +310,7 @@ bool SimplexTree<N>::collectChildren(
         return false;
     }
 
-    // Load the children here, to avoid atomics
+    // Make a copy of the children pointers here, to avoid atomics
     std::array<SimplexTree<N>*, 1 << N> cs;
     for (unsigned i=0; i < this->children.size(); ++i)
     {
