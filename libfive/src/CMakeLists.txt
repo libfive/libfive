@@ -36,7 +36,12 @@ add_library(five SHARED
     render/brep/dc/dc_neighbors.cpp
     render/brep/dc/dc_tree2.cpp
     render/brep/dc/dc_tree3.cpp
-    render/brep/simplex/simplextree.cpp
+    render/brep/dc/dc_xtree2.cpp
+    render/brep/dc/dc_xtree3.cpp
+    render/brep/simplex/simplex_tree2.cpp
+    render/brep/simplex/simplex_tree3.cpp
+    render/brep/simplex/simplex_xtree2.cpp
+    render/brep/simplex/simplex_xtree3.cpp
     render/brep/simplex/simplex_mesher.cpp
     solve/bounds.cpp
     solve/solver.cpp

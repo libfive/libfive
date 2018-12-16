@@ -158,7 +158,7 @@ const std::vector<std::pair<uint8_t, uint8_t>>& DCTree<3>::edges() const
     return es;
 }
 
+// Explicit initialization of template
 template class DCTree<3>;
 
 }   // namespace Kernel
-// Explicit initialization of template

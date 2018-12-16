@@ -27,72 +27,28 @@ public:
      *  Pointers are initialized to nullptr, but other members
      *  are invalid until reset() is called.
      */
-    explicit XTree()
-    {
-        for (auto& c : children)
-        {
-            c.store(nullptr, std::memory_order_relaxed);
-        }
-        leaf = nullptr;
-    }
-    explicit XTree(T* parent, unsigned index, const Region<N>& region)
-        : XTree()
-    {
-        reset(parent, index, region);
-    }
+    explicit XTree();
+    explicit XTree(T* parent, unsigned index, const Region<N>& region);
 
     /*
      *  Resets this tree to a freshly-constructed state
      */
-    void reset(T* p, unsigned i, Region<N> r)
-    {
-        parent = p;
-        parent_index = i;
-        type = Interval::UNKNOWN;
-        region = r;
-
-        // By design, a tree that is being reset must have no children
-        for (auto& c : children)
-        {
-            assert(c.load() == nullptr);
-            (void)c;
-        }
-
-        // By design, a tree that is being reset also has no leaf.
-        assert(leaf == nullptr);
-
-        pending.store((1 << N) - 1);
-    }
+    void reset(T* p, unsigned i, Region<N> r);
 
     /*
      *  Checks whether this tree splits
      */
-    bool isBranch() const {
-        return children[0] != nullptr;
-    }
+    bool isBranch() const;
 
     /*
      *  Looks up a child, returning *this if this isn't a branch
      */
-    const T* child(unsigned i) const
-    {
-        return isBranch()
-            ? children[i].load(std::memory_order_relaxed)
-            : static_cast<const T*>(this);
-    }
+    const T* child(unsigned i) const;
 
     /*
      *  Walks the tree, resetting pending to its initial value of (1 << N) - 1
      */
-    void resetPending() const
-    {
-        pending.store((1 << N) - 1);
-        if (isBranch()) {
-            for (auto& c : children) {
-                c.load()->resetPending();
-            }
-        }
-    }
+    void resetPending() const;
 
     /*  Parent tree, or nullptr if this is the root */
     T* parent;
@@ -126,29 +82,13 @@ protected:
      *  template expansion.
      */
     template <typename Pool>
-    void releaseChildren(Pool& object_pool)
-    {
-        for (auto& c : children)
-        {
-            auto ptr = c.exchange(nullptr);
-            assert(ptr != nullptr);
-            ptr->releaseTo(object_pool);
-        }
-    }
+    void releaseChildren(Pool& object_pool);
 
     /*
      *  Call this when construction is complete; it will atomically install
      *  this tree into the parent's array of children pointers.
      */
-    void done()
-    {
-        if (parent)
-        {
-            assert(parent->children[parent_index].load() == nullptr);
-            parent->children[parent_index].store(static_cast<T*>(this),
-                                                 std::memory_order_relaxed);
-        }
-    }
+    void done();
 };
 
 }   // namespace Kernel

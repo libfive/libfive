@@ -17,12 +17,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/StdVector>
 #include <boost/lockfree/queue.hpp>
 
-#include "libfive/render/brep/simplex/simplextree.hpp"
+#include "libfive/render/brep/simplex/simplex_tree.hpp"
 #include "libfive/render/brep/simplex/simplex_neighbors.hpp"
 
 #include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
+
+#include "../xtree.cpp"
 
 namespace Kernel {
 
@@ -489,9 +491,5 @@ void SimplexTree<N>::releaseTo(Pool& object_pool) {
     }
     object_pool.put(this);
 }
-////////////////////////////////////////////////////////////////////////////////
-// Explicit initialization of template
-template class SimplexTree<2>;
-template class SimplexTree<3>;
 
 }   // namespace Kernel

@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <memory>
 
-#include "libfive/render/brep/simplex/simplextree.hpp"
+#include "libfive/render/brep/simplex/simplex_tree.hpp"
 #include "libfive/render/brep/simplex/simplex_neighbors.hpp"
 #include "libfive/render/brep/worker_pool.hpp"
 

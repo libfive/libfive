@@ -23,6 +23,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
 
+#include "../xtree.cpp"
+
 namespace Kernel {
 
 //  Here's our cutoff value (with a value set in the header)
