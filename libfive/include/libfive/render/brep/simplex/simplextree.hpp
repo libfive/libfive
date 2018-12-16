@@ -64,6 +64,9 @@ struct SimplexLeaf
     SimplexLeaf();
     void reset();
 
+    using Pool = ObjectPool<SimplexLeaf, SimplexLeafSubspace<N>>;
+    void releaseTo(Pool& object_pool);
+
     /*  One QEF structure per subspace in the leaf, shared between neighbors.
      *  These pointers are owned by an object pool, for fast allocation
      *  and re-use. */

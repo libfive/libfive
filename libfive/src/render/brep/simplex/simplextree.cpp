@@ -65,6 +65,18 @@ void SimplexLeaf<N>::reset()
     std::fill(sub.begin(), sub.end(), nullptr);
 }
 
+template <unsigned N>
+void SimplexLeaf<N>::releaseTo(Pool& object_pool)
+{
+    for (auto& s : sub) {
+        if (--s->refcount == 0) {
+            object_pool.next().put(s);
+        }
+        s = nullptr;
+    }
+    object_pool.put(this);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
@@ -321,7 +333,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
     // TODO: Does this actually matter?  It may make things slightly less
     // efficient, because we don't get the benefits of neighbor sharing.
     if (this->type != Interval::AMBIGUOUS) {
-        object_pool.next().put(this->leaf);
+        this->leaf->releaseTo(object_pool.next());
         this->leaf = nullptr;
     }
 
@@ -472,16 +484,9 @@ void SimplexTree<N>::assignIndices(
 template <unsigned N>
 void SimplexTree<N>::releaseTo(Pool& object_pool) {
     if (this->leaf != nullptr) {
-        for (auto& s : this->leaf->sub) {
-            if (--s->refcount == 0) {
-                object_pool.next().next().put(s);
-            }
-            s = nullptr;
-        }
-        object_pool.next().put(this->leaf);
+        this->leaf->releaseTo(object_pool.next());
         this->leaf = nullptr;
     }
-
     object_pool.put(this);
 }
 ////////////////////////////////////////////////////////////////////////////////
