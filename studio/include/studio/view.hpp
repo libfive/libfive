@@ -64,6 +64,9 @@ public slots:
     void toTurnY(bool=false)  { camera.toTurnY();   }
     void zoomTo(bool=false) { camera.zoomTo(settings.min, settings.max); }
 
+    void toDCMeshing();
+    void toIsoMeshing();
+
     /*
      *  Emits shapesReady if all the shapes being drawn
      *  are at their final (highest) resolution

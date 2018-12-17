@@ -529,6 +529,16 @@ void View::showBBox(bool b)
     update();
 }
 
+void View::toDCMeshing()
+{
+    // TODO
+}
+
+void View::toIsoMeshing()
+{
+    // TODO
+}
+
 void View::checkMeshes() const
 {
     bool all_done = true;
