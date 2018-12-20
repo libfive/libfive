@@ -404,6 +404,59 @@ bool SimplexTree<N>::collectChildren(
     assert(this->leaf == nullptr);
     object_pool.next().get(&this->leaf);
 
+    // Iterate over every child, collecting the QEFs and summing
+    // them into larger QEFs.  To avoid double-counting, we skip
+    // the low subspaces on high children, the cell marked with
+    // an X adds every QEF marked with a *
+    //
+    //    -------------        -------------
+    //    |     |     |        |     |     |
+    //    |     |     |        |     |     |
+    //    |     |     |        |     |     |
+    //    *--*--*------        ---------*--*
+    //    |     |     |        |     |     |
+    //    *  X  *     |        |     |  X  *
+    //    |     |     |        |     |     |
+    //    *--*--*------        ---------*--*
+    //
+    //    ---------*--*        *--*--*------
+    //    |     |     |        |     |     |
+    //    |     |  X  *        *  X  *     |
+    //    |     |     |        |     |     |
+    //    -------------        -------------
+    //    |     |     |        |     |     |
+    //    |     |     |        |     |     |
+    //    |     |     |        |     |     |
+    //    -------------        -------------
+    //
+    //  Hopefully, the compiler optimizes this into a set of fixed
+    //  assignments, rather than running through the loop.
+    for (unsigned i=0; i < ipow(2, N); ++i) {
+        for (unsigned j=0; j < ipow(3, N); ++j) {
+            const auto child = CornerIndex(i);
+            const auto neighbor = NeighborIndex(j);
+            const auto fixed = neighbor.fixed();
+            const auto pos = neighbor.pos();
+
+            // For every fixed axis, it must either be high,
+            // or the child position on said axis must be low
+            bool valid = true;
+            for (unsigned d=0; d < N; ++d) {
+                if (fixed & (1 << d)) {
+                    valid &= (pos & (1 << d)) || (child.i & (1 << d));
+                }
+            }
+
+            if (!valid) {
+                continue;
+            }
+
+            // Next, we need to figure out how to map the child's subspace
+            // into the parent subspace.  Something about spanning vs position
+            // vs child position?
+        }
+    }
+
     // TODO: attempt to collapse Leaf
     // For now, assume it failed
     {
