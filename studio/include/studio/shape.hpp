@@ -56,7 +56,7 @@ public:
     /*
      *  Kicks off a mesh rendering operation in a separate thread
      */
-    void startRender(Settings s);
+    void startRender(Settings s, Kernel::Mesh::Algorithm alg);
 
     /*
      *  Checks whether the shape is done rendering
@@ -145,13 +145,19 @@ protected slots:
     void onFutureFinished();
 
 protected:
-    void startRender(QPair<Settings, int> s);
+    struct RenderSettings {
+        Settings settings;
+        int div;
+        Kernel::Mesh::Algorithm alg;
+    };
+    typedef QPair<Kernel::Mesh*, Kernel::Region<3>> BoundedMesh;
+
+    void startRender(RenderSettings s);
+    BoundedMesh renderMesh(RenderSettings s);
 
     bool grabbed=false;
     bool hover=false;
 
-    typedef QPair<Kernel::Mesh*, Kernel::Region<3>> BoundedMesh;
-    BoundedMesh renderMesh(QPair<Settings, int> s);
     QFuture<BoundedMesh> mesh_future;
     QFutureWatcher<BoundedMesh> mesh_watcher;
     std::atomic_bool cancel;
@@ -164,7 +170,7 @@ protected:
     QScopedPointer<Kernel::Mesh> mesh;
     Kernel::Region<3> render_bounds;
     Kernel::Region<3> mesh_bounds;
-    QPair<Settings, int> next;
+    RenderSettings next;
 
     /*  running marks not just whether the future has finished, but whether
      *  the main thread has handled it.  This prevents situations where the

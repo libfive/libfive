@@ -110,6 +110,8 @@ protected:
     void paintGL() override;
     void resizeGL(int width, int height) override;
 
+    void setAlgorithm(Kernel::Mesh::Algorithm alg);
+
     /*
      *  Converts from mouse event coordinates to model coordinates
      *  using the z depth from the pick buffer
@@ -155,6 +157,8 @@ protected:
     QList<Shape*> shapes;
     bool settings_enabled=true;
     Settings settings;
+    Kernel::Mesh::Algorithm alg;
+
     bool show_axes=true;
     bool show_bbox=false;
 
