@@ -404,6 +404,12 @@ bool SimplexTree<N>::collectChildren(
     assert(this->leaf == nullptr);
     object_pool.next().get(&this->leaf);
 
+    // Grab SimplexLeafSubspace objects
+    // TODO: can we pull from neighbors here as well?
+    for (auto& s: this->leaf->sub) {
+        object_pool.next().next().get(&s);
+    }
+
     // Iterate over every child, collecting the QEFs and summing
     // them into larger QEFs.  To avoid double-counting, we skip
     // the low subspaces on high children, the cell marked with
@@ -432,10 +438,22 @@ bool SimplexTree<N>::collectChildren(
     //  Hopefully, the compiler optimizes this into a set of fixed
     //  assignments, rather than running through the loop.
     for (unsigned i=0; i < ipow(2, N); ++i) {
+        // EMPTY and FILLED trees have lost their QEFs,
+        // so we skip them here.  TODO: does this make sense,
+        // or should we be using their data to get better
+        // vertex placement?
+        if (cs[i]->type != Interval::AMBIGUOUS) {
+            continue;
+        }
+        assert(cs[i]->leaf != nullptr);
+
         for (unsigned j=0; j < ipow(3, N); ++j) {
+            assert(cs[i]->leaf->sub[j] != nullptr);
+
             const auto child = CornerIndex(i);
             const auto neighbor = NeighborIndex(j);
-            const auto fixed = neighbor.fixed();
+            const auto fixed = neighbor.fixed<N>();
+            const auto floating = neighbor.floating();
             const auto pos = neighbor.pos();
 
             // For every fixed axis, it must either be high,
@@ -452,8 +470,27 @@ bool SimplexTree<N>::collectChildren(
             }
 
             // Next, we need to figure out how to map the child's subspace
-            // into the parent subspace.  Something about spanning vs position
-            // vs child position?
+            // into the parent subspace.
+            //
+            // Every floating axis remains floating
+            // Each fixed axis remains fixed if it agrees with the corner axis,
+            // otherwise it's converted to a floating axis.
+            uint8_t floating_out = 0;
+            uint8_t pos_out = 0;
+            for (unsigned d=0; d < N; ++d) {
+                if (floating & (1 << d) ||
+                   (pos & (1 << d)) != (child.i & (1 << N)))
+                {
+                    floating_out |= (1 << d);
+                }
+                else
+                {
+                    pos_out |= pos & (1 << d);
+                }
+            }
+            const auto target = NeighborIndex::fromPosAndFloating(
+                    pos_out, floating_out);
+            this->leaf->sub[target.i]->qef += cs[i]->leaf->sub[j]->qef;
         }
     }
 
