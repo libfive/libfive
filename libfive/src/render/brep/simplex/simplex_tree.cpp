@@ -352,7 +352,6 @@ bool SimplexTree<N>::collectChildren(
     (void)eval;
     (void)tape;
     (void)max_err;
-    (void)region;
 
     // Wait for collectChildren to have been called N times
     if (this->pending-- != 0)
@@ -493,6 +492,11 @@ bool SimplexTree<N>::collectChildren(
             this->leaf->sub[target.i]->qef += cs[i]->leaf->sub[j]->qef;
         }
     }
+
+    // Statically unroll a loop to position every vertex within their subspace.
+    std::array<bool, ipow(3, N)> already_solved;
+    std::fill(already_solved.begin(), already_solved.end(), false);
+    Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
 
     // TODO: attempt to collapse Leaf
     // For now, assume it failed
