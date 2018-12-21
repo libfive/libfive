@@ -176,6 +176,15 @@ protected:
      */
     void assignIndices(uint64_t& i, const SimplexNeighbors<N>& neighbors) const;
 
+    /*
+     *  Calculate and store whether each vertex is inside or outside
+     *  This populates leaf->sub[i]->inside, for in in 0..ipow(3, N)
+     */
+    void saveVertexSigns(XTreeEvaluator* eval,
+                         Tape::Handle tape,
+                         const Region<N>& region,
+                         const std::array<bool, ipow(3, N)>& already_solved);
+
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;
 };

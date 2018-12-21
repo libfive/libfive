@@ -134,11 +134,16 @@ Tape::Handle SimplexTree<N>::evalInterval(
 template <unsigned BaseDimension, int SubspaceIndex_>
 struct Unroller
 {
-    void operator()(
+    /*
+     *  Statically unrolls a loop to position each subspace's vertex,
+     *  return the maximum error from the QEF solver.
+     */
+    double operator()(
             typename SimplexTree<BaseDimension>::Leaf& leaf,
             const std::array<bool, ipow(3, BaseDimension)>& already_solved,
             const Region<BaseDimension>& region)
     {
+        double error = 0.0;
         if (!already_solved[SubspaceIndex_]) {
             constexpr auto SubspaceIndex = NeighborIndex(SubspaceIndex_);
             constexpr unsigned SubspaceDimension = SubspaceIndex.dimension();
@@ -155,6 +160,7 @@ struct Unroller
 
             const auto r = region.template subspace<SubspaceFloating>();
             const auto sol = qef.solveBounded(r);
+            error = sol.error;
 
             // Unpack from the reduced-dimension solution to the leaf vertex
             unsigned j = 0;
@@ -171,8 +177,9 @@ struct Unroller
         }
 
         // Recurse!
-        Unroller<BaseDimension, SubspaceIndex_ - 1>()(
-                leaf, already_solved, region);
+        return std::max(error,
+                Unroller<BaseDimension, SubspaceIndex_ - 1>()(
+                    leaf, already_solved, region));
     }
 };
 
@@ -180,11 +187,11 @@ struct Unroller
 template <unsigned BaseDimension>
 struct Unroller<BaseDimension, -1>
 {
-    void operator()(typename SimplexTree<BaseDimension>::Leaf&,
+    double operator()(typename SimplexTree<BaseDimension>::Leaf&,
                     const std::array<bool, ipow(3, BaseDimension)>&,
                     const Region<BaseDimension>&)
     {
-        // Nothing to do here
+        return 0.0; // Nothing to do here
     }
 };
 
@@ -285,29 +292,8 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
     // Statically unroll a loop to position every vertex within their subspace.
     Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
 
-    // Finally, with every vertex positioned, solve for whether it is inside or outside.
-    for (unsigned i=0; i < ipow(3, N); ++i)
-    {
-        // Skip subspaces that have already been solved
-        if (already_solved[i]) {
-            continue;
-        }
-
-        Eigen::Vector3f p;
-        p << this->leaf->sub[i]->vert.template cast<float>().transpose(),
-             region.perp.template cast<float>();
-
-        eval->array.set(p, 0);
-        const auto out = eval->array.values(1)[0];
-
-        // TODO: make this case broader to deal with array vs non-array
-        // evaluation (see comment at dc_tree.cpp:162).
-        const bool inside = (out == 0)
-            ? eval->feature.isInside(p)
-            : (out < 0);
-
-        this->leaf->sub[i]->inside = inside;
-    }
+    // Check whether each vertex is inside or outside
+    saveVertexSigns(eval, tape, region, already_solved);
 
     // Check all subspace vertices to decide whether this leaf is
     // completely empty or full.  This isn't as conclusive as the
@@ -348,11 +334,6 @@ bool SimplexTree<N>::collectChildren(
         double max_err, const Region<N>& region,
         Pool& object_pool)
 {
-    // TODO
-    (void)eval;
-    (void)tape;
-    (void)max_err;
-
     // Wait for collectChildren to have been called N times
     if (this->pending-- != 0)
     {
@@ -496,17 +477,60 @@ bool SimplexTree<N>::collectChildren(
     // Statically unroll a loop to position every vertex within their subspace.
     std::array<bool, ipow(3, N)> already_solved;
     std::fill(already_solved.begin(), already_solved.end(), false);
-    Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
+    const double err = Unroller<N, ipow(3, N) - 1>()(
+            *this->leaf, already_solved, region);
 
-    // TODO: attempt to collapse Leaf
-    // For now, assume it failed
-    {
+    if (err < max_err && false /* TODO: enable this branch */) {
+            // Store this tree's depth as a function of its children
+            this->leaf->level = std::accumulate(
+                cs.begin(), cs.end(), (unsigned)0,
+                [](const unsigned& a, SimplexTree<N>* b)
+                { return std::max(a, b->level());} ) + 1;
+
+            // Calculate and save vertex inside/outside states
+            saveVertexSigns(eval, tape, region, already_solved);
+
+            // Then, erase all of the children and mark that we collapsed
+            this->releaseChildren(object_pool);
+    } else {
         object_pool.next().put(this->leaf);
         this->leaf = nullptr;
     }
 
     this->done();
     return true;
+}
+
+template <unsigned N>
+void SimplexTree<N>::saveVertexSigns(
+        XTreeEvaluator* eval, Tape::Handle tape, const Region<N>& region,
+        const std::array<bool, ipow(3, N)>& already_solved)
+{
+    // Finally, with every vertex positioned, solve for whether it is inside or outside.
+    for (unsigned i=0; i < ipow(3, N); ++i)
+    {
+        // Skip subspaces that have already been solved
+        if (already_solved[i]) {
+            continue;
+        }
+
+        Eigen::Vector3f p;
+        p << this->leaf->sub[i]->vert.template cast<float>().transpose(),
+             region.perp.template cast<float>();
+
+        // TODO: make this run in a single array evaluation, rather than
+        // one per vertex.
+        eval->array.set(p, 0);
+        const auto out = eval->array.values(1, tape)[0];
+
+        // TODO: make this case broader to deal with array vs non-array
+        // evaluation (see comment at dc_tree.cpp:162).
+        const bool inside = (out == 0)
+            ? eval->feature.isInside(p, tape)
+            : (out < 0);
+
+        this->leaf->sub[i]->inside = inside;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
