@@ -441,7 +441,7 @@ bool SimplexTree<N>::collectChildren(
             bool valid = true;
             for (unsigned d=0; d < N; ++d) {
                 if (fixed & (1 << d)) {
-                    valid &= (pos & (1 << d)) || (child.i & (1 << d));
+                    valid &= (pos & (1 << d)) || (!(child.i & (1 << d)));
                 }
             }
 
@@ -459,7 +459,7 @@ bool SimplexTree<N>::collectChildren(
             uint8_t pos_out = 0;
             for (unsigned d=0; d < N; ++d) {
                 if (floating & (1 << d) ||
-                   (pos & (1 << d)) != (child.i & (1 << N)))
+                   (pos & (1 << d)) != (child.i & (1 << d)))
                 {
                     floating_out |= (1 << d);
                 }
