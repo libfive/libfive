@@ -480,7 +480,7 @@ bool SimplexTree<N>::collectChildren(
     const double err = Unroller<N, ipow(3, N) - 1>()(
             *this->leaf, already_solved, region);
 
-    if (err < max_err && false /* TODO: enable this branch */) {
+    if (err < max_err) {
             // Store this tree's depth as a function of its children
             this->leaf->level = std::accumulate(
                 cs.begin(), cs.end(), (unsigned)0,

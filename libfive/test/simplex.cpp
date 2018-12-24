@@ -59,6 +59,16 @@ TEST_CASE("SimplexTree<2>::assignIndices")
     REQUIRE(*indices.rbegin() == 25);
 }
 
+TEST_CASE("SimplexTree<2>: cell collapsing", "[!mayfail]")
+{
+    auto shape = rectangle(-0.3, 0.8, -0.7, 0.2);
+    auto r = Region<2>({-1, -1}, {1, 1});
+    auto t = SimplexTreePool<2>::build(shape, r,
+         1.2 /* min_feature */);
+
+    REQUIRE(!t->isBranch());
+}
+
 TEST_CASE("SimplexTree<3>: types")
 {
     auto c = sphere(0.5);
