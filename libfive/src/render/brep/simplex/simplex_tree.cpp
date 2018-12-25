@@ -124,6 +124,7 @@ Tape::Handle SimplexTree<N>::evalInterval(
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
+        // TODO HERE
         this->done();
     }
     return o.second;
@@ -317,13 +318,10 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
         this->type = Interval::AMBIGUOUS;
     }
 
-    // Release the leaf if it's completely empty or filed
-    // TODO: Does this actually matter?  It may make things slightly less
-    // efficient, because we don't get the benefits of neighbor sharing.
-    if (this->type != Interval::AMBIGUOUS) {
-        this->leaf->releaseTo(object_pool.next());
-        this->leaf = nullptr;
-    }
+    // We need to keep the QEF leaf, even if the region is completely
+    // filled or empty, because it could contain data that's required
+    // to solve for vertex positions when we merge this cell with a neighbor
+    // that's partially occupied.
 
     this->done();
 }
@@ -371,16 +369,9 @@ bool SimplexTree<N>::collectChildren(
     this->type = all_empty ? Interval::EMPTY
                : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
 
-    // If this cell is unambiguous, then forget all its branches and return
-    if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
-    {
-        this->releaseChildren(object_pool);
-        this->done();
-        return true;
-    }
-
-    // We've now passed all of our opportunities to exit without
-    // allocating a Leaf, so create one here.
+    // Even if this cell is unambiguous, we have to create a combined QEF
+    // for each subspace, which may be used when merging with neighbors
+    // higher up the tree.
     assert(this->leaf == nullptr);
     object_pool.next().get(&this->leaf);
 
@@ -418,13 +409,6 @@ bool SimplexTree<N>::collectChildren(
     //  Hopefully, the compiler optimizes this into a set of fixed
     //  assignments, rather than running through the loop.
     for (unsigned i=0; i < ipow(2, N); ++i) {
-        // EMPTY and FILLED trees have lost their QEFs,
-        // so we skip them here.  TODO: does this make sense,
-        // or should we be using their data to get better
-        // vertex placement?
-        if (cs[i]->type != Interval::AMBIGUOUS) {
-            continue;
-        }
         assert(cs[i]->leaf != nullptr);
 
         for (unsigned j=0; j < ipow(3, N); ++j) {
@@ -470,31 +454,48 @@ bool SimplexTree<N>::collectChildren(
             }
             const auto target = NeighborIndex::fromPosAndFloating(
                     pos_out, floating_out);
+
             this->leaf->sub[target.i]->qef += cs[i]->leaf->sub[j]->qef;
         }
     }
 
-    // Statically unroll a loop to position every vertex within their subspace.
-    std::array<bool, ipow(3, N)> already_solved;
-    std::fill(already_solved.begin(), already_solved.end(), false);
-    const double err = Unroller<N, ipow(3, N) - 1>()(
-            *this->leaf, already_solved, region);
+    // If this cell is unambiguous, then we don't care about vertex placement,
+    // so we can skip everything after immediately after merging the QEFs.
+    if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
+    {
+        for (auto& s: this->leaf->sub) {
+            s->inside = (this->type == Interval::FILLED);
+        }
+    }
+    else
+    {
+        // Statically unroll a loop to position every subspace vertex
+        std::array<bool, ipow(3, N)> already_solved;
+        std::fill(already_solved.begin(), already_solved.end(), false);
+        const double err = Unroller<N, ipow(3, N) - 1>()(
+                *this->leaf, already_solved, region);
 
-    if (err < max_err) {
-            // Store this tree's depth as a function of its children
-            this->leaf->level = std::accumulate(
-                cs.begin(), cs.end(), (unsigned)0,
-                [](const unsigned& a, SimplexTree<N>* b)
-                { return std::max(a, b->level());} ) + 1;
-
+        if (err < max_err) {
             // Calculate and save vertex inside/outside states
             saveVertexSigns(eval, tape, region, already_solved);
+        } else {
+            // Otherwise, this remains a branching node;
+            // free this leaf back to the pool
+            object_pool.next().put(this->leaf);
+            this->leaf = nullptr;
+        }
+    }
 
-            // Then, erase all of the children and mark that we collapsed
-            this->releaseChildren(object_pool);
-    } else {
-        object_pool.next().put(this->leaf);
-        this->leaf = nullptr;
+    if (this->leaf) {
+        // Store this tree's depth as a function of its children
+        this->leaf->level = std::accumulate(
+            cs.begin(), cs.end(), (unsigned)0,
+            [](const unsigned& a, SimplexTree<N>* b)
+            { return std::max(a, b->leaf->level);} ) + 1;
+
+        // Then, erase all of the children, which marks that this
+        // cell is no longer a BRANCH.
+        this->releaseChildren(object_pool);
     }
 
     this->done();
@@ -536,25 +537,6 @@ void SimplexTree<N>::saveVertexSigns(
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-unsigned SimplexTree<N>::level() const
-{
-    assert(!this->isBranch());
-    switch (this->type)
-    {
-        case Interval::AMBIGUOUS:
-            assert(this->leaf != nullptr);
-            return this->leaf->level;
-
-        case Interval::UNKNOWN: assert(false);
-
-        case Interval::FILLED:  // fallthrough
-        case Interval::EMPTY:   assert(this->leaf == nullptr);
-                                return 0;
-    };
-    return 0;
-}
-
-template <unsigned N>
 uint32_t SimplexTree<N>::leafLevel() const
 {
     assert(!this->isBranch());
@@ -564,10 +546,10 @@ uint32_t SimplexTree<N>::leafLevel() const
             assert(this->leaf != nullptr);
             return this->leaf->level;
 
-        case Interval::UNKNOWN: assert(false);
-
         case Interval::FILLED:  // fallthrough
         case Interval::EMPTY:   return LEAF_LEVEL_INVALID;
+
+        case Interval::UNKNOWN: assert(false);
     };
     return 0;
 }

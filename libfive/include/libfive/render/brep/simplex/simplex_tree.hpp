@@ -135,16 +135,6 @@ public:
             double max_err, const Region<N>& region,
             Pool& object_pool);
 
-    /*  Looks up the cell's level.
-     *
-     *  This must only be called on non-branching cells.
-     *
-     *  level is defined as 0 for EMPTY or FILLED terminal cells;
-     *  for ambiguous leaf cells, it is the number of leafs that
-     *  were merged into this cell.
-     */
-    unsigned level() const;
-
     /*  Looks up the cell's level for purposes of vertex placement,
      *  returning 0 or more for LEAF cells (depending on how many
      *  other leafs were merged into them), and UINT32_MAX max for
