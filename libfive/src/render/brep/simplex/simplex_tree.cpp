@@ -81,57 +81,6 @@ void SimplexLeaf<N>::releaseTo(Pool& object_pool)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <unsigned N>
-SimplexTree<N>::SimplexTree(SimplexTree<N>* parent, unsigned index,
-                            const Region<N>& region)
-    : XTree<N, SimplexTree<N>, SimplexLeaf<N>>(parent, index, region)
-{
-    // Nothing to do here
-}
-
-template <unsigned N>
-SimplexTree<N>::SimplexTree()
-    : XTree<N, SimplexTree<N>, SimplexLeaf<N>>()
-{
-    // Nothing to do here
-}
-
-template <unsigned N>
-std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
-{
-    std::unique_ptr<SimplexTree> t(new SimplexTree);
-    t->type = Interval::EMPTY;
-    return std::move(t);
-}
-
-template <unsigned N>
-Tape::Handle SimplexTree<N>::evalInterval(
-        XTreeEvaluator* eval, const Region<N>& region, Tape::Handle tape)
-{
-    // Do a preliminary evaluation to prune the tree, storing the interval
-    // result and an handle to the pushed tape (which we'll use when recursing)
-    auto o = eval->interval.evalAndPush(
-            region.lower3().template cast<float>(),
-            region.upper3().template cast<float>(),
-            tape);
-
-    this->type = Interval::state(o.first);
-    if (!eval->interval.isSafe())
-    {
-        this->type = Interval::AMBIGUOUS;
-        return tape;
-    }
-
-    if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
-    {
-        // TODO HERE
-        this->done();
-    }
-    return o.second;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 template <unsigned BaseDimension, int SubspaceIndex_>
 struct Unroller
 {
@@ -174,6 +123,7 @@ struct Unroller
                     leaf.sub[SubspaceIndex_]->vert(i) = region.lower(i);
                 }
             }
+
             assert(j == SubspaceDimension);
         }
 
@@ -199,45 +149,86 @@ struct Unroller<BaseDimension, -1>
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
-                              const SimplexNeighbors<N>& neighbors,
-                              const Region<N>& region, Tape::Handle tape,
-                              Pool& object_pool)
+SimplexTree<N>::SimplexTree(SimplexTree<N>* parent, unsigned index,
+                            const Region<N>& region)
+    : XTree<N, SimplexTree<N>, SimplexLeaf<N>>(parent, index, region)
 {
-    object_pool.next().get(&this->leaf);
-    this->leaf->tape = tape;
-    this->leaf->level = 0;
+    // Nothing to do here
+}
 
-    // Track how many corners have to be evaluated here
-    // (if they can be looked up from a neighbor, they don't have
-    //  to be evaluated here, which can save time)
-    size_t count = 0;
+template <unsigned N>
+SimplexTree<N>::SimplexTree()
+    : XTree<N, SimplexTree<N>, SimplexLeaf<N>>()
+{
+    // Nothing to do here
+}
 
-    // Marks which subspaces have already been solved
-    std::array<bool, ipow(3, N)> already_solved;
-    std::fill(already_solved.begin(), already_solved.end(), false);
+template <unsigned N>
+std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
+{
+    std::unique_ptr<SimplexTree> t(new SimplexTree);
+    t->type = Interval::EMPTY;
+    return std::move(t);
+}
 
+template <unsigned N>
+Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
+                                          Tape::Handle tape,
+                                          const Region<N>& region,
+                                          Pool& object_pool)
+{
+    // Do a preliminary evaluation to prune the tree, storing the interval
+    // result and an handle to the pushed tape (which we'll use when recursing)
+    auto o = eval->interval.evalAndPush(
+            region.lower3().template cast<float>(),
+            region.upper3().template cast<float>(),
+            tape);
+
+    this->type = Interval::state(o.first);
+    if (!eval->interval.isSafe())
+    {
+        this->type = Interval::AMBIGUOUS;
+        return tape;
+    }
+
+    if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
+    {
+        std::array<bool, ipow(3, N)> already_solved;
+        std::fill(already_solved.begin(), already_solved.end(), false);
+
+        // Build the corner-subspace QEFs by sampling the function at the corners
+        object_pool.next().get(&this->leaf);
+        buildCornerQEFs(eval, tape, region, already_solved);
+
+        // Statically unroll a loop to position every vertex within their subspace.
+        // TODO: This is wasted work for interval regions, where we never need
+        // to use vertex position, but is necessary if a neighbor borrows
+        // a leaf subspace and expects the vertex to be in the right position.
+        Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
+
+        this->done();
+    }
+    return o.second;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+void SimplexTree<N>::buildCornerQEFs(
+        XTreeEvaluator* eval,
+        Tape::Handle tape,
+        const Region<N>& region,
+        const std::array<bool, ipow(3, N)>& already_solved)
+{
     // Remap from a value in the range [0, count) to a corner index
     // in the range [0, 1 <<N).
     std::array<int, 1 << N> corner_indices;
 
-    // First, borrow solved QEF + vertex position + inside / outside
-    // from our neighbors whenever possible.
-    for (unsigned i=0; i < ipow(3, N); ++i) {
-        const auto c = neighbors.check(NeighborIndex(i));
-        if (c.first != nullptr) {
-            this->leaf->sub[i] = c.first->sub[c.second.i];
-            already_solved[i] = true;
-        } else {
-            object_pool.next().next().get(&this->leaf->sub[i]);
-        }
-        this->leaf->sub[i]->refcount++;
-    }
+    // Track how many corners have to be evaluated here
+    // (if they have been be looked up from a neighbor, they don't have
+    //  to be evaluated here, which can save time)
+    size_t count = 0;
 
-    // First, we evaluate the corners, finding position + normal and storing
-    // it in the corner QEFs (which are assumed to be empty)
-    static_assert(ipow(2, N) < LIBFIVE_EVAL_ARRAY_SIZE,
-                  "Too many points to evaluate");
     // Pack values into the evaluator, skipping when values have already been
     // borrowed from neighbors
     for (unsigned i=0; i < ipow(2, N); ++i) {
@@ -289,6 +280,43 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
             }
         }
     }
+}
+
+template <unsigned N>
+void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
+                              std::shared_ptr<Tape> tape,
+                              const Region<N>& region,
+                              Pool& object_pool,
+                              const SimplexNeighbors<N>& neighbors)
+{
+    object_pool.next().get(&this->leaf);
+    this->leaf->tape = tape;
+    this->leaf->level = 0;
+
+    // Marks which subspaces have already been solved
+    std::array<bool, ipow(3, N)> already_solved;
+    std::fill(already_solved.begin(), already_solved.end(), false);
+
+    // First, borrow solved QEF + vertex position + inside / outside
+    // from our neighbors whenever possible.
+    for (unsigned i=0; i < ipow(3, N); ++i) {
+        const auto c = neighbors.check(NeighborIndex(i));
+        if (c.first != nullptr) {
+            this->leaf->sub[i] = c.first->sub[c.second.i];
+            already_solved[i] = true;
+        } else {
+            object_pool.next().next().get(&this->leaf->sub[i]);
+        }
+        this->leaf->sub[i]->refcount++;
+    }
+
+    // First, we evaluate the corners, finding position + normal and storing
+    // it in the corner QEFs (which are assumed to be empty)
+    static_assert(ipow(2, N) < LIBFIVE_EVAL_ARRAY_SIZE,
+                  "Too many points to evaluate");
+
+    // Build the corner-subspace QEFs by sampling the function at the corners
+    buildCornerQEFs(eval, tape, region, already_solved);
 
     // Statically unroll a loop to position every vertex within their subspace.
     Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
@@ -327,10 +355,11 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
 }
 
 template <unsigned N>
-bool SimplexTree<N>::collectChildren(
-        XTreeEvaluator* eval, Tape::Handle tape,
-        double max_err, const Region<N>& region,
-        Pool& object_pool)
+bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
+                                     Tape::Handle tape,
+                                     const Region<N>& region,
+                                     Pool& object_pool,
+                                     double max_err)
 {
     // Wait for collectChildren to have been called N times
     if (this->pending-- != 0)

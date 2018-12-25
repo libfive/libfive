@@ -147,7 +147,7 @@ void WorkerPool<T, Neighbors, N>::run(
         const bool can_subdivide =  min_dimension > min_feature;
         if (can_subdivide)
         {
-            tape = t->evalInterval(eval, region, task.tape);
+            tape = t->evalInterval(eval, task.tape, region, object_pool);
 
             // If this Tree is ambiguous, then push the children to the stack
             // and keep going (because all the useful work will be done
@@ -181,7 +181,7 @@ void WorkerPool<T, Neighbors, N>::run(
         }
         else
         {
-            t->evalLeaf(eval, neighbors, region, tape, object_pool);
+            t->evalLeaf(eval, tape, region, object_pool, neighbors);
         }
 
         if (progress)
@@ -210,8 +210,7 @@ void WorkerPool<T, Neighbors, N>::run(
         // (recursively, merging the trees on the way up, and reporting
         // completed tree cells to the progress tracker if present).
         for (region = region.parent(t->parent_index), t = t->parent;
-             t && t->collectChildren(eval, tape, max_err, region,
-                                     object_pool);
+             t && t->collectChildren(eval, tape, region, object_pool, max_err);
              region = region.parent(t->parent_index), t = t->parent)
         {
             // Report the volume of completed trees as we walk back

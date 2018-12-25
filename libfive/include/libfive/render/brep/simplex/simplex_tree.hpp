@@ -111,18 +111,21 @@ public:
      *
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
-    std::shared_ptr<Tape> evalInterval(
-            XTreeEvaluator* eval, const Region<N>& region,
-            std::shared_ptr<Tape> tape);
+    std::shared_ptr<Tape> evalInterval(XTreeEvaluator* eval,
+                                       std::shared_ptr<Tape> tape,
+                                       const Region<N>& region,
+                                       Pool& object_pool);
 
     /*
      *  Evaluates and stores a result at every corner of the cell.
      *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
-    void evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>& neighbors,
-                  const Region<N>& region, std::shared_ptr<Tape> tape,
-                  Pool& object_pool);
+    void evalLeaf(XTreeEvaluator* eval,
+                  std::shared_ptr<Tape> tape,
+                  const Region<N>& region,
+                  Pool& object_pool,
+                  const SimplexNeighbors<N>& neighbors);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -130,10 +133,11 @@ public:
      *
      *  Returns false if any children are yet to come, true otherwise.
      */
-    bool collectChildren(
-            XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
-            double max_err, const Region<N>& region,
-            Pool& object_pool);
+    bool collectChildren(XTreeEvaluator* eval,
+                         std::shared_ptr<Tape> tape,
+                         const Region<N>& region,
+                         Pool& object_pool,
+                         double max_err);
 
     /*  Looks up the cell's level for purposes of vertex placement,
      *  returning 0 or more for LEAF cells (depending on how many
@@ -168,9 +172,20 @@ protected:
 
     /*
      *  Calculate and store whether each vertex is inside or outside
-     *  This populates leaf->sub[i]->inside, for in in 0..ipow(3, N)
+     *  This populates leaf->sub[i]->inside, for i in 0..ipow(3, N)
      */
     void saveVertexSigns(XTreeEvaluator* eval,
+                         Tape::Handle tape,
+                         const Region<N>& region,
+                         const std::array<bool, ipow(3, N)>& already_solved);
+
+    /*
+     *  Populates this->leaf->sub[i]->qef for every corner subspace.
+     *
+     *  Only corners are evaluated + populated; faces / edges / volumes
+     *  are initialized to zero (and can be filled by merging later)
+     */
+    void buildCornerQEFs(XTreeEvaluator* eval,
                          Tape::Handle tape,
                          const Region<N>& region,
                          const std::array<bool, ipow(3, N)>& already_solved);

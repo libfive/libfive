@@ -112,18 +112,21 @@ public:
      *
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
-    std::shared_ptr<Tape> evalInterval(
-            XTreeEvaluator* eval, const Region<N>& region,
-            std::shared_ptr<Tape> tape);
+    std::shared_ptr<Tape> evalInterval(XTreeEvaluator* eval,
+                                       std::shared_ptr<Tape> tape,
+                                       const Region<N>& region,
+                                       Pool& object_pool);
 
     /*
      *  Evaluates and stores a result at every corner of the cell.
      *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
-    void evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
-                  const Region<N>& region, std::shared_ptr<Tape> tape,
-                  Pool& spare_leafs);
+    void evalLeaf(XTreeEvaluator* eval,
+                  std::shared_ptr<Tape> tape,
+                  const Region<N>& region,
+                  Pool& spare_leafs,
+                  const DCNeighbors<N>& neighbors);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -131,10 +134,11 @@ public:
      *
      *  Returns false if any children are yet to come, true otherwise.
      */
-    bool collectChildren(
-            XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
-            double max_err, const Region<N>& region,
-            Pool& object_pool);
+    bool collectChildren(XTreeEvaluator* eval,
+                         std::shared_ptr<Tape> tape,
+                         const Region<N>& region,
+                         Pool& object_pool,
+                         double max_err);
 
     /*
      *  Returns the filled / empty state for the ith corner
@@ -226,7 +230,6 @@ protected:
      *  (must be specialized for a specific dimensionality)
      */
     const std::vector<std::pair<uint8_t, uint8_t>>& edges() const;
-
 
     /*
      *  Writes the given intersection into the intersections list

@@ -84,8 +84,10 @@ void DCLeaf<N>::reset()
 }
 
 template <unsigned N>
-Tape::Handle DCTree<N>::evalInterval(
-        XTreeEvaluator* eval, const Region<N>& region, Tape::Handle tape)
+Tape::Handle DCTree<N>::evalInterval(XTreeEvaluator* eval,
+                                     Tape::Handle tape,
+                                     const Region<N>& region,
+                                     Pool&)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -109,9 +111,11 @@ Tape::Handle DCTree<N>::evalInterval(
 }
 
 template <unsigned N>
-void DCTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
-                        const Region<N>& region, Tape::Handle tape,
-                        Pool& object_pool)
+void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
+                        Tape::Handle tape,
+                        const Region<N>& region,
+                        Pool& object_pool,
+                        const DCNeighbors<N>& neighbors)
 {
     // Track how many corners have to be evaluated here
     // (if they can be looked up from a neighbor, they don't have
@@ -644,10 +648,11 @@ uint8_t DCTree<N>::buildCornerMask(
 }
 
 template <unsigned N>
-bool DCTree<N>::collectChildren(
-        XTreeEvaluator* eval, Tape::Handle tape,
-        double max_err, const Region<N>& region,
-        Pool& object_pool)
+bool DCTree<N>::collectChildren(XTreeEvaluator* eval,
+                                Tape::Handle tape,
+                                const Region<N>& region,
+                                Pool& object_pool,
+                                double max_err)
 {
     // Wait for collectChildren to have been called N times
     if (this->pending-- != 0)
