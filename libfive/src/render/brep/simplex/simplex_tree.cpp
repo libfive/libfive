@@ -193,11 +193,17 @@ Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
+        // Build the corner-subspace QEFs by sampling the function at
+        // the corners.  Normally, this would be done by evalLeaf, but
+        // we skip it for empty / filled cells, so we need to do it here.
         std::array<bool, ipow(3, N)> already_solved;
-        std::fill(already_solved.begin(), already_solved.end(), false);
-
-        // Build the corner-subspace QEFs by sampling the function at the corners
         object_pool.next().get(&this->leaf);
+        for (unsigned i=0; i < ipow(3, N); ++i) {
+            already_solved[i] = false;
+            object_pool.next().next().get(&this->leaf->sub[i]);
+            this->leaf->sub[i]->refcount++;
+        }
+
         buildCornerQEFs(eval, tape, region, already_solved);
 
         // Statically unroll a loop to position every vertex within their subspace.
@@ -205,6 +211,12 @@ Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
         // to use vertex position, but is necessary if a neighbor borrows
         // a leaf subspace and expects the vertex to be in the right position.
         Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
+
+        // We know that every vertex is either inside or outside, so assign
+        // that state here to save time (i.e. don't call saveVertexSigns)
+        for (auto& s: this->leaf->sub) {
+            s->inside = (this->type == Interval::FILLED);
+        }
 
         this->done();
     }
@@ -596,11 +608,13 @@ void SimplexTree<N>::assignIndices(
         uint64_t& index, const SimplexNeighbors<N>& neighbors) const
 {
     if (this->isBranch()) {
+        assert(this->leaf == nullptr);
         for (unsigned i=0; i < this->children.size(); ++i) {
             auto new_neighbors = neighbors.push(i, this->children);
             this->children[i].load()->assignIndices(index, new_neighbors);
         }
-    } else if (this->leaf != nullptr) {
+    } else {
+        assert(this->leaf != nullptr);
         for (unsigned i=0; i < ipow(3, N); ++i) {
             auto n = neighbors.getIndex(i);
             if (n) {
