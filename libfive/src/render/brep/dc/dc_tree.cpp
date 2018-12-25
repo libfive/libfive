@@ -85,17 +85,17 @@ void DCLeaf<N>::reset()
 
 template <unsigned N>
 Tape::Handle DCTree<N>::evalInterval(
-        IntervalEvaluator& eval, const Region<N>& region, Tape::Handle tape)
+        XTreeEvaluator* eval, const Region<N>& region, Tape::Handle tape)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
-    auto o = eval.evalAndPush(
+    auto o = eval->interval.evalAndPush(
             region.lower3().template cast<float>(),
             region.upper3().template cast<float>(),
             tape);
 
     this->type = Interval::state(o.first);
-    if (!eval.isSafe())
+    if (!eval->interval.isSafe())
     {
         this->type = Interval::AMBIGUOUS;
         return tape;

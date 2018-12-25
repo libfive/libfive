@@ -112,7 +112,7 @@ public:
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
     std::shared_ptr<Tape> evalInterval(
-            IntervalEvaluator& eval, const Region<N>& region,
+            XTreeEvaluator* eval, const Region<N>& region,
             std::shared_ptr<Tape> tape);
 
     /*

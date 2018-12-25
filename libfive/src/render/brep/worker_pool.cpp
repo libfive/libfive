@@ -147,7 +147,7 @@ void WorkerPool<T, Neighbors, N>::run(
         const bool can_subdivide =  min_dimension > min_feature;
         if (can_subdivide)
         {
-            tape = t->evalInterval(eval->interval, region, task.tape);
+            tape = t->evalInterval(eval, region, task.tape);
 
             // If this Tree is ambiguous, then push the children to the stack
             // and keep going (because all the useful work will be done
