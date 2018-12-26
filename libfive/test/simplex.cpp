@@ -321,7 +321,7 @@ TEST_CASE("SimplexMesher: sphere-box intersection vertex placement")
     auto c = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
     Region<3> r({-10, -10, -10}, {10, 10, 10});
 
-    auto t = SimplexTreePool<3>::build(c, r, 0.2, 0, 1);
+    auto t = SimplexTreePool<3>::build(c, r, 0.2, 1e-8, 1);
     t->assignIndices();
 
     std::atomic_bool cancel(false);
