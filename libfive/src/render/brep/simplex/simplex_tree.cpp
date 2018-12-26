@@ -516,6 +516,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
     const double err = Unroller<N, ipow(3, N) - 1>()(
             *this->leaf, already_solved, region);
 
+    // We've successfully collapsed the cell!
     if (err < max_err) {
         // Store this tree's depth as a function of its children
         this->leaf->level = std::accumulate(
@@ -523,8 +524,13 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
             [](const unsigned& a, SimplexTree<N>* b)
             { return std::max(a, b->leaf->level);} ) + 1;
 
+        // Store the tape for this larger region
+        this->leaf->tape = tape;
+
         // Calculate and save vertex inside/outside states
         saveVertexSigns(eval, tape, region, already_solved);
+
+        // TODO: reduce to interval here
 
         // Then, erase all of the children, which marks that this
         // cell is no longer a BRANCH.

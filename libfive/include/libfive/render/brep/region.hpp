@@ -119,6 +119,10 @@ public:
         return out;
     }
 
+    Region<3> region3() const {
+        return Region<3>(lower3(), upper3());
+    }
+
     Eigen::Vector3d corner3(unsigned i) const
     {
         Eigen::Vector3d out;
