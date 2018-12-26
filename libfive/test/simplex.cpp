@@ -201,28 +201,57 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 
 TEST_CASE("SimplexTree<3>::assignIndices")
 {
-    auto c = sphere(0.5);
-    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+    SECTION("Sphere") {
+        auto c = sphere(0.5);
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
-    auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
-    REQUIRE(t.get() != nullptr);
+        auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
+        REQUIRE(t.get() != nullptr);
 
-    t->assignIndices();
+        t->assignIndices();
 
-    REQUIRE(t->isBranch());
-    std::set<uint64_t> indices;
-    for (auto& c : t->children) {
-        REQUIRE(c.load() != nullptr);
-        REQUIRE(!c.load()->isBranch());
-        REQUIRE(c.load()->leaf != nullptr);
-        for (auto& i : c.load()->leaf->sub)
-        {
-            indices.insert(i->index);
+        REQUIRE(t->isBranch());
+        std::set<uint64_t> indices;
+        for (auto& c : t->children) {
+            REQUIRE(c.load() != nullptr);
+            REQUIRE(!c.load()->isBranch());
+            REQUIRE(c.load()->leaf != nullptr);
+            for (auto& i : c.load()->leaf->sub)
+            {
+                indices.insert(i->index);
+            }
+        }
+        REQUIRE(indices.size() == 125);
+        REQUIRE(*indices.begin() == 1);
+        REQUIRE(*indices.rbegin() == 125);
+    }
+
+
+    SECTION("Sphere-cube intersection") {
+        auto c = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+        Region<3> r({-10, -10, -10}, {10, 10, 10});
+
+        auto t = SimplexTreePool<3>::build(c, r, 1, 1e-8, 1);
+        t->assignIndices();
+
+        std::list<const SimplexTree<3>*> todo;
+        todo.push_back(t.get());
+
+        while (todo.size()) {
+            const auto next = todo.front();
+            todo.pop_front();
+
+            if (next->isBranch()) {
+                for (const auto& c: next->children) {
+                    todo.push_back(c.load());
+                }
+            } else if (next->leaf) {
+                for (const auto& sub: next->leaf->sub) {
+                    REQUIRE(sub->index != 0);
+                }
+            }
         }
     }
-    REQUIRE(indices.size() == 125);
-    REQUIRE(*indices.begin() == 1);
-    REQUIRE(*indices.rbegin() == 125);
 }
 
 TEST_CASE("SimplexTree<3>::leafLevel")
