@@ -83,11 +83,11 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             ts.at(index)->leaf->sub[s.i]->inside,
         });
     };
-    auto saveDummyVertex = [&subvs]() {
+    auto saveDummyVertex = [&subvs](Interval::I i) {
         subvs.push_back(SubspaceVertex {
                 Eigen::Vector3d::Zero(),
                 0,
-                false,
+                i == Interval::FILLED,
         });
     };
 
@@ -135,7 +135,8 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             if (ta->leafLevel() == tb->leafLevel() &&
                 ta->leafLevel() == SimplexTree<3>::LEAF_LEVEL_INVALID)
             {
-                saveDummyVertex();
+                assert(ta->type == tb->type);
+                saveDummyVertex(ta->type);
             }
             else if (ta->leafLevel() < tb->leafLevel())
             {
@@ -161,7 +162,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         if (ts[i]->type == Interval::AMBIGUOUS) {
             saveSubspaceVertex(i, ipow(3, 3) - 1);
         } else {
-            saveDummyVertex();
+            saveDummyVertex(ts[i]->type);
         }
     }
 
