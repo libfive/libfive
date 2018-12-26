@@ -186,7 +186,7 @@ std::shared_ptr<OracleContext> Tape::getContext(unsigned i) const
 std::shared_ptr<Tape> Tape::getBase(std::shared_ptr<Tape> tape,
                                     const Region<3>& r)
 {
-    while (tape) {
+    while (tape->parent.get()) {
         if (tape->type == Tape::INTERVAL &&
             r.lower.x() >= tape->X.lower() && r.upper.x() <= tape->X.upper() &&
             r.lower.y() >= tape->Y.lower() && r.upper.y() <= tape->Y.upper() &&
