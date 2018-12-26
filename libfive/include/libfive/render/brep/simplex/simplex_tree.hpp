@@ -188,7 +188,9 @@ protected:
     void buildCornerQEFs(XTreeEvaluator* eval,
                          Tape::Handle tape,
                          const Region<N>& region,
-                         const std::array<bool, ipow(3, N)>& already_solved);
+                         Pool& object_pool,
+                         const SimplexNeighbors<N>& neighbors,
+                         bool find_vertices);
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;

@@ -175,7 +175,7 @@ template <unsigned N>
 Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
                                           Tape::Handle tape,
                                           const Region<N>& region,
-                                          Pool& object_pool)
+                                          Pool& /* object_pool */)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -193,31 +193,6 @@ Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        // Build the corner-subspace QEFs by sampling the function at
-        // the corners.  Normally, this would be done by evalLeaf, but
-        // we skip it for empty / filled cells, so we need to do it here.
-        std::array<bool, ipow(3, N)> already_solved;
-        object_pool.next().get(&this->leaf);
-        for (unsigned i=0; i < ipow(3, N); ++i) {
-            already_solved[i] = false;
-            object_pool.next().next().get(&this->leaf->sub[i]);
-            this->leaf->sub[i]->refcount++;
-        }
-
-        buildCornerQEFs(eval, tape, region, already_solved);
-
-        // Statically unroll a loop to position every vertex within their subspace.
-        // TODO: This is wasted work for interval regions, where we never need
-        // to use vertex position, but is necessary if a neighbor borrows
-        // a leaf subspace and expects the vertex to be in the right position.
-        Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
-
-        // We know that every vertex is either inside or outside, so assign
-        // that state here to save time (i.e. don't call saveVertexSigns)
-        for (auto& s: this->leaf->sub) {
-            s->inside = (this->type == Interval::FILLED);
-        }
-
         this->done();
     }
     return o.second;
@@ -230,8 +205,34 @@ void SimplexTree<N>::buildCornerQEFs(
         XTreeEvaluator* eval,
         Tape::Handle tape,
         const Region<N>& region,
-        const std::array<bool, ipow(3, N)>& already_solved)
+        Pool& object_pool,
+        const SimplexNeighbors<N>& neighbors,
+        bool find_vertices)
 {
+    assert(this->leaf != nullptr);
+
+    // Marks which subspaces have already been solved
+    std::array<bool, ipow(3, N)> already_solved;
+    std::fill(already_solved.begin(), already_solved.end(), false);
+
+    // First, borrow solved QEF + vertex position + inside / outside
+    // from our neighbors whenever possible.
+    for (unsigned i=0; i < ipow(3, N); ++i) {
+        const auto c = neighbors.check(NeighborIndex(i));
+        if (c.first != nullptr) {
+            this->leaf->sub[i] = c.first->sub[c.second.i];
+            already_solved[i] = true;
+        } else {
+            object_pool.next().next().get(&this->leaf->sub[i]);
+        }
+        this->leaf->sub[i]->refcount++;
+    }
+
+    // First, we evaluate the corners, finding position + normal and storing
+    // it in the corner QEFs (which are assumed to be empty)
+    static_assert(ipow(2, N) < LIBFIVE_EVAL_ARRAY_SIZE,
+                  "Too many points to evaluate");
+
     // Remap from a value in the range [0, count) to a corner index
     // in the range [0, 1 <<N).
     std::array<int, 1 << N> corner_indices;
@@ -292,6 +293,14 @@ void SimplexTree<N>::buildCornerQEFs(
             }
         }
     }
+
+    if (find_vertices) {
+        // Statically unroll a loop to position every vertex within their subspace.
+        Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
+
+        // Check whether each vertex is inside or outside
+        saveVertexSigns(eval, tape, region, already_solved);
+    }
 }
 
 template <unsigned N>
@@ -305,36 +314,8 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
     this->leaf->tape = tape;
     this->leaf->level = 0;
 
-    // Marks which subspaces have already been solved
-    std::array<bool, ipow(3, N)> already_solved;
-    std::fill(already_solved.begin(), already_solved.end(), false);
-
-    // First, borrow solved QEF + vertex position + inside / outside
-    // from our neighbors whenever possible.
-    for (unsigned i=0; i < ipow(3, N); ++i) {
-        const auto c = neighbors.check(NeighborIndex(i));
-        if (c.first != nullptr) {
-            this->leaf->sub[i] = c.first->sub[c.second.i];
-            already_solved[i] = true;
-        } else {
-            object_pool.next().next().get(&this->leaf->sub[i]);
-        }
-        this->leaf->sub[i]->refcount++;
-    }
-
-    // First, we evaluate the corners, finding position + normal and storing
-    // it in the corner QEFs (which are assumed to be empty)
-    static_assert(ipow(2, N) < LIBFIVE_EVAL_ARRAY_SIZE,
-                  "Too many points to evaluate");
-
     // Build the corner-subspace QEFs by sampling the function at the corners
-    buildCornerQEFs(eval, tape, region, already_solved);
-
-    // Statically unroll a loop to position every vertex within their subspace.
-    Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
-
-    // Check whether each vertex is inside or outside
-    saveVertexSigns(eval, tape, region, already_solved);
+    buildCornerQEFs(eval, tape, region, object_pool, neighbors, true);
 
     // Check all subspace vertices to decide whether this leaf is
     // completely empty or full.  This isn't as conclusive as the
@@ -410,13 +391,41 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
     this->type = all_empty ? Interval::EMPTY
                : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
 
-    // Even if this cell is unambiguous, we have to create a combined QEF
-    // for each subspace, which may be used when merging with neighbors
-    // higher up the tree.
+    // If this cell is unambiguous, then forget all its branches and return
+    if (this->type == Interval::EMPTY || this->type == Interval::FILLED)
+    {
+        this->releaseChildren(object_pool);
+        this->done();
+        return true;
+    }
+
+    // Children may have been proven filled / empty by interval arithmetic
+    // or by collapsing smaller cells.  In this case, they don't have QEF
+    // data populated, so we add it here
+    SimplexNeighbors<N> neighbors;
+    const auto rs = region.subdivide();
+    for (unsigned i=0; i < ipow(2, N); ++i) {
+        if (cs[i]->leaf == nullptr) {
+            assert(cs[i]->type == Interval::FILLED ||
+                   cs[i]->type == Interval::EMPTY);
+
+            object_pool.next().get(&cs[i]->leaf);
+            cs[i]->buildCornerQEFs(eval, tape, rs[i], object_pool,
+                                   neighbors.push(i, this->children),
+                                   false);
+
+            for (unsigned j=0; j < ipow(3, N); ++j) {
+                cs[i]->leaf->sub[j]->inside = (cs[i]->type == Interval::FILLED);
+            }
+        }
+    }
+
+    // We've now passed all of our opportunitie to exit without
+    // allocating a Leaf, so create one here.
     assert(this->leaf == nullptr);
     object_pool.next().get(&this->leaf);
 
-    // Grab SimplexLeafSubspace objects
+    // Allocate SimplexLeafSubspace objects for this tree
     // TODO: can we pull from neighbors here as well?
     for (auto& s: this->leaf->sub) {
         object_pool.next().next().get(&s);
@@ -482,6 +491,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
             // otherwise it's converted to a floating axis.
             uint8_t floating_out = 0;
             uint8_t pos_out = 0;
+
             for (unsigned d=0; d < N; ++d) {
                 if (floating & (1 << d) ||
                    (pos & (1 << d)) != (child.i & (1 << d)))
@@ -522,7 +532,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
         } else {
             // Otherwise, this remains a branching node;
             // free this leaf back to the pool
-            object_pool.next().put(this->leaf);
+            this->leaf->releaseTo(object_pool.next());
             this->leaf = nullptr;
         }
     }
@@ -613,8 +623,7 @@ void SimplexTree<N>::assignIndices(
             auto new_neighbors = neighbors.push(i, this->children);
             this->children[i].load()->assignIndices(index, new_neighbors);
         }
-    } else {
-        assert(this->leaf != nullptr);
+    } else if (this->leaf != nullptr) {
         for (unsigned i=0; i < ipow(3, N); ++i) {
             auto n = neighbors.getIndex(i);
             if (n) {
