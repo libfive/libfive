@@ -297,7 +297,10 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     {
         const auto this_cell = ts.at(i);
         // Skip empty or filled cells immediately
-        if (this_cell->leaf == nullptr) {
+        if (this_cell->leaf == nullptr ||
+            this_cell->type == Interval::EMPTY ||
+            this_cell->type == Interval::FILLED)
+        {
             assert(this_cell->type == Interval::EMPTY ||
                    this_cell->type == Interval::FILLED);
             continue;
