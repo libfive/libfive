@@ -209,16 +209,21 @@ void WorkerPool<T, Neighbors, N>::run(
         // If all of the children are done, then ask the parent to collect them
         // (recursively, merging the trees on the way up, and reporting
         // completed tree cells to the progress tracker if present).
-        for (region = region.parent(t->parent_index), t = t->parent;
-             t && t->collectChildren(eval, tape, region, object_pool, max_err);
-             region = region.parent(t->parent_index), t = t->parent)
+        auto up = [&]{
+            region = region.parent(t->parent_index);
+            tape = Tape::getBase(tape, region.region3());
+            t = t->parent;
+        };
+        up();
+        while (t != nullptr &&
+               t->collectChildren(eval, tape, region, object_pool, max_err))
         {
             // Report the volume of completed trees as we walk back
             // up towards the root of the tree.
-            if (progress)
-            {
+            if (progress) {
                 progress->tick();
             }
+            up();
         }
 
         // Termination condition:  if we've ended up pointing at the parent
