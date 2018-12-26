@@ -510,43 +510,30 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
         }
     }
 
-    // If this cell is unambiguous, then we don't care about vertex placement,
-    // so we can skip everything after immediately after merging the QEFs.
-    if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
-    {
-        for (auto& s: this->leaf->sub) {
-            s->inside = (this->type == Interval::FILLED);
-        }
-    }
-    else
-    {
-        // Statically unroll a loop to position every subspace vertex
-        std::array<bool, ipow(3, N)> already_solved;
-        std::fill(already_solved.begin(), already_solved.end(), false);
-        const double err = Unroller<N, ipow(3, N) - 1>()(
-                *this->leaf, already_solved, region);
+    // Statically unroll a loop to position every subspace vertex
+    std::array<bool, ipow(3, N)> already_solved;
+    std::fill(already_solved.begin(), already_solved.end(), false);
+    const double err = Unroller<N, ipow(3, N) - 1>()(
+            *this->leaf, already_solved, region);
 
-        if (err < max_err) {
-            // Calculate and save vertex inside/outside states
-            saveVertexSigns(eval, tape, region, already_solved);
-        } else {
-            // Otherwise, this remains a branching node;
-            // free this leaf back to the pool
-            this->leaf->releaseTo(object_pool.next());
-            this->leaf = nullptr;
-        }
-    }
-
-    if (this->leaf) {
+    if (err < max_err) {
         // Store this tree's depth as a function of its children
         this->leaf->level = std::accumulate(
             cs.begin(), cs.end(), (unsigned)0,
             [](const unsigned& a, SimplexTree<N>* b)
             { return std::max(a, b->leaf->level);} ) + 1;
 
+        // Calculate and save vertex inside/outside states
+        saveVertexSigns(eval, tape, region, already_solved);
+
         // Then, erase all of the children, which marks that this
         // cell is no longer a BRANCH.
         this->releaseChildren(object_pool);
+    } else {
+        // Otherwise, this remains a branching node;
+        // free this leaf back to the pool
+        this->leaf->releaseTo(object_pool.next());
+        this->leaf = nullptr;
     }
 
     this->done();
