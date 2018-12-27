@@ -293,9 +293,12 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     }
 
     // Iterate over the four cells
-    for (unsigned i : {0, 1, 3, 2})
+    const std::array<unsigned, 4> order = {{0, 1, 3, 2}};
+    for (unsigned index=0; index < 4; ++index)
     {
+        const auto i = order.at(index);
         const auto this_cell = ts.at(i);
+
         // Skip empty or filled cells immediately
         if (this_cell->leaf == nullptr ||
             this_cell->type == Interval::EMPTY ||
