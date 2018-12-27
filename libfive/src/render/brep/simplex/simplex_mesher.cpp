@@ -170,7 +170,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     // and perform marching tetrahedrons on 4 tets within each cell.
     //
     // First, we define which six vertices we care about in each cell,
-    // in the order
+    // as indices into the subvs array in the order
     // 0:   edge
     // 1:   corner
     // 2:   corner
@@ -181,8 +181,8 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     const std::array<std::array<unsigned, 6>, 4> cell_vertices = {{
         {{0, 1, 2, 6, 3, 7}},  // Cell 0
         {{0, 1, 2, 3, 4, 8}},  // Cell 1
-        {{0, 1, 2, 5, 6, 10}}, // Cell 3
-        {{0, 1, 2, 4, 5, 9}},  // Cell 2
+        {{0, 1, 2, 5, 6, 10}}, // Cell 2
+        {{0, 1, 2, 4, 5, 9}},  // Cell 3
     }};
 
     //  Within each cell, indexing into the array above, here are the four
