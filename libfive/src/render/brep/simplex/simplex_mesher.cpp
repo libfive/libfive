@@ -299,6 +299,30 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         const auto i = order.at(index);
         const auto this_cell = ts.at(i);
 
+        // We skip cells which don't actually contain the edge, which is
+        // detected by seeing if they're duplicated from a neighbor as
+        // we rotate around the axis.
+        //
+        // Here's an ASCII-art depiction:
+        //
+        //   ------W--------
+        //   |    /| B |   |
+        //   |  C -V-------|
+        //   |    \| A |   |
+        //   ---------------
+        //   If this function is called with cells A, B, C, C about axis V,
+        //   then we only want to generate two triangles within cell C,
+        //   rather than 4 triangles (which would be generated in the naive
+        //   case, where cell C is treated as both lower-left and upper-left).
+        //
+        //   We store whether the previous or next cell (clockwise) is the
+        //   same as this cell, then check whether that face is used in the
+        //   tet below (skipping the tet if that is the case).
+        const bool next_shared =
+            (this_cell == ts.at(order.at((index + 1) % 4)));
+        const bool prev_shared =
+            (this_cell == ts.at(order.at((index + 3) % 4)));
+
         // Skip empty or filled cells immediately
         if (this_cell->leaf == nullptr ||
             this_cell->type == Interval::EMPTY ||
@@ -315,8 +339,23 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         {
             // Build the corner mask
             unsigned mask = 0;
+            bool shared_okay = true;
             for (unsigned j=0; j < 4; ++j) {
+                // This is the check described above, where we
+                // skip tets which use a face that's invalid (due
+                // to a duplicate, larger cell being included twice).
+                //
+                // tet vertices 3 and 4 are the face-shared vertices,
+                // which is why we check those numbers specifically.
+                if ((tet.at(j) == 3 && prev_shared) ||
+                    (tet.at(j) == 4 && next_shared))
+                {
+                    shared_okay = false;
+                }
                 mask |= subvs.at(vs.at(tet.at(j))).inside << j;
+            }
+            if (!shared_okay) {
+                continue;
             }
 
             // Iterate over up-to-two triangles
