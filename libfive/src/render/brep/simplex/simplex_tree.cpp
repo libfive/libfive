@@ -535,6 +535,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
         // Then, erase all of the children, which marks that this
         // cell is no longer a BRANCH.
         this->releaseChildren(object_pool);
+        assert(!this->isBranch());
     } else {
         // Otherwise, this remains a branching node;
         // free this leaf back to the pool
