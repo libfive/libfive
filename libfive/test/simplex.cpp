@@ -201,11 +201,27 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 
 TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
 {
-    auto c = box({-1, -1, -3}, {1, 2, 0.1});
-    Region<3> r({-10, -10, -10}, {10, 10, 10});
+    auto c = box({-3, -3, -3}, {3, 3, 3});
+    Region<3> r({-4, -4, -4}, {4, 4, 4});
 
-    auto t = SimplexTreePool<3>::build(c, r, 0.4, 1e-8, 1);
+    auto t = SimplexTreePool<3>::build(c, r, 1, 1e-8, 1);
     t->assignIndices();
+
+    std::list<const SimplexTree<3>*> todo;
+    todo.push_back(t.get());
+
+    while (todo.size()) {
+        const auto next = todo.front();
+        todo.pop_front();
+        if (next->isBranch()) {
+            REQUIRE(next->leaf == nullptr);
+            for (auto& c : next->children) {
+                todo.push_back(c.load());
+            }
+        } else if (next->type == Interval::AMBIGUOUS) {
+            REQUIRE(next->leaf != nullptr);
+        }
+    }
 
     std::atomic_bool cancel(false);
     auto m = Dual<3>::walk<SimplexMesher>(t, 8,
