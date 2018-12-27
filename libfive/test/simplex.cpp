@@ -199,6 +199,23 @@ TEST_CASE("SimplexTree<3>: Corner positions")
     }
 }
 
+TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
+{
+    auto c = box({-1, -1, -3}, {1, 2, 0.1});
+    Region<3> r({-10, -10, -10}, {10, 10, 10});
+
+    auto t = SimplexTreePool<3>::build(c, r, 0.4, 1e-8, 1);
+    t->assignIndices();
+
+    std::atomic_bool cancel(false);
+    auto m = Dual<3>::walk<SimplexMesher>(t, 8,
+            cancel, EMPTY_PROGRESS_CALLBACK, c);
+
+    REQUIRE(m->branes.size() > 0);
+    REQUIRE(m->verts.size() > 1);
+    CHECK_EDGE_PAIRS(*m);
+}
+
 TEST_CASE("SimplexTree<3>::assignIndices")
 {
     SECTION("Sphere") {
