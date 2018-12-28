@@ -272,12 +272,6 @@ void SimplexTree<N>::findLeafVertices(
                 if (!d_.array().isFinite().all()) {
                     d_.array() = 0.0;
                 }
-
-#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
-                std::cout << "==============================================\n";
-                std::cout << region.corner(i).transpose() << " "
-                          << d_.transpose() << " " << ds(3, i) << "\n";
-#endif
                 this->leaf->sub[sub.i]->qef.insert(
                         region.corner(corner_indices[i]), d_, ds(3, i));
             };
