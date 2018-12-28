@@ -186,6 +186,12 @@ protected:
                          const std::array<bool, ipow(3, N)>& already_solved);
 
     /*
+     *  Sets this->type to EMPTY / FILLED / AMBIGUOUS depending on
+     *  the vertex signs, which must be populated.
+     */
+    void checkVertexSigns();
+
+    /*
      *  Populates this->leaf->sub[i]->qef for every corner subspace,
      *  then solves for vertex position and signs.
      *

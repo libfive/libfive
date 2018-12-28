@@ -325,28 +325,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
     // then solve for vertex position.
     this->type = Interval::AMBIGUOUS;
     findLeafVertices(eval, tape, region, object_pool, neighbors);
-
-    // Check all subspace vertices to decide whether this leaf is
-    // completely empty or full.  This isn't as conclusive as the
-    // interval arithmetic, but if there were parts of the model
-    // within the cell, we'd expect at least one vertex to hit them.
-    bool all_inside = true;
-    bool all_outside = true;
-    for (unsigned i=0; i < ipow(3, N); ++i) {
-        all_inside  &=   this->leaf->sub[i]->inside;
-        all_outside &=  !this->leaf->sub[i]->inside;
-    }
-
-    // Store a tree type based on subspace vertex positions
-    if (all_inside) {
-        assert(!all_outside);
-        this->type = Interval::FILLED;
-    } else if (all_outside) {
-        assert(!all_inside);
-        this->type = Interval::EMPTY;
-    } else {
-        this->type = Interval::AMBIGUOUS;
-    }
+    checkVertexSigns();
 
     // We need to keep the leaf + QEF data, even if the region is completely
     // filled or empty, because it could contain data that's required
@@ -521,7 +500,8 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
         // Calculate and save vertex inside/outside states
         saveVertexSigns(eval, tape, region, already_solved);
 
-        // TODO: reduce to interval here
+        // Convert to EMPTY / FILLED if unambiguous
+        checkVertexSigns();
 
         // Then, erase all of the children, which marks that this
         // cell is no longer a BRANCH.
@@ -569,6 +549,31 @@ void SimplexTree<N>::saveVertexSigns(
             : (out < 0);
 
         this->leaf->sub[i]->inside = inside;
+    }
+}
+
+template <unsigned N>
+void SimplexTree<N>::checkVertexSigns() {
+    // Check all subspace vertices to decide whether this leaf is
+    // completely empty or full.  This isn't as conclusive as the
+    // interval arithmetic, but if there were parts of the model
+    // within the cell, we'd expect at least one vertex to hit them.
+    bool all_inside = true;
+    bool all_outside = true;
+    for (const auto& s : this->leaf->sub) {
+        all_inside  &=   s->inside;
+        all_outside &=  !s->inside;
+    }
+
+    // Store a tree type based on subspace vertex positions
+    if (all_inside) {
+        assert(!all_outside);
+        this->type = Interval::FILLED;
+    } else if (all_outside) {
+        assert(!all_inside);
+        this->type = Interval::EMPTY;
+    } else {
+        this->type = Interval::AMBIGUOUS;
     }
 }
 
