@@ -213,18 +213,20 @@ TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
     while (todo.size()) {
         const auto next = todo.front();
         todo.pop_front();
+        REQUIRE(next->region.lower.matrix() !=
+                next->region.upper.matrix());
         if (next->isBranch()) {
             REQUIRE(next->leaf == nullptr);
             for (auto& c : next->children) {
                 todo.push_back(c.load());
             }
-        } else if (next->type == Interval::AMBIGUOUS) {
+        } else {
             REQUIRE(next->leaf != nullptr);
         }
     }
 
     std::atomic_bool cancel(false);
-    auto m = Dual<3>::walk<SimplexMesher>(t, 8,
+    auto m = Dual<3>::walk<SimplexMesher>(t, 1,
             cancel, EMPTY_PROGRESS_CALLBACK, c);
 
     REQUIRE(m->branes.size() > 0);

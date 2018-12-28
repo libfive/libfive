@@ -140,16 +140,22 @@ public:
                          double max_err);
 
     /*  Looks up the cell's level for purposes of vertex placement,
-     *  returning 0 or more for LEAF cells (depending on how many
-     *  other leafs were merged into them), and UINT32_MAX max for
-     *  EMPTY or FILLED cells */
-    constexpr static uint32_t LEAF_LEVEL_INVALID = UINT32_MAX;
+     *  returning 0 or more for LEAF / EMPTY / FILLED cells (depending
+     *  on how many other leafs were merged into them; 0 is the smallest
+     *  leaf).
+     *
+     *  Returns UINT32_MAX for UNKNOWN cells, which should only be created
+     *  with SimplexTree::empty() and are used around the borders of the
+     *  model to include those edges.
+     *
+     *  Triggers an assertion failure if called on a BRANCH cell.
+     */
     uint32_t leafLevel() const;
 
     /*
-     *  Assigns leaf->index to a array of unique integers for every leaf
+     *  Assigns leaf->sub[*]->index to a array of unique integers for every leaf
      *  in the tree, starting at 1.  This provides a globally unique
-     *  identifier for every subspace vertex.
+     *  identifier for every subspace vertex, which is used when making edges.
      */
     void assignIndices() const;
 
@@ -180,17 +186,18 @@ protected:
                          const std::array<bool, ipow(3, N)>& already_solved);
 
     /*
-     *  Populates this->leaf->sub[i]->qef for every corner subspace.
+     *  Populates this->leaf->sub[i]->qef for every corner subspace,
+     *  then solves for vertex position and signs.
      *
      *  Only corners are evaluated + populated; faces / edges / volumes
-     *  are initialized to zero (and can be filled by merging later)
+     *  are initialized to zero, because they'll be constructed by accumulation
+     *  as we walk up the tree.
      */
-    void buildCornerQEFs(XTreeEvaluator* eval,
-                         Tape::Handle tape,
-                         const Region<N>& region,
-                         Pool& object_pool,
-                         const SimplexNeighbors<N>& neighbors,
-                         bool find_vertices);
+    void findLeafVertices(XTreeEvaluator* eval,
+                          Tape::Handle tape,
+                          const Region<N>& region,
+                          Pool& object_pool,
+                          const SimplexNeighbors<N>& neighbors);
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;

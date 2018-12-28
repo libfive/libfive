@@ -40,6 +40,13 @@ SimplexMesher::~SimplexMesher() {
 template <Axis::Axis A>
 void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 {
+    // Skip this if all of the cells are empty / filled
+    if (std::all_of(ts.begin(), ts.end(),
+        [](const SimplexTree<3>* t){ return t->type != Interval::AMBIGUOUS; }))
+    {
+        return;
+    }
+
     // For each cell, we need to generate 4 tetrahedrons, which are
     //  edge, corner+, face A, center
     //  edge, corner+, face B, center
@@ -98,16 +105,16 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                 [](const SimplexTree<3>* a, const SimplexTree<3>* b)
                 { return a->leafLevel() < b->leafLevel(); }) - ts.begin();
 
-        // All cells are EMPTY or FILLED, so we return early
-        if (ts.at(index)->leafLevel() == SimplexTree<3>::LEAF_LEVEL_INVALID) {
-            return;
-        }
-        assert(index != SimplexTree<3>::LEAF_LEVEL_INVALID);
+        // Sanity checking to make sure that this edge belongs to a
+        // valid leaf.  If one of these fails, all should fail, but
+        // better safe than sorry.
+        assert(ts.at(index)->type != Interval::UNKNOWN);
+        assert(ts.at(index)->leafLevel() != UINT32_MAX);
+        assert(ts.at(index)->leaf != nullptr);
 
         const CornerIndex corner_index_a(((index & 1) ? 0 : Q) |
                                          ((index & 2) ? 0 : R));
         const CornerIndex corner_index_b(corner_index_a.i ^ A);
-        assert(ts.at(index)->leaf != nullptr);
 
         const auto corner_simplex_a = corner_index_a.neighbor();
         const auto corner_simplex_b = corner_index_b.neighbor();
@@ -132,23 +139,26 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             auto ta = ts.at(p.a);
             auto tb = ts.at(p.b);
 
-            if (ta->leafLevel() == tb->leafLevel() &&
-                ta->leafLevel() == SimplexTree<3>::LEAF_LEVEL_INVALID)
+            if (ta->type == Interval::UNKNOWN &&
+                tb->type == Interval::UNKNOWN)
             {
-                assert(ta->type == tb->type);
                 saveDummyVertex(ta->type);
             }
             else if (ta->leafLevel() < tb->leafLevel())
             {
-                assert(ta->leafLevel() != SimplexTree<3>::LEAF_LEVEL_INVALID);
                 saveSubspaceVertex(p.a, CornerIndex(p.axis).neighbor() |
                                         CornerIndex(7).neighbor());
             }
+            else if (ta->leafLevel() > tb->leafLevel())
+            {
+                saveSubspaceVertex(p.b, CornerIndex(0).neighbor() |
+                                        CornerIndex(7 ^ p.axis).neighbor());
+            }
+            // This is the same as the case above, but is written out
+            // for clarity: if both leafs are at the same level, then it
+            // doesn't matter which vertex is saved, so we pick the second.
             else
             {
-                // This handles the case where both vertices are at the same
-                // level (and neither are EMPTY or FILLED).
-                assert(tb->leafLevel() != SimplexTree<3>::LEAF_LEVEL_INVALID);
                 saveSubspaceVertex(p.b, CornerIndex(0).neighbor() |
                                         CornerIndex(7 ^ p.axis).neighbor());
             }
@@ -299,6 +309,16 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         const auto i = order.at(index);
         const auto this_cell = ts.at(i);
 
+        // Skip empty, filled, and dummy cells immediately
+        if (this_cell->leaf == nullptr) {
+            assert(this_cell->type == Interval::UNKNOWN);
+            continue;
+        } else if (this_cell->type == Interval::EMPTY ||
+                   this_cell->type == Interval::FILLED)
+        {
+            continue;
+        }
+
         // We skip cells which don't actually contain the edge, which is
         // detected by seeing if they're duplicated from a neighbor as
         // we rotate around the axis.
@@ -322,16 +342,6 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             (this_cell == ts.at(order.at((index + 1) % 4)));
         const bool prev_shared =
             (this_cell == ts.at(order.at((index + 3) % 4)));
-
-        // Skip empty or filled cells immediately
-        if (this_cell->leaf == nullptr ||
-            this_cell->type == Interval::EMPTY ||
-            this_cell->type == Interval::FILLED)
-        {
-            assert(this_cell->type == Interval::EMPTY ||
-                   this_cell->type == Interval::FILLED);
-            continue;
-        }
 
         // Iterate over the six tetrahedrons
         const auto& vs = cell_vertices.at(i);
@@ -415,6 +425,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                     // Otherwise, perform the edge search here, storing
                     // the resulting position in both caches.
                     assert(va.inside != vb.inside);
+
                     const uint64_t surf_vert_index = va.inside
                         ? searchEdge(va.pos, vb.pos, this_cell->leaf->tape)
                         : searchEdge(vb.pos, va.pos, this_cell->leaf->tape);
@@ -485,6 +496,7 @@ uint64_t SimplexMesher::searchEdge(Eigen::Vector3d inside,
 
     // TODO: we should weight the exact position based on values
     Eigen::Vector3d vert = (inside + outside) / 2;
+
     return m.pushVertex(vert.template cast<float>());
 }
 
