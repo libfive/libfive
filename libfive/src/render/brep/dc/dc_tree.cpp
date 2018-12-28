@@ -778,11 +778,8 @@ bool DCTree<N>::collectChildren(XTreeEvaluator* eval,
                  region.perp.template cast<float>();
             if (fabs(eval->feature.eval(v, Tape::getBase(tape, v))) < max_err)
             {
-                // Store this tree's depth as a function of its children
-                this->leaf->level = std::accumulate(
-                    cs.begin(), cs.end(), (unsigned)0,
-                    [](const unsigned& a, DCTree<N>* b)
-                    { return std::max(a, b->level());} ) + 1;
+                // Store this tree's depth based on the region's level
+                this->leaf->level = region.level;
 
                 // Then, erase all of the children and mark that we collapsed
                 this->releaseChildren(object_pool);

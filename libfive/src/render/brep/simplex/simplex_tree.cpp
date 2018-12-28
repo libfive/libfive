@@ -197,6 +197,7 @@ Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
         SimplexNeighbors<N> neighbors;
 
         object_pool.next().get(&this->leaf);
+        this->leaf->level = region.level;
         findLeafVertices(eval, tape, region, object_pool, neighbors);
         this->done();
     }
@@ -317,7 +318,8 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
 {
     object_pool.next().get(&this->leaf);
     this->leaf->tape = tape;
-    this->leaf->level = 0;
+    this->leaf->level = region.level;
+    assert(region.level == 0);
 
     // Build the corner-subspace QEFs by sampling the function at the corners,
     // then solve for vertex position.
@@ -387,6 +389,13 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
     assert(this->leaf == nullptr);
     object_pool.next().get(&this->leaf);
 
+    // Store this tree's depth and tape.  This could be delegated
+    // until we're sure that we're keeping the leaf, but might as well
+    // do it here (instead of having to write this code in both the
+    // unambiguous and ambiguous cases).
+    this->leaf->level = region.level;
+    this->leaf->tape = tape;
+
     // Update corner and filled / empty state from children
     bool all_empty = true;
     bool all_full  = true;
@@ -406,16 +415,6 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
     // (after solving for vertex positions).
     if (this->type == Interval::EMPTY || this->type == Interval::FILLED)
     {
-        // Store this tree's depth as a function of its children
-        // TODO: this is duplicated from below
-        this->leaf->level = std::accumulate(
-            cs.begin(), cs.end(), (unsigned)0,
-            [](const unsigned& a, SimplexTree<N>* b)
-            { return std::max(a, b->leaf->level);} ) + 1;
-
-        // Store the tape for this larger region
-        this->leaf->tape = tape;
-
         this->releaseChildren(object_pool);
         assert(!this->isBranch());
 
@@ -519,15 +518,6 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
 
     // We've successfully collapsed the cell!
     if (err < max_err) {
-        // Store this tree's depth as a function of its children
-        this->leaf->level = std::accumulate(
-            cs.begin(), cs.end(), (unsigned)0,
-            [](const unsigned& a, SimplexTree<N>* b)
-            { return std::max(a, b->leaf->level);} ) + 1;
-
-        // Store the tape for this larger region
-        this->leaf->tape = tape;
-
         // Calculate and save vertex inside/outside states
         saveVertexSigns(eval, tape, region, already_solved);
 

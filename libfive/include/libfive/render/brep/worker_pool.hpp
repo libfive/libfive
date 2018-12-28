@@ -53,10 +53,9 @@ protected:
         boost::lockfree::stack<Task, boost::lockfree::fixed_sized<true>>;
 
     static void run(XTreeEvaluator* eval, LockFreeStack& tasks,
-                    const float min_feature, const float max_err,
-                    std::atomic_bool& done, std::atomic_bool& cancel,
-                    Root<T>& root, std::mutex& root_lock,
-                    ProgressWatcher* progress);
+                    const float max_err, std::atomic_bool& done,
+                    std::atomic_bool& cancel, Root<T>& root,
+                    std::mutex& root_lock, ProgressWatcher* progress);
 };
 
 }   // namespace Kernel
