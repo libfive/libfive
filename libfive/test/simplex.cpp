@@ -59,21 +59,18 @@ TEST_CASE("SimplexTree<2>::assignIndices")
     REQUIRE(*indices.rbegin() == 25);
 }
 
-TEST_CASE("SimplexTree<2>: cell collapsing", "[!mayfail]")
+TEST_CASE("SimplexTree<2>: cell collapsing")
 {
-    SECTION("Axis-aligned box") {
-        auto shape = rectangle(-0.3, 0.8, -0.7, 0.2);
+    SECTION("Rotated box") {
+        auto shape = rotate2d(rectangle(-0.5, -0.5, 0.6, 0.6),
+                              M_PI / 4);
         auto r = Region<2>({-1, -1}, {1, 1});
         auto t = SimplexTreePool<2>::build(shape, r,
              0.4 /* min_feature */,
              1e-8, /* max_err */
              1 /* workers */);
-        REQUIRE(t->isBranch());
-        for (auto& c : t->children) {
-            REQUIRE(!c.load()->isBranch());
-        }
+        REQUIRE(!t->isBranch());
     }
-
 }
 
 TEST_CASE("SimplexTree<3>: types")
