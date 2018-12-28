@@ -39,19 +39,24 @@ public:
     /*
      *  Constructs a region with the given bounds
      */
-    Region(Pt lower, Pt upper) : lower(lower), upper(upper),
-                                 perp(Perp::Zero()) {}
+    Region(Pt lower, Pt upper)
+        : lower(lower), upper(upper), perp(Perp::Zero()), level(-1)
+    { /* Nothing to do here */ }
 
     /*
      *  Construct a region with the given bounds
      *  and perpendicular coordinate(s)
      */
-    Region(Pt lower, Pt upper, Perp p) : lower(lower), upper(upper), perp(p) {}
+    Region(Pt lower, Pt upper, Perp p, int32_t level=-1)
+        : lower(lower), upper(upper), perp(p), level(level)
+    { /* Nothing to do here */ }
 
     /*
      *  Default constructor for an empty region
      */
-    Region() : lower(Pt::Zero()), upper(Pt::Zero()) {}
+    Region()
+        : lower(Pt::Zero()), upper(Pt::Zero()), level(-1)
+    { /* Nothing to do here */ }
 
     Pt& operator[](std::size_t idx)
     {
@@ -70,6 +75,8 @@ public:
      */
     std::array<Region, 1 << N> subdivide() const
     {
+        assert(level > 0);
+
         // Default-construct empty regions
         std::array<Region, 1 << N> out = {};
         auto c = center();
@@ -81,7 +88,8 @@ public:
             {
                 a(j) = (i & (1 << j)) > 0;
             }
-            out[i] = Region(a.select(c, lower), a.select(upper, c), perp);
+            out[i] = Region(a.select(c, lower), a.select(upper, c),
+                            perp, level - 1);
         }
         return out;
     }
@@ -117,6 +125,10 @@ public:
         Eigen::Array3d out;
         out << upper, perp;
         return out;
+    }
+
+    Region<3> region3() const {
+        return Region<3>(lower3(), upper3());
     }
 
     Eigen::Vector3d corner3(unsigned i) const
@@ -162,6 +174,7 @@ public:
     Region<N> parent(unsigned parent_index) const
     {
         Region<N> out = *this;
+        out.level++;
         for (unsigned i=0; i < N; ++i)
         {
             if (parent_index & (1 << i))
@@ -200,6 +213,7 @@ public:
             }
         }
         out.perp.array() = 0.0;
+        out.level = level;
 
         assert(j == D);
         return out;
@@ -214,7 +228,19 @@ public:
     {
         const Pt size = upper - lower;
         const Pt d = (size * (1 - percentage)) / 2.0;
-        return Region(lower + d, upper - d);
+        return Region(lower + d, upper - d, perp, level);
+    }
+
+    /*
+     *  Sets the level parameter based on a minimum feature size.
+     *
+     *  This lets us do subdivision without worrying that the termination
+     *  condition (of a cell side being < min_feature) is dependent on
+     *  floating-point accuracy.
+     */
+    void setResolution(double min_feature) {
+        const auto min_dimension = (upper - lower).minCoeff();
+        level = ceil(log(min_dimension / min_feature) / log(2));
     }
 
     /*  Lower and upper bounds for the region  */
@@ -223,6 +249,10 @@ public:
     /*  perp is the coordinates on perpendicular axes, used when converting
      *  a 2D region into 3D coordinates for Interval evaluation  */
     Perp perp;
+
+    /*  Used when subdividing a region to decide when to terminate;
+     *  must be set beforehand with setResolution */
+    int32_t level;
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

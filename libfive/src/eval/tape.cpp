@@ -183,6 +183,26 @@ std::shared_ptr<OracleContext> Tape::getContext(unsigned i) const
     return contexts[i];
 }
 
+std::shared_ptr<Tape> Tape::getBase(std::shared_ptr<Tape> tape,
+                                    const Region<3>& r)
+{
+    while (tape->parent.get()) {
+        if (tape->type == Tape::INTERVAL &&
+            r.lower.x() >= tape->X.lower() && r.upper.x() <= tape->X.upper() &&
+            r.lower.y() >= tape->Y.lower() && r.upper.y() <= tape->Y.upper() &&
+            r.lower.z() >= tape->Z.lower() && r.upper.z() <= tape->Z.upper())
+        {
+            break;
+        }
+        else
+        {
+            tape = tape->parent;
+        }
+    }
+
+    return tape;
+}
+
 std::shared_ptr<Tape> Tape::getBase(
         std::shared_ptr<Tape> tape,
         const Eigen::Vector3f& p)

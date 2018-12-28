@@ -40,6 +40,7 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     std::atomic_bool done(false);
 
     LockFreeStack tasks(workers);
+    region.setResolution(min_feature);
     tasks.push({root, eval->deck->tape, region, Neighbors()});
 
     std::vector<std::future<void>> futures;
@@ -50,11 +51,8 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
 
     // Kick off the progress tracking thread, based on the number of
     // octree levels and a fixed split per level
-    auto min_dimension = (region.upper - region.lower).minCoeff();
-    const unsigned levels = ceil(log(min_dimension / min_feature) / log(2));
     uint64_t ticks = 0;
-    for (unsigned i=0; i <= levels; ++i)
-    {
+    for (int i=0; i <= region.level; ++i) {
         ticks = (ticks + 1) * (1 << N);
     }
     auto progress_watcher = ProgressWatcher::build(ticks, 0, progress_callback,
@@ -64,9 +62,9 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     {
         futures[i] = std::async(std::launch::async,
                 [&eval, &tasks, &cancel, &done, &out, &root_lock,
-                 min_feature, max_err, i, progress_watcher](){
-                    run(eval + i, tasks, min_feature, max_err,
-                        done, cancel, out, root_lock, progress_watcher);
+                 max_err, i, progress_watcher](){
+                    run(eval + i, tasks, max_err, done, cancel, out,
+                        root_lock, progress_watcher);
                     });
     }
 
@@ -93,8 +91,7 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
 
 template <typename T, typename Neighbors, unsigned N>
 void WorkerPool<T, Neighbors, N>::run(
-        XTreeEvaluator* eval, LockFreeStack& tasks,
-        const float min_feature, const float max_err,
+        XTreeEvaluator* eval, LockFreeStack& tasks, const float max_err,
         std::atomic_bool& done, std::atomic_bool& cancel,
         Root<T>& root, std::mutex& root_lock,
         ProgressWatcher* progress)
@@ -143,11 +140,10 @@ void WorkerPool<T, Neighbors, N>::run(
 
         // If this tree is larger than the minimum size, then it will either
         // be unambiguously filled/empty, or we'll need to recurse.
-        const double min_dimension = (region.upper - region.lower).minCoeff();
-        const bool can_subdivide =  min_dimension > min_feature;
+        const bool can_subdivide = region.level > 0;
         if (can_subdivide)
         {
-            tape = t->evalInterval(eval->interval, region, task.tape);
+            tape = t->evalInterval(eval, task.tape, region, object_pool);
 
             // If this Tree is ambiguous, then push the children to the stack
             // and keep going (because all the useful work will be done
@@ -181,7 +177,7 @@ void WorkerPool<T, Neighbors, N>::run(
         }
         else
         {
-            t->evalLeaf(eval, neighbors, region, tape, object_pool);
+            t->evalLeaf(eval, tape, region, object_pool, neighbors);
         }
 
         if (progress)
@@ -191,11 +187,8 @@ void WorkerPool<T, Neighbors, N>::run(
                 // Accumulate all of the child XTree cells that would have been
                 // included if we continued to subdivide this tree, then pass
                 // all of them to the progress tracker
-                const unsigned levels =
-                    ceil(log(min_dimension / min_feature) / log(2));
                 uint64_t ticks = 0;
-                for (unsigned i=0; i <= levels; ++i)
-                {
+                for (int i=0; i <= region.level; ++i) {
                     ticks = (ticks + 1) * (1 << N);
                 }
                 progress->tick(ticks);
@@ -209,17 +202,21 @@ void WorkerPool<T, Neighbors, N>::run(
         // If all of the children are done, then ask the parent to collect them
         // (recursively, merging the trees on the way up, and reporting
         // completed tree cells to the progress tracker if present).
-        for (region = region.parent(t->parent_index), t = t->parent;
-             t && t->collectChildren(eval, tape, max_err, region,
-                                     object_pool);
-             region = region.parent(t->parent_index), t = t->parent)
+        auto up = [&]{
+            region = region.parent(t->parent_index);
+            tape = Tape::getBase(tape, region.region3());
+            t = t->parent;
+        };
+        up();
+        while (t != nullptr &&
+               t->collectChildren(eval, tape, region, object_pool, max_err))
         {
             // Report the volume of completed trees as we walk back
             // up towards the root of the tree.
-            if (progress)
-            {
+            if (progress) {
                 progress->tick();
             }
+            up();
         }
 
         // Termination condition:  if we've ended up pointing at the parent

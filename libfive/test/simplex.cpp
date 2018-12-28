@@ -59,14 +59,18 @@ TEST_CASE("SimplexTree<2>::assignIndices")
     REQUIRE(*indices.rbegin() == 25);
 }
 
-TEST_CASE("SimplexTree<2>: cell collapsing", "[!mayfail]")
+TEST_CASE("SimplexTree<2>: cell collapsing")
 {
-    auto shape = rectangle(-0.3, 0.8, -0.7, 0.2);
-    auto r = Region<2>({-1, -1}, {1, 1});
-    auto t = SimplexTreePool<2>::build(shape, r,
-         1.2 /* min_feature */);
-
-    REQUIRE(!t->isBranch());
+    SECTION("Rotated box") {
+        auto shape = rotate2d(rectangle(-0.5, -0.5, 0.6, 0.6),
+                              M_PI / 4);
+        auto r = Region<2>({-1, -1}, {1, 1});
+        auto t = SimplexTreePool<2>::build(shape, r,
+             0.4 /* min_feature */,
+             1e-8, /* max_err */
+             1 /* workers */);
+        REQUIRE(!t->isBranch());
+    }
 }
 
 TEST_CASE("SimplexTree<3>: types")
@@ -192,30 +196,80 @@ TEST_CASE("SimplexTree<3>: Corner positions")
     }
 }
 
-TEST_CASE("SimplexTree<3>::assignIndices")
+TEST_CASE("SimplexTree<3>: meshing + cell collapsing",
+          "[!mayfail]")
 {
-    auto c = sphere(0.5);
-    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+    auto c = box({-3, -3, -3}, {3, 3, 3});
+    Region<3> r({-4, -4, -4}, {4, 4, 4});
 
-    auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
-    REQUIRE(t.get() != nullptr);
-
+    auto t = SimplexTreePool<3>::build(c, r, 0.1, 1e-8, 8);
     t->assignIndices();
 
-    REQUIRE(t->isBranch());
-    std::set<uint64_t> indices;
-    for (auto& c : t->children) {
-        REQUIRE(c.load() != nullptr);
-        REQUIRE(!c.load()->isBranch());
-        REQUIRE(c.load()->leaf != nullptr);
-        for (auto& i : c.load()->leaf->sub)
-        {
-            indices.insert(i->index);
+    std::list<const SimplexTree<3>*> todo;
+    todo.push_back(t.get());
+
+    std::atomic_bool cancel(false);
+    auto m = Dual<3>::walk<SimplexMesher>(t, 8,
+            cancel, EMPTY_PROGRESS_CALLBACK, c);
+
+    REQUIRE(m->branes.size() > 0);
+    REQUIRE(m->verts.size() > 1);
+    CHECK_EDGE_PAIRS(*m);
+}
+
+TEST_CASE("SimplexTree<3>::assignIndices")
+{
+    SECTION("Sphere") {
+        auto c = sphere(0.5);
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+        auto t = SimplexTreePool<3>::build(c, r, 1.1, 1e-8, 1);
+        REQUIRE(t.get() != nullptr);
+
+        t->assignIndices();
+
+        REQUIRE(t->isBranch());
+        std::set<uint64_t> indices;
+        for (auto& c : t->children) {
+            REQUIRE(c.load() != nullptr);
+            REQUIRE(!c.load()->isBranch());
+            REQUIRE(c.load()->leaf != nullptr);
+            for (auto& i : c.load()->leaf->sub)
+            {
+                indices.insert(i->index);
+            }
+        }
+        REQUIRE(indices.size() == 125);
+        REQUIRE(*indices.begin() == 1);
+        REQUIRE(*indices.rbegin() == 125);
+    }
+
+
+    SECTION("Sphere-cube intersection") {
+        auto c = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+        Region<3> r({-10, -10, -10}, {10, 10, 10});
+
+        auto t = SimplexTreePool<3>::build(c, r, 1, 1e-8, 1);
+        t->assignIndices();
+
+        std::list<const SimplexTree<3>*> todo;
+        todo.push_back(t.get());
+
+        while (todo.size()) {
+            const auto next = todo.front();
+            todo.pop_front();
+
+            if (next->isBranch()) {
+                for (const auto& c: next->children) {
+                    todo.push_back(c.load());
+                }
+            } else if (next->leaf) {
+                for (const auto& sub: next->leaf->sub) {
+                    REQUIRE(sub->index != 0);
+                }
+            }
         }
     }
-    REQUIRE(indices.size() == 125);
-    REQUIRE(*indices.begin() == 1);
-    REQUIRE(*indices.rbegin() == 125);
 }
 
 TEST_CASE("SimplexTree<3>::leafLevel")
@@ -285,7 +339,7 @@ TEST_CASE("SimplexMesher: sphere-box intersection vertex placement")
     auto c = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
     Region<3> r({-10, -10, -10}, {10, 10, 10});
 
-    auto t = SimplexTreePool<3>::build(c, r, 0.2, 0, 1);
+    auto t = SimplexTreePool<3>::build(c, r, 0.2, 1e-8, 8);
     t->assignIndices();
 
     std::atomic_bool cancel(false);

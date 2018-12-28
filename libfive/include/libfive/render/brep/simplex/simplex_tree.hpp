@@ -111,18 +111,21 @@ public:
      *
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
-    std::shared_ptr<Tape> evalInterval(
-            IntervalEvaluator& eval, const Region<N>& region,
-            std::shared_ptr<Tape> tape);
+    std::shared_ptr<Tape> evalInterval(XTreeEvaluator* eval,
+                                       std::shared_ptr<Tape> tape,
+                                       const Region<N>& region,
+                                       Pool& object_pool);
 
     /*
      *  Evaluates and stores a result at every corner of the cell.
      *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
-    void evalLeaf(XTreeEvaluator* eval, const SimplexNeighbors<N>& neighbors,
-                  const Region<N>& region, std::shared_ptr<Tape> tape,
-                  Pool& object_pool);
+    void evalLeaf(XTreeEvaluator* eval,
+                  std::shared_ptr<Tape> tape,
+                  const Region<N>& region,
+                  Pool& object_pool,
+                  const SimplexNeighbors<N>& neighbors);
 
     /*
      *  If all children are present, then collapse based on the error
@@ -130,32 +133,29 @@ public:
      *
      *  Returns false if any children are yet to come, true otherwise.
      */
-    bool collectChildren(
-            XTreeEvaluator* eval, std::shared_ptr<Tape> tape,
-            double max_err, const Region<N>& region,
-            Pool& object_pool);
-
-    /*  Looks up the cell's level.
-     *
-     *  This must only be called on non-branching cells.
-     *
-     *  level is defined as 0 for EMPTY or FILLED terminal cells;
-     *  for ambiguous leaf cells, it is the number of leafs that
-     *  were merged into this cell.
-     */
-    unsigned level() const;
+    bool collectChildren(XTreeEvaluator* eval,
+                         std::shared_ptr<Tape> tape,
+                         const Region<N>& region,
+                         Pool& object_pool,
+                         double max_err);
 
     /*  Looks up the cell's level for purposes of vertex placement,
-     *  returning 0 or more for LEAF cells (depending on how many
-     *  other leafs were merged into them), and UINT32_MAX max for
-     *  EMPTY or FILLED cells */
-    constexpr static uint32_t LEAF_LEVEL_INVALID = UINT32_MAX;
+     *  returning 0 or more for LEAF / EMPTY / FILLED cells (depending
+     *  on how many other leafs were merged into them; 0 is the smallest
+     *  leaf).
+     *
+     *  Returns UINT32_MAX for UNKNOWN cells, which should only be created
+     *  with SimplexTree::empty() and are used around the borders of the
+     *  model to include those edges.
+     *
+     *  Triggers an assertion failure if called on a BRANCH cell.
+     */
     uint32_t leafLevel() const;
 
     /*
-     *  Assigns leaf->index to a array of unique integers for every leaf
+     *  Assigns leaf->sub[*]->index to a array of unique integers for every leaf
      *  in the tree, starting at 1.  This provides a globally unique
-     *  identifier for every subspace vertex.
+     *  identifier for every subspace vertex, which is used when making edges.
      */
     void assignIndices() const;
 
@@ -178,12 +178,26 @@ protected:
 
     /*
      *  Calculate and store whether each vertex is inside or outside
-     *  This populates leaf->sub[i]->inside, for in in 0..ipow(3, N)
+     *  This populates leaf->sub[i]->inside, for i in 0..ipow(3, N)
      */
     void saveVertexSigns(XTreeEvaluator* eval,
                          Tape::Handle tape,
                          const Region<N>& region,
                          const std::array<bool, ipow(3, N)>& already_solved);
+
+    /*
+     *  Populates this->leaf->sub[i]->qef for every corner subspace,
+     *  then solves for vertex position and signs.
+     *
+     *  Only corners are evaluated + populated; faces / edges / volumes
+     *  are initialized to zero, because they'll be constructed by accumulation
+     *  as we walk up the tree.
+     */
+    void findLeafVertices(XTreeEvaluator* eval,
+                          Tape::Handle tape,
+                          const Region<N>& region,
+                          Pool& object_pool,
+                          const SimplexNeighbors<N>& neighbors);
 
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;

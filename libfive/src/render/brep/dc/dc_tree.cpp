@@ -84,18 +84,20 @@ void DCLeaf<N>::reset()
 }
 
 template <unsigned N>
-Tape::Handle DCTree<N>::evalInterval(
-        IntervalEvaluator& eval, const Region<N>& region, Tape::Handle tape)
+Tape::Handle DCTree<N>::evalInterval(XTreeEvaluator* eval,
+                                     Tape::Handle tape,
+                                     const Region<N>& region,
+                                     Pool&)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
-    auto o = eval.evalAndPush(
+    auto o = eval->interval.evalAndPush(
             region.lower3().template cast<float>(),
             region.upper3().template cast<float>(),
             tape);
 
     this->type = Interval::state(o.first);
-    if (!eval.isSafe())
+    if (!eval->interval.isSafe())
     {
         this->type = Interval::AMBIGUOUS;
         return tape;
@@ -109,9 +111,11 @@ Tape::Handle DCTree<N>::evalInterval(
 }
 
 template <unsigned N>
-void DCTree<N>::evalLeaf(XTreeEvaluator* eval, const DCNeighbors<N>& neighbors,
-                        const Region<N>& region, Tape::Handle tape,
-                        Pool& object_pool)
+void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
+                        Tape::Handle tape,
+                        const Region<N>& region,
+                        Pool& object_pool,
+                        const DCNeighbors<N>& neighbors)
 {
     // Track how many corners have to be evaluated here
     // (if they can be looked up from a neighbor, they don't have
@@ -644,10 +648,11 @@ uint8_t DCTree<N>::buildCornerMask(
 }
 
 template <unsigned N>
-bool DCTree<N>::collectChildren(
-        XTreeEvaluator* eval, Tape::Handle tape,
-        double max_err, const Region<N>& region,
-        Pool& object_pool)
+bool DCTree<N>::collectChildren(XTreeEvaluator* eval,
+                                Tape::Handle tape,
+                                const Region<N>& region,
+                                Pool& object_pool,
+                                double max_err)
 {
     // Wait for collectChildren to have been called N times
     if (this->pending-- != 0)
@@ -773,11 +778,8 @@ bool DCTree<N>::collectChildren(
                  region.perp.template cast<float>();
             if (fabs(eval->feature.eval(v, Tape::getBase(tape, v))) < max_err)
             {
-                // Store this tree's depth as a function of its children
-                this->leaf->level = std::accumulate(
-                    cs.begin(), cs.end(), (unsigned)0,
-                    [](const unsigned& a, DCTree<N>* b)
-                    { return std::max(a, b->level());} ) + 1;
+                // Store this tree's depth based on the region's level
+                this->leaf->level = region.level;
 
                 // Then, erase all of the children and mark that we collapsed
                 this->releaseChildren(object_pool);
