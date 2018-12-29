@@ -99,7 +99,7 @@ signals:
     /*
      *  Emitted when a drag operation has changed variables
      */
-    void varsDragged(QMap<Kernel::Tree::Id, float> vs);
+    void varsDragged(QMap<Kernel::Tree::Id, double> vs);
 
 protected slots:
     void update() { QOpenGLWidget::update(); }
@@ -122,7 +122,7 @@ protected:
      *  Converts from mouse event coordinates to model coordinates
      *  using a user-provided z depth
      */
-    QVector3D toModelPos(QPoint pt, float z) const;
+    QVector3D toModelPos(QPoint pt, double z) const;
 
     /*  Background items to render  */
     Arrow arrow;
@@ -166,7 +166,7 @@ protected:
     QScopedPointer<QOpenGLFramebufferObject> pick_fbo;
     QTimer pick_timer;
     QImage pick_img;
-    QVector<float> pick_depth;
+    QVector<double> pick_depth;
 
     /*  Data to handle direct modification of shapes */
     QVector3D drag_start;

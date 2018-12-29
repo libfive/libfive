@@ -17,11 +17,11 @@ namespace Kernel {
 
 Region<3> findBounds(const Tree& t)
 {
-    std::map<Tree::Id, float> vars;
+    std::map<Tree::Id, double> vars;
     return findBounds(t, vars);
 }
 
-Region<3> findBounds(const Tree& t, const std::map<Tree::Id, float>& vars)
+Region<3> findBounds(const Tree& t, const std::map<Tree::Id, double>& vars)
 {
     IntervalEvaluator e(std::make_shared<Deck>(t), vars);
     return findBounds(&e);
@@ -34,9 +34,7 @@ Region<3> findBounds(IntervalEvaluator* eval)
 
     // Helper function to load and evaluate an interval
     auto testRegion = [=](const Region<3>& r){
-        auto lower = r.lower.cast<float>();
-        auto upper = r.upper.cast<float>();
-        return eval->eval(lower, upper).lower(); };
+        return eval->eval(r.lower, r.upper).lower(); };
 
     // Helper function to check a particular [axis + sign + value].
     //
@@ -49,7 +47,7 @@ Region<3> findBounds(IntervalEvaluator* eval)
     auto check = [&](unsigned axis, unsigned s, double d, unsigned n){
         const int q = Axis::toIndex(Axis::Q(Axis::toAxis(axis)));
         const int r = Axis::toIndex(Axis::R(Axis::toAxis(axis)));
-        float o = std::numeric_limits<float>::infinity();
+        double o = std::numeric_limits<double>::infinity();
 
         if (out.lower.isInf().any() || out.upper.isInf().any())
         {
@@ -68,17 +66,17 @@ Region<3> findBounds(IntervalEvaluator* eval)
             {
                 Region<3> target = out;
                 target[s](axis) = d;
-                target.lower(q) = (out.lower(q) * (n - i) / float(n)) +
-                                  (out.upper(q) * i / float(n));
-                target.upper(q) = (out.lower(q) * (n - i - 1) / float(n)) +
-                                  (out.upper(q) * (i + 1) / float(n));
+                target.lower(q) = (out.lower(q) * (n - i) / double(n)) +
+                                  (out.upper(q) * i / double(n));
+                target.upper(q) = (out.lower(q) * (n - i - 1) / double(n)) +
+                                  (out.upper(q) * (i + 1) / double(n));
 
                 for (unsigned j=0; j < n; ++j)
                 {
-                    target.lower(r) = (out.lower(r) * (n - j) / float(n)) +
-                                      (out.upper(r) * j / float(n));
-                    target.upper(r) = (out.lower(r) * (n - j - 1) / float(n)) +
-                                      (out.upper(r) * (j + 1) / float(n));
+                    target.lower(r) = (out.lower(r) * (n - j) / double(n)) +
+                                      (out.upper(r) * j / double(n));
+                    target.upper(r) = (out.lower(r) * (n - j - 1) / double(n)) +
+                                      (out.upper(r) * (j + 1) / double(n));
                     o = fmin(o, testRegion(target));
                 }
             }

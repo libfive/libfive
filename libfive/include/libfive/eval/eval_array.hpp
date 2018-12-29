@@ -21,13 +21,13 @@ class ArrayEvaluator : public BaseEvaluator
 public:
     ArrayEvaluator(std::shared_ptr<Deck> t);
     ArrayEvaluator(std::shared_ptr<Deck> t,
-                   const std::map<Tree::Id, float>& vars);
+                   const std::map<Tree::Id, double>& vars);
 
     /*
      *  Stores the given value in the result arrays
      *  (inlined for efficiency)
      */
-    void set(const Eigen::Vector3f& p, size_t index)
+    void set(const Eigen::Vector3d& p, size_t index)
     {
         f(deck->X, index) = p.x();
         f(deck->Y, index) = p.y();
@@ -48,7 +48,7 @@ protected:
     size_t count;
 
     /*  f(clause, index) is a specific data point */
-    Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> f;
+    Eigen::Array<double, Eigen::Dynamic, N, Eigen::RowMajor> f;
 
     /*  ambig(index) returns whether a particular slot is ambiguous */
     Eigen::Array<bool, 1, N> ambig;
@@ -80,7 +80,7 @@ public:
      *  If the variable isn't present in the tree, does nothing
      *  Returns true if the variable's value changes
      */
-    bool setVar(Tree::Id var, float value);
+    bool setVar(Tree::Id var, double value);
 
     /*
      *  Returns a list of ambiguous items from indices 0 to i

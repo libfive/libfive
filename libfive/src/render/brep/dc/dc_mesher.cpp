@@ -113,7 +113,7 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts, unsigned index)
     }
 
     uint32_t vs[4];
-    Eigen::Matrix<float, 3, 4> vert_positions;
+    Eigen::Matrix<double, 3, 4> vert_positions;
     for (unsigned i=0; i < ts.size(); ++i)
     {
         assert(ts[i]->leaf != nullptr);
@@ -130,12 +130,11 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts, unsigned index)
 
         if (ts[i]->leaf->index[vi] == 0)
         {
-            ts[i]->leaf->index[vi] = m.pushVertex(
-                ts[i]->vert(vi).template cast<float>());
+            ts[i]->leaf->index[vi] = m.pushVertex(ts[i]->vert(vi));
         }
 
         // Save the vertex position for normal calculations
-        vert_positions.col(i) = ts[i]->vert(vi).template cast<float>();
+        vert_positions.col(i) = ts[i]->vert(vi);
 
         // Store the vertex index for pushing triangles
         vs[i] = ts[i]->leaf->index[vi];
@@ -156,7 +155,7 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts, unsigned index)
             assert(intersectVec[i].pos == intersectVec[i % 2].pos);
         }
         auto intersectPos = (intersectPos1 + intersectPos2) / 2.;
-        intersectVec[0].index = m.pushVertex(intersectPos.template cast<float>());
+        intersectVec[0].index = m.pushVertex(intersectPos);
     }
     auto vCenter = intersectVec[0].index;
     assert(vCenter != 0);
@@ -188,13 +187,13 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts, unsigned index)
     {
         std::swap(vs[1], vs[2]);
 
-        const Eigen::Vector3f r = vert_positions.col(1);
+        const Eigen::Vector3d r = vert_positions.col(1);
         vert_positions.col(1) = vert_positions.col(2);
         vert_positions.col(2) = r;
     }
     // Pick a triangulation that prevents triangles from folding back
     // on each other by checking normals.
-    std::array<Eigen::Vector3f, 4> norms;
+    std::array<Eigen::Vector3d, 4> norms;
 
     // Computes and saves a corner normal.  a,b,c must be right-handed
     // according to the quad winding, which looks like
@@ -268,7 +267,7 @@ void DCMesher::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
         const auto& largerVertex = aIsSmaller ? bPos : aPos;
         const auto largerDirection = (aIsSmaller == D) ? 1 : -1;
         auto compareToBounds = [&smallerRegion]
-        (const Eigen::Vector3f& pt, Axis::Axis compAxis)
+        (const Eigen::Vector3d& pt, Axis::Axis compAxis)
         {
             auto idx = Axis::toIndex(compAxis);
             if (pt[idx] < smallerRegion.lower[idx])
@@ -452,8 +451,7 @@ void DCMesher::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
                             }
                             auto intersectPos =
                                 (intersectPos1 + intersectPos2) / 2.;
-                            m.verts.push_back(intersectPos
-                                            .template cast<float>());
+                            m.verts.push_back(intersectPos);
                         }
                         forcedIndex = (*intersectionVec)[0].index;
                         if ((*intersectionVec)[0].index == intersectionIndex)

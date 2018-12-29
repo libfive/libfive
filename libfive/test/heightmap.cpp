@@ -35,7 +35,7 @@ TEST_CASE("Heightmap::render: 2D interval Z values")
     auto out = render(t, r)->depth;
     CAPTURE(out);
     REQUIRE((out == 0 ||
-             out == -std::numeric_limits<float>::infinity()).all());
+             out == -std::numeric_limits<double>::infinity()).all());
 }
 
 TEST_CASE("Heightmap::render: 3D interval Z values")
@@ -46,7 +46,7 @@ TEST_CASE("Heightmap::render: 3D interval Z values")
     auto out = render(t, r)->depth;
     CAPTURE(out);
     REQUIRE((out == r.pts[2].back() ||
-             out == -std::numeric_limits<float>::infinity()).all());
+             out == -std::numeric_limits<double>::infinity()).all());
 }
 
 TEST_CASE("Heightmap::render: 2D circle ")
@@ -54,7 +54,7 @@ TEST_CASE("Heightmap::render: 2D circle ")
     Tree t = circle(1);
 
     Heightmap::Depth comp(10, 10);
-    float inf = std::numeric_limits<float>::infinity();
+    const auto inf = std::numeric_limits<double>::infinity();
     comp <<
         -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
         -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
@@ -93,7 +93,7 @@ TEST_CASE("Heightmap::render: 2D circle at non-zero Z ")
     CAPTURE(out);
 
     Heightmap::Depth comp(10, 10);
-    float inf = std::numeric_limits<float>::infinity();
+    const auto inf = std::numeric_limits<double>::infinity();
     comp <<
         -inf,-inf,-inf,   1,   1,   1,   1,-inf,-inf,-inf,
         -inf,   1,   1,   1,   1,   1,   1,   1,   1,-inf,
@@ -119,7 +119,7 @@ TEST_CASE("Heightmap::render: orientation")
         auto out = render(t, r)->depth;
 
         Heightmap::Depth comp(10, 10);
-        float inf = std::numeric_limits<float>::infinity();
+        const auto inf = std::numeric_limits<double>::infinity();
         comp <<
             -inf,-inf,-inf,   0,   0,   0,   0,-inf,-inf,-inf,
             -inf,   0,   0,   0,   0,   0,   0,   0,   0,-inf,
@@ -142,7 +142,7 @@ TEST_CASE("Heightmap::render: orientation")
         auto out = render(t, r)->depth;
 
         Heightmap::Depth comp(10, 10);
-        float inf = std::numeric_limits<float>::infinity();
+        const auto inf = std::numeric_limits<double>::infinity();
         comp <<
             -inf,-inf,-inf,   0,   0,-inf,-inf,-inf,-inf,-inf,
             -inf,   0,   0,   0,   0,-inf,-inf,-inf,-inf,-inf,
@@ -190,7 +190,7 @@ TEST_CASE("Heightmap::render: 3D sphere")
         auto out = render(t, r)->depth;
 
         Heightmap::Depth comp(10, 10);
-        float inf = std::numeric_limits<float>::infinity();
+        const auto inf = std::numeric_limits<double>::infinity();
         comp <<
             -inf,-inf,-inf, 0.3, 0.3, 0.3, 0.3,-inf,-inf,-inf,
             -inf, 0.1, 0.5, 0.5, 0.7, 0.7, 0.5, 0.5, 0.1,-inf,
@@ -271,9 +271,9 @@ TEST_CASE("Heightmap::render: Performance")
 
         Voxels r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5}, 250);
 
-        Eigen::Matrix3f m;
-        m = Eigen::AngleAxisf(float(M_PI/4), Eigen::Vector3f::UnitY()) *
-            Eigen::AngleAxisf(float(atan(1/sqrt(2))), Eigen::Vector3f::UnitX());
+        Eigen::Matrix3d m;
+        m = Eigen::AngleAxisd(double(M_PI/4), Eigen::Vector3d::UnitY()) *
+            Eigen::AngleAxisd(double(atan(1/sqrt(2))), Eigen::Vector3d::UnitX());
 
         auto sponge_ = sponge.remap(
             m(0,0)*Tree::X() + m(0,1)*Tree::Y() + m(0,2)*Tree::Z(),

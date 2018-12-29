@@ -42,7 +42,7 @@ public:
      */
     static Handle instance() { return Handle(); }
 
-    Node constant(float v);
+    Node constant(double v);
     Node operation(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr,
                    bool simplify=true);
 
@@ -55,7 +55,7 @@ public:
     /*
      *  Called when the last Tree_ is destroyed
      */
-    void del(float v);
+    void del(double v);
     void del(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr);
 
     /*
@@ -64,12 +64,12 @@ public:
      *  This is a building block for automatic collapsing of affine
      *  expressions, exposed here primarily for unit testing.
      */
-    std::map<Node, float> asAffine(Node n);
+    std::map<Node, double> asAffine(Node n);
 
     /*
      *  Converts a sum-of-multiplications into an affine tree.
      */
-    Node fromAffine(const std::map<Node, float>& ns);
+    Node fromAffine(const std::map<Node, double>& ns);
 
 protected:
     /*
@@ -106,7 +106,7 @@ protected:
     std::map<Key, std::weak_ptr<Tree::Tree_>> ops;
 
     /*  Constants in the tree are uniquely identified by their value  */
-    std::map<float, std::weak_ptr<Tree::Tree_>> constants;
+    std::map<double, std::weak_ptr<Tree::Tree_>> constants;
 
     /*  nan cannot be stored in the usual map, so the nan constant lives here */
     std::weak_ptr<Tree::Tree_> nan_constant;

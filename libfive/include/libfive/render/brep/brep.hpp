@@ -20,18 +20,18 @@ template <unsigned N>
 class BRep
 {
 public:
-    BRep() { verts.push_back(Eigen::Matrix<float, N, 1>::Zero()); }
+    BRep() { verts.push_back(Eigen::Matrix<double, N, 1>::Zero()); }
 
     /*  Flat array of point positions
      *  The 0th position is reserved as a marker */
-    std::vector<Eigen::Matrix<float, N, 1>,
-                Eigen::aligned_allocator<Eigen::Matrix<float, N, 1>>> verts;
+    std::vector<Eigen::Matrix<double, N, 1>,
+                Eigen::aligned_allocator<Eigen::Matrix<double, N, 1>>> verts;
 
     /*  [N-1]-dimensional objects (line segments, triangles) */
     std::vector<Eigen::Matrix<uint32_t, N, 1>,
                 Eigen::aligned_allocator<Eigen::Matrix<uint32_t, N, 1>>> branes;
 
-    uint32_t pushVertex(const Eigen::Matrix<float, N, 1>& v) {
+    uint32_t pushVertex(const Eigen::Matrix<double, N, 1>& v) {
         uint32_t out = verts.size();
         verts.push_back(v);
         return out;

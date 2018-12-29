@@ -91,7 +91,7 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
 
 template <typename T, typename Neighbors, unsigned N>
 void WorkerPool<T, Neighbors, N>::run(
-        XTreeEvaluator* eval, LockFreeStack& tasks, const float max_err,
+        XTreeEvaluator* eval, LockFreeStack& tasks, const double max_err,
         std::atomic_bool& done, std::atomic_bool& cancel,
         Root<T>& root, std::mutex& root_lock,
         ProgressWatcher* progress)

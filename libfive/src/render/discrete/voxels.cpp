@@ -13,23 +13,23 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-Voxels::Voxels(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper,
-               float res)
+Voxels::Voxels(const Eigen::Vector3d& lower, const Eigen::Vector3d& upper,
+               double res)
     : Voxels(lower, upper, {res, res, res})
 {
     // Nothing to do here
 }
 
-Voxels::Voxels(const Eigen::Vector3f& _lower, const Eigen::Vector3f& _upper,
-               const Eigen::Vector3f& res)
+Voxels::Voxels(const Eigen::Vector3d& _lower, const Eigen::Vector3d& _upper,
+               const Eigen::Vector3d& res)
 {
     Eigen::Array3i size = (res.array() * (_upper - _lower).array()).ceil().max(1).cast<int>();
 
     // Figure out much should be added to each axis, masking out
     // the case where resolution is zero
     auto extra = (res.array() > 0)
-        .select(size.array().cast<float>() / res.array() -
-                     (_upper - _lower).array(),
+        .select(size.array().cast<double>() / res.array() -
+                    (_upper - _lower).array(),
                 Eigen::Array3i::Zero());
     lower = _lower.array() - extra/2;
     upper = _upper.array() + extra/2;
@@ -38,7 +38,7 @@ Voxels::Voxels(const Eigen::Vector3f& _lower, const Eigen::Vector3f& _upper,
     {
         for (int index=0; index < size(i); ++index)
         {
-            const float frac = (index + 0.5) / size(i);
+            const double frac = (index + 0.5) / size(i);
             pts[i].push_back(lower(i) * (1 - frac) + upper(i) * frac);
         }
     }
@@ -59,9 +59,9 @@ Voxels::View::View(const Voxels& r)
     // Nothing to do here
 }
 
-Voxels::View::View(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper,
+Voxels::View::View(const Eigen::Vector3d& lower, const Eigen::Vector3d& upper,
                    const Eigen::Vector3i& size, const Eigen::Vector3i& corner,
-                   const Eigen::Matrix<const float*, 3, 1>& pts)
+                   const Eigen::Matrix<const double*, 3, 1>& pts)
     : lower(lower), upper(upper), size(size), corner(corner),
       pts(pts)
 {

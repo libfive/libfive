@@ -21,18 +21,18 @@ class PointEvaluator : public BaseEvaluator
 public:
     PointEvaluator(std::shared_ptr<Deck> t);
     PointEvaluator(std::shared_ptr<Deck> t,
-                   const std::map<Tree::Id, float>& vars);
+                   const std::map<Tree::Id, double>& vars);
 
     /*
      *  Single-point evaluation
      */
-    float eval(const Eigen::Vector3f& pt);
-    float eval(const Eigen::Vector3f& pt, std::shared_ptr<Tape> tape);
+    double eval(const Eigen::Vector3d& pt);
+    double eval(const Eigen::Vector3d& pt, std::shared_ptr<Tape> tape);
 
-    std::pair<float, std::shared_ptr<Tape>> evalAndPush(
-            const Eigen::Vector3f& pt);
-    std::pair<float, std::shared_ptr<Tape>> evalAndPush(
-            const Eigen::Vector3f& pt,
+    std::pair<double, std::shared_ptr<Tape>> evalAndPush(
+            const Eigen::Vector3d& pt);
+    std::pair<double, std::shared_ptr<Tape>> evalAndPush(
+            const Eigen::Vector3d& pt,
             std::shared_ptr<Tape> tape);
 
     /*
@@ -41,7 +41,7 @@ public:
      *  If the variable isn't present in the tree, does nothing
      *  Returns true if the variable's value changes
      */
-    bool setVar(Tree::Id var, float value);
+    bool setVar(Tree::Id var, double value);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
@@ -49,7 +49,7 @@ public:
 
 protected:
     /*  f(clause) is a specific data point */
-    Eigen::Array<float, Eigen::Dynamic, 1> f;
+    Eigen::Array<double, Eigen::Dynamic, 1> f;
 
     /*
      *  Per-clause evaluation, used in tape walking

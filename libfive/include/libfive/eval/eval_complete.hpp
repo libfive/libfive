@@ -24,10 +24,10 @@ class CompleteEvaluator
 {
 public:
     CompleteEvaluator(const Tree t)
-        : CompleteEvaluator(t, std::map<Tree::Id, float>())
+        : CompleteEvaluator(t, std::map<Tree::Id, double>())
     { /* Nothing to do here */ }
 
-    CompleteEvaluator(const Tree t, const std::map<Tree::Id, float>& vars)
+    CompleteEvaluator(const Tree t, const std::map<Tree::Id, double>& vars)
         : deck(new Deck(t)), array(deck, vars),
           interval(deck, vars), feature(deck, vars), deriv(deck, vars)
     { /* Nothing to do here */ }
@@ -35,7 +35,7 @@ public:
     /*
     *  Updates variable values, return true if changed
     */
-    bool updateVars(const std::map<Kernel::Tree::Id, float>& vars)
+    bool updateVars(const std::map<Kernel::Tree::Id, double>& vars)
     {
         bool changed = false;
         for (auto& v : vars)

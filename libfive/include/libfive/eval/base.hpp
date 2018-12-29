@@ -20,7 +20,7 @@ class BaseEvaluator
 {
 public:
     BaseEvaluator(std::shared_ptr<Deck> deck,
-                  const std::map<Tree::Id, float>& vars);
+                  const std::map<Tree::Id, double>& vars);
 
 protected:
     std::shared_ptr<Deck> deck;

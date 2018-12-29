@@ -24,7 +24,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-const float Mesh::MAX_PROGRESS = 3.0f;
+const double Mesh::MAX_PROGRESS = 3.0f;
 
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    double min_feature, double max_err,
@@ -33,13 +33,13 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    Algorithm alg)
 {
     std::atomic_bool cancel(false);
-    std::map<Tree::Id, float> vars;
+    std::map<Tree::Id, double> vars;
     return render(t, vars, r, min_feature, max_err,
                   multithread ? 8 : 1, cancel, progress_callback, alg);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
-            const Tree t, const std::map<Tree::Id, float>& vars,
+            const Tree t, const std::map<Tree::Id, double>& vars,
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback,
@@ -109,7 +109,7 @@ std::unique_ptr<Mesh> Mesh::render(
     return out;
 }
 
-void Mesh::line(const Eigen::Vector3f& a, const Eigen::Vector3f& b)
+void Mesh::line(const Eigen::Vector3d& a, const Eigen::Vector3d& b)
 {
     uint32_t a_ = verts.size();
     verts.push_back(a);
@@ -165,7 +165,9 @@ bool Mesh::saveSTL(const std::string& filename,
             for (unsigned i=0; i < 3; ++i)
             {
                 auto v = m->verts[t[i]];
-                float vert[3] = {v.x(), v.y(), v.z()};
+                float vert[3] = {static_cast<float>(v.x()),
+                                 static_cast<float>(v.y()),
+                                 static_cast<float>(v.z())};
                 file.write(reinterpret_cast<char*>(&vert), sizeof(vert));
             }
 

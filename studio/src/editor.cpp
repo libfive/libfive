@@ -279,7 +279,7 @@ void Editor::onDragEnd()
     script->setFocus();
 }
 
-void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
+void Editor::setVarValues(QMap<Kernel::Tree::Id, double> vs)
 {
     // Temporarily enable the script so that we can edit the variable value
     script->setEnabled(true);

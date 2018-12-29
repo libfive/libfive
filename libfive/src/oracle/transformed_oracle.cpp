@@ -19,7 +19,7 @@ TransformedOracle::TransformedOracle(
     //nothing more to do here.
 }
 
-void TransformedOracle::set(const Eigen::Vector3f& p, size_t index)
+void TransformedOracle::set(const Eigen::Vector3d& p, size_t index)
 {
     OracleStorage::set(p, index);
     xEvaluator.array.set(p, index);
@@ -33,25 +33,25 @@ void TransformedOracle::evalInterval(Interval::I& out)
     auto yRange = yEvaluator.interval.eval(lower, upper);
     auto zRange = zEvaluator.interval.eval(lower, upper);
 
-    Eigen::Vector3f rangeLower{
+    Eigen::Vector3d rangeLower{
         xRange.lower(), yRange.lower(), zRange.lower() };
-    Eigen::Vector3f rangeUpper{
+    Eigen::Vector3d rangeUpper{
         xRange.upper(), yRange.upper(), zRange.upper() };
 
     underlying->set(rangeLower, rangeUpper);
     underlying->evalInterval(out);
 }
 
-void TransformedOracle::evalPoint(float& out, size_t index)
+void TransformedOracle::evalPoint(double& out, size_t index)
 {
     auto ctx = dynamic_cast<Context*>(context.get());
     assert(context == nullptr || ctx != nullptr);
 
-    Eigen::Vector3f transformedPoint = ctx
-        ? Eigen::Vector3f(xEvaluator.feature.eval(points.col(index), ctx->tx),
+    Eigen::Vector3d transformedPoint = ctx
+        ? Eigen::Vector3d(xEvaluator.feature.eval(points.col(index), ctx->tx),
                           yEvaluator.feature.eval(points.col(index), ctx->ty),
                           zEvaluator.feature.eval(points.col(index), ctx->tz))
-        : Eigen::Vector3f(xEvaluator.feature.eval(points.col(index)),
+        : Eigen::Vector3d(xEvaluator.feature.eval(points.col(index)),
                           yEvaluator.feature.eval(points.col(index)),
                           zEvaluator.feature.eval(points.col(index)));
 
@@ -63,7 +63,7 @@ void TransformedOracle::evalPoint(float& out, size_t index)
 }
 
 void TransformedOracle::evalArray(
-    Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
+    Eigen::Block<Eigen::Array<double, Eigen::Dynamic,
                  LIBFIVE_EVAL_ARRAY_SIZE, Eigen::RowMajor>, 1, Eigen::Dynamic> out)
 {
     auto ctx = dynamic_cast<Context*>(context.get());
@@ -98,13 +98,13 @@ void TransformedOracle::checkAmbiguous(
 }
 
 void TransformedOracle::evalDerivs(
-    Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
+    Eigen::Block<Eigen::Array<double, 3, Eigen::Dynamic>,
                  3, 1, true> out, size_t index)
 {
     auto ctx = dynamic_cast<Context*>(context.get());
     assert(context == nullptr || ctx != nullptr);
 
-    Eigen::Matrix3f Jacobian;
+    Eigen::Matrix3d Jacobian;
     Jacobian <<
         (ctx
             ? xEvaluator.deriv.deriv(points.col(index), ctx->tx)
@@ -116,7 +116,7 @@ void TransformedOracle::evalDerivs(
             ? zEvaluator.deriv.deriv(points.col(index), ctx->tz)
             : zEvaluator.deriv.deriv(points.col(index))).template head<3>();
 
-    Eigen::Vector3f transformedPoint{
+    Eigen::Vector3d transformedPoint{
         xEvaluator.deriv.eval(points.col(index)),
         yEvaluator.deriv.eval(points.col(index)),
         zEvaluator.deriv.eval(points.col(index))};
@@ -131,7 +131,7 @@ void TransformedOracle::evalDerivs(
 }
 
 void TransformedOracle::evalDerivArray(
-    Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
+    Eigen::Block<Eigen::Array<double, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
                  3, Eigen::Dynamic, true> out)
 {
     auto ctx = dynamic_cast<Context*>(context.get());
@@ -150,7 +150,7 @@ void TransformedOracle::evalDerivArray(
 
     for (auto i = 0; i < out.cols(); ++i)
     {
-        Eigen::Matrix3f Jacobian;
+        Eigen::Matrix3d Jacobian;
         Jacobian << xDerivs.col(i).template head<3>(),
                     yDerivs.col(i).template head<3>(),
                     zDerivs.col(i).template head<3>();
@@ -166,11 +166,11 @@ void TransformedOracle::evalFeatures(
 
     out.clear();
     auto pt = points.col(0);
-    Eigen::Vector3f transformedPoint = ctx
-        ? Eigen::Vector3f(xEvaluator.feature.eval(pt, ctx->tx),
+    Eigen::Vector3d transformedPoint = ctx
+        ? Eigen::Vector3d(xEvaluator.feature.eval(pt, ctx->tx),
                           yEvaluator.feature.eval(pt, ctx->ty),
                           zEvaluator.feature.eval(pt, ctx->tz))
-        : Eigen::Vector3f(xEvaluator.feature.eval(pt),
+        : Eigen::Vector3d(xEvaluator.feature.eval(pt),
                           yEvaluator.feature.eval(pt),
                           zEvaluator.feature.eval(pt));
 
@@ -200,7 +200,7 @@ void TransformedOracle::evalFeatures(
                     if (f3.check(f12))
                     {
                         Feature f123({ 0.f, 0.f, 0.f }, f12, f3);
-                        Eigen::Matrix3f Jacobian;
+                        Eigen::Matrix3d Jacobian;
                         Jacobian << f1.deriv, f2.deriv, f3.deriv;
                         for (auto f4 : underlyingOut)
                         {

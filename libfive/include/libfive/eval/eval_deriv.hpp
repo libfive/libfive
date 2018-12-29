@@ -19,11 +19,11 @@ class DerivEvaluator : public PointEvaluator
 public:
     DerivEvaluator(std::shared_ptr<Deck> t);
     DerivEvaluator(std::shared_ptr<Deck> t,
-                   const std::map<Tree::Id, float>& vars);
+                   const std::map<Tree::Id, double>& vars);
 
 protected:
     /*  d(axis, clause) is a set of partial derivatives [dx, dy, dz] */
-    Eigen::Array<float, 3, Eigen::Dynamic> d;
+    Eigen::Array<double, 3, Eigen::Dynamic> d;
 
     /*
      *  Per-clause evaluation, used in tape walking
@@ -34,8 +34,8 @@ public:
     /*
      *  Single-point evaluation (return dx, dy, dz, distance)
      */
-    Eigen::Vector4f deriv(const Eigen::Vector3f& pt);
-    Eigen::Vector4f deriv(const Eigen::Vector3f& pt,
+    Eigen::Vector4d deriv(const Eigen::Vector3d& pt);
+    Eigen::Vector4d deriv(const Eigen::Vector3d& pt,
                           std::shared_ptr<Tape> tape);
 
     /*  Make an aligned new operator, as this class has Eigen structs

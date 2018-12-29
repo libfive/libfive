@@ -22,7 +22,7 @@ class Tree;
 
 namespace Solver
 {
-    typedef std::map<Tree::Id, float> Solution;
+    typedef std::map<Tree::Id, double> Solution;
     typedef std::set<Tree::Id> Mask;
 
     /*
@@ -31,14 +31,14 @@ namespace Solver
      *  pos is the x,y,z coordinates at which to solve
      *  Initial conditions are the variable values in vars
      */
-    std::pair<float, Solution> findRoot(
-            const Tree& t, const std::map<Tree::Id, float>& vars,
-            const Eigen::Vector3f pos={0,0,0}, const Mask& mask=Mask(),
+    std::pair<double, Solution> findRoot(
+            const Tree& t, const std::map<Tree::Id, double>& vars,
+            const Eigen::Vector3d pos={0,0,0}, const Mask& mask=Mask(),
             unsigned gas=25000);
-    std::pair<float, Solution> findRoot(
+    std::pair<double, Solution> findRoot(
             JacobianEvaluator& e, std::shared_ptr<Tape> tape,
-            std::map<Tree::Id, float> vars,
-            const Eigen::Vector3f pos={0,0,0}, const Mask& mask=Mask(),
+            std::map<Tree::Id, double> vars,
+            const Eigen::Vector3d pos={0,0,0}, const Mask& mask=Mask(),
             unsigned gas=25000);
 
 }   // namespace Solver

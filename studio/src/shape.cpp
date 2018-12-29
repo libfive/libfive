@@ -26,7 +26,7 @@ const int Shape::MESH_DIV_ABORT;
 const int Shape::MESH_DIV_NEW_VARS;
 const int Shape::MESH_DIV_NEW_VARS_SMALL;
 
-Shape::Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, float> vars)
+Shape::Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, double> vars)
     : tree(t), vars(vars), vert_vbo(QOpenGLBuffer::VertexBuffer),
       tri_vbo(QOpenGLBuffer::IndexBuffer)
 {
@@ -56,7 +56,7 @@ bool Shape::updateFrom(const Shape* other)
     return updateVars(other->vars);
 }
 
-bool Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
+bool Shape::updateVars(const std::map<Kernel::Tree::Id, double>& vs)
 {
     bool changed = false;
 

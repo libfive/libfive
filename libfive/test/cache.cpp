@@ -200,14 +200,14 @@ TEST_CASE("Cache::checkCommutative")
     {
         auto b = t->operation(Opcode::OP_MIN, t->X(),
                  t->operation(Opcode::OP_MIN, t->Y(),
-                 t->operation(Opcode::OP_MIN, t->Z(), t->constant(1.0f))));
+                 t->operation(Opcode::OP_MIN, t->Z(), t->constant(1.0))));
         REQUIRE(b->rank == 2);
     }
 
     SECTION("RHS")
     {
         auto b = t->operation(Opcode::OP_MIN, t->operation(Opcode::OP_MIN,
-                 t->operation(Opcode::OP_MIN, t->Z(), t->constant(1.0f)),
+                 t->operation(Opcode::OP_MIN, t->Z(), t->constant(1.0)),
                      t->X()), t->Y());
         REQUIRE(b->rank == 2);
     }
@@ -221,7 +221,7 @@ TEST_CASE("Cache::asAffine")
         auto x = t->X();
         auto m = t->asAffine(x);
         REQUIRE(m.size() == 1);
-        REQUIRE(m.at(x) == 1.0f);
+        REQUIRE(m.at(x) == 1.0);
     }
 
     SECTION("X + Y")
@@ -229,8 +229,8 @@ TEST_CASE("Cache::asAffine")
         auto a = t->operation(Opcode::OP_ADD, t->X(), t->Y());
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
-        REQUIRE(m.at(t->X()) == 1.0f);
-        REQUIRE(m.at(t->Y()) == 1.0f);
+        REQUIRE(m.at(t->X()) == 1.0);
+        REQUIRE(m.at(t->Y()) == 1.0);
     }
 
     SECTION("2 * X + Y")
@@ -240,8 +240,8 @@ TEST_CASE("Cache::asAffine")
                 t->Y(), false);
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
-        REQUIRE(m.at(t->X()) == 2.0f);
-        REQUIRE(m.at(t->Y()) == 1.0f);
+        REQUIRE(m.at(t->X()) == 2.0);
+        REQUIRE(m.at(t->Y()) == 1.0);
     }
 
     SECTION("X * 2 + Y")
@@ -251,8 +251,8 @@ TEST_CASE("Cache::asAffine")
                 t->Y(), false);
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
-        REQUIRE(m.at(t->X()) == 2.0f);
-        REQUIRE(m.at(t->Y()) == 1.0f);
+        REQUIRE(m.at(t->X()) == 2.0);
+        REQUIRE(m.at(t->Y()) == 1.0);
     }
 
     SECTION("(X * 2 + Y) * 3")
@@ -264,8 +264,8 @@ TEST_CASE("Cache::asAffine")
                 t->constant(3), false);
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
-        REQUIRE(m.at(t->X()) == 6.0f);
-        REQUIRE(m.at(t->Y()) == 3.0f);
+        REQUIRE(m.at(t->X()) == 6.0);
+        REQUIRE(m.at(t->Y()) == 3.0);
     }
 
     SECTION("(X * 2 + Y) / 3")
@@ -277,8 +277,8 @@ TEST_CASE("Cache::asAffine")
                 t->constant(3), false);
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
-        REQUIRE(m.at(t->X()) == Approx(2.0f/3.0f));
-        REQUIRE(m.at(t->Y()) == Approx(1.0f/3.0f));
+        REQUIRE(m.at(t->X()) == Approx(2.0/3.0));
+        REQUIRE(m.at(t->Y()) == Approx(1.0/3.0));
     }
 
     SECTION("X + 3")
@@ -286,8 +286,8 @@ TEST_CASE("Cache::asAffine")
         auto a = t->operation(Opcode::OP_ADD, t->constant(3), t->X());
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
-        REQUIRE(m.at(t->X()) == 1.0f);
-        REQUIRE(m.at(t->constant(1.0f)) == 3.0f);
+        REQUIRE(m.at(t->X()) == 1.0);
+        REQUIRE(m.at(t->constant(1.0)) == 3.0);
     }
 
     SECTION("4 + 3 * (X + 2)")
@@ -299,8 +299,8 @@ TEST_CASE("Cache::asAffine")
 
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
-        REQUIRE(m.at(t->X()) == 3.0f);
-        REQUIRE(m.at(t->constant(1.0f)) == 10.0f);
+        REQUIRE(m.at(t->X()) == 3.0);
+        REQUIRE(m.at(t->constant(1.0)) == 10.0);
     }
 
     SECTION("X + (X - Y)")
@@ -310,8 +310,8 @@ TEST_CASE("Cache::asAffine")
 
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 2);
-        REQUIRE(m.at(t->X()) == 2.0f);
-        REQUIRE(m.at(t->Y()) == -1.0f);
+        REQUIRE(m.at(t->X()) == 2.0);
+        REQUIRE(m.at(t->Y()) == -1.0);
     }
 }
 
@@ -321,17 +321,17 @@ TEST_CASE("Cache::fromAffine")
 
     SECTION("Empty")
     {
-        std::map<std::shared_ptr<Tree::Tree_>, float> empty;
+        std::map<std::shared_ptr<Tree::Tree_>, double> empty;
         auto a_ = t->fromAffine(empty);
         REQUIRE(a_->op == Opcode::CONSTANT);
-        REQUIRE(a_->value == 0.0f);
+        REQUIRE(a_->value == 0.0);
     }
 
     SECTION("{1: 5}")
     {
-        auto a_ = t->fromAffine({{t->constant(1.0f), 5.0f}});
+        auto a_ = t->fromAffine({{t->constant(1.0), 5.0}});
         REQUIRE(a_->op == Opcode::CONSTANT);
-        REQUIRE(a_->value == 5.0f);
+        REQUIRE(a_->value == 5.0);
     }
 
     SECTION("(X * 2 + Y) / 3")
@@ -348,15 +348,15 @@ TEST_CASE("Cache::fromAffine")
         REQUIRE(a_->lhs->op == Opcode::OP_MUL);
         REQUIRE(a_->lhs->lhs->op == Opcode::VAR_Y);
         REQUIRE(a_->lhs->rhs->op == Opcode::CONSTANT);
-        REQUIRE(a_->lhs->rhs->value == Approx(1.0f / 3.0f));
+        REQUIRE(a_->lhs->rhs->value == Approx(1.0 / 3.0));
         REQUIRE(a_->rhs->lhs->op == Opcode::VAR_X);
         REQUIRE(a_->lhs->rhs->op == Opcode::CONSTANT);
-        REQUIRE(a_->rhs->rhs->value == Approx(2.0f / 3.0f));
+        REQUIRE(a_->rhs->rhs->value == Approx(2.0 / 3.0));
     }
 
     SECTION("{X: 2, Y: -1}")
     {
-        auto a = t->fromAffine({{t->X(), 2.0f}, {t->Y(), -1}});
+        auto a = t->fromAffine({{t->X(), 2.0}, {t->Y(), -1}});
 
         std::stringstream ss;
         a->print(ss);
@@ -366,7 +366,7 @@ TEST_CASE("Cache::fromAffine")
         REQUIRE(a->lhs->op == Opcode::OP_MUL);
         REQUIRE(a->lhs->lhs->op == Opcode::VAR_X);
         REQUIRE(a->lhs->rhs->op == Opcode::CONSTANT);
-        REQUIRE(a->lhs->rhs->value == 2.0f);
+        REQUIRE(a->lhs->rhs->value == 2.0);
         REQUIRE(a->rhs->op == Opcode::VAR_Y);
     }
 }
@@ -388,7 +388,7 @@ TEST_CASE("Cache::checkAffine")
         REQUIRE(a->lhs->op == Opcode::OP_MUL);
         REQUIRE(a->lhs->lhs->op == Opcode::VAR_X);
         REQUIRE(a->lhs->rhs->op == Opcode::CONSTANT);
-        REQUIRE(a->lhs->rhs->value == 2.0f);
+        REQUIRE(a->lhs->rhs->value == 2.0);
         REQUIRE(a->rhs->op == Opcode::VAR_Y);
     }
 
@@ -402,8 +402,8 @@ TEST_CASE("Cache::checkAffine")
 
         auto m = t->asAffine(a);
         REQUIRE(m.size() == 3);
-        REQUIRE(m.at(t->X()) == Approx(0.4f));
-        REQUIRE(m.at(t->Y()) == Approx(-0.4f));
-        REQUIRE(m.at(t->constant(1)) == Approx(0.2f));
+        REQUIRE(m.at(t->X()) == Approx(0.4));
+        REQUIRE(m.at(t->Y()) == Approx(-0.4));
+        REQUIRE(m.at(t->constant(1)) == Approx(0.2));
     }
 }

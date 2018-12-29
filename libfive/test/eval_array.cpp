@@ -17,7 +17,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace Kernel;
 
-float eval(ArrayEvaluator& a, Eigen::Vector3f pt)
+double eval(ArrayEvaluator& a, Eigen::Vector3d pt)
 {
     a.set(pt, 0);
     return a.values(1)(0);

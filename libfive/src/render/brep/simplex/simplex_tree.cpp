@@ -180,10 +180,7 @@ Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
-    auto o = eval->interval.evalAndPush(
-            region.lower3().template cast<float>(),
-            region.upper3().template cast<float>(),
-            tape);
+    auto o = eval->interval.evalAndPush(region.lower3(), region.upper3(), tape);
 
     this->type = Interval::state(o.first);
     if (!eval->interval.isSafe())
@@ -252,7 +249,7 @@ void SimplexTree<N>::findLeafVertices(
     for (unsigned i=0; i < ipow(2, N); ++i) {
         const auto sub = CornerIndex(i).neighbor();
         if (!already_solved[sub.i]) {
-            eval->array.set(region.corner3f(i), count);
+            eval->array.set(region.corner3(i), count);
             corner_indices[count++] = i;
         }
     }
@@ -267,9 +264,8 @@ void SimplexTree<N>::findLeafVertices(
 
             // Helper function to push a position + value + normal, swapping
             // the normal to an all-zeros vector if any items are invalid.
-            auto push = [&](Eigen::Vector3f d) {
-                Eigen::Matrix<double, N, 1> d_ =
-                    d.template head<N>().template cast<double>();
+            auto push = [&](Eigen::Vector3d d) {
+                Eigen::Matrix<double, N, 1> d_ = d.template head<N>();
                 if (!d_.array().isFinite().all()) {
                     d_.array() = 0.0;
                 }
@@ -282,7 +278,7 @@ void SimplexTree<N>::findLeafVertices(
             // the corner's QEF.
             if (ambig(i)) {
                 const auto fs = eval->feature.features(
-                        region.corner3f(corner_indices[i]), tape);
+                        region.corner3(corner_indices[i]), tape);
                 for (auto& f : fs) {
                     push(f);
                 }
@@ -533,9 +529,8 @@ void SimplexTree<N>::saveVertexSigns(
             continue;
         }
 
-        Eigen::Vector3f p;
-        p << this->leaf->sub[i]->vert.template cast<float>().transpose(),
-             region.perp.template cast<float>();
+        Eigen::Vector3d p;
+        p << this->leaf->sub[i]->vert.transpose(), region.perp;
 
         // TODO: make this run in a single array evaluation, rather than
         // one per vertex.

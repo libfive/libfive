@@ -90,7 +90,7 @@ TEST_CASE("FeatureEvaluator::features")
         FeatureEvaluator e(t);
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 1);
-        REQUIRE(fs.front() == Eigen::Vector3f(1, 0, 0));
+        REQUIRE(fs.front() == Eigen::Vector3d(1, 0, 0));
     }
 
     SECTION("Two features (min)")
@@ -101,8 +101,8 @@ TEST_CASE("FeatureEvaluator::features")
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 2);
         auto i = fs.begin();
-        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
-        REQUIRE(*(i++) == Eigen::Vector3f(-1, 0, 0));
+        REQUIRE(*(i++) == Eigen::Vector3d(1, 0, 0));
+        REQUIRE(*(i++) == Eigen::Vector3d(-1, 0, 0));
     }
 
     SECTION("Two features (max)")
@@ -113,8 +113,8 @@ TEST_CASE("FeatureEvaluator::features")
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 2);
         auto i = fs.begin();
-        REQUIRE(*(i++) == Eigen::Vector3f(-1, 0, 0));
-        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
+        REQUIRE(*(i++) == Eigen::Vector3d(-1, 0, 0));
+        REQUIRE(*(i++) == Eigen::Vector3d(1, 0, 0));
     }
 
     SECTION("Three features")
@@ -127,9 +127,9 @@ TEST_CASE("FeatureEvaluator::features")
         REQUIRE(fs.size() == 3);
 
         auto i = fs.begin();
-        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
-        REQUIRE(*(i++) == Eigen::Vector3f(0, 1, 0));
-        REQUIRE(*(i++) == Eigen::Vector3f(0, 0, 1));
+        REQUIRE(*(i++) == Eigen::Vector3d(1, 0, 0));
+        REQUIRE(*(i++) == Eigen::Vector3d(0, 1, 0));
+        REQUIRE(*(i++) == Eigen::Vector3d(0, 0, 1));
     }
 
     SECTION("Buried ambiguity")

@@ -14,39 +14,39 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Deck> d)
-    : FeatureEvaluator(d, std::map<Tree::Id, float>())
+    : FeatureEvaluator(d, std::map<Tree::Id, double>())
 {
     // Nothing to do here
 }
 
 FeatureEvaluator::FeatureEvaluator(
-        std::shared_ptr<Deck> t, const std::map<Tree::Id, float>& vars)
+        std::shared_ptr<Deck> t, const std::map<Tree::Id, double>& vars)
     : PointEvaluator(t, vars), d(1, deck->num_clauses + 1)
 {
     // Load the default derivatives
-    d(deck->X).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
-    d(deck->Y).push_back(Feature(Eigen::Vector3f(0, 1, 0)));
-    d(deck->Z).push_back(Feature(Eigen::Vector3f(0, 0, 1)));
+    d(deck->X).push_back(Feature(Eigen::Vector3d(1, 0, 0)));
+    d(deck->Y).push_back(Feature(Eigen::Vector3d(0, 1, 0)));
+    d(deck->Z).push_back(Feature(Eigen::Vector3d(0, 0, 1)));
 
     // Set variables to have a single all-zero derivative
     for (auto& v : t->vars.right)
     {
-        d(v.second).push_back(Feature(Eigen::Vector3f::Zero()));
+        d(v.second).push_back(Feature(Eigen::Vector3d::Zero()));
     }
 
     // Set constants to have a single all-zero derivative
     for (auto& c : deck->constants)
     {
-        d(c.first).push_back(Feature(Eigen::Vector3f::Zero()));
+        d(c.first).push_back(Feature(Eigen::Vector3d::Zero()));
     }
 }
 
-bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
+bool FeatureEvaluator::isInside(const Eigen::Vector3d& p)
 {
     return isInside(p, deck->tape);
 }
 
-bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
+bool FeatureEvaluator::isInside(const Eigen::Vector3d& p,
                                 Tape::Handle tape)
 {
     auto handle = evalAndPush(p, tape);
@@ -89,13 +89,13 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
 }
 
 const boost::container::small_vector<Feature, 4>&
-    FeatureEvaluator::features_(const Eigen::Vector3f& p)
+    FeatureEvaluator::features_(const Eigen::Vector3d& p)
 {
     return features_(p, deck->tape);
 }
 
 const boost::container::small_vector<Feature, 4>&
-    FeatureEvaluator::features_(const Eigen::Vector3f& p,
+    FeatureEvaluator::features_(const Eigen::Vector3d& p,
                                 Tape::Handle tape)
 {
     // Load the location into the results slot and evaluate point-wise
@@ -109,17 +109,17 @@ const boost::container::small_vector<Feature, 4>&
     return d(index);
 }
 
-std::list<Eigen::Vector3f> FeatureEvaluator::features(const Eigen::Vector3f& p)
+std::list<Eigen::Vector3d> FeatureEvaluator::features(const Eigen::Vector3d& p)
 {
     return features(p, deck->tape);
 }
 
-std::list<Eigen::Vector3f> FeatureEvaluator::features(
-        const Eigen::Vector3f& p,
+std::list<Eigen::Vector3d> FeatureEvaluator::features(
+        const Eigen::Vector3d& p,
         Tape::Handle tape)
 {
     // Deduplicate and return the result
-    std::list<Eigen::Vector3f> out;
+    std::list<Eigen::Vector3d> out;
     for (auto& o : features_(p, tape))
     {
         if (std::find(out.begin(), out.end(), o.deriv) == out.end())
@@ -178,7 +178,7 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             }
             else LOOP2
             {
-                Eigen::Vector3f epsilon = bd - ad;
+                Eigen::Vector3d epsilon = bd - ad;
                 if (epsilon.norm() == 0)
                 {
                     if (_ad.hasEpsilons())
@@ -224,7 +224,7 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             }
             else LOOP2
             {
-                Eigen::Vector3f epsilon = ad - bd;
+                Eigen::Vector3d epsilon = ad - bd;
                 if (epsilon.norm() == 0)
                 {
                     if (_ad.hasEpsilons())
@@ -283,15 +283,15 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = std::isnan(av) ? _bds : _ads;
             break;
         case Opcode::OP_COMPARE:
-            od.push_back(Feature(Eigen::Vector3f::Zero()));
+            od.push_back(Feature(Eigen::Vector3d::Zero()));
             break;
 
         case Opcode::OP_SQUARE:
             STORE1(ad * av * 2);
             break;
         case Opcode::OP_SQRT:
-            STORE1(av < 0 ? Eigen::Vector3f::Zero().eval()
-                          : (ad.array() == 0).select(Eigen::Vector3f::Zero(),
+            STORE1(av < 0 ? Eigen::Vector3d::Zero().eval()
+                          : (ad.array() == 0).select(Eigen::Vector3d::Zero(),
                                                      (ad / (2 * ov))));
             break;
         case Opcode::OP_NEG:

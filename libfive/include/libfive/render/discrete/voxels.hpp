@@ -30,7 +30,7 @@ public:
      *  expanded about their centers to include a unit number of voxels at the
      *  specified resolution.
      */
-    Voxels(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper, float res);
+    Voxels(const Eigen::Vector3d& lower, const Eigen::Vector3d& upper, double res);
 
     /*
      *  Constructs a region with the given bounds and per-axis resolution
@@ -39,14 +39,14 @@ public:
      *  expanded about their centers to include a unit number of voxels at the
      *  specified resolution.
      */
-    Voxels(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper,
-           const Eigen::Vector3f& res);
+    Voxels(const Eigen::Vector3d& lower, const Eigen::Vector3d& upper,
+           const Eigen::Vector3d& res);
 
     /*  Bounding box of the region  */
-    Eigen::Vector3f lower, upper;
+    Eigen::Vector3d lower, upper;
 
     /*  Voxel sample positions  */
-    std::array<std::vector<float>, 3> pts;
+    std::array<std::vector<double>, 3> pts;
 
     /*
      *  A Voxels::View is used when recursively rendering to quickly pass around
@@ -84,8 +84,8 @@ public:
             size_upper(axis) = size(axis) / 2;
             size_lower(axis) -= size_upper(axis);
 
-            auto frac = size_lower(axis) / float(size(axis));
-            float middle = (upper(axis) * frac) + (lower(axis) * (1 - frac));
+            auto frac = size_lower(axis) / double(size(axis));
+            double middle = (upper(axis) * frac) + (lower(axis) * (1 - frac));
 
             auto upper_lower = lower;
             auto lower_upper = upper;
@@ -120,7 +120,7 @@ public:
         bool unit() const { return size == Eigen::Vector3i(1, 1, 1); }
 
         /*  Region bounds  */
-        Eigen::Vector3f lower, upper;
+        Eigen::Vector3d lower, upper;
 
         /*  Size of this subregion (in voxels)  */
         Eigen::Vector3i size;
@@ -129,15 +129,15 @@ public:
         Eigen::Vector3i corner;
 
         /*  Data pointers  */
-        Eigen::Array<const float*, 3, 1> pts;
+        Eigen::Array<const double*, 3, 1> pts;
 
     protected:
         /*
          *  Private constructor, used when subdividing
          */
-        View(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper,
+        View(const Eigen::Vector3d& lower, const Eigen::Vector3d& upper,
              const Eigen::Vector3i& size, const Eigen::Vector3i& corner,
-             const Eigen::Matrix<const float*, 3, 1>& pts);
+             const Eigen::Matrix<const double*, 3, 1>& pts);
 
         View();
     };

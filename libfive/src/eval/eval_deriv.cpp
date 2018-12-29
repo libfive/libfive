@@ -14,13 +14,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 DerivEvaluator::DerivEvaluator(std::shared_ptr<Deck> d)
-    : DerivEvaluator(d, std::map<Tree::Id, float>())
+    : DerivEvaluator(d, std::map<Tree::Id, double>())
 {
     // Nothing to do here
 }
 
 DerivEvaluator::DerivEvaluator(
-        std::shared_ptr<Deck> deck, const std::map<Tree::Id, float>& vars)
+        std::shared_ptr<Deck> deck, const std::map<Tree::Id, double>& vars)
     : PointEvaluator(deck, vars), d(3, deck->num_clauses + 1)
 {
     // Initialize all derivatives to zero
@@ -32,12 +32,12 @@ DerivEvaluator::DerivEvaluator(
     d(2, deck->Z) = 1;
 }
 
-Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt)
+Eigen::Vector4d DerivEvaluator::deriv(const Eigen::Vector3d& pt)
 {
     return deriv(pt, deck->tape);
 }
 
-Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt,
+Eigen::Vector4d DerivEvaluator::deriv(const Eigen::Vector3d& pt,
         Tape::Handle tape)
 {
     // Perform value evaluation, saving results
@@ -47,7 +47,7 @@ Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt,
     auto xyz = d.col(tape->rwalk(*this));
     deck->unbindOracles();
 
-    Eigen::Vector4f out;
+    Eigen::Vector4d out;
     out << xyz, w;
     return out;
 }
@@ -114,8 +114,8 @@ void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::OP_SQRT:
             // This is not technically correct (the derivative goes to
             // infinity as ad goes to 0), but saves us from NaNs.
-            od = av < 0 ? Eigen::Vector3f::Zero().eval()
-                        : (ad == 0).select(Eigen::Vector3f::Zero(),
+            od = av < 0 ? Eigen::Vector3d::Zero().eval()
+                        : (ad == 0).select(Eigen::Vector3d::Zero(),
                                            (ad / (2 * ov)));
             break;
         case Opcode::OP_NEG:

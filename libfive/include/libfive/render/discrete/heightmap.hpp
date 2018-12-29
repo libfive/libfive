@@ -42,7 +42,7 @@ public:
      */
     bool savePNG(std::string filename);
 
-    typedef Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> Depth;
+    typedef Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> Depth;
     typedef Eigen::Array<uint32_t, Eigen::Dynamic, Eigen::Dynamic> Normal;
 
     Depth depth;

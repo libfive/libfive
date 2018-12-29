@@ -28,7 +28,7 @@ class FeatureEvaluator : public PointEvaluator
 public:
     FeatureEvaluator(std::shared_ptr<Deck> d);
     FeatureEvaluator(std::shared_ptr<Deck> d,
-                     const std::map<Tree::Id, float>& vars);
+                     const std::map<Tree::Id, double>& vars);
 
     /*
      *  Checks to see if the given point is inside the solid body.
@@ -37,16 +37,16 @@ public:
      *      eval(x, y, z) > 0  => false
      *      eval(x, y, z) == 0 => further checking is performed
      */
-    bool isInside(const Eigen::Vector3f& p);
-    bool isInside(const Eigen::Vector3f& p,
+    bool isInside(const Eigen::Vector3d& p);
+    bool isInside(const Eigen::Vector3d& p,
                   std::shared_ptr<Tape> tape);
 
     /*
      *  Checks for features at the given position, returning a list
      *  of unique feature normals.
      */
-    std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p);
-    std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p,
+    std::list<Eigen::Vector3d> features(const Eigen::Vector3d& p);
+    std::list<Eigen::Vector3d> features(const Eigen::Vector3d& p,
                                         std::shared_ptr<Tape> tape);
 
     /*
@@ -54,9 +54,9 @@ public:
      *  of the raw features themselves
      */
     const boost::container::small_vector<Feature, 4>&
-        features_(const Eigen::Vector3f& p);
+        features_(const Eigen::Vector3d& p);
     const boost::container::small_vector<Feature, 4>&
-        features_(const Eigen::Vector3f& p, std::shared_ptr<Tape> tape);
+        features_(const Eigen::Vector3d& p, std::shared_ptr<Tape> tape);
 
 protected:
     /*

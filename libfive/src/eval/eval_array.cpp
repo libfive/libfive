@@ -16,13 +16,13 @@ namespace Kernel {
 constexpr size_t ArrayEvaluator::N;
 
 ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Deck> d)
-    : ArrayEvaluator(d, std::map<Tree::Id, float>())
+    : ArrayEvaluator(d, std::map<Tree::Id, double>())
 {
     // Nothing to do here
 }
 
 ArrayEvaluator::ArrayEvaluator(
-        std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
+        std::shared_ptr<Deck> d, const std::map<Tree::Id, double>& vars)
     : BaseEvaluator(d, vars), f(deck->num_clauses + 1, N)
 {
     // Unpack variables into result array
@@ -89,7 +89,7 @@ void ArrayEvaluator::setCount(size_t count)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool ArrayEvaluator::setVar(Tree::Id var, float value)
+bool ArrayEvaluator::setVar(Tree::Id var, double value)
 {
     auto v = deck->vars.right.find(var);
     if (v != deck->vars.right.end())

@@ -19,14 +19,14 @@ class DerivArrayEvaluator : public ArrayEvaluator
 public:
     DerivArrayEvaluator(std::shared_ptr<Deck> t);
     DerivArrayEvaluator(std::shared_ptr<Deck> t,
-                        const std::map<Tree::Id, float>& vars);
+                        const std::map<Tree::Id, double>& vars);
 
 protected:
     /*  d(clause).col(index) is a set of partial derivatives [dx, dy, dz] */
-    Eigen::Array<Eigen::Array<float, 3, N>, Eigen::Dynamic, 1> d;
+    Eigen::Array<Eigen::Array<double, 3, N>, Eigen::Dynamic, 1> d;
 
     /*  out(col) is a result [dx, dy, dz, w] */
-    Eigen::Array<float, 4, N> out;
+    Eigen::Array<double, 4, N> out;
 
 public:
     /*

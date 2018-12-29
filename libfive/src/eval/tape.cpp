@@ -205,7 +205,7 @@ std::shared_ptr<Tape> Tape::getBase(std::shared_ptr<Tape> tape,
 
 std::shared_ptr<Tape> Tape::getBase(
         std::shared_ptr<Tape> tape,
-        const Eigen::Vector3f& p)
+        const Eigen::Vector3d& p)
 {
     // Walk up the tape stack until we find an interval-type tape
     // that contains the given point, or we hit the start of the stack

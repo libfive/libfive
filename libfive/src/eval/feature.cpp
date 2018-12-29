@@ -11,19 +11,19 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-Feature::Feature(const Eigen::Vector3f& d)
+Feature::Feature(const Eigen::Vector3d& d)
     : deriv(d)
 {
     // Nothing to do here
 }
 
-Feature::Feature(const Eigen::Vector3f& d, const Feature& a)
+Feature::Feature(const Eigen::Vector3d& d, const Feature& a)
     : deriv(d), epsilons(a.epsilons)
 {
     // Nothing to do here
 }
 
-Feature::Feature(const Eigen::Vector3f& d, const Feature& a, const Feature& b)
+Feature::Feature(const Eigen::Vector3d& d, const Feature& a, const Feature& b)
     : deriv(d), epsilons(a.epsilons)
 {
     // Merge and deduplicate epsilons
@@ -47,7 +47,7 @@ Feature::Feature(const Eigen::Vector3f& d, const Feature& a, const Feature& b)
     }
 }
 
-Feature::Feature(const Feature& a, const Eigen::Matrix3f& transform)
+Feature::Feature(const Feature& a, const Eigen::Matrix3d& transform)
     : deriv(transform * a.deriv), epsilons(a.epsilons)
 {
     for (auto& e : epsilons)
@@ -56,7 +56,7 @@ Feature::Feature(const Feature& a, const Eigen::Matrix3f& transform)
     }
 }
 
-bool Feature::push(const Eigen::Vector3f& e_)
+bool Feature::push(const Eigen::Vector3d& e_)
 {
     const auto norm = e_.norm();
     if (norm == 0)
@@ -64,7 +64,7 @@ bool Feature::push(const Eigen::Vector3f& e_)
         return false;
     }
 
-    Eigen::Vector3f e = e_ / norm;
+    Eigen::Vector3d e = e_ / norm;
     bool dup = false;
     if (check(e, &dup))
     {
@@ -84,10 +84,10 @@ bool Feature::check(const Feature& other) const
 {
     auto temp = *this;
     return std::all_of(other.epsilons.begin(), other.epsilons.end(),
-            [&](const Eigen::Vector3f& e){ return temp.push(e); });
+            [&](const Eigen::Vector3d& e){ return temp.push(e); });
 }
 
-bool Feature::check(const Eigen::Vector3f& e, bool* duplicate) const
+bool Feature::check(const Eigen::Vector3d& e, bool* duplicate) const
 {
     // Return early if the epsilon is already in the list
     for (const auto& i : epsilons)
@@ -198,7 +198,7 @@ bool Feature::check(const Eigen::Vector3f& e, bool* duplicate) const
 bool Feature::operator<(const Feature& other) const
 {
     auto EigenCompare =
-        [](const Eigen::Vector3f& a, const Eigen::Vector3f& b)
+        [](const Eigen::Vector3d& a, const Eigen::Vector3d& b)
     {
         for (auto i = 0; i < 3; ++i)
         {

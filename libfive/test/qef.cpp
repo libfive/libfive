@@ -179,9 +179,9 @@ QEF<N> fromCorners(Region<N> r, Tree c)
     for (unsigned i=0; i < 4; ++i) {
         const auto pos = r.corner(i);
         const auto deriv = d.deriv(
-                Eigen::Vector3f(pos.x(), pos.y(), 0));
+                Eigen::Vector3d(pos.x(), pos.y(), 0));
 
-        q.insert(pos, deriv.head<2>().cast<double>(), deriv(3));
+        q.insert(pos, deriv.head<2>(), deriv(3));
     }
     return q;
 }

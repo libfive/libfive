@@ -16,13 +16,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 PointEvaluator::PointEvaluator(std::shared_ptr<Deck> d)
-    : PointEvaluator(d, std::map<Tree::Id, float>())
+    : PointEvaluator(d, std::map<Tree::Id, double>())
 {
     // Nothing to do here
 }
 
 PointEvaluator::PointEvaluator(
-        std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
+        std::shared_ptr<Deck> d, const std::map<Tree::Id, double>& vars)
     : BaseEvaluator(d, vars), f(d->num_clauses + 1, 1)
 {
     // Unpack variables into result array
@@ -39,12 +39,12 @@ PointEvaluator::PointEvaluator(
     }
 }
 
-float PointEvaluator::eval(const Eigen::Vector3f& pt)
+double PointEvaluator::eval(const Eigen::Vector3d& pt)
 {
     return eval(pt, deck->tape);
 }
 
-float PointEvaluator::eval(const Eigen::Vector3f& pt,
+double PointEvaluator::eval(const Eigen::Vector3d& pt,
                            std::shared_ptr<Tape> tape)
 {
     assert(tape.get());
@@ -65,14 +65,14 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt,
     return f(index);
 }
 
-std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
-        const Eigen::Vector3f& pt)
+std::pair<double, Tape::Handle> PointEvaluator::evalAndPush(
+        const Eigen::Vector3d& pt)
 {
     return evalAndPush(pt, deck->tape);
 }
 
-std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
-        const Eigen::Vector3f& pt, Tape::Handle tape)
+std::pair<double, Tape::Handle> PointEvaluator::evalAndPush(
+        const Eigen::Vector3d& pt, Tape::Handle tape)
 {
     auto out = eval(pt, tape);
     auto p = Tape::push(tape, *deck,
@@ -118,7 +118,7 @@ std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool PointEvaluator::setVar(Tree::Id var, float value)
+bool PointEvaluator::setVar(Tree::Id var, double value)
 {
     auto v = deck->vars.right.find(var);
     if (v != deck->vars.right.end())

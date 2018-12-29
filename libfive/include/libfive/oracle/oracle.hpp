@@ -35,13 +35,13 @@ public:
      *  This should be O(1) for best performance.
      *  The oracle must accept 0 <= index < LIBFIVE_EVAL_ARRAY_SIZE.
      */
-    virtual void set(const Eigen::Vector3f& p, size_t index=0)=0;
+    virtual void set(const Eigen::Vector3d& p, size_t index=0)=0;
 
     /*
      *  Sets a region for interval evaluation
      */
-    virtual void set(const Eigen::Vector3f& lower,
-                     const Eigen::Vector3f& upper)=0;
+    virtual void set(const Eigen::Vector3d& lower,
+                     const Eigen::Vector3d& upper)=0;
 
     /*
      *  Return the result of interval arithmetic over the range
@@ -72,9 +72,9 @@ public:
 
     /*
      *  Returns the result of pointwise arithemetic on the value
-     *  previously defined with set(Eigen::Vector3f, index)
+     *  previously defined with set(Eigen::Vector3d, index)
      */
-    virtual void evalPoint(float& out, size_t index=0)=0;
+    virtual void evalPoint(double& out, size_t index=0)=0;
 
     /*
      *  Block-level floating-point evaluation.
@@ -82,7 +82,7 @@ public:
      *  a more efficient implementation if possible.
      */
     virtual void evalArray(
-            Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
+            Eigen::Block<Eigen::Array<double, Eigen::Dynamic,
                                       LIBFIVE_EVAL_ARRAY_SIZE,
                                       Eigen::RowMajor>,
                          1, Eigen::Dynamic> out)
@@ -95,7 +95,7 @@ public:
 
     /*
      *  Sets appropriate bits to 1 if the given point (as set with
-     *  set(Eigen::Vector3f, i) and evaluated with evaluArray) is ambiguous.
+     *  set(Eigen::Vector3d, i) and evaluated with evaluArray) is ambiguous.
      *
      *  This function must only be called after evalArray is called
      *  (with the same result block size)
@@ -106,7 +106,7 @@ public:
 
     /*
      *  Returns the result of gradient arithemetic on the value
-     *  previously defined with set(Eigen::Vector3f).
+     *  previously defined with set(Eigen::Vector3d).
      *
      *  Note that the argument is the output, not an input, for parallel
      *  structure with other functions within this class.
@@ -114,7 +114,7 @@ public:
      *  In the case of ambiguous points, only one gradient is returned.
      */
     virtual void evalDerivs(
-            Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
+            Eigen::Block<Eigen::Array<double, 3, Eigen::Dynamic>,
                          3, 1, true> out, size_t index=0)=0;
 
     /*
@@ -127,10 +127,10 @@ public:
      *  (with the same output block size).
      */
     virtual void evalDerivArray(
-            Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
+            Eigen::Block<Eigen::Array<double, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
                          3, Eigen::Dynamic, true> out)
     {
-        Eigen::Array<float, 3, Eigen::Dynamic> dummy(3, out.cols());
+        Eigen::Array<double, 3, Eigen::Dynamic> dummy(3, out.cols());
         for (unsigned i=0; i < out.cols(); ++i)
         {
             evalDerivs(dummy.col(i), i);

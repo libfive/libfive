@@ -112,20 +112,19 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
         Region<3> ra({-0.3125, -3.4375, -0.3125}, {0, -3.125, 0});
         Region<3> rb({-0.3125, -3.4375, 0}, {0, -3.125, 0.3125});
-        Eigen::Vector3f target(0, -3.4375, 0);
+        Eigen::Vector3d target(0, -3.4375, 0);
 
         // Initial sanity-checking
-        REQUIRE(ra.contains(target.template cast<double>()));
-        REQUIRE(rb.contains(target.template cast<double>()));
+        REQUIRE(ra.contains(target));
+        REQUIRE(rb.contains(target));
 
         auto deck = std::make_shared<Deck>(tree);
         IntervalEvaluator eval(deck);
         PointEvaluator eval_(deck);
 
-        float ea, eb;
+        double ea, eb;
         {
-            auto ia = eval.evalAndPush(ra.lower.template cast<float>(),
-                                       ra.upper.template cast<float>());
+            auto ia = eval.evalAndPush(ra.lower, ra.upper);
             CAPTURE(ia.first.lower());
             CAPTURE(ia.first.upper());
             CAPTURE(ia.second->size() / (float)deck->tape->size());
@@ -133,8 +132,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         }
 
         {
-            auto ib = eval.evalAndPush(rb.lower.template cast<float>(),
-                                       rb.upper.template cast<float>());
+            auto ib = eval.evalAndPush(rb.lower, rb.upper);
             CAPTURE(ib.first.lower());
             CAPTURE(ib.first.upper());
             CAPTURE(ib.second->size() / (float)deck->tape->size());
@@ -155,7 +153,7 @@ TEST_CASE("IntervalEvaluator::isSafe")
         e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
         REQUIRE(e.isSafe());
 
-        e.eval({-std::numeric_limits<float>::infinity(), 1, 0},
+        e.eval({-std::numeric_limits<double>::infinity(), 1, 0},
                {1, 2, 0}, t->tape);
         REQUIRE(e.isSafe());
     }

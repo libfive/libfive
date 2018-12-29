@@ -85,7 +85,7 @@ TEST_CASE("Voxels::View::lower")
 {
     auto r = Voxels({0, 0, 0}, {10, 5, 2.5}, 10);
     auto v = r.view();
-    REQUIRE(v.lower == Eigen::Vector3f(0, 0, 0));
+    REQUIRE(v.lower == Eigen::Vector3d(0, 0, 0));
 }
 
 TEST_CASE("Voxels::View::size")

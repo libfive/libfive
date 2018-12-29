@@ -26,14 +26,14 @@ public:
      *  Sets not only OracleStorage's points,
      *  but also the array evaluators.
      */
-    void set(const Eigen::Vector3f& p, size_t index=0) override;
+    void set(const Eigen::Vector3d& p, size_t index=0) override;
 
     void evalInterval(Interval::I& out) override;
 
-    void evalPoint(float& out, size_t index=0) override;
+    void evalPoint(double& out, size_t index=0) override;
 
     void evalArray(
-        Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
+        Eigen::Block<Eigen::Array<double, Eigen::Dynamic,
                      LIBFIVE_EVAL_ARRAY_SIZE,Eigen::RowMajor>,
                      1, Eigen::Dynamic> out) override;
 
@@ -42,11 +42,11 @@ public:
                      1, Eigen::Dynamic> out) override;
 
     void evalDerivs(
-        Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
+        Eigen::Block<Eigen::Array<double, 3, Eigen::Dynamic>,
                      3, 1, true> out, size_t index=0) override;
 
     void evalDerivArray(
-        Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
+        Eigen::Block<Eigen::Array<double, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
                      3, Eigen::Dynamic, true> out) override;
 
     void evalFeatures(

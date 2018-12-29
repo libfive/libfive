@@ -14,13 +14,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 DerivArrayEvaluator::DerivArrayEvaluator(std::shared_ptr<Deck> d)
-    : DerivArrayEvaluator(d, std::map<Tree::Id, float>())
+    : DerivArrayEvaluator(d, std::map<Tree::Id, double>())
 {
     // Nothing to do here
 }
 
 DerivArrayEvaluator::DerivArrayEvaluator(
-        std::shared_ptr<Deck> deck, const std::map<Tree::Id, float>& vars)
+        std::shared_ptr<Deck> deck, const std::map<Tree::Id, double>& vars)
     : ArrayEvaluator(deck, vars), d(deck->num_clauses + 1, 1)
 {
     // Initialize all derivatives to zero
@@ -159,7 +159,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::OP_SQRT:
             for (Eigen::Index i=0; i < od.rows(); ++i)
                 od.row(i) = (av < 0 || ad.row(i) == 0).select(
-                    Eigen::Array<float, 1, Eigen::Dynamic>::Zero(1, count),
+                    Eigen::Array<double, 1, Eigen::Dynamic>::Zero(1, count),
                     ad.row(i) / (2 * ov));
             break;
         case Opcode::OP_NEG:

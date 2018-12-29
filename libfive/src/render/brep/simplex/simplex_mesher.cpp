@@ -467,7 +467,7 @@ uint64_t SimplexMesher::searchEdge(Eigen::Vector3d inside,
                 const double frac = j / (POINTS_PER_SEARCH - 1.0);
                 ps.col(j) = (inside * (1 - frac)) +
                             (outside * frac);
-                eval->array.set(ps.col(j).template cast<float>(), j);
+                eval->array.set(ps.col(j), j);
         }
 
         auto out = eval->array.values(POINTS_PER_SEARCH, tape);
@@ -483,8 +483,7 @@ uint64_t SimplexMesher::searchEdge(Eigen::Vector3d inside,
             // search, working around  numerical issues where different
             // evaluators disagree with whether points are inside or outside.
             if (out[j] > 0 || j == POINTS_PER_SEARCH - 1 ||
-                (out[j] == 0 && !eval->feature.isInside(
-                            ps.col(j).template cast<float>(), tape)))
+                (out[j] == 0 && !eval->feature.isInside(ps.col(j), tape)))
 
             {
                 inside = ps.col(j - 1);
@@ -497,7 +496,7 @@ uint64_t SimplexMesher::searchEdge(Eigen::Vector3d inside,
     // TODO: we should weight the exact position based on values
     Eigen::Vector3d vert = (inside + outside) / 2;
 
-    return m.pushVertex(vert.template cast<float>());
+    return m.pushVertex(vert);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

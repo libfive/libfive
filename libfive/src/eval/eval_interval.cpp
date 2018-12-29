@@ -16,23 +16,23 @@ namespace Kernel {
 namespace {
 using Pr = std::pair<Interval::I, bool>;
 // Turn a constant into an interval-and-NaN pair.
-Pr toPair(float inp)
+Pr toPair(double inp)
 {
-  return std::isnan(inp)
-    ? Pr{Interval::I::empty(), true}
-    : Pr{inp, false};
+    return std::isnan(inp)
+        ? Pr{Interval::I::empty(), true}
+        : Pr{inp, false};
 }
 
 }
 
 IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Deck> d)
-    : IntervalEvaluator(d, std::map<Tree::Id, float>())
+    : IntervalEvaluator(d, std::map<Tree::Id, double>())
 {
     // Nothing to do here
 }
 
 IntervalEvaluator::IntervalEvaluator(
-        std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
+        std::shared_ptr<Deck> d, const std::map<Tree::Id, double>& vars)
     : BaseEvaluator(d, vars)
 {
     i.resize(d->num_clauses + 1);
@@ -51,14 +51,14 @@ IntervalEvaluator::IntervalEvaluator(
     }
 }
 
-Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
-                                    const Eigen::Vector3f& upper)
+Interval::I IntervalEvaluator::eval(const Eigen::Vector3d& lower,
+                                    const Eigen::Vector3d& upper)
 {
     return eval(lower, upper, deck->tape);
 }
 
-Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
-                                    const Eigen::Vector3f& upper,
+Interval::I IntervalEvaluator::eval(const Eigen::Vector3d& lower,
+                                    const Eigen::Vector3d& upper,
                                     Tape::Handle tape)
 {
     assert(!lower.array().isNaN().any()); // A region's bounds should
@@ -81,15 +81,15 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
 }
 
 std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
-        const Eigen::Vector3f& lower,
-        const Eigen::Vector3f& upper)
+        const Eigen::Vector3d& lower,
+        const Eigen::Vector3d& upper)
 {
     return evalAndPush(lower, upper, deck->tape);
 }
 
 std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
-        const Eigen::Vector3f& lower,
-        const Eigen::Vector3f& upper,
+        const Eigen::Vector3d& lower,
+        const Eigen::Vector3d& upper,
         Tape::Handle tape)
 {
     auto out = eval(lower, upper, tape);
@@ -158,7 +158,7 @@ std::shared_ptr<Tape> IntervalEvaluator::push(std::shared_ptr<Tape> tape)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool IntervalEvaluator::setVar(Tree::Id var, float value)
+bool IntervalEvaluator::setVar(Tree::Id var, double value)
 {
     auto v = deck->vars.right.find(var);
     if (v != deck->vars.right.end())

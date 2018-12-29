@@ -42,7 +42,7 @@ Tree::Tree(std::unique_ptr<const OracleClause>&& o)
     // duplication.
 }
 
-Tree::Tree(float v)
+Tree::Tree(double v)
     : ptr(Cache::instance()->constant(v))
 {
     // Nothing to do here

@@ -15,7 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 BaseEvaluator::BaseEvaluator(std::shared_ptr<Deck> deck,
-                             const std::map<Tree::Id, float>& vars)
+                             const std::map<Tree::Id, double>& vars)
     : deck(deck)
 {
     for (auto& v : deck->vars.right)

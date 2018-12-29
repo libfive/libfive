@@ -377,7 +377,7 @@ void View::mouseMoveEvent(QMouseEvent* event)
                 *drag_eval.first, drag_eval.second,
                 drag_target->getVars(),
                 {cursor_pos.x(), cursor_pos.y(), cursor_pos.z()});
-        emit(varsDragged(QMap<Kernel::Tree::Id, float>(sol.second)));
+        emit(varsDragged(QMap<Kernel::Tree::Id, double>(sol.second)));
 
         drag_valid = fabs(sol.first) < 1e-6;
         bool changed = false;
@@ -399,7 +399,7 @@ void View::mouseMoveEvent(QMouseEvent* event)
 
 QVector3D View::toModelPos(QPoint pt) const
 {
-    float pick_z = 0;
+    double pick_z = 0;
     if (pick_img.valid(pt))
     {
         pick_z = 2 * pick_depth.at(
@@ -409,7 +409,7 @@ QVector3D View::toModelPos(QPoint pt) const
     return toModelPos(pt, pick_z);
 }
 
-QVector3D View::toModelPos(QPoint pt, float z) const
+QVector3D View::toModelPos(QPoint pt, double z) const
 {
     return camera.M().inverted() * QVector3D(
             (pt.x() * 2.0) / pick_img.width() - 1,

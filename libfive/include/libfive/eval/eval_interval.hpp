@@ -22,23 +22,23 @@ class IntervalEvaluator : public BaseEvaluator
 public:
     IntervalEvaluator(std::shared_ptr<Deck> d);
     IntervalEvaluator(std::shared_ptr<Deck> d,
-                      const std::map<Tree::Id, float>& vars);
+                      const std::map<Tree::Id, double>& vars);
 
     /*
      *  Interval evaluation
      */
-    Interval::I eval(const Eigen::Vector3f& lower,
-                     const Eigen::Vector3f& upper);
-    Interval::I eval(const Eigen::Vector3f& lower,
-                     const Eigen::Vector3f& upper,
+    Interval::I eval(const Eigen::Vector3d& lower,
+                     const Eigen::Vector3d& upper);
+    Interval::I eval(const Eigen::Vector3d& lower,
+                     const Eigen::Vector3d& upper,
                      std::shared_ptr<Tape> tape);
 
     std::pair<Interval::I, std::shared_ptr<Tape>> evalAndPush(
-                     const Eigen::Vector3f& lower,
-                     const Eigen::Vector3f& upper);
+                     const Eigen::Vector3d& lower,
+                     const Eigen::Vector3d& upper);
     std::pair<Interval::I, std::shared_ptr<Tape>> evalAndPush(
-                     const Eigen::Vector3f& lower,
-                     const Eigen::Vector3f& upper,
+                     const Eigen::Vector3d& lower,
+                     const Eigen::Vector3d& upper,
                      std::shared_ptr<Tape> tape);
 
     /*
@@ -57,7 +57,7 @@ public:
      *  If the variable isn't present in the tree, does nothing
      *  Returns true if the variable's value changes
      */
-    bool setVar(Tree::Id var, float value);
+    bool setVar(Tree::Id var, double value);
 
     bool isSafe() const { return safe; }
 

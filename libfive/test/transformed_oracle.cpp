@@ -29,7 +29,7 @@ using namespace Kernel;
 
 void compareUnderTransformation(Tree oracleTree, Tree controlTree,
     std::function<Tree(Tree)> transformation,
-    std::vector<Eigen::Vector3f> testPoints)
+    std::vector<Eigen::Vector3d> testPoints)
 {
     auto transformedOracle = transformation(oracleTree);
     auto transformedControl = transformation(controlTree);
@@ -64,7 +64,7 @@ void compareUnderTransformation(Tree oracleTree, Tree controlTree,
             CAPTURE(i);
             CAPTURE(oResults.col(i));
             CAPTURE(cResults.col(i));
-            Eigen::Vector4f diff = oResults.col(i) - cResults.col(i);
+            Eigen::Vector4d diff = oResults.col(i) - cResults.col(i);
             auto relativeClose = oResults.col(i).isApprox(cResults.col(i));
             if (!ambigPoints(i))
             {
@@ -97,8 +97,8 @@ void compareUnderTransformation(Tree oracleTree, Tree controlTree,
 
             auto valid = std::is_permutation(oFeatures.begin(), oFeatures.end(),
                 cFeatures.begin(), [](
-                    const Eigen::Vector3f& first,
-                    const Eigen::Vector3f& second)
+                    const Eigen::Vector3d& first,
+                    const Eigen::Vector3d& second)
             {return (first - second).norm() < (1e-4) ||
                 first.isApprox(second, 1e-4);});
             REQUIRE(valid);

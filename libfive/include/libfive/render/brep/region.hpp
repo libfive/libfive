@@ -138,11 +138,6 @@ public:
         return out;
     }
 
-    Eigen::Vector3f corner3f(unsigned i) const
-    {
-        return corner3(i).template cast<float>();
-    }
-
     Eigen::Matrix<double, N, 1> corner(unsigned i) const
     {
         Eigen::Matrix<double, N, 1> out;

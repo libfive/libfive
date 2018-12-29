@@ -123,7 +123,7 @@ public:
      *  into a deeper interval, e.g. in dual contouring where points can
      *  be positioned outside of their parent cells.
      */
-    static Handle getBase(Handle tape, const Eigen::Vector3f& p);
+    static Handle getBase(Handle tape, const Eigen::Vector3d& p);
     static Handle getBase(Handle tape, const Region<3>& r);
 
     friend class Deck;

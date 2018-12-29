@@ -25,37 +25,37 @@ namespace Kernel
  */
 class Feature {
 public:
-    Feature(const Eigen::Vector3f& d);
+    Feature(const Eigen::Vector3d& d);
 
     /*
      *  Constructs a feature with a single parent
      */
-    Feature(const Eigen::Vector3f& d, const Feature& a);
+    Feature(const Eigen::Vector3d& d, const Feature& a);
 
     /*
      *  Construct a feature with two parents, merging and deduplicating
      *  their lists of epsilons.  Note that the two parent features must
      *  already be checked as compatible; no checking is performed here.
      */
-    Feature(const Eigen::Vector3f& d, const Feature& a, const Feature& b);
+    Feature(const Eigen::Vector3d& d, const Feature& a, const Feature& b);
 
     /*
      *  Transforms the derivative and all epsilons
      *  according to the given transformation.
      */
-    Feature(const Feature& a, const Eigen::Matrix3f& transform);
+    Feature(const Feature& a, const Eigen::Matrix3d& transform);
 
     /*
      *  If incompatible, does nothing and returns false
      *  Otherwise, pushes to the front of the choice list and returns true
      */
-    bool push(const Eigen::Vector3f& e);
+    bool push(const Eigen::Vector3d& e);
 
     /*
      *  Checks to see whether the given epsilon is compatible with
      *  the existing epsilon vector.
      */
-    bool check(const Eigen::Vector3f& e, bool* dup=nullptr) const;
+    bool check(const Eigen::Vector3d& e, bool* dup=nullptr) const;
     bool check(const Feature& other) const;
 
     bool hasEpsilons() const { return epsilons.size(); }
@@ -67,10 +67,10 @@ public:
         return epsilons == other.epsilons;
     }
 
-    Eigen::Vector3f deriv;
+    Eigen::Vector3d deriv;
 
 protected:
-    boost::container::small_vector<Eigen::Vector3f, 4> epsilons;
+    boost::container::small_vector<Eigen::Vector3d, 4> epsilons;
 };
 
 }   // namespace Kernel

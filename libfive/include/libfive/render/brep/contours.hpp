@@ -42,9 +42,9 @@ public:
      *  worker count to autoconvert to the multithreading boolean.
      */
     static std::unique_ptr<Contours> render(
-      const Tree t, const Region<2>& r,
-      double min_feature, double max_err,
-      unsigned workers);
+        const Tree t, const Region<2>& r,
+        double min_feature, double max_err,
+        unsigned workers);
 
     /*
      *  Saves the contours to an SVG file
@@ -57,7 +57,7 @@ public:
     void collect(const std::vector<PerThreadBRep<2>>& children);
 
     /*  Contours in 2D space  */
-    std::vector<std::vector<Eigen::Vector2f>> contours;
+    std::vector<std::vector<Eigen::Vector2d>> contours;
 
     /*  Optional bounding box */
     Region<2> bbox;

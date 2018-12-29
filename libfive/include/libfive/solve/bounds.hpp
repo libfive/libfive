@@ -16,7 +16,7 @@ namespace Kernel {
 
 #ifdef ENABLE_FIND_BOUNDS_EXPERIMENTAL
 Region<3> findBounds(const Tree& t);
-Region<3> findBounds(const Tree& t, const std::map<Tree::Id, float>& vars);
+Region<3> findBounds(const Tree& t, const std::map<Tree::Id, double>& vars);
 Region<3> findBounds(IntervalEvaluator* eval);
 #else
 #error \

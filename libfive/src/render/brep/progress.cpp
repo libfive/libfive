@@ -14,14 +14,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-void EMPTY_PROGRESS_CALLBACK(float) { /* Nothing to do here */ }
+void EMPTY_PROGRESS_CALLBACK(double) { /* Nothing to do here */ }
 
-ProgressWatcher* ProgressWatcher::build(uint64_t total, float offset,
-                                        std::function<void(float)> callback,
+ProgressWatcher* ProgressWatcher::build(uint64_t total, double offset,
+                                        std::function<void(double)> callback,
                                         std::atomic_bool& done,
                                         std::atomic_bool& cancel)
 {
-    auto progress_cb_ptr = callback.target<void(*)(float)>();
+    auto progress_cb_ptr = callback.target<void(*)(double)>();
     const bool has_progress_callback = !progress_cb_ptr ||
         (*progress_cb_ptr != EMPTY_PROGRESS_CALLBACK);
 
@@ -35,8 +35,8 @@ ProgressWatcher* ProgressWatcher::build(uint64_t total, float offset,
     }
 }
 
-ProgressWatcher::ProgressWatcher(uint64_t total, float offset,
-                                 std::function<void(float)> callback,
+ProgressWatcher::ProgressWatcher(uint64_t total, double offset,
+                                 std::function<void(double)> callback,
                                  std::atomic_bool& done,
                                  std::atomic_bool& cancel)
     : callback(callback), done(done), cancel(cancel),
@@ -63,7 +63,7 @@ ProgressWatcher::ProgressWatcher(uint64_t total, float offset,
                 if (next != n)
                 {
                     n = next;
-                    this->callback(n / (float)this->total + this->offset);
+                    this->callback(n / (double)this->total + this->offset);
                 }
                 // Sleep for 50 ms, returning early if the mutex is
                 // unlocked (which happens in the destructor)

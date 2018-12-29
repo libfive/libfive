@@ -20,13 +20,13 @@ class JacobianEvaluator : public DerivEvaluator
 public:
     JacobianEvaluator(std::shared_ptr<Deck> t);
     JacobianEvaluator(std::shared_ptr<Deck> t,
-                      const std::map<Tree::Id, float>& vars);
+                      const std::map<Tree::Id, double>& vars);
 
     /*
      *  Returns the gradient with respect to all VAR nodes
      */
-    std::map<Tree::Id, float> gradient(const Eigen::Vector3f& p);
-    std::map<Tree::Id, float> gradient(const Eigen::Vector3f& p,
+    std::map<Tree::Id, double> gradient(const Eigen::Vector3d& p);
+    std::map<Tree::Id, double> gradient(const Eigen::Vector3d& p,
             std::shared_ptr<Tape> tape);
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -38,7 +38,7 @@ protected:
                     Clause::Id a, Clause::Id b);
 
     /*  j(clause, var) = dclause / dvar */
-    Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> j;
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> j;
 
     friend class Tape; // for rwalk<JacobianEvaluator>
 };

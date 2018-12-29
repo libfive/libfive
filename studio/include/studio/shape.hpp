@@ -36,7 +36,7 @@ class Shape : public QObject, QOpenGLFunctions
 {
     Q_OBJECT
 public:
-    Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, float> vars);
+    Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, double> vars);
 
     /*
      *  In destructor, wait for computation to finish
@@ -87,7 +87,7 @@ public:
      *
      *  Returns true if variable values have changed.
      */
-    bool updateVars(const std::map<Kernel::Tree::Id, float>& vs);
+    bool updateVars(const std::map<Kernel::Tree::Id, double>& vs);
 
     /*
      *  Checks to see whether this shape has attached vars
@@ -107,7 +107,7 @@ public:
     /*
      *  Returns another pointer to the solution map
      */
-    const std::map<Kernel::Tree::Id, float>& getVars() const
+    const std::map<Kernel::Tree::Id, double>& getVars() const
     { return vars; }
 
     /*
@@ -163,7 +163,7 @@ protected:
     std::atomic_bool cancel;
 
     Kernel::Tree tree;
-    std::map<Kernel::Tree::Id, float> vars;
+    std::map<Kernel::Tree::Id, double> vars;
     std::vector<Kernel::XTreeEvaluator,
                 Eigen::aligned_allocator<Kernel::XTreeEvaluator>> es;
 

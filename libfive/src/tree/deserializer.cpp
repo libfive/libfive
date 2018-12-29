@@ -86,7 +86,7 @@ Archive::Shape Deserializer::deserializeShape(char tag)
             auto next = trees.size();
             if (op == Opcode::CONSTANT)
             {
-                float v = deserializeBytes<float>();
+                double v = deserializeBytes<double>();
                 trees.insert({next, Tree(v)});
             }
             else if (op == Opcode::ORACLE)

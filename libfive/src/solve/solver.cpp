@@ -19,20 +19,20 @@ namespace Kernel {
 namespace Solver
 {
 
-static std::pair<float, Solution> findRoot(
+static std::pair<double, Solution> findRoot(
         JacobianEvaluator& e, Tape::Handle tape,
-        const Eigen::Vector3f pos, Solution vars, unsigned gas)
+        const Eigen::Vector3d pos, Solution vars, unsigned gas)
 {
-    const float EPSILON = 1e-6f;
+    const double EPSILON = 1e-6;
 
     // Create a static map for all of our derivatives
-    std::map<Tree::Id, float> ds;
+    std::map<Tree::Id, double> ds;
     for (auto& v : vars)
     {
         ds.insert({v.first, 0});
     }
 
-    float r = e.eval(pos, tape);
+    double r = e.eval(pos, tape);
     bool converged = false;
     while (!converged && fabs(r) >= EPSILON && --gas)
     {
@@ -56,11 +56,11 @@ static std::pair<float, Solution> findRoot(
         }
 
         // Solve for step size using a backtracking line search
-        const float slope = std::accumulate(ds.begin(), ds.end(), 0.0f,
-                [](float d, const decltype(ds)::value_type& itr) {
+        const double slope = std::accumulate(ds.begin(), ds.end(), 0.0f,
+                [](double d, const decltype(ds)::value_type& itr) {
                     return d + pow(itr.second, 2); });
 
-        for (float step = r / slope; true; step /= 2)
+        for (double step = r / slope; true; step /= 2)
         {
             for (auto& v : vars)
             {
@@ -96,18 +96,18 @@ static std::pair<float, Solution> findRoot(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::pair<float, Solution> findRoot(
-        const Tree& t, const std::map<Tree::Id, float>& vars,
-        const Eigen::Vector3f pos, const Mask& mask, unsigned gas)
+std::pair<double, Solution> findRoot(
+        const Tree& t, const std::map<Tree::Id, double>& vars,
+        const Eigen::Vector3d pos, const Mask& mask, unsigned gas)
 {
     auto deck = std::make_shared<Deck>(t);
     JacobianEvaluator e(deck, vars);
     return findRoot(e, deck->tape, vars, pos, mask, gas);
 }
 
-std::pair<float, Solution> findRoot(
+std::pair<double, Solution> findRoot(
         JacobianEvaluator& e, Tape::Handle tape,
-        std::map<Tree::Id, float> vars, const Eigen::Vector3f pos,
+        std::map<Tree::Id, double> vars, const Eigen::Vector3d pos,
         const Mask& mask, unsigned gas)
 {
     // Load initial variable values here

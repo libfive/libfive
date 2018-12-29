@@ -24,7 +24,7 @@ class AxisOracle : public OracleStorage<>
         out = {lower(A), upper(A)};
     }
 
-    void evalPoint(float& out, size_t index) override
+    void evalPoint(double& out, size_t index) override
     {
         out = points(A, index);
     }
@@ -39,7 +39,7 @@ class AxisOracle : public OracleStorage<>
     void evalFeatures(
             boost::container::small_vector<Feature, 4>& out) override
     {
-        Eigen::Vector3f v = Eigen::Vector3f::Zero();
+        Eigen::Vector3d v = Eigen::Vector3d::Zero();
         v(A) = 1;
         out.push_back(Feature(v));
     }
@@ -82,21 +82,21 @@ class CubeOracle : public OracleStorage<>
         Interval::I Z(lower.z(), upper.z());
 
         out = max(max(
-            max(-(X + 1.5f), X - 1.5f),
-            max(-(Y + 1.5f), Y - 1.5f)),
-            max(-(Z + 1.5f), Z - 1.5f));
+            max(-(X + 1.5), X - 1.5),
+            max(-(Y + 1.5), Y - 1.5)),
+            max(-(Z + 1.5), Z - 1.5));
     }
 
-    void evalPoint(float& out, size_t index) override
+    void evalPoint(double& out, size_t index) override
     {
-        float x = points(0, index);
-        float y = points(1, index);
-        float z = points(2, index);
+        const auto x = points(0, index);
+        const auto y = points(1, index);
+        const auto z = points(2, index);
 
         out = fmax(fmax(
-            fmax(-(x + 1.5f), x - 1.5f),
-            fmax(-(y + 1.5f), y - 1.5f)),
-            fmax(-(z + 1.5f), z - 1.5f));
+            fmax(-(x + 1.5), x - 1.5),
+            fmax(-(y + 1.5), y - 1.5)),
+            fmax(-(z + 1.5), z - 1.5));
     }
 
     void checkAmbiguous(
@@ -117,9 +117,9 @@ class CubeOracle : public OracleStorage<>
     {
         // We don't properly push epsilons, but that's okay for this
         // basic test (where we don't encounter other features).
-        auto push = [&](Eigen::Vector3f d){ out.push_back(Feature(d)); };
+        auto push = [&](Eigen::Vector3d d){ out.push_back(Feature(d)); };
 
-        Eigen::Vector3f p = points.col(0);
+        Eigen::Vector3d p = points.col(0);
         if (fabs(p.x()) >= fmax(fabs(p.y()), fabs(p.z())))
         {
             if (p.x() >= 0.f)

@@ -40,7 +40,7 @@ TEST_CASE("DerivEvaluator::deriv")
         DerivEvaluator e(t, {{v.id(), 0}});
 
         auto out = e.deriv({2, 0, 0});
-        REQUIRE(out == Eigen::Vector4f(2, 0, 0, 4));
+        REQUIRE(out == Eigen::Vector4d(2, 0, 0, 4));
     }
 
     SECTION("X^(1/3)")
@@ -52,14 +52,14 @@ TEST_CASE("DerivEvaluator::deriv")
             auto out = e.deriv({0, 0, 0});
             CAPTURE(out);
             REQUIRE(std::isinf(out(0)));
-            REQUIRE(out.bottomRows(3).matrix() == Eigen::Vector3f(0, 0, 0));
+            REQUIRE(out.bottomRows(3).matrix() == Eigen::Vector3d(0, 0, 0));
         }
 
         {
             auto out = e.deriv({1, 2, 3});
             CAPTURE(out);
             REQUIRE(out(0) == Approx(0.33333));
-            REQUIRE(out.bottomRows(3).matrix() == Eigen::Vector3f(0, 0, 1));
+            REQUIRE(out.bottomRows(3).matrix() == Eigen::Vector3d(0, 0, 1));
         }
     }
 }

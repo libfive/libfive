@@ -19,7 +19,7 @@ namespace Kernel {
 std::recursive_mutex Cache::mut;
 Cache Cache::_instance;
 
-Cache::Node Cache::constant(float v)
+Cache::Node Cache::constant(double v)
 {
     // Special-case for NaN, which can't be stored in the usual map
     if (std::isnan(v))
@@ -151,7 +151,7 @@ Cache::Node Cache::var()
         nullptr});
 }
 
-void Cache::del(float v)
+void Cache::del(double v)
 {
     if (std::isnan(v))
     {
@@ -175,9 +175,9 @@ void Cache::del(Opcode::Opcode op, Node lhs, Node rhs)
     ops.erase(o);
 }
 
-std::map<Cache::Node, float> Cache::asAffine(Node n)
+std::map<Cache::Node, double> Cache::asAffine(Node n)
 {
-    std::map<Node, float> out;
+    std::map<Node, double> out;
 
     if (n->op == Opcode::OP_ADD)
     {
@@ -263,9 +263,9 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
     return out;
 }
 
-Cache::Node Cache::fromAffine(const std::map<Node, float>& ns)
+Cache::Node Cache::fromAffine(const std::map<Node, double>& ns)
 {
-    std::map<float, std::list<Node>> cs;
+    std::map<double, std::list<Node>> cs;
     for (const auto& n : ns)
     {
         if (cs.find(n.second) == cs.end())
@@ -275,8 +275,8 @@ Cache::Node Cache::fromAffine(const std::map<Node, float>& ns)
         cs.at(n.second).push_back(n.first);
     }
 
-    std::list<std::pair<float, std::list<Node>>> pos;
-    std::list<std::pair<float, std::list<Node>>> neg;
+    std::list<std::pair<double, std::list<Node>>> pos;
+    std::list<std::pair<double, std::list<Node>>> neg;
     for (const auto& c : cs)
     {
         if (c.first < 0)
@@ -290,7 +290,7 @@ Cache::Node Cache::fromAffine(const std::map<Node, float>& ns)
     }
 
     auto accumulate =
-        [this](const std::list<std::pair<float, std::list<Node>>>& vs)
+        [this](const std::list<std::pair<double, std::list<Node>>>& vs)
         {
             Node out = constant(0);
             for (const auto& v : vs)

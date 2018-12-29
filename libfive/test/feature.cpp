@@ -17,25 +17,25 @@ TEST_CASE("Feature::push")
 {
     SECTION("Pushing zero-length epsilon")
     {
-        Feature f(Eigen::Vector3f::Zero());
+        Feature f(Eigen::Vector3d::Zero());
         REQUIRE(f.push({0, 0, 0}) == false);
     }
     SECTION("Separated by exactly 180 degrees")
     {
-        Feature f(Eigen::Vector3f::Zero());
+        Feature f(Eigen::Vector3d::Zero());
         REQUIRE(f.push({1, 0, 0}) == true);
         REQUIRE(f.push({-1, 0, 0}) == false);
     }
     SECTION("Separability testing")
     {
-        Feature a(Eigen::Vector3f::Zero());
+        Feature a(Eigen::Vector3d::Zero());
         REQUIRE(a.push({1, 0, 0}) == true);
         REQUIRE(a.push({0, 1, 0}) == true);
         REQUIRE(a.push({0, 0, 1}) == true);
         REQUIRE(a.push({1, 1, 1}) == true);
         REQUIRE(a.push({-1, -1, -1}) == false);
 
-        Feature b(Eigen::Vector3f::Zero());
+        Feature b(Eigen::Vector3d::Zero());
         REQUIRE(b.push({1, 0, 0}) == true);
         REQUIRE(b.push({0, -1, 0}) == true);
         REQUIRE(b.push({0, 0, -1}) == true);
@@ -47,7 +47,7 @@ TEST_CASE("Feature::push")
 
     SECTION("Fun with numerical instability")
     {
-        Feature a(Eigen::Vector3f::Zero());
+        Feature a(Eigen::Vector3d::Zero());
         auto s = sqrt(2.f);
         REQUIRE(a.push({s,  0, -s}) == true);
         REQUIRE(a.push({s,  0,  s}) == true);
@@ -59,7 +59,7 @@ TEST_CASE("Feature::check")
 {
     SECTION("Flat plane")
     {
-        Feature a(Eigen::Vector3f::Zero());
+        Feature a(Eigen::Vector3d::Zero());
         REQUIRE(a.push({-1, 1, 0}) == true);
         REQUIRE(a.push({-1, -1, 0}) == true);
         REQUIRE(a.check({0, -1, 0}));
@@ -74,11 +74,11 @@ TEST_CASE("Feature::check(Feature)")
 {
     SECTION("Tetrahedron")
     {
-        Feature a(Eigen::Vector3f::Zero());
+        Feature a(Eigen::Vector3d::Zero());
         REQUIRE(a.push({0, 0,  1}) == true);
         REQUIRE(a.push({1, 0, -1}) == true);
 
-        Feature b(Eigen::Vector3f::Zero());
+        Feature b(Eigen::Vector3d::Zero());
         REQUIRE(b.push({-1,  1, -1}) == true);
         REQUIRE(b.push({-1, -1, -1}) == true);
 

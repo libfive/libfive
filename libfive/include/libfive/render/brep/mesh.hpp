@@ -43,7 +43,7 @@ public:
      *  partway through the computation.
      */
     static std::unique_ptr<Mesh> render(
-            const Tree t, const std::map<Tree::Id, float>& vars,
+            const Tree t, const std::map<Tree::Id, double>& vars,
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
@@ -73,7 +73,7 @@ public:
     static bool saveSTL(const std::string& filename,
                         const std::list<const Mesh*>& meshes);
 
-    static const float MAX_PROGRESS;
+    static const double MAX_PROGRESS;
 
 protected:
 
@@ -81,7 +81,7 @@ protected:
      *  Inserts a line into the mesh as a zero-size triangle
      *  (used for debugging)
      */
-    void line(const Eigen::Vector3f& a, const Eigen::Vector3f& b);
+    void line(const Eigen::Vector3d& a, const Eigen::Vector3d& b);
 
 };
 

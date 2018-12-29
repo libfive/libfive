@@ -189,14 +189,17 @@ libfive_interval libfive_tree_eval_r(libfive_tree t, libfive_region3 r)
     IntervalEvaluator e(std::make_shared<Deck>(*t));
     auto i = e.eval({r.X.lower, r.Y.lower, r.Z.lower},
                     {r.X.upper, r.Y.upper, r.Z.upper});
-    return {i.lower(), i.upper()};
+    return {static_cast<float>(i.lower()),
+            static_cast<float>(i.upper())};
 }
 
 libfive_vec3 libfive_tree_eval_d(libfive_tree t, libfive_vec3 p)
 {
     DerivEvaluator e(std::make_shared<Deck>(*t));
     auto v = e.deriv({p.x, p.y, p.z});
-    return {v.x(), v.y(), v.z()};
+    return {static_cast<float>(v.x()),
+            static_cast<float>(v.y()),
+            static_cast<float>(v.z())};
 }
 
 bool libfive_tree_eq(libfive_tree a, libfive_tree b)
@@ -237,7 +240,8 @@ libfive_contours* libfive_tree_render_slice(libfive_tree tree,
         size_t j=0;
         for (auto& pt : c)
         {
-            out->cs[i].pts[j++] = {pt.x(), pt.y()};
+            out->cs[i].pts[j++] = {static_cast<float>(pt.x()),
+                                   static_cast<float>(pt.y())};
         }
         i++;
     }
@@ -265,9 +269,11 @@ libfive_contours3* libfive_tree_render_slice3(libfive_tree tree,
         size_t j=0;
         for (auto& pt : c)
         {
-          // each 2D contour point is converted to a 3D point (with
-          // this function's z argument as the Z coordinate)
-          out->cs[i].pts[j++] = {pt.x(), pt.y(), z};
+            // each 2D contour point is converted to a 3D point (with
+            // this function's z argument as the Z coordinate)
+            out->cs[i].pts[j++] = {static_cast<float>(pt.x()),
+                                   static_cast<float>(pt.y()),
+                                   static_cast<float>(z)};
         }
         i++;
     }
@@ -306,7 +312,9 @@ libfive_mesh* libfive_tree_render_mesh(libfive_tree tree, libfive_region3 R, flo
     i=0;
     for (auto& v : ms->verts)
     {
-        out->verts[i++] = {v.x(), v.y(), v.z()};
+        out->verts[i++] = {static_cast<float>(v.x()),
+                           static_cast<float>(v.y()),
+                           static_cast<float>(v.z())};
     }
 
     i=0;
@@ -344,7 +352,9 @@ libfive_mesh_coords* libfive_tree_render_mesh_coords(libfive_tree tree,
     i=0;
     for (auto& v : ms->verts)
     {
-        out->verts[i++] = {v.x(), v.y(), v.z()};
+        out->verts[i++] = {static_cast<float>(v.x()),
+                           static_cast<float>(v.y()),
+                           static_cast<float>(v.z())};
     }
 
     i=0;

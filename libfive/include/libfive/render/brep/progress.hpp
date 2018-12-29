@@ -12,9 +12,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-void EMPTY_PROGRESS_CALLBACK(float);
+void EMPTY_PROGRESS_CALLBACK(double);
 
-typedef std::function<void(float)> ProgressCallback;
+typedef std::function<void(double)> ProgressCallback;
 
 class ProgressWatcher
 {
@@ -23,7 +23,7 @@ public:
      *  If the callback is not EMPTY_PROGRESS_CALLBACK, constructs a new
      *  ProgressWatcher and returns it.
      */
-    static ProgressWatcher* build(uint64_t total, float offset,
+    static ProgressWatcher* build(uint64_t total, double offset,
                                   ProgressCallback callback,
                                   std::atomic_bool& done,
                                   std::atomic_bool& cancel);
@@ -35,7 +35,7 @@ public:
     ~ProgressWatcher();
 
 protected:
-    ProgressWatcher(uint64_t total, float offset,
+    ProgressWatcher(uint64_t total, double offset,
                     ProgressCallback callback,
                     std::atomic_bool& done,
                     std::atomic_bool& cancel);
@@ -50,7 +50,7 @@ protected:
 
     std::atomic_uint64_t counter;
     const uint64_t total;
-    const float offset;
+    const double offset;
 
     std::future<void> future;
 };

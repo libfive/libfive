@@ -88,7 +88,7 @@ public slots:
     /*
      *  Modifies the textual values of variables
      */
-    void setVarValues(QMap<Kernel::Tree::Id, float> vs);
+    void setVarValues(QMap<Kernel::Tree::Id, double> vs);
 
     /*
      *  While a drag is taking place, the text field is frozen to user editing

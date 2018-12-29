@@ -17,8 +17,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace Kernel;
 
-
-Eigen::Vector4f deriv(DerivArrayEvaluator& d, const Eigen::Vector3f& pt)
+Eigen::Vector4d deriv(DerivArrayEvaluator& d, const Eigen::Vector3d& pt)
 {
     d.set(pt, 0);
     return d.derivs(1).col(0);
@@ -47,7 +46,7 @@ TEST_CASE("DerivArrayEvaluator::deriv")
         DerivArrayEvaluator e(t, {{v.id(), 0}});
 
         auto out = deriv(e, {2, 0, 0});
-        REQUIRE(out.col(0) == Eigen::Vector4f(2, 0, 0, 4));
+        REQUIRE(out.col(0) == Eigen::Vector4d(2, 0, 0, 4));
     }
 }
 
@@ -61,8 +60,8 @@ TEST_CASE("DerivArrayEvaluator::derivs")
         e.set({1, 2, 3}, 1);
         auto d = e.derivs(2);
 
-        REQUIRE(d.col(0).matrix() == Eigen::Vector4f(1, 0, 0, 0));
-        REQUIRE(d.col(1).matrix() == Eigen::Vector4f(1, 0, 0, 1));
+        REQUIRE(d.col(0).matrix() == Eigen::Vector4d(1, 0, 0, 0));
+        REQUIRE(d.col(1).matrix() == Eigen::Vector4d(1, 0, 0, 1));
     }
 
     SECTION("X + Z")
@@ -74,8 +73,8 @@ TEST_CASE("DerivArrayEvaluator::derivs")
         e.set({1, 2, 3}, 1);
         auto d = e.derivs(2);
 
-        REQUIRE(d.col(0).matrix() == Eigen::Vector4f(1, 0, 1, 2));
-        REQUIRE(d.col(1).matrix() == Eigen::Vector4f(1, 0, 1, 4));
+        REQUIRE(d.col(0).matrix() == Eigen::Vector4d(1, 0, 1, 2));
+        REQUIRE(d.col(1).matrix() == Eigen::Vector4d(1, 0, 1, 4));
     }
 
     SECTION("X^(1/3)")
@@ -89,11 +88,11 @@ TEST_CASE("DerivArrayEvaluator::derivs")
 
         CAPTURE(d.col(0));
         REQUIRE(std::isinf(d.col(0)(0)));
-        REQUIRE(d.col(0).bottomRows(3).matrix() == Eigen::Vector3f(0, 0, 0));
+        REQUIRE(d.col(0).bottomRows(3).matrix() == Eigen::Vector3d(0, 0, 0));
 
         CAPTURE(d.col(1));
         REQUIRE(d.col(1)(0) == Approx(0.33333));
-        REQUIRE(d.col(1).bottomRows(3).matrix() == Eigen::Vector3f(0, 0, 1));
+        REQUIRE(d.col(1).bottomRows(3).matrix() == Eigen::Vector3d(0, 0, 1));
     }
 }
 

@@ -14,15 +14,15 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 JacobianEvaluator::JacobianEvaluator(std::shared_ptr<Deck> d)
-    : JacobianEvaluator(d, std::map<Tree::Id, float>())
+    : JacobianEvaluator(d, std::map<Tree::Id, double>())
 {
     // Nothing to do here
 }
 
 JacobianEvaluator::JacobianEvaluator(
-        std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
+        std::shared_ptr<Deck> d, const std::map<Tree::Id, double>& vars)
     : DerivEvaluator(d, vars),
-      j(Eigen::ArrayXXf::Zero(deck->num_clauses + 1, deck->vars.size()))
+      j(Eigen::ArrayXXd::Zero(deck->num_clauses + 1, deck->vars.size()))
 {
     // Then drop a 1 at each var's position
     size_t index = 0;
@@ -32,13 +32,13 @@ JacobianEvaluator::JacobianEvaluator(
     }
 }
 
-std::map<Tree::Id, float> JacobianEvaluator::gradient(
-        const Eigen::Vector3f& p)
+std::map<Tree::Id, double> JacobianEvaluator::gradient(
+        const Eigen::Vector3d& p)
 {
     return gradient(p, deck->tape);
 }
-std::map<Tree::Id, float> JacobianEvaluator::gradient(
-        const Eigen::Vector3f& p,
+std::map<Tree::Id, double> JacobianEvaluator::gradient(
+        const Eigen::Vector3d& p,
         std::shared_ptr<Tape> tape)
 {
     // Perform value evaluation, to make sure the f array is correct
@@ -51,7 +51,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
 
     // Unpack from flat array into map
     // (to allow correlating back to VARs in Tree)
-    std::map<Tree::Id, float> out;
+    std::map<Tree::Id, double> out;
     size_t index = 0;
     for (auto v : deck->vars.left)
     {

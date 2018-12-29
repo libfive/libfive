@@ -129,11 +129,11 @@ TEST_CASE("DCTree<2>::vertex_count")
         REQUIRE(ta->leaf->vertex_count == 2);
         for (unsigned i=0; i < ta->leaf->vertex_count; ++i)
         {
-            auto pt = ta->vert(i).template cast<float>().eval();
+            auto pt = ta->vert(i);
             CAPTURE(i);
             CAPTURE(pt.transpose());
-            Eigen::Vector3f v;
-            v << pt, 0.0f;
+            Eigen::Vector3d v;
+            v << pt, 0.0;
             REQUIRE(fabs(eval.eval(v)) < 1e-6);
         }
     }
@@ -142,7 +142,7 @@ TEST_CASE("DCTree<2>::vertex_count")
 TEST_CASE("DCTree<3>::vert")
 {
     auto walk = [](Root<DCTree<3>>& xtree,
-                   XTreeEvaluator& eval, float err=0.001)
+                   XTreeEvaluator& eval, double err=0.001)
     {
         std::list<const DCTree<3>*> todo = {xtree.get()};
         while (todo.size())
@@ -169,8 +169,8 @@ TEST_CASE("DCTree<3>::vert")
                     CAPTURE(i);
                     CAPTURE(t->leaf->manifold);
                     CAPTURE((int)t->leaf->corner_mask);
-                    REQUIRE(eval.feature.eval(t->vert(i).template cast<float>())
-                            == Approx(0.0f).margin(err));
+                    REQUIRE(eval.feature.eval(t->vert(i))
+                            == Approx(0.0).margin(err));
                 }
             }
         }

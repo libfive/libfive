@@ -20,13 +20,13 @@ template <int N=LIBFIVE_EVAL_ARRAY_SIZE>
 class OracleStorage : public Oracle
 {
 public:
-    void set(const Eigen::Vector3f& p, size_t index=0) override
+    void set(const Eigen::Vector3d& p, size_t index=0) override
     {
         points.col(index) = p;
     }
 
-    void set(const Eigen::Vector3f& _lower,
-             const Eigen::Vector3f& _upper) override
+    void set(const Eigen::Vector3d& _lower,
+             const Eigen::Vector3d& _upper) override
     {
         lower = _lower;
         upper = _upper;
@@ -38,10 +38,10 @@ public:
      *  (delegates work to evalFeatures)
      */
     void evalDerivs(
-            Eigen::Block<Eigen::Array<float, 3, Eigen::Dynamic>,
+            Eigen::Block<Eigen::Array<double, 3, Eigen::Dynamic>,
                          3, 1, true> out, size_t index=0) override
     {
-        Eigen::Vector3f before = points.col(0);
+        Eigen::Vector3d before = points.col(0);
         points.col(0) = points.col(index);
 
         boost::container::small_vector<Feature, 4> fs;
@@ -57,12 +57,12 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 protected:
-    /* Local storage for set(Vector3f) */
-    Eigen::Array<float, 3, N> points;
+    /* Local storage for set(Vector3d) */
+    Eigen::Array<double, 3, N> points;
 
     /* Local storage for set(Interval) */
-    Eigen::Vector3f lower;
-    Eigen::Vector3f upper;
+    Eigen::Vector3d lower;
+    Eigen::Vector3d upper;
 };
 
 }   // namespace Kernel

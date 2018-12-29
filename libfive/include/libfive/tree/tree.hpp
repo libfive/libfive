@@ -34,7 +34,7 @@ public:
     /*
      *  Returns a Tree for the given constant
      */
-    Tree(float v);
+    Tree(double v);
 
     /*
      *  Returns a Tree for the given oracle, taking ownership.
@@ -94,7 +94,7 @@ public:
         const unsigned rank;
 
         /*  Only populated for constants  */
-        const float value;
+        const double value;
 
         /* Only populated for oracles */
         const std::unique_ptr<const OracleClause> oracle;

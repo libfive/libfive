@@ -91,10 +91,7 @@ Tape::Handle DCTree<N>::evalInterval(XTreeEvaluator* eval,
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
-    auto o = eval->interval.evalAndPush(
-            region.lower3().template cast<float>(),
-            region.upper3().template cast<float>(),
-            tape);
+    auto o = eval->interval.evalAndPush(region.lower3(), region.upper3(), tape);
 
     this->type = Interval::state(o.first);
     if (!eval->interval.isSafe())
@@ -130,13 +127,13 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
     std::array<Interval::State, 1 << N> corners;
 
     // Pack corners into evaluator
-    Eigen::Matrix<float, 3, 1 << N> pos;
+    Eigen::Matrix<double, 3, 1 << N> pos;
     for (uint8_t i=0; i < this->children.size(); ++i)
     {
         auto c = neighbors.check(i);
         if (c == Interval::UNKNOWN)
         {
-            pos.col(count) = region.corner3f(i);
+            pos.col(count) = region.corner3(i);
             eval->array.set(pos.col(count), count);
             corner_indices[count++] = i;
         }
@@ -267,11 +264,11 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
     this->leaf->manifold = cornersAreManifold(this->leaf->corner_mask);
 
     // We'll use this vector anytime we need to pass something
-    // into the evaluator (which requires a Vector3f)
-    Eigen::Vector3f _pos;
-    _pos.template tail<3 - N>() = region.perp.template cast<float>();
+    // into the evaluator (which requires a Vector3d)
+    Eigen::Vector3d _pos;
+    _pos.template tail<3 - N>() = region.perp;
     auto set = [&](const Vec& v, size_t i){
-        _pos.template head<N>() = v.template cast<float>();
+        _pos.template head<N>() = v;
         eval->array.set(_pos, i);
     };
 
@@ -393,8 +390,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
                             {
                                 Eigen::Vector3d pos;
                                 pos << ps.col(i), region.perp;
-                                if (!eval->feature.isInside(
-                                            pos.template cast<float>(), tape))
+                                if (!eval->feature.isInside(pos, tape))
                                 {
                                     assert(i > 0);
                                     targets[e] = {ps.col(i - 1), ps.col(i)};
@@ -447,22 +443,18 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
                     if (!ambig(i))
                     {
                         saveIntersection(pos.template head<N>(),
-                                         ds.col(i).template cast<double>()
-                                                  .template head<N>(),
+                                         ds.col(i).template head<N>(),
                                          ds.col(i).w(), eval_edges[i/2]);
                     }
                     // Otherwise, we need to use the feature-finding special
                     // case to find all possible derivatives at this point.
                     else
                     {
-                        const auto fs = eval->feature.features(
-                                pos.template cast<float>(), tape);
-
+                        const auto fs = eval->feature.features(pos, tape);
                         for (auto& f : fs)
                         {
                             saveIntersection(pos.template head<N>(),
-                                             f.template head<N>()
-                                              .template cast<double>(),
+                                             f.template head<N>(),
                                              ds.col(i).w(), eval_edges[i/2]);
                         }
                     }
@@ -773,9 +765,8 @@ bool DCTree<N>::collectChildren(XTreeEvaluator* eval,
         if (findVertex(this->leaf->vertex_count++) < max_err &&
             region.contains(vert(0), 1e-6))
         {
-            Eigen::Vector3f v;
-            v << vert(0).template cast<float>(),
-                 region.perp.template cast<float>();
+            Eigen::Vector3d v;
+            v << vert(0), region.perp;
             if (fabs(eval->feature.eval(v, Tape::getBase(tape, v))) < max_err)
             {
                 // Store this tree's depth based on the region's level

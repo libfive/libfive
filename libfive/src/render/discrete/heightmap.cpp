@@ -67,7 +67,7 @@ struct NormalRenderer
         }
     }
 
-    void push(size_t i, size_t j, float z)
+    void push(size_t i, size_t j, double z)
     {
         xs[count] = r.corner.x() + i;
         ys[count] = r.corner.y() + j;
@@ -134,7 +134,7 @@ void Heightmap::pixels(HeightmapEvaluator* e, Tape::Handle tape,
         if (out[index++] < 0)
         {
             // Check to see whether the voxel is in front of the image's depth
-            const float z = r.pts.z()[r.size.z() - k - 1];
+            const double z = r.pts.z()[r.size.z() - k - 1];
             if (depth(r.corner.y() + j, r.corner.x() + i) < z)
             {
                 depth(r.corner.y() + j, r.corner.x() + i) = z;
@@ -165,7 +165,7 @@ void Heightmap::fill(HeightmapEvaluator* e, Tape::Handle tape,
 {
     // Store the maximum z position (which is what we're flooding into
     // the depth image)
-    const float z = r.pts.z()[r.size.z() - 1];
+    const double z = r.pts.z()[r.size.z() - 1];
 
     // Helper struct to handle normal rendering
     NormalRenderer nr(e, tape, r, norm);
@@ -276,7 +276,7 @@ std::unique_ptr<Heightmap> Heightmap::render(
 {
     auto out = new Heightmap(r.pts[1].size(), r.pts[0].size());
 
-    out->depth.fill(-std::numeric_limits<float>::infinity());
+    out->depth.fill(-std::numeric_limits<double>::infinity());
     out->norm.fill(0);
 
     // Build a list of regions by splitting on the XY axes
@@ -373,8 +373,8 @@ bool Heightmap::savePNG(std::string filename)
 
     png_init_io(png_ptr, output);
 
-    const float zmax = depth.maxCoeff();
-    const float zmin = (depth == -std::numeric_limits<float>::infinity())
+    const double zmax = depth.maxCoeff();
+    const double zmin = (depth == -std::numeric_limits<double>::infinity())
             .select(Depth::Constant(depth.rows(), depth.cols(), zmax),
                     depth)
             .minCoeff();

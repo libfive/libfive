@@ -30,15 +30,15 @@ public:
         assert(c.load() == 1);
     }
 
-    uint32_t pushVertex(const Eigen::Matrix<float, N, 1>& v) {
+    uint32_t pushVertex(const Eigen::Matrix<double, N, 1>& v) {
         const auto out = c.fetch_add(1);
         this->verts.push_back(v);
         indices.push_back(out);
         return out;
     }
 
-    std::vector<Eigen::Matrix<float, N, 1>,
-                Eigen::aligned_allocator<Eigen::Matrix<float, N, 1>>> verts;
+    std::vector<Eigen::Matrix<double, N, 1>,
+                Eigen::aligned_allocator<Eigen::Matrix<double, N, 1>>> verts;
     std::vector<Eigen::Matrix<uint32_t, N, 1>,
                 Eigen::aligned_allocator<Eigen::Matrix<uint32_t, N, 1>>> branes;
     std::vector<uint32_t> indices;

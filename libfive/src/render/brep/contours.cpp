@@ -155,7 +155,7 @@ void Contours::collect(const std::vector<PerThreadBRep<2>>& children)
         {
             continue;
         }
-        this->contours.push_back(std::vector<Eigen::Vector2f>());
+        this->contours.push_back(std::vector<Eigen::Vector2d>());
 
         // Weld multiple contours together here
         unsigned target = i;

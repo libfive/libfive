@@ -216,7 +216,7 @@ void _Interpreter::eval()
         QList<Shape*> shapes;
 
         // Initialize variables and their textual positions
-        std::map<Kernel::Tree::Id, float> vars;
+        std::map<Kernel::Tree::Id, double> vars;
         QMap<Kernel::Tree::Id, Editor::Range> var_pos;
 
         {   // Walk through the global variable map
