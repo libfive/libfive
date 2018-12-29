@@ -173,7 +173,8 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 
         REQUIRE(t->leaf->sub[24]->vert == Eigen::RowVector3d(-1,  0,  0));
         REQUIRE(t->leaf->sub[25]->vert == Eigen::RowVector3d( 1,  0,  0));
-        REQUIRE(t->leaf->sub[26]->vert == Eigen::RowVector3d( 0,  0,  0));
+        REQUIRE((t->leaf->sub[26]->vert - Eigen::RowVector3d( 0,  0,  0))
+                .norm() < 1e-12);
     }
 
     SECTION("Sphere")
