@@ -85,7 +85,7 @@ TEST_CASE("Tree::deserialize")
     SECTION("With constant")
     {
         std::stringstream out;
-        min(Tree::X(), Tree(2.5f)).serialize(out);
+        min(Tree::X(), Tree(2.5)).serialize(out);
 
         std::stringstream in(out.str());
         auto a = Tree::deserialize(in);
@@ -94,7 +94,7 @@ TEST_CASE("Tree::deserialize")
         REQUIRE(a->op == Opcode::OP_MIN);
         REQUIRE(a->lhs->op == Opcode::VAR_X);
         REQUIRE(a->rhs->op == Opcode::CONSTANT);
-        REQUIRE(a->rhs->value == 2.5f);
+        REQUIRE(a->rhs->value == 2.5);
     }
 
     SECTION("With variable")

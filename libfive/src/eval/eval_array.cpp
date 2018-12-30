@@ -183,7 +183,7 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                     out(i) = boost::numeric::nth_root(
                             Interval::I(a(i), a(i)), b(i)).lower();
                 else
-                    out(i) = pow(a(i), 1.0f/b(i));
+                    out(i) = pow(a(i), 1.0/b(i));
             }
             break;
         case Opcode::OP_MOD:

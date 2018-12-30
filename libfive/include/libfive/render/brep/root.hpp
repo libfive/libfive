@@ -38,7 +38,7 @@ public:
         std::atomic_bool done(false);
         std::atomic_bool cancel(false);
         auto progress_watcher = ProgressWatcher::build(
-                object_pool.total_size(), 2.0f,
+                object_pool.total_size(), 2.0,
                 progress_callback, done, cancel);
 
         object_pool.reset(progress_watcher);

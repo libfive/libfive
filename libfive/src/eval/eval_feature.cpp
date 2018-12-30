@@ -274,7 +274,7 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::OP_NTH_ROOT:
             STORE2((ad.array() == 0)
-                    .select(0, ad * pow(av, 1.0f / bv - 1) / bv));
+                    .select(0, ad * pow(av, 1.0 / bv - 1) / bv));
             break;
         case Opcode::OP_MOD:
             od = _ads;

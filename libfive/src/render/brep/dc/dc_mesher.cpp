@@ -308,7 +308,7 @@ void DCMesher::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
             auto bFactor = bWeight / weightSum;
             auto crossing = (aFactor * aPos + bFactor * bPos).eval();
             assert(std::abs(crossing[Axis::toIndex(A)] -
-                            intersectionPos[Axis::toIndex(A)]) < 1e-6f);
+                            intersectionPos[Axis::toIndex(A)]) < 1e-6);
             crossing[Axis::toIndex(A)] = intersectionPos[Axis::toIndex(A)];
 
             // Determine on which side(s) of the actual boundary the crossing is.

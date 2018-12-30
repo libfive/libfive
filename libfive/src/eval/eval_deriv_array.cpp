@@ -139,7 +139,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::OP_NTH_ROOT:
             for (Eigen::Index i=0; i < od.cols(); ++i)
                 od.col(i) = (ad.col(i) == 0)
-                    .select(0, ad.col(i) * (pow(av(i), 1.0f / bv(i) - 1) / bv(i)));
+                    .select(0, ad.col(i) * (pow(av(i), 1.0 / bv(i) - 1) / bv(i)));
             break;
         case Opcode::OP_MOD:
             od = ad;

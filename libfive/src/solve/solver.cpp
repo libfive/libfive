@@ -56,7 +56,7 @@ static std::pair<double, Solution> findRoot(
         }
 
         // Solve for step size using a backtracking line search
-        const double slope = std::accumulate(ds.begin(), ds.end(), 0.0f,
+        const double slope = std::accumulate(ds.begin(), ds.end(), 0.0,
                 [](double d, const decltype(ds)::value_type& itr) {
                     return d + pow(itr.second, 2); });
 

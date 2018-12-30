@@ -76,9 +76,9 @@ TEST_CASE("FeatureEvaluator::isInside")
             max(cylinder(10, 100), -cylinder(5, 100)));
         auto t = std::make_shared<Deck>(shape);
         FeatureEvaluator e(t);
-        auto fs = e.features_({0.1f, 0.1f, 0.0f});
+        auto fs = e.features_({0.1, 0.1, 0.0});
         CAPTURE(fs.size());
-        REQUIRE(!e.isInside({0.0f, 0.0f, 0.0f}));
+        REQUIRE(!e.isInside({0.0, 0.0, 0.0}));
     }
 }
 
@@ -150,7 +150,7 @@ TEST_CASE("FeatureEvaluator::features")
         auto t = std::make_shared<Deck>(r);
         FeatureEvaluator e(t);
 
-        REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
+        REQUIRE(e.features({0, 0.2, 0}).size() == 1);
     }
 
     SECTION("One feature (duplicated)")
@@ -159,7 +159,7 @@ TEST_CASE("FeatureEvaluator::features")
         auto t = std::make_shared<Deck>(r);
         FeatureEvaluator e(t);
 
-        REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
+        REQUIRE(e.features({0, 0.2, 0}).size() == 1);
     }
 
     SECTION("One feature (duplicated multiple times)")
@@ -168,7 +168,7 @@ TEST_CASE("FeatureEvaluator::features")
         auto t = std::make_shared<Deck>(r);
         FeatureEvaluator e(t);
 
-        REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
+        REQUIRE(e.features({0, 0.2, 0}).size() == 1);
     }
 
     SECTION("One feature (duplicated even more times)")
@@ -176,7 +176,7 @@ TEST_CASE("FeatureEvaluator::features")
         auto r = max(max(Tree::X(), Tree::X()), max(Tree::X(), Tree::X()));
         auto t = std::make_shared<Deck>(r);
         FeatureEvaluator e(t);
-        REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
+        REQUIRE(e.features({0, 0.2, 0}).size() == 1);
     }
 
     SECTION("Coincident planes with same normal")

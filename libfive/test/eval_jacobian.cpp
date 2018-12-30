@@ -62,8 +62,8 @@ TEST_CASE("JacobianEvaluator::gradient")
         REQUIRE(e.eval({0, 0, 0}) == Approx(34));
 
         auto g = e.gradient({0, 0, 0});
-        REQUIRE(g.at(a.id()) == Approx(1.0f));
-        REQUIRE(g.at(b.id()) == Approx(2.0f));
-        REQUIRE(g.at(c.id()) == Approx(3.0f));
+        REQUIRE(g.at(a.id()) == Approx(1.0));
+        REQUIRE(g.at(b.id()) == Approx(2.0));
+        REQUIRE(g.at(c.id()) == Approx(3.0));
     }
 }

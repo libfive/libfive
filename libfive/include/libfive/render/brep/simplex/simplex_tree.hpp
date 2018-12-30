@@ -206,7 +206,7 @@ protected:
                           const SimplexNeighbors<N>& neighbors);
 
     /*  Eigenvalue threshold for determining feature rank  */
-    constexpr static double EIGENVALUE_CUTOFF=0.1f;
+    constexpr static double EIGENVALUE_CUTOFF=0.1;
 };
 
 extern template class SimplexTree<2>;

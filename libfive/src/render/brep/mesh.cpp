@@ -24,7 +24,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-const double Mesh::MAX_PROGRESS = 3.0f;
+const double Mesh::MAX_PROGRESS = 3.0;
 
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    double min_feature, double max_err,

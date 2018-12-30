@@ -173,7 +173,7 @@ void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             if (a < 0)
                 out = boost::numeric::nth_root(Interval::I(a, a), b).lower();
             else
-                out = pow(a, 1.0f/b);
+                out = pow(a, 1.0/b);
             break;
         case Opcode::OP_MOD:
             out = std::fmod(a, b);

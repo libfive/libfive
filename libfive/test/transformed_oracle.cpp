@@ -187,9 +187,9 @@ TEST_CASE("Abs and skew applied to Oracle: "
     compareUnderTransformation(cubeOracle, cube,
         [](Tree t) {
         return t.remap(Tree::Y(), Tree::X(),
-            abs(Tree::Z() + Tree::X() * 0.2f));},
-        { { 1.5f, 1.5f, 1.8f },{ -1.5f, -1.5f, 1.8f},
-        { -1.5f, 1.5f, -1.8f },{ 1.5f, -1.5f, -1.8f }, { 0.f, 0.f, 0.f } });
+            abs(Tree::Z() + Tree::X() * 0.2));},
+        { { 1.5, 1.5, 1.8 },{ -1.5, -1.5, 1.8},
+        { -1.5, 1.5, -1.8 },{ 1.5, -1.5, -1.8 }, { 0.0, 0.0, 0.0 } });
         //  Some of these points are maps of corners, some are not.
 
 }
@@ -208,9 +208,9 @@ TEST_CASE("Abs and skew applied to Oracle: "
     compareUnderTransformation(cubeOracle, cube,
         [](Tree t) {
         return t.remap(Tree::Y(), Tree::X(),
-            abs(Tree::Z() + Tree::X() * 0.2f));},
-        { { 1.5f, 1.5f, 1.8f },{ -1.5f, -1.5f, 1.8f },
-        { -1.5f, 1.5f, -1.8f },{ 1.5f, -1.5f, -1.8f },{ 0.f, 0.f, 0.f } });
+            abs(Tree::Z() + Tree::X() * 0.2));},
+        { { 1.5, 1.5, 1.8 },{ -1.5, -1.5, 1.8 },
+        { -1.5, 1.5, -1.8 },{ 1.5, -1.5, -1.8 },{ 0.0, 0.0, 0.0 } });
     //  Some of these points correspond to corners, some do not.
 }
 

@@ -263,7 +263,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
     std::atomic_bool done(false);
 
     auto progress = ProgressWatcher::build(
-            t.size(), 1.0f,
+            t.size(), 1.0,
             progress_callback, done, cancel);
 
     std::vector<std::future<void>> futures;

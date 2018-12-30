@@ -282,7 +282,7 @@ protected:
             const std::array<Interval::State, 1 << N>& corners);
 
     /*  Eigenvalue threshold for determining feature rank  */
-    constexpr static double EIGENVALUE_CUTOFF=0.1f;
+    constexpr static double EIGENVALUE_CUTOFF=0.1;
 };
 
 // Explicit template instantiation declarations

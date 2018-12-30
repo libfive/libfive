@@ -102,7 +102,7 @@ void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 oj = pow(av, bv - 1) * (bv * aj);
                 break;
             case Opcode::OP_NTH_ROOT:
-                oj = pow(av, 1.0f/bv - 1) * (1.0f/bv * aj);
+                oj = pow(av, 1.0/bv - 1) * (1.0/bv * aj);
                 break;
             case Opcode::OP_MOD:
                 // This isn't quite how partial derivatives of mod work,

@@ -36,8 +36,8 @@ TEST_CASE("DCPool::build (progress callback)")
         CAPTURE(res);
 
         REQUIRE(ps.size() >= 2);
-        REQUIRE(ps[0] == 0.0f);
-        REQUIRE(ps[ps.size() - 1] == 1.0f);
+        REQUIRE(ps[0] == 0.0);
+        REQUIRE(ps[ps.size() - 1] == 1.0);
 
         // Check that the values are monotonically increasing
         float prev = -1;
@@ -49,8 +49,8 @@ TEST_CASE("DCPool::build (progress callback)")
 
         if (ps.size() > 2)
         {
-            REQUIRE(ps[ps.size() - 2] > 0.0f);
-            REQUIRE(ps[ps.size() - 2] < 1.0f);
+            REQUIRE(ps[ps.size() - 2] > 0.0);
+            REQUIRE(ps[ps.size() - 2] < 1.0);
         }
         else
         {
@@ -78,8 +78,8 @@ TEST_CASE("Mesh::render (progress callback)")
         CAPTURE(res);
 
         REQUIRE(ps.size() >= 2);
-        REQUIRE(ps[0] == 0.0f);
-        REQUIRE(ps[ps.size() - 1] == 3.0f);
+        REQUIRE(ps[0] == 0.0);
+        REQUIRE(ps[ps.size() - 1] == 3.0);
 
         // Check that the values are monotonically increasing
         float prev = -1;

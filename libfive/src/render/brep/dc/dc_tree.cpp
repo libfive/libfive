@@ -209,7 +209,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
         auto ds = eval->array.derivs(unambiguous_zeros, tape);
         for (unsigned i=0; i < unambiguous_zeros; ++i)
         {
-            if ((ds.col(i).head<3>().abs() < 1e-6f).any())
+            if ((ds.col(i).head<3>().abs() < 1e-6).any())
             {
                 ds.col(i) = eval->deriv.deriv(pos.col(unambig_remap[i]));
                 corners[corner_indices[unambig_remap[i]]] =

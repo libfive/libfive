@@ -51,9 +51,9 @@ ProgressWatcher::ProgressWatcher(uint64_t total, double offset,
     future = std::async(std::launch::async,
         [this]()
         {
-            if (this->offset == 0.0f)
+            if (this->offset == 0.0)
             {
-                this->callback(0.0f);
+                this->callback(0.0);
             }
 
             uint64_t n = 0;
@@ -74,7 +74,7 @@ ProgressWatcher::ProgressWatcher(uint64_t total, double offset,
             // Once evaluation is finished, report that we're completely done
             if (!this->cancel.load())
             {
-                this->callback(1.0f + this->offset);
+                this->callback(1.0 + this->offset);
             }
         });
 }

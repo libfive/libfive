@@ -122,35 +122,35 @@ class CubeOracle : public OracleStorage<>
         Eigen::Vector3d p = points.col(0);
         if (fabs(p.x()) >= fmax(fabs(p.y()), fabs(p.z())))
         {
-            if (p.x() >= 0.f)
+            if (p.x() >= 0.0)
             {
-                push({ 1.f, 0.f, 0.f });
+                push({ 1.0, 0.0, 0.0 });
             }
-            if (p.x() <= 0.f)
+            if (p.x() <= 0.0)
             {
-                push({ -1.f, 0.f, 0.f });
+                push({ -1.0, 0.0, 0.0 });
             }
         }
         if (fabs(p.y()) >= fmax(fabs(p.x()), fabs(p.z())))
         {
-            if (p.y() >= 0.f)
+            if (p.y() >= 0.0)
             {
-                push({ 0.f, 1.f, 0.f });
+                push({ 0.0, 1.0, 0.0 });
             }
-            if (p.y() <= 0.f)
+            if (p.y() <= 0.0)
             {
-                push({ 0.f, -1.f, 0.f });
+                push({ 0.0, -1.0, 0.0 });
             }
         }
         if (fabs(p.z()) >= fmax(fabs(p.y()), fabs(p.x())))
         {
-            if (p.z() >= 0.f)
+            if (p.z() >= 0.0)
             {
-                push({ 0.f, 0.f, 1.f });
+                push({ 0.0, 0.0, 1.0 });
             }
-            if (p.z() <= 0.f)
+            if (p.z() <= 0.0)
             {
-                push({ 0.f, 0.f, -1.f });
+                push({ 0.0, 0.0, -1.0 });
             }
         }
     }
