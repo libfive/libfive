@@ -13,8 +13,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace Kernel;
 
-Tree rectangle(float xmin, float xmax, float ymin, float ymax,
-               Eigen::Matrix4f M)
+Tree rectangle(double xmin, double xmax, double ymin, double ymax,
+               Eigen::Matrix4d M)
 {
     auto x = M(0,0)*Tree::X() + M(0,1)*Tree::Y() + M(0,2)*Tree::Z() + M(0,3);
     auto y = M(1,0)*Tree::X() + M(1,1)*Tree::Y() + M(1,2)*Tree::Z() + M(1,3);
@@ -22,19 +22,19 @@ Tree rectangle(float xmin, float xmax, float ymin, float ymax,
     return max(max(xmin - x, x - xmax), max(ymin - y, y - ymax));
 }
 
-Tree rotate2d(Tree t, float angle)
+Tree rotate2d(Tree t, double angle)
 {
     return t.remap( cos(angle) * Tree::X() + sin(angle) * Tree::Y(),
                    -sin(angle) * Tree::X() + cos(angle) * Tree::Y(),
                    Tree::Z());
 }
 
-Tree move(Tree t, Eigen::Vector3f m)
+Tree move(Tree t, Eigen::Vector3d m)
 {
     return t.remap(Tree::X() - m.x(), Tree::Y() - m.y(), Tree::Z() - m.z());
 }
 
-Tree recurse(float x, float y, float scale, Eigen::Matrix4f M, int i)
+Tree recurse(double x, double y, double scale, Eigen::Matrix4d M, int i)
 {
     auto base = rectangle(x - scale/2, x + scale/2,
                           y - scale/2, y + scale/2, M);
@@ -63,16 +63,16 @@ Tree recurse(float x, float y, float scale, Eigen::Matrix4f M, int i)
 
 Tree menger(int i)
 {
-    Eigen::Matrix3f m = Eigen::Matrix3f::Identity();
-    Eigen::Matrix4f M = Eigen::Matrix4f::Zero();
+    Eigen::Matrix3d m = Eigen::Matrix3d::Identity();
+    Eigen::Matrix4d M = Eigen::Matrix4d::Zero();
     M.block<3,3>(0,0) = m;
     Tree a = recurse(0, 0, 1, M, i);
 
-    m = Eigen::AngleAxisf(float(M_PI/2), Eigen::Vector3f::UnitX());
+    m = Eigen::AngleAxisd(double(M_PI/2), Eigen::Vector3d::UnitX());
     M.block<3,3>(0,0) = m;
     Tree b = recurse(0, 0, 1, M, i);
 
-    m = Eigen::AngleAxisf(float(M_PI/2), Eigen::Vector3f::UnitY());
+    m = Eigen::AngleAxisd(double(M_PI/2), Eigen::Vector3d::UnitY());
     M.block<3,3>(0,0) = m;
     Tree c = recurse(0, 0, 1, M, i);
 
@@ -88,19 +88,19 @@ Tree menger(int i)
     return max(cube, cutout);
 }
 
-Tree circle(float r, Eigen::Vector2f center)
+Tree circle(double r, Eigen::Vector2d center)
 {
     return sqrt(square(Tree::X() - center.x()) + square(Tree::Y() - center.y())) - r;
 }
 
-Tree sphere(float r, Eigen::Vector3f center)
+Tree sphere(double r, Eigen::Vector3d center)
 {
     return sqrt(square(Tree::X() - center.x()) +
                 square(Tree::Y() - center.y()) +
                 square(Tree::Z() - center.z())) - r;
 }
 
-Tree box(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
+Tree box(const Eigen::Vector3d& lower, const Eigen::Vector3d& upper)
 {
     return max(max(
                max(lower.x() - Tree::X(),
@@ -111,12 +111,12 @@ Tree box(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper)
                    Tree::Z() - upper.z()));
 }
 
-Tree shell(Tree t, float offset)
+Tree shell(Tree t, double offset)
 {
     return max(t, t - offset);
 }
 
-Tree blend(Tree a, Tree b, float r)
+Tree blend(Tree a, Tree b, double r)
 {
     auto vc0 = r - a;
     auto vc1 = r - b;
@@ -129,12 +129,12 @@ Tree blend(Tree a, Tree b, float r)
     return max(r, min(a, b)) - len;
 }
 
-Tree cylinder(float r, float h, Eigen::Vector3f base)
+Tree cylinder(double r, double h, Eigen::Vector3d base)
 {
     return extrude(move(circle(r), base), base.z(), base.z() + h);
 }
 
-Tree extrude(Tree a, float lower, float upper)
+Tree extrude(Tree a, double lower, double upper)
 {
     return max(a, max(lower - Tree::Z(), Tree::Z() - upper));
 }

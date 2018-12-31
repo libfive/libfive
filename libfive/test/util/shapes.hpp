@@ -13,17 +13,17 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 
-Kernel::Tree rectangle(float xmin, float xmax, float ymin, float ymax,
-                       Eigen::Matrix4f M=Eigen::Matrix4f::Identity());
+Kernel::Tree rectangle(double xmin, double xmax, double ymin, double ymax,
+                       Eigen::Matrix4d M=Eigen::Matrix4d::Identity());
 Kernel::Tree menger(int i);
-Kernel::Tree circle(float r, Eigen::Vector2f pos=Eigen::Vector2f::Zero());
-Kernel::Tree sphere(float r, Eigen::Vector3f center=Eigen::Vector3f::Zero());
-Kernel::Tree box(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper);
-Kernel::Tree rotate2d(Kernel::Tree t, float angle);
-Kernel::Tree move(Kernel::Tree t, Eigen::Vector3f d);
-Kernel::Tree shell(Kernel::Tree t, float offset);
-Kernel::Tree blend(Kernel::Tree a, Kernel::Tree b, float r);
-Kernel::Tree cylinder(float r, float h, Eigen::Vector3f base=
-                                        Eigen::Vector3f::Zero());
-Kernel::Tree extrude(Kernel::Tree t, float lower, float upper);
+Kernel::Tree circle(double r, Eigen::Vector2d pos=Eigen::Vector2d::Zero());
+Kernel::Tree sphere(double r, Eigen::Vector3d center=Eigen::Vector3d::Zero());
+Kernel::Tree box(const Eigen::Vector3d& lower, const Eigen::Vector3d& upper);
+Kernel::Tree rotate2d(Kernel::Tree t, double angle);
+Kernel::Tree move(Kernel::Tree t, Eigen::Vector3d d);
+Kernel::Tree shell(Kernel::Tree t, double offset);
+Kernel::Tree blend(Kernel::Tree a, Kernel::Tree b, double r);
+Kernel::Tree cylinder(double r, double h, Eigen::Vector3d base=
+                                        Eigen::Vector3d::Zero());
+Kernel::Tree extrude(Kernel::Tree t, double lower, double upper);
 Kernel::Tree sphereGyroid();

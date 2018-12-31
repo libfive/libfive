@@ -219,7 +219,7 @@ TEST_CASE("QEF::solveBounded")
 
     SECTION("Circle outside of region")
     {
-        auto c = circle(1, Eigen::Vector2f(1.5, 2.7));
+        auto c = circle(1, Eigen::Vector2d(1.5, 2.7));
 
         {
             Region<2> r({1, 0}, {2, 1});
