@@ -56,7 +56,8 @@ C Neighbors<N, T, C>::push(uint8_t child,
      */
     const auto n = CornerIndex(child).neighbor();
     if (out.neighbors[n.i] == nullptr) {
-        out.neighbors[n.i] = neighbors[n.i];
+        // TODO: is this the right things to do?
+        //out.neighbors[n.i] = neighbors[n.i];
     }
     return out;
 }
