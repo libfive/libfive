@@ -43,6 +43,34 @@ public:
                     children[q.second.i].load();
             }
         }
+
+        /*  Special-casing for this particular situation:
+         *
+         *  -----------------------------------------
+         *  |                    |         |        |
+         *  |                    |         |        |
+         *  |                    |         |        |
+         *  |                    --------------------
+         *  |                    |         |        |
+         *  |                    |    i    |        |
+         *  |                    |         |        |
+         *  ---------------------X-------------------
+         *  |                    |                  |
+         *  |                    |                  |
+         *  |         N          |                  |
+         *  |                    |                  |
+         *  |                    |                  |
+         *  |                    |                  |
+         *  -----------------------------------------
+         *
+         *  If we're pushing into the cell labelled i, then the
+         *  corner-adjacent neighbor at X remains N, even if N isn't
+         *  a subdividing cell.
+         */
+        const auto n = CornerIndex(child).neighbor();
+        if (out.neighbors[n.i] == nullptr) {
+            out.neighbors[n.i] = neighbors[n.i];
+        }
         return out;
     }
 
