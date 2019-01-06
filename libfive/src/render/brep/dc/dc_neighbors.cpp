@@ -66,8 +66,4 @@ std::shared_ptr<IntersectionVec<N>> DCNeighbors<N>::check(
     return nullptr;
 }
 
-// Explicit initialization of template
-template class DCNeighbors<2>;
-template class DCNeighbors<3>;
-
 }   // namespace Kernel
