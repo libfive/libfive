@@ -606,7 +606,7 @@ void SimplexTree<N>::assignIndices() const
     // cells of different sizes, so the standard neighbor tracking
     // doesn't work.  Instead, we explicitly track them in this array.
     std::array<uint64_t, ipow(2, N)> corners;
-    for (unsigned i; i < corners.size(); ++i) {
+    for (unsigned i=0; i < corners.size(); ++i) {
         corners[i] = index++;
     }
 
@@ -620,13 +620,34 @@ void SimplexTree<N>::assignIndices(
 {
     if (this->isBranch()) {
         assert(this->leaf == nullptr);
+
+        /*  sub_corners is an array of corners that appear within this branch,
+         *  using the usual neighbor / subspace indexing scheme.
+         *
+         *  For example, in 2D, sub_corners contains the following:
+         *
+         *  d----f----e
+         *  |    |    |
+         *  g----i----h
+         *  |    |    |
+         *  a----c----b
+         *
+         *  The original corners are populated from the corners input array;
+         *  other corners are assigned new unique IDs.
+         */
+        std::array<uint64_t, ipow(3, N)> sub_corners;
+        for (unsigned i=0; i < sub_corners.size(); ++i) {
+            const NeighborIndex i_(i);
+            sub_corners[i] = i_.isCorner() ? corners[i_.pos()] : index++;
+        }
+
         for (unsigned i=0; i < this->children.size(); ++i) {
             auto new_neighbors = neighbors.push(i, this->children);
 
             std::array<uint64_t, ipow(2, N)> new_corners;
             // TODO: populate new_corners correctly
 
-            this->children[i].load()->assignIndices(index, new_neighbors);
+            this->children[i].load()->assignIndices(index, new_neighbors, new_corners);
         }
     } else {
         assert(this->leaf != nullptr);
