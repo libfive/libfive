@@ -31,34 +31,6 @@ C Neighbors<N, T, C>::push(uint8_t child,
         }
     }
 
-    /*  Special-casing for this particular situation:
-     *
-     *  -----------------------------------------
-     *  |                    |         |        |
-     *  |                    |         |        |
-     *  |                    |         |        |
-     *  |                    --------------------
-     *  |                    |         |        |
-     *  |                    |    i    |        |
-     *  |                    |         |        |
-     *  ---------------------X-------------------
-     *  |                    |                  |
-     *  |                    |                  |
-     *  |         N          |                  |
-     *  |                    |                  |
-     *  |                    |                  |
-     *  |                    |                  |
-     *  -----------------------------------------
-     *
-     *  If we're pushing into the cell labelled i, then the
-     *  corner-adjacent neighbor at X remains N, even if N isn't
-     *  a subdividing cell.
-     */
-    const auto n = CornerIndex(child).neighbor();
-    if (out.neighbors[n.i] == nullptr) {
-        // TODO: is this the right things to do?
-        //out.neighbors[n.i] = neighbors[n.i];
-    }
     return out;
 }
 

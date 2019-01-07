@@ -199,10 +199,10 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 TEST_CASE("SimplexTree<3>: meshing + cell collapsing",
           "[!mayfail]")
 {
-    auto c = box({-3, -3, -3}, {3, 3, 3});
+    auto c = box({-3.1, -3.1, -3.1}, {3.1, 3.1, 3.1});
     Region<3> r({-4, -4, -4}, {4, 4, 4});
 
-    auto t = SimplexTreePool<3>::build(c, r, 0.1, 1e-8, 8);
+    auto t = SimplexTreePool<3>::build(c, r, 0.9, 1e-8, 8);
     t->assignIndices();
 
     std::list<const SimplexTree<3>*> todo;

@@ -102,6 +102,13 @@ struct NeighborIndex {
     }
 
     /*
+     *  Checks whether this is index refers to a corner
+     */
+    constexpr bool isCorner() const {
+        return floating() == 0;
+    }
+
+    /*
      *  Builds a NeighborIndex from pos and fixed (described above)
      */
     constexpr static NeighborIndex fromPosAndFloating(uint8_t pos, uint8_t floating) {
