@@ -32,46 +32,6 @@ uint64_t SimplexNeighbors<N>::getIndex(NeighborIndex i) const
         }
     }
 
-    /*  Special-casing for this particular situation:
-     *
-     *  -----------------------------------------
-     *  |                    |         |        |
-     *  |                    |         |        |
-     *  |                    |         |        |
-     *  |                    ----------X---------
-     *  |                    |         |        |
-     *  |                    |    i    |        |
-     *  |                    |         |        |
-     *  ---------------------C-------------------
-     *  |                    |                  |
-     *  |                    |                  |
-     *  |         N          |                  |
-     *  |                    |                  |
-     *  |                    |                  |
-     *  |                    |                  |
-     *  -----------------------------------------
-     *
-     *  If we're the cell labelled N, our upper-right neighbor
-     *  is the cell marked with an X.  If we want to find the
-     *  corner marked C, we need to recurse down into X, to cell i.
-     */
-    if (i.isCorner()) {
-        for (auto& c: NeighborTables<N>::cornerTable[i.pos()]) {
-            if (this->neighbors[c.first.i] != nullptr) {
-                auto n = this->neighbors[c.first.i];
-                while (n->isBranch()) {
-                    assert(n->leaf == nullptr);
-                    n = n->children[c.second.i].load();
-                    assert(n != nullptr);
-                }
-                assert(n->leaf != nullptr);
-                auto index = n->leaf->sub[c.second.neighbor().i]->index;
-                if (index != 0) {
-                    return index;
-                }
-            }
-        }
-    }
     return 0;
 }
 

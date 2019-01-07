@@ -601,27 +601,46 @@ void SimplexTree<N>::assignIndices() const
 {
     uint64_t index = 1;
     SimplexNeighbors<N> neighbors;
-    assignIndices(index, neighbors);
+
+    // Corners are the only subspace that are shared between
+    // cells of different sizes, so the standard neighbor tracking
+    // doesn't work.  Instead, we explicitly track them in this array.
+    std::array<uint64_t, ipow(2, N)> corners;
+    for (unsigned i; i < corners.size(); ++i) {
+        corners[i] = index++;
+    }
+
+    assignIndices(index, neighbors, corners);
 }
 
 template <unsigned N>
 void SimplexTree<N>::assignIndices(
-        uint64_t& index, const SimplexNeighbors<N>& neighbors) const
+        uint64_t& index, const SimplexNeighbors<N>& neighbors,
+        const std::array<uint64_t, ipow(2, N)>& corners) const
 {
     if (this->isBranch()) {
         assert(this->leaf == nullptr);
         for (unsigned i=0; i < this->children.size(); ++i) {
             auto new_neighbors = neighbors.push(i, this->children);
+
+            std::array<uint64_t, ipow(2, N)> new_corners;
+            // TODO: populate new_corners correctly
+
             this->children[i].load()->assignIndices(index, new_neighbors);
         }
     } else {
         assert(this->leaf != nullptr);
         for (unsigned i=0; i < ipow(3, N); ++i) {
-            auto n = neighbors.getIndex(i);
-            if (n) {
-                this->leaf->sub[i]->index = n;
+            const auto i_ = NeighborIndex(i);
+            if (i_.isCorner()) {
+                this->leaf->sub[i]->index = corners[i_.pos()];
             } else {
-                this->leaf->sub[i]->index = index++;
+                auto n = neighbors.getIndex(i);
+                if (n) {
+                    this->leaf->sub[i]->index = n;
+                } else {
+                    this->leaf->sub[i]->index = index++;
+                }
             }
         }
     }

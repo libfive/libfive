@@ -172,9 +172,10 @@ public:
 
 protected:
     /*
-     *  Helper function to assign leaf->index for all leafs in a tree
+     *  Helper function to assign leaf->sub[*]->index for all leafs in a tree
      */
-    void assignIndices(uint64_t& i, const SimplexNeighbors<N>& neighbors) const;
+    void assignIndices(uint64_t& i, const SimplexNeighbors<N>& neighbors,
+                       const std::array<uint64_t, ipow(2, N)>& corners) const;
 
     /*
      *  Calculate and store whether each vertex is inside or outside
