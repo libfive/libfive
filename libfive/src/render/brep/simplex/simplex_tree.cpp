@@ -645,7 +645,14 @@ void SimplexTree<N>::assignIndices(
             auto new_neighbors = neighbors.push(i, this->children);
 
             std::array<uint64_t, ipow(2, N)> new_corners;
-            // TODO: populate new_corners correctly
+            for (unsigned j=0; j < new_corners.size(); ++j) {
+                //  Every axis whose position disagrees with the corner
+                //  position is converted to a floating axis, then used
+                //  to construct the neighbor index.
+                const auto floating = (i ^ j);
+                const auto m = NeighborIndex::fromPosAndFloating(i, floating);
+                new_corners[j] = sub_corners[m.i];
+            }
 
             this->children[i].load()->assignIndices(index, new_neighbors, new_corners);
         }
