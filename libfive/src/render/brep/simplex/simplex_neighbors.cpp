@@ -36,6 +36,31 @@ uint64_t SimplexNeighbors<N>::getIndex(NeighborIndex i) const
 }
 
 template <unsigned N>
+std::pair<uint64_t, bool> SimplexNeighbors<N>::getIndexAndBranching(
+        NeighborIndex i) const
+{
+    uint64_t out = 0;
+    bool has_branching_neighbor = false;
+    for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
+        const auto n = this->neighbors[t.first.i];
+        if (n != nullptr) {
+            if (n->isBranch()) {
+                has_branching_neighbor = true;
+            } else {
+                assert(n->leaf != nullptr);
+                auto index = n->leaf->sub[t.second.i]->index;
+                if (index != 0) {
+                    assert(out == 0 || out == index);
+                    out = index;
+                }
+            }
+        }
+    }
+
+    return std::make_pair(out, has_branching_neighbor);
+}
+
+template <unsigned N>
 std::pair<const SimplexLeaf<N>*, NeighborIndex> SimplexNeighbors<N>::check(NeighborIndex i) const
 {
     for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {

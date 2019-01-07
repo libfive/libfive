@@ -633,12 +633,27 @@ void SimplexTree<N>::assignIndices(
          *  a----c----b
          *
          *  The original corners are populated from the corners input array;
-         *  other corners are assigned new unique IDs.
+         *  other corners are assigned new unique IDs or pulled from neighbors.
          */
         std::array<uint64_t, ipow(3, N)> sub_corners;
+        std::fill(sub_corners.begin(), sub_corners.end(), 0);
         for (unsigned i=0; i < sub_corners.size(); ++i) {
             const NeighborIndex i_(i);
-            sub_corners[i] = i_.isCorner() ? corners[i_.pos()] : index++;
+            if (i_.isCorner() && corners[i_.pos()]) {
+                sub_corners[i] = corners[i_.pos()];
+            } else {
+                auto index_and_branch = neighbors.getIndexAndBranching(i);
+                if (index_and_branch.first != 0) {
+                    sub_corners[i] = index_and_branch.first;
+                } else if (!index_and_branch.second) {
+                    sub_corners[i] = index++;
+                } else {
+                    /*  If there's a branch, then we don't assign an index
+                     *  here, because the index may have already been assigned
+                     *  deeper down the branching neighbor, which we'll get to
+                     *  eventually. */
+                }
+            }
         }
 
         for (unsigned i=0; i < this->children.size(); ++i) {
@@ -660,7 +675,7 @@ void SimplexTree<N>::assignIndices(
         assert(this->leaf != nullptr);
         for (unsigned i=0; i < ipow(3, N); ++i) {
             const auto i_ = NeighborIndex(i);
-            if (i_.isCorner()) {
+            if (i_.isCorner() && corners[i_.pos()]) {
                 this->leaf->sub[i]->index = corners[i_.pos()];
             } else {
                 auto n = neighbors.getIndex(i);

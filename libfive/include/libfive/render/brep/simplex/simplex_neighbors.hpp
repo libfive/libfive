@@ -31,10 +31,20 @@ public:
 
     /*
      *  Looks up the given subspace vertex to see if it has already been
-     *  assign an index by any of the neighbors, returning the index if
+     *  assigned an index by any of the neighbors, returning the index if
      *  that's the case and 0 otherwise.
      */
     uint64_t getIndex(NeighborIndex i) const;
+
+    /*
+     *  Looks up the given subspace vertex to see if it has already been
+     *  assigned an index by any of the neighbors, returning the index if
+     *  that's the case and 0 otherwise.
+     *
+     *  If any of the relevant neighbors are present and branches, then
+     *  the second item in the pair is true; otherwise, it is false.
+     */
+    std::pair<uint64_t, bool> getIndexAndBranching(NeighborIndex i) const;
 
     /*
      *  Looks up the given corner to see if it has already been calculated
