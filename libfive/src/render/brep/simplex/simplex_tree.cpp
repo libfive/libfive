@@ -600,24 +600,19 @@ template <unsigned N>
 void SimplexTree<N>::assignIndices() const
 {
     uint64_t index = 1;
-    SimplexNeighbors<N> neighbors;
 
-    // Corners are the only subspace that are shared between
-    // cells of different sizes, so the standard neighbor tracking
-    // doesn't work.  Instead, we explicitly track them in this array.
-    std::array<uint64_t, ipow(2, N)> corners;
-    for (unsigned i=0; i < corners.size(); ++i) {
-        corners[i] = index++;
-    }
+    std::vector<const SimplexNeighbors<N>> stack;
+    stack.push(SimplexNeighbors<N>());
 
-    assignIndices(index, neighbors, corners);
+    assignIndices(index, stack);
 }
 
 template <unsigned N>
 void SimplexTree<N>::assignIndices(
-        uint64_t& index, const SimplexNeighbors<N>& neighbors,
-        const std::array<uint64_t, ipow(2, N)>& corners) const
+        uint64_t& index, std::vector<const SimplexNeighbors<N>>& stack)
 {
+    const auto& neighbors = stack.at(stack.size() - 1);
+
     if (this->isBranch()) {
         assert(this->leaf == nullptr);
 
@@ -673,18 +668,44 @@ void SimplexTree<N>::assignIndices(
         }
     } else {
         assert(this->leaf != nullptr);
+        printf("\n");
+        std::cout << "[" << this->region.lower.transpose() << "]\t[" << this->region.upper.transpose() << "]\n";
         for (unsigned i=0; i < ipow(3, N); ++i) {
+
+            // First, try to get the pre-assigned index from the corners array
             const auto i_ = NeighborIndex(i);
+
+            if (i_.isCorner())
+                std::cout << "    [" << this->region.corner(i_.pos()).transpose() << "]\t";
+
             if (i_.isCorner() && corners[i_.pos()]) {
                 this->leaf->sub[i]->index = corners[i_.pos()];
-            } else {
+
+                std::cout << corners[i_.pos()] << " from corners\n";
                 auto n = neighbors.getIndex(i);
                 if (n) {
-                    this->leaf->sub[i]->index = n;
-                } else {
-                    this->leaf->sub[i]->index = index++;
+                    if (n != corners[i_.pos()]) {
+                        printf("UH OH\n");
+                        assert(false);
+                    }
                 }
+
+                continue;
             }
+
+            // Next, try to get it from a neighbor
+            auto n = neighbors.getIndex(i);
+            if (n) {
+                if (i_.isCorner())
+                    std::cout << n << " from neighbors\n";
+                this->leaf->sub[i]->index = n;
+                continue;
+            }
+
+            if (i_.isCorner())
+                std::cout << index << " from index\n";
+            // Otherwise, assign it to a new value
+            this->leaf->sub[i]->index = index++;
         }
     }
 }

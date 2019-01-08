@@ -173,9 +173,14 @@ public:
 protected:
     /*
      *  Helper function to assign leaf->sub[*]->index for all leafs in a tree
+     *
+     *  i is the global index, which monotonically increases.
+     *
+     *  stack is a stack of neighbors, where the current neighbors are
+     *  stack[stack.size() - 1].
      */
-    void assignIndices(uint64_t& i, const SimplexNeighbors<N>& neighbors,
-                       const std::array<uint64_t, ipow(2, N)>& corners) const;
+    void assignIndices(uint64_t& i,
+                       std::vector<const SimplexNeighbors<N>>& stack);
 
     /*
      *  Calculate and store whether each vertex is inside or outside

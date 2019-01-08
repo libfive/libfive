@@ -25,9 +25,41 @@ uint64_t SimplexNeighbors<N>::getIndex(NeighborIndex i) const
     for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
         const auto n = this->neighbors[t.first.i];
         if (n != nullptr && n->leaf != nullptr) {
-            auto index = n->leaf->sub[t.second.i]->index;
+            const auto index = n->leaf->sub[t.second.i]->index;
             if (index != 0) {
                 return index;
+            }
+        }
+    }
+
+    // If this is a corner, it could have a defined index deeper down
+    // one of the neighbors.  For example, if we're in cell X and looking
+    // for corner C, our neighbor isn't a leaf, but we can travel down it's
+    // branching structure to find the corner index
+    //
+    //   ---------
+    //   |   |   |
+    //   ---------
+    //   |-|-|-|-|
+    //   ====C====
+    //   | X |   |
+    //   ---------
+    //   |   |   |
+    //   ---------
+    //
+    if (i.isCorner()) {
+        for (const auto& t : NeighborTables<N>::cornerTable[i.pos()]) {
+            auto n = this->neighbors[t.first.i];
+            if (n != nullptr) {
+                while (n->isBranch()) {
+                    n = n->children[t.second.i].load();
+                    assert(n != nullptr);
+                }
+                assert(n->leaf != nullptr);
+                const auto index = n->leaf->sub[t.second.neighbor().i]->index;
+                if (index != 0) {
+                    return index;
+                }
             }
         }
     }
