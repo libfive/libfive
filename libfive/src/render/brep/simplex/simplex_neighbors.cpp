@@ -25,54 +25,71 @@ uint64_t SimplexNeighbors<N>::getIndex(NeighborIndex i) const
     for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
         const auto n = this->neighbors[t.first.i];
         if (n != nullptr && n->leaf != nullptr) {
-            auto index = n->leaf->sub[t.second.i]->index;
+            const auto index = n->leaf->sub[t.second.i]->index;
             if (index != 0) {
                 return index;
             }
         }
     }
 
-    /*  Special-casing for this particular situation:
-     *
-     *  -----------------------------------------
-     *  |                    |         |        |
-     *  |                    |         |        |
-     *  |                    |         |        |
-     *  |                    ----------X---------
-     *  |                    |         |        |
-     *  |                    |    i    |        |
-     *  |                    |         |        |
-     *  ---------------------C-------------------
-     *  |                    |                  |
-     *  |                    |                  |
-     *  |         N          |                  |
-     *  |                    |                  |
-     *  |                    |                  |
-     *  |                    |                  |
-     *  -----------------------------------------
-     *
-     *  If we're the cell labelled N, our upper-right neighbor
-     *  is the cell marked with an X.  If we want to find the
-     *  corner marked C, we need to recurse down into X, to cell i.
-     */
+    // If this is a corner, it could have a defined index deeper down
+    // one of the neighbors.  For example, if we're in cell X and looking
+    // for corner C, our neighbor isn't a leaf, but we can travel down it's
+    // branching structure to find the corner index
+    //
+    //   ---------
+    //   |   |   |
+    //   ---------
+    //   |-|-|-|-|
+    //   ====C====
+    //   | X |   |
+    //   ---------
+    //   |   |   |
+    //   ---------
+    //
     if (i.isCorner()) {
-        for (auto& c: NeighborTables<N>::cornerTable[i.pos()]) {
-            if (this->neighbors[c.first.i] != nullptr) {
-                auto n = this->neighbors[c.first.i];
+        for (const auto& t : NeighborTables<N>::cornerTable[i.pos()]) {
+            auto n = this->neighbors[t.first.i];
+            if (n != nullptr) {
                 while (n->isBranch()) {
-                    assert(n->leaf == nullptr);
-                    n = n->children[c.second.i].load();
+                    n = n->children[t.second.i].load();
                     assert(n != nullptr);
                 }
                 assert(n->leaf != nullptr);
-                auto index = n->leaf->sub[c.second.neighbor().i]->index;
+                const auto index = n->leaf->sub[t.second.neighbor().i]->index;
                 if (index != 0) {
                     return index;
                 }
             }
         }
     }
+
     return 0;
+}
+
+template <unsigned N>
+std::pair<uint64_t, bool> SimplexNeighbors<N>::getIndexAndBranching(
+        NeighborIndex i) const
+{
+    uint64_t out = 0;
+    bool has_branching_neighbor = false;
+    for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
+        const auto n = this->neighbors[t.first.i];
+        if (n != nullptr) {
+            if (n->isBranch()) {
+                has_branching_neighbor = true;
+            } else {
+                assert(n->leaf != nullptr);
+                auto index = n->leaf->sub[t.second.i]->index;
+                if (index != 0) {
+                    assert(out == 0 || out == index);
+                    out = index;
+                }
+            }
+        }
+    }
+
+    return std::make_pair(out, has_branching_neighbor);
 }
 
 template <unsigned N>

@@ -600,29 +600,111 @@ template <unsigned N>
 void SimplexTree<N>::assignIndices() const
 {
     uint64_t index = 1;
-    SimplexNeighbors<N> neighbors;
-    assignIndices(index, neighbors);
+
+    std::vector<SimplexNeighbors<N>> neighbor_stack;
+    neighbor_stack.push_back(SimplexNeighbors<N>());
+
+    assignIndices(index, neighbor_stack);
 }
 
 template <unsigned N>
 void SimplexTree<N>::assignIndices(
-        uint64_t& index, const SimplexNeighbors<N>& neighbors) const
+        uint64_t& index, std::vector<SimplexNeighbors<N>>& neighbor_stack) const
 {
     if (this->isBranch()) {
         assert(this->leaf == nullptr);
+
         for (unsigned i=0; i < this->children.size(); ++i) {
-            auto new_neighbors = neighbors.push(i, this->children);
-            this->children[i].load()->assignIndices(index, new_neighbors);
+            // We have to recheck neighbor_stack.at each time we go through
+            // this loop, because the vector could have been resized + moved.
+            neighbor_stack.push_back(
+                    neighbor_stack.at(neighbor_stack.size() - 1)
+                    .push(i, this->children));
+            this->children[i].load()->assignIndices(index, neighbor_stack);
+            neighbor_stack.pop_back();
         }
     } else {
+        const auto& neighbors = neighbor_stack.at(neighbor_stack.size() - 1);
+
         assert(this->leaf != nullptr);
         for (unsigned i=0; i < ipow(3, N); ++i) {
-            auto n = neighbors.getIndex(i);
+
+            // First, try to get the pre-assigned index from the corners array
+            const auto i_ = NeighborIndex(i);
+
+            // Next, try to get it from a neighbor.  This function call also
+            // walks down branching neighbors, to account for neighbors of
+            // different levels, e.g.
+            //   -------------------------
+            //   |           |           |
+            //   |     X     |           |
+            //   |           |           |
+            //   ------------C------------
+            //   |     |  Z  |           |
+            //   |-----Y-----|           |
+            //   |     |     |           |
+            //   -------------------------
+            //   If we're in cell X and looking for corner C, then our neighbor
+            //   Y should recurse into cell Z to check C's index within Z.
+            auto n = neighbors.getIndex(i_);
             if (n) {
                 this->leaf->sub[i]->index = n;
-            } else {
-                this->leaf->sub[i]->index = index++;
+                continue;
             }
+
+            // Otherwise, we need to try walking up the tree, looking at the
+            // neighbors of parent cells as long as they contain the target
+            // vertex.  For example, in this situation:
+            //
+            //   -------------------------
+            //   |           |           |
+            //   |           |           |
+            //   |           |           |
+            //   ------------C------------
+            //   |     |  X  |           |
+            //   |-----|-----|           |
+            //   |     |     |           |
+            //   -------------------------
+            //   we'd want to look at the parent cell of X to find corner C
+            //
+            //   On the other hand, in this situation:
+            //   -------------------------
+            //   |           |           |
+            //   |           |           |
+            //   |           |           |
+            //   ------C------------------
+            //   |  X  |     |           |
+            //   |-----|-----|           |
+            //   |     |     |           |
+            //   -------------------------
+            //   we don't want to back out to the parent cell of X, because
+            //   the corner C isn't contained within that parent.
+            //
+            //   Each cell contains one vertex of the parent's corner cell,
+            //   indicated by its parent_index variable.
+            if (i_.isCorner()) {
+                auto target = this;
+                auto stack_index = neighbor_stack.size() - 1;
+                while (target && target->parent &&
+                       target->parent_index == i_.pos())
+                {
+                    target = target->parent;
+                    const auto& neighbors = neighbor_stack.at(--stack_index);
+                    auto n = neighbors.getIndex(i_);
+                    if (n) {
+                        this->leaf->sub[i]->index = n;
+                        break;
+                    }
+                }
+                // If we succeeded, then continue the main loop here
+                // (instead of assigning + incrementing from the global index)
+                if (this->leaf->sub[i]->index != 0) {
+                    continue;
+                }
+            }
+
+            // Otherwise, assign it to a new value
+            this->leaf->sub[i]->index = index++;
         }
     }
 }
