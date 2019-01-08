@@ -180,7 +180,7 @@ protected:
      *  stack[stack.size() - 1].
      */
     void assignIndices(uint64_t& i,
-                       std::vector<const SimplexNeighbors<N>>& stack);
+                       std::vector<SimplexNeighbors<N>>& stack) const;
 
     /*
      *  Calculate and store whether each vertex is inside or outside
