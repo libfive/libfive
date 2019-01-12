@@ -181,7 +181,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
         // canonical single-point evaluator to avoid inconsistency.
         if (fabs(vs(i)) < 1e-6)
         {
-            vs(i) = eval->deriv.eval(pos.col(i));
+            vs(i) = eval->deriv.eval(pos.col(i), tape);
         }
 
         // Handle inside, outside, and (non-ambiguous) on-boundary
