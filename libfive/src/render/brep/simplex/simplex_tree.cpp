@@ -526,6 +526,15 @@ void SimplexTree<N>::saveVertexSigns(
     // With every vertex positioned, solve for whether it is inside or outside.
     assert(this->leaf != nullptr);
     assert(this->type == Interval::AMBIGUOUS);
+
+    auto pos = [&](unsigned i) {
+        Eigen::Vector3f p;
+        p << this->leaf->sub[i]->vert.template cast<float>().transpose(),
+             region.perp.template cast<float>();
+        return p;
+    };
+
+    unsigned num = 0;
     for (unsigned i=0; i < ipow(3, N); ++i)
     {
         // Skip subspaces that have already been solved
@@ -533,22 +542,36 @@ void SimplexTree<N>::saveVertexSigns(
             continue;
         }
 
-        Eigen::Vector3f p;
-        p << this->leaf->sub[i]->vert.template cast<float>().transpose(),
-             region.perp.template cast<float>();
+        eval->array.set(pos(i), num++);
+    }
 
-        // TODO: make this run in a single array evaluation, rather than
-        // one per vertex.
-        eval->array.set(p, 0);
-        const auto out = eval->array.values(1, tape)[0];
+    const auto values = eval->array.values(num, tape);
 
-        // TODO: make this case broader to deal with array vs non-array
-        // evaluation (see comment at dc_tree.cpp:162).
-        const bool inside = (out == 0)
-            ? eval->feature.isInside(p, tape)
-            : (out < 0);
+    num = 0;
+    for (unsigned i=0; i < ipow(3, N); ++i)
+    {
+        // Skip subspaces that have already been solved
+        if (already_solved[i]) {
+            continue;
+        }
+        double out = values[num++];
 
-        this->leaf->sub[i]->inside = inside;
+        // The Eigen evaluator occasionally disagrees with the
+        // deriv (single-point) evaluator, because it has SSE
+        // implementations of transcendental functions that can
+        // return subtly different results.  If we get a result that
+        // is sufficiently close to zero, then fall back to the
+        // canonical single-point evaluator to avoid inconsistency.
+        if (fabs(out) < 1e-6) {
+            out = eval->deriv.eval(pos(i), tape);
+        }
+
+        // Handle ambiguities with the high-power isInside check
+        if (out == 0) {
+            this->leaf->sub[i]->inside = eval->feature.isInside(pos(i), tape);
+        } else {
+            this->leaf->sub[i]->inside = (out < 0);
+        }
     }
 }
 
