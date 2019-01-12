@@ -56,18 +56,19 @@ public:
     template <typename... Args>
     void get(T** t, Args... args)
     {
-        if (!d.size())
+        if (d.empty())
         {
             auto ptr = new T[N];
             alloc.push_back(ptr);
+            d.reserve(N);
             for (unsigned i=0; i < N; ++i)
             {
-                d.push(ptr + i);
+                d.push_back(ptr + i);
             }
         }
         assert(d.size());
-        *t = d.top();
-        d.pop();
+        *t = d.back();
+        d.pop_back();
 
         assert(*t != nullptr);
         (*t)->reset(args...);
@@ -87,7 +88,7 @@ public:
     void put(T* t)
     {
         assert(t != nullptr);
-        d.push(t);
+        d.push_back(t);
     }
 
     ~ObjectPool()
@@ -97,6 +98,7 @@ public:
 
     void claim(ObjectPool<T, Ts...>& other)
     {
+        alloc.reserve(alloc.size() + other.alloc.size());
         for (auto& t : other.alloc)
         {
             alloc.push_back(t);
@@ -141,10 +143,10 @@ public:
 
 private:
     /*  d stores available objects */
-    std::stack<T*, std::vector<T*>> d;
+    std::vector<T*> d;
 
     /*  alloc is the master list of allocated blocks */
-    std::list<T*> alloc;
+    std::vector<T*> alloc;
 
     static const unsigned N=512;
 };
