@@ -194,6 +194,46 @@ TEST_CASE("SimplexTree<3>: Corner positions")
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
         CHECK_CORNER_POSITIONS(t.get(), r);
     }
+
+}
+
+TEST_CASE("SimplexMesher<3>: box with problematic edges", "[!mayfail]")
+{
+    auto shape = box({-1, -1, -1}, {1.1, 1.1, 1.1});
+    auto r = Region<3>({-2, -2, -2}, {2, 2, 2});
+
+    // Build a tree without any collapsing
+    auto t = SimplexTreePool<3>::build(shape, r, 1, -1);
+    CHECK_CORNER_POSITIONS(t.get(), r);
+
+    t->assignIndices();
+
+    std::atomic_bool cancel(false);
+    auto m = Dual<3>::walk<SimplexMesher>(t, 8,
+            cancel, EMPTY_PROGRESS_CALLBACK, shape);
+    m->saveSTL("out.stl");
+
+    REQUIRE(m->branes.size() > 0);
+    REQUIRE(m->verts.size() > 1);
+
+    PointEvaluator eval(std::shared_ptr<Deck>(new Deck(shape)));
+    for (auto& tri: m->branes) {
+        auto a = m->verts[tri[0]];
+        auto b = m->verts[tri[1]];
+        auto c = m->verts[tri[2]];
+
+        CAPTURE(a);
+        CAPTURE(b);
+        CAPTURE(c);
+
+        REQUIRE(eval.eval(a.template cast<float>()) == Approx(0.0).margin(1e-4));
+        REQUIRE(eval.eval(b.template cast<float>()) == Approx(0.0).margin(1e-4));
+        REQUIRE(eval.eval(c.template cast<float>()) == Approx(0.0).margin(1e-4));
+
+        REQUIRE(eval.eval(((a + b) / 2).template cast<float>()) == Approx(0.0).margin(1e-4));
+        REQUIRE(eval.eval(((b + c) / 2).template cast<float>()) == Approx(0.0).margin(1e-4));
+        REQUIRE(eval.eval(((a + c) / 2).template cast<float>()) == Approx(0.0).margin(1e-4));
+    }
 }
 
 TEST_CASE("SimplexTree<3>: meshing + cell collapsing",
