@@ -21,8 +21,7 @@ TEST_CASE("FeatureEvaluator::isInside")
 {
     SECTION("Single plane edge")
     {
-        auto t = std::make_shared<Deck>(Tree::X());
-        FeatureEvaluator a(t);
+        FeatureEvaluator a(Tree::X());
         REQUIRE(a.isInside({0, 0, 0}) == true);
         REQUIRE(a.isInside({-1, 0, 0}) == true);
         REQUIRE(a.isInside({1, 0, 0}) == false);
@@ -30,8 +29,7 @@ TEST_CASE("FeatureEvaluator::isInside")
 
     SECTION("2D plane-to-plane (full)")
     {
-        auto t = std::make_shared<Deck>(min(Tree::X(), -Tree::X()));
-        FeatureEvaluator b(t);
+        FeatureEvaluator b(min(Tree::X(), -Tree::X()));
         REQUIRE(b.isInside({0, 0, 0}) == true);
         REQUIRE(b.isInside({1, 0, 0}) == true);
         REQUIRE(b.isInside({-1, 0, 0}) == true);
@@ -39,8 +37,7 @@ TEST_CASE("FeatureEvaluator::isInside")
 
     SECTION("2D plane-to-plane (empty)")
     {
-        auto t = std::make_shared<Deck>(max(Tree::X(), -Tree::X()));
-        FeatureEvaluator c(t);
+        FeatureEvaluator c(max(Tree::X(), -Tree::X()));
         REQUIRE(c.isInside({0, 0, 0}) == false);
         REQUIRE(c.isInside({1, 0, 0}) == false);
         REQUIRE(c.isInside({-1, 0, 0}) == false);
@@ -48,17 +45,15 @@ TEST_CASE("FeatureEvaluator::isInside")
 
     SECTION("2D Corner")
     {
-        auto t = std::make_shared<Deck>(
-                min(min(Tree::X(), -Tree::X()), min(Tree::Y(), -Tree::Y())));
+        auto t = min(min(Tree::X(), -Tree::X()), min(Tree::Y(), -Tree::Y()));
         FeatureEvaluator d(t);
         REQUIRE(d.isInside({0, 0, 0}) == true);
     }
 
     SECTION("Cube-sphere intersection")
     {
-        auto t = std::make_shared<Deck>(
-                min(sphere(0.5, {0, 0, 1}),
-                    box({-1, -1, -1}, {1, 1, 1})));
+        auto t = min(sphere(0.5, {0, 0, 1}),
+                     box({-1, -1, -1}, {1, 1, 1}));
         FeatureEvaluator d(t);
         REQUIRE(d.isInside({0, 0, 0}) == true);
         REQUIRE(d.isInside({0.5, 0, 1}) == true);
@@ -74,8 +69,7 @@ TEST_CASE("FeatureEvaluator::isInside")
     {
         auto shape = max(box({-50, -50, 0}, {50, 50, 10}),
             max(cylinder(10, 100), -cylinder(5, 100)));
-        auto t = std::make_shared<Deck>(shape);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(shape);
         auto fs = e.features_({0.1f, 0.1f, 0.0f});
         CAPTURE(fs.size());
         REQUIRE(!e.isInside({0.0f, 0.0f, 0.0f}));
@@ -86,8 +80,7 @@ TEST_CASE("FeatureEvaluator::features")
 {
     SECTION("Single feature")
     {
-        auto t = std::make_shared<Deck>(Tree::X());
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(Tree::X());
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 1);
         REQUIRE(fs.front() == Eigen::Vector3f(1, 0, 0));
@@ -95,8 +88,7 @@ TEST_CASE("FeatureEvaluator::features")
 
     SECTION("Two features (min)")
     {
-        auto t = std::make_shared<Deck>(min(Tree::X(), -Tree::X()));
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(min(Tree::X(), -Tree::X()));
 
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 2);
@@ -107,8 +99,7 @@ TEST_CASE("FeatureEvaluator::features")
 
     SECTION("Two features (max)")
     {
-        auto t = std::make_shared<Deck>(max(Tree::X(), -Tree::X()));
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(max(Tree::X(), -Tree::X()));
 
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 2);
@@ -119,9 +110,7 @@ TEST_CASE("FeatureEvaluator::features")
 
     SECTION("Three features")
     {
-        auto t = std::make_shared<Deck>(
-                min(Tree::X(), min(Tree::Y(), Tree::Z())));
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(min(Tree::X(), min(Tree::Y(), Tree::Z())));
 
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 3);
@@ -136,8 +125,7 @@ TEST_CASE("FeatureEvaluator::features")
     {
         // The ambiguity here (in max(-1 - X, X) is irrelevant, as
         // it ends up being masked by the Y clause)
-        auto t = std::make_shared<Deck>(rectangle(-1, 0, -1, 1));
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(rectangle(-1, 0, -1, 1));
 
         REQUIRE(e.features({-0.5, -1, 0}).size() == 1);
     }
@@ -147,8 +135,7 @@ TEST_CASE("FeatureEvaluator::features")
         auto r = max(max(max(-Tree::X(), Tree::X() - 1),
                          max(-Tree::Y(), Tree::Y() - 1)),
                     -Tree::X());
-        auto t = std::make_shared<Deck>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(r);
 
         REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
     }
@@ -156,8 +143,7 @@ TEST_CASE("FeatureEvaluator::features")
     SECTION("One feature (duplicated)")
     {
         auto r = max(Tree::X(), Tree::X());
-        auto t = std::make_shared<Deck>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(r);
 
         REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
     }
@@ -165,8 +151,7 @@ TEST_CASE("FeatureEvaluator::features")
     SECTION("One feature (duplicated multiple times)")
     {
         auto r = max(Tree::X(), max(Tree::X(), Tree::X()));
-        auto t = std::make_shared<Deck>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(r);
 
         REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
     }
@@ -174,24 +159,21 @@ TEST_CASE("FeatureEvaluator::features")
     SECTION("One feature (duplicated even more times)")
     {
         auto r = max(max(Tree::X(), Tree::X()), max(Tree::X(), Tree::X()));
-        auto t = std::make_shared<Deck>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(r);
         REQUIRE(e.features({0, 0.2f, 0}).size() == 1);
     }
 
     SECTION("Coincident planes with same normal")
     {
         auto r = max(Tree::Z() - 6, Tree::Z() + -6);
-        auto t = std::make_shared<Deck>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(r);
         REQUIRE(e.features({0, 0, 6}).size() == 1);
     }
 
     SECTION("Feature deduplication")
     {
         auto r = max(Tree::X(), Tree::X() + Tree::Y() * 1e-8);
-        auto t = std::make_shared<Deck>(r);
-        FeatureEvaluator e(t);
+        FeatureEvaluator e(r);
         REQUIRE(e.features({0, 0, 0}).size() == 1);
     }
 }

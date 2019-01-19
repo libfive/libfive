@@ -25,6 +25,19 @@ Pr toPair(float inp)
 
 }
 
+IntervalEvaluator::IntervalEvaluator(const Tree& root)
+    : IntervalEvaluator(std::make_shared<Deck>(root))
+{
+    // Nothing to do here
+}
+
+IntervalEvaluator::IntervalEvaluator(
+        const Tree& root, const std::map<Tree::Id, float>& vars)
+    : IntervalEvaluator(std::make_shared<Deck>(root), vars)
+{
+    // Nothing to do here
+}
+
 IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Deck> d)
     : IntervalEvaluator(d, std::map<Tree::Id, float>())
 {

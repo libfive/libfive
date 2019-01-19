@@ -15,6 +15,19 @@ namespace Kernel {
 
 constexpr size_t ArrayEvaluator::N;
 
+ArrayEvaluator::ArrayEvaluator(const Tree& root)
+    : ArrayEvaluator(std::make_shared<Deck>(root))
+{
+    // Nothing to do here
+}
+
+ArrayEvaluator::ArrayEvaluator(
+        const Tree& root, const std::map<Tree::Id, float>& vars)
+    : ArrayEvaluator(std::make_shared<Deck>(root), vars)
+{
+    // Nothing to do here
+}
+
 ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Deck> d)
     : ArrayEvaluator(d, std::map<Tree::Id, float>())
 {

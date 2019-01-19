@@ -283,8 +283,7 @@ void Shape::setHover(bool h)
 std::pair<Kernel::JacobianEvaluator*, Kernel::Tape::Handle>
 Shape::dragFrom(const QVector3D& v)
 {
-    auto e = new Kernel::JacobianEvaluator(
-            std::make_shared<Kernel::Deck>(tree), vars);
+    auto e = new Kernel::JacobianEvaluator(tree, vars);
     auto o = e->evalAndPush({v.x(), v.y(), v.z()});
     return std::make_pair(e, o.second);
 }

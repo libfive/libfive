@@ -17,6 +17,9 @@ namespace Kernel {
 class DerivArrayEvaluator : public ArrayEvaluator
 {
 public:
+    DerivArrayEvaluator(const Tree& root);
+    DerivArrayEvaluator(const Tree& root,
+                        const std::map<Tree::Id, float>& vars);
     DerivArrayEvaluator(std::shared_ptr<Deck> t);
     DerivArrayEvaluator(std::shared_ptr<Deck> t,
                         const std::map<Tree::Id, float>& vars);

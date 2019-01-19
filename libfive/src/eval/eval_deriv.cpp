@@ -13,6 +13,19 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+DerivEvaluator::DerivEvaluator(const Tree& root)
+    : DerivEvaluator(std::make_shared<Deck>(root))
+{
+    // Nothing to do here
+}
+
+DerivEvaluator::DerivEvaluator(
+        const Tree& root, const std::map<Tree::Id, float>& vars)
+    : DerivEvaluator(std::make_shared<Deck>(root), vars)
+{
+    // Nothing to do here
+}
+
 DerivEvaluator::DerivEvaluator(std::shared_ptr<Deck> d)
     : DerivEvaluator(d, std::map<Tree::Id, float>())
 {

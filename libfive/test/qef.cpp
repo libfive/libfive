@@ -174,7 +174,7 @@ template <unsigned N>
 QEF<N> fromCorners(Region<N> r, Tree c)
 {
     QEF<2> q;
-    DerivEvaluator d(std::make_shared<Deck>(c));
+    DerivEvaluator d(c);
 
     for (unsigned i=0; i < 4; ++i) {
         const auto pos = r.corner(i);

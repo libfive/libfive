@@ -121,8 +121,7 @@ TEST_CASE("DCTree<2>::vertex_count")
     {
         Tree a = min(max(Tree::X(), Tree::Y()),
                      max(1 - Tree::X(), 1 - Tree::Y()));
-        auto deck = std::make_shared<Deck>(a);
-        PointEvaluator eval(deck);
+        PointEvaluator eval(a);
         auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {3, 3}), 100);
         REQUIRE(ta->level() == 0);
         REQUIRE(ta->leaf != nullptr);

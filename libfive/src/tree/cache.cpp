@@ -125,7 +125,7 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
         {
             // Here, we construct a Tree manually to avoid a recursive loop,
             // then pass it immediately into a dummy Evaluator
-            PointEvaluator e(std::make_shared<Deck>(Tree(out)));
+            auto e = PointEvaluator(Tree(out));
             auto result = e.eval({0,0,0});
             return constant(result);
         }

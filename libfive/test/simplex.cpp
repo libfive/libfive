@@ -216,7 +216,7 @@ TEST_CASE("SimplexMesher<3>: box with problematic edges", "[!mayfail]")
     REQUIRE(m->branes.size() > 0);
     REQUIRE(m->verts.size() > 1);
 
-    PointEvaluator eval(std::shared_ptr<Deck>(new Deck(shape)));
+    PointEvaluator eval(shape);
     for (auto& tri: m->branes) {
         auto a = m->verts[tri[0]];
         auto b = m->verts[tri[1]];

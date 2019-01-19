@@ -24,8 +24,7 @@ TEST_CASE("IntervalEvaluator::eval")
 {
     SECTION("Basic math")
     {
-        auto t = std::make_shared<Deck>(Tree::X() + 1);
-        IntervalEvaluator e(t);
+        IntervalEvaluator e(Tree::X() + 1);
 
         auto out = e.eval({1,1,1}, {2,2,2});
 
@@ -40,8 +39,7 @@ TEST_CASE("IntervalEvaluator::eval")
             auto op = (Kernel::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
-            auto p = std::make_shared<Deck>(t);
-            IntervalEvaluator e(p);
+            IntervalEvaluator e(t);
             e.eval({0, 0, 0}, {1, 1, 1});
             REQUIRE(true /* No crash! */ );
         }
@@ -49,8 +47,8 @@ TEST_CASE("IntervalEvaluator::eval")
 
     SECTION("Bounds growth")
     {
-        IntervalEvaluator e(std::make_shared<Deck>(
-            (Tree::X() + Tree::Y()) * (Tree::X() - Tree::Y())));
+        IntervalEvaluator e(
+            (Tree::X() + Tree::Y()) * (Tree::X() - Tree::Y()));
 
         auto o = e.eval({0, 0, 0}, {1, 1, 1});
         REQUIRE(o.lower() == -2);
@@ -62,8 +60,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 {
     SECTION("Basic")
     {
-        auto t = std::make_shared<Deck>(
-                min(Tree::X() + 1, Tree::Y() + 1));
+        auto t = std::make_shared<Deck>(min(Tree::X() + 1, Tree::Y() + 1));
         IntervalEvaluator e(t);
 
         // Store -3 in the rhs's value

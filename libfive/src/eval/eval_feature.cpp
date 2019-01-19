@@ -13,6 +13,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+FeatureEvaluator::FeatureEvaluator(const Tree& root)
+    : FeatureEvaluator(std::make_shared<Deck>(root))
+{
+    // Nothing to do here
+}
+
 FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Deck> d)
     : FeatureEvaluator(d, std::map<Tree::Id, float>())
 {

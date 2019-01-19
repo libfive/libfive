@@ -17,6 +17,9 @@ namespace Kernel {
 class DerivEvaluator : public PointEvaluator
 {
 public:
+    DerivEvaluator(const Tree& root);
+    DerivEvaluator(const Tree& root,
+                   const std::map<Tree::Id, float>& vars);
     DerivEvaluator(std::shared_ptr<Deck> t);
     DerivEvaluator(std::shared_ptr<Deck> t,
                    const std::map<Tree::Id, float>& vars);
