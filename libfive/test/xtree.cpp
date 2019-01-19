@@ -14,7 +14,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/axes.hpp"
-#include "libfive/eval/deck.hpp"
 #include "util/shapes.hpp"
 
 using namespace Kernel;

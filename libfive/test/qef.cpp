@@ -11,7 +11,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/simplex/qef.hpp"
 #include "libfive/eval/eval_deriv.hpp"
-#include "libfive/eval/deck.hpp"
 
 #include "util/shapes.hpp"
 

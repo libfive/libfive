@@ -11,7 +11,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_feature.hpp"
-#include "libfive/eval/deck.hpp"
 
 #include "util/shapes.hpp"
 

@@ -11,7 +11,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #define ENABLE_FIND_BOUNDS_EXPERIMENTAL
 #include "libfive/solve/bounds.hpp"
 #include "libfive/render/axes.hpp"
-#include "libfive/eval/deck.hpp"
 
 namespace Kernel {
 
