@@ -11,4 +11,5 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 template class SimplexTree<3>;
+template struct SimplexLeaf<3>;
 }   // namespace Kernel

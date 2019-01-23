@@ -80,8 +80,15 @@ struct SimplexLeaf
      *  The index is a pair of subspace vertex indices.
      *
      *  We can't simply store a fixed number of edges because of
-     *  how neighboring cells of varying sizes are meshed. */
-    std::map<std::pair<uint64_t, uint64_t>, uint64_t> surface;
+     *  how neighboring cells of varying sizes are meshed.  Instead,
+     *  we use a pair of small_vectors to act as a stack-allocated
+     *  ordered map. */
+    uint64_t findSurfaceValue(std::pair<uint64_t, uint64_t> key);
+    uint64_t pushSurfaceValue(std::pair<uint64_t, uint64_t> key,
+                              uint64_t value);
+    boost::container::small_vector<std::pair<uint64_t, uint64_t>, 32>
+        surface_keys;
+    boost::container::small_vector<uint64_t, 32> surface_values;
 
     /*  Represents how far from minimum-size leafs we are */
     unsigned level;

@@ -63,8 +63,9 @@ void SimplexLeaf<N>::reset()
 {
     level = 0;
     tape.reset();
-    surface.clear();
     std::fill(sub.begin(), sub.end(), nullptr);
+    surface_keys.clear();
+    surface_values.clear();
 }
 
 template <unsigned N>
@@ -77,6 +78,29 @@ void SimplexLeaf<N>::releaseTo(Pool& object_pool)
         s = nullptr;
     }
     object_pool.put(this);
+}
+
+template <unsigned N>
+uint64_t SimplexLeaf<N>::findSurfaceValue(std::pair<uint64_t, uint64_t> key)
+{
+    auto itr = std::lower_bound(surface_keys.begin(),
+                                surface_keys.end(), key);
+    if (itr == surface_keys.end() || *itr != key) {
+        return 0;
+    } else {
+        return surface_values[itr - surface_keys.begin()];
+    }
+}
+
+template <unsigned N>
+uint64_t SimplexLeaf<N>::pushSurfaceValue(std::pair<uint64_t, uint64_t> key,
+                                          uint64_t value)
+{
+    const auto itr = surface_keys.insert(
+            std::upper_bound(surface_keys.begin(), surface_keys.end(), key),
+            key);
+    const auto n = itr - surface_keys.begin();
+    surface_values.insert(surface_values.begin() + n, value);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
