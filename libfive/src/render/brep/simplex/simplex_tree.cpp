@@ -537,8 +537,10 @@ void SimplexTree<N>::saveVertexSigns(
     unsigned num = 0;
     for (unsigned i=0; i < ipow(3, N); ++i)
     {
-        // Skip subspaces that have already been solved
-        if (already_solved[i]) {
+        // Skip subspaces that have already been solved,
+        // which include corners (since they have the solution
+        // in their QEF data)
+        if (already_solved[i] || NeighborIndex(i).isCorner()) {
             continue;
         }
 
@@ -550,11 +552,15 @@ void SimplexTree<N>::saveVertexSigns(
     num = 0;
     for (unsigned i=0; i < ipow(3, N); ++i)
     {
+        double out;
         // Skip subspaces that have already been solved
         if (already_solved[i]) {
             continue;
+        } else if (NeighborIndex(i).isCorner()) {
+            out = this->leaf->sub[i]->qef.averageDistanceValue();
+        } else {
+            out = values[num++];
         }
-        double out = values[num++];
 
         // The Eigen evaluator occasionally disagrees with the
         // deriv (single-point) evaluator, because it has SSE

@@ -249,6 +249,13 @@ public:
     }
 
     /*
+     *  A bit of magic matrix math to extract the distance value
+     */
+    double averageDistanceValue() const {
+        return AtBp(N, N) / AtA(N, N);
+    }
+
+    /*
      *  Solves the given QEF, bounded to lie within the given region.
      *
      *  By default, minimizes towards the center of the region and
