@@ -84,8 +84,8 @@ struct SimplexLeaf
      *  we use a pair of small_vectors to act as a stack-allocated
      *  ordered map. */
     uint64_t findSurfaceValue(std::pair<uint64_t, uint64_t> key);
-    uint64_t pushSurfaceValue(std::pair<uint64_t, uint64_t> key,
-                              uint64_t value);
+    void pushSurfaceValue(std::pair<uint64_t, uint64_t> key,
+                          uint64_t value);
     boost::container::small_vector<std::pair<uint64_t, uint64_t>, 32>
         surface_keys;
     boost::container::small_vector<uint64_t, 32> surface_values;

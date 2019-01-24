@@ -93,14 +93,16 @@ uint64_t SimplexLeaf<N>::findSurfaceValue(std::pair<uint64_t, uint64_t> key)
 }
 
 template <unsigned N>
-uint64_t SimplexLeaf<N>::pushSurfaceValue(std::pair<uint64_t, uint64_t> key,
+void SimplexLeaf<N>::pushSurfaceValue(std::pair<uint64_t, uint64_t> key,
                                           uint64_t value)
 {
-    const auto itr = surface_keys.insert(
-            std::upper_bound(surface_keys.begin(), surface_keys.end(), key),
-            key);
-    const auto n = itr - surface_keys.begin();
-    surface_values.insert(surface_values.begin() + n, value);
+    const auto pos = std::upper_bound(surface_keys.begin(),
+                                      surface_keys.end(), key);
+    if (*pos != key) {
+        const auto itr = surface_keys.insert(pos, key);
+        const auto n = itr - surface_keys.begin();
+        surface_values.insert(surface_values.begin() + n, value);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
