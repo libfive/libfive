@@ -27,6 +27,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/simplex/qef.hpp"
+#include "libfive/render/brep/simplex/surface_edge_map.hpp"
 
 namespace Kernel {
 
@@ -83,12 +84,7 @@ struct SimplexLeaf
      *  how neighboring cells of varying sizes are meshed.  Instead,
      *  we use a pair of small_vectors to act as a stack-allocated
      *  ordered map. */
-    uint64_t findSurfaceValue(std::pair<uint64_t, uint64_t> key);
-    void pushSurfaceValue(std::pair<uint64_t, uint64_t> key,
-                          uint64_t value);
-    boost::container::small_vector<std::pair<uint64_t, uint64_t>, 32>
-        surface_keys;
-    boost::container::small_vector<uint64_t, 32> surface_values;
+    SurfaceEdgeMap<32> surface;
 
     /*  Represents how far from minimum-size leafs we are */
     unsigned level;

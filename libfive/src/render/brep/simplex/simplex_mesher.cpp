@@ -298,9 +298,9 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     for (unsigned i=0; i < 4; ++i) {
         const auto leaf = ts.at(i)->leaf;
         if (leaf != nullptr) {
-            for (unsigned j=0; j < leaf->surface_keys.size(); ++j) {
-                edge_search_cache.insert({leaf->surface_keys.at(i),
-                                          leaf->surface_values.at(j)});
+            for (unsigned j=0; j < leaf->surface.size(); ++j) {
+                edge_search_cache.insert({leaf->surface.key(i),
+                                          leaf->surface.value(j)});
             }
         }
     }
@@ -403,7 +403,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                     //
                     // We check for it in both places, populating it into
                     // whichever caches it's missing from.
-                    const auto leaf_index = this_cell->leaf->findSurfaceValue(k);
+                    const auto leaf_index = this_cell->leaf->surface.find(k);
                     const auto cache_itr = edge_search_cache.find(k);
                     if (leaf_index &&
                         cache_itr != edge_search_cache.end())
@@ -421,7 +421,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                     else if (cache_itr != edge_search_cache.end())
                     {
                         tri_vert_indices[t] = cache_itr->second;
-                        this_cell->leaf->pushSurfaceValue(k, cache_itr->second);
+                        this_cell->leaf->surface.insert(k, cache_itr->second);
                         continue;
                     }
 
@@ -433,7 +433,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                         ? searchEdge(va.pos, vb.pos, this_cell->leaf->tape)
                         : searchEdge(vb.pos, va.pos, this_cell->leaf->tape);
 
-                    this_cell->leaf->pushSurfaceValue(k, surf_vert_index);
+                    this_cell->leaf->surface.insert(k, surf_vert_index);
                     edge_search_cache.insert({k, surf_vert_index});
                     tri_vert_indices[t] = surf_vert_index;
                 }
