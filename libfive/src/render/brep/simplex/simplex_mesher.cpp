@@ -290,7 +290,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     auto Key = [](uint64_t a, uint64_t b) {
         return std::make_pair(std::min(a, b), std::max(a, b));
     };
-    std::map<std::pair<uint64_t, uint64_t>, uint64_t> edge_search_cache;
+    SurfaceEdgeMap<128> edge_search_cache;
 
     // Store all of the per-leaf edge caches into our cache here,
     // to prevent cases where we search an edge before getting to
@@ -299,8 +299,8 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         const auto leaf = ts.at(i)->leaf;
         if (leaf != nullptr) {
             for (unsigned j=0; j < leaf->surface.size(); ++j) {
-                edge_search_cache.insert({leaf->surface.key(i),
-                                          leaf->surface.value(j)});
+                edge_search_cache.insert(leaf->surface.key(i),
+                                         leaf->surface.value(j));
             }
         }
     }
@@ -404,24 +404,23 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                     // We check for it in both places, populating it into
                     // whichever caches it's missing from.
                     const auto leaf_index = this_cell->leaf->surface.find(k);
-                    const auto cache_itr = edge_search_cache.find(k);
-                    if (leaf_index &&
-                        cache_itr != edge_search_cache.end())
+                    const auto cache_index = edge_search_cache.find(k);
+                    if (leaf_index && cache_index)
                     {
-                        assert(leaf_itr->second == cache_itr->second);
+                        assert(leaf_index == cache_index);
                         tri_vert_indices[t] = leaf_index;
                         continue;
                     }
                     else if (leaf_index)
                     {
                         tri_vert_indices[t] = leaf_index;
-                        edge_search_cache.insert({k, leaf_index});
+                        edge_search_cache.insert(k, leaf_index);
                         continue;
                     }
-                    else if (cache_itr != edge_search_cache.end())
+                    else if (cache_index)
                     {
-                        tri_vert_indices[t] = cache_itr->second;
-                        this_cell->leaf->surface.insert(k, cache_itr->second);
+                        tri_vert_indices[t] = cache_index;
+                        this_cell->leaf->surface.insert(k, cache_index);
                         continue;
                     }
 
@@ -434,7 +433,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                         : searchEdge(vb.pos, va.pos, this_cell->leaf->tape);
 
                     this_cell->leaf->surface.insert(k, surf_vert_index);
-                    edge_search_cache.insert({k, surf_vert_index});
+                    edge_search_cache.insert(k, surf_vert_index);
                     tri_vert_indices[t] = surf_vert_index;
                 }
 
