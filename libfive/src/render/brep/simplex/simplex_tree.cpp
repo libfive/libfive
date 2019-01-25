@@ -35,9 +35,8 @@ template <unsigned N> constexpr double SimplexTree<N>::EIGENVALUE_CUTOFF;
 
 template <unsigned N>
 SimplexLeafSubspace<N>::SimplexLeafSubspace()
-    : inside(false), index(0)
 {
-    /* (use default QEF constructor, which is all zeros) */
+    reset();
 }
 
 template <unsigned N>
