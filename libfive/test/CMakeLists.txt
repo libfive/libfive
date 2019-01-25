@@ -19,6 +19,7 @@ set(SRCS main.cpp
     marching.cpp
     mesh.cpp
     neighbors.cpp
+    object_pool.cpp
     oracle.cpp
     oracle_context.cpp
     progress.cpp

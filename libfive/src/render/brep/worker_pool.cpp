@@ -157,8 +157,7 @@ void WorkerPool<T, Neighbors, N>::run(
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
-                    T* next_tree;
-                    object_pool.get(&next_tree, t, i, rs[i]);
+                    auto next_tree = object_pool.get(t, i, rs[i]);
                     Task next{next_tree, tape, rs[i], neighbors};
                     if (!tasks.bounded_push(next))
                     {

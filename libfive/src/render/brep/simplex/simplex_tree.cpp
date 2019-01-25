@@ -196,7 +196,7 @@ Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
     {
         SimplexNeighbors<N> neighbors;
 
-        object_pool.next().get(&this->leaf);
+        this->leaf = object_pool.next().get();
         this->leaf->level = region.level;
         findLeafVertices(eval, tape, region, object_pool, neighbors);
         this->done();
@@ -228,7 +228,7 @@ void SimplexTree<N>::findLeafVertices(
             this->leaf->sub[i] = c.first->sub[c.second.i];
             already_solved[i] = true;
         } else {
-            object_pool.next().next().get(&this->leaf->sub[i]);
+            this->leaf->sub[i] = object_pool.next().next().get();
         }
         this->leaf->sub[i]->refcount++;
     }
@@ -316,7 +316,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
                               Pool& object_pool,
                               const SimplexNeighbors<N>& neighbors)
 {
-    object_pool.next().get(&this->leaf);
+    this->leaf = object_pool.next().get();
     this->leaf->tape = tape;
     this->leaf->level = region.level;
     assert(region.level == 0);
@@ -366,7 +366,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
     // We've now passed all of our opportunitie to exit without
     // allocating a Leaf, so create one here.
     assert(this->leaf == nullptr);
-    object_pool.next().get(&this->leaf);
+    this->leaf = object_pool.next().get();
 
     // Store this tree's depth and tape.  This could be delegated
     // until we're sure that we're keeping the leaf, but might as well
@@ -407,7 +407,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
     // Allocate SimplexLeafSubspace objects for this tree
     // TODO: can we pull from neighbors here as well?
     for (auto& s: this->leaf->sub) {
-        object_pool.next().next().get(&s);
+        s = object_pool.next().next().get();
     }
 
     // Iterate over every child, collecting the QEFs and summing

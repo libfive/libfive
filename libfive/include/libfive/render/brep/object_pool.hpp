@@ -46,38 +46,49 @@ class ObjectPool<T, Ts...> : public ObjectPool<Ts...>
 {
 public:
     ObjectPool<T, Ts...>& operator=(ObjectPool<T, Ts...>&& other) {
-        alloc = std::move(other.alloc);
-        other.alloc.clear();
-        d = other.d;
+        fresh_blocks = std::move(other.fresh_blocks);
+        other.fresh_blocks.clear();
+
+        allocated_blocks = std::move(other.allocated_blocks);
+        other.allocated_blocks.clear();
+
+        reusable_objects = std::move(other.reusable_objects);
+        other.reusable_objects.clear();
+
         next() = std::move(other.next());
         return *this;
     }
 
     template <typename... Args>
-    void get(T** t, Args... args)
+    T* get(Args... args)
     {
-        if (d.empty())
-        {
-            auto ptr = new T[N];
-            alloc.push_back(ptr);
-            d.reserve(N);
-            for (unsigned i=0; i < N; ++i)
-            {
-                d.push_back(ptr + i);
-            }
-        }
-        assert(d.size());
-        *t = d.back();
-        d.pop_back();
+        if (!reusable_objects.empty()) {
+            auto out = reusable_objects.back();
+            reusable_objects.pop_back();
 
-        assert(*t != nullptr);
-        (*t)->reset(args...);
+            assert(out != nullptr);
+            out->reset(args...);
+            return out;
+        }
+
+        if (fresh_blocks.empty()) {
+            fresh_blocks.push_back(std::make_pair(
+                        static_cast<T*>(malloc(sizeof(T) * N)), 0));
+        }
+        assert(fresh_blocks.size());
+
+        auto& block = fresh_blocks.back();
+        auto out = block.first + block.second;
+
+        if (++block.second == N) {
+            allocated_blocks.push_back(block.first);
+            fresh_blocks.pop_back();
+        }
+        assert(out != nullptr);
+        new (out) T(args...); // Placement new!
+        return out;
     }
 
-    /*
-     *  I'm not sure why these functions are necessary - I expected
-     *  put() and get() to dispatch properly through the hierarchy.  Alas!
-     */
     ObjectPool<Ts...>& next() {
         return *static_cast<ObjectPool<Ts...>*>(this);
     }
@@ -88,7 +99,7 @@ public:
     void put(T* t)
     {
         assert(t != nullptr);
-        d.push_back(t);
+        reusable_objects.push_back(t);
     }
 
     ~ObjectPool()
@@ -96,14 +107,22 @@ public:
         reset();
     }
 
+    template <typename Q>
+    static void claimVector(std::vector<Q>& mine, std::vector<Q>& other)
+    {
+        mine.reserve(mine.size() + other.size());
+        for (auto& t : other) {
+            mine.push_back(t);
+        }
+        other.clear();
+    }
+
     void claim(ObjectPool<T, Ts...>& other)
     {
-        alloc.reserve(alloc.size() + other.alloc.size());
-        for (auto& t : other.alloc)
-        {
-            alloc.push_back(t);
-        }
-        other.alloc.clear();
+        claimVector(allocated_blocks, other.allocated_blocks);
+        claimVector(fresh_blocks, other.fresh_blocks);
+        claimVector(reusable_objects, other.reusable_objects);
+
         next().claim(other.next());
     }
 
@@ -116,7 +135,8 @@ public:
      */
     int64_t size() const
     {
-        return (int64_t)alloc.size() * N - d.size();
+        return (int64_t)(allocated_blocks.size() + fresh_blocks.size()) * N
+               - reusable_objects.size();
     }
 
     int64_t total_size() const {
@@ -132,21 +152,43 @@ public:
      *  (this is the same as the destructor, but includes a progress callback)
      */
     void reset(ProgressWatcher* progress_watcher=nullptr) {
-        for (auto& t : alloc)
-        {
-            if (progress_watcher) progress_watcher->tick();
-            delete [] t;
+        for (auto& t : allocated_blocks) {
+            for (unsigned i=0; i < N; ++i) {
+                t[i].~T();
+            }
+            if (progress_watcher) {
+                progress_watcher->tick();
+            }
+            free(t);
         }
-        alloc.clear();
+        allocated_blocks.clear();
+
+        for (auto& t : fresh_blocks) {
+            for (unsigned i=0; i < t.second; ++i) {
+                t.first[i].~T();
+            }
+            if (progress_watcher) {
+                progress_watcher->tick();
+            }
+            free(t.first);
+        }
+        fresh_blocks.clear();
+
         next().reset(progress_watcher);
     }
 
 private:
-    /*  d stores available objects */
-    std::vector<T*> d;
+    /*  Each fresh_block is a pointer to the start of the block,
+     *  plus an offset (initially 0) with how many items in the block
+     *  have already been used.  */
+    std::vector<std::pair<T*, size_t>> fresh_blocks;
 
-    /*  alloc is the master list of allocated blocks */
-    std::vector<T*> alloc;
+    /*  reused_objects stores available objects */
+    std::vector<T*> reusable_objects;
+
+    /*  allocated_blocks is the master list of allocated blocks,
+     *  which must be fully used (otherwise they'd be in fresh_blocks) */
+    std::vector<T*> allocated_blocks;
 
     static const unsigned N=512;
 };
