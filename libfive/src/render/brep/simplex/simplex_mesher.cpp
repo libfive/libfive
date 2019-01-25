@@ -411,16 +411,16 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                         tri_vert_indices[t] = leaf_index;
                         continue;
                     }
-                    else if (leaf_index)
-                    {
-                        tri_vert_indices[t] = leaf_index;
-                        edge_search_cache.insert(k, leaf_index);
-                        continue;
-                    }
                     else if (cache_index)
                     {
                         tri_vert_indices[t] = cache_index;
                         this_cell->leaf->surface.insert(k, cache_index);
+                        continue;
+                    }
+                    else if (leaf_index)
+                    {
+                        tri_vert_indices[t] = leaf_index;
+                        edge_search_cache.insert(k, leaf_index);
                         continue;
                     }
 

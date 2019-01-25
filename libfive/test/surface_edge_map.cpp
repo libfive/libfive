@@ -13,7 +13,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace Kernel;
 
-TEST_CASE("SurfaceEdgeMap::insert") {
+TEST_CASE("SurfaceEdgeMap::insert")
+{
     SurfaceEdgeMap<16> s;
 
     s.insert({1, 2}, 4);
@@ -24,9 +25,13 @@ TEST_CASE("SurfaceEdgeMap::insert") {
 
     s.insert({1, 3}, 4);
     REQUIRE(s.size() == 2);
+
+    s.insert({1, 1}, 4);
+    REQUIRE(s.size() == 3);
 }
 
-TEST_CASE("SurfaceEdgeMap::find") {
+TEST_CASE("SurfaceEdgeMap::find")
+{
     SurfaceEdgeMap<16> s;
 
     s.insert({1, 3}, 4);

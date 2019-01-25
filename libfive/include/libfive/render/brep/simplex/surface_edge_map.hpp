@@ -29,11 +29,9 @@ public:
         assert(value != 0);
 
         auto pos = std::lower_bound(keys.begin(),
-                                          keys.end(), key);
-        if (*pos != key) {
-            if (pos != keys.end()) {
-                pos++;
-            }
+                                    keys.end(), key);
+
+        if (pos == keys.end() || *pos != key) {
             const auto itr = keys.insert(pos, key);
             const auto n = itr - keys.begin();
             values.insert(values.begin() + n, value);
