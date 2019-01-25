@@ -28,9 +28,12 @@ public:
     void insert(Key key, Value value) {
         assert(value != 0);
 
-        const auto pos = std::upper_bound(keys.begin(),
+        auto pos = std::lower_bound(keys.begin(),
                                           keys.end(), key);
         if (*pos != key) {
+            if (pos != keys.end()) {
+                pos++;
+            }
             const auto itr = keys.insert(pos, key);
             const auto n = itr - keys.begin();
             values.insert(values.begin() + n, value);

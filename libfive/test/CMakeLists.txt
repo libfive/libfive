@@ -27,6 +27,7 @@ set(SRCS main.cpp
     region.cpp
     simplex.cpp
     solver.cpp
+    surface_edge_map.cpp
     transformed_oracle.cpp
     tree.cpp
     voxels.cpp
