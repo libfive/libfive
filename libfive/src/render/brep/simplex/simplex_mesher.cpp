@@ -299,7 +299,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
         const auto leaf = ts.at(i)->leaf;
         if (leaf != nullptr) {
             for (unsigned j=0; j < leaf->surface.size(); ++j) {
-                edge_search_cache.insert(leaf->surface.key(i),
+                edge_search_cache.insert(leaf->surface.key(j),
                                          leaf->surface.value(j));
             }
         }
