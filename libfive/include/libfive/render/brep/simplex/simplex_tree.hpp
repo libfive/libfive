@@ -104,8 +104,20 @@ public:
      *  are invalid until reset() is called.
      */
     explicit SimplexTree();
+
+    /*
+     *  Complete constructor
+     */
     explicit SimplexTree(SimplexTree<N>* parent, unsigned index,
                          const Region<N>&);
+
+    /*
+     *  Constructs an empty SimplexTree
+     *
+     *  This only exists for API completeness, and should never
+     *  be called.  The returned tree has an invalid parent pointer
+     *  and Interval::UNKNOWN as its type.
+     */
     static std::unique_ptr<SimplexTree> empty();
 
     /*
