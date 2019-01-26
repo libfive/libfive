@@ -655,9 +655,8 @@ void SimplexTree<N>::assignIndices(
         const auto& neighbors = neighbor_stack.at(neighbor_stack.size() - 1);
 
         assert(this->leaf != nullptr);
-        for (unsigned i=0; i < ipow(3, N); ++i) {
-
-            // First, try to get the pre-assigned index from the corners array
+        for (unsigned i=0; i < ipow(3, N); ++i)
+        {
             const auto i_ = NeighborIndex(i);
 
             // Next, try to get it from a neighbor.  This function call also
