@@ -46,7 +46,7 @@ struct SimplexLeafSubspace {
     bool inside;
 
     /*   Global indices for subspace vertices  */
-    uint64_t index;
+    std::atomic_uint64_t index;
 
     /*  Per-subspace QEF */
     QEF<N> qef;
@@ -71,7 +71,7 @@ struct SimplexLeaf
     /*  One QEF structure per subspace in the leaf, shared between neighbors.
      *  These pointers are owned by an object pool, for fast allocation
      *  and re-use. */
-    std::array<SimplexLeafSubspace<N>*, ipow(3, N)> sub;
+    std::array<std::atomic<SimplexLeafSubspace<N>*>, ipow(3, N)> sub;
 
     /*  Tape used for evaluation within this leaf */
     std::shared_ptr<Tape> tape;

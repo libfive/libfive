@@ -25,7 +25,7 @@ uint64_t SimplexNeighbors<N>::getIndex(NeighborIndex i) const
     for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
         const auto n = this->neighbors[t.first.i];
         if (n != nullptr && n->leaf != nullptr) {
-            const auto index = n->leaf->sub[t.second.i]->index;
+            const auto index = n->leaf->sub[t.second.i].load()->index.load();
             if (index != 0) {
                 return index;
             }
@@ -56,7 +56,8 @@ uint64_t SimplexNeighbors<N>::getIndex(NeighborIndex i) const
                     assert(n != nullptr);
                 }
                 assert(n->leaf != nullptr);
-                const auto index = n->leaf->sub[t.second.neighbor().i]->index;
+                const auto index = n->leaf->sub[t.second.neighbor().i].load()
+                                    ->index.load();
                 if (index != 0) {
                     return index;
                 }
@@ -80,7 +81,7 @@ std::pair<uint64_t, bool> SimplexNeighbors<N>::getIndexAndBranching(
                 has_branching_neighbor = true;
             } else {
                 assert(n->leaf != nullptr);
-                auto index = n->leaf->sub[t.second.i]->index;
+                auto index = n->leaf->sub[t.second.i].load()->index.load();
                 if (index != 0) {
                     assert(out == 0 || out == index);
                     out = index;

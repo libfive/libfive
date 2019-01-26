@@ -70,8 +70,9 @@ template <unsigned N>
 void SimplexLeaf<N>::releaseTo(Pool& object_pool)
 {
     for (auto& s : sub) {
-        if (--s->refcount == 0) {
-            object_pool.next().put(s);
+        auto sub = s.load();
+        if (--sub->refcount == 0) {
+            object_pool.next().put(sub);
         }
         s = nullptr;
     }
@@ -103,7 +104,8 @@ struct Unroller
             QEF<SubspaceDimension> qef;
             for (unsigned i=0; i < ipow(3, BaseDimension); ++i) {
                 if (SubspaceIndex.contains(NeighborIndex(i))) {
-                    qef += leaf.sub[i]->qef.template sub<SubspaceFloating>();
+                    qef += leaf.sub[i].load()->
+                           qef.template sub<SubspaceFloating>();
                 }
             }
 
@@ -113,13 +115,14 @@ struct Unroller
 
             // Unpack from the reduced-dimension solution to the leaf vertex
             unsigned j = 0;
+            auto s = leaf.sub[SubspaceIndex_].load();
             for (unsigned i=0; i < BaseDimension; ++i) {
                 if (SubspaceFloating & (1 << i)) {
-                    leaf.sub[SubspaceIndex_]->vert(i) = sol.position(j++);
+                    s->vert(i) = sol.position(j++);
                 } else if (SubspacePos & (1 << i)) {
-                    leaf.sub[SubspaceIndex_]->vert(i) = region.upper(i);
+                    s->vert(i) = region.upper(i);
                 } else {
-                    leaf.sub[SubspaceIndex_]->vert(i) = region.lower(i);
+                    s->vert(i) = region.lower(i);
                 }
             }
 
@@ -223,13 +226,15 @@ void SimplexTree<N>::findLeafVertices(
     // from our neighbors whenever possible.
     for (unsigned i=0; i < ipow(3, N); ++i) {
         const auto c = neighbors.check(NeighborIndex(i));
+        SimplexLeafSubspace<N>* s = nullptr;
         if (c.first != nullptr) {
-            this->leaf->sub[i] = c.first->sub[c.second.i];
+            s = c.first->sub[c.second.i].load();
             already_solved[i] = true;
         } else {
-            this->leaf->sub[i] = object_pool.next().next().get();
+            s = object_pool.next().next().get();
         }
-        this->leaf->sub[i]->refcount++;
+        this->leaf->sub[i].store(s);
+        s->refcount++;
     }
 
     // First, we evaluate the corners, finding position + normal and storing
@@ -263,6 +268,7 @@ void SimplexTree<N>::findLeafVertices(
         const auto ambig = eval->array.getAmbiguous(count, tape);
         for (unsigned i=0; i < count; ++i) {
             const auto sub = CornerIndex(corner_indices[i]).neighbor();
+            const auto sub_ptr = this->leaf->sub[sub.i].load();
 
             // Helper function to push a position + value + normal, swapping
             // the normal to an all-zeros vector if any items are invalid.
@@ -272,7 +278,7 @@ void SimplexTree<N>::findLeafVertices(
                 if (!d_.array().isFinite().all()) {
                     d_.array() = 0.0;
                 }
-                this->leaf->sub[sub.i]->qef.insert(
+                sub_ptr->qef.insert(
                         region.corner(corner_indices[i]), d_, ds(3, i));
             };
 
@@ -303,7 +309,7 @@ void SimplexTree<N>::findLeafVertices(
         assert(this->type == Interval::FILLED ||
                this->type == Interval::EMPTY);
         for (auto& s : this->leaf->sub) {
-            s->inside = (this->type == Interval::FILLED);
+            s.load()->inside = (this->type == Interval::FILLED);
         }
     }
 }
@@ -405,8 +411,8 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
 
     // Allocate SimplexLeafSubspace objects for this tree
     // TODO: can we pull from neighbors here as well?
-    for (auto& s: this->leaf->sub) {
-        s = object_pool.next().next().get();
+    for (auto& s : this->leaf->sub) {
+        s.store(object_pool.next().next().get());
     }
 
     // Iterate over every child, collecting the QEFs and summing
@@ -440,7 +446,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
         assert(cs[i]->leaf != nullptr);
 
         for (unsigned j=0; j < ipow(3, N); ++j) {
-            assert(cs[i]->leaf->sub[j] != nullptr);
+            assert(cs[i]->leaf->sub[j].load() != nullptr);
 
             const auto child = CornerIndex(i);
             const auto neighbor = NeighborIndex(j);
@@ -484,7 +490,8 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
             const auto target = NeighborIndex::fromPosAndFloating(
                     pos_out, floating_out);
 
-            this->leaf->sub[target.i]->qef += cs[i]->leaf->sub[j]->qef;
+            this->leaf->sub[target.i].load()->qef +=
+                cs[i]->leaf->sub[j].load()->qef;
         }
     }
 
@@ -528,7 +535,7 @@ void SimplexTree<N>::saveVertexSigns(
 
     auto pos = [&](unsigned i) {
         Eigen::Vector3f p;
-        p << this->leaf->sub[i]->vert.template cast<float>().transpose(),
+        p << this->leaf->sub[i].load()->vert.template cast<float>().transpose(),
              region.perp.template cast<float>();
         return p;
     };
@@ -555,8 +562,11 @@ void SimplexTree<N>::saveVertexSigns(
         // Skip subspaces that have already been solved
         if (already_solved[i]) {
             continue;
-        } else if (NeighborIndex(i).isCorner()) {
-            out = this->leaf->sub[i]->qef.averageDistanceValue();
+        }
+        auto sub = this->leaf->sub[i].load();
+
+        if (NeighborIndex(i).isCorner()) {
+            out = sub->qef.averageDistanceValue();
         } else {
             out = values[num++];
         }
@@ -573,9 +583,9 @@ void SimplexTree<N>::saveVertexSigns(
 
         // Handle ambiguities with the high-power isInside check
         if (out == 0) {
-            this->leaf->sub[i]->inside = eval->feature.isInside(pos(i), tape);
+            sub->inside = eval->feature.isInside(pos(i), tape);
         } else {
-            this->leaf->sub[i]->inside = (out < 0);
+            sub->inside = (out < 0);
         }
     }
 }
@@ -589,8 +599,9 @@ void SimplexTree<N>::checkVertexSigns() {
     bool all_inside = true;
     bool all_outside = true;
     for (const auto& s : this->leaf->sub) {
-        all_inside  &=   s->inside;
-        all_outside &=  !s->inside;
+        auto sub = s.load();
+        all_inside  &=   sub->inside;
+        all_outside &=  !sub->inside;
     }
 
     // Store a tree type based on subspace vertex positions
@@ -675,7 +686,7 @@ void SimplexTree<N>::assignIndices(
             //   Y should recurse into cell Z to check C's index within Z.
             auto n = neighbors.getIndex(i_);
             if (n) {
-                this->leaf->sub[i]->index = n;
+                this->leaf->sub[i].load()->index = n;
                 continue;
             }
 
@@ -712,26 +723,27 @@ void SimplexTree<N>::assignIndices(
             if (i_.isCorner()) {
                 auto target = this;
                 auto stack_index = neighbor_stack.size() - 1;
-                while (target && target->parent &&
+                bool stored = false;
+                while (!stored && target && target->parent &&
                        target->parent_index == i_.pos())
                 {
                     target = target->parent;
                     const auto& neighbors = neighbor_stack.at(--stack_index);
                     auto n = neighbors.getIndex(i_);
                     if (n) {
-                        this->leaf->sub[i]->index = n;
-                        break;
+                        this->leaf->sub[i].load()->index.store(n);
+                        stored = true;
                     }
                 }
                 // If we succeeded, then continue the main loop here
                 // (instead of assigning + incrementing from the global index)
-                if (this->leaf->sub[i]->index != 0) {
+                if (stored) {
                     continue;
                 }
             }
 
             // Otherwise, assign it to a new value
-            this->leaf->sub[i]->index = index++;
+            this->leaf->sub[i].load()->index.store(index++);
         }
     }
 }
