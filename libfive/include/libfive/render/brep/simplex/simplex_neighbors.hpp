@@ -31,16 +31,6 @@ public:
     SimplexNeighbors();
 
     /*
-     *  Looks up the given subspace vertex to see if it has already been
-     *  assigned an index by any of the neighbors, returning the index if
-     *  that's the case and 0 otherwise.
-     *
-     *  This function recurses down the neighbor if it's a branch and the
-     *  given index is for a corner.
-     */
-    uint64_t getIndex(NeighborIndex i) const;
-
-    /*
      *  A given subspace may have been allocated multiple times,
      *  depending on the vagaries of multithreaded evaluation.
      *
