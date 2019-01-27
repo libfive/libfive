@@ -18,6 +18,7 @@ namespace Kernel {
 // Forward declaration
 template <unsigned N> class SimplexTree;
 template <unsigned N> struct SimplexLeaf;
+template <unsigned N> struct SimplexLeafSubspace;
 
 template <unsigned N>
 class SimplexNeighbors :
@@ -40,14 +41,29 @@ public:
     uint64_t getIndex(NeighborIndex i) const;
 
     /*
-     *  Looks up the given subspace vertex to see if it has already been
-     *  assigned an index by any of the neighbors, returning the index if
-     *  that's the case and 0 otherwise.
+     *  A given subspace may have been allocated multiple times,
+     *  depending on the vagaries of multithreaded evaluation.
      *
-     *  If any of the relevant neighbors are present and branches, then
-     *  the second item in the pair is true; otherwise, it is false.
+     *  This function returns the canonical subspace, as a pointer
+     *  to a pool-allocated object.  It decides which subspace is
+     *  canonical by picking the smallest pointer, which is arbitrary
+     *  but unambiguous.
+     *
+     *  This function also walks down branching neighbors, e.g. to
+     *  find the corner C of cell X, it will walk down cell Y to
+     *  cell Z (which contains that corner).
+     *
+     *   -------------------------
+     *   |           |           |
+     *   |     X     |           |
+     *   |           |           |
+     *   ------------C------------
+     *   |     |  Z  |           |
+     *   |-----Y-----|           |
+     *   |     |     |           |
+     *   -------------------------
      */
-    std::pair<uint64_t, bool> getIndexAndBranching(NeighborIndex i) const;
+    SimplexLeafSubspace<N>* getSubspace(NeighborIndex i) const;
 
     /*
      *  Looks up the given corner to see if it has already been calculated

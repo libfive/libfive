@@ -666,11 +666,16 @@ void SimplexTree<N>::assignIndices(
         const auto& neighbors = neighbor_stack.at(neighbor_stack.size() - 1);
 
         assert(this->leaf != nullptr);
+        // First, do a pass through the subspaces, converting them to
+        // their canonical values by checking to see if a neighbor
+        // has each subspace with a smaller pointer.
         for (unsigned i=0; i < ipow(3, N); ++i)
         {
             const auto i_ = NeighborIndex(i);
+            const auto sub = this->leaf->sub[i].load();
+            assert(sub != nullptr);
 
-            // Next, try to get it from a neighbor.  This function call also
+            // First, try to get it from a neighbor.  This function call also
             // walks down branching neighbors, to account for neighbors of
             // different levels, e.g.
             //   -------------------------
@@ -684,10 +689,9 @@ void SimplexTree<N>::assignIndices(
             //   -------------------------
             //   If we're in cell X and looking for corner C, then our neighbor
             //   Y should recurse into cell Z to check C's index within Z.
-            auto n = neighbors.getIndex(i_);
-            if (n) {
-                this->leaf->sub[i].load()->index = n;
-                continue;
+            auto new_sub = neighbors.getSubspace(i_);
+            if (new_sub != nullptr && new_sub < sub) {
+                this->leaf->sub[i].store(new_sub);
             }
 
             // Otherwise, we need to try walking up the tree, looking at the
@@ -703,7 +707,7 @@ void SimplexTree<N>::assignIndices(
             //   |-----|-----|           |
             //   |     |     |           |
             //   -------------------------
-            //   we'd want to look at the parent cell of X to find corner C
+            //   we'd look at the neighbors of X's parent cell to find corner C
             //
             //   On the other hand, in this situation:
             //   -------------------------
@@ -723,27 +727,26 @@ void SimplexTree<N>::assignIndices(
             if (i_.isCorner()) {
                 auto target = this;
                 auto stack_index = neighbor_stack.size() - 1;
-                bool stored = false;
-                while (!stored && target && target->parent &&
+                while (target && target->parent &&
                        target->parent_index == i_.pos())
                 {
                     target = target->parent;
                     const auto& neighbors = neighbor_stack.at(--stack_index);
-                    auto n = neighbors.getIndex(i_);
-                    if (n) {
-                        this->leaf->sub[i].load()->index.store(n);
-                        stored = true;
+                    auto new_sub = neighbors.getSubspace(i_);
+                    if (new_sub != nullptr && new_sub < sub) {
+                        this->leaf->sub[i].store(new_sub);
                     }
                 }
-                // If we succeeded, then continue the main loop here
-                // (instead of assigning + incrementing from the global index)
-                if (stored) {
-                    continue;
-                }
             }
+        }
 
-            // Otherwise, assign it to a new value
-            this->leaf->sub[i].load()->index.store(index++);
+        // Then, go through and make sure all indexes are assigned
+        for (unsigned i=0; i < ipow(3, N); ++i)
+        {
+            auto sub = this->leaf->sub[i].load();
+            if (sub->index.load() == 0) {
+                sub->index.store(index++);
+            }
         }
     }
 }

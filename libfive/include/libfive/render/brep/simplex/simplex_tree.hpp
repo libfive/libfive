@@ -175,6 +175,13 @@ public:
     void assignIndices() const;
 
     /*
+     *  Walks down the tree, ensuring that the same subspaces are represented
+     *  by the same pointer and have unique indexes assigned.  This is done
+     *  with multiple threads, for speed.
+     */
+    void stitchSubspaces(unsigned workers=1);
+
+    /*
      *  Releases this tree and any leaf objects to the given object pool
      */
     void releaseTo(Pool& object_pool);
