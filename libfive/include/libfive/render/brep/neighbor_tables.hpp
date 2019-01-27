@@ -255,6 +255,14 @@ struct NeighborTables
                                         ipow(2, N)>,
         ipow(3, N)> neighborTable;
 
+    /*  When collecting QEFs from a set of children, this table contains
+     *  the list of which children + subspaces to sum for each subspace
+     *  in the parent.  */
+    static std::array<
+        boost::container::static_vector<std::pair<CornerIndex, NeighborIndex>,
+                                        ipow(3, N)>,
+        ipow(3, N)> qefSumTable;
+
     /*  Used as a flag to trigger population of the static arrays */
     static bool buildTables();
     static bool loaded;

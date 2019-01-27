@@ -425,82 +425,10 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
     }
     const auto leaf_sub = getLeafSubs();
 
-    // Iterate over every child, collecting the QEFs and summing
-    // them into larger QEFs.  To avoid double-counting, we skip
-    // the low subspaces on high children, e.g. the cell marked with
-    // an X adds every QEF marked with a *
-    //
-    //    -------------        -------------
-    //    |     |     |        |     |     |
-    //    |     |     |        |     |     |
-    //    |     |     |        |     |     |
-    //    *--*--*------        ---------*--*
-    //    |     |     |        |     |     |
-    //    *  X  *     |        |     |  X  *
-    //    |     |     |        |     |     |
-    //    *--*--*------        ---------*--*
-    //
-    //    ---------*--*        *--*--*------
-    //    |     |     |        |     |     |
-    //    |     |  X  *        *  X  *     |
-    //    |     |     |        |     |     |
-    //    -------------        -------------
-    //    |     |     |        |     |     |
-    //    |     |     |        |     |     |
-    //    |     |     |        |     |     |
-    //    -------------        -------------
-    //
-    //  Hopefully, the compiler optimizes this into a set of fixed
-    //  assignments, rather than running through the loop.
-    for (unsigned i=0; i < ipow(2, N); ++i) {
-        assert(cs[i]->leaf != nullptr);
-
-        for (unsigned j=0; j < ipow(3, N); ++j) {
-            assert(cs[i]->leaf->sub[j].load() != nullptr);
-
-            const auto child = CornerIndex(i);
-            const auto neighbor = NeighborIndex(j);
-            const auto fixed = neighbor.fixed<N>();
-            const auto floating = neighbor.floating();
-            const auto pos = neighbor.pos();
-
-            // For every fixed axis, it must either be high,
-            // or the child position on said axis must be low
-            bool valid = true;
-            for (unsigned d=0; d < N; ++d) {
-                if (fixed & (1 << d)) {
-                    valid &= (pos & (1 << d)) || (!(child.i & (1 << d)));
-                }
-            }
-
-            if (!valid) {
-                continue;
-            }
-
-            // Next, we need to figure out how to map the child's subspace
-            // into the parent subspace.
-            //
-            // Every floating axis remains floating
-            // Each fixed axis remains fixed if it agrees with the corner axis,
-            // otherwise it's converted to a floating axis.
-            uint8_t floating_out = 0;
-            uint8_t pos_out = 0;
-
-            for (unsigned d=0; d < N; ++d) {
-                if (floating & (1 << d) ||
-                   (pos & (1 << d)) != (child.i & (1 << d)))
-                {
-                    floating_out |= (1 << d);
-                }
-                else
-                {
-                    pos_out |= pos & (1 << d);
-                }
-            }
-            const auto target = NeighborIndex::fromPosAndFloating(
-                    pos_out, floating_out);
-
-            leaf_sub[target.i]->qef += cs[i]->leaf->sub[j].load()->qef;
+    // Collect all of the child subspaces, based on a precalculated table
+    for (unsigned i=0; i < ipow(3, N); ++i) {
+        for (const auto& t: NeighborTables<N>::qefSumTable[i]) {
+            leaf_sub[i]->qef += cs[t.first.i]->leaf->sub[t.second.i].load()->qef;
         }
     }
 
