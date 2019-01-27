@@ -638,7 +638,7 @@ uint32_t SimplexTree<N>::leafLevel() const
 template <unsigned N>
 void SimplexTree<N>::assignIndices() const
 {
-    uint64_t index = 1;
+    std::atomic_uint64_t index(1);
 
     std::vector<SimplexNeighbors<N>> neighbor_stack;
     neighbor_stack.push_back(SimplexNeighbors<N>());
@@ -648,7 +648,8 @@ void SimplexTree<N>::assignIndices() const
 
 template <unsigned N>
 void SimplexTree<N>::assignIndices(
-        uint64_t& index, std::vector<SimplexNeighbors<N>>& neighbor_stack) const
+        std::atomic_uint64_t& index,
+        std::vector<SimplexNeighbors<N>>& neighbor_stack) const
 {
     if (this->isBranch()) {
         assert(this->leaf == nullptr);
@@ -744,7 +745,17 @@ void SimplexTree<N>::assignIndices(
         for (unsigned i=0; i < ipow(3, N); ++i)
         {
             auto sub = this->leaf->sub[i].load();
-            if (sub->index.load() == 0) {
+
+            // We do two atomic operations here:
+            //
+            // First, we compare to see if it's zero, assigning it to 1
+            // if it was zero.  This prevents more than one thread from
+            // entering the conditional block at once.
+            //
+            // Second, we assign the true index value (incrementing the
+            // global index counter).
+            uint64_t zero = 0;
+            if (sub->index.compare_exchange_strong(zero, 1)) {
                 sub->index.store(index++);
             }
         }

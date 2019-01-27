@@ -201,7 +201,7 @@ protected:
      *  stack is a stack of neighbors, where the current neighbors are
      *  stack[stack.size() - 1].
      */
-    void assignIndices(uint64_t& i,
+    void assignIndices(std::atomic_uint64_t& i,
                        std::vector<SimplexNeighbors<N>>& stack) const;
 
     /*
