@@ -20,19 +20,20 @@ SimplexNeighbors<N>::SimplexNeighbors()
 }
 
 template <unsigned N>
-uint64_t SimplexNeighbors<N>::getIndex(NeighborIndex i) const
+SimplexLeafSubspace<N>* SimplexNeighbors<N>::getSubspace(NeighborIndex i) const
 {
+    SimplexLeafSubspace<N>* out = nullptr;
     for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
         const auto n = this->neighbors[t.first.i];
         if (n != nullptr && n->leaf != nullptr) {
-            const auto index = n->leaf->sub[t.second.i].load()->index.load();
-            if (index != 0) {
-                return index;
+            auto ptr = n->leaf->sub[t.second.i].load();
+            if (ptr != nullptr && (out == nullptr || ptr < out)) {
+                out = ptr;
             }
         }
     }
 
-    // If this is a corner, it could have a defined index deeper down
+    // If this is a corner, it could have a subspace deeper down
     // one of the neighbors.  For example, if we're in cell X and looking
     // for corner C, our neighbor isn't a leaf, but we can travel down it's
     // branching structure to find the corner index
@@ -56,41 +57,15 @@ uint64_t SimplexNeighbors<N>::getIndex(NeighborIndex i) const
                     assert(n != nullptr);
                 }
                 assert(n->leaf != nullptr);
-                const auto index = n->leaf->sub[t.second.neighbor().i].load()
-                                    ->index.load();
-                if (index != 0) {
-                    return index;
+                auto ptr = n->leaf->sub[t.second.neighbor().i].load();
+                if (ptr != nullptr && (out == nullptr || ptr < out)) {
+                    out = ptr;
                 }
             }
         }
     }
 
-    return 0;
-}
-
-template <unsigned N>
-std::pair<uint64_t, bool> SimplexNeighbors<N>::getIndexAndBranching(
-        NeighborIndex i) const
-{
-    uint64_t out = 0;
-    bool has_branching_neighbor = false;
-    for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
-        const auto n = this->neighbors[t.first.i];
-        if (n != nullptr) {
-            if (n->isBranch()) {
-                has_branching_neighbor = true;
-            } else {
-                assert(n->leaf != nullptr);
-                auto index = n->leaf->sub[t.second.i].load()->index.load();
-                if (index != 0) {
-                    assert(out == 0 || out == index);
-                    out = index;
-                }
-            }
-        }
-    }
-
-    return std::make_pair(out, has_branching_neighbor);
+    return out;
 }
 
 template <unsigned N>
