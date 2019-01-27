@@ -635,45 +635,41 @@ uint32_t SimplexTree<N>::leafLevel() const
     return 0;
 }
 
+/*  This helper struct lets us make a directed acyclic graph
+ *  of neighbors, automatically cleaning them up when no one
+ *  is using them anymore.  */
 template <unsigned N>
-void SimplexTree<N>::assignIndices() const
-{
-    std::atomic_uint64_t index(1);
+struct NeighborStack {
+    SimplexNeighbors<N> ns;
+    std::shared_ptr<NeighborStack<N>> parent;
+};
 
-    std::vector<SimplexNeighbors<N>> neighbor_stack;
-    neighbor_stack.push_back(SimplexNeighbors<N>());
-
-    assignIndices(index, neighbor_stack);
-}
-
+/*
+ *  Helper function to assign indices through a tree recursively
+ */
 template <unsigned N>
-void SimplexTree<N>::assignIndices(
-        std::atomic_uint64_t& index,
-        std::vector<SimplexNeighbors<N>>& neighbor_stack) const
+void assignIndicesHelper(const SimplexTree<N>* target,
+                         std::atomic_uint64_t& index,
+                         std::shared_ptr<NeighborStack<N>> neighbor_stack)
 {
-    if (this->isBranch()) {
-        assert(this->leaf == nullptr);
+    if (target->isBranch()) {
+        assert(target->leaf == nullptr);
 
-        for (unsigned i=0; i < this->children.size(); ++i) {
-            // We have to recheck neighbor_stack.at each time we go through
-            // this loop, because the vector could have been resized + moved.
-            neighbor_stack.push_back(
-                    neighbor_stack.at(neighbor_stack.size() - 1)
-                    .push(i, this->children));
-            this->children[i].load()->assignIndices(index, neighbor_stack);
-            neighbor_stack.pop_back();
+        for (unsigned i=0; i < target->children.size(); ++i) {
+            auto next_neighbors = std::make_shared<NeighborStack<N>>();
+            next_neighbors->parent = neighbor_stack;
+            next_neighbors->ns = neighbor_stack->ns.push(i, target->children);
+            assignIndicesHelper(target->children[i].load(), index, next_neighbors);
         }
     } else {
-        const auto& neighbors = neighbor_stack.at(neighbor_stack.size() - 1);
-
-        assert(this->leaf != nullptr);
+        assert(target->leaf != nullptr);
         // First, do a pass through the subspaces, converting them to
         // their canonical values by checking to see if a neighbor
         // has each subspace with a smaller pointer.
         for (unsigned i=0; i < ipow(3, N); ++i)
         {
             const auto i_ = NeighborIndex(i);
-            const auto sub = this->leaf->sub[i].load();
+            const auto sub = target->leaf->sub[i].load();
             assert(sub != nullptr);
 
             // First, try to get it from a neighbor.  This function call also
@@ -690,9 +686,9 @@ void SimplexTree<N>::assignIndices(
             //   -------------------------
             //   If we're in cell X and looking for corner C, then our neighbor
             //   Y should recurse into cell Z to check C's index within Z.
-            auto new_sub = neighbors.getSubspace(i_);
+            auto new_sub = neighbor_stack->ns.getSubspace(i_);
             if (new_sub != nullptr && new_sub < sub) {
-                this->leaf->sub[i].store(new_sub);
+                target->leaf->sub[i].store(new_sub);
             }
 
             // Otherwise, we need to try walking up the tree, looking at the
@@ -726,16 +722,16 @@ void SimplexTree<N>::assignIndices(
             //   Each cell contains one vertex of the parent's corner cell,
             //   indicated by its parent_index variable.
             if (i_.isCorner()) {
-                auto target = this;
-                auto stack_index = neighbor_stack.size() - 1;
-                while (target && target->parent &&
-                       target->parent_index == i_.pos())
+                auto t = target;
+                auto neighbors_above = neighbor_stack;
+                while (t && t->parent &&
+                       t->parent_index == i_.pos())
                 {
-                    target = target->parent;
-                    const auto& neighbors = neighbor_stack.at(--stack_index);
-                    auto new_sub = neighbors.getSubspace(i_);
+                    t = t->parent;
+                    neighbors_above = neighbors_above->parent;
+                    auto new_sub = neighbors_above->ns.getSubspace(i_);
                     if (new_sub != nullptr && new_sub < sub) {
-                        this->leaf->sub[i].store(new_sub);
+                        target->leaf->sub[i].store(new_sub);
                     }
                 }
             }
@@ -744,7 +740,7 @@ void SimplexTree<N>::assignIndices(
         // Then, go through and make sure all indexes are assigned
         for (unsigned i=0; i < ipow(3, N); ++i)
         {
-            auto sub = this->leaf->sub[i].load();
+            auto sub = target->leaf->sub[i].load();
 
             // We do two atomic operations here:
             //
@@ -760,6 +756,14 @@ void SimplexTree<N>::assignIndices(
             }
         }
     }
+}
+
+template <unsigned N>
+void SimplexTree<N>::assignIndices() const
+{
+    std::atomic_uint64_t index(1);
+    auto neighbor_stack = std::make_shared<NeighborStack<N>>();
+    assignIndicesHelper(this, index, neighbor_stack);
 }
 
 template <unsigned N>
