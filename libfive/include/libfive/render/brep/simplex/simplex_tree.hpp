@@ -172,14 +172,8 @@ public:
      *  in the tree, starting at 1.  This provides a globally unique
      *  identifier for every subspace vertex, which is used when making edges.
      */
+    void assignIndices(unsigned workers, std::atomic_bool& cancel) const;
     void assignIndices() const;
-
-    /*
-     *  Walks down the tree, ensuring that the same subspaces are represented
-     *  by the same pointer and have unique indexes assigned.  This is done
-     *  with multiple threads, for speed.
-     */
-    void stitchSubspaces(unsigned workers=1);
 
     /*
      *  Releases this tree and any leaf objects to the given object pool

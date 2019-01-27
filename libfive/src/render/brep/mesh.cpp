@@ -96,7 +96,7 @@ std::unique_ptr<Mesh> Mesh::render(
             return nullptr;
         }
 
-        t->assignIndices();
+        t->assignIndices(workers, cancel);
 
         out = Dual<3>::walk_<SimplexMesher>(t, workers,
                 cancel, progress_callback,

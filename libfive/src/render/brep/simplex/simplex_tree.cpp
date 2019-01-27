@@ -644,32 +644,70 @@ struct NeighborStack {
     std::shared_ptr<NeighborStack<N>> parent;
 };
 
-/*
- *  Helper function to assign indices through a tree recursively
- */
 template <unsigned N>
-void assignIndicesHelper(const SimplexTree<N>* target,
-                         std::atomic_uint64_t& index,
-                         std::shared_ptr<NeighborStack<N>> neighbor_stack)
-{
-    if (target->isBranch()) {
-        assert(target->leaf == nullptr);
+struct AssignIndexTask {
+    const SimplexTree<N>* target;
+    std::shared_ptr<NeighborStack<N>> neighbors;
+};
 
-        for (unsigned i=0; i < target->children.size(); ++i) {
-            auto next_neighbors = std::make_shared<NeighborStack<N>>();
-            next_neighbors->parent = neighbor_stack;
-            next_neighbors->ns = neighbor_stack->ns.push(i, target->children);
-            assignIndicesHelper(target->children[i].load(), index, next_neighbors);
+template <unsigned N>
+using LockFreeStack = boost::lockfree::stack<
+        AssignIndexTask<N>,
+        boost::lockfree::fixed_sized<true>>;
+
+template <unsigned N>
+void assignIndicesWorker(LockFreeStack<N>& tasks,
+                         std::atomic_uint64_t& index,
+                         std::atomic_bool& done,
+                         std::atomic_bool& cancel)
+{
+    // See detailed comments in worker_pool.cpp, which
+    // implements a similar worker pool system.
+    std::stack<AssignIndexTask<N>, std::vector<AssignIndexTask<N>>> local;
+
+    while (!done.load() && !cancel.load()) {
+        // Pick a task from the local empty, falling back to the MPMC
+        // stack if the local stack is empty.  If both are empty, then
+        // spin here until another thread adds a task to the global stack.
+        AssignIndexTask<N> task;
+        if (local.size()) {
+            task = local.top();
+            local.pop();
+        } else if (!tasks.pop(task)) {
+            task.target = nullptr;
         }
-    } else {
-        assert(target->leaf != nullptr);
+
+        if (task.target == nullptr) {
+            continue;
+        }
+
+        // If this is a tree which can be subdivided, then push each
+        // subtree as a new task.
+        if (task.target->isBranch()) {
+            for (unsigned i=0; i < task.target->children.size(); ++i) {
+                AssignIndexTask<N> next_task;
+
+                next_task.target = task.target->children[i].load();
+                next_task.neighbors = std::make_shared<NeighborStack<N>>();
+                next_task.neighbors->ns = task.neighbors->ns.push(i, task.target->children);
+                next_task.neighbors->parent = task.neighbors;
+
+                if (!tasks.bounded_push(next_task)) {
+                    local.push(next_task);
+                }
+            }
+            continue;
+        }
+        // Otherwise, do the actual work!
+
+        assert(task.target->leaf != nullptr);
         // First, do a pass through the subspaces, converting them to
         // their canonical values by checking to see if a neighbor
         // has each subspace with a smaller pointer.
         for (unsigned i=0; i < ipow(3, N); ++i)
         {
             const auto i_ = NeighborIndex(i);
-            const auto sub = target->leaf->sub[i].load();
+            const auto sub = task.target->leaf->sub[i].load();
             assert(sub != nullptr);
 
             // First, try to get it from a neighbor.  This function call also
@@ -686,9 +724,9 @@ void assignIndicesHelper(const SimplexTree<N>* target,
             //   -------------------------
             //   If we're in cell X and looking for corner C, then our neighbor
             //   Y should recurse into cell Z to check C's index within Z.
-            auto new_sub = neighbor_stack->ns.getSubspace(i_);
+            auto new_sub = task.neighbors->ns.getSubspace(i_);
             if (new_sub != nullptr && new_sub < sub) {
-                target->leaf->sub[i].store(new_sub);
+                task.target->leaf->sub[i].store(new_sub);
             }
 
             // Otherwise, we need to try walking up the tree, looking at the
@@ -722,8 +760,8 @@ void assignIndicesHelper(const SimplexTree<N>* target,
             //   Each cell contains one vertex of the parent's corner cell,
             //   indicated by its parent_index variable.
             if (i_.isCorner()) {
-                auto t = target;
-                auto neighbors_above = neighbor_stack;
+                auto t = task.target;
+                auto neighbors_above = task.neighbors;
                 while (t && t->parent &&
                        t->parent_index == i_.pos())
                 {
@@ -731,7 +769,7 @@ void assignIndicesHelper(const SimplexTree<N>* target,
                     neighbors_above = neighbors_above->parent;
                     auto new_sub = neighbors_above->ns.getSubspace(i_);
                     if (new_sub != nullptr && new_sub < sub) {
-                        target->leaf->sub[i].store(new_sub);
+                        task.target->leaf->sub[i].store(new_sub);
                     }
                 }
             }
@@ -740,7 +778,7 @@ void assignIndicesHelper(const SimplexTree<N>* target,
         // Then, go through and make sure all indexes are assigned
         for (unsigned i=0; i < ipow(3, N); ++i)
         {
-            auto sub = target->leaf->sub[i].load();
+            auto sub = task.target->leaf->sub[i].load();
 
             // We do two atomic operations here:
             //
@@ -755,15 +793,57 @@ void assignIndicesHelper(const SimplexTree<N>* target,
                 sub->index.store(index++);
             }
         }
+
+        SimplexTree<N>* t = nullptr;
+        for (t = task.target->parent; t && t->pending-- == 0; t = t->parent)
+        {
+            // Walk up the tree here!
+        }
+
+        if (t == nullptr) {
+            break;
+        }
     }
+
+    done.store(true);
 }
 
 template <unsigned N>
 void SimplexTree<N>::assignIndices() const
 {
-    std::atomic_uint64_t index(1);
-    auto neighbor_stack = std::make_shared<NeighborStack<N>>();
-    assignIndicesHelper(this, index, neighbor_stack);
+    std::atomic_bool cancel(false);
+    assignIndices(8, cancel);
+}
+
+template <unsigned N>
+void SimplexTree<N>::assignIndices(unsigned workers,
+                                   std::atomic_bool& cancel) const
+{
+    this->resetPending();
+
+    LockFreeStack<N> tasks(workers);
+    AssignIndexTask<N> first{this, std::make_shared<NeighborStack<N>>()};
+    tasks.push(first);
+
+    std::atomic_uint64_t global_index(1);
+    std::atomic_bool done(false);
+
+    std::vector<std::future<void>> futures;
+    futures.resize(workers);
+    for (unsigned i=0; i < workers; ++i) {
+        futures[i] = std::async(std::launch::async,
+            [&done, &cancel, &tasks, &global_index]() {
+                assignIndicesWorker(tasks, global_index, done, cancel);
+            });
+    }
+
+    // Wait on all of the futures
+    for (auto& f : futures) {
+        f.get();
+    }
+
+    assert(done.load() || cancel.load());
+    done.store(true);
 }
 
 template <unsigned N>

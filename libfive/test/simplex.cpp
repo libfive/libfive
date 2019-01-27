@@ -434,7 +434,7 @@ TEST_CASE("SimplexMesher: edge pairing")
             REQUIRE(!c.load()->isBranch());
             REQUIRE(c.load()->type == Interval::AMBIGUOUS);
         }
-        t->assignIndices();
+        t->assignIndices(1, cancel);
 
         auto m = Dual<3>::walk<SimplexMesher>(t, workers,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
@@ -448,7 +448,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
-        t->assignIndices();
+        t->assignIndices(1, cancel);
 
         auto m = Dual<3>::walk<SimplexMesher>(t, workers,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
@@ -462,7 +462,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
         auto t = SimplexTreePool<3>::build(c, r, 0.4, 0, 1);
-        t->assignIndices();
+        t->assignIndices(1, cancel);
 
         auto m = Dual<3>::walk<SimplexMesher>(t, workers,
                 cancel, EMPTY_PROGRESS_CALLBACK, c);
@@ -477,9 +477,9 @@ TEST_CASE("SimplexMesher: menger sponge")
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
 
     auto t = SimplexTreePool<3>::build(sponge, r, 0.1);
+    std::atomic_bool cancel(false);
     t->assignIndices();
 
-    std::atomic_bool cancel(false);
     auto m = Dual<3>::walk<SimplexMesher>(t,
             8, cancel, EMPTY_PROGRESS_CALLBACK, sponge);
     REQUIRE(true);
@@ -541,7 +541,7 @@ TEST_CASE("Simplex meshing (gyroid performance breakdown)", "[!benchmark]")
 
     BENCHMARK("Assigning indices")
     {
-        t->assignIndices();
+        t->assignIndices(workers, cancel);
     }
 
     std::unique_ptr<Mesh> m;
