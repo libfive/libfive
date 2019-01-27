@@ -90,6 +90,8 @@ struct Unroller
      */
     double operator()(
             typename SimplexTree<BaseDimension>::Leaf& leaf,
+            const std::array<SimplexLeafSubspace<BaseDimension>*,
+                       ipow(3, BaseDimension)>& leaf_sub,
             const std::array<bool, ipow(3, BaseDimension)>& already_solved,
             const Region<BaseDimension>& region)
     {
@@ -104,8 +106,7 @@ struct Unroller
             QEF<SubspaceDimension> qef;
             for (unsigned i=0; i < ipow(3, BaseDimension); ++i) {
                 if (SubspaceIndex.contains(NeighborIndex(i))) {
-                    qef += leaf.sub[i].load()->
-                           qef.template sub<SubspaceFloating>();
+                    qef += leaf_sub[i]->qef.template sub<SubspaceFloating>();
                 }
             }
 
@@ -115,7 +116,7 @@ struct Unroller
 
             // Unpack from the reduced-dimension solution to the leaf vertex
             unsigned j = 0;
-            auto s = leaf.sub[SubspaceIndex_].load();
+            auto s = leaf_sub[SubspaceIndex_];
             for (unsigned i=0; i < BaseDimension; ++i) {
                 if (SubspaceFloating & (1 << i)) {
                     s->vert(i) = sol.position(j++);
@@ -132,7 +133,7 @@ struct Unroller
         // Recurse!
         return std::max(error,
                 Unroller<BaseDimension, SubspaceIndex_ - 1>()(
-                    leaf, already_solved, region));
+                    leaf, leaf_sub, already_solved, region));
     }
 };
 
@@ -141,8 +142,10 @@ template <unsigned BaseDimension>
 struct Unroller<BaseDimension, -1>
 {
     double operator()(typename SimplexTree<BaseDimension>::Leaf&,
-                    const std::array<bool, ipow(3, BaseDimension)>&,
-                    const Region<BaseDimension>&)
+                      const std::array<SimplexLeafSubspace<BaseDimension>*,
+                                 ipow(3, BaseDimension)>&,
+                      const std::array<bool, ipow(3, BaseDimension)>&,
+                      const Region<BaseDimension>&)
     {
         return 0.0; // Nothing to do here
     }
@@ -233,9 +236,11 @@ void SimplexTree<N>::findLeafVertices(
         } else {
             s = object_pool.next().next().get();
         }
-        this->leaf->sub[i].store(s);
         s->refcount++;
+        this->leaf->sub[i].store(s);
     }
+
+    const auto leaf_sub = getLeafSubs();
 
     // First, we evaluate the corners, finding position + normal and storing
     // it in the corner QEFs (which are assumed to be empty)
@@ -267,8 +272,7 @@ void SimplexTree<N>::findLeafVertices(
         const auto ds = eval->array.derivs(count, tape);
         const auto ambig = eval->array.getAmbiguous(count, tape);
         for (unsigned i=0; i < count; ++i) {
-            const auto sub = CornerIndex(corner_indices[i]).neighbor();
-            const auto sub_ptr = this->leaf->sub[sub.i].load();
+            const auto sub_index = CornerIndex(corner_indices[i]).neighbor();
 
             // Helper function to push a position + value + normal, swapping
             // the normal to an all-zeros vector if any items are invalid.
@@ -278,7 +282,7 @@ void SimplexTree<N>::findLeafVertices(
                 if (!d_.array().isFinite().all()) {
                     d_.array() = 0.0;
                 }
-                sub_ptr->qef.insert(
+                leaf_sub[sub_index.i]->qef.insert(
                         region.corner(corner_indices[i]), d_, ds(3, i));
             };
 
@@ -299,7 +303,7 @@ void SimplexTree<N>::findLeafVertices(
     }
 
     // Statically unroll a loop to position every vertex within their subspace.
-    Unroller<N, ipow(3, N) - 1>()(*this->leaf, already_solved, region);
+    Unroller<N, ipow(3, N) - 1>()(*this->leaf, leaf_sub, already_solved, region);
 
     // Check whether each vertex is inside or outside, either the hard way
     // (if this cell is ambiguous) or the easy way (if it's empty / filled).
@@ -308,8 +312,8 @@ void SimplexTree<N>::findLeafVertices(
     } else {
         assert(this->type == Interval::FILLED ||
                this->type == Interval::EMPTY);
-        for (auto& s : this->leaf->sub) {
-            s.load()->inside = (this->type == Interval::FILLED);
+        for (auto& s : leaf_sub) {
+            s->inside = (this->type == Interval::FILLED);
         }
     }
 }
@@ -411,13 +415,19 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
 
     // Allocate SimplexLeafSubspace objects for this tree
     // TODO: can we pull from neighbors here as well?
+    //
+    // We use an array of plain pointers to reduce the number
+    // of atomic loads that need to be performed.
     for (auto& s : this->leaf->sub) {
-        s.store(object_pool.next().next().get());
+        auto ptr = object_pool.next().next().get();
+        s.store(ptr);
+        ptr->refcount++;
     }
+    const auto leaf_sub = getLeafSubs();
 
     // Iterate over every child, collecting the QEFs and summing
     // them into larger QEFs.  To avoid double-counting, we skip
-    // the low subspaces on high children, the cell marked with
+    // the low subspaces on high children, e.g. the cell marked with
     // an X adds every QEF marked with a *
     //
     //    -------------        -------------
@@ -490,8 +500,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
             const auto target = NeighborIndex::fromPosAndFloating(
                     pos_out, floating_out);
 
-            this->leaf->sub[target.i].load()->qef +=
-                cs[i]->leaf->sub[j].load()->qef;
+            leaf_sub[target.i]->qef += cs[i]->leaf->sub[j].load()->qef;
         }
     }
 
@@ -499,7 +508,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
     std::array<bool, ipow(3, N)> already_solved;
     std::fill(already_solved.begin(), already_solved.end(), false);
     const double err = Unroller<N, ipow(3, N) - 1>()(
-            *this->leaf, already_solved, region);
+            *this->leaf, leaf_sub, already_solved, region);
 
     // We've successfully collapsed the cell!
     if (err < max_err) {
@@ -533,9 +542,10 @@ void SimplexTree<N>::saveVertexSigns(
     assert(this->leaf != nullptr);
     assert(this->type == Interval::AMBIGUOUS);
 
+    const auto leaf_sub = getLeafSubs();
     auto pos = [&](unsigned i) {
         Eigen::Vector3f p;
-        p << this->leaf->sub[i].load()->vert.template cast<float>().transpose(),
+        p << leaf_sub[i]->vert.template cast<float>().transpose(),
              region.perp.template cast<float>();
         return p;
     };
@@ -563,10 +573,9 @@ void SimplexTree<N>::saveVertexSigns(
         if (already_solved[i]) {
             continue;
         }
-        auto sub = this->leaf->sub[i].load();
 
         if (NeighborIndex(i).isCorner()) {
-            out = sub->qef.averageDistanceValue();
+            out = leaf_sub[i]->qef.averageDistanceValue();
         } else {
             out = values[num++];
         }
@@ -583,9 +592,9 @@ void SimplexTree<N>::saveVertexSigns(
 
         // Handle ambiguities with the high-power isInside check
         if (out == 0) {
-            sub->inside = eval->feature.isInside(pos(i), tape);
+            leaf_sub[i]->inside = eval->feature.isInside(pos(i), tape);
         } else {
-            sub->inside = (out < 0);
+            leaf_sub[i]->inside = (out < 0);
         }
     }
 }
@@ -617,6 +626,17 @@ void SimplexTree<N>::checkVertexSigns() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+std::array<SimplexLeafSubspace<N>*, ipow(3, N)>
+SimplexTree<N>::getLeafSubs() const
+{
+    std::array<SimplexLeafSubspace<N>*, ipow(3, N)> out;
+    for (unsigned i=0; i < out.size(); ++i) {
+        out[i] = this->leaf->sub[i].load();
+    }
+    return out;
+}
 
 template <unsigned N>
 uint32_t SimplexTree<N>::leafLevel() const

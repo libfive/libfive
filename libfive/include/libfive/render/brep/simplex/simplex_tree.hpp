@@ -216,6 +216,13 @@ protected:
                           Pool& object_pool,
                           const SimplexNeighbors<N>& neighbors);
 
+    /*
+     *  Unwraps the atomic pointers, returning an array of plain pointers
+     *  Only use this if multiple threads won't be messing with the pointers
+     *  simultaneously!
+     */
+    std::array<SimplexLeafSubspace<N>*, ipow(3, N)> getLeafSubs() const;
+
     /*  Eigenvalue threshold for determining feature rank  */
     constexpr static double EIGENVALUE_CUTOFF=0.1f;
 };
