@@ -84,7 +84,7 @@ std::unique_ptr<Mesh> Mesh::render(
         out = Dual<3>::walk<DCMesher>(t, workers, cancel, progress_callback);
 
         // TODO: check for early return here again
-        t.reset(progress_callback);
+        t.reset(workers, progress_callback);
     }
     else if (alg == ISO_SIMPLEX)
     {
@@ -103,7 +103,7 @@ std::unique_ptr<Mesh> Mesh::render(
                 [&](PerThreadBRep<3>& brep, int i) {
                     return SimplexMesher(brep, &es[i]);
                 });
-        t.reset(progress_callback);
+        t.reset(workers, progress_callback);
     }
 
     return out;

@@ -31,7 +31,8 @@ public:
 
     ~Root() { reset(); }
 
-    void reset(ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK)
+    void reset(unsigned workers=8,
+               ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK)
     {
         ptr = nullptr;
 
@@ -41,7 +42,7 @@ public:
                 object_pool.total_size(), 2.0f,
                 progress_callback, done, cancel);
 
-        object_pool.reset(progress_watcher);
+        object_pool.reset(workers, progress_watcher);
         done.store(true);
         delete progress_watcher;
     }

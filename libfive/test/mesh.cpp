@@ -262,7 +262,7 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
 
     BENCHMARK("DCTree deletion")
     {
-        t.reset(progress_callback);
+        t.reset(8, progress_callback);
     }
 
     // Confirm that the progress counter is monotonically increasing

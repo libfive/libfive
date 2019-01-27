@@ -36,7 +36,7 @@ class ObjectPool
 {
 public:
     void claim(ObjectPool<>&) {}
-    void reset(ProgressWatcher*) {}
+    void reset(unsigned, ProgressWatcher*) {}
     int64_t total_size() const { return 0; }
     ObjectPool<>& operator=(ObjectPool<>&&) { return *this; }
 };
@@ -151,30 +151,49 @@ public:
      *
      *  (this is the same as the destructor, but includes a progress callback)
      */
-    void reset(ProgressWatcher* progress_watcher=nullptr) {
-        for (auto& t : allocated_blocks) {
-            for (unsigned i=0; i < N; ++i) {
-                t[i].~T();
-            }
-            if (progress_watcher) {
-                progress_watcher->tick();
-            }
-            free(t);
-        }
-        allocated_blocks.clear();
+    void reset(unsigned workers=8,
+               ProgressWatcher* progress_watcher=nullptr)
+    {
+        std::vector<std::future<void>> futures;
+        futures.resize(workers);
 
-        for (auto& t : fresh_blocks) {
-            for (unsigned i=0; i < t.second; ++i) {
-                t.first[i].~T();
-            }
-            if (progress_watcher) {
-                progress_watcher->tick();
-            }
-            free(t.first);
+        // Delete all of the blocks, using multiple threads for speed
+        for (unsigned i=0; i < workers; ++i) {
+            futures[i] = std::async(std::launch::async,
+                    [i, this, workers, &progress_watcher]() {
+                    for (unsigned j=i; j < allocated_blocks.size();
+                                       j += workers)
+                    {
+                        for (unsigned k=0; k < N; ++k) {
+                            allocated_blocks[j][k].~T();
+                        }
+                        if (progress_watcher) {
+                            progress_watcher->tick();
+                        }
+                        free(allocated_blocks[j]);
+                    }
+
+                for (unsigned j=i; j < fresh_blocks.size(); j += workers) {
+                    for (unsigned k=0; k < fresh_blocks[j].second; ++k) {
+                        fresh_blocks[j].first[k].~T();
+                    }
+                    if (progress_watcher) {
+                        progress_watcher->tick();
+                    }
+                    free(fresh_blocks[j].first);
+                }
+            });
         }
+
+        // Wait on all of the futures
+        for (auto& f : futures) {
+            f.get();
+        }
+
+        allocated_blocks.clear();
         fresh_blocks.clear();
 
-        next().reset(progress_watcher);
+        next().reset(workers, progress_watcher);
     }
 
 private:
