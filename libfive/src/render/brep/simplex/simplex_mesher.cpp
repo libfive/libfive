@@ -398,44 +398,33 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
                     // Then build a globally unique key for this edge
                     const auto k = Key(va.index, vb.index);
 
-                    // This edge could be precalculated within the cell (from
-                    // a previous cell in this call to load), or within a leaf
-                    // (from a different branch of meshing), or both.
-                    //
-                    // We check for it in both places, populating it into
-                    // whichever caches it's missing from.
-                    const auto leaf_index = this_cell->leaf->surface.find(k);
+                    //  Everything in the leaf cache has been moved into
+                    //  edge_search_cache, so we only need to look for the
+                    //  index in a single place.
                     const auto cache_index = edge_search_cache.find(k);
-                    if (leaf_index && cache_index)
-                    {
-                        assert(leaf_index == cache_index);
-                        tri_vert_indices[t] = leaf_index;
-                        continue;
-                    }
-                    else if (cache_index)
+                    if (cache_index)
                     {
                         tri_vert_indices[t] = cache_index;
+
+                        // Re-inserting into the leaf's map, since insertion
+                        // stops if the value is already found, so this is
+                        // cheaper than checking if it's present first
                         this_cell->leaf->surface.insert(k, cache_index);
-                        continue;
                     }
-                    else if (leaf_index)
+                    else
                     {
-                        tri_vert_indices[t] = leaf_index;
-                        edge_search_cache.insert(k, leaf_index);
-                        continue;
+                        // Otherwise, perform the edge search here, storing
+                        // the resulting position in both caches.
+                        assert(va.inside != vb.inside);
+
+                        const uint64_t surf_vert_index = va.inside
+                            ? searchEdge(va.pos, vb.pos, this_cell->leaf->tape)
+                            : searchEdge(vb.pos, va.pos, this_cell->leaf->tape);
+
+                        this_cell->leaf->surface.insert(k, surf_vert_index);
+                        edge_search_cache.insert(k, surf_vert_index);
+                        tri_vert_indices[t] = surf_vert_index;
                     }
-
-                    // Otherwise, perform the edge search here, storing
-                    // the resulting position in both caches.
-                    assert(va.inside != vb.inside);
-
-                    const uint64_t surf_vert_index = va.inside
-                        ? searchEdge(va.pos, vb.pos, this_cell->leaf->tape)
-                        : searchEdge(vb.pos, va.pos, this_cell->leaf->tape);
-
-                    this_cell->leaf->surface.insert(k, surf_vert_index);
-                    edge_search_cache.insert(k, surf_vert_index);
-                    tri_vert_indices[t] = surf_vert_index;
                 }
 
                 // Save the resulting triangle
