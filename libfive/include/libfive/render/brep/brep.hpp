@@ -43,6 +43,18 @@ public:
 
         uint32_t index = 1;
 
+        // Pre-allocated enough space for everything, to avoid
+        // intermediate reallocations.
+        size_t num_verts = 0;
+        size_t num_branes = 0;
+        for (const auto& c : children) {
+            num_verts += c.verts.size();
+            num_branes += c.branes.size();
+        }
+        verts.reserve(num_verts);
+        branes.reserve(num_branes);
+
+        // This stores our position in each of the children vectors
         std::vector<uint32_t> pos;
         pos.resize(children.size(), 0);
 
