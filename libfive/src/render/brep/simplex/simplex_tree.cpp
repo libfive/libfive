@@ -673,7 +673,9 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
             //   If we're in cell X and looking for corner C, then our neighbor
             //   Y should recurse into cell Z to check C's index within Z.
             auto new_sub = task.neighbors->ns.getSubspace(i_);
-            if (new_sub != nullptr && new_sub < sub) {
+            if (reinterpret_cast<uintptr_t>(new_sub) >
+                reinterpret_cast<uintptr_t>(sub))
+            {
                 task.target->leaf->sub[i].store(new_sub);
             }
 
@@ -716,7 +718,9 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
                     t = t->parent;
                     neighbors_above = neighbors_above->parent;
                     auto new_sub = neighbors_above->ns.getSubspace(i_);
-                    if (new_sub != nullptr && new_sub < sub) {
+                    if (reinterpret_cast<uintptr_t>(new_sub) >
+                        reinterpret_cast<uintptr_t>(sub))
+                    {
                         task.target->leaf->sub[i].store(new_sub);
                     }
                 }
