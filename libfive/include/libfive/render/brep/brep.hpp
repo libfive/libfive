@@ -8,7 +8,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
+#include <future>
 #include <vector>
+
 #include <Eigen/Eigen>
 #include <Eigen/StdVector>
 
@@ -37,54 +39,70 @@ public:
         return out;
     }
 
-    void collect(const std::vector<PerThreadBRep<N>>& children)
+    /*
+     *  Collects a set of PerThreadBRep objects into this BRep.
+     *  The children must be a valid set of breps, i.e. generated with
+     *  the same atomic index, so that their indices are globally
+     *  unique and completely fill the range starting from 1.
+     *
+     *  If workers is 0, spins up one thread per child, otherwise spins
+     *  up the requested number of threads to do the merge in parallel.
+     */
+    void collect(const std::vector<PerThreadBRep<N>>& children,
+                 unsigned workers=0)
     {
         assert(verts.size() == 1);
+        assert(branes.size() == 0);
 
-        uint32_t index = 1;
+        if (workers == 0) {
+            workers = children.size();
+        }
 
-        // Pre-allocated enough space for everything, to avoid
-        // intermediate reallocations.
-        size_t num_verts = 0;
+        // Build big enough vectors to hold everything, since we're going
+        // to be dropping items in through multiple threads.
+        size_t num_verts = 1;
         size_t num_branes = 0;
         for (const auto& c : children) {
             num_verts += c.verts.size();
             num_branes += c.branes.size();
         }
-        verts.reserve(num_verts);
-        branes.reserve(num_branes);
+        verts.resize(num_verts);
+        branes.resize(num_branes);
 
-        // This stores our position in each of the children vectors
-        std::vector<uint32_t> pos;
-        pos.resize(children.size(), 0);
+        std::vector<std::future<void>> futures;
+        futures.resize(workers);
 
-        // Walk up the global vertex index, saving the appropriate vertex
-        // in the array as we go.
-        while (true) {
-            bool found = false;
-            // TODO: check whether a min-heap is faster here in practice
-            for (unsigned i=0; i < children.size(); ++i)
-            {
-                if (pos[i] != children[i].indices.size() &&
-                    children[i].indices.at(pos[i]) == index)
-                {
-                    verts.push_back(children[i].verts.at(pos[i]));
-                    found = true;
-                    pos[i]++;
-                    index++;
+        for (unsigned i=0; i < workers; ++i) {
+            futures[i] = std::async(std::launch::async,
+                [i, workers, this, &children]() {
+                    for (unsigned j=i; j < children.size(); j += workers) {
+                        const auto& c = children[j];
+
+                        // Unpack vertices, which all have unique indexes into
+                        // our collecting vertex array.
+                        for (unsigned k=0; k < c.indices.size(); ++k) {
+                            verts.at(c.indices.at(k)) = c.verts.at(k);
+                        }
+
+                        // Figure out where to position the branes in the
+                        // collecting branes array, using a simple offset
+                        // from the start.
+                        size_t offset = 0;
+                        for (unsigned k=0; k < j; ++k) {
+                            offset += children[k].branes.size();
+                        }
+
+                        // Then save all of the branes
+                        for (unsigned k=0; k < c.branes.size(); ++k) {
+                            branes[offset + k] = c.branes[k];
+                        }
+                    }
                 }
-            }
-            if (!found) {
-                break;
-            }
+            );
         }
 
-        // Copy over all of the branes
-        for (unsigned i=0; i < children.size(); ++i)
-        {
-            assert(pos[i] == children[i].indices.size());
-            branes.insert(branes.end(), children[i].branes.begin(),
-                                        children[i].branes.end());
+        for (auto& f : futures) {
+            f.wait();
         }
     }
 };
