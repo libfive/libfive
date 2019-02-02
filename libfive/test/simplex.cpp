@@ -212,7 +212,6 @@ TEST_CASE("SimplexMesher<3>: box with problematic edges", "[!mayfail]")
     std::atomic_bool cancel(false);
     auto m = Dual<3>::walk<SimplexMesher>(t, 8,
             cancel, EMPTY_PROGRESS_CALLBACK, shape);
-    m->saveSTL("out.stl");
 
     REQUIRE(m->branes.size() > 0);
     REQUIRE(m->verts.size() > 1);
@@ -240,9 +239,9 @@ TEST_CASE("SimplexMesher<3>: box with problematic edges", "[!mayfail]")
 TEST_CASE("SimplexMesher<3>: tricky shape", "[!mayfail]")
 {
     auto b = max(box({-1, 0, -1}, {1, 2, 1}),
-                -box({0, 0, -0.5}, {1, 1.5, 0}));
+                -box({0, 0, -1}, {1, 2, 0}));
 
-    Region<3> r({-10, -10, -10}, {10, 10, 10});
+    Region<3> r({-5, -5, -5}, {5, 5, 5});
     auto t = SimplexTreePool<3>::build(b, r, 0.25, 1e-8);
     t->assignIndices();
 
