@@ -79,10 +79,15 @@ TEST_CASE("FeatureEvaluator::isInside")
         auto b = max(box({-1, 0, -1}, {1, 2, -0.2}),
                     -box({0.1, 0, -1}, {1, 2, -0.1}));
         FeatureEvaluator e(b);
-        std::cout << "STARTING TEST\n";
-        auto f = e.isInside({0.625f, 0.0f, -1.0f});
-        std::cout << "DONE WITH TEST\n";
-        REQUIRE(!f);
+        REQUIRE(!e.isInside({0.625f, 0.0f, -1.0f}));
+    }
+
+    SECTION("Other box-box intersection")
+    {
+        auto b = max(box({-1, 0, -1}, {1, 2, 1}),
+                    -box({0, 0, -1}, {1, 2, 0}));
+        FeatureEvaluator e(b);
+        REQUIRE(!e.isInside({1.0, 0.0f, -0.5f}));
     }
 }
 
