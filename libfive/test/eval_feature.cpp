@@ -73,6 +73,17 @@ TEST_CASE("FeatureEvaluator::isInside")
         CAPTURE(fs.size());
         REQUIRE(!e.isInside({0.0f, 0.0f, 0.0f}));
     }
+
+    SECTION("Box-box intersection")
+    {
+        auto b = max(box({-1, 0, -1}, {1, 2, -0.2}),
+                    -box({0.1, 0, -1}, {1, 2, -0.1}));
+        FeatureEvaluator e(b);
+        std::cout << "STARTING TEST\n";
+        auto f = e.isInside({0.625f, 0.0f, -1.0f});
+        std::cout << "DONE WITH TEST\n";
+        REQUIRE(!f);
+    }
 }
 
 TEST_CASE("FeatureEvaluator::features")
