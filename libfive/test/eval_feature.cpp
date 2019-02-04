@@ -84,10 +84,12 @@ TEST_CASE("FeatureEvaluator::isInside")
 
     SECTION("Other box-box intersection")
     {
-        auto b = max(box({-1, 0, -1}, {1, 2, 1}),
-                    -box({0, 0, -1}, {1, 2, 0}));
+        auto b = max(max(Tree::X(), Tree::Y()),
+                    -max(Tree::X(), Tree::Y()));
         FeatureEvaluator e(b);
-        REQUIRE(!e.isInside({1.0, 0.0f, -0.5f}));
+
+        auto fs = e.features_({0.0, 0.0f, -0.5f});
+        REQUIRE(!e.isInside({0.0, 0.0f, -0.5f}));
     }
 }
 

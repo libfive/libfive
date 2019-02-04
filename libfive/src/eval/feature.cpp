@@ -80,6 +80,16 @@ bool Feature::push(const Eigen::Vector3f& e_)
     }
 }
 
+bool Feature::push(const Feature& other)
+{
+    for (auto& e : other.epsilons) {
+        if (!push(e)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool Feature::check(const Feature& other) const
 {
     auto temp = *this;
