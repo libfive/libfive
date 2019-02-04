@@ -73,6 +73,24 @@ TEST_CASE("FeatureEvaluator::isInside")
         CAPTURE(fs.size());
         REQUIRE(!e.isInside({0.0f, 0.0f, 0.0f}));
     }
+
+    SECTION("Box-box intersection")
+    {
+        auto b = max(box({-1, 0, -1}, {1, 2, -0.2}),
+                    -box({0.1, 0, -1}, {1, 2, -0.1}));
+        FeatureEvaluator e(b);
+        REQUIRE(!e.isInside({0.625f, 0.0f, -1.0f}));
+    }
+
+    SECTION("Other box-box intersection")
+    {
+        auto b = max(max(Tree::X(), Tree::Y()),
+                    -max(Tree::X(), Tree::Y()));
+        FeatureEvaluator e(b);
+
+        auto fs = e.features_({0.0, 0.0f, -0.5f});
+        REQUIRE(!e.isInside({0.0, 0.0f, -0.5f}));
+    }
 }
 
 TEST_CASE("FeatureEvaluator::features")
