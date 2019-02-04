@@ -26,6 +26,7 @@ namespace Kernel {
 class FeatureEvaluator : public PointEvaluator
 {
 public:
+    FeatureEvaluator(const Tree& root);
     FeatureEvaluator(std::shared_ptr<Deck> d);
     FeatureEvaluator(std::shared_ptr<Deck> d,
                      const std::map<Tree::Id, float>& vars);

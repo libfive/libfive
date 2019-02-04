@@ -11,11 +11,18 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "catch.hpp"
 
-#include "libfive/render/brep/mesh.hpp"
-#include "libfive/render/brep/xtree_pool.hpp"
+#include "libfive/render/brep/dc/dc_mesher.hpp"
+#include "libfive/render/brep/dc/dc_pool.hpp"
+#include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/mesh.hpp"
+
+#if LIBFIVE_TRIANGLE_FAN_MESHING
+#include "libfive/render/brep/dc/intersection_aligner.hpp"
+#endif
 
 #include "util/shapes.hpp"
+#include "util/mesh_checks.hpp"
 
 using namespace Kernel;
 
@@ -89,12 +96,19 @@ TEST_CASE("Mesh::render (face count in rectangular prism)")
     REQUIRE(m->branes.size() == 12);
 }
 
-TEST_CASE("Mesh::render (sphere)")
+TEST_CASE("Mesh::render (different algorithms)")
 {
     auto s = sphere(1);
-    auto m = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
-                          1/32.0f, pow(10, -3));
-    REQUIRE(true);
+    auto a = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
+                          1/32.0f, pow(10, -3), true,
+                          EMPTY_PROGRESS_CALLBACK,
+                          Mesh::DUAL_CONTOURING);
+    auto b = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
+                          1/32.0f, pow(10, -3), true,
+                          EMPTY_PROGRESS_CALLBACK,
+                          Mesh::ISO_SIMPLEX);
+    REQUIRE(b->branes.size() > a->branes.size());
+    REQUIRE(b->verts.size() >  a->verts.size());
 }
 
 TEST_CASE("Mesh::render (cone)")
@@ -155,28 +169,6 @@ TEST_CASE("Mesh::render (checking for flipped triangles)")
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Kernel::Tree sphereGyroid()
-{
-    auto scale = 0.5f;
-    auto radius = 1.5f;
-    auto thickness = 0.5;
-
-    auto gyroidSrf =
-        sin(Kernel::Tree::X() / scale) * cos(Kernel::Tree::Y() / scale) +
-        sin(Kernel::Tree::Y() / scale) * cos(Kernel::Tree::Z() / scale) +
-        sin(Kernel::Tree::Z() / scale) * cos(Kernel::Tree::X() / scale);
-
-    auto gyroid = shell(gyroidSrf, thickness);
-    auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
-
-    auto sphereGyroid = max(sphere1, gyroid);
-    sphereGyroid = min(sphereGyroid,
-                     min(sphereGyroid,
-                     (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
-
-    return sphereGyroid;
-}
-
 TEST_CASE("Mesh::render (performance)", "[!benchmark]")
 {
     BENCHMARK("Menger sponge")
@@ -210,20 +202,30 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
 {
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
-    XTree<3>::Root t;
-    BENCHMARK("XTree construction")
+    Root<DCTree<3>> t;
+    unsigned workers = 8;
+    std::atomic_bool cancel(false);
+
+    BENCHMARK("DCTree construction")
     {
-        t = XTreePool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8);
+        t = DCPool<3>::build(sphereGyroid(), r, 0.025, 1e-8, workers);
     }
+
+#if LIBFIVE_TRIANGLE_FAN_MESHING
+    BENCHMARK("Intersection alignment")
+    {
+        workers = 1;
+        Dual<3>::walk<IntersectionAligner>(t, workers, cancel, EMPTY_PROGRESS_CALLBACK);
+    }
+#endif
 
     std::unique_ptr<Mesh> m;
-    std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Mesh::mesh(t, cancel);
+        m = Dual<3>::walk<DCMesher>(t, workers, cancel, EMPTY_PROGRESS_CALLBACK);
     }
 
-    BENCHMARK("XTree deletion")
+    BENCHMARK("DCTree deletion")
     {
         t.reset();
     }
@@ -244,23 +246,23 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
 
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
-    XTree<3>::Root t;
-    BENCHMARK("XTree construction")
+    Root<DCTree<3>> t;
+    BENCHMARK("DCTree construction")
     {
-        t = XTreePool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8,
-                                progress_callback);
+        t = DCPool<3>::build(sphereGyroid(), r, 0.025, 1e-8, 8,
+                             progress_callback);
     }
 
     std::unique_ptr<Mesh> m;
     std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Mesh::mesh(t, cancel, progress_callback);
+        m = Dual<3>::walk<DCMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK);
     }
 
-    BENCHMARK("XTree deletion")
+    BENCHMARK("DCTree deletion")
     {
-        t.reset(progress_callback);
+        t.reset(8, progress_callback);
     }
 
     // Confirm that the progress counter is monotonically increasing
@@ -273,4 +275,13 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
     }
     REQUIRE(progress[0] == 0.0f);
     REQUIRE(prev == 3.0f);
+}
+
+TEST_CASE("Mesh::render (edge pairing)")
+{
+    auto c = sphere(0.5);
+    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+    auto m = Mesh::render(c, r, 1.1, 1e-8, 1);
+    CHECK_EDGE_PAIRS(*m);
 }

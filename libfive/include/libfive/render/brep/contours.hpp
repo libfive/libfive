@@ -15,32 +15,55 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+// Forward declaration
+template <unsigned N> class PerThreadBRep;
+
 class Contours {
 public:
     /*
-     *  Basic render function
+     *  Basic render function, with sensible defaults
      */
     static std::unique_ptr<Contours> render(
         const Tree t, const Region<2>& r,
-        double min_feature = 0.1, double max_err = 1e-8,
-        bool multithread = true);
+        double min_feature=0.1, double max_err=1e-8,
+        bool multithread=true);
 
+    /*
+     *  Full-featured render function, with all arguments required
+     */
     static std::unique_ptr<Contours> render(
         const Tree t, const Region<2>& r,
         double min_feature, double max_err,
-        std::atomic_bool& cancelled,
-        int workers);
+        std::atomic_bool& cancel, unsigned workers);
+
+    /*
+     *  Full-featured render function without cancel, to prevent
+     *  an accidentally-left-out cancel boolean from causing the
+     *  worker count to autoconvert to the multithreading boolean.
+     */
+    static std::unique_ptr<Contours> render(
+      const Tree t, const Region<2>& r,
+      double min_feature, double max_err,
+      unsigned workers);
 
     /*
      *  Saves the contours to an SVG file
      */
     bool saveSVG(const std::string& filename);
 
+    /*
+     *  Merge together a set of contours, welding continuous paths
+     */
+    void collect(const std::vector<PerThreadBRep<2>>& children);
+
     /*  Contours in 2D space  */
     std::vector<std::vector<Eigen::Vector2f>> contours;
 
     /*  Optional bounding box */
     Region<2> bbox;
+
+    /*  Empty constructor, used prior to calling collect() */
+    Contours() { /* Nothing to do here */ }
 
 protected:
     Contours(Region<2> bbox) : bbox(bbox) {}

@@ -9,14 +9,34 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "libfive/render/brep/mesh.hpp"
-#include "libfive/render/brep/intersection_aligner.hpp"
+#include "libfive/render/brep/dc/intersection_aligner.hpp"
+#include "libfive/render/brep/dc/dc_mesher.hpp"
 #include "libfive/render/axes.hpp"
 
 namespace Kernel {
 
+#if LIBFIVE_TRIANGLE_FAN_MESHING
+
+template <Axis::Axis A>
+void IntersectionAligner::load(const std::array<const DCTree<3>*, 4>& ts)
+{
+    auto index_sign = DCMesher::getIndexAndSign<A>(ts);
+    if (index_sign.first == -1) {
+        return;
+    } else {
+        assert(index_sign.first >= 0);
+    }
+
+    if (index_sign.second) {
+        load<A, 1>(ts, index_sign.first);
+    } else {
+        load<A, 0>(ts, index_sign.first);
+    }
+}
+
 template <Axis::Axis A, bool D>
 void IntersectionAligner::load(
-    const std::array<const XTree<3>*, 4>& ts, unsigned index)
+    const std::array<const DCTree<3>*, 4>& ts, unsigned index)
 {
     int es[4];
     {   // Unpack edge vertex pairs into edge indices
@@ -29,7 +49,7 @@ void IntersectionAligner::load(
             {0, A} };
         for (unsigned i = 0; i < 4; ++i)
         {
-            es[i] = XTree<3>::mt->e[D ? ev[i].first : ev[i].second]
+            es[i] = MarchingTable<3>::mt.e[D ? ev[i].first : ev[i].second]
                 [D ? ev[i].second : ev[i].first];
             assert(es[i] != -1);
         }
@@ -60,14 +80,11 @@ void IntersectionAligner::load(
     }
 }
 
-#define specializeLoad(axis)                               \
-template void IntersectionAligner::load<axis, true>(       \
-const std::array<const XTree<3>*, 4>& ts, unsigned index); \
-template void IntersectionAligner::load<axis, false>(      \
-const std::array<const XTree<3>*, 4>& ts, unsigned index); \
+// Explicit template instantiation
+template void IntersectionAligner::load<Axis::X>(const std::array<const DCTree<3>*, 4>&);
+template void IntersectionAligner::load<Axis::Y>(const std::array<const DCTree<3>*, 4>&);
+template void IntersectionAligner::load<Axis::Z>(const std::array<const DCTree<3>*, 4>&);
 
-specializeLoad(Axis::X)
-specializeLoad(Axis::Y)
-specializeLoad(Axis::Z)
+#endif
 
 }   // namespace Kernel

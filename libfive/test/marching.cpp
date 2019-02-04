@@ -9,40 +9,38 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "catch.hpp"
 
-#include "libfive/render/brep/marching.hpp"
+#include "libfive/render/brep/dc/marching.hpp"
 
 using namespace Kernel;
 
-TEST_CASE("Marching::buildTable<2>")
+TEST_CASE("MarchingTable<2>")
 {
-    auto t = Marching::buildTable<2>();
-    REQUIRE(t->v.size() == 16);
+    REQUIRE(MarchingTable<2>::mt.v.size() == 16);
 
     // Make sure that we have built every item in the table
-    for (unsigned i=1; i < t->v.size() - 1; ++i)
+    for (unsigned i=1; i < MarchingTable<2>::mt.v.size() - 1; ++i)
     {
         CAPTURE(i);
-        auto& _t = t->v[i];
-        REQUIRE(t->v[i][0][0].first != -1);
+        auto& _t = MarchingTable<2>::mt.v[i];
+        REQUIRE(MarchingTable<2>::mt.v[i][0][0].first != -1);
     }
 
-    REQUIRE(t->v[0][0][0].first == -1);
-    REQUIRE(t->v[15][0][0].first == -1);
+    REQUIRE(MarchingTable<2>::mt.v[0][0][0].first == -1);
+    REQUIRE(MarchingTable<2>::mt.v[15][0][0].first == -1);
 }
 
-TEST_CASE("Marching::buildTable<3>")
+TEST_CASE("MarchingTable<3>")
 {
-    auto t = Marching::buildTable<3>();
-    REQUIRE(t->v.size() == 256);
+    REQUIRE(MarchingTable<3>::mt.v.size() == 256);
 
     // Make sure that we have built every item in the table
-    for (unsigned i=1; i < t->v.size() - 1; ++i)
+    for (unsigned i=1; i < MarchingTable<3>::mt.v.size() - 1; ++i)
     {
         CAPTURE(i);
-        auto& _t = t->v[i];
-        REQUIRE(t->v[i][0][0].first != -1);
+        auto& _t = MarchingTable<3>::mt.v[i];
+        REQUIRE(MarchingTable<3>::mt.v[i][0][0].first != -1);
     }
 
-    REQUIRE(t->v[0][0][0].first == -1);
-    REQUIRE(t->v[255][0][0].first == -1);
+    REQUIRE(MarchingTable<3>::mt.v[0][0][0].first == -1);
+    REQUIRE(MarchingTable<3>::mt.v[255][0][0].first == -1);
 }

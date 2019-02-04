@@ -13,7 +13,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_array.hpp"
-#include "libfive/eval/deck.hpp"
 
 using namespace Kernel;
 
@@ -27,51 +26,44 @@ TEST_CASE("ArrayEvaluator::eval")
 {
     SECTION("X")
     {
-        auto t = std::make_shared<Deck>(Tree::X());
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(Tree::X());
         REQUIRE(eval(e, {1.0, 2.0, 3.0}) == 1.0);
     }
 
     SECTION("Y")
     {
-        auto t = std::make_shared<Deck>(Tree::Y());
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(Tree::Y());
         REQUIRE(eval(e, {1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("Constant")
     {
-        auto t = std::make_shared<Deck>(Tree(3.14));
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(Tree(3.14));
         REQUIRE(eval(e, {1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
     SECTION("Secondary variable")
     {
         auto v = Tree::var();
-        auto t = std::make_shared<Deck>(v);
-        ArrayEvaluator e(t, {{v.id(), 3.14}});
+        ArrayEvaluator e(v, {{v.id(), 3.14}});
         REQUIRE(eval(e, {1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
     SECTION("X + 1")
     {
-        auto t = std::make_shared<Deck>(Tree::X() + 1);
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(Tree::X() + 1);
         REQUIRE(eval(e, {1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("X + Z")
     {
-        auto t = std::make_shared<Deck>(Tree::X() + Tree::Z());
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(Tree::X() + Tree::Z());
         REQUIRE(eval(e, {1.0, 2.0, 3.0}) == 4.0);
     }
 
     SECTION("nth-root")
     {
-        auto t = std::make_shared<Deck>(nth_root(Tree::X(), 3));
-        ArrayEvaluator e(t);
+        ArrayEvaluator e(nth_root(Tree::X(), 3));
         REQUIRE(eval(e, {-0.5, 0.0, 0.0}) == Approx(-0.7937));
     }
 
@@ -82,8 +74,7 @@ TEST_CASE("ArrayEvaluator::eval")
             auto op = (Kernel::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
-            auto p = std::make_shared<Deck>(t);
-            ArrayEvaluator e(p);
+            ArrayEvaluator e(t);
             eval(e, {0, 0, 0});
             REQUIRE(true /* No crash! */ );
         }
@@ -97,8 +88,7 @@ TEST_CASE("ArrayEvaluator::setVar")
     auto c = Tree::var();
     auto b = Tree::var();
 
-    auto t = std::make_shared<Deck>(a*1 + b*2 + c*3);
-    ArrayEvaluator e(t, {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
+    ArrayEvaluator e(a*1 + b*2 + c*3, {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
     REQUIRE(eval(e, {0, 0, 0}) == Approx(34));
 
     e.setVar(a.id(), 5);
@@ -111,8 +101,7 @@ TEST_CASE("ArrayEvaluator::setVar")
 
 TEST_CASE("ArrayEvaluator::getAmbiguous")
 {
-    auto t = std::make_shared<Deck>(min(Tree::X(), -Tree::X()));
-    ArrayEvaluator e(t);
+    ArrayEvaluator e(min(Tree::X(), -Tree::X()));
     e.set({0, 0, 0}, 0);
     e.set({1, 0, 0}, 1);
     e.set({2, 0, 0}, 2);

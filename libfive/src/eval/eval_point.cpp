@@ -15,6 +15,19 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+PointEvaluator::PointEvaluator(const Tree& root)
+    : PointEvaluator(std::make_shared<Deck>(root))
+{
+    // Nothing to do here
+}
+
+PointEvaluator::PointEvaluator(
+        const Tree& root, const std::map<Tree::Id, float>& vars)
+    : PointEvaluator(std::make_shared<Deck>(root), vars)
+{
+    // Nothing to do here
+}
+
 PointEvaluator::PointEvaluator(std::shared_ptr<Deck> d)
     : PointEvaluator(d, std::map<Tree::Id, float>())
 {

@@ -13,6 +13,19 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+JacobianEvaluator::JacobianEvaluator(const Tree& root)
+    : JacobianEvaluator(std::make_shared<Deck>(root))
+{
+    // Nothing to do here
+}
+
+JacobianEvaluator::JacobianEvaluator(
+        const Tree& root, const std::map<Tree::Id, float>& vars)
+    : JacobianEvaluator(std::make_shared<Deck>(root), vars)
+{
+    // Nothing to do here
+}
+
 JacobianEvaluator::JacobianEvaluator(std::shared_ptr<Deck> d)
     : JacobianEvaluator(d, std::map<Tree::Id, float>())
 {

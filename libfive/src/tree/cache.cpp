@@ -11,7 +11,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/cache.hpp"
 #include "libfive/eval/eval_point.hpp"
-#include "libfive/eval/deck.hpp"
 
 namespace Kernel {
 
@@ -125,7 +124,7 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
         {
             // Here, we construct a Tree manually to avoid a recursive loop,
             // then pass it immediately into a dummy Evaluator
-            PointEvaluator e(std::make_shared<Deck>(Tree(out)));
+            auto e = PointEvaluator(Tree(out));
             auto result = e.eval({0,0,0});
             return constant(result);
         }

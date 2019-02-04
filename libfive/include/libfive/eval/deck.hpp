@@ -27,7 +27,7 @@ class Tape; /* Foward declaration */
  *  Oracles are stored on a per-Deck basis.
  *
  *  The deck contains a list of constants and variables which are used
- *  to construct Evaluators, and pointers to Oracles thare used during
+ *  to construct Evaluators, and pointers to Oracles that are used during
  *  evaluation.
  */
 class Deck

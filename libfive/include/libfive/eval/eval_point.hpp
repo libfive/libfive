@@ -19,6 +19,9 @@ class Tape; /* Forward declaration */
 class PointEvaluator : public BaseEvaluator
 {
 public:
+    PointEvaluator(const Tree& root);
+    PointEvaluator(const Tree& root,
+                   const std::map<Tree::Id, float>& vars);
     PointEvaluator(std::shared_ptr<Deck> t);
     PointEvaluator(std::shared_ptr<Deck> t,
                    const std::map<Tree::Id, float>& vars);

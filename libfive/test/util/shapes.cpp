@@ -88,9 +88,9 @@ Tree menger(int i)
     return max(cube, cutout);
 }
 
-Tree circle(float r)
+Tree circle(float r, Eigen::Vector2f center)
 {
-    return sqrt(square(Tree::X()) + square(Tree::Y())) - r;
+    return sqrt(square(Tree::X() - center.x()) + square(Tree::Y() - center.y())) - r;
 }
 
 Tree sphere(float r, Eigen::Vector3f center)
@@ -137,4 +137,25 @@ Tree cylinder(float r, float h, Eigen::Vector3f base)
 Tree extrude(Tree a, float lower, float upper)
 {
     return max(a, max(lower - Tree::Z(), Tree::Z() - upper));
+}
+
+Tree sphereGyroid()
+{
+    auto scale = 0.5f;
+    auto thickness = 0.5;
+
+    auto gyroidSrf =
+        sin(Kernel::Tree::X() / scale) * cos(Kernel::Tree::Y() / scale) +
+        sin(Kernel::Tree::Y() / scale) * cos(Kernel::Tree::Z() / scale) +
+        sin(Kernel::Tree::Z() / scale) * cos(Kernel::Tree::X() / scale);
+
+    auto gyroid = shell(gyroidSrf, thickness);
+    auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
+
+    auto sphereGyroid = max(sphere1, gyroid);
+    sphereGyroid = min(sphereGyroid,
+                     min(sphereGyroid,
+                     (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
+
+    return sphereGyroid;
 }
