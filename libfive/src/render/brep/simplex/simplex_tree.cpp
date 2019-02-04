@@ -471,7 +471,7 @@ void SimplexTree<N>::saveVertexSigns(
     assert(this->type == Interval::AMBIGUOUS);
 
     const auto leaf_sub = getLeafSubs();
-    auto pos = [&](unsigned i) {
+    auto pos = [&leaf_sub, &region](unsigned i) {
         Eigen::Vector3f p;
         p << leaf_sub[i]->vert.template cast<float>().transpose(),
              region.perp.template cast<float>();
