@@ -18,6 +18,9 @@ namespace Kernel {
 class JacobianEvaluator : public DerivEvaluator
 {
 public:
+    JacobianEvaluator(const Tree& root);
+    JacobianEvaluator(const Tree& root,
+                      const std::map<Tree::Id, float>& vars);
     JacobianEvaluator(std::shared_ptr<Deck> t);
     JacobianEvaluator(std::shared_ptr<Deck> t,
                       const std::map<Tree::Id, float>& vars);

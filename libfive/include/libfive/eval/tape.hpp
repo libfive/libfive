@@ -124,6 +124,7 @@ public:
      *  be positioned outside of their parent cells.
      */
     static Handle getBase(Handle tape, const Eigen::Vector3f& p);
+    static Handle getBase(Handle tape, const Region<3>& r);
 
     friend class Deck;
 };

@@ -13,6 +13,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
+FeatureEvaluator::FeatureEvaluator(const Tree& root)
+    : FeatureEvaluator(std::make_shared<Deck>(root))
+{
+    // Nothing to do here
+}
+
 FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Deck> d)
     : FeatureEvaluator(d, std::map<Tree::Id, float>())
 {
@@ -85,7 +91,8 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
         pos |= f.check(f.deriv);
         neg |= f.check(-f.deriv);
     }
-    return !(pos && !neg);
+    const bool outside = pos && !neg;
+    return !outside;
 }
 
 const boost::container::small_vector<Feature, 4>&
@@ -196,15 +203,22 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 }
                 else
                 {
-                    auto fa = _ad;
-                    if (fa.push(epsilon))
-                    {
-                        od.push_back(fa);
-                    }
-                    auto fb = _bd;
-                    if (fb.push(-epsilon))
-                    {
-                        od.push_back(fb);
+                    // The new feature must be compatible with the epsilons
+                    // from both of the source features, plus the new epsilon
+                    // to select a particular branch of the max.
+                    auto combined = _ad;
+                    if (combined.push(_bd)) {
+                        auto fa = combined;
+                        fa.deriv = _ad.deriv;
+                        if (fa.push(epsilon)) {
+                            od.push_back(fa);
+                        }
+
+                        auto fb = combined;
+                        fb.deriv = _bd.deriv;
+                        if (fb.push(-epsilon)) {
+                            od.push_back(fb);
+                        }
                     }
                 }
             }
@@ -215,10 +229,6 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 od = _bds;
             }
             else if (av > bv)
-            {
-                od = _ads;
-            }
-            else if (a == b)
             {
                 od = _ads;
             }
@@ -242,15 +252,22 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 }
                 else
                 {
-                    auto fa = _ad;
-                    if (fa.push(epsilon))
-                    {
-                        od.push_back(fa);
-                    }
-                    auto fb = _bd;
-                    if (fb.push(-epsilon))
-                    {
-                        od.push_back(fb);
+                    // The new feature must be compatible with the epsilons
+                    // from both of the source features, plus the new epsilon
+                    // to select a particular branch of the max.
+                    auto combined = _ad;
+                    if (combined.push(_bd)) {
+                        auto fa = combined;
+                        fa.deriv = _ad.deriv;
+                        if (fa.push(epsilon)) {
+                            od.push_back(fa);
+                        }
+
+                        auto fb = combined;
+                        fb.deriv = _bd.deriv;
+                        if (fb.push(-epsilon)) {
+                            od.push_back(fb);
+                        }
                     }
                 }
             }

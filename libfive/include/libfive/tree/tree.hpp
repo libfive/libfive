@@ -168,9 +168,10 @@ public:
      */
     static Tree load(const std::string& filename);
 
-    /*  Returns the left-hand and right-hand inputs as trees; if the input
+    /*
+     *  Returns the left-hand and right-hand inputs as trees; if the input
      *  is invalid, returns the same result as Invalid()
-     */    
+     */
     Tree lhs() const;
     Tree rhs() const;
 

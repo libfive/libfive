@@ -64,6 +64,9 @@ public slots:
     void toTurnY(bool=false)  { camera.toTurnY();   }
     void zoomTo(bool=false) { camera.zoomTo(settings.min, settings.max); }
 
+    void toDCMeshing();
+    void toIsoMeshing();
+
     /*
      *  Emits shapesReady if all the shapes being drawn
      *  are at their final (highest) resolution
@@ -106,6 +109,8 @@ protected:
     void initializeGL() override;
     void paintGL() override;
     void resizeGL(int width, int height) override;
+
+    void setAlgorithm(Kernel::Mesh::Algorithm alg);
 
     /*
      *  Converts from mouse event coordinates to model coordinates
@@ -152,6 +157,8 @@ protected:
     QList<Shape*> shapes;
     bool settings_enabled=true;
     Settings settings;
+    Kernel::Mesh::Algorithm alg;
+
     bool show_axes=true;
     bool show_bbox=false;
 

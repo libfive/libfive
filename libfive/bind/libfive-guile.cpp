@@ -43,17 +43,37 @@ SCM scm_unwrap_shape_= NULL;
 SCM scm_shape_p_= NULL;
 
 SCM scm_vec3_ = NULL;
+SCM scm_vec3_p_ = NULL;
+SCM scm_vec_x_ = NULL;
+SCM scm_vec_y_ = NULL;
+SCM scm_vec_z_ = NULL;
 
 // Scheme-flavored bindings
 SCM scm_wrap_shape(SCM ptr)      { return scm_call_1(scm_wrap_shape_, ptr); }
 SCM scm_unwrap_shape(SCM ptr)    { return scm_call_1(scm_unwrap_shape_, ptr); }
 SCM scm_shape_p(SCM ptr)         { return scm_call_1(scm_shape_p_, ptr); }
+SCM scm_vec3_p(SCM ptr)          { return scm_call_1(scm_vec3_p_, ptr); }
+SCM scm_vec_x(SCM ptr)           { return scm_call_1(scm_vec_x_, ptr); }
+SCM scm_vec_y(SCM ptr)           { return scm_call_1(scm_vec_y_, ptr); }
+SCM scm_vec_z(SCM ptr)           { return scm_call_1(scm_vec_z_, ptr); }
 
 // C-flavored bindings
 bool scm_is_shape(SCM t) { return scm_is_true(scm_shape_p(t)); }
+bool scm_is_vec3(SCM t)  { return scm_is_true(scm_vec3_p(t)); }
 libfive_tree scm_get_tree(SCM t)
 {
+    SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_get_tree", "shape");
     return ((scm_shape*)scm_to_pointer(scm_unwrap_shape(t)))->tree;
+}
+
+libfive_vec3 scm_to_vec3(SCM v)
+{
+    SCM_ASSERT_TYPE(scm_is_vec3(v), v, 0, "scm_to_vec3", "vec3");
+    libfive_vec3 out;
+    out.x = scm_to_double(scm_vec_x(v));
+    out.y = scm_to_double(scm_vec_y(v));
+    out.z = scm_to_double(scm_vec_z(v));
+    return out;
 }
 
 SCM scm_from_tree(libfive_tree t)
@@ -74,7 +94,6 @@ SCM scm_vec3(float x, float y, float z)
                                  scm_from_double(y),
                                  scm_from_double(z));
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -291,6 +310,46 @@ SCM scm_shape_to_mesh(SCM t, SCM f, SCM res, SCM region)
     return out ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
+SCM scm_shapes_to_mesh(SCM ts, SCM filename, SCM lower, SCM upper,
+                       SCM res, SCM quality)
+{
+    SCM_ASSERT_TYPE(scm_is_true(scm_list_p(ts)), ts, 0, "scm_shapes_to_mesh", "list");
+    SCM_ASSERT_TYPE(scm_is_string(filename), filename, 1, "scm_shapes_to_mesh", "string");
+    SCM_ASSERT_TYPE(scm_is_vec3(lower), lower, 2, "scm_shapes_to_mesh", "vec3");
+    SCM_ASSERT_TYPE(scm_is_vec3(upper), upper, 3, "scm_shapes_to_mesh", "vec3");
+    SCM_ASSERT_TYPE(scm_is_number(res), res, 4, "scm_shapes_to_mesh", "number");
+    SCM_ASSERT_TYPE(scm_is_number(quality), res, 5, "scm_shapes_to_mesh", "number");
+
+    const size_t num = scm_to_size_t(scm_length(ts));
+    libfive_tree* trees = new libfive_tree[num + 1];
+    trees[num] = nullptr;
+
+    for (unsigned i=0; i < num; ++i) {
+        SCM_ASSERT_TYPE(scm_is_shape(scm_car(ts)), scm_car(ts), 0, "scm_shapes_to_mesh", "shape");
+        trees[i] = scm_get_tree(scm_car(ts));
+        ts = scm_cdr(ts);
+    }
+
+    const auto lower_ = scm_to_vec3(lower);
+    const auto upper_ = scm_to_vec3(upper);
+
+    libfive_region3 R;
+    R.X.lower = lower_.x;
+    R.Y.lower = lower_.y;
+    R.Z.lower = lower_.z;
+    R.X.upper = upper_.x;
+    R.Y.upper = upper_.y;
+    R.Z.upper = upper_.z;
+
+    auto f = scm_to_locale_string(filename);
+    const auto out = libfive_tree_save_meshes(
+            trees, R, scm_to_double(res), scm_to_double(quality), f);
+    free(f);
+
+    delete [] trees;
+    return out ? SCM_BOOL_T : SCM_BOOL_F;
+}
+
 SCM scm_shape_to_string(SCM t)
 {
     SCM_ASSERT_TYPE(scm_is_shape(t), t, 0, "scm_shape_to_string", "shape");
@@ -350,6 +409,10 @@ void init_libfive_kernel(void*)
 
     // Extract vec3 constructor from local environment
     scm_vec3_ = scm_c_eval_string("vec3");
+    scm_vec3_p_ = scm_c_eval_string("vec3?");
+    scm_vec_x_ = scm_c_eval_string(".x");
+    scm_vec_y_ = scm_c_eval_string(".y");
+    scm_vec_z_ = scm_c_eval_string(".z");
 
     // Inject all of our compiled functions into the module environment
     scm_c_define_gsubr("make-shape", 1, 2, 0, (void*)scm_shape);
@@ -364,6 +427,7 @@ void init_libfive_kernel(void*)
     scm_c_define_gsubr("_shape-eval-i", 7, 0, 0, (void*)scm_shape_eval_i);
     scm_c_define_gsubr("_shape-eval-d", 4, 0, 0, (void*)scm_shape_eval_d);
     scm_c_define_gsubr("shape->mesh", 4, 0, 0, (void*)scm_shape_to_mesh);
+    scm_c_define_gsubr("shapes->mesh", 6, 0, 0, (void*)scm_shapes_to_mesh);
     scm_c_define_gsubr("shape->string", 1, 0, 0, (void*)scm_shape_to_string);
     scm_c_define_gsubr("shape-meta", 1, 0, 0, (void*)scm_shape_get_meta);
     scm_c_define_gsubr("save-shape", 2, 0, 0, (void*)scm_shape_save);
@@ -509,8 +573,8 @@ void init_libfive_kernel(void*)
     scm_c_export(
             "shape?", "<shape>", "wrap-shape", "unwrap-shape",
             "make-shape", "make-var", "var?", "shape-tree-id", "number->shape",
-            "shape-equal?", "shape-eval", "shape->mesh", "shape-meta",
-            "save-shape", "load-shape",
+            "shape-equal?", "shape-eval", "shape->mesh", "shapes->mesh",
+            "shape-meta", "save-shape", "load-shape",
             NULL);
 }
 

@@ -10,10 +10,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <atomic>
 
+#include "libfive/eval/eval_heightmap.hpp"
 #include "libfive/render/discrete/voxels.hpp"
 #include "libfive/tree/tree.hpp"
-
-#include "libfive/render/discrete/eval_height.hpp"
 
 namespace Kernel {
 

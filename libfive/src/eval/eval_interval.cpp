@@ -25,6 +25,19 @@ Pr toPair(float inp)
 
 }
 
+IntervalEvaluator::IntervalEvaluator(const Tree& root)
+    : IntervalEvaluator(std::make_shared<Deck>(root))
+{
+    // Nothing to do here
+}
+
+IntervalEvaluator::IntervalEvaluator(
+        const Tree& root, const std::map<Tree::Id, float>& vars)
+    : IntervalEvaluator(std::make_shared<Deck>(root), vars)
+{
+    // Nothing to do here
+}
+
 IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Deck> d)
     : IntervalEvaluator(d, std::map<Tree::Id, float>())
 {
@@ -184,7 +197,7 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #define outN i[id].second
 #define aN i[a_].second
 #define bN i[b_].second
-#define SET_UNSAFE(cond) outN = aN || bN || cond
+#define SET_UNSAFE(cond) outN = (aN) || (bN) || (cond)
   switch (op) {
         case Opcode::OP_ADD:
             out = a + b;

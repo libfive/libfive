@@ -186,6 +186,7 @@ Tree Tree::lhs() const
 {
     return Tree(ptr->lhs);
 }
+
 Tree Tree::rhs() const
 {
     return Tree(ptr->rhs);

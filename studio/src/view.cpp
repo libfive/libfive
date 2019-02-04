@@ -113,8 +113,8 @@ void View::setShapes(QList<Shape*> new_shapes)
             connect(s, &Shape::gotMesh, &pick_timer,
                     static_cast<void (QTimer::*)()>(&QTimer::start));
             connect(this, &View::startRender,
-                    s, static_cast<void (Shape::*)(Settings)>(&Shape::startRender));
-            s->startRender(settings);
+                    s, [=](Settings st) { s->startRender(st, this->alg); });
+            s->startRender(settings, alg);
             s->setParent(this);
 
             shapes.push_back(s);
@@ -527,6 +527,26 @@ void View::showBBox(bool b)
 {
     show_bbox = b;
     update();
+}
+
+void View::toDCMeshing()
+{
+    setAlgorithm(Kernel::Mesh::DUAL_CONTOURING);
+}
+
+void View::toIsoMeshing()
+{
+    setAlgorithm(Kernel::Mesh::ISO_SIMPLEX);
+}
+
+void View::setAlgorithm(Kernel::Mesh::Algorithm a)
+{
+    if (a != alg) {
+        alg = a;
+        for (auto& s : shapes) {
+            s->startRender(settings, alg);
+        }
+    }
 }
 
 void View::checkMeshes() const

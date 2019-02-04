@@ -30,51 +30,6 @@ _Interpreter::_Interpreter()
     moveToThread(&thread);
 }
 
-static void init_studio_gui(void*)
-{
-    scm_c_eval_string(R"(
-(use-modules (libfive vec) (oop goops) (srfi srfi-1))
-
-(define (vec3? v)
-    (eq? (class-name (class-of v)) '<vec3>))
-
-(define-public global-bounds #f)
-(define-public (set-bounds! lower upper)
-  "set-bounds! [xmin ymin zmin] [xmax ymax zmax]
-  Sets the global render bounds"
-  (when (not (and (vec3? lower) (vec3? upper)))
-    (error "Arguments must be vec3"))
-  (let ((result (list (.x lower) (.y lower) (.z lower)
-                      (.x upper) (.y upper) (.z upper))))
-    (if (every number? result)
-      (set! global-bounds result)
-      (error "All values must be numbers"))))
-
-(define-public global-resolution #f)
-(define-public (set-resolution! res)
-  "set-resolution! res
-  Sets the global render resolution, which is the
-  reciprocal of minimum feature size"
-  (if (number? res)
-    (set! global-resolution res)
-    (error "resolution must be a number")))
-
-(define-public global-quality #f)
-(define-public (set-quality! q)
-  "set-quality! q
-  Sets the global render quality, which is a metric
-  from 1 to 11 that determines how enthusiastically
-  triangles are collapsed in the mesh"
-  (when (not (number? q))
-    (error "quality must be a number"))
-  (when (< q 1)
-    (error "quality must be >= 1"))
-  (when (> q 11)
-    (error "quality must be <= 11"))
-  (set! global-quality q))
-)");
-}
-
 void _Interpreter::init()
 {
 #ifdef Q_OS_MAC
@@ -86,18 +41,9 @@ void _Interpreter::init()
 #endif
 
     scm_init_guile();
-
     scm_init_libfive_modules();
-    scm_c_define_module("studio gui", init_studio_gui, NULL);
-
-    scm_c_eval_string(R"(
-(use-modules (libfive sandbox))
-(set! sandbox-bindings (append! sandbox-bindings
-    '(((studio gui) set-bounds! set-resolution! set-quality!))))
-    )");
 
     scm_c_use_module("libfive kernel");
-
     scm_eval_sandboxed = scm_c_eval_string(R"(
 (use-modules (libfive sandbox))
 eval-sandboxed
@@ -174,7 +120,7 @@ void _Interpreter::eval()
 
     // Clear global bounds, so we can detect if they were set in the script
     scm_c_eval_string(R"(
-    (use-modules (studio gui))
+    (use-modules (libfive sandbox))
     (set! global-bounds #f)
     (set! global-quality #f)
     (set! global-resolution #f)
@@ -314,15 +260,15 @@ void _Interpreter::eval()
         // Detect variables that should be set in the script but were not,
         // and emit warnings for them (as well as storing reasonable defaults)
         auto bounds = scm_c_eval_string(R"(
-        (use-modules (studio gui)) global-bounds
+        (use-modules (libfive sandbox)) global-bounds
         )");
 
         auto resolution = scm_c_eval_string(R"(
-        (use-modules (studio gui)) global-resolution
+        (use-modules (libfive sandbox)) global-resolution
         )");
 
         auto quality = scm_c_eval_string(R"(
-        (use-modules (studio gui)) global-quality
+        (use-modules (libfive sandbox)) global-quality
         )");
 
         QList<QPair<QString, QString>> warnings;

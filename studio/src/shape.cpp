@@ -91,7 +91,7 @@ bool Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
 
         // Start a special render operation that uses a flag in the div
         // field that tells the system load new var values before starting
-        startRender({next.first, div});
+        startRender({next.settings, div, next.alg});
     }
 
     return changed;
@@ -208,21 +208,21 @@ void Shape::drawMonochrome(const QMatrix4x4& M, QColor color)
     }
 }
 
-void Shape::startRender(Settings s)
+void Shape::startRender(Settings s, Kernel::Mesh::Algorithm alg)
 {
-    startRender(QPair<Settings, int>(s, s.defaultDiv()));
+    startRender(RenderSettings { s, s.defaultDiv(), alg });
 }
 
-void Shape::startRender(QPair<Settings, int> s)
+void Shape::startRender(RenderSettings s)
 {
     if (default_div == MESH_DIV_EMPTY)
     {
-        default_div = s.second;
+        default_div = s.div;
     }
 
     if (running)
     {
-        if (next.second != MESH_DIV_ABORT)
+        if (next.div != MESH_DIV_ABORT)
         {
             cancel.store(true);
             next = s;
@@ -230,30 +230,30 @@ void Shape::startRender(QPair<Settings, int> s)
     }
     else
     {
-        if (s.second == MESH_DIV_NEW_VARS ||
-            s.second == MESH_DIV_NEW_VARS_SMALL)
+        if (s.div == MESH_DIV_NEW_VARS ||
+            s.div == MESH_DIV_NEW_VARS_SMALL)
         {
             for (auto& e : es)
             {
                 e.updateVars(vars);
             }
-            s.second = (s.second == MESH_DIV_NEW_VARS) ? default_div : 0;
+            s.div = (s.div == MESH_DIV_NEW_VARS) ? default_div : 0;
         }
 
-        target_div = s.second;
+        target_div = s.div;
 
         timer.start();
         running = true;
         mesh_future = QtConcurrent::run(this, &Shape::renderMesh, s);
         mesh_watcher.setFuture(mesh_future);
 
-        next = {s.first, s.second - 1};
+        next = {s.settings, s.div - 1, s.alg};
     }
 }
 
 bool Shape::done() const
 {
-    return next.second == MESH_DIV_EMPTY && mesh_future.isFinished();
+    return next.div == MESH_DIV_EMPTY && mesh_future.isFinished();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -283,8 +283,7 @@ void Shape::setHover(bool h)
 std::pair<Kernel::JacobianEvaluator*, Kernel::Tape::Handle>
 Shape::dragFrom(const QVector3D& v)
 {
-    auto e = new Kernel::JacobianEvaluator(
-            std::make_shared<Kernel::Deck>(tree), vars);
+    auto e = new Kernel::JacobianEvaluator(tree, vars);
     auto o = e->evalAndPush({v.x(), v.y(), v.z()});
     return std::make_pair(e, o.second);
 }
@@ -293,7 +292,7 @@ void Shape::deleteLater()
 {
     if (running)
     {
-        next.second = MESH_DIV_ABORT;
+        next.div = MESH_DIV_ABORT;
         cancel.store(true);
     }
     else
@@ -330,12 +329,12 @@ void Shape::onFutureFinished()
         }
     }
 
-    if (next.second == MESH_DIV_ABORT)
+    if (next.div == MESH_DIV_ABORT)
     {
         QObject::deleteLater();
     }
-    else if (next.second >= 0 || next.second == MESH_DIV_NEW_VARS
-                              || next.second == MESH_DIV_NEW_VARS_SMALL)
+    else if (next.div >= 0 || next.div == MESH_DIV_NEW_VARS
+                           || next.div == MESH_DIV_NEW_VARS_SMALL)
     {
         startRender(next);
     }
@@ -355,15 +354,17 @@ void Shape::freeGL()
 
 ////////////////////////////////////////////////////////////////////////////////
 // This function is called in a separate thread:
-Shape::BoundedMesh Shape::renderMesh(QPair<Settings, int> s)
+Shape::BoundedMesh Shape::renderMesh(RenderSettings s)
 {
     cancel.store(false);
 
     // Use the global bounds settings
-    Kernel::Region<3> r({s.first.min.x(), s.first.min.y(), s.first.min.z()},
-                        {s.first.max.x(), s.first.max.y(), s.first.max.z()});
+    Kernel::Region<3> r(
+            {s.settings.min.x(), s.settings.min.y(), s.settings.min.z()},
+            {s.settings.max.x(), s.settings.max.y(), s.settings.max.z()});
     auto m = Kernel::Mesh::render(es.data(), r,
-            1 / (s.first.res / (1 << s.second)),
-            pow(10, -s.first.quality), es.size(), cancel);
+            1 / (s.settings.res / (1 << s.div)),
+            pow(10, -s.settings.quality), es.size(), cancel,
+            Kernel::EMPTY_PROGRESS_CALLBACK, s.alg);
     return {m.release(), r};
 }

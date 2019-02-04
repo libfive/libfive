@@ -180,13 +180,13 @@ libfive_tree libfive_tree_remap(libfive_tree p, libfive_tree x, libfive_tree y, 
 
 float libfive_tree_eval_f(libfive_tree t, libfive_vec3 p)
 {
-    PointEvaluator e(std::make_shared<Deck>(*t));
+    PointEvaluator e(*t);
     return e.eval({p.x, p.y, p.z});
 }
 
 libfive_interval libfive_tree_eval_r(libfive_tree t, libfive_region3 r)
 {
-    IntervalEvaluator e(std::make_shared<Deck>(*t));
+    IntervalEvaluator e(*t);
     auto i = e.eval({r.X.lower, r.Y.lower, r.Z.lower},
                     {r.X.upper, r.Y.upper, r.Z.upper});
     return {i.lower(), i.upper()};
@@ -194,7 +194,7 @@ libfive_interval libfive_tree_eval_r(libfive_tree t, libfive_region3 r)
 
 libfive_vec3 libfive_tree_eval_d(libfive_tree t, libfive_vec3 p)
 {
-    DerivEvaluator e(std::make_shared<Deck>(*t));
+    DerivEvaluator e(*t);
     auto v = e.deriv({p.x, p.y, p.z});
     return {v.x(), v.y(), v.z()};
 }
@@ -365,6 +365,27 @@ bool libfive_tree_save_mesh(libfive_tree tree, libfive_region3 R, float res, con
                      {R.X.upper, R.Y.upper, R.Z.upper});
     auto ms = Mesh::render(*tree, region, 1/res);
     return ms->saveSTL(f);
+}
+
+bool libfive_tree_save_meshes(
+        libfive_tree trees[], libfive_region3 R,
+        float res, float quality, const char* f)
+{
+    Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
+                     {R.X.upper, R.Y.upper, R.Z.upper});
+
+    std::list<const Kernel::Mesh*> meshes;
+    for (unsigned i=0; trees[i] != nullptr; ++i){
+        auto ms = Mesh::render(*trees[i], region, 1 / res,
+                               pow(10, -quality));
+        meshes.push_back(ms.release());
+    }
+
+    const bool out = Mesh::saveSTL(f, meshes);
+    for (auto& m : meshes) {
+        delete m;
+    }
+    return out;
 }
 
 libfive_pixels* libfive_tree_render_pixels(libfive_tree tree, libfive_region2 R,

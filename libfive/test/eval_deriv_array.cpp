@@ -13,7 +13,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_deriv_array.hpp"
-#include "libfive/eval/deck.hpp"
 
 using namespace Kernel;
 
@@ -33,8 +32,7 @@ TEST_CASE("DerivArrayEvaluator::deriv")
             auto op = (Kernel::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
-            auto tape = std::make_shared<Deck>(t);
-            DerivArrayEvaluator e(tape);
+            DerivArrayEvaluator e(t);
             deriv(e, {0, 0, 0});
             REQUIRE(true /* No crash! */ );
         }
@@ -43,8 +41,7 @@ TEST_CASE("DerivArrayEvaluator::deriv")
     SECTION("var + 2*X")
     {
         auto v = Tree::var();
-        auto t = std::make_shared<Deck>(v + 2 * Tree::X());
-        DerivArrayEvaluator e(t, {{v.id(), 0}});
+        DerivArrayEvaluator e(v + 2 * Tree::X(), {{v.id(), 0}});
 
         auto out = deriv(e, {2, 0, 0});
         REQUIRE(out.col(0) == Eigen::Vector4f(2, 0, 0, 4));
@@ -55,8 +52,7 @@ TEST_CASE("DerivArrayEvaluator::derivs")
 {
     SECTION("X")
     {
-        auto t = std::make_shared<Deck>(Tree::X());
-        DerivArrayEvaluator e(t);
+        DerivArrayEvaluator e(Tree::X());
         e.set({0, 0, 0}, 0);
         e.set({1, 2, 3}, 1);
         auto d = e.derivs(2);
@@ -67,8 +63,7 @@ TEST_CASE("DerivArrayEvaluator::derivs")
 
     SECTION("X + Z")
     {
-        auto t = std::make_shared<Deck>(Tree::X() + Tree::Z());
-        DerivArrayEvaluator e(t);
+        DerivArrayEvaluator e(Tree::X() + Tree::Z());
 
         e.set({1, 1, 1}, 0);
         e.set({1, 2, 3}, 1);
@@ -80,8 +75,7 @@ TEST_CASE("DerivArrayEvaluator::derivs")
 
     SECTION("X^(1/3)")
     {
-        auto t = std::make_shared<Deck>(nth_root(Tree::X(), 3));
-        DerivArrayEvaluator e(t);
+        DerivArrayEvaluator e(nth_root(Tree::X(), 3));
 
         e.set({0, 0, 0}, 0);
         e.set({1, 2, 3}, 1);
@@ -99,9 +93,8 @@ TEST_CASE("DerivArrayEvaluator::derivs")
 
 TEST_CASE("DerivArrayEvaluator::getAmbiguousDerivs")
 {
-    auto t = std::make_shared<Deck>(min(min(Tree::X(), Tree::Y()),
-                                        min(Tree::X(), 4 + 0.2 * Tree::Y())));
-    DerivArrayEvaluator e(t);
+    DerivArrayEvaluator e(min(min(Tree::X(), Tree::Y()),
+                              min(Tree::X(), 4 + 0.2 * Tree::Y())));
     e.set({0, 0, 0}, 0); // True ambiguity
     e.set({0, 1, 0}, 1); // False ambiguity, since it's doing min(X, X)
     e.set({5, 5, 0}, 2); // True ambiguity

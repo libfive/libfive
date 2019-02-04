@@ -15,18 +15,24 @@ set(SRCS main.cpp
     eval_point.cpp
     feature.cpp
     heightmap.cpp
+    indexes.cpp
     marching.cpp
     mesh.cpp
     neighbors.cpp
+    object_pool.cpp
     oracle.cpp
     oracle_context.cpp
     progress.cpp
+    qef.cpp
     region.cpp
+    simplex.cpp
     solver.cpp
+    surface_edge_map.cpp
     transformed_oracle.cpp
     tree.cpp
     voxels.cpp
     xtree.cpp
+    util/mesh_checks.cpp
     util/shapes.cpp)
 set(LIBS five)
 
@@ -37,3 +43,4 @@ endif(GUILE_FOUND)
 
 add_executable(libfive-test ${SRCS})
 target_link_libraries(libfive-test ${LIBS})
+target_include_directories(libfive-test PRIVATE .)

@@ -12,14 +12,21 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/axes.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/root.hpp"
 #include "libfive/render/brep/brep.hpp"
-#include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/progress.hpp"
+
+#include "libfive/render/brep/dc/dc_tree.hpp"
 
 namespace Kernel {
 
 class Mesh : public BRep<3> {
 public:
+    enum Algorithm {
+        DUAL_CONTOURING,
+        ISO_SIMPLEX,
+    };
+
     /*
      *  Blocking, unstoppable render function
      *  Returns nullptr if min_feature is invalid (i.e. <= 0)
@@ -27,7 +34,8 @@ public:
     static std::unique_ptr<Mesh> render(
             const Tree t, const Region<3>& r,
             double min_feature=0.1, double max_err=1e-8, bool multithread=true,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
+            Algorithm=DUAL_CONTOURING);
 
     /*
      *  Fully-specified render function
@@ -38,7 +46,8 @@ public:
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
+            Algorithm=DUAL_CONTOURING);
 
     /*
      *  Render function that re-uses evaluators
@@ -50,7 +59,8 @@ public:
             XTreeEvaluator* es, const Region<3>& r,
             double min_feature, double max_err,
             int workers, std::atomic_bool& cancel,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
+            Algorithm=DUAL_CONTOURING);
 
     /*
      *  Writes the mesh to a file
@@ -63,50 +73,15 @@ public:
     static bool saveSTL(const std::string& filename,
                         const std::list<const Mesh*>& meshes);
 
-    /*
-     *  Called by Dual::walk to construct the triangle mesh.  ts[index]
-     *  should be a minimal-level member of ts (though properly, it need
-     *  merely contain the edge being loaded as one of its edges).
-     */
-    template <Axis::Axis A, bool D>
-    void load(const std::array<const XTree<3>*, 4>& ts, unsigned index);
-
-    /*  Walks an XTree, returning a mesh  */
-    static std::unique_ptr<Mesh> mesh(
-            const XTree<3>::Root& tree, std::atomic_bool& cancel,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
-
     static const float MAX_PROGRESS;
 
 protected:
+
     /*
      *  Inserts a line into the mesh as a zero-size triangle
      *  (used for debugging)
      */
     void line(const Eigen::Vector3f& a, const Eigen::Vector3f& b);
-
-
-    /*
-     *  It is possible for a triangle to escape the cells that generated it, 
-     *  if said cells are of different sizes.  This function adds branes in
-     *  such a way that, so long as the endpoints are in their proper cells,
-     *  the entire triangle will be as well.  The axis and direction are not
-     *  those of the load function that calls this, but rather from a to b.
-     *  a and b must be ordered such that aIndex, bIndex, intersectionIndex 
-     *  is the proper winding for this triangle.
-     */
-    template <Axis::Axis A, bool D>
-    void checkAndAddTriangle(const XTree<3>* a, const XTree<3>* b, 
-                             uint32_t aIndex, uint32_t bIndex, 
-                             uint32_t intersectionIndex);
-
-    /*
-     *  Used to store the indices of vertices created by forcing triangles to
-     *  be inside the cells generating them.  The key values are the 
-     *  corresponding cell vertices in ascending order, and the resulting 
-     *  vertex may or may not be an intersection vertex.
-     */
-    std::map<std::pair<uint32_t, uint32_t>, uint32_t> forcedVerts;
 
 };
 

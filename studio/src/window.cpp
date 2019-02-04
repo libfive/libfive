@@ -188,6 +188,23 @@ Window::Window(Arguments args)
     view_menu->addAction(zoom_to_action);
     connect(zoom_to_action, &QAction::triggered, view, &View::zoomTo);
 
+    // Debug menu
+    auto debug_menu = menuBar()->addMenu("Debug");
+    auto dc_meshing = new QAction("Dual contouring", nullptr);
+    auto iso_meshing = new QAction("Iso-simplex", nullptr);
+    auto meshing_menu = new QMenu("Meshing algorithm");
+    debug_menu->addMenu(meshing_menu);
+    meshing_menu->addAction(dc_meshing);
+    meshing_menu->addAction(iso_meshing);
+    dc_meshing->setCheckable(true);
+    dc_meshing->setChecked(true);
+    iso_meshing->setCheckable(true);
+    auto meshing_mode = new QActionGroup(meshing_menu);
+    meshing_mode->addAction(dc_meshing);
+    meshing_mode->addAction(iso_meshing);
+    connect(dc_meshing, &QAction::triggered, view, &View::toDCMeshing);
+    connect(iso_meshing, &QAction::triggered, view, &View::toIsoMeshing);
+
     // Help menu
     auto help_menu = menuBar()->addMenu("Help");
     connect(help_menu->addAction("About"), &QAction::triggered,

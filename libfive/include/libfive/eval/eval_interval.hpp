@@ -20,6 +20,9 @@ class Tape; /* Forward declaration */
 class IntervalEvaluator : public BaseEvaluator
 {
 public:
+    IntervalEvaluator(const Tree& root);
+    IntervalEvaluator(const Tree& root,
+                      const std::map<Tree::Id, float>& vars);
     IntervalEvaluator(std::shared_ptr<Deck> d);
     IntervalEvaluator(std::shared_ptr<Deck> d,
                       const std::map<Tree::Id, float>& vars);

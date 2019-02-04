@@ -8,242 +8,365 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
-#include "libfive/render/brep/xtree.hpp"
+#include <stack>
+#include "libfive/render/brep/per_thread_brep.hpp"
 #include "libfive/render/brep/progress.hpp"
 #include "libfive/render/axes.hpp"
+#include "libfive/eval/interval.hpp"
+#include "libfive/render/brep/mesh.hpp"
 
 namespace Kernel {
 
 /*
  *  Class to walk a dual grid for a quad or octree
- *  t needs operator(const std::array<XTree<N>*, N>& trees) defined
  */
 template <unsigned N>
 class Dual
 {
 public:
-    template<typename V>
-    static void walk(const XTree<N>* tree, V& v, ProgressWatcher* p=nullptr);
+     /*
+      *  Basic dual-walking function
+      *
+      *  The mesher type M needs
+      *     load(const std::array<T*, N>& trees)
+      *     Input (typename)
+      *     Output (typename)
+      *  and must have a constructor of the form
+      *     M(PerThreadBRep<N>&, A...)
+      */
+    template<typename M, typename ... A>
+    static std::unique_ptr<typename M::Output> walk(
+            const Root<typename M::Input>& t, unsigned workers,
+            std::atomic_bool& cancel,
+            ProgressCallback progress_callback,
+            A... args);
+
+     /*
+      *  Flexible dual-walking function
+      *
+      *  The mesher type M needs
+      *     load(const std::array<T*, N>& trees)
+      *     Input (typename)
+      *     Output (typename)
+      *
+      *  The factory can be anything that spits out valid M objects,
+      *  given a PerThreadBRep and worker index.
+      */
+    template<typename M>
+    static std::unique_ptr<typename M::Output> walk_(
+            const Root<typename M::Input>& t, unsigned workers,
+            std::atomic_bool& cancel,
+            ProgressCallback progress_callback,
+            std::function<M(PerThreadBRep<N>&, int)> MesherFactory);
+
+protected:
+    template<typename T, typename Mesher>
+    static void run(Mesher& m, ProgressWatcher* progress,
+                    boost::lockfree::stack<const T*,
+                                           boost::lockfree::fixed_sized<true>>& tasks,
+                    std::atomic_bool& done, std::atomic_bool& cancel);
+
+    template <typename T, typename Mesher>
+    static void work(const T* t, Mesher& m);
+
+    template <typename T, typename Mesher>
+    static void handleTopEdges(T* t, Mesher& m);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // 2D Implementation
-template <typename V, Axis::Axis A>
-void edge2(const std::array<const XTree<2>*, 2>& ts, V& v)
+template <typename T, typename V, Axis::Axis A>
+void edge2(const std::array<const T*, 2>& ts, V& v)
 {
     constexpr uint8_t perp = (Axis::X | Axis::Y) ^ A;
 
     if (std::any_of(ts.begin(), ts.end(),
-        [](const XTree<2>* t){ return t->isBranch(); }))
+        [](const T* t){ return t->isBranch(); }))
     {
-        edge2<V, A>({{ts[0]->child(perp), ts[1]->child(0)}}, v);
-        edge2<V, A>({{ts[0]->child(A|perp), ts[1]->child(A)}}, v);
+        edge2<T, V, A>({{ts[0]->child(perp), ts[1]->child(0)}}, v);
+        edge2<T, V, A>({{ts[0]->child(A|perp), ts[1]->child(A)}}, v);
     }
     else if (std::all_of(ts.begin(), ts.end(),
-        [](const XTree<2>* t){ return t->type == Interval::AMBIGUOUS &&
-                                      !t->isBranch(); }))
+        [](const T* t){ return t->type == Interval::AMBIGUOUS &&
+                               !t->isBranch(); }))
     {
-        // Sanity-checking that all cells have a Leaf struct allocated
-        for (auto& t : ts)
-        {
-            assert(t->leaf != nullptr);
-            (void)t;
-        }
-
-        const auto index = std::min_element(ts.begin(), ts.end(),
-                [](const XTree<2>* a, const XTree<2>* b)
-                { return a->leaf->level < b->leaf->level; }) - ts.begin();
-
-        constexpr std::array<uint8_t, 2> corners = {{perp, 0}};
-
-        // If there is a sign change across the relevant edge, then call the
-        // watcher with the segment corners (with proper winding order)
-        auto a = ts[index]->cornerState(corners[index]);
-        auto b = ts[index]->cornerState(corners[index] | A);
-        if (a != b)
-        {
-            // Use either forward or reversed segment building
-            if ((a == Interval::FILLED && A == Axis::Y) ||
-                (b == Interval::FILLED && A == Axis::X))
-            {
-                v.template load<A, 0>(ts);
-            }
-            else
-            {
-                v.template load<A, 1>(ts);
-            }
-        }
+        v.template load<A>(ts);
     }
 }
 
 template <>
-template <typename V>
-void Dual<2>::walk(const XTree<2>* t, V& v, ProgressWatcher* progress)
+template <typename T, typename V>
+void Dual<2>::work(const T* t, V& v)
 {
-    if (t->isBranch())
-    {
-        // Recurse down every subface in the quadtree
-        for (unsigned i=0; i < t->children.size(); ++i)
-        {
-            auto c = t->child(i);
-            if (c != t)
-            {
-                walk(c, v, progress);
-            }
-        }
-
-        //  Then, call edge on every pair of cells
-        edge2<V, Axis::Y>({{t->child(0), t->child(Axis::X)}}, v);
-        edge2<V, Axis::Y>({{t->child(Axis::Y), t->child(Axis::Y | Axis::X)}}, v);
-        edge2<V, Axis::X>({{t->child(0), t->child(Axis::Y)}}, v);
-        edge2<V, Axis::X>({{t->child(Axis::X), t->child(Axis::X | Axis::Y)}}, v);
-    }
-
-    if (progress != nullptr)
-    {
-        progress->tick();
-    }
+    edge2<T, V, Axis::Y>({{t->child(0), t->child(Axis::X)}}, v);
+    edge2<T, V, Axis::Y>({{t->child(Axis::Y), t->child(Axis::Y | Axis::X)}}, v);
+    edge2<T, V, Axis::X>({{t->child(0), t->child(Axis::Y)}}, v);
+    edge2<T, V, Axis::X>({{t->child(Axis::X), t->child(Axis::X | Axis::Y)}}, v);
 }
-////////////////////////////////////////////////////////////////////////////////
 
-template <typename V, Axis::Axis A>
-void edge3(const std::array<const XTree<3>*, 4> ts, V& v)
+template <>
+template <typename T, typename Mesher>
+void Dual<2>::handleTopEdges(T* t, Mesher& m)
+{
+    (void)t;
+    (void)m;
+
+    // TODO
+    // No one should be calling this yet, because simplex meshing
+    // isn't implemented in 2D.
+    assert(false);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// 3D Implementation
+template <typename T, typename V, Axis::Axis A>
+void edge3(const std::array<const T*, 4> ts, V& v)
 {
     constexpr auto Q = Axis::Q(A);
     constexpr auto R = Axis::R(A);
 
     if (std::any_of(ts.begin(), ts.end(),
-        [](const XTree<3>* t){ return t->isBranch(); }))
+        [](const T* t){ return t->isBranch(); }))
     {
-        edge3<V, A>({{ts[0]->child(Q|R), ts[1]->child(R), ts[2]->child(Q), ts[3]->child(0)}}, v);
-        edge3<V, A>({{ts[0]->child(Q|R|A), ts[1]->child(R|A), ts[2]->child(Q|A), ts[3]->child(A)}}, v);
+        edge3<T, V, A>({{ts[0]->child(Q|R), ts[1]->child(R), ts[2]->child(Q), ts[3]->child(0)}}, v);
+        edge3<T, V, A>({{ts[0]->child(Q|R|A), ts[1]->child(R|A), ts[2]->child(Q|A), ts[3]->child(A)}}, v);
     }
-    else if (std::all_of(ts.begin(), ts.end(),
-        [](const XTree<3>* t){ return t->type == Interval::AMBIGUOUS &&
-                                      !t->isBranch(); }))
+    else
     {
-        // Sanity-checking that all cells have a Leaf struct allocated
-        for (auto& t : ts)
-        {
-            assert(t->leaf != nullptr);
-            (void)t;
-        }
-        /*  We need to check the values on the shared edge to see whether we need
-         *  to add a face.  However, this is tricky when the edge spans multiple
-         *  octree levels.
-         *
-         * In the following diagram, the target edge is marked with an o
-         * (travelling out of the screen):
-         *      _________________
-         *      | 2 |           |
-         *      ----o   1, 3    |  ^ R
-         *      | 0 |           |  |
-         *      ----------------|  --> Q
-         *
-         *  If we were to look at corners of c or d, we wouldn't be looking at the
-         *  correct edge.  Instead, we need to look at corners for the smallest cell
-         *  among the function arguments.
-         */
-        const auto index = std::min_element(ts.begin(), ts.end(),
-                [](const XTree<3>* a, const XTree<3>* b)
-                { return a->leaf->level < b->leaf->level; }) - ts.begin();
-
-        constexpr std::array<uint8_t, 4> corners = {{Q|R, R, Q, 0}};
-
-        // If there is a sign change across the relevant edge, then call the
-        // watcher with the segment corners (with proper winding order)
-        auto a = ts[index]->cornerState(corners[index]);
-        auto b = ts[index]->cornerState(corners[index] | A);
-        if (a != b)
-        {
-            if (a != Interval::FILLED)
-            {
-                v.template load<A, 0>(ts, index);
-            }
-            else
-            {
-                v.template load<A, 1>(ts, index);
-            }
-        }
+        v.template load<A>(ts);
     }
 }
 
-template <typename V, Axis::Axis A>
-void face3(const std::array<const XTree<3>*, 2> ts, V& v)
+template <typename T, typename V, Axis::Axis A>
+void face3(const std::array<const T*, 2> ts, V& v)
 {
     if (std::any_of(ts.begin(), ts.end(),
-        [](const XTree<3>* t){ return t->isBranch(); }))
+        [](const T* t){ return t->isBranch(); }))
     {
         constexpr auto Q = Axis::Q(A);
         constexpr auto R = Axis::R(A);
 
         for (unsigned k : {0, (int)Q, (int)R, Q|R})
         {
-            face3<V, A>({{ts[0]->child(k|A), ts[1]->child(k)}}, v);
+            face3<T, V, A>({{ts[0]->child(k|A), ts[1]->child(k)}}, v);
         }
 
-        edge3<V, Q>({{ts[0]->child(A), ts[0]->child(R|A), ts[1]->child(0), ts[1]->child(R)}}, v);
-        edge3<V, Q>({{ts[0]->child(Q|A), ts[0]->child(Q|R|A), ts[1]->child(Q), ts[1]->child(Q|R)}}, v);
+        edge3<T, V, Q>({{ts[0]->child(A), ts[0]->child(R|A), ts[1]->child(0), ts[1]->child(R)}}, v);
+        edge3<T, V, Q>({{ts[0]->child(Q|A), ts[0]->child(Q|R|A), ts[1]->child(Q), ts[1]->child(Q|R)}}, v);
 
-        edge3<V, R>({{ts[0]->child(A), ts[1]->child(0), ts[0]->child(A|Q), ts[1]->child(Q)}}, v);
-        edge3<V, R>({{ts[0]->child(R|A), ts[1]->child(R), ts[0]->child(R|A|Q), ts[1]->child(R|Q)}}, v);
+        edge3<T, V, R>({{ts[0]->child(A), ts[1]->child(0), ts[0]->child(A|Q), ts[1]->child(Q)}}, v);
+        edge3<T, V, R>({{ts[0]->child(R|A), ts[1]->child(R), ts[0]->child(R|A|Q), ts[1]->child(R|Q)}}, v);
     }
 }
 
-template <typename V, Axis::Axis A>
-void call_edge3(const XTree<3>* t, V& v)
+template <typename T, typename V, Axis::Axis A>
+void call_edge3(const T* t, V& v)
 {
     for (auto a : {Axis::Axis(0), A})
     {
-        edge3<V, A>({{t->child(a),
+        edge3<T, V, A>({{t->child(a),
              t->child(Axis::Q(A) | a),
              t->child(Axis::R(A) | a),
              t->child(Axis::Q(A) | Axis::R(A) | a)}}, v);
     }
 }
 
-template <typename V, Axis::Axis A>
-void call_face3(const XTree<3>* t, V& v)
+template <typename T, typename V, Axis::Axis A>
+void call_face3(const T* t, V& v)
 {
     constexpr auto q = Axis::Q(A);
     constexpr auto r = Axis::R(A);
 
-    face3<V, A>({{t->child(0), t->child(A)}}, v);
-    face3<V, A>({{t->child(q), t->child(q|A)}}, v);
-    face3<V, A>({{t->child(r), t->child(r|A)}}, v);
-    face3<V, A>({{t->child(q|r), t->child(q|r|A)}}, v);
+    face3<T, V, A>({{t->child(0), t->child(A)}}, v);
+    face3<T, V, A>({{t->child(q), t->child(q|A)}}, v);
+    face3<T, V, A>({{t->child(r), t->child(r|A)}}, v);
+    face3<T, V, A>({{t->child(q|r), t->child(q|r|A)}}, v);
 }
 
 template <>
-template <typename V>
-void Dual<3>::walk(const XTree<3>* t, V& v, ProgressWatcher* progress)
+template <typename T, typename V>
+void Dual<3>::work(const T* t, V& v)
 {
-    if (t->isBranch())
+    // Call the face procedure on every pair of cells (4x per axis)
+    call_face3<T, V, Axis::X>(t, v);
+    call_face3<T, V, Axis::Y>(t, v);
+    call_face3<T, V, Axis::Z>(t, v);
+
+    // Call the edge function 6 times (2x per axis)
+    call_edge3<T, V, Axis::X>(t, v);
+    call_edge3<T, V, Axis::Y>(t, v);
+    call_edge3<T, V, Axis::Z>(t, v);
+}
+
+template <>
+template <typename T, typename V>
+void Dual<3>::handleTopEdges(T* t, V& v)
+{
+    auto e = T::empty();
+
+    for (unsigned i=0; i < 4; ++i)
     {
-        // Recurse, calling the cell procedure for every child
-        for (unsigned i=0; i < t->children.size(); ++i)
+        std::array<T*, 4> ts = {{e.get(), e.get(), e.get(), e.get()}};
+        ts[i] = t;
+        edge3<T, V, Axis::X>(ts, v);
+        edge3<T, V, Axis::Y>(ts, v);
+        edge3<T, V, Axis::Z>(ts, v);
+    }
+
+    for (unsigned i=0; i < 2; ++i)
+    {
+        std::array<T*, 2> ts = {{e.get(), e.get()}};
+        ts[i] = t;
+        face3<T, V, Axis::X>(ts, v);
+        face3<T, V, Axis::Y>(ts, v);
+        face3<T, V, Axis::Z>(ts, v);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <unsigned N>
+template<typename M, typename ... A>
+std::unique_ptr<typename M::Output> Dual<N>::walk(
+            const Root<typename M::Input>& t, unsigned workers,
+            std::atomic_bool& cancel,
+            ProgressCallback progress_callback,
+            A... args)
+{
+    return Dual<N>::walk_<M>(t, workers, cancel, progress_callback,
+            [&args...](PerThreadBRep<N>& brep, int i) {
+                (void)i;
+                return M(brep, args...);
+                });
+
+}
+
+template <unsigned N>
+template<typename M>
+std::unique_ptr<typename M::Output> Dual<N>::walk_(
+            const Root<typename M::Input>& t, unsigned workers,
+            std::atomic_bool& cancel,
+            ProgressCallback progress_callback,
+            std::function<M(PerThreadBRep<N>&, int)> MesherFactory)
+{
+    boost::lockfree::stack<const typename M::Input*,
+                           boost::lockfree::fixed_sized<true>> tasks(workers);
+    tasks.push(t.get());
+    t->resetPending();
+
+    std::atomic_uint32_t global_index(1);
+    std::vector<PerThreadBRep<N>> breps;
+    for (unsigned i=0; i < workers; ++i) {
+        breps.emplace_back(PerThreadBRep<N>(global_index));
+    }
+
+    std::atomic_bool done(false);
+
+    auto progress = ProgressWatcher::build(
+            t.size(), 1.0f,
+            progress_callback, done, cancel);
+
+    std::vector<std::future<void>> futures;
+    futures.resize(workers);
+    for (unsigned i=0; i < workers; ++i) {
+        futures[i] = std::async(std::launch::async,
+            [&breps, &done, &cancel, &tasks, &MesherFactory, i, progress]() {
+                auto m = MesherFactory(breps[i], i);
+                Dual<N>::run(m, progress, tasks, done, cancel);
+            });
+    }
+
+    // Wait on all of the futures
+    for (auto& f : futures) {
+        f.get();
+    }
+
+    assert(done.load() || cancel.load());
+
+    // Handle the top tree edges (only used for simplex meshing)
+    if (M::needsTopEdges()) {
+        auto m = MesherFactory(breps[0], 0);
+        Dual<N>::handleTopEdges(t.get(), m);
+    }
+
+    // This causes the progress tracker to terminate
+    done.store(true);
+    delete progress;
+
+    auto out = std::unique_ptr<typename M::Output>(new typename M::Output);
+    out->collect(breps);
+    return out;
+}
+
+
+template <unsigned N>
+template <typename T, typename V>
+void Dual<N>::run(V& v, ProgressWatcher* progress,
+                  boost::lockfree::stack<const T*,
+                                         boost::lockfree::fixed_sized<true>>& tasks,
+                  std::atomic_bool& done, std::atomic_bool& cancel)
+{
+    // Tasks to be evaluated by this thread (populated when the
+    // MPMC stack is completely full).
+    std::stack<const T*, std::vector<const T*>> local;
+
+    while (!done.load() && !cancel.load())
+    {
+        // Prioritize picking up a local task before going to
+        // the MPMC queue, to keep things in this thread for
+        // as long as possible.
+        const T* t;
+        if (local.size())
         {
-            auto c = t->child(i);
-            if (c != t)
+            t = local.top();
+            local.pop();
+        }
+        else if (!tasks.pop(t))
+        {
+            t = nullptr;
+        }
+
+        // If we failed to get a task, keep looping
+        // (so that we terminate when either of the flags are set).
+        if (t == nullptr)
+        {
+            continue;
+        }
+
+        if (t->isBranch())
+        {
+            // Recurse, calling the cell procedure for every child
+            for (const auto& c_ : t->children)
             {
-                walk(c, v, progress);
+                const auto c = c_.load();
+                if (!tasks.bounded_push(c)) {
+                    local.push(c);
+                }
+            }
+            continue;
+        }
+
+        for (t = t->parent; t && t->pending-- == 0; t = t->parent)
+        {
+            // Do the actual DC work (specialized for N = 2 or 3)
+            Dual<N>::work(t, v);
+
+            // Report trees as completed
+            if (progress) {
+                progress->tick();
             }
         }
 
-        // Call the face procedure on every pair of cells (4x per axis)
-        call_face3<V, Axis::X>(t, v);
-        call_face3<V, Axis::Y>(t, v);
-        call_face3<V, Axis::Z>(t, v);
+        // Termination condition:  if we've ended up pointing at the parent
+        // of the tree's root (which is nullptr), then we're done and break
+        if (t == nullptr) {
+            break;
+        }
+    }
 
-        // Call the edge function 6 times (2x per axis)
-        call_edge3<V, Axis::X>(t, v);
-        call_edge3<V, Axis::Y>(t, v);
-        call_edge3<V, Axis::Z>(t, v);
-    }
-    if (progress != nullptr)
-    {
-        progress->tick();
-    }
+    // If we've broken out of the loop, then we should set the done flag
+    // so that other worker threads also terminate.
+    done.store(true);
 }
 
 }   // namespace Kernel

@@ -50,6 +50,7 @@ public:
      *  Otherwise, pushes to the front of the choice list and returns true
      */
     bool push(const Eigen::Vector3f& e);
+    bool push(const Feature& other);
 
     /*
      *  Checks to see whether the given epsilon is compatible with

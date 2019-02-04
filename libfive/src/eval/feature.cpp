@@ -80,6 +80,16 @@ bool Feature::push(const Eigen::Vector3f& e_)
     }
 }
 
+bool Feature::push(const Feature& other)
+{
+    for (auto& e : other.epsilons) {
+        if (!push(e)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool Feature::check(const Feature& other) const
 {
     auto temp = *this;
@@ -111,87 +121,90 @@ bool Feature::check(const Eigen::Vector3f& e, bool* duplicate) const
         return (e.dot(epsilons.front()) != -1);
     }
 
-    {   // Check for planarity (2D special case)
-        auto itr = epsilons.begin();
-        const auto cross = itr->cross(e);
-        const auto cross_ = cross.normalized();
+    // Construct a potential set of epsilons, which includes the new point
+    auto es = epsilons;
+    es.push_back(e);
 
-        const auto angle = asin(cross.norm());
-        auto angle_min = fmin(0.0, angle);
-        auto angle_max = fmax(0.0, angle);
+    // Each epsilon implies a plane.  The intersection of all of these
+    // which is a polyhedral convex cone.  We want to check whether the
+    // cone is empty or not.  To do so, we build a bounded polytope by
+    // intersecting the cone with a small cube, then check every possible
+    // vertex to see if it's valid.  If the only valid vertex is at the
+    // origin, then the cone is empty.
+    //
+    // This is not particularly inefficient, and could be replaced with
+    // a linear programming system, but N should be relatively small.
 
-        while (++itr != epsilons.end())
-        {
-            auto c = itr->cross(e);
-            auto c_ = c.normalized();
-
-            // Early exit from the loop if values are non-planar
-            if (fabs(c_.dot(cross_)) != 1)
-            {
-                break;
-            }
-
-            const auto angle = asin(c.norm());
-            angle_min = fmin(angle, angle_min);
-            angle_max = fmax(angle, angle_max);
-        }
-
-        if (itr == epsilons.end())
-        {
-            return !(angle_max - angle_min > M_PI);
-        }
+    // These are the planes of the polytope, in the form n * x = d
+    using boost::container::small_vector;
+    small_vector<std::pair<Eigen::Vector3f, float>, 16> planes;
+    for (const auto& e : es) {
+        planes.push_back(std::make_pair(e, 0.0));
     }
+    // Add the six planes defining the cube
+    planes.push_back(std::make_pair(Eigen::Vector3f(1, 0, 0), 1));
+    planes.push_back(std::make_pair(Eigen::Vector3f(-1, 0, 0), 1));
+    planes.push_back(std::make_pair(Eigen::Vector3f(0, 1, 0), 1));
+    planes.push_back(std::make_pair(Eigen::Vector3f(0, -1, 0), 1));
+    planes.push_back(std::make_pair(Eigen::Vector3f(0, 0, 1), 1));
+    planes.push_back(std::make_pair(Eigen::Vector3f(0, 0, -1), 1));
 
-    {   // Otherwise, we construct every possible plane and check against
-        // every remaining point to make sure they work
-        auto es = epsilons;
-        es.push_back(e);
+    // We build the polytope corners with an expensive loop
+    small_vector<Eigen::Vector3f, 32> corners;
+    for (unsigned i=0; i < planes.size(); ++i) {
+        for (unsigned j=i; j < planes.size(); ++j) {
+            for (unsigned k=j; k < planes.size(); ++k) {
+                const auto a = planes[i];
+                const auto b = planes[j];
+                const auto c = planes[k];
 
-        // Yes, this is an O(n^3) loop
-        // It's far from optimal, but will suffice unless people start making
-        // deliberately pathological models.
-        for (auto a=es.begin(); a != es.end(); ++a)
-        {
-            for (auto b=es.begin(); b != es.end(); ++b)
-            {
-                if (a == b || a->dot(*b) == -1)
-                {
+                // Skip corners that are entirely from cone planes, which
+                // have a degenerate solution at the origin
+                if (a.second == 0.0 && b.second == 0.0 && c.second == 0.0) {
                     continue;
                 }
-                const auto norm = a->cross(*b);
-                int sign = 0;
-                bool passed = true;
-                for (auto c=es.begin(); passed && c != es.end(); ++c)
-                {
-                    if (a == c || b == c)
-                    {
-                        continue;
-                    }
-                    auto d = norm.dot(*c);
-                    if (d < 0)
-                    {
-                        passed &= (sign <= 0);
-                        sign = -1;
-                    }
-                    else if (d > 0)
-                    {
-                        passed &= (sign >= 0);
-                        sign = 1;
-                    }
-                    else
-                    {
-                        passed = false;
+
+                Eigen::Matrix3f M;
+                M << a.first, b.first, c.first;
+
+                Eigen::Vector3f d;
+                d << a.second, b.second, c.second;
+
+                // Skip matrices with a bad determinant, which can happen
+                // if the two cone normals are nearly identical
+                const auto det = M.determinant();
+                if (fabs(det) < 1e-6) {
+                    continue;
+                }
+                const auto vert = M.inverse() * d;
+                bool duplicate = false;
+                for (const auto& c : corners) {
+                    if (c == vert) {
+                        duplicate = true;
+                        break;
                     }
                 }
-                if (passed)
-                {
-                    return true;
+                if (!duplicate) {
+                    corners.push_back(vert);
                 }
             }
         }
     }
 
-    // If we've made it through the whole loop with no matches, then
+    // Now, we check every epsilon against every possible corner, returning
+    // true when we find a corner that's compatible with each one.
+    for (const auto& c : corners) {
+        bool okay = true;
+        for (const auto& e : es) {
+            if (c.dot(e) <= 0) {
+                okay = false;
+                break;
+            }
+        }
+        if (okay) {
+            return true;
+        }
+    }
     return false;
 }
 
