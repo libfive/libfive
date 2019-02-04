@@ -63,6 +63,13 @@ void libfive_pixels_delete(libfive_pixels* m)
     delete m;
 }
 
+void libfive_vars_delete(libfive_vars* vs)
+{
+    delete [] vs->vars;
+    delete [] vs->values;
+    delete vs;
+}
+
 int libfive_opcode_enum(const char* op)
 {
     auto o = Opcode::fromScmString(op);
