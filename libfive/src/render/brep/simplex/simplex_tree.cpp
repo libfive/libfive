@@ -173,7 +173,13 @@ std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
 {
     std::unique_ptr<SimplexTree> t(new SimplexTree);
     t->type = Interval::UNKNOWN;
-    t->parent = reinterpret_cast<SimplexTree<N>*>(0xDEADBEEF);
+
+    // We set the parent to a silly invalid value, because it should
+    // never be used (and if someone uses it by accident, we want to
+    // crash quickly and with an obviously-wrong value).
+    uintptr_t flag_ptr = 0xDEADBEEF;
+    t->parent = reinterpret_cast<SimplexTree<N>*>(flag_ptr);
+
     return std::move(t);
 }
 
@@ -471,7 +477,7 @@ void SimplexTree<N>::saveVertexSigns(
     assert(this->type == Interval::AMBIGUOUS);
 
     const auto leaf_sub = getLeafSubs();
-    auto pos = [&](unsigned i) {
+    auto pos = [&leaf_sub, &region](unsigned i) {
         Eigen::Vector3f p;
         p << leaf_sub[i]->vert.template cast<float>().transpose(),
              region.perp.template cast<float>();
