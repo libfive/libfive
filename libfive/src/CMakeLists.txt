@@ -41,6 +41,7 @@ add_library(five SHARED
     render/brep/dc/dc_tree3.cpp
     render/brep/dc/dc_xtree2.cpp
     render/brep/dc/dc_xtree3.cpp
+    render/brep/simplex/simplex_debug.cpp
     render/brep/simplex/simplex_neighbors2.cpp
     render/brep/simplex/simplex_neighbors3.cpp
     render/brep/simplex/simplex_pool2.cpp
