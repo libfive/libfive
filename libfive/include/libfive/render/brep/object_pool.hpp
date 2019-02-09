@@ -73,7 +73,7 @@ public:
 
         if (fresh_blocks.empty()) {
             fresh_blocks.push_back(std::make_pair(
-                        static_cast<T*>(malloc(sizeof(T) * N)), 0));
+                        static_cast<T*>(T::operator new[](sizeof(T) * N)), 0));
         }
         assert(fresh_blocks.size());
 
@@ -170,7 +170,7 @@ public:
                         if (progress_watcher) {
                             progress_watcher->tick();
                         }
-                        free(allocated_blocks[j]);
+                        T::operator delete[](allocated_blocks[j]);
                     }
 
                 for (unsigned j=i; j < fresh_blocks.size(); j += workers) {
@@ -180,7 +180,7 @@ public:
                     if (progress_watcher) {
                         progress_watcher->tick();
                     }
-                    free(fresh_blocks[j].first);
+                    T::operator delete [](fresh_blocks[j].first);
                 }
             });
         }

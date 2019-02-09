@@ -476,6 +476,8 @@ protected:
     Matrix AtBp;
     Matrix BptBp;
 
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     friend class QEF<0>;
     friend class QEF<1>;
     friend class QEF<2>;

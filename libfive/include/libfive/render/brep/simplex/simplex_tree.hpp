@@ -57,6 +57,8 @@ struct SimplexLeafSubspace {
      *  homebrew reference counting system to avoid releasing them to
      *  the pool while they're still in use.  */
     std::atomic_uint32_t refcount;
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 template <unsigned N>
@@ -85,6 +87,15 @@ struct SimplexLeaf
      *  we use a pair of small_vectors to act as a stack-allocated
      *  ordered map. */
     SurfaceEdgeMap<32> surface;
+
+    /*  Required for ObjectPool, but we're just using the default operators
+     *  here because there are no alignment requirements. */
+    static void* operator new[](std::size_t sz) {
+        return ::operator new[](sz);
+    }
+    void operator delete[]( void* ptr ) {
+        ::operator delete[](ptr);
+    }
 
     /*  Represents how far from minimum-size leafs we are */
     unsigned level;
