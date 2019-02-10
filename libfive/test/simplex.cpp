@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/simplex/simplex_pool.hpp"
 #include "libfive/render/brep/simplex/simplex_mesher.hpp"
+#include "libfive/render/brep/simplex/simplex_debug.hpp"
 #include "libfive/render/brep/indexes.hpp"
 #include "libfive/render/brep/dual.hpp"
 

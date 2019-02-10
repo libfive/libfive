@@ -265,14 +265,14 @@ public:
      *  This is implemented by walking down in dimensionality from N to 0,
      *  picking the lowest-error solution available that is within the bounds.
      */
-    Solution solveBounded(const Region<N>& region)
+    Solution solveBounded(const Region<N>& region, double shrink=(1 - 1e-6))
     {
-        return solveBounded(region,
+        return solveBounded(region, shrink,
                             (region.lower + region.upper) / 2.0,
                             AtBp(N, N) / AtA(N, N));
     }
 
-    Solution solveBounded(const Region<N>& region,
+    Solution solveBounded(const Region<N>& region, double shrink,
                           Eigen::Matrix<double, 1, N> target_pos,
                           double target_value) const
     {
@@ -285,7 +285,7 @@ public:
 
         {   //  First, check the full-dimension, unconstrained solver
             auto sol = solve(target_pos, target_value);
-            if (region.contains(sol.position)) {
+            if (region.shrink(shrink).contains(sol.position)) {
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
                 std::cout << "Got full-dimension solution\n";
 #endif
@@ -302,7 +302,7 @@ public:
         //  every corner, picking the first case where the QEF solution
         //  doesn't escape the bounds).
         UnrollDimension<(int)N - 1>()(
-                *this, region, target_pos, target_value, out);
+                *this, region, shrink, target_pos, target_value, out);
 
         assert(!std::isinf(out.error));
         return out;
@@ -318,10 +318,10 @@ protected:
      */
     template <int TargetDimension, unsigned Dummy=0>
     struct UnrollDimension {
-        void operator()(const QEF<N>& qef, const Region<N>& region,
-                        const Eigen::Matrix<double, 1, N>& target_pos,
-                        double target_value,
-                        Solution& out)
+        void operator()(
+                const QEF<N>& qef, const Region<N>& region, double shrink,
+                const Eigen::Matrix<double, 1, N>& target_pos,
+                double target_value, Solution& out)
         {
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
             std::cout << "UnrollDimension<" << TargetDimension
@@ -329,7 +329,7 @@ protected:
 #endif
 
             UnrollSubspace<TargetDimension, ipow(3, N)>()(
-                qef, region, target_pos, target_value, out);
+                qef, region, shrink, target_pos, target_value, out);
 
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
             std::cout << "Done unrolling subspace\n";
@@ -341,7 +341,7 @@ protected:
             if (std::isinf(out.error))
             {
                 UnrollDimension<TargetDimension - 1, Dummy>()(
-                        qef, region, target_pos, target_value, out);
+                        qef, region, shrink, target_pos, target_value, out);
             }
         }
     };
@@ -349,7 +349,7 @@ protected:
     // We go all the way down to 0D, then terminate static unrolling at -1D
     template <unsigned Dummy>
     struct UnrollDimension<-1, Dummy> {
-        void operator()(const QEF<N>&, const Region<N>&,
+        void operator()(const QEF<N>&, const Region<N>&, double,
                         const Eigen::Matrix<double, 1, N>&,
                         double, Solution&)
         {
@@ -359,47 +359,40 @@ protected:
 
     template <unsigned TargetDimension, unsigned TargetSubspace>
     struct UnrollSubspace {
-        void operator()(const QEF<N>& qef, const Region<N>& region,
-                        const Eigen::Matrix<double, 1, N>& target_pos,
-                        double target_value,
-                        Solution& out)
+        void operator()(
+                const QEF<N>& qef, const Region<N>& region, double shrink,
+                const Eigen::Matrix<double, 1, N>& target_pos,
+                double target_value, Solution& out)
         {
             // If this neighbor is of the target dimension, then check for
             // an improved solution constrained to this neighbor.
             if (TargetDimension ==
                 NeighborIndex(TargetSubspace - 1).dimension())
             {
-#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
-                std::cout << "  UnrollSubspace<" << TargetDimension << ", "
-                          << TargetSubspace << "> activated\n";
-#endif
+                const auto region_ = region.shrink(shrink);
+
                 // Calculate the constrained solution, including error
                 const auto sol = qef.solveConstrained<TargetSubspace - 1>(
-                        region.shrink(1 - 1e-6), target_pos, target_value);
+                        region_, target_pos, target_value);
 
                 // If this solution is an improvement, then store it
-                if (region.contains(sol.position) && out.error > sol.error) {
+                if (region_.contains(sol.position) && out.error > sol.error) {
                     assert(sol.error >= -1e-12);
                     out = sol;
                 }
             }
-#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
-            else {
-                std::cout << "  UnrollSubspace<" << TargetDimension << ", "
-                          << TargetSubspace << "> skipped\n";
-            }
-#endif
 
-            // Statically unroll a loop, dropping in dimensionality loop
+            // Statically unroll the loop across all neighbors
+            // (keeping the target dimension constant)
             UnrollSubspace<TargetDimension, TargetSubspace - 1>()(
-                    qef, region, target_pos, target_value, out);
+                    qef, region, shrink, target_pos, target_value, out);
         }
     };
 
-    // Terminates static unrolling
+    // Terminates static unrolling across neighbors with a fixed dimension
     template <unsigned TargetDimension>
     struct UnrollSubspace<TargetDimension, 0> {
-        void operator()(const QEF<N>&, const Region<N>&,
+        void operator()(const QEF<N>&, const Region<N>&, double,
                         const Eigen::Matrix<double, 1, N>&, double, Solution&)
         {
             // Nothing to do here
