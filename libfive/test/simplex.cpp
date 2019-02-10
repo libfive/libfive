@@ -198,7 +198,7 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 
 }
 
-TEST_CASE("SimplexMesher<3>: box with problematic edges", "[!mayfail]")
+TEST_CASE("SimplexMesher<3>: box with problematic edges")
 {
     auto shape = box({-1, -1, -1}, {1.1, 1.1, 1.1});
     auto r = Region<3>({-2, -2, -2}, {2, 2, 2});
