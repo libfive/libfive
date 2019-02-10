@@ -559,7 +559,7 @@ void init_libfive_kernel(void*)
     lambda-shape
     define-shape
     remap-shape
-    shape-find-bounds
+    make-var
     shape->string
     shape-eval
     shape-derivs
