@@ -283,9 +283,10 @@ public:
             << region.upper << "]\n";
 #endif
 
+        const auto region_ = region.shrink(shrink);
         {   //  First, check the full-dimension, unconstrained solver
             auto sol = solve(target_pos, target_value);
-            if (region.shrink(shrink).contains(sol.position)) {
+            if (region_.contains(sol.position)) {
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
                 std::cout << "Got full-dimension solution\n";
 #endif
@@ -302,7 +303,7 @@ public:
         //  every corner, picking the first case where the QEF solution
         //  doesn't escape the bounds).
         UnrollDimension<(int)N - 1>()(
-                *this, region, shrink, target_pos, target_value, out);
+                *this, region_, target_pos, target_value, out);
 
         assert(!std::isinf(out.error));
         return out;
@@ -319,7 +320,7 @@ protected:
     template <int TargetDimension, unsigned Dummy=0>
     struct UnrollDimension {
         void operator()(
-                const QEF<N>& qef, const Region<N>& region, double shrink,
+                const QEF<N>& qef, const Region<N>& region,
                 const Eigen::Matrix<double, 1, N>& target_pos,
                 double target_value, Solution& out)
         {
@@ -329,7 +330,7 @@ protected:
 #endif
 
             UnrollSubspace<TargetDimension, ipow(3, N)>()(
-                qef, region, shrink, target_pos, target_value, out);
+                qef, region, target_pos, target_value, out);
 
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
             std::cout << "Done unrolling subspace\n";
@@ -341,7 +342,7 @@ protected:
             if (std::isinf(out.error))
             {
                 UnrollDimension<TargetDimension - 1, Dummy>()(
-                        qef, region, shrink, target_pos, target_value, out);
+                        qef, region, target_pos, target_value, out);
             }
         }
     };
@@ -349,7 +350,7 @@ protected:
     // We go all the way down to 0D, then terminate static unrolling at -1D
     template <unsigned Dummy>
     struct UnrollDimension<-1, Dummy> {
-        void operator()(const QEF<N>&, const Region<N>&, double,
+        void operator()(const QEF<N>&, const Region<N>&,
                         const Eigen::Matrix<double, 1, N>&,
                         double, Solution&)
         {
@@ -360,7 +361,7 @@ protected:
     template <unsigned TargetDimension, unsigned TargetSubspace>
     struct UnrollSubspace {
         void operator()(
-                const QEF<N>& qef, const Region<N>& region, double shrink,
+                const QEF<N>& qef, const Region<N>& region,
                 const Eigen::Matrix<double, 1, N>& target_pos,
                 double target_value, Solution& out)
         {
@@ -369,14 +370,12 @@ protected:
             if (TargetDimension ==
                 NeighborIndex(TargetSubspace - 1).dimension())
             {
-                const auto region_ = region.shrink(shrink);
-
                 // Calculate the constrained solution, including error
                 const auto sol = qef.solveConstrained<TargetSubspace - 1>(
-                        region_, target_pos, target_value);
+                        region, target_pos, target_value);
 
                 // If this solution is an improvement, then store it
-                if (region_.contains(sol.position) && out.error > sol.error) {
+                if (region.contains(sol.position) && out.error > sol.error) {
                     assert(sol.error >= -1e-12);
                     out = sol;
                 }
@@ -385,14 +384,14 @@ protected:
             // Statically unroll the loop across all neighbors
             // (keeping the target dimension constant)
             UnrollSubspace<TargetDimension, TargetSubspace - 1>()(
-                    qef, region, shrink, target_pos, target_value, out);
+                    qef, region, target_pos, target_value, out);
         }
     };
 
     // Terminates static unrolling across neighbors with a fixed dimension
     template <unsigned TargetDimension>
     struct UnrollSubspace<TargetDimension, 0> {
-        void operator()(const QEF<N>&, const Region<N>&, double,
+        void operator()(const QEF<N>&, const Region<N>&,
                         const Eigen::Matrix<double, 1, N>&, double, Solution&)
         {
             // Nothing to do here
