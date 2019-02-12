@@ -342,8 +342,12 @@ protected:
             // Continue unrolling if we haven't found a bounded position,
             // moving to the next-lowest dimension (cell to face, face to edge,
             // edge to vertex, terminating at -1 dimensions)
-            if (std::isinf(out.error))
+            assert(!std::isinf(out.error));
+            if (!region.contains(out.position))
             {
+                // Reset the error value, then try the next dimension down
+                out.error = std::numeric_limits<double>::infinity();
+
                 UnrollDimension<TargetDimension - 1, Dummy>()(
                         qef, region, target_pos, target_value, out);
             }
@@ -384,7 +388,10 @@ protected:
                 std::cout << "  Got solution at " << sol.position.transpose() << " and error " << sol.error << "\n";
 #endif
                 // If this solution is an improvement, then store it
-                if (region.contains(sol.position) && out.error > sol.error) {
+                if (sol.error < out.error || (sol.error == out.error &&
+                                              !region.contains(sol.position) &&
+                                               region.contains(out.position)))
+                {
                     assert(sol.error >= -1e-12);
                     out = sol;
                 } else {
