@@ -279,13 +279,16 @@ public:
 
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
         std::cout << "------------------------------------------------------\n";
-        std::cout << "Solving bounded between \n[" << region.lower << "]\n["
-            << region.upper << "]\n";
+        std::cout << "Solving bounded between \n[" << region.lower.transpose() << "]\n["
+            << region.upper.transpose() << "]\n";
 #endif
 
         const auto region_ = region.shrink(shrink);
         {   //  First, check the full-dimension, unconstrained solver
             auto sol = solve(target_pos, target_value);
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+            std::cout << "Got solution at [" << sol.position.transpose() << "]\n";
+#endif
             if (region_.contains(sol.position)) {
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
                 std::cout << "Got full-dimension solution\n";
@@ -370,14 +373,24 @@ protected:
             if (TargetDimension ==
                 NeighborIndex(TargetSubspace - 1).dimension())
             {
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+                std::cout << "  Solving constrained to subspace " << TargetSubspace - 1 << "\n";
+#endif
                 // Calculate the constrained solution, including error
                 const auto sol = qef.solveConstrained<TargetSubspace - 1>(
                         region, target_pos, target_value);
 
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+                std::cout << "  Got solution at " << sol.position.transpose() << " and error " << sol.error << "\n";
+#endif
                 // If this solution is an improvement, then store it
                 if (region.contains(sol.position) && out.error > sol.error) {
                     assert(sol.error >= -1e-12);
                     out = sol;
+                } else {
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+                    std::cout << "  Not an improvement; skipping\n";
+#endif
                 }
             }
 
