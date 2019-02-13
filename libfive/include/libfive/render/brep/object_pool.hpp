@@ -154,6 +154,14 @@ public:
     void reset(unsigned workers=8,
                ProgressWatcher* progress_watcher=nullptr)
     {
+
+        auto workers_needed = std::max(allocated_blocks.size(),
+                                       fresh_blocks.size());
+        if (workers_needed < workers)
+        {
+            workers = workers_needed;
+        }
+
         std::vector<std::future<void>> futures;
         futures.resize(workers);
 
