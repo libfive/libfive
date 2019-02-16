@@ -531,15 +531,15 @@ void View::showBBox(bool b)
 
 void View::toDCMeshing()
 {
-    setAlgorithm(Kernel::Mesh::DUAL_CONTOURING);
+    setAlgorithm(Kernel::DUAL_CONTOURING);
 }
 
 void View::toIsoMeshing()
 {
-    setAlgorithm(Kernel::Mesh::ISO_SIMPLEX);
+    setAlgorithm(Kernel::ISO_SIMPLEX);
 }
 
-void View::setAlgorithm(Kernel::Mesh::Algorithm a)
+void View::setAlgorithm(Kernel::BRepAlgorithm a)
 {
     if (a != alg) {
         alg = a;

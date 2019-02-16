@@ -56,7 +56,7 @@ public:
     /*
      *  Kicks off a mesh rendering operation in a separate thread
      */
-    void startRender(Settings s, Kernel::Mesh::Algorithm alg);
+    void startRender(Settings s, Kernel::BRepAlgorithm alg);
 
     /*
      *  Checks whether the shape is done rendering
@@ -148,7 +148,7 @@ protected:
     struct RenderSettings {
         Settings settings;
         int div;
-        Kernel::Mesh::Algorithm alg;
+        Kernel::BRepAlgorithm alg;
     };
     typedef QPair<Kernel::Mesh*, Kernel::Region<3>> BoundedMesh;
 

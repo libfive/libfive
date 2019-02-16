@@ -102,11 +102,11 @@ TEST_CASE("Mesh::render (different algorithms)")
     auto a = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
                           1/32.0f, pow(10, -3), true,
                           EMPTY_PROGRESS_CALLBACK,
-                          Mesh::DUAL_CONTOURING);
+                          DUAL_CONTOURING);
     auto b = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
                           1/32.0f, pow(10, -3), true,
                           EMPTY_PROGRESS_CALLBACK,
-                          Mesh::ISO_SIMPLEX);
+                          ISO_SIMPLEX);
     REQUIRE(b->branes.size() > a->branes.size());
     REQUIRE(b->verts.size() >  a->verts.size());
 }

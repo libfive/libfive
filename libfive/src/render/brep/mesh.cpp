@@ -30,7 +30,7 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    double min_feature, double max_err,
                                    bool multithread,
                                    ProgressCallback progress_callback,
-                                   Algorithm alg)
+                                   BRepAlgorithm alg)
 {
     std::atomic_bool cancel(false);
     std::map<Tree::Id, float> vars;
@@ -43,7 +43,7 @@ std::unique_ptr<Mesh> Mesh::render(
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback,
-            Algorithm alg)
+            BRepAlgorithm alg)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -61,7 +61,7 @@ std::unique_ptr<Mesh> Mesh::render(
         const Region<3>& r, double min_feature, double max_err,
         int workers, std::atomic_bool& cancel,
         ProgressCallback progress_callback,
-        Algorithm alg)
+        BRepAlgorithm alg)
 {
     std::unique_ptr<Mesh> out;
     if (alg == DUAL_CONTOURING)

@@ -32,10 +32,20 @@ std::unique_ptr<Contours> Contours::render(
         es.emplace_back(XTreeEvaluator(t));
     }
 
+    return render(es.data(), r, min_feature, max_err, workers, cancel,
+                  EMPTY_PROGRESS_CALLBACK);
+}
+
+std::unique_ptr<Contours> Contours::render(
+        XTreeEvaluator* es, const Region<2>& r,
+        double min_feature, double max_err,
+        unsigned workers, std::atomic_bool& cancel,
+        ProgressCallback progress_callback)
+{
     // Create the quadtree on the scaffold
     auto xtree = DCPool<2>::build(
-        es.data(), r, min_feature, max_err,
-        workers, cancel);
+        es, r, min_feature, max_err,
+        workers, cancel, progress_callback);
 
     // Abort early if the cancellation flag is set
     if (cancel == true) {
@@ -44,7 +54,7 @@ std::unique_ptr<Contours> Contours::render(
 
     // Perform marching squares, collecting into Contours
     auto cs = Dual<2>::walk<DCContourer>(xtree, workers, cancel,
-                                         EMPTY_PROGRESS_CALLBACK);
+                                         progress_callback);
     cs->bbox = r;
     return cs;
 }
