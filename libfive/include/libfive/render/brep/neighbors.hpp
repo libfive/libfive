@@ -9,8 +9,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include <atomic>
-
-#include "libfive/render/brep/neighbor_tables.hpp"
+#include <array>
+#include "libfive/render/brep/util.hpp"
 
 namespace Kernel {
 

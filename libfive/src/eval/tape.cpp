@@ -11,12 +11,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/eval/tape.hpp"
 #include "libfive/eval/deck.hpp"
+#include "libfive/render/brep/region.hpp"
 
 namespace Kernel {
 
-Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
-                                          Clause::Id, Clause::Id)> fn,
-                       bool& abort)
+Clause::Id Tape::rwalk(WalkFunction fn, bool& abort)
 {
     for (auto itr = t.rbegin(); itr != t.rend() && !abort; ++itr)
     {
@@ -25,8 +24,7 @@ Clause::Id Tape::rwalk(std::function<void(Opcode::Opcode, Clause::Id,
     return i;
 }
 
-void Tape::walk(std::function<void(Opcode::Opcode, Clause::Id,
-                                   Clause::Id, Clause::Id)> fn, bool& abort)
+void Tape::walk(WalkFunction fn, bool& abort)
 {
     for (auto itr = t.begin(); itr != t.end() && !abort; ++itr)
     {
@@ -34,11 +32,14 @@ void Tape::walk(std::function<void(Opcode::Opcode, Clause::Id,
     }
 }
 
-std::shared_ptr<Tape>
-Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
-           std::function<Keep(Opcode::Opcode, Clause::Id,
-                              Clause::Id, Clause::Id)> fn,
-           Type t, Region<3> r)
+std::shared_ptr<Tape> Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
+                                 KeepFunction fn, Type t)
+{
+    return push(tape, deck, fn, t, Region<3>());
+}
+
+std::shared_ptr<Tape> Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
+                                 KeepFunction fn, Type t, const Region<3>& r)
 {
     // If this tape has no min/max clauses, then return it right away
     if (tape->terminal)

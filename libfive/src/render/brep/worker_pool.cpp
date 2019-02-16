@@ -9,12 +9,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "libfive/render/brep/worker_pool.hpp"
+#include "libfive/eval/eval_xtree.hpp"
 
 namespace Kernel {
 
 template <typename T, typename Neighbors, unsigned N>
 Root<T> WorkerPool<T, Neighbors, N>::build(
-        const Tree t, Region<N> region,
+        const Tree t, const Region<N>& region,
         double min_feature, double max_err, unsigned workers,
         ProgressCallback progress_callback)
 {
@@ -32,15 +33,15 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
 template <typename T, typename Neighbors, unsigned N>
 Root<T> WorkerPool<T, Neighbors, N>::build(
     XTreeEvaluator* eval,
-    Region<N> region, double min_feature,
+    const Region<N>& region_, double min_feature,
     double max_err, unsigned workers, std::atomic_bool& cancel,
     ProgressCallback progress_callback)
 {
+    const auto region = region_.withResolution(min_feature);
     auto root(new T(nullptr, 0, region));
     std::atomic_bool done(false);
 
     LockFreeStack tasks(workers);
-    region.setResolution(min_feature);
     tasks.push({root, eval->deck->tape, region, Neighbors()});
 
     std::vector<std::future<void>> futures;

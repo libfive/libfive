@@ -10,13 +10,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 
-#include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/brep.hpp"
 #include "libfive/render/brep/progress.hpp"
 #include "libfive/render/brep/algorithm.hpp"
 
 namespace Kernel {
 class XTreeEvaluator; // Forward declaration
+template <unsigned N> class Region;
 
 class Mesh : public BRep<3> {
 public:

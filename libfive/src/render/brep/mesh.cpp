@@ -17,6 +17,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/simplex/simplex_pool.hpp"
 #include "libfive/render/brep/simplex/simplex_mesher.hpp"
 #include "libfive/render/brep/dual.hpp"
+#include "libfive/render/brep/region.hpp"
 
 #if LIBFIVE_TRIANGLE_FAN_MESHING
 #include "libfive/render/brep/dc/intersection_aligner.hpp"

@@ -10,6 +10,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <fstream>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include "libfive/eval/eval_xtree.hpp"
+
 #include "libfive/render/brep/contours.hpp"
 #include "libfive/render/brep/brep.hpp"
 #include "libfive/render/brep/dc/dc_pool.hpp"

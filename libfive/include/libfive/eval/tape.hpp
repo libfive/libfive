@@ -14,13 +14,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/eval/clause.hpp"
 #include "libfive/eval/interval.hpp"
-#include "libfive/tree/tree.hpp"
 
-#include "libfive/render/brep/region.hpp"
 #include "libfive/oracle/oracle_context.hpp"
 
 namespace Kernel {
-class Deck; /*  Foward declaration */
+
+/*  Foward declarations */
+template <unsigned N> class Region;
+class Deck;
 
 class Tape
 {
@@ -84,10 +85,11 @@ public:
      *  t is a tape type
      *  r is the relevant region (or an empty region by default)
      */
-    static Handle push(const Handle& tape, Deck& deck,
-         std::function<Keep(Opcode::Opcode, Clause::Id,
-                            Clause::Id, Clause::Id)> fn,
-         Type t, Region<3> r=Region<3>());
+    using KeepFunction = std::function<Keep(Opcode::Opcode, Clause::Id,
+                                            Clause::Id, Clause::Id)>;
+    static Handle push(const Handle& tape, Deck& deck, KeepFunction fn, Type t);
+    static Handle push(const Handle& tape, Deck& deck, KeepFunction fn, Type t,
+                       const Region<3>& r);
 
     /*
      *  Walks through the tape in bottom-to-top (reverse) order,
@@ -95,9 +97,9 @@ public:
      *
      *  Returns the clause id of the tape's root
      */
-    Clause::Id rwalk(
-            std::function<void(Opcode::Opcode, Clause::Id,
-                               Clause::Id, Clause::Id)> fn, bool& abort);
+    using WalkFunction = std::function<void(Opcode::Opcode, Clause::Id,
+                                            Clause::Id, Clause::Id)>;
+    Clause::Id rwalk(WalkFunction fn, bool& abort);
 
     /*
      *  Inlined, faster version of rwalk
@@ -112,8 +114,7 @@ public:
         return i;
     }
 
-    void  walk(std::function<void(Opcode::Opcode, Clause::Id,
-                                  Clause::Id, Clause::Id)> fn, bool& abort);
+    void  walk(WalkFunction fn, bool& abort);
 
     /*
      *  Walks up the tape list until p is within the tape's region, then

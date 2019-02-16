@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "catch.hpp"
 
+#include "libfive/eval/eval_xtree.hpp"
 #include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/axes.hpp"

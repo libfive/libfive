@@ -31,7 +31,7 @@ XTree<N, T, L>::XTree(T* parent, unsigned index, const Region<N>& region)
 }
 
 template <unsigned N, typename T, typename L>
-void XTree<N, T, L>::reset(T* p, unsigned i, Region<N> r)
+void XTree<N, T, L>::reset(T* p, unsigned i, const Region<N>& r)
 {
     parent = p;
     parent_index = i;

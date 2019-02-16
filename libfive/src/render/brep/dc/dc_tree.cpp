@@ -17,11 +17,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/StdVector>
 #include <boost/lockfree/queue.hpp>
 
+#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/tape.hpp"
+
+#include "libfive/render/brep/dc/marching.hpp"
 #include "libfive/render/brep/dc/dc_tree.hpp"
-#include "libfive/render/brep/object_pool.hpp"
+#include "libfive/render/brep/dc/dc_neighbors.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/axes.hpp"
-#include "libfive/eval/tape.hpp"
 
 #include "../xtree.cpp"
 
@@ -33,7 +36,7 @@ template <unsigned N> constexpr double DCTree<N>::EIGENVALUE_CUTOFF;
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-DCTree<N>::DCTree(DCTree<N>* parent, unsigned index, Region<N> r)
+DCTree<N>::DCTree(DCTree<N>* parent, unsigned index, const Region<N>& r)
     : XTree<N, DCTree<N>, DCLeaf<N>>(parent, index, r)
 {
     // Nothing to do here

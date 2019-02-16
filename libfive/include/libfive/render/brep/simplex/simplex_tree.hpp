@@ -20,12 +20,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/export.hpp"
 #include "libfive/eval/eval_xtree.hpp"
-#include "libfive/eval/interval.hpp"
 
-#include "libfive/render/brep/region.hpp"
-#include "libfive/render/brep/progress.hpp"
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/simplex/qef.hpp"
 #include "libfive/render/brep/simplex/surface_edge_map.hpp"
 
@@ -33,6 +31,7 @@ namespace Kernel {
 
 /* Forward declarations */
 template <unsigned N> class SimplexNeighbors;
+template <unsigned N> class Region;
 
 template <unsigned N>
 struct SimplexLeafSubspace {

@@ -10,6 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/eval_interval.hpp"
 #include "libfive/eval/deck.hpp"
 #include "libfive/eval/tape.hpp"
+#include "libfive/render/brep/region.hpp"
 
 namespace Kernel {
 
@@ -118,6 +119,12 @@ std::shared_ptr<Tape> IntervalEvaluator::push(std::shared_ptr<Tape> tape)
 {
     assert(tape.get() != nullptr);
 
+    const Region<3> R(Eigen::Vector3d(i[deck->X].first.lower(),
+                                      i[deck->Y].first.lower(),
+                                      i[deck->Z].first.lower()),
+                      Eigen::Vector3d(i[deck->X].first.upper(),
+                                      i[deck->Y].first.upper(),
+                                      i[deck->Z].first.upper()));
     return Tape::push(tape, *deck,
         [&](Opcode::Opcode op, Clause::Id /* id */,
             Clause::Id a, Clause::Id b)
@@ -164,9 +171,7 @@ std::shared_ptr<Tape> IntervalEvaluator::push(std::shared_ptr<Tape> tape)
         }
         return Tape::KEEP_ALWAYS;
     },
-        Tape::INTERVAL,
-        {{i[deck->X].first.lower(), i[deck->Y].first.lower(), i[deck->Z].first.lower()},
-         {i[deck->X].first.upper(), i[deck->Y].first.upper(), i[deck->Z].first.upper()}});
+    Tape::INTERVAL, R);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

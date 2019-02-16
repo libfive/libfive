@@ -20,7 +20,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/simplex/simplex_tree.hpp"
 #include "libfive/render/brep/simplex/simplex_neighbors.hpp"
 
-#include "libfive/render/brep/object_pool.hpp"
+#include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/neighbor_tables.hpp"
+
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
 
