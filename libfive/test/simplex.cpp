@@ -275,9 +275,6 @@ TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
     auto t = SimplexTreePool<3>::build(c, r, 0.9, 1e-8, 8);
     t->assignIndices();
 
-    std::list<const SimplexTree<3>*> todo;
-    todo.push_back(t.get());
-
     std::atomic_bool cancel(false);
     auto m = Dual<3>::walk<SimplexMesher>(t, 8,
             cancel, EMPTY_PROGRESS_CALLBACK, c);
