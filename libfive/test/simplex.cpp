@@ -258,11 +258,11 @@ TEST_CASE("SimplexMesher<3>: another tricky shape", "[!mayfail]")
                 -box({0, -1, -0.5}, {1, 2.5, 1}));
 
     Region<3> r({-5, -5, -5}, {5, 5, 5});
-    auto t = SimplexTreePool<3>::build(b, r, 0.25, 1e-8);
+    auto t = SimplexTreePool<3>::build(b, r, 0.5, 1e-8, 1);
     t->assignIndices();
 
     std::atomic_bool cancel(false);
-    auto m = Dual<3>::walk<SimplexMesher>(t, 8,
+    auto m = Dual<3>::walk<SimplexMesher>(t, 1,
             cancel, EMPTY_PROGRESS_CALLBACK, b);
     CHECK_EDGE_PAIRS(*m);
 }
