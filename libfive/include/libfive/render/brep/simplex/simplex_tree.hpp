@@ -190,6 +190,13 @@ public:
      */
     void releaseTo(Pool& object_pool);
 
+    /*  Centers vertices within their respective subspaces.
+     *
+     *  This isn't used in normal operation, but paired with
+     *  SimplexDebugMesher, can be helpful to see where subdivision
+     *  topologies are broken. */
+    void debugCenterVertices();
+
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
