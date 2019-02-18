@@ -817,7 +817,7 @@ void SimplexTree<N>::releaseTo(Pool& object_pool) {
 
 
 template <unsigned N>
-void SimplexTree<N>::debugCenterVertices()
+void SimplexTree<N>::debugCenterVertices() const
 {
     if (this->isBranch()) {
         for (const auto& c: this->children) {
