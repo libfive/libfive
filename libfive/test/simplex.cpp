@@ -252,16 +252,62 @@ TEST_CASE("SimplexMesher<3>: tricky shape")
     CHECK_EDGE_PAIRS(*m);
 }
 
-TEST_CASE("SimplexMesher<3>: another tricky shape", "[!mayfail]")
+using SimplexVertexMap = std::map<std::pair<const SimplexTree<3>*, unsigned>,
+                                  std::pair<Eigen::Vector3d, bool>>;
+void buildVertexMap(const SimplexTree<3>* t, SimplexVertexMap& out)
+{
+    if (t->isBranch()) {
+        for (const auto& c: t->children) {
+            buildVertexMap(c.load(), out);
+        }
+    } else if (t->leaf) {
+        for (unsigned i=0; i < ipow(3, 3); ++i) {
+            out.insert({{t, i}, {t->leaf->sub[i].load()->vert,
+                                 t->leaf->sub[i].load()->inside}});
+        }
+    }
+}
+
+TEST_CASE("SimplexTree<3>: assignIndices with cell collapsing",
+          "[!mayfail]")
 {
     auto b = max(box({-1, 0, -1}, {1, 2, 1}),
                 -box({0, -1, -0.5}, {1, 2.5, 1}));
 
     Region<3> r({-5, -5, -5}, {5, 5, 5});
     auto t = SimplexTreePool<3>::build(b, r, 0.5, 1e-8, 1);
-    t->assignIndices();
+    SimplexVertexMap before;
+    buildVertexMap(t.get(), before);
 
     std::atomic_bool cancel(false);
+    t->assignIndices(1, cancel);
+    SimplexVertexMap after;
+    buildVertexMap(t.get(), after);
+
+    for (auto& k : before) {
+        REQUIRE(after.count(k.first) != 0);
+        const auto a = after.at(k.first);
+        const auto b = k.second;
+        CAPTURE(a.first);
+        CAPTURE(b.first);
+        CAPTURE(k.first.first->region.lower.transpose());
+        CAPTURE(k.first.first->region.upper.transpose());
+        REQUIRE((a.first - b.first).norm() < 1e-12);
+        REQUIRE(a.second == b.second);
+    }
+}
+
+TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement",
+          "[!mayfail]")
+{
+    auto b = max(box({-1, 0, -1}, {1, 2, 1}),
+                -box({0, -1, -0.5}, {1, 2.5, 1}));
+
+    Region<3> r({-5, -5, -5}, {5, 5, 5});
+    auto t = SimplexTreePool<3>::build(b, r, 0.5, 1e-8, 1);
+    std::atomic_bool cancel(false);
+    t->assignIndices(1, cancel); // Something is going wrong here?
+
     auto m = Dual<3>::walk<SimplexMesher>(t, 1,
             cancel, EMPTY_PROGRESS_CALLBACK, b);
     CHECK_EDGE_PAIRS(*m);
