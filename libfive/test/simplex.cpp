@@ -268,6 +268,36 @@ void buildVertexMap(const SimplexTree<3>* t, SimplexVertexMap& out)
     }
 }
 
+/*  Centers vertices within their respective subspaces.
+ *
+ *  This isn't used in normal operation, but paired with
+ *  SimplexDebugMesher, can be helpful to see where subdivision
+ *  topologies are broken. */
+void debugCenterVertices(const SimplexTree<3>* t) {
+    if (t->isBranch()) {
+        for (const auto& c: t->children) {
+            debugCenterVertices(c.load());
+        }
+    } else if (t->leaf) {
+        for (unsigned i_=0; i_ < ipow(3, 3); ++i_) {
+            const auto i = NeighborIndex(i_);
+
+            // Find the average position of corners within this subspace
+            Eigen::Vector3d start = Eigen::Vector3d::Zero();
+            unsigned count = 0;
+            for (unsigned j=0; j < ipow(2, 3); ++j) {
+                if (i.contains(CornerIndex(j))) {
+                    start += t->region.corner(j);
+                    count++;
+                }
+            }
+
+            const auto sub = t->leaf->sub[i_].load();
+            sub->vert = start / count;
+        }
+    }
+}
+
 TEST_CASE("SimplexTree<3>: assignIndices with cell collapsing",
           "[!mayfail]")
 {

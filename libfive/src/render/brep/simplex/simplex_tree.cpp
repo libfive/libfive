@@ -815,32 +815,4 @@ void SimplexTree<N>::releaseTo(Pool& object_pool) {
     object_pool.put(this);
 }
 
-
-template <unsigned N>
-void SimplexTree<N>::debugCenterVertices() const
-{
-    if (this->isBranch()) {
-        for (const auto& c: this->children) {
-            c.load()->debugCenterVertices();
-        }
-    } else if (this->leaf) {
-        for (unsigned i_=0; i_ < ipow(3, N); ++i_) {
-            const auto i = NeighborIndex(i_);
-
-            // Find the average position of corners within this subspace
-            Vec start = Vec::Zero();
-            unsigned count = 0;
-            for (unsigned j=0; j < ipow(2, N); ++j) {
-                if (i.contains(CornerIndex(j))) {
-                    start += this->region.corner(j);
-                    count++;
-                }
-            }
-
-            const auto sub = this->leaf->sub[i_].load();
-            sub->vert = start / count;
-        }
-    }
-}
-
 }   // namespace Kernel
