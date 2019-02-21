@@ -276,20 +276,22 @@ public:
                           Eigen::Matrix<double, 1, N> target_pos,
                           double target_value) const
     {
+        const auto region_ = region.shrink(shrink);
 
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
         std::cout << "------------------------------------------------------\n";
         std::cout << "Solving bounded between \n[" << region.lower.transpose() << "]\n["
             << region.upper.transpose() << "]\n";
+        std::cout << "shrunk region: \n[" << region_.lower.transpose() << "]\n["
+            << region_.upper.transpose() << "]\n";
 #endif
 
-        const auto region_ = region.shrink(shrink);
         {   //  First, check the full-dimension, unconstrained solver
             auto sol = solve(target_pos, target_value);
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
             std::cout << "Got solution at [" << sol.position.transpose() << "]\n";
 #endif
-            if (region_.contains(sol.position)) {
+            if (region_.contains(sol.position, 0)) {
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
                 std::cout << "Got full-dimension solution\n";
 #endif
@@ -343,7 +345,7 @@ protected:
             // moving to the next-lowest dimension (cell to face, face to edge,
             // edge to vertex, terminating at -1 dimensions)
             assert(!std::isinf(out.error));
-            if (!region.contains(out.position))
+            if (!region.contains(out.position, 0))
             {
                 // Reset the error value, then try the next dimension down
                 out.error = std::numeric_limits<double>::infinity();
@@ -389,8 +391,8 @@ protected:
 #endif
                 // If this solution is an improvement, then store it
                 if (sol.error < out.error || (sol.error == out.error &&
-                                              !region.contains(sol.position) &&
-                                               region.contains(out.position)))
+                                              !region.contains(sol.position, 0) &&
+                                               region.contains(out.position, 0)))
                 {
                     assert(sol.error >= -1e-12);
                     out = sol;
