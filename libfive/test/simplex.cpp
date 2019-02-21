@@ -322,7 +322,8 @@ TEST_CASE("SimplexTree<3>: assignIndices with cell collapsing",
         CAPTURE(b.first);
         CAPTURE(k.first.first->region.lower.transpose());
         CAPTURE(k.first.first->region.upper.transpose());
-        REQUIRE((a.first - b.first).norm() < 1e-12);
+        CAPTURE((a.first - b.first).norm());
+        REQUIRE((a.first - b.first).norm() < 1e-9);
         REQUIRE(a.second == b.second);
     }
 }

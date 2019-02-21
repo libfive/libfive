@@ -684,6 +684,7 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
             if (reinterpret_cast<uintptr_t>(new_sub) >
                 reinterpret_cast<uintptr_t>(sub))
             {
+                assert(new_sub->inside == sub->inside);
                 task.target->leaf->sub[i].store(new_sub);
             }
 
@@ -729,6 +730,7 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
                     if (reinterpret_cast<uintptr_t>(new_sub) >
                         reinterpret_cast<uintptr_t>(sub))
                     {
+                        assert(new_sub->inside == sub->inside);
                         task.target->leaf->sub[i].store(new_sub);
                     }
                 }
