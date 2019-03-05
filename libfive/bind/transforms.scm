@@ -187,43 +187,193 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     y z))
 (export shear-x-y)
 
+(define (attractrepel-generic shape locus r e signfunc remapfunc)
+  (define (falloff point)
+    (signfunc 1 (* e (exp (- (/ (norm point) r)))))
+  )
+  (let ((shapep (move shape (- locus))))
+    (move
+      (remapfunc shapep falloff)
+    locus)
+  )
+)
+
+(define (attractrepel-remapfunc-xyz shapep falloff)
+  (remap-shape
+    (shapep x y z)
+    (* x (falloff (vec3 x y z)))
+    (* y (falloff (vec3 x y z)))
+    (* z (falloff (vec3 x y z)))
+  )
+)
+
+(define (attractrepel-remapfunc-x shapep falloff)
+  (remap-shape
+    (shapep x y z)
+    (* x (falloff (vec3 x 0 0)))
+    y
+    z
+  )
+)
+
+(define (attractrepel-remapfunc-y shapep falloff)
+  (remap-shape
+    (shapep x y z)
+    x
+    (* y (falloff (vec3 0 y 0)))
+    z
+  )
+)
+
+(define (attractrepel-remapfunc-z shapep falloff)
+  (remap-shape
+    (shapep x y z)
+    x
+    y
+    (* z (falloff (vec3 0  0 z)))
+  )
+)
+
+(define (attractrepel-remapfunc-xy shapep falloff)
+  (remap-shape
+    (shapep x y z)
+    (* x (falloff (vec3 x y 0)))
+    (* y (falloff (vec3 x y 0)))
+    z
+  )
+)
+
+(define (attractrepel-remapfunc-yz shapep falloff)
+  (remap-shape
+    (shapep x y z)
+    x
+    (* y (falloff (vec3 0 y z)))
+    (* z (falloff (vec3 0 y z)))
+  )
+)
+
+(define (attractrepel-remapfunc-xz shapep falloff)
+  (remap-shape
+    (shapep x y z)
+    (* x (falloff (vec3 x 0 z)))
+    y
+    (* z (falloff (vec3 x 0 z)))
+  )
+)
+
+
 (define* (repel shape locus r #:optional (e 1))
   "repel shape #[x0 y0 z0] radius [exaggeration]
   Repels the shape away from a point based upon a radius r,
   with optional exaggeration e"
-  (define (falloff point)
-    (- 1 (* e (exp (- (/ (norm point) r))))))
-  (let ((shapep (move shape (- locus))))
-    (move
-     (remap-shape
-      (shapep x y z)
-      (* x (falloff (vec3 x y z)))
-      (* y (falloff (vec3 x y z)))
-      (* z (falloff (vec3 x y z)))
-      )
-     locus)
-    )
-  )
+  (attractrepel-generic shape locus r e - attractrepel-remapfunc-xyz)
+)
 (export repel)
+
+(define* (repel-x shape locus r #:optional (e 1))
+  "repel-x shape #[x0 y0 z0] radius [exaggeration]
+  Repels the shape away from a plane on the yz axes,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e - attractrepel-remapfunc-x)
+)
+(export repel-x)
+
+(define* (repel-y shape locus r #:optional (e 1))
+  "repel-y shape #[x0 y0 z0] radius [exaggeration]
+  Repels the shape away from a plane on the xz axes,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e - attractrepel-remapfunc-y)
+)
+(export repel-y)
+
+(define* (repel-z shape locus r #:optional (e 1))
+  "repel-z shape #[x0 y0 z0] radius [exaggeration]
+  Repels the shape away from a plane on the xy axes,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e - attractrepel-remapfunc-z)
+)
+(export repel-z)
+
+(define* (repel-xy shape locus r #:optional (e 1))
+  "repel-xy shape #[x0 y0 z0] radius [exaggeration]
+  Repels the shape away from a line parallel to the the z axis,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e - attractrepel-remapfunc-xy)
+)
+(export repel-xy)
+
+(define* (repel-yz shape locus r #:optional (e 1))
+  "repel-yz shape #[x0 y0 z0] radius [exaggeration]
+  Repels the shape away from a line parallel to the the x axis,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e - attractrepel-remapfunc-yz)
+)
+(export repel-yz)
+
+(define* (repel-xz shape locus r #:optional (e 1))
+  "repel-xz shape #[x0 y0 z0] radius [exaggeration]
+  Repels the shape away from a line parallel to the the y axis,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e - attractrepel-remapfunc-xz)
+)
+(export repel-xz)
+
 
 (define* (attract shape locus r #:optional (e 1))
   "attract shape #[x0 y0 z0] radius [exaggeration]
   Attracts the shape towards a point based upon a radius r,
   with optional exaggeration e"
-  (define (falloff point)
-    (+ 1 (* e (exp (- (/ (norm point) r))))))
-  (let ((shapep (move shape (- locus))))
-    (move
-     (remap-shape
-      (shapep x y z)
-      (* x (falloff (vec3 x y z)))
-      (* y (falloff (vec3 x y z)))
-      (* z (falloff (vec3 x y z)))
-      )
-     locus)
-    )
-  )
+  (attractrepel-generic shape locus r e + attractrepel-remapfunc-xyz)
+)
 (export attract)
+
+(define* (attract-x shape locus r #:optional (e 1))
+  "attract-x shape #[x0 y0 z0] radius [exaggeration]
+  Attracts the shape towards a plane on the yz axes,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e + attractrepel-remapfunc-x)
+)
+(export attract-x)
+
+(define* (attract-y shape locus r #:optional (e 1))
+  "attract-y shape #[x0 y0 z0] radius [exaggeration]
+  Attracts the shape towards a plane on the xz axes,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e + attractrepel-remapfunc-y)
+)
+(export attract-y)
+
+(define* (attract-z shape locus r #:optional (e 1))
+  "attract-z shape #[x0 y0 z0] radius [exaggeration]
+  Attracts the shape towards a plane on the xy axes,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e + attractrepel-remapfunc-z)
+)
+(export attract-z)
+
+(define* (attract-xy shape locus r #:optional (e 1))
+  "attract-xy shape #[x0 y0 z0] radius [exaggeration]
+  Attracts the shape towards a line parallel to the the z axis,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e + attractrepel-remapfunc-xy)
+)
+(export attract-xy)
+
+(define* (attract-yz shape locus r #:optional (e 1))
+  "attract-yz shape #[x0 y0 z0] radius [exaggeration]
+  Attracts the shape towards a line parallel to the the x axis,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e + attractrepel-remapfunc-yz)
+)
+(export attract-yz)
+
+(define* (attract-xz shape locus r #:optional (e 1))
+  "attract-xz shape #[x0 y0 z0] radius [exaggeration]
+  Attracts the shape towards a line parallel to the the y axis,
+  based upon a radius r, with optional exaggeration e"
+  (attractrepel-generic shape locus r e + attractrepel-remapfunc-xz)
+)
+(export attract-xz)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
