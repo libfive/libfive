@@ -328,8 +328,7 @@ TEST_CASE("SimplexTree<3>: assignIndices with cell collapsing",
     }
 }
 
-TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement",
-          "[!mayfail]")
+TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement")
 {
     auto b = max(box({-1, 0, -1}, {1, 2, 1}),
                 -box({0, -1, -0.5}, {1, 2.5, 1}));
@@ -337,7 +336,7 @@ TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement",
     Region<3> r({-5, -5, -5}, {5, 5, 5});
     auto t = SimplexTreePool<3>::build(b, r, 0.5, 1e-8, 1);
     std::atomic_bool cancel(false);
-    t->assignIndices(1, cancel); // Something is going wrong here?
+    t->assignIndices(1, cancel);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, 1,
             cancel, EMPTY_PROGRESS_CALLBACK, b);
