@@ -250,10 +250,14 @@ void SimplexTree<N>::findLeafVertices(
 
     const auto leaf_sub = getLeafSubs();
 
-    constexpr unsigned SUBSAMPLE = 4;
-    // First, we evaluate the corners, finding position + normal and storing
-    // it in the corner QEFs (which are assumed to be empty)
-    static_assert(ipow(SUBSAMPLE, N) < LIBFIVE_EVAL_ARRAY_SIZE,
+    //  This variable controls subsample size along each axis.  When it is 2,
+    //  we only sample on the corners; when it is > 2, then we also sample
+    //  between the corners to build up a denser grid within each cell.  This
+    //  grows to the power of N (e.g. doubling it will cause 8x more points to
+    //  be evaluated in the 3D case).
+    constexpr unsigned SAMPLES_PER_EDGE = 2;
+    static_assert(SAMPLES_PER_EDGE >= 2, "Too few samples per edge");
+    static_assert(ipow(SAMPLES_PER_EDGE, N) < LIBFIVE_EVAL_ARRAY_SIZE,
                   "Too many points to evaluate");
 
     // Track how many grid points have to be evaluated here
@@ -293,17 +297,17 @@ void SimplexTree<N>::findLeafVertices(
                 if (!sub.isAxisFixed(a)) {
                     std::vector<Vec, Eigen::aligned_allocator<Vec>> next;
                     for (auto& t : todo) {
-                        for (unsigned j=1; j < SUBSAMPLE - 1; ++j) {
+                        for (unsigned j=1; j < SAMPLES_PER_EDGE - 1; ++j) {
                             t(a) = (region.lower(a) * j +
-                                    region.upper(a) * (SUBSAMPLE - 1 - j))
-                                     / (SUBSAMPLE - 1);
+                                    region.upper(a) * (SAMPLES_PER_EDGE - 1 - j))
+                                     / (SAMPLES_PER_EDGE - 1);
                             next.push_back(t);
                         }
                     }
                     todo = next;
                 }
             }
-            assert(todo.size() == ipow(SUBSAMPLE - 2, sub.dimension()));
+            assert(todo.size() == ipow(SAMPLES_PER_EDGE - 2, sub.dimension()));
 
             for (auto& t : todo) {
                 Eigen::Vector3f v;
@@ -323,7 +327,10 @@ void SimplexTree<N>::findLeafVertices(
         for (unsigned i=0; i < ipow(3, N); ++i) {
             const auto sub = NeighborIndex(i);
             if (!already_solved[sub.i]) {
-                for (unsigned j=0; j < ipow(SUBSAMPLE - 2, sub.dimension()); ++j) {
+                for (unsigned j=0;
+                     j < ipow(SAMPLES_PER_EDGE - 2, sub.dimension());
+                     ++j)
+                {
                     // Helper function to push a position + value + normal,
                     // swapping the normal to an all-zeros vector if any
                     // items are invalid.
