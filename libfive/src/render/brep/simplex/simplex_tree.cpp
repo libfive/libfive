@@ -95,7 +95,8 @@ struct Unroller
             const std::array<SimplexLeafSubspace<BaseDimension>*,
                        ipow(3, BaseDimension)>& leaf_sub,
             const std::array<bool, ipow(3, BaseDimension)>& already_solved,
-            const Region<BaseDimension>& region)
+            const Region<BaseDimension>& region,
+            XTreeEvaluator* eval, Tape::Handle& tape)
     {
         double error = 0.0;
         if (!already_solved[SubspaceIndex_]) {
@@ -113,29 +114,47 @@ struct Unroller
             }
 
             const auto r = region.template subspace<SubspaceFloating>();
-            const auto sol = qef.solveBounded(r);
-            error = sol.error;
 
-            // Unpack from the reduced-dimension solution to the leaf vertex
-            unsigned j = 0;
-            auto s = leaf_sub[SubspaceIndex_];
-            for (unsigned i=0; i < BaseDimension; ++i) {
-                if (SubspaceFloating & (1 << i)) {
-                    s->vert(i) = sol.position(j++);
-                } else if (SubspacePos & (1 << i)) {
-                    s->vert(i) = region.upper(i);
-                } else {
-                    s->vert(i) = region.lower(i);
+            for (unsigned i=0; i < 4; ++i) {
+                const auto sol = qef.solveBounded(r);
+                error = sol.error;
+
+                // Unpack from the reduced-dimension solution to the leaf vertex
+                unsigned j = 0;
+                auto s = leaf_sub[SubspaceIndex_];
+                for (unsigned i=0; i < BaseDimension; ++i) {
+                    if (SubspaceFloating & (1 << i)) {
+                        s->vert(i) = sol.position(j++);
+                    } else if (SubspacePos & (1 << i)) {
+                        s->vert(i) = region.upper(i);
+                    } else {
+                        s->vert(i) = region.lower(i);
+                    }
                 }
-            }
+                assert(j == SubspaceDimension);
 
-            assert(j == SubspaceDimension);
+                // Evaluate the function at the solution point, and add that
+                // information to the QEF, to do an iterative refinement.
+                Eigen::Vector3f vert;
+                vert << s->vert.template cast<float>().transpose(),
+                        region.perp.template cast<float>();
+                eval->array.set(vert, 0);
+                const auto ds = eval->array.derivs(1, tape);
+                QEF<BaseDimension> extra;
+                extra.insert(s->vert,
+                             ds.col(0).template head<BaseDimension>().template cast<double>(),
+                             ds(3, 0));
+
+                qef /= 2.0;
+                qef += extra.template sub<SubspaceFloating>();
+            }
         }
 
         // Recurse!
         return std::max(error,
                 Unroller<BaseDimension, SubspaceIndex_ - 1>()(
-                    leaf, leaf_sub, already_solved, region));
+                    leaf, leaf_sub, already_solved, region,
+                    eval, tape));
     }
 };
 
@@ -147,7 +166,8 @@ struct Unroller<BaseDimension, -1>
                       const std::array<SimplexLeafSubspace<BaseDimension>*,
                                  ipow(3, BaseDimension)>&,
                       const std::array<bool, ipow(3, BaseDimension)>&,
-                      const Region<BaseDimension>&)
+                      const Region<BaseDimension>&,
+                      XTreeEvaluator*, Tape::Handle&)
     {
         return 0.0; // Nothing to do here
     }
@@ -366,26 +386,9 @@ void SimplexTree<N>::findLeafVertices(
     }
 
     // Statically unroll a loop to position every vertex within their subspace.
-    for (unsigned j=0; j < 16; ++j) {
-        Unroller<N, ipow(3, N) - 1>()(*this->leaf, leaf_sub,
-                                      already_solved, region);
-        for (unsigned i=0; i < ipow(3, N); ++i) {
-            if (!already_solved[i]) {
-                const auto leaf_sub = this->leaf->sub[i].load();
-                leaf_sub->qef /= 2.0;
-                Eigen::Vector3f vert;
-                vert << leaf_sub->vert.template cast<float>().transpose(),
-                        region.perp.template cast<float>();
-                eval->array.set(vert, 0);
-                const auto ds = eval->array.derivs(1, tape);
+    Unroller<N, ipow(3, N) - 1>()(*this->leaf, leaf_sub,
+                                  already_solved, region, eval, tape);
 
-                leaf_sub->qef.insert(
-                        leaf_sub->vert,
-                        ds.col(0).template head<N>().template cast<double>(),
-                        ds(3, 0));
-            }
-        }
-    }
 
     // Check whether each vertex is inside or outside, either the hard way
     // (if this cell is ambiguous) or the easy way (if it's empty / filled).
@@ -518,7 +521,8 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
     std::array<bool, ipow(3, N)> already_solved;
     std::fill(already_solved.begin(), already_solved.end(), false);
     const double err = Unroller<N, ipow(3, N) - 1>()(
-            *this->leaf, leaf_sub, already_solved, region);
+            *this->leaf, leaf_sub, already_solved, region,
+            eval, tape);
 
     // We've successfully collapsed the cell!
     if (err < max_err) {
