@@ -250,62 +250,109 @@ void SimplexTree<N>::findLeafVertices(
 
     const auto leaf_sub = getLeafSubs();
 
+    constexpr unsigned SUBSAMPLE = 4;
     // First, we evaluate the corners, finding position + normal and storing
     // it in the corner QEFs (which are assumed to be empty)
-    static_assert(ipow(2, N) < LIBFIVE_EVAL_ARRAY_SIZE,
+    static_assert(ipow(SUBSAMPLE, N) < LIBFIVE_EVAL_ARRAY_SIZE,
                   "Too many points to evaluate");
 
-    // Remap from a value in the range [0, count) to a corner index
-    // in the range [0, 1 <<N).
-    std::array<int, 1 << N> corner_indices;
-
-    // Track how many corners have to be evaluated here
+    // Track how many grid points have to be evaluated here
     // (if they have been be looked up from a neighbor, they don't have
     //  to be evaluated here, which can save time)
     size_t count = 0;
 
     // Pack values into the evaluator, skipping when values have already been
-    // borrowed from neighbors
-    for (unsigned i=0; i < ipow(2, N); ++i) {
-        const auto sub = CornerIndex(i).neighbor();
+    // borrowed from neighbors.  Here's a visual example of the packing,
+    // with a subsampling factor of 4x:
+    //
+    //      X O O X
+    //      O I I O
+    //      O I I O
+    //      X O O X
+    //
+    //  Values with an X are packed into each corner (4x)
+    //  Values marked with O are packed into edges (4x)
+    //  Values marked with I are packed into the volume (1x)
+    //
+    //  If nothing is borrowed from neighbors, we'd end up with
+    //      X | X | O O | X | X | O O | O O | O O | I I I I
+    //  in the evaluator (following the usual ternary ordering rule)
+    for (unsigned i=0; i < ipow(3, N); ++i) {
+        const auto sub = NeighborIndex(i);
         if (!already_solved[sub.i]) {
-            eval->array.set(region.corner3f(i), count);
-            corner_indices[count++] = i;
+            std::vector<Vec, Eigen::aligned_allocator<Vec>> todo;
+            Vec init;
+            for (unsigned a=0; a < N; ++a) {
+                if (sub.isAxisFixed(a)) {
+                    init(a) = (sub.axisPosition(a) ? region.upper
+                                                   : region.lower)(a);
+                }
+            }
+            for (unsigned a=0; a < N; ++a) {
+                if (!sub.isAxisFixed(a)) {
+                    std::vector<Vec, Eigen::aligned_allocator<Vec>> next;
+                    for (auto& t : todo) {
+                        for (unsigned j=1; j < SUBSAMPLE - 1; ++j) {
+                            t(a) = (region.lower(a) * j +
+                                    region.upper(a) * (SUBSAMPLE - 1 - j))
+                                     / (SUBSAMPLE - 1);
+                            next.push_back(t);
+                        }
+                    }
+                    todo = next;
+                }
+            }
+            assert(todo.len() == ipow(SUBSAMPLE, sub.dimension()));
+
+            for (auto& t : todo) {
+                Eigen::Vector3f v;
+                v << t.template cast<float>(),
+                     region.perp.template cast<float>();
+                eval->array.set(v, count++);
+            }
         }
     }
 
-    // Then unpack into the corner QEF arrays (which are guaranteed to be
+    // Then unpack into the subspace QEF arrays (which are guaranteed to be
     // empty, because SimplexLeaf::reset() clears them).
     {
         const auto ds = eval->array.derivs(count, tape);
         const auto ambig = eval->array.getAmbiguous(count, tape);
-        for (unsigned i=0; i < count; ++i) {
-            const auto sub_index = CornerIndex(corner_indices[i]).neighbor();
+        unsigned index=0;
+        for (unsigned i=0; i < ipow(3, N); ++i) {
+            const auto sub = NeighborIndex(i);
+            if (!already_solved[sub.i]) {
+                for (unsigned j=0; j < ipow(SUBSAMPLE, sub.dimension()); ++j) {
+                    // Helper function to push a position + value + normal,
+                    // swapping the normal to an all-zeros vector if any
+                    // items are invalid.
+                    auto push = [&](Eigen::Vector3f d) {
+                        Eigen::Matrix<double, N, 1> d_ =
+                            d.template head<N>().template cast<double>();
+                        if (!d_.array().isFinite().all()) {
+                            d_.array() = 0.0;
+                        }
+                        leaf_sub[sub.i]->qef.insert(
+                                eval->array.get(index).template cast<double>()
+                                                      .template head<N>(),
+                                d_, ds(3, i));
+                    };
 
-            // Helper function to push a position + value + normal, swapping
-            // the normal to an all-zeros vector if any items are invalid.
-            auto push = [&](Eigen::Vector3f d) {
-                Eigen::Matrix<double, N, 1> d_ =
-                    d.template head<N>().template cast<double>();
-                if (!d_.array().isFinite().all()) {
-                    d_.array() = 0.0;
+                    // If this corner was ambiguous, then use FeatureEvaluator
+                    // to get all of the possible derivatives, then add them to
+                    // the corner's QEF.
+                    if (ambig(index)) {
+                        const auto fs = eval->feature.features(
+                                eval->array.get(index), tape);
+                        for (auto& f : fs) {
+                            push(f);
+                        }
+                    // Otherwise, use the normal found by the DerivArrayEvaluator
+                    } else {
+                        push(ds.col(index).template head<3>());
+                    }
+                    index++;
                 }
-                leaf_sub[sub_index.i]->qef.insert(
-                        region.corner(corner_indices[i]), d_, ds(3, i));
-            };
-
-            // If this corner was ambiguous, then use the FeatureEvaluator
-            // to get all of the possible derivatives, then add them to
-            // the corner's QEF.
-            if (ambig(i)) {
-                const auto fs = eval->feature.features(
-                        region.corner3f(corner_indices[i]), tape);
-                for (auto& f : fs) {
-                    push(f);
-                }
-            // Otherwise, use the normal found by the DerivArrayEvaluator
-            } else {
-                push(ds.col(i).template head<3>());
             }
         }
     }

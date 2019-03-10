@@ -84,6 +84,9 @@ struct NeighborIndex {
     constexpr bool isAxisFixed(uint8_t a) const
     { return fixed() & (1 << a); }
 
+    constexpr bool axisPosition(uint8_t a) const
+    { return pos() & (1 << a); }
+
     /*
      *  Returns a bitfield representing which axes are fixed,
      *  with extra-dimension axes masked.

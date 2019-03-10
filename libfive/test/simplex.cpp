@@ -343,6 +343,25 @@ TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement")
     CHECK_EDGE_PAIRS(*m);
 }
 
+TEST_CASE("SimplexMesher<3>: cylinder meshing")
+{
+    auto b = extrude(circle(1, {0.5, 0.5}), -1, 1);
+
+    Region<3> r({-5, -5, -5}, {5, 5, 5});
+    auto t = SimplexTreePool<3>::build(b, r, 0.5, 1e-8, 1);
+    std::atomic_bool cancel(false);
+    t->assignIndices(1, cancel);
+
+    auto m = Dual<3>::walk<SimplexMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, b);
+    CHECK_EDGE_PAIRS(*m);
+    m->saveSTL("out.stl");
+
+    auto g = Dual<3>::walk<SimplexDebugMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, b);
+    g->saveSTL("grid.stl");
+}
+
 TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
 {
     auto c = box({-3.1, -3.1, -3.1}, {3.1, 3.1, 3.1});
