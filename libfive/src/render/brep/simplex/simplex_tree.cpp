@@ -255,7 +255,7 @@ void SimplexTree<N>::findLeafVertices(
     //  between the corners to build up a denser grid within each cell.  This
     //  grows to the power of N (e.g. doubling it will cause 8x more points to
     //  be evaluated in the 3D case).
-    constexpr unsigned SAMPLES_PER_EDGE = 2;
+    constexpr unsigned SAMPLES_PER_EDGE = 6;
     static_assert(SAMPLES_PER_EDGE >= 2, "Too few samples per edge");
     static_assert(ipow(SAMPLES_PER_EDGE, N) < LIBFIVE_EVAL_ARRAY_SIZE,
                   "Too many points to evaluate");
@@ -366,7 +366,26 @@ void SimplexTree<N>::findLeafVertices(
     }
 
     // Statically unroll a loop to position every vertex within their subspace.
-    Unroller<N, ipow(3, N) - 1>()(*this->leaf, leaf_sub, already_solved, region);
+    for (unsigned j=0; j < 16; ++j) {
+        Unroller<N, ipow(3, N) - 1>()(*this->leaf, leaf_sub,
+                                      already_solved, region);
+        for (unsigned i=0; i < ipow(3, N); ++i) {
+            if (!already_solved[i]) {
+                const auto leaf_sub = this->leaf->sub[i].load();
+                leaf_sub->qef /= 2.0;
+                Eigen::Vector3f vert;
+                vert << leaf_sub->vert.template cast<float>().transpose(),
+                        region.perp.template cast<float>();
+                eval->array.set(vert, 0);
+                const auto ds = eval->array.derivs(1, tape);
+
+                leaf_sub->qef.insert(
+                        leaf_sub->vert,
+                        ds.col(0).template head<N>().template cast<double>(),
+                        ds(3, 0));
+            }
+        }
+    }
 
     // Check whether each vertex is inside or outside, either the hard way
     // (if this cell is ambiguous) or the easy way (if it's empty / filled).
