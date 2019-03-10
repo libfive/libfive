@@ -343,7 +343,7 @@ void SimplexTree<N>::findLeafVertices(
                         leaf_sub[sub.i]->qef.insert(
                                 eval->array.get(index).template cast<double>()
                                                       .template head<N>(),
-                                d_, ds(3, i));
+                                d_, ds(3, index));
                     };
 
                     // If this corner was ambiguous, then use FeatureEvaluator
