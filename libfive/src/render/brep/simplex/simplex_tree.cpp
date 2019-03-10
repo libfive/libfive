@@ -303,7 +303,7 @@ void SimplexTree<N>::findLeafVertices(
                     todo = next;
                 }
             }
-            assert(todo.len() == ipow(SUBSAMPLE, sub.dimension()));
+            assert(todo.size() == ipow(SUBSAMPLE - 2, sub.dimension()));
 
             for (auto& t : todo) {
                 Eigen::Vector3f v;
@@ -323,7 +323,7 @@ void SimplexTree<N>::findLeafVertices(
         for (unsigned i=0; i < ipow(3, N); ++i) {
             const auto sub = NeighborIndex(i);
             if (!already_solved[sub.i]) {
-                for (unsigned j=0; j < ipow(SUBSAMPLE, sub.dimension()); ++j) {
+                for (unsigned j=0; j < ipow(SUBSAMPLE - 2, sub.dimension()); ++j) {
                     // Helper function to push a position + value + normal,
                     // swapping the normal to an all-zeros vector if any
                     // items are invalid.
