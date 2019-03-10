@@ -288,6 +288,7 @@ void SimplexTree<N>::findLeafVertices(
                                                    : region.lower)(a);
                 }
             }
+            todo.push_back(init);
             for (unsigned a=0; a < N; ++a) {
                 if (!sub.isAxisFixed(a)) {
                     std::vector<Vec, Eigen::aligned_allocator<Vec>> next;
