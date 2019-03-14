@@ -46,4 +46,4 @@ private:
     Tree Z_;
 };
 
-}; //namespace Kernel
+} //namespace Kernel
