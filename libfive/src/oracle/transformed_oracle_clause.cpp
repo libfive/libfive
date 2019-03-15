@@ -15,7 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-REGISTER_ORACLE_CLAUSE(TransformedOracleClause);
+REGISTER_ORACLE_CLAUSE(TransformedOracleClause)
 
 TransformedOracleClause::TransformedOracleClause(
         Tree underlying, Tree X_, Tree Y_, Tree Z_)
@@ -80,4 +80,4 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::deserialize(
             new TransformedOracleClause(underlying, X_, Y_, Z_));
 }
 
-}; //namespace Kernel
+} //namespace Kernel
