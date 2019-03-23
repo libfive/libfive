@@ -4,7 +4,14 @@
 ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.c
            ${CMAKE_CURRENT_BINARY_DIR}/_version.c
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake)
+    # Pass the current source dir to version.cmake, so that it can run git
+    # commands there instead of in the binary dir. This enables it to find
+    # the right info when the build dir is outside the libfive repo.
+    COMMAND ${CMAKE_COMMAND}
+        -DLIBFIVE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DFIVE_DLL")
