@@ -115,7 +115,10 @@ struct Unroller
 
             const auto r = region.template subspace<SubspaceFloating>();
 
-            for (unsigned i=0; i < 4; ++i) {
+#ifndef LIBFIVE_SIMPLEX_REFINE
+#define LIBFIVE_SIMPLEX_REFINE 0
+#endif
+            for (unsigned i=0; i <= LIBFIVE_SIMPLEX_REFINE; ++i) {
                 const auto sol = qef.solveBounded(r);
                 error = sol.error;
 
@@ -275,7 +278,10 @@ void SimplexTree<N>::findLeafVertices(
     //  between the corners to build up a denser grid within each cell.  This
     //  grows to the power of N (e.g. doubling it will cause 8x more points to
     //  be evaluated in the 3D case).
-    constexpr unsigned SAMPLES_PER_EDGE = 6;
+#ifndef LIBFIVE_SIMPLEX_SUBSAMPLE
+#define LIBFIVE_SIMPLEX_SUBSAMPLE 0
+#endif
+    constexpr unsigned SAMPLES_PER_EDGE = 2 + LIBFIVE_SIMPLEX_SUBSAMPLE;
     static_assert(SAMPLES_PER_EDGE >= 2, "Too few samples per edge");
     static_assert(ipow(SAMPLES_PER_EDGE, N) < LIBFIVE_EVAL_ARRAY_SIZE,
                   "Too many points to evaluate");
