@@ -55,6 +55,14 @@ public:
         return *this;
     }
 
+    QEF& operator/=(const double& other) {
+        AtA /= other;
+        AtBp /= other;
+        BptBp /= other;
+
+        return *this;
+    }
+
     void reset() {
         AtA = Matrix::Zero();
         AtBp = Matrix::Zero();

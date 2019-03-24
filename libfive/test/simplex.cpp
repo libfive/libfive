@@ -343,6 +343,63 @@ TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement")
     CHECK_EDGE_PAIRS(*m);
 }
 
+TEST_CASE("SimplexMesher<3>: sphere")
+{
+    auto s = sphere(1);
+    Region<3> r({-2, -2, -2}, {2, 2, 2});
+    auto t = SimplexTreePool<3>::build(s, r, 5, 1e-8, 1);
+    std::atomic_bool cancel(false);
+    t->assignIndices(1, cancel);
+
+    auto m = Dual<3>::walk<SimplexMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, s);
+    CHECK_EDGE_PAIRS(*m);
+    m->saveSTL("out.stl");
+
+    auto g = Dual<3>::walk<SimplexDebugMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, s);
+    g->saveSTL("grid.stl");
+}
+
+TEST_CASE("SimplexMesher<3>: cylinder meshing")
+{
+    auto b = extrude(circle(1, {0, 0}), -1, 1);
+
+    Region<3> r({-5, -5, -5}, {5, 5, 5});
+    auto t = SimplexTreePool<3>::build(b, r, 5, 1e-8, 1);
+    std::atomic_bool cancel(false);
+    t->assignIndices(1, cancel);
+
+    auto m = Dual<3>::walk<SimplexMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, b);
+    CHECK_EDGE_PAIRS(*m);
+    m->saveSTL("out.stl");
+
+    auto g = Dual<3>::walk<SimplexDebugMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, b);
+    g->saveSTL("grid.stl");
+}
+
+TEST_CASE("SimplexTree<3>: vertex placement in centered cylinder")
+{
+    auto b = extrude(circle(1, {0, 0}), -1, 1);
+
+    Region<3> r({-5, -5, -5}, {5, 5, 5});
+    auto t = SimplexTreePool<3>::build(b, r, 5, 1e-8, 1);
+
+    // Check that every XY plane has a vertex placed at X = Y
+    // (since this is a symmetric model)
+    for (unsigned i=0; i < 4; ++i) {
+        const auto v = t.get()->children[i].load()->leaf->sub[8].load()->vert;
+        CAPTURE(v);
+        REQUIRE(fabs(v.x()) == Approx(fabs(v.y())));
+
+        const auto w = t.get()->children[4 + i].load()->leaf->sub[17].load()->vert;
+        CAPTURE(w);
+        REQUIRE(fabs(w.x()) == Approx(fabs(w.y())));
+    }
+}
+
 TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
 {
     auto c = box({-3.1, -3.1, -3.1}, {3.1, 3.1, 3.1});

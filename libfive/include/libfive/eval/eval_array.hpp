@@ -42,6 +42,15 @@ public:
         }
     }
 
+    /*
+     *  Reads a position from the results arrays
+     */
+    Eigen::Vector3f get(size_t index) const {
+        return Eigen::Vector3f(f(deck->X, index),
+                               f(deck->Y, index),
+                               f(deck->Z, index));
+    }
+
     /*  This is the number of samples that we can process in one pass */
     static constexpr size_t N=LIBFIVE_EVAL_ARRAY_SIZE;
 
