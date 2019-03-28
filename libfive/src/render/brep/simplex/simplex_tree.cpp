@@ -120,7 +120,10 @@ struct Unroller
 #endif
             for (unsigned i=0; i <= LIBFIVE_SIMPLEX_REFINE; ++i) {
                 const auto sol = qef.solveBounded(r);
-                error = sol.error;
+
+                if (i == 0) {
+                    error = sol.error;
+                }
 
                 // Unpack from the reduced-dimension solution to the leaf vertex
                 unsigned j = 0;
