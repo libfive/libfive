@@ -119,7 +119,15 @@ struct Unroller
 #define LIBFIVE_SIMPLEX_REFINE 0
 #endif
             for (unsigned i=0; i <= LIBFIVE_SIMPLEX_REFINE; ++i) {
-                const auto sol = qef.solveBounded(r);
+                typename QEF<SubspaceDimension>::Solution sol;
+#ifdef LIBFIVE_SIMPLEX_DC
+                sol = qef.solveDC(r.center());
+                if (!r.contains(sol.position, 0)) {
+                    sol = qef.solveBounded(r);
+                }
+#else
+                sol = qef.solveBounded(r);
+#endif
 
                 if (i == 0) {
                     error = sol.error;
