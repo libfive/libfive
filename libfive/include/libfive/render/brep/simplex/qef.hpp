@@ -257,6 +257,12 @@ public:
     }
 
     /*
+     *  Solves the equivalent DC QEF, which tries to find the point
+     *  where all of the planes intersect at a distance-field value of 0
+     */
+    Solution solveDC(Eigen::Matrix<double, 1, N> target_pos=
+                         Eigen::Matrix<double, 1, N>::Zero()) const;
+    /*
      *  A bit of magic matrix math to extract the distance value
      */
     double averageDistanceValue() const {
@@ -505,5 +511,75 @@ protected:
     friend class QEF<2>;
     friend class QEF<3>;
 };
+
+template <>
+inline typename QEF<0>::Solution QEF<0>::solveDC(Eigen::Matrix<double, 1, 0>) const
+{
+    Solution sol;
+    sol.value = 0.0;
+    sol.rank = 0;
+    return sol;
+}
+
+template <unsigned N>
+inline typename QEF<N>::Solution QEF<N>::solveDC(Eigen::Matrix<double, 1, N> target_pos) const
+{
+    // Cache the AtB calculation so we only do it once
+    const auto AtB_ = AtB();
+
+    Eigen::Matrix<double, N, N> AtA_c =
+        AtA.template topLeftCorner<N, N>();
+    Eigen::Matrix<double, N, 1> AtB_c =
+        AtB_.template topRows<N>();
+    Eigen::Matrix<double, N, 1> target_c =
+        target_pos.transpose();
+
+    /*
+     *  This is a weird trick to do constrained matrix solving:
+     *
+     *  We recognize that we're solving (A^TA) x = (A^TB), with certain
+     *  rows of x fixed.  We drop those fixed rows + columns from A^TA and
+     *  A^TB, and subtract their value from A^TB to compensate.
+     *
+     *  A more detailed writeup is at
+     *  mattkeeter.com/projects/qef/#alternate-constraints
+     */
+    unsigned r = 0;
+    for (unsigned row=0; row < N; ++row) {
+        AtB_c(r) = AtB_(row);
+        target_c(r) = target_pos(row);
+
+        unsigned c = 0;
+        for (unsigned col=0; col < N; ++col) {
+            AtA_c(r, c) = AtA(row, col);
+            c++;
+        }
+        assert(c == N + 1 - NumConstrainedAxes);
+        r++;
+    }
+    assert(r == N + 1 - NumConstrainedAxes);
+
+    auto sol = QEF<N - 1>::solve(
+            AtA_c, AtB_c, target_c);
+
+    Solution out;
+    out.position = sol.value;
+    out.value = 0.0;
+    out.rank = sol.rank + 1;
+
+    // Calculate the resulting error, hard-coding the matrix size here so
+    // that Eigen checks that all of our types are correct.
+    // This error calculation uses the unconstrained matrices to return
+    // a true error, rather than a weird value that could be < 0.
+    Vector v;
+    v << out.position, out.value;
+    Eigen::Matrix<double, 1, 1> err =
+        v.transpose() * AtA * v -
+        2 * v.transpose() * AtB_ +
+        BtB();
+    out.error = err(0);
+
+    return out;
+}
 
 }   // namespace Kernel
