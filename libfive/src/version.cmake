@@ -42,5 +42,6 @@ else()
 endif()
 
 if (NOT "${VERSION}" STREQUAL "${VERSION_}")
+    message("Regenerating version header")
     file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/version.c "${VERSION}")
 endif()
