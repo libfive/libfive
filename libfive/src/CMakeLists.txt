@@ -1,9 +1,8 @@
 # Add a custom command that produces version.c, plus
 # a dummy output that's not actually produced, in order
 # to force version.cmake to always be re-run before the build
-ADD_CUSTOM_COMMAND(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.c
-           ${CMAKE_CURRENT_BINARY_DIR}/_version.c
+ADD_CUSTOM_TARGET(five-version
+    BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/version.c
     # Pass the current source dir to version.cmake, so that it can run git
     # commands there instead of in the binary dir. This enables it to find
     # the right info when the build dir is outside the libfive repo.
@@ -72,6 +71,7 @@ add_library(five SHARED
 
     ${CMAKE_CURRENT_BINARY_DIR}/version.c
 )
+add_dependencies(five five-version)
 
 target_include_directories(five SYSTEM PUBLIC
     ${Boost_INCLUDE_DIRS}
