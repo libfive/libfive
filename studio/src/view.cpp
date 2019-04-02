@@ -344,6 +344,7 @@ void View::syncPicker()
 void View::mouseMoveEvent(QMouseEvent* event)
 {
     QOpenGLWidget::mouseMoveEvent(event);
+    event->accept();
 
     if (mouse.state == mouse.DRAG_ROT)
     {
@@ -419,6 +420,7 @@ QVector3D View::toModelPos(QPoint pt, float z) const
 void View::mousePressEvent(QMouseEvent* event)
 {
     QOpenGLWidget::mousePressEvent(event);
+    event->accept();
 
     if (mouse.state == mouse.RELEASED)
     {
@@ -462,6 +464,7 @@ void View::mousePressEvent(QMouseEvent* event)
 void View::mouseReleaseEvent(QMouseEvent* event)
 {
     QOpenGLWidget::mouseReleaseEvent(event);
+    event->accept();
     if (mouse.state != mouse.RELEASED)
     {
         redrawPicker();
@@ -479,6 +482,7 @@ void View::mouseReleaseEvent(QMouseEvent* event)
 void View::wheelEvent(QWheelEvent *event)
 {
     QOpenGLWidget::wheelEvent(event);
+    event->accept();
     camera.zoomIncremental(event->angleDelta().y(), mouse.pos);
     update();
     pick_timer.start();
