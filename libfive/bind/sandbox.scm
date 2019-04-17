@@ -225,13 +225,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (cons mod (module-map (lambda (n . a) n) (resolve-interface mod))))
 
 (define-public sandbox-bindings
-  (append (list (cons '(libfive kernel) libfive-bindings)
-                (cons '(guile) '(inexact->exact))
+  (append (list
+          (cons '(libfive kernel) libfive-bindings)
           (get-bindings '(libfive vec))
           (get-bindings '(libfive shapes))
           (get-bindings '(libfive csg))
           (get-bindings '(libfive transforms))
           (get-bindings '(libfive text))
           (get-bindings '(libfive util))
-          '((libfive sandbox) set-bounds! set-resolution! set-quality!))
+          '((libfive sandbox) set-bounds! set-resolution! set-quality!)
+
+          ;; Extra functions from Guile's standard libraries
+          '((srfi srfi-1) fold iota)
+          '((guile) inexact->exact))
+
+    ;; Default sandbox-safe functions
     all-pure-bindings))
