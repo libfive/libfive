@@ -44,6 +44,16 @@ public:
                      const Eigen::Vector3f& upper)=0;
 
     /*
+     *  Sets and reads the count of how many points to evaluate.  (This cannot 
+     *  always be read off of the size of the output matrix, since that may be 
+     *  expanded for consistency with regard to SIMD use, while the invalid 
+     *  data in it may indicate points that are unusually expensive for the 
+     *  oracle to evaluate.)
+     */
+    virtual void setCount(Eigen::Index count) = 0;
+    virtual Eigen::Index count() const = 0;
+
+    /*
      *  Return the result of interval arithmetic over the range
      *  previously defined with set(Interval::I)
      */
@@ -87,7 +97,7 @@ public:
                                       Eigen::RowMajor>,
                          1, Eigen::Dynamic> out)
     {
-        for (unsigned i=0; i < out.cols(); ++i)
+        for (unsigned i=0; i < std::min(count(), out.cols()); ++i)
         {
             evalPoint(out(i), i);
         }
@@ -131,7 +141,7 @@ public:
                          3, Eigen::Dynamic, true> out)
     {
         Eigen::Array<float, 3, Eigen::Dynamic> dummy(3, out.cols());
-        for (unsigned i=0; i < out.cols(); ++i)
+        for (unsigned i=0; i < count(); ++i)
         {
             evalDerivs(dummy.col(i), i);
         }

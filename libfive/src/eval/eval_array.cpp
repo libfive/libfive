@@ -65,6 +65,7 @@ ArrayEvaluator::values(size_t count, Tape::Handle tape)
     setCount(count);
 
     deck->bindOracles(tape);
+    deck->setOracleCount(count);
     auto index = tape->rwalk(*this);
     deck->unbindOracles();
 
