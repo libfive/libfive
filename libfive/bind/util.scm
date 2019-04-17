@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   When h = 0, returns a; when h = 1, returns b"
   (+ (* b h) (* a (- 1 h))))
 
+(use-modules (srfi srfi-1))
 (define-public (fold-shape shape func vs)
   "fold-shape shape func vs
   Calls func once for every entry in vs,
