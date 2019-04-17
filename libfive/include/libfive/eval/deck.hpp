@@ -67,6 +67,11 @@ public:
     void claim(std::shared_ptr<Tape> tape) { spares.push_back(tape); }
 
     /*
+     *  Sets the internal count of all oracles for array evaluation.
+     */
+    void setOracleCount(Eigen::Index count);
+
+    /*
      *  Binds all oracles to the contexts in the given tape
      */
     void bindOracles(std::shared_ptr<Tape> tape);
