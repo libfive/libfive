@@ -27,6 +27,12 @@ void TransformedOracle::set(const Eigen::Vector3f& p, size_t index)
     zEvaluator.array.set(p, index);
 }
 
+void TransformedOracle::setCount(Eigen::Index count)
+{
+    OracleStorage::setCount(count);
+    underlying->setCount(count);
+}
+
 void TransformedOracle::evalInterval(Interval::I& out)
 {
     auto xRange = xEvaluator.interval.eval(lower, upper);

@@ -89,7 +89,8 @@ public:
     /*
      *  Block-level floating-point evaluation.
      *  By default, this simply calls evalPoint multiple times; overload it with
-     *  a more efficient implementation if possible.
+     *  a more efficient implementation if possible.  setCount() must be called
+     *  first.
      */
     virtual void evalArray(
             Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
@@ -97,7 +98,7 @@ public:
                                       Eigen::RowMajor>,
                          1, Eigen::Dynamic> out)
     {
-        for (unsigned i=0; i < std::min(count(), out.cols()); ++i)
+        for (unsigned i=0; i < count(); ++i)
         {
             evalPoint(out(i), i);
         }
