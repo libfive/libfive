@@ -28,6 +28,11 @@ public:
      */
     void set(const Eigen::Vector3f& p, size_t index=0) override;
 
+    /*
+     *  Sets the count for both this and underlying
+     */
+    void setCount(Eigen::Index count) override;
+
     void evalInterval(Interval::I& out) override;
 
     void evalPoint(float& out, size_t index=0) override;
