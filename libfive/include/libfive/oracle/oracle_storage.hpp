@@ -32,6 +32,15 @@ public:
         upper = _upper;
     }
 
+    void setCount(Eigen::Index _count) override
+    {
+        stored_count = _count;
+    }
+
+    Eigen::Index count() const override
+    {
+        return stored_count;
+    }
 
     /*
      *  Inefficient-but-correct implementation of evalDerivs
@@ -63,6 +72,9 @@ protected:
     /* Local storage for set(Interval) */
     Eigen::Vector3f lower;
     Eigen::Vector3f upper;
+
+    /* Local storage for setCount*/
+    Eigen::Index stored_count;
 };
 
 }   // namespace Kernel
