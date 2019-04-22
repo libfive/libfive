@@ -48,7 +48,7 @@ protected:
      *  updates at a fixed speed (e.g. 200 Hz). */
     std::timed_mutex mut;
 
-    std::atomic_uint64_t counter;
+    std::atomic<uint64_t> counter;
     const uint64_t total;
     const float offset;
 
