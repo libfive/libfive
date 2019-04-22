@@ -254,7 +254,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
     tasks.push(t.get());
     t->resetPending();
 
-    std::atomic_uint32_t global_index(1);
+    std::atomic<uint32_t> global_index(1);
     std::vector<PerThreadBRep<N>> breps;
     for (unsigned i=0; i < workers; ++i) {
         breps.emplace_back(PerThreadBRep<N>(global_index));

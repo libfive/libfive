@@ -45,7 +45,7 @@ struct SimplexLeafSubspace {
     bool inside;
 
     /*   Global indices for subspace vertices  */
-    std::atomic_uint64_t index;
+    std::atomic<uint64_t> index;
 
     /*  Per-subspace QEF */
     QEF<N> qef;
@@ -55,7 +55,7 @@ struct SimplexLeafSubspace {
      *  at a time (since they represent shared spaces).  We use a
      *  homebrew reference counting system to avoid releasing them to
      *  the pool while they're still in use.  */
-    std::atomic_uint32_t refcount;
+    std::atomic<uint32_t> refcount;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

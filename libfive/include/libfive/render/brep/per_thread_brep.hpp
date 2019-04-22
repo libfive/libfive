@@ -25,7 +25,7 @@ template <unsigned N>
 class PerThreadBRep
 {
 public:
-    PerThreadBRep(std::atomic_uint32_t& c) : c(c)
+    PerThreadBRep(std::atomic<uint32_t>& c) : c(c)
     {
         assert(c.load() == 1);
     }
@@ -55,7 +55,7 @@ public:
     std::vector<uint32_t> indices;
 
 protected:
-    std::atomic_uint32_t& c;
+    std::atomic<uint32_t>& c;
 };
 
 }   // namespace Kernel
