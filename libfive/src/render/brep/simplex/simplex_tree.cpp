@@ -708,7 +708,7 @@ using LockFreeStack = boost::lockfree::stack<
 
 template <unsigned N>
 void assignIndicesWorker(LockFreeStack<N>& tasks,
-                         std::atomic_uint64_t& index,
+                         std::atomic<uint64_t>& index,
                          std::atomic_bool& done,
                          std::atomic_bool& cancel)
 {
@@ -882,7 +882,7 @@ void SimplexTree<N>::assignIndices(unsigned workers,
     AssignIndexTask<N> first{this, std::make_shared<NeighborStack<N>>()};
     tasks.push(first);
 
-    std::atomic_uint64_t global_index(1);
+    std::atomic<uint64_t> global_index(1);
     std::atomic_bool done(false);
 
     std::vector<std::future<void>> futures;
