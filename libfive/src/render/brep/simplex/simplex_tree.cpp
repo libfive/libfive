@@ -16,6 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <Eigen/StdVector>
 #include <boost/lockfree/queue.hpp>
+#include <boost/lockfree/stack.hpp>
 
 #include "libfive/render/brep/simplex/simplex_tree.hpp"
 #include "libfive/render/brep/simplex/simplex_neighbors.hpp"
