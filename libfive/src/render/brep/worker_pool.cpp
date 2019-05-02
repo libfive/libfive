@@ -59,12 +59,15 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     auto progress_watcher = ProgressWatcher::build(ticks, 0, progress_callback,
                                                    done, cancel);
 
+    std::mutex task_mut;
+    std::condition_variable task_cond;
     for (unsigned i=0; i < workers; ++i)
     {
         futures[i] = std::async(std::launch::async,
-                [&eval, &tasks, &cancel, &done, &out, &root_lock,
-                 max_err, i, progress_watcher](){
-                    run(eval + i, tasks, max_err, done, cancel, out,
+                [&eval, &tasks, &task_mut, &task_cond, &cancel,
+                &done, &out, &root_lock, max_err, i, progress_watcher](){
+                    run(eval + i, tasks, task_mut, task_cond, max_err,
+                        done, cancel, out,
                         root_lock, progress_watcher);
                     });
     }
@@ -92,8 +95,9 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
 
 template <typename T, typename Neighbors, unsigned N>
 void WorkerPool<T, Neighbors, N>::run(
-        XTreeEvaluator* eval, LockFreeStack& tasks, const float max_err,
-        std::atomic_bool& done, std::atomic_bool& cancel,
+        XTreeEvaluator* eval, LockFreeStack& tasks,
+        std::mutex& task_mut, std::condition_variable& task_cond,
+        const float max_err, std::atomic_bool& done, std::atomic_bool& cancel,
         Root<T>& root, std::mutex& root_lock,
         ProgressWatcher* progress)
 {
@@ -116,7 +120,15 @@ void WorkerPool<T, Neighbors, N>::run(
         }
         else if (!tasks.pop(task))
         {
-            task.target = nullptr;
+            std::unique_lock<std::mutex> lock(task_mut);
+            task_cond.wait_for(lock, std::chrono::milliseconds(50),
+                [&]() {
+                    if (tasks.pop(task)) {
+                        return true;
+                    }
+                    task.target = nullptr;
+                    return done.load() || cancel.load();
+            });
         }
 
         // If we failed to get a task, keep looping
@@ -230,6 +242,7 @@ void WorkerPool<T, Neighbors, N>::run(
     // If we've broken out of the loop, then we should set the done flag
     // so that other worker threads also terminate.
     done.store(true);
+    task_cond.notify_all();
 
     {   // Release the pooled objects to the root
         std::lock_guard<std::mutex> lock(root_lock);

@@ -56,6 +56,7 @@ protected:
         boost::lockfree::stack<Task, boost::lockfree::fixed_sized<true>>;
 
     static void run(XTreeEvaluator* eval, LockFreeStack& tasks,
+                    std::mutex& task_mut, std::condition_variable& task_cond,
                     const float max_err, std::atomic_bool& done,
                     std::atomic_bool& cancel, Root<T>& root,
                     std::mutex& root_lock, ProgressWatcher* progress);

@@ -64,6 +64,7 @@ protected:
     static void run(Mesher& m, ProgressWatcher* progress,
                     boost::lockfree::stack<const T*,
                                            boost::lockfree::fixed_sized<true>>& tasks,
+                    std::mutex& mut, std::condition_variable& cond,
                     std::atomic_bool& done, std::atomic_bool& cancel);
 
     template <typename T, typename Mesher>
@@ -262,6 +263,9 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
 
     std::atomic_bool done(false);
 
+    std::mutex mut;
+    std::condition_variable cond;
+
     auto progress = ProgressWatcher::build(
             t.size(), 1.0f,
             progress_callback, done, cancel);
@@ -270,9 +274,10 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
     futures.resize(workers);
     for (unsigned i=0; i < workers; ++i) {
         futures[i] = std::async(std::launch::async,
-            [&breps, &done, &cancel, &tasks, &MesherFactory, i, progress]() {
+            [&breps, &mut, &cond, &done, &cancel,
+             &tasks, &MesherFactory, i, progress]() {
                 auto m = MesherFactory(breps[i], i);
-                Dual<N>::run(m, progress, tasks, done, cancel);
+                Dual<N>::run(m, progress, tasks, mut, cond, done, cancel);
             });
     }
 
@@ -304,6 +309,7 @@ template <typename T, typename V>
 void Dual<N>::run(V& v, ProgressWatcher* progress,
                   boost::lockfree::stack<const T*,
                                          boost::lockfree::fixed_sized<true>>& tasks,
+                  std::mutex& mut, std::condition_variable& cond,
                   std::atomic_bool& done, std::atomic_bool& cancel)
 {
     // Tasks to be evaluated by this thread (populated when the
@@ -321,15 +327,25 @@ void Dual<N>::run(V& v, ProgressWatcher* progress,
             t = local.top();
             local.pop();
         }
+        // Try to pop a single task from the MPMC queue; if that
+        // fails, then wait on the condition variable for the
+        // queue to be ready (or done / cancel to be set).
         else if (!tasks.pop(t))
         {
-            t = nullptr;
+            std::unique_lock<std::mutex> lock(mut);
+            cond.wait_for(lock, std::chrono::milliseconds(10),
+                [&]() {
+                    if (tasks.pop(t)) {
+                        return true;
+                    }
+                    t = nullptr;
+                    return done.load() || cancel.load();
+            });
         }
 
         // If we failed to get a task, keep looping
         // (so that we terminate when either of the flags are set).
-        if (t == nullptr)
-        {
+        if (t == nullptr) {
             continue;
         }
 
@@ -339,7 +355,9 @@ void Dual<N>::run(V& v, ProgressWatcher* progress,
             for (const auto& c_ : t->children)
             {
                 const auto c = c_.load();
-                if (!tasks.bounded_push(c)) {
+                if (tasks.bounded_push(c)) {
+                    cond.notify_all();
+                } else {
                     local.push(c);
                 }
             }
@@ -367,6 +385,7 @@ void Dual<N>::run(V& v, ProgressWatcher* progress,
     // If we've broken out of the loop, then we should set the done flag
     // so that other worker threads also terminate.
     done.store(true);
+    cond.notify_all();
 }
 
 }   // namespace Kernel
