@@ -12,7 +12,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <atomic>
 
 #include "libfive/eval/interval.hpp"
-#include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/region.hpp"
 
 namespace Kernel {
@@ -33,7 +32,7 @@ public:
     /*
      *  Resets this tree to a freshly-constructed state
      */
-    void reset(T* p, unsigned i, Region<N> r);
+    void reset(T* p, unsigned i, const Region<N>& r);
 
     /*
      *  Checks whether this tree splits

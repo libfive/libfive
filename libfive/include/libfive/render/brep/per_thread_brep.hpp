@@ -25,7 +25,7 @@ template <unsigned N>
 class PerThreadBRep
 {
 public:
-    PerThreadBRep(std::atomic_uint32_t& c) : c(c)
+    PerThreadBRep(std::atomic<uint32_t>& c) : c(c)
     {
         assert(c.load() == 1);
     }
@@ -37,6 +37,17 @@ public:
         return out;
     }
 
+    /*  Adds a debug line to the mesh, drawing it as a zero-area
+     *  triangle.  This is inefficient and ignores any indexing,
+     *  so should only be used for debugging purposes */
+    void drawDebugLine(const Eigen::Matrix<float, N, 1>& a,
+                       const Eigen::Matrix<float, N, 1>& b)
+    {
+        const auto a_ = pushVertex(a);
+        const auto b_ = pushVertex(b);
+        this->branes.push_back({a_, b_, a_});
+    }
+
     std::vector<Eigen::Matrix<float, N, 1>,
                 Eigen::aligned_allocator<Eigen::Matrix<float, N, 1>>> verts;
     std::vector<Eigen::Matrix<uint32_t, N, 1>,
@@ -44,7 +55,7 @@ public:
     std::vector<uint32_t> indices;
 
 protected:
-    std::atomic_uint32_t& c;
+    std::atomic<uint32_t>& c;
 };
 
 }   // namespace Kernel

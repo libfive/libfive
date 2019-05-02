@@ -20,12 +20,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/export.hpp"
 #include "libfive/eval/eval_xtree.hpp"
-#include "libfive/eval/interval.hpp"
 
-#include "libfive/render/brep/region.hpp"
-#include "libfive/render/brep/progress.hpp"
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
+#include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/simplex/qef.hpp"
 #include "libfive/render/brep/simplex/surface_edge_map.hpp"
 
@@ -33,6 +31,7 @@ namespace Kernel {
 
 /* Forward declarations */
 template <unsigned N> class SimplexNeighbors;
+template <unsigned N> class Region;
 
 template <unsigned N>
 struct SimplexLeafSubspace {
@@ -46,7 +45,7 @@ struct SimplexLeafSubspace {
     bool inside;
 
     /*   Global indices for subspace vertices  */
-    std::atomic_uint64_t index;
+    std::atomic<uint64_t> index;
 
     /*  Per-subspace QEF */
     QEF<N> qef;
@@ -56,7 +55,9 @@ struct SimplexLeafSubspace {
      *  at a time (since they represent shared spaces).  We use a
      *  homebrew reference counting system to avoid releasing them to
      *  the pool while they're still in use.  */
-    std::atomic_uint32_t refcount;
+    std::atomic<uint32_t> refcount;
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 template <unsigned N>
@@ -85,6 +86,15 @@ struct SimplexLeaf
      *  we use a pair of small_vectors to act as a stack-allocated
      *  ordered map. */
     SurfaceEdgeMap<32> surface;
+
+    /*  Required for ObjectPool, but we're just using the default operators
+     *  here because there are no alignment requirements. */
+    static void* operator new[](std::size_t sz) {
+        return ::operator new[](sz);
+    }
+    void operator delete[]( void* ptr ) {
+        ::operator delete[](ptr);
+    }
 
     /*  Represents how far from minimum-size leafs we are */
     unsigned level;

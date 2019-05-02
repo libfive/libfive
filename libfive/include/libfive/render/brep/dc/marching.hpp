@@ -73,8 +73,6 @@ struct MarchingTable
     Marching::EdgeToPatch<N> p;
 
     static MarchingTable<N> mt;
-    /*  Used as a flag to trigger population of the static arrays */
-    static bool loaded;
 };
 
 //  We explicitly instantiate the MarchingTables classes in marching.cpp

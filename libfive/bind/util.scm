@@ -27,3 +27,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   Mixes the two values based on h (which should be in the 0-1 range)
   When h = 0, returns a; when h = 1, returns b"
   (+ (* b h) (* a (- 1 h))))
+
+(use-modules (srfi srfi-1))
+(define-public (fold-shape shape func vs)
+  "fold-shape shape func vs
+  Calls func once for every entry in vs,
+  passing it the current vs entry and what was returned from the previous func call
+  (or shape, in the case of the first call).
+  Intended for repeated shapes inside a sequence, using iota to generate vs."
+  (fold (lambda (i shape) (func shape i)) shape vs))

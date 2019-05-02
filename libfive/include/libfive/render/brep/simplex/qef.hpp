@@ -55,6 +55,14 @@ public:
         return *this;
     }
 
+    QEF& operator/=(const double& other) {
+        AtA /= other;
+        AtBp /= other;
+        BptBp /= other;
+
+        return *this;
+    }
+
     void reset() {
         AtA = Matrix::Zero();
         AtBp = Matrix::Zero();
@@ -249,6 +257,12 @@ public:
     }
 
     /*
+     *  Solves the equivalent DC QEF, which tries to find the point
+     *  where all of the planes intersect at a distance-field value of 0
+     */
+    Solution solveDC(Eigen::Matrix<double, 1, N> target_pos=
+                         Eigen::Matrix<double, 1, N>::Zero()) const;
+    /*
      *  A bit of magic matrix math to extract the distance value
      */
     double averageDistanceValue() const {
@@ -265,27 +279,33 @@ public:
      *  This is implemented by walking down in dimensionality from N to 0,
      *  picking the lowest-error solution available that is within the bounds.
      */
-    Solution solveBounded(const Region<N>& region)
+    Solution solveBounded(const Region<N>& region, double shrink=(1 - 1e-9))
     {
-        return solveBounded(region,
+        return solveBounded(region, shrink,
                             (region.lower + region.upper) / 2.0,
                             AtBp(N, N) / AtA(N, N));
     }
 
-    Solution solveBounded(const Region<N>& region,
+    Solution solveBounded(const Region<N>& region, double shrink,
                           Eigen::Matrix<double, 1, N> target_pos,
                           double target_value) const
     {
+        const auto region_ = region.shrink(shrink);
 
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
         std::cout << "------------------------------------------------------\n";
-        std::cout << "Solving bounded between \n[" << region.lower << "]\n["
-            << region.upper << "]\n";
+        std::cout << "Solving bounded between \n[" << region.lower.transpose() << "]\n["
+            << region.upper.transpose() << "]\n";
+        std::cout << "shrunk region: \n[" << region_.lower.transpose() << "]\n["
+            << region_.upper.transpose() << "]\n";
 #endif
 
         {   //  First, check the full-dimension, unconstrained solver
             auto sol = solve(target_pos, target_value);
-            if (region.contains(sol.position)) {
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+            std::cout << "Got solution at [" << sol.position.transpose() << "]\n";
+#endif
+            if (region_.contains(sol.position, 0)) {
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
                 std::cout << "Got full-dimension solution\n";
 #endif
@@ -302,7 +322,7 @@ public:
         //  every corner, picking the first case where the QEF solution
         //  doesn't escape the bounds).
         UnrollDimension<(int)N - 1>()(
-                *this, region, target_pos, target_value, out);
+                *this, region_, target_pos, target_value, out);
 
         assert(!std::isinf(out.error));
         return out;
@@ -318,10 +338,10 @@ protected:
      */
     template <int TargetDimension, unsigned Dummy=0>
     struct UnrollDimension {
-        void operator()(const QEF<N>& qef, const Region<N>& region,
-                        const Eigen::Matrix<double, 1, N>& target_pos,
-                        double target_value,
-                        Solution& out)
+        void operator()(
+                const QEF<N>& qef, const Region<N>& region,
+                const Eigen::Matrix<double, 1, N>& target_pos,
+                double target_value, Solution& out)
         {
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
             std::cout << "UnrollDimension<" << TargetDimension
@@ -338,8 +358,12 @@ protected:
             // Continue unrolling if we haven't found a bounded position,
             // moving to the next-lowest dimension (cell to face, face to edge,
             // edge to vertex, terminating at -1 dimensions)
-            if (std::isinf(out.error))
+            assert(!std::isinf(out.error));
+            if (!region.contains(out.position, 0))
             {
+                // Reset the error value, then try the next dimension down
+                out.error = std::numeric_limits<double>::infinity();
+
                 UnrollDimension<TargetDimension - 1, Dummy>()(
                         qef, region, target_pos, target_value, out);
             }
@@ -359,10 +383,10 @@ protected:
 
     template <unsigned TargetDimension, unsigned TargetSubspace>
     struct UnrollSubspace {
-        void operator()(const QEF<N>& qef, const Region<N>& region,
-                        const Eigen::Matrix<double, 1, N>& target_pos,
-                        double target_value,
-                        Solution& out)
+        void operator()(
+                const QEF<N>& qef, const Region<N>& region,
+                const Eigen::Matrix<double, 1, N>& target_pos,
+                double target_value, Solution& out)
         {
             // If this neighbor is of the target dimension, then check for
             // an improved solution constrained to this neighbor.
@@ -370,33 +394,37 @@ protected:
                 NeighborIndex(TargetSubspace - 1).dimension())
             {
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
-                std::cout << "  UnrollSubspace<" << TargetDimension << ", "
-                          << TargetSubspace << "> activated\n";
+                std::cout << "  Solving constrained to subspace " << TargetSubspace - 1 << "\n";
 #endif
                 // Calculate the constrained solution, including error
                 const auto sol = qef.solveConstrained<TargetSubspace - 1>(
-                        region.shrink(1 - 1e-6), target_pos, target_value);
+                        region, target_pos, target_value);
 
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+                std::cout << "  Got solution at " << sol.position.transpose() << " and error " << sol.error << "\n";
+#endif
                 // If this solution is an improvement, then store it
-                if (region.contains(sol.position) && out.error > sol.error) {
+                if (sol.error < out.error || (sol.error == out.error &&
+                                              !region.contains(sol.position, 0) &&
+                                               region.contains(out.position, 0)))
+                {
                     assert(sol.error >= -1e-12);
                     out = sol;
+                } else {
+#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
+                    std::cout << "  Not an improvement; skipping\n";
+#endif
                 }
             }
-#ifdef LIBFIVE_VERBOSE_QEF_DEBUG
-            else {
-                std::cout << "  UnrollSubspace<" << TargetDimension << ", "
-                          << TargetSubspace << "> skipped\n";
-            }
-#endif
 
-            // Statically unroll a loop, dropping in dimensionality loop
+            // Statically unroll the loop across all neighbors
+            // (keeping the target dimension constant)
             UnrollSubspace<TargetDimension, TargetSubspace - 1>()(
                     qef, region, target_pos, target_value, out);
         }
     };
 
-    // Terminates static unrolling
+    // Terminates static unrolling across neighbors with a fixed dimension
     template <unsigned TargetDimension>
     struct UnrollSubspace<TargetDimension, 0> {
         void operator()(const QEF<N>&, const Region<N>&,
@@ -476,10 +504,82 @@ protected:
     Matrix AtBp;
     Matrix BptBp;
 
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     friend class QEF<0>;
     friend class QEF<1>;
     friend class QEF<2>;
     friend class QEF<3>;
 };
+
+template <>
+inline typename QEF<0>::Solution QEF<0>::solveDC(Eigen::Matrix<double, 1, 0>) const
+{
+    Solution sol;
+    sol.value = 0.0;
+    sol.rank = 0;
+    return sol;
+}
+
+template <unsigned N>
+inline typename QEF<N>::Solution QEF<N>::solveDC(Eigen::Matrix<double, 1, N> target_pos) const
+{
+    // Cache the AtB calculation so we only do it once
+    const auto AtB_ = AtB();
+
+    Eigen::Matrix<double, N, N> AtA_c =
+        AtA.template topLeftCorner<N, N>();
+    Eigen::Matrix<double, N, 1> AtB_c =
+        AtB_.template topRows<N>();
+    Eigen::Matrix<double, N, 1> target_c =
+        target_pos.transpose();
+
+    /*
+     *  This is a weird trick to do constrained matrix solving:
+     *
+     *  We recognize that we're solving (A^TA) x = (A^TB), with certain
+     *  rows of x fixed.  We drop those fixed rows + columns from A^TA and
+     *  A^TB, and subtract their value from A^TB to compensate.
+     *
+     *  A more detailed writeup is at
+     *  mattkeeter.com/projects/qef/#alternate-constraints
+     */
+    unsigned r = 0;
+    for (unsigned row=0; row < N; ++row) {
+        AtB_c(r) = AtB_(row);
+        target_c(r) = target_pos(row);
+
+        unsigned c = 0;
+        for (unsigned col=0; col < N; ++col) {
+            AtA_c(r, c) = AtA(row, col);
+            c++;
+        }
+        assert(c == N + 1 - NumConstrainedAxes);
+        r++;
+    }
+    assert(r == N + 1 - NumConstrainedAxes);
+
+    auto sol = QEF<N - 1>::solve(
+            AtA_c, AtB_c, target_c);
+
+    Solution out;
+    out.position = sol.value;
+    out.value = 0.0;
+    out.rank = sol.rank + 1;
+
+    // Calculate the resulting error, hard-coding the matrix size here so
+    // that Eigen checks that all of our types are correct.
+    // This error calculation uses the unconstrained matrices to return
+    // a true error, rather than a weird value that could be < 0.
+    Vector v;
+    v << out.position, out.value;
+    Eigen::Matrix<double, 1, 1> err =
+        v.transpose() * AtA * v -
+        2 * v.transpose() * AtB_ +
+        BtB();
+    out.error = err(0);
+
+    return out;
+}
 
 }   // namespace Kernel

@@ -293,3 +293,8 @@ Create a volume-filling gyroid with the given periods and thickness"
   Iterates a shape about an optional center position"
   (apply union (map (lambda (i) (rotate-z shape (* 2 pi (/ i n)) c)) (iota n))))
 (export array-polar)
+
+(define-public (emptiness)
+  "emptiness
+  Returns a shape which is empty everywhere"
+  (lambda-shape (x y z) 1))

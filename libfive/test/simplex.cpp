@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/simplex/simplex_pool.hpp"
 #include "libfive/render/brep/simplex/simplex_mesher.hpp"
+#include "libfive/render/brep/simplex/simplex_debug.hpp"
 #include "libfive/render/brep/indexes.hpp"
 #include "libfive/render/brep/dual.hpp"
 
@@ -198,7 +199,7 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 
 }
 
-TEST_CASE("SimplexMesher<3>: box with problematic edges", "[!mayfail]")
+TEST_CASE("SimplexMesher<3>: box with problematic edges")
 {
     auto shape = box({-1, -1, -1}, {1.1, 1.1, 1.1});
     auto r = Region<3>({-2, -2, -2}, {2, 2, 2});
@@ -236,7 +237,7 @@ TEST_CASE("SimplexMesher<3>: box with problematic edges", "[!mayfail]")
     }
 }
 
-TEST_CASE("SimplexMesher<3>: tricky shape", "[!mayfail]")
+TEST_CASE("SimplexMesher<3>: tricky shape")
 {
     auto b = max(box({-1, 0, -1}, {1, 2, 1}),
                 -box({0, 0, -1}, {1, 2, 0}));
@@ -251,6 +252,154 @@ TEST_CASE("SimplexMesher<3>: tricky shape", "[!mayfail]")
     CHECK_EDGE_PAIRS(*m);
 }
 
+using SimplexVertexMap = std::map<std::pair<const SimplexTree<3>*, unsigned>,
+                                  std::pair<Eigen::Vector3d, bool>>;
+void buildVertexMap(const SimplexTree<3>* t, SimplexVertexMap& out)
+{
+    if (t->isBranch()) {
+        for (const auto& c: t->children) {
+            buildVertexMap(c.load(), out);
+        }
+    } else if (t->leaf) {
+        for (unsigned i=0; i < ipow(3, 3); ++i) {
+            out.insert({{t, i}, {t->leaf->sub[i].load()->vert,
+                                 t->leaf->sub[i].load()->inside}});
+        }
+    }
+}
+
+/*  Centers vertices within their respective subspaces.
+ *
+ *  This isn't used in normal operation, but paired with
+ *  SimplexDebugMesher, can be helpful to see where subdivision
+ *  topologies are broken. */
+void debugCenterVertices(const SimplexTree<3>* t) {
+    if (t->isBranch()) {
+        for (const auto& c: t->children) {
+            debugCenterVertices(c.load());
+        }
+    } else if (t->leaf) {
+        for (unsigned i_=0; i_ < ipow(3, 3); ++i_) {
+            const auto i = NeighborIndex(i_);
+
+            // Find the average position of corners within this subspace
+            Eigen::Vector3d start = Eigen::Vector3d::Zero();
+            unsigned count = 0;
+            for (unsigned j=0; j < ipow(2, 3); ++j) {
+                if (i.contains(CornerIndex(j))) {
+                    start += t->region.corner(j);
+                    count++;
+                }
+            }
+
+            const auto sub = t->leaf->sub[i_].load();
+            sub->vert = start / count;
+        }
+    }
+}
+
+TEST_CASE("SimplexTree<3>: assignIndices with cell collapsing",
+          "[!mayfail]")
+{
+    auto b = max(box({-1, 0, -1}, {1, 2, 1}),
+                -box({0, -1, -0.5}, {1, 2.5, 1}));
+
+    Region<3> r({-5, -5, -5}, {5, 5, 5});
+    auto t = SimplexTreePool<3>::build(b, r, 0.5, 1e-8, 1);
+    SimplexVertexMap before;
+    buildVertexMap(t.get(), before);
+
+    std::atomic_bool cancel(false);
+    t->assignIndices(1, cancel);
+    SimplexVertexMap after;
+    buildVertexMap(t.get(), after);
+
+    for (auto& k : before) {
+        REQUIRE(after.count(k.first) != 0);
+        const auto a = after.at(k.first);
+        const auto b = k.second;
+        CAPTURE(a.first);
+        CAPTURE(b.first);
+        CAPTURE(k.first.first->region.lower.transpose());
+        CAPTURE(k.first.first->region.upper.transpose());
+        CAPTURE((a.first - b.first).norm());
+        REQUIRE((a.first - b.first).norm() < 1e-9);
+        REQUIRE(a.second == b.second);
+    }
+}
+
+TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement")
+{
+    auto b = max(box({-1, 0, -1}, {1, 2, 1}),
+                -box({0, -1, -0.5}, {1, 2.5, 1}));
+
+    Region<3> r({-5, -5, -5}, {5, 5, 5});
+    auto t = SimplexTreePool<3>::build(b, r, 0.5, 1e-8, 1);
+    std::atomic_bool cancel(false);
+    t->assignIndices(1, cancel);
+
+    auto m = Dual<3>::walk<SimplexMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, b);
+    CHECK_EDGE_PAIRS(*m);
+}
+
+TEST_CASE("SimplexMesher<3>: sphere")
+{
+    auto s = sphere(1);
+    Region<3> r({-2, -2, -2}, {2, 2, 2});
+    auto t = SimplexTreePool<3>::build(s, r, 5, 1e-8, 1);
+    std::atomic_bool cancel(false);
+    t->assignIndices(1, cancel);
+
+    auto m = Dual<3>::walk<SimplexMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, s);
+    CHECK_EDGE_PAIRS(*m);
+    m->saveSTL("out.stl");
+
+    auto g = Dual<3>::walk<SimplexDebugMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, s);
+    g->saveSTL("grid.stl");
+}
+
+TEST_CASE("SimplexMesher<3>: cylinder meshing")
+{
+    auto b = extrude(circle(1, {0, 0}), -1, 1);
+
+    Region<3> r({-5, -5, -5}, {5, 5, 5});
+    auto t = SimplexTreePool<3>::build(b, r, 5, 1e-8, 1);
+    std::atomic_bool cancel(false);
+    t->assignIndices(1, cancel);
+
+    auto m = Dual<3>::walk<SimplexMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, b);
+    CHECK_EDGE_PAIRS(*m);
+    m->saveSTL("out.stl");
+
+    auto g = Dual<3>::walk<SimplexDebugMesher>(t, 1,
+            cancel, EMPTY_PROGRESS_CALLBACK, b);
+    g->saveSTL("grid.stl");
+}
+
+TEST_CASE("SimplexTree<3>: vertex placement in centered cylinder")
+{
+    auto b = extrude(circle(1, {0, 0}), -1, 1);
+
+    Region<3> r({-5, -5, -5}, {5, 5, 5});
+    auto t = SimplexTreePool<3>::build(b, r, 5, 1e-8, 1);
+
+    // Check that every XY plane has a vertex placed at X = Y
+    // (since this is a symmetric model)
+    for (unsigned i=0; i < 4; ++i) {
+        const auto v = t.get()->children[i].load()->leaf->sub[8].load()->vert;
+        CAPTURE(v);
+        REQUIRE(fabs(v.x()) == Approx(fabs(v.y())));
+
+        const auto w = t.get()->children[4 + i].load()->leaf->sub[17].load()->vert;
+        CAPTURE(w);
+        REQUIRE(fabs(w.x()) == Approx(fabs(w.y())));
+    }
+}
+
 TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
 {
     auto c = box({-3.1, -3.1, -3.1}, {3.1, 3.1, 3.1});
@@ -258,9 +407,6 @@ TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
 
     auto t = SimplexTreePool<3>::build(c, r, 0.9, 1e-8, 8);
     t->assignIndices();
-
-    std::list<const SimplexTree<3>*> todo;
-    todo.push_back(t.get());
 
     std::atomic_bool cancel(false);
     auto m = Dual<3>::walk<SimplexMesher>(t, 8,

@@ -10,11 +10,34 @@ option(BUILD_GUILE_BINDINGS "Build Guile bindings" ON)
 set(CMAKE_BUILD_TYPE RELEASE)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+# Build libfive with ccache if the package is present
+set(LIBFIVE_CCACHE_BUILD OFF CACHE BOOL "Set to ON for a ccache enabled build")
+if(LIBFIVE_CCACHE_BUILD)
+  find_program(CCACHE_PROGRAM ccache)
+  if(CCACHE_PROGRAM)
+      set(LIBFIVE_CCACHE_MAXSIZE "" CACHE STRING "Size of ccache")
+      set(LIBFIVE_CCACHE_DIR "" CACHE STRING "Directory to keep ccached data")
+      set(LIBFIVE_CCACHE_PARAMS "CCACHE_CPP2=yes CCACHE_HASHDIR=yes"
+          CACHE STRING "Parameters to pass through to ccache")
+
+      set(CCACHE_PROGRAM "${LIBFIVE_CCACHE_PARAMS} ${CCACHE_PROGRAM}")
+      if (LIBFIVE_CCACHE_MAXSIZE)
+        set(CCACHE_PROGRAM "CCACHE_MAXSIZE=${LIBFIVE_CCACHE_MAXSIZE} ${CCACHE_PROGRAM}")
+      endif()
+      if (LIBFIVE_CCACHE_DIR)
+        set(CCACHE_PROGRAM "CCACHE_DIR=${LIBFIVE_CCACHE_DIR} ${CCACHE_PROGRAM}")
+      endif()
+      set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE_PROGRAM})
+  else()
+    message(FATAL_ERROR "Unable to find the program ccache. Set LIBFIVE_CCACHE_BUILD to OFF")
+  endif()
+endif()
+
 ################################################################################
 
 if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -g -fPIC -pedantic -Werror=switch -march=native")
-    if (APPLE)
+    if (${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")

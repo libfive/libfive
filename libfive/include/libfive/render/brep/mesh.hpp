@@ -10,21 +10,16 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 
-#include "libfive/render/axes.hpp"
-#include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/brep.hpp"
 #include "libfive/render/brep/progress.hpp"
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/render/brep/algorithm.hpp"
 
 namespace Kernel {
+class XTreeEvaluator; // Forward declaration
+template <unsigned N> class Region;
 
 class Mesh : public BRep<3> {
 public:
-    enum Algorithm {
-        DUAL_CONTOURING,
-        ISO_SIMPLEX,
-    };
-
     /*
      *  Blocking, unstoppable render function
      *  Returns nullptr if min_feature is invalid (i.e. <= 0)
@@ -33,7 +28,7 @@ public:
             const Tree t, const Region<3>& r,
             double min_feature=0.1, double max_err=1e-8, bool multithread=true,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            Algorithm=DUAL_CONTOURING);
+            BRepAlgorithm=DUAL_CONTOURING);
 
     /*
      *  Fully-specified render function
@@ -45,7 +40,7 @@ public:
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            Algorithm=DUAL_CONTOURING);
+            BRepAlgorithm=DUAL_CONTOURING);
 
     /*
      *  Render function that re-uses evaluators
@@ -58,7 +53,7 @@ public:
             double min_feature, double max_err,
             int workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            Algorithm=DUAL_CONTOURING);
+            BRepAlgorithm=DUAL_CONTOURING);
 
     /*
      *  Writes the mesh to a file

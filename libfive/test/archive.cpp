@@ -40,7 +40,7 @@ public:
         return std::unique_ptr<const OracleClause>(new ST());
     }
 };
-REGISTER_ORACLE_CLAUSE(ST);
+REGISTER_ORACLE_CLAUSE(ST)
 
 ////////////////////////////////////////////////////////////////////////////////
 

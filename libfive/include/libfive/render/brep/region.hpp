@@ -232,15 +232,17 @@ public:
     }
 
     /*
-     *  Sets the level parameter based on a minimum feature size.
+     *  Returns a version of this region that has the level set
+     *  based on the given minimum feature.
      *
      *  This lets us do subdivision without worrying that the termination
      *  condition (of a cell side being < min_feature) is dependent on
      *  floating-point accuracy.
      */
-    void setResolution(double min_feature) {
+    Region<N> withResolution(double min_feature) const {
         const auto min_dimension = (upper - lower).minCoeff();
-        level = ceil(log(min_dimension / min_feature) / log(2));
+        const auto level = ceil(log(min_dimension / min_feature) / log(2));
+        return Region<N>(lower, upper, perp, level);
     }
 
     /*  Lower and upper bounds for the region  */

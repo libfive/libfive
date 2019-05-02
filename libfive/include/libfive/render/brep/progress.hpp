@@ -8,7 +8,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 #include <future>
-#include <boost/lockfree/stack.hpp>
 
 namespace Kernel {
 
@@ -48,7 +47,7 @@ protected:
      *  updates at a fixed speed (e.g. 200 Hz). */
     std::timed_mutex mut;
 
-    std::atomic_uint64_t counter;
+    std::atomic<uint64_t> counter;
     const uint64_t total;
     const float offset;
 

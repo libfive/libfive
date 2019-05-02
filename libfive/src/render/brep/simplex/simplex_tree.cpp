@@ -16,11 +16,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <Eigen/StdVector>
 #include <boost/lockfree/queue.hpp>
+#include <boost/lockfree/stack.hpp>
 
 #include "libfive/render/brep/simplex/simplex_tree.hpp"
 #include "libfive/render/brep/simplex/simplex_neighbors.hpp"
 
-#include "libfive/render/brep/object_pool.hpp"
+#include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/neighbor_tables.hpp"
+
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
 
@@ -93,7 +96,8 @@ struct Unroller
             const std::array<SimplexLeafSubspace<BaseDimension>*,
                        ipow(3, BaseDimension)>& leaf_sub,
             const std::array<bool, ipow(3, BaseDimension)>& already_solved,
-            const Region<BaseDimension>& region)
+            const Region<BaseDimension>& region,
+            XTreeEvaluator* eval, Tape::Handle& tape)
     {
         double error = 0.0;
         if (!already_solved[SubspaceIndex_]) {
@@ -111,29 +115,61 @@ struct Unroller
             }
 
             const auto r = region.template subspace<SubspaceFloating>();
-            const auto sol = qef.solveBounded(r);
-            error = sol.error;
 
-            // Unpack from the reduced-dimension solution to the leaf vertex
-            unsigned j = 0;
-            auto s = leaf_sub[SubspaceIndex_];
-            for (unsigned i=0; i < BaseDimension; ++i) {
-                if (SubspaceFloating & (1 << i)) {
-                    s->vert(i) = sol.position(j++);
-                } else if (SubspacePos & (1 << i)) {
-                    s->vert(i) = region.upper(i);
-                } else {
-                    s->vert(i) = region.lower(i);
+#ifndef LIBFIVE_SIMPLEX_REFINE
+#define LIBFIVE_SIMPLEX_REFINE 0
+#endif
+            for (unsigned i=0; i <= LIBFIVE_SIMPLEX_REFINE; ++i) {
+                typename QEF<SubspaceDimension>::Solution sol;
+#ifdef LIBFIVE_SIMPLEX_DC
+                sol = qef.solveDC(r.center());
+                if (!r.contains(sol.position, 0)) {
+                    sol = qef.solveBounded(r);
                 }
-            }
+#else
+                sol = qef.solveBounded(r);
+#endif
 
-            assert(j == SubspaceDimension);
+                if (i == 0) {
+                    error = sol.error;
+                }
+
+                // Unpack from the reduced-dimension solution to the leaf vertex
+                unsigned j = 0;
+                auto s = leaf_sub[SubspaceIndex_];
+                for (unsigned i=0; i < BaseDimension; ++i) {
+                    if (SubspaceFloating & (1 << i)) {
+                        s->vert(i) = sol.position(j++);
+                    } else if (SubspacePos & (1 << i)) {
+                        s->vert(i) = region.upper(i);
+                    } else {
+                        s->vert(i) = region.lower(i);
+                    }
+                }
+                assert(j == SubspaceDimension);
+
+                // Evaluate the function at the solution point, and add that
+                // information to the QEF, to do an iterative refinement.
+                Eigen::Vector3f vert;
+                vert << s->vert.template cast<float>().transpose(),
+                        region.perp.template cast<float>();
+                eval->array.set(vert, 0);
+                const auto ds = eval->array.derivs(1, tape);
+                QEF<BaseDimension> extra;
+                extra.insert(s->vert,
+                             ds.col(0).template head<BaseDimension>().template cast<double>(),
+                             ds(3, 0));
+
+                qef /= 2.0;
+                qef += extra.template sub<SubspaceFloating>();
+            }
         }
 
         // Recurse!
         return std::max(error,
                 Unroller<BaseDimension, SubspaceIndex_ - 1>()(
-                    leaf, leaf_sub, already_solved, region));
+                    leaf, leaf_sub, already_solved, region,
+                    eval, tape));
     }
 };
 
@@ -145,7 +181,8 @@ struct Unroller<BaseDimension, -1>
                       const std::array<SimplexLeafSubspace<BaseDimension>*,
                                  ipow(3, BaseDimension)>&,
                       const std::array<bool, ipow(3, BaseDimension)>&,
-                      const Region<BaseDimension>&)
+                      const Region<BaseDimension>&,
+                      XTreeEvaluator*, Tape::Handle&)
     {
         return 0.0; // Nothing to do here
     }
@@ -173,7 +210,13 @@ std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
 {
     std::unique_ptr<SimplexTree> t(new SimplexTree);
     t->type = Interval::UNKNOWN;
-    t->parent = reinterpret_cast<SimplexTree<N>*>(0xDEADBEEF);
+
+    // We set the parent to a silly invalid value, because it should
+    // never be used (and if someone uses it by accident, we want to
+    // crash quickly and with an obviously-wrong value).
+    uintptr_t flag_ptr = 0xDEADBEEF;
+    t->parent = reinterpret_cast<SimplexTree<N>*>(flag_ptr);
+
     return std::move(t);
 }
 
@@ -242,68 +285,128 @@ void SimplexTree<N>::findLeafVertices(
 
     const auto leaf_sub = getLeafSubs();
 
-    // First, we evaluate the corners, finding position + normal and storing
-    // it in the corner QEFs (which are assumed to be empty)
-    static_assert(ipow(2, N) < LIBFIVE_EVAL_ARRAY_SIZE,
+    //  This variable controls subsample size along each axis.  When it is 2,
+    //  we only sample on the corners; when it is > 2, then we also sample
+    //  between the corners to build up a denser grid within each cell.  This
+    //  grows to the power of N (e.g. doubling it will cause 8x more points to
+    //  be evaluated in the 3D case).
+#ifndef LIBFIVE_SIMPLEX_SUBSAMPLE
+#define LIBFIVE_SIMPLEX_SUBSAMPLE 0
+#endif
+    constexpr unsigned SAMPLES_PER_EDGE = 2 + LIBFIVE_SIMPLEX_SUBSAMPLE;
+    static_assert(SAMPLES_PER_EDGE >= 2, "Too few samples per edge");
+    static_assert(ipow(SAMPLES_PER_EDGE, N) < LIBFIVE_EVAL_ARRAY_SIZE,
                   "Too many points to evaluate");
 
-    // Remap from a value in the range [0, count) to a corner index
-    // in the range [0, 1 <<N).
-    std::array<int, 1 << N> corner_indices;
-
-    // Track how many corners have to be evaluated here
+    // Track how many grid points have to be evaluated here
     // (if they have been be looked up from a neighbor, they don't have
     //  to be evaluated here, which can save time)
     size_t count = 0;
 
     // Pack values into the evaluator, skipping when values have already been
-    // borrowed from neighbors
-    for (unsigned i=0; i < ipow(2, N); ++i) {
-        const auto sub = CornerIndex(i).neighbor();
+    // borrowed from neighbors.  Here's a visual example of the packing,
+    // with a subsampling factor of 4x:
+    //
+    //      X O O X
+    //      O I I O
+    //      O I I O
+    //      X O O X
+    //
+    //  Values with an X are packed into each corner (4x)
+    //  Values marked with O are packed into edges (4x)
+    //  Values marked with I are packed into the volume (1x)
+    //
+    //  If nothing is borrowed from neighbors, we'd end up with
+    //      X | X | O O | X | X | O O | O O | O O | I I I I
+    //  in the evaluator (following the usual ternary ordering rule)
+    for (unsigned i=0; i < ipow(3, N); ++i) {
+        const auto sub = NeighborIndex(i);
         if (!already_solved[sub.i]) {
-            eval->array.set(region.corner3f(i), count);
-            corner_indices[count++] = i;
+            std::vector<Vec, Eigen::aligned_allocator<Vec>> todo;
+            Vec init;
+            for (unsigned a=0; a < N; ++a) {
+                if (sub.isAxisFixed(a)) {
+                    init(a) = (sub.axisPosition(a) ? region.upper
+                                                   : region.lower)(a);
+                }
+            }
+            todo.push_back(init);
+            for (unsigned a=0; a < N; ++a) {
+                if (!sub.isAxisFixed(a)) {
+                    std::vector<Vec, Eigen::aligned_allocator<Vec>> next;
+                    for (auto& t : todo) {
+                        for (unsigned j=1; j < SAMPLES_PER_EDGE - 1; ++j) {
+                            t(a) = (region.lower(a) * j +
+                                    region.upper(a) * (SAMPLES_PER_EDGE - 1 - j))
+                                     / (SAMPLES_PER_EDGE - 1);
+                            next.push_back(t);
+                        }
+                    }
+                    todo = next;
+                }
+            }
+            assert(todo.size() == ipow(SAMPLES_PER_EDGE - 2, sub.dimension()));
+
+            for (auto& t : todo) {
+                Eigen::Vector3f v;
+                v << t.template cast<float>(),
+                     region.perp.template cast<float>();
+                eval->array.set(v, count++);
+            }
         }
     }
 
-    // Then unpack into the corner QEF arrays (which are guaranteed to be
+    // Then unpack into the subspace QEF arrays (which are guaranteed to be
     // empty, because SimplexLeaf::reset() clears them).
     {
         const auto ds = eval->array.derivs(count, tape);
         const auto ambig = eval->array.getAmbiguous(count, tape);
-        for (unsigned i=0; i < count; ++i) {
-            const auto sub_index = CornerIndex(corner_indices[i]).neighbor();
+        unsigned index=0;
+        for (unsigned i=0; i < ipow(3, N); ++i) {
+            const auto sub = NeighborIndex(i);
+            if (!already_solved[sub.i]) {
+                for (unsigned j=0;
+                     j < ipow(SAMPLES_PER_EDGE - 2, sub.dimension());
+                     ++j)
+                {
+                    // Helper function to push a position + value + normal,
+                    // swapping the normal to an all-zeros vector if any
+                    // items are invalid.
+                    auto push = [&](Eigen::Vector3f d) {
+                        Eigen::Matrix<double, N, 1> d_ =
+                            d.template head<N>().template cast<double>();
+                        if (!d_.array().isFinite().all()) {
+                            d_.array() = 0.0;
+                        }
+                        leaf_sub[sub.i]->qef.insert(
+                                eval->array.get(index).template cast<double>()
+                                                      .template head<N>(),
+                                d_, ds(3, index));
+                    };
 
-            // Helper function to push a position + value + normal, swapping
-            // the normal to an all-zeros vector if any items are invalid.
-            auto push = [&](Eigen::Vector3f d) {
-                Eigen::Matrix<double, N, 1> d_ =
-                    d.template head<N>().template cast<double>();
-                if (!d_.array().isFinite().all()) {
-                    d_.array() = 0.0;
+                    // If this corner was ambiguous, then use FeatureEvaluator
+                    // to get all of the possible derivatives, then add them to
+                    // the corner's QEF.
+                    if (ambig(index)) {
+                        const auto fs = eval->feature.features(
+                                eval->array.get(index), tape);
+                        for (auto& f : fs) {
+                            push(f);
+                        }
+                    // Otherwise, use the normal found by the DerivArrayEvaluator
+                    } else {
+                        push(ds.col(index).template head<3>());
+                    }
+                    index++;
                 }
-                leaf_sub[sub_index.i]->qef.insert(
-                        region.corner(corner_indices[i]), d_, ds(3, i));
-            };
-
-            // If this corner was ambiguous, then use the FeatureEvaluator
-            // to get all of the possible derivatives, then add them to
-            // the corner's QEF.
-            if (ambig(i)) {
-                const auto fs = eval->feature.features(
-                        region.corner3f(corner_indices[i]), tape);
-                for (auto& f : fs) {
-                    push(f);
-                }
-            // Otherwise, use the normal found by the DerivArrayEvaluator
-            } else {
-                push(ds.col(i).template head<3>());
             }
         }
     }
 
     // Statically unroll a loop to position every vertex within their subspace.
-    Unroller<N, ipow(3, N) - 1>()(*this->leaf, leaf_sub, already_solved, region);
+    Unroller<N, ipow(3, N) - 1>()(*this->leaf, leaf_sub,
+                                  already_solved, region, eval, tape);
+
 
     // Check whether each vertex is inside or outside, either the hard way
     // (if this cell is ambiguous) or the easy way (if it's empty / filled).
@@ -436,7 +539,8 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
     std::array<bool, ipow(3, N)> already_solved;
     std::fill(already_solved.begin(), already_solved.end(), false);
     const double err = Unroller<N, ipow(3, N) - 1>()(
-            *this->leaf, leaf_sub, already_solved, region);
+            *this->leaf, leaf_sub, already_solved, region,
+            eval, tape);
 
     // We've successfully collapsed the cell!
     if (err < max_err) {
@@ -605,7 +709,7 @@ using LockFreeStack = boost::lockfree::stack<
 
 template <unsigned N>
 void assignIndicesWorker(LockFreeStack<N>& tasks,
-                         std::atomic_uint64_t& index,
+                         std::atomic<uint64_t>& index,
                          std::atomic_bool& done,
                          std::atomic_bool& cancel)
 {
@@ -676,6 +780,7 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
             if (reinterpret_cast<uintptr_t>(new_sub) >
                 reinterpret_cast<uintptr_t>(sub))
             {
+                assert(new_sub->inside == sub->inside);
                 task.target->leaf->sub[i].store(new_sub);
             }
 
@@ -721,6 +826,7 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
                     if (reinterpret_cast<uintptr_t>(new_sub) >
                         reinterpret_cast<uintptr_t>(sub))
                     {
+                        assert(new_sub->inside == sub->inside);
                         task.target->leaf->sub[i].store(new_sub);
                     }
                 }
@@ -777,7 +883,7 @@ void SimplexTree<N>::assignIndices(unsigned workers,
     AssignIndexTask<N> first{this, std::make_shared<NeighborStack<N>>()};
     tasks.push(first);
 
-    std::atomic_uint64_t global_index(1);
+    std::atomic<uint64_t> global_index(1);
     std::atomic_bool done(false);
 
     std::vector<std::future<void>> futures;

@@ -12,7 +12,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <array>
 
-#include "libfive/eval/interval.hpp"
 #include "libfive/render/axes.hpp"
 
 namespace Kernel {

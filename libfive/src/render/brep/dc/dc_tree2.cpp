@@ -56,7 +56,6 @@ const std::vector<std::pair<uint8_t, uint8_t>>& DCTree<2>::edges() const
 }
 
 // Explicit initialization of template
-template class XTree<2, DCTree<2>, DCLeaf<2>>;
 template class DCTree<2>;
 
 }   // namespace Kernel

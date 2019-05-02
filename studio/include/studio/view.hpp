@@ -110,7 +110,7 @@ protected:
     void paintGL() override;
     void resizeGL(int width, int height) override;
 
-    void setAlgorithm(Kernel::Mesh::Algorithm alg);
+    void setAlgorithm(Kernel::BRepAlgorithm alg);
 
     /*
      *  Converts from mouse event coordinates to model coordinates
@@ -157,7 +157,7 @@ protected:
     QList<Shape*> shapes;
     bool settings_enabled=true;
     Settings settings;
-    Kernel::Mesh::Algorithm alg;
+    Kernel::BRepAlgorithm alg;
 
     bool show_axes=true;
     bool show_bbox=false;

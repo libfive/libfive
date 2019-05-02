@@ -19,18 +19,19 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/StdVector>
 
 #include "libfive/export.hpp"
-#include "libfive/eval/eval_xtree.hpp"
 #include "libfive/eval/interval.hpp"
-
-#include "libfive/render/brep/region.hpp"
-#include "libfive/render/brep/progress.hpp"
 #include "libfive/render/brep/xtree.hpp"
-
+#include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/dc/intersection.hpp"
 #include "libfive/render/brep/dc/marching.hpp"
-#include "libfive/render/brep/dc/dc_neighbors.hpp"
 
 namespace Kernel {
+
+/* Forward declaration */
+class XTreeEvaluator;
+class Tape;
+template <unsigned N> class Region;
+template <unsigned N> class DCNeighbors;
 
 /*  AMBIGUOUS leaf cells have more data, which we heap-allocate in
  *  this struct to keep the overall tree smaller. */
@@ -103,7 +104,7 @@ public:
      *  are invalid until reset() is called.
      */
     explicit DCTree();
-    explicit DCTree(DCTree<N>* parent, unsigned index, Region<N> region);
+    explicit DCTree(DCTree<N>* parent, unsigned index, const Region<N>& region);
     static std::unique_ptr<DCTree<N>> empty();
 
     /*

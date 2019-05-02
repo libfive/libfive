@@ -10,13 +10,15 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/progress.hpp"
 
 #include <atomic>
 
 namespace Kernel {
 
-// Forward declaration
+// Forward declarations
 template <unsigned N> class PerThreadBRep;
+class XTreeEvaluator;
 
 class Contours {
 public:
@@ -35,6 +37,12 @@ public:
         const Tree t, const Region<2>& r,
         double min_feature, double max_err,
         std::atomic_bool& cancel, unsigned workers);
+
+    static std::unique_ptr<Contours> render(
+            XTreeEvaluator* es, const Region<2>& r,
+            double min_feature, double max_err,
+            unsigned workers, std::atomic_bool& cancel,
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
 
     /*
      *  Full-featured render function without cancel, to prevent

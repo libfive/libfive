@@ -16,6 +16,12 @@ using namespace Kernel;
 struct Dummy {
     Dummy() { i = 1; }
     void reset() { i = 2; }
+    static void* operator new[](std::size_t sz) {
+        return ::operator new[](sz);
+    }
+    void operator delete[]( void* ptr ) {
+        ::operator delete[](ptr);
+    }
     int i;
 };
 

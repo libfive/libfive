@@ -10,7 +10,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <Eigen/Eigen>
 
-#include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_deriv.hpp"
 
 namespace Kernel {

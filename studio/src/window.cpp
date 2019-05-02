@@ -111,7 +111,8 @@ Window::Window(Arguments args)
 
     file_menu->addSeparator();
 
-    auto export_action = file_menu->addAction("Export...");
+    auto export_action = file_menu->addAction("Export STL...");
+    export_action->setShortcuts({Qt::CTRL + Qt::Key_E, Qt::Key_F7});
     connect(export_action, &QAction::triggered, this, &Window::onExport);
 
     // Edit menu
@@ -279,7 +280,7 @@ bool Window::onOpen(bool)
     CHECK_UNSAVED();
 
     QString f = QFileDialog::getOpenFileName(this, "Open",
-            workingDirectory(), "*.io;;*.ao");
+            workingDirectory(), "Libfive Studio files (*.io);;Any files (*)");
     if (!f.isEmpty())
     {
         return openFile(f);
@@ -390,15 +391,9 @@ bool Window::onSave(bool)
 bool Window::onSaveAs(bool)
 {
     QString f = QFileDialog::getSaveFileName(this, "Save as",
-            workingDirectory(), "*.io");
+            workingDirectory(), "Libfive Studio files (*.io);;Any files (*)");
     if (!f.isEmpty())
     {
-#ifdef Q_OS_LINUX
-        if (!f.endsWith(".io"))
-        {
-            f += ".io";
-        }
-#endif
         if (saveFile(f))
         {
             setFilename(f);
@@ -581,7 +576,7 @@ void Window::onExportReady(QList<const Kernel::Mesh*> shapes)
 void Window::onExport(bool)
 {
     export_filename = QFileDialog::getSaveFileName(
-            this, "Export", workingDirectory(), "*.stl");
+            this, "Export STL", workingDirectory(), "STL files (*.stl);;Any files (*)");
     if (export_filename.isEmpty())
     {
         return;

@@ -14,6 +14,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/opcode.hpp"
 #include "libfive/tree/tree.hpp"
 
+#include "libfive/eval/eval_point.hpp"
+#include "libfive/eval/eval_deriv.hpp"
+
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/contours.hpp"
 #include "libfive/render/brep/mesh.hpp"
@@ -61,6 +64,13 @@ void libfive_pixels_delete(libfive_pixels* m)
 {
     delete [] m->pixels;
     delete m;
+}
+
+void libfive_vars_delete(libfive_vars* vs)
+{
+    delete [] vs->vars;
+    delete [] vs->values;
+    delete vs;
 }
 
 int libfive_opcode_enum(const char* op)

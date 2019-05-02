@@ -8,6 +8,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "libfive/render/brep/simplex/simplex_neighbors.hpp"
+#include "libfive/render/brep/neighbor_tables.hpp"
 #include "libfive/render/brep/simplex/simplex_tree.hpp"
 
 namespace Kernel {

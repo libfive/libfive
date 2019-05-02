@@ -92,7 +92,6 @@ typedef struct libfive_contours3 {
     uint32_t count;
 } libfive_contours3;
 
-
 /*
  *  libfive_mesh is an indexed 3D mesh.
  *  There are vert_count vertices, and tri_count triangles.
@@ -166,6 +165,18 @@ int libfive_opcode_enum(const char* op);
  *  (either 0, 1, 2, or -1 if the opcode is invalid)
  */
 int libfive_opcode_args(int op);
+
+////////////////////////////////////////////////////////////////////////////////
+
+/*  libfive_vars is a general-purpose struct for mapping a set of
+ *  free variables to their values.  The variables are opaque
+ *  pointers, i.e. values returned with libfive_tree_id. */
+typedef struct libfive_vars {
+    void* const* vars;
+    float* values;
+    uint32_t size;
+} libfive_vars;
+void libfive_vars_delete(libfive_vars* j);
 
 ////////////////////////////////////////////////////////////////////////////////
 
