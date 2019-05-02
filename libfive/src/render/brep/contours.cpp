@@ -23,7 +23,8 @@ namespace Kernel {
 std::unique_ptr<Contours> Contours::render(
         const Tree t, const Region<2>& r,
         double min_feature, double max_err,
-        std::atomic_bool& cancel, unsigned workers)
+        std::atomic_bool& cancel, unsigned workers,
+        FreeThreadHandler& freeThreadHandler)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -34,8 +35,8 @@ std::unique_ptr<Contours> Contours::render(
 
     // Create the quadtree on the scaffold
     auto xtree = DCPool<2>::build(
-        es.data(), r, min_feature, max_err,
-        workers, cancel);
+        es.data(), r, min_feature, max_err, workers, cancel, 
+        EMPTY_PROGRESS_CALLBACK, freeThreadHandler);
 
     // Abort early if the cancellation flag is set
     if (cancel == true) {
@@ -44,7 +45,8 @@ std::unique_ptr<Contours> Contours::render(
 
     // Perform marching squares, collecting into Contours
     auto cs = Dual<2>::walk<DCContourer>(xtree, workers, cancel,
-                                         EMPTY_PROGRESS_CALLBACK);
+                                         EMPTY_PROGRESS_CALLBACK,
+                                         freeThreadHandler);
     cs->bbox = r;
     return cs;
 }
@@ -188,19 +190,11 @@ std::unique_ptr<Contours> Contours::render(const Tree t,
                                            const Region<2>& r,
                                            double min_feature /*= 0.1*/,
                                            double max_err /*= 1e-8*/,
-                                           bool multithread /*= true*/)
+                                           bool multithread /*= true*/,
+                                           FreeThreadHandler& freeThreadHandler)
 {
-  return render(t, r, min_feature, max_err, multithread ? 8u : 1u);
-}
-
-std::unique_ptr<Contours> Contours::render(const Tree t,
-                                           const Region<2>& r,
-                                           double min_feature /*= 0.1*/,
-                                           double max_err /*= 1e-8*/,
-                                           unsigned workers)
-{
-  std::atomic_bool cancelled(false);
-  return render(t, r, min_feature, max_err, cancelled, workers);
+  return render(t, r, min_feature, max_err, 
+                multithread ? 8u : 1u, freeThreadHandler);
 }
 
 }   // namespace Kernel

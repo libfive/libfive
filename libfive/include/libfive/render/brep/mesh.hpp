@@ -14,6 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/brep.hpp"
 #include "libfive/render/brep/progress.hpp"
+#include "libfive/render/brep/free_thread_handler.hpp"
 #include "libfive/eval/eval_xtree.hpp"
 
 namespace Kernel {
@@ -33,7 +34,8 @@ public:
             const Tree t, const Region<3>& r,
             double min_feature=0.1, double max_err=1e-8, bool multithread=true,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            Algorithm=DUAL_CONTOURING);
+            Algorithm=DUAL_CONTOURING,
+            FreeThreadHandler& freeThreadHandler = NullFreeThreadHandler::ref);
 
     /*
      *  Fully-specified render function
@@ -45,7 +47,8 @@ public:
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            Algorithm=DUAL_CONTOURING);
+            Algorithm=DUAL_CONTOURING,
+            FreeThreadHandler& freeThreadHandler = NullFreeThreadHandler::ref);
 
     /*
      *  Render function that re-uses evaluators
@@ -58,7 +61,8 @@ public:
             double min_feature, double max_err,
             int workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            Algorithm=DUAL_CONTOURING);
+            Algorithm=DUAL_CONTOURING,
+            FreeThreadHandler& freeThreadHandler = NullFreeThreadHandler::ref);
 
     /*
      *  Writes the mesh to a file

@@ -29,6 +29,7 @@ add_library(five SHARED
     render/brep/progress.cpp
     render/brep/mesh.cpp
     render/brep/neighbor_tables.cpp
+    render/brep/free_thread_handler.cpp
     render/brep/dc/intersection_aligner.cpp
     render/brep/dc/marching.cpp
     render/brep/dc/dc_contourer.cpp

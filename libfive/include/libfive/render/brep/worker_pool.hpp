@@ -13,10 +13,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <boost/lockfree/stack.hpp>
 
 #include "libfive/eval/eval_xtree.hpp"
+#include "libfive/render/brep/free_thread_handler.hpp"
 #include "libfive/render/brep/root.hpp"
 #include "libfive/render/brep/progress.hpp"
 
 namespace Kernel {
+
+class FreeThreadHandler;
 
 /*
  *  A WorkerPool is used to construct a recursive tree (quadtree / octree)
@@ -31,7 +34,8 @@ public:
      */
     static Root<T> build(const Tree t, Region<N> region,
             double min_feature=0.1, double max_err=1e-8, unsigned workers=8,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
+            FreeThreadHandler& freeThreadHandler = NullFreeThreadHandler::ref);
 
     /*
      *  Full-featured builder function
@@ -39,7 +43,8 @@ public:
     static Root<T> build(XTreeEvaluator* eval,
             Region<N> region, double min_feature,
             double max_err, unsigned workers, std::atomic_bool& cancel,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
+            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
+            FreeThreadHandler& freeThreadHandler = NullFreeThreadHandler::ref);
 
 protected:
     struct Task {
@@ -55,7 +60,8 @@ protected:
     static void run(XTreeEvaluator* eval, LockFreeStack& tasks,
                     const float max_err, std::atomic_bool& done,
                     std::atomic_bool& cancel, Root<T>& root,
-                    std::mutex& root_lock, ProgressWatcher* progress);
+                    std::mutex& root_lock, ProgressWatcher* progress,
+                    FreeThreadHandler& freeThreadHandler);
 };
 
 }   // namespace Kernel

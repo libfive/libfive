@@ -16,7 +16,8 @@ template <typename T, typename Neighbors, unsigned N>
 Root<T> WorkerPool<T, Neighbors, N>::build(
         const Tree t, Region<N> region,
         double min_feature, double max_err, unsigned workers,
-        ProgressCallback progress_callback)
+        ProgressCallback progress_callback,
+        FreeThreadHandler& freeThreadHandler)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -26,7 +27,8 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     }
     std::atomic_bool cancel(false);
     return build(es.data(), region, min_feature,
-                 max_err, workers, cancel, progress_callback);
+                 max_err, workers, cancel, 
+                 progress_callback, freeThreadHandler);
 }
 
 template <typename T, typename Neighbors, unsigned N>
@@ -34,7 +36,8 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     XTreeEvaluator* eval,
     Region<N> region, double min_feature,
     double max_err, unsigned workers, std::atomic_bool& cancel,
-    ProgressCallback progress_callback)
+    ProgressCallback progress_callback,
+    FreeThreadHandler& freeThreadHandler)
 {
     auto root(new T(nullptr, 0, region));
     std::atomic_bool done(false);
@@ -62,9 +65,9 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     {
         futures[i] = std::async(std::launch::async,
                 [&eval, &tasks, &cancel, &done, &out, &root_lock,
-                 max_err, i, progress_watcher](){
+                 max_err, i, progress_watcher, &freeThreadHandler](){
                     run(eval + i, tasks, max_err, done, cancel, out,
-                        root_lock, progress_watcher);
+                        root_lock, progress_watcher, freeThreadHandler);
                     });
     }
 
@@ -94,7 +97,8 @@ void WorkerPool<T, Neighbors, N>::run(
         XTreeEvaluator* eval, LockFreeStack& tasks, const float max_err,
         std::atomic_bool& done, std::atomic_bool& cancel,
         Root<T>& root, std::mutex& root_lock,
-        ProgressWatcher* progress)
+        ProgressWatcher* progress,
+        FreeThreadHandler& freeThreadHandler)
 {
     // Tasks to be evaluated by this thread (populated when the
     // MPMC stack is completely full).
@@ -118,10 +122,11 @@ void WorkerPool<T, Neighbors, N>::run(
             task.target = nullptr;
         }
 
-        // If we failed to get a task, keep looping
+        // If we failed to get a task, offer a lock then keep looping
         // (so that we terminate when either of the flags are set).
         if (task.target == nullptr)
         {
+            freeThreadHandler.offerWait();
             continue;
         }
 

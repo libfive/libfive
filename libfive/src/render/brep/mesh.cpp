@@ -30,12 +30,14 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    double min_feature, double max_err,
                                    bool multithread,
                                    ProgressCallback progress_callback,
-                                   Algorithm alg)
+                                   Algorithm alg,
+                                   FreeThreadHandler& freeThreadHandler)
 {
     std::atomic_bool cancel(false);
     std::map<Tree::Id, float> vars;
     return render(t, vars, r, min_feature, max_err,
-                  multithread ? 8 : 1, cancel, progress_callback, alg);
+                  multithread ? 8 : 1, cancel, 
+                  progress_callback, alg, freeThreadHandler);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
@@ -43,7 +45,8 @@ std::unique_ptr<Mesh> Mesh::render(
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
             ProgressCallback progress_callback,
-            Algorithm alg)
+            Algorithm alg,
+            FreeThreadHandler& freeThreadHandler)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -53,7 +56,7 @@ std::unique_ptr<Mesh> Mesh::render(
     }
 
     return render(es.data(), r, min_feature, max_err, workers, cancel,
-                  progress_callback, alg);
+                  progress_callback, alg, freeThreadHandler);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
@@ -61,14 +64,15 @@ std::unique_ptr<Mesh> Mesh::render(
         const Region<3>& r, double min_feature, double max_err,
         int workers, std::atomic_bool& cancel,
         ProgressCallback progress_callback,
-        Algorithm alg)
+        Algorithm alg,
+        FreeThreadHandler& freeThreadHandler)
 {
     std::unique_ptr<Mesh> out;
     if (alg == DUAL_CONTOURING)
     {
         auto t = DCPool<3>::build(
                 es, r, min_feature, max_err, workers,
-                cancel, progress_callback);
+                cancel, progress_callback, freeThreadHandler);
 
         if (cancel.load() || t.get() == nullptr) {
             return nullptr;
@@ -81,7 +85,8 @@ std::unique_ptr<Mesh> Mesh::render(
 #endif
 
         // Perform marching squares
-        out = Dual<3>::walk<DCMesher>(t, workers, cancel, progress_callback);
+        out = Dual<3>::walk<DCMesher>(t, workers, cancel, 
+                                      progress_callback, freeThreadHandler);
 
         // TODO: check for early return here again
         t.reset(workers, progress_callback);
@@ -90,7 +95,7 @@ std::unique_ptr<Mesh> Mesh::render(
     {
         auto t = SimplexTreePool<3>::build(
                 es, r, min_feature, max_err, workers,
-                cancel, progress_callback);
+                cancel, progress_callback, freeThreadHandler);
 
         if (cancel.load() || t.get() == nullptr) {
             return nullptr;
@@ -99,7 +104,7 @@ std::unique_ptr<Mesh> Mesh::render(
         t->assignIndices(workers, cancel);
 
         out = Dual<3>::walk_<SimplexMesher>(t, workers,
-                cancel, progress_callback,
+                cancel, progress_callback, freeThreadHandler,
                 [&](PerThreadBRep<3>& brep, int i) {
                     return SimplexMesher(brep, &es[i]);
                 });

@@ -39,6 +39,7 @@ public:
             const Root<typename M::Input>& t, unsigned workers,
             std::atomic_bool& cancel,
             ProgressCallback progress_callback,
+            FreeThreadHandler& freeThreadHandler,
             A... args);
 
      /*
@@ -57,6 +58,7 @@ public:
             const Root<typename M::Input>& t, unsigned workers,
             std::atomic_bool& cancel,
             ProgressCallback progress_callback,
+            FreeThreadHandler& freeThreadHandler,
             std::function<M(PerThreadBRep<N>&, int)> MesherFactory);
 
 protected:
@@ -64,7 +66,8 @@ protected:
     static void run(Mesher& m, ProgressWatcher* progress,
                     boost::lockfree::stack<const T*,
                                            boost::lockfree::fixed_sized<true>>& tasks,
-                    std::atomic_bool& done, std::atomic_bool& cancel);
+                    std::atomic_bool& done, std::atomic_bool& cancel,
+                    FreeThreadHandler& freeThreadHandler = NullFreeThreadHandler::ref);
 
     template <typename T, typename Mesher>
     static void work(const T* t, Mesher& m);
@@ -231,9 +234,11 @@ std::unique_ptr<typename M::Output> Dual<N>::walk(
             const Root<typename M::Input>& t, unsigned workers,
             std::atomic_bool& cancel,
             ProgressCallback progress_callback,
+            FreeThreadHandler& freeThreadHandler,
             A... args)
 {
-    return Dual<N>::walk_<M>(t, workers, cancel, progress_callback,
+    return Dual<N>::walk_<M>(t, workers, cancel, 
+                             progress_callback, freeThreadHandler,
             [&args...](PerThreadBRep<N>& brep, int i) {
                 (void)i;
                 return M(brep, args...);
@@ -247,6 +252,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
             const Root<typename M::Input>& t, unsigned workers,
             std::atomic_bool& cancel,
             ProgressCallback progress_callback,
+            FreeThreadHandler& freeThreadHandler,
             std::function<M(PerThreadBRep<N>&, int)> MesherFactory)
 {
     boost::lockfree::stack<const typename M::Input*,
@@ -270,9 +276,11 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
     futures.resize(workers);
     for (unsigned i=0; i < workers; ++i) {
         futures[i] = std::async(std::launch::async,
-            [&breps, &done, &cancel, &tasks, &MesherFactory, i, progress]() {
+            [&breps, &done, &cancel, &tasks, &MesherFactory, i, 
+                                progress, &freeThreadHandler]() {
                 auto m = MesherFactory(breps[i], i);
-                Dual<N>::run(m, progress, tasks, done, cancel);
+                Dual<N>::run(m, progress, tasks, done, cancel, 
+                             freeThreadHandler);
             });
     }
 
@@ -304,7 +312,8 @@ template <typename T, typename V>
 void Dual<N>::run(V& v, ProgressWatcher* progress,
                   boost::lockfree::stack<const T*,
                                          boost::lockfree::fixed_sized<true>>& tasks,
-                  std::atomic_bool& done, std::atomic_bool& cancel)
+                  std::atomic_bool& done, std::atomic_bool& cancel,
+                  FreeThreadHandler& freeThreadHandler)
 {
     // Tasks to be evaluated by this thread (populated when the
     // MPMC stack is completely full).
@@ -326,10 +335,11 @@ void Dual<N>::run(V& v, ProgressWatcher* progress,
             t = nullptr;
         }
 
-        // If we failed to get a task, keep looping
+        // If we failed to get a task, offer a lock then keep looping
         // (so that we terminate when either of the flags are set).
         if (t == nullptr)
         {
+            freeThreadHandler.offerWait();
             continue;
         }
 
