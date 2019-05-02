@@ -333,7 +333,7 @@ void Dual<N>::run(V& v, ProgressWatcher* progress,
         else if (!tasks.pop(t))
         {
             std::unique_lock<std::mutex> lock(mut);
-            cond.wait_for(lock, std::chrono::milliseconds(10),
+            cond.wait_for(lock, std::chrono::milliseconds(50),
                 [&]() {
                     if (tasks.pop(t)) {
                         return true;
