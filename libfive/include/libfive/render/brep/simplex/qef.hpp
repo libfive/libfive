@@ -554,10 +554,8 @@ inline typename QEF<N>::Solution QEF<N>::solveDC(Eigen::Matrix<double, 1, N> tar
             AtA_c(r, c) = AtA(row, col);
             c++;
         }
-        assert(c == N + 1 - NumConstrainedAxes);
         r++;
     }
-    assert(r == N + 1 - NumConstrainedAxes);
 
     auto sol = QEF<N - 1>::solve(
             AtA_c, AtB_c, target_c);
