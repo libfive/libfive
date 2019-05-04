@@ -112,6 +112,14 @@ Deck::Deck(const Tree root)
     tape->i = clauses.at(root.id());
 }
 
+void Deck::setOracleCount(Eigen::Index count)
+{
+  for (unsigned i = 0; i < oracles.size(); ++i)
+  {
+    oracles[i]->setCount(count);
+  }
+}
+
 void Deck::bindOracles(std::shared_ptr<Tape> tape)
 {
     for (unsigned i=0; i < oracles.size(); ++i)

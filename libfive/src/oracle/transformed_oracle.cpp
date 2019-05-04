@@ -69,15 +69,14 @@ void TransformedOracle::evalArray(
     auto ctx = dynamic_cast<Context*>(context.get());
     assert(context == nullptr || ctx != nullptr);
 
-    const int count = out.cols();
-    auto xPoints = ctx ? xEvaluator.array.values(count, ctx->tx)
-                       : xEvaluator.array.values(count);
-    auto yPoints = ctx ? yEvaluator.array.values(count, ctx->ty)
-                       : yEvaluator.array.values(count);
-    auto zPoints = ctx ? zEvaluator.array.values(count, ctx->tz)
-                       : zEvaluator.array.values(count);
+    auto xPoints = ctx ? xEvaluator.array.values(count(), ctx->tx)
+                       : xEvaluator.array.values(count());
+    auto yPoints = ctx ? yEvaluator.array.values(count(), ctx->ty)
+                       : yEvaluator.array.values(count());
+    auto zPoints = ctx ? zEvaluator.array.values(count(), ctx->tz)
+                       : zEvaluator.array.values(count());
 
-    for (auto i = 0; i < count; ++i)
+    for (auto i = 0; i < count(); ++i)
     {
         underlying->set({ xPoints(i), yPoints(i), zPoints(i) }, i);
     }
@@ -92,9 +91,9 @@ void TransformedOracle::checkAmbiguous(
                  1, Eigen::Dynamic> out)
 {
     underlying->checkAmbiguous(out);
-    out = out || xEvaluator.array.getAmbiguous(out.cols())
-              || yEvaluator.array.getAmbiguous(out.cols())
-              || zEvaluator.array.getAmbiguous(out.cols());
+    out = out || xEvaluator.array.getAmbiguous(count())
+              || yEvaluator.array.getAmbiguous(count())
+              || zEvaluator.array.getAmbiguous(count());
 }
 
 void TransformedOracle::evalDerivs(
@@ -137,18 +136,18 @@ void TransformedOracle::evalDerivArray(
     auto ctx = dynamic_cast<Context*>(context.get());
     assert(context == nullptr || ctx != nullptr);
 
-    auto xDerivs = ctx ? xEvaluator.array.derivs(out.cols(), ctx->tx)
-                       : xEvaluator.array.derivs(out.cols());
-    auto yDerivs = ctx ? yEvaluator.array.derivs(out.cols(), ctx->ty)
-                       : yEvaluator.array.derivs(out.cols());
-    auto zDerivs = ctx ? zEvaluator.array.derivs(out.cols(), ctx->tz)
-                       : zEvaluator.array.derivs(out.cols());
+    auto xDerivs = ctx ? xEvaluator.array.derivs(count(), ctx->tx)
+                       : xEvaluator.array.derivs(count());
+    auto yDerivs = ctx ? yEvaluator.array.derivs(count(), ctx->ty)
+                       : yEvaluator.array.derivs(count());
+    auto zDerivs = ctx ? zEvaluator.array.derivs(count(), ctx->tz)
+                       : zEvaluator.array.derivs(count());
 
     underlying->bind(ctx ? ctx->u : nullptr);
     underlying->evalDerivArray(out);
     underlying->unbind();
 
-    for (auto i = 0; i < out.cols(); ++i)
+    for (auto i = 0; i < count(); ++i)
     {
         Eigen::Matrix3f Jacobian;
         Jacobian << xDerivs.col(i).template head<3>(),
