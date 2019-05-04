@@ -212,7 +212,7 @@ TEST_CASE("SimplexMesher<3>: box with problematic edges")
 
     std::atomic_bool cancel(false);
     auto m = Dual<3>::walk<SimplexMesher>(t, 8,
-            cancel, EMPTY_PROGRESS_CALLBACK, shape);
+            cancel, EMPTY_PROGRESS_CALLBACK, nullptr, shape);
 
     REQUIRE(m->branes.size() > 0);
     REQUIRE(m->verts.size() > 1);
@@ -248,7 +248,7 @@ TEST_CASE("SimplexMesher<3>: tricky shape")
 
     std::atomic_bool cancel(false);
     auto m = Dual<3>::walk<SimplexMesher>(t, 8,
-            cancel, EMPTY_PROGRESS_CALLBACK, b);
+            cancel, EMPTY_PROGRESS_CALLBACK, nullptr, b);
     CHECK_EDGE_PAIRS(*m);
 }
 
@@ -339,7 +339,7 @@ TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement")
     t->assignIndices(1, cancel);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, 1,
-            cancel, EMPTY_PROGRESS_CALLBACK, b);
+            cancel, EMPTY_PROGRESS_CALLBACK, nullptr, b);
     CHECK_EDGE_PAIRS(*m);
 }
 
@@ -352,12 +352,12 @@ TEST_CASE("SimplexMesher<3>: sphere")
     t->assignIndices(1, cancel);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, 1,
-            cancel, EMPTY_PROGRESS_CALLBACK, s);
+            cancel, EMPTY_PROGRESS_CALLBACK, nullptr, s);
     CHECK_EDGE_PAIRS(*m);
     m->saveSTL("out.stl");
 
     auto g = Dual<3>::walk<SimplexDebugMesher>(t, 1,
-            cancel, EMPTY_PROGRESS_CALLBACK, s);
+            cancel, EMPTY_PROGRESS_CALLBACK, nullptr, s);
     g->saveSTL("grid.stl");
 }
 
@@ -371,12 +371,12 @@ TEST_CASE("SimplexMesher<3>: cylinder meshing")
     t->assignIndices(1, cancel);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, 1,
-            cancel, EMPTY_PROGRESS_CALLBACK, b);
+            cancel, EMPTY_PROGRESS_CALLBACK, nullptr, b);
     CHECK_EDGE_PAIRS(*m);
     m->saveSTL("out.stl");
 
     auto g = Dual<3>::walk<SimplexDebugMesher>(t, 1,
-            cancel, EMPTY_PROGRESS_CALLBACK, b);
+            cancel, EMPTY_PROGRESS_CALLBACK, nullptr, b);
     g->saveSTL("grid.stl");
 }
 
@@ -410,7 +410,7 @@ TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
 
     std::atomic_bool cancel(false);
     auto m = Dual<3>::walk<SimplexMesher>(t, 8,
-            cancel, EMPTY_PROGRESS_CALLBACK, c);
+            cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
 
     REQUIRE(m->branes.size() > 0);
     REQUIRE(m->verts.size() > 1);
@@ -500,7 +500,7 @@ TEST_CASE("SimplexMesher (smoke test)")
         t->assignIndices();
 
         auto m = Dual<3>::walk<SimplexMesher>(t, 8,
-                cancel, EMPTY_PROGRESS_CALLBACK, c);
+                cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
 
         REQUIRE(m->branes.size() > 0);
         REQUIRE(m->verts.size() > 1);
@@ -514,7 +514,7 @@ TEST_CASE("SimplexMesher (smoke test)")
         t->assignIndices();
 
         auto m = Dual<3>::walk<SimplexMesher>(t, 8,
-                cancel, EMPTY_PROGRESS_CALLBACK, c);
+                cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
         REQUIRE(m->verts.size() > 1);
         REQUIRE(m->branes.size() > 1);
     }
@@ -528,7 +528,7 @@ TEST_CASE("SimplexMesher (smoke test)")
         t->assignIndices();
 
         auto m = Dual<3>::walk<SimplexMesher>(t, 8,
-                cancel, EMPTY_PROGRESS_CALLBACK, c);
+                cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
         REQUIRE(m->verts.size() > 1);
         REQUIRE(m->branes.size() > 1);
     }
@@ -544,7 +544,7 @@ TEST_CASE("SimplexMesher: sphere-box intersection vertex placement")
 
     std::atomic_bool cancel(false);
     auto m = Dual<3>::walk<SimplexMesher>(t, 8,
-            cancel, EMPTY_PROGRESS_CALLBACK, c);
+            cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
 
     // We pick out any triangle that's at the sphere-cube intersection,
     // and check that the intersection vertices are at the sphere's radius.
@@ -596,7 +596,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         t->assignIndices(1, cancel);
 
         auto m = Dual<3>::walk<SimplexMesher>(t, workers,
-                cancel, EMPTY_PROGRESS_CALLBACK, c);
+                cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
 
         CHECK_EDGE_PAIRS(*m);
     }
@@ -610,7 +610,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         t->assignIndices(1, cancel);
 
         auto m = Dual<3>::walk<SimplexMesher>(t, workers,
-                cancel, EMPTY_PROGRESS_CALLBACK, c);
+                cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
 
         CHECK_EDGE_PAIRS(*m);
     }
@@ -624,7 +624,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         t->assignIndices(1, cancel);
 
         auto m = Dual<3>::walk<SimplexMesher>(t, workers,
-                cancel, EMPTY_PROGRESS_CALLBACK, c);
+                cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
 
         CHECK_EDGE_PAIRS(*m);
     }
@@ -640,7 +640,7 @@ TEST_CASE("SimplexMesher: menger sponge")
     t->assignIndices();
 
     auto m = Dual<3>::walk<SimplexMesher>(t,
-            8, cancel, EMPTY_PROGRESS_CALLBACK, sponge);
+            8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, sponge);
     REQUIRE(true);
 }
 
@@ -707,7 +707,7 @@ TEST_CASE("Simplex meshing (gyroid performance breakdown)", "[!benchmark]")
     BENCHMARK("Mesh building")
     {
         m = Dual<3>::walk<SimplexMesher>(
-                t, workers, cancel, EMPTY_PROGRESS_CALLBACK, s);
+                t, workers, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, s);
     }
 
     BENCHMARK("SimplexTree deletion")

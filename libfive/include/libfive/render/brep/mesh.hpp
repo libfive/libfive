@@ -15,7 +15,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/algorithm.hpp"
 
 namespace Kernel {
-class XTreeEvaluator; // Forward declaration
+
+// Forward declaration
+class XTreeEvaluator;
+class FreeThreadHandler;
+
 template <unsigned N> class Region;
 
 class Mesh : public BRep<3> {
@@ -26,9 +30,8 @@ public:
      */
     static std::unique_ptr<Mesh> render(
             const Tree t, const Region<3>& r,
-            double min_feature=0.1, double max_err=1e-8, bool multithread=true,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            BRepAlgorithm=DUAL_CONTOURING);
+            double min_feature=0.1, double max_err=1e-8,
+            bool multithread=true, BRepAlgorithm alg=DUAL_CONTOURING);
 
     /*
      *  Fully-specified render function
@@ -39,8 +42,9 @@ public:
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
+            BRepAlgorithm alg=DUAL_CONTOURING,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            BRepAlgorithm=DUAL_CONTOURING);
+            FreeThreadHandler* free_thread_handler=nullptr);
 
     /*
      *  Render function that re-uses evaluators
@@ -51,9 +55,10 @@ public:
     static std::unique_ptr<Mesh> render(
             XTreeEvaluator* es, const Region<3>& r,
             double min_feature, double max_err,
-            int workers, std::atomic_bool& cancel,
+            unsigned workers, std::atomic_bool& cancel,
+            BRepAlgorithm alg=DUAL_CONTOURING,
             ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            BRepAlgorithm=DUAL_CONTOURING);
+            FreeThreadHandler* free_thread_handler=nullptr);
 
     /*
      *  Writes the mesh to a file

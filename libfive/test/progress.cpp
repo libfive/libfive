@@ -71,7 +71,10 @@ TEST_CASE("Mesh::render (progress callback)")
             ps.push_back(f);
         };
 
-        Mesh::render(sponge, r, res, 1e-8, true, callback);
+        std::atomic_bool cancel(false);
+        std::map<Tree::Id, float> vars;
+        Mesh::render(sponge, vars, r, res, 1e-8, 8, cancel,
+                     DUAL_CONTOURING, callback, nullptr);
 
         CAPTURE(ps.size());
         CAPTURE(ps);
