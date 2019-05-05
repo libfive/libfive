@@ -153,7 +153,15 @@ TEST_CASE("Archive::deserialize")
         auto b_itr = b.shapes.begin();
         while(a_itr != a.shapes.end())
         {
+            std::stringstream ss;
+            a_itr->tree->print(ss);
+            ss << "\t";
+            b_itr->tree->print(ss);
+            CAPTURE(ss.str());
+            CAPTURE(a_itr->tree.id());
+            CAPTURE(b_itr->tree.id());
             REQUIRE(a_itr->tree == b_itr->tree);
+
             REQUIRE(a_itr->name == b_itr->name);
             REQUIRE(a_itr->doc == b_itr->doc);
 
