@@ -208,6 +208,15 @@ Tree Tree::makeVarsConstant() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const std::shared_ptr<Tree::Tree_> Tree::Tree_::branch(Direction d)
+{
+    switch (d) {
+        case LEFT:  return lhs;
+        case RIGHT: return rhs;
+    }
+    return nullptr;
+}
+
 void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
 {
     const bool commutative = (prev_op == op);

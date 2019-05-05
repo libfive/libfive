@@ -82,6 +82,9 @@ public:
         FLAG_LOCATION_AGNOSTIC  = (1<<1),
     };
 
+    /*  Simple enum for branch selection */
+    enum Direction {LEFT, RIGHT};
+
     /*  This is where tree data is actually stored  */
     struct Tree_ {
         /*
@@ -102,6 +105,9 @@ public:
         /*  Only populated for operations  */
         const std::shared_ptr<Tree_> lhs;
         const std::shared_ptr<Tree_> rhs;
+
+        /*  Programmatic branch lookup */
+        const std::shared_ptr<Tree_> branch(Direction d);
 
         /*
          *  Pushes a Scheme-format serialization to an ostream
