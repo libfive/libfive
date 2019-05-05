@@ -424,35 +424,76 @@ Cache::Node Cache::checkIdentity(Opcode::Opcode op, Cache::Node a, Cache::Node b
 
 Cache::Node Cache::checkCommutative(Opcode::Opcode op, Cache::Node a, Cache::Node b)
 {
+    /*  This optimization turns a long series of commutative operations into a
+     *  mostly-balanced binary tree.  For example, it will turn
+     *  (+ (+ (+ (+ (+ a b) c) d) e) f)
+     *  into something more like
+     *  (+ (+ (+ a b) (+ c d)) (+ (+ d e) f))
+     *  which packs the evaluation into fewer levels.
+     *
+     *  This should run in log(n) time, where n is the depth of the
+     *  commutative tree; a sequence of insertions will take n * log(n) */
     if (Opcode::isCommutative(op))
     {
-        const auto al = a->lhs ? a->lhs->rank : 0;
-        const auto ar = a->rhs ? a->rhs->rank : 0;
-        const auto bl = b->lhs ? b->lhs->rank : 0;
-        const auto br = b->rhs ? b->rhs->rank : 0;
+        // Descend through a tree, returning a path from the root to the
+        // leaf of lowest rank (which is where we want to insert the new
+        // element).  We need the path, because the trees are immutable,
+        // so we need to walk up the path and build a new tree.
+        std::vector<std::pair<Cache::Node, Tree::Direction>> path;
+        auto descend = [op, &path](Cache::Node target)
+        {
+            while (target->op == op) {
+                const auto dir = (target->lhs->rank <= target->rhs->rank)
+                    ? Tree::LEFT : Tree::RIGHT;
+                path.push_back(std::make_pair(target, dir));
+                target = target->branch(dir);
+            }
+        };
 
-        if (a->op == op)
-        {
-            if (al > b->rank)
-            {
-                return operation(op, a->lhs, operation(op, a->rhs, b));
-            }
-            else if (ar > b->rank)
-            {
-                return operation(op, a->rhs, operation(op, a->lhs, b));
+        Cache::Node target;
+        // Left-hand insertion
+        if (a->op == op && b->op != op) {
+            target = b;
+            descend(a);
+        }
+        // Right-hand insertion
+        else if (b->op == op && a->op != op) {
+            target = a;
+            descend(b);
+        } else {
+            return nullptr;
+        }
+
+        /*  At this point, the data stored in path looks something like this:
+         *  {{a,L}, {b,R}, {c,L}}
+         *  which represents this path through the tree
+         *
+         *          (a,L)
+         *          /   \
+         *       (b,R)
+         *       /   \
+         *          (c,L)
+         *          /   \
+         *         X
+         *
+         *  We want to replace X with op(X, target)
+         *  (where target is either a or b, depending on which branch we took),
+         *  then work our way back up the tree, swapping modified branches */
+        auto itr = path.rbegin();
+        if (itr->second == Tree::LEFT) {
+            target = operation(op, target, itr->first->lhs, false);
+        } else {
+            target = operation(op, target, itr->first->rhs, false);
+        }
+        for (auto itr = path.rbegin(); itr != path.rend(); ++itr) {
+            assert(itr->first->op == op);
+            if (itr->second == Tree::LEFT) {
+                target = operation(op, target, itr->first->rhs, false);
+            } else {
+                target = operation(op, itr->first->lhs, target, false);
             }
         }
-        else if (b->op == op)
-        {
-            if (bl > a->rank)
-            {
-                return operation(op, b->lhs, operation(op, b->rhs, a));
-            }
-            else if (br > a->rank)
-            {
-                return operation(op, b->rhs, operation(op, b->lhs, a));
-            }
-        }
+        return target;
     }
     return 0;
 }
