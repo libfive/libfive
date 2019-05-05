@@ -411,33 +411,74 @@ TEST_CASE("Cache::checkAffine")
 TEST_CASE("Cache: performance of commutative tree balancing", "[!mayfail]")
 {
     auto t = Cache::instance();
+    const unsigned N = 1000;
 
     // Build a left-biased tree without any simplification,
     // to get a baseline for how long it should take.
     auto start = std::chrono::steady_clock::now();
     auto dt = std::chrono::steady_clock::now() - start;
     auto c = t->constant(0.0f);
-    for (unsigned i=0; i < 1000; ++i) {
+    for (unsigned i=0; i < N; ++i) {
         dt = std::chrono::steady_clock::now() - start;
-        auto p = t->operation(Opcode::OP_POW, t->X(), t->constant(i));
-        c = t->operation(Opcode::OP_ADD, c, p, false);
+        auto p = t->operation(Opcode::OP_ADD, t->X(), t->constant(i));
+        c = t->operation(Opcode::OP_MIN, c, p, false);
     }
+    REQUIRE(c->rank == N);
 
     // Then run the same tree-building exercise with simplifications turned
     // on, which will try to balance the binary tree.
     start = std::chrono::steady_clock::now();
     auto d = t->constant(0.0f);
-    for (unsigned i=0; i < 1000; ++i) {
+    for (unsigned i=0; i < N; ++i) {
         const auto dt_ = std::chrono::steady_clock::now() - start;
-        if (dt_ > dt * 4) {
+        if (dt_ > dt * 15) {
             CAPTURE(std::chrono::duration_cast<std::chrono::microseconds>(dt)
                     .count());
             CAPTURE(std::chrono::duration_cast<std::chrono::microseconds>(dt_)
                     .count());
             REQUIRE(false);
         }
-        auto p = t->operation(Opcode::OP_POW, t->X(), t->constant(i));
-        d = t->operation(Opcode::OP_ADD, d, p, true);
+        auto p = t->operation(Opcode::OP_ADD, t->X(), t->constant(i));
+        d = t->operation(Opcode::OP_MIN, d, p, true);
     }
-    REQUIRE(true);
+    REQUIRE(d->rank < log(N) / log(2) * 2);
+
+
+    // Next, build a tree that's biased in the opposite direction
+    start = std::chrono::steady_clock::now();
+    auto e = t->constant(0.0f);
+    for (unsigned i=0; i < N; ++i) {
+        const auto dt_ = std::chrono::steady_clock::now() - start;
+        if (dt_ > dt * 15) {
+            CAPTURE(std::chrono::duration_cast<std::chrono::microseconds>(dt)
+                    .count());
+            CAPTURE(std::chrono::duration_cast<std::chrono::microseconds>(dt_)
+                    .count());
+            REQUIRE(false);
+        }
+        auto p = t->operation(Opcode::OP_ADD, t->X(), t->constant(i));
+        e = t->operation(Opcode::OP_MIN, p, e, true);
+    }
+    REQUIRE(e->rank < log(N) / log(2) * 2);
+
+    // Just for fun, build a tree with alternating left / right insertions
+    start = std::chrono::steady_clock::now();
+    auto f = t->constant(0.0f);
+    for (unsigned i=0; i < N; ++i) {
+        const auto dt_ = std::chrono::steady_clock::now() - start;
+        if (dt_ > dt * 15) {
+            CAPTURE(std::chrono::duration_cast<std::chrono::microseconds>(dt)
+                    .count());
+            CAPTURE(std::chrono::duration_cast<std::chrono::microseconds>(dt_)
+                    .count());
+            REQUIRE(false);
+        }
+        auto p = t->operation(Opcode::OP_ADD, t->X(), t->constant(i));
+        if (i & 1) {
+            f = t->operation(Opcode::OP_MIN, p, f, true);
+        } else {
+            f = t->operation(Opcode::OP_MIN, f, p, true);
+        }
+    }
+    REQUIRE(f->rank < log(N) / log(2) * 2);
 }
