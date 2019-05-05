@@ -62,8 +62,13 @@ public:
      *  If the opcode is POW or NTH_ROOT, b must be an integral CONST
      *  (otherwise an assertion will be triggered).
      *  If the opcode is NTH_ROOT, b must be > 0.
+     *
+     *  If simplify is true (the default), then certain types of operations
+     *  will be automatically simplified; see the check* family
+     *  of functions in Cache for details.
      */
-    explicit Tree(Opcode::Opcode op, Tree a=Tree(), Tree b=Tree());
+    explicit Tree(Opcode::Opcode op, Tree a=Tree(), Tree b=Tree(),
+                  bool simplify=true);
 
     /*
      *  Returns a new unique variable

@@ -48,8 +48,8 @@ Tree::Tree(float v)
     // Nothing to do here
 }
 
-Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
-    : ptr(Cache::instance()->operation(op, a.ptr, b.ptr))
+Tree::Tree(Opcode::Opcode op, Tree a, Tree b, bool simplify)
+    : ptr(Cache::instance()->operation(op, a.ptr, b.ptr, simplify))
 {
     // Aggressive sanity-checking
     assert((Opcode::args(op) == 0 && a.ptr.get() == 0 && b.ptr.get() == 0) ||

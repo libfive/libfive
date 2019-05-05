@@ -107,16 +107,16 @@ Archive::Shape Deserializer::deserializeShape(char tag)
             {
                 auto rhs = deserializeBytes<uint32_t>();
                 auto lhs = deserializeBytes<uint32_t>();
-                trees.insert({next, Tree(op, trees.at(lhs), trees.at(rhs))});
+                trees.insert({next, Tree(op, trees.at(lhs), trees.at(rhs), false)});
             }
             else if (args == 1)
             {
                 auto lhs = deserializeBytes<uint32_t>();
-                trees.insert({next, Tree(op, trees.at(lhs))});
+                trees.insert({next, Tree(op, trees.at(lhs), Tree::Invalid(), false)});
             }
             else
             {
-                trees.insert({next, Tree(op)});
+                trees.insert({next, Tree(op, Tree::Invalid(), Tree::Invalid(), false)});
             }
         }
         out.tree = trees.at(trees.size() - 1);
