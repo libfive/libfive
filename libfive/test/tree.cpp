@@ -198,3 +198,13 @@ TEST_CASE("Tree thread safety")
 
     REQUIRE(true);
 }
+
+TEST_CASE("Tree: commutative stability", "[!mayfail]")
+{
+    auto t = Tree(0.0);
+    for (unsigned i=0; i < 4; ++i) {
+        t = min(t, Tree::X() + i);
+    }
+    auto u = t.remap(Tree::X(), Tree::Y(), Tree::Z());
+    REQUIRE(u == t);
+}
