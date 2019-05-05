@@ -443,7 +443,7 @@ Cache::Node Cache::checkCommutative(Opcode::Opcode op, Cache::Node a, Cache::Nod
         auto descend = [op, &path](Cache::Node target)
         {
             while (target->op == op) {
-                const auto dir = (target->lhs->rank <= target->rhs->rank)
+                const auto dir = (target->lhs->rank < target->rhs->rank)
                     ? Tree::LEFT : Tree::RIGHT;
                 path.push_back(std::make_pair(target, dir));
                 target = target->branch(dir);
@@ -483,7 +483,7 @@ Cache::Node Cache::checkCommutative(Opcode::Opcode op, Cache::Node a, Cache::Nod
         if (itr->second == Tree::LEFT) {
             target = operation(op, target, itr->first->lhs, false);
         } else {
-            target = operation(op, target, itr->first->rhs, false);
+            target = operation(op, itr->first->rhs, target, false);
         }
         for (auto itr = path.rbegin(); itr != path.rend(); ++itr) {
             assert(itr->first->op == op);
