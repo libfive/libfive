@@ -407,3 +407,37 @@ TEST_CASE("Cache::checkAffine")
         REQUIRE(m.at(t->constant(1)) == Approx(0.2f));
     }
 }
+
+TEST_CASE("Cache: performance of commutative tree balancing", "[!mayfail]")
+{
+    auto t = Cache::instance();
+
+    // Build a left-biased tree without any simplification,
+    // to get a baseline for how long it should take.
+    auto start = std::chrono::steady_clock::now();
+    auto dt = std::chrono::steady_clock::now() - start;
+    auto c = t->constant(0.0f);
+    for (unsigned i=0; i < 1000; ++i) {
+        dt = std::chrono::steady_clock::now() - start;
+        auto p = t->operation(Opcode::OP_POW, t->X(), t->constant(i));
+        c = t->operation(Opcode::OP_ADD, c, p, false);
+    }
+
+    // Then run the same tree-building exercise with simplifications turned
+    // on, which will try to balance the binary tree.
+    start = std::chrono::steady_clock::now();
+    auto d = t->constant(0.0f);
+    for (unsigned i=0; i < 1000; ++i) {
+        const auto dt_ = std::chrono::steady_clock::now() - start;
+        if (dt_ > dt * 4) {
+            CAPTURE(std::chrono::duration_cast<std::chrono::microseconds>(dt)
+                    .count());
+            CAPTURE(std::chrono::duration_cast<std::chrono::microseconds>(dt_)
+                    .count());
+            REQUIRE(false);
+        }
+        auto p = t->operation(Opcode::OP_POW, t->X(), t->constant(i));
+        d = t->operation(Opcode::OP_ADD, d, p, true);
+    }
+    REQUIRE(true);
+}
