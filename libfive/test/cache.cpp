@@ -408,7 +408,7 @@ TEST_CASE("Cache::checkAffine")
     }
 }
 
-TEST_CASE("Cache: performance of commutative tree balancing", "[!mayfail]")
+TEST_CASE("Cache: performance of commutative tree balancing")
 {
     auto t = Cache::instance();
     const unsigned N = 1000;
