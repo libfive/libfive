@@ -206,5 +206,9 @@ TEST_CASE("Tree: commutative stability", "[!mayfail]")
         t = min(t, Tree::X() + i);
     }
     auto u = t.remap(Tree::X(), Tree::Y(), Tree::Z());
+    t->print(std::cout);
+    std::cout << "\n";
+    u->print(std::cout);
+    std::cout << "\n";
     REQUIRE(u == t);
 }

@@ -167,9 +167,15 @@ Tree Tree::remap(std::map<Id, Tree> m) const
         {
             auto lhs = m.find(t->lhs.get());
             auto rhs = m.find(t->rhs.get());
-            m.insert({t.id(), Tree(Cache::instance()->operation(t->op,
+            auto out = Tree(Cache::instance()->operation(t->op,
                         lhs == m.end() ? t->lhs : lhs->second.ptr,
-                        rhs == m.end() ? t->rhs : rhs->second.ptr))});
+                        rhs == m.end() ? t->rhs : rhs->second.ptr));
+            m.insert({t.id(), out});
+            std::cout << "remapped ";
+            t->print(std::cout);
+            std::cout << " to ";
+            out->print(std::cout);
+            std::cout << "\n";
         }
         else if (t->op == Opcode::ORACLE)
         {
@@ -219,7 +225,7 @@ const std::shared_ptr<Tree::Tree_> Tree::Tree_::branch(Direction d)
 
 void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
 {
-    const bool commutative = (prev_op == op);
+    const bool commutative = false; //(prev_op == op);
     const int args = Opcode::args(op);
 
     if (!commutative)
