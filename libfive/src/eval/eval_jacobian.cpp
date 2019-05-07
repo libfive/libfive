@@ -73,9 +73,19 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
     return out;
 }
 
-void JacobianEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                   Clause::Id a, Clause::Id b)
+void JacobianEvaluator::operator()(std::vector<Token>::const_reverse_iterator& itr)
 {
+    const auto op = itr++->op;
+    const auto id = itr++->id;
+
+    Token::Id a = 0;
+    Token::Id b = 0;
+    switch (Opcode::args(op)) {
+        case 0: break;
+        case 1: a = itr++->id; // fallthrough
+        case 2: b = itr++->id; // fallthrough
+        default: break;
+    }
 #define ov f(id)
 #define oj j.row(id)
 

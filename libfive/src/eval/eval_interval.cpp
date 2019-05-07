@@ -193,9 +193,19 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                   Clause::Id a_, Clause::Id b_)
+void IntervalEvaluator::operator()(std::vector<Token>::const_reverse_iterator& itr)
 {
+    const auto op = itr++->op;
+    const auto id = itr++->id;
+
+    Token::Id a_ = 0;
+    Token::Id b_ = 0;
+    switch (Opcode::args(op)) {
+        case 0: break;
+        case 1: a_ = itr++->id; // fallthrough
+        case 2: b_ = itr++->id; // fallthrough
+        default: break;
+    }
 #define out i[id].first
 #define a i[a_].first
 #define b i[b_].first

@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/Eigen>
 
 #include "libfive/eval/base.hpp"
-#include "libfive/eval/clause.hpp"
+#include "libfive/eval/token.hpp"
 
 namespace Kernel {
 class Tape; /* Forward declaration */
@@ -54,11 +54,8 @@ protected:
     /*  f(clause) is a specific data point */
     Eigen::Array<float, Eigen::Dynamic, 1> f;
 
-    /*
-     *  Per-clause evaluation, used in tape walking
-     */
-    void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+    /*  Per-clause evaluation, used in tape walking */
+    void operator()(std::vector<Token>::const_reverse_iterator& itr);
 
     friend class Tape; // for rwalk<PointEvaluator>
 };

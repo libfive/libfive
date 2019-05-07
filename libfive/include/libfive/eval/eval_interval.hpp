@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/eval/base.hpp"
 #include "libfive/eval/interval.hpp"
-#include "libfive/eval/clause.hpp"
+#include "libfive/eval/token.hpp"
 
 namespace Kernel {
 class Tape; /* Forward declaration */
@@ -78,8 +78,7 @@ protected:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+    void operator()(std::vector<Token>::const_reverse_iterator& itr);
 
     friend class Tape; // for rwalk<IntervalEvaluator>
 };

@@ -62,8 +62,20 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i, Tape::Handle tape)
 
     bool abort = false;
     tape->walk(
-        [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
+        [&](std::vector<Token>::const_iterator& itr)
         {
+            const auto op = itr++->op;
+            const auto id = itr++->id;
+
+            Token::Id a = 0;
+            Token::Id b = 0;
+            switch (Opcode::args(op)) {
+                case 0: break;
+                case 1: a = itr++->id; // fallthrough
+                case 2: b = itr++->id; // fallthrough
+                default: break;
+            }
+
             if (op == Opcode::ORACLE)
             {
                 deck->oracles[a]->checkAmbiguous(ambig.head(i));
@@ -102,9 +114,19 @@ DerivArrayEvaluator::derivs(size_t count, Tape::Handle tape)
     return out.block<4, Eigen::Dynamic>(0, 0, 4, count);
 }
 
-void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                     Clause::Id a_, Clause::Id b_)
+void DerivArrayEvaluator::operator()(std::vector<Token>::const_reverse_iterator& itr)
 {
+    const auto op = itr++->op;
+    const auto id = itr++->id;
+
+    Token::Id a_ = 0;
+    Token::Id b_ = 0;
+    switch (Opcode::args(op)) {
+        case 0: break;
+        case 1: a_ = itr++->id; // fallthrough
+        case 2: b_ = itr++->id; // fallthrough
+        default: break;
+    }
 #define ov f.row(id).head(count)
 #define od d(id).leftCols(count)
 

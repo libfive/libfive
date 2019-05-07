@@ -15,20 +15,22 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-Clause::Id Tape::rwalk(WalkFunction fn, bool& abort)
+Clause::Id Tape::rwalk(RWalkFunction fn, bool& abort)
 {
-    for (auto itr = t.rbegin(); itr != t.rend() && !abort; ++itr)
+    auto itr = t.crbegin();
+    while (itr != t.crend() && !abort)
     {
-        fn(itr->op, itr->id, itr->a, itr->b);
+        fn(itr);
     }
     return i;
 }
 
 void Tape::walk(WalkFunction fn, bool& abort)
 {
-    for (auto itr = t.begin(); itr != t.end() && !abort; ++itr)
+    auto itr = t.cbegin();
+    while (itr != t.cend() && !abort)
     {
-        fn(itr->op, itr->id, itr->a, itr->b);
+        fn(itr);
     }
 }
 

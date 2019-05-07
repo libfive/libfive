@@ -42,8 +42,7 @@ public:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+    void operator()(std::vector<Token>::const_reverse_iterator& itr);
 
     /*
      *  Returns a list of ambiguous items from indices 0 to i that

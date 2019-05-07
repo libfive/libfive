@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <Eigen/Eigen>
 
-#include "libfive/eval/clause.hpp"
+#include "libfive/eval/token.hpp"
 #include "libfive/eval/interval.hpp"
 
 #include "libfive/oracle/oracle_context.hpp"
@@ -57,14 +57,14 @@ public:
 
 protected:
     /*  The tape itself, as a vector of clauses  */
-    std::vector<Clause> t;
+    std::vector<Token> t;
 
     /*  OracleContext handles used to speed up oracle evaluation
      *  by letting them push into the tree as well. */
     std::vector<std::shared_ptr<OracleContext>> contexts;
 
     /*  Root clause of the tape  */
-    Clause::Id i;
+    Token::Id i;
 
     /*  These bounds are only valid if type == INTERVAL  */
     Interval::I X, Y, Z;
@@ -86,8 +86,8 @@ public:
      *  t is a tape type
      *  r is the relevant region (or an empty region by default)
      */
-    using KeepFunction = std::function<Keep(Opcode::Opcode, Clause::Id,
-                                            Clause::Id, Clause::Id)>;
+    using KeepFunction = std::function<
+        Keep(std::vector<Token>::const_iterator& itr)>;
     static Handle push(const Handle& tape, Deck& deck, KeepFunction fn, Type t);
     static Handle push(const Handle& tape, Deck& deck, KeepFunction fn, Type t,
                        const Region<3>& r);
@@ -98,23 +98,26 @@ public:
      *
      *  Returns the clause id of the tape's root
      */
-    using WalkFunction = std::function<void(Opcode::Opcode, Clause::Id,
-                                            Clause::Id, Clause::Id)>;
-    Clause::Id rwalk(WalkFunction fn, bool& abort);
+    using RWalkFunction = std::function<
+        void(std::vector<Token>::const_reverse_iterator& itr)>;
+    Token::Id rwalk(RWalkFunction fn, bool& abort);
 
     /*
      *  Inlined, faster version of rwalk
      */
     template <class T>
-    Clause::Id rwalk(T& fn)
+    Token::Id rwalk(T& fn)
     {
-        for (auto itr = t.rbegin(); itr != t.rend(); ++itr)
+        auto itr = t.rbegin();
+        while (itr != t.rend())
         {
-            fn(itr->op, itr->id, itr->a, itr->b);
+            fn(itr);
         }
         return i;
     }
 
+    using WalkFunction = std::function<
+        void(std::vector<Token>::const_iterator& itr)>;
     void  walk(WalkFunction fn, bool& abort);
 
     /*

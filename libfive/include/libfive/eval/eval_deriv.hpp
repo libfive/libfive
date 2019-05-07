@@ -28,11 +28,8 @@ protected:
     /*  d(axis, clause) is a set of partial derivatives [dx, dy, dz] */
     Eigen::Array<float, 3, Eigen::Dynamic> d;
 
-    /*
-     *  Per-clause evaluation, used in tape walking
-     */
-    void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+    /*  Per-clause evaluation, used in tape walking */
+    void operator()(std::vector<Token>::const_reverse_iterator& itr);
 public:
     /*
      *  Single-point evaluation (return dx, dy, dz, distance)

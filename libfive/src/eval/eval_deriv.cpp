@@ -65,9 +65,19 @@ Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt,
     return out;
 }
 
-void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                Clause::Id a_, Clause::Id b_)
+void DerivEvaluator::operator()(std::vector<Token>::const_reverse_iterator& itr)
 {
+    const auto op = itr++->op;
+    const auto id = itr++->id;
+
+    Token::Id a_ = 0;
+    Token::Id b_ = 0;
+    switch (Opcode::args(op)) {
+        case 0: break;
+        case 1: a_ = itr++->id; // fallthrough
+        case 2: b_ = itr++->id; // fallthrough
+        default: break;
+    }
 #define ov f(id)
 #define od d.col(id)
 

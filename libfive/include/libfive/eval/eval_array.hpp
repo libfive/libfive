@@ -68,8 +68,7 @@ protected:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+    void operator()(std::vector<Token>::const_reverse_iterator& itr);
 
     /*
      *  Sets this->count to count, rounding up to the appropriate SIMD
