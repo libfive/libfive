@@ -120,9 +120,6 @@ void WorkerPool<T, Neighbors, N>::run(
         }
         else if (!tasks.pop(task))
         {
-            if (free_thread_handler != nullptr) {
-                free_thread_handler->offerWait();
-            }
             task.target = nullptr;
         }
 
@@ -130,6 +127,9 @@ void WorkerPool<T, Neighbors, N>::run(
         // (so that we terminate when either of the flags are set).
         if (task.target == nullptr)
         {
+            if (free_thread_handler != nullptr) {
+                free_thread_handler->offerWait();
+            }
             continue;
         }
 

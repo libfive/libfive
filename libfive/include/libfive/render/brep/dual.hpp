@@ -342,9 +342,6 @@ void Dual<N>::run(V& v,
         }
         else if (!tasks.pop(t))
         {
-            if (free_thread_handler != nullptr) {
-                free_thread_handler->offerWait();
-            }
             t = nullptr;
         }
 
@@ -352,6 +349,9 @@ void Dual<N>::run(V& v,
         // (so that we terminate when either of the flags are set).
         if (t == nullptr)
         {
+            if (free_thread_handler != nullptr) {
+                free_thread_handler->offerWait();
+            }
             continue;
         }
 
