@@ -365,7 +365,7 @@ Shape::BoundedMesh Shape::renderMesh(RenderSettings s)
             {s.settings.max.x(), s.settings.max.y(), s.settings.max.z()});
     auto m = Kernel::Mesh::render(es.data(), r,
             1 / (s.settings.res / (1 << s.div)),
-            pow(10, -s.settings.quality), es.size(), cancel,
-            Kernel::EMPTY_PROGRESS_CALLBACK, s.alg);
+            pow(10, -s.settings.quality), es.size(), cancel, s.alg,
+            Kernel::EMPTY_PROGRESS_CALLBACK, nullptr);
     return {m.release(), r};
 }

@@ -30,21 +30,21 @@ const float Mesh::MAX_PROGRESS = 3.0f;
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    double min_feature, double max_err,
                                    bool multithread,
-                                   ProgressCallback progress_callback,
                                    BRepAlgorithm alg)
 {
     std::atomic_bool cancel(false);
     std::map<Tree::Id, float> vars;
     return render(t, vars, r, min_feature, max_err,
-                  multithread ? 8 : 1, cancel, progress_callback, alg);
+                  multithread ? 8 : 1, cancel, alg);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
             const Tree t, const std::map<Tree::Id, float>& vars,
             const Region<3>& r, double min_feature, double max_err,
             unsigned workers, std::atomic_bool& cancel,
+            BRepAlgorithm alg,
             ProgressCallback progress_callback,
-            BRepAlgorithm alg)
+            FreeThreadHandler* free_thread_handler)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
     es.reserve(workers);
@@ -53,23 +53,24 @@ std::unique_ptr<Mesh> Mesh::render(
         es.emplace_back(XTreeEvaluator(t, vars));
     }
 
-    return render(es.data(), r, min_feature, max_err, workers, cancel,
-                  progress_callback, alg);
+    return render(es.data(), r, min_feature, max_err, workers, cancel, alg,
+                  progress_callback, free_thread_handler);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
         XTreeEvaluator* es,
         const Region<3>& r, double min_feature, double max_err,
-        int workers, std::atomic_bool& cancel,
+        unsigned workers, std::atomic_bool& cancel,
+        BRepAlgorithm alg,
         ProgressCallback progress_callback,
-        BRepAlgorithm alg)
+        FreeThreadHandler* free_thread_handler)
 {
     std::unique_ptr<Mesh> out;
     if (alg == DUAL_CONTOURING)
     {
         auto t = DCPool<3>::build(
                 es, r, min_feature, max_err, workers,
-                cancel, progress_callback);
+                cancel, progress_callback, free_thread_handler);
 
         if (cancel.load() || t.get() == nullptr) {
             return nullptr;
@@ -82,7 +83,9 @@ std::unique_ptr<Mesh> Mesh::render(
 #endif
 
         // Perform marching squares
-        out = Dual<3>::walk<DCMesher>(t, workers, cancel, progress_callback);
+        out = Dual<3>::walk<DCMesher>(
+                t, workers, cancel,
+                progress_callback, free_thread_handler);
 
         // TODO: check for early return here again
         t.reset(workers, progress_callback);
@@ -100,7 +103,7 @@ std::unique_ptr<Mesh> Mesh::render(
         t->assignIndices(workers, cancel);
 
         out = Dual<3>::walk_<SimplexMesher>(t, workers,
-                cancel, progress_callback,
+                cancel, progress_callback, free_thread_handler,
                 [&](PerThreadBRep<3>& brep, int i) {
                     return SimplexMesher(brep, &es[i]);
                 });

@@ -19,6 +19,7 @@ namespace Kernel {
 // Forward declarations
 template <unsigned N> class PerThreadBRep;
 class XTreeEvaluator;
+class FreeThreadHandler;
 
 class Contours {
 public:
@@ -31,28 +32,15 @@ public:
         bool multithread=true);
 
     /*
-     *  Full-featured render function, with all arguments required
+     *  Full-featured render function, with more required arguments
+     *  (and optional progress tracking + free thread handling)
      */
     static std::unique_ptr<Contours> render(
         const Tree t, const Region<2>& r,
         double min_feature, double max_err,
-        std::atomic_bool& cancel, unsigned workers);
-
-    static std::unique_ptr<Contours> render(
-            XTreeEvaluator* es, const Region<2>& r,
-            double min_feature, double max_err,
-            unsigned workers, std::atomic_bool& cancel,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK);
-
-    /*
-     *  Full-featured render function without cancel, to prevent
-     *  an accidentally-left-out cancel boolean from causing the
-     *  worker count to autoconvert to the multithreading boolean.
-     */
-    static std::unique_ptr<Contours> render(
-      const Tree t, const Region<2>& r,
-      double min_feature, double max_err,
-      unsigned workers);
+        unsigned workers, std::atomic_bool& cancel,
+        ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
+        FreeThreadHandler* free_thread_handler=nullptr);
 
     /*
      *  Saves the contours to an SVG file

@@ -9,8 +9,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include <stack>
+#include <boost/lockfree/stack.hpp>
+
 #include "libfive/render/brep/per_thread_brep.hpp"
+#include "libfive/render/brep/free_thread_handler.hpp"
 #include "libfive/render/brep/progress.hpp"
+#include "libfive/render/brep/root.hpp"
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/interval.hpp"
 #include "libfive/render/brep/mesh.hpp"
@@ -39,6 +43,7 @@ public:
             const Root<typename M::Input>& t, unsigned workers,
             std::atomic_bool& cancel,
             ProgressCallback progress_callback,
+            FreeThreadHandler* free_thread_handler,
             A... args);
 
      /*
@@ -57,14 +62,17 @@ public:
             const Root<typename M::Input>& t, unsigned workers,
             std::atomic_bool& cancel,
             ProgressCallback progress_callback,
+            FreeThreadHandler* free_thread_handler,
             std::function<M(PerThreadBRep<N>&, int)> MesherFactory);
 
 protected:
     template<typename T, typename Mesher>
-    static void run(Mesher& m, ProgressWatcher* progress,
+    static void run(Mesher& m,
                     boost::lockfree::stack<const T*,
                                            boost::lockfree::fixed_sized<true>>& tasks,
-                    std::atomic_bool& done, std::atomic_bool& cancel);
+                    std::atomic_bool& done, std::atomic_bool& cancel,
+                    ProgressWatcher* progress,
+                    FreeThreadHandler* free_thread_handler);
 
     template <typename T, typename Mesher>
     static void work(const T* t, Mesher& m);
@@ -231,9 +239,13 @@ std::unique_ptr<typename M::Output> Dual<N>::walk(
             const Root<typename M::Input>& t, unsigned workers,
             std::atomic_bool& cancel,
             ProgressCallback progress_callback,
+            FreeThreadHandler* free_thread_handler,
             A... args)
 {
-    return Dual<N>::walk_<M>(t, workers, cancel, progress_callback,
+    return Dual<N>::walk_<M>(
+            t, workers, cancel,
+            progress_callback,
+            free_thread_handler,
             [&args...](PerThreadBRep<N>& brep, int i) {
                 (void)i;
                 return M(brep, args...);
@@ -247,6 +259,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
             const Root<typename M::Input>& t, unsigned workers,
             std::atomic_bool& cancel,
             ProgressCallback progress_callback,
+            FreeThreadHandler* free_thread_handler,
             std::function<M(PerThreadBRep<N>&, int)> MesherFactory)
 {
     boost::lockfree::stack<const typename M::Input*,
@@ -270,9 +283,12 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
     futures.resize(workers);
     for (unsigned i=0; i < workers; ++i) {
         futures[i] = std::async(std::launch::async,
-            [&breps, &done, &cancel, &tasks, &MesherFactory, i, progress]() {
+            [&breps, &done, &cancel, &tasks, &MesherFactory,
+             i, progress, free_thread_handler]()
+            {
                 auto m = MesherFactory(breps[i], i);
-                Dual<N>::run(m, progress, tasks, done, cancel);
+                Dual<N>::run(m, tasks, done, cancel,
+                             progress, free_thread_handler);
             });
     }
 
@@ -301,10 +317,13 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
 
 template <unsigned N>
 template <typename T, typename V>
-void Dual<N>::run(V& v, ProgressWatcher* progress,
+void Dual<N>::run(V& v,
                   boost::lockfree::stack<const T*,
                                          boost::lockfree::fixed_sized<true>>& tasks,
-                  std::atomic_bool& done, std::atomic_bool& cancel)
+                  std::atomic_bool& done, std::atomic_bool& cancel,
+                  ProgressWatcher* progress,
+                  FreeThreadHandler* free_thread_handler)
+
 {
     // Tasks to be evaluated by this thread (populated when the
     // MPMC stack is completely full).
@@ -330,6 +349,9 @@ void Dual<N>::run(V& v, ProgressWatcher* progress,
         // (so that we terminate when either of the flags are set).
         if (t == nullptr)
         {
+            if (free_thread_handler != nullptr) {
+                free_thread_handler->offerWait();
+            }
             continue;
         }
 

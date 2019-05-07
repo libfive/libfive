@@ -101,11 +101,9 @@ TEST_CASE("Mesh::render (different algorithms)")
     auto s = sphere(1);
     auto a = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
                           1/32.0f, pow(10, -3), true,
-                          EMPTY_PROGRESS_CALLBACK,
                           DUAL_CONTOURING);
     auto b = Mesh::render(s, Region<3>({-1.6, -1, -8}, {1.6, 1, 1}),
                           1/32.0f, pow(10, -3), true,
-                          EMPTY_PROGRESS_CALLBACK,
                           ISO_SIMPLEX);
     REQUIRE(b->branes.size() > a->branes.size());
     REQUIRE(b->verts.size() >  a->verts.size());
@@ -222,7 +220,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
     std::unique_ptr<Mesh> m;
     BENCHMARK("Mesh building")
     {
-        m = Dual<3>::walk<DCMesher>(t, workers, cancel, EMPTY_PROGRESS_CALLBACK);
+        m = Dual<3>::walk<DCMesher>(t, workers, cancel, EMPTY_PROGRESS_CALLBACK, nullptr);
     }
 
     BENCHMARK("DCTree deletion")
@@ -257,7 +255,7 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
     std::atomic_bool cancel(false);
     BENCHMARK("Mesh building")
     {
-        m = Dual<3>::walk<DCMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK);
+        m = Dual<3>::walk<DCMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr);
     }
 
     BENCHMARK("DCTree deletion")
