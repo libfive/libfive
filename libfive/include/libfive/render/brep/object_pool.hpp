@@ -11,6 +11,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <stack>
 #include <vector>
 #include <list>
+#include <cassert>
+
 
 #include "libfive/render/brep/progress.hpp"
 
