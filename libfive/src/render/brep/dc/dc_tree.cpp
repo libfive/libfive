@@ -197,7 +197,6 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
         }
         else if (!ambig(i))
         {
-            eval->array.set(pos.col(i), unambiguous_zeros);
             unambig_remap[unambiguous_zeros] = i;
             unambiguous_zeros++;
         }
@@ -209,6 +208,10 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
     // single-point evaluation if it's sufficiently close to zero.
     if (unambiguous_zeros)
     {
+        for (unsigned i = 0; i < unambiguous_zeros; ++i)
+        {
+            eval->array.set(pos.col(unambig_remap[i]), i);
+        }
         auto ds = eval->array.derivs(unambiguous_zeros, tape);
         for (unsigned i=0; i < unambiguous_zeros; ++i)
         {
