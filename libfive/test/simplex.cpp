@@ -298,8 +298,7 @@ void debugCenterVertices(const SimplexTree<3>* t) {
     }
 }
 
-TEST_CASE("SimplexTree<3>: assignIndices with cell collapsing",
-          "[!mayfail]")
+TEST_CASE("SimplexTree<3>: assignIndices with cell collapsing")
 {
     auto b = max(box({-1, 0, -1}, {1, 2, 1}),
                 -box({0, -1, -0.5}, {1, 2.5, 1}));
