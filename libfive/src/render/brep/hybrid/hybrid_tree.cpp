@@ -88,12 +88,35 @@ void HybridTree<N>::evalLeaf(XTreeEvaluator* eval,
                              Pool& object_pool,
                              const HybridNeighbors<N>& neighbors)
 {
-    (void)eval;
-    (void)tape;
-    (void)region;
-    (void)object_pool;
     (void)neighbors;
-    this->type = Interval::EMPTY;
+
+    assert(this->leaf == nullptr);
+    this->leaf = object_pool.next().get();
+
+    bool all_empty = true;
+    bool all_full  = true;
+
+    for (unsigned i=0; i < ipow(3, N); ++i) {
+        Vec center = Vec::Zero();
+        unsigned count = 0;
+        for (unsigned j=0; j < ipow(3, N); ++j) {
+            if (NeighborIndex(i).contains(NeighborIndex(j))) {
+                center += region.corner(j);
+                count++;
+            }
+        }
+        center /= count;
+        this->leaf->pos.col(i) = center;
+
+        Eigen::Vector3f p;
+        p << center.template cast<float>(), region.perp.template cast<float>();
+        this->leaf->inside[i] = eval->feature.isInside(p, tape);
+        all_empty  &= !this->leaf->inside[i];
+        all_full   &=  this->leaf->inside[i];
+    }
+
+    this->type = all_empty ? Interval::EMPTY
+               : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
 }
 
 template <unsigned N>

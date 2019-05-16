@@ -28,16 +28,10 @@ struct HybridLeaf
     HybridLeaf();
     void reset();
 
+    Eigen::Matrix<double, N, ipow(3, N)> pos;
     std::array<bool, ipow(3, N)> inside;
 
-    /*  Required for ObjectPool, but we're just using the default operators
-     *  here because there are no alignment requirements. */
-    static void* operator new[](std::size_t sz) {
-        return ::operator new[](sz);
-    }
-    void operator delete[]( void* ptr ) {
-        ::operator delete[](ptr);
-    }
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 template <unsigned N>
