@@ -1,0 +1,16 @@
+/*
+libfive: a CAD kernel for modeling with implicit functions
+
+Copyright (C) 2019  Matt Keeter
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this file,
+You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+#include "hybrid_tree.cpp"
+
+namespace Kernel {
+template class HybridTree<3>;
+template struct HybridLeaf<3>;
+}   // namespace Kernel
+

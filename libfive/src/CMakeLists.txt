@@ -28,13 +28,15 @@ add_library(five SHARED
     eval/eval_point.cpp
     eval/tape.cpp
     eval/feature.cpp
-    oracle/transformed_oracle.cpp
+
     render/discrete/heightmap.cpp
     render/discrete/voxels.cpp
+
     render/brep/contours.cpp
     render/brep/progress.cpp
     render/brep/mesh.cpp
     render/brep/neighbor_tables.cpp
+
     render/brep/dc/intersection_aligner.cpp
     render/brep/dc/marching.cpp
     render/brep/dc/dc_contourer.cpp
@@ -47,6 +49,12 @@ add_library(five SHARED
     render/brep/dc/dc_tree3.cpp
     render/brep/dc/dc_xtree2.cpp
     render/brep/dc/dc_xtree3.cpp
+
+    render/brep/hybrid/hybrid_pool3.cpp
+    render/brep/hybrid/hybrid_neighbors3.cpp
+    render/brep/hybrid/hybrid_tree3.cpp
+    render/brep/hybrid/hybrid_xtree3.cpp
+
     render/brep/simplex/simplex_debug.cpp
     render/brep/simplex/simplex_neighbors2.cpp
     render/brep/simplex/simplex_neighbors3.cpp
@@ -57,16 +65,21 @@ add_library(five SHARED
     render/brep/simplex/simplex_xtree2.cpp
     render/brep/simplex/simplex_xtree3.cpp
     render/brep/simplex/simplex_mesher.cpp
+
     solve/bounds.cpp
     solve/solver.cpp
+
     tree/cache.cpp
     tree/opcode.cpp
     tree/archive.cpp
     tree/deserializer.cpp
     tree/serializer.cpp
     tree/tree.cpp
+
     oracle/oracle_clause.cpp
+    oracle/transformed_oracle.cpp
     oracle/transformed_oracle_clause.cpp
+
     libfive.cpp
 
     ${CMAKE_CURRENT_BINARY_DIR}/version.c
