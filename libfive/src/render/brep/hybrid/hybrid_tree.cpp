@@ -213,19 +213,14 @@ uint32_t HybridTree<N>::leafLevel() const
     return 0;
 }
 
-/*  This helper struct lets us make a directed acyclic graph
- *  of neighbors, automatically cleaning them up when no one
+/*  This helper struct lets us make a directed acyclic graph of
+ *  tasks + neighbors, automatically cleaning them up when no one
  *  is using them anymore.  */
-template <unsigned N>
-struct NeighborStack {
-    HybridNeighbors<N> ns;
-    std::shared_ptr<NeighborStack<N>> parent;
-};
-
 template <unsigned N>
 struct AssignIndexTask {
     const HybridTree<N>* target;
-    std::shared_ptr<NeighborStack<N>> neighbors;
+    HybridNeighbors<N> neighbors;
+    std::shared_ptr<AssignIndexTask<N>> parent;
 };
 
 template <unsigned N>
@@ -234,9 +229,12 @@ void HybridTree<N>::assignIndices() const
     // We do a depth-first search here, flattened into a vector
     // to more easily convert to a multithreaded operation
     // (like the one in simplex_tree.cpp)
-    std::stack<AssignIndexTask<N>, std::vector<AssignIndexTask<N>>> todo;
+    using Task = std::shared_ptr<AssignIndexTask<N>>;
+    std::stack<Task, std::vector<Task>> todo;
     if (this->type == Interval::AMBIGUOUS) {
-        todo.push({this, std::make_shared<NeighborStack<N>>()});
+        auto task = std::make_shared<AssignIndexTask<N>>();
+        task->target = this;
+        todo.push(task);
     }
 
     uint32_t index = 0;
@@ -246,78 +244,81 @@ void HybridTree<N>::assignIndices() const
 
         // If this is a tree which can be subdivided, then push each
         // subtree as a new task.
-        if (task.target->isBranch()) {
-            for (unsigned i=0; i < task.target->children.size(); ++i) {
-                AssignIndexTask<N> next_task;
-
-                next_task.target = task.target->children[i].load();
-                next_task.neighbors = std::make_shared<NeighborStack<N>>();
-                next_task.neighbors->ns = task.neighbors->ns.push(
-                        i, task.target->children);
-                next_task.neighbors->parent = task.neighbors;
-
-                if (next_task.target != nullptr) {
-                    todo.push(next_task);
+        if (task->target->isBranch()) {
+            for (unsigned i=0; i < task->target->children.size(); ++i) {
+                const auto child = task->target->children[i].load();
+                if (child->type == Interval::AMBIGUOUS) {
+                    auto next = std::make_shared<AssignIndexTask<N>>();
+                    next->target = child;
+                    next->neighbors = task->neighbors.push(i, task->target->children);
+                    next->parent = task;
+                    todo.push(next);
                 }
             }
             continue;
         }
 
-        assert(task.target->leaf != nullptr);
-        for (unsigned i=0; i < ipow(3, N); ++i)
+        // Try to assign a new value to every slot in the index array
+        //
+        // If the index is already assigned skip it.  Otherwise, spread the
+        // value to every other index field that represents the same subspace.
+        assert(task->target->leaf != nullptr);
+        for (unsigned i_=0; i_ < ipow(3, N); ++i_)
         {
-            if (this->leaf->index[i] != 0) {
+            // Skip if the index is already assigned
+            if (this->leaf->index[i_] != 0) {
                 continue;
             }
-            const auto my_index = ++index;
-            this->leaf->index[i] = my_index;
 
+            // Record the new index here
+            const auto my_index = ++index;
+            this->leaf->index[i_] = my_index;
+
+            // Functor to assign the new index to a given tree + neighbor index
             auto f = [my_index](const HybridTree<N>* t, NeighborIndex n) {
-                assert(n->leaf->index[n.i] == 0);
+                assert(t->leaf->index[n.i] == 0);
                 t->leaf->index[n.i] = my_index;
             };
-            task.neighbors->ns.map(NeighborIndex(i), f);
 
-            if (NeighborIndex(i).isCorner()) {
-                // We need to try walking up the tree, looking at the
-                // neighbors of parent cells as long as they contain the target
-                // vertex.  For example, in this situation:
-                //
-                //   -------------------------
-                //   |           |           |
-                //   |           |           |
-                //   |           |           |
-                //   ------------C------------
-                //   |     |  X  |           |
-                //   |-----|-----|           |
-                //   |     |     |           |
-                //   -------------------------
-                //   we'd look at neighbors of X's parent cell to find corner C
-                //
-                //   On the other hand, in this situation:
-                //   -------------------------
-                //   |           |           |
-                //   |           |           |
-                //   |           |           |
-                //   ------C------------------
-                //   |  X  |     |           |
-                //   |-----|-----|           |
-                //   |     |     |           |
-                //   -------------------------
-                //   we don't want to back out to the parent cell of X, because
-                //   the corner C isn't contained within that parent.
-                //
-                //   Each cell contains one vertex of the parent's corner cell,
-                //   indicated by its parent_index variable.
-                auto t = task.target;
-                auto neighbors_above = task.neighbors;
-                const auto pos = NeighborIndex(i).pos();
-                while (t && t->parent && t->parent_index == pos)
-                {
-                    t = t->parent;
-                    neighbors_above = neighbors_above->parent;
-                    neighbors_above->ns.map(i, f);
-                }
+            // Apply the functor to local neighbors
+            NeighborIndex i(i_);
+            task->neighbors.map(i, f);
+
+            // We need to try walking up the tree, looking at the
+            // neighbors of parent cells as long as they contain the target
+            // vertex.  For example, in this situation:
+            //
+            //   -------------------------
+            //   |           |           |
+            //   |           |           |
+            //   |           |           |
+            //   ------------C------------
+            //   |     |  X  |           |
+            //   |-----|-----|           |
+            //   |     |     |           |
+            //   -------------------------
+            //   we'd look at neighbors of X's parent cell to find corner C
+            //
+            //   On the other hand, in this situation:
+            //   -------------------------
+            //   |           |           |
+            //   |           |           |
+            //   |           |           |
+            //   ------C------------------
+            //   |  X  |     |           |
+            //   |-----|-----|           |
+            //   |     |     |           |
+            //   -------------------------
+            //   we don't want to back out to the parent cell of X, because
+            //   the corner C isn't contained within that parent.
+            //
+            //   Each cell contains one vertex of the parent's corner cell,
+            //   indicated by its parent_index variable.
+            for (auto t = task; i.isCorner() && t->parent &&
+                                t->target->parent_index == i.pos();
+                 t = t->parent)
+            {
+                t->parent->neighbors.map(i, f);
             }
         }
     }
