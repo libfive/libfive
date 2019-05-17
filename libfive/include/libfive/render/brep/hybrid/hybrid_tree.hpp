@@ -113,6 +113,13 @@ public:
      */
     uint32_t leafLevel() const;
 
+    /*
+     *  Assigns leaf->index[*] to a unique integer for every leaf subspace
+     *  in the tree, starting at 1.  This provides a globally unique
+     *  identifier for every subspace vertex, which is used when making edges.
+     */
+    void assignIndices() const;
+
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;
 

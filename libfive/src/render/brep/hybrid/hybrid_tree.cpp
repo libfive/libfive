@@ -14,6 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/hybrid/hybrid_tree.hpp"
 #include "libfive/render/brep/hybrid/hybrid_neighbors.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/neighbor_tables.hpp"
 
 #include "../xtree.cpp"
 
@@ -210,6 +211,116 @@ uint32_t HybridTree<N>::leafLevel() const
         case Interval::UNKNOWN: return UINT32_MAX;
     };
     return 0;
+}
+
+/*  This helper struct lets us make a directed acyclic graph
+ *  of neighbors, automatically cleaning them up when no one
+ *  is using them anymore.  */
+template <unsigned N>
+struct NeighborStack {
+    HybridNeighbors<N> ns;
+    std::shared_ptr<NeighborStack<N>> parent;
+};
+
+template <unsigned N>
+struct AssignIndexTask {
+    const HybridTree<N>* target;
+    std::shared_ptr<NeighborStack<N>> neighbors;
+};
+
+template <unsigned N>
+void HybridTree<N>::assignIndices() const
+{
+    // We do a depth-first search here, flattened into a vector
+    // to more easily convert to a multithreaded operation
+    // (like the one in simplex_tree.cpp)
+    std::stack<AssignIndexTask<N>, std::vector<AssignIndexTask<N>>> todo;
+    if (this->type == Interval::AMBIGUOUS) {
+        todo.push({this, std::make_shared<NeighborStack<N>>()});
+    }
+
+    uint32_t index = 0;
+    while (todo.size()) {
+        const auto task = todo.top();
+        todo.pop();
+
+        // If this is a tree which can be subdivided, then push each
+        // subtree as a new task.
+        if (task.target->isBranch()) {
+            for (unsigned i=0; i < task.target->children.size(); ++i) {
+                AssignIndexTask<N> next_task;
+
+                next_task.target = task.target->children[i].load();
+                next_task.neighbors = std::make_shared<NeighborStack<N>>();
+                next_task.neighbors->ns = task.neighbors->ns.push(
+                        i, task.target->children);
+                next_task.neighbors->parent = task.neighbors;
+
+                if (next_task.target != nullptr) {
+                    todo.push(next_task);
+                }
+            }
+            continue;
+        }
+
+        assert(task.target->leaf != nullptr);
+        for (unsigned i=0; i < ipow(3, N); ++i)
+        {
+            if (this->leaf->index[i] != 0) {
+                continue;
+            }
+            const auto my_index = ++index;
+            this->leaf->index[i] = my_index;
+
+            auto f = [my_index](const HybridTree<N>* t, NeighborIndex n) {
+                assert(n->leaf->index[n.i] == 0);
+                t->leaf->index[n.i] = my_index;
+            };
+            task.neighbors->ns.map(NeighborIndex(i), f);
+
+            if (NeighborIndex(i).isCorner()) {
+                // We need to try walking up the tree, looking at the
+                // neighbors of parent cells as long as they contain the target
+                // vertex.  For example, in this situation:
+                //
+                //   -------------------------
+                //   |           |           |
+                //   |           |           |
+                //   |           |           |
+                //   ------------C------------
+                //   |     |  X  |           |
+                //   |-----|-----|           |
+                //   |     |     |           |
+                //   -------------------------
+                //   we'd look at neighbors of X's parent cell to find corner C
+                //
+                //   On the other hand, in this situation:
+                //   -------------------------
+                //   |           |           |
+                //   |           |           |
+                //   |           |           |
+                //   ------C------------------
+                //   |  X  |     |           |
+                //   |-----|-----|           |
+                //   |     |     |           |
+                //   -------------------------
+                //   we don't want to back out to the parent cell of X, because
+                //   the corner C isn't contained within that parent.
+                //
+                //   Each cell contains one vertex of the parent's corner cell,
+                //   indicated by its parent_index variable.
+                auto t = task.target;
+                auto neighbors_above = task.neighbors;
+                const auto pos = NeighborIndex(i).pos();
+                while (t && t->parent && t->parent_index == pos)
+                {
+                    t = t->parent;
+                    neighbors_above = neighbors_above->parent;
+                    neighbors_above->ns.map(i, f);
+                }
+            }
+        }
+    }
 }
 
 }   // namespace Kernel
