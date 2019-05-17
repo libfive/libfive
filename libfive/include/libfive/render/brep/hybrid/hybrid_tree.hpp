@@ -10,15 +10,16 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <array>
 
+#include "libfive/eval/eval_xtree.hpp"
+
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/object_pool.hpp"
+#include "libfive/render/brep/simplex/surface_edge_map.hpp"
 
 namespace Kernel {
 
 /* Forward declaration */
-class XTreeEvaluator;
-class Tape;
 template <unsigned N> class Region;
 template <unsigned N> class HybridNeighbors;
 
@@ -30,6 +31,20 @@ struct HybridLeaf
 
     Eigen::Matrix<double, N, ipow(3, N)> pos;
     std::array<bool, ipow(3, N)> inside;
+
+    /* Unique indexes for every subspace, shared when subspaces are
+     * shared by more than one neighbor. */
+    std::array<uint32_t, ipow(3, N)> index;
+
+    /*  Indices of surface vertices, populated when meshing.
+     *  This maps from a pair of subspace vertex indexes to a mesh index */
+    SurfaceEdgeMap<32> surface;
+
+    /*  Tape used for evaluation within this leaf */
+    Tape::Handle tape;
+
+    /*  Minimum-size leafs are at level 0, and it counts up from there */
+    unsigned level;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
@@ -85,6 +100,18 @@ public:
                          Pool& object_pool,
                          double max_err);
 
+    /*  Looks up the cell's level for purposes of vertex placement,
+     *  returning 0 or more for LEAF / EMPTY / FILLED cells (depending
+     *  on how many other leafs were merged into them; 0 is the smallest
+     *  leaf).
+     *
+     *  Returns UINT32_MAX for UNKNOWN cells, which should only be created
+     *  with SimplexTree::empty() and are used around the borders of the
+     *  model to include those edges.
+     *
+     *  Triggers an assertion failure if called on a BRANCH cell.
+     */
+    uint32_t leafLevel() const;
 
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;

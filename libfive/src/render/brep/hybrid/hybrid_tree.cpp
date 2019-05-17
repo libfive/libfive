@@ -52,6 +52,9 @@ template <unsigned N>
 void HybridLeaf<N>::reset()
 {
     std::fill(inside.begin(), inside.end(), false);
+    this->level = 0;
+    this->surface.clear();
+    this->tape.reset();
 }
 
 template <unsigned N>
@@ -190,6 +193,23 @@ void HybridTree<N>::releaseTo(Pool& object_pool) {
     }
 
     object_pool.put(this);
+}
+
+template <unsigned N>
+uint32_t HybridTree<N>::leafLevel() const
+{
+    assert(!this->isBranch());
+    switch (this->type)
+    {
+        case Interval::FILLED:  // fallthrough
+        case Interval::EMPTY:   // fallthrough
+        case Interval::AMBIGUOUS:
+            assert(this->leaf != nullptr);
+            return this->leaf->level;
+
+        case Interval::UNKNOWN: return UINT32_MAX;
+    };
+    return 0;
 }
 
 }   // namespace Kernel

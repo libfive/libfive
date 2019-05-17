@@ -54,6 +54,7 @@ add_library(five SHARED
     render/brep/hybrid/hybrid_neighbors3.cpp
     render/brep/hybrid/hybrid_tree3.cpp
     render/brep/hybrid/hybrid_xtree3.cpp
+    render/brep/hybrid/hybrid_mesher.cpp
 
     render/brep/simplex/simplex_debug.cpp
     render/brep/simplex/simplex_neighbors2.cpp
