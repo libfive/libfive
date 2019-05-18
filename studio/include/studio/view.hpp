@@ -66,6 +66,7 @@ public slots:
 
     void toDCMeshing();
     void toIsoMeshing();
+    void toHybridMeshing();
 
     /*
      *  Emits shapesReady if all the shapes being drawn

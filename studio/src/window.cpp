@@ -193,18 +193,20 @@ Window::Window(Arguments args)
     auto debug_menu = menuBar()->addMenu("Debug");
     auto dc_meshing = new QAction("Dual contouring", nullptr);
     auto iso_meshing = new QAction("Iso-simplex", nullptr);
+    auto hybrid_meshing = new QAction("Hybrid", nullptr);
     auto meshing_menu = new QMenu("Meshing algorithm");
-    debug_menu->addMenu(meshing_menu);
-    meshing_menu->addAction(dc_meshing);
-    meshing_menu->addAction(iso_meshing);
-    dc_meshing->setCheckable(true);
-    dc_meshing->setChecked(true);
-    iso_meshing->setCheckable(true);
     auto meshing_mode = new QActionGroup(meshing_menu);
-    meshing_mode->addAction(dc_meshing);
-    meshing_mode->addAction(iso_meshing);
+    debug_menu->addMenu(meshing_menu);
+
+    for (auto& m : { dc_meshing, iso_meshing, hybrid_meshing }) {
+        meshing_menu->addAction(m);
+        meshing_mode->addAction(m);
+        m->setCheckable(true);
+    }
+    dc_meshing->setChecked(true);
     connect(dc_meshing, &QAction::triggered, view, &View::toDCMeshing);
     connect(iso_meshing, &QAction::triggered, view, &View::toIsoMeshing);
+    connect(hybrid_meshing, &QAction::triggered, view, &View::toHybridMeshing);
 
     // Help menu
     auto help_menu = menuBar()->addMenu("Help");

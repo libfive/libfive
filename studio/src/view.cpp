@@ -543,6 +543,11 @@ void View::toIsoMeshing()
     setAlgorithm(Kernel::ISO_SIMPLEX);
 }
 
+void View::toHybridMeshing()
+{
+    setAlgorithm(Kernel::HYBRID);
+}
+
 void View::setAlgorithm(Kernel::BRepAlgorithm a)
 {
     if (a != alg) {

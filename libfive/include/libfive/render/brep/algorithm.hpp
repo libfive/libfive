@@ -12,5 +12,6 @@ namespace Kernel {
     enum BRepAlgorithm {
         DUAL_CONTOURING,
         ISO_SIMPLEX,
+        HYBRID,
     };
 }   // namespace Kernel

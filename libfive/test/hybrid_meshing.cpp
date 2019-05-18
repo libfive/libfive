@@ -97,12 +97,27 @@ TEST_CASE("HybridMesher<3>: smoke test", "[!mayfail]")
     auto c = sphere(1);
     auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
-    auto t = HybridTreePool<3>::build(c, r, 5, 1e-8, 1);
-    t->assignIndices();
-    std::cout << t->type << " " << t->isBranch() << "\n";
+    SECTION("Single cell")
+    {
+        auto t = HybridTreePool<3>::build(c, r, 5, 1e-8, 1);
+        t->assignIndices();
+        std::cout << t->type << " " << t->isBranch() << "\n";
 
-    std::atomic_bool cancel(false);
-    auto m = Dual<3>::walk<HybridMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
-    REQUIRE(m->branes.size() > 0);
-    REQUIRE(m->verts.size() > 0);
+        std::atomic_bool cancel(false);
+        auto m = Dual<3>::walk<HybridMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
+        REQUIRE(m->branes.size() > 0);
+        REQUIRE(m->verts.size() > 0);
+    }
+
+    SECTION("Recursive")
+    {
+        auto t = HybridTreePool<3>::build(c, r, 0.1, 1e-8, 1);
+        t->assignIndices();
+        std::cout << t->type << " " << t->isBranch() << "\n";
+
+        std::atomic_bool cancel(false);
+        auto m = Dual<3>::walk<HybridMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
+        REQUIRE(m->branes.size() > 0);
+        REQUIRE(m->verts.size() > 0);
+    }
 }

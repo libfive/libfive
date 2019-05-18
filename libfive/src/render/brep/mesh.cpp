@@ -12,16 +12,23 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "libfive/render/brep/mesh.hpp"
-#include "libfive/render/brep/dc/dc_pool.hpp"
-#include "libfive/render/brep/dc/dc_mesher.hpp"
-#include "libfive/render/brep/simplex/simplex_pool.hpp"
-#include "libfive/render/brep/simplex/simplex_mesher.hpp"
 #include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/region.hpp"
 
+// Dual contouring
+#include "libfive/render/brep/dc/dc_pool.hpp"
+#include "libfive/render/brep/dc/dc_mesher.hpp"
 #if LIBFIVE_TRIANGLE_FAN_MESHING
 #include "libfive/render/brep/dc/intersection_aligner.hpp"
 #endif
+
+// Simplex meshing
+#include "libfive/render/brep/simplex/simplex_pool.hpp"
+#include "libfive/render/brep/simplex/simplex_mesher.hpp"
+
+// Hybrid meshing
+#include "libfive/render/brep/hybrid/hybrid_pool.hpp"
+#include "libfive/render/brep/hybrid/hybrid_mesher.hpp"
 
 namespace Kernel {
 
@@ -106,6 +113,25 @@ std::unique_ptr<Mesh> Mesh::render(
                 cancel, progress_callback, free_thread_handler,
                 [&](PerThreadBRep<3>& brep, int i) {
                     return SimplexMesher(brep, &es[i]);
+                });
+        t.reset(workers, progress_callback);
+    }
+    else if (alg == HYBRID)
+    {
+        auto t = HybridTreePool<3>::build(
+                es, r, min_feature, max_err, workers,
+                cancel, progress_callback);
+
+        if (cancel.load() || t.get() == nullptr) {
+            return nullptr;
+        }
+
+        t->assignIndices();
+
+        out = Dual<3>::walk_<HybridMesher>(t, workers,
+                cancel, progress_callback, free_thread_handler,
+                [&](PerThreadBRep<3>& brep, int i) {
+                    return HybridMesher(brep, &es[i]);
                 });
         t.reset(workers, progress_callback);
     }

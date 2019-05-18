@@ -245,7 +245,7 @@ void HybridTree<N>::assignIndices() const
     // (like the one in simplex_tree.cpp)
     using Task = std::shared_ptr<AssignIndexTask<N>>;
     std::stack<Task, std::vector<Task>> todo;
-    if (this->type == Interval::AMBIGUOUS) {
+    if (this->leaf) {
         auto task = std::make_shared<AssignIndexTask<N>>();
         task->target = this;
         todo.push(task);
@@ -261,7 +261,7 @@ void HybridTree<N>::assignIndices() const
         if (task->target->isBranch()) {
             for (unsigned i=0; i < task->target->children.size(); ++i) {
                 const auto child = task->target->children[i].load();
-                if (child->type == Interval::AMBIGUOUS) {
+                if (child->leaf) {
                     auto next = std::make_shared<AssignIndexTask<N>>();
                     next->target = child;
                     next->neighbors = task->neighbors.push(i, task->target->children);
@@ -290,7 +290,8 @@ void HybridTree<N>::assignIndices() const
 
             // Functor to assign the new index to a given tree + neighbor index
             auto f = [my_index](const HybridTree<N>* t, NeighborIndex n) {
-                assert(t->leaf->index[n.i] == 0);
+                assert(t->leaf->index[n.i] == 0 ||
+                       t->leaf->index[n.i] == my_index);
                 t->leaf->index[n.i] = my_index;
             };
 
