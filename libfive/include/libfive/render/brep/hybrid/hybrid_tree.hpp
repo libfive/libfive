@@ -120,6 +120,22 @@ public:
      */
     void assignIndices() const;
 
+    /*
+     *  Maps a function across every terminal cell in the tree (which may
+     *  be a leaf or an empty / filled region), using naive recursion.
+     */
+    template <typename F>
+    void map(F& f) const {
+        if (this->isBranch()) {
+            for (auto& c : this->children) {
+                c.load()->map(f);
+            }
+        }
+        else {
+            f(this);
+        }
+    }
+
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;
 

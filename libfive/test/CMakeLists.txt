@@ -15,6 +15,7 @@ set(SRCS main.cpp
     eval_point.cpp
     feature.cpp
     heightmap.cpp
+    hybrid_meshing.cpp
     indexes.cpp
     marching.cpp
     mesh.cpp

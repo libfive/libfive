@@ -53,6 +53,7 @@ template <unsigned N>
 void HybridLeaf<N>::reset()
 {
     std::fill(inside.begin(), inside.end(), false);
+    std::fill(index.begin(), index.end(), 0);
     this->level = 0;
     this->surface.clear();
     this->tape.reset();
@@ -103,12 +104,13 @@ void HybridTree<N>::evalLeaf(XTreeEvaluator* eval,
     for (unsigned i=0; i < ipow(3, N); ++i) {
         Vec center = Vec::Zero();
         unsigned count = 0;
-        for (unsigned j=0; j < ipow(3, N); ++j) {
-            if (NeighborIndex(i).contains(NeighborIndex(j))) {
+        for (unsigned j=0; j < ipow(2, N); ++j) {
+            if (NeighborIndex(i).contains(CornerIndex(j))) {
                 center += region.corner(j);
                 count++;
             }
         }
+        assert(count > 0);
         center /= count;
         this->leaf->pos.col(i) = center;
 
@@ -121,6 +123,8 @@ void HybridTree<N>::evalLeaf(XTreeEvaluator* eval,
 
     this->type = all_empty ? Interval::EMPTY
                : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
+
+    this->done();
 }
 
 template <unsigned N>
@@ -266,13 +270,13 @@ void HybridTree<N>::assignIndices() const
         for (unsigned i_=0; i_ < ipow(3, N); ++i_)
         {
             // Skip if the index is already assigned
-            if (this->leaf->index[i_] != 0) {
+            if (task->target->leaf->index[i_] != 0) {
                 continue;
             }
 
             // Record the new index here
             const auto my_index = ++index;
-            this->leaf->index[i_] = my_index;
+            task->target->leaf->index[i_] = my_index;
 
             // Functor to assign the new index to a given tree + neighbor index
             auto f = [my_index](const HybridTree<N>* t, NeighborIndex n) {

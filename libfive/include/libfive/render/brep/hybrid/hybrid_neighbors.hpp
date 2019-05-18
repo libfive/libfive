@@ -66,7 +66,7 @@ public:
         if (i.isCorner()) {
             for (const auto& t : NeighborTables<N>::cornerTable[i.pos()]) {
                 auto n = this->neighbors[t.first.i];
-                if (n != nullptr) {
+                if (n != nullptr && n->isBranch()) {
                     while (n->isBranch()) {
                         n = n->children[t.second.i].load();
                         assert(n != nullptr);
