@@ -101,7 +101,6 @@ TEST_CASE("HybridMesher<3>: smoke test", "[!mayfail]")
     {
         auto t = HybridTreePool<3>::build(c, r, 5, 1e-8, 1);
         t->assignIndices();
-        std::cout << t->type << " " << t->isBranch() << "\n";
 
         std::atomic_bool cancel(false);
         auto m = Dual<3>::walk<HybridMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
@@ -113,7 +112,6 @@ TEST_CASE("HybridMesher<3>: smoke test", "[!mayfail]")
     {
         auto t = HybridTreePool<3>::build(c, r, 0.1, 1e-8, 1);
         t->assignIndices();
-        std::cout << t->type << " " << t->isBranch() << "\n";
 
         std::atomic_bool cancel(false);
         auto m = Dual<3>::walk<HybridMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);

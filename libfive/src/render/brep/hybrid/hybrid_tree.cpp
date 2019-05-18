@@ -245,11 +245,9 @@ void HybridTree<N>::assignIndices() const
     // (like the one in simplex_tree.cpp)
     using Task = std::shared_ptr<AssignIndexTask<N>>;
     std::stack<Task, std::vector<Task>> todo;
-    if (this->leaf) {
-        auto task = std::make_shared<AssignIndexTask<N>>();
-        task->target = this;
-        todo.push(task);
-    }
+    auto task = std::make_shared<AssignIndexTask<N>>();
+    task->target = this;
+    todo.push(task);
 
     uint32_t index = 0;
     while (todo.size()) {
@@ -261,13 +259,11 @@ void HybridTree<N>::assignIndices() const
         if (task->target->isBranch()) {
             for (unsigned i=0; i < task->target->children.size(); ++i) {
                 const auto child = task->target->children[i].load();
-                if (child->leaf) {
-                    auto next = std::make_shared<AssignIndexTask<N>>();
-                    next->target = child;
-                    next->neighbors = task->neighbors.push(i, task->target->children);
-                    next->parent = task;
-                    todo.push(next);
-                }
+                auto next = std::make_shared<AssignIndexTask<N>>();
+                next->target = child;
+                next->neighbors = task->neighbors.push(i, task->target->children);
+                next->parent = task;
+                todo.push(next);
             }
             continue;
         }
