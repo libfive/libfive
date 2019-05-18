@@ -14,37 +14,74 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace Kernel;
 
-TEST_CASE("HybridPool::build")
+TEST_CASE("HybridPool::build (smoke test)")
 {
-    auto c = circle(1);
-    auto r = Region<2>({-1, -1}, {1, 1});
+    SECTION("2D") {
+        auto c = circle(1);
+        auto r = Region<2>({-1, -1}, {1, 1});
 
-    auto t = HybridTreePool<2>::build(c, r, 5, 1e-8, 1);
-    REQUIRE(t.get() != nullptr);
+        auto t = HybridTreePool<2>::build(c, r, 5, 1e-8, 1);
+        REQUIRE(t.get() != nullptr);
+    }
+
+    SECTION("3D") {
+        auto c = circle(1);
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+        auto t = HybridTreePool<3>::build(c, r, 5, 1e-8, 1);
+        REQUIRE(t.get() != nullptr);
+    }
 }
 
 TEST_CASE("HybridTree::assignIndices")
 {
-    auto c = circle(1);
-    auto r = Region<2>({-1, -1}, {1, 1});
+    SECTION("2D") {
+        auto c = circle(1);
+        auto r = Region<2>({-1, -1}, {1, 1});
 
-    auto t = HybridTreePool<2>::build(c, r, 1, 1e-8, 1);
-    REQUIRE(t->isBranch());
-    for (auto& c : t->children) {
-        REQUIRE(!c.load()->isBranch());
-        REQUIRE(c.load()->type == Interval::AMBIGUOUS);
-    }
-    t->assignIndices();
-
-    uint32_t max_index = 0;
-    auto f = [&](const HybridTree<2>* t) {
-        if (t->leaf) {
-            for (auto& i: t->leaf->index) {
-                REQUIRE(i != 0);
-                max_index = std::max(max_index, i);
-            }
+        auto t = HybridTreePool<2>::build(c, r, 1, 1e-8, 1);
+        REQUIRE(t->isBranch());
+        for (auto& c : t->children) {
+            REQUIRE(!c.load()->isBranch());
+            REQUIRE(c.load()->type == Interval::AMBIGUOUS);
         }
-    };
-    t->map(f);
-    REQUIRE(max_index == 25);
+        t->assignIndices();
+
+        uint32_t max_index = 0;
+        auto f = [&](const HybridTree<2>* t) {
+            if (t->leaf) {
+                for (auto& i: t->leaf->index) {
+                    REQUIRE(i != 0);
+                    max_index = std::max(max_index, i);
+                }
+            }
+        };
+        t->map(f);
+        REQUIRE(max_index == 25);
+    }
+
+    SECTION("3D") {
+        auto c = sphere(1);
+        auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+        auto t = HybridTreePool<3>::build(c, r, 1, 1e-8, 1);
+        REQUIRE(t->isBranch());
+        for (auto& c : t->children) {
+            REQUIRE(!c.load()->isBranch());
+            REQUIRE(c.load()->type == Interval::AMBIGUOUS);
+        }
+        t->assignIndices();
+
+        uint32_t max_index = 0;
+        auto f = [&](const HybridTree<3>* t) {
+            if (t->leaf) {
+                for (auto& i: t->leaf->index) {
+                    REQUIRE(i != 0);
+                    max_index = std::max(max_index, i);
+                }
+            }
+        };
+        t->map(f);
+        REQUIRE(max_index == 125);
+    }
 }
