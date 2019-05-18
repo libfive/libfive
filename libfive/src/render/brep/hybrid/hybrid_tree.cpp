@@ -39,7 +39,7 @@ template <unsigned N>
 std::unique_ptr<HybridTree<N>> HybridTree<N>::empty()
 {
     std::unique_ptr<HybridTree> t(new HybridTree);
-    t->type = Interval::EMPTY;
+    t->type = Interval::UNKNOWN;
     return std::move(t);
 }
 
@@ -63,7 +63,7 @@ template <unsigned N>
 Tape::Handle HybridTree<N>::evalInterval(XTreeEvaluator* eval,
                                          Tape::Handle tape,
                                          const Region<N>& region,
-                                         Pool&)
+                                         Pool& object_pool)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -81,25 +81,19 @@ Tape::Handle HybridTree<N>::evalInterval(XTreeEvaluator* eval,
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
+        buildDummyLeaf(region, object_pool);
         this->done();
     }
     return o.second;
 }
 
 template <unsigned N>
-void HybridTree<N>::evalLeaf(XTreeEvaluator* eval,
-                             Tape::Handle tape,
-                             const Region<N>& region,
-                             Pool& object_pool,
-                             const HybridNeighbors<N>& neighbors)
+void HybridTree<N>::buildDummyLeaf(const Region<N>& region,
+                                   Pool& object_pool)
 {
-    (void)neighbors;
-
     assert(this->leaf == nullptr);
     this->leaf = object_pool.next().get();
-
-    bool all_empty = true;
-    bool all_full  = true;
+    this->leaf->level = region.level;
 
     for (unsigned i=0; i < ipow(3, N); ++i) {
         Vec center = Vec::Zero();
@@ -111,11 +105,27 @@ void HybridTree<N>::evalLeaf(XTreeEvaluator* eval,
             }
         }
         assert(count > 0);
-        center /= count;
-        this->leaf->pos.col(i) = center;
+        this->leaf->pos.col(i) = center / count;
+    }
+}
 
+template <unsigned N>
+void HybridTree<N>::evalLeaf(XTreeEvaluator* eval,
+                             Tape::Handle tape,
+                             const Region<N>& region,
+                             Pool& object_pool,
+                             const HybridNeighbors<N>& neighbors)
+{
+    (void)neighbors;
+
+    buildDummyLeaf(region, object_pool);
+    bool all_empty = true;
+    bool all_full  = true;
+
+    for (unsigned i=0; i < ipow(3, N); ++i) {
         Eigen::Vector3f p;
-        p << center.template cast<float>(), region.perp.template cast<float>();
+        p << this->leaf->pos.col(i).template cast<float>(),
+             region.perp.template cast<float>();
         this->leaf->inside[i] = eval->feature.isInside(p, tape);
         all_empty  &= !this->leaf->inside[i];
         all_full   &=  this->leaf->inside[i];
@@ -123,7 +133,6 @@ void HybridTree<N>::evalLeaf(XTreeEvaluator* eval,
 
     this->type = all_empty ? Interval::EMPTY
                : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
-
     this->done();
 }
 

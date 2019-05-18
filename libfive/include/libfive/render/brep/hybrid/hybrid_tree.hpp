@@ -146,6 +146,14 @@ public:
      *  Releases this tree and any leaf objects to the given object pool
      */
     void releaseTo(Pool& object_pool);
+
+protected:
+    /*
+     *  Assigns a new leaf to this->leaf, then places every subspace
+     *  vertex at the average position of that subspace.
+     */
+    void buildDummyLeaf(const Region<N>& region,
+                        Pool& object_pool);
 };
 
 extern template class HybridTree<3>;
