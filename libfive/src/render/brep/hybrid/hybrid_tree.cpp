@@ -184,6 +184,7 @@ bool HybridTree<N>::collectChildren(XTreeEvaluator* eval,
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
         this->releaseChildren(object_pool);
+        buildDummyLeaf(tape, region, object_pool);
         this->done();
         return true;
     }
