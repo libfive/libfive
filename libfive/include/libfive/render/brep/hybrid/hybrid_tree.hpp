@@ -43,9 +43,6 @@ struct HybridLeaf
     /*  Tape used for evaluation within this leaf */
     Tape::Handle tape;
 
-    /*  Minimum-size leafs are at level 0, and it counts up from there */
-    unsigned level;
-
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
@@ -152,7 +149,8 @@ protected:
      *  Assigns a new leaf to this->leaf, then places every subspace
      *  vertex at the average position of that subspace.
      */
-    void buildDummyLeaf(const Region<N>& region,
+    void buildDummyLeaf(Tape::Handle tape,
+                        const Region<N>& region,
                         Pool& object_pool);
 };
 

@@ -54,7 +54,6 @@ void HybridLeaf<N>::reset()
 {
     std::fill(inside.begin(), inside.end(), false);
     std::fill(index.begin(), index.end(), 0);
-    this->level = 0;
     this->surface.clear();
     this->tape.reset();
 }
@@ -81,19 +80,20 @@ Tape::Handle HybridTree<N>::evalInterval(XTreeEvaluator* eval,
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        buildDummyLeaf(region, object_pool);
+        buildDummyLeaf(o.second, region, object_pool);
         this->done();
     }
     return o.second;
 }
 
 template <unsigned N>
-void HybridTree<N>::buildDummyLeaf(const Region<N>& region,
+void HybridTree<N>::buildDummyLeaf(Tape::Handle tape,
+                                   const Region<N>& region,
                                    Pool& object_pool)
 {
     assert(this->leaf == nullptr);
     this->leaf = object_pool.next().get();
-    this->leaf->level = region.level;
+    this->leaf->tape = tape;
 
     for (unsigned i=0; i < ipow(3, N); ++i) {
         Vec center = Vec::Zero();
@@ -118,7 +118,7 @@ void HybridTree<N>::evalLeaf(XTreeEvaluator* eval,
 {
     (void)neighbors;
 
-    buildDummyLeaf(region, object_pool);
+    buildDummyLeaf(tape, region, object_pool);
     bool all_empty = true;
     bool all_full  = true;
 
@@ -219,7 +219,8 @@ uint32_t HybridTree<N>::leafLevel() const
         case Interval::EMPTY:   // fallthrough
         case Interval::AMBIGUOUS:
             assert(this->leaf != nullptr);
-            return this->leaf->level;
+            assert(this->region.level >= 0);
+            return this->region.level;
 
         case Interval::UNKNOWN: return UINT32_MAX;
     };
