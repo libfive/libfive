@@ -75,11 +75,17 @@ public:
      */
     std::array<Region, 1 << N> subdivide() const
     {
-        assert(level > 0);
+        // If the region has a level, then it must be non-zero
+        //
+        // Subdividing a no-level region is acceptable, because the
+        // level is an optional field, but if it is present, then it
+        // must be non-zero.
+        assert(level > 0 || level == -1);
 
         // Default-construct empty regions
         std::array<Region, 1 << N> out = {};
         auto c = center();
+        const auto new_level = (level == -1) ? -1 : (level - 1);
 
         for (unsigned i=0; i < (1 << N); ++i)
         {
@@ -89,7 +95,7 @@ public:
                 a(j) = (i & (1 << j)) > 0;
             }
             out[i] = Region(a.select(c, lower), a.select(upper, c),
-                            perp, level - 1);
+                            perp, new_level);
         }
         return out;
     }
@@ -241,7 +247,8 @@ public:
      */
     Region<N> withResolution(double min_feature) const {
         const auto min_dimension = (upper - lower).minCoeff();
-        const auto level = ceil(log(min_dimension / min_feature) / log(2));
+        const auto level = ceil(fmax(0.0, log(min_dimension / min_feature)) /
+                                log(2));
         return Region<N>(lower, upper, perp, level);
     }
 

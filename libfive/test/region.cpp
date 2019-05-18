@@ -177,3 +177,12 @@ TEST_CASE("Region<3>::shrink")
     REQUIRE(s.lower.z() == Approx(-2.65));
     REQUIRE(s.upper.z() == Approx(3.65));
 }
+
+TEST_CASE("Region<3>::withResolution")
+{
+    Region<3> r({-1, -1, -1}, {1, 1, 1});
+    REQUIRE(r.withResolution(5).level == 0);
+    REQUIRE(r.withResolution(1).level == 1);
+    REQUIRE(r.withResolution(1.2).level == 1);
+    REQUIRE(r.withResolution(0.9).level == 2);
+}
