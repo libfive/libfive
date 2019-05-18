@@ -12,4 +12,3 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 template class XTree<3, HybridTree<3>, HybridLeaf<3>>;
 }   // namespace Kernel
-
