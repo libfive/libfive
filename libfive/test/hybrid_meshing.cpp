@@ -12,7 +12,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/hybrid/hybrid_pool.hpp"
 #include "libfive/render/brep/hybrid/hybrid_mesher.hpp"
 #include "libfive/render/brep/dual.hpp"
+
 #include "util/shapes.hpp"
+#include "util/mesh_checks.hpp"
 
 using namespace Kernel;
 
@@ -92,7 +94,7 @@ TEST_CASE("HybridTree::assignIndices")
     }
 }
 
-TEST_CASE("HybridMesher<3>: smoke test", "[!mayfail]")
+TEST_CASE("HybridMesher<3>: smoke test")
 {
     auto c = sphere(1);
     auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
@@ -118,4 +120,17 @@ TEST_CASE("HybridMesher<3>: smoke test", "[!mayfail]")
         REQUIRE(m->branes.size() > 0);
         REQUIRE(m->verts.size() > 0);
     }
+}
+
+TEST_CASE("HybridMesher<3>: mesh manifoldness")
+{
+    auto c = sphere(0.8);
+    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+    auto t = HybridTreePool<3>::build(c, r, 0.5, 1e-8, 1);
+    t->assignIndices();
+
+    std::atomic_bool cancel(false);
+    auto m = Dual<3>::walk<HybridMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
+    m->saveSTL("out.stl");
+    CHECK_EDGE_PAIRS(*m);
 }
