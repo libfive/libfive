@@ -95,6 +95,16 @@ struct SimplexLeaf
     void operator delete[]( void* ptr ) {
         ::operator delete[](ptr);
     }
+    /* Non-array versions are also required for ObjectPool by Visual Studio's 
+     * compiler.
+     */
+    template <typename... Args>
+    static void* operator new(size_t sz, Args... args) {
+        return ::operator new(sz, args...);
+    }
+    void operator delete(void* ptr) {
+        ::operator delete(ptr);
+    }
 
     /*  Represents how far from minimum-size leafs we are */
     unsigned level;

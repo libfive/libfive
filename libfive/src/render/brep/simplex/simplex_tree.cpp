@@ -371,8 +371,11 @@ void SimplexTree<N>::findLeafVertices(
                 {
                     // Helper function to push a position + value + normal,
                     // swapping the normal to an all-zeros vector if any
-                    // items are invalid.
-                    auto push = [&](Eigen::Vector3f d) {
+                    // items are invalid.  Visual Studio seems to have trouble
+                    // capturing ds by default for some reason, so we capture
+                    // all used variables individually.
+                    auto push = [&ds, &leaf_sub, &sub, &eval, &index]
+                        (Eigen::Vector3f d) {
                         Eigen::Matrix<double, N, 1> d_ =
                             d.template head<N>().template cast<double>();
                         if (!d_.array().isFinite().all()) {
