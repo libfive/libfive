@@ -32,6 +32,7 @@ namespace Kernel {
 /* Forward declarations */
 template <unsigned N> class SimplexNeighbors;
 template <unsigned N> class Region;
+struct BRepSettings;
 
 template <unsigned N>
 struct SimplexLeafSubspace {
@@ -181,9 +182,10 @@ public:
      *  Assigns leaf->sub[*]->index to a array of unique integers for every leaf
      *  in the tree, starting at 1.  This provides a globally unique
      *  identifier for every subspace vertex, which is used when making edges.
+     *
+     *  Settings are used for cancellation and worker count.
      */
-    void assignIndices(unsigned workers, std::atomic_bool& cancel) const;
-    void assignIndices() const;
+    void assignIndices(const BRepSettings& settings) const;
 
     /*
      *  Releases this tree and any leaf objects to the given object pool

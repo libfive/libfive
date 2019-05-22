@@ -20,12 +20,16 @@ using namespace Kernel;
 
 TEST_CASE("HybridPool::build (smoke test)")
 {
+    BRepSettings settings;
+    settings.min_feature = 5;
+    settings.workers = 1;
+
     SECTION("2D")
     {
         auto c = circle(1);
         auto r = Region<2>({-1, -1}, {1, 1});
 
-        auto t = HybridTreePool<2>::build(c, r, 5, 1e-8, 1);
+        auto t = HybridTreePool<2>::build(c, r, settings);
         REQUIRE(t.get() != nullptr);
     }
 
@@ -34,24 +38,28 @@ TEST_CASE("HybridPool::build (smoke test)")
         auto c = sphere(1);
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
-        auto t = HybridTreePool<3>::build(c, r, 5, 1e-8, 1);
+        auto t = HybridTreePool<3>::build(c, r, settings);
         REQUIRE(t.get() != nullptr);
     }
 }
 
 TEST_CASE("HybridTree::assignIndices")
 {
+    BRepSettings settings;
+    settings.min_feature = 1;
+    settings.workers = 1;
+
     SECTION("2D") {
         auto c = circle(1);
         auto r = Region<2>({-1, -1}, {1, 1});
 
-        auto t = HybridTreePool<2>::build(c, r, 1, 1e-8, 1);
+        auto t = HybridTreePool<2>::build(c, r, settings);
         REQUIRE(t->isBranch());
         for (auto& c : t->children) {
             REQUIRE(!c.load()->isBranch());
             REQUIRE(c.load()->type == Interval::AMBIGUOUS);
         }
-        t->assignIndices();
+        t->assignIndices(settings);
 
         std::set<uint64_t> indices;
         auto f = [&](const HybridTree<2>* t) {
@@ -71,13 +79,13 @@ TEST_CASE("HybridTree::assignIndices")
         auto c = sphere(1);
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
-        auto t = HybridTreePool<3>::build(c, r, 1, 1e-8, 1);
+        auto t = HybridTreePool<3>::build(c, r, settings);
         REQUIRE(t->isBranch());
         for (auto& c : t->children) {
             REQUIRE(!c.load()->isBranch());
             REQUIRE(c.load()->type == Interval::AMBIGUOUS);
         }
-        t->assignIndices();
+        t->assignIndices(settings);
 
         std::set<uint64_t> indices;
         auto f = [&](const HybridTree<3>* t) {
@@ -101,22 +109,30 @@ TEST_CASE("HybridMesher<3>: smoke test")
 
     SECTION("Single cell")
     {
-        auto t = HybridTreePool<3>::build(c, r, 5, 1e-8, 1);
-        t->assignIndices();
+        BRepSettings settings;
+        settings.min_feature = 5;
+        settings.workers = 1;
 
-        std::atomic_bool cancel(false);
-        auto m = Dual<3>::walk<HybridMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
+        auto t = HybridTreePool<3>::build(c, r, settings);
+        t->assignIndices(settings);
+
+        settings.workers = 8;
+        auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
         REQUIRE(m->branes.size() > 0);
         REQUIRE(m->verts.size() > 0);
     }
 
     SECTION("Recursive")
     {
-        auto t = HybridTreePool<3>::build(c, r, 0.1, 1e-8, 1);
-        t->assignIndices();
+        BRepSettings settings;
+        settings.min_feature = 0.1;
+        settings.workers = 1;
 
-        std::atomic_bool cancel(false);
-        auto m = Dual<3>::walk<HybridMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
+        auto t = HybridTreePool<3>::build(c, r, settings);
+        t->assignIndices(settings);
+
+        settings.workers = 8;
+        auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
         REQUIRE(m->branes.size() > 0);
         REQUIRE(m->verts.size() > 0);
     }
@@ -126,11 +142,15 @@ TEST_CASE("HybridMesher<3>: mesh manifoldness")
 {
     auto c = sphere(0.8);
     auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
-    auto t = HybridTreePool<3>::build(c, r, 0.5, 1e-8, 1);
-    t->assignIndices();
 
-    std::atomic_bool cancel(false);
-    auto m = Dual<3>::walk<HybridMesher>(t, 8, cancel, EMPTY_PROGRESS_CALLBACK, nullptr, c);
+    BRepSettings settings;
+    settings.min_feature = 0.5;
+    settings.workers = 1;
+    auto t = HybridTreePool<3>::build(c, r, settings);
+    t->assignIndices(settings);
+
+    settings.workers = 8;
+    auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
     m->saveSTL("out.stl");
     CHECK_EDGE_PAIRS(*m);
 }

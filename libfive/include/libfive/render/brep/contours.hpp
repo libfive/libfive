@@ -10,7 +10,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/render/brep/region.hpp"
-#include "libfive/render/brep/progress.hpp"
 
 #include <atomic>
 
@@ -19,28 +18,16 @@ namespace Kernel {
 // Forward declarations
 template <unsigned N> class PerThreadBRep;
 class XTreeEvaluator;
-class FreeThreadHandler;
+struct BRepSettings;
 
 class Contours {
 public:
     /*
-     *  Basic render function, with sensible defaults
+     *  Generic render function
      */
     static std::unique_ptr<Contours> render(
         const Tree t, const Region<2>& r,
-        double min_feature=0.1, double max_err=1e-8,
-        bool multithread=true);
-
-    /*
-     *  Full-featured render function, with more required arguments
-     *  (and optional progress tracking + free thread handling)
-     */
-    static std::unique_ptr<Contours> render(
-        const Tree t, const Region<2>& r,
-        double min_feature, double max_err,
-        unsigned workers, std::atomic_bool& cancel,
-        ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-        FreeThreadHandler* free_thread_handler=nullptr);
+        const BRepSettings& settings);
 
     /*
      *  Saves the contours to an SVG file

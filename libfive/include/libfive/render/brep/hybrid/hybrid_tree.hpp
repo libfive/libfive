@@ -22,6 +22,7 @@ namespace Kernel {
 /* Forward declaration */
 template <unsigned N> class Region;
 template <unsigned N> class HybridNeighbors;
+struct BRepSettings;
 
 template <unsigned N>
 struct HybridLeaf
@@ -114,8 +115,10 @@ public:
      *  Assigns leaf->index[*] to a unique integer for every leaf subspace
      *  in the tree, starting at 1.  This provides a globally unique
      *  identifier for every subspace vertex, which is used when making edges.
+     *
+     *  settings are used for cancellation and worker count.
      */
-    void assignIndices() const;
+    void assignIndices(const BRepSettings& settings) const;
 
     /*
      *  Maps a function across every terminal cell in the tree (which may

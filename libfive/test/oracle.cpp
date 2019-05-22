@@ -12,6 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/settings.hpp"
 
 #include "libfive/oracle/oracle_storage.hpp"
 #include "libfive/oracle/oracle_clause.hpp"
@@ -54,8 +55,11 @@ TEST_CASE("Oracle: render and compare (sphere)")
 
   // We can't use multithreading, because it causes triangles to be
   // output in a non-deterministic order, which fails the comparison.
-  auto mesh = Mesh::render(sOracle, r, 0.1, 1e-8, false);
-  auto comparisonMesh = Mesh::render(s, r, 0.1, 1e-8, false);
+  BRepSettings settings;
+  settings.workers = 1;
+  settings.min_feature = 0.1;
+  auto mesh = Mesh::render(sOracle, r, settings);
+  auto comparisonMesh = Mesh::render(s, r, settings);
 
   BRepCompare(*mesh, *comparisonMesh);
 }
@@ -72,8 +76,12 @@ TEST_CASE("Oracle: render and compare (cube)")
   Region<3> r({ -2.5, -2.5, -2.5 }, { 2.5, 2.5, 2.5 });
   Tree cubeOracle = convertToOracleAxes(cube);
 
-  auto mesh = Mesh::render(cubeOracle, r, 0.1, 1e-8, false);
-  auto comparisonMesh = Mesh::render(cube, r, 0.1, 1e-8, false);
+  BRepSettings settings;
+  settings.workers = 1;
+  settings.min_feature = 0.1;
+
+  auto mesh = Mesh::render(cubeOracle, r, settings);
+  auto comparisonMesh = Mesh::render(cube, r, settings);
 
   BRepCompare(*mesh, *comparisonMesh);
 }
@@ -93,8 +101,12 @@ TEST_CASE("Oracle: render and compare (cube as oracle)")
     //  The region is set so we hit where the interesting stuff happens.
     Region<3> r({ -3., -3., -3. }, { 3., 3., 3. });
 
-    auto mesh = Mesh::render(cubeOracle, r, 1.6);
-    auto comparisonMesh = Mesh::render(cube, r);
+    BRepSettings settings;
+    settings.workers = 1;
+    settings.min_feature = 1.6;
+
+    auto mesh = Mesh::render(cubeOracle, r, settings);
+    auto comparisonMesh = Mesh::render(cube, r, settings);
 
     BRepCompare(*mesh, *comparisonMesh);
 }

@@ -9,13 +9,24 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "catch.hpp"
 
+#include "libfive/eval/eval_xtree.hpp"
+
 #include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/dc/dc_pool.hpp"
 #include "libfive/render/brep/mesh.hpp"
+#include "libfive/render/brep/settings.hpp"
 
 #include "util/shapes.hpp"
 
 using namespace Kernel;
+
+class TestProgressHandler : public ProgressHandler {
+public:
+    void progress(double d) override {
+        ps.push_back(d);
+    }
+    std::vector<float> ps;
+};
 
 TEST_CASE("DCPool::build (progress callback)")
 {
@@ -24,33 +35,34 @@ TEST_CASE("DCPool::build (progress callback)")
 
     for (auto res: {0.02, 0.03, 0.05, 0.1, 0.11, 0.125})
     {
-        std::vector<float> ps;
-        auto callback = [&](float f) {
-            ps.push_back(f);
-        };
+        BRepSettings settings;
+        settings.min_feature = res;
+        TestProgressHandler handler;
+        handler.start({1});
+        settings.progress_handler = &handler;
 
-        DCPool<3>::build(sponge, r, res, 1e-8, 8, callback);
+        DCPool<3>::build(sponge, r, settings);
+        handler.finish();
 
-        CAPTURE(ps.size());
-        CAPTURE(ps);
+        CAPTURE(handler.ps.size());
+        CAPTURE(handler.ps);
         CAPTURE(res);
 
-        REQUIRE(ps.size() >= 2);
-        REQUIRE(ps[0] == 0.0f);
-        REQUIRE(ps[ps.size() - 1] == 1.0f);
+        REQUIRE(handler.ps.size() >= 2);
+        REQUIRE(handler.ps[0] == 0.0f);
 
         // Check that the values are monotonically increasing
         float prev = -1;
-        for (auto& p : ps)
+        for (auto& p : handler.ps)
         {
             REQUIRE(p > prev);
             prev = p;
         }
 
-        if (ps.size() > 2)
+        if (handler.ps.size() > 2)
         {
-            REQUIRE(ps[ps.size() - 2] > 0.0f);
-            REQUIRE(ps[ps.size() - 2] < 1.0f);
+            REQUIRE(handler.ps[handler.ps.size() - 2] > 0.0f);
+            REQUIRE(handler.ps[handler.ps.size() - 2] < 1.0f);
         }
         else
         {
@@ -64,37 +76,30 @@ TEST_CASE("Mesh::render (progress callback)")
     Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
 
+    BRepSettings settings;
+
     for (auto res: {0.02, 0.03, 0.05, 0.1, 0.11, 0.125})
     {
-        std::vector<float> ps;
-        auto callback = [&](float f) {
-            ps.push_back(f);
-        };
+        TestProgressHandler progress;
+        settings.progress_handler = &progress;
 
-        std::atomic_bool cancel(false);
-        std::map<Tree::Id, float> vars;
-        Mesh::render(sponge, vars, r, res, 1e-8, 8, cancel,
-                     DUAL_CONTOURING, callback, nullptr);
+        settings.min_feature = res;
+        Mesh::render(sponge, r, settings);
 
-        CAPTURE(ps.size());
-        CAPTURE(ps);
+        CAPTURE(progress.ps.size());
+        CAPTURE(progress.ps);
         CAPTURE(res);
 
-        REQUIRE(ps.size() >= 2);
-        REQUIRE(ps[0] == 0.0f);
-        REQUIRE(ps[ps.size() - 1] == 3.0f);
+        REQUIRE(progress.ps.size() >= 2);
+        REQUIRE(progress.ps[0] == 0.0f);
+        REQUIRE(progress.ps[progress.ps.size() - 1] > 0.6666f);
 
         // Check that the values are monotonically increasing
         float prev = -1;
-        for (auto& p : ps)
+        for (auto& p : progress.ps)
         {
             REQUIRE(p > prev);
             prev = p;
-        }
-
-        if (ps.size() <= 4)
-        {
-            WARN("Callbacks not triggered (this is expected in debug builds)");
         }
     }
 }

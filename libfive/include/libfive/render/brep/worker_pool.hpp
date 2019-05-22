@@ -13,15 +13,15 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <boost/lockfree/stack.hpp>
 
 #include "libfive/render/brep/root.hpp"
-#include "libfive/render/brep/progress.hpp"
 #include "libfive/tree/tree.hpp"
 
 namespace Kernel {
-// Forward declaration
+
+// Forward declarations
 class XTreeEvaluator;
 template <unsigned N> class Region;
 class Tape;
-class FreeThreadHandler;
+struct BRepSettings;
 
 /*
  *  A WorkerPool is used to construct a recursive tree (quadtree / octree)
@@ -32,21 +32,18 @@ class WorkerPool
 {
 public:
     /*
-     *  Builder function with optional arguments, fewer features
+     *  Evaluation function that builds a local evaluator array
+     *  (based on settings.workers)
      */
-    static Root<T> build(const Tree t, const Region<N>& region,
-            double min_feature=0.1, double max_err=1e-8, unsigned workers=8,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            FreeThreadHandler* free_thread_handler=nullptr);
-
+    static Root<T> build(Tree t, const Region<N>& region,
+                         const BRepSettings& settings);
     /*
-     *  Full-featured builder function
+     *  General-purpose evaluation function
+     *
+     *  eval must be an array of at least [settings.workers] evaluators
      */
-    static Root<T> build(XTreeEvaluator* eval,
-            const Region<N>& region, double min_feature,
-            double max_err, unsigned workers, std::atomic_bool& cancel,
-            ProgressCallback progress_callback=EMPTY_PROGRESS_CALLBACK,
-            FreeThreadHandler* free_thread_handler=nullptr);
+    static Root<T> build(XTreeEvaluator* eval, const Region<N>& region,
+                         const BRepSettings& settings);
 
 protected:
     struct Task {
@@ -60,10 +57,9 @@ protected:
         boost::lockfree::stack<Task, boost::lockfree::fixed_sized<true>>;
 
     static void run(XTreeEvaluator* eval, LockFreeStack& tasks,
-                    const float max_err, std::atomic_bool& done,
-                    std::atomic_bool& cancel, Root<T>& root,
-                    std::mutex& root_lock, ProgressWatcher* progress,
-                    FreeThreadHandler* free_thread_handler);
+                    Root<T>& root, std::mutex& root_lock,
+                    const BRepSettings& settings,
+                    std::atomic_bool& done);
 };
 
 }   // namespace Kernel

@@ -87,7 +87,7 @@ bool Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
         // Only abort non-default renders
         if (target_div != default_div)
         {
-            cancel.store(true);
+            mesh_settings.cancel.store(true);
         }
 
         // Start a special render operation that uses a flag in the div
@@ -225,7 +225,7 @@ void Shape::startRender(RenderSettings s)
     {
         if (next.div != MESH_DIV_ABORT)
         {
-            cancel.store(true);
+            mesh_settings.cancel.store(true);
             next = s;
         }
     }
@@ -294,7 +294,7 @@ void Shape::deleteLater()
     if (running)
     {
         next.div = MESH_DIV_ABORT;
-        cancel.store(true);
+        mesh_settings.cancel.store(true);
     }
     else
     {
@@ -357,15 +357,16 @@ void Shape::freeGL()
 // This function is called in a separate thread:
 Shape::BoundedMesh Shape::renderMesh(RenderSettings s)
 {
-    cancel.store(false);
-
     // Use the global bounds settings
     Kernel::Region<3> r(
             {s.settings.min.x(), s.settings.min.y(), s.settings.min.z()},
             {s.settings.max.x(), s.settings.max.y(), s.settings.max.z()});
-    auto m = Kernel::Mesh::render(es.data(), r,
-            1 / (s.settings.res / (1 << s.div)),
-            pow(10, -s.settings.quality), es.size(), cancel, s.alg,
-            Kernel::EMPTY_PROGRESS_CALLBACK, nullptr);
+
+    mesh_settings.reset();
+    mesh_settings.min_feature = 1 / (s.settings.res / (1 << s.div));
+    mesh_settings.max_err = pow(10, -s.settings.quality);
+    mesh_settings.alg = s.alg;
+
+    auto m = Kernel::Mesh::render(es.data(), r, mesh_settings);
     return {m.release(), r};
 }

@@ -13,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/contours.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/settings.hpp"
 
 #include "util/shapes.hpp"
 
@@ -24,7 +25,7 @@ TEST_CASE("Contours::render (segment welding)")
 
     Region<2> r({-1, -1}, {1, 1});
 
-    auto m = Contours::render(t, r);
+    auto m = Contours::render(t, r, BRepSettings());
     REQUIRE(m->contours.size() == 1);
 }
 
@@ -34,7 +35,7 @@ TEST_CASE("Contours::render (accuracy)")
 
     Region<2> r({-1, -1}, {1, 1});
 
-    auto m = Contours::render(t, r);
+    auto m = Contours::render(t, r, BRepSettings());
     REQUIRE(m->contours.size() == 1);
 
     float min = 1;
@@ -57,7 +58,7 @@ TEST_CASE("Contours::render (with ambiguities)")
                          max(-Tree::Y(), Tree::Y() - 1)),
                 -Tree::X());
 
-    auto m = Contours::render(t, r);
+    auto m = Contours::render(t, r, BRepSettings());
     REQUIRE(m->contours.size() == 1);
     REQUIRE(m->contours[0] == m->contours[m->contours.size() - 1]);
 }
@@ -67,10 +68,10 @@ TEST_CASE("Contours::render (adjacent rectangles)")
     auto rects = min(rectangle(-1, 0, -1, 1), rectangle(0, 1, -1, 1));
     Region<2> r({-2, -2}, {2, 2});
 
-    auto cs_pos = Contours::render(rects, r);
+    auto cs_pos = Contours::render(rects, r, BRepSettings());
     REQUIRE(cs_pos->contours.size() == 1);
 
-    auto cs_neg = Contours::render(-rects, r);
+    auto cs_neg = Contours::render(-rects, r, BRepSettings());
     REQUIRE(cs_neg->contours.size() == 1);
 }
 
@@ -79,6 +80,6 @@ TEST_CASE("Contours::render (menger, perp offset)")
     auto m = menger(2);
     Region<2> r({-2.5, -2.5}, {2.5, 2.5}, Eigen::Array<double, 1, 1>(1.49));
 
-    auto cs = Contours::render(m, r);
+    auto cs = Contours::render(m, r, BRepSettings());
     REQUIRE(cs->contours.size() == 74);
 }

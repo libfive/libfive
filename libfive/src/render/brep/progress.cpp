@@ -15,84 +15,93 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-void EMPTY_PROGRESS_CALLBACK(float) { /* Nothing to do here */ }
-
-ProgressWatcher* ProgressWatcher::build(uint64_t total, float offset,
-                                        std::function<void(float)> callback,
-                                        std::atomic_bool& done,
-                                        std::atomic_bool& cancel)
+ProgressHandler::ProgressHandler()
+    : done(false)
 {
-    auto progress_cb_ptr = callback.target<void(*)(float)>();
-    const bool has_progress_callback = !progress_cb_ptr ||
-        (*progress_cb_ptr != EMPTY_PROGRESS_CALLBACK);
+    // The mutex remains locked until the destructor is called, so that
+    // the try_lock_for calls block, preventing the worker thread from
+    // spinning too hard.
+    timed_mut.lock();
+}
 
-    if (has_progress_callback)
-    {
-        return new ProgressWatcher(total, offset, callback, done, cancel);
-    }
-    else
-    {
-        return nullptr;
+void ProgressHandler::run()
+{
+    assert(phases.size() > 0);
+
+    progress(0.0f);
+
+    float prev = 0.0f;
+    while (!done.load()) {
+        // Sleep for 50 ms, returning early if the mutex is
+        // unlocked (which happens in the destructor)
+        auto b = timed_mut.try_lock_for(std::chrono::milliseconds(50));
+        (void)b; // Result is unused, but this prevents a warning
+
+        float accum = 0.0f;
+        {   // Locked region which accesses current_phase
+            std::lock_guard<std::mutex> lock(phase_mut);
+            auto itr = phases.begin();
+            do {
+                accum += itr->weight * itr->counter.load() / (float)itr->total;
+            } while (itr++ != current_phase);
+        }
+
+        const float next = accum / total_weight;
+        if (next != prev) {
+            progress(next);
+            prev = next;
+        }
     }
 }
 
-ProgressWatcher::ProgressWatcher(uint64_t total, float offset,
-                                 std::function<void(float)> callback,
-                                 std::atomic_bool& done,
-                                 std::atomic_bool& cancel)
-    : callback(callback), done(done), cancel(cancel),
-      counter(0), total(total), offset(offset)
+void ProgressHandler::start(const std::vector<unsigned>& weights)
 {
-    if (!counter.is_lock_free())
-    {
-        std::cerr << "ProgressWatcher: counter is not lock-free" << std::endl;
+    total_weight = 0;
+    for (unsigned i=0; i < weights.size(); ++i) {
+        phases.emplace_back(weights[i]);
+        total_weight += weights[i];
     }
-    mut.lock();
-
-    future = std::async(std::launch::async,
-        [this]()
-        {
-            if (this->offset == 0.0f)
-            {
-                this->callback(0.0f);
-            }
-
-            uint64_t n = 0;
-            while (!this->done.load() && !this->cancel.load())
-            {
-                const uint64_t next = this->counter.load();
-                if (next != n)
-                {
-                    n = next;
-                    this->callback(n / (float)this->total + this->offset);
-                }
-                // Sleep for 50 ms, returning early if the mutex is
-                // unlocked (which happens in the destructor)
-                auto b = this->mut.try_lock_for(std::chrono::milliseconds(50));
-                (void)b; // Result is unused, but this prevents a warning
-            }
-
-            // Once evaluation is finished, report that we're completely done
-            if (!this->cancel.load())
-            {
-                this->callback(1.0f + this->offset);
-            }
-        });
+    current_phase = phases.end();
 }
 
-ProgressWatcher::~ProgressWatcher()
-{
-    assert(done.load() || cancel.load());
+void ProgressHandler::nextPhase(uint64_t total) {
+    // When we start the worker thread, we set current_phase = phases.end()
+    // to mark that it hasn't yet started.  The first branch of this
+    // conditional detects that case and starts the worker thread.
+    if (current_phase == phases.end()) {
+        current_phase = phases.begin();
+        future = std::async(std::launch::async, [this]() { run(); });
+    } else {
+        std::lock_guard<std::mutex> lock(phase_mut);
 
-    // Speed up the thread's exit condition by releasing the timex mutex
-    mut.unlock();
-    // Then wait for the thread to finish
-    future.wait();
+        // TODO: why is this necessary?  The total should always be
+        // correctly counted to.
+        current_phase->counter = current_phase->total;
+
+        // Move to the next phase while the lock is present
+        current_phase++;
+    }
+    assert(current_phase != phases.end());
+    current_phase->total = total;
 }
 
-void ProgressWatcher::tick(uint64_t i)
+void ProgressHandler::finish()
 {
-    counter += i;
+    if (future.valid()) {
+        // Set the flag to abort the worker thread
+        done = true;
+
+        // Speed up the thread's exit condition by releasing the timex mutex
+        timed_mut.unlock();
+
+        // Then wait for the thread to finish
+        future.wait();
+    }
+}
+
+void ProgressHandler::tick(uint64_t i)
+{
+    current_phase->counter += i;
 }
 
 }   // namespace Kernel
