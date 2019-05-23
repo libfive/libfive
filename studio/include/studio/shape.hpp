@@ -24,10 +24,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QOpenGLBuffer>
 #include <QOpenGLFunctions>
 
+#include "libfive/eval/eval_jacobian.hpp"
 #include "libfive/tree/tree.hpp"
+
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/region.hpp"
-#include "libfive/eval/eval_jacobian.hpp"
+#include "libfive/render/brep/settings.hpp"
 
 namespace Kernel { class Tape; /*  forward declaration */ }
 
@@ -161,7 +163,7 @@ protected:
 
     QFuture<BoundedMesh> mesh_future;
     QFutureWatcher<BoundedMesh> mesh_watcher;
-    std::atomic_bool cancel;
+    Kernel::BRepSettings mesh_settings;
 
     Kernel::Tree tree;
     std::map<Kernel::Tree::Id, float> vars;

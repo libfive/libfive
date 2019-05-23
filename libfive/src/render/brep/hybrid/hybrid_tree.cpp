@@ -14,6 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/hybrid/hybrid_tree.hpp"
 #include "libfive/render/brep/hybrid/hybrid_neighbors.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/neighbor_tables.hpp"
 
 #include "../xtree.cpp"
@@ -239,8 +240,10 @@ struct AssignIndexTask {
 };
 
 template <unsigned N>
-void HybridTree<N>::assignIndices() const
+void HybridTree<N>::assignIndices(const BRepSettings& settings) const
 {
+    (void)settings; // TODO: multithreading and cancellation
+
     // We do a depth-first search here, flattened into a vector
     // to more easily convert to a multithreaded operation
     // (like the one in simplex_tree.cpp)

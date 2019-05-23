@@ -22,6 +22,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/simplex/simplex_neighbors.hpp"
 
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/neighbor_tables.hpp"
 
 #include "libfive/render/axes.hpp"
@@ -870,19 +871,11 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
 }
 
 template <unsigned N>
-void SimplexTree<N>::assignIndices() const
-{
-    std::atomic_bool cancel(false);
-    assignIndices(8, cancel);
-}
-
-template <unsigned N>
-void SimplexTree<N>::assignIndices(unsigned workers,
-                                   std::atomic_bool& cancel) const
+void SimplexTree<N>::assignIndices(const BRepSettings& settings) const
 {
     this->resetPending();
 
-    LockFreeStack<N> tasks(workers);
+    LockFreeStack<N> tasks(settings.workers);
     AssignIndexTask<N> first{this, std::make_shared<NeighborStack<N>>()};
     tasks.push(first);
 
@@ -890,11 +883,11 @@ void SimplexTree<N>::assignIndices(unsigned workers,
     std::atomic_bool done(false);
 
     std::vector<std::future<void>> futures;
-    futures.resize(workers);
-    for (unsigned i=0; i < workers; ++i) {
+    futures.resize(settings.workers);
+    for (unsigned i=0; i < settings.workers; ++i) {
         futures[i] = std::async(std::launch::async,
-            [&done, &cancel, &tasks, &global_index]() {
-                assignIndicesWorker(tasks, global_index, done, cancel);
+            [&done, &settings, &tasks, &global_index]() {
+                assignIndicesWorker(tasks, global_index, done, settings.cancel);
             });
     }
 
@@ -903,8 +896,7 @@ void SimplexTree<N>::assignIndices(unsigned workers,
         f.get();
     }
 
-    assert(done.load() || cancel.load());
-    done.store(true);
+    assert(done.load() || settings.cancel.load());
 }
 
 template <unsigned N>

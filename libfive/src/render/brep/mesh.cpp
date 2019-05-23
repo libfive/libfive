@@ -11,9 +11,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <fstream>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include "libfive/eval/eval_xtree.hpp"
+
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/settings.hpp"
 
 // Dual contouring
 #include "libfive/render/brep/dc/dc_pool.hpp"
@@ -35,51 +38,34 @@ namespace Kernel {
 const float Mesh::MAX_PROGRESS = 3.0f;
 
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
-                                   double min_feature, double max_err,
-                                   bool multithread,
-                                   BRepAlgorithm alg)
-{
-    std::atomic_bool cancel(false);
-    std::map<Tree::Id, float> vars;
-    return render(t, vars, r, min_feature, max_err,
-                  multithread ? 8 : 1, cancel, alg);
-}
-
-std::unique_ptr<Mesh> Mesh::render(
-            const Tree t, const std::map<Tree::Id, float>& vars,
-            const Region<3>& r, double min_feature, double max_err,
-            unsigned workers, std::atomic_bool& cancel,
-            BRepAlgorithm alg,
-            ProgressCallback progress_callback,
-            FreeThreadHandler* free_thread_handler)
+                                   const BRepSettings& settings)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
-    es.reserve(workers);
-    for (unsigned i=0; i < workers; ++i)
-    {
-        es.emplace_back(XTreeEvaluator(t, vars));
+    es.reserve(settings.workers);
+    for (unsigned i=0; i < settings.workers; ++i) {
+        es.emplace_back(XTreeEvaluator(t));
     }
 
-    return render(es.data(), r, min_feature, max_err, workers, cancel, alg,
-                  progress_callback, free_thread_handler);
+    return render(es.data(), r, settings);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
         XTreeEvaluator* es,
-        const Region<3>& r, double min_feature, double max_err,
-        unsigned workers, std::atomic_bool& cancel,
-        BRepAlgorithm alg,
-        ProgressCallback progress_callback,
-        FreeThreadHandler* free_thread_handler)
+        const Region<3>& r, const BRepSettings& settings)
 {
     std::unique_ptr<Mesh> out;
-    if (alg == DUAL_CONTOURING)
+    if (settings.alg == DUAL_CONTOURING)
     {
-        auto t = DCPool<3>::build(
-                es, r, min_feature, max_err, workers,
-                cancel, progress_callback, free_thread_handler);
+        if (settings.progress_handler) {
+            // Pool::build, Dual::walk, t.reset
+            settings.progress_handler->start({1, 1, 1});
+        }
+        auto t = DCPool<3>::build(es, r, settings);
 
-        if (cancel.load() || t.get() == nullptr) {
+        if (settings.cancel.load() || t.get() == nullptr) {
+            if (settings.progress_handler) {
+                settings.progress_handler->finish();
+            }
             return nullptr;
         }
 
@@ -90,52 +76,61 @@ std::unique_ptr<Mesh> Mesh::render(
 #endif
 
         // Perform marching squares
-        out = Dual<3>::walk<DCMesher>(
-                t, workers, cancel,
-                progress_callback, free_thread_handler);
+        out = Dual<3>::walk<DCMesher>(t, settings);
 
         // TODO: check for early return here again
-        t.reset(workers, progress_callback);
+        t.reset(settings);
     }
-    else if (alg == ISO_SIMPLEX)
+    else if (settings.alg == ISO_SIMPLEX)
     {
-        auto t = SimplexTreePool<3>::build(
-                es, r, min_feature, max_err, workers,
-                cancel, progress_callback);
+        if (settings.progress_handler) {
+            // Pool::build, Dual::walk, t->assignIndices, t.reset
+            settings.progress_handler->start({1, 1, 1});
+        }
+        auto t = SimplexTreePool<3>::build(es, r, settings);
 
-        if (cancel.load() || t.get() == nullptr) {
+        if (settings.cancel.load() || t.get() == nullptr) {
+            if (settings.progress_handler) {
+                settings.progress_handler->finish();
+            }
             return nullptr;
         }
 
-        t->assignIndices(workers, cancel);
+        t->assignIndices(settings);
 
-        out = Dual<3>::walk_<SimplexMesher>(t, workers,
-                cancel, progress_callback, free_thread_handler,
+        out = Dual<3>::walk_<SimplexMesher>(t, settings,
                 [&](PerThreadBRep<3>& brep, int i) {
                     return SimplexMesher(brep, &es[i]);
                 });
-        t.reset(workers, progress_callback);
+        t.reset(settings);
     }
-    else if (alg == HYBRID)
+    else if (settings.alg == HYBRID)
     {
-        auto t = HybridTreePool<3>::build(
-                es, r, min_feature, max_err, workers,
-                cancel, progress_callback);
+        if (settings.progress_handler) {
+            // Pool::build, Dual::walk, t->assignIndices, t.reset
+            settings.progress_handler->start({1, 1, 1});
+        }
+        auto t = HybridTreePool<3>::build(es, r, settings);
 
-        if (cancel.load() || t.get() == nullptr) {
+        if (settings.cancel.load() || t.get() == nullptr) {
+            if (settings.progress_handler) {
+                settings.progress_handler->finish();
+            }
             return nullptr;
         }
 
-        t->assignIndices();
+        t->assignIndices(settings);
 
-        out = Dual<3>::walk_<HybridMesher>(t, workers,
-                cancel, progress_callback, free_thread_handler,
+        out = Dual<3>::walk_<HybridMesher>(t, settings,
                 [&](PerThreadBRep<3>& brep, int i) {
                     return HybridMesher(brep, &es[i]);
                 });
-        t.reset(workers, progress_callback);
+        t.reset(settings);
     }
 
+    if (settings.progress_handler) {
+        settings.progress_handler->finish();
+    }
     return out;
 }
 

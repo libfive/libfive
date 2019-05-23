@@ -24,33 +24,25 @@ namespace Kernel {
 
 std::unique_ptr<Contours> Contours::render(
         const Tree t, const Region<2>& r,
-        double min_feature, double max_err,
-        unsigned workers, std::atomic_bool& cancel,
-        ProgressCallback progress_callback,
-        FreeThreadHandler* free_thread_handler)
+        const BRepSettings& settings)
 {
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
-    es.reserve(workers);
-    for (unsigned i=0; i < workers; ++i)
+    es.reserve(settings.workers);
+    for (unsigned i=0; i < settings.workers; ++i)
     {
         es.emplace_back(XTreeEvaluator(t));
     }
 
     // Create the quadtree on the scaffold
-    auto xtree = DCPool<2>::build(
-        es.data(), r, min_feature, max_err,
-        workers, cancel, progress_callback,
-        free_thread_handler);
+    auto xtree = DCPool<2>::build(es.data(), r, settings);
 
     // Abort early if the cancellation flag is set
-    if (cancel == true) {
+    if (settings.cancel == true) {
         return nullptr;
     }
 
     // Perform marching squares, collecting into Contours
-    auto cs = Dual<2>::walk<DCContourer>(
-        xtree, workers, cancel,
-        progress_callback, free_thread_handler);
+    auto cs = Dual<2>::walk<DCContourer>(xtree, settings);
     cs->bbox = r;
     return cs;
 }
@@ -188,16 +180,6 @@ void Contours::collect(const std::vector<PerThreadBRep<2>>& children)
             }
         }
     }
-}
-
-std::unique_ptr<Contours> Contours::render(const Tree t,
-                                           const Region<2>& r,
-                                           double min_feature /*= 0.1*/,
-                                           double max_err /*= 1e-8*/,
-                                           bool multithread /*= true*/)
-{
-    std::atomic_bool cancel(false);
-    return render(t, r, min_feature, max_err, multithread ? 8u : 1u, cancel);
 }
 
 }   // namespace Kernel

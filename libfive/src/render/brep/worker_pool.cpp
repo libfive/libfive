@@ -8,48 +8,40 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "libfive/render/brep/worker_pool.hpp"
 #include "libfive/render/brep/free_thread_handler.hpp"
+#include "libfive/render/brep/settings.hpp"
+#include "libfive/render/brep/worker_pool.hpp"
 #include "libfive/eval/eval_xtree.hpp"
 
 namespace Kernel {
 
 template <typename T, typename Neighbors, unsigned N>
 Root<T> WorkerPool<T, Neighbors, N>::build(
-        const Tree t, const Region<N>& region,
-        double min_feature, double max_err, unsigned workers,
-        ProgressCallback progress_callback,
-        FreeThreadHandler* free_thread_handler)
+        Tree t, const Region<N>& region_,
+        const BRepSettings& settings)
 {
+    // Build evaluators for the pool
     std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
-    es.reserve(workers);
-    for (unsigned i=0; i < workers; ++i)
-    {
+    es.reserve(settings.workers);
+    for (unsigned i=0; i < settings.workers; ++i) {
         es.emplace_back(XTreeEvaluator(t));
     }
-    std::atomic_bool cancel(false);
-    return build(es.data(), region, min_feature,
-                 max_err, workers, cancel, progress_callback,
-                 free_thread_handler);
+    return build(es.data(), region_, settings);
 }
 
 template <typename T, typename Neighbors, unsigned N>
 Root<T> WorkerPool<T, Neighbors, N>::build(
-    XTreeEvaluator* eval,
-    const Region<N>& region_, double min_feature,
-    double max_err, unsigned workers, std::atomic_bool& cancel,
-    ProgressCallback progress_callback,
-    FreeThreadHandler* free_thread_handler)
+        XTreeEvaluator* eval, const Region<N>& region_,
+        const BRepSettings& settings)
 {
-    const auto region = region_.withResolution(min_feature);
+    const auto region = region_.withResolution(settings.min_feature);
     auto root(new T(nullptr, 0, region));
-    std::atomic_bool done(false);
 
-    LockFreeStack tasks(workers);
+    LockFreeStack tasks(settings.workers);
     tasks.push({root, eval->deck->tape, region, Neighbors()});
 
     std::vector<std::future<void>> futures;
-    futures.resize(workers);
+    futures.resize(settings.workers);
 
     Root<T> out(root);
     std::mutex root_lock;
@@ -60,17 +52,17 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     for (int i=0; i <= region.level; ++i) {
         ticks = (ticks + 1) * (1 << N);
     }
-    auto progress_watcher = ProgressWatcher::build(ticks, 0, progress_callback,
-                                                   done, cancel);
+    if (settings.progress_handler) {
+        settings.progress_handler->nextPhase(ticks);
+    }
 
-    for (unsigned i=0; i < workers; ++i)
+    std::atomic_bool done(false);
+    for (unsigned i=0; i < settings.workers; ++i)
     {
         futures[i] = std::async(std::launch::async,
-                [&eval, &tasks, &cancel, &done, &out, &root_lock,
-                 max_err, i, progress_watcher, free_thread_handler](){
-                    run(eval + i, tasks, max_err, done, cancel, out,
-                        root_lock, progress_watcher, free_thread_handler);
-                    });
+                [&eval, &tasks, &out, &root_lock, &settings, &done, i](){
+                    run(eval + i, tasks, out, root_lock, settings, done);
+                });
     }
 
     // Wait on all of the futures
@@ -79,12 +71,9 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
         f.get();
     }
 
-    assert(done.load() || cancel.load());
+    assert(done.load() || settings.cancel.load());
 
-    // Wait for the progress bar to finish, which happens in the destructor.
-    delete progress_watcher;
-
-    if (cancel.load())
+    if (settings.cancel.load())
     {
         return Root<T>();
     }
@@ -96,10 +85,10 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
 
 template <typename T, typename Neighbors, unsigned N>
 void WorkerPool<T, Neighbors, N>::run(
-        XTreeEvaluator* eval, LockFreeStack& tasks, const float max_err,
-        std::atomic_bool& done, std::atomic_bool& cancel,
+        XTreeEvaluator* eval, LockFreeStack& tasks,
         Root<T>& root, std::mutex& root_lock,
-        ProgressWatcher* progress, FreeThreadHandler* free_thread_handler)
+        const BRepSettings& settings,
+        std::atomic_bool& done)
 {
     // Tasks to be evaluated by this thread (populated when the
     // MPMC stack is completely full).
@@ -107,7 +96,7 @@ void WorkerPool<T, Neighbors, N>::run(
 
     typename T::Pool object_pool;
 
-    while (!done.load() && !cancel.load())
+    while (!done.load() && !settings.cancel.load())
     {
         // Prioritize picking up a local task before going to
         // the MPMC queue, to keep things in this thread for
@@ -127,8 +116,8 @@ void WorkerPool<T, Neighbors, N>::run(
         // (so that we terminate when either of the flags are set).
         if (task.target == nullptr)
         {
-            if (free_thread_handler != nullptr) {
-                free_thread_handler->offerWait();
+            if (settings.free_thread_handler != nullptr) {
+                settings.free_thread_handler->offerWait();
             }
             continue;
         }
@@ -187,7 +176,7 @@ void WorkerPool<T, Neighbors, N>::run(
             t->evalLeaf(eval, tape, region, object_pool, neighbors);
         }
 
-        if (progress)
+        if (settings.progress_handler)
         {
             if (can_subdivide)
             {
@@ -198,11 +187,11 @@ void WorkerPool<T, Neighbors, N>::run(
                 for (int i=0; i <= region.level; ++i) {
                     ticks = (ticks + 1) * (1 << N);
                 }
-                progress->tick(ticks);
+                settings.progress_handler->tick(ticks);
             }
             else
             {
-                progress->tick(1);
+                settings.progress_handler->tick(1);
             }
         }
 
@@ -215,13 +204,14 @@ void WorkerPool<T, Neighbors, N>::run(
             t = t->parent;
         };
         up();
-        while (t != nullptr &&
-               t->collectChildren(eval, tape, region, object_pool, max_err))
+        while (t != nullptr && t->collectChildren(eval, tape, region,
+                                                  object_pool,
+                                                  settings.max_err))
         {
             // Report the volume of completed trees as we walk back
             // up towards the root of the tree.
-            if (progress) {
-                progress->tick();
+            if (settings.progress_handler) {
+                settings.progress_handler->tick();
             }
             up();
         }

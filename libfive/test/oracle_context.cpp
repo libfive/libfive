@@ -12,6 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/settings.hpp"
 #include "libfive/oracle/transformed_oracle_clause.hpp"
 #include "libfive/oracle/transformed_oracle.hpp"
 #include "libfive/eval/deck.hpp"
@@ -31,7 +32,10 @@ TEST_CASE("OracleContext: TransformedOracle evaluation")
                     Tree::Z(), Tree::Y())));
 
     Region<3> r({-4, -4, -4}, {4, 4, 4});
-    auto mesh = Mesh::render(t, r, 0.1);
+
+    BRepSettings settings;
+    settings.min_feature = 0.1;
+    auto mesh = Mesh::render(t, r, settings);
     REQUIRE(true);
 }
 

@@ -38,7 +38,7 @@ class ObjectPool
 {
 public:
     void claim(ObjectPool<>&) {}
-    void reset(unsigned, ProgressWatcher*) {}
+    void reset(unsigned, ProgressHandler*) {}
     int64_t total_size() const { return 0; }
     ObjectPool<>& operator=(ObjectPool<>&&) { return *this; }
 };
@@ -154,9 +154,8 @@ public:
      *  (this is the same as the destructor, but includes a progress callback)
      */
     void reset(unsigned workers=8,
-               ProgressWatcher* progress_watcher=nullptr)
+               ProgressHandler* progress_watcher=nullptr)
     {
-
         auto workers_needed = std::max(allocated_blocks.size(),
                                        fresh_blocks.size());
         if (workers_needed < workers)
