@@ -227,12 +227,6 @@ protected:
     double findVertex(unsigned i=0);
 
     /*
-     *  Returns edges (as indices into corners)
-     *  (must be specialized for a specific dimensionality)
-     */
-    const std::vector<std::pair<uint8_t, uint8_t>>& edges() const;
-
-    /*
      *  Writes the given intersection into the intersections list
      *  for the specified edge.  Allocates an interesections list
      *  if none already exists.  The given set of derivatives is normalized
@@ -296,9 +290,6 @@ template <> bool DCTree<2>::leafsAreManifold(
 template <> bool DCTree<3>::leafsAreManifold(
             const std::array<DCTree<3>*, 1 << 3>& children,
             const std::array<Interval::State, 1 << 3>& corners);
-
-template <> const std::vector<std::pair<uint8_t, uint8_t>>& DCTree<2>::edges() const;
-template <> const std::vector<std::pair<uint8_t, uint8_t>>& DCTree<3>::edges() const;
 
 extern template class DCTree<2>;
 extern template class DCTree<3>;

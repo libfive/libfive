@@ -153,20 +153,6 @@ bool DCTree<3>::cornersAreManifold(const uint8_t corner_mask)
     return corner_table[corner_mask];
 }
 
-template <>
-const std::vector<std::pair<uint8_t, uint8_t>>& DCTree<3>::edges() const
-{
-    static const std::vector<std::pair<uint8_t, uint8_t>> es =
-        {{0, Axis::X}, {0, Axis::Y}, {0, Axis::Z},
-         {Axis::X, Axis::X|Axis::Y}, {Axis::X, Axis::X|Axis::Z},
-         {Axis::Y, Axis::Y|Axis::X}, {Axis::Y, Axis::Y|Axis::Z},
-         {Axis::X|Axis::Y, Axis::X|Axis::Y|Axis::Z},
-         {Axis::Z, Axis::Z|Axis::X}, {Axis::Z, Axis::Z|Axis::Y},
-         {Axis::Z|Axis::X, Axis::Z|Axis::X|Axis::Y},
-         {Axis::Z|Axis::Y, Axis::Z|Axis::Y|Axis::X}};
-    return es;
-}
-
 // Explicit initialization of template
 template class DCTree<3>;
 

@@ -46,15 +46,6 @@ bool DCTree<2>::leafsAreManifold(
     return edges_safe && faces_safe;
 }
 
-template <>
-const std::vector<std::pair<uint8_t, uint8_t>>& DCTree<2>::edges() const
-{
-    static const std::vector<std::pair<uint8_t, uint8_t>> es =
-        {{0, Axis::X}, {0, Axis::Y},
-         {Axis::X, Axis::X|Axis::Y}, {Axis::Y, Axis::Y|Axis::X}};
-    return es;
-}
-
 // Explicit initialization of template
 template class DCTree<2>;
 
