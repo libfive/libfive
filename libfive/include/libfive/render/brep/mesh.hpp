@@ -54,8 +54,6 @@ public:
     static bool saveSTL(const std::string& filename,
                         const std::list<const Mesh*>& meshes);
 
-    static const float MAX_PROGRESS;
-
 protected:
 
     /*

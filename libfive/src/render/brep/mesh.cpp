@@ -35,8 +35,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-const float Mesh::MAX_PROGRESS = 3.0f;
-
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    const BRepSettings& settings)
 {
