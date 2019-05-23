@@ -11,21 +11,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <memory>
 #include <set>
 
-#include "libfive/render/brep/util.hpp"
+#include "libfive/render/brep/edge_tables.hpp"
 
 namespace Kernel {
-
-////////////////////////////////////////////////////////////////////////////////
-
-/*  Returns the number of vertices in an N-dimensional cube */
-static constexpr int _verts(unsigned N)
-{ return ipow(2, N); }
-
-/*  Returns the number of edges in an N-dimensional cube */
-static constexpr int _edges(unsigned N)
-{ return (N == 0) ? 0 : (_edges(N - 1) * 2 + _verts(N - 1)); }
-
-////////////////////////////////////////////////////////////////////////////////
 
 namespace Marching
 {

@@ -33,6 +33,7 @@ add_library(five SHARED
     render/discrete/voxels.cpp
 
     render/brep/contours.cpp
+    render/brep/edge_tables.cpp
     render/brep/progress.cpp
     render/brep/mesh.cpp
     render/brep/neighbor_tables.cpp

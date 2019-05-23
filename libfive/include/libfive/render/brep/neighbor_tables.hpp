@@ -268,7 +268,7 @@ struct NeighborTables
     static bool loaded;
 };
 
-//  We explicitly instantiate the NeighborTables classes in neighbors.cpp
+//  We explicitly instantiate the NeighborTables classes in neighbor_tables.cpp
 extern template struct NeighborTables<2>;
 extern template struct NeighborTables<3>;
 
