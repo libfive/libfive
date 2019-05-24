@@ -9,6 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include <array>
+#include <boost/container/static_vector.hpp>
 
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/indexes.hpp"
@@ -26,7 +27,15 @@ static constexpr int _edges(unsigned N)
 template <unsigned N>
 struct EdgeTables
 {
-    static std::array<std::pair<CornerIndex, CornerIndex>, _edges(N)> t;
+    /*  For an N-dimensional square / cube, returns the edge connections
+     *  between vertices. */
+    static std::array<std::pair<CornerIndex, CornerIndex>, _edges(N)> edges;
+
+    /*  For each subspace in an N-dimensional subspace cell, returns the
+     *  subspaces which it is connected to */
+    static std::array<boost::container::static_vector<
+            NeighborIndex, ipow(3, N) - 1>,
+        ipow(3, N)> neighbors;
 
     /*  Used as a flag to trigger population of the static arrays */
     static bool buildTables();

@@ -13,7 +13,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 template <unsigned N>
-std::array<std::pair<CornerIndex, CornerIndex>, _edges(N)> EdgeTables<N>::t;
+std::array<std::pair<CornerIndex, CornerIndex>, _edges(N)> EdgeTables<N>::edges;
+
+template <unsigned N>
+std::array<boost::container::static_vector<NeighborIndex, ipow(3, N) - 1>,
+           ipow(3, N)> EdgeTables<N>::neighbors;
 
 template <unsigned N>
 bool EdgeTables<N>::loaded = EdgeTables<N>::buildTables();
@@ -25,7 +29,18 @@ bool EdgeTables<N>::buildTables()
     for (unsigned i=0; i < ipow(2, N); ++i) {
         for (unsigned j=0; j < i; ++j) {
             if (std::bitset<8>(i ^ j).count() == 1) {
-                t[n++] = std::make_pair(CornerIndex(i), CornerIndex(j));
+                edges[n++] = std::make_pair(CornerIndex(i), CornerIndex(j));
+            }
+        }
+    }
+    assert(n == _edges(N));
+
+    for (unsigned i=0; i < ipow(3, N); ++i) {
+        for (unsigned j=0; j < ipow(3, N); ++j) {
+            NeighborIndex a(i);
+            NeighborIndex b(j);
+            if (i != j && (a.contains(b) || b.contains(a))) {
+                neighbors[i].push_back(b);
             }
         }
     }
