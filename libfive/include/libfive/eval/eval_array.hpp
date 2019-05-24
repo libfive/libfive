@@ -43,6 +43,19 @@ public:
     }
 
     /*
+     *  Helper function to reduce boilerplate in functions which work
+     *  in arbitrary dimensions and with double-precision values.
+     */
+    template <unsigned N>
+    void set(const Eigen::Matrix<double, N, 1>& p, const Region<N>& region,
+             size_t index)
+    {
+        Eigen::Vector3f v;
+        v << p.template cast<float>(), region.perp.template cast<float>();
+        set(v, index);
+    }
+
+    /*
      *  Reads a position from the results arrays
      */
     Eigen::Vector3f get(size_t index) const {
