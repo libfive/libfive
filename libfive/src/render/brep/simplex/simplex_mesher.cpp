@@ -438,7 +438,7 @@ uint64_t SimplexMesher::searchEdge(Eigen::Vector3d inside,
                                    Eigen::Vector3d outside,
                                    std::shared_ptr<Tape> tape)
 {
-    // This code is based on xtree.cpp, but flattened to a signle pass
+    // This code is based on xtree.cpp, but flattened to a single pass
     assert(tape.get() != nullptr);
 
     // There's an interesting question of precision + speed tradeoffs,
