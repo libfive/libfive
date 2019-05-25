@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/hybrid/hybrid_pool.hpp"
 #include "libfive/render/brep/hybrid/hybrid_mesher.hpp"
+#include "libfive/render/brep/hybrid/hybrid_debug.hpp"
 #include "libfive/render/brep/dual.hpp"
 
 #include "util/shapes.hpp"
@@ -151,6 +152,12 @@ TEST_CASE("HybridMesher<3>: mesh manifoldness")
 
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
+
+#if 0 // Uncomment to save debug meshes
     m->saveSTL("out.stl");
+    auto g = Dual<3>::walk<HybridDebugMesher>(t, settings, c);
+    g->saveSTL("grid.stl");
+#endif
+
     CHECK_EDGE_PAIRS(*m);
 }

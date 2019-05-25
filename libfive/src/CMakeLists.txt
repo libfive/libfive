@@ -51,6 +51,7 @@ add_library(five SHARED
     render/brep/dc/dc_xtree2.cpp
     render/brep/dc/dc_xtree3.cpp
 
+    render/brep/hybrid/hybrid_debug.cpp
     render/brep/hybrid/hybrid_pool2.cpp
     render/brep/hybrid/hybrid_pool3.cpp
     render/brep/hybrid/hybrid_neighbors2.cpp

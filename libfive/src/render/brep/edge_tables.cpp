@@ -39,7 +39,7 @@ bool EdgeTables<N>::buildTables()
         for (unsigned j=0; j < ipow(3, N); ++j) {
             NeighborIndex a(i);
             NeighborIndex b(j);
-            if (i != j && (a.contains(b) || b.contains(a))) {
+            if (i != j && a.contains(b)) {
                 neighbors[i].push_back(b);
             }
         }
