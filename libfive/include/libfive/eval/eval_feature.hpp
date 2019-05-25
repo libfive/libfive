@@ -12,6 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/eval/eval_deriv.hpp"
 #include "libfive/eval/feature.hpp"
+#include "libfive/render/brep/region.hpp"
 
 namespace Kernel {
 
@@ -41,6 +42,18 @@ public:
     bool isInside(const Eigen::Vector3f& p);
     bool isInside(const Eigen::Vector3f& p,
                   std::shared_ptr<Tape> tape);
+
+    /*
+     *  Helper function to reduce boilerplate
+     */
+    template <unsigned N>
+    bool isInside(const Eigen::Matrix<double, N, 1>& p, const Region<N>& region,
+                  std::shared_ptr<Tape> tape)
+    {
+        Eigen::Vector3f v;
+        v << p.template cast<float>(), region.perp.template cast<float>();
+        return isInside(v, tape);
+    }
 
     /*
      *  Checks for features at the given position, returning a list
