@@ -225,6 +225,28 @@ public:
         return out;
     }
 
+    template <unsigned OutBits>
+    Region<OutBits> subspace(unsigned mask) const
+    {
+        static_assert(OutBits <= N, "Too many dimensions");
+        assert(bitcount(mask) <= OutBits);
+
+        Region<OutBits> out;
+        unsigned j = 0;
+        for (unsigned i=0; i < N; ++i) {
+            if (mask & (1 << i)) {
+                out.lower[j] = lower[i];
+                out.upper[j] = upper[i];
+                j++;
+            }
+        }
+        out.perp.array() = 0.0;
+        out.level = level;
+
+        assert(j == D);
+        return out;
+    }
+
     /*
      *  Returns a region that is shrunk on all axes to a certain percent
      *  of the original region.  For example, shrink(1) returns the same

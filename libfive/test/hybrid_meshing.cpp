@@ -177,4 +177,12 @@ TEST_CASE("HybridTree<3>: edge vertex placement", "[!mayfail]")
 
     CAPTURE(t->leaf->pos.col(18).transpose());
     REQUIRE((t->leaf->pos.col(18) - Eigen::Vector3d(-1, -1, 0.8)).norm() < 0.01);
+
+    REQUIRE(t->leaf->intersection[18]);
+    for (unsigned i=0; i < ipow(3, 3); ++i) {
+        if (i != 18 && NeighborIndex(i).dimension() == 1) {
+            CAPTURE(i);
+            REQUIRE(!t->leaf->intersection[i]);
+        }
+    }
 }

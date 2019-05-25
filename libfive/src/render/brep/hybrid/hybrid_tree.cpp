@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/eval_xtree.hpp"
 #include "libfive/eval/tape.hpp"
 
+#include "libfive/render/axes.hpp"
 #include "libfive/render/brep/hybrid/hybrid_tree.hpp"
 #include "libfive/render/brep/hybrid/hybrid_neighbors.hpp"
 #include "libfive/render/brep/region.hpp"
@@ -151,10 +152,29 @@ void HybridTree<N>::processEdges(XTreeEvaluator* eval,
         // field (which will hopefully be a sign change, if a sign
         // change exists along this edge).
         if (this->leaf->inside[a.i] == this->leaf->inside[b.i]) {
-            // TODO: use the QEF here
-            placeSubspaceVertex(eval,tape, region, edge,
-                    (region.corner(e.first.i) +
-                     region.corner(e.second.i)) / 2);
+            // TODO: this is kinda dumb, and we should just write the
+            // templated N-dimensional case
+            QEF<N> qef;
+            qef += this->leaf->qef[a.i];
+            qef += this->leaf->qef[b.i];
+            Vec target_pos = (region.corner(e.first.i) +
+                              region.corner(e.second.i)) / 2;
+            const double target_value =
+                (this->leaf->qef[a.i].averageDistanceValue()
+                 +this->leaf->qef[a.i].averageDistanceValue()) / 2;
+
+            const auto floating = edge.floating();
+            auto qef_ = qef.template sub<1>(floating);
+            const auto region_ = region.template subspace<1>(edge.floating());
+            auto sol = qef_.solveBounded(region_, 1 - 1e-9,
+                    Eigen::Matrix<double, 1, 1>(target_pos[floating]),
+                    target_value);
+            // There's only one free axis, which we can unpack into
+            // the target position vector
+            target_pos[Axis::toIndex((Axis::Axis)floating)] =
+                sol.position[0];
+
+            placeSubspaceVertex(eval,tape, region, edge, target_pos);
         }
         // Otherwise, do a binary search for the intersection
         else {
@@ -237,6 +257,8 @@ void HybridTree<N>::placeSubspaceVertex(
         eval->array.set<N>(p, region, 1);
         accumulate(eval, tape, 0, &n);
     }
+
+    this->leaf->intersection[n.i] = found_sign_change;
 
     // If we didn't find a sign change, then store the vertex itself into
     // the subspace QEF.
