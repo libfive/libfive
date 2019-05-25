@@ -161,3 +161,20 @@ TEST_CASE("HybridMesher<3>: mesh manifoldness")
 
     CHECK_EDGE_PAIRS(*m);
 }
+
+TEST_CASE("HybridTree<3>: edge vertex placement", "[!mayfail]")
+{
+    // In this test, we build a single cell where one of the edges
+    // has a sharp feature that's off-center, then confirm that
+    // that edge's subspace vertex ends up correctly positioned.
+    auto c = sphere(0.05, {-1, -1, 0.8});
+    auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
+
+    BRepSettings settings;
+    settings.min_feature = 5;
+    settings.workers = 1;
+    auto t = HybridTreePool<3>::build(c, r, settings);
+
+    CAPTURE(t->leaf->pos.col(18).transpose());
+    REQUIRE((t->leaf->pos.col(18) - Eigen::Vector3d(-1, -1, 0.8)).norm() < 0.01);
+}
