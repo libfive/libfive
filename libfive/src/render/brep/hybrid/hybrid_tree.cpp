@@ -484,7 +484,7 @@ void HybridTree<N>::placeSubspaceVertex(
         // into the same QEF, but it makes accumulate() more flexible
         std::array<NeighborIndex, ipow(3, N)> targets;
         std::fill(targets.begin(), targets.end(), n);
-        assert(target.size() >= num_intersections);
+        assert(targets.size() >= num_intersections);
 
         accumulate(eval, tape, num_intersections, targets.data());
     } else {
