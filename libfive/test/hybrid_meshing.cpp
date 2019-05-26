@@ -228,3 +228,24 @@ TEST_CASE("HybridTree<2>: subspace vertex placement")
         REQUIRE((t->leaf->pos.col(8) - Eigen::Vector2d(-0.6, -0.8)).norm() < 0.01);
     }
 }
+
+TEST_CASE("HybridMesher<3>: cylinder meshing")
+{
+    auto c = cylinder(1, 1);
+    auto r = Region<3>({-3, -3, -3}, {3, 3, 3});
+
+    BRepSettings settings;
+    settings.min_feature = 0.5;
+    settings.workers = 1;
+    auto t = HybridTreePool<3>::build(c, r, settings);
+    t->assignIndices(settings);
+
+    settings.workers = 8;
+    auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
+
+#if 1 // Uncomment to save debug meshes
+    m->saveSTL("out.stl");
+    auto g = Dual<3>::walk<HybridDebugMesher>(t, settings, c);
+    g->saveSTL("grid.stl");
+#endif
+}

@@ -449,7 +449,7 @@ void HybridTree<N>::placeSubspaceVertex(
     // Check every edge from the new point to its neighbouring subspaces,
     // seeing whether there's a sign change and searching the edge
     // if that's the case
-    bool found_sign_change = false;
+    unsigned num_intersections = 0;
     for (auto& t: EdgeTables<N>::neighbors[n.i]) {
         // If there isn't a sign change along this subspace-to-subspace
         // edge, then we shouldn't search it.
@@ -458,7 +458,6 @@ void HybridTree<N>::placeSubspaceVertex(
             continue;
         }
 
-        found_sign_change = true;
         Vec inside, outside;
         if (this->leaf->inside[t.i]) {
             inside = this->leaf->pos.col(t.i);
@@ -472,14 +471,22 @@ void HybridTree<N>::placeSubspaceVertex(
         MassPoint<N> mp;
         mp << p, 1;
         this->leaf->mass_point.col(n.i) += mp;
-        // Store the intersection point into the QEF
-        eval->array.set<N>(p, region, 1);
-        accumulate(eval, tape, 1, &n);
+
+        // Store the intersection point into the QEF target list
+        eval->array.set<N>(p, region, num_intersections++);
     }
 
-    // If we didn't find a sign change, then store the vertex itself into
-    // the subspace QEF.
-    if (!found_sign_change) {
+    if (num_intersections) {
+        // This is a bit silly, because every intersection ends up accumulated
+        // into the same QEF, but it makes accumulate() more flexible
+        std::array<NeighborIndex, ipow(3, N)> targets;
+        std::fill(targets.begin(), targets.end(), n);
+        assert(target.size() >= num_intersections);
+
+        accumulate(eval, tape, num_intersections, targets.data());
+    } else {
+        // If we didn't find a sign change, then store the vertex itself into
+        // the subspace QEF.
         eval->array.set<N>(pos, region, 0);
         accumulate(eval, tape, 1, &n);
     }
