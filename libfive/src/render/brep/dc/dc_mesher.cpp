@@ -130,8 +130,7 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts, unsigned index)
 
         if (ts[i]->leaf->index[vi] == 0)
         {
-            ts[i]->leaf->index[vi] = m.pushVertex(
-                ts[i]->vert(vi).template cast<float>());
+            ts[i]->leaf->index[vi] = m.pushVertex(ts[i]->vert(vi));
         }
 
         // Save the vertex position for normal calculations

@@ -494,7 +494,7 @@ uint64_t HybridMesher::searchEdge(Eigen::Vector3d inside,
     // TODO: we should weight the exact position based on values
     Eigen::Vector3d vert = (inside + outside) / 2;
 
-    return m.pushVertex(vert.template cast<float>());
+    return m.pushVertex(vert);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

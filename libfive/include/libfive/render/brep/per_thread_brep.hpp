@@ -36,6 +36,10 @@ public:
         indices.push_back(out);
         return out;
     }
+    uint32_t pushVertex(const Eigen::Matrix<double, N, 1>& v) {
+        const Eigen::Matrix<float, N, 1> v_ = v.template cast<float>();
+        return pushVertex(v_);
+    }
 
     /*  Adds a debug line to the mesh, drawing it as a zero-area
      *  triangle.  This is inefficient and ignores any indexing,

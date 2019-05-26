@@ -94,8 +94,7 @@ void DCContourer::load(const std::array<const DCTree<2>*, 2>& ts)
 
         if (ts[i]->leaf->index[vi] == 0)
         {
-            ts[i]->leaf->index[vi] = m.pushVertex(
-                ts[i]->vert(vi).template cast<float>());
+            ts[i]->leaf->index[vi] = m.pushVertex(ts[i]->vert(vi));
         }
         vs[i] = ts[i]->leaf->index[vi];
     }
