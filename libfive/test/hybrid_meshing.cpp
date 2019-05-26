@@ -162,7 +162,7 @@ TEST_CASE("HybridMesher<3>: mesh manifoldness")
     CHECK_EDGE_PAIRS(*m);
 }
 
-TEST_CASE("HybridTree<3>: edge vertex placement", "[!mayfail]")
+TEST_CASE("HybridTree<3>: edge vertex placement")
 {
     // In this test, we build a single cell where one of the edges
     // has a sharp feature that's off-center, then confirm that
@@ -184,5 +184,47 @@ TEST_CASE("HybridTree<3>: edge vertex placement", "[!mayfail]")
             CAPTURE(i);
             REQUIRE(!t->leaf->intersection(i));
         }
+    }
+}
+
+TEST_CASE("HybridTree<2>: subspace vertex placement", "[!mayfail]")
+{
+    SECTION("Offset circle") {
+        // In this test, we build a single cell where one of the edges
+        // has a sharp feature that's off-center, then confirm that
+        // that edge's subspace vertex ends up correctly positioned.
+        auto c = circle(0.05, {-0.9, 0.7});
+        auto r = Region<2>({-1, -1}, {1, 1});
+
+        BRepSettings settings;
+        settings.min_feature = 5;
+        settings.workers = 1;
+        auto t = HybridTreePool<2>::build(c, r, settings);
+
+        CAPTURE(t->leaf->pos.col(8));
+        REQUIRE((t->leaf->pos.col(8) - Eigen::Vector2d(-0.9, 0.7)).norm() < 0.01);
+
+        REQUIRE(!t->leaf->intersection(0));
+        REQUIRE(!t->leaf->intersection(1));
+        REQUIRE(!t->leaf->intersection(2));
+        REQUIRE(!t->leaf->intersection(3));
+        REQUIRE(!t->leaf->intersection(4));
+        REQUIRE(!t->leaf->intersection(5));
+        // The edge 6 with partial circle touching may or may not be an intersection
+        REQUIRE(!t->leaf->intersection(7));
+        REQUIRE( t->leaf->intersection(8));
+    }
+
+    SECTION("Rectangle") {
+        auto c = box({-0.6, -0.8, -1.0}, {0.7, 0.9, 1.0});
+        auto r = Region<2>({-1, -1}, {0, 0});
+
+        BRepSettings settings;
+        settings.min_feature = 5;
+        settings.workers = 1;
+        auto t = HybridTreePool<2>::build(c, r, settings);
+
+        CAPTURE(t->leaf->pos.col(8));
+        REQUIRE((t->leaf->pos.col(8) - Eigen::Vector2d(-0.6, -0.8)).norm() < 0.01);
     }
 }
