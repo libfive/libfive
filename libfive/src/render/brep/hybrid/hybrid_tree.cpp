@@ -449,6 +449,7 @@ void HybridTree<N>::placeSubspaceVertex(
     // Expensive check for inside / outsideness of this point (TODO)
     this->leaf->inside[n.i] = eval->feature.isInside<N>(pos, region, tape);
 
+    Eigen::Matrix<double, N, ipow(3, N)> intersections;
     // Check every edge from the new point to its neighbouring subspaces,
     // seeing whether there's a sign change and searching the edge
     // if that's the case
@@ -476,10 +477,15 @@ void HybridTree<N>::placeSubspaceVertex(
         this->leaf->mass_point.col(n.i) += mp;
 
         // Store the intersection point into the QEF target list
-        eval->array.set<N>(p, region, num_intersections++);
+        intersections.col(num_intersections++) = p;
     }
 
     if (num_intersections) {
+        // Pack the target points into the array
+        for (unsigned i=0; i < num_intersections; ++i) {
+            eval->array.set<N>(intersections.col(i), region, i);
+        }
+
         // This is a bit silly, because every intersection ends up accumulated
         // into the same QEF, but it makes accumulate() more flexible
         std::array<NeighborIndex, ipow(3, N)> targets;
