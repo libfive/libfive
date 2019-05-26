@@ -177,6 +177,7 @@ template <unsigned N>
 void HybridLeaf<N>::reset()
 {
     std::fill(inside.begin(), inside.end(), false);
+    std::fill(on_surface.begin(), on_surface.end(), false);
     std::fill(index.begin(), index.end(), 0);
 
     surface.clear();
@@ -313,6 +314,7 @@ void processEdge(HybridTree<BaseDimension>* tree,
     }
     // Otherwise, do a binary search for the intersection
     else {
+        tree->leaf->on_surface[edge.i] = true;
         tree->placeSubspaceVertex(eval, tape, region, edge,
                 searchBetween<BaseDimension>(eval, tape, region,
                                              inside, outside));
@@ -369,6 +371,7 @@ void process(HybridTree<BaseDimension>* tree,
         // vertex.
         if (region.contains(out)) {
             tree->placeSubspaceVertex(eval, tape, region, n, out);
+            tree->leaf->on_surface[n.i] = true;
             return;
         }
     }

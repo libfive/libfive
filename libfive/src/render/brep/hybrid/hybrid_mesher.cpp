@@ -82,6 +82,7 @@ void HybridMesher::load(const std::array<const HybridTree<3>*, 4>& ts)
         Eigen::Vector3d pos;
         uint64_t index;
         bool inside;
+        bool on_surface;
     };
     boost::container::static_vector<SubspaceVertex, 11> subvs;
     auto saveSubspaceVertex = [&subvs, &ts](unsigned index, NeighborIndex s) {
@@ -92,6 +93,7 @@ void HybridMesher::load(const std::array<const HybridTree<3>*, 4>& ts)
             leaf->pos.col(s.i),
             leaf->index[s.i],
             leaf->inside[s.i],
+            leaf->on_surface[s.i],
         });
     };
     auto saveDummyVertex = [&subvs](Interval::I i) {
@@ -99,6 +101,7 @@ void HybridMesher::load(const std::array<const HybridTree<3>*, 4>& ts)
                 Eigen::Vector3d::Zero(),
                 0,
                 i == Interval::FILLED,
+                false,
         });
     };
 
@@ -422,9 +425,19 @@ void HybridMesher::load(const std::array<const HybridTree<3>*, 4>& ts)
                         // the resulting position in both caches.
                         assert(va.inside != vb.inside);
 
-                        const uint64_t surf_vert_index = va.inside
-                            ? searchEdge(va.pos, vb.pos, this_cell->leaf->tape)
-                            : searchEdge(vb.pos, va.pos, this_cell->leaf->tape);
+                        uint64_t surf_vert_index;
+                        if (va.on_surface && !vb.on_surface) {
+                            surf_vert_index = m.pushVertex(va.pos);
+                        } else if (vb.on_surface && !va.on_surface) {
+                            surf_vert_index = m.pushVertex(vb.pos);
+                        } else if (va.on_surface && vb.on_surface) {
+                            const Eigen::Vector3d c = (va.pos + vb.pos) / 2;
+                            surf_vert_index = m.pushVertex(c);
+                        } else {
+                            surf_vert_index = va.inside
+                                ? searchEdge(va.pos, vb.pos, this_cell->leaf->tape)
+                                : searchEdge(vb.pos, va.pos, this_cell->leaf->tape);
+                        }
 
                         this_cell->leaf->surface.insert(k, surf_vert_index);
                         edge_search_cache.insert(k, surf_vert_index);

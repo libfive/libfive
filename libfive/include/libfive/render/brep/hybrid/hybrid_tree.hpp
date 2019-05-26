@@ -34,6 +34,7 @@ struct HybridLeaf
     Eigen::Matrix<double, N, ipow(3, N)> pos;
     Eigen::Matrix<double, N + 1, ipow(3, N)> mass_point;
     std::array<bool, ipow(3, N)> inside;
+    std::array<bool, ipow(3, N)> on_surface;
     std::array<QEF<N>, ipow(3, N)> qef;
 
     /* Check whether this point is an intersection by seeing
