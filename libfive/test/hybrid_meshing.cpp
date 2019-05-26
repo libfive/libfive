@@ -249,3 +249,31 @@ TEST_CASE("HybridMesher<3>: cylinder meshing")
     g->saveSTL("grid.stl");
 #endif
 }
+
+TEST_CASE("HybridMesher<3>: cube meshing")
+{
+    auto c = rotate2d(box({-1.4, -1.3, -1.5}, {1.2, 1.4, 1.2}), 0.7);
+    auto r = Region<3>({0.375, -1.5, 1.125}, {0.75, -1.125, 1.5});
+    //auto r = Region<3>({-3, -3, -3}, {3, 3, 3});
+
+    BRepSettings settings;
+    settings.min_feature = 0.5;
+    settings.workers = 1;
+    auto t = HybridTreePool<3>::build(c, r, settings);
+    t->assignIndices(settings);
+
+    settings.workers = 8;
+    auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
+
+    for (unsigned i=0; i < ipow(3, 3); ++i) {
+        std::cout << i << ":\n";
+        std::cout << " inside: " << t->leaf->inside[i] << "\n";
+        std::cout << " surface: " << t->leaf->on_surface[i] << "\n";
+        std::cout << " pos: " << t->leaf->pos.col(i).transpose() << "\n";
+    }
+#if 1 // Uncomment to save debug meshes
+    m->saveSTL("out.stl");
+    auto g = Dual<3>::walk<HybridDebugMesher>(t, settings, c);
+    g->saveSTL("grid.stl");
+#endif
+}
