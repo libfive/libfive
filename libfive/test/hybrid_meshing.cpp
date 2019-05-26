@@ -187,7 +187,7 @@ TEST_CASE("HybridTree<3>: edge vertex placement")
     }
 }
 
-TEST_CASE("HybridTree<2>: subspace vertex placement", "[!mayfail]")
+TEST_CASE("HybridTree<2>: subspace vertex placement")
 {
     SECTION("Offset circle") {
         // In this test, we build a single cell where one of the edges

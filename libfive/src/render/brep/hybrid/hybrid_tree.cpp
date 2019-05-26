@@ -474,7 +474,7 @@ void HybridTree<N>::placeSubspaceVertex(
         this->leaf->mass_point.col(n.i) += mp;
         // Store the intersection point into the QEF
         eval->array.set<N>(p, region, 1);
-        accumulate(eval, tape, 0, &n);
+        accumulate(eval, tape, 1, &n);
     }
 
     // If we didn't find a sign change, then store the vertex itself into
