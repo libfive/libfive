@@ -27,10 +27,6 @@ static constexpr int _edges(unsigned N)
 template <unsigned N>
 struct EdgeTables
 {
-    /*  For an N-dimensional square / cube, returns the edge connections
-     *  between vertices. */
-    static std::array<std::pair<CornerIndex, CornerIndex>, _edges(N)> edges;
-
     /*  For each subspace in an N-dimensional subspace cell, returns the
      *  subspaces which it is connected to */
     static std::array<boost::container::static_vector<

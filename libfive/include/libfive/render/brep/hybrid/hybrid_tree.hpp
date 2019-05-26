@@ -32,9 +32,13 @@ struct HybridLeaf
     void reset();
 
     Eigen::Matrix<double, N, ipow(3, N)> pos;
+    Eigen::Matrix<double, N + 1, ipow(3, N)> mass_point;
     std::array<bool, ipow(3, N)> inside;
     std::array<QEF<N>, ipow(3, N)> qef;
-    std::array<bool, ipow(3, N)> intersection;
+
+    /* Check whether this point is an intersection by seeing
+     * whether we've accumulated any mass points. */
+    bool intersection(unsigned i) { return mass_point(N, i) != 0; }
 
     /* Unique indexes for every subspace, shared when subspaces are
      * shared by more than one neighbor. */
@@ -150,6 +154,25 @@ public:
      */
     void releaseTo(Pool& object_pool);
 
+    /*
+     *  We've found a point of interest on some subspace.  Now, we need
+     *  to solve for insideness, and decide what to accumulate for the QEF:
+     *   - This point's position / normal / distance, or
+     *   - Intersections on edges between this point and its neighbors
+     *
+     *   We'd prefer to store intersections, because they make it easier to
+     *   cleave to the surface, but they may not exist on this particular
+     *   subspace.
+     *
+     *   This function is public because the template-madness Unroller struct
+     *   needs to be able to call it, but should not be considered part
+     *   of the public API for the HybridTree.
+     */
+    void placeSubspaceVertex(
+        XTreeEvaluator* eval, Tape::Handle tape,
+        const Region<N>& region,
+        NeighborIndex n, const Vec& pos);
+
 protected:
     /*  Evaluates the 2^N corners of this tree, setting
      *      leaf->pos
@@ -179,24 +202,12 @@ protected:
     void processCorners(XTreeEvaluator* eval,
                         Tape::Handle tape,
                         const Region<N>& region);
-    void processEdges(XTreeEvaluator* eval,
-                      Tape::Handle tape,
-                      const Region<N>& region);
 
     /*  We use the same logic for faces and cubes, so it's templated here */
     template <unsigned D>
     void processSubspaces(XTreeEvaluator* eval,
                           Tape::Handle tape,
                           const Region<N>& region);
-
-    /*
-     *  Searches between a point inside the model and outside,
-     *  returning a point that's approximately on the surface.
-     */
-    static Vec searchBetween(XTreeEvaluator* eval, Tape::Handle tape,
-                             const Region<N>& region,
-                             Vec inside, Vec outside);
-
 
     /*
      *  After loading the first count slots of eval with data, this function
@@ -209,21 +220,6 @@ protected:
                     NeighborIndex* target);
 
     /*
-     *  We've found a point of interest on some subspace.  Now, we need
-     *  to solve for insideness, and decide what to accumulate for the QEF:
-     *   - This point's position / normal / distance, or
-     *   - Intersections on edges between this point and its neighbors
-     *
-     *   We'd prefer to store intersections, because they make it easier to
-     *   cleave to the surface, but they may not exist on this particular
-     *   subspace.
-     */
-    void placeSubspaceVertex(
-        XTreeEvaluator* eval, Tape::Handle tape,
-        const Region<N>& region,
-        NeighborIndex n, const Vec& pos);
-
-    /*
      *  Asserts that the leaf is null, pulls a fresh leaf from the object
      *  pool, and assigns it the given tape.
      *
@@ -234,7 +230,6 @@ protected:
                    std::shared_ptr<Tape> tape,
                    const Region<N>& region,
                    Pool& object_pool);
-
 };
 
 extern template class HybridTree<3>;

@@ -114,42 +114,6 @@ public:
     }
 
     /*
-     *  Returns a new QEF with the axes set in a bitfield mask preserved,
-     *  and the mask specified at runtime.  If you know the mask at
-     *  compile-time, use the templated version instead.
-     *
-     *  For example, this lets you go from a 2D QEF to a 1D QEF by dropping
-     *  one axis from the matrices.
-     */
-    template <unsigned OutBits>
-    QEF<OutBits> sub(unsigned mask) const
-    {
-        static_assert(OutBits <= N, "Too many axes");
-        assert(bitcount(mask) == OutBits);
-
-        QEF<OutBits> out;
-        unsigned row_ = 0;
-        for (unsigned row=0; row <= N; ++row) {
-            unsigned col_ = 0;
-            if ((mask & (1 << row)) || row == N) {
-                for (unsigned col=0; col <= N; ++col) {
-                    if ((mask & (1 << col)) || col == N) {
-                        out.AtA(row_, col_) = AtA(row, col);
-                        out.AtBp(row_, col_) = AtBp(row, col);
-                        out.BptBp(row_, col_) = BptBp(row, col);
-                        col_++;
-                    }
-                }
-                assert(col_ == bitcount(mask) + 1);
-                row_++;
-            }
-        }
-        assert(row_ == bitcount(mask) + 1);
-
-        return out;
-    }
-
-    /*
      *  Returns a new QEF with the axes set in a bitfield mask preserved
      *
      *  For example, this lets you go from a 2D QEF to a 1D QEF by dropping
