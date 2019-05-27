@@ -87,7 +87,7 @@ Eigen::Matrix<double, N, 1> unMassPoint(const MassPoint<N>& m) {
  *  returning a point that's approximately on the surface.
  */
 template <unsigned N>
-Eigen::Matrix<double, N, 1> searchBetween(
+Eigen::Matrix<double, N, 2> searchBetween(
         XTreeEvaluator* eval, Tape::Handle tape,
         const Region<N>& region,
         Eigen::Matrix<double, N, 1> inside,
@@ -140,8 +140,10 @@ Eigen::Matrix<double, N, 1> searchBetween(
         }
     }
 
-    // TODO: we should weight the exact position based on values
-    return (inside + outside) / 2;
+    Eigen::Matrix<double, N, 2> out;
+    out.col(0) = inside;
+    out.col(1) = outside;
+    return out;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -320,9 +322,12 @@ void processEdge(HybridTree<BaseDimension>* tree,
     // Otherwise, do a binary search for the intersection
     else {
         tree->leaf->on_surface[edge.i] = true;
-        tree->placeSubspaceVertex(eval, tape, region, edge,
-                searchBetween<BaseDimension>(eval, tape, region,
-                                             inside, outside));
+        auto surf = searchBetween<BaseDimension>(eval, tape, region,
+                                                 inside, outside);
+        // TODO: weigh this based on distance
+        Eigen::Matrix<double, BaseDimension, 1> out =
+            (surf.col(0) + surf.col(1)) / 2;
+        tree->placeSubspaceVertex(eval, tape, region, edge, out);
     }
 }
 
@@ -506,7 +511,7 @@ void HybridTree<N>::placeSubspaceVertex(
     // Expensive check for inside / outsideness of this point (TODO)
     this->leaf->inside[n.i] = eval->feature.isInside<N>(pos, region, tape);
 
-    Eigen::Matrix<double, N, ipow(3, N)> intersections;
+    Eigen::Matrix<double, N, ipow(3, N) * 2> intersections;
     // Check every edge from the new point to its neighbouring subspaces,
     // seeing whether there's a sign change and searching the edge
     // if that's the case
@@ -529,13 +534,16 @@ void HybridTree<N>::placeSubspaceVertex(
         }
         auto p = searchBetween<N>(eval, tape, region, inside, outside);
 
-        MassPoint<N> mp;
-        mp << p, 1;
-        this->leaf->mass_point.col(n.i) += mp;
+        for (unsigned i=0; i < 2; ++i) {
+            MassPoint<N> mp;
+            mp << p.col(i), 1;
+            this->leaf->mass_point.col(n.i) += mp;
 
-        // Store the intersection point into the QEF target list
-        intersections.col(num_intersections++) = p;
+            // Store the intersection point into the QEF target list
+            intersections.col(num_intersections++) = p.col(i);
+        }
     }
+    assert(num_intersections <= intersections.cols());
 
     if (num_intersections) {
         // Pack the target points into the array
@@ -545,7 +553,7 @@ void HybridTree<N>::placeSubspaceVertex(
 
         // This is a bit silly, because every intersection ends up accumulated
         // into the same QEF, but it makes accumulate() more flexible
-        std::array<NeighborIndex, ipow(3, N)> targets;
+        std::array<NeighborIndex, ipow(3, N) * 2> targets;
         std::fill(targets.begin(), targets.end(), n);
         assert(targets.size() >= num_intersections);
 
