@@ -238,6 +238,52 @@ void HybridTree<N>::buildLeaf(XTreeEvaluator* eval,
     if (N == 3) {
         processSubspaces<3>(eval, tape, region);
     }
+
+    /*
+     *  Walk through the subspaces, looking for cases where a higher-dimension
+     *  vertex has snapped to a lower-dimension subspace.  For example, in 2D
+     *
+     *    ------------
+     *    | :        |   m is a higher-dimensional (face) vertex which has
+     *    | :        |   snapped to the same edge as n, which is a
+     *    nm - - - - |   lower-dimension edge vertex.
+     *    | :        |
+     *    | :        |   In this case, we'd move m to line up with n, to
+     *    ------------   a zero-area triangle gap.
+     */
+    for (unsigned i=0; i < ipow(3, N); ++i) {
+        for (unsigned j=0; j < ipow(3, N); ++j) {
+            const NeighborIndex n(i);
+            const NeighborIndex m(j);
+            if (n.dimension() == 0 || n.dimension() == N ||
+                m.dimension() != n.dimension() + 1 ||
+                !m.contains(n))
+            {
+                continue;
+            }
+            bool constrained = true;
+            const double epsilon = (region.upper - region.lower)
+                .maxCoeff() * 1e-9;
+            for (unsigned k=0; k < N && constrained; ++k) {
+                if (n.fixed() & (1 << k)) {
+                    constrained &= fabs(this->leaf->pos(k, j) -
+                                        this->leaf->pos(k, i)) < epsilon;
+                }
+            }
+            if (constrained) {
+#if LIBFIVE_HYBRID_DEBUG
+                std::cout << "Found constrained " << this->leaf->pos.col(j).transpose()
+                    << " (" << j << ") to " << this->leaf->pos.col(i).transpose()
+                    << " (" << i << ")\n";
+#endif
+
+                this->leaf->pos.col(j) = this->leaf->pos.col(i);
+                this->leaf->inside[j] = this->leaf->inside[i];
+                this->leaf->on_surface[j] = this->leaf->on_surface[i];
+                // TODO: when collapsing cells, does anything else matter?
+            }
+        }
+    }
 }
 
 template <unsigned N>
@@ -386,6 +432,18 @@ void process(HybridTree<BaseDimension>* tree,
         auto sol_surf = qef_surf_.solveDC(target_pos_surf_);
         auto v_surf = unpack<BaseDimension, Target>(sol_surf.position, region);
 
+        // Add a bit of padding + clamping to the DC vertex, in case it
+        // ended up just outside of the valid region.  The epsilon in this
+        // case is relative to the region size, rather than fixed.
+        bool within_region = false;
+        if (region.shrink(1 + 1e-9).contains(v_surf, 0)) {
+            if (!region.contains(v_surf, 0)) {
+                v_surf = v_surf.cwiseMax(region.lower.matrix());
+                v_surf = v_surf.cwiseMin(region.upper.matrix());
+            }
+            within_region = true;
+        }
+
         // Then, try solving for a sharp feature on the distance field itself,
         // using the DC-chosen point as a starting point if it's within the
         // cell's boundaries.
@@ -393,7 +451,7 @@ void process(HybridTree<BaseDimension>* tree,
             .template sub<TargetFloating>();
         Eigen::Matrix<double, BaseDimension, 1> target_pos_dist;
         double target_value_dist;
-        if (region.contains(v_surf, 0)) {
+        if (within_region) {
             target_pos_dist = v_surf;
             target_value_dist = 0.0;
         } else {
@@ -402,7 +460,7 @@ void process(HybridTree<BaseDimension>* tree,
         }
         const auto target_pos_dist_ = pack<BaseDimension, Target>(
                 target_pos_dist);
-        auto sol_dist = qef_dist_.solveBounded(region_, 1 - 1e-9,
+        auto sol_dist = qef_dist_.solveBounded(region_, 1,
                 target_pos_dist_, target_value_dist);
         auto v_dist = unpack<BaseDimension, Target>(sol_dist.position, region);
 
@@ -416,7 +474,7 @@ void process(HybridTree<BaseDimension>* tree,
 
         // If we successfully placed the vertex using Dual Contouring
         // rules, then mark that the resulting vertex is a surface vertex.
-        if (region.contains(v_surf, 0) && (sol_surf.error <= 0
+        if (within_region && (sol_surf.error <= 0
                     || sol_surf.error / 10.0 < sol_dist.error
                     || (v_dist - v_surf).norm() < 1e-12)) {
 #if LIBFIVE_HYBRID_DEBUG
@@ -426,7 +484,7 @@ void process(HybridTree<BaseDimension>* tree,
             tree->leaf->on_surface[n.i] = true;
         } else {
 #if LIBFIVE_HYBRID_DEBUG
-            std::cout << "  placing DC + distance vertex at " << n.i << " " << v_surf.transpose() << "\n";
+            std::cout << "  placing DC + distance vertex at " << n.i << " " << v_dist.transpose() << "\n";
             std::cout << "      rank: " << sol_dist.rank << "\n";
             std::cout << "      target pos: " << target_pos_dist.transpose() << "\n";
             std::cout << "      error: " << sol_dist.error << "\n";
@@ -441,7 +499,7 @@ void process(HybridTree<BaseDimension>* tree,
 
         // Solve the distance-field sharp-feature QEF
         QEF<TargetDimension> qef_ = qef_distance.template sub<TargetFloating>();
-        auto sol = qef_.solveBounded(region_, 1 - 1e-9,
+        auto sol = qef_.solveBounded(region_, 1,
                 target_pos_, qef_.averageDistanceValue());
 
         // Unpack from the reduced-dimension solution to the leaf vertex
