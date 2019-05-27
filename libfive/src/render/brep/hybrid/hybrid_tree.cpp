@@ -307,7 +307,7 @@ void processEdge(HybridTree<BaseDimension>* tree,
 
             const auto target_pos = unMassPoint<BaseDimension>(mass_point);
             const auto target_pos_ = pack<BaseDimension, Target>(target_pos);
-            auto sol = qef_.solveBounded(region_, 1 - 1e-9,
+            auto sol = qef_.solveBounded(region_, 1,
                     target_pos_, qef_.averageDistanceValue());
 
 #if LIBFIVE_HYBRID_DEBUG
@@ -388,7 +388,7 @@ void process(HybridTree<BaseDimension>* tree,
             .template sub<TargetFloating>();
         Eigen::Matrix<double, BaseDimension, 1> target_pos_dist;
         double target_value_dist;
-        if (region.contains(v_surf)) {
+        if (region.contains(v_surf, 0)) {
             target_pos_dist = v_surf;
             target_value_dist = 0.0;
         } else {
@@ -411,7 +411,7 @@ void process(HybridTree<BaseDimension>* tree,
 
         // If we successfully placed the vertex using Dual Contouring
         // rules, then mark that the resulting vertex is a surface vertex.
-        if (region.contains(v_surf) && (sol_surf.error <= 0
+        if (region.contains(v_surf, 0) && (sol_surf.error <= 0
                     || sol_surf.error / 10.0 < sol_dist.error
                     || (v_dist - v_surf).norm() < 1e-12)) {
 #if LIBFIVE_HYBRID_DEBUG
