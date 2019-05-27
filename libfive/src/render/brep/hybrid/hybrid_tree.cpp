@@ -21,6 +21,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../xtree.cpp"
 
+#define LIBFIVE_HYBRID_DEBUG 0
+
 namespace Kernel {
 
 /*
@@ -308,6 +310,9 @@ void processEdge(HybridTree<BaseDimension>* tree,
             auto sol = qef_.solveBounded(region_, 1 - 1e-9,
                     target_pos_, qef_.averageDistanceValue());
 
+#if LIBFIVE_HYBRID_DEBUG
+            std::cout << "Solved edge " << edge.i << " with error " << sol.error << "\n";
+#endif
             // Unpack from the reduced-dimension solution to the leaf vertex
             auto out = unpack<BaseDimension, Target>(sol.position, region);
             tree->placeSubspaceVertex(eval,tape, region, edge, out);
@@ -359,6 +364,10 @@ void process(HybridTree<BaseDimension>* tree,
     // positioning the final model vertices on corners and edges.
     const auto region_ = region.template subspace<TargetFloating>();
 
+#if LIBFIVE_HYBRID_DEBUG
+    std::cout << "Solving for subspace " << Target << "\n";
+#endif
+
     // If we have found one or more intersections, then we should
     // try to position the vertex using Dual Contouring.
     if (mass_point_surface[BaseDimension] != 0) {
@@ -392,26 +401,31 @@ void process(HybridTree<BaseDimension>* tree,
                 target_pos_dist_, target_value_dist);
         auto v_dist = unpack<BaseDimension, Target>(sol_dist.position, region);
 
+
+#if LIBFIVE_HYBRID_DEBUG
+        std::cout << "  found DC vertex at " << v_surf.transpose() << "\n";
+        std::cout << "      rank: " << sol_surf.rank << "\n";
+        std::cout << "      target pos: " << target_pos_surf.transpose() << "\n";
+        std::cout << "      error: " << sol_surf.error << " " << sol_dist.error << "\n";
+#endif
+
         // If we successfully placed the vertex using Dual Contouring
         // rules, then mark that the resulting vertex is a surface vertex.
         if (region.contains(v_surf) && (sol_surf.error <= 0
                     || sol_surf.error / 10.0 < sol_dist.error
                     || (v_dist - v_surf).norm() < 1e-12)) {
-            /*
-            std::cout << " placing DC vertex at " << n.i << "\n";
-            std::cout << "   " << sol_surf.rank << "\n";
-            std::cout << "  target pos was " << target_pos_surf.transpose() << "\n";
-            std::cout << "  error " << sol_surf.error << "\n";
-            */
+#if LIBFIVE_HYBRID_DEBUG
+            std::cout << "      Placed DC vertex\n";
+#endif
             tree->placeSubspaceVertex(eval, tape, region, n, v_surf);
             tree->leaf->on_surface[n.i] = true;
         } else {
-            /*
-            std::cout << " placing DC + distance vertex at " << n.i << "\n";
-            std::cout << "   " << sol_dist.rank << "\n";
-            std::cout << "  target pos was " << target_pos_dist.transpose() << "\n";
-            std::cout << "  error " << sol_dist.error << "\n";
-            */
+#if LIBFIVE_HYBRID_DEBUG
+            std::cout << "  placing DC + distance vertex at " << n.i << " " << v_surf.transpose() << "\n";
+            std::cout << "      rank: " << sol_dist.rank << "\n";
+            std::cout << "      target pos: " << target_pos_dist.transpose() << "\n";
+            std::cout << "      error: " << sol_dist.error << "\n";
+#endif
             tree->placeSubspaceVertex(eval, tape, region, n, v_dist);
         }
     } else {
@@ -428,12 +442,13 @@ void process(HybridTree<BaseDimension>* tree,
         // Unpack from the reduced-dimension solution to the leaf vertex
         auto out = unpack<BaseDimension, Target>(sol.position, region);
 
-        /*
-        std::cout << " placing distance vertex at " << n.i << "\n";
+#if LIBFIVE_HYBRID_DEBUG
+        std::cout << " placing distance vertex at " << n.i << " " << out.transpose() << "\n";
         std::cout << "   " << sol.rank << "\n";
         std::cout << "  target pos was " << target_pos.transpose() << "\n";
+        std::cout << "  target value was " << qef_.averageDistanceValue() << "\n";
         std::cout << "  error " << sol.error << "\n";
-        */
+#endif
         tree->placeSubspaceVertex(eval, tape, region, n, out);
     }
 }
