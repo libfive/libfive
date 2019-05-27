@@ -230,6 +230,8 @@ TEST_CASE("QEF::solveBounded")
             CAPTURE(sol.error);
             REQUIRE(sol.error > 0);
             REQUIRE(sol.position.x() == Approx(1.5));
+            REQUIRE(sol.constrained[0] == false);
+            REQUIRE(sol.constrained[1] == true);
 
         }
         {
@@ -246,6 +248,8 @@ TEST_CASE("QEF::solveBounded")
             REQUIRE(sol.rank == 2);
             REQUIRE(sol.error == Approx(0.0).margin(1e-9));
             REQUIRE(sol.value == Approx(-1));
+            REQUIRE(sol.constrained[0] == false);
+            REQUIRE(sol.constrained[1] == false);
         }
     }
 }

@@ -30,6 +30,7 @@ class QEF
 public:
     struct Solution {
         Eigen::Matrix<double, N, 1> position;
+        Eigen::Matrix<bool, N, 1> constrained;
         double value;
         unsigned rank;
         double error;
@@ -101,6 +102,7 @@ public:
         out.position = sol.value.template head<N>();
         out.value = sol.value(N);
         out.rank = sol.rank - 1; // Skip the rank due to value
+        out.constrained.array() = false;
 
         // Calculate the resulting error, hard-code the matrix size here so
         // that Eigen checks that all of our types are correct.
@@ -234,8 +236,10 @@ public:
                 out.position(i) = (Neighbor.pos() & (1 << i))
                     ? region.upper(i)
                     : region.lower(i);
+                out.constrained(i) = true;
             } else {
                 out.position(i) = sol.value(r++);
+                out.constrained(i) = false;
             }
         }
         out.value = sol.value(r);
