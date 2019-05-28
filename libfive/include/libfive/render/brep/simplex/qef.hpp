@@ -332,6 +332,16 @@ public:
         return out;
     }
 
+    double error(const Eigen::Matrix<double, N, 1>& pos,
+                 const double value) const {
+        Vector v;
+        v << pos, value;
+        Eigen::Matrix<double, 1, 1> err =
+            v.transpose() * AtA * v -
+            2 * v.transpose() * AtB() +
+            BtB();
+        return err(0);
+    }
 
 protected:
     /*
