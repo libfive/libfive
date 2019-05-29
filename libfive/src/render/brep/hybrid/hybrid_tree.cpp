@@ -350,20 +350,14 @@ void process(HybridTree<BaseDimension>* tree,
     mass_point_surface.array() = 0.0;
     mass_point_distance.array() = 0.0;
 
-    // For parity with Dual Contouring, we'd prefer to use only edge
-    // intersections if they're present.  This ensures that the mass
-    // point is cleanly accumulated in certain cases.
-    unsigned target_intersection_dimension = BaseDimension + 1;
+    // This part is a bit subtle:  vertices on 2D subsurfaces (faces) that
+    // are 'surface' vertices don't add any useful data, so we skip them
+    // when accumulating QEFs.  This is because their data should be contained
+    // within the edge QEFs that went into constructing them, and we
+    // don't want to double-count it.
     for (unsigned j=0; j < ipow(3, BaseDimension); ++j) {
-        if (tree->leaf->intersection(j)) {
-            target_intersection_dimension = std::min(
-                    target_intersection_dimension,
-                    NeighborIndex(j).dimension());
-        }
-    }
-
-    for (unsigned j=0; j < ipow(3, BaseDimension); ++j) {
-        if (n.i != j && n.contains(NeighborIndex(j))) {
+        NeighborIndex m(j);
+        if (n.i != j && n.contains(m) && !(m.dimension() == 2 && tree->leaf->on_surface[m.i])) {
             qef_distance += tree->leaf->qef[j];
             MassPoint<BaseDimension> v;
             v << tree->leaf->pos.col(j), 1;
@@ -371,11 +365,7 @@ void process(HybridTree<BaseDimension>* tree,
 
             if (tree->leaf->intersection(j)) {
                 qef_surface += tree->leaf->qef[j];
-                if (NeighborIndex(j).dimension() ==
-                    target_intersection_dimension)
-                {
-                    mass_point_surface += tree->leaf->mass_point.col(j);
-                }
+                mass_point_surface += tree->leaf->mass_point.col(j);
             }
         }
     }
@@ -423,7 +413,7 @@ void process(HybridTree<BaseDimension>* tree,
         double target_value_dist;
         if (within_region) {
             target_pos_dist = v_surf;
-            target_value_dist = 0.0;
+            target_value_dist = sol_surf.value;
         } else {
             target_pos_dist = unMassPoint<BaseDimension>(mass_point_distance);
             target_value_dist = qef_distance.averageDistanceValue();
