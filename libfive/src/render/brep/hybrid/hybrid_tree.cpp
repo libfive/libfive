@@ -18,6 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/neighbor_tables.hpp"
 #include "libfive/render/brep/edge_tables.hpp"
+#include "libfive/render/brep/manifold_tables.hpp"
 
 #include "../xtree.cpp"
 
@@ -350,22 +351,33 @@ void process(HybridTree<BaseDimension>* tree,
     mass_point_surface.array() = 0.0;
     mass_point_distance.array() = 0.0;
 
-    // This part is a bit subtle:  vertices on 2D subsurfaces (faces) that
-    // are 'surface' vertices don't add any useful data, so we skip them
-    // when accumulating QEFs.  This is because their data should be contained
-    // within the edge QEFs that went into constructing them, and we
-    // don't want to double-count it.
+    uint32_t filled_mask = 0;
+    unsigned filled_mask_bit = 0;
     for (unsigned j=0; j < ipow(3, BaseDimension); ++j) {
         NeighborIndex m(j);
-        if (n.i != j && n.contains(m) && !(m.dimension() == 2 && tree->leaf->on_surface[m.i])) {
-            qef_distance += tree->leaf->qef[j];
-            MassPoint<BaseDimension> v;
-            v << tree->leaf->pos.col(j), 1;
-            mass_point_distance += v;
+        if (n.i != j && n.contains(m)) {
+            // Build up a bitmask of occupied perimeter subspaces, so that
+            // we can check for manifoldness later.
+            if (tree->leaf->inside[j]) {
+                filled_mask |= (1 << filled_mask_bit);
+            }
+            filled_mask_bit++;
 
-            if (tree->leaf->intersection(j)) {
-                qef_surface += tree->leaf->qef[j];
-                mass_point_surface += tree->leaf->mass_point.col(j);
+            // This part is a bit subtle:  vertices on 2D subsurfaces (faces)
+            // that are 'surface' vertices don't add any useful data, so we
+            // skip them when accumulating QEFs.  This is because their data
+            // should be contained within the edge QEFs that went into
+            // constructing them, and we don't want to double-count it.
+            if (!(m.dimension() == 2 && tree->leaf->on_surface[m.i])) {
+                qef_distance += tree->leaf->qef[j];
+                MassPoint<BaseDimension> v;
+                v << tree->leaf->pos.col(j), 1;
+                mass_point_distance += v;
+
+                if (tree->leaf->intersection(j)) {
+                    qef_surface += tree->leaf->qef[j];
+                    mass_point_surface += tree->leaf->mass_point.col(j);
+                }
             }
         }
     }
@@ -379,9 +391,11 @@ void process(HybridTree<BaseDimension>* tree,
     std::cout << "Solving for subspace " << Target << "\n";
 #endif
 
-    // If we have found one or more intersections, then we should
-    // try to position the vertex using Dual Contouring.
-    if (mass_point_surface[BaseDimension] != 0) {
+    // If we have found one or more intersections and the surface is locally
+    // manifold, then we try to position the vertex using Dual Contouring.
+    if (mass_point_surface[BaseDimension] != 0 &&
+        ManifoldTables<BaseDimension>::manifold(filled_mask))
+    {
         // Solve for DC-style position
         QEF<TargetDimension> qef_surf_ = qef_surface
             .template sub<TargetFloating>();
