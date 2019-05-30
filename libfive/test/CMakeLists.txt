@@ -18,6 +18,7 @@ set(SRCS main.cpp
     hybrid_meshing.cpp
     indexes.cpp
     marching.cpp
+    manifold_tables.cpp
     mesh.cpp
     neighbors.cpp
     object_pool.cpp

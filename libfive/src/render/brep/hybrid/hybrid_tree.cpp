@@ -534,7 +534,7 @@ void HybridTree<N>::placeSubspaceVertex(
     // seeing whether there's a sign change and searching the edge
     // if that's the case
     unsigned num_intersections = 0;
-    for (auto& t: EdgeTables<N>::neighbors[n.i]) {
+    for (auto& t: EdgeTables<N>::subspaces(n.i)) {
         // If there isn't a sign change along this subspace-to-subspace
         // edge, then we shouldn't search it.
         assert(t.dimension() < n.dimension());

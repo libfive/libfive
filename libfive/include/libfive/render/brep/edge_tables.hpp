@@ -25,21 +25,51 @@ static constexpr int _edges(unsigned N)
 { return (N == 0) ? 0 : (_edges(N - 1) * 2 + _verts(N - 1)); }
 
 template <unsigned N>
-struct EdgeTables
+class EdgeTables
 {
-    /*  For each subspace in an N-dimensional subspace cell, returns the
-     *  subspaces which it is connected to */
-    static std::array<boost::container::static_vector<
-            NeighborIndex, ipow(3, N) - 1>,
-        ipow(3, N)> neighbors;
+public:
+    using Table = boost::container::static_vector<
+        NeighborIndex, ipow(3, N) - 1>;
 
-    /*  Used as a flag to trigger population of the static arrays */
-    static bool buildTables();
-    static bool loaded;
+    /*  For each subspace in an N-dimensional subspace cell, returns
+     *  the lower-dimensional subspaces which it is connected to.
+     *
+     *  For example, in 2D,
+     *  A--B--C
+     *  | \|/ |
+     *  D--E--F
+     *  | /|\ |
+     *  G--H--I
+     *
+     *  B connects to A and C, A connects to nothing, D connects
+     *  to A and G, E, connects to everything, etc.
+     */
+    static const Table& subspaces(NeighborIndex n);
+
+    /*  For each subspace in an N-dimensional cell, returns all of the
+     *  subspaces which it is connected to (of higher and lower dimension). */
+    static const Table& neighbors(NeighborIndex n);
+
+    /*  For each subspace in an N-dimensional cell, returns all of the
+     *  subspaces which it is connected to (of dimensions lower than N).
+     *
+     *  In the example given above, A is connected to B and D, but not E.
+     *
+     *  This represents connectivity along the N-1 dimensional boundary
+     *  of an N-dimensional cell. */
+    static const Table& boundary(NeighborIndex n);
+
+protected:
+    static const EdgeTables& instance();
+
+    EdgeTables();
+    std::array<Table, ipow(3, N)> subspace_table;
+    std::array<Table, ipow(3, N)> neighbor_table;
+    std::array<Table, ipow(3, N)> boundary_table;
 };
 
 //  We explicitly instantiate the EdgeTables classes in edge_tables.cpp
-extern template struct EdgeTables<2>;
-extern template struct EdgeTables<3>;
+extern template class EdgeTables<2>;
+extern template class EdgeTables<3>;
 
 }   // namespace Kernel
