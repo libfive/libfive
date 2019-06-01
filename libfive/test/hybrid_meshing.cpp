@@ -272,7 +272,6 @@ TEST_CASE("HybridMesher<3>: cylinder meshing")
 TEST_CASE("HybridMesher<3>: cube meshing")
 {
     auto c = rotate2d(box({-1.4, -1.3, -1.5}, {1.2, 1.4, 1.2}), 0.7);
-    //auto r = Region<3>({-3, -3, -3}, {3, 3, 3});
     auto r = Region<3>({-2.25, 0, 1.125}, {-1.875, 0.375, 1.5});
 
     BRepSettings settings;
@@ -284,7 +283,15 @@ TEST_CASE("HybridMesher<3>: cube meshing")
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
 
-#if 0 // Uncomment to save debug meshes
+    // Require that the cube's corner is on its actual corner
+    REQUIRE(t->leaf != nullptr);
+    const Eigen::Vector3d v = t->leaf->pos.col(26);
+    CAPTURE(v.transpose());
+    REQUIRE(v.x() == Approx( cos(0.7) * -1.4 - sin(0.7) * 1.4));
+    REQUIRE(v.y() == Approx( sin(0.7) * -1.4 + cos(0.7) * 1.4));
+    REQUIRE(v.z() == Approx(1.2));
+
+#if 1 // Uncomment to save debug meshes
     print_debug_leaf(t.get());
     save_debug_mesh(c, t, settings, m.get());
 #endif
