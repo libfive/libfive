@@ -100,7 +100,7 @@ Eigen::Matrix<double, N, 2> searchBetween(
 
     // There's an interesting question of precision + speed tradeoffs,
     // which mostly depend on how well evaluation scales in the
-    // ArrayEaluator.  for now, we'll use the same value as XTree.
+    // ArrayEvaluator.  for now, we'll use the same value as XTree.
     constexpr int SEARCH_COUNT = 4;
     constexpr int POINTS_PER_SEARCH = 16;
     static_assert(POINTS_PER_SEARCH <= ArrayEvaluator::N,
