@@ -229,9 +229,29 @@ TEST_CASE("HybridTree<2>: subspace vertex placement")
     }
 }
 
+template <unsigned N>
+void print_debug_leaf(const HybridTree<N>* t) {
+    if (t->leaf) {
+        for (unsigned i=0; i < ipow(3, N); ++i) {
+            std::cout << i << ":\n";
+            std::cout << " inside: " << t->leaf->inside[i] << "\n";
+            std::cout << " surface: " << t->leaf->on_surface[i] << "\n";
+            std::cout << " pos: " << t->leaf->pos.col(i).transpose() << "\n";
+        }
+    }
+}
+
+void save_debug_mesh(const Tree c, const Root<HybridTree<3>>& t,
+                     const BRepSettings& settings, const Mesh* m)
+{
+    m->saveSTL("out.stl");
+    auto g = Dual<3>::walk<HybridDebugMesher>(t, settings, c);
+    g->saveSTL("grid.stl");
+}
+
 TEST_CASE("HybridMesher<3>: cylinder meshing")
 {
-    auto c = cylinder(1, 1);
+    auto c = cylinder(1.3, 1.3);
     auto r = Region<3>({-3, -3, -3}, {3, 3, 3});
 
     BRepSettings settings;
@@ -243,25 +263,17 @@ TEST_CASE("HybridMesher<3>: cylinder meshing")
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
 
-    if (t->leaf) {
-        for (unsigned i=0; i < ipow(3, 3); ++i) {
-            std::cout << i << ":\n";
-            std::cout << " inside: " << t->leaf->inside[i] << "\n";
-            std::cout << " surface: " << t->leaf->on_surface[i] << "\n";
-            std::cout << " pos: " << t->leaf->pos.col(i).transpose() << "\n";
-        }
-    }
 #if 0 // Uncomment to save debug meshes
-    m->saveSTL("out.stl");
-    auto g = Dual<3>::walk<HybridDebugMesher>(t, settings, c);
-    g->saveSTL("grid.stl");
+    print_debug_leaf(t.get());
+    save_debug_mesh(c, t, settings, m.get());
 #endif
 }
 
 TEST_CASE("HybridMesher<3>: cube meshing")
 {
     auto c = rotate2d(box({-1.4, -1.3, -1.5}, {1.2, 1.4, 1.2}), 0.7);
-    auto r = Region<3>({-3, -3, -3}, {3, 3, 3});
+    //auto r = Region<3>({-3, -3, -3}, {3, 3, 3});
+    auto r = Region<3>({-2.25, 0, 1.125}, {-1.875, 0.375, 1.5});
 
     BRepSettings settings;
     settings.min_feature = 0.5;
@@ -272,29 +284,22 @@ TEST_CASE("HybridMesher<3>: cube meshing")
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
 
-    if (t->leaf) {
-        for (unsigned i=0; i < ipow(3, 3); ++i) {
-            std::cout << i << ":\n";
-            std::cout << " inside: " << t->leaf->inside[i] << "\n";
-            std::cout << " surface: " << t->leaf->on_surface[i] << "\n";
-            std::cout << " pos: " << t->leaf->pos.col(i).transpose() << "\n";
-        }
-    }
 #if 0 // Uncomment to save debug meshes
-    m->saveSTL("out.stl");
-    auto g = Dual<3>::walk<HybridDebugMesher>(t, settings, c);
-    g->saveSTL("grid.stl");
+    print_debug_leaf(t.get());
+    save_debug_mesh(c, t, settings, m.get());
 #endif
 }
 
 TEST_CASE("HybridMesher<3>: cylinder cutout meshing")
 {
-    auto c = max(box({-1, -1.001, -1}, {1, 1, 1}),
-            -cylinder(1.1, 20, {0, 0, -10}));
-    auto r = Region<3>({-3, -3, -3}, {3, 3, 3});
+    auto c = max(box({-1, -1, -1}, {1.4, 1.1, 1}),
+            -cylinder(1.2, 1.3, {0, 0, 0.01}));
+    auto r = Region<3>({0, 0, 0}, {3, 3, 3});
+    //auto r = Region<3>({1.125, 0.0, 0.9385}, {1.3125, 0.1875, 1.125});
+    //auto r = Region<3>({0.46875, 1.03125, 0}, {0.5625, 1.125, 0.09375});
 
     BRepSettings settings;
-    settings.min_feature = 0.1;
+    settings.min_feature = 0.125;
     settings.workers = 1;
     auto t = HybridTreePool<3>::build(c, r, settings);
     t->assignIndices(settings);
@@ -302,17 +307,29 @@ TEST_CASE("HybridMesher<3>: cylinder cutout meshing")
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
 
-    if (t->leaf) {
-        for (unsigned i=0; i < ipow(3, 3); ++i) {
-            std::cout << i << ":\n";
-            std::cout << " inside: " << t->leaf->inside[i] << "\n";
-            std::cout << " surface: " << t->leaf->on_surface[i] << "\n";
-            std::cout << " pos: " << t->leaf->pos.col(i).transpose() << "\n";
-        }
-    }
 #if 0 // Uncomment to save debug meshes
-    m->saveSTL("out.stl");
-    auto g = Dual<3>::walk<HybridDebugMesher>(t, settings, c);
-    g->saveSTL("grid.stl");
+    print_debug_leaf(t.get());
+    save_debug_mesh(c, t, settings, m.get());
+#endif
+}
+
+TEST_CASE("HybridMesher<3>: rotated cylinder meshing")
+{
+    auto c = rotate_x(-cylinder(1, 1, {0, 0, -0.5}), 0.4);
+    //auto r = Region<3>({-3, -3, -3}, {3, 3, 3});
+    auto r = Region<3>({-1.125, 0.375, 0.375}, {-0.75, 0.75, 0.75});
+
+    BRepSettings settings;
+    settings.min_feature = 0.5;
+    settings.workers = 1;
+    auto t = HybridTreePool<3>::build(c, r, settings);
+    t->assignIndices(settings);
+
+    settings.workers = 8;
+    auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
+
+#if 0 // Uncomment to save debug meshes
+    print_debug_leaf(t.get());
+    save_debug_mesh(c, t, settings, m.get());
 #endif
 }
