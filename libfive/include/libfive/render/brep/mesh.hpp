@@ -46,7 +46,7 @@ public:
     /*
      *  Writes the mesh to a file
      */
-    bool saveSTL(const std::string& filename);
+    bool saveSTL(const std::string& filename) const;
 
     /*
      *  Merge multiple bodies and write them to a single file

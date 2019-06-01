@@ -201,7 +201,7 @@ bool Mesh::saveSTL(const std::string& filename,
     return true;
 }
 
-bool Mesh::saveSTL(const std::string& filename)
+bool Mesh::saveSTL(const std::string& filename) const
 {
     return saveSTL(filename, {this});
 }
