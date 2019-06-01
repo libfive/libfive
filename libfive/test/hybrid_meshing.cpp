@@ -283,6 +283,11 @@ TEST_CASE("HybridMesher<3>: cube meshing")
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
 
+#if 0 // Uncomment to save debug meshes
+    print_debug_leaf(t.get());
+    save_debug_mesh(c, t, settings, m.get());
+#endif
+
     // Require that the cube's corner is on its actual corner
     REQUIRE(t->leaf != nullptr);
     const Eigen::Vector3d v = t->leaf->pos.col(26);
@@ -290,11 +295,6 @@ TEST_CASE("HybridMesher<3>: cube meshing")
     REQUIRE(v.x() == Approx( cos(0.7) * -1.4 - sin(0.7) * 1.4));
     REQUIRE(v.y() == Approx( sin(0.7) * -1.4 + cos(0.7) * 1.4));
     REQUIRE(v.z() == Approx(1.2));
-
-#if 1 // Uncomment to save debug meshes
-    print_debug_leaf(t.get());
-    save_debug_mesh(c, t, settings, m.get());
-#endif
 }
 
 TEST_CASE("HybridMesher<3>: cylinder cutout meshing")
