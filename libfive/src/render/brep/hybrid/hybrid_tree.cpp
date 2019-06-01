@@ -275,21 +275,11 @@ void processEdge(HybridTree<BaseDimension>* tree,
     // Now, we'll check to see whether we have any intersections
     // on a child subspace, to decide whether to place the vertex
     // on a sharp feature of the surface or of the distance field.
-    QEF<BaseDimension> qef;
-    MassPoint<BaseDimension> mass_point;
-    mass_point.array() = 0.0;
-
     bool has_inside = false;
     bool has_outside = false;
     Eigen::Matrix<double, BaseDimension, 1> inside, outside;
     for (unsigned j=0; j < ipow(3, BaseDimension); ++j) {
         if (edge.i != j && edge.contains(NeighborIndex(j))) {
-            qef += tree->leaf->qef[j];
-
-            MassPoint<BaseDimension> v;
-            v << tree->leaf->pos.col(j), 1;
-            mass_point += v;
-
             if (tree->leaf->inside[j]) {
                 has_inside = true;
                 inside = tree->leaf->pos.col(j);
@@ -300,28 +290,10 @@ void processEdge(HybridTree<BaseDimension>* tree,
         }
     }
 
-    // If the edge doesn't have an obvious sign change,
-    // then place a vertex on a sharp feature of the distance
-    // field (which will hopefully be a sign change, if a sign
-    // change exists along this edge).
-    if (!has_inside || !has_outside) {
-            const auto region_ = region.template subspace<TargetFloating>();
-            QEF<TargetDimension> qef_ = qef.template sub<TargetFloating>();
-
-            const auto target_pos = unMassPoint<BaseDimension>(mass_point);
-            const auto target_pos_ = pack<BaseDimension, Target>(target_pos);
-            auto sol = qef_.solveBounded(region_, 1,
-                    target_pos_, qef_.averageDistanceValue());
-
-#if LIBFIVE_HYBRID_DEBUG
-            std::cout << "Solved edge " << edge.i << " with error " << sol.error << "\n";
-#endif
-            // Unpack from the reduced-dimension solution to the leaf vertex
-            auto out = unpack<BaseDimension, Target>(sol.position, region);
-            tree->placeSubspaceVertex(eval,tape, region, edge, out);
-    }
-    // Otherwise, do a binary search for the intersection
-    else {
+    if (has_inside && has_outside) {
+        // If there's a sign change, then do a binary search to
+        // find the exact point of intersection, marking the resulting
+        // point as a surface feature.
         tree->leaf->on_surface[edge.i] = true;
         auto surf = searchBetween<BaseDimension>(eval, tape, region,
                                                  inside, outside);
@@ -329,6 +301,30 @@ void processEdge(HybridTree<BaseDimension>* tree,
         Eigen::Matrix<double, BaseDimension, 1> out =
             (surf.col(0) + surf.col(1)) / 2;
         tree->placeSubspaceVertex(eval, tape, region, edge, out);
+    } else {
+        // If the edge doesn't have an obvious sign change,
+        // then place a vertex on a sharp feature of the distance
+        // field (which will hopefully be a sign change, if a sign
+        // change exists along this edge).
+        QEF<BaseDimension> qef;
+        for (unsigned j=0; j < ipow(3, BaseDimension); ++j) {
+            if (edge.i != j && edge.contains(NeighborIndex(j))) {
+                qef += tree->leaf->qef[j];
+            }
+        }
+        const auto region_ = region.template subspace<TargetFloating>();
+        QEF<TargetDimension> qef_ = qef.template sub<TargetFloating>();
+
+        // Bounded, minimizing towards the center of the region
+        // (which is the of the edge in this case)
+        auto sol = qef_.solveBounded(region_, 1);
+
+#if LIBFIVE_HYBRID_DEBUG
+            std::cout << "Solved edge " << edge.i << " with error " << sol.error << "\n";
+#endif
+        // Unpack from the reduced-dimension solution to the leaf vertex
+        auto out = unpack<BaseDimension, Target>(sol.position, region);
+        tree->placeSubspaceVertex(eval,tape, region, edge, out);
     }
 }
 
