@@ -29,6 +29,13 @@ Tree rotate2d(Tree t, float angle)
                    Tree::Z());
 }
 
+Tree rotate_x(Tree t, float angle)
+{
+    return t.remap(Tree::X(),
+                   cos(angle) * Tree::Y() + sin(angle) * Tree::Z(),
+                   -sin(angle) * Tree::Y() + cos(angle) * Tree::Z());
+}
+
 Tree move(Tree t, Eigen::Vector3f m)
 {
     return t.remap(Tree::X() - m.x(), Tree::Y() - m.y(), Tree::Z() - m.z());

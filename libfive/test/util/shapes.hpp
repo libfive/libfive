@@ -20,6 +20,7 @@ Kernel::Tree circle(float r, Eigen::Vector2f pos=Eigen::Vector2f::Zero());
 Kernel::Tree sphere(float r, Eigen::Vector3f center=Eigen::Vector3f::Zero());
 Kernel::Tree box(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper);
 Kernel::Tree rotate2d(Kernel::Tree t, float angle);
+Kernel::Tree rotate_x(Kernel::Tree t, float angle);
 Kernel::Tree move(Kernel::Tree t, Eigen::Vector3f d);
 Kernel::Tree shell(Kernel::Tree t, float offset);
 Kernel::Tree blend(Kernel::Tree a, Kernel::Tree b, float r);
