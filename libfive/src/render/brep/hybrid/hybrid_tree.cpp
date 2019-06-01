@@ -368,6 +368,9 @@ void process(HybridTree<BaseDimension>* tree,
                 qef_surface += tree->leaf->qef[j];
                 mass_point_surface += tree->leaf->mass_point.col(j);
             }
+            // Similarly, for distance-field vertices, we don't care about
+            // any data other than corners, because that's the only source
+            // of higher-dimension spaces QEF info.
             if (m.dimension() == 0) {
                 qef_distance += tree->leaf->qef[j];
             }
