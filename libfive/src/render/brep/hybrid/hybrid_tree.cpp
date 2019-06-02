@@ -366,7 +366,15 @@ void process(HybridTree<BaseDimension>* tree,
                 tree->leaf->intersection(j))
             {
                 qef_surface += tree->leaf->qef[j];
-                mass_point_surface += tree->leaf->mass_point.col(j);
+            }
+            if (tree->leaf->intersection(j)) {
+                if (tree->leaf->on_surface[j]) {
+                    Eigen::Matrix<double, BaseDimension + 1, 1> v;
+                    v << tree->leaf->pos.col(j), 1;
+                    mass_point_surface += v;
+                } else {
+                    mass_point_surface += tree->leaf->mass_point.col(j);
+                }
             }
             // Similarly, for distance-field vertices, we don't care about
             // any data other than corners, because that's the only source
