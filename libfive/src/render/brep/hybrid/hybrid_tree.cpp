@@ -392,6 +392,17 @@ void process(HybridTree<BaseDimension>* tree,
 
     DEBUG("Solving for subspace " << Target);
 
+    // Then, try solving for a sharp feature on the distance field itself,
+    // using the DC-chosen point as a starting point if it's within the
+    // cell's boundaries.
+    QEF<TargetDimension> qef_dist_ = qef_distance
+        .template sub<TargetFloating>();
+    auto sol_dist = qef_dist_.solveBounded(region_, 1);
+    auto v_dist = unpack<BaseDimension, Target>(sol_dist.position, region);
+    DEBUG("  found distance vertex at " << v_dist.transpose());
+    DEBUG("      rank: " << sol_dist.rank);
+    DEBUG("      error: " << sol_dist.error);
+
     // If we have found one or more intersections and the surface is locally
     // manifold, then we try to position the vertex using Dual Contouring.
     if (mass_point_surface[BaseDimension] != 0 &&
@@ -423,17 +434,6 @@ void process(HybridTree<BaseDimension>* tree,
         DEBUG("      target pos: " << target_pos_surf.transpose());
         DEBUG("      error: " << sol_surf.error);
 
-        // Then, try solving for a sharp feature on the distance field itself,
-        // using the DC-chosen point as a starting point if it's within the
-        // cell's boundaries.
-        QEF<TargetDimension> qef_dist_ = qef_distance
-            .template sub<TargetFloating>();
-        auto sol_dist = qef_dist_.solveBounded(region_, 1);
-        auto v_dist = unpack<BaseDimension, Target>(sol_dist.position, region);
-        DEBUG("  found distance vertex at " << v_dist.transpose());
-        DEBUG("      rank: " << sol_dist.rank);
-        DEBUG("      error: " << sol_dist.error);
-
         // If we successfully placed the vertex using Dual Contouring
         // rules, then mark that the resulting vertex is a surface vertex.
         if (within_region && (sol_surf.error <= 1e-12
@@ -443,24 +443,14 @@ void process(HybridTree<BaseDimension>* tree,
             DEBUG("      Placed DC vertex");
             tree->placeSubspaceVertex(eval, tape, region, n, v_surf);
             tree->leaf->on_surface[n.i] = true;
-        } else {
-            DEBUG("      Placing distance vertex");
-            tree->placeSubspaceVertex(eval, tape, region, n, v_dist);
+            return;
         }
-    } else {
-        // Solve the distance-field sharp-feature QEF
-        // TODO: should we be optimizing towards the center, or somewhere else?
-        QEF<TargetDimension> qef_ = qef_distance.template sub<TargetFloating>();
-        auto sol = qef_.solveBounded(region_, 1);
-
-        // Unpack from the reduced-dimension solution to the leaf vertex
-        auto out = unpack<BaseDimension, Target>(sol.position, region);
-
-        DEBUG(" placing distance vertex at " << n.i << " " << out.transpose());
-        DEBUG("  rank: " << sol.rank);
-        DEBUG("  error: " << sol.error);
-        tree->placeSubspaceVertex(eval, tape, region, n, out);
     }
+
+    //  If we failed to place a DC vertex, then we're placing a distance
+    //  vertex instead.
+    DEBUG("      Placing distance vertex");
+    tree->placeSubspaceVertex(eval, tape, region, n, v_dist);
 }
 
 
