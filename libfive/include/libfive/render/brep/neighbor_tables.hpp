@@ -18,8 +18,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 template <unsigned N>
-struct NeighborTables
+class NeighborTables
 {
+public:
     /*
      *  Returns the corner index (within a particular neighbor) that matches
      *  the provided corner index.
@@ -233,43 +234,49 @@ struct NeighborTables
      *  list of neighbors + quad/octant indices that form the new neighbors
      *  array.
      */
-    static std::array<
-        std::array<std::pair<NeighborIndex, CornerIndex>, ipow(3, N) - 1>,
-        ipow(2, N)> pushIndexTable;
+    using PushIndexArray = std::array<std::pair<NeighborIndex, CornerIndex>,
+                                      ipow(3, N) - 1>;
+    std::array<PushIndexArray, ipow(2, N)> pushIndexTable_data;
+    static const PushIndexArray& pushIndexTable(CornerIndex c);
 
     /*  Pre-calculated, expanded version of getCorner.
      *
      *  Index it with a particular corner, and it will return a list of
      *  neighbor + corner indices that represent that same corner.
      */
-    static std::array<
-        std::array<std::pair<NeighborIndex, CornerIndex>, ipow(2, N) - 1>,
-        ipow(2, N)> cornerTable;
+    using CornerTableArray = std::array<std::pair<NeighborIndex, CornerIndex>,
+                                        ipow(2, N) - 1>;
+    static const CornerTableArray& cornerTable(CornerIndex c);
 
     /*  Pre-calculated, expanded version of getCorner.
      *
      *  Index it with a particular subspace, and it will return a list of
      *  neighbor + subspace (neighbor) indices that represent that subspace. */
-    static std::array<
-        boost::container::static_vector<std::pair<NeighborIndex, NeighborIndex>,
-                                        ipow(2, N)>,
-        ipow(3, N)> neighborTable;
+    using NeighborTableVec = boost::container::static_vector<
+            std::pair<NeighborIndex, NeighborIndex>,
+            ipow(2, N)>;
+    static const NeighborTableVec& neighborTable(NeighborIndex n);
 
     /*  When collecting QEFs from a set of children, this table contains
      *  the list of which children + subspaces to sum for each subspace
      *  in the parent.  */
-    static std::array<
-        boost::container::static_vector<std::pair<CornerIndex, NeighborIndex>,
-                                        ipow(3, N)>,
-        ipow(3, N)> qefSumTable;
+    using QEFTableVec = boost::container::static_vector<
+            std::pair<CornerIndex, NeighborIndex>,
+            ipow(3, N)>;
+    static const QEFTableVec& qefSumTable(NeighborIndex n);
 
-    /*  Used as a flag to trigger population of the static arrays */
-    static bool buildTables();
-    static bool loaded;
+protected:
+    /*  Implements a Meyer's singleton */
+    static const NeighborTables& instance();
+    NeighborTables();
+
+    std::array<CornerTableArray, ipow(2, N)> cornerTable_data;
+    std::array<NeighborTableVec, ipow(3, N)> neighborTable_data;
+    std::array<QEFTableVec, ipow(3, N)> qefSumTable_data;
 };
 
 //  We explicitly instantiate the NeighborTables classes in neighbor_tables.cpp
-extern template struct NeighborTables<2>;
-extern template struct NeighborTables<3>;
+extern template class NeighborTables<2>;
+extern template class NeighborTables<3>;
 
 }   // namespace Kernel

@@ -23,7 +23,7 @@ C Neighbors<N, T, C>::push(uint8_t child,
     C out;
     for (unsigned i=0; i < ipow(3, N) - 1; ++i)
     {
-        const auto q = NeighborTables<N>::pushIndexTable[child][i];
+        const auto q = NeighborTables<N>::pushIndexTable(child)[i];
         if (q.first.i == -1) {
             out.neighbors[i] = children[q.second.i].load();
         } else if (neighbors[q.first.i]) {

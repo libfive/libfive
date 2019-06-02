@@ -534,7 +534,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
 
     // Collect all of the child subspaces, based on a precalculated table
     for (unsigned i=0; i < ipow(3, N); ++i) {
-        for (const auto& t: NeighborTables<N>::qefSumTable[i]) {
+        for (const auto& t: NeighborTables<N>::qefSumTable(i)) {
             leaf_sub[i]->qef += cs[t.first.i]->leaf->sub[t.second.i].load()->qef;
         }
     }

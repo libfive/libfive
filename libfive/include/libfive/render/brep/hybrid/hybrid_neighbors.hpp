@@ -55,7 +55,7 @@ public:
     template <typename F>
     void map(NeighborIndex i, F& f) const {
         // Apply the function to every direct neighbor
-        for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
+        for (const auto& t : NeighborTables<N>::neighborTable(i)) {
             const auto n = this->neighbors[t.first.i];
             if (n != nullptr && n->leaf != nullptr) {
                 f(n, t.second);
@@ -64,7 +64,7 @@ public:
 
         // Then search down the tree, if this is a corner
         if (i.isCorner()) {
-            for (const auto& t : NeighborTables<N>::cornerTable[i.pos()]) {
+            for (const auto& t : NeighborTables<N>::cornerTable(i.pos())) {
                 auto n = this->neighbors[t.first.i];
                 if (n != nullptr && n->isBranch()) {
                     while (n->isBranch()) {

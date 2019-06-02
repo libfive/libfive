@@ -16,9 +16,9 @@ namespace Kernel {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-Interval::State DCNeighbors<N>::check(uint8_t corner) const
+Interval::State DCNeighbors<N>::check(CornerIndex corner) const
 {
-    for (const auto& t : NeighborTables<N>::cornerTable[corner])
+    for (const auto& t : NeighborTables<N>::cornerTable(corner))
     {
         if (this->neighbors[t.first.i] != nullptr) {
             return this->neighbors[t.first.i]->cornerState(t.second.i);
@@ -44,11 +44,11 @@ std::shared_ptr<IntersectionVec<N>> DCNeighbors<N>::check(
     //
     // This is admittedly code that took maximum cleverness to write,
     // so think carefully about debugging it...
-    auto itr_a = NeighborTables<N>::cornerTable[a].begin();
-    auto itr_b = NeighborTables<N>::cornerTable[b].begin();
+    auto itr_a = NeighborTables<N>::cornerTable(a).begin();
+    auto itr_b = NeighborTables<N>::cornerTable(b).begin();
 
-    while (itr_a != NeighborTables<N>::cornerTable[a].end() &&
-           itr_b != NeighborTables<N>::cornerTable[b].end())
+    while (itr_a != NeighborTables<N>::cornerTable(a).end() &&
+           itr_b != NeighborTables<N>::cornerTable(b).end())
     {
         if (itr_a->first.i < itr_b->first.i) {
             itr_a++;

@@ -14,6 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/dc/intersection.hpp"
 #include "libfive/render/brep/neighbors.hpp"
+#include "libfive/render/brep/indexes.hpp"
 #include "libfive/eval/interval.hpp"
 
 namespace Kernel {
@@ -35,7 +36,7 @@ public:
      *  by any of the neighbors, returning FILLED / EMPTY if that is the case
      *  and UNKNOWN otherwise.
      */
-    Interval::State check(uint8_t corner) const;
+    Interval::State check(CornerIndex corner) const;
 
     /*
      *  Looks up the given edge to see if it has been calculated by any

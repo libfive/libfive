@@ -24,7 +24,7 @@ template <unsigned N>
 SimplexLeafSubspace<N>* SimplexNeighbors<N>::getSubspace(NeighborIndex i) const
 {
     SimplexLeafSubspace<N>* out = nullptr;
-    for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
+    for (const auto& t : NeighborTables<N>::neighborTable(i)) {
         const auto n = this->neighbors[t.first.i];
         if (n != nullptr && n->leaf != nullptr) {
             auto ptr = n->leaf->sub[t.second.i].load();
@@ -52,7 +52,7 @@ SimplexLeafSubspace<N>* SimplexNeighbors<N>::getSubspace(NeighborIndex i) const
     //   ---------
     //
     if (i.isCorner()) {
-        for (const auto& t : NeighborTables<N>::cornerTable[i.pos()]) {
+        for (const auto& t : NeighborTables<N>::cornerTable(i.pos())) {
             auto n = this->neighbors[t.first.i];
             if (n != nullptr) {
                 while (n->isBranch()) {
@@ -76,7 +76,7 @@ SimplexLeafSubspace<N>* SimplexNeighbors<N>::getSubspace(NeighborIndex i) const
 template <unsigned N>
 std::pair<const SimplexLeaf<N>*, NeighborIndex> SimplexNeighbors<N>::check(NeighborIndex i) const
 {
-    for (const auto& t : NeighborTables<N>::neighborTable[i.i]) {
+    for (const auto& t : NeighborTables<N>::neighborTable(i)) {
         const auto n = this->neighbors[t.first.i];
         if (n != nullptr && n->leaf != nullptr) {
             return std::make_pair(n->leaf, t.second.i);
