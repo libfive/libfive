@@ -367,6 +367,9 @@ public:
         for (unsigned col=0; col < N; ++col) {
             AtB_c(0) -= AtA(N, col) * pos(col);
         }
+
+        // TODO:  This is probably reducible to a single division, since
+        // it's all one-coefficient arrays.
         auto sol = QEF<0>::solve(AtA_c, AtB_c, target_c);
 
         Vector v;
