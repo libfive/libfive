@@ -335,6 +335,7 @@ public:
         return out;
     }
 
+    /*  Calculates the QEF error for a given position + value. */
     double error(const Eigen::Matrix<double, N, 1>& pos,
                  const double value) const {
         Vector v;
@@ -344,6 +345,45 @@ public:
             2 * v.transpose() * AtB() +
             BtB();
         return err(0);
+    }
+
+    /*  Calculates the QEF error for a given position, with value allowed
+     *  to float and minimize the error.  This is equivalent to doing a
+     *  constrained solve with the position fixed. */
+    Solution minimizeErrorAt(const Eigen::Matrix<double, N, 1>& pos) const {
+        // This is based on solveConstrained above, specialized
+        // to constrain all of the position axes and let the
+        // value axis float.
+        Eigen::Matrix<double, 1, 1> AtA_c;
+        Eigen::Matrix<double, 1, 1> AtB_c;
+        Eigen::Matrix<double, 1, 1> target_c;
+
+        // Cache the AtB calculation so we only do it once
+        const auto AtB_ = AtB();
+
+        AtB_c(0) = AtB_(N);
+        AtA_c(0, 0) = AtA(N, N);
+        target_c(0) = 0.0;
+        for (unsigned col=0; col < N; ++col) {
+            AtB_c(0) -= AtA(N, col) * pos(col);
+        }
+        auto sol = QEF<0>::solve(AtA_c, AtB_c, target_c);
+
+        Vector v;
+        v << pos, sol.value(0);
+        Eigen::Matrix<double, 1, 1> err =
+            v.transpose() * AtA * v -
+            2 * v.transpose() * AtB_ +
+            BtB();
+
+        Solution out;
+        out.position = pos;
+        out.constrained.array() = true;
+        out.value = sol.value(0);
+        out.rank = 0;
+        out.pseudorank = 0;
+        out.error = err(0);
+        return out;
     }
 
 protected:

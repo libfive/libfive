@@ -253,3 +253,22 @@ TEST_CASE("QEF::solveBounded")
         }
     }
 }
+
+TEST_CASE("QEF::minimizeErrorAt")
+{
+    auto c = circle(1, Eigen::Vector2f(1.5, 2.7));
+    Region<2> r({1, 2}, {2, 3});
+    QEF<2> q = fromCorners(r, c);
+
+    // It doesn't matter what this value is; we're just going to
+    // confirm that the value is correctly minimizing the error
+    // by trying to offset it a little bit.
+    Eigen::Vector2d v(1.3, 1.7);
+    auto sol = q.minimizeErrorAt(v);
+
+    CAPTURE(sol.value);
+    CAPTURE(sol.error);
+    REQUIRE(sol.error == Approx(q.error(v, sol.value)));
+    REQUIRE(q.error(v, sol.value + 0.01) > sol.error);
+    REQUIRE(q.error(v, sol.value - 0.01) > sol.error);
+}
