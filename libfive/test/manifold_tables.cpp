@@ -26,7 +26,7 @@ TEST_CASE("ManifoldTables<2>::manifold")
      */
 
     // We're going to just do a bunch of spot-checks here
-    REQUIRE(ManifoldTables<2>::manifold(0));
+    REQUIRE(!ManifoldTables<2>::manifold(0));
     REQUIRE(ManifoldTables<2>::manifold(1 << 0));
     REQUIRE(ManifoldTables<2>::manifold(
         (1 << 0) | (1 << 6) | (1 << 3)));
@@ -40,12 +40,16 @@ TEST_CASE("ManifoldTables<2>::manifold")
         (1 << 3) | (1 << 4) | (1 << 5)));
     REQUIRE(!ManifoldTables<2>::manifold(
         (1 << 6) | (1 << 4)));
+    REQUIRE(!ManifoldTables<2>::manifold(
+        (1 << 0) | (1 << 1) | (1 << 2) |
+        (1 << 3) | (1 << 4) | (1 << 5) |
+        (1 << 6) | (1 << 7)));
 }
 
 TEST_CASE("ManifoldTables<3>::manifold")
 {
     // All of the 2D case should still be true
-    REQUIRE(ManifoldTables<3>::manifold(0));
+    REQUIRE(!ManifoldTables<3>::manifold(0));
     REQUIRE(ManifoldTables<3>::manifold(1 << 0));
     REQUIRE(ManifoldTables<3>::manifold(
         (1 << 0) | (1 << 6) | (1 << 3)));
@@ -63,4 +67,8 @@ TEST_CASE("ManifoldTables<3>::manifold")
         (1 << 0) | (1 << 8)));
     REQUIRE(ManifoldTables<3>::manifold(
         (1 << 0) | (1 << 8) | (1 << 5)));
+    REQUIRE(ManifoldTables<3>::manifold(
+        (1 << 0) | (1 << 1) | (1 << 2) |
+        (1 << 3) | (1 << 4) | (1 << 5) |
+        (1 << 6) | (1 << 7)));
 }

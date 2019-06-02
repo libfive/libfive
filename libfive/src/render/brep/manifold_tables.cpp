@@ -24,6 +24,11 @@ bool checkBitfield(uint32_t b) {
         }
     }
 
+    //  A completely-empty or completely-filled region isn't a topological disk
+    if (new_inside == 0 || new_inside == (1 << ipow(3, N)) - 1) {
+        return false;
+    }
+
     // We'll flood-fill from a starting point for each set.
     uint32_t connected_inside = 0;
 
