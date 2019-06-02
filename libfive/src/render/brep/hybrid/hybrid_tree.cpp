@@ -347,41 +347,38 @@ void process(HybridTree<BaseDimension>* tree,
 
     uint32_t filled_mask = 0;
     unsigned filled_mask_bit = 0;
-    for (unsigned j=0; j < ipow(3, BaseDimension); ++j) {
-        NeighborIndex m(j);
-        if (n.i != j && n.contains(m)) {
-            // Build up a bitmask of occupied perimeter subspaces, so that
-            // we can check for manifoldness later.
-            if (tree->leaf->inside[j]) {
-                filled_mask |= (1 << filled_mask_bit);
-            }
-            filled_mask_bit++;
+    for (const auto& m : EdgeTables<BaseDimension>::subspaces(n)) {
+        // Build up a bitmask of occupied perimeter subspaces, so that
+        // we can check for manifoldness later.
+        if (tree->leaf->inside[m.i]) {
+            filled_mask |= (1 << filled_mask_bit);
+        }
+        filled_mask_bit++;
 
-            // This part is a bit subtle:  vertices on 2D subsurfaces (faces)
-            // that are 'surface' vertices don't add any useful data, so we
-            // skip them when accumulating QEFs.  This is because their data
-            // should be contained within the edge QEFs that went into
-            // constructing them, and we don't want to double-count it.
-            if (!(m.dimension() == 2 && tree->leaf->on_surface[m.i]) &&
-                tree->leaf->intersection(j))
-            {
-                qef_surface += tree->leaf->qef[j];
+        // This part is a bit subtle:  vertices on 2D subsurfaces (faces)
+        // that are 'surface' vertices don't add any useful data, so we
+        // skip them when accumulating QEFs.  This is because their data
+        // should be contained within the edge QEFs that went into
+        // constructing them, and we don't want to double-count it.
+        if (!(m.dimension() == 2 && tree->leaf->on_surface[m.i]) &&
+            tree->leaf->intersection(m.i))
+        {
+            qef_surface += tree->leaf->qef[m.i];
+        }
+        if (tree->leaf->intersection(m.i)) {
+            if (tree->leaf->on_surface[m.i]) {
+                Eigen::Matrix<double, BaseDimension + 1, 1> v;
+                v << tree->leaf->pos.col(m.i), 1;
+                mass_point_surface += v;
+            } else {
+                mass_point_surface += tree->leaf->mass_point.col(m.i);
             }
-            if (tree->leaf->intersection(j)) {
-                if (tree->leaf->on_surface[j]) {
-                    Eigen::Matrix<double, BaseDimension + 1, 1> v;
-                    v << tree->leaf->pos.col(j), 1;
-                    mass_point_surface += v;
-                } else {
-                    mass_point_surface += tree->leaf->mass_point.col(j);
-                }
-            }
-            // Similarly, for distance-field vertices, we don't care about
-            // any data other than corners, because that's the only source
-            // of higher-dimension spaces QEF info.
-            if (m.dimension() == 0) {
-                qef_distance += tree->leaf->qef[j];
-            }
+        }
+        // Similarly, for distance-field vertices, we don't care about
+        // any data other than corners, because that's the only source
+        // of higher-dimension spaces QEF info.
+        if (m.dimension() == 0) {
+            qef_distance += tree->leaf->qef[m.i];
         }
     }
 
