@@ -321,7 +321,11 @@ public:
         }
 
         // Construct an empty solution object with infinite error
+        // (and dummy values for other fields)
         Solution out;
+        out.value = std::nan("");
+        out.rank = 0;
+        out.pseudorank = 0;
         out.error = std::numeric_limits<double>::infinity();
 
         // Do static loop unrolling to check every smaller dimension
