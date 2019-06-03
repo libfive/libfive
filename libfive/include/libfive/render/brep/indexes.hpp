@@ -34,10 +34,19 @@ struct NeighborIndex {
     constexpr NeighborIndex() : i(0) {}
     constexpr NeighborIndex(unsigned i) : i(i) {}
 
-    constexpr unsigned dimension() const {
+    /*  Calling dimension() on a constexpr NeighborIndex and using it as a 
+     *  constexpr value seems to cause an internal compiler error in Visual 
+     *  Studio, so we can use this helper static method for a workaround.
+     */
+
+    static constexpr unsigned dimension(unsigned i) {
         return i
             ? ((i % 3) == 2) + NeighborIndex(i / 3).dimension()
             : 0;
+    }
+
+    constexpr unsigned dimension() const {
+        return dimension(i);
     }
 
     // Defined below, after struct CornerIndex is defined
@@ -121,6 +130,7 @@ struct NeighborIndex {
             : 0);
     }
     int i;
+
 };
 
 /*
