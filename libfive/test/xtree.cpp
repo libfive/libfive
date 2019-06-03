@@ -150,7 +150,7 @@ TEST_CASE("DCTree<2>::vertex_count")
 TEST_CASE("DCTree<3>::vert")
 {
     auto walk = [](Root<DCTree<3>>& xtree,
-                   XTreeEvaluator& eval, float err=0.001)
+                   XTreeEvaluator& eval, float err)
     {
         std::list<const DCTree<3>*> todo = {xtree.get()};
         while (todo.size())
@@ -194,7 +194,7 @@ TEST_CASE("DCTree<3>::vert")
         BRepSettings settings;
         settings.min_feature = 0.1;
         auto xtree = DCPool<3>::build(b, r, settings);
-        walk(xtree, eval);
+        walk(xtree, eval, 0.001);
     }
 
     SECTION("Another sliced box")
@@ -207,7 +207,7 @@ TEST_CASE("DCTree<3>::vert")
         BRepSettings settings;
         settings.min_feature = 0.1;
         auto xtree = DCPool<3>::build(b, r, settings);
-        walk(xtree, eval);
+        walk(xtree, eval, 0.001);
     }
 
     SECTION("Sphere with circular cutout (manifoldness)")

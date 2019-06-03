@@ -21,7 +21,6 @@ TEST_CASE("MarchingTable<2>")
     for (unsigned i=1; i < MarchingTable<2>::mt.v.size() - 1; ++i)
     {
         CAPTURE(i);
-        auto& _t = MarchingTable<2>::mt.v[i];
         REQUIRE(MarchingTable<2>::mt.v[i][0][0].first != -1);
     }
 
