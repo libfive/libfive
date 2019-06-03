@@ -1,0 +1,11 @@
+dist: xenial
+language: minimal
+
+services:
+- docker
+
+install:
+- .travis/build-docker.sh
+
+script:
+- docker run -v $PWD:/root/libfive libfive:1
