@@ -31,7 +31,7 @@ namespace Kernel {
  *  Helper function to pack from a higher dimension to a lower one
  */
 template <unsigned BaseDimension, unsigned Target>
-Eigen::Matrix<double, NeighborIndex(Target).dimension(), 1> pack(
+Eigen::Matrix<double, NeighborIndex::dimension(Target), 1> pack(
         const Eigen::Matrix<double, BaseDimension, 1>& in)
 {
     constexpr NeighborIndex n(Target);
@@ -54,7 +54,7 @@ Eigen::Matrix<double, NeighborIndex(Target).dimension(), 1> pack(
  */
 template <unsigned BaseDimension, unsigned Target>
 Eigen::Matrix<double, BaseDimension, 1> unpack(
-        const Eigen::Matrix<double, NeighborIndex(Target).dimension(), 1>& in,
+        const Eigen::Matrix<double, NeighborIndex::dimension(Target), 1>& in,
         const Region<BaseDimension>& region)
 {
     constexpr NeighborIndex n(Target);
