@@ -46,7 +46,7 @@ to change variables in the script.
 (c) 2015-2018 Matthew Keeter
 
 Different layers of this project are released under different licenses:
-- The `libfive` dynamic library is released under the
+- The `libfive` library is released under the
   [Mozilla Public License, version 2](https://www.mozilla.org/en-US/MPL/2.0/).
 - `libfive-guile` and `Studio` are released under the
   [GNU General Public License, version 2](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html)
