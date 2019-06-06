@@ -105,10 +105,14 @@ public:
 
     /*
      *  Sets appropriate bits to 1 if the given point (as set with
-     *  set(Eigen::Vector3f, i) and evaluated with evaluArray) is ambiguous.
+     *  set(Eigen::Vector3f, i) and evaluated with evalArray) is ambiguous.
      *
-     *  This function must only be called after evalArray is called
-     *  (with the same result block size)
+     *  This function should set bits to indicate ambiguity in the oracle,
+     *  but should not clear bits (as they may have been set by other oracles
+     *  or evaluators).
+     *
+     *  It must only be called after evalArray is called
+     *  (with the same result block size).
      */
     virtual void checkAmbiguous(
             Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
