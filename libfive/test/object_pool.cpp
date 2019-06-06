@@ -19,8 +19,22 @@ struct Dummy {
     static void* operator new[](std::size_t sz) {
         return ::operator new[](sz);
     }
-    void operator delete[]( void* ptr ) {
+    void operator delete[](void* ptr) {
         ::operator delete[](ptr);
+    }
+    static void* operator new(size_t sz) {
+        return ::operator new(sz);
+    }
+    void operator delete(void* ptr) {
+        ::operator delete(ptr);
+    }
+    template <typename... Args>
+    static void* operator new(size_t sz, Args... args) {
+        return ::operator new(sz);
+    }
+    template <typename... Args>
+    void operator delete(void* ptr, Args... args) {
+        ::operator delete(ptr);
     }
     int i;
 };

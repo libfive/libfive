@@ -17,6 +17,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "util/shapes.hpp"
 #include "util/mesh_checks.hpp"
 
+#include <set>
+
 using namespace Kernel;
 
 TEST_CASE("HybridPool::build (smoke test)")

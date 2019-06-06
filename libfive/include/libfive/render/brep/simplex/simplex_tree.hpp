@@ -93,9 +93,14 @@ struct SimplexLeaf
     static void* operator new[](std::size_t sz) {
         return ::operator new[](sz);
     }
-    void operator delete[]( void* ptr ) {
+    void operator delete[](void* ptr) {
         ::operator delete[](ptr);
     }
+    template <typename... Args>
+    void operator delete[](void* ptr, Args... args) {
+        ::operator delete(ptr);
+    }
+
     /* Non-array versions are also required for ObjectPool by Visual Studio's 
      * compiler.
      */
@@ -104,6 +109,10 @@ struct SimplexLeaf
         return ::operator new(sz, args...);
     }
     void operator delete(void* ptr) {
+        ::operator delete(ptr);
+    }
+    template <typename... Args>
+    void operator delete(void* ptr, Args... args) {
         ::operator delete(ptr);
     }
 

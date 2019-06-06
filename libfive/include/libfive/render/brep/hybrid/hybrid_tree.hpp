@@ -175,14 +175,6 @@ public:
         NeighborIndex n, const Vec& pos);
 
 protected:
-    /*  Evaluates the 2^N corners of this tree, setting
-     *      leaf->pos
-     *      leaf->inside
-     *      leaf->qef
-     */
-    void evalCorners(XTreeEvaluator* eval,
-                     Tape::Handle tape,
-                     const Region<N>& region);
 
     /*
      *  Process all subspaces of dimension D.  This means:
