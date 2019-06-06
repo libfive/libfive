@@ -35,7 +35,6 @@ bool inline Intersection<N>::operator==(const Intersection<N>& other) const
 
 template <size_t N>
 using IntersectionVec =
-        boost::container::small_vector<Intersection<N>, 4,
-            Eigen::aligned_allocator<Intersection<N>>>;
+        boost::container::small_vector<Intersection<N>, 4>;
 
 }   // namespace Kernel

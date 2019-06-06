@@ -105,4 +105,4 @@ bool ManifoldTables<N>::manifold(uint32_t b)
 template class ManifoldTables<2>;
 template class ManifoldTables<3>;
 
-};
+}
