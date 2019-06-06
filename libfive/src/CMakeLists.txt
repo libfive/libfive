@@ -13,7 +13,7 @@ ADD_CUSTOM_TARGET(five-version
 )
 
 if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DFIVE_DLL")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj /DFIVE_DLL")
 endif()
 
 add_library(five SHARED
