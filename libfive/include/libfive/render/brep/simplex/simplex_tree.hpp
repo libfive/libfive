@@ -24,6 +24,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/object_pool.hpp"
+#include "libfive/render/brep/default_new_delete.hpp"
 #include "libfive/render/brep/simplex/qef.hpp"
 #include "libfive/render/brep/simplex/surface_edge_map.hpp"
 
@@ -88,33 +89,7 @@ struct SimplexLeaf
      *  ordered map. */
     SurfaceEdgeMap<32> surface;
 
-    /*  Required for ObjectPool, but we're just using the default operators
-     *  here because there are no alignment requirements. */
-    static void* operator new[](std::size_t sz) {
-        return ::operator new[](sz);
-    }
-    void operator delete[](void* ptr) {
-        ::operator delete[](ptr);
-    }
-    template <typename... Args>
-    void operator delete[](void* ptr, Args... args) {
-        ::operator delete(ptr);
-    }
-
-    /* Non-array versions are also required for ObjectPool by Visual Studio's 
-     * compiler.
-     */
-    template <typename... Args>
-    static void* operator new(size_t sz, Args... args) {
-        return ::operator new(sz, args...);
-    }
-    void operator delete(void* ptr) {
-        ::operator delete(ptr);
-    }
-    template <typename... Args>
-    void operator delete(void* ptr, Args... args) {
-        ::operator delete(ptr);
-    }
+    DEFAULT_OPERATORS_NEW_AND_DELETE
 
     /*  Represents how far from minimum-size leafs we are */
     unsigned level;
