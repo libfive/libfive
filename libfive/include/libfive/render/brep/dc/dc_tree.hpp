@@ -264,7 +264,7 @@ protected:
 
     /*
      *  When collecting children and collapsing, each child can contribute the
-     *  intersections on the N edges (2*N directed edges) adjacent to the 
+     *  intersections on the N edges (2*N directed edges) adjacent to the
      *  corner that it contributes.  This method uses mt, which therefore
      *  must have been built first.
      */
