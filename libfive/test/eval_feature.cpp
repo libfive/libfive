@@ -76,8 +76,8 @@ TEST_CASE("FeatureEvaluator::isInside")
 
     SECTION("Box-box intersection")
     {
-        auto b = max(box({-1, 0, -1}, {1, 2, -0.2}),
-                    -box({0.1, 0, -1}, {1, 2, -0.1}));
+        auto b = max(box({-1, 0, -1}, {1, 2, -0.2f}),
+                    -box({0.1f, 0, -1}, {1, 2, -0.1f}));
         FeatureEvaluator e(b);
         REQUIRE(!e.isInside({0.625f, 0.0f, -1.0f}));
     }

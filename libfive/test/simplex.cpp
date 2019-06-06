@@ -203,7 +203,7 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 
     SECTION("Box (low-resolution)")
     {
-        auto c = box({-0.4, -0.4, -0.4}, {0.4, 0.4, 0.4});
+        auto c = box({-0.4f, -0.4f, -0.4f}, {0.4f, 0.4f, 0.4f});
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
         BRepSettings settings;
@@ -218,7 +218,7 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 
 TEST_CASE("SimplexMesher<3>: box with problematic edges")
 {
-    auto shape = box({-1, -1, -1}, {1.1, 1.1, 1.1});
+    auto shape = box({-1, -1, -1}, {1.1f, 1.1f, 1.1f});
     auto r = Region<3>({-2, -2, -2}, {2, 2, 2});
 
     // Build a tree without any collapsing
@@ -432,7 +432,7 @@ TEST_CASE("SimplexTree<3>: vertex placement in centered cylinder")
 
 TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
 {
-    auto c = box({-3.1, -3.1, -3.1}, {3.1, 3.1, 3.1});
+    auto c = box({-3.1f, -3.1f, -3.1f}, {3.1f, 3.1f, 3.1f});
     Region<3> r({-4, -4, -4}, {4, 4, 4});
 
     BRepSettings settings;
@@ -479,7 +479,7 @@ TEST_CASE("SimplexTree<3>::assignIndices")
 
 
     SECTION("Sphere-cube intersection") {
-        auto c = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+        auto c = min(sphere(0.7, {0, 0, 0.1f}), box({-1, -1, -1}, {1, 1, 0.1f}));
         Region<3> r({-10, -10, -10}, {10, 10, 10});
 
         BRepSettings settings;
@@ -563,7 +563,7 @@ TEST_CASE("SimplexMesher (smoke test)")
 
     SECTION("Low-resolution box")
     {
-        auto c = box({-0.4, -0.4, -0.4}, {0.4, 0.4, 0.4});
+        auto c = box({-0.4f, -0.4f, -0.4f}, {0.4f, 0.4f, 0.4f});
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
         BRepSettings settings;
@@ -582,7 +582,7 @@ TEST_CASE("SimplexMesher (smoke test)")
 
 TEST_CASE("SimplexMesher: sphere-box intersection vertex placement")
 {
-    auto c = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+    auto c = min(sphere(0.7, {0, 0, 0.1f}), box({-1, -1, -1}, {1, 1, 0.1f}));
     Region<3> r({-10, -10, -10}, {10, 10, 10});
 
     BRepSettings settings;
@@ -670,7 +670,7 @@ TEST_CASE("SimplexMesher: edge pairing")
 
     SECTION("Box (low-resolution)")
     {
-        auto c = box({-0.4, -0.4, -0.4}, {0.4, 0.4, 0.4});
+        auto c = box({-0.4f, -0.4f, -0.4f}, {0.4f, 0.4f, 0.4f});
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
         BRepSettings settings;

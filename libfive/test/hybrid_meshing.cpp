@@ -169,7 +169,7 @@ TEST_CASE("HybridTree<3>: edge vertex placement")
     // In this test, we build a single cell where one of the edges
     // has a sharp feature that's off-center, then confirm that
     // that edge's subspace vertex ends up correctly positioned.
-    auto c = sphere(0.05, {-1, -1, 0.8});
+    auto c = sphere(0.05, {-1, -1, 0.8f});
     auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
     BRepSettings settings;
@@ -218,7 +218,7 @@ TEST_CASE("HybridTree<2>: subspace vertex placement")
     }
 
     SECTION("Rectangle") {
-        auto c = box({-0.6, -0.8, -1.0}, {0.7, 0.9, 1.0});
+        auto c = box({-0.6f, -0.8f, -1.0}, {0.7f, 0.9f, 1.0});
         auto r = Region<2>({-1, -1}, {0, 0});
 
         BRepSettings settings;
@@ -273,7 +273,7 @@ TEST_CASE("HybridMesher<3>: cylinder meshing")
 
 TEST_CASE("HybridMesher<3>: cube meshing")
 {
-    auto c = rotate2d(box({-1.4, -1.3, -1.5}, {1.2, 1.4, 1.2}), 0.7);
+    auto c = rotate2d(box({-1.4f, -1.3f, -1.5}, {1.2f, 1.4f, 1.2f}), 0.7);
     auto r = Region<3>({-2.25, 0, 1.125}, {-1.875, 0.375, 1.5});
 
     BRepSettings settings;
@@ -301,8 +301,8 @@ TEST_CASE("HybridMesher<3>: cube meshing")
 
 TEST_CASE("HybridMesher<3>: cylinder cutout meshing")
 {
-    auto c = max(box({-1, -1, -1}, {1.4, 1.1, 1}),
-            -cylinder(1.2, 1.3, {0, 0, 0.01}));
+    auto c = max(box({-1, -1, -1}, {1.4f, 1.1f, 1}),
+            -cylinder(1.2, 1.3, {0, 0, 0.01f}));
     auto r = Region<3>({0, 0, 0}, {3, 3, 3});
     //auto r = Region<3>({1.125, 0.0, 0.9385}, {1.3125, 0.1875, 1.125});
     //auto r = Region<3>({0.46875, 1.03125, 0}, {0.5625, 1.125, 0.09375});

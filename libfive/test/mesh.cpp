@@ -137,7 +137,7 @@ TEST_CASE("Mesh::render (cone)")
 
 TEST_CASE("Mesh::render (checking for triangles that are lines)")
 {
-    auto b = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+    auto b = min(sphere(0.7, {0, 0, 0.1f}), box({-1, -1, -1}, {1, 1, 0.1f}));
     Region<3> r({-10, -10, -10}, {10, 10, 10});
 
     BRepSettings settings;
@@ -155,7 +155,7 @@ TEST_CASE("Mesh::render (checking for triangles that are lines)")
 
 TEST_CASE("Mesh::render (checking for flipped triangles)")
 {
-    auto b = min(sphere(0.7, {0, 0, 0.1}), box({-1, -1, -1}, {1, 1, 0.1}));
+    auto b = min(sphere(0.7, {0, 0, 0.1f}), box({-1, -1, -1}, {1, 1, 0.1f}));
     Region<3> r({-10, -10, -10}, {10, 10, 10});
 
     BRepSettings settings;
