@@ -13,7 +13,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/marching.hpp"
 
 namespace Kernel {
-namespace Marching {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -56,7 +55,7 @@ std::list<Eigen::Matrix<double, 3, 3>,
  *  (must be specialized to a particular dimension)
  */
 template <unsigned N>
-static void loadCases(VertsToPatches<N>& t);
+static void loadCases(typename MarchingTable<N>::VertsToPatches& t);
 
 /*
  *  We use the following vertex numbering scheme:
@@ -70,7 +69,7 @@ static void loadCases(VertsToPatches<N>& t);
  *      ---> X
  */
 template <>
-void loadCases<2>(VertsToPatches<2>& t)
+void loadCases<2>(typename MarchingTable<2>::VertsToPatches& t)
 {
     // Empty
     // Nothing to do here
@@ -113,7 +112,7 @@ void loadCases<2>(VertsToPatches<2>& t)
  *       0----------1
  */
 template <>
-void loadCases<3>(VertsToPatches<3>& t)
+void loadCases<3>(typename MarchingTable<3>::VertsToPatches& t)
 {
     unsigned bitmap;
     unsigned patch;
@@ -131,7 +130,7 @@ void loadCases<3>(VertsToPatches<3>& t)
         edge = 0;
     };
 
-    auto push = [&](Edge e)
+    auto push = [&](MarchingTable<3>::Edge e)
     {
         assert(patch < t[bitmap].size());
         assert(edge < t[bitmap][patch].size());
@@ -417,12 +416,10 @@ static unsigned rotateMask(unsigned mask, const Eigen::Matrix<double, N, N>& rot
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-MarchingTable<N> buildTable()
+MarchingTable<N>::MarchingTable()
 {
-    MarchingTable<N> table;
-
     // Mark every case as uninitialized
-    for (auto& t : table.v)
+    for (auto& t : v_data)
     {
         for (auto& p : t)
         {
@@ -431,7 +428,7 @@ MarchingTable<N> buildTable()
     }
 
     // Load the initial set of cases (specialized on a per-dimension basis)
-    loadCases<N>(table.v);
+    loadCases<N>(v_data);
 
     //  Load all possible rigid-body rotations, which we will use to populate
     //  the rest of the table
@@ -439,9 +436,9 @@ MarchingTable<N> buildTable()
 
     //  Start by marking the changed elements on the table
     std::array<bool, ipow(2, _verts(N))> changed;
-    for (unsigned i=0; i < table.v.size(); ++i)
+    for (unsigned i=0; i < v_data.size(); ++i)
     {
-        changed[i] = table.v[i][0][0].first != -1;
+        changed[i] = v_data[i][0][0].first != -1;
     }
 
     // Loop until the system stabilizes
@@ -449,7 +446,7 @@ MarchingTable<N> buildTable()
     while (any_changed)
     {
         any_changed = false;
-        for (unsigned i=0; i < table.v.size(); ++i)
+        for (unsigned i=0; i < v_data.size(); ++i)
         {
             // If this vertex bitmask has changed in the previous cycle,
             // then apply every possible rotation to fill out the table.
@@ -458,9 +455,9 @@ MarchingTable<N> buildTable()
                 changed[i] = false;
                 for (const auto& rot : rots)
                 {
-                    const Patches<N>& patches = table.v[i];
+                    const Patches& patches = v_data[i];
                     auto i_ = rotateMask<N>(i, rot);
-                    Patches<N>& target = table.v[i_];
+                    Patches& target = v_data[i_];
 
                     // If this new target is uninitialized, then populate it
                     // by applying the rigid rotation to all the patch edges
@@ -490,54 +487,71 @@ MarchingTable<N> buildTable()
     }
 
     // Mark every vertex-pair-to-edge and edge-to-patch mapping as invalid
-    for (unsigned i=0; i < table.e.size(); ++i)
+    for (unsigned i=0; i < e_data.size(); ++i)
     {
-        std::fill(table.e[i].begin(), table.e[i].end(), -1);
+        std::fill(e_data[i].begin(), e_data[i].end(), -1);
     }
-    for (unsigned i=0; i < table.p.size(); ++i)
+    for (unsigned i=0; i < p_data.size(); ++i)
     {
-        std::fill(table.p[i].begin(), table.p[i].end(), -1);
+        std::fill(p_data[i].begin(), p_data[i].end(), -1);
     }
 
     // Assign every vertex pair in the table to an edge id
     unsigned j=0;
-    for (unsigned i=0; i < table.v.size(); ++i)
+    for (unsigned i=0; i < v_data.size(); ++i)
     {
-        for (unsigned p=0; p < table.v[i].size() &&
-                           table.v[i][p][0].first != -1; ++p)
+        for (unsigned p=0; p < v_data[i].size() &&
+                           v_data[i][p][0].first != -1; ++p)
         {
-            for (unsigned e=0; e < table.v[i][p].size() &&
-                               table.v[i][p][e].first != -1; ++e)
+            for (unsigned e=0; e < v_data[i][p].size() &&
+                               v_data[i][p][e].first != -1; ++e)
             {
                 // Store verts-to-edge mapping if necessary
-                auto verts = table.v[i][p][e];
+                auto verts = v_data[i][p][e];
                 assert(verts.first != verts.second);
 
-                auto& edge = table.e[verts.first][verts.second];
+                auto& edge = e_data[verts.first][verts.second];
                 if (edge == -1)
                 {
                     edge = j++;
                 }
 
                 // Store edge-to-patch mapping
-                table.p[i][edge] = p;
+                p_data[i][edge] = p;
             }
         }
     }
     assert(j == 2*_edges(N));
-    assert(table.v[0][0][0].first == -1);
-
-    return table;
+    assert(v_data[0][0][0].first == -1);
 }
 
-}   // namespace Marching
-
-// Static variables
 template <unsigned N>
-MarchingTable<N> MarchingTable<N>::mt = Marching::buildTable<N>();
+const typename MarchingTable<N>::Patches& MarchingTable<N>::v(CornerIndex i)
+{
+    return instance().v_data[i.i];
+}
+
+template <unsigned N>
+const std::array<int, _verts(N)>& MarchingTable<N>::e(CornerIndex i)
+{
+    return instance().e_data[i.i];
+}
+
+template <unsigned N>
+const std::array<int, _edges(N) * 2>& MarchingTable<N>::p(CornerIndex i)
+{
+    return instance().p_data[i.i];
+}
+
+template <unsigned N>
+const MarchingTable<N>& MarchingTable<N>::instance()
+{
+    static MarchingTable<N> singleton;
+    return singleton;
+}
 
 // Explicit initialization of template
-template struct MarchingTable<2>;
-template struct MarchingTable<3>;
+template class MarchingTable<2>;
+template class MarchingTable<3>;
 
 }   // namespace Kernel

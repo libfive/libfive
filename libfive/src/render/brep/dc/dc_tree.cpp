@@ -282,7 +282,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
     };
 
     // Iterate over manifold patches, storing one vertex per patch
-    const auto& ps = MarchingTable<N>::mt.v[this->leaf->corner_mask];
+    const auto& ps = MarchingTable<N>::v(this->leaf->corner_mask);
     while (this->leaf->vertex_count < ps.size() &&
            ps[this->leaf->vertex_count][0].first != -1)
     {
@@ -323,7 +323,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
 
                 // Store the edge index associated with this target
                 auto c = ps[this->leaf->vertex_count][edge_count];
-                edges[edge_count] = MarchingTable<N>::mt.e[c.first][c.second];
+                edges[edge_count] = MarchingTable<N>::e(c.first)[c.second];
 
                 auto compare = neighbors.check(c.first, c.second);
                 // Enable this to turn on sharing of results with neighbors
@@ -865,8 +865,8 @@ template <unsigned N>
 std::shared_ptr<IntersectionVec<N>> DCTree<N>::intersection(
         unsigned a, unsigned b) const
 {
-    assert(MarchingTable<N>::mt.e[a][b] != -1);
-    return intersection(MarchingTable<N>::mt.e[a][b]);
+    assert(MarchingTable<N>::e(a)[b] != -1);
+    return intersection(MarchingTable<N>::e(a)[b]);
 }
 
 template <unsigned N>
@@ -995,10 +995,10 @@ std::array<unsigned, 2 * N> DCTree<N>::edgesFromChild(unsigned childIndex)
     for (unsigned i=0; i < N; ++i)
     {
         auto otherCorner = childIndex ^ (1 << i);
-        assert(MarchingTable<N>::mt.e[childIndex][otherCorner] >= 0);
-        assert(MarchingTable<N>::mt.e[otherCorner][childIndex] >= 0);
-        out[2 * i] = MarchingTable<N>::mt.e[childIndex][otherCorner];
-        out[2 * i + 1] = MarchingTable<N>::mt.e[otherCorner][childIndex];
+        assert(MarchingTable<N>::e(childIndex)[otherCorner] >= 0);
+        assert(MarchingTable<N>::e(otherCorner)[childIndex] >= 0);
+        out[2 * i] = MarchingTable<N>::e(childIndex)[otherCorner];
+        out[2 * i + 1] = MarchingTable<N>::e(otherCorner)[childIndex];
     }
     return out;
 }

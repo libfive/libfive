@@ -106,7 +106,7 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts, unsigned index)
             {0, A} };
         for (unsigned i=0; i < 4; ++i)
         {
-            es[i] = MarchingTable<3>::mt.e[D ? ev[i].first  : ev[i].second]
+            es[i] = MarchingTable<3>::e(D ? ev[i].first  : ev[i].second)
                                    [D ? ev[i].second : ev[i].first];
             assert(es[i] != -1);
         }
@@ -122,7 +122,7 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts, unsigned index)
         // potentially non-manifold cell) or the default vertex
         auto vi = ts[i]->leaf->level > 0
             ? 0
-            : MarchingTable<3>::mt.p[ts[i]->leaf->corner_mask][es[i]];
+            : MarchingTable<3>::p(ts[i]->leaf->corner_mask)[es[i]];
         assert(vi != -1);
 
         // Sanity-checking manifoldness of collapsed cells
@@ -376,16 +376,16 @@ void DCMesher::checkAndAddTriangle(const DCTree<3>* a, const DCTree<3>* b,
                             auto thirdTerm = 7 - A - compAxis;
                             auto vert1 = boundaryTerm | compTerm;
                             auto vert2 = boundaryTerm | compTerm | thirdTerm;
-                            auto edge = MarchingTable<3>::mt.e[vert1][vert2];
+                            auto edge = MarchingTable<3>::e(vert1)[vert2];
                             assert(edge != -1);
-                            auto patch = MarchingTable<3>::mt.
-                                p[smallerCell->leaf->corner_mask][edge];
+                            auto patch = MarchingTable<3>::
+                                p(smallerCell->leaf->corner_mask)[edge];
                             if (patch == -1)
                             {
-                                edge = MarchingTable<3>::mt.e[vert2][vert1];
+                                edge = MarchingTable<3>::e(vert2)[vert1];
                                 assert(edge != -1);
-                                patch = MarchingTable<3>::mt.
-                                    p[smallerCell->leaf->corner_mask][edge];
+                                patch = MarchingTable<3>::
+                                    p(smallerCell->leaf->corner_mask)[edge];
                             }
                             // We have a patch value (possibly -1), but we only
                             // want to use this edge if it's the patch of

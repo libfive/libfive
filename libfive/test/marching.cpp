@@ -15,31 +15,27 @@ using namespace Kernel;
 
 TEST_CASE("MarchingTable<2>")
 {
-    REQUIRE(MarchingTable<2>::mt.v.size() == 16);
-
     // Make sure that we have built every item in the table
-    for (unsigned i=1; i < MarchingTable<2>::mt.v.size() - 1; ++i)
+    for (unsigned i=1; i < ipow(2, _verts(2)) - 1; ++i)
     {
         CAPTURE(i);
-        REQUIRE(MarchingTable<2>::mt.v[i][0][0].first != -1);
+        REQUIRE(MarchingTable<2>::v(i)[0][0].first != -1);
     }
 
-    REQUIRE(MarchingTable<2>::mt.v[0][0][0].first == -1);
-    REQUIRE(MarchingTable<2>::mt.v[15][0][0].first == -1);
+    REQUIRE(MarchingTable<2>::v(0)[0][0].first == -1);
+    REQUIRE(MarchingTable<2>::v(15)[0][0].first == -1);
 }
 
 TEST_CASE("MarchingTable<3>")
 {
-    REQUIRE(MarchingTable<3>::mt.v.size() == 256);
-
     // Make sure that we have built every item in the table
-    for (unsigned i=1; i < MarchingTable<3>::mt.v.size() - 1; ++i)
+    for (unsigned i=1; i < ipow(2, _verts(3)) - 1; ++i)
     {
         CAPTURE(i);
-        auto& _t = MarchingTable<3>::mt.v[i];
-        REQUIRE(MarchingTable<3>::mt.v[i][0][0].first != -1);
+        auto& _t = MarchingTable<3>::v(i);
+        REQUIRE(MarchingTable<3>::v(i)[0][0].first != -1);
     }
 
-    REQUIRE(MarchingTable<3>::mt.v[0][0][0].first == -1);
-    REQUIRE(MarchingTable<3>::mt.v[255][0][0].first == -1);
+    REQUIRE(MarchingTable<3>::v(0)[0][0].first == -1);
+    REQUIRE(MarchingTable<3>::v(255)[0][0].first == -1);
 }
