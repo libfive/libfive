@@ -518,7 +518,9 @@ protected:
     static RawSolution solve(
             const Matrix& AtA,
             const Vector& AtB,
-            const Vector& target)
+            const Vector& target,
+            const double eigenvalue_cutoff_relative=1e-12,
+            const double eigenvalue_cutoff_absolute=0)
     {
         // Our high-level goal here is to find the pseduo-inverse of AtA,
         // with special handling for when it isn't of full rank.
@@ -529,12 +531,15 @@ protected:
         Matrix D = Matrix::Zero();
         const double max_eigenvalue = eigenvalues.cwiseAbs().maxCoeff();
 
-        const double EIGENVALUE_CUTOFF = 1e-12;
         unsigned rank = 0;
         double pseudorank = 0.0;
         for (unsigned i=0; i < N + 1; ++i) {
             const auto r = fabs(eigenvalues[i]) / max_eigenvalue;
-            if (r > EIGENVALUE_CUTOFF) {
+            if ((eigenvalue_cutoff_relative &&
+                 r > eigenvalue_cutoff_relative) ||
+                (eigenvalue_cutoff_absolute &&
+                 fabs(eigenvalues[i]) > eigenvalue_cutoff_absolute))
+            {
                 D.diagonal()[i] = 1 / eigenvalues[i];
                 rank++;
             }
@@ -610,31 +615,8 @@ inline typename QEF<N>::Solution QEF<N>::solveDC(Eigen::Matrix<double, 1, N> tar
     Eigen::Matrix<double, N, 1> target_c =
         target_pos.transpose();
 
-    /*
-     *  This is a weird trick to do constrained matrix solving:
-     *
-     *  We recognize that we're solving (A^TA) x = (A^TB), with certain
-     *  rows of x fixed.  We drop those fixed rows + columns from A^TA and
-     *  A^TB, and subtract their value from A^TB to compensate.
-     *
-     *  A more detailed writeup is at
-     *  mattkeeter.com/projects/qef/#alternate-constraints
-     */
-    unsigned r = 0;
-    for (unsigned row=0; row < N; ++row) {
-        AtB_c(r) = AtB_(row);
-        target_c(r) = target_pos(row);
-
-        unsigned c = 0;
-        for (unsigned col=0; col < N; ++col) {
-            AtA_c(r, c) = AtA(row, col);
-            c++;
-        }
-        r++;
-    }
-
     auto sol = QEF<N - 1>::solve(
-            AtA_c, AtB_c, target_c);
+            AtA_c, AtB_c, target_c, 0, 0.1);
 
     Solution out;
     out.position = sol.value;

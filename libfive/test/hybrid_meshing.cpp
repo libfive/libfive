@@ -237,7 +237,7 @@ void print_debug_leaf(const HybridTree<N>* t) {
         for (unsigned i=0; i < ipow(3, N); ++i) {
             std::cout << i << ":\n";
             std::cout << " inside: " << t->leaf->inside[i] << "\n";
-            std::cout << " surface: " << t->leaf->on_surface[i] << "\n";
+            std::cout << " surface: " << t->leaf->vertex_on_surface[i] << "\n";
             std::cout << " pos: " << t->leaf->vertex_pos.col(i).transpose() << "\n";
         }
     }
