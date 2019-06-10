@@ -177,14 +177,14 @@ TEST_CASE("HybridTree<3>: edge vertex placement")
     settings.workers = 1;
     auto t = HybridTreePool<3>::build(c, r, settings);
 
-    CAPTURE(t->leaf->pos.col(18).transpose());
-    REQUIRE((t->leaf->pos.col(18) - Eigen::Vector3d(-1, -1, 0.8)).norm() < 0.01);
+    CAPTURE(t->leaf->vertex_pos.col(18).transpose());
+    REQUIRE((t->leaf->vertex_pos.col(18) - Eigen::Vector3d(-1, -1, 0.8)).norm() < 0.01);
 
-    REQUIRE(t->leaf->intersection(18));
+    REQUIRE(t->leaf->has_surface_qef[18]);
     for (unsigned i=0; i < ipow(3, 3); ++i) {
         if (i != 18 && NeighborIndex(i).dimension() == 1) {
             CAPTURE(i);
-            REQUIRE(!t->leaf->intersection(i));
+            REQUIRE(!t->leaf->has_surface_qef[i]);
         }
     }
 }
@@ -203,18 +203,18 @@ TEST_CASE("HybridTree<2>: subspace vertex placement")
         settings.workers = 1;
         auto t = HybridTreePool<2>::build(c, r, settings);
 
-        CAPTURE(t->leaf->pos.col(8));
-        REQUIRE((t->leaf->pos.col(8) - Eigen::Vector2d(-0.9, 0.7)).norm() < 0.01);
+        CAPTURE(t->leaf->vertex_pos.col(8));
+        REQUIRE((t->leaf->vertex_pos.col(8) - Eigen::Vector2d(-0.9, 0.7)).norm() < 0.01);
 
-        REQUIRE(!t->leaf->intersection(0));
-        REQUIRE(!t->leaf->intersection(1));
-        REQUIRE(!t->leaf->intersection(2));
-        REQUIRE(!t->leaf->intersection(3));
-        REQUIRE(!t->leaf->intersection(4));
-        REQUIRE(!t->leaf->intersection(5));
+        REQUIRE(!t->leaf->has_surface_qef[0]);
+        REQUIRE(!t->leaf->has_surface_qef[1]);
+        REQUIRE(!t->leaf->has_surface_qef[2]);
+        REQUIRE(!t->leaf->has_surface_qef[3]);
+        REQUIRE(!t->leaf->has_surface_qef[4]);
+        REQUIRE(!t->leaf->has_surface_qef[5]);
         // The edge 6 with partial circle touching may or may not be an intersection
-        REQUIRE(!t->leaf->intersection(7));
-        REQUIRE( t->leaf->intersection(8));
+        REQUIRE(!t->leaf->has_surface_qef[7]);
+        REQUIRE( t->leaf->has_surface_qef[8]);
     }
 
     SECTION("Rectangle") {
@@ -226,8 +226,8 @@ TEST_CASE("HybridTree<2>: subspace vertex placement")
         settings.workers = 1;
         auto t = HybridTreePool<2>::build(c, r, settings);
 
-        CAPTURE(t->leaf->pos.col(8));
-        REQUIRE((t->leaf->pos.col(8) - Eigen::Vector2d(-0.6, -0.8)).norm() < 0.01);
+        CAPTURE(t->leaf->vertex_pos.col(8));
+        REQUIRE((t->leaf->vertex_pos.col(8) - Eigen::Vector2d(-0.6, -0.8)).norm() < 0.01);
     }
 }
 
@@ -238,7 +238,7 @@ void print_debug_leaf(const HybridTree<N>* t) {
             std::cout << i << ":\n";
             std::cout << " inside: " << t->leaf->inside[i] << "\n";
             std::cout << " surface: " << t->leaf->on_surface[i] << "\n";
-            std::cout << " pos: " << t->leaf->pos.col(i).transpose() << "\n";
+            std::cout << " pos: " << t->leaf->vertex_pos.col(i).transpose() << "\n";
         }
     }
 }
@@ -292,7 +292,7 @@ TEST_CASE("HybridMesher<3>: cube meshing")
 
     // Require that the cube's corner is on its actual corner
     REQUIRE(t->leaf != nullptr);
-    const Eigen::Vector3d v = t->leaf->pos.col(26);
+    const Eigen::Vector3d v = t->leaf->vertex_pos.col(26);
     CAPTURE(v.transpose());
     REQUIRE(v.x() == Approx( cos(0.7) * -1.4 - sin(0.7) * 1.4));
     REQUIRE(v.y() == Approx( sin(0.7) * -1.4 + cos(0.7) * 1.4));

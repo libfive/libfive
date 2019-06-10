@@ -86,7 +86,7 @@ void HybridDebugMesher::load(const std::array<const HybridTree<3>*, 4>& ts)
         assert(ts.at(index)->leaf != nullptr);
         assert(ts.at(index)->leaf->index[s.i] != 0);
         subvs.push_back(SubspaceVertex {
-            ts.at(index)->leaf->pos.col(s.i),
+            ts.at(index)->leaf->vertex_pos.col(s.i),
             ts.at(index)->leaf->index[s.i],
             ts.at(index)->leaf->inside[s.i],
         });

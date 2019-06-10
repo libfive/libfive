@@ -90,10 +90,10 @@ void HybridMesher::load(const std::array<const HybridTree<3>*, 4>& ts)
         assert(ts.at(index)->leaf->index[s.i] != 0);
         const auto leaf = ts.at(index)->leaf;
         subvs.push_back(SubspaceVertex {
-            leaf->pos.col(s.i),
+            leaf->vertex_pos.col(s.i),
             leaf->index[s.i],
             leaf->inside[s.i],
-            leaf->on_surface[s.i],
+            leaf->vertex_on_surface[s.i],
         });
     };
     auto saveDummyVertex = [&subvs](Interval::I i) {

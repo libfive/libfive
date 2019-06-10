@@ -71,10 +71,16 @@ public:
         BptBp = Matrix::Zero();
     }
 
+    /*  Inserts a new sample into the QEF.  If the normal has
+     *  non-finite values, it's replaced with an all-zeros normal
+     *  before insertion. */
     void insert(Eigen::Matrix<double, 1, N> position,
                 Eigen::Matrix<double, 1, N> normal,
                 double value)
     {
+        if (!normal.array().isFinite().all()) {
+            normal.array() = 0.0;
+        }
         RowVector ni;
         RowVector pi;
 

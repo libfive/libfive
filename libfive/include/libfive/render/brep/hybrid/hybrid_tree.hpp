@@ -31,15 +31,35 @@ struct HybridLeaf
     HybridLeaf();
     void reset();
 
-    Eigen::Matrix<double, N, ipow(3, N)> pos;
-    Eigen::Matrix<double, N + 1, ipow(3, N)> mass_point;
+    /*  This represents the position of the subspace vertices.
+     *  Each subspace vertex is positioned either on the model's surface
+     *  (in which case vertex_on_surface[i] is true) or on a sharp feature
+     *  of the distance field itself.  */
+    Eigen::Matrix<double, N, ipow(3, N)> vertex_pos;
+
+    /*  Marks whether the subspace vertex is inside or outside the model. */
     std::array<bool, ipow(3, N)> inside;
-    std::array<bool, ipow(3, N)> on_surface;
+
+    /*  If this is true, then qef[i] represents a normalized QEF based on
+     *  exact surface samples.  It is never true for corners, which always
+     *  contain (non-normalized) distance-field QEFs. */
+    std::array<bool, ipow(3, N)> has_surface_qef;
+
+    /*  Represents a distance-field QEF for corners, a normalized surface QEF
+     *  when has_surface_qef[i] is true, and empty otherwise. */
     std::array<QEF<N>, ipow(3, N)> qef;
 
-    /* Check whether this point is an intersection by seeing
-     * whether we've accumulated any mass points. */
-    bool intersection(unsigned i) { return mass_point(N, i) != 0; }
+    /*  True when the vertex position is on the model's surface.  If this is
+     *  true, then meshing should snap to the vertex position (instead of
+     *  doing an edge search). */
+    std::array<bool, ipow(3, N)> vertex_on_surface;
+
+    /*  Represents the mass-point center of surface intersections.  This is
+     *  only relevant when has_surface_qef is true and vertex_on_surface is
+     *  false; if vertex_on_surface is true, then surface_mass_point is the
+     *  same as vertex_pos, and if has_surface_qef is false, then we don't
+     *  care about the mass point for this subspace. */
+    Eigen::Matrix<double, N + 1, ipow(3, N)> surface_mass_point;
 
     /* Unique indexes for every subspace, shared when subspaces are
      * shared by more than one neighbor. */
@@ -157,22 +177,36 @@ public:
 
     /*
      *  We've found a point of interest on some subspace.  Now, we need
-     *  to solve for insideness, and decide what to accumulate for the QEF:
-     *   - This point's position / normal / distance, or
-     *   - Intersections on edges between this point and its neighbors
+     *  to record the point, and decide whether to accumulate a distance-field
+     *  or surface QEF, depending on whether there are surface intersections
+     *  on the edges between this vertex and its subspace neighbors.
      *
-     *   We'd prefer to store intersections, because they make it easier to
-     *   cleave to the surface, but they may not exist on this particular
-     *   subspace.
-     *
-     *   This function is public because the template-madness Unroller struct
-     *   needs to be able to call it, but should not be considered part
-     *   of the public API for the HybridTree.
+     *  This function is public because the template-madness Unroller struct
+     *  needs to be able to call it, but should not be considered part
+     *  of the public API for the HybridTree.
      */
-    void placeSubspaceVertex(
+    void placeDistanceVertex(
         XTreeEvaluator* eval, Tape::Handle tape,
         const Region<N>& region,
         NeighborIndex n, const Vec& pos);
+
+    /*
+     *  After loading the first count slots of eval with data, this function
+     *  evaluates them and accumulates to the subspace QEFs specified by
+     *  targets[0..count]
+     *
+     *  If normalize is true, then the normals are normalized for better
+     *  Dual Contouring stability.
+     *
+     *  This function is public because the template-madness Unroller struct
+     *  needs to be able to call it, but should not be considered part
+     *  of the public API for the HybridTree.
+     */
+    void accumulate(XTreeEvaluator* eval,
+                    Tape::Handle tape,
+                    unsigned count,
+                    NeighborIndex* target,
+                    bool normalize);
 
 protected:
 
@@ -201,16 +235,6 @@ protected:
     void processSubspaces(XTreeEvaluator* eval,
                           Tape::Handle tape,
                           const Region<N>& region);
-
-    /*
-     *  After loading the first count slots of eval with data, this function
-     *  evaluates them and accumulates to the subspace QEFs specified by
-     *  targets[0..count]
-     */
-    void accumulate(XTreeEvaluator* eval,
-                    Tape::Handle tape,
-                    unsigned count,
-                    NeighborIndex* target);
 
     /*
      *  Asserts that the leaf is null, pulls a fresh leaf from the object

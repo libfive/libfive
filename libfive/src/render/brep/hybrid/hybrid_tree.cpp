@@ -183,7 +183,7 @@ template <unsigned N>
 void HybridLeaf<N>::reset()
 {
     std::fill(inside.begin(), inside.end(), false);
-    std::fill(on_surface.begin(), on_surface.end(), false);
+    std::fill(vertex_on_surface.begin(), vertex_on_surface.end(), false);
     std::fill(index.begin(), index.end(), 0);
 
     surface.clear();
@@ -191,8 +191,8 @@ void HybridLeaf<N>::reset()
     for (auto& q : qef) {
         q.reset();
     }
-    mass_point.array() = 0.0;
-    pos.array() = 0.0;
+    surface_mass_point.array() = 0.0;
+    vertex_pos.array() = 0.0;
 }
 
 template <unsigned N>
@@ -247,18 +247,15 @@ void HybridTree<N>::processCorners(XTreeEvaluator* eval,
                                    Tape::Handle tape,
                                    const Region<N>& region)
 {
-    std::array<NeighborIndex, ipow(2, N)> targets;
     for (unsigned i=0; i < ipow(2, N); ++i) {
-        eval->array.set(region.corner3f(i), i);
-        targets[i] = CornerIndex(i).neighbor();
-        this->leaf->pos.col(targets[i].i) = region.corner(i);
+        const NeighborIndex n = CornerIndex(i).neighbor();
+        const auto corner = region.corner(i);
+        placeDistanceVertex(eval, tape, region, n, corner);
 
-        // TODO: don't use the full-power evaluator when not needed
-        this->leaf->inside[targets[i].i] = eval->feature.isInside(
-                region.corner3f(i), tape);
+        DEBUG("Corner " << n.i );
+        DEBUG("  placed at " << corner.transpose());
+        DEBUG("  inside: " << this->leaf->inside[n.i]);
     }
-    // Store QEF data for this new vertex
-    accumulate(eval, tape, targets.size(), targets.data());
 }
 
 template <unsigned BaseDimension, unsigned Target>
@@ -279,15 +276,13 @@ void processEdge(HybridTree<BaseDimension>* tree,
     bool has_inside = false;
     bool has_outside = false;
     Eigen::Matrix<double, BaseDimension, 1> inside, outside;
-    for (unsigned j=0; j < ipow(3, BaseDimension); ++j) {
-        if (edge.i != j && edge.contains(NeighborIndex(j))) {
-            if (tree->leaf->inside[j]) {
-                has_inside = true;
-                inside = tree->leaf->pos.col(j);
-            } else {
-                has_outside = true;
-                outside = tree->leaf->pos.col(j);
-            }
+    for (const auto& j : EdgeTables<BaseDimension>::subspaces(edge)) {
+        if (tree->leaf->inside[j.i]) {
+            has_inside = true;
+            inside = tree->leaf->vertex_pos.col(j.i);
+        } else {
+            has_outside = true;
+            outside = tree->leaf->vertex_pos.col(j.i);
         }
     }
 
@@ -295,35 +290,63 @@ void processEdge(HybridTree<BaseDimension>* tree,
         // If there's a sign change, then do a binary search to
         // find the exact point of intersection, marking the resulting
         // point as a surface feature.
-        tree->leaf->on_surface[edge.i] = true;
+        tree->leaf->has_surface_qef[edge.i] = true;
+        tree->leaf->vertex_on_surface[edge.i] = true;
+        tree->leaf->surface_mass_point.col(edge.i).array() = 0.0;
         auto surf = searchBetween<BaseDimension>(eval, tape, region,
                                                  inside, outside);
+
+        // Unpack from inside-outside into mass point, and prepare to call
+        // accumulate() to store QEF data for a normalized surface QEF.
+        for (unsigned i=0; i < 2; ++i) {
+            MassPoint<BaseDimension> mp;
+            mp << surf.col(i), 1;
+            tree->leaf->surface_mass_point.col(edge.i) += mp;
+            eval->array.set<BaseDimension>(surf.col(i), region, i);
+        }
+        std::array<NeighborIndex, 2> targets = {edge, edge};
+        tree->accumulate(eval, tape, 2, targets.data(), true);
+
         // TODO: weigh this based on distance
-        Eigen::Matrix<double, BaseDimension, 1> out =
-            (surf.col(0) + surf.col(1)) / 2;
-        tree->placeSubspaceVertex(eval, tape, region, edge, out);
+        Eigen::Matrix<double, BaseDimension, 1> pos;
+        pos = (surf.col(0) + surf.col(1)) / 2;
+        tree->leaf->vertex_pos.col(edge.i) = pos;
+
+        // TODO: use a less powerful evaluator unless needed
+        tree->leaf->inside[edge.i] = eval->feature.isInside<BaseDimension>(
+                pos, region, tape);
+
+        DEBUG("Found surface edge " << edge.i);
+        DEBUG("  placed at " << pos.transpose());
+        DEBUG("  inside: " << tree->leaf->inside[edge.i]);
     } else {
-        // If the edge doesn't have an obvious sign change,
-        // then place a vertex on a sharp feature of the distance
-        // field (which will hopefully be a sign change, if a sign
-        // change exists along this edge).
+        // If the edge doesn't have an obvious sign change, then place a
+        // vertex on a sharp feature of the distance field (which will
+        // hopefully be a sign change, if a sign change exists along this edge).
         QEF<BaseDimension> qef;
-        for (unsigned j=0; j < ipow(3, BaseDimension); ++j) {
-            if (edge.i != j && edge.contains(NeighborIndex(j))) {
-                qef += tree->leaf->qef[j];
-            }
+
+        // This should hopefully only be the two corners along the edge.
+        for (const auto& n: EdgeTables<BaseDimension>::subspaces(edge)) {
+            assert(n.dimension() == 0);
+            qef += tree->leaf->qef[n.i];
         }
         const auto region_ = region.template subspace<TargetFloating>();
         QEF<TargetDimension> qef_ = qef.template sub<TargetFloating>();
 
         // Bounded, minimizing towards the center of the region
-        // (which is the of the edge in this case)
+        // (which is the center of the edge in this case)
         auto sol = qef_.solveBounded(region_, 1);
-        DEBUG("Solved edge " << edge.i << " with error " << sol.error);
 
         // Unpack from the reduced-dimension solution to the leaf vertex
-        auto out = unpack<BaseDimension, Target>(sol.position, region);
-        tree->placeSubspaceVertex(eval,tape, region, edge, out);
+        auto pos = unpack<BaseDimension, Target>(sol.position, region);
+
+        // placeDistanceVertex will check if there's a sign change and store
+        // surface QEF data if that's the case.
+        tree->placeDistanceVertex(eval, tape, region, edge, pos);
+
+        DEBUG("Solved distance edge " << edge.i << " with error " << sol.error);
+        DEBUG("  placed at " << pos.transpose());
+        DEBUG("  inside: " << tree->leaf->inside[edge.i]);
     }
 }
 
@@ -338,8 +361,10 @@ void process(HybridTree<BaseDimension>* tree,
     constexpr auto TargetDimension = n.dimension();
     constexpr auto TargetFloating = n.floating();
 
+    DEBUG("Solving for subspace " << Target);
+
     // Now, we'll check to see whether we have any intersections
-    // on a child subspace, to decide whether to place the vertex
+    // on a child edge subspace, to decide whether to place the vertex
     // on a sharp feature of the surface or of the distance field.
     QEF<BaseDimension> qef_surface, qef_distance;
     MassPoint<BaseDimension> mass_point_surface;
@@ -355,25 +380,14 @@ void process(HybridTree<BaseDimension>* tree,
         }
         filled_mask_bit++;
 
-        // This part is a bit subtle:  vertices on 2D subsurfaces (faces)
-        // that are 'surface' vertices don't add any useful data, so we
-        // skip them when accumulating QEFs.  This is because their data
-        // should be contained within the edge QEFs that went into
-        // constructing them, and we don't want to double-count it.
-        if (!(m.dimension() == 2 && tree->leaf->on_surface[m.i]) &&
-            tree->leaf->intersection(m.i))
-        {
+        // For the DC-style (surface) QEF accumulation, only select QEFs
+        // that have the "has surface qef" flag set.  This prevents
+        // double-counting.
+        if (tree->leaf->has_surface_qef[m.i]) {
             qef_surface += tree->leaf->qef[m.i];
+            mass_point_surface += tree->leaf->surface_mass_point.col(m.i);
         }
-        if (tree->leaf->intersection(m.i)) {
-            if (tree->leaf->on_surface[m.i]) {
-                Eigen::Matrix<double, BaseDimension + 1, 1> v;
-                v << tree->leaf->pos.col(m.i), 1;
-                mass_point_surface += v;
-            } else {
-                mass_point_surface += tree->leaf->mass_point.col(m.i);
-            }
-        }
+
         // Similarly, for distance-field vertices, we don't care about
         // any data other than corners, because that's the only source
         // of higher-dimension spaces QEF info.
@@ -386,8 +400,6 @@ void process(HybridTree<BaseDimension>* tree,
     // the distance field itself.  This is more robust, but worse at
     // positioning the final model vertices on corners and edges.
     const auto region_ = region.template subspace<TargetFloating>();
-
-    DEBUG("Solving for subspace " << Target);
 
     // Then, try solving for a sharp feature on the distance field itself,
     // using the DC-chosen point as a starting point if it's within the
@@ -438,8 +450,9 @@ void process(HybridTree<BaseDimension>* tree,
                     || (v_dist - v_surf).norm() < 1e-12))
         {
             DEBUG("      Placed DC vertex");
-            tree->placeSubspaceVertex(eval, tape, region, n, v_surf);
-            tree->leaf->on_surface[n.i] = true;
+            tree->leaf->has_surface_qef[n.i] = false;
+            tree->leaf->vertex_on_surface[n.i] = true;
+            tree->leaf->vertex_pos.col(n.i) = v_surf;
             return;
         }
     }
@@ -447,7 +460,7 @@ void process(HybridTree<BaseDimension>* tree,
     //  If we failed to place a DC vertex, then we're placing a distance
     //  vertex instead.
     DEBUG("      Placing distance vertex");
-    tree->placeSubspaceVertex(eval, tape, region, n, v_dist);
+    tree->placeDistanceVertex(eval, tape, region, n, v_dist);
 }
 
 
@@ -492,22 +505,23 @@ void HybridTree<N>::processSubspaces(XTreeEvaluator* eval,
 }
 
 template <unsigned N>
-void HybridTree<N>::placeSubspaceVertex(
+void HybridTree<N>::placeDistanceVertex(
         XTreeEvaluator* eval, Tape::Handle tape,
         const Region<N>& region,
         NeighborIndex n, const Vec& pos)
 {
-    // Store this edge's position
-    this->leaf->pos.col(n.i) = pos;
+    // Store the vertex position
+    this->leaf->vertex_pos.col(n.i) = pos;
 
     // Expensive check for inside / outsideness of this point (TODO)
     this->leaf->inside[n.i] = eval->feature.isInside<N>(pos, region, tape);
+    this->leaf->surface_mass_point.col(n.i).array() = 0.0;
 
-    Eigen::Matrix<double, N, ipow(3, N) * 2> intersections;
     // Check every edge from the new point to its neighbouring subspaces,
-    // seeing whether there's a sign change and searching the edge
-    // if that's the case
+    // seeing whether there's a sign change and searching the edge if that's
+    // the case.
     unsigned num_intersections = 0;
+    Eigen::Matrix<double, N, ipow(3, N) * 2> intersections;
     for (auto& t: EdgeTables<N>::subspaces(n.i)) {
         // If there isn't a sign change along this subspace-to-subspace
         // edge, then we shouldn't search it.
@@ -518,18 +532,18 @@ void HybridTree<N>::placeSubspaceVertex(
 
         Vec inside, outside;
         if (this->leaf->inside[t.i]) {
-            inside = this->leaf->pos.col(t.i);
-            outside = this->leaf->pos.col(n.i);
+            inside = this->leaf->vertex_pos.col(t.i);
+            outside = this->leaf->vertex_pos.col(n.i);
         } else {
-            inside = this->leaf->pos.col(n.i);
-            outside = this->leaf->pos.col(t.i);
+            inside = this->leaf->vertex_pos.col(n.i);
+            outside = this->leaf->vertex_pos.col(t.i);
         }
         auto p = searchBetween<N>(eval, tape, region, inside, outside);
 
         for (unsigned i=0; i < 2; ++i) {
             MassPoint<N> mp;
             mp << p.col(i), 1;
-            this->leaf->mass_point.col(n.i) += mp;
+            this->leaf->surface_mass_point.col(n.i) += mp;
 
             // Store the intersection point into the QEF target list
             intersections.col(num_intersections++) = p.col(i);
@@ -538,6 +552,7 @@ void HybridTree<N>::placeSubspaceVertex(
     assert(num_intersections <= intersections.cols());
 
     if (num_intersections) {
+        assert(n.dimension() > 0);
         // Pack the target points into the array
         for (unsigned i=0; i < num_intersections; ++i) {
             eval->array.set<N>(intersections.col(i), region, i);
@@ -549,12 +564,14 @@ void HybridTree<N>::placeSubspaceVertex(
         std::fill(targets.begin(), targets.end(), n);
         assert(targets.size() >= num_intersections);
 
-        accumulate(eval, tape, num_intersections, targets.data());
+        accumulate(eval, tape, num_intersections, targets.data(), true);
+        this->leaf->has_surface_qef[n.i] = true;
     } else {
         // If we didn't find a sign change, then store the vertex itself into
         // the subspace QEF.
         eval->array.set<N>(pos, region, 0);
-        accumulate(eval, tape, 1, &n);
+        accumulate(eval, tape, 1, &n, false);
+        this->leaf->has_surface_qef[n.i] = false;
     }
 }
 
@@ -562,21 +579,26 @@ template <unsigned N>
 void HybridTree<N>::accumulate(XTreeEvaluator* eval,
                                Tape::Handle tape,
                                unsigned count,
-                               NeighborIndex* target)
+                               NeighborIndex* target,
+                               bool normalize)
 {
     auto ds = eval->array.derivs(count);
     auto ambig = eval->array.getAmbiguous(count);
 
-    auto push = [&ds, &eval, &target, this](Eigen::Vector3f d, unsigned i) {
-        Eigen::Matrix<double, N, 1> d_ =
-            d.template head<N>().template cast<double>();
-        if (!d_.array().isFinite().all()) {
-            d_.array() = 0.0;
+    auto push = [&ds, &eval, &target, &normalize, this]
+                (Eigen::Vector3f d, unsigned i)
+    {
+        double value = ds(3, i);
+        if (normalize) {
+            double norm = d.norm();
+            d /= norm;
+            value /= norm;
         }
         this->leaf->qef[target[i].i].insert(
                 eval->array.get(i).template cast<double>()
                                   .template head<N>(),
-                d_, ds(3, i));
+                d.template cast<double>().template head<N>(),
+                value);
     };
 
     for (unsigned i=0; i < count; ++i) {
@@ -590,7 +612,6 @@ void HybridTree<N>::accumulate(XTreeEvaluator* eval,
             }
         }
     }
-
 }
 
 template <unsigned N>
