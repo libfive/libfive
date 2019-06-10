@@ -33,7 +33,6 @@ public:
         Eigen::Matrix<bool, N, 1> constrained;
         double value;
         unsigned rank;
-        double pseudorank;
         double error;
     };
 
@@ -109,7 +108,6 @@ public:
         out.position = sol.value.template head<N>();
         out.value = sol.value(N);
         out.rank = sol.rank - 1; // Skip the rank due to value
-        out.pseudorank = sol.pseudorank;
         out.constrained.array() = false;
 
         // Calculate the resulting error, hard-code the matrix size here so
@@ -252,7 +250,6 @@ public:
         }
         out.value = sol.value(r);
         out.rank = sol.rank + NumConstrainedAxes;
-        out.pseudorank = sol.pseudorank;
 
         // Calculate the resulting error, hard-coding the matrix size here so
         // that Eigen checks that all of our types are correct.
@@ -331,7 +328,6 @@ public:
         Solution out;
         out.value = std::nan("");
         out.rank = 0;
-        out.pseudorank = 0;
         out.error = std::numeric_limits<double>::infinity();
 
         // Do static loop unrolling to check every smaller dimension
@@ -394,7 +390,6 @@ public:
         out.constrained.array() = true;
         out.value = sol.value(0);
         out.rank = 0;
-        out.pseudorank = 0;
         out.error = err(0);
         return out;
     }
@@ -507,7 +502,6 @@ protected:
     struct RawSolution {
         Vector value;
         unsigned rank;
-        double pseudorank;
     };
 
     /*
@@ -532,18 +526,16 @@ protected:
         const double max_eigenvalue = eigenvalues.cwiseAbs().maxCoeff();
 
         unsigned rank = 0;
-        double pseudorank = 0.0;
         for (unsigned i=0; i < N + 1; ++i) {
-            const auto r = fabs(eigenvalues[i]) / max_eigenvalue;
+            const auto e = fabs(eigenvalues[i]);
             if ((eigenvalue_cutoff_relative &&
-                 r > eigenvalue_cutoff_relative) ||
+                 e / max_eigenvalue > eigenvalue_cutoff_relative) ||
                 (eigenvalue_cutoff_absolute &&
-                 fabs(eigenvalues[i]) > eigenvalue_cutoff_absolute))
+                 e > eigenvalue_cutoff_absolute))
             {
                 D.diagonal()[i] = 1 / eigenvalues[i];
                 rank++;
             }
-            pseudorank += r;
         }
 
         // SVD matrices
@@ -564,7 +556,6 @@ protected:
         RawSolution out;
         out.value = sol;
         out.rank = rank;
-        out.pseudorank = pseudorank;
 
         return out;
     }
@@ -598,7 +589,6 @@ inline typename QEF<0>::Solution QEF<0>::solveDC(Eigen::Matrix<double, 1, 0>) co
     Solution sol;
     sol.value = 0.0;
     sol.rank = 0;
-    sol.pseudorank = 0.0;
     return sol;
 }
 
@@ -621,8 +611,7 @@ inline typename QEF<N>::Solution QEF<N>::solveDC(Eigen::Matrix<double, 1, N> tar
     Solution out;
     out.position = sol.value;
     out.value = 0.0;
-    out.rank = sol.rank + 1;
-    out.pseudorank = sol.pseudorank;
+    out.rank = sol.rank;
 
     // Calculate the resulting error, hard-coding the matrix size here so
     // that Eigen checks that all of our types are correct.
