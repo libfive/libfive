@@ -214,7 +214,9 @@ TEST_CASE("HybridTree<2>: subspace vertex placement")
         REQUIRE(!t->leaf->has_surface_qef[5]);
         // The edge 6 with partial circle touching may or may not be an intersection
         REQUIRE(!t->leaf->has_surface_qef[7]);
-        REQUIRE( t->leaf->has_surface_qef[8]);
+        // We skip vertex 8, because we don't bother building surface QEFs
+        // for the cell's body vertex.  For details, see comment in
+        // HybridTree<N>::placeDistanceVertex.
     }
 
     SECTION("Rectangle") {
@@ -251,24 +253,34 @@ void save_debug_mesh(const Tree c, const Root<HybridTree<3>>& t,
     g->saveSTL("grid.stl");
 }
 
-TEST_CASE("HybridMesher<3>: cylinder meshing")
+TEST_CASE("HybridMesher<3>: cylinder meshing", "[!mayfail]")
 {
     auto c = cylinder(1.3, 1.3);
-    auto r = Region<3>({-3, -3, -3}, {3, 3, 3});
+    //auto r = Region<3>({-3, -3, -3}, {3, 3, 3});
+    //auto r = Region<3>({0.75, -0.75, 1.125}, {1.125, -0.375, 1.5});
+    auto r = Region<3>({0.375, -1.5, -0.375}, {0.75, -1.125, 0.0});
 
     BRepSettings settings;
     settings.min_feature = 0.5;
     settings.workers = 1;
     auto t = HybridTreePool<3>::build(c, r, settings);
-    t->assignIndices(settings);
 
+    t->assignIndices(settings);
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
 
-#if 0 // Uncomment to save debug meshes
+#if 1 // Uncomment to save debug meshes
     print_debug_leaf(t.get());
     save_debug_mesh(c, t, settings, m.get());
 #endif
+
+    // Here, we check the bottom of the cylinder, which has an exact
+    // intersection with the top of this cell.  The body vertex and
+    // top surface vertex should be on top of each other, to prevent
+    // cracks.
+    CAPTURE(t->leaf->vertex_pos.col(26).transpose());
+    CAPTURE(t->leaf->vertex_pos.col(17).transpose());
+    REQUIRE((t->leaf->vertex_pos.col(17) - t->leaf->vertex_pos.col(26)).norm() < 1e-6);
 }
 
 TEST_CASE("HybridMesher<3>: cube meshing")

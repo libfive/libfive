@@ -392,25 +392,10 @@ void process(HybridTree<BaseDimension>* tree,
         // any data other than corners, because that's the only source
         // of higher-dimension spaces QEF info.
         if (m.dimension() == 0) {
+            DEBUG("      Accumulated distance QEF from " << m.i);
             qef_distance += tree->leaf->qef[m.i];
         }
     }
-
-    // First, run the solver to position the vertex on a sharp feature of
-    // the distance field itself.  This is more robust, but worse at
-    // positioning the final model vertices on corners and edges.
-    const auto region_ = region.template subspace<TargetFloating>();
-
-    // Then, try solving for a sharp feature on the distance field itself,
-    // using the DC-chosen point as a starting point if it's within the
-    // cell's boundaries.
-    QEF<TargetDimension> qef_dist_ = qef_distance
-        .template sub<TargetFloating>();
-    auto sol_dist = qef_dist_.solveBounded(region_, 1);
-    auto v_dist = unpack<BaseDimension, Target>(sol_dist.position, region);
-    DEBUG("  found distance vertex at " << v_dist.transpose());
-    DEBUG("      rank: " << sol_dist.rank);
-    DEBUG("      error: " << sol_dist.error);
 
     // If we have found one or more intersections and the surface is locally
     // manifold, then we try to position the vertex using Dual Contouring.
@@ -445,9 +430,7 @@ void process(HybridTree<BaseDimension>* tree,
 
         // If we successfully placed the vertex using Dual Contouring
         // rules, then mark that the resulting vertex is a surface vertex.
-        if (within_region && (sol_surf.error <= 1e-12
-                    || sol_surf.error / 10.0 < sol_dist.error
-                    || (v_dist - v_surf).norm() < 1e-12))
+        if (within_region)
         {
             DEBUG("      Placed DC vertex");
             tree->leaf->has_surface_qef[n.i] = false;
@@ -456,6 +439,22 @@ void process(HybridTree<BaseDimension>* tree,
             return;
         }
     }
+
+    // If that failed, run the solver to position the vertex on a sharp feature
+    // of the distance field itself.  This is more robust, but worse at
+    // positioning the final model vertices on corners and edges.
+    const auto region_ = region.template subspace<TargetFloating>();
+
+    // Then, try solving for a sharp feature on the distance field itself,
+    // using the DC-chosen point as a starting point if it's within the
+    // cell's boundaries.
+    QEF<TargetDimension> qef_dist_ = qef_distance
+        .template sub<TargetFloating>();
+    auto sol_dist = qef_dist_.solveBounded(region_, 1);
+    auto v_dist = unpack<BaseDimension, Target>(sol_dist.position, region);
+    DEBUG("  found distance vertex at " << v_dist.transpose());
+    DEBUG("      rank: " << sol_dist.rank);
+    DEBUG("      error: " << sol_dist.error);
 
     //  If we failed to place a DC vertex, then we're placing a distance
     //  vertex instead.
@@ -516,6 +515,17 @@ void HybridTree<N>::placeDistanceVertex(
     // Expensive check for inside / outsideness of this point (TODO)
     this->leaf->inside[n.i] = eval->feature.isInside<N>(pos, region, tape);
     this->leaf->surface_mass_point.col(n.i).array() = 0.0;
+
+    // For now, we don't care about accumulating QEFs or surface intersections
+    // for any subspace vertex of the maximum dimension.  This is because
+    // there's only one such vertex per cell, it's the cell's body vertex,
+    // and it isn't used to find any other cell positions.
+    //
+    // We may want to change this behavior once we start thinking about
+    // cell collapsing.
+    if (n.dimension() == N) {
+        return;
+    }
 
     // Check every edge from the new point to its neighbouring subspaces,
     // seeing whether there's a sign change and searching the edge if that's
