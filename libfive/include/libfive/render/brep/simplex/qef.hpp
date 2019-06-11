@@ -272,6 +272,30 @@ public:
      */
     Solution solveDC(Eigen::Matrix<double, 1, N> target_pos=
                          Eigen::Matrix<double, 1, N>::Zero()) const;
+
+    /*  Returns the rank of the DC matrix subset.
+     *
+     *  This assumes that the normals have been normalized, because it uses an
+     *  absolute threshold to decide when to discard eigenvalues. */
+    unsigned rankDC() const
+    {
+        // Pick out the DC subset of the matrix
+        Eigen::Matrix<double, N, N> AtA_c = AtA.template topLeftCorner<N, N>();
+
+        // Use the same logic as `static RawSolution solve()`, but
+        // only accumulate the rank with an absolute threshold.
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, N, N>> es(AtA_c);
+        auto eigenvalues = es.eigenvalues().real();
+
+        unsigned rank = 0;
+        for (unsigned i=0; i < N; ++i) {
+            if (fabs(eigenvalues[i]) > 0.1) {
+                rank++;
+            }
+        }
+        return rank;
+    }
+
     /*
      *  A bit of magic matrix math to extract the distance value
      */

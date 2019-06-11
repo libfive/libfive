@@ -307,6 +307,11 @@ void processEdge(HybridTree<BaseDimension>* tree,
         std::array<NeighborIndex, 2> targets = {edge, edge};
         tree->accumulate(eval, tape, 2, targets.data(), true);
 
+        // Calculate the rank of the edge intersection.  This is probably
+        // 1 (if the cell edge intersects a surface) or 2 (if the cell edge
+        // happens to catch a sharp edge on the surface).
+        tree->leaf->surface_rank[edge.i] = tree->leaf->qef[edge.i].rankDC();
+
         // TODO: weigh this based on distance
         Eigen::Matrix<double, BaseDimension, 1> pos;
         pos = (surf.col(0) + surf.col(1)) / 2;
@@ -319,6 +324,7 @@ void processEdge(HybridTree<BaseDimension>* tree,
         DEBUG("Found surface edge " << edge.i);
         DEBUG("  placed at " << pos.transpose());
         DEBUG("  inside: " << tree->leaf->inside[edge.i]);
+        DEBUG("  rank: " << tree->leaf->surface_rank[edge.i]);
     } else {
         // If the edge doesn't have an obvious sign change, then place a
         // vertex on a sharp feature of the distance field (which will
@@ -392,7 +398,6 @@ void process(HybridTree<BaseDimension>* tree,
         // any data other than corners, because that's the only source
         // of higher-dimension spaces QEF info.
         if (m.dimension() == 0) {
-            DEBUG("      Accumulated distance QEF from " << m.i);
             qef_distance += tree->leaf->qef[m.i];
         }
     }
@@ -576,6 +581,7 @@ void HybridTree<N>::placeDistanceVertex(
 
         accumulate(eval, tape, num_intersections, targets.data(), true);
         this->leaf->has_surface_qef[n.i] = true;
+        this->leaf->surface_rank[n.i] = this->leaf->qef[n.i].rankDC();
     } else {
         // If we didn't find a sign change, then store the vertex itself into
         // the subspace QEF.

@@ -55,11 +55,19 @@ struct HybridLeaf
     std::array<bool, ipow(3, N)> vertex_on_surface;
 
     /*  Represents the mass-point center of surface intersections.  This is
-     *  only relevant when has_surface_qef is true and vertex_on_surface is
-     *  false; if vertex_on_surface is true, then surface_mass_point is the
-     *  same as vertex_pos, and if has_surface_qef is false, then we don't
-     *  care about the mass point for this subspace. */
+     *  only relevant when has_surface_qef is true.  If has_surface_qef is
+     *  false, then we don't care about the mass point for this subspace.
+     *
+     *  If vertex_on_surface is true, then surface_mass_point is the
+     *  same as vertex_pos. */
     Eigen::Matrix<double, N + 1, ipow(3, N)> surface_mass_point;
+
+    /*  This represents the rank of the mass point, which is used when
+     *  accumulating: we only accumulate mass points from max-rank
+     *  subspaces, to give us a better target for minimization.
+     *
+     *  This is only relevant when has_surface_qef is true. */
+    std::array<unsigned, ipow(3, N)> surface_rank;
 
     /* Unique indexes for every subspace, shared when subspaces are
      * shared by more than one neighbor. */

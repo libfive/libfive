@@ -274,6 +274,12 @@ TEST_CASE("HybridMesher<3>: cylinder meshing", "[!mayfail]")
     save_debug_mesh(c, t, settings, m.get());
 #endif
 
+    // Two of the edges are on the bottom edge of the cylinder, and
+    // should therefore have rank two.
+    REQUIRE(t->leaf->surface_rank[14] == 2);
+    REQUIRE(t->leaf->surface_rank[15] == 2);
+    REQUIRE(t->leaf->surface_rank[21] == 1);
+
     // Here, we check the bottom of the cylinder, which has an exact
     // intersection with the top of this cell.  The body vertex and
     // top surface vertex should be on top of each other, to prevent
