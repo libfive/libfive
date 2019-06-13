@@ -186,3 +186,30 @@ TEST_CASE("Region<3>::withResolution")
     REQUIRE(r.withResolution(1.2).level == 1);
     REQUIRE(r.withResolution(0.9).level == 2);
 }
+
+TEST_CASE("Region<2>::intersection")
+{
+    Region<2> r({0, 0}, {1, 1});
+
+    bool found = false;
+    auto o = r.intersection({-1.0, 0.5}, {1, 0}, &found);
+
+    {
+        CAPTURE(o);
+        REQUIRE(found);
+        REQUIRE(o.col(0).matrix() == Eigen::Vector2d(0, 0.5));
+        REQUIRE(o.col(1).matrix() == Eigen::Vector2d(1, 0.5));
+    }
+
+    {
+        auto o = r.intersection({-1.0, 0.5}, {1, 0.5}, &found);
+        REQUIRE(found);
+        REQUIRE(o.col(0).matrix() == Eigen::Vector2d(0, 1));
+        REQUIRE(o.col(1).matrix() == Eigen::Vector2d(0, 1));
+    }
+
+    {
+        auto o = r.intersection({-1.0, 0.5}, {0.5, 0.5}, &found);
+        REQUIRE(!found);
+    }
+}

@@ -252,6 +252,28 @@ public:
         return Region<N>(lower, upper, perp, level);
     }
 
+
+    /*  Finds the intersection of a ray with this region, setting *found to
+     *  true on success and false otherwise. */
+    Eigen::Array<double, N, 2> intersection(const Pt& pos, const Pt& dir,
+                                            bool* found)
+    {
+        Eigen::Array<double, 2, N> out;
+        *found = false;
+        // Iterate over dimensions
+        for (unsigned i=0; i < N; ++i) {
+            for (unsigned j=0; j < 2; ++j) {
+                const double d = ((*this)[j][i] - pos[i]) / dir[i];
+                const Pt pt = pos + d * dir;
+                if (this->contains(pt, 0)) {
+                    out.col(*found) = pt;
+                    *found = true;
+                }
+            }
+        }
+        return out;
+    }
+
     /*  Lower and upper bounds for the region  */
     Pt lower, upper;
 
