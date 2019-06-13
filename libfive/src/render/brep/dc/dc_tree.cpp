@@ -627,7 +627,7 @@ void DCTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
     }
 
     // If the point has a valid normal, then store it
-    if (dv.array().isFinite().all())
+    if (norm > 1e-12 && dv.array().isFinite().all())
     {
         this->leaf->intersections[edge]->
              push_back({pos, dv, value / norm, 0});
