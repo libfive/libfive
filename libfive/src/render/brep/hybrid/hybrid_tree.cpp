@@ -412,6 +412,22 @@ void process(HybridTree<BaseDimension>* tree,
         }
     }
 
+    // If that failed, run the solver to position the vertex on a sharp feature
+    // of the distance field itself.  This is more robust, but worse at
+    // positioning the final model vertices on corners and edges.
+    const auto region_ = region.template subspace<TargetFloating>();
+
+    // Then, try solving for a sharp feature on the distance field itself,
+    // using the DC-chosen point as a starting point if it's within the
+    // cell's boundaries.
+    QEF<TargetDimension> qef_dist_ = qef_distance
+        .template sub<TargetFloating>();
+    auto sol_dist = qef_dist_.solveBounded(region_, 1);
+    auto v_dist = unpack<BaseDimension, Target>(sol_dist.position, region);
+    DEBUG("  found distance vertex at " << v_dist.transpose());
+    DEBUG("      rank: " << sol_dist.rank);
+    DEBUG("      error: " << sol_dist.error);
+
     // Accumulate max-rank intersections into our local mass point.
     // We only want max-rank intersections, because that improves the
     // final vertex position (see the Dual Contouring Secret Sauce paper
@@ -461,7 +477,9 @@ void process(HybridTree<BaseDimension>* tree,
 
         // If we successfully placed the vertex using Dual Contouring
         // rules, then mark that the resulting vertex is a surface vertex.
-        if (within_region)
+        if (within_region && (sol_surf.error <= 1e-12
+                    || sol_surf.error / 10.0 < sol_dist.error
+                    || (v_dist - v_surf).norm() < 1e-12))
         {
             DEBUG("      Placed DC vertex");
             tree->leaf->has_surface_qef[n.i] = false;
@@ -470,22 +488,6 @@ void process(HybridTree<BaseDimension>* tree,
             return;
         }
     }
-
-    // If that failed, run the solver to position the vertex on a sharp feature
-    // of the distance field itself.  This is more robust, but worse at
-    // positioning the final model vertices on corners and edges.
-    const auto region_ = region.template subspace<TargetFloating>();
-
-    // Then, try solving for a sharp feature on the distance field itself,
-    // using the DC-chosen point as a starting point if it's within the
-    // cell's boundaries.
-    QEF<TargetDimension> qef_dist_ = qef_distance
-        .template sub<TargetFloating>();
-    auto sol_dist = qef_dist_.solveBounded(region_, 1);
-    auto v_dist = unpack<BaseDimension, Target>(sol_dist.position, region);
-    DEBUG("  found distance vertex at " << v_dist.transpose());
-    DEBUG("      rank: " << sol_dist.rank);
-    DEBUG("      error: " << sol_dist.error);
 
     //  If we failed to place a DC vertex, then we're placing a distance
     //  vertex instead.
