@@ -185,6 +185,7 @@ void HybridLeaf<N>::reset()
     std::fill(inside.begin(), inside.end(), false);
     std::fill(vertex_on_surface.begin(), vertex_on_surface.end(), false);
     std::fill(index.begin(), index.end(), 0);
+    std::fill(surface_rank.begin(), surface_rank.end(), 0);
 
     surface.clear();
     tape.reset();
@@ -378,6 +379,7 @@ void process(HybridTree<BaseDimension>* tree,
 
     uint32_t filled_mask = 0;
     unsigned filled_mask_bit = 0;
+    unsigned max_surface_rank = 0;
     for (const auto& m : EdgeTables<BaseDimension>::subspaces(n)) {
         // Build up a bitmask of occupied perimeter subspaces, so that
         // we can check for manifoldness later.
@@ -391,7 +393,15 @@ void process(HybridTree<BaseDimension>* tree,
         // double-counting.
         if (tree->leaf->has_surface_qef[m.i]) {
             qef_surface += tree->leaf->qef[m.i];
-            mass_point_surface += tree->leaf->surface_mass_point.col(m.i);
+        }
+
+        // We're going to accumulate the mass point based on all of
+        // the max-rank on-surface vertices (or surface QEF mass points).
+        if (tree->leaf->has_surface_qef[m.i] ||
+            tree->leaf->vertex_on_surface[m.i])
+        {
+            max_surface_rank = std::max(max_surface_rank,
+                                        tree->leaf->surface_rank[m.i]);
         }
 
         // Similarly, for distance-field vertices, we don't care about
@@ -399,6 +409,22 @@ void process(HybridTree<BaseDimension>* tree,
         // of higher-dimension spaces QEF info.
         if (m.dimension() == 0) {
             qef_distance += tree->leaf->qef[m.i];
+        }
+    }
+
+    // Accumulate max-rank intersections into our local mass point.
+    // We only want max-rank intersections, because that improves the
+    // final vertex position (see the Dual Contouring Secret Sauce paper
+    // for details).
+    for (const auto& m : EdgeTables<BaseDimension>::subspaces(n)) {
+        if (tree->leaf->surface_rank[m.i] == max_surface_rank) {
+            if (tree->leaf->vertex_on_surface[m.i]) {
+                Eigen::Matrix<double, BaseDimension + 1, 1> v;
+                v << tree->leaf->vertex_pos.col(m.i), 1.0;
+                mass_point_surface += v;
+            } else if (tree->leaf->has_surface_qef[m.i]) {
+                mass_point_surface += tree->leaf->surface_mass_point.col(m.i);
+            }
         }
     }
 
