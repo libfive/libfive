@@ -70,6 +70,18 @@ public:
         return lower;
     }
 
+    const Pt& operator[](std::size_t idx) const
+    {
+        switch(idx)
+        {
+            case 0: return lower;
+            case 1: return upper;
+            default: assert(false);
+        }
+        assert(false);
+        return lower;
+    }
+
     /*
      *  Splits along all axes
      */
@@ -256,9 +268,9 @@ public:
     /*  Finds the intersection of a ray with this region, setting *found to
      *  true on success and false otherwise. */
     Eigen::Array<double, N, 2> intersection(const Pt& pos, const Pt& dir,
-                                            bool* found)
+                                            bool* found) const
     {
-        Eigen::Array<double, 2, N> out;
+        Eigen::Array<double, N, 2> out;
         *found = false;
         // Iterate over dimensions
         for (unsigned i=0; i < N; ++i) {

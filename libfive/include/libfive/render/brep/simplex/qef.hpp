@@ -297,6 +297,14 @@ public:
     }
 
     /*
+     *  Returns the direction of travel which produces the minimum QEF error.
+     *
+     *  For a DC QEF that's on an edge, this is equivalent to the edge's
+     *  direction, which is useful for sliding vertices into their cells.
+     */
+    Eigen::Matrix<double, N, 1> slideDC() const;
+
+    /*
      *  A bit of magic matrix math to extract the distance value
      */
     double averageDistanceValue() const {
@@ -651,5 +659,23 @@ inline typename QEF<N>::Solution QEF<N>::solveDC(Eigen::Matrix<double, 1, N> tar
 
     return out;
 }
+
+template <>
+inline Eigen::Matrix<double, 0, 1> QEF<0>::slideDC() const {
+    return {};
+}
+
+template <unsigned N>
+inline Eigen::Matrix<double, N, 1> QEF<N>::slideDC() const {
+    // Pick out the DC subset of the matrix
+    Eigen::Matrix<double, N, N> AtA_c = AtA.template topLeftCorner<N, N>();
+
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, N, N>> es(AtA_c);
+    unsigned i;
+    es.eigenvalues().minCoeff(&i);
+
+    return es.eigenvectors().col(i);
+}
+
 
 }   // namespace Kernel

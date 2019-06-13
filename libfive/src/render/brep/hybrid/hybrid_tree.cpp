@@ -475,6 +475,30 @@ void process(HybridTree<BaseDimension>* tree,
         DEBUG("      target pos: " << target_pos_surf.transpose());
         DEBUG("      error: " << sol_surf.error);
 
+        // This is a tricky special case which helps prevent DC vertices
+        // from escaping their cells: if an edge vertex is outside of the
+        // cell, then we check whether we can slide along its one degree
+        // of freedom to put it back inside.
+        if (!within_region && TargetDimension == BaseDimension &&
+            sol_surf.rank == TargetDimension - 1)
+        {
+            DEBUG("  DC vertex is out-of-region with one degree of freedom");
+            DEBUG("    Attempting to slide it into the region");
+            const auto slide_direction = qef_surface.slideDC();
+            DEBUG("    Sliding along [" << slide_direction.transpose() << "]");
+            bool found = false;
+            auto inter = region.intersection(v_surf, slide_direction, &found);
+            if (found) {
+                DEBUG("    Found intersection");
+                DEBUG("      [" << inter.col(0).transpose() << "]");
+                DEBUG("      [" << inter.col(1).transpose() << "]");
+
+                v_surf = (inter.col(0) + inter.col(1)) / 2;
+                within_region = true;
+                DEBUG("    Slid to [" << v_surf.transpose() << "]");
+            }
+        }
+
         // If we successfully placed the vertex using Dual Contouring
         // rules, then mark that the resulting vertex is a surface vertex.
         if (within_region && (sol_surf.error <= 1e-12
