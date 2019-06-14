@@ -18,8 +18,8 @@ namespace Kernel {
 template <unsigned N>
 bool checkBitfield(uint32_t b) {
     uint32_t new_inside = 0;
-    for (unsigned i=0; i < ipow(3, N); ++i) {
-        if (b & (1 << i) && !new_inside) {
+    for (unsigned i=0; i < ipow(3, N) && !new_inside; ++i) {
+        if (b & (1 << i)) {
             new_inside = (1 << i);
         }
     }
@@ -88,17 +88,19 @@ bool ManifoldTables<N>::manifold(uint32_t b)
     static ManifoldTables<N> singleton;
     constexpr uint32_t top_bit = 1 << (ipow(3, N) - 2);
 
+    // We check both the positive and negative of this bitfield,
+    // because we're only flood-filling one sign.
+    const uint32_t inv = (~b) & ((top_bit << 1) - 1);
+
     // Manifoldness is symmetric to flipping the sign, so we only store
     // half of the table (with the top bit always set to zero).
-    if (b & top_bit) {
-        b = (~b) & (top_bit - 1);
-    }
+    const uint32_t index = (b & top_bit) ? inv : b;
 
     // Lazily populate the full data array
-    if (!singleton.known.at(b)) {
-        singleton.data.at(b) = checkBitfield<N>(b);
+    if (!singleton.known.at(index)) {
+        singleton.data.at(index) = checkBitfield<N>(b) && checkBitfield<N>(inv);
     }
-    return singleton.data.at(b);
+    return singleton.data.at(index);
 }
 
 // Explicit initialization of template
