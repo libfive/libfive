@@ -269,7 +269,7 @@ TEST_CASE("HybridMesher<3>: cylinder meshing", "[!mayfail]")
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
 
-#if 1 // Uncomment to save debug meshes
+#if 0 // Uncomment to save debug meshes
     print_debug_leaf(t.get());
     save_debug_mesh(c, t, settings, m.get());
 #endif
@@ -317,6 +317,28 @@ TEST_CASE("HybridMesher<3>: cube meshing")
     REQUIRE(v.z() == Approx(1.2));
 }
 
+TEST_CASE("HybridMesher<3>: another rotated cube meshing")
+{
+    auto c = rotate2d(box({-1, -1, -1}, {1, 1, 1}), 0.4);
+    //auto r = Region<3>({-5, -5, -5}, {5, 5, 5});
+    //auto r = Region<3>({-0.625, -1.25, 0.9375}, {-0.3125, -0.9375, 1.25});
+    auto r = Region<3>({-0.625, -1.25, 0.0}, {0, -0.625, 0.625});
+
+    BRepSettings settings;
+    settings.min_feature = 1;
+    settings.workers = 1;
+    auto t = HybridTreePool<3>::build(c, r, settings);
+    t->assignIndices(settings);
+
+    settings.workers = 8;
+    auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
+
+#if 0 // Uncomment to save debug meshes
+    print_debug_leaf(t.get());
+    save_debug_mesh(c, t, settings, m.get());
+#endif
+}
+
 TEST_CASE("HybridMesher<3>: cylinder cutout meshing")
 {
     auto c = max(box({-1, -1, -1}, {1.4f, 1.1f, 1}),
@@ -355,7 +377,7 @@ TEST_CASE("HybridMesher<3>: rotated cylinder meshing")
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
 
-#if 1 // Uncomment to save debug meshes
+#if 0 // Uncomment to save debug meshes
     print_debug_leaf(t.get());
     save_debug_mesh(c, t, settings, m.get());
 #endif
