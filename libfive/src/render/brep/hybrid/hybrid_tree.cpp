@@ -518,10 +518,38 @@ void process(HybridTree<BaseDimension>* tree,
         }
     }
 
-    //  If we failed to place a DC vertex, then we're placing a distance
-    //  vertex instead.
-    DEBUG("      Placing distance vertex");
-    tree->placeDistanceVertex(eval, tape, region, n, v_dist);
+    NeighborIndex constrained_to = n;
+    for (const auto& m : EdgeTables<BaseDimension>::subspaces(n)) {
+        bool constrained = true;
+        for (unsigned i=0; i < BaseDimension; ++i) {
+            if ((n.floating() & (1 << i)) && (m.fixed() & (1 << i))) {
+                constrained &= (v_dist[i] == tree->leaf->vertex_pos(i, m.i));
+            }
+        }
+        if (constrained && m.dimension() < constrained_to.dimension()) {
+            constrained_to = m;
+        }
+    }
+    if (constrained_to.i != n.i && 0) {
+        DEBUG("    Placing distance vertex constrained to subspace "
+              << constrained_to.i);
+#define ASSIGN(p) tree->leaf->p[n.i] = tree->leaf->p[constrained_to.i]
+        ASSIGN(inside);
+        ASSIGN(has_surface_qef);
+        ASSIGN(qef);
+        ASSIGN(vertex_on_surface);
+        ASSIGN(surface_rank);
+#undef ASSIGN
+        tree->leaf->vertex_pos.col(n.i) =
+            tree->leaf->vertex_pos.col(constrained_to.i);
+        tree->leaf->surface_mass_point.col(n.i) =
+            tree->leaf->surface_mass_point.col(constrained_to.i);
+    } else {
+        //  If we failed to place a DC vertex, then we're placing a distance
+        //  vertex instead.
+        DEBUG("      Placing distance vertex");
+        tree->placeDistanceVertex(eval, tape, region, n, v_dist);
+    }
 }
 
 
