@@ -494,8 +494,13 @@ void process(HybridTree<BaseDimension>* tree,
                 DEBUG("      [" << inter.col(1).transpose() << "]");
 
                 v_surf = (inter.col(0) + inter.col(1)) / 2;
-                within_region = true;
-                DEBUG("    Slid to [" << v_surf.transpose() << "]");
+                if (region.contains(v_surf, 0)) {
+                    DEBUG("    Slid to [" << v_surf.transpose() << "]");
+                    within_region = true;
+                } else {
+                    DEBUG("    Sliding left us outside the region at ["
+                           << v_surf.transpose() << "]");
+                }
             }
         }
 

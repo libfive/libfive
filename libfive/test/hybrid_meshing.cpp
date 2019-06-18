@@ -355,8 +355,12 @@ TEST_CASE("HybridMesher<3>: rotated cylinder meshing")
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
 
-#if 0 // Uncomment to save debug meshes
+#if 1 // Uncomment to save debug meshes
     print_debug_leaf(t.get());
     save_debug_mesh(c, t, settings, m.get());
 #endif
+
+    // This vertex is naturally placed outside of the cell, but edge shifting
+    // brings it back into the cell (we hope).
+    REQUIRE(t->leaf->vertex_on_surface[26]);
 }
