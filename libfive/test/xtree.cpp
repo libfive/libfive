@@ -270,3 +270,22 @@ TEST_CASE("DCTree<3> cancellation")
     // (rather than a partially-constructed or invalid tree)
     REQUIRE(result.get() == nullptr);
 }
+
+TEST_CASE("DCTree<3>: vertex sliding")
+{
+    auto c = rotate_x(-cylinder(1, 1, {0, 0, -0.5}), 0.4);
+    auto r = Region<3>({-1.125, 0.375, 0.375}, {-0.75, 0.75, 0.75});
+
+    BRepSettings settings;
+    settings.min_feature = 0.5;
+    settings.workers = 1;
+    auto t = DCPool<3>::build(c, r, settings);
+
+    REQUIRE(t->leaf != nullptr);
+    REQUIRE(t->leaf->vertex_count == 1);
+
+    CAPTURE(t->leaf->verts.col(0).transpose());
+    CAPTURE(r.lower.transpose());
+    CAPTURE(r.upper.transpose());
+    REQUIRE(r.contains(t->leaf->verts.col(0), 0));
+}

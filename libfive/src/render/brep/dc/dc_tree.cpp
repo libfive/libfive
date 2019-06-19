@@ -601,7 +601,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
         // Find the vertex position, storing into the appropriate column
         // of the vertex array and ignoring the error result (because
         // this is the bottom of the recursion)
-        findVertex(this->leaf->vertex_count);
+        findVertex(this->leaf->vertex_count, region);
 
         // Move on to the next vertex
         this->leaf->vertex_count++;
@@ -776,7 +776,7 @@ bool DCTree<N>::collectChildren(XTreeEvaluator* eval,
     // a leaf by erasing all of the child branches
     {
         bool collapsed = false;
-        if (findVertex(this->leaf->vertex_count++) < max_err &&
+        if (findVertex(this->leaf->vertex_count++, region) < max_err &&
             region.contains(vert(0), 1e-6))
         {
             Eigen::Vector3f v;
@@ -806,7 +806,7 @@ bool DCTree<N>::collectChildren(XTreeEvaluator* eval,
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-double DCTree<N>::findVertex(unsigned index)
+double DCTree<N>::findVertex(unsigned index, const Region<N>& region)
 {
     assert(this->leaf != nullptr);
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, N, N>> es(
@@ -841,6 +841,20 @@ double DCTree<N>::findVertex(unsigned index)
     Vec center = this->leaf->mass_point.template head<N>() /
                  this->leaf->mass_point(N);
     Vec v = AtAp * (this->leaf->AtB - (this->leaf->AtA * center)) + center;
+
+    // If the vertex is outside of our region and has one degree
+    // of freedom, try to slide it back into the region.
+    if (this->leaf->rank == N - 1 && !region.contains(v, 0)) {
+        unsigned min_eigenvalue;
+        es.eigenvalues().minCoeff(&min_eigenvalue);
+
+        const Vec slide = es.eigenvectors().col(min_eigenvalue);
+        bool found = false;
+        auto intersection = region.intersection(v, slide, &found);
+        if (found) {
+            v = (intersection.col(0) + intersection.col(1)) / 2.0;
+        }
+    }
 
     // Store this specific vertex in the verts matrix
     this->leaf->verts.col(index) = v;

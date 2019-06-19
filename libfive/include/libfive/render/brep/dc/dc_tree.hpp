@@ -220,11 +220,16 @@ protected:
      *  Searches for a vertex within the DCTree cell, using the QEF matrices
      *  that are pre-populated in AtA, AtB, etc.
      *
-     *  Minimizes the QEF towards mass_point
+     *  Minimizes the QEF towards mass_point.
+     *
+     *  If the resulting vertex has a rank of N - 1 (i.e. it has one degree
+     *  of freedom) and is outside the region, then we try to slide it along
+     *  that degree of freedom to place it inside the region.  This reduces
+     *  self-intersections at the cost of slightly higher error.
      *
      *  Stores the vertex in vert and returns the QEF error
      */
-    double findVertex(unsigned i=0);
+    double findVertex(unsigned i, const Region<N>& region);
 
     /*
      *  Writes the given intersection into the intersections list
