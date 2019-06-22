@@ -20,6 +20,12 @@ class Tape; /* Forward declaration */
 class IntervalEvaluator : public BaseEvaluator
 {
 public:
+    struct Result {
+        Interval::I i;
+        bool safe;
+        std::shared_ptr<Tape> tape;
+    };
+
     IntervalEvaluator(const Tree& root);
     IntervalEvaluator(const Tree& root,
                       const std::map<Tree::Id, float>& vars);
@@ -36,13 +42,16 @@ public:
                      const Eigen::Vector3f& upper,
                      std::shared_ptr<Tape> tape);
 
-    std::pair<Interval::I, std::shared_ptr<Tape>> evalAndPush(
-                     const Eigen::Vector3f& lower,
-                     const Eigen::Vector3f& upper);
-    std::pair<Interval::I, std::shared_ptr<Tape>> evalAndPush(
-                     const Eigen::Vector3f& lower,
-                     const Eigen::Vector3f& upper,
-                     std::shared_ptr<Tape> tape);
+    /*  Helper function to return a full Result */
+    Result eval_(const Eigen::Vector3f& lower,
+                 const Eigen::Vector3f& upper,
+                 std::shared_ptr<Tape> tape);
+
+    Result evalAndPush(const Eigen::Vector3f& lower,
+                       const Eigen::Vector3f& upper);
+    Result evalAndPush(const Eigen::Vector3f& lower,
+                       const Eigen::Vector3f& upper,
+                       std::shared_ptr<Tape> tape);
 
     /*
      *  Returns a shortened tape based on the most recent evaluation.
@@ -62,8 +71,6 @@ public:
      */
     bool setVar(Tree::Id var, float value);
 
-    bool isSafe() const { return safe; }
-
 protected:
     /*  i[clause] is the interval result for that clause, */
     std::vector<Interval::I> i;
@@ -71,10 +78,6 @@ protected:
     /*  maybe_nan[clause] indicates whether the result might be NaN (which is
      *  generally not included in interval evaluation) */
     std::vector<bool> maybe_nan;
-
-    /*  Marks whether the most recent evaluation could have any NaN in its
-     *  root clause. */
-     bool safe;
 
      /* Sets i[index] = f and maybe_nan[index] = std::isnan(f) */
      void store(float f, size_t index);

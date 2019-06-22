@@ -72,6 +72,14 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
                                     const Eigen::Vector3f& upper,
                                     Tape::Handle tape)
 {
+    return eval_(lower, upper, tape).i;
+}
+
+IntervalEvaluator::Result IntervalEvaluator::eval_(
+        const Eigen::Vector3f& lower,
+        const Eigen::Vector3f& upper,
+        Tape::Handle tape)
+{
     assert(!lower.array().isNaN().any()); // A region's bounds should
     assert(!upper.array().isNaN().any()); // never be NaN.
 
@@ -91,24 +99,24 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     auto root = tape->rwalk(*this);
     deck->unbindOracles();
 
-    safe = !maybe_nan[root];
-    return i[root];
+    return {i[root], !maybe_nan[root], nullptr};
 }
 
-std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
+IntervalEvaluator::Result IntervalEvaluator::evalAndPush(
         const Eigen::Vector3f& lower,
         const Eigen::Vector3f& upper)
 {
     return evalAndPush(lower, upper, deck->tape);
 }
 
-std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
+IntervalEvaluator::Result IntervalEvaluator::evalAndPush(
         const Eigen::Vector3f& lower,
         const Eigen::Vector3f& upper,
         Tape::Handle tape)
 {
-    auto out = eval(lower, upper, tape);
-    return std::make_pair(out, push(tape));
+    auto out = eval_(lower, upper, tape);
+    out.tape = push(tape);
+    return out;
 }
 
 std::shared_ptr<Tape> IntervalEvaluator::push()
@@ -439,11 +447,10 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            {
-                deck->oracles[a_]->evalInterval(out);
-
+            {   // We need a helper variable here because outN is
+                // a vector<bool> accessor class, not a bool itself.
                 bool nan(false);
-                deck->oracles[a_]->evalIntervalNaN(nan);
+                deck->oracles[a_]->evalInterval(out, nan);
                 outN = nan;
                 break;
             }

@@ -231,11 +231,11 @@ Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
             region.upper3().template cast<float>(),
             tape);
 
-    this->type = Interval::state(o.first);
-    if (!eval->interval.isSafe())
+    this->type = Interval::state(o.i);
+    if (!o.safe)
     {
         this->type = Interval::AMBIGUOUS;
-        o.second = tape; // We can't safely push the tape
+        o.tape = tape; // We can't safely push the tape
     }
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
@@ -247,7 +247,7 @@ Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
         findLeafVertices(eval, tape, region, object_pool, neighbors);
         this->done();
     }
-    return o.second;
+    return o.tape;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

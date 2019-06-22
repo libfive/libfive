@@ -209,8 +209,8 @@ Tape::Handle HybridTree<N>::evalInterval(XTreeEvaluator* eval,
             region.upper3().template cast<float>(),
             tape);
 
-    this->type = Interval::state(o.first);
-    if (!eval->interval.isSafe())
+    this->type = Interval::state(o.i);
+    if (!o.safe)
     {
         this->type = Interval::AMBIGUOUS;
         return tape;
@@ -221,7 +221,7 @@ Tape::Handle HybridTree<N>::evalInterval(XTreeEvaluator* eval,
         buildLeaf(eval, tape, region, object_pool);
         this->done();
     }
-    return o.second;
+    return o.tape;
 }
 
 

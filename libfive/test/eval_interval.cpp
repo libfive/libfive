@@ -71,12 +71,12 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         // Do an interval evaluation that will lead to disabling the rhs
         // Pushing should disable the rhs of min
         auto p = e.evalAndPush({-5, 8, 0}, {-4, 9, 0});
-        auto i = p.first;
+        auto i = p.i;
         REQUIRE(i.lower() == -4);
         REQUIRE(i.upper() == -3);
 
         // Check to make sure that the push disabled something
-        REQUIRE(p.second->size() < t->tape->size());
+        REQUIRE(p.tape->size() < t->tape->size());
 
         // Require that the evaluation gets 1
         o = e.eval({1, 2, 0}, {1, 2, 0});
@@ -96,7 +96,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         // picking X, then collapsing min(X, X) into just X.
         auto i = e.evalAndPush({-5, 0, 0}, {-4, 1, 0});
         CAPTURE(d->tape->size());
-        REQUIRE(i.second->size() == 1);
+        REQUIRE(i.tape->size() == 1);
     }
 
     SECTION("With NaNs")
@@ -123,18 +123,18 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         {
             auto ia = eval.evalAndPush(ra.lower.template cast<float>(),
                                        ra.upper.template cast<float>());
-            CAPTURE(ia.first.lower());
-            CAPTURE(ia.first.upper());
-            CAPTURE(ia.second->size() / (float)deck->tape->size());
+            CAPTURE(ia.i.lower());
+            CAPTURE(ia.i.upper());
+            CAPTURE(ia.tape->size() / (float)deck->tape->size());
             ea = eval_.eval(target);
         }
 
         {
             auto ib = eval.evalAndPush(rb.lower.template cast<float>(),
                                        rb.upper.template cast<float>());
-            CAPTURE(ib.first.lower());
-            CAPTURE(ib.first.upper());
-            CAPTURE(ib.second->size() / (float)deck->tape->size());
+            CAPTURE(ib.i.lower());
+            CAPTURE(ib.i.upper());
+            CAPTURE(ib.tape->size() / (float)deck->tape->size());
             eb = eval_.eval(target);
         }
 
@@ -142,19 +142,16 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
     }
 }
 
-TEST_CASE("IntervalEvaluator::isSafe")
+TEST_CASE("IntervalEvaluator::eval_().safe")
 {
     SECTION("Input values")
     {
         auto t = std::make_shared<Deck>(Tree::X());
         IntervalEvaluator e(t);
 
-        e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
-        REQUIRE(e.isSafe());
-
-        e.eval({-std::numeric_limits<float>::infinity(), 1, 0},
-               {1, 2, 0}, t->tape);
-        REQUIRE(e.isSafe());
+        REQUIRE(e.eval_({-1, 1, 0}, {1, 2, 0}, t->tape).safe);
+        REQUIRE(e.eval_({-std::numeric_limits<float>::infinity(), 1, 0},
+               {1, 2, 0}, t->tape).safe);
     }
 
     SECTION("Division")
@@ -162,17 +159,10 @@ TEST_CASE("IntervalEvaluator::isSafe")
         auto t = std::make_shared<Deck>(Tree::X() / Tree::Y());
         IntervalEvaluator e(t);
 
-        e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
-        REQUIRE(e.isSafe());
-
-        e.eval({-1, 0, 0}, {1, 2, 0}, t->tape);
-        REQUIRE(!e.isSafe());
-
-        e.eval({-1, -1, 0}, {1, 2, 0}, t->tape);
-        REQUIRE(!e.isSafe());
-
-        e.eval({1, -1, 0}, {2, 2, 0}, t->tape);
-        REQUIRE(e.isSafe());
+        REQUIRE(e.eval_({-1, 1, 0}, {1, 2, 0}, t->tape).safe);
+        REQUIRE(!e.eval_({-1, 0, 0}, {1, 2, 0}, t->tape).safe);
+        REQUIRE(!e.eval_({-1, -1, 0}, {1, 2, 0}, t->tape).safe);
+        REQUIRE(e.eval_({1, -1, 0}, {2, 2, 0}, t->tape).safe);
     }
 
     SECTION("Multiplication of zero and infinity")
@@ -180,22 +170,11 @@ TEST_CASE("IntervalEvaluator::isSafe")
         auto t = std::make_shared<Deck>(Tree::Z() * (Tree::X() / Tree::Y()));
         IntervalEvaluator e(t);
 
-        e.eval({-1, 1, 0}, {1, 2, 0}, t->tape);
-        REQUIRE(e.isSafe());
-
-        e.eval({-1, 0, 0}, {1, 2, 0}, t->tape);
-        REQUIRE(!e.isSafe());
-
-        e.eval({-1, -1, 1}, {1, 2, 2}, t->tape);
-        REQUIRE(!e.isSafe());
-
-        e.eval({1, -1, -1}, {2, 2, 1}, t->tape);
-        REQUIRE(!e.isSafe());
-
-        e.eval({1, -1, 1}, {2, 2, 2}, t->tape);
-        REQUIRE(e.isSafe());
-
-        e.eval({1, -1, -1}, {2, 2, 2}, t->tape);
-        REQUIRE(!e.isSafe());
+        REQUIRE(e.eval_({-1, 1, 0}, {1, 2, 0}, t->tape).safe);
+        REQUIRE(!e.eval_({-1, 0, 0}, {1, 2, 0}, t->tape).safe);
+        REQUIRE(!e.eval_({-1, -1, 1}, {1, 2, 2}, t->tape).safe);
+        REQUIRE(!e.eval_({1, -1, -1}, {2, 2, 1}, t->tape).safe);
+        REQUIRE(e.eval_({1, -1, 1}, {2, 2, 2}, t->tape).safe);
+        REQUIRE(!e.eval_({1, -1, -1}, {2, 2, 2}, t->tape).safe);
     }
 }

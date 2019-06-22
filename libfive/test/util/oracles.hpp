@@ -19,9 +19,10 @@ namespace Kernel {
 template <int A>
 class AxisOracle : public OracleStorage<>
 {
-    void evalInterval(Interval::I& out) override
+    void evalInterval(Interval::I& out, bool& maybe_nan) override
     {
         out = {lower(A), upper(A)};
+        maybe_nan = false;
     }
 
     void evalPoint(float& out, size_t index) override
@@ -73,7 +74,7 @@ inline Tree convertToOracleAxes(Tree t)
 
 class CubeOracle : public OracleStorage<>
 {
-    void evalInterval(Interval::I& out) override
+    void evalInterval(Interval::I& out, bool& maybe_nan) override
     {
         using namespace boost::numeric; // for max
 
@@ -85,6 +86,8 @@ class CubeOracle : public OracleStorage<>
             max(-(X + 1.5f), X - 1.5f),
             max(-(Y + 1.5f), Y - 1.5f)),
             max(-(Z + 1.5f), Z - 1.5f));
+
+        maybe_nan = false;
     }
 
     void evalPoint(float& out, size_t index) override

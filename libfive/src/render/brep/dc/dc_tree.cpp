@@ -99,8 +99,8 @@ Tape::Handle DCTree<N>::evalInterval(XTreeEvaluator* eval,
             region.upper3().template cast<float>(),
             tape);
 
-    this->type = Interval::state(o.first);
-    if (!eval->interval.isSafe())
+    this->type = Interval::state(o.i);
+    if (!o.safe)
     {
         this->type = Interval::AMBIGUOUS;
         return tape;
@@ -110,7 +110,7 @@ Tape::Handle DCTree<N>::evalInterval(XTreeEvaluator* eval,
     {
         this->done();
     }
-    return o.second;
+    return o.tape;
 }
 
 template <unsigned N>

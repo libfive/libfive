@@ -55,9 +55,10 @@ public:
 
     /*
      *  Return the result of interval arithmetic over the range
-     *  previously defined with set(Interval::I)
+     *  previously defined with set(Interval::I).  Sets maybe_nan
+     *  based on whether the given range could contain NaN.
      */
-    virtual void evalInterval(Interval::I& out)=0;
+    virtual void evalInterval(Interval::I& out, bool& maybe_nan)=0;
 
     /*
      *  Re-implemented by subclasses to return a context that specializes
@@ -68,15 +69,6 @@ public:
     {
         (void)t;
         return std::shared_ptr<OracleContext>(nullptr);
-    }
-
-    /*
-     *  Returns whether interval arithmetic over the previously defined range
-     *  can result in a NaN.
-     */
-    virtual void evalIntervalNaN(bool& out)
-    {
-      out = false;
     }
 
     /*

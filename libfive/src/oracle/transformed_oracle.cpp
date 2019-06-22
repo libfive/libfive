@@ -27,7 +27,7 @@ void TransformedOracle::set(const Eigen::Vector3f& p, size_t index)
     zEvaluator.array.set(p, index);
 }
 
-void TransformedOracle::evalInterval(Interval::I& out)
+void TransformedOracle::evalInterval(Interval::I& out, bool& maybe_nan)
 {
     auto xRange = xEvaluator.interval.eval(lower, upper);
     auto yRange = yEvaluator.interval.eval(lower, upper);
@@ -39,7 +39,7 @@ void TransformedOracle::evalInterval(Interval::I& out)
         xRange.upper(), yRange.upper(), zRange.upper() };
 
     underlying->set(rangeLower, rangeUpper);
-    underlying->evalInterval(out);
+    underlying->evalInterval(out, maybe_nan);
 }
 
 void TransformedOracle::evalPoint(float& out, size_t index)
