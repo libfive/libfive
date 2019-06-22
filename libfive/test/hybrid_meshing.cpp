@@ -386,3 +386,24 @@ TEST_CASE("HybridMesher<3>: rotated cylinder meshing")
     // brings it back into the cell (we hope).
     REQUIRE(t->leaf->vertex_on_surface[26]);
 }
+
+TEST_CASE("HybridMesher<3>: rotated cube-sphere difference")
+{
+    auto c = max(box({-1, -1, -1}, {1, 1, 1}),
+            -sphere(1.2));
+    auto r = Region<3>({-5, -5, -5}, {5, 5, 5});
+
+    BRepSettings settings;
+    settings.min_feature = 0.25;
+    settings.workers = 1;
+    auto t = HybridTreePool<3>::build(c, r, settings);
+    t->assignIndices(settings);
+
+    settings.workers = 8;
+    auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
+
+#if 0 // Uncomment to save debug meshes
+    print_debug_leaf(t.get());
+    save_debug_mesh(c, t, settings, m.get());
+#endif
+}
