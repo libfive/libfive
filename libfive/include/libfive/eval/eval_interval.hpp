@@ -65,15 +65,19 @@ public:
     bool isSafe() const { return safe; }
 
 protected:
-    /*  i[clause].first is the interval result for that clause,
-     *  i[clause].second indicates whether the result might be NaN (which is
+    /*  i[clause] is the interval result for that clause, */
+    std::vector<Interval::I> i;
+
+    /*  maybe_nan[clause] indicates whether the result might be NaN (which is
      *  generally not included in interval evaluation) */
-    std::vector<std::pair<Interval::I, bool>> i;
+    std::vector<bool> maybe_nan;
 
     /*  Marks whether the most recent evaluation could have any NaN in its
-     *  root clause.
-     */
+     *  root clause. */
      bool safe;
+
+     /* Sets i[index] = f and maybe_nan[index] = std::isnan(f) */
+     void store(float f, size_t index);
 
     /*
      *  Per-clause evaluation, used in tape walking

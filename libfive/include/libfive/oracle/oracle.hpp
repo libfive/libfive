@@ -74,7 +74,6 @@ public:
      *  Returns whether interval arithmetic over the previously defined range
      *  can result in a NaN.
      */
-
     virtual void evalIntervalNaN(bool& out)
     {
       out = false;

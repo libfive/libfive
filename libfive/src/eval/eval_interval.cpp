@@ -14,18 +14,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-namespace {
-using Pr = std::pair<Interval::I, bool>;
-// Turn a constant into an interval-and-NaN pair.
-Pr toPair(float inp)
-{
-  return std::isnan(inp)
-    ? Pr{Interval::I::empty(), true}
-    : Pr{inp, false};
-}
-
-}
-
 IntervalEvaluator::IntervalEvaluator(const Tree& root)
     : IntervalEvaluator(std::make_shared<Deck>(root))
 {
@@ -50,19 +38,28 @@ IntervalEvaluator::IntervalEvaluator(
     : BaseEvaluator(d, vars)
 {
     i.resize(d->num_clauses + 1);
+    maybe_nan.resize(d->num_clauses + 1);
 
     // Unpack variables into result array
     for (auto& v : d->vars.right)
     {
         auto var = vars.find(v.first);
-        i[v.second] = toPair((var != vars.end()) ? var->second : 0);
+        store((var != vars.end()) ? var->second : 0, v.second);
     }
 
     // Unpack constants into result array
     for (auto& c : d->constants)
     {
-      i[c.first] = toPair(c.second);
+        store(c.second, c.first);
     }
+}
+
+
+void IntervalEvaluator::store(float f, size_t index)
+{
+    const bool is_nan = std::isnan(f);
+    i[index] = is_nan ? Interval::I::empty() : f;
+    maybe_nan[index] = is_nan;
 }
 
 Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
@@ -77,9 +74,13 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
 {
     assert(!lower.array().isNaN().any()); // A region's bounds should
     assert(!upper.array().isNaN().any()); // never be NaN.
-    i[deck->X] = { {lower.x(), upper.x()}, false };
-    i[deck->Y] = { {lower.y(), upper.y()}, false };
-    i[deck->Z] = { {lower.z(), upper.z()}, false };
+
+    i[deck->X] = {lower.x(), upper.x()};
+    i[deck->Y] = {lower.y(), upper.y()};
+    i[deck->Z] = {lower.z(), upper.z()};
+    maybe_nan[deck->X] = false;
+    maybe_nan[deck->Y] = false;
+    maybe_nan[deck->Z] = false;
 
     for (auto& o : deck->oracles)
     {
@@ -90,8 +91,8 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
     auto root = tape->rwalk(*this);
     deck->unbindOracles();
 
-    safe = !i[root].second;
-    return i[root].first;
+    safe = !maybe_nan[root];
+    return i[root];
 }
 
 std::pair<Interval::I, Tape::Handle> IntervalEvaluator::evalAndPush(
@@ -119,12 +120,12 @@ std::shared_ptr<Tape> IntervalEvaluator::push(std::shared_ptr<Tape> tape)
 {
     assert(tape.get() != nullptr);
 
-    const Region<3> R(Eigen::Vector3d(i[deck->X].first.lower(),
-                                      i[deck->Y].first.lower(),
-                                      i[deck->Z].first.lower()),
-                      Eigen::Vector3d(i[deck->X].first.upper(),
-                                      i[deck->Y].first.upper(),
-                                      i[deck->Z].first.upper()));
+    const Region<3> R(Eigen::Vector3d(i[deck->X].lower(),
+                                      i[deck->Y].lower(),
+                                      i[deck->Z].lower()),
+                      Eigen::Vector3d(i[deck->X].upper(),
+                                      i[deck->Y].upper(),
+                                      i[deck->Z].upper()));
     return Tape::push(tape, *deck,
         [&](Opcode::Opcode op, Clause::Id /* id */,
             Clause::Id a, Clause::Id b)
@@ -137,13 +138,13 @@ std::shared_ptr<Tape> IntervalEvaluator::push(std::shared_ptr<Tape> tape)
             {
                 return Tape::KEEP_A;
             }
-            else if (!i[a].second && !i[b].second)
+            else if (!maybe_nan[a] && !maybe_nan[b])
             {
-                if (i[a].first.lower() > i[b].first.upper())
+                if (i[a].lower() > i[b].upper())
                 {
                     return Tape::KEEP_A;
                 }
-                else if (i[b].first.lower() > i[a].first.upper())
+                else if (i[b].lower() > i[a].upper())
                 {
                     return Tape::KEEP_B;
                 }
@@ -156,13 +157,13 @@ std::shared_ptr<Tape> IntervalEvaluator::push(std::shared_ptr<Tape> tape)
             {
                 return Tape::KEEP_A;
             }
-            else if (!i[a].second && !i[b].second)
+            else if (!maybe_nan[a] && !maybe_nan[b])
             {
-                if (i[a].first.lower() > i[b].first.upper())
+                if (i[a].lower() > i[b].upper())
                 {
                     return Tape::KEEP_B;
                 }
-                else if (i[b].first.lower() > i[a].first.upper())
+                else if (i[b].lower() > i[a].upper())
                 {
                     return Tape::KEEP_A;
                 }
@@ -181,8 +182,8 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
     auto v = deck->vars.right.find(var);
     if (v != deck->vars.right.end())
     {
-        bool changed = i[v->second] != toPair(value);
-        i[v->second] = toPair(value);
+        const bool changed = (i[v->second] != value);
+        store(value, v->second);
         return changed;
     }
     else
@@ -196,12 +197,12 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
 void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                    Clause::Id a_, Clause::Id b_)
 {
-#define out i[id].first
-#define a i[a_].first
-#define b i[b_].first
-#define outN i[id].second
-#define aN i[a_].second
-#define bN i[b_].second
+#define out i[id]
+#define a i[a_]
+#define b i[b_]
+#define outN maybe_nan[id]
+#define aN maybe_nan[a_]
+#define bN maybe_nan[b_]
 #define SET_UNSAFE(cond) outN = (aN) || (bN) || (cond)
   switch (op) {
         case Opcode::OP_ADD:
@@ -438,9 +439,14 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            deck->oracles[a_]->evalInterval(out);
-            deck->oracles[a_]->evalIntervalNaN(outN);
-            break;
+            {
+                deck->oracles[a_]->evalInterval(out);
+
+                bool nan(false);
+                deck->oracles[a_]->evalIntervalNaN(nan);
+                outN = nan;
+                break;
+            }
 
         case Opcode::INVALID:
         case Opcode::CONSTANT:
