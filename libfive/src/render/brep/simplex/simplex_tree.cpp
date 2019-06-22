@@ -151,10 +151,7 @@ struct Unroller
 
                 // Evaluate the function at the solution point, and add that
                 // information to the QEF, to do an iterative refinement.
-                Eigen::Vector3f vert;
-                vert << s->vert.template cast<float>().transpose(),
-                        region.perp.template cast<float>();
-                eval->array.set(vert, 0);
+                eval->array.set<BaseDimension>(s->vert, region, 0);
                 const auto ds = eval->array.derivs(1, tape);
                 QEF<BaseDimension> extra;
                 extra.insert(s->vert,
@@ -349,10 +346,7 @@ void SimplexTree<N>::findLeafVertices(
             assert(todo.size() == ipow(SAMPLES_PER_EDGE - 2, sub.dimension()));
 
             for (auto& t : todo) {
-                Eigen::Vector3f v;
-                v << t.template cast<float>(),
-                     region.perp.template cast<float>();
-                eval->array.set(v, count++);
+                eval->array.set<N>(t, region, count++);
             }
         }
     }

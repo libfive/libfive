@@ -272,15 +272,6 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
     // Figure out if the leaf is manifold
     this->leaf->manifold = cornersAreManifold(this->leaf->corner_mask);
 
-    // We'll use this vector anytime we need to pass something
-    // into the evaluator (which requires a Vector3f)
-    Eigen::Vector3f _pos;
-    _pos.template tail<3 - N>() = region.perp.template cast<float>();
-    auto set = [&](const Vec& v, size_t i){
-        _pos.template head<N>() = v.template cast<float>();
-        eval->array.set(_pos, i);
-    };
-
     // Iterate over manifold patches, storing one vertex per patch
     const auto& ps = MarchingTable<N>::v(this->leaf->corner_mask);
     while (this->leaf->vertex_count < ps.size() &&
@@ -369,7 +360,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
                         const unsigned i = j + e*POINTS_PER_SEARCH;
                         ps.col(i) = (targets[e].first * (1 - frac)) +
                                     (targets[e].second * frac);
-                        set(ps.col(i), i);
+                        eval->array.set<N>(ps.col(i), region, i);
                     }
                 }
 
@@ -397,10 +388,8 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
                             }
                             else if (out[i] == 0)
                             {
-                                Eigen::Vector3d pos;
-                                pos << ps.col(i), region.perp;
-                                if (!eval->feature.isInside(
-                                            pos.template cast<float>(), tape))
+                                if (!eval->feature.isInside<N>(ps.col(i), region,
+                                                               tape))
                                 {
                                     assert(i > 0);
                                     targets[e] = {ps.col(i - 1), ps.col(i)};
@@ -429,8 +418,8 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
             {
                 for (unsigned i=0; i < eval_count; ++i)
                 {
-                    set(targets[i].first, 2*i);
-                    set(targets[i].second, 2*i + 1);
+                    eval->array.set<N>(targets[i].first, region, 2*i);
+                    eval->array.set<N>(targets[i].second, region, 2*i + 1);
                 }
                 auto ds = eval->array.derivs(2 * eval_count, tape);
                 auto ambig = eval->array.getAmbiguous(2 * eval_count, tape);
