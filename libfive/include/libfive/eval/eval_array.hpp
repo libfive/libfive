@@ -69,8 +69,10 @@ public:
 
 protected:
     /*  Stored in values() and used in operator() to decide how much of the
-     *  array we're addressing at once  */
-    size_t count;
+     *  array we're addressing at once.  count_simd is rounded up to the
+     *  nearest SIMD block size; count_actual is the actual count. */
+    size_t count_simd;
+    size_t count_actual;
 
     /*  f(clause, index) is a specific data point */
     Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> f;
@@ -83,13 +85,6 @@ protected:
      */
     void operator()(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
-
-    /*
-     *  Sets this->count to count, rounding up to the appropriate SIMD
-     *  block size (because Eigen sometimes returns different results
-     *  depending on whether it took the SIMD or non-SIMD path).
-     */
-    void setCount(size_t count);
 
 public:
     /*

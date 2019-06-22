@@ -105,14 +105,14 @@ DerivArrayEvaluator::derivs(size_t count, Tape::Handle tape)
 void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                      Clause::Id a_, Clause::Id b_)
 {
-#define ov f.row(id).head(count)
-#define od d(id).leftCols(count)
+#define ov f.row(id).head(count_simd)
+#define od d(id).leftCols(count_simd)
 
-#define av f.row(a_).head(count)
-#define ad d(a_).leftCols(count)
+#define av f.row(a_).head(count_simd)
+#define ad d(a_).leftCols(count_simd)
 
-#define bv f.row(b_).head(count)
-#define bd d(b_).leftCols(count)
+#define bv f.row(b_).head(count_simd)
+#define bd d(b_).leftCols(count_simd)
 
     switch (op) {
         case Opcode::OP_ADD:
@@ -172,7 +172,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::OP_SQRT:
             for (Eigen::Index i=0; i < od.rows(); ++i)
                 od.row(i) = (av < 0 || ad.row(i) == 0).select(
-                    Eigen::Array<float, 1, Eigen::Dynamic>::Zero(1, count),
+                    Eigen::Array<float, 1, Eigen::Dynamic>::Zero(1, count_simd),
                     ad.row(i) / (2 * ov));
             break;
         case Opcode::OP_NEG:
@@ -215,7 +215,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            deck->oracles[a_]->evalDerivArray(od);
+            deck->oracles[a_]->evalDerivArray(d(id).leftCols(count_actual));
             break;
 
         case Opcode::INVALID:

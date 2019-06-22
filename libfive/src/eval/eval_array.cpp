@@ -54,26 +54,16 @@ ArrayEvaluator::ArrayEvaluator(
 
 
 Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
-ArrayEvaluator::values(size_t _count)
+ArrayEvaluator::values(size_t count)
 {
-    return values(_count, deck->tape);
+    return values(count, deck->tape);
 }
 
 Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t count, Tape::Handle tape)
 {
-    setCount(count);
+    count_actual = count;
 
-    deck->bindOracles(tape);
-    deck->setOracleCount(count);
-    auto index = tape->rwalk(*this);
-    deck->unbindOracles();
-
-    return f.block<1, Eigen::Dynamic>(index, 0, 1, count);
-}
-
-void ArrayEvaluator::setCount(size_t count)
-{
 #if defined EIGEN_VECTORIZE_AVX512
     #define LIBFIVE_SIMD_SIZE 16
 #elif defined EIGEN_VECTORIZE_AVX
@@ -92,13 +82,19 @@ void ArrayEvaluator::setCount(size_t count)
     // non-SIMD paths produce different results.
     if (LIBFIVE_SIMD_SIZE)
     {
-        this->count = ((count + LIBFIVE_SIMD_SIZE - 1) / LIBFIVE_SIMD_SIZE)
+        count_simd = ((count + LIBFIVE_SIMD_SIZE - 1) / LIBFIVE_SIMD_SIZE)
                 * LIBFIVE_SIMD_SIZE;
     }
     else
     {
-        this->count = count;
+        count_simd = count;
     }
+
+    deck->bindOracles(tape);
+    auto index = tape->rwalk(*this);
+    deck->unbindOracles();
+
+    return f.block<1, Eigen::Dynamic>(index, 0, 1, count);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -156,9 +152,9 @@ ArrayEvaluator::getAmbiguous(size_t i, Tape::Handle tape)
 void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                 Clause::Id a_, Clause::Id b_)
 {
-#define out f.block<1, Eigen::Dynamic>(id, 0, 1, count)
-#define a f.row(a_).head(count)
-#define b f.row(b_).head(count)
+#define out f.block<1, Eigen::Dynamic>(id, 0, 1, count_simd)
+#define a f.row(a_).head(count_simd)
+#define b f.row(b_).head(count_simd)
     switch (op)
     {
         case Opcode::OP_ADD:
@@ -267,7 +263,8 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            deck->oracles[a_]->evalArray(out);
+            deck->oracles[a_]->evalArray(
+                    f.block<1, Eigen::Dynamic>(id, 0, 1, count_actual));
             break;
 
         case Opcode::INVALID:

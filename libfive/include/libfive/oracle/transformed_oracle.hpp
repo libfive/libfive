@@ -58,16 +58,6 @@ public:
      */
     std::shared_ptr<OracleContext> push(Tape::Type t) override;
 
-    /*
-     *  Sets the precise number of points to evaluate (since the array block
-     *  may be rounded up for SIMD purposes).
-     */
-    void setCount(Eigen::Index count) override
-    {
-        OracleStorage<>::setCount(count);
-        underlying->setCount(count);
-    }
-
 private:
     class Context : public OracleContext {
     public:

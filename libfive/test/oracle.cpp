@@ -17,6 +17,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/oracle/oracle_storage.hpp"
 #include "libfive/oracle/oracle_clause.hpp"
 
+#include "libfive/eval/eval_deriv_array.hpp"
+
 #include "util/shapes.hpp"
 #include "util/oracles.hpp"
 
@@ -109,4 +111,83 @@ TEST_CASE("Oracle: render and compare (cube as oracle)")
     auto comparisonMesh = Mesh::render(cube, r, settings);
 
     BRepCompare(*mesh, *comparisonMesh);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+class PickySIMDOracle : public OracleStorage<256>
+{
+public:
+    PickySIMDOracle(long& expected_eval_size)
+        : expected_eval_size(expected_eval_size)
+    {
+        // Nothing to do here
+    }
+
+    // We don't care about any of these functions
+    void evalInterval(Interval::I&, bool&) override {}
+    void evalPoint(float&, size_t) override {}
+    void checkAmbiguous(
+            Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,
+                         1, Eigen::Dynamic>) override {}
+    void evalFeatures(
+            boost::container::small_vector<Feature, 4>&) override {}
+
+    void evalArray(
+            Eigen::Block<Eigen::Array<float, Eigen::Dynamic,
+                                      LIBFIVE_EVAL_ARRAY_SIZE,
+                                      Eigen::RowMajor>,
+                         1, Eigen::Dynamic> out) override
+    {
+        REQUIRE(out.cols() == expected_eval_size);
+        out = 0.0f;
+    }
+
+    void evalDerivArray(
+            Eigen::Block<Eigen::Array<float, 3, LIBFIVE_EVAL_ARRAY_SIZE>,
+                         3, Eigen::Dynamic, true> out) override
+    {
+        REQUIRE(out.cols() == expected_eval_size);
+        out = 0.0f;
+    }
+
+    long& expected_eval_size;
+};
+
+class PickySIMDOracleClause : public OracleClause
+{
+public:
+    PickySIMDOracleClause(long& expected_eval_size)
+        : expected_eval_size(expected_eval_size)
+    {
+        // Nothing to do here
+    }
+    std::unique_ptr<Oracle> getOracle() const override
+    {
+        return std::unique_ptr<Oracle>(new PickySIMDOracle(expected_eval_size));
+    }
+
+    std::string name() const override
+    {
+        return "PickySIMDOracle";
+    }
+    long& expected_eval_size;
+};
+
+TEST_CASE("Oracle: check SIMD clamping")
+{
+    long expected_eval_size = 0;
+    Tree picky(std::unique_ptr<PickySIMDOracleClause>(
+            new PickySIMDOracleClause(expected_eval_size)));
+
+    DerivArrayEvaluator eval(picky + Tree::X() + 1.0f);
+    for (unsigned i=1; i < 100; ++i) {
+        eval.set(Eigen::Vector3f(i, 0, 0), i);
+        expected_eval_size = i;
+        eval.values(i);
+        eval.derivs(i);
+    }
+
+    // The test will have failed in PickySIMDOracle
+    REQUIRE(true);
 }
