@@ -118,3 +118,14 @@ TEST_CASE("ArrayEvaluator::getAmbiguous")
     REQUIRE(b(0) == true);
     REQUIRE(b(3) == true);
 }
+
+TEST_CASE("ArrayEvaluator::values (returned size)")
+{
+    ArrayEvaluator e(min(Tree::X(), -Tree::X()));
+    e.set({0, 0, 0}, 0);
+    e.set({1, 0, 0}, 1);
+    e.set({2, 0, 0}, 2);
+
+    auto o = e.values(3);
+    REQUIRE(o.cols() == 3);
+}
