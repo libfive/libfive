@@ -52,6 +52,17 @@ ArrayEvaluator::ArrayEvaluator(
     }
 }
 
+float ArrayEvaluator::value(const Eigen::Vector3f& pt) {
+    return value(pt, deck->tape);
+}
+
+float ArrayEvaluator::value(const Eigen::Vector3f& pt,
+                            std::shared_ptr<Tape> tape)
+{
+    set(pt, 0);
+    return values(1, tape)(0);
+}
+
 
 Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t count)
@@ -95,6 +106,55 @@ ArrayEvaluator::values(size_t count, Tape::Handle tape)
     deck->unbindOracles();
 
     return f.block<1, Eigen::Dynamic>(index, 0, 1, count);
+}
+
+
+std::pair<float, Tape::Handle> ArrayEvaluator::evalAndPush(
+        const Eigen::Vector3f& pt, Tape::Handle tape)
+{
+    if (tape == nullptr) {
+        tape = deck->tape;
+    }
+    auto out = value(pt, tape);
+    auto p = Tape::push(tape, *deck,
+        [&](Opcode::Opcode op, Clause::Id /* id */,
+            Clause::Id a, Clause::Id b)
+    {
+        // For min and max operations, we may only need to keep one branch
+        // active if it is decisively above or below the other branch.
+        if (op == Opcode::OP_MAX)
+        {
+            if (f(a, 0) > f(b, 0))
+            {
+                return Tape::KEEP_A;
+            }
+            else if (f(b, 0) > f(a, 0))
+            {
+                return Tape::KEEP_B;
+            }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
+        }
+        else if (op == Opcode::OP_MIN)
+        {
+            if (f(a, 0) > f(b, 0))
+            {
+                return Tape::KEEP_B;
+            }
+            else if (f(b, 0) > f(a, 0))
+            {
+                return Tape::KEEP_A;
+            }
+            else
+            {
+                return Tape::KEEP_BOTH;
+            }
+        }
+        return Tape::KEEP_ALWAYS;
+    }, Tape::SPECIALIZED);
+    return std::make_pair(out, std::move(p));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

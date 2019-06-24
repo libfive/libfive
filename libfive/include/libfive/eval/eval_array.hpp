@@ -95,6 +95,20 @@ public:
             size_t count, std::shared_ptr<Tape> tape);
 
     /*
+     *  Single-point evaluation
+     *  Invalidates slot 0 in the data and results array
+     */
+    float value(const Eigen::Vector3f& pt);
+    float value(const Eigen::Vector3f& pt, std::shared_ptr<Tape> tape);
+
+    /*
+     *  Evaluates a single point and returns a tape that doesn't
+     *  contain branches that weren't taken by that point evaluation.
+     */
+    std::pair<float, std::shared_ptr<Tape>> evalAndPush(
+            const Eigen::Vector3f& pt, std::shared_ptr<Tape> tape=nullptr);
+
+    /*
      *  Changes a variable's value
      *
      *  If the variable isn't present in the tree, does nothing

@@ -81,6 +81,16 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i, Tape::Handle tape)
 
 }
 
+Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt,
+                                           std::shared_ptr<Tape> tape)
+{
+    if (tape == nullptr) {
+        tape = deck->tape;
+    }
+    set(pt, 0);
+    return derivs(1, tape).col(0);
+}
+
 Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
 DerivArrayEvaluator::derivs(size_t count)
 {

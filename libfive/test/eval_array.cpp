@@ -49,6 +49,26 @@ TEST_CASE("ArrayEvaluator::eval")
         REQUIRE(eval(e, {1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
+    SECTION("Constant + variable")
+    {
+        auto v = Tree::var();
+        ArrayEvaluator e(v + 1.0, {{v.id(), 3.14}});
+        REQUIRE(eval(e, {1.0, 2.0, 3.0}) == Approx(4.14));
+    }
+
+    SECTION("Multiple variables")
+    {
+        // Deliberately construct out of order
+        auto a = Tree::var();
+        auto c = Tree::var();
+        auto b = Tree::var();
+
+        ArrayEvaluator e(a*1 + b*2 + c*3,
+                {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
+
+        REQUIRE(eval(e, {0, 0, 0}) == Approx(34));
+    }
+
     SECTION("X + 1")
     {
         ArrayEvaluator e(Tree::X() + 1);
@@ -128,4 +148,25 @@ TEST_CASE("ArrayEvaluator::values (returned size)")
 
     auto o = e.values(3);
     REQUIRE(o.cols() == 3);
+}
+
+TEST_CASE("ArrayEvaluator::evalAndPush")
+{
+    ArrayEvaluator e(min(Tree::X(), Tree::Y()));
+
+    {
+        auto h = e.evalAndPush({-1, 0, 0}); // specialize to just "X"
+        REQUIRE(e.value({-2, 0, 0}, h.second) == -2);
+        REQUIRE(e.value({4, 0, 0}, h.second) == 4);
+        REQUIRE(e.value({4, 5, 0}, h.second) == 4);
+        REQUIRE(e.value({10, 5, 0}, h.second) == 10);
+    }
+
+    {
+        auto h = e.evalAndPush({0, -1, 0}); // specialize to just "Y"
+        REQUIRE(e.value({-2, 0, 0}, h.second) == 0);
+        REQUIRE(e.value({4, 0, 0}, h.second) == 0);
+        REQUIRE(e.value({4, 5, 0}, h.second) == 5);
+        REQUIRE(e.value({10, 5, 0}, h.second) == 5);
+    }
 }

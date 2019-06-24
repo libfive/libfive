@@ -10,11 +10,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <Eigen/Eigen>
 
-#include "libfive/eval/eval_deriv.hpp"
+#include "libfive/eval/eval_deriv_array.hpp"
 
 namespace Kernel {
 
-class JacobianEvaluator : public DerivEvaluator
+class JacobianEvaluator : public DerivArrayEvaluator
 {
 public:
     JacobianEvaluator(const Tree& root);
@@ -32,17 +32,10 @@ public:
             std::shared_ptr<Tape> tape);
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 protected:
-    /*
-     *  Raw clause evaluation is done here!
-     */
-    void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
-
-    /*  j(clause, var) = dclause / dvar */
-    Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> j;
-
-    friend class Tape; // for rwalk<JacobianEvaluator>
+    /*  j(var) = dout / dvar */
+    Eigen::Array<float, Eigen::Dynamic, 1> j;
 };
 
 }   // namespace Kernel

@@ -32,7 +32,7 @@ static std::pair<float, Solution> findRoot(
         ds.insert({v.first, 0});
     }
 
-    float r = e.eval(pos, tape);
+    float r = e.value(pos, tape);
     bool converged = false;
     while (!converged && fabs(r) >= EPSILON && --gas)
     {
@@ -68,7 +68,7 @@ static std::pair<float, Solution> findRoot(
             }
 
             // Get new residual
-            const auto r_ = e.eval(pos, tape);
+            const float r_ = e.value(pos, tape);
 
             // Find change in residuals
             const auto diff = r - r_;

@@ -40,6 +40,13 @@ public:
             size_t count, std::shared_ptr<Tape> tape);
 
     /*
+     *  Single-point evaluation (return dx, dy, dz, distance)
+     *  Invalidates slot 0 in the data array.
+     */
+    Eigen::Vector4f deriv(const Eigen::Vector3f& pt,
+                          std::shared_ptr<Tape> tape=nullptr);
+
+    /*
      *  Per-clause evaluation, used in tape walking
      */
     void operator()(Opcode::Opcode op, Clause::Id id,
