@@ -36,19 +36,19 @@ ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Deck> d)
 
 ArrayEvaluator::ArrayEvaluator(
         std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
-    : BaseEvaluator(d, vars), f(deck->num_clauses + 1, N)
+    : BaseEvaluator(d, vars), v(deck->num_clauses + 1, N)
 {
     // Unpack variables into result array
-    for (auto& v : deck->vars.right)
+    for (auto& var_ : deck->vars.right)
     {
-        auto var = vars.find(v.first);
-        f.row(v.second) = (var != vars.end()) ? var->second : 0;
+        auto var = vars.find(var_.first);
+        v.row(var_.second) = (var != vars.end()) ? var->second : 0;
     }
 
     // Unpack constants into result array
     for (auto& c : deck->constants)
     {
-        f.row(c.first) = c.second;
+        v.row(c.first) = c.second;
     }
 }
 
@@ -64,13 +64,13 @@ float ArrayEvaluator::value(const Eigen::Vector3f& pt,
 }
 
 
-Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
+Eigen::Block<decltype(ArrayEvaluator::v), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t count)
 {
     return values(count, deck->tape);
 }
 
-Eigen::Block<decltype(ArrayEvaluator::f), 1, Eigen::Dynamic>
+Eigen::Block<decltype(ArrayEvaluator::v), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t count, Tape::Handle tape)
 {
     count_actual = count;
@@ -105,7 +105,7 @@ ArrayEvaluator::values(size_t count, Tape::Handle tape)
     auto index = tape->rwalk(*this);
     deck->unbindOracles();
 
-    return f.block<1, Eigen::Dynamic>(index, 0, 1, count);
+    return v.block<1, Eigen::Dynamic>(index, 0, 1, count);
 }
 
 
@@ -124,11 +124,11 @@ std::pair<float, Tape::Handle> ArrayEvaluator::evalAndPush(
         // active if it is decisively above or below the other branch.
         if (op == Opcode::OP_MAX)
         {
-            if (f(a, 0) > f(b, 0))
+            if (v(a, 0) > v(b, 0))
             {
                 return Tape::KEEP_A;
             }
-            else if (f(b, 0) > f(a, 0))
+            else if (v(b, 0) > v(a, 0))
             {
                 return Tape::KEEP_B;
             }
@@ -139,11 +139,11 @@ std::pair<float, Tape::Handle> ArrayEvaluator::evalAndPush(
         }
         else if (op == Opcode::OP_MIN)
         {
-            if (f(a, 0) > f(b, 0))
+            if (v(a, 0) > v(b, 0))
             {
                 return Tape::KEEP_B;
             }
-            else if (f(b, 0) > f(a, 0))
+            else if (v(b, 0) > v(a, 0))
             {
                 return Tape::KEEP_A;
             }
@@ -159,13 +159,13 @@ std::pair<float, Tape::Handle> ArrayEvaluator::evalAndPush(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool ArrayEvaluator::setVar(Tree::Id var, float value)
+bool ArrayEvaluator::setVar(Tree::Id var_, float value)
 {
-    auto v = deck->vars.right.find(var);
-    if (v != deck->vars.right.end())
+    auto var = deck->vars.right.find(var_);
+    if (var != deck->vars.right.end())
     {
-        bool changed = f(v->second, 0) != value;
-        f.row(v->second) = value;
+        bool changed = v(var->second, 0) != value;
+        v.row(var->second) = value;
         return changed;
     }
     else
@@ -199,8 +199,8 @@ ArrayEvaluator::getAmbiguous(size_t i, Tape::Handle tape)
             else if (op == Opcode::OP_MIN || op == Opcode::OP_MAX)
             {
                 ambig.head(i) = ambig.head(i) ||
-                    (f.block(a, 0, 1, i) ==
-                     f.block(b, 0, 1, i));
+                    (v.block(a, 0, 1, i) ==
+                     v.block(b, 0, 1, i));
             }
         }, abort);
 
@@ -212,9 +212,9 @@ ArrayEvaluator::getAmbiguous(size_t i, Tape::Handle tape)
 void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                 Clause::Id a_, Clause::Id b_)
 {
-#define out f.block<1, Eigen::Dynamic>(id, 0, 1, count_simd)
-#define a f.row(a_).head(count_simd)
-#define b f.row(b_).head(count_simd)
+#define out v.block<1, Eigen::Dynamic>(id, 0, 1, count_simd)
+#define a v.row(a_).head(count_simd)
+#define b v.row(b_).head(count_simd)
     switch (op)
     {
         case Opcode::OP_ADD:
@@ -324,7 +324,7 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         case Opcode::ORACLE:
             deck->oracles[a_]->evalArray(
-                    f.block<1, Eigen::Dynamic>(id, 0, 1, count_actual));
+                    v.block<1, Eigen::Dynamic>(id, 0, 1, count_actual));
             break;
 
         case Opcode::INVALID:

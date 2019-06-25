@@ -71,8 +71,8 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i, Tape::Handle tape)
             else if (op == Opcode::OP_MIN || op == Opcode::OP_MAX)
             {
                 ambig.head(i) = ambig.head(i) ||
-                    ((f.block(a, 0, 1, i) ==
-                      f.block(b, 0, 1, i)) &&
+                    ((v.block(a, 0, 1, i) ==
+                      v.block(b, 0, 1, i)) &&
                       (d(a).leftCols(i) != d(b).leftCols(i)).colwise().sum());
             }
         }, abort);
@@ -115,13 +115,13 @@ DerivArrayEvaluator::derivs(size_t count, Tape::Handle tape)
 void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                      Clause::Id a_, Clause::Id b_)
 {
-#define ov f.row(id).head(count_simd)
+#define ov v.row(id).head(count_simd)
 #define od d(id).leftCols(count_simd)
 
-#define av f.row(a_).head(count_simd)
+#define av v.row(a_).head(count_simd)
 #define ad d(a_).leftCols(count_simd)
 
-#define bv f.row(b_).head(count_simd)
+#define bv v.row(b_).head(count_simd)
 #define bd d(b_).leftCols(count_simd)
 
     switch (op) {

@@ -51,9 +51,9 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
 {
     // Load the XYZ values into the whole array, rather than
     // checking and loading a subset of the array.
-    f.row(deck->X) = p.x();
-    f.row(deck->Y) = p.y();
-    f.row(deck->Z) = p.z();
+    v.row(deck->X) = p.x();
+    v.row(deck->Y) = p.y();
+    v.row(deck->Z) = p.z();
 
     unsigned count = 0;
 

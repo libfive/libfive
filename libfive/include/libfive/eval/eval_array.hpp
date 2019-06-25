@@ -32,9 +32,9 @@ public:
      */
     void set(const Eigen::Vector3f& p, size_t index)
     {
-        f(deck->X, index) = p.x();
-        f(deck->Y, index) = p.y();
-        f(deck->Z, index) = p.z();
+        v(deck->X, index) = p.x();
+        v(deck->Y, index) = p.y();
+        v(deck->Z, index) = p.z();
 
         for (auto& o : deck->oracles)
         {
@@ -59,9 +59,9 @@ public:
      *  Reads a position from the results arrays
      */
     Eigen::Vector3f get(size_t index) const {
-        return Eigen::Vector3f(f(deck->X, index),
-                               f(deck->Y, index),
-                               f(deck->Z, index));
+        return Eigen::Vector3f(v(deck->X, index),
+                               v(deck->Y, index),
+                               v(deck->Z, index));
     }
 
     /*  This is the number of samples that we can process in one pass */
@@ -74,8 +74,8 @@ protected:
     size_t count_simd;
     size_t count_actual;
 
-    /*  f(clause, index) is a specific data point */
-    Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> f;
+    /*  v(clause, index) is a specific data point */
+    Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> v;
 
     /*  ambig(index) returns whether a particular slot is ambiguous */
     Eigen::Array<bool, 1, N> ambig;
@@ -90,8 +90,8 @@ public:
     /*
      *  Multi-point evaluation (values must be stored with set)
      */
-    Eigen::Block<decltype(f), 1, Eigen::Dynamic> values(size_t count);
-    Eigen::Block<decltype(f), 1, Eigen::Dynamic> values(
+    Eigen::Block<decltype(v), 1, Eigen::Dynamic> values(size_t count);
+    Eigen::Block<decltype(v), 1, Eigen::Dynamic> values(
             size_t count, std::shared_ptr<Tape> tape);
 
     /*
