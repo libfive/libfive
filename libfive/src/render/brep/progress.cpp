@@ -42,11 +42,14 @@ void ProgressHandler::run()
             std::lock_guard<std::mutex> lock(phase_mut);
             auto itr = phases.begin();
             do {
-                accum += itr->weight * itr->counter.load() / (float)itr->total;
+                if (itr->total) {
+                    accum += itr->weight * itr->counter.load() /
+                                           (float)itr->total;
+                }
             } while (itr++ != current_phase);
         }
 
-        const float next = accum / total_weight;
+        const float next = total_weight ? (accum / total_weight) : 0.0;
         if (next != prev) {
             progress(next);
             prev = next;
