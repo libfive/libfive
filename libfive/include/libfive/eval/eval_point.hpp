@@ -52,7 +52,7 @@ public:
 
 protected:
     /*  f(clause) is a specific data point */
-    Eigen::Array<float, Eigen::Dynamic, 1> f;
+    Eigen::Array<float, Eigen::Dynamic, 1> v;
 
     /*
      *  Per-clause evaluation, used in tape walking

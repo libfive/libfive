@@ -80,7 +80,7 @@ protected:
                     Clause::Id a, Clause::Id b);
 
     Eigen::Array<boost::container::small_vector<Feature, 4>,
-                 1, Eigen::Dynamic> d;
+                 1, Eigen::Dynamic> f;
 
     friend class Tape; // for rwalk<DerivEvaluator>
 };

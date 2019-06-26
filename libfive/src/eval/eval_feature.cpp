@@ -27,23 +27,23 @@ FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Deck> d)
 
 FeatureEvaluator::FeatureEvaluator(
         std::shared_ptr<Deck> t, const std::map<Tree::Id, float>& vars)
-    : PointEvaluator(t, vars), d(1, deck->num_clauses + 1)
+    : PointEvaluator(t, vars), f(1, deck->num_clauses + 1)
 {
     // Load the default derivatives
-    d(deck->X).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
-    d(deck->Y).push_back(Feature(Eigen::Vector3f(0, 1, 0)));
-    d(deck->Z).push_back(Feature(Eigen::Vector3f(0, 0, 1)));
+    f(deck->X).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
+    f(deck->Y).push_back(Feature(Eigen::Vector3f(0, 1, 0)));
+    f(deck->Z).push_back(Feature(Eigen::Vector3f(0, 0, 1)));
 
     // Set variables to have a single all-zero derivative
     for (auto& v : t->vars.right)
     {
-        d(v.second).push_back(Feature(Eigen::Vector3f::Zero()));
+        f(v.second).push_back(Feature(Eigen::Vector3f::Zero()));
     }
 
     // Set constants to have a single all-zero derivative
     for (auto& c : deck->constants)
     {
-        d(c.first).push_back(Feature(Eigen::Vector3f::Zero()));
+        f(c.first).push_back(Feature(Eigen::Vector3f::Zero()));
     }
 }
 
@@ -71,7 +71,7 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
 
     // First, we evaluate and extract all of the features, saving
     // time by re-using the shortened tape from evalAndPush
-    auto fs = d(handle.second->rwalk(*this));
+    auto fs = f(handle.second->rwalk(*this));
 
     // If there's only a single feature, we can get both positive and negative
     // values out if it's got a non-zero gradient
@@ -113,7 +113,7 @@ const boost::container::small_vector<Feature, 4>&
     auto index = handle.second->rwalk(*this);
     deck->unbindOracles();
 
-    return d(index);
+    return f(index);
 }
 
 std::list<Eigen::Vector3f> FeatureEvaluator::features(const Eigen::Vector3f& p)
@@ -140,15 +140,15 @@ std::list<Eigen::Vector3f> FeatureEvaluator::features(
 void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                   Clause::Id a, Clause::Id b)
 {
-#define ov f(id)
-#define od d(id)
+#define ov v(id)
+#define od f(id)
 
-#define av f(a)
-#define _ads d(a)
+#define av v(a)
+#define _ads f(a)
 #define ad _ad.deriv
 
-#define bv f(b)
-#define _bds d(b)
+#define bv v(b)
+#define _bds f(b)
 #define bd _bd.deriv
 
 

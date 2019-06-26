@@ -36,19 +36,19 @@ PointEvaluator::PointEvaluator(std::shared_ptr<Deck> d)
 
 PointEvaluator::PointEvaluator(
         std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
-    : BaseEvaluator(d, vars), f(d->num_clauses + 1, 1)
+    : BaseEvaluator(d, vars), v(d->num_clauses + 1, 1)
 {
     // Unpack variables into result array
-    for (auto& v : d->vars.right)
+    for (auto& var_ : d->vars.right)
     {
-        auto var = vars.find(v.first);
-        f(v.second) = (var != vars.end()) ? var->second : 0;
+        auto var = vars.find(var_.first);
+        v(var_.second) = (var != vars.end()) ? var->second : 0;
     }
 
     // Unpack constants into result array
     for (auto& c : deck->constants)
     {
-        f(c.first) = c.second;
+        v(c.first) = c.second;
     }
 }
 
@@ -62,9 +62,9 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt,
 {
     assert(tape.get());
 
-    f(deck->X) = pt.x();
-    f(deck->Y) = pt.y();
-    f(deck->Z) = pt.z();
+    v(deck->X) = pt.x();
+    v(deck->Y) = pt.y();
+    v(deck->Z) = pt.z();
 
     for (auto& o : deck->oracles)
     {
@@ -75,7 +75,7 @@ float PointEvaluator::eval(const Eigen::Vector3f& pt,
     auto index = tape->rwalk(*this);
     deck->unbindOracles();
 
-    return f(index);
+    return v(index);
 }
 
 std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
@@ -96,11 +96,11 @@ std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
         // active if it is decisively above or below the other branch.
         if (op == Opcode::OP_MAX)
         {
-            if (f(a) > f(b))
+            if (v(a) > v(b))
             {
                 return Tape::KEEP_A;
             }
-            else if (f(b) > f(a))
+            else if (v(b) > v(a))
             {
                 return Tape::KEEP_B;
             }
@@ -111,11 +111,11 @@ std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
         }
         else if (op == Opcode::OP_MIN)
         {
-            if (f(a) > f(b))
+            if (v(a) > v(b))
             {
                 return Tape::KEEP_B;
             }
-            else if (f(b) > f(a))
+            else if (v(b) > v(a))
             {
                 return Tape::KEEP_A;
             }
@@ -131,13 +131,13 @@ std::pair<float, Tape::Handle> PointEvaluator::evalAndPush(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool PointEvaluator::setVar(Tree::Id var, float value)
+bool PointEvaluator::setVar(Tree::Id var_, float value)
 {
-    auto v = deck->vars.right.find(var);
-    if (v != deck->vars.right.end())
+    auto var = deck->vars.right.find(var_);
+    if (var != deck->vars.right.end())
     {
-        bool changed = f(v->second) != value;
-        f.row(v->second) = value;
+        bool changed = v(var->second) != value;
+        v.row(var->second) = value;
         return changed;
     }
     else
@@ -151,9 +151,9 @@ bool PointEvaluator::setVar(Tree::Id var, float value)
 void PointEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                 Clause::Id a_, Clause::Id b_)
 {
-#define out f(id)
-#define a f(a_)
-#define b f(b_)
+#define out v(id)
+#define a v(a_)
+#define b v(b_)
     switch (op)
     {
         case Opcode::OP_ADD:

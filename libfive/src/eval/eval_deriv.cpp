@@ -68,13 +68,13 @@ Eigen::Vector4f DerivEvaluator::deriv(const Eigen::Vector3f& pt,
 void DerivEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                                 Clause::Id a_, Clause::Id b_)
 {
-#define ov f(id)
+#define ov v(id)
 #define od d.col(id)
 
-#define av f(a_)
+#define av v(a_)
 #define ad d.col(a_)
 
-#define bv f(b_)
+#define bv v(b_)
 #define bd d.col(b_)
 
     switch (op) {
