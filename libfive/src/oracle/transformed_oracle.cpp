@@ -48,12 +48,12 @@ void TransformedOracle::evalPoint(float& out, size_t index)
     assert(context == nullptr || ctx != nullptr);
 
     Eigen::Vector3f transformedPoint = ctx
-        ? Eigen::Vector3f(xEvaluator.feature.eval(points.col(index), ctx->tx),
-                          yEvaluator.feature.eval(points.col(index), ctx->ty),
-                          zEvaluator.feature.eval(points.col(index), ctx->tz))
-        : Eigen::Vector3f(xEvaluator.feature.eval(points.col(index)),
-                          yEvaluator.feature.eval(points.col(index)),
-                          zEvaluator.feature.eval(points.col(index)));
+        ? Eigen::Vector3f(xEvaluator.feature.value(points.col(index), ctx->tx),
+                          yEvaluator.feature.value(points.col(index), ctx->ty),
+                          zEvaluator.feature.value(points.col(index), ctx->tz))
+        : Eigen::Vector3f(xEvaluator.feature.value(points.col(index)),
+                          yEvaluator.feature.value(points.col(index)),
+                          zEvaluator.feature.value(points.col(index)));
 
     underlying->set(transformedPoint, index);
 
@@ -169,12 +169,12 @@ void TransformedOracle::evalFeatures(
     out.clear();
     auto pt = points.col(0);
     Eigen::Vector3f transformedPoint = ctx
-        ? Eigen::Vector3f(xEvaluator.feature.eval(pt, ctx->tx),
-                          yEvaluator.feature.eval(pt, ctx->ty),
-                          zEvaluator.feature.eval(pt, ctx->tz))
-        : Eigen::Vector3f(xEvaluator.feature.eval(pt),
-                          yEvaluator.feature.eval(pt),
-                          zEvaluator.feature.eval(pt));
+        ? Eigen::Vector3f(xEvaluator.feature.value(pt, ctx->tx),
+                          yEvaluator.feature.value(pt, ctx->ty),
+                          zEvaluator.feature.value(pt, ctx->tz))
+        : Eigen::Vector3f(xEvaluator.feature.value(pt),
+                          yEvaluator.feature.value(pt),
+                          zEvaluator.feature.value(pt));
 
     auto xFeatures = xEvaluator.feature.features_(pt);
     auto yFeatures = yEvaluator.feature.features_(pt);

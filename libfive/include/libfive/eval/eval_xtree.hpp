@@ -9,6 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include "libfive/eval/eval_deriv_array.hpp"
+#include "libfive/eval/eval_deriv.hpp"
 #include "libfive/eval/eval_interval.hpp"
 #include "libfive/eval/eval_feature.hpp"
 

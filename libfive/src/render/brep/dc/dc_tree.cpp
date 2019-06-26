@@ -771,7 +771,7 @@ bool DCTree<N>::collectChildren(XTreeEvaluator* eval,
             Eigen::Vector3f v;
             v << vert(0).template cast<float>(),
                  region.perp.template cast<float>();
-            if (fabs(eval->feature.eval(v, Tape::getBase(tape, v))) < max_err)
+            if (fabs(eval->feature.value(v, Tape::getBase(tape, v))) < max_err)
             {
                 // Store this tree's depth based on the region's level
                 this->leaf->level = region.level;
