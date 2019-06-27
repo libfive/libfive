@@ -237,10 +237,13 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 }
             }
         }
+    } else if (op == Opcode::ORACLE) {
+        deck->oracles[a]->evalFeatures(f(id));
     } else if (Opcode::args(op) == 1) {
         unsigned count = 0;
         auto run = [&]() {
             if (count) {
+                setCount(count);
                 DerivArrayEvaluator::operator()(op, id, a, b);
                 for (unsigned i=0; i < count; ++i) {
                     of.push_back(Feature(d(id).col(i), _ads[i]));

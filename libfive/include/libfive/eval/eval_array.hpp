@@ -74,6 +74,9 @@ protected:
     size_t count_simd;
     size_t count_actual;
 
+    /*  Sets count_simd and count_actual based on count */
+    void setCount(size_t count);
+
     /*  v(clause, index) is a specific data point */
     Eigen::Array<float, Eigen::Dynamic, N, Eigen::RowMajor> v;
 
