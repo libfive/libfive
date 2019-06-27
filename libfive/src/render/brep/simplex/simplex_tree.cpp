@@ -610,16 +610,6 @@ void SimplexTree<N>::saveVertexSigns(
             out = values[num++];
         }
 
-        // The Eigen evaluator occasionally disagrees with the
-        // deriv (single-point) evaluator, because it has SSE
-        // implementations of transcendental functions that can
-        // return subtly different results.  If we get a result that
-        // is sufficiently close to zero, then fall back to the
-        // canonical single-point evaluator to avoid inconsistency.
-        if (fabs(out) < 1e-6) {
-            out = eval->deriv.eval(pos(i), tape);
-        }
-
         // Handle ambiguities with the high-power isInside check
         if (out == 0) {
             leaf_sub[i]->inside = eval->feature.isInside(pos(i), tape);
