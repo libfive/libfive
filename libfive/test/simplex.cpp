@@ -422,6 +422,7 @@ TEST_CASE("SimplexTree<3>: vertex placement in centered cylinder")
     for (unsigned i=0; i < 4; ++i) {
         const auto v = t.get()->children[i].load()->leaf->sub[8].load()->vert;
         CAPTURE(v);
+        CAPTURE(t.get()->children[i].load()->type);
         REQUIRE(fabs(v.x()) == Approx(fabs(v.y())));
 
         const auto w = t.get()->children[4 + i].load()->leaf->sub[17].load()->vert;

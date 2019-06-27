@@ -23,8 +23,7 @@ public:
     { /* Nothing to do here */ }
 
     XTreeEvaluator(const Tree t, const std::map<Tree::Id, float>& vars)
-        : deck(new Deck(t)), array(deck, vars), interval(deck, vars),
-          feature(deck, vars), deriv(deck, vars)
+        : deck(new Deck(t)), interval(deck, vars), array(deck, vars)
     { /* Nothing to do here */ }
 
     /*
@@ -35,10 +34,8 @@ public:
         bool changed = false;
         for (auto& v : vars)
         {
-            changed |= array.setVar(v.first, v.second);
             changed |= interval.setVar(v.first, v.second);
-            changed |= feature.setVar(v.first, v.second);
-            changed |= deriv.setVar(v.first, v.second);
+            changed |= array.setVar(v.first, v.second);
         }
         return changed;
     }
@@ -46,10 +43,8 @@ public:
 public:
     std::shared_ptr<Deck> deck;
 
-    DerivArrayEvaluator array;
     IntervalEvaluator interval;
-    FeatureEvaluator feature;
-    DerivEvaluator deriv;
+    FeatureEvaluator array;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

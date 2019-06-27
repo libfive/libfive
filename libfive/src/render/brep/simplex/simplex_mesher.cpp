@@ -475,7 +475,7 @@ uint64_t SimplexMesher::searchEdge(Eigen::Vector3d inside,
             // search, working around  numerical issues where different
             // evaluators disagree with whether points are inside or outside.
             if (out[j] > 0 || j == POINTS_PER_SEARCH - 1 ||
-                (out[j] == 0 && !eval->feature.isInside(
+                (out[j] == 0 && !eval->array.isInside(
                             ps.col(j).template cast<float>(), tape)))
 
             {

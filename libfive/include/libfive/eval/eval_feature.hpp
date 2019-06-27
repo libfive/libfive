@@ -61,6 +61,15 @@ public:
     std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p);
     std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p,
                                         std::shared_ptr<Tape> tape);
+    template <unsigned N>
+    std::list<Eigen::Vector3f> features(const Eigen::Matrix<double, N, 1>& p,
+                                        const Region<N>& region, 
+                                        std::shared_ptr<Tape> tape)
+    {
+        Eigen::Vector3f v;
+        v << p.template cast<float>(), region.perp.template cast<float>();
+        return features(v, tape);
+    }
 
     /*
      *  Checks for features at the given position, returning a list

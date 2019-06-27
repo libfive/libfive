@@ -119,7 +119,9 @@ Eigen::Matrix<double, N, 2> searchBetween(
                 eval->array.set<N>(ps.col(j), region, j);
         }
 
-        auto out = eval->array.values(POINTS_PER_SEARCH, tape);
+        Eigen::Array<float, 1, ArrayEvaluator::N> out;
+        out.leftCols(POINTS_PER_SEARCH) = eval->array.values(
+                POINTS_PER_SEARCH, tape);
 
         // Skip one point, because the very first point is
         // already known to be inside the shape (but
@@ -132,7 +134,7 @@ Eigen::Matrix<double, N, 2> searchBetween(
             // search, working around  numerical issues where different
             // evaluators disagree with whether points are inside or outside.
             if (out[j] > 0 || j == POINTS_PER_SEARCH - 1 ||
-                (out[j] == 0 && !eval->feature.isInside<N>(
+                (out[j] == 0 && !eval->array.isInside<N>(
                     ps.col(j), region, tape)))
             {
                 inside = ps.col(j - 1);
@@ -319,7 +321,7 @@ void processEdge(HybridTree<BaseDimension>* tree,
         tree->leaf->vertex_pos.col(edge.i) = pos;
 
         // TODO: use a less powerful evaluator unless needed
-        tree->leaf->inside[edge.i] = eval->feature.isInside<BaseDimension>(
+        tree->leaf->inside[edge.i] = eval->array.isInside<BaseDimension>(
                 pos, region, tape);
 
         DEBUG("Found surface edge " << edge.i);
@@ -603,7 +605,7 @@ void HybridTree<N>::placeDistanceVertex(
     this->leaf->vertex_pos.col(n.i) = pos;
 
     // Expensive check for inside / outsideness of this point (TODO)
-    this->leaf->inside[n.i] = eval->feature.isInside<N>(pos, region, tape);
+    this->leaf->inside[n.i] = eval->array.isInside<N>(pos, region, tape);
     this->leaf->surface_mass_point.col(n.i).array() = 0.0;
 
     // For now, we don't care about accumulating QEFs or surface intersections
@@ -683,7 +685,8 @@ void HybridTree<N>::accumulate(XTreeEvaluator* eval,
                                NeighborIndex* target,
                                bool normalize)
 {
-    auto ds = eval->array.derivs(count);
+    Eigen::Array<float, 4, ArrayEvaluator::N> ds;
+    ds.leftCols(count) = eval->array.derivs(count);
     auto ambig = eval->array.getAmbiguous(count);
 
     auto push = [&ds, &eval, &target, &normalize, this]
@@ -706,7 +709,7 @@ void HybridTree<N>::accumulate(XTreeEvaluator* eval,
         if (!ambig[i]) {
             push(ds.col(i).head<3>(), i);
         } else {
-            const auto fs = eval->feature.features(
+            const auto fs = eval->array.features(
                     eval->array.get(i), tape);
             for (const auto& f : fs) {
                 push(f, i);

@@ -317,6 +317,7 @@ void SimplexTree<N>::findLeafVertices(
     //  If nothing is borrowed from neighbors, we'd end up with
     //      X | X | O O | X | X | O O | O O | O O | I I I I
     //  in the evaluator (following the usual ternary ordering rule)
+    Eigen::Array<double, N, ArrayEvaluator::N> positions;
     for (unsigned i=0; i < ipow(3, N); ++i) {
         const auto sub = NeighborIndex(i);
         if (!already_solved[sub.i]) {
@@ -346,6 +347,7 @@ void SimplexTree<N>::findLeafVertices(
             assert(todo.size() == ipow(SAMPLES_PER_EDGE - 2, sub.dimension()));
 
             for (auto& t : todo) {
+                positions.col(count) = t;
                 eval->array.set<N>(t, region, count++);
             }
         }
@@ -354,7 +356,8 @@ void SimplexTree<N>::findLeafVertices(
     // Then unpack into the subspace QEF arrays (which are guaranteed to be
     // empty, because SimplexLeaf::reset() clears them).
     {
-        const auto ds = eval->array.derivs(count, tape);
+        Eigen::Matrix<float, 4, ArrayEvaluator::N> ds;
+        ds.leftCols(count) = eval->array.derivs(count, tape);
         const auto ambig = eval->array.getAmbiguous(count, tape);
         unsigned index=0;
         for (unsigned i=0; i < ipow(3, N); ++i) {
@@ -369,7 +372,7 @@ void SimplexTree<N>::findLeafVertices(
                     // items are invalid.  Visual Studio seems to have trouble
                     // capturing ds by default for some reason, so we capture
                     // all used variables individually.
-                    auto push = [&ds, &leaf_sub, &sub, &eval, &index]
+                    auto push = [&ds, &leaf_sub, &positions, &sub, &index]
                         (Eigen::Vector3f d) {
                         Eigen::Matrix<double, N, 1> d_ =
                             d.template head<N>().template cast<double>();
@@ -377,8 +380,7 @@ void SimplexTree<N>::findLeafVertices(
                             d_.array() = 0.0;
                         }
                         leaf_sub[sub.i]->qef.insert(
-                                eval->array.get(index).template cast<double>()
-                                                      .template head<N>(),
+                                positions.col(index),
                                 d_, ds(3, index));
                     };
 
@@ -386,8 +388,8 @@ void SimplexTree<N>::findLeafVertices(
                     // to get all of the possible derivatives, then add them to
                     // the corner's QEF.
                     if (ambig(index)) {
-                        const auto fs = eval->feature.features(
-                                eval->array.get(index), tape);
+                        const auto fs = eval->array.features<N>(
+                                positions.col(index), region, tape);
                         for (auto& f : fs) {
                             push(f);
                         }
@@ -593,7 +595,8 @@ void SimplexTree<N>::saveVertexSigns(
         eval->array.set(pos(i), num++);
     }
 
-    const auto values = eval->array.values(num, tape);
+    Eigen::Matrix<float, 1, ArrayEvaluator::N> values;
+    values.leftCols(num) = eval->array.values(num, tape);
 
     num = 0;
     for (unsigned i=0; i < ipow(3, N); ++i)
@@ -612,7 +615,7 @@ void SimplexTree<N>::saveVertexSigns(
 
         // Handle ambiguities with the high-power isInside check
         if (out == 0) {
-            leaf_sub[i]->inside = eval->feature.isInside(pos(i), tape);
+            leaf_sub[i]->inside = eval->array.isInside(pos(i), tape);
         } else {
             leaf_sub[i]->inside = (out < 0);
         }

@@ -177,7 +177,7 @@ TEST_CASE("DCTree<3>::vert")
                     CAPTURE(i);
                     CAPTURE(t->leaf->manifold);
                     CAPTURE((int)t->leaf->corner_mask);
-                    REQUIRE(eval.feature.value(t->vert(i).template cast<float>())
+                    REQUIRE(eval.array.value(t->vert(i).template cast<float>())
                             == Approx(0.0f).margin(err));
                 }
             }
