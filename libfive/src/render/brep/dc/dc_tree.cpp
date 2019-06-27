@@ -176,17 +176,6 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
     // This is phase 1, as described above
     for (uint8_t i=0; i < count; ++i)
     {
-        // The Eigen evaluator occasionally disagrees with the
-        // deriv (single-point) evaluator, because it has SSE
-        // implementations of transcendental functions that can
-        // return subtly different results.  If we get a result that
-        // is sufficiently close to zero, then fall back to the
-        // canonical single-point evaluator to avoid inconsistency.
-        if (fabs(vs(i)) < 1e-6)
-        {
-            vs(i) = eval->deriv.eval(pos.col(i), tape);
-        }
-
         // Handle inside, outside, and (non-ambiguous) on-boundary
         if (vs(i) > 0 || std::isnan(vs(i)))
         {
@@ -218,17 +207,9 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
         auto ds = eval->array.derivs(unambiguous_zeros, tape);
         for (unsigned i=0; i < unambiguous_zeros; ++i)
         {
-            if ((ds.col(i).head<3>().abs() < 1e-6f).any())
-            {
-                ds.col(i) = eval->deriv.deriv(pos.col(unambig_remap[i]));
-                corners[corner_indices[unambig_remap[i]]] =
-                    (ds.col(i).template head<3>() != 0).any()
-                    ? Interval::FILLED : Interval::EMPTY;
-            }
-            else
-            {
-                corners[corner_indices[unambig_remap[i]]] = Interval::FILLED;
-            }
+            corners[corner_indices[unambig_remap[i]]] =
+                (ds.col(i).template head<3>() != 0).any()
+                ? Interval::FILLED : Interval::EMPTY;
         }
     }
 
