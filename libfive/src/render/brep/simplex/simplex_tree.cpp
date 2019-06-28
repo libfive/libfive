@@ -98,7 +98,7 @@ struct Unroller
                        ipow(3, BaseDimension)>& leaf_sub,
             const std::array<bool, ipow(3, BaseDimension)>& already_solved,
             const Region<BaseDimension>& region,
-            XTreeEvaluator* eval, Tape::Handle& tape)
+            Evaluator* eval, Tape::Handle& tape)
     {
         double error = 0.0;
         if (!already_solved[SubspaceIndex_]) {
@@ -151,8 +151,8 @@ struct Unroller
 
                 // Evaluate the function at the solution point, and add that
                 // information to the QEF, to do an iterative refinement.
-                eval->array.set<BaseDimension>(s->vert, region, 0);
-                const auto ds = eval->array.derivs(1, tape);
+                eval->set<BaseDimension>(s->vert, region, 0);
+                const auto ds = eval->derivs(1, tape);
                 QEF<BaseDimension> extra;
                 extra.insert(s->vert,
                              ds.col(0).template head<BaseDimension>().template cast<double>(),
@@ -180,7 +180,7 @@ struct Unroller<BaseDimension, -1>
                                  ipow(3, BaseDimension)>&,
                       const std::array<bool, ipow(3, BaseDimension)>&,
                       const Region<BaseDimension>&,
-                      XTreeEvaluator*, Tape::Handle&)
+                      Evaluator*, Tape::Handle&)
     {
         return 0.0; // Nothing to do here
     }
@@ -219,14 +219,14 @@ std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
 }
 
 template <unsigned N>
-Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
+Tape::Handle SimplexTree<N>::evalInterval(Evaluator* eval,
                                           Tape::Handle tape,
                                           const Region<N>& region,
                                           Pool& object_pool)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
-    auto o = eval->interval.evalAndPush(
+    auto o = eval->intervalAndPush(
             region.lower3().template cast<float>(),
             region.upper3().template cast<float>(),
             tape);
@@ -254,7 +254,7 @@ Tape::Handle SimplexTree<N>::evalInterval(XTreeEvaluator* eval,
 
 template <unsigned N>
 void SimplexTree<N>::findLeafVertices(
-        XTreeEvaluator* eval,
+        Evaluator* eval,
         Tape::Handle tape,
         const Region<N>& region,
         Pool& object_pool,
@@ -348,7 +348,7 @@ void SimplexTree<N>::findLeafVertices(
 
             for (auto& t : todo) {
                 positions.col(count) = t;
-                eval->array.set<N>(t, region, count++);
+                eval->set<N>(t, region, count++);
             }
         }
     }
@@ -357,8 +357,8 @@ void SimplexTree<N>::findLeafVertices(
     // empty, because SimplexLeaf::reset() clears them).
     {
         Eigen::Matrix<float, 4, ArrayEvaluator::N> ds;
-        ds.leftCols(count) = eval->array.derivs(count, tape);
-        const auto ambig = eval->array.getAmbiguous(count, tape);
+        ds.leftCols(count) = eval->derivs(count, tape);
+        const auto ambig = eval->getAmbiguous(count, tape);
         unsigned index=0;
         for (unsigned i=0; i < ipow(3, N); ++i) {
             const auto sub = NeighborIndex(i);
@@ -388,7 +388,7 @@ void SimplexTree<N>::findLeafVertices(
                     // to get all of the possible derivatives, then add them to
                     // the corner's QEF.
                     if (ambig(index)) {
-                        const auto fs = eval->array.features<N>(
+                        const auto fs = eval->features<N>(
                                 positions.col(index), region, tape);
                         for (auto& f : fs) {
                             push(f);
@@ -422,7 +422,7 @@ void SimplexTree<N>::findLeafVertices(
 }
 
 template <unsigned N>
-void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
+void SimplexTree<N>::evalLeaf(Evaluator* eval,
                               std::shared_ptr<Tape> tape,
                               const Region<N>& region,
                               Pool& object_pool,
@@ -447,7 +447,7 @@ void SimplexTree<N>::evalLeaf(XTreeEvaluator* eval,
 }
 
 template <unsigned N>
-bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
+bool SimplexTree<N>::collectChildren(Evaluator* eval,
                                      Tape::Handle tape,
                                      const Region<N>& region,
                                      Pool& object_pool,
@@ -567,7 +567,7 @@ bool SimplexTree<N>::collectChildren(XTreeEvaluator* eval,
 
 template <unsigned N>
 void SimplexTree<N>::saveVertexSigns(
-        XTreeEvaluator* eval, Tape::Handle tape, const Region<N>& region,
+        Evaluator* eval, Tape::Handle tape, const Region<N>& region,
         const std::array<bool, ipow(3, N)>& already_solved)
 {
     // With every vertex positioned, solve for whether it is inside or outside.
@@ -592,11 +592,11 @@ void SimplexTree<N>::saveVertexSigns(
             continue;
         }
 
-        eval->array.set(pos(i), num++);
+        eval->set(pos(i), num++);
     }
 
     Eigen::Matrix<float, 1, ArrayEvaluator::N> values;
-    values.leftCols(num) = eval->array.values(num, tape);
+    values.leftCols(num) = eval->values(num, tape);
 
     num = 0;
     for (unsigned i=0; i < ipow(3, N); ++i)
@@ -615,7 +615,7 @@ void SimplexTree<N>::saveVertexSigns(
 
         // Handle ambiguities with the high-power isInside check
         if (out == 0) {
-            leaf_sub[i]->inside = eval->array.isInside(pos(i), tape);
+            leaf_sub[i]->inside = eval->isInside(pos(i), tape);
         } else {
             leaf_sub[i]->inside = (out < 0);
         }

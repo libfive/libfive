@@ -8,7 +8,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 #include "libfive/eval/tape.hpp"
 
 #include "libfive/render/axes.hpp"
@@ -90,7 +90,7 @@ Eigen::Matrix<double, N, 1> unMassPoint(const MassPoint<N>& m) {
  */
 template <unsigned N>
 Eigen::Matrix<double, N, 2> searchBetween(
-        XTreeEvaluator* eval, Tape::Handle tape,
+        Evaluator* eval, Tape::Handle tape,
         const Region<N>& region,
         Eigen::Matrix<double, N, 1> inside,
         Eigen::Matrix<double, N, 1> outside)
@@ -116,11 +116,11 @@ Eigen::Matrix<double, N, 2> searchBetween(
         {
                 const double frac = j / (POINTS_PER_SEARCH - 1.0);
                 ps.col(j) = (inside * (1 - frac)) + (outside * frac);
-                eval->array.set<N>(ps.col(j), region, j);
+                eval->set<N>(ps.col(j), region, j);
         }
 
         Eigen::Array<float, 1, ArrayEvaluator::N> out;
-        out.leftCols(POINTS_PER_SEARCH) = eval->array.values(
+        out.leftCols(POINTS_PER_SEARCH) = eval->values(
                 POINTS_PER_SEARCH, tape);
 
         // Skip one point, because the very first point is
@@ -134,7 +134,7 @@ Eigen::Matrix<double, N, 2> searchBetween(
             // search, working around  numerical issues where different
             // evaluators disagree with whether points are inside or outside.
             if (out[j] > 0 || j == POINTS_PER_SEARCH - 1 ||
-                (out[j] == 0 && !eval->array.isInside<N>(
+                (out[j] == 0 && !eval->isInside<N>(
                     ps.col(j), region, tape)))
             {
                 inside = ps.col(j - 1);
@@ -199,14 +199,14 @@ void HybridLeaf<N>::reset()
 }
 
 template <unsigned N>
-Tape::Handle HybridTree<N>::evalInterval(XTreeEvaluator* eval,
+Tape::Handle HybridTree<N>::evalInterval(Evaluator* eval,
                                          Tape::Handle tape,
                                          const Region<N>& region,
                                          Pool& object_pool)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
-    auto o = eval->interval.evalAndPush(
+    auto o = eval->intervalAndPush(
             region.lower3().template cast<float>(),
             region.upper3().template cast<float>(),
             tape);
@@ -228,7 +228,7 @@ Tape::Handle HybridTree<N>::evalInterval(XTreeEvaluator* eval,
 
 
 template <unsigned N>
-void HybridTree<N>::buildLeaf(XTreeEvaluator* eval,
+void HybridTree<N>::buildLeaf(Evaluator* eval,
                               std::shared_ptr<Tape> tape,
                               const Region<N>& region,
                               Pool& object_pool)
@@ -246,7 +246,7 @@ void HybridTree<N>::buildLeaf(XTreeEvaluator* eval,
 }
 
 template <unsigned N>
-void HybridTree<N>::processCorners(XTreeEvaluator* eval,
+void HybridTree<N>::processCorners(Evaluator* eval,
                                    Tape::Handle tape,
                                    const Region<N>& region)
 {
@@ -263,7 +263,7 @@ void HybridTree<N>::processCorners(XTreeEvaluator* eval,
 
 template <unsigned BaseDimension, unsigned Target>
 void processEdge(HybridTree<BaseDimension>* tree,
-                 XTreeEvaluator* eval,
+                 Evaluator* eval,
                  Tape::Handle tape,
                  const Region<BaseDimension>& region)
 {
@@ -323,7 +323,7 @@ void processEdge(HybridTree<BaseDimension>* tree,
         tree->leaf->vertex_pos.col(edge.i) = pos;
 
         // TODO: use a less powerful evaluator unless needed
-        tree->leaf->inside[edge.i] = eval->array.isInside<BaseDimension>(
+        tree->leaf->inside[edge.i] = eval->isInside<BaseDimension>(
                 pos, region, tape);
 
         DEBUG("Found surface edge " << edge.i);
@@ -363,7 +363,7 @@ void processEdge(HybridTree<BaseDimension>* tree,
 
 template <unsigned BaseDimension, int Target>
 void process(HybridTree<BaseDimension>* tree,
-             XTreeEvaluator* eval,
+             Evaluator* eval,
              Tape::Handle tape,
              const Region<BaseDimension>& region)
 {
@@ -560,7 +560,7 @@ void process(HybridTree<BaseDimension>* tree,
 template <unsigned BaseDimension, unsigned TargetDimension, int Target>
 struct Unroller {
     void run(HybridTree<BaseDimension>* tree,
-             XTreeEvaluator* eval,
+             Evaluator* eval,
              Tape::Handle tape,
              const Region<BaseDimension>& region)
     {
@@ -579,7 +579,7 @@ struct Unroller {
 template <unsigned BaseDimension, unsigned TargetDimension>
 struct Unroller<BaseDimension, TargetDimension, -1> {
     void run(HybridTree<BaseDimension>*,
-                 XTreeEvaluator*,
+                 Evaluator*,
                  Tape::Handle,
                  const Region<BaseDimension>&)
     {
@@ -590,7 +590,7 @@ struct Unroller<BaseDimension, TargetDimension, -1> {
 
 template <unsigned N>
 template<unsigned D>
-void HybridTree<N>::processSubspaces(XTreeEvaluator* eval,
+void HybridTree<N>::processSubspaces(Evaluator* eval,
                                      Tape::Handle tape,
                                      const Region<N>& region)
 {
@@ -599,7 +599,7 @@ void HybridTree<N>::processSubspaces(XTreeEvaluator* eval,
 
 template <unsigned N>
 void HybridTree<N>::placeDistanceVertex(
-        XTreeEvaluator* eval, Tape::Handle tape,
+        Evaluator* eval, Tape::Handle tape,
         const Region<N>& region,
         NeighborIndex n, const Vec& pos)
 {
@@ -607,7 +607,7 @@ void HybridTree<N>::placeDistanceVertex(
     this->leaf->vertex_pos.col(n.i) = pos;
 
     // Expensive check for inside / outsideness of this point (TODO)
-    this->leaf->inside[n.i] = eval->array.isInside<N>(pos, region, tape);
+    this->leaf->inside[n.i] = eval->isInside<N>(pos, region, tape);
     this->leaf->surface_mass_point.col(n.i).array() = 0.0;
 
     // For now, we don't care about accumulating QEFs or surface intersections
@@ -679,7 +679,7 @@ void HybridTree<N>::placeDistanceVertex(
 
 template <unsigned N>
 void HybridTree<N>::accumulate(
-        XTreeEvaluator* eval,
+        Evaluator* eval,
         const Eigen::Array<double, N, ArrayEvaluator::N>& positions,
         const Region<N>& region,
         Tape::Handle tape,
@@ -689,11 +689,11 @@ void HybridTree<N>::accumulate(
 {
     // Unpack into the data array
     for (unsigned i=0; i < count; ++i) {
-        eval->array.set<N>(positions.col(i), region, i);
+        eval->set<N>(positions.col(i), region, i);
     }
     Eigen::Array<float, 4, ArrayEvaluator::N> ds;
-    ds.leftCols(count) = eval->array.derivs(count);
-    auto ambig = eval->array.getAmbiguous(count);
+    ds.leftCols(count) = eval->derivs(count);
+    auto ambig = eval->getAmbiguous(count);
 
     auto push = [&ds, &positions, &target, &normalize, this]
                 (Eigen::Vector3f d, unsigned i)
@@ -714,8 +714,8 @@ void HybridTree<N>::accumulate(
         if (!ambig[i]) {
             push(ds.col(i).head<3>(), i);
         } else {
-            const auto fs = eval->array.features(
-                    eval->array.get(i), tape);
+            const auto fs = eval->features<N>(
+                    positions.col(i), region, tape);
             for (const auto& f : fs) {
                 push(f, i);
             }
@@ -724,7 +724,7 @@ void HybridTree<N>::accumulate(
 }
 
 template <unsigned N>
-void HybridTree<N>::evalLeaf(XTreeEvaluator* eval,
+void HybridTree<N>::evalLeaf(Evaluator* eval,
                              Tape::Handle tape,
                              const Region<N>& region,
                              Pool& object_pool,
@@ -749,7 +749,7 @@ void HybridTree<N>::evalLeaf(XTreeEvaluator* eval,
 }
 
 template <unsigned N>
-bool HybridTree<N>::collectChildren(XTreeEvaluator* eval,
+bool HybridTree<N>::collectChildren(Evaluator* eval,
                                     Tape::Handle tape,
                                     const Region<N>& region,
                                     Pool& object_pool,

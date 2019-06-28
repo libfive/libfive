@@ -56,7 +56,7 @@ TEST_CASE("IntervalEvaluator::eval")
     }
 }
 
-TEST_CASE("IntervalEvaluator::evalAndPush")
+TEST_CASE("IntervalEvaluator::intervalAndPush")
 {
     SECTION("Basic")
     {
@@ -70,7 +70,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
         // Do an interval evaluation that will lead to disabling the rhs
         // Pushing should disable the rhs of min
-        auto p = e.evalAndPush({-5, 8, 0}, {-4, 9, 0});
+        auto p = e.intervalAndPush({-5, 8, 0}, {-4, 9, 0});
         auto i = p.i;
         REQUIRE(i.lower() == -4);
         REQUIRE(i.upper() == -3);
@@ -94,7 +94,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
         // Do an interval evaluation that should lead to both sides
         // picking X, then collapsing min(X, X) into just X.
-        auto i = e.evalAndPush({-5, 0, 0}, {-4, 1, 0});
+        auto i = e.intervalAndPush({-5, 0, 0}, {-4, 1, 0});
         CAPTURE(d->tape->size());
         REQUIRE(i.tape->size() == 1);
     }
@@ -121,8 +121,8 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
         float ea, eb;
         {
-            auto ia = eval.evalAndPush(ra.lower.template cast<float>(),
-                                       ra.upper.template cast<float>());
+            auto ia = eval.intervalAndPush(ra.lower.template cast<float>(),
+                                           ra.upper.template cast<float>());
             CAPTURE(ia.i.lower());
             CAPTURE(ia.i.upper());
             CAPTURE(ia.tape->size() / (float)deck->tape->size());
@@ -130,8 +130,8 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
         }
 
         {
-            auto ib = eval.evalAndPush(rb.lower.template cast<float>(),
-                                       rb.upper.template cast<float>());
+            auto ib = eval.intervalAndPush(rb.lower.template cast<float>(),
+                                           rb.upper.template cast<float>());
             CAPTURE(ib.i.lower());
             CAPTURE(ib.i.upper());
             CAPTURE(ib.tape->size() / (float)deck->tape->size());

@@ -52,7 +52,7 @@ TEST_CASE("OracleContext: TransformedOracle push/pop")
 
     // Do an interval evaluation that selects the X branch of min(X, Y)
     IntervalEvaluator i(deck);
-    auto o = i.evalAndPush({1.0, 2.0, 3.0}, {1.5, 2.5, 3.5});
+    auto o = i.intervalAndPush({1.0, 2.0, 3.0}, {1.5, 2.5, 3.5});
     REQUIRE(o.i.lower() == 1.0);
     REQUIRE(o.i.upper() == 1.5);
 

@@ -111,7 +111,7 @@ ArrayEvaluator::values(size_t count, Tape::Handle tape)
 }
 
 
-std::pair<float, Tape::Handle> ArrayEvaluator::evalAndPush(
+std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
         const Eigen::Vector3f& pt, Tape::Handle tape)
 {
     if (tape == nullptr) {

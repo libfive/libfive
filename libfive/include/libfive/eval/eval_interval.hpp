@@ -47,16 +47,16 @@ public:
                  const Eigen::Vector3f& upper,
                  std::shared_ptr<Tape> tape);
 
-    Result evalAndPush(const Eigen::Vector3f& lower,
-                       const Eigen::Vector3f& upper);
-    Result evalAndPush(const Eigen::Vector3f& lower,
-                       const Eigen::Vector3f& upper,
-                       std::shared_ptr<Tape> tape);
+    Result intervalAndPush(const Eigen::Vector3f& lower,
+                           const Eigen::Vector3f& upper);
+    Result intervalAndPush(const Eigen::Vector3f& lower,
+                           const Eigen::Vector3f& upper,
+                           std::shared_ptr<Tape> tape);
 
     /*
      *  Returns a shortened tape based on the most recent evaluation.
      *
-     *  Normally, this is invoked through evalAndPush, but in some cases,
+     *  Normally, this is invoked through intervalAndPush, but in some cases,
      *  we need to call it as a standalone function.  If you're not using
      *  Oracles, then you probably don't need to call it.
      */

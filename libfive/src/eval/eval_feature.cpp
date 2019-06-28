@@ -55,7 +55,7 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
 bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
                                 Tape::Handle tape)
 {
-    auto handle = evalAndPush(p, tape);
+    auto handle = valueAndPush(p, tape);
 
     // Unambiguous cases
     if (handle.first < 0)
@@ -70,7 +70,7 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
     // Otherwise, we need to handle the zero-crossing case!
 
     // First, we evaluate and extract all of the features, saving
-    // time by re-using the shortened tape from evalAndPush
+    // time by re-using the shortened tape from valueAndPush
     auto fs = f(handle.second->rwalk(*this));
 
     // If there's only a single feature, we can get both positive and negative
@@ -106,7 +106,7 @@ const boost::container::small_vector<Feature, 4>&
                                 Tape::Handle tape)
 {
     // Load the location into the results slot and evaluate point-wise
-    auto handle = evalAndPush(p, tape);
+    auto handle = valueAndPush(p, tape);
 
     // We have just done a single-point evaluation, but could be using
     // every slot in the results array, so we store them here.

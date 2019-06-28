@@ -29,6 +29,23 @@ public:
     Evaluator(std::shared_ptr<Deck> t,
               const std::map<Tree::Id, float>& vars) :
         JacobianEvaluator(t, vars), IntervalEvaluator(t, vars) {}
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    std::shared_ptr<Deck> getDeck() { return JacobianEvaluator::deck; }
+
+    /*
+     *  Updates variable values, return true if changed
+     */
+    bool updateVars(const std::map<Kernel::Tree::Id, float>& vars)
+    {
+        bool changed = false;
+        for (auto& v : vars) {
+            changed |= JacobianEvaluator::setVar(v.first, v.second);
+            changed |= IntervalEvaluator::setVar(v.first, v.second);
+        }
+        return changed;
+}
 };
 
 }   // namespace Kernel

@@ -28,7 +28,7 @@ namespace Kernel {
  */
 struct NormalRenderer
 {
-    NormalRenderer(HeightmapEvaluator* e, Tape::Handle tape,
+    NormalRenderer(Evaluator* e, Tape::Handle tape,
                    const Voxels::View& r, Heightmap::Normal& norm)
         : e(e), tape(tape), r(r), norm(norm) {}
 
@@ -43,7 +43,7 @@ struct NormalRenderer
     void run()
     {
         // Get derivative array pointers
-        auto ds = e->array.derivs(count, tape).topRows(3).eval();
+        auto ds = e->derivs(count, tape).topRows(3).eval();
 
         for (size_t i=0; i < count; ++i)
         {
@@ -71,7 +71,7 @@ struct NormalRenderer
     {
         xs[count] = r.corner.x() + i;
         ys[count] = r.corner.y() + j;
-        e->array.set({r.pts.x()[i], r.pts.y()[j], z}, count++);
+        e->set({r.pts.x()[i], r.pts.y()[j], z}, count++);
 
         // If the gradient array is completely full, execute a
         // calculation that finds normals and blits them to the image
@@ -81,7 +81,7 @@ struct NormalRenderer
         }
     }
 
-    HeightmapEvaluator* e;
+    Evaluator* e;
     Tape::Handle tape;
     const Voxels::View& r;
     Heightmap::Normal& norm;
@@ -105,7 +105,7 @@ for (int i=0; i < r.size.x(); ++i)           \
 /*
  *  Helper functions that evaluates a region of pixels
  */
-void Heightmap::pixels(HeightmapEvaluator* e, Tape::Handle tape,
+void Heightmap::pixels(Evaluator* e, Tape::Handle tape,
                        const Voxels::View& r)
 {
     size_t index = 0;
@@ -114,12 +114,12 @@ void Heightmap::pixels(HeightmapEvaluator* e, Tape::Handle tape,
     // (which needs to be obeyed by anything unflattening results)
     VIEW_ITERATE_XYZ(r)
     {
-        e->array.set(
+        e->set(
             {r.pts.x()[i], r.pts.y()[j], r.pts.z()[r.size.z() - k - 1]},
             index++);
     }
 
-    auto out = e->array.values(index, tape);
+    auto out = e->values(index, tape);
 
     index = 0;
 
@@ -160,7 +160,7 @@ void Heightmap::pixels(HeightmapEvaluator* e, Tape::Handle tape,
  *
  *  This function is used when marking an Interval as filled
  */
-void Heightmap::fill(HeightmapEvaluator* e, Tape::Handle tape,
+void Heightmap::fill(Evaluator* e, Tape::Handle tape,
                      const Voxels::View& r)
 {
     // Store the maximum z position (which is what we're flooding into
@@ -192,7 +192,7 @@ void Heightmap::fill(HeightmapEvaluator* e, Tape::Handle tape,
 * Helper function that reduces a particular matrix block
 * Returns true if finished, false if aborted
 */
-bool Heightmap::recurse(HeightmapEvaluator* e, Tape::Handle tape,
+bool Heightmap::recurse(Evaluator* e, Tape::Handle tape,
                         const Voxels::View& r, const std::atomic_bool& abort)
 {
     // Stop rendering if the abort flag is set
@@ -219,7 +219,7 @@ bool Heightmap::recurse(HeightmapEvaluator* e, Tape::Handle tape,
     }
 
     // Do the interval evaluation, storing an tape-popping handle
-    auto result = e->interval.evalAndPush(r.lower, r.upper, tape);
+    auto result = e->intervalAndPush(r.lower, r.upper, tape);
     Interval::I out = result.i;
 
     bool ret = true;
@@ -239,7 +239,7 @@ bool Heightmap::recurse(HeightmapEvaluator* e, Tape::Handle tape,
         ret &= recurse(e, result.tape, rs.second, abort) &&
                recurse(e, result.tape, rs.first, abort);
     }
-    e->deck->claim(result.tape);
+    e->getDeck()->claim(result.tape);
     return ret;
 }
 
@@ -255,10 +255,10 @@ std::unique_ptr<Heightmap> Heightmap::render(
     const Tree t, Voxels r, const std::atomic_bool& abort,
     size_t workers)
 {
-    std::vector<HeightmapEvaluator*> es;
+    std::vector<Evaluator*> es;
     for (size_t i=0; i < workers; ++i)
     {
-        es.push_back(new HeightmapEvaluator(t));
+        es.push_back(new Evaluator(t));
     }
 
     auto out = render(es, r, abort);
@@ -271,7 +271,7 @@ std::unique_ptr<Heightmap> Heightmap::render(
 }
 
 std::unique_ptr<Heightmap> Heightmap::render(
-        const std::vector<HeightmapEvaluator*>& es, Voxels r,
+        const std::vector<Evaluator*>& es, Voxels r,
         const std::atomic_bool& abort)
 {
     auto out = new Heightmap(r.pts[1].size(), r.pts[0].size());
@@ -297,7 +297,7 @@ std::unique_ptr<Heightmap> Heightmap::render(
     {
         futures.push_back(std::async(std::launch::async,
             [itr, region, &out, &abort](){
-                out->recurse(*itr, (*itr)->deck->tape, region, abort);
+                out->recurse(*itr, (*itr)->getDeck()->tape, region, abort);
             }));
         ++itr;
     }

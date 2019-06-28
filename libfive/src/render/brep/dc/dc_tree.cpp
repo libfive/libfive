@@ -17,7 +17,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/StdVector>
 #include <boost/lockfree/queue.hpp>
 
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 #include "libfive/eval/tape.hpp"
 
 #include "libfive/render/brep/dc/marching.hpp"
@@ -87,14 +87,14 @@ void DCLeaf<N>::reset()
 }
 
 template <unsigned N>
-Tape::Handle DCTree<N>::evalInterval(XTreeEvaluator* eval,
+Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
                                      Tape::Handle tape,
                                      const Region<N>& region,
                                      Pool&)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
-    auto o = eval->interval.evalAndPush(
+    auto o = eval->intervalAndPush(
             region.lower3().template cast<float>(),
             region.upper3().template cast<float>(),
             tape);
@@ -114,7 +114,7 @@ Tape::Handle DCTree<N>::evalInterval(XTreeEvaluator* eval,
 }
 
 template <unsigned N>
-void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
+void DCTree<N>::evalLeaf(Evaluator* eval,
                         Tape::Handle tape,
                         const Region<N>& region,
                         Pool& object_pool,
@@ -140,7 +140,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
         if (c == Interval::UNKNOWN)
         {
             pos.col(count) = region.corner3f(i);
-            eval->array.set(pos.col(count), count);
+            eval->set(pos.col(count), count);
             corner_indices[count++] = i;
         }
         else
@@ -160,12 +160,12 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
     //     can find an inside-outside transition).
     // 3)  For values that are == 0 and ambiguous, call isInside
     //     (the heavy hitter of inside-outside checking).
-    auto vs = eval->array.values(count, tape);
+    auto vs = eval->values(count, tape);
 
     // We store ambiguity here, but clear it if the point is inside
     // or outside (so after the loop below, ambig(i) is only set if
     // pos[i] is both == 0 and ambiguous).
-    auto ambig = eval->array.getAmbiguous(count, tape);
+    auto ambig = eval->getAmbiguous(count, tape);
 
     // This is a count of how many points there are that == 0
     // but are unambiguous; unambig_remap[z] returns the index
@@ -202,9 +202,9 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
     {
         for (unsigned i = 0; i < unambiguous_zeros; ++i)
         {
-            eval->array.set(pos.col(unambig_remap[i]), i);
+            eval->set(pos.col(unambig_remap[i]), i);
         }
-        auto ds = eval->array.derivs(unambiguous_zeros, tape);
+        auto ds = eval->derivs(unambiguous_zeros, tape);
         for (unsigned i=0; i < unambiguous_zeros; ++i)
         {
             corners[corner_indices[unambig_remap[i]]] =
@@ -219,7 +219,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
         if (ambig(i))
         {
             corners[corner_indices[i]] =
-                eval->array.isInside(pos.col(i), tape)
+                eval->isInside(pos.col(i), tape)
                     ? Interval::FILLED
                     : Interval::EMPTY;
         }
@@ -341,7 +341,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
                         const unsigned i = j + e*POINTS_PER_SEARCH;
                         ps.col(i) = (targets[e].first * (1 - frac)) +
                                     (targets[e].second * frac);
-                        eval->array.set<N>(ps.col(i), region, i);
+                        eval->set<N>(ps.col(i), region, i);
                     }
                 }
 
@@ -353,7 +353,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
                     // invalidates the output array.
                     Eigen::Array<float, 1, ArrayEvaluator::N> out;
                     out.leftCols(POINTS_PER_SEARCH * eval_count) =
-                        eval->array.values(
+                        eval->values(
                             POINTS_PER_SEARCH * eval_count, tape);
 
                     for (unsigned e=0; e < eval_count; ++e)
@@ -373,7 +373,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
                             }
                             else if (out[i] == 0)
                             {
-                                if (!eval->array.isInside<N>(ps.col(i), region,
+                                if (!eval->isInside<N>(ps.col(i), region,
                                                                tape))
                                 {
                                     assert(i > 0);
@@ -403,16 +403,16 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
             {
                 for (unsigned i=0; i < eval_count; ++i)
                 {
-                    eval->array.set<N>(targets[i].first, region, 2*i);
-                    eval->array.set<N>(targets[i].second, region, 2*i + 1);
+                    eval->set<N>(targets[i].first, region, 2*i);
+                    eval->set<N>(targets[i].second, region, 2*i + 1);
                 }
 
                 // Copy the results to a local array, to avoid invalidating
                 // the results array when we call features() below.
                 Eigen::Array<float, 4, ArrayEvaluator::N> ds;
-                ds.leftCols(2 * eval_count) = eval->array.derivs(
+                ds.leftCols(2 * eval_count) = eval->derivs(
                         2 * eval_count, tape);
-                auto ambig = eval->array.getAmbiguous(2 * eval_count, tape);
+                auto ambig = eval->getAmbiguous(2 * eval_count, tape);
 
                 // Iterate over all inside-outside pairs, storing the number
                 // of intersections before each inside node (in prev_size),
@@ -440,7 +440,7 @@ void DCTree<N>::evalLeaf(XTreeEvaluator* eval,
                     // case to find all possible derivatives at this point.
                     else
                     {
-                        const auto fs = eval->array.features(
+                        const auto fs = eval->features(
                                 pos.template cast<float>(), tape);
 
                         for (auto& f : fs)
@@ -633,7 +633,7 @@ uint8_t DCTree<N>::buildCornerMask(
 }
 
 template <unsigned N>
-bool DCTree<N>::collectChildren(XTreeEvaluator* eval,
+bool DCTree<N>::collectChildren(Evaluator* eval,
                                 Tape::Handle tape,
                                 const Region<N>& region,
                                 Pool& object_pool,
@@ -761,7 +761,7 @@ bool DCTree<N>::collectChildren(XTreeEvaluator* eval,
             Eigen::Vector3f v;
             v << vert(0).template cast<float>(),
                  region.perp.template cast<float>();
-            if (fabs(eval->array.value(v, Tape::getBase(tape, v))) < max_err)
+            if (fabs(eval->value(v, Tape::getBase(tape, v))) < max_err)
             {
                 // Store this tree's depth based on the region's level
                 this->leaf->level = region.level;

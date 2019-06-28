@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/oracle/oracle_storage.hpp"
 
 #include "libfive/eval/deck.hpp"
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 
 #include "util/shapes.hpp"
 #include "util/oracles.hpp"

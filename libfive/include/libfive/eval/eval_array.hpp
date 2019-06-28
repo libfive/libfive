@@ -55,15 +55,6 @@ public:
         set(v, index);
     }
 
-    /*
-     *  Reads a position from the results arrays
-     */
-    Eigen::Vector3f get(size_t index) const {
-        return Eigen::Vector3f(v(deck->X, index),
-                               v(deck->Y, index),
-                               v(deck->Z, index));
-    }
-
     /*  This is the number of samples that we can process in one pass */
     static constexpr size_t N=LIBFIVE_EVAL_ARRAY_SIZE;
 
@@ -108,7 +99,7 @@ public:
      *  Evaluates a single point and returns a tape that doesn't
      *  contain branches that weren't taken by that point evaluation.
      */
-    std::pair<float, std::shared_ptr<Tape>> evalAndPush(
+    std::pair<float, std::shared_ptr<Tape>> valueAndPush(
             const Eigen::Vector3f& pt, std::shared_ptr<Tape> tape=nullptr);
 
     /*

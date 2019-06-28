@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <atomic>
 
-#include "libfive/eval/eval_heightmap.hpp"
+#include "libfive/eval/evaluator.hpp"
 #include "libfive/render/discrete/voxels.hpp"
 #include "libfive/tree/tree.hpp"
 
@@ -34,7 +34,7 @@ public:
      *  Render an image using pre-allocated evaluators
      */
     static std::unique_ptr<Heightmap> render(
-            const std::vector<HeightmapEvaluator*>& es, Voxels r,
+            const std::vector<Evaluator*>& es, Voxels r,
             const std::atomic_bool& abort);
 
     /*
@@ -53,19 +53,19 @@ protected:
      *  Recurses down into a rendering operation
      *  Returns true if aborted, false otherwise
      */
-    bool recurse(HeightmapEvaluator* e, std::shared_ptr<Tape> tape,
+    bool recurse(Evaluator* e, std::shared_ptr<Tape> tape,
                  const Voxels::View& r, const std::atomic_bool& abort);
 
     /*
      *  Evaluates a set of voxels on a pixel-by-pixel basis
      */
-    void pixels(HeightmapEvaluator* e, std::shared_ptr<Tape> tape,
+    void pixels(Evaluator* e, std::shared_ptr<Tape> tape,
                 const Voxels::View& v);
 
     /*
      *  Fills a region of voxels, marking them as at the top of the view
      */
-    void fill(HeightmapEvaluator* e, std::shared_ptr<Tape> tape,
+    void fill(Evaluator* e, std::shared_ptr<Tape> tape,
               const Voxels::View& v);
 
 };

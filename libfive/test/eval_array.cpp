@@ -144,12 +144,12 @@ TEST_CASE("ArrayEvaluator::values (returned size)")
     REQUIRE(o.cols() == 3);
 }
 
-TEST_CASE("ArrayEvaluator::evalAndPush")
+TEST_CASE("ArrayEvaluator::valueAndPush")
 {
     ArrayEvaluator e(min(Tree::X(), Tree::Y()));
 
     {
-        auto h = e.evalAndPush({-1, 0, 0}); // specialize to just "X"
+        auto h = e.valueAndPush({-1, 0, 0}); // specialize to just "X"
         REQUIRE(e.value({-2, 0, 0}, h.second) == -2);
         REQUIRE(e.value({4, 0, 0}, h.second) == 4);
         REQUIRE(e.value({4, 5, 0}, h.second) == 4);
@@ -157,7 +157,7 @@ TEST_CASE("ArrayEvaluator::evalAndPush")
     }
 
     {
-        auto h = e.evalAndPush({0, -1, 0}); // specialize to just "Y"
+        auto h = e.valueAndPush({0, -1, 0}); // specialize to just "Y"
         REQUIRE(e.value({-2, 0, 0}, h.second) == 0);
         REQUIRE(e.value({4, 0, 0}, h.second) == 0);
         REQUIRE(e.value({4, 5, 0}, h.second) == 5);

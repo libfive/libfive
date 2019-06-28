@@ -28,7 +28,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 /* Forward declaration */
-class XTreeEvaluator;
+class Evaluator;
 class Tape;
 template <unsigned N> class Region;
 template <unsigned N> class DCNeighbors;
@@ -113,7 +113,7 @@ public:
      *
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
-    std::shared_ptr<Tape> evalInterval(XTreeEvaluator* eval,
+    std::shared_ptr<Tape> evalInterval(Evaluator* eval,
                                        std::shared_ptr<Tape> tape,
                                        const Region<N>& region,
                                        Pool& object_pool);
@@ -123,7 +123,7 @@ public:
      *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
-    void evalLeaf(XTreeEvaluator* eval,
+    void evalLeaf(Evaluator* eval,
                   std::shared_ptr<Tape> tape,
                   const Region<N>& region,
                   Pool& spare_leafs,
@@ -135,7 +135,7 @@ public:
      *
      *  Returns false if any children are yet to come, true otherwise.
      */
-    bool collectChildren(XTreeEvaluator* eval,
+    bool collectChildren(Evaluator* eval,
                          std::shared_ptr<Tape> tape,
                          const Region<N>& region,
                          Pool& object_pool,
