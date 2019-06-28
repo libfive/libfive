@@ -199,9 +199,9 @@ public:
         NeighborIndex n, const Vec& pos);
 
     /*
-     *  After loading the first count slots of eval with data, this function
-     *  evaluates them and accumulates to the subspace QEFs specified by
-     *  targets[0..count]
+     *  After loading the first count columns of positions with data, this
+     *  function evaluates them and accumulates to the subspace QEFs specified
+     *  by targets[0..count]
      *
      *  If normalize is true, then the normals are normalized for better
      *  Dual Contouring stability.
@@ -211,6 +211,8 @@ public:
      *  of the public API for the HybridTree.
      */
     void accumulate(XTreeEvaluator* eval,
+                    const Eigen::Array<double, N, ArrayEvaluator::N>& positions,
+                    const Region<N>& region,
                     Tape::Handle tape,
                     unsigned count,
                     NeighborIndex* target,

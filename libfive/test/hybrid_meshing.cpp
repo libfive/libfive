@@ -303,7 +303,7 @@ TEST_CASE("HybridMesher<3>: cube meshing")
     settings.workers = 8;
     auto m = Dual<3>::walk<HybridMesher>(t, settings, c);
 
-#if 0 // Uncomment to save debug meshes
+#if 1 // Uncomment to save debug meshes
     print_debug_leaf(t.get());
     save_debug_mesh(c, t, settings, m.get());
 #endif

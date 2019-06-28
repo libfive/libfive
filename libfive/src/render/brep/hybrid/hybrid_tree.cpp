@@ -301,14 +301,16 @@ void processEdge(HybridTree<BaseDimension>* tree,
 
         // Unpack from inside-outside into mass point, and prepare to call
         // accumulate() to store QEF data for a normalized surface QEF.
+        Eigen::Array<double, BaseDimension, ArrayEvaluator::N> positions;
         for (unsigned i=0; i < 2; ++i) {
             MassPoint<BaseDimension> mp;
             mp << surf.col(i), 1;
             tree->leaf->surface_mass_point.col(edge.i) += mp;
-            eval->array.set<BaseDimension>(surf.col(i), region, i);
+            positions.col(i) = surf.col(i);
         }
         std::array<NeighborIndex, 2> targets = {edge, edge};
-        tree->accumulate(eval, tape, 2, targets.data(), true);
+        tree->accumulate(eval, positions, region, tape, 2,
+                         targets.data(), true);
 
         // Calculate the rank of the edge intersection.  This is probably
         // 1 (if the cell edge intersects a surface) or 2 (if the cell edge
@@ -623,7 +625,7 @@ void HybridTree<N>::placeDistanceVertex(
     // seeing whether there's a sign change and searching the edge if that's
     // the case.
     unsigned num_intersections = 0;
-    Eigen::Matrix<double, N, ipow(3, N) * 2> intersections;
+    Eigen::Matrix<double, N, ArrayEvaluator::N> intersections;
     for (auto& t: EdgeTables<N>::subspaces(n.i)) {
         // If there isn't a sign change along this subspace-to-subspace
         // edge, then we shouldn't search it.
@@ -655,10 +657,6 @@ void HybridTree<N>::placeDistanceVertex(
 
     if (num_intersections) {
         assert(n.dimension() > 0);
-        // Pack the target points into the array
-        for (unsigned i=0; i < num_intersections; ++i) {
-            eval->array.set<N>(intersections.col(i), region, i);
-        }
 
         // This is a bit silly, because every intersection ends up accumulated
         // into the same QEF, but it makes accumulate() more flexible
@@ -666,30 +664,38 @@ void HybridTree<N>::placeDistanceVertex(
         std::fill(targets.begin(), targets.end(), n);
         assert(targets.size() >= num_intersections);
 
-        accumulate(eval, tape, num_intersections, targets.data(), true);
+        accumulate(eval, intersections, region, tape, num_intersections,
+                   targets.data(), true);
         this->leaf->has_surface_qef[n.i] = true;
         this->leaf->surface_rank[n.i] = this->leaf->qef[n.i].rankDC();
     } else {
         // If we didn't find a sign change, then store the vertex itself into
         // the subspace QEF.
-        eval->array.set<N>(pos, region, 0);
-        accumulate(eval, tape, 1, &n, false);
+        intersections.col(0) = pos;
+        accumulate(eval, intersections, region, tape, 1, &n, false);
         this->leaf->has_surface_qef[n.i] = false;
     }
 }
 
 template <unsigned N>
-void HybridTree<N>::accumulate(XTreeEvaluator* eval,
-                               Tape::Handle tape,
-                               unsigned count,
-                               NeighborIndex* target,
-                               bool normalize)
+void HybridTree<N>::accumulate(
+        XTreeEvaluator* eval,
+        const Eigen::Array<double, N, ArrayEvaluator::N>& positions,
+        const Region<N>& region,
+        Tape::Handle tape,
+        unsigned count,
+        NeighborIndex* target,
+        bool normalize)
 {
+    // Unpack into the data array
+    for (unsigned i=0; i < count; ++i) {
+        eval->array.set<N>(positions.col(i), region, i);
+    }
     Eigen::Array<float, 4, ArrayEvaluator::N> ds;
     ds.leftCols(count) = eval->array.derivs(count);
     auto ambig = eval->array.getAmbiguous(count);
 
-    auto push = [&ds, &eval, &target, &normalize, this]
+    auto push = [&ds, &positions, &target, &normalize, this]
                 (Eigen::Vector3f d, unsigned i)
     {
         double value = ds(3, i);
@@ -699,8 +705,7 @@ void HybridTree<N>::accumulate(XTreeEvaluator* eval,
             value /= norm;
         }
         this->leaf->qef[target[i].i].insert(
-                eval->array.get(i).template cast<double>()
-                                  .template head<N>(),
+                positions.col(i),
                 d.template cast<double>().template head<N>(),
                 value);
     };
