@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/eval_interval.hpp"
-#include "libfive/eval/eval_point.hpp"
+#include "libfive/eval/evaluator.hpp"
 #include "libfive/eval/deck.hpp"
 #include "libfive/eval/tape.hpp"
 #include "libfive/render/brep/region.hpp"
@@ -117,7 +117,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
 
         auto deck = std::make_shared<Deck>(tree);
         IntervalEvaluator eval(deck);
-        PointEvaluator eval_(deck);
+        Evaluator eval_(deck);
 
         float ea, eb;
         {
@@ -126,7 +126,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
             CAPTURE(ia.i.lower());
             CAPTURE(ia.i.upper());
             CAPTURE(ia.tape->size() / (float)deck->tape->size());
-            ea = eval_.eval(target);
+            ea = eval_.value(target);
         }
 
         {
@@ -135,7 +135,7 @@ TEST_CASE("IntervalEvaluator::evalAndPush")
             CAPTURE(ib.i.lower());
             CAPTURE(ib.i.upper());
             CAPTURE(ib.tape->size() / (float)deck->tape->size());
-            eb = eval_.eval(target);
+            eb = eval_.value(target);
         }
 
         REQUIRE(ea == eb);

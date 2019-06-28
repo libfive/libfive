@@ -46,9 +46,9 @@ TEST_CASE("OracleContext: TransformedOracle push/pop")
     auto remapped = cube.remap(min(Tree::X(), Tree::Y()), Tree::Y(), Tree::Z());
 
     auto deck = std::make_shared<Deck>(remapped);
-    PointEvaluator p(deck);
-    REQUIRE(p.eval({1.0, 2.0, 3.0}) == 1.0);
-    REQUIRE(p.eval({1.0, 0.0, 3.0}) == 0.0);
+    Evaluator p(deck);
+    REQUIRE(p.value({1.0, 2.0, 3.0}) == 1.0);
+    REQUIRE(p.value({1.0, 0.0, 3.0}) == 0.0);
 
     // Do an interval evaluation that selects the X branch of min(X, Y)
     IntervalEvaluator i(deck);
@@ -57,6 +57,6 @@ TEST_CASE("OracleContext: TransformedOracle push/pop")
     REQUIRE(o.i.upper() == 1.5);
 
     // Check to make sure that the X branch is selected in the tape
-    REQUIRE(p.eval({1.0, 2.0, 3.0}, o.tape) == 1.0);
-    REQUIRE(p.eval({1.0, 0.0, 3.0}, o.tape) == 1.0);
+    REQUIRE(p.value({1.0, 2.0, 3.0}, o.tape) == 1.0);
+    REQUIRE(p.value({1.0, 0.0, 3.0}, o.tape) == 1.0);
 }

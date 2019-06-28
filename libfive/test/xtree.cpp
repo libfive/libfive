@@ -130,7 +130,7 @@ TEST_CASE("DCTree<2>::vertex_count")
     {
         Tree a = min(max(Tree::X(), Tree::Y()),
                      max(1 - Tree::X(), 1 - Tree::Y()));
-        PointEvaluator eval(a);
+        ArrayEvaluator eval(a);
         auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {3, 3}), settings);
         REQUIRE(ta->level() == 0);
         REQUIRE(ta->leaf != nullptr);
@@ -142,7 +142,7 @@ TEST_CASE("DCTree<2>::vertex_count")
             CAPTURE(pt.transpose());
             Eigen::Vector3f v;
             v << pt, 0.0f;
-            REQUIRE(fabs(eval.eval(v)) < 1e-6);
+            REQUIRE(fabs(eval.value(v)) < 1e-6);
         }
     }
 }

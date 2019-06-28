@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "catch.hpp"
 
 #include "libfive/render/brep/simplex/qef.hpp"
-#include "libfive/eval/eval_deriv.hpp"
+#include "libfive/eval/eval_deriv_array.hpp"
 
 #include "util/shapes.hpp"
 
@@ -173,7 +173,7 @@ template <unsigned N>
 QEF<N> fromCorners(Region<N> r, Tree c)
 {
     QEF<2> q;
-    DerivEvaluator d(c);
+    DerivArrayEvaluator d(c);
 
     for (unsigned i=0; i < 4; ++i) {
         const auto pos = r.corner(i);

@@ -14,8 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/opcode.hpp"
 #include "libfive/tree/tree.hpp"
 
-#include "libfive/eval/eval_point.hpp"
-#include "libfive/eval/eval_deriv.hpp"
+#include "libfive/eval/eval_deriv_array.hpp"
 
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/contours.hpp"
@@ -191,8 +190,8 @@ libfive_tree libfive_tree_remap(libfive_tree p, libfive_tree x, libfive_tree y, 
 
 float libfive_tree_eval_f(libfive_tree t, libfive_vec3 p)
 {
-    PointEvaluator e(*t);
-    return e.eval({p.x, p.y, p.z});
+    ArrayEvaluator e(*t);
+    return e.value({p.x, p.y, p.z});
 }
 
 libfive_interval libfive_tree_eval_r(libfive_tree t, libfive_region3 r)
@@ -205,7 +204,7 @@ libfive_interval libfive_tree_eval_r(libfive_tree t, libfive_region3 r)
 
 libfive_vec3 libfive_tree_eval_d(libfive_tree t, libfive_vec3 p)
 {
-    DerivEvaluator e(*t);
+    DerivArrayEvaluator e(*t);
     auto v = e.deriv({p.x, p.y, p.z});
     return {v.x(), v.y(), v.z()};
 }

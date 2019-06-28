@@ -110,8 +110,8 @@ void compareUnderTransformation(Tree oracleTree, Tree controlTree,
          */
     }
     {
-        DerivEvaluator o(oDeck);
-        DerivEvaluator c(cDeck);
+        DerivArrayEvaluator o(oDeck);
+        DerivArrayEvaluator c(cDeck);
         for (unsigned i = 0; i < testPoints.size(); ++i)
         {
             auto oDeriv = o.deriv(testPoints[i]);
