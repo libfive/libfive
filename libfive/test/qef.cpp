@@ -242,7 +242,7 @@ TEST_CASE("QEF::solveBounded")
             CAPTURE(sol.value);
             CAPTURE(sol.rank);
             CAPTURE(sol.error);
-            REQUIRE(sol.error > 0);
+            REQUIRE(sol.error >= 0);
             REQUIRE(sol.position.x() == Approx(1.5));
             REQUIRE(sol.position.y() == Approx(2.7));
             REQUIRE(sol.rank == 2);
