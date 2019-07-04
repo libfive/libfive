@@ -205,6 +205,38 @@ bool Feature::check(const Eigen::Vector3f& e, bool* duplicate) const
             return true;
         }
     }
+    // Extremely hacky extra loop: there are cases where there exists a valid
+    // point, but it is in between a set of corners.  For example, consider
+    // the three epsilons
+    //     [-1,  0, 0]
+    //     [ 0, -1, 0]
+    //     [-1,  1, 0]
+    //
+    //  These form a Z-extrusion polytope which looks like this:
+    //
+    //   --------O    (O marks the origin)
+    //   |      /
+    //   X    /
+    //   |  /
+    //   |/
+    //  but the corners of this polytope all have one vector for which the
+    //  dot product is exactly zero.  We want to select the point marked with
+    //  an X, but it's not on any corner.
+    for (const auto& c : corners) {
+        for (const auto& d : corners) {
+            const Eigen::Vector3f p = (c + d) / 2.0f;
+            bool okay = true;
+            for (const auto& e : es) {
+                if (p.dot(e) <= 0) {
+                    okay = false;
+                    break;
+                }
+            }
+            if (okay) {
+                return true;
+            }
+        }
+    }
     return false;
 }
 

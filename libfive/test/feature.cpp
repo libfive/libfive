@@ -53,6 +53,14 @@ TEST_CASE("Feature::push")
         REQUIRE(a.push({s,  0,  s}) == true);
         REQUIRE(a.push({1, 0, -1}) == true);
     }
+
+    SECTION("2D around the clock")
+    {
+        Feature a(Eigen::Vector3f::Zero());
+        REQUIRE(a.push({-1,  0, 0}));
+        REQUIRE(a.push({ 0, -1, 0}));
+        REQUIRE(a.push({-1,  1, 0}));
+    }
 }
 
 TEST_CASE("Feature::check")

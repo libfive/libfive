@@ -197,7 +197,7 @@ TEST_CASE("Abs and skew applied to Oracle: "
 }
 
 TEST_CASE("Abs and skew applied to Oracle: "
-          "Render and compare (cube as oracle)", "[!mayfail]")
+          "Render and compare (cube as oracle)")
 {
     auto cube = max(max(
         max(-(Tree::X() + 1.5),
