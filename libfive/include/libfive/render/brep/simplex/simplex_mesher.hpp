@@ -21,7 +21,7 @@ namespace Kernel {
 // Forward declarations
 template <unsigned N> class SimplexTree;
 template <unsigned N> class PerThreadBRep;
-class XTreeEvaluator;
+class Evaluator;
 class Mesh;
 
 class SimplexMesher
@@ -41,7 +41,7 @@ public:
      *  which is useful in cases where constructing evaluators
      *  is expensive and they should be re-used.
      */
-    SimplexMesher(PerThreadBRep<3>& m, XTreeEvaluator* es);
+    SimplexMesher(PerThreadBRep<3>& m, Evaluator* es);
 
     ~SimplexMesher();
 
@@ -67,7 +67,7 @@ protected:
                         std::shared_ptr<Tape> tape);
 
     PerThreadBRep<3>& m;
-    XTreeEvaluator* eval;
+    Evaluator* eval;
     bool owned;
 };
 

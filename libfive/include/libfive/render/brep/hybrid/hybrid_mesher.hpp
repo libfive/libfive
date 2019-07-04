@@ -21,7 +21,7 @@ namespace Kernel {
 // Forward declarations
 template <unsigned N> class HybridTree;
 template <unsigned N> class PerThreadBRep;
-class XTreeEvaluator;
+class Evaluator;
 class Mesh;
 
 class HybridMesher
@@ -41,7 +41,7 @@ public:
      *  which is useful in cases where constructing evaluators
      *  is expensive and they should be re-used.
      */
-    HybridMesher(PerThreadBRep<3>& m, XTreeEvaluator* es);
+    HybridMesher(PerThreadBRep<3>& m, Evaluator* es);
 
     ~HybridMesher();
 
@@ -67,7 +67,7 @@ protected:
                         std::shared_ptr<Tape> tape);
 
     PerThreadBRep<3>& m;
-    XTreeEvaluator* eval;
+    Evaluator* eval;
     bool owned;
 };
 

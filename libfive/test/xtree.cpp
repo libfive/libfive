@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "catch.hpp"
 
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 #include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/dc/dc_pool.hpp"
@@ -130,7 +130,7 @@ TEST_CASE("DCTree<2>::vertex_count")
     {
         Tree a = min(max(Tree::X(), Tree::Y()),
                      max(1 - Tree::X(), 1 - Tree::Y()));
-        PointEvaluator eval(a);
+        ArrayEvaluator eval(a);
         auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {3, 3}), settings);
         REQUIRE(ta->level() == 0);
         REQUIRE(ta->leaf != nullptr);
@@ -142,7 +142,7 @@ TEST_CASE("DCTree<2>::vertex_count")
             CAPTURE(pt.transpose());
             Eigen::Vector3f v;
             v << pt, 0.0f;
-            REQUIRE(fabs(eval.eval(v)) < 1e-6);
+            REQUIRE(fabs(eval.value(v)) < 1e-6);
         }
     }
 }
@@ -150,7 +150,7 @@ TEST_CASE("DCTree<2>::vertex_count")
 TEST_CASE("DCTree<3>::vert")
 {
     auto walk = [](Root<DCTree<3>>& xtree,
-                   XTreeEvaluator& eval, float err)
+                   Evaluator& eval, float err)
     {
         std::list<const DCTree<3>*> todo = {xtree.get()};
         while (todo.size())
@@ -177,7 +177,7 @@ TEST_CASE("DCTree<3>::vert")
                     CAPTURE(i);
                     CAPTURE(t->leaf->manifold);
                     CAPTURE((int)t->leaf->corner_mask);
-                    REQUIRE(eval.feature.eval(t->vert(i).template cast<float>())
+                    REQUIRE(eval.value(t->vert(i).template cast<float>())
                             == Approx(0.0f).margin(err));
                 }
             }
@@ -188,7 +188,7 @@ TEST_CASE("DCTree<3>::vert")
     {
         auto b = max(box({0, 0, 0}, {1, 1, 1}),
                 Tree::X() + Tree::Y() + Tree::Z() - 1.3);
-        XTreeEvaluator eval(b);
+        Evaluator eval(b);
         Region<3> r({-2, -2, -2}, {2, 2, 2});
 
         BRepSettings settings;
@@ -201,7 +201,7 @@ TEST_CASE("DCTree<3>::vert")
     {
         auto b = max(box({0, 0, 0}, {1, 1, 1}),
                 Tree::X() + Tree::Y() + Tree::Z() - 1.2);
-        XTreeEvaluator eval(b);
+        Evaluator eval(b);
         Region<3> r({-10, -10, -10}, {10, 10, 10});
 
         BRepSettings settings;
@@ -218,7 +218,7 @@ TEST_CASE("DCTree<3>::vert")
         BRepSettings settings;
         settings.min_feature = 1 / 9.0f;
         auto xtree = DCPool<3>::build(s, r, settings);
-        XTreeEvaluator eval(s);
+        Evaluator eval(s);
         walk(xtree, eval, 0.01);
     }
 
@@ -232,7 +232,7 @@ TEST_CASE("DCTree<3>::vert")
         settings.min_feature = 0.2;
         auto xtree = DCPool<3>::build(t, r, settings);
 
-        XTreeEvaluator eval(t);
+        Evaluator eval(t);
         walk(xtree, eval, 0.01);
     }
 }
@@ -244,7 +244,7 @@ TEST_CASE("DCTree<3> cancellation")
 
     Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
-    XTreeEvaluator eval(sponge);
+    Evaluator eval(sponge);
 
     BRepSettings settings;
     settings.min_feature = 0.02;

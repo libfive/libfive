@@ -70,8 +70,7 @@ ArrayEvaluator::values(size_t count)
     return values(count, deck->tape);
 }
 
-Eigen::Block<decltype(ArrayEvaluator::v), 1, Eigen::Dynamic>
-ArrayEvaluator::values(size_t count, Tape::Handle tape)
+void ArrayEvaluator::setCount(size_t count)
 {
     count_actual = count;
 
@@ -91,15 +90,18 @@ ArrayEvaluator::values(size_t count, Tape::Handle tape)
     // If we have SIMD instructions, then round the evaluation size up
     // to the nearest block, to avoid issues where Eigen's SIMD and
     // non-SIMD paths produce different results.
-    if (LIBFIVE_SIMD_SIZE)
-    {
+    if (LIBFIVE_SIMD_SIZE) {
         count_simd = ((count + LIBFIVE_SIMD_SIZE - 1) / LIBFIVE_SIMD_SIZE)
                 * LIBFIVE_SIMD_SIZE;
-    }
-    else
-    {
+    } else {
         count_simd = count;
     }
+}
+
+Eigen::Block<decltype(ArrayEvaluator::v), 1, Eigen::Dynamic>
+ArrayEvaluator::values(size_t count, Tape::Handle tape)
+{
+    setCount(count);
 
     deck->bindOracles(tape);
     auto index = tape->rwalk(*this);
@@ -109,7 +111,7 @@ ArrayEvaluator::values(size_t count, Tape::Handle tape)
 }
 
 
-std::pair<float, Tape::Handle> ArrayEvaluator::evalAndPush(
+std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
         const Eigen::Vector3f& pt, Tape::Handle tape)
 {
     if (tape == nullptr) {

@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <cmath>
 
 #include "libfive/tree/cache.hpp"
-#include "libfive/eval/eval_point.hpp"
+#include "libfive/eval/eval_array.hpp"
 
 namespace Kernel {
 
@@ -124,8 +124,8 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
         {
             // Here, we construct a Tree manually to avoid a recursive loop,
             // then pass it immediately into a dummy Evaluator
-            auto e = PointEvaluator(Tree(out));
-            auto result = e.eval({0,0,0});
+            auto e = ArrayEvaluator(Tree(out));
+            auto result = e.value({0,0,0});
             return constant(result);
         }
         return out;

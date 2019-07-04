@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <Eigen/Eigen>
 
-#include "libfive/eval/eval_deriv.hpp"
+#include "libfive/eval/eval_deriv_array.hpp"
 #include "libfive/eval/feature.hpp"
 #include "libfive/render/brep/region.hpp"
 
@@ -24,7 +24,7 @@ namespace Kernel {
  *
  *  This is more expensive, but also more awesome.
  */
-class FeatureEvaluator : public PointEvaluator
+class FeatureEvaluator : public DerivArrayEvaluator
 {
 public:
     FeatureEvaluator(const Tree& root);
@@ -40,8 +40,7 @@ public:
      *      eval(x, y, z) == 0 => further checking is performed
      */
     bool isInside(const Eigen::Vector3f& p);
-    bool isInside(const Eigen::Vector3f& p,
-                  std::shared_ptr<Tape> tape);
+    bool isInside(const Eigen::Vector3f& p, std::shared_ptr<Tape> tape);
 
     /*
      *  Helper function to reduce boilerplate
@@ -62,6 +61,15 @@ public:
     std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p);
     std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p,
                                         std::shared_ptr<Tape> tape);
+    template <unsigned N>
+    std::list<Eigen::Vector3f> features(const Eigen::Matrix<double, N, 1>& p,
+                                        const Region<N>& region,
+                                        std::shared_ptr<Tape> tape)
+    {
+        Eigen::Vector3f v;
+        v << p.template cast<float>(), region.perp.template cast<float>();
+        return features(v, tape);
+    }
 
     /*
      *  Checks for features at the given position, returning a list

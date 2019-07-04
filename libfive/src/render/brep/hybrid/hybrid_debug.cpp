@@ -20,12 +20,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 HybridDebugMesher::HybridDebugMesher(PerThreadBRep<3>& m, Tree t)
-    : m(m), eval(new XTreeEvaluator(t)), owned(true)
+    : m(m), eval(new Evaluator(t)), owned(true)
 {
     // Nothing to do here
 }
 
-HybridDebugMesher::HybridDebugMesher(PerThreadBRep<3>& m, XTreeEvaluator* es)
+HybridDebugMesher::HybridDebugMesher(PerThreadBRep<3>& m, Evaluator* es)
     : m(m), eval(es), owned(false)
 {
     // Nothing to do here

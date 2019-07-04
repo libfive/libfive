@@ -102,14 +102,14 @@ IntervalEvaluator::Result IntervalEvaluator::eval_(
     return {i[root], !maybe_nan[root], nullptr};
 }
 
-IntervalEvaluator::Result IntervalEvaluator::evalAndPush(
+IntervalEvaluator::Result IntervalEvaluator::intervalAndPush(
         const Eigen::Vector3f& lower,
         const Eigen::Vector3f& upper)
 {
-    return evalAndPush(lower, upper, deck->tape);
+    return intervalAndPush(lower, upper, deck->tape);
 }
 
-IntervalEvaluator::Result IntervalEvaluator::evalAndPush(
+IntervalEvaluator::Result IntervalEvaluator::intervalAndPush(
         const Eigen::Vector3f& lower,
         const Eigen::Vector3f& upper,
         Tape::Handle tape)

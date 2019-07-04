@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QOpenGLBuffer>
 #include <QOpenGLFunctions>
 
-#include "libfive/eval/eval_jacobian.hpp"
+#include "libfive/eval/evaluator.hpp"
 #include "libfive/tree/tree.hpp"
 
 #include "libfive/render/brep/mesh.hpp"
@@ -43,7 +43,7 @@ public:
 
     /*
      *  In destructor, wait for computation to finish
-     *  (otherwise XTreeEvaluators may be destroyed early)
+     *  (otherwise Evaluators may be destroyed early)
      */
     ~Shape();
 
@@ -167,8 +167,8 @@ protected:
 
     Kernel::Tree tree;
     std::map<Kernel::Tree::Id, float> vars;
-    std::vector<Kernel::XTreeEvaluator,
-                Eigen::aligned_allocator<Kernel::XTreeEvaluator>> es;
+    std::vector<Kernel::Evaluator,
+                Eigen::aligned_allocator<Kernel::Evaluator>> es;
 
     QScopedPointer<Kernel::Mesh> mesh;
     Kernel::Region<3> render_bounds;

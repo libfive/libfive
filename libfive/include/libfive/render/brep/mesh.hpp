@@ -15,7 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 // Forward declaration
-class XTreeEvaluator;
+class Evaluator;
 struct BRepSettings;
 
 template <unsigned N> class Region;
@@ -40,7 +40,7 @@ public:
      *  partway through the computation.
      */
     static std::unique_ptr<Mesh> render(
-            XTreeEvaluator* es, const Region<3>& r,
+            Evaluator* es, const Region<3>& r,
             const BRepSettings& settings);
 
     /*

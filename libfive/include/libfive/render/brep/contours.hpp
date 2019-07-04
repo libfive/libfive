@@ -17,7 +17,7 @@ namespace Kernel {
 
 // Forward declarations
 template <unsigned N> class PerThreadBRep;
-class XTreeEvaluator;
+class Evaluator;
 struct BRepSettings;
 
 class Contours {

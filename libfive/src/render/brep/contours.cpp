@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <fstream>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 
 #include "libfive/render/brep/contours.hpp"
 #include "libfive/render/brep/brep.hpp"
@@ -26,11 +26,11 @@ std::unique_ptr<Contours> Contours::render(
         const Tree t, const Region<2>& r,
         const BRepSettings& settings)
 {
-    std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
+    std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
     es.reserve(settings.workers);
     for (unsigned i=0; i < settings.workers; ++i)
     {
-        es.emplace_back(XTreeEvaluator(t));
+        es.emplace_back(Evaluator(t));
     }
 
     // Create the quadtree on the scaffold

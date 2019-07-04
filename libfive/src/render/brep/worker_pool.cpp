@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/free_thread_handler.hpp"
 #include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/worker_pool.hpp"
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 
 namespace Kernel {
 
@@ -21,24 +21,24 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
         const BRepSettings& settings)
 {
     // Build evaluators for the pool
-    std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
+    std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
     es.reserve(settings.workers);
     for (unsigned i=0; i < settings.workers; ++i) {
-        es.emplace_back(XTreeEvaluator(t));
+        es.emplace_back(Evaluator(t));
     }
     return build(es.data(), region_, settings);
 }
 
 template <typename T, typename Neighbors, unsigned N>
 Root<T> WorkerPool<T, Neighbors, N>::build(
-        XTreeEvaluator* eval, const Region<N>& region_,
+        Evaluator* eval, const Region<N>& region_,
         const BRepSettings& settings)
 {
     const auto region = region_.withResolution(settings.min_feature);
     auto root(new T(nullptr, 0, region));
 
     LockFreeStack tasks(settings.workers);
-    tasks.push({root, eval->deck->tape, region, Neighbors()});
+    tasks.push({root, eval->getDeck()->tape, region, Neighbors()});
 
     std::vector<std::future<void>> futures;
     futures.resize(settings.workers);
@@ -85,7 +85,7 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
 
 template <typename T, typename Neighbors, unsigned N>
 void WorkerPool<T, Neighbors, N>::run(
-        XTreeEvaluator* eval, LockFreeStack& tasks,
+        Evaluator* eval, LockFreeStack& tasks,
         Root<T>& root, std::mutex& root_lock,
         const BRepSettings& settings,
         std::atomic_bool& done)

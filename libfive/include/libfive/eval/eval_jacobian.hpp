@@ -10,11 +10,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <Eigen/Eigen>
 
-#include "libfive/eval/eval_deriv_array.hpp"
+#include "libfive/eval/eval_feature.hpp"
 
 namespace Kernel {
 
-class JacobianEvaluator : public DerivArrayEvaluator
+class JacobianEvaluator : public FeatureEvaluator
 {
 public:
     JacobianEvaluator(const Tree& root);

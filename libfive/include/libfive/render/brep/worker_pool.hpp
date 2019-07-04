@@ -18,7 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 
 // Forward declarations
-class XTreeEvaluator;
+class Evaluator;
 template <unsigned N> class Region;
 class Tape;
 struct BRepSettings;
@@ -42,7 +42,7 @@ public:
      *
      *  eval must be an array of at least [settings.workers] evaluators
      */
-    static Root<T> build(XTreeEvaluator* eval, const Region<N>& region,
+    static Root<T> build(Evaluator* eval, const Region<N>& region,
                          const BRepSettings& settings);
 
 protected:
@@ -56,7 +56,7 @@ protected:
     using LockFreeStack =
         boost::lockfree::stack<Task, boost::lockfree::fixed_sized<true>>;
 
-    static void run(XTreeEvaluator* eval, LockFreeStack& tasks,
+    static void run(Evaluator* eval, LockFreeStack& tasks,
                     Root<T>& root, std::mutex& root_lock,
                     const BRepSettings& settings,
                     std::atomic_bool& done);

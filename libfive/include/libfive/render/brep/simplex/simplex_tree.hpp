@@ -19,7 +19,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/StdVector>
 
 #include "libfive/export.hpp"
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
@@ -131,7 +131,7 @@ public:
      *
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
-    std::shared_ptr<Tape> evalInterval(XTreeEvaluator* eval,
+    std::shared_ptr<Tape> evalInterval(Evaluator* eval,
                                        std::shared_ptr<Tape> tape,
                                        const Region<N>& region,
                                        Pool& object_pool);
@@ -141,7 +141,7 @@ public:
      *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
-    void evalLeaf(XTreeEvaluator* eval,
+    void evalLeaf(Evaluator* eval,
                   std::shared_ptr<Tape> tape,
                   const Region<N>& region,
                   Pool& object_pool,
@@ -153,7 +153,7 @@ public:
      *
      *  Returns false if any children are yet to come, true otherwise.
      */
-    bool collectChildren(XTreeEvaluator* eval,
+    bool collectChildren(Evaluator* eval,
                          std::shared_ptr<Tape> tape,
                          const Region<N>& region,
                          Pool& object_pool,
@@ -197,7 +197,7 @@ protected:
      *  Calculate and store whether each vertex is inside or outside
      *  This populates leaf->sub[i]->inside, for i in 0..ipow(3, N)
      */
-    void saveVertexSigns(XTreeEvaluator* eval,
+    void saveVertexSigns(Evaluator* eval,
                          Tape::Handle tape,
                          const Region<N>& region,
                          const std::array<bool, ipow(3, N)>& already_solved);
@@ -216,7 +216,7 @@ protected:
      *  are initialized to zero, because they'll be constructed by accumulation
      *  as we walk up the tree.
      */
-    void findLeafVertices(XTreeEvaluator* eval,
+    void findLeafVertices(Evaluator* eval,
                           Tape::Handle tape,
                           const Region<N>& region,
                           Pool& object_pool,

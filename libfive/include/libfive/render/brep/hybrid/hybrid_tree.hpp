@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <array>
 
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
@@ -107,7 +107,7 @@ public:
      *
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
-    std::shared_ptr<Tape> evalInterval(XTreeEvaluator* eval,
+    std::shared_ptr<Tape> evalInterval(Evaluator* eval,
                                        std::shared_ptr<Tape> tape,
                                        const Region<N>& region,
                                        Pool& object_pool);
@@ -116,7 +116,7 @@ public:
      *  Evaluates a minimum-size octree node.
      *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
      */
-    void evalLeaf(XTreeEvaluator* eval,
+    void evalLeaf(Evaluator* eval,
                   std::shared_ptr<Tape> tape,
                   const Region<N>& region,
                   Pool& spare_leafs,
@@ -128,7 +128,7 @@ public:
      *
      *  Returns false if any children are yet to come, true otherwise.
      */
-    bool collectChildren(XTreeEvaluator* eval,
+    bool collectChildren(Evaluator* eval,
                          std::shared_ptr<Tape> tape,
                          const Region<N>& region,
                          Pool& object_pool,
@@ -194,14 +194,14 @@ public:
      *  of the public API for the HybridTree.
      */
     void placeDistanceVertex(
-        XTreeEvaluator* eval, Tape::Handle tape,
+        Evaluator* eval, Tape::Handle tape,
         const Region<N>& region,
         NeighborIndex n, const Vec& pos);
 
     /*
-     *  After loading the first count slots of eval with data, this function
-     *  evaluates them and accumulates to the subspace QEFs specified by
-     *  targets[0..count]
+     *  After loading the first count columns of positions with data, this
+     *  function evaluates them and accumulates to the subspace QEFs specified
+     *  by targets[0..count]
      *
      *  If normalize is true, then the normals are normalized for better
      *  Dual Contouring stability.
@@ -210,7 +210,9 @@ public:
      *  needs to be able to call it, but should not be considered part
      *  of the public API for the HybridTree.
      */
-    void accumulate(XTreeEvaluator* eval,
+    void accumulate(Evaluator* eval,
+                    const Eigen::Array<double, N, ArrayEvaluator::N>& positions,
+                    const Region<N>& region,
                     Tape::Handle tape,
                     unsigned count,
                     NeighborIndex* target,
@@ -234,13 +236,13 @@ protected:
      *  using Dual Contouring's algorithm.  This lets us more precisely
      *  position the vertex on the surface of the model.
      */
-    void processCorners(XTreeEvaluator* eval,
+    void processCorners(Evaluator* eval,
                         Tape::Handle tape,
                         const Region<N>& region);
 
     /*  We use the same logic for faces and cubes, so it's templated here */
     template <unsigned D>
-    void processSubspaces(XTreeEvaluator* eval,
+    void processSubspaces(Evaluator* eval,
                           Tape::Handle tape,
                           const Region<N>& region);
 
@@ -251,7 +253,7 @@ protected:
      *  Then, calls processCorners, processEdges, and processSubspaces
      *  to fill out all of the leaf data.
      */
-    void buildLeaf(XTreeEvaluator* eval,
+    void buildLeaf(Evaluator* eval,
                    std::shared_ptr<Tape> tape,
                    const Region<N>& region,
                    Pool& object_pool);

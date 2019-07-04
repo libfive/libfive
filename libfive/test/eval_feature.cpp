@@ -13,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/eval_feature.hpp"
 
 #include "util/shapes.hpp"
+#include "util/oracles.hpp"
 
 using namespace Kernel;
 
@@ -192,5 +193,28 @@ TEST_CASE("FeatureEvaluator::features")
         auto r = max(Tree::X(), Tree::X() + Tree::Y() * 1e-8);
         FeatureEvaluator e(r);
         REQUIRE(e.features({0, 0, 0}).size() == 1);
+    }
+
+    SECTION("Very simple Oracle")
+    {
+        Tree x = convertToOracleAxes(Tree::X());
+        FeatureEvaluator e(x);
+        auto fs = e.features({1.25, 1.25, 1.5});
+        REQUIRE(fs.size() == 1);
+    }
+
+    SECTION("Oracle features")
+    {
+        auto cube = max(max(
+            max(-(Tree::X() + 1.5),
+                  Tree::X() - 1.5),
+            max(-(Tree::Y() + 1.5),
+                  Tree::Y() - 1.5)),
+            max(-(Tree::Z() + 1.5),
+                  Tree::Z() - 1.5));
+        Tree cubeOracle = convertToOracleAxes(cube);
+        FeatureEvaluator e(cubeOracle);
+        auto fs = e.features({1.25, 1.25, 1.5});
+        REQUIRE(fs.size() == 1);
     }
 }

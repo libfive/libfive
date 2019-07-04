@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <fstream>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/dual.hpp"
@@ -38,17 +38,17 @@ namespace Kernel {
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    const BRepSettings& settings)
 {
-    std::vector<XTreeEvaluator, Eigen::aligned_allocator<XTreeEvaluator>> es;
+    std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
     es.reserve(settings.workers);
     for (unsigned i=0; i < settings.workers; ++i) {
-        es.emplace_back(XTreeEvaluator(t));
+        es.emplace_back(Evaluator(t));
     }
 
     return render(es.data(), r, settings);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
-        XTreeEvaluator* es,
+        Evaluator* es,
         const Region<3>& r, const BRepSettings& settings)
 {
     std::unique_ptr<Mesh> out;

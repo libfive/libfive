@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/shader.hpp"
 
 #include "libfive/eval/tape.hpp"
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 
 const int Shape::MESH_DIV_EMPTY;
 const int Shape::MESH_DIV_ABORT;
@@ -35,7 +35,7 @@ Shape::Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, float> vars)
     es.reserve(8);
     for (unsigned i=0; i < es.capacity(); ++i)
     {
-        es.emplace_back(Kernel::XTreeEvaluator(t, vars));
+        es.emplace_back(Kernel::Evaluator(t, vars));
     }
 
     connect(this, &Shape::gotMesh, this, &Shape::redraw);
@@ -285,7 +285,7 @@ std::pair<Kernel::JacobianEvaluator*, Kernel::Tape::Handle>
 Shape::dragFrom(const QVector3D& v)
 {
     auto e = new Kernel::JacobianEvaluator(tree, vars);
-    auto o = e->evalAndPush({v.x(), v.y(), v.z()});
+    auto o = e->valueAndPush({v.x(), v.y(), v.z()});
     return std::make_pair(e, o.second);
 }
 

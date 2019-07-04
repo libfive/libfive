@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/oracle/oracle_storage.hpp"
 
 #include "libfive/eval/deck.hpp"
-#include "libfive/eval/eval_xtree.hpp"
+#include "libfive/eval/evaluator.hpp"
 
 #include "util/shapes.hpp"
 #include "util/oracles.hpp"
@@ -110,8 +110,8 @@ void compareUnderTransformation(Tree oracleTree, Tree controlTree,
          */
     }
     {
-        DerivEvaluator o(oDeck);
-        DerivEvaluator c(cDeck);
+        DerivArrayEvaluator o(oDeck);
+        DerivArrayEvaluator c(cDeck);
         for (unsigned i = 0; i < testPoints.size(); ++i)
         {
             auto oDeriv = o.deriv(testPoints[i]);

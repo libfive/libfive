@@ -16,44 +16,38 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace Kernel;
 
-float eval(ArrayEvaluator& a, Eigen::Vector3f pt)
-{
-    a.set(pt, 0);
-    return a.values(1)(0);
-}
-
 TEST_CASE("ArrayEvaluator::eval")
 {
     SECTION("X")
     {
         ArrayEvaluator e(Tree::X());
-        REQUIRE(eval(e, {1.0, 2.0, 3.0}) == 1.0);
+        REQUIRE(e.value({1.0, 2.0, 3.0}) == 1.0);
     }
 
     SECTION("Y")
     {
         ArrayEvaluator e(Tree::Y());
-        REQUIRE(eval(e, {1.0, 2.0, 3.0}) == 2.0);
+        REQUIRE(e.value({1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("Constant")
     {
         ArrayEvaluator e(Tree(3.14));
-        REQUIRE(eval(e, {1.0, 2.0, 3.0}) == Approx(3.14));
+        REQUIRE(e.value({1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
     SECTION("Secondary variable")
     {
         auto v = Tree::var();
         ArrayEvaluator e(v, {{v.id(), 3.14}});
-        REQUIRE(eval(e, {1.0, 2.0, 3.0}) == Approx(3.14));
+        REQUIRE(e.value({1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
     SECTION("Constant + variable")
     {
         auto v = Tree::var();
         ArrayEvaluator e(v + 1.0, {{v.id(), 3.14}});
-        REQUIRE(eval(e, {1.0, 2.0, 3.0}) == Approx(4.14));
+        REQUIRE(e.value({1.0, 2.0, 3.0}) == Approx(4.14));
     }
 
     SECTION("Multiple variables")
@@ -66,25 +60,25 @@ TEST_CASE("ArrayEvaluator::eval")
         ArrayEvaluator e(a*1 + b*2 + c*3,
                 {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
 
-        REQUIRE(eval(e, {0, 0, 0}) == Approx(34));
+        REQUIRE(e.value({0, 0, 0}) == Approx(34));
     }
 
     SECTION("X + 1")
     {
         ArrayEvaluator e(Tree::X() + 1);
-        REQUIRE(eval(e, {1.0, 2.0, 3.0}) == 2.0);
+        REQUIRE(e.value({1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("X + Z")
     {
         ArrayEvaluator e(Tree::X() + Tree::Z());
-        REQUIRE(eval(e, {1.0, 2.0, 3.0}) == 4.0);
+        REQUIRE(e.value({1.0, 2.0, 3.0}) == 4.0);
     }
 
     SECTION("nth-root")
     {
         ArrayEvaluator e(nth_root(Tree::X(), 3));
-        REQUIRE(eval(e, {-0.5, 0.0, 0.0}) == Approx(-0.7937));
+        REQUIRE(e.value({-0.5, 0.0, 0.0}) == Approx(-0.7937));
     }
 
     SECTION("Every operation")
@@ -95,7 +89,7 @@ TEST_CASE("ArrayEvaluator::eval")
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
             ArrayEvaluator e(t);
-            eval(e, {0, 0, 0});
+            e.value({0, 0, 0});
             REQUIRE(true /* No crash! */ );
         }
     }
@@ -109,14 +103,14 @@ TEST_CASE("ArrayEvaluator::setVar")
     auto b = Tree::var();
 
     ArrayEvaluator e(a*1 + b*2 + c*3, {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
-    REQUIRE(eval(e, {0, 0, 0}) == Approx(34));
+    REQUIRE(e.value({0, 0, 0}) == Approx(34));
 
     e.setVar(a.id(), 5);
-    REQUIRE(eval(e, {0, 0, 0}) == Approx(36));
+    REQUIRE(e.value({0, 0, 0}) == Approx(36));
     e.setVar(b.id(), 0);
-    REQUIRE(eval(e, {0, 0, 0}) == Approx(26));
+    REQUIRE(e.value({0, 0, 0}) == Approx(26));
     e.setVar(c.id(), 10);
-    REQUIRE(eval(e, {0, 0, 0}) == Approx(35));
+    REQUIRE(e.value({0, 0, 0}) == Approx(35));
 }
 
 TEST_CASE("ArrayEvaluator::getAmbiguous")
@@ -150,12 +144,12 @@ TEST_CASE("ArrayEvaluator::values (returned size)")
     REQUIRE(o.cols() == 3);
 }
 
-TEST_CASE("ArrayEvaluator::evalAndPush")
+TEST_CASE("ArrayEvaluator::valueAndPush")
 {
     ArrayEvaluator e(min(Tree::X(), Tree::Y()));
 
     {
-        auto h = e.evalAndPush({-1, 0, 0}); // specialize to just "X"
+        auto h = e.valueAndPush({-1, 0, 0}); // specialize to just "X"
         REQUIRE(e.value({-2, 0, 0}, h.second) == -2);
         REQUIRE(e.value({4, 0, 0}, h.second) == 4);
         REQUIRE(e.value({4, 5, 0}, h.second) == 4);
@@ -163,7 +157,7 @@ TEST_CASE("ArrayEvaluator::evalAndPush")
     }
 
     {
-        auto h = e.evalAndPush({0, -1, 0}); // specialize to just "Y"
+        auto h = e.valueAndPush({0, -1, 0}); // specialize to just "Y"
         REQUIRE(e.value({-2, 0, 0}, h.second) == 0);
         REQUIRE(e.value({4, 0, 0}, h.second) == 0);
         REQUIRE(e.value({4, 5, 0}, h.second) == 5);

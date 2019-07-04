@@ -9,10 +9,8 @@ set(SRCS main.cpp
     eval_interval.cpp
     eval_jacobian.cpp
     eval_array.cpp
-    eval_deriv.cpp
     eval_deriv_array.cpp
     eval_feature.cpp
-    eval_point.cpp
     feature.cpp
     heightmap.cpp
     hybrid_meshing.cpp

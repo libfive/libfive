@@ -23,9 +23,7 @@ add_library(five SHARED
     eval/eval_jacobian.cpp
     eval/eval_array.cpp
     eval/eval_deriv_array.cpp
-    eval/eval_deriv.cpp
     eval/eval_feature.cpp
-    eval/eval_point.cpp
     eval/tape.cpp
     eval/feature.cpp
 

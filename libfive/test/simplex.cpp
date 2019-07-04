@@ -15,6 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/indexes.hpp"
 #include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/settings.hpp"
+#include "libfive/eval/evaluator.hpp"
 
 #include "util/shapes.hpp"
 #include "util/mesh_checks.hpp"
@@ -236,7 +237,7 @@ TEST_CASE("SimplexMesher<3>: box with problematic edges")
     REQUIRE(m->branes.size() > 0);
     REQUIRE(m->verts.size() > 1);
 
-    PointEvaluator eval(shape);
+    Evaluator eval(shape);
     for (auto& tri: m->branes) {
         auto a = m->verts[tri[0]];
         auto b = m->verts[tri[1]];
@@ -246,13 +247,13 @@ TEST_CASE("SimplexMesher<3>: box with problematic edges")
         CAPTURE(b);
         CAPTURE(c);
 
-        REQUIRE(eval.eval(a.template cast<float>()) == Approx(0.0).margin(1e-4));
-        REQUIRE(eval.eval(b.template cast<float>()) == Approx(0.0).margin(1e-4));
-        REQUIRE(eval.eval(c.template cast<float>()) == Approx(0.0).margin(1e-4));
+        REQUIRE(eval.value(a.template cast<float>()) == Approx(0.0).margin(1e-4));
+        REQUIRE(eval.value(b.template cast<float>()) == Approx(0.0).margin(1e-4));
+        REQUIRE(eval.value(c.template cast<float>()) == Approx(0.0).margin(1e-4));
 
-        REQUIRE(eval.eval(((a + b) / 2).template cast<float>()) == Approx(0.0).margin(1e-4));
-        REQUIRE(eval.eval(((b + c) / 2).template cast<float>()) == Approx(0.0).margin(1e-4));
-        REQUIRE(eval.eval(((a + c) / 2).template cast<float>()) == Approx(0.0).margin(1e-4));
+        REQUIRE(eval.value(((a + b) / 2).template cast<float>()) == Approx(0.0).margin(1e-4));
+        REQUIRE(eval.value(((b + c) / 2).template cast<float>()) == Approx(0.0).margin(1e-4));
+        REQUIRE(eval.value(((a + c) / 2).template cast<float>()) == Approx(0.0).margin(1e-4));
     }
 }
 
@@ -422,6 +423,7 @@ TEST_CASE("SimplexTree<3>: vertex placement in centered cylinder")
     for (unsigned i=0; i < 4; ++i) {
         const auto v = t.get()->children[i].load()->leaf->sub[8].load()->vert;
         CAPTURE(v);
+        CAPTURE(t.get()->children[i].load()->type);
         REQUIRE(fabs(v.x()) == Approx(fabs(v.y())));
 
         const auto w = t.get()->children[4 + i].load()->leaf->sub[17].load()->vert;
