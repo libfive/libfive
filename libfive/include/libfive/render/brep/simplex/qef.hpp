@@ -357,10 +357,12 @@ public:
 
         // Construct an empty solution object with infinite error
         // (and dummy values for other fields)
-        Solution out;
-        out.value = std::nan("");
-        out.rank = 0;
-        out.error = std::numeric_limits<double>::infinity();
+        Solution out = {
+            Eigen::Matrix<double, N, 1>::Zero(), /* positions */
+            Eigen::Matrix<bool, N, 1>::Zero(), /* constrained */
+            std::nan(""), /* value */
+            0, /* rank */
+            std::numeric_limits<double>::infinity()}; /* error */
 
         // Do static loop unrolling to check every smaller dimension
         // (e.g. for a cell, check every face, then every edge, then
