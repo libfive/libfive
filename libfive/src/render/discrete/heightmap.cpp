@@ -49,7 +49,7 @@ struct NormalRenderer
         {
             // Map a scaled normal into the range 0 - 255
             Eigen::Array3i n = (255 *
-                (ds.col(i) / (2 * ds.col(i).matrix().norm()) + 0.5))
+                (ds.col(i).matrix().normalized().array() / 2 + 0.5))
                 .cast<int>();
 
             // Pack the normals and a dummy alpha byte into the image

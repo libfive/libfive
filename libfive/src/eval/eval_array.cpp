@@ -36,7 +36,7 @@ ArrayEvaluator::ArrayEvaluator(std::shared_ptr<Deck> d)
 
 ArrayEvaluator::ArrayEvaluator(
         std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
-    : BaseEvaluator(d, vars), v(deck->num_clauses + 1, N)
+    : BaseEvaluator(d, vars), v(deck->num_clauses + 1, N), ambig(false)
 {
     // Initialize the whole data array as zero, to prevent Valgrind warnings.
     v.array() = 0;
