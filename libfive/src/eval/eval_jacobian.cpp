@@ -34,7 +34,8 @@ JacobianEvaluator::JacobianEvaluator(std::shared_ptr<Deck> d)
 
 JacobianEvaluator::JacobianEvaluator(
         std::shared_ptr<Deck> d, const std::map<Tree::Id, float>& vars)
-    : FeatureEvaluator(d, vars), j(deck->vars.size())
+    : BaseEvaluator(d, vars), FeatureEvaluator(d, vars),
+      j(deck->vars.size())
 {
     // Nothing to do here
 }

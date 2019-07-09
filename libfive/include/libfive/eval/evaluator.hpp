@@ -24,15 +24,17 @@ public:
         Evaluator(std::make_shared<Deck>(root), vars) {}
 
     Evaluator(std::shared_ptr<Deck> t) :
-        JacobianEvaluator(t), IntervalEvaluator(t) {}
+        Evaluator(t, std::map<Tree::Id, float>()) {}
 
     Evaluator(std::shared_ptr<Deck> t,
               const std::map<Tree::Id, float>& vars) :
-        JacobianEvaluator(t, vars), IntervalEvaluator(t, vars) {}
+        BaseEvaluator(t, vars),
+        JacobianEvaluator(t, vars),
+        IntervalEvaluator(t, vars) {}
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    std::shared_ptr<Deck> getDeck() { return JacobianEvaluator::deck; }
+    std::shared_ptr<Deck> getDeck() { return BaseEvaluator::deck; }
 
     /*
      *  Updates variable values, return true if changed

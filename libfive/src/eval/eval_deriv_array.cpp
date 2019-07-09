@@ -34,7 +34,8 @@ DerivArrayEvaluator::DerivArrayEvaluator(std::shared_ptr<Deck> d)
 
 DerivArrayEvaluator::DerivArrayEvaluator(
         std::shared_ptr<Deck> deck, const std::map<Tree::Id, float>& vars)
-    : ArrayEvaluator(deck, vars), d(deck->num_clauses + 1, 1)
+    : BaseEvaluator(deck, vars), ArrayEvaluator(deck, vars),
+      d(deck->num_clauses + 1, 1)
 {
     // Initialize all derivatives to zero
     for (Eigen::Index i=0; i < d.rows(); ++i)

@@ -17,7 +17,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 class Tape; /* Forward declaration */
 
-class IntervalEvaluator : public BaseEvaluator
+class IntervalEvaluator : public virtual BaseEvaluator
 {
 public:
     struct Result {

@@ -27,7 +27,8 @@ FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Deck> d)
 
 FeatureEvaluator::FeatureEvaluator(
         std::shared_ptr<Deck> t, const std::map<Tree::Id, float>& vars)
-    : DerivArrayEvaluator(t, vars), f(1, deck->num_clauses + 1)
+    : BaseEvaluator(t, vars), DerivArrayEvaluator(t, vars),
+      f(1, deck->num_clauses + 1)
 {
     // Load the default derivatives
     f(deck->X).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
