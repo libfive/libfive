@@ -67,6 +67,7 @@ void View::setShapes(QList<Shape*> new_shapes)
 
     // Erase all existing shapes that aren't in the new_shapes list
     bool vars_changed = false;
+    bool any_running = false;
     for (auto itr=shapes.begin(); itr != shapes.end(); /* no update */ )
     {
         auto n = new_shapes_map.find((*itr)->id());
@@ -94,6 +95,7 @@ void View::setShapes(QList<Shape*> new_shapes)
             vars_changed |= (*itr)->updateFrom(n->second);
             new_shapes_map.erase(n);
             ++itr;
+            any_running |= !(*itr)->done();
         }
     }
 
@@ -116,6 +118,7 @@ void View::setShapes(QList<Shape*> new_shapes)
                     s, [=](Settings st) { s->startRender(st, this->alg); });
             s->startRender(settings, alg);
             s->setParent(this);
+            any_running = true;
 
             shapes.push_back(s);
         }
@@ -123,6 +126,10 @@ void View::setShapes(QList<Shape*> new_shapes)
         {
             s->deleteLater();
         }
+    }
+
+    if (!any_running) {
+        busy.hide();
     }
     update();
 }
