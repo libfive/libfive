@@ -93,9 +93,9 @@ void View::setShapes(QList<Shape*> new_shapes)
         else
         {
             vars_changed |= (*itr)->updateFrom(n->second);
+            any_running |= !(*itr)->done();
             new_shapes_map.erase(n);
             ++itr;
-            any_running |= !(*itr)->done();
         }
     }
 
