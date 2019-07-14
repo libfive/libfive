@@ -109,9 +109,8 @@ std::shared_ptr<Tape> Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
                 deck.oracles[c.a]->unbind();
 
                 changed |= (contexts[c.a] != prev);
-                terminal &= (contexts[c.a].get() != nullptr) ?
-                    contexts[c.a]->isTerminal()
-                    : true;
+                terminal &= (contexts[c.a].get() == nullptr) ||
+                             contexts[c.a]->isTerminal();
             }
         }
     }
