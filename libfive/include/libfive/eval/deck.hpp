@@ -64,7 +64,9 @@ public:
     std::shared_ptr<Tape> tape;
 
     /*  Moves this tape into the spares bin, so it can be reused later */
-    void claim(std::shared_ptr<Tape> tape) { spares.push_back(tape); }
+    void claim(std::shared_ptr<Tape>&& tape) {
+        spares.push_back(tape);
+    }
 
     /*
      *  Binds all oracles to the contexts in the given tape
