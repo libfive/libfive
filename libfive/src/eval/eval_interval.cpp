@@ -96,9 +96,12 @@ IntervalEvaluator::Result IntervalEvaluator::eval_(
     }
 
     deck->bindOracles(tape);
-    auto root = tape->rwalk(*this);
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+        (*this)(itr->op, itr->id, itr->a, itr->b);
+    }
     deck->unbindOracles();
 
+    auto root = tape->root();
     return {i[root], !maybe_nan[root], nullptr};
 }
 

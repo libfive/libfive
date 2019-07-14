@@ -72,7 +72,11 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
 
     // First, we evaluate and extract all of the features, saving
     // time by re-using the shortened tape from valueAndPush
-    auto fs = f(handle.second->rwalk(*this));
+    tape = handle.second;
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+        (*this)(itr->op, itr->id, itr->a, itr->b);
+    }
+    auto fs = f(tape->root());
 
     // If there's only a single feature, we can get both positive and negative
     // values out if it's got a non-zero gradient
@@ -117,10 +121,12 @@ const boost::container::small_vector<Feature, 4>&
 
     // Evaluate feature-wise
     deck->bindOracles(handle.second);
-    auto index = handle.second->rwalk(*this);
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+        (*this)(itr->op, itr->id, itr->a, itr->b);
+    }
     deck->unbindOracles();
 
-    return f(index);
+    return f(tape->root());
 }
 
 std::list<Eigen::Vector3f> FeatureEvaluator::features(const Eigen::Vector3f& p)

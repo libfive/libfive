@@ -89,8 +89,6 @@ protected:
 
     Eigen::Array<boost::container::small_vector<Feature, 4>,
                  1, Eigen::Dynamic> f;
-
-    friend class Tape; // for rwalk<DerivEvaluator>
 };
 
 }   // namespace Kernel

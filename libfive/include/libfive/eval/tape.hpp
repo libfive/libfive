@@ -101,31 +101,6 @@ public:
                        const Region<3>& r);
 
     /*
-     *  Walks through the tape in bottom-to-top (reverse) order,
-     *  calling an arbitrary function for every clause.
-     *
-     *  Returns the clause id of the tape's root
-     */
-    using WalkFunction = std::function<void(Opcode::Opcode, Clause::Id,
-                                            Clause::Id, Clause::Id)>;
-    Clause::Id rwalk(WalkFunction fn, bool& abort);
-
-    /*
-     *  Inlined, faster version of rwalk
-     */
-    template <class T>
-    Clause::Id rwalk(T& fn)
-    {
-        for (auto itr = t.rbegin(); itr != t.rend(); ++itr)
-        {
-            fn(itr->op, itr->id, itr->a, itr->b);
-        }
-        return i;
-    }
-
-    void  walk(WalkFunction fn, bool& abort);
-
-    /*
      *  Walks up the tape list until p is within the tape's region, then
      *  returns a Handle that restores the original tape.
      *

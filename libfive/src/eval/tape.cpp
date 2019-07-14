@@ -15,23 +15,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-Clause::Id Tape::rwalk(WalkFunction fn, bool& abort)
-{
-    for (auto itr = t.rbegin(); itr != t.rend() && !abort; ++itr)
-    {
-        fn(itr->op, itr->id, itr->a, itr->b);
-    }
-    return i;
-}
-
-void Tape::walk(WalkFunction fn, bool& abort)
-{
-    for (auto itr = t.begin(); itr != t.end() && !abort; ++itr)
-    {
-        fn(itr->op, itr->id, itr->a, itr->b);
-    }
-}
-
 std::shared_ptr<Tape> Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
                                  KeepFunction fn, Type t)
 {

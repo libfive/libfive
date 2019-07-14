@@ -61,22 +61,20 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i, Tape::Handle tape)
     // Reset the ambiguous array to all false
     ambig = false;
 
-    bool abort = false;
-    tape->walk(
-        [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+        if (itr->op == Opcode::ORACLE)
         {
-            if (op == Opcode::ORACLE)
-            {
-                deck->oracles[a]->checkAmbiguous(ambig.head(i));
-            }
-            else if (op == Opcode::OP_MIN || op == Opcode::OP_MAX)
-            {
-                ambig.head(i) = ambig.head(i) ||
-                    ((v.block(a, 0, 1, i) ==
-                      v.block(b, 0, 1, i)) &&
-                      (d(a).leftCols(i) != d(b).leftCols(i)).colwise().sum());
-            }
-        }, abort);
+            deck->oracles[itr->a]->checkAmbiguous(ambig.head(i));
+        }
+        else if (itr->op == Opcode::OP_MIN || itr->op == Opcode::OP_MAX)
+        {
+            ambig.head(i) = ambig.head(i) ||
+                ((v.block(itr->a, 0, 1, i) ==
+                  v.block(itr->b, 0, 1, i)) &&
+                  (d(itr->a).leftCols(i) != d(itr->b).leftCols(i))
+                    .colwise().sum());
+        }
+    }
 
     return ambig.head(i);
 
@@ -106,10 +104,13 @@ DerivArrayEvaluator::derivs(size_t count, Tape::Handle tape)
 
     // Perform derivative evaluation, copying results into the out array
     deck->bindOracles(tape);
-    out.topLeftCorner(3, count) = d(tape->rwalk(*this)).leftCols(count);
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+        (*this)(itr->op, itr->id, itr->a, itr->b);
+    }
     deck->unbindOracles();
 
     // Return a block of valid results from the out array
+    out.topLeftCorner(3, count) = d(tape->root()).leftCols(count);
     return out.block<4, Eigen::Dynamic>(0, 0, 4, count);
 }
 

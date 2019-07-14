@@ -87,8 +87,6 @@ protected:
      */
     void operator()(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
-
-    friend class Tape; // for rwalk<IntervalEvaluator>
 };
 
 }   // namespace Kernel

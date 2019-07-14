@@ -107,10 +107,12 @@ ArrayEvaluator::values(size_t count, Tape::Handle tape)
     setCount(count);
 
     deck->bindOracles(tape);
-    auto index = tape->rwalk(*this);
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+        (*this)(itr->op, itr->id, itr->a, itr->b);
+    }
     deck->unbindOracles();
 
-    return v.block<1, Eigen::Dynamic>(index, 0, 1, count);
+    return v.block<1, Eigen::Dynamic>(tape->root(), 0, 1, count);
 }
 
 
@@ -193,21 +195,18 @@ ArrayEvaluator::getAmbiguous(size_t i, Tape::Handle tape)
     // Reset the ambiguous array to all false
     ambig = false;
 
-    bool abort = false;
-    tape->walk(
-        [&](Opcode::Opcode op, Clause::Id /* id */, Clause::Id a, Clause::Id b)
+    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+        if (itr->op == Opcode::ORACLE)
         {
-            if (op == Opcode::ORACLE)
-            {
-                deck->oracles[a]->checkAmbiguous(ambig.head(i));
-            }
-            else if (op == Opcode::OP_MIN || op == Opcode::OP_MAX)
-            {
-                ambig.head(i) = ambig.head(i) ||
-                    (v.block(a, 0, 1, i) ==
-                     v.block(b, 0, 1, i));
-            }
-        }, abort);
+            deck->oracles[itr->a]->checkAmbiguous(ambig.head(i));
+        }
+        else if (itr->op == Opcode::OP_MIN || itr->op == Opcode::OP_MAX)
+        {
+            ambig.head(i) = ambig.head(i) ||
+                (v.block(itr->a, 0, 1, i) ==
+                 v.block(itr->b, 0, 1, i));
+        }
+    };
 
     return ambig.head(i);
 }
