@@ -55,6 +55,14 @@ public:
      */
     bool isTerminal() const { return terminal; }
 
+    std::vector<Clause>::const_reverse_iterator rbegin() const
+    { return t.crbegin(); }
+
+    std::vector<Clause>::const_reverse_iterator rend() const
+    { return t.crend(); }
+
+    Clause::Id root() const { return i; }
+
 protected:
     /*  The tape itself, as a vector of clauses  */
     std::vector<Clause> t;
