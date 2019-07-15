@@ -86,7 +86,7 @@ public:
      */
     Eigen::Block<decltype(v), 1, Eigen::Dynamic> values(size_t count);
     Eigen::Block<decltype(v), 1, Eigen::Dynamic> values(
-            size_t count, const std::shared_ptr<Tape>& tape);
+            size_t count, const Tape& tape);
 
     /*
      *  Single-point evaluation

@@ -480,7 +480,7 @@ uint64_t HybridMesher::searchEdge(Eigen::Vector3d inside,
                 eval->set(ps.col(j).template cast<float>(), j);
         }
 
-        auto out = eval->values(POINTS_PER_SEARCH, tape);
+        auto out = eval->values(POINTS_PER_SEARCH, *tape);
 
         // Skip one point, because the very first point is
         // already known to be inside the shape (but

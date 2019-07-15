@@ -121,7 +121,7 @@ Eigen::Matrix<double, N, 2> searchBetween(
 
         Eigen::Array<float, 1, ArrayEvaluator::N> out;
         out.leftCols(POINTS_PER_SEARCH) = eval->values(
-                POINTS_PER_SEARCH, tape);
+                POINTS_PER_SEARCH, *tape);
 
         // Skip one point, because the very first point is
         // already known to be inside the shape (but

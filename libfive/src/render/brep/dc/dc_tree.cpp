@@ -160,7 +160,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
     //     can find an inside-outside transition).
     // 3)  For values that are == 0 and ambiguous, call isInside
     //     (the heavy hitter of inside-outside checking).
-    auto vs = eval->values(count, tape);
+    auto vs = eval->values(count, *tape);
 
     // We store ambiguity here, but clear it if the point is inside
     // or outside (so after the loop below, ambig(i) is only set if
@@ -354,7 +354,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                     Eigen::Array<float, 1, ArrayEvaluator::N> out;
                     out.leftCols(POINTS_PER_SEARCH * eval_count) =
                         eval->values(
-                            POINTS_PER_SEARCH * eval_count, tape);
+                            POINTS_PER_SEARCH * eval_count, *tape);
 
                     for (unsigned e=0; e < eval_count; ++e)
                     {

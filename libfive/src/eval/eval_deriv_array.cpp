@@ -102,10 +102,10 @@ Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
 DerivArrayEvaluator::derivs(size_t count, const Tape::Handle& tape)
 {
     // Perform value evaluation, copying results into the 4th row of out
-    out.row(3).head(count) = values(count, tape);
+    out.row(3).head(count) = values(count, *tape);
 
     // Perform derivative evaluation, copying results into the out array
-    deck->bindOracles(tape);
+    deck->bindOracles(*tape);
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }

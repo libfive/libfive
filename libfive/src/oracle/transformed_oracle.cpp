@@ -70,11 +70,11 @@ void TransformedOracle::evalArray(
     assert(context == nullptr || ctx != nullptr);
     const unsigned count = out.cols();
 
-    auto xPoints = ctx ? xEvaluator.values(count, ctx->tx)
+    auto xPoints = ctx ? xEvaluator.values(count, *ctx->tx)
                        : xEvaluator.values(count);
-    auto yPoints = ctx ? yEvaluator.values(count, ctx->ty)
+    auto yPoints = ctx ? yEvaluator.values(count, *ctx->ty)
                        : yEvaluator.values(count);
-    auto zPoints = ctx ? zEvaluator.values(count, ctx->tz)
+    auto zPoints = ctx ? zEvaluator.values(count, *ctx->tz)
                        : zEvaluator.values(count);
 
     for (unsigned i = 0; i < count; ++i)

@@ -597,7 +597,7 @@ void SimplexTree<N>::saveVertexSigns(
     }
 
     Eigen::Matrix<float, 1, ArrayEvaluator::N> values;
-    values.leftCols(num) = eval->values(num, tape);
+    values.leftCols(num) = eval->values(num, *tape);
 
     num = 0;
     for (unsigned i=0; i < ipow(3, N); ++i)

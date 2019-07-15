@@ -112,11 +112,11 @@ Deck::Deck(const Tree root)
     tape->i = clauses.at(root.id());
 }
 
-void Deck::bindOracles(const std::shared_ptr<Tape>& tape)
+void Deck::bindOracles(const Tape& tape)
 {
     for (unsigned i=0; i < oracles.size(); ++i)
     {
-        oracles[i]->bind(tape->getContext(i));
+        oracles[i]->bind(tape.getContext(i));
     }
 }
 

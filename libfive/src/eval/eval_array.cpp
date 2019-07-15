@@ -63,14 +63,14 @@ float ArrayEvaluator::value(const Eigen::Vector3f& pt,
                             const std::shared_ptr<Tape>& tape)
 {
     set(pt, 0);
-    return values(1, tape)(0);
+    return values(1, *tape)(0);
 }
 
 
 Eigen::Block<decltype(ArrayEvaluator::v), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t count)
 {
-    return values(count, deck->tape);
+    return values(count, *deck->tape);
 }
 
 void ArrayEvaluator::setCount(size_t count)
@@ -102,17 +102,17 @@ void ArrayEvaluator::setCount(size_t count)
 }
 
 Eigen::Block<decltype(ArrayEvaluator::v), 1, Eigen::Dynamic>
-ArrayEvaluator::values(size_t count, const Tape::Handle& tape)
+ArrayEvaluator::values(size_t count, const Tape& tape)
 {
     setCount(count);
 
     deck->bindOracles(tape);
-    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
     deck->unbindOracles();
 
-    return v.block<1, Eigen::Dynamic>(tape->root(), 0, 1, count);
+    return v.block<1, Eigen::Dynamic>(tape.root(), 0, 1, count);
 }
 
 

@@ -119,7 +119,7 @@ void Heightmap::pixels(Evaluator* e, const Tape::Handle& tape,
             index++);
     }
 
-    auto out = e->values(index, tape);
+    auto out = e->values(index, *tape);
 
     index = 0;
 

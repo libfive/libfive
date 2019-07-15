@@ -120,7 +120,7 @@ const boost::container::small_vector<Feature, 4>&
     }
 
     // Evaluate feature-wise
-    deck->bindOracles(handle.second);
+    deck->bindOracles(*handle.second);
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }

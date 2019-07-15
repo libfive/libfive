@@ -95,7 +95,7 @@ IntervalEvaluator::Result IntervalEvaluator::eval_(
         o->set(lower, upper);
     }
 
-    deck->bindOracles(tape);
+    deck->bindOracles(*tape);
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
