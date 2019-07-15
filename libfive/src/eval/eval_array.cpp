@@ -56,14 +56,14 @@ ArrayEvaluator::ArrayEvaluator(
 }
 
 float ArrayEvaluator::value(const Eigen::Vector3f& pt) {
-    return value(pt, deck->tape);
+    return value(pt, *deck->tape);
 }
 
 float ArrayEvaluator::value(const Eigen::Vector3f& pt,
-                            const std::shared_ptr<Tape>& tape)
+                            const Tape& tape)
 {
     set(pt, 0);
-    return values(1, *tape)(0);
+    return values(1, tape)(0);
 }
 
 
@@ -125,7 +125,7 @@ std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
 std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
         const Eigen::Vector3f& pt, const Tape::Handle& tape)
 {
-    auto out = value(pt, tape);
+    auto out = value(pt, *tape);
     auto p = Tape::push(tape, *deck,
         [&](Opcode::Opcode op, Clause::Id /* id */,
             Clause::Id a, Clause::Id b)

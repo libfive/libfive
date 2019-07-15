@@ -63,7 +63,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
 
     auto run = [&]() {
         if (count) {
-            auto ds = derivs((count + 2) / 3, tape);
+            auto ds = derivs((count + 2) / 3, *tape);
             for (unsigned i=0; i < count; ++i) {
                 j[remap[i]] = ds(i % 3, i / 3);
             }

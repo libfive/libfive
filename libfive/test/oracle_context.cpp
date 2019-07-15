@@ -57,6 +57,6 @@ TEST_CASE("OracleContext: TransformedOracle push/pop")
     REQUIRE(o.i.upper() == 1.5);
 
     // Check to make sure that the X branch is selected in the tape
-    REQUIRE(p.value({1.0, 2.0, 3.0}, o.tape) == 1.0);
-    REQUIRE(p.value({1.0, 0.0, 3.0}, o.tape) == 1.0);
+    REQUIRE(p.value({1.0, 2.0, 3.0}, *o.tape) == 1.0);
+    REQUIRE(p.value({1.0, 0.0, 3.0}, *o.tape) == 1.0);
 }

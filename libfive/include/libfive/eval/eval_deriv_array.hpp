@@ -37,7 +37,7 @@ public:
      */
     Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(size_t count);
     Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(
-            size_t count, const std::shared_ptr<Tape>& tape);
+            size_t count, const Tape& tape);
 
     /*
      *  Single-point evaluation (return dx, dy, dz, distance)
@@ -45,7 +45,7 @@ public:
      */
     Eigen::Vector4f deriv(const Eigen::Vector3f& pt);
     Eigen::Vector4f deriv(const Eigen::Vector3f& pt,
-                          const std::shared_ptr<Tape>& tape);
+                          const Tape& tape);
 
     /*
      *  Per-clause evaluation, used in tape walking

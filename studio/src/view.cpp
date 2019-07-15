@@ -450,7 +450,7 @@ void View::mousePressEvent(QMouseEvent* event)
 
                 auto norm = drag_eval.first->deriv(
                         {drag_start.x(), drag_start.y(), drag_start.z()},
-                        df.second);
+                        *df.second);
                 drag_dir = {norm.x(), norm.y(), norm.z()};
 
                 mouse.state = mouse.DRAG_EVAL;

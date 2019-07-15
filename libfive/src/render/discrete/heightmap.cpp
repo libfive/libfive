@@ -43,7 +43,7 @@ struct NormalRenderer
     void run()
     {
         // Get derivative array pointers
-        auto ds = e->derivs(count, tape).topRows(3).eval();
+        auto ds = e->derivs(count, *tape).topRows(3).eval();
 
         for (size_t i=0; i < count; ++i)
         {

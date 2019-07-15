@@ -204,7 +204,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
         {
             eval->set(pos.col(unambig_remap[i]), i);
         }
-        auto ds = eval->derivs(unambiguous_zeros, tape);
+        auto ds = eval->derivs(unambiguous_zeros, *tape);
         for (unsigned i=0; i < unambiguous_zeros; ++i)
         {
             corners[corner_indices[unambig_remap[i]]] =
@@ -411,7 +411,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                 // the results array when we call features() below.
                 Eigen::Array<float, 4, ArrayEvaluator::N> ds;
                 ds.leftCols(2 * eval_count) = eval->derivs(
-                        2 * eval_count, tape);
+                        2 * eval_count, *tape);
                 auto ambig = eval->getAmbiguous(2 * eval_count, tape);
 
                 // Iterate over all inside-outside pairs, storing the number
@@ -761,7 +761,7 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
             Eigen::Vector3f v;
             v << vert(0).template cast<float>(),
                  region.perp.template cast<float>();
-            if (fabs(eval->value(v, Tape::getBase(tape, v))) < max_err)
+            if (fabs(eval->value(v, *Tape::getBase(tape, v))) < max_err)
             {
                 // Store this tree's depth based on the region's level
                 this->leaf->level = region.level;

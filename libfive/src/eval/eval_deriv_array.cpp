@@ -82,11 +82,11 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i, const Tape::Handle& tape)
 
 Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt)
 {
-    return deriv(pt, deck->tape);
+    return deriv(pt, *deck->tape);
 }
 
 Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt,
-                                           const Tape::Handle& tape)
+                                           const Tape& tape)
 {
     set(pt, 0);
     return derivs(1, tape).col(0);
@@ -95,24 +95,24 @@ Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt,
 Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
 DerivArrayEvaluator::derivs(size_t count)
 {
-    return derivs(count, deck->tape);
+    return derivs(count, *deck->tape);
 }
 
 Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
-DerivArrayEvaluator::derivs(size_t count, const Tape::Handle& tape)
+DerivArrayEvaluator::derivs(size_t count, const Tape& tape)
 {
     // Perform value evaluation, copying results into the 4th row of out
-    out.row(3).head(count) = values(count, *tape);
+    out.row(3).head(count) = values(count, tape);
 
     // Perform derivative evaluation, copying results into the out array
-    deck->bindOracles(*tape);
-    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+    deck->bindOracles(tape);
+    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
     deck->unbindOracles();
 
     // Return a block of valid results from the out array
-    out.topLeftCorner(3, count) = d(tape->root()).leftCols(count);
+    out.topLeftCorner(3, count) = d(tape.root()).leftCols(count);
     return out.block<4, Eigen::Dynamic>(0, 0, 4, count);
 }
 

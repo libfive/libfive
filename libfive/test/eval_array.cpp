@@ -150,17 +150,17 @@ TEST_CASE("ArrayEvaluator::valueAndPush")
 
     {
         auto h = e.valueAndPush({-1, 0, 0}); // specialize to just "X"
-        REQUIRE(e.value({-2, 0, 0}, h.second) == -2);
-        REQUIRE(e.value({4, 0, 0}, h.second) == 4);
-        REQUIRE(e.value({4, 5, 0}, h.second) == 4);
-        REQUIRE(e.value({10, 5, 0}, h.second) == 10);
+        REQUIRE(e.value({-2, 0, 0}, *h.second) == -2);
+        REQUIRE(e.value({4, 0, 0}, *h.second) == 4);
+        REQUIRE(e.value({4, 5, 0}, *h.second) == 4);
+        REQUIRE(e.value({10, 5, 0}, *h.second) == 10);
     }
 
     {
         auto h = e.valueAndPush({0, -1, 0}); // specialize to just "Y"
-        REQUIRE(e.value({-2, 0, 0}, h.second) == 0);
-        REQUIRE(e.value({4, 0, 0}, h.second) == 0);
-        REQUIRE(e.value({4, 5, 0}, h.second) == 5);
-        REQUIRE(e.value({10, 5, 0}, h.second) == 5);
+        REQUIRE(e.value({-2, 0, 0}, *h.second) == 0);
+        REQUIRE(e.value({4, 0, 0}, *h.second) == 0);
+        REQUIRE(e.value({4, 5, 0}, *h.second) == 5);
+        REQUIRE(e.value({10, 5, 0}, *h.second) == 5);
     }
 }

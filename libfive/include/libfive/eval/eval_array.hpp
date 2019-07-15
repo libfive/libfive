@@ -93,7 +93,7 @@ public:
      *  Invalidates slot 0 in the data and results array
      */
     float value(const Eigen::Vector3f& pt);
-    float value(const Eigen::Vector3f& pt, const std::shared_ptr<Tape>& tape);
+    float value(const Eigen::Vector3f& pt, const Tape& tape);
 
     /*
      *  Evaluates a single point and returns a tape that doesn't

@@ -152,7 +152,7 @@ struct Unroller
                 // Evaluate the function at the solution point, and add that
                 // information to the QEF, to do an iterative refinement.
                 eval->set<BaseDimension>(s->vert, region, 0);
-                const auto ds = eval->derivs(1, tape);
+                const auto ds = eval->derivs(1, *tape);
                 QEF<BaseDimension> extra;
                 extra.insert(s->vert,
                              ds.col(0).template head<BaseDimension>().template cast<double>(),
@@ -357,7 +357,7 @@ void SimplexTree<N>::findLeafVertices(
     // empty, because SimplexLeaf::reset() clears them).
     {
         Eigen::Matrix<float, 4, ArrayEvaluator::N> ds;
-        ds.leftCols(count) = eval->derivs(count, tape);
+        ds.leftCols(count) = eval->derivs(count, *tape);
         const auto ambig = eval->getAmbiguous(count, tape);
         unsigned index=0;
         for (unsigned i=0; i < ipow(3, N); ++i) {

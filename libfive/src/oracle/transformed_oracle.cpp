@@ -48,9 +48,9 @@ void TransformedOracle::evalPoint(float& out, size_t index)
     assert(context == nullptr || ctx != nullptr);
 
     Eigen::Vector3f transformedPoint = ctx
-        ? Eigen::Vector3f(xEvaluator.value(points.col(index), ctx->tx),
-                          yEvaluator.value(points.col(index), ctx->ty),
-                          zEvaluator.value(points.col(index), ctx->tz))
+        ? Eigen::Vector3f(xEvaluator.value(points.col(index), *ctx->tx),
+                          yEvaluator.value(points.col(index), *ctx->ty),
+                          zEvaluator.value(points.col(index), *ctx->tz))
         : Eigen::Vector3f(xEvaluator.value(points.col(index)),
                           yEvaluator.value(points.col(index)),
                           zEvaluator.value(points.col(index)));
@@ -108,13 +108,13 @@ void TransformedOracle::evalDerivs(
     Eigen::Matrix3f Jacobian;
     Jacobian <<
         (ctx
-            ? xEvaluator.deriv(points.col(index), ctx->tx)
+            ? xEvaluator.deriv(points.col(index), *ctx->tx)
             : xEvaluator.deriv(points.col(index))).template head<3>(),
         (ctx
-            ? yEvaluator.deriv(points.col(index), ctx->ty)
+            ? yEvaluator.deriv(points.col(index), *ctx->ty)
             : yEvaluator.deriv(points.col(index))).template head<3>(),
         (ctx
-            ? zEvaluator.deriv(points.col(index), ctx->tz)
+            ? zEvaluator.deriv(points.col(index), *ctx->tz)
             : zEvaluator.deriv(points.col(index))).template head<3>();
 
     Eigen::Vector3f transformedPoint{
@@ -139,11 +139,11 @@ void TransformedOracle::evalDerivArray(
     const unsigned count = out.cols();
     assert(context == nullptr || ctx != nullptr);
 
-    auto xDerivs = ctx ? xEvaluator.derivs(count, ctx->tx)
+    auto xDerivs = ctx ? xEvaluator.derivs(count, *ctx->tx)
                        : xEvaluator.derivs(count);
-    auto yDerivs = ctx ? yEvaluator.derivs(count, ctx->ty)
+    auto yDerivs = ctx ? yEvaluator.derivs(count, *ctx->ty)
                        : yEvaluator.derivs(count);
-    auto zDerivs = ctx ? zEvaluator.derivs(count, ctx->tz)
+    auto zDerivs = ctx ? zEvaluator.derivs(count, *ctx->tz)
                        : zEvaluator.derivs(count);
 
     underlying->bind(ctx ? ctx->u : nullptr);
@@ -169,9 +169,9 @@ void TransformedOracle::evalFeatures(
     out.clear();
     auto pt = points.col(0);
     Eigen::Vector3f transformedPoint = ctx
-        ? Eigen::Vector3f(xEvaluator.value(pt, ctx->tx),
-                          yEvaluator.value(pt, ctx->ty),
-                          zEvaluator.value(pt, ctx->tz))
+        ? Eigen::Vector3f(xEvaluator.value(pt, *ctx->tx),
+                          yEvaluator.value(pt, *ctx->ty),
+                          zEvaluator.value(pt, *ctx->tz))
         : Eigen::Vector3f(xEvaluator.value(pt),
                           yEvaluator.value(pt),
                           zEvaluator.value(pt));
