@@ -28,7 +28,7 @@ namespace Kernel {
  */
 struct NormalRenderer
 {
-    NormalRenderer(Evaluator* e, Tape::Handle tape,
+    NormalRenderer(Evaluator* e, const Tape::Handle& tape,
                    const Voxels::View& r, Heightmap::Normal& norm)
         : e(e), tape(tape), r(r), norm(norm) {}
 
@@ -105,7 +105,7 @@ for (int i=0; i < r.size.x(); ++i)           \
 /*
  *  Helper functions that evaluates a region of pixels
  */
-void Heightmap::pixels(Evaluator* e, Tape::Handle tape,
+void Heightmap::pixels(Evaluator* e, const Tape::Handle& tape,
                        const Voxels::View& r)
 {
     size_t index = 0;
@@ -160,7 +160,7 @@ void Heightmap::pixels(Evaluator* e, Tape::Handle tape,
  *
  *  This function is used when marking an Interval as filled
  */
-void Heightmap::fill(Evaluator* e, Tape::Handle tape,
+void Heightmap::fill(Evaluator* e, const Tape::Handle& tape,
                      const Voxels::View& r)
 {
     // Store the maximum z position (which is what we're flooding into
@@ -192,7 +192,7 @@ void Heightmap::fill(Evaluator* e, Tape::Handle tape,
 * Helper function that reduces a particular matrix block
 * Returns true if finished, false if aborted
 */
-bool Heightmap::recurse(Evaluator* e, Tape::Handle tape,
+bool Heightmap::recurse(Evaluator* e, const Tape::Handle& tape,
                         const Voxels::View& r, const std::atomic_bool& abort)
 {
     // Stop rendering if the abort flag is set

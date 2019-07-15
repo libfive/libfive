@@ -48,7 +48,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
 
 std::map<Tree::Id, float> JacobianEvaluator::gradient(
         const Eigen::Vector3f& p,
-        std::shared_ptr<Tape> tape)
+        const Tape::Handle& tape)
 {
     // Load the XYZ values into the whole array, rather than
     // checking and loading a subset of the array.

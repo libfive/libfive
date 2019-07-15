@@ -98,7 +98,7 @@ struct Unroller
                        ipow(3, BaseDimension)>& leaf_sub,
             const std::array<bool, ipow(3, BaseDimension)>& already_solved,
             const Region<BaseDimension>& region,
-            Evaluator* eval, Tape::Handle& tape)
+            Evaluator* eval, const Tape::Handle& tape)
     {
         double error = 0.0;
         if (!already_solved[SubspaceIndex_]) {
@@ -180,7 +180,7 @@ struct Unroller<BaseDimension, -1>
                                  ipow(3, BaseDimension)>&,
                       const std::array<bool, ipow(3, BaseDimension)>&,
                       const Region<BaseDimension>&,
-                      Evaluator*, Tape::Handle&)
+                      Evaluator*, const Tape::Handle&)
     {
         return 0.0; // Nothing to do here
     }
@@ -220,7 +220,7 @@ std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
 
 template <unsigned N>
 Tape::Handle SimplexTree<N>::evalInterval(Evaluator* eval,
-                                          Tape::Handle tape,
+                                          const Tape::Handle& tape,
                                           const Region<N>& region,
                                           Pool& object_pool)
 {
@@ -255,7 +255,7 @@ Tape::Handle SimplexTree<N>::evalInterval(Evaluator* eval,
 template <unsigned N>
 void SimplexTree<N>::findLeafVertices(
         Evaluator* eval,
-        Tape::Handle tape,
+        const Tape::Handle& tape,
         const Region<N>& region,
         Pool& object_pool,
         const SimplexNeighbors<N>& neighbors)
@@ -423,7 +423,7 @@ void SimplexTree<N>::findLeafVertices(
 
 template <unsigned N>
 void SimplexTree<N>::evalLeaf(Evaluator* eval,
-                              std::shared_ptr<Tape> tape,
+                              const std::shared_ptr<Tape>& tape,
                               const Region<N>& region,
                               Pool& object_pool,
                               const SimplexNeighbors<N>& neighbors)
@@ -448,7 +448,7 @@ void SimplexTree<N>::evalLeaf(Evaluator* eval,
 
 template <unsigned N>
 bool SimplexTree<N>::collectChildren(Evaluator* eval,
-                                     Tape::Handle tape,
+                                     const Tape::Handle& tape,
                                      const Region<N>& region,
                                      Pool& object_pool,
                                      double max_err)
@@ -567,7 +567,8 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
 
 template <unsigned N>
 void SimplexTree<N>::saveVertexSigns(
-        Evaluator* eval, Tape::Handle tape, const Region<N>& region,
+        Evaluator* eval, const Tape::Handle& tape,
+        const Region<N>& region,
         const std::array<bool, ipow(3, N)>& already_solved)
 {
     // With every vertex positioned, solve for whether it is inside or outside.

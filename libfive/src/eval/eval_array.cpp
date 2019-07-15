@@ -60,7 +60,7 @@ float ArrayEvaluator::value(const Eigen::Vector3f& pt) {
 }
 
 float ArrayEvaluator::value(const Eigen::Vector3f& pt,
-                            std::shared_ptr<Tape> tape)
+                            const std::shared_ptr<Tape>& tape)
 {
     set(pt, 0);
     return values(1, tape)(0);
@@ -102,7 +102,7 @@ void ArrayEvaluator::setCount(size_t count)
 }
 
 Eigen::Block<decltype(ArrayEvaluator::v), 1, Eigen::Dynamic>
-ArrayEvaluator::values(size_t count, Tape::Handle tape)
+ArrayEvaluator::values(size_t count, const Tape::Handle& tape)
 {
     setCount(count);
 
@@ -117,11 +117,14 @@ ArrayEvaluator::values(size_t count, Tape::Handle tape)
 
 
 std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
-        const Eigen::Vector3f& pt, Tape::Handle tape)
+        const Eigen::Vector3f& pt)
 {
-    if (tape == nullptr) {
-        tape = deck->tape;
-    }
+    return valueAndPush(pt, deck->tape);
+}
+
+std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
+        const Eigen::Vector3f& pt, const Tape::Handle& tape)
+{
     auto out = value(pt, tape);
     auto p = Tape::push(tape, *deck,
         [&](Opcode::Opcode op, Clause::Id /* id */,
@@ -190,7 +193,7 @@ ArrayEvaluator::getAmbiguous(size_t i)
 }
 
 Eigen::Block<decltype(ArrayEvaluator::ambig), 1, Eigen::Dynamic>
-ArrayEvaluator::getAmbiguous(size_t i, Tape::Handle tape)
+ArrayEvaluator::getAmbiguous(size_t i, const Tape::Handle& tape)
 {
     // Reset the ambiguous array to all false
     ambig = false;

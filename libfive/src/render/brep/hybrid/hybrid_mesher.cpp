@@ -454,7 +454,7 @@ void HybridMesher::load(const std::array<const HybridTree<3>*, 4>& ts)
 
 uint64_t HybridMesher::searchEdge(Eigen::Vector3d inside,
                                   Eigen::Vector3d outside,
-                                  std::shared_ptr<Tape> tape)
+                                  const std::shared_ptr<Tape>& tape)
 {
     // This code is based on xtree.cpp, but flattened to a signle pass
     assert(tape.get() != nullptr);

@@ -15,14 +15,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Kernel {
 
-std::shared_ptr<Tape> Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
-                                 KeepFunction fn, Type t)
+Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
+                        KeepFunction fn, Type t)
 {
     return push(tape, deck, fn, t, Region<3>());
 }
 
-std::shared_ptr<Tape> Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
-                                 KeepFunction fn, Type t, const Region<3>& r)
+Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
+                        KeepFunction fn, Type t, const Region<3>& r)
 {
     // If this tape has no min/max clauses, then return it right away
     if (tape->terminal)
@@ -104,7 +104,7 @@ std::shared_ptr<Tape> Tape::push(const std::shared_ptr<Tape>& tape, Deck& deck,
         return tape;
     }
 
-    std::shared_ptr<Tape> out;
+    Tape::Handle out;
     if (deck.spares.size())
     {
         out = deck.spares.back();
@@ -166,8 +166,7 @@ std::shared_ptr<OracleContext> Tape::getContext(unsigned i) const
     return contexts[i];
 }
 
-std::shared_ptr<Tape> Tape::getBase(std::shared_ptr<Tape> tape,
-                                    const Region<3>& r)
+Tape::Handle Tape::getBase(Tape::Handle tape, const Region<3>& r)
 {
     while (tape->parent.get()) {
         if (tape->type == Tape::INTERVAL &&
@@ -186,9 +185,7 @@ std::shared_ptr<Tape> Tape::getBase(std::shared_ptr<Tape> tape,
     return tape;
 }
 
-std::shared_ptr<Tape> Tape::getBase(
-        std::shared_ptr<Tape> tape,
-        const Eigen::Vector3f& p)
+Tape::Handle Tape::getBase(Tape::Handle tape, const Eigen::Vector3f& p)
 {
     // Walk up the tape stack until we find an interval-type tape
     // that contains the given point, or we hit the start of the stack

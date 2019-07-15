@@ -436,7 +436,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
 
 uint64_t SimplexMesher::searchEdge(Eigen::Vector3d inside,
                                    Eigen::Vector3d outside,
-                                   std::shared_ptr<Tape> tape)
+                                   const std::shared_ptr<Tape>& tape)
 {
     // This code is based on xtree.cpp, but flattened to a single pass
     assert(tape.get() != nullptr);

@@ -64,7 +64,7 @@ protected:
      *  and returns its index.
      */
     uint64_t searchEdge(Eigen::Vector3d inside, Eigen::Vector3d outside,
-                        std::shared_ptr<Tape> tape);
+                        const std::shared_ptr<Tape>& tape);
 
     PerThreadBRep<3>& m;
     Evaluator* eval;

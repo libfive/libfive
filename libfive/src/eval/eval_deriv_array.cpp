@@ -56,7 +56,7 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i)
 }
 
 Eigen::Block<decltype(DerivArrayEvaluator::ambig), 1, Eigen::Dynamic>
-DerivArrayEvaluator::getAmbiguousDerivs(size_t i, Tape::Handle tape)
+DerivArrayEvaluator::getAmbiguousDerivs(size_t i, const Tape::Handle& tape)
 {
     // Reset the ambiguous array to all false
     ambig = false;
@@ -80,12 +80,14 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i, Tape::Handle tape)
 
 }
 
-Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt,
-                                           std::shared_ptr<Tape> tape)
+Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt)
 {
-    if (tape == nullptr) {
-        tape = deck->tape;
-    }
+    return deriv(pt, deck->tape);
+}
+
+Eigen::Vector4f DerivArrayEvaluator::deriv(const Eigen::Vector3f& pt,
+                                           const Tape::Handle& tape)
+{
     set(pt, 0);
     return derivs(1, tape).col(0);
 }
@@ -97,7 +99,7 @@ DerivArrayEvaluator::derivs(size_t count)
 }
 
 Eigen::Block<decltype(DerivArrayEvaluator::out), 4, Eigen::Dynamic>
-DerivArrayEvaluator::derivs(size_t count, Tape::Handle tape)
+DerivArrayEvaluator::derivs(size_t count, const Tape::Handle& tape)
 {
     // Perform value evaluation, copying results into the 4th row of out
     out.row(3).head(count) = values(count, tape);

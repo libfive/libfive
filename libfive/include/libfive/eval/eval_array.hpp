@@ -86,21 +86,23 @@ public:
      */
     Eigen::Block<decltype(v), 1, Eigen::Dynamic> values(size_t count);
     Eigen::Block<decltype(v), 1, Eigen::Dynamic> values(
-            size_t count, std::shared_ptr<Tape> tape);
+            size_t count, const std::shared_ptr<Tape>& tape);
 
     /*
      *  Single-point evaluation
      *  Invalidates slot 0 in the data and results array
      */
     float value(const Eigen::Vector3f& pt);
-    float value(const Eigen::Vector3f& pt, std::shared_ptr<Tape> tape);
+    float value(const Eigen::Vector3f& pt, const std::shared_ptr<Tape>& tape);
 
     /*
      *  Evaluates a single point and returns a tape that doesn't
      *  contain branches that weren't taken by that point evaluation.
      */
     std::pair<float, std::shared_ptr<Tape>> valueAndPush(
-            const Eigen::Vector3f& pt, std::shared_ptr<Tape> tape=nullptr);
+            const Eigen::Vector3f& pt);
+    std::pair<float, std::shared_ptr<Tape>> valueAndPush(
+            const Eigen::Vector3f& pt, const std::shared_ptr<Tape>& tape);
 
     /*
      *  Changes a variable's value
@@ -117,7 +119,7 @@ public:
      */
     Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(size_t i);
     Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(
-            size_t i, std::shared_ptr<Tape> tape);
+            size_t i, const std::shared_ptr<Tape>& tape);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */

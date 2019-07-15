@@ -132,7 +132,7 @@ public:
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
     std::shared_ptr<Tape> evalInterval(Evaluator* eval,
-                                       std::shared_ptr<Tape> tape,
+                                       const std::shared_ptr<Tape>& tape,
                                        const Region<N>& region,
                                        Pool& object_pool);
 
@@ -142,7 +142,7 @@ public:
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
     void evalLeaf(Evaluator* eval,
-                  std::shared_ptr<Tape> tape,
+                  const std::shared_ptr<Tape>& tape,
                   const Region<N>& region,
                   Pool& object_pool,
                   const SimplexNeighbors<N>& neighbors);
@@ -154,7 +154,7 @@ public:
      *  Returns false if any children are yet to come, true otherwise.
      */
     bool collectChildren(Evaluator* eval,
-                         std::shared_ptr<Tape> tape,
+                         const std::shared_ptr<Tape>& tape,
                          const Region<N>& region,
                          Pool& object_pool,
                          double max_err);
@@ -198,7 +198,7 @@ protected:
      *  This populates leaf->sub[i]->inside, for i in 0..ipow(3, N)
      */
     void saveVertexSigns(Evaluator* eval,
-                         Tape::Handle tape,
+                         const Tape::Handle& tape,
                          const Region<N>& region,
                          const std::array<bool, ipow(3, N)>& already_solved);
 
@@ -217,7 +217,7 @@ protected:
      *  as we walk up the tree.
      */
     void findLeafVertices(Evaluator* eval,
-                          Tape::Handle tape,
+                          const Tape::Handle& tape,
                           const Region<N>& region,
                           Pool& object_pool,
                           const SimplexNeighbors<N>& neighbors);

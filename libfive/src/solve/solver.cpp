@@ -20,7 +20,7 @@ namespace Solver
 {
 
 static std::pair<float, Solution> findRoot(
-        JacobianEvaluator& e, Tape::Handle tape,
+        JacobianEvaluator& e, const Tape::Handle& tape,
         const Eigen::Vector3f pos, Solution vars, unsigned gas)
 {
     const float EPSILON = 1e-6f;
@@ -106,7 +106,7 @@ std::pair<float, Solution> findRoot(
 }
 
 std::pair<float, Solution> findRoot(
-        JacobianEvaluator& e, Tape::Handle tape,
+        JacobianEvaluator& e, const Tape::Handle& tape,
         std::map<Tree::Id, float> vars, const Eigen::Vector3f pos,
         const Mask& mask, unsigned gas)
 {

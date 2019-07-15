@@ -54,7 +54,7 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p)
 }
 
 bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
-                                Tape::Handle tape)
+                                const Tape::Handle& tape)
 {
     auto handle = valueAndPush(p, tape);
 
@@ -72,11 +72,11 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
 
     // First, we evaluate and extract all of the features, saving
     // time by re-using the shortened tape from valueAndPush
-    tape = handle.second;
-    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+    const auto& tape_ = handle.second;
+    for (auto itr = tape_->rbegin(); itr != tape_->rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
-    auto fs = f(tape->root());
+    auto fs = f(tape_->root());
 
     // If there's only a single feature, we can get both positive and negative
     // values out if it's got a non-zero gradient
@@ -108,7 +108,7 @@ const boost::container::small_vector<Feature, 4>&
 
 const boost::container::small_vector<Feature, 4>&
     FeatureEvaluator::features_(const Eigen::Vector3f& p,
-                                Tape::Handle tape)
+                                const Tape::Handle& tape)
 {
     // Load the location into the results slot and evaluate point-wise
     auto handle = valueAndPush(p, tape);
@@ -136,7 +136,7 @@ std::list<Eigen::Vector3f> FeatureEvaluator::features(const Eigen::Vector3f& p)
 
 std::list<Eigen::Vector3f> FeatureEvaluator::features(
         const Eigen::Vector3f& p,
-        Tape::Handle tape)
+        const Tape::Handle& tape)
 {
     // Deduplicate and return the result
     std::list<Eigen::Vector3f> out;

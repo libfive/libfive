@@ -71,7 +71,7 @@ public:
     /*
      *  Binds all oracles to the contexts in the given tape
      */
-    void bindOracles(std::shared_ptr<Tape> tape);
+    void bindOracles(const std::shared_ptr<Tape>& tape);
 
     /*
      *  Unbinds all oracles, setting their contexts to null

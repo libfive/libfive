@@ -70,7 +70,7 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
 
 Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
                                     const Eigen::Vector3f& upper,
-                                    Tape::Handle tape)
+                                    const Tape::Handle& tape)
 {
     return eval_(lower, upper, tape).i;
 }
@@ -78,7 +78,7 @@ Interval::I IntervalEvaluator::eval(const Eigen::Vector3f& lower,
 IntervalEvaluator::Result IntervalEvaluator::eval_(
         const Eigen::Vector3f& lower,
         const Eigen::Vector3f& upper,
-        Tape::Handle tape)
+        const Tape::Handle& tape)
 {
     assert(!lower.array().isNaN().any()); // A region's bounds should
     assert(!upper.array().isNaN().any()); // never be NaN.
@@ -115,19 +115,19 @@ IntervalEvaluator::Result IntervalEvaluator::intervalAndPush(
 IntervalEvaluator::Result IntervalEvaluator::intervalAndPush(
         const Eigen::Vector3f& lower,
         const Eigen::Vector3f& upper,
-        Tape::Handle tape)
+        const Tape::Handle& tape)
 {
     auto out = eval_(lower, upper, tape);
     out.tape = push(tape);
     return out;
 }
 
-std::shared_ptr<Tape> IntervalEvaluator::push()
+Tape::Handle IntervalEvaluator::push()
 {
     return push(deck->tape);
 }
 
-std::shared_ptr<Tape> IntervalEvaluator::push(std::shared_ptr<Tape> tape)
+Tape::Handle IntervalEvaluator::push(const Tape::Handle& tape)
 {
     assert(tape.get() != nullptr);
 

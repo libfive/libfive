@@ -88,7 +88,7 @@ void DCLeaf<N>::reset()
 
 template <unsigned N>
 Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
-                                     Tape::Handle tape,
+                                     const Tape::Handle& tape,
                                      const Region<N>& region,
                                      Pool&)
 {
@@ -115,7 +115,7 @@ Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
 
 template <unsigned N>
 void DCTree<N>::evalLeaf(Evaluator* eval,
-                        Tape::Handle tape,
+                        const Tape::Handle& tape,
                         const Region<N>& region,
                         Pool& object_pool,
                         const DCNeighbors<N>& neighbors)
@@ -634,7 +634,7 @@ uint8_t DCTree<N>::buildCornerMask(
 
 template <unsigned N>
 bool DCTree<N>::collectChildren(Evaluator* eval,
-                                Tape::Handle tape,
+                                const Tape::Handle& tape,
                                 const Region<N>& region,
                                 Pool& object_pool,
                                 double max_err)

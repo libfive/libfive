@@ -37,14 +37,15 @@ public:
      */
     Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(size_t count);
     Eigen::Block<decltype(out), 4, Eigen::Dynamic> derivs(
-            size_t count, std::shared_ptr<Tape> tape);
+            size_t count, const std::shared_ptr<Tape>& tape);
 
     /*
      *  Single-point evaluation (return dx, dy, dz, distance)
      *  Invalidates slot 0 in the data array.
      */
+    Eigen::Vector4f deriv(const Eigen::Vector3f& pt);
     Eigen::Vector4f deriv(const Eigen::Vector3f& pt,
-                          std::shared_ptr<Tape> tape=nullptr);
+                          const std::shared_ptr<Tape>& tape);
 
     /*
      *  Per-clause evaluation, used in tape walking
@@ -63,7 +64,7 @@ public:
      *  This call performs O(i) work to set up the ambig array
      */
     Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguousDerivs(
-            size_t count, std::shared_ptr<Tape> tape);
+            size_t count, const std::shared_ptr<Tape>& tape);
     Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguousDerivs(
             size_t count);
 

@@ -36,7 +36,7 @@ namespace Solver
             const Eigen::Vector3f pos={0,0,0}, const Mask& mask=Mask(),
             unsigned gas=25000);
     std::pair<float, Solution> findRoot(
-            JacobianEvaluator& e, std::shared_ptr<Tape> tape,
+            JacobianEvaluator& e, const std::shared_ptr<Tape>& tape,
             std::map<Tree::Id, float> vars,
             const Eigen::Vector3f pos={0,0,0}, const Mask& mask=Mask(),
             unsigned gas=25000);

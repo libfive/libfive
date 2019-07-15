@@ -40,18 +40,18 @@ public:
                      const Eigen::Vector3f& upper);
     Interval::I eval(const Eigen::Vector3f& lower,
                      const Eigen::Vector3f& upper,
-                     std::shared_ptr<Tape> tape);
+                     const std::shared_ptr<Tape>& tape);
 
     /*  Helper function to return a full Result */
     Result eval_(const Eigen::Vector3f& lower,
                  const Eigen::Vector3f& upper,
-                 std::shared_ptr<Tape> tape);
+                 const std::shared_ptr<Tape>& tape);
 
     Result intervalAndPush(const Eigen::Vector3f& lower,
                            const Eigen::Vector3f& upper);
     Result intervalAndPush(const Eigen::Vector3f& lower,
                            const Eigen::Vector3f& upper,
-                           std::shared_ptr<Tape> tape);
+                           const std::shared_ptr<Tape>& tape);
 
     /*
      *  Returns a shortened tape based on the most recent evaluation.
@@ -61,7 +61,7 @@ public:
      *  Oracles, then you probably don't need to call it.
      */
     std::shared_ptr<Tape> push(/* uses top-level tape */);
-    std::shared_ptr<Tape> push(std::shared_ptr<Tape> tape);
+    std::shared_ptr<Tape> push(const std::shared_ptr<Tape>& tape);
 
     /*
      *  Changes a variable's value

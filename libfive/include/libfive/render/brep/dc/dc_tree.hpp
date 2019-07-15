@@ -114,7 +114,7 @@ public:
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
     std::shared_ptr<Tape> evalInterval(Evaluator* eval,
-                                       std::shared_ptr<Tape> tape,
+                                       const std::shared_ptr<Tape>& tape,
                                        const Region<N>& region,
                                        Pool& object_pool);
 
@@ -124,7 +124,7 @@ public:
      *  Then, solves for vertex position, populating AtA / AtB / BtB.
      */
     void evalLeaf(Evaluator* eval,
-                  std::shared_ptr<Tape> tape,
+                  const std::shared_ptr<Tape>& tape,
                   const Region<N>& region,
                   Pool& spare_leafs,
                   const DCNeighbors<N>& neighbors);
@@ -136,7 +136,7 @@ public:
      *  Returns false if any children are yet to come, true otherwise.
      */
     bool collectChildren(Evaluator* eval,
-                         std::shared_ptr<Tape> tape,
+                         const std::shared_ptr<Tape>& tape,
                          const Region<N>& region,
                          Pool& object_pool,
                          double max_err);

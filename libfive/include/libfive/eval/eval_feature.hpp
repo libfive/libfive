@@ -40,14 +40,14 @@ public:
      *      eval(x, y, z) == 0 => further checking is performed
      */
     bool isInside(const Eigen::Vector3f& p);
-    bool isInside(const Eigen::Vector3f& p, std::shared_ptr<Tape> tape);
+    bool isInside(const Eigen::Vector3f& p, const std::shared_ptr<Tape>& tape);
 
     /*
      *  Helper function to reduce boilerplate
      */
     template <unsigned N>
     bool isInside(const Eigen::Matrix<double, N, 1>& p, const Region<N>& region,
-                  std::shared_ptr<Tape> tape)
+                  const std::shared_ptr<Tape>& tape)
     {
         Eigen::Vector3f v;
         v << p.template cast<float>(), region.perp.template cast<float>();
@@ -60,11 +60,11 @@ public:
      */
     std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p);
     std::list<Eigen::Vector3f> features(const Eigen::Vector3f& p,
-                                        std::shared_ptr<Tape> tape);
+                                        const std::shared_ptr<Tape>& tape);
     template <unsigned N>
     std::list<Eigen::Vector3f> features(const Eigen::Matrix<double, N, 1>& p,
                                         const Region<N>& region,
-                                        std::shared_ptr<Tape> tape)
+                                        const std::shared_ptr<Tape>& tape)
     {
         Eigen::Vector3f v;
         v << p.template cast<float>(), region.perp.template cast<float>();
@@ -78,7 +78,7 @@ public:
     const boost::container::small_vector<Feature, 4>&
         features_(const Eigen::Vector3f& p);
     const boost::container::small_vector<Feature, 4>&
-        features_(const Eigen::Vector3f& p, std::shared_ptr<Tape> tape);
+        features_(const Eigen::Vector3f& p, const std::shared_ptr<Tape>& tape);
 
 protected:
     /*

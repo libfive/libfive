@@ -90,7 +90,7 @@ Eigen::Matrix<double, N, 1> unMassPoint(const MassPoint<N>& m) {
  */
 template <unsigned N>
 Eigen::Matrix<double, N, 2> searchBetween(
-        Evaluator* eval, Tape::Handle tape,
+        Evaluator* eval, const Tape::Handle& tape,
         const Region<N>& region,
         Eigen::Matrix<double, N, 1> inside,
         Eigen::Matrix<double, N, 1> outside)
@@ -200,7 +200,7 @@ void HybridLeaf<N>::reset()
 
 template <unsigned N>
 Tape::Handle HybridTree<N>::evalInterval(Evaluator* eval,
-                                         Tape::Handle tape,
+                                         const Tape::Handle& tape,
                                          const Region<N>& region,
                                          Pool& object_pool)
 {
@@ -229,7 +229,7 @@ Tape::Handle HybridTree<N>::evalInterval(Evaluator* eval,
 
 template <unsigned N>
 void HybridTree<N>::buildLeaf(Evaluator* eval,
-                              std::shared_ptr<Tape> tape,
+                              const std::shared_ptr<Tape>& tape,
                               const Region<N>& region,
                               Pool& object_pool)
 {
@@ -247,7 +247,7 @@ void HybridTree<N>::buildLeaf(Evaluator* eval,
 
 template <unsigned N>
 void HybridTree<N>::processCorners(Evaluator* eval,
-                                   Tape::Handle tape,
+                                   const Tape::Handle& tape,
                                    const Region<N>& region)
 {
     for (unsigned i=0; i < ipow(2, N); ++i) {
@@ -264,7 +264,7 @@ void HybridTree<N>::processCorners(Evaluator* eval,
 template <unsigned BaseDimension, unsigned Target>
 void processEdge(HybridTree<BaseDimension>* tree,
                  Evaluator* eval,
-                 Tape::Handle tape,
+                 const Tape::Handle& tape,
                  const Region<BaseDimension>& region)
 {
     constexpr NeighborIndex edge(Target);
@@ -364,7 +364,7 @@ void processEdge(HybridTree<BaseDimension>* tree,
 template <unsigned BaseDimension, int Target>
 void process(HybridTree<BaseDimension>* tree,
              Evaluator* eval,
-             Tape::Handle tape,
+             const Tape::Handle& tape,
              const Region<BaseDimension>& region)
 {
     static_assert(Target >= 0, "Invalid Target subspace");
@@ -561,7 +561,7 @@ template <unsigned BaseDimension, unsigned TargetDimension, int Target>
 struct Unroller {
     void run(HybridTree<BaseDimension>* tree,
              Evaluator* eval,
-             Tape::Handle tape,
+             const Tape::Handle& tape,
              const Region<BaseDimension>& region)
     {
         if (NeighborIndex(Target).dimension() == TargetDimension) {
@@ -580,7 +580,7 @@ template <unsigned BaseDimension, unsigned TargetDimension>
 struct Unroller<BaseDimension, TargetDimension, -1> {
     void run(HybridTree<BaseDimension>*,
                  Evaluator*,
-                 Tape::Handle,
+                 const Tape::Handle&,
                  const Region<BaseDimension>&)
     {
         // Terminate static unrolling here
@@ -591,7 +591,7 @@ struct Unroller<BaseDimension, TargetDimension, -1> {
 template <unsigned N>
 template<unsigned D>
 void HybridTree<N>::processSubspaces(Evaluator* eval,
-                                     Tape::Handle tape,
+                                     const Tape::Handle& tape,
                                      const Region<N>& region)
 {
     Unroller<N, D, ipow(3, N) - 1>().run(this, eval, tape, region);
@@ -599,7 +599,7 @@ void HybridTree<N>::processSubspaces(Evaluator* eval,
 
 template <unsigned N>
 void HybridTree<N>::placeDistanceVertex(
-        Evaluator* eval, Tape::Handle tape,
+        Evaluator* eval, const Tape::Handle& tape,
         const Region<N>& region,
         NeighborIndex n, const Vec& pos)
 {
@@ -682,7 +682,7 @@ void HybridTree<N>::accumulate(
         Evaluator* eval,
         const Eigen::Array<double, N, ArrayEvaluator::N>& positions,
         const Region<N>& region,
-        Tape::Handle tape,
+        const Tape::Handle& tape,
         unsigned count,
         NeighborIndex* target,
         bool normalize)
@@ -725,7 +725,7 @@ void HybridTree<N>::accumulate(
 
 template <unsigned N>
 void HybridTree<N>::evalLeaf(Evaluator* eval,
-                             Tape::Handle tape,
+                             const Tape::Handle& tape,
                              const Region<N>& region,
                              Pool& object_pool,
                              const HybridNeighbors<N>& neighbors)
@@ -750,7 +750,7 @@ void HybridTree<N>::evalLeaf(Evaluator* eval,
 
 template <unsigned N>
 bool HybridTree<N>::collectChildren(Evaluator* eval,
-                                    Tape::Handle tape,
+                                    const Tape::Handle& tape,
                                     const Region<N>& region,
                                     Pool& object_pool,
                                     double max_err)
