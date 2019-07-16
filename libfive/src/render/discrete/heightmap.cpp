@@ -239,7 +239,9 @@ bool Heightmap::recurse(Evaluator* e, const Tape::Handle& tape,
         ret &= recurse(e, result.tape, rs.second, abort) &&
                recurse(e, result.tape, rs.first, abort);
     }
-    e->getDeck()->claim(std::move(result.tape));
+    if (result.tape != tape) {
+        e->getDeck()->claim(std::move(result.tape));
+    }
     return ret;
 }
 

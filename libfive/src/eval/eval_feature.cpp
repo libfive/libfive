@@ -59,16 +59,19 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
     auto handle = valueAndPush(p, tape);
 
     // Unambiguous cases
-    if (handle.first < 0)
-    {
+    if (handle.first < 0) {
         return true;
-    }
-    else if (handle.first > 0)
-    {
+    } else if (handle.first > 0) {
         return false;
     }
 
     // Otherwise, we need to handle the zero-crossing case!
+
+    // We have just done a single-point evaluation, but could be using
+    // every slot in the results array, so we store them here.
+    for (long r=0; r < v.rows(); ++r) {
+        v.row(r) = v(r, 0);
+    }
 
     // First, we evaluate and extract all of the features, saving
     // time by re-using the shortened tape from valueAndPush
@@ -97,6 +100,7 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
         neg |= f.check(-f.deriv);
     }
     const bool outside = pos && !neg;
+
     return !outside;
 }
 
@@ -121,12 +125,12 @@ const boost::container::small_vector<Feature, 4>&
 
     // Evaluate feature-wise
     deck->bindOracles(*handle.second);
-    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+    for (auto itr = handle.second->rbegin(); itr != handle.second->rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
     deck->unbindOracles();
 
-    return f(tape->root());
+    return f(handle.second->root());
 }
 
 std::list<Eigen::Vector3f> FeatureEvaluator::features(const Eigen::Vector3f& p)
