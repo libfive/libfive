@@ -693,7 +693,7 @@ void HybridTree<N>::accumulate(
     }
     Eigen::Array<float, 4, ArrayEvaluator::N> ds;
     ds.leftCols(count) = eval->derivs(count);
-    auto ambig = eval->getAmbiguous(count);
+    auto ambig = eval->getAmbiguous(count, *tape);
 
     auto push = [&ds, &positions, &target, &normalize, this]
                 (Eigen::Vector3f d, unsigned i)
