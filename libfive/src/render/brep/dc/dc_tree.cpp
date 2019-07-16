@@ -165,7 +165,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
     // We store ambiguity here, but clear it if the point is inside
     // or outside (so after the loop below, ambig(i) is only set if
     // pos[i] is both == 0 and ambiguous).
-    auto ambig = eval->getAmbiguous(count, tape);
+    auto ambig = eval->getAmbiguous(count, *tape);
 
     // This is a count of how many points there are that == 0
     // but are unambiguous; unambig_remap[z] returns the index
@@ -412,7 +412,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                 Eigen::Array<float, 4, ArrayEvaluator::N> ds;
                 ds.leftCols(2 * eval_count) = eval->derivs(
                         2 * eval_count, *tape);
-                auto ambig = eval->getAmbiguous(2 * eval_count, tape);
+                auto ambig = eval->getAmbiguous(2 * eval_count, *tape);
 
                 // Iterate over all inside-outside pairs, storing the number
                 // of intersections before each inside node (in prev_size),

@@ -189,16 +189,16 @@ bool ArrayEvaluator::setVar(Tree::Id var_, float value)
 Eigen::Block<decltype(ArrayEvaluator::ambig), 1, Eigen::Dynamic>
 ArrayEvaluator::getAmbiguous(size_t i)
 {
-    return getAmbiguous(i, deck->tape);
+    return getAmbiguous(i, *deck->tape);
 }
 
 Eigen::Block<decltype(ArrayEvaluator::ambig), 1, Eigen::Dynamic>
-ArrayEvaluator::getAmbiguous(size_t i, const Tape::Handle& tape)
+ArrayEvaluator::getAmbiguous(size_t i, const Tape& tape)
 {
     // Reset the ambiguous array to all false
     ambig = false;
 
-    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
         if (itr->op == Opcode::ORACLE)
         {
             deck->oracles[itr->a]->checkAmbiguous(ambig.head(i));

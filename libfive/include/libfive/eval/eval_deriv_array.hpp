@@ -64,7 +64,7 @@ public:
      *  This call performs O(i) work to set up the ambig array
      */
     Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguousDerivs(
-            size_t count, const std::shared_ptr<Tape>& tape);
+            size_t count, const Tape& tape);
     Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguousDerivs(
             size_t count);
 

@@ -358,7 +358,7 @@ void SimplexTree<N>::findLeafVertices(
     {
         Eigen::Matrix<float, 4, ArrayEvaluator::N> ds;
         ds.leftCols(count) = eval->derivs(count, *tape);
-        const auto ambig = eval->getAmbiguous(count, tape);
+        const auto ambig = eval->getAmbiguous(count, *tape);
         unsigned index=0;
         for (unsigned i=0; i < ipow(3, N); ++i) {
             const auto sub = NeighborIndex(i);

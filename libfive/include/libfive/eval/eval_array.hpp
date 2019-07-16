@@ -119,7 +119,7 @@ public:
      */
     Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(size_t i);
     Eigen::Block<decltype(ambig), 1, Eigen::Dynamic> getAmbiguous(
-            size_t i, const std::shared_ptr<Tape>& tape);
+            size_t i, const Tape& tape);
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */

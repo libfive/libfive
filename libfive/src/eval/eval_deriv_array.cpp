@@ -52,16 +52,16 @@ DerivArrayEvaluator::DerivArrayEvaluator(
 Eigen::Block<decltype(DerivArrayEvaluator::ambig), 1, Eigen::Dynamic>
 DerivArrayEvaluator::getAmbiguousDerivs(size_t i)
 {
-    return getAmbiguousDerivs(i, deck->tape);
+    return getAmbiguousDerivs(i, *deck->tape);
 }
 
 Eigen::Block<decltype(DerivArrayEvaluator::ambig), 1, Eigen::Dynamic>
-DerivArrayEvaluator::getAmbiguousDerivs(size_t i, const Tape::Handle& tape)
+DerivArrayEvaluator::getAmbiguousDerivs(size_t i, const Tape& tape)
 {
     // Reset the ambiguous array to all false
     ambig = false;
 
-    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
+    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
         if (itr->op == Opcode::ORACLE)
         {
             deck->oracles[itr->a]->checkAmbiguous(ambig.head(i));
