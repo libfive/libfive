@@ -29,7 +29,7 @@ public:
      */
     std::map<Tree::Id, float> gradient(const Eigen::Vector3f& p);
     std::map<Tree::Id, float> gradient(const Eigen::Vector3f& p,
-            const std::shared_ptr<Tape>& tape);
+                                       const Tape& tape);
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

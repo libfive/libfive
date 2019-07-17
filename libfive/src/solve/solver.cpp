@@ -37,7 +37,7 @@ static std::pair<float, Solution> findRoot(
     while (!converged && fabs(r) >= EPSILON && --gas)
     {
         // Evaluate and update our local gradient
-        for (auto& d : e.gradient(pos, tape))
+        for (auto& d : e.gradient(pos, *tape))
         {
             auto v = ds.find(d.first);
             if (v != ds.end())

@@ -43,12 +43,11 @@ JacobianEvaluator::JacobianEvaluator(
 std::map<Tree::Id, float> JacobianEvaluator::gradient(
         const Eigen::Vector3f& p)
 {
-    return gradient(p, deck->tape);
+    return gradient(p, *deck->tape);
 }
 
 std::map<Tree::Id, float> JacobianEvaluator::gradient(
-        const Eigen::Vector3f& p,
-        const Tape::Handle& tape)
+        const Eigen::Vector3f& p, const Tape& tape)
 {
     // Load the XYZ values into the whole array, rather than
     // checking and loading a subset of the array.
@@ -67,7 +66,7 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
 
     auto run = [&]() {
         if (count) {
-            auto ds = derivs((count + 2) / 3, *tape);
+            auto ds = derivs((count + 2) / 3, tape);
             for (unsigned i=0; i < count; ++i) {
                 j[remap[i]] = ds(i % 3, i / 3);
             }
