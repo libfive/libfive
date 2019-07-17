@@ -110,6 +110,17 @@ TEST_CASE("JacobianEvaluator::gradient")
         REQUIRE(g.at(b.id()) == 2);
         REQUIRE(g.at(c.id()) == 4);
     }
+
+    SECTION("CONST_VAR opcode")
+    {
+        auto v = Tree::var();
+        JacobianEvaluator e((v + 1.0).makeVarsConstant(), {{v.id(), 3.14}});
+
+        auto g = e.gradient({1, 2, 3});
+        REQUIRE(g.size() == 1);
+        REQUIRE(g.count(v.id()) == 1);
+        REQUIRE(g.at(v.id()) == Approx(0));
+    }
 }
 
 TEST_CASE("JacobianEvaluator::derivs")

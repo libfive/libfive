@@ -225,7 +225,11 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::CONST_VAR:
-            od = ad;
+            if (clear_vars) {
+                od = 0.0;
+            } else {
+                od = ad;
+            }
             break;
 
         case Opcode::ORACLE:

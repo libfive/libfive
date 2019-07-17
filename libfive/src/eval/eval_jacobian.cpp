@@ -56,6 +56,10 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
     v.row(deck->Y) = p.y();
     v.row(deck->Z) = p.z();
 
+    // Turn on a flag which modifies the DerivArrayEvaluator
+    // behavior for the CONST_VAR opcode.
+    clear_vars = true;
+
     unsigned count = 0;
 
     // remap[i] tells us which variable is at ds(i % 3, i / 3)
@@ -105,6 +109,9 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
     {
         out[v.second] = j(index++);
     }
+
+    // Reset our special-behavior-on-CONST_VAR flag to the default.
+    clear_vars = false;
     return out;
 }
 

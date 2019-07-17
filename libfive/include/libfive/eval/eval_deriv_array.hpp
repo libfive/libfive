@@ -31,6 +31,11 @@ protected:
     /*  out(col) is a result [dx, dy, dz, w] */
     Eigen::Array<float, 4, N> out;
 
+    /* When evaluating from a parent JacobianEvaluator, we want the
+     * CONST_VARS opcode to clear the derivatives, which is special-cased
+     * in this flag.  */
+    bool clear_vars = false;
+
 public:
     /*
      *  Multi-point evaluation (values must be stored with set)
