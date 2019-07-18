@@ -49,11 +49,11 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     // Kick off the progress tracking thread, based on the number of
     // octree levels and a fixed split per level
     uint64_t ticks = 0;
-    for (int i=0; i <= region.level; ++i) {
+    for (int i=0; i < region.level; ++i) {
         ticks = (ticks + 1) * (1 << N);
     }
     if (settings.progress_handler) {
-        settings.progress_handler->nextPhase(ticks);
+        settings.progress_handler->nextPhase(ticks + 1);
     }
 
     std::atomic_bool done(false);
@@ -184,10 +184,10 @@ void WorkerPool<T, Neighbors, N>::run(
                 // included if we continued to subdivide this tree, then pass
                 // all of them to the progress tracker
                 uint64_t ticks = 0;
-                for (int i=0; i <= region.level; ++i) {
+                for (int i=0; i < region.level; ++i) {
                     ticks = (ticks + 1) * (1 << N);
                 }
-                settings.progress_handler->tick(ticks);
+                settings.progress_handler->tick(ticks + 1);
             }
             else
             {
