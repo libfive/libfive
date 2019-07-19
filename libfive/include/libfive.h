@@ -12,6 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <cstdint>
 #include "libfive/tree/tree.hpp"
 #include "libfive/tree/archive.hpp"
+#include "libfive/eval/evaluator.hpp"
 extern "C" {
 #else
 #include <stdint.h>
@@ -184,6 +185,7 @@ void libfive_vars_delete(libfive_vars* j);
 typedef Kernel::Tree* libfive_tree;
 typedef Kernel::Tree::Id libfive_id;
 typedef Kernel::Archive* libfive_archive;
+typedef Kernel::Evaluator *libfive_evaluator;
 #else
 typedef struct libfive_tree_ libfive_tree_;
 typedef struct libfive_tree_* libfive_tree;
@@ -193,6 +195,9 @@ typedef struct libfive_id_* libfive_id;
 
 typedef struct libfive_archive_ libfive_archive_;
 typedef struct libfive_archive_* libfive_archive;
+
+typedef struct libfive_evaluator_ libfive_evaluator_;
+typedef struct libfive_evaluator_ *libfive_evaluator;
 #endif
 
 /*
@@ -375,6 +380,17 @@ bool libfive_tree_save_mesh(libfive_tree tree, libfive_region3 R,
                             float res, const char* f);
 
 /*
+ *  Renders and saves a mesh to a file
+ *
+ *  Returns true on success, false otherwise
+ *  Second argument is an evaluator
+ *  See other argument details in libfive_tree_render_mesh
+ */
+bool libfive_evaluator_save_mesh(libfive_evaluator evaluator, libfive_region3 R,
+                                   const char *f);
+
+
+/*
  *  Renders and saves multiple meshes mesh to a file
  *
  *  Returns true on success, false otherwise
@@ -398,6 +414,21 @@ bool libfive_tree_save_meshes(
 libfive_pixels* libfive_tree_render_pixels(libfive_tree tree,
                                            libfive_region2 R,
                                            float z, float res);
+
+/*
+ *  Constructs a new evaluator
+ */
+libfive_evaluator libfive_tree_evaluator(libfive_tree tree, libfive_vars vars);
+
+/*
+ *  Upates the variables of the evaluator
+ */
+bool libfive_evaluator_update_vars(libfive_evaluator eval_tree, libfive_vars vars);
+
+/*
+ *  Deletes (first) evaluator.  TODO: if settings.workers > 1
+ */
+void libfive_evaluator_delete(libfive_evaluator ptr);
 
 /*
  *  Returns the human-readable tag associated with this build,

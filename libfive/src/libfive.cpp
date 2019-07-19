@@ -390,6 +390,17 @@ bool libfive_tree_save_mesh(libfive_tree tree, libfive_region3 R, float res, con
     return ms->saveSTL(f);
 }
 
+bool libfive_evaluator_save_mesh(libfive_evaluator evaluator, libfive_region3 R, const char *f)
+{
+    Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
+                     {R.X.upper, R.Y.upper, R.Z.upper});
+
+    BRepSettings settings; // TODO: pass it in as an argument
+    settings.workers = 1;  // MOTE: temporay limitation
+    auto ms = Mesh::render(evaluator, region, settings);
+    return ms->saveSTL(f);
+}
+
 bool libfive_tree_save_meshes(
         libfive_tree trees[], libfive_region3 R,
         float res, float quality, const char* f)
@@ -436,6 +447,37 @@ libfive_pixels* libfive_tree_render_pixels(libfive_tree tree, libfive_region2 R,
     }
 
     return out;
+}
+
+libfive_evaluator libfive_tree_evaluator(libfive_tree tree, libfive_vars vars)
+{
+    std::map<Kernel::Tree::Id, float> mapOfVars;
+    for (unsigned i = 0; i < vars.size; ++i)
+    {
+        auto treeId = static_cast<Kernel::Tree::Id>(vars.vars[i]);
+        mapOfVars.insert(std::make_pair(treeId, vars.values[i]));
+    }
+    // TODO: For more than one worker
+    return new Evaluator(*tree, mapOfVars);
+}
+
+bool libfive_evaluator_update_vars(libfive_evaluator eval_tree, libfive_vars vars)
+{
+    std::map<Kernel::Tree::Id, float> mapOfVars;
+    for (unsigned i = 0; i < vars.size; ++i)
+    {
+        auto treeId = static_cast<Kernel::Tree::Id>(vars.vars[i]);
+        mapOfVars.insert(std::make_pair(treeId, vars.values[i]));
+    }
+
+    return eval_tree->updateVars(mapOfVars);
+}
+
+void libfive_evaluator_delete(libfive_evaluator ptr)
+{
+    // TODO: For more than one worker
+    std::cout << "libfive_evaluator_delete";
+    delete ptr;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
