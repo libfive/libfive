@@ -84,9 +84,8 @@ ObjectPool<T, Ts...>::~ObjectPool()
     reset();
 }
 
-template <typename T, typename... Ts>
 template <typename Q>
-void ObjectPool<T, Ts...>::claimVector(
+static void claimVector(
     std::vector<Q>& mine, std::vector<Q>& other)
 {
     mine.reserve(mine.size() + other.size());

@@ -57,9 +57,6 @@ public:
 
     ~ObjectPool();
 
-    template <typename Q>
-    static void claimVector(std::vector<Q>& mine, std::vector<Q>& other);
-
     void claim(ObjectPool<T, Ts...>& other);
 
     /*
