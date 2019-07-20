@@ -34,6 +34,7 @@ public:
 
     void reset(const BRepSettings& settings)
     {
+        delete ptr;
         ptr = nullptr;
         if (settings.progress_handler) {
             settings.progress_handler->nextPhase(object_pool.total_size());
@@ -58,7 +59,7 @@ protected:
     // Used for progress tracking.  We use a signed value here because,
     // as we claim Pools of XTrees, it's possible for the intermediate
     // result to go negative (if one pool has claimed many trees from
-    // another Pool, so it owns more trees than it has allocated)..
+    // another Pool, so it owns more trees than it has allocated).
     int64_t tree_count=0;
 };
 
