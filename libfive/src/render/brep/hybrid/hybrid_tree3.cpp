@@ -8,9 +8,11 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "hybrid_tree.cpp"
+#include "../object_pool.cpp"
 
 namespace Kernel {
 template class HybridTree<3>;
 template struct HybridLeaf<3>;
+template class ObjectPool<HybridTree<3>, HybridTree<3>::Leaf>;
 }   // namespace Kernel
 

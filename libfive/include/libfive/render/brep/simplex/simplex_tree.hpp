@@ -235,5 +235,9 @@ protected:
 
 extern template class SimplexTree<2>;
 extern template class SimplexTree<3>;
+extern template class ObjectPool<SimplexTree<2>, SimplexTree<2>::Leaf,
+                                 SimplexLeafSubspace<2>>;
+extern template class ObjectPool<SimplexTree<3>, SimplexTree<3>::Leaf,
+                                 SimplexLeafSubspace<3>>;
 
 }   // namespace Kernel
