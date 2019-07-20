@@ -260,5 +260,6 @@ protected:
 };
 
 extern template class HybridTree<3>;
+extern template class ObjectPool<HybridTree<3>, HybridTree<3>::Leaf>;
 
 }   // namespace Kernel

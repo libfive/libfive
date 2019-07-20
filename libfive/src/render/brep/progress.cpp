@@ -79,6 +79,7 @@ void ProgressHandler::nextPhase(uint64_t total) {
 
         // TODO: why is this necessary?  The total should always be
         // correctly counted to.
+        std::cout << current_phase->counter << " " << current_phase->total << "\n";
         current_phase->counter = current_phase->total;
 
         // Move to the next phase while the lock is present

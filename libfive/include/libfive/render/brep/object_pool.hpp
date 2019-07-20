@@ -13,10 +13,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <list>
 #include <cassert>
 
-
-#include "libfive/render/brep/progress.hpp"
-
 namespace Kernel {
+class ProgressHandler;
 
 /*
  *  This is a object pool container, to avoid allocation churn.
@@ -47,86 +45,22 @@ template <typename T, typename... Ts>
 class ObjectPool<T, Ts...> : public ObjectPool<Ts...>
 {
 public:
-    ObjectPool<T, Ts...>& operator=(ObjectPool<T, Ts...>&& other) {
-        fresh_blocks = std::move(other.fresh_blocks);
-        other.fresh_blocks.clear();
-
-        allocated_blocks = std::move(other.allocated_blocks);
-        other.allocated_blocks.clear();
-
-        reusable_objects = std::move(other.reusable_objects);
-        other.reusable_objects.clear();
-
-        next() = std::move(other.next());
-        return *this;
-    }
+    ObjectPool<T, Ts...>& operator=(ObjectPool<T, Ts...>&& other);
 
     template <typename... Args>
-    T* get(Args... args)
-    {
-        if (!reusable_objects.empty()) {
-            auto out = reusable_objects.back();
-            reusable_objects.pop_back();
+    T* get(Args... args);
 
-            assert(out != nullptr);
-            out->reset(args...);
-            return out;
-        }
+    ObjectPool<Ts...>& next();
+    const ObjectPool<Ts...>& next() const;
 
-        if (fresh_blocks.empty()) {
-            fresh_blocks.push_back(std::make_pair(
-                        static_cast<T*>(T::operator new[](sizeof(T) * N)), 0));
-        }
-        assert(fresh_blocks.size());
+    void put(T* t);
 
-        auto& block = fresh_blocks.back();
-        auto out = block.first + block.second;
-
-        if (++block.second == N) {
-            allocated_blocks.push_back(block.first);
-            fresh_blocks.pop_back();
-        }
-        assert(out != nullptr);
-        new (out) T(args...); // Placement new!
-        return out;
-    }
-
-    ObjectPool<Ts...>& next() {
-        return *static_cast<ObjectPool<Ts...>*>(this);
-    }
-    const ObjectPool<Ts...>& next() const {
-        return *static_cast<const ObjectPool<Ts...>*>(this);
-    }
-
-    void put(T* t)
-    {
-        assert(t != nullptr);
-        reusable_objects.push_back(t);
-    }
-
-    ~ObjectPool()
-    {
-        reset();
-    }
+    ~ObjectPool();
 
     template <typename Q>
-    static void claimVector(std::vector<Q>& mine, std::vector<Q>& other)
-    {
-        mine.reserve(mine.size() + other.size());
-        for (auto& t : other) {
-            mine.push_back(t);
-        }
-        other.clear();
-    }
+    static void claimVector(std::vector<Q>& mine, std::vector<Q>& other);
 
-    void claim(ObjectPool<T, Ts...>& other)
-    {
-        claimVector(allocated_blocks, other.allocated_blocks);
-        claimVector(fresh_blocks, other.fresh_blocks);
-        claimVector(reusable_objects, other.reusable_objects);
-
-        next().claim(other.next());
-    }
+    void claim(ObjectPool<T, Ts...>& other);
 
     /*
      *  Returns the number of (assigned) items in the pool
@@ -135,15 +69,8 @@ public:
      *  This could be a negative number, if we we're storing available
      *  trees that were allocated by pools in different threads.
      */
-    int64_t size() const
-    {
-        return (int64_t)(allocated_blocks.size() + fresh_blocks.size()) * N
-               - reusable_objects.size();
-    }
-
-    int64_t total_size() const {
-        return size() + next().total_size();
-    }
+    int64_t size() const;
+    int64_t total_size() const;
 
     /*
      *  Deallocate everything stored in this object pool.
@@ -154,56 +81,7 @@ public:
      *  (this is the same as the destructor, but includes a progress callback)
      */
     void reset(unsigned workers=8,
-               ProgressHandler* progress_watcher=nullptr)
-    {
-        auto workers_needed = std::max(allocated_blocks.size(),
-                                       fresh_blocks.size());
-        if (workers_needed < workers)
-        {
-            workers = workers_needed;
-        }
-
-        std::vector<std::future<void>> futures;
-        futures.resize(workers);
-
-        // Delete all of the blocks, using multiple threads for speed
-        for (unsigned i=0; i < workers; ++i) {
-            futures[i] = std::async(std::launch::async,
-                    [i, this, workers, &progress_watcher]() {
-                    for (unsigned j=i; j < allocated_blocks.size();
-                                       j += workers)
-                    {
-                        for (unsigned k=0; k < N; ++k) {
-                            allocated_blocks[j][k].~T();
-                        }
-                        if (progress_watcher) {
-                            progress_watcher->tick();
-                        }
-                        T::operator delete[](allocated_blocks[j]);
-                    }
-
-                for (unsigned j=i; j < fresh_blocks.size(); j += workers) {
-                    for (unsigned k=0; k < fresh_blocks[j].second; ++k) {
-                        fresh_blocks[j].first[k].~T();
-                    }
-                    if (progress_watcher) {
-                        progress_watcher->tick();
-                    }
-                    T::operator delete [](fresh_blocks[j].first);
-                }
-            });
-        }
-
-        // Wait on all of the futures
-        for (auto& f : futures) {
-            f.get();
-        }
-
-        allocated_blocks.clear();
-        fresh_blocks.clear();
-
-        next().reset(workers, progress_watcher);
-    }
+               ProgressHandler* progress_watcher=nullptr);
 
 private:
     /*  Each fresh_block is a pointer to the start of the block,

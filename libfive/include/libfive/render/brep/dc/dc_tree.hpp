@@ -293,5 +293,7 @@ template <> bool DCTree<3>::leafsAreManifold(
 
 extern template class DCTree<2>;
 extern template class DCTree<3>;
+extern template class ObjectPool<DCTree<2>, DCTree<2>::Leaf>;
+extern template class ObjectPool<DCTree<3>, DCTree<3>::Leaf>;
 
 }   // namespace Kernel
