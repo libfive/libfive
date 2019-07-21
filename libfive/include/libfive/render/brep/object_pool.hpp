@@ -39,7 +39,7 @@ class ObjectPool
 public:
     void claim(ObjectPool<>&) {}
     void reset(unsigned, ProgressHandler*) {}
-    int64_t total_size() const { return 0; }
+    int64_t num_blocks() const { return 0; }
     ObjectPool<>& operator=(ObjectPool<>&&) { return *this; }
 };
 
@@ -144,8 +144,9 @@ public:
         return out - reusable_objects.size();
     }
 
-    int64_t total_size() const {
-        return size() + next().total_size();
+    int64_t num_blocks() const {
+        return allocated_blocks.size() + fresh_blocks.size()
+                                       + next().num_blocks();
     }
 
     /*

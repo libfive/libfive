@@ -37,7 +37,7 @@ public:
         delete ptr;
         ptr = nullptr;
         if (settings.progress_handler) {
-            settings.progress_handler->nextPhase(object_pool.total_size());
+            settings.progress_handler->nextPhase(object_pool.num_blocks());
         }
         object_pool.reset(settings.workers, settings.progress_handler);
     }
