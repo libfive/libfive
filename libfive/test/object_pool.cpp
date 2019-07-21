@@ -49,3 +49,18 @@ TEST_CASE("ObjectPool::put + get") {
     REQUIRE(b == a);
     REQUIRE(b->i == 2);
 }
+
+TEST_CASE("ObjectPool::size") {
+    ObjectPool<Dummy> pool;
+    auto a = pool.get();
+    REQUIRE(pool.size() == 1);
+
+    pool.put(a);
+    REQUIRE(pool.size() == 0);
+
+    auto b = pool.get();
+    REQUIRE(pool.size() == 1);
+
+    auto c = pool.get();
+    REQUIRE(pool.size() == 2);
+}

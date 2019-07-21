@@ -137,8 +137,11 @@ public:
      */
     int64_t size() const
     {
-        return (int64_t)(allocated_blocks.size() + fresh_blocks.size()) * N
-               - reusable_objects.size();
+        int64_t out = allocated_blocks.size() * N;
+        for (const auto& f : fresh_blocks) {
+            out += f.second;
+        }
+        return out - reusable_objects.size();
     }
 
     int64_t total_size() const {

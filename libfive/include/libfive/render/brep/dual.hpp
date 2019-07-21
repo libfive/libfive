@@ -265,7 +265,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
     }
 
     if (settings.progress_handler) {
-        settings.progress_handler->nextPhase(t.size());
+        settings.progress_handler->nextPhase(t.size() + 1);
     }
 
     std::vector<std::future<void>> futures;
@@ -351,6 +351,9 @@ void Dual<N>::run(V& v,
             continue;
         }
 
+        if (settings.progress_handler) {
+            settings.progress_handler->tick();
+        }
         for (t = t->parent; t && t->pending-- == 0; t = t->parent)
         {
             // Do the actual DC work (specialized for N = 2 or 3)

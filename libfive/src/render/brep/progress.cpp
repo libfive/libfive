@@ -77,9 +77,9 @@ void ProgressHandler::nextPhase(uint64_t total) {
     } else {
         std::lock_guard<std::mutex> lock(phase_mut);
 
-        // TODO: why is this necessary?  The total should always be
-        // correctly counted to.
-        current_phase->counter = current_phase->total;
+        // Consistency checking: we must count up the expected number
+        // of ticks, otherwise there's a bug somewhere in the library.
+        assert(current_phase->counter == current_phase->total);
 
         // Move to the next phase while the lock is present
         current_phase++;
