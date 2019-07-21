@@ -20,10 +20,14 @@ public:
      *  Constructor
      */
     ProgressHandler();
-    virtual ~ProgressHandler() { /* Nothing to do here */ }
+    virtual ~ProgressHandler();
 
-    /*  Implement this function in a subclass to send progress updates */
-    virtual void progress(double d)=0;
+    /*  Implement this function in a subclass to send progress updates.
+     *
+     *  The default implementation does nothing, but needs to exist
+     *  so that we don't fail if the thread tries to call it during
+     *  the destructor. */
+    virtual void progress(double d);
 
     /*  Called by workers to update current progress */
     void tick(uint64_t i=1);

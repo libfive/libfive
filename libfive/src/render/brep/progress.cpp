@@ -24,6 +24,11 @@ ProgressHandler::ProgressHandler()
     timed_mut.lock();
 }
 
+ProgressHandler::~ProgressHandler()
+{
+    finish();
+}
+
 void ProgressHandler::run()
 {
     assert(phases.size() > 0);
@@ -86,6 +91,11 @@ void ProgressHandler::nextPhase(uint64_t total) {
     }
     assert(current_phase != phases.end());
     current_phase->total = total;
+}
+
+void ProgressHandler::progress(double d)
+{
+    (void)d;
 }
 
 void ProgressHandler::finish()

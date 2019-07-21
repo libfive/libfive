@@ -13,7 +13,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/dc/dc_worker_pool.hpp"
+#include "libfive/render/brep/dc/dc_mesher.hpp"
 #include "libfive/render/brep/mesh.hpp"
+#include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/settings.hpp"
 
 #include "util/shapes.hpp"
@@ -102,4 +104,26 @@ TEST_CASE("Mesh::render (progress callback)")
             prev = p;
         }
     }
+}
+
+TEST_CASE("Mesh::render (early destruction of progress watcher)")
+{
+    Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
+
+    Root<DCTree<3>> t;
+    BRepSettings settings;
+    settings.min_feature = 0.25;
+    {
+        TestProgressHandler progress;
+        settings.progress_handler = &progress;
+        progress.start({1, 1, 1});
+
+        t = DCWorkerPool<3>::build(sphereGyroid(), r, settings);
+
+        std::unique_ptr<Mesh> m;
+        m = Dual<3>::walk<DCMesher>(t, settings);
+        t.reset(settings);
+        // Destructor runs here
+    }
+    REQUIRE(true);
 }
