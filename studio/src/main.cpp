@@ -43,8 +43,8 @@ int main(int argc, char** argv)
     qRegisterMetaType<Settings>("Settings");
     qRegisterMetaType<QList<Shape*>>("QList<Shape*>");
     qRegisterMetaType<Editor::Range>("Editor::Range");
-    qRegisterMetaType<QMap<Kernel::Tree::Id,Editor::Range>>(
-            "QMap<Kernel::Tree::Id,Editor::Range>");
+    qRegisterMetaType<QMap<libfive::Tree::Id,Editor::Range>>(
+            "QMap<libfive::Tree::Id,Editor::Range>");
     qRegisterMetaType<QList<QPair<QString, QString>>>(
             "QList<QPair<QString,QString>>");
 

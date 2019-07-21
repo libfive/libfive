@@ -27,7 +27,7 @@ const int Shape::MESH_DIV_ABORT;
 const int Shape::MESH_DIV_NEW_VARS;
 const int Shape::MESH_DIV_NEW_VARS_SMALL;
 
-Shape::Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, float> vars)
+Shape::Shape(libfive::Tree t, std::map<libfive::Tree::Id, float> vars)
     : tree(t), vars(vars), vert_vbo(QOpenGLBuffer::VertexBuffer),
       tri_vbo(QOpenGLBuffer::IndexBuffer)
 {
@@ -35,7 +35,7 @@ Shape::Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, float> vars)
     es.reserve(8);
     for (unsigned i=0; i < es.capacity(); ++i)
     {
-        es.emplace_back(Kernel::Evaluator(t, vars));
+        es.emplace_back(libfive::Evaluator(t, vars));
     }
 
     connect(this, &Shape::gotMesh, this, &Shape::redraw);
@@ -57,7 +57,7 @@ bool Shape::updateFrom(const Shape* other)
     return updateVars(other->vars);
 }
 
-bool Shape::updateVars(const std::map<Kernel::Tree::Id, float>& vs)
+bool Shape::updateVars(const std::map<libfive::Tree::Id, float>& vs)
 {
     bool changed = false;
 
@@ -104,7 +104,7 @@ void Shape::draw(const QMatrix4x4& M)
     {
         initializeOpenGLFunctions();
 
-        mesh_bounds = Kernel::Region<3>({0,0,0}, {0,0,0});
+        mesh_bounds = libfive::Region<3>({0,0,0}, {0,0,0});
         GLfloat* verts = new GLfloat[mesh->verts.size() * 6];
         unsigned i = 0;
 
@@ -209,7 +209,7 @@ void Shape::drawMonochrome(const QMatrix4x4& M, QColor color)
     }
 }
 
-void Shape::startRender(Settings s, Kernel::BRepAlgorithm alg)
+void Shape::startRender(Settings s, libfive::BRepAlgorithm alg)
 {
     startRender(RenderSettings { s, s.defaultDiv(), alg });
 }
@@ -281,10 +281,10 @@ void Shape::setHover(bool h)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::pair<Kernel::JacobianEvaluator*, Kernel::Tape::Handle>
+std::pair<libfive::JacobianEvaluator*, libfive::Tape::Handle>
 Shape::dragFrom(const QVector3D& v)
 {
-    auto e = new Kernel::JacobianEvaluator(tree, vars);
+    auto e = new libfive::JacobianEvaluator(tree, vars);
     auto o = e->valueAndPush({v.x(), v.y(), v.z()});
     return std::make_pair(e, o.second);
 }
@@ -358,7 +358,7 @@ void Shape::freeGL()
 Shape::BoundedMesh Shape::renderMesh(RenderSettings s)
 {
     // Use the global bounds settings
-    Kernel::Region<3> r(
+    libfive::Region<3> r(
             {s.settings.min.x(), s.settings.min.y(), s.settings.min.z()},
             {s.settings.max.x(), s.settings.max.y(), s.settings.max.z()});
 
@@ -367,6 +367,6 @@ Shape::BoundedMesh Shape::renderMesh(RenderSettings s)
     mesh_settings.max_err = pow(10, -s.settings.quality);
     mesh_settings.alg = s.alg;
 
-    auto m = Kernel::Mesh::render(es.data(), r, mesh_settings);
+    auto m = libfive::Mesh::render(es.data(), r, mesh_settings);
     return {m.release(), r};
 }

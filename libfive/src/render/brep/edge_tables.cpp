@@ -8,7 +8,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "libfive/render/brep/edge_tables.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 EdgeTables<N>::EdgeTables()
@@ -59,4 +59,4 @@ const EdgeTables<N>& EdgeTables<N>::instance()
 template class EdgeTables<2>;
 template class EdgeTables<3>;
 
-}   // namespace Kernel
+}   // namespace libfive

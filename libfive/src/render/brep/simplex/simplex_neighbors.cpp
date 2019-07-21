@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/neighbor_tables.hpp"
 #include "libfive/render/brep/simplex/simplex_tree.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 SimplexNeighbors<N>::SimplexNeighbors()
@@ -85,4 +85,4 @@ std::pair<const SimplexLeaf<N>*, NeighborIndex> SimplexNeighbors<N>::check(Neigh
     return std::make_pair(nullptr, 0);
 }
 
-}   // namespace Kernel
+}   // namespace libfive

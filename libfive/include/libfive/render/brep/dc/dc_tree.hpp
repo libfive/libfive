@@ -25,7 +25,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/intersection.hpp"
 #include "libfive/render/brep/dc/marching.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /* Forward declaration */
 class Evaluator;
@@ -295,4 +295,4 @@ extern template class DCTree<3>;
 extern template class ObjectPool<DCTree<2>, DCLeaf<2>>;
 extern template class ObjectPool<DCTree<3>, DCLeaf<3>>;
 
-}   // namespace Kernel
+}   // namespace libfive

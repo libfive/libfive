@@ -14,9 +14,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_neighbors.hpp"
 #include "libfive/render/brep/dc/dc_tree.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 using DCWorkerPool = WorkerPool<DCTree<N>, DCNeighbors<N>, N>;
 
-}   // namespace Kernel
+}   // namespace libfive

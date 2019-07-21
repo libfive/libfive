@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/axes.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 TEST_CASE("Region<2>::subdivide")
 {

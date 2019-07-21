@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/simplex/simplex_tree.hpp"
 #include "../object_pool.cpp"
 
-namespace Kernel {
+namespace libfive {
 template class ObjectPool<SimplexTree<3>, SimplexLeaf<3>,
                           SimplexLeafSubspace<3>>;
 template class ObjectPool<SimplexLeaf<3>, SimplexLeafSubspace<3>>;
@@ -18,8 +18,8 @@ template class ObjectPool<SimplexLeafSubspace<3>>;
 
 template SimplexTree<3>* ObjectPool<SimplexTree<3>, SimplexLeaf<3>,
                           SimplexLeafSubspace<3>>::get(
-        Kernel::SimplexTree<3>*, unsigned, Region<3>);
+        libfive::SimplexTree<3>*, unsigned, Region<3>);
 template SimplexLeaf<3>* ObjectPool<SimplexLeaf<3>,
                           SimplexLeafSubspace<3>>::get();
 template SimplexLeafSubspace<3>* ObjectPool<SimplexLeafSubspace<3>>::get();
-}   // namespace Kernel
+}   // namespace libfive

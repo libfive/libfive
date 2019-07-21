@@ -10,8 +10,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "simplex_tree.cpp"
 #include "../object_pool.cpp"
 
-namespace Kernel {
+namespace libfive {
 template class SimplexTree<2>;
 template struct SimplexLeaf<2>;
 template struct SimplexLeafSubspace<2>;
-}   // namespace Kernel
+}   // namespace libfive

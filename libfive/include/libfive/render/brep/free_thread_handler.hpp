@@ -7,7 +7,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
-namespace Kernel {
+namespace libfive {
 
 class FreeThreadHandler
 {
@@ -25,4 +25,4 @@ public:
     virtual void offerWait() = 0;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

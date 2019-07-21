@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/dc/marching.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -554,4 +554,4 @@ const MarchingTable<N>& MarchingTable<N>::instance()
 template class MarchingTable<2>;
 template class MarchingTable<3>;
 
-}   // namespace Kernel
+}   // namespace libfive

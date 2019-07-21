@@ -17,7 +17,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/hybrid/hybrid_tree.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 class HybridNeighbors :
@@ -80,6 +80,6 @@ public:
     }
 };
 
-}   // namespace Kernel
+}   // namespace libfive
 
 

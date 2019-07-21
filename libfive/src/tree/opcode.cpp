@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/opcode.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 size_t Opcode::args(Opcode op)
 {
@@ -226,4 +226,4 @@ bool Opcode::isCommutative(Opcode op)
     return false;
 }
 
-}   // namespace Kernel
+}   // namespace libfive

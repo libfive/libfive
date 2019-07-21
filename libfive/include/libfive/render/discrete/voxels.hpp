@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/axes.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /*
  *  A Voxels object constains X, Y, Z bounds and voxel count / positions
@@ -147,4 +147,4 @@ public:
     View view() const;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

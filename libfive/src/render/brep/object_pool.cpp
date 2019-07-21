@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/progress.hpp"
 #include "libfive/render/brep/object_pool.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <typename T, typename... Ts>
 ObjectPool<T, Ts...>& ObjectPool<T, Ts...>::operator=(
@@ -173,4 +173,4 @@ void ObjectPool<T, Ts...>::reset(unsigned workers,
 
     next().reset(workers, progress_watcher);
 }
-}   // namespace Kernel
+}   // namespace libfive

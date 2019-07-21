@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/interval.hpp"
 #include "libfive/eval/clause.hpp"
 
-namespace Kernel {
+namespace libfive {
 class Tape; /* Forward declaration */
 
 class IntervalEvaluator : public virtual BaseEvaluator
@@ -89,4 +89,4 @@ protected:
                     Clause::Id a, Clause::Id b);
 };
 
-}   // namespace Kernel
+}   // namespace libfive

@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/deck.hpp"
 #include "libfive/eval/tape.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 Deck::Deck(const Tree root)
 {
@@ -128,4 +128,4 @@ void Deck::unbindOracles()
     }
 }
 
-}   // namespace Kernel
+}   // namespace libfive

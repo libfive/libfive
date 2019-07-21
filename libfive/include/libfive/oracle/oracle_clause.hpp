@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /*  Forward declaration */
 class Oracle;
@@ -35,7 +35,7 @@ public:
     virtual ~OracleClause()=default;
     virtual std::unique_ptr<Oracle> getOracle() const=0;
     virtual std::string name() const=0;
-    virtual std::vector<Kernel::Tree> dependencies() const
+    virtual std::vector<libfive::Tree> dependencies() const
     {
         return {};
     }
@@ -117,7 +117,7 @@ protected:
     }
 };
 
-}   // namespace Kernel
+}   // namespace libfive
 
 /*
  *  Use this macro in the .cpp file for classes derived from OracleClause

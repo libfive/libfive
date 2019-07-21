@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/oracle/oracle_storage.hpp"
 #include "libfive/eval/evaluator.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /* The transformedOracle is the result of applying a remap to an oracle.
 */

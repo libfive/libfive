@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/per_thread_brep.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 class BRep
@@ -107,4 +107,4 @@ public:
     }
 };
 
-}   // namespace Kernel
+}   // namespace libfive

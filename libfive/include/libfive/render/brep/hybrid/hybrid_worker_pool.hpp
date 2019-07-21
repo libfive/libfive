@@ -14,11 +14,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/hybrid/hybrid_neighbors.hpp"
 #include "libfive/render/brep/worker_pool.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 using HybridWorkerPool = WorkerPool<HybridTree<N>, HybridNeighbors<N>, N>;
 
-}   // namespace Kernel
+}   // namespace libfive
 
 

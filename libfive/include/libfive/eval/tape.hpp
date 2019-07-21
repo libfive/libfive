@@ -18,7 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/oracle/oracle_context.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /*  Foward declarations */
 template <unsigned N> class Region;
@@ -114,4 +114,4 @@ public:
     friend class Deck;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

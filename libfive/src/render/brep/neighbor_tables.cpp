@@ -8,7 +8,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "libfive/render/brep/neighbor_tables.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Static variables
@@ -159,4 +159,4 @@ const NeighborTables<N>& NeighborTables<N>::instance()
 template class NeighborTables<2>;
 template class NeighborTables<3>;
 
-}   // namespace Kernel
+}   // namespace libfive

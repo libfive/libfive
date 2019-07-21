@@ -558,10 +558,10 @@ QString Window::workingDirectory() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Window::onExportReady(QList<const Kernel::Mesh*> shapes)
+void Window::onExportReady(QList<const libfive::Mesh*> shapes)
 {
     disconnect(view, &View::meshesReady, this, &Window::onExportReady);
-    if (!Kernel::Mesh::saveSTL(export_filename.toStdString(),
+    if (!libfive::Mesh::saveSTL(export_filename.toStdString(),
                                shapes.toStdList()))
     {
         QMessageBox m(this);

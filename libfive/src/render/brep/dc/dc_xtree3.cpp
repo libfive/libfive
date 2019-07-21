@@ -9,6 +9,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "dc_tree.cpp"
 
-namespace Kernel {
+namespace libfive {
 template class XTree<3, DCTree<3>, DCLeaf<3>>;
-}   // namespace Kernel
+}   // namespace libfive

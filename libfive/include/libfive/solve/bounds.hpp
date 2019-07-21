@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/region.hpp"
 #include "libfive/eval/eval_interval.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 #ifdef ENABLE_FIND_BOUNDS_EXPERIMENTAL
 Region<3> findBounds(const Tree& t);
@@ -24,4 +24,4 @@ The findBounds API is experimental and only works for the simplest of shapes. \
 If you still want to use it, please #define ENABLE_FIND_BOUNDS_EXPERIMENTAL.
 #endif
 
-}   // namespace Kernel
+}   // namespace libfive

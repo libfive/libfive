@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/deck.hpp"
 #include "libfive/eval/tape.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 JacobianEvaluator::JacobianEvaluator(const Tree& root)
     : JacobianEvaluator(std::make_shared<Deck>(root))
@@ -114,4 +114,4 @@ std::map<Tree::Id, float> JacobianEvaluator::gradient(
     return out;
 }
 
-}   // namespace Kernel
+}   // namespace libfive

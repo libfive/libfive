@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <boost/container/small_vector.hpp>
 
-namespace Kernel {
+namespace libfive {
 
 /*  At various points while meshing, we want to associate
  *  a key (which is a pair of subspace vertex indices) with
@@ -71,4 +71,4 @@ protected:
     boost::container::small_vector<Value, Size> values;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <list>
 #include <cassert>
 
-namespace Kernel {
+namespace libfive {
 class ProgressHandler;
 
 /*
@@ -96,4 +96,4 @@ private:
     static const unsigned N=512;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/deck.hpp"
 #include "libfive/eval/tape.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 DerivArrayEvaluator::DerivArrayEvaluator(const Tree& root)
     : DerivArrayEvaluator(std::make_shared<Deck>(root))
@@ -255,4 +255,4 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
 }
 
-}   // namespace Kernel
+}   // namespace libfive

@@ -19,7 +19,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/archive.hpp"
 #include "libfive/oracle/transformed_oracle_clause.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 Tree::Tree()
     : ptr(nullptr)
@@ -273,47 +273,47 @@ void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
     }
 }
 
-}   // namespace Kernel
+}   // namespace libfive
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // Mass-produce definitions for overloaded operations
 #define OP_UNARY(name, opcode) \
-Kernel::Tree name(const Kernel::Tree& a) { return Kernel::Tree(opcode, a); }
-OP_UNARY(square,    Kernel::Opcode::OP_SQUARE)
-OP_UNARY(sqrt,      Kernel::Opcode::OP_SQRT)
-Kernel::Tree Kernel::Tree::operator-() const
-    { return Kernel::Tree(Kernel::Opcode::OP_NEG, *this); }
-OP_UNARY(abs,       Kernel::Opcode::OP_ABS)
-OP_UNARY(sin,       Kernel::Opcode::OP_SIN)
-OP_UNARY(cos,       Kernel::Opcode::OP_COS)
-OP_UNARY(tan,       Kernel::Opcode::OP_TAN)
-OP_UNARY(asin,      Kernel::Opcode::OP_ASIN)
-OP_UNARY(acos,      Kernel::Opcode::OP_ACOS)
-OP_UNARY(atan,      Kernel::Opcode::OP_ATAN)
-OP_UNARY(log,       Kernel::Opcode::OP_LOG)
-OP_UNARY(exp,       Kernel::Opcode::OP_EXP)
+libfive::Tree name(const libfive::Tree& a) { return libfive::Tree(opcode, a); }
+OP_UNARY(square,    libfive::Opcode::OP_SQUARE)
+OP_UNARY(sqrt,      libfive::Opcode::OP_SQRT)
+libfive::Tree libfive::Tree::operator-() const
+    { return libfive::Tree(libfive::Opcode::OP_NEG, *this); }
+OP_UNARY(abs,       libfive::Opcode::OP_ABS)
+OP_UNARY(sin,       libfive::Opcode::OP_SIN)
+OP_UNARY(cos,       libfive::Opcode::OP_COS)
+OP_UNARY(tan,       libfive::Opcode::OP_TAN)
+OP_UNARY(asin,      libfive::Opcode::OP_ASIN)
+OP_UNARY(acos,      libfive::Opcode::OP_ACOS)
+OP_UNARY(atan,      libfive::Opcode::OP_ATAN)
+OP_UNARY(log,       libfive::Opcode::OP_LOG)
+OP_UNARY(exp,       libfive::Opcode::OP_EXP)
 #undef OP_UNARY
 
 #define OP_BINARY(name, opcode) \
-Kernel::Tree name(const Kernel::Tree& a, const Kernel::Tree& b) \
-    { return Kernel::Tree(opcode, a, b); }
-OP_BINARY(operator+,    Kernel::Opcode::OP_ADD)
-OP_BINARY(operator*,    Kernel::Opcode::OP_MUL)
-OP_BINARY(min,          Kernel::Opcode::OP_MIN)
-OP_BINARY(max,          Kernel::Opcode::OP_MAX)
-OP_BINARY(operator-,    Kernel::Opcode::OP_SUB)
-OP_BINARY(operator/,    Kernel::Opcode::OP_DIV)
-OP_BINARY(atan2,        Kernel::Opcode::OP_ATAN2)
-OP_BINARY(pow,          Kernel::Opcode::OP_POW)
-OP_BINARY(nth_root,     Kernel::Opcode::OP_NTH_ROOT)
-OP_BINARY(mod,          Kernel::Opcode::OP_MOD)
-OP_BINARY(nanfill,      Kernel::Opcode::OP_NANFILL)
-OP_BINARY(compare,      Kernel::Opcode::OP_COMPARE)
+libfive::Tree name(const libfive::Tree& a,const libfive::Tree& b) \
+    { return libfive::Tree(opcode, a, b); }
+OP_BINARY(operator+,    libfive::Opcode::OP_ADD)
+OP_BINARY(operator*,    libfive::Opcode::OP_MUL)
+OP_BINARY(min,          libfive::Opcode::OP_MIN)
+OP_BINARY(max,          libfive::Opcode::OP_MAX)
+OP_BINARY(operator-,    libfive::Opcode::OP_SUB)
+OP_BINARY(operator/,    libfive::Opcode::OP_DIV)
+OP_BINARY(atan2,        libfive::Opcode::OP_ATAN2)
+OP_BINARY(pow,          libfive::Opcode::OP_POW)
+OP_BINARY(nth_root,     libfive::Opcode::OP_NTH_ROOT)
+OP_BINARY(mod,          libfive::Opcode::OP_MOD)
+OP_BINARY(nanfill,      libfive::Opcode::OP_NANFILL)
+OP_BINARY(compare,      libfive::Opcode::OP_COMPARE)
 #undef OP_BINARY
 
 
-std::ostream& operator<<(std::ostream& stream, const Kernel::Tree& tree)
+std::ostream& operator<<(std::ostream& stream, const libfive::Tree& tree)
 {
     tree->print(stream);
     return stream;

@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/edge_tables.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 class MarchingTable
@@ -63,4 +63,4 @@ protected:
 extern template class MarchingTable<2>;
 extern template class MarchingTable<3>;
 
-}   // namespace Kernel
+}   // namespace libfive

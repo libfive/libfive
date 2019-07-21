@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../neighbors.cpp"
 #include "libfive/render/brep/hybrid/hybrid_neighbors.hpp"
 
-namespace Kernel {
+namespace libfive {
 template class Neighbors<3, HybridTree<3>, HybridNeighbors<3>>;
 template class HybridNeighbors<3>;
-}   // namespace Kernel
+}   // namespace libfive

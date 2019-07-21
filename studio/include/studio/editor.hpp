@@ -82,13 +82,13 @@ public slots:
     /*
      *  Stores the textual positions of variables
      */
-    void setVarPositions(QMap<Kernel::Tree::Id, Range> vs)
+    void setVarPositions(QMap<libfive::Tree::Id, Range> vs)
     { vars = vs; }
 
     /*
      *  Modifies the textual values of variables
      */
-    void setVarValues(QMap<Kernel::Tree::Id, float> vs);
+    void setVarValues(QMap<libfive::Tree::Id, float> vs);
 
     /*
      *  While a drag is taking place, the text field is frozen to user editing
@@ -134,5 +134,5 @@ protected:
     bool drag_should_join=false;
     bool first_change=false;
 
-    QMap<Kernel::Tree::Id, Range> vars;
+    QMap<libfive::Tree::Id, Range> vars;
 };

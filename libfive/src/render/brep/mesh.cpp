@@ -33,7 +33,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/hybrid/hybrid_worker_pool.hpp"
 #include "libfive/render/brep/hybrid/hybrid_mesher.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    const BRepSettings& settings)
@@ -206,4 +206,4 @@ bool Mesh::saveSTL(const std::string& filename) const
     return saveSTL(filename, {this});
 }
 
-}   // namespace Kernel
+}   // namespace libfive

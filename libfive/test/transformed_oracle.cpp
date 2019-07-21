@@ -21,7 +21,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "util/shapes.hpp"
 #include "util/oracles.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 /*  In order to test the transformed primitives, we can't test that the meshing
  *  is identical when they're used, since numeric error can cause them not to

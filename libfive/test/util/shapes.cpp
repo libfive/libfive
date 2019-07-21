@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "shapes.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 Tree rectangle(float xmin, float xmax, float ymin, float ymax,
                Eigen::Matrix4f M)
@@ -152,9 +152,9 @@ Tree sphereGyroid()
     auto thickness = 0.5;
 
     auto gyroidSrf =
-        sin(Kernel::Tree::X() / scale) * cos(Kernel::Tree::Y() / scale) +
-        sin(Kernel::Tree::Y() / scale) * cos(Kernel::Tree::Z() / scale) +
-        sin(Kernel::Tree::Z() / scale) * cos(Kernel::Tree::X() / scale);
+        sin(libfive::Tree::X() / scale) * cos(libfive::Tree::Y() / scale) +
+        sin(libfive::Tree::Y() / scale) * cos(libfive::Tree::Z() / scale) +
+        sin(libfive::Tree::Z() / scale) * cos(libfive::Tree::X() / scale);
 
     auto gyroid = shell(gyroidSrf, thickness);
     auto sphere1 = sphere(3.0f, { 0.f,0.f,0.f });
@@ -162,7 +162,7 @@ Tree sphereGyroid()
     auto sphereGyroid = max(sphere1, gyroid);
     sphereGyroid = min(sphereGyroid,
                      min(sphereGyroid,
-                     (sqrt(abs(sphereGyroid)) + sqrt(abs( sphereGyroid ))) - .5));
+                     (sqrt(abs(sphereGyroid)) + sqrt(abs(sphereGyroid))) - .5));
 
     return sphereGyroid;
 }

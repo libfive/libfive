@@ -25,7 +25,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 //#define DEBUG(s) std::cout << s << "\n"
 #define DEBUG(s) {}
 
-namespace Kernel {
+namespace libfive {
 
 /*
  *  Helper function to pack from a higher dimension to a lower one
@@ -950,4 +950,4 @@ void HybridTree<N>::assignIndices(const BRepSettings& settings) const
     }
 }
 
-}   // namespace Kernel
+}   // namespace libfive

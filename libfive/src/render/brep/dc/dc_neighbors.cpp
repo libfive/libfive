@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/neighbor_tables.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -66,4 +66,4 @@ std::shared_ptr<IntersectionVec<N>> DCNeighbors<N>::check(
     return nullptr;
 }
 
-}   // namespace Kernel
+}   // namespace libfive

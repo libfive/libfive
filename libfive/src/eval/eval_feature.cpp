@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/deck.hpp"
 #include "libfive/eval/tape.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 FeatureEvaluator::FeatureEvaluator(const Tree& root)
     : FeatureEvaluator(std::make_shared<Deck>(root))
@@ -349,4 +349,4 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #undef LOOP2
 }
 
-}   // namespace Kernel
+}   // namespace libfive

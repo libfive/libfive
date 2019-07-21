@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/base.hpp"
 #include "libfive/eval/deck.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 BaseEvaluator::BaseEvaluator(std::shared_ptr<Deck> deck,
                              const std::map<Tree::Id, float>& vars)
@@ -28,4 +28,4 @@ BaseEvaluator::BaseEvaluator(std::shared_ptr<Deck> deck,
     }
 }
 
-}   // namespace Kernel
+}   // namespace libfive

@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "simplex_tree.cpp"
 
-namespace Kernel {
+namespace libfive {
 template class XTree<3, SimplexTree<3>, SimplexLeaf<3>>;
-}   // namespace Kernel
+}   // namespace libfive
 

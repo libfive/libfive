@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "libfive/render/axes.hpp"
 #include "libfive/render/brep/dc/dc_mesher.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 #if LIBFIVE_TRIANGLE_FAN_MESHING
 
@@ -57,4 +57,4 @@ protected:
 
 #endif
 
-}   // namespace Kernel
+}   // namespace libfive

@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <list>
 #include <vector>
 
-namespace Kernel {
+namespace libfive {
 
 class ProgressHandler
 {
@@ -72,4 +72,4 @@ protected:
     std::future<void> future;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

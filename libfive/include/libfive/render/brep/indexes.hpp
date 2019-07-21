@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <cstdint>
 
-namespace Kernel {
+namespace libfive {
 
 struct CornerIndex; // Forward declaration
 
@@ -170,4 +170,4 @@ inline constexpr bool NeighborIndex::contains(const CornerIndex& c) const {
         : (c.i == 0);
 }
 
-}   // namespace Kernel
+}   // namespace libfive

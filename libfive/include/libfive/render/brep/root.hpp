@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/progress.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <typename T>
 class Root
@@ -63,4 +63,4 @@ protected:
     int64_t tree_count=0;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/tree/tree.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 // This oracle wraps the X, Y, or Z axis
 template <int A>
@@ -173,4 +173,4 @@ class CubeOracleClause : public OracleClause
 };
 
 
-}   // namespace Kernel
+}   // namespace libfive

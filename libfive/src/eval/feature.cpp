@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "libfive/eval/feature.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 Feature::Feature(const Eigen::Vector3f& d)
     : deriv(d)
@@ -281,4 +281,4 @@ bool Feature::operator<(const Feature& other) const
     }
 }
 
-}   // namespace Kernel
+}   // namespace libfive

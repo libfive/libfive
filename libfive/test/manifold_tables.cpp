@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/manifold_tables.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 TEST_CASE("ManifoldTables<2>::manifold")
 {

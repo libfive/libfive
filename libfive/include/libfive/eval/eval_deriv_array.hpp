@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/eval/eval_array.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 class DerivArrayEvaluator : public ArrayEvaluator
 {
@@ -78,6 +78,6 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-}   // namespace Kernel
+}   // namespace libfive
 
 

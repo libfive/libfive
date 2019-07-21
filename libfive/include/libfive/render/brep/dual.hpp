@@ -20,7 +20,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/interval.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /*
  *  Class to walk a dual grid for a quad or octree
@@ -377,4 +377,4 @@ void Dual<N>::run(V& v,
     done.store(true);
 }
 
-}   // namespace Kernel
+}   // namespace libfive

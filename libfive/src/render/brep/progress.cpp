@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/progress.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 ProgressHandler::ProgressHandler()
     : done(false)
@@ -117,4 +117,4 @@ void ProgressHandler::tick(uint64_t i)
     current_phase->counter += i;
 }
 
-}   // namespace Kernel
+}   // namespace libfive

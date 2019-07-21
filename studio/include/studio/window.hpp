@@ -29,7 +29,7 @@ class Editor;
 class View;
 struct Documentation;
 
-namespace Kernel { class Mesh; }
+namespace libfive { class Mesh; }
 
 class Window : public QMainWindow
 {
@@ -60,7 +60,7 @@ protected slots:
     void onShowDocs(bool=false);
     void onAutoLoad(const QString&);
 
-    void onExportReady(QList<const Kernel::Mesh*> shapes);
+    void onExportReady(QList<const libfive::Mesh*> shapes);
     void setDocs(Documentation* docs);
 
 signals:

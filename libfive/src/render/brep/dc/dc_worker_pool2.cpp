@@ -10,6 +10,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../worker_pool.cpp"
 #include "libfive/render/brep/dc/dc_worker_pool.hpp"
 
-namespace Kernel {
+namespace libfive {
 template class WorkerPool<DCTree<2>, DCNeighbors<2>, 2>;
 }

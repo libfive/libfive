@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/Eigen>
 #include <Eigen/StdVector>
 
-namespace Kernel {
+namespace libfive {
 
 /*
  *  A PerThreadBRep is a thread-safe class used when to a BRep from multiple
@@ -62,4 +62,4 @@ protected:
     std::atomic<uint32_t>& c;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

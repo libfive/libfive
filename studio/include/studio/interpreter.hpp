@@ -82,7 +82,7 @@ signals:
     /*
      *  Emitted to tell the editor about textual positions
      */
-    void gotVars(QMap<Kernel::Tree::Id, Editor::Range> vs);
+    void gotVars(QMap<libfive::Tree::Id, Editor::Range> vs);
 
 protected slots:
     /*  Initializes everything that Scheme needs */
@@ -150,7 +150,7 @@ signals:
     void keywords(QString kws);
     void docs(Documentation* docs);
     void gotShapes(QList<Shape*> s);
-    void gotVars(QMap<Kernel::Tree::Id, Editor::Range> vs);
+    void gotVars(QMap<libfive::Tree::Id, Editor::Range> vs);
     void gotSettings(Settings s);
 
     /*

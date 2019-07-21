@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/eval_jacobian.hpp"
 #include "libfive/eval/eval_interval.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 class Evaluator : public JacobianEvaluator, public IntervalEvaluator
 {
@@ -39,7 +39,7 @@ public:
     /*
      *  Updates variable values, return true if changed
      */
-    bool updateVars(const std::map<Kernel::Tree::Id, float>& vars)
+    bool updateVars(const std::map<libfive::Tree::Id, float>& vars)
     {
         bool changed = false;
         for (auto& v : vars) {
@@ -50,5 +50,5 @@ public:
 }
 };
 
-}   // namespace Kernel
+}   // namespace libfive
 

@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <array>
 #include "libfive/render/axes.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /*  Forward declarations */
 template <unsigned N> class DCTree;
@@ -39,4 +39,4 @@ protected:
     PerThreadBRep<2>& m;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

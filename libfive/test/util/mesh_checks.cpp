@@ -1,7 +1,7 @@
 #include "catch.hpp"
 #include "mesh_checks.hpp"
 
-void CHECK_EDGE_PAIRS(const Kernel::Mesh& m) {
+void CHECK_EDGE_PAIRS(const libfive::Mesh& m) {
     // Every edge must be shared by two triangles
     // We build a bitfield here, counting forward and reverse edges
     std::map<std::pair<int, int>, int> edges;

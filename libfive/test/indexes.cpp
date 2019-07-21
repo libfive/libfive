@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/indexes.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 TEST_CASE("NeighborIndex::dimension")
 {

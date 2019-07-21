@@ -18,7 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <iostream>
 #endif
 
-namespace Kernel {
+namespace libfive {
 
 /*
  *  This is documented in a long article at
@@ -680,4 +680,4 @@ inline Eigen::Matrix<double, N, 1> QEF<N>::slideDC() const {
 }
 
 
-}   // namespace Kernel
+}   // namespace libfive

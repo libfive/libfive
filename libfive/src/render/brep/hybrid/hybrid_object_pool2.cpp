@@ -10,8 +10,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/hybrid/hybrid_tree.hpp"
 #include "../object_pool.cpp"
 
-namespace Kernel {
+namespace libfive {
 template class ObjectPool<HybridTree<2>, HybridLeaf<2>>;
 template HybridTree<2>* ObjectPool<HybridTree<2>, HybridLeaf<2>>::get(
-        Kernel::HybridTree<2>*, unsigned, Region<2>);
-}   // namespace Kernel
+        libfive::HybridTree<2>*, unsigned, Region<2>);
+}   // namespace libfive

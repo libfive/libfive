@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/clause.hpp"
 #include "libfive/oracle/oracle.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 class Tape; /* Foward declaration */
 
@@ -89,4 +89,4 @@ protected:
     friend class Tape;
 };
 
-} // namespace Kernel
+} // namespace libfive

@@ -18,7 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_contourer.hpp"
 #include "libfive/render/brep/dual.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -182,4 +182,4 @@ void Contours::collect(const std::vector<PerThreadBRep<2>>& children)
     }
 }
 
-}   // namespace Kernel
+}   // namespace libfive

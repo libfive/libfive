@@ -9,8 +9,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "simplex_tree.cpp"
 
-namespace Kernel {
+namespace libfive {
 template class SimplexTree<3>;
 template struct SimplexLeaf<3>;
 template struct SimplexLeafSubspace<3>;
-}   // namespace Kernel
+}   // namespace libfive

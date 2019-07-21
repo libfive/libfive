@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/tape.hpp"
 #include "libfive/eval/deck.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 constexpr size_t ArrayEvaluator::N;
 
@@ -347,5 +347,5 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #undef b
 }
 
-}   // namespace Kernel
+}   // namespace libfive
 

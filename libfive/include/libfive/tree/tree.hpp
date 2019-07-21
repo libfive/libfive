@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/opcode.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 // Forward declaration
 class OracleClause;
@@ -199,10 +199,10 @@ protected:
     friend class Cache;
 };
 
-}   // namespace Kernel
+}   // namespace libfive
 
 // Mass-produce declarations for overloaded operations
-#define OP_UNARY(OP)      Kernel::Tree OP(const Kernel::Tree& a)
+#define OP_UNARY(OP)      libfive::Tree OP(const libfive::Tree& a)
 OP_UNARY(square);
 OP_UNARY(sqrt);
 OP_UNARY(abs);
@@ -216,7 +216,7 @@ OP_UNARY(log);
 OP_UNARY(exp);
 #undef OP_UNARY
 
-#define OP_BINARY(OP)     Kernel::Tree OP(const Kernel::Tree& a, const Kernel::Tree& b)
+#define OP_BINARY(OP)     libfive::Tree OP(const libfive::Tree& a, const libfive::Tree& b)
 OP_BINARY(operator+);
 OP_BINARY(operator*);
 OP_BINARY(min);
@@ -234,7 +234,7 @@ OP_BINARY(compare);
 /*
  *  Deserialize with Scheme-style syntax
  */
-std::ostream& operator<<(std::ostream& stream, const Kernel::Tree& tree);
+std::ostream& operator<<(std::ostream& stream, const libfive::Tree& tree);
 
 // This include goes at the bottom to work around circular ordering
 #include "libfive/oracle/oracle_clause.hpp"

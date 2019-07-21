@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <array>
 #include "libfive/render/brep/util.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 // N = number of dimensions
 // T = leaf node type
@@ -36,4 +36,4 @@ protected:
     std::array<const T*, ipow(3, N) - 1> neighbors;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

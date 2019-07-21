@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/tree/tree.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /*
 *  TransformedOracleClause is used for implementing remap on OracleClauses
@@ -34,7 +34,7 @@ public:
     std::unique_ptr<const OracleClause> remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const override;
 
-    std::vector<Kernel::Tree> dependencies() const override;
+    std::vector<libfive::Tree> dependencies() const override;
 
     bool serialize(Serializer& out) const;
     static std::unique_ptr<const OracleClause> deserialize(Deserializer& in);
@@ -46,4 +46,4 @@ private:
     Tree Z_;
 };
 
-} //namespace Kernel
+} //namespace libfive

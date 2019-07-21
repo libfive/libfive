@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/neighbor_tables.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 
 /*

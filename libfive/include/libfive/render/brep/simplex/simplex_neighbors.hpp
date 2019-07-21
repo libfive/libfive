@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/neighbors.hpp"
 #include "libfive/render/brep/indexes.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 // Forward declaration
 template <unsigned N> class SimplexTree;
@@ -64,5 +64,5 @@ public:
     std::pair<const SimplexLeaf<N>*, NeighborIndex> check(NeighborIndex i) const;
 };
 
-}   // namespace Kernel
+}   // namespace libfive
 

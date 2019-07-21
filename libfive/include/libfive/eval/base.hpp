@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 
-namespace Kernel {
+namespace libfive {
 class Deck; /*  Forward declaration */
 
 class BaseEvaluator
@@ -26,4 +26,4 @@ protected:
     std::shared_ptr<Deck> deck;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

@@ -18,7 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/tape.hpp"
 #include "libfive/render/brep/region.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 TEST_CASE("IntervalEvaluator::eval")
 {
@@ -34,9 +34,9 @@ TEST_CASE("IntervalEvaluator::eval")
 
     SECTION("Every operation")
     {
-        for (unsigned i=7; i < Kernel::Opcode::ORACLE; ++i)
+        for (unsigned i=7; i < libfive::Opcode::ORACLE; ++i)
         {
-            auto op = (Kernel::Opcode::Opcode)i;
+            auto op = (libfive::Opcode::Opcode)i;
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
             IntervalEvaluator e(t);

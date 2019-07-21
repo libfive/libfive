@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/serializer.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 const uint8_t Serializer::END_OF_ITEM = 0xFF;
 
@@ -117,4 +117,4 @@ void Serializer::serializeString(const std::string& s)
 }
 
 
-}   // namespace Kernel
+}   // namespace libfive

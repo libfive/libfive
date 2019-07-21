@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/deserializer.hpp"
 #include "libfive/tree/serializer.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 Archive Deserializer::run()
 {
@@ -181,4 +181,4 @@ std::string Deserializer::deserializeString()
 }
 
 
-}   // namespace Kernel
+}   // namespace libfive

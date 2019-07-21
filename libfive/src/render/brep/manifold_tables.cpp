@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/manifold_tables.hpp"
 #include "libfive/render/brep/util.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 bool checkBitfield(uint32_t b) {

@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/brep.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 // Forward declaration
 class Evaluator;
@@ -64,4 +64,4 @@ protected:
 
 };
 
-}   // namespace Kernel
+}   // namespace libfive

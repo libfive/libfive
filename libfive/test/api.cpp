@@ -16,7 +16,7 @@ Copyright (C) 2017-2018  Matt Keeter
 #include "libfive/tree/tree.hpp"
 #include "libfive.h"
 
-using namespace Kernel;
+using namespace libfive;
 
 TEST_CASE("libfive_opcode_enum")
 {

@@ -9,6 +9,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "hybrid_tree.cpp"
 
-namespace Kernel {
+namespace libfive {
 template class XTree<2, HybridTree<2>, HybridLeaf<2>>;
-}   // namespace Kernel
+}   // namespace libfive

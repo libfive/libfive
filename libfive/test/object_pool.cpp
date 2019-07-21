@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 // to save on compile time, so we pull in the source here.
 #include "../src/render/brep/object_pool.cpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 struct Dummy {
     Dummy() { i = 1; }

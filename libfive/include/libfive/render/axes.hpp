@@ -8,7 +8,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
-namespace Kernel {
+namespace libfive {
 namespace Axis {
 
     /*  Enumerator to refer to spatial axes  */
@@ -43,4 +43,4 @@ namespace Axis {
     }
 
 }   // namespace Axis
-}   // namespace Kernel
+}   // namespace libfive

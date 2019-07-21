@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <boost/numeric/interval.hpp>
 
-namespace Kernel {
+namespace libfive {
 namespace Interval {
 
 typedef boost::numeric::interval<float,
@@ -30,10 +30,10 @@ inline State state(const Interval::I& i)
 }
 
 }   // namespace Interval
-}   // namespace Kernel
+}   // namespace libfive
 
-inline Kernel::Interval::I atan2(const Kernel::Interval::I& y,
-                                 const Kernel::Interval::I& x)
+inline libfive::Interval::I atan2(const libfive::Interval::I& y,
+                                  const libfive::Interval::I& x)
 {
     // There are 9 possible cases for interval atan2:
     // - Completely within a quadrant (4 cases)
@@ -44,17 +44,17 @@ inline Kernel::Interval::I atan2(const Kernel::Interval::I& y,
     {   // Right half of the plane
         if (y.lower() > 0)
         {   // 1st quadrant
-            return Kernel::Interval::I(atan2(y.lower(), x.upper()),
+            return libfive::Interval::I(atan2(y.lower(), x.upper()),
                                        atan2(y.upper(), x.lower()));
         }
         else if (y.upper() < 0)
         {   // 4th quadrant
-            return Kernel::Interval::I(atan2(y.lower(), x.lower()),
+            return libfive::Interval::I(atan2(y.lower(), x.lower()),
                                        atan2(y.upper(), x.upper()));
         }
         else
         {   // Crossing the X axis
-            return Kernel::Interval::I(atan2(y.lower(), x.lower()),
+            return libfive::Interval::I(atan2(y.lower(), x.lower()),
                                        atan2(y.upper(), x.lower()));
         }
     }
@@ -62,36 +62,36 @@ inline Kernel::Interval::I atan2(const Kernel::Interval::I& y,
     {   // Left half of the plane
         if (y.lower() > 0)
         {   // 2nd quadrant
-            return Kernel::Interval::I(atan2(y.upper(), x.upper()),
+            return libfive::Interval::I(atan2(y.upper(), x.upper()),
                                        atan2(y.lower(), x.lower()));
         }
         else if (y.upper() < 0)
         {   // 3rd quadrant
-            return Kernel::Interval::I(atan2(y.upper(), x.lower()),
+            return libfive::Interval::I(atan2(y.upper(), x.lower()),
                                        atan2(y.lower(), x.upper()));
         }
         else
         {   // Branch cut
-            return Kernel::Interval::I(-float(M_PI), float(M_PI));
+            return libfive::Interval::I(-float(M_PI), float(M_PI));
         }
     }
     else
     {  // Both sides of the plane
         if (y.lower() > 0)
         {   // Top half of the plane
-            return Kernel::Interval::I(atan2(y.lower(), x.upper()),
+            return libfive::Interval::I(atan2(y.lower(), x.upper()),
                                        atan2(y.lower(), x.lower()));
         }
         else if (y.upper() < 0)
         {
             // Bottom half of the plane
-            return Kernel::Interval::I(atan2(y.upper(), x.lower()),
+            return libfive::Interval::I(atan2(y.upper(), x.lower()),
                                        atan2(y.upper(), x.upper()));
         }
         else
         {
             // Contains the origin
-            return Kernel::Interval::I(-float(M_PI), float(M_PI));
+            return libfive::Interval::I(-float(M_PI), float(M_PI));
         }
     }
 }

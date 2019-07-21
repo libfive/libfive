@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/interval.hpp"
 #include "libfive/render/brep/region.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N, typename T, typename L>
 class XTree
@@ -90,4 +90,4 @@ protected:
     void done();
 };
 
-}   // namespace Kernel
+}   // namespace libfive

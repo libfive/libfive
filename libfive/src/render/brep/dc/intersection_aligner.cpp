@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_mesher.hpp"
 #include "libfive/render/axes.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 #if LIBFIVE_TRIANGLE_FAN_MESHING
 
@@ -87,4 +87,4 @@ template void IntersectionAligner::load<Axis::Z>(const std::array<const DCTree<3
 
 #endif
 
-}   // namespace Kernel
+}   // namespace libfive

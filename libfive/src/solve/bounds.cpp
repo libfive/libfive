@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/solve/bounds.hpp"
 #include "libfive/render/axes.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 Region<3> findBounds(const Tree& t)
 {
@@ -152,4 +152,4 @@ Region<3> findBounds(IntervalEvaluator* eval)
     return out;
 }
 
-}   // namespace Kernel
+}   // namespace libfive

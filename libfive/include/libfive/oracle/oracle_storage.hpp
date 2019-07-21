@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/oracle/oracle.hpp"
 #include "libfive/eval/eval_array_size.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <int N=LIBFIVE_EVAL_ARRAY_SIZE>
 class OracleStorage : public Oracle
@@ -64,4 +64,4 @@ protected:
     Eigen::Vector3f upper;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

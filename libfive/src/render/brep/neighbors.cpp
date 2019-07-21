@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/neighbors.hpp"
 #include "libfive/render/brep/neighbor_tables.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N, typename T, typename C>
 Neighbors<N, T, C>::Neighbors() {
@@ -35,5 +35,5 @@ C Neighbors<N, T, C>::push(uint8_t child,
     return out;
 }
 
-}   // namespace Kernel
+}   // namespace libfive
 

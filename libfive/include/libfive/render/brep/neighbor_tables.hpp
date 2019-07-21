@@ -15,7 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/indexes.hpp"
 #include "libfive/render/brep/util.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 class NeighborTables
@@ -279,4 +279,4 @@ protected:
 extern template class NeighborTables<2>;
 extern template class NeighborTables<3>;
 
-}   // namespace Kernel
+}   // namespace libfive

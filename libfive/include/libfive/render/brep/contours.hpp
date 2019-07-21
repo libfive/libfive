@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <atomic>
 
-namespace Kernel {
+namespace libfive {
 
 // Forward declarations
 template <unsigned N> class PerThreadBRep;
@@ -52,4 +52,4 @@ protected:
     Contours(Region<2> bbox) : bbox(bbox) {}
 };
 
-}   // namespace Kernel
+}   // namespace libfive

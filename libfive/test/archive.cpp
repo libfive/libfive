@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/oracle/oracle.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 class ST : public OracleClause
 {

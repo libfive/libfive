@@ -22,7 +22,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "util/shapes.hpp"
 #include "util/oracles.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 // Compares two BRep objects using Catch macros
 template <unsigned N>

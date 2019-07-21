@@ -89,7 +89,7 @@ signals:
     /*
      *  Emitted when all shapes are done rendering at their highest resolution
      */
-    void meshesReady(QList<const Kernel::Mesh*> shapes) const;
+    void meshesReady(QList<const libfive::Mesh*> shapes) const;
 
     /*
      *  Indicates when a drag operation begins and ends
@@ -100,7 +100,7 @@ signals:
     /*
      *  Emitted when a drag operation has changed variables
      */
-    void varsDragged(QMap<Kernel::Tree::Id, float> vs);
+    void varsDragged(QMap<libfive::Tree::Id, float> vs);
 
 protected slots:
     void update() { QOpenGLWidget::update(); }
@@ -111,7 +111,7 @@ protected:
     void paintGL() override;
     void resizeGL(int width, int height) override;
 
-    void setAlgorithm(Kernel::BRepAlgorithm alg);
+    void setAlgorithm(libfive::BRepAlgorithm alg);
 
     /*
      *  Converts from mouse event coordinates to model coordinates
@@ -158,7 +158,7 @@ protected:
     QList<Shape*> shapes;
     bool settings_enabled=true;
     Settings settings;
-    Kernel::BRepAlgorithm alg;
+    libfive::BRepAlgorithm alg;
 
     bool show_axes=true;
     bool show_bbox=false;
@@ -172,8 +172,8 @@ protected:
     /*  Data to handle direct modification of shapes */
     QVector3D drag_start;
     QVector3D drag_dir;
-    std::pair<std::unique_ptr<Kernel::JacobianEvaluator>,
-              std::shared_ptr<Kernel::Tape>> drag_eval;
+    std::pair<std::unique_ptr<libfive::JacobianEvaluator>,
+              std::shared_ptr<libfive::Tape>> drag_eval;
     Shape* drag_target=nullptr;
     bool drag_valid=false;
     Shape* hover_target=nullptr;

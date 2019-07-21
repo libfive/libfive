@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/discrete/voxels.hpp"
 #include "libfive/tree/tree.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 class Heightmap
 {
@@ -69,4 +69,4 @@ protected:
               const Voxels::View& v);
 
 };
-}   // namespace Kernel
+}   // namespace libfive

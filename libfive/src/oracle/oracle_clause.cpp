@@ -4,7 +4,7 @@
 #include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/oracle/transformed_oracle_clause.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 std::unique_ptr<const OracleClause> OracleClause::deserialize(
         const std::string& name, Deserializer& in)
@@ -52,4 +52,4 @@ std::unique_ptr<const OracleClause> OracleClause::remap(
         new TransformedOracleClause(self, X_, Y_, Z_));
 }
 
-}   // namespace Kernel
+}   // namespace libfive

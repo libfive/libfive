@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/tape.hpp"
 #include "libfive/eval/eval_jacobian.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 namespace Solver
 {
@@ -127,4 +127,4 @@ std::pair<float, Solution> findRoot(
 
 } // namespace Solver
 
-}   // namespace Kernel
+}   // namespace libfive

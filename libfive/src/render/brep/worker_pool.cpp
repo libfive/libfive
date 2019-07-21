@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/worker_pool.hpp"
 #include "libfive/eval/evaluator.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <typename T, typename Neighbors, unsigned N>
 Root<T> WorkerPool<T, Neighbors, N>::build(
@@ -234,4 +234,4 @@ void WorkerPool<T, Neighbors, N>::run(
     }
 }
 
-}   // namespace Kernel
+}   // namespace libfive

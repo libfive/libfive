@@ -20,7 +20,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/indexes.hpp"
 #include "libfive/render/brep/per_thread_brep.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 HybridMesher::HybridMesher(PerThreadBRep<3>& m, Tree t)
     : m(m), eval(new Evaluator(t)), owned(true)
@@ -519,5 +519,5 @@ template void HybridMesher::load<Axis::Y>(
 template void HybridMesher::load<Axis::Z>(
         const std::array<const HybridTree<3>*, 4>&);
 
-}   // namespace Kernel
+}   // namespace libfive
 

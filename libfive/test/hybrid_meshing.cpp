@@ -19,7 +19,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <set>
 
-using namespace Kernel;
+using namespace libfive;
 
 TEST_CASE("HybridPool::build (smoke test)")
 {

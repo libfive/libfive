@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "dc_tree.cpp"
 
-namespace Kernel {
+namespace libfive {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Specializations for octree
@@ -157,4 +157,4 @@ bool DCTree<3>::cornersAreManifold(const uint8_t corner_mask)
 template class DCTree<3>;
 template struct DCLeaf<3>;
 
-}   // namespace Kernel
+}   // namespace libfive

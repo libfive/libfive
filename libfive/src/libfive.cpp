@@ -24,7 +24,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/discrete/voxels.hpp"
 #include "libfive/render/discrete/heightmap.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 void libfive_contours_delete(libfive_contours* cs)
 {
@@ -411,7 +411,7 @@ bool libfive_tree_save_meshes(
     BRepSettings settings;
     settings.min_feature = 1/res;
     settings.max_err = pow(10, -quality);
-    std::list<const Kernel::Mesh*> meshes;
+    std::list<const libfive::Mesh*> meshes;
     for (unsigned i=0; trees[i] != nullptr; ++i){
         auto ms = Mesh::render(*trees[i], region, settings);
         meshes.push_back(ms.release());
@@ -451,10 +451,10 @@ libfive_pixels* libfive_tree_render_pixels(libfive_tree tree, libfive_region2 R,
 
 libfive_evaluator libfive_tree_evaluator(libfive_tree tree, libfive_vars vars)
 {
-    std::map<Kernel::Tree::Id, float> mapOfVars;
+    std::map<libfive::Tree::Id, float> mapOfVars;
     for (unsigned i = 0; i < vars.size; ++i)
     {
-        auto treeId = static_cast<Kernel::Tree::Id>(vars.vars[i]);
+        auto treeId = static_cast<libfive::Tree::Id>(vars.vars[i]);
         mapOfVars.insert(std::make_pair(treeId, vars.values[i]));
     }
     // TODO: For more than one worker
@@ -463,10 +463,10 @@ libfive_evaluator libfive_tree_evaluator(libfive_tree tree, libfive_vars vars)
 
 bool libfive_evaluator_update_vars(libfive_evaluator eval_tree, libfive_vars vars)
 {
-    std::map<Kernel::Tree::Id, float> mapOfVars;
+    std::map<libfive::Tree::Id, float> mapOfVars;
     for (unsigned i = 0; i < vars.size; ++i)
     {
-        auto treeId = static_cast<Kernel::Tree::Id>(vars.vars[i]);
+        auto treeId = static_cast<libfive::Tree::Id>(vars.vars[i]);
         mapOfVars.insert(std::make_pair(treeId, vars.values[i]));
     }
 

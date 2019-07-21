@@ -17,7 +17,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/indexes.hpp"
 #include "libfive/eval/interval.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 // Forward declaration
 template <unsigned N> class DCTree;
@@ -50,4 +50,4 @@ public:
 extern template class DCNeighbors<2>;
 extern template class DCNeighbors<3>;
 
-}   // namespace Kernel
+}   // namespace libfive

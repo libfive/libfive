@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/tree.hpp"
 #include "libfive/solve/solver.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 TEST_CASE("Solver::findRoot")
 {

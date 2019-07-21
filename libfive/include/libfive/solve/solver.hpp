@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/cache.hpp"
 #include "libfive/eval/eval_jacobian.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 class Tree;
 
@@ -42,4 +42,4 @@ namespace Solver
             unsigned gas=25000);
 
 }   // namespace Solver
-}   // namespace Kernel
+}   // namespace libfive

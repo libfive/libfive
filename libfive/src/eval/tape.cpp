@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/deck.hpp"
 #include "libfive/render/brep/region.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
                         KeepFunction fn, Type t)
@@ -207,4 +207,4 @@ Tape::Handle Tape::getBase(Tape::Handle tape, const Eigen::Vector3f& p)
     return tape;
 }
 
-}   // namespace Kernel
+}   // namespace libfive

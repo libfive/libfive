@@ -30,7 +30,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../xtree.cpp"
 
-namespace Kernel {
+namespace libfive {
 
 //  Here's our cutoff value (with a value set in the header)
 template <unsigned N> constexpr double SimplexTree<N>::EIGENVALUE_CUTOFF;
@@ -896,4 +896,4 @@ void SimplexTree<N>::releaseTo(Pool& object_pool) {
     object_pool.put(this);
 }
 
-}   // namespace Kernel
+}   // namespace libfive

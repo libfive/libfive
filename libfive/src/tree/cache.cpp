@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/cache.hpp"
 #include "libfive/eval/eval_array.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 // Static class variables
 std::recursive_mutex Cache::mut;
@@ -492,4 +492,4 @@ Cache::Node Cache::checkAffine(Opcode::Opcode op, Node a_, Node b_)
     return overlap ? fromAffine(a) : Node();
 }
 
-}   // namespace Kernel
+}   // namespace libfive

@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/discrete/voxels.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 Voxels::Voxels(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper,
                float res)
@@ -79,4 +79,4 @@ size_t Voxels::View::voxels() const
     return size.x() * size.y() * size.z();
 }
 
-}   // namespace Kernel
+}   // namespace libfive

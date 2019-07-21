@@ -8,7 +8,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <vector>
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 class ManifoldTables
@@ -37,4 +37,4 @@ protected:
 extern template class ManifoldTables<2>;
 extern template class ManifoldTables<3>;
 
-}   // namespace Kernel
+}   // namespace libfive

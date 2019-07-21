@@ -19,7 +19,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/oracle/oracle_context.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /* The oracle is an interface class for the use of externally defined oracles
  * as primitives in trees.

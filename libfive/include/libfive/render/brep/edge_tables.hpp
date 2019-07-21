@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/indexes.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /*  Returns the number of vertices in an N-dimensional cube */
 static constexpr int _verts(unsigned N)
@@ -72,4 +72,4 @@ protected:
 extern template class EdgeTables<2>;
 extern template class EdgeTables<3>;
 
-}   // namespace Kernel
+}   // namespace libfive

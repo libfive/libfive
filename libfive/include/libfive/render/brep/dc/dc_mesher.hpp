@@ -15,7 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #define LIBFIVE_TRIANGLE_FAN_MESHING 0
 #endif
 
-namespace Kernel {
+namespace libfive {
 
 /* Forward declarations */
 template <unsigned N> class PerThreadBRep;
@@ -84,4 +84,4 @@ protected:
     PerThreadBRep<3>& m;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

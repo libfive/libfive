@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "libfive/oracle/transformed_oracle.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 TransformedOracle::TransformedOracle(
         std::unique_ptr<Oracle> underlying, Tree X_, Tree Y_, Tree Z_)

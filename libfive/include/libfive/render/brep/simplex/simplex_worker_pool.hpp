@@ -14,10 +14,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/simplex/simplex_neighbors.hpp"
 #include "libfive/render/brep/worker_pool.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N>
 using SimplexWorkerPool = WorkerPool<SimplexTree<N>, SimplexNeighbors<N>, N>;
 
-}   // namespace Kernel
+}   // namespace libfive
 

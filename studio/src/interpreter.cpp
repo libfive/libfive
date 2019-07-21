@@ -216,8 +216,8 @@ void _Interpreter::eval()
         QList<Shape*> shapes;
 
         // Initialize variables and their textual positions
-        std::map<Kernel::Tree::Id, float> vars;
-        QMap<Kernel::Tree::Id, Editor::Range> var_pos;
+        std::map<libfive::Tree::Id, float> vars;
+        QMap<libfive::Tree::Id, Editor::Range> var_pos;
 
         {   // Walk through the global variable map
             auto vs = scm_c_eval_string(R"(
@@ -227,7 +227,7 @@ void _Interpreter::eval()
             for (auto v = vs; !scm_is_null(v); v = scm_cdr(v))
             {
                 auto data = scm_cdar(v);
-                auto id = static_cast<Kernel::Tree::Id>(
+                auto id = static_cast<libfive::Tree::Id>(
                         libfive_tree_id(scm_get_tree(scm_car(data))));
                 auto value = scm_to_double(scm_cadr(data));
                 vars[id] = value;

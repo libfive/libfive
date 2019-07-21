@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/xtree.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned N, typename T, typename L>
 XTree<N, T, L>::XTree()
@@ -99,4 +99,4 @@ void XTree<N, T, L>::done()
     }
 }
 
-}   // namespace Kernel
+}   // namespace libfive

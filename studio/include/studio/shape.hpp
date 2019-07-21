@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/settings.hpp"
 
-namespace Kernel { class Tape; /*  forward declaration */ }
+namespace libfive { class Tape; /*  forward declaration */ }
 
 #include "studio/settings.hpp"
 
@@ -39,7 +39,7 @@ class Shape : public QObject, QOpenGLFunctions
 {
     Q_OBJECT
 public:
-    Shape(Kernel::Tree t, std::map<Kernel::Tree::Id, float> vars);
+    Shape(libfive::Tree t, std::map<libfive::Tree::Id, float> vars);
 
     /*
      *  In destructor, wait for computation to finish
@@ -59,7 +59,7 @@ public:
     /*
      *  Kicks off a mesh rendering operation in a separate thread
      */
-    void startRender(Settings s, Kernel::BRepAlgorithm alg);
+    void startRender(Settings s, libfive::BRepAlgorithm alg);
 
     /*
      *  Checks whether the shape is done rendering
@@ -69,12 +69,12 @@ public:
     /*
      *  Returns the raw mesh object pointer
      */
-    const Kernel::Mesh* getMesh() const { return mesh.data(); }
+    const libfive::Mesh* getMesh() const { return mesh.data(); }
 
     /*
      *  Looks up the tree's ID
      */
-    Kernel::Tree::Id id() const { return tree.id(); }
+    libfive::Tree::Id id() const { return tree.id(); }
 
     /*
      *  Updates variables from another Shape
@@ -90,7 +90,7 @@ public:
      *
      *  Returns true if variable values have changed.
      */
-    bool updateVars(const std::map<Kernel::Tree::Id, float>& vs);
+    bool updateVars(const std::map<libfive::Tree::Id, float>& vs);
 
     /*
      *  Checks to see whether this shape has attached vars
@@ -104,19 +104,19 @@ public:
      *  Ownership is transfered, so the caller is responsible for deleting
      *  the evaluator (or storing it in an owned structure)
      */
-    std::pair<Kernel::JacobianEvaluator*, std::shared_ptr<Kernel::Tape>>
+    std::pair<libfive::JacobianEvaluator*, std::shared_ptr<libfive::Tape>>
     dragFrom(const QVector3D& pt);
 
     /*
      *  Returns another pointer to the solution map
      */
-    const std::map<Kernel::Tree::Id, float>& getVars() const
+    const std::map<libfive::Tree::Id, float>& getVars() const
     { return vars; }
 
     /*
      *  Looks up the shape's bounds
      */
-    const Kernel::Region<3>& getRenderBounds() const { return render_bounds; }
+    const libfive::Region<3>& getRenderBounds() const { return render_bounds; }
 
     /*
      *  Sets grabbed and redraws as necessary
@@ -151,9 +151,9 @@ protected:
     struct RenderSettings {
         Settings settings;
         int div;
-        Kernel::BRepAlgorithm alg;
+        libfive::BRepAlgorithm alg;
     };
-    typedef QPair<Kernel::Mesh*, Kernel::Region<3>> BoundedMesh;
+    typedef QPair<libfive::Mesh*,libfive::Region<3>> BoundedMesh;
 
     void startRender(RenderSettings s);
     BoundedMesh renderMesh(RenderSettings s);
@@ -163,16 +163,16 @@ protected:
 
     QFuture<BoundedMesh> mesh_future;
     QFutureWatcher<BoundedMesh> mesh_watcher;
-    Kernel::BRepSettings mesh_settings;
+    libfive::BRepSettings mesh_settings;
 
-    Kernel::Tree tree;
-    std::map<Kernel::Tree::Id, float> vars;
-    std::vector<Kernel::Evaluator,
-                Eigen::aligned_allocator<Kernel::Evaluator>> es;
+    libfive::Tree tree;
+    std::map<libfive::Tree::Id, float> vars;
+    std::vector<libfive::Evaluator,
+                Eigen::aligned_allocator<libfive::Evaluator>> es;
 
-    QScopedPointer<Kernel::Mesh> mesh;
-    Kernel::Region<3> render_bounds;
-    Kernel::Region<3> mesh_bounds;
+    QScopedPointer<libfive::Mesh> mesh;
+    libfive::Region<3> render_bounds;
+    libfive::Region<3> mesh_bounds;
     RenderSettings next;
 
     /*  running marks not just whether the future has finished, but whether

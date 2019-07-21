@@ -10,8 +10,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../neighbors.cpp"
 #include "simplex_neighbors.cpp"
 
-namespace Kernel {
+namespace libfive {
 template class Neighbors<2, SimplexTree<2>, SimplexNeighbors<2>>;
 template class SimplexNeighbors<2>;
-}   // namespace Kernel
+}   // namespace libfive
 

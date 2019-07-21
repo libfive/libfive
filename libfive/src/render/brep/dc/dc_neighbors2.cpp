@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../neighbors.cpp"
 #include "dc_neighbors.cpp"
 
-namespace Kernel {
+namespace libfive {
 template class Neighbors<2, DCTree<2>, DCNeighbors<2>>;
 template class DCNeighbors<2>;
-}   // namespace Kernel
+}   // namespace libfive

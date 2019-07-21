@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/util.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <unsigned int N>
 class Region
@@ -301,4 +301,4 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-}   // namespace Kernel
+}   // namespace libfive

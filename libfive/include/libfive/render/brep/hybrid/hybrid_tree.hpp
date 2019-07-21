@@ -18,7 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/simplex/surface_edge_map.hpp"
 #include "libfive/render/brep/simplex/qef.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /* Forward declaration */
 template <unsigned N> class Region;
@@ -261,4 +261,4 @@ protected:
 extern template class HybridTree<3>;
 extern template class ObjectPool<HybridTree<3>, HybridLeaf<3>>;
 
-}   // namespace Kernel
+}   // namespace libfive

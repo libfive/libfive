@@ -19,7 +19,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/discrete/heightmap.hpp"
 #include "libfive/eval/tape.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -401,4 +401,4 @@ bool Heightmap::savePNG(std::string filename)
     return true;
 }
 
-}   // namespace Kernel
+}   // namespace libfive

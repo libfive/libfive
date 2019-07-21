@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <atomic>
 #include <memory>
 
-namespace Kernel {
+namespace libfive {
 
 // Forward declarations
 class ProgressHandler;

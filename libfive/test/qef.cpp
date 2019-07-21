@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "util/shapes.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 TEST_CASE("QEF::solve")
 {

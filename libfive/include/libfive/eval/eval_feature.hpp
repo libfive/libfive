@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/feature.hpp"
 #include "libfive/render/brep/region.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /*
  *  FeatureEvaluator is an enhanced version of DerivEvaluator.
@@ -99,4 +99,4 @@ protected:
     Eigen::Array<unsigned, 1, Eigen::Dynamic> filled;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

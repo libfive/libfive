@@ -279,7 +279,7 @@ void Editor::onDragEnd()
     script->setFocus();
 }
 
-void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
+void Editor::setVarValues(QMap<libfive::Tree::Id, float> vs)
 {
     // Temporarily enable the script so that we can edit the variable value
     script->setEnabled(true);
@@ -308,13 +308,13 @@ void Editor::setVarValues(QMap<Kernel::Tree::Id, float> vs)
     // Build an ordered set so that we can walk through variables
     // in sorted line / column order, making offsets as textual positions
     // shift due to earlier variables in the same line
-    auto comp = [&](Kernel::Tree::Id a, Kernel::Tree::Id b){
+    auto comp = [&](libfive::Tree::Id a, libfive::Tree::Id b){
         auto& pa = vars[a];
         auto& pb = vars[b];
         return (pa.start_row != pb.start_row) ? (pa.start_row < pb.start_row)
                                               : (pa.start_col < pb.start_col);
     };
-    std::set<Kernel::Tree::Id, decltype(comp)> ordered(comp);
+    std::set<libfive::Tree::Id, decltype(comp)> ordered(comp);
     for (auto v=vs.begin(); v != vs.end(); ++v)
     {
         ordered.insert(v.key());

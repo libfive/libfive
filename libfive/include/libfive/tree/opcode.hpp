@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <cstdlib>
 #include <string>
 
-namespace Kernel {
+namespace libfive {
 
 namespace Opcode
 {
@@ -98,4 +98,4 @@ bool isCommutative(Opcode op);
 }
 
 
-}   // namespace Kernel
+}   // namespace libfive

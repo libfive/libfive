@@ -157,7 +157,7 @@ void libfive_pixels_delete(libfive_pixels* ps);
 
 /*
  *  Takes a string description of an op-code ('min', 'max', etc) and
- *  returns the Kernel::Opcode value, or -1 if no such value exists.
+ *  returns the libfive::Opcode value, or -1 if no such value exists.
  */
 int libfive_opcode_enum(const char* op);
 
@@ -182,10 +182,10 @@ void libfive_vars_delete(libfive_vars* j);
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef __cplusplus
-typedef Kernel::Tree* libfive_tree;
-typedef Kernel::Tree::Id libfive_id;
-typedef Kernel::Archive* libfive_archive;
-typedef Kernel::Evaluator *libfive_evaluator;
+typedef libfive::Tree* libfive_tree;
+typedef libfive::Tree::Id libfive_id;
+typedef libfive::Archive* libfive_archive;
+typedef libfive::Evaluator *libfive_evaluator;
 #else
 typedef struct libfive_tree_ libfive_tree_;
 typedef struct libfive_tree_* libfive_tree;

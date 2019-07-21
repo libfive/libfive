@@ -18,7 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/axes.hpp"
 #include "util/shapes.hpp"
 
-using namespace Kernel;
+using namespace libfive;
 
 TEST_CASE("DCTree<2>::vert")
 {

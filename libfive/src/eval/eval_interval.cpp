@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/tape.hpp"
 #include "libfive/render/brep/region.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 IntervalEvaluator::IntervalEvaluator(const Tree& root)
     : IntervalEvaluator(std::make_shared<Deck>(root))
@@ -476,4 +476,4 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #undef nCond
 }
 
-}   // namespace Kernel
+}   // namespace libfive

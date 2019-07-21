@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/eval/eval_feature.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 class JacobianEvaluator : public FeatureEvaluator
 {
@@ -38,4 +38,4 @@ protected:
     Eigen::Array<float, Eigen::Dynamic, 1> j;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

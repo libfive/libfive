@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/per_thread_brep.hpp"
 #include "libfive/render/brep/dc/dc_tree.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <Axis::Axis A>
 std::pair<int, bool> DCMesher::getIndexAndSign(
@@ -482,4 +482,4 @@ template void DCMesher::load<Axis::X>(const std::array<const DCTree<3>*, 4>&);
 template void DCMesher::load<Axis::Y>(const std::array<const DCTree<3>*, 4>&);
 template void DCMesher::load<Axis::Z>(const std::array<const DCTree<3>*, 4>&);
 
-}   // namespace Kernel
+}   // namespace libfive

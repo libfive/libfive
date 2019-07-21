@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <boost/container/small_vector.hpp>
 #include <Eigen/Eigen>
 
-namespace Kernel
+namespace libfive
 {
 
 /*  A Feature contains a axis-wise partial derivatives (in d), and a set
@@ -74,4 +74,4 @@ protected:
     boost::container::small_vector<Eigen::Vector3f, 4> epsilons;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

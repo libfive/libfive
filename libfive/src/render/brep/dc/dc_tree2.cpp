@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "dc_tree.cpp"
 #include "../object_pool.cpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <>
 bool DCTree<2>::cornersAreManifold(const uint8_t corner_mask)
@@ -51,4 +51,4 @@ bool DCTree<2>::leafsAreManifold(
 template class DCTree<2>;
 template struct DCLeaf<2>;
 
-}   // namespace Kernel
+}   // namespace libfive

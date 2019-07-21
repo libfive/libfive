@@ -10,6 +10,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../worker_pool.cpp"
 #include "libfive/render/brep/hybrid/hybrid_worker_pool.hpp"
 
-namespace Kernel {
+namespace libfive {
 template class WorkerPool<HybridTree<3>, HybridNeighbors<3>, 3>;
 }

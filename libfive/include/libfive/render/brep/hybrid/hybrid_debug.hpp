@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/tape.hpp"
 #include "libfive/tree/tree.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 // Forward declarations
 template <unsigned N> class HybridTree;
@@ -71,5 +71,5 @@ protected:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-}   // namespace Kernel
+}   // namespace libfive
 

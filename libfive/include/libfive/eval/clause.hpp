@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/opcode.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 /*
  *  A clause is used in an Evaluator to evaluate a tree
@@ -34,4 +34,4 @@ struct Clause
     Id const b;
 };
 
-}   // namespace Kernel
+}   // namespace libfive

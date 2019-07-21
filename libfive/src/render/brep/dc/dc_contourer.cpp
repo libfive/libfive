@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/per_thread_brep.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 template <Axis::Axis A>
 void DCContourer::load(const std::array<const DCTree<2>*, 2>& ts)
@@ -109,4 +109,4 @@ template void DCContourer::load<Axis::X>(const std::array<const DCTree<2>*, 2>&)
 template void DCContourer::load<Axis::Y>(const std::array<const DCTree<2>*, 2>&);
 template void DCContourer::load<Axis::Z>(const std::array<const DCTree<2>*, 2>&);
 
-}   // namespace Kernel
+}   // namespace libfive

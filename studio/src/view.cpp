@@ -36,7 +36,7 @@ View::View(QWidget* parent)
     connect(this, &View::startRender, &busy,
             [&](Settings){ if (shapes.size()) busy.show(); });
     connect(this, &View::meshesReady, &busy,
-            [&](QList<const Kernel::Mesh*>){ busy.hide(); });
+            [&](QList<const libfive::Mesh*>){ busy.hide(); });
     connect(&camera, &Camera::changed, this, &View::update);
 
     connect(&camera, &Camera::animDone, this, &View::redrawPicker);
@@ -59,7 +59,7 @@ View::~View()
 void View::setShapes(QList<Shape*> new_shapes)
 {
     // Pack tree IDs into a pair of sets for fast checking
-    std::map<Kernel::Tree::Id, Shape*> new_shapes_map;
+    std::map<libfive::Tree::Id, Shape*> new_shapes_map;
     for (auto& s : new_shapes)
     {
         new_shapes_map.insert({s->id(), s});
@@ -381,11 +381,11 @@ void View::mouseMoveEvent(QMouseEvent* event)
             drag_dir * QVector3D::dotProduct(cursor_pos - drag_start, n2) /
             QVector3D::dotProduct(drag_dir, n2);
 
-        auto sol = Kernel::Solver::findRoot(
+        auto sol = libfive::Solver::findRoot(
                 *drag_eval.first, drag_eval.second,
                 drag_target->getVars(),
                 {cursor_pos.x(), cursor_pos.y(), cursor_pos.z()});
-        emit(varsDragged(QMap<Kernel::Tree::Id, float>(sol.second)));
+        emit(varsDragged(QMap<libfive::Tree::Id, float>(sol.second)));
 
         drag_valid = fabs(sol.first) < 1e-6;
         bool changed = false;
@@ -542,20 +542,20 @@ void View::showBBox(bool b)
 
 void View::toDCMeshing()
 {
-    setAlgorithm(Kernel::DUAL_CONTOURING);
+    setAlgorithm(libfive::DUAL_CONTOURING);
 }
 
 void View::toIsoMeshing()
 {
-    setAlgorithm(Kernel::ISO_SIMPLEX);
+    setAlgorithm(libfive::ISO_SIMPLEX);
 }
 
 void View::toHybridMeshing()
 {
-    setAlgorithm(Kernel::HYBRID);
+    setAlgorithm(libfive::HYBRID);
 }
 
-void View::setAlgorithm(Kernel::BRepAlgorithm a)
+void View::setAlgorithm(libfive::BRepAlgorithm a)
 {
     if (a != alg) {
         alg = a;
@@ -568,7 +568,7 @@ void View::setAlgorithm(Kernel::BRepAlgorithm a)
 void View::checkMeshes() const
 {
     bool all_done = true;
-    QList<const Kernel::Mesh*> meshes;
+    QList<const libfive::Mesh*> meshes;
     for (auto s : shapes)
     {
         if (s->done())

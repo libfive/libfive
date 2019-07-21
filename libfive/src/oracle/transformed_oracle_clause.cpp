@@ -13,7 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/serializer.hpp"
 #include "libfive/tree/deserializer.hpp"
 
-namespace Kernel {
+namespace libfive {
 
 REGISTER_ORACLE_CLAUSE(TransformedOracleClause)
 
@@ -43,7 +43,7 @@ TransformedOracleClause::remap(Tree self, Tree X_, Tree Y_, Tree Z_) const
             this->Z_.remap(X_, Y_, Z_)));
 }
 
-std::vector<Kernel::Tree> TransformedOracleClause::dependencies() const
+std::vector<libfive::Tree> TransformedOracleClause::dependencies() const
 {
     return { underlying, X_, Y_, Z_ };
 }
@@ -80,4 +80,4 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::deserialize(
             new TransformedOracleClause(underlying, X_, Y_, Z_));
 }
 
-} //namespace Kernel
+} //namespace libfive
