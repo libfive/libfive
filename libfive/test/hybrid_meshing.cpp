@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "catch.hpp"
 
-#include "libfive/render/brep/hybrid/hybrid_pool.hpp"
+#include "libfive/render/brep/hybrid/hybrid_worker_pool.hpp"
 #include "libfive/render/brep/hybrid/hybrid_mesher.hpp"
 #include "libfive/render/brep/hybrid/hybrid_debug.hpp"
 #include "libfive/render/brep/dual.hpp"
@@ -32,7 +32,7 @@ TEST_CASE("HybridPool::build (smoke test)")
         auto c = circle(1);
         auto r = Region<2>({-1, -1}, {1, 1});
 
-        auto t = HybridTreePool<2>::build(c, r, settings);
+        auto t = HybridWorkerPool<2>::build(c, r, settings);
         REQUIRE(t.get() != nullptr);
     }
 
@@ -41,7 +41,7 @@ TEST_CASE("HybridPool::build (smoke test)")
         auto c = sphere(1);
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
-        auto t = HybridTreePool<3>::build(c, r, settings);
+        auto t = HybridWorkerPool<3>::build(c, r, settings);
         REQUIRE(t.get() != nullptr);
     }
 }
@@ -56,7 +56,7 @@ TEST_CASE("HybridTree::assignIndices")
         auto c = circle(1);
         auto r = Region<2>({-1, -1}, {1, 1});
 
-        auto t = HybridTreePool<2>::build(c, r, settings);
+        auto t = HybridWorkerPool<2>::build(c, r, settings);
         REQUIRE(t->isBranch());
         for (auto& c : t->children) {
             REQUIRE(!c.load()->isBranch());
@@ -82,7 +82,7 @@ TEST_CASE("HybridTree::assignIndices")
         auto c = sphere(1);
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
-        auto t = HybridTreePool<3>::build(c, r, settings);
+        auto t = HybridWorkerPool<3>::build(c, r, settings);
         REQUIRE(t->isBranch());
         for (auto& c : t->children) {
             REQUIRE(!c.load()->isBranch());
@@ -116,7 +116,7 @@ TEST_CASE("HybridMesher<3>: smoke test")
         settings.min_feature = 5;
         settings.workers = 1;
 
-        auto t = HybridTreePool<3>::build(c, r, settings);
+        auto t = HybridWorkerPool<3>::build(c, r, settings);
         t->assignIndices(settings);
 
         settings.workers = 8;
@@ -131,7 +131,7 @@ TEST_CASE("HybridMesher<3>: smoke test")
         settings.min_feature = 0.1;
         settings.workers = 1;
 
-        auto t = HybridTreePool<3>::build(c, r, settings);
+        auto t = HybridWorkerPool<3>::build(c, r, settings);
         t->assignIndices(settings);
 
         settings.workers = 8;
@@ -149,7 +149,7 @@ TEST_CASE("HybridMesher<3>: mesh manifoldness")
     BRepSettings settings;
     settings.min_feature = 0.5;
     settings.workers = 1;
-    auto t = HybridTreePool<3>::build(c, r, settings);
+    auto t = HybridWorkerPool<3>::build(c, r, settings);
     t->assignIndices(settings);
 
     settings.workers = 8;
@@ -175,7 +175,7 @@ TEST_CASE("HybridTree<3>: edge vertex placement")
     BRepSettings settings;
     settings.min_feature = 5;
     settings.workers = 1;
-    auto t = HybridTreePool<3>::build(c, r, settings);
+    auto t = HybridWorkerPool<3>::build(c, r, settings);
 
     CAPTURE(t->leaf->vertex_pos.col(18).transpose());
     REQUIRE((t->leaf->vertex_pos.col(18) - Eigen::Vector3d(-1, -1, 0.8)).norm() < 0.01);
@@ -201,7 +201,7 @@ TEST_CASE("HybridTree<2>: subspace vertex placement")
         BRepSettings settings;
         settings.min_feature = 5;
         settings.workers = 1;
-        auto t = HybridTreePool<2>::build(c, r, settings);
+        auto t = HybridWorkerPool<2>::build(c, r, settings);
 
         CAPTURE(t->leaf->vertex_pos.col(8));
         REQUIRE((t->leaf->vertex_pos.col(8) - Eigen::Vector2d(-0.9, 0.7)).norm() < 0.01);
@@ -226,7 +226,7 @@ TEST_CASE("HybridTree<2>: subspace vertex placement")
         BRepSettings settings;
         settings.min_feature = 5;
         settings.workers = 1;
-        auto t = HybridTreePool<2>::build(c, r, settings);
+        auto t = HybridWorkerPool<2>::build(c, r, settings);
 
         CAPTURE(t->leaf->vertex_pos.col(8));
         REQUIRE((t->leaf->vertex_pos.col(8) - Eigen::Vector2d(-0.6, -0.8)).norm() < 0.01);
@@ -263,7 +263,7 @@ TEST_CASE("HybridMesher<3>: cylinder meshing", "[!mayfail]")
     BRepSettings settings;
     settings.min_feature = 0.5;
     settings.workers = 1;
-    auto t = HybridTreePool<3>::build(c, r, settings);
+    auto t = HybridWorkerPool<3>::build(c, r, settings);
 
     t->assignIndices(settings);
     settings.workers = 8;
@@ -297,7 +297,7 @@ TEST_CASE("HybridMesher<3>: cube meshing")
     BRepSettings settings;
     settings.min_feature = 0.5;
     settings.workers = 1;
-    auto t = HybridTreePool<3>::build(c, r, settings);
+    auto t = HybridWorkerPool<3>::build(c, r, settings);
     t->assignIndices(settings);
 
     settings.workers = 8;
@@ -327,7 +327,7 @@ TEST_CASE("HybridMesher<3>: another rotated cube meshing")
     BRepSettings settings;
     settings.min_feature = 1;
     settings.workers = 1;
-    auto t = HybridTreePool<3>::build(c, r, settings);
+    auto t = HybridWorkerPool<3>::build(c, r, settings);
     t->assignIndices(settings);
 
     settings.workers = 8;
@@ -350,7 +350,7 @@ TEST_CASE("HybridMesher<3>: cylinder cutout meshing")
     BRepSettings settings;
     settings.min_feature = 0.125;
     settings.workers = 1;
-    auto t = HybridTreePool<3>::build(c, r, settings);
+    auto t = HybridWorkerPool<3>::build(c, r, settings);
     t->assignIndices(settings);
 
     settings.workers = 8;
@@ -371,7 +371,7 @@ TEST_CASE("HybridMesher<3>: rotated cylinder meshing")
     BRepSettings settings;
     settings.min_feature = 0.5;
     settings.workers = 1;
-    auto t = HybridTreePool<3>::build(c, r, settings);
+    auto t = HybridWorkerPool<3>::build(c, r, settings);
     t->assignIndices(settings);
 
     settings.workers = 8;
@@ -396,7 +396,7 @@ TEST_CASE("HybridMesher<3>: rotated cube-sphere difference")
     BRepSettings settings;
     settings.min_feature = 0.25;
     settings.workers = 1;
-    auto t = HybridTreePool<3>::build(c, r, settings);
+    auto t = HybridWorkerPool<3>::build(c, r, settings);
     t->assignIndices(settings);
 
     settings.workers = 8;

@@ -8,6 +8,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "dc_tree.cpp"
+#include "../object_pool.cpp"
 
 namespace Kernel {
 
@@ -46,7 +47,8 @@ bool DCTree<2>::leafsAreManifold(
     return edges_safe && faces_safe;
 }
 
-// Explicit initialization of template
+// Explicit initialization of templates
 template class DCTree<2>;
+template struct DCLeaf<2>;
 
 }   // namespace Kernel

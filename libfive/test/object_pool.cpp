@@ -12,6 +12,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/default_new_delete.hpp"
 
+// Though the object pool is templated, it requires explicit instantiation
+// to save on compile time, so we pull in the source here.
+#include "../src/render/brep/object_pool.cpp"
+
 using namespace Kernel;
 
 struct Dummy {

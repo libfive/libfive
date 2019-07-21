@@ -93,7 +93,7 @@ struct Unroller
      *  return the maximum error from the QEF solver.
      */
     double operator()(
-            typename SimplexTree<BaseDimension>::Leaf& leaf,
+            SimplexLeaf<BaseDimension>& leaf,
             const std::array<SimplexLeafSubspace<BaseDimension>*,
                        ipow(3, BaseDimension)>& leaf_sub,
             const std::array<bool, ipow(3, BaseDimension)>& already_solved,
@@ -175,7 +175,7 @@ struct Unroller
 template <unsigned BaseDimension>
 struct Unroller<BaseDimension, -1>
 {
-    double operator()(typename SimplexTree<BaseDimension>::Leaf&,
+    double operator()(SimplexLeaf<BaseDimension>&,
                       const std::array<SimplexLeafSubspace<BaseDimension>*,
                                  ipow(3, BaseDimension)>&,
                       const std::array<bool, ipow(3, BaseDimension)>&,

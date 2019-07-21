@@ -94,8 +94,7 @@ template <unsigned N>
 class DCTree : public XTree<N, DCTree<N>, DCLeaf<N>>
 {
 public:
-    using Leaf = DCLeaf<N>;
-    using Pool = ObjectPool<DCTree<N>, Leaf>;
+    using Pool = ObjectPool<DCTree<N>, DCLeaf<N>>;
 
     /*
      *  Simple constructor
@@ -293,5 +292,7 @@ template <> bool DCTree<3>::leafsAreManifold(
 
 extern template class DCTree<2>;
 extern template class DCTree<3>;
+extern template class ObjectPool<DCTree<2>, DCLeaf<2>>;
+extern template class ObjectPool<DCTree<3>, DCLeaf<3>>;
 
 }   // namespace Kernel

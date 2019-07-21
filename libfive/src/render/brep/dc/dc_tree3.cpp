@@ -155,5 +155,6 @@ bool DCTree<3>::cornersAreManifold(const uint8_t corner_mask)
 
 // Explicit initialization of template
 template class DCTree<3>;
+template struct DCLeaf<3>;
 
 }   // namespace Kernel

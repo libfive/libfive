@@ -19,18 +19,18 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/settings.hpp"
 
 // Dual contouring
-#include "libfive/render/brep/dc/dc_pool.hpp"
+#include "libfive/render/brep/dc/dc_worker_pool.hpp"
 #include "libfive/render/brep/dc/dc_mesher.hpp"
 #if LIBFIVE_TRIANGLE_FAN_MESHING
 #include "libfive/render/brep/dc/intersection_aligner.hpp"
 #endif
 
 // Simplex meshing
-#include "libfive/render/brep/simplex/simplex_pool.hpp"
+#include "libfive/render/brep/simplex/simplex_worker_pool.hpp"
 #include "libfive/render/brep/simplex/simplex_mesher.hpp"
 
 // Hybrid meshing
-#include "libfive/render/brep/hybrid/hybrid_pool.hpp"
+#include "libfive/render/brep/hybrid/hybrid_worker_pool.hpp"
 #include "libfive/render/brep/hybrid/hybrid_mesher.hpp"
 
 namespace Kernel {
@@ -58,7 +58,7 @@ std::unique_ptr<Mesh> Mesh::render(
             // Pool::build, Dual::walk, t.reset
             settings.progress_handler->start({1, 1, 1});
         }
-        auto t = DCPool<3>::build(es, r, settings);
+        auto t = DCWorkerPool<3>::build(es, r, settings);
 
         if (settings.cancel.load() || t.get() == nullptr) {
             if (settings.progress_handler) {
@@ -85,7 +85,7 @@ std::unique_ptr<Mesh> Mesh::render(
             // Pool::build, Dual::walk, t->assignIndices, t.reset
             settings.progress_handler->start({1, 1, 1});
         }
-        auto t = SimplexTreePool<3>::build(es, r, settings);
+        auto t = SimplexWorkerPool<3>::build(es, r, settings);
 
         if (settings.cancel.load() || t.get() == nullptr) {
             if (settings.progress_handler) {
@@ -108,7 +108,7 @@ std::unique_ptr<Mesh> Mesh::render(
             // Pool::build, Dual::walk, t->assignIndices, t.reset
             settings.progress_handler->start({1, 1, 1});
         }
-        auto t = HybridTreePool<3>::build(es, r, settings);
+        auto t = HybridWorkerPool<3>::build(es, r, settings);
 
         if (settings.cancel.load() || t.get() == nullptr) {
             if (settings.progress_handler) {

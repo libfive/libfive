@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/evaluator.hpp"
 
 #include "libfive/render/brep/dc/dc_tree.hpp"
-#include "libfive/render/brep/dc/dc_pool.hpp"
+#include "libfive/render/brep/dc/dc_worker_pool.hpp"
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/settings.hpp"
 
@@ -28,7 +28,7 @@ public:
     std::vector<float> ps;
 };
 
-TEST_CASE("DCPool::build (progress callback)")
+TEST_CASE("DCWorkerPool::build (progress callback)")
 {
     Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
@@ -41,7 +41,7 @@ TEST_CASE("DCPool::build (progress callback)")
         handler.start({1});
         settings.progress_handler = &handler;
 
-        DCPool<3>::build(sponge, r, settings);
+        DCWorkerPool<3>::build(sponge, r, settings);
         handler.finish();
 
         CAPTURE(handler.ps.size());
