@@ -28,7 +28,7 @@ FeatureEvaluator::FeatureEvaluator(std::shared_ptr<Deck> d)
 FeatureEvaluator::FeatureEvaluator(
         std::shared_ptr<Deck> t, const std::map<Tree::Id, float>& vars)
     : BaseEvaluator(t, vars), DerivArrayEvaluator(t, vars),
-      f(1, deck->num_clauses + 1)
+      f(1, deck->num_clauses + 1), filled(1, deck->num_clauses + 1)
 {
     // Load the default derivatives
     f(deck->X).push_back(Feature(Eigen::Vector3f(1, 0, 0)));
@@ -67,11 +67,8 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
 
     // Otherwise, we need to handle the zero-crossing case!
 
-    // We have just done a single-point evaluation, but could be using
-    // every slot in the results array, so we store them here.
-    for (long r=0; r < v.rows(); ++r) {
-        v.row(r) = v(r, 0);
-    }
+    // Mark that only the first slot is valid
+    filled = 1;
 
     // First, we evaluate and extract all of the features, saving
     // time by re-using the shortened tape from valueAndPush
@@ -116,12 +113,7 @@ const boost::container::small_vector<Feature, 4>&
 {
     // Load the location into the results slot and evaluate point-wise
     auto handle = valueAndPush(p, tape);
-
-    // We have just done a single-point evaluation, but could be using
-    // every slot in the results array, so we store them here.
-    for (long r=0; r < v.rows(); ++r) {
-        v.row(r) = v(r, 0);
-    }
+    filled = 1;
 
     // Evaluate feature-wise
     deck->bindOracles(*handle.second);
@@ -254,6 +246,14 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         unsigned count = 0;
         auto run = [&]() {
             if (count) {
+                // Make sure that the values arrays are correctly filled up,
+                // because we'll be doing an array-wise evaluation, but
+                // previous only solved for the value in slot 0 (so filled(a)
+                // is 1 to start).
+                if (count > filled(a)) {
+                    v.row(a).leftCols(count)  = v(a, 0);
+                    filled(a) = count;
+                }
                 setCount(count);
                 DerivArrayEvaluator::operator()(op, id, a, b);
                 for (unsigned i=0; i < count; ++i) {
@@ -274,6 +274,15 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         unsigned count = 0;
         auto run = [&]() {
             if (count) {
+                // Same logic as above
+                if (count > filled(a)) {
+                    v.row(a).leftCols(count)  = v(a, 0);
+                    filled(a) = count;
+                }
+                if (count > filled(b)) {
+                    v.row(b).leftCols(count)  = v(b, 0);
+                    filled(b) = count;
+                }
                 DerivArrayEvaluator::operator()(op, id, a, b);
                 for (unsigned i=0; i < count; ++i) {
                     of.push_back(Feature(d(id).col(i), _ads[i / _bds.size()],

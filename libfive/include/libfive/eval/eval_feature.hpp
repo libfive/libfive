@@ -87,8 +87,16 @@ protected:
     void operator()(Opcode::Opcode op, Clause::Id id,
                     Clause::Id a, Clause::Id b);
 
+    /*  Raw feature data */
     Eigen::Array<boost::container::small_vector<Feature, 4>,
                  1, Eigen::Dynamic> f;
+
+    /*  filled(id) represents how many slots of v.row(id) have been filled
+     *  with v(id, 0).  This is needed because we do point-wise evaluation
+     *  on a single slot (to get values), then need to copy that value into
+     *  multiple slots to have the correct value for array-wise derivative
+     *  evaluations. */
+    Eigen::Array<unsigned, 1, Eigen::Dynamic> filled;
 };
 
 }   // namespace Kernel
