@@ -140,7 +140,10 @@ void WorkerPool<T, Neighbors, N>::run(
         const bool can_subdivide = region.level > 0;
         if (can_subdivide)
         {
-            tape = t->evalInterval(eval, task.tape, region, object_pool);
+            auto next_tape = t->evalInterval(eval, task.tape, region, object_pool);
+            if (next_tape != nullptr) {
+                tape = next_tape;
+            }
 
             // If this Tree is ambiguous, then push the children to the stack
             // and keep going (because all the useful work will be done
