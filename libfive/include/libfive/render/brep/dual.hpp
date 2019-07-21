@@ -361,7 +361,7 @@ void Dual<N>::run(V& v,
 
             // Report trees as completed
             if (settings.progress_handler) {
-                settings.progress_handler->tick(8);
+                settings.progress_handler->tick();
             }
         }
 
