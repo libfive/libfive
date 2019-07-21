@@ -13,6 +13,5 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Kernel {
 template class HybridTree<3>;
 template struct HybridLeaf<3>;
-template class ObjectPool<HybridTree<3>, HybridTree<3>::Leaf>;
 }   // namespace Kernel
 

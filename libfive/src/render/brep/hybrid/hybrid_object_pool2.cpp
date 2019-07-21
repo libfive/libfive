@@ -7,9 +7,11 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#include "../worker_pool.cpp"
-#include "libfive/render/brep/hybrid/hybrid_pool.hpp"
+#include "libfive/render/brep/hybrid/hybrid_tree.hpp"
+#include "../object_pool.cpp"
 
 namespace Kernel {
-template class WorkerPool<HybridTree<3>, HybridNeighbors<3>, 3>;
-}
+template class ObjectPool<HybridTree<2>, HybridLeaf<2>>;
+template HybridTree<2>* ObjectPool<HybridTree<2>, HybridLeaf<2>>::get(
+        Kernel::HybridTree<2>*, unsigned, Region<2>);
+}   // namespace Kernel

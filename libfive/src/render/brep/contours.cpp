@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/contours.hpp"
 #include "libfive/render/brep/brep.hpp"
-#include "libfive/render/brep/dc/dc_pool.hpp"
+#include "libfive/render/brep/dc/dc_worker_pool.hpp"
 #include "libfive/render/brep/dc/dc_contourer.hpp"
 #include "libfive/render/brep/dual.hpp"
 
@@ -34,7 +34,7 @@ std::unique_ptr<Contours> Contours::render(
     }
 
     // Create the quadtree on the scaffold
-    auto xtree = DCPool<2>::build(es.data(), r, settings);
+    auto xtree = DCWorkerPool<2>::build(es.data(), r, settings);
 
     // Abort early if the cancellation flag is set
     if (settings.cancel == true) {

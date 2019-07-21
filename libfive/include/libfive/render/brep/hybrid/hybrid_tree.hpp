@@ -87,7 +87,6 @@ template <unsigned N>
 class HybridTree : public XTree<N, HybridTree<N>, HybridLeaf<N>>
 {
 public:
-    using Leaf = HybridLeaf<N>;
     using Pool = ObjectPool<HybridTree<N>, HybridLeaf<N>>;
 
     /*
@@ -260,6 +259,6 @@ protected:
 };
 
 extern template class HybridTree<3>;
-extern template class ObjectPool<HybridTree<3>, HybridTree<3>::Leaf>;
+extern template class ObjectPool<HybridTree<3>, HybridLeaf<3>>;
 
 }   // namespace Kernel

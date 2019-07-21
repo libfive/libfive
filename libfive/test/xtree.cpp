@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/evaluator.hpp"
 #include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/dc/dc_tree.hpp"
-#include "libfive/render/brep/dc/dc_pool.hpp"
+#include "libfive/render/brep/dc/dc_worker_pool.hpp"
 #include "libfive/render/axes.hpp"
 #include "util/shapes.hpp"
 
@@ -25,7 +25,7 @@ TEST_CASE("DCTree<2>::vert")
     SECTION("Vertex positioning (with two planes)")
     {
         Tree a = min(Tree::X() + 0.1, Tree::Y() - 0.2);
-        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {1, 1}), BRepSettings());
+        auto ta = DCWorkerPool<2>::build(a, Region<2>({-3, -3}, {1, 1}), BRepSettings());
         REQUIRE(ta->vert().x() == Approx(-0.1));
         REQUIRE(ta->vert().y() == Approx(0.2));
     }
@@ -36,21 +36,21 @@ TEST_CASE("DCTree<2>::type")
     SECTION("Empty")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = DCPool<2>::build(a, Region<2>({1, 1}, {2, 2}), BRepSettings());
+        auto e = DCWorkerPool<2>::build(a, Region<2>({1, 1}, {2, 2}), BRepSettings());
         REQUIRE(e->type == Interval::EMPTY);
     }
 
     SECTION("Filled")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = DCPool<2>::build(a, Region<2>({-3, -3}, {-1, -1}), BRepSettings());
+        auto e = DCWorkerPool<2>::build(a, Region<2>({-3, -3}, {-1, -1}), BRepSettings());
         REQUIRE(e->type == Interval::FILLED);
     }
 
     SECTION("Containing corner")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {1, 1}), BRepSettings());
+        auto ta = DCWorkerPool<2>::build(a, Region<2>({-3, -3}, {1, 1}), BRepSettings());
         REQUIRE(ta->type == Interval::AMBIGUOUS);
     }
 }
@@ -60,34 +60,34 @@ TEST_CASE("DCTree<2>::isBranch")
     SECTION("Empty")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = DCPool<2>::build(a, Region<2>({1, 1}, {2, 2}), BRepSettings());
+        auto e = DCWorkerPool<2>::build(a, Region<2>({1, 1}, {2, 2}), BRepSettings());
         REQUIRE(!e->isBranch());
     }
 
     SECTION("Filled")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = DCPool<2>::build(a, Region<2>({-3, -3}, {-1, -1}), BRepSettings());
+        auto e = DCWorkerPool<2>::build(a, Region<2>({-3, -3}, {-1, -1}), BRepSettings());
         REQUIRE(!e->isBranch());
     }
 
     SECTION("Containing line")
     {
-        auto e = DCPool<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}), BRepSettings());
+        auto e = DCWorkerPool<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}), BRepSettings());
         REQUIRE(!e->isBranch());
     }
 
     SECTION("Containing corner")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {1, 1}),
+        auto ta = DCWorkerPool<2>::build(a, Region<2>({-3, -3}, {1, 1}),
                                    BRepSettings());
         REQUIRE(!ta->isBranch());
     }
 
     SECTION("Containing shape")
     {
-        auto t = DCPool<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}),
+        auto t = DCWorkerPool<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}),
                                   BRepSettings());
         REQUIRE(t->isBranch());
     }
@@ -97,7 +97,7 @@ TEST_CASE("DCTree<2>::rank()")
 {
     SECTION("Containing line")
     {
-        auto e = DCPool<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}),
+        auto e = DCWorkerPool<2>::build(Tree::X(), Region<2>({-2, -2}, {2, 2}),
                                   BRepSettings());
         REQUIRE(e->rank() == 1);
     }
@@ -105,7 +105,7 @@ TEST_CASE("DCTree<2>::rank()")
     SECTION("Containing corner")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {1, 1}),
+        auto ta = DCWorkerPool<2>::build(a, Region<2>({-3, -3}, {1, 1}),
                                    BRepSettings());
         REQUIRE(ta->rank() == 2);
     }
@@ -120,7 +120,7 @@ TEST_CASE("DCTree<2>::vertex_count")
     {
         Tree a = min(Tree::X(), Tree::Y());
 
-        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {3, 3}), settings);
+        auto ta = DCWorkerPool<2>::build(a, Region<2>({-3, -3}, {3, 3}), settings);
         REQUIRE(ta->rank() == 2);
         REQUIRE(ta->level() == 0);
         REQUIRE(ta->leaf != nullptr);
@@ -131,7 +131,7 @@ TEST_CASE("DCTree<2>::vertex_count")
         Tree a = min(max(Tree::X(), Tree::Y()),
                      max(1 - Tree::X(), 1 - Tree::Y()));
         ArrayEvaluator eval(a);
-        auto ta = DCPool<2>::build(a, Region<2>({-3, -3}, {3, 3}), settings);
+        auto ta = DCWorkerPool<2>::build(a, Region<2>({-3, -3}, {3, 3}), settings);
         REQUIRE(ta->level() == 0);
         REQUIRE(ta->leaf != nullptr);
         REQUIRE(ta->leaf->vertex_count == 2);
@@ -193,7 +193,7 @@ TEST_CASE("DCTree<3>::vert")
 
         BRepSettings settings;
         settings.min_feature = 0.1;
-        auto xtree = DCPool<3>::build(b, r, settings);
+        auto xtree = DCWorkerPool<3>::build(b, r, settings);
         walk(xtree, eval, 0.001);
     }
 
@@ -206,7 +206,7 @@ TEST_CASE("DCTree<3>::vert")
 
         BRepSettings settings;
         settings.min_feature = 0.1;
-        auto xtree = DCPool<3>::build(b, r, settings);
+        auto xtree = DCWorkerPool<3>::build(b, r, settings);
         walk(xtree, eval, 0.001);
     }
 
@@ -217,7 +217,7 @@ TEST_CASE("DCTree<3>::vert")
 
         BRepSettings settings;
         settings.min_feature = 1 / 9.0f;
-        auto xtree = DCPool<3>::build(s, r, settings);
+        auto xtree = DCWorkerPool<3>::build(s, r, settings);
         Evaluator eval(s);
         walk(xtree, eval, 0.01);
     }
@@ -230,7 +230,7 @@ TEST_CASE("DCTree<3>::vert")
 
         BRepSettings settings;
         settings.min_feature = 0.2;
-        auto xtree = DCPool<3>::build(t, r, settings);
+        auto xtree = DCWorkerPool<3>::build(t, r, settings);
 
         Evaluator eval(t);
         walk(xtree, eval, 0.01);
@@ -251,7 +251,7 @@ TEST_CASE("DCTree<3> cancellation")
     settings.workers = 1;
     // Start a long render operation, then cancel it immediately
     auto future = std::async(std::launch::async, [&](){
-        return DCPool<3>::build(&eval, r, settings); });
+        return DCWorkerPool<3>::build(&eval, r, settings); });
 
     // Record how long it takes betwen triggering the cancel
     // and the future finishing, so we can check that the cancelling

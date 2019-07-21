@@ -49,6 +49,6 @@ bool DCTree<2>::leafsAreManifold(
 
 // Explicit initialization of templates
 template class DCTree<2>;
-template class ObjectPool<DCTree<2>, DCTree<2>::Leaf>;
+template struct DCLeaf<2>;
 
 }   // namespace Kernel

@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "catch.hpp"
 
-#include "libfive/render/brep/simplex/simplex_pool.hpp"
+#include "libfive/render/brep/simplex/simplex_worker_pool.hpp"
 #include "libfive/render/brep/simplex/simplex_mesher.hpp"
 #include "libfive/render/brep/simplex/simplex_debug.hpp"
 #include "libfive/render/brep/indexes.hpp"
@@ -32,7 +32,7 @@ TEST_CASE("SimplexPool")
     BRepSettings settings;
     settings.min_feature = 0.1;
     settings.workers = 1;
-    auto t = SimplexTreePool<2>::build(c, r, settings);
+    auto t = SimplexWorkerPool<2>::build(c, r, settings);
     REQUIRE(t.get() != nullptr);
 
     t->assignIndices(settings);
@@ -46,7 +46,7 @@ TEST_CASE("SimplexTree<2>::assignIndices")
     BRepSettings settings;
     settings.min_feature = 1.1;
     settings.workers = 1;
-    auto t = SimplexTreePool<2>::build(c, r, settings);
+    auto t = SimplexWorkerPool<2>::build(c, r, settings);
     REQUIRE(t.get() != nullptr);
 
     t->assignIndices(settings);
@@ -80,7 +80,7 @@ TEST_CASE("SimplexTree<2>: cell collapsing")
         BRepSettings settings;
         settings.min_feature = 0.4;
         settings.workers = 1;
-        auto t = SimplexTreePool<2>::build(shape, r, settings);
+        auto t = SimplexWorkerPool<2>::build(shape, r, settings);
         REQUIRE(!t->isBranch());
     }
 }
@@ -90,7 +90,7 @@ TEST_CASE("SimplexTree<3>: types")
     auto c = sphere(0.5);
     auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
-    auto t = SimplexTreePool<3>::build(c, r, BRepSettings());
+    auto t = SimplexWorkerPool<3>::build(c, r, BRepSettings());
     REQUIRE(t.get() != nullptr);
 
     REQUIRE(t->isBranch());
@@ -143,7 +143,7 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 
         BRepSettings settings;
         settings.min_feature = 2;
-        auto t = SimplexTreePool<3>::build(c, r, settings);
+        auto t = SimplexWorkerPool<3>::build(c, r, settings);
 
         REQUIRE(t.get() != nullptr);
         REQUIRE(t->type == Interval::AMBIGUOUS);
@@ -197,7 +197,7 @@ TEST_CASE("SimplexTree<3>: Corner positions")
         auto c = sphere(0.5);
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
-        auto t = SimplexTreePool<3>::build(c, r, BRepSettings());
+        auto t = SimplexWorkerPool<3>::build(c, r, BRepSettings());
         REQUIRE(t.get() != nullptr);
         CHECK_CORNER_POSITIONS(t.get(), r);
     }
@@ -211,7 +211,7 @@ TEST_CASE("SimplexTree<3>: Corner positions")
         settings.min_feature = 0.4;
         settings.max_err = 0;
         settings.workers = 1;
-        auto t = SimplexTreePool<3>::build(c, r, settings);
+        auto t = SimplexWorkerPool<3>::build(c, r, settings);
         CHECK_CORNER_POSITIONS(t.get(), r);
     }
 
@@ -226,7 +226,7 @@ TEST_CASE("SimplexMesher<3>: box with problematic edges")
     BRepSettings settings;
     settings.min_feature = 1;
     settings.max_err = -1;
-    auto t = SimplexTreePool<3>::build(shape, r, settings);
+    auto t = SimplexWorkerPool<3>::build(shape, r, settings);
     CHECK_CORNER_POSITIONS(t.get(), r);
 
     t->assignIndices(settings);
@@ -266,7 +266,7 @@ TEST_CASE("SimplexMesher<3>: tricky shape")
 
     BRepSettings settings;
     settings.min_feature = 0.25;
-    auto t = SimplexTreePool<3>::build(b, r, settings);
+    auto t = SimplexWorkerPool<3>::build(b, r, settings);
     t->assignIndices(settings);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, settings, b);
@@ -329,7 +329,7 @@ TEST_CASE("SimplexTree<3>: assignIndices with cell collapsing")
     BRepSettings settings;
     settings.min_feature = 0.5;
     settings.workers = 1;
-    auto t = SimplexTreePool<3>::build(b, r, settings);
+    auto t = SimplexWorkerPool<3>::build(b, r, settings);
     SimplexVertexMap before;
     buildVertexMap(t.get(), before);
 
@@ -361,7 +361,7 @@ TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement")
     BRepSettings settings;
     settings.min_feature = 0.5;
     settings.workers = 1;
-    auto t = SimplexTreePool<3>::build(b, r, settings);
+    auto t = SimplexWorkerPool<3>::build(b, r, settings);
     t->assignIndices(settings);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, settings, b);
@@ -376,7 +376,7 @@ TEST_CASE("SimplexMesher<3>: sphere")
     BRepSettings settings;
     settings.min_feature = 5;
     settings.workers = 1;
-    auto t = SimplexTreePool<3>::build(s, r, settings);
+    auto t = SimplexWorkerPool<3>::build(s, r, settings);
     t->assignIndices(settings);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, settings, s);
@@ -396,7 +396,7 @@ TEST_CASE("SimplexMesher<3>: cylinder meshing")
     BRepSettings settings;
     settings.min_feature = 5;
     settings.workers = 1;
-    auto t = SimplexTreePool<3>::build(b, r, settings);
+    auto t = SimplexWorkerPool<3>::build(b, r, settings);
     t->assignIndices(settings);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, settings, b);
@@ -416,7 +416,7 @@ TEST_CASE("SimplexTree<3>: vertex placement in centered cylinder")
     BRepSettings settings;
     settings.min_feature = 5;
     settings.workers = 1;
-    auto t = SimplexTreePool<3>::build(b, r, settings);
+    auto t = SimplexWorkerPool<3>::build(b, r, settings);
 
     // Check that every XY plane has a vertex placed at X = Y
     // (since this is a symmetric model)
@@ -439,7 +439,7 @@ TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
 
     BRepSettings settings;
     settings.min_feature = 0.9;
-    auto t = SimplexTreePool<3>::build(c, r, settings);
+    auto t = SimplexWorkerPool<3>::build(c, r, settings);
     t->assignIndices(settings);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, settings, c);
@@ -458,7 +458,7 @@ TEST_CASE("SimplexTree<3>::assignIndices")
         BRepSettings settings;
         settings.min_feature = 1.1;
         settings.workers = 1;
-        auto t = SimplexTreePool<3>::build(c, r, settings);
+        auto t = SimplexWorkerPool<3>::build(c, r, settings);
         REQUIRE(t.get() != nullptr);
 
         t->assignIndices(settings);
@@ -487,7 +487,7 @@ TEST_CASE("SimplexTree<3>::assignIndices")
         BRepSettings settings;
         settings.min_feature = 1;
         settings.workers = 1;
-        auto t = SimplexTreePool<3>::build(c, r, settings);
+        auto t = SimplexWorkerPool<3>::build(c, r, settings);
         t->assignIndices(settings);
 
         std::list<const SimplexTree<3>*> todo;
@@ -518,7 +518,7 @@ TEST_CASE("SimplexTree<3>::leafLevel")
     BRepSettings settings;
     settings.min_feature = 1.1;
     settings.workers = 1;
-    auto t = SimplexTreePool<3>::build(c, r, settings);
+    auto t = SimplexWorkerPool<3>::build(c, r, settings);
     REQUIRE(t->isBranch());
     for (auto& c : t->children) {
         REQUIRE(c.load()->leafLevel() == 0);
@@ -535,7 +535,7 @@ TEST_CASE("SimplexMesher (smoke test)")
         BRepSettings settings;
         settings.min_feature = 1.1;
         settings.workers = 1;
-        auto t = SimplexTreePool<3>::build(c, r, settings);
+        auto t = SimplexWorkerPool<3>::build(c, r, settings);
         REQUIRE(t->isBranch());
         for (auto& c : t->children) {
             REQUIRE(c.load()->type == Interval::AMBIGUOUS);
@@ -555,7 +555,7 @@ TEST_CASE("SimplexMesher (smoke test)")
 
         BRepSettings settings;
         settings.min_feature = 1;
-        auto t = SimplexTreePool<3>::build(c, r, settings);
+        auto t = SimplexWorkerPool<3>::build(c, r, settings);
         t->assignIndices(settings);
 
         auto m = Dual<3>::walk<SimplexMesher>(t, settings, c);
@@ -572,7 +572,7 @@ TEST_CASE("SimplexMesher (smoke test)")
         settings.min_feature = 0.4;
         settings.max_err = 0;
         settings.workers = 1;
-        auto t = SimplexTreePool<3>::build(c, r, settings);
+        auto t = SimplexWorkerPool<3>::build(c, r, settings);
         t->assignIndices(settings);
 
         settings.workers = 8;
@@ -589,7 +589,7 @@ TEST_CASE("SimplexMesher: sphere-box intersection vertex placement")
 
     BRepSettings settings;
     settings.min_feature = 0.2;
-    auto t = SimplexTreePool<3>::build(c, r, settings);
+    auto t = SimplexWorkerPool<3>::build(c, r, settings);
     t->assignIndices(settings);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, settings, c);
@@ -638,7 +638,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         settings.min_feature = 1.1;
         settings.max_err = 0;
         settings.workers = 1;
-        auto t = SimplexTreePool<3>::build(c, r, settings);
+        auto t = SimplexWorkerPool<3>::build(c, r, settings);
         REQUIRE(t->isBranch());
         for (auto& c : t->children) {
             REQUIRE(!c.load()->isBranch());
@@ -661,7 +661,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         settings.min_feature = 0.4;
         settings.max_err = 0;
         settings.workers = 1;
-        auto t = SimplexTreePool<3>::build(c, r, settings);
+        auto t = SimplexWorkerPool<3>::build(c, r, settings);
         t->assignIndices(settings);
 
         settings.workers = workers;
@@ -679,7 +679,7 @@ TEST_CASE("SimplexMesher: edge pairing")
         settings.min_feature = 0.4;
         settings.max_err = 0;
         settings.workers = 1;
-        auto t = SimplexTreePool<3>::build(c, r, settings);
+        auto t = SimplexWorkerPool<3>::build(c, r, settings);
         t->assignIndices(settings);
 
         settings.workers = workers;
@@ -696,14 +696,14 @@ TEST_CASE("SimplexMesher: menger sponge")
 
     BRepSettings settings;
     settings.min_feature = 0.1;
-    auto t = SimplexTreePool<3>::build(sponge, r, settings);
+    auto t = SimplexWorkerPool<3>::build(sponge, r, settings);
     t->assignIndices(settings);
 
     auto m = Dual<3>::walk<SimplexMesher>(t, settings, sponge);
     REQUIRE(true);
 }
 
-TEST_CASE("SimplexTreePool: gyroid-sphere intersection vertex positions")
+TEST_CASE("SimplexWorkerPool: gyroid-sphere intersection vertex positions")
 {
     Region<3> r({ -5, -5, -5 }, { 5, 5, 5 });
 
@@ -712,7 +712,7 @@ TEST_CASE("SimplexTreePool: gyroid-sphere intersection vertex positions")
     BRepSettings settings;
     settings.min_feature = 0.5;
     settings.workers = 1;
-    auto t = SimplexTreePool<3>::build(s, r, settings);
+    auto t = SimplexWorkerPool<3>::build(s, r, settings);
 
     std::list<std::pair<const SimplexTree<3>*, Region<3>>> todo;
     todo.push_back({t.get(), r});
@@ -759,7 +759,7 @@ TEST_CASE("Simplex meshing (gyroid performance breakdown)", "[!benchmark]")
 
     BENCHMARK("SimplexTree construction")
     {
-        t = SimplexTreePool<3>::build(s, r, settings);
+        t = SimplexWorkerPool<3>::build(s, r, settings);
     }
 
     BENCHMARK("Assigning indices")

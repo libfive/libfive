@@ -8,7 +8,6 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "dc_tree.cpp"
-#include "../object_pool.cpp"
 
 namespace Kernel {
 
@@ -156,6 +155,6 @@ bool DCTree<3>::cornersAreManifold(const uint8_t corner_mask)
 
 // Explicit initialization of template
 template class DCTree<3>;
-template class ObjectPool<DCTree<3>, DCTree<3>::Leaf>;
+template struct DCLeaf<3>;
 
 }   // namespace Kernel

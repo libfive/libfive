@@ -8,8 +8,8 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "../worker_pool.cpp"
-#include "libfive/render/brep/dc/dc_pool.hpp"
+#include "libfive/render/brep/dc/dc_worker_pool.hpp"
 
 namespace Kernel {
-template class WorkerPool<DCTree<2>, DCNeighbors<2>, 2>;
+template class WorkerPool<DCTree<3>, DCNeighbors<3>, 3>;
 }

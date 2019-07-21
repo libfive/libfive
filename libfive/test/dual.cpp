@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "catch.hpp"
 
-#include "libfive/render/brep/dc/dc_pool.hpp"
+#include "libfive/render/brep/dc/dc_worker_pool.hpp"
 #include "libfive/render/brep/dual.hpp"
 
 #include "util/shapes.hpp"
@@ -116,7 +116,7 @@ struct Walker3
 // TODO
 TEST_CASE("Dual<2>::walk")
 {
-    auto ta = DCPool<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
+    auto ta = DCWorkerPool<2>::build(circle(0.5), Region<2>({-1, -1}, {1, 1}));
 
     Walker2 c;
     Dual<2>::walk(ta.get(), c);
@@ -129,7 +129,7 @@ TEST_CASE("Dual<2>::walk")
 
 TEST_CASE("Dual<3>::walk")
 {
-    auto ta = DCPool<3>::build(sphere(0.5), Region<3>({-1, -1, -1}, {1, 1, 1}));
+    auto ta = DCWorkerPool<3>::build(sphere(0.5), Region<3>({-1, -1, -1}, {1, 1, 1}));
 
     Walker3 c;
     Dual<3>::walk(ta.get(), c);
