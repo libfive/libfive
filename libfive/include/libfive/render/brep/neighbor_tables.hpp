@@ -275,8 +275,4 @@ protected:
     std::array<QEFTableVec, ipow(3, N)> qefSumTable_data;
 };
 
-//  We explicitly instantiate the NeighborTables classes in neighbor_tables.cpp
-extern template class NeighborTables<2>;
-extern template class NeighborTables<3>;
-
 }   // namespace libfive

@@ -68,8 +68,4 @@ protected:
     std::array<Table, ipow(3, N)> boundary_table;
 };
 
-//  We explicitly instantiate the EdgeTables classes in edge_tables.cpp
-extern template class EdgeTables<2>;
-extern template class EdgeTables<3>;
-
 }   // namespace libfive

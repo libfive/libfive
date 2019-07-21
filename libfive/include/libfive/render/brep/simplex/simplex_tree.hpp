@@ -234,11 +234,4 @@ protected:
     constexpr static double EIGENVALUE_CUTOFF=0.1f;
 };
 
-extern template class SimplexTree<2>;
-extern template class SimplexTree<3>;
-extern template class ObjectPool<SimplexTree<2>, SimplexLeaf<2>,
-                                 SimplexLeafSubspace<2>>;
-extern template class ObjectPool<SimplexTree<3>, SimplexLeaf<3>,
-                                 SimplexLeafSubspace<3>>;
-
 }   // namespace libfive

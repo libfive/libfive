@@ -258,7 +258,4 @@ protected:
                    Pool& object_pool);
 };
 
-extern template class HybridTree<3>;
-extern template class ObjectPool<HybridTree<3>, HybridLeaf<3>>;
-
 }   // namespace libfive

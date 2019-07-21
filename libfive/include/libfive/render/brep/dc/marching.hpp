@@ -59,8 +59,4 @@ protected:
     EdgeToPatch p_data;
 };
 
-//  We explicitly instantiate the MarchingTables classes in marching.cpp
-extern template class MarchingTable<2>;
-extern template class MarchingTable<3>;
-
 }   // namespace libfive

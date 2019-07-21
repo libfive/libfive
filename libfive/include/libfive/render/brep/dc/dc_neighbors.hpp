@@ -46,8 +46,4 @@ public:
     std::shared_ptr<IntersectionVec<N>> check(uint8_t a, uint8_t b) const;
 };
 
-//  We explicitly instantiate the Neighbors classes in neighbors.cpp
-extern template class DCNeighbors<2>;
-extern template class DCNeighbors<3>;
-
 }   // namespace libfive

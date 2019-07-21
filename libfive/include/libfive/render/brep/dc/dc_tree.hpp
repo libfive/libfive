@@ -279,20 +279,4 @@ protected:
     constexpr static double EIGENVALUE_CUTOFF=0.1f;
 };
 
-// Explicit template instantiation declarations
-template <> bool DCTree<2>::cornersAreManifold(const uint8_t corner_mask);
-template <> bool DCTree<3>::cornersAreManifold(const uint8_t corner_mask);
-
-template <> bool DCTree<2>::leafsAreManifold(
-            const std::array<DCTree<2>*, 1 << 2>& children,
-            const std::array<Interval::State, 1 << 2>& corners);
-template <> bool DCTree<3>::leafsAreManifold(
-            const std::array<DCTree<3>*, 1 << 3>& children,
-            const std::array<Interval::State, 1 << 3>& corners);
-
-extern template class DCTree<2>;
-extern template class DCTree<3>;
-extern template class ObjectPool<DCTree<2>, DCLeaf<2>>;
-extern template class ObjectPool<DCTree<3>, DCLeaf<3>>;
-
 }   // namespace libfive

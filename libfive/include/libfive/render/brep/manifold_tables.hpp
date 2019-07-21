@@ -33,8 +33,4 @@ protected:
     std::vector<bool> known;
 };
 
-//  We explicitly instantiate the ManifoldTables classes in manifold_tables.cpp
-extern template class ManifoldTables<2>;
-extern template class ManifoldTables<3>;
-
 }   // namespace libfive
