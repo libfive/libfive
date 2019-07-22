@@ -109,6 +109,10 @@ Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
         this->done();
+        if (tape != o.tape) {
+            eval->getDeck()->claim(std::move(o.tape));
+            return nullptr;
+        }
     }
     return o.tape;
 }
