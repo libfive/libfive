@@ -150,7 +150,7 @@ TEST_CASE("ArrayEvaluator::eval")
                 }
             }
         }
-   }
+    }
 }
 
 TEST_CASE("ArrayEvaluator::setVar")
