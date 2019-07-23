@@ -93,6 +93,62 @@ TEST_CASE("ArrayEvaluator::eval")
             REQUIRE(true /* No crash! */ );
         }
     }
+
+    SECTION("SIMD consistency")
+    {
+        std::vector<float> pts = {0.0f, -1.0f, 1.0f, 1.000001f,
+                                 -3.14159f, 19.0f, 2.718f,
+                                  123123123123123123.0f};
+
+        const auto count = 100;
+        for (unsigned i=7; i < libfive::Opcode::ORACLE; ++i)
+        {
+            auto op = (libfive::Opcode::Opcode)i;
+            CAPTURE(Opcode::toString(op));
+            if (Opcode::args(op) == 1) {
+                Tree t = Tree(op, Tree::X());
+                ArrayEvaluator e(t);
+                for (auto p : pts) {
+                    CAPTURE(p);
+                    for (unsigned i=0; i < count; ++i) {
+                        e.set({p, 0, 0}, i);
+                    }
+                    auto vs = e.values(count);
+                    for (unsigned i=0; i < count; ++i) {
+                        if (std::isnan(vs[i])) {
+                            REQUIRE(std::isnan(vs[0]));
+                        } else {
+                            REQUIRE(vs[i] == vs[0]);
+                        }
+                    }
+                }
+            } else if (Opcode::args(op) == 2) {
+                Tree t = Tree(op, Tree::X(), Tree::Y());
+                ArrayEvaluator e(t);
+
+                for (auto p : pts) {
+                    CAPTURE(p);
+                    for (auto q : pts) {
+                        // Special-casing for invalid operation
+                        if (op == Opcode::OP_MOD && q <= 0) { continue; }
+
+                        CAPTURE(q);
+                        for (unsigned i=0; i < count; ++i) {
+                            e.set({p, q, 0}, i);
+                        }
+                        auto vs = e.values(count);
+                        for (unsigned i=0; i < count; ++i) {
+                            if (std::isnan(vs[i])) {
+                                REQUIRE(std::isnan(vs[0]));
+                            } else {
+                                REQUIRE(vs[i] == vs[0]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+   }
 }
 
 TEST_CASE("ArrayEvaluator::setVar")
