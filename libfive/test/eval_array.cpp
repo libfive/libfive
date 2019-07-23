@@ -115,6 +115,7 @@ TEST_CASE("ArrayEvaluator::eval")
                     }
                     auto vs = e.values(count);
                     for (unsigned i=0; i < count; ++i) {
+                        CAPTURE(i);
                         if (std::isnan(vs[i])) {
                             REQUIRE(std::isnan(vs[0]));
                         } else {
@@ -138,6 +139,7 @@ TEST_CASE("ArrayEvaluator::eval")
                         }
                         auto vs = e.values(count);
                         for (unsigned i=0; i < count; ++i) {
+                            CAPTURE(i);
                             if (std::isnan(vs[i])) {
                                 REQUIRE(std::isnan(vs[0]));
                             } else {
