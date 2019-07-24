@@ -15,19 +15,18 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
-                        KeepFunction fn, Type t)
+Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type t)
 {
-    return push(tape, deck, fn, t, Region<3>());
+    return push(deck, fn, t, Region<3>());
 }
 
-Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
-                        KeepFunction fn, Type t, const Region<3>& r)
+Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
+                        const Region<3>& r)
 {
     // If this tape has no min/max clauses, then return it right away
-    if (tape->terminal)
+    if (terminal)
     {
-        return tape;
+        return shared_from_this();
     }
 
     // Since we'll be figuring out which clauses are disabled and
@@ -36,19 +35,19 @@ Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
     std::fill(deck.remap.begin(), deck.remap.end(), 0);
 
     // Mark the root node as active
-    deck.disabled[tape->i] = false;
+    deck.disabled[i] = false;
 
     // We'll store a temporary vector of Oracle contexts here.
     //
     // By default, these contexts will be the same as the previous tape,
     // but we'll call push on each Oracle to see if we should refine it
     // any further.
-    std::vector<std::shared_ptr<OracleContext>> contexts = tape->contexts;
-    assert(contexts.size() == deck.oracles.size());
+    std::vector<std::shared_ptr<OracleContext>> new_contexts = contexts;
+    assert(new_contexts.size() == deck.oracles.size());
 
     bool terminal = true;
     bool changed = false;
-    for (const auto& c : tape->t)
+    for (const auto& c : t)
     {
         if (!deck.disabled[c.id])
         {
@@ -84,16 +83,16 @@ Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
                 // Get the previous context, then use it to store
                 // a new context for the oracle, marking whether it
                 // has changed.
-                assert(c.a < tape->contexts.size());
-                auto prev = tape->contexts[c.a];
+                assert(c.a < contexts.size());
+                auto prev = contexts[c.a];
 
                 deck.oracles[c.a]->bind(prev);
-                contexts[c.a] = deck.oracles[c.a]->push(t);
+                new_contexts[c.a] = deck.oracles[c.a]->push(type);
                 deck.oracles[c.a]->unbind();
 
-                changed |= (contexts[c.a] != prev);
-                terminal &= (contexts[c.a].get() == nullptr) ||
-                             contexts[c.a]->isTerminal();
+                changed |= (new_contexts[c.a] != prev);
+                terminal &= (new_contexts[c.a].get() == nullptr) ||
+                             new_contexts[c.a]->isTerminal();
             }
         }
     }
@@ -101,7 +100,7 @@ Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
 
     if (!changed)
     {
-        return tape;
+        return shared_from_this();
     }
 
     Tape::Handle out;
@@ -114,15 +113,15 @@ Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
     {
         out.reset(new Tape);
     }
-    out->t.reserve(tape->t.size());
+    out->t.reserve(t.size());
 
-    out->type = t;
-    out->parent = tape;
+    out->type = type;
+    out->parent = shared_from_this();
     out->terminal = terminal;
     out->t.clear(); // preserves capacity
 
     // Now, use the data in disabled and remap to make the new tape
-    for (const auto& c : tape->t)
+    for (const auto& c : t)
     {
         if (!deck.disabled[c.id])
         {
@@ -144,10 +143,10 @@ Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
     }
 
     // Remap the tape root index
-    for (out->i = tape->i; deck.remap[out->i]; out->i = deck.remap[out->i]);
+    for (out->i = i; deck.remap[out->i]; out->i = deck.remap[out->i]);
 
     // Make sure that the tape got shorter
-    assert(out->t.size() <= tape->t.size());
+    assert(out->t.size() <= t.size());
 
     // Store X / Y / Z bounds (may be irrelevant)
     out->X = {r.lower.x(), r.upper.x()};
@@ -155,7 +154,7 @@ Tape::Handle Tape::push(const Tape::Handle& tape, Deck& deck,
     out->Z = {r.lower.z(), r.upper.z()};
 
     // Store the Oracle contexts
-    out->contexts = std::move(contexts);
+    out->contexts = std::move(new_contexts);
 
     return out;
 }
@@ -166,8 +165,9 @@ std::shared_ptr<OracleContext> Tape::getContext(unsigned i) const
     return contexts[i];
 }
 
-Tape::Handle Tape::getBase(Tape::Handle tape, const Region<3>& r)
+Tape::Handle Tape::getBase(const Region<3>& r)
 {
+    auto tape = shared_from_this();
     while (tape->parent.get()) {
         if (tape->type == Tape::INTERVAL &&
             r.lower.x() >= tape->X.lower() && r.upper.x() <= tape->X.upper() &&
@@ -185,10 +185,11 @@ Tape::Handle Tape::getBase(Tape::Handle tape, const Region<3>& r)
     return tape;
 }
 
-Tape::Handle Tape::getBase(Tape::Handle tape, const Eigen::Vector3f& p)
+Tape::Handle Tape::getBase(const Eigen::Vector3f& p)
 {
     // Walk up the tape stack until we find an interval-type tape
     // that contains the given point, or we hit the start of the stack
+    auto tape = shared_from_this();
     while (tape->parent.get())
     {
         if (tape->type == Tape::INTERVAL &&

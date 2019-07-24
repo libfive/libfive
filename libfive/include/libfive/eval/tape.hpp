@@ -24,7 +24,7 @@ namespace libfive {
 template <unsigned N> class Region;
 class Deck;
 
-class Tape
+class Tape : public std::enable_shared_from_this<Tape>
 {
 public:
     /*  Returned by evaluator types when pushing
@@ -96,9 +96,8 @@ public:
      */
     using KeepFunction = std::function<Keep(Opcode::Opcode, Clause::Id,
                                             Clause::Id, Clause::Id)>;
-    static Handle push(const Handle& tape, Deck& deck, KeepFunction fn, Type t);
-    static Handle push(const Handle& tape, Deck& deck, KeepFunction fn, Type t,
-                       const Region<3>& r);
+    Handle push(Deck& deck, KeepFunction fn, Type t);
+    Handle push(Deck& deck, KeepFunction fn, Type t, const Region<3>& r);
 
     /*
      *  Walks up the tape list until p is within the tape's region, then
@@ -108,8 +107,8 @@ public:
      *  into a deeper interval, e.g. in dual contouring where points can
      *  be positioned outside of their parent cells.
      */
-    static Handle getBase(Handle tape, const Eigen::Vector3f& p);
-    static Handle getBase(Handle tape, const Region<3>& r);
+    Handle getBase(const Eigen::Vector3f& p);
+    Handle getBase(const Region<3>& r);
 
     friend class Deck;
 };

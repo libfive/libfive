@@ -126,7 +126,7 @@ std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
         const Eigen::Vector3f& pt, const Tape::Handle& tape)
 {
     auto out = value(pt, *tape);
-    auto p = Tape::push(tape, *deck,
+    auto p = tape->push(*deck,
         [&](Opcode::Opcode op, Clause::Id /* id */,
             Clause::Id a, Clause::Id b)
     {

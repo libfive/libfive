@@ -203,7 +203,7 @@ void WorkerPool<T, Neighbors, N>::run(
         // completed tree cells to the progress tracker if present).
         auto up = [&]{
             region = region.parent(t->parent_index);
-            tape = Tape::getBase(tape, region.region3());
+            tape = tape->getBase(region.region3());
             t = t->parent;
         };
         up();

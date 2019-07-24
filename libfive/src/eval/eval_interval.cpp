@@ -137,7 +137,7 @@ Tape::Handle IntervalEvaluator::push(const Tape::Handle& tape)
                       Eigen::Vector3d(i[deck->X].upper(),
                                       i[deck->Y].upper(),
                                       i[deck->Z].upper()));
-    return Tape::push(tape, *deck,
+    return tape->push(*deck,
         [&](Opcode::Opcode op, Clause::Id /* id */,
             Clause::Id a, Clause::Id b)
     {
