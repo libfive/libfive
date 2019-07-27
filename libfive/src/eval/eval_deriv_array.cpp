@@ -120,6 +120,7 @@ DerivArrayEvaluator::derivs(size_t count, const Tape& tape)
     return out.block<4, Eigen::Dynamic>(0, 0, 4, count);
 }
 
+LIBFIVE_INLINE
 void DerivArrayEvaluator::operator()(Opcode::Opcode op, uint32_t id,
                                      const uint32_t* a_, const uint32_t* b_)
 {

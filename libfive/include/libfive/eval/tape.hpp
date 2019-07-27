@@ -18,6 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/opcode.hpp"
 
 #include "libfive/oracle/oracle_context.hpp"
+#include "libfive/inline.hpp"
 
 namespace libfive {
 
@@ -62,6 +63,7 @@ public:
     std::vector<uint32_t>::const_reverse_iterator rend() const
     { return t.crend(); }
 
+    LIBFIVE_INLINE
     static Clause next(std::vector<uint32_t>::const_reverse_iterator& itr)
     {
         const auto op = static_cast<Opcode::Opcode>(*itr & OPCODE_MASK);
@@ -73,6 +75,7 @@ public:
         return Clause { op, id, a, b };
     }
 
+    LIBFIVE_INLINE
     static Clause next(std::vector<uint32_t>::const_iterator& itr)
     {
         uint32_t const* b = &*itr;

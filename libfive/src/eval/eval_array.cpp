@@ -220,6 +220,7 @@ ArrayEvaluator::getAmbiguous(size_t i, const Tape& tape)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+LIBFIVE_INLINE
 void ArrayEvaluator::operator()(Opcode::Opcode op, uint32_t id,
                                 const uint32_t* a_, const uint32_t* b_)
 {

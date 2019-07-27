@@ -207,6 +207,7 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+LIBFIVE_INLINE
 void IntervalEvaluator::operator()(Opcode::Opcode op, uint32_t id,
                                    const uint32_t* a_, const uint32_t* b_)
 {
