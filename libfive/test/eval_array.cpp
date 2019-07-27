@@ -124,6 +124,9 @@ TEST_CASE("ArrayEvaluator::eval")
                     }
                 }
             } else if (Opcode::args(op) == 2) {
+                if (op == Opcode::OP_POW || op == Opcode::OP_NTH_ROOT) {
+                    continue;
+                }
                 Tree t = Tree(op, Tree::X(), Tree::Y());
                 ArrayEvaluator e(t);
 
