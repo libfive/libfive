@@ -61,17 +61,19 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i, const Tape& tape)
     // Reset the ambiguous array to all false
     ambig = false;
 
-    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
-        if (itr->op == Opcode::ORACLE)
+    auto itr = tape.rbegin();
+    while (itr != tape.rend()) {
+        const auto c = Tape::next(itr);
+        if (c.op == Opcode::ORACLE)
         {
-            deck->oracles[itr->a]->checkAmbiguous(ambig.head(i));
+            deck->oracles[*c.a]->checkAmbiguous(ambig.head(i));
         }
-        else if (itr->op == Opcode::OP_MIN || itr->op == Opcode::OP_MAX)
+        else if (c.op == Opcode::OP_MIN || c.op == Opcode::OP_MAX)
         {
             ambig.head(i) = ambig.head(i) ||
-                ((v.block(itr->a, 0, 1, i) ==
-                  v.block(itr->b, 0, 1, i)) &&
-                  (d(itr->a).leftCols(i) != d(itr->b).leftCols(i))
+                ((v.block(*c.a, 0, 1, i) ==
+                  v.block(*c.b, 0, 1, i)) &&
+                  (d(*c.a).leftCols(i) != d(*c.b).leftCols(i))
                     .colwise().sum());
         }
     }
@@ -106,8 +108,10 @@ DerivArrayEvaluator::derivs(size_t count, const Tape& tape)
 
     // Perform derivative evaluation, copying results into the out array
     deck->bindOracles(tape);
-    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
-        (*this)(itr->op, itr->id, itr->a, itr->b);
+    auto itr = tape.rbegin();
+    while (itr != tape.rend()) {
+        const auto c = Tape::next(itr);
+        (*this)(c.op, c.id, c.a, c.b);
     }
     deck->unbindOracles();
 
@@ -116,17 +120,17 @@ DerivArrayEvaluator::derivs(size_t count, const Tape& tape)
     return out.block<4, Eigen::Dynamic>(0, 0, 4, count);
 }
 
-void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                     Clause::Id a_, Clause::Id b_)
+void DerivArrayEvaluator::operator()(Opcode::Opcode op, uint32_t id,
+                                     const uint32_t* a_, const uint32_t* b_)
 {
 #define ov v.row(id).head(count_simd)
 #define od d(id).leftCols(count_simd)
 
-#define av v.row(a_).head(count_simd)
-#define ad d(a_).leftCols(count_simd)
+#define av v.row(*a_).head(count_simd)
+#define ad d(*a_).leftCols(count_simd)
 
-#define bv v.row(b_).head(count_simd)
-#define bd d(b_).leftCols(count_simd)
+#define bv v.row(*b_).head(count_simd)
+#define bd d(*b_).leftCols(count_simd)
 
     switch (op) {
         case Opcode::OP_ADD:
@@ -233,7 +237,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            deck->oracles[a_]->evalDerivArray(d(id).leftCols(count_actual));
+            deck->oracles[*a_]->evalDerivArray(d(id).leftCols(count_actual));
             break;
 
         case Opcode::INVALID:

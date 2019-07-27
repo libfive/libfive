@@ -39,15 +39,15 @@ public:
     Deck& operator=(const Deck& other)=delete;
 
     /*  Indices of X, Y, Z coordinates */
-    Clause::Id X, Y, Z;
+    uint32_t X, Y, Z;
 
     /*  Constants, unpacked from the tree at construction */
-    std::map<Clause::Id, float> constants;
+    std::map<uint32_t, float> constants;
 
     /*  Map of variables (in terms of where they live in this Evaluator) to
      *  their ids in their respective Tree (e.g. what you get when calling
      *  Tree::var().id() */
-    boost::bimap<Clause::Id, Tree::Id> vars;
+    boost::bimap<uint32_t, Tree::Id> vars;
 
     /*  Oracles are also unpacked from the tree at construction, and
      *  stored in this flat list.  The ORACLE opcode takes an index into
@@ -81,7 +81,7 @@ public:
 protected:
     /*  Temporary storage, used when pushing into a Tape  */
     std::vector<uint8_t> disabled;
-    std::vector<Clause::Id> remap;
+    std::vector<uint32_t> remap;
 
     /*  We can keep spare tapes around, to avoid reallocating their data */
     std::vector<std::shared_ptr<Tape>> spares;

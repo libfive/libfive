@@ -107,8 +107,10 @@ ArrayEvaluator::values(size_t count, const Tape& tape)
     setCount(count);
 
     deck->bindOracles(tape);
-    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
-        (*this)(itr->op, itr->id, itr->a, itr->b);
+    auto itr = tape.rbegin();
+    while (itr != tape.rend()) {
+        const auto c = tape.next(itr);
+        (*this)(c.op, c.id, c.a, c.b);
     }
     deck->unbindOracles();
 
@@ -127,8 +129,8 @@ std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
 {
     auto out = value(pt, *tape);
     auto p = tape->push(*deck,
-        [&](Opcode::Opcode op, Clause::Id /* id */,
-            Clause::Id a, Clause::Id b)
+        [&](Opcode::Opcode op, uint32_t /* id */,
+            uint32_t a, uint32_t b)
     {
         // For min and max operations, we may only need to keep one branch
         // active if it is decisively above or below the other branch.
@@ -198,16 +200,18 @@ ArrayEvaluator::getAmbiguous(size_t i, const Tape& tape)
     // Reset the ambiguous array to all false
     ambig = false;
 
-    for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
-        if (itr->op == Opcode::ORACLE)
+    auto itr = tape.rbegin();
+    while (itr != tape.rend()) {
+        const auto c = tape.next(itr);
+        if (c.op == Opcode::ORACLE)
         {
-            deck->oracles[itr->a]->checkAmbiguous(ambig.head(i));
+            deck->oracles[*c.a]->checkAmbiguous(ambig.head(i));
         }
-        else if (itr->op == Opcode::OP_MIN || itr->op == Opcode::OP_MAX)
+        else if (c.op == Opcode::OP_MIN || c.op == Opcode::OP_MAX)
         {
             ambig.head(i) = ambig.head(i) ||
-                (v.block(itr->a, 0, 1, i) ==
-                 v.block(itr->b, 0, 1, i));
+                (v.block(*c.a, 0, 1, i) ==
+                 v.block(*c.b, 0, 1, i));
         }
     };
 
@@ -216,12 +220,12 @@ ArrayEvaluator::getAmbiguous(size_t i, const Tape& tape)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                Clause::Id a_, Clause::Id b_)
+void ArrayEvaluator::operator()(Opcode::Opcode op, uint32_t id,
+                                const uint32_t* a_, const uint32_t* b_)
 {
 #define out v.block<1, Eigen::Dynamic>(id, 0, 1, count_simd)
-#define a v.row(a_).head(count_simd)
-#define b v.row(b_).head(count_simd)
+#define a v.row(*a_).head(count_simd)
+#define b v.row(*b_).head(count_simd)
     switch (op)
     {
         case Opcode::OP_ADD:
@@ -330,7 +334,7 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            deck->oracles[a_]->evalArray(
+            deck->oracles[*a_]->evalArray(
                     v.block<1, Eigen::Dynamic>(id, 0, 1, count_actual));
             break;
 

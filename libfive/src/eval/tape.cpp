@@ -47,18 +47,22 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
 
     bool terminal = true;
     bool changed = false;
-    for (const auto& c : t)
-    {
+    /*  Data is in the order [op, id, a, b] when reading in reverse, so
+     *  we read b, a, id, op */
+    auto itr = t.cbegin();
+    while (itr != t.cend()) {
+        const auto c = next(itr);
+
         if (!deck.disabled[c.id])
         {
-            switch (fn(c.op, c.id, c.a, c.b))
+            switch (fn(c.op, c.id, *c.a, *c.b))
             {
-                case KEEP_A:        deck.disabled[c.a] = false;
-                                    deck.remap[c.id] = c.a;
+                case KEEP_A:        deck.disabled[*c.a] = false;
+                                    deck.remap[c.id] = *c.a;
                                     changed = true;
                                     break;
-                case KEEP_B:        deck.disabled[c.b] = false;
-                                    deck.remap[c.id] = c.b;
+                case KEEP_B:        deck.disabled[*c.b] = false;
+                                    deck.remap[c.id] = *c.b;
                                     changed = true;
                                     break;
                 case KEEP_BOTH:     terminal = false; // fallthrough
@@ -75,24 +79,24 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
             // array, so we shouldn't mis-interpret it as a clause index).
             else if (c.op != Opcode::ORACLE)
             {
-                deck.disabled[c.a] = false;
-                deck.disabled[c.b] = false;
+                deck.disabled[*c.a] = false;
+                deck.disabled[*c.b] = false;
             }
             else if (c.op == Opcode::ORACLE)
             {
                 // Get the previous context, then use it to store
                 // a new context for the oracle, marking whether it
                 // has changed.
-                assert(c.a < contexts.size());
-                auto prev = contexts[c.a];
+                assert(*c.a < contexts.size());
+                auto prev = contexts[*c.a];
 
-                deck.oracles[c.a]->bind(prev);
-                new_contexts[c.a] = deck.oracles[c.a]->push(type);
-                deck.oracles[c.a]->unbind();
+                deck.oracles[*c.a]->bind(prev);
+                new_contexts[*c.a] = deck.oracles[*c.a]->push(type);
+                deck.oracles[*c.a]->unbind();
 
-                changed |= (new_contexts[c.a] != prev);
-                terminal &= (new_contexts[c.a].get() == nullptr) ||
-                             new_contexts[c.a]->isTerminal();
+                changed |= (new_contexts[*c.a] != prev);
+                terminal &= (new_contexts[*c.a].get() == nullptr) ||
+                             new_contexts[*c.a]->isTerminal();
             }
         }
     }
@@ -121,24 +125,32 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
     out->t.clear(); // preserves capacity
 
     // Now, use the data in disabled and remap to make the new tape
-    for (const auto& c : t)
-    {
+    itr = t.cbegin();
+    while (itr != t.cend()) {
+        const auto c = next(itr);
+        const auto args = Opcode::args(c.op);
+
         if (!deck.disabled[c.id])
         {
             // Oracle nodes use c.a as an index into tape->oracles,
             // rather than the address of an lhs / rhs expression,
             // so we special-case them here to avoid bad remapping.
-            if (c.op == Opcode::ORACLE)
-            {
-                out->t.push_back({c.op, c.id, c.a, c.b});
+            if (c.op == Opcode::ORACLE) {
+                out->t.push_back(*c.a);
+            } else {
+                if (args == 2) {
+                    uint32_t rb;
+                    for (rb = *c.b; deck.remap[rb]; rb = deck.remap[rb]);
+                    out->t.push_back(rb);
+                }
+                if (args >= 1) {
+                    uint32_t ra;
+                    for (ra = *c.a; deck.remap[ra]; ra = deck.remap[ra]);
+                    out->t.push_back(ra);
+                }
             }
-            else
-            {
-                Clause::Id ra, rb;
-                for (ra = c.a; deck.remap[ra]; ra = deck.remap[ra]);
-                for (rb = c.b; deck.remap[rb]; rb = deck.remap[rb]);
-                out->t.push_back({c.op, c.id, ra, rb});
-            }
+            out->t.push_back(c.id);
+            out->t.push_back(c.op | OPCODE_FLAG);
         }
     }
 

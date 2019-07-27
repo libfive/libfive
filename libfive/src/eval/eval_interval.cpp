@@ -96,8 +96,10 @@ IntervalEvaluator::Result IntervalEvaluator::eval_(
     }
 
     deck->bindOracles(*tape);
-    for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
-        (*this)(itr->op, itr->id, itr->a, itr->b);
+    auto itr = tape->rbegin();
+    while (itr != tape->rend()) {
+        auto c = Tape::next(itr);
+        (*this)(c.op, c.id, c.a, c.b);
     }
     deck->unbindOracles();
 
@@ -138,8 +140,8 @@ Tape::Handle IntervalEvaluator::push(const Tape::Handle& tape)
                                       i[deck->Y].upper(),
                                       i[deck->Z].upper()));
     return tape->push(*deck,
-        [&](Opcode::Opcode op, Clause::Id /* id */,
-            Clause::Id a, Clause::Id b)
+        [&](Opcode::Opcode op, uint32_t /* id */,
+            uint32_t a, uint32_t b)
     {
         // For min and max operations, we may only need to keep one branch
         // active if it is decisively above or below the other branch.
@@ -205,15 +207,15 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                   Clause::Id a_, Clause::Id b_)
+void IntervalEvaluator::operator()(Opcode::Opcode op, uint32_t id,
+                                   const uint32_t* a_, const uint32_t* b_)
 {
 #define out i[id]
-#define a i[a_]
-#define b i[b_]
+#define a i[*a_]
+#define b i[*b_]
 #define outN maybe_nan[id]
-#define aN maybe_nan[a_]
-#define bN maybe_nan[b_]
+#define aN maybe_nan[*a_]
+#define bN maybe_nan[*b_]
 #define SET_UNSAFE(cond) outN = (aN) || (bN) || (cond)
   switch (op) {
         case Opcode::OP_ADD:
@@ -453,7 +455,7 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             {   // We need a helper variable here because outN is
                 // a vector<bool> accessor class, not a bool itself.
                 bool nan(false);
-                deck->oracles[a_]->evalInterval(out, nan);
+                deck->oracles[*a_]->evalInterval(out, nan);
                 outN = nan;
                 break;
             }

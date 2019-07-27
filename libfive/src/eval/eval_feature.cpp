@@ -78,11 +78,10 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
 
     // First, we evaluate and extract all of the features, saving
     // time by re-using the shortened tape from valueAndPush
-    for (auto itr = handle.second->rbegin();
-         itr != handle.second->rend();
-         ++itr)
-    {
-        (*this)(itr->op, itr->id, itr->a, itr->b);
+    auto itr = handle.second->rbegin();
+    while (itr != handle.second->rend()) {
+        auto c = Tape::next(itr);
+        (*this)(c.op, c.id, c.a, c.b);
     }
     auto fs = f(handle.second->root());
 
@@ -131,8 +130,10 @@ const boost::container::small_vector<Feature, 4>&
 
     // Evaluate feature-wise
     deck->bindOracles(*handle.second);
-    for (auto itr = handle.second->rbegin(); itr != handle.second->rend(); ++itr) {
-        (*this)(itr->op, itr->id, itr->a, itr->b);
+    auto itr = handle.second->rbegin();
+    while (itr != handle.second->rend()) {
+        auto c = Tape::next(itr);
+        (*this)(c.op, c.id, c.a, c.b);
     }
     deck->unbindOracles();
 
@@ -168,17 +169,17 @@ std::list<Eigen::Vector3f> FeatureEvaluator::features(
     return out;
 }
 
-void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                  Clause::Id a, Clause::Id b)
+void FeatureEvaluator::operator()(Opcode::Opcode op, uint32_t id,
+                                  const uint32_t* a, const uint32_t* b)
 {
 #define of f(id)
 
-#define av v(a, 0)
-#define _ads f(a)
+#define av v(*a, 0)
+#define _ads f(*a)
 #define ad _ad.deriv
 
-#define bv v(b, 0)
-#define _bds f(b)
+#define bv v(*b, 0)
+#define _bds f(*b)
 #define bd _bd.deriv
 
 #define LOOP2 \
@@ -263,7 +264,7 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             }
         }
     } else if (op == Opcode::ORACLE) {
-        deck->oracles[a]->evalFeatures(f(id));
+        deck->oracles[*a]->evalFeatures(f(id));
     } else if (Opcode::args(op) == 1) {
         unsigned count = 0;
         auto run = [&]() {
@@ -272,9 +273,9 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 // because we'll be doing an array-wise evaluation, but
                 // previous only solved for the value in slot 0 (so filled(a)
                 // is 1 to start).
-                if (count > filled(a)) {
-                    v.row(a).leftCols(count)  = v(a, 0);
-                    filled(a) = count;
+                if (count > filled(*a)) {
+                    v.row(*a).leftCols(count)  = v(*a, 0);
+                    filled(*a) = count;
                 }
                 setCount(count);
                 DerivArrayEvaluator::operator()(op, id, a, b);
@@ -286,7 +287,7 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         };
 
         for (auto& _ad : _ads) {
-            d(a).col(count++) = _ad.deriv;
+            d(*a).col(count++) = _ad.deriv;
             if (count == N) {
                 run();
             }
@@ -297,13 +298,13 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         auto run = [&]() {
             if (count) {
                 // Same logic as above
-                if (count > filled(a)) {
-                    v.row(a).leftCols(count)  = v(a, 0);
-                    filled(a) = count;
+                if (count > filled(*a)) {
+                    v.row(*a).leftCols(count)  = v(*a, 0);
+                    filled(*a) = count;
                 }
-                if (count > filled(b)) {
-                    v.row(b).leftCols(count)  = v(b, 0);
-                    filled(b) = count;
+                if (count > filled(*b)) {
+                    v.row(*b).leftCols(count)  = v(*b, 0);
+                    filled(*b) = count;
                 }
                 DerivArrayEvaluator::operator()(op, id, a, b);
                 for (unsigned i=0; i < count; ++i) {
@@ -316,8 +317,8 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         for (auto& _ad : _ads) {
             for (auto& _bd : _bds) {
-                d(a).col(count) = _ad.deriv;
-                d(b).col(count) = _bd.deriv;
+                d(*a).col(count) = _ad.deriv;
+                d(*b).col(count) = _bd.deriv;
                 if (++count == N) {
                     run();
                 }

@@ -20,18 +20,22 @@ Deck::Deck(const Tree root)
 
     // Helper function to create a new clause in the data array
     // The dummy clause (0) is mapped to the first result slot
-    std::unordered_map<Tree::Id, Clause::Id> clauses = {{nullptr, 0}};
-    Clause::Id id = flat.size();
+    std::unordered_map<Tree::Id, uint32_t> clauses = {{nullptr, 0}};
+    uint32_t id = flat.size();
 
     // Helper function to make a new function
-    std::list<Clause> tape_;
+    std::list<uint32_t> tape_;
     auto newClause = [&clauses, &id, &tape_](const Tree::Id t)
     {
-        tape_.push_front(
-                {t->op,
-                 id,
-                 clauses.at(t->lhs.get()),
-                 clauses.at(t->rhs.get())});
+        const auto args = Opcode::args(t->op);
+        tape_.push_front(t->op | Tape::OPCODE_FLAG);
+        tape_.push_front(id);
+        if (args >= 1) {
+            tape_.push_front(clauses.at(t->lhs.get()));
+        }
+        if (args >= 2) {
+            tape_.push_front(clauses.at(t->rhs.get()));
+        }
     };
 
     // Write the flattened tree into the tape!
@@ -58,8 +62,9 @@ Deck::Deck(const Tree root)
         else if (m->op == Opcode::ORACLE) {
             assert(m->oracle);
 
-            tape_.push_front({Opcode::ORACLE, id,
-                    static_cast<unsigned int>(oracles.size()), 0});
+            tape_.push_front(Opcode::ORACLE | Tape::OPCODE_FLAG);
+            tape_.push_front(id);
+            tape_.push_front(static_cast<uint32_t>(oracles.size()));
             oracles.push_back(m->oracle->getOracle());
         }
         else

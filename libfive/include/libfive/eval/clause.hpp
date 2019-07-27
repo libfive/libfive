@@ -17,21 +17,15 @@ namespace libfive {
  */
 struct Clause
 {
-    typedef uint32_t Id;
-
-    /*
-     *  Clause constructor
-     */
-    Clause(Opcode::Opcode op, Id id, Id a, Id b)
-        : op(op), id(id), a(a), b(b) {}
-
     /*  Opcode for this clause  */
     const Opcode::Opcode op;
 
     /*  Populated for operators with arguments */
-    Id const id;
-    Id const a;
-    Id const b;
+    uint32_t const id;
+
+    /*  a and b cover the range of arguments (inclusive) */
+    uint32_t const* const a;
+    uint32_t const* const b;
 };
 
 }   // namespace libfive

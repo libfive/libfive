@@ -13,8 +13,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <Eigen/Eigen>
 
-#include "libfive/eval/clause.hpp"
 #include "libfive/eval/interval.hpp"
+#include "libfive/eval/clause.hpp"
+#include "libfive/tree/opcode.hpp"
 
 #include "libfive/oracle/oracle_context.hpp"
 
@@ -55,24 +56,59 @@ public:
      */
     bool isTerminal() const { return terminal; }
 
-    std::vector<Clause>::const_reverse_iterator rbegin() const
+    std::vector<uint32_t>::const_reverse_iterator rbegin() const
     { return t.crbegin(); }
 
-    std::vector<Clause>::const_reverse_iterator rend() const
+    std::vector<uint32_t>::const_reverse_iterator rend() const
     { return t.crend(); }
 
-    Clause::Id root() const { return i; }
+    static Clause next(std::vector<uint32_t>::const_reverse_iterator& itr)
+    {
+        const auto op = static_cast<Opcode::Opcode>(*itr & OPCODE_MASK);
+        const auto args = (op == Opcode::ORACLE) ? 1 : Opcode::args(op);
+        const uint32_t id = *(itr + 1);
+        uint32_t const* const a = &*(itr + 2);
+        uint32_t const* const b = &*(itr + 3);
+        itr += args + 2;
+        return Clause { op, id, a, b };
+    }
+
+    static Clause next(std::vector<uint32_t>::const_iterator& itr)
+    {
+        uint32_t const* b = &*itr;
+
+        while (!(*itr & OPCODE_FLAG)) {
+            ++itr;
+        }
+
+        static uint32_t z = 0;
+        const auto op = static_cast<Opcode::Opcode>(*itr & OPCODE_MASK);
+        const auto args = (op == Opcode::ORACLE) ? 1 : Opcode::args(op);
+        const uint32_t id = *(itr - 1);
+        uint32_t const* const a = (args >= 1) ? &*(itr - 2) : &z;
+        if (args < 2) {
+            b = &z;
+        }
+
+        ++itr;
+        return Clause { op, id, a, b };
+    }
+
+    uint32_t root() const { return i; }
+
+    const static uint32_t OPCODE_FLAG = (1U << 31);
+    const static uint32_t OPCODE_MASK = OPCODE_FLAG - 1;
 
 protected:
-    /*  The tape itself, as a vector of clauses  */
-    std::vector<Clause> t;
+    /*  The tape itself, as a vector of raw data.  */
+    std::vector<uint32_t> t;
 
     /*  OracleContext handles used to speed up oracle evaluation
      *  by letting them push into the tree as well. */
     std::vector<std::shared_ptr<OracleContext>> contexts;
 
     /*  Root clause of the tape  */
-    Clause::Id i;
+    uint32_t i;
 
     /*  These bounds are only valid if type == INTERVAL  */
     Interval::I X, Y, Z;
@@ -94,8 +130,8 @@ public:
      *  t is a tape type
      *  r is the relevant region (or an empty region by default)
      */
-    using KeepFunction = std::function<Keep(Opcode::Opcode, Clause::Id,
-                                            Clause::Id, Clause::Id)>;
+    using KeepFunction = std::function<Keep(Opcode::Opcode, uint32_t,
+                                            uint32_t, uint32_t)>;
     Handle push(Deck& deck, KeepFunction fn, Type t);
     Handle push(Deck& deck, KeepFunction fn, Type t, const Region<3>& r);
 
