@@ -31,6 +31,7 @@ set(SRCS main.cpp
     transformed_oracle.cpp
     tree.cpp
     voxels.cpp
+    vol_tree.cpp
     xtree.cpp
     util/mesh_checks.cpp
     util/shapes.cpp)

@@ -78,6 +78,11 @@ add_library(five SHARED
     render/brep/simplex/simplex_object_pool3.cpp
     render/brep/simplex/simplex_mesher.cpp
 
+    render/brep/vol/vol_neighbors.cpp
+    render/brep/vol/vol_object_pool.cpp
+    render/brep/vol/vol_tree.cpp
+    render/brep/vol/vol_worker_pool.cpp
+
     solve/bounds.cpp
     solve/solver.cpp
 
