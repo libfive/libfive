@@ -75,6 +75,12 @@ void XTree<N, T, L>::resetPending() const
     }
 }
 
+template <unsigned N, typename T, typename L>
+void XTree<N, T, L>::setType(Interval::State t)
+{
+    type = t;
+    done();
+}
 
 template <unsigned N, typename T, typename L>
 template <typename Pool>

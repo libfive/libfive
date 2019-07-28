@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/free_thread_handler.hpp"
 #include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/worker_pool.hpp"
+#include "libfive/render/brep/vol/vol_tree.hpp"
 #include "libfive/eval/evaluator.hpp"
 
 namespace libfive {
@@ -38,7 +39,7 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     auto root(new T(nullptr, 0, region));
 
     LockFreeStack tasks(settings.workers);
-    tasks.push({root, eval->getDeck()->tape, region, Neighbors()});
+    tasks.push({root, eval->getDeck()->tape, region, Neighbors(), settings.vol});
 
     std::vector<std::future<void>> futures;
     futures.resize(settings.workers);
@@ -140,7 +141,16 @@ void WorkerPool<T, Neighbors, N>::run(
         const bool can_subdivide = region.level > 0;
         if (can_subdivide)
         {
-            auto next_tape = t->evalInterval(eval, task.tape, region, object_pool);
+            Tape::Handle next_tape;
+            if (task.vol) {
+                auto i = task.vol->check(region);
+                if (i == Interval::EMPTY || i == Interval::FILLED) {
+                    t->setType(i);
+                }
+            }
+            if (t->type == Interval::UNKNOWN) {
+                next_tape = t->evalInterval(eval, task.tape, region, object_pool);
+            }
             if (next_tape != nullptr) {
                 tape = next_tape;
             }
@@ -158,7 +168,7 @@ void WorkerPool<T, Neighbors, N>::run(
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
                     auto next_tree = object_pool.get(t, i, rs[i]);
-                    Task next{next_tree, tape, rs[i], neighbors};
+                    Task next{next_tree, tape, rs[i], neighbors, nullptr};
                     if (!tasks.bounded_push(next))
                     {
                         local.push(next);

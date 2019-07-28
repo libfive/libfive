@@ -49,6 +49,11 @@ public:
      */
     void resetPending() const;
 
+    /*
+     *  Sets type and calls done()
+     */
+    void setType(Interval::State t);
+
     /*  Parent tree, or nullptr if this is the root */
     T* parent;
 

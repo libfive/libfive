@@ -50,7 +50,6 @@ Tape::Handle VolTree::evalInterval(Evaluator* eval,
     if (!o.safe)
     {
         this->type = Interval::AMBIGUOUS;
-        this->tape = tape;
         return tape;
     }
 
@@ -61,8 +60,6 @@ Tape::Handle VolTree::evalInterval(Evaluator* eval,
             eval->getDeck()->claim(std::move(o.tape));
             return nullptr;
         }
-    } else {
-        this->tape = o.tape;
     }
     return o.tape;
 }
@@ -83,7 +80,6 @@ void VolTree::evalLeaf(Evaluator* eval,
     if (!o.safe)
     {
         this->type = Interval::AMBIGUOUS;
-        this->tape = tape;
     }
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
@@ -92,8 +88,6 @@ void VolTree::evalLeaf(Evaluator* eval,
         if (tape != o.tape) {
             eval->getDeck()->claim(std::move(o.tape));
         }
-    } else {
-        this->tape = o.tape;
     }
     this->done();
 }
@@ -151,6 +145,27 @@ bool VolTree::collectChildren(Evaluator*,
 
 void VolTree::releaseTo(Pool& object_pool) {
     object_pool.put(this);
+}
+
+Interval::State VolTree::check(const Region<3>& r) const
+{
+    if (r.lower(0) >= region.lower(0) && r.upper(0) <= region.upper(0) &&
+        r.lower(1) >= region.lower(1) && r.upper(1) <= region.upper(1) &&
+        r.lower(2) >= region.lower(2) && r.upper(2) <= region.upper(2))
+    {
+        return this->type;
+    }
+    return Interval::UNKNOWN;
+}
+
+Interval::State VolTree::check(const Region<2>& r) const {
+    if (r.perp(0) >= region.lower(2) && r.perp(0) <= region.upper(2) &&
+        r.lower(0) >= region.lower(0) && r.upper(0) <= region.upper(0) &&
+        r.lower(1) >= region.lower(1) && r.upper(1) <= region.upper(1))
+    {
+        return this->type;
+    }
+    return Interval::UNKNOWN;
 }
 
 // Explicit instantiation of templates

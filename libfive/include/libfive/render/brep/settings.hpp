@@ -16,6 +16,7 @@ namespace libfive {
 // Forward declarations
 class ProgressHandler;
 class FreeThreadHandler;
+class VolTree;
 
 enum BRepAlgorithm {
     DUAL_CONTOURING,
@@ -38,6 +39,7 @@ public:
         free_thread_handler = nullptr;
         progress_handler = nullptr;
         cancel.store(false);
+        vol = nullptr;
     }
 
     /*  The meshing region is subdivided until the smallest region edge
@@ -64,6 +66,9 @@ public:
 
     /*  Optional class that wraps a progress callback.  */
     ProgressHandler* progress_handler;
+
+    /*  Optional acceleration structure */
+    VolTree* vol;
 
     mutable std::atomic_bool cancel;
 };

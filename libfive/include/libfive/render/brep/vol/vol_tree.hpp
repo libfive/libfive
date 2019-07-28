@@ -71,10 +71,9 @@ public:
 
     DEFAULT_OPERATORS_NEW_AND_DELETE
 
-protected:
-    /*  Every VolTree stores a shortened version of the tape which
-     *  applies within its particular region. */
-    std::shared_ptr<Tape> tape;
+    /*  Checks whether the given interval is empty or filled */
+    Interval::State check(const Region<3>& r) const;
+    Interval::State check(const Region<2>& r) const;
 };
 
 }   // namespace libfive

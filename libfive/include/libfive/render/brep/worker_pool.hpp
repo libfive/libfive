@@ -22,6 +22,7 @@ class Evaluator;
 template <unsigned N> class Region;
 class Tape;
 struct BRepSettings;
+class VolTree;
 
 /*
  *  A WorkerPool is used to construct a recursive tree (quadtree / octree)
@@ -51,6 +52,7 @@ protected:
         std::shared_ptr<Tape> tape;
         Region<N> region;
         Neighbors parent_neighbors;
+        VolTree* vol;
     };
 
     using LockFreeStack =
