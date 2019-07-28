@@ -39,7 +39,7 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     auto root(new T(nullptr, 0, region));
 
     LockFreeStack tasks(settings.workers);
-    tasks.push({root, eval->getDeck()->tape, region, Neighbors(), settings.vol});
+    tasks.push({root, eval->getDeck()->tape, Neighbors(), settings.vol});
 
     std::vector<std::future<void>> futures;
     futures.resize(settings.workers);
@@ -125,7 +125,6 @@ void WorkerPool<T, Neighbors, N>::run(
 
         auto tape = task.tape;
         auto t = task.target;
-        Region<N> region = task.region;
 
         // Find our local neighbors.  We do this at the last minute to
         // give other threads the chance to populate more pointers.
@@ -138,18 +137,18 @@ void WorkerPool<T, Neighbors, N>::run(
 
         // If this tree is larger than the minimum size, then it will either
         // be unambiguously filled/empty, or we'll need to recurse.
-        const bool can_subdivide = region.level > 0;
+        const bool can_subdivide = t->region.level > 0;
         if (can_subdivide)
         {
             Tape::Handle next_tape;
             if (task.vol) {
-                auto i = task.vol->check(region);
+                auto i = task.vol->check(t->region);
                 if (i == Interval::EMPTY || i == Interval::FILLED) {
                     t->setType(i);
                 }
             }
             if (t->type == Interval::UNKNOWN) {
-                next_tape = t->evalInterval(eval, task.tape, region, object_pool);
+                next_tape = t->evalInterval(eval, task.tape, object_pool);
             }
             if (next_tape != nullptr) {
                 tape = next_tape;
@@ -161,14 +160,14 @@ void WorkerPool<T, Neighbors, N>::run(
             assert(t->type != Interval::UNKNOWN);
             if (t->type == Interval::AMBIGUOUS)
             {
-                auto rs = region.subdivide();
+                auto rs = t->region.subdivide();
                 for (unsigned i=0; i < t->children.size(); ++i)
                 {
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
                     auto next_tree = object_pool.get(t, i, rs[i]);
-                    Task next{next_tree, tape, rs[i], neighbors, nullptr};
+                    Task next{next_tree, tape, neighbors, nullptr};
                     if (!tasks.bounded_push(next))
                     {
                         local.push(next);
@@ -186,7 +185,7 @@ void WorkerPool<T, Neighbors, N>::run(
         }
         else
         {
-            t->evalLeaf(eval, tape, region, object_pool, neighbors);
+            t->evalLeaf(eval, tape, object_pool, neighbors);
         }
 
         if (settings.progress_handler)
@@ -197,7 +196,7 @@ void WorkerPool<T, Neighbors, N>::run(
                 // included if we continued to subdivide this tree, then pass
                 // all of them to the progress tracker
                 uint64_t ticks = 0;
-                for (int i=0; i < region.level; ++i) {
+                for (int i=0; i < t->region.level; ++i) {
                     ticks = (ticks + 1) * (1 << N);
                 }
                 settings.progress_handler->tick(ticks + 1);
@@ -212,12 +211,13 @@ void WorkerPool<T, Neighbors, N>::run(
         // (recursively, merging the trees on the way up, and reporting
         // completed tree cells to the progress tracker if present).
         auto up = [&]{
-            region = region.parent(t->parent_index);
-            tape = tape->getBase(region.region3());
             t = t->parent;
+            if (t) {
+                tape = tape->getBase(t->region.region3());
+            }
         };
         up();
-        while (t != nullptr && t->collectChildren(eval, tape, region,
+        while (t != nullptr && t->collectChildren(eval, tape,
                                                   object_pool,
                                                   settings.max_err))
         {

@@ -201,14 +201,13 @@ void HybridLeaf<N>::reset()
 template <unsigned N>
 Tape::Handle HybridTree<N>::evalInterval(Evaluator* eval,
                                          const Tape::Handle& tape,
-                                         const Region<N>& region,
                                          Pool& object_pool)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
     auto o = eval->intervalAndPush(
-            region.lower3().template cast<float>(),
-            region.upper3().template cast<float>(),
+            this->region.lower3().template cast<float>(),
+            this->region.upper3().template cast<float>(),
             tape);
 
     this->type = Interval::state(o.i);
@@ -220,7 +219,7 @@ Tape::Handle HybridTree<N>::evalInterval(Evaluator* eval,
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        buildLeaf(eval, tape, region, object_pool);
+        buildLeaf(eval, tape, object_pool);
         this->done();
     }
     return o.tape;
@@ -230,30 +229,28 @@ Tape::Handle HybridTree<N>::evalInterval(Evaluator* eval,
 template <unsigned N>
 void HybridTree<N>::buildLeaf(Evaluator* eval,
                               const std::shared_ptr<Tape>& tape,
-                              const Region<N>& region,
                               Pool& object_pool)
 {
     assert(this->leaf == nullptr);
     this->leaf = object_pool.next().get();
     this->leaf->tape = tape;
 
-    processCorners(eval, tape, region);
-    processSubspaces<1>(eval, tape, region);
-    processSubspaces<2>(eval, tape, region);
+    processCorners(eval, tape);
+    processSubspaces<1>(eval, tape);
+    processSubspaces<2>(eval, tape);
     if (N == 3) {
-        processSubspaces<3>(eval, tape, region);
+        processSubspaces<3>(eval, tape);
     }
 }
 
 template <unsigned N>
 void HybridTree<N>::processCorners(Evaluator* eval,
-                                   const Tape::Handle& tape,
-                                   const Region<N>& region)
+                                   const Tape::Handle& tape)
 {
     for (unsigned i=0; i < ipow(2, N); ++i) {
         const NeighborIndex n = CornerIndex(i).neighbor();
-        const auto corner = region.corner(i);
-        placeDistanceVertex(eval, tape, region, n, corner);
+        const auto corner = this->region.corner(i);
+        placeDistanceVertex(eval, tape, n, corner);
 
         DEBUG("Corner " << n.i );
         DEBUG("  placed at " << corner.transpose());
@@ -309,8 +306,7 @@ void processEdge(HybridTree<BaseDimension>* tree,
             positions.col(i) = surf.col(i);
         }
         std::array<NeighborIndex, 2> targets = {edge, edge};
-        tree->accumulate(eval, positions, region, tape, 2,
-                         targets.data(), true);
+        tree->accumulate(eval, positions, tape, 2, targets.data(), true);
 
         // Calculate the rank of the edge intersection.  This is probably
         // 1 (if the cell edge intersects a surface) or 2 (if the cell edge
@@ -353,7 +349,7 @@ void processEdge(HybridTree<BaseDimension>* tree,
 
         // placeDistanceVertex will check if there's a sign change and store
         // surface QEF data if that's the case.
-        tree->placeDistanceVertex(eval, tape, region, edge, pos);
+        tree->placeDistanceVertex(eval, tape, edge, pos);
 
         DEBUG("Solved distance edge " << edge.i << " with error " << sol.error);
         DEBUG("  placed at " << pos.transpose());
@@ -552,7 +548,7 @@ void process(HybridTree<BaseDimension>* tree,
         //  If we failed to place a DC vertex, then we're placing a distance
         //  vertex instead.
         DEBUG("      Placing distance vertex");
-        tree->placeDistanceVertex(eval, tape, region, n, v_dist);
+        tree->placeDistanceVertex(eval, tape, n, v_dist);
     }
 }
 
@@ -591,23 +587,21 @@ struct Unroller<BaseDimension, TargetDimension, -1> {
 template <unsigned N>
 template<unsigned D>
 void HybridTree<N>::processSubspaces(Evaluator* eval,
-                                     const Tape::Handle& tape,
-                                     const Region<N>& region)
+                                     const Tape::Handle& tape)
 {
-    Unroller<N, D, ipow(3, N) - 1>().run(this, eval, tape, region);
+    Unroller<N, D, ipow(3, N) - 1>().run(this, eval, tape, this->region);
 }
 
 template <unsigned N>
 void HybridTree<N>::placeDistanceVertex(
         Evaluator* eval, const Tape::Handle& tape,
-        const Region<N>& region,
         NeighborIndex n, const Vec& pos)
 {
     // Store the vertex position
     this->leaf->vertex_pos.col(n.i) = pos;
 
     // Expensive check for inside / outsideness of this point (TODO)
-    this->leaf->inside[n.i] = eval->isInside<N>(pos, region, tape);
+    this->leaf->inside[n.i] = eval->isInside<N>(pos, this->region, tape);
     this->leaf->surface_mass_point.col(n.i).array() = 0.0;
 
     // For now, we don't care about accumulating QEFs or surface intersections
@@ -642,7 +636,7 @@ void HybridTree<N>::placeDistanceVertex(
             inside = this->leaf->vertex_pos.col(n.i);
             outside = this->leaf->vertex_pos.col(t.i);
         }
-        auto p = searchBetween<N>(eval, tape, region, inside, outside);
+        auto p = searchBetween<N>(eval, tape, this->region, inside, outside);
 
         for (unsigned i=0; i < 2; ++i) {
             MassPoint<N> mp;
@@ -664,7 +658,7 @@ void HybridTree<N>::placeDistanceVertex(
         std::fill(targets.begin(), targets.end(), n);
         assert(targets.size() >= num_intersections);
 
-        accumulate(eval, intersections, region, tape, num_intersections,
+        accumulate(eval, intersections, tape, num_intersections,
                    targets.data(), true);
         this->leaf->has_surface_qef[n.i] = true;
         this->leaf->surface_rank[n.i] = this->leaf->qef[n.i].rankDC();
@@ -672,7 +666,7 @@ void HybridTree<N>::placeDistanceVertex(
         // If we didn't find a sign change, then store the vertex itself into
         // the subspace QEF.
         intersections.col(0) = pos;
-        accumulate(eval, intersections, region, tape, 1, &n, false);
+        accumulate(eval, intersections, tape, 1, &n, false);
         this->leaf->has_surface_qef[n.i] = false;
     }
 }
@@ -681,7 +675,6 @@ template <unsigned N>
 void HybridTree<N>::accumulate(
         Evaluator* eval,
         const Eigen::Array<double, N, ArrayEvaluator::N>& positions,
-        const Region<N>& region,
         const Tape::Handle& tape,
         unsigned count,
         NeighborIndex* target,
@@ -689,7 +682,7 @@ void HybridTree<N>::accumulate(
 {
     // Unpack into the data array
     for (unsigned i=0; i < count; ++i) {
-        eval->set<N>(positions.col(i), region, i);
+        eval->set<N>(positions.col(i), this->region, i);
     }
     Eigen::Array<float, 4, ArrayEvaluator::N> ds;
     ds.leftCols(count) = eval->derivs(count);
@@ -715,7 +708,7 @@ void HybridTree<N>::accumulate(
             push(ds.col(i).head<3>(), i);
         } else {
             const auto fs = eval->features<N>(
-                    positions.col(i), region, tape);
+                    positions.col(i), this->region, tape);
             for (const auto& f : fs) {
                 push(f, i);
             }
@@ -726,13 +719,12 @@ void HybridTree<N>::accumulate(
 template <unsigned N>
 void HybridTree<N>::evalLeaf(Evaluator* eval,
                              const Tape::Handle& tape,
-                             const Region<N>& region,
                              Pool& object_pool,
                              const HybridNeighbors<N>& neighbors)
 {
     (void)neighbors;
 
-    buildLeaf(eval, tape, region, object_pool);
+    buildLeaf(eval, tape, object_pool);
 
     bool all_empty = true;
     bool all_full  = true;
@@ -751,7 +743,6 @@ void HybridTree<N>::evalLeaf(Evaluator* eval,
 template <unsigned N>
 bool HybridTree<N>::collectChildren(Evaluator* eval,
                                     const Tape::Handle& tape,
-                                    const Region<N>& region,
                                     Pool& object_pool,
                                     double max_err)
 {
@@ -796,7 +787,7 @@ bool HybridTree<N>::collectChildren(Evaluator* eval,
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
         this->releaseChildren(object_pool);
-        buildLeaf(eval, tape, region, object_pool);
+        buildLeaf(eval, tape, object_pool);
         this->done();
         return true;
     }
@@ -804,7 +795,6 @@ bool HybridTree<N>::collectChildren(Evaluator* eval,
     // Eventually, we'll use these variables to perhaps collapse the tree
     (void)eval;
     (void)tape;
-    (void)region;
     (void)max_err;
 
     this->done();

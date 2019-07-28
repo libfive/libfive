@@ -36,14 +36,13 @@ std::unique_ptr<VolTree> VolTree::empty()
 
 Tape::Handle VolTree::evalInterval(Evaluator* eval,
                                    const Tape::Handle& tape,
-                                   const Region<3>& region,
                                    Pool&)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
     auto o = eval->intervalAndPush(
-            region.lower3().template cast<float>(),
-            region.upper3().template cast<float>(),
+            this->region.lower3().template cast<float>(),
+            this->region.upper3().template cast<float>(),
             tape);
 
     this->type = Interval::state(o.i);
@@ -66,14 +65,13 @@ Tape::Handle VolTree::evalInterval(Evaluator* eval,
 
 void VolTree::evalLeaf(Evaluator* eval,
                        const Tape::Handle& tape,
-                       const Region<3>& region,
                        Pool&, const VolNeighbors&)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
     auto o = eval->intervalAndPush(
-            region.lower3().template cast<float>(),
-            region.upper3().template cast<float>(),
+            this->region.lower3().template cast<float>(),
+            this->region.upper3().template cast<float>(),
             tape);
 
     this->type = Interval::state(o.i);
@@ -94,7 +92,6 @@ void VolTree::evalLeaf(Evaluator* eval,
 
 bool VolTree::collectChildren(Evaluator*,
                               const Tape::Handle&,
-                              const Region<3>&,
                               Pool& object_pool,
                               double)
 {

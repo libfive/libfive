@@ -108,7 +108,6 @@ public:
      */
     std::shared_ptr<Tape> evalInterval(Evaluator* eval,
                                        const std::shared_ptr<Tape>& tape,
-                                       const Region<N>& region,
                                        Pool& object_pool);
 
     /*
@@ -117,7 +116,6 @@ public:
      */
     void evalLeaf(Evaluator* eval,
                   const std::shared_ptr<Tape>& tape,
-                  const Region<N>& region,
                   Pool& spare_leafs,
                   const HybridNeighbors<N>& neighbors);
 
@@ -129,7 +127,6 @@ public:
      */
     bool collectChildren(Evaluator* eval,
                          const std::shared_ptr<Tape>& tape,
-                         const Region<N>& region,
                          Pool& object_pool,
                          double max_err);
 
@@ -194,7 +191,6 @@ public:
      */
     void placeDistanceVertex(
         Evaluator* eval, const Tape::Handle& tape,
-        const Region<N>& region,
         NeighborIndex n, const Vec& pos);
 
     /*
@@ -211,7 +207,6 @@ public:
      */
     void accumulate(Evaluator* eval,
                     const Eigen::Array<double, N, ArrayEvaluator::N>& positions,
-                    const Region<N>& region,
                     const Tape::Handle& tape,
                     unsigned count,
                     NeighborIndex* target,
@@ -236,14 +231,12 @@ protected:
      *  position the vertex on the surface of the model.
      */
     void processCorners(Evaluator* eval,
-                        const Tape::Handle& tape,
-                        const Region<N>& region);
+                        const Tape::Handle& tape);
 
     /*  We use the same logic for faces and cubes, so it's templated here */
     template <unsigned D>
     void processSubspaces(Evaluator* eval,
-                          const Tape::Handle& tape,
-                          const Region<N>& region);
+                          const Tape::Handle& tape);
 
     /*
      *  Asserts that the leaf is null, pulls a fresh leaf from the object
@@ -254,7 +247,6 @@ protected:
      */
     void buildLeaf(Evaluator* eval,
                    const std::shared_ptr<Tape>& tape,
-                   const Region<N>& region,
                    Pool& object_pool);
 };
 

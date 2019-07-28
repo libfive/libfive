@@ -89,14 +89,13 @@ void DCLeaf<N>::reset()
 template <unsigned N>
 Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
                                      const Tape::Handle& tape,
-                                     const Region<N>& region,
                                      Pool&)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
     auto o = eval->intervalAndPush(
-            region.lower3().template cast<float>(),
-            region.upper3().template cast<float>(),
+            this->region.lower3().template cast<float>(),
+            this->region.upper3().template cast<float>(),
             tape);
 
     this->type = Interval::state(o.i);
@@ -120,7 +119,6 @@ Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
 template <unsigned N>
 void DCTree<N>::evalLeaf(Evaluator* eval,
                         const Tape::Handle& tape,
-                        const Region<N>& region,
                         Pool& object_pool,
                         const DCNeighbors<N>& neighbors)
 {
@@ -143,7 +141,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
         auto c = neighbors.check(i);
         if (c == Interval::UNKNOWN)
         {
-            pos.col(count) = region.corner3f(i);
+            pos.col(count) = this->region.corner3f(i);
             eval->set(pos.col(count), count);
             corner_indices[count++] = i;
         }
@@ -312,8 +310,8 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                 {
                     // Store inside / outside in targets array, and the edge
                     // index in the eval_edges array.
-                    targets[eval_count] = {region.corner(c.first),
-                                           region.corner(c.second)};
+                    targets[eval_count] = {this->region.corner(c.first),
+                                           this->region.corner(c.second)};
                     eval_edges[eval_count] = edges[edge_count];
 
                     assert(eval_edges[eval_count] < this->leaf->intersections.size());
@@ -345,7 +343,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                         const unsigned i = j + e*POINTS_PER_SEARCH;
                         ps.col(i) = (targets[e].first * (1 - frac)) +
                                     (targets[e].second * frac);
-                        eval->set<N>(ps.col(i), region, i);
+                        eval->set<N>(ps.col(i), this->region, i);
                     }
                 }
 
@@ -377,7 +375,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                             }
                             else if (out[i] == 0)
                             {
-                                if (!eval->isInside<N>(ps.col(i), region,
+                                if (!eval->isInside<N>(ps.col(i), this->region,
                                                                tape))
                                 {
                                     assert(i > 0);
@@ -407,8 +405,8 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
             {
                 for (unsigned i=0; i < eval_count; ++i)
                 {
-                    eval->set<N>(targets[i].first, region, 2*i);
-                    eval->set<N>(targets[i].second, region, 2*i + 1);
+                    eval->set<N>(targets[i].first, this->region, 2*i);
+                    eval->set<N>(targets[i].second, this->region, 2*i + 1);
                 }
 
                 // Copy the results to a local array, to avoid invalidating
@@ -429,7 +427,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                     Eigen::Vector3d pos;
                     pos << ((i & 1) ? targets[i/2].second
                                     : targets[i/2].first),
-                           region.perp;
+                           this->region.perp;
 
                     // If this position is unambiguous, then we can use the
                     // derivatives value calculated and stored in ds.
@@ -639,7 +637,6 @@ uint8_t DCTree<N>::buildCornerMask(
 template <unsigned N>
 bool DCTree<N>::collectChildren(Evaluator* eval,
                                 const Tape::Handle& tape,
-                                const Region<N>& region,
                                 Pool& object_pool,
                                 double max_err)
 {
@@ -760,15 +757,15 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     {
         bool collapsed = false;
         if (findVertex(this->leaf->vertex_count++) < max_err &&
-            region.contains(vert(0), 1e-6))
+            this->region.contains(vert(0), 1e-6))
         {
             Eigen::Vector3f v;
             v << vert(0).template cast<float>(),
-                 region.perp.template cast<float>();
+                 this->region.perp.template cast<float>();
             if (fabs(eval->value(v, *tape->getBase(v))) < max_err)
             {
                 // Store this tree's depth based on the region's level
-                this->leaf->level = region.level;
+                this->leaf->level = this->region.level;
 
                 // Then, erase all of the children and mark that we collapsed
                 this->releaseChildren(object_pool);

@@ -134,7 +134,6 @@ public:
      */
     std::shared_ptr<Tape> evalInterval(Evaluator* eval,
                                        const std::shared_ptr<Tape>& tape,
-                                       const Region<N>& region,
                                        Pool& object_pool);
 
     /*
@@ -144,7 +143,6 @@ public:
      */
     void evalLeaf(Evaluator* eval,
                   const std::shared_ptr<Tape>& tape,
-                  const Region<N>& region,
                   Pool& object_pool,
                   const SimplexNeighbors<N>& neighbors);
 
@@ -156,7 +154,6 @@ public:
      */
     bool collectChildren(Evaluator* eval,
                          const std::shared_ptr<Tape>& tape,
-                         const Region<N>& region,
                          Pool& object_pool,
                          double max_err);
 
@@ -200,7 +197,6 @@ protected:
      */
     void saveVertexSigns(Evaluator* eval,
                          const Tape::Handle& tape,
-                         const Region<N>& region,
                          const std::array<bool, ipow(3, N)>& already_solved);
 
     /*
@@ -219,7 +215,6 @@ protected:
      */
     void findLeafVertices(Evaluator* eval,
                           const Tape::Handle& tape,
-                          const Region<N>& region,
                           Pool& object_pool,
                           const SimplexNeighbors<N>& neighbors);
 

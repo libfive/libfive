@@ -122,27 +122,6 @@ TEST_CASE("Region<3>::subdivide")
     }
 }
 
-TEST_CASE("Region<2>::parent")
-{
-    Region<2> r({0, 0}, {1, 1});
-
-    auto a = r.parent(0);
-    REQUIRE(a.lower.matrix() == Eigen::Vector2d(0, 0));
-    REQUIRE(a.upper.matrix() == Eigen::Vector2d(2, 2));
-
-    auto b = r.parent(1);
-    REQUIRE(b.lower.matrix() == Eigen::Vector2d(-1, 0));
-    REQUIRE(b.upper.matrix() == Eigen::Vector2d(1, 2));
-
-    auto c = r.parent(2);
-    REQUIRE(c.lower.matrix() == Eigen::Vector2d(0, -1));
-    REQUIRE(c.upper.matrix() == Eigen::Vector2d(2, 1));
-
-    auto d = r.parent(3);
-    REQUIRE(d.lower.matrix() == Eigen::Vector2d(-1, -1));
-    REQUIRE(d.upper.matrix() == Eigen::Vector2d(1, 1));
-}
-
 TEST_CASE("Region<3>::subspace")
 {
     Region<3> r({-1, -2, -4}, {1, 2, 4});

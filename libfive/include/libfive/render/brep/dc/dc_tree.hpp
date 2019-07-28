@@ -114,7 +114,6 @@ public:
      */
     std::shared_ptr<Tape> evalInterval(Evaluator* eval,
                                        const std::shared_ptr<Tape>& tape,
-                                       const Region<N>& region,
                                        Pool& object_pool);
 
     /*
@@ -124,7 +123,6 @@ public:
      */
     void evalLeaf(Evaluator* eval,
                   const std::shared_ptr<Tape>& tape,
-                  const Region<N>& region,
                   Pool& spare_leafs,
                   const DCNeighbors<N>& neighbors);
 
@@ -136,7 +134,6 @@ public:
      */
     bool collectChildren(Evaluator* eval,
                          const std::shared_ptr<Tape>& tape,
-                         const Region<N>& region,
                          Pool& object_pool,
                          double max_err);
 

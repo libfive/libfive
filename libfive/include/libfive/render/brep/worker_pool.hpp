@@ -50,7 +50,6 @@ protected:
     struct Task {
         T* target;
         std::shared_ptr<Tape> tape;
-        Region<N> region;
         Neighbors parent_neighbors;
         VolTree* vol;
     };

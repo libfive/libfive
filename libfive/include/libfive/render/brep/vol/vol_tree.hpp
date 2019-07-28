@@ -48,19 +48,16 @@ public:
      */
     std::shared_ptr<Tape> evalInterval(Evaluator* eval,
                                        const std::shared_ptr<Tape>& tape,
-                                       const Region<3>& region,
                                        Pool& object_pool);
 
     void evalLeaf(Evaluator* eval,
                   const std::shared_ptr<Tape>& tape,
-                  const Region<3>& region,
                   Pool& spare_leafs,
                   const VolNeighbors& neighbors);
 
     /*  If all children are EMPTY / FILLED, merges them */
     bool collectChildren(Evaluator* eval,
                          const std::shared_ptr<Tape>& tape,
-                         const Region<3>& region,
                          Pool& object_pool,
                          double max_err);
 

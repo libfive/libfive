@@ -221,14 +221,13 @@ std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
 template <unsigned N>
 Tape::Handle SimplexTree<N>::evalInterval(Evaluator* eval,
                                           const Tape::Handle& tape,
-                                          const Region<N>& region,
                                           Pool& object_pool)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
     auto o = eval->intervalAndPush(
-            region.lower3().template cast<float>(),
-            region.upper3().template cast<float>(),
+            this->region.lower3().template cast<float>(),
+            this->region.upper3().template cast<float>(),
             tape);
 
     this->type = Interval::state(o.i);
@@ -243,8 +242,8 @@ Tape::Handle SimplexTree<N>::evalInterval(Evaluator* eval,
         SimplexNeighbors<N> neighbors;
 
         this->leaf = object_pool.next().get();
-        this->leaf->level = region.level;
-        findLeafVertices(eval, tape, region, object_pool, neighbors);
+        this->leaf->level = this->region.level;
+        findLeafVertices(eval, tape, object_pool, neighbors);
         this->done();
     }
     return o.tape;
@@ -256,7 +255,6 @@ template <unsigned N>
 void SimplexTree<N>::findLeafVertices(
         Evaluator* eval,
         const Tape::Handle& tape,
-        const Region<N>& region,
         Pool& object_pool,
         const SimplexNeighbors<N>& neighbors)
 {
@@ -325,8 +323,8 @@ void SimplexTree<N>::findLeafVertices(
             Vec init;
             for (unsigned a=0; a < N; ++a) {
                 if (sub.isAxisFixed(a)) {
-                    init(a) = (sub.axisPosition(a) ? region.upper
-                                                   : region.lower)(a);
+                    init(a) = (sub.axisPosition(a) ? this->region.upper
+                                                   : this->region.lower)(a);
                 }
             }
             todo.push_back(init);
@@ -335,8 +333,8 @@ void SimplexTree<N>::findLeafVertices(
                     std::vector<Vec, Eigen::aligned_allocator<Vec>> next;
                     for (auto& t : todo) {
                         for (unsigned j=1; j < SAMPLES_PER_EDGE - 1; ++j) {
-                            t(a) = (region.lower(a) * j +
-                                    region.upper(a) * (SAMPLES_PER_EDGE - 1 - j))
+                            t(a) = (this->region.lower(a) * j +
+                                    this->region.upper(a) * (SAMPLES_PER_EDGE - 1 - j))
                                      / (SAMPLES_PER_EDGE - 1);
                             next.push_back(t);
                         }
@@ -348,7 +346,7 @@ void SimplexTree<N>::findLeafVertices(
 
             for (auto& t : todo) {
                 positions.col(count) = t;
-                eval->set<N>(t, region, count++);
+                eval->set<N>(t, this->region, count++);
             }
         }
     }
@@ -389,7 +387,7 @@ void SimplexTree<N>::findLeafVertices(
                     // the corner's QEF.
                     if (ambig(index)) {
                         const auto fs = eval->features<N>(
-                                positions.col(index), region, tape);
+                                positions.col(index), this->region, tape);
                         for (auto& f : fs) {
                             push(f);
                         }
@@ -405,13 +403,13 @@ void SimplexTree<N>::findLeafVertices(
 
     // Statically unroll a loop to position every vertex within their subspace.
     Unroller<N, ipow(3, N) - 1>()(*this->leaf, leaf_sub,
-                                  already_solved, region, eval, tape);
+                                  already_solved, this->region, eval, tape);
 
 
     // Check whether each vertex is inside or outside, either the hard way
     // (if this cell is ambiguous) or the easy way (if it's empty / filled).
     if (this->type == Interval::AMBIGUOUS) {
-        saveVertexSigns(eval, tape, region, already_solved);
+        saveVertexSigns(eval, tape, already_solved);
     } else {
         assert(this->type == Interval::FILLED ||
                this->type == Interval::EMPTY);
@@ -424,19 +422,18 @@ void SimplexTree<N>::findLeafVertices(
 template <unsigned N>
 void SimplexTree<N>::evalLeaf(Evaluator* eval,
                               const std::shared_ptr<Tape>& tape,
-                              const Region<N>& region,
                               Pool& object_pool,
                               const SimplexNeighbors<N>& neighbors)
 {
     this->leaf = object_pool.next().get();
     this->leaf->tape = tape;
-    this->leaf->level = region.level;
-    assert(region.level == 0);
+    this->leaf->level = this->region.level;
+    assert(this->region.level == 0);
 
     // Build the corner-subspace QEFs by sampling the function at the corners,
     // then solve for vertex position.
     this->type = Interval::AMBIGUOUS;
-    findLeafVertices(eval, tape, region, object_pool, neighbors);
+    findLeafVertices(eval, tape, object_pool, neighbors);
     checkVertexSigns();
 
     // We need to keep the leaf + QEF data, even if the region is completely
@@ -449,7 +446,6 @@ void SimplexTree<N>::evalLeaf(Evaluator* eval,
 template <unsigned N>
 bool SimplexTree<N>::collectChildren(Evaluator* eval,
                                      const Tape::Handle& tape,
-                                     const Region<N>& region,
                                      Pool& object_pool,
                                      double max_err)
 {
@@ -484,7 +480,7 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
     // until we're sure that we're keeping the leaf, but might as well
     // do it here (instead of having to write this code in both the
     // unambiguous and ambiguous cases).
-    this->leaf->level = region.level;
+    this->leaf->level = this->region.level;
     this->leaf->tape = tape;
 
     // Update corner and filled / empty state from children
@@ -510,7 +506,7 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
         assert(!this->isBranch());
 
         SimplexNeighbors<N> neighbors;
-        findLeafVertices(eval, tape, region, object_pool, neighbors);
+        findLeafVertices(eval, tape, object_pool, neighbors);
         this->done();
 
         return true;
@@ -539,13 +535,13 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
     std::array<bool, ipow(3, N)> already_solved;
     std::fill(already_solved.begin(), already_solved.end(), false);
     const double err = Unroller<N, ipow(3, N) - 1>()(
-            *this->leaf, leaf_sub, already_solved, region,
+            *this->leaf, leaf_sub, already_solved, this->region,
             eval, tape);
 
     // We've successfully collapsed the cell!
     if (err < max_err) {
         // Calculate and save vertex inside/outside states
-        saveVertexSigns(eval, tape, region, already_solved);
+        saveVertexSigns(eval, tape, already_solved);
 
         // Convert to EMPTY / FILLED if unambiguous
         checkVertexSigns();
@@ -568,7 +564,6 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
 template <unsigned N>
 void SimplexTree<N>::saveVertexSigns(
         Evaluator* eval, const Tape::Handle& tape,
-        const Region<N>& region,
         const std::array<bool, ipow(3, N)>& already_solved)
 {
     // With every vertex positioned, solve for whether it is inside or outside.
@@ -576,10 +571,10 @@ void SimplexTree<N>::saveVertexSigns(
     assert(this->type == Interval::AMBIGUOUS);
 
     const auto leaf_sub = getLeafSubs();
-    auto pos = [&leaf_sub, &region](unsigned i) {
+    auto pos = [&leaf_sub, this](unsigned i) {
         Eigen::Vector3f p;
         p << leaf_sub[i]->vert.template cast<float>().transpose(),
-             region.perp.template cast<float>();
+             this->region.perp.template cast<float>();
         return p;
     };
 
