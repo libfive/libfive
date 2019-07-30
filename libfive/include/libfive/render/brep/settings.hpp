@@ -68,7 +68,7 @@ public:
     ProgressHandler* progress_handler;
 
     /*  Optional acceleration structure */
-    VolTree* vol;
+    const VolTree* vol;
 
     mutable std::atomic_bool cancel;
 };

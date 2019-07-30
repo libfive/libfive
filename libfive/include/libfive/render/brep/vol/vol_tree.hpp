@@ -71,6 +71,12 @@ public:
     /*  Checks whether the given interval is empty or filled */
     Interval::State check(const Region<3>& r) const;
     Interval::State check(const Region<2>& r) const;
+
+    bool contains(const Region<2>& r) const;
+    bool contains(const Region<3>& r) const;
+
+    const VolTree* push(unsigned i, const Region<2>::Perp& perp) const;
+    const VolTree* push(unsigned i, const Region<3>::Perp& perp) const;
 };
 
 }   // namespace libfive

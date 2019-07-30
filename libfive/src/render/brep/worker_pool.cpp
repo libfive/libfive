@@ -35,6 +35,10 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
         Evaluator* eval, const Region<N>& region_,
         const BRepSettings& settings)
 {
+    if (settings.vol && settings.vol->contains(region_)) {
+        std::cerr << "WorkerPool::build: Invalid region for vol tree\n";
+    }
+
     const auto region = region_.withResolution(settings.min_feature);
     auto root(new T(nullptr, 0, region));
 
@@ -167,7 +171,9 @@ void WorkerPool<T, Neighbors, N>::run(
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
                     auto next_tree = object_pool.get(t, i, rs[i]);
-                    Task next{next_tree, tape, neighbors, nullptr};
+                    auto next_vol = task.vol ? task.vol->push(i, rs[i].perp)
+                                             : nullptr;
+                    Task next{next_tree, tape, neighbors, next_vol};
                     if (!tasks.bounded_push(next))
                     {
                         local.push(next);

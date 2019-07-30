@@ -9,6 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "libfive/render/brep/vol/vol_tree.hpp"
+#include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
 #include "libfive/eval/evaluator.hpp"
 #include "../xtree.cpp"
@@ -163,6 +164,44 @@ Interval::State VolTree::check(const Region<2>& r) const {
         return this->type;
     }
     return Interval::UNKNOWN;
+}
+
+bool VolTree::contains(const Region<2>& r) const
+{
+    return (r.lower == region.lower.template head<2>()).all() &&
+           (r.upper == region.upper.template head<2>()).all() &&
+           r.perp(0) >= region.lower(2) && r.perp(0) <= region.upper(2);
+}
+
+bool VolTree::contains(const Region<3>& r) const
+{
+    return (r.lower == region.lower).all() &&
+           (r.upper == region.upper).all();
+}
+
+const VolTree* VolTree::push(unsigned i, const Region<2>::Perp& perp) const
+{
+    if (isBranch()) {
+        if (perp(0) >= region.center()(2)) {
+            i |= Axis::Z;
+        }
+        return children[i].load();
+    } else if (this->type == Interval::AMBIGUOUS) {
+        return nullptr;
+    } else {
+        return this;
+    }
+}
+
+const VolTree* VolTree::push(unsigned i, const Region<3>::Perp&) const
+{
+    if (isBranch()) {
+        return children[i].load();
+    } else if (this->type == Interval::AMBIGUOUS) {
+        return nullptr;
+    } else {
+        return this;
+    }
 }
 
 // Explicit instantiation of templates

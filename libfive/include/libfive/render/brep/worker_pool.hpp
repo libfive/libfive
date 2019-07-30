@@ -51,7 +51,7 @@ protected:
         T* target;
         std::shared_ptr<Tape> tape;
         Neighbors parent_neighbors;
-        VolTree* vol;
+        const VolTree* vol;
     };
 
     using LockFreeStack =
