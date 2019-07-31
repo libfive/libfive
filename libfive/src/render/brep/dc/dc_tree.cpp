@@ -28,6 +28,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../xtree.cpp"
 
+#ifndef LIBFIVE_UNNORMALIZED_DERIVS
+#define LIBFIVE_UNNORMALIZED_DERIVS 0
+#endif
+#ifndef LIBFIVE_LINEAR_ERROR
+#define LIBFIVE_LINEAR_ERROR 0
+#endif
+
 namespace libfive {
 
 //  Here's our cutoff value (with a value set in the header)
@@ -594,11 +601,12 @@ template <unsigned N>
 void DCTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
                                 const double value, const size_t edge)
 {
+#if !LIBFIVE_UNNORMALIZED_DERIVS
     const double norm = derivs.matrix().norm();
 
     // Find normalized derivatives and distance value
     Eigen::Matrix<double, N, 1> dv = derivs / norm;
-
+#endif
 
     // Just-in-time allocation of intersections array
     if (this->leaf->intersections[edge] == nullptr)
@@ -607,6 +615,10 @@ void DCTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
                 new IntersectionVec<N>);
     }
 
+#if LIBFIVE_UNNORMALIZED_DERIVS
+      this->leaf->intersections[edge]->
+         push_back({pos, derivs, value, 0});
+#else
     // If the point has a valid normal, then store it
     if (norm > 1e-12 && dv.array().isFinite().all())
     {
@@ -619,6 +631,7 @@ void DCTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
         this->leaf->intersections[edge]->
              push_back({pos, Vec::Zero(), 0, 0});
     }
+#endif
 }
 
 template <unsigned N>
@@ -756,7 +769,11 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     // a leaf by erasing all of the child branches
     {
         bool collapsed = false;
+#ifdef LIBFIVE_LINEAR_ERROR
+        if (findVertex(this->leaf->vertex_count++) < max_err * max_err &&
+#else
         if (findVertex(this->leaf->vertex_count++) < max_err &&
+#endif
             this->region.contains(vert(0), 1e-6))
         {
             Eigen::Vector3f v;
@@ -798,11 +815,24 @@ double DCTree<N>::findVertex(unsigned index)
 
     // Truncate near-singular eigenvalues in the SVD's diagonal matrix
     Eigen::Matrix<double, N, N> D = Eigen::Matrix<double, N, N>::Zero();
-    for (unsigned i=0; i < N; ++i)
+#if LIBFIVE_UNNORMALIZED_DERIVS
+    auto highestVal = eigenvalues.lpNorm<Eigen::Infinity>();
+    if (highestVal > 1e-20) 
+    {
+        auto cutoff = highestVal * EIGENVALUE_CUTOFF;
+        for (unsigned i = 0; i < N; ++i)
+        {
+            D.diagonal()[i] = (fabs(eigenvalues[i]) < cutoff)
+                ? 0 : (1 / eigenvalues[i]);
+        }
+    }
+#else
+    for (unsigned i = 0; i < N; ++i)
     {
         D.diagonal()[i] = (fabs(eigenvalues[i]) < EIGENVALUE_CUTOFF)
             ? 0 : (1 / eigenvalues[i]);
     }
+#endif
 
     // Get rank from eigenvalues
     if (!this->isBranch())
