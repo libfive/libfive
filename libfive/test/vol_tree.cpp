@@ -11,6 +11,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "catch.hpp"
 
 #include "libfive/render/brep/vol/vol_worker_pool.hpp"
+#include "libfive/render/brep/contours.hpp"
+#include "util/shapes.hpp"
 
 using namespace libfive;
 
@@ -47,3 +49,22 @@ TEST_CASE("VolTree: basic behavior")
     }
 }
 
+TEST_CASE("VolTree: use as an accelerator")
+{
+    auto s = sphere(0.8);
+    Region<3> r({-1, -1, -1}, {1, 1, 1});
+
+    BRepSettings b;
+    auto e = VolWorkerPool::build(s, r, b);
+    REQUIRE(e->isBranch());
+
+    for (float p : {0.9, 0.8, 0.7, 0.6}) {
+        Region<2> q({-1, -1}, {1, 1}, Region<2>::Perp(p));
+        BRepSettings c;
+        c.vol = e.get();
+        c.workers = 1;
+
+        auto m = Contours::render(s, q, c);
+    }
+    REQUIRE(true);
+}

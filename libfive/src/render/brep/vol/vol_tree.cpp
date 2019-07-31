@@ -156,7 +156,8 @@ Interval::State VolTree::check(const Region<3>& r) const
     return Interval::UNKNOWN;
 }
 
-Interval::State VolTree::check(const Region<2>& r) const {
+Interval::State VolTree::check(const Region<2>& r) const
+{
     if (r.perp(0) >= region.lower(2) && r.perp(0) <= region.upper(2) &&
         r.lower(0) >= region.lower(0) && r.upper(0) <= region.upper(0) &&
         r.lower(1) >= region.lower(1) && r.upper(1) <= region.upper(1))

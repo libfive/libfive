@@ -35,7 +35,7 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
         Evaluator* eval, const Region<N>& region_,
         const BRepSettings& settings)
 {
-    if (settings.vol && settings.vol->contains(region_)) {
+    if (settings.vol && !settings.vol->contains(region_)) {
         std::cerr << "WorkerPool::build: Invalid region for vol tree\n";
     }
 
