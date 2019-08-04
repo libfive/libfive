@@ -342,7 +342,6 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
         case Opcode::OP_SQRT:
             out = boost::numeric::sqrt(a);
-            std::cout << "sqrt [" << a.lower() << " " << a.upper() << "] = [" << out.lower() << " " << out.upper() << "]\n";
             SET_UNSAFE(a.lower() < 0.0f);
             break;
         case Opcode::OP_NEG:
