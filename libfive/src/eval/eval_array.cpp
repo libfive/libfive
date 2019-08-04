@@ -264,12 +264,30 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             }
             break;
         case Opcode::OP_MOD:
+            // We choose to match Python's behavior:
+            //  If b is positive, then the result is in the range [ 0, b]
+            //  If b is negative, then the result is in the range [-b, 0]
+            //  If b is zero, then the result is NaN
             for (auto i=0; i < a.size(); ++i)
             {
-                out(i) = std::fmod(a(i), b(i));
-                while (out(i) < 0)
+                float d = fabs(a(i) / b(i));
+                if ((a(i) < 0) ^ (b(i) < 0)) {
+                    d = -ceil(d);
+                } else {
+                    d = floor(d);
+                }
+                out(i) = a(i) - b(i) * d;
+
+                // Clamping for safety
+                if ((b(i) > 0 && out(i) > b(i)) ||
+                    (b(i) < 0 && out(i) < b(i)))
                 {
-                    out(i) += b(i);
+                    out(i) = b(i);
+                }
+                if ((b(i) > 0.0f && out(i) < 0.0f) ||
+                    (b(i) < 0.0f && out(i) > 0.0f))
+                {
+                    out(i) = 0.0f;
                 }
             }
             break;

@@ -140,6 +140,49 @@ TEST_CASE("IntervalEvaluator::intervalAndPush")
 
         REQUIRE(ea == eb);
     }
+
+    SECTION("Fuzzing mod operator")
+    {
+        std::list<Interval::I> i;
+        for (int a=-5; a <= 5; ++a) {
+            for (int b=-5; b <= 5; ++b) {
+                if (a <= b) {
+                    i.push_back({float(a), float(b)});
+                }
+            }
+        }
+        auto m = mod(Tree::X(), Tree::Y());
+        auto deck = std::make_shared<Deck>(m);
+        auto ei = IntervalEvaluator(deck);
+        auto ea = ArrayEvaluator(deck);
+        for (const auto& a : i) {
+            for (const auto& b : i) {
+                auto r = ei.eval_({a.lower(), b.lower(), 0.0f},
+                                  {a.upper(), b.upper(), 0.0f},
+                                  deck->tape);
+                CAPTURE(a.lower());
+                CAPTURE(a.upper());
+                CAPTURE(b.lower());
+                CAPTURE(b.upper());
+                CAPTURE(r.i.lower());
+                CAPTURE(r.i.upper());
+                const unsigned N = 10;
+                for (unsigned c = 0; c <= N; ++c) {
+                    float a_ = a.lower() * (c / float(N)) +
+                               a.upper() * (1.0f - c / float(N));
+                    for (unsigned d = 0; d <= N; ++d) {
+                        float b_ = b.lower() * (c / float(N)) +
+                                   b.upper() * (1 - c / float(N));
+                        auto v = ea.value({a_, b_, 0.0f});
+                        if (r.safe) {
+                            REQUIRE(v >= r.i.lower());
+                            REQUIRE(v <= r.i.upper());
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 TEST_CASE("IntervalEvaluator::eval_().safe")

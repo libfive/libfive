@@ -94,6 +94,23 @@ TEST_CASE("ArrayEvaluator::eval")
         }
     }
 
+    SECTION("Behavior of mod operator")
+    {
+        ArrayEvaluator e(mod(Tree::X(), Tree::Y()));
+        REQUIRE(e.value({1.1, 1.0, 0.0}) == Approx(0.1));
+        REQUIRE(e.value({-1.1, 1.0, 0.0}) == Approx(0.9));
+        REQUIRE(e.value({-1.1, 1.1, 0.0}) == Approx(0.0));
+
+        REQUIRE(e.value({2.1, 2.5, 0.0}) == Approx(2.1));
+        REQUIRE(e.value({2.6, 2.5, 0.0}) == Approx(0.1));
+
+        REQUIRE(e.value({2.1, -2, 0.0}) == Approx(-1.9));
+        REQUIRE(e.value({2.4, -1, 0.0}) == Approx(-0.6));
+
+        REQUIRE(e.value({-2.1, -2, 0.0}) == Approx(-0.1));
+        REQUIRE(e.value({-2.4, -1, 0.0}) == Approx(-0.4));
+    }
+
     SECTION("SIMD consistency")
     {
         std::vector<float> pts = {0.0f, -1.0f, 1.0f, 1.000001f,

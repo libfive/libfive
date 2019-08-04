@@ -323,7 +323,8 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         }
         case Opcode::OP_MOD:
         {
-            out = { 0.f , fmax(fabs(b.lower()), fabs(b.upper())) };
+            out = { fmin(b.lower(), 0.0f), fmax(0.0f, b.upper()) };
+#if 0 /* This logic is failing with new mod behavior + fuzzing */
             if (std::isfinite(a.upper()) && std::isfinite(a.lower()))
             {
                 // We may be able to do better: Divide into cases, based on whether
@@ -359,9 +360,8 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                     assert(false);
                 }
             }
-
-            SET_UNSAFE(a.upper() >= 0.f && a.lower() <= 0.f &&
-                       b.upper() >= 0.f && b.lower() <= 0.f);
+#endif
+            SET_UNSAFE(b.upper() >= 0.f && b.lower() <= 0.f);
             break;
         }
         case Opcode::OP_NANFILL:
