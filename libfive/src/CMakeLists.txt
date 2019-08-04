@@ -83,7 +83,6 @@ add_library(five SHARED
     render/brep/vol/vol_tree.cpp
     render/brep/vol/vol_worker_pool.cpp
 
-    solve/bounds.cpp
     solve/solver.cpp
 
     tree/cache.cpp
