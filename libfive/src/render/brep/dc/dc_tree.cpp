@@ -769,7 +769,7 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     // a leaf by erasing all of the child branches
     {
         bool collapsed = false;
-#ifdef LIBFIVE_LINEAR_ERROR
+#if LIBFIVE_LINEAR_ERROR
         if (findVertex(this->leaf->vertex_count++) < max_err * max_err &&
 #else
         if (findVertex(this->leaf->vertex_count++) < max_err &&
