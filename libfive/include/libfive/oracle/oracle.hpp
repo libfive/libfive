@@ -44,11 +44,11 @@ public:
                      const Eigen::Vector3f& upper)=0;
 
     /*
-     *  Return the result of interval arithmetic over the range
-     *  previously defined with set(Interval::I).  Sets maybe_nan
-     *  based on whether the given range could contain NaN.
+     *  Return the result of interval arithmetic over the range previously
+     *  defined with set(Interval::I).  If the output range could include
+     *  NaN, the oracle must return the interval {NaN, NaN}.
      */
-    virtual void evalInterval(Interval::I& out, bool& maybe_nan)=0;
+    virtual void evalInterval(Interval::I& out)=0;
 
     /*
      *  Re-implemented by subclasses to return a context that specializes

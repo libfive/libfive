@@ -220,7 +220,7 @@ bool Heightmap::recurse(Evaluator* e, const Tape::Handle& tape,
 
     // Do the interval evaluation, storing an tape-popping handle
     auto result = e->intervalAndPush(r.lower, r.upper, tape);
-    Interval::I out = result.i;
+    Interval::I out = result.first;
 
     bool ret = true;
     // If strictly negative, fill up the block and return
@@ -236,11 +236,11 @@ bool Heightmap::recurse(Evaluator* e, const Tape::Handle& tape,
 
         // Since the higher Z region is in the second item of the
         // split, evaluate rs.second then rs.first
-        ret &= recurse(e, result.tape, rs.second, abort) &&
-               recurse(e, result.tape, rs.first, abort);
+        ret &= recurse(e, result.second, rs.second, abort) &&
+               recurse(e, result.second, rs.first, abort);
     }
-    if (result.tape != tape) {
-        e->getDeck()->claim(std::move(result.tape));
+    if (result.second != tape) {
+        e->getDeck()->claim(std::move(result.second));
     }
     return ret;
 }

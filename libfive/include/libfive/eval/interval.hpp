@@ -21,6 +21,11 @@ typedef boost::numeric::interval<float,
 
 enum State { EMPTY, FILLED, AMBIGUOUS, UNKNOWN };
 
+inline bool isSafe(const Interval::I& i)
+{
+    return !std::isnan(i.upper()) && !std::isnan(i.lower());
+}
+
 inline bool isFilled(const Interval::I& i) { return i.upper() < 0; }
 inline bool isEmpty(const Interval::I& i)  { return i.lower() > 0; }
 inline State state(const Interval::I& i)

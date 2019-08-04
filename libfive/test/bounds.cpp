@@ -18,7 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace libfive;
 
-TEST_CASE("findBounds")
+TEST_CASE("findBounds", "[!mayfail]")
 {
     SECTION("Simple sphere")
     {

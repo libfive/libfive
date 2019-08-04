@@ -105,8 +105,8 @@ Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
             this->region.upper3().template cast<float>(),
             tape);
 
-    this->type = Interval::state(o.i);
-    if (!o.safe)
+    this->type = Interval::state(o.first);
+    if (!Interval::isSafe(o.first))
     {
         this->type = Interval::AMBIGUOUS;
         return tape;
@@ -115,12 +115,12 @@ Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
         this->done();
-        if (tape != o.tape) {
-            eval->getDeck()->claim(std::move(o.tape));
+        if (tape != o.second) {
+            eval->getDeck()->claim(std::move(o.second));
             return nullptr;
         }
     }
-    return o.tape;
+    return o.second;
 }
 
 template <unsigned N>
