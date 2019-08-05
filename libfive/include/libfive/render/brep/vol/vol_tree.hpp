@@ -8,6 +8,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
+#include <memory>
+
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/default_new_delete.hpp"
