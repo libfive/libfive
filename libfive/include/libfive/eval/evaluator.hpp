@@ -48,6 +48,19 @@ public:
         }
         return changed;
 }
+    /// This computes intervals and checks against the result of the array
+    /// evaluator.  It returns true if the result is valid and false if not;
+    /// it is intended for debugging (as, in the absence of bugs, it will
+    /// always return true if the passed point is inside the passed region;
+    /// if not, it will return false with no evaluation necessary).
+    bool intervalAndCheck(const Eigen::Vector3f& lower,
+                          const Eigen::Vector3f& upper,
+                          size_t count,
+                          const Tape& tape);
+protected:
+    /// Used in intervalAndCheck.
+    void operator()(Opcode::Opcode op, Clause::Id id,
+                    Clause::Id a, Clause::Id b, bool& failed);
 };
 
 }   // namespace libfive
