@@ -236,7 +236,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk(
             const BRepSettings& settings,
             A... args)
 {
-    return Dual<N>::walk_<M>(
+    return walk_<M>(
             t, settings,
             [&args...](PerThreadBRep<N>& brep, int i) {
                 (void)i;
