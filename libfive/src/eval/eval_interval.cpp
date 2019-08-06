@@ -323,32 +323,40 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         }
         case Opcode::OP_MOD:
         {
+        
             out = { fmin(b.lower(), 0.0f), fmax(0.0f, b.upper()) };
-#if 0 /* This logic is failing with new mod behavior + fuzzing */
             if (std::isfinite(a.upper()) && std::isfinite(a.lower()))
             {
                 // We may be able to do better: Divide into cases, based on whether
                 // b is above, below, or crossing 0.
                 auto position = (b.upper() >= 0.f) + 2 * (b.lower() <= 0.f);
+                auto usedA = a; // This will become a sgn(b)
                 switch (position)
                 {
-                case 1:
                 case 2:
+                  usedA *= -1;
+                case 1:
                 {
-                    auto maxMagB = position == 1 ? b.upper() : -b.lower();
-                    auto minMagB = position == 1 ? b.lower() : -b.upper();
-                    auto highestQuotientB = a.upper() > 0 ? minMagB : maxMagB;
-                    auto lowestQuotientB = a.lower() < 0 ? maxMagB : minMagB;
-                    // Use std::floor to round to -INFINITY rather than to 0, 
-                    // in order to match the point evaluator behavior.
-                    auto highestQuotientInt = static_cast<int>
-                        (std::floor(a.upper() / highestQuotientB));
-                    auto lowestQuotientInt = static_cast<int>
-                        (std::floor(a.lower() / lowestQuotientB));
-                    if (highestQuotientInt == lowestQuotientInt)
-                    {
-                      out = { a.lower() - lowestQuotientInt * lowestQuotientB,
-                          a.upper() - highestQuotientInt * highestQuotientB };
+                    // We will try to find better bounds for usedA mod 
+                    // abs(b), and then negate in case 2 (the one in 
+                    // which b is always negative).
+
+                    auto absB = boost::numeric::abs(b);
+                    auto highestQuotientB = usedA.upper() > 0 
+                      ? absB.lower() 
+                      : absB.upper();
+                    auto lowestQuotientB = usedA.lower() < 0 
+                      ? absB.lower()
+                      : absB.upper();
+                    auto quotients = usedA / absB;
+                    // We take the floor after dividing, so that it will round
+                    // toward -INFINITY instead of 0; this matches the array 
+                    // evaluator for positive b.
+                    auto quotientInt = static_cast<int>
+                      (std::floor(quotients.lower()));
+                    if (quotientInt == static_cast<int>
+                      (std::floor(quotients.upper()))) {
+                      out = a - b * Interval::I(quotientInt);
                     }
                 }
                 case 3:
@@ -360,7 +368,6 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                     assert(false);
                 }
             }
-#endif
             SET_UNSAFE(b.upper() >= 0.f && b.lower() <= 0.f);
             break;
         }

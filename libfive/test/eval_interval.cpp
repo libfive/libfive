@@ -168,11 +168,17 @@ TEST_CASE("IntervalEvaluator::intervalAndPush")
                 CAPTURE(r.i.upper());
                 const unsigned N = 10;
                 for (unsigned c = 0; c <= N; ++c) {
-                    float a_ = a.lower() * (c / float(N)) +
-                               a.upper() * (1.0f - c / float(N));
+                    // This form of interpolation is less intuitive than
+                    // a.lower() * (c / float(N)) + 
+                    // a.upper() * (1 - c / float(N)), but does not allow
+                    // the result to exceed the input interval bounds due
+                    // to floating-point error the way the more intuitive
+                    // approach would.
+                    float a_ = a.lower() + 
+                               c / float(N) * (a.upper() - a.lower());
                     for (unsigned d = 0; d <= N; ++d) {
-                        float b_ = b.lower() * (c / float(N)) +
-                                   b.upper() * (1 - c / float(N));
+                        float b_ = b.lower() + 
+                                   d / float(N) * (b.upper() - b.lower());
                         auto v = ea.value({a_, b_, 0.0f});
                         if (r.safe) {
                             REQUIRE(v >= r.i.lower());
