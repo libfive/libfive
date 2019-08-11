@@ -75,7 +75,7 @@ protected:
     Clause::Id i;
 
     /*  These bounds are only valid if type == INTERVAL  */
-    Interval::I X, Y, Z;
+    Interval X, Y, Z;
     Type type;
 
     /*  If terminal is true, then the tape contains no min/max clauses

@@ -28,7 +28,7 @@ public:
      */
     void set(const Eigen::Vector3f& p, size_t index=0) override;
 
-    void evalInterval(Interval::I& out) override;
+    void evalInterval(Interval& out) override;
 
     void evalPoint(float& out, size_t index=0) override;
 

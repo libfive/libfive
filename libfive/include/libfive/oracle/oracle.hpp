@@ -45,10 +45,10 @@ public:
 
     /*
      *  Return the result of interval arithmetic over the range previously
-     *  defined with set(Interval::I).  If the output range could include
+     *  defined with set(Interval).  If the output range could include
      *  NaN, the oracle must return the interval {NaN, NaN}.
      */
-    virtual void evalInterval(Interval::I& out)=0;
+    virtual void evalInterval(Interval& out)=0;
 
     /*
      *  Re-implemented by subclasses to return a context that specializes

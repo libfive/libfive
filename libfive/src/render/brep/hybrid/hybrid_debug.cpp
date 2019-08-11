@@ -91,7 +91,7 @@ void HybridDebugMesher::load(const std::array<const HybridTree<3>*, 4>& ts)
             ts.at(index)->leaf->inside[s.i],
         });
     };
-    auto saveDummyVertex = [&subvs](Interval::I i) {
+    auto saveDummyVertex = [&subvs](Interval::State i) {
         subvs.push_back(SubspaceVertex {
                 Eigen::Vector3d::Zero(),
                 0,

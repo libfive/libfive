@@ -125,7 +125,7 @@ public:
     }
 
     // We don't care about any of these functions
-    void evalInterval(Interval::I&) override {}
+    void evalInterval(Interval&) override {}
     void evalPoint(float&, size_t) override {}
     void checkAmbiguous(
             Eigen::Block<Eigen::Array<bool, 1, LIBFIVE_EVAL_ARRAY_SIZE>,

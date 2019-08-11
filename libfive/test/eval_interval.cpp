@@ -143,7 +143,7 @@ TEST_CASE("IntervalEvaluator::intervalAndPush")
 
     SECTION("Fuzzing mod operator")
     {
-        std::list<Interval::I> i;
+        std::list<Interval> i;
         for (int a=-5; a <= 5; ++a) {
             for (int b=-5; b <= 5; ++b) {
                 if (a <= b) {
@@ -168,13 +168,19 @@ TEST_CASE("IntervalEvaluator::intervalAndPush")
                 CAPTURE(r.upper());
                 const unsigned N = 10;
                 for (unsigned c = 0; c <= N; ++c) {
-                    float a_ = a.lower() * (c / float(N)) +
-                               a.upper() * (1.0f - c / float(N));
+                    // This form of interpolation is less intuitive than
+                    //      a.lower() * (c / float(N)) +
+                    //      a.upper() * (1 - c / float(N))
+                    // but does not allow the result to exceed the input
+                    // interval bounds due to floating-point error (which
+                    // the more intuitive approach does allow).
+                    float a_ = a.lower() +
+                               c / float(N) * (a.upper() - a.lower());
                     for (unsigned d = 0; d <= N; ++d) {
-                        float b_ = b.lower() * (c / float(N)) +
-                                   b.upper() * (1 - c / float(N));
+                        float b_ = b.lower() +
+                                   d / float(N) * (b.upper() - b.lower());
                         auto v = ea.value({a_, b_, 0.0f});
-                        if (Interval::isSafe(r)) {
+                        if (r.isSafe()) {
                             REQUIRE(v >= r.lower());
                             REQUIRE(v <= r.upper());
                         }
@@ -192,10 +198,10 @@ TEST_CASE("IntervalEvaluator::eval(): NaN behavior")
         auto t = std::make_shared<Deck>(Tree::X());
         IntervalEvaluator e(t);
 
-        REQUIRE(Interval::isSafe(e.eval({-1, 1, 0}, {1, 2, 0})));
-        REQUIRE(Interval::isSafe(e.eval(
+        REQUIRE(e.eval({-1, 1, 0}, {1, 2, 0}).isSafe());
+        REQUIRE(e.eval(
                 {-std::numeric_limits<float>::infinity(), 1, 0},
-                {1, 2, 0})));
+                {1, 2, 0}).isSafe());
     }
 
     SECTION("Division")
@@ -203,10 +209,10 @@ TEST_CASE("IntervalEvaluator::eval(): NaN behavior")
         auto t = std::make_shared<Deck>(Tree::X() / Tree::Y());
         IntervalEvaluator e(t);
 
-        REQUIRE(Interval::isSafe(e.eval({-1, 1, 0}, {1, 2, 0})));
-        REQUIRE(!Interval::isSafe(e.eval({-1, 0, 0}, {1, 2, 0})));
-        REQUIRE(!Interval::isSafe(e.eval({-1, -1, 0}, {1, 2, 0})));
-        REQUIRE(Interval::isSafe(e.eval({1, -1, 0}, {2, 2, 0})));
+        REQUIRE(e.eval({-1, 1, 0}, {1, 2, 0}).isSafe());
+        REQUIRE(!e.eval({-1, 0, 0}, {1, 2, 0}).isSafe());
+        REQUIRE(!e.eval({-1, -1, 0}, {1, 2, 0}).isSafe());
+        REQUIRE(e.eval({1, -1, 0}, {2, 2, 0}).isSafe());
     }
 
     SECTION("Multiplication of zero and infinity")
@@ -214,11 +220,11 @@ TEST_CASE("IntervalEvaluator::eval(): NaN behavior")
         auto t = std::make_shared<Deck>(Tree::Z() * (Tree::X() / Tree::Y()));
         IntervalEvaluator e(t);
 
-        REQUIRE(Interval::isSafe(e.eval({-1, 1, 0}, {1, 2, 0})));
-        REQUIRE(!Interval::isSafe(e.eval({-1, 0, 0}, {1, 2, 0})));
-        REQUIRE(!Interval::isSafe(e.eval({-1, -1, 1}, {1, 2, 2})));
-        REQUIRE(!Interval::isSafe(e.eval({1, -1, -1}, {2, 2, 1})));
-        REQUIRE(Interval::isSafe(e.eval({1, -1, 1}, {2, 2, 2})));
-        REQUIRE(!Interval::isSafe(e.eval({1, -1, -1}, {2, 2, 2})));
+        REQUIRE(e.eval({-1, 1, 0}, {1, 2, 0}).isSafe());
+        REQUIRE(!e.eval({-1, 0, 0}, {1, 2, 0}).isSafe());
+        REQUIRE(!e.eval({-1, -1, 1}, {1, 2, 2}).isSafe());
+        REQUIRE(!e.eval({1, -1, -1}, {2, 2, 1}).isSafe());
+        REQUIRE(e.eval({1, -1, 1}, {2, 2, 2}).isSafe());
+        REQUIRE(!e.eval({1, -1, -1}, {2, 2, 2}).isSafe());
     }
 }

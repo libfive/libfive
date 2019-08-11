@@ -105,10 +105,10 @@ Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
             this->region.upper3().template cast<float>(),
             tape);
 
-    this->type = Interval::state(o.first);
-    if (!Interval::isSafe(o.first))
+    this->type = o.first.state();
+    if (!o.first.isSafe())
     {
-        this->type = Interval::AMBIGUOUS;
+        assert(this->type == Interval::AMBIGUOUS);
         return tape;
     }
 

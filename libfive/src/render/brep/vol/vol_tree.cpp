@@ -46,10 +46,10 @@ Tape::Handle VolTree::evalInterval(Evaluator* eval,
             this->region.upper3().template cast<float>(),
             tape);
 
-    this->type = Interval::state(o.first);
-    if (!Interval::isSafe(o.first))
+    this->type = o.first.state();
+    if (!o.first.isSafe())
     {
-        this->type = Interval::AMBIGUOUS;
+        assert(this->type == Interval::AMBIGUOUS);
         return tape;
     }
 
@@ -75,9 +75,10 @@ void VolTree::evalLeaf(Evaluator* eval,
             this->region.upper3().template cast<float>(),
             tape);
 
-    this->type = Interval::state(o.first);
-    if (!Interval::isSafe(o.first))
+    this->type = o.first.state();
+    if (!o.first.isSafe())
     {
+        assert(this->type == Interval::AMBIGUOUS);
         this->type = Interval::AMBIGUOUS;
     }
 

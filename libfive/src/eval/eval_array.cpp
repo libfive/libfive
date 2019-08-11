@@ -257,8 +257,9 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 // Work around a limitation in pow by using boost's nth-root
                 // function on a single-point interval
                 if (a(i) < 0)
-                    out(i) = boost::numeric::nth_root(
-                            Interval::I(a(i), a(i)), b(i)).lower();
+                    out(i) = Interval::nth_root(
+                            Interval(a(i), a(i)),
+                            Interval(b(i), b(i))).lower();
                 else
                     out(i) = pow(a(i), 1.0f/b(i));
             }

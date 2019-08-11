@@ -91,7 +91,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
             sub->inside,
         });
     };
-    auto saveDummyVertex = [&subvs](Interval::I i) {
+    auto saveDummyVertex = [&subvs](Interval::State i) {
         subvs.push_back(SubspaceVertex {
                 Eigen::Vector3d::Zero(),
                 0,

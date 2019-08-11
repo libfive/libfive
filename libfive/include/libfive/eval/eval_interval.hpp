@@ -30,16 +30,16 @@ public:
     /*
      *  Interval evaluation
      */
-    Interval::I eval(const Eigen::Vector3f& lower,
-                     const Eigen::Vector3f& upper);
-    Interval::I eval(const Eigen::Vector3f& lower,
-                     const Eigen::Vector3f& upper,
-                     const std::shared_ptr<Tape>& tape);
+    Interval eval(const Eigen::Vector3f& lower,
+                  const Eigen::Vector3f& upper);
+    Interval eval(const Eigen::Vector3f& lower,
+                  const Eigen::Vector3f& upper,
+                  const std::shared_ptr<Tape>& tape);
 
-    std::pair<Interval::I, std::shared_ptr<Tape>> intervalAndPush(
+    std::pair<Interval, std::shared_ptr<Tape>> intervalAndPush(
             const Eigen::Vector3f& lower,
             const Eigen::Vector3f& upper);
-    std::pair<Interval::I, std::shared_ptr<Tape>> intervalAndPush(
+    std::pair<Interval, std::shared_ptr<Tape>> intervalAndPush(
             const Eigen::Vector3f& lower,
             const Eigen::Vector3f& upper,
             const std::shared_ptr<Tape>& tape);
@@ -64,7 +64,7 @@ public:
 
 protected:
     /*  i[clause] is the interval result for that clause, */
-    std::vector<Interval::I> i;
+    std::vector<Interval> i;
 
      /* Sets i[index] = f and maybe_nan[index] = std::isnan(f) */
      void store(float f, size_t index);

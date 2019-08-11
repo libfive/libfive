@@ -220,16 +220,16 @@ bool Heightmap::recurse(Evaluator* e, const Tape::Handle& tape,
 
     // Do the interval evaluation, storing an tape-popping handle
     auto result = e->intervalAndPush(r.lower, r.upper, tape);
-    Interval::I out = result.first;
+    Interval out = result.first;
 
     bool ret = true;
     // If strictly negative, fill up the block and return
-    if (Interval::isFilled(out))
+    if (out.isFilled())
     {
         fill(e, tape, r);
     }
     // Otherwise, recurse if the output interval is ambiguous
-    else if (!Interval::isEmpty(out))
+    else if (!out.isEmpty())
     {
         // Disable inactive nodes in the tree
         auto rs = r.split();
