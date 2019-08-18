@@ -77,7 +77,7 @@ protected:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void evalClause(const Clause& c);
+    void evalClause(const Clause& c, const uint32_t* n_ary);
 
 public:
     /*

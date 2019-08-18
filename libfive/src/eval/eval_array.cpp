@@ -108,7 +108,7 @@ ArrayEvaluator::values(size_t count, const Tape& tape)
 
     deck->bindOracles(tape);
     for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
-        evalClause(*itr);
+        evalClause(*itr, tape.getNaryData());
     }
     deck->unbindOracles();
 
@@ -216,7 +216,7 @@ ArrayEvaluator::getAmbiguous(size_t i, const Tape& tape)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ArrayEvaluator::evalClause(const Clause& c)
+void ArrayEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
 {
 #define out v.block<1, Eigen::Dynamic>(c.id, 0, 1, count_simd)
 #define a v.row(c.a).head(count_simd)

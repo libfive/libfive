@@ -107,7 +107,7 @@ DerivArrayEvaluator::derivs(size_t count, const Tape& tape)
     // Perform derivative evaluation, copying results into the out array
     deck->bindOracles(tape);
     for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
-        evalClause(*itr);
+        evalClause(*itr, tape.getNaryData());
     }
     deck->unbindOracles();
 
@@ -116,7 +116,7 @@ DerivArrayEvaluator::derivs(size_t count, const Tape& tape)
     return out.block<4, Eigen::Dynamic>(0, 0, 4, count);
 }
 
-void DerivArrayEvaluator::evalClause(const Clause& c)
+void DerivArrayEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
 {
 #define ov v.row(c.id).head(count_simd)
 #define od d(c.id).leftCols(count_simd)
@@ -235,13 +235,32 @@ void DerivArrayEvaluator::evalClause(const Clause& c)
             deck->oracles[c.a]->evalDerivArray(d(c.id).leftCols(count_actual));
             break;
 
+        case Opcode::OP_NARY_MIN: {
+            // Iterate over the n-ary clauses, finding which one was
+            // selected as the min for each of the array evaluations
+            // and using its values for the derivatives.
+            Eigen::Array<uint32_t, 1, N> target;
+            for (unsigned i=0; i < count_simd; ++i) {
+                for (unsigned j=c.a; j < c.b; ++j) {
+                    if (v(n_ary[j], i) == v(c.id, i)) {
+                        d[c.id] = d[n_ary[j]];
+                        break;
+                    // If we haven't found the match in any of the n-ary
+                    // operations, then something has gone wrong
+                    } else if (j == c.b - 1) {
+                        assert(false);
+                    }
+                }
+            }
+            break;
+        }
+
         case Opcode::INVALID:
         case Opcode::CONSTANT:
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR_FREE:
-        case Opcode::OP_NARY_MIN:
         case Opcode::LAST_OP: assert(false);
     }
 #undef ov

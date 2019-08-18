@@ -82,7 +82,7 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
          itr != handle.second->rend();
          ++itr)
     {
-        evalClause(*itr);
+        evalClause(*itr, handle.second->getNaryData());
     }
     auto fs = f(handle.second->root());
 
@@ -132,7 +132,7 @@ const boost::container::small_vector<Feature, 4>&
     // Evaluate feature-wise
     deck->bindOracles(*handle.second);
     for (auto itr = handle.second->rbegin(); itr != handle.second->rend(); ++itr) {
-        evalClause(*itr);
+        evalClause(*itr, handle.second->getNaryData());
     }
     deck->unbindOracles();
 
@@ -168,7 +168,7 @@ std::list<Eigen::Vector3f> FeatureEvaluator::features(
     return out;
 }
 
-void FeatureEvaluator::evalClause(const Clause& c)
+void FeatureEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
 {
 #define of f(c.id)
 
@@ -276,7 +276,7 @@ void FeatureEvaluator::evalClause(const Clause& c)
                     filled(c.a) = count;
                 }
                 setCount(count);
-                DerivArrayEvaluator::evalClause(c);
+                DerivArrayEvaluator::evalClause(c, n_ary);
                 for (unsigned i=0; i < count; ++i) {
                     of.push_back(Feature(d(c.id).col(i), _ads[i]));
                 }
@@ -304,7 +304,7 @@ void FeatureEvaluator::evalClause(const Clause& c)
                     v.row(c.b).leftCols(count) = v(c.b, 0);
                     filled(c.b) = count;
                 }
-                DerivArrayEvaluator::evalClause(c);
+                DerivArrayEvaluator::evalClause(c, n_ary);
                 for (unsigned i=0; i < count; ++i) {
                     of.push_back(Feature(d(c.id).col(i),
                                  _ads[i / _bds.size()],

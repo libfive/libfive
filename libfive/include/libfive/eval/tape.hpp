@@ -63,6 +63,10 @@ public:
 
     Clause::Id root() const { return i; }
 
+    const uint32_t* getNaryData() const {
+        return nary_data.data();
+    }
+
 protected:
     /*  The tape itself, as a vector of clauses  */
     std::vector<Clause> t;

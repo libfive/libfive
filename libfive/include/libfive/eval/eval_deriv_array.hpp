@@ -55,7 +55,7 @@ public:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void evalClause(const Clause& c);
+    void evalClause(const Clause& c, const uint32_t* n_ary);
 
     /*
      *  Returns a list of ambiguous items from indices 0 to i that

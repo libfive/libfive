@@ -84,7 +84,7 @@ Interval IntervalEvaluator::eval(
 
     deck->bindOracles(*tape);
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
-        evalClause(*itr);
+        evalClause(*itr, tape->getNaryData());
     }
     deck->unbindOracles();
 
@@ -186,7 +186,7 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void IntervalEvaluator::evalClause(const Clause& c)
+void IntervalEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
 {
 #define out i[c.id]
 #define a i[c.a]
@@ -281,13 +281,19 @@ void IntervalEvaluator::evalClause(const Clause& c)
             deck->oracles[c.a]->evalInterval(i[c.id]);
             break;
 
+        case Opcode::OP_NARY_MIN:
+            i[c.id] = i[n_ary[c.a]];
+            for (unsigned j=c.a; j != c.b; ++j) {
+                i[c.id] = Interval::min(i[c.id], i[n_ary[j]]);
+            }
+            break;
+
         case Opcode::INVALID:
         case Opcode::CONSTANT:
         case Opcode::VAR_X:
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR_FREE:
-        case Opcode::OP_NARY_MIN:
         case Opcode::LAST_OP: assert(false);
     }
 }
