@@ -108,7 +108,7 @@ ArrayEvaluator::values(size_t count, const Tape& tape)
 
     deck->bindOracles(tape);
     for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
-        (*this)(itr->op, itr->id, itr->a, itr->b);
+        evalClause(*itr);
     }
     deck->unbindOracles();
 
@@ -216,13 +216,12 @@ ArrayEvaluator::getAmbiguous(size_t i, const Tape& tape)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                Clause::Id a_, Clause::Id b_)
+void ArrayEvaluator::evalClause(const Clause& c)
 {
-#define out v.block<1, Eigen::Dynamic>(id, 0, 1, count_simd)
-#define a v.row(a_).head(count_simd)
-#define b v.row(b_).head(count_simd)
-    switch (op)
+#define out v.block<1, Eigen::Dynamic>(c.id, 0, 1, count_simd)
+#define a v.row(c.a).head(count_simd)
+#define b v.row(c.b).head(count_simd)
+    switch (c.op)
     {
         case Opcode::OP_ADD:
             out = a + b;
@@ -348,9 +347,12 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = a;
             break;
 
+#undef out
+#undef a
+#undef b
         case Opcode::ORACLE:
-            deck->oracles[a_]->evalArray(
-                    v.block<1, Eigen::Dynamic>(id, 0, 1, count_actual));
+            deck->oracles[c.a]->evalArray(
+                    v.block<1, Eigen::Dynamic>(c.id, 0, 1, count_actual));
             break;
 
         case Opcode::INVALID:
@@ -359,11 +361,9 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR_FREE:
+        case Opcode::OP_NARY_MIN:
         case Opcode::LAST_OP: assert(false);
     }
-#undef out
-#undef a
-#undef b
 }
 
 }   // namespace libfive

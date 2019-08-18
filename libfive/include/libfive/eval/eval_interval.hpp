@@ -72,8 +72,7 @@ protected:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+    void evalClause(const Clause& c);
 };
 
 }   // namespace libfive

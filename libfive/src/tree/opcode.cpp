@@ -58,6 +58,7 @@ size_t Opcode::args(Opcode op)
             return 2;
 
         case INVALID: // fallthrough
+        case OP_NARY_MIN:
         case LAST_OP: return -1;
     }
     assert(false); /* All enumeration values must be handled */
@@ -170,6 +171,7 @@ std::string Opcode::toOpString(Opcode op)
         case OP_SUB:   return "-";
         case OP_RECIP: // FALLTHROUGH
         case OP_DIV:   return "/";
+        case OP_NARY_MIN: return "min";
 
         case INVALID: // fallthrough
         case CONSTANT:
@@ -220,6 +222,56 @@ bool Opcode::isCommutative(Opcode op)
         case OP_MUL:
         case OP_MIN:
         case OP_MAX:
+            return true;
+
+        case OP_NARY_MIN: // this case shouldn't be hit
+            assert(false);
+            return false;
+    }
+    assert(false);
+    return false;
+}
+
+bool Opcode::isNary(Opcode op)
+{
+    switch (op)
+    {
+        case CONSTANT: // fallthrough
+        case VAR_X:
+        case VAR_Y:
+        case VAR_Z:
+        case VAR_FREE:
+        case ORACLE:
+        case OP_SQUARE:
+        case OP_SQRT:
+        case OP_NEG:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+        case OP_EXP:
+        case OP_SUB:
+        case OP_DIV:
+        case OP_ATAN2:
+        case OP_POW:
+        case OP_NTH_ROOT:
+        case OP_MOD:
+        case OP_NANFILL:
+        case OP_COMPARE:
+        case INVALID:
+        case OP_LOG:
+        case OP_ABS:
+        case OP_RECIP:
+        case CONST_VAR:
+        case LAST_OP:
+        case OP_ADD:
+        case OP_MUL:
+        case OP_MIN:
+        case OP_MAX:
+            return false;
+        case OP_NARY_MIN:
             return true;
     }
     assert(false);

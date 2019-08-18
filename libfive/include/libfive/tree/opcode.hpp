@@ -57,12 +57,14 @@ namespace Opcode
     OPCODE(OP_COMPARE, 31)  \
                             \
     OPCODE(ORACLE, 32)      \
+                            \
+    OPCODE(OP_NARY_MIN, 33) \
 
 enum Opcode {
 #define OPCODE(s, i) s=i,
     OPCODES
 #undef OPCODE
-    LAST_OP=33,
+    LAST_OP=34,
 };
 
 size_t args(Opcode op);
@@ -94,6 +96,11 @@ Opcode fromScmString(std::string s);
  *  Returns true if the opcode is commutative (+, *, etc)
  */
 bool isCommutative(Opcode op);
+
+/*
+ *  Returns true if the opcode is n-ary (NARY_MIN, etc)
+ */
+bool isNary(Opcode op);
 
 }
 

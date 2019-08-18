@@ -82,7 +82,7 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
          itr != handle.second->rend();
          ++itr)
     {
-        (*this)(itr->op, itr->id, itr->a, itr->b);
+        evalClause(*itr);
     }
     auto fs = f(handle.second->root());
 
@@ -132,7 +132,7 @@ const boost::container::small_vector<Feature, 4>&
     // Evaluate feature-wise
     deck->bindOracles(*handle.second);
     for (auto itr = handle.second->rbegin(); itr != handle.second->rend(); ++itr) {
-        (*this)(itr->op, itr->id, itr->a, itr->b);
+        evalClause(*itr);
     }
     deck->unbindOracles();
 
@@ -168,17 +168,16 @@ std::list<Eigen::Vector3f> FeatureEvaluator::features(
     return out;
 }
 
-void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                  Clause::Id a, Clause::Id b)
+void FeatureEvaluator::evalClause(const Clause& c)
 {
-#define of f(id)
+#define of f(c.id)
 
-#define av v(a, 0)
-#define _ads f(a)
+#define av v(c.a, 0)
+#define _ads f(c.a)
 #define ad _ad.deriv
 
-#define bv v(b, 0)
-#define _bds f(b)
+#define bv v(c.b, 0)
+#define _bds f(c.b)
 #define bd _bd.deriv
 
 #define LOOP2 \
@@ -187,8 +186,8 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
     of.clear();
 
-    if (op == Opcode::OP_MIN) {
-        if (av < bv || a == b) {
+    if (c.op == Opcode::OP_MIN) {
+        if (av < bv || c.a == c.b) {
             of = _ads;
         } else if (av > bv) {
             of = _bds;
@@ -225,8 +224,8 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 }
             }
         }
-    } else if (op == Opcode::OP_MAX) {
-        if (av < bv || a == b) {
+    } else if (c.op == Opcode::OP_MAX) {
+        if (av < bv || c.a == c.b) {
             of = _bds;
         } else if (av > bv) {
             of = _ads;
@@ -262,9 +261,9 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 }
             }
         }
-    } else if (op == Opcode::ORACLE) {
-        deck->oracles[a]->evalFeatures(f(id));
-    } else if (Opcode::args(op) == 1) {
+    } else if (c.op == Opcode::ORACLE) {
+        deck->oracles[c.a]->evalFeatures(f(c.id));
+    } else if (Opcode::args(c.op) == 1) {
         unsigned count = 0;
         auto run = [&]() {
             if (count) {
@@ -272,43 +271,44 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                 // because we'll be doing an array-wise evaluation, but
                 // previous only solved for the value in slot 0 (so filled(a)
                 // is 1 to start).
-                if (count > filled(a)) {
-                    v.row(a).leftCols(count)  = v(a, 0);
-                    filled(a) = count;
+                if (count > filled(c.a)) {
+                    v.row(c.a).leftCols(count) = v(c.a, 0);
+                    filled(c.a) = count;
                 }
                 setCount(count);
-                DerivArrayEvaluator::operator()(op, id, a, b);
+                DerivArrayEvaluator::evalClause(c);
                 for (unsigned i=0; i < count; ++i) {
-                    of.push_back(Feature(d(id).col(i), _ads[i]));
+                    of.push_back(Feature(d(c.id).col(i), _ads[i]));
                 }
             }
             count = 0;
         };
 
         for (auto& _ad : _ads) {
-            d(a).col(count++) = _ad.deriv;
+            d(c.a).col(count++) = _ad.deriv;
             if (count == N) {
                 run();
             }
         }
         run();
-    } else if (Opcode::args(op) == 2) {
+    } else if (Opcode::args(c.op) == 2) {
         unsigned count = 0;
         auto run = [&]() {
             if (count) {
                 // Same logic as above
-                if (count > filled(a)) {
-                    v.row(a).leftCols(count)  = v(a, 0);
-                    filled(a) = count;
+                if (count > filled(c.a)) {
+                    v.row(c.a).leftCols(count) = v(c.a, 0);
+                    filled(c.a) = count;
                 }
-                if (count > filled(b)) {
-                    v.row(b).leftCols(count)  = v(b, 0);
-                    filled(b) = count;
+                if (count > filled(c.b)) {
+                    v.row(c.b).leftCols(count) = v(c.b, 0);
+                    filled(c.b) = count;
                 }
-                DerivArrayEvaluator::operator()(op, id, a, b);
+                DerivArrayEvaluator::evalClause(c);
                 for (unsigned i=0; i < count; ++i) {
-                    of.push_back(Feature(d(id).col(i), _ads[i / _bds.size()],
-                                                       _bds[i % _bds.size()]));
+                    of.push_back(Feature(d(c.id).col(i),
+                                 _ads[i / _bds.size()],
+                                 _bds[i % _bds.size()]));
                 }
             }
             count = 0;
@@ -316,8 +316,8 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 
         for (auto& _ad : _ads) {
             for (auto& _bd : _bds) {
-                d(a).col(count) = _ad.deriv;
-                d(b).col(count) = _bd.deriv;
+                d(c.a).col(count) = _ad.deriv;
+                d(c.b).col(count) = _bd.deriv;
                 if (++count == N) {
                     run();
                 }

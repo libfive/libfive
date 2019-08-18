@@ -107,7 +107,7 @@ DerivArrayEvaluator::derivs(size_t count, const Tape& tape)
     // Perform derivative evaluation, copying results into the out array
     deck->bindOracles(tape);
     for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
-        (*this)(itr->op, itr->id, itr->a, itr->b);
+        evalClause(*itr);
     }
     deck->unbindOracles();
 
@@ -116,19 +116,18 @@ DerivArrayEvaluator::derivs(size_t count, const Tape& tape)
     return out.block<4, Eigen::Dynamic>(0, 0, 4, count);
 }
 
-void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                     Clause::Id a_, Clause::Id b_)
+void DerivArrayEvaluator::evalClause(const Clause& c)
 {
-#define ov v.row(id).head(count_simd)
-#define od d(id).leftCols(count_simd)
+#define ov v.row(c.id).head(count_simd)
+#define od d(c.id).leftCols(count_simd)
 
-#define av v.row(a_).head(count_simd)
-#define ad d(a_).leftCols(count_simd)
+#define av v.row(c.a).head(count_simd)
+#define ad d(c.a).leftCols(count_simd)
 
-#define bv v.row(b_).head(count_simd)
-#define bd d(b_).leftCols(count_simd)
+#define bv v.row(c.b).head(count_simd)
+#define bd d(c.b).leftCols(count_simd)
 
-    switch (op) {
+    switch (c.op) {
         case Opcode::OP_ADD:
             od = ad + bd;
             break;
@@ -233,7 +232,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
-            deck->oracles[a_]->evalDerivArray(d(id).leftCols(count_actual));
+            deck->oracles[c.a]->evalDerivArray(d(c.id).leftCols(count_actual));
             break;
 
         case Opcode::INVALID:
@@ -242,6 +241,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR_FREE:
+        case Opcode::OP_NARY_MIN:
         case Opcode::LAST_OP: assert(false);
     }
 #undef ov

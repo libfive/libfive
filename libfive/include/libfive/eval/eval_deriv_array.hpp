@@ -55,8 +55,7 @@ public:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+    void evalClause(const Clause& c);
 
     /*
      *  Returns a list of ambiguous items from indices 0 to i that

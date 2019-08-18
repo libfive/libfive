@@ -59,7 +59,7 @@ public:
     static constexpr size_t N=LIBFIVE_EVAL_ARRAY_SIZE;
 
 protected:
-    /*  Stored in values() and used in operator() to decide how much of the
+    /*  Stored in values() and used in evalClause to decide how much of the
      *  array we're addressing at once.  count_simd is rounded up to the
      *  nearest SIMD block size; count_actual is the actual count. */
     size_t count_simd;
@@ -77,8 +77,7 @@ protected:
     /*
      *  Per-clause evaluation, used in tape walking
      */
-    void operator()(Opcode::Opcode op, Clause::Id id,
-                    Clause::Id a, Clause::Id b);
+    void evalClause(const Clause& c);
 
 public:
     /*

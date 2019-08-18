@@ -67,6 +67,11 @@ protected:
     /*  The tape itself, as a vector of clauses  */
     std::vector<Clause> t;
 
+    /*  For n-ary opcodes (e.g. OP_NARY_MIN), a and b don't refer to
+     *  single indices; instead, they refer to a range in the nary_data
+     *  array. */
+    std::vector<Clause::Id> nary_data;
+
     /*  OracleContext handles used to speed up oracle evaluation
      *  by letting them push into the tree as well. */
     std::vector<std::shared_ptr<OracleContext>> contexts;

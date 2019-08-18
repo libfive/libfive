@@ -84,7 +84,7 @@ Interval IntervalEvaluator::eval(
 
     deck->bindOracles(*tape);
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
-        (*this)(itr->op, itr->id, itr->a, itr->b);
+        evalClause(*itr);
     }
     deck->unbindOracles();
 
@@ -186,14 +186,13 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
-                                   Clause::Id a_, Clause::Id b_)
+void IntervalEvaluator::evalClause(const Clause& c)
 {
-#define out i[id]
-#define a i[a_]
-#define b i[b_]
+#define out i[c.id]
+#define a i[c.a]
+#define b i[c.b]
 
-    switch (op) {
+    switch (c.op) {
         case Opcode::OP_ADD:
             out = a + b;
             break;
@@ -275,8 +274,11 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = a;
             break;
 
+#undef out
+#undef a
+#undef b
         case Opcode::ORACLE:
-            deck->oracles[a_]->evalInterval(out);
+            deck->oracles[c.a]->evalInterval(i[c.id]);
             break;
 
         case Opcode::INVALID:
@@ -285,12 +287,9 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR_FREE:
+        case Opcode::OP_NARY_MIN:
         case Opcode::LAST_OP: assert(false);
     }
-
-#undef out
-#undef a
-#undef b
 }
 
 }   // namespace libfive
