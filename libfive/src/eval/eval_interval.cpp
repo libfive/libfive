@@ -283,7 +283,7 @@ void IntervalEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
 
         case Opcode::OP_NARY_MIN:
             i[c.id] = i[n_ary[c.a]];
-            for (unsigned j=c.a; j != c.b; ++j) {
+            for (unsigned j=c.a + 1; j < c.b; ++j) {
                 i[c.id] = Interval::min(i[c.id], i[n_ary[j]]);
             }
             break;

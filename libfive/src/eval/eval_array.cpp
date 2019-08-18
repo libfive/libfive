@@ -347,9 +347,14 @@ void ArrayEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
             out = a;
             break;
 
-#undef out
 #undef a
 #undef b
+        case Opcode::OP_NARY_MIN:
+            out = v.row(n_ary[c.a]).head(count_simd);
+            for (unsigned j=c.a + 1; j < c.b; ++j) {
+                out = out.cwiseMin(v.row(n_ary[j]).head(count_simd));
+            }
+#undef out
         case Opcode::ORACLE:
             deck->oracles[c.a]->evalArray(
                     v.block<1, Eigen::Dynamic>(c.id, 0, 1, count_actual));
@@ -361,7 +366,6 @@ void ArrayEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
         case Opcode::VAR_Y:
         case Opcode::VAR_Z:
         case Opcode::VAR_FREE:
-        case Opcode::OP_NARY_MIN:
         case Opcode::LAST_OP: assert(false);
     }
 }
