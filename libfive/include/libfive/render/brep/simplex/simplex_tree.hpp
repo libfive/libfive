@@ -18,7 +18,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/Eigen>
 #include <Eigen/StdVector>
 
-#include "libfive/export.hpp"
 #include "libfive/eval/evaluator.hpp"
 
 #include "libfive/render/brep/util.hpp"
