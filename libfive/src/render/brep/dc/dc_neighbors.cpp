@@ -41,7 +41,7 @@ std::pair<const DCTree<N>*, unsigned> DCNeighbors<N>::checkConsistency(
                 n = n->children[t.second.i].load();
             }
             if (n->cornerState(t.second.i) != s) {
-                return std::make_pair(this->neighbors[t.first.i], t.second.i);
+                return std::make_pair(n, t.second.i);
             }
         }
     }

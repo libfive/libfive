@@ -54,6 +54,14 @@ TEST_CASE("IntervalEvaluator::eval")
         REQUIRE(o.lower() == -2);
         REQUIRE(o.upper() == 2);
     }
+
+    SECTION("Division behavior") {
+        IntervalEvaluator e(0.1 / Tree::Y());
+        auto o = e.eval({-0.625, -0.3125, -0.625}, {-0.3125, 0, -0.2125});
+        // Evaluating 0.1 / +-0 should give +-infinity
+        REQUIRE(o.lower() == -std::numeric_limits<float>::infinity());
+        REQUIRE(o.upper() ==  std::numeric_limits<float>::infinity());
+    }
 }
 
 TEST_CASE("IntervalEvaluator::intervalAndPush")

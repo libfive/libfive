@@ -1050,13 +1050,22 @@ bool DCTree<N>::checkConsistency(const DCNeighbors<N>& neighbors) const
                     << "    [" << this->region.lower.transpose() << "]\n"
                     << "    [" << this->region.upper.transpose() << "]\n"
                     << "    type: " << this->type << "\n"
-                    << "    corner " << i << ": " << cornerState(i) << "\n"
+                    << "    branch: "
+                        << (this->isBranch() ? "yes" : "no") << "\n"
+                    << "    rank: " << this->rank() << "\n"
+                    << "    corner " << i << " at ["
+                        << this->region.corner(i).transpose()
+                        << "]: " << cornerState(i) << "\n"
                     << "  Tree B:\n"
                     << "    [" << r.first->region.lower.transpose() << "]\n"
                     << "    [" << r.first->region.upper.transpose() << "]\n"
                     << "    type: " << r.first->type << "\n"
-                    << "    corner " << r.second << ": "
-                                     << r.first->cornerState(r.second) << "\n";
+                    << "    branch: "
+                        << (r.first->isBranch() ? "yes" : "no") << "\n"
+                    << "    rank: " << r.first->rank() << "\n"
+                    << "    corner " << r.second << " at ["
+                        << r.first->region.corner(r.second).transpose() << "]: "
+                        << r.first->cornerState(r.second) << "\n";
                 return false;
             }
         }
