@@ -270,3 +270,17 @@ TEST_CASE("DCTree<3> cancellation")
     // (rather than a partially-constructed or invalid tree)
     REQUIRE(result.get() == nullptr);
 }
+
+TEST_CASE("DCTree::checkConsistency")
+{
+    SECTION("Sphere with circular cutout")
+    {
+        auto s = max(sphere(1), -circle(0.5));
+        Region<3> r({-5, -5, -5}, {5, 5, 5});
+
+        BRepSettings settings;
+        settings.min_feature = 1 / 9.0f;
+        auto xtree = DCWorkerPool<3>::build(s, r, settings);
+        REQUIRE(xtree->checkConsistency());
+    }
+}

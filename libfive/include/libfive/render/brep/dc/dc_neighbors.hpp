@@ -39,6 +39,13 @@ public:
     Interval::State check(CornerIndex corner) const;
 
     /*
+     *  Checks the given corner against all neighbors that contain it.
+     *  If any of them don't match, then return that tree + corner index.
+     */
+    std::pair<const DCTree<N>*, unsigned> checkConsistency(
+            CornerIndex corner, Interval::State i) const;
+
+    /*
      *  Looks up the given edge to see if it has been calculated by any
      *  of the neighbors, assigning the pointer if that is the case
      *  and setting it to nullptr otherwise.

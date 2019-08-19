@@ -174,6 +174,14 @@ public:
      */
     unsigned rank() const;
 
+    /*
+     *  Sanity-check a DCTree by ensuring that all corners are consistent
+     *  between shared subtrees.  This is useful for debugging segfaults
+     *  in meshing, which are usually caused by inconsistent trees.
+     */
+    bool checkConsistency() const;
+    bool checkConsistency(const DCNeighbors<N>& neighbors) const;
+
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
