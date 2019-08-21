@@ -50,10 +50,17 @@ Window::Window(Arguments args)
 
     setAcceptDrops(true);
 
-    auto layout = new QSplitter();
-    layout->addWidget(editor);
+    auto layout = new QSplitter(args.vertical ? Qt::Vertical : Qt::Horizontal);
+
+    if (args.vertical) {
+        layout->addWidget(view);
+        layout->addWidget(editor);
+    } else {
+        layout->addWidget(editor);
+        layout->addWidget(view);
+    }
+
     editor->resize(width() * 0.4, editor->height());
-    layout->addWidget(view);
     setCentralWidget(layout);
 
     // Sync document modification state with window
