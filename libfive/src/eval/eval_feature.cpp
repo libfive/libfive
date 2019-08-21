@@ -173,90 +173,58 @@ void FeatureEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
 #define of f(c.id)
 
 #define av v(c.a, 0)
-#define _ads f(c.a)
-#define ad _ad.deriv
-
 #define bv v(c.b, 0)
-#define _bds f(c.b)
-#define bd _bd.deriv
-
-#define LOOP2 \
-    for (auto& _ad : _ads) \
-        for (auto& _bd : _bds)
 
     of.clear();
 
     if (c.op == Opcode::OP_MIN) {
         if (av < bv || c.a == c.b) {
-            of = _ads;
+            of = f(c.a);
         } else if (av > bv) {
-            of = _bds;
-        }
-        else LOOP2 {
-            const Eigen::Vector3f epsilon = bd - ad;
-            if (epsilon.norm() == 0) {
-                if (_ad.hasEpsilons()) {
-                    of.push_back(_ad);
-                }
-                if (_bd.hasEpsilons()) {
-                    of.push_back(_bd);
-                }
-                if (!_ad.hasEpsilons() && !_bd.hasEpsilons()) {
-                    of.push_back(_ad);
-                }
-            } else {
-                // The new feature must be compatible with the epsilons
-                // from both of the source features, plus the new epsilon
-                // to select a particular branch of the max.
-                auto combined = _ad;
-                if (combined.push(_bd)) {
-                    auto fa = combined;
-                    fa.deriv = _ad.deriv;
-                    if (fa.push(epsilon)) {
-                        of.push_back(fa);
-                    }
-
-                    auto fb = combined;
-                    fb.deriv = _bd.deriv;
-                    if (fb.push(-epsilon)) {
-                        of.push_back(fb);
+            of = f(c.b);
+        } else {
+            for (auto& ad: f(c.a)) {
+                for (auto& bd: f(c.b)) {
+                    for (auto& o: Feature::min(ad, bd)) {
+                        of.push_back(o);
                     }
                 }
             }
         }
+    } else if (c.op == Opcode::OP_NARY_MIN) {
+        // Find the first matching item in the array
+        unsigned q = c.a;
+        while (v(n_ary[q], 0) != v(c.id, 0) && q < c.b) {
+            q++;
+        }
+        assert(q != c.b);
+        boost::container::small_vector<Feature, 4> out = f(n_ary[q]);
+
+        // Iterate over the remaining arguments, seeing if any of them match
+        while (++q < c.b) {
+            if (v(n_ary[q], 0) == v(c.id, 0)) {
+                boost::container::small_vector<Feature, 4> next_out;
+                for (auto& ad: f(n_ary[q])) {
+                    for (auto& bd: out) {
+                        for (auto& o: Feature::max(ad, bd)) {
+                            next_out.push_back(o);
+                        }
+                    }
+                }
+                out = next_out;
+            }
+        }
+        of = out;
     } else if (c.op == Opcode::OP_MAX) {
         if (av < bv || c.a == c.b) {
-            of = _bds;
+            of = f(c.b);
         } else if (av > bv) {
-            of = _ads;
-        } else LOOP2 {
-            const Eigen::Vector3f epsilon = ad - bd;
-            if (epsilon.norm() == 0) {
-                if (_ad.hasEpsilons()) {
-                    of.push_back(_ad);
-                }
-                if (_bd.hasEpsilons()) {
-                    of.push_back(_bd);
-                }
-                if (!_ad.hasEpsilons() && !_bd.hasEpsilons()) {
-                    of.push_back(_ad);
-                }
-            } else {
-                // The new feature must be compatible with the epsilons
-                // from both of the source features, plus the new epsilon
-                // to select a particular branch of the max.
-                auto combined = _ad;
-                if (combined.push(_bd)) {
-                    auto fa = combined;
-                    fa.deriv = _ad.deriv;
-                    if (fa.push(epsilon)) {
-                        of.push_back(fa);
-                    }
-
-                    auto fb = combined;
-                    fb.deriv = _bd.deriv;
-                    if (fb.push(-epsilon)) {
-                        of.push_back(fb);
+            of = f(c.a);
+        } else {
+            for (auto& ad: f(c.a)) {
+                for (auto& bd: f(c.b)) {
+                    for (auto& o: Feature::max(ad, bd)) {
+                        of.push_back(o);
                     }
                 }
             }
@@ -278,14 +246,14 @@ void FeatureEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
                 setCount(count);
                 DerivArrayEvaluator::evalClause(c, n_ary);
                 for (unsigned i=0; i < count; ++i) {
-                    of.push_back(Feature(d(c.id).col(i), _ads[i]));
+                    of.push_back(Feature(d(c.id).col(i), f(c.a)[i]));
                 }
             }
             count = 0;
         };
 
-        for (auto& _ad : _ads) {
-            d(c.a).col(count++) = _ad.deriv;
+        for (auto& ad : f(c.a)) {
+            d(c.a).col(count++) = ad.deriv;
             if (count == N) {
                 run();
             }
@@ -307,17 +275,17 @@ void FeatureEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
                 DerivArrayEvaluator::evalClause(c, n_ary);
                 for (unsigned i=0; i < count; ++i) {
                     of.push_back(Feature(d(c.id).col(i),
-                                 _ads[i / _bds.size()],
-                                 _bds[i % _bds.size()]));
+                                 f(c.a)[i / f(c.b).size()],
+                                 f(c.b)[i % f(c.b).size()]));
                 }
             }
             count = 0;
         };
 
-        for (auto& _ad : _ads) {
-            for (auto& _bd : _bds) {
-                d(c.a).col(count) = _ad.deriv;
-                d(c.b).col(count) = _bd.deriv;
+        for (auto& ad : f(c.a)) {
+            for (auto& bd : f(c.b)) {
+                d(c.a).col(count) = ad.deriv;
+                d(c.b).col(count) = bd.deriv;
                 if (++count == N) {
                     run();
                 }

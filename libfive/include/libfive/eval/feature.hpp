@@ -9,6 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include <boost/container/small_vector.hpp>
+#include <boost/container/static_vector.hpp>
 #include <Eigen/Eigen>
 
 namespace libfive
@@ -68,9 +69,22 @@ public:
         return epsilons == other.epsilons;
     }
 
+    /*
+     *  Returns one or more features corresponding to min(a, b) where
+     *  the value at a and b is equal.
+     */
+    static boost::container::static_vector<Feature, 2> min(
+            const Feature& a, const Feature& b);
+    static boost::container::static_vector<Feature, 2> max(
+            const Feature& a, const Feature& b);
+
     Eigen::Vector3f deriv;
 
 protected:
+    static boost::container::static_vector<Feature, 2> combine(
+            const Feature& a, const Feature& b,
+            const Eigen::Vector3f& epsilon);
+
     boost::container::small_vector<Eigen::Vector3f, 4> epsilons;
 };
 

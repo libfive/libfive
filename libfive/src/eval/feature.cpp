@@ -281,4 +281,53 @@ bool Feature::operator<(const Feature& other) const
     }
 }
 
+boost::container::static_vector<Feature, 2> Feature::min(
+        const Feature& a, const Feature& b)
+{
+    return combine(a, b, b.deriv - a.deriv);
+}
+
+boost::container::static_vector<Feature, 2> Feature::max(
+        const Feature& a, const Feature& b)
+{
+    return combine(a, b, a.deriv - b.deriv);
+}
+
+boost::container::static_vector<Feature, 2> Feature::combine(
+        const Feature& a, const Feature& b,
+        const Eigen::Vector3f& epsilon)
+{
+    boost::container::static_vector<Feature, 2> out;
+    if (epsilon.norm() == 0) {
+        if (a.hasEpsilons()) {
+            out.push_back(a);
+        }
+        if (b.hasEpsilons()) {
+            out.push_back(b);
+        }
+        if (!a.hasEpsilons() && !a.hasEpsilons()) {
+            out.push_back(b);
+        }
+    } else {
+        // The new feature must be compatible with the epsilons
+        // from both of the source features, plus the new epsilon
+        // to select a particular branch of the max.
+        auto combined = a;
+        if (combined.push(b)) {
+            auto fa = combined;
+            fa.deriv = a.deriv;
+            if (fa.push(epsilon)) {
+                out.push_back(fa);
+            }
+
+            auto fb = combined;
+            fb.deriv = b.deriv;
+            if (fb.push(-epsilon)) {
+                out.push_back(fb);
+            }
+        }
+    }
+    return out;
+}
+
 }   // namespace libfive
