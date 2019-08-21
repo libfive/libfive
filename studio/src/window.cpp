@@ -52,10 +52,13 @@ Window::Window(Arguments args)
 
     auto layout = new QSplitter(args.vertical ? Qt::Vertical : Qt::Horizontal);
 
-    if (args.vertical) {
+    if (args.vertical)
+    {
         layout->addWidget(view);
         layout->addWidget(editor);
-    } else {
+    }
+    else
+    {
         layout->addWidget(editor);
         layout->addWidget(view);
     }
