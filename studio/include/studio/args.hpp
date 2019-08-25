@@ -25,4 +25,5 @@ struct Arguments
 
     QString filename;
     bool do_syntax;
+    bool vertical;
 };
