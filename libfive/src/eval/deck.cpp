@@ -34,6 +34,88 @@ Deck::Deck(const Tree root)
                  clauses.at(t->rhs.get())});
     };
 
+    // In order to expand min operations into n-ary min clauses, we
+    // first need to find cases where there's a min that only has one
+    // parent, which is also a min.
+    //
+    // We build two maps:
+    //      n_ary_parents is a MIN parent of any MIN node
+    //      num_parents is the number of parents of a MIN node
+    //
+    // Iff a MIN node has only one parent and which is also a MIN, it can be
+    // collapsed into an NARY_MIN node.
+    std::map<Tree::Id, Tree::Id> n_ary_parents;
+    std::map<Tree::Id, uint32_t> num_parents;
+    for (auto itr=flat.crbegin(); itr != flat.crend(); ++itr) {
+        if ((*itr)->op == Opcode::OP_MIN) {
+            for (auto& p: {(*itr)->lhs, (*itr)->rhs}) {
+                if (p->op == Opcode::OP_MIN) {
+                    n_ary_parents[p.get()] = itr->id();
+                }
+            }
+        }
+        // Count all parents, even those that aren't MINs, e.g. in the tree
+        //      min(x, min(y, z)) + 2 + min(y, z)
+        // we'll need to make min(y, z) a separate node for the addition op
+        switch (Opcode::args((*itr)->op)) {
+            case 2:
+                if ((*itr)->rhs->op == Opcode::OP_MIN) {
+                    num_parents[(*itr)->rhs.get()]++;
+                }   // FALLTHROUGH
+            case 1:
+                if ((*itr)->lhs->op == Opcode::OP_MIN) {
+                    num_parents[(*itr)->lhs.get()]++;
+                }   // FALLTHROUGH (doesn't matter)
+            default:
+                break;
+        }
+    }
+    {   // Having built those two maps, we'll now go through and filter out
+        // the nodes in n_ary_parents that have more than one parent
+        auto itr = n_ary_parents.begin();
+        while (itr != n_ary_parents.end()) {
+            assert(num_parents.contains(itr->first));
+            if (num_parents[itr->first] > 1) {
+                itr = n_ary_parents.erase(itr);
+            } else {
+                itr++;
+            }
+        }
+    }
+    // Next, we go through and adjust every item in n_ary_parents to point to
+    // the top-most parent, which is what it will be collected under.
+    for (auto& k: n_ary_parents) {
+        for (auto itr=n_ary_parents.find(k.second);
+             itr != n_ary_parents.end();
+             n_ary_parents.find(itr->second))
+        {
+            k.second = itr->first;
+        }
+    }
+    // Reverse the map, so that we have a map of each parent to one or
+    // more children.
+    std::map<Tree::Id, std::set<Tree::Id>> n_ary_children;
+    for (auto& k: n_ary_parents) {
+        n_ary_children[k.second].insert(k.first);
+    }
+    // Finally, we skip any n-ary operations which only have two children
+    // (since that's less efficient than a single opcode), and record all
+    // of the children which should be skipped
+    std::set<Tree::Id> n_ary_skip;
+    {
+        auto itr = n_ary_children.begin();
+        while (itr != n_ary_children.end()) {
+            if (itr->second.size() > 2) {
+                for (auto& c : itr->second) {
+                    n_ary_skip.insert(c);
+                }
+                itr++;
+            } else {
+                itr = n_ary_children.erase(itr);
+            }
+        }
+    }
+
     // Write the flattened tree into the tape!
     for (const auto& m : flat)
     {
