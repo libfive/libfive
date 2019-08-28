@@ -242,3 +242,11 @@ TEST_CASE("ArrayEvaluator::valueAndPush")
         REQUIRE(e.value({10, 5, 0}, *h.second) == 5);
     }
 }
+
+TEST_CASE("ArrayEvaluator: n-ary evaluation")
+{
+    ArrayEvaluator e(min(Tree::X(), min(Tree::Y(), Tree::Z())));
+    REQUIRE(e.value({1, 2, 3}) == 1);
+    REQUIRE(e.value({4, 2, 3}) == 2);
+    REQUIRE(e.value({4, 5, 3}) == 3);
+}

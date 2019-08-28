@@ -354,6 +354,7 @@ void ArrayEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
             for (unsigned j=c.a + 1; j < c.b; ++j) {
                 out = out.cwiseMin(v.row(n_ary[j]).head(count_simd));
             }
+            break;
 #undef out
         case Opcode::ORACLE:
             deck->oracles[c.a]->evalArray(

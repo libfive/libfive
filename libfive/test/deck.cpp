@@ -39,3 +39,11 @@ TEST_CASE("Deck::constants")
     CAPTURE(t.constants.begin()->second);
     REQUIRE(t.constants.at(2) == 5.0f);
 }
+
+TEST_CASE("Deck: NARY_MIN collapsing")
+{
+    Deck t(min(Tree::X(), min(Tree::Y(), Tree::Z())));
+    REQUIRE(t.num_clauses == 4); // X, Y, Z, n-ary min
+
+    // min(x, min(y, z)) + 2 + min(y, z)
+}

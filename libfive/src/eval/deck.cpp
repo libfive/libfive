@@ -18,22 +18,6 @@ Deck::Deck(const Tree root)
 {
     auto flat = root.ordered();
 
-    // Helper function to create a new clause in the data array
-    // The dummy clause (0) is mapped to the first result slot
-    std::unordered_map<Tree::Id, Clause::Id> clauses = {{nullptr, 0}};
-    Clause::Id id = flat.size();
-
-    // Helper function to make a new function
-    std::list<Clause> tape_;
-    auto newClause = [&clauses, &id, &tape_](const Tree::Id t)
-    {
-        tape_.push_front(
-                {t->op,
-                 id,
-                 clauses.at(t->lhs.get()),
-                 clauses.at(t->rhs.get())});
-    };
-
     // In order to expand min operations into n-ary min clauses, we
     // first need to find cases where there's a min that only has one
     // parent, which is also a min.
@@ -74,7 +58,7 @@ Deck::Deck(const Tree root)
         // the nodes in n_ary_parents that have more than one parent
         auto itr = n_ary_parents.begin();
         while (itr != n_ary_parents.end()) {
-            assert(num_parents.contains(itr->first));
+            assert(num_parents.count(itr->first));
             if (num_parents[itr->first] > 1) {
                 itr = n_ary_parents.erase(itr);
             } else {
@@ -95,32 +79,62 @@ Deck::Deck(const Tree root)
     // Reverse the map, so that we have a map of each parent to one or
     // more children.
     std::map<Tree::Id, std::set<Tree::Id>> n_ary_children;
+    std::map<Tree::Id, std::set<Tree::Id>> n_ary_to_skip;
     for (auto& k: n_ary_parents) {
-        n_ary_children[k.second].insert(k.first);
-    }
-    // Finally, we skip any n-ary operations which only have two children
-    // (since that's less efficient than a single opcode), and record all
-    // of the children which should be skipped
-    std::set<Tree::Id> n_ary_skip;
-    {
-        auto itr = n_ary_children.begin();
-        while (itr != n_ary_children.end()) {
-            if (itr->second.size() > 2) {
-                for (auto& c : itr->second) {
-                    n_ary_skip.insert(c);
-                }
-                itr++;
-            } else {
-                itr = n_ary_children.erase(itr);
+        n_ary_children[k.second].insert(k.first->lhs.get());
+        n_ary_children[k.second].insert(k.first->rhs.get());
+        // Also insert any other children of the parent
+        for (auto q : {k.second->lhs.get(), k.second->rhs.get()}) {
+            if (n_ary_parents.find(q) == n_ary_parents.end()) {
+                n_ary_children[k.second].insert(q);
             }
         }
     }
 
+    // Allocate the tape here so we can start populating n-ary data
+    tape.reset(new Tape);
+    tape->type = Tape::BASE;
+
+    // Helper function to create a new clause in the data array
+    // The dummy clause (0) is mapped to the first result slot
+    std::unordered_map<Tree::Id, Clause::Id> clauses = {{nullptr, 0}};
+    Clause::Id id = flat.size() - n_ary_parents.size();
+
+    // Helper function to make a new function
+    std::list<Clause> tape_;
+    auto newClause = [&clauses, &id, &tape_](const Tree::Id t)
+    {
+        tape_.push_front(
+                {t->op,
+                 id,
+                 clauses.at(t->lhs.get()),
+                 clauses.at(t->rhs.get())});
+    };
+
     // Write the flattened tree into the tape!
     for (const auto& m : flat)
     {
+        auto itr = n_ary_children.find(m.id());
+        if (itr != n_ary_children.end())
+        {
+            const Clause::Id start = tape->nary_data.size();
+            for (auto& c: itr->second) {
+                tape->nary_data.push_back(clauses.at(c));
+            }
+            const Clause::Id end = tape->nary_data.size();
+            tape_.push_front(
+                    {Opcode::OP_NARY_MIN,
+                     id,
+                     start,
+                     end});
+        }
+        // Clauses which are bundled into an n-ary node are skipped
+        else if (n_ary_parents.find(m.id()) != n_ary_parents.end())
+        {
+            continue;
+        }
         // Normal clauses end up in the tape
-        if (m->rank > 0)
+        else if (m->rank > 0)
         {
             newClause(m.id());
         }
@@ -155,8 +169,6 @@ Deck::Deck(const Tree root)
     assert(id == 0);
 
     //  Move from the list tape to a more-compact vector tape
-    tape.reset(new Tape);
-    tape->type = Tape::BASE;
     for (auto& t : tape_)
     {
         tape->t.push_back(t);
