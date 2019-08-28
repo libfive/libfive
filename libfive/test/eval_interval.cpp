@@ -236,3 +236,11 @@ TEST_CASE("IntervalEvaluator::eval(): NaN behavior")
         REQUIRE(!e.eval({1, -1, -1}, {2, 2, 2}).isSafe());
     }
 }
+
+TEST_CASE("IntervalEvaluator: n-ary evaluation")
+{
+    IntervalEvaluator e(min(Tree::X(), min(Tree::Y(), Tree::Z())));
+    REQUIRE(e.eval({1, 2, 3}, {3, 4, 5}) == Interval(1.0, 3.0));
+    REQUIRE(e.eval({1, 1, 1.1}, {3, 2, 1.5}) == Interval(1.0, 1.5));
+    REQUIRE(e.eval({3, 1.5, 1.25}, {3, 1.5, 5}) == Interval(1.25, 1.5));
+}

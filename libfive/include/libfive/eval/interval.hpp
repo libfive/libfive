@@ -46,6 +46,10 @@ public:
 
     bool isSafe() const { return !maybe_nan; }
 
+    bool operator==(const Interval& other) const {
+        return other.lower() == lower() && other.upper() == upper();
+    }
+
     float lower() const { return i.lower(); }
     float upper() const { return i.upper(); }
 
