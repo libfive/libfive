@@ -388,21 +388,15 @@ inline Interval operator-(const Interval& a, const Interval& b)
 
 inline Interval operator/(const Interval& a, const Interval& b)
 {
-    auto i = a.i / b.i;
-    if (b.lower() == 0.0f && b.upper() == 0.0f)
-    {
-        // In this case, i gives us the empty interval, but point
-        // evaluation might give us an infinite value.
-        if ((a.lower() <= 0.0f && a.upper() >= 0.0f) ||
-            std::signbit(b.lower()) != std::signbit(b.upper()))
-        {
-            i = { -INFINITY, INFINITY };
-        } else if (std::signbit(b.lower()) == (a.upper() < 0.0f)) {
-            i = { INFINITY, INFINITY };
-        } else {
-            i = { -INFINITY, -INFINITY };
-        }
-    }
+    // We're conservative here: if b crosses 0, then we assume
+    // it can produce both positive and negative infinity.  This
+    // works around behaviors in boost where
+    //      0.1 / [-0.3215, 0] = [-inf, -0.32]
+    // (which obviously doesn't contain 0.1 / 0 = +inf
+    auto i = (b.lower() <= 0.0f && b.upper() >= 0.0f)
+        ? Interval::I(-INFINITY, INFINITY)
+        : (a.i / b.i);
+
     const bool u = a.maybe_nan || b.maybe_nan ||
         ((a.lower() == -INFINITY || a.upper() == INFINITY) &&
          (b.lower() == -INFINITY || b.upper() == INFINITY)) ||

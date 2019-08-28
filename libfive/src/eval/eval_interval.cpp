@@ -291,7 +291,6 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
 #undef out
 #undef a
 #undef b
-#undef SET_UNSAFE
 }
 
 }   // namespace libfive

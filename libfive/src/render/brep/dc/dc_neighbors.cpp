@@ -29,6 +29,27 @@ Interval::State DCNeighbors<N>::check(CornerIndex corner) const
 }
 
 template <unsigned N>
+std::pair<const DCTree<N>*, unsigned> DCNeighbors<N>::checkConsistency(
+        CornerIndex corner,
+        const Interval::State s) const
+{
+    for (const auto& t : NeighborTables<N>::cornerTable(corner))
+    {
+        auto n = this->neighbors[t.first.i];
+        if (this->neighbors[t.first.i] != nullptr) {
+            while (n->isBranch()) {
+                n = n->children[t.second.i].load();
+            }
+            if (n->cornerState(t.second.i) != s) {
+                return std::make_pair(n, t.second.i);
+            }
+        }
+    }
+    return std::make_pair(nullptr, 0);
+}
+
+
+template <unsigned N>
 std::shared_ptr<IntersectionVec<N>> DCNeighbors<N>::check(
         uint8_t a, uint8_t b) const
 {
