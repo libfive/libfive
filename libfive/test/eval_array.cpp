@@ -193,22 +193,43 @@ TEST_CASE("ArrayEvaluator::setVar")
 
 TEST_CASE("ArrayEvaluator::getAmbiguous")
 {
-    ArrayEvaluator e(min(Tree::X(), -Tree::X()));
-    e.set({0, 0, 0}, 0);
-    e.set({1, 0, 0}, 1);
-    e.set({2, 0, 0}, 2);
-    e.set({0, 0, 0}, 3);
+    SECTION("Single min operation") {
+        ArrayEvaluator e(min(Tree::X(), -Tree::X()));
+        e.set({0, 0, 0}, 0);
+        e.set({1, 0, 0}, 1);
+        e.set({2, 0, 0}, 2);
+        e.set({0, 0, 0}, 3);
 
-    e.values(4);
+        e.values(4);
 
-    auto a = e.getAmbiguous(3);
-    REQUIRE(a.count() == 1);
-    REQUIRE(a(0) == true);
+        auto a = e.getAmbiguous(3);
+        REQUIRE(a.count() == 1);
+        REQUIRE(a(0) == true);
 
-    auto b = e.getAmbiguous(4);
-    REQUIRE(b.count() == 2);
-    REQUIRE(b(0) == true);
-    REQUIRE(b(3) == true);
+        auto b = e.getAmbiguous(4);
+        REQUIRE(b.count() == 2);
+        REQUIRE(b(0) == true);
+        REQUIRE(b(3) == true);
+    }
+
+    SECTION("Multiple min operations") {
+        ArrayEvaluator e(min(Tree::X(), min(Tree::Y(), Tree::Z())));
+        e.set({0, 1, 1}, 0);
+        e.set({1, 2, 3}, 1);
+        e.set({2, 3, 4}, 2);
+        e.set({1, 1, 0}, 3);
+
+        e.values(4);
+
+        auto a = e.getAmbiguous(3);
+        REQUIRE(a.count() == 1);
+        REQUIRE(a(0) == true);
+
+        auto b = e.getAmbiguous(4);
+        REQUIRE(b.count() == 2);
+        REQUIRE(b(0) == true);
+        REQUIRE(b(3) == true);
+    }
 }
 
 TEST_CASE("ArrayEvaluator::values (returned size)")

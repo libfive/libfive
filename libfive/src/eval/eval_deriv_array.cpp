@@ -74,6 +74,16 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i, const Tape& tape)
                   (d(itr->a).leftCols(i) != d(itr->b).leftCols(i))
                     .colwise().sum());
         }
+        else if (itr->op == Opcode::OP_NARY_MIN)
+        {
+            for (unsigned j=itr->a; j < itr->b; ++j) {
+                ambig.head(i) = ambig.head(i) ||
+                    ((v.block(tape.getNaryData()[j], 0, 1, i) ==
+                      v.block(itr->id, 0, 1, i)) &&
+                    (d(tape.getNaryData()[j]).leftCols(i) != d(itr->id).leftCols(i))
+                      .colwise().sum());
+            }
+        }
     }
 
     return ambig.head(i);
