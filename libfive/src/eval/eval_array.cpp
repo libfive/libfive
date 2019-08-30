@@ -161,6 +161,13 @@ std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
                 return Tape::KEEP_BOTH;
             }
         }
+        else if (c.op == Opcode::OP_NARY_MIN)
+        {
+            for (unsigned j=c.a; j != c.b; ++j) {
+                n_ary_keep[j] = (v(n_ary[j], 0) <= v(c.id, 0));
+            }
+            return Tape::KEEP_BOTH;
+        }
         return Tape::KEEP_ALWAYS;
     }, Tape::SPECIALIZED);
     return std::make_pair(out, std::move(p));

@@ -165,6 +165,7 @@ Tape::Handle IntervalEvaluator::push(const Tape::Handle& tape)
             for (unsigned j=c.a; j != c.b; ++j) {
                 n_ary_keep[j] = (i[n_ary[j]].lower() <= i[c.id].upper());
             }
+            return Tape::KEEP_BOTH;
         }
         return Tape::KEEP_ALWAYS;
     },
