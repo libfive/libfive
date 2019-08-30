@@ -64,7 +64,7 @@ public:
     Clause::Id root() const { return i; }
 
     const uint32_t* getNaryData() const {
-        return nary_data.data();
+        return n_ary_data.data();
     }
 
 protected:
@@ -72,9 +72,9 @@ protected:
     std::vector<Clause> t;
 
     /*  For n-ary opcodes (e.g. OP_NARY_MIN), a and b don't refer to
-     *  single indices; instead, they refer to a range in the nary_data
+     *  single indices; instead, they refer to a range in the n_ary_data
      *  array. */
-    std::vector<Clause::Id> nary_data;
+    std::vector<Clause::Id> n_ary_data;
 
     /*  OracleContext handles used to speed up oracle evaluation
      *  by letting them push into the tree as well. */
@@ -103,8 +103,8 @@ public:
      *  t is a tape type
      *  r is the relevant region (or an empty region by default)
      */
-    using KeepFunction = std::function<Keep(Opcode::Opcode, Clause::Id,
-                                            Clause::Id, Clause::Id)>;
+    using KeepFunction = std::function<Keep(Clause, const uint32_t* n_ary,
+                                            uint8_t* n_ary_keep)>;
     Handle push(Deck& deck, KeepFunction fn, Type t);
     Handle push(Deck& deck, KeepFunction fn, Type t, const Region<3>& r);
 

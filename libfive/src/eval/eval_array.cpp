@@ -127,18 +127,17 @@ std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
 {
     auto out = value(pt, *tape);
     auto p = tape->push(*deck,
-        [&](Opcode::Opcode op, Clause::Id /* id */,
-            Clause::Id a, Clause::Id b)
+        [&](Clause c, const uint32_t* n_ary, uint8_t* n_ary_keep)
     {
         // For min and max operations, we may only need to keep one branch
         // active if it is decisively above or below the other branch.
-        if (op == Opcode::OP_MAX)
+        if (c.op == Opcode::OP_MAX)
         {
-            if (v(a, 0) > v(b, 0))
+            if (v(c.a, 0) > v(c.b, 0))
             {
                 return Tape::KEEP_A;
             }
-            else if (v(b, 0) > v(a, 0))
+            else if (v(c.b, 0) > v(c.a, 0))
             {
                 return Tape::KEEP_B;
             }
@@ -147,13 +146,13 @@ std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
                 return Tape::KEEP_BOTH;
             }
         }
-        else if (op == Opcode::OP_MIN)
+        else if (c.op == Opcode::OP_MIN)
         {
-            if (v(a, 0) > v(b, 0))
+            if (v(c.a, 0) > v(c.b, 0))
             {
                 return Tape::KEEP_B;
             }
-            else if (v(b, 0) > v(a, 0))
+            else if (v(c.b, 0) > v(c.a, 0))
             {
                 return Tape::KEEP_A;
             }

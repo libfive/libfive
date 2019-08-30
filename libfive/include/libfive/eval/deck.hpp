@@ -82,6 +82,7 @@ protected:
     /*  Temporary storage, used when pushing into a Tape  */
     std::vector<uint8_t> disabled;
     std::vector<Clause::Id> remap;
+    std::vector<uint8_t> n_ary_keep;
 
     /*  We can keep spare tapes around, to avoid reallocating their data */
     std::vector<std::shared_ptr<Tape>> spares;

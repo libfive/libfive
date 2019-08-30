@@ -124,42 +124,47 @@ Tape::Handle IntervalEvaluator::push(const Tape::Handle& tape)
                                       i[deck->Y].upper(),
                                       i[deck->Z].upper()));
     return tape->push(*deck,
-        [&](Opcode::Opcode op, Clause::Id /* id */,
-            Clause::Id a, Clause::Id b)
+        [&](Clause c, const uint32_t* n_ary, uint8_t* n_ary_keep)
     {
         // For min and max operations, we may only need to keep one branch
         // active if it is decisively above or below the other branch.
-        if (op == Opcode::OP_MAX)
+        if (c.op == Opcode::OP_MAX)
         {
-            if (a == b)
+            if (c.a == c.b)
             {
                 return Tape::KEEP_A;
             }
-            else if (i[a].lower() > i[b].upper())
+            else if (i[c.a].lower() > i[c.b].upper())
             {
                 return Tape::KEEP_A;
             }
-            else if (i[b].lower() > i[a].upper())
+            else if (i[c.b].lower() > i[c.a].upper())
             {
                 return Tape::KEEP_B;
             }
             return Tape::KEEP_BOTH;
         }
-        else if (op == Opcode::OP_MIN)
+        else if (c.op == Opcode::OP_MIN)
         {
-            if (a == b)
+            if (c.a == c.b)
             {
                 return Tape::KEEP_A;
             }
-            else if (i[a].lower() > i[b].upper())
+            else if (i[c.a].lower() > i[c.b].upper())
             {
                 return Tape::KEEP_B;
             }
-            else if (i[b].lower() > i[a].upper())
+            else if (i[c.b].lower() > i[c.a].upper())
             {
                 return Tape::KEEP_A;
             }
             return Tape::KEEP_BOTH;
+        }
+        else if (c.op == Opcode::OP_NARY_MIN)
+        {
+            for (unsigned j=c.a; j != c.b; ++j) {
+                n_ary_keep[j] = (i[n_ary[j]].lower() <= i[c.id].upper());
+            }
         }
         return Tape::KEEP_ALWAYS;
     },

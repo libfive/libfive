@@ -104,7 +104,7 @@ TEST_CASE("IntervalEvaluator::intervalAndPush")
         // picking X, then collapsing min(X, X) into just X.
         auto i = e.intervalAndPush({-5, 0, 0}, {-4, 1, 0});
         CAPTURE(d->tape->size());
-        REQUIRE(i.second->size() == 1);
+        REQUIRE(i.second->size() == 0);
     }
 
     SECTION("With NaNs")
@@ -243,4 +243,29 @@ TEST_CASE("IntervalEvaluator: n-ary evaluation")
     REQUIRE(e.eval({1, 2, 3}, {3, 4, 5}) == Interval(1.0, 3.0));
     REQUIRE(e.eval({1, 1, 1.1}, {3, 2, 1.5}) == Interval(1.0, 1.5));
     REQUIRE(e.eval({3, 1.5, 1.25}, {3, 1.5, 5}) == Interval(1.25, 1.5));
+}
+
+TEST_CASE("IntervalEvaluator: n-ary pushing")
+{
+    IntervalEvaluator e(min(Tree::X(), min(Tree::Y(), Tree::Z())));
+
+    SECTION("Can't push anything")
+    {
+        auto t = e.intervalAndPush({1, 2, 0}, {4, 4, 5}); // Can't push
+        REQUIRE(t.second->size() == 1);
+        // Test that we decay to MIN
+        REQUIRE(t.second->rbegin()->op == Opcode::OP_NARY_MIN);
+    }
+    SECTION("Collapsing to a single value")
+    {
+        auto t = e.intervalAndPush({1, 2, 3}, {1.5, 4, 5}); // Select X branch
+        REQUIRE(t.second->size() == 0);
+    }
+    SECTION("Collapsing to MIN")
+    {
+        auto t = e.intervalAndPush({1, 2, 4.5}, {4, 4, 5}); // Select XY branch
+        REQUIRE(t.second->size() == 1);
+        // Test that we decay to MIN
+        REQUIRE(t.second->rbegin()->op == Opcode::OP_MIN);
+    }
 }

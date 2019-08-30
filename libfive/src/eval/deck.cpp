@@ -117,11 +117,11 @@ Deck::Deck(const Tree root)
         auto itr = n_ary_children.find(m.id());
         if (itr != n_ary_children.end())
         {
-            const Clause::Id start = tape->nary_data.size();
+            const Clause::Id start = tape->n_ary_data.size();
             for (auto& c: itr->second) {
-                tape->nary_data.push_back(clauses.at(c));
+                tape->n_ary_data.push_back(clauses.at(c));
             }
-            const Clause::Id end = tape->nary_data.size();
+            const Clause::Id end = tape->n_ary_data.size();
             tape_.push_front(
                     {Opcode::OP_NARY_MIN,
                      id,
@@ -192,6 +192,7 @@ Deck::Deck(const Tree root)
     // Allocate enough memory for all the clauses
     disabled.resize(clauses.size());
     remap.resize(clauses.size());
+    n_ary_keep.resize(tape->n_ary_data.size());
 
     // Save X, Y, Z ids
     X = clauses.at(axes[0].id());

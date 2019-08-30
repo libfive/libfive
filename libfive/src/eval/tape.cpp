@@ -33,6 +33,7 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
     // which should be remapped, we reset those arrays here
     std::fill(deck.disabled.begin(), deck.disabled.end(), true);
     std::fill(deck.remap.begin(), deck.remap.end(), 0);
+    std::fill(deck.n_ary_keep.begin(), deck.n_ary_keep.end(), false);
 
     // Mark the root node as active
     deck.disabled[i] = false;
@@ -51,7 +52,7 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
     {
         if (!deck.disabled[c.id])
         {
-            switch (fn(c.op, c.id, c.a, c.b))
+            switch (fn(c, n_ary_data.data(), deck.n_ary_keep.data()))
             {
                 case KEEP_A:        deck.disabled[c.a] = false;
                                     deck.remap[c.id] = c.a;
@@ -73,11 +74,6 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
             // return either KEEP_BOTH or KEEP_ALWAYS, but have no children
             // to disable (and c.a is a dummy index into the oracles[]
             // array, so we shouldn't mis-interpret it as a clause index).
-            else if (c.op != Opcode::ORACLE)
-            {
-                deck.disabled[c.a] = false;
-                deck.disabled[c.b] = false;
-            }
             else if (c.op == Opcode::ORACLE)
             {
                 // Get the previous context, then use it to store
@@ -94,9 +90,40 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
                 terminal &= (new_contexts[c.a].get() == nullptr) ||
                              new_contexts[c.a]->isTerminal();
             }
+            else if (c.op == Opcode::OP_NARY_MIN)
+            {
+                bool found_one = false;
+                Clause::Id remap_to = 0;
+                for (unsigned i=c.a; i != c.b; ++i) {
+                    if (deck.n_ary_keep[i]) {
+                        if (!found_one) {
+                            found_one = true;
+                            assert(n_ary_data[i] != 0);
+                            remap_to = n_ary_data[i];
+                        } else {
+                            remap_to = 0;
+                        }
+                        deck.disabled[n_ary_data[i]] = false;
+                    } else {
+                        // We've disabled something!
+                        changed = true;
+                    }
+                }
+                // If only one clause was active, then remap to it
+                if (found_one && remap_to) {
+                    deck.remap[c.id] = remap_to;
+                    deck.disabled[c.id] = true;
+                } else {
+                    deck.disabled[c.id] = false;
+                }
+            }
+            else
+            {
+                deck.disabled[c.a] = false;
+                deck.disabled[c.b] = false;
+            }
         }
     }
-
 
     if (!changed)
     {
@@ -114,11 +141,15 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
         out.reset(new Tape);
     }
     out->t.reserve(t.size());
+    out->n_ary_data.reserve(n_ary_data.size());
 
     out->type = type;
     out->parent = shared_from_this();
     out->terminal = terminal;
-    out->t.clear(); // preserves capacity
+
+    // Clear any previous data (preserving capacity)
+    out->t.clear();
+    out->n_ary_data.clear();
 
     // Now, use the data in disabled and remap to make the new tape
     for (const auto& c : t)
@@ -131,6 +162,29 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
             if (c.op == Opcode::ORACLE)
             {
                 out->t.push_back({c.op, c.id, c.a, c.b});
+            }
+            else if (c.op == Opcode::OP_NARY_MIN)
+            {
+                const unsigned start = out->n_ary_data.size();
+                for (unsigned i=c.a; i != c.b; ++i) {
+                    if (deck.n_ary_keep[i]) {
+                        out->n_ary_data.push_back(n_ary_data[i]);
+                    }
+                }
+                const unsigned end = out->n_ary_data.size();
+
+                // Collapse to standard min if there are only two
+                // n-ary nodes remaining
+                if (end - start == 2) {
+                    out->t.push_back({
+                            Opcode::OP_MIN, c.id,
+                            out->n_ary_data[end - 2],
+                            out->n_ary_data[end - 1]});
+                    out->n_ary_data.pop_back();
+                    out->n_ary_data.pop_back();
+                } else {
+                    out->t.push_back({c.op, c.id, start, end});
+                }
             }
             else
             {
