@@ -168,7 +168,11 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
                 const unsigned start = out->n_ary_data.size();
                 for (unsigned i=c.a; i != c.b; ++i) {
                     if (deck.n_ary_keep[i]) {
-                        out->n_ary_data.push_back(n_ary_data[i]);
+                        Clause::Id r;
+                        for (r = n_ary_data[i];
+                             deck.remap[r];
+                             r = deck.remap[r]);
+                        out->n_ary_data.push_back(r);
                     }
                 }
                 const unsigned end = out->n_ary_data.size();
