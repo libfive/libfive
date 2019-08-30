@@ -69,22 +69,26 @@ Deck::Deck(const Tree root)
     // Next, we go through and adjust every item in n_ary_parents to point to
     // the top-most parent, which is what it will be collected under.
     for (auto& k: n_ary_parents) {
+        assert(k.first != nullptr);
+        assert(k.second != nullptr);
+
+        Tree::Id top = k.second;
         for (auto itr=n_ary_parents.find(k.second);
              itr != n_ary_parents.end();
-             n_ary_parents.find(itr->second))
+             itr = n_ary_parents.find(itr->second))
         {
-            k.second = itr->first;
+            top = itr->second;
         }
+        assert(top != nullptr);
+        k.second = top;
     }
     // Reverse the map, so that we have a map of each parent to one or
     // more children.
     std::map<Tree::Id, std::set<Tree::Id>> n_ary_children;
-    std::map<Tree::Id, std::set<Tree::Id>> n_ary_to_skip;
     for (auto& k: n_ary_parents) {
-        n_ary_children[k.second].insert(k.first->lhs.get());
-        n_ary_children[k.second].insert(k.first->rhs.get());
-        // Also insert any other children of the parent
-        for (auto q : {k.second->lhs.get(), k.second->rhs.get()}) {
+        for (auto q : {k.first->lhs.get(), k.first->rhs.get(),
+                       k.second->lhs.get(), k.second->rhs.get()})
+        {
             if (n_ary_parents.find(q) == n_ary_parents.end()) {
                 n_ary_children[k.second].insert(q);
             }
