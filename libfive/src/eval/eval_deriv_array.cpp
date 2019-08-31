@@ -76,13 +76,17 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i, const Tape& tape)
         }
         else if (itr->op == Opcode::OP_NARY_MIN)
         {
+            Eigen::Array<unsigned, 1, LIBFIVE_EVAL_ARRAY_SIZE> count;
+            count = 0;
+
             for (unsigned j=itr->a; j < itr->b; ++j) {
-                ambig.head(i) = ambig.head(i) ||
+                count.head(i) +=
                     ((v.block(tape.getNaryData()[j], 0, 1, i) ==
                       v.block(itr->id, 0, 1, i)) &&
                     (d(tape.getNaryData()[j]).leftCols(i) != d(itr->id).leftCols(i))
-                      .colwise().sum());
+                      .colwise().sum()).template cast<unsigned>();
             }
+            ambig.head(i) = ambig.head(i) || (count.head(i) > 0);
         }
     }
 

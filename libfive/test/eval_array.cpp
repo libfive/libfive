@@ -214,16 +214,17 @@ TEST_CASE("ArrayEvaluator::getAmbiguous")
 
     SECTION("Multiple min operations") {
         ArrayEvaluator e(min(Tree::X(), min(Tree::Y(), Tree::Z())));
-        e.set({0, 1, 1}, 0);
-        e.set({1, 2, 3}, 1);
-        e.set({2, 3, 4}, 2);
-        e.set({1, 1, 0}, 3);
-
+        e.set({0, 0, 1}, 0); // min = 0, ambiguous
+        e.set({1, 2, 3}, 1); // min = 1, unambiguous
+        e.set({2, 0, 4}, 2); // min = 0, unambiguous
+        e.set({1, 1, 5}, 3); // min = 1, ambiguous
         e.values(4);
 
         auto a = e.getAmbiguous(3);
         REQUIRE(a.count() == 1);
         REQUIRE(a(0) == true);
+        REQUIRE(a(1) == false);
+        REQUIRE(a(2) == false);
 
         auto b = e.getAmbiguous(4);
         REQUIRE(b.count() == 2);

@@ -215,6 +215,23 @@ ArrayEvaluator::getAmbiguous(size_t i, const Tape& tape)
                 (v.block(itr->a, 0, 1, i) ==
                  v.block(itr->b, 0, 1, i));
         }
+        else if (itr->op == Opcode::OP_NARY_MIN)
+        {
+            // Every min(a, b, c, d, ...) operation is guaranteed to match
+            // at least one of its operands.  We accumulate how many operands
+            // it matches in the count array, then mark as ambiguous evaluation
+            // slots which matched *more than one*.
+            Eigen::Array<unsigned, 1, LIBFIVE_EVAL_ARRAY_SIZE> count;
+            count = 0;
+
+            for (unsigned j=itr->a; j < itr->b; ++j) {
+                count.head(i) +=
+                    (v.block(tape.getNaryData()[j], 0, 1, i) ==
+                     v.block(itr->id, 0, 1, i)).template cast<unsigned>();
+            }
+            assert((count.head(i) > 0).all());
+            ambig.head(i) = ambig.head(i) || (count.head(i) > 1);
+        }
     };
 
     return ambig.head(i);
