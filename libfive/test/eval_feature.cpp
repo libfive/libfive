@@ -133,10 +133,15 @@ TEST_CASE("FeatureEvaluator::features")
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 3);
 
-        auto i = fs.begin();
-        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
-        REQUIRE(*(i++) == Eigen::Vector3f(0, 1, 0));
-        REQUIRE(*(i++) == Eigen::Vector3f(0, 0, 1));
+        bool has_axis[3] = {false};
+        for (auto& f : fs) {
+            has_axis[0] |= (f == Eigen::Vector3f(1, 0, 0));
+            has_axis[1] |= (f == Eigen::Vector3f(0, 1, 0));
+            has_axis[2] |= (f == Eigen::Vector3f(0, 0, 1));
+        }
+        REQUIRE(has_axis[0]);
+        REQUIRE(has_axis[1]);
+        REQUIRE(has_axis[2]);
     }
 
     SECTION("Buried ambiguity")
