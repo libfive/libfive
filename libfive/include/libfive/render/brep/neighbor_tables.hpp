@@ -275,4 +275,7 @@ protected:
     std::array<QEFTableVec, ipow(3, N)> qefSumTable_data;
 };
 
+extern template class NeighborTables<2u>;
+extern template class NeighborTables<3u>;
+
 }   // namespace libfive
