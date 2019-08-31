@@ -168,6 +168,13 @@ std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
             }
             return Tape::KEEP_BOTH;
         }
+        else if (c.op == Opcode::OP_NARY_MAX)
+        {
+            for (unsigned j=c.a; j != c.b; ++j) {
+                n_ary_keep[j] = (v(n_ary[j], 0) >= v(c.id, 0));
+            }
+            return Tape::KEEP_BOTH;
+        }
         return Tape::KEEP_ALWAYS;
     }, Tape::SPECIALIZED);
     return std::make_pair(out, std::move(p));
@@ -215,7 +222,8 @@ ArrayEvaluator::getAmbiguous(size_t i, const Tape& tape)
                 (v.block(itr->a, 0, 1, i) ==
                  v.block(itr->b, 0, 1, i));
         }
-        else if (itr->op == Opcode::OP_NARY_MIN)
+        else if (itr->op == Opcode::OP_NARY_MIN ||
+                 itr->op == Opcode::OP_NARY_MAX)
         {
             // Every min(a, b, c, d, ...) operation is guaranteed to match
             // at least one of its operands.  We accumulate how many operands
@@ -376,6 +384,24 @@ void ArrayEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
             out = v.row(n_ary[c.a]).head(count_simd);
             for (unsigned j=c.a + 1; j < c.b; ++j) {
                 out = out.cwiseMin(v.row(n_ary[j]).head(count_simd));
+            }
+            break;
+        case Opcode::OP_NARY_MAX:
+            out = v.row(n_ary[c.a]).head(count_simd);
+            for (unsigned j=c.a + 1; j < c.b; ++j) {
+                out = out.cwiseMax(v.row(n_ary[j]).head(count_simd));
+            }
+            break;
+        case Opcode::OP_NARY_ADD:
+            out = v.row(n_ary[c.a]).head(count_simd);
+            for (unsigned j=c.a + 1; j < c.b; ++j) {
+                out = out + v.row(n_ary[j]).head(count_simd);
+            }
+            break;
+        case Opcode::OP_NARY_MUL:
+            out = v.row(n_ary[c.a]).head(count_simd);
+            for (unsigned j=c.a + 1; j < c.b; ++j) {
+                out = out * v.row(n_ary[j]).head(count_simd);
             }
             break;
 #undef out

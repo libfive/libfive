@@ -167,6 +167,13 @@ Tape::Handle IntervalEvaluator::push(const Tape::Handle& tape)
             }
             return Tape::KEEP_BOTH;
         }
+        else if (c.op == Opcode::OP_NARY_MAX)
+        {
+            for (unsigned j=c.a; j != c.b; ++j) {
+                n_ary_keep[j] = (i[n_ary[j]].upper() >= i[c.id].lower());
+            }
+            return Tape::KEEP_BOTH;
+        }
         return Tape::KEEP_ALWAYS;
     },
     Tape::INTERVAL, R);
@@ -291,6 +298,27 @@ void IntervalEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
             i[c.id] = i[n_ary[c.a]];
             for (unsigned j=c.a + 1; j < c.b; ++j) {
                 i[c.id] = Interval::min(i[c.id], i[n_ary[j]]);
+            }
+            break;
+
+        case Opcode::OP_NARY_MAX:
+            i[c.id] = i[n_ary[c.a]];
+            for (unsigned j=c.a + 1; j < c.b; ++j) {
+                i[c.id] = Interval::max(i[c.id], i[n_ary[j]]);
+            }
+            break;
+
+        case Opcode::OP_NARY_ADD:
+            i[c.id] = i[n_ary[c.a]];
+            for (unsigned j=c.a + 1; j < c.b; ++j) {
+                i[c.id] = i[c.id] + i[n_ary[j]];
+            }
+            break;
+
+        case Opcode::OP_NARY_MUL:
+            i[c.id] = i[n_ary[c.a]];
+            for (unsigned j=c.a + 1; j < c.b; ++j) {
+                i[c.id] = i[c.id] * i[n_ary[j]];
             }
             break;
 

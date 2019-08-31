@@ -33,9 +33,9 @@ Deck::Deck(const Tree root)
 #ifdef LIBFIVE_USE_NARY_OPS
     std::map<Tree::Id, uint32_t> num_parents;
     for (auto itr=flat.crbegin(); itr != flat.crend(); ++itr) {
-        if ((*itr)->op == Opcode::OP_MIN) {
+        if (Opcode::hasNary((*itr)->op)) {
             for (auto& p: {(*itr)->lhs, (*itr)->rhs}) {
-                if (p->op == Opcode::OP_MIN) {
+                if (p->op == (*itr)->op) {
                     n_ary_parents[p.get()] = itr->id();
                 }
             }
@@ -45,11 +45,11 @@ Deck::Deck(const Tree root)
         // we'll need to make min(y, z) a separate node for the addition op
         switch (Opcode::args((*itr)->op)) {
             case 2:
-                if ((*itr)->rhs->op == Opcode::OP_MIN) {
+                if (Opcode::hasNary((*itr)->rhs->op)) {
                     num_parents[(*itr)->rhs.get()]++;
                 }   // FALLTHROUGH
             case 1:
-                if ((*itr)->lhs->op == Opcode::OP_MIN) {
+                if (Opcode::hasNary((*itr)->lhs->op)) {
                     num_parents[(*itr)->lhs.get()]++;
                 }   // FALLTHROUGH (doesn't matter)
             default:
@@ -123,13 +123,14 @@ Deck::Deck(const Tree root)
         auto itr = n_ary_children.find(m.id());
         if (itr != n_ary_children.end())
         {
+            assert(Opcode::hasNary(m->op));
             const Clause::Id start = tape->n_ary_data.size();
             for (auto& c: itr->second) {
                 tape->n_ary_data.push_back(clauses.at(c));
             }
             const Clause::Id end = tape->n_ary_data.size();
             tape_.push_front(
-                    {Opcode::OP_NARY_MIN,
+                    {Opcode::toNary(m->op),
                      id,
                      start,
                      end});

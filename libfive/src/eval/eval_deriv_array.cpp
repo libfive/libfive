@@ -74,7 +74,8 @@ DerivArrayEvaluator::getAmbiguousDerivs(size_t i, const Tape& tape)
                   (d(itr->a).leftCols(i) != d(itr->b).leftCols(i))
                     .colwise().sum());
         }
-        else if (itr->op == Opcode::OP_NARY_MIN)
+        else if (itr->op == Opcode::OP_NARY_MIN ||
+                 itr->op == Opcode::OP_NARY_MAX)
         {
             Eigen::Array<unsigned, 1, LIBFIVE_EVAL_ARRAY_SIZE> count;
             count = 0;
@@ -249,6 +250,7 @@ void DerivArrayEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
             deck->oracles[c.a]->evalDerivArray(d(c.id).leftCols(count_actual));
             break;
 
+        case Opcode::OP_NARY_MAX:  // FALLTHROUGH
         case Opcode::OP_NARY_MIN: {
             // Iterate over the n-ary clauses, finding which one was
             // selected as the min for each of the array evaluations
@@ -257,7 +259,7 @@ void DerivArrayEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
             for (unsigned i=0; i < count_simd; ++i) {
                 for (unsigned j=c.a; j < c.b; ++j) {
                     if (v(n_ary[j], i) == v(c.id, i)) {
-                        d[c.id] = d[n_ary[j]];
+                        d[c.id].col(i) = d[n_ary[j]].col(i);
                         break;
                     // If we haven't found the match in any of the n-ary
                     // operations, then something has gone wrong
@@ -265,6 +267,21 @@ void DerivArrayEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
                         assert(false);
                     }
                 }
+            }
+            break;
+        }
+
+        case Opcode::OP_NARY_ADD: {
+            od = d[n_ary[c.a]].leftCols(count_simd);
+            for (unsigned j=c.a + 1; j < c.b; ++j) {
+                od += d[n_ary[j]].leftCols(count_simd);
+            }
+            break;
+       }
+        case Opcode::OP_NARY_MUL: {
+            od = d[n_ary[c.a]].leftCols(count_simd);
+            for (unsigned j=c.a + 1; j < c.b; ++j) {
+                od *= d[n_ary[j]].leftCols(count_simd);
             }
             break;
         }

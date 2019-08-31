@@ -59,12 +59,15 @@ namespace Opcode
     OPCODE(ORACLE, 32)      \
                             \
     OPCODE(OP_NARY_MIN, 33) \
+    OPCODE(OP_NARY_MAX, 34) \
+    OPCODE(OP_NARY_ADD, 35) \
+    OPCODE(OP_NARY_MUL, 36) \
 
 enum Opcode {
 #define OPCODE(s, i) s=i,
     OPCODES
 #undef OPCODE
-    LAST_OP=34,
+    LAST_OP=37,
 };
 
 size_t args(Opcode op);
@@ -101,6 +104,21 @@ bool isCommutative(Opcode op);
  *  Returns true if the opcode is n-ary (NARY_MIN, etc)
  */
 bool isNary(Opcode op);
+
+/*
+ *  Returns true if the opcode has an n-ary equivalent (MIN, ADD, etc)
+ */
+bool hasNary(Opcode op);
+
+/*
+ *  Converts an opcode to its n-ary equivalient (MIN -> NARY_MIN, etc)
+ */
+Opcode toNary(Opcode op);
+
+/*
+ *  Converts an opcode from its n-ary form (NARY_MIN -> MIN)
+ */
+Opcode fromNary(Opcode op);
 
 }
 

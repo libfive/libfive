@@ -215,6 +215,30 @@ void FeatureEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
             }
         }
         of = out;
+    } else if (c.op == Opcode::OP_NARY_MAX) {
+        // Find the first matching item in the array
+        unsigned q = c.a;
+        while (v(n_ary[q], 0) != v(c.id, 0) && q < c.b) {
+            q++;
+        }
+        assert(q != c.b);
+        boost::container::small_vector<Feature, 4> out = f(n_ary[q]);
+
+        // Iterate over the remaining arguments, seeing if any of them match
+        while (++q < c.b) {
+            if (v(n_ary[q], 0) == v(c.id, 0)) {
+                boost::container::small_vector<Feature, 4> next_out;
+                for (auto& ad: f(n_ary[q])) {
+                    for (auto& bd: out) {
+                        for (auto& o: Feature::max(ad, bd)) {
+                            next_out.push_back(o);
+                        }
+                    }
+                }
+                out = next_out;
+            }
+        }
+        of = out;
     } else if (c.op == Opcode::OP_MAX) {
         if (av < bv || c.a == c.b) {
             of = f(c.b);

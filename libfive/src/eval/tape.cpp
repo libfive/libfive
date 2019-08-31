@@ -90,31 +90,38 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
                 terminal &= (new_contexts[c.a].get() == nullptr) ||
                              new_contexts[c.a]->isTerminal();
             }
-            else if (c.op == Opcode::OP_NARY_MIN)
+            else if (c.op == Opcode::OP_NARY_MIN || c.op == Opcode::OP_NARY_MAX)
             {
-                bool found_one = false;
+                unsigned keep_count = 0;
                 Clause::Id remap_to = 0;
-                for (unsigned i=c.a; i != c.b; ++i) {
+                for (unsigned i=c.a; i < c.b; ++i) {
                     if (deck.n_ary_keep[i]) {
-                        if (!found_one) {
-                            found_one = true;
-                            assert(n_ary_data[i] != 0);
-                            remap_to = n_ary_data[i];
-                        } else {
-                            remap_to = 0;
-                        }
+                        keep_count++;
+                        remap_to = n_ary_data[i];
                         deck.disabled[n_ary_data[i]] = false;
                     } else {
                         // We've disabled something!
                         changed = true;
                     }
                 }
+                assert(keep_count >= 1);
+
                 // If only one clause was active, then remap to it
-                if (found_one && remap_to) {
+                if (keep_count == 1) {
+                    assert(remap_to);
                     deck.remap[c.id] = remap_to;
                     deck.disabled[c.id] = true;
                 } else {
                     deck.disabled[c.id] = false;
+                }
+            }
+            // Other n-ary operations (that don't store any data in
+            // n_ary_keep) leave all of their children enabled.
+            else if (Opcode::isNary(c.op))
+            {
+                for (unsigned i=c.a; i != c.b; ++i) {
+                    deck.disabled[n_ary_data[i]] = false;
+                    deck.n_ary_keep[i] = true;
                 }
             }
             else
@@ -163,7 +170,7 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
             {
                 out->t.push_back({c.op, c.id, c.a, c.b});
             }
-            else if (c.op == Opcode::OP_NARY_MIN)
+            else if (Opcode::isNary(c.op))
             {
                 const unsigned start = out->n_ary_data.size();
                 for (unsigned i=c.a; i != c.b; ++i) {
@@ -180,13 +187,19 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
                 // Collapse to standard min if there are only two
                 // n-ary nodes remaining
                 if (end - start == 2) {
+                    // n-ary nodes must have more than two arguments, and
+                    // the only ones which should shorten are min and max
+                    // (since the others can't prune branches).
+                    assert(c.op == Opcode::OP_NARY_MIN ||
+                           c.op == Opcode::OP_NARY_MAX);
                     out->t.push_back({
-                            Opcode::OP_MIN, c.id,
+                            Opcode::fromNary(c.op), c.id,
                             out->n_ary_data[end - 2],
                             out->n_ary_data[end - 1]});
                     out->n_ary_data.pop_back();
                     out->n_ary_data.pop_back();
                 } else {
+                    assert(end - start > 2);
                     out->t.push_back({c.op, c.id, start, end});
                 }
             }

@@ -59,6 +59,9 @@ size_t Opcode::args(Opcode op)
 
         case INVALID: // fallthrough
         case OP_NARY_MIN:
+        case OP_NARY_MAX:
+        case OP_NARY_ADD:
+        case OP_NARY_MUL:
         case LAST_OP: return -1;
     }
     assert(false); /* All enumeration values must be handled */
@@ -165,13 +168,17 @@ std::string Opcode::toOpString(Opcode op)
             return toScmString(op);
 
 
+        case OP_NARY_ADD:   // FALLTHROUGH
         case OP_ADD:   return "+";
+        case OP_NARY_MUL:   // FALLTHROUGH
         case OP_MUL:   return "*";
         case OP_NEG:   // FALLTHROUGH
         case OP_SUB:   return "-";
         case OP_RECIP: // FALLTHROUGH
         case OP_DIV:   return "/";
+
         case OP_NARY_MIN: return "min";
+        case OP_NARY_MAX: return "max";
 
         case INVALID: // fallthrough
         case CONSTANT:
@@ -224,7 +231,10 @@ bool Opcode::isCommutative(Opcode op)
         case OP_MAX:
             return true;
 
-        case OP_NARY_MIN: // this case shouldn't be hit
+        case OP_NARY_MIN: // these cases shouldn't be hit
+        case OP_NARY_MAX:
+        case OP_NARY_ADD:
+        case OP_NARY_MUL:
             assert(false);
             return false;
     }
@@ -272,10 +282,118 @@ bool Opcode::isNary(Opcode op)
         case OP_MAX:
             return false;
         case OP_NARY_MIN:
+        case OP_NARY_MAX:
+        case OP_NARY_ADD:
+        case OP_NARY_MUL:
             return true;
     }
     assert(false);
     return false;
+}
+
+Opcode::Opcode Opcode::toNary(Opcode op)
+{
+    switch (op)
+    {
+        case OP_ADD:
+            return OP_NARY_ADD;
+        case OP_MUL:
+            return OP_NARY_MUL;
+        case OP_MIN:
+            return OP_NARY_MIN;
+        case OP_MAX:
+            return OP_NARY_MAX;
+        case CONSTANT: // fallthrough
+        case VAR_X:
+        case VAR_Y:
+        case VAR_Z:
+        case VAR_FREE:
+        case ORACLE:
+        case OP_SQUARE:
+        case OP_SQRT:
+        case OP_NEG:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+        case OP_EXP:
+        case OP_SUB:
+        case OP_DIV:
+        case OP_ATAN2:
+        case OP_POW:
+        case OP_NTH_ROOT:
+        case OP_MOD:
+        case OP_NANFILL:
+        case OP_COMPARE:
+        case INVALID:
+        case OP_LOG:
+        case OP_ABS:
+        case OP_RECIP:
+        case CONST_VAR:
+        case LAST_OP:
+        case OP_NARY_MIN:
+        case OP_NARY_MAX:
+        case OP_NARY_ADD:
+        case OP_NARY_MUL:
+            return INVALID;
+    }
+    return INVALID;
+}
+
+bool Opcode::hasNary(Opcode op) {
+    return toNary(op) != INVALID;
+}
+
+Opcode::Opcode Opcode::fromNary(Opcode op) {
+    switch (op)
+    {
+        case OP_NARY_ADD:
+            return OP_ADD;
+        case OP_NARY_MUL:
+            return OP_MUL;
+        case OP_NARY_MIN:
+            return OP_MIN;
+        case OP_NARY_MAX:
+            return OP_MAX;
+        case CONSTANT: // fallthrough
+        case VAR_X:
+        case VAR_Y:
+        case VAR_Z:
+        case VAR_FREE:
+        case ORACLE:
+        case OP_SQUARE:
+        case OP_SQRT:
+        case OP_NEG:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+        case OP_EXP:
+        case OP_SUB:
+        case OP_DIV:
+        case OP_ATAN2:
+        case OP_POW:
+        case OP_NTH_ROOT:
+        case OP_MOD:
+        case OP_NANFILL:
+        case OP_COMPARE:
+        case INVALID:
+        case OP_LOG:
+        case OP_ABS:
+        case OP_RECIP:
+        case CONST_VAR:
+        case LAST_OP:
+        case OP_MIN:
+        case OP_MAX:
+        case OP_ADD:
+        case OP_MUL:
+            return INVALID;
+    }
+    return INVALID;
 }
 
 }   // namespace libfive
