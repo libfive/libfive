@@ -104,7 +104,11 @@ TEST_CASE("IntervalEvaluator::intervalAndPush")
         // picking X, then collapsing min(X, X) into just X.
         auto i = e.intervalAndPush({-5, 0, 0}, {-4, 1, 0});
         CAPTURE(d->tape->size());
+#if LIBFIVE_USE_NARY_OPS
         REQUIRE(i.second->size() == 0);
+#else
+        REQUIRE(i.second->size() == 1);
+#endif
     }
 
     SECTION("With NaNs")
@@ -245,6 +249,7 @@ TEST_CASE("IntervalEvaluator: n-ary evaluation")
     REQUIRE(e.eval({3, 1.5, 1.25}, {3, 1.5, 5}) == Interval(1.25, 1.5));
 }
 
+#if LIBFIVE_USE_NARY_OPS
 TEST_CASE("IntervalEvaluator: n-ary pushing")
 {
     IntervalEvaluator e(min(Tree::X(), min(Tree::Y(), Tree::Z())));
@@ -269,3 +274,4 @@ TEST_CASE("IntervalEvaluator: n-ary pushing")
         REQUIRE(t.second->rbegin()->op == Opcode::OP_MIN);
     }
 }
+#endif

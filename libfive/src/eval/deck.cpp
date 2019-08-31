@@ -29,6 +29,8 @@ Deck::Deck(const Tree root)
     // Iff a MIN node has only one parent and which is also a MIN, it can be
     // collapsed into an NARY_MIN node.
     std::map<Tree::Id, Tree::Id> n_ary_parents;
+    std::map<Tree::Id, std::set<Tree::Id>> n_ary_children;
+#ifdef LIBFIVE_USE_NARY_OPS
     std::map<Tree::Id, uint32_t> num_parents;
     for (auto itr=flat.crbegin(); itr != flat.crend(); ++itr) {
         if ((*itr)->op == Opcode::OP_MIN) {
@@ -84,7 +86,6 @@ Deck::Deck(const Tree root)
     }
     // Reverse the map, so that we have a map of each parent to one or
     // more children.
-    std::map<Tree::Id, std::set<Tree::Id>> n_ary_children;
     for (auto& k: n_ary_parents) {
         for (auto q : {k.first->lhs.get(), k.first->rhs.get(),
                        k.second->lhs.get(), k.second->rhs.get()})
@@ -94,6 +95,7 @@ Deck::Deck(const Tree root)
             }
         }
     }
+#endif
 
     // Allocate the tape here so we can start populating n-ary data
     tape.reset(new Tape);

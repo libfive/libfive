@@ -40,6 +40,7 @@ TEST_CASE("Deck::constants")
     REQUIRE(t.constants.at(2) == 5.0f);
 }
 
+#if LIBFIVE_USE_NARY_OPS
 TEST_CASE("Deck: NARY_MIN collapsing")
 {
     Deck t(min(Tree::X(), min(Tree::Y(), Tree::Z())));
@@ -47,3 +48,4 @@ TEST_CASE("Deck: NARY_MIN collapsing")
 
     // min(x, min(y, z)) + 2 + min(y, z)
 }
+#endif
