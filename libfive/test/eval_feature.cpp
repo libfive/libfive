@@ -241,4 +241,12 @@ TEST_CASE("FeatureEvaluator::features")
         auto fs = exy.features({0, 0, 0});
         REQUIRE(fs.size() == 4);
     }
+
+    SECTION("2D Corner")
+    {
+        auto t = min(min(Tree::X(), -Tree::X()), min(Tree::Y(), -Tree::Y()));
+        FeatureEvaluator d(t);
+        auto fs = d.features({0, 0, 0});
+        REQUIRE(fs.size() == 4);
+    }
 }

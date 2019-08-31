@@ -206,7 +206,7 @@ void FeatureEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
                 boost::container::small_vector<Feature, 4> next_out;
                 for (auto& ad: f(n_ary[q])) {
                     for (auto& bd: out) {
-                        for (auto& o: Feature::max(ad, bd)) {
+                        for (auto& o: Feature::min(ad, bd)) {
                             next_out.push_back(o);
                         }
                     }
