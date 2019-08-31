@@ -163,14 +163,14 @@ Tape::Handle IntervalEvaluator::push(const Tape::Handle& tape)
         else if (c.op == Opcode::OP_NARY_MIN)
         {
             for (unsigned j=c.a; j != c.b; ++j) {
-                n_ary_keep[j] = (i[n_ary[j]].lower() <= i[c.id].upper());
+                n_ary_keep[j] = !(i[n_ary[j]].lower() > i[c.id].upper());
             }
             return Tape::KEEP_BOTH;
         }
         else if (c.op == Opcode::OP_NARY_MAX)
         {
             for (unsigned j=c.a; j != c.b; ++j) {
-                n_ary_keep[j] = (i[n_ary[j]].upper() >= i[c.id].lower());
+                n_ary_keep[j] = !(i[n_ary[j]].upper() < i[c.id].lower());
             }
             return Tape::KEEP_BOTH;
         }

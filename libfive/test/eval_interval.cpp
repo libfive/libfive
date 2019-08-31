@@ -249,6 +249,28 @@ TEST_CASE("IntervalEvaluator: n-ary evaluation")
     REQUIRE(e.eval({3, 1.5, 1.25}, {3, 1.5, 5}) == Interval(1.25, 1.5));
 }
 
+TEST_CASE("IntervalEvaluator: stability under pushing")
+{
+    auto z = Tree::Z();
+    auto s = 1 / (-z);
+    auto radius = sqrt(square(Tree::X() * s) + square(Tree::Y() * s));
+    auto cone = max(radius - 1, max(Tree::Z(), -1 - z));
+    Region<3> r({-10, -10, -10}, {10, 10, 10});
+
+    IntervalEvaluator i(cone);
+    auto out = i.intervalAndPush({0.078125, -9.92188, -0.078125},
+                                 {0.15625, -9.84375, 0});
+
+    ArrayEvaluator a(cone);
+    auto r1 = a.value({0.15625, -9.84375, 0});
+    auto r2 = a.value({0.15625, -9.84375, 0}, *out.second);
+    if (std::isnan(r1) && std::isnan(r2)) {
+        REQUIRE(true);
+    } else {
+        REQUIRE(r1 == r2);
+    }
+}
+
 #if LIBFIVE_USE_NARY_OPS
 TEST_CASE("IntervalEvaluator: n-ary pushing")
 {

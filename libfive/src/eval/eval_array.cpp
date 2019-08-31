@@ -338,7 +338,11 @@ void ArrayEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
             out = a * a;
             break;
         case Opcode::OP_SQRT:
-            out = sqrt(a);
+            // Eigen fails on SIMD sqrt with a mix of inf and NaNs, e.g.
+            // sqrt([inf, nan*7]) = [nan*8], rather than [inf, nan*7]
+            for (unsigned i=0; i < a.size(); ++i) {
+                out(i) = sqrt(a(i));
+            }
             break;
         case Opcode::OP_NEG:
             out = -a;
