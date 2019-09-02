@@ -451,6 +451,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                     {
                         const auto fs = eval->features(
                                 pos.template cast<float>(), tape);
+                        assert(fs.size() > 0);
 
                         for (auto& f : fs)
                         {

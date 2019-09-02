@@ -249,4 +249,14 @@ TEST_CASE("FeatureEvaluator::features")
         auto fs = d.features({0, 0, 0});
         REQUIRE(fs.size() == 4);
     }
+
+    SECTION("Simple sphere")
+    {
+        Tree sponge = sqrt(square(Tree::X()) +
+                square(Tree::Y() ) +
+                square(Tree::Z() ));
+        FeatureEvaluator f(sponge);
+        auto fs = f.features({0.800781 - 1.5, 0.800781 - 1.5,  1.35105 - 1.5});
+        REQUIRE(fs.size() == 1);
+    }
 }

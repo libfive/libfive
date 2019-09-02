@@ -191,6 +191,20 @@ void FeatureEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
                 }
             }
         }
+    } else if (c.op == Opcode::OP_MAX) {
+        if (av < bv || c.a == c.b) {
+            of = f(c.b);
+        } else if (av > bv) {
+            of = f(c.a);
+        } else {
+            for (auto& ad: f(c.a)) {
+                for (auto& bd: f(c.b)) {
+                    for (auto& o: Feature::max(ad, bd)) {
+                        of.push_back(o);
+                    }
+                }
+            }
+        }
     } else if (c.op == Opcode::OP_NARY_MIN) {
         // Find the first matching item in the array
         unsigned q = c.a;
@@ -239,20 +253,21 @@ void FeatureEvaluator::evalClause(const Clause& c, const uint32_t* n_ary)
             }
         }
         of = out;
-    } else if (c.op == Opcode::OP_MAX) {
-        if (av < bv || c.a == c.b) {
-            of = f(c.b);
-        } else if (av > bv) {
-            of = f(c.a);
-        } else {
-            for (auto& ad: f(c.a)) {
-                for (auto& bd: f(c.b)) {
-                    for (auto& o: Feature::max(ad, bd)) {
-                        of.push_back(o);
-                    }
+    // This duplicates code from the EvalDerivArray, but it's very awkward
+    // to squeeze n-ary evaluation into that framework.
+    } else if (c.op == Opcode::OP_NARY_ADD) {
+        boost::container::small_vector<Feature, 4> out = f(n_ary[c.a]);
+        for (unsigned i=c.a + 1; i < c.b; ++i) {
+            boost::container::small_vector<Feature, 4> next_out;
+            for (auto& ad: f(n_ary[i])) {
+                for (auto& bd: out) {
+                    next_out.push_back(Feature(ad.deriv + bd.deriv,
+                                ad, bd));
                 }
             }
+            out = next_out;
         }
+        of = out;
     } else if (c.op == Opcode::ORACLE) {
         deck->oracles[c.a]->evalFeatures(f(c.id));
     } else if (Opcode::args(c.op) == 1) {
