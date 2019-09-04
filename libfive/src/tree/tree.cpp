@@ -42,6 +42,25 @@ Tree::Tree(std::unique_ptr<const OracleClause>&& o)
     // duplication.
 }
 
+Tree::Tree(std::unique_ptr<const OracleClause>&& o,
+           std::function<void(const Tree_*)> onDeletion)
+  : ptr(std::shared_ptr<Tree_>(new Tree_{
+        Opcode::ORACLE,
+        0, // flags
+        0, // rank
+        std::nanf(""), // value
+        std::move(o), // oracle
+        nullptr,
+        nullptr },
+        [onDeletion](Tree_* ptr) 
+{
+  onDeletion(ptr);
+  std::default_delete<Tree_>()(ptr);
+}))
+{
+  // Nothing to do here either.
+}
+
 Tree::Tree(float v)
     : ptr(Cache::instance()->constant(v))
 {
