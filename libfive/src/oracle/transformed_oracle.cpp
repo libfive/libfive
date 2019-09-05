@@ -252,7 +252,7 @@ bool TransformedOracle::Context::isTerminal()
     return tx->isTerminal() &&
            ty->isTerminal() &&
            tz->isTerminal() &&
-           u->isTerminal();
+           (!u || u->isTerminal());
 }
 
 } //Namespace Kernel
