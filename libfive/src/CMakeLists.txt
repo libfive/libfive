@@ -110,7 +110,7 @@ target_include_directories(five SYSTEM PUBLIC
 target_include_directories(five PUBLIC
     ../include
 )
-
+target_compile_definitions(five PUBLIC LIBFIVE_USE_NARY_OPS)
 set(LIBS ${PNG_LIBRARIES})
 
 if(UNIX AND NOT(APPLE))
