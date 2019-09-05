@@ -13,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <list>
 #include <vector>
 #include <map>
+#include <functional>
 
 #include "libfive/tree/opcode.hpp"
 
@@ -31,15 +32,54 @@ class OracleClause;
 class Tree
 {
 public:
+
+    /*  Simple enum for branch selection */
+    enum Direction { LEFT, RIGHT };
+
+    /*  This is where tree data is actually stored  */
+    struct Tree_ {
+        /*
+         *  Destructor erases this Tree from the global Cache
+         */
+        ~Tree_();
+
+        const Opcode::Opcode op;
+        const uint8_t flags;
+        const unsigned rank;
+
+        /*  Only populated for constants  */
+        const float value;
+
+        /* Only populated for oracles */
+        const std::unique_ptr<const OracleClause> oracle;
+
+        /*  Only populated for operations  */
+        const std::shared_ptr<Tree_> lhs;
+        const std::shared_ptr<Tree_> rhs;
+
+        /*  Programmatic branch lookup */
+        const std::shared_ptr<Tree_> branch(Direction d);
+
+        /*
+         *  Pushes a Scheme-format serialization to an ostream
+         */
+        void print(std::ostream& stream,
+                   Opcode::Opcode prev_op=Opcode::INVALID);
+    };
     /*
      *  Returns a Tree for the given constant
      */
     Tree(float v);
 
     /*
-     *  Returns a Tree for the given oracle, taking ownership.
+     *  Returns a Tree for the given oracle, taking ownership.  Can optionally
+     *  take a function to call before deleting the resulting Tree; this function
+     *  should not actually delete the Tree or deallocate its memory, but must
+     *  fulfill all other conditions for the deleter of a shared_ptr.
      */
     Tree(std::unique_ptr<const OracleClause>&& oracle);
+    Tree(std::unique_ptr<const OracleClause>&& oracle, 
+         std::function<void(const Tree_*)> onDeletion);
 
     /*
      *  Constructors for individual axes
@@ -80,40 +120,6 @@ public:
         /*  Does this Id only contain constants and variables
          *  (no VAR_X, VAR_Y, VAR_Z, or ORACLE opcodes allowed) */
         FLAG_LOCATION_AGNOSTIC  = (1<<1),
-    };
-
-    /*  Simple enum for branch selection */
-    enum Direction {LEFT, RIGHT};
-
-    /*  This is where tree data is actually stored  */
-    struct Tree_ {
-        /*
-         *  Destructor erases this Tree from the global Cache
-         */
-        ~Tree_();
-
-        const Opcode::Opcode op;
-        const uint8_t flags;
-        const unsigned rank;
-
-        /*  Only populated for constants  */
-        const float value;
-
-        /* Only populated for oracles */
-        const std::unique_ptr<const OracleClause> oracle;
-
-        /*  Only populated for operations  */
-        const std::shared_ptr<Tree_> lhs;
-        const std::shared_ptr<Tree_> rhs;
-
-        /*  Programmatic branch lookup */
-        const std::shared_ptr<Tree_> branch(Direction d);
-
-        /*
-         *  Pushes a Scheme-format serialization to an ostream
-         */
-        void print(std::ostream& stream,
-                   Opcode::Opcode prev_op=Opcode::INVALID);
     };
 
     /*  Trees are uniquely identified by their Tree_ address, but we don't

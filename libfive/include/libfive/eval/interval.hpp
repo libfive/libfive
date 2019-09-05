@@ -8,7 +8,19 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
+/*  The Boost interval library hits MSVC warning 4244 (casting to a narrower 
+ *  type) when it creates an interval of a narrower type from objects of a 
+ *  wider type.  We don't want to just cast beforehand, as Boost performs the
+ *  narrowing in an interval-safe manner, so we need to disable the warning.
+ */
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#endif
 #include <boost/numeric/interval.hpp>
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 namespace libfive {
 
@@ -167,7 +179,8 @@ public:
 
     static Interval pow(const Interval& a, const Interval& b)
     {
-        auto bPt = b.lower();
+        auto bPt = int(b.lower());
+
         auto out = boost::numeric::pow(a.i, bPt);
         // The behavior of raising zero to a negative power is
         // implementation-defined; it may raise a domain error (and thus
@@ -191,7 +204,7 @@ public:
 
     static Interval nth_root(const Interval& a, const Interval& b)
     {
-        int bPt = b.lower();
+        auto bPt = int(b.lower());
         auto i = boost::numeric::nth_root(a.i, bPt);
 
         // We can only take multiples-of-two nth roots on negative values
