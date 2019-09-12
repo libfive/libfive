@@ -816,7 +816,7 @@ double DCTree<N>::findVertex(unsigned index)
     // Truncate near-singular eigenvalues in the SVD's diagonal matrix
     Eigen::Matrix<double, N, N> D = Eigen::Matrix<double, N, N>::Zero();
 #if LIBFIVE_UNNORMALIZED_DERIVS
-    auto highestVal = eigenvalues.lpNorm<Eigen::Infinity>();
+    auto highestVal = eigenvalues.template lpNorm<Eigen::Infinity>();
     if (highestVal > 1e-20) 
     {
         auto cutoff = highestVal * EIGENVALUE_CUTOFF;
