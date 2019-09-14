@@ -218,7 +218,23 @@ public:
      */
     void releaseTo(Pool& object_pool);
 
+    static constexpr bool hasSingletons() { return true; }
+    static DCTree<N>* singletonEmpty() {
+        static DCTree<N> empty(Interval::EMPTY);
+        return &empty;
+    }
+    static DCTree<N>* singletonFilled() {
+        static DCTree<N> filled(Interval::FILLED);
+        return &filled;
+    }
+    static bool isSingleton(const DCTree<N>* t) {
+        return t == singletonEmpty() || t == singletonFilled();
+    }
+
 protected:
+    /*  Private constructor for a dummy tree of a particular type */
+    DCTree(Interval::State type);
+
     /*
      *  Searches for a vertex within the DCTree cell, using the QEF matrices
      *  that are pre-populated in AtA, AtB, etc.

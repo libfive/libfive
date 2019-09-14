@@ -79,6 +79,11 @@ public:
 
     const VolTree* push(unsigned i, const Region<2>::Perp& perp) const;
     const VolTree* push(unsigned i, const Region<3>::Perp& perp) const;
+
+    static bool hasSingletons() { return false; }
+    static VolTree* singletonEmpty() { return nullptr; }
+    static VolTree* singletonFilled() { return nullptr; }
+    static bool isSingleton(const VolTree*) { return false; }
 };
 
 }   // namespace libfive

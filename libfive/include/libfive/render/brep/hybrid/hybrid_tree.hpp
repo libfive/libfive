@@ -212,6 +212,11 @@ public:
                     NeighborIndex* target,
                     bool normalize);
 
+    static bool hasSingletons() { return false; }
+    static HybridTree<N>* singletonEmpty() { return nullptr; }
+    static HybridTree<N>* singletonFilled() { return nullptr; }
+    static bool isSingleton(const HybridTree<N>*) { return false; }
+
 protected:
 
     /*

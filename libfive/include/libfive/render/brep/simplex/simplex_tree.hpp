@@ -189,6 +189,11 @@ public:
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;
 
+    static bool hasSingletons() { return false; }
+    static SimplexTree<N>* singletonEmpty() { return nullptr; }
+    static SimplexTree<N>* singletonFilled() { return nullptr; }
+    static bool isSingleton(const SimplexTree<N>*) { return false; }
+
 protected:
     /*
      *  Calculate and store whether each vertex is inside or outside

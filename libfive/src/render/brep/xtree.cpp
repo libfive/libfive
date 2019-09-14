@@ -70,6 +70,9 @@ void XTree<N, T, L>::resetPending() const
     pending.store((1 << N) - 1);
     if (isBranch()) {
         for (auto& c : children) {
+            if (T::isSingleton(c.load())) {
+                pending--;
+            }
             c.load()->resetPending();
         }
     }
@@ -95,14 +98,25 @@ void XTree<N, T, L>::releaseChildren(Pool& object_pool)
 }
 
 template <unsigned N, typename T, typename L>
-void XTree<N, T, L>::done()
+bool XTree<N, T, L>::done()
 {
+    bool out = false;
     if (parent)
     {
         assert(parent->children[parent_index].load() == nullptr);
-        parent->children[parent_index].store(static_cast<T*>(this),
-                                             std::memory_order_relaxed);
+        T* t = static_cast<T*>(this);
+        if (T::hasSingletons()) {
+            if (this->type == Interval::EMPTY) {
+                t = T::singletonEmpty();
+                out = true;
+            } else if (this->type == Interval::FILLED) {
+                t = T::singletonFilled();
+                out = true;
+            }
+        }
+        parent->children[parent_index].store(t, std::memory_order_relaxed);
     }
+    return out;
 }
 
 }   // namespace libfive

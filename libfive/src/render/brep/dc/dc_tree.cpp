@@ -57,6 +57,13 @@ DCTree<N>::DCTree()
 }
 
 template <unsigned N>
+DCTree<N>::DCTree(Interval::State t)
+    : XTree<N, DCTree<N>, DCLeaf<N>>()
+{
+    this->type = t;
+}
+
+template <unsigned N>
 std::unique_ptr<DCTree<N>> DCTree<N>::empty()
 {
     std::unique_ptr<DCTree> t(new DCTree);
@@ -96,7 +103,7 @@ void DCLeaf<N>::reset()
 template <unsigned N>
 Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
                                      const Tape::Handle& tape,
-                                     Pool&)
+                                     Pool& pool)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -114,7 +121,14 @@ Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        this->done();
+        // If this is unambiguous, then we're actually installed the singleton
+        // into the parent, so we can release this tree to the pool.  This is
+        // a bit scary, because it's still used in WorkerPool, but the pool
+        // won't change it until we're done operating on it.
+        if (this->done()) {
+            releaseTo(pool);
+        }
+
         if (tape != o.second) {
             eval->getDeck()->claim(std::move(o.second));
             return nullptr;
@@ -250,7 +264,9 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
     // Early exit if this leaf is unambiguous
     if (this->type != Interval::AMBIGUOUS)
     {
-        this->done();
+        if (this->done()) {
+            releaseTo(object_pool);
+        }
         return;
     }
 
@@ -698,7 +714,12 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
         this->releaseChildren(object_pool);
-        this->done();
+
+        // this->done will swap us with a singleton, so we can release
+        // this tree to the pool right away
+        if (this->done()) {
+            releaseTo(object_pool);
+        }
         return true;
     }
 
@@ -1019,8 +1040,9 @@ void DCTree<N>::releaseTo(Pool& object_pool) {
         object_pool.next().put(this->leaf);
         this->leaf = nullptr;
     }
-
-    object_pool.put(this);
+    if (!isSingleton(this)) {
+        object_pool.put(this);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
