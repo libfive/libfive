@@ -17,10 +17,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/mesh.hpp"
 
-#if LIBFIVE_TRIANGLE_FAN_MESHING
-#include "libfive/render/brep/dc/intersection_aligner.hpp"
-#endif
-
 #include "util/shapes.hpp"
 #include "util/mesh_checks.hpp"
 
@@ -31,7 +27,10 @@ TEST_CASE("Mesh::render (sphere normals)")
     Tree s = sphere(0.5);
     Region<3> r({-1, -1, -1}, {1, 1, 1});
 
-    auto mesh = Mesh::render(s, r, BRepSettings());
+    BRepSettings settings;
+    settings.workers = 1;
+    settings.min_feature = 0.2;
+    auto mesh = Mesh::render(s, r, settings);
 
     float dot = 2;
     int pos = 0;
@@ -240,14 +239,6 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
     {
         t = DCWorkerPool<3>::build(sphereGyroid(), r, settings);
     }
-
-#if LIBFIVE_TRIANGLE_FAN_MESHING
-    BENCHMARK("Intersection alignment")
-    {
-        workers = 1;
-        Dual<3>::walk<IntersectionAligner>(t, workers, cancel, EMPTY_PROGRESS_CALLBACK);
-    }
-#endif
 
     std::unique_ptr<Mesh> m;
     BENCHMARK("Mesh building")

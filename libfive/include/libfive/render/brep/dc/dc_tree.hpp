@@ -49,12 +49,10 @@ struct DCLeaf
      *  leaf; see writeup in marching.cpp for details  */
     Eigen::Matrix<double, N, ipow(2, N - 1)> verts;
 
-    /* This array allows us to store position, normal, and value where
-     * the mesh crosses a cell edge.  IntersectionVec is small_vec that
-     * has enough space for a few intersections, and will move to the
-     * heap for pathological cases. */
-    std::array<std::shared_ptr<IntersectionVec<N>>, _edges(N) * 2>
-        intersections;
+    /* This array allows us to store QEFs for cases where the surface
+     * crosses a particular cell edge.  We use a shared_ptr to
+     * reduce RAM usage, though it causes allocation churn. */
+    std::array<std::shared_ptr<Intersection<N>>, _edges(N) * 2> intersections;
 
     /*  Feature rank for the cell's vertex, where                    *
      *      1 is face, 2 is edge, 3 is corner                        *
@@ -196,22 +194,14 @@ public:
     /*
      *  Looks up a particular intersection array by corner indices
      */
-    std::shared_ptr<IntersectionVec<N>> intersection(
+    std::shared_ptr<Intersection<N>> intersection(
             unsigned a, unsigned b) const;
 
     /*
      *  Looks up a particular intersection array by (directed) edge index
      */
-    std::shared_ptr<IntersectionVec<N>> intersection(
+    std::shared_ptr<Intersection<N>> intersection(
             unsigned edge) const;
-
-    /*
-     *  Sets a particular intersection to a given value.  This method is 
-     *  const, so should only be called when the intersection is already set
-     *  to an object identical to ptr, and even then is not thread-safe.
-     */
-    void setIntersectionPtr(
-        unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const;
 
     /*
      *  Releases this tree and any leaf objects to the given object pool
@@ -294,9 +284,6 @@ protected:
      */
     static uint8_t buildCornerMask(
             const std::array<Interval::State, 1 << N>& corners);
-
-    /*  Eigenvalue threshold for determining feature rank  */
-    constexpr static double EIGENVALUE_CUTOFF=0.1f;
 };
 
 }   // namespace libfive

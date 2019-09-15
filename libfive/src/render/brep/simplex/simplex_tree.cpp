@@ -32,9 +32,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-//  Here's our cutoff value (with a value set in the header)
-template <unsigned N> constexpr double SimplexTree<N>::EIGENVALUE_CUTOFF;
-
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>

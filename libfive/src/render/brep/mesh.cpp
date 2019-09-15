@@ -21,9 +21,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 // Dual contouring
 #include "libfive/render/brep/dc/dc_worker_pool.hpp"
 #include "libfive/render/brep/dc/dc_mesher.hpp"
-#if LIBFIVE_TRIANGLE_FAN_MESHING
-#include "libfive/render/brep/dc/intersection_aligner.hpp"
-#endif
 
 // Simplex meshing
 #include "libfive/render/brep/simplex/simplex_worker_pool.hpp"
@@ -66,12 +63,6 @@ std::unique_ptr<Mesh> Mesh::render(
             }
             return nullptr;
         }
-
-#if LIBFIVE_TRIANGLE_FAN_MESHING
-        // Make sure each intersection has the same object in all cells.
-        Dual<3>::walk<IntersectionAligner>(t, 1, cancel, progress_callback);
-        workers = 1;    // The fan walker isn't thread-safe
-#endif
 
         // Perform marching squares
         out = Dual<3>::walk<DCMesher>(t, settings);

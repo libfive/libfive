@@ -228,9 +228,6 @@ protected:
      *  simultaneously!
      */
     std::array<SimplexLeafSubspace<N>*, ipow(3, N)> getLeafSubs() const;
-
-    /*  Eigenvalue threshold for determining feature rank  */
-    constexpr static double EIGENVALUE_CUTOFF=0.1f;
 };
 
 }   // namespace libfive
