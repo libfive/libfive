@@ -17,16 +17,25 @@ namespace libfive {
 template <unsigned N>
 struct Intersection {
     Intersection()
-        : mass_point(Eigen::Matrix<double, N + 1, 1>::Zero()),
-          AtA(Eigen::Matrix<double, N, N>::Zero()),
-          AtB(Eigen::Matrix<double, N, 1>::Zero()),
-          BtB(0)
-    { /* Nothing to do here */ }
+    {
+        reset();
+    }
+
+    void reset() {
+        AtA.array() = 0.0;
+        AtB.array() = 0.0;
+        BtB = 0.0;
+        mass_point.array() = 0.0;
+    }
 
     void push(Eigen::Matrix<double, N, 1> pos,
               Eigen::Matrix<double, N, 1> deriv,
               double value)
     {
+        Eigen::Matrix<double, N + 1, 1> mp;
+        mp << pos, 1.0;
+        mass_point += mp;
+
 #if !LIBFIVE_UNNORMALIZED_DERIVS
         // Find normalized derivatives and distance value
         const double norm = deriv.matrix().norm();
@@ -43,10 +52,6 @@ struct Intersection {
 
         AtB += deriv * b;
         BtB += b * b;
-
-        Eigen::Matrix<double, N + 1, 1> mp;
-        mp << pos, 1.0;
-        mass_point += mp;
 
         // Reset the recorded rank
         rank = -1;

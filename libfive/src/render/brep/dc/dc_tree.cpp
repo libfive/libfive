@@ -79,9 +79,8 @@ void DCLeaf<N>::reset()
 
     std::fill(index.begin(), index.end(), 0);
 
-    for (auto& i : intersections)
-    {
-        i.reset();
+    for (auto& i : intersections) {
+        i = nullptr;
     }
 
     verts.setZero();
@@ -315,7 +314,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
 
                 auto compare = neighbors.check(c.first, c.second);
                 // Enable this to turn on sharing of results with neighbors
-                if (compare.get() != nullptr)
+                if (compare != nullptr)
                 {
                     assert(compare->size() > 0);
                     this->leaf->intersections[edges[edge_count]] = compare;
@@ -450,7 +449,8 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                         saveIntersection(pos.template head<N>(),
                                          ds.col(i).template cast<double>()
                                                   .template head<N>(),
-                                         ds.col(i).w(), eval_edges[i/2]);
+                                         ds.col(i).w(), eval_edges[i/2],
+                                         object_pool);
                     }
                     // Otherwise, we need to use the feature-finding special
                     // case to find all possible derivatives at this point.
@@ -464,7 +464,8 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                             saveIntersection(pos.template head<N>(),
                                              f.template head<N>()
                                               .template cast<double>(),
-                                             ds.col(i).w(), eval_edges[i/2]);
+                                             ds.col(i).w(), eval_edges[i/2],
+                                             object_pool);
                         }
                     }
                 }
@@ -553,12 +554,13 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
 
 template <unsigned N>
 void DCTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
-                                 const double value, const size_t edge)
+                                 const double value, const size_t edge,
+                                 Pool& object_pool)
 {
     // Just-in-time allocation of intersections array
     if (this->leaf->intersections[edge] == nullptr)
     {
-        this->leaf->intersections[edge].reset(new Intersection<N>);
+        this->leaf->intersections[edge] = object_pool.next().next().get();
     }
     this->leaf->intersections[edge]->push(pos, derivs, value);
 }
@@ -803,15 +805,14 @@ typename DCTree<N>::Vec DCTree<N>::vert(unsigned i) const
 }
 
 template <unsigned N>
-std::shared_ptr<Intersection<N>> DCTree<N>::intersection(
-        unsigned a, unsigned b) const
+Intersection<N>* DCTree<N>::intersection(unsigned a, unsigned b) const
 {
     assert(MarchingTable<N>::e(a)[b] != -1);
     return intersection(MarchingTable<N>::e(a)[b]);
 }
 
 template <unsigned N>
-std::shared_ptr<Intersection<N>> DCTree<N>::intersection(unsigned edge) const
+Intersection<N>* DCTree<N>::intersection(unsigned edge) const
 {
     assert(this->leaf != nullptr);
     return this->leaf->intersections[edge];

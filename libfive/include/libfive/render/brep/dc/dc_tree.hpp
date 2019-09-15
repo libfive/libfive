@@ -50,9 +50,10 @@ struct DCLeaf
     Eigen::Matrix<double, N, ipow(2, N - 1)> verts;
 
     /* This array allows us to store QEFs for cases where the surface
-     * crosses a particular cell edge.  We use a shared_ptr to
-     * reduce RAM usage, though it causes allocation churn. */
-    std::array<std::shared_ptr<Intersection<N>>, _edges(N) * 2> intersections;
+     * crosses a particular cell edge.  The objects are allocated from
+     * the shared pool, though they're not released back to the pool
+     * (because they could be in more than one DCLeaf) */
+    std::array<Intersection<N>*, _edges(N) * 2> intersections;
 
     /*  Feature rank for the cell's vertex, where                    *
      *      1 is face, 2 is edge, 3 is corner                        *
@@ -91,7 +92,7 @@ template <unsigned N>
 class DCTree : public XTree<N, DCTree<N>, DCLeaf<N>>
 {
 public:
-    using Pool = ObjectPool<DCTree<N>, DCLeaf<N>>;
+    using Pool = ObjectPool<DCTree<N>, DCLeaf<N>, Intersection<N>>;
 
     /*
      *  Simple constructor
@@ -194,14 +195,12 @@ public:
     /*
      *  Looks up a particular intersection array by corner indices
      */
-    std::shared_ptr<Intersection<N>> intersection(
-            unsigned a, unsigned b) const;
+    Intersection<N>* intersection(unsigned a, unsigned b) const;
 
     /*
      *  Looks up a particular intersection array by (directed) edge index
      */
-    std::shared_ptr<Intersection<N>> intersection(
-            unsigned edge) const;
+    Intersection<N>* intersection(unsigned edge) const;
 
     /*
      *  Releases this tree and any leaf objects to the given object pool
@@ -246,7 +245,8 @@ protected:
      *  building the A and b matrices).
      */
     void saveIntersection(const Vec& pos, const Vec& derivs,
-                          const double value, const size_t edge);
+                          const double value, const size_t edge,
+                          Pool& object_pool);
 
     /*
      *  Returns a table such that looking up a particular corner
