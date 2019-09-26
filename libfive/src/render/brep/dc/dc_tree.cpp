@@ -755,8 +755,20 @@ double DCTree<N>::findVertex(unsigned index)
     // before loading them into the AtA matrix
 #if LIBFIVE_UNNORMALIZED_DERIVS
     auto highest_val = eigenvalues.template lpNorm<Eigen::Infinity>();
+    // We scale EIGENVALUE_CUTOFF to highestVal.  Additionally, we need to 
+    // use a significantly lower cutoff threshold (here set to the square 
+    // of the normalized-derivatives threshold), since when derivatives 
+    // are not normalized a cutoff of .1 can cause one feature to be 
+    // entirely ignored if its derivative is fairly small in comparison to
+    // another feature.  (The same can happen with any cutoff, but it is
+    // much less likely this way, and it should still be high enough to
+    // avoid wild vertices due to noisy normals under most circumstances, 
+    // at least enough that they will be a small minority of the situations
+    // in which dual contouring's need to allow out-of-box vertices causes
+    // issues.)
+    constexpr double EIGENVALUE_CUTOFF_2 = EIGENVALUE_CUTOFF * EIGENVALUE_CUTOFF;
     const double cutoff = (highest_val > 1e-20)
-        ? highest_val * EIGENVALUE_CUTOFF
+        ? highest_val * EIGENVALUE_CUTOFF_2
         : 0.0;
 #else
     const double cutoff = EIGENVALUE_CUTOFF;
