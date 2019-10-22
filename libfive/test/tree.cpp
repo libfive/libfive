@@ -201,14 +201,29 @@ TEST_CASE("Tree thread safety")
 
 TEST_CASE("Tree::orderedDfs")
 {
-    auto t = min(min(Tree::X(), Tree::Y()), min(Tree::Z(), 1.0));
-    auto o = t.orderedDfs();
-    auto itr = o.begin();
-    REQUIRE(*itr++ == Tree::X());
-    REQUIRE(*itr++ == Tree::Y());
-    REQUIRE(*itr++ == min(Tree::X(), Tree::Y()));
-    REQUIRE(*itr++ == Tree::Z());
-    REQUIRE(*itr++ == Tree(1.0));
-    REQUIRE(*itr++ == min(Tree::Z(), Tree(1.0)));
-    REQUIRE(*itr++ == t);
+    SECTION("Fully branching")
+    {
+        auto t = min(min(Tree::X(), Tree::Y()), min(Tree::Z(), 1.0));
+        auto o = t.orderedDfs();
+        auto itr = o.begin();
+        REQUIRE(*itr++ == Tree::X());
+        REQUIRE(*itr++ == Tree::Y());
+        REQUIRE(*itr++ == min(Tree::X(), Tree::Y()));
+        REQUIRE(*itr++ == Tree::Z());
+        REQUIRE(*itr++ == Tree(1.0));
+        REQUIRE(*itr++ == min(Tree::Z(), Tree(1.0)));
+        REQUIRE(*itr++ == t);
+    }
+    SECTION("Self-intersecting")
+    {
+        auto t = min(min(Tree::X(), Tree::Y()), min(Tree::Z(), Tree::X()));
+        auto o = t.orderedDfs();
+        auto itr = o.begin();
+        REQUIRE(*itr++ == Tree::X());
+        REQUIRE(*itr++ == Tree::Y());
+        REQUIRE(*itr++ == min(Tree::X(), Tree::Y()));
+        REQUIRE(*itr++ == Tree::Z());
+        REQUIRE(*itr++ == min(Tree::Z(), Tree::X()));
+        REQUIRE(*itr++ == t);
+    }
 }
