@@ -143,6 +143,29 @@ std::list<Tree> Tree::ordered() const
     return out;
 }
 
+std::list<Tree> Tree::orderedDfs() const
+{
+    std::set<Id> found = {nullptr};
+    std::list<std::shared_ptr<Tree_>> todo = { ptr };
+    std::list<Tree> out;
+
+    while (todo.size())
+    {
+        auto t = todo.back();
+        todo.pop_back();
+
+        if (found.find(t.get()) == found.end())
+        {
+            todo.push_back(t->lhs);
+            todo.push_back(t->rhs);
+            found.insert(t.get());
+            out.push_back(Tree(t));
+        }
+    }
+    out.reverse();
+    return out;
+}
+
 void Tree::serialize(std::ostream& out) const
 {
     return Archive(*this).serialize(out);

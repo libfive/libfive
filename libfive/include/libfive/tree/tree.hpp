@@ -172,6 +172,12 @@ public:
      */
     std::list<Tree> ordered() const;
 
+    /*
+     *  Walks the tree as a depth-first search, then reverses the results
+     *  The last item in the list will be the tree this is called on
+     */
+    std::list<Tree> orderedDfs() const;
+
     void serialize(std::ostream& out) const;
     static Tree deserialize(std::istream& in);
 
