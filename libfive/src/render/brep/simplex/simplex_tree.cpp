@@ -212,7 +212,7 @@ std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
     uintptr_t flag_ptr = 0xDEADBEEF;
     t->parent = reinterpret_cast<SimplexTree<N>*>(flag_ptr);
 
-    return std::move(t);
+    return t;
 }
 
 template <unsigned N>

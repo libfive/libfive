@@ -188,7 +188,7 @@ TEST_CASE("Region<2>::intersection")
     }
 
     {
-        auto o = r.intersection({-1.0, 0.5}, {0.5, 0.5}, &found);
+        r.intersection({-1.0, 0.5}, {0.5, 0.5}, &found);
         REQUIRE(!found);
     }
 }

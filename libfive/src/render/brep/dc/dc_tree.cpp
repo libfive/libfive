@@ -59,7 +59,7 @@ std::unique_ptr<DCTree<N>> DCTree<N>::empty()
 {
     std::unique_ptr<DCTree> t(new DCTree);
     t->type = Interval::EMPTY;
-    return std::move(t);
+    return t;
 }
 
 template <unsigned N>

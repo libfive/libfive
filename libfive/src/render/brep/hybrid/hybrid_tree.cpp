@@ -172,7 +172,7 @@ std::unique_ptr<HybridTree<N>> HybridTree<N>::empty()
 {
     std::unique_ptr<HybridTree> t(new HybridTree);
     t->type = Interval::UNKNOWN;
-    return std::move(t);
+    return t;
 }
 
 template <unsigned N>

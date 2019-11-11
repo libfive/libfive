@@ -62,9 +62,9 @@ TEST_CASE("ObjectPool::size") {
     pool.put(a);
     REQUIRE(pool.size() == 0);
 
-    auto b = pool.get();
+    pool.get();
     REQUIRE(pool.size() == 1);
 
-    auto c = pool.get();
+    pool.get();
     REQUIRE(pool.size() == 2);
 }

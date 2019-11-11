@@ -33,6 +33,7 @@ TEST_CASE("MarchingTable<3>")
     {
         CAPTURE(i);
         auto& _t = MarchingTable<3>::v(i);
+        (void)_t;
         REQUIRE(MarchingTable<3>::v(i)[0][0].first != -1);
     }
 
