@@ -12,6 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <map>
 #include <memory>
 #include <mutex>
+#include <assert.h>
 
 #include "libfive/export.hpp"
 #include "libfive/tree/tree.hpp"
@@ -19,7 +20,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace libfive {
 
 /*
- *  A Cache stores values in a deduplicated math expression
+ *  A Cache stores values in a deduplicated math expression.  It is 
+ *  static-initialization-safe: If its methods are called before it is 
+ *  initialized or after deinitialization (e.g. due to destroying a static
+ *  std::shared_ptr<Tree> that was initialized before the cache), the this 
+ *  pointer is not used, and instead a non-deduplicated tree is returned if 
+ *  necessary; this also occurs if accessed from a Handle that could not 
+ *  lock the mutex due to concerns that it may not have been initialized, 
+ *  or if the methods are called from Cache*(nullptr).
  */
 class Cache
 {
@@ -30,8 +38,18 @@ class Cache
     class Handle
     {
     public:
-        Handle() : lock(mut) {}
-        Cache* operator->() const { return &_instance; }
+        Handle() 
+        {
+          if (_exists) {
+            lock = std::unique_lock<std::recursive_mutex>(mut);
+          }
+          // Otherwise, mut might not exist yet or may have already
+          // been destroyed, so accessing it may not be safe.
+        }
+        Cache* operator->() const 
+        { 
+          return lock.owns_lock() ? &_instance : nullptr; 
+        }
     protected:
         std::unique_lock<std::recursive_mutex> lock;
     };
@@ -75,7 +93,26 @@ protected:
     /*
      *  Cache constructor is private so outsiders must use instance()
      */
-    Cache() {}
+    Cache() 
+    {
+      std::unique_lock<std::recursive_mutex> lock(mut);
+      _exists = true; 
+    }
+
+    ~Cache() 
+    { 
+      std::unique_lock<std::recursive_mutex> lock(mut);
+      _exists = false; 
+    }
+
+    /*
+     *  Checks if this is a valid cache.  May be safely called on any
+     *  pointer.
+     */
+    bool isValid() {
+      assert(this == nullptr || this == &_instance);
+      return this != nullptr && _exists;
+    }
 
     /*
      *  Checks whether the operation is an identity operation
@@ -116,6 +153,7 @@ protected:
      *  to duplicate.  */
 
     static FIVE_EXPORT std::recursive_mutex mut;
+    static FIVE_EXPORT bool _exists;
     static FIVE_EXPORT Cache _instance;
 };
 

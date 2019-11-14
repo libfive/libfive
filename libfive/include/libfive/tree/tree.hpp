@@ -57,6 +57,11 @@ public:
         const std::shared_ptr<Tree_> lhs;
         const std::shared_ptr<Tree_> rhs;
 
+        /*  Determines if this uses the cache; this should be true unless
+         *  the Tree_ was created during static initialization.
+         */
+        const bool usesCache;
+
         /*  Programmatic branch lookup */
         const std::shared_ptr<Tree_> branch(Direction d);
 

@@ -14,16 +14,20 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-// Static class variables
+// Static class variables.  mut must be before _instance, so that they are
+// initialized in the correct order.
+
 std::recursive_mutex Cache::mut;
+bool Cache::_exists = false;
 Cache Cache::_instance;
 
 Cache::Node Cache::constant(float v)
 {
+    auto valid = isValid();
     // Special-case for NaN, which can't be stored in the usual map
     if (std::isnan(v))
     {
-        auto out = nan_constant.lock();
+        auto out = valid ? nan_constant.lock() : Cache::Node();
         if (out.get() == nullptr)
         {
             out.reset(new Tree::Tree_ {
@@ -33,31 +37,39 @@ Cache::Node Cache::constant(float v)
                     v, // value
                     nullptr, // oracle
                     nullptr,
-                    nullptr });
-            nan_constant = out;
+                    nullptr,
+                    valid });
+            if (valid) 
+            {
+                nan_constant = out;
+            }
         }
         return out;
     }
 
-    auto f = constants.find(v);
-    if (f == constants.end())
+    if (valid) 
     {
-        Node out(new Tree::Tree_ {
-            Opcode::CONSTANT,
-            Tree::FLAG_LOCATION_AGNOSTIC,
-            0, // rank
-            v, // value
-            nullptr, // oracle
-            nullptr,
-            nullptr });
-        constants.insert({v, out});
-        return out;
+        auto f = constants.find(v);
+        if (f != constants.end())
+        {
+            assert(!f->second.expired());
+            return f->second.lock();
+        }
     }
-    else
+    Node out(new Tree::Tree_{
+        Opcode::CONSTANT,
+        Tree::FLAG_LOCATION_AGNOSTIC,
+        0, // rank
+        v, // value
+        nullptr, // oracle
+        nullptr,
+        nullptr,
+        valid });
+    if (valid) 
     {
-        assert(!f->second.expired());
-        return f->second.lock();
+      constants.insert({ v, out });
     }
+    return out;
 }
 
 Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
@@ -81,60 +93,68 @@ Cache::Node Cache::operation(Opcode::Opcode op, Cache::Node lhs,
 
     Key k(op, lhs.get(), rhs.get());
 
-    auto found = ops.find(k);
-    if (found == ops.end())
+    auto valid = isValid();
+    if (valid)
     {
-        // Construct a new operation node
-        Node out(new Tree::Tree_ {
-            op,
-
-            // Flags
-            (uint8_t)
-            (((!lhs.get() || (lhs->flags & Tree::FLAG_LOCATION_AGNOSTIC)) &&
-              (!rhs.get() || (rhs->flags & Tree::FLAG_LOCATION_AGNOSTIC)) &&
-               op != Opcode::VAR_X &&
-               op != Opcode::VAR_Y &&
-               op != Opcode::VAR_Z &&
-               op != Opcode::ORACLE)
-                  ? Tree::FLAG_LOCATION_AGNOSTIC : 0),
-
-            // Rank
-            std::max(lhs.get() ? lhs->rank + 1 : 0,
-                     rhs.get() ? rhs->rank + 1 : 0),
-
-            // Value
-            std::nanf(""),
-
-            // Oracle
-            nullptr,
-
-            // Arguments
-            lhs,
-            rhs });
-
-        // Store a weak pointer to this new Node
-        ops.insert({k, out});
-
-        // If both sides of the operation are constant, then build up a
-        // temporary Evaluator in order to get a constant value out
-        // (out will be GC'd immediately when it goes out of scope)
-        if ((lhs.get() || rhs.get()) &&
-            (!lhs.get() || lhs->op == Opcode::CONSTANT) &&
-            (!rhs.get() || rhs->op == Opcode::CONSTANT))
+        auto found = ops.find(k);
+        if (found != ops.end())
         {
-            // Here, we construct a Tree manually to avoid a recursive loop,
-            // then pass it immediately into a dummy Evaluator
-            auto e = ArrayEvaluator(Tree(out));
-            auto result = e.value({0,0,0});
-            return constant(result);
+          assert(!found->second.expired());
+          return found->second.lock();
         }
-        return out;
     }
-    else
+    
+    // Construct a new operation node
+    Node out(new Tree::Tree_ {
+        op,
+
+        // Flags
+        (uint8_t)
+        (((!lhs.get() || (lhs->flags & Tree::FLAG_LOCATION_AGNOSTIC)) &&
+          (!rhs.get() || (rhs->flags & Tree::FLAG_LOCATION_AGNOSTIC)) &&
+            op != Opcode::VAR_X &&
+            op != Opcode::VAR_Y &&
+            op != Opcode::VAR_Z &&
+            op != Opcode::ORACLE)
+              ? Tree::FLAG_LOCATION_AGNOSTIC : 0),
+
+        // Rank
+        std::max(lhs.get() ? lhs->rank + 1 : 0,
+                  rhs.get() ? rhs->rank + 1 : 0),
+
+        // Value
+        std::nanf(""),
+
+        // Oracle
+        nullptr,
+
+        // Arguments
+        lhs,
+        rhs,
+      
+        // If it uses the cache
+        valid });
+
+    if (valid) 
     {
-        assert(!found->second.expired());
-        return found->second.lock();
+        // Store a weak pointer to this new Node
+        ops.insert({ k, out });
     }
+
+    // If both sides of the operation are constant, then build up a
+    // temporary Evaluator in order to get a constant value out
+    // (out will be GC'd immediately when it goes out of scope)
+    if ((lhs.get() || rhs.get()) &&
+        (!lhs.get() || lhs->op == Opcode::CONSTANT) &&
+        (!rhs.get() || rhs->op == Opcode::CONSTANT))
+    {
+        // Here, we construct a Tree manually to avoid a recursive loop,
+        // then pass it immediately into a dummy Evaluator
+        auto e = ArrayEvaluator(Tree(out));
+        auto result = e.value({0,0,0});
+        return constant(result);
+    }
+    return out;
 }
 
 
@@ -152,6 +172,11 @@ Cache::Node Cache::var()
 
 void Cache::del(float v)
 {
+    if (!isValid()) 
+    {
+        // Cache is invalid, do nothing.
+        return;
+    }
     if (std::isnan(v))
     {
         assert(nan_constant.expired());
@@ -168,6 +193,11 @@ void Cache::del(float v)
 
 void Cache::del(Opcode::Opcode op, Node lhs, Node rhs)
 {
+    if (!isValid()) 
+    {
+        // Cache is invalid, do nothing.
+        return;
+    }
     auto o = ops.find(Key(op, lhs.get(), rhs.get()));
     assert(o != ops.end());
     assert(o->second.expired());

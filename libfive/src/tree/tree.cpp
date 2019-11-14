@@ -102,6 +102,11 @@ Tree::~Tree()
 
 Tree::Tree_::~Tree_()
 {
+    if (!usesCache) {
+      // It was created without the cache; we want it to not access the cache
+      // on deletion, even if the cache has since been created.
+      return;
+    }
     if (op == Opcode::CONSTANT)
     {
         Cache::instance()->del(value);
