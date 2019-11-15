@@ -14,10 +14,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-// Static class variables
-std::recursive_mutex Cache::mut;
-Cache Cache::_instance;
-
 Cache::Node Cache::constant(float v)
 {
     // Special-case for NaN, which can't be stored in the usual map
