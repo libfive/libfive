@@ -41,8 +41,8 @@ public:
      *  Returns a safe (locking) handle to the global Cache
      */
     static Handle instance() {
-        static Cache c;
-        return Handle(c);
+        static Cache* c = new Cache();
+        return Handle(*c);
     }
 
     Node constant(float v);
@@ -76,8 +76,8 @@ public:
 
 protected:
     static std::recursive_mutex& mut() {
-        static std::recursive_mutex m;
-        return m;
+        static auto m = new std::recursive_mutex;
+        return *m;
     }
 
     /*
