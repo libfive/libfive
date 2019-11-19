@@ -270,6 +270,102 @@ const std::shared_ptr<Tree::Tree_> Tree::Tree_::branch(Direction d)
     return nullptr;
 }
 
+void Tree::Tree_::printInfix(std::ostream& stream)
+{
+    using namespace Opcode;
+    switch (op) {
+        case CONSTANT:
+            if (value == int(value)) {
+                stream << int(value);
+            } else {
+                stream << value;
+            }
+            break;
+        case VAR_X: stream << "X"; break;
+        case VAR_Y: stream << "Y"; break;
+        case VAR_Z: stream << "Z"; break;
+        case VAR_FREE: stream << "var"; break;
+        case CONST_VAR:
+            stream << "const(";
+            lhs->printInfix(stream);
+            stream << ")";
+            break;
+
+        case OP_SQUARE:
+            stream << "(";
+            lhs->printInfix(stream);
+            stream << "*";
+            lhs->printInfix(stream);
+            stream << ")";
+            break;
+        case OP_NEG:
+            stream << "(-";
+            lhs->printInfix(stream);
+            stream << ")";
+            break;
+        case OP_SQRT:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+        case OP_EXP:
+        case OP_ABS:
+        case OP_LOG:
+            stream << toOpString(op) << "(";
+            lhs->printInfix(stream);
+            stream << ")";
+            break;
+        case OP_RECIP:
+            stream << "(1 / ";
+            lhs->printInfix(stream);
+            stream << ")";
+            break;
+
+        case OP_ADD:
+        case OP_SUB:
+        case OP_MUL:
+        case OP_DIV:
+            stream << "(";
+            lhs->printInfix(stream);
+            stream << " " << toOpString(op) << " ";
+            rhs->printInfix(stream);
+            stream << ")";
+            break;
+
+        case OP_MIN:
+        case OP_MAX:
+        case OP_ATAN2:
+        case OP_POW:
+            stream << toOpString(op);
+            stream << "(";
+            lhs->printInfix(stream);
+            stream << ", ";
+            rhs->printInfix(stream);
+            stream << ")";
+            break;
+
+        case OP_MOD:
+            stream << "(";
+            lhs->printInfix(stream);
+            stream << " % ";
+            rhs->printInfix(stream);
+            stream << ")";
+            break;
+
+        case OP_NTH_ROOT:
+            stream << "pow(";
+            lhs->printInfix(stream);
+            stream << ", (1/";
+            rhs->printInfix(stream);
+            stream << "))";
+            break;
+        default:
+            std::cerr << "Cannot print opcode " << toScmString(op) << "\n";
+    }
+}
+
 void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
 {
     const bool commutative = (prev_op == op);

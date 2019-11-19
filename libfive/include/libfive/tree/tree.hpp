@@ -65,6 +65,11 @@ public:
          */
         void print(std::ostream& stream,
                    Opcode::Opcode prev_op=Opcode::INVALID);
+
+        /*
+         *  Prints an infix-format string to an ostream
+         */
+        void printInfix(std::ostream& stream);
     };
     /*
      *  Returns a Tree for the given constant
