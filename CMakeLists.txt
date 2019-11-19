@@ -6,9 +6,17 @@ cmake_policy(SET CMP0025 NEW)
 
 option(BUILD_STUDIO_APP "Build Studio application" ON)
 option(BUILD_GUILE_BINDINGS "Build Guile bindings" ON)
+option(LIBFIVE_PACKED_OPCODES
+    "Tightly pack opcodes (breaks compatibility with older saved f-reps)"
+    OFF)
 
 set(CMAKE_BUILD_TYPE RELEASE)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
+if (LIBFIVE_PACKED_OPCODES)
+    message("Using packed opcodes, which breaks compatibility with saved f-reps!")
+    add_definitions(-DLIBFIVE_PACKED_OPCODES)
+endif()
 
 # Build libfive with ccache if the package is present
 set(LIBFIVE_CCACHE_BUILD OFF CACHE BOOL "Set to ON for a ccache enabled build")
@@ -72,7 +80,9 @@ endif()
 ################################################################################
 # Find all packages here at the top level so we can print debugging info
 if(NOT MSVC)
-    find_package(Qt5Core)
+    if (BUILD_STUDIO_APP)
+        find_package(Qt5Core)
+    endif ()
     find_package(Boost REQUIRED)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GUILE guile-2.2>=2.2.1)
