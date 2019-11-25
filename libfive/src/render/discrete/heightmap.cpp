@@ -401,4 +401,64 @@ bool Heightmap::savePNG(std::string filename)
     return true;
 }
 
+bool Heightmap::saveNormalPNG(std::string filename)
+{
+    if (!boost::algorithm::iends_with(filename, ".png"))
+    {
+        std::cerr << "Heightmap::savePNG: filename \"" << filename
+                  << "\" does not end in .png" << std::endl;
+    }
+
+    // Open up a file for writing
+    FILE* output = fopen(filename.c_str(), "wb");
+    if (output == NULL)
+    {
+        fprintf(stderr, "Failed to open PNG file for writing (errno = %i)\n",
+                errno);
+        return false;
+    }
+
+    // Create a png pointer with the callbacks above
+    png_structp png_ptr = png_create_write_struct(
+        PNG_LIBPNG_VER_STRING, NULL, on_png_error, on_png_warn);
+    if (png_ptr == NULL)
+    {
+        fprintf(stderr, "Failed to allocate png write_struct\n");
+        fclose(output);
+        return false;
+    }
+
+    // Create an info pointer
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+    if (info_ptr == NULL)
+    {
+        fprintf(stderr, "Failed to create png info_struct");
+        png_destroy_write_struct(&png_ptr, &info_ptr);
+        fclose(output);
+        return false;
+    }
+
+    // Set physical vars
+    png_set_IHDR(png_ptr, info_ptr, norm.cols(), norm.rows(), 8,
+                 PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+    png_init_io(png_ptr, output);
+
+
+    Eigen::Array<uint32_t, Eigen::Dynamic, Eigen::Dynamic> t = norm.transpose();
+    std::vector<uint8_t*> rows;
+    for (int i=t.cols() - 1; i >= 0; --i)
+    {
+        rows.push_back(reinterpret_cast<uint8_t*>(t.data() + i * t.rows()));
+    }
+
+    png_set_rows(png_ptr, info_ptr, reinterpret_cast<png_bytepp>(&rows[0]));
+    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_SWAP_ENDIAN, NULL);
+    fclose(output);
+
+    png_destroy_write_struct(&png_ptr, &info_ptr);
+    return true;
+}
+
 }   // namespace libfive
