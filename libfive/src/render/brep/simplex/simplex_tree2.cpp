@@ -7,8 +7,8 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#include "simplex_tree.cpp"
-#include "../object_pool.cpp"
+#include "simplex_tree.inl"
+#include "../object_pool.inl"
 
 namespace libfive {
 template class SimplexTree<2>;

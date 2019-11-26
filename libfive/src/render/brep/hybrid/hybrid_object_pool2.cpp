@@ -8,7 +8,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "libfive/render/brep/hybrid/hybrid_tree.hpp"
-#include "../object_pool.cpp"
+#include "../object_pool.inl"
 
 namespace libfive {
 template class ObjectPool<HybridTree<2>, HybridLeaf<2>>;

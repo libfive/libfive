@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
 #include "libfive/eval/evaluator.hpp"
-#include "../xtree.cpp"
+#include "../xtree.inl"
 
 namespace libfive {
 

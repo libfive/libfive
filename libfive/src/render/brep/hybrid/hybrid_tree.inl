@@ -20,7 +20,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/edge_tables.hpp"
 #include "libfive/render/brep/manifold_tables.hpp"
 
-#include "../xtree.cpp"
+#include "../xtree.inl"
 
 //#define DEBUG(s) std::cout << s << "\n"
 #define DEBUG(s) {}

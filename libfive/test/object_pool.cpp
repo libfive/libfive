@@ -14,7 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Though the object pool is templated, it requires explicit instantiation
 // to save on compile time, so we pull in the source here.
-#include "../src/render/brep/object_pool.cpp"
+#include "../src/render/brep/object_pool.inl"
 
 using namespace libfive;
 

@@ -27,7 +27,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/axes.hpp"
 
-#include "../xtree.cpp"
+#include "../xtree.inl"
 
 namespace libfive {
 

@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "libfive/render/brep/dc/dc_tree.hpp"
-#include "../object_pool.cpp"
+#include "../object_pool.inl"
 
 namespace libfive {
 template class ObjectPool<DCTree<2>, DCLeaf<2>, Intersection<2>>;

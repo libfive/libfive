@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "libfive/render/brep/vol/vol_tree.hpp"
-#include "../object_pool.cpp"
+#include "../object_pool.inl"
 
 namespace libfive {
 template class ObjectPool<VolTree>;
