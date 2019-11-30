@@ -10,9 +10,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <memory>
 
-#include "libfive/render/brep/worker_pool.hpp"
 #include "libfive/render/brep/vol/vol_neighbors.hpp"
 #include "libfive/render/brep/vol/vol_tree.hpp"
+#ifdef FIVE_TBB
+#include "libfive/render/brep/worker_pool_tbb.hpp"
+#else
+#include "libfive/render/brep/worker_pool.hpp"
+#endif
 
 namespace libfive {
 

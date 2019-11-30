@@ -12,7 +12,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/hybrid/hybrid_tree.hpp"
 #include "libfive/render/brep/hybrid/hybrid_neighbors.hpp"
+#ifdef FIVE_TBB
+#include "libfive/render/brep/worker_pool_tbb.hpp"
+#else
 #include "libfive/render/brep/worker_pool.hpp"
+#endif
 
 namespace libfive {
 

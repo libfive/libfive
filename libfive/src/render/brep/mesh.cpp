@@ -38,17 +38,25 @@ namespace libfive {
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    const BRepSettings& settings)
 {
+#ifdef FIVE_TBB
+    tbb::enumerable_thread_specific<Evaluator> es(t);
+    return render(es, r, settings);
+#else
     std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
     es.reserve(settings.workers);
     for (unsigned i=0; i < settings.workers; ++i) {
         es.emplace_back(Evaluator(t));
     }
-
     return render(es.data(), r, settings);
+#endif
 }
 
 std::unique_ptr<Mesh> Mesh::render(
+#ifdef FIVE_TBB
+        tbb::enumerable_thread_specific<Evaluator>& es,
+#else
         Evaluator* es,
+#endif
         const Region<3>& r, const BRepSettings& settings)
 {
     std::unique_ptr<Mesh> out;
@@ -96,10 +104,17 @@ std::unique_ptr<Mesh> Mesh::render(
 
         t->assignIndices(settings);
 
+#ifdef FIVE_TBB
+        out = Dual<3>::walk_<SimplexMesher>(t, settings,
+                [&](PerThreadBRep<3>& brep, int i) {
+                    return SimplexMesher(brep, &es.local());
+                });
+#else
         out = Dual<3>::walk_<SimplexMesher>(t, settings,
                 [&](PerThreadBRep<3>& brep, int i) {
                     return SimplexMesher(brep, &es[i]);
                 });
+#endif
         t.reset(settings);
     }
     else if (settings.alg == HYBRID)
@@ -121,7 +136,11 @@ std::unique_ptr<Mesh> Mesh::render(
 
         out = Dual<3>::walk_<HybridMesher>(t, settings,
                 [&](PerThreadBRep<3>& brep, int i) {
+#ifdef FIVE_TBB
+                    return HybridMesher(brep, &es.local());
+#else
                     return HybridMesher(brep, &es[i]);
+#endif
                 });
         t.reset(settings);
     }

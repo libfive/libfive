@@ -6,6 +6,8 @@ cmake_policy(SET CMP0025 NEW)
 
 option(BUILD_STUDIO_APP "Build Studio application" ON)
 option(BUILD_GUILE_BINDINGS "Build Guile bindings" ON)
+option(LIBFIVE_BUILD_WITH_TBB "Build with Threading Building Blocks (TBB) support" OFF)
+option(LIBFIVE_BUILD_STATIC_LIB "Build five as a static library" OFF)
 
 set(CMAKE_BUILD_TYPE RELEASE)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -78,11 +80,20 @@ if(NOT MSVC)
     pkg_check_modules(GUILE guile-2.2>=2.2.1)
     pkg_check_modules(EIGEN REQUIRED eigen3>=3.2.92)
 else()
-    find_package(eigen3 REQUIRED)
-    find_package(boost REQUIRED 1.65.0)
+    if(NOT TARGET Eigen3::Eigen)
+      find_package(eigen3 REQUIRED)
+    endif()
+    #if(NOT TARGET boost)
+    #find_package(boost REQUIRED 1.65.0)
 endif()
 
-find_package(PNG REQUIRED)
+if(NOT TARGET pngstatic)
+    find_package(PNG REQUIRED)
+endif()
+
+if(LIBFIVE_BUILD_WITH_TBB AND NOT TARGET tbb::tbb)
+    #TODO: find package for tbb
+endif()
 
 if (UNIX AND NOT(APPLE))
     find_package(Threads REQUIRED)

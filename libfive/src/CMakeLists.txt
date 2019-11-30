@@ -12,11 +12,7 @@ ADD_CUSTOM_TARGET(five-version
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj /DFIVE_DLL")
-endif()
-
-add_library(five SHARED
+list(APPEND five_sources
     eval/base.cpp
     eval/deck.cpp
     eval/eval_interval.cpp
@@ -100,18 +96,28 @@ add_library(five SHARED
 
     ${CMAKE_CURRENT_BINARY_DIR}/version.c
 )
+
+if(LIBFIVE_BUILD_STATIC_LIB)
+    add_library(five STATIC ${five_sources})
+    target_compile_definitions(five PUBLIC 
+        FIVE_STATIC)
+else()
+    add_library(five SHARED ${five_sources})
+endif()
+
 add_dependencies(five five-version)
 
-target_include_directories(five SYSTEM PUBLIC
-    ${Boost_INCLUDE_DIRS}
-    ${PNG_INCLUDE_DIR}
-    ${EIGEN_INCLUDE_DIRS}
+target_compile_definitions(five PUBLIC 
+    _USE_MATH_DEFINES
+    LIBFIVE_UNNORMALIZED_DERIVS=1
+    NOMINMAX
 )
+
 target_include_directories(five PUBLIC
     ../include
 )
 
-set(LIBS ${PNG_LIBRARIES})
+set(LIBS Eigen3::Eigen pngstatic ntop::boost)
 
 if(UNIX AND NOT(APPLE))
     set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT})
@@ -124,3 +130,10 @@ if (UNIX)
 endif(UNIX)
 
 target_link_libraries(five ${LIBS})
+
+if(LIBFIVE_BUILD_WITH_TBB)
+    target_link_libraries(five tbb::tbb)
+    target_compile_definitions(five PUBLIC FIVE_TBB) 
+endif()
+
+add_library(five::five ALIAS five)

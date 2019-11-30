@@ -244,14 +244,19 @@ TEST_CASE("DCTree<3> cancellation")
 
     Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
-    Evaluator eval(sponge);
+#ifdef FIVE_TBB
+    tbb::enumerable_thread_specific<Evaluator> eval(sponge);
+#else
+    Evaluator evaluator(sponge);
+    auto eval = &evaluator;
+#endif
 
     BRepSettings settings;
     settings.min_feature = 0.02;
     settings.workers = 1;
     // Start a long render operation, then cancel it immediately
     auto future = std::async(std::launch::async, [&](){
-        return DCWorkerPool<3>::build(&eval, r, settings); });
+        return DCWorkerPool<3>::build(eval, r, settings); });
 
     // Record how long it takes betwen triggering the cancel
     // and the future finishing, so we can check that the cancelling

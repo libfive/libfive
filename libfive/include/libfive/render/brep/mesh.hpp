@@ -12,6 +12,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/brep.hpp"
 
+#ifdef FIVE_TBB
+#include <tbb/enumerable_thread_specific.h>
+#endif
+
 namespace libfive {
 
 // Forward declaration
@@ -32,6 +36,17 @@ public:
             const Tree t, const Region<3>& r,
             const BRepSettings& settings);
 
+#ifdef FIVE_TBB
+    /*
+    *  Render function that re-uses evaluators per thread.
+    *
+    *  Returns nullptr if min_feature is invalid or cancel is set to true
+    *  partway through the computation.
+    */
+    static std::unique_ptr<Mesh> render(
+            tbb::enumerable_thread_specific<Evaluator>& es, const Region<3>& r,
+            const BRepSettings& settings);
+#else
     /*
      *  Render function that re-uses evaluators
      *  es must be a pointer to at least [settings.workers] Evaluators
@@ -42,6 +57,7 @@ public:
     static std::unique_ptr<Mesh> render(
             Evaluator* es, const Region<3>& r,
             const BRepSettings& settings);
+#endif
 
     /*
      *  Writes the mesh to a file
