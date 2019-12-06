@@ -13,7 +13,22 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/eval_array.hpp"
 
 namespace libfive {
-
+int Cache::shutdown()
+{
+    auto mutPtr = mut();
+    /// We can lock the mutex to at least protect against Handles that
+    /// existed before the call on other threads.
+    std::unique_lock lock(*mutPtr);
+    auto cache = singleton();
+    if (!cache->ops.empty() || !cache->constants.empty() ||
+        !cache->nan_constant.expired()) {
+        return -1;
+    }
+    delete cache;
+    lock.unlock();
+    delete mutPtr;
+    return 0;
+}
 Cache::Node Cache::constant(float v)
 {
     // Special-case for NaN, which can't be stored in the usual map

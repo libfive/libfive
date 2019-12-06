@@ -29,7 +29,7 @@ class Cache
     class Handle
     {
     public:
-        Handle(Cache& c) : lock(mut()), c(c) {}
+        Handle(Cache& c) : lock(*mut()), c(c) {}
         Cache* operator->() const { return &c; }
     protected:
         std::unique_lock<std::recursive_mutex> lock;
@@ -41,9 +41,19 @@ public:
      *  Returns a safe (locking) handle to the global Cache
      */
     static Handle instance() {
-        static Cache* c = new Cache();
-        return Handle(*c);
+        return Handle(*singleton());
     }
+
+    /*
+     *  Deletes all singleton objects, allowing the user to ensure that
+     *  nothing is leaked to the operating system (e.g. to avoid false
+     *  positives in leak detection software).  Fails (returning -1)
+     *  if the cache is not empty; returns 0 if successful.  Caution must
+     *  be used: If instance() or shutdown() is called after or during a 
+     *  successful shutdown, or if shutdown() is called while a Handle that 
+     *  was created on the same thread still exists, the behavior is undefined.
+     */
+    static int shutdown();
 
     Node constant(float v);
     Node operation(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr,
@@ -75,9 +85,14 @@ public:
     Node fromAffine(const std::map<Node, float>& ns);
 
 protected:
-    static std::recursive_mutex& mut() {
-        static auto m = new std::recursive_mutex;
-        return *m;
+    static std::recursive_mutex* mut() {
+      static auto m = new std::recursive_mutex;
+      return m;
+    }
+
+    static Cache* singleton() {
+        static Cache* c = new Cache();
+        return c;
     }
 
     /*
