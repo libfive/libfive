@@ -316,7 +316,6 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                 // Enable this to turn on sharing of results with neighbors
                 if (compare != nullptr)
                 {
-                    assert(compare->size() > 0);
                     this->leaf->intersections[edges[edge_count]] = compare;
                 }
                 else
