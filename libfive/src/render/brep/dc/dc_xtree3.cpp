@@ -7,7 +7,7 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#include "dc_tree.cpp"
+#include "dc_tree.inl"
 
 namespace libfive {
 template class XTree<3, DCTree<3>, DCLeaf<3>>;

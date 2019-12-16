@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "libfive/render/brep/vol/vol_neighbors.hpp"
 #include "libfive/render/brep/vol/vol_tree.hpp"
-#include "../neighbors.cpp"
+#include "../neighbors.inl"
 
 namespace libfive {
 

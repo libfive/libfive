@@ -65,6 +65,11 @@ public:
          */
         void print(std::ostream& stream,
                    Opcode::Opcode prev_op=Opcode::INVALID);
+
+        /*
+         *  Prints an infix-format string to an ostream
+         */
+        void printInfix(std::ostream& stream);
     };
     /*
      *  Returns a Tree for the given constant
@@ -171,6 +176,12 @@ public:
      *  The last item in the list will be the tree this is called on
      */
     std::list<Tree> ordered() const;
+
+    /*
+     *  Walks the tree as a depth-first search, then reverses the results
+     *  The last item in the list will be the tree this is called on
+     */
+    std::list<Tree> orderedDfs() const;
 
     void serialize(std::ostream& out) const;
     static Tree deserialize(std::istream& in);

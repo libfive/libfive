@@ -42,6 +42,11 @@ public:
      */
     bool savePNG(std::string filename);
 
+    /*
+     *  Saves the normals as a 8-bit RGBA PNG
+     */
+    bool saveNormalPNG(std::string filename);
+
     typedef Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> Depth;
     typedef Eigen::Array<uint32_t, Eigen::Dynamic, Eigen::Dynamic> Normal;
 

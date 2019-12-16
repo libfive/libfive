@@ -19,6 +19,7 @@ namespace Opcode
 // To create a new opcode, add it to the relevant section with the
 // next-highest value and increment LAST_OP by one.  This is necessary
 // to avoid changing the meanings of opcodes in previously saved files.
+#ifndef LIBFIVE_PACKED_OPCODES
 #define OPCODES \
     OPCODE(INVALID, 0)      \
                             \
@@ -57,6 +58,48 @@ namespace Opcode
     OPCODE(OP_COMPARE, 31)  \
                             \
     OPCODE(ORACLE, 32)      \
+    /* end of opcodes */
+#else
+#define OPCODES \
+    OPCODE(INVALID, 0)      \
+                            \
+    OPCODE(CONSTANT, 1)     \
+    OPCODE(VAR_X, 2)        \
+    OPCODE(VAR_Y, 3)        \
+    OPCODE(VAR_Z, 4)        \
+    OPCODE(VAR_FREE, 5)     \
+    OPCODE(CONST_VAR, 6)    \
+                            \
+    OPCODE(OP_SQUARE, 7)    \
+    OPCODE(OP_SQRT, 8)      \
+    OPCODE(OP_NEG, 9)       \
+    OPCODE(OP_SIN, 10)      \
+    OPCODE(OP_COS, 11)      \
+    OPCODE(OP_TAN, 12)      \
+    OPCODE(OP_ASIN, 13)     \
+    OPCODE(OP_ACOS, 14)     \
+    OPCODE(OP_ATAN, 15)     \
+    OPCODE(OP_EXP, 16)      \
+    OPCODE(OP_ABS, 17)      \
+    OPCODE(OP_LOG, 18)      \
+    OPCODE(OP_RECIP, 19)    \
+                            \
+    OPCODE(OP_ADD, 20)      \
+    OPCODE(OP_MUL, 21)      \
+    OPCODE(OP_MIN, 22)      \
+    OPCODE(OP_MAX, 23)      \
+    OPCODE(OP_SUB, 24)      \
+    OPCODE(OP_DIV, 25)      \
+    OPCODE(OP_ATAN2, 26)    \
+    OPCODE(OP_POW, 27)      \
+    OPCODE(OP_NTH_ROOT, 28) \
+    OPCODE(OP_MOD, 29)      \
+    OPCODE(OP_NANFILL, 30)  \
+    OPCODE(OP_COMPARE, 31)  \
+                            \
+    OPCODE(ORACLE, 32)      \
+    /* end of opcodes */
+#endif
 
 enum Opcode {
 #define OPCODE(s, i) s=i,

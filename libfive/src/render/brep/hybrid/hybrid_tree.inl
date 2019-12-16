@@ -20,7 +20,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/edge_tables.hpp"
 #include "libfive/render/brep/manifold_tables.hpp"
 
-#include "../xtree.cpp"
+#include "../xtree.inl"
 
 //#define DEBUG(s) std::cout << s << "\n"
 #define DEBUG(s) {}
@@ -172,7 +172,7 @@ std::unique_ptr<HybridTree<N>> HybridTree<N>::empty()
 {
     std::unique_ptr<HybridTree> t(new HybridTree);
     t->type = Interval::UNKNOWN;
-    return std::move(t);
+    return t;
 }
 
 template <unsigned N>

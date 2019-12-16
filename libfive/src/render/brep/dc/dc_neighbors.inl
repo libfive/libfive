@@ -50,8 +50,7 @@ std::pair<const DCTree<N>*, unsigned> DCNeighbors<N>::checkConsistency(
 
 
 template <unsigned N>
-std::shared_ptr<IntersectionVec<N>> DCNeighbors<N>::check(
-        uint8_t a, uint8_t b) const
+Intersection<N>* DCNeighbors<N>::check(uint8_t a, uint8_t b) const
 {
     // This is actually quite beautiful:
     //

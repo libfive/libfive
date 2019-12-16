@@ -23,22 +23,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/marching.hpp"
 #include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/dc/dc_neighbors.hpp"
+#include "libfive/render/brep/dc/dc_flags.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/axes.hpp"
 
-#include "../xtree.cpp"
-
-#ifndef LIBFIVE_UNNORMALIZED_DERIVS
-#define LIBFIVE_UNNORMALIZED_DERIVS 0
-#endif
-#ifndef LIBFIVE_LINEAR_ERROR
-#define LIBFIVE_LINEAR_ERROR 0
-#endif
+#include "../xtree.inl"
 
 namespace libfive {
-
-//  Here's our cutoff value (with a value set in the header)
-template <unsigned N> constexpr double DCTree<N>::EIGENVALUE_CUTOFF;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -57,11 +48,18 @@ DCTree<N>::DCTree()
 }
 
 template <unsigned N>
+DCTree<N>::DCTree(Interval::State t)
+    : XTree<N, DCTree<N>, DCLeaf<N>>()
+{
+    this->type = t;
+}
+
+template <unsigned N>
 std::unique_ptr<DCTree<N>> DCTree<N>::empty()
 {
     std::unique_ptr<DCTree> t(new DCTree);
     t->type = Interval::EMPTY;
-    return std::move(t);
+    return t;
 }
 
 template <unsigned N>
@@ -81,9 +79,8 @@ void DCLeaf<N>::reset()
 
     std::fill(index.begin(), index.end(), 0);
 
-    for (auto& i : intersections)
-    {
-        i.reset();
+    for (auto& i : intersections) {
+        i = nullptr;
     }
 
     verts.setZero();
@@ -96,7 +93,7 @@ void DCLeaf<N>::reset()
 template <unsigned N>
 Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
                                      const Tape::Handle& tape,
-                                     Pool&)
+                                     Pool& pool)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -114,7 +111,14 @@ Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        this->done();
+        // If this is unambiguous, then we're actually installed the singleton
+        // into the parent, so we can release this tree to the pool.  This is
+        // a bit scary, because it's still used in WorkerPool, but the pool
+        // won't change it until we're done operating on it.
+        if (this->done()) {
+            releaseTo(pool);
+        }
+
         if (tape != o.second) {
             eval->getDeck()->claim(std::move(o.second));
             return nullptr;
@@ -250,7 +254,9 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
     // Early exit if this leaf is unambiguous
     if (this->type != Interval::AMBIGUOUS)
     {
-        this->done();
+        if (this->done()) {
+            releaseTo(object_pool);
+        }
         return;
     }
 
@@ -308,9 +314,8 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
 
                 auto compare = neighbors.check(c.first, c.second);
                 // Enable this to turn on sharing of results with neighbors
-                if (compare.get() != nullptr)
+                if (compare != nullptr)
                 {
-                    assert(compare->size() > 0);
                     this->leaf->intersections[edges[edge_count]] = compare;
                 }
                 else
@@ -443,7 +448,8 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                         saveIntersection(pos.template head<N>(),
                                          ds.col(i).template cast<double>()
                                                   .template head<N>(),
-                                         ds.col(i).w(), eval_edges[i/2]);
+                                         ds.col(i).w(), eval_edges[i/2],
+                                         object_pool);
                     }
                     // Otherwise, we need to use the feature-finding special
                     // case to find all possible derivatives at this point.
@@ -457,94 +463,49 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                             saveIntersection(pos.template head<N>(),
                                              f.template head<N>()
                                               .template cast<double>(),
-                                             ds.col(i).w(), eval_edges[i/2]);
+                                             ds.col(i).w(), eval_edges[i/2],
+                                             object_pool);
                         }
                     }
                 }
             }
         }
         // At this point, every [intersections[e] for e in edges] should be
-        // populated with a list of Intersection objects, whether taken
-        // from a neighbor or calculated in the code above.
-
-        // Each edge, which contains one or more intersections, is assigned
-        // a rank based on the normals of those intersections.
-        std::array<int, _edges(N)> edge_ranks;
-        std::fill(edge_ranks.begin(), edge_ranks.end(), -1);
-        for (unsigned i=0; i < edge_count; ++i)
-        {
-            // If every intersection was NaN (?!), use rank 0;
-            // otherwise, figure out how many normals diverge
-            IntersectionVec<N> prev_normals;
-            edge_ranks[i] = 0;
-
-            if (this->leaf->intersections[edges[i]].get())
-            {
-                for (const auto& t : *this->leaf->intersections[edges[i]])
-                {
-                    if (t.deriv != Vec::Zero())
-                    {
-                        bool matched = false;
-                        for (auto& v : prev_normals)
-                        {
-                            matched |= (t.deriv.dot(v.deriv) >= 0.9);
-                        }
-                        if (!matched)
-                        {
-                            edge_ranks[i]++;
-                            prev_normals.push_back(t);
-                        }
-                    }
-                }
-            }
-        }
+        // populated with an Intersection object, whether taken from a neighbor
+        // or calculated in the code above.
 
         // Reset the mass point, since we may have used it for the previous
         // vertex.
         this->leaf->mass_point = this->leaf->mass_point.Zero();
 
         {   // Build the mass point from max-rank intersections
-            const int max_rank = *std::max_element(
-                    edge_ranks.begin(), edge_ranks.end());
-            for (unsigned i=0; i < edge_count; ++i)
-            {
-                assert(edge_ranks[i] != -1);
-                if (edge_ranks[i] == max_rank)
-                {
-                    // Accumulate this intersection in the mass point
-                    // by storing the first and last intersection position
-                    // (which are guaranteed by construction to be a
-                    // just-inside and just-outside position, respectively)
-                    Eigen::Matrix<double, N + 1, 1> mp;
-                    const auto& ns = this->leaf->intersections[edges[i]];
-                    if (ns.get() && ns->size() > 1)
-                    {
-                        mp << (*ns).front().pos, 1;
-                        this->leaf->mass_point += mp;
-                        mp << (*ns).back().pos, 1;
-                        this->leaf->mass_point += mp;
+            int max_rank = 0;
+            for (unsigned i=0; i < edge_count; ++i) {
+                if (this->leaf->intersections[edges[i]]) {
+                    auto r = this->leaf->intersections[edges[i]]->get_rank();
+                    if (r > max_rank) {
+                        max_rank = r;
                     }
                 }
             }
-        }
 
-        // Count how many intersections are stored, across all of the
-        // relevant edges for this vertex.  We use this data to determine
-        // the size of the arrays for QEF solving.
-        size_t rows = 0;
-        for (unsigned i=0; i < edge_count; ++i)
-        {
-            for (const auto& n : *this->leaf->intersections[edges[i]])
+            for (unsigned i=0; i < edge_count; ++i)
             {
-                if (n.deriv != Vec::Zero())
+                if (this->leaf->intersections[edges[i]] &&
+                    this->leaf->intersections[edges[i]]->get_rank() == max_rank)
                 {
-                    rows++;
+                    this->leaf->mass_point +=
+                        this->leaf->intersections[edges[i]]
+                                  ->normalized_mass_point();
                 }
             }
         }
 
         // Now, we'll (pretend to) unpack into A and b matrices,
         // then immediately calculate AtA, AtB, and BtB
+        //
+        // (Note: this has been moved to the Intersection class, but
+        //  the explanation below is still valid)
         //
         //  The A matrix is of the form
         //  [n1x, n1y, n1z]
@@ -573,16 +534,9 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
         {
             if (this->leaf->intersections[edges[i]])
             {
-                for (auto& n : *this->leaf->intersections[edges[i]])
-                {
-                    if (n.deriv != Vec::Zero())
-                    {
-                        this->leaf->AtA += n.deriv * n.deriv.transpose();
-                        const double b = n.deriv.dot(n.pos) - n.value;
-                        this->leaf->AtB += n.deriv * b;
-                        this->leaf->BtB += b * b;
-                    }
-                }
+                this->leaf->AtA += this->leaf->intersections[edges[i]]->AtA;
+                this->leaf->AtB += this->leaf->intersections[edges[i]]->AtB;
+                this->leaf->BtB += this->leaf->intersections[edges[i]]->BtB;
             }
         }
 
@@ -599,39 +553,15 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
 
 template <unsigned N>
 void DCTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
-                                const double value, const size_t edge)
+                                 const double value, const size_t edge,
+                                 Pool& object_pool)
 {
-#if !LIBFIVE_UNNORMALIZED_DERIVS
-    const double norm = derivs.matrix().norm();
-
-    // Find normalized derivatives and distance value
-    Eigen::Matrix<double, N, 1> dv = derivs / norm;
-#endif
-
     // Just-in-time allocation of intersections array
     if (this->leaf->intersections[edge] == nullptr)
     {
-        this->leaf->intersections[edge].reset(
-                new IntersectionVec<N>);
+        this->leaf->intersections[edge] = object_pool.next().next().get();
     }
-
-#if LIBFIVE_UNNORMALIZED_DERIVS
-      this->leaf->intersections[edge]->
-         push_back({pos, derivs, value, 0});
-#else
-    // If the point has a valid normal, then store it
-    if (norm > 1e-12 && dv.array().isFinite().all())
-    {
-        this->leaf->intersections[edge]->
-             push_back({pos, dv, value / norm, 0});
-    }
-    // Otherwise, store an intersection with a zero normal
-    else
-    {
-        this->leaf->intersections[edge]->
-             push_back({pos, Vec::Zero(), 0, 0});
-    }
-#endif
+    this->leaf->intersections[edge]->push(pos, derivs, value);
 }
 
 template <unsigned N>
@@ -698,7 +628,12 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
         this->releaseChildren(object_pool);
-        this->done();
+
+        // this->done will swap us with a singleton, so we can release
+        // this tree to the pool right away
+        if (this->done()) {
+            releaseTo(object_pool);
+        }
         return true;
     }
 
@@ -730,7 +665,6 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     // feature ranks (as seen in DC: The Secret Sauce)
     this->leaf->rank = std::accumulate(cs.begin(), cs.end(), (unsigned)0,
             [](unsigned a, DCTree<N>* b){ return std::max(a, b->rank());} );
-
 
     // Accumulate the mass point, QEF matrices, and appropriate intersections.
     for (unsigned i=0; i < cs.size(); ++i)
@@ -815,24 +749,34 @@ double DCTree<N>::findVertex(unsigned index)
 
     // Truncate near-singular eigenvalues in the SVD's diagonal matrix
     Eigen::Matrix<double, N, N> D = Eigen::Matrix<double, N, N>::Zero();
+
+    // Pick a cutoff depending on whether the derivatives were normalized
+    // before loading them into the AtA matrix
 #if LIBFIVE_UNNORMALIZED_DERIVS
-    auto highestVal = eigenvalues.template lpNorm<Eigen::Infinity>();
-    if (highestVal > 1e-20) 
-    {
-        auto cutoff = highestVal * EIGENVALUE_CUTOFF;
-        for (unsigned i = 0; i < N; ++i)
-        {
-            D.diagonal()[i] = (fabs(eigenvalues[i]) < cutoff)
-                ? 0 : (1 / eigenvalues[i]);
-        }
-    }
+    auto highest_val = eigenvalues.template lpNorm<Eigen::Infinity>();
+    // We scale EIGENVALUE_CUTOFF to highestVal.  Additionally, we need to 
+    // use a significantly lower cutoff threshold (here set to the square 
+    // of the normalized-derivatives threshold), since when derivatives 
+    // are not normalized a cutoff of .1 can cause one feature to be 
+    // entirely ignored if its derivative is fairly small in comparison to
+    // another feature.  (The same can happen with any cutoff, but it is
+    // much less likely this way, and it should still be high enough to
+    // avoid wild vertices due to noisy normals under most circumstances, 
+    // at least enough that they will be a small minority of the situations
+    // in which dual contouring's need to allow out-of-box vertices causes
+    // issues.)
+    constexpr double EIGENVALUE_CUTOFF_2 = EIGENVALUE_CUTOFF * EIGENVALUE_CUTOFF;
+    const double cutoff = (highest_val > 1e-20)
+        ? highest_val * EIGENVALUE_CUTOFF_2
+        : 0.0;
 #else
-    for (unsigned i = 0; i < N; ++i)
-    {
-        D.diagonal()[i] = (fabs(eigenvalues[i]) < EIGENVALUE_CUTOFF)
+    const double cutoff = EIGENVALUE_CUTOFF;
+#endif
+
+    for (unsigned i = 0; i < N; ++i) {
+        D.diagonal()[i] = (fabs(eigenvalues[i]) < cutoff)
             ? 0 : (1 / eigenvalues[i]);
     }
-#endif
 
     // Get rank from eigenvalues
     if (!this->isBranch())
@@ -872,32 +816,17 @@ typename DCTree<N>::Vec DCTree<N>::vert(unsigned i) const
 }
 
 template <unsigned N>
-std::shared_ptr<IntersectionVec<N>> DCTree<N>::intersection(
-        unsigned a, unsigned b) const
+Intersection<N>* DCTree<N>::intersection(unsigned a, unsigned b) const
 {
     assert(MarchingTable<N>::e(a)[b] != -1);
     return intersection(MarchingTable<N>::e(a)[b]);
 }
 
 template <unsigned N>
-std::shared_ptr<IntersectionVec<N>> DCTree<N>::intersection(
-        unsigned edge) const
+Intersection<N>* DCTree<N>::intersection(unsigned edge) const
 {
     assert(this->leaf != nullptr);
     return this->leaf->intersections[edge];
-}
-
-template <unsigned N>
-void DCTree<N>::setIntersectionPtr(
-    unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const
-{
-    assert(this->leaf != nullptr);
-    auto& dest = this->leaf->intersections[edge];
-    assert(*dest == *ptr);
-    if (dest != ptr)
-    {
-        dest = ptr;
-    }
 }
 
 template <unsigned N>
@@ -1019,8 +948,9 @@ void DCTree<N>::releaseTo(Pool& object_pool) {
         object_pool.next().put(this->leaf);
         this->leaf = nullptr;
     }
-
-    object_pool.put(this);
+    if (!isSingleton(this)) {
+        object_pool.put(this);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

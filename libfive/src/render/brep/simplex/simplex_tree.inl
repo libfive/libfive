@@ -28,12 +28,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/tape.hpp"
 
-#include "../xtree.cpp"
+#include "../xtree.inl"
 
 namespace libfive {
-
-//  Here's our cutoff value (with a value set in the header)
-template <unsigned N> constexpr double SimplexTree<N>::EIGENVALUE_CUTOFF;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -215,7 +212,7 @@ std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
     uintptr_t flag_ptr = 0xDEADBEEF;
     t->parent = reinterpret_cast<SimplexTree<N>*>(flag_ptr);
 
-    return std::move(t);
+    return t;
 }
 
 template <unsigned N>

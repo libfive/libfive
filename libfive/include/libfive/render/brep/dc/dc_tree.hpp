@@ -49,12 +49,11 @@ struct DCLeaf
      *  leaf; see writeup in marching.cpp for details  */
     Eigen::Matrix<double, N, ipow(2, N - 1)> verts;
 
-    /* This array allows us to store position, normal, and value where
-     * the mesh crosses a cell edge.  IntersectionVec is small_vec that
-     * has enough space for a few intersections, and will move to the
-     * heap for pathological cases. */
-    std::array<std::shared_ptr<IntersectionVec<N>>, _edges(N) * 2>
-        intersections;
+    /* This array allows us to store QEFs for cases where the surface
+     * crosses a particular cell edge.  The objects are allocated from
+     * the shared pool, though they're not released back to the pool
+     * (because they could be in more than one DCLeaf) */
+    std::array<Intersection<N>*, _edges(N) * 2> intersections;
 
     /*  Feature rank for the cell's vertex, where                    *
      *      1 is face, 2 is edge, 3 is corner                        *
@@ -93,7 +92,7 @@ template <unsigned N>
 class DCTree : public XTree<N, DCTree<N>, DCLeaf<N>>
 {
 public:
-    using Pool = ObjectPool<DCTree<N>, DCLeaf<N>>;
+    using Pool = ObjectPool<DCTree<N>, DCLeaf<N>, Intersection<N>>;
 
     /*
      *  Simple constructor
@@ -196,29 +195,35 @@ public:
     /*
      *  Looks up a particular intersection array by corner indices
      */
-    std::shared_ptr<IntersectionVec<N>> intersection(
-            unsigned a, unsigned b) const;
+    Intersection<N>* intersection(unsigned a, unsigned b) const;
 
     /*
      *  Looks up a particular intersection array by (directed) edge index
      */
-    std::shared_ptr<IntersectionVec<N>> intersection(
-            unsigned edge) const;
-
-    /*
-     *  Sets a particular intersection to a given value.  This method is 
-     *  const, so should only be called when the intersection is already set
-     *  to an object identical to ptr, and even then is not thread-safe.
-     */
-    void setIntersectionPtr(
-        unsigned edge, const std::shared_ptr<IntersectionVec<N>>& ptr) const;
+    Intersection<N>* intersection(unsigned edge) const;
 
     /*
      *  Releases this tree and any leaf objects to the given object pool
      */
     void releaseTo(Pool& object_pool);
 
+    static constexpr bool hasSingletons() { return true; }
+    static DCTree<N>* singletonEmpty() {
+        static DCTree<N> empty(Interval::EMPTY);
+        return &empty;
+    }
+    static DCTree<N>* singletonFilled() {
+        static DCTree<N> filled(Interval::FILLED);
+        return &filled;
+    }
+    static bool isSingleton(const DCTree<N>* t) {
+        return t == singletonEmpty() || t == singletonFilled();
+    }
+
 protected:
+    /*  Private constructor for a dummy tree of a particular type */
+    DCTree(Interval::State type);
+
     /*
      *  Searches for a vertex within the DCTree cell, using the QEF matrices
      *  that are pre-populated in AtA, AtB, etc.
@@ -240,7 +245,8 @@ protected:
      *  building the A and b matrices).
      */
     void saveIntersection(const Vec& pos, const Vec& derivs,
-                          const double value, const size_t edge);
+                          const double value, const size_t edge,
+                          Pool& object_pool);
 
     /*
      *  Returns a table such that looking up a particular corner
@@ -278,9 +284,6 @@ protected:
      */
     static uint8_t buildCornerMask(
             const std::array<Interval::State, 1 << N>& corners);
-
-    /*  Eigenvalue threshold for determining feature rank  */
-    constexpr static double EIGENVALUE_CUTOFF=0.1f;
 };
 
 }   // namespace libfive

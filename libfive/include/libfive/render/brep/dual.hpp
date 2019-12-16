@@ -354,6 +354,13 @@ void Dual<N>::run(V& v,
         if (settings.progress_handler) {
             settings.progress_handler->tick();
         }
+
+        // Special-case for singleton trees, which have null parents
+        // (and have already been subtracted from pending)
+        if (T::isSingleton(t)) {
+            continue;
+        }
+
         for (t = t->parent; t && t->pending-- == 0; t = t->parent)
         {
             // Do the actual DC work (specialized for N = 2 or 3)

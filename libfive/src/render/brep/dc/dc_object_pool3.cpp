@@ -9,13 +9,15 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "libfive/render/brep/dc/dc_tree.hpp"
-#include "../object_pool.cpp"
+#include "../object_pool.inl"
 
 namespace libfive {
-template class ObjectPool<DCTree<3>, DCLeaf<3>>;
-template class ObjectPool<DCLeaf<3>>;
+template class ObjectPool<DCTree<3>, DCLeaf<3>, Intersection<3>>;
+template class ObjectPool<DCLeaf<3>, Intersection<3>>;
+template class ObjectPool<Intersection<3>>;
 
-template DCTree<3>* ObjectPool<DCTree<3>, DCLeaf<3>>::get(
+template DCTree<3>* ObjectPool<DCTree<3>, DCLeaf<3>, Intersection<3>>::get(
         DCTree<3>*, unsigned, Region<3>);
-template DCLeaf<3>* ObjectPool<DCLeaf<3>>::get();
+template DCLeaf<3>* ObjectPool<DCLeaf<3>, Intersection<3>>::get();
+template Intersection<3>* ObjectPool<Intersection<3>>::get();
 }   // namespace libfive

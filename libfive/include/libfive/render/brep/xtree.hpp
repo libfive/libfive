@@ -91,8 +91,12 @@ protected:
     /*
      *  Call this when construction is complete; it will atomically install
      *  this tree into the parent's array of children pointers.
+     *
+     *  Returns true if instead it has installed a singleton into the parent's
+     *  array, which happens if a tree type's hasSingletons() is true and the
+     *  given tree is empty or filled.
      */
-    void done();
+    bool done();
 };
 
 }   // namespace libfive

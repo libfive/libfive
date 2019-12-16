@@ -13,7 +13,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <memory>
 #include <mutex>
 
-#include "libfive/export.hpp"
 #include "libfive/tree/tree.hpp"
 
 namespace libfive {
@@ -30,17 +29,31 @@ class Cache
     class Handle
     {
     public:
-        Handle() : lock(mut) {}
-        Cache* operator->() const { return &_instance; }
+        Handle(Cache& c) : lock(*mut()), c(c) {}
+        Cache* operator->() const { return &c; }
     protected:
         std::unique_lock<std::recursive_mutex> lock;
+        Cache& c;
     };
 
 public:
     /*
      *  Returns a safe (locking) handle to the global Cache
      */
-    static Handle instance() { return Handle(); }
+    static Handle instance() {
+        return Handle(*singleton());
+    }
+
+    /*
+     *  Deletes all singleton objects, allowing the user to ensure that
+     *  nothing is leaked to the operating system (e.g. to avoid false
+     *  positives in leak detection software).  Fails (returning -1)
+     *  if the cache is not empty; returns 0 if successful.  Caution must
+     *  be used: If instance() or shutdown() is called after or during a 
+     *  successful shutdown, or if shutdown() is called while a Handle that 
+     *  was created on the same thread still exists, the behavior is undefined.
+     */
+    static int shutdown();
 
     Node constant(float v);
     Node operation(Opcode::Opcode op, Node lhs=nullptr, Node rhs=nullptr,
@@ -72,6 +85,16 @@ public:
     Node fromAffine(const std::map<Node, float>& ns);
 
 protected:
+    static std::recursive_mutex* mut() {
+      static auto m = new std::recursive_mutex;
+      return m;
+    }
+
+    static Cache* singleton() {
+        static Cache* c = new Cache();
+        return c;
+    }
+
     /*
      *  Cache constructor is private so outsiders must use instance()
      */
@@ -114,9 +137,6 @@ protected:
     /*  Oracles do not need to use the cache to be deduplicated, since they
      *  are created from unique_ptr's, and therefore are already impossible
      *  to duplicate.  */
-
-    static FIVE_EXPORT std::recursive_mutex mut;
-    static FIVE_EXPORT Cache _instance;
 };
 
 }   // namespace libfive
