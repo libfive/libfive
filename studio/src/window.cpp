@@ -125,6 +125,12 @@ Window::Window(Arguments args)
     export_action->setShortcuts({Qt::CTRL + Qt::Key_E, Qt::Key_F7});
     connect(export_action, &QAction::triggered, this, &Window::onExport);
 
+    file_menu->addSeparator();
+
+    auto quit_action = file_menu->addAction("Quit");
+    quit_action->setShortcuts(QKeySequence::Quit);
+    connect(quit_action, &QAction::triggered, this, &Window::onQuit);
+
     // Edit menu
     auto edit_menu = menuBar()->addMenu("&Edit");
     auto undo_action = edit_menu->addAction("Undo");
@@ -668,4 +674,9 @@ void Window::onShowDocs(bool)
     {
         DocumentationPane::open();
     }
+}
+
+void Window::onQuit(bool)
+{
+    Window::close();
 }
