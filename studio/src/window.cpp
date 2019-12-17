@@ -128,7 +128,7 @@ Window::Window(Arguments args)
     file_menu->addSeparator();
 
     auto quit_action = file_menu->addAction("Quit");
-    quit_action->setShortcuts({Qt::CTRL + Qt::Key_Q});
+    quit_action->setShortcuts(QKeySequence::Quit);
     connect(quit_action, &QAction::triggered, this, &Window::onQuit);
 
     // Edit menu
