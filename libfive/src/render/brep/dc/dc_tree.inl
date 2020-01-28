@@ -765,10 +765,17 @@ double DCTree<N>::findVertex(unsigned index)
     // at least enough that they will be a small minority of the situations
     // in which dual contouring's need to allow out-of-box vertices causes
     // issues.)
+
+    // If highestVal is extremely small, it's almost certainly due to noise or
+    // is 0; in the former case, scaling our cutoff to it will still result in 
+    // a garbage result, and in the latter it'll produce a diagonal matrix full
+    // of infinities.  So we instead use an infinite cutoff to force D to be
+    // set to zero, resulting in the mass point being used as our vertex, which
+    // is the best we can do without good gradients.
     constexpr double EIGENVALUE_CUTOFF_2 = EIGENVALUE_CUTOFF * EIGENVALUE_CUTOFF;
     const double cutoff = (highest_val > 1e-20)
         ? highest_val * EIGENVALUE_CUTOFF_2
-        : 0.0;
+        : std::numeric_limits<double>::infinity();
 #else
     const double cutoff = EIGENVALUE_CUTOFF;
 #endif
