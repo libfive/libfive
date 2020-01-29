@@ -82,29 +82,52 @@ public:
     static Interval min(const Interval& a, const Interval& b)
     {
         auto i = boost::numeric::min(a.i, b.i);
-
-        // fmin returns NaN iff both inputs are NaN, so:
+        // Eigen uses std::min (via a using declaration), which returns NaN if 
+        // and only if the first input is NaN.  Thus, if the second input can 
+        // be NaN, we need to include the range of the first, but not vice 
+        // versa; we likewise can copy the maybe_nan from the first input.  If
+        // it is later changed to use the approach of fmin and fmax (returning
+        // the non-NaN value if one of the inputs is NaN), we can switch to
+        // the other form (including each range if the other can be NaN, but
+        // returning a maybe_nan that is the conjunction of the inputs').
+#define LIBFIVE_USES_STD_MIN_AND_MAX true
+#if LIBFIVE_USES_STD_MIN_AND_MAX
+        if (b.maybe_nan) {
+            i = hull(i, a.i);
+        }
+        return Interval(i, a.maybe_nan);
+#else
         if (a.maybe_nan) {
             i = hull(i, b.i);
         }
         if (b.maybe_nan) {
             i = hull(i, a.i);
         }
-        return Interval(i, a.maybe_nan || b.maybe_nan);
+        return Interval(i, a.maybe_nan && b.maybe_nan);
+#endif
     }
 
     static Interval max(const Interval& a, const Interval& b)
     {
         auto i = boost::numeric::max(a.i, b.i);
 
-        // fmin returns NaN iff both inputs are NaN, so:
+        // std::max returns NaN iff the first input NaN the same way as 
+        // std::min.
+#if LIBFIVE_USES_STD_MIN_AND_MAX
+        if (b.maybe_nan) {
+            i = hull(i, a.i);
+        }
+        return Interval(i, a.maybe_nan);
+#else
         if (a.maybe_nan) {
             i = hull(i, b.i);
         }
         if (b.maybe_nan) {
             i = hull(i, a.i);
         }
-        return Interval(i, a.maybe_nan || b.maybe_nan);
+        return Interval(i, a.maybe_nan && b.maybe_nan);
+#endif
+#undef LIBFIVE_USES_STD_MIN_AND_MAX
     }
 
     friend Interval operator-(const Interval& a, const Interval& b);
