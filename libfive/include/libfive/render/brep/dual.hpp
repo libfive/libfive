@@ -351,14 +351,14 @@ void Dual<N>::run(V& v,
             continue;
         }
 
-        if (settings.progress_handler) {
-            settings.progress_handler->tick();
-        }
-
         // Special-case for singleton trees, which have null parents
         // (and have already been subtracted from pending)
         if (T::isSingleton(t)) {
             continue;
+        }
+
+        if (settings.progress_handler) {
+            settings.progress_handler->tick();
         }
 
         for (t = t->parent; t && t->pending-- == 0; t = t->parent)
