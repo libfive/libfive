@@ -18,7 +18,7 @@ int Cache::shutdown()
     auto mutPtr = mut();
     /// We can lock the mutex to at least protect against Handles that
     /// existed before the call on other threads.
-    std::unique_lock lock(*mutPtr);
+    std::unique_lock<std::recursive_mutex> lock(*mutPtr);
     auto cache = singleton();
     if (!cache->ops.empty() || !cache->constants.empty() ||
         !cache->nan_constant.expired()) {

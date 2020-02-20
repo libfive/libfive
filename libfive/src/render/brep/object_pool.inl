@@ -112,7 +112,7 @@ int64_t ObjectPool<T, Ts...>::size() const
     for (const auto& f : fresh_blocks) {
         out += f.second;
     }
-    return out - reusable_objects.size();
+    return out - (int64_t)reusable_objects.size();
 }
 
 template <typename T, typename... Ts>

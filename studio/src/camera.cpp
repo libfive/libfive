@@ -136,7 +136,7 @@ void Camera::toTurnZ()
 
 void Camera::toTurnY()
 {
-    animateAxis(QQuaternion::fromDirection({0, 1, 0}, {1, 0, 0}));
+    animateAxis(QQuaternion::fromDirection({0, 1, 0}, {0, 0, 1}));
 }
 
 void Camera::zoomTo(const QVector3D& min, const QVector3D& max)

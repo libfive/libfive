@@ -348,7 +348,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (union (circle 0.075 #[0.1 0.075])
     (intersection (scale-y (circle 0.075 #[0.075 0.075]) 3 0.075)
                   (rectangle #[0 -0.15] #[0.15 0.075])
-                  (inverse (triangle #[0.075 0.075] #[0 -0.15] #[-0.5 0.075])))
+                  (inverse (triangle #[0.1 0.2] #[0 -0.15] #[-0.5 0.075])))
 ))
 
 (make-glyph! #\. 0.175 (circle 0.075 #[0.075 0.075]))

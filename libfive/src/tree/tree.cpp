@@ -143,11 +143,10 @@ std::list<Tree> Tree::ordered() const
     return out;
 }
 
-std::list<Tree> Tree::orderedDfs() const
+std::vector<Tree> Tree::orderedDfs() const
 {
     std::map<Id, unsigned> count;
-    std::list<std::shared_ptr<Tree_>> todo = { ptr };
-    std::list<Tree> out;
+    std::vector<std::shared_ptr<Tree_>> todo = { ptr };
 
     while (todo.size())
     {
@@ -155,25 +154,35 @@ std::list<Tree> Tree::orderedDfs() const
         todo.pop_back();
         if (t) {
             count[t.get()]++;
-            todo.push_back(t->lhs);
-            todo.push_back(t->rhs);
+            if (t->lhs) {
+                todo.push_back(t->lhs);
+            }
+            if (t->rhs) {
+                todo.push_back(t->rhs);
+            }
         }
     }
 
+    std::vector<Tree> out;
+    out.reserve(count.size());
     todo = { ptr };
     while (todo.size())
     {
         auto t = todo.back();
         todo.pop_back();
         if (t) {
-            todo.push_back(t->lhs);
-            todo.push_back(t->rhs);
+            if (t->lhs) {
+                todo.push_back(t->lhs);
+            }
+            if (t->rhs) {
+                todo.push_back(t->rhs);
+            }
             if (--count[t.get()] == 0) {
                 out.push_back(Tree(t));
             }
         }
     }
-    out.reverse();
+    std::reverse(out.begin(), out.end());
     return out;
 }
 
