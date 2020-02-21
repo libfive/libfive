@@ -11,6 +11,7 @@ option(LIBFIVE_PACKED_OPCODES
     OFF)
 option(LIBFIVE_BUILD_STATIC_LIB "Build five as a static library" OFF)
 option(LIBFIVE_UNNORMALIZED_DERIVS "Use unnormalized derivs" OFF)
+option(LIBFIVE_GENERATE_GIT_VERSION "Generate git version globals" ON)
 
 set(CMAKE_BUILD_TYPE RELEASE)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
