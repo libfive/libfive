@@ -430,6 +430,7 @@ bool libfive_evaluator_update_vars(libfive_evaluator eval_tree, libfive_vars var
  */
 void libfive_evaluator_delete(libfive_evaluator ptr);
 
+#ifdef LIBFIVE_GENERATE_GIT_VERSION
 /*
  *  Returns the human-readable tag associated with this build,
  *  or the empty string if there is no such tag
@@ -446,6 +447,7 @@ const char* libfive_git_revision(void);
  *  Returns the name of the branch associated with this build
  */
 const char* libfive_git_branch(void);
+#endif
 
 #ifdef __cplusplus
 }

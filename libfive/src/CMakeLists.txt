@@ -1,16 +1,3 @@
-# Add a custom command that produces version.c, plus
-# a dummy output that's not actually produced, in order
-# to force version.cmake to always be re-run before the build
-ADD_CUSTOM_TARGET(five-version
-    BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/version.c
-    # Pass the current source dir to version.cmake, so that it can run git
-    # commands there instead of in the binary dir. This enables it to find
-    # the right info when the build dir is outside the libfive repo.
-    COMMAND ${CMAKE_COMMAND}
-        -DLIBFIVE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
 
 set(five_sources
     eval/base.cpp
@@ -92,8 +79,6 @@ set(five_sources
     oracle/transformed_oracle_clause.cpp
 
     libfive.cpp
-
-    ${CMAKE_CURRENT_BINARY_DIR}/version.c
 )
 
 if(LIBFIVE_BUILD_STATIC_LIB)
@@ -120,8 +105,6 @@ if(MSVC)
     )
 endif()
 
-add_dependencies(five five-version)
-
 target_include_directories(five PUBLIC
     ../include
 )
@@ -141,3 +124,24 @@ endif(UNIX)
 target_link_libraries(five ${LIBS})
 
 add_library(five::five ALIAS five)
+
+if(LIBFIVE_GENERATE_GIT_VERSION)
+    # Add a custom command that produces version.c, plus
+    # a dummy output that's not actually produced, in order
+    # to force version.cmake to always be re-run before the build
+    ADD_CUSTOM_TARGET(five-version
+        BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/version.c
+        # Pass the current source dir to version.cmake, so that it can run git
+        # commands there instead of in the binary dir. This enables it to find
+        # the right info when the build dir is outside the libfive repo.
+        COMMAND ${CMAKE_COMMAND}
+            -DLIBFIVE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    add_dependencies(five five-version)
+    target_compile_definitions(five PUBLIC
+        LIBFIVE_GENERATE_GIT_VERSION=1
+    )
+    target_sources(five PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/version.c)
+endif()
