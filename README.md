@@ -69,7 +69,7 @@ and should also build with MinGW (though this is untested).
 - [Eigen 3.3.x](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
 - [Boost 1.65 or later](https://www.boost.org)
-- [Qt 5.11 or later](https://www.qt.io)
+- [Qt 5.7 or later](https://www.qt.io)
 - [Guile 2.2.1 or later](https://www.gnu.org/software/guile/)
 
 Qt and Guile are optional; if they aren't present, then
