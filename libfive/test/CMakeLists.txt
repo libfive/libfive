@@ -25,6 +25,7 @@ set(SRCS main.cpp
     qef.cpp
     region.cpp
     simplex.cpp
+    simple_tree.cpp
     solver.cpp
     surface_edge_map.cpp
     transformed_oracle.cpp
