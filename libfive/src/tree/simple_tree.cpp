@@ -196,6 +196,7 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
         } else if (auto d = std::get_if<SimpleConstant>(&next.first->data)) {
             *next.second = SimpleTree { SimpleConstant { d->value }};
         } else if (auto d = std::get_if<SimpleOracle>(&next.first->data)) {
+            // TODO
             *next.second = SimpleTree { SimpleOracle { d->oracle }};
         }
     }
