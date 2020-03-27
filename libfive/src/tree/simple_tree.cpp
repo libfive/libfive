@@ -109,31 +109,33 @@ SimpleTree SimpleTree::clone() const {
             std::shared_ptr<SimpleTree> lhs;
             // Check to see if we've already visited the child branches;
             // if so, use that shared_ptr instead of making a new one.
-            auto itr = done.insert({d->lhs.get(), lhs});
-            if (itr.second) {
+            auto itr = done.find(d->lhs.get());
+            if (itr != done.end()) {
+                lhs = itr->second;
+            } else {
                 lhs = std::make_shared<SimpleTree>(invalid());
                 todo.push_back({d->lhs.get(), lhs.get()});
-            } else {
-                lhs = itr.first->second;
+                done.insert(itr, {d->lhs.get(), lhs});
             }
             *next.second = SimpleTree { SimpleUnaryOp { d->op, lhs }};
         } else if (auto d = std::get_if<SimpleBinaryOp>(&next.first->data)) {
             std::shared_ptr<SimpleTree> lhs, rhs;
-            auto itr = done.insert({d->lhs.get(), lhs});
-            if (itr.second) {
+            auto itr = done.find(d->lhs.get());
+            if (itr != done.end()) {
+                lhs = itr->second;
+            } else {
                 lhs = std::make_shared<SimpleTree>(invalid());
                 todo.push_back({d->lhs.get(), lhs.get()});
-            } else {
-                lhs = itr.first->second;
+                done.insert(itr, {d->lhs.get(), lhs});
             }
-            itr = done.insert({d->rhs.get(), rhs});
-            if (itr.second) {
+            itr = done.find(d->rhs.get());
+            if (itr != done.end()) {
+                rhs = itr->second;
+            } else {
                 rhs = std::make_shared<SimpleTree>(invalid());
                 todo.push_back({d->rhs.get(), rhs.get()});
-            } else {
-                rhs = itr.first->second;
+                done.insert(itr, {d->rhs.get(), rhs});
             }
-
             *next.second = SimpleTree { SimpleBinaryOp { d->op, lhs, rhs }};
         } else if (auto d = std::get_if<SimpleConstant>(&next.first->data)) {
             *next.second = SimpleTree { SimpleConstant { d->value }};
@@ -167,31 +169,33 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
             std::shared_ptr<SimpleTree> lhs;
             // Check to see if we've already visited the child branches;
             // if so, use that shared_ptr instead of making a new one.
-            auto itr = done.insert({d->lhs.get(), lhs});
-            if (itr.second) {
+            auto itr = done.find(d->lhs.get());
+            if (itr != done.end()) {
+                lhs = itr->second;
+            } else {
                 lhs = std::make_shared<SimpleTree>(invalid());
                 todo.push_back({d->lhs.get(), lhs.get()});
-            } else {
-                lhs = itr.first->second;
+                done.insert(itr, {d->lhs.get(), lhs});
             }
             *next.second = SimpleTree { SimpleUnaryOp { d->op, lhs }};
         } else if (auto d = std::get_if<SimpleBinaryOp>(&next.first->data)) {
             std::shared_ptr<SimpleTree> lhs, rhs;
-            auto itr = done.insert({d->lhs.get(), lhs});
-            if (itr.second) {
+            auto itr = done.find(d->lhs.get());
+            if (itr != done.end()) {
+                lhs = itr->second;
+            } else {
                 lhs = std::make_shared<SimpleTree>(invalid());
                 todo.push_back({d->lhs.get(), lhs.get()});
-            } else {
-                lhs = itr.first->second;
+                done.insert(itr, {d->lhs.get(), lhs});
             }
-            itr = done.insert({d->rhs.get(), rhs});
-            if (itr.second) {
+            itr = done.find(d->rhs.get());
+            if (itr != done.end()) {
+                rhs = itr->second;
+            } else {
                 rhs = std::make_shared<SimpleTree>(invalid());
                 todo.push_back({d->rhs.get(), rhs.get()});
-            } else {
-                rhs = itr.first->second;
+                done.insert(itr, {d->rhs.get(), rhs});
             }
-
             *next.second = SimpleTree { SimpleBinaryOp { d->op, lhs, rhs }};
         } else if (auto d = std::get_if<SimpleConstant>(&next.first->data)) {
             *next.second = SimpleTree { SimpleConstant { d->value }};
