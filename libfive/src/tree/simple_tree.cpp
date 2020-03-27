@@ -7,6 +7,9 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
+#include <vector>
+#include <unordered_map>
+
 #include "libfive/tree/simple_tree.hpp"
 
 namespace libfive {
@@ -17,7 +20,7 @@ SimpleTree::SimpleTree(float f)
     // Nothing to do here
 }
 
-SimpleTree::SimpleTree(Data&& d)
+SimpleTree::SimpleTree(Data d)
     : data(d)
 {
     // Nothing to do here
@@ -33,6 +36,10 @@ SimpleTree SimpleTree::Y() {
 
 SimpleTree SimpleTree::Z() {
     return SimpleTree{ SimpleNonaryOp { Opcode::VAR_Z }};
+}
+
+SimpleTree SimpleTree::invalid() {
+    return SimpleTree{ SimpleTreeInvalid {} };
 }
 
 Opcode::Opcode SimpleTree::op() const {
@@ -59,7 +66,7 @@ SimpleTree SimpleTree::lhs() const {
     } else if (auto i = std::get_if<SimpleBinaryOp>(&data)) {
         return *i->lhs;
     } else {
-        return SimpleTree { SimpleTreeInvalid {} };
+        return invalid();
     }
 }
 
@@ -67,7 +74,7 @@ SimpleTree SimpleTree::rhs() const {
     if (auto i = std::get_if<SimpleBinaryOp>(&data)) {
         return *i->rhs;
     } else {
-        return SimpleTree { SimpleTreeInvalid {} };
+        return invalid();
     }
 }
 
@@ -79,6 +86,62 @@ float SimpleTree::value() const {
     } else {
         throw Exception();
     }
+}
+
+bool SimpleTree::is_valid() const {
+    return !std::get_if<SimpleTreeInvalid>(&data);
+}
+
+SimpleTree SimpleTree::clone() const {
+    using P = std::pair<const SimpleTree*, SimpleTree*>;
+    auto out = SimpleTree::invalid();
+
+    std::vector<P> todo = {{this, &out}};
+    std::unordered_map<const SimpleTree*, std::shared_ptr<SimpleTree>> done;
+
+    while (todo.size()) {
+        auto next = todo.back();
+        todo.pop_back();
+
+        if (auto d = std::get_if<SimpleNonaryOp>(&next.first->data)) {
+            *next.second = SimpleTree { SimpleNonaryOp { d->op }};
+        } else if (auto d = std::get_if<SimpleUnaryOp>(&next.first->data)) {
+            std::shared_ptr<SimpleTree> lhs;
+            // Check to see if we've already visited the child branches;
+            // if so, use that shred_ptr instead of making a new one.
+            auto itr = done.insert({d->lhs.get(), lhs});
+            if (itr.second) {
+                lhs = std::make_shared<SimpleTree>(invalid());
+                todo.push_back({d->lhs.get(), lhs.get()});
+            } else {
+                lhs = itr.first->second;
+            }
+            *next.second = SimpleTree { SimpleUnaryOp { d->op, lhs }};
+        } else if (auto d = std::get_if<SimpleBinaryOp>(&next.first->data)) {
+            std::shared_ptr<SimpleTree> lhs, rhs;
+            auto itr = done.insert({d->lhs.get(), lhs});
+            if (itr.second) {
+                lhs = std::make_shared<SimpleTree>(invalid());
+                todo.push_back({d->lhs.get(), lhs.get()});
+            } else {
+                lhs = itr.first->second;
+            }
+            itr = done.insert({d->rhs.get(), rhs});
+            if (itr.second) {
+                rhs = std::make_shared<SimpleTree>(invalid());
+                todo.push_back({d->rhs.get(), rhs.get()});
+            } else {
+                rhs = itr.first->second;
+            }
+
+            *next.second = SimpleTree { SimpleBinaryOp { d->op, lhs, rhs }};
+        } else if (auto d = std::get_if<SimpleConstant>(&next.first->data)) {
+            *next.second = SimpleTree { SimpleConstant { d->value }};
+        } else if (auto d = std::get_if<SimpleOracle>(&next.first->data)) {
+            *next.second = SimpleTree { SimpleOracle { d->oracle }};
+        }
+    }
+    return out;
 }
 
 }   // namespace libfive
