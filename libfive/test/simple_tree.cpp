@@ -25,3 +25,20 @@ TEST_CASE("SimpleTree: basic operations")
     REQUIRE(t.rhs().op() == Opcode::CONSTANT);
     REQUIRE(t.rhs().value() == 1);
 }
+
+TEST_CASE("SimpleTree: clone")
+{
+    auto t = SimpleTree::X();
+    auto y = SimpleTree::Y();
+    for (unsigned i=0; i < 32768; ++i) {
+        t = t + y * i;
+    }
+    auto z = t.clone();
+    REQUIRE(z.op() == Opcode::OP_ADD);
+    REQUIRE(z.lhs().op() == Opcode::OP_ADD);
+    REQUIRE(z.rhs().op() == Opcode::OP_MUL);
+    REQUIRE(z.rhs().lhs().op() == Opcode::VAR_Y);
+    REQUIRE(z.rhs().rhs().op() == Opcode::CONSTANT);
+    REQUIRE(z.lhs().rhs().lhs().op() == Opcode::VAR_Y);
+    REQUIRE(z.lhs().rhs().rhs().op() == Opcode::CONSTANT);
+}

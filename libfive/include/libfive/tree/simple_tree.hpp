@@ -56,16 +56,19 @@ public:
         SimpleOracle,
         SimpleTreeInvalid>;
 
+    // These are the main constructors used to build SimpleTrees in code
     static SimpleTree X();
     static SimpleTree Y();
     static SimpleTree Z();
-
     SimpleTree(float v);
-    SimpleTree(Data&& d);
+
+    // Secondary constructor to build from the raw variant type
+    SimpleTree(Data d);
 
     /*  Overloaded operator */
     SimpleTree operator-() const;
 
+    /*  Looks up the opcode, returning Opcode::INVALID if its invalid */
     Opcode::Opcode op() const;
 
     /*  lhs and rhs return an invalid SimpleTree if not present */
@@ -80,6 +83,10 @@ public:
     /*  Checks whether this SimpleTree is valid. */
     bool is_valid() const;
 
+    /*  Performs a deep copy of the tree, so that it can be modified without
+     *  changing the original. */
+    SimpleTree clone() const;
+
     struct Exception : public std::exception {
         const char* what() const throw () {
             return "Accessed value of non-constant SimpleTree";
@@ -87,6 +94,7 @@ public:
     };
 
 protected:
+    static SimpleTree invalid();
     Data data;
 };
 
