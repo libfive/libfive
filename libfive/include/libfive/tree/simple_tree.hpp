@@ -87,6 +87,9 @@ public:
      *  changing the original. */
     SimpleTree clone() const;
 
+    /*  Remaps the coordinates of this tree, returning a new tree.  */
+    SimpleTree remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const;
+
     struct Exception : public std::exception {
         const char* what() const throw () {
             return "Accessed value of non-constant SimpleTree";
