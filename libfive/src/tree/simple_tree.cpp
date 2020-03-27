@@ -108,7 +108,65 @@ SimpleTree SimpleTree::clone() const {
         } else if (auto d = std::get_if<SimpleUnaryOp>(&next.first->data)) {
             std::shared_ptr<SimpleTree> lhs;
             // Check to see if we've already visited the child branches;
-            // if so, use that shred_ptr instead of making a new one.
+            // if so, use that shared_ptr instead of making a new one.
+            auto itr = done.insert({d->lhs.get(), lhs});
+            if (itr.second) {
+                lhs = std::make_shared<SimpleTree>(invalid());
+                todo.push_back({d->lhs.get(), lhs.get()});
+            } else {
+                lhs = itr.first->second;
+            }
+            *next.second = SimpleTree { SimpleUnaryOp { d->op, lhs }};
+        } else if (auto d = std::get_if<SimpleBinaryOp>(&next.first->data)) {
+            std::shared_ptr<SimpleTree> lhs, rhs;
+            auto itr = done.insert({d->lhs.get(), lhs});
+            if (itr.second) {
+                lhs = std::make_shared<SimpleTree>(invalid());
+                todo.push_back({d->lhs.get(), lhs.get()});
+            } else {
+                lhs = itr.first->second;
+            }
+            itr = done.insert({d->rhs.get(), rhs});
+            if (itr.second) {
+                rhs = std::make_shared<SimpleTree>(invalid());
+                todo.push_back({d->rhs.get(), rhs.get()});
+            } else {
+                rhs = itr.first->second;
+            }
+
+            *next.second = SimpleTree { SimpleBinaryOp { d->op, lhs, rhs }};
+        } else if (auto d = std::get_if<SimpleConstant>(&next.first->data)) {
+            *next.second = SimpleTree { SimpleConstant { d->value }};
+        } else if (auto d = std::get_if<SimpleOracle>(&next.first->data)) {
+            *next.second = SimpleTree { SimpleOracle { d->oracle }};
+        }
+    }
+    return out;
+}
+
+SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
+    // This is basically the same as clone() above, but with extra logic
+    using P = std::pair<const SimpleTree*, SimpleTree*>;
+    auto out = SimpleTree::invalid();
+
+    std::vector<P> todo = {{this, &out}};
+    std::unordered_map<const SimpleTree*, std::shared_ptr<SimpleTree>> done;
+
+    while (todo.size()) {
+        auto next = todo.back();
+        todo.pop_back();
+
+        if (auto d = std::get_if<SimpleNonaryOp>(&next.first->data)) {
+            switch (d->op) {
+                case Opcode::VAR_X: *next.second = X; break;
+                case Opcode::VAR_Y: *next.second = Y; break;
+                case Opcode::VAR_Z: *next.second = Z; break;
+                default: *next.second = SimpleTree { SimpleNonaryOp { d->op }};
+            }
+        } else if (auto d = std::get_if<SimpleUnaryOp>(&next.first->data)) {
+            std::shared_ptr<SimpleTree> lhs;
+            // Check to see if we've already visited the child branches;
+            // if so, use that shared_ptr instead of making a new one.
             auto itr = done.insert({d->lhs.get(), lhs});
             if (itr.second) {
                 lhs = std::make_shared<SimpleTree>(invalid());
