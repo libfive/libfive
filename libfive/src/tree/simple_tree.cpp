@@ -9,6 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "libfive/tree/simple_tree.hpp"
 
@@ -93,65 +94,15 @@ bool SimpleTree::is_valid() const {
 }
 
 SimpleTree SimpleTree::clone() const {
-    using P = std::pair<const SimpleTree*, SimpleTree*>;
-    auto out = SimpleTree::invalid();
-
-    std::vector<P> todo = {{this, &out}};
-    std::unordered_map<const SimpleTree*, std::shared_ptr<SimpleTree>> done;
-
-    while (todo.size()) {
-        auto next = todo.back();
-        todo.pop_back();
-
-        if (auto d = std::get_if<SimpleNonaryOp>(&next.first->data)) {
-            *next.second = SimpleTree { SimpleNonaryOp { d->op }};
-        } else if (auto d = std::get_if<SimpleUnaryOp>(&next.first->data)) {
-            std::shared_ptr<SimpleTree> lhs;
-            // Check to see if we've already visited the child branches;
-            // if so, use that shared_ptr instead of making a new one.
-            auto itr = done.find(d->lhs.get());
-            if (itr != done.end()) {
-                lhs = itr->second;
-            } else {
-                lhs = std::make_shared<SimpleTree>(invalid());
-                todo.push_back({d->lhs.get(), lhs.get()});
-                done.insert(itr, {d->lhs.get(), lhs});
-            }
-            *next.second = SimpleTree { SimpleUnaryOp { d->op, lhs }};
-        } else if (auto d = std::get_if<SimpleBinaryOp>(&next.first->data)) {
-            std::shared_ptr<SimpleTree> lhs, rhs;
-            auto itr = done.find(d->lhs.get());
-            if (itr != done.end()) {
-                lhs = itr->second;
-            } else {
-                lhs = std::make_shared<SimpleTree>(invalid());
-                todo.push_back({d->lhs.get(), lhs.get()});
-                done.insert(itr, {d->lhs.get(), lhs});
-            }
-            itr = done.find(d->rhs.get());
-            if (itr != done.end()) {
-                rhs = itr->second;
-            } else {
-                rhs = std::make_shared<SimpleTree>(invalid());
-                todo.push_back({d->rhs.get(), rhs.get()});
-                done.insert(itr, {d->rhs.get(), rhs});
-            }
-            *next.second = SimpleTree { SimpleBinaryOp { d->op, lhs, rhs }};
-        } else if (auto d = std::get_if<SimpleConstant>(&next.first->data)) {
-            *next.second = SimpleTree { SimpleConstant { d->value }};
-        } else if (auto d = std::get_if<SimpleOracle>(&next.first->data)) {
-            *next.second = SimpleTree { SimpleOracle { d->oracle }};
-        }
-    }
-    return out;
+    // remap() does a deep clone, so do a dummy remapping here
+    return remap(X(), Y(), Z());
 }
 
 SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
-    // This is basically the same as clone() above, but with extra logic
-    using P = std::pair<const SimpleTree*, SimpleTree*>;
-    auto out = SimpleTree::invalid();
+    using P = std::pair<const SimpleTree*, std::shared_ptr<SimpleTree>&>;
+    auto out = std::make_shared<SimpleTree>(SimpleTree::invalid());
 
-    std::vector<P> todo = {{this, &out}};
+    std::vector<P> todo = {{this, out}};
     std::unordered_map<const SimpleTree*, std::shared_ptr<SimpleTree>> done;
 
     while (todo.size()) {
@@ -174,7 +125,7 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
                 lhs = itr->second;
             } else {
                 lhs = std::make_shared<SimpleTree>(invalid());
-                todo.push_back({d->lhs.get(), lhs.get()});
+                todo.push_back({d->lhs.get(), lhs});
                 done.insert(itr, {d->lhs.get(), lhs});
             }
             *next.second = SimpleTree { SimpleUnaryOp { d->op, lhs }};
@@ -185,7 +136,7 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
                 lhs = itr->second;
             } else {
                 lhs = std::make_shared<SimpleTree>(invalid());
-                todo.push_back({d->lhs.get(), lhs.get()});
+                todo.push_back({d->lhs.get(), lhs});
                 done.insert(itr, {d->lhs.get(), lhs});
             }
             itr = done.find(d->rhs.get());
@@ -193,7 +144,7 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
                 rhs = itr->second;
             } else {
                 rhs = std::make_shared<SimpleTree>(invalid());
-                todo.push_back({d->rhs.get(), rhs.get()});
+                todo.push_back({d->rhs.get(), rhs});
                 done.insert(itr, {d->rhs.get(), rhs});
             }
             *next.second = SimpleTree { SimpleBinaryOp { d->op, lhs, rhs }};
@@ -204,7 +155,54 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
             *next.second = SimpleTree { SimpleOracle { d->oracle }};
         }
     }
-    return out;
+    return *out;
+}
+
+SimpleTree SimpleTree::unique() const {
+    auto out = SimpleTree::invalid();
+    std::vector<const SimpleTree*> flat;
+    std::unordered_set<const SimpleTree*> done;
+
+    // Flatten the tree
+    std::vector<const SimpleTree*> todo = {this};
+    while (todo.size()) {
+        auto next = todo.back();
+        todo.pop_back();
+        flat.push_back(next);
+
+        if (auto d = std::get_if<SimpleUnaryOp>(&next->data)) {
+            // Check to see if we've already visited the child branches;
+            // if so, use that shared_ptr instead of making a new one.
+            auto itr = done.find(d->lhs.get());
+            if (itr == done.end()) {
+                todo.push_back(d->lhs.get());
+                done.insert(itr, d->lhs.get());
+            }
+        } else if (auto d = std::get_if<SimpleBinaryOp>(&next->data)) {
+            auto itr = done.find(d->lhs.get());
+            if (itr == done.end()) {
+                todo.push_back(d->lhs.get());
+                done.insert(itr, d->lhs.get());
+            }
+            itr = done.find(d->rhs.get());
+            if (itr == done.end()) {
+                todo.push_back(d->rhs.get());
+                done.insert(itr, d->rhs.get());
+            }
+        }
+    }
+
+    // Maps to deduplicate trees
+    std::unordered_map<const float, std::shared_ptr<SimpleTree>> constants;
+    std::unordered_map<Opcode::Opcode, std::shared_ptr<SimpleTree>> nonary;
+    std::unordered_map<
+        std::tuple<Opcode::Opcode, const SimpleTree*>,
+        std::shared_ptr<SimpleTree>> unary;
+    std::unordered_map<
+        std::tuple<Opcode::Opcode, const SimpleTree*, const SimpleTree*>,
+        std::shared_ptr<SimpleTree>> binary;
+        */
+    return *out;
 }
 
 }   // namespace libfive
