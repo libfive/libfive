@@ -7,6 +7,7 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
+#include <map>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -93,6 +94,24 @@ bool SimpleTree::is_valid() const {
     return !std::get_if<SimpleTreeInvalid>(&data);
 }
 
+SimpleTree::Key SimpleTree::key() const {
+    if (auto d = std::get_if<SimpleConstant>(&data)) {
+        if (std::isnan(d->value)) {
+            return Key(true);
+        } else {
+            return Key(d->value);
+        }
+    } else if (auto d = std::get_if<SimpleNonaryOp>(&data)) {
+        return Key(d->op);
+    } else if (auto d = std::get_if<SimpleUnaryOp>(&data)) {
+        return Key(std::make_tuple(d->op, d->lhs.get()));
+    } else if (auto d = std::get_if<SimpleBinaryOp>(&data)) {
+        return Key(std::make_tuple(d->op, d->lhs.get(), d->rhs.get()));
+    } else {
+        return Key(false);
+    }
+}
+
 SimpleTree SimpleTree::clone() const {
     // remap() does a deep clone, so do a dummy remapping here
     return remap(X(), Y(), Z());
@@ -114,7 +133,7 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
                 case Opcode::VAR_X: *next.second = X; break;
                 case Opcode::VAR_Y: *next.second = Y; break;
                 case Opcode::VAR_Z: *next.second = Z; break;
-                default: *next.second = SimpleTree { SimpleNonaryOp { d->op }};
+                default: *next.second = *next.first;
             }
         } else if (auto d = std::get_if<SimpleUnaryOp>(&next.first->data)) {
             std::shared_ptr<SimpleTree> lhs;
@@ -149,60 +168,137 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
             }
             *next.second = SimpleTree { SimpleBinaryOp { d->op, lhs, rhs }};
         } else if (auto d = std::get_if<SimpleConstant>(&next.first->data)) {
-            *next.second = SimpleTree { SimpleConstant { d->value }};
+            *next.second = *next.first;
         } else if (auto d = std::get_if<SimpleOracle>(&next.first->data)) {
             // TODO
-            *next.second = SimpleTree { SimpleOracle { d->oracle }};
+            *next.second = *next.first;
         }
     }
     return *out;
 }
 
 SimpleTree SimpleTree::unique() const {
-    auto out = SimpleTree::invalid();
-    std::vector<const SimpleTree*> flat;
-    std::unordered_set<const SimpleTree*> done;
+    auto head = std::make_shared<SimpleTree>(*this);
+    std::vector<std::shared_ptr<SimpleTree>*> flat;
 
-    // Flatten the tree
-    std::vector<const SimpleTree*> todo = {this};
-    while (todo.size()) {
-        auto next = todo.back();
-        todo.pop_back();
-        flat.push_back(next);
+    {   // This block is responsible for flattening the tree
+        std::unordered_map<const SimpleTree*, unsigned> count;
+        std::vector<std::shared_ptr<SimpleTree>*> todo = {&head};
+        // Count how many branches reach to a given node.
+        // This matters when flattening, since we're doing a topological sort
+        while (todo.size()) {
+            auto next = todo.back();
+            todo.pop_back();
 
-        if (auto d = std::get_if<SimpleUnaryOp>(&next->data)) {
-            // Check to see if we've already visited the child branches;
-            // if so, use that shared_ptr instead of making a new one.
-            auto itr = done.find(d->lhs.get());
-            if (itr == done.end()) {
-                todo.push_back(d->lhs.get());
-                done.insert(itr, d->lhs.get());
+            if (auto d = std::get_if<SimpleUnaryOp>(&(**next).data)) {
+                if (count[d->lhs.get()]++ == 0) {
+                    todo.push_back(&d->lhs);
+                }
+            } else if (auto d = std::get_if<SimpleBinaryOp>(&(**next).data)) {
+                if (count[d->lhs.get()]++ == 0) {
+                    todo.push_back(&d->lhs);
+                }
+                if (count[d->rhs.get()]++ == 0) {
+                    todo.push_back(&d->rhs);
+                }
             }
-        } else if (auto d = std::get_if<SimpleBinaryOp>(&next->data)) {
-            auto itr = done.find(d->lhs.get());
-            if (itr == done.end()) {
-                todo.push_back(d->lhs.get());
-                done.insert(itr, d->lhs.get());
+        }
+
+        // Flatten the tree.  This is a heap-allocated recursive
+        // descent, to avoid running into stack limitations.
+        todo = {&head};
+        while (todo.size()) {
+            auto next = todo.back();
+            todo.pop_back();
+            flat.push_back(next);
+
+            if (auto d = std::get_if<SimpleUnaryOp>(&(**next).data)) {
+                // Schedule child branches to be flattened *after all* of their
+                // parents, since we'll be reversing the order of this tape
+                // afterwards, meaning children will be evaluated *before all*
+                // of their parents.
+                if (--count.at(d->lhs.get()) == 0) {
+                    todo.push_back(&d->lhs);
+                }
+            } else if (auto d = std::get_if<SimpleBinaryOp>(&(**next).data)) {
+                if (--count.at(d->lhs.get()) == 0) {
+                    todo.push_back(&d->lhs);
+                }
+                if (--count.at(d->rhs.get()) == 0) {
+                    todo.push_back(&d->rhs);
+                }
             }
-            itr = done.find(d->rhs.get());
-            if (itr == done.end()) {
-                todo.push_back(d->rhs.get());
-                done.insert(itr, d->rhs.get());
+        }
+        // We'll walk from the leafs up to the root, storing the first
+        // unique instance of a given operation in the maps above, and
+        // marking subsequent instances in the remap table.
+        std::reverse(flat.begin(), flat.end());
+    }
+
+    // If a specific tree should be remapped, that fact is stored here
+    std::unordered_map<const SimpleTree*, std::shared_ptr<SimpleTree>> remap;
+    // The canonical tree for each Key is stored here
+    std::map<Key, std::shared_ptr<SimpleTree>> canonical;
+
+    for (auto t : flat) {
+        // Get canonical key
+        auto key = (**t).key();
+        bool changed = false;
+        if (auto k = std::get_if<UnaryKey>(&key)) {
+            auto itr = remap.find(std::get<1>(*k));
+            if (itr != remap.end()) {
+                std::get<1>(*k) = itr->second.get();
+                changed = true;
             }
+        } else if (auto k = std::get_if<BinaryKey>(&key)) {
+            auto itr = remap.find(std::get<1>(*k));
+            if (itr != remap.end()) {
+                std::get<1>(*k) = itr->second.get();
+                changed = true;
+            }
+            itr = remap.find(std::get<2>(*k));
+            if (itr != remap.end()) {
+                std::get<2>(*k) = itr->second.get();
+                changed = true;
+            }
+        }
+
+        auto k_itr = canonical.find(key);
+        // We already have a canonical version of this tree,
+        // so remap it and keep going.
+        if (k_itr != canonical.end()) {
+            remap.insert({t->get(), k_itr->second});
+        } else if (!changed) {
+            // This is the canonical tree, and it requires
+            // no remapping, so we're done!
+            canonical.insert(k_itr, {key, *t});
+        } else {
+            // We need make a new canonical tree, using remapped arguments
+            auto out = std::make_shared<SimpleTree>(**t);
+            if (auto d = std::get_if<SimpleUnaryOp>(&out->data)) {
+                auto itr = remap.find(d->lhs.get());
+                if (itr != remap.end()) {
+                    d->lhs = itr->second;
+                }
+            } else if (auto d = std::get_if<SimpleBinaryOp>(&out->data)) {
+                auto itr = remap.find(d->lhs.get());
+                if (itr != remap.end()) {
+                    d->lhs = itr->second;
+                }
+                itr = remap.find(d->rhs.get());
+                if (itr != remap.end()) {
+                    d->rhs = itr->second;
+                }
+            }
+            // The new tree is the canonical tree; folks that were using
+            // the original tree need to use it instead.
+            canonical.insert(k_itr, {key, out});
+            remap.insert({t->get(), out});
         }
     }
 
-    // Maps to deduplicate trees
-    std::unordered_map<const float, std::shared_ptr<SimpleTree>> constants;
-    std::unordered_map<Opcode::Opcode, std::shared_ptr<SimpleTree>> nonary;
-    std::unordered_map<
-        std::tuple<Opcode::Opcode, const SimpleTree*>,
-        std::shared_ptr<SimpleTree>> unary;
-    std::unordered_map<
-        std::tuple<Opcode::Opcode, const SimpleTree*, const SimpleTree*>,
-        std::shared_ptr<SimpleTree>> binary;
-        */
-    return *out;
+    auto itr = remap.find(head.get());
+    return (itr == remap.end()) ? *head : *itr->second;
 }
 
 }   // namespace libfive
