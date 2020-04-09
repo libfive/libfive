@@ -56,6 +56,15 @@ public:
         SimpleOracle,
         SimpleTreeInvalid>;
 
+    using UnaryKey = std::tuple<Opcode::Opcode, const SimpleTree*>;
+    using BinaryKey = std::tuple<Opcode::Opcode, const SimpleTree*, const SimpleTree*>;
+    using Key = std::variant<
+        bool, // Used for NaN
+        float,
+        Opcode::Opcode,
+        UnaryKey,
+        BinaryKey>;
+
     // These are the main constructors used to build SimpleTrees in code
     static SimpleTree X();
     static SimpleTree Y();
@@ -82,6 +91,9 @@ public:
 
     /*  Checks whether this SimpleTree is valid. */
     bool is_valid() const;
+
+    /*  Returns a key suitable for use in maps */
+    Key key() const;
 
     /*  Performs a deep copy of the tree, so that it can be modified without
      *  changing the original. */
