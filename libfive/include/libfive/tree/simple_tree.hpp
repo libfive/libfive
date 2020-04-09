@@ -87,6 +87,10 @@ public:
      *  changing the original. */
     SimpleTree clone() const;
 
+    /*  Performs a deep copy of the tree with any duplicate subtrees merged
+     *  to point to the same objects. */
+    SimpleTree unique() const;
+
     /*  Remaps the coordinates of this tree, returning a new tree.  */
     SimpleTree remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const;
 
@@ -100,6 +104,21 @@ protected:
     static SimpleTree invalid();
     Data data;
 };
+
+/*
+ *  Represents a SimpleTree which has been deduplicated.
+ *
+ *  This conversion is implicit, so you can construct objects which
+ *  expect a SimpleUniqueTree using a SimpleTree, and it will deduplciate
+ *  things under the hood.
+ */
+class SimpleUniqueTree {
+public:
+    SimpleUniqueTree(const SimpleTree& t);
+protected:
+    SimpleTree t;
+};
+
 
 }   // namespace libfive
 
