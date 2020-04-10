@@ -55,29 +55,26 @@ TEST_CASE("SimpleTree: remap")
 
     auto f = SimpleTree::X();
     f = f * 2 + f * 3 + f;
-    REQUIRE(f.size() == 9);
+    REQUIRE(f.size() == 7);
 
-    // Remapping should also deduplicate the X values
     auto g = f.remap(SimpleTree::Y(), SimpleTree::Y(), SimpleTree::Z());
     REQUIRE(g.size() == 7);
 }
 
 TEST_CASE("SimpleTree: count")
 {
-    auto x = SimpleTree::X() + 1;
-    REQUIRE(x.size() == 3);
+    auto x = SimpleTree::X();
+    REQUIRE(x.size() == 1);
 
     auto y = SimpleTree::Y();
     REQUIRE(y.size() == 1);
 
     auto t = x + y;
-    REQUIRE(t.size() == 5);
+    REQUIRE(t.size() == 3);
 
-    // X, 1, (X + 1), (X + 1) + (X + 1)
-    // (testing special-casing for binary operations with the same arguments)
     auto z = x + x;
-    REQUIRE(z.size() == 4);
+    REQUIRE(z.size() == 2);
 
     auto q = x + SimpleTree::X();
-    REQUIRE(q.size() == 5);
+    REQUIRE(q.size() == 3);
 }

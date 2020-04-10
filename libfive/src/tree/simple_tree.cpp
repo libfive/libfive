@@ -113,39 +113,33 @@ SimpleTree::Key SimpleTree::key() const {
     }
 }
 
-#if 0
 SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
-    auto head = std::make_shared<SimpleTree>(*this);
-    auto flat = flatten(head);
-
-    auto tx = std::make_shared<SimpleTree>(X);
-    auto ty = std::make_shared<SimpleTree>(Y);
-    auto tz = std::make_shared<SimpleTree>(Z);
+    auto flat = walk();
 
     // If a specific tree should be remapped, that fact is stored here
-    std::unordered_map<const SimpleTree*, std::shared_ptr<SimpleTree>> remap;
+    std::unordered_map<const Data*, std::shared_ptr<Data>> remap;
 
     for (auto t : flat) {
-        std::shared_ptr<SimpleTree> changed;
+        std::shared_ptr<Data> changed;
 
-        if (auto d = std::get_if<SimpleNonaryOp>((**t).data.get())) {
+        if (auto d = std::get_if<SimpleNonaryOp>(t)) {
             switch (d->op) {
-                case Opcode::VAR_X: changed = tx; break;
-                case Opcode::VAR_Y: changed = ty; break;
-                case Opcode::VAR_Z: changed = tz; break;
+                case Opcode::VAR_X: changed = X.data; break;
+                case Opcode::VAR_Y: changed = Y.data; break;
+                case Opcode::VAR_Z: changed = Z.data; break;
                 default: break;
             }
-        } else if (auto d = std::get_if<SimpleUnaryOp>((**t).data.get())) {
+        } else if (auto d = std::get_if<SimpleUnaryOp>(t)) {
             auto itr = remap.find(d->lhs.get());
             if (itr != remap.end()) {
-                changed = std::make_shared<SimpleTree>(SimpleUnaryOp {
+                changed = std::make_shared<Data>(SimpleUnaryOp {
                     d->op, itr->second});
             }
-        } else if (auto d = std::get_if<SimpleBinaryOp>((**t).data.get())) {
+        } else if (auto d = std::get_if<SimpleBinaryOp>(t)) {
             auto lhs = remap.find(d->lhs.get());
             auto rhs = remap.find(d->rhs.get());
             if (lhs != remap.end() || rhs != remap.end()) {
-                changed = std::make_shared<SimpleTree>(SimpleBinaryOp {
+                changed = std::make_shared<Data>(SimpleBinaryOp {
                     d->op,
                     (lhs == remap.end()) ? d->lhs : lhs->second,
                     (rhs == remap.end()) ? d->rhs : rhs->second });
@@ -153,14 +147,13 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
         }
 
         if (changed) {
-            remap.insert({t->get(), changed});
+            remap.insert({t, changed});
         }
     }
 
-    auto itr = remap.find(head.get());
-    return (itr == remap.end()) ? *head : *itr->second;
+    auto itr = remap.find(data.get());
+    return (itr == remap.end()) ? *this : SimpleTree(itr->second);
 }
-#endif
 
 template <typename T>
 std::vector<T> SimpleTree::flatten(
