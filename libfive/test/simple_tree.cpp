@@ -26,23 +26,6 @@ TEST_CASE("SimpleTree: basic operations")
     REQUIRE(t.rhs().value() == 1);
 }
 
-TEST_CASE("SimpleTree: clone")
-{
-    auto t = SimpleTree::X();
-    auto y = SimpleTree::Y();
-    for (unsigned i=0; i < 32768; ++i) {
-        t = t + y * i;
-    }
-    auto z = t.clone();
-    REQUIRE(z.op() == Opcode::OP_ADD);
-    REQUIRE(z.lhs().op() == Opcode::OP_ADD);
-    REQUIRE(z.rhs().op() == Opcode::OP_MUL);
-    REQUIRE(z.rhs().lhs().op() == Opcode::VAR_Y);
-    REQUIRE(z.rhs().rhs().op() == Opcode::CONSTANT);
-    REQUIRE(z.lhs().rhs().lhs().op() == Opcode::VAR_Y);
-    REQUIRE(z.lhs().rhs().rhs().op() == Opcode::CONSTANT);
-}
-
 TEST_CASE("SimpleTree: remap")
 {
     auto t = SimpleTree::X();
@@ -69,4 +52,32 @@ TEST_CASE("SimpleTree: remap")
     REQUIRE(z.rhs().rhs().op() == Opcode::CONSTANT);
     REQUIRE(z.lhs().rhs().lhs().op() == Opcode::VAR_X);
     REQUIRE(z.lhs().rhs().rhs().op() == Opcode::CONSTANT);
+
+    auto f = SimpleTree::X();
+    f = f * 2 + f * 3 + f;
+    REQUIRE(f.size() == 9);
+
+    // Remapping should also deduplicate the X values
+    auto g = f.remap(SimpleTree::Y(), SimpleTree::Y(), SimpleTree::Z());
+    REQUIRE(g.size() == 7);
+}
+
+TEST_CASE("SimpleTree: count")
+{
+    auto x = SimpleTree::X() + 1;
+    REQUIRE(x.size() == 3);
+
+    auto y = SimpleTree::Y();
+    REQUIRE(y.size() == 1);
+
+    auto t = x + y;
+    REQUIRE(t.size() == 5);
+
+    // X, 1, (X + 1), (X + 1) + (X + 1)
+    // (testing special-casing for binary operations with the same arguments)
+    auto z = x + x;
+    REQUIRE(z.size() == 4);
+
+    auto q = x + SimpleTree::X();
+    REQUIRE(q.size() == 5);
 }

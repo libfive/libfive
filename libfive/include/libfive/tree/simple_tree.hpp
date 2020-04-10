@@ -103,6 +103,9 @@ public:
      *  to point to the same objects. */
     SimpleTree unique() const;
 
+    /*  Checks the number of unique nodes in the tree */
+    size_t size() const;
+
     /*  Remaps the coordinates of this tree, returning a new tree.  */
     SimpleTree remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const;
 
@@ -113,6 +116,9 @@ public:
     };
 
 protected:
+    static std::vector<std::shared_ptr<SimpleTree>*> flatten(
+            std::shared_ptr<SimpleTree>& head);
+
     static SimpleTree invalid();
     Data data;
 };
