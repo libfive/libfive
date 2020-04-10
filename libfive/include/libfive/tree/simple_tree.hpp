@@ -12,22 +12,57 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/opcode.hpp"
 
 namespace libfive {
+    class SimpleTree;
+}
+
+// Mass-produce declarations for overloaded operations
+#define OP_UNARY(OP)      libfive::SimpleTree OP(const libfive::SimpleTree& a)
+OP_UNARY(square);
+OP_UNARY(sqrt);
+OP_UNARY(abs);
+OP_UNARY(sin);
+OP_UNARY(cos);
+OP_UNARY(tan);
+OP_UNARY(asin);
+OP_UNARY(acos);
+OP_UNARY(atan);
+OP_UNARY(log);
+OP_UNARY(exp);
+#undef OP_UNARY
+
+#define OP_BINARY(OP) libfive::SimpleTree OP(const libfive::SimpleTree& a,  \
+                                             const libfive::SimpleTree& b)
+OP_BINARY(operator+);
+OP_BINARY(operator*);
+OP_BINARY(min);
+OP_BINARY(max);
+OP_BINARY(operator-);
+OP_BINARY(operator/);
+OP_BINARY(atan2);
+OP_BINARY(pow);
+OP_BINARY(nth_root);
+OP_BINARY(mod);
+OP_BINARY(nanfill);
+OP_BINARY(compare);
+#undef OP_BINARY
+namespace libfive {
 
 // Forward declaration
 class OracleClause;
 class SimpleTree;
+struct SimpleTreeData;
 
 struct SimpleNonaryOp {
     Opcode::Opcode op;
 };
 struct SimpleUnaryOp {
     Opcode::Opcode op;
-    std::shared_ptr<SimpleTree> lhs;
+    std::shared_ptr<SimpleTreeData> lhs;
 };
 struct SimpleBinaryOp {
     Opcode::Opcode op;
-    std::shared_ptr<SimpleTree> lhs;
-    std::shared_ptr<SimpleTree> rhs;
+    std::shared_ptr<SimpleTreeData> lhs;
+    std::shared_ptr<SimpleTreeData> rhs;
 };
 struct SimpleConstant {
     float value;
@@ -38,6 +73,22 @@ struct SimpleOracle {
 struct SimpleTreeInvalid {
     // No members
 };
+using SimpleTreeDataVariant = std::variant<
+        SimpleNonaryOp,
+        SimpleUnaryOp,
+        SimpleBinaryOp,
+        SimpleConstant,
+        SimpleOracle,
+        SimpleTreeInvalid>;
+
+// Wrapper struct around the variant, required to make recursive
+// variant structure work out nicely (since SimpleTreeData has to be
+// forward-declared, which isn't possible with the raw variant).
+struct SimpleTreeData : public SimpleTreeDataVariant {
+    SimpleTreeData(const SimpleTreeDataVariant& v)
+        : SimpleTreeDataVariant(v)
+    { /* Nothing to do here */ }
+};
 
 /*
  *  A SimpleTree represents a tree of math expressions
@@ -47,17 +98,9 @@ struct SimpleTreeInvalid {
 class SimpleTree
 {
 public:
-    // The SimpleTree stores one of these objects
-    using Data = std::variant<
-        SimpleNonaryOp,
-        SimpleUnaryOp,
-        SimpleBinaryOp,
-        SimpleConstant,
-        SimpleOracle,
-        SimpleTreeInvalid>;
-
-    using UnaryKey = std::tuple<Opcode::Opcode, const SimpleTree*>;
-    using BinaryKey = std::tuple<Opcode::Opcode, const SimpleTree*, const SimpleTree*>;
+    using Data = SimpleTreeData;
+    using UnaryKey = std::tuple<Opcode::Opcode, const Data*>;
+    using BinaryKey = std::tuple<Opcode::Opcode, const Data*, const Data*>;
     using Key = std::variant<
         bool, // Used for NaN
         float,
@@ -72,7 +115,7 @@ public:
     SimpleTree(float v);
 
     // Secondary constructor to build from the raw variant type
-    SimpleTree(Data d);
+    SimpleTree(std::shared_ptr<Data> d);
 
     /*  Overloaded operator */
     SimpleTree operator-() const;
@@ -115,12 +158,52 @@ public:
         }
     };
 
+    std::vector<const Data*> walk() const;
+
 protected:
-    static std::vector<std::shared_ptr<SimpleTree>*> flatten(
-            std::shared_ptr<SimpleTree>& head);
+    /* Generic function which topologically sorts the tree.
+     * This is generic so it can either return either
+     *      vector<const shared_ptr<Data>*>
+     *          (useful if you need the shared_ptr handles)
+     *      vector<const Data*>
+     *          (easier to iterate over)  */
+    template <typename T>
+    static std::vector<T> flatten(T head,
+            std::function<T(const std::shared_ptr<Data>&)> into,
+            std::function<const Data* (T)> from);
+
+    std::vector<const std::shared_ptr<Data>*> walkSharedPtrs() const;
 
     static SimpleTree invalid();
-    Data data;
+    std::shared_ptr<Data> data;
+
+#define FRIEND(OP) friend libfive::SimpleTree (::OP(const libfive::SimpleTree&));
+FRIEND(square)
+FRIEND(sqrt)
+FRIEND(abs)
+FRIEND(sin)
+FRIEND(cos)
+FRIEND(tan)
+FRIEND(asin)
+FRIEND(acos)
+FRIEND(atan)
+FRIEND(log)
+FRIEND(exp)
+#undef FRIEND
+#define FRIEND(OP) friend SimpleTree (::OP(const SimpleTree&, const SimpleTree&));
+FRIEND(operator+)
+FRIEND(operator*)
+FRIEND(min)
+FRIEND(max)
+FRIEND(operator-)
+FRIEND(operator/)
+FRIEND(atan2)
+FRIEND(pow)
+FRIEND(nth_root)
+FRIEND(mod)
+FRIEND(nanfill)
+FRIEND(compare)
+#undef FRIEND
 };
 
 /*
@@ -137,36 +220,5 @@ protected:
     SimpleTree t;
 };
 
-
 }   // namespace libfive
 
-// Mass-produce declarations for overloaded operations
-#define OP_UNARY(OP)      libfive::SimpleTree OP(const libfive::SimpleTree& a)
-OP_UNARY(square);
-OP_UNARY(sqrt);
-OP_UNARY(abs);
-OP_UNARY(sin);
-OP_UNARY(cos);
-OP_UNARY(tan);
-OP_UNARY(asin);
-OP_UNARY(acos);
-OP_UNARY(atan);
-OP_UNARY(log);
-OP_UNARY(exp);
-#undef OP_UNARY
-
-#define OP_BINARY(OP) libfive::SimpleTree OP(const libfive::SimpleTree& a,  \
-                                             const libfive::SimpleTree& b)
-OP_BINARY(operator+);
-OP_BINARY(operator*);
-OP_BINARY(min);
-OP_BINARY(max);
-OP_BINARY(operator-);
-OP_BINARY(operator/);
-OP_BINARY(atan2);
-OP_BINARY(pow);
-OP_BINARY(nth_root);
-OP_BINARY(mod);
-OP_BINARY(nanfill);
-OP_BINARY(compare);
-#undef OP_BINARY
