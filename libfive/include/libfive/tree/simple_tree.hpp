@@ -115,7 +115,7 @@ public:
     SimpleTree(float v);
 
     // Secondary constructor to build from the raw variant type
-    SimpleTree(std::shared_ptr<Data> d);
+    explicit SimpleTree(std::shared_ptr<Data> d);
 
     /*  Overloaded operator */
     SimpleTree operator-() const;
