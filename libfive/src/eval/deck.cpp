@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/eval/deck.hpp"
 #include "libfive/eval/tape.hpp"
+#include "libfive/tree/simple_tree.hpp"
 
 namespace libfive {
 
@@ -25,7 +26,7 @@ Deck::Deck(const Tree root)
 
     // Helper function to make a new function
     std::list<Clause> tape_;
-    auto newClause = [&clauses, &id, &tape_](const Tree::Id t)
+    auto newClause = [&clauses, &id, &tape_](const Tree& t)
     {
         tape_.push_front(
                 {t->op,
@@ -40,7 +41,7 @@ Deck::Deck(const Tree root)
         // Normal clauses end up in the tape
         if (m->rank > 0)
         {
-            newClause(m.id());
+            newClause(m);
         }
         // For constants and variables, record their values so
         // that we can store those values in the result array
@@ -86,6 +87,75 @@ Deck::Deck(const Tree root)
     {
         if (clauses.find(a.id()) == clauses.end())
         {
+            clauses.insert({a.id(), clauses.size()});
+        }
+    }
+
+    // Store the total number of clauses
+    // Remember, evaluators need to allocate one more than this
+    // amount of space, as the clause with id = 0 is a placeholder
+    num_clauses = clauses.size() - 1;
+
+    // Allocate enough memory for all the clauses
+    disabled.resize(clauses.size());
+    remap.resize(clauses.size());
+
+    // Save X, Y, Z ids
+    X = clauses.at(axes[0].id());
+    Y = clauses.at(axes[1].id());
+    Z = clauses.at(axes[2].id());
+
+    // Add empty contexts for every oracle in the tape
+    tape->contexts.resize(oracles.size());
+
+    // Store the index of the tree's root
+    assert(clauses.at(root.id()) == 1);
+    tape->i = clauses.at(root.id());
+}
+
+Deck::Deck(const SimpleTree& root) {
+    auto flat = root.walk();
+
+    // Helper function to create a new clause in the data array
+    // The dummy clause (0) is mapped to the first result slot
+    std::unordered_map<const void*, Clause::Id> clauses = {{nullptr, 0}};
+    Clause::Id id = flat.size();
+
+    tape.reset(new Tape);
+    tape->type = Tape::BASE;
+
+    // Write the flattened tree into the tape!
+    for (const auto& m : flat) {
+        switch (m->op()) {
+            case Opcode::CONSTANT:
+                constants[id] = m->value(); break;
+            case Opcode::VAR_FREE:
+                vars.left.insert({id, m}); break;
+            case Opcode::ORACLE:
+                tape->t.push_back({Opcode::ORACLE, id,
+                    static_cast<unsigned int>(oracles.size()), 0});
+                oracles.push_back(m->get_oracle());
+                break;
+            case Opcode::VAR_X:  // fallthrough
+            case Opcode::VAR_Y:  // fallthrough
+            case Opcode::VAR_Z:
+                break;
+            default:
+                tape->t.push_back(
+                        {m->op(),
+                         id,
+                         clauses.at(m->lhs()),
+                         clauses.at(m->rhs())});
+                break;
+        }
+        clauses[m] = id--;
+    }
+    assert(id == 0);
+
+    // Make sure that X, Y, Z have been allocated space
+    SimpleTree axes[3] = {SimpleTree::X(), SimpleTree::Y(), SimpleTree::Z()};
+    for (const auto& a : axes) {
+        if (clauses.find(a.id()) == clauses.end()) {
             clauses.insert({a.id(), clauses.size()});
         }
     }

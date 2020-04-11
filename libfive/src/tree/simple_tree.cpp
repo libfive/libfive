@@ -14,6 +14,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <unordered_set>
 
 #include "libfive/tree/simple_tree.hpp"
+#include "libfive/oracle/oracle_clause.hpp"
+#include "libfive/oracle/oracle.hpp"
 
 namespace libfive {
 
@@ -50,49 +52,57 @@ SimpleTree SimpleTree::invalid() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Opcode::Opcode SimpleTree::op() const {
-    if (auto i = std::get_if<SimpleNonaryOp>(data.get())) {
+Opcode::Opcode SimpleTreeData::op() const {
+    if (auto i = std::get_if<SimpleNonaryOp>(this)) {
         return i->op;
-    } else if (auto i = std::get_if<SimpleUnaryOp>(data.get())) {
+    } else if (auto i = std::get_if<SimpleUnaryOp>(this)) {
         return i->op;
-    } else if (auto i = std::get_if<SimpleBinaryOp>(data.get())) {
+    } else if (auto i = std::get_if<SimpleBinaryOp>(this)) {
         return i->op;
-    } else if (std::get_if<SimpleConstant>(data.get())) {
+    } else if (std::get_if<SimpleConstant>(this)) {
         return Opcode::CONSTANT;
-    } else if (std::get_if<SimpleOracle>(data.get())) {
+    } else if (std::get_if<SimpleOracle>(this)) {
         return Opcode::ORACLE;
-    } else if (std::get_if<SimpleTreeInvalid>(data.get())) {
+    } else if (std::get_if<SimpleTreeInvalid>(this)) {
         return Opcode::INVALID;
     } else {
         return Opcode::INVALID;
     }
 }
 
-SimpleTree SimpleTree::lhs() const {
-    if (auto i = std::get_if<SimpleUnaryOp>(data.get())) {
-        return SimpleTree(i->lhs);
-    } else if (auto i = std::get_if<SimpleBinaryOp>(data.get())) {
-        return SimpleTree(i->lhs);
+const SimpleTreeData* SimpleTreeData::lhs() const {
+    if (auto i = std::get_if<SimpleUnaryOp>(this)) {
+        return i->lhs.get();
+    } else if (auto i = std::get_if<SimpleBinaryOp>(this)) {
+        return i->lhs.get();
     } else {
-        return invalid();
+        return nullptr;
     }
 }
 
-SimpleTree SimpleTree::rhs() const {
-    if (auto i = std::get_if<SimpleBinaryOp>(data.get())) {
-        return SimpleTree(i->rhs);
+const SimpleTreeData* SimpleTreeData::rhs() const {
+    if (auto i = std::get_if<SimpleBinaryOp>(this)) {
+        return i->rhs.get();
     } else {
-        return invalid();
+        return nullptr;
     }
 }
 
-float SimpleTree::value() const {
+float SimpleTreeData::value() const {
     // Can't use std::get<SimpleConstant> because it requires a newer macOS
     // than my main development machine.
-    if (auto i = std::get_if<SimpleConstant>(data.get())) {
+    if (auto i = std::get_if<SimpleConstant>(this)) {
         return i->value;
     } else {
-        throw Exception();
+        throw ValueException();
+    }
+}
+
+std::unique_ptr<Oracle> SimpleTreeData::get_oracle() const {
+    if (auto i = std::get_if<SimpleOracle>(this)) {
+        return i->oracle->getOracle();
+    } else {
+        throw OracleException();
     }
 }
 
@@ -286,6 +296,10 @@ SimpleTree SimpleTree::unique() const {
                     d->rhs = itr->second->shared_from_this();
                 }
             }
+            // TODO: handle identities, e.g. min(a, a) => a
+            // or a * a => square(a), which have only been proven now
+            // that children are deduplicated
+
             // The new tree is the canonical tree; folks that were using
             // the original tree need to use it instead.
             canonical.insert(k_itr, {key, out.get()});
@@ -327,6 +341,16 @@ size_t SimpleTree::size() const {
     return count;
 }
 
+SimpleTree SimpleTree::lhs() const {
+    const auto ptr = data->lhs();
+    return ptr ? SimpleTree(ptr->shared_from_this()) : invalid();
+}
+
+SimpleTree SimpleTree::rhs() const {
+    const auto ptr = data->rhs();
+    return ptr ? SimpleTree(ptr->shared_from_this()) : invalid();
+}
+
 }   // namespace libfive
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -341,7 +365,6 @@ libfive::SimpleTree name(const libfive::SimpleTree& a) {                    \
 }
 OP_UNARY(square,    libfive::Opcode::OP_SQUARE)
 OP_UNARY(sqrt,      libfive::Opcode::OP_SQRT)
-OP_UNARY(abs,       libfive::Opcode::OP_ABS)
 OP_UNARY(sin,       libfive::Opcode::OP_SIN)
 OP_UNARY(cos,       libfive::Opcode::OP_COS)
 OP_UNARY(tan,       libfive::Opcode::OP_TAN)
@@ -352,12 +375,6 @@ OP_UNARY(log,       libfive::Opcode::OP_LOG)
 OP_UNARY(exp,       libfive::Opcode::OP_EXP)
 #undef OP_UNARY
 
-libfive::SimpleTree libfive::SimpleTree::operator-() const {
-    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
-        libfive::SimpleUnaryOp {
-            libfive::Opcode::OP_NEG, data }));
-}
-
 #define OP_BINARY(name, opcode)                                             \
 libfive::SimpleTree name(const libfive::SimpleTree& a,                      \
                          const libfive::SimpleTree& b) {                    \
@@ -365,16 +382,152 @@ libfive::SimpleTree name(const libfive::SimpleTree& a,                      \
         libfive::SimpleBinaryOp {                                           \
             opcode, a.data, b.data }));                                     \
 }
-OP_BINARY(operator+,    libfive::Opcode::OP_ADD)
-OP_BINARY(operator*,    libfive::Opcode::OP_MUL)
-OP_BINARY(min,          libfive::Opcode::OP_MIN)
-OP_BINARY(max,          libfive::Opcode::OP_MAX)
-OP_BINARY(operator-,    libfive::Opcode::OP_SUB)
-OP_BINARY(operator/,    libfive::Opcode::OP_DIV)
 OP_BINARY(atan2,        libfive::Opcode::OP_ATAN2)
-OP_BINARY(pow,          libfive::Opcode::OP_POW)
-OP_BINARY(nth_root,     libfive::Opcode::OP_NTH_ROOT)
 OP_BINARY(mod,          libfive::Opcode::OP_MOD)
 OP_BINARY(nanfill,      libfive::Opcode::OP_NANFILL)
 OP_BINARY(compare,      libfive::Opcode::OP_COMPARE)
 #undef OP_BINARY
+
+////////////////////////////////////////////////////////////////////////////////
+// Special-casing for arithmetic identities goes here
+libfive::SimpleTree abs(const libfive::SimpleTree& a) {
+    if (a.op() == libfive::Opcode::OP_ABS) {
+        return a;
+    }
+    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
+        libfive::SimpleUnaryOp {
+        libfive::Opcode::OP_ABS,
+            a.data }));
+}
+
+libfive::SimpleTree libfive::SimpleTree::operator-() const {
+    if (op() == Opcode::OP_NEG) {
+        // Double-negative returns the original value
+        return SimpleTree(lhs());
+    }
+    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
+        libfive::SimpleUnaryOp {
+            libfive::Opcode::OP_NEG, data }));
+}
+
+libfive::SimpleTree operator+(const libfive::SimpleTree& a,
+                              const libfive::SimpleTree& b)
+{
+    using namespace libfive;
+    if (a.op() == Opcode::CONSTANT && a.value() == 0.0f) {
+        return b;
+    } else if (b.op() == Opcode::CONSTANT && b.value() == 0.0f) {
+        return a;
+    } else if (b.op() == Opcode::OP_NEG) {
+        return a - b.lhs();
+    } else if (a.op() == Opcode::OP_NEG) {
+        return b - a.lhs();
+    }
+    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
+        libfive::SimpleBinaryOp {
+        libfive::Opcode::OP_ADD, a.data, b.data }));
+}
+
+libfive::SimpleTree operator-(const libfive::SimpleTree& a,
+                              const libfive::SimpleTree& b)
+{
+    using namespace libfive;
+    if (a.op() == Opcode::CONSTANT && a.value() == 0.0f) {
+        return -b;
+    } else if (b.op() == Opcode::CONSTANT && b.value() == 0.0f) {
+        return a;
+    } else if (b.op() == Opcode::OP_NEG) {
+        return a + b.lhs();
+    }
+    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
+        libfive::SimpleBinaryOp {
+        libfive::Opcode::OP_SUB, a.data, b.data }));
+}
+
+libfive::SimpleTree operator*(const libfive::SimpleTree& a,
+                              const libfive::SimpleTree& b)
+{
+    using namespace libfive;
+    if (a.op() == Opcode::CONSTANT) {
+        if (a.value() == 0) {
+            return a;
+        } else if (a.value() == 1) {
+            return b;
+        } else if (a.value() == -1) {
+            return -b;
+        }
+    } else if (b.op() == Opcode::CONSTANT) {
+        if (b.value() == 0) {
+            return b;
+        } else if (b.value() == 1) {
+            return a;
+        } else if (b.value() == -1) {
+            return -a;
+        }
+    } else if (a.data.get() == b.data.get()) {
+        return square(a);
+    }
+    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
+        libfive::SimpleBinaryOp {
+        libfive::Opcode::OP_MUL, a.data, b.data }));
+}
+
+libfive::SimpleTree nth_root(const libfive::SimpleTree& a,
+                             const libfive::SimpleTree& b)
+{
+    using namespace libfive;
+    if (b.op() == Opcode::CONSTANT && b.value() == 1.0f) {
+        return a;
+    }
+    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
+        libfive::SimpleBinaryOp {
+        libfive::Opcode::OP_NTH_ROOT, a.data, b.data }));
+}
+
+libfive::SimpleTree pow(const libfive::SimpleTree& a,
+                        const libfive::SimpleTree& b)
+{
+    using namespace libfive;
+    if (b.op() == Opcode::CONSTANT && b.value() == 1.0f) {
+        return a;
+    }
+    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
+        libfive::SimpleBinaryOp {
+        libfive::Opcode::OP_POW, a.data, b.data }));
+}
+
+libfive::SimpleTree min(const libfive::SimpleTree& a,
+                        const libfive::SimpleTree& b)
+{
+    using namespace libfive;
+    if (a.data.get() == b.data.get()) {
+        return a;
+    }
+    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
+        libfive::SimpleBinaryOp {
+        libfive::Opcode::OP_MIN, a.data, b.data }));
+}
+
+libfive::SimpleTree max(const libfive::SimpleTree& a,
+                        const libfive::SimpleTree& b)
+{
+    using namespace libfive;
+    if (a.data.get() == b.data.get()) {
+        return a;
+    }
+    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
+        libfive::SimpleBinaryOp {
+        libfive::Opcode::OP_MAX, a.data, b.data }));
+}
+
+libfive::SimpleTree operator/(const libfive::SimpleTree& a,
+                              const libfive::SimpleTree& b)
+{
+    using namespace libfive;
+    if (b.op() == Opcode::CONSTANT && b.value() == 1.0f) {
+        return a;
+    }
+    return libfive::SimpleTree(std::make_shared<libfive::SimpleTree::Data>(
+        libfive::SimpleBinaryOp {
+        libfive::Opcode::OP_DIV, a.data, b.data }));
+}

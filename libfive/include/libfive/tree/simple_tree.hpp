@@ -13,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
     class SimpleTree;
+    class Oracle;
 }
 
 #define SIMPLE_TREE_OPERATORS \
@@ -103,6 +104,32 @@ struct SimpleTreeData : public SimpleTreeDataVariant,
         UnaryKey,
         BinaryKey>;
 
+    /*  Returns the opcode of this clause */
+    Opcode::Opcode op() const;
+
+    /*  Returns the floating-point value if this is a constant,
+     *  throwing an exception otherwise. */
+    struct ValueException : public std::exception {
+        const char* what() const throw () {
+            return "Accessed value of non-constant SimpleTree";
+        }
+    };
+    float value() const;
+
+    /*  Returns left and right-hand subtrees.  If this operation
+     *  is missing one (or both), returns nullptr instead. */
+    const SimpleTreeData* lhs() const;
+    const SimpleTreeData* rhs() const;
+
+    /*  Returns a freshly-baked Oracle from the given clause.
+     *  If this isn't a SimpleOracle, throws an exception. */
+    struct OracleException : public std::exception {
+        const char* what() const throw () {
+            return "Accessed oracle of non-constant SimpleTree";
+        }
+    };
+    std::unique_ptr<Oracle> get_oracle() const;
+
     /*  Returns a key suitable for use in maps */
     Key key() const;
 };
@@ -130,16 +157,20 @@ public:
     SimpleTree operator-() const;
 
     /*  Looks up the opcode, returning Opcode::INVALID if its invalid */
-    Opcode::Opcode op() const;
+    Opcode::Opcode op() const { return data->op(); }
+
+    /*  Unique identifier for the underlying clause.  This is not necessarily
+     *  deduplicated, unless the tree was constructed using unique(). */
+    const void* id() const { return data.get(); }
 
     /*  lhs and rhs return an invalid SimpleTree if not present */
     SimpleTree lhs() const;
     SimpleTree rhs() const;
 
     /*  value() returns the constant if this is a constant, and throws
-     *  a SimpleTree::Exception otherwise.  This matches the behavior of
+     *  a SimpleTreeData::Exception otherwise.  This matches the behavior of
      *  std::get if you get an incorrect variant. */
-    float value() const;
+    float value() const { return data->value(); }
 
     /*  Checks whether this SimpleTree is valid. */
     bool is_valid() const;
@@ -157,12 +188,6 @@ public:
 
     /*  Remaps the coordinates of this tree, returning a new tree.  */
     SimpleTree remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const;
-
-    struct Exception : public std::exception {
-        const char* what() const throw () {
-            return "Accessed value of non-constant SimpleTree";
-        }
-    };
 
     std::vector<const Data*> walk() const;
 
