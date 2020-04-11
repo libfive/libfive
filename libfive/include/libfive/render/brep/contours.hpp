@@ -19,6 +19,7 @@ namespace libfive {
 template <unsigned N> class PerThreadBRep;
 class Evaluator;
 struct BRepSettings;
+class SimpleUniqueTree;
 
 class Contours {
 public:
@@ -27,6 +28,9 @@ public:
      */
     static std::unique_ptr<Contours> render(
         const Tree t, const Region<2>& r,
+        const BRepSettings& settings);
+    static std::unique_ptr<Contours> render(
+        const SimpleUniqueTree& t, const Region<2>& r,
         const BRepSettings& settings);
 
     /*

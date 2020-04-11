@@ -26,6 +26,19 @@ DerivArrayEvaluator::DerivArrayEvaluator(
     // Nothing to do here
 }
 
+DerivArrayEvaluator::DerivArrayEvaluator(const SimpleUniqueTree& root)
+    : DerivArrayEvaluator(std::make_shared<Deck>(root))
+{
+    // Nothing to do here
+}
+
+DerivArrayEvaluator::DerivArrayEvaluator(
+        const SimpleUniqueTree& root, const std::map<Tree::Id, float>& vars)
+    : DerivArrayEvaluator(std::make_shared<Deck>(root), vars)
+{
+    // Nothing to do here
+}
+
 DerivArrayEvaluator::DerivArrayEvaluator(std::shared_ptr<Deck> d)
     : DerivArrayEvaluator(d, std::map<Tree::Id, float>())
 {

@@ -50,6 +50,9 @@ SIMPLE_TREE_OPERATORS
 #undef OP_UNARY
 #undef OP_BINARY
 
+/*  Prints the tree to the given ostream. */
+std::ostream& operator<<(std::ostream& stream, const libfive::SimpleTree& tree);
+
 namespace libfive {
 
 // Forward declaration
@@ -153,6 +156,24 @@ public:
     static SimpleTree X();
     static SimpleTree Y();
     static SimpleTree Z();
+
+    //  Returns a new unique variable
+    static SimpleTree var();
+
+    //  Returns a version of this tree wrapped in the CONST_VAR opcode,
+    //  which zeroes out partial derivatives with respect to all variables.
+    SimpleTree with_const_vars() const;
+
+    // Constructors from opcodes, etc.
+    // These will return invalid() if the opcode doesn't match the number
+    // of arguments (or you do something else silly, like making an ORACLE
+    // opcode using this constructor).
+    explicit SimpleTree(Opcode::Opcode op);
+    explicit SimpleTree(Opcode::Opcode op, const SimpleTree& lhs);
+    explicit SimpleTree(Opcode::Opcode op,
+                        const SimpleTree& lhs,
+                        const SimpleTree& rhs);
+
     SimpleTree(float v);
 
     // Secondary constructor to build from the raw variant type
@@ -204,6 +225,8 @@ public:
     std::vector<const Data*> walk() const;
 
 protected:
+    std::ostream& print_prefix(std::ostream& stream) const;
+
     static SimpleTree invalid();
     std::shared_ptr<const Data> data;
 
@@ -213,6 +236,9 @@ protected:
 SIMPLE_TREE_OPERATORS
 #undef OP_UNARY
 #undef OP_BINARY
+
+    friend std::ostream& (::operator<<(std::ostream& stream,
+                                       const libfive::SimpleTree& tree));
 };
 
 /*

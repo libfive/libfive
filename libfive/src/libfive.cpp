@@ -15,6 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/tree.hpp"
 
 #include "libfive/eval/eval_deriv_array.hpp"
+#include "libfive/eval/eval_interval.hpp"
 
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/contours.hpp"
@@ -88,24 +89,24 @@ int libfive_opcode_args(int op)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-libfive_tree libfive_tree_x() { return new Tree(Tree::X()); }
-libfive_tree libfive_tree_y() { return new Tree(Tree::Y()); }
-libfive_tree libfive_tree_z() { return new Tree(Tree::Z()); }
+libfive_tree libfive_tree_x() { return new SimpleTree(SimpleTree::X()); }
+libfive_tree libfive_tree_y() { return new SimpleTree(SimpleTree::Y()); }
+libfive_tree libfive_tree_z() { return new SimpleTree(SimpleTree::Z()); }
 
-libfive_tree libfive_tree_const(float f) { return new Tree(f); }
-libfive_tree libfive_tree_var() { return new Tree(Tree::var()); }
+libfive_tree libfive_tree_const(float f) { return new SimpleTree(f); }
+libfive_tree libfive_tree_var() { return new SimpleTree(SimpleTree::var()); }
 
 bool libfive_tree_is_var(libfive_tree t)
 {
-    return (*t)->op == Opcode::VAR_FREE;
+    return t->op() == Opcode::VAR_FREE;
 }
 
 float libfive_tree_get_const(libfive_tree t, bool* success)
 {
-    if ((*t)->op == Opcode::CONSTANT)
+    if (t->op() == Opcode::CONSTANT)
     {
         if (success) { *success = true; }
-        return (*t)->value;
+        return t->value();
     }
     if (success) { *success = false; }
     return 0;
@@ -113,7 +114,7 @@ float libfive_tree_get_const(libfive_tree t, bool* success)
 
 libfive_tree libfive_tree_constant_vars(libfive_tree t)
 {
-    return new Tree(t->makeVarsConstant());
+    return new SimpleTree(t->with_const_vars());
 }
 
 static bool opcode_is_valid(int op, size_t expected_args)
@@ -126,20 +127,20 @@ static bool opcode_is_valid(int op, size_t expected_args)
 libfive_tree libfive_tree_nonary(int op)
 {
     return opcode_is_valid(op, 0)
-        ? new Tree(Opcode::Opcode(op))
+        ? new SimpleTree(Opcode::Opcode(op))
         : nullptr;
 }
 
 libfive_tree libfive_tree_unary(int op, libfive_tree a)
 {
     return (opcode_is_valid(op, 1) && a != nullptr)
-        ? new Tree(Opcode::Opcode(op), *a)
+        ? new SimpleTree(Opcode::Opcode(op), *a)
         : nullptr;
 }
 libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b)
 {
     return (opcode_is_valid(op, 2) && a != nullptr && b != nullptr)
-        ? new Tree(Opcode::Opcode(op), *a, *b)
+        ? new SimpleTree(Opcode::Opcode(op), *a, *b)
         : nullptr;
 }
 
@@ -174,7 +175,8 @@ libfive_tree libfive_tree_load(const char* filename)
     auto t = Tree::load(filename);
     if (t.id())
     {
-        return new Tree(t);
+        // TODO
+        return nullptr; //new Tree(t);
     }
     else
     {
@@ -185,7 +187,7 @@ libfive_tree libfive_tree_load(const char* filename)
 
 libfive_tree libfive_tree_remap(libfive_tree p, libfive_tree x, libfive_tree y, libfive_tree z)
 {
-    return new Tree(p->remap(*x, *y, *z));
+    return new SimpleTree(p->remap(*x, *y, *z));
 }
 
 float libfive_tree_eval_f(libfive_tree t, libfive_vec3 p)
@@ -209,15 +211,10 @@ libfive_vec3 libfive_tree_eval_d(libfive_tree t, libfive_vec3 p)
     return {v.x(), v.y(), v.z()};
 }
 
-bool libfive_tree_eq(libfive_tree a, libfive_tree b)
-{
-    return *a == *b;
-}
-
 char* libfive_tree_print(libfive_tree t)
 {
     std::stringstream ss;
-    (*t)->print(ss);
+    ss << *t;
     const auto str = ss.str();
 
     auto out = static_cast<char*>(malloc(str.size() + 1 * sizeof(char)));

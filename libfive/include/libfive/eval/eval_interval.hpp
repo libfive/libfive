@@ -15,13 +15,18 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/clause.hpp"
 
 namespace libfive {
-class Tape; /* Forward declaration */
+// Forward declarations
+class Tape;
+class SimpleUniqueTree;
 
 class IntervalEvaluator : public virtual BaseEvaluator
 {
 public:
     IntervalEvaluator(const Tree& root);
     IntervalEvaluator(const Tree& root,
+                      const std::map<Tree::Id, float>& vars);
+    IntervalEvaluator(const SimpleUniqueTree& root);
+    IntervalEvaluator(const SimpleUniqueTree& root,
                       const std::map<Tree::Id, float>& vars);
     IntervalEvaluator(std::shared_ptr<Deck> d);
     IntervalEvaluator(std::shared_ptr<Deck> d,

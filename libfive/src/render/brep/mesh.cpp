@@ -44,6 +44,18 @@ std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
     return render(es.data(), r, settings);
 }
 
+std::unique_ptr<Mesh> Mesh::render(const SimpleUniqueTree& t, const Region<3>& r,
+                                   const BRepSettings& settings)
+{
+    std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
+    es.reserve(settings.workers);
+    for (unsigned i=0; i < settings.workers; ++i) {
+        es.emplace_back(Evaluator(t));
+    }
+
+    return render(es.data(), r, settings);
+}
+
 std::unique_ptr<Mesh> Mesh::render(
         Evaluator* es,
         const Region<3>& r, const BRepSettings& settings)
