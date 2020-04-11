@@ -98,9 +98,17 @@ float SimpleTreeData::value() const {
     }
 }
 
-std::unique_ptr<Oracle> SimpleTreeData::get_oracle() const {
+std::unique_ptr<Oracle> SimpleTreeData::build_oracle() const {
     if (auto i = std::get_if<SimpleOracle>(this)) {
         return i->oracle->getOracle();
+    } else {
+        throw OracleException();
+    }
+}
+
+const OracleClause* SimpleTreeData::oracle_clause() const {
+    if (auto i = std::get_if<SimpleOracle>(this)) {
+        return i->oracle.get();
     } else {
         throw OracleException();
     }

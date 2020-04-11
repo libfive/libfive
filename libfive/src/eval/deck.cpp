@@ -134,7 +134,7 @@ Deck::Deck(const SimpleUniqueTree& root) {
             case Opcode::ORACLE:
                 tape->t.push_back({Opcode::ORACLE, id,
                     static_cast<unsigned int>(oracles.size()), 0});
-                oracles.push_back(m->get_oracle());
+                oracles.push_back(m->build_oracle());
                 break;
             case Opcode::VAR_X:  // fallthrough
             case Opcode::VAR_Y:  // fallthrough
