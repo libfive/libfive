@@ -15,36 +15,39 @@ namespace libfive {
     class SimpleTree;
 }
 
-// Mass-produce declarations for overloaded operations
-#define OP_UNARY(OP)      libfive::SimpleTree OP(const libfive::SimpleTree& a)
-OP_UNARY(square);
-OP_UNARY(sqrt);
-OP_UNARY(abs);
-OP_UNARY(sin);
-OP_UNARY(cos);
-OP_UNARY(tan);
-OP_UNARY(asin);
-OP_UNARY(acos);
-OP_UNARY(atan);
-OP_UNARY(log);
-OP_UNARY(exp);
-#undef OP_UNARY
+#define SIMPLE_TREE_OPERATORS \
+OP_UNARY(square) \
+OP_UNARY(sqrt) \
+OP_UNARY(abs) \
+OP_UNARY(sin) \
+OP_UNARY(cos) \
+OP_UNARY(tan) \
+OP_UNARY(asin) \
+OP_UNARY(acos) \
+OP_UNARY(atan) \
+OP_UNARY(log) \
+OP_UNARY(exp) \
+OP_BINARY(operator+) \
+OP_BINARY(operator*) \
+OP_BINARY(min) \
+OP_BINARY(max) \
+OP_BINARY(operator-) \
+OP_BINARY(operator/) \
+OP_BINARY(atan2) \
+OP_BINARY(pow) \
+OP_BINARY(nth_root) \
+OP_BINARY(mod) \
+OP_BINARY(nanfill) \
+OP_BINARY(compare)
 
-#define OP_BINARY(OP) libfive::SimpleTree OP(const libfive::SimpleTree& a,  \
-                                             const libfive::SimpleTree& b)
-OP_BINARY(operator+);
-OP_BINARY(operator*);
-OP_BINARY(min);
-OP_BINARY(max);
-OP_BINARY(operator-);
-OP_BINARY(operator/);
-OP_BINARY(atan2);
-OP_BINARY(pow);
-OP_BINARY(nth_root);
-OP_BINARY(mod);
-OP_BINARY(nanfill);
-OP_BINARY(compare);
+// Mass-produce declarations for overloaded operations
+#define OP_UNARY(OP)    libfive::SimpleTree OP(const libfive::SimpleTree& a);
+#define OP_BINARY(OP)   libfive::SimpleTree OP(const libfive::SimpleTree& a, \
+                                               const libfive::SimpleTree& b);
+SIMPLE_TREE_OPERATORS
+#undef OP_UNARY
 #undef OP_BINARY
+
 namespace libfive {
 
 // Forward declaration
@@ -167,33 +170,12 @@ protected:
     static SimpleTree invalid();
     std::shared_ptr<const Data> data;
 
-#define FRIEND(OP) friend libfive::SimpleTree (::OP(const libfive::SimpleTree&));
-FRIEND(square)
-FRIEND(sqrt)
-FRIEND(abs)
-FRIEND(sin)
-FRIEND(cos)
-FRIEND(tan)
-FRIEND(asin)
-FRIEND(acos)
-FRIEND(atan)
-FRIEND(log)
-FRIEND(exp)
-#undef FRIEND
-#define FRIEND(OP) friend SimpleTree (::OP(const SimpleTree&, const SimpleTree&));
-FRIEND(operator+)
-FRIEND(operator*)
-FRIEND(min)
-FRIEND(max)
-FRIEND(operator-)
-FRIEND(operator/)
-FRIEND(atan2)
-FRIEND(pow)
-FRIEND(nth_root)
-FRIEND(mod)
-FRIEND(nanfill)
-FRIEND(compare)
-#undef FRIEND
+#define OP_UNARY(OP)  friend SimpleTree (::OP(const SimpleTree&));
+#define OP_BINARY(OP) friend SimpleTree (::OP(const SimpleTree&, \
+                                              const SimpleTree&));
+SIMPLE_TREE_OPERATORS
+#undef OP_UNARY
+#undef OP_BINARY
 };
 
 /*
