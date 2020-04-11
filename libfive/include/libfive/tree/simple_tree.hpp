@@ -57,12 +57,12 @@ struct SimpleNonaryOp {
 };
 struct SimpleUnaryOp {
     Opcode::Opcode op;
-    std::shared_ptr<SimpleTreeData> lhs;
+    std::shared_ptr<const SimpleTreeData> lhs;
 };
 struct SimpleBinaryOp {
     Opcode::Opcode op;
-    std::shared_ptr<SimpleTreeData> lhs;
-    std::shared_ptr<SimpleTreeData> rhs;
+    std::shared_ptr<const SimpleTreeData> lhs;
+    std::shared_ptr<const SimpleTreeData> rhs;
 };
 struct SimpleConstant {
     float value;
@@ -84,10 +84,24 @@ using SimpleTreeDataVariant = std::variant<
 // Wrapper struct around the variant, required to make recursive
 // variant structure work out nicely (since SimpleTreeData has to be
 // forward-declared, which isn't possible with the raw variant).
-struct SimpleTreeData : public SimpleTreeDataVariant {
+struct SimpleTreeData : public SimpleTreeDataVariant,
+                        std::enable_shared_from_this<SimpleTreeData>
+{
     SimpleTreeData(const SimpleTreeDataVariant& v)
         : SimpleTreeDataVariant(v)
     { /* Nothing to do here */ }
+
+    using UnaryKey = std::tuple<Opcode::Opcode, const SimpleTreeData*>;
+    using BinaryKey = std::tuple<Opcode::Opcode, const SimpleTreeData*, const SimpleTreeData*>;
+    using Key = std::variant<
+        bool, // Used for NaN and invalid
+        float,
+        Opcode::Opcode,
+        UnaryKey,
+        BinaryKey>;
+
+    /*  Returns a key suitable for use in maps */
+    Key key() const;
 };
 
 /*
@@ -99,14 +113,6 @@ class SimpleTree
 {
 public:
     using Data = SimpleTreeData;
-    using UnaryKey = std::tuple<Opcode::Opcode, const Data*>;
-    using BinaryKey = std::tuple<Opcode::Opcode, const Data*, const Data*>;
-    using Key = std::variant<
-        bool, // Used for NaN
-        float,
-        Opcode::Opcode,
-        UnaryKey,
-        BinaryKey>;
 
     // These are the main constructors used to build SimpleTrees in code
     static SimpleTree X();
@@ -115,7 +121,7 @@ public:
     SimpleTree(float v);
 
     // Secondary constructor to build from the raw variant type
-    explicit SimpleTree(std::shared_ptr<Data> d);
+    explicit SimpleTree(std::shared_ptr<const Data> d);
 
     /*  Overloaded operator */
     SimpleTree operator-() const;
@@ -134,9 +140,6 @@ public:
 
     /*  Checks whether this SimpleTree is valid. */
     bool is_valid() const;
-
-    /*  Returns a key suitable for use in maps */
-    Key key() const;
 
     /*  Performs a deep copy of the tree, so that it can be modified without
      *  changing the original. */
@@ -161,21 +164,8 @@ public:
     std::vector<const Data*> walk() const;
 
 protected:
-    /* Generic function which topologically sorts the tree.
-     * This is generic so it can either return either
-     *      vector<const shared_ptr<Data>*>
-     *          (useful if you need the shared_ptr handles)
-     *      vector<const Data*>
-     *          (easier to iterate over)  */
-    template <typename T>
-    static std::vector<T> flatten(T head,
-            std::function<T(const std::shared_ptr<Data>&)> into,
-            std::function<const Data* (T)> from);
-
-    std::vector<const std::shared_ptr<Data>*> walkSharedPtrs() const;
-
     static SimpleTree invalid();
-    std::shared_ptr<Data> data;
+    std::shared_ptr<const Data> data;
 
 #define FRIEND(OP) friend libfive::SimpleTree (::OP(const libfive::SimpleTree&));
 FRIEND(square)

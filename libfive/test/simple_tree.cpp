@@ -76,5 +76,26 @@ TEST_CASE("SimpleTree: count")
     REQUIRE(z.size() == 2);
 
     auto q = x + SimpleTree::X();
-    REQUIRE(q.size() == 3);
+    REQUIRE(q.size() == 2); // X is a singleton
+}
+
+TEST_CASE("SimpleTree: unique")
+{
+    auto x = SimpleTree::X();
+    auto y = SimpleTree::Y();
+
+    auto a = x + y;
+    auto b = x + y;
+
+    auto z = a * b;
+    REQUIRE(z.size() == 5);
+
+    auto q = z.unique();
+    REQUIRE(q.size() == 4);
+
+    auto f = a * b + (a * 2);
+    REQUIRE(f.size() == 8);
+
+    auto g = f.unique();
+    REQUIRE(g.size() == 7);
 }
