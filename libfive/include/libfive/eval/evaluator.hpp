@@ -23,6 +23,12 @@ public:
               const std::map<Tree::Id, float>& vars) :
         Evaluator(std::make_shared<Deck>(root), vars) {}
 
+    Evaluator(const SimpleUniqueTree& root) :
+        Evaluator(std::make_shared<Deck>(root)) {}
+    Evaluator(const SimpleUniqueTree& root,
+              const std::map<Tree::Id, float>& vars) :
+        Evaluator(std::make_shared<Deck>(root), vars) {}
+
     Evaluator(std::shared_ptr<Deck> t) :
         Evaluator(t, std::map<Tree::Id, float>()) {}
 

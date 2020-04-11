@@ -27,6 +27,19 @@ IntervalEvaluator::IntervalEvaluator(
     // Nothing to do here
 }
 
+IntervalEvaluator::IntervalEvaluator(const SimpleUniqueTree& root)
+    : IntervalEvaluator(std::make_shared<Deck>(root))
+{
+    // Nothing to do here
+}
+
+IntervalEvaluator::IntervalEvaluator(
+        const SimpleUniqueTree& root, const std::map<Tree::Id, float>& vars)
+    : IntervalEvaluator(std::make_shared<Deck>(root), vars)
+{
+    // Nothing to do here
+}
+
 IntervalEvaluator::IntervalEvaluator(std::shared_ptr<Deck> d)
     : IntervalEvaluator(d, std::map<Tree::Id, float>())
 {

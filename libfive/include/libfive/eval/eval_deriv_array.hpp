@@ -20,6 +20,9 @@ public:
     DerivArrayEvaluator(const Tree& root);
     DerivArrayEvaluator(const Tree& root,
                         const std::map<Tree::Id, float>& vars);
+    DerivArrayEvaluator(const SimpleUniqueTree& root);
+    DerivArrayEvaluator(const SimpleUniqueTree& root,
+                        const std::map<Tree::Id, float>& vars);
     DerivArrayEvaluator(std::shared_ptr<Deck> t);
     DerivArrayEvaluator(std::shared_ptr<Deck> t,
                         const std::map<Tree::Id, float>& vars);
