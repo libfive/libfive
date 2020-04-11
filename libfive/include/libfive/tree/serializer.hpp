@@ -13,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/archive.hpp"
 
 namespace libfive {
+class SimpleTree;   // Forward declaration
 
 class Serializer
 {
@@ -56,6 +57,7 @@ protected:
      *  Modifies the ids map to store where each subtree has been serialized.
      */
     void serializeTree(Tree t);
+    void serializeSimpleTree(const SimpleTree& t);
 
     /*
      *  Writes a tree to the given output stream.

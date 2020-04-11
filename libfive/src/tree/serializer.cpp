@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <cassert>
 
 #include "libfive/tree/serializer.hpp"
+#include "libfive/tree/simple_tree.hpp"
 
 namespace libfive {
 
@@ -114,6 +115,45 @@ void Serializer::serializeString(const std::string& s)
         out.put(c);
     }
     out.put('"');
+}
+
+void Serializer::serializeSimpleTree(const SimpleTree& t) {
+    for (auto& n : t.walk()) {
+        // Skip this id, as it has already been stored
+        if (ids.find(n) != ids.end()) {
+            continue;
+        }
+
+        const auto op = n->op();
+        if (op == Opcode::ORACLE) {
+            assert(n->oracle.get() != nullptr);
+            for (auto& d : n->oracle_clause()->dependencies()) {
+                serializeTree(d);
+            }
+        }
+        out.put(op);
+        ids.insert({ n, (uint32_t)ids.size() });
+
+        switch (op) {
+            case Opcode::CONSTANT:
+                // Write constants as raw bytes
+                serializeBytes(n->value());
+                break;
+            case Opcode::ORACLE: {
+                auto o = n->oracle_clause();
+                serializeString(o->name());
+                OracleClause::serialize(o->name(), o, *this);
+                break;
+            }
+            default:
+                switch (Opcode::args(op)) {
+                    case 2:  serializeBytes(ids.at(n->rhs())); // fallthrough
+                    case 1:  serializeBytes(ids.at(n->lhs())); // fallthrough
+                    default: break;
+                }
+                break;
+        }
+    }
 }
 
 

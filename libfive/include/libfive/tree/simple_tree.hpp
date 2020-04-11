@@ -121,14 +121,17 @@ struct SimpleTreeData : public SimpleTreeDataVariant,
     const SimpleTreeData* lhs() const;
     const SimpleTreeData* rhs() const;
 
+    /*  Returns the underlying OracleClause.  If this isn't a SimpleOracle,
+     *  throws an OracleException. */
+    const OracleClause* oracle_clause() const;
     /*  Returns a freshly-baked Oracle from the given clause.
      *  If this isn't a SimpleOracle, throws an exception. */
+    std::unique_ptr<Oracle> build_oracle() const;
     struct OracleException : public std::exception {
         const char* what() const throw () {
             return "Accessed oracle of non-constant SimpleTree";
         }
     };
-    std::unique_ptr<Oracle> get_oracle() const;
 
     /*  Returns a key suitable for use in maps */
     Key key() const;
@@ -188,6 +191,13 @@ public:
 
     /*  Remaps the coordinates of this tree, returning a new tree.  */
     SimpleTree remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const;
+
+    /*  Serializes the tree to a stream of bytes */
+    void serialize(std::ostream& out) const;
+
+    /*  Attempts to deserialize from a stream of bytes.
+     *  Returns invalid() on failure. */
+    static SimpleTree deserialize(std::istream& in);
 
     std::vector<const Data*> walk() const;
 
