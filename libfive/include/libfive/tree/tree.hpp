@@ -129,7 +129,7 @@ public:
 
     /*  Trees are uniquely identified by their Tree_ address, but we don't
      *  want anyone to do anything with that value  */
-    typedef const Tree_* Id;
+    typedef const void* Id;
 
     /*
      *  Overload arrow to get shared Tree_ value
