@@ -212,9 +212,8 @@ SIMPLE_TREE_OPERATORS
  */
 class SimpleUniqueTree {
 public:
-    SimpleUniqueTree(const SimpleTree& t);
-protected:
-    SimpleTree t;
+    SimpleUniqueTree(const SimpleTree& t) : tree(t.unique()) {}
+    SimpleTree tree;
 };
 
 }   // namespace libfive

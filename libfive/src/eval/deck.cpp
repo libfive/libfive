@@ -113,8 +113,8 @@ Deck::Deck(const Tree root)
     tape->i = clauses.at(root.id());
 }
 
-Deck::Deck(const SimpleTree& root) {
-    auto flat = root.walk();
+Deck::Deck(const SimpleUniqueTree& root) {
+    auto flat = root.tree.walk();
 
     // Helper function to create a new clause in the data array
     // The dummy clause (0) is mapped to the first result slot
@@ -178,8 +178,8 @@ Deck::Deck(const SimpleTree& root) {
     tape->contexts.resize(oracles.size());
 
     // Store the index of the tree's root
-    assert(clauses.at(root.id()) == 1);
-    tape->i = clauses.at(root.id());
+    assert(clauses.at(root.tree.id()) == 1);
+    tape->i = clauses.at(root.tree.id());
 }
 
 void Deck::bindOracles(const Tape& tape)
