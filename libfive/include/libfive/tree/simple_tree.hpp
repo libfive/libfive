@@ -95,15 +95,6 @@ struct SimpleTreeData : public SimpleTreeDataVariant,
         : SimpleTreeDataVariant(v)
     { /* Nothing to do here */ }
 
-    using UnaryKey = std::tuple<Opcode::Opcode, const SimpleTreeData*>;
-    using BinaryKey = std::tuple<Opcode::Opcode, const SimpleTreeData*, const SimpleTreeData*>;
-    using Key = std::variant<
-        bool, // Used for NaN and invalid
-        float,
-        Opcode::Opcode,
-        UnaryKey,
-        BinaryKey>;
-
     /*  Returns the opcode of this clause */
     Opcode::Opcode op() const;
 
@@ -134,6 +125,16 @@ struct SimpleTreeData : public SimpleTreeDataVariant,
     };
 
     /*  Returns a key suitable for use in maps */
+    using UnaryKey = std::tuple<Opcode::Opcode, const SimpleTreeData*>;
+    using BinaryKey = std::tuple<
+        Opcode::Opcode, const SimpleTreeData*, const SimpleTreeData*>;
+    using Key = std::variant<
+        bool, // Used for NaN and invalid
+        float,
+        Opcode::Opcode,
+        UnaryKey,
+        BinaryKey>;
+
     Key key() const;
 };
 
