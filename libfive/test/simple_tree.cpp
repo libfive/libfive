@@ -26,7 +26,7 @@ TEST_CASE("SimpleTree: basic operations")
     REQUIRE(t.rhs().value() == 1);
 }
 
-TEST_CASE("SimpleTree: remap")
+TEST_CASE("SimpleTree::remap()")
 {
     auto t = SimpleTree::X();
     auto y = SimpleTree::Y();
@@ -59,9 +59,11 @@ TEST_CASE("SimpleTree: remap")
 
     auto g = f.remap(SimpleTree::Y(), SimpleTree::Y(), SimpleTree::Z());
     REQUIRE(g.size() == 7);
+
+    // TODO: remap in a way that simplifies something
 }
 
-TEST_CASE("SimpleTree: count")
+TEST_CASE("SimpleTree::size()")
 {
     auto x = SimpleTree::X();
     REQUIRE(x.size() == 1);
@@ -79,7 +81,7 @@ TEST_CASE("SimpleTree: count")
     REQUIRE(q.size() == 2); // X is a singleton
 }
 
-TEST_CASE("SimpleTree: unique")
+TEST_CASE("SimpleTree::unique()")
 {
     auto x = SimpleTree::X();
     auto y = SimpleTree::Y();
@@ -98,4 +100,43 @@ TEST_CASE("SimpleTree: unique")
 
     auto g = f.unique();
     REQUIRE(g.size() == 7);
+}
+
+
+TEST_CASE("SimpleTree::operator<<")
+{
+    SECTION("Basic")
+    {
+        std::stringstream ss;
+        ss << (SimpleTree::X() + 5);
+        REQUIRE(ss.str() == "(+ x 5)");
+    }
+
+    SECTION("With oracle")
+    {
+        std::stringstream ss;
+        std::shared_ptr<OracleClause> p(new CubeOracleClause);
+        auto o = SimpleTree(p);
+        ss << (SimpleTree::X() + 5 + o);
+        REQUIRE(ss.str() == "(+ x 5 'CubeOracle)");
+    }
+}
+
+TEST_CASE("SimpleTree::with_const_vars") {
+    auto v = SimpleTree::var();
+    auto w = SimpleTree::var();
+    auto a = 2 * v + 5 * w;
+    auto b = a.with_const_vars();
+
+    {
+        std::stringstream ss;
+        ss << a;
+        REQUIRE(ss.str() == "(+ (* 2 var-free) (* 5 var-free))");
+
+    }
+    {
+        std::stringstream ss;
+        ss << b;
+        REQUIRE(ss.str() == "(const-var (+ (* 2 var-free) (* 5 var-free)))");
+    }
 }

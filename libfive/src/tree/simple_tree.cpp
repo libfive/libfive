@@ -31,6 +31,12 @@ SimpleTree::SimpleTree(std::shared_ptr<const Data> d)
     // Nothing to do here
 }
 
+SimpleTree::SimpleTree(const std::shared_ptr<OracleClause>& o)
+    : SimpleTree(std::make_shared<Data>( SimpleOracle { o }))
+{
+    // Nothing to do here
+}
+
 SimpleTree SimpleTree::var() {
     return SimpleTree(std::make_shared<Data>(
         SimpleNonaryOp { Opcode::VAR_FREE }));
@@ -93,7 +99,45 @@ SimpleTree SimpleTree::with_const_vars() const {
 
 std::ostream& SimpleTree::print_prefix(std::ostream& s) const {
     // TODO
-    s << "HI";
+    std::vector<std::variant<const Data*, char>> todo;
+    std::vector<Opcode::Opcode> ops;
+    todo.push_back(data.get());
+
+    while (todo.size()) {
+        auto t = todo.back();
+        todo.pop_back();
+        if (auto c = std::get_if<char>(&t)) {
+            switch (*c) {
+                case ')': s << ')'; ops.pop_back(); break;
+                case '|': ops.pop_back(); break;
+                case ' ': s << ' '; break;
+            }
+        } else if (auto d = std::get_if<const Data*>(&t)) {
+            auto op = (**d).op();
+            if (op == Opcode::CONSTANT) {
+                s << (**d).value();
+            } else if (op == Opcode::ORACLE) {
+                s << '\'' << (**d).oracle_clause()->name();
+            } else if (Opcode::args(op) == 0) {
+                s << Opcode::toOpString(op);
+            } else {
+                if (Opcode::isCommutative(op) && ops.size() && ops.back() == op) {
+                    todo.push_back('|');
+                } else {
+                    s << "(" << Opcode::toOpString(op) << " ";
+                    todo.push_back(')');
+                }
+                ops.push_back(op);
+                if (Opcode::args(op) == 1) {
+                    todo.push_back((**d).lhs());
+                } else {
+                    todo.push_back((**d).rhs());
+                    todo.push_back(' ');
+                    todo.push_back((**d).lhs());
+                }
+            }
+        }
+    }
     return s;
 }
 

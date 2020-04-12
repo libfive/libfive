@@ -173,6 +173,7 @@ public:
     explicit SimpleTree(Opcode::Opcode op,
                         const SimpleTree& lhs,
                         const SimpleTree& rhs);
+    explicit SimpleTree(const std::shared_ptr<OracleClause>& oracle);
 
     SimpleTree(float v);
 
