@@ -144,8 +144,8 @@ Deck::Deck(const SimpleUniqueTree& root) {
                 tape->t.push_back(
                         {m->op(),
                          id,
-                         clauses.at(m->lhs()),
-                         clauses.at(m->rhs())});
+                         clauses.at(m->lhs().id()),
+                         clauses.at(m->rhs().id())});
                 break;
         }
         clauses[m] = id--;

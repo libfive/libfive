@@ -98,15 +98,15 @@ libfive_tree libfive_tree_var() { return new SimpleTree(SimpleTree::var()); }
 
 bool libfive_tree_is_var(libfive_tree t)
 {
-    return t->op() == Opcode::VAR_FREE;
+    return (*t)->op() == Opcode::VAR_FREE;
 }
 
 float libfive_tree_get_const(libfive_tree t, bool* success)
 {
-    if (t->op() == Opcode::CONSTANT)
+    if ((*t)->op() == Opcode::CONSTANT)
     {
         if (success) { *success = true; }
-        return t->value();
+        return (*t)->value();
     }
     if (success) { *success = false; }
     return 0;
@@ -134,13 +134,13 @@ libfive_tree libfive_tree_nonary(int op)
 libfive_tree libfive_tree_unary(int op, libfive_tree a)
 {
     return (opcode_is_valid(op, 1) && a != nullptr)
-        ? new SimpleTree(Opcode::Opcode(op), *a)
+        ? new SimpleTree(SimpleTree::unary(Opcode::Opcode(op), *a))
         : nullptr;
 }
 libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b)
 {
     return (opcode_is_valid(op, 2) && a != nullptr && b != nullptr)
-        ? new SimpleTree(Opcode::Opcode(op), *a, *b)
+        ? new SimpleTree(SimpleTree::binary(Opcode::Opcode(op), *a, *b))
         : nullptr;
 }
 

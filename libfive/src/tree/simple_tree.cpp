@@ -26,7 +26,7 @@ SimpleTree::SimpleTree(float f)
 }
 
 SimpleTree::SimpleTree(std::shared_ptr<const Data> d)
-    : data(d)
+    : std::shared_ptr<const Data>(d)
 {
     // Nothing to do here
 }
@@ -42,35 +42,94 @@ SimpleTree SimpleTree::var() {
         SimpleNonaryOp { Opcode::VAR_FREE }));
 }
 
-SimpleTree::SimpleTree(Opcode::Opcode op) {
-    switch (op) {
-        case Opcode::VAR_X: *this = X(); break;
-        case Opcode::VAR_Y: *this = Y(); break;
-        case Opcode::VAR_Z: *this = Z(); break;
-        case Opcode::VAR_FREE:
-            data = std::make_shared<Data>(SimpleNonaryOp { Opcode::VAR_FREE });
-            break;
-        default: *this = invalid();
+SimpleTree SimpleTree::unary(Opcode::Opcode op, const SimpleTree& lhs) {
+    // We can only build unary operations with this function
+    if (Opcode::args(op) != 1) {
+        return invalid();
     }
+    // abs is idempotent after abs() or square()
+    else if (op == Opcode::OP_ABS) {
+        if (lhs->op() == Opcode::OP_ABS) {
+            return lhs;
+        } else if (lhs->op() == Opcode::OP_SQUARE) {
+            return lhs;
+        }
+    }
+    // Double-negative returns the original
+    else if (op == Opcode::OP_NEG && lhs->op() == Opcode::OP_NEG) {
+        return lhs->lhs();
+    }
+    // Default if we didn't fall into any special cases
+    return SimpleTree(std::make_shared<Data>(
+           SimpleUnaryOp { op, lhs }));
 }
 
-SimpleTree::SimpleTree(Opcode::Opcode op, const SimpleTree& lhs) {
-    if (Opcode::args(op) == 1) {
-        data = std::make_shared<Data>(SimpleUnaryOp { op, lhs.data });
-    } else {
-        *this = invalid();
-    }
-}
-
-SimpleTree::SimpleTree(Opcode::Opcode op,
-                       const SimpleTree& lhs, const SimpleTree& rhs)
+SimpleTree SimpleTree::binary(Opcode::Opcode op,
+                              const SimpleTree& lhs,
+                              const SimpleTree& rhs)
 {
-    if (Opcode::args(op) == 2) {
-        data = std::make_shared<Data>(SimpleBinaryOp {
-            op, lhs.data, rhs.data });
-    } else {
-        *this = invalid();
+    // We can only build binary operations with this function
+    if (Opcode::args(op) != 2) {
+        return invalid();
     }
+    // Division by 1 is ignored
+    else if (op == Opcode::OP_DIV) {
+        if (rhs->op() == Opcode::CONSTANT && rhs->value() == 1.0f) {
+            return lhs;
+        }
+    }
+    else if (op == Opcode::OP_ADD) {
+        if (lhs->op() == Opcode::CONSTANT && lhs->value() == 0.0f) {
+            return rhs;
+        } else if (rhs->op() == Opcode::CONSTANT && rhs->value() == 0.0f) {
+            return lhs;
+        } else if (rhs->op() == Opcode::OP_NEG) {
+            const SimpleTree& t = rhs->lhs();
+            const SimpleTree& q = lhs;
+            return q - t;
+        } else if (lhs->op() == Opcode::OP_NEG) {
+            return rhs - lhs->lhs();
+        }
+    } else if (op == Opcode::OP_SUB) {
+        if (lhs->op() == Opcode::CONSTANT && lhs->value() == 0.0f) {
+            return -rhs;
+        } else if (rhs->op() == Opcode::CONSTANT && rhs->value() == 0.0f) {
+            return lhs;
+        } else if (rhs->op() == Opcode::OP_NEG) {
+            return lhs + rhs->lhs();
+        }
+    } else if (op == Opcode::OP_MUL) {
+        if (lhs->op() == Opcode::CONSTANT) {
+            if (lhs->value() == 0) {
+                return lhs;
+            } else if (lhs->value() == 1) {
+                return rhs;
+            } else if (lhs->value() == -1) {
+                return -rhs;
+            }
+        } else if (rhs->op() == Opcode::CONSTANT) {
+            if (rhs->value() == 0) {
+                return rhs;
+            } else if (rhs->value() == 1) {
+                return lhs;
+            } else if (rhs->value() == -1) {
+                return -lhs;
+            }
+        } else if (lhs.id() == rhs.id()) {
+            return square(lhs);
+        }
+    } else if (op == Opcode::OP_NTH_ROOT || op == Opcode::OP_POW) {
+        if (rhs->op() == Opcode::CONSTANT && rhs->value() == 1.0f) {
+            return lhs;
+        }
+    } else if (op == Opcode::OP_MIN || op == Opcode::OP_MAX) {
+        if (lhs.id() == rhs.id()) {
+            return lhs;
+        }
+    }
+    // Default if we didn't fall into any special cases
+    return SimpleTree(std::make_shared<Data>(
+           SimpleBinaryOp {op, lhs, rhs}));
 }
 
 // Use Meyer's singletons for X/Y/Z, since they're the most common trees
@@ -94,14 +153,13 @@ SimpleTree SimpleTree::invalid() {
 
 SimpleTree SimpleTree::with_const_vars() const {
     return SimpleTree(std::make_shared<Data>(SimpleUnaryOp {
-        Opcode::CONST_VAR, data }));
+        Opcode::CONST_VAR, *this }));
 }
 
 std::ostream& SimpleTree::print_prefix(std::ostream& s) const {
-    // TODO
     std::vector<std::variant<const Data*, char>> todo;
     std::vector<Opcode::Opcode> ops;
-    todo.push_back(data.get());
+    todo.push_back(get());
 
     while (todo.size()) {
         auto t = todo.back();
@@ -117,7 +175,7 @@ std::ostream& SimpleTree::print_prefix(std::ostream& s) const {
             if (op == Opcode::CONSTANT) {
                 s << (**d).value();
             } else if (op == Opcode::ORACLE) {
-                s << '\'' << (**d).oracle_clause()->name();
+                s << '\'' << (**d).oracle_clause().name();
             } else if (Opcode::args(op) == 0) {
                 s << Opcode::toOpString(op);
             } else {
@@ -129,11 +187,11 @@ std::ostream& SimpleTree::print_prefix(std::ostream& s) const {
                 }
                 ops.push_back(op);
                 if (Opcode::args(op) == 1) {
-                    todo.push_back((**d).lhs());
+                    todo.push_back((**d).lhs_data());
                 } else {
-                    todo.push_back((**d).rhs());
+                    todo.push_back((**d).rhs_data());
                     todo.push_back(' ');
-                    todo.push_back((**d).lhs());
+                    todo.push_back((**d).lhs_data());
                 }
             }
         }
@@ -166,7 +224,25 @@ Opcode::Opcode SimpleTreeData::op() const {
     }
 }
 
-const SimpleTreeData* SimpleTreeData::lhs() const {
+const SimpleTree& SimpleTreeData::lhs() const {
+    if (auto i = std::get_if<SimpleUnaryOp>(this)) {
+        return i->lhs;
+    } else if (auto i = std::get_if<SimpleBinaryOp>(this)) {
+        return i->lhs;
+    } else {
+        throw ValueException();
+    }
+}
+
+const SimpleTree& SimpleTreeData::rhs() const {
+    if (auto i = std::get_if<SimpleBinaryOp>(this)) {
+        return i->rhs;
+    } else {
+        throw ValueException();
+    }
+}
+
+const SimpleTreeData* SimpleTreeData::lhs_data() const {
     if (auto i = std::get_if<SimpleUnaryOp>(this)) {
         return i->lhs.get();
     } else if (auto i = std::get_if<SimpleBinaryOp>(this)) {
@@ -176,7 +252,7 @@ const SimpleTreeData* SimpleTreeData::lhs() const {
     }
 }
 
-const SimpleTreeData* SimpleTreeData::rhs() const {
+const SimpleTreeData* SimpleTreeData::rhs_data() const {
     if (auto i = std::get_if<SimpleBinaryOp>(this)) {
         return i->rhs.get();
     } else {
@@ -202,16 +278,16 @@ std::unique_ptr<Oracle> SimpleTreeData::build_oracle() const {
     }
 }
 
-const OracleClause* SimpleTreeData::oracle_clause() const {
+const OracleClause& SimpleTreeData::oracle_clause() const {
     if (auto i = std::get_if<SimpleOracle>(this)) {
-        return i->oracle.get();
+        return *(i->oracle);
     } else {
         throw OracleException();
     }
 }
 
 bool SimpleTree::is_valid() const {
-    return !std::get_if<SimpleTreeInvalid>(data.get());
+    return !std::get_if<SimpleTreeInvalid>(get());
 }
 
 SimpleTreeData::Key SimpleTreeData::key() const {
@@ -235,51 +311,51 @@ SimpleTreeData::Key SimpleTreeData::key() const {
 SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
     auto flat = walk();
 
-    // If a specific tree should be remapped, that fact is stored here
-    std::unordered_map<const Data*, std::shared_ptr<const Data>> remap;
+    // If a specific tree (by id) should be remapped, that fact is stored here
+    std::unordered_map<const void*, SimpleTree> remap;
 
     for (auto t : flat) {
         std::shared_ptr<const Data> changed;
 
         if (auto d = std::get_if<SimpleNonaryOp>(t)) {
             switch (d->op) {
-                case Opcode::VAR_X: changed = X.data; break;
-                case Opcode::VAR_Y: changed = Y.data; break;
-                case Opcode::VAR_Z: changed = Z.data; break;
+                case Opcode::VAR_X: changed = X; break;
+                case Opcode::VAR_Y: changed = Y; break;
+                case Opcode::VAR_Z: changed = Z; break;
                 default: break;
             }
         } else if (auto d = std::get_if<SimpleUnaryOp>(t)) {
-            auto itr = remap.find(d->lhs.get());
+            auto itr = remap.find(d->lhs.id());
             if (itr != remap.end()) {
                 changed = std::make_shared<Data>(SimpleUnaryOp {
-                    d->op, itr->second->shared_from_this()});
+                    d->op, itr->second});
             }
         } else if (auto d = std::get_if<SimpleBinaryOp>(t)) {
-            auto lhs = remap.find(d->lhs.get());
-            auto rhs = remap.find(d->rhs.get());
+            auto lhs = remap.find(d->lhs.id());
+            auto rhs = remap.find(d->rhs.id());
             if (lhs != remap.end() || rhs != remap.end()) {
                 changed = std::make_shared<Data>(SimpleBinaryOp {
                     d->op,
                     (lhs == remap.end()) ? d->lhs
-                                         : lhs->second->shared_from_this(),
+                                         : lhs->second,
                     (rhs == remap.end()) ? d->rhs
-                                         : rhs->second->shared_from_this() });
+                                         : rhs->second });
             }
         }
 
         if (changed) {
-            remap.insert({t, changed});
+            remap.insert({t, SimpleTree(changed)});
         }
     }
 
-    auto itr = remap.find(data.get());
+    auto itr = remap.find(get());
     return (itr == remap.end()) ? *this : SimpleTree(itr->second->shared_from_this());
 }
 
 std::vector<const SimpleTree::Data*> SimpleTree::walk() const {
-    // This block is responsible for flattening the tree
-    std::unordered_map<const Data*, unsigned> count;
-    std::vector todo = {data.get()};
+    // Store how many times each tree (by id) is referenced
+    std::unordered_map<const void*, unsigned> count;
+    std::vector todo = {get()};
     // Count how many branches reach to a given node.
     // This matters when flattening, since we're doing a topological sort
     while (todo.size()) {
@@ -287,14 +363,14 @@ std::vector<const SimpleTree::Data*> SimpleTree::walk() const {
         todo.pop_back();
 
         if (auto d = std::get_if<SimpleUnaryOp>(next)) {
-            if (count[d->lhs.get()]++ == 0) {
+            if (count[d->lhs.id()]++ == 0) {
                 todo.push_back(d->lhs.get());
             }
         } else if (auto d = std::get_if<SimpleBinaryOp>(next)) {
-            if (count[d->lhs.get()]++ == 0) {
+            if (count[d->lhs.id()]++ == 0) {
                 todo.push_back(d->lhs.get());
             }
-            if (count[d->rhs.get()]++ == 0) {
+            if (count[d->rhs.id()]++ == 0) {
                 todo.push_back(d->rhs.get());
             }
         }
@@ -302,7 +378,7 @@ std::vector<const SimpleTree::Data*> SimpleTree::walk() const {
 
     // Flatten the tree.  This is a heap-allocated recursive
     // descent, to avoid running into stack limitations.
-    todo = {data.get()};
+    todo = {get()};
 
     std::vector<const Data*> flat;
     while (todo.size()) {
@@ -315,14 +391,14 @@ std::vector<const SimpleTree::Data*> SimpleTree::walk() const {
             // parents, since we'll be reversing the order of this tape
             // afterwards, meaning children will be evaluated *before all*
             // of their parents.
-            if (--count.at(d->lhs.get()) == 0) {
+            if (--count.at(d->lhs.id()) == 0) {
                 todo.push_back(d->lhs.get());
             }
         } else if (auto d = std::get_if<SimpleBinaryOp>(next)) {
-            if (--count.at(d->lhs.get()) == 0) {
+            if (--count.at(d->lhs.id()) == 0) {
                 todo.push_back(d->lhs.get());
             }
-            if (--count.at(d->rhs.get()) == 0) {
+            if (--count.at(d->rhs.id()) == 0) {
                 todo.push_back(d->rhs.get());
             }
         }
@@ -340,8 +416,9 @@ SimpleTree SimpleTree::unique() const {
 
     // If a specific tree should be remapped, that fact is stored here
     // These remap pointers can point either into the existing tree or
-    // to shared_ptrs in the new_ptrs list below
-    std::unordered_map<const Data*, const Data*> remap;
+    // to shared_ptrs in the new_ptrs list below, so we store the bare
+    // pointer and use shared_from_this to rehydrate it.
+    std::unordered_map<const void*, const Data*> remap;
 
     // The canonical tree for each Key is stored here
     std::map<Data::Key, const Data*> canonical;
@@ -384,21 +461,24 @@ SimpleTree SimpleTree::unique() const {
             canonical.insert(k_itr, {key, t});
         } else {
             // We need make a new canonical tree, using remapped arguments
-            auto out = std::make_shared<Data>(*t);
-            if (auto d = std::get_if<SimpleUnaryOp>(out.get())) {
-                auto itr = remap.find(d->lhs.get());
-                if (itr != remap.end()) {
-                    d->lhs = itr->second->shared_from_this();
-                }
-            } else if (auto d = std::get_if<SimpleBinaryOp>(out.get())) {
-                auto itr = remap.find(d->lhs.get());
-                if (itr != remap.end()) {
-                    d->lhs = itr->second->shared_from_this();
-                }
-                itr = remap.find(d->rhs.get());
-                if (itr != remap.end()) {
-                    d->rhs = itr->second->shared_from_this();
-                }
+            std::shared_ptr<const Data> out;
+            if (auto d = std::get_if<SimpleUnaryOp>(t)) {
+                auto itr = remap.find(d->lhs.id());
+                assert(itr != remap.end());
+                out = std::make_shared<Data>(SimpleUnaryOp {
+                    d->op, SimpleTree(itr->second->shared_from_this())});
+            } else if (auto d = std::get_if<SimpleBinaryOp>(t)) {
+                auto lhs = remap.find(d->lhs.id());
+                auto rhs = remap.find(d->rhs.id());
+                assert(lhs != remap.end() || rhs != remap.end());
+                out = std::make_shared<Data>(SimpleBinaryOp {
+                    d->op,
+                    (lhs == remap.end())
+                        ? d->lhs
+                        : SimpleTree(lhs->second->shared_from_this()),
+                    (rhs == remap.end())
+                        ? d->rhs
+                        : SimpleTree(rhs->second->shared_from_this()) });
             }
             // TODO: handle identities, e.g. min(a, a) => a
             // or a * a => square(a), which have only been proven now
@@ -414,17 +494,17 @@ SimpleTree SimpleTree::unique() const {
         }
     }
 
-    auto itr = remap.find(data.get());
+    auto itr = remap.find(get());
     return (itr == remap.end())
         ? *this
         : SimpleTree(itr->second->shared_from_this());
 }
 
 size_t SimpleTree::size() const {
-    std::unordered_set<const Data*> seen;
+    std::unordered_set<const void*> seen;
     size_t count = 0;
 
-    std::vector<const Data*> todo = {data.get()};
+    std::vector<const Data*> todo = {get()};
     // Count how many branches reach to a given node.
     // This matters when flattening, since we're doing a topological sort
     while (todo.size()) {
@@ -445,184 +525,18 @@ size_t SimpleTree::size() const {
     return count;
 }
 
-SimpleTree SimpleTree::lhs() const {
-    const auto ptr = data->lhs();
-    return ptr ? SimpleTree(ptr->shared_from_this()) : invalid();
-}
-
-SimpleTree SimpleTree::rhs() const {
-    const auto ptr = data->rhs();
-    return ptr ? SimpleTree(ptr->shared_from_this()) : invalid();
-}
-
-}   // namespace libfive
-
 ////////////////////////////////////////////////////////////////////////////////
-
-using namespace libfive;
 
 // Mass-produce definitions for overloaded operations
-#define OP_UNARY(name, opcode) \
-SimpleTree name(const SimpleTree& a) {                    \
-    return SimpleTree(std::make_shared<SimpleTree::Data>( \
-        SimpleUnaryOp {                                   \
-            opcode,                                       \
-            a.data }));                                   \
+#define OP_UNARY(name, opcode)                                      \
+SimpleTree name(const SimpleTree& lhs) {                            \
+    return SimpleTree::unary(Opcode::opcode, lhs);                  \
 }
-OP_UNARY(square,    Opcode::OP_SQUARE)
-OP_UNARY(sqrt,      Opcode::OP_SQRT)
-OP_UNARY(sin,       Opcode::OP_SIN)
-OP_UNARY(cos,       Opcode::OP_COS)
-OP_UNARY(tan,       Opcode::OP_TAN)
-OP_UNARY(asin,      Opcode::OP_ASIN)
-OP_UNARY(acos,      Opcode::OP_ACOS)
-OP_UNARY(atan,      Opcode::OP_ATAN)
-OP_UNARY(log,       Opcode::OP_LOG)
-OP_UNARY(exp,       Opcode::OP_EXP)
-#undef OP_UNARY
-
-#define OP_BINARY(name, opcode)                             \
-SimpleTree name(const SimpleTree& a, const SimpleTree& b) { \
-    return SimpleTree(std::make_shared<SimpleTree::Data>(   \
-        SimpleBinaryOp {                                    \
-            opcode, a.data, b.data }));                     \
+#define OP_BINARY(name, opcode)                                     \
+SimpleTree name(const SimpleTree& lhs, const SimpleTree& rhs) {     \
+    return SimpleTree::binary(Opcode::opcode, lhs, rhs);            \
 }
-OP_BINARY(atan2,        Opcode::OP_ATAN2)
-OP_BINARY(mod,          Opcode::OP_MOD)
-OP_BINARY(nanfill,      Opcode::OP_NANFILL)
-OP_BINARY(compare,      Opcode::OP_COMPARE)
-#undef OP_BINARY
-
-////////////////////////////////////////////////////////////////////////////////
-// Special-casing for arithmetic identities goes here
-SimpleTree abs(const SimpleTree& a) {
-    if (a.op() == Opcode::OP_ABS) {
-        return a;
-    }
-    return SimpleTree(std::make_shared<SimpleTree::Data>(
-        SimpleUnaryOp {
-        Opcode::OP_ABS,
-            a.data }));
-}
-
-SimpleTree SimpleTree::operator-() const {
-    if (op() == Opcode::OP_NEG) {
-        // Double-negative returns the original value
-        return SimpleTree(lhs());
-    }
-    return SimpleTree(std::make_shared<SimpleTree::Data>(
-        SimpleUnaryOp {
-            Opcode::OP_NEG, data }));
-}
-
-SimpleTree operator+(const SimpleTree& a, const SimpleTree& b) {
-    using namespace libfive;
-    if (a.op() == Opcode::CONSTANT && a.value() == 0.0f) {
-        return b;
-    } else if (b.op() == Opcode::CONSTANT && b.value() == 0.0f) {
-        return a;
-    } else if (b.op() == Opcode::OP_NEG) {
-        return a - b.lhs();
-    } else if (a.op() == Opcode::OP_NEG) {
-        return b - a.lhs();
-    }
-    return SimpleTree(std::make_shared<SimpleTree::Data>(
-        SimpleBinaryOp {
-        Opcode::OP_ADD, a.data, b.data }));
-}
-
-SimpleTree operator-(const SimpleTree& a, const SimpleTree& b) {
-    using namespace libfive;
-    if (a.op() == Opcode::CONSTANT && a.value() == 0.0f) {
-        return -b;
-    } else if (b.op() == Opcode::CONSTANT && b.value() == 0.0f) {
-        return a;
-    } else if (b.op() == Opcode::OP_NEG) {
-        return a + b.lhs();
-    }
-    return SimpleTree(std::make_shared<SimpleTree::Data>(
-        SimpleBinaryOp {
-        Opcode::OP_SUB, a.data, b.data }));
-}
-
-SimpleTree operator*(const SimpleTree& a, const SimpleTree& b) {
-    using namespace libfive;
-    if (a.op() == Opcode::CONSTANT) {
-        if (a.value() == 0) {
-            return a;
-        } else if (a.value() == 1) {
-            return b;
-        } else if (a.value() == -1) {
-            return -b;
-        }
-    } else if (b.op() == Opcode::CONSTANT) {
-        if (b.value() == 0) {
-            return b;
-        } else if (b.value() == 1) {
-            return a;
-        } else if (b.value() == -1) {
-            return -a;
-        }
-    } else if (a.data.get() == b.data.get()) {
-        return square(a);
-    }
-    return SimpleTree(std::make_shared<SimpleTree::Data>(
-        SimpleBinaryOp {
-        Opcode::OP_MUL, a.data, b.data }));
-}
-
-SimpleTree nth_root(const SimpleTree& a, const SimpleTree& b) {
-    using namespace libfive;
-    if (b.op() == Opcode::CONSTANT && b.value() == 1.0f) {
-        return a;
-    }
-    return SimpleTree(std::make_shared<SimpleTree::Data>(
-        SimpleBinaryOp {
-        Opcode::OP_NTH_ROOT, a.data, b.data }));
-}
-
-SimpleTree pow(const SimpleTree& a, const SimpleTree& b) {
-    using namespace libfive;
-    if (b.op() == Opcode::CONSTANT && b.value() == 1.0f) {
-        return a;
-    }
-    return SimpleTree(std::make_shared<SimpleTree::Data>(
-        SimpleBinaryOp {
-        Opcode::OP_POW, a.data, b.data }));
-}
-
-SimpleTree min(const SimpleTree& a, const SimpleTree& b)
-{
-    using namespace libfive;
-    if (a.data.get() == b.data.get()) {
-        return a;
-    }
-    return SimpleTree(std::make_shared<SimpleTree::Data>(
-        SimpleBinaryOp {
-        Opcode::OP_MIN, a.data, b.data }));
-}
-
-SimpleTree max(const SimpleTree& a, const SimpleTree& b)
-{
-    using namespace libfive;
-    if (a.data.get() == b.data.get()) {
-        return a;
-    }
-    return SimpleTree(std::make_shared<SimpleTree::Data>(
-        SimpleBinaryOp {
-        Opcode::OP_MAX, a.data, b.data }));
-}
-
-SimpleTree operator/(const SimpleTree& a, const SimpleTree& b)
-{
-    using namespace libfive;
-    if (b.op() == Opcode::CONSTANT && b.value() == 1.0f) {
-        return a;
-    }
-    return SimpleTree(std::make_shared<SimpleTree::Data>(
-        SimpleBinaryOp {
-        Opcode::OP_DIV, a.data, b.data }));
-}
+SIMPLE_TREE_OPERATORS
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -630,3 +544,5 @@ std::ostream& operator<<(std::ostream& stream, const SimpleTree& tree)
 {
     return tree.print_prefix(stream);
 }
+
+}   // namespace libfive
