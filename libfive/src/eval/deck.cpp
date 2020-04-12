@@ -118,7 +118,7 @@ Deck::Deck(const SimpleUniqueTree& root) {
 
     // Helper function to create a new clause in the data array
     // The dummy clause (0) is mapped to the first result slot
-    std::unordered_map<const void*, Clause::Id> clauses = {{nullptr, 0}};
+    std::unordered_map<SimpleTree::Id, Clause::Id> clauses = {{nullptr, 0}};
     Clause::Id id = flat.size();
 
     tape.reset(new Tape);
@@ -126,7 +126,8 @@ Deck::Deck(const SimpleUniqueTree& root) {
 
     // Write the flattened tree into the tape!
     for (const auto& m : flat) {
-        switch (m->op()) {
+        auto op = m->op();
+        switch (op) {
             case Opcode::CONSTANT:
                 constants[id] = m->value(); break;
             case Opcode::VAR_FREE:
@@ -142,10 +143,9 @@ Deck::Deck(const SimpleUniqueTree& root) {
                 break;
             default:
                 tape->t.push_back(
-                        {m->op(),
-                         id,
-                         clauses.at(m->lhs().id()),
-                         clauses.at(m->rhs().id())});
+                    {op, id,
+                     Opcode::args(op) >= 1 ? clauses.at(m->lhs().id()) : 0,
+                     Opcode::args(op) >= 2 ? clauses.at(m->rhs().id()) : 0});
                 break;
         }
         clauses[m] = id--;

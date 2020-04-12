@@ -187,11 +187,11 @@ std::ostream& SimpleTree::print_prefix(std::ostream& s) const {
                 }
                 ops.push_back(op);
                 if (Opcode::args(op) == 1) {
-                    todo.push_back((**d).lhs_data());
+                    todo.push_back((**d).lhs().get());
                 } else {
-                    todo.push_back((**d).rhs_data());
+                    todo.push_back((**d).rhs().get());
                     todo.push_back(' ');
-                    todo.push_back((**d).lhs_data());
+                    todo.push_back((**d).lhs().get());
                 }
             }
         }
@@ -239,24 +239,6 @@ const SimpleTree& SimpleTreeData::rhs() const {
         return i->rhs;
     } else {
         throw ValueException();
-    }
-}
-
-const SimpleTreeData* SimpleTreeData::lhs_data() const {
-    if (auto i = std::get_if<SimpleUnaryOp>(this)) {
-        return i->lhs.get();
-    } else if (auto i = std::get_if<SimpleBinaryOp>(this)) {
-        return i->lhs.get();
-    } else {
-        return nullptr;
-    }
-}
-
-const SimpleTreeData* SimpleTreeData::rhs_data() const {
-    if (auto i = std::get_if<SimpleBinaryOp>(this)) {
-        return i->rhs.get();
-    } else {
-        return nullptr;
     }
 }
 
@@ -312,7 +294,7 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
     auto flat = walk();
 
     // If a specific tree (by id) should be remapped, that fact is stored here
-    std::unordered_map<const void*, SimpleTree> remap;
+    std::unordered_map<Id, SimpleTree> remap;
 
     for (auto t : flat) {
         std::shared_ptr<const Data> changed;
@@ -354,7 +336,7 @@ SimpleTree SimpleTree::remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const {
 
 std::vector<const SimpleTree::Data*> SimpleTree::walk() const {
     // Store how many times each tree (by id) is referenced
-    std::unordered_map<const void*, unsigned> count;
+    std::unordered_map<Id, unsigned> count;
     std::vector todo = {get()};
     // Count how many branches reach to a given node.
     // This matters when flattening, since we're doing a topological sort
@@ -418,7 +400,7 @@ SimpleTree SimpleTree::unique() const {
     // These remap pointers can point either into the existing tree or
     // to shared_ptrs in the new_ptrs list below, so we store the bare
     // pointer and use shared_from_this to rehydrate it.
-    std::unordered_map<const void*, const Data*> remap;
+    std::unordered_map<Id, const Data*> remap;
 
     // The canonical tree for each Key is stored here
     std::map<Data::Key, const Data*> canonical;
@@ -501,7 +483,7 @@ SimpleTree SimpleTree::unique() const {
 }
 
 size_t SimpleTree::size() const {
-    std::unordered_set<const void*> seen;
+    std::unordered_set<Id> seen;
     size_t count = 0;
 
     std::vector<const Data*> todo = {get()};

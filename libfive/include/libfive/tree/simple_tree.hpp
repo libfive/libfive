@@ -102,7 +102,8 @@ public:
 
     /*  Unique identifier for the underlying clause.  This is not necessarily
      *  deduplicated, unless the tree was constructed using unique(). */
-    const void* id() const { return get(); }
+    using Id = const void*;
+    Id id() const { return get(); }
 
     /*  Performs a deep copy of the tree with any duplicate subtrees merged
      *  to point to the same objects. */
@@ -192,11 +193,6 @@ struct SimpleTreeData : public SimpleTreeDataVariant,
         }
     };
     float value() const;
-
-    /*  Returns left and right-hand subtrees.  If this operation
-     *  is missing one (or both), returns nullptr instead. */
-    const SimpleTreeData* lhs_data() const;
-    const SimpleTreeData* rhs_data() const;
 
     /*  Returns left and right-hand SimpleTree references.
      *  Throws a ChildException if the requested branch is missing. */
