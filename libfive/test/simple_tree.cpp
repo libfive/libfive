@@ -20,10 +20,10 @@ using namespace libfive;
 TEST_CASE("SimpleTree: basic operations")
 {
     auto t = SimpleTree::X() + 1;
-    REQUIRE(t.op() == Opcode::OP_ADD);
-    REQUIRE(t.lhs().op() == Opcode::VAR_X);
-    REQUIRE(t.rhs().op() == Opcode::CONSTANT);
-    REQUIRE(t.rhs().value() == 1);
+    REQUIRE(t->op() == Opcode::OP_ADD);
+    REQUIRE(t->lhs()->op() == Opcode::VAR_X);
+    REQUIRE(t->rhs()->op() == Opcode::CONSTANT);
+    REQUIRE(t->rhs()->value() == 1);
 }
 
 TEST_CASE("SimpleTree::remap()")
@@ -36,22 +36,22 @@ TEST_CASE("SimpleTree::remap()")
     auto z = t.remap(SimpleTree::Z(), SimpleTree::X(), SimpleTree::Y());
 
     // Make sure the original hasn't changed
-    REQUIRE(t.op() == Opcode::OP_ADD);
-    REQUIRE(t.lhs().op() == Opcode::OP_ADD);
-    REQUIRE(t.rhs().op() == Opcode::OP_MUL);
-    REQUIRE(t.rhs().lhs().op() == Opcode::VAR_Y);
-    REQUIRE(t.rhs().rhs().op() == Opcode::CONSTANT);
-    REQUIRE(t.lhs().rhs().lhs().op() == Opcode::VAR_Y);
-    REQUIRE(t.lhs().rhs().rhs().op() == Opcode::CONSTANT);
+    REQUIRE(t->op() == Opcode::OP_ADD);
+    REQUIRE(t->lhs()->op() == Opcode::OP_ADD);
+    REQUIRE(t->rhs()->op() == Opcode::OP_MUL);
+    REQUIRE(t->rhs()->lhs()->op() == Opcode::VAR_Y);
+    REQUIRE(t->rhs()->rhs()->op() == Opcode::CONSTANT);
+    REQUIRE(t->lhs()->rhs()->lhs()->op() == Opcode::VAR_Y);
+    REQUIRE(t->lhs()->rhs()->rhs()->op() == Opcode::CONSTANT);
 
     // Check that the remapping went through
-    REQUIRE(z.op() == Opcode::OP_ADD);
-    REQUIRE(z.lhs().op() == Opcode::OP_ADD);
-    REQUIRE(z.rhs().op() == Opcode::OP_MUL);
-    REQUIRE(z.rhs().lhs().op() == Opcode::VAR_X);
-    REQUIRE(z.rhs().rhs().op() == Opcode::CONSTANT);
-    REQUIRE(z.lhs().rhs().lhs().op() == Opcode::VAR_X);
-    REQUIRE(z.lhs().rhs().rhs().op() == Opcode::CONSTANT);
+    REQUIRE(z->op() == Opcode::OP_ADD);
+    REQUIRE(z->lhs()->op() == Opcode::OP_ADD);
+    REQUIRE(z->rhs()->op() == Opcode::OP_MUL);
+    REQUIRE(z->rhs()->lhs()->op() == Opcode::VAR_X);
+    REQUIRE(z->rhs()->rhs()->op() == Opcode::CONSTANT);
+    REQUIRE(z->lhs()->rhs()->lhs()->op() == Opcode::VAR_X);
+    REQUIRE(z->lhs()->rhs()->rhs()->op() == Opcode::CONSTANT);
 
     auto f = SimpleTree::X();
     f = f * 2 + f * 3 + f;

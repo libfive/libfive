@@ -12,40 +12,43 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/opcode.hpp"
 
+// Forward declarations
 namespace libfive {
     class SimpleTree;
+    struct SimpleTreeData;
     class Oracle;
-}
+    class OracleClause;
 
 #define SIMPLE_TREE_OPERATORS \
-OP_UNARY(square) \
-OP_UNARY(sqrt) \
-OP_UNARY(abs) \
-OP_UNARY(sin) \
-OP_UNARY(cos) \
-OP_UNARY(tan) \
-OP_UNARY(asin) \
-OP_UNARY(acos) \
-OP_UNARY(atan) \
-OP_UNARY(log) \
-OP_UNARY(exp) \
-OP_BINARY(operator+) \
-OP_BINARY(operator*) \
-OP_BINARY(min) \
-OP_BINARY(max) \
-OP_BINARY(operator-) \
-OP_BINARY(operator/) \
-OP_BINARY(atan2) \
-OP_BINARY(pow) \
-OP_BINARY(nth_root) \
-OP_BINARY(mod) \
-OP_BINARY(nanfill) \
-OP_BINARY(compare)
+OP_UNARY(square, OP_SQUARE) \
+OP_UNARY(sqrt, OP_SQRT) \
+OP_UNARY(abs, OP_ABS) \
+OP_UNARY(operator-, OP_NEG) \
+OP_UNARY(sin, OP_SIN) \
+OP_UNARY(cos, OP_COS) \
+OP_UNARY(tan, OP_TAN) \
+OP_UNARY(asin, OP_ASIN) \
+OP_UNARY(acos, OP_ACOS) \
+OP_UNARY(atan, OP_ATAN) \
+OP_UNARY(log, OP_LOG) \
+OP_UNARY(exp, OP_EXP) \
+OP_BINARY(operator+, OP_ADD) \
+OP_BINARY(operator*, OP_MUL) \
+OP_BINARY(min, OP_MIN) \
+OP_BINARY(max, OP_MAX) \
+OP_BINARY(operator-, OP_SUB) \
+OP_BINARY(operator/, OP_DIV) \
+OP_BINARY(atan2, OP_ATAN2) \
+OP_BINARY(pow, OP_POW) \
+OP_BINARY(nth_root, OP_NTH_ROOT) \
+OP_BINARY(mod, OP_MOD) \
+OP_BINARY(nanfill, OP_NANFILL) \
+OP_BINARY(compare, OP_COMPARE)
 
 // Mass-produce declarations for overloaded operations
-#define OP_UNARY(OP)    libfive::SimpleTree OP(const libfive::SimpleTree& a);
-#define OP_BINARY(OP)   libfive::SimpleTree OP(const libfive::SimpleTree& a, \
-                                               const libfive::SimpleTree& b);
+#define OP_UNARY(OP, C)    libfive::SimpleTree OP(const libfive::SimpleTree& a);
+#define OP_BINARY(OP, C)   libfive::SimpleTree OP(const libfive::SimpleTree& a,\
+                                                  const libfive::SimpleTree& b);
 SIMPLE_TREE_OPERATORS
 #undef OP_UNARY
 #undef OP_BINARY
@@ -53,24 +56,103 @@ SIMPLE_TREE_OPERATORS
 /*  Prints the tree to the given ostream. */
 std::ostream& operator<<(std::ostream& stream, const libfive::SimpleTree& tree);
 
-namespace libfive {
+////////////////////////////////////////////////////////////////////////////////
 
-// Forward declaration
-class OracleClause;
-class SimpleTree;
-struct SimpleTreeData;
+/*
+ *  A SimpleTree represents a tree of math expressions
+ *
+ *  It is a data object (passed around by value), which is a zero-cost wrapper
+ *  around a shared_ptr<SimpleTreeData>
+ */
+class SimpleTree : public std::shared_ptr<const SimpleTreeData> {
+public:
+    using Data = SimpleTreeData;
+
+    // These are the main constructors used to build SimpleTrees in code
+    // X, Y, and Z are singletons, since they're used a lot
+    static SimpleTree X();
+    static SimpleTree Y();
+    static SimpleTree Z();
+
+    //  Returns a new unique variable
+    static SimpleTree var();
+
+    //  Returns a version of this tree wrapped in the CONST_VAR opcode,
+    //  which zeroes out partial derivatives with respect to all variables.
+    SimpleTree with_const_vars() const;
+
+    // Construct a unary SimpleTree
+    // If the operation is idempotent, e.g. abs(abs(...)),
+    // returns the previous value.
+    static SimpleTree unary(Opcode::Opcode op, const SimpleTree& lhs);
+
+    // Constructs a binary-operation SimpleTree, simplifying arithmetic
+    // identities as needed.
+    static SimpleTree binary(Opcode::Opcode op,
+                             const SimpleTree& lhs,
+                             const SimpleTree& rhs);
+
+    // Constructs a constant SimpleTree with a floating-point value
+    SimpleTree(float v);
+
+    // Constructs a SimpleTree from an OracleClause
+    explicit SimpleTree(const std::shared_ptr<OracleClause>& oracle);
+
+    bool is_valid() const;
+
+    /*  Unique identifier for the underlying clause.  This is not necessarily
+     *  deduplicated, unless the tree was constructed using unique(). */
+    const void* id() const { return get(); }
+
+    /*  Performs a deep copy of the tree with any duplicate subtrees merged
+     *  to point to the same objects. */
+    SimpleTree unique() const;
+
+    /*  Checks the number of unique nodes in the tree */
+    size_t size() const;
+
+    /*  Remaps the coordinates of this tree, returning a new tree.  */
+    SimpleTree remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const;
+
+    /*  Serializes the tree to a stream of bytes */
+    void serialize(std::ostream& out) const;
+
+    /*  Attempts to deserialize from a stream of bytes.
+     *  Returns invalid() on failure. */
+    static SimpleTree deserialize(std::istream& in);
+
+    std::vector<const Data*> walk() const;
+
+protected:
+    // Private constructor to build from the raw variant type
+    explicit SimpleTree(std::shared_ptr<const Data> d);
+
+    std::ostream& print_prefix(std::ostream& stream) const;
+
+    static SimpleTree invalid();
+
+#define OP_UNARY(OP, C)  friend SimpleTree OP(const SimpleTree&);
+#define OP_BINARY(OP, C) friend SimpleTree OP(const SimpleTree&,    \
+                                              const SimpleTree&);
+SIMPLE_TREE_OPERATORS
+#undef OP_UNARY
+#undef OP_BINARY
+    friend struct SimpleTreeData;
+    friend std::ostream& operator<<(std::ostream& stream,
+                                    const libfive::SimpleTree& tree);
+};
 
 struct SimpleNonaryOp {
     Opcode::Opcode op;
 };
 struct SimpleUnaryOp {
     Opcode::Opcode op;
-    std::shared_ptr<const SimpleTreeData> lhs;
+    SimpleTree lhs;
 };
 struct SimpleBinaryOp {
     Opcode::Opcode op;
-    std::shared_ptr<const SimpleTreeData> lhs;
-    std::shared_ptr<const SimpleTreeData> rhs;
+    SimpleTree lhs;
+    SimpleTree rhs;
 };
 struct SimpleConstant {
     float value;
@@ -113,12 +195,23 @@ struct SimpleTreeData : public SimpleTreeDataVariant,
 
     /*  Returns left and right-hand subtrees.  If this operation
      *  is missing one (or both), returns nullptr instead. */
-    const SimpleTreeData* lhs() const;
-    const SimpleTreeData* rhs() const;
+    const SimpleTreeData* lhs_data() const;
+    const SimpleTreeData* rhs_data() const;
+
+    /*  Returns left and right-hand SimpleTree references.
+     *  Throws a ChildException if the requested branch is missing. */
+    struct ChildException : public std::exception {
+        const char* what() const throw () {
+            return "Accessed missing child";
+        }
+    };
+    const SimpleTree& lhs() const;
+    const SimpleTree& rhs() const;
 
     /*  Returns the underlying OracleClause.  If this isn't a SimpleOracle,
      *  throws an OracleException. */
-    const OracleClause* oracle_clause() const;
+    const OracleClause& oracle_clause() const;
+
     /*  Returns a freshly-baked Oracle from the given clause.
      *  If this isn't a SimpleOracle, throws an exception. */
     std::unique_ptr<Oracle> build_oracle() const;
@@ -140,106 +233,6 @@ struct SimpleTreeData : public SimpleTreeDataVariant,
         BinaryKey>;
 
     Key key() const;
-};
-
-/*
- *  A SimpleTree represents a tree of math expressions
- *
- *  It is a data object (passed around by value)
- */
-class SimpleTree
-{
-public:
-    using Data = SimpleTreeData;
-
-    // These are the main constructors used to build SimpleTrees in code
-    static SimpleTree X();
-    static SimpleTree Y();
-    static SimpleTree Z();
-
-    //  Returns a new unique variable
-    static SimpleTree var();
-
-    //  Returns a version of this tree wrapped in the CONST_VAR opcode,
-    //  which zeroes out partial derivatives with respect to all variables.
-    SimpleTree with_const_vars() const;
-
-    // Constructors from opcodes, etc.
-    // These will return invalid() if the opcode doesn't match the number
-    // of arguments (or you do something else silly, like making an ORACLE
-    // opcode using this constructor).
-    explicit SimpleTree(Opcode::Opcode op);
-    explicit SimpleTree(Opcode::Opcode op, const SimpleTree& lhs);
-    explicit SimpleTree(Opcode::Opcode op,
-                        const SimpleTree& lhs,
-                        const SimpleTree& rhs);
-    explicit SimpleTree(const std::shared_ptr<OracleClause>& oracle);
-
-    SimpleTree(float v);
-
-    // Secondary constructor to build from the raw variant type
-    explicit SimpleTree(std::shared_ptr<const Data> d);
-
-    /*  Overloaded operator */
-    SimpleTree operator-() const;
-
-    /*  Looks up the opcode, returning Opcode::INVALID if its invalid */
-    Opcode::Opcode op() const { return data->op(); }
-
-    /*  Unique identifier for the underlying clause.  This is not necessarily
-     *  deduplicated, unless the tree was constructed using unique(). */
-    const void* id() const { return data.get(); }
-
-    /*  lhs and rhs return an invalid SimpleTree if not present */
-    SimpleTree lhs() const;
-    SimpleTree rhs() const;
-
-    /*  value() returns the constant if this is a constant, and throws
-     *  a SimpleTreeData::Exception otherwise.  This matches the behavior of
-     *  std::get if you get an incorrect variant. */
-    float value() const { return data->value(); }
-
-    /*  Checks whether this SimpleTree is valid. */
-    bool is_valid() const;
-
-    /*  Performs a deep copy of the tree, so that it can be modified without
-     *  changing the original. */
-    SimpleTree clone() const;
-
-    /*  Performs a deep copy of the tree with any duplicate subtrees merged
-     *  to point to the same objects. */
-    SimpleTree unique() const;
-
-    /*  Checks the number of unique nodes in the tree */
-    size_t size() const;
-
-    /*  Remaps the coordinates of this tree, returning a new tree.  */
-    SimpleTree remap(SimpleTree X, SimpleTree Y, SimpleTree Z) const;
-
-    /*  Serializes the tree to a stream of bytes */
-    void serialize(std::ostream& out) const;
-
-    /*  Attempts to deserialize from a stream of bytes.
-     *  Returns invalid() on failure. */
-    static SimpleTree deserialize(std::istream& in);
-
-    std::vector<const Data*> walk() const;
-
-protected:
-    std::ostream& print_prefix(std::ostream& stream) const;
-
-    static SimpleTree invalid();
-    std::shared_ptr<const Data> data;
-
-#define OP_UNARY(OP)  friend SimpleTree (::OP(const SimpleTree&));
-#define OP_BINARY(OP) friend SimpleTree (::OP(const SimpleTree&, \
-                                              const SimpleTree&));
-SIMPLE_TREE_OPERATORS
-#undef OP_UNARY
-#undef OP_BINARY
-
-    friend std::ostream& (::operator<<(std::ostream& stream,
-                                       const libfive::SimpleTree& tree));
 };
 
 /*

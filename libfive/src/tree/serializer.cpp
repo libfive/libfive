@@ -127,7 +127,7 @@ void Serializer::serializeSimpleTree(const SimpleTree& t) {
         const auto op = n->op();
         if (op == Opcode::ORACLE) {
             assert(n->oracle.get() != nullptr);
-            for (auto& d : n->oracle_clause()->dependencies()) {
+            for (auto& d : n->oracle_clause().dependencies()) {
                 serializeTree(d);
             }
         }
@@ -140,15 +140,16 @@ void Serializer::serializeSimpleTree(const SimpleTree& t) {
                 serializeBytes(n->value());
                 break;
             case Opcode::ORACLE: {
-                auto o = n->oracle_clause();
-                serializeString(o->name());
-                OracleClause::serialize(o->name(), o, *this);
+                const auto& o = n->oracle_clause();
+                serializeString(o.name());
+                OracleClause::serialize(o.name(), &o, *this);
                 break;
             }
             default:
                 switch (Opcode::args(op)) {
-                    case 2:  serializeBytes(ids.at(n->rhs())); // fallthrough
-                    case 1:  serializeBytes(ids.at(n->lhs())); // fallthrough
+                    // Fall all the way through!
+                    case 2:  serializeBytes(ids.at(n->rhs().id()));
+                    case 1:  serializeBytes(ids.at(n->lhs().id()));
                     default: break;
                 }
                 break;
