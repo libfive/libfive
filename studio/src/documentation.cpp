@@ -131,7 +131,7 @@ DocumentationPane::DocumentationPane()
         QFontMetrics fm(txt->font());
         for (auto line : txt->toPlainText().split("\n"))
         {
-            max_width = std::max(max_width, fm.horizontalAdvance(line));
+            max_width = std::max(max_width, fm.width(line));
         }
         txt->setMinimumWidth(max_width + 40);
     }
