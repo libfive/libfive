@@ -162,10 +162,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (export cylinder-z)
 (define-public cylinder cylinder-z)
 
+(define* (cone-ang-z a height #:optional (base #[0 0 0]))
+  "cone-ang-z a height [#[x y z]]
+  Creates a cone from a radius, slope angle, and optional base location"
+  (sequence
+    (lambda-shape (x y z)
+      (max
+        (dot #[(cos a) (sin a)] #[(norm #[x y]) (- z height)])
+        (- z)
+      )
+    )
+    (move base)
+  )
+)
+(export cone-ang-z)
+(define-public cone-ang cone-ang-z)
+
 (define* (cone-z r height #:optional (base #[0 0 0]))
   "cone-z r height [#[x y z]]
   Creates a cone from a radius, height, and optional base location"
-  (taper-xy-z (cylinder-z r height base) base height 0))
+  (cone-ang-z (atan r height) height base))
 (export cone-z)
 (define-public cone cone-z)
 
