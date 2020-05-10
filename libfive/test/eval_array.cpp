@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "catch.hpp"
 
-#include "libfive/tree/tree.hpp"
+#include "libfive/tree/simple_tree.hpp"
 #include "libfive/eval/eval_array.hpp"
 
 using namespace libfive;
@@ -20,32 +20,32 @@ TEST_CASE("ArrayEvaluator::eval")
 {
     SECTION("X")
     {
-        ArrayEvaluator e(Tree::X());
+        ArrayEvaluator e(SimpleTree::X());
         REQUIRE(e.value({1.0, 2.0, 3.0}) == 1.0);
     }
 
     SECTION("Y")
     {
-        ArrayEvaluator e(Tree::Y());
+        ArrayEvaluator e(SimpleTree::Y());
         REQUIRE(e.value({1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("Constant")
     {
-        ArrayEvaluator e(Tree(3.14));
+        ArrayEvaluator e(SimpleTree(3.14));
         REQUIRE(e.value({1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
     SECTION("Secondary variable")
     {
-        auto v = Tree::var();
+        auto v = SimpleTree::var();
         ArrayEvaluator e(v, {{v.id(), 3.14}});
         REQUIRE(e.value({1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
     SECTION("Constant + variable")
     {
-        auto v = Tree::var();
+        auto v = SimpleTree::var();
         ArrayEvaluator e(v + 1.0, {{v.id(), 3.14}});
         REQUIRE(e.value({1.0, 2.0, 3.0}) == Approx(4.14));
     }
@@ -53,9 +53,9 @@ TEST_CASE("ArrayEvaluator::eval")
     SECTION("Multiple variables")
     {
         // Deliberately construct out of order
-        auto a = Tree::var();
-        auto c = Tree::var();
-        auto b = Tree::var();
+        auto a = SimpleTree::var();
+        auto c = SimpleTree::var();
+        auto b = SimpleTree::var();
 
         ArrayEvaluator e(a*1 + b*2 + c*3,
                 {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
@@ -65,19 +65,19 @@ TEST_CASE("ArrayEvaluator::eval")
 
     SECTION("X + 1")
     {
-        ArrayEvaluator e(Tree::X() + 1);
+        ArrayEvaluator e(SimpleTree::X() + 1);
         REQUIRE(e.value({1.0, 2.0, 3.0}) == 2.0);
     }
 
     SECTION("X + Z")
     {
-        ArrayEvaluator e(Tree::X() + Tree::Z());
+        ArrayEvaluator e(SimpleTree::X() + SimpleTree::Z());
         REQUIRE(e.value({1.0, 2.0, 3.0}) == 4.0);
     }
 
     SECTION("nth-root")
     {
-        ArrayEvaluator e(nth_root(Tree::X(), 3));
+        ArrayEvaluator e(nth_root(SimpleTree::X(), 3));
         REQUIRE(e.value({-0.5, 0.0, 0.0}) == Approx(-0.7937));
     }
 
@@ -86,8 +86,9 @@ TEST_CASE("ArrayEvaluator::eval")
         for (unsigned i=7; i < libfive::Opcode::ORACLE; ++i)
         {
             auto op = (libfive::Opcode::Opcode)i;
-            Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
-                                            : Tree(op, Tree::X()));
+            SimpleTree t = (Opcode::args(op) == 2
+                    ? SimpleTree::binary(op, SimpleTree::X(), 5)
+                    : SimpleTree::unary(op, SimpleTree::X()));
             ArrayEvaluator e(t);
             e.value({0, 0, 0});
             REQUIRE(true /* No crash! */ );
@@ -96,7 +97,7 @@ TEST_CASE("ArrayEvaluator::eval")
 
     SECTION("Behavior of mod operator")
     {
-        ArrayEvaluator e(mod(Tree::X(), Tree::Y()));
+        ArrayEvaluator e(mod(SimpleTree::X(), SimpleTree::Y()));
         REQUIRE(e.value({1.1, 1.0, 0.0}) == Approx(0.1));
         REQUIRE(e.value({-1.1, 1.0, 0.0}) == Approx(0.9));
         REQUIRE(e.value({-1.1, 1.1, 0.0}) == Approx(0.0));
@@ -123,7 +124,7 @@ TEST_CASE("ArrayEvaluator::eval")
             auto op = (libfive::Opcode::Opcode)i;
             CAPTURE(Opcode::toString(op));
             if (Opcode::args(op) == 1) {
-                Tree t = Tree(op, Tree::X());
+                SimpleTree t = SimpleTree::unary(op, SimpleTree::X());
                 ArrayEvaluator e(t);
                 for (auto p : pts) {
                     CAPTURE(p);
@@ -144,7 +145,7 @@ TEST_CASE("ArrayEvaluator::eval")
                 if (op == Opcode::OP_POW || op == Opcode::OP_NTH_ROOT) {
                     continue;
                 }
-                Tree t = Tree(op, Tree::X(), Tree::Y());
+                SimpleTree t = SimpleTree::binary(op, SimpleTree::X(), SimpleTree::Y());
                 ArrayEvaluator e(t);
 
                 for (auto p : pts) {
@@ -176,9 +177,9 @@ TEST_CASE("ArrayEvaluator::eval")
 TEST_CASE("ArrayEvaluator::setVar")
 {
     // Deliberately construct out of order
-    auto a = Tree::var();
-    auto c = Tree::var();
-    auto b = Tree::var();
+    auto a = SimpleTree::var();
+    auto c = SimpleTree::var();
+    auto b = SimpleTree::var();
 
     ArrayEvaluator e(a*1 + b*2 + c*3, {{a.id(), 3}, {c.id(), 7}, {b.id(), 5}});
     REQUIRE(e.value({0, 0, 0}) == Approx(34));
@@ -193,7 +194,7 @@ TEST_CASE("ArrayEvaluator::setVar")
 
 TEST_CASE("ArrayEvaluator::getAmbiguous")
 {
-    ArrayEvaluator e(min(Tree::X(), -Tree::X()));
+    ArrayEvaluator e(min(SimpleTree::X(), -SimpleTree::X()));
     e.set({0, 0, 0}, 0);
     e.set({1, 0, 0}, 1);
     e.set({2, 0, 0}, 2);
@@ -213,7 +214,7 @@ TEST_CASE("ArrayEvaluator::getAmbiguous")
 
 TEST_CASE("ArrayEvaluator::values (returned size)")
 {
-    ArrayEvaluator e(min(Tree::X(), -Tree::X()));
+    ArrayEvaluator e(min(SimpleTree::X(), -SimpleTree::X()));
     e.set({0, 0, 0}, 0);
     e.set({1, 0, 0}, 1);
     e.set({2, 0, 0}, 2);
@@ -224,7 +225,7 @@ TEST_CASE("ArrayEvaluator::values (returned size)")
 
 TEST_CASE("ArrayEvaluator::valueAndPush")
 {
-    ArrayEvaluator e(min(Tree::X(), Tree::Y()));
+    ArrayEvaluator e(min(SimpleTree::X(), SimpleTree::Y()));
 
     {
         auto h = e.valueAndPush({-1, 0, 0}); // specialize to just "X"
