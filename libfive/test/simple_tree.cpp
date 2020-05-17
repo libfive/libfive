@@ -83,23 +83,33 @@ TEST_CASE("SimpleTree::size()")
 
 TEST_CASE("SimpleTree::unique()")
 {
-    auto x = SimpleTree::X();
-    auto y = SimpleTree::Y();
+    SECTION("Basic") {
+        auto x = SimpleTree::X();
+        auto y = SimpleTree::Y();
 
-    auto a = x + y;
-    auto b = x + y;
+        auto a = x + y;
+        auto b = x + y;
 
-    auto z = a * b;
-    REQUIRE(z.size() == 5);
+        auto z = a * b;
+        REQUIRE(z.size() == 5);
 
-    auto q = z.unique();
-    REQUIRE(q.size() == 4);
+        auto q = z.unique();
+        REQUIRE(q.size() == 4);
 
-    auto f = a * b + (a * 2);
-    REQUIRE(f.size() == 8);
+        auto f = a * b + (a * 2);
+        REQUIRE(f.size() == 8);
 
-    auto g = f.unique();
-    REQUIRE(g.size() == 7);
+        auto g = f.unique();
+        REQUIRE(g.size() == 7);
+    }
+    SECTION("With vars") {
+        auto a = SimpleTree::var();
+        auto c = SimpleTree::var();
+        auto b = SimpleTree::var();
+
+        auto t = (a*1 + b*2 + c*3).unique();
+        REQUIRE(t.walk().size() == 9);
+    }
 }
 
 
