@@ -280,7 +280,11 @@ SimpleTreeData::Key SimpleTreeData::key() const {
             return Key(d->value);
         }
     } else if (auto d = std::get_if<SimpleNonaryOp>(this)) {
-        return Key(d->op);
+        if (d->op == Opcode::VAR_FREE) {
+            return Key(std::make_tuple(d->op, this));
+        } else {
+            return Key(d->op);
+        }
     } else if (auto d = std::get_if<SimpleUnaryOp>(this)) {
         return Key(std::make_tuple(d->op, d->lhs.get()));
     } else if (auto d = std::get_if<SimpleBinaryOp>(this)) {
