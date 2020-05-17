@@ -1,4 +1,3 @@
-#include <iostream>
 /*
 libfive: a CAD kernel for modeling with implicit functions
 
@@ -14,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <unordered_set>
 
 #include "libfive/tree/simple_tree.hpp"
+#include "libfive/tree/archive.hpp"
 #include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/oracle/oracle.hpp"
 
@@ -200,8 +200,7 @@ std::ostream& SimpleTree::print_prefix(std::ostream& s) const {
 }
 
 void SimpleTree::serialize(std::ostream& out) const {
-    // TODO
-    out << "HI";
+    return Archive(*this).serialize(out);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
