@@ -121,10 +121,10 @@ Deck::Deck(const SimpleUniqueTree& root) {
     std::unordered_map<SimpleTree::Id, Clause::Id> clauses = {{nullptr, 0}};
     Clause::Id id = flat.size();
 
-    tape.reset(new Tape);
-    tape->type = Tape::BASE;
-
     // Write the flattened tree into the tape!
+    // It's reversed in this pass, then flipped when writing to tape->t below
+    std::vector<Clause> rev;
+    rev.reserve(flat.size());
     for (const auto& m : flat) {
         auto op = m->op();
         switch (op) {
@@ -133,7 +133,7 @@ Deck::Deck(const SimpleUniqueTree& root) {
             case Opcode::VAR_FREE:
                 vars.left.insert({id, m}); break;
             case Opcode::ORACLE:
-                tape->t.push_back({Opcode::ORACLE, id,
+                rev.push_back({Opcode::ORACLE, id,
                     static_cast<unsigned int>(oracles.size()), 0});
                 oracles.push_back(m->build_oracle());
                 break;
@@ -142,7 +142,7 @@ Deck::Deck(const SimpleUniqueTree& root) {
             case Opcode::VAR_Z:
                 break;
             default:
-                tape->t.push_back(
+                rev.push_back(
                     {op, id,
                      Opcode::args(op) >= 1 ? clauses.at(m->lhs().id()) : 0,
                      Opcode::args(op) >= 2 ? clauses.at(m->rhs().id()) : 0});
@@ -151,6 +151,13 @@ Deck::Deck(const SimpleUniqueTree& root) {
         clauses[m] = id--;
     }
     assert(id == 0);
+
+    tape.reset(new Tape);
+    tape->type = Tape::BASE;
+    tape->t.reserve(rev.size());
+    for (auto itr = rev.rbegin(); itr != rev.rend(); ++itr) {
+        tape->t.push_back(*itr);
+    }
 
     // Make sure that X, Y, Z have been allocated space
     SimpleTree axes[3] = {SimpleTree::X(), SimpleTree::Y(), SimpleTree::Z()};

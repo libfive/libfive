@@ -36,6 +36,14 @@ TEST_CASE("ArrayEvaluator::eval")
         REQUIRE(e.value({1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
+    SECTION("Math")
+    {
+        auto X = SimpleTree::X();
+        auto Y = SimpleTree::Y();
+        ArrayEvaluator e(X*2 + Y*3);
+        REQUIRE(e.value({1.0, 2.0, 3.0}) == Approx(8));
+    }
+
     SECTION("Secondary variable")
     {
         auto v = SimpleTree::var();
