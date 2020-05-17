@@ -15,14 +15,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive
 {
-void Archive::addShape(Tree tree, std::string name, std::string doc,
-                       std::map<Tree::Id, std::string> vars)
+void Archive::addShape(SimpleTree tree, std::string name, std::string doc,
+                       std::map<SimpleTree::Id, std::string> vars)
 {
-    Shape s;
-    s.tree = tree;
-    s.name = name;
-    s.doc = doc;
-    s.vars = vars;
+    Shape s {
+        tree, name, doc, vars
+    };
 
     shapes.push_back(s);
 }

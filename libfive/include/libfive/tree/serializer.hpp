@@ -45,7 +45,7 @@ public:
     /*  This variable maps between Tree ids and positions within
      *  the serialized data stream, so we can skip trees that
      *  have already been serialized.  */
-    std::map<Tree::Id, uint32_t> ids;
+    std::map<SimpleTree::Id, uint32_t> ids;
 
     /*  We use this flag to end a data stream, either of
      *  the tree of a shape or its vars.  */
@@ -56,7 +56,7 @@ protected:
      *  Serialize a Tree and all of its dependencies.
      *  Modifies the ids map to store where each subtree has been serialized.
      */
-    void serializeTree(Tree t);
+    void serializeTree(SimpleTree t);
     void serializeSimpleTree(const SimpleTree& t);
 
     /*

@@ -188,14 +188,16 @@ std::vector<Tree> Tree::orderedDfs() const
 
 void Tree::serialize(std::ostream& out) const
 {
-    return Archive(*this).serialize(out);
+    out << "REMOVED";
+    // REMOVED
 }
 
 Tree Tree::deserialize(std::istream& in)
 {
     auto s = Archive::deserialize(in).shapes;
     assert(s.size() == 1);
-    return s.front().tree;
+    return Tree::Invalid();
+    // REMOVED
 }
 
 Tree Tree::load(const std::string& filename)

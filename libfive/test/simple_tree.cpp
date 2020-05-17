@@ -150,3 +150,73 @@ TEST_CASE("SimpleTree::with_const_vars") {
         REQUIRE(ss.str() == "(const-var (+ (* 2 var-free) (* 5 var-free)))");
     }
 }
+
+TEST_CASE("SimpleTree::serialize")
+{
+    SECTION("Basic")
+    {
+        auto a = min(SimpleTree::X(), SimpleTree::Y());
+        std::stringstream out;
+        a.serialize(out);
+
+        std::string expected =
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_MIN, 1, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF};
+        REQUIRE(out.str() == expected);
+    }
+
+    SECTION("With local references")
+    {
+        auto a = min(SimpleTree::X(), SimpleTree::Y() + SimpleTree::X());
+        std::stringstream out;
+        a.serialize(out);
+        std::string expected =
+            {'T', '"', '"', '"', '"', Opcode::VAR_X, Opcode::VAR_Y, Opcode::OP_ADD, 0, 0, 0, 0, 1, 0, 0, 0, Opcode::OP_MIN, 2, 0, 0, 0, 0, 0, 0, 0, (char)0xFF, (char)0xFF};
+        REQUIRE(out.str() == expected);
+    }
+}
+
+TEST_CASE("SimpleTree::deserialize")
+{
+    SECTION("Simple")
+    {
+        std::stringstream out;
+        min(SimpleTree::X(), SimpleTree::Y()).serialize(out);
+
+        std::stringstream in(out.str());
+        auto a = SimpleTree::deserialize(in);
+
+        REQUIRE(a.id() != nullptr);
+        REQUIRE(a->op() == Opcode::OP_MIN);
+        REQUIRE(a->lhs()->op() == Opcode::VAR_X);
+        REQUIRE(a->rhs()->op() == Opcode::VAR_Y);
+    }
+
+    SECTION("With constant")
+    {
+        std::stringstream out;
+        min(SimpleTree::X(), SimpleTree(2.5f)).serialize(out);
+
+        std::stringstream in(out.str());
+        auto a = SimpleTree::deserialize(in);
+
+        REQUIRE(a.id() != nullptr);
+        REQUIRE(a->op() == Opcode::OP_MIN);
+        REQUIRE(a->lhs()->op() == Opcode::VAR_X);
+        REQUIRE(a->rhs()->op() == Opcode::CONSTANT);
+        REQUIRE(a->rhs()->value() == 2.5f);
+    }
+
+    SECTION("With variable")
+    {
+        std::stringstream out;
+        min(SimpleTree::X(), SimpleTree::var()).serialize(out);
+
+        std::stringstream in(out.str());
+        auto a = SimpleTree::deserialize(in);
+
+        REQUIRE(a.id() != nullptr);
+        REQUIRE(a->op() == Opcode::OP_MIN);
+        REQUIRE(a->lhs()->op() == Opcode::VAR_X);
+        REQUIRE(a->rhs()->op() == Opcode::VAR_FREE);
+    }
+}
