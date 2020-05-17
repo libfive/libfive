@@ -188,7 +188,7 @@ struct SimpleTreeData : public SimpleTreeDataVariant,
     /*  Returns the floating-point value if this is a constant,
      *  throwing an exception otherwise. */
     struct ValueException : public std::exception {
-        const char* what() const throw () {
+        const char* what() const throw () override {
             return "Accessed value of non-constant SimpleTree";
         }
     };
@@ -197,7 +197,7 @@ struct SimpleTreeData : public SimpleTreeDataVariant,
     /*  Returns left and right-hand SimpleTree references.
      *  Throws a ChildException if the requested branch is missing. */
     struct ChildException : public std::exception {
-        const char* what() const throw () {
+        const char* what() const throw () override {
             return "Accessed missing child";
         }
     };
