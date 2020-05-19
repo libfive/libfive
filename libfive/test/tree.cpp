@@ -40,14 +40,14 @@ TEST_CASE("Tree::remap")
     {
         auto x = Tree::X();
         auto t = x.remap(Tree(12), Tree::X(), Tree::X());
-        REQUIRE(t == Tree(12));
+        REQUIRE(t->value() == 12);
     }
 
     SECTION("Collapsing while remapping")
     {
         auto x = Tree::X() + 5;
         auto t = x.remap(Tree(3), Tree::X(), Tree::X());
-        REQUIRE(t == Tree(8));
+        REQUIRE(t->value() == 8);
     }
 
     SECTION("Deep remapping")
@@ -152,26 +152,6 @@ TEST_CASE("Tree: operator<<")
         auto o = Tree(oracle);
         ss << (Tree::X() + 5 + o);
         REQUIRE(ss.str() == "(+ x 5 'CubeOracle)");
-    }
-}
-
-TEST_CASE("Tree::makeVarsConstant")
-{
-    auto v = Tree::var();
-    auto w = Tree::var();
-    auto a = 2 * v + 5 * w;
-    auto b = a.with_const_vars();
-
-    {
-        std::stringstream ss;
-        ss << a;
-        REQUIRE(ss.str() == "(+ (* 2 var-free) (* 5 var-free))");
-
-    }
-    {
-        std::stringstream ss;
-        ss << b;
-        REQUIRE(ss.str() == "(+ (* 2 (const-var var-free)) (* 5 (const-var var-free)))");
     }
 }
 
@@ -354,9 +334,9 @@ TEST_CASE("Tree::unique: deduplication of constants")
     auto p = ca + cb;
     REQUIRE(p.unique().size() == 6);
 
-    auto cc = Tree(4);
+    auto cc = Tree(4) * Tree::Y();
     auto q = ca + cc;
-    REQUIRE(q.unique().size() == 3);
+    REQUIRE(q.unique().size() == 7);
 }
 
 TEST_CASE("Tree::unique: deduplication of NAN")
@@ -464,7 +444,7 @@ TEST_CASE("Tree: identity operations")
         REQUIRE(ob == Tree::X());
 
         auto ib = max(Tree::X(), Tree::Y());
-        REQUIRE(ib->op() == Opcode::OP_MIN);
+        REQUIRE(ib->op() == Opcode::OP_MAX);
     }
 }
 
