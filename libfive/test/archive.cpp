@@ -153,7 +153,14 @@ TEST_CASE("Archive::deserialize")
         auto b_itr = b.shapes.begin();
         while(a_itr != a.shapes.end())
         {
-            REQUIRE(a_itr->tree == b_itr->tree);
+            // Compare shapes by stringified values, since the trees
+            // themselves could be the same math expressions but have
+            // different pointers.
+            std::stringstream ss_a;
+            std::stringstream ss_b;
+            ss_a << a_itr->tree;
+            ss_b << b_itr->tree;
+            REQUIRE(ss_a.str() == ss_b.str());
             REQUIRE(a_itr->name == b_itr->name);
             REQUIRE(a_itr->doc == b_itr->doc);
 
