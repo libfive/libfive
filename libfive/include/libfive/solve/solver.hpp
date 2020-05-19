@@ -13,7 +13,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <Eigen/Eigen>
 
-#include "libfive/tree/cache.hpp"
 #include "libfive/eval/eval_jacobian.hpp"
 
 namespace libfive {

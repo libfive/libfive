@@ -98,7 +98,7 @@ TEST_CASE("Oracle: render and compare (cube as oracle)")
         max(-(Tree::Z() + 1.5),
             Tree::Z() - 1.5));
 
-    Tree cubeOracle(std::unique_ptr<CubeOracleClause>(new CubeOracleClause()));
+    Tree cubeOracle(std::shared_ptr<CubeOracleClause>(new CubeOracleClause()));
 
     //  The region is set so we hit where the interesting stuff happens.
     Region<3> r({ -3., -3., -3. }, { 3., 3., 3. });
@@ -177,7 +177,7 @@ public:
 TEST_CASE("Oracle: check SIMD clamping")
 {
     long expected_eval_size = 0;
-    Tree picky(std::unique_ptr<PickySIMDOracleClause>(
+    Tree picky(std::shared_ptr<PickySIMDOracleClause>(
             new PickySIMDOracleClause(expected_eval_size)));
 
     DerivArrayEvaluator eval(picky + Tree::X() + 1.0f);

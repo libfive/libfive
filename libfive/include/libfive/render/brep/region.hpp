@@ -224,8 +224,8 @@ public:
      */
     Region<N> withResolution(double min_feature) const {
         const auto min_dimension = (upper - lower).minCoeff();
-        const auto level = ceil(fmax(0.0, log(min_dimension / min_feature)) /
-                                log(2));
+        const auto level = ceil(fmaxf(0.0f, logf(min_dimension / min_feature)) /
+                                logf(2));
         return Region<N>(lower, upper, perp, level);
     }
 

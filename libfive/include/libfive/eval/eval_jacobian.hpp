@@ -17,11 +17,8 @@ namespace libfive {
 class JacobianEvaluator : public FeatureEvaluator
 {
 public:
-    JacobianEvaluator(const Tree& root);
-    JacobianEvaluator(const Tree& root,
-                      const std::map<Tree::Id, float>& vars);
-    JacobianEvaluator(const SimpleUniqueTree& root);
-    JacobianEvaluator(const SimpleUniqueTree& root,
+    JacobianEvaluator(const UniqueTree& root);
+    JacobianEvaluator(const UniqueTree& root,
                       const std::map<Tree::Id, float>& vars);
     JacobianEvaluator(std::shared_ptr<Deck> t);
     JacobianEvaluator(std::shared_ptr<Deck> t,

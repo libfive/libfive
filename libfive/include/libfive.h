@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifdef __cplusplus
 #include <cstdint>
-#include "libfive/tree/simple_tree.hpp"
+#include "libfive/tree/tree.hpp"
 #include "libfive/eval/evaluator.hpp"
 extern "C" {
 #else
@@ -181,7 +181,7 @@ void libfive_vars_delete(libfive_vars* j);
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef __cplusplus
-typedef libfive::SimpleTree* libfive_tree;
+typedef libfive::Tree* libfive_tree;
 typedef libfive::Evaluator *libfive_evaluator;
 #else
 typedef struct libfive_tree_ libfive_tree_;

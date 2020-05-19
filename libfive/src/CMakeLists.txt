@@ -84,12 +84,10 @@ add_library(five SHARED
 
     solve/solver.cpp
 
-    tree/cache.cpp
     tree/opcode.cpp
     tree/archive.cpp
     tree/deserializer.cpp
     tree/serializer.cpp
-    tree/simple_tree.cpp
     tree/tree.cpp
 
     oracle/oracle_clause.cpp

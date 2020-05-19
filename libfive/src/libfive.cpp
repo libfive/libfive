@@ -89,12 +89,12 @@ int libfive_opcode_args(int op)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-libfive_tree libfive_tree_x() { return new SimpleTree(SimpleTree::X()); }
-libfive_tree libfive_tree_y() { return new SimpleTree(SimpleTree::Y()); }
-libfive_tree libfive_tree_z() { return new SimpleTree(SimpleTree::Z()); }
+libfive_tree libfive_tree_x() { return new Tree(Tree::X()); }
+libfive_tree libfive_tree_y() { return new Tree(Tree::Y()); }
+libfive_tree libfive_tree_z() { return new Tree(Tree::Z()); }
 
-libfive_tree libfive_tree_const(float f) { return new SimpleTree(f); }
-libfive_tree libfive_tree_var() { return new SimpleTree(SimpleTree::var()); }
+libfive_tree libfive_tree_const(float f) { return new Tree(f); }
+libfive_tree libfive_tree_var() { return new Tree(Tree::var()); }
 
 bool libfive_tree_is_var(libfive_tree t)
 {
@@ -114,7 +114,7 @@ float libfive_tree_get_const(libfive_tree t, bool* success)
 
 libfive_tree libfive_tree_constant_vars(libfive_tree t)
 {
-    return new SimpleTree(t->with_const_vars());
+    return new Tree(t->with_const_vars());
 }
 
 static bool opcode_is_valid(int op, size_t expected_args)
@@ -127,20 +127,20 @@ static bool opcode_is_valid(int op, size_t expected_args)
 libfive_tree libfive_tree_nonary(int op)
 {
     return opcode_is_valid(op, 0)
-        ? new SimpleTree(Opcode::Opcode(op))
+        ? new Tree(Opcode::Opcode(op))
         : nullptr;
 }
 
 libfive_tree libfive_tree_unary(int op, libfive_tree a)
 {
     return (opcode_is_valid(op, 1) && a != nullptr)
-        ? new SimpleTree(SimpleTree::unary(Opcode::Opcode(op), *a))
+        ? new Tree(Tree::unary(Opcode::Opcode(op), *a))
         : nullptr;
 }
 libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b)
 {
     return (opcode_is_valid(op, 2) && a != nullptr && b != nullptr)
-        ? new SimpleTree(SimpleTree::binary(Opcode::Opcode(op), *a, *b))
+        ? new Tree(Tree::binary(Opcode::Opcode(op), *a, *b))
         : nullptr;
 }
 
@@ -187,7 +187,7 @@ libfive_tree libfive_tree_load(const char* filename)
 
 libfive_tree libfive_tree_remap(libfive_tree p, libfive_tree x, libfive_tree y, libfive_tree z)
 {
-    return new SimpleTree(p->remap(*x, *y, *z));
+    return new Tree(p->remap(*x, *y, *z));
 }
 
 float libfive_tree_eval_f(libfive_tree t, libfive_vec3 p)

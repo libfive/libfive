@@ -27,10 +27,7 @@ public:
      *  into int32_t pixels.
      */
     static std::unique_ptr<Heightmap> render(
-            const Tree t, Voxels r,
-            const std::atomic_bool& abort, size_t threads=8);
-    static std::unique_ptr<Heightmap> render(
-            const SimpleUniqueTree& t, Voxels r,
+            const UniqueTree& t, Voxels r,
             const std::atomic_bool& abort, size_t threads=8);
 
     /*

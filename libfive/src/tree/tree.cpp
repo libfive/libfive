@@ -1,480 +1,554 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
-Copyright (C) 2017  Matt Keeter
+
+Copyright (C) 2020  Matt Keeter
 
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <set>
-#include <list>
-#include <cmath>
-#include <cassert>
-#include <array>
+#include <map>
+#include <unordered_map>
+#include <unordered_set>
 
-#include "libfive/tree/cache.hpp"
+#include "libfive/tree/tree.hpp"
 #include "libfive/tree/archive.hpp"
-#include "libfive/oracle/transformed_oracle_clause.hpp"
+#include "libfive/oracle/oracle_clause.hpp"
+#include "libfive/oracle/oracle.hpp"
 
 namespace libfive {
 
-Tree::Tree()
-    : ptr(nullptr)
+Tree::Tree(float f)
+    : Tree(std::make_shared<Data>(TreeConstant { f }))
 {
     // Nothing to do here
 }
 
-Tree::Tree(std::unique_ptr<const OracleClause>&& o)
-    : ptr(std::shared_ptr<Tree_>(new Tree_{
-        Opcode::ORACLE,
-        0, // flags
-        0, // rank
-        std::nanf(""), // value
-        std::move(o), // oracle
-        nullptr,
-        nullptr }))
-{
-    // Nothing to do here either.  ptr is constructed directly (without using
-    // the cache), since using  a unique_ptr to the oracle already precludes
-    // duplication.
-}
-
-Tree::Tree(std::unique_ptr<const OracleClause>&& o,
-           std::function<void(const Tree_*)> onDeletion)
-  : ptr(std::shared_ptr<Tree_>(new Tree_{
-        Opcode::ORACLE,
-        0, // flags
-        0, // rank
-        std::nanf(""), // value
-        std::move(o), // oracle
-        nullptr,
-        nullptr },
-        [onDeletion](Tree_* ptr) 
-{
-  onDeletion(ptr);
-  std::default_delete<Tree_>()(ptr);
-}))
-{
-  // Nothing to do here either.
-}
-
-Tree::Tree(float v)
-    : ptr(Cache::instance()->constant(v))
+Tree::Tree(std::shared_ptr<const Data> d)
+    : std::shared_ptr<const Data>(d)
 {
     // Nothing to do here
 }
 
-Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
-    : ptr(Cache::instance()->operation(op, a.ptr, b.ptr))
+Tree::Tree(const std::shared_ptr<OracleClause>& o)
+    : Tree(std::make_shared<Data>( TreeOracle { o }))
 {
-    // Aggressive sanity-checking
-    assert((Opcode::args(op) == 0 && a.ptr.get() == 0 && b.ptr.get() == 0) ||
-           (Opcode::args(op) == 1 && a.ptr.get() != 0 && b.ptr.get() == 0) ||
-           (Opcode::args(op) == 2 && a.ptr.get() != 0 && b.ptr.get() != 0));
-
-    // POW only accepts integral values as its second argument
-    if (op == Opcode::OP_POW)
-    {
-        assert(b->op == Opcode::CONSTANT &&
-               b->value == std::round(b->value));
-    }
-    else if (op == Opcode::OP_NTH_ROOT)
-    {
-        assert(b->op == Opcode::CONSTANT &&
-               b->value == std::round(b->value) &&
-               b->value > 0);
-    }
+    // Nothing to do here
 }
 
-Tree Tree::var()
-{
-    return Tree(Cache::instance()->var());
+Tree Tree::var() {
+    return Tree(std::make_shared<Data>(
+        TreeNonaryOp { Opcode::VAR_FREE }));
 }
 
-Tree::~Tree()
-{
-    auto lock = Cache::instance();
-    ptr.reset();
-}
-
-Tree::Tree_::~Tree_()
-{
-    if (op == Opcode::CONSTANT)
-    {
-        Cache::instance()->del(value);
+Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
+    // We can only build unary operations with this function
+    if (Opcode::args(op) != 1) {
+        return invalid();
     }
-    else if (op != Opcode::VAR_FREE && op != Opcode::ORACLE)
-    {
-        Cache::instance()->del(op, lhs, rhs);
-    }
-}
-
-std::list<Tree> Tree::ordered() const
-{
-    std::set<Id> found = {nullptr};
-    std::list<std::shared_ptr<Tree_>> todo = { ptr };
-    std::map<unsigned, std::list<std::shared_ptr<Tree_>>> ranks;
-
-    while (todo.size())
-    {
-        auto t = todo.front();
-        todo.pop_front();
-
-        if (found.find(t.get()) == found.end())
-        {
-            todo.push_back(t->lhs);
-            todo.push_back(t->rhs);
-            found.insert(t.get());
-            ranks[t->rank].push_back(t);
+    // abs is idempotent after abs() or square()
+    else if (op == Opcode::OP_ABS) {
+        if (lhs->op() == Opcode::OP_ABS) {
+            return lhs;
+        } else if (lhs->op() == Opcode::OP_SQUARE) {
+            return lhs;
         }
     }
-
-    std::list<Tree> out;
-    for (auto& r : ranks)
-    {
-        for (auto& t : r.second)
-        {
-            out.push_back(Tree(t));
-        }
+    // Double-negative returns the original
+    else if (op == Opcode::OP_NEG && lhs->op() == Opcode::OP_NEG) {
+        return lhs->lhs();
     }
-    return out;
+    // Default if we didn't fall into any special cases
+    return Tree(std::make_shared<Data>(
+           TreeUnaryOp { op, lhs }));
 }
 
-std::vector<Tree> Tree::orderedDfs() const
-{
-    std::map<Id, unsigned> count;
-    std::vector<std::shared_ptr<Tree_>> todo = { ptr };
+Tree Tree::nonary(Opcode::Opcode op) {
+    // We can only build unary operations with this function
+    if (Opcode::args(op) != 0) {
+        return invalid();
+    }
+    // Default if we didn't fall into any special cases
+    return Tree(std::make_shared<Data>(TreeNonaryOp { op }));
+}
 
-    while (todo.size())
-    {
+Tree Tree::binary(Opcode::Opcode op,
+                              const Tree& lhs,
+                              const Tree& rhs)
+{
+    // We can only build binary operations with this function
+    if (Opcode::args(op) != 2) {
+        return invalid();
+    }
+    // Division by 1 is ignored
+    else if (op == Opcode::OP_DIV) {
+        if (rhs->op() == Opcode::CONSTANT && rhs->value() == 1.0f) {
+            return lhs;
+        }
+    }
+    else if (op == Opcode::OP_ADD) {
+        if (lhs->op() == Opcode::CONSTANT && lhs->value() == 0.0f) {
+            return rhs;
+        } else if (rhs->op() == Opcode::CONSTANT && rhs->value() == 0.0f) {
+            return lhs;
+        } else if (rhs->op() == Opcode::OP_NEG) {
+            const Tree& t = rhs->lhs();
+            const Tree& q = lhs;
+            return q - t;
+        } else if (lhs->op() == Opcode::OP_NEG) {
+            return rhs - lhs->lhs();
+        }
+    } else if (op == Opcode::OP_SUB) {
+        if (lhs->op() == Opcode::CONSTANT && lhs->value() == 0.0f) {
+            return -rhs;
+        } else if (rhs->op() == Opcode::CONSTANT && rhs->value() == 0.0f) {
+            return lhs;
+        } else if (rhs->op() == Opcode::OP_NEG) {
+            return lhs + rhs->lhs();
+        }
+    } else if (op == Opcode::OP_MUL) {
+        if (lhs->op() == Opcode::CONSTANT) {
+            if (lhs->value() == 0) {
+                return lhs;
+            } else if (lhs->value() == 1) {
+                return rhs;
+            } else if (lhs->value() == -1) {
+                return -rhs;
+            }
+        } else if (rhs->op() == Opcode::CONSTANT) {
+            if (rhs->value() == 0) {
+                return rhs;
+            } else if (rhs->value() == 1) {
+                return lhs;
+            } else if (rhs->value() == -1) {
+                return -lhs;
+            }
+        } else if (lhs.id() == rhs.id()) {
+            return square(lhs);
+        }
+    } else if (op == Opcode::OP_NTH_ROOT || op == Opcode::OP_POW) {
+        if (rhs->op() == Opcode::CONSTANT && rhs->value() == 1.0f) {
+            return lhs;
+        }
+    } else if (op == Opcode::OP_MIN || op == Opcode::OP_MAX) {
+        if (lhs.id() == rhs.id()) {
+            return lhs;
+        }
+    }
+    // Default if we didn't fall into any special cases
+    return Tree(std::make_shared<Data>(
+           TreeBinaryOp {op, lhs, rhs}));
+}
+
+// Use Meyer's singletons for X/Y/Z, since they're the most common trees
+Tree Tree::X() {
+    static auto x = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_X });
+    return Tree(x);
+}
+Tree Tree::Y() {
+    static auto y = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_Y });
+    return Tree(y);
+}
+Tree Tree::Z() {
+    static auto z = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_Z });
+    return Tree(z);
+}
+
+Tree Tree::invalid() {
+    static auto i = std::make_shared<Data>(TreeInvalid {});
+    return Tree(i);
+}
+
+Tree Tree::with_const_vars() const {
+    return Tree(std::make_shared<Data>(TreeUnaryOp {
+        Opcode::CONST_VAR, *this }));
+}
+
+std::ostream& Tree::print_prefix(std::ostream& s) const {
+    std::vector<std::variant<const Data*, char>> todo;
+    std::vector<Opcode::Opcode> ops;
+    todo.push_back(get());
+
+    while (todo.size()) {
         auto t = todo.back();
         todo.pop_back();
-        if (t) {
-            count[t.get()]++;
-            if (t->lhs) {
-                todo.push_back(t->lhs);
+        if (auto c = std::get_if<char>(&t)) {
+            switch (*c) {
+                case ')': s << ')'; ops.pop_back(); break;
+                case '|': ops.pop_back(); break;
+                case ' ': s << ' '; break;
             }
-            if (t->rhs) {
-                todo.push_back(t->rhs);
+        } else if (auto d = std::get_if<const Data*>(&t)) {
+            auto op = (**d).op();
+            if (op == Opcode::CONSTANT) {
+                s << (**d).value();
+            } else if (op == Opcode::ORACLE) {
+                s << '\'' << (**d).oracle_clause().name();
+            } else if (Opcode::args(op) == 0) {
+                s << Opcode::toOpString(op);
+            } else {
+                if (Opcode::isCommutative(op) && ops.size() && ops.back() == op) {
+                    todo.push_back('|');
+                } else {
+                    s << "(" << Opcode::toOpString(op) << " ";
+                    todo.push_back(')');
+                }
+                ops.push_back(op);
+                if (Opcode::args(op) == 1) {
+                    todo.push_back((**d).lhs().get());
+                } else {
+                    todo.push_back((**d).rhs().get());
+                    todo.push_back(' ');
+                    todo.push_back((**d).lhs().get());
+                }
             }
         }
     }
-
-    std::vector<Tree> out;
-    out.reserve(count.size());
-    todo = { ptr };
-    while (todo.size())
-    {
-        auto t = todo.back();
-        todo.pop_back();
-        if (t) {
-            if (t->lhs) {
-                todo.push_back(t->lhs);
-            }
-            if (t->rhs) {
-                todo.push_back(t->rhs);
-            }
-            if (--count[t.get()] == 0) {
-                out.push_back(Tree(t));
-            }
-        }
-    }
-    std::reverse(out.begin(), out.end());
-    return out;
+    return s;
 }
 
-void Tree::serialize(std::ostream& out) const
-{
-    out << "REMOVED";
-    // REMOVED
+void Tree::serialize(std::ostream& out) const {
+    return Archive(*this).serialize(out);
 }
 
-Tree Tree::deserialize(std::istream& in)
-{
+Tree Tree::deserialize(std::istream& in) {
     auto s = Archive::deserialize(in).shapes;
     assert(s.size() == 1);
-    return Tree::Invalid();
-    // REMOVED
+    return s.front().tree;
 }
 
-Tree Tree::load(const std::string& filename)
-{
+Tree Tree::load(const std::string& filename) {
     std::ifstream in(filename, std::ios::in|std::ios::binary);
-    return in.is_open() ? deserialize(in) : Tree();
-}
-
-Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const
-{
-    std::map<Tree::Id, Tree> m = {
-        {X().id(), X_}, {Y().id(), Y_}, {Z().id(), Z_}};
-
-    return remap(m);
-}
-
-Tree Tree::remap(std::map<Id, Tree> m) const
-{
-    // Oracles only care about remapping X/Y/Z, so we extract them here.
-    auto get_remapped = [&](Tree target) {
-        auto itr = m.find(target.id());
-        return (itr == m.end()) ? target : Tree(itr->second);
-    };
-    auto X_ = get_remapped(Tree::X());
-    auto Y_ = get_remapped(Tree::Y());
-    auto Z_ = get_remapped(Tree::Z());
-
-    for (const auto& t : ordered())
-    {
-        if (Opcode::args(t->op) >= 1)
-        {
-            auto lhs = m.find(t->lhs.get());
-            auto rhs = m.find(t->rhs.get());
-            m.insert({t.id(), Tree(Cache::instance()->operation(t->op,
-                        lhs == m.end() ? t->lhs : lhs->second.ptr,
-                        rhs == m.end() ? t->rhs : rhs->second.ptr))});
-        }
-        else if (t->op == Opcode::ORACLE)
-        {
-            m.insert({ t.id(), t->oracle->remap(t, X_, Y_, Z_) });
-        }
-    }
-
-    // If this Tree was remapped, then return it; otherwise return itself
-    auto r = m.find(id());
-    return r == m.end() ? *this : Tree(r->second);
-}
-
-Tree Tree::lhs() const
-{
-    return Tree(ptr->lhs);
-}
-
-Tree Tree::rhs() const
-{
-    return Tree(ptr->rhs);
-}
-
-Tree Tree::makeVarsConstant() const
-{
-    std::map<Id, Tree> vars;
-    for (auto& o : ordered())
-    {
-        if (o->op == Opcode::VAR_FREE)
-        {
-            vars.insert({o.id(),
-                    Tree(Cache::instance()->operation(Opcode::CONST_VAR, o.ptr))});
-        }
-    }
-    return remap(vars);
+    return in.is_open() ? deserialize(in) : invalid();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const std::shared_ptr<Tree::Tree_> Tree::Tree_::branch(Direction d)
-{
-    switch (d) {
-        case LEFT:  return lhs;
-        case RIGHT: return rhs;
+Opcode::Opcode TreeData::op() const {
+    if (auto i = std::get_if<TreeNonaryOp>(this)) {
+        return i->op;
+    } else if (auto i = std::get_if<TreeUnaryOp>(this)) {
+        return i->op;
+    } else if (auto i = std::get_if<TreeBinaryOp>(this)) {
+        return i->op;
+    } else if (std::get_if<TreeConstant>(this)) {
+        return Opcode::CONSTANT;
+    } else if (std::get_if<TreeOracle>(this)) {
+        return Opcode::ORACLE;
+    } else if (std::get_if<TreeInvalid>(this)) {
+        return Opcode::INVALID;
+    } else {
+        return Opcode::INVALID;
     }
-    return nullptr;
 }
 
-void Tree::Tree_::printInfix(std::ostream& stream)
-{
-    using namespace Opcode;
-    switch (op) {
-        case CONSTANT:
-            if (value == int(value)) {
-                stream << int(value);
-            } else {
-                stream << value;
+const Tree& TreeData::lhs() const {
+    if (auto i = std::get_if<TreeUnaryOp>(this)) {
+        return i->lhs;
+    } else if (auto i = std::get_if<TreeBinaryOp>(this)) {
+        return i->lhs;
+    } else {
+        throw ValueException();
+    }
+}
+
+const Tree& TreeData::rhs() const {
+    if (auto i = std::get_if<TreeBinaryOp>(this)) {
+        return i->rhs;
+    } else {
+        throw ValueException();
+    }
+}
+
+float TreeData::value() const {
+    // Can't use std::get<TreeConstant> because it requires a newer macOS
+    // than my main development machine.
+    if (auto i = std::get_if<TreeConstant>(this)) {
+        return i->value;
+    } else {
+        throw ValueException();
+    }
+}
+
+std::unique_ptr<Oracle> TreeData::build_oracle() const {
+    if (auto i = std::get_if<TreeOracle>(this)) {
+        return i->oracle->getOracle();
+    } else {
+        throw OracleException();
+    }
+}
+
+const OracleClause& TreeData::oracle_clause() const {
+    if (auto i = std::get_if<TreeOracle>(this)) {
+        return *(i->oracle);
+    } else {
+        throw OracleException();
+    }
+}
+
+bool Tree::is_valid() const {
+    return !std::get_if<TreeInvalid>(get());
+}
+
+TreeData::Key TreeData::key() const {
+    if (auto d = std::get_if<TreeConstant>(this)) {
+        if (std::isnan(d->value)) {
+            return Key(true);
+        } else {
+            return Key(d->value);
+        }
+    } else if (auto d = std::get_if<TreeNonaryOp>(this)) {
+        if (d->op == Opcode::VAR_FREE) {
+            return Key(std::make_tuple(d->op, this));
+        } else {
+            return Key(d->op);
+        }
+    } else if (auto d = std::get_if<TreeUnaryOp>(this)) {
+        return Key(std::make_tuple(d->op, d->lhs.get()));
+    } else if (auto d = std::get_if<TreeBinaryOp>(this)) {
+        return Key(std::make_tuple(d->op, d->lhs.get(), d->rhs.get()));
+    } else {
+        return Key(false);
+    }
+}
+
+Tree Tree::remap(Tree X, Tree Y, Tree Z) const {
+    auto flat = walk();
+
+    // If a specific tree (by id) should be remapped, that fact is stored here
+    std::unordered_map<Id, Tree> remap;
+
+    for (auto t : flat) {
+        std::shared_ptr<const Data> changed;
+
+        if (auto d = std::get_if<TreeNonaryOp>(t)) {
+            switch (d->op) {
+                case Opcode::VAR_X: changed = X; break;
+                case Opcode::VAR_Y: changed = Y; break;
+                case Opcode::VAR_Z: changed = Z; break;
+                default: break;
             }
-            break;
-        case VAR_X: stream << "X"; break;
-        case VAR_Y: stream << "Y"; break;
-        case VAR_Z: stream << "Z"; break;
-        case VAR_FREE: stream << "var"; break;
-        case CONST_VAR:
-            stream << "const(";
-            lhs->printInfix(stream);
-            stream << ")";
-            break;
+        } else if (auto d = std::get_if<TreeUnaryOp>(t)) {
+            auto itr = remap.find(d->lhs.id());
+            if (itr != remap.end()) {
+                changed = std::make_shared<Data>(TreeUnaryOp {
+                    d->op, itr->second});
+            }
+        } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
+            auto lhs = remap.find(d->lhs.id());
+            auto rhs = remap.find(d->rhs.id());
+            if (lhs != remap.end() || rhs != remap.end()) {
+                changed = std::make_shared<Data>(TreeBinaryOp {
+                    d->op,
+                    (lhs == remap.end()) ? d->lhs
+                                         : lhs->second,
+                    (rhs == remap.end()) ? d->rhs
+                                         : rhs->second });
+            }
+        }
 
-        case OP_SQUARE:
-            stream << "(";
-            lhs->printInfix(stream);
-            stream << "*";
-            lhs->printInfix(stream);
-            stream << ")";
-            break;
-        case OP_NEG:
-            stream << "(-";
-            lhs->printInfix(stream);
-            stream << ")";
-            break;
-        case OP_SQRT:
-        case OP_SIN:
-        case OP_COS:
-        case OP_TAN:
-        case OP_ASIN:
-        case OP_ACOS:
-        case OP_ATAN:
-        case OP_EXP:
-        case OP_ABS:
-        case OP_LOG:
-            stream << toOpString(op) << "(";
-            lhs->printInfix(stream);
-            stream << ")";
-            break;
-        case OP_RECIP:
-            stream << "(1 / ";
-            lhs->printInfix(stream);
-            stream << ")";
-            break;
-
-        case OP_ADD:
-        case OP_SUB:
-        case OP_MUL:
-        case OP_DIV:
-            stream << "(";
-            lhs->printInfix(stream);
-            stream << " " << toOpString(op) << " ";
-            rhs->printInfix(stream);
-            stream << ")";
-            break;
-
-        case OP_MIN:
-        case OP_MAX:
-        case OP_ATAN2:
-        case OP_POW:
-            stream << toOpString(op);
-            stream << "(";
-            lhs->printInfix(stream);
-            stream << ", ";
-            rhs->printInfix(stream);
-            stream << ")";
-            break;
-
-        case OP_MOD:
-            stream << "(";
-            lhs->printInfix(stream);
-            stream << " % ";
-            rhs->printInfix(stream);
-            stream << ")";
-            break;
-
-        case OP_NTH_ROOT:
-            stream << "pow(";
-            lhs->printInfix(stream);
-            stream << ", (1/";
-            rhs->printInfix(stream);
-            stream << "))";
-            break;
-        default:
-            std::cerr << "Cannot print opcode " << toScmString(op) << "\n";
-    }
-}
-
-void Tree::Tree_::print(std::ostream& stream, Opcode::Opcode prev_op)
-{
-    const bool commutative = (prev_op == op);
-    const int args = Opcode::args(op);
-
-    if (!commutative)
-    {
-        switch (args)
-        {
-            case 2:
-            case 1: stream << "(" <<  Opcode::toOpString(op) << " ";
-                    break;
-            case 0:
-                if (op == Opcode::CONSTANT)
-                {
-                    if (value == int(value))
-                    {
-                        stream << int(value);
-                    }
-                    else
-                    {
-                        stream << value;
-                    }
-                }
-                else if (op == Opcode::ORACLE)
-                {
-                    stream << "'" << oracle->name();
-                }
-                else
-                {
-                    stream << Opcode::toOpString(op);
-                }
-                break;
-            default:    assert(false);
+        if (changed) {
+            remap.insert({t, Tree(changed)});
         }
     }
 
-    const auto op_ = Opcode::isCommutative(op) ? op : Opcode::INVALID;
-    switch (args)
-    {
-        case 2:     lhs->print(stream, op_);
-                    stream << " ";
-                    rhs->print(stream, op_);
-                    break;
-        case 1:     lhs->print(stream, op_);
-                    break;
-        case 0:     break;
-        default:    assert(false);
-    }
-
-    if (!commutative && args > 0)
-    {
-        stream <<")";
-    }
+    auto itr = remap.find(get());
+    return (itr == remap.end()) ? *this : Tree(itr->second->shared_from_this());
 }
 
-}   // namespace libfive
+std::vector<const Tree::Data*> Tree::walk() const {
+    // Store how many times each tree (by id) is referenced
+    std::unordered_map<Id, unsigned> count;
+    std::vector todo = {get()};
+    // Count how many branches reach to a given node.
+    // This matters when flattening, since we're doing a topological sort
+    while (todo.size()) {
+        auto next = todo.back();
+        todo.pop_back();
+
+        if (auto d = std::get_if<TreeUnaryOp>(next)) {
+            if (count[d->lhs.id()]++ == 0) {
+                todo.push_back(d->lhs.get());
+            }
+        } else if (auto d = std::get_if<TreeBinaryOp>(next)) {
+            if (count[d->lhs.id()]++ == 0) {
+                todo.push_back(d->lhs.get());
+            }
+            if (count[d->rhs.id()]++ == 0) {
+                todo.push_back(d->rhs.get());
+            }
+        }
+    }
+
+    // Flatten the tree.  This is a heap-allocated recursive
+    // descent, to avoid running into stack limitations.
+    todo = {get()};
+
+    std::vector<const Data*> flat;
+    while (todo.size()) {
+        auto next = todo.back();
+        todo.pop_back();
+        flat.push_back(next);
+
+        if (auto d = std::get_if<TreeUnaryOp>(next)) {
+            // Schedule child branches to be flattened *after all* of their
+            // parents, since we'll be reversing the order of this tape
+            // afterwards, meaning children will be evaluated *before all*
+            // of their parents.
+            if (--count.at(d->lhs.id()) == 0) {
+                todo.push_back(d->lhs.get());
+            }
+        } else if (auto d = std::get_if<TreeBinaryOp>(next)) {
+            if (--count.at(d->lhs.id()) == 0) {
+                todo.push_back(d->lhs.get());
+            }
+            if (--count.at(d->rhs.id()) == 0) {
+                todo.push_back(d->rhs.get());
+            }
+        }
+    }
+    // We'll walk from the leafs up to the root, storing the first
+    // unique instance of a given operation in the maps above, and
+    // marking subsequent instances in the remap table.
+    std::reverse(flat.begin(), flat.end());
+
+    return flat;
+}
+
+Tree Tree::unique() const {
+    auto flat = walk();
+
+    // If a specific tree should be remapped, that fact is stored here
+    // These remap pointers can point either into the existing tree or
+    // to shared_ptrs in the new_ptrs list below, so we store the bare
+    // pointer and use shared_from_this to rehydrate it.
+    std::unordered_map<Id, const Data*> remap;
+
+    // The canonical tree for each Key is stored here
+    std::map<Data::Key, const Data*> canonical;
+
+    // New pointers are owned here, because the maps above hold
+    // raw pointers instead of shared_ptrs.
+    std::vector<std::shared_ptr<const Data>> new_ptrs;
+
+    for (auto t : flat) {
+        // Get canonical key
+        auto key = t->key();
+        bool changed = false;
+        if (auto k = std::get_if<Data::UnaryKey>(&key)) {
+            auto itr = remap.find(std::get<1>(*k));
+            if (itr != remap.end()) {
+                std::get<1>(*k) = itr->second;
+                changed = true;
+            }
+        } else if (auto k = std::get_if<Data::BinaryKey>(&key)) {
+            auto itr = remap.find(std::get<1>(*k));
+            if (itr != remap.end()) {
+                std::get<1>(*k) = itr->second;
+                changed = true;
+            }
+            itr = remap.find(std::get<2>(*k));
+            if (itr != remap.end()) {
+                std::get<2>(*k) = itr->second;
+                changed = true;
+            }
+        }
+
+        auto k_itr = canonical.find(key);
+        // We already have a canonical version of this tree,
+        // so remap it and keep going.
+        if (k_itr != canonical.end()) {
+            remap.insert({t, k_itr->second});
+        } else if (!changed) {
+            // This is the canonical tree, and it requires
+            // no remapping, so we're done!
+            canonical.insert(k_itr, {key, t});
+        } else {
+            // We need make a new canonical tree, using remapped arguments
+            std::shared_ptr<const Data> out;
+            if (auto d = std::get_if<TreeUnaryOp>(t)) {
+                auto itr = remap.find(d->lhs.id());
+                assert(itr != remap.end());
+                out = std::make_shared<Data>(TreeUnaryOp {
+                    d->op, Tree(itr->second->shared_from_this())});
+            } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
+                auto lhs = remap.find(d->lhs.id());
+                auto rhs = remap.find(d->rhs.id());
+                assert(lhs != remap.end() || rhs != remap.end());
+                out = std::make_shared<Data>(TreeBinaryOp {
+                    d->op,
+                    (lhs == remap.end())
+                        ? d->lhs
+                        : Tree(lhs->second->shared_from_this()),
+                    (rhs == remap.end())
+                        ? d->rhs
+                        : Tree(rhs->second->shared_from_this()) });
+            }
+            // TODO: handle identities, e.g. min(a, a) => a
+            // or a * a => square(a), which have only been proven now
+            // that children are deduplicated
+
+            // The new tree is the canonical tree; folks that were using
+            // the original tree need to use it instead.
+            canonical.insert(k_itr, {key, out.get()});
+            remap.insert({t, out.get()});
+
+            // The new pointer is owned by the new_ptrs list
+            new_ptrs.emplace_back(std::move(out));
+        }
+    }
+
+    auto itr = remap.find(get());
+    return (itr == remap.end())
+        ? *this
+        : Tree(itr->second->shared_from_this());
+}
+
+size_t Tree::size() const {
+    std::unordered_set<Id> seen;
+    size_t count = 0;
+
+    std::vector<const Data*> todo = {get()};
+    // Count how many branches reach to a given node.
+    // This matters when flattening, since we're doing a topological sort
+    while (todo.size()) {
+        auto next = todo.back();
+        todo.pop_back();
+        if (!seen.insert(next).second) {
+            continue;
+        }
+        count++;
+
+        if (auto d = std::get_if<TreeUnaryOp>(next)) {
+            todo.push_back(d->lhs.get());
+        } else if (auto d = std::get_if<TreeBinaryOp>(next)) {
+            todo.push_back(d->lhs.get());
+            todo.push_back(d->rhs.get());
+        }
+    }
+    return count;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // Mass-produce definitions for overloaded operations
-#define OP_UNARY(name, opcode) \
-libfive::Tree name(const libfive::Tree& a) { return libfive::Tree(opcode, a); }
-OP_UNARY(square,    libfive::Opcode::OP_SQUARE)
-OP_UNARY(sqrt,      libfive::Opcode::OP_SQRT)
-libfive::Tree libfive::Tree::operator-() const
-    { return libfive::Tree(libfive::Opcode::OP_NEG, *this); }
-OP_UNARY(abs,       libfive::Opcode::OP_ABS)
-OP_UNARY(sin,       libfive::Opcode::OP_SIN)
-OP_UNARY(cos,       libfive::Opcode::OP_COS)
-OP_UNARY(tan,       libfive::Opcode::OP_TAN)
-OP_UNARY(asin,      libfive::Opcode::OP_ASIN)
-OP_UNARY(acos,      libfive::Opcode::OP_ACOS)
-OP_UNARY(atan,      libfive::Opcode::OP_ATAN)
-OP_UNARY(log,       libfive::Opcode::OP_LOG)
-OP_UNARY(exp,       libfive::Opcode::OP_EXP)
-#undef OP_UNARY
-
-#define OP_BINARY(name, opcode) \
-libfive::Tree name(const libfive::Tree& a,const libfive::Tree& b) \
-    { return libfive::Tree(opcode, a, b); }
-OP_BINARY(operator+,    libfive::Opcode::OP_ADD)
-OP_BINARY(operator*,    libfive::Opcode::OP_MUL)
-OP_BINARY(min,          libfive::Opcode::OP_MIN)
-OP_BINARY(max,          libfive::Opcode::OP_MAX)
-OP_BINARY(operator-,    libfive::Opcode::OP_SUB)
-OP_BINARY(operator/,    libfive::Opcode::OP_DIV)
-OP_BINARY(atan2,        libfive::Opcode::OP_ATAN2)
-OP_BINARY(pow,          libfive::Opcode::OP_POW)
-OP_BINARY(nth_root,     libfive::Opcode::OP_NTH_ROOT)
-OP_BINARY(mod,          libfive::Opcode::OP_MOD)
-OP_BINARY(nanfill,      libfive::Opcode::OP_NANFILL)
-OP_BINARY(compare,      libfive::Opcode::OP_COMPARE)
-#undef OP_BINARY
-
-
-std::ostream& operator<<(std::ostream& stream, const libfive::Tree& tree)
-{
-    tree->print(stream);
-    return stream;
+#define OP_UNARY(name, opcode)                      \
+Tree name(const Tree& lhs) {                        \
+    return Tree::unary(Opcode::opcode, lhs);        \
 }
+#define OP_BINARY(name, opcode)                     \
+Tree name(const Tree& lhs, const Tree& rhs) {       \
+    return Tree::binary(Opcode::opcode, lhs, rhs);  \
+}
+TREE_OPERATORS
+
+////////////////////////////////////////////////////////////////////////////////
+
+std::ostream& operator<<(std::ostream& stream, const Tree& tree)
+{
+    return tree.print_prefix(stream);
+}
+
+}   // namespace libfive

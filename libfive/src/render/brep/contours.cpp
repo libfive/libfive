@@ -23,32 +23,7 @@ namespace libfive {
 ////////////////////////////////////////////////////////////////////////////////
 
 std::unique_ptr<Contours> Contours::render(
-        const Tree t, const Region<2>& r,
-        const BRepSettings& settings)
-{
-    std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
-    es.reserve(settings.workers);
-    for (unsigned i=0; i < settings.workers; ++i)
-    {
-        es.emplace_back(Evaluator(t));
-    }
-
-    // Create the quadtree on the scaffold
-    auto xtree = DCWorkerPool<2>::build(es.data(), r, settings);
-
-    // Abort early if the cancellation flag is set
-    if (settings.cancel == true) {
-        return nullptr;
-    }
-
-    // Perform marching squares, collecting into Contours
-    auto cs = Dual<2>::walk<DCContourer>(xtree, settings);
-    cs->bbox = r;
-    return cs;
-}
-
-std::unique_ptr<Contours> Contours::render(
-        const SimpleUniqueTree& t, const Region<2>& r,
+        const UniqueTree& t, const Region<2>& r,
         const BRepSettings& settings)
 {
     std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;

@@ -30,8 +30,8 @@ TEST_CASE("DerivArrayEvaluator::deriv")
         for (unsigned i=7; i < libfive::Opcode::ORACLE; ++i)
         {
             auto op = (libfive::Opcode::Opcode)i;
-            Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
-                                            : Tree(op, Tree::X()));
+            Tree t = (Opcode::args(op) == 2 ? Tree::binary(op, Tree::X(), Tree(5))
+                                            : Tree::unary(op, Tree::X()));
             DerivArrayEvaluator e(t);
             deriv(e, {0, 0, 0});
             REQUIRE(true /* No crash! */ );

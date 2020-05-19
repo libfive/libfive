@@ -254,26 +254,7 @@ Heightmap::Heightmap(unsigned rows, unsigned cols)
 }
 
 std::unique_ptr<Heightmap> Heightmap::render(
-    const Tree t, Voxels r, const std::atomic_bool& abort,
-    size_t workers)
-{
-    std::vector<Evaluator*> es;
-    for (size_t i=0; i < workers; ++i)
-    {
-        es.push_back(new Evaluator(t));
-    }
-
-    auto out = render(es, r, abort);
-
-    for (auto e : es)
-    {
-        delete e;
-    }
-    return out;
-}
-
-std::unique_ptr<Heightmap> Heightmap::render(
-    const SimpleUniqueTree& t, Voxels r, const std::atomic_bool& abort,
+    const UniqueTree& t, Voxels r, const std::atomic_bool& abort,
     size_t workers)
 {
     std::vector<Evaluator*> es;

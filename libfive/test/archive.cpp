@@ -30,14 +30,14 @@ public:
         return true;
     }
 
-    static std::unique_ptr<const OracleClause> deserialize(Deserializer& in)
+    static std::shared_ptr<OracleClause> deserialize(Deserializer& in)
     {
         auto out = in.deserializeString();
         if (out != "hi")
         {
             return nullptr;
         }
-        return std::unique_ptr<const OracleClause>(new ST());
+        return std::shared_ptr<OracleClause>(new ST());
     }
 };
 REGISTER_ORACLE_CLAUSE(ST)
@@ -107,7 +107,7 @@ TEST_CASE("Archive::serialize")
 
     SECTION("With an oracle")
     {
-        auto a = Archive(Tree(std::unique_ptr<OracleClause>(
+        auto a = Archive(Tree(std::shared_ptr<OracleClause>(
                         new ST())));
 
         std::stringstream out;
@@ -129,8 +129,8 @@ TEST_CASE("Archive::deserialize")
         std::stringstream in(s);
         auto t = Archive::deserialize(in).shapes.front();
         REQUIRE(t.tree.id() != nullptr);
-        REQUIRE(t.tree->op == Opcode::ORACLE);
-        REQUIRE(dynamic_cast<const ST*>(t.tree->oracle.get())
+        REQUIRE(t.tree->op() == Opcode::ORACLE);
+        REQUIRE(dynamic_cast<const ST*>(&t.tree->oracle_clause())
                 != nullptr);
     }
 
