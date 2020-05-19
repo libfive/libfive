@@ -25,8 +25,8 @@ using namespace libfive;
 
 TEST_CASE("OracleContext: TransformedOracle evaluation")
 {
-    auto cube = Tree(std::unique_ptr<const OracleClause>(new CubeOracleClause));
-    auto t = Tree(std::unique_ptr<const OracleClause>(
+    auto cube = Tree(std::shared_ptr<OracleClause>(new CubeOracleClause));
+    auto t = Tree(std::shared_ptr<OracleClause>(
                 new TransformedOracleClause(cube,
                     min(Tree::X(), Tree::X() + Tree::Y()),
                     Tree::Z(), Tree::Y())));
@@ -42,7 +42,7 @@ TEST_CASE("OracleContext: TransformedOracle evaluation")
 TEST_CASE("OracleContext: TransformedOracle push/pop")
 {
     // Construct a tree that is min(X, Y), but done with oracles
-    auto cube = Tree(std::unique_ptr<const OracleClause>(new AxisOracleClause<0>));
+    auto cube = Tree(std::shared_ptr<OracleClause>(new AxisOracleClause<0>));
     auto remapped = cube.remap(min(Tree::X(), Tree::Y()), Tree::Y(), Tree::Z());
 
     auto deck = std::make_shared<Deck>(remapped);

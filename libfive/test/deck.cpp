@@ -12,7 +12,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "catch.hpp"
 
 #include "libfive/tree/tree.hpp"
-#include "libfive/tree/simple_tree.hpp"
 #include "libfive/eval/deck.hpp"
 
 using namespace libfive;
@@ -34,30 +33,6 @@ TEST_CASE("Deck::XYZ")
 TEST_CASE("Deck::constants")
 {
     Deck t(Tree::X() + 5);
-    REQUIRE(t.constants.size() == 1);
-
-    CAPTURE(t.constants.begin()->first);
-    CAPTURE(t.constants.begin()->second);
-    REQUIRE(t.constants.at(2) == 5.0f);
-}
-
-TEST_CASE("Deck::num_clauses (SimpleTree)")
-{
-    Deck t(SimpleTree::X() + 1);
-    REQUIRE(t.num_clauses == 5); // X, Y, Z, 1, +
-}
-
-TEST_CASE("Deck::XYZ (SimpleTree)")
-{
-    Deck t(SimpleTree::X() + 1);
-    REQUIRE(t.X == 3);
-    REQUIRE(t.Y == 4);
-    REQUIRE(t.Z == 5);
-}
-
-TEST_CASE("Deck::constants (SimpleTree)")
-{
-    Deck t(SimpleTree::X() + 5);
     REQUIRE(t.constants.size() == 1);
 
     CAPTURE(t.constants.begin()->first);

@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <map>
 #include <list>
 
-#include "libfive/tree/simple_tree.hpp"
+#include "libfive/tree/tree.hpp"
 
 namespace libfive {
 
@@ -20,7 +20,7 @@ class Archive
 {
 public:
     Archive() { /* Nothing to do here */ }
-    Archive(SimpleTree t) { addShape(t); }
+    Archive(Tree t) { addShape(t); }
 
     /*
      *  Adds a new shape to the archive
@@ -28,9 +28,9 @@ public:
      *  The shape has an optional name and docstring, plus a map of
      *  variables to names.
      */
-    void addShape(SimpleTree tree, std::string name="", std::string doc="",
-                  std::map<SimpleTree::Id, std::string> vars=
-                    std::map<SimpleTree::Id, std::string>());
+    void addShape(Tree tree, std::string name="", std::string doc="",
+                  std::map<Tree::Id, std::string> vars=
+                    std::map<Tree::Id, std::string>());
 
     /*
      *  Serialize to a set of raw bytes
@@ -47,12 +47,12 @@ public:
      *  circle(x, y, r), where vars have their own names and docstrings
      */
     struct Shape {
-        SimpleTree tree;
+        Tree tree;
 
         std::string name;
         std::string doc;
 
-        std::map<SimpleTree::Id, std::string> vars;
+        std::map<Tree::Id, std::string> vars;
     };
 
     /* Here's the actual data stored in the Archive */

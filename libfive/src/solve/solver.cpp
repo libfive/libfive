@@ -58,7 +58,7 @@ static std::pair<float, Solution> findRoot(
         // Solve for step size using a backtracking line search
         const float slope = std::accumulate(ds.begin(), ds.end(), 0.0f,
                 [](float d, const decltype(ds)::value_type& itr) {
-                    return d + pow(itr.second, 2); });
+                    return d + powf(itr.second, 2.0f); });
 
         for (float step = r / slope; true; step /= 2)
         {

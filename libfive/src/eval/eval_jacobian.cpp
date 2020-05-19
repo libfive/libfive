@@ -13,27 +13,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-JacobianEvaluator::JacobianEvaluator(const Tree& root)
+JacobianEvaluator::JacobianEvaluator(const UniqueTree& root)
     : JacobianEvaluator(std::make_shared<Deck>(root))
 {
     // Nothing to do here
 }
 
 JacobianEvaluator::JacobianEvaluator(
-        const Tree& root, const std::map<Tree::Id, float>& vars)
-    : JacobianEvaluator(std::make_shared<Deck>(root), vars)
-{
-    // Nothing to do here
-}
-
-JacobianEvaluator::JacobianEvaluator(const SimpleUniqueTree& root)
-    : JacobianEvaluator(std::make_shared<Deck>(root))
-{
-    // Nothing to do here
-}
-
-JacobianEvaluator::JacobianEvaluator(
-        const SimpleUniqueTree& root, const std::map<Tree::Id, float>& vars)
+        const UniqueTree& root, const std::map<Tree::Id, float>& vars)
     : JacobianEvaluator(std::make_shared<Deck>(root), vars)
 {
     // Nothing to do here

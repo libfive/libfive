@@ -28,15 +28,16 @@ TransformedOracleClause::TransformedOracleClause(
 std::unique_ptr<Oracle> TransformedOracleClause::getOracle() const
 {
     return std::unique_ptr<TransformedOracle>(
-        new TransformedOracle(underlying->oracle->getOracle(), X_, Y_, Z_));
+        new TransformedOracle(underlying->oracle_clause().getOracle(),
+                              X_, Y_, Z_));
 }
 
-std::unique_ptr<const OracleClause>
+std::shared_ptr<OracleClause>
 TransformedOracleClause::remap(Tree self, Tree X_, Tree Y_, Tree Z_) const
 {
     (void)self; // unused, as we execute the remap on the underlying oracle
 
-    return std::unique_ptr<const OracleClause>(
+    return std::shared_ptr<OracleClause>(
         new TransformedOracleClause(underlying,
             this->X_.remap(X_, Y_, Z_),
             this->Y_.remap(X_, Y_, Z_),
@@ -62,7 +63,7 @@ bool TransformedOracleClause::serialize(Serializer& out) const
     return true;
 }
 
-std::unique_ptr<const OracleClause> TransformedOracleClause::deserialize(
+std::shared_ptr<OracleClause> TransformedOracleClause::deserialize(
         Deserializer& in)
 {
     auto deserializeId = [&in]()
@@ -76,7 +77,7 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::deserialize(
     auto X_ = deserializeId();
     auto Y_ = deserializeId();
     auto Z_ = deserializeId();
-    return std::unique_ptr<TransformedOracleClause>(
+    return std::shared_ptr<TransformedOracleClause>(
             new TransformedOracleClause(underlying, X_, Y_, Z_));
 }
 

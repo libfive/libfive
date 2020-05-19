@@ -16,16 +16,9 @@ namespace libfive {
 class Evaluator : public JacobianEvaluator, public IntervalEvaluator
 {
 public:
-    Evaluator(const Tree& root) :
+    Evaluator(const UniqueTree& root) :
         Evaluator(std::make_shared<Deck>(root)) {}
-
-    Evaluator(const Tree& root,
-              const std::map<Tree::Id, float>& vars) :
-        Evaluator(std::make_shared<Deck>(root), vars) {}
-
-    Evaluator(const SimpleUniqueTree& root) :
-        Evaluator(std::make_shared<Deck>(root)) {}
-    Evaluator(const SimpleUniqueTree& root,
+    Evaluator(const UniqueTree& root,
               const std::map<Tree::Id, float>& vars) :
         Evaluator(std::make_shared<Deck>(root), vars) {}
 

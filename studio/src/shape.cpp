@@ -27,8 +27,8 @@ const int Shape::MESH_DIV_ABORT;
 const int Shape::MESH_DIV_NEW_VARS;
 const int Shape::MESH_DIV_NEW_VARS_SMALL;
 
-Shape::Shape(const libfive::SimpleUniqueTree& t,
-             std::map<libfive::SimpleTree::Id, float> vars)
+Shape::Shape(const libfive::UniqueTree& t,
+             std::map<libfive::Tree::Id, float> vars)
     : tree(t), vars(vars), vert_vbo(QOpenGLBuffer::VertexBuffer),
       tri_vbo(QOpenGLBuffer::IndexBuffer)
 {

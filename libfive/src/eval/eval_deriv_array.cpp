@@ -13,27 +13,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-DerivArrayEvaluator::DerivArrayEvaluator(const Tree& root)
+DerivArrayEvaluator::DerivArrayEvaluator(const UniqueTree& root)
     : DerivArrayEvaluator(std::make_shared<Deck>(root))
 {
     // Nothing to do here
 }
 
 DerivArrayEvaluator::DerivArrayEvaluator(
-        const Tree& root, const std::map<Tree::Id, float>& vars)
-    : DerivArrayEvaluator(std::make_shared<Deck>(root), vars)
-{
-    // Nothing to do here
-}
-
-DerivArrayEvaluator::DerivArrayEvaluator(const SimpleUniqueTree& root)
-    : DerivArrayEvaluator(std::make_shared<Deck>(root))
-{
-    // Nothing to do here
-}
-
-DerivArrayEvaluator::DerivArrayEvaluator(
-        const SimpleUniqueTree& root, const std::map<Tree::Id, float>& vars)
+        const UniqueTree& root, const std::map<Tree::Id, float>& vars)
     : DerivArrayEvaluator(std::make_shared<Deck>(root), vars)
 {
     // Nothing to do here
@@ -179,7 +166,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::OP_NTH_ROOT:
             for (Eigen::Index i=0; i < od.cols(); ++i)
                 od.col(i) = (ad.col(i) == 0)
-                    .select(0, ad.col(i) * (pow(av(i), 1.0f / bv(i) - 1) / bv(i)));
+                    .select(0, ad.col(i) * (powf(av(i), 1.0f / bv(i) - 1) / bv(i)));
             break;
         case Opcode::OP_MOD:
             od = ad;

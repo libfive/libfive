@@ -16,8 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-class Tape; /* Foward declaration */
-class SimpleUniqueTree; /* Forward declaration */
+class UniqueTree; /* Forward declaration */
 
 /*
  *  A Deck is the top-level class that produces Tapes.  It includes
@@ -34,8 +33,7 @@ class SimpleUniqueTree; /* Forward declaration */
 class Deck
 {
 public:
-    Deck(const Tree root);
-    Deck(const SimpleUniqueTree& root);
+    Deck(const UniqueTree& root);
 
     Deck(const Deck&)=delete;
     Deck& operator=(const Deck& other)=delete;
@@ -47,8 +45,8 @@ public:
     std::map<Clause::Id, float> constants;
 
     /*  Map of variables (in terms of where they live in this Evaluator) to
-     *  their ids in their respective Tree or SimpleTree
-     *  (e.g. what you get when calling Tree::var().id() */
+     *  their ids in their respective Tree  (e.g. what you get when calling
+     *  Tree::var().id() */
     boost::bimap<Clause::Id, const void*> vars;
 
     /*  Oracles are also unpacked from the tree at construction, and

@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QOpenGLFunctions>
 
 #include "libfive/eval/evaluator.hpp"
-#include "libfive/tree/simple_tree.hpp"
+#include "libfive/tree/tree.hpp"
 
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/region.hpp"
@@ -39,8 +39,8 @@ class Shape : public QObject, QOpenGLFunctions
 {
     Q_OBJECT
 public:
-    Shape(const libfive::SimpleUniqueTree& t,
-          std::map<libfive::SimpleTree::Id, float> vars);
+    Shape(const libfive::UniqueTree& t,
+          std::map<libfive::Tree::Id, float> vars);
 
     /*
      *  In destructor, wait for computation to finish
@@ -75,7 +75,7 @@ public:
     /*
      *  Looks up the tree's ID
      */
-    libfive::SimpleTree::Id id() const { return tree.tree.id(); }
+    libfive::Tree::Id id() const { return tree.tree.id(); }
 
     /*
      *  Updates variables from another Shape
@@ -91,7 +91,7 @@ public:
      *
      *  Returns true if variable values have changed.
      */
-    bool updateVars(const std::map<libfive::SimpleTree::Id, float>& vs);
+    bool updateVars(const std::map<libfive::Tree::Id, float>& vs);
 
     /*
      *  Checks to see whether this shape has attached vars
@@ -111,7 +111,7 @@ public:
     /*
      *  Returns another pointer to the solution map
      */
-    const std::map<libfive::SimpleTree::Id, float>& getVars() const
+    const std::map<libfive::Tree::Id, float>& getVars() const
     { return vars; }
 
     /*
@@ -166,8 +166,8 @@ protected:
     QFutureWatcher<BoundedMesh> mesh_watcher;
     libfive::BRepSettings mesh_settings;
 
-    libfive::SimpleUniqueTree tree;
-    std::map<libfive::SimpleTree::Id, float> vars;
+    libfive::UniqueTree tree;
+    std::map<libfive::Tree::Id, float> vars;
     std::vector<libfive::Evaluator,
                 Eigen::aligned_allocator<libfive::Evaluator>> es;
 

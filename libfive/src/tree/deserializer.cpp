@@ -9,6 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <iostream>
 #include <map>
 
+#include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/tree/deserializer.hpp"
 #include "libfive/tree/serializer.hpp"
 
@@ -48,10 +49,14 @@ Archive::Shape Deserializer::deserializeShape(char tag)
     CHECK_POS();
     REQUIRE(tag == 'T' || tag == 't');
 
-    Archive::Shape out;
-    out.name = deserializeString();
+    auto name = deserializeString();
     CHECK_POS();
-    out.doc = deserializeString();
+    auto doc = deserializeString();
+    Archive::Shape out {
+        libfive::Tree::invalid(),
+        name, doc,
+        {}
+    };
 
     if (tag == 't')
     {
@@ -101,22 +106,22 @@ Archive::Shape Deserializer::deserializeShape(char tag)
                         << name << "\"" << std::endl;
                     return out;
                 }
-                trees.insert({next, Tree(std::move(o))});
+                trees.insert({next, Tree(o)});
             }
             else if (args == 2)
             {
                 auto rhs = deserializeBytes<uint32_t>();
                 auto lhs = deserializeBytes<uint32_t>();
-                trees.insert({next, Tree(op, trees.at(lhs), trees.at(rhs))});
+                trees.insert({next, Tree::binary(op, trees.at(lhs), trees.at(rhs))});
             }
             else if (args == 1)
             {
                 auto lhs = deserializeBytes<uint32_t>();
-                trees.insert({next, Tree(op, trees.at(lhs))});
+                trees.insert({next, Tree::unary(op, trees.at(lhs))});
             }
             else
             {
-                trees.insert({next, Tree(op)});
+                trees.insert({next, Tree::nonary(op)});
             }
         }
         out.tree = trees.at(trees.size() - 1);
