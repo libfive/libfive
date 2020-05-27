@@ -39,6 +39,12 @@ namespace Opcode
     OPCODE(OP_ASIN, 13)     \
     OPCODE(OP_ACOS, 14)     \
     OPCODE(OP_ATAN, 15)     \
+    OPCODE(OP_SINH, 33)      \
+    OPCODE(OP_COSH, 34)      \
+    OPCODE(OP_TANH, 35)      \
+    OPCODE(OP_ASINH, 36)     \
+    OPCODE(OP_ACOSH, 37)     \
+    OPCODE(OP_ATANH, 38)     \
     OPCODE(OP_EXP, 16)      \
     OPCODE(OP_ABS, 28)      \
     OPCODE(OP_LOG, 30)      \
@@ -79,6 +85,12 @@ namespace Opcode
     OPCODE(OP_ASIN, 13)     \
     OPCODE(OP_ACOS, 14)     \
     OPCODE(OP_ATAN, 15)     \
+    OPCODE(OP_SINH, 33)      \
+    OPCODE(OP_COSH, 34)      \
+    OPCODE(OP_TANH, 35)      \
+    OPCODE(OP_ASINH, 36)     \
+    OPCODE(OP_ACOSH, 37)     \
+    OPCODE(OP_ATANH, 38)     \
     OPCODE(OP_EXP, 16)      \
     OPCODE(OP_ABS, 17)      \
     OPCODE(OP_LOG, 18)      \
@@ -105,7 +117,7 @@ enum Opcode {
 #define OPCODE(s, i) s=i,
     OPCODES
 #undef OPCODE
-    LAST_OP=33,
+    LAST_OP=39,
 };
 
 size_t args(Opcode op);

@@ -331,6 +331,24 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::OP_ATAN:
             out = atan(a);
             break;
+        case Opcode::OP_SINH:
+            out = sinh(a);
+            break;
+        case Opcode::OP_COSH:
+            out = cosh(a);
+            break;
+        case Opcode::OP_TANH:
+            out = tanh(a);
+            break;
+        case Opcode::OP_ASINH:
+            out = asinh(a);
+            break;
+        case Opcode::OP_ACOSH:
+            out = acosh(a);
+            break;
+        case Opcode::OP_ATANH:
+            out = atanh(a);
+            break;
         case Opcode::OP_LOG:
             out = log(a);
             break;
