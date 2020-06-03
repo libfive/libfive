@@ -82,10 +82,7 @@ Tree Tree::nonary(Opcode::Opcode op) {
     return Tree(std::make_shared<Data>(TreeNonaryOp { op }));
 }
 
-Tree Tree::binary(Opcode::Opcode op,
-                              const Tree& lhs,
-                              const Tree& rhs)
-{
+Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
     // We can only build binary operations with this function
     if (Opcode::args(op) != 2) {
         return invalid();
