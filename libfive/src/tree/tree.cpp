@@ -15,6 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/tree/archive.hpp"
+#include "libfive/eval/eval_array.hpp"
 #include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/oracle/oracle.hpp"
 
@@ -47,6 +48,13 @@ Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
     // We can only build unary operations with this function
     if (Opcode::args(op) != 1) {
         return invalid();
+    }
+    // Collapse constant operations
+    else if (lhs->op() == Opcode::CONSTANT) {
+        auto tmp = Tree(std::make_shared<Data>(TreeUnaryOp { op, lhs }));
+        ArrayEvaluator eval(tmp);
+        const float v = eval.value({0.0f, 0.0f, 0.0f});
+        return Tree(v);
     }
     // abs is idempotent after abs() or square()
     else if (op == Opcode::OP_ABS) {
@@ -81,6 +89,13 @@ Tree Tree::binary(Opcode::Opcode op,
     // We can only build binary operations with this function
     if (Opcode::args(op) != 2) {
         return invalid();
+    }
+    // Collapse constant operations
+    else if (lhs->op() == Opcode::CONSTANT && rhs->op() == Opcode::CONSTANT) {
+        auto tmp = Tree(std::make_shared<Data>(TreeBinaryOp { op, lhs, rhs }));
+        ArrayEvaluator eval(tmp);
+        const float v = eval.value({0.0f, 0.0f, 0.0f});
+        return Tree(v);
     }
     // Division by 1 is ignored
     else if (op == Opcode::OP_DIV) {

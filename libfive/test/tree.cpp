@@ -342,13 +342,13 @@ TEST_CASE("Tree::unique: deduplication of constants")
 TEST_CASE("Tree::unique: deduplication of NAN")
 {
     auto cx = Tree(1);
-    auto ca = Tree(NAN);
+    auto ca = Tree(NAN) * Tree::X();
     auto cb = Tree(std::nanf(""));
     auto cy = Tree(2);
 
-    REQUIRE((ca + cb).unique().size() == 2);
-    REQUIRE((ca + cx).unique().size() == 3);
-    REQUIRE((ca + cy).unique().size() == 3);
+    REQUIRE((ca + cb).unique().size() == 4);
+    REQUIRE((ca + cx).unique().size() == 5);
+    REQUIRE((ca + cy).unique().size() == 5);
 }
 
 TEST_CASE("Tree: identity operations")
