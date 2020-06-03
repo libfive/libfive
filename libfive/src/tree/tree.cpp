@@ -333,7 +333,7 @@ Tree Tree::remap(Tree X, Tree Y, Tree Z) const {
     std::unordered_map<Id, Tree> remap;
 
     for (auto t : flat) {
-        std::shared_ptr<const Data> changed;
+        Tree changed = Tree::invalid();
 
         if (auto d = std::get_if<TreeNonaryOp>(t)) {
             switch (d->op) {
@@ -345,29 +345,28 @@ Tree Tree::remap(Tree X, Tree Y, Tree Z) const {
         } else if (auto d = std::get_if<TreeUnaryOp>(t)) {
             auto itr = remap.find(d->lhs.id());
             if (itr != remap.end()) {
-                changed = std::make_shared<Data>(TreeUnaryOp {
-                    d->op, itr->second});
+                changed = Tree::unary(d->op, itr->second);
             }
         } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
             auto lhs = remap.find(d->lhs.id());
             auto rhs = remap.find(d->rhs.id());
             if (lhs != remap.end() || rhs != remap.end()) {
-                changed = std::make_shared<Data>(TreeBinaryOp {
+                changed = Tree::binary(
                     d->op,
                     (lhs == remap.end()) ? d->lhs
                                          : lhs->second,
                     (rhs == remap.end()) ? d->rhs
-                                         : rhs->second });
+                                         : rhs->second );
             }
         }
 
-        if (changed) {
-            remap.insert({t, Tree(changed)});
+        if (changed.is_valid()) {
+            remap.insert({t, changed});
         }
     }
 
     auto itr = remap.find(get());
-    return (itr == remap.end()) ? *this : Tree(itr->second->shared_from_this());
+    return (itr == remap.end()) ? *this : itr->second;
 }
 
 std::vector<const Tree::Data*> Tree::walk() const {
