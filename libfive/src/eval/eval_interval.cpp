@@ -281,7 +281,7 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
         case Opcode::OP_LOG:
             out = Interval::log(a);
-            break;                       
+            break;
         case Opcode::OP_ABS:
             out = Interval::abs(a);
             break;

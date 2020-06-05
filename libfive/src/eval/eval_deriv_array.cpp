@@ -223,7 +223,7 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             od = ad.rowwise() / sqrt(pow(av, 2) + 1);
             break;
         case Opcode::OP_ACOSH:
-            od = ad.rowwise() / sqrt(pow(av, 2) - 1);
+            od = ad.rowwise() / (sqrt(av - 1) * sqrt(av + 1));
             break;
         case Opcode::OP_ATANH:
             od = ad.rowwise() / (1 - pow(av, 2));
