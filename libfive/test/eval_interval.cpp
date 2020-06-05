@@ -34,9 +34,12 @@ TEST_CASE("IntervalEvaluator::eval")
 
     SECTION("Every operation")
     {
-        for (unsigned i=7; i < libfive::Opcode::ORACLE; ++i)
+        for (unsigned i=0; i < libfive::Opcode::LAST_OP; ++i)
         {
             auto op = (libfive::Opcode::Opcode)i;
+            if (Opcode::args(op) <= 0) {
+                continue;
+            }
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
             IntervalEvaluator e(t);
