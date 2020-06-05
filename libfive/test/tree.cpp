@@ -194,7 +194,7 @@ TEST_CASE("Tree::walk")
             REQUIRE(m != nullptr);
             REQUIRE(m->op == Opcode::OP_MIN);
             REQUIRE(m->lhs == Tree::X());
-            REQUIRE(m->rhs == Tree::X());
+            REQUIRE(m->rhs == Tree::Y());
         }
         {
             auto m = std::get_if<TreeConstant>(*itr++);
