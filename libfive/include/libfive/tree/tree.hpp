@@ -229,12 +229,14 @@ struct TreeData : public TreeDataVariant,
     using UnaryKey = std::tuple<Opcode::Opcode, const TreeData*>;
     using BinaryKey = std::tuple<
         Opcode::Opcode, const TreeData*, const TreeData*>;
+    using OracleKey = const OracleClause*;
     using Key = std::variant<
         bool, // Used for NaN and invalid
         float,
         Opcode::Opcode,
         UnaryKey,
-        BinaryKey>;
+        BinaryKey,
+        OracleKey>;
 
     Key key() const;
 };

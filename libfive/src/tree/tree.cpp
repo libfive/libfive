@@ -321,6 +321,8 @@ TreeData::Key TreeData::key() const {
         return Key(std::make_tuple(d->op, d->lhs.get()));
     } else if (auto d = std::get_if<TreeBinaryOp>(this)) {
         return Key(std::make_tuple(d->op, d->lhs.get(), d->rhs.get()));
+    } else if (auto d = std::get_if<TreeOracle>(this)) {
+        return Key(d->oracle.get());
     } else {
         return Key(false);
     }
@@ -445,7 +447,7 @@ Tree Tree::unique() const {
     std::vector<std::shared_ptr<const Data>> new_ptrs;
 
     for (auto t : flat) {
-        // Get canonical key
+        // Get canonical key by applying remap to all children
         auto key = t->key();
         bool changed = false;
         if (auto k = std::get_if<Data::UnaryKey>(&key)) {
@@ -469,7 +471,7 @@ Tree Tree::unique() const {
 
         auto k_itr = canonical.find(key);
         // We already have a canonical version of this tree,
-        // so remap it and keep going.
+        // so remap this tree to the canonical version and keep going.
         if (k_itr != canonical.end()) {
             remap.insert({t, k_itr->second});
         } else if (!changed) {
