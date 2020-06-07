@@ -360,6 +360,11 @@ Tree Tree::remap(Tree X, Tree Y, Tree Z) const {
                     (rhs == remap.end()) ? d->rhs
                                          : rhs->second );
             }
+        } else if (auto d = std::get_if<TreeOracle>(t)) {
+            auto r = d->oracle->remap(Tree(t->shared_from_this()), X, Y, Z);
+            if (r != d->oracle) {
+                changed = Tree(r);
+            }
         }
 
         if (changed.is_valid()) {
