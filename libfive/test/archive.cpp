@@ -37,7 +37,7 @@ public:
         {
             return nullptr;
         }
-        return std::unique_ptr<OracleClause>(new ST());
+        return std::make_unique<ST>();
     }
 };
 REGISTER_ORACLE_CLAUSE(ST)
@@ -107,8 +107,7 @@ TEST_CASE("Archive::serialize")
 
     SECTION("With an oracle")
     {
-        auto a = Archive(Tree(std::unique_ptr<OracleClause>(
-                        new ST())));
+        auto a = Archive(Tree(std::make_unique<ST>()));
 
         std::stringstream out;
         a.serialize(out);

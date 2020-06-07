@@ -164,7 +164,7 @@ public:
     }
     std::unique_ptr<Oracle> getOracle() const override
     {
-        return std::unique_ptr<Oracle>(new PickySIMDOracle(expected_eval_size));
+        return std::make_unique<PickySIMDOracle>(expected_eval_size);
     }
 
     std::string name() const override
@@ -177,8 +177,7 @@ public:
 TEST_CASE("Oracle: check SIMD clamping")
 {
     long expected_eval_size = 0;
-    Tree picky(std::unique_ptr<PickySIMDOracleClause>(
-            new PickySIMDOracleClause(expected_eval_size)));
+    Tree picky(std::make_unique<PickySIMDOracleClause>(expected_eval_size));
 
     DerivArrayEvaluator eval(picky + Tree::X() + 1.0f);
     for (unsigned i=1; i < 100; ++i) {
