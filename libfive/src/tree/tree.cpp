@@ -488,24 +488,20 @@ Tree Tree::unique() const {
             if (auto d = std::get_if<TreeUnaryOp>(t)) {
                 auto itr = remap.find(d->lhs.id());
                 assert(itr != remap.end());
-                out = std::make_shared<Data>(TreeUnaryOp {
-                    d->op, Tree(itr->second->shared_from_this())});
+                out = Tree::unary(d->op, Tree(itr->second->shared_from_this()));
             } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
                 auto lhs = remap.find(d->lhs.id());
                 auto rhs = remap.find(d->rhs.id());
                 assert(lhs != remap.end() || rhs != remap.end());
-                out = std::make_shared<Data>(TreeBinaryOp {
+                out = Tree::binary(
                     d->op,
                     (lhs == remap.end())
                         ? d->lhs
                         : Tree(lhs->second->shared_from_this()),
                     (rhs == remap.end())
                         ? d->rhs
-                        : Tree(rhs->second->shared_from_this()) });
+                        : Tree(rhs->second->shared_from_this()));
             }
-            // TODO: handle identities, e.g. min(a, a) => a
-            // or a * a => square(a), which have only been proven now
-            // that children are deduplicated
 
             // The new tree is the canonical tree; folks that were using
             // the original tree need to use it instead.

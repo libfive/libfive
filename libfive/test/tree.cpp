@@ -134,6 +134,19 @@ TEST_CASE("Tree::unique()")
         auto t = (a*1 + b*2 + c*3).unique();
         REQUIRE(t.walk().size() == 9);
     }
+
+    SECTION("Collapsing") {
+        auto a = Tree::X() + Tree::Y();
+        auto b = Tree::X() + Tree::Y();
+
+        // a and b are different, so min(a, b) doesn't collapse
+        auto c = min(a, b);
+        REQUIRE(c.walk().size() == 5);
+
+        // However, post-collapse, this should hit the min(x, x) = x identity
+        auto d = c.unique();
+        REQUIRE(d.walk().size() == 3);
+    }
 }
 
 TEST_CASE("Tree: operator<<")
