@@ -8,8 +8,6 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <iostream>
-
 #include "libfive/render/brep/free_thread_handler.hpp"
 #include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/worker_pool.hpp"

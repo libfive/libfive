@@ -21,8 +21,8 @@ ArrayEvaluator::ArrayEvaluator(const UniqueTree& root)
     // Nothing to do here
 }
 
-ArrayEvaluator::ArrayEvaluator(
-        const UniqueTree& root, const std::map<Tree::Id, float>& vars)
+ArrayEvaluator::ArrayEvaluator(const UniqueTree& root,
+                               const std::map<Tree::Id, float>& vars)
     : ArrayEvaluator(std::make_shared<Deck>(root), vars)
 {
     // Nothing to do here

@@ -6,7 +6,7 @@
 
 namespace libfive {
 
-std::unique_ptr<OracleClause> OracleClause::deserialize(
+std::unique_ptr<const OracleClause> OracleClause::deserialize(
         const std::string& name, Deserializer& in)
 {
     auto itr = installed().find(name);
@@ -42,7 +42,7 @@ bool OracleClause::serialize(const std::string& name,
     }
 }
 
-std::unique_ptr<OracleClause> OracleClause::remap(
+std::unique_ptr<const OracleClause> OracleClause::remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const
 {
     assert(self->op == Opcode::ORACLE);

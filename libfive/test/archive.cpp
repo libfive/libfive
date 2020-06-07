@@ -30,7 +30,7 @@ public:
         return true;
     }
 
-    static std::unique_ptr<OracleClause> deserialize(Deserializer& in)
+    static std::unique_ptr<const OracleClause> deserialize(Deserializer& in)
     {
         auto out = in.deserializeString();
         if (out != "hi")
