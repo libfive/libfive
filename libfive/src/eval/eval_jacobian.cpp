@@ -19,8 +19,8 @@ JacobianEvaluator::JacobianEvaluator(const UniqueTree& root)
     // Nothing to do here
 }
 
-JacobianEvaluator::JacobianEvaluator(
-        const UniqueTree& root, const std::map<Tree::Id, float>& vars)
+JacobianEvaluator::JacobianEvaluator(const UniqueTree& root,
+                                     const std::map<Tree::Id, float>& vars)
     : JacobianEvaluator(std::make_shared<Deck>(root), vars)
 {
     // Nothing to do here

@@ -103,7 +103,7 @@ public:
     Tree(float v);
 
     // Constructs a Tree from an OracleClause
-    explicit Tree(std::unique_ptr<OracleClause>&& oracle);
+    explicit Tree(std::unique_ptr<const OracleClause>&& oracle);
 
     bool is_valid() const;
 
@@ -167,7 +167,7 @@ struct TreeConstant {
     float value;
 };
 struct TreeOracle {
-    std::unique_ptr<OracleClause> oracle;
+    std::unique_ptr<const OracleClause> oracle;
 };
 struct TreeInvalid {
     // No members
@@ -256,5 +256,5 @@ public:
 
 }   // namespace libfive
 
-// Needed so that the unique_ptr<OracleClause> destructor works
+// Needed so that the unique_ptr<const OracleClause> destructor works
 #include "libfive/oracle/oracle_clause.hpp"

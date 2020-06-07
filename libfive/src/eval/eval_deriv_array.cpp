@@ -19,8 +19,8 @@ DerivArrayEvaluator::DerivArrayEvaluator(const UniqueTree& root)
     // Nothing to do here
 }
 
-DerivArrayEvaluator::DerivArrayEvaluator(
-        const UniqueTree& root, const std::map<Tree::Id, float>& vars)
+DerivArrayEvaluator::DerivArrayEvaluator(const UniqueTree& root,
+                                         const std::map<Tree::Id, float>& vars)
     : DerivArrayEvaluator(std::make_shared<Deck>(root), vars)
 {
     // Nothing to do here

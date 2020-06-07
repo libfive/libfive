@@ -33,7 +33,7 @@ Tree::Tree(std::shared_ptr<const Data> d)
     // Nothing to do here
 }
 
-Tree::Tree(std::unique_ptr<OracleClause>&& o)
+Tree::Tree(std::unique_ptr<const OracleClause>&& o)
     : Tree(std::make_shared<Data>( TreeOracle { std::move(o) }))
 {
     // Nothing to do here

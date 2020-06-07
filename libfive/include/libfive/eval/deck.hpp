@@ -45,9 +45,9 @@ public:
     std::map<Clause::Id, float> constants;
 
     /*  Map of variables (in terms of where they live in this Evaluator) to
-     *  their ids in their respective Tree  (e.g. what you get when calling
+     *  their ids in their respective Tree (e.g. what you get when calling
      *  Tree::var().id() */
-    boost::bimap<Clause::Id, const void*> vars;
+    boost::bimap<Clause::Id, Tree::Id> vars;
 
     /*  Oracles are also unpacked from the tree at construction, and
      *  stored in this flat list.  The ORACLE opcode takes an index into
