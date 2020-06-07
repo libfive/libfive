@@ -47,7 +47,7 @@ public:
      *
      *  In addition, T must declare
      *      bool T::serialize(Serializer& out) const
-     *      static std::shared_ptr<OracleClause> deserialize(
+     *      static std::unique_ptr<OracleClause> deserialize(
      *          Deserializer& in);
      *  If it depends on other trees having been serialized first, it should
      *      override dependencies().
@@ -82,7 +82,7 @@ public:
      *      pos is adjusted as the data is read.
      *      returns a null pointer on failure.
      */
-    static std::shared_ptr<OracleClause> deserialize(
+    static std::unique_ptr<OracleClause> deserialize(
             const std::string& name, Deserializer& in);
 
     /*
@@ -94,13 +94,13 @@ public:
      *  handle cases where the underlying OracleClause needs to be cloned,
      *  as ownership is handled at the Tree level.
      */
-    virtual std::shared_ptr<OracleClause> remap(
+    virtual std::unique_ptr<OracleClause> remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const;
 
 protected:
     typedef std::function<bool(const OracleClause*, Serializer&)>
         OracleSerializer;
-    typedef std::function<std::shared_ptr<OracleClause>(Deserializer&)>
+    typedef std::function<std::unique_ptr<OracleClause>(Deserializer&)>
         OracleDeserializer;
 
     typedef std::pair<OracleSerializer, OracleDeserializer> SerDe;

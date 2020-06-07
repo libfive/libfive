@@ -31,13 +31,13 @@ public:
     /*
      *  More efficient remap implementation that remaps the underlying Trees
      */
-    std::shared_ptr<OracleClause> remap(
+    std::unique_ptr<OracleClause> remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const override;
 
     std::vector<libfive::Tree> dependencies() const override;
 
     bool serialize(Serializer& out) const;
-    static std::shared_ptr<OracleClause> deserialize(Deserializer& in);
+    static std::unique_ptr<OracleClause> deserialize(Deserializer& in);
 
 private:
     Tree underlying;

@@ -30,14 +30,14 @@ public:
         return true;
     }
 
-    static std::shared_ptr<OracleClause> deserialize(Deserializer& in)
+    static std::unique_ptr<OracleClause> deserialize(Deserializer& in)
     {
         auto out = in.deserializeString();
         if (out != "hi")
         {
             return nullptr;
         }
-        return std::shared_ptr<OracleClause>(new ST());
+        return std::unique_ptr<OracleClause>(new ST());
     }
 };
 REGISTER_ORACLE_CLAUSE(ST)
@@ -107,7 +107,7 @@ TEST_CASE("Archive::serialize")
 
     SECTION("With an oracle")
     {
-        auto a = Archive(Tree(std::shared_ptr<OracleClause>(
+        auto a = Archive(Tree(std::unique_ptr<OracleClause>(
                         new ST())));
 
         std::stringstream out;
