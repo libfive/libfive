@@ -40,8 +40,7 @@ Tree::Tree(const std::shared_ptr<OracleClause>& o)
 }
 
 Tree Tree::var() {
-    return Tree(std::make_shared<Data>(
-        TreeNonaryOp { Opcode::VAR_FREE }));
+    return Tree::nonary(Opcode::VAR_FREE);
 }
 
 Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
