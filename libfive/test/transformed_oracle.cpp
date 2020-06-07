@@ -166,7 +166,7 @@ TEST_CASE("Rotated Oracle: Render and compare (cube as oracle)")
             Tree::Y() - 1.5)),
         max(-(Tree::Z() + 1.5),
             Tree::Z() - 1.5));
-    Tree cubeOracle(std::shared_ptr<CubeOracleClause>(new CubeOracleClause));
+    Tree cubeOracle(std::unique_ptr<CubeOracleClause>(new CubeOracleClause));
 
     compareUnderTransformation(cubeOracle, cube,
         [](Tree t) {return rotate2d(t, 10);},
@@ -206,7 +206,7 @@ TEST_CASE("Abs and skew applied to Oracle: "
             Tree::Y() - 1.5)),
         max(-(Tree::Z() + 1.5),
             Tree::Z() - 1.5));
-    Tree cubeOracle(std::shared_ptr<CubeOracleClause>(new CubeOracleClause));
+    Tree cubeOracle(std::unique_ptr<CubeOracleClause>(new CubeOracleClause));
     compareUnderTransformation(cubeOracle, cube,
         [](Tree t) {
         return t.remap(Tree::Y(), Tree::X(),
@@ -264,7 +264,7 @@ TEST_CASE("Jacobian-0 transform and abs applied to Oracle: "
             Tree::Y() - 1.5)),
         max(-(Tree::Z() + 1.5),
             Tree::Z() - 1.5));
-    Tree cubeOracle(std::shared_ptr<CubeOracleClause>(new CubeOracleClause));
+    Tree cubeOracle(std::unique_ptr<CubeOracleClause>(new CubeOracleClause));
 
     compareUnderTransformation(cubeOracle, cube,
         [](Tree t) {

@@ -33,8 +33,8 @@ Tree::Tree(std::shared_ptr<const Data> d)
     // Nothing to do here
 }
 
-Tree::Tree(const std::shared_ptr<OracleClause>& o)
-    : Tree(std::make_shared<Data>( TreeOracle { o }))
+Tree::Tree(std::unique_ptr<OracleClause>&& o)
+    : Tree(std::make_shared<Data>( TreeOracle { std::move(o) }))
 {
     // Nothing to do here
 }
@@ -361,7 +361,7 @@ Tree Tree::remap(Tree X, Tree Y, Tree Z) const {
         } else if (auto d = std::get_if<TreeOracle>(t)) {
             auto r = d->oracle->remap(Tree(t->shared_from_this()), X, Y, Z);
             if (r != d->oracle) {
-                changed = Tree(r);
+                changed = Tree(std::move(r));
             }
         }
 

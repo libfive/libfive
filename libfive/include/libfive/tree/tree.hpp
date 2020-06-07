@@ -103,7 +103,7 @@ public:
     Tree(float v);
 
     // Constructs a Tree from an OracleClause
-    explicit Tree(const std::shared_ptr<OracleClause>& oracle);
+    explicit Tree(std::unique_ptr<OracleClause>&& oracle);
 
     bool is_valid() const;
 
@@ -167,7 +167,7 @@ struct TreeConstant {
     float value;
 };
 struct TreeOracle {
-    std::shared_ptr<OracleClause> oracle;
+    std::unique_ptr<OracleClause> oracle;
 };
 struct TreeInvalid {
     // No members
@@ -186,8 +186,8 @@ using TreeDataVariant = std::variant<
 struct TreeData : public TreeDataVariant,
                         std::enable_shared_from_this<TreeData>
 {
-    TreeData(const TreeDataVariant& v)
-        : TreeDataVariant(v)
+    TreeData(TreeDataVariant&& v)
+        : TreeDataVariant(std::move(v))
     { /* Nothing to do here */ }
 
     /*  Returns the opcode of this clause */
@@ -256,3 +256,5 @@ public:
 
 }   // namespace libfive
 
+// Needed so that the unique_ptr<OracleClause> destructor works
+#include "libfive/oracle/oracle_clause.hpp"

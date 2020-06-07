@@ -6,7 +6,7 @@
 
 namespace libfive {
 
-std::shared_ptr<OracleClause> OracleClause::deserialize(
+std::unique_ptr<OracleClause> OracleClause::deserialize(
         const std::string& name, Deserializer& in)
 {
     auto itr = installed().find(name);
@@ -42,13 +42,13 @@ bool OracleClause::serialize(const std::string& name,
     }
 }
 
-std::shared_ptr<OracleClause> OracleClause::remap(
+std::unique_ptr<OracleClause> OracleClause::remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const
 {
     assert(self->op == Opcode::ORACLE);
     assert(self->oracle.get() == this);
 
-    return std::shared_ptr<OracleClause>(
+    return std::unique_ptr<OracleClause>(
         new TransformedOracleClause(self, X_, Y_, Z_));
 }
 

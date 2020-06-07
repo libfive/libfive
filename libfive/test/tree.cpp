@@ -161,8 +161,8 @@ TEST_CASE("Tree: operator<<")
     SECTION("With oracle")
     {
         std::stringstream ss;
-        auto oracle = std::shared_ptr<OracleClause>(new CubeOracleClause());
-        auto o = Tree(oracle);
+        auto oracle = std::make_unique<CubeOracleClause>();
+        auto o = Tree(std::move(oracle));
         ss << (Tree::X() + 5 + o);
         REQUIRE(ss.str() == "(+ x 5 'CubeOracle)");
     }

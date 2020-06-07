@@ -106,7 +106,7 @@ Archive::Shape Deserializer::deserializeShape(char tag)
                         << name << "\"" << std::endl;
                     return out;
                 }
-                trees.insert({next, Tree(o)});
+                trees.insert({next, Tree(std::move(o))});
             }
             else if (args == 2)
             {

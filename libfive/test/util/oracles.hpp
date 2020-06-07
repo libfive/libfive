@@ -64,9 +64,9 @@ class AxisOracleClause : public OracleClause
 inline Tree convertToOracleAxes(Tree t)
 {
     return t.remap(
-        Tree(std::shared_ptr<OracleClause>(new AxisOracleClause<0>)),
-        Tree(std::shared_ptr<OracleClause>(new AxisOracleClause<1>)),
-        Tree(std::shared_ptr<OracleClause>(new AxisOracleClause<2>)));
+        Tree(std::unique_ptr<OracleClause>(new AxisOracleClause<0>)),
+        Tree(std::unique_ptr<OracleClause>(new AxisOracleClause<1>)),
+        Tree(std::unique_ptr<OracleClause>(new AxisOracleClause<2>)));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
