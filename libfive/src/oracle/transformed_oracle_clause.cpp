@@ -27,9 +27,9 @@ TransformedOracleClause::TransformedOracleClause(
 
 std::unique_ptr<Oracle> TransformedOracleClause::getOracle() const
 {
-    return std::unique_ptr<TransformedOracle>(
-        new TransformedOracle(underlying->oracle_clause().getOracle(),
-                              X_, Y_, Z_));
+    return std::make_unique<TransformedOracle>(
+            underlying->oracle_clause().getOracle(),
+            X_, Y_, Z_);
 }
 
 std::unique_ptr<OracleClause>
@@ -37,11 +37,11 @@ TransformedOracleClause::remap(Tree self, Tree X_, Tree Y_, Tree Z_) const
 {
     (void)self; // unused, as we execute the remap on the underlying oracle
 
-    return std::unique_ptr<OracleClause>(
-        new TransformedOracleClause(underlying,
+    return std::make_unique<TransformedOracleClause>(
+            underlying,
             this->X_.remap(X_, Y_, Z_),
             this->Y_.remap(X_, Y_, Z_),
-            this->Z_.remap(X_, Y_, Z_)));
+            this->Z_.remap(X_, Y_, Z_));
 }
 
 std::vector<libfive::Tree> TransformedOracleClause::dependencies() const
@@ -77,8 +77,7 @@ std::unique_ptr<OracleClause> TransformedOracleClause::deserialize(
     auto X_ = deserializeId();
     auto Y_ = deserializeId();
     auto Z_ = deserializeId();
-    return std::unique_ptr<TransformedOracleClause>(
-            new TransformedOracleClause(underlying, X_, Y_, Z_));
+    return std::make_unique<TransformedOracleClause>(underlying, X_, Y_, Z_);
 }
 
 } //namespace libfive

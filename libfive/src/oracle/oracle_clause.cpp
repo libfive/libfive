@@ -48,8 +48,7 @@ std::unique_ptr<OracleClause> OracleClause::remap(
     assert(self->op == Opcode::ORACLE);
     assert(self->oracle.get() == this);
 
-    return std::unique_ptr<OracleClause>(
-        new TransformedOracleClause(self, X_, Y_, Z_));
+    return std::make_unique<TransformedOracleClause>(self, X_, Y_, Z_);
 }
 
 }   // namespace libfive
