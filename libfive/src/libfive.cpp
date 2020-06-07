@@ -173,10 +173,9 @@ bool libfive_tree_save(libfive_tree ptr, const char* filename)
 libfive_tree libfive_tree_load(const char* filename)
 {
     auto t = Tree::load(filename);
-    if (t.id())
+    if (t.id() && t.is_valid())
     {
-        // TODO
-        return nullptr; //new Tree(t);
+        return new Tree(t);
     }
     else
     {
