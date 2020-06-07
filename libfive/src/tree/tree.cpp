@@ -156,15 +156,15 @@ Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
 
 // Use Meyer's singletons for X/Y/Z, since they're the most common trees
 Tree Tree::X() {
-    static auto x = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_X });
+    static auto x = Tree::nonary(Opcode::VAR_X);
     return Tree(x);
 }
 Tree Tree::Y() {
-    static auto y = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_Y });
+    static auto y = Tree::nonary(Opcode::VAR_Y);
     return Tree(y);
 }
 Tree Tree::Z() {
-    static auto z = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_Z });
+    static auto z = Tree::nonary(Opcode::VAR_Z);
     return Tree(z);
 }
 
@@ -174,8 +174,7 @@ Tree Tree::invalid() {
 }
 
 Tree Tree::with_const_vars() const {
-    return Tree(std::make_shared<Data>(TreeUnaryOp {
-        Opcode::CONST_VAR, *this }));
+    return Tree::unary(Opcode::CONST_VAR, *this);
 }
 
 std::ostream& Tree::print_prefix(std::ostream& s) const {
