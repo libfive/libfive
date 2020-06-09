@@ -266,27 +266,12 @@ TEST_CASE("Tree::explore_affine") {
         REQUIRE(root_map.size() == 1);
         auto itr = root_map.find(t.id());
         REQUIRE(itr != root_map.end());
-        auto map = itr->second;
-        REQUIRE(map.size() == 3);
 
-        bool x_found = false;
-        bool y_found = false;
-        bool c_found = false;
-        for (auto& m : map) {
-            if (m.first == Tree::X().id()) {
-                x_found = true;
-                REQUIRE(m.second == 2);
-            } else if (m.first == Tree::Y().id()) {
-                y_found = true;
-                REQUIRE(m.second == 5);
-            } else if (m.first == c.id()) {
-                c_found = true;
-                REQUIRE(m.second == 6);
-            }
-        }
-        REQUIRE(x_found);
-        REQUIRE(y_found);
-        REQUIRE(c_found);
+        std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+        REQUIRE(map.size() == 3);
+        REQUIRE(map[Tree::X().id()] == 2);
+        REQUIRE(map[Tree::Y().id()] == 5);
+        REQUIRE(map[c.id()] == 6);
     }
 }
 
