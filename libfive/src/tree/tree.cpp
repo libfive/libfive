@@ -533,26 +533,38 @@ void Tree::explore_affine(AffineMap& map,
         std::unordered_map<Id, float> my_prev;
         std::unordered_map<Id, float>* prev_ = prev ? prev : &my_prev;
 
-        if (op == OP_NEG) {
-            (*this)->lhs().explore_affine(map, prev_, -scale);
-        } else if (op == OP_ADD) {
-            (*this)->lhs().explore_affine(map, prev_, scale);
-            (*this)->rhs().explore_affine(map, prev_, scale);
-        } else if (op == OP_SUB) {
-            (*this)->lhs().explore_affine(map, prev_, scale);
-            (*this)->rhs().explore_affine(map, prev_, -scale);
-        } else if (op == OP_MUL) {
-            if ((*this)->lhs()->op() == CONSTANT) {
-                const float c = (*this)->lhs()->value();
-                (*this)->rhs().explore_affine(map, prev_, scale * c);
-            } else if ((*this)->rhs()->op() == CONSTANT) {
-                const float c = (*this)->rhs()->value();
-                (*this)->lhs().explore_affine(map, prev_, scale * c);
+        // Recurse if we haven't already solved for this node
+        auto itr = map.find(id());
+        if (itr == map.end()) {
+            if (op == OP_NEG) {
+                (*this)->lhs().explore_affine(map, prev_, -scale);
+            } else if (op == OP_ADD) {
+                (*this)->lhs().explore_affine(map, prev_, scale);
+                (*this)->rhs().explore_affine(map, prev_, scale);
+            } else if (op == OP_SUB) {
+                (*this)->lhs().explore_affine(map, prev_, scale);
+                (*this)->rhs().explore_affine(map, prev_, -scale);
+            } else if (op == OP_MUL) {
+                if ((*this)->lhs()->op() == CONSTANT) {
+                    const float c = (*this)->lhs()->value();
+                    (*this)->rhs().explore_affine(map, prev_, scale * c);
+                } else if ((*this)->rhs()->op() == CONSTANT) {
+                    const float c = (*this)->rhs()->value();
+                    (*this)->lhs().explore_affine(map, prev_, scale * c);
+                }
+            }
+        } else if (prev) {
+            for (const auto& k: itr->second) {
+                (*prev)[k.first] += scale * k.second;
             }
         }
 
-        if (!prev) {
+        if (!prev && itr == map.end()) {
             // Record that we should do a remapping
+            auto& v = map[id()];
+            for (const auto& k: my_prev) {
+                v.push_back(k);
+            }
         }
     } else {
         // Recurse with parent_was_affine = false
