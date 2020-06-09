@@ -10,7 +10,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <unordered_map>
 #include <unordered_set>
 
 #include "libfive/tree/tree.hpp"
@@ -516,6 +515,57 @@ Tree Tree::unique() const {
     return (itr == remap.end())
         ? *this
         : Tree(itr->second->shared_from_this());
+}
+
+void Tree::explore_affine(AffineMap& map,
+                          std::unordered_map<Tree::Id, float>* prev,
+                          float scale) const
+{
+    const auto op = (*this)->op();
+
+    using namespace Opcode;
+    const bool could_be_affine = (op == OP_NEG) ||
+        (op == OP_ADD) || (op == OP_SUB) ||
+        (op == OP_MUL && ((*this)->lhs()->op() == CONSTANT ||
+                          (*this)->rhs()->op() == CONSTANT));
+
+    if (could_be_affine) {
+        std::unordered_map<Id, float> my_prev;
+        std::unordered_map<Id, float>* prev_ = prev ? prev : &my_prev;
+
+        if (op == OP_NEG) {
+            (*this)->lhs().explore_affine(map, prev_, -scale);
+        } else if (op == OP_ADD) {
+            (*this)->lhs().explore_affine(map, prev_, scale);
+            (*this)->rhs().explore_affine(map, prev_, scale);
+        } else if (op == OP_SUB) {
+            (*this)->lhs().explore_affine(map, prev_, scale);
+            (*this)->rhs().explore_affine(map, prev_, -scale);
+        } else if (op == OP_MUL) {
+            if ((*this)->lhs()->op() == CONSTANT) {
+                const float c = (*this)->lhs()->value();
+                (*this)->rhs().explore_affine(map, prev_, scale * c);
+            } else if ((*this)->rhs()->op() == CONSTANT) {
+                const float c = (*this)->rhs()->value();
+                (*this)->lhs().explore_affine(map, prev_, scale * c);
+            }
+        }
+
+        if (!prev) {
+            // Record that we should do a remapping
+        }
+    } else {
+        // Recurse with parent_was_affine = false
+        switch (args(op)) {
+            case 2: (*this)->rhs().explore_affine(map, nullptr, 1); // FALLTHROUGH
+            case 1: (*this)->lhs().explore_affine(map, nullptr, 1); // FALLTHROUGH
+            default: break;
+        }
+
+        if (prev) {
+            (*prev)[id()] += scale;
+        }
+    }
 }
 
 size_t Tree::size() const {

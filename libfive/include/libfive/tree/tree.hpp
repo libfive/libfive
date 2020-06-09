@@ -8,6 +8,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -115,6 +116,14 @@ public:
     /*  Performs a deep copy of the tree with any duplicate subtrees merged
      *  to point to the same objects. */
     Tree unique() const;
+
+    /*  Recurses through the graph, accumulating the affine form of child nodes
+     *  into a map of t1*a + t2*b + t3*c... */
+    using AffinePair = std::pair<Tree::Id, float>;
+    using AffineMap = std::unordered_map<Tree::Id, std::vector<AffinePair>>;
+    void explore_affine(AffineMap& map,
+                        std::unordered_map<Tree::Id, float>* prev,
+                        float scale) const;
 
     /*  Checks the number of unique nodes in the tree */
     size_t size() const;
@@ -231,12 +240,12 @@ struct TreeData : public TreeDataVariant,
         Opcode::Opcode, const TreeData*, const TreeData*>;
     using OracleKey = const OracleClause*;
     using Key = std::variant<
-        bool, // Used for NaN and invalid
-        float,
-        Opcode::Opcode,
-        UnaryKey,
-        BinaryKey,
-        OracleKey>;
+        bool,           // Used for NaN (true) and invalid (false)
+        float,          // Float constants
+        Opcode::Opcode, // Nonary operations, other than VAR_FREE
+        UnaryKey,       // Unary operations and VAR_FREE
+        BinaryKey,      // Binary operations
+        OracleKey>;     // Oracles, keyed by their unique_ptr
 
     Key key() const;
 };
