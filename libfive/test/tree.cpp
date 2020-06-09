@@ -269,9 +269,54 @@ TEST_CASE("Tree::explore_affine") {
 
         std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
         REQUIRE(map.size() == 3);
-        REQUIRE(map[Tree::X().id()] == 2);
-        REQUIRE(map[Tree::Y().id()] == 5);
-        REQUIRE(map[c.id()] == 6);
+        REQUIRE(map.at(Tree::X().id()) == 2);
+        REQUIRE(map.at(Tree::Y().id()) == 5);
+        REQUIRE(map.at(c.id()) == 6);
+    }
+
+    SECTION("(X + Y) + (X + Y)") {
+        // These trees have the same value, but don't have the same Id
+        auto a = Tree::X() + Tree::Y();
+        auto b = Tree::X() + Tree::Y();
+        Tree::AffineMap root_map;
+        auto t = a + b;
+        t.explore_affine(root_map, nullptr, 1);
+        REQUIRE(root_map.size() == 1);
+        auto itr = root_map.find(t.id());
+        REQUIRE(itr != root_map.end());
+
+        std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+        REQUIRE(map.size() == 2);
+        REQUIRE(map.at(Tree::X().id()) == 2);
+        REQUIRE(map.at(Tree::Y().id()) == 2);
+    }
+
+    SECTION("(X + Y) * (X + Y)") {
+        // These trees have the same value, but don't have the same Id
+        auto a = Tree::X() + Tree::Y();
+        auto b = Tree::X() + Tree::Y();
+        Tree::AffineMap root_map;
+        auto t = a * b;
+        t.explore_affine(root_map, nullptr, 1);
+        REQUIRE(root_map.size() == 2);
+        {
+            auto itr = root_map.find(a.id());
+            REQUIRE(itr != root_map.end());
+
+            std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+            REQUIRE(map.size() == 2);
+            REQUIRE(map.at(Tree::X().id()) == 1);
+            REQUIRE(map.at(Tree::Y().id()) == 1);
+        }
+        {
+            auto itr = root_map.find(b.id());
+            REQUIRE(itr != root_map.end());
+
+            std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+            REQUIRE(map.size() == 2);
+            REQUIRE(map.at(Tree::X().id()) == 1);
+            REQUIRE(map.at(Tree::Y().id()) == 1);
+        }
     }
 }
 
