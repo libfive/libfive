@@ -318,6 +318,33 @@ TEST_CASE("Tree::explore_affine") {
             REQUIRE(map.at(Tree::Y().id()) == 1);
         }
     }
+    SECTION("(X + Y) + cos(X + Y)") {
+        auto a = Tree::X() + Tree::Y();
+        auto c = cos(a);
+        Tree::AffineMap root_map;
+        auto t = a + c;
+        t.explore_affine(root_map, nullptr, 1);
+        REQUIRE(root_map.size() == 2);
+        {
+            auto itr = root_map.find(a.id());
+            REQUIRE(itr != root_map.end());
+
+            std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+            REQUIRE(map.size() == 2);
+            REQUIRE(map.at(Tree::X().id()) == 1);
+            REQUIRE(map.at(Tree::Y().id()) == 1);
+        }
+        {
+            auto itr = root_map.find(t.id());
+            REQUIRE(itr != root_map.end());
+
+            std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+            REQUIRE(map.size() == 3);
+            REQUIRE(map.at(Tree::X().id()) == 1);
+            REQUIRE(map.at(Tree::Y().id()) == 1);
+            REQUIRE(map.at(c.id()) == 1);
+        }
+    }
 }
 
 TEST_CASE("Tree::serialize")
