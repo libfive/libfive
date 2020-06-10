@@ -329,19 +329,15 @@ Tree Tree::remap(Tree X, Tree Y, Tree Z) const {
     auto flat = walk();
 
     // If a specific tree (by id) should be remapped, that fact is stored here
-    std::unordered_map<Id, Tree> remap;
+    std::unordered_map<Id, Tree> remap = {
+            {Tree::X().id(), X},
+            {Tree::Y().id(), Y},
+            {Tree::Z().id(), Z}};
 
     for (auto t : flat) {
         Tree changed = Tree::invalid();
 
-        if (auto d = std::get_if<TreeNonaryOp>(t)) {
-            switch (d->op) {
-                case Opcode::VAR_X: changed = X; break;
-                case Opcode::VAR_Y: changed = Y; break;
-                case Opcode::VAR_Z: changed = Z; break;
-                default: break;
-            }
-        } else if (auto d = std::get_if<TreeUnaryOp>(t)) {
+        if (auto d = std::get_if<TreeUnaryOp>(t)) {
             auto itr = remap.find(d->lhs.id());
             if (itr != remap.end()) {
                 changed = Tree::unary(d->op, itr->second);
