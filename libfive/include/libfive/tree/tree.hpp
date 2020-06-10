@@ -125,6 +125,10 @@ public:
                         std::unordered_map<Tree::Id, float>* prev,
                         float scale) const;
 
+    /*  Returns a tree in which nested affine forms are collapsed, e.g.
+     *  (2*X + 3*Y) + 5*(X - Y) ==> 7*X - 2*Y   */
+    Tree collect_affine() const;
+
     /*  Checks the number of unique nodes in the tree */
     size_t size() const;
 

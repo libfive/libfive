@@ -580,6 +580,12 @@ void Tree::explore_affine(AffineMap& map,
     }
 }
 
+Tree Tree::collect_affine() const {
+    AffineMap map;
+    explore_affine(map, nullptr, 1);
+    return *this;
+}
+
 size_t Tree::size() const {
     std::unordered_set<Id> seen;
     size_t count = 0;
