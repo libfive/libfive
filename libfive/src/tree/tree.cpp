@@ -357,9 +357,19 @@ Tree Tree::remap_from(std::unordered_map<Tree::Id, Tree> remap) const {
                                          : rhs->second );
             }
         } else if (auto d = std::get_if<TreeOracle>(t)) {
-            auto r = d->oracle->remap(Tree(t->shared_from_this()), X, Y, Z);
-            if (r != d->oracle) {
-                changed = Tree(std::move(r));
+            // Oracles only support the basic remapping of X/Y/Z, so we detect
+            // this case and handle it below.  Otherwise, we don't change the
+            // change the oracle (e.g. we can't push an affine or other custom
+            // remapping *through* an Oracle with the current API).
+            auto x = remap.find(Tree::X().id());
+            auto y = remap.find(Tree::Y().id());
+            auto z = remap.find(Tree::Z().id());
+            if (x != remap.end() && y != remap.end() && z != remap.end()) {
+                auto r = d->oracle->remap(Tree(t->shared_from_this()),
+                                          x->second, y->second, z->second);
+                if (r != d->oracle) {
+                    changed = Tree(std::move(r));
+                }
             }
         }
 
@@ -517,7 +527,7 @@ Tree Tree::unique() const {
 }
 
 void Tree::explore_affine(AffineMap& map,
-                          std::unordered_map<Tree::Id, float>* prev,
+                          std::unordered_map<const Data*, float>* prev,
                           float scale) const
 {
     const auto op = (*this)->op();
@@ -529,8 +539,8 @@ void Tree::explore_affine(AffineMap& map,
                           (*this)->rhs()->op() == CONSTANT));
 
     if (could_be_affine) {
-        std::unordered_map<Id, float> my_prev;
-        std::unordered_map<Id, float>* prev_ = prev ? prev : &my_prev;
+        std::unordered_map<const Data*, float> my_prev;
+        std::unordered_map<const Data*, float>* prev_ = prev ? prev : &my_prev;
 
         // Recurse if we haven't already solved for this node
         auto itr = map.find(id());
@@ -554,7 +564,7 @@ void Tree::explore_affine(AffineMap& map,
             }
         } else if (prev) {
             for (const auto& k: itr->second) {
-                (*prev)[k.first] += scale * k.second;
+                (*prev)[k.first.get()] += scale * k.second;
             }
         }
 
@@ -562,7 +572,7 @@ void Tree::explore_affine(AffineMap& map,
             // Record that we should do a remapping
             auto& v = map[id()];
             for (const auto& k: my_prev) {
-                v.push_back(k);
+                v.push_back({Tree(k.first->shared_from_this()), k.second});
             }
         }
     } else {
@@ -574,14 +584,34 @@ void Tree::explore_affine(AffineMap& map,
         }
 
         if (prev) {
-            (*prev)[id()] += scale;
+            (*prev)[get()] += scale;
         }
+    }
+}
+
+Tree Tree::reduce_binary(std::vector<AffinePair>::iterator a,
+                         std::vector<AffinePair>::iterator b)
+{
+    const auto delta = b - a;
+    if (delta == 0) {
+        return Tree(0.0f);
+    } else if (delta == 1) {
+        return a->first * a->second;
+    } else {
+        return reduce_binary(a, a + delta / 2) +
+               reduce_binary(a + delta / 2, b);
     }
 }
 
 Tree Tree::collect_affine() const {
     AffineMap map;
     explore_affine(map, nullptr, 1);
+
+    std::unordered_map<Tree::Id, Tree> remap;
+    for (auto& m : map) {
+        remap.insert({m.first, reduce_binary(m.second.begin(),
+                                             m.second.end())});
+    }
     return *this;
 }
 

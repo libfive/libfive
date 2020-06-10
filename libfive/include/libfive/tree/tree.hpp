@@ -119,10 +119,10 @@ public:
 
     /*  Recurses through the graph, accumulating the affine form of child nodes
      *  into a map of t1*a + t2*b + t3*c... */
-    using AffinePair = std::pair<Tree::Id, float>;
+    using AffinePair = std::pair<Tree, float>;
     using AffineMap = std::unordered_map<Tree::Id, std::vector<AffinePair>>;
     void explore_affine(AffineMap& map,
-                        std::unordered_map<Tree::Id, float>* prev,
+                        std::unordered_map<const Data*, float>* prev,
                         float scale) const;
 
     /*  Returns a tree in which nested affine forms are collapsed, e.g.
@@ -151,6 +151,13 @@ public:
     std::vector<const Data*> walk() const;
 
 protected:
+    /*  Does a binary reduction of a set of affine pairs, building
+     *  a balanced-ish tree with a recursive approach.  The a iterator is the
+     *  beginning of the region to reduce, and b is one-past-the-end of the
+     *  region to reduce. */
+    static Tree reduce_binary(std::vector<AffinePair>::iterator a,
+                              std::vector<AffinePair>::iterator b);
+
     // Private constructor to build from the raw variant type
     explicit Tree(std::shared_ptr<const Data> d);
 
