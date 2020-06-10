@@ -135,6 +135,9 @@ public:
     /*  Remaps the coordinates of this tree, returning a new tree.  */
     Tree remap(Tree X, Tree Y, Tree Z) const;
 
+    /*  Generic (static) remapper */
+    Tree remap_from(std::unordered_map<Id, Tree> remap) const;
+
     /*  Serializes the tree to a stream of bytes */
     void serialize(std::ostream& out) const;
 

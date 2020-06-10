@@ -326,14 +326,17 @@ TreeData::Key TreeData::key() const {
 }
 
 Tree Tree::remap(Tree X, Tree Y, Tree Z) const {
-    auto flat = walk();
 
     // If a specific tree (by id) should be remapped, that fact is stored here
-    std::unordered_map<Id, Tree> remap = {
+    std::unordered_map<Id, Tree> m = {
             {Tree::X().id(), X},
             {Tree::Y().id(), Y},
             {Tree::Z().id(), Z}};
+    return remap_from(m);
+}
 
+Tree Tree::remap_from(std::unordered_map<Tree::Id, Tree> remap) const {
+    auto flat = walk();
     for (auto t : flat) {
         Tree changed = Tree::invalid();
 
