@@ -267,11 +267,11 @@ TEST_CASE("Tree::explore_affine") {
         auto itr = root_map.find(t.id());
         REQUIRE(itr != root_map.end());
 
-        std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+        std::map<Tree, float> map(itr->second.begin(), itr->second.end());
         REQUIRE(map.size() == 3);
-        REQUIRE(map.at(Tree::X().id()) == 2);
-        REQUIRE(map.at(Tree::Y().id()) == 5);
-        REQUIRE(map.at(c.id()) == 6);
+        REQUIRE(map.at(Tree::X()) == 2);
+        REQUIRE(map.at(Tree::Y()) == 5);
+        REQUIRE(map.at(c) == 6);
     }
 
     SECTION("(X + Y) + (X + Y)") {
@@ -285,10 +285,10 @@ TEST_CASE("Tree::explore_affine") {
         auto itr = root_map.find(t.id());
         REQUIRE(itr != root_map.end());
 
-        std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+        std::map<Tree, float> map(itr->second.begin(), itr->second.end());
         REQUIRE(map.size() == 2);
-        REQUIRE(map.at(Tree::X().id()) == 2);
-        REQUIRE(map.at(Tree::Y().id()) == 2);
+        REQUIRE(map.at(Tree::X()) == 2);
+        REQUIRE(map.at(Tree::Y()) == 2);
     }
 
     SECTION("(X + Y) * (X + Y)") {
@@ -303,19 +303,19 @@ TEST_CASE("Tree::explore_affine") {
             auto itr = root_map.find(a.id());
             REQUIRE(itr != root_map.end());
 
-            std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
             REQUIRE(map.size() == 2);
-            REQUIRE(map.at(Tree::X().id()) == 1);
-            REQUIRE(map.at(Tree::Y().id()) == 1);
+            REQUIRE(map.at(Tree::X()) == 1);
+            REQUIRE(map.at(Tree::Y()) == 1);
         }
         {
             auto itr = root_map.find(b.id());
             REQUIRE(itr != root_map.end());
 
-            std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
             REQUIRE(map.size() == 2);
-            REQUIRE(map.at(Tree::X().id()) == 1);
-            REQUIRE(map.at(Tree::Y().id()) == 1);
+            REQUIRE(map.at(Tree::X()) == 1);
+            REQUIRE(map.at(Tree::Y()) == 1);
         }
     }
     SECTION("(X + Y) + cos(X + Y)") {
@@ -329,20 +329,20 @@ TEST_CASE("Tree::explore_affine") {
             auto itr = root_map.find(a.id());
             REQUIRE(itr != root_map.end());
 
-            std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
             REQUIRE(map.size() == 2);
-            REQUIRE(map.at(Tree::X().id()) == 1);
-            REQUIRE(map.at(Tree::Y().id()) == 1);
+            REQUIRE(map.at(Tree::X()) == 1);
+            REQUIRE(map.at(Tree::Y()) == 1);
         }
         {
             auto itr = root_map.find(t.id());
             REQUIRE(itr != root_map.end());
 
-            std::map<Tree::Id, float> map(itr->second.begin(), itr->second.end());
+            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
             REQUIRE(map.size() == 3);
-            REQUIRE(map.at(Tree::X().id()) == 1);
-            REQUIRE(map.at(Tree::Y().id()) == 1);
-            REQUIRE(map.at(c.id()) == 1);
+            REQUIRE(map.at(Tree::X()) == 1);
+            REQUIRE(map.at(Tree::Y()) == 1);
+            REQUIRE(map.at(c) == 1);
         }
     }
 }
