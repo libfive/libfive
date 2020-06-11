@@ -8,6 +8,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
+#include <map>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -18,6 +19,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace libfive {
     class Tree;
     struct TreeData;
+    struct TreeDataKey;
     class Oracle;
     class OracleClause;
 
@@ -117,6 +119,13 @@ public:
      *  to point to the same objects. */
     Tree unique() const;
 
+    /*  This is a helper function which actually does the uniquifying.
+     *  It's exposed so that it's possible to uniquify multiple trees
+     *  together, which is helpful in niche circumstances. */
+    Tree unique_helper(std::unordered_map<Id, const Data*>& remap,
+                       std::map<TreeDataKey, const Data*>& canonical,
+                       std::vector<Tree>& new_trees) const;
+
     /*  Recurses through the graph, accumulating the affine form of child nodes
      *  into a map of t1*a + t2*b + t3*c... */
     using AffinePair = std::pair<Tree, float>;
@@ -203,11 +212,31 @@ using TreeDataVariant = std::variant<
         TreeOracle,
         TreeInvalid>;
 
+/*  Returns a key suitable for use in maps */
+using TreeUnaryKey = std::tuple<Opcode::Opcode, const TreeData*>;
+using TreeBinaryKey = std::tuple<
+    Opcode::Opcode, const TreeData*, const TreeData*>;
+using TreeOracleKey = const OracleClause*;
+using TreeDataKeyVariant = std::variant<
+    bool,           // Used for NaN (true) and invalid (false)
+    float,          // Float constants
+    Opcode::Opcode, // Nonary operations, other than VAR_FREE
+    TreeUnaryKey,       // Unary operations and VAR_FREE
+    TreeBinaryKey,      // Binary operations
+    TreeOracleKey>;     // Oracles, keyed by their unique_ptr
+
+struct TreeDataKey : public TreeDataKeyVariant
+{
+    TreeDataKey(TreeDataKeyVariant&& v)
+        : TreeDataKeyVariant(std::move(v))
+    { /* Nothing to do here */ }
+};
+
 // Wrapper struct around the variant, required to make recursive
 // variant structure work out nicely (since TreeData has to be
 // forward-declared, which isn't possible with the raw variant).
 struct TreeData : public TreeDataVariant,
-                        std::enable_shared_from_this<TreeData>
+                         std::enable_shared_from_this<TreeData>
 {
     TreeData(TreeDataVariant&& v)
         : TreeDataVariant(std::move(v))
@@ -248,19 +277,7 @@ struct TreeData : public TreeDataVariant,
         }
     };
 
-    /*  Returns a key suitable for use in maps */
-    using UnaryKey = std::tuple<Opcode::Opcode, const TreeData*>;
-    using BinaryKey = std::tuple<
-        Opcode::Opcode, const TreeData*, const TreeData*>;
-    using OracleKey = const OracleClause*;
-    using Key = std::variant<
-        bool,           // Used for NaN (true) and invalid (false)
-        float,          // Float constants
-        Opcode::Opcode, // Nonary operations, other than VAR_FREE
-        UnaryKey,       // Unary operations and VAR_FREE
-        BinaryKey,      // Binary operations
-        OracleKey>;     // Oracles, keyed by their unique_ptr
-
+    using Key = TreeDataKey;
     Key key() const;
 };
 
