@@ -155,8 +155,8 @@ protected:
      *  a balanced-ish tree with a recursive approach.  The a iterator is the
      *  beginning of the region to reduce, and b is one-past-the-end of the
      *  region to reduce. */
-    static Tree reduce_binary(std::vector<AffinePair>::iterator a,
-                              std::vector<AffinePair>::iterator b);
+    static Tree reduce_binary(std::vector<AffinePair>::const_iterator a,
+                              std::vector<AffinePair>::const_iterator b);
 
     // Private constructor to build from the raw variant type
     explicit Tree(std::shared_ptr<const Data> d);
