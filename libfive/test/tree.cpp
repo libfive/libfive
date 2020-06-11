@@ -347,6 +347,46 @@ TEST_CASE("Tree::explore_affine") {
     }
 }
 
+TEST_CASE("Tree::collect_affine") {
+    SECTION("Basic") {
+        auto c = cos(Tree::Z());
+        auto t = (Tree::X() * 2 + Tree::Y() * 5 + c + 5 * c);
+
+        std::stringstream ss;
+        ss << t.collect_affine();
+        REQUIRE(ss.str() == "(+ (* (cos z) 6) (* y 5) (* x 2))");
+    }
+
+    SECTION("(X + Y) + (X + Y)") {
+        // These trees have the same value, but don't have the same Id
+        auto a = Tree::X() + Tree::Y();
+        auto b = Tree::X() + Tree::Y();
+        auto t = a + b;
+
+        std::stringstream ss;
+        ss << t.collect_affine();
+        REQUIRE(ss.str() == "(+ (* y 2) (* x 2))");
+    }
+
+    SECTION("(X + Y) * (X + Y)") {
+        // These trees have the same value, but don't have the same Id
+        auto a = Tree::X() + Tree::Y();
+        auto b = Tree::X() + Tree::Y();
+        auto t = a * b;
+        std::stringstream ss;
+        ss << t.collect_affine();
+        REQUIRE(ss.str() == "(* (+ y x) (+ y x))");
+    }
+    SECTION("(X + Y) + cos(X + Y)") {
+        auto a = Tree::X() + Tree::Y();
+        auto c = cos(a);
+        auto t = a + c;
+        std::stringstream ss;
+        ss << t.collect_affine();
+        REQUIRE(ss.str() == "(+ (cos (+ x y)) y x)");
+    }
+}
+
 TEST_CASE("Tree::serialize")
 {
     SECTION("Basic")

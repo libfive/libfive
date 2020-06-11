@@ -589,8 +589,8 @@ void Tree::explore_affine(AffineMap& map,
     }
 }
 
-Tree Tree::reduce_binary(std::vector<AffinePair>::iterator a,
-                         std::vector<AffinePair>::iterator b)
+Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
+                         std::vector<AffinePair>::const_iterator b)
 {
     const auto delta = b - a;
     if (delta == 0) {
@@ -608,11 +608,11 @@ Tree Tree::collect_affine() const {
     explore_affine(map, nullptr, 1);
 
     std::unordered_map<Tree::Id, Tree> remap;
-    for (auto& m : map) {
+    for (const auto& m : map) {
         remap.insert({m.first, reduce_binary(m.second.begin(),
                                              m.second.end())});
     }
-    return *this;
+    return remap_from(remap);
 }
 
 size_t Tree::size() const {
