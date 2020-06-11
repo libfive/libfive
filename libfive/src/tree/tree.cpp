@@ -441,33 +441,23 @@ std::vector<const Tree::Data*> Tree::walk() const {
     return flat;
 }
 
-Tree Tree::unique() const {
+Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remap,
+                         std::map<TreeDataKey, const Data*>& canonical,
+                         std::vector<Tree>& new_trees) const
+{
     auto flat = walk();
-
-    // If a specific tree should be remapped, that fact is stored here
-    // These remap pointers can point either into the existing tree or
-    // to shared_ptrs in the new_ptrs list below, so we store the bare
-    // pointer and use shared_from_this to rehydrate it.
-    std::unordered_map<Id, const Data*> remap;
-
-    // The canonical tree for each Key is stored here
-    std::map<Data::Key, const Data*> canonical;
-
-    // New pointers are owned here, because the maps above hold
-    // raw pointers instead of shared_ptrs.
-    std::vector<std::shared_ptr<const Data>> new_ptrs;
 
     for (auto t : flat) {
         // Get canonical key by applying remap to all children
         auto key = t->key();
         bool changed = false;
-        if (auto k = std::get_if<Data::UnaryKey>(&key)) {
+        if (auto k = std::get_if<TreeUnaryKey>(&key)) {
             auto itr = remap.find(std::get<1>(*k));
             if (itr != remap.end()) {
                 std::get<1>(*k) = itr->second;
                 changed = true;
             }
-        } else if (auto k = std::get_if<Data::BinaryKey>(&key)) {
+        } else if (auto k = std::get_if<TreeBinaryKey>(&key)) {
             auto itr = remap.find(std::get<1>(*k));
             if (itr != remap.end()) {
                 std::get<1>(*k) = itr->second;
@@ -515,8 +505,8 @@ Tree Tree::unique() const {
             canonical.insert(k_itr, {key, out.get()});
             remap.insert({t, out.get()});
 
-            // The new pointer is owned by the new_ptrs list
-            new_ptrs.emplace_back(std::move(out));
+            // The new pointer is owned by the new_trees list
+            new_trees.emplace_back(Tree(std::move(out)));
         }
     }
 
@@ -524,6 +514,23 @@ Tree Tree::unique() const {
     return (itr == remap.end())
         ? *this
         : Tree(itr->second->shared_from_this());
+}
+
+Tree Tree::unique() const {
+    // If a specific tree should be remapped, that fact is stored here
+    // These remap pointers can point either into the existing tree or
+    // to shared_ptrs in the new_trees list below, so we store the bare
+    // pointer and use shared_from_this to rehydrate it.
+    std::unordered_map<Id, const Data*> remap;
+
+    // The canonical tree for each Key is stored here
+    std::map<Data::Key, const Data*> canonical;
+
+    // New pointers are owned here, because the maps above hold
+    // raw pointers instead of shared_ptrs.
+    std::vector<Tree> new_trees;
+
+    return unique_helper(remap, canonical, new_trees);
 }
 
 void Tree::explore_affine(AffineMap& map,
