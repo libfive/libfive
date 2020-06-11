@@ -357,33 +357,57 @@ TEST_CASE("Tree::collect_affine") {
         REQUIRE(ss.str() == "(+ (* (cos z) 6) (* y 5) (* x 2))");
     }
 
-    SECTION("(X + Y) + (X + Y)") {
+    SECTION("(2*X + Y) + (2*X + Y)") {
         // These trees have the same value, but don't have the same Id
-        auto a = Tree::X() + Tree::Y();
-        auto b = Tree::X() + Tree::Y();
+        auto a = 2*Tree::X() + Tree::Y();
+        auto b = 2*Tree::X() + Tree::Y();
         auto t = a + b;
 
         std::stringstream ss;
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(+ (* y 2) (* x 2))");
+        REQUIRE(ss.str() == "(+ (* x 4) (* y 2))");
     }
 
-    SECTION("(X + Y) * (X + Y)") {
+    SECTION("(2*X + Y) * (2*X + Y)") {
         // These trees have the same value, but don't have the same Id
-        auto a = Tree::X() + Tree::Y();
-        auto b = Tree::X() + Tree::Y();
+        auto a = 2*Tree::X() + Tree::Y();
+        auto b = 2*Tree::X() + Tree::Y();
         auto t = a * b;
         std::stringstream ss;
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(* (+ y x) (+ y x))");
+        REQUIRE(ss.str() == "(* (+ (* x 2) y) (+ (* x 2) y))");
     }
-    SECTION("(X + Y) + cos(X + Y)") {
-        auto a = Tree::X() + Tree::Y();
-        auto c = cos(a);
+
+    SECTION("(X + 2*Y) + 3*cos(X + 2*Y)") {
+        auto a = Tree::X() + (2 * Tree::Y());
+        auto c = 3*cos(a);
         auto t = a + c;
         std::stringstream ss;
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(+ (cos (+ x y)) y x)");
+        REQUIRE(ss.str() == "(+ (* (cos (+ x (* 2 y))) 3) (* y 2) x)");
+    }
+
+    SECTION("X + 2*Y + 3*cos(X) + 4*cos(Y)") {
+        // This should be right-balanced
+        auto t = Tree::X() + 2*Tree::Y() + 3*cos(Tree::X()) + 4*cos(Tree::Y());
+
+        std::stringstream ss;
+        ss << t->lhs();
+        REQUIRE(ss.str() == "(+ x (* 2 y) (* 3 (cos x)))");
+
+        auto q = t.collect_affine();
+
+        ss.str(std::string());
+        ss << q;
+        REQUIRE(ss.str() == "(+ (* (cos y) 4) (* (cos x) 3) (* y 2) x)");
+
+        ss.str(std::string());
+        ss << q->lhs();
+        REQUIRE(ss.str() == "(+ (* (cos y) 4) (* (cos x) 3))");
+
+        ss.str(std::string());
+        ss << q->rhs();
+        REQUIRE(ss.str() == "(+ (* y 2) x)");
     }
 }
 

@@ -608,7 +608,13 @@ Tree Tree::collect_affine() const {
     explore_affine(map, nullptr, 1);
 
     std::unordered_map<Tree::Id, Tree> remap;
-    for (const auto& m : map) {
+    for (auto& m : map) {
+        // Sorting isn't strictly necessary, and could be a *tiny* performance
+        // hit, but lets us make deterministic unit tests, which is appealing.
+        //
+        // We sort by the multiplier, since pointer comparisons are hit-or-miss
+        std::sort(m.second.begin(), m.second.end(),
+                  [](auto a, auto b) { return a.second > b.second; });
         remap.insert({m.first, reduce_binary(m.second.begin(),
                                              m.second.end())});
     }
