@@ -13,13 +13,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-JacobianEvaluator::JacobianEvaluator(const UniqueTree& root)
+JacobianEvaluator::JacobianEvaluator(const OptimizedTree& root)
     : JacobianEvaluator(std::make_shared<Deck>(root))
 {
     // Nothing to do here
 }
 
-JacobianEvaluator::JacobianEvaluator(const UniqueTree& root,
+JacobianEvaluator::JacobianEvaluator(const OptimizedTree& root,
                                      const std::map<Tree::Id, float>& vars)
     : JacobianEvaluator(std::make_shared<Deck>(root), vars)
 {

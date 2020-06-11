@@ -254,7 +254,7 @@ Heightmap::Heightmap(unsigned rows, unsigned cols)
 }
 
 std::unique_ptr<Heightmap> Heightmap::render(
-    const UniqueTree& t, Voxels r, const std::atomic_bool& abort,
+    const OptimizedTree& t, Voxels r, const std::atomic_bool& abort,
     size_t workers)
 {
     std::vector<Evaluator*> es;

@@ -17,8 +17,8 @@ namespace libfive {
 class DerivArrayEvaluator : public ArrayEvaluator
 {
 public:
-    DerivArrayEvaluator(const UniqueTree& root);
-    DerivArrayEvaluator(const UniqueTree& root,
+    DerivArrayEvaluator(const OptimizedTree& root);
+    DerivArrayEvaluator(const OptimizedTree& root,
                         const std::map<Tree::Id, float>& vars);
     DerivArrayEvaluator(std::shared_ptr<Deck> t);
     DerivArrayEvaluator(std::shared_ptr<Deck> t,

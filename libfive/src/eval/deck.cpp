@@ -15,7 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-Deck::Deck(const UniqueTree& root) {
+Deck::Deck(const OptimizedTree& root) {
     auto flat = root.tree.walk();
 
     // Helper function to create a new clause in the data array

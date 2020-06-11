@@ -19,8 +19,8 @@ namespace libfive {
 class ArrayEvaluator : public virtual BaseEvaluator
 {
 public:
-    ArrayEvaluator(const UniqueTree& root);
-    ArrayEvaluator(const UniqueTree& root,
+    ArrayEvaluator(const OptimizedTree& root);
+    ArrayEvaluator(const OptimizedTree& root,
                    const std::map<Tree::Id, float>& vars);
     ArrayEvaluator(std::shared_ptr<Deck> t);
     ArrayEvaluator(std::shared_ptr<Deck> t,

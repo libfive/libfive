@@ -16,7 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-class UniqueTree; /* Forward declaration */
+class OptimizedTree; /* Forward declaration */
 
 /*
  *  A Deck is the top-level class that produces Tapes.  It includes
@@ -33,7 +33,7 @@ class UniqueTree; /* Forward declaration */
 class Deck
 {
 public:
-    Deck(const UniqueTree& root);
+    Deck(const OptimizedTree& root);
 
     Deck(const Deck&)=delete;
     Deck& operator=(const Deck& other)=delete;

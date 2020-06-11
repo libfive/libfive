@@ -17,7 +17,7 @@ namespace libfive {
 // Forward declaration
 class Evaluator;
 struct BRepSettings;
-class UniqueTree;
+class OptimizedTree;
 
 template <unsigned N> class Region;
 
@@ -30,7 +30,7 @@ public:
      *  partway through the computation.
      */
     static std::unique_ptr<Mesh> render(
-            const UniqueTree& t, const Region<3>& r,
+            const OptimizedTree& t, const Region<3>& r,
             const BRepSettings& settings);
 
     /*
