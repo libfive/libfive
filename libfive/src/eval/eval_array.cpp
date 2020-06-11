@@ -15,13 +15,13 @@ namespace libfive {
 
 constexpr size_t ArrayEvaluator::N;
 
-ArrayEvaluator::ArrayEvaluator(const UniqueTree& root)
+ArrayEvaluator::ArrayEvaluator(const OptimizedTree& root)
     : ArrayEvaluator(std::make_shared<Deck>(root))
 {
     // Nothing to do here
 }
 
-ArrayEvaluator::ArrayEvaluator(const UniqueTree& root,
+ArrayEvaluator::ArrayEvaluator(const OptimizedTree& root,
                                const std::map<Tree::Id, float>& vars)
     : ArrayEvaluator(std::make_shared<Deck>(root), vars)
 {

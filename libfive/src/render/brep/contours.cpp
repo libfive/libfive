@@ -23,7 +23,7 @@ namespace libfive {
 ////////////////////////////////////////////////////////////////////////////////
 
 std::unique_ptr<Contours> Contours::render(
-        const UniqueTree& t, const Region<2>& r,
+        const OptimizedTree& t, const Region<2>& r,
         const BRepSettings& settings)
 {
     std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;

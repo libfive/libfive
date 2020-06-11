@@ -17,13 +17,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace libfive {
 // Forward declarations
 class Tape;
-class UniqueTree;
+class OptimizedTree;
 
 class IntervalEvaluator : public virtual BaseEvaluator
 {
 public:
-    IntervalEvaluator(const UniqueTree& root);
-    IntervalEvaluator(const UniqueTree& root,
+    IntervalEvaluator(const OptimizedTree& root);
+    IntervalEvaluator(const OptimizedTree& root,
                       const std::map<Tree::Id, float>& vars);
     IntervalEvaluator(std::shared_ptr<Deck> d);
     IntervalEvaluator(std::shared_ptr<Deck> d,

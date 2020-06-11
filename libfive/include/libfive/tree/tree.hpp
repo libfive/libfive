@@ -268,12 +268,12 @@ struct TreeData : public TreeDataVariant,
  *  Represents a Tree which has been deduplicated.
  *
  *  This conversion is implicit, so you can construct objects which
- *  expect a UniqueTree using a Tree, and it will deduplciate
+ *  expect a OptimizedTree using a Tree, and it will deduplciate
  *  things under the hood.
  */
-class UniqueTree {
+class OptimizedTree {
 public:
-    UniqueTree(const Tree& t) : tree(t.unique()) {}
+    OptimizedTree(const Tree& t) : tree(t.unique()) {}
     Tree tree;
 };
 
