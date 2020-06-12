@@ -50,7 +50,11 @@ Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
     // Collapse constant operations
     else if (lhs->op() == Opcode::CONSTANT) {
         auto tmp = Tree(std::make_shared<Data>(TreeUnaryOp { op, lhs }));
-        ArrayEvaluator eval(tmp);
+
+        OptimizedTree opt;
+        opt.tree = tmp;
+        ArrayEvaluator eval(opt);
+
         const float v = eval.value({0.0f, 0.0f, 0.0f});
         return Tree(v);
     }
@@ -88,7 +92,14 @@ Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
     // Collapse constant operations
     else if (lhs->op() == Opcode::CONSTANT && rhs->op() == Opcode::CONSTANT) {
         auto tmp = Tree(std::make_shared<Data>(TreeBinaryOp { op, lhs, rhs }));
-        ArrayEvaluator eval(tmp);
+
+        // Use the private constructor to construct an OptimizedTree without
+        // actually doing the optimization pass, which would trigger infinite
+        // recursion.
+        OptimizedTree opt;
+        opt.tree = tmp;
+        ArrayEvaluator eval(opt);
+
         const float v = eval.value({0.0f, 0.0f, 0.0f});
         return Tree(v);
     }
@@ -514,6 +525,29 @@ Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remap,
     return (itr == remap.end())
         ? *this
         : Tree(itr->second->shared_from_this());
+}
+
+Tree Tree::optimized() const {
+    std::unordered_map<Id, const Data*> remap;
+    std::map<Data::Key, const Data*> canonical;
+    std::vector<Tree> new_trees;
+    auto out = unique_helper(remap, canonical, new_trees);
+
+    // Give all oracles a chance to optimize themselves as well, reusing
+    // any deduplicated trees in the maps above.
+    std::unordered_map<Tree::Id, Tree> remap_oracles;
+    for (auto d : out.walk()) {
+        if (auto t = std::get_if<TreeOracle>(d)) {
+            if (auto o = t->oracle->optimized(remap, canonical, new_trees)) {
+                remap_oracles.insert({d, Tree(std::move(o))});
+            }
+        }
+    }
+    if (remap_oracles.size()) {
+        out = out.remap_from(remap_oracles);
+    }
+
+    return out.collect_affine();
 }
 
 Tree Tree::unique() const {
