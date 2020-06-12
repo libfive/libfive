@@ -115,6 +115,10 @@ public:
     using Id = const void*;
     Id id() const { return get(); }
 
+    /*  Returns a new tree which has been unique-ified and has had its affine
+     *  subtrees collapsed + balanced. */
+    Tree optimized() const;
+
     /*  Performs a deep copy of the tree with any duplicate subtrees merged
      *  to point to the same objects. */
     Tree unique() const;
@@ -290,8 +294,16 @@ struct TreeData : public TreeDataVariant,
  */
 class OptimizedTree {
 public:
-    OptimizedTree(const Tree& t) : tree(t.unique()) {}
+    OptimizedTree(const Tree& t) : tree(t.optimized()) {}
     Tree tree;
+protected:
+    OptimizedTree()
+        : tree(Tree::invalid())
+    {
+        /* Private constructor for special cases where you need to construct
+         * an OptimizedTree without actually calling optimized() */
+    }
+    friend class Tree;
 };
 
 }   // namespace libfive

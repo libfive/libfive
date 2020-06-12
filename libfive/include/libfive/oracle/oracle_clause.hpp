@@ -97,6 +97,25 @@ public:
     virtual std::unique_ptr<const OracleClause> remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const;
 
+    /*
+     * optimize() gives an OracleClause the opportunity to deduplicate
+     * subtrees, balance commutative / affine expressions, and do whatever
+     * other expensive operations it may want to run before being converted
+     * into an Evaluator.
+     */
+    virtual std::unique_ptr<const OracleClause> optimized(
+        std::unordered_map<Tree::Id, const Tree::Data*>& remap,
+        std::map<Tree::Data::Key, const Tree::Data*>& canonical,
+        std::vector<Tree>& new_trees) const
+    {
+        // All arguments are unused by default
+        (void)remap;
+        (void)canonical;
+        (void)new_trees;
+
+        return nullptr;
+    }
+
 protected:
     typedef std::function<bool(const OracleClause*, Serializer&)>
         OracleSerializer;
