@@ -12,6 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <list>
 #include <cassert>
+#include <cstdint>
 
 namespace libfive {
 class ProgressHandler;
@@ -39,6 +40,8 @@ public:
     void reset(unsigned, ProgressHandler*) {}
     int64_t num_blocks() const { return 0; }
     ObjectPool<>& operator=(ObjectPool<>&&) { return *this; }
+    ObjectPool(ObjectPool&&) = default;
+    ObjectPool() = default;
 };
 
 template <typename T, typename... Ts>
@@ -46,7 +49,10 @@ class ObjectPool<T, Ts...> : public ObjectPool<Ts...>
 {
 public:
     ObjectPool<T, Ts...>& operator=(ObjectPool<T, Ts...>&& other);
-
+    ObjectPool(ObjectPool&& other) {
+        claim(other);
+    };
+    ObjectPool() = default;
     template <typename... Args>
     T* get(Args... args);
 

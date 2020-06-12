@@ -1,4 +1,3 @@
-
 /*
 libfive: a CAD kernel for modeling with implicit functions
 
@@ -8,9 +7,11 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#include "../worker_pool.inl"
-#include "libfive/render/brep/simplex/simplex_worker_pool.hpp"
+#include "../root.inl"
+#include "libfive/render/brep/simplex/simplex_neighbors.hpp"
+#include "libfive/render/brep/simplex/simplex_tree.hpp"
 
 namespace libfive {
-template class WorkerPool<SimplexTree<3>, SimplexNeighbors<3>, 3>;
-}
+template class Root<SimplexTree<2>>;
+}   // namespace libfive
+

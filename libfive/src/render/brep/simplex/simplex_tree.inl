@@ -14,13 +14,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <cmath>
 
-#include <Eigen/StdVector>
-#include <boost/lockfree/queue.hpp>
-#include <boost/lockfree/stack.hpp>
-
 #include "libfive/render/brep/simplex/simplex_tree.hpp"
 #include "libfive/render/brep/simplex/simplex_neighbors.hpp"
 
+#include "libfive/render/brep/multithread_recursive.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/neighbor_tables.hpp"
@@ -441,17 +438,11 @@ void SimplexTree<N>::evalLeaf(Evaluator* eval,
 }
 
 template <unsigned N>
-bool SimplexTree<N>::collectChildren(Evaluator* eval,
+void SimplexTree<N>::collectChildren(Evaluator* eval,
                                      const Tape::Handle& tape,
                                      Pool& object_pool,
                                      double max_err)
 {
-    // Wait for collectChildren to have been called N times
-    if (this->pending-- != 0)
-    {
-        return false;
-    }
-
     // Make a copy of the children pointers here, to avoid atomics
     std::array<SimplexTree<N>*, 1 << N> cs;
     for (unsigned i=0; i < this->children.size(); ++i)
@@ -465,7 +456,7 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
                     [](SimplexTree<N>* o){ return o->isBranch(); }))
     {
         this->done();
-        return true;
+        return;
     }
 
     // We've now passed all of our opportunitie to exit without
@@ -506,7 +497,7 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
         findLeafVertices(eval, tape, object_pool, neighbors);
         this->done();
 
-        return true;
+        return;
     }
 
     // Allocate SimplexLeafSubspace objects for this tree
@@ -555,7 +546,6 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
     }
 
     this->done();
-    return true;
 }
 
 template <unsigned N>
@@ -671,212 +661,141 @@ uint32_t SimplexTree<N>::leafLevel() const
     return 0;
 }
 
-/*  This helper struct lets us make a directed acyclic graph
- *  of neighbors, automatically cleaning them up when no one
- *  is using them anymore.  */
+/*  This helper struct lets us keep track of a neighbor struct's parents (as
+ *  that is used in the algorithm).  It is used in a call to 
+ *  multithreadRecursive, in which the parent will not go out of scope until
+ *  we're done with the children, so we can use a raw pointer.*/
 template <unsigned N>
 struct NeighborStack {
     SimplexNeighbors<N> ns;
-    std::shared_ptr<NeighborStack<N>> parent;
+    NeighborStack<N>* parent;
 };
-
-template <unsigned N>
-struct AssignIndexTask {
-    const SimplexTree<N>* target;
-    std::shared_ptr<NeighborStack<N>> neighbors;
-};
-
-template <unsigned N>
-using LockFreeStack = boost::lockfree::stack<
-        AssignIndexTask<N>,
-        boost::lockfree::fixed_sized<true>>;
-
-template <unsigned N>
-void assignIndicesWorker(LockFreeStack<N>& tasks,
-                         std::atomic<uint64_t>& index,
-                         std::atomic_bool& done,
-                         std::atomic_bool& cancel)
-{
-    // See detailed comments in worker_pool.cpp, which
-    // implements a similar worker pool system.
-    std::stack<AssignIndexTask<N>, std::vector<AssignIndexTask<N>>> local;
-
-    while (!done.load() && !cancel.load()) {
-        // Pick a task from the local empty, falling back to the MPMC
-        // stack if the local stack is empty.  If both are empty, then
-        // spin here until another thread adds a task to the global stack.
-        AssignIndexTask<N> task;
-        if (local.size()) {
-            task = local.top();
-            local.pop();
-        } else if (!tasks.pop(task)) {
-            task.target = nullptr;
-        }
-
-        if (task.target == nullptr) {
-            continue;
-        }
-
-        // If this is a tree which can be subdivided, then push each
-        // subtree as a new task.
-        if (task.target->isBranch()) {
-            for (unsigned i=0; i < task.target->children.size(); ++i) {
-                AssignIndexTask<N> next_task;
-
-                next_task.target = task.target->children[i].load();
-                next_task.neighbors = std::make_shared<NeighborStack<N>>();
-                next_task.neighbors->ns = task.neighbors->ns.push(i, task.target->children);
-                next_task.neighbors->parent = task.neighbors;
-
-                if (!tasks.bounded_push(next_task)) {
-                    local.push(next_task);
-                }
-            }
-            continue;
-        }
-        // Otherwise, do the actual work!
-
-        assert(task.target->leaf != nullptr);
-        // First, do a pass through the subspaces, converting them to
-        // their canonical values by checking to see if a neighbor
-        // has each subspace with a smaller pointer.
-        for (unsigned i=0; i < ipow(3, N); ++i)
-        {
-            const auto i_ = NeighborIndex(i);
-            const auto sub = task.target->leaf->sub[i].load();
-            assert(sub != nullptr);
-
-            // First, try to get it from a neighbor.  This function call also
-            // walks down branching neighbors, to account for neighbors of
-            // different levels, e.g.
-            //   -------------------------
-            //   |           |           |
-            //   |     X     |           |
-            //   |           |           |
-            //   ------------C------------
-            //   |     |  Z  |           |
-            //   |-----Y-----|           |
-            //   |     |     |           |
-            //   -------------------------
-            //   If we're in cell X and looking for corner C, then our neighbor
-            //   Y should recurse into cell Z to check C's index within Z.
-            auto new_sub = task.neighbors->ns.getSubspace(i_);
-            if (reinterpret_cast<uintptr_t>(new_sub) >
-                reinterpret_cast<uintptr_t>(sub))
-            {
-                assert(new_sub->inside == sub->inside);
-                task.target->leaf->sub[i].store(new_sub);
-            }
-
-            // Otherwise, we need to try walking up the tree, looking at the
-            // neighbors of parent cells as long as they contain the target
-            // vertex.  For example, in this situation:
-            //
-            //   -------------------------
-            //   |           |           |
-            //   |           |           |
-            //   |           |           |
-            //   ------------C------------
-            //   |     |  X  |           |
-            //   |-----|-----|           |
-            //   |     |     |           |
-            //   -------------------------
-            //   we'd look at the neighbors of X's parent cell to find corner C
-            //
-            //   On the other hand, in this situation:
-            //   -------------------------
-            //   |           |           |
-            //   |           |           |
-            //   |           |           |
-            //   ------C------------------
-            //   |  X  |     |           |
-            //   |-----|-----|           |
-            //   |     |     |           |
-            //   -------------------------
-            //   we don't want to back out to the parent cell of X, because
-            //   the corner C isn't contained within that parent.
-            //
-            //   Each cell contains one vertex of the parent's corner cell,
-            //   indicated by its parent_index variable.
-            if (i_.isCorner()) {
-                auto t = task.target;
-                auto neighbors_above = task.neighbors;
-                while (t && t->parent &&
-                       t->parent_index == i_.pos())
-                {
-                    t = t->parent;
-                    neighbors_above = neighbors_above->parent;
-                    auto new_sub = neighbors_above->ns.getSubspace(i_);
-                    if (reinterpret_cast<uintptr_t>(new_sub) >
-                        reinterpret_cast<uintptr_t>(sub))
-                    {
-                        assert(new_sub->inside == sub->inside);
-                        task.target->leaf->sub[i].store(new_sub);
-                    }
-                }
-            }
-        }
-
-        // Then, go through and make sure all indexes are assigned
-        for (unsigned i=0; i < ipow(3, N); ++i)
-        {
-            auto sub = task.target->leaf->sub[i].load();
-
-            // We do two atomic operations here:
-            //
-            // First, we compare to see if it's zero, assigning it to 1
-            // if it was zero.  This prevents more than one thread from
-            // entering the conditional block at once.
-            //
-            // Second, we assign the true index value (incrementing the
-            // global index counter).
-            uint64_t zero = 0;
-            if (sub->index.compare_exchange_strong(zero, 1)) {
-                sub->index.store(index++);
-            }
-        }
-
-        SimplexTree<N>* t = nullptr;
-        for (t = task.target->parent; t && t->pending-- == 0; t = t->parent)
-        {
-            // Walk up the tree here!
-        }
-
-        if (t == nullptr) {
-            break;
-        }
-    }
-
-    done.store(true);
-}
 
 template <unsigned N>
 void SimplexTree<N>::assignIndices(const BRepSettings& settings) const
 {
-    this->resetPending();
-
-    LockFreeStack<N> tasks(settings.workers);
-    AssignIndexTask<N> first{this, std::make_shared<NeighborStack<N>>()};
-    tasks.push(first);
-
     std::atomic<uint64_t> global_index(1);
-    std::atomic_bool done(false);
+    using Local = std::monostate;
+    auto locals = tbb::enumerable_thread_specific<Local>();
 
-    std::vector<std::future<void>> futures;
-    futures.resize(settings.workers);
-    for (unsigned i=0; i < settings.workers; ++i) {
-        futures[i] = std::async(std::launch::async,
-            [&done, &settings, &tasks, &global_index]() {
-                assignIndicesWorker(tasks, global_index, done, settings.cancel);
-            });
-    }
+    auto pre = [&global_index](const SimplexTree<N>* node, 
+                               NeighborStack<N>* parent_neighbors, 
+                               unsigned childNo, bool& recurse, Local&) {
+        assert(node);
+        NeighborStack<N> out{ {}, parent_neighbors };
+        if (parent_neighbors) {
+            out.ns = parent_neighbors->ns.push(childNo, node->parent->children);
+        }
+        recurse = node->isBranch();
+        if (!recurse) {
+            // Do the actual work!
+            assert(node->leaf != nullptr);
+            // First, do a pass through the subspaces, converting them to
+            // their canonical values by checking to see if a neighbor
+            // has each subspace with a smaller pointer.
+            for (unsigned i = 0; i < ipow(3, N); ++i)
+            {
+                const auto i_ = NeighborIndex(i);
+                const auto sub = node->leaf->sub[i].load();
+                assert(sub != nullptr);
 
-    // Wait on all of the futures
-    for (auto& f : futures) {
-        f.get();
-    }
+                // First, try to get it from a neighbor.  This function call also
+                // walks down branching neighbors, to account for neighbors of
+                // different levels, e.g.
+                //   -------------------------
+                //   |           |           |
+                //   |     X     |           |
+                //   |           |           |
+                //   ------------C------------
+                //   |     |  Z  |           |
+                //   |-----Y-----|           |
+                //   |     |     |           |
+                //   -------------------------
+                //   If we're in cell X and looking for corner C, then our neighbor
+                //   Y should recurse into cell Z to check C's index within Z.
+                auto new_sub = out.ns.getSubspace(i_);
+                if (reinterpret_cast<uintptr_t>(new_sub) >
+                    reinterpret_cast<uintptr_t>(sub))
+                {
+                    assert(new_sub->inside == sub->inside);
+                    node->leaf->sub[i].store(new_sub);
+                }
 
-    assert(done.load() || settings.cancel.load());
+                // Otherwise, we need to try walking up the tree, looking at the
+                // neighbors of parent cells as long as they contain the target
+                // vertex.  For example, in this situation:
+                //
+                //   -------------------------
+                //   |           |           |
+                //   |           |           |
+                //   |           |           |
+                //   ------------C------------
+                //   |     |  X  |           |
+                //   |-----|-----|           |
+                //   |     |     |           |
+                //   -------------------------
+                //   we'd look at the neighbors of X's parent cell to find corner C
+                //
+                //   On the other hand, in this situation:
+                //   -------------------------
+                //   |           |           |
+                //   |           |           |
+                //   |           |           |
+                //   ------C------------------
+                //   |  X  |     |           |
+                //   |-----|-----|           |
+                //   |     |     |           |
+                //   -------------------------
+                //   we don't want to back out to the parent cell of X, because
+                //   the corner C isn't contained within that parent.
+                //
+                //   Each cell contains one vertex of the parent's corner cell,
+                //   indicated by its parent_index variable.
+                if (i_.isCorner()) {
+                    auto t = node;
+                    auto neighbors_above = &out;
+                    while (t && t->parent &&
+                        t->parent_index == i_.pos())
+                    {
+                        t = t->parent;
+                        neighbors_above = neighbors_above->parent;
+                        auto new_sub = neighbors_above->ns.getSubspace(i_);
+                        if (reinterpret_cast<uintptr_t>(new_sub) >
+                            reinterpret_cast<uintptr_t>(sub))
+                        {
+                            assert(new_sub->inside == sub->inside);
+                            node->leaf->sub[i].store(new_sub);
+                        }
+                    }
+                }
+            }
+
+            // Then, go through and make sure all indexes are assigned
+            for (unsigned i = 0; i < ipow(3, N); ++i)
+            {
+                auto sub = node->leaf->sub[i].load();
+
+                // We do two atomic operations here:
+                //
+                // First, we compare to see if it's zero, assigning it to 1
+                // if it was zero.  This prevents more than one thread from
+                // entering the conditional block at once.
+                //
+                // Second, we assign the true index value (incrementing the
+                // global index counter).
+                uint64_t zero = 0;
+                if (sub->index.compare_exchange_strong(zero, 1)) {
+                    sub->index.store(global_index++);
+                }
+            }
+        }
+        return out;
+    };
+
+    auto post = [](auto...) {};
+
+    multithreadRecursive<const SimplexTree<N>*, NeighborStack<N>>(
+        this, locals, pre, post);
 }
 
 template <unsigned N>

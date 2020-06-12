@@ -26,9 +26,7 @@ class PerThreadBRep
 {
 public:
     PerThreadBRep(std::atomic<uint32_t>& c) : c(c)
-    {
-        assert(c.load() == 1);
-    }
+    {}
 
     uint32_t pushVertex(const Eigen::Matrix<float, N, 1>& v) {
         const auto out = c.fetch_add(1);

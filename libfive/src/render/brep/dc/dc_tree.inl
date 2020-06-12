@@ -578,17 +578,11 @@ uint8_t DCTree<N>::buildCornerMask(
 }
 
 template <unsigned N>
-bool DCTree<N>::collectChildren(Evaluator* eval,
+void DCTree<N>::collectChildren(Evaluator* eval,
                                 const Tape::Handle& tape,
                                 Pool& object_pool,
                                 double max_err)
 {
-    // Wait for collectChildren to have been called N times
-    if (this->pending-- != 0)
-    {
-        return false;
-    }
-
     // Load the children here, to avoid atomics
     std::array<DCTree<N>*, 1 << N> cs;
     for (unsigned i=0; i < this->children.size(); ++i)
@@ -602,7 +596,7 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
                     [](DCTree<N>* o){ return o->isBranch(); }))
     {
         this->done();
-        return true;
+        return;
     }
 
     // Update corner and filled / empty state from children
@@ -634,7 +628,7 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
         if (this->done()) {
             releaseTo(object_pool);
         }
-        return true;
+        return;
     }
 
     auto corner_mask = buildCornerMask(corners);
@@ -651,7 +645,7 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     if (!manifold)
     {
         this->done();
-        return true;
+        return;
     }
 
     // We've now passed all of our opportunities to exit without
@@ -731,7 +725,6 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     }
 
     this->done();
-    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

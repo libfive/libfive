@@ -12,7 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "catch.hpp"
 
 #include "libfive/render/brep/dc/dc_mesher.hpp"
-#include "libfive/render/brep/dc/dc_worker_pool.hpp"
+#include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/dual.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/mesh.hpp"
@@ -237,7 +237,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
 
     BENCHMARK("DCTree construction")
     {
-        t = DCWorkerPool<3>::build(sphereGyroid(), r, settings);
+        t = Root<DCTree<3>>::build(sphereGyroid(), r, settings);
     }
 
     std::unique_ptr<Mesh> m;
@@ -277,7 +277,7 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
 
     BENCHMARK("DCTree construction")
     {
-        t = DCWorkerPool<3>::build(sphereGyroid(), r, settings);
+        t = Root<DCTree<3>>::build(sphereGyroid(), r, settings);
     }
 
     std::unique_ptr<Mesh> m;

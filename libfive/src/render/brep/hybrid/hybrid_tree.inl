@@ -741,17 +741,11 @@ void HybridTree<N>::evalLeaf(Evaluator* eval,
 }
 
 template <unsigned N>
-bool HybridTree<N>::collectChildren(Evaluator* eval,
+void HybridTree<N>::collectChildren(Evaluator* eval,
                                     const Tape::Handle& tape,
                                     Pool& object_pool,
                                     double max_err)
 {
-    // Wait for collectChildren to have been called N times
-    if (this->pending-- != 0)
-    {
-        return false;
-    }
-
     // Load the children here, to avoid atomics
     std::array<HybridTree<N>*, 1 << N> cs;
     for (unsigned i=0; i < this->children.size(); ++i)
@@ -765,7 +759,7 @@ bool HybridTree<N>::collectChildren(Evaluator* eval,
                     [](HybridTree<N>* o){ return o->isBranch(); }))
     {
         this->done();
-        return true;
+        return;
     }
 
     // Update filled / empty state from children
@@ -789,7 +783,7 @@ bool HybridTree<N>::collectChildren(Evaluator* eval,
         this->releaseChildren(object_pool);
         buildLeaf(eval, tape, object_pool);
         this->done();
-        return true;
+        return;
     }
 
     // Eventually, we'll use these variables to perhaps collapse the tree
@@ -798,7 +792,6 @@ bool HybridTree<N>::collectChildren(Evaluator* eval,
     (void)max_err;
 
     this->done();
-    return true;
 }
 
 

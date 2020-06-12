@@ -105,6 +105,71 @@ public:
             f.wait();
         }
     }
+
+    /*
+     * Sorts the triangles of the brep, allowing consistent results regardless
+     * of multithreading, provided that there are not duplicate vertices.
+     * Asserts if called when there are duplicate vertices.
+     */
+    void sort() {
+        // sortMapForward[i] is the current location of the vertex that
+        // should be in the i'th place.
+        std::vector<uint32_t> sortMapForward(verts.size());
+        assert(sortMapForward.size() == verts.size());
+        for (auto i = 0; i < verts.size(); ++i) {
+            sortMapForward[i] = i;
+        }
+        std::sort(sortMapForward.begin(), sortMapForward.end(),
+            [this](uint32_t a, uint32_t b) {
+            if (a == 0) {
+                // Keep our "marker" at the 0th point at the beginning.
+                return false;
+            }
+            else if (b == 0) {
+                return true;
+            }
+            const auto& aVert = verts[a];
+            const auto& bVert = verts[b];
+            for (auto i = 0; i < N; ++i) {
+                if (aVert[i] != bVert[i]) {
+                    return aVert[i] < bVert[i];
+                };
+            }
+            // If we reach here, we have a duplicate vertex.
+            assert(false);
+            return false;
+        });
+        // sortMapBackward[i] is the proper location of the vertex that
+        // is currently in the i'th place.
+        std::vector<uint32_t> sortMapBackward(verts.size());
+        std::vector<Eigen::Matrix<float, N, 1>,
+            Eigen::aligned_allocator<Eigen::Matrix<float, N, 1>>> 
+            newVerts(verts.size());
+
+        for (auto i = 0; i < verts.size(); ++i) {
+            newVerts[i] = verts[sortMapForward[i]];
+            sortMapBackward[sortMapForward[i]] = i;
+        }
+
+        verts = newVerts;
+
+        for (auto& brane : branes) {
+            for (auto i = 0; i < N; ++i) {
+                auto& vert = brane[i];
+                assert(vert < verts.size());
+                assert(vert != 0);
+                vert = sortMapBackward[vert];
+            }
+        }
+        std::sort(branes.begin(), branes.end(), [](auto a, auto b) {
+            for (auto i = 0; i < N; ++i) {
+                if (a[i] != b[i]) {
+                    return a[i] < b[i];
+                };
+            }
+            return false;
+        });
+    }
 };
 
 }   // namespace libfive

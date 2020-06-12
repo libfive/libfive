@@ -53,4 +53,9 @@ public:
     Intersection<N>* check(uint8_t a, uint8_t b) const;
 };
 
+template <unsigned N>
+struct NeighborHelper<DCTree<N>> {
+    using NeighborType = DCNeighbors<N>;
+};
+
 }   // namespace libfive

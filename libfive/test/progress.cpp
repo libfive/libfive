@@ -12,7 +12,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/evaluator.hpp"
 
 #include "libfive/render/brep/dc/dc_tree.hpp"
-#include "libfive/render/brep/dc/dc_worker_pool.hpp"
 #include "libfive/render/brep/dc/dc_mesher.hpp"
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/dual.hpp"
@@ -43,7 +42,7 @@ TEST_CASE("DCWorkerPool::build (progress callback)")
         handler.start({1});
         settings.progress_handler = &handler;
 
-        DCWorkerPool<3>::build(sponge, r, settings);
+        Root<DCTree<3>>::build(sponge, r, settings);
         handler.finish();
 
         CAPTURE(handler.ps.size());
@@ -118,7 +117,7 @@ TEST_CASE("Mesh::render (early destruction of progress watcher)")
         settings.progress_handler = &progress;
         progress.start({1, 1, 1});
 
-        t = DCWorkerPool<3>::build(sphereGyroid(), r, settings);
+        t = Root<DCTree<3>>::build(sphereGyroid(), r, settings);
 
         std::unique_ptr<Mesh> m;
         m = Dual<3>::walk<DCMesher>(t, settings);

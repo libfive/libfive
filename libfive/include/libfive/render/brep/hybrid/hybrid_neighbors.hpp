@@ -80,6 +80,12 @@ public:
     }
 };
 
+template <unsigned N>
+struct NeighborHelper<HybridTree<N>> {
+    using NeighborType = HybridNeighbors<N>;
+};
+
+
 }   // namespace libfive
 
 

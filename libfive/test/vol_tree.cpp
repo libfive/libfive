@@ -10,7 +10,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "catch.hpp"
 
-#include "libfive/render/brep/vol/vol_worker_pool.hpp"
+#include "libfive/render/brep/vol/vol_tree.hpp"
+#include "libfive/render/brep/root.hpp"
+#include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/contours.hpp"
 #include "util/shapes.hpp"
 
@@ -21,21 +23,21 @@ TEST_CASE("VolTree: basic behavior")
     SECTION("Empty")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = VolWorkerPool::build(a, Region<3>({1, 1, 1}, {2, 2, 2}), BRepSettings());
+        auto e = Root<VolTree>::build(a, Region<3>({1, 1, 1}, {2, 2, 2}), BRepSettings());
         REQUIRE(e->type == Interval::EMPTY);
     }
 
     SECTION("Filled")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = VolWorkerPool::build(a, Region<3>({-3, -3, -3}, {-1, -1, -1}), BRepSettings());
+        auto e = Root<VolTree>::build(a, Region<3>({-3, -3, -3}, {-1, -1, -1}), BRepSettings());
         REQUIRE(e->type == Interval::FILLED);
     }
 
     SECTION("Containing corner")
     {
         Tree a = min(Tree::X(), Tree::Y());
-        auto ta = VolWorkerPool::build(a, Region<3>({-3, -3, -3}, {1, 1, 1}), BRepSettings());
+        auto ta = Root<VolTree>::build(a, Region<3>({-3, -3, -3}, {1, 1, 1}), BRepSettings());
         REQUIRE(ta->type == Interval::AMBIGUOUS);
     }
 
@@ -44,7 +46,7 @@ TEST_CASE("VolTree: basic behavior")
         BRepSettings b;
         b.min_feature = 100;
         Tree a = min(Tree::X(), Tree::Y());
-        auto e = VolWorkerPool::build(a, Region<3>({1, 1, 1}, {2, 2, 2}), b);
+        auto e = Root<VolTree>::build(a, Region<3>({1, 1, 1}, {2, 2, 2}), b);
         REQUIRE(e->type == Interval::EMPTY);
     }
 }
@@ -55,7 +57,7 @@ TEST_CASE("VolTree: use as an accelerator")
     Region<3> r({-1, -1, -1}, {1, 1, 1});
 
     BRepSettings b;
-    auto e = VolWorkerPool::build(s, r, b);
+    auto e = Root<VolTree>::build(s, r, b);
     REQUIRE(e->isBranch());
 
     for (float p : {0.9, 0.8, 0.7, 0.6}) {

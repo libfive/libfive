@@ -396,8 +396,8 @@ bool libfive_evaluator_save_mesh(libfive_evaluator evaluator, libfive_region3 R,
                      {R.X.upper, R.Y.upper, R.Z.upper});
 
     BRepSettings settings; // TODO: pass it in as an argument
-    settings.workers = 1;  // MOTE: temporay limitation
-    auto ms = Mesh::render(evaluator, region, settings);
+    tbb::enumerable_thread_specific<Evaluator> evals(*evaluator);
+    auto ms = Mesh::render(evals, region, settings);
     return ms->saveSTL(f);
 }
 
@@ -457,7 +457,6 @@ libfive_evaluator libfive_tree_evaluator(libfive_tree tree, libfive_vars vars)
         auto treeId = static_cast<libfive::Tree::Id>(vars.vars[i]);
         mapOfVars.insert(std::make_pair(treeId, vars.values[i]));
     }
-    // TODO: For more than one worker
     return new Evaluator(*tree, mapOfVars);
 }
 

@@ -11,8 +11,17 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/progress.hpp"
+#include "libfive/render/brep/hybrid/hybrid_tree.hpp"
+#include "libfive/eval/evaluator.hpp"
+
+#include "tbb/enumerable_thread_specific.h"
 
 namespace libfive {
+
+template <unsigned N>
+class Region;
+
+class Tree;
 
 template <typename T>
 class Root
@@ -51,6 +60,17 @@ public:
     }
 
     int64_t size() const { return tree_count; }
+
+    static Root build(tbb::enumerable_thread_specific<Evaluator>& eval, 
+                      const Region<T::Dimension>& region, 
+                      const BRepSettings& settings);
+
+    static Root build(Tree tree, const Region<T::Dimension>& region,
+                      const BRepSettings& settings) {
+        tbb::enumerable_thread_specific<Evaluator> eval(
+            [&tree]() {return Evaluator(tree); });
+        return build(eval, region, settings);
+    }
 
 protected:
     T* ptr;

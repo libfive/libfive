@@ -113,6 +113,12 @@ public:
     }
 
     /*
+     *  Alternate name for subdivide(), to fulfill the template requirement for
+     *  multithread_Recursive.
+     */
+    std::array<Region, 1 << N> getChildren() const { return subdivide(); }
+
+    /*
      *  Returns the volume of the region in arbitrary units
      */
     double volume() const
