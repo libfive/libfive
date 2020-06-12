@@ -33,8 +33,10 @@ set(SRCS main.cpp
     vol_tree.cpp
     xtree.cpp
     util/mesh_checks.cpp
-    util/shapes.cpp)
-set(LIBS five)
+    util/shapes.cpp
+)
+
+set(LIBS five ${CMAKE_THREAD_LIBS_INIT} )
 
 if (BUILD_GUILE_BINDINGS AND GUILE_FOUND)
     set(SRCS ${SRCS} guile.cpp)
@@ -42,5 +44,6 @@ if (BUILD_GUILE_BINDINGS AND GUILE_FOUND)
 endif(BUILD_GUILE_BINDINGS AND GUILE_FOUND)
 
 add_executable(libfive-test ${SRCS})
+
 target_link_libraries(libfive-test ${LIBS})
 target_include_directories(libfive-test PRIVATE .)

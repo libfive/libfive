@@ -1,0 +1,18 @@
+# LibFiveConfigVersion 
+# --------------------
+#
+# Check the version of LibFive.
+#
+# Modified from KitWare CMake wiki on "How to create a ProjectConfig.cmake file".
+# See: https://gitlab.kitware.com/cmake/community/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
+set(PACKAGE_VERSION "@FIVE_VERSION@")
+
+# Check whether the requested PACKAGE_FIND_VERSION is compatible
+if("${PACKAGE_VERSION}" VERSION_LESS "${PACKAGE_FIND_VERSION}")
+  set(PACKAGE_VERSION_COMPATIBLE FALSE)
+else()
+  set(PACKAGE_VERSION_COMPATIBLE TRUE)
+  if ("${PACKAGE_VERSION}" VERSION_EQUAL "${PACKAGE_FIND_VERSION}")
+    set(PACKAGE_VERSION_EXACT TRUE)
+  endif()
+endif()

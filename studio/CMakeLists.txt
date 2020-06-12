@@ -63,15 +63,42 @@ else()
     add_executable(Studio ${SRCS} ${QOBJECTS})
 endif()
 
-if(UNIX AND NOT(APPLE))
-    install(TARGETS Studio DESTINATION bin RENAME studio)
-endif(UNIX AND NOT(APPLE))
+#add_dependencies(five-guile five)
 
-target_include_directories(Studio PUBLIC include)
-target_link_libraries(Studio five-guile
+
+# if(UNIX AND NOT(APPLE))
+#     install(TARGETS Studio DESTINATION bin RENAME studio)
+# endif(UNIX AND NOT(APPLE))
+
+target_include_directories(Studio
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
+        ${GUILE_INCLUDE_DIRS}
+        # ${FIVE_GUILE_INCLUDE_DIRS}
+)
+
+target_link_libraries(Studio
+  PUBLIC
+    five-guile
     Qt5::Widgets
     Qt5::Gui
     Qt5::OpenGL
     Qt5::Concurrent
     ${EXTRA_LIBS}
+)
+
+set_target_properties(Studio
+   PROPERTIES
+   CXX_STANDARD "${FIVE_CXX_STANDARD}"
+   CXX_STANDARD_REQUIRED "YES"
+   CXX_EXTENSION "NO"
+   INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib
+)
+
+install(
+  TARGETS Studio 
+  EXPORT LibFiveTargets
+  RUNTIME DESTINATION ${FIVE_INSTALL_BIN_DIR}
+  LIBRARY DESTINATION ${FIVE_INSTALL_LIB_DIR}
+  ARCHIVE DESTINATION ${FIVE_INSTALL_LIB_DIR}
 )
