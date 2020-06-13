@@ -37,5 +37,5 @@ TEST_CASE("Deck::constants")
 
     CAPTURE(t.constants.begin()->first);
     CAPTURE(t.constants.begin()->second);
-    REQUIRE(t.constants.at(3) == 5.0f);
+    REQUIRE(t.constants[0] == std::make_pair<Clause::Id, float>(3, 5.0f));
 }

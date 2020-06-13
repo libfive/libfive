@@ -31,7 +31,7 @@ Deck::Deck(const OptimizedTree& root) {
         auto op = m->op();
         switch (op) {
             case Opcode::CONSTANT:
-                constants[id] = m->value(); break;
+                constants.push_back({id, m->value()}); break;
             case Opcode::VAR_FREE:
                 vars.left.insert({id, m}); break;
             case Opcode::ORACLE:
