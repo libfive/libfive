@@ -118,6 +118,9 @@ public:
     /*  Returns a new tree which has been unique-ified and has had its affine
      *  subtrees collapsed + balanced. */
     Tree optimized() const;
+    Tree optimized_helper(std::unordered_map<Id, const Data*>& remap,
+                          std::map<TreeDataKey, const Data*>& canonical,
+                          std::vector<Tree>& new_trees) const;
 
     /*  Performs a deep copy of the tree with any duplicate subtrees merged
      *  to point to the same objects. */
