@@ -531,6 +531,14 @@ Tree Tree::optimized() const {
     std::unordered_map<Id, const Data*> remap;
     std::map<Data::Key, const Data*> canonical;
     std::vector<Tree> new_trees;
+
+    return optimized_helper(remap, canonical, new_trees);
+}
+
+Tree Tree::optimized_helper(std::unordered_map<Id, const Data*>& remap,
+                            std::map<Data::Key, const Data*>& canonical,
+                            std::vector<Tree>& new_trees) const
+{
     auto out = unique_helper(remap, canonical, new_trees);
 
     // Give all oracles a chance to optimize themselves as well, reusing

@@ -80,4 +80,17 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::deserialize(
     return std::make_unique<TransformedOracleClause>(underlying, X_, Y_, Z_);
 }
 
+std::unique_ptr<const OracleClause> TransformedOracleClause::optimized(
+        std::unordered_map<Tree::Id, const Tree::Data*>& remap,
+        std::map<Tree::Data::Key, const Tree::Data*>& canonical,
+        std::vector<Tree>& new_trees) const
+{
+    auto new_u = underlying.optimized_helper(remap, canonical, new_trees);
+    auto new_x = X_.optimized_helper(remap, canonical, new_trees);
+    auto new_y = Y_.optimized_helper(remap, canonical, new_trees);
+    auto new_z = Z_.optimized_helper(remap, canonical, new_trees);
+
+    return nullptr;
+}
+
 } //namespace libfive
