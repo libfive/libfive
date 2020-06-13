@@ -42,7 +42,7 @@ public:
     Clause::Id X, Y, Z;
 
     /*  Constants, unpacked from the tree at construction */
-    std::map<Clause::Id, float> constants;
+    std::vector<std::pair<Clause::Id, float>> constants;
 
     /*  Map of variables (in terms of where they live in this Evaluator) to
      *  their ids in their respective Tree (e.g. what you get when calling
