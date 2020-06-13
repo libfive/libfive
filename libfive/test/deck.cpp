@@ -25,7 +25,7 @@ TEST_CASE("Deck::num_clauses")
 TEST_CASE("Deck::XYZ")
 {
     Deck t(Tree::X() + 1);
-    REQUIRE(t.X == 3);
+    REQUIRE(t.X == 2);
     REQUIRE(t.Y == 4);
     REQUIRE(t.Z == 5);
 }
@@ -37,5 +37,5 @@ TEST_CASE("Deck::constants")
 
     CAPTURE(t.constants.begin()->first);
     CAPTURE(t.constants.begin()->second);
-    REQUIRE(t.constants.at(2) == 5.0f);
+    REQUIRE(t.constants.at(3) == 5.0f);
 }
