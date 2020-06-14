@@ -80,6 +80,13 @@ Tree Tree::nonary(Opcode::Opcode op) {
     if (Opcode::args(op) != 0) {
         return invalid();
     }
+    // Special-case handling to re-use X/Y/Z singletons
+    switch (op) {
+        case Opcode::VAR_X: return X();
+        case Opcode::VAR_Y: return Y();
+        case Opcode::VAR_Z: return Z();
+        default: break;
+    }
     // Default if we didn't fall into any special cases
     return Tree(std::make_shared<Data>(TreeNonaryOp { op }));
 }
@@ -165,15 +172,15 @@ Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
 
 // Use Meyer's singletons for X/Y/Z, since they're the most common trees
 Tree Tree::X() {
-    static auto x = Tree::nonary(Opcode::VAR_X);
+    static auto x = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_X });
     return Tree(x);
 }
 Tree Tree::Y() {
-    static auto y = Tree::nonary(Opcode::VAR_Y);
+    static auto y = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_Y });
     return Tree(y);
 }
 Tree Tree::Z() {
-    static auto z = Tree::nonary(Opcode::VAR_Z);
+    static auto z = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_Z });
     return Tree(z);
 }
 
