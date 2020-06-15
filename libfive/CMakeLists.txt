@@ -5,11 +5,14 @@ endif()
 
 option(BUILD_TESTS "Build test suite" ON)
 
+ADD_CUSTOM_TARGET(version-directory
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/src)
 # Add a custom command that produces version.c, plus
 # a dummy output that's not actually produced, in order
 # to force version.cmake to always be re-run before the build
 ADD_CUSTOM_TARGET(five-version
     BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/src/version.c
+    DEPENDS version-directory
     # Pass the current source dir to version.cmake, so that it can run git
     # commands there instead of in the binary dir. This enables it to find
     # the right info when the build dir is outside the libfive repo.
