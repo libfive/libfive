@@ -24,7 +24,7 @@ set(FIVE_CXX_STANDARD 14 CACHE STRING "C++ standard for libfive")
 set(FIVE_INSTALL_LIB_DIR lib CACHE PATH "Installation path for libfive files")
 set(FIVE_INSTALL_BIN_DIR bin CACHE PATH "Installation path for libfive binary files")
 set(FIVE_INSTALL_INCLUDE_DIR include CACHE PATH "Installation path for header files")
-set(FIVE_CMAKE_INSTALL_DIR lib/cmake CACHE PATH "Installation path for cmake files")
+set(FIVE_CMAKE_INSTALL_DIR lib/cmake/LibFive CACHE PATH "Installation path for cmake files")
 
 
 # set(CMAKE_BUILD_TYPE RELEASE)
@@ -171,7 +171,7 @@ include(CMakePackageConfigHelpers)
 #   VERSION ${FIVE_VERSION}
 #   COMPATIBILITY AnyNewerVersion
 # )
-
+include(GNUInstallDirs)
 install(EXPORT LibFiveTargets
         DESTINATION ${FIVE_CMAKE_INSTALL_DIR}
 )
