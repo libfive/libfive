@@ -130,12 +130,11 @@ target_include_directories(five
          $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
          ${Boost_INCLUDE_DIRS}
          ${PNG_INCLUDE_DIR}
-         ${EIGEN_INCLUDE_DIRS}
 )
 
 
 set(LIBS ${PNG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-target_link_libraries(five PRIVATE ${LIBS})
+target_link_libraries(five PUBLIC Eigen3::Eigen PRIVATE ${LIBS})
 
 set_target_properties(five
    PROPERTIES
