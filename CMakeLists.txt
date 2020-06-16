@@ -1,5 +1,14 @@
-cmake_minimum_required(VERSION 3.3)
-project(libfive)
+cmake_minimum_required(VERSION 3.14)
+project(libfive
+  LANGUAGES C CXX
+)
+
+set(FIVE_MAJOR_VERSION 0)
+set(FIVE_MINOR_VERSION 1)
+set(FIVE_PATCH_VERSION 1)
+set(FIVE_VERSION
+  ${FIVE_MAJOR_VERSION}.${FIVE_MINOR_VERSION}.${FIVE_PATCH_VERSION})
+
 
 # Properly distinguish between Apple and upstream Clang
 cmake_policy(SET CMP0025 NEW)
@@ -10,8 +19,16 @@ option(LIBFIVE_PACKED_OPCODES
     "Tightly pack opcodes (breaks compatibility with older saved f-reps)"
     OFF)
 
-set(CMAKE_BUILD_TYPE RELEASE)
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+set(FIVE_CXX_STANDARD 14 CACHE STRING "C++ standard for libfive")
+
+set(FIVE_INSTALL_LIB_DIR lib CACHE PATH "Installation path for libfive files")
+set(FIVE_INSTALL_BIN_DIR bin CACHE PATH "Installation path for libfive binary files")
+set(FIVE_INSTALL_INCLUDE_DIR include CACHE PATH "Installation path for header files")
+set(FIVE_CMAKE_INSTALL_DIR lib/cmake/LibFive CACHE PATH "Installation path for cmake files")
+
+
+# set(CMAKE_BUILD_TYPE RELEASE)
+# set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR}/cmake)
 
 if (LIBFIVE_PACKED_OPCODES)
     message("Using packed opcodes, which breaks compatibility with saved f-reps!")
@@ -63,7 +80,7 @@ endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DRELEASE -DEIGEN_NO_DEBUG")
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD ${FIVE_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -84,12 +101,14 @@ if(NOT MSVC)
         find_package(Qt5Core)
     endif ()
     find_package(Boost REQUIRED)
+    # find_package(Boost REQUIRED COMPONENTS system thread)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GUILE guile-2.2>=2.2.1)
-    pkg_check_modules(EIGEN REQUIRED eigen3>=3.2.92)
+    find_package(Eigen3 REQUIRED)
+    # pkg_check_modules(EIGEN REQUIRED eigen3>=3.2.92)
 else()
-    find_package(eigen3 REQUIRED)
-    find_package(boost REQUIRED 1.65.0)
+    find_package(Eigen3 REQUIRED)
+    find_package(Boost REQUIRED 1.65.0)
 endif()
 
 find_package(PNG REQUIRED)
@@ -144,3 +163,27 @@ add_subdirectory(libfive)
 if(BUILD_STUDIO_APP AND GUILE_FOUND AND Qt5Core_FOUND)
     add_subdirectory(studio)
 endif(BUILD_STUDIO_APP AND GUILE_FOUND AND Qt5Core_FOUND)
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+write_basic_package_version_file(
+        LibFiveConfigVersion.cmake
+        VERSION ${FIVE_VERSION}
+        COMPATIBILITY AnyNewerVersion
+)
+
+install(EXPORT LibFiveTargets
+        FILE LibFiveTargets.cmake
+        NAMESPACE LibFive::
+        DESTINATION ${FIVE_CMAKE_INSTALL_DIR}
+)
+
+configure_package_config_file(
+	"cmake/LibFiveConfig.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/LibFiveConfig.cmake"
+	INSTALL_DESTINATION ${FIVE_CMAKE_INSTALL_DIR}
+)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LibFiveConfig.cmake"
+        DESTINATION ${FIVE_CMAKE_INSTALL_DIR}
+)

@@ -1,0 +1,38 @@
+# LibFiveConfig
+# -------------
+#
+# Defines the following variables:
+#
+#  LIBFIVE_INCLUDE_DIRS - include directories for LibFive
+#  LIBFIVE_LIBRARIES    - libraries for LibFive
+#  LIBFIVE_EXECUTABLE   - Studio executable
+
+#
+# Modified from KitWare CMake wiki on "How to create a ProjectConfig.cmake file".
+# See: https://gitlab.kitware.com/cmake/community/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
+
+#get_filename_component(LIBFIVE_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+#set( LIBFIVE_INCLUDE_DIR "@CONFIG_INCLUDE_DIRS@")
+
+#if(NOT TARGET LibFive AND NOT ${LIBFIVE_BINARY_DIR})
+#  include("${LIBFIVE_CMAKE_DIR}/LibFiveTargets.cmake")
+#endif()
+
+#set(LIBFIVE_LIBRARIES five five-guile )
+#set(LIBFIVE_EXECUTABLE Studio)
+
+
+include(CMakeFindDependencyMacro)
+
+# Capturing values from configure (optional)
+#set(my-config-var @my-config-var@)
+
+# Same syntax as find_package
+find_dependency(Boost REQUIRED)
+find_dependency(Eigen3 REQUIRED)
+find_dependency(PNG REQUIRED)
+find_dependency(Threads REQUIRED)
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/LibFiveTargets.cmake")

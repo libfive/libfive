@@ -136,3 +136,13 @@ cd build
 cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
 ```
 Now open `build\libfiv.sln` and build the solution. Check that `libfive-test` runs correctly.
+
+### Using the library from a CMake project
+Once installed, the libfive C++ library can be found from CMake with:
+```cmake
+find_package(LibFive)
+```
+To use the library and ensure the include paths are added, use:
+```cmake
+target_link_library( <your target> PUBLIC LibFive::core)
+```
