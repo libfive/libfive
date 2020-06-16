@@ -118,7 +118,9 @@ add_library(five SHARED
     ${five_version_src}
 )
 
-add_library(five::core ALIAS five)
+# So that the same target can be used in the source tree and
+# in other projects.
+add_library(LibFive::core ALIAS five)
 
 set_property(TARGET five PROPERTY VERSION ${FIVE_VERSION})
 
@@ -142,10 +144,11 @@ set_target_properties(five
    CXX_STANDARD_REQUIRED "YES"
    CXX_EXTENSION "NO"
    INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib
+        EXPORT_NAME core
 )
 
 install(
-  TARGETS five 
+  TARGETS five
   EXPORT LibFiveTargets
   RUNTIME DESTINATION ${FIVE_INSTALL_BIN_DIR}
   LIBRARY DESTINATION ${FIVE_INSTALL_LIB_DIR}

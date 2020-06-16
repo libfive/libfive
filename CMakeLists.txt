@@ -164,15 +164,18 @@ if(BUILD_STUDIO_APP AND GUILE_FOUND AND Qt5Core_FOUND)
     add_subdirectory(studio)
 endif(BUILD_STUDIO_APP AND GUILE_FOUND AND Qt5Core_FOUND)
 
-
-include(CMakePackageConfigHelpers)
-# write_basic_package_version_file(
-#   LibFiveConfigVersion.cmake
-#   VERSION ${FIVE_VERSION}
-#   COMPATIBILITY AnyNewerVersion
-# )
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+write_basic_package_version_file(
+        LibFiveConfigVersion.cmake
+        VERSION ${FIVE_VERSION}
+        COMPATIBILITY AnyNewerVersion
+)
+
 install(EXPORT LibFiveTargets
+        FILE LibFiveTargets.cmake
+        NAMESPACE LibFive::
         DESTINATION ${FIVE_CMAKE_INSTALL_DIR}
 )
 
@@ -184,96 +187,3 @@ configure_package_config_file(
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LibFiveConfig.cmake"
         DESTINATION ${FIVE_CMAKE_INSTALL_DIR}
 )
-
-# Create/Install LibFiveConfig.cmake and related files.
-#
-# The below section is modified from KitWare CMake wiki on "How to create a ProjectConfig.cmake file".
-# See: https://gitlab.kitware.com/cmake/community/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
-# export(TARGETS five five-guile Studio FILE ${libfive_BINARY_DIR}/LibFiveConfig.cmake)
-# export(PACKAGE libfive)
-# # Add LibFiveConfigVersion.cmake
-# configure_file(cmake/LibFiveConfigVersion.cmake.in
-#   "${libfive_BINARY_DIR}/LibFiveConfigVersion.cmake" @ONLY)
-# Add LibFiveConfig.cmake for build tree and for install tree.
-# -- Note: CONFIG_INCLUDE_DIRS is the location of the include directories.
-# -- Note: libfive_CMAKE_DIR is set to the path of LibFiveConfig.cmake when it is called.
-# set(CONFIG_INCLUDE_DIRS "${libfive_SOURCE_DIR}/src" )
-# configure_file(cmake/LibFiveConfig.cmake.in
-#   "${libfive_BINARY_DIR}/LibFiveConfig.cmake" @ONLY)
-# file(RELATIVE_PATH RELATIVE_INCLUDE_DIR "/${libfive_INSTALL_CMAKE_DIR}"
-#   "/${libfive_INSTALL_INCLUDE_DIR}")
-# set(CONFIG_INCLUDE_DIRS "\${libfive_CMAKE_DIR}/${RELATIVE_INCLUDE_DIR}")
-# configure_file(cmake/LibFiveConfig.cmake.in
-#   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/LibFiveConfig.cmake" @ONLY)
-# # Install the LibFiveConfig.cmake and LibFiveConfigVersion.cmake
-# install(FILES
-#   "${libfive_BINARY_DIR}/LibFiveConfigVersion.cmake"
-#   "${libfive_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/LibFiveConfig.cmake"
-#   DESTINATION "${libfive_INSTALL_CMAKE_DIR}" COMPONENT dev)
-# # Install the export set for use with the install-tree
-# install(EXPORT LibFiveTargets DESTINATION
-#   "${libfive_INSTALL_CMAKE_DIR}" COMPONENT dev)
-# # Configure and install pkg-config file.
-# configure_file(cmake/libfive.pc.in
-#   "${libfive_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/libfive.pc" @ONLY)
-# install(FILES
-#   "${libfive_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/libfive.pc"
-#   DESTINATION "${libfive_INSTALL_LIB_DIR}/pkgconfig"
-# )
-
-
-
-
-# export(TARGETS
-#         CoreTargets
-#         FiveGuileTargets
-#       NAMESPACE five::
-#       FILE LibFiveTargets.cmake
-# )
-
-# include(CMakePackageConfigHelpers)
-# write_basic_package_version_file(
-#   LibFiveConfigVersion.cmake
-#   VERSION ${FIVE_VERSION}
-#   COMPATIBILITY AnyNewerVersion
-# )
-
-
-# install(EXPORT MyLibTargets
-#         FILE MyLibTargets.cmake
-#         NAMESPACE MyLib::
-#         DESTINATION lib/cmake/MyLib
-#          )
-# install(EXPORT FiveGuile DESTINATION lib/cmake)
-
-# export(TARGETS five-guile FILE FiveGuileConfig.cmake)
-
-
-
-# export(EXPORT fiveTargets
-#   FILE "${CMAKE_CURRENT_BINARY_DIR}/five/fiveTargets.cmake"
-#   NAMESPACE Upstream::
-# )
-# configure_file(cmake/fiveConfig.cmake
-#   "${CMAKE_CURRENT_BINARY_DIR}/five/fiveConfig.cmake"
-#   COPYONLY
-# )
-
-# set(ConfigPackageLocation lib/cmake/five)
-# install(EXPORT fiveTargets
-#   FILE
-#     fiveTargets.cmake
-#   NAMESPACE
-#     Upstream::
-#   DESTINATION
-#     ${ConfigPackageLocation}
-# )
-# install(
-#   FILES
-#     cmake/fiveConfig.cmake
-#     "${CMAKE_CURRENT_BINARY_DIR}/five/fiveConfigVersion.cmake"
-#   DESTINATION
-#     ${ConfigPackageLocation}
-#   COMPONENT
-#     Devel
-# )
