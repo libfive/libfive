@@ -39,7 +39,6 @@ void Serializer::serializeTree(const Tree& t)
         }
         if (n->op() == Opcode::ORACLE)
         {
-            assert(n->oracle.get() != nullptr);
             for (auto& d : n->oracle_clause().dependencies())
             {
                 serializeTree(d);
@@ -52,7 +51,6 @@ void Serializer::serializeTree(const Tree& t)
         if (n->op() == Opcode::CONSTANT) {
             serializeBytes(n->value());
         } else if (n->op ()== Opcode::ORACLE) {
-            assert(n->oracle.get() != nullptr);
             serializeString(n->oracle_clause().name());
             OracleClause::serialize(n->oracle_clause().name(), &n->oracle_clause(), *this);
         }

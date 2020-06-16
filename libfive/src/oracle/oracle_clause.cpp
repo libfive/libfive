@@ -45,8 +45,8 @@ bool OracleClause::serialize(const std::string& name,
 std::unique_ptr<const OracleClause> OracleClause::remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const
 {
-    assert(self->op == Opcode::ORACLE);
-    assert(self->oracle.get() == this);
+    assert(self->op() == Opcode::ORACLE);
+    assert(&self->oracle_clause() == this);
 
     return std::make_unique<TransformedOracleClause>(self, X_, Y_, Z_);
 }

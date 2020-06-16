@@ -78,7 +78,8 @@ public:
     static Tree Y();
     static Tree Z();
 
-    // Returns a tree with OP_INVALID
+    // Returns a tree for which is_invalid() = true
+    // (using the TreeInvalid variant)
     static Tree invalid();
 
     //  Returns a new unique variable
@@ -88,18 +89,18 @@ public:
     //  which zeroes out partial derivatives with respect to all variables.
     Tree with_const_vars() const;
 
-    // Construct a unary Tree
-    // If the operation is idempotent, e.g. abs(abs(...)),
-    // returns the previous value.
+    // Construct a unary Tree, applying local simplifications as appropriate
+    // e.g. abs(abs(t)) --> abs(t)
     static Tree unary(Opcode::Opcode op, const Tree& lhs);
 
-    // Constructs a binary-operation Tree, simplifying arithmetic
-    // identities as needed.
+    // Constructs a binary-operation Tree, apply local simplifications as
+    // appropriate (e.g. t + 0 --> t)
     static Tree binary(Opcode::Opcode op,
                        const Tree& lhs,
                        const Tree& rhs);
 
-    // Constructs a zero-argument tree
+    // Constructs a zero-argument tree.  If the opcode is VAR_X/Y/Z, returns
+    // the singleton X/Y/Z objects from the functions above.
     static Tree nonary(Opcode::Opcode op);
 
     // Constructs a constant Tree with a floating-point value
@@ -108,6 +109,7 @@ public:
     // Constructs a Tree from an OracleClause
     explicit Tree(std::unique_ptr<const OracleClause>&& oracle);
 
+    // Checks whether this tree was constructed by Tree::invalid()
     bool is_valid() const;
 
     /*  Unique identifier for the underlying clause.  This is not necessarily
@@ -174,7 +176,7 @@ protected:
     static Tree reduce_binary(std::vector<AffinePair>::const_iterator a,
                               std::vector<AffinePair>::const_iterator b);
 
-    // Private constructor to build from the raw variant type
+    /* Private constructor to build from the raw variant type */
     explicit Tree(std::shared_ptr<const Data> d);
 
     std::ostream& print_prefix(std::ostream& stream) const;
@@ -225,9 +227,9 @@ using TreeBinaryKey = std::tuple<
     Opcode::Opcode, const TreeData*, const TreeData*>;
 using TreeOracleKey = const OracleClause*;
 using TreeDataKeyVariant = std::variant<
-    bool,           // Used for NaN (true) and invalid (false)
-    float,          // Float constants
-    Opcode::Opcode, // Nonary operations, other than VAR_FREE
+    bool,               // Used for NaN (true) and invalid (false)
+    float,              // Float constants other than NaN
+    Opcode::Opcode,     // Nonary operations, other than VAR_FREE
     TreeUnaryKey,       // Unary operations and VAR_FREE
     TreeBinaryKey,      // Binary operations
     TreeOracleKey>;     // Oracles, keyed by their unique_ptr
@@ -254,22 +256,22 @@ struct TreeData : public TreeDataVariant,
 
     /*  Returns the floating-point value if this is a constant,
      *  throwing an exception otherwise. */
+    float value() const;
     struct ValueException : public std::exception {
         const char* what() const throw () override {
             return "Accessed value of non-constant Tree";
         }
     };
-    float value() const;
 
     /*  Returns left and right-hand Tree references.
      *  Throws a ChildException if the requested branch is missing. */
+    const Tree& lhs() const;
+    const Tree& rhs() const;
     struct ChildException : public std::exception {
         const char* what() const throw () override {
             return "Accessed missing child";
         }
     };
-    const Tree& lhs() const;
-    const Tree& rhs() const;
 
     /*  Returns the underlying OracleClause.  If this isn't a TreeOracle,
      *  throws an OracleException. */
@@ -278,6 +280,7 @@ struct TreeData : public TreeDataVariant,
     /*  Returns a freshly-baked Oracle from the given clause.
      *  If this isn't a TreeOracle, throws an exception. */
     std::unique_ptr<Oracle> build_oracle() const;
+
     struct OracleException : public std::exception {
         const char* what() const throw () {
             return "Accessed oracle of non-constant Tree";
@@ -304,7 +307,10 @@ protected:
         : tree(Tree::invalid())
     {
         /* Private constructor for special cases where you need to construct
-         * an OptimizedTree without actually calling optimized() */
+         * an OptimizedTree without actually calling optimized().  You probably
+         * shouldn't use this.  The only use case is when reducing constant
+         * operations, where we want to construct an evaluator without
+         * optimizing the tree (which would recurse). */
     }
     friend class Tree;
 };
