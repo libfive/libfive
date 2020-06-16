@@ -21,8 +21,7 @@ TransformedOracleClause::TransformedOracleClause(
         Tree underlying, Tree X_, Tree Y_, Tree Z_)
     : underlying(underlying), X_(X_), Y_(Y_), Z_(Z_)
 {
-    assert(underlying->op == Opcode::ORACLE);
-    assert(underlying->oracle.get() != nullptr);
+    assert(underlying->op() == Opcode::ORACLE);
 }
 
 std::unique_ptr<Oracle> TransformedOracleClause::getOracle() const
