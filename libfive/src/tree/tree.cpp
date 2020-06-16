@@ -679,7 +679,6 @@ Tree Tree::collect_affine() const {
 
 size_t Tree::size() const {
     std::unordered_set<Id> seen;
-    size_t count = 0;
 
     std::vector<const Data*> todo = {get()};
     // Count how many branches reach to a given node.
@@ -690,7 +689,6 @@ size_t Tree::size() const {
         if (!seen.insert(next).second) {
             continue;
         }
-        count++;
 
         if (auto d = std::get_if<TreeUnaryOp>(next)) {
             todo.push_back(d->lhs.get());
@@ -699,7 +697,7 @@ size_t Tree::size() const {
             todo.push_back(d->rhs.get());
         }
     }
-    return count;
+    return seen.size();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
