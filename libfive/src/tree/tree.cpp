@@ -648,15 +648,42 @@ void Tree::explore_affine(AffineMap& map,
 Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
                          std::vector<AffinePair>::const_iterator b)
 {
-    const auto delta = b - a;
-    if (delta == 0) {
-        return Tree(0.0f);
-    } else if (delta == 1) {
-        return a->first * a->second;
-    } else {
-        return reduce_binary(a, a + delta / 2) +
-               reduce_binary(a + delta / 2, b);
+    using itr = std::vector<AffinePair>::const_iterator;
+    using pair = std::pair<itr, itr>;
+    struct Pop { /* Phantom type */ };
+    using variant = std::variant<Pop, pair>;
+
+    variant v = pair(a, b);
+
+    // This is a heap implementation of a recursive depth-first traverse
+    std::vector<variant> todo = {v};
+    std::vector<Tree> out;
+    while (todo.size()) {
+        auto t = todo.back();
+        todo.pop_back();
+        if (auto p = std::get_if<pair>(&t)) {
+            auto a = p->first;
+            auto b = p->second;
+            const auto delta = b - a;
+            if (delta == 0) {
+                out.push_back(Tree(0.0f));
+            } else if (delta == 1) {
+                out.push_back(a->first * a->second);
+            } else {
+                todo.push_back(Pop{});
+                todo.push_back(pair(a, a + delta / 2));
+                todo.push_back(pair(a + delta / 2, b));
+            }
+        } else {
+            auto a = out.back();
+            out.pop_back();
+            auto b = out.back();
+            out.pop_back();
+            out.push_back(a + b);
+        }
     }
+    assert(out.size() == 1);
+    return out.at(0);
 }
 
 Tree Tree::collect_affine() const {
