@@ -582,67 +582,100 @@ Tree Tree::unique() const {
     return unique_helper(remap, canonical, new_trees);
 }
 
-void Tree::explore_affine(AffineMap& map,
-                          std::unordered_map<const Data*, float>* prev,
-                          float scale) const
-{
-    const auto op = (*this)->op();
+Tree::AffineMap Tree::explore_affine() const {
+    using map = std::unordered_map<const Data*, float>;
+    struct EmptyMap { /* Phantom type */};
+    std::vector<std::variant<map, EmptyMap>> maps;
+    maps.reserve(100);
+    maps.push_back(EmptyMap{});
 
-    using namespace Opcode;
-    const bool could_be_affine = (op == OP_NEG) ||
-        (op == OP_ADD) || (op == OP_SUB) ||
-        (op == OP_MUL && ((*this)->lhs()->op() == CONSTANT ||
-                          (*this)->rhs()->op() == CONSTANT));
+    struct Pop { const Id id; };
+    struct Node { const Data* data; float scale; };
+    std::vector<std::variant<Pop, Node>> todo;
+    todo.push_back(Node { get(), 1 });
 
-    if (could_be_affine) {
-        std::unordered_map<const Data*, float> my_prev;
-        std::unordered_map<const Data*, float>* prev_ = prev ? prev : &my_prev;
+    AffineMap out;
 
-        // Recurse if we haven't already solved for this node
-        auto itr = map.find(id());
-        if (itr == map.end()) {
-            if (op == OP_NEG) {
-                (*this)->lhs().explore_affine(map, prev_, -scale);
-            } else if (op == OP_ADD) {
-                (*this)->lhs().explore_affine(map, prev_, scale);
-                (*this)->rhs().explore_affine(map, prev_, scale);
-            } else if (op == OP_SUB) {
-                (*this)->lhs().explore_affine(map, prev_, scale);
-                (*this)->rhs().explore_affine(map, prev_, -scale);
-            } else if (op == OP_MUL) {
-                if ((*this)->lhs()->op() == CONSTANT) {
-                    const float c = (*this)->lhs()->value();
-                    (*this)->rhs().explore_affine(map, prev_, scale * c);
-                } else if ((*this)->rhs()->op() == CONSTANT) {
-                    const float c = (*this)->rhs()->value();
-                    (*this)->lhs().explore_affine(map, prev_, scale * c);
+    while (todo.size()) {
+        const auto q = todo.back();
+        todo.pop_back();
+
+        if (auto n = std::get_if<Node>(&q)) {
+            const auto t = n->data;
+            const auto scale = n->scale;
+
+            using namespace Opcode;
+            const auto op = t->op();
+            const bool could_be_affine = (op == OP_NEG) ||
+                (op == OP_ADD) || (op == OP_SUB) ||
+                (op == OP_MUL && (t->lhs()->op() == CONSTANT ||
+                                  t->rhs()->op() == CONSTANT));
+
+            if (could_be_affine) {
+                // If this is an affine node that isn't part of an affine tree,
+                // then store a new affine map onto the data stack.
+                if (std::get_if<EmptyMap>(&maps.back())) {
+                    todo.push_back(Pop{t});
+                    maps.push_back(map());
+                }
+
+                // Recurse if we haven't already solved for this node
+                auto itr = out.find(t);
+                if (itr == out.end()) {
+                    if (op == OP_NEG) {
+                        todo.push_back(Node { t->lhs().get(), -scale });
+                    } else if (op == OP_ADD) {
+                        todo.push_back(Node { t->lhs().get(),  scale });
+                        todo.push_back(Node { t->rhs().get(),  scale });
+                    } else if (op == OP_SUB) {
+                        todo.push_back(Node { t->lhs().get(),  scale });
+                        todo.push_back(Node { t->rhs().get(), -scale });
+                    } else if (op == OP_MUL) {
+                        if (t->lhs()->op() == CONSTANT) {
+                            const float c = t->lhs()->value();
+                            todo.push_back(Node { t->rhs().get(), scale * c });
+                        } else if (t->rhs()->op() == CONSTANT) {
+                            const float c = t->rhs()->value();
+                            todo.push_back(Node { t->lhs().get(), scale * c });
+                        }
+                    }
+                // If we've seen this node before, then just accumulate
+                // its affine terms into the parent afine node
+                } else if (auto m = std::get_if<map>(&maps.back())) {
+                    for (const auto& k: itr->second) {
+                        (*m)[k.first.get()] += scale * k.second;
+                    }
+                }
+            } else {
+                // If there's an affine map that's under construction,
+                // contribute to it then hide it with an EmptyMap, since
+                // we're about to recurse into a non-affine subtree.
+                if (auto m = std::get_if<map>(&maps.back())) {
+                    (*m)[t] += scale;
+                    if (args(op) > 0) {
+                        todo.push_back(Pop{t});
+                        maps.push_back(EmptyMap{});
+                    }
+                }
+                switch (args(op)) {
+                    case 2: todo.push_back(Node { t->rhs().get(), 1.0f }); // FALLTHROUGH
+                    case 1: todo.push_back(Node { t->lhs().get(), 1.0f }); // FALLTHROUGH
+                    default: break;
                 }
             }
-        } else if (prev) {
-            for (const auto& k: itr->second) {
-                (*prev)[k.first.get()] += scale * k.second;
+        } else if (auto p = std::get_if<Pop>(&q)) {
+            // If this is a real map (rather than an empty map), then
+            // accumulate its results into our output map.
+            if (auto m = std::get_if<map>(&maps.back())) {
+                auto& v = out[p->id];
+                for (const auto& k: (*m)) {
+                    v.push_back({Tree(k.first->shared_from_this()), k.second});
+                }
             }
-        }
-
-        if (!prev && itr == map.end()) {
-            // Record that we should do a remapping
-            auto& v = map[id()];
-            for (const auto& k: my_prev) {
-                v.push_back({Tree(k.first->shared_from_this()), k.second});
-            }
-        }
-    } else {
-        // Recurse with parent_was_affine = false
-        switch (args(op)) {
-            case 2: (*this)->rhs().explore_affine(map, nullptr, 1); // FALLTHROUGH
-            case 1: (*this)->lhs().explore_affine(map, nullptr, 1); // FALLTHROUGH
-            default: break;
-        }
-
-        if (prev) {
-            (*prev)[get()] += scale;
+            maps.pop_back();
         }
     }
+    return out;
 }
 
 Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
@@ -655,7 +688,10 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
 
     variant v = pair(a, b);
 
-    // This is a heap implementation of a recursive depth-first traverse
+    // This is a heap implementation of a recursive depth-first traverse,
+    // to avoid blowing up the stack on deep trees.  This implementation
+    // uses one stack for the tasks yet to do, and a second stack for the
+    // outputs.
     std::vector<variant> todo = {v};
     std::vector<Tree> out;
     while (todo.size()) {
@@ -687,8 +723,7 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
 }
 
 Tree Tree::collect_affine() const {
-    AffineMap map;
-    explore_affine(map, nullptr, 1);
+    AffineMap map = explore_affine();
 
     std::unordered_map<Tree::Id, Tree> remap;
     for (auto& m : map) {

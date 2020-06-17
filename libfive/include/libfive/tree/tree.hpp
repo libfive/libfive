@@ -139,9 +139,7 @@ public:
      *  into a map of t1*a + t2*b + t3*c... */
     using AffinePair = std::pair<Tree, float>;
     using AffineMap = std::unordered_map<Tree::Id, std::vector<AffinePair>>;
-    void explore_affine(AffineMap& map,
-                        std::unordered_map<const Data*, float>* prev,
-                        float scale) const;
+    AffineMap explore_affine() const;
 
     /*  Returns a tree in which nested affine forms are collapsed, e.g.
      *  (2*X + 3*Y) + 5*(X - Y) ==> 7*X - 2*Y   */
