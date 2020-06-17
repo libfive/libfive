@@ -584,10 +584,11 @@ Tree Tree::unique() const {
 
 Tree::AffineMap Tree::explore_affine() const {
     using map = std::unordered_map<const Data*, float>;
-    struct EmptyMap { /* Phantom type */};
-    std::vector<std::variant<map, EmptyMap>> maps;
-    maps.reserve(100);
-    maps.push_back(EmptyMap{});
+    std::vector<std::optional<map>> maps;
+
+    // Empty root map; this saves us from having to check whether
+    // maps.size() > 0 whenever we want to look at maps.back().
+    maps.push_back(std::nullopt);
 
     struct Pop { const Id id; };
     struct Node { const Data* data; float scale; };
@@ -614,7 +615,7 @@ Tree::AffineMap Tree::explore_affine() const {
             if (could_be_affine) {
                 // If this is an affine node that isn't part of an affine tree,
                 // then store a new affine map onto the data stack.
-                if (std::get_if<EmptyMap>(&maps.back())) {
+                if (!maps.back().has_value()) {
                     todo.push_back(Pop{t});
                     maps.push_back(map());
                 }
@@ -641,20 +642,24 @@ Tree::AffineMap Tree::explore_affine() const {
                     }
                 // If we've seen this node before, then just accumulate
                 // its affine terms into the parent afine node
-                } else if (auto m = std::get_if<map>(&maps.back())) {
-                    for (const auto& k: itr->second) {
-                        (*m)[k.first.get()] += scale * k.second;
+                } else {
+                    auto& m = maps.back();
+                    if (m.has_value()) {
+                        for (const auto& k: itr->second) {
+                            (*m)[k.first.get()] += scale * k.second;
+                        }
                     }
                 }
             } else {
                 // If there's an affine map that's under construction,
                 // contribute to it then hide it with an EmptyMap, since
                 // we're about to recurse into a non-affine subtree.
-                if (auto m = std::get_if<map>(&maps.back())) {
+                auto& m = maps.back();
+                if (m.has_value()) {
                     (*m)[t] += scale;
                     if (args(op) > 0) {
                         todo.push_back(Pop{t});
-                        maps.push_back(EmptyMap{});
+                        maps.push_back(std::nullopt); // Marker for empty map
                     }
                 }
                 switch (args(op)) {
@@ -666,7 +671,8 @@ Tree::AffineMap Tree::explore_affine() const {
         } else if (auto p = std::get_if<Pop>(&q)) {
             // If this is a real map (rather than an empty map), then
             // accumulate its results into our output map.
-            if (auto m = std::get_if<map>(&maps.back())) {
+            const auto& m = maps.back();
+            if (m.has_value()) {
                 auto& v = out[p->id];
                 for (const auto& k: (*m)) {
                     v.push_back({Tree(k.first->shared_from_this()), k.second});
@@ -683,30 +689,29 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
 {
     using itr = std::vector<AffinePair>::const_iterator;
     using pair = std::pair<itr, itr>;
-    struct Pop { /* Phantom type */ };
-    using variant = std::variant<Pop, pair>;
+    using option = std::optional<pair>;
 
-    variant v = pair(a, b);
+    option v = pair(a, b);
 
     // This is a heap implementation of a recursive depth-first traverse,
     // to avoid blowing up the stack on deep trees.  This implementation
     // uses one stack for the tasks yet to do, and a second stack for the
     // outputs.
-    std::vector<variant> todo = {v};
+    std::vector<option> todo = {v};
     std::vector<Tree> out;
     while (todo.size()) {
-        auto t = todo.back();
+        const auto t = todo.back();
         todo.pop_back();
-        if (auto p = std::get_if<pair>(&t)) {
-            auto a = p->first;
-            auto b = p->second;
+        if (t.has_value()) {
+            const auto a = t->first;
+            const auto b = t->second;
             const auto delta = b - a;
             if (delta == 0) {
                 out.push_back(Tree(0.0f));
             } else if (delta == 1) {
                 out.push_back(a->first * a->second);
             } else {
-                todo.push_back(Pop{});
+                todo.push_back(std::nullopt); // marker to pop stack
                 todo.push_back(pair(a, a + delta / 2));
                 todo.push_back(pair(a + delta / 2, b));
             }
