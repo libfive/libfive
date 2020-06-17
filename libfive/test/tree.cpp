@@ -261,8 +261,7 @@ TEST_CASE("Tree::explore_affine") {
     SECTION("Basic") {
         auto c = cos(Tree::Z());
         auto t = Tree::X() * 2 + Tree::Y() * 5 + c + 5 * c;
-        Tree::AffineMap root_map;
-        t.explore_affine(root_map, nullptr, 1);
+        const auto root_map = t.explore_affine();
         REQUIRE(root_map.size() == 1);
         auto itr = root_map.find(t.id());
         REQUIRE(itr != root_map.end());
@@ -278,9 +277,8 @@ TEST_CASE("Tree::explore_affine") {
         // These trees have the same value, but don't have the same Id
         auto a = Tree::X() + Tree::Y();
         auto b = Tree::X() + Tree::Y();
-        Tree::AffineMap root_map;
         auto t = a + b;
-        t.explore_affine(root_map, nullptr, 1);
+        const auto root_map = t.explore_affine();
         REQUIRE(root_map.size() == 1);
         auto itr = root_map.find(t.id());
         REQUIRE(itr != root_map.end());
@@ -295,9 +293,8 @@ TEST_CASE("Tree::explore_affine") {
         // These trees have the same value, but don't have the same Id
         auto a = Tree::X() + Tree::Y();
         auto b = Tree::X() + Tree::Y();
-        Tree::AffineMap root_map;
         auto t = a * b;
-        t.explore_affine(root_map, nullptr, 1);
+        const auto root_map = t.explore_affine();
         REQUIRE(root_map.size() == 2);
         {
             auto itr = root_map.find(a.id());
@@ -321,9 +318,8 @@ TEST_CASE("Tree::explore_affine") {
     SECTION("(X + Y) + cos(X + Y)") {
         auto a = Tree::X() + Tree::Y();
         auto c = cos(a);
-        Tree::AffineMap root_map;
         auto t = a + c;
-        t.explore_affine(root_map, nullptr, 1);
+        const auto root_map = t.explore_affine();
         REQUIRE(root_map.size() == 2);
         {
             auto itr = root_map.find(a.id());
@@ -385,6 +381,15 @@ TEST_CASE("Tree::collect_affine") {
         std::stringstream ss;
         ss << t.collect_affine();
         REQUIRE(ss.str() == "(+ (* (cos (+ x (* 2 y))) 3) (* y 2) x)");
+    }
+
+    SECTION("(X + 2*Y) + 3*cos(sin(X + 2*Y))") {
+        auto a = Tree::X() + (2 * Tree::Y());
+        auto c = 3*cos(sin(a));
+        auto t = a + c;
+        std::stringstream ss;
+        ss << t.collect_affine();
+        REQUIRE(ss.str() == "(+ (* (cos (sin (+ x (* 2 y)))) 3) (* y 2) x)");
     }
 
     SECTION("X + 2*Y + 3*cos(X) + 4*cos(Y)") {
