@@ -13,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <future>
 
 #include "libfive/tree/tree.hpp"
+#include "libfive/tree/data.hpp"
 #include "util/oracles.hpp"
 
 using namespace libfive;

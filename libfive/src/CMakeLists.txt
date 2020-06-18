@@ -86,6 +86,7 @@ add_library(five SHARED
 
     tree/opcode.cpp
     tree/archive.cpp
+    tree/data.cpp
     tree/deserializer.cpp
     tree/serializer.cpp
     tree/tree.cpp
