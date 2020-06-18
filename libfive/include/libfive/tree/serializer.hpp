@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <map>
 
 #include "libfive/tree/archive.hpp"
+#include "libfive/tree/data.hpp"
 
 namespace libfive {
 class Tree;   // Forward declaration

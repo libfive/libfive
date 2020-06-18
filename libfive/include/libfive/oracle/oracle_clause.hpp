@@ -105,7 +105,7 @@ public:
      */
     virtual std::unique_ptr<const OracleClause> optimized(
         std::unordered_map<Tree::Id, const Tree::Data*>& remap,
-        std::map<Tree::Data::Key, const Tree::Data*>& canonical,
+        std::map<TreeDataKey, const Tree::Data*>& canonical,
         std::vector<Tree>& new_trees) const
     {
         // All arguments are unused by default
