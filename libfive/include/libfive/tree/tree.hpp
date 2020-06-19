@@ -84,13 +84,13 @@ public:
     Tree(const Tree& other)
         : Tree(other.ptr)
     { /* Nothing to do here */ }
-    Tree(Tree&& other)
+    Tree(Tree&& other) noexcept
         : ptr(std::exchange(other.ptr, nullptr))
     { /* Nothing to do here */ }
     Tree& operator=(const Tree& other) {
         return *this = Tree(other.ptr);
     }
-    Tree& operator=(Tree&& other) {
+    Tree& operator=(Tree&& other) noexcept {
         std::swap(ptr, other.ptr);
         return *this;
     }
@@ -125,9 +125,7 @@ public:
 
     // Constructs a binary-operation Tree, apply local simplifications as
     // appropriate (e.g. t + 0 --> t)
-    static Tree binary(Opcode::Opcode op,
-                       const Tree& lhs,
-                       const Tree& rhs);
+    static Tree binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs);
 
     // Constructs a zero-argument tree.  If the opcode is VAR_X/Y/Z, returns
     // the singleton X/Y/Z objects from the functions above.
@@ -208,21 +206,19 @@ protected:
      *  Tree (to avoid blowing up the stack). */
     const Data mutable* ptr = nullptr;
 
-    /*  Does a binary reduction of a set of affine pairs, building
-     *  a balanced-ish tree with a recursive approach.  The a iterator is the
-     *  beginning of the region to reduce, and b is one-past-the-end of the
-     *  region to reduce. */
+    /*  Does a binary reduction of a set of affine pairs, building a
+     *  balanced-ish tree.  The a iterator is the beginning of the region to
+     *  reduce, and b is one-past-the-end of the region to reduce. */
     static Tree reduce_binary(std::vector<AffinePair>::const_iterator a,
                               std::vector<AffinePair>::const_iterator b);
 
-    /* Private constructor to build from the raw variant type */
+    /* Private constructor to build from the raw variant pointer */
     explicit Tree(const Data* d, bool increment_refcount=true);
 
     std::ostream& print_prefix(std::ostream& stream) const;
 
 #define OP_UNARY(OP, C)  friend Tree OP(const Tree&);
-#define OP_BINARY(OP, C) friend Tree OP(const Tree&,    \
-                                              const Tree&);
+#define OP_BINARY(OP, C) friend Tree OP(const Tree&, const Tree&);
 TREE_OPERATORS
 #undef OP_UNARY
 #undef OP_BINARY
