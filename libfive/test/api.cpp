@@ -154,7 +154,7 @@ TEST_CASE("libfive_tree_save/load")
     libfive_tree_save(c, ".libfive_tree.tmp");
     auto c_ = libfive_tree_load(".libfive_tree.tmp");
     REQUIRE(c_ != nullptr);
-    // TODO
+    // TODO: compare
 
     // Redirect stderr to avoid spurious print statements
     std::stringstream buffer;
@@ -163,6 +163,9 @@ TEST_CASE("libfive_tree_save/load")
     std::cerr.rdbuf(old);
 
     REQUIRE(f == nullptr);
+    for (auto& t : {a, b, c, c_}) {
+        delete t;
+    }
 }
 
 TEST_CASE("libfive_tree_render_pixels")
@@ -182,6 +185,10 @@ TEST_CASE("libfive_tree_render_pixels")
     libfive_pixels_delete(m);
 
     REQUIRE(true); // No crash!
+
+    for (auto& t: {x, y, z, x2, y2, z2, r_, r, one, d}) {
+        libfive_tree_delete(t);
+    }
 }
 
 TEST_CASE("libfive_tree_print")
@@ -199,12 +206,19 @@ TEST_CASE("libfive_tree_print")
 
     std::string s = libfive_tree_print(d);
     REQUIRE(s == "(- (+ (square x) (square y) (square z)) 1)");
+
+    for (auto& t: {x, y, z, x2, y2, z2, r_, r, one, d}) {
+        libfive_tree_delete(t);
+    }
 }
 
 TEST_CASE("libfive_tree_nonary")
 {
     REQUIRE(libfive_tree_nonary(Opcode::OP_MIN) == NULL);
-    REQUIRE(libfive_tree_nonary(Opcode::VAR_X) != NULL);
+
+    auto x = libfive_tree_nonary(Opcode::VAR_X);
+    REQUIRE(x != NULL);
+    libfive_tree_delete(x);
 }
 
 TEST_CASE("libfive_tree_unary")
@@ -213,7 +227,11 @@ TEST_CASE("libfive_tree_unary")
     REQUIRE(libfive_tree_unary(Opcode::OP_ADD, x) == NULL);
     REQUIRE(libfive_tree_unary(Opcode::OP_COS, NULL) == NULL);
     REQUIRE(libfive_tree_unary(Opcode::OP_ADD, NULL) == NULL);
-    REQUIRE(libfive_tree_unary(Opcode::OP_COS, x) != NULL);
+
+    auto t = libfive_tree_unary(Opcode::OP_COS, x);
+    REQUIRE(t != NULL);
+    libfive_tree_delete(x);
+    libfive_tree_delete(t);
 }
 
 TEST_CASE("libfive_tree_binary")
@@ -223,5 +241,10 @@ TEST_CASE("libfive_tree_binary")
     REQUIRE(libfive_tree_binary(Opcode::OP_COS, x, y) == NULL);
     REQUIRE(libfive_tree_binary(Opcode::OP_ADD, x, NULL) == NULL);
     REQUIRE(libfive_tree_binary(Opcode::OP_ADD, NULL, y) == NULL);
-    REQUIRE(libfive_tree_binary(Opcode::OP_ADD, x, y) != NULL);
+
+    auto t = libfive_tree_binary(Opcode::OP_ADD, x, y);
+    REQUIRE(t != NULL);
+    libfive_tree_delete(x);
+    libfive_tree_delete(y);
+    libfive_tree_delete(t);
 }
