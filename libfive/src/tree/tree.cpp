@@ -236,17 +236,19 @@ bool Tree::operator<(const Tree& other) const {
 }
 
 std::ostream& Tree::print_prefix(std::ostream& s) const {
-    std::vector<std::variant<const Data*, char>> todo;
-    std::vector<Opcode::Opcode> ops;
-    todo.push_back(get());
+    std::stack<std::variant<const Data*, char>> todo;
+    todo.push(get());
+
+    std::stack<Opcode::Opcode> ops;
+    ops.push(Opcode::INVALID); // Remove need to check ops.size()
 
     while (todo.size()) {
-        auto t = todo.back();
-        todo.pop_back();
+        auto t = todo.top();
+        todo.pop();
         if (auto c = std::get_if<char>(&t)) {
             switch (*c) {
-                case ')': s << ')'; ops.pop_back(); break;
-                case '|': ops.pop_back(); break;
+                case ')': s << ')'; ops.pop(); break;
+                case '|': ops.pop(); break;
                 case ' ': s << ' '; break;
             }
         } else if (auto d = std::get_if<const Data*>(&t)) {
@@ -258,19 +260,19 @@ std::ostream& Tree::print_prefix(std::ostream& s) const {
             } else if (Opcode::args(op) == 0) {
                 s << Opcode::toOpString(op);
             } else {
-                if (Opcode::isCommutative(op) && ops.size() && ops.back() == op) {
-                    todo.push_back('|');
+                if (Opcode::isCommutative(op) && ops.top() == op) {
+                    todo.push('|');
                 } else {
                     s << "(" << Opcode::toOpString(op) << " ";
-                    todo.push_back(')');
+                    todo.push(')');
                 }
-                ops.push_back(op);
+                ops.push(op);
                 if (Opcode::args(op) == 1) {
-                    todo.push_back((**d).lhs().get());
+                    todo.push((**d).lhs().get());
                 } else {
-                    todo.push_back((**d).rhs().get());
-                    todo.push_back(' ');
-                    todo.push_back((**d).lhs().get());
+                    todo.push((**d).rhs().get());
+                    todo.push(' ');
+                    todo.push((**d).lhs().get());
                 }
             }
         }
@@ -359,35 +361,36 @@ Tree Tree::remap_from(std::unordered_map<Tree::Id, Tree> remap) const {
 std::vector<const Tree::Data*> Tree::walk() const {
     // Store how many times each tree (by id) is referenced
     std::unordered_map<Id, unsigned> count;
-    std::vector todo = {get()};
+    std::stack<const Data*> todo;
+    todo.push(get());
     // Count how many branches reach to a given node.
     // This matters when flattening, since we're doing a topological sort
     while (todo.size()) {
-        auto next = todo.back();
-        todo.pop_back();
+        auto next = todo.top();
+        todo.pop();
 
         if (auto d = std::get_if<TreeUnaryOp>(next)) {
             if (count[d->lhs.id()]++ == 0) {
-                todo.push_back(d->lhs.get());
+                todo.push(d->lhs.get());
             }
         } else if (auto d = std::get_if<TreeBinaryOp>(next)) {
             if (count[d->lhs.id()]++ == 0) {
-                todo.push_back(d->lhs.get());
+                todo.push(d->lhs.get());
             }
             if (count[d->rhs.id()]++ == 0) {
-                todo.push_back(d->rhs.get());
+                todo.push(d->rhs.get());
             }
         }
     }
 
     // Flatten the tree.  This is a heap-allocated recursive
     // descent, to avoid running into stack limitations.
-    todo = {get()};
+    todo.push(get());
 
     std::vector<const Data*> flat;
     while (todo.size()) {
-        auto next = todo.back();
-        todo.pop_back();
+        auto next = todo.top();
+        todo.pop();
         flat.push_back(next);
 
         if (auto d = std::get_if<TreeUnaryOp>(next)) {
@@ -396,14 +399,14 @@ std::vector<const Tree::Data*> Tree::walk() const {
             // afterwards, meaning children will be evaluated *before all*
             // of their parents.
             if (--count.at(d->lhs.id()) == 0) {
-                todo.push_back(d->lhs.get());
+                todo.push(d->lhs.get());
             }
         } else if (auto d = std::get_if<TreeBinaryOp>(next)) {
             if (--count.at(d->lhs.id()) == 0) {
-                todo.push_back(d->lhs.get());
+                todo.push(d->lhs.get());
             }
             if (--count.at(d->rhs.id()) == 0) {
-                todo.push_back(d->rhs.get());
+                todo.push(d->rhs.get());
             }
         }
     }
@@ -540,22 +543,22 @@ Tree Tree::unique() const {
 
 Tree::AffineMap Tree::explore_affine() const {
     using map = std::unordered_map<const Data*, float>;
-    std::vector<std::optional<map>> maps;
+    std::stack<std::optional<map>> maps;
 
     // Empty root map; this saves us from having to check whether
     // maps.size() > 0 whenever we want to look at maps.back().
-    maps.push_back(std::nullopt);
+    maps.push(std::nullopt);
 
     struct Pop { const Id id; };
     struct Node { const Data* data; float scale; };
-    std::vector<std::variant<Pop, Node>> todo;
-    todo.push_back(Node { get(), 1 });
+    std::stack<std::variant<Pop, Node>> todo;
+    todo.push(Node { get(), 1 });
 
     AffineMap out;
 
     while (todo.size()) {
-        const auto q = todo.back();
-        todo.pop_back();
+        const auto q = todo.top();
+        todo.pop();
 
         if (auto n = std::get_if<Node>(&q)) {
             const auto t = n->data;
@@ -571,35 +574,35 @@ Tree::AffineMap Tree::explore_affine() const {
             if (could_be_affine) {
                 // If this is an affine node that isn't part of an affine tree,
                 // then store a new affine map onto the data stack.
-                if (!maps.back().has_value()) {
-                    todo.push_back(Pop{t});
-                    maps.push_back(map());
+                if (!maps.top().has_value()) {
+                    todo.push(Pop{t});
+                    maps.push(map());
                 }
 
                 // Recurse if we haven't already solved for this node
                 auto itr = out.find(t);
                 if (itr == out.end()) {
                     if (op == OP_NEG) {
-                        todo.push_back(Node { t->lhs().get(), -scale });
+                        todo.push(Node { t->lhs().get(), -scale });
                     } else if (op == OP_ADD) {
-                        todo.push_back(Node { t->lhs().get(),  scale });
-                        todo.push_back(Node { t->rhs().get(),  scale });
+                        todo.push(Node { t->lhs().get(),  scale });
+                        todo.push(Node { t->rhs().get(),  scale });
                     } else if (op == OP_SUB) {
-                        todo.push_back(Node { t->lhs().get(),  scale });
-                        todo.push_back(Node { t->rhs().get(), -scale });
+                        todo.push(Node { t->lhs().get(),  scale });
+                        todo.push(Node { t->rhs().get(), -scale });
                     } else if (op == OP_MUL) {
                         if (t->lhs()->op() == CONSTANT) {
                             const float c = t->lhs()->value();
-                            todo.push_back(Node { t->rhs().get(), scale * c });
+                            todo.push(Node { t->rhs().get(), scale * c });
                         } else if (t->rhs()->op() == CONSTANT) {
                             const float c = t->rhs()->value();
-                            todo.push_back(Node { t->lhs().get(), scale * c });
+                            todo.push(Node { t->lhs().get(), scale * c });
                         }
                     }
                 // If we've seen this node before, then just accumulate
                 // its affine terms into the parent afine node
                 } else {
-                    auto& m = maps.back();
+                    auto& m = maps.top();
                     if (m.has_value()) {
                         for (const auto& k: itr->second) {
                             (*m)[k.first.get()] += scale * k.second;
@@ -610,31 +613,31 @@ Tree::AffineMap Tree::explore_affine() const {
                 // If there's an affine map that's under construction,
                 // contribute to it then hide it with an EmptyMap, since
                 // we're about to recurse into a non-affine subtree.
-                auto& m = maps.back();
+                auto& m = maps.top();
                 if (m.has_value()) {
                     (*m)[t] += scale;
                     if (args(op) > 0) {
-                        todo.push_back(Pop{t});
-                        maps.push_back(std::nullopt); // Marker for empty map
+                        todo.push(Pop{t});
+                        maps.push(std::nullopt); // Marker for empty map
                     }
                 }
                 switch (args(op)) {
-                    case 2: todo.push_back(Node { t->rhs().get(), 1.0f }); // FALLTHROUGH
-                    case 1: todo.push_back(Node { t->lhs().get(), 1.0f }); // FALLTHROUGH
+                    case 2: todo.push(Node { t->rhs().get(), 1.0f }); // FALLTHROUGH
+                    case 1: todo.push(Node { t->lhs().get(), 1.0f }); // FALLTHROUGH
                     default: break;
                 }
             }
         } else if (auto p = std::get_if<Pop>(&q)) {
             // If this is a real map (rather than an empty map), then
             // accumulate its results into our output map.
-            const auto& m = maps.back();
+            const auto& m = maps.top();
             if (m.has_value()) {
                 auto& v = out[p->id];
                 for (const auto& k: (*m)) {
                     v.push_back({Tree(k.first), k.second});
                 }
             }
-            maps.pop_back();
+            maps.pop();
         }
     }
     return out;
@@ -653,34 +656,35 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
     // to avoid blowing up the stack on deep trees.  This implementation
     // uses one stack for the tasks yet to do, and a second stack for the
     // outputs.
-    std::vector<option> todo = {v};
-    std::vector<Tree> out;
+    std::stack<option> todo;
+    todo.push(v);
+    std::stack<Tree> out;
     while (todo.size()) {
-        const auto t = todo.back();
-        todo.pop_back();
+        const auto t = todo.top();
+        todo.pop();
         if (t.has_value()) {
             const auto a = t->first;
             const auto b = t->second;
             const auto delta = b - a;
             if (delta == 0) {
-                out.push_back(Tree(0.0f));
+                out.push(Tree(0.0f));
             } else if (delta == 1) {
-                out.push_back(a->first * a->second);
+                out.push(a->first * a->second);
             } else {
-                todo.push_back(std::nullopt); // marker to pop stack
-                todo.push_back(pair(a, a + delta / 2));
-                todo.push_back(pair(a + delta / 2, b));
+                todo.push(std::nullopt); // marker to pop stack
+                todo.push(pair(a, a + delta / 2));
+                todo.push(pair(a + delta / 2, b));
             }
         } else {
-            auto a = out.back();
-            out.pop_back();
-            auto b = out.back();
-            out.pop_back();
-            out.push_back(a + b);
+            auto a = out.top();
+            out.pop();
+            auto b = out.top();
+            out.pop();
+            out.push(a + b);
         }
     }
     assert(out.size() == 1);
-    return out.at(0);
+    return out.top();
 }
 
 Tree Tree::collect_affine() const {
@@ -703,21 +707,22 @@ Tree Tree::collect_affine() const {
 size_t Tree::size() const {
     std::unordered_set<Id> seen;
 
-    std::vector<const Data*> todo = {get()};
+    std::stack<const Data*> todo;
+    todo.push(get());
     // Count how many branches reach to a given node.
     // This matters when flattening, since we're doing a topological sort
     while (todo.size()) {
-        auto next = todo.back();
-        todo.pop_back();
+        auto next = todo.top();
+        todo.pop();
         if (!seen.insert(next).second) {
             continue;
         }
 
         if (auto d = std::get_if<TreeUnaryOp>(next)) {
-            todo.push_back(d->lhs.get());
+            todo.push(d->lhs.get());
         } else if (auto d = std::get_if<TreeBinaryOp>(next)) {
-            todo.push_back(d->lhs.get());
-            todo.push_back(d->rhs.get());
+            todo.push(d->lhs.get());
+            todo.push(d->rhs.get());
         }
     }
     return seen.size();

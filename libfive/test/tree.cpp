@@ -18,7 +18,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace libfive;
 
-TEST_CASE("Joining two trees")
+TEST_CASE("Tree: basic operation")
 {
     auto t = Tree::X() + 1;
 
