@@ -212,27 +212,25 @@ TEST_CASE("Tree: operator<<")
 
 TEST_CASE("Tree thread safety")
 {
-    // This test is only valid in debug builds, because it checks an
-    // assertion in Cache::del.
-    std::array<std::future<void>, 2> futures;
+    // Check reference count
+    std::array<std::future<void>, 4> futures;
     for (unsigned i=0; i < futures.size(); ++i)
     {
         futures[i] = std::async(std::launch::async,
             [](){
                 for (unsigned j=0; j < 100000; ++j)
                 {
-                    auto x = new Tree(Tree::X());
+                    auto x = new Tree(Tree::X() + j);
                     delete x;
                 }
             });
     }
 
-    for (auto& f : futures)
-    {
+    for (auto& f : futures) {
         f.get();
     }
 
-    REQUIRE(true);
+    REQUIRE(Tree::X()->refcount == 2);
 }
 
 TEST_CASE("Tree::walk")
