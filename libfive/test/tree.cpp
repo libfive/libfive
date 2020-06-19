@@ -18,6 +18,47 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace libfive;
 
+TEST_CASE("Tree: reference counting")
+{
+    SECTION("Singletons")
+    {
+        auto t = Tree::X();
+        REQUIRE(t->refcount == 2);
+        {
+            auto q = Tree::X();
+            REQUIRE(t == q);
+            REQUIRE(t->refcount == 3);
+            REQUIRE(q->refcount == 3);
+        }
+        REQUIRE(t->refcount == 2);
+    }
+
+    SECTION("Operations and stuff")
+    {
+        // Using vars because they're unique
+        auto a = Tree::var();
+        auto b = Tree::var();
+        REQUIRE(a != b);
+        REQUIRE(a->refcount == 1);
+        REQUIRE(b->refcount == 1);
+        {
+            auto c = a + b;
+            REQUIRE(a->refcount == 2);
+            REQUIRE(b->refcount == 2);
+            REQUIRE(c->refcount == 1);
+            {
+                auto e = b;
+                REQUIRE(b->refcount == 3);
+                auto g = std::move(e);
+                REQUIRE(b->refcount == 3);
+                REQUIRE(e.operator->() == nullptr);
+            }
+        }
+        REQUIRE(a->refcount == 1);
+        REQUIRE(b->refcount == 1);
+    }
+}
+
 TEST_CASE("Tree: basic operation")
 {
     auto t = Tree::X() + 1;
