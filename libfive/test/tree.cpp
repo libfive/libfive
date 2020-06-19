@@ -383,6 +383,19 @@ TEST_CASE("Tree::explore_affine") {
     }
 
 
+    SECTION("(- z) * (- z)") {
+        auto a = -Tree::Z();
+        auto t = a * a; // shared subtree!
+        const auto root_map = t.explore_affine();
+        REQUIRE(root_map.size() == 1);
+
+        auto itr = root_map.find(a.id());
+        REQUIRE(itr != root_map.end());
+        std::map<Tree, float> map(itr->second.begin(), itr->second.end());
+        REQUIRE(map.size() == 1);
+        REQUIRE(map.at(Tree::Z()) == -1);
+    }
+
     SECTION("min(max(-Z, Z - 10), max(-Z, Z - 100))") {
         auto a = -Tree::Z();
         auto b = -Tree::Z();
@@ -516,6 +529,7 @@ TEST_CASE("Tree::optimized")
         auto t = min(max(-Tree::Z(), Tree::Z() - 10),
                      max(-Tree::Z(), Tree::Z() - 100));
         std::stringstream ss;
+        ss << t.optimized();
         REQUIRE(ss.str() == "(min (max (- z) (+ z -10)) (max (- z) (+ z -100)))");
     }
 }
