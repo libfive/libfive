@@ -393,6 +393,13 @@ TEST_CASE("Tree::collect_affine") {
         REQUIRE(ss.str() == "(+ (* (cos z) 6) (* y 5) (* x 2))");
     }
 
+    SECTION("Negation") {
+        auto t = max(Tree::Z() - 10, -Tree::Z());
+        std::stringstream ss;
+        ss << t.collect_affine();
+        REQUIRE(ss.str() == "(max (+ z -10) (- z))");
+    }
+
     SECTION("(2*X + Y) + (2*X + Y)") {
         // These trees have the same value, but don't have the same Id
         auto a = 2*Tree::X() + Tree::Y();
@@ -540,28 +547,28 @@ TEST_CASE("Tree: deduplication of XYZ")
     REQUIRE(xa != ya);
 }
 
-TEST_CASE("Tree::unique: deduplication of constants")
+TEST_CASE("Tree::unique")
 {
-    auto ca = Tree(3.14) * Tree::X();
-    auto cb = Tree(3.14) * Tree::Y();
-    auto p = ca + cb;
-    REQUIRE(p.unique().size() == 6);
+    SECTION("Deduplication of constants") {
+        auto ca = Tree(3.14) * Tree::X();
+        auto cb = Tree(3.14) * Tree::Y();
+        auto p = ca + cb;
+        REQUIRE(p.unique().size() == 6);
 
-    auto cc = Tree(4) * Tree::Y();
-    auto q = ca + cc;
-    REQUIRE(q.unique().size() == 7);
-}
+        auto cc = Tree(4) * Tree::Y();
+        auto q = ca + cc;
+        REQUIRE(q.unique().size() == 7);
+    }
+    SECTION("Deduplication of NAN") {
+        auto cx = Tree(1);
+        auto ca = Tree(NAN) * Tree::X();
+        auto cb = Tree(std::nanf(""));
+        auto cy = Tree(2);
 
-TEST_CASE("Tree::unique: deduplication of NAN")
-{
-    auto cx = Tree(1);
-    auto ca = Tree(NAN) * Tree::X();
-    auto cb = Tree(std::nanf(""));
-    auto cy = Tree(2);
-
-    REQUIRE((ca + cb).unique().size() == 4);
-    REQUIRE((ca + cx).unique().size() == 5);
-    REQUIRE((ca + cy).unique().size() == 5);
+        REQUIRE((ca + cb).unique().size() == 4);
+        REQUIRE((ca + cx).unique().size() == 5);
+        REQUIRE((ca + cy).unique().size() == 5);
+    }
 }
 
 TEST_CASE("Tree: identity operations")
