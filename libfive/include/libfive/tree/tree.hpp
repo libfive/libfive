@@ -65,12 +65,35 @@ std::ostream& operator<<(std::ostream& stream, const libfive::Tree& tree);
 /*
  *  A Tree represents a tree of math expressions
  *
- *  It is a data object (passed around by value), which is a zero-cost wrapper
- *  around a shared_ptr<TreeData>
+ *  It is a data object (passed around by value), which is a reference-counted
+ *  wrapper around a TreeData pointer on the heap.  This is a homebrew shared
+ *  pointer class, because we have very particular needs:
+ *  - For the C API, we want to release pointers without decrementing the
+ *    reference count, which prohibits shared_ptr.
+ *  - When destroying deeply nested trees, we want to use the heap rather than
+ *    the stack to prevent overflow, which prohibits boost::intrusive_ptr.
+ *
+ *  This means that we need a full-on rule-of-five class, with all of the
+ *  excitement that brings along with it.
  */
-class Tree : public std::shared_ptr<const TreeData> {
+class Tree {
 public:
     using Data = TreeData;
+
+    ~Tree();
+    Tree(const Tree& other)
+        : Tree(other.ptr)
+    { /* Nothing to do here */ }
+    Tree(Tree&& other)
+        : ptr(std::exchange(other.ptr, nullptr))
+    { /* Nothing to do here */ }
+    Tree& operator=(const Tree& other) {
+        return *this = Tree(other.ptr);
+    }
+    Tree& operator=(Tree&& other) {
+        std::swap(ptr, other.ptr);
+        return *this;
+    }
 
     // These are the main constructors used to build Trees in code
     // X, Y, and Z are singletons, since they're used a lot
@@ -84,6 +107,13 @@ public:
 
     //  Returns a new unique variable
     static Tree var();
+
+    // Compares two trees by *address*, not value.
+    // This is O(1), but isn't a deep comparison unless you've deduplicated
+    // the two trees using the same canonical map.
+    bool operator==(const Tree& other) const;
+    bool operator!=(const Tree& other) const;
+    bool operator<(const Tree& other) const;
 
     //  Returns a version of this tree wrapped in the CONST_VAR opcode,
     //  which zeroes out partial derivatives with respect to all variables.
@@ -115,7 +145,7 @@ public:
     /*  Unique identifier for the underlying clause.  This is not necessarily
      *  deduplicated, unless the tree was constructed using unique(). */
     using Id = const void*;
-    Id id() const { return get(); }
+    Id id() const { return ptr; }
 
     /*  Returns a new tree which has been unique-ified and has had its affine
      *  subtrees collapsed + balanced. */
@@ -127,6 +157,12 @@ public:
     /*  Performs a deep copy of the tree with any duplicate subtrees merged
      *  to point to the same objects. */
     Tree unique() const;
+
+    /*  Equivalent to shared_ptr::get */
+    const Data* get() const { return ptr; }
+
+    /*  Dereferencing follows the pointer */
+    const Data* operator->() const { return ptr; }
 
     /*  This is a helper function which actually does the uniquifying.
      *  It's exposed so that it's possible to uniquify multiple trees
@@ -167,6 +203,11 @@ public:
     std::vector<const Data*> walk() const;
 
 protected:
+    /*  This is the managed pointer.  It's mutable so that the destructor
+     *  can swap it out for nullptr when flattening out destruction of a
+     *  Tree (to avoid blowing up the stack). */
+    const Data mutable* ptr = nullptr;
+
     /*  Does a binary reduction of a set of affine pairs, building
      *  a balanced-ish tree with a recursive approach.  The a iterator is the
      *  beginning of the region to reduce, and b is one-past-the-end of the
@@ -175,7 +216,7 @@ protected:
                               std::vector<AffinePair>::const_iterator b);
 
     /* Private constructor to build from the raw variant type */
-    explicit Tree(std::shared_ptr<const Data> d);
+    explicit Tree(const Data* d, bool increment_refcount=true);
 
     std::ostream& print_prefix(std::ostream& stream) const;
 
@@ -185,7 +226,6 @@ protected:
 TREE_OPERATORS
 #undef OP_UNARY
 #undef OP_BINARY
-    friend struct TreeData;
     friend std::ostream& operator<<(std::ostream& stream,
                                     const libfive::Tree& tree);
 };
@@ -202,16 +242,15 @@ public:
     OptimizedTree(const Tree& t) : tree(t.optimized()) {}
     Tree tree;
 protected:
+    /* Private constructor for special cases where you need to construct
+     * an OptimizedTree without actually calling optimized().  You probably
+     * shouldn't use this.  The only use case is when reducing constant
+     * operations, where we want to construct an evaluator without
+     * optimizing the tree (which would recurse). */
     OptimizedTree()
         : tree(Tree::invalid())
-    {
-        /* Private constructor for special cases where you need to construct
-         * an OptimizedTree without actually calling optimized().  You probably
-         * shouldn't use this.  The only use case is when reducing constant
-         * operations, where we want to construct an evaluator without
-         * optimizing the tree (which would recurse). */
-    }
-    friend class Tree;
+    { }
+    friend class Tree; // so that Tree can use the special constructor
 };
 
 }   // namespace libfive

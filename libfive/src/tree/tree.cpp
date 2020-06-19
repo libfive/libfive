@@ -10,6 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <stack>
 #include <unordered_set>
 
 #include "libfive/tree/tree.hpp"
@@ -20,20 +21,51 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
+Tree::~Tree() {
+    if (!ptr) {
+        return;
+    }
+    std::stack<const Data*> todo;
+    todo.push(ptr);
+    while (!todo.empty()) {
+        auto t = todo.top();
+        todo.pop();
+        // If this was the last remaining reference to this tree, then
+        // empty it out (so that its destructor doesn't recurse) and add
+        // its children to the queue for refcount subtraction.
+        if (!--t->refcount) {
+            // Move the children out of the Tree, adding them to the queue
+            // before deleting the tree (to prevent recursion).  We use
+            // std::exchange to steal the pointer out from the tree; we'll
+            // decrement its refcount (and possibly recurse) in later
+            // iterations of the loop.
+            if (auto d = std::get_if<TreeUnaryOp>(t)) {
+                todo.push(std::exchange(d->lhs.ptr, nullptr));
+            } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
+                todo.push(std::exchange(d->lhs.ptr, nullptr));
+                todo.push(std::exchange(d->rhs.ptr, nullptr));
+            }
+            delete t;
+        }
+    }
+}
+
 Tree::Tree(float f)
-    : Tree(std::make_shared<Data>(TreeConstant { f }))
+    : Tree(new Data(TreeConstant { f }))
 {
     // Nothing to do here
 }
 
-Tree::Tree(std::shared_ptr<const Data> d)
-    : std::shared_ptr<const Data>(d)
+Tree::Tree(const Data* d, bool increment_refcount)
+    : ptr(d)
 {
-    // Nothing to do here
+    if (d && increment_refcount) {
+        d->refcount++;
+    }
 }
 
 Tree::Tree(std::unique_ptr<const OracleClause>&& o)
-    : Tree(std::make_shared<Data>( TreeOracle { std::move(o) }))
+    : Tree(new Data( TreeOracle { std::move(o) }))
 {
     // Nothing to do here
 }
@@ -49,7 +81,7 @@ Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
     }
     // Collapse constant operations
     else if (lhs->op() == Opcode::CONSTANT) {
-        auto tmp = Tree(std::make_shared<Data>(TreeUnaryOp { op, lhs }));
+        auto tmp = Tree(new Data(TreeUnaryOp { op, lhs }));
 
         OptimizedTree opt;
         opt.tree = tmp;
@@ -71,8 +103,7 @@ Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
         return lhs->lhs();
     }
     // Default if we didn't fall into any special cases
-    return Tree(std::make_shared<Data>(
-           TreeUnaryOp { op, lhs }));
+    return Tree(new Data(TreeUnaryOp { op, lhs }));
 }
 
 Tree Tree::nonary(Opcode::Opcode op) {
@@ -88,7 +119,7 @@ Tree Tree::nonary(Opcode::Opcode op) {
         default: break;
     }
     // Default if we didn't fall into any special cases
-    return Tree(std::make_shared<Data>(TreeNonaryOp { op }));
+    return Tree(new Data(TreeNonaryOp { op }));
 }
 
 Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
@@ -98,7 +129,7 @@ Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
     }
     // Collapse constant operations
     else if (lhs->op() == Opcode::CONSTANT && rhs->op() == Opcode::CONSTANT) {
-        auto tmp = Tree(std::make_shared<Data>(TreeBinaryOp { op, lhs, rhs }));
+        auto tmp = Tree(new Data(TreeBinaryOp { op, lhs, rhs }));
 
         // Use the private constructor to construct an OptimizedTree without
         // actually doing the optimization pass, which would trigger infinite
@@ -166,31 +197,42 @@ Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
         }
     }
     // Default if we didn't fall into any special cases
-    return Tree(std::make_shared<Data>(
-           TreeBinaryOp {op, lhs, rhs}));
+    return Tree(new Data(TreeBinaryOp {op, lhs, rhs}));
 }
 
 // Use Meyer's singletons for X/Y/Z, since they're the most common trees
 Tree Tree::X() {
-    static auto x = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_X });
-    return Tree(x);
+    static auto x = Tree(new Data(TreeNonaryOp { Opcode::VAR_X }));
+    return x;
 }
 Tree Tree::Y() {
-    static auto y = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_Y });
-    return Tree(y);
+    static auto y = Tree(new Data(TreeNonaryOp { Opcode::VAR_Y }));
+    return y;
 }
 Tree Tree::Z() {
-    static auto z = std::make_shared<Data>(TreeNonaryOp { Opcode::VAR_Z });
-    return Tree(z);
+    static auto z = Tree(new Data(TreeNonaryOp { Opcode::VAR_Z }));
+    return z;
 }
 
 Tree Tree::invalid() {
-    static auto i = std::make_shared<Data>(TreeInvalid {});
-    return Tree(i);
+    static auto i = Tree(new Data(TreeInvalid {}));
+    return i;
 }
 
 Tree Tree::with_const_vars() const {
     return Tree::unary(Opcode::CONST_VAR, *this);
+}
+
+bool Tree::operator==(const Tree& other) const {
+    return get() == other.get();
+}
+
+bool Tree::operator!=(const Tree& other) const {
+    return !(*this == other);
+}
+
+bool Tree::operator<(const Tree& other) const {
+    return get() < other.get();
 }
 
 std::ostream& Tree::print_prefix(std::ostream& s) const {
@@ -297,7 +339,7 @@ Tree Tree::remap_from(std::unordered_map<Tree::Id, Tree> remap) const {
             auto y = remap.find(Tree::Y().id());
             auto z = remap.find(Tree::Z().id());
             if (x != remap.end() && y != remap.end() && z != remap.end()) {
-                auto r = d->oracle->remap(Tree(t->shared_from_this()),
+                auto r = d->oracle->remap(Tree(t),
                                           x->second, y->second, z->second);
                 if (r != d->oracle) {
                     changed = Tree(std::move(r));
@@ -413,11 +455,11 @@ Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remap,
             canonical.insert(k_itr, {key, t});
         } else {
             // We need make a new canonical tree, using remapped arguments
-            std::shared_ptr<const Data> out;
+            Tree out = Tree::invalid();
             if (auto d = std::get_if<TreeUnaryOp>(t)) {
                 auto itr = remap.find(d->lhs.id());
                 assert(itr != remap.end());
-                out = Tree::unary(d->op, Tree(itr->second->shared_from_this()));
+                out = Tree::unary(d->op, Tree(itr->second));
             } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
                 auto lhs = remap.find(d->lhs.id());
                 auto rhs = remap.find(d->rhs.id());
@@ -426,10 +468,10 @@ Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remap,
                     d->op,
                     (lhs == remap.end())
                         ? d->lhs
-                        : Tree(lhs->second->shared_from_this()),
+                        : Tree(lhs->second),
                     (rhs == remap.end())
                         ? d->rhs
-                        : Tree(rhs->second->shared_from_this()));
+                        : Tree(rhs->second));
             }
 
             // The new tree is the canonical tree; folks that were using
@@ -445,7 +487,7 @@ Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remap,
     auto itr = remap.find(get());
     return (itr == remap.end())
         ? *this
-        : Tree(itr->second->shared_from_this());
+        : Tree(itr->second);
 }
 
 Tree Tree::optimized() const {
@@ -482,8 +524,8 @@ Tree Tree::optimized_helper(std::unordered_map<Id, const Data*>& remap,
 Tree Tree::unique() const {
     // If a specific tree should be remapped, that fact is stored here
     // These remap pointers can point either into the existing tree or
-    // to shared_ptrs in the new_trees list below, so we store the bare
-    // pointer and use shared_from_this to rehydrate it.
+    // to Trees in the new_trees list below, so we store the bare pointer
+    // and use Tree(ptr) to rehydrate it.
     std::unordered_map<Id, const Data*> remap;
 
     // The canonical tree for each Key is stored here
@@ -589,7 +631,7 @@ Tree::AffineMap Tree::explore_affine() const {
             if (m.has_value()) {
                 auto& v = out[p->id];
                 for (const auto& k: (*m)) {
-                    v.push_back({Tree(k.first->shared_from_this()), k.second});
+                    v.push_back({Tree(k.first), k.second});
                 }
             }
             maps.pop_back();
