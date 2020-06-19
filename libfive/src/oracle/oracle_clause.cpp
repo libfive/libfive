@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 
+#include "libfive/tree/data.hpp"
 #include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/oracle/transformed_oracle_clause.hpp"
 
