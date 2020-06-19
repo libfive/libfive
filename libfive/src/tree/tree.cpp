@@ -572,16 +572,17 @@ Tree::AffineMap Tree::explore_affine() const {
                                   t->rhs()->op() == CONSTANT));
 
             if (could_be_affine) {
-                // If this is an affine node that isn't part of an affine tree,
-                // then store a new affine map onto the data stack.
-                if (!maps.top().has_value()) {
-                    todo.push(Pop{t});
-                    maps.push(map());
-                }
-
                 // Recurse if we haven't already solved for this node
                 auto itr = out.find(t);
                 if (itr == out.end()) {
+                    // If this is an affine node that isn't part of an affine tree,
+                    // then store a new affine map onto the data stack before
+                    // recursing down the node's children.
+                    if (!maps.top().has_value()) {
+                        todo.push(Pop{t});
+                        maps.push(map());
+                    }
+
                     if (op == OP_NEG) {
                         todo.push(Node { t->lhs().get(), -scale });
                     } else if (op == OP_ADD) {
