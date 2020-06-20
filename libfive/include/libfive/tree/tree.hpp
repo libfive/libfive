@@ -95,6 +95,12 @@ public:
         return *this;
     }
 
+    /* Constructor to build from the raw variant pointer.  This is only useful
+     * for building a temporary Tree around a pointer acquired from release() */
+    explicit Tree(const Data* d)
+        : Tree(d, true)
+    { /* Nothing to do here */ }
+
     // These are the main constructors used to build Trees in code
     // X, Y, and Z are singletons, since they're used a lot
     static Tree X();
@@ -156,12 +162,6 @@ public:
      *  to point to the same objects. */
     Tree unique() const;
 
-    /*  Equivalent to shared_ptr::get */
-    const Data* get() const { return ptr; }
-
-    /*  Dereferencing follows the pointer */
-    const Data* operator->() const { return ptr; }
-
     /*  This is a helper function which actually does the uniquifying.
      *  It's exposed so that it's possible to uniquify multiple trees
      *  together, which is helpful in niche circumstances. */
@@ -200,6 +200,21 @@ public:
 
     std::vector<const Data*> walk() const;
 
+    /*  Equivalent to shared_ptr::get */
+    const Data* get() const { return ptr; }
+
+    /*  Dereferencing follows the pointer */
+    const Data* operator->() const { return ptr; }
+
+    /*  Releases the internal pointer (replacing it with nullptr), without
+     *  decrementing its reference count.  This is used in the C API to pass
+     *  around raw Data pointers.
+     *
+     *  The pointer must be reclaimed eventually with Tree::reclaim; otherwise,
+     *  it will be a memory leak. */
+    const Data* release();
+    static Tree reclaim(const Data* ptr);
+
 protected:
     /*  This is the managed pointer.  It's mutable so that the destructor
      *  can swap it out for nullptr when flattening out destruction of a
@@ -213,7 +228,7 @@ protected:
                               std::vector<AffinePair>::const_iterator b);
 
     /* Private constructor to build from the raw variant pointer */
-    explicit Tree(const Data* d, bool increment_refcount=true);
+    explicit Tree(const Data* d, bool increment_refcount);
 
     std::ostream& print_prefix(std::ostream& stream) const;
 
