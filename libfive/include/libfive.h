@@ -181,7 +181,7 @@ void libfive_vars_delete(libfive_vars* j);
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef __cplusplus
-typedef libfive::Tree* libfive_tree;
+typedef const libfive::Tree::Data* libfive_tree;
 typedef libfive::Evaluator *libfive_evaluator;
 #else
 typedef struct libfive_tree_ libfive_tree_;

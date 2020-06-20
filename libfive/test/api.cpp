@@ -33,8 +33,8 @@ TEST_CASE("libfive_tree")
     auto a = libfive_tree_x();
     auto b = libfive_tree_x();
     auto c = libfive_tree_y();
-    REQUIRE(a->id() == b->id());
-    REQUIRE(b->id() != c->id());
+    REQUIRE(a == b);
+    REQUIRE(b != c);
 
     libfive_tree_delete(a);
     libfive_tree_delete(b);
@@ -164,7 +164,7 @@ TEST_CASE("libfive_tree_save/load")
 
     REQUIRE(f == nullptr);
     for (auto& t : {a, b, c, c_}) {
-        delete t;
+        libfive_tree_delete(t);
     }
 }
 

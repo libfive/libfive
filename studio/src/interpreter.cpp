@@ -247,7 +247,7 @@ void _Interpreter::eval()
                 if (scm_is_shape(scm_car(r)))
                 {
                     auto tree = scm_get_tree(scm_car(r));
-                    auto shape = new Shape(*tree, vars);
+                    auto shape = new Shape(libfive::Tree(tree), vars);
                     shape->moveToThread(QApplication::instance()->thread());
                     shapes.push_back(shape);
                 }

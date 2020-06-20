@@ -418,6 +418,14 @@ std::vector<const Tree::Data*> Tree::walk() const {
     return flat;
 }
 
+const Tree::Data* Tree::release() {
+    return std::exchange(ptr, nullptr);
+}
+
+Tree Tree::reclaim(const Data* ptr) {
+    return Tree(ptr, false); // Don't increment refcount
+}
+
 Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remap,
                          std::map<TreeDataKey, const Data*>& canonical,
                          std::vector<Tree>& new_trees) const
