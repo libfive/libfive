@@ -305,6 +305,19 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                     v.row(b).leftCols(count)  = v(b, 0);
                     filled(b) = count;
                 }
+                /*fCopy.clear();
+                dCopy.clear();
+                for (auto i = 0; i < f.size(); ++i) {
+                    fCopy.emplace_back();
+                    for (auto& f : f(i)) {
+                        fCopy.back().push_back(f);
+                    }
+                }
+                for (auto i = 0; i < count; ++i) {
+                    const auto& col = d.col(i);
+                    dCopy.push_back({ col(0), col(1), col(2) });
+                }*/
+                setCount(count);
                 DerivArrayEvaluator::operator()(op, id, a, b);
                 for (unsigned i=0; i < count; ++i) {
                     of.push_back(Feature(d(id).col(i), _ads[i / _bds.size()],
