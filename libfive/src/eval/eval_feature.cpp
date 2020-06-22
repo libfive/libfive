@@ -305,6 +305,7 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                     v.row(b).leftCols(count)  = v(b, 0);
                     filled(b) = count;
                 }
+                setCount(count);
                 DerivArrayEvaluator::operator()(op, id, a, b);
                 for (unsigned i=0; i < count; ++i) {
                     of.push_back(Feature(d(id).col(i), _ads[i / _bds.size()],
