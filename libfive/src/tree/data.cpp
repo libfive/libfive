@@ -105,7 +105,26 @@ TreeData::Key TreeData::key() const {
 }
 
 uint32_t TreeData::get_flags() const {
-    return 0;
+    if (auto d = std::get_if<TreeConstant>(this)) {
+        return 0;
+    } else if (auto d = std::get_if<TreeNonaryOp>(this)) {
+        return (d->op == Opcode::VAR_X ||
+                d->op == Opcode::VAR_Y ||
+                d->op == Opcode::VAR_Z)
+            ? TREE_FLAG_HAS_XYZ
+            : 0;
+    } else if (auto d = std::get_if<TreeUnaryOp>(this)) {
+        return d->lhs->flags;
+    } else if (auto d = std::get_if<TreeBinaryOp>(this)) {
+        return d->lhs->flags | d->rhs->flags;
+    } else if (auto d = std::get_if<TreeOracle>(this)) {
+        return TREE_FLAG_HAS_ORACLE;
+    } else if (auto d = std::get_if<TreeRemap>(this)) {
+        return d->x->flags | d->y->flags | d->z->flags |
+               d->t->flags | TREE_FLAG_HAS_REMAP;
+    } else {
+        return 0;
+    }
 }
 
 }   // namespace libfive
