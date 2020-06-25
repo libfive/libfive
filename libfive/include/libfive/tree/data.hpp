@@ -32,6 +32,12 @@ struct TreeConstant {
 struct TreeOracle {
     std::unique_ptr<const OracleClause> oracle;
 };
+struct TreeRemap {
+    Tree x;
+    Tree y;
+    Tree z;
+    Tree t;
+};
 struct TreeInvalid {
     // No members
 };
@@ -41,6 +47,7 @@ using TreeDataVariant = std::variant<
         TreeBinaryOp,
         TreeConstant,
         TreeOracle,
+        TreeRemap,
         TreeInvalid>;
 
 /*  TreeData is a wrapper struct around the TreeDataVariant.
@@ -59,6 +66,7 @@ struct TreeData : public TreeDataVariant
 {
     TreeData(TreeDataVariant&& v)
         : TreeDataVariant(std::move(v))
+        , flags(get_flags())
     { /* Nothing to do here */ }
 
     /*  Returns the opcode of this clause */
@@ -97,10 +105,30 @@ struct TreeData : public TreeDataVariant
         }
     };
 
+    struct RemapException : public std::exception {
+        const char* what() const throw () override {
+            return "Tried to do an operation which requires flattened tree";
+        }
+    };
+
     using Key = TreeDataKey;
     Key key() const;
 
     mutable std::atomic_uint32_t refcount = 0;
+
+    // Flags are accumulated up through the tree, and used to do things
+    // like lazily flattening remap operations when needed.
+    enum {
+        TREE_FLAG_HAS_REMAP=(1<<0),
+        TREE_FLAG_HAS_ORACLE=(1<<1),
+        TREE_FLAG_HAS_XYZ=(1<<2),
+    };
+    const uint32_t flags;
+
+protected:
+    /*  Used to calculate flags during the constructor, after the variant
+     *  is assigned but before the constructor completes. */
+    uint32_t get_flags() const;
 };
 
 }   // namespace libfive

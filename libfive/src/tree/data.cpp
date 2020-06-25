@@ -25,7 +25,10 @@ Opcode::Opcode TreeData::op() const {
         return Opcode::ORACLE;
     } else if (std::get_if<TreeInvalid>(this)) {
         return Opcode::INVALID;
+    } else if (std::get_if<TreeRemap>(this)) {
+        return Opcode::INVALID;
     } else {
+        assert(false); // All variants should be covered above
         return Opcode::INVALID;
     }
 }
@@ -93,9 +96,16 @@ TreeData::Key TreeData::key() const {
         return Key(std::make_tuple(d->op, d->lhs.get(), d->rhs.get()));
     } else if (auto d = std::get_if<TreeOracle>(this)) {
         return Key(d->oracle.get());
+    } else if (auto d = std::get_if<TreeRemap>(this)) {
+        return Key(std::make_tuple(d->x.get(), d->y.get(),
+                                   d->z.get(), d->t.get()));
     } else {
         return Key(false);
     }
+}
+
+uint32_t TreeData::get_flags() const {
+    return 0;
 }
 
 }   // namespace libfive
