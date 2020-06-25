@@ -44,6 +44,11 @@ Tree::~Tree() {
             } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
                 todo.push(std::exchange(d->lhs.ptr, nullptr));
                 todo.push(std::exchange(d->rhs.ptr, nullptr));
+            } else if (auto d = std::get_if<TreeRemap>(t)) {
+                todo.push(std::exchange(d->x.ptr, nullptr));
+                todo.push(std::exchange(d->y.ptr, nullptr));
+                todo.push(std::exchange(d->z.ptr, nullptr));
+                todo.push(std::exchange(d->t.ptr, nullptr));
             }
             delete t;
         }
@@ -302,63 +307,77 @@ bool Tree::is_valid() const {
 }
 
 Tree Tree::remap(Tree X, Tree Y, Tree Z) const {
-
-    // If a specific tree (by id) should be remapped, that fact is stored here
-    std::unordered_map<Id, Tree> m = {
-            {Tree::X().id(), X},
-            {Tree::Y().id(), Y},
-            {Tree::Z().id(), Z}};
-    return remap_from(m);
+    return Tree(new Data(TreeRemap {
+                X.flatten(),
+                Y.flatten(),
+                Z.flatten(),
+                *this }));
 }
 
-Tree Tree::remap_from(std::unordered_map<Tree::Id, Tree> remap) const {
+Tree Tree::flatten() const {
+    if (!(ptr->flags & TreeData::TREE_FLAG_HAS_REMAP)) {
+        return *this;
+    }
+
+    using State = TreeRemapKey;
+    std::stack<State> todo;
+    todo.push({Tree::X().get(), Tree::Y().get(), Tree::Z().get(), ptr});
+    std::set<State> seen;
+
+    while (todo.size()) {
+        auto k = todo.top();
+        todo.pop();
+
+        // If this tree has already been explored (with the given remapping),
+        // then keep going.
+        auto itr = seen.find(k);
+        if (itr != seen.end()) {
+            continue;
+        }
+    }
+}
+
+Tree Tree::substitute(std::unordered_map<Tree::Id, Tree>&& s) const {
+    if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
+        throw TreeData::RemapException();
+    }
     auto flat = walk();
     for (auto t : flat) {
         Tree changed = Tree::invalid();
 
         if (auto d = std::get_if<TreeUnaryOp>(t)) {
-            auto itr = remap.find(d->lhs.id());
-            if (itr != remap.end()) {
+            auto itr = s.find(d->lhs.id());
+            if (itr != s.end()) {
                 changed = Tree::unary(d->op, itr->second);
             }
         } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
-            auto lhs = remap.find(d->lhs.id());
-            auto rhs = remap.find(d->rhs.id());
-            if (lhs != remap.end() || rhs != remap.end()) {
+            auto lhs = s.find(d->lhs.id());
+            auto rhs = s.find(d->rhs.id());
+            if (lhs != s.end() || rhs != s.end()) {
                 changed = Tree::binary(
                     d->op,
-                    (lhs == remap.end()) ? d->lhs
-                                         : lhs->second,
-                    (rhs == remap.end()) ? d->rhs
-                                         : rhs->second );
+                    (lhs == s.end()) ? d->lhs : lhs->second,
+                    (rhs == s.end()) ? d->rhs : rhs->second);
             }
-        } else if (auto d = std::get_if<TreeOracle>(t)) {
-            // Oracles only support the basic remapping of X/Y/Z, so we detect
-            // this case and handle it below.  Otherwise, we don't change the
-            // change the oracle (e.g. we can't push an affine or other custom
-            // remapping *through* an Oracle with the current API).
-            auto x = remap.find(Tree::X().id());
-            auto y = remap.find(Tree::Y().id());
-            auto z = remap.find(Tree::Z().id());
-            if (x != remap.end() && y != remap.end() && z != remap.end()) {
-                auto r = d->oracle->remap(Tree(t),
-                                          x->second, y->second, z->second);
-                if (r != d->oracle) {
-                    changed = Tree(std::move(r));
-                }
-            }
+        } else if (auto d = std::get_if<TreeRemap>(t)) {
+            // This should never happen, because we call flatten() above
+            assert(false);
+            throw TreeData::RemapException();
         }
 
         if (changed.is_valid()) {
-            remap.insert({t, changed});
+            s.insert({t, changed});
         }
     }
 
-    auto itr = remap.find(get());
-    return (itr == remap.end()) ? *this : itr->second;
+    auto itr = s.find(get());
+    return (itr == s.end()) ? *this : itr->second;
 }
 
 std::vector<const Tree::Data*> Tree::walk() const {
+    if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
+        return flatten().walk();
+    }
     // Store how many times each tree (by id) is referenced
     std::unordered_map<Id, unsigned> count;
     std::stack<const Data*> todo;
@@ -380,6 +399,10 @@ std::vector<const Tree::Data*> Tree::walk() const {
             if (count[d->rhs.id()]++ == 0) {
                 todo.push(d->rhs.get());
             }
+        } else if (auto d = std::get_if<TreeRemap>(next)) {
+            // This should never happen because of the check above
+            assert(false);
+            throw TreeData::RemapException();
         }
     }
 
@@ -410,9 +433,7 @@ std::vector<const Tree::Data*> Tree::walk() const {
             }
         }
     }
-    // We'll walk from the leafs up to the root, storing the first
-    // unique instance of a given operation in the maps above, and
-    // marking subsequent instances in the remap table.
+    // Reverse the tree so that the walk is from leaves to root
     std::reverse(flat.begin(), flat.end());
 
     return flat;
@@ -426,7 +447,7 @@ Tree Tree::reclaim(const Data* ptr) {
     return Tree(ptr, false); // Don't increment refcount
 }
 
-Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remap,
+Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remapped,
                          std::map<TreeDataKey, const Data*>& canonical,
                          std::vector<Tree>& new_trees) const
 {
@@ -437,29 +458,34 @@ Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remap,
         auto key = t->key();
         bool changed = false;
         if (auto k = std::get_if<TreeUnaryKey>(&key)) {
-            auto itr = remap.find(std::get<1>(*k));
-            if (itr != remap.end()) {
+            auto itr = remapped.find(std::get<1>(*k));
+            if (itr != remapped.end()) {
                 std::get<1>(*k) = itr->second;
                 changed = true;
             }
         } else if (auto k = std::get_if<TreeBinaryKey>(&key)) {
-            auto itr = remap.find(std::get<1>(*k));
-            if (itr != remap.end()) {
+            auto itr = remapped.find(std::get<1>(*k));
+            if (itr != remapped.end()) {
                 std::get<1>(*k) = itr->second;
                 changed = true;
             }
-            itr = remap.find(std::get<2>(*k));
-            if (itr != remap.end()) {
+            itr = remapped.find(std::get<2>(*k));
+            if (itr != remapped.end()) {
                 std::get<2>(*k) = itr->second;
                 changed = true;
             }
+        } else if (std::get_if<TreeRemapKey>(&key)) {
+            // This should never happen, because walk() automatically flattens
+            // trees that contain a remapped operation.
+            assert(false);
+            throw TreeData::RemapException();
         }
 
         auto k_itr = canonical.find(key);
         // We already have a canonical version of this tree,
-        // so remap this tree to the canonical version and keep going.
+        // so remapped this tree to the canonical version and keep going.
         if (k_itr != canonical.end()) {
-            remap.insert({t, k_itr->second});
+            remapped.insert({t, k_itr->second});
         } else if (!changed) {
             // This is the canonical tree, and it requires
             // no remapping, so we're done!
@@ -468,19 +494,19 @@ Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remap,
             // We need make a new canonical tree, using remapped arguments
             Tree out = Tree::invalid();
             if (auto d = std::get_if<TreeUnaryOp>(t)) {
-                auto itr = remap.find(d->lhs.id());
-                assert(itr != remap.end());
+                auto itr = remapped.find(d->lhs.id());
+                assert(itr != remapped.end());
                 out = Tree::unary(d->op, Tree(itr->second));
             } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
-                auto lhs = remap.find(d->lhs.id());
-                auto rhs = remap.find(d->rhs.id());
-                assert(lhs != remap.end() || rhs != remap.end());
+                auto lhs = remapped.find(d->lhs.id());
+                auto rhs = remapped.find(d->rhs.id());
+                assert(lhs != remapped.end() || rhs != remapped.end());
                 out = Tree::binary(
                     d->op,
-                    (lhs == remap.end())
+                    (lhs == remapped.end())
                         ? d->lhs
                         : Tree(lhs->second),
-                    (rhs == remap.end())
+                    (rhs == remapped.end())
                         ? d->rhs
                         : Tree(rhs->second));
             }
@@ -488,15 +514,15 @@ Tree Tree::unique_helper(std::unordered_map<Id, const Data*>& remap,
             // The new tree is the canonical tree; folks that were using
             // the original tree need to use it instead.
             canonical.insert(k_itr, {key, out.get()});
-            remap.insert({t, out.get()});
+            remapped.insert({t, out.get()});
 
             // The new pointer is owned by the new_trees list
             new_trees.emplace_back(Tree(std::move(out)));
         }
     }
 
-    auto itr = remap.find(get());
-    return (itr == remap.end())
+    auto itr = remapped.find(get());
+    return (itr == remapped.end())
         ? *this
         : Tree(itr->second);
 }
@@ -513,6 +539,8 @@ Tree Tree::optimized_helper(std::unordered_map<Id, const Data*>& remap,
                             std::map<Data::Key, const Data*>& canonical,
                             std::vector<Tree>& new_trees) const
 {
+    // TODO: expand remaps here
+
     auto out = unique_helper(remap, canonical, new_trees);
 
     // Give all oracles a chance to optimize themselves as well, reusing
@@ -526,7 +554,7 @@ Tree Tree::optimized_helper(std::unordered_map<Id, const Data*>& remap,
         }
     }
     if (remap_oracles.size()) {
-        out = out.remap_from(remap_oracles);
+        out = out.substitute(std::move(remap_oracles));
     }
 
     return out.collect_affine();
@@ -630,10 +658,14 @@ Tree::AffineMap Tree::explore_affine() const {
                         maps.push(std::nullopt); // Marker for empty map
                     }
                 }
-                switch (args(op)) {
-                    case 2: todo.push(Node { t->rhs().get(), 1.0f }); // FALLTHROUGH
-                    case 1: todo.push(Node { t->lhs().get(), 1.0f }); // FALLTHROUGH
-                    default: break;
+                if (auto d = std::get_if<TreeUnaryOp>(t)) {
+                    todo.push(Node { d->lhs.get(), 1.0f });
+                } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
+                    todo.push(Node { d->lhs.get(), 1.0f });
+                    todo.push(Node { d->rhs.get(), 1.0f });
+                } else if (std::get_if<TreeRemap>(t)) {
+                    // This could happen if someone isn't careful!
+                    throw TreeData::RemapException();
                 }
             }
         } else if (auto p = std::get_if<Pop>(&q)) {
@@ -710,7 +742,7 @@ Tree Tree::collect_affine() const {
         remap.insert({m.first, reduce_binary(m.second.begin(),
                                              m.second.end())});
     }
-    return remap_from(remap);
+    return substitute(std::move(remap));
 }
 
 size_t Tree::size() const {
@@ -732,6 +764,11 @@ size_t Tree::size() const {
         } else if (auto d = std::get_if<TreeBinaryOp>(next)) {
             todo.push(d->lhs.get());
             todo.push(d->rhs.get());
+        } else if (auto d = std::get_if<TreeRemap>(next)) {
+            todo.push(d->x.get());
+            todo.push(d->y.get());
+            todo.push(d->y.get());
+            todo.push(d->z.get());
         }
     }
     return seen.size();

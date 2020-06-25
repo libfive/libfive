@@ -154,39 +154,55 @@ public:
     /*  Returns a new tree which has been unique-ified and has had its affine
      *  subtrees collapsed + balanced. */
     Tree optimized() const;
-    Tree optimized_helper(std::unordered_map<Id, const Data*>& remap,
+    Tree optimized_helper(std::unordered_map<Id, const Data*>& remapped,
                           std::map<TreeDataKey, const Data*>& canonical,
                           std::vector<Tree>& new_trees) const;
 
+    /*  Returns a tree with all remap operations expanded. */
+    Tree flatten() const;
+
     /*  Performs a deep copy of the tree with any duplicate subtrees merged
-     *  to point to the same objects. */
+     *  to point to the same objects.  This will also flatten any remap
+     *  operations in the tree. */
     Tree unique() const;
 
     /*  This is a helper function which actually does the uniquifying.
      *  It's exposed so that it's possible to uniquify multiple trees
      *  together, which is helpful in niche circumstances. */
-    Tree unique_helper(std::unordered_map<Id, const Data*>& remap,
+    Tree unique_helper(std::unordered_map<Id, const Data*>& remapped,
                        std::map<TreeDataKey, const Data*>& canonical,
                        std::vector<Tree>& new_trees) const;
 
     /*  Recurses through the graph, accumulating the affine form of child nodes
-     *  into a map of t1*a + t2*b + t3*c... */
+     *  into a map of t1*a + t2*b + t3*c...
+     *
+     *  The tree must be flattened, otherwise a TreeData::RemapException
+     *  will be thrown upon encountering a TreeRemap clause. */
     using AffinePair = std::pair<Tree, float>;
     using AffineMap = std::unordered_map<Tree::Id, std::vector<AffinePair>>;
     AffineMap explore_affine() const;
 
     /*  Returns a tree in which nested affine forms are collapsed, e.g.
-     *  (2*X + 3*Y) + 5*(X - Y) ==> 7*X - 2*Y   */
+     *  (2*X + 3*Y) + 5*(X - Y) ==> 7*X - 2*Y
+     *
+     *  If the tree contains remap operations, it will be flattened before
+     *  doing the affine collection operation. */
     Tree collect_affine() const;
 
     /*  Checks the number of unique nodes in the tree */
     size_t size() const;
 
-    /*  Remaps the coordinates of this tree, returning a new tree.  */
+    /*  Remaps the coordinates of this tree, returning a new tree.
+     *
+     *  This is normally a constant-time operation, but if X/Y/Z contain
+     *  unflattened remap operations of their own, they will be flattened,
+     *  which is not constant time. */
     Tree remap(Tree X, Tree Y, Tree Z) const;
 
-    /*  Generic (static) remapper */
-    Tree remap_from(std::unordered_map<Id, Tree> remap) const;
+    /*  Generic (static) substitution, which does not recurse through oracles.
+     *
+     *  Throws a RemapException if the tree has unflatten remap operations. */
+    Tree substitute(std::unordered_map<Id, Tree>&& s) const;
 
     /*  Serializes the tree to a stream of bytes */
     void serialize(std::ostream& out) const;
@@ -198,6 +214,10 @@ public:
     /* Loads a tree from a file */
     static Tree load(const std::string& filename);
 
+    /*  Performs a leaves-to-root traverse of the tree.
+     *
+     *  If the tree contains remap operations, it will be flattened
+     *  prior to walking. */
     std::vector<const Data*> walk() const;
 
     /*  Equivalent to shared_ptr::get */
