@@ -328,9 +328,14 @@ Tree Tree::flatten() const {
     }
 
     using State = TreeRemapKey;
+    const auto root_key = std::make_tuple(Tree::X().get(),
+                                          Tree::Y().get(),
+                                          Tree::Z().get(), ptr);
+
     std::stack<State> todo;
-    todo.push({Tree::X().get(), Tree::Y().get(), Tree::Z().get(), ptr});
-    std::set<State> seen;
+    todo.push(root_key);
+
+    std::map<State, const Tree::Data*> remap;
 
     while (todo.size()) {
         auto k = todo.top();
@@ -338,11 +343,14 @@ Tree Tree::flatten() const {
 
         // If this tree has already been explored (with the given remapping),
         // then keep going.
-        auto itr = seen.find(k);
-        if (itr != seen.end()) {
+        auto itr = remap.find(k);
+        if (itr != remap.end()) {
             continue;
         }
     }
+
+    auto itr = remap.find(root_key);
+    return itr == remap.end() ? *this : Tree(itr->second);
 }
 
 Tree Tree::substitute(std::unordered_map<Tree::Id, Tree>&& s) const {
