@@ -203,8 +203,7 @@ TEST_CASE("Tree: operator<<")
     SECTION("With oracle")
     {
         std::stringstream ss;
-        auto oracle = std::make_unique<CubeOracleClause>();
-        auto o = Tree(std::move(oracle));
+        auto o = Tree(std::make_unique<CubeOracleClause>());
         ss << (Tree::X() + 5 + o);
         REQUIRE(ss.str() == "(+ x 5 'CubeOracle)");
     }
@@ -532,6 +531,22 @@ TEST_CASE("Tree::optimized")
         ss << t.optimized();
         REQUIRE(ss.str() == "(min (max (- z) (+ z -10)) (max (- z) (+ z -100)))");
     }
+}
+
+TEST_CASE("Tree::flags")
+{
+    auto t = Tree::X();
+    REQUIRE(t->flags == TreeData::TREE_FLAG_HAS_XYZ);
+
+    t = Tree::X() + Tree::Y();
+    REQUIRE(t->flags == TreeData::TREE_FLAG_HAS_XYZ);
+
+    t = (Tree::X() + Tree::Y()).remap(Tree::Y(), Tree::Z(), Tree::X());
+    REQUIRE(t->flags == (TreeData::TREE_FLAG_HAS_XYZ |
+                         TreeData::TREE_FLAG_HAS_REMAP));
+
+    t = Tree(std::make_unique<CubeOracleClause>());
+    REQUIRE(t->flags == TreeData::TREE_FLAG_HAS_ORACLE);
 }
 
 TEST_CASE("Tree::serialize")
