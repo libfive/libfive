@@ -74,21 +74,22 @@ TEST_CASE("Tree::remap")
     SECTION("Simple")
     {
         auto x = Tree::X();
-        auto y = x.remap(Tree::Y(), Tree::X(), Tree::X());
+        auto y = x.remap(Tree::Y(), Tree::X(), Tree::X()).flatten();
         REQUIRE(y == Tree::Y());
     }
 
     SECTION("Remapping to a constant")
     {
         auto x = Tree::X();
-        auto t = x.remap(Tree(12), Tree::X(), Tree::X());
+        auto t = x.remap(Tree(12), Tree::X(), Tree::X()).flatten();
         REQUIRE(t->value() == 12);
     }
 
     SECTION("Collapsing while remapping")
     {
         auto x = Tree::X() + 5;
-        auto t = x.remap(Tree(3), Tree::X(), Tree::X());
+        auto t = x.remap(Tree(3), Tree::X(), Tree::X()).flatten();
+        CAPTURE(t);
         REQUIRE(t->value() == 8);
     }
 
@@ -99,7 +100,7 @@ TEST_CASE("Tree::remap")
         for (unsigned i=0; i < 32768; ++i) {
             t = t + y * i;
         }
-        auto z = t.remap(Tree::Z(), Tree::X(), Tree::Y());
+        auto z = t.remap(Tree::Z(), Tree::X(), Tree::Y()).flatten();
 
         // Make sure the original hasn't changed
         REQUIRE(t->op() == Opcode::OP_ADD);
@@ -123,7 +124,7 @@ TEST_CASE("Tree::remap")
         f = f * 2 + f * 3 + f;
         REQUIRE(f.size() == 7);
 
-        auto g = f.remap(Tree::Y(), Tree::Y(), Tree::Z());
+        auto g = f.remap(Tree::Y(), Tree::Y(), Tree::Z()).flatten();
         REQUIRE(g.size() == 7);
     }
 }
@@ -544,6 +545,9 @@ TEST_CASE("Tree::flags")
     t = (Tree::X() + Tree::Y()).remap(Tree::Y(), Tree::Z(), Tree::X());
     REQUIRE(t->flags == (TreeData::TREE_FLAG_HAS_XYZ |
                          TreeData::TREE_FLAG_HAS_REMAP));
+
+    t = t.flatten();
+    REQUIRE(t->flags == TreeData::TREE_FLAG_HAS_XYZ);
 
     t = Tree(std::make_unique<CubeOracleClause>());
     REQUIRE(t->flags == TreeData::TREE_FLAG_HAS_ORACLE);
