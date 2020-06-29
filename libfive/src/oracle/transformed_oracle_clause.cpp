@@ -80,14 +80,12 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::deserialize(
 }
 
 std::unique_ptr<const OracleClause> TransformedOracleClause::optimized(
-        std::unordered_map<Tree::Id, const Tree::Data*>& remap,
-        std::map<Tree::Data::Key, const Tree::Data*>& canonical,
-        std::vector<Tree>& new_trees) const
+        std::map<Tree::Data::Key, Tree>& canonical) const
 {
-    auto new_u = underlying.optimized_helper(remap, canonical, new_trees);
-    auto new_x = X_.optimized_helper(remap, canonical, new_trees);
-    auto new_y = Y_.optimized_helper(remap, canonical, new_trees);
-    auto new_z = Z_.optimized_helper(remap, canonical, new_trees);
+    auto new_u = underlying.optimized_helper(canonical);
+    auto new_x = X_.optimized_helper(canonical);
+    auto new_y = Y_.optimized_helper(canonical);
+    auto new_z = Z_.optimized_helper(canonical);
 
     return nullptr;
 }
