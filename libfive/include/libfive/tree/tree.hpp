@@ -154,9 +154,7 @@ public:
     /*  Returns a new tree which has been unique-ified and has had its affine
      *  subtrees collapsed + balanced. */
     Tree optimized() const;
-    Tree optimized_helper(std::unordered_map<Id, const Data*>& remapped,
-                          std::map<TreeDataKey, const Data*>& canonical,
-                          std::vector<Tree>& new_trees) const;
+    Tree optimized_helper(std::map<TreeDataKey, Tree>& canonical) const;
 
     /*  Returns a tree with all remap operations expanded. */
     Tree flatten() const;
@@ -169,9 +167,7 @@ public:
     /*  This is a helper function which actually does the uniquifying.
      *  It's exposed so that it's possible to uniquify multiple trees
      *  together, which is helpful in niche circumstances. */
-    Tree unique_helper(std::unordered_map<Id, const Data*>& remapped,
-                       std::map<TreeDataKey, const Data*>& canonical,
-                       std::vector<Tree>& new_trees) const;
+    Tree unique_helper(std::map<TreeDataKey, Tree>& canonical) const;
 
     /*  Recurses through the graph, accumulating the affine form of child nodes
      *  into a map of t1*a + t2*b + t3*c...

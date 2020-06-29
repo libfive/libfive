@@ -104,14 +104,10 @@ public:
      * into an Evaluator.
      */
     virtual std::unique_ptr<const OracleClause> optimized(
-        std::unordered_map<Tree::Id, const Tree::Data*>& remap,
-        std::map<TreeDataKey, const Tree::Data*>& canonical,
-        std::vector<Tree>& new_trees) const
+            std::map<TreeDataKey, Tree>& canonical) const
     {
         // All arguments are unused by default
-        (void)remap;
         (void)canonical;
-        (void)new_trees;
 
         return nullptr;
     }
