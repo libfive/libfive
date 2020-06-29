@@ -111,6 +111,12 @@ struct TreeData : public TreeDataVariant
         }
     };
 
+    struct InvalidException : public std::exception {
+        const char* what() const throw () override {
+            return "Invalid tree";
+        }
+    };
+
     using Key = TreeDataKey;
     Key key() const;
 
