@@ -134,7 +134,7 @@ TEST_CASE("Tree::remap")
         {
             std::stringstream ss;
             ss << out;
-            REQUIRE(ss.str() == "(remap (+ y z) y (remap x (+ y 2) z x) (remap x (+ y 2) z x)");
+            REQUIRE(ss.str() == "(remap (+ y z) y (remap x (+ y 2) z x) (remap x (+ y 2) z x))");
         }
         {
             std::stringstream ss;

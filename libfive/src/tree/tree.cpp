@@ -242,7 +242,7 @@ bool Tree::operator<(const Tree& other) const {
 
 std::ostream& Tree::print_prefix(std::ostream& s) const {
     std::stack<std::variant<const Data*, char>> todo;
-    todo.push(get());
+    todo.push(ptr);
 
     std::stack<Opcode::Opcode> ops;
     ops.push(Opcode::INVALID); // Remove need to check ops.size()
@@ -257,28 +257,41 @@ std::ostream& Tree::print_prefix(std::ostream& s) const {
                 case ' ': s << ' '; break;
             }
         } else if (auto d = std::get_if<const Data*>(&t)) {
-            auto op = (**d).op();
-            if (op == Opcode::CONSTANT) {
-                s << (**d).value();
-            } else if (op == Opcode::ORACLE) {
-                s << '\'' << (**d).oracle_clause().name();
-            } else if (Opcode::args(op) == 0) {
-                s << Opcode::toOpString(op);
-            } else {
-                if (Opcode::isCommutative(op) && ops.top() == op) {
+            if (auto t = std::get_if<TreeNonaryOp>(*d)) {
+                s << Opcode::toOpString(t->op);
+            } else if (auto t = std::get_if<TreeUnaryOp>(*d)) {
+                s << "(" << Opcode::toOpString(t->op) << " ";
+                ops.push(t->op);
+                todo.push(')');
+                todo.push(t->lhs.get());
+            } else if (auto t = std::get_if<TreeBinaryOp>(*d)) {
+                if (Opcode::isCommutative(t->op) && ops.top() == t->op) {
                     todo.push('|');
                 } else {
-                    s << "(" << Opcode::toOpString(op) << " ";
+                    s << "(" << Opcode::toOpString(t->op) << " ";
                     todo.push(')');
                 }
-                ops.push(op);
-                if (Opcode::args(op) == 1) {
-                    todo.push((**d).lhs().get());
-                } else {
-                    todo.push((**d).rhs().get());
-                    todo.push(' ');
-                    todo.push((**d).lhs().get());
-                }
+                ops.push(t->op);
+                todo.push(t->rhs.get());
+                todo.push(' ');
+                todo.push(t->lhs.get());
+            } else if (auto t = std::get_if<TreeConstant>(*d)) {
+                s << t->value;
+            } else if (auto t = std::get_if<TreeOracle>(*d)) {
+                s << '\'' << t->oracle->name();
+            } else if (auto t = std::get_if<TreeRemap>(*d)) {
+                s << "(remap ";
+                todo.push(')');
+                ops.push(Opcode::INVALID); // dummy op for remap
+                todo.push(t->z.get());
+                todo.push(' ');
+                todo.push(t->y.get());
+                todo.push(' ');
+                todo.push(t->x.get());
+                todo.push(' ');
+                todo.push(t->t.get());
+            } else {
+                throw TreeData::InvalidException();
             }
         }
     }
