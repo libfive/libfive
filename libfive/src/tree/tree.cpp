@@ -461,7 +461,6 @@ Tree Tree::substitute(std::unordered_map<Tree::Id, Tree>&& s) const {
         } else if (auto d = std::get_if<TreeRemap>(t)) {
             // This should never happen, because we call flatten() above
             assert(false);
-            throw TreeData::RemapException();
         }
 
         if (changed.is_valid()) {
@@ -501,7 +500,6 @@ std::vector<const Tree::Data*> Tree::walk() const {
         } else if (auto d = std::get_if<TreeRemap>(next)) {
             // This should never happen because of the check above
             assert(false);
-            throw TreeData::RemapException();
         }
     }
 
@@ -601,6 +599,13 @@ Tree Tree::unique_helper(std::map<TreeDataKey, Tree>& canonical) const {
                 todo.push(Down { t->rhs.ptr });
             } else if (auto t=std::get_if<TreeConstant>(d->t)) {
                 out.push(get_canonical(d->t));
+            } else if (auto t=std::get_if<TreeOracle>(d->t)) {
+                out.push(get_canonical(d->t));
+            } else if (std::get_if<TreeRemap>(d->t)) {
+                // This should never happen, because we flatten above
+                assert(false);
+            } else {
+                throw TreeData::InvalidException();
             }
         } else if (auto d=std::get_if<Up>(&k)) {
             if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
