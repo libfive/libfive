@@ -312,11 +312,7 @@ Tree Tree::remap(Tree X, Tree Y, Tree Z) const {
     if (ptr->flags & (TreeData::TREE_FLAG_HAS_XYZ |
                       TreeData::TREE_FLAG_HAS_ORACLE))
     {
-        return Tree(new Data(TreeRemap {
-                    X.flatten(),
-                    Y.flatten(),
-                    Z.flatten(),
-                    *this }));
+        return Tree(new Data(TreeRemap { X, Y, Z, *this }));
     } else {
         return *this;
     }

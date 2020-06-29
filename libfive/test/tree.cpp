@@ -127,6 +127,21 @@ TEST_CASE("Tree::remap")
         auto g = f.remap(Tree::Y(), Tree::Y(), Tree::Z()).flatten();
         REQUIRE(g.size() == 7);
     }
+
+    SECTION("Nested") {
+        auto y_plus_two = Tree::X().remap(Tree::Y() + 2, Tree::Z(), Tree::X());
+        auto out = (Tree::Y() + Tree::Z()).remap(Tree::Y(), y_plus_two, y_plus_two);
+        {
+            std::stringstream ss;
+            ss << out;
+            REQUIRE(ss.str() == "(remap (+ y z) y (remap x (+ y 2) z x) (remap x (+ y 2) z x)");
+        }
+        {
+            std::stringstream ss;
+            ss << out.flatten();
+            REQUIRE(ss.str() == "(+ y 2 y 2)");
+        }
+    }
 }
 
 TEST_CASE("Tree::size()")
