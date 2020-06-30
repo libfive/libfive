@@ -243,6 +243,11 @@ protected:
     static Tree reduce_binary(std::vector<AffinePair>::const_iterator a,
                               std::vector<AffinePair>::const_iterator b);
 
+    /*  subsitute_with performs a recursive remapping of the tree using
+     *  a subsitution function, which returns a pointer if we should
+     *  replace a given tree (and nullptr otherwise) */
+    Tree substitute_with(std::function<const Data* (Tree)> fn) const;
+
     /* Private constructor to build from the raw variant pointer */
     explicit Tree(const Data* d, bool increment_refcount);
 
