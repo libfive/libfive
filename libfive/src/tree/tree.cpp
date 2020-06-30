@@ -357,19 +357,15 @@ Tree Tree::flatten() const {
     };
 
     /*  If t has children, then pops them from the out stack and pushes
-     *  a modified version of t to the out stack. */
+     *  a modified version of t to the out stack.
+     *
+     *  Otherwise, if t is a remap, then pops x', y', and z' from the output
+     *  stack then pushes Down { x', y', z', t->t } to the task stack */
     struct Up {
         const Data* t;
     };
 
-    /*  Pops x', y', and z' from the out stack, then pushes
-     *      Down(x', y', z', t->t)  [executed first]
-     *      Up(t)
-     *  to the todo stack. */
-    struct Remap {
-        const Data* t;
-    };
-    using Task = std::variant<Down, Up, Remap>;
+    using Task = std::variant<Down, Up>;
     std::stack<Task> todo;
     std::stack<Tree> out;
 
@@ -401,7 +397,7 @@ Tree Tree::flatten() const {
                             Tree(d->t), d->x, d->y, d->z));
                 out.push(new_oracle);
             } else if (auto t=std::get_if<TreeRemap>(d->t)) {
-                todo.push(Remap { t->t.ptr });
+                todo.push(Up { d->t });
                 todo.push(Down { d->x, d->y, d->z, t->z.ptr });
                 todo.push(Down { d->x, d->y, d->z, t->y.ptr });
                 todo.push(Down { d->x, d->y, d->z, t->x.ptr });
@@ -425,19 +421,19 @@ Tree Tree::flatten() const {
                 } else {
                     out.push(Tree(d->t));
                 }
+            } else if (auto t=std::get_if<TreeRemap>(d->t)) {
+                const auto z = out.top();
+                out.pop();
+                const auto y = out.top();
+                out.pop();
+                const auto x = out.top();
+                out.pop();
+                todo.push(Down { x, y, z, t->t.ptr });
             } else {
                 // We shouldn't ever get here, because Nonary, Constant,
                 // Oracles, and Remap shouldn't ever be pushed as Up nodes.
                 assert(false);
             }
-        } else if (auto d=std::get_if<Remap>(&k)) {
-            const auto z = out.top();
-            out.pop();
-            const auto y = out.top();
-            out.pop();
-            const auto x = out.top();
-            out.pop();
-            todo.push(Down { x, y, z, d->t });
         }
     }
 
@@ -528,8 +524,8 @@ Tree Tree::substitute_with(std::function<const TreeData* (Tree)> fn) const {
         const Data* t;
     };
 
-    /*  If t has children, then pops them from the out stack, checks whether
-     *  this is canonical, and pushes the canonical t to the output stack. */
+    /*  If t has children, then pops them from the out stack, applies fn to
+     *  t, then pushes either t or the output of fn(t) to the output stack. */
     struct Up {
         const Data* t;
     };
