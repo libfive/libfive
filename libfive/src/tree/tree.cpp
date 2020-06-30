@@ -445,42 +445,6 @@ Tree Tree::flatten() const {
     return out.top();
 }
 
-Tree Tree::substitute(std::unordered_map<Tree::Id, Tree>&& s) const {
-    if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
-        throw TreeData::RemapException();
-    }
-    auto flat = walk();
-    for (auto t : flat) {
-        Tree changed = Tree::invalid();
-
-        if (auto d = std::get_if<TreeUnaryOp>(t)) {
-            auto itr = s.find(d->lhs.id());
-            if (itr != s.end()) {
-                changed = Tree::unary(d->op, itr->second);
-            }
-        } else if (auto d = std::get_if<TreeBinaryOp>(t)) {
-            auto lhs = s.find(d->lhs.id());
-            auto rhs = s.find(d->rhs.id());
-            if (lhs != s.end() || rhs != s.end()) {
-                changed = Tree::binary(
-                    d->op,
-                    (lhs == s.end()) ? d->lhs : lhs->second,
-                    (rhs == s.end()) ? d->rhs : rhs->second);
-            }
-        } else if (auto d = std::get_if<TreeRemap>(t)) {
-            // This should never happen, because we call flatten() above
-            assert(false);
-        }
-
-        if (changed.is_valid()) {
-            s.insert({t, changed});
-        }
-    }
-
-    auto itr = s.find(get());
-    return (itr == s.end()) ? *this : itr->second;
-}
-
 std::vector<const Tree::Data*> Tree::walk() const {
     if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
         return flatten().walk();
@@ -553,16 +517,13 @@ Tree Tree::reclaim(const Data* ptr) {
     return Tree(ptr, false); // Don't increment refcount
 }
 
-Tree Tree::unique_helper(std::map<TreeDataKey, Tree>& canonical) const {
+Tree Tree::substitute_with(std::function<const TreeData* (Tree)> fn) const {
     if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
-        return flatten().unique_helper(canonical);
+        return flatten().substitute_with(fn);
     }
 
-    /*  If t is a nonary tree or constant, then pushes the canonical version
-     *  of t to the output stack.
-     *
-     *  If t has children, pushes Up(t) to the task stack, followed by
-     *  Down(t->lhs/rhs) for each child. */
+    /*  Pushes Up(t) to the task stack, followed by Down(t->lhs/rhs)
+     *  for each child (if any). */
     struct Down {
         const Data* t;
     };
@@ -579,37 +540,23 @@ Tree Tree::unique_helper(std::map<TreeDataKey, Tree>& canonical) const {
 
     todo.push(Down { ptr });
 
-    auto get_canonical = [&canonical](const Data* t) {
-        const auto key = t->key();
-        const auto k_itr = canonical.find(key);
-        // We already have a canonical version of this tree,
-        // so remapped this tree to the canonical version and keep going.
-        if (k_itr != canonical.end()) {
-            return k_itr->second;
-        } else {
-            canonical.insert(k_itr, {key, Tree(t)});
-            return Tree(t);
-        }
-    };
-
     while (todo.size()) {
         auto k = todo.top();
         todo.pop();
 
         if (const auto d=std::get_if<Down>(&k)) {
+            todo.push(Up { d->t });
             if (const auto t=std::get_if<TreeNonaryOp>(d->t)) {
-                out.push(get_canonical(d->t));
+                // Nothing to do here
             } else if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
-                todo.push(Up { d->t });
                 todo.push(Down { t->lhs.ptr });
             } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
-                todo.push(Up { d->t });
                 todo.push(Down { t->lhs.ptr });
                 todo.push(Down { t->rhs.ptr });
             } else if (auto t=std::get_if<TreeConstant>(d->t)) {
-                out.push(get_canonical(d->t));
+                // Nothing to do here
             } else if (auto t=std::get_if<TreeOracle>(d->t)) {
-                out.push(get_canonical(d->t));
+                // Nothing to do here
             } else if (std::get_if<TreeRemap>(d->t)) {
                 // This should never happen, because we flatten above
                 assert(false);
@@ -620,27 +567,58 @@ Tree Tree::unique_helper(std::map<TreeDataKey, Tree>& canonical) const {
             if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
                 const auto lhs = out.top();
                 out.pop();
-                out.push(lhs.ptr != t->lhs.ptr
-                        ? get_canonical(Tree::unary(t->op, lhs).ptr)
-                        : get_canonical(d->t));
+                const auto n = lhs.ptr != t->lhs.ptr
+                        ? Tree::unary(t->op, lhs)
+                        : Tree(d->t);
+                if (auto ptr = fn(n)) {
+                    out.push(Tree(ptr));
+                } else {
+                    out.push(n);
+                }
             } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
                 const auto lhs = out.top();
                 out.pop();
                 const auto rhs = out.top();
                 out.pop();
-                out.push(lhs.ptr != t->lhs.ptr || rhs.ptr != t->rhs.ptr
-                        ? get_canonical(Tree::binary(t->op, lhs, rhs).ptr)
-                        : get_canonical(d->t));
+                const auto n = lhs.ptr != t->lhs.ptr || rhs.ptr != t->rhs.ptr
+                        ? Tree::binary(t->op, lhs, rhs)
+                        : Tree(d->t);
+                if (auto ptr = fn(n)) {
+                    out.push(Tree(ptr));
+                } else {
+                    out.push(n);
+                }
             } else {
-                // We shouldn't ever get here, because Nonary, Constant,
-                // Oracles, and Remap shouldn't ever be pushed as Up nodes.
-                assert(false);
+                if (auto ptr = fn(Tree(d->t))) {
+                    out.push(Tree(ptr));
+                } else {
+                    out.push(Tree(d->t));
+                }
             }
         }
     }
 
     assert(out.size() == 1);
     return out.top();
+}
+
+Tree Tree::unique_helper(std::map<TreeDataKey, Tree>& canonical) const {
+    if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
+        return flatten().unique_helper(canonical);
+    }
+
+    return substitute_with([&canonical](const Tree t) {
+        const auto key = t->key();
+        const auto k_itr = canonical.find(key);
+        // We already have a canonical version of this tree,
+        // so remapped this tree to the canonical version and keep going.
+        if (k_itr != canonical.end()) {
+            return k_itr->second.ptr;
+        } else {
+            canonical.insert(k_itr, {key, Tree(t)});
+            return t.ptr;
+        }
+    });
 }
 
 Tree Tree::optimized() const {
@@ -660,17 +638,14 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     // Give all oracles a chance to optimize themselves as well, reusing
     // any deduplicated trees in the maps above.
     if (out->flags & TreeData::TREE_FLAG_HAS_ORACLE) {
-        std::unordered_map<Tree::Id, Tree> remap_oracles;
-        for (auto d : out.walk()) {
-            if (auto t = std::get_if<TreeOracle>(d)) {
+        out = out.substitute_with([&canonical](Tree d) {
+            if (auto t = std::get_if<TreeOracle>(d.ptr)) {
                 if (auto o = t->oracle->optimized(canonical)) {
-                    remap_oracles.insert({d, Tree(std::move(o))});
+                    return new TreeData(TreeOracle { std::move(o) });
                 }
             }
-        }
-        if (remap_oracles.size()) {
-            out = out.substitute(std::move(remap_oracles));
-        }
+            return static_cast<TreeData*>(nullptr);
+        });
     }
 
     // Collect and collapse affine equations, e.g. 2*X + 3*X --> 5*X
@@ -852,7 +827,14 @@ Tree Tree::collect_affine() const {
         remap.insert({m.first, reduce_binary(m.second.begin(),
                                              m.second.end())});
     }
-    return substitute(std::move(remap));
+    return substitute_with([&](Tree t) {
+        auto itr = remap.find(t.ptr);
+
+        // We can return the raw pointer because it's owned by remap above
+        return itr == remap.end()
+            ? nullptr
+            : itr->second.ptr;
+    });
 }
 
 size_t Tree::size() const {
