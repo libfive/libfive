@@ -312,167 +312,21 @@ TEST_CASE("Tree::with_const_vars") {
     }
 }
 
-TEST_CASE("Tree::explore_affine") {
-    SECTION("Basic") {
-        auto c = cos(Tree::Z());
-        auto t = Tree::X() * 2 + Tree::Y() * 5 + c + 5 * c;
-        const auto root_map = t.explore_affine();
-        REQUIRE(root_map.size() == 1);
-        auto itr = root_map.find(t.id());
-        REQUIRE(itr != root_map.end());
-
-        std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-        REQUIRE(map.size() == 3);
-        REQUIRE(map.at(Tree::X()) == 2);
-        REQUIRE(map.at(Tree::Y()) == 5);
-        REQUIRE(map.at(c) == 6);
-    }
-
-    SECTION("(X + Y) + (X + Y)") {
-        // These trees have the same value, but don't have the same Id
-        auto a = Tree::X() + Tree::Y();
-        auto b = Tree::X() + Tree::Y();
-        auto t = a + b;
-        const auto root_map = t.explore_affine();
-        REQUIRE(root_map.size() == 1);
-        auto itr = root_map.find(t.id());
-        REQUIRE(itr != root_map.end());
-
-        std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-        REQUIRE(map.size() == 2);
-        REQUIRE(map.at(Tree::X()) == 2);
-        REQUIRE(map.at(Tree::Y()) == 2);
-    }
-
-    SECTION("(X + Y) * (X + Y)") {
-        // These trees have the same value, but don't have the same Id
-        auto a = Tree::X() + Tree::Y();
-        auto b = Tree::X() + Tree::Y();
-        auto t = a * b;
-        const auto root_map = t.explore_affine();
-        REQUIRE(root_map.size() == 2);
-        {
-            auto itr = root_map.find(a.id());
-            REQUIRE(itr != root_map.end());
-
-            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-            REQUIRE(map.size() == 2);
-            REQUIRE(map.at(Tree::X()) == 1);
-            REQUIRE(map.at(Tree::Y()) == 1);
-        }
-        {
-            auto itr = root_map.find(b.id());
-            REQUIRE(itr != root_map.end());
-
-            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-            REQUIRE(map.size() == 2);
-            REQUIRE(map.at(Tree::X()) == 1);
-            REQUIRE(map.at(Tree::Y()) == 1);
-        }
-    }
-    SECTION("(X + Y) + cos(X + Y)") {
-        auto a = Tree::X() + Tree::Y();
-        auto c = cos(a);
-        auto t = a + c;
-        const auto root_map = t.explore_affine();
-        REQUIRE(root_map.size() == 2);
-        {
-            auto itr = root_map.find(a.id());
-            REQUIRE(itr != root_map.end());
-
-            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-            REQUIRE(map.size() == 2);
-            REQUIRE(map.at(Tree::X()) == 1);
-            REQUIRE(map.at(Tree::Y()) == 1);
-        }
-        {
-            auto itr = root_map.find(t.id());
-            REQUIRE(itr != root_map.end());
-
-            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-            REQUIRE(map.size() == 3);
-            REQUIRE(map.at(Tree::X()) == 1);
-            REQUIRE(map.at(Tree::Y()) == 1);
-            REQUIRE(map.at(c) == 1);
-        }
-    }
-
-
-    SECTION("(- z) * (- z)") {
-        auto a = -Tree::Z();
-        auto t = a * a; // shared subtree!
-        const auto root_map = t.explore_affine();
-        REQUIRE(root_map.size() == 1);
-
-        auto itr = root_map.find(a.id());
-        REQUIRE(itr != root_map.end());
-        std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-        REQUIRE(map.size() == 1);
-        REQUIRE(map.at(Tree::Z()) == -1);
-    }
-
-    SECTION("min(max(-Z, Z - 10), max(-Z, Z - 100))") {
-        auto a = -Tree::Z();
-        auto b = -Tree::Z();
-        auto ten = Tree(10.0f);
-        auto hundred = Tree(100.0f);
-        auto c = Tree::Z() - ten;
-        auto d = Tree::Z() - hundred;
-        auto t = min(max(a, b), max(c, d));
-        const auto root_map = t.explore_affine();
-        REQUIRE(root_map.size() == 4);
-        {
-            auto itr = root_map.find(a.id());
-            REQUIRE(itr != root_map.end());
-
-            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-            REQUIRE(map.size() == 1);
-            REQUIRE(map.at(Tree::Z()) == -1);
-        }
-        {
-            auto itr = root_map.find(b.id());
-            REQUIRE(itr != root_map.end());
-
-            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-            REQUIRE(map.size() == 1);
-            REQUIRE(map.at(Tree::Z()) == -1);
-        }
-        {
-            auto itr = root_map.find(c.id());
-            REQUIRE(itr != root_map.end());
-
-            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-            REQUIRE(map.size() == 2);
-            REQUIRE(map.at(Tree::Z()) == 1);
-            REQUIRE(map.at(ten) == -1);
-        }
-        {
-            auto itr = root_map.find(d.id());
-            REQUIRE(itr != root_map.end());
-
-            std::map<Tree, float> map(itr->second.begin(), itr->second.end());
-            REQUIRE(map.size() == 2);
-            REQUIRE(map.at(Tree::Z()) == 1);
-            REQUIRE(map.at(hundred) == -1);
-        }
-    }
-}
-
 TEST_CASE("Tree::collect_affine") {
-    SECTION("Basic") {
+    SECTION("X*2 + Y*5 + cos(Z) + 5 * cos(Z)") {
         auto c = cos(Tree::Z());
         auto t = (Tree::X() * 2 + Tree::Y() * 5 + c + 5 * c);
 
         std::stringstream ss;
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(+ (* (cos z) 6) (* y 5) (* x 2))");
+        REQUIRE(ss.str() == "(+ (* x 2) (* y 5) (* (cos z) 6))");
     }
 
-    SECTION("Negation") {
+    SECTION("max(Z - 10, -Z)") {
         auto t = max(Tree::Z() - 10, -Tree::Z());
         std::stringstream ss;
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(max (+ z -10) (- z))");
+        REQUIRE(ss.str() == "(max (+ -10 z) (- z))");
     }
 
     SECTION("(2*X + Y) + (2*X + Y)") {
@@ -483,7 +337,7 @@ TEST_CASE("Tree::collect_affine") {
 
         std::stringstream ss;
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(+ (* x 4) (* y 2))");
+        REQUIRE(ss.str() == "(+ (* y 2) (* x 4))");
     }
 
     SECTION("(2*X + Y) * (2*X + Y)") {
@@ -493,7 +347,7 @@ TEST_CASE("Tree::collect_affine") {
         auto t = a * b;
         std::stringstream ss;
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(* (+ (* x 2) y) (+ (* x 2) y))");
+        REQUIRE(ss.str() == "(* (+ y (* x 2)) (+ y (* x 2)))");
     }
 
     SECTION("(X + 2*Y) + 3*cos(X + 2*Y)") {
@@ -502,16 +356,16 @@ TEST_CASE("Tree::collect_affine") {
         auto t = a + c;
         std::stringstream ss;
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(+ (* (cos (+ x (* 2 y))) 3) (* y 2) x)");
+        REQUIRE(ss.str() == "(+ x (* y 2) (* (cos (+ x (* y 2))) 3))");
     }
 
-    SECTION("(X + 2*Y) + 3*cos(sin(X + 2*Y))") {
-        auto a = Tree::X() + (2 * Tree::Y());
+    SECTION("(X + 2*Y) + 3*cos(sin(X + 2*Y + 7))") {
+        auto a = Tree::X() + (2 * Tree::Y()) + 7;
         auto c = 3*cos(sin(a));
         auto t = a + c;
         std::stringstream ss;
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(+ (* (cos (sin (+ x (* 2 y)))) 3) (* y 2) x)");
+        REQUIRE(ss.str() == "(+ x (* y 2) (* (cos (sin (+ x (* y 2) 7))) 3) 7)");
     }
 
     SECTION("X + 2*Y + 3*cos(X) + 4*cos(Y)") {
@@ -526,15 +380,41 @@ TEST_CASE("Tree::collect_affine") {
 
         ss.str(std::string());
         ss << q;
-        REQUIRE(ss.str() == "(+ (* (cos y) 4) (* (cos x) 3) (* y 2) x)");
+        REQUIRE(ss.str() == "(+ x (* y 2) (* (cos x) 3) (* (cos y) 4))");
 
         ss.str(std::string());
         ss << q->lhs();
-        REQUIRE(ss.str() == "(+ (* (cos y) 4) (* (cos x) 3))");
+        REQUIRE(ss.str() == "(+ x (* y 2))");
 
         ss.str(std::string());
         ss << q->rhs();
-        REQUIRE(ss.str() == "(+ (* y 2) x)");
+        REQUIRE(ss.str() == "(+ (* (cos x) 3) (* (cos y) 4))");
+    }
+
+    SECTION("min(max(-Z, Z - 10), max(-Z, Z - 100))") {
+        auto ten = Tree(10.0f);
+        auto hundred = Tree(100.0f);
+
+        auto a = -Tree::Z();
+        auto b =  Tree::Z() - ten;
+        auto c = -Tree::Z();
+        auto d =  Tree::Z() - hundred;
+        auto t = min(max(a, b), max(c, d));
+
+        auto q = t.collect_affine();
+        std::stringstream ss;
+        ss << q;
+        REQUIRE(ss.str() == "(min (max (- z) (+ -10 z)) (max (- z) (+ -100 z)))");
+    }
+
+    SECTION("(- z) * (- z)") {
+        auto a = -Tree::Z();
+
+        auto t = a * a; // shared su
+        auto q = t.collect_affine();
+        std::stringstream ss;
+        ss << q;
+        REQUIRE(ss.str() == "(square (- z))");
     }
 }
 
@@ -545,7 +425,7 @@ TEST_CASE("Tree::optimized")
                      max(-Tree::Z(), Tree::Z() - 100));
         std::stringstream ss;
         ss << t.optimized();
-        REQUIRE(ss.str() == "(min (max (- z) (+ z -10)) (max (- z) (+ z -100)))");
+        REQUIRE(ss.str() == "(min (max (- z) (+ -10 z)) (max (- z) (+ -100 z)))");
     }
 }
 
