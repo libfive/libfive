@@ -169,15 +169,6 @@ public:
      *  together, which is helpful in niche circumstances. */
     Tree unique_helper(std::map<TreeDataKey, Tree>& canonical) const;
 
-    /*  Recurses through the graph, accumulating the affine form of child nodes
-     *  into a map of t1*a + t2*b + t3*c...
-     *
-     *  The tree must be flattened, otherwise a TreeData::RemapException
-     *  will be thrown upon encountering a TreeRemap clause. */
-    using AffinePair = std::pair<Tree, float>;
-    using AffineMap = std::unordered_map<Tree::Id, std::vector<AffinePair>>;
-    AffineMap explore_affine() const;
-
     /*  Returns a tree in which nested affine forms are collapsed, e.g.
      *  (2*X + 3*Y) + 5*(X - Y) ==> 7*X - 2*Y
      *
@@ -231,6 +222,9 @@ public:
     const Data* release();
     static Tree reclaim(const Data* ptr);
 
+    static Tree collect_affine_helper(const Tree d,
+                                  std::map<const Tree, float>* parent_map=nullptr,
+                                  const float scale=1);
 protected:
     /*  This is the managed pointer.  It's mutable so that the destructor
      *  can swap it out for nullptr when flattening out destruction of a
@@ -240,6 +234,7 @@ protected:
     /*  Does a binary reduction of a set of affine pairs, building a
      *  balanced-ish tree.  The a iterator is the beginning of the region to
      *  reduce, and b is one-past-the-end of the region to reduce. */
+    using AffinePair = std::pair<const Data*, float>;
     static Tree reduce_binary(std::vector<AffinePair>::const_iterator a,
                               std::vector<AffinePair>::const_iterator b);
 
@@ -250,6 +245,10 @@ protected:
 
     /* Private constructor to build from the raw variant pointer */
     explicit Tree(const Data* d, bool increment_refcount);
+
+    /*  Returns a shared Tree with a constant value of one.
+     *  This is used when doing affine reduction. */
+    static Tree one();
 
     std::ostream& print_prefix(std::ostream& stream) const;
 
