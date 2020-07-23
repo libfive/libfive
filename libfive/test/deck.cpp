@@ -24,7 +24,7 @@ TEST_CASE("Deck::num_clauses")
 
 TEST_CASE("Deck::XYZ")
 {
-    Deck t(Tree::X() + 1);
+    Deck t(Tree::X() + 2);
     REQUIRE(t.X == 3);
     REQUIRE(t.Y == 4);
     REQUIRE(t.Z == 5);
