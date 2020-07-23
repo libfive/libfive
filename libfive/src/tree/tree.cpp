@@ -663,100 +663,138 @@ Tree Tree::unique() const {
     return unique_helper(canonical);
 }
 
-Tree Tree::collect_affine_helper(const Tree d,
-                                 std::map<const Tree, float>* parent_map,
-                                 const float scale) {
-    using namespace Opcode;
-    const auto op = d->op();
-    const bool could_be_affine = (op == OP_NEG) ||
-        (op == OP_ADD) || (op == OP_SUB) ||
-        (op == OP_MUL && (d->lhs()->op() == CONSTANT ||
-                          d->rhs()->op() == CONSTANT));
-
-    if (could_be_affine) {
-        std::map<const Tree, float> my_map;
-        const auto down_map = parent_map ? parent_map : &my_map;
-
-        if (op == OP_NEG) {
-            collect_affine_helper(d->lhs(), down_map, -scale);
-        } else if (op == OP_ADD) {
-            collect_affine_helper(d->lhs(), down_map, scale);
-            collect_affine_helper(d->rhs(), down_map, scale);
-        } else if (op == OP_SUB) {
-            collect_affine_helper(d->lhs(), down_map, scale);
-            collect_affine_helper(d->rhs(), down_map, -scale);
-        } else if (op == OP_MUL) {
-            if (d->lhs()->op() == CONSTANT) {
-                const float c = d->lhs()->value();
-                collect_affine_helper(d->rhs(), down_map, c * scale);
-            } else if (d->rhs()->op() == CONSTANT) {
-                const float c = d->rhs()->value();
-                collect_affine_helper(d->lhs(), down_map, c * scale);
-            }
-        }
-
-        if (parent_map) {
-            // we're going to rebuild the tree from the Map below
-            return Tree::invalid();
-        } else {
-            // Sorting isn't strictly necessary, and could be a *tiny*
-            // performance penalty, but this lets us make deterministic
-            // unit tests, which is nice.
-            //
-            // We sort by the multiplier, rather than trusting pointers
-            std::vector<std::pair<const TreeData*, float>> sorted;
-            for (auto& p: my_map) {
-                sorted.push_back({p.first.ptr, p.second});
-            }
-            std::sort(sorted.begin(), sorted.end(),
-                [](auto a, auto b) { return a.second < b.second; });
-            auto out = reduce_binary(sorted.cbegin(), sorted.cend());
-            return out;
-        }
-    } else {
-        Tree new_self = Tree::invalid();
-        if (auto t=std::get_if<TreeUnaryOp>(d.ptr)) {
-            const auto lhs = collect_affine_helper(d->lhs());
-            if (lhs.ptr != t->lhs.ptr) {
-                new_self = Tree::unary(t->op, lhs);
-            } else {
-                new_self = d;
-            }
-        } else if (auto t=std::get_if<TreeBinaryOp>(d.ptr)) {
-            const auto lhs = collect_affine_helper(d->lhs());
-            const auto rhs = collect_affine_helper(d->rhs());
-            if (lhs.ptr != t->lhs.ptr || rhs.ptr != t->rhs.ptr) {
-                new_self = Tree::binary(t->op, lhs, rhs);
-            } else {
-                new_self = d;
-            }
-        } else if (auto t=std::get_if<TreeRemap>(d.ptr)) {
-            // This should be caught above
-            assert(false);
-        } else {
-            new_self = d;
-        }
-
-        if (parent_map) {
-            if (new_self->op() == CONSTANT) {
-                // This ensures that all constants are accumulated together
-                (*parent_map)[Tree::one()] += scale * new_self->value();
-            } else {
-                (*parent_map)[new_self] += scale;
-            }
-            return Tree::invalid();
-        } else {
-            return new_self;
-        }
-    }
-}
-
 Tree Tree::collect_affine() const {
     if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
         return flatten().collect_affine();
-    } else {
-        return collect_affine_helper(*this);
     }
+    using AffineMap = std::unordered_map<Tree, float>;
+    std::stack<std::optional<AffineMap>> maps;
+    maps.push(std::nullopt);
+
+    struct Down {
+        const Data* t;
+        float scale;
+    };
+    struct Up {
+        const Data* t;
+        const float scale;
+    };
+    struct UpAffine {
+        // If this is the affine operation that pushed the map, then
+        // top is set to true; otherwise it's false.
+        bool top;
+    };
+    using Task = std::variant<Down, Up, UpAffine>;
+    std::stack<Task> todo;
+    todo.push(Down { ptr, 1 });
+
+    std::stack<Tree> out;
+
+    while (todo.size()) {
+        const auto t = todo.top();
+        todo.pop();
+        if (auto d = std::get_if<Down>(&t)) {
+            using namespace Opcode;
+            const auto op = d->t->op();
+            const bool could_be_affine = (op == OP_NEG) ||
+                (op == OP_ADD) || (op == OP_SUB) ||
+                (op == OP_MUL && (d->t->lhs()->op() == CONSTANT ||
+                                  d->t->rhs()->op() == CONSTANT));
+
+            if (could_be_affine) {
+                const bool has_map = maps.top().has_value();
+                if (!has_map) {
+                    maps.push(AffineMap());
+                }
+                todo.push(UpAffine { !has_map });
+
+                if (op == OP_NEG) {
+                    todo.push(Down { d->t->lhs().ptr, -d->scale });
+                } else if (op == OP_ADD) {
+                    todo.push(Down { d->t->lhs().ptr, d->scale });
+                    todo.push(Down { d->t->rhs().ptr, d->scale });
+                } else if (op == OP_SUB) {
+                    todo.push(Down { d->t->lhs().ptr, d->scale });
+                    todo.push(Down { d->t->rhs().ptr, -d->scale });
+                } else if (op == OP_MUL) {
+                    if (d->t->lhs()->op() == CONSTANT) {
+                        const float c = d->t->lhs()->value();
+                        todo.push(Down { d->t->rhs().ptr, c * d->scale });
+                    } else if (d->t->rhs()->op() == CONSTANT) {
+                        const float c = d->t->rhs()->value();
+                        todo.push(Down { d->t->lhs().ptr, c * d->scale });
+                    }
+                }
+            } else {
+                todo.push(Up { d->t, d->scale });
+                maps.push(std::nullopt);
+                if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
+                    todo.push(Down { t->lhs.ptr, 1.0f });
+                } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
+                    todo.push(Down { t->lhs.ptr, 1.0f });
+                    todo.push(Down { t->rhs.ptr, 1.0f });
+                } else if (auto t=std::get_if<TreeRemap>(d->t)) {
+                    // This should be caught above
+                    assert(false);
+                } else {
+                    // Don't do anything; this tree will be moved to
+                    // the output stack in the Up { } task
+                }
+            }
+        } else if (auto d = std::get_if<Up>(&t)) {
+            maps.pop(); // Pop the std::nullopt
+            Tree new_self = Tree(d->t);
+            if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
+                auto lhs = out.top();
+                out.pop();
+                if (lhs != t->lhs) {
+                    new_self = Tree::unary(t->op, lhs);
+                }
+            } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
+                auto lhs = out.top();
+                out.pop();
+                auto rhs = out.top();
+                out.pop();
+                if (lhs != t->lhs || rhs != t->rhs) {
+                    new_self = Tree::binary(t->op, lhs, rhs);
+                }
+            }
+
+            if (maps.top().has_value()) {
+                if (new_self->op() == Opcode::CONSTANT) {
+                    (*maps.top())[Tree::one()] += d->scale * new_self->value();
+                } else {
+                    (*maps.top())[new_self] += d->scale;
+                }
+                // In this case, we don't push anything to the Out stack
+                // because it will all be accumulated by the UpAffine task
+            } else {
+                out.push(new_self);
+            }
+        } else if (auto d = std::get_if<UpAffine>(&t)) {
+            if (d->top) {
+                assert(maps.top().has_value());
+                auto map = *maps.top();
+                maps.pop();
+                // Sorting isn't strictly necessary, and could be a *tiny*
+                // performance penalty, but this lets us make deterministic
+                // unit tests, which is nice.
+                //
+                // We sort by the multiplier, rather than trusting pointers
+                std::vector<std::pair<const TreeData*, float>> sorted;
+                for (auto& p: map) {
+                    sorted.push_back({p.first.ptr, p.second});
+                }
+                std::sort(sorted.begin(), sorted.end(),
+                    [](auto a, auto b) { return a.second < b.second; });
+                out.push(reduce_binary(sorted.cbegin(), sorted.cend()));
+            } else {
+                // Do nothing
+            }
+        }
+    }
+    assert(out.size() == 1);
+    return out.top();
 }
 
 Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,

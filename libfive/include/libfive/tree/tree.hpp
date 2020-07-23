@@ -222,9 +222,6 @@ public:
     const Data* release();
     static Tree reclaim(const Data* ptr);
 
-    static Tree collect_affine_helper(const Tree d,
-                                  std::map<const Tree, float>* parent_map=nullptr,
-                                  const float scale=1);
 protected:
     /*  This is the managed pointer.  It's mutable so that the destructor
      *  can swap it out for nullptr when flattening out destruction of a
@@ -285,6 +282,16 @@ protected:
 };
 
 }   // namespace libfive
+
+/*  Specialize std::hash so that we can use std::unordered_map of Trees */
+namespace std {
+template <>
+struct hash<libfive::Tree> {
+    std::size_t operator()(const libfive::Tree& k) const {
+        return hash<const void*>()(k.id());
+    }
+};
+}
 
 // Needed so that the unique_ptr<const OracleClause> destructor works
 #include "libfive/oracle/oracle_clause.hpp"
