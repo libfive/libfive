@@ -604,7 +604,9 @@ Tree Tree::substitute_with(std::function<const TreeData* (Tree)> fn) const {
 }
 
 Tree Tree::unique_helper(std::map<TreeDataKey, Tree>& canonical) const {
-    if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
+    if (flags & TREE_FLAG_IS_OPTIMIZED) {
+        return *this;
+    } else if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
         return flatten().unique_helper(canonical);
     }
 
@@ -632,6 +634,10 @@ Tree Tree::optimized() const {
 }
 
 Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
+    if (flags & TREE_FLAG_IS_OPTIMIZED) {
+        return *this;
+    }
+
     Tree out = *this;
 
     // Expand any remap operations in the tree
@@ -657,7 +663,7 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     out = out.collect_affine();
 
     // And we're done!
-    return out;
+    return out.with_flags(TREE_FLAG_IS_UNIQUE | TREE_FLAG_IS_OPTIMIZED);
 }
 
 Tree Tree::unique() const {
