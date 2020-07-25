@@ -139,15 +139,21 @@ Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
     }
     // Division by 1 is ignored
     else if (op == Opcode::OP_DIV) {
-        if (rhs->op() == Opcode::CONSTANT && rhs->value() == 1.0f) {
-            return lhs;
+        if (auto v = std::get_if<TreeConstant>(rhs.ptr)) {
+            if (v->value == 1.0f) {
+                return lhs;
+            }
         }
     }
     else if (op == Opcode::OP_ADD) {
-        if (lhs->op() == Opcode::CONSTANT && lhs->value() == 0.0f) {
-            return rhs;
-        } else if (rhs->op() == Opcode::CONSTANT && rhs->value() == 0.0f) {
-            return lhs;
+        if (auto v = std::get_if<TreeConstant>(lhs.ptr)) {
+            if (v->value == 0.0) {
+                return rhs;
+            }
+        } else if (auto v = std::get_if<TreeConstant>(rhs.ptr)) {
+            if (v->value == 0.0) {
+                return lhs;
+            }
         } else if (rhs->op() == Opcode::OP_NEG) {
             const Tree& t = rhs->lhs();
             const Tree& q = lhs;
@@ -156,36 +162,42 @@ Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
             return rhs - lhs->lhs();
         }
     } else if (op == Opcode::OP_SUB) {
-        if (lhs->op() == Opcode::CONSTANT && lhs->value() == 0.0f) {
-            return -rhs;
-        } else if (rhs->op() == Opcode::CONSTANT && rhs->value() == 0.0f) {
-            return lhs;
+        if (auto v = std::get_if<TreeConstant>(lhs.ptr)) {
+            if (v->value == 0.0) {
+                return -rhs;
+            }
+        } else if (auto v = std::get_if<TreeConstant>(rhs.ptr)) {
+            if (v->value == 0.0) {
+                return lhs;
+            }
         } else if (rhs->op() == Opcode::OP_NEG) {
             return lhs + rhs->lhs();
         }
     } else if (op == Opcode::OP_MUL) {
-        if (lhs->op() == Opcode::CONSTANT) {
-            if (lhs->value() == 0) {
+        if (auto v = std::get_if<TreeConstant>(lhs.ptr)) {
+            if (v->value == 0) {
                 return lhs;
-            } else if (lhs->value() == 1) {
+            } else if (v->value == 1) {
                 return rhs;
-            } else if (lhs->value() == -1) {
+            } else if (v->value == -1) {
                 return -rhs;
             }
-        } else if (rhs->op() == Opcode::CONSTANT) {
-            if (rhs->value() == 0) {
+        } else if (auto v = std::get_if<TreeConstant>(rhs.ptr)) {
+            if (v->value == 0) {
                 return rhs;
-            } else if (rhs->value() == 1) {
+            } else if (v->value == 1) {
                 return lhs;
-            } else if (rhs->value() == -1) {
+            } else if (v->value == -1) {
                 return -lhs;
             }
         } else if (lhs.id() == rhs.id()) {
             return square(lhs);
         }
     } else if (op == Opcode::OP_NTH_ROOT || op == Opcode::OP_POW) {
-        if (rhs->op() == Opcode::CONSTANT && rhs->value() == 1.0f) {
-            return lhs;
+        if (auto v = std::get_if<TreeConstant>(rhs.ptr)) {
+            if (v->value == 1.0f) {
+                return lhs;
+            }
         }
     } else if (op == Opcode::OP_MIN || op == Opcode::OP_MAX) {
         if (lhs.id() == rhs.id()) {
