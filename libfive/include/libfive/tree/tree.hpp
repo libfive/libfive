@@ -9,6 +9,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 #include <map>
+#include <memory>
+#include <functional>
 #include <unordered_map>
 #include <variant>
 #include <vector>
