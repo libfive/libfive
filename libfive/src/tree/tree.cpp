@@ -87,10 +87,7 @@ Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
     // Collapse constant operations
     else if (lhs->op() == Opcode::CONSTANT) {
         auto tmp = Tree(new Data(TreeUnaryOp { op, lhs }));
-
-        OptimizedTree opt;
-        opt.tree = tmp;
-        ArrayEvaluator eval(opt);
+        ArrayEvaluator eval(tmp.with_flags(TREE_FLAG_IS_OPTIMIZED));
 
         const float v = eval.value({0.0f, 0.0f, 0.0f});
         return Tree(v);
@@ -135,13 +132,7 @@ Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
     // Collapse constant operations
     else if (lhs->op() == Opcode::CONSTANT && rhs->op() == Opcode::CONSTANT) {
         auto tmp = Tree(new Data(TreeBinaryOp { op, lhs, rhs }));
-
-        // Use the private constructor to construct an OptimizedTree without
-        // actually doing the optimization pass, which would trigger infinite
-        // recursion.
-        OptimizedTree opt;
-        opt.tree = tmp;
-        ArrayEvaluator eval(opt);
+        ArrayEvaluator eval(tmp.with_flags(TREE_FLAG_IS_OPTIMIZED));
 
         const float v = eval.value({0.0f, 0.0f, 0.0f});
         return Tree(v);

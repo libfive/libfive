@@ -13,13 +13,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-DerivArrayEvaluator::DerivArrayEvaluator(const OptimizedTree& root)
+DerivArrayEvaluator::DerivArrayEvaluator(const Tree& root)
     : DerivArrayEvaluator(std::make_shared<Deck>(root))
 {
     // Nothing to do here
 }
 
-DerivArrayEvaluator::DerivArrayEvaluator(const OptimizedTree& root,
+DerivArrayEvaluator::DerivArrayEvaluator(const Tree& root,
                                          const std::map<Tree::Id, float>& vars)
     : DerivArrayEvaluator(std::make_shared<Deck>(root), vars)
 {

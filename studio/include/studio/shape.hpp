@@ -39,7 +39,7 @@ class Shape : public QObject, QOpenGLFunctions
 {
     Q_OBJECT
 public:
-    Shape(const libfive::OptimizedTree& t,
+    Shape(const libfive::Tree& t,
           std::map<libfive::Tree::Id, float> vars);
 
     /*
@@ -166,7 +166,7 @@ protected:
     QFutureWatcher<BoundedMesh> mesh_watcher;
     libfive::BRepSettings mesh_settings;
 
-    libfive::OptimizedTree tree;
+    libfive::Tree tree;
     std::map<libfive::Tree::Id, float> vars;
     std::vector<libfive::Evaluator,
                 Eigen::aligned_allocator<libfive::Evaluator>> es;

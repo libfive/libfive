@@ -16,8 +16,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-class OptimizedTree; /* Forward declaration */
-
 /*
  *  A Deck is the top-level class that produces Tapes.  It includes
  *  meta-data like the number of clauses, constant values, and variable,
@@ -33,7 +31,7 @@ class OptimizedTree; /* Forward declaration */
 class Deck
 {
 public:
-    Deck(const OptimizedTree& root);
+    Deck(const Tree& root);
 
     Deck(const Deck&)=delete;
     Deck& operator=(const Deck& other)=delete;

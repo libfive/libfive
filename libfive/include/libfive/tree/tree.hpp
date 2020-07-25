@@ -272,29 +272,6 @@ TREE_OPERATORS
                                     const libfive::Tree& tree);
 };
 
-/*
- *  Represents a Tree which has been deduplicated.
- *
- *  This conversion is implicit, so you can construct objects which
- *  expect a OptimizedTree using a Tree, and it will deduplciate
- *  things under the hood.
- */
-class OptimizedTree {
-public:
-    OptimizedTree(const Tree& t) : tree(t.optimized()) {}
-    Tree tree;
-protected:
-    /* Private constructor for special cases where you need to construct
-     * an OptimizedTree without actually calling optimized().  You probably
-     * shouldn't use this.  The only use case is when reducing constant
-     * operations, where we want to construct an evaluator without
-     * optimizing the tree (which would recurse). */
-    OptimizedTree()
-        : tree(Tree::invalid())
-    { }
-    friend class Tree; // so that Tree can use the special constructor
-};
-
 }   // namespace libfive
 
 /*  Specialize std::hash so that we can use std::unordered_map of Trees */

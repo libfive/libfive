@@ -16,8 +16,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-Deck::Deck(const OptimizedTree& root) {
-    auto flat = root.tree.walk();
+Deck::Deck(const Tree& root_) {
+    const auto root = root_.optimized();
+    auto flat = root.walk();
 
     // Helper function to create a new clause in the data array
     // The dummy clause (0) is mapped to the first result slot
@@ -88,8 +89,8 @@ Deck::Deck(const OptimizedTree& root) {
     tape->contexts.resize(oracles.size());
 
     // Store the index of the tree's root
-    assert(clauses.at(root.tree.id()) == 1);
-    tape->i = clauses.at(root.tree.id());
+    assert(clauses.at(root.id()) == 1);
+    tape->i = clauses.at(root.id());
 }
 
 void Deck::bindOracles(const Tape& tape)
