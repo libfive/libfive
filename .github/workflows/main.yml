@@ -15,6 +15,7 @@ jobs:
       with:
         path: |
           ./vcpkg
+          C:\Users\runneradmin\AppData\Local\vcpkg
         key: ${{ runner.os }}-vcpkg
 
 
