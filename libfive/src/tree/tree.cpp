@@ -85,7 +85,7 @@ Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
         return invalid();
     }
     // Collapse constant operations
-    else if (lhs->op() == Opcode::CONSTANT) {
+    else if (std::get_if<TreeConstant>(lhs.ptr)) {
         auto tmp = Tree(new Data(TreeUnaryOp { op, lhs }));
         ArrayEvaluator eval(tmp.with_flags(TREE_FLAG_IS_OPTIMIZED));
 
@@ -94,15 +94,19 @@ Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
     }
     // abs is idempotent after abs() or square()
     else if (op == Opcode::OP_ABS) {
-        if (lhs->op() == Opcode::OP_ABS) {
-            return lhs;
-        } else if (lhs->op() == Opcode::OP_SQUARE) {
-            return lhs;
+        if (auto v = std::get_if<TreeUnaryOp>(lhs.ptr)) {
+            if (v->op == Opcode::OP_ABS || v->op == Opcode::OP_SQUARE) {
+                return lhs;
+            }
         }
     }
     // Double-negative returns the original
-    else if (op == Opcode::OP_NEG && lhs->op() == Opcode::OP_NEG) {
-        return lhs->lhs();
+    else if (op == Opcode::OP_NEG) {
+        if (auto v = std::get_if<TreeUnaryOp>(lhs.ptr)) {
+            if (v->op == Opcode::OP_NEG) {
+                return v->lhs;
+            }
+        }
     }
     // Default if we didn't fall into any special cases
     return Tree(new Data(TreeUnaryOp { op, lhs }));
@@ -150,28 +154,32 @@ Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
             if (v->value == 0.0) {
                 return rhs;
             }
-        } else if (auto v = std::get_if<TreeConstant>(rhs.ptr)) {
+        } else if ((v = std::get_if<TreeConstant>(rhs.ptr))) {
             if (v->value == 0.0) {
                 return lhs;
             }
-        } else if (rhs->op() == Opcode::OP_NEG) {
-            const Tree& t = rhs->lhs();
-            const Tree& q = lhs;
-            return q - t;
-        } else if (lhs->op() == Opcode::OP_NEG) {
-            return rhs - lhs->lhs();
+        } else if (auto v = std::get_if<TreeUnaryOp>(lhs.ptr)) {
+            if (v->op == Opcode::OP_NEG) {
+                return rhs - v->lhs;
+            }
+        } else if (auto v = std::get_if<TreeUnaryOp>(rhs.ptr)) {
+            if (v->op == Opcode::OP_NEG) {
+                return lhs - v->lhs;
+            }
         }
     } else if (op == Opcode::OP_SUB) {
         if (auto v = std::get_if<TreeConstant>(lhs.ptr)) {
             if (v->value == 0.0) {
                 return -rhs;
             }
-        } else if (auto v = std::get_if<TreeConstant>(rhs.ptr)) {
+        } else if ((v = std::get_if<TreeConstant>(rhs.ptr))) {
             if (v->value == 0.0) {
                 return lhs;
             }
-        } else if (rhs->op() == Opcode::OP_NEG) {
-            return lhs + rhs->lhs();
+        } else if (auto v = std::get_if<TreeUnaryOp>(rhs.ptr)) {
+            if (v->op == Opcode::OP_NEG) {
+                return lhs + v->lhs;
+            }
         }
     } else if (op == Opcode::OP_MUL) {
         if (auto v = std::get_if<TreeConstant>(lhs.ptr)) {
@@ -182,7 +190,7 @@ Tree Tree::binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs) {
             } else if (v->value == -1) {
                 return -rhs;
             }
-        } else if (auto v = std::get_if<TreeConstant>(rhs.ptr)) {
+        } else if ((v = std::get_if<TreeConstant>(rhs.ptr))) {
             if (v->value == 0) {
                 return rhs;
             } else if (v->value == 1) {
@@ -708,37 +716,42 @@ Tree Tree::collect_affine() const {
         todo.pop();
         if (auto d = std::get_if<Down>(&t)) {
             using namespace Opcode;
-            const auto op = d->t->op();
-            const bool could_be_affine = (op == OP_NEG) ||
-                (op == OP_ADD) || (op == OP_SUB) ||
-                (op == OP_MUL && (d->t->lhs()->op() == CONSTANT ||
-                                  d->t->rhs()->op() == CONSTANT));
 
-            if (could_be_affine) {
+            bool could_be_affine = false;
+            auto mark_affine = [&]() {
                 const bool has_map = maps.top().has_value();
                 if (!has_map) {
                     maps.push(AffineMap());
                 }
                 todo.push(UpAffine { !has_map });
-
-                if (op == OP_NEG) {
-                    todo.push(Down { d->t->lhs().ptr, -d->scale });
-                } else if (op == OP_ADD) {
-                    todo.push(Down { d->t->lhs().ptr, d->scale });
-                    todo.push(Down { d->t->rhs().ptr, d->scale });
-                } else if (op == OP_SUB) {
-                    todo.push(Down { d->t->lhs().ptr, d->scale });
-                    todo.push(Down { d->t->rhs().ptr, -d->scale });
-                } else if (op == OP_MUL) {
-                    if (d->t->lhs()->op() == CONSTANT) {
-                        const float c = d->t->lhs()->value();
-                        todo.push(Down { d->t->rhs().ptr, c * d->scale });
-                    } else if (d->t->rhs()->op() == CONSTANT) {
-                        const float c = d->t->rhs()->value();
-                        todo.push(Down { d->t->lhs().ptr, c * d->scale });
+                could_be_affine = true;
+            };
+            if (auto g = std::get_if<TreeUnaryOp>(d->t)) {
+                if (g->op == OP_NEG) {
+                    mark_affine();
+                    todo.push(Down { g->lhs.ptr, -d->scale });
+                }
+            } else if (auto g = std::get_if<TreeBinaryOp>(d->t)) {
+                if (g->op == OP_ADD) {
+                    mark_affine();
+                    todo.push(Down { g->lhs.ptr, d->scale });
+                    todo.push(Down { g->rhs.ptr, d->scale });
+                } else if (g->op == OP_SUB) {
+                    mark_affine();
+                    todo.push(Down { g->lhs.ptr, d->scale });
+                    todo.push(Down { g->rhs.ptr, -d->scale });
+                } else if (g->op == OP_MUL) {
+                    if (auto v = std::get_if<TreeConstant>(g->lhs.ptr)) {
+                        mark_affine();
+                        todo.push(Down { g->rhs.ptr, v->value * d->scale });
+                    } else if ((v = std::get_if<TreeConstant>(g->rhs.ptr))) {
+                        mark_affine();
+                        todo.push(Down { g->lhs.ptr, v->value * d->scale });
                     }
                 }
-            } else {
+            }
+
+            if (!could_be_affine) {
                 todo.push(Up { d->t, d->scale });
                 maps.push(std::nullopt);
                 if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
@@ -774,8 +787,8 @@ Tree Tree::collect_affine() const {
             }
 
             if (maps.top().has_value()) {
-                if (new_self->op() == Opcode::CONSTANT) {
-                    (*maps.top())[Tree::one()] += d->scale * new_self->value();
+                if (auto v = std::get_if<TreeConstant>(new_self.ptr)) {
+                    (*maps.top())[Tree::one()] += d->scale * v->value;
                 } else {
                     (*maps.top())[new_self] += d->scale;
                 }
