@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: install dependencies
+      run: |
+        sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev
+
+    - name: Install packages
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make -j4
