@@ -11,6 +11,13 @@ jobs:
     runs-on: windows-latest 
 
     steps:
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ./vcpkg
+          key: ${{ runner.os }}-vcpkg
+
+
     - uses: actions/checkout@v2
 
     - name: Bootstrap vspkg
