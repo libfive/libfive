@@ -13,8 +13,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Run a one-line script
-      run: echo Hello, world!
+    - name: Bootstrap vspkg
+      run: |
+          git clone https://github.com/Microsoft/vcpkg.git
+          vcpkg\bootstrap-vcpkg.bat
+          vcpkg\vcpkg install eigen3:x86-windows-static boost:x86-windows-static libpng:x86-windows-static
+          md build
+          cd build
+          cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
 
     - name: Run a multi-line script
       run: |
