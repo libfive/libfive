@@ -104,7 +104,7 @@ TreeData::Key TreeData::key() const {
     }
 }
 
-uint32_t TreeData::get_flags() const {
+uint32_t TreeData::compute_flags() const {
     if (auto d = std::get_if<TreeConstant>(this)) {
         return 0;
     } else if (auto d = std::get_if<TreeNonaryOp>(this)) {
