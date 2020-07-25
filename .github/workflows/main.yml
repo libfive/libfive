@@ -32,7 +32,7 @@ jobs:
 
     - name: Bootstrap vspkg
       run: |
-        git clone --depth=1 https://github.com/TyOverby/vcpkg.git
+        git clone --depth=1 https://github.com/Microsoft/vcpkg.git
         vcpkg\bootstrap-vcpkg.bat
 
     - name: Install packages
