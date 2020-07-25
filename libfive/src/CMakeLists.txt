@@ -90,6 +90,7 @@ add_library(five SHARED
     tree/deserializer.cpp
     tree/serializer.cpp
     tree/tree.cpp
+    tree/operations.cpp
 
     oracle/oracle_clause.cpp
     oracle/transformed_oracle.cpp
