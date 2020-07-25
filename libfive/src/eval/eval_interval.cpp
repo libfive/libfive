@@ -14,13 +14,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-IntervalEvaluator::IntervalEvaluator(const OptimizedTree& root)
+IntervalEvaluator::IntervalEvaluator(const Tree& root)
     : IntervalEvaluator(std::make_shared<Deck>(root))
 {
     // Nothing to do here
 }
 
-IntervalEvaluator::IntervalEvaluator(const OptimizedTree& root,
+IntervalEvaluator::IntervalEvaluator(const Tree& root,
                                      const std::map<Tree::Id, float>& vars)
     : IntervalEvaluator(std::make_shared<Deck>(root), vars)
 {

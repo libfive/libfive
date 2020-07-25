@@ -27,9 +27,10 @@ const int Shape::MESH_DIV_ABORT;
 const int Shape::MESH_DIV_NEW_VARS;
 const int Shape::MESH_DIV_NEW_VARS_SMALL;
 
-Shape::Shape(const libfive::OptimizedTree& t,
+Shape::Shape(const libfive::Tree& t,
              std::map<libfive::Tree::Id, float> vars)
-    : tree(t), vars(vars), vert_vbo(QOpenGLBuffer::VertexBuffer),
+    : tree(t.optimized()), vars(vars),
+      vert_vbo(QOpenGLBuffer::VertexBuffer),
       tri_vbo(QOpenGLBuffer::IndexBuffer)
 {
     // Construct evaluators to run meshing (in parallel)
