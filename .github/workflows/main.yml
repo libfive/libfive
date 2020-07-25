@@ -21,6 +21,15 @@ jobs:
 
     - uses: actions/checkout@v2
 
+    - name: install msys2
+      run: choco install msys2
+
+    - name: Pacman key things
+      run: | 
+        pacman-key --init
+        pacman-key --populate msys2
+        pacman-key --refresh-keys
+
     - name: Bootstrap vspkg
       run: |
         git clone --depth=1 https://github.com/TyOverby/vcpkg.git
