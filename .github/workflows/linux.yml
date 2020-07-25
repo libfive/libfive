@@ -24,6 +24,7 @@ jobs:
         make -j4
 
     - name: Test
+      continue-on-error: true
       run: ./build/libfive/test/libfive-test
 
     - uses: actions/upload-artifact@v2
