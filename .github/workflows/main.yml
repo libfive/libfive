@@ -23,12 +23,11 @@ jobs:
 
     - name: Bootstrap vspkg
       run: |
-        git clone https://github.com/Microsoft/vcpkg.git
+		git clone --depth=1 --branch patch-7 https://github.com/Neumann-A/vcpkg.git
         vcpkg\bootstrap-vcpkg.bat
-        vcpkg\vcpkg install eigen3:x86-windows-static boost:x86-windows-static libpng:x86-windows-static
-        #md build
-        #cd build
-        #cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
+        vcpkg\vcpkg install libpng:x86-windows-static
+        vcpkg\vcpkg install eigen3:x86-windows-static
+        vcpkg\vcpkg install boost:x86-windows-static
 
     - name: Run a multi-line script
       run: |
