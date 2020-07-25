@@ -25,3 +25,11 @@ jobs:
 
     - name: Test
       run: ./build/libfive/test/libfive-test
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: artifacts.zip
+        path: |
+          ./studio/Studio
+          ./libfive/src/libfive.so
+          ./libfive/bind/libfive-guile.so
