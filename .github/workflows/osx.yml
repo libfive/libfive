@@ -1,4 +1,4 @@
-name: Linux-Build
+name: OSX-Build
 
 on:
   push:
@@ -8,14 +8,15 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest 
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Install Dependencies
       run: |
-        sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev
+        brew install cmake pkg-config eigen libpng qt guile boost
+
 
     - name: Build Project
       run: |
