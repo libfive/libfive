@@ -11,30 +11,7 @@ jobs:
     runs-on: windows-latest 
 
     steps:
-#    - uses: actions/cache@v2
-#      with:
-#        path: |
-#          ./vcpkg
-#          C:\Users\runneradmin\AppData\Local\vcpkg
-#        key: ${{ runner.os }}-vcpkg
-
     - uses: actions/checkout@v2
 
-#    - name: install msys2
-#      run: choco install msys2
-
-#    - name: Pacman key things
-#      run: | 
-#        msys "pacman-key --init"
-#        msys "pacman-key --populate msys2"
-#        msys "pacman-key --refresh-keys"
-
-#    - name: Bootstrap vspkg
-#      run: |
-#        git clone --depth=1 https://github.com/Microsoft/vcpkg.git
-#        vcpkg\bootstrap-vcpkg.bat
-
-#    - name: Install packages
-#      run: |
-#        vcpkg\vcpkg install libpng:x86-windows-static
-
+#  Windows doesn't work yet.  Blocking on: 
+#  - https://github.com/microsoft/vcpkg/issues/12573
