@@ -21,9 +21,6 @@ jobs:
 
     - uses: actions/checkout@v2
 
-    - name : install msys2
-      run: choco install msys2
-
     - name: Bootstrap vspkg
       run: |
         git clone --depth=1 https://github.com/TyOverby/vcpkg.git
