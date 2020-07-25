@@ -734,7 +734,7 @@ Tree Tree::collect_affine() const {
                 } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
                     todo.push(Down { t->lhs.ptr, 1.0f });
                     todo.push(Down { t->rhs.ptr, 1.0f });
-                } else if (auto t=std::get_if<TreeRemap>(d->t)) {
+                } else if (std::get_if<TreeRemap>(d->t)) {
                     // This should be caught above
                     assert(false);
                 } else {
