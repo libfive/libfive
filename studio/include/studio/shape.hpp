@@ -75,7 +75,7 @@ public:
     /*
      *  Looks up the tree's ID
      */
-    libfive::Tree::Id id() const { return tree.tree.id(); }
+    libfive::Tree::Id id() const { return tree.id(); }
 
     /*
      *  Updates variables from another Shape

@@ -105,7 +105,7 @@ TreeData::Key TreeData::key() const {
 }
 
 uint32_t TreeData::compute_flags() const {
-    if (auto d = std::get_if<TreeConstant>(this)) {
+    if (std::get_if<TreeConstant>(this)) {
         return 0;
     } else if (auto d = std::get_if<TreeNonaryOp>(this)) {
         return (d->op == Opcode::VAR_X ||
@@ -117,7 +117,7 @@ uint32_t TreeData::compute_flags() const {
         return d->lhs->flags;
     } else if (auto d = std::get_if<TreeBinaryOp>(this)) {
         return d->lhs->flags | d->rhs->flags;
-    } else if (auto d = std::get_if<TreeOracle>(this)) {
+    } else if (std::get_if<TreeOracle>(this)) {
         return TREE_FLAG_HAS_ORACLE;
     } else if (auto d = std::get_if<TreeRemap>(this)) {
         return d->x->flags | d->y->flags | d->z->flags |
