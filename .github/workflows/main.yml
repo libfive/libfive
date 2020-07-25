@@ -24,11 +24,11 @@ jobs:
     - name: install msys2
       run: choco install msys2
 
-    - name: Pacman key things
-      run: | 
-        pacman-key --init
-        pacman-key --populate msys2
-        pacman-key --refresh-keys
+#    - name: Pacman key things
+#      run: | 
+#        msys "pacman-key --init"
+#        msys "pacman-key --populate msys2"
+#        msys "pacman-key --refresh-keys"
 
     - name: Bootstrap vspkg
       run: |
