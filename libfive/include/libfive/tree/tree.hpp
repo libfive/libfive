@@ -82,23 +82,24 @@ public:
 
     ~Tree();
     Tree(const Tree& other)
-        : Tree(other.ptr)
+        : Tree(other.ptr, true, other.flags)
     { /* Nothing to do here */ }
     Tree(Tree&& other) noexcept
-        : ptr(std::exchange(other.ptr, nullptr))
+        : ptr(std::exchange(other.ptr, nullptr)), flags(other.flags)
     { /* Nothing to do here */ }
     Tree& operator=(const Tree& other) {
-        return *this = Tree(other.ptr);
+        return *this = Tree(other.ptr, true, other.flags);
     }
     Tree& operator=(Tree&& other) noexcept {
         std::swap(ptr, other.ptr);
+        flags = other.flags;
         return *this;
     }
 
     /* Constructor to build from the raw variant pointer.  This is only useful
      * for building a temporary Tree around a pointer acquired from release() */
     explicit Tree(const Data* d)
-        : Tree(d, true)
+        : Tree(d, true, 0)
     { /* Nothing to do here */ }
 
     // These are the main constructors used to build Trees in code
@@ -228,6 +229,19 @@ protected:
      *  Tree (to avoid blowing up the stack). */
     const Data mutable* ptr = nullptr;
 
+    /*  These flags are different from the flags within TreeData in
+     *  that they are caches of pure functions of the tree data; instead,
+     *  they mark information about the history of the tree (e.g.
+     *  whether it was returned from optimized() or unique()) */
+    enum {
+        TREE_FLAG_IS_UNIQUE=(1<<0),
+        TREE_FLAG_IS_OPTIMIZED=(1<<0),
+    };
+    uint32_t flags;
+
+    /*  Returns a Tree with the same data but extra flag bits set */
+    Tree with_flags(uint32_t extra_flags) const;
+
     /*  Does a binary reduction of a set of affine pairs, building a
      *  balanced-ish tree.  The a iterator is the beginning of the region to
      *  reduce, and b is one-past-the-end of the region to reduce. */
@@ -241,7 +255,7 @@ protected:
     Tree substitute_with(std::function<const Data* (Tree)> fn) const;
 
     /* Private constructor to build from the raw variant pointer */
-    explicit Tree(const Data* d, bool increment_refcount);
+    explicit Tree(const Data* d, bool increment_refcount, uint32_t flags);
 
     /*  Returns a shared Tree with a constant value of one.
      *  This is used when doing affine reduction. */

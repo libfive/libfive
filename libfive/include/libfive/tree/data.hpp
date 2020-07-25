@@ -66,7 +66,7 @@ struct TreeData : public TreeDataVariant
 {
     TreeData(TreeDataVariant&& v)
         : TreeDataVariant(std::move(v))
-        , flags(get_flags())
+        , flags(compute_flags())
     { /* Nothing to do here */ }
 
     /*  Returns the opcode of this clause */
@@ -124,6 +124,10 @@ struct TreeData : public TreeDataVariant
 
     // Flags are accumulated up through the tree, and used to do things
     // like lazily flattening remap operations when needed.
+    //
+    // These flags are a pure function of the tree data, serving as
+    // a cache; they could be computed by walking the tree, but it's
+    // nice to have this information available with O(1).
     enum {
         TREE_FLAG_HAS_REMAP=(1<<0),
         TREE_FLAG_HAS_ORACLE=(1<<1),
@@ -134,7 +138,7 @@ struct TreeData : public TreeDataVariant
 protected:
     /*  Used to calculate flags during the constructor, after the variant
      *  is assigned but before the constructor completes. */
-    uint32_t get_flags() const;
+    uint32_t compute_flags() const;
 };
 
 }   // namespace libfive

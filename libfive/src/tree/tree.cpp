@@ -61,8 +61,8 @@ Tree::Tree(float f)
     // Nothing to do here
 }
 
-Tree::Tree(const Data* d, bool increment_refcount)
-    : ptr(d)
+Tree::Tree(const Data* d, bool increment_refcount, uint32_t flags)
+    : ptr(d), flags(flags)
 {
     if (d && increment_refcount) {
         d->refcount++;
@@ -515,7 +515,7 @@ const Tree::Data* Tree::release() {
 }
 
 Tree Tree::reclaim(const Data* ptr) {
-    return Tree(ptr, false); // Don't increment refcount
+    return Tree(ptr, false, 0); // Don't increment refcount
 }
 
 Tree Tree::substitute_with(std::function<const TreeData* (Tree)> fn) const {
@@ -619,7 +619,11 @@ Tree Tree::unique_helper(std::map<TreeDataKey, Tree>& canonical) const {
             canonical.insert(k_itr, {key, Tree(t)});
             return t.ptr;
         }
-    });
+    }).with_flags(TREE_FLAG_IS_UNIQUE);
+}
+
+Tree Tree::with_flags(uint32_t extra_flags) const {
+    return Tree(ptr, true, flags | extra_flags);
 }
 
 Tree Tree::optimized() const {
