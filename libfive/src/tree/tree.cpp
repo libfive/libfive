@@ -870,24 +870,4 @@ size_t Tree::size() const {
     return seen.size();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-// Mass-produce definitions for overloaded operations
-#define OP_UNARY(name, opcode)                      \
-Tree name(const Tree& lhs) {                        \
-    return Tree::unary(Opcode::opcode, lhs);        \
-}
-#define OP_BINARY(name, opcode)                     \
-Tree name(const Tree& lhs, const Tree& rhs) {       \
-    return Tree::binary(Opcode::opcode, lhs, rhs);  \
-}
-TREE_OPERATORS
-
-////////////////////////////////////////////////////////////////////////////////
-
-std::ostream& operator<<(std::ostream& stream, const Tree& tree)
-{
-    return tree.print_prefix(stream);
-}
-
 }   // namespace libfive
