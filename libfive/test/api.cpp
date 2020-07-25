@@ -204,9 +204,10 @@ TEST_CASE("libfive_tree_print")
     auto one = libfive_tree_const(1.0f);
     auto d = libfive_tree_binary(Opcode::OP_SUB, r, one);
 
-    std::string s = libfive_tree_print(d);
+    auto ptr = libfive_tree_print(d);
+    std::string s(ptr);
     REQUIRE(s == "(- (+ (square x) (square y) (square z)) 1)");
-    free(d);
+    free(ptr);
 
     for (auto& t: {x, y, z, x2, y2, z2, r_, r, one, d}) {
         libfive_tree_delete(t);
