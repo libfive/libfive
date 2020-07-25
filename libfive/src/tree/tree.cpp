@@ -386,7 +386,7 @@ Tree Tree::flatten() const {
                 todo.push(Up { d->t });
                 todo.push(Down { d->x, d->y, d->z, t->lhs.ptr });
                 todo.push(Down { d->x, d->y, d->z, t->rhs.ptr });
-            } else if (auto t=std::get_if<TreeConstant>(d->t)) {
+            } else if (std::get_if<TreeConstant>(d->t)) {
                 out.push(Tree(d->t));
             } else if (auto t=std::get_if<TreeOracle>(d->t)) {
                 const Tree new_oracle(t->oracle->remap(
@@ -462,7 +462,7 @@ std::vector<const Tree::Data*> Tree::walk() const {
             if (count[d->rhs.id()]++ == 0) {
                 todo.push(d->rhs.get());
             }
-        } else if (auto d = std::get_if<TreeRemap>(next)) {
+        } else if (std::get_if<TreeRemap>(next)) {
             // This should never happen because of the check above
             assert(false);
         }
@@ -545,9 +545,9 @@ Tree Tree::substitute_with(std::function<const TreeData* (Tree)> fn) const {
             } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
                 todo.push(Down { t->lhs.ptr });
                 todo.push(Down { t->rhs.ptr });
-            } else if (auto t=std::get_if<TreeConstant>(d->t)) {
+            } else if (std::get_if<TreeConstant>(d->t)) {
                 // Nothing to do here
-            } else if (auto t=std::get_if<TreeOracle>(d->t)) {
+            } else if (std::get_if<TreeOracle>(d->t)) {
                 // Nothing to do here
             } else if (std::get_if<TreeRemap>(d->t)) {
                 // This should never happen, because we flatten above
