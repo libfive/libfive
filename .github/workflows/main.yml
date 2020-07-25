@@ -26,14 +26,12 @@ jobs:
 
     - name: Bootstrap vspkg
       run: |
-        git clone --depth=1 --branch patch-7 https://github.com/Neumann-A/vcpkg.git
+        git clone --depth=1 --branch patch-7 https://github.com/TyOverby/vcpkg.git
         vcpkg\bootstrap-vcpkg.bat
 
     - name: Install packages
       run: |
         vcpkg\vcpkg install libpng:x86-windows-static
-        vcpkg\vcpkg install eigen3:x86-windows-static
-        vcpkg\vcpkg install boost:x86-windows-static
 
     - name: Run a multi-line script
       run: |
