@@ -206,6 +206,7 @@ TEST_CASE("libfive_tree_print")
 
     std::string s = libfive_tree_print(d);
     REQUIRE(s == "(- (+ (square x) (square y) (square z)) 1)");
+    free(d);
 
     for (auto& t: {x, y, z, x2, y2, z2, r_, r, one, d}) {
         libfive_tree_delete(t);
