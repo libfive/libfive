@@ -29,17 +29,12 @@ jobs:
 #        msys "pacman-key --populate msys2"
 #        msys "pacman-key --refresh-keys"
 
-    - name: Bootstrap vspkg
-      run: |
-        git clone --depth=1 https://github.com/Microsoft/vcpkg.git
-        vcpkg\bootstrap-vcpkg.bat
+#    - name: Bootstrap vspkg
+#      run: |
+#        git clone --depth=1 https://github.com/Microsoft/vcpkg.git
+#        vcpkg\bootstrap-vcpkg.bat
 
-    - name: Install packages
-      run: |
-        vcpkg\vcpkg install libpng:x86-windows-static
-
-    - name: Run a multi-line script
-      run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+#    - name: Install packages
+#      run: |
+#        vcpkg\vcpkg install libpng:x86-windows-static
 
