@@ -1,4 +1,4 @@
-name: Windows-Build
+name: Windows Build
 
 on:
   push:
@@ -11,7 +11,22 @@ jobs:
     runs-on: windows-latest 
 
     steps:
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ./vcpkg
+          C:\Users\runneradmin\AppData\Local\vcpkg
+        key: ${{ runner.os }}-vcpkg
+
     - uses: actions/checkout@v2
 
-#  Windows doesn't work yet.  Blocking on: 
-#  - https://github.com/microsoft/vcpkg/issues/12573
+    - name: Bootstrap vspkg
+      run: |
+        git clone --depth=1 https://github.com/Microsoft/vcpkg.git
+        (cd vcpkg && git checkout 6bf5adff937abd9bf09fb1c3fda40b5f566f8acd)
+        vcpkg\bootstrap-vcpkg.bat
+
+    - name: Install packages
+      run: |
+        vcpkg\vcpkg install libpng:x86-windows-static
+
