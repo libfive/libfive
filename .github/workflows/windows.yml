@@ -16,8 +16,7 @@ jobs:
       with:
         path: |
           vcpkg
-          C:\Users\runneradmin\AppData\Local\vcpkg
-        key: ${{ runner.os }}-vcpkg-cache-min
+        key: ${{ runner.os }}-vcpkg-cache-min-2
 
     - uses: actions/checkout@v2
 
@@ -39,12 +38,6 @@ jobs:
         vcpkg\vcpkg install boost-bimap:x86-windows-static 
         vcpkg\vcpkg install boost-numeric:x86-windows-static 
         vcpkg\vcpkg install eigen3:x86-windows-static
-
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.1
-      with:
-       vs-version: '[16.4,16.5)'
-
 
     - name: Build
       run: |
