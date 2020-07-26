@@ -37,7 +37,6 @@ jobs:
       with:
         name: artifacts.zip
         path: |
-          ./studio/Studio
           ./libfive/src/libfive.dylib
           ./libfive/bind/libfive-guile.dylib
-          ./libfive/studio/Studio.app
+          ./libfive/studio/Studio.app/**/*
