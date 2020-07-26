@@ -30,9 +30,7 @@ jobs:
 
     - name: Install packages
       run: |
-        vcpkg\vcpkg install libpng:x86-windows-static
-        vcpkg\vcpkg install boost:x86-windows-static
-        vcpkg\vcpkg install eigen3:x86-windows-static
+        vcpkg\vcpkg install libpng:x86-windows-static boost:x86-windows-static eigen3:x86-windows-static
 
     - name: Build
       run: |
