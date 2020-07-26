@@ -42,7 +42,7 @@ jobs:
     - name: Build
       run: |
         md build
-        cmake .\build -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" 
+        cmake -B .\build -S . -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static"
         cmake --build .\build
 
 
