@@ -27,10 +27,13 @@ jobs:
       continue-on-error: true
       run: ./build/libfive/test/libfive-test
 
+    - name: Tree
+      run: tree ./build
+
     - uses: actions/upload-artifact@v2
       with:
         name: artifacts.zip
         path: |
-          ./studio/Studio
-          ./libfive/src/libfive.so
-          ./libfive/bind/libfive-guile.so
+          ./build/studio/Studio
+          ./build/libfive/src/libfive.so
+          ./build/libfive/bind/libfive-guile.so
