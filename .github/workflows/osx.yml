@@ -19,6 +19,7 @@ jobs:
     - name: Build Project
       run: |
         export PKG_CONFIG_PATH="/usr/local/opt/guile@2/lib/pkgconfig:$PKG_CONFIG_PATH"
+        exprot PKG_CONFIG_PATH="/usr/local/opt/qt/lib/pkgconfig:$PKG_CONFIG_PATH"
         mkdir build
         cd build
         cmake ..
