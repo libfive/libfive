@@ -20,11 +20,10 @@ jobs:
       run: |
         export PKG_CONFIG_PATH="/usr/local/opt/guile@2/lib/pkgconfig:$PKG_CONFIG_PATH"
         export PKG_CONFIG_PATH="/usr/local/opt/qt/lib/pkgconfig:$PKG_CONFIG_PATH"
-        export CMAKE_MODULE_PATH=/usr/local/opt/qt/lib/cmake
 
         mkdir build
         cd build
-        cmake ..
+        cmake -DCMAKE_PREFIX_PATH=/usr/local/opt/qt ..
         make -j4
 
     - name: Test
