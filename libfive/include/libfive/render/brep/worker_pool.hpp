@@ -58,7 +58,6 @@ protected:
         boost::lockfree::stack<Task, boost::lockfree::fixed_sized<true>>;
 
     static void run(Evaluator* eval, LockFreeStack& tasks,
-                    Root<T>& root, std::mutex& root_lock,
                     const BRepSettings& settings,
                     std::atomic_bool& done);
 };

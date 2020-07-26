@@ -7,6 +7,7 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
+#include <stack>
 
 #include "libfive/render/brep/free_thread_handler.hpp"
 #include "libfive/render/brep/settings.hpp"
@@ -49,7 +50,6 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     futures.resize(settings.workers);
 
     Root<T> out(root);
-    std::mutex root_lock;
 
     // Kick off the progress tracking thread, based on the number of
     // octree levels and a fixed split per level
@@ -65,8 +65,8 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
     for (unsigned i=0; i < settings.workers; ++i)
     {
         futures[i] = std::async(std::launch::async,
-                [&eval, &tasks, &out, &root_lock, &settings, &done, i](){
-                    run(eval + i, tasks, out, root_lock, settings, done);
+                [&eval, &tasks, &settings, &done, i](){
+                    run(eval + i, tasks, settings, done);
                 });
     }
 
@@ -91,15 +91,12 @@ Root<T> WorkerPool<T, Neighbors, N>::build(
 template <typename T, typename Neighbors, unsigned N>
 void WorkerPool<T, Neighbors, N>::run(
         Evaluator* eval, LockFreeStack& tasks,
-        Root<T>& root, std::mutex& root_lock,
         const BRepSettings& settings,
         std::atomic_bool& done)
 {
     // Tasks to be evaluated by this thread (populated when the
     // MPMC stack is completely full).
     std::stack<Task, std::vector<Task>> local;
-
-    typename T::Pool object_pool;
 
     while (!done.load() && !settings.cancel.load())
     {
@@ -152,7 +149,7 @@ void WorkerPool<T, Neighbors, N>::run(
                 }
             }
             if (t->type == Interval::UNKNOWN) {
-                next_tape = t->evalInterval(eval, task.tape, object_pool);
+                next_tape = t->evalInterval(eval, task.tape);
             }
             if (next_tape != nullptr) {
                 tape = next_tape;
@@ -170,7 +167,7 @@ void WorkerPool<T, Neighbors, N>::run(
                     // If there are available slots, then pass this work
                     // to the queue; otherwise, undo the decrement and
                     // assign it to be evaluated locally.
-                    auto next_tree = object_pool.get(t, i, rs[i]);
+                    auto next_tree = new T(t, i, rs[i]);
                     auto next_vol = task.vol ? task.vol->push(i, rs[i].perp)
                                              : nullptr;
                     Task next{next_tree, tape, neighbors, next_vol};
@@ -191,7 +188,7 @@ void WorkerPool<T, Neighbors, N>::run(
         }
         else
         {
-            t->evalLeaf(eval, tape, object_pool, neighbors);
+            t->evalLeaf(eval, tape, neighbors);
         }
 
         if (settings.progress_handler)
@@ -224,7 +221,6 @@ void WorkerPool<T, Neighbors, N>::run(
         };
         up();
         while (t != nullptr && t->collectChildren(eval, tape,
-                                                  object_pool,
                                                   settings.max_err))
         {
             // Report the volume of completed trees as we walk back
@@ -246,11 +242,6 @@ void WorkerPool<T, Neighbors, N>::run(
     // If we've broken out of the loop, then we should set the done flag
     // so that other worker threads also terminate.
     done.store(true);
-
-    {   // Release the pooled objects to the root
-        std::lock_guard<std::mutex> lock(root_lock);
-        root.claim(object_pool);
-    }
 }
 
 }   // namespace libfive

@@ -69,7 +69,7 @@ std::unique_ptr<Mesh> Mesh::render(
         out = Dual<3>::walk<DCMesher>(t, settings);
 
         // TODO: check for early return here again
-        t.reset(settings);
+        t.reset();
     }
     else if (settings.alg == ISO_SIMPLEX)
     {
@@ -92,7 +92,7 @@ std::unique_ptr<Mesh> Mesh::render(
                 [&](PerThreadBRep<3>& brep, int i) {
                     return SimplexMesher(brep, &es[i]);
                 });
-        t.reset(settings);
+        t.reset();
     }
     else if (settings.alg == HYBRID)
     {
@@ -115,7 +115,7 @@ std::unique_ptr<Mesh> Mesh::render(
                 [&](PerThreadBRep<3>& brep, int i) {
                     return HybridMesher(brep, &es[i]);
                 });
-        t.reset(settings);
+        t.reset();
     }
 
     if (settings.progress_handler) {

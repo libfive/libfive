@@ -60,14 +60,8 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
 
     // Unambiguous cases
     if (handle.first < 0) {
-        if (handle.second != tape) {
-            deck->claim(std::move(handle.second));
-        }
         return true;
     } else if (handle.first > 0) {
-        if (handle.second != tape) {
-            deck->claim(std::move(handle.second));
-        }
         return false;
     }
 
@@ -85,12 +79,6 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
     auto fs = f(handle.second->root());
-
-    // If this is a freshly allocated tape, then release it to the Deck
-    // so that it can be reused later.
-    if (handle.second != tape) {
-        deck->claim(std::move(handle.second));
-    }
 
     // If there's only a single feature, we can get both positive and negative
     // values out if it's got a non-zero gradient
@@ -137,13 +125,6 @@ const boost::container::small_vector<Feature, 4>&
     deck->unbindOracles();
 
     const auto root = handle.second->root();
-
-    // If this is a freshly allocated tape, then release it to the Deck
-    // so that it can be reused later.
-    if (handle.second != tape) {
-        deck->claim(std::move(handle.second));
-    }
-
     return f(root);
 }
 

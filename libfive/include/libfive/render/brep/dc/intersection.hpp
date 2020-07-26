@@ -18,10 +18,6 @@ template <unsigned N>
 struct Intersection {
     Intersection()
     {
-        reset();
-    }
-
-    void reset() {
         AtA.array() = 0.0;
         AtB.array() = 0.0;
         BtB = 0.0;

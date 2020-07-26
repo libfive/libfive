@@ -20,19 +20,10 @@ template <unsigned N, typename T, typename L>
 class XTree
 {
 public:
-    /*
-     *  Simple constructor
-     *
-     *  Pointers are initialized to nullptr, but other members
-     *  are invalid until reset() is called.
-     */
     explicit XTree();
     explicit XTree(T* parent, unsigned index, const Region<N>& region);
 
-    /*
-     *  Resets this tree to a freshly-constructed state
-     */
-    void reset(T* p, unsigned i, const Region<N>& r);
+    virtual ~XTree();
 
     /*
      *  Checks whether this tree splits
@@ -71,32 +62,23 @@ public:
     /*  The cell's region */
     Region<N> region;
 
-    /*  Optional leaf data, owned by a parent ObjectPool<Leaf> */
-    L* leaf;
+    /*  Optional leaf data */
+    std::unique_ptr<L> leaf;
 
     /*  Marks whether this tree is fully constructed */
     mutable std::atomic_uint pending;
 
 protected:
     /*
-     *  Releases the children (and their Leaf pointers, if present)
-     *  into the given object pools.
-     *
-     *  The template argument must be T::Pool, but that breaks
-     *  template expansion.
+     *  Deletes all children
      */
-    template <typename Pool>
-    void releaseChildren(Pool& object_pool);
+    void freeChildren();
 
     /*
      *  Call this when construction is complete; it will atomically install
      *  this tree into the parent's array of children pointers.
-     *
-     *  Returns true if instead it has installed a singleton into the parent's
-     *  array, which happens if a tree type's hasSingletons() is true and the
-     *  given tree is empty or filled.
      */
-    bool done();
+    void done();
 };
 
 }   // namespace libfive

@@ -36,18 +36,9 @@ namespace libfive {
 
 template <unsigned N>
 SimplexLeafSubspace<N>::SimplexLeafSubspace()
+    : inside(false), index(0)
 {
-    reset();
-}
-
-template <unsigned N>
-void SimplexLeafSubspace<N>::reset()
-{
-    inside = false;
-    index = 0;
     vert.array() = 0.0;
-    qef.reset();
-    refcount.store(0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,29 +46,10 @@ void SimplexLeafSubspace<N>::reset()
 template <unsigned N>
 SimplexLeaf<N>::SimplexLeaf()
 {
-    reset();
-}
-
-template <unsigned N>
-void SimplexLeaf<N>::reset()
-{
     level = 0;
     tape.reset();
     std::fill(sub.begin(), sub.end(), nullptr);
     surface.clear();
-}
-
-template <unsigned N>
-void SimplexLeaf<N>::releaseTo(Pool& object_pool)
-{
-    for (auto& s : sub) {
-        auto sub = s.load();
-        if (--sub->refcount == 0) {
-            object_pool.next().put(sub);
-        }
-        s = nullptr;
-    }
-    object_pool.put(this);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -91,7 +63,7 @@ struct Unroller
      */
     double operator()(
             SimplexLeaf<BaseDimension>& leaf,
-            const std::array<SimplexLeafSubspace<BaseDimension>*,
+            const std::array<std::shared_ptr<SimplexLeafSubspace<BaseDimension>>,
                        ipow(3, BaseDimension)>& leaf_sub,
             const std::array<bool, ipow(3, BaseDimension)>& already_solved,
             const Region<BaseDimension>& region,
@@ -173,7 +145,7 @@ template <unsigned BaseDimension>
 struct Unroller<BaseDimension, -1>
 {
     double operator()(SimplexLeaf<BaseDimension>&,
-                      const std::array<SimplexLeafSubspace<BaseDimension>*,
+                      const std::array<std::shared_ptr<SimplexLeafSubspace<BaseDimension>>,
                                  ipow(3, BaseDimension)>&,
                       const std::array<bool, ipow(3, BaseDimension)>&,
                       const Region<BaseDimension>&,
@@ -217,8 +189,7 @@ std::unique_ptr<SimplexTree<N>> SimplexTree<N>::empty()
 
 template <unsigned N>
 Tape::Handle SimplexTree<N>::evalInterval(Evaluator* eval,
-                                          const Tape::Handle& tape,
-                                          Pool& object_pool)
+                                          const Tape::Handle& tape)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -238,9 +209,9 @@ Tape::Handle SimplexTree<N>::evalInterval(Evaluator* eval,
     {
         SimplexNeighbors<N> neighbors;
 
-        this->leaf = object_pool.next().get();
+        this->leaf.reset(new SimplexLeaf<N>());
         this->leaf->level = this->region.level;
-        findLeafVertices(eval, tape, object_pool, neighbors);
+        findLeafVertices(eval, tape, neighbors);
         this->done();
     }
     return o.second;
@@ -252,7 +223,6 @@ template <unsigned N>
 void SimplexTree<N>::findLeafVertices(
         Evaluator* eval,
         const Tape::Handle& tape,
-        Pool& object_pool,
         const SimplexNeighbors<N>& neighbors)
 {
     assert(this->leaf != nullptr);
@@ -265,15 +235,14 @@ void SimplexTree<N>::findLeafVertices(
     // from our neighbors whenever possible.
     for (unsigned i=0; i < ipow(3, N); ++i) {
         const auto c = neighbors.check(NeighborIndex(i));
-        SimplexLeafSubspace<N>* s = nullptr;
+        std::shared_ptr<SimplexLeafSubspace<N>> s;
         if (c.first != nullptr) {
-            s = c.first->sub[c.second.i].load();
+            s = std::atomic_load(&c.first->sub[c.second.i]);
             already_solved[i] = true;
         } else {
-            s = object_pool.next().next().get();
+            s = std::make_shared<SimplexLeafSubspace<N>>();
         }
-        s->refcount++;
-        this->leaf->sub[i].store(s);
+        std::atomic_store(&this->leaf->sub[i], s);
     }
 
     const auto leaf_sub = getLeafSubs();
@@ -349,7 +318,7 @@ void SimplexTree<N>::findLeafVertices(
     }
 
     // Then unpack into the subspace QEF arrays (which are guaranteed to be
-    // empty, because SimplexLeaf::reset() clears them).
+    // empty, because SimplexLeaf constructor clears them).
     {
         Eigen::Matrix<float, 4, ArrayEvaluator::N> ds;
         ds.leftCols(count) = eval->derivs(count, *tape);
@@ -419,10 +388,9 @@ void SimplexTree<N>::findLeafVertices(
 template <unsigned N>
 void SimplexTree<N>::evalLeaf(Evaluator* eval,
                               const std::shared_ptr<Tape>& tape,
-                              Pool& object_pool,
                               const SimplexNeighbors<N>& neighbors)
 {
-    this->leaf = object_pool.next().get();
+    this->leaf.reset(new SimplexLeaf<N>());
     this->leaf->tape = tape;
     this->leaf->level = this->region.level;
     assert(this->region.level == 0);
@@ -430,7 +398,7 @@ void SimplexTree<N>::evalLeaf(Evaluator* eval,
     // Build the corner-subspace QEFs by sampling the function at the corners,
     // then solve for vertex position.
     this->type = Interval::AMBIGUOUS;
-    findLeafVertices(eval, tape, object_pool, neighbors);
+    findLeafVertices(eval, tape, neighbors);
     checkVertexSigns();
 
     // We need to keep the leaf + QEF data, even if the region is completely
@@ -443,7 +411,6 @@ void SimplexTree<N>::evalLeaf(Evaluator* eval,
 template <unsigned N>
 bool SimplexTree<N>::collectChildren(Evaluator* eval,
                                      const Tape::Handle& tape,
-                                     Pool& object_pool,
                                      double max_err)
 {
     // Wait for collectChildren to have been called N times
@@ -471,7 +438,7 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
     // We've now passed all of our opportunitie to exit without
     // allocating a Leaf, so create one here.
     assert(this->leaf == nullptr);
-    this->leaf = object_pool.next().get();
+    this->leaf.reset(new SimplexLeaf<N>());
 
     // Store this tree's depth and tape.  This could be delegated
     // until we're sure that we're keeping the leaf, but might as well
@@ -499,11 +466,11 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
     // (after solving for vertex positions).
     if (this->type == Interval::EMPTY || this->type == Interval::FILLED)
     {
-        this->releaseChildren(object_pool);
+        this->freeChildren();
         assert(!this->isBranch());
 
         SimplexNeighbors<N> neighbors;
-        findLeafVertices(eval, tape, object_pool, neighbors);
+        findLeafVertices(eval, tape, neighbors);
         this->done();
 
         return true;
@@ -512,19 +479,18 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
     // Allocate SimplexLeafSubspace objects for this tree
     // TODO: can we pull from neighbors here as well?
     //
-    // We use an array of plain pointers to reduce the number
-    // of atomic loads that need to be performed.
+    // We use an array of shared_ptrs here to manage memory automatically
     for (auto& s : this->leaf->sub) {
-        auto ptr = object_pool.next().next().get();
-        s.store(ptr);
-        ptr->refcount++;
+        auto ptr = std::make_shared<SimplexLeafSubspace<N>>();
+        std::atomic_store(&s, ptr);
     }
     const auto leaf_sub = getLeafSubs();
 
     // Collect all of the child subspaces, based on a precalculated table
     for (unsigned i=0; i < ipow(3, N); ++i) {
         for (const auto& t: NeighborTables<N>::qefSumTable(i)) {
-            leaf_sub[i]->qef += cs[t.first.i]->leaf->sub[t.second.i].load()->qef;
+            auto ptr = std::atomic_load(&cs[t.first.i]->leaf->sub[t.second.i]);
+            leaf_sub[i]->qef += ptr->qef;
         }
     }
 
@@ -545,13 +511,12 @@ bool SimplexTree<N>::collectChildren(Evaluator* eval,
 
         // Then, erase all of the children, which marks that this
         // cell is no longer a BRANCH.
-        this->releaseChildren(object_pool);
+        this->freeChildren();
         assert(!this->isBranch());
     } else {
         // Otherwise, this remains a branching node;
         // free this leaf back to the pool
-        this->leaf->releaseTo(object_pool.next());
-        this->leaf = nullptr;
+        this->leaf.reset();
     }
 
     this->done();
@@ -624,7 +589,7 @@ void SimplexTree<N>::checkVertexSigns() {
     bool all_inside = true;
     bool all_outside = true;
     for (const auto& s : this->leaf->sub) {
-        auto sub = s.load();
+        auto sub = std::atomic_load(&s);
         all_inside  &=   sub->inside;
         all_outside &=  !sub->inside;
     }
@@ -644,12 +609,12 @@ void SimplexTree<N>::checkVertexSigns() {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <unsigned N>
-std::array<SimplexLeafSubspace<N>*, ipow(3, N)>
+std::array<std::shared_ptr<SimplexLeafSubspace<N>>, ipow(3, N)>
 SimplexTree<N>::getLeafSubs() const
 {
-    std::array<SimplexLeafSubspace<N>*, ipow(3, N)> out;
+    std::array<std::shared_ptr<SimplexLeafSubspace<N>>, ipow(3, N)> out;
     for (unsigned i=0; i < out.size(); ++i) {
-        out[i] = this->leaf->sub[i].load();
+        out[i] = std::atomic_load(&this->leaf->sub[i]);
     }
     return out;
 }
@@ -743,7 +708,7 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
         for (unsigned i=0; i < ipow(3, N); ++i)
         {
             const auto i_ = NeighborIndex(i);
-            const auto sub = task.target->leaf->sub[i].load();
+            const auto sub = std::atomic_load(&task.target->leaf->sub[i]);
             assert(sub != nullptr);
 
             // First, try to get it from a neighbor.  This function call also
@@ -761,11 +726,11 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
             //   If we're in cell X and looking for corner C, then our neighbor
             //   Y should recurse into cell Z to check C's index within Z.
             auto new_sub = task.neighbors->ns.getSubspace(i_);
-            if (reinterpret_cast<uintptr_t>(new_sub) >
-                reinterpret_cast<uintptr_t>(sub))
+            if (reinterpret_cast<uintptr_t>(new_sub.get()) >
+                reinterpret_cast<uintptr_t>(sub.get()))
             {
                 assert(new_sub->inside == sub->inside);
-                task.target->leaf->sub[i].store(new_sub);
+                std::atomic_store(&task.target->leaf->sub[i], new_sub);
             }
 
             // Otherwise, we need to try walking up the tree, looking at the
@@ -807,11 +772,11 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
                     t = t->parent;
                     neighbors_above = neighbors_above->parent;
                     auto new_sub = neighbors_above->ns.getSubspace(i_);
-                    if (reinterpret_cast<uintptr_t>(new_sub) >
-                        reinterpret_cast<uintptr_t>(sub))
+                    if (reinterpret_cast<uintptr_t>(new_sub.get()) >
+                        reinterpret_cast<uintptr_t>(sub.get()))
                     {
                         assert(new_sub->inside == sub->inside);
-                        task.target->leaf->sub[i].store(new_sub);
+                        std::atomic_store(&task.target->leaf->sub[i], new_sub);
                     }
                 }
             }
@@ -820,7 +785,7 @@ void assignIndicesWorker(LockFreeStack<N>& tasks,
         // Then, go through and make sure all indexes are assigned
         for (unsigned i=0; i < ipow(3, N); ++i)
         {
-            auto sub = task.target->leaf->sub[i].load();
+            auto sub = std::atomic_load(&task.target->leaf->sub[i]);
 
             // We do two atomic operations here:
             //
@@ -877,15 +842,6 @@ void SimplexTree<N>::assignIndices(const BRepSettings& settings) const
     }
 
     assert(done.load() || settings.cancel.load());
-}
-
-template <unsigned N>
-void SimplexTree<N>::releaseTo(Pool& object_pool) {
-    if (this->leaf != nullptr) {
-        this->leaf->releaseTo(object_pool.next());
-        this->leaf = nullptr;
-    }
-    object_pool.put(this);
 }
 
 }   // namespace libfive

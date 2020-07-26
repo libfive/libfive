@@ -48,8 +48,6 @@ add_library(five SHARED
     render/brep/dc/dc_tree3.cpp
     render/brep/dc/dc_xtree2.cpp
     render/brep/dc/dc_xtree3.cpp
-    render/brep/dc/dc_object_pool2.cpp
-    render/brep/dc/dc_object_pool3.cpp
 
     render/brep/hybrid/hybrid_debug.cpp
     render/brep/hybrid/hybrid_worker_pool2.cpp
@@ -60,8 +58,6 @@ add_library(five SHARED
     render/brep/hybrid/hybrid_tree3.cpp
     render/brep/hybrid/hybrid_xtree2.cpp
     render/brep/hybrid/hybrid_xtree3.cpp
-    render/brep/hybrid/hybrid_object_pool2.cpp
-    render/brep/hybrid/hybrid_object_pool3.cpp
     render/brep/hybrid/hybrid_mesher.cpp
 
     render/brep/simplex/simplex_debug.cpp
@@ -73,12 +69,9 @@ add_library(five SHARED
     render/brep/simplex/simplex_tree3.cpp
     render/brep/simplex/simplex_xtree2.cpp
     render/brep/simplex/simplex_xtree3.cpp
-    render/brep/simplex/simplex_object_pool2.cpp
-    render/brep/simplex/simplex_object_pool3.cpp
     render/brep/simplex/simplex_mesher.cpp
 
     render/brep/vol/vol_neighbors.cpp
-    render/brep/vol/vol_object_pool.cpp
     render/brep/vol/vol_tree.cpp
     render/brep/vol/vol_worker_pool.cpp
 

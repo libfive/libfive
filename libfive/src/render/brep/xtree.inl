@@ -14,41 +14,20 @@ namespace libfive {
 
 template <unsigned N, typename T, typename L>
 XTree<N, T, L>::XTree()
+    : XTree(nullptr, 0, Region<N>())
 {
-    for (auto& c : children)
-    {
-        c.store(nullptr, std::memory_order_relaxed);
-    }
-    leaf = nullptr;
+    // Nothing to do here
 }
 
 
 template <unsigned N, typename T, typename L>
 XTree<N, T, L>::XTree(T* parent, unsigned index, const Region<N>& region)
-    : XTree()
+    : parent(parent), parent_index(index), type(Interval::UNKNOWN),
+      region(region), leaf(nullptr), pending((1 << N) - 1)
 {
-    reset(parent, index, region);
-}
-
-template <unsigned N, typename T, typename L>
-void XTree<N, T, L>::reset(T* p, unsigned i, const Region<N>& r)
-{
-    parent = p;
-    parent_index = i;
-    type = Interval::UNKNOWN;
-    region = r;
-
-    // By design, a tree that is being reset must have no children
-    for (auto& c : children)
-    {
-        assert(c.load() == nullptr);
-        (void)c;
+    for (auto& c : children) {
+        c.store(nullptr, std::memory_order_relaxed);
     }
-
-    // By design, a tree that is being reset also has no leaf.
-    assert(leaf == nullptr);
-
-    pending.store((1 << N) - 1);
 }
 
 template <unsigned N, typename T, typename L>
@@ -70,9 +49,6 @@ void XTree<N, T, L>::resetPending() const
     pending.store((1 << N) - 1);
     if (isBranch()) {
         for (auto& c : children) {
-            if (T::isSingleton(c.load())) {
-                pending--;
-            }
             c.load()->resetPending();
         }
     }
@@ -86,37 +62,27 @@ void XTree<N, T, L>::setType(Interval::State t)
 }
 
 template <unsigned N, typename T, typename L>
-template <typename Pool>
-void XTree<N, T, L>::releaseChildren(Pool& object_pool)
-{
-    for (auto& c : children)
-    {
+XTree<N, T, L>::~XTree<N, T, L>() {
+    freeChildren();
+}
+
+template <unsigned N, typename T, typename L>
+void XTree<N, T, L>::freeChildren() {
+    for (auto& c : children) {
         auto ptr = c.exchange(nullptr);
-        assert(ptr != nullptr);
-        ptr->releaseTo(object_pool);
+        delete ptr;
     }
 }
 
 template <unsigned N, typename T, typename L>
-bool XTree<N, T, L>::done()
+void XTree<N, T, L>::done()
 {
-    bool out = false;
     if (parent)
     {
         assert(parent->children[parent_index].load() == nullptr);
         T* t = static_cast<T*>(this);
-        if (T::hasSingletons()) {
-            if (this->type == Interval::EMPTY) {
-                t = T::singletonEmpty();
-                out = true;
-            } else if (this->type == Interval::FILLED) {
-                t = T::singletonFilled();
-                out = true;
-            }
-        }
         parent->children[parent_index].store(t, std::memory_order_relaxed);
     }
-    return out;
 }
 
 }   // namespace libfive

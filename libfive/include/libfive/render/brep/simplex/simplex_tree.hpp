@@ -22,8 +22,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
-#include "libfive/render/brep/object_pool.hpp"
-#include "libfive/render/brep/default_new_delete.hpp"
 #include "libfive/render/brep/simplex/qef.hpp"
 #include "libfive/render/brep/simplex/surface_edge_map.hpp"
 
@@ -37,7 +35,6 @@ struct BRepSettings;
 template <unsigned N>
 struct SimplexLeafSubspace {
     SimplexLeafSubspace();
-    void reset();
 
     /*  Subspace vertex position */
     Eigen::Matrix<double, 1, N> vert;
@@ -51,13 +48,6 @@ struct SimplexLeafSubspace {
     /*  Per-subspace QEF */
     QEF<N> qef;
 
-    /*  SimplexLeafSubspace objects are allocated and released to an
-     *  object pool, but can be stored by more than one SubspaceLeaf
-     *  at a time (since they represent shared spaces).  We use a
-     *  homebrew reference counting system to avoid releasing them to
-     *  the pool while they're still in use.  */
-    std::atomic<uint32_t> refcount;
-
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
@@ -65,15 +55,11 @@ template <unsigned N>
 struct SimplexLeaf
 {
     SimplexLeaf();
-    void reset();
-
-    using Pool = ObjectPool<SimplexLeaf, SimplexLeafSubspace<N>>;
-    void releaseTo(Pool& object_pool);
 
     /*  One QEF structure per subspace in the leaf, shared between neighbors.
-     *  These pointers are owned by an object pool, for fast allocation
-     *  and re-use. */
-    std::array<std::atomic<SimplexLeafSubspace<N>*>, ipow(3, N)> sub;
+     *  These pointers are managed by shared_ptrs because they're shared
+     *  between neighbors for efficiency. */
+    std::array<std::shared_ptr<SimplexLeafSubspace<N>>, ipow(3, N)> sub;
 
     /*  Tape used for evaluation within this leaf */
     std::shared_ptr<Tape> tape;
@@ -88,8 +74,6 @@ struct SimplexLeaf
      *  ordered map. */
     SurfaceEdgeMap<32> surface;
 
-    DEFAULT_OPERATORS_NEW_AND_DELETE
-
     /*  Represents how far from minimum-size leafs we are */
     unsigned level;
 };
@@ -98,16 +82,6 @@ template <unsigned N>
 class SimplexTree : public XTree<N, SimplexTree<N>, SimplexLeaf<N>>
 {
 public:
-    using Pool = ObjectPool<SimplexTree<N>,
-                            SimplexLeaf<N>,
-                            SimplexLeafSubspace<N>>;
-
-    /*
-     *  Simple constructor
-     *
-     *  Pointers are initialized to nullptr, but other members
-     *  are invalid until reset() is called.
-     */
     explicit SimplexTree();
 
     /*
@@ -132,8 +106,7 @@ public:
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
     std::shared_ptr<Tape> evalInterval(Evaluator* eval,
-                                       const std::shared_ptr<Tape>& tape,
-                                       Pool& object_pool);
+                                       const std::shared_ptr<Tape>& tape);
 
     /*
      *  Evaluates and stores a result at every corner of the cell.
@@ -142,7 +115,6 @@ public:
      */
     void evalLeaf(Evaluator* eval,
                   const std::shared_ptr<Tape>& tape,
-                  Pool& object_pool,
                   const SimplexNeighbors<N>& neighbors);
 
     /*
@@ -153,7 +125,6 @@ public:
      */
     bool collectChildren(Evaluator* eval,
                          const std::shared_ptr<Tape>& tape,
-                         Pool& object_pool,
                          double max_err);
 
     /*  Looks up the cell's level for purposes of vertex placement,
@@ -178,21 +149,11 @@ public:
      */
     void assignIndices(const BRepSettings& settings) const;
 
-    /*
-     *  Releases this tree and any leaf objects to the given object pool
-     */
-    void releaseTo(Pool& object_pool);
-
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;
-
-    static bool hasSingletons() { return false; }
-    static SimplexTree<N>* singletonEmpty() { return nullptr; }
-    static SimplexTree<N>* singletonFilled() { return nullptr; }
-    static bool isSingleton(const SimplexTree<N>*) { return false; }
 
 protected:
     /*
@@ -219,15 +180,12 @@ protected:
      */
     void findLeafVertices(Evaluator* eval,
                           const Tape::Handle& tape,
-                          Pool& object_pool,
                           const SimplexNeighbors<N>& neighbors);
 
     /*
-     *  Unwraps the atomic pointers, returning an array of plain pointers
-     *  Only use this if multiple threads won't be messing with the pointers
-     *  simultaneously!
+     *  Atomically unwraps the shared pointers into an array
      */
-    std::array<SimplexLeafSubspace<N>*, ipow(3, N)> getLeafSubs() const;
+    std::array<std::shared_ptr<SimplexLeafSubspace<N>>, ipow(3, N)> getLeafSubs() const;
 };
 
 }   // namespace libfive

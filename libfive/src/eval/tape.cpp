@@ -103,16 +103,7 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
         return shared_from_this();
     }
 
-    Tape::Handle out;
-    if (deck.spares.size())
-    {
-        out = deck.spares.back();
-        deck.spares.pop_back();
-    }
-    else
-    {
-        out.reset(new Tape);
-    }
+    Tape::Handle out = std::make_shared<Tape>();
     out->t.reserve(t.size());
 
     out->type = type;

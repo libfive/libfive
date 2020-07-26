@@ -21,15 +21,15 @@ SimplexNeighbors<N>::SimplexNeighbors()
 }
 
 template <unsigned N>
-SimplexLeafSubspace<N>* SimplexNeighbors<N>::getSubspace(NeighborIndex i) const
+std::shared_ptr<SimplexLeafSubspace<N>> SimplexNeighbors<N>::getSubspace(NeighborIndex i) const
 {
-    SimplexLeafSubspace<N>* out = nullptr;
+    std::shared_ptr<SimplexLeafSubspace<N>> out;
     for (const auto& t : NeighborTables<N>::neighborTable(i)) {
         const auto n = this->neighbors[t.first.i];
         if (n != nullptr && n->leaf != nullptr) {
-            auto ptr = n->leaf->sub[t.second.i].load();
-            if (reinterpret_cast<uintptr_t>(ptr) >
-                reinterpret_cast<uintptr_t>(out))
+            auto ptr = std::atomic_load(&n->leaf->sub[t.second.i]);
+            if (reinterpret_cast<uintptr_t>(ptr.get()) >
+                reinterpret_cast<uintptr_t>(out.get()))
             {
                 out = ptr;
             }
@@ -60,9 +60,9 @@ SimplexLeafSubspace<N>* SimplexNeighbors<N>::getSubspace(NeighborIndex i) const
                     assert(n != nullptr);
                 }
                 assert(n->leaf != nullptr);
-                auto ptr = n->leaf->sub[t.second.neighbor().i].load();
-                if (reinterpret_cast<uintptr_t>(ptr) >
-                    reinterpret_cast<uintptr_t>(out))
+                auto ptr = std::atomic_load(&n->leaf->sub[t.second.neighbor().i]);
+                if (reinterpret_cast<uintptr_t>(ptr.get()) >
+                    reinterpret_cast<uintptr_t>(out.get()))
                 {
                     out = ptr;
                 }
@@ -79,7 +79,7 @@ std::pair<const SimplexLeaf<N>*, NeighborIndex> SimplexNeighbors<N>::check(Neigh
     for (const auto& t : NeighborTables<N>::neighborTable(i)) {
         const auto n = this->neighbors[t.first.i];
         if (n != nullptr && n->leaf != nullptr) {
-            return std::make_pair(n->leaf, t.second.i);
+            return std::make_pair(n->leaf.get(), t.second.i);
         }
     }
     return std::make_pair(nullptr, 0);

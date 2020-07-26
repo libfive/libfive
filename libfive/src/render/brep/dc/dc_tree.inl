@@ -64,19 +64,8 @@ std::unique_ptr<DCTree<N>> DCTree<N>::empty()
 
 template <unsigned N>
 DCLeaf<N>::DCLeaf()
+    : level(0), rank(0), corner_mask(0), vertex_count(0), manifold(false)
 {
-    reset();
-}
-
-template <unsigned N>
-void DCLeaf<N>::reset()
-{
-    level = 0;
-    rank = 0;
-    corner_mask = 0;
-    vertex_count = 0;
-    manifold = false;
-
     std::fill(index.begin(), index.end(), 0);
 
     for (auto& i : intersections) {
@@ -90,10 +79,10 @@ void DCLeaf<N>::reset()
     BtB = 0;
 }
 
+
 template <unsigned N>
 Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
-                                     const Tape::Handle& tape,
-                                     Pool& pool)
+                                     const Tape::Handle& tape)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -111,18 +100,7 @@ Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        // If this is unambiguous, then we're actually installed the singleton
-        // into the parent, so we can release this tree to the pool.  This is
-        // a bit scary, because it's still used in WorkerPool, but the pool
-        // won't change it until we're done operating on it.
-        if (this->done()) {
-            releaseTo(pool);
-        }
-
-        if (tape != o.second) {
-            eval->getDeck()->claim(std::move(o.second));
-            return nullptr;
-        }
+        this->done();
     }
     return o.second;
 }
@@ -130,7 +108,6 @@ Tape::Handle DCTree<N>::evalInterval(Evaluator* eval,
 template <unsigned N>
 void DCTree<N>::evalLeaf(Evaluator* eval,
                         const Tape::Handle& tape,
-                        Pool& object_pool,
                         const DCNeighbors<N>& neighbors)
 {
     // Track how many corners have to be evaluated here
@@ -252,16 +229,13 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                : all_full  ? Interval::FILLED : Interval::AMBIGUOUS;
 
     // Early exit if this leaf is unambiguous
-    if (this->type != Interval::AMBIGUOUS)
-    {
-        if (this->done()) {
-            releaseTo(object_pool);
-        }
+    if (this->type != Interval::AMBIGUOUS) {
+        this->done();
         return;
     }
 
     assert(this->leaf == nullptr);
-    this->leaf = object_pool.next().get();
+    this->leaf.reset(new DCLeaf<N>());
     this->leaf->corner_mask = buildCornerMask(corners);
 
     // Now, for the fun part of actually placing vertices!
@@ -448,8 +422,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                         saveIntersection(pos.template head<N>(),
                                          ds.col(i).template cast<double>()
                                                   .template head<N>(),
-                                         ds.col(i).w(), eval_edges[i/2],
-                                         object_pool);
+                                         ds.col(i).w(), eval_edges[i/2]);
                     }
                     // Otherwise, we need to use the feature-finding special
                     // case to find all possible derivatives at this point.
@@ -463,8 +436,7 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
                             saveIntersection(pos.template head<N>(),
                                              f.template head<N>()
                                               .template cast<double>(),
-                                             ds.col(i).w(), eval_edges[i/2],
-                                             object_pool);
+                                             ds.col(i).w(), eval_edges[i/2]);
                         }
                     }
                 }
@@ -553,13 +525,12 @@ void DCTree<N>::evalLeaf(Evaluator* eval,
 
 template <unsigned N>
 void DCTree<N>::saveIntersection(const Vec& pos, const Vec& derivs,
-                                 const double value, const size_t edge,
-                                 Pool& object_pool)
+                                 const double value, const size_t edge)
 {
     // Just-in-time allocation of intersections array
     if (this->leaf->intersections[edge] == nullptr)
     {
-        this->leaf->intersections[edge] = object_pool.next().next().get();
+        this->leaf->intersections[edge].reset(new Intersection<N>());
     }
     this->leaf->intersections[edge]->push(pos, derivs, value);
 }
@@ -580,7 +551,6 @@ uint8_t DCTree<N>::buildCornerMask(
 template <unsigned N>
 bool DCTree<N>::collectChildren(Evaluator* eval,
                                 const Tape::Handle& tape,
-                                Pool& object_pool,
                                 double max_err)
 {
     // Wait for collectChildren to have been called N times
@@ -594,6 +564,7 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     for (unsigned i=0; i < this->children.size(); ++i)
     {
         cs[i] = this->children[i].load(std::memory_order_relaxed);
+        assert(cs[i] != nullptr);
     }
 
     // If any children are branches, then we can't collapse.
@@ -627,13 +598,11 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     // If this cell is unambiguous, then forget all its branches and return
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        this->releaseChildren(object_pool);
+        this->freeChildren();
 
         // this->done will swap us with a singleton, so we can release
         // this tree to the pool right away
-        if (this->done()) {
-            releaseTo(object_pool);
-        }
+        this->done();
         return true;
     }
 
@@ -657,7 +626,7 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
     // We've now passed all of our opportunities to exit without
     // allocating a Leaf, so create one here.
     assert(this->leaf == nullptr);
-    this->leaf = object_pool.next().get();
+    this->leaf.reset(new DCLeaf<N>());
     this->leaf->manifold = true;
     this->leaf->corner_mask = corner_mask;
 
@@ -719,14 +688,13 @@ bool DCTree<N>::collectChildren(Evaluator* eval,
                 this->leaf->level = this->region.level;
 
                 // Then, erase all of the children and mark that we collapsed
-                this->releaseChildren(object_pool);
+                this->freeChildren();
                 collapsed = true;
             }
         }
         if (!collapsed)
         {
-            object_pool.next().put(this->leaf);
-            this->leaf = nullptr;
+            this->leaf.reset();
         }
     }
 
@@ -823,14 +791,14 @@ typename DCTree<N>::Vec DCTree<N>::vert(unsigned i) const
 }
 
 template <unsigned N>
-Intersection<N>* DCTree<N>::intersection(unsigned a, unsigned b) const
+std::shared_ptr<Intersection<N>> DCTree<N>::intersection(unsigned a, unsigned b) const
 {
     assert(MarchingTable<N>::e(a)[b] != -1);
     return intersection(MarchingTable<N>::e(a)[b]);
 }
 
 template <unsigned N>
-Intersection<N>* DCTree<N>::intersection(unsigned edge) const
+std::shared_ptr<Intersection<N>> DCTree<N>::intersection(unsigned edge) const
 {
     assert(this->leaf != nullptr);
     return this->leaf->intersections[edge];
@@ -947,17 +915,6 @@ std::array<unsigned, 2 * N> DCTree<N>::edgesFromChild(unsigned childIndex)
         out[2 * i + 1] = MarchingTable<N>::e(otherCorner)[childIndex];
     }
     return out;
-}
-
-template <unsigned N>
-void DCTree<N>::releaseTo(Pool& object_pool) {
-    if (this->leaf != nullptr) {
-        object_pool.next().put(this->leaf);
-        this->leaf = nullptr;
-    }
-    if (!isSingleton(this)) {
-        object_pool.put(this);
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

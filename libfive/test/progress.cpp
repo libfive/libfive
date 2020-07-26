@@ -122,7 +122,7 @@ TEST_CASE("Mesh::render (early destruction of progress watcher)")
 
         std::unique_ptr<Mesh> m;
         m = Dual<3>::walk<DCMesher>(t, settings);
-        t.reset(settings);
+        t.reset();
         // Destructor runs here
     }
     REQUIRE(true);

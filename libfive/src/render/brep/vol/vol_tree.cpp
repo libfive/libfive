@@ -17,13 +17,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace libfive {
 
 VolTree::VolTree(VolTree* parent, unsigned index, const Region<3>& r)
-    : XTree<3, VolTree, void>(parent, index, r)
+    : XTree<3, VolTree, char>(parent, index, r)
 {
     // Nothing to do here
 }
 
 VolTree::VolTree()
-    : XTree<3, VolTree, void>()
+    : XTree<3, VolTree, char>()
 {
     // Nothing to do here
 }
@@ -36,8 +36,7 @@ std::unique_ptr<VolTree> VolTree::empty()
 }
 
 Tape::Handle VolTree::evalInterval(Evaluator* eval,
-                                   const Tape::Handle& tape,
-                                   Pool&)
+                                   const Tape::Handle& tape)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -56,17 +55,13 @@ Tape::Handle VolTree::evalInterval(Evaluator* eval,
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
         this->done();
-        if (tape != o.second) {
-            eval->getDeck()->claim(std::move(o.second));
-            return nullptr;
-        }
     }
     return o.second;
 }
 
 void VolTree::evalLeaf(Evaluator* eval,
                        const Tape::Handle& tape,
-                       Pool&, const VolNeighbors&)
+                       const VolNeighbors&)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -85,16 +80,12 @@ void VolTree::evalLeaf(Evaluator* eval,
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
         this->done();
-        if (tape != o.second) {
-            eval->getDeck()->claim(std::move(o.second));
-        }
     }
     this->done();
 }
 
 bool VolTree::collectChildren(Evaluator*,
                               const Tape::Handle&,
-                              Pool& object_pool,
                               double)
 {
     // Wait for collectChildren to have been called N times
@@ -135,15 +126,11 @@ bool VolTree::collectChildren(Evaluator*,
     // If this cell is unambiguous, then forget all its branches and return
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        this->releaseChildren(object_pool);
+        this->freeChildren();
     }
 
     this->done();
     return true;
-}
-
-void VolTree::releaseTo(Pool& object_pool) {
-    object_pool.put(this);
 }
 
 Interval::State VolTree::check(const Region<3>& r) const
@@ -207,6 +194,6 @@ const VolTree* VolTree::push(unsigned i, const Region<3>::Perp&) const
 }
 
 // Explicit instantiation of templates
-template class XTree<3, VolTree, void>;
+template class XTree<3, VolTree, char>;
 
 }   // namespace libfive

@@ -248,7 +248,7 @@ TEST_CASE("Mesh::render (gyroid performance breakdown)", "[!benchmark]")
 
     BENCHMARK("DCTree deletion")
     {
-        t.reset(BRepSettings());
+        t.reset();
     }
 
     BENCHMARK("Mesh deletion")
@@ -288,7 +288,7 @@ TEST_CASE("Mesh::render (gyroid with progress callback)", "[!benchmark]")
 
     BENCHMARK("DCTree deletion")
     {
-        t.reset(settings);
+        t.reset();
     }
 
     // Confirm that the progress counter is monotonically increasing

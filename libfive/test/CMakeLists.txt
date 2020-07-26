@@ -17,7 +17,6 @@ set(SRCS main.cpp
     manifold_tables.cpp
     mesh.cpp
     neighbors.cpp
-    object_pool.cpp
     oracle.cpp
     oracle_context.cpp
     progress.cpp

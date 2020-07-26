@@ -83,8 +83,8 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     boost::container::static_vector<SubspaceVertex, 11> subvs;
     auto saveSubspaceVertex = [&subvs, &ts](unsigned index, NeighborIndex s) {
         assert(ts.at(index)->leaf != nullptr);
-        assert(ts.at(index)->leaf->sub[s.i].load()->index.load() != 0);
-        const auto sub = ts.at(index)->leaf->sub[s.i].load();
+        assert(ts.at(index)->leaf->sub[s.i]->index.load() != 0);
+        const auto sub = ts.at(index)->leaf->sub[s.i];
         subvs.push_back(SubspaceVertex {
             sub->vert,
             sub->index.load(),
@@ -297,7 +297,7 @@ void SimplexMesher::load(const std::array<const SimplexTree<3>*, 4>& ts)
     // to prevent cases where we search an edge before getting to
     // the leaf that has already searched that edge.
     for (unsigned i=0; i < 4; ++i) {
-        const auto leaf = ts.at(i)->leaf;
+        const auto& leaf = ts.at(i)->leaf;
         if (leaf != nullptr) {
             for (unsigned j=0; j < leaf->surface.size(); ++j) {
                 edge_search_cache.insert(leaf->surface.key(j),

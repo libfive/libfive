@@ -7,6 +7,7 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
+#include <stack>
 
 #include "libfive/eval/evaluator.hpp"
 #include "libfive/eval/tape.hpp"
@@ -178,12 +179,6 @@ std::unique_ptr<HybridTree<N>> HybridTree<N>::empty()
 template <unsigned N>
 HybridLeaf<N>::HybridLeaf()
 {
-    reset();
-}
-
-template <unsigned N>
-void HybridLeaf<N>::reset()
-{
     std::fill(inside.begin(), inside.end(), false);
     std::fill(vertex_on_surface.begin(), vertex_on_surface.end(), false);
     std::fill(index.begin(), index.end(), 0);
@@ -191,17 +186,13 @@ void HybridLeaf<N>::reset()
 
     surface.clear();
     tape.reset();
-    for (auto& q : qef) {
-        q.reset();
-    }
     surface_mass_point.array() = 0.0;
     vertex_pos.array() = 0.0;
 }
 
 template <unsigned N>
 Tape::Handle HybridTree<N>::evalInterval(Evaluator* eval,
-                                         const Tape::Handle& tape,
-                                         Pool& object_pool)
+                                         const Tape::Handle& tape)
 {
     // Do a preliminary evaluation to prune the tree, storing the interval
     // result and an handle to the pushed tape (which we'll use when recursing)
@@ -219,7 +210,7 @@ Tape::Handle HybridTree<N>::evalInterval(Evaluator* eval,
 
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        buildLeaf(eval, tape, object_pool);
+        buildLeaf(eval, tape);
         this->done();
     }
     return o.second;
@@ -228,11 +219,10 @@ Tape::Handle HybridTree<N>::evalInterval(Evaluator* eval,
 
 template <unsigned N>
 void HybridTree<N>::buildLeaf(Evaluator* eval,
-                              const std::shared_ptr<Tape>& tape,
-                              Pool& object_pool)
+                              const std::shared_ptr<Tape>& tape)
 {
     assert(this->leaf == nullptr);
-    this->leaf = object_pool.next().get();
+    this->leaf.reset(new HybridLeaf<N>());
     this->leaf->tape = tape;
 
     processCorners(eval, tape);
@@ -719,12 +709,11 @@ void HybridTree<N>::accumulate(
 template <unsigned N>
 void HybridTree<N>::evalLeaf(Evaluator* eval,
                              const Tape::Handle& tape,
-                             Pool& object_pool,
                              const HybridNeighbors<N>& neighbors)
 {
     (void)neighbors;
 
-    buildLeaf(eval, tape, object_pool);
+    buildLeaf(eval, tape);
 
     bool all_empty = true;
     bool all_full  = true;
@@ -743,7 +732,6 @@ void HybridTree<N>::evalLeaf(Evaluator* eval,
 template <unsigned N>
 bool HybridTree<N>::collectChildren(Evaluator* eval,
                                     const Tape::Handle& tape,
-                                    Pool& object_pool,
                                     double max_err)
 {
     // Wait for collectChildren to have been called N times
@@ -786,8 +774,8 @@ bool HybridTree<N>::collectChildren(Evaluator* eval,
     // If this cell is unambiguous, then forget all its branches and return
     if (this->type == Interval::FILLED || this->type == Interval::EMPTY)
     {
-        this->releaseChildren(object_pool);
-        buildLeaf(eval, tape, object_pool);
+        this->freeChildren();
+        buildLeaf(eval, tape);
         this->done();
         return true;
     }
@@ -801,16 +789,6 @@ bool HybridTree<N>::collectChildren(Evaluator* eval,
     return true;
 }
 
-
-template <unsigned N>
-void HybridTree<N>::releaseTo(Pool& object_pool) {
-    if (this->leaf != nullptr) {
-        object_pool.next().put(this->leaf);
-        this->leaf = nullptr;
-    }
-
-    object_pool.put(this);
-}
 
 template <unsigned N>
 uint32_t HybridTree<N>::leafLevel() const

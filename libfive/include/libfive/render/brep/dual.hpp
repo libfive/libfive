@@ -210,7 +210,7 @@ void Dual<3>::handleTopEdges(T* t, V& v)
 
     for (unsigned i=0; i < 4; ++i)
     {
-        std::array<T*, 4> ts = {{e.get(), e.get(), e.get(), e.get()}};
+        std::array<const T*, 4> ts = {{e.get(), e.get(), e.get(), e.get()}};
         ts[i] = t;
         edge3<T, V, Axis::X>(ts, v);
         edge3<T, V, Axis::Y>(ts, v);
@@ -219,7 +219,7 @@ void Dual<3>::handleTopEdges(T* t, V& v)
 
     for (unsigned i=0; i < 2; ++i)
     {
-        std::array<T*, 2> ts = {{e.get(), e.get()}};
+        std::array<const T*, 2> ts = {{e.get(), e.get()}};
         ts[i] = t;
         face3<T, V, Axis::X>(ts, v);
         face3<T, V, Axis::Y>(ts, v);
@@ -265,7 +265,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
     }
 
     if (settings.progress_handler) {
-        settings.progress_handler->nextPhase(t.size() + 1);
+        settings.progress_handler->nextPhase(1000); // TODO
     }
 
     std::vector<std::future<void>> futures;
@@ -348,12 +348,6 @@ void Dual<N>::run(V& v,
                     local.push(c);
                 }
             }
-            continue;
-        }
-
-        // Special-case for singleton trees, which have null parents
-        // (and have already been subtracted from pending)
-        if (T::isSingleton(t)) {
             continue;
         }
 

@@ -64,12 +64,6 @@ public:
         return *this;
     }
 
-    void reset() {
-        AtA = Matrix::Zero();
-        AtBp = Matrix::Zero();
-        BptBp = Matrix::Zero();
-    }
-
     /*  Inserts a new sample into the QEF.  If the normal has
      *  non-finite values, it's replaced with an all-zeros normal
      *  before insertion. */

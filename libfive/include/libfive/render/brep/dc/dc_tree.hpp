@@ -20,7 +20,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/eval/interval.hpp"
 #include "libfive/render/brep/xtree.hpp"
-#include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/dc/intersection.hpp"
 #include "libfive/render/brep/dc/marching.hpp"
 
@@ -38,7 +37,6 @@ template <unsigned N>
 struct DCLeaf
 {
     DCLeaf();
-    void reset();
 
     /*  level = max(map(level, children)) + 1  */
     unsigned level;
@@ -50,10 +48,8 @@ struct DCLeaf
     Eigen::Matrix<double, N, ipow(2, N - 1)> verts;
 
     /* This array allows us to store QEFs for cases where the surface
-     * crosses a particular cell edge.  The objects are allocated from
-     * the shared pool, though they're not released back to the pool
-     * (because they could be in more than one DCLeaf) */
-    std::array<Intersection<N>*, _edges(N) * 2> intersections;
+     * crosses a particular cell edge. */
+    std::array<std::shared_ptr<Intersection<N>>, _edges(N) * 2> intersections;
 
     /*  Feature rank for the cell's vertex, where                    *
      *      1 is face, 2 is edge, 3 is corner                        *
@@ -92,14 +88,6 @@ template <unsigned N>
 class DCTree : public XTree<N, DCTree<N>, DCLeaf<N>>
 {
 public:
-    using Pool = ObjectPool<DCTree<N>, DCLeaf<N>, Intersection<N>>;
-
-    /*
-     *  Simple constructor
-     *
-     *  Pointers are initialized to nullptr, but other members
-     *  are invalid until reset() is called.
-     */
     explicit DCTree();
     explicit DCTree(DCTree<N>* parent, unsigned index, const Region<N>& region);
     static std::unique_ptr<DCTree<N>> empty();
@@ -111,8 +99,7 @@ public:
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
     std::shared_ptr<Tape> evalInterval(Evaluator* eval,
-                                       const std::shared_ptr<Tape>& tape,
-                                       Pool& object_pool);
+                                       const std::shared_ptr<Tape>& tape);
 
     /*
      *  Evaluates and stores a result at every corner of the cell.
@@ -121,7 +108,6 @@ public:
      */
     void evalLeaf(Evaluator* eval,
                   const std::shared_ptr<Tape>& tape,
-                  Pool& spare_leafs,
                   const DCNeighbors<N>& neighbors);
 
     /*
@@ -132,7 +118,6 @@ public:
      */
     bool collectChildren(Evaluator* eval,
                          const std::shared_ptr<Tape>& tape,
-                         Pool& object_pool,
                          double max_err);
 
     /*
@@ -195,30 +180,12 @@ public:
     /*
      *  Looks up a particular intersection array by corner indices
      */
-    Intersection<N>* intersection(unsigned a, unsigned b) const;
+    std::shared_ptr<Intersection<N>> intersection(unsigned a, unsigned b) const;
 
     /*
      *  Looks up a particular intersection array by (directed) edge index
      */
-    Intersection<N>* intersection(unsigned edge) const;
-
-    /*
-     *  Releases this tree and any leaf objects to the given object pool
-     */
-    void releaseTo(Pool& object_pool);
-
-    static constexpr bool hasSingletons() { return true; }
-    static DCTree<N>* singletonEmpty() {
-        static DCTree<N> empty(Interval::EMPTY);
-        return &empty;
-    }
-    static DCTree<N>* singletonFilled() {
-        static DCTree<N> filled(Interval::FILLED);
-        return &filled;
-    }
-    static bool isSingleton(const DCTree<N>* t) {
-        return t == singletonEmpty() || t == singletonFilled();
-    }
+    std::shared_ptr<Intersection<N>> intersection(unsigned edge) const;
 
 protected:
     /*  Private constructor for a dummy tree of a particular type */
@@ -245,8 +212,7 @@ protected:
      *  building the A and b matrices).
      */
     void saveIntersection(const Vec& pos, const Vec& derivs,
-                          const double value, const size_t edge,
-                          Pool& object_pool);
+                          const double value, const size_t edge);
 
     /*
      *  Returns a table such that looking up a particular corner

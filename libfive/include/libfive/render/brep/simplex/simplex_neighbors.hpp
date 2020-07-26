@@ -54,7 +54,7 @@ public:
      *   |     |     |           |
      *   -------------------------
      */
-    SimplexLeafSubspace<N>* getSubspace(NeighborIndex i) const;
+    std::shared_ptr<SimplexLeafSubspace<N>> getSubspace(NeighborIndex i) const;
 
     /*
      *  Looks up the given corner to see if it has already been calculated

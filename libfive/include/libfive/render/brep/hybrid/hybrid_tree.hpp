@@ -14,7 +14,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
-#include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/simplex/surface_edge_map.hpp"
 #include "libfive/render/brep/simplex/qef.hpp"
 
@@ -29,7 +28,6 @@ template <unsigned N>
 struct HybridLeaf
 {
     HybridLeaf();
-    void reset();
 
     /*  This represents the position of the subspace vertices.
      *  Each subspace vertex is positioned either on the model's surface
@@ -87,14 +85,6 @@ template <unsigned N>
 class HybridTree : public XTree<N, HybridTree<N>, HybridLeaf<N>>
 {
 public:
-    using Pool = ObjectPool<HybridTree<N>, HybridLeaf<N>>;
-
-    /*
-     *  Simple constructor
-     *
-     *  Pointers are initialized to nullptr, but other members
-     *  are invalid until reset() is called.
-     */
     explicit HybridTree();
     explicit HybridTree(HybridTree<N>* parent, unsigned index,
                         const Region<N>& region);
@@ -107,8 +97,7 @@ public:
      *  Returns a shorter version of the tape that ignores unambiguous clauses.
      */
     std::shared_ptr<Tape> evalInterval(Evaluator* eval,
-                                       const std::shared_ptr<Tape>& tape,
-                                       Pool& object_pool);
+                                       const std::shared_ptr<Tape>& tape);
 
     /*
      *  Evaluates a minimum-size octree node.
@@ -116,7 +105,6 @@ public:
      */
     void evalLeaf(Evaluator* eval,
                   const std::shared_ptr<Tape>& tape,
-                  Pool& spare_leafs,
                   const HybridNeighbors<N>& neighbors);
 
     /*
@@ -127,7 +115,6 @@ public:
      */
     bool collectChildren(Evaluator* eval,
                          const std::shared_ptr<Tape>& tape,
-                         Pool& object_pool,
                          double max_err);
 
     /*  Looks up the cell's level for purposes of vertex placement,
@@ -175,11 +162,6 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     /*
-     *  Releases this tree and any leaf objects to the given object pool
-     */
-    void releaseTo(Pool& object_pool);
-
-    /*
      *  We've found a point of interest on some subspace.  Now, we need
      *  to record the point, and decide whether to accumulate a distance-field
      *  or surface QEF, depending on whether there are surface intersections
@@ -212,11 +194,6 @@ public:
                     NeighborIndex* target,
                     bool normalize);
 
-    static bool hasSingletons() { return false; }
-    static HybridTree<N>* singletonEmpty() { return nullptr; }
-    static HybridTree<N>* singletonFilled() { return nullptr; }
-    static bool isSingleton(const HybridTree<N>*) { return false; }
-
 protected:
 
     /*
@@ -244,15 +221,14 @@ protected:
                           const Tape::Handle& tape);
 
     /*
-     *  Asserts that the leaf is null, pulls a fresh leaf from the object
-     *  pool, and assigns it the given tape.
+     *  Asserts that the leaf is null, allocates a new leaf, and assigns
+     *  it to the given tape.
      *
      *  Then, calls processCorners, processEdges, and processSubspaces
      *  to fill out all of the leaf data.
      */
     void buildLeaf(Evaluator* eval,
-                   const std::shared_ptr<Tape>& tape,
-                   Pool& object_pool);
+                   const std::shared_ptr<Tape>& tape);
 };
 
 }   // namespace libfive

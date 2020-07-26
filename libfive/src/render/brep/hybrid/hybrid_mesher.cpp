@@ -88,7 +88,7 @@ void HybridMesher::load(const std::array<const HybridTree<3>*, 4>& ts)
     auto saveSubspaceVertex = [&subvs, &ts](unsigned index, NeighborIndex s) {
         assert(ts.at(index)->leaf != nullptr);
         assert(ts.at(index)->leaf->index[s.i] != 0);
-        const auto leaf = ts.at(index)->leaf;
+        const auto& leaf = ts.at(index)->leaf;
         subvs.push_back(SubspaceVertex {
             leaf->vertex_pos.col(s.i),
             leaf->index[s.i],
@@ -305,7 +305,7 @@ void HybridMesher::load(const std::array<const HybridTree<3>*, 4>& ts)
     // to prevent cases where we search an edge before getting to
     // the leaf that has already searched that edge.
     for (unsigned i=0; i < 4; ++i) {
-        const auto leaf = ts.at(i)->leaf;
+        const auto& leaf = ts.at(i)->leaf;
         if (leaf != nullptr) {
             for (unsigned j=0; j < leaf->surface.size(); ++j) {
                 edge_search_cache.insert(leaf->surface.key(j),
