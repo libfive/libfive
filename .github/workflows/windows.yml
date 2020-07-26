@@ -39,10 +39,16 @@ jobs:
         vcpkg\vcpkg install boost-numeric:x86-windows-static 
         vcpkg\vcpkg install eigen3:x86-windows-static
 
-#    - name: Build
-#      run: |
-#        md build
-#        cd build
-#        cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.1
+      with:
+       vs-version: '[16.4,16.5)'
+
+
+    - name: Build
+      run: |
+        md build
+        cd build
+        cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
 
 
