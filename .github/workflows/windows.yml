@@ -34,10 +34,10 @@ jobs:
       run: |
         vcpkg\vcpkg install libpng:x86-windows-static boost:x86-windows-static eigen3:x86-windows-static
 
-    - name: Build
-      run: |
-        md build
-        cd build
-        cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
+#    - name: Build
+#      run: |
+#        md build
+#        cd build
+#        cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
 
 
