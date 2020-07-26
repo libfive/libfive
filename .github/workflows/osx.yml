@@ -20,6 +20,7 @@ jobs:
       run: |
         export PKG_CONFIG_PATH="/usr/local/opt/guile@2/lib/pkgconfig:$PKG_CONFIG_PATH"
         export PKG_CONFIG_PATH="/usr/local/opt/qt/lib/pkgconfig:$PKG_CONFIG_PATH"
+        export Qt5Core_DIR=/usr/local/opt/qt/lib/cmake/Qt5Core
         mkdir build
         cd build
         cmake ..
