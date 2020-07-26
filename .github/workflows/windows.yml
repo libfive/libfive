@@ -17,7 +17,7 @@ jobs:
         path: |
           vcpkg
           C:\Users\runneradmin\AppData\Local\vcpkg
-        key: ${{ runner.os }}-vcpkg-cache
+        key: ${{ runner.os }}-vcpkg-cache-min
 
     - uses: actions/checkout@v2
 
@@ -32,7 +32,12 @@ jobs:
 
     - name: Install packages
       run: |
-        vcpkg\vcpkg install libpng:x86-windows-static boost:x86-windows-static eigen3:x86-windows-static
+        vcpkg\vcpkg install libpng:x86-windows-static 
+        vcpkg\vcpkg install boost-algorithm:x86-windows-static 
+        vcpkg\vcpkg install boost-lockfree:x86-windows-static 
+        vcpkg\vcpkg install boost-bimap:x86-windows-static 
+        vcpkg\vcpkg install boost-numeric:x86-windows-static 
+        vcpkg\vcpkg install eigen3:x86-windows-static
 
 #    - name: Build
 #      run: |
