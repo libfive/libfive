@@ -36,7 +36,8 @@ jobs:
         vcpkg\vcpkg install boost-algorithm:x86-windows-static 
         vcpkg\vcpkg install boost-lockfree:x86-windows-static 
         vcpkg\vcpkg install boost-bimap:x86-windows-static 
-        vcpkg\vcpkg install boost-safe-numerics:x86-windows-static 
+        vcpkg\vcpkg install boost-interval:x86-windows-static 
+        vcpkg\vcpkg install boost-interval:x86-windows-static 
         vcpkg\vcpkg install eigen3:x86-windows-static
 
     - name: Build
