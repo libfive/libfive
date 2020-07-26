@@ -23,7 +23,7 @@ jobs:
     - name: Bootstrap vspkg
       run: |
         git clone --depth=1 https://github.com/Microsoft/vcpkg.git
-         (cd vcpkg && git checkout 6bf5adff937abd9bf09fb1c3fda40b5f566f8acd)
+        (cd vcpkg && git checkout 6bf5adff937abd9bf09fb1c3fda40b5f566f8acd)
         vcpkg\bootstrap-vcpkg.bat
 
     - name: Install packages
