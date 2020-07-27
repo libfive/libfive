@@ -37,13 +37,12 @@ jobs:
         vcpkg\vcpkg install boost-lockfree:x86-windows-static 
         vcpkg\vcpkg install boost-bimap:x86-windows-static 
         vcpkg\vcpkg install boost-interval:x86-windows-static 
-        vcpkg\vcpkg install boost-interval:x86-windows-static 
         vcpkg\vcpkg install eigen3:x86-windows-static
 
     - name: Build
       run: |
         md build
-        cmake -B ./build -S ./ -DCMAKE_TOOLCHAIN_FILE="./vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static"
+        cmake -B ./build -S ./ -DCMAKE_TOOLCHAIN_FILE="./vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017"
         cmake --build .\build
 
 
