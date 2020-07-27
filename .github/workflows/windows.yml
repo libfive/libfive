@@ -54,5 +54,5 @@ jobs:
       continue-on-error: true
       run: |
         ls build
-        msbuild build/libfive.sln /p:Platform=Win32 
+        msbuild build/libfive.sln
 
