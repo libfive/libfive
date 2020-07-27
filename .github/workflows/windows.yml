@@ -43,9 +43,14 @@ jobs:
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.1
 
-    - name: Build
+    - name: Cmake Generator
       continue-on-error: true
       run: |
         md build
         cd build
         cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 16 2019" ..
+
+    - name: Build
+      continue-on-error: true
+      run: ls
+
