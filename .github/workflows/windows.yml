@@ -49,5 +49,4 @@ jobs:
 
     - name: Cat
       continue-on-error: true
-      run: |
-        cat ./build/libfive/src/version.c
+      run: cat ./build/libfive/src/version.c

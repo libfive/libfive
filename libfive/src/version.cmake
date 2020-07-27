@@ -13,7 +13,7 @@ if ("${GIT_REV}" STREQUAL "")
     set(GIT_TAG "N/A")
     set(GIT_BRANCH "N/A")
 else()
-    execute_process(COMMAND bash -c "git diff --quiet --exit-code || echo +"
+    execute_process(COMMAND git describe --dirty="+" --tags --always
                     OUTPUT_VARIABLE GIT_DIFF
                     WORKING_DIRECTORY ${LIBFIVE_CURRENT_SOURCE_DIR})
     execute_process(COMMAND git describe --exact-match --tags
@@ -31,7 +31,7 @@ else()
     string(STRIP "${GIT_BRANCH}" GIT_BRANCH)
 endif()
 
-set(VERSION "const char* GIT_REV=\"${GIT_REV}${GIT_DIFF}\";
+set(VERSION "const char* GIT_REV=\"${GIT_DIFF}\";
 const char* GIT_TAG=\"${GIT_TAG}\";
 const char* GIT_BRANCH=\"${GIT_BRANCH}\";")
 
