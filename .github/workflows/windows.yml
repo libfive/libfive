@@ -77,4 +77,5 @@ jobs:
 
     - name: Test
       continue-on-error: true
+      timeout-minutes: 5
       run: ./build/Output/Debug/libfive-test.exe
