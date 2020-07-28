@@ -71,4 +71,4 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
-        msbuild build/libfive.sln /p:Platform=x64
+        msbuild build/libfive.sln /p:Platform=x86
