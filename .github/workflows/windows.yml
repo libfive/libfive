@@ -10,17 +10,23 @@ jobs:
   build:
     runs-on: windows-latest 
 
-
     steps:
+
+    # Check out the repository
     - uses: actions/checkout@v2
 
+    # Cache the "vcpkg" directory, which contains the installed
+    # libpng, boost, and eigen libraries, which were installed 
+    # using vcpkg.
     - uses: actions/cache@v2
       id: vcpkg-cache
       with:
         path: ./vcpkg
         key: ${{ runner.os }}-vcpkg-cache-min-2
 
-
+    # Download and install "vskpg" a package manager for 
+    # C++ which we only use for windows builds.  Skip this 
+    # stage if the pull from the cache was successful.
     - name: Bootstrap vspkg
       if: steps.vcpkg-cache.outputs.cache-hit != 'true'
       run: |
@@ -30,6 +36,7 @@ jobs:
         cd ..
         vcpkg\bootstrap-vcpkg.bat
 
+    # Install all of the 
     - name: Install packages
       if: steps.vcpkg-cache.outputs.cache-hit != 'true'
       run: |
@@ -54,7 +61,5 @@ jobs:
       continue-on-error: true
       shell: cmd
       run: |
-        ls build
         "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" x86
-        msbuild build/libfive.sln
-
+        msbuild build/libfive.sln /p:Platform=x64
