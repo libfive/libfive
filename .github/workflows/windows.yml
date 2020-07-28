@@ -57,7 +57,6 @@ jobs:
 
     # Use cmake to generate the msbuild files for the files.
     - name: Cmake Generator
-      continue-on-error: true
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
