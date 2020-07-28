@@ -55,6 +55,9 @@ jobs:
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.1
 
+    - name: Tree
+      run: tree "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise"
+
     # Use cmake to generate the msbuild files for the files.
     - name: Cmake Generator
       continue-on-error: true
