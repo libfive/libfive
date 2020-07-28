@@ -71,6 +71,10 @@ jobs:
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         msbuild build/libfive.sln
 
+    - name: Tree
+      continue-on-error: true
+      run: tree /F build
+
     - name: Test
       continue-on-error: true
       run: ./build/Output/Debug/libfive-test.exe
