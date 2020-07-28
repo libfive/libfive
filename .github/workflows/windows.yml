@@ -60,7 +60,7 @@ jobs:
       continue-on-error: true
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxilary\Build\vcvars32.bat"
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
         md build
         cd build
         cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 16 2019" ..
@@ -70,5 +70,5 @@ jobs:
       continue-on-error: true
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxilary\Build\vcvars32.bat"
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
         msbuild build/libfive.sln /p:Platform=x64
