@@ -36,7 +36,10 @@ jobs:
         cd ..
         vcpkg\bootstrap-vcpkg.bat
 
-    # Install all of the 
+    # Install all of the required packages.  Note that we only 
+    # grab the boost libraries that are necessary, because otherwise
+    # the install time is very long, and the resulting directory is 
+    # so big that github refuses to cache it!
     - name: Install packages
       if: steps.vcpkg-cache.outputs.cache-hit != 'true'
       run: |
@@ -47,12 +50,16 @@ jobs:
         vcpkg\vcpkg install boost-interval:x86-windows-static 
         vcpkg\vcpkg install eigen3:x86-windows-static
 
+    # Sets environment variables that are requred for
+    # some of the later stages
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.1
 
     - name: Cmake Generator
       continue-on-error: true
+      shell: cmd
       run: |
+        "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" x86
         md build
         cd build
         cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 16 2019" ..
