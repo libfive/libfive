@@ -56,7 +56,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.1
 
     - name: Tree
-      run: tree "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise"
+      run: tree "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise" /F
 
     # Use cmake to generate the msbuild files for the files.
     - name: Cmake Generator
