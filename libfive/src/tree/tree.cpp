@@ -748,6 +748,11 @@ Tree Tree::collect_affine() const {
                         mark_affine();
                         todo.push(Down { g->lhs.ptr, v->value * d->scale });
                     }
+                } else if (g->op == OP_DIV) {
+                    if (auto v = std::get_if<TreeConstant>(g->rhs.ptr)) {
+                        mark_affine();
+                        todo.push(Down { g->lhs.ptr, d->scale / v->value });
+                    }
                 }
             }
 

@@ -426,7 +426,7 @@ TEST_CASE("Tree::collect_affine") {
 
         ss.str("");
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(- 4.409 (* z 1.66667))");
+        REQUIRE(ss.str() == "(+ (* z -1.66667) 4.409)");
     }
 }
 
