@@ -416,6 +416,18 @@ TEST_CASE("Tree::collect_affine") {
         ss << q;
         REQUIRE(ss.str() == "(square (- z))");
     }
+
+    SECTION("(- -0.091 (/ (- z 2.7) 0.6))") {
+        auto z = Tree::Z();
+        auto t = -0.091 - (z - 2.7) / 0.6;
+        std::stringstream ss;
+        ss << t;
+        REQUIRE(ss.str() == "(- -0.091 (/ (- z 2.7) 0.6))");
+
+        ss.str("");
+        ss << t.collect_affine();
+        REQUIRE(ss.str() == "(- 4.409 (* z 1.66667))");
+    }
 }
 
 TEST_CASE("Tree::optimized")
