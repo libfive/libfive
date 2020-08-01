@@ -13,6 +13,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <stack>
 #include <unordered_set>
 
+#include <boost/container/small_vector.hpp>
+
 #include "libfive/tree/tree.hpp"
 #include "libfive/tree/data.hpp"
 #include "libfive/tree/archive.hpp"
@@ -799,8 +801,9 @@ Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {
             // components, so that we can subtract them.  This also puts
             // all affine terms in the form X * positive constant, which
             // encourages tree re-use.
-            std::vector<std::pair<const TreeData*, float>> pos_;
-            std::vector<std::pair<const TreeData*, float>> neg_;
+            using namespace boost::container;
+            small_vector<std::pair<const TreeData*, float>, 3> pos_;
+            small_vector<std::pair<const TreeData*, float>, 3> neg_;
             for (auto& p: map) {
                 if (p.second > 0.0f) {
                     pos_.push_back({p.first.ptr, p.second});
@@ -814,7 +817,7 @@ Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {
                 }
             }
 
-            // Sorting *after uniquifying* means that any affine terms that
+            // Sorting (after uniquifying) means that any affine terms that
             // share the same set of Trees will be ordered deterministicly,
             // which in turn helps with common subexpression elimination
             //
@@ -830,86 +833,60 @@ Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {
             std::sort(pos_.begin(), pos_.end(), sort_fn);
             std::sort(neg_.begin(), neg_.end(), sort_fn);
 
-            auto to_vec = [&uniq](const auto& v) {
-                std::vector<Tree> out;
-                out.reserve(v.size());
+            auto collapse = [&uniq](const auto& v) {
+                auto itr = v.begin();
+                Tree out = Tree::invalid();
+                while (itr != v.end()) {
+                    // Find the subsequence with the same multiplier
+                    const float multiplier = itr->second;
+                    if (multiplier == 0.0f) {
+                        continue;
+                    }
 
-                for (const auto& p : v) {
-                    // Skip the multiplication if this is the constant term,
-                    // since that just adds extra computation.
-                    if (p.first == Tree::one().ptr) {
-                        out.push_back(uniq(Tree(p.second)));
-                    } else if (p.second) {
-                        out.push_back(uniq(Tree(p.first) * uniq(p.second)));
+                    Tree t((itr++)->first);
+                    assert(t == uniq(t));
+
+                    // Accumulate all subtrees with the same multiplier
+                    while (itr != v.end() && itr->second == multiplier) {
+                        t = uniq(t + Tree((itr++)->first));
+                    }
+
+                    // Apply the multiplication to accumulated t
+                    if (multiplier != 1) {
+                        if (t == one()) {
+                            t = uniq(multiplier);
+                        } else {
+                            t = uniq(t * uniq(multiplier));
+                        }
+                    }
+                    if (out.is_valid()) {
+                        out = uniq(out + t);
+                    } else {
+                        out = t;
                     }
                 }
-                return out;
+                return out.is_valid() ? out : uniq(0.0f);
             };
-            std::vector<Tree> pos = to_vec(pos_);
-            std::vector<Tree> neg = to_vec(neg_);
 
-            out.push(uniq(reduce_binary(pos.cbegin(), pos.cend(), uniq) -
-                          reduce_binary(neg.cbegin(), neg.cend(), uniq)));
+            const auto pos = collapse(pos_);
+            const auto neg = collapse(neg_);
+            if (pos.is_valid()) {
+                if (neg.is_valid()) {
+                    out.push(uniq(pos - neg));
+                } else {
+                    out.push(pos);
+                }
+            } else {
+                if (neg.is_valid()) {
+                    out.push(uniq(-neg));
+                } else {
+                    out.push(uniq(0.0f));
+                }
+            }
         }
     }
     assert(out.size() == 1);
     return out.top();
-}
-
-Tree Tree::reduce_binary(std::vector<Tree>::const_iterator a,
-                         std::vector<Tree>::const_iterator b,
-                         std::function<Tree (Tree)> uniq)
-{
-    using itr = std::vector<Tree>::const_iterator;
-    using pair = std::pair<itr, itr>;
-    using option = std::optional<pair>;
-
-    option v = pair(a, b);
-
-    // This is a heap implementation of a recursive depth-first traverse,
-    // to avoid blowing up the stack on deep trees.  This implementation
-    // uses one stack for the tasks yet to do, and a second stack for the
-    // outputs.
-    //
-    // We use Tree::invalid() to represent empty accumulations, to avoid
-    // having to build a full Evaluator in order to do 0 + constant; this
-    // improves runtime.
-    std::stack<option> todo;
-    todo.push(v);
-    std::stack<Tree> out;
-    while (todo.size()) {
-        const auto t = todo.top();
-        todo.pop();
-        if (t.has_value()) {
-            const auto a = t->first;
-            const auto b = t->second;
-            const auto delta = b - a;
-            if (delta == 0) {
-                out.push(Tree::invalid());
-            } else if (delta == 1) {
-                out.push(*a);
-            } else {
-                todo.push(std::nullopt); // marker to pop stack
-                todo.push(pair(a, a + delta / 2));
-                todo.push(pair(a + delta / 2, b));
-            }
-        } else {
-            auto a = out.top();
-            out.pop();
-            auto b = out.top();
-            out.pop();
-            if (a.is_valid() && b.is_valid()) {
-                out.push(uniq(a + b));
-            } else if (a.is_valid()) {
-                out.push(a);
-            } else {
-                out.push(b); // could be invalid, checked at final return
-            }
-        }
-    }
-    assert(out.size() == 1);
-    const auto t = out.top();
-    return t.is_valid() ? t : Tree(0.0f);
 }
 
 size_t Tree::size() const {

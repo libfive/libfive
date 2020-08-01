@@ -196,13 +196,6 @@ protected:
     /*  Returns a Tree with the same data but extra flag bits set */
     Tree with_flags(uint32_t extra_flags) const;
 
-    /*  Does a binary reduction of a set of affine pairs, building a
-     *  balanced-ish tree.  The a iterator is the beginning of the region to
-     *  reduce, and b is one-past-the-end of the region to reduce. */
-    static Tree reduce_binary(std::vector<Tree>::const_iterator a,
-                              std::vector<Tree>::const_iterator b,
-                              std::function<Tree (Tree)> uniq);
-
     /*  subsitute_with performs a recursive remapping of the tree using
      *  a subsitution function, which returns a pointer if we should
      *  replace a given tree (and nullptr otherwise) */

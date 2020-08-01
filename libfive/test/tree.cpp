@@ -352,29 +352,6 @@ TEST_CASE("Tree::optimized")
         REQUIRE(ss.str() == "(+ x (* y 2) (* (cos (sin (+ x (* y 2) 7))) 3) 7)");
     }
 
-    SECTION("X + 2*Y + 3*cos(X) + 4*cos(Y)") {
-        // This should be right-balanced
-        auto t = Tree::X() + 2*Tree::Y() + 3*cos(Tree::X()) + 4*cos(Tree::Y());
-
-        std::stringstream ss;
-        ss << t->lhs();
-        REQUIRE(ss.str() == "(+ x (* 2 y) (* 3 (cos x)))");
-
-        auto q = t.optimized();
-
-        ss.str(std::string());
-        ss << q;
-        REQUIRE(ss.str() == "(+ x (* y 2) (* (cos x) 3) (* (cos y) 4))");
-
-        ss.str(std::string());
-        ss << q->lhs();
-        REQUIRE(ss.str() == "(+ x (* y 2))");
-
-        ss.str(std::string());
-        ss << q->rhs();
-        REQUIRE(ss.str() == "(+ (* (cos x) 3) (* (cos y) 4))");
-    }
-
     SECTION("min(max(-Z, Z - 10), max(-Z, Z - 100))") {
         auto ten = Tree(10.0f);
         auto hundred = Tree(100.0f);
@@ -461,7 +438,9 @@ TEST_CASE("Tree::optimized")
         auto ca = Tree(3.14) * Tree::X();
         auto cb = Tree(3.14) * Tree::Y();
         auto p = ca + cb;
-        REQUIRE(p.optimized().size() == 6);
+        CAPTURE(p);
+        CAPTURE(p.optimized());
+        REQUIRE(p.optimized().size() == 5); // --> (* (+ y x) 3.14)
 
         auto cc = Tree(4) * Tree::Y();
         auto q = ca + cc;
