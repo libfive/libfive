@@ -439,6 +439,16 @@ TEST_CASE("Tree::optimized")
         ss << t.optimized();
         REQUIRE(ss.str() == "(min (max (- z) (+ -10 z)) (max (- z) (+ -100 z)))");
     }
+
+    SECTION("(Z + 2) / (2 * (Z + 1))") {
+        auto z = Tree::Z();
+        auto t = (z + 2) / (2 * (z + 1));
+        t = t.optimized();
+        std::stringstream ss;
+        ss << t;
+        REQUIRE(ss.str() == "(/ (+ z 2) (+ 2 (* z 2)))");
+        REQUIRE(t.size() == 6);
+    }
 }
 
 TEST_CASE("Tree::flags")

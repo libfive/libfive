@@ -654,6 +654,9 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     // Expand any remap operations in the tree
     out = out.flatten();
 
+    // Collect and collapse affine equations, e.g. 2*X + 3*X --> 5*X
+    out = out.collect_affine();
+
     // Deduplicate the tree, so that shared nodes are reused
     out = out.unique_helper(canonical);
 
@@ -669,9 +672,6 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
             return static_cast<TreeData*>(nullptr);
         });
     }
-
-    // Collect and collapse affine equations, e.g. 2*X + 3*X --> 5*X
-    out = out.collect_affine();
 
     // And we're done!
     return out.with_flags(TREE_FLAG_IS_UNIQUE | TREE_FLAG_IS_OPTIMIZED);
@@ -817,7 +817,15 @@ Tree Tree::collect_affine() const {
                     sorted.push_back({p.first.ptr, p.second});
                 }
                 std::sort(sorted.begin(), sorted.end(),
-                    [](auto a, auto b) { return a.second < b.second; });
+                    [](auto a, auto b) -> bool {
+                        if (a.second != b.second) {
+                            return a.second < b.second;
+                        } else {
+                            // This will at least sort constants before
+                            // trees that contain X/Y/Z, although it won't
+                            // order things any more finely than that.
+                            return a.first->flags < b.first->flags;
+                        }});
                 out.push(reduce_binary(sorted.cbegin(), sorted.cend()));
             } else {
                 // Do nothing
@@ -854,7 +862,13 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
             if (delta == 0) {
                 out.push(Tree(0.0f));
             } else if (delta == 1) {
-                out.push(Tree(a->first) * Tree(a->second));
+                // Skip the multiplication if this is the constant term,
+                // since that just adds extra computation.
+                if (a->first == Tree::one().ptr) {
+                    out.push(Tree(a->second));
+                } else {
+                    out.push(Tree(a->first) * a->second);
+                }
             } else {
                 todo.push(std::nullopt); // marker to pop stack
                 todo.push(pair(a, a + delta / 2));
