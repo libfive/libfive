@@ -855,6 +855,10 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
     // to avoid blowing up the stack on deep trees.  This implementation
     // uses one stack for the tasks yet to do, and a second stack for the
     // outputs.
+    //
+    // We use Tree::invalid() to represent empty accumulations, to avoid
+    // having to build a full Evaluator in order to do 0 + constant; this
+    // improves runtime.
     std::stack<option> todo;
     todo.push(v);
     std::stack<Tree> out;
@@ -866,14 +870,16 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
             const auto b = t->second;
             const auto delta = b - a;
             if (delta == 0) {
-                out.push(Tree(0.0f));
+                out.push(Tree::invalid());
             } else if (delta == 1) {
                 // Skip the multiplication if this is the constant term,
                 // since that just adds extra computation.
                 if (a->first == Tree::one().ptr) {
                     out.push(Tree(a->second));
-                } else {
+                } else if (a->second) {
                     out.push(Tree(a->first) * a->second);
+                } else {
+                    out.push(Tree::invalid());
                 }
             } else {
                 todo.push(std::nullopt); // marker to pop stack
@@ -885,11 +891,18 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
             out.pop();
             auto b = out.top();
             out.pop();
-            out.push(a + b);
+            if (a.is_valid() && b.is_valid()) {
+                out.push(a + b);
+            } else if (a.is_valid()) {
+                out.push(a);
+            } else {
+                out.push(b); // could be invalid, checked at final return
+            }
         }
     }
     assert(out.size() == 1);
-    return out.top();
+    const auto t = out.top();
+    return t.is_valid() ? t : Tree(0.0f);
 }
 
 size_t Tree::size() const {
