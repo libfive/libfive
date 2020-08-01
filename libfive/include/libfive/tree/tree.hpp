@@ -124,22 +124,12 @@ public:
     /*  Returns a tree with all remap operations expanded. */
     Tree flatten() const;
 
-    /*  Performs a deep copy of the tree with any duplicate subtrees merged
-     *  to point to the same objects.  This will also flatten any remap
-     *  operations in the tree. */
-    Tree unique() const;
-
-    /*  This is a helper function which actually does the uniquifying.
-     *  It's exposed so that it's possible to uniquify multiple trees
-     *  together, which is helpful in niche circumstances. */
-    Tree unique_helper(std::map<TreeDataKey, Tree>& canonical) const;
-
     /*  Returns a tree in which nested affine forms are collapsed, e.g.
      *  (2*X + 3*Y) + 5*(X - Y) ==> 7*X - 2*Y
      *
      *  If the tree contains remap operations, it will be flattened before
      *  doing the affine collection operation. */
-    Tree collect_affine() const;
+    Tree collect_affine(std::map<TreeDataKey, Tree>& canonical) const;
 
     /*  Checks the number of unique nodes in the tree */
     size_t size() const;
@@ -211,7 +201,8 @@ protected:
      *  reduce, and b is one-past-the-end of the region to reduce. */
     using AffinePair = std::pair<const Data*, float>;
     static Tree reduce_binary(std::vector<AffinePair>::const_iterator a,
-                              std::vector<AffinePair>::const_iterator b);
+                              std::vector<AffinePair>::const_iterator b,
+                              std::function<Tree (Tree)> uniq);
 
     /*  subsitute_with performs a recursive remapping of the tree using
      *  a subsitution function, which returns a pointer if we should

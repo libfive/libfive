@@ -620,27 +620,6 @@ Tree Tree::substitute_with(std::function<const TreeData* (Tree)> fn) const {
     return out.top();
 }
 
-Tree Tree::unique_helper(std::map<TreeDataKey, Tree>& canonical) const {
-    if (flags & TREE_FLAG_IS_OPTIMIZED) {
-        return *this;
-    } else if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
-        return flatten().unique_helper(canonical);
-    }
-
-    return substitute_with([&canonical](const Tree t) {
-        const auto key = t->key();
-        const auto k_itr = canonical.find(key);
-        // We already have a canonical version of this tree,
-        // so remapped this tree to the canonical version and keep going.
-        if (k_itr != canonical.end()) {
-            return k_itr->second.ptr;
-        } else {
-            canonical.insert(k_itr, {key, Tree(t)});
-            return t.ptr;
-        }
-    }).with_flags(TREE_FLAG_IS_UNIQUE);
-}
-
 Tree Tree::with_flags(uint32_t extra_flags) const {
     return Tree(ptr, true, flags | extra_flags);
 }
@@ -660,11 +639,9 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     // Expand any remap operations in the tree
     out = out.flatten();
 
-    // Collect and collapse affine equations, e.g. 2*X + 3*X --> 5*X
-    out = out.collect_affine();
-
-    // Deduplicate the tree, so that shared nodes are reused
-    out = out.unique_helper(canonical);
+    // Collect and collapse affine equations, e.g. 2*X + 3*X --> 5*X,
+    // along with deduplication.
+    out = out.collect_affine(canonical);
 
     // Give all oracles a chance to optimize themselves as well, reusing
     // any deduplicated trees in the maps above.
@@ -683,16 +660,9 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     return out.with_flags(TREE_FLAG_IS_UNIQUE | TREE_FLAG_IS_OPTIMIZED);
 }
 
-Tree Tree::unique() const {
-    // The canonical tree for each Key is stored here
-    std::map<Data::Key, Tree> canonical;
-
-    return unique_helper(canonical);
-}
-
-Tree Tree::collect_affine() const {
+Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {
     if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
-        return flatten().collect_affine();
+        return flatten().collect_affine(canonical);
     }
     using AffineMap = std::unordered_map<Tree, float>;
     std::stack<std::optional<AffineMap>> maps;
@@ -707,15 +677,27 @@ Tree Tree::collect_affine() const {
         const float scale;
     };
     struct UpAffine {
-        // If this is the affine operation that pushed the map, then
-        // top is set to true; otherwise it's false.
-        bool top;
+        // Marker struct which pops the top affine map
     };
     using Task = std::variant<Down, Up, UpAffine>;
     std::stack<Task> todo;
     todo.push(Down { ptr, 1 });
 
     std::stack<Tree> out;
+
+    // Deduplicator function, which returns a raw pointer
+    auto uniq = [&canonical](const Tree t) {
+        const auto key = t->key();
+        const auto k_itr = canonical.find(key);
+        // We already have a canonical version of this tree,
+        // so remapped this tree to the canonical version and keep going.
+        if (k_itr != canonical.end()) {
+            return k_itr->second;
+        } else {
+            canonical.insert(k_itr, {key, t});
+            return t;
+        }
+    };
 
     while (todo.size()) {
         const auto t = todo.top();
@@ -728,8 +710,8 @@ Tree Tree::collect_affine() const {
                 const bool has_map = maps.top().has_value();
                 if (!has_map) {
                     maps.push(AffineMap());
+                    todo.push(UpAffine { });
                 }
-                todo.push(UpAffine { !has_map });
                 could_be_affine = true;
             };
             if (auto g = std::get_if<TreeUnaryOp>(d->t)) {
@@ -780,12 +762,12 @@ Tree Tree::collect_affine() const {
             }
         } else if (auto d = std::get_if<Up>(&t)) {
             maps.pop(); // Pop the std::nullopt
-            Tree new_self = Tree(d->t);
+            Tree new_self = uniq(Tree(d->t));
             if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
                 auto lhs = out.top();
                 out.pop();
                 if (lhs != t->lhs) {
-                    new_self = Tree::unary(t->op, lhs);
+                    new_self = uniq(Tree::unary(t->op, lhs));
                 }
             } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
                 auto lhs = out.top();
@@ -793,7 +775,7 @@ Tree Tree::collect_affine() const {
                 auto rhs = out.top();
                 out.pop();
                 if (lhs != t->lhs || rhs != t->rhs) {
-                    new_self = Tree::binary(t->op, lhs, rhs);
+                    new_self = uniq(Tree::binary(t->op, lhs, rhs));
                 }
             }
 
@@ -809,48 +791,46 @@ Tree Tree::collect_affine() const {
                 out.push(new_self);
             }
         } else if (auto d = std::get_if<UpAffine>(&t)) {
-            if (d->top) {
-                assert(maps.top().has_value());
-                auto map = *maps.top();
-                maps.pop();
+            assert(maps.top().has_value());
+            auto map = *maps.top();
+            maps.pop();
 
-                // Split the affine terms into positive and negative
-                // components, so that we can subtract them.  This also puts
-                // all affine terms in the form X * positive constant, which
-                // encourages tree re-use.
-                std::vector<std::pair<const TreeData*, float>> pos;
-                std::vector<std::pair<const TreeData*, float>> neg;
-                for (auto& p: map) {
-                    if (p.second > 0.0f) {
-                        pos.push_back({p.first.ptr, p.second});
-                    } else if (p.second < 0.0f) {
-                        neg.push_back({p.first.ptr, -p.second});
-                    }
+            // Split the affine terms into positive and negative
+            // components, so that we can subtract them.  This also puts
+            // all affine terms in the form X * positive constant, which
+            // encourages tree re-use.
+            std::vector<std::pair<const TreeData*, float>> pos;
+            std::vector<std::pair<const TreeData*, float>> neg;
+            for (auto& p: map) {
+                if (p.second > 0.0f) {
+                    pos.push_back({p.first.ptr, p.second});
+                } else if (p.second < 0.0f) {
+                    neg.push_back({p.first.ptr, -p.second});
+                } else if (p.second) {
+                    // Store NaN terms in the positive array
+                    pos.push_back({p.first.ptr, p.second});
+                } else {
                     // Skip any zero terms here, since they don't matter
                 }
-
-                // Sorting isn't strictly necessary, and could be a *tiny*
-                // performance penalty, but this lets us make deterministic
-                // unit tests, which is nice.
-                //
-                // We sort by the multiplier, rather than trusting pointers
-                auto sort_fn = [](auto a, auto b) -> bool {
-                    if (a.second != b.second) {
-                        return a.second < b.second;
-                    } else {
-                        // This will at least sort constants before
-                        // trees that contain X/Y/Z, although it won't
-                        // order things any more finely than that.
-                        return a.first->flags < b.first->flags;
-                    }
-                };
-                std::sort(pos.begin(), pos.end(), sort_fn);
-                std::sort(neg.begin(), neg.end(), sort_fn);
-                out.push(reduce_binary(pos.cbegin(), pos.cend()) -
-                         reduce_binary(neg.cbegin(), neg.cend()));
-            } else {
-                // Do nothing
             }
+
+            // Sorting *after uniquifying* means that any affine terms that
+            // share the same set of Trees will be ordered deterministicly,
+            // which in turn helps with common subexpression elimination
+            //
+            // We sort by the multiplier first (to make deterministic unit
+            // tests easier), then by the pointer (to make CSE work)
+            auto sort_fn = [](auto a, auto b) -> bool {
+                if (a.second != b.second) {
+                    return a.second < b.second;
+                } else {
+                    return a.first < b.first;
+                }
+            };
+            std::sort(pos.begin(), pos.end(), sort_fn);
+            std::sort(neg.begin(), neg.end(), sort_fn);
+            out.push(uniq(reduce_binary(pos.cbegin(), pos.cend(), uniq) -
+                          reduce_binary(neg.cbegin(), neg.cend(), uniq)));
         }
     }
     assert(out.size() == 1);
@@ -858,7 +838,8 @@ Tree Tree::collect_affine() const {
 }
 
 Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
-                         std::vector<AffinePair>::const_iterator b)
+                         std::vector<AffinePair>::const_iterator b,
+                         std::function<Tree (Tree)> uniq)
 {
     using itr = std::vector<AffinePair>::const_iterator;
     using pair = std::pair<itr, itr>;
@@ -890,9 +871,9 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
                 // Skip the multiplication if this is the constant term,
                 // since that just adds extra computation.
                 if (a->first == Tree::one().ptr) {
-                    out.push(Tree(a->second));
+                    out.push(uniq(Tree(a->second)));
                 } else if (a->second) {
-                    out.push(Tree(a->first) * a->second);
+                    out.push(uniq(Tree(a->first) * uniq(a->second)));
                 } else {
                     out.push(Tree::invalid());
                 }
@@ -907,7 +888,7 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
             auto b = out.top();
             out.pop();
             if (a.is_valid() && b.is_valid()) {
-                out.push(a + b);
+                out.push(uniq(a + b));
             } else if (a.is_valid()) {
                 out.push(a);
             } else {

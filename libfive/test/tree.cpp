@@ -162,51 +162,6 @@ TEST_CASE("Tree::size()")
     REQUIRE(q.size() == 2); // X is a singleton
 }
 
-TEST_CASE("Tree::unique()")
-{
-    SECTION("Basic") {
-        auto x = Tree::X();
-        auto y = Tree::Y();
-
-        auto a = x + y;
-        auto b = x + y;
-
-        auto z = a * b;
-        REQUIRE(z.size() == 5);
-
-        auto q = z.unique();
-        REQUIRE(q.size() == 4);
-
-        auto f = a * b + (a * 2);
-        REQUIRE(f.size() == 8);
-
-        auto g = f.unique();
-        REQUIRE(g.size() == 7);
-    }
-
-    SECTION("With vars") {
-        auto a = Tree::var();
-        auto c = Tree::var();
-        auto b = Tree::var();
-
-        auto t = (a*1 + b*2 + c*3).unique();
-        REQUIRE(t.walk().size() == 9);
-    }
-
-    SECTION("Collapsing") {
-        auto a = Tree::X() + Tree::Y();
-        auto b = Tree::X() + Tree::Y();
-
-        // a and b are different, so min(a, b) doesn't collapse
-        auto c = min(a, b);
-        REQUIRE(c.walk().size() == 5);
-
-        // However, post-collapse, this should hit the min(x, x) = x identity
-        auto d = c.unique();
-        REQUIRE(d.walk().size() == 3);
-    }
-}
-
 TEST_CASE("Tree: operator<<")
 {
     SECTION("Basic")
@@ -312,20 +267,49 @@ TEST_CASE("Tree::with_const_vars") {
     }
 }
 
-TEST_CASE("Tree::collect_affine") {
+TEST_CASE("Tree::optimized")
+{
+    SECTION("min(max(-Z, Z - 10), max(-Z, Z - 100))") {
+        auto t = min(max(-Tree::Z(), Tree::Z() - 10),
+                     max(-Tree::Z(), Tree::Z() - 100));
+        std::stringstream ss;
+        ss << t.optimized();
+        REQUIRE(ss.str() == "(min (max (- z) (- z 10)) (max (- z) (- z 100)))");
+    }
+
+    SECTION("(Z + 2) / (2 * (Z + 3))") {
+        auto z = Tree::Z();
+        auto t = (z + 2) / (2 * (z + 3));
+        t = t.optimized();
+        std::stringstream ss;
+        ss << t;
+        REQUIRE(ss.str() == "(/ (+ z 2) (+ (* z 2) 6))");
+        REQUIRE(t.size() == 7);
+    }
+
+    SECTION("-3*cos(X) + Z + 2") {
+        auto x = Tree::X();
+        auto z = Tree::Z();
+        auto t = -3 * cos(x) + z + 2;
+        t = t.optimized();
+        std::stringstream ss;
+        ss << t;
+        REQUIRE(ss.str() == "(- (+ z 2) (* (cos x) 3))");
+    }
+
     SECTION("X*2 + Y*5 + cos(Z) + 5 * cos(Z)") {
         auto c = cos(Tree::Z());
         auto t = (Tree::X() * 2 + Tree::Y() * 5 + c + 5 * c);
 
         std::stringstream ss;
-        ss << t.collect_affine();
+        ss << t.optimized();
         REQUIRE(ss.str() == "(+ (* x 2) (* y 5) (* (cos z) 6))");
     }
 
     SECTION("max(Z - 10, -Z)") {
         auto t = max(Tree::Z() - 10, -Tree::Z());
         std::stringstream ss;
-        ss << t.collect_affine();
+        ss << t.optimized();
         REQUIRE(ss.str() == "(max (- z 10) (- z))");
     }
 
@@ -336,7 +320,7 @@ TEST_CASE("Tree::collect_affine") {
         auto t = a + b;
 
         std::stringstream ss;
-        ss << t.collect_affine();
+        ss << t.optimized();
         REQUIRE(ss.str() == "(+ (* y 2) (* x 4))");
     }
 
@@ -346,8 +330,8 @@ TEST_CASE("Tree::collect_affine") {
         auto b = 2*Tree::X() + Tree::Y();
         auto t = a * b;
         std::stringstream ss;
-        ss << t.collect_affine();
-        REQUIRE(ss.str() == "(* (+ y (* x 2)) (+ y (* x 2)))");
+        ss << t.optimized();
+        REQUIRE(ss.str() == "(square (+ y (* x 2)))");
     }
 
     SECTION("(X + 2*Y) + 3*cos(X + 2*Y)") {
@@ -355,7 +339,7 @@ TEST_CASE("Tree::collect_affine") {
         auto c = 3*cos(a);
         auto t = a + c;
         std::stringstream ss;
-        ss << t.collect_affine();
+        ss << t.optimized();
         REQUIRE(ss.str() == "(+ x (* y 2) (* (cos (+ x (* y 2))) 3))");
     }
 
@@ -364,7 +348,7 @@ TEST_CASE("Tree::collect_affine") {
         auto c = 3*cos(sin(a));
         auto t = a + c;
         std::stringstream ss;
-        ss << t.collect_affine();
+        ss << t.optimized();
         REQUIRE(ss.str() == "(+ x (* y 2) (* (cos (sin (+ x (* y 2) 7))) 3) 7)");
     }
 
@@ -376,7 +360,7 @@ TEST_CASE("Tree::collect_affine") {
         ss << t->lhs();
         REQUIRE(ss.str() == "(+ x (* 2 y) (* 3 (cos x)))");
 
-        auto q = t.collect_affine();
+        auto q = t.optimized();
 
         ss.str(std::string());
         ss << q;
@@ -401,7 +385,7 @@ TEST_CASE("Tree::collect_affine") {
         auto d =  Tree::Z() - hundred;
         auto t = min(max(a, b), max(c, d));
 
-        auto q = t.collect_affine();
+        auto q = t.optimized();
         std::stringstream ss;
         ss << q;
         REQUIRE(ss.str() == "(min (max (- z) (- z 10)) (max (- z) (- z 100)))");
@@ -411,7 +395,7 @@ TEST_CASE("Tree::collect_affine") {
         auto a = -Tree::Z();
 
         auto t = a * a; // shared su
-        auto q = t.collect_affine();
+        auto q = t.optimized();
         std::stringstream ss;
         ss << q;
         REQUIRE(ss.str() == "(square (- z))");
@@ -425,39 +409,82 @@ TEST_CASE("Tree::collect_affine") {
         REQUIRE(ss.str() == "(- -0.091 (/ (- z 2.7) 0.6))");
 
         ss.str("");
-        ss << t.collect_affine();
+        ss << t.optimized();
         REQUIRE(ss.str() == "(- 4.409 (* z 1.66667))");
     }
-}
 
-TEST_CASE("Tree::optimized")
-{
-    SECTION("min(max(-Z, Z - 10), max(-Z, Z - 100))") {
-        auto t = min(max(-Tree::Z(), Tree::Z() - 10),
-                     max(-Tree::Z(), Tree::Z() - 100));
-        std::stringstream ss;
-        ss << t.optimized();
-        REQUIRE(ss.str() == "(min (max (- z) (- z 10)) (max (- z) (- z 100)))");
-    }
-
-    SECTION("(Z + 2) / (2 * (Z + 1))") {
-        auto z = Tree::Z();
-        auto t = (z + 2) / (2 * (z + 1));
-        t = t.optimized();
-        std::stringstream ss;
-        ss << t;
-        REQUIRE(ss.str() == "(/ (+ z 2) (+ 2 (* z 2)))");
-        REQUIRE(t.size() == 6);
-    }
-
-    SECTION("-3*cos(X) + Z + 2") {
+    SECTION("Basic") {
         auto x = Tree::X();
-        auto z = Tree::Z();
-        auto t = -3 * cos(x) + z + 2;
-        t = t.optimized();
-        std::stringstream ss;
-        ss << t;
-        REQUIRE(ss.str() == "(- (+ z 2) (* (cos x) 3))");
+        auto y = Tree::Y();
+
+        auto a = x + y;
+        auto b = x + y;
+
+        auto z = a * b;
+        REQUIRE(z.size() == 5);
+
+        auto q = z.optimized();
+        REQUIRE(q.size() == 4);
+
+        auto f = a * b + (a * 2);
+        REQUIRE(f.size() == 8);
+
+        auto g = f.optimized();
+        CAPTURE(f);
+        CAPTURE(g);
+        REQUIRE(g.size() == 7);
+    }
+
+    SECTION("With vars") {
+        auto a = Tree::var();
+        auto c = Tree::var();
+        auto b = Tree::var();
+
+        auto t = (a*1 + b*2 + c*3).optimized();
+        REQUIRE(t.walk().size() == 9);
+    }
+
+    SECTION("Collapsing") {
+        auto a = Tree::X() + Tree::Y();
+        auto b = Tree::X() + Tree::Y();
+
+        // a and b are different, so min(a, b) doesn't collapse
+        auto c = min(a, b);
+        REQUIRE(c.walk().size() == 5);
+
+        // However, post-collapse, this should hit the min(x, x) = x identity
+        auto d = c.optimized();
+        REQUIRE(d.walk().size() == 3);
+    }
+
+    SECTION("Deduplication of constants") {
+        auto ca = Tree(3.14) * Tree::X();
+        auto cb = Tree(3.14) * Tree::Y();
+        auto p = ca + cb;
+        REQUIRE(p.optimized().size() == 6);
+
+        auto cc = Tree(4) * Tree::Y();
+        auto q = ca + cc;
+        REQUIRE(q.optimized().size() == 7);
+    }
+    SECTION("Handling of NaN") {
+        auto ca = sin(Tree(NAN) * Tree::X());
+        CAPTURE(ca);
+        REQUIRE(ca.size() == 4);
+        CAPTURE(ca.optimized());
+        REQUIRE(ca.optimized().size() == 4);
+    }
+    SECTION("Deduplication of NAN") {
+        auto cx = Tree(1);
+        auto ca = sin(Tree(NAN) * Tree::X());
+        auto cb = Tree(std::nanf(""));
+        auto cy = Tree(2);
+
+        CAPTURE(ca + cb);
+        CAPTURE((ca + cb).optimized());
+        REQUIRE((ca + cb).optimized().size() == 5);
+        REQUIRE((ca + cx).optimized().size() == 5);
+        REQUIRE((ca + cy).optimized().size() == 5);
     }
 }
 
@@ -562,30 +589,6 @@ TEST_CASE("Tree: deduplication of XYZ")
 
     auto ya = Tree::Y();
     REQUIRE(xa != ya);
-}
-
-TEST_CASE("Tree::unique")
-{
-    SECTION("Deduplication of constants") {
-        auto ca = Tree(3.14) * Tree::X();
-        auto cb = Tree(3.14) * Tree::Y();
-        auto p = ca + cb;
-        REQUIRE(p.unique().size() == 6);
-
-        auto cc = Tree(4) * Tree::Y();
-        auto q = ca + cc;
-        REQUIRE(q.unique().size() == 7);
-    }
-    SECTION("Deduplication of NAN") {
-        auto cx = Tree(1);
-        auto ca = Tree(NAN) * Tree::X();
-        auto cb = Tree(std::nanf(""));
-        auto cy = Tree(2);
-
-        REQUIRE((ca + cb).unique().size() == 4);
-        REQUIRE((ca + cx).unique().size() == 5);
-        REQUIRE((ca + cy).unique().size() == 5);
-    }
 }
 
 TEST_CASE("Tree: identity operations")
