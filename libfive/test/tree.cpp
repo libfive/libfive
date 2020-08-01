@@ -467,6 +467,7 @@ TEST_CASE("Tree::optimized")
         auto q = ca + cc;
         REQUIRE(q.optimized().size() == 7);
     }
+
     SECTION("Handling of NaN") {
         auto ca = sin(Tree(NAN) * Tree::X());
         CAPTURE(ca);
@@ -474,17 +475,21 @@ TEST_CASE("Tree::optimized")
         CAPTURE(ca.optimized());
         REQUIRE(ca.optimized().size() == 4);
     }
-    SECTION("Deduplication of NAN") {
+
+    SECTION("Deduplication of NaN") {
         auto cx = Tree(1);
         auto ca = sin(Tree(NAN) * Tree::X());
         auto cb = Tree(std::nanf(""));
         auto cy = Tree(2);
 
-        CAPTURE(ca + cb);
         CAPTURE((ca + cb).optimized());
         REQUIRE((ca + cb).optimized().size() == 5);
-        REQUIRE((ca + cx).optimized().size() == 5);
-        REQUIRE((ca + cy).optimized().size() == 5);
+
+        CAPTURE((ca + cx).optimized());
+        REQUIRE((ca + cx).optimized().size() == 6);
+
+        CAPTURE((ca + cy).optimized());
+        REQUIRE((ca + cy).optimized().size() == 6);
     }
 }
 

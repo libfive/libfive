@@ -799,16 +799,16 @@ Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {
             // components, so that we can subtract them.  This also puts
             // all affine terms in the form X * positive constant, which
             // encourages tree re-use.
-            std::vector<std::pair<const TreeData*, float>> pos;
-            std::vector<std::pair<const TreeData*, float>> neg;
+            std::vector<std::pair<const TreeData*, float>> pos_;
+            std::vector<std::pair<const TreeData*, float>> neg_;
             for (auto& p: map) {
                 if (p.second > 0.0f) {
-                    pos.push_back({p.first.ptr, p.second});
+                    pos_.push_back({p.first.ptr, p.second});
                 } else if (p.second < 0.0f) {
-                    neg.push_back({p.first.ptr, -p.second});
+                    neg_.push_back({p.first.ptr, -p.second});
                 } else if (p.second) {
                     // Store NaN terms in the positive array
-                    pos.push_back({p.first.ptr, p.second});
+                    pos_.push_back({p.first.ptr, p.second});
                 } else {
                     // Skip any zero terms here, since they don't matter
                 }
@@ -827,8 +827,27 @@ Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {
                     return a.first < b.first;
                 }
             };
-            std::sort(pos.begin(), pos.end(), sort_fn);
-            std::sort(neg.begin(), neg.end(), sort_fn);
+            std::sort(pos_.begin(), pos_.end(), sort_fn);
+            std::sort(neg_.begin(), neg_.end(), sort_fn);
+
+            auto to_vec = [&uniq](const auto& v) {
+                std::vector<Tree> out;
+                out.reserve(v.size());
+
+                for (const auto& p : v) {
+                    // Skip the multiplication if this is the constant term,
+                    // since that just adds extra computation.
+                    if (p.first == Tree::one().ptr) {
+                        out.push_back(uniq(Tree(p.second)));
+                    } else if (p.second) {
+                        out.push_back(uniq(Tree(p.first) * uniq(p.second)));
+                    }
+                }
+                return out;
+            };
+            std::vector<Tree> pos = to_vec(pos_);
+            std::vector<Tree> neg = to_vec(neg_);
+
             out.push(uniq(reduce_binary(pos.cbegin(), pos.cend(), uniq) -
                           reduce_binary(neg.cbegin(), neg.cend(), uniq)));
         }
@@ -837,11 +856,11 @@ Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {
     return out.top();
 }
 
-Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
-                         std::vector<AffinePair>::const_iterator b,
+Tree Tree::reduce_binary(std::vector<Tree>::const_iterator a,
+                         std::vector<Tree>::const_iterator b,
                          std::function<Tree (Tree)> uniq)
 {
-    using itr = std::vector<AffinePair>::const_iterator;
+    using itr = std::vector<Tree>::const_iterator;
     using pair = std::pair<itr, itr>;
     using option = std::optional<pair>;
 
@@ -868,15 +887,7 @@ Tree Tree::reduce_binary(std::vector<AffinePair>::const_iterator a,
             if (delta == 0) {
                 out.push(Tree::invalid());
             } else if (delta == 1) {
-                // Skip the multiplication if this is the constant term,
-                // since that just adds extra computation.
-                if (a->first == Tree::one().ptr) {
-                    out.push(uniq(Tree(a->second)));
-                } else if (a->second) {
-                    out.push(uniq(Tree(a->first) * uniq(a->second)));
-                } else {
-                    out.push(Tree::invalid());
-                }
+                out.push(*a);
             } else {
                 todo.push(std::nullopt); // marker to pop stack
                 todo.push(pair(a, a + delta / 2));

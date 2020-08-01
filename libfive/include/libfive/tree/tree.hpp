@@ -199,9 +199,8 @@ protected:
     /*  Does a binary reduction of a set of affine pairs, building a
      *  balanced-ish tree.  The a iterator is the beginning of the region to
      *  reduce, and b is one-past-the-end of the region to reduce. */
-    using AffinePair = std::pair<const Data*, float>;
-    static Tree reduce_binary(std::vector<AffinePair>::const_iterator a,
-                              std::vector<AffinePair>::const_iterator b,
+    static Tree reduce_binary(std::vector<Tree>::const_iterator a,
+                              std::vector<Tree>::const_iterator b,
                               std::function<Tree (Tree)> uniq);
 
     /*  subsitute_with performs a recursive remapping of the tree using
