@@ -25,6 +25,12 @@ Tree::~Tree() {
     if (!ptr) {
         return;
     }
+    // Special case if this tree isn't being freed here: we return early
+    // to avoid allocating data on the heap.
+    if (--ptr->refcount) {
+        return;
+    }
+
     std::stack<const Data*> todo;
     todo.push(ptr);
     while (!todo.empty()) {
@@ -33,7 +39,7 @@ Tree::~Tree() {
         // If this was the last remaining reference to this tree, then
         // empty it out (so that its destructor doesn't recurse) and add
         // its children to the queue for refcount subtraction.
-        if (!--t->refcount) {
+        if (t == ptr || !--t->refcount) {
             // Move the children out of the Tree, adding them to the queue
             // before deleting the tree (to prevent recursion).  We use
             // std::exchange to steal the pointer out from the tree; we'll
