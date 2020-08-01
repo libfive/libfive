@@ -813,26 +813,41 @@ Tree Tree::collect_affine() const {
                 assert(maps.top().has_value());
                 auto map = *maps.top();
                 maps.pop();
+
+                // Split the affine terms into positive and negative
+                // components, so that we can subtract them.  This also puts
+                // all affine terms in the form X * positive constant, which
+                // encourages tree re-use.
+                std::vector<std::pair<const TreeData*, float>> pos;
+                std::vector<std::pair<const TreeData*, float>> neg;
+                for (auto& p: map) {
+                    if (p.second > 0.0f) {
+                        pos.push_back({p.first.ptr, p.second});
+                    } else if (p.second < 0.0f) {
+                        neg.push_back({p.first.ptr, -p.second});
+                    }
+                    // Skip any zero terms here, since they don't matter
+                }
+
                 // Sorting isn't strictly necessary, and could be a *tiny*
                 // performance penalty, but this lets us make deterministic
                 // unit tests, which is nice.
                 //
                 // We sort by the multiplier, rather than trusting pointers
-                std::vector<std::pair<const TreeData*, float>> sorted;
-                for (auto& p: map) {
-                    sorted.push_back({p.first.ptr, p.second});
-                }
-                std::sort(sorted.begin(), sorted.end(),
-                    [](auto a, auto b) -> bool {
-                        if (a.second != b.second) {
-                            return a.second < b.second;
-                        } else {
-                            // This will at least sort constants before
-                            // trees that contain X/Y/Z, although it won't
-                            // order things any more finely than that.
-                            return a.first->flags < b.first->flags;
-                        }});
-                out.push(reduce_binary(sorted.cbegin(), sorted.cend()));
+                auto sort_fn = [](auto a, auto b) -> bool {
+                    if (a.second != b.second) {
+                        return a.second < b.second;
+                    } else {
+                        // This will at least sort constants before
+                        // trees that contain X/Y/Z, although it won't
+                        // order things any more finely than that.
+                        return a.first->flags < b.first->flags;
+                    }
+                };
+                std::sort(pos.begin(), pos.end(), sort_fn);
+                std::sort(neg.begin(), neg.end(), sort_fn);
+                out.push(reduce_binary(pos.cbegin(), pos.cend()) -
+                         reduce_binary(neg.cbegin(), neg.cend()));
             } else {
                 // Do nothing
             }

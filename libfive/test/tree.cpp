@@ -326,7 +326,7 @@ TEST_CASE("Tree::collect_affine") {
         auto t = max(Tree::Z() - 10, -Tree::Z());
         std::stringstream ss;
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(max (+ -10 z) (- z))");
+        REQUIRE(ss.str() == "(max (- z 10) (- z))");
     }
 
     SECTION("(2*X + Y) + (2*X + Y)") {
@@ -404,7 +404,7 @@ TEST_CASE("Tree::collect_affine") {
         auto q = t.collect_affine();
         std::stringstream ss;
         ss << q;
-        REQUIRE(ss.str() == "(min (max (- z) (+ -10 z)) (max (- z) (+ -100 z)))");
+        REQUIRE(ss.str() == "(min (max (- z) (- z 10)) (max (- z) (- z 100)))");
     }
 
     SECTION("(- z) * (- z)") {
@@ -426,7 +426,7 @@ TEST_CASE("Tree::collect_affine") {
 
         ss.str("");
         ss << t.collect_affine();
-        REQUIRE(ss.str() == "(+ (* z -1.66667) 4.409)");
+        REQUIRE(ss.str() == "(- 4.409 (* z 1.66667))");
     }
 }
 
@@ -437,7 +437,7 @@ TEST_CASE("Tree::optimized")
                      max(-Tree::Z(), Tree::Z() - 100));
         std::stringstream ss;
         ss << t.optimized();
-        REQUIRE(ss.str() == "(min (max (- z) (+ -10 z)) (max (- z) (+ -100 z)))");
+        REQUIRE(ss.str() == "(min (max (- z) (- z 10)) (max (- z) (- z 100)))");
     }
 
     SECTION("(Z + 2) / (2 * (Z + 1))") {
@@ -448,6 +448,16 @@ TEST_CASE("Tree::optimized")
         ss << t;
         REQUIRE(ss.str() == "(/ (+ z 2) (+ 2 (* z 2)))");
         REQUIRE(t.size() == 6);
+    }
+
+    SECTION("-3*cos(X) + Z + 2") {
+        auto x = Tree::X();
+        auto z = Tree::Z();
+        auto t = -3 * cos(x) + z + 2;
+        t = t.optimized();
+        std::stringstream ss;
+        ss << t;
+        REQUIRE(ss.str() == "(- (+ z 2) (* (cos x) 3))");
     }
 }
 
