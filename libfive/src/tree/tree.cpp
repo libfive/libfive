@@ -537,91 +537,6 @@ Tree Tree::reclaim(const Data* ptr) {
     return Tree(ptr, false, 0); // Don't increment refcount
 }
 
-Tree Tree::substitute_with(std::function<const TreeData* (Tree)> fn) const {
-    if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
-        return flatten().substitute_with(fn);
-    }
-
-    /*  Pushes Up(t) to the task stack, followed by Down(t->lhs/rhs)
-     *  for each child (if any). */
-    struct Down {
-        const Data* t;
-    };
-
-    /*  If t has children, then pops them from the out stack, applies fn to
-     *  t, then pushes either t or the output of fn(t) to the output stack. */
-    struct Up {
-        const Data* t;
-    };
-
-    using Task = std::variant<Down, Up>;
-    std::stack<Task> todo;
-    std::stack<Tree> out;
-
-    todo.push(Down { ptr });
-
-    while (todo.size()) {
-        auto k = todo.top();
-        todo.pop();
-
-        if (const auto d=std::get_if<Down>(&k)) {
-            todo.push(Up { d->t });
-            if (const auto t=std::get_if<TreeNonaryOp>(d->t)) {
-                // Nothing to do here
-            } else if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
-                todo.push(Down { t->lhs.ptr });
-            } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
-                todo.push(Down { t->lhs.ptr });
-                todo.push(Down { t->rhs.ptr });
-            } else if (std::get_if<TreeConstant>(d->t)) {
-                // Nothing to do here
-            } else if (std::get_if<TreeOracle>(d->t)) {
-                // Nothing to do here
-            } else if (std::get_if<TreeRemap>(d->t)) {
-                // This should never happen, because we flatten above
-                assert(false);
-            } else {
-                throw TreeData::InvalidException();
-            }
-        } else if (auto d=std::get_if<Up>(&k)) {
-            if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
-                const auto lhs = out.top();
-                out.pop();
-                const auto n = lhs.ptr != t->lhs.ptr
-                        ? Tree::unary(t->op, lhs)
-                        : Tree(d->t);
-                if (auto new_tree = fn(n)) {
-                    out.push(Tree(new_tree));
-                } else {
-                    out.push(n);
-                }
-            } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
-                const auto lhs = out.top();
-                out.pop();
-                const auto rhs = out.top();
-                out.pop();
-                const auto n = lhs.ptr != t->lhs.ptr || rhs.ptr != t->rhs.ptr
-                        ? Tree::binary(t->op, lhs, rhs)
-                        : Tree(d->t);
-                if (auto new_tree = fn(n)) {
-                    out.push(Tree(new_tree));
-                } else {
-                    out.push(n);
-                }
-            } else {
-                if (auto new_tree = fn(Tree(d->t))) {
-                    out.push(Tree(new_tree));
-                } else {
-                    out.push(Tree(d->t));
-                }
-            }
-        }
-    }
-
-    assert(out.size() == 1);
-    return out.top();
-}
-
 Tree Tree::with_flags(uint32_t extra_flags) const {
     return Tree(ptr, true, flags | extra_flags);
 }
@@ -644,19 +559,6 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     // Collect and collapse affine equations, e.g. 2*X + 3*X --> 5*X,
     // along with deduplication.
     out = out.collect_affine(canonical);
-
-    // Give all oracles a chance to optimize themselves as well, reusing
-    // any deduplicated trees in the maps above.
-    if (out->flags & TreeData::TREE_FLAG_HAS_ORACLE) {
-        out = out.substitute_with([&canonical](Tree d) {
-            if (auto t = std::get_if<TreeOracle>(d.ptr)) {
-                if (auto o = t->oracle->optimized(canonical)) {
-                    return new TreeData(TreeOracle { std::move(o) });
-                }
-            }
-            return static_cast<TreeData*>(nullptr);
-        });
-    }
 
     // And we're done!
     return out.with_flags(TREE_FLAG_IS_UNIQUE | TREE_FLAG_IS_OPTIMIZED);
@@ -778,6 +680,10 @@ Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {
                 out.pop();
                 if (lhs != t->lhs || rhs != t->rhs) {
                     new_self = uniq(Tree::binary(t->op, lhs, rhs));
+                }
+            } else if (auto t=std::get_if<TreeOracle>(d->t)) {
+                if (auto o = t->oracle->optimized(canonical)) {
+                    new_self = uniq(Tree(std::move(o)));
                 }
             }
 

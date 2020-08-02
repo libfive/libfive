@@ -196,11 +196,6 @@ protected:
     /*  Returns a Tree with the same data but extra flag bits set */
     Tree with_flags(uint32_t extra_flags) const;
 
-    /*  subsitute_with performs a recursive remapping of the tree using
-     *  a subsitution function, which returns a pointer if we should
-     *  replace a given tree (and nullptr otherwise) */
-    Tree substitute_with(std::function<const Data* (Tree)> fn) const;
-
     /* Private constructor to build from the raw variant pointer */
     explicit Tree(const Data* d, bool increment_refcount, uint32_t flags);
 
