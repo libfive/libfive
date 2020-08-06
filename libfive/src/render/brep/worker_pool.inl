@@ -18,10 +18,11 @@ namespace libfive {
 
 template <typename T, typename Neighbors, unsigned N>
 Root<T> WorkerPool<T, Neighbors, N>::build(
-        Tree t, const Region<N>& region_,
+        const Tree& t_, const Region<N>& region_,
         const BRepSettings& settings)
 {
     // Build evaluators for the pool
+    const auto t = t_.optimized();
     std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
     es.reserve(settings.workers);
     for (unsigned i=0; i < settings.workers; ++i) {
