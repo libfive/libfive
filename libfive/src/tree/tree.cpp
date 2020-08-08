@@ -549,19 +549,11 @@ Tree Tree::optimized() const {
 Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     if (flags & TREE_FLAG_IS_OPTIMIZED) {
         return *this;
+    } else {
+        return flatten()
+            .collect_affine(canonical)
+            .with_flags(TREE_FLAG_IS_OPTIMIZED);
     }
-
-    Tree out = *this;
-
-    // Expand any remap operations in the tree
-    out = out.flatten();
-
-    // Collect and collapse affine equations, e.g. 2*X + 3*X --> 5*X,
-    // along with deduplication.
-    out = out.collect_affine(canonical);
-
-    // And we're done!
-    return out.with_flags(TREE_FLAG_IS_UNIQUE | TREE_FLAG_IS_OPTIMIZED);
 }
 
 Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {

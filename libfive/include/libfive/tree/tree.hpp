@@ -19,10 +19,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/tree/operations.hpp"
 
 namespace libfive {
-    // Forward declarations
-    struct TreeData;
-    struct TreeDataKey;
-    class OracleClause;
+
+// Forward declarations
+struct TreeData;
+struct TreeDataKey;
+class OracleClause;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -60,14 +61,15 @@ public:
         return *this;
     }
 
-    /* Constructor to build from the raw variant pointer.  This is only useful
-     * for building a temporary Tree around a pointer acquired from release() */
+    /* Constructor to build from the raw variant pointer.  This is used to
+     * build a temporary Tree around a raw pointer acquired from release(),
+     * in libfive's C API. */
     explicit Tree(const Data* d)
         : Tree(d, true, 0)
     { /* Nothing to do here */ }
 
-    // These are the main constructors used to build Trees in code
-    // X, Y, and Z are singletons, since they're used a lot
+    /* These are the main constructors used to build Trees in code
+     * X, Y, and Z are singletons, since they're used a lot */
     static Tree X();
     static Tree Y();
     static Tree Z();
@@ -79,27 +81,28 @@ public:
     //  Returns a new unique variable
     static Tree var();
 
-    // Compares two trees by *address*, not value.
-    // This is O(1), but isn't a deep comparison unless you've deduplicated
-    // the two trees using the same canonical map.
+    /* Performs a shallow comparison of two trees
+     *
+     * This is O(1), but isn't a deep (logical) comparison.  To do one, first
+     * compare the outputs of optimized_helper(map) with the same map */
     bool operator==(const Tree& other) const;
     bool operator!=(const Tree& other) const;
     bool operator<(const Tree& other) const;
 
-    //  Returns a version of this tree wrapped in the CONST_VAR opcode,
-    //  which zeroes out partial derivatives with respect to all variables.
+    /*  Returns a version of this tree wrapped in the CONST_VAR opcode,
+     *  which zeroes out partial derivatives with respect to all variables. */
     Tree with_const_vars() const;
 
-    // Construct a unary Tree, applying local simplifications as appropriate
-    // e.g. abs(abs(t)) --> abs(t)
+    /* Construct a unary Tree, applying local simplifications as appropriate
+     * e.g. abs(abs(t)) --> abs(t) */
     static Tree unary(Opcode::Opcode op, const Tree& lhs);
 
-    // Constructs a binary-operation Tree, apply local simplifications as
-    // appropriate (e.g. t + 0 --> t)
+    /* Constructs a binary-operation Tree, apply local simplifications as
+     * appropriate (e.g. t + 0 --> t) */
     static Tree binary(Opcode::Opcode op, const Tree& lhs, const Tree& rhs);
 
-    // Constructs a zero-argument tree.  If the opcode is VAR_X/Y/Z, returns
-    // the singleton X/Y/Z objects from the functions above.
+    /* Constructs a zero-argument tree.  If the opcode is VAR_X/Y/Z, returns
+     * the singleton X/Y/Z objects; otherwise, returns a fresh pointer. */
     static Tree nonary(Opcode::Opcode op);
 
     // Constructs a constant Tree with a floating-point value
@@ -111,8 +114,8 @@ public:
     // Checks whether this tree was constructed by Tree::invalid()
     bool is_valid() const;
 
-    /*  Unique identifier for the underlying clause.  This is not necessarily
-     *  deduplicated, unless the tree was constructed using unique(). */
+    /*  Unique identifier for the underlying clause.  This is not automatically
+     *  deduplicated, so the same logic trees may have different ids. */
     using Id = const void*;
     Id id() const { return ptr; }
 
@@ -140,11 +143,6 @@ public:
      *  unflattened remap operations of their own, they will be flattened,
      *  which is not constant time. */
     Tree remap(Tree X, Tree Y, Tree Z) const;
-
-    /*  Generic (static) substitution, which does not recurse through oracles.
-     *
-     *  Throws a RemapException if the tree has unflatten remap operations. */
-    Tree substitute(std::unordered_map<Id, Tree>&& s) const;
 
     /*  Serializes the tree to a stream of bytes */
     void serialize(std::ostream& out) const;
@@ -186,9 +184,8 @@ protected:
     /*  These flags are different from the flags within TreeData in
      *  that they are caches of pure functions of the tree data; instead,
      *  they mark information about the history of the tree (e.g.
-     *  whether it was returned from optimized() or unique()) */
+     *  whether it was returned from optimized()) */
     enum {
-        TREE_FLAG_IS_UNIQUE=(1<<0),
         TREE_FLAG_IS_OPTIMIZED=(1<<0),
     };
     uint32_t flags;
@@ -224,7 +221,7 @@ struct hash<libfive::Tree> {
         return hash<const void*>()(k.id());
     }
 };
-}
+}   // namespace std
 
 // Needed so that the unique_ptr<const OracleClause> destructor works
 #include "libfive/oracle/oracle_clause.hpp"

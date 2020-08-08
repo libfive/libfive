@@ -584,7 +584,8 @@ TEST_CASE("SimplexMesher (smoke test)")
 
 TEST_CASE("SimplexMesher: sphere-box intersection vertex placement")
 {
-    auto c = min(sphere(0.7, {0, 0, 0.1f}), box({-1, -1, -1}, {1, 1, 0.1f}));
+    auto c = min(sphere(0.7, {0, 0, 0.1f}), box({-1, -1, -1}, {1, 1, 0.1f}))
+        .optimized();
     Region<3> r({-10, -10, -10}, {10, 10, 10});
 
     BRepSettings settings;
