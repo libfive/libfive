@@ -561,6 +561,28 @@ TEST_CASE("Tree::deserialize")
     }
 }
 
+TEST_CASE("Tree::eq") {
+    SECTION("X") {
+        // These are also equal by pointer equality, since they're singletons
+        REQUIRE(Tree::X().eq(Tree::X()));
+    }
+
+#define REQUIRE_EQ(t) SECTION(#t) {\
+        auto a = (t); \
+        auto b = (t); \
+        CAPTURE(a); \
+        CAPTURE(b); \
+        REQUIRE(a != b); \
+        REQUIRE(a.eq(b)); \
+    } while (0)
+
+    REQUIRE_EQ(Tree::X() + 2);
+    REQUIRE_EQ((Tree::X() + 2 * Tree::Y()).remap(
+                Tree::Y() + 1, cos(Tree::Z()), Tree::Y() * 2));
+
+#undef REQUIRE_EQ
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Taken from old test/cache.cpp

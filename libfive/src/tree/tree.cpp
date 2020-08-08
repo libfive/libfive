@@ -264,6 +264,11 @@ bool Tree::operator<(const Tree& other) const {
     return get() < other.get();
 }
 
+bool Tree::eq(const Tree& other) const {
+    std::map<Data::Key, Tree> canonical;
+    return optimized_helper(canonical) == other.optimized_helper(canonical);
+}
+
 std::ostream& Tree::print_prefix(std::ostream& s) const {
     std::stack<std::variant<const Data*, char>> todo;
     todo.push(ptr);

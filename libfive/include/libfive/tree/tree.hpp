@@ -74,12 +74,15 @@ public:
     static Tree Y();
     static Tree Z();
 
-    // Returns a tree for which is_invalid() = true
-    // (using the TreeInvalid variant)
+    /* Returns a tree for which is_invalid() = true
+     * (under the hood, uses the TreeInvalid variant) */
     static Tree invalid();
 
-    //  Returns a new unique variable
+    /*  Returns a new unique variable */
     static Tree var();
+
+    /*  Deep comparison, which could be O(N*log(N)) */
+    bool eq(const Tree& other) const;
 
     /* Performs a shallow comparison of two trees
      *
