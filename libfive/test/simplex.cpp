@@ -219,7 +219,7 @@ TEST_CASE("SimplexTree<3>: Corner positions")
 
 TEST_CASE("SimplexMesher<3>: box with problematic edges")
 {
-    auto shape = box({-1, -1, -1}, {1.1f, 1.1f, 1.1f});
+    auto shape = box({-1, -1, -1}, {1.1f, 1.1f, 1.1f}).optimized();
     auto r = Region<3>({-2, -2, -2}, {2, 2, 2});
 
     // Build a tree without any collapsing
@@ -260,7 +260,7 @@ TEST_CASE("SimplexMesher<3>: box with problematic edges")
 TEST_CASE("SimplexMesher<3>: tricky shape")
 {
     auto b = max(box({-1, 0, -1}, {1, 2, 1}),
-                -box({0, 0, -1}, {1, 2, 0}));
+                -box({0, 0, -1}, {1, 2, 0})).optimized();
 
     Region<3> r({-5, -5, -5}, {5, 5, 5});
 
@@ -354,7 +354,7 @@ TEST_CASE("SimplexTree<3>: assignIndices with cell collapsing")
 TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement")
 {
     auto b = max(box({-1, 0, -1}, {1, 2, 1}),
-                -box({0, -1, -0.5}, {1, 2.5, 1}));
+                -box({0, -1, -0.5}, {1, 2.5, 1})).optimized();
 
     Region<3> r({-5, -5, -5}, {5, 5, 5});
 
@@ -370,7 +370,7 @@ TEST_CASE("SimplexMesher<3>: cell collapsing and vertex placement")
 
 TEST_CASE("SimplexMesher<3>: sphere")
 {
-    auto s = sphere(1);
+    auto s = sphere(1).optimized();
     Region<3> r({-2, -2, -2}, {2, 2, 2});
 
     BRepSettings settings;
@@ -389,7 +389,7 @@ TEST_CASE("SimplexMesher<3>: sphere")
 
 TEST_CASE("SimplexMesher<3>: cylinder meshing")
 {
-    auto b = extrude(circle(1, {0, 0}), -1, 1);
+    auto b = extrude(circle(1, {0, 0}), -1, 1).optimized();
 
     Region<3> r({-5, -5, -5}, {5, 5, 5});
 
@@ -434,7 +434,7 @@ TEST_CASE("SimplexTree<3>: vertex placement in centered cylinder")
 
 TEST_CASE("SimplexTree<3>: meshing + cell collapsing")
 {
-    auto c = box({-3.1f, -3.1f, -3.1f}, {3.1f, 3.1f, 3.1f});
+    auto c = box({-3.1f, -3.1f, -3.1f}, {3.1f, 3.1f, 3.1f}).optimized();
     Region<3> r({-4, -4, -4}, {4, 4, 4});
 
     BRepSettings settings;
@@ -530,7 +530,7 @@ TEST_CASE("SimplexMesher (smoke test)")
     SECTION("High-resolution sphere")
     {
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
-        auto c = sphere(0.5);
+        auto c = sphere(0.5).optimized();
 
         BRepSettings settings;
         settings.min_feature = 1.1;
@@ -551,7 +551,7 @@ TEST_CASE("SimplexMesher (smoke test)")
     SECTION("Low-resolution sphere")
     {
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
-        auto c = sphere(0.1);
+        auto c = sphere(0.1).optimized();
 
         BRepSettings settings;
         settings.min_feature = 1;
@@ -565,7 +565,7 @@ TEST_CASE("SimplexMesher (smoke test)")
 
     SECTION("Low-resolution box")
     {
-        auto c = box({-0.4f, -0.4f, -0.4f}, {0.4f, 0.4f, 0.4f});
+        auto c = box({-0.4f, -0.4f, -0.4f}, {0.4f, 0.4f, 0.4f}).optimized();
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
         BRepSettings settings;
@@ -631,7 +631,7 @@ TEST_CASE("SimplexMesher: edge pairing")
 
     SECTION("Sphere (low resolution)")
     {
-        auto c = sphere(0.4);
+        auto c = sphere(0.4).optimized();
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
         BRepSettings settings;
@@ -654,7 +654,7 @@ TEST_CASE("SimplexMesher: edge pairing")
 
     SECTION("Sphere (higher-resolution)")
     {
-        auto c = sphere(0.4);
+        auto c = sphere(0.4).optimized();
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
         BRepSettings settings;
@@ -672,7 +672,7 @@ TEST_CASE("SimplexMesher: edge pairing")
 
     SECTION("Box (low-resolution)")
     {
-        auto c = box({-0.4f, -0.4f, -0.4f}, {0.4f, 0.4f, 0.4f});
+        auto c = box({-0.4f, -0.4f, -0.4f}, {0.4f, 0.4f, 0.4f}).optimized();
         auto r = Region<3>({-1, -1, -1}, {1, 1, 1});
 
         BRepSettings settings;
@@ -691,7 +691,7 @@ TEST_CASE("SimplexMesher: edge pairing")
 
 TEST_CASE("SimplexMesher: menger sponge")
 {
-    Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5}));
+    Tree sponge = max(menger(2), -sphere(1, {1.5, 1.5, 1.5})).optimized();
     Region<3> r({-2.5, -2.5, -2.5}, {2.5, 2.5, 2.5});
 
     BRepSettings settings;
@@ -752,7 +752,7 @@ TEST_CASE("Simplex meshing (gyroid performance breakdown)", "[!benchmark]")
 
     Root<SimplexTree<3>> t;
 
-    auto s = sphereGyroid();
+    auto s = sphereGyroid().optimized();
 
     BRepSettings settings;
     settings.min_feature = 0.05;
