@@ -470,6 +470,15 @@ TEST_CASE("Tree::optimized")
         CAPTURE((ca + cy).optimized());
         REQUIRE((ca + cy).optimized().size() == 6);
     }
+
+    SECTION("CSE of commutative operations") {
+        auto a = min(2 * Tree::X(), 3 * Tree::Y() + Tree::Z());
+        auto b = min(3 * Tree::Y() + Tree::Z(), 2 * Tree::X());
+        auto c = 1 + a * (3 * b);
+        auto d = c.optimized();
+        CAPTURE(d);
+        REQUIRE(d.size() == 13);
+    }
 }
 
 TEST_CASE("Tree::flags")
