@@ -554,13 +554,13 @@ Tree Tree::optimized() const {
 Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     if (flags & TREE_FLAG_IS_OPTIMIZED) {
         return *this;
-    } else if  (flags & TreeData::TREE_FLAG_HAS_REMAP) {
+    } else if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
         return flatten().optimized_helper(canonical);
     }
 
     using AffineMap = std::unordered_map<Tree, float>;
-    std::stack<std::optional<AffineMap>> maps;
-    maps.push(std::nullopt);
+    std::stack<std::optional<AffineMap>> affine;
+    affine.push(std::nullopt);
 
     struct Down {
         const Data* t;
@@ -601,9 +601,9 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
 
             bool could_be_affine = false;
             auto mark_affine = [&]() {
-                const bool has_map = maps.top().has_value();
+                const bool has_map = affine.top().has_value();
                 if (!has_map) {
-                    maps.push(AffineMap());
+                    affine.push(AffineMap());
                     todo.push(UpAffine { });
                 }
                 could_be_affine = true;
@@ -640,7 +640,7 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
 
             if (!could_be_affine) {
                 todo.push(Up { d->t, d->scale });
-                maps.push(std::nullopt);
+                affine.push(std::nullopt);
                 if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
                     todo.push(Down { t->lhs.ptr, 1.0f });
                 } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
@@ -655,7 +655,7 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
                 }
             }
         } else if (auto d = std::get_if<Up>(&t)) {
-            maps.pop(); // Pop the std::nullopt
+            affine.pop(); // Pop the std::nullopt
             Tree new_self = uniq(Tree(d->t));
             if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
                 auto lhs = out.top();
@@ -677,11 +677,11 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
                 }
             }
 
-            if (maps.top().has_value()) {
+            if (affine.top().has_value()) {
                 if (auto v = std::get_if<TreeConstant>(new_self.ptr)) {
-                    (*maps.top())[Tree::one()] += d->scale * v->value;
+                    (*affine.top())[Tree::one()] += d->scale * v->value;
                 } else {
-                    (*maps.top())[new_self] += d->scale;
+                    (*affine.top())[new_self] += d->scale;
                 }
                 // In this case, we don't push anything to the Out stack
                 // because it will all be accumulated by the UpAffine task
@@ -689,9 +689,9 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
                 out.push(new_self);
             }
         } else if (auto d = std::get_if<UpAffine>(&t)) {
-            assert(maps.top().has_value());
-            auto map = *maps.top();
-            maps.pop();
+            assert(affine.top().has_value());
+            auto map = *affine.top();
+            affine.pop();
 
             // Split the affine terms into positive and negative
             // components, so that we can subtract them.  This also puts
