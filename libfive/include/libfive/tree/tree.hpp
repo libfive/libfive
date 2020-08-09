@@ -86,8 +86,8 @@ public:
 
     /* Performs a shallow comparison of two trees
      *
-     * This is O(1), but isn't a deep (logical) comparison.  To do one, first
-     * compare the outputs of optimized_helper(map) with the same map */
+     * This is O(1), but isn't a deep (logical) comparison.
+     * Tree:eq() performs a deep comparison. */
     bool operator==(const Tree& other) const;
     bool operator!=(const Tree& other) const;
     bool operator<(const Tree& other) const;
@@ -122,20 +122,21 @@ public:
     using Id = const void*;
     Id id() const { return ptr; }
 
-    /*  Returns a new tree which has been unique-ified and has had its affine
-     *  subtrees collapsed + balanced. */
+    /*  Returns a new tree which has been optimized!
+     *
+     *  An optimized tree is deduplicated: subexpressions which are logically
+     *  the same become shared, to make evaluation more efficient.
+     *
+     *  An optimized tree also has nested affine forms collapsed, e.g.
+     *  (2*X + 3*Y) + 5*(X - Y) ==> 7*X - 2*Y
+     *
+     *  If the input tree contained remap operations, it will be flattened
+     *  before optimization */
     Tree optimized() const;
     Tree optimized_helper(std::map<TreeDataKey, Tree>& canonical) const;
 
     /*  Returns a tree with all remap operations expanded. */
     Tree flatten() const;
-
-    /*  Returns a tree in which nested affine forms are collapsed, e.g.
-     *  (2*X + 3*Y) + 5*(X - Y) ==> 7*X - 2*Y
-     *
-     *  If the tree contains remap operations, it will be flattened before
-     *  doing the affine collection operation. */
-    Tree collect_affine(std::map<TreeDataKey, Tree>& canonical) const;
 
     /*  Checks the number of unique nodes in the tree */
     size_t size() const;

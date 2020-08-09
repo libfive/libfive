@@ -554,17 +554,10 @@ Tree Tree::optimized() const {
 Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     if (flags & TREE_FLAG_IS_OPTIMIZED) {
         return *this;
-    } else {
-        return flatten()
-            .collect_affine(canonical)
-            .with_flags(TREE_FLAG_IS_OPTIMIZED);
+    } else if  (flags & TreeData::TREE_FLAG_HAS_REMAP) {
+        return flatten().optimized_helper(canonical);
     }
-}
 
-Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {
-    if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {
-        return flatten().collect_affine(canonical);
-    }
     using AffineMap = std::unordered_map<Tree, float>;
     std::stack<std::optional<AffineMap>> maps;
     maps.push(std::nullopt);
@@ -789,7 +782,7 @@ Tree Tree::collect_affine(std::map<TreeDataKey, Tree>& canonical) const {
         }
     }
     assert(out.size() == 1);
-    return out.top();
+    return out.top().with_flags(TREE_FLAG_IS_OPTIMIZED);
 }
 
 size_t Tree::size() const {
