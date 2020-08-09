@@ -10,8 +10,9 @@ option(LIBFIVE_PACKED_OPCODES
     "Tightly pack opcodes (breaks compatibility with older saved f-reps)"
     OFF)
 
-set(CMAKE_BUILD_TYPE RELEASE)
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE RELEASE)
+endif()
 
 if (LIBFIVE_PACKED_OPCODES)
     message("Using packed opcodes, which breaks compatibility with saved f-reps!")
