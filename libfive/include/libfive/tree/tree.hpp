@@ -133,7 +133,8 @@ public:
      *  If the input tree contained remap operations, it will be flattened
      *  before optimization */
     Tree optimized() const;
-    Tree optimized_helper(std::map<TreeDataKey, Tree>& canonical) const;
+    Tree optimized_helper(
+            std::unordered_map<TreeDataKey, Tree>& canonical) const;
 
     /*  Returns a tree with all remap operations expanded. */
     Tree flatten() const;
@@ -221,7 +222,7 @@ LIBFIVE_TREE_OPERATORS
 namespace std {
 template <>
 struct hash<libfive::Tree> {
-    std::size_t operator()(const libfive::Tree& k) const {
+    size_t operator()(const libfive::Tree& k) const {
         return hash<const void*>()(k.id());
     }
 };

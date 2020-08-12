@@ -38,7 +38,7 @@ public:
 
     /*  Deduplicates and optimizes the underlying trees */
     std::unique_ptr<const OracleClause> optimized(
-            std::map<TreeDataKey, Tree>& canonical) const override;
+            std::unordered_map<TreeDataKey, Tree>& canonical) const override;
 
     bool serialize(Serializer& out) const;
     static std::unique_ptr<const OracleClause> deserialize(Deserializer& in);

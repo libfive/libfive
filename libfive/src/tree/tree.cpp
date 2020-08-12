@@ -266,7 +266,8 @@ bool Tree::operator<(const Tree& other) const {
 }
 
 bool Tree::eq(const Tree& other) const {
-    std::map<Data::Key, Tree> canonical;
+    std::unordered_map<Data::Key, Tree> canonical;
+
     return optimized_helper(canonical) == other.optimized_helper(canonical);
 }
 
@@ -548,11 +549,13 @@ Tree Tree::with_flags(uint32_t extra_flags) const {
 }
 
 Tree Tree::optimized() const {
-    std::map<Data::Key, Tree> canonical;
+    std::unordered_map<Data::Key, Tree> canonical;
     return optimized_helper(canonical);
 }
 
-Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
+Tree Tree::optimized_helper(
+        std::unordered_map<Data::Key, Tree>& canonical) const
+{
     if (flags & TREE_FLAG_IS_OPTIMIZED) {
         return *this;
     } else if (ptr->flags & TreeData::TREE_FLAG_HAS_REMAP) {

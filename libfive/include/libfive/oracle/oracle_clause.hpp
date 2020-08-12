@@ -11,7 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <map>
+#include <unordered_map>
 #include <string>
 
 #include "libfive/tree/tree.hpp"
@@ -104,7 +104,7 @@ public:
      * into an Evaluator.
      */
     virtual std::unique_ptr<const OracleClause> optimized(
-            std::map<TreeDataKey, Tree>& canonical) const
+            std::unordered_map<TreeDataKey, Tree>& canonical) const
     {
         // All arguments are unused by default
         (void)canonical;
