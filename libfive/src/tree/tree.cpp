@@ -563,7 +563,12 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     std::stack<std::optional<AffineMap>> affine;
     affine.push(std::nullopt);
 
-    using CommutativeList = boost::container::small_vector<Tree, 4>;
+    struct CommutativeList {
+        CommutativeList(Opcode::Opcode op) : op(op) {}
+
+        boost::container::small_vector<Tree, 4> list;
+        Opcode::Opcode op;
+    };
     std::stack<std::optional<CommutativeList>> commutative;
     commutative.push(std::nullopt);
 
@@ -582,7 +587,6 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
     struct UpCommutative {
         // Marker struct which pops the top commutative list, then pushes it
         // to either the output stack or the affine stack
-        const Opcode::Opcode op;
         const float scale;
     };
 
@@ -627,8 +631,26 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
                 if (!has_map) {
                     affine.push(AffineMap());
                     todo.push(UpAffine { });
+                } else {
+                    commutative.pop();
                 }
                 could_be_affine = true;
+            };
+            bool could_be_commutative = false;
+            auto mark_commutative = [&](libfive::Opcode::Opcode op) {
+                todo.pop();
+                commutative.pop();
+                // If we've got a commutative list available, then the most
+                // recent operation on the todo stack must be an UpCommutative,
+                // since that's what consumes the list.
+                const bool has_list = commutative.top().has_value();
+                if (!has_list || (*commutative.top()).op != op) {
+                    commutative.push(CommutativeList(op));
+                    todo.push(UpCommutative { d->scale });
+                } else {
+                    affine.pop();
+                }
+                could_be_commutative = true;
             };
 
             if (auto g = std::get_if<TreeUnaryOp>(d->t)) {
@@ -652,12 +674,16 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
                     } else if ((v = std::get_if<TreeConstant>(g->rhs.ptr))) {
                         mark_affine();
                         todo.push(Down { g->lhs.ptr, v->value * d->scale });
+                    } else {
+                        mark_commutative(OP_MUL);
                     }
                 } else if (g->op == OP_DIV) {
                     if (auto v = std::get_if<TreeConstant>(g->rhs.ptr)) {
                         mark_affine();
                         todo.push(Down { g->lhs.ptr, d->scale / v->value });
                     }
+                } else if (g->op == OP_MIN || g->op == OP_MAX) {
+                    mark_commutative(g->op);
                 }
             }
 
@@ -700,6 +726,7 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
                     new_self = uniq(Tree(std::move(o)));
                 }
             }
+            assert(new_self == uniq(new_self));
 
             if (affine.top().has_value()) {
                 assert(!commutative.top().has_value());
@@ -711,7 +738,7 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
                 // In this case, we don't push anything to the Out stack
                 // because it will all be accumulated by the UpAffine task
             } else if (commutative.top().has_value()) {
-                (*commutative.top()).push_back(new_self);
+                (*commutative.top()).list.push_back(new_self);
                 // In this case, we don't push anything to the Out stack
                 // because it will all be accumulated by the UpCommutative task
             } else {
@@ -770,7 +797,7 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
                     }
 
                     Tree t((itr++)->first);
-                    assert(t == uniq(t));
+                    assert(t == uniq(t) || t == one());
 
                     // Accumulate all subtrees with the same multiplier
                     while (itr != v.end() && itr->second == multiplier) {
@@ -810,30 +837,34 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
                     new_self = uniq(0.0f);
                 }
             }
+            assert(new_self == uniq(new_self));
+
             // Store the new result either in the output stack or the
             // commutative accumulator (if one is present).
             if (commutative.top().has_value()) {
-                (*commutative.top()).push_back(new_self);
+                (*commutative.top()).list.push_back(new_self);
             } else {
                 out.push(new_self);
             }
         } else if (auto d = std::get_if<UpCommutative>(&t)) {
             assert(commutative.top().has_value());
-            auto list = std::move(*commutative.top());
-            assert(list.size() >= 2);
+            auto comm = std::move(*commutative.top());
+            assert(comm.list.size() >= 2);
             affine.pop();
             commutative.pop();
 
             // Sort so that commutative operations with the same list of
             // children will be deduplicated, since the arguments are
             // already deduplicated by now.
-            std::sort(list.begin(), list.end());
+            std::sort(comm.list.begin(), comm.list.end());
 
             Tree new_self = std::accumulate(
-                    list.begin() + 1, list.end(), Tree::invalid(),
-                    [&uniq, d](Tree a, Tree b) {
-                        return uniq(Tree::binary(d->op, a, b));
+                    comm.list.begin() + 1, comm.list.end(), *comm.list.begin(),
+                    [&uniq, &comm](Tree a, Tree b) {
+                        return uniq(Tree::binary(comm.op, a, b));
                     });
+            assert(new_self == uniq(new_self));
+
             if (affine.top().has_value()) {
                 assert(!commutative.top().has_value());
                 if (auto v = std::get_if<TreeConstant>(new_self.ptr)) {
@@ -843,6 +874,10 @@ Tree Tree::optimized_helper(std::map<Data::Key, Tree>& canonical) const {
                 }
                 // In this case, we don't push anything to the Out stack
                 // because it will all be accumulated by the UpAffine task
+            } else if (commutative.top().has_value()) {
+                // It's possible for the commutative stack to have another
+                // list right here, with a different opcode
+                (*commutative.top()).list.push_back(new_self);
             } else {
                 out.push(new_self);
             }
