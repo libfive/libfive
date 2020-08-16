@@ -269,14 +269,6 @@ TEST_CASE("Tree::with_const_vars") {
 
 TEST_CASE("Tree::optimized")
 {
-    SECTION("min(max(-Z, Z - 10), max(-Z, Z - 100))") {
-        auto t = min(max(-Tree::Z(), Tree::Z() - 10),
-                     max(-Tree::Z(), Tree::Z() - 100));
-        std::stringstream ss;
-        ss << t.optimized();
-        REQUIRE(ss.str() == "(min (max (- z) (- z 10)) (max (- z) (- z 100)))");
-    }
-
     SECTION("(Z + 2) / (2 * (Z + 3))") {
         auto z = Tree::Z();
         auto t = (z + 2) / (2 * (z + 3));
@@ -306,11 +298,11 @@ TEST_CASE("Tree::optimized")
         REQUIRE(ss.str() == "(+ (* x 2) (* y 5) (* (cos z) 6))");
     }
 
-    SECTION("max(Z - 10, -Z)") {
-        auto t = max(Tree::Z() - 10, -Tree::Z());
+    SECTION("(Z - 10) / -Z") {
+        auto t = (Tree::Z() - 10) / -Tree::Z();
         std::stringstream ss;
         ss << t.optimized();
-        REQUIRE(ss.str() == "(max (- z 10) (- z))");
+        REQUIRE(ss.str() == "(/ (- z 10) (- z))");
     }
 
     SECTION("(2*X + Y) + (2*X + Y)") {
