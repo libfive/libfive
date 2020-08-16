@@ -352,7 +352,7 @@ TEST_CASE("Tree::optimized")
         REQUIRE(ss.str() == "(+ x (* y 2) (* (cos (sin (+ x (* y 2) 7))) 3) 7)");
     }
 
-    SECTION("min(max(-Z, Z - 10), max(-Z, Z - 100))") {
+    SECTION("atan2(-Z / (Z - 10), -Z / (Z - 100))") {
         auto ten = Tree(10.0f);
         auto hundred = Tree(100.0f);
 
@@ -360,12 +360,12 @@ TEST_CASE("Tree::optimized")
         auto b =  Tree::Z() - ten;
         auto c = -Tree::Z();
         auto d =  Tree::Z() - hundred;
-        auto t = min(max(a, b), max(c, d));
+        auto t = atan2(a / b, c / d);
 
         auto q = t.optimized();
         std::stringstream ss;
         ss << q;
-        REQUIRE(ss.str() == "(min (max (- z) (- z 10)) (max (- z) (- z 100)))");
+        REQUIRE(ss.str() == "(atan2 (/ (- z) (- z 10)) (/ (- z) (- z 100)))");
     }
 
     SECTION("(- z) * (- z)") {
