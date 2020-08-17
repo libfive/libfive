@@ -861,11 +861,17 @@ Tree Tree::optimized_helper(
             // already deduplicated by now.
             std::sort(comm.list.begin(), comm.list.end());
 
+            // If this is a min or max operation, then cancel out duplicates
+            // (since min(f, f) = f)
+            auto end = Opcode::isIdempotent(comm.op)
+                ? std::unique(comm.list.begin(), comm.list.end())
+                : comm.list.end();
+            auto start = comm.list.begin();
             Tree new_self = std::accumulate(
-                    comm.list.begin() + 1, comm.list.end(), *comm.list.begin(),
-                    [&uniq, &comm](Tree a, Tree b) {
-                        return uniq(Tree::binary(comm.op, a, b));
-                    });
+                start + 1, end, *start,
+                [&uniq, &comm](Tree a, Tree b) {
+                    return uniq(Tree::binary(comm.op, a, b));
+                });
             assert(new_self == uniq(new_self));
 
             if (affine.top().has_value()) {

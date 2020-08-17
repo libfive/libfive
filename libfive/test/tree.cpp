@@ -360,6 +360,24 @@ TEST_CASE("Tree::optimized")
         REQUIRE(ss.str() == "(atan2 (/ (- z) (- z 10)) (/ (- z) (- z 100)))");
     }
 
+    SECTION("min(X, Y, X, Y)") {
+        auto t = min(min(Tree::X(), Tree::Y()), min(Tree::X(), Tree::Y()));
+        auto q = t.optimized();
+        CAPTURE(q);
+        REQUIRE(q.size() == 3);
+    }
+
+    SECTION("min(X + 1, Y + 1, X + 1, Y + 1)") {
+        auto xa = Tree::X() + 1;
+        auto xb = Tree::X() + 1;
+        auto ya = Tree::Y() + 1;
+        auto yb = Tree::Y() + 1;
+        auto t = min(min(xa, ya), min(xb, yb));
+        auto q = t.optimized();
+        CAPTURE(q);
+        REQUIRE(q.size() == 6);
+    }
+
     SECTION("(- z) * (- z)") {
         auto a = -Tree::Z();
 

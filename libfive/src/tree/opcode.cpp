@@ -226,4 +226,50 @@ bool Opcode::isCommutative(Opcode op)
     return false;
 }
 
+bool Opcode::isIdempotent(Opcode op)
+{
+    switch (op)
+    {
+        case CONSTANT: // fallthrough
+        case VAR_X:
+        case VAR_Y:
+        case VAR_Z:
+        case VAR_FREE:
+        case ORACLE:
+        case OP_SQUARE:
+        case OP_SQRT:
+        case OP_NEG:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_ASIN:
+        case OP_ACOS:
+        case OP_ATAN:
+        case OP_EXP:
+        case OP_SUB:
+        case OP_DIV:
+        case OP_ATAN2:
+        case OP_POW:
+        case OP_NTH_ROOT:
+        case OP_MOD:
+        case OP_NANFILL:
+        case OP_COMPARE:
+        case INVALID:
+        case OP_LOG:
+        case OP_ABS:
+        case OP_RECIP:
+        case CONST_VAR:
+        case LAST_OP:
+        case OP_ADD:
+        case OP_MUL:
+            return false;
+
+        case OP_MIN:
+        case OP_MAX:
+            return true;
+    }
+    assert(false);
+    return false;
+}
+
 }   // namespace libfive
