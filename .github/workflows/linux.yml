@@ -23,10 +23,12 @@ jobs:
         cmake ..
         make -j4
 
+    # Tests do not pass on Linux
     - name: Test
       continue-on-error: true
       run: ./build/libfive/test/libfive-test
 
+    # Print the tree (useful for debugging)
     - name: Tree
       run: tree ./build
 

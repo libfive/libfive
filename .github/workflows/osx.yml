@@ -26,12 +26,14 @@ jobs:
         cmake -DCMAKE_PREFIX_PATH=/usr/local/opt/qt ..
         make -j4
 
+    # Print the tree (useful debug info)
+    - name: Tree
+      run: tree ./build
+
+    # Tests do no pass on Windows
     - name: Test
       continue-on-error: true
       run: ./build/libfive/test/libfive-test
-
-    - name: Tree
-      run: tree ./build
 
     - uses: actions/upload-artifact@v2
       with:
