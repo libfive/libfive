@@ -87,7 +87,8 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::optimized(
     auto new_y = Y_.optimized_helper(canonical);
     auto new_z = Z_.optimized_helper(canonical);
 
-    return nullptr;
+    return std::make_unique<TransformedOracleClause>(
+            new_u, new_x, new_y, new_z);
 }
 
 } //namespace libfive
