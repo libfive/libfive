@@ -104,7 +104,8 @@ TEST_CASE("IntervalEvaluator::intervalAndPush")
         // picking X, then collapsing min(X, X) into just X.
         auto i = e.intervalAndPush({-5, 0, 0}, {-4, 1, 0});
         CAPTURE(d->tape->size());
-        REQUIRE(i.second->size() == 1);
+        REQUIRE(i.second->size() == 0);
+        REQUIRE(i.second->root() == d->X);
     }
 
     SECTION("With NaNs")
