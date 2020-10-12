@@ -22,6 +22,7 @@ set(five_sources
     eval/eval_array.cpp
     eval/eval_deriv_array.cpp
     eval/eval_feature.cpp
+    eval/interval.cpp
     eval/tape.cpp
     eval/feature.cpp
 
@@ -202,6 +203,8 @@ else()
     target_compile_definitions(five PUBLIC
         FIVE_DLL)
 endif()
+
+target_compile_features(five PUBLIC cxx_std_17)
 
 if(LIBFIVE_UNNORMALIZED_DERIVS)
     target_compile_definitions(five PUBLIC

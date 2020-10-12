@@ -7,6 +7,12 @@ License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
+#include <optional>
+#include <variant>
+
+#ifndef LIBFIVE_OPP_INTERVAL_ROUNDING
+#define LIBFIVE_OPP_INTERVAL_ROUNDING 0
+#endif
 
 /*  The Boost interval library hits MSVC warning 4244 (casting to a narrower 
  *  type) when it creates an interval of a narrower type from objects of a 
@@ -379,11 +385,49 @@ public:
         return Interval(1.0f / a.i, a.maybe_nan);
     }
 
+    /// Once this is called, the rounding mode will be saved and will not be
+    /// re-saved and restored each time the Interval is used.  Call
+    /// clearRoundingGroup to restore the saved rounding mode and return to
+    /// normal operation.  Used on a thread-by-thread basis.
+    static void setRoundingGroup() {
+        savedRounding.emplace();
+    }
+
+    static void clearRoundingGroup() {
+        savedRounding.reset();
+    }
+
 protected:
+#if LIBFIVE_OPP_INTERVAL_ROUNDING
+    using BaseRound = boost::numeric::interval_lib::rounded_transc_opp<float>;
+#else
+    using BaseRound = boost::numeric::interval_lib::rounded_transc_std<float>;
+#endif
+    static thread_local std::optional<
+        boost::numeric::interval_lib::save_state<BaseRound>> savedRounding;
+
+    template<class Rounding>
+    struct save_if_unprotected : Rounding
+    {
+        typename Rounding::rounding_mode mode;
+        save_if_unprotected() {
+            was_already_saved = Interval::savedRounding.has_value();
+            if (!was_already_saved) {
+                this->get_rounding_mode(mode);
+                this->init();
+            }
+        }
+        ~save_if_unprotected() { 
+          if (!was_already_saved) this->set_rounding_mode(mode); 
+        }
+        bool was_already_saved;
+        typedef typename boost::numeric::interval_lib::
+          save_state<Rounding>::unprotected_rounding unprotected_rounding;
+    };
+
     using I =  boost::numeric::interval<float,
         boost::numeric::interval_lib::policies<
-            boost::numeric::interval_lib::save_state<
-                boost::numeric::interval_lib::rounded_transc_std<float>>,
+            save_if_unprotected<BaseRound>,
             boost::numeric::interval_lib::checking_base<float>>>;
     I i;
 
