@@ -12,6 +12,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 template class ObjectPool<HybridTree<3>, HybridLeaf<3>>;
+template class ObjectPool<HybridLeaf<3>>;
 template HybridTree<3>* ObjectPool<HybridTree<3>, HybridLeaf<3>>::get(
         libfive::HybridTree<3>*, unsigned, Region<3>);
+template HybridLeaf<3>* ObjectPool<HybridLeaf<3>>::get();
 }   // namespace libfive

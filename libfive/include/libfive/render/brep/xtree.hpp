@@ -20,6 +20,7 @@ template <unsigned N, typename T, typename L>
 class XTree
 {
 public:
+    constexpr static unsigned Dimension = N;
     /*
      *  Simple constructor
      *
@@ -43,6 +44,14 @@ public:
      *  Looks up a child, returning *this if this isn't a branch
      */
     const T* child(unsigned i) const;
+
+    std::array<const T*, 1 << N> getChildren() const {
+        std::array<const T*, 1 << N> out;
+        for (auto i = 0; i < out.size(); ++i) {
+            out[i] = child(i);
+        }
+        return out;
+    }
 
     /*
      *  Walks the tree, resetting pending to its initial value of (1 << N) - 1

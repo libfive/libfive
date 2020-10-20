@@ -64,5 +64,11 @@ public:
     std::pair<const SimplexLeaf<N>*, NeighborIndex> check(NeighborIndex i) const;
 };
 
+template <unsigned N>
+struct NeighborHelper<SimplexTree<N>> {
+    using NeighborType = SimplexNeighbors<N>;
+};
+
+
 }   // namespace libfive
 

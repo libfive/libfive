@@ -23,4 +23,9 @@ public:
     VolNeighbors();
 };
 
+template <>
+struct NeighborHelper<VolTree> {
+    using NeighborType = VolNeighbors;
+};
+
 }   // namespace libfive

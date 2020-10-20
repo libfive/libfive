@@ -8,14 +8,12 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
-#include <stack>
-#include <boost/lockfree/stack.hpp>
-
 #include "libfive/render/brep/per_thread_brep.hpp"
 #include "libfive/render/brep/free_thread_handler.hpp"
 #include "libfive/render/brep/settings.hpp"
 #include "libfive/render/brep/mesh.hpp"
 #include "libfive/render/brep/root.hpp"
+#include "libfive/render/brep/multithread_recursive.hpp"
 
 #include "libfive/render/axes.hpp"
 #include "libfive/eval/interval.hpp"
@@ -54,22 +52,16 @@ public:
       *     Output (typename)
       *
       *  The factory can be anything that spits out valid M objects,
-      *  given a PerThreadBRep and worker index.
+      *  given a PerThreadBRep.  It can be assumed that the factory will
+      *  be called on the same thread that it will be used on.
       */
     template<typename M>
     static std::unique_ptr<typename M::Output> walk_(
             const Root<typename M::Input>& t,
             const BRepSettings& settings,
-            std::function<M(PerThreadBRep<N>&, int)> MesherFactory);
+            std::function<M(PerThreadBRep<N>&)> MesherFactory);
 
 protected:
-    template<typename T, typename Mesher>
-    static void run(Mesher& m,
-                    boost::lockfree::stack<const T*,
-                                           boost::lockfree::fixed_sized<true>>& tasks,
-                    const BRepSettings& settings,
-                    std::atomic_bool& done);
-
     template <typename T, typename Mesher>
     static void work(const T* t, Mesher& m);
 
@@ -238,8 +230,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk(
 {
     return walk_<M>(
             t, settings,
-            [&args...](PerThreadBRep<N>& brep, int i) {
-                (void)i;
+            [&args...](PerThreadBRep<N>& brep) {
                 return M(brep, args...);
                 });
 
@@ -250,138 +241,66 @@ template<typename M>
 std::unique_ptr<typename M::Output> Dual<N>::walk_(
             const Root<typename M::Input>& t,
             const BRepSettings& settings,
-            std::function<M(PerThreadBRep<N>&, int)> MesherFactory)
+            std::function<M(PerThreadBRep<N>&)> MesherFactory)
 {
-    boost::lockfree::stack<
-        const typename M::Input*,
-        boost::lockfree::fixed_sized<true>> tasks(settings.workers);
-    tasks.push(t.get());
-    t->resetPending();
+    struct Local {
+        PerThreadBRep<N> brep;
+        M m;
+        Local(std::atomic<uint32_t>& index, decltype(MesherFactory) factory)
+            : brep(index), m(factory(brep)) {}
+    };
+
 
     std::atomic<uint32_t> global_index(1);
-    std::vector<PerThreadBRep<N>> breps;
-    for (unsigned i=0; i < settings.workers; ++i) {
-        breps.emplace_back(PerThreadBRep<N>(global_index));
-    }
 
-    if (settings.progress_handler) {
-        settings.progress_handler->nextPhase(t.size() + 1);
-    }
+    tbb::enumerable_thread_specific<Local> locals(
+        [&MesherFactory, &global_index]()
+    {return Local(global_index, MesherFactory); });
 
-    std::vector<std::future<void>> futures;
-    futures.resize(settings.workers);
-    std::atomic_bool done(false);
-    for (unsigned i=0; i < settings.workers; ++i) {
-        futures[i] = std::async(std::launch::async,
-            [&breps, &tasks, &MesherFactory, &settings, &done, i]()
-            {
-                auto m = MesherFactory(breps[i], i);
-                Dual<N>::run(m, tasks, settings, done);
-            });
-    }
-
-    // Wait on all of the futures
-    for (auto& f : futures) {
-        f.get();
-    }
-
-    assert(done.load() || settings.cancel.load());
-
-    // Handle the top tree edges (only used for simplex meshing)
-    if (M::needsTopEdges()) {
-        auto m = MesherFactory(breps[0], 0);
-        Dual<N>::handleTopEdges(t.get(), m);
-    }
-
-    auto out = std::unique_ptr<typename M::Output>(new typename M::Output);
-    out->collect(breps);
-    return out;
-}
-
-
-template <unsigned N>
-template <typename T, typename V>
-void Dual<N>::run(V& v,
-                  boost::lockfree::stack<const T*,
-                                         boost::lockfree::fixed_sized<true>>& tasks,
-                  const BRepSettings& settings,
-                  std::atomic_bool& done)
-
-{
-    // Tasks to be evaluated by this thread (populated when the
-    // MPMC stack is completely full).
-    std::stack<const T*, std::vector<const T*>> local;
-
-    while (!done.load() && !settings.cancel.load())
+    auto pre = 
+        [&settings](const typename M::Input* t, bool& recurse, Local& local)
     {
-        // Prioritize picking up a local task before going to
-        // the MPMC queue, to keep things in this thread for
-        // as long as possible.
-        const T* t;
-        if (local.size())
-        {
-            t = local.top();
-            local.pop();
-        }
-        else if (!tasks.pop(t))
-        {
-            t = nullptr;
-        }
+        recurse = t->isBranch() && !settings.cancel;
 
-        // If we failed to get a task, keep looping
-        // (so that we terminate when either of the flags are set).
-        if (t == nullptr)
-        {
-            if (settings.free_thread_handler != nullptr) {
-                settings.free_thread_handler->offerWait();
-            }
-            continue;
-        }
+        // Don't actually do anything, as leaf nodes don't have interior 
+        // edges to work on, and branch nodes will be done in "post" from
+        // the leaves upward.
 
-        if (t->isBranch())
-        {
-            // Recurse, calling the cell procedure for every child
-            for (const auto& c_ : t->children)
-            {
-                const auto c = c_.load();
-                if (!tasks.bounded_push(c)) {
-                    local.push(c);
-                }
-            }
-            continue;
+        if (!recurse && !settings.cancel && !M::Input::isSingleton(t) &&
+            settings.progress_handler) {
+            settings.progress_handler->tick();
         }
+    };
 
-        // Special-case for singleton trees, which have null parents
-        // (and have already been subtracted from pending)
-        if (T::isSingleton(t)) {
-            continue;
+    auto post = [&settings](const typename M::Input* t, Local& local)
+    {
+        if (settings.cancel) {
+            return;
         }
-
+        // Do the actual work (specialized for N = 2 or 3)
+        Dual<N>::work(t, local.m);
+        // Report trees as completed
         if (settings.progress_handler) {
             settings.progress_handler->tick();
         }
+    };
 
-        for (t = t->parent; t && t->pending-- == 0; t = t->parent)
-        {
-            // Do the actual DC work (specialized for N = 2 or 3)
-            Dual<N>::work(t, v);
+    multithreadRecursive<const typename M::Input*, void>(
+        t.get(), locals, pre, post);
 
-            // Report trees as completed
-            if (settings.progress_handler) {
-                settings.progress_handler->tick();
-            }
-        }
-
-        // Termination condition:  if we've ended up pointing at the parent
-        // of the tree's root (which is nullptr), then we're done and break
-        if (t == nullptr) {
-            break;
-        }
+    // Handle the top tree edges (only used for simplex meshing)
+    if (M::needsTopEdges()) {
+        auto& first = locals.empty() ? locals.local() : *locals.begin();
+        Dual<N>::handleTopEdges(t.get(), first.m);
     }
 
-    // If we've broken out of the loop, then we should set the done flag
-    // so that other worker threads also terminate.
-    done.store(true);
+    auto out = std::unique_ptr<typename M::Output>(new typename M::Output);
+    std::vector<PerThreadBRep<N>> breps;
+    breps.reserve(locals.size());
+    std::transform(locals.begin(), locals.end(), std::back_inserter(breps),
+        [](Local& loc) {return std::move(loc.brep); });
+    out->collect(breps);
+    return out;
 }
 
 }   // namespace libfive

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+﻿cmake_minimum_required(VERSION 3.3)
 project(libfive)
 
 # Properly distinguish between Apple and upstream Clang
@@ -87,6 +87,9 @@ endif()
 
 if(NOT TARGET PNG::PNG)
     find_package(PNG REQUIRED)
+endif()
+if(NOT TARGET tbb::tbb)
+    find_package(TBB REQUIRED)
 endif()
 
 if (UNIX AND NOT(APPLE))

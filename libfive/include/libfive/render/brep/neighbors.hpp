@@ -36,4 +36,10 @@ protected:
     std::array<const T*, ipow(3, N) - 1> neighbors;
 };
 
+// This can be specialized to get C from T; at some point, this will allow
+// Neighbors to be a single-parameter template, but for now is used to help
+// Root::build.
+template <class T>
+struct NeighborHelper;
+
 }   // namespace libfive

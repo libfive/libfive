@@ -120,12 +120,13 @@ public:
                   const HybridNeighbors<N>& neighbors);
 
     /*
-     *  If all children are present, then collapse cells based on error
-     *  metrics (TODO; cell collapsing is not implemented).
+     *  Collapse based on the error metrics
+     *  (TODO; cell collapsing is not implemented).
      *
-     *  Returns false if any children are yet to come, true otherwise.
+     *  Should only be called once all children have been built.
      */
-    bool collectChildren(Evaluator* eval,
+
+    void collectChildren(Evaluator* eval,
                          const std::shared_ptr<Tape>& tape,
                          Pool& object_pool,
                          double max_err);

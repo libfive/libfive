@@ -92,17 +92,11 @@ void VolTree::evalLeaf(Evaluator* eval,
     this->done();
 }
 
-bool VolTree::collectChildren(Evaluator*,
+void VolTree::collectChildren(Evaluator*,
                               const Tape::Handle&,
                               Pool& object_pool,
                               double)
 {
-    // Wait for collectChildren to have been called N times
-    if (this->pending-- != 0)
-    {
-        return false;
-    }
-
     // Load the children here, to avoid atomics
     std::array<VolTree*, 8> cs;
     for (unsigned i=0; i < this->children.size(); ++i)
@@ -116,7 +110,7 @@ bool VolTree::collectChildren(Evaluator*,
                     [](VolTree* o){ return o->isBranch(); }))
     {
         this->done();
-        return true;
+        return;
     }
 
     // Update corner and filled / empty state from children
@@ -139,7 +133,6 @@ bool VolTree::collectChildren(Evaluator*,
     }
 
     this->done();
-    return true;
 }
 
 void VolTree::releaseTo(Pool& object_pool) {

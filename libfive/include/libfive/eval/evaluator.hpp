@@ -36,6 +36,10 @@ public:
 
     std::shared_ptr<Deck> getDeck() { return BaseEvaluator::deck; }
 
+    void operator()() = delete; // Explicitly deleted to resolve an "ambiguity" that otherwise
+                                // compile error when making a tbb::enumerable_thread_specific
+                                // of this class.
+
     /*
      *  Updates variable values, return true if changed
      */

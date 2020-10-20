@@ -55,13 +55,12 @@ TEST_CASE("Oracle: render and compare (sphere)")
   Region<3> r({ -1, -1, -1 }, { 1, 1, 1 });
   Tree sOracle = convertToOracleAxes(s);
 
-  // We can't use multithreading, because it causes triangles to be
-  // output in a non-deterministic order, which fails the comparison.
   BRepSettings settings;
-  settings.workers = 1;
   settings.min_feature = 0.1;
   auto mesh = Mesh::render(sOracle, r, settings);
   auto comparisonMesh = Mesh::render(s, r, settings);
+  mesh->sort();
+  comparisonMesh->sort();
 
   BRepCompare(*mesh, *comparisonMesh);
 }

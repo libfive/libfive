@@ -58,7 +58,7 @@ public:
                   const VolNeighbors& neighbors);
 
     /*  If all children are EMPTY / FILLED, merges them */
-    bool collectChildren(Evaluator* eval,
+    void collectChildren(Evaluator* eval,
                          const std::shared_ptr<Tape>& tape,
                          Pool& object_pool,
                          double max_err);

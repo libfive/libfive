@@ -19,33 +19,32 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/settings.hpp"
 
 // Dual contouring
-#include "libfive/render/brep/dc/dc_worker_pool.hpp"
+#include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/dc/dc_mesher.hpp"
 
 // Simplex meshing
-#include "libfive/render/brep/simplex/simplex_worker_pool.hpp"
+#include "libfive/render/brep/simplex/simplex_tree.hpp"
 #include "libfive/render/brep/simplex/simplex_mesher.hpp"
 
 // Hybrid meshing
-#include "libfive/render/brep/hybrid/hybrid_worker_pool.hpp"
+#include "libfive/render/brep/hybrid/hybrid_tree.hpp"
 #include "libfive/render/brep/hybrid/hybrid_mesher.hpp"
+
+#include "tbb/tbb.h"
 
 namespace libfive {
 
 std::unique_ptr<Mesh> Mesh::render(const Tree t, const Region<3>& r,
                                    const BRepSettings& settings)
 {
-    std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
-    es.reserve(settings.workers);
-    for (unsigned i=0; i < settings.workers; ++i) {
-        es.emplace_back(Evaluator(t));
-    }
+    tbb::enumerable_thread_specific<Evaluator> 
+        es([&t]() {return Evaluator(t); });
 
-    return render(es.data(), r, settings);
+    return render(es, r, settings);
 }
 
 std::unique_ptr<Mesh> Mesh::render(
-        Evaluator* es,
+        tbb::enumerable_thread_specific<Evaluator>& es,
         const Region<3>& r, const BRepSettings& settings)
 {
     std::unique_ptr<Mesh> out;
@@ -55,7 +54,7 @@ std::unique_ptr<Mesh> Mesh::render(
             // Pool::build, Dual::walk, t.reset
             settings.progress_handler->start({1, 1, 1});
         }
-        auto t = DCWorkerPool<3>::build(es, r, settings);
+        auto t = Root<DCTree<3>>::build(es, r, settings);
 
         if (settings.cancel.load() || t.get() == nullptr) {
             if (settings.progress_handler) {
@@ -76,7 +75,7 @@ std::unique_ptr<Mesh> Mesh::render(
             // Pool::build, Dual::walk, t->assignIndices, t.reset
             settings.progress_handler->start({1, 1, 1});
         }
-        auto t = SimplexWorkerPool<3>::build(es, r, settings);
+        auto t = Root<SimplexTree<3>>::build(es, r, settings);
 
         if (settings.cancel.load() || t.get() == nullptr) {
             if (settings.progress_handler) {
@@ -88,8 +87,8 @@ std::unique_ptr<Mesh> Mesh::render(
         t->assignIndices(settings);
 
         out = Dual<3>::walk_<SimplexMesher>(t, settings,
-                [&](PerThreadBRep<3>& brep, int i) {
-                    return SimplexMesher(brep, &es[i]);
+                [&](PerThreadBRep<3>& brep) {
+                    return SimplexMesher(brep, &es.local());
                 });
         t.reset(settings);
     }
@@ -99,7 +98,7 @@ std::unique_ptr<Mesh> Mesh::render(
             // Pool::build, Dual::walk, t->assignIndices, t.reset
             settings.progress_handler->start({1, 1, 1});
         }
-        auto t = HybridWorkerPool<3>::build(es, r, settings);
+        auto t = Root<HybridTree<3>>::build(es, r, settings);
 
         if (settings.cancel.load() || t.get() == nullptr) {
             if (settings.progress_handler) {
@@ -111,8 +110,8 @@ std::unique_ptr<Mesh> Mesh::render(
         t->assignIndices(settings);
 
         out = Dual<3>::walk_<HybridMesher>(t, settings,
-                [&](PerThreadBRep<3>& brep, int i) {
-                    return HybridMesher(brep, &es[i]);
+                [&](PerThreadBRep<3>& brep) {
+                    return HybridMesher(brep, &es.local());
                 });
         t.reset(settings);
     }

@@ -14,8 +14,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "libfive/render/brep/contours.hpp"
 #include "libfive/render/brep/brep.hpp"
-#include "libfive/render/brep/dc/dc_worker_pool.hpp"
 #include "libfive/render/brep/dc/dc_contourer.hpp"
+#include "libfive/render/brep/dc/dc_tree.hpp"
 #include "libfive/render/brep/dual.hpp"
 
 namespace libfive {
@@ -26,15 +26,10 @@ std::unique_ptr<Contours> Contours::render(
         const Tree t, const Region<2>& r,
         const BRepSettings& settings)
 {
-    std::vector<Evaluator, Eigen::aligned_allocator<Evaluator>> es;
-    es.reserve(settings.workers);
-    for (unsigned i=0; i < settings.workers; ++i)
-    {
-        es.emplace_back(Evaluator(t));
-    }
+    tbb::enumerable_thread_specific<Evaluator> es([&t]() {return Evaluator(t); });
 
     // Create the quadtree on the scaffold
-    auto xtree = DCWorkerPool<2>::build(es.data(), r, settings);
+    auto xtree = Root<DCTree<2>>::build(es, r, settings);
 
     // Abort early if the cancellation flag is set
     if (settings.cancel == true) {
