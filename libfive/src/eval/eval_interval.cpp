@@ -83,9 +83,11 @@ Interval IntervalEvaluator::eval(
     }
 
     deck->bindOracles(*tape);
+    Interval::setRoundingGroup();
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
+    Interval::clearRoundingGroup();
     deck->unbindOracles();
 
     auto root = tape->root();
@@ -276,7 +278,11 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             break;
 
         case Opcode::ORACLE:
+            // Since the oracle may be reliant on using default rounding, we
+            // clear the rounding group and re-set it when we're done.
+            Interval::clearRoundingGroup();
             deck->oracles[a_]->evalInterval(out);
+            Interval::setRoundingGroup();
             break;
 
         case Opcode::INVALID:
