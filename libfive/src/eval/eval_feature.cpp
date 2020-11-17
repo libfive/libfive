@@ -276,6 +276,12 @@ void FeatureEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                     v.row(a).leftCols(count)  = v(a, 0);
                     filled(a) = count;
                 }
+                if (op == Opcode::OP_SQRT && count > filled(id)) {
+                    // The deriv array evaluator for SQRT uses the value at id,
+                    // so that likewise needs to be extended.
+                    v.row(id).leftCols(count) = v(id, 0);
+                    filled(id) = count;
+                }
                 setCount(count);
                 DerivArrayEvaluator::operator()(op, id, a, b);
                 for (unsigned i=0; i < count; ++i) {
