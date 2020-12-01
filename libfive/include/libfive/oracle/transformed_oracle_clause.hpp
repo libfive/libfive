@@ -26,6 +26,8 @@ public:
     TransformedOracleClause(Tree underlying, Tree X_, Tree Y_, Tree Z_);
 
     std::unique_ptr<Oracle> getOracle() const override;
+    std::unique_ptr<Oracle> getOracle(
+          std::unordered_map<Tree::Id, Clause::Id> map) const override;
     std::string name() const override { return "TransformedOracleClause"; }
 
     /*
@@ -33,6 +35,8 @@ public:
      */
     std::unique_ptr<const OracleClause> remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const override;
+
+    std::vector<libfive::Tree> evaluationDependencies() const override;
 
     std::vector<libfive::Tree> dependencies() const override;
 

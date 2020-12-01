@@ -16,7 +16,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-class Tape; /* Foward declaration */
+/* Foward declarations */
+class Tape; 
+class BaseEvaluator;
 
 /*
  *  A Deck is the top-level class that produces Tapes.  It includes
@@ -69,9 +71,10 @@ public:
     }
 
     /*
-     *  Binds all oracles to the contexts in the given tape
+     *  Binds all oracles to the contexts in the given tape and to the
+     *  given evaluator.
      */
-    void bindOracles(const Tape& tape);
+    void bindOracles(const Tape& tape, const BaseEvaluator* eval);
 
     /*
      *  Unbinds all oracles, setting their contexts to null

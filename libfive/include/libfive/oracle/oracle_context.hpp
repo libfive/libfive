@@ -26,6 +26,11 @@ public:
      *  tree is terminal if there are no min / max nodes in it.
      */
     virtual bool isTerminal() { return false; }
+    /*
+     *  If the context is meant to work using a tape, updates it to handle
+     *  any remaps within that tape.
+     */
+    virtual void applyRemaps(const std::vector<Clause::Id>& remaps) {}
 };
 
 }   // namespace libfive

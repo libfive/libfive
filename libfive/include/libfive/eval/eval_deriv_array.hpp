@@ -52,6 +52,9 @@ public:
     Eigen::Vector4f deriv(const Eigen::Vector3f& pt,
                           const Tape& tape);
 
+    /*  Gets a specific clause's results, such as for a "borrowing" oracle.*/
+    const Eigen::Array<float, 3, N>& clauseDerivs(Clause::Id id) const;
+
     /*
      *  Per-clause evaluation, used in tape walking
      */

@@ -21,6 +21,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
+class BaseEvaluator;
+
 /* The oracle is an interface class for the use of externally defined oracles
  * as primitives in trees.
  */
@@ -137,24 +139,47 @@ public:
     virtual void evalFeatures(
             boost::container::small_vector<Feature, 4>& out)=0;
 
+    /*  Returns the set of clauses that this is dependent on 
+     *  given the specified context.*/
+    virtual boost::container::small_vector<Clause::Id, 4> 
+            activeDependencies(OracleContext* context) 
+    {
+      return {};
+    }
+
     /*
      *  Oracles are evaluated within a particular context,
      *  which is bound by this function.  This is used in cases where
      *  the oracle evaluation can be simplified by knowing that it's
      *  being evaluated within a particular spatial region.
+     * 
+     *  Oracles are also evaluated by an evaluator, which is referenced by this
+     *  function.  This is used in cases where the oracle may need to reference
+     *  information already present in the evaluator in order to deduplicate 
+     *  work.  If not null, the evaluator may be assumed to be in use, and of
+     *  the correct type for the evaluation function currently being called, and
+     *  to be built from a deck that was made from the map that was passed in to
+     *  OracleClause::getOracle to generate this.  (If this was generated via
+     *  the version that does not take a map, or via any method other than 
+     *  getOracle(), the evaluator passed in here must be null.)  Conversely, if
+     *  the evaluator is null, it may be assumed that the Oracle was not generated
+     *  via the map-using overload of getOracle.
      */
-    void bind(std::shared_ptr<OracleContext> context)
+    void bind(std::shared_ptr<OracleContext> context, const BaseEvaluator* eval)
     {
         this->context = context;
+        this->evaluator = eval;
     }
 
     void unbind()
     {
         this->context = nullptr;
+        this->evaluator = nullptr;
     }
 
 protected:
     std::shared_ptr<OracleContext> context;
+    const BaseEvaluator*           evaluator;
 };
 
 } //Namespace Kernel

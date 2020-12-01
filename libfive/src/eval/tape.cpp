@@ -86,8 +86,13 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
                 assert(c.a < contexts.size());
                 auto prev = contexts[c.a];
 
-                deck.oracles[c.a]->bind(prev);
+                deck.oracles[c.a]->bind(prev, nullptr);
                 new_contexts[c.a] = deck.oracles[c.a]->push(type);
+                for (auto dep : deck.oracles[c.a]->
+                    activeDependencies(new_contexts[c.a].get()))
+                {
+                    deck.disabled[c.a] = false;
+                }
                 deck.oracles[c.a]->unbind();
 
                 changed |= (new_contexts[c.a] != prev);
@@ -140,6 +145,10 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
                 out->t.push_back({c.op, c.id, ra, rb});
             }
         }
+    }
+    // And to update the new contexts.
+    for (auto& context : new_contexts) {
+      context->applyRemaps(deck.remap);
     }
 
     // Remap the tape root index

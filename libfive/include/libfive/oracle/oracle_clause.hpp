@@ -15,6 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <iostream>
 
 #include "libfive/tree/tree.hpp"
+#include "libfive/eval/clause.hpp"
 
 namespace libfive {
 
@@ -25,7 +26,7 @@ class Deserializer;
 
 /*
  *  OracleClause is an interface class for oracles, i.e. black-box nodes
- *  within a Tree.  The only API that it exposes is a way to get an Oracle;
+ *  within a Tree.  The primary API that it exposes is a way to get an Oracle;
  *  in the same way that Trees are turned into one or more Tapes for
  *  evaluation, OracleClauses are turned into one or more Oracles.
  */
@@ -33,12 +34,27 @@ class OracleClause
 {
 public:
     virtual ~OracleClause()=default;
-    virtual std::unique_ptr<Oracle> getOracle() const=0;
+
+    /* There are two forms of getOracle, one taking a map for more efficient
+     * use of the Tape in which the Oracle will be placed, and one not.  The
+     * version taking a map uses the non-map version by default, but may be
+     * overridden in order to deduplicate work.
+     */
+    virtual std::unique_ptr<Oracle> getOracle(
+            std::unordered_map<Tree::Id, Clause::Id> map) const;
+    virtual std::unique_ptr<Oracle> getOracle() const = 0;
+
+    virtual std::vector<libfive::Tree> evaluationDependencies() const
+    {
+      return {};
+    }
+
     virtual std::string name() const=0;
     virtual std::vector<libfive::Tree> dependencies() const
     {
         return {};
     }
+    unsigned rank() const;
 
     /*
      *  Installs a particular class's serializer / deserializer pair
