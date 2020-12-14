@@ -32,7 +32,7 @@ to change variables in the script.
 
 ## Other projects using `libfive`
 ### Language bindings
-- [Tovero](https://common-lisp.net/project/tovero/): A 3D modeling system for Common Lisp
+- [Tovero](https://gitlab.com/kavalogic-inc/tovero): A 3D modeling system for Common Lisp
 - [`libfivepy`](https://gitlab.com/rcmz0/libfivepy): A Python CAD library (work in progress)
 - [Bindings for Unity](https://github.com/zalo/libfive-unity)
 - Unpublished [Stanza](http://lbstanza.org/) bindings (email for details)
