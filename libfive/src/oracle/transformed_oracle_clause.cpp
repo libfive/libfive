@@ -43,6 +43,22 @@ TransformedOracleClause::remap(Tree self, Tree X_, Tree Y_, Tree Z_) const
             this->Z_.remap(X_, Y_, Z_)));
 }
 
+std::unique_ptr<const OracleClause> TransformedOracleClause::remap(
+  Tree                     self,
+  std::map<Tree::Id, Tree> deps_) const
+{
+  auto lx = deps_.find(this->X_.id());
+  auto ly = deps_.find(this->Y_.id());
+  auto lz = deps_.find(this->Z_.id());
+
+  auto Xn = lx == deps_.end() ? this->X_.remap(deps_) : lx->second;
+  auto Yn = ly == deps_.end() ? this->Y_.remap(deps_) : ly->second;
+  auto Zn = lz == deps_.end() ? this->Z_.remap(deps_) : lz->second;
+
+  return std::unique_ptr<const OracleClause>(new TransformedOracleClause(
+    this->underlying, Xn, Yn, Zn));
+}
+
 std::vector<libfive::Tree> TransformedOracleClause::dependencies() const
 {
     return { underlying, X_, Y_, Z_ };

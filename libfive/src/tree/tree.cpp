@@ -235,7 +235,14 @@ Tree Tree::remap(std::map<Id, Tree> m) const
         }
         else if (t->op == Opcode::ORACLE)
         {
-            m.insert({ t.id(), t->oracle->remap(t, X_, Y_, Z_) });
+          std::map<Tree::Id, Tree> depMap = {{X().id(), X_}, {Y().id(), Y_}, {Z().id(), Z_}};
+          for (auto d : t->oracle->dependencies()) {
+            auto tmp = m.find(d.id());
+            if (tmp != m.end()) {
+              depMap.insert({ tmp->first,tmp->second });
+            }
+          }
+          m.insert({ t.id(), t->oracle->remap(t,depMap) });
         }
     }
 
