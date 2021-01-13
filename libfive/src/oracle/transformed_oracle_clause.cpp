@@ -55,8 +55,17 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::remap(
   auto Yn = ly == deps_.end() ? this->Y_.remap(deps_) : ly->second;
   auto Zn = lz == deps_.end() ? this->Z_.remap(deps_) : lz->second;
 
+  for (auto iter : { lx, ly, lz }) {
+    if (iter != deps_.end()) {
+      deps_.erase(iter);
+    }
+  }
+
+  auto newUnderlying = deps_.empty() ? this->underlying 
+                                     : this->underlying.remap(deps_);
+
   return std::unique_ptr<const OracleClause>(new TransformedOracleClause(
-    this->underlying, Xn, Yn, Zn));
+    newUnderlying, Xn, Yn, Zn));
 }
 
 std::vector<libfive::Tree> TransformedOracleClause::dependencies() const
