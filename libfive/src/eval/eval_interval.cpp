@@ -173,17 +173,18 @@ Tape::Handle IntervalEvaluator::push(const Tape::Handle& tape)
 bool IntervalEvaluator::setVar(Tree::Id var, float value)
 {
     auto v = deck->vars.right.find(var);
+    auto changed = false;
     if (v != deck->vars.right.end())
     {
-        const bool changed = (i[v->second].lower() != value) ||
-                             (i[v->second].upper() != value);
+        changed = (i[v->second].lower() != value) ||
+                  (i[v->second].upper() != value);
         store(value, v->second);
-        return changed;
     }
-    else
+    if (deck->setVarInOracles(var, value))
     {
-        return false;
+        changed = true;
     }
+    return changed;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

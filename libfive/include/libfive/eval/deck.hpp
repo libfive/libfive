@@ -78,6 +78,11 @@ public:
      */
     void unbindOracles();
 
+    /*
+     *  Sets variable values in oracles contained in the deck.
+     */
+    bool setVarInOracles(Tree::Id var, float value);
+
 protected:
     /*  Temporary storage, used when pushing into a Tape  */
     std::vector<uint8_t> disabled;
