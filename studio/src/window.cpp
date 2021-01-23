@@ -79,6 +79,9 @@ Window::Window(Arguments args)
     // reload the file.
     connect(&watcher, &QFileSystemWatcher::fileChanged,
             this, &Window::onAutoLoad);
+    connect(&watcher, &QFileSystemWatcher::directoryChanged,
+            this, &Window::onAutoLoadPath);
+
 
     // Connect drag start + end signals, so the user can't edit
     // the script while dragging in the 3D viewport
@@ -349,10 +352,34 @@ bool Window::loadFile(QString f, bool reload)
 
 void Window::onAutoLoad(const QString&)
 {
-    if (autoreload)
+    if (QFile(filename).open(QIODevice::ReadOnly))
     {
-        Q_ASSERT(!filename.isEmpty());
-        loadFile(filename, true);
+        if (autoreload)
+        {
+            Q_ASSERT(!filename.isEmpty());
+            loadFile(filename, true);
+        }
+    }
+    else // File was deleted. Waiting for new file
+    {
+        watcher.addPath(QFileInfo(filename).path());
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void Window::onAutoLoadPath(const QString&)
+{
+    // file was created
+    if (QFile(filename).open(QIODevice::ReadOnly))
+    {
+        watcher.removePaths(watcher.directories());
+        watcher.addPath(filename);
+        if (autoreload)
+        {
+            Q_ASSERT(!filename.isEmpty());
+            loadFile(filename, true);
+        }
     }
 }
 
