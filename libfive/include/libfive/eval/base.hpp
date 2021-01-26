@@ -19,6 +19,7 @@ class Deck; /*  Forward declaration */
 class BaseEvaluator
 {
 public:
+    // Sets the vars on the oracles in the deck.
     BaseEvaluator(std::shared_ptr<Deck> deck,
                   const std::map<Tree::Id, float>& vars);
 

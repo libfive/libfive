@@ -34,7 +34,7 @@ bool TransformedOracle::setVar(Tree::Id var, float value)
     if (underlying->setVar(var, value)) {
         changed = true;
     }
-    for (auto eval : { xEvaluator, yEvaluator, zEvaluator }) {
+    for (auto& eval : { xEvaluator, yEvaluator, zEvaluator }) {
         if (eval.updateVars({ {var, value} })) {
             changed = true;
         }
