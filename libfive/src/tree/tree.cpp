@@ -206,8 +206,11 @@ Tree Tree::load(const std::string& filename)
 
 Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const
 {
+    // instantiate in case xyz vars are not in cache already
+    Tree xyz[3] = { X(), Y(), Z()};
+
     std::map<Tree::Id, Tree> m = {
-        {X().id(), X_}, {Y().id(), Y_}, {Z().id(), Z_}};
+        {xyz[0].id(), X_}, {xyz[1].id(), Y_}, {xyz[2].id(), Z_}};
 
     return remap(m);
 }
