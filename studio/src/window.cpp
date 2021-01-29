@@ -586,6 +586,16 @@ void Window::setFilename(const QString& f)
         setWindowFilePath(f);
     }
 
+    // change working directory (change to home if dir does not exist)
+    if (QFileInfo(filename).dir().exists())
+    {
+        QDir::setCurrent(QFileInfo(filename).dir().path());
+    }
+    else
+    {
+        QDir::setCurrent(QDir::homePath());
+    }
+
     // Store the target file as our autoreload target
     // (even though we'll only do reloading if the menu option is set)
     auto watched_files = watcher.files();
@@ -601,9 +611,7 @@ void Window::setFilename(const QString& f)
 
 QString Window::workingDirectory() const
 {
-    return (filename.startsWith(":/") || filename.isEmpty())
-        ? QDir::homePath()
-        : QFileInfo(filename).dir().absolutePath();
+    return QDir::currentPath();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
