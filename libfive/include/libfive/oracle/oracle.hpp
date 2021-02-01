@@ -12,6 +12,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/Eigen>
 #include <boost/container/small_vector.hpp>
 
+#include "libfive/tree/tree.hpp"
+
 #include "libfive/eval/eval_array_size.hpp"
 #include "libfive/eval/interval.hpp"
 #include "libfive/eval/feature.hpp"
@@ -44,6 +46,11 @@ public:
      */
     virtual void set(const Eigen::Vector3f& lower,
                      const Eigen::Vector3f& upper)=0;
+
+    /*
+     *  Sets a variable.  Returns whether anything changed as a result.
+     */
+    virtual bool setVar(Tree::Id var, float value) { return false; }
 
     /*
      *  Return the result of interval arithmetic over the range previously

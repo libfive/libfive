@@ -36,6 +36,9 @@ public:
     std::unique_ptr<const OracleClause> remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const override;
 
+    std::unique_ptr<const OracleClause> remap(
+            Tree self, std::map<Tree::Id, Tree> deps_) const override;
+
     std::vector<libfive::Tree> evaluationDependencies() const override;
 
     std::vector<libfive::Tree> dependencies() const override;

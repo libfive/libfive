@@ -29,6 +29,8 @@ public:
      */
     void set(const Eigen::Vector3f& p, size_t index=0) override;
 
+    bool setVar(Tree::Id var, float value) override;
+
     void evalInterval(Interval& out) override;
 
     void evalPoint(float& out, size_t index=0) override;

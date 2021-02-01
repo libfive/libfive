@@ -128,4 +128,15 @@ void Deck::unbindOracles()
     }
 }
 
+bool Deck::setVarInOracles(Tree::Id var, float value)
+{
+    auto changed = false;
+    for (auto& o : oracles) {
+        if (o->setVar(var, value)) {
+            changed = true;
+        }
+    }
+    return changed;
+}
+
 }   // namespace libfive

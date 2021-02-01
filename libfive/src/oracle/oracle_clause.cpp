@@ -53,6 +53,19 @@ std::unique_ptr<const OracleClause> OracleClause::remap(
         new TransformedOracleClause(self, X_, Y_, Z_));
 }
 
+std::unique_ptr<const OracleClause> OracleClause::remap(Tree                     self,
+                                                        std::map<Tree::Id, Tree> deps_) const
+{
+    auto lx = deps_.find(Tree::X().id());
+    auto ly = deps_.find(Tree::Y().id());
+    auto lz = deps_.find(Tree::Z().id());
+
+    auto Xn = lx == deps_.end() ? Tree::X() : lx->second;
+    auto Yn = ly == deps_.end() ? Tree::Y() : ly->second;
+    auto Zn = lz == deps_.end() ? Tree::Z() : lz->second;
+    return remap(self, Xn, Yn, Zn);
+}
+  
 unsigned OracleClause::rank() const
 {
     unsigned out = 0;

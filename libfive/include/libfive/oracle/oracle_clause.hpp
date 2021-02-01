@@ -113,6 +113,8 @@ public:
     virtual std::unique_ptr<const OracleClause> remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const;
 
+    virtual std::unique_ptr<const OracleClause> remap(Tree self, std::map<Tree::Id, Tree> deps_) const;
+
 protected:
     typedef std::function<bool(const OracleClause*, Serializer&)>
         OracleSerializer;

@@ -175,17 +175,18 @@ std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
 
 bool ArrayEvaluator::setVar(Tree::Id var_, float value)
 {
+    auto changed = false;
     auto var = deck->vars.right.find(var_);
     if (var != deck->vars.right.end())
     {
-        bool changed = v(var->second, 0) != value;
+        changed = v(var->second, 0) != value;
         v.row(var->second) = value;
-        return changed;
     }
-    else
+    if (deck->setVarInOracles(var_, value))
     {
-        return false;
+        changed = true;
     }
+    return changed;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

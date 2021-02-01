@@ -216,8 +216,11 @@ Tree Tree::load(const std::string& filename)
 
 Tree Tree::remap(Tree X_, Tree Y_, Tree Z_) const
 {
+    // instantiate in case xyz vars are not in cache already
+    Tree xyz[3] = { X(), Y(), Z()};
+
     std::map<Tree::Id, Tree> m = {
-        {X().id(), X_}, {Y().id(), Y_}, {Z().id(), Z_}};
+        {xyz[0].id(), X_}, {xyz[1].id(), Y_}, {xyz[2].id(), Z_}};
 
     return remap(m);
 }
@@ -245,7 +248,14 @@ Tree Tree::remap(std::map<Id, Tree> m) const
         }
         else if (t->op == Opcode::ORACLE)
         {
-            m.insert({ t.id(), t->oracle->remap(t, X_, Y_, Z_) });
+          std::map<Tree::Id, Tree> depMap = {{X().id(), X_}, {Y().id(), Y_}, {Z().id(), Z_}};
+          for (auto d : t->oracle->dependencies()) {
+            auto tmp = m.find(d.id());
+            if (tmp != m.end()) {
+              depMap.insert({ tmp->first,tmp->second });
+            }
+          }
+          m.insert({ t.id(), t->oracle->remap(t,depMap) });
         }
     }
 

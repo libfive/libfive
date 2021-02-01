@@ -25,7 +25,10 @@ BaseEvaluator::BaseEvaluator(std::shared_ptr<Deck> deck,
             std::cerr << "BaseEvaluator::BaseEvaluator: "
                       << "uninitialized variable." << std::endl;
         }
-    }
+        else {
+          deck->setVarInOracles(v.first, v.second);
+        }
+    }    
 }
 
 }   // namespace libfive

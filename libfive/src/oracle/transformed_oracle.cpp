@@ -27,6 +27,21 @@ void TransformedOracle::set(const Eigen::Vector3f& p, size_t index)
     zEvaluator.set(p, index);
 }
 
+bool TransformedOracle::setVar(Tree::Id var, float value)
+{
+    // Just pass it on to dependents.
+    auto changed = false;
+    if (underlying->setVar(var, value)) {
+        changed = true;
+    }
+    for (auto eval : { &xEvaluator, &yEvaluator, &zEvaluator }) {
+        if (eval->updateVars({ {var, value} })) {
+            changed = true;
+        }
+    }
+    return changed;
+}
+
 void TransformedOracle::evalInterval(Interval& out)
 {
     auto xRange = xEvaluator.eval(lower, upper);
