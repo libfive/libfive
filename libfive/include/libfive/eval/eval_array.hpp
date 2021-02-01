@@ -95,6 +95,11 @@ public:
     float value(const Eigen::Vector3f& pt);
     float value(const Eigen::Vector3f& pt, const Tape& tape);
 
+    /*  Gets a specific clause's results, such as for a "borrowing"
+     *  oracle.*/
+    Eigen::Block<const decltype(v), 1, Eigen::Dynamic> clause(
+            Clause::Id id, size_t count) const;
+
     /*
      *  Evaluates a single point and returns a tape that doesn't
      *  contain branches that weren't taken by that point evaluation.

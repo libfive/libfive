@@ -130,7 +130,7 @@ const boost::container::small_vector<Feature, 4>&
     filled = 1;
 
     // Evaluate feature-wise
-    deck->bindOracles(*handle.second);
+    deck->bindOracles(*handle.second, this);
     for (auto itr = handle.second->rbegin(); itr != handle.second->rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
@@ -145,6 +145,12 @@ const boost::container::small_vector<Feature, 4>&
     }
 
     return f(root);
+}
+
+const boost::container::small_vector<Feature, 4>&
+FeatureEvaluator::clauseFeatures(Clause::Id clause) const
+{
+    return f(clause);
 }
 
 std::list<Eigen::Vector3f> FeatureEvaluator::features(const Eigen::Vector3f& p)

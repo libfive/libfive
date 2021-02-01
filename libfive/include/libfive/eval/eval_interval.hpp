@@ -62,6 +62,10 @@ public:
      */
     bool setVar(Tree::Id var, float value);
 
+    /*  Gets a specific clause's interval result, such as for a "borrowing" 
+     *  oracle.*/
+    Interval clause(Clause::Id id) const;
+
 protected:
     /*  i[clause] is the interval result for that clause, */
     std::vector<Interval> i;

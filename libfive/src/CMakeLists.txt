@@ -90,6 +90,7 @@ set(five_sources
     tree/serializer.cpp
     tree/tree.cpp
 
+    oracle/borrowing_transformed_oracle.cpp
     oracle/oracle_clause.cpp
     oracle/transformed_oracle.cpp
     oracle/transformed_oracle_clause.cpp
@@ -184,6 +185,7 @@ set(five_sources
     ../include/libfive/tree/serializer.hpp
     ../include/libfive/tree/tree.hpp
 
+    ../include/libfive/oracle/borrowing_transformed_oracle.hpp
     ../include/libfive/oracle/oracle.hpp
     ../include/libfive/oracle/oracle_clause.hpp
     ../include/libfive/oracle/oracle_context.hpp

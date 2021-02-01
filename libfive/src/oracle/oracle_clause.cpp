@@ -3,6 +3,7 @@
 
 #include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/oracle/transformed_oracle_clause.hpp"
+#include "libfive/oracle/oracle.hpp"
 
 namespace libfive {
 
@@ -50,6 +51,27 @@ std::unique_ptr<const OracleClause> OracleClause::remap(
 
     return std::unique_ptr<const OracleClause>(
         new TransformedOracleClause(self, X_, Y_, Z_));
+}
+
+unsigned OracleClause::rank() const
+{
+    unsigned out = 0;
+    for (auto dependency : evaluationDependencies()) 
+    {
+        out = std::max(out, dependency->rank + 1);
+    }
+    return out;
+}
+
+std::unique_ptr<Oracle>
+OracleClause::getOracle(std::unordered_map<Tree::Id, Clause::Id> map) const
+{
+    return getOracle();
+}
+
+std::unique_ptr<Oracle> OracleClause::getOracle() const
+{
+    return getOracle({});
 }
 
 }   // namespace libfive

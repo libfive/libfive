@@ -9,6 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "libfive/oracle/transformed_oracle_clause.hpp"
 #include "libfive/oracle/transformed_oracle.hpp"
+#include "libfive/oracle/borrowing_transformed_oracle.hpp"
 
 #include "libfive/tree/serializer.hpp"
 #include "libfive/tree/deserializer.hpp"
@@ -31,6 +32,20 @@ std::unique_ptr<Oracle> TransformedOracleClause::getOracle() const
         new TransformedOracle(underlying->oracle->getOracle(), X_, Y_, Z_));
 }
 
+std::unique_ptr<Oracle> TransformedOracleClause::getOracle(
+    std::unordered_map<Tree::Id, Clause::Id> map) const
+{
+  auto X = map.find(X_.id());
+  auto Y = map.find(Y_.id());
+  auto Z = map.find(Z_.id());
+  if (X == map.end() || Y == map.end() || Z == map.end()) {
+    assert(false);
+    return getOracle();
+  }
+  return std::make_unique<BorrowingTransformedOracle>(
+        underlying->oracle->getOracle(), X->second, Y->second, Z->second);
+}
+
 std::unique_ptr<const OracleClause>
 TransformedOracleClause::remap(Tree self, Tree X_, Tree Y_, Tree Z_) const
 {
@@ -41,6 +56,12 @@ TransformedOracleClause::remap(Tree self, Tree X_, Tree Y_, Tree Z_) const
             this->X_.remap(X_, Y_, Z_),
             this->Y_.remap(X_, Y_, Z_),
             this->Z_.remap(X_, Y_, Z_)));
+}
+
+std::vector<libfive::Tree> 
+TransformedOracleClause::evaluationDependencies() const
+{
+    return { X_, Y_, Z_ };
 }
 
 std::vector<libfive::Tree> TransformedOracleClause::dependencies() const
