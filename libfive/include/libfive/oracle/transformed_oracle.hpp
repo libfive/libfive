@@ -13,8 +13,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-/* The transformedOracle is the result of applying a remap to an oracle.
-*/
+/* The transformedOracle is the result of generating an oracle
+ * from a transformedOracleClause without using a deck for deduplication
+ */
 
 class TransformedOracle : public OracleStorage<>
 {

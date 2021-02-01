@@ -82,7 +82,7 @@ Interval IntervalEvaluator::eval(
         o->set(lower, upper);
     }
 
-    deck->bindOracles(*tape);
+    deck->bindOracles(*tape, this);
     Interval::setRoundingGroup();
     for (auto itr = tape->rbegin(); itr != tape->rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
@@ -185,6 +185,17 @@ bool IntervalEvaluator::setVar(Tree::Id var, float value)
         changed = true;
     }
     return changed;
+}
+
+Interval IntervalEvaluator::clause(Clause::Id id) const
+{
+    if (id != 0 && id < i.size()) {
+        return i[id];
+    }
+    else {
+        assert(false);
+        return { -INFINITY, INFINITY, true };
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -105,7 +105,7 @@ DerivArrayEvaluator::derivs(size_t count, const Tape& tape)
     out.row(3).head(count) = values(count, tape);
 
     // Perform derivative evaluation, copying results into the out array
-    deck->bindOracles(tape);
+    deck->bindOracles(tape, this);
     for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
@@ -114,6 +114,12 @@ DerivArrayEvaluator::derivs(size_t count, const Tape& tape)
     // Return a block of valid results from the out array
     out.topLeftCorner(3, count) = d(tape.root()).leftCols(count);
     return out.block<4, Eigen::Dynamic>(0, 0, 4, count);
+}
+
+const Eigen::Array<float, 3, DerivArrayEvaluator::N>& 
+DerivArrayEvaluator::clauseDerivs(Clause::Id id) const
+{
+    return d(id);
 }
 
 void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,

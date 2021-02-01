@@ -37,8 +37,18 @@ Deck::Deck(const Tree root)
     // Write the flattened tree into the tape!
     for (const auto& m : flat)
     {
+        // For oracles, store their position in the oracles vector
+        // as the LHS of the clause, so that we can find them during
+        // tape evaluation.
+        if (m->op == Opcode::ORACLE) {
+        assert(m->oracle);
+
+        tape_.push_front({ Opcode::ORACLE, id,
+                static_cast<unsigned int>(oracles.size()), 0 });
+        oracles.push_back(m->oracle->getOracle(clauses));
+        }
         // Normal clauses end up in the tape
-        if (m->rank > 0)
+        else if (m->rank > 0)
         {
             newClause(m.id());
         }
@@ -51,17 +61,7 @@ Deck::Deck(const Tree root)
         else if (m->op == Opcode::VAR_FREE)
         {
             vars.left.insert({id, m.id()});
-        }
-        // For oracles, store their position in the oracles vector
-        // as the LHS of the clause, so that we can find them during
-        // tape evaluation.
-        else if (m->op == Opcode::ORACLE) {
-            assert(m->oracle);
-
-            tape_.push_front({Opcode::ORACLE, id,
-                    static_cast<unsigned int>(oracles.size()), 0});
-            oracles.push_back(m->oracle->getOracle());
-        }
+        }        
         else
         {
             assert(m->op == Opcode::VAR_X ||
@@ -112,11 +112,11 @@ Deck::Deck(const Tree root)
     tape->i = clauses.at(root.id());
 }
 
-void Deck::bindOracles(const Tape& tape)
+void Deck::bindOracles(const Tape& tape, const BaseEvaluator* eval)
 {
     for (unsigned i=0; i < oracles.size(); ++i)
     {
-        oracles[i]->bind(tape.getContext(i));
+        oracles[i]->bind(tape.getContext(i), eval);
     }
 }
 

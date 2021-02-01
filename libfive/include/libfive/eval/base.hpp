@@ -22,7 +22,8 @@ public:
     // Sets the vars on the oracles in the deck.
     BaseEvaluator(std::shared_ptr<Deck> deck,
                   const std::map<Tree::Id, float>& vars);
-
+    /*Virtual destructor allows dynamic casts to other evaluator types*/
+    virtual ~BaseEvaluator() = default;
 protected:
     std::shared_ptr<Deck> deck;
 };

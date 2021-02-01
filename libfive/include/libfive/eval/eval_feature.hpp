@@ -80,6 +80,9 @@ public:
     const boost::container::small_vector<Feature, 4>&
         features_(const Eigen::Vector3f& p, const std::shared_ptr<Tape>& tape);
 
+    const boost::container::small_vector<Feature, 4>& clauseFeatures(
+        Clause::Id clause) const;
+
 protected:
     /*
      *  Per-clause evaluation, used in tape walking

@@ -66,7 +66,6 @@ float ArrayEvaluator::value(const Eigen::Vector3f& pt,
     return values(1, tape)(0);
 }
 
-
 Eigen::Block<decltype(ArrayEvaluator::v), 1, Eigen::Dynamic>
 ArrayEvaluator::values(size_t count)
 {
@@ -106,7 +105,7 @@ ArrayEvaluator::values(size_t count, const Tape& tape)
 {
     setCount(count);
 
-    deck->bindOracles(tape);
+    deck->bindOracles(tape, this);
     for (auto itr = tape.rbegin(); itr != tape.rend(); ++itr) {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
@@ -115,6 +114,11 @@ ArrayEvaluator::values(size_t count, const Tape& tape)
     return v.block<1, Eigen::Dynamic>(tape.root(), 0, 1, count);
 }
 
+Eigen::Block<const decltype(ArrayEvaluator::v), 1, Eigen::Dynamic> 
+    ArrayEvaluator::clause(Clause::Id id, size_t count) const
+{
+    return v.block<1, Eigen::Dynamic>(id, 0, 1, count);
+}
 
 std::pair<float, Tape::Handle> ArrayEvaluator::valueAndPush(
         const Eigen::Vector3f& pt)

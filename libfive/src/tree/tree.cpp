@@ -31,7 +31,7 @@ Tree::Tree(std::unique_ptr<const OracleClause>&& o)
     : ptr(std::shared_ptr<Tree_>(new Tree_{
         Opcode::ORACLE,
         0, // flags
-        0, // rank
+        o->rank(), // rank
         std::nanf(""), // value
         std::move(o), // oracle
         nullptr,
@@ -47,7 +47,7 @@ Tree::Tree(std::unique_ptr<const OracleClause>&& o,
   : ptr(std::shared_ptr<Tree_>(new Tree_{
         Opcode::ORACLE,
         0, // flags
-        0, // rank
+        o->rank(), // rank
         std::nanf(""), // value
         std::move(o), // oracle
         nullptr,
@@ -125,8 +125,18 @@ std::list<Tree> Tree::ordered() const
 
         if (found.find(t.get()) == found.end())
         {
-            todo.push_back(t->lhs);
-            todo.push_back(t->rhs);
+            if (t->oracle)
+            {
+                for (const auto& dep : t->oracle->evaluationDependencies())
+                {
+                    todo.push_back(dep.ptr);
+                }
+            }
+            else
+            {
+                todo.push_back(t->lhs);
+                todo.push_back(t->rhs);
+            }
             found.insert(t.get());
             ranks[t->rank].push_back(t);
         }

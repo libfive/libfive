@@ -3,6 +3,7 @@
 
 #include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/oracle/transformed_oracle_clause.hpp"
+#include "libfive/oracle/oracle.hpp"
 
 namespace libfive {
 
@@ -55,14 +56,35 @@ std::unique_ptr<const OracleClause> OracleClause::remap(
 std::unique_ptr<const OracleClause> OracleClause::remap(Tree                     self,
                                                         std::map<Tree::Id, Tree> deps_) const
 {
-  auto lx = deps_.find(Tree::X().id());
-  auto ly = deps_.find(Tree::Y().id());
-  auto lz = deps_.find(Tree::Z().id());
+    auto lx = deps_.find(Tree::X().id());
+    auto ly = deps_.find(Tree::Y().id());
+    auto lz = deps_.find(Tree::Z().id());
 
-  auto Xn = lx == deps_.end() ? Tree::X() : lx->second;
-  auto Yn = ly == deps_.end() ? Tree::Y() : ly->second;
-  auto Zn = lz == deps_.end() ? Tree::Z() : lz->second;
-  return remap(self, Xn, Yn, Zn);
+    auto Xn = lx == deps_.end() ? Tree::X() : lx->second;
+    auto Yn = ly == deps_.end() ? Tree::Y() : ly->second;
+    auto Zn = lz == deps_.end() ? Tree::Z() : lz->second;
+    return remap(self, Xn, Yn, Zn);
+}
+  
+unsigned OracleClause::rank() const
+{
+    unsigned out = 0;
+    for (auto dependency : evaluationDependencies()) 
+    {
+        out = std::max(out, dependency->rank + 1);
+    }
+    return out;
+}
+
+std::unique_ptr<Oracle>
+OracleClause::getOracle(std::unordered_map<Tree::Id, Clause::Id> map) const
+{
+    return getOracle();
+}
+
+std::unique_ptr<Oracle> OracleClause::getOracle() const
+{
+    return getOracle({});
 }
 
 }   // namespace libfive

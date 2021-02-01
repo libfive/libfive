@@ -72,7 +72,7 @@ void TransformedOracle::evalPoint(float& out, size_t index)
 
     underlying->set(transformedPoint, index);
 
-    underlying->bind(ctx ? ctx->u : nullptr);
+    underlying->bind(ctx ? ctx->u : nullptr, nullptr);
     underlying->evalPoint(out, index);
     underlying->unbind();
 }
@@ -97,7 +97,7 @@ void TransformedOracle::evalArray(
         underlying->set({ xPoints(i), yPoints(i), zPoints(i) }, i);
     }
 
-    underlying->bind(ctx ? ctx->u : nullptr);
+    underlying->bind(ctx ? ctx->u : nullptr, nullptr);
     underlying->evalArray(out);
     underlying->unbind();
 }
@@ -139,7 +139,7 @@ void TransformedOracle::evalDerivs(
 
     underlying->set(transformedPoint, index);
 
-    underlying->bind(ctx ? ctx->u : nullptr);
+    underlying->bind(ctx ? ctx->u : nullptr, nullptr);
     underlying->evalDerivs(out, index);
     underlying->unbind();
 
@@ -161,7 +161,7 @@ void TransformedOracle::evalDerivArray(
     auto zDerivs = ctx ? zEvaluator.derivs(count, *ctx->tz)
                        : zEvaluator.derivs(count);
 
-    underlying->bind(ctx ? ctx->u : nullptr);
+    underlying->bind(ctx ? ctx->u : nullptr, nullptr);
     underlying->evalDerivArray(out);
     underlying->unbind();
 
@@ -198,7 +198,7 @@ void TransformedOracle::evalFeatures(
     boost::container::small_vector<Feature, 4> underlyingOut;
     underlying->set(transformedPoint);
 
-    underlying->bind(ctx ? ctx->u : nullptr);
+    underlying->bind(ctx ? ctx->u : nullptr, nullptr);
     underlying->evalFeatures(underlyingOut);
     underlying->unbind();
 
@@ -254,7 +254,7 @@ std::shared_ptr<OracleContext> TransformedOracle::push(Tape::Type t)
     out->tz = ctx ? zEvaluator.push(ctx->tz)
                   : zEvaluator.push();
 
-    underlying->bind(ctx ? ctx->u : nullptr);
+    underlying->bind(ctx ? ctx->u : nullptr, nullptr);
     out->u = underlying->push(t);
     underlying->unbind();
 
