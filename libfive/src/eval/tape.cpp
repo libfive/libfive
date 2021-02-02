@@ -148,7 +148,9 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
     }
     // And to update the new contexts.
     for (auto& context : new_contexts) {
-      context->applyRemaps(deck.remap);
+      if (context) {
+        context->applyRemaps(deck.remap);
+      }
     }
 
     // Remap the tape root index
