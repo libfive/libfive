@@ -161,15 +161,15 @@ void BorrowingTransformedOracle::evalDerivArray(
     auto zPoints = derivEvaluator->clause(z, count);
 
     underlying->bind(ctx ? ctx->u : nullptr, nullptr);
-    underlying->evalDerivArray(out);
-    underlying->unbind();
-
     for (unsigned i = 0; i < count; ++i)
     {
+        underlying->set({xPoints(i), yPoints(i), zPoints(i)});
+        underlying->evalDerivArray(out);
         Eigen::Matrix3f Jacobian;
-        Jacobian << xGradients.col(i), xGradients.col(i), xGradients.col(i);
+        Jacobian << xGradients.col(i), yGradients.col(i), zGradients.col(i);
         out.col(i) = Jacobian * out.col(i).matrix();
     }
+    underlying->unbind();
 }
 
 void BorrowingTransformedOracle::evalFeatures(
