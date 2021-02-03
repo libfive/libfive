@@ -22,24 +22,26 @@ BorrowingTransformedOracle::BorrowingTransformedOracle(
 
 void BorrowingTransformedOracle::evalInterval(Interval& out)
 {
-    auto intervalEvaluator = dynamic_cast<const IntervalEvaluator*>(evaluator);
-    if (!intervalEvaluator) {
-        assert(false);
-        out = { -INFINITY, INFINITY, true };
-        return;
-    }
-    auto [x, y, z] = getRemappedXYZ();
-    auto xRange = intervalEvaluator->clause(x);
-    auto yRange = intervalEvaluator->clause(y);
-    auto zRange = intervalEvaluator->clause(z);
+  auto ctx = dynamic_cast<Context*>(context.get());
+  assert(context == nullptr || ctx != nullptr);
+  auto intervalEvaluator = dynamic_cast<const IntervalEvaluator*>(evaluator);
+  if (!intervalEvaluator) {
+    assert(false);
+    out = {-INFINITY, INFINITY, true};
+    return;
+  }
+  auto [x, y, z] = getRemappedXYZ();
+  auto xRange    = intervalEvaluator->clause(x);
+  auto yRange    = intervalEvaluator->clause(y);
+  auto zRange    = intervalEvaluator->clause(z);
 
-    Eigen::Vector3f rangeLower{
-        xRange.lower(), yRange.lower(), zRange.lower() };
-    Eigen::Vector3f rangeUpper{
-        xRange.upper(), yRange.upper(), zRange.upper() };
+  Eigen::Vector3f rangeLower {xRange.lower(), yRange.lower(), zRange.lower()};
+  Eigen::Vector3f rangeUpper {xRange.upper(), yRange.upper(), zRange.upper()};
 
-    underlying->set(rangeLower, rangeUpper);
-    underlying->evalInterval(out);
+  underlying->bind(ctx ? ctx->u : nullptr, nullptr);
+  underlying->set(rangeLower, rangeUpper);
+  underlying->evalInterval(out);
+  underlying->unbind();
 }
 
 void BorrowingTransformedOracle::evalPoint(float& out, size_t index)

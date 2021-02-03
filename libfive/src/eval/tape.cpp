@@ -91,7 +91,7 @@ Tape::Handle Tape::push(Deck& deck, KeepFunction fn, Type type,
                 for (auto dep : deck.oracles[c.a]->
                     activeDependencies(new_contexts[c.a].get()))
                 {
-                    deck.disabled[c.a] = false;
+                    deck.disabled[dep] = false;
                 }
                 deck.oracles[c.a]->unbind();
 
