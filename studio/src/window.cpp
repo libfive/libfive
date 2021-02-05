@@ -359,6 +359,13 @@ void Window::onAutoLoad(const QString&)
             Q_ASSERT(!filename.isEmpty());
             loadFile(filename, true);
         }
+
+        // Some editors don't edit but replace the file so the watcher thinks
+        // the file was deleted and the signal is only sent once.
+        // Re-watching the file is mandatory for those cases.
+        if (QFile::exists(filename)) {
+            watcher.addPath(filename);
+        }
     }
     else // File was deleted. Waiting for new file
     {
