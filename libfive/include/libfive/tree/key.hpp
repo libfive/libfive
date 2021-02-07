@@ -27,6 +27,10 @@ using TreeRemapKey = std::tuple<
     const TreeData*,
     const TreeData*,
     const TreeData*>;
+using TreeApplyKey = std::tuple<
+    const TreeData*,
+    const TreeData*,
+    const TreeData*>;
 
 using TreeDataKeyVariant = std::variant<
     bool,               // Used for NaN (true) and invalid (false)
@@ -35,6 +39,7 @@ using TreeDataKeyVariant = std::variant<
     TreeUnaryKey,       // Unary operations and VAR_FREE
     TreeBinaryKey,      // Binary operations
     TreeRemapKey,       // Remap operation
+    TreeApplyKey,       // Apply operation
     TreeOracleKey>;     // Oracles, keyed by their unique_ptr
 
 // Wrapper struct so that we can use forward declarations

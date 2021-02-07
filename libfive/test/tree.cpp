@@ -730,3 +730,23 @@ TEST_CASE("Tree::var")
     auto b = Tree::var();
     REQUIRE(a != b);
 }
+
+TEST_CASE("Tree::apply")
+{
+    auto a = Tree::var();
+    auto b = (a + 1.3) / Tree::X();
+
+    {
+        std::stringstream out;
+        out << b;
+        REQUIRE(out.str() == "(/ (+ var-free 1.3) x)");
+    }
+
+    {
+        auto c = b.apply(a, Tree::X() + Tree::Y())
+            .remap(Tree::X(), Tree::Z(), Tree::Y());
+        std::stringstream out;
+        out << c.optimized();
+        REQUIRE(out.str() == "(/ (+ z x 1.3) x)");
+    }
+}

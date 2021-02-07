@@ -58,6 +58,10 @@ Tree::~Tree() {
                 todo.push(std::exchange(d->y.ptr, nullptr));
                 todo.push(std::exchange(d->z.ptr, nullptr));
                 todo.push(std::exchange(d->t.ptr, nullptr));
+            } else if (auto d = std::get_if<TreeApply>(t)) {
+                todo.push(std::exchange(d->target.ptr, nullptr));
+                todo.push(std::exchange(d->value.ptr, nullptr));
+                todo.push(std::exchange(d->t.ptr, nullptr));
             }
             delete t;
         }
@@ -321,6 +325,15 @@ std::ostream& Tree::print_prefix(std::ostream& s) const {
                 todo.push(t->x.get());
                 todo.push(' ');
                 todo.push(t->t.get());
+            } else if (auto t = std::get_if<TreeApply>(*d)) {
+                s << "(apply ";
+                todo.push(')');
+                ops.push(Opcode::INVALID); // dummy op for remap
+                todo.push(t->target.get());
+                todo.push(' ');
+                todo.push(t->value.get());
+                todo.push(' ');
+                todo.push(t->t.get());
             } else {
                 throw TreeData::InvalidException();
             }
@@ -362,87 +375,113 @@ Tree Tree::remap(Tree X, Tree Y, Tree Z) const {
     }
 }
 
+Tree Tree::apply(Tree var, Tree value) const {
+    if (var->op() != Opcode::VAR_FREE) {
+        throw TreeData::ApplyException();
+    }
+    return Tree(new Data(TreeApply { var, value, *this }));
+}
+
 Tree Tree::flatten() const {
     if (!(ptr->flags & TreeData::TREE_FLAG_HAS_REMAP)) {
         return *this;
     }
 
-    /*  If t is an axis, then pushes x/y/z to the output stack
+    /*  When going down:
+     *  ======================
+     *  If t is a nonary operation:
+     *      If there's a remap for it, push the remapped value to the output
+     *      Otherwise, push t to the output stack directly
      *
      *  If t is a remap, then pushes
-     *      Down(t->x)  [executed first]
-     *      Down(t->y)
+     *      Up(t->tree)
      *      Down(t->z)
-     *      Remap(t->tree)
+     *      Down(t->y)
+     *      Down(t->x)  [executed first]
      *  to the task stack
+     *
+     *  If t is an apply, then pushes
+     *      Up(t->tree)
+     *      Down(t->value) [executed first]
      *
      *  If t has children, pushes Up(t) to the task stack, followed by
      *  Down(t->lhs/rhs) for each child.
      *
-     *  Otherwise, pushes t to the output stack immediately */
-    struct Down {
-        Tree x;
-        Tree y;
-        Tree z;
-        const Data* t;
-    };
-
-    /*  If t has children, then pops them from the out stack and pushes
+     *  Otherwise, pushes t to the output stack immediately
+     *
+     *  When going up:
+     *  ======================
+     *  If t has children, then pops them from the out stack and pushes
      *  a modified version of t to the out stack.
      *
      *  Otherwise, if t is a remap, then pops x', y', and z' from the output
-     *  stack then pushes Down { x', y', z', t->t } to the task stack */
-    struct Up {
+     *  stack then pushes Down { x', y', z', t->m, t->t } to the task stack.
+     *
+     *  Finally, if t is an Apply, then pops the modified value from the
+     *  output stack, then pushes Down { x, y, z, m', t->t } to the task stack
+     */
+    using MapPointer = std::shared_ptr<std::unordered_map<const Data*, Tree>>;
+    struct Task {
+        enum { DOWN, UP } v;
         const Data* t;
+        MapPointer m;
     };
-
-    using Task = std::variant<Down, Up>;
     std::stack<Task> todo;
     std::stack<Tree> out;
 
-    todo.push(Down {Tree::X(), Tree::Y(), Tree::Z(), ptr });
+    todo.push({Task::DOWN, ptr, nullptr});
 
     while (todo.size()) {
         auto k = todo.top();
         todo.pop();
 
-        if (auto d=std::get_if<Down>(&k)) {
-            if (auto t=std::get_if<TreeNonaryOp>(d->t)) {
-                switch (t->op) {
-                    case Opcode::VAR_X: out.push(d->x); break;
-                    case Opcode::VAR_Y: out.push(d->y); break;
-                    case Opcode::VAR_Z: out.push(d->z); break;
-                    default: out.push(Tree(d->t)); break;
+        auto get = [&](const Data* t) {
+            if (k.m) {
+                const auto k_itr = k.m->find(t);
+                if (k_itr != k.m->end()) {
+                    return k_itr->second;
                 }
-            } else if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
-                todo.push(Up { d->t });
-                todo.push(Down { d->x, d->y, d->z, t->lhs.ptr });
-            } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
-                todo.push(Up { d->t });
-                todo.push(Down { d->x, d->y, d->z, t->lhs.ptr });
-                todo.push(Down { d->x, d->y, d->z, t->rhs.ptr });
-            } else if (std::get_if<TreeConstant>(d->t)) {
-                out.push(Tree(d->t));
-            } else if (auto t=std::get_if<TreeOracle>(d->t)) {
-                const Tree new_oracle(t->oracle->remap(
-                            Tree(d->t), d->x, d->y, d->z));
-                out.push(new_oracle);
-            } else if (auto t=std::get_if<TreeRemap>(d->t)) {
-                todo.push(Up { d->t });
-                todo.push(Down { d->x, d->y, d->z, t->z.ptr });
-                todo.push(Down { d->x, d->y, d->z, t->y.ptr });
-                todo.push(Down { d->x, d->y, d->z, t->x.ptr });
             }
-        } else if (auto d=std::get_if<Up>(&k)) {
-            if (auto t=std::get_if<TreeUnaryOp>(d->t)) {
+            return Tree(t);
+        };
+
+        if (k.v == Task::DOWN) {
+            if (auto t=std::get_if<TreeNonaryOp>(k.t)) {
+                out.push(get(k.t));
+            } else if (auto t=std::get_if<TreeUnaryOp>(k.t)) {
+                todo.push({Task::UP, k.t, k.m});
+                todo.push({Task::DOWN, t->lhs.ptr, k.m});
+            } else if (auto t=std::get_if<TreeBinaryOp>(k.t)) {
+                todo.push({Task::UP, k.t, k.m});
+                todo.push({Task::DOWN, t->lhs.ptr, k.m});
+                todo.push({Task::DOWN, t->rhs.ptr, k.m});
+            } else if (std::get_if<TreeConstant>(k.t)) {
+                out.push(Tree(k.t));
+            } else if (auto t=std::get_if<TreeOracle>(k.t)) {
+                const Tree new_oracle(t->oracle->remap(Tree(k.t),
+                            get(Tree::X().ptr),
+                            get(Tree::Y().ptr),
+                            get(Tree::Z().ptr)));
+                out.push(new_oracle);
+            } else if (auto t=std::get_if<TreeRemap>(k.t)) {
+                todo.push({Task::UP, k.t, k.m});
+                todo.push({Task::DOWN, t->z.ptr, k.m});
+                todo.push({Task::DOWN, t->y.ptr, k.m});
+                todo.push({Task::DOWN, t->x.ptr, k.m});
+            } else if (auto t=std::get_if<TreeApply>(k.t)) {
+                todo.push({Task::UP, k.t, k.m});
+                todo.push({Task::DOWN, t->value.ptr, k.m});
+            }
+        } else if (k.v == Task::UP) {
+            if (auto t=std::get_if<TreeUnaryOp>(k.t)) {
                 const auto lhs = out.top();
                 out.pop();
                 if (lhs.ptr != t->lhs.ptr) {
                     out.push(Tree::unary(t->op, lhs));
                 } else {
-                    out.push(Tree(d->t));
+                    out.push(Tree(k.t));
                 }
-            } else if (auto t=std::get_if<TreeBinaryOp>(d->t)) {
+            } else if (auto t=std::get_if<TreeBinaryOp>(k.t)) {
                 const auto lhs = out.top();
                 out.pop();
                 const auto rhs = out.top();
@@ -450,19 +489,30 @@ Tree Tree::flatten() const {
                 if (lhs.ptr != t->lhs.ptr || rhs.ptr != t->rhs.ptr) {
                     out.push(Tree::binary(t->op, lhs, rhs));
                 } else {
-                    out.push(Tree(d->t));
+                    out.push(Tree(k.t));
                 }
-            } else if (auto t=std::get_if<TreeRemap>(d->t)) {
-                const auto z = out.top();
+            } else if (auto t=std::get_if<TreeRemap>(k.t)) {
+                // Update the map with X/Y/Z values
+                auto m = std::make_shared<std::unordered_map<const Data*, Tree>>(
+                        k.m ? *(k.m) : std::unordered_map<const Data*, Tree>());
+                m->insert({Tree::Z().ptr, out.top()});
                 out.pop();
-                const auto y = out.top();
+                m->insert({Tree::Y().ptr, out.top()});
                 out.pop();
-                const auto x = out.top();
+                m->insert({Tree::X().ptr, out.top()});
                 out.pop();
-                todo.push(Down { x, y, z, t->t.ptr });
+
+                todo.push({Task::DOWN, t->t.ptr, m});
+            } else if (auto t=std::get_if<TreeApply>(k.t)) {
+                // Update the map with the new value
+                auto m = std::make_shared<MapPointer::element_type>(
+                        k.m ? *(k.m) : MapPointer::element_type());
+                m->insert({t->target.ptr, out.top()});
+                out.pop();
+                todo.push({Task::DOWN,  t->t.ptr , m});
             } else {
                 // We shouldn't ever get here, because Nonary, Constant,
-                // Oracles, and Remap shouldn't ever be pushed as Up nodes.
+                // Oracles, Remap, and Apply shouldn't be pushed as Up nodes.
                 assert(false);
             }
         }
@@ -497,8 +547,10 @@ std::vector<const Tree::Data*> Tree::walk() const {
             if (count[d->rhs.id()]++ == 0) {
                 todo.push(d->rhs.get());
             }
+        // These cases should never happen because of the check above
         } else if (std::get_if<TreeRemap>(next)) {
-            // This should never happen because of the check above
+            assert(false);
+        } else if (std::get_if<TreeApply>(next)) {
             assert(false);
         }
     }
@@ -697,6 +749,9 @@ Tree Tree::optimized_helper(
                     todo.push(Down { t->lhs.ptr, 1.0f });
                     todo.push(Down { t->rhs.ptr, 1.0f });
                 } else if (std::get_if<TreeRemap>(d->t)) {
+                    // This should be caught above
+                    assert(false);
+                } else if (std::get_if<TreeApply>(d->t)) {
                     // This should be caught above
                     assert(false);
                 } else {
@@ -919,6 +974,10 @@ size_t Tree::size() const {
             todo.push(d->y.get());
             todo.push(d->y.get());
             todo.push(d->z.get());
+        } else if (auto d = std::get_if<TreeApply>(next)) {
+            todo.push(d->target.get());
+            todo.push(d->value.get());
+            todo.push(d->t.get());
         }
     }
     return seen.size();

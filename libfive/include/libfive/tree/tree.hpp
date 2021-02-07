@@ -144,10 +144,20 @@ public:
 
     /*  Remaps the coordinates of this tree, returning a new tree.
      *
-     *  This is normally a constant-time operation, but if X/Y/Z contain
-     *  unflattened remap operations of their own, they will be flattened,
-     *  which is not constant time. */
+     *  This is a constant-time lazy operation that is expanded during a call
+     *  to flatten() or optimized().
+     */
     Tree remap(Tree X, Tree Y, Tree Z) const;
+
+    /*  Substitutes a variable within a tree.
+     *
+     *  This is a constant-time lazy operation that is expanded during a call
+     *  to flatten() or optimized().
+     *
+     *  var must be a tree returned from Tree::var(); otherwise, an
+     *  ApplyException will be thrown.
+     */
+    Tree apply(Tree var, Tree value) const;
 
     /*  Serializes the tree to a stream of bytes */
     void serialize(std::ostream& out) const;

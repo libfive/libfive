@@ -27,6 +27,8 @@ Opcode::Opcode TreeData::op() const {
         return Opcode::INVALID;
     } else if (std::get_if<TreeRemap>(this)) {
         return Opcode::INVALID;
+    } else if (std::get_if<TreeApply>(this)) {
+        return Opcode::INVALID;
     } else {
         assert(false); // All variants should be covered above
         return Opcode::INVALID;
@@ -99,6 +101,9 @@ TreeData::Key TreeData::key() const {
     } else if (auto d = std::get_if<TreeRemap>(this)) {
         return Key(std::make_tuple(d->x.get(), d->y.get(),
                                    d->z.get(), d->t.get()));
+    } else if (auto d = std::get_if<TreeApply>(this)) {
+        return Key(std::make_tuple(
+                    d->target.get(), d->value.get(), d->t.get()));
     } else {
         return Key(false);
     }
@@ -121,6 +126,9 @@ uint32_t TreeData::compute_flags() const {
         return TREE_FLAG_HAS_ORACLE;
     } else if (auto d = std::get_if<TreeRemap>(this)) {
         return d->x->flags | d->y->flags | d->z->flags |
+               d->t->flags | TREE_FLAG_HAS_REMAP;
+    } else if (auto d = std::get_if<TreeApply>(this)) {
+        return d->target->flags | d->value->flags |
                d->t->flags | TREE_FLAG_HAS_REMAP;
     } else {
         return 0;

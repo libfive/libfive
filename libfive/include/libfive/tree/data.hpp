@@ -40,6 +40,12 @@ struct TreeRemap {
     Tree z;
     Tree t;
 };
+struct TreeApply {
+    Tree target;
+    Tree value;
+
+    Tree t;
+};
 struct TreeInvalid {
     // No members
 };
@@ -50,6 +56,7 @@ using TreeDataVariant = std::variant<
         TreeConstant,
         TreeOracle,
         TreeRemap,
+        TreeApply,
         TreeInvalid>;
 
 /*  TreeData is a wrapper struct around the TreeDataVariant.
@@ -110,6 +117,12 @@ struct TreeData : public TreeDataVariant
     struct RemapException : public std::exception {
         const char* what() const throw () override {
             return "Tried to do an operation which requires flattened tree";
+        }
+    };
+
+    struct ApplyException : public std::exception {
+        const char* what() const throw () override {
+            return "Can only apply with a variable as first argument";
         }
     };
 
