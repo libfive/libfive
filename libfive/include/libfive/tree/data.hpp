@@ -103,7 +103,7 @@ struct TreeData : public TreeDataVariant
 
     struct OracleException : public std::exception {
         const char* what() const throw () {
-            return "Accessed oracle of non-constant Tree";
+            return "Accessed oracle of non-oracle Tree";
         }
     };
 
