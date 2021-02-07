@@ -744,9 +744,9 @@ TEST_CASE("Tree::apply")
 
     {
         auto c = b.apply(a, Tree::X() + Tree::Y())
-            .remap(Tree::X(), Tree::Z(), Tree::Y());
+            .remap(Tree::X(), 2*Tree::Z(), Tree::Y());
         std::stringstream out;
         out << c.optimized();
-        REQUIRE(out.str() == "(/ (+ z x 1.3) x)");
+        REQUIRE(out.str() == "(/ (+ x 1.3 (* z 2)) x)");
     }
 }
