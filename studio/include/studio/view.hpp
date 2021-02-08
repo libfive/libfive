@@ -158,7 +158,7 @@ protected:
     QList<Shape*> shapes;
     bool settings_enabled=true;
     Settings settings;
-    libfive::BRepAlgorithm alg;
+    libfive::BRepAlgorithm alg = libfive::BRepAlgorithm::DUAL_CONTOURING;
 
     bool show_axes=true;
     bool show_bbox=false;

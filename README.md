@@ -32,7 +32,7 @@ to change variables in the script.
 
 ## Other projects using `libfive`
 ### Language bindings
-- [Tovero](https://common-lisp.net/project/tovero/): A 3D modeling system for Common Lisp
+- [Tovero](https://gitlab.com/kavalogic-inc/tovero): A 3D modeling system for Common Lisp
 - [`libfivepy`](https://gitlab.com/rcmz0/libfivepy): A Python CAD library (work in progress)
 - [Bindings for Unity](https://github.com/zalo/libfive-unity)
 - Unpublished [Stanza](http://lbstanza.org/) bindings (email for details)
@@ -64,23 +64,31 @@ The `libfive` kernel builds on MSVC,
 and should also build with MinGW (though this is untested).
 
 ### Dependencies
+
+#### libfive
 - [`cmake`](https://cmake.org/)
 - [`pkg-config`](https://www.freedesktop.org/wiki/Software/pkg-config/)
 - [Eigen 3.3.x](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
 - [Boost 1.65 or later](https://www.boost.org)
-- [Qt 5.7 or later](https://www.qt.io)
+
+#### + Guile Bindings (Optional)
 - [Guile 2.2.1 or later](https://www.gnu.org/software/guile/)
 
-Qt and Guile are optional; if they aren't present, then
-the Guile bindings and Studio will not be included in the build
+If Guile isn't present, the Guile bindings won't be built.
+
+#### + Studio (Optional, Requires Guile Bindings)
+- [Qt 5.7 or later](https://www.qt.io)
+
+If Qt and Guile aren't present, Studio will not be included in the build
 (and `cmake` will print a message to that effect).
 
 ### Mac
 With `homebrew` installed, run
 ```
-brew install cmake pkg-config eigen libpng qt guile boost
+brew install cmake pkg-config eigen libpng boost guile qt  
 ```
+Omit `guile` and/or `qt` if you do not want Guile bindings and/or Studio to be built too.
 
 Then, from the `libfive` folder, run something like:
 ```
@@ -97,8 +105,9 @@ and consider using [`ninja`](https://ninja-build.org/) for faster builds.
 
 Ubuntu __18.04 or later__ should have all dependencies available through the package manager
 ```
-sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev qtbase5-dev guile-2.2-dev 
+sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-2.2-dev qtbase5-dev 
 ```
+Omit `guile-2.2-dev` and/or `qtbase5-dev` if you do not want Guile bindings and/or Studio to be built too.
 
 Ubuntu releases __before 18.04__ do not provide `guile-2.2-dev`, so omit that from the above package install command.
 To build guile 2.2.3 from source, run

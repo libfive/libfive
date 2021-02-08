@@ -59,6 +59,7 @@ protected slots:
     bool onLoadTutorial(bool=false);
     void onShowDocs(bool=false);
     void onAutoLoad(const QString&);
+    void onAutoLoadPath(const QString&);
     void onQuit(bool=false);
 
     void onExportReady(QList<const libfive::Mesh*> shapes);
