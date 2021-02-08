@@ -232,9 +232,6 @@ OP_UNARY(atan);
 OP_UNARY(sinh);
 OP_UNARY(cosh);
 OP_UNARY(tanh);
-OP_UNARY(asinh);
-OP_UNARY(acosh);
-OP_UNARY(atanh);
 OP_UNARY(log);
 OP_UNARY(exp);
 #undef OP_UNARY

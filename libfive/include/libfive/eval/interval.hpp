@@ -379,26 +379,6 @@ public:
         return Interval(i, a.maybe_nan);
     }
 
-    static Interval asinh(const Interval& a)
-    {
-        return Interval(boost::numeric::asinh(a.i),
-                        a.maybe_nan);
-    }
-
-    static Interval acosh(const Interval& a)
-    {
-        return Interval(boost::numeric::acosh(a.i),
-                        a.maybe_nan || a.lower() < 1.0f );
-    }
-
-    static Interval atanh(const Interval& a)
-    {
-        return Interval(boost::numeric::atanh(a.i),
-                        a.maybe_nan ||
-                        a.lower() < -1.0f ||
-                        a.upper() > 1.0f );
-    }
-
     static Interval exp(const Interval& a)
     {
         return Interval(boost::numeric::exp(a.i), a.maybe_nan);

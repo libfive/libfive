@@ -81,31 +81,22 @@ TEST_CASE("ArrayEvaluator::eval")
         REQUIRE(e.value({-0.5, 0.0, 0.0}) == Approx(-0.7937));
     }
 
-    SECTION("sinh and asinh")
+    SECTION("sinh")
     {
         ArrayEvaluator e(sinh(Tree::X()));
         REQUIRE(e.value({1.0, 0.0, 0.0}) == Approx(1.17520119364));
-
-        ArrayEvaluator ei(asinh(Tree::X()));
-        REQUIRE(ei.value({1.17520119364, 0.0, 0.0}) == Approx(1.0));
     }
 
-    SECTION("cosh and acosh")
+    SECTION("cosh")
     {
         ArrayEvaluator e(cosh(Tree::X()));
         REQUIRE(e.value({1.0, 0.0, 0.0}) == Approx(1.54308063482));
-
-        ArrayEvaluator ei(acosh(Tree::X()));
-        REQUIRE(ei.value({1.54308063482, 0.0, 0.0}) == Approx(1.0));
     }
 
-    SECTION("tanh and atanh")
+    SECTION("tanh")
     {
         ArrayEvaluator e(tanh(Tree::X()));
         REQUIRE(e.value({1.0, 0.0, 0.0}) == Approx(0.76159415595));
-
-        ArrayEvaluator ei(atanh(Tree::X()));
-        REQUIRE(ei.value({0.76159415595, 0.0, 0.0}) == Approx(1.0));
     }
 
     SECTION("Every operation")

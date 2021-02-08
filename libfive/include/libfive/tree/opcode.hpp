@@ -42,9 +42,6 @@ namespace Opcode
     OPCODE(OP_SINH, 33)      \
     OPCODE(OP_COSH, 34)      \
     OPCODE(OP_TANH, 35)      \
-    OPCODE(OP_ASINH, 36)     \
-    OPCODE(OP_ACOSH, 37)     \
-    OPCODE(OP_ATANH, 38)     \
     OPCODE(OP_EXP, 16)      \
     OPCODE(OP_ABS, 28)      \
     OPCODE(OP_LOG, 30)      \
@@ -70,8 +67,10 @@ namespace Opcode
    of arguments, e.g. so you can check whether an opcode has two arguments
    by seeing if it's >= OP_ADD. This makes certain checks faster, but breaks
    compatibility with saved files
-   Therefore, in this block, you should number these new starting at 16, and
-   bump the numbers of everything after them
+   In this block add single argument operations starting from the value for
+   OP_ADD and increment the numbers for everything after the newly added
+   operations. For opcodes that have more than one argument, start from the
+   highest number item.
 */
 #define OPCODES \
 
@@ -93,31 +92,28 @@ namespace Opcode
     OPCODE(OP_ASIN, 13)     \
     OPCODE(OP_ACOS, 14)     \
     OPCODE(OP_ATAN, 15)     \
-    OPCODE(OP_SINH, 16)      \
-    OPCODE(OP_COSH, 17)      \
-    OPCODE(OP_TANH, 18)      \
-    OPCODE(OP_ASINH, 19)     \
-    OPCODE(OP_ACOSH, 20)     \
-    OPCODE(OP_ATANH, 21)     \
-    OPCODE(OP_EXP, 22)      \
-    OPCODE(OP_ABS, 23)      \
-    OPCODE(OP_LOG, 24)      \
-    OPCODE(OP_RECIP, 25)    \
+    OPCODE(OP_EXP, 16)      \
+    OPCODE(OP_ABS, 17)      \
+    OPCODE(OP_LOG, 18)      \
+    OPCODE(OP_RECIP, 19)    \
+    OPCODE(OP_SINH, 20)      \
+    OPCODE(OP_COSH, 21)      \
+    OPCODE(OP_TANH, 22)      \
                             \
-    OPCODE(OP_ADD, 26)      \
-    OPCODE(OP_MUL, 27)      \
-    OPCODE(OP_MIN, 28)      \
-    OPCODE(OP_MAX, 29)      \
-    OPCODE(OP_SUB, 30)      \
-    OPCODE(OP_DIV, 31)      \
-    OPCODE(OP_ATAN2, 32)    \
-    OPCODE(OP_POW, 33)      \
-    OPCODE(OP_NTH_ROOT, 34) \
-    OPCODE(OP_MOD, 35)      \
-    OPCODE(OP_NANFILL, 36)  \
-    OPCODE(OP_COMPARE, 37)  \
+    OPCODE(OP_ADD, 23)      \
+    OPCODE(OP_MUL, 24)      \
+    OPCODE(OP_MIN, 25)      \
+    OPCODE(OP_MAX, 26)      \
+    OPCODE(OP_SUB, 27)      \
+    OPCODE(OP_DIV, 28)      \
+    OPCODE(OP_ATAN2, 29)    \
+    OPCODE(OP_POW, 30)      \
+    OPCODE(OP_NTH_ROOT, 31) \
+    OPCODE(OP_MOD, 32)      \
+    OPCODE(OP_NANFILL, 33)  \
+    OPCODE(OP_COMPARE, 34)  \
                             \
-    OPCODE(ORACLE, 38)      \
+    OPCODE(ORACLE, 35)      \
     /* end of opcodes */
 #endif
 
@@ -125,7 +121,7 @@ enum Opcode {
 #define OPCODE(s, i) s=i,
     OPCODES
 #undef OPCODE
-    LAST_OP=39,
+    LAST_OP=36,
 };
 
 size_t args(Opcode op);

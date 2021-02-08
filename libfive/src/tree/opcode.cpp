@@ -39,9 +39,6 @@ size_t Opcode::args(Opcode op)
         case OP_SINH:
         case OP_COSH:
         case OP_TANH:
-        case OP_ASINH:
-        case OP_ACOSH:
-        case OP_ATANH:
         case OP_EXP:
         case OP_ABS:
         case OP_LOG:
@@ -158,9 +155,6 @@ std::string Opcode::toOpString(Opcode op)
         case OP_SINH:
         case OP_COSH:
         case OP_TANH:
-        case OP_ASINH:
-        case OP_ACOSH:
-        case OP_ATANH:
         case OP_ATAN2:
         case OP_EXP:
         case CONST_VAR:
@@ -213,10 +207,7 @@ bool Opcode::isCommutative(Opcode op)
         case OP_ATAN:
         case OP_SINH:
         case OP_COSH:    
-        case OP_TANH:    
-        case OP_ASINH:   
-        case OP_ACOSH:   
-        case OP_ATANH:   
+        case OP_TANH:  
         case OP_EXP:
         case OP_SUB:
         case OP_DIV:

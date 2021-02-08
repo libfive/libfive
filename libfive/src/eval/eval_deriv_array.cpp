@@ -219,15 +219,6 @@ void DerivArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::OP_TANH:
             od = ad.rowwise() * pow(1/cosh(av), 2);
             break;
-        case Opcode::OP_ASINH:
-            od = ad.rowwise() / sqrt(pow(av, 2) + 1);
-            break;
-        case Opcode::OP_ACOSH:
-            od = ad.rowwise() / (sqrt(av - 1) * sqrt(av + 1));
-            break;
-        case Opcode::OP_ATANH:
-            od = ad.rowwise() / (1 - pow(av, 2));
-            break;
         case Opcode::OP_LOG:
             od = ad.rowwise() / av;
             break;

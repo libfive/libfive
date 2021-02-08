@@ -76,34 +76,6 @@ TEST_CASE("DerivArrayEvaluator::deriv")
         auto out = deriv(e, {1, 0, 0});
         REQUIRE(out.coeff(0,0) == Approx(0.839949));
     }
-
-    SECTION("var + asinh(X)")
-    {
-        auto v = Tree::var();
-        DerivArrayEvaluator e(v + 2 * asinh(Tree::X()), {{v.id(), 0}});
-
-        auto out = deriv(e, {2, 0, 0});
-        REQUIRE(out.coeff(0,0) == Approx(0.894427));
-    }
-
-    SECTION("var + acosh(X)")
-    {
-        auto v = Tree::var();
-        DerivArrayEvaluator e(v + 2 * acosh(Tree::X()), {{v.id(), 0}});
-
-        auto out = deriv(e, {2, 0, 0});
-        REQUIRE(out.coeff(0,0) == Approx(1.1547));
-    }
-
-    SECTION("var + atanh(X)")
-    {
-        auto v = Tree::var();
-        DerivArrayEvaluator e(v + 2 * atanh(Tree::X()), {{v.id(), 0}});
-
-        auto out = deriv(e, {0.8, 0, 0});
-        REQUIRE(out.coeff(0,0) == Approx(5.55556));
-    }
-
 }
 
 TEST_CASE("DerivArrayEvaluator::derivs")
