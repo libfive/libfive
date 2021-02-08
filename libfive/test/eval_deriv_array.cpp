@@ -27,9 +27,12 @@ TEST_CASE("DerivArrayEvaluator::deriv")
 {
     SECTION("Every operator")
     {
-        for (unsigned i=7; i < libfive::Opcode::ORACLE; ++i)
+        for (unsigned i=0; i < libfive::Opcode::LAST_OP; ++i)
         {
             auto op = (libfive::Opcode::Opcode)i;
+            if (Opcode::args(op) <= 0) {
+                continue;
+            }
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
             DerivArrayEvaluator e(t);
@@ -41,10 +44,37 @@ TEST_CASE("DerivArrayEvaluator::deriv")
     SECTION("var + 2*X")
     {
         auto v = Tree::var();
-        DerivArrayEvaluator e(v + 2 * Tree::X(), {{v.id(), 0}});
+        DerivArrayEvaluator e(v + 2.0 * Tree::X(), {{v.id(), 0}});
 
         auto out = deriv(e, {2, 0, 0});
         REQUIRE(out.col(0) == Eigen::Vector4f(2, 0, 0, 4));
+    }
+    
+    SECTION("var + sinh(X)")
+    {
+        auto v = Tree::var();
+        DerivArrayEvaluator e(v + 2 * sinh(Tree::X()), {{v.id(), 0}});
+
+        auto out = deriv(e, {1, 0, 0});
+        REQUIRE(out.coeff(0,0) == Approx(3.08616));
+    }
+
+    SECTION("var + cosh(X)")
+    {
+        auto v = Tree::var();
+        DerivArrayEvaluator e(v + 2 * cosh(Tree::X()), {{v.id(), 0}});
+
+        auto out = deriv(e, {1, 0, 0});
+        REQUIRE(out.coeff(0,0) == Approx(2.3504));
+    }
+
+    SECTION("var + tanh(X)")
+    {
+        auto v = Tree::var();
+        DerivArrayEvaluator e(v + 2 * tanh(Tree::X()), {{v.id(), 0}});
+
+        auto out = deriv(e, {1, 0, 0});
+        REQUIRE(out.coeff(0,0) == Approx(0.839949));
     }
 }
 

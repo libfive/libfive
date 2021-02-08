@@ -356,6 +356,29 @@ public:
         return Interval(i, a.maybe_nan);
     }
 
+    static Interval sinh(const Interval& a)
+    {
+        return Interval(boost::numeric::asin(a.i), a.maybe_nan);
+    }
+
+    static Interval cosh(const Interval& a)
+    {
+        return Interval(boost::numeric::cosh(a.i), a.maybe_nan);
+    }
+
+    static Interval tanh(const Interval& a)
+    {
+        // If the interval has an infinite bound, then return the largest
+        // possible output interval (of +/- 1).  This rescues us from
+        // situations where we do atan(y / x) and the behavior of the
+        // interval changes if you're approaching x = 0 from below versus
+        // from above.
+        auto i = (std::isinf(a.lower()) || std::isinf(a.upper()))
+            ? I(-1, 1)
+            : boost::numeric::tanh(a.i);
+        return Interval(i, a.maybe_nan);
+    }
+
     static Interval exp(const Interval& a)
     {
         return Interval(boost::numeric::exp(a.i), a.maybe_nan);

@@ -258,6 +258,15 @@ void IntervalEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::OP_ATAN:
             out = Interval::atan(a);
             break;
+        case Opcode::OP_SINH:
+            out = Interval::sinh(a);
+            break;
+        case Opcode::OP_COSH:
+            out = Interval::cosh(a);
+            break;
+        case Opcode::OP_TANH:
+            out = Interval::tanh(a);
+            break;
         case Opcode::OP_EXP:
             out = Interval::exp(a);
             break;

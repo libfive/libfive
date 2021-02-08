@@ -81,11 +81,32 @@ TEST_CASE("ArrayEvaluator::eval")
         REQUIRE(e.value({-0.5, 0.0, 0.0}) == Approx(-0.7937));
     }
 
+    SECTION("sinh")
+    {
+        ArrayEvaluator e(sinh(Tree::X()));
+        REQUIRE(e.value({1.0, 0.0, 0.0}) == Approx(1.17520119364));
+    }
+
+    SECTION("cosh")
+    {
+        ArrayEvaluator e(cosh(Tree::X()));
+        REQUIRE(e.value({1.0, 0.0, 0.0}) == Approx(1.54308063482));
+    }
+
+    SECTION("tanh")
+    {
+        ArrayEvaluator e(tanh(Tree::X()));
+        REQUIRE(e.value({1.0, 0.0, 0.0}) == Approx(0.76159415595));
+    }
+
     SECTION("Every operation")
     {
-        for (unsigned i=7; i < libfive::Opcode::ORACLE; ++i)
+        for (unsigned i=0; i < libfive::Opcode::LAST_OP; ++i)
         {
             auto op = (libfive::Opcode::Opcode)i;
+            if (Opcode::args(op) <= 0) {
+                continue;
+            }
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
             ArrayEvaluator e(t);

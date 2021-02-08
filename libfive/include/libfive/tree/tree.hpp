@@ -229,6 +229,9 @@ OP_UNARY(tan);
 OP_UNARY(asin);
 OP_UNARY(acos);
 OP_UNARY(atan);
+OP_UNARY(sinh);
+OP_UNARY(cosh);
+OP_UNARY(tanh);
 OP_UNARY(log);
 OP_UNARY(exp);
 #undef OP_UNARY

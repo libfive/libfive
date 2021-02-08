@@ -313,12 +313,15 @@ void Tree::Tree_::printInfix(std::ostream& stream)
             stream << ")";
             break;
         case OP_SQRT:
-        case OP_SIN:
         case OP_COS:
+        case OP_SIN:
         case OP_TAN:
-        case OP_ASIN:
         case OP_ACOS:
+        case OP_ASIN:
         case OP_ATAN:
+        case OP_COSH:
+        case OP_SINH:
+        case OP_TANH:
         case OP_EXP:
         case OP_ABS:
         case OP_LOG:
@@ -449,6 +452,9 @@ OP_UNARY(tan,       libfive::Opcode::OP_TAN)
 OP_UNARY(asin,      libfive::Opcode::OP_ASIN)
 OP_UNARY(acos,      libfive::Opcode::OP_ACOS)
 OP_UNARY(atan,      libfive::Opcode::OP_ATAN)
+OP_UNARY(sinh,      libfive::Opcode::OP_SINH)
+OP_UNARY(cosh,      libfive::Opcode::OP_COSH)
+OP_UNARY(tanh,      libfive::Opcode::OP_TANH)
 OP_UNARY(log,       libfive::Opcode::OP_LOG)
 OP_UNARY(exp,       libfive::Opcode::OP_EXP)
 #undef OP_UNARY

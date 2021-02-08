@@ -39,6 +39,9 @@ namespace Opcode
     OPCODE(OP_ASIN, 13)     \
     OPCODE(OP_ACOS, 14)     \
     OPCODE(OP_ATAN, 15)     \
+    OPCODE(OP_SINH, 33)      \
+    OPCODE(OP_COSH, 34)      \
+    OPCODE(OP_TANH, 35)      \
     OPCODE(OP_EXP, 16)      \
     OPCODE(OP_ABS, 28)      \
     OPCODE(OP_LOG, 30)      \
@@ -60,7 +63,17 @@ namespace Opcode
     OPCODE(ORACLE, 32)      \
     /* end of opcodes */
 #else
+/* LIBFIVE_PACKED_OPCODES is used to make opcodes tightly ordered by number
+   of arguments, e.g. so you can check whether an opcode has two arguments
+   by seeing if it's >= OP_ADD. This makes certain checks faster, but breaks
+   compatibility with saved files
+   In this block add single argument operations starting from the value for
+   OP_ADD and increment the numbers for everything after the newly added
+   operations. For opcodes that have more than one argument, start from the
+   highest number item.
+*/
 #define OPCODES \
+
     OPCODE(INVALID, 0)      \
                             \
     OPCODE(CONSTANT, 1)     \
@@ -83,21 +96,24 @@ namespace Opcode
     OPCODE(OP_ABS, 17)      \
     OPCODE(OP_LOG, 18)      \
     OPCODE(OP_RECIP, 19)    \
+    OPCODE(OP_SINH, 20)      \
+    OPCODE(OP_COSH, 21)      \
+    OPCODE(OP_TANH, 22)      \
                             \
-    OPCODE(OP_ADD, 20)      \
-    OPCODE(OP_MUL, 21)      \
-    OPCODE(OP_MIN, 22)      \
-    OPCODE(OP_MAX, 23)      \
-    OPCODE(OP_SUB, 24)      \
-    OPCODE(OP_DIV, 25)      \
-    OPCODE(OP_ATAN2, 26)    \
-    OPCODE(OP_POW, 27)      \
-    OPCODE(OP_NTH_ROOT, 28) \
-    OPCODE(OP_MOD, 29)      \
-    OPCODE(OP_NANFILL, 30)  \
-    OPCODE(OP_COMPARE, 31)  \
+    OPCODE(OP_ADD, 23)      \
+    OPCODE(OP_MUL, 24)      \
+    OPCODE(OP_MIN, 25)      \
+    OPCODE(OP_MAX, 26)      \
+    OPCODE(OP_SUB, 27)      \
+    OPCODE(OP_DIV, 28)      \
+    OPCODE(OP_ATAN2, 29)    \
+    OPCODE(OP_POW, 30)      \
+    OPCODE(OP_NTH_ROOT, 31) \
+    OPCODE(OP_MOD, 32)      \
+    OPCODE(OP_NANFILL, 33)  \
+    OPCODE(OP_COMPARE, 34)  \
                             \
-    OPCODE(ORACLE, 32)      \
+    OPCODE(ORACLE, 35)      \
     /* end of opcodes */
 #endif
 
@@ -105,7 +121,7 @@ enum Opcode {
 #define OPCODE(s, i) s=i,
     OPCODES
 #undef OPCODE
-    LAST_OP=33,
+    LAST_OP=36,
 };
 
 size_t args(Opcode op);
