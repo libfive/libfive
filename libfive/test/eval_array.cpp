@@ -81,11 +81,41 @@ TEST_CASE("ArrayEvaluator::eval")
         REQUIRE(e.value({-0.5, 0.0, 0.0}) == Approx(-0.7937));
     }
 
+    SECTION("sinh and asinh")
+    {
+        ArrayEvaluator e(sinh(Tree::X()));
+        REQUIRE(e.value({1.0, 0.0, 0.0}) == Approx(1.17520119364));
+
+        ArrayEvaluator ei(asinh(Tree::X()));
+        REQUIRE(ei.value({1.17520119364, 0.0, 0.0}) == Approx(1.0));
+    }
+
+    SECTION("cosh and acosh")
+    {
+        ArrayEvaluator e(cosh(Tree::X()));
+        REQUIRE(e.value({1.0, 0.0, 0.0}) == Approx(1.54308063482));
+
+        ArrayEvaluator ei(acosh(Tree::X()));
+        REQUIRE(ei.value({1.54308063482, 0.0, 0.0}) == Approx(1.0));
+    }
+
+    SECTION("tanh and atanh")
+    {
+        ArrayEvaluator e(tanh(Tree::X()));
+        REQUIRE(e.value({1.0, 0.0, 0.0}) == Approx(0.76159415595));
+
+        ArrayEvaluator ei(atanh(Tree::X()));
+        REQUIRE(ei.value({0.76159415595, 0.0, 0.0}) == Approx(1.0));
+    }
+
     SECTION("Every operation")
     {
-        for (unsigned i=7; i < libfive::Opcode::ORACLE; ++i)
+        for (unsigned i=0; i < libfive::Opcode::LAST_OP; ++i)
         {
             auto op = (libfive::Opcode::Opcode)i;
+            if (Opcode::args(op) <= 0) {
+                continue;
+            }
             Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
                                             : Tree(op, Tree::X()));
             ArrayEvaluator e(t);
