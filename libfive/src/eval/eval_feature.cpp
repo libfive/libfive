@@ -78,12 +78,14 @@ bool FeatureEvaluator::isInside(const Eigen::Vector3f& p,
 
     // First, we evaluate and extract all of the features, saving
     // time by re-using the shortened tape from valueAndPush
+    deck->bindOracles(*handle.second, this);
     for (auto itr = handle.second->rbegin();
          itr != handle.second->rend();
          ++itr)
     {
         (*this)(itr->op, itr->id, itr->a, itr->b);
     }
+    deck->unbindOracles();
     auto fs = f(handle.second->root());
 
     // If this is a freshly allocated tape, then release it to the Deck
