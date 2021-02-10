@@ -142,6 +142,19 @@ TEST_CASE("Tree::remap")
             REQUIRE(ss.str() == "(+ y 2 y 2)");
         }
     }
+
+    SECTION("Multiple") {
+        auto x = Tree::X();
+        auto y = Tree::Y();
+        auto z = Tree::Z();
+        auto c = sqrt(x*x + y*y);
+        c = c.remap(x / 2, y, z);
+        c = c.remap(x - -0.5, y, z - 0.25);
+        std::stringstream ss;
+        ss << c.flatten();
+        REQUIRE(ss.str() == "(sqrt (+ (square (- (/ x 2) -0.5)) (square y)))");
+    }
+
 }
 
 TEST_CASE("Tree::size()")
