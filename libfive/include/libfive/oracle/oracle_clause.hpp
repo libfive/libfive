@@ -15,6 +15,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 
 #include "libfive/tree/tree.hpp"
+#include "libfive/tree/key.hpp"
 
 namespace libfive {
 
