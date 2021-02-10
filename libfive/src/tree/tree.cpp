@@ -509,7 +509,7 @@ Tree Tree::flatten() const {
                         k.m ? *(k.m) : MapPointer::element_type());
                 m->insert({t->target.ptr, out.top()});
                 out.pop();
-                todo.push({Task::DOWN,  t->t.ptr , m});
+                todo.push({Task::DOWN, t->t.ptr, m});
             } else {
                 // We shouldn't ever get here, because Nonary, Constant,
                 // Oracles, Remap, and Apply shouldn't be pushed as Up nodes.
