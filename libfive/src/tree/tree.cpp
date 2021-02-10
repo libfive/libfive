@@ -446,7 +446,7 @@ Tree Tree::flatten() const {
         };
 
         if (k.v == Task::DOWN) {
-            if (auto t=std::get_if<TreeNonaryOp>(k.t)) {
+            if (std::get_if<TreeNonaryOp>(k.t)) {
                 out.push(get(k.t));
             } else if (auto t=std::get_if<TreeUnaryOp>(k.t)) {
                 todo.push({Task::UP, k.t, k.m});
@@ -802,7 +802,7 @@ Tree Tree::optimized_helper(
             } else {
                 out.push(new_self);
             }
-        } else if (auto d = std::get_if<UpAffine>(&t)) {
+        } else if (std::get_if<UpAffine>(&t)) {
             assert(affine.top().has_value());
             auto map = std::move(*affine.top());
             affine.pop();
