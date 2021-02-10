@@ -152,7 +152,7 @@ TEST_CASE("Tree::remap")
         c = c.remap(x - -0.5, y, z - 0.25);
         std::stringstream ss;
         ss << c.flatten();
-        REQUIRE(ss.str() == "(sqrt (+ (square (- (/ x 2) -0.5)) (square y)))");
+        REQUIRE(ss.str() == "(sqrt (+ (square (/ (- x -0.5) 2)) (square y)))");
     }
 
 }

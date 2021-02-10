@@ -495,11 +495,12 @@ Tree Tree::flatten() const {
                 // Update the map with X/Y/Z values
                 auto m = std::make_shared<std::unordered_map<const Data*, Tree>>(
                         k.m ? *(k.m) : std::unordered_map<const Data*, Tree>());
-                m->insert({Tree::Z().ptr, out.top()});
+
+                m->insert_or_assign(Tree::Z().ptr, out.top());
                 out.pop();
-                m->insert({Tree::Y().ptr, out.top()});
+                m->insert_or_assign(Tree::Y().ptr, out.top());
                 out.pop();
-                m->insert({Tree::X().ptr, out.top()});
+                m->insert_or_assign(Tree::X().ptr, out.top());
                 out.pop();
 
                 todo.push({Task::DOWN, t->t.ptr, m});
@@ -507,7 +508,7 @@ Tree Tree::flatten() const {
                 // Update the map with the new value
                 auto m = std::make_shared<MapPointer::element_type>(
                         k.m ? *(k.m) : MapPointer::element_type());
-                m->insert({t->target.ptr, out.top()});
+                m->insert_or_assign(t->target.ptr, out.top());
                 out.pop();
                 todo.push({Task::DOWN, t->t.ptr, m});
             } else {
