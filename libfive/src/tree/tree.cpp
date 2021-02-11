@@ -112,7 +112,7 @@ Tree::Tree_::~Tree_()
     }
 }
 
-std::list<Tree> Tree::ordered() const
+std::list<Tree> Tree::ordered(bool includeOracleDeps) const
 {
     std::set<Id> found = {nullptr};
     std::list<std::shared_ptr<Tree_>> todo = { ptr };
@@ -125,7 +125,7 @@ std::list<Tree> Tree::ordered() const
 
         if (found.find(t.get()) == found.end())
         {
-            if (t->oracle)
+            if (t->oracle && includeOracleDeps)
             {
                 for (const auto& dep : t->oracle->evaluationDependencies())
                 {
@@ -267,7 +267,7 @@ Tree Tree::rhs() const
 Tree Tree::makeVarsConstant() const
 {
     std::map<Id, Tree> vars;
-    for (auto& o : ordered())
+    for (auto& o : ordered(true))
     {
         if (o->op == Opcode::VAR_FREE)
         {
