@@ -42,6 +42,11 @@ to change variables in the script.
 - [PyFive3D](https://gitlab.com/kavalogic-inc/pyfive3d): Lightweight pure-Python viewer (work in progress)
 - [C5H12 (Pentane)](https://gitlab.com/kavalogic-inc/C5H12): Lightweight C viewer
 
+### Research
+- [Massively Parallel Rendering of Complex Closed-Form Implicit Surfaces](https://www.mattkeeter.com/research/mpr/):
+  a technical paper extending `libfive` to render on the GPU
+  ([reference implementation](https://github.com/mkeeter/mpr/))
+
 ## License
 (c) 2015-2021 Matthew Keeter
 
