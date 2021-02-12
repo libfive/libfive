@@ -20,8 +20,8 @@ IntervalEvaluator::IntervalEvaluator(const Tree& root)
     // Nothing to do here
 }
 
-IntervalEvaluator::IntervalEvaluator(
-        const Tree& root, const std::map<Tree::Id, float>& vars)
+IntervalEvaluator::IntervalEvaluator(const Tree& root,
+                                     const std::map<Tree::Id, float>& vars)
     : IntervalEvaluator(std::make_shared<Deck>(root), vars)
 {
     // Nothing to do here

@@ -15,7 +15,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/clause.hpp"
 
 namespace libfive {
-class Tape; /* Forward declaration */
+// Forward declarations
+class Tape;
+class Tree;
 
 class IntervalEvaluator : public virtual BaseEvaluator
 {

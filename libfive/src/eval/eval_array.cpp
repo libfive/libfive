@@ -21,8 +21,8 @@ ArrayEvaluator::ArrayEvaluator(const Tree& root)
     // Nothing to do here
 }
 
-ArrayEvaluator::ArrayEvaluator(
-        const Tree& root, const std::map<Tree::Id, float>& vars)
+ArrayEvaluator::ArrayEvaluator(const Tree& root,
+                               const std::map<Tree::Id, float>& vars)
     : ArrayEvaluator(std::make_shared<Deck>(root), vars)
 {
     // Nothing to do here
@@ -245,7 +245,7 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
         case Opcode::OP_ATAN2:
             for (auto i=0; i < a.size(); ++i)
             {
-                out(i) = atan2(a(i), b(i));
+                out(i) = atan2f(a(i), b(i));
             }
             break;
         case Opcode::OP_POW:
@@ -261,7 +261,7 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
                             Interval(a(i), a(i)),
                             Interval(b(i), b(i))).lower();
                 else
-                    out(i) = pow(a(i), 1.0f/b(i));
+                    out(i) = powf(a(i), 1.0f/b(i));
             }
             break;
         case Opcode::OP_MOD:

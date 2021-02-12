@@ -26,7 +26,7 @@ public:
      *  Generic render function
      */
     static std::unique_ptr<Contours> render(
-        const Tree t, const Region<2>& r,
+        const Tree& t, const Region<2>& r,
         const BRepSettings& settings);
 
     /*

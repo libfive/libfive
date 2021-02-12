@@ -51,7 +51,7 @@ class AxisOracleClause : public OracleClause
 {
     std::unique_ptr<Oracle> getOracle() const override
     {
-        return std::unique_ptr<Oracle>(new AxisOracle<A>());
+        return std::make_unique<AxisOracle<A>>();
     }
 
     std::string name() const override
@@ -64,9 +64,9 @@ class AxisOracleClause : public OracleClause
 inline Tree convertToOracleAxes(Tree t)
 {
     return t.remap(
-        Tree(std::unique_ptr<OracleClause>(new AxisOracleClause<0>)),
-        Tree(std::unique_ptr<OracleClause>(new AxisOracleClause<1>)),
-        Tree(std::unique_ptr<OracleClause>(new AxisOracleClause<2>)));
+        Tree(std::make_unique<AxisOracleClause<0>>()),
+        Tree(std::make_unique<AxisOracleClause<1>>()),
+        Tree(std::make_unique<AxisOracleClause<2>>()));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -160,7 +160,7 @@ class CubeOracleClause : public OracleClause
 {
     std::unique_ptr<Oracle> getOracle() const override
     {
-        return std::unique_ptr<Oracle>(new CubeOracle());
+        return std::make_unique<CubeOracle>();
     }
 
     std::string name() const override

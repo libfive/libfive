@@ -37,8 +37,8 @@ TEST_CASE("IntervalEvaluator::eval")
         for (unsigned i=7; i < libfive::Opcode::ORACLE; ++i)
         {
             auto op = (libfive::Opcode::Opcode)i;
-            Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
-                                            : Tree(op, Tree::X()));
+            Tree t = (Opcode::args(op) == 2 ? Tree::binary(op, Tree::X(), Tree(5))
+                                            : Tree::unary(op, Tree::X()));
             IntervalEvaluator e(t);
             e.eval({0, 0, 0}, {1, 1, 1});
             REQUIRE(true /* No crash! */ );
@@ -104,7 +104,8 @@ TEST_CASE("IntervalEvaluator::intervalAndPush")
         // picking X, then collapsing min(X, X) into just X.
         auto i = e.intervalAndPush({-5, 0, 0}, {-4, 1, 0});
         CAPTURE(d->tape->size());
-        REQUIRE(i.second->size() == 1);
+        REQUIRE(i.second->size() == 0);
+        REQUIRE(i.second->root() == d->X);
     }
 
     SECTION("With NaNs")

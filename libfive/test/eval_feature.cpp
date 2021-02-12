@@ -96,6 +96,16 @@ TEST_CASE("FeatureEvaluator::isInside")
 
 TEST_CASE("FeatureEvaluator::features")
 {
+    // Helper function to make features have a deterministic order
+    auto cmp = [](const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
+        for (unsigned i=0; i < 3; ++i) {
+            if (a[i] != b[i]) {
+                return a[i] < b[i];
+            }
+        }
+        return false;
+    };
+
     SECTION("Single feature")
     {
         FeatureEvaluator e(Tree::X());
@@ -110,9 +120,11 @@ TEST_CASE("FeatureEvaluator::features")
 
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 2);
+        fs.sort(cmp);
+
         auto i = fs.begin();
-        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
         REQUIRE(*(i++) == Eigen::Vector3f(-1, 0, 0));
+        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
     }
 
     SECTION("Two features (max)")
@@ -121,6 +133,8 @@ TEST_CASE("FeatureEvaluator::features")
 
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 2);
+        fs.sort(cmp);
+
         auto i = fs.begin();
         REQUIRE(*(i++) == Eigen::Vector3f(-1, 0, 0));
         REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
@@ -132,11 +146,12 @@ TEST_CASE("FeatureEvaluator::features")
 
         auto fs = e.features({0, 0, 0});
         REQUIRE(fs.size() == 3);
+        fs.sort(cmp);
 
         auto i = fs.begin();
-        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
-        REQUIRE(*(i++) == Eigen::Vector3f(0, 1, 0));
         REQUIRE(*(i++) == Eigen::Vector3f(0, 0, 1));
+        REQUIRE(*(i++) == Eigen::Vector3f(0, 1, 0));
+        REQUIRE(*(i++) == Eigen::Vector3f(1, 0, 0));
     }
 
     SECTION("Buried ambiguity")

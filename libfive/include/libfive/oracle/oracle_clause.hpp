@@ -9,12 +9,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include <functional>
-#include <memory>
-#include <map>
-#include <string>
 #include <iostream>
+#include <memory>
+#include <unordered_map>
+#include <string>
 
 #include "libfive/tree/tree.hpp"
+#include "libfive/tree/key.hpp"
 
 namespace libfive {
 
@@ -96,6 +97,21 @@ public:
      */
     virtual std::unique_ptr<const OracleClause> remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const;
+
+    /*
+     * optimize() gives an OracleClause the opportunity to deduplicate
+     * subtrees, balance commutative / affine expressions, and do whatever
+     * other expensive operations it may want to run before being converted
+     * into an Evaluator.
+     */
+    virtual std::unique_ptr<const OracleClause> optimized(
+            std::unordered_map<TreeDataKey, Tree>& canonical) const
+    {
+        // All arguments are unused by default
+        (void)canonical;
+
+        return nullptr;
+    }
 
 protected:
     typedef std::function<bool(const OracleClause*, Serializer&)>

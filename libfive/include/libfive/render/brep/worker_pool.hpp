@@ -36,7 +36,7 @@ public:
      *  Evaluation function that builds a local evaluator array
      *  (based on settings.workers)
      */
-    static Root<T> build(Tree t, const Region<N>& region,
+    static Root<T> build(const Tree& t_, const Region<N>& region,
                          const BRepSettings& settings);
     /*
      *  General-purpose evaluation function

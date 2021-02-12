@@ -1,7 +1,6 @@
 set(SRCS main.cpp
     api.cpp
     archive.cpp
-    cache.cpp
     contours.cpp
     deck.cpp
     dual.cpp

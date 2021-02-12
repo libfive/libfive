@@ -10,8 +10,9 @@ option(LIBFIVE_PACKED_OPCODES
     "Tightly pack opcodes (breaks compatibility with older saved f-reps)"
     OFF)
 
-set(CMAKE_BUILD_TYPE RELEASE)
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE RELEASE)
+endif()
 
 if (LIBFIVE_PACKED_OPCODES)
     message("Using packed opcodes, which breaks compatibility with saved f-reps!")
@@ -63,7 +64,7 @@ endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DRELEASE -DEIGEN_NO_DEBUG")
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)

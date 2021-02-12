@@ -293,7 +293,7 @@ std::unique_ptr<typename M::Output> Dual<N>::walk_(
         Dual<N>::handleTopEdges(t.get(), m);
     }
 
-    auto out = std::unique_ptr<typename M::Output>(new typename M::Output);
+    auto out = std::make_unique<typename M::Output>();
     out->collect(breps);
     return out;
 }

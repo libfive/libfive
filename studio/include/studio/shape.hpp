@@ -39,7 +39,8 @@ class Shape : public QObject, QOpenGLFunctions
 {
     Q_OBJECT
 public:
-    Shape(libfive::Tree t, std::map<libfive::Tree::Id, float> vars);
+    Shape(const libfive::Tree& t,
+          std::map<libfive::Tree::Id, float> vars);
 
     /*
      *  In destructor, wait for computation to finish

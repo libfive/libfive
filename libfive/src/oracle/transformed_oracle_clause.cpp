@@ -21,14 +21,14 @@ TransformedOracleClause::TransformedOracleClause(
         Tree underlying, Tree X_, Tree Y_, Tree Z_)
     : underlying(underlying), X_(X_), Y_(Y_), Z_(Z_)
 {
-    assert(underlying->op == Opcode::ORACLE);
-    assert(underlying->oracle.get() != nullptr);
+    assert(underlying->op() == Opcode::ORACLE);
 }
 
 std::unique_ptr<Oracle> TransformedOracleClause::getOracle() const
 {
-    return std::unique_ptr<TransformedOracle>(
-        new TransformedOracle(underlying->oracle->getOracle(), X_, Y_, Z_));
+    return std::make_unique<TransformedOracle>(
+            underlying->oracle_clause().getOracle(),
+            X_, Y_, Z_);
 }
 
 std::unique_ptr<const OracleClause>
@@ -36,11 +36,11 @@ TransformedOracleClause::remap(Tree self, Tree X_, Tree Y_, Tree Z_) const
 {
     (void)self; // unused, as we execute the remap on the underlying oracle
 
-    return std::unique_ptr<const OracleClause>(
-        new TransformedOracleClause(underlying,
+    return std::make_unique<TransformedOracleClause>(
+            underlying,
             this->X_.remap(X_, Y_, Z_),
             this->Y_.remap(X_, Y_, Z_),
-            this->Z_.remap(X_, Y_, Z_)));
+            this->Z_.remap(X_, Y_, Z_));
 }
 
 std::vector<libfive::Tree> TransformedOracleClause::dependencies() const
@@ -76,8 +76,19 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::deserialize(
     auto X_ = deserializeId();
     auto Y_ = deserializeId();
     auto Z_ = deserializeId();
-    return std::unique_ptr<TransformedOracleClause>(
-            new TransformedOracleClause(underlying, X_, Y_, Z_));
+    return std::make_unique<TransformedOracleClause>(underlying, X_, Y_, Z_);
+}
+
+std::unique_ptr<const OracleClause> TransformedOracleClause::optimized(
+        std::unordered_map<Tree::Data::Key, Tree>& canonical) const
+{
+    auto new_u = underlying.optimized_helper(canonical);
+    auto new_x = X_.optimized_helper(canonical);
+    auto new_y = Y_.optimized_helper(canonical);
+    auto new_z = Z_.optimized_helper(canonical);
+
+    return std::make_unique<TransformedOracleClause>(
+            new_u, new_x, new_y, new_z);
 }
 
 } //namespace libfive

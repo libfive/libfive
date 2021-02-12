@@ -16,15 +16,23 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+
+// The version of GCC that I'm using to test on my Mac chokes on this header
+// files, so we'll just comment this out entirely - it's a QoL improvement,
+// rather than a critical feature.
+#ifndef __GNUC__
 #include <Cocoa/Cocoa.h>
+#endif
 
 #include "studio/platform_darwin.hpp"
 
 void PlatformDarwin::disableWindowTabbing()
 {
+#ifndef __GNUC__
     [NSWindow setAllowsAutomaticWindowTabbing: false];
     [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NSFullScreenMenuItemEverywhere"];
 
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NSDisabledDictationMenuItem"];
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NSDisabledCharacterPaletteMenuItem"];
+#endif
 }

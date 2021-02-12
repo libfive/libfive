@@ -37,7 +37,7 @@ public:
         {
             return nullptr;
         }
-        return std::unique_ptr<const OracleClause>(new ST());
+        return std::make_unique<ST>();
     }
 };
 REGISTER_ORACLE_CLAUSE(ST)
@@ -107,8 +107,7 @@ TEST_CASE("Archive::serialize")
 
     SECTION("With an oracle")
     {
-        auto a = Archive(Tree(std::unique_ptr<OracleClause>(
-                        new ST())));
+        auto a = Archive(Tree(std::make_unique<ST>()));
 
         std::stringstream out;
         a.serialize(out);
@@ -129,8 +128,8 @@ TEST_CASE("Archive::deserialize")
         std::stringstream in(s);
         auto t = Archive::deserialize(in).shapes.front();
         REQUIRE(t.tree.id() != nullptr);
-        REQUIRE(t.tree->op == Opcode::ORACLE);
-        REQUIRE(dynamic_cast<const ST*>(t.tree->oracle.get())
+        REQUIRE(t.tree->op() == Opcode::ORACLE);
+        REQUIRE(dynamic_cast<const ST*>(&t.tree->oracle_clause())
                 != nullptr);
     }
 
@@ -153,7 +152,14 @@ TEST_CASE("Archive::deserialize")
         auto b_itr = b.shapes.begin();
         while(a_itr != a.shapes.end())
         {
-            REQUIRE(a_itr->tree == b_itr->tree);
+            // Compare shapes by stringified values, since the trees
+            // themselves could be the same math expressions but have
+            // different pointers.
+            std::stringstream ss_a;
+            std::stringstream ss_b;
+            ss_a << a_itr->tree;
+            ss_b << b_itr->tree;
+            REQUIRE(ss_a.str() == ss_b.str());
             REQUIRE(a_itr->name == b_itr->name);
             REQUIRE(a_itr->doc == b_itr->doc);
 

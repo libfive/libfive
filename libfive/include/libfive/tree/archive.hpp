@@ -10,6 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include <map>
+#include <list>
 
 #include "libfive/tree/tree.hpp"
 
@@ -46,8 +47,6 @@ public:
      *  circle(x, y, r), where vars have their own names and docstrings
      */
     struct Shape {
-        Shape() : tree(Tree::Invalid()) {}
-
         Tree tree;
 
         std::string name;

@@ -11,6 +11,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <cassert>
 
 #include "libfive/tree/serializer.hpp"
+#include "libfive/tree/tree.hpp"
+#include "libfive/oracle/oracle_clause.hpp"
 
 namespace libfive {
 
@@ -26,42 +28,36 @@ void Serializer::run(Archive& a)
     }
 }
 
-void Serializer::serializeTree(Tree t)
+void Serializer::serializeTree(const Tree& t)
 {
-    for (auto& n : t.ordered())
+    for (auto& n : t.walk())
     {
         // Skip this id, as it has already been stored
-        if (ids.find(n.id()) != ids.end())
+        if (ids.find(n) != ids.end())
         {
             continue;
         }
-        if (n->op == Opcode::ORACLE)
+        if (n->op() == Opcode::ORACLE)
         {
-            assert(n->oracle.get() != nullptr);
-            for (auto& d : n->oracle->dependencies())
+            for (auto& d : n->oracle_clause().dependencies())
             {
                 serializeTree(d);
             }
         }
-        out.put(n->op);
-        ids.insert({ n.id(), (uint32_t)ids.size() });
+        out.put(n->op());
+        ids.insert({ n, (uint32_t)ids.size() });
 
         // Write constants as raw bytes
-        if (n->op == Opcode::CONSTANT)
-        {
-            serializeBytes(n->value);
-        }
-        else if (n->op == Opcode::ORACLE)
-        {
-            assert(n->oracle.get() != nullptr);
-            serializeString(n->oracle->name());
-            OracleClause::serialize(n->oracle->name(), n->oracle.get(), *this);
+        if (n->op() == Opcode::CONSTANT) {
+            serializeBytes(n->value());
+        } else if (n->op ()== Opcode::ORACLE) {
+            serializeString(n->oracle_clause().name());
+            OracleClause::serialize(n->oracle_clause().name(), &n->oracle_clause(), *this);
         }
 
-        switch (Opcode::args(n->op))
-        {
-            case 2:  serializeBytes(ids.at(n->rhs.get())); // FALLTHRU
-            case 1:  serializeBytes(ids.at(n->lhs.get())); // FALLTHRU
+        switch (Opcode::args(n->op())) {
+            case 2:  serializeBytes(ids.at(n->rhs().get())); // FALLTHRU
+            case 1:  serializeBytes(ids.at(n->lhs().get())); // FALLTHRU
             default: break;
         }
     }
@@ -115,6 +111,5 @@ void Serializer::serializeString(const std::string& s)
     }
     out.put('"');
 }
-
 
 }   // namespace libfive

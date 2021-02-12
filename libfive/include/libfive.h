@@ -11,7 +11,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #ifdef __cplusplus
 #include <cstdint>
 #include "libfive/tree/tree.hpp"
-#include "libfive/tree/archive.hpp"
 #include "libfive/eval/evaluator.hpp"
 extern "C" {
 #else
@@ -182,19 +181,11 @@ void libfive_vars_delete(libfive_vars* j);
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef __cplusplus
-typedef libfive::Tree* libfive_tree;
-typedef libfive::Tree::Id libfive_id;
-typedef libfive::Archive* libfive_archive;
+typedef const libfive::Tree::Data* libfive_tree;
 typedef libfive::Evaluator *libfive_evaluator;
 #else
 typedef struct libfive_tree_ libfive_tree_;
 typedef struct libfive_tree_* libfive_tree;
-
-typedef struct libfive_id_ libfive_id_;
-typedef struct libfive_id_* libfive_id;
-
-typedef struct libfive_archive_ libfive_archive_;
-typedef struct libfive_archive_* libfive_archive;
 
 typedef struct libfive_evaluator_ libfive_evaluator_;
 typedef struct libfive_evaluator_ *libfive_evaluator;
@@ -284,11 +275,6 @@ libfive_interval libfive_tree_eval_r(libfive_tree t, libfive_region3 r);
  *  with respect to x, y, z.
  */
 libfive_vec3 libfive_tree_eval_d(libfive_tree t, libfive_vec3 p);
-
-/*
- *  Checks whether two trees are equal, taking deduplication into account
- */
-bool libfive_tree_eq(libfive_tree a, libfive_tree b);
 
 /*
  *  Deletes a tree.  If binding in a higher-level language, call this in
@@ -388,7 +374,6 @@ bool libfive_tree_save_mesh(libfive_tree tree, libfive_region3 R,
  */
 bool libfive_evaluator_save_mesh(libfive_evaluator evaluator, libfive_region3 R,
                                    const char *f);
-
 
 /*
  *  Renders and saves multiple meshes mesh to a file

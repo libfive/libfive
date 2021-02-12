@@ -114,7 +114,7 @@ TEST_CASE("JacobianEvaluator::gradient")
     SECTION("CONST_VAR opcode")
     {
         auto v = Tree::var();
-        JacobianEvaluator e((v + 1.0).makeVarsConstant(), {{v.id(), 3.14}});
+        JacobianEvaluator e((v + 1.0).with_const_vars(), {{v.id(), 3.14}});
 
         auto g = e.gradient({1, 2, 3});
         REQUIRE(g.size() == 1);

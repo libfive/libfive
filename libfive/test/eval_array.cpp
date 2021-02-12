@@ -36,6 +36,14 @@ TEST_CASE("ArrayEvaluator::eval")
         REQUIRE(e.value({1.0, 2.0, 3.0}) == Approx(3.14));
     }
 
+    SECTION("Math")
+    {
+        auto X = Tree::X();
+        auto Y = Tree::Y();
+        ArrayEvaluator e(X*2 + Y*3);
+        REQUIRE(e.value({1.0, 2.0, 3.0}) == Approx(8));
+    }
+
     SECTION("Secondary variable")
     {
         auto v = Tree::var();
@@ -86,8 +94,9 @@ TEST_CASE("ArrayEvaluator::eval")
         for (unsigned i=7; i < libfive::Opcode::ORACLE; ++i)
         {
             auto op = (libfive::Opcode::Opcode)i;
-            Tree t = (Opcode::args(op) == 2 ? Tree(op, Tree::X(), Tree(5))
-                                            : Tree(op, Tree::X()));
+            Tree t = (Opcode::args(op) == 2
+                    ? Tree::binary(op, Tree::X(), 5)
+                    : Tree::unary(op, Tree::X()));
             ArrayEvaluator e(t);
             e.value({0, 0, 0});
             REQUIRE(true /* No crash! */ );
@@ -123,7 +132,7 @@ TEST_CASE("ArrayEvaluator::eval")
             auto op = (libfive::Opcode::Opcode)i;
             CAPTURE(Opcode::toString(op));
             if (Opcode::args(op) == 1) {
-                Tree t = Tree(op, Tree::X());
+                Tree t = Tree::unary(op, Tree::X());
                 ArrayEvaluator e(t);
                 for (auto p : pts) {
                     CAPTURE(p);
@@ -144,7 +153,7 @@ TEST_CASE("ArrayEvaluator::eval")
                 if (op == Opcode::OP_POW || op == Opcode::OP_NTH_ROOT) {
                     continue;
                 }
-                Tree t = Tree(op, Tree::X(), Tree::Y());
+                Tree t = Tree::binary(op, Tree::X(), Tree::Y());
                 ArrayEvaluator e(t);
 
                 for (auto p : pts) {

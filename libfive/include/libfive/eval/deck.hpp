@@ -16,8 +16,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
-class Tape; /* Foward declaration */
-
 /*
  *  A Deck is the top-level class that produces Tapes.  It includes
  *  meta-data like the number of clauses, constant values, and variable,
@@ -33,7 +31,7 @@ class Tape; /* Foward declaration */
 class Deck
 {
 public:
-    Deck(const Tree root);
+    Deck(const Tree& root);
 
     Deck(const Deck&)=delete;
     Deck& operator=(const Deck& other)=delete;
@@ -42,7 +40,7 @@ public:
     Clause::Id X, Y, Z;
 
     /*  Constants, unpacked from the tree at construction */
-    std::map<Clause::Id, float> constants;
+    std::vector<std::pair<Clause::Id, float>> constants;
 
     /*  Map of variables (in terms of where they live in this Evaluator) to
      *  their ids in their respective Tree (e.g. what you get when calling

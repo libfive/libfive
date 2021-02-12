@@ -18,7 +18,6 @@ class Evaluator : public JacobianEvaluator, public IntervalEvaluator
 public:
     Evaluator(const Tree& root) :
         Evaluator(std::make_shared<Deck>(root)) {}
-
     Evaluator(const Tree& root,
               const std::map<Tree::Id, float>& vars) :
         Evaluator(std::make_shared<Deck>(root), vars) {}

@@ -103,15 +103,6 @@ SCM scm_number_to_shape(SCM n)
     return scm_from_tree(libfive_tree_const(scm_to_double(n)));
 }
 
-SCM scm_shape_equal_p(SCM a, SCM b)
-{
-    SCM_ASSERT_TYPE(scm_is_shape(a), a, 0, "scm_shape_equal_p", "shape");
-    SCM_ASSERT_TYPE(scm_is_shape(b), b, 1, "scm_shape_equal_p", "shape");
-
-    return libfive_tree_eq(scm_get_tree(a), scm_get_tree(b))
-        ? SCM_BOOL_T : SCM_BOOL_F;
-}
-
 SCM scm_var()
 {
     return scm_from_tree(libfive_tree_var());
@@ -421,7 +412,6 @@ void init_libfive_kernel(void*)
     scm_c_define_gsubr("constant", 1, 0, 0, (void*)scm_shape_constant_vars);
     scm_c_define_gsubr("shape-tree-id", 1, 0, 0, (void*)scm_shape_tree_id);
     scm_c_define_gsubr("number->shape", 1, 0, 0, (void*)scm_number_to_shape);
-    scm_c_define_gsubr("shape-equal?", 2, 0, 0, (void*)scm_shape_equal_p);
     scm_c_define_gsubr("_shape-eval-f", 4, 0, 0, (void*)scm_shape_eval_f);
     scm_c_define_gsubr("_shape-remap", 4, 0, 0, (void*)scm_shape_remap);
     scm_c_define_gsubr("_shape-eval-i", 7, 0, 0, (void*)scm_shape_eval_i);
@@ -573,7 +563,7 @@ void init_libfive_kernel(void*)
     scm_c_export(
             "shape?", "<shape>", "wrap-shape", "unwrap-shape",
             "make-shape", "make-var", "var?", "shape-tree-id", "number->shape",
-            "shape-equal?", "shape-eval", "shape->mesh", "shapes->mesh",
+            "shape-eval", "shape->mesh", "shapes->mesh",
             "shape-meta", "save-shape", "load-shape",
             NULL);
 }

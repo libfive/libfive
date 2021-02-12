@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 
+#include "libfive/tree/data.hpp"
 #include "libfive/oracle/oracle_clause.hpp"
 #include "libfive/oracle/transformed_oracle_clause.hpp"
 
@@ -25,7 +26,7 @@ std::unique_ptr<const OracleClause> OracleClause::deserialize(
 }
 
 bool OracleClause::serialize(const std::string& name,
-        const OracleClause* clause, Serializer& out)
+                             const OracleClause* clause, Serializer& out)
 {
     auto itr = installed().find(name);
     if (itr == installed().end())
@@ -45,11 +46,10 @@ bool OracleClause::serialize(const std::string& name,
 std::unique_ptr<const OracleClause> OracleClause::remap(
             Tree self, Tree X_, Tree Y_, Tree Z_) const
 {
-    assert(self->op == Opcode::ORACLE);
-    assert(self->oracle.get() == this);
+    assert(self->op() == Opcode::ORACLE);
+    assert(&self->oracle_clause() == this);
 
-    return std::unique_ptr<const OracleClause>(
-        new TransformedOracleClause(self, X_, Y_, Z_));
+    return std::make_unique<TransformedOracleClause>(self, X_, Y_, Z_);
 }
 
 }   // namespace libfive

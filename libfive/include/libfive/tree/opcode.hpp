@@ -138,6 +138,11 @@ Opcode fromScmString(std::string s);
  */
 bool isCommutative(Opcode op);
 
+/*
+ *  Returns true if the opcode is idempotent (min, max)
+ */
+bool isIdempotent(Opcode op);
+
 }
 
 

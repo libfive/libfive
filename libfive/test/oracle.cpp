@@ -33,15 +33,58 @@ void BRepCompare(const BRep<N>& first, const BRep<N>& second)
         CAPTURE(i);
         CAPTURE(first.verts[i]);
         CAPTURE(second.verts[i]);
+        CAPTURE(first.verts[i] - second.verts[i]);
         REQUIRE((first.verts[i] - second.verts[i]).norm() < 1e-6);
     }
 
     REQUIRE(first.branes.size() == second.branes.size());
-    for (unsigned i = 0; i < first.branes.size(); ++i) {
+    REQUIRE(first.branes.size() % 2 == 0);
+    for (unsigned i = 0; i < first.branes.size(); i += 2) {
+        // There are two different ways to triangulate quads, and the
+        // two BReps may have chosen different ones depending on minute
+        // differences in vertex position (below the 1e-6 checked above).
+        //
+        // Here, we detect which winding each quad is using, to do a fair
+        // comparison.
+        bool f = first.branes[i][0] == first.branes[i + 1][0];
+        bool s = second.branes[i][0] == second.branes[i + 1][0];
+
         CAPTURE(i);
         CAPTURE(first.branes[i]);
+        CAPTURE(first.branes[i + 1]);
         CAPTURE(second.branes[i]);
-        REQUIRE(first.branes[i] == second.branes[i]);
+        CAPTURE(second.branes[i + 1]);
+        CAPTURE(f);
+        CAPTURE(s);
+        if (f == s) {
+            REQUIRE(first.branes[i] == second.branes[i]);
+            REQUIRE(first.branes[i + 1] == second.branes[i + 1]);
+        } else if (f) {
+            REQUIRE(first.branes[i][0] == second.branes[i][0]);
+            REQUIRE(first.branes[i][1] == second.branes[i][1]);
+            REQUIRE(first.branes[i][2] == second.branes[i + 1][2]);
+
+            REQUIRE(first.branes[i + 1][0] == second.branes[i][0]);
+            REQUIRE(first.branes[i + 1][1] == second.branes[i + 1][2]);
+            REQUIRE(first.branes[i + 1][2] == second.branes[i][2]);
+
+            REQUIRE(first.branes[i + 1][2] == second.branes[i + 1][0]);
+            REQUIRE(first.branes[i][1] == second.branes[i + 1][1]);
+
+        } else if (s) {
+            REQUIRE(second.branes[i][0] == first.branes[i][0]);
+            REQUIRE(second.branes[i][1] == first.branes[i][1]);
+            REQUIRE(second.branes[i][2] == first.branes[i + 1][2]);
+
+            REQUIRE(second.branes[i + 1][0] == first.branes[i][0]);
+            REQUIRE(second.branes[i + 1][1] == first.branes[i + 1][2]);
+            REQUIRE(second.branes[i + 1][2] == first.branes[i][2]);
+
+            REQUIRE(second.branes[i + 1][2] == first.branes[i + 1][0]);
+            REQUIRE(second.branes[i][1] == first.branes[i + 1][1]);
+        } else {
+            REQUIRE(false);
+        }
     }
 }
 
@@ -98,7 +141,7 @@ TEST_CASE("Oracle: render and compare (cube as oracle)")
         max(-(Tree::Z() + 1.5),
             Tree::Z() - 1.5));
 
-    Tree cubeOracle(std::unique_ptr<CubeOracleClause>(new CubeOracleClause()));
+    Tree cubeOracle(std::make_unique<CubeOracleClause>());
 
     //  The region is set so we hit where the interesting stuff happens.
     Region<3> r({ -3., -3., -3. }, { 3., 3., 3. });
@@ -164,7 +207,7 @@ public:
     }
     std::unique_ptr<Oracle> getOracle() const override
     {
-        return std::unique_ptr<Oracle>(new PickySIMDOracle(expected_eval_size));
+        return std::make_unique<PickySIMDOracle>(expected_eval_size);
     }
 
     std::string name() const override
@@ -177,8 +220,7 @@ public:
 TEST_CASE("Oracle: check SIMD clamping")
 {
     long expected_eval_size = 0;
-    Tree picky(std::unique_ptr<PickySIMDOracleClause>(
-            new PickySIMDOracleClause(expected_eval_size)));
+    Tree picky(std::make_unique<PickySIMDOracleClause>(expected_eval_size));
 
     DerivArrayEvaluator eval(picky + Tree::X() + 1.0f);
     for (unsigned i=1; i < 100; ++i) {
