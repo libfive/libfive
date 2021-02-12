@@ -43,7 +43,7 @@ to change variables in the script.
 - [C5H12 (Pentane)](https://gitlab.com/kavalogic-inc/C5H12): Lightweight C viewer
 
 ## License
-(c) 2015-2018 Matthew Keeter
+(c) 2015-2021 Matthew Keeter
 
 Different layers of this project are released under different licenses:
 - The `libfive` library is released under the
@@ -86,7 +86,7 @@ If Qt and Guile aren't present, Studio will not be included in the build
 ### Mac
 With `homebrew` installed, run
 ```
-brew install cmake pkg-config eigen libpng boost guile qt  
+brew install cmake pkg-config eigen libpng boost guile qt
 ```
 Omit `guile` and/or `qt` if you do not want Guile bindings and/or Studio to be built too.
 
@@ -100,20 +100,29 @@ make
 (adjust based on your Qt installation,
 and consider using [`ninja`](https://ninja-build.org/) for faster builds.
 
-
 ### Ubuntu
-
+#### 18.04 or later
 Ubuntu __18.04 or later__ should have all dependencies available through the package manager
 ```
-sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-2.2-dev qtbase5-dev 
+sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-2.2-dev qtbase5-dev
 ```
 Omit `guile-2.2-dev` and/or `qtbase5-dev` if you do not want Guile bindings and/or Studio to be built too.
 
+Building is similar as on Mac: clone the repository, then run something like
+```
+mkdir build
+cd build
+cmake -DCMAKE_PREFIX_PATH=<QT INSTALL PATH>/5.7/gcc_64 ..
+make -j4
+```
+(adjusting the Qt path to your install location)
+
+#### Before 18.04
 Ubuntu releases __before 18.04__ do not provide `guile-2.2-dev`, so omit that from the above package install command.
 To build guile 2.2.3 from source, run
 ```
 sudo apt-get install libgmp-dev libltdl-dev libunistring-dev libgc-dev libffi-dev pkg-config
-wget https://ftp.gnu.org/gnu/guile/guile-2.2.3.tar.gz 
+wget https://ftp.gnu.org/gnu/guile/guile-2.2.3.tar.gz
 tar -xf guile-2.2.3.tar.gz
 cd guile-2.2.3
 ./configure
@@ -121,18 +130,15 @@ make -j4
 sudo make install
 ```
 
-Ubuntu releases __before 17.04__ do not have high enough Qt versions, so also omit `qtbase5-dev` from the above package install command.
-To install Qt 5.7 or later, use the Qt provided Online Installer: https://www.qt.io/download
+Then, build as above.
+
+#### Before 17.04
+Ubuntu releases __before 17.04__ do not have high enough Qt versions,
+so _also_ omit `qtbase5-dev` from the above package install command.
+To install Qt 5.7 or later, use the [Qt Online Installer](https://www.qt.io/download-qt-installer).
 The installer will prompt for the install path, which defaults to `$HOME/Qt`.
 
-Building is similar as on Mac: clone the repository, then run something like
-```
-mkdir build
-cd build
-cmake -DCMAKE_PREFIX_PATH=<Qt Install Path>/5.7/gcc_64 ..
-make -j4
-```
-(adjusting the Qt path to your install location)
+Then, build as above.
 
 ### Windows (MSVC)
 With Visual Studio 2017 installed, run from libfive folder
