@@ -16,7 +16,7 @@ namespace libfive {
 
 Deck::Deck(const Tree root)
 {
-    auto flat = root.ordered();
+    auto flat = root.ordered(true);
 
     // Helper function to create a new clause in the data array
     // The dummy clause (0) is mapped to the first result slot
