@@ -77,12 +77,12 @@ and should also build with MinGW (though this is untested).
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
 - [Boost 1.65 or later](https://www.boost.org)
 
-#### + Guile Bindings (Optional)
+#### Guile bindings (optional)
 - [Guile 2.2.1 or later](https://www.gnu.org/software/guile/)
 
 If Guile isn't present, the Guile bindings won't be built.
 
-#### + Studio (Optional, Requires Guile Bindings)
+#### Studio (optional, requires Guile bindings)
 - [Qt 5.7 or later](https://www.qt.io)
 
 If Qt and Guile aren't present, Studio will not be included in the build
@@ -146,7 +146,7 @@ The installer will prompt for the install path, which defaults to `$HOME/Qt`.
 Then, build as above.
 
 ### Windows (MSVC)
-With Visual Studio 2017 installed, run from libfive folder
+With Visual Studio 2017 installed, run from `libfive` folder
 ```
 git clone https://github.com/Microsoft/vcpkg.git
 vcpkg\bootstrap-vcpkg.bat
