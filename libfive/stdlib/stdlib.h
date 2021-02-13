@@ -16,16 +16,16 @@ extern "C" {
 LIBFIVE_SECTION(csg)
 
 LIBFIVE_STDLIB _union(
-    // Returns the union of any number of shapes
+    // Returns the union of two shapes
     libfive_tree a, libfive_tree b);
 LIBFIVE_STDLIB intersection(
-    // Returns the intersection of any number of shapes
+    // Returns the intersection of two shapes
     libfive_tree a, libfive_tree b);
 LIBFIVE_STDLIB inverse(
     // Returns a shape that's the inverse of the input shape
     libfive_tree a);
 LIBFIVE_STDLIB difference(
-    // Subtracts any number of shapes from the first argument
+    // Subtracts the second shape from the first
     libfive_tree a, libfive_tree b);
 LIBFIVE_STDLIB offset(
     // Expand or contract a given shape by an offset
@@ -68,7 +68,7 @@ LIBFIVE_STDLIB loft(
 LIBFIVE_STDLIB loft_between(
     // Produces a blended loft between a (at lower.z) and b (at upper.z),
     // with XY coordinates remapped to slide between lower.xy and upper.xy.
-    // a and b should be 2D shapes (i.e. invariant along the z axis)"
+    // a and b should be 2D shapes (i.e. invariant along the z axis)
     libfive_tree a, libfive_tree b, vec3 lower, vec3 upper);
 
 ////////////////////////////////////////////////////////////////////////////////

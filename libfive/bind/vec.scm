@@ -176,3 +176,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public (vec2? v)
     (eq? (class-name (class-of v)) '<vec2>))
+
+(define-public (vec2->ffi v)
+  " Converts from a vec2 to a libfive_vec2 for FFI calls"
+  (make-c-struct (list float float) (list (.x v) (.y v))))
+(define-public (vec3->ffi v)
+  " Converts from a vec3 to a libfive_vec3 for FFI calls"
+  (make-c-struct (list float float float) (list (.x v) (.y v) (.z v))))
