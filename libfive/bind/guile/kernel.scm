@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
-(use-modules (system foreign) (oop goops) (libfive lib) (libfive vec))
+(use-modules (system foreign) (oop goops) (srfi srfi-28))
+(use-modules (libfive lib) (libfive vec))
 
 (define-class <shape> (<number>) (ptr #:init-value #f #:init-keyword #:ptr))
 (define (shape? t) (is-a? t <shape>))
@@ -158,29 +159,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(export shape? <shape> shape-tree-id 
-#|
-    scm_c_export(
-            "shape?", "<shape>", "wrap-shape", "unwrap-shape",
-            "make-shape", "make-var", "var?", "shape-tree-id", "number->shape",
-            "shape-eval", "shape->mesh", "shapes->mesh",
-            "shape->tree", "tree->shape",
-            "save-shape", "load-shape",
-            NULL);
-|#
-
 (define (ptr->shape p)
   (tree->shape (make-pointer (pointer-address p) libfive-tree-del)))
 
 (define-public (number->shape f)
   (ptr->shape (libfive-tree-const f)))
+
 (define-public (opcode-enum s)
-  (libfive-opcode-enum (string->pointer s)))
+  (define op (libfive-opcode-enum (string->pointer s)))
+  (if (eq? op -1)
+    (error (format "Invalid opcode ~s" s))
+    op))
+
 (define-public (var? t)
   (equal? 1 (libfive-tree-is-var (shape->tree t))))
 (define-public (make-var)
   (ptr->shape (libfive-tree-var)))
 
+(define* (make-shape op #:optional a b)
+  (define opcode (opcode-enum op))
+(export make-shape)
 #|
   Low-level functions that need to be ported over
     scm_c_define_gsubr("make-shape", 1, 2, 0, (void*)scm_make_shape);
@@ -197,6 +195,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     scm_c_define_gsubr("load-shape", 1, 0, 0, (void*)scm_shape_load);
 |#
 
+(export shape? <shape> shape-tree-id number->shape
+        shape-eval shape->mesh shapes->mesh save-shape load-shape)
 
-
-
+#|
+  (add-to-load-path (getcwd))
+  |#
