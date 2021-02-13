@@ -6,6 +6,7 @@ endif()
 option(BUILD_TESTS "Build test suite" ON)
 
 add_subdirectory(src)
+add_subdirectory(stdlib)
 
 if (BUILD_TESTS)
   add_subdirectory(test)
