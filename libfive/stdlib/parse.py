@@ -67,7 +67,7 @@ def parse(f):
         line = line.strip()
         if line.startswith('LIBFIVE_SECTION'):
             section = parse_section(line)
-            modules[section] = Module(shapes=[], aliases=[])
+            modules[section] = Module(shapes=[])
         elif line.startswith('LIBFIVE_STDLIB'):
             modules[section].shapes.append(parse_decl(line, f))
     return modules
