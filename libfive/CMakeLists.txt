@@ -13,7 +13,7 @@ if (BUILD_TESTS)
 endif(BUILD_TESTS)
 
 if (BUILD_GUILE_BINDINGS AND GUILE_FOUND)
-    add_subdirectory(bind/guile)
+    add_subdirectory(bind/guile/libfive)
 endif(BUILD_GUILE_BINDINGS AND GUILE_FOUND)
 
 if(UNIX AND NOT(APPLE))
