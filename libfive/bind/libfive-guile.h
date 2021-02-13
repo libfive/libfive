@@ -28,7 +28,7 @@ extern "C" {
 void scm_init_libfive_modules();
 
 bool scm_is_shape(SCM t);
-libfive_tree scm_get_tree(SCM t);
+libfive_tree scm_shape_to_raw_tree(SCM t);
 
 #ifdef __cplusplus
 }
