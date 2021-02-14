@@ -214,11 +214,11 @@ TEST_CASE("libfive_tree_print")
     }
 }
 
-TEST_CASE("libfive_tree_nonary")
+TEST_CASE("libfive_tree_nullary")
 {
-    REQUIRE(libfive_tree_nonary(Opcode::OP_MIN) == NULL);
+    REQUIRE(libfive_tree_nullary(Opcode::OP_MIN) == NULL);
 
-    auto x = libfive_tree_nonary(Opcode::VAR_X);
+    auto x = libfive_tree_nullary(Opcode::VAR_X);
     REQUIRE(x != NULL);
     libfive_tree_delete(x);
 }

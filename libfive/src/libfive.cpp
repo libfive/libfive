@@ -113,11 +113,6 @@ float libfive_tree_get_const(libfive_tree t, bool* success)
     return 0;
 }
 
-libfive_tree libfive_tree_constant_vars(libfive_tree t)
-{
-    return Tree(t).with_const_vars().release();
-}
-
 static bool opcode_is_valid(int op, size_t expected_args)
 {
     return op >= 0 &&
@@ -127,8 +122,13 @@ static bool opcode_is_valid(int op, size_t expected_args)
 
 libfive_tree libfive_tree_nonary(int op)
 {
+    return libfive_tree_nullary(op);
+}
+
+libfive_tree libfive_tree_nullary(int op)
+{
     return opcode_is_valid(op, 0)
-        ? Tree::nonary(Opcode::Opcode(op)).release()
+        ? Tree::nullary(Opcode::Opcode(op)).release()
         : nullptr;
 }
 
@@ -223,6 +223,10 @@ char* libfive_tree_print(libfive_tree t)
     auto out = static_cast<char*>(malloc(str.size() + 1 * sizeof(char)));
     memcpy(out, str.c_str(), str.size() + 1);
     return out;
+}
+
+void libfive_free_str(char* ptr) {
+    free(ptr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

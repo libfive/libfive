@@ -106,7 +106,10 @@ public:
 
     /* Constructs a zero-argument tree.  If the opcode is VAR_X/Y/Z, returns
      * the singleton X/Y/Z objects; otherwise, returns a fresh pointer. */
-    static Tree nonary(Opcode::Opcode op);
+    [[deprecated("use Tree::nullary instead")]]
+    static Tree nonary(Opcode::Opcode op) { return nullary(op); }
+
+    static Tree nullary(Opcode::Opcode op);
 
     // Constructs a constant Tree with a floating-point value
     Tree(float v);

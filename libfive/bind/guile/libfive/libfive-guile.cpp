@@ -104,7 +104,9 @@ SCM scm_var_p(SCM a)
 SCM scm_shape_constant_vars(SCM a)
 {
     SCM_ASSERT_TYPE(scm_is_shape(a), a, 0, "scm_shape_constant_vars", "shape");
-    return scm_raw_tree_to_shape(libfive_tree_constant_vars(scm_shape_to_raw_tree(a)));
+    return scm_raw_tree_to_shape(libfive_tree_unary(
+                libfive_opcode_enum("const-var"),
+                scm_shape_to_raw_tree(a)));
 }
 
 SCM scm_shape_tree_id(SCM a)
@@ -162,7 +164,7 @@ SCM scm_make_shape(SCM op, SCM a, SCM b)
     libfive_tree out = nullptr;
     switch (args)
     {
-        case 0: out = libfive_tree_nonary(opcode);
+        case 0: out = libfive_tree_nullary(opcode);
                 break;
         case 1: out = libfive_tree_unary(opcode, scm_shape_to_raw_tree(a));
                 break;

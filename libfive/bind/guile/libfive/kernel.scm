@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
+(define-module (libfive kernel))
+
 (use-modules (system foreign) (oop goops) (srfi srfi-28))
 (use-modules (libfive lib) (libfive vec))
 
@@ -88,8 +90,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-method (shape-eval (a <shape>) (lower <vec3>) (upper <vec3>))
     (_shape-eval-i a (.x lower) (.x upper)
-                   (.y lower) (.y upper)
-                   (.z lower) (.z upper)))
+                     (.y lower) (.y upper)
+                     (.z lower) (.z upper)))
 
 (define-method (shape-derivs (a <shape>) (pt <vec3>))
     (_shape-eval-d a (.x pt) (.y pt) (.z pt)))
@@ -109,9 +111,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     ((remap-shape (shape . vars) x y z)
         (remap-shape shape vars x y z))
     ((remap-shape shape (. vars) x y z)
-        (_shape-remap shape (lambda-shape vars x)
-                            (lambda-shape vars y)
-                            (lambda-shape vars z)))))
+        (shape-remap shape (lambda-shape vars x)
+                           (lambda-shape vars y)
+                           (lambda-shape vars z)))))
 
 (define-syntax sequence_
   (syntax-rules ()
@@ -160,15 +162,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (ptr->shape p)
-  (tree->shape (make-pointer (pointer-address p) libfive-tree-del)))
+  (tree->shape (make-pointer (pointer-address p) libfive-tree-del-ptr)))
 
 (define-public (number->shape f)
   (ptr->shape (libfive-tree-const f)))
 
 (define-public (opcode-enum s)
-  (define op (libfive-opcode-enum (string->pointer s)))
+  (define op (libfive-opcode-enum (string->pointer (symbol->string s))))
   (if (eq? op -1)
-    (error (format "Invalid opcode ~s" s))
+    (error (format "Invalid opcode: ~s" s))
     op))
 
 (define-public (var? t)
@@ -178,14 +180,52 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define* (make-shape op #:optional a b)
   (define opcode (opcode-enum op))
+  (define args (libfive-opcode-args opcode))
+  (cond
+    ((= args 0)
+      (if (or a b)
+        (error (format "Opcode ~s takes 0 arguments" op))
+        (ptr->shape (libfive-tree-nullary opcode))))
+    ((= args 1)
+      (if (or (not (shape? a)) b)
+        (error (format "Opcode ~s takes 1 shape argument" op))
+        (ptr->shape (libfive-tree-unary opcode (shape->tree a)))))
+    ((= args 2)
+      (if (or (not (shape? a)) (not (shape? b)))
+        (error (format "Opcode ~s takes 2 shape arguments" op))
+        (ptr->shape (libfive-tree-binary opcode (shape->tree a) (shape->tree b)))))
+))
 (export make-shape)
+
+(define-public (constant t)
+  " Returns a new Shape which represents the given shape with its free variables
+    locked (so that the partial derivatives with respect to those vars is 0).
+    This is useful to fine-tune the behavior of direct modeling."
+  (make-shape 'const-var t))
+
+(define-public (shape-tree-id t)
+  " Returns an id for the given tree.
+
+    This ID is not globally deduplicated for trees other than x/y/z and free
+    variables; in other words (+ x y) and (+ x y) will have different IDs."
+  (libfive-tree-id (shape->tree t)))
+
+(define-public (shape-remap t x' y' z')
+  " Remaps a shape with the given transform.
+
+  Consider using the remap-shape syntax form instead, for ease of use."
+  (ptr->shape (libfive-tree-remap (shape->tree t)
+    (shape->tree x') (shape->tree y') (shape->tree z'))))
+
+(define-public (shape->string t)
+  (define s (libfive-tree-print (shape->tree t)))
+  (define out (pointer->string s))
+  (libfive-free s)
+  out)
+
 #|
   Low-level functions that need to be ported over
-    scm_c_define_gsubr("make-shape", 1, 2, 0, (void*)scm_make_shape);
-    scm_c_define_gsubr("constant", 1, 0, 0, (void*)scm_shape_constant_vars);
-    scm_c_define_gsubr("shape-tree-id", 1, 0, 0, (void*)scm_shape_tree_id);
     scm_c_define_gsubr("_shape-eval-f", 4, 0, 0, (void*)scm_shape_eval_f);
-    scm_c_define_gsubr("_shape-remap", 4, 0, 0, (void*)scm_shape_remap);
     scm_c_define_gsubr("_shape-eval-i", 7, 0, 0, (void*)scm_shape_eval_i);
     scm_c_define_gsubr("_shape-eval-d", 4, 0, 0, (void*)scm_shape_eval_d);
     scm_c_define_gsubr("shape->mesh", 4, 0, 0, (void*)scm_shape_to_mesh);
@@ -200,4 +240,4 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #|
   (add-to-load-path (getcwd))
-  |#
+|#

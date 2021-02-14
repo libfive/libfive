@@ -121,7 +121,7 @@ Archive::Shape Deserializer::deserializeShape(char tag)
             }
             else
             {
-                trees.insert({next, Tree::nonary(op)});
+                trees.insert({next, Tree::nullary(op)});
             }
         }
         out.tree = trees.at(trees.size() - 1);

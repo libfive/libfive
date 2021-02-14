@@ -89,7 +89,7 @@ Tree::Tree(std::unique_ptr<const OracleClause>&& o)
 }
 
 Tree Tree::var() {
-    return Tree::nonary(Opcode::VAR_FREE);
+    return Tree::nullary(Opcode::VAR_FREE);
 }
 
 Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
@@ -125,7 +125,7 @@ Tree Tree::unary(Opcode::Opcode op, const Tree& lhs) {
     return Tree(new Data(TreeUnaryOp { op, lhs }));
 }
 
-Tree Tree::nonary(Opcode::Opcode op) {
+Tree Tree::nullary(Opcode::Opcode op) {
     // We can only build unary operations with this function
     if (Opcode::args(op) != 0) {
         return invalid();
@@ -389,7 +389,7 @@ Tree Tree::flatten() const {
 
     /*  When going down:
      *  ======================
-     *  If t is a nonary operation:
+     *  If t is a nullary operation:
      *      If there's a remap for it, push the remapped value to the output
      *      Otherwise, push t to the output stack directly
      *

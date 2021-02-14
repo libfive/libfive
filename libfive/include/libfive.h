@@ -228,15 +228,12 @@ libfive_tree libfive_tree_const(float f);
 float libfive_tree_get_const(libfive_tree t, bool* success);
 
 /*
- *  Wraps a tree in an operation that sets the derivatives with respect to
- *  all of its free variables to zero.
- */
-libfive_tree libfive_tree_constant_vars(libfive_tree t);
-
-/*
  *  Constructs a tree with the given no-argument opcode
  *  Returns NULL if the opcode is invalid.
  */
+libfive_tree libfive_tree_nullary(int op);
+
+[[deprecated("use libfive_tree_nullary instead")]]
 libfive_tree libfive_tree_nonary(int op);
 
 /*
@@ -298,9 +295,14 @@ libfive_tree libfive_tree_remap(libfive_tree p,
  *  Returns a C string representing the tree in Scheme style
  *  (e.g. "(+ 1 2 x y)" )
  *
- *  The caller is responsible for freeing the string with free()
+ *  The caller is responsible for freeing the string with libfive_free()
  */
 char* libfive_tree_print(libfive_tree t);
+
+/*
+ *  Frees a string allocated by libfive (probably by libfive_tree_print
+ */
+void libfive_free_str(char* ptr);
 
 ////////////////////////////////////////////////////////////////////////////////
 
