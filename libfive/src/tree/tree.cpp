@@ -272,7 +272,7 @@ bool Tree::operator<(const Tree& other) const {
 bool Tree::eq(const Tree& other) const {
     std::unordered_map<Data::Key, Tree> canonical;
 
-    return optimized_helper(canonical) == other.optimized_helper(canonical);
+    return cooptimize(canonical) == other.cooptimize(canonical);
 }
 
 std::ostream& Tree::print_prefix(std::ostream& s) const {

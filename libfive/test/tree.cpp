@@ -611,7 +611,7 @@ TEST_CASE("Tree::eq") {
     REQUIRE_EQ(Tree::X() + 2);
     REQUIRE_EQ((Tree::X() + 2 * Tree::Y()).remap(
                 Tree::Y() + 1, cos(Tree::Z()), Tree::Y() * 2));
-
+    REQUIRE_EQ(((Tree::X() + 1.3) / Tree::Y()).optimized());
 #undef REQUIRE_EQ
 }
 
@@ -762,4 +762,17 @@ TEST_CASE("Tree::apply")
         out << c.optimized();
         REQUIRE(out.str() == "(/ (+ x 1.3 (* z 2)) x)");
     }
+}
+
+TEST_CASE("Tree::cooptimize")
+{
+    auto a = Tree::var();
+    auto b = ((a + 1.3) / Tree::X()).optimized();
+    auto c = ((a + 1.3) / Tree::X()).optimized();
+    REQUIRE(a.id() != b.id());
+
+    std::unordered_map<TreeDataKey, Tree> canonical;
+    b = b.cooptimize(canonical);
+    c = c.cooptimize(canonical);
+    REQUIRE(b == c);
 }
