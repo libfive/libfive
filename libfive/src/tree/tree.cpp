@@ -601,6 +601,10 @@ Tree Tree::with_flags(uint32_t extra_flags) const {
     return Tree(ptr, true, flags | extra_flags);
 }
 
+Tree Tree::without_flags(uint32_t clear_flags) const {
+    return Tree(ptr, true, flags & (~clear_flags));
+}
+
 Tree Tree::optimized() const {
     std::unordered_map<Data::Key, Tree> canonical;
     return optimized_helper(canonical);
@@ -950,6 +954,10 @@ Tree Tree::optimized_helper(
     }
     assert(out.size() == 1);
     return out.top().with_flags(TREE_FLAG_IS_OPTIMIZED);
+}
+
+Tree Tree::cooptimize(std::unordered_map<Data::Key, Tree>& canonical) const {
+    return without_flags(TREE_FLAG_IS_OPTIMIZED).optimized_helper(canonical);
 }
 
 size_t Tree::size() const {

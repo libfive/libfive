@@ -138,6 +138,12 @@ public:
      */
     void freeGL();
 
+    /*
+     *  Returns a unique ID using the given deduplication map
+     */
+    libfive::Tree::Id getUniqueId(
+        std::unordered_map<libfive::TreeDataKey, libfive::Tree>& canonical);
+
 signals:
     void gotMesh();
     void redraw();

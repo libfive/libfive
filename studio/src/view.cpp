@@ -58,11 +58,21 @@ View::~View()
 
 void View::setShapes(QList<Shape*> new_shapes)
 {
+    // We're going to co-optimize every single new and old tree together,
+    // so that we can deduplicate them.  This could be expensive; if we
+    // notice the main thread lagging, we could do the new_shapes half of this
+    // co-optimization on the worker thread, but would then need to pass
+    // the map from the thread.
+    std::unordered_map<libfive::TreeDataKey, libfive::Tree> canonical;
+
     // Pack tree IDs into a pair of sets for fast checking
     std::map<libfive::Tree::Id, Shape*> new_shapes_map;
+    std::map<libfive::Tree::Id, libfive::Tree::Id> new_shapes_canonical;
     for (auto& s : new_shapes)
     {
-        new_shapes_map.insert({s->id(), s});
+        auto c = s->getUniqueId(canonical);
+        new_shapes_canonical.insert({s->id(), c});
+        new_shapes_map.insert({c, s});
     }
 
     // Erase all existing shapes that aren't in the new_shapes list
@@ -70,7 +80,7 @@ void View::setShapes(QList<Shape*> new_shapes)
     bool any_running = false;
     for (auto itr=shapes.begin(); itr != shapes.end(); /* no update */ )
     {
-        auto n = new_shapes_map.find((*itr)->id());
+        auto n = new_shapes_map.find((*itr)->getUniqueId(canonical));
         if (n == new_shapes_map.end())
         {
             if (*itr == drag_target)
@@ -108,7 +118,7 @@ void View::setShapes(QList<Shape*> new_shapes)
     // Connect all new shapes
     for (auto s : new_shapes)
     {
-        if (new_shapes_map.find(s->id()) != new_shapes_map.end())
+        if (new_shapes_map.count(new_shapes_canonical[s->id()]))
         {
             connect(s, &Shape::redraw, this, &View::update);
             connect(s, &Shape::gotMesh, this, &View::checkMeshes);

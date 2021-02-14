@@ -355,6 +355,12 @@ void Shape::freeGL()
     }
 }
 
+libfive::Tree::Id Shape::getUniqueId(
+    std::unordered_map<libfive::TreeDataKey, libfive::Tree>& canonical)
+{
+    return tree.cooptimize(canonical).id();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // This function is called in a separate thread:
 Shape::BoundedMesh Shape::renderMesh(RenderSettings s)

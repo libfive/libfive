@@ -139,6 +139,13 @@ public:
     Tree optimized_helper(
             std::unordered_map<TreeDataKey, Tree>& canonical) const;
 
+    /*  Optimizes this tree against the given canonical map, ignoring
+     *  whether it has already been optimized.
+     *
+     *  This is useful when you want to compare multiple Trees: cooptimize
+     *  them against the same canonical map, then compare their ids. */
+    Tree cooptimize(std::unordered_map<TreeDataKey, Tree>& canonical) const;
+
     /*  Returns a tree with all remap operations expanded. */
     Tree flatten() const;
 
@@ -210,6 +217,9 @@ protected:
 
     /*  Returns a Tree with the same data but extra flag bits set */
     Tree with_flags(uint32_t extra_flags) const;
+
+    /*  Returns a Tree with the same data but some flag bits cleared */
+    Tree without_flags(uint32_t clear_flags) const;
 
     /* Private constructor to build from the raw variant pointer */
     explicit Tree(const Data* d, bool increment_refcount, uint32_t flags);
