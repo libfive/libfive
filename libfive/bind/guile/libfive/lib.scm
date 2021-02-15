@@ -28,6 +28,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define libfive-interval-type (list float float))
+(define-public (libfive-interval lower upper)
+  " Constructs a libfive_interval "
+  (make-c-struct libfive-interval-type (list lower upper)))
+
+(define libfive-region-type
+  (list libfive-interval-type libfive-interval-type libfive-interval-type))
+(define-public (libfive-region X Y Z)
+  " Constructs a libfive_region "
+  (make-c-struct libfive-region-type (list X Y Z)))
+
+(define libfive-vec2-type (list float float))
+(define libfive-vec3-type (list float float float))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define-public libfive-tree-del-ptr
     (dynamic-func "libfive_tree_delete" lib))
 
@@ -63,10 +79,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (pointer->procedure
     '* (dynamic-func "libfive_tree_binary" lib) (list int '* '*)))
 
-(define-public libfive-tree-constant-vars
-  (pointer->procedure
-    '* (dynamic-func "libfive_tree_constant_vars" lib) (list '*)))
-
 (define-public libfive-tree-id
   (pointer->procedure
     '* (dynamic-func "libfive_tree_id" lib) (list '*)))
@@ -79,6 +91,39 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (pointer->procedure
     '* (dynamic-func "libfive_tree_print" lib) (list '*)))
 
-(define-public libfive-free
+(define-public libfive-free-str
   (pointer->procedure
-    void (dynamic-func "libfive_free" lib) (list '*)))
+    void (dynamic-func "libfive_free_str" lib) (list '*)))
+
+(define-public libfive-tree-save-mesh
+  (pointer->procedure
+    uint8 (dynamic-func "libfive_tree_save_mesh" lib)
+      (list '* libfive-region-type float '*)))
+
+(define-public libfive-trees-save-mesh
+  (pointer->procedure
+    uint8 (dynamic-func "libfive_trees_save_mesh" lib)
+      (list '* libfive-region-type float float '*)))
+
+(define-public libfive-tree-save
+  (pointer->procedure
+    '* (dynamic-func "libfive_tree_save" lib) (list '* '*)))
+
+(define-public libfive-tree-load
+  (pointer->procedure
+    uint8 (dynamic-func "libfive_tree_load" lib) (list '*)))
+
+(define-public libfive-tree-eval-f
+  (pointer->procedure
+    float (dynamic-func "libfive_tree_eval_f" lib)
+      (list '* libfive-vec3-type)))
+
+(define-public libfive-tree-eval-i
+  (pointer->procedure
+    libfive-interval-type (dynamic-func "libfive_tree_eval_r" lib)
+      (list '* libfive-region-type)))
+
+(define-public libfive-tree-eval-d
+  (pointer->procedure
+    libfive-vec3-type (dynamic-func "libfive_tree_eval_d" lib)
+      (list '* libfive-vec3-type)))

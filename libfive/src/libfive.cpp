@@ -400,7 +400,7 @@ bool libfive_evaluator_save_mesh(libfive_evaluator evaluator, libfive_region3 R,
                      {R.X.upper, R.Y.upper, R.Z.upper});
 
     BRepSettings settings; // TODO: pass it in as an argument
-    settings.workers = 1;  // MOTE: temporay limitation
+    settings.workers = 1;  // NOTE: temporary limitation
     auto ms = Mesh::render(evaluator, region, settings);
     return ms->saveSTL(f);
 }

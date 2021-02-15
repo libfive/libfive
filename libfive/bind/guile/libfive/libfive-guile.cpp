@@ -369,14 +369,14 @@ void init_libfive_kernel(void*)
 
 (define-class <shape> (<number>) (ptr #:init-value #f #:init-keyword #:ptr))
 (define (shape? t) (is-a? t <shape>))
-(define (tree->shape t) (make <shape> #:ptr t))
-(define (shape->tree t) (slot-ref t 'ptr))
+(define (ptr->shape t) (make <shape> #:ptr t))
+(define (shape->ptr t) (slot-ref t 'ptr))
 )");
 
     // Extract shape wrapping and unwrapping from local environment
     scm_shape_p_ = scm_c_eval_string("shape?");
-    scm_tree_to_shape_ = scm_c_eval_string("tree->shape");
-    scm_shape_to_tree_ = scm_c_eval_string("shape->tree");
+    scm_tree_to_shape_ = scm_c_eval_string("ptr->shape");
+    scm_shape_to_tree_ = scm_c_eval_string("shape->ptr");
 
     // Extract vec3 constructor from local environment
     scm_vec3_ = scm_c_eval_string("vec3");
@@ -543,7 +543,7 @@ void init_libfive_kernel(void*)
             "shape?", "<shape>", "wrap-shape", "unwrap-shape",
             "make-shape", "make-var", "var?", "shape-tree-id", "number->shape",
             "shape-eval", "shape->mesh", "shapes->mesh",
-            "shape->tree", "tree->shape",
+            "shape->ptr", "ptr->shape",
             "save-shape", "load-shape",
             NULL);
 }

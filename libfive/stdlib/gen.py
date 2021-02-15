@@ -11,7 +11,7 @@ def arg_type(a):
 
 def arg_call(a):
     if a.type == 'libfive_tree':
-        return '(shape->tree %s)' % a.name
+        return '(shape->ptr %s)' % a.name
     elif a.type == 'float':
         return a.name
     elif a.type == 'vec2':
@@ -47,7 +47,7 @@ It was last generated on {} by user {}
   (list {arg_types})))
 (define-public ({0} {arg_names})
   {doc}
-  (tree->shape (ffi_{0} {arg_calls})))
+  (ptr->shape (ffi_{0} {arg_calls})))
 
 '''.format(f.name.replace('_', '-'), doc='" ' + f.docstring.replace('\n', '\n    ') + '"', arg_types=arg_types, arg_names=arg_names, arg_calls=arg_calls)
             out += s
