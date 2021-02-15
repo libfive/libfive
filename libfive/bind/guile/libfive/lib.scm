@@ -21,10 +21,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ;; For now, it's manually generated, since there aren't that many functions
 (define-module (libfive lib))
 
-(use-modules (system foreign))
+(use-modules (system foreign) (srfi srfi-1))
 
-;; TODO: find this library with more smarts
-(define lib (dynamic-link "../../../build/libfive/src/libfive"))
+(define (try-link lib)
+  (with-exception-handler
+    (lambda (exn) #f)
+    (lambda () (dynamic-link lib))
+    #:unwind? #t))
+
+;; Right now, it assumes that we're looking from the build directory
+(define lib-paths (list "libfive/src/libfive"))
+(let ((f (current-filename)))
+  (if f (append! lib-paths
+    (list
+      (string-append (dirname f) "/../../../../build/libfive/src/libfive")))))
+(define lib (any (lambda (i) i) (map try-link lib-paths)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -100,9 +111,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     uint8 (dynamic-func "libfive_tree_save_mesh" lib)
       (list '* libfive-region-type float '*)))
 
-(define-public libfive-trees-save-mesh
+(define-public libfive-tree-save-meshes
   (pointer->procedure
-    uint8 (dynamic-func "libfive_trees_save_mesh" lib)
+    uint8 (dynamic-func "libfive_tree_save_meshes" lib)
       (list '* libfive-region-type float float '*)))
 
 (define-public libfive-tree-save

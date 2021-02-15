@@ -264,7 +264,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     (unless (null? shapes)
       (f (1+ i) (cdr shapes))))
   (libfive-tree-save-meshes (bytevector->pointer bv)
-    bounsd resolution quality (string->pointer filename)))
+    bounds resolution quality (string->pointer filename)))
 (export shapes-save-mesh)
 
 (define-public (shape-save shape filename)
