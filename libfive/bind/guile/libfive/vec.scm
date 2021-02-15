@@ -18,7 +18,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
 
 (define-module (libfive vec))
-(use-modules (oop goops) (ice-9 textual-ports) (system foreign))
+
+(use-modules
+  (ice-9 textual-ports)
+  (oop goops)
+  (system foreign)
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

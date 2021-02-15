@@ -18,8 +18,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
 (define-module (libfive kernel))
 
-(use-modules (system foreign) (oop goops) (srfi srfi-28) (rnrs bytevectors))
-(use-modules (libfive lib) (libfive vec))
+(use-modules
+  (oop goops)
+  (rnrs bytevectors)
+  (srfi srfi-28)
+  (system foreign)
+
+  (libfive lib)
+  (libfive vec)
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The basic shape class and constructor functions

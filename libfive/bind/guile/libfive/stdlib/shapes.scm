@@ -16,7 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
-(use-modules (libfive kernel) (libfive vec) (libfive csg) (libfive transforms))
+(define-module (libfive stdlib shapes))
+
+(use-modules
+  (libfive kernel)
+  (libfive vec)
+  (libfive stdlib csg)
+  (libfive stdlib transforms)
+)
 
 (define-public pi 3.14159265359)
 
