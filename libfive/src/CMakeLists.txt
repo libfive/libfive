@@ -120,7 +120,8 @@ endif(UNIX AND NOT(APPLE))
 if (UNIX)
     install(TARGETS five DESTINATION lib)
     install(FILES ../include/libfive.h DESTINATION include)
-    install(DIRECTORY ../include/libfive DESTINATION include)
+    install(DIRECTORY ../include/libfive DESTINATION include
+            FILES_MATCHING PATTERN "*.hpp")
 endif(UNIX)
 
 target_link_libraries(five ${LIBS})
