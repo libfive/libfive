@@ -42,6 +42,10 @@ void _Interpreter::init()
 
     scm_init_guile();
 
+    // This works if you're running from the build directory;
+    scm_c_eval_string(
+        "(add-to-load-path (string-append (getcwd) \"/../libfive/bind/guile\"))");
+
     // TODO: edit path so that stuff works
 
     scm_c_use_module("libfive kernel");
@@ -91,9 +95,9 @@ port-eof?
     free(kws);
 
     // Extract a list of function names + docstrings
-    QList<QString> modules = {"(libfive shapes)",
-                              "(libfive csg)",
-                              "(libfive transforms)"};
+    QList<QString> modules = {"(libfive stdlib shapes)",
+                              "(libfive stdlib csg)",
+                              "(libfive stdlib transforms)"};
     Documentation* ds = new Documentation;
     for (auto mod : modules)
     {

@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (define (shape? t) (is-a? t <shape>))
 (export shape? <shape>)
 
-(define (shape->ptr t) (slot-ref t 'ptr))
+(define-public (shape->ptr t) (slot-ref t 'ptr))
 (define (ptr->shape p)
   "Converts a foreign pointer to a shape, attaching a deletion finalizer"
   (make <shape> #:ptr (make-pointer (pointer-address p) libfive-tree-del-ptr)))
