@@ -29,11 +29,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     (lambda () (dynamic-link (string-append lib name)))
     #:unwind? #t))
 
-;; Search first based on an environment variable (i.e. in the Mac app),
-;; then assuming we're running from the build directory.
+;; Search various paths to find libfive.dylib, in order of priority:
+;;  - LIBFIVE_FRAMEWORK_DIR hint (used by Mac app)
+;;  - A relative path, assuming we're in the build directory
+;;  - Empty path, which uses the default system search path
 (define lib-paths (list
   (get-environment-variable "LIBFIVE_FRAMEWORK_DIR")
-  "libfive/src/"))
+  "libfive/src/"
+  ""
+))
 
 (define lib (any (lambda (t) (try-link t "libfive")) lib-paths))
 

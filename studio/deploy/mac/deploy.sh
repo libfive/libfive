@@ -7,12 +7,14 @@ APP=$EXE.app
 VERSION=`git describe --exact-match --tags || echo "($(git rev-parse --abbrev-ref HEAD))"`
 VERSION=`echo $VERSION|sed s:/:-:g`
 
+QT_DIR=$(find /usr/local/Cellar/qt -name "5.1*" -depth 1|head -n1)
+
 cd ../../..
 rm -rf build
 mkdir build
 cd build
 cmake -GNinja\
-    -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt/5.15.0 \
+    -DCMAKE_PREFIX_PATH=$QT_DIR \
     -DLIBFIVE_CCACHE_BUILD=ON \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12  ..
 rm -rf $APP studio/$APP
@@ -113,14 +115,15 @@ png2icns studio.icns icon512.png icon256.png icon128.png icon32.png icon16.png
 mv studio.icns $APP/Contents/Resources/studio.icns
 rm icon512.png icon256.png icon128.png icon32.png icon16.png
 
-wargarble
-# Create the disk image
-rm -rf deploy $EXE.dmg
-mkdir deploy
-cp ../README.md ./deploy/README.txt
-cp -r ../studio/examples ./deploy/examples
-mv $APP ./deploy
-mkdir deploy/.Trash
-hdiutil create $EXE.dmg -volname "$EXE $VERSION" -srcfolder deploy
-rm -rf deploy
-mv $EXE.dmg ..
+if [ "$1" == "dmg" ]; then
+    # Create the disk image
+    rm -rf deploy $EXE.dmg
+    mkdir deploy
+    cp ../README.md ./deploy/README.txt
+    cp -r ../studio/examples ./deploy/examples
+    mv $APP ./deploy
+    mkdir deploy/.Trash
+    hdiutil create $EXE.dmg -volname "$EXE $VERSION" -srcfolder deploy
+    rm -rf deploy
+    mv $EXE.dmg ..
+fi
