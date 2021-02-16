@@ -12,6 +12,10 @@ if (BUILD_TESTS)
   add_subdirectory(test)
 endif(BUILD_TESTS)
 
+if (BUILD_GUILE_BINDINGS AND GUILE_FOUND)
+    add_subdirectory(bind/guile)
+endif(BUILD_GUILE_BINDINGS AND GUILE_FOUND)
+
 if(UNIX AND NOT(APPLE))
     set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")
     CONFIGURE_FILE("libfive.pc.in" "libfive.pc" @ONLY)
