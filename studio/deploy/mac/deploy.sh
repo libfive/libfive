@@ -87,6 +87,17 @@ cp -r $GUILE_SCM guile/scm/
 cp -r $GUILE_CCACHE guile/ccache/
 cp -r ../../../../libfive/bind/guile/libfive guile/scm
 
+# In the Resources directory, find any uncompiled scm files and compile them
+# now for a faster startup, then delete them to reduce bundle size
+cd guile/ccache && find . -name "*.go" | sed "s/\.go//g" | sort > ../../ccache_list
+cd ../scm && find . -name "*.scm" | sed "s/\.scm//g" | sort > ../../scm_list
+cd ../..
+for v in $(comm -2 -3 scm_list ccache_list); do
+    LIBFIVE_FRAMEWORK_DIR=../Frameworks/ guild compile -Lguile/scm -o guile/ccache/$v.go guile/scm/$v.scm
+done
+rm ccache_list scm_list
+rm -r guile/scm
+
 # Update release number in Info.plist
 cd ../../..
 cp ../studio/deploy/mac/Info.plist $APP/Contents/Info.plist
