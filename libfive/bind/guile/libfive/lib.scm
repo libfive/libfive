@@ -21,21 +21,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ;; For now, it's manually generated, since there aren't that many functions
 (define-module (libfive lib))
 
-(use-modules (system foreign) (srfi srfi-1))
+(use-modules (system foreign) (srfi srfi-1) (srfi srfi-98))
 
-(define (try-link lib)
+(define (try-link lib name)
   (with-exception-handler
     (lambda (exn) #f)
-    (lambda () (dynamic-link lib))
+    (lambda () (dynamic-link (string-append lib name)))
     #:unwind? #t))
 
-;; Right now, it assumes that we're looking from the build directory
-(define lib-paths (list "libfive/src/libfive"))
-(let ((f (current-filename)))
-  (if f (append! lib-paths
-    (list
-      (string-append (dirname f) "/../../../../build/libfive/src/libfive")))))
-(define lib (any (lambda (i) i) (map try-link lib-paths)))
+;; Search first based on an environment variable (i.e. in the Mac app),
+;; then assuming we're running from the build directory.
+(define lib-paths (list
+  (get-environment-variable "LIBFIVE_FRAMEWORK_DIR")
+  "libfive/src/"))
+
+(define lib (any (lambda (t) (try-link t "libfive")) lib-paths))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

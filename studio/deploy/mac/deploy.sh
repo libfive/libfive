@@ -17,7 +17,7 @@ cmake -GNinja\
     -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12  ..
 rm -rf $APP studio/$APP
 ninja clean
-ninja
+ninja studio/all
 
 # Copy to a new location before modifying, so that the built app doesn't
 # get modified and future builds don't misbehave due to duplicate frameworks
