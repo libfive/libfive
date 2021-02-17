@@ -24,10 +24,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (use-modules (system foreign) (srfi srfi-1) (srfi srfi-98))
 
 (define (try-link lib name)
-  (with-exception-handler
-    (lambda (exn) #f)
+  (catch
+    #t
     (lambda () (dynamic-link (string-append lib name)))
-    #:unwind? #t))
+    (lambda (key . args) #f)))
 
 ;; Search various paths to find libfive.dylib, in order of priority:
 ;;  - LIBFIVE_FRAMEWORK_DIR hint (used by Mac app)
@@ -40,6 +40,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ))
 
 (define lib (any (lambda (t) (try-link t "libfive")) lib-paths))
+(if (not lib) (begin
+  (error "Could not find libfive shared library")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
