@@ -34,10 +34,11 @@ void _Interpreter::init()
 {
 #ifdef Q_OS_MAC
     const auto app_dir = QCoreApplication::applicationDirPath().toLocal8Bit();
-    // Modify environmental variables to use local Guile path
-    auto guile_path = app_dir + "/../Resources/guile/";
-    qputenv("GUILE_LOAD_COMPILED_PATH", guile_path + "ccache/");
-    qputenv("GUILE_LOAD_PATH", guile_path + "scm/");
+
+    // We include a pre-compiled Guile standard library in the Mac app bundle.
+    qputenv("GUILE_LOAD_COMPILED_PATH", "/../Resources/guile/ccache/");
+
+    // This hints at Guile where to find libfive.dylib
     qputenv("LIBFIVE_FRAMEWORK_DIR", app_dir + "/../Frameworks/");
 #endif
 
