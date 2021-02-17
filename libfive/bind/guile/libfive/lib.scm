@@ -51,7 +51,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (make-c-struct libfive-interval_t (list lower upper)))
 
 (define libfive-region_t
-  (list libfive-interval_t libfive-interval-type libfive-interval-type))
+  (list libfive-interval_t libfive-interval_t libfive-interval_t))
 (define-public (libfive-region X Y Z)
   " Constructs a libfive_region "
   (make-c-struct libfive-region_t (list X Y Z)))
