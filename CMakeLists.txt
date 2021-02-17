@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.3)
 project(libfive)
 
 # Properly distinguish between Apple and upstream Clang
@@ -109,6 +109,20 @@ endif(UNIX AND NOT(APPLE))
 # Inform the user which subsystems will be built and any missing deps
 message("Checking dependencies:")
 message("  libfive:		✓")
+
+if (BUILD_GUILE_BINDINGS)
+  if (GUILE_FOUND)
+    message("  Guile bindings:	✓")
+
+    # target_link_directories is available in cmake 3.13, which is slightly
+    # too fresh (not shipped by default on Ubuntu 18.04 LTS)
+    link_directories(${GUILE_LIBRARY_DIRS})
+  else ()
+    message("  Guile bindings:	✘   (needs Guile 2.2 or later)")
+  endif()
+else()
+    message("  Guile bindings:	✘   (skipping)")
+endif()
 
 if (BUILD_STUDIO_APP)
   if (Qt5Core_FOUND AND GUILE_FOUND)

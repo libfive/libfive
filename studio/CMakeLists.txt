@@ -78,4 +78,3 @@ target_link_libraries(Studio five
     ${GUILE_LIBRARIES}
     ${EXTRA_LIBS}
 )
-target_link_directories(Studio PRIVATE ${GUILE_LIBRARY_DIRS})
