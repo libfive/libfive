@@ -122,6 +122,15 @@ make -j4
 ```
 (adjusting the Qt path to your install location)
 
+Running `make install` will install `libfive.so` (the core shared library)
+and the `libfive` headers
+(`sudo` may be required, depending on system configuration).
+If Guile bindings are enabled,
+they will be installed to Guile's `(%site-dir)` directory.
+If Studio was also built, the `studio` executable will installed as well.
+[`Studio.desktop`](https://github.com/libfive/libfive/blob/master/studio/deploy/linux/Studio.desktop)
+may be used to put the program on your desktop (untested as of yet).
+
 #### Before 18.04
 Ubuntu releases __before 18.04__ do not provide `guile-2.2-dev`, so omit that from the above package install command.
 To build guile 2.2.3 from source, run
