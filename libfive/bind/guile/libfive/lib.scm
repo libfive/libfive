@@ -46,7 +46,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ;; and used in all of the (libfive stdlib ...) modules
 (define stdlib-paths (list
   (get-environment-variable "LIBFIVE_FRAMEWORK_DIR")
-  "libfive/stdlib"
+  "libfive/stdlib/"
   ""
 ))
 (define stdlib (any (lambda (t) (try-link t "libfive-stdlib")) stdlib-paths))

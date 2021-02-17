@@ -30,7 +30,7 @@ LIBFIVE_STDLIB difference(
 LIBFIVE_STDLIB offset(
     // Expand or contract a given shape by an offset
     // Positive offsets expand the shape; negative offsets shrink it
-    libfive_tree a, float offset);
+    libfive_tree a, float o);
 LIBFIVE_STDLIB clearance(
     // Expands shape b by the given offset then subtracts it from shape a
     libfive_tree a, libfive_tree b, float offset);

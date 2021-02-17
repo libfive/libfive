@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-Declaration = namedtuple('Declaration', ['name', 'version', 'docstring', 'args'])
+Declaration = namedtuple('Declaration', ['name', 'version', 'docstring', 'args', 'raw_name'])
 Argument = namedtuple('Argument', ['name', 'type', 'default'])
 Module = namedtuple('Module', ['shapes'])
 
@@ -26,8 +26,12 @@ def parse_decl(line, f):
         name, version = name.split('__')
     else:
         version = None
+
     if name.startswith('_'):
+        raw_name = name
         name = name[1:]
+    else:
+        raw_name = None
 
     doc = ''
     if rest.endswith(');'): # single-line form
@@ -43,8 +47,11 @@ def parse_decl(line, f):
 
             if line.endswith(');'):
                 break
+    if any([a.name == name for a in args]):
+        raise RuntimeError("Argument shadows function name in '%s'" % name)
 
-    return Declaration(name=name, version=version, docstring=doc[:-1], args=args)
+    return Declaration(name=name, version=version, docstring=doc[:-1],
+                       args=args, raw_name=raw_name)
 
 
 def parse_section(s):
