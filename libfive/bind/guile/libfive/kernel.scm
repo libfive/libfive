@@ -178,7 +178,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
         (list float float))))
 
 (define-method (shape-derivs (a <shape>) (pt <vec3>))
-    (ffi->vec3 (libfive-tree-eval-d a (vec3->ffi pt))))
+    (ffi->vec3 (libfive-tree-eval-d (shape->ptr a) (vec3->ffi pt))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Syntactic sugar for constructing and editing shapes

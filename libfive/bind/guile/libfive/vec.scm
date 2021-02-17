@@ -19,6 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-module (libfive vec))
 
+(use-modules (libfive lib)) ;; for FFI vec types
+
 (use-modules
   (ice-9 textual-ports)
   (oop goops)
@@ -195,12 +197,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public (vec2->ffi v)
   " Converts from a vec2 to a libfive_vec2 for FFI calls"
-  (make-c-struct (list float float) (list (.x v) (.y v))))
+  (make-c-struct libfive-vec2_t (list (.x v) (.y v))))
 (define-public (ffi->vec2 v)
-  (apply vec2 (parse-c-struct v (list float float))))
+  (apply vec2 (parse-c-struct v libfive-vec2_t)))
 
 (define-public (vec3->ffi v)
   " Converts from a vec3 to a libfive_vec3 for FFI calls"
-  (make-c-struct (list float float float) (list (.x v) (.y v) (.z v))))
+  (make-c-struct libfive-vec3_t (list (.x v) (.y v) (.z v))))
 (define-public (ffi->vec3 v)
-  (apply vec3 (parse-c-struct v (list float float))))
+  (apply vec3 (parse-c-struct v libfive-vec3_t)))
