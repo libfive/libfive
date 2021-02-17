@@ -64,7 +64,7 @@ else()
 endif()
 
 if(UNIX AND NOT(APPLE))
-    install(TARGETS Studio DESTINATION bin RENAME studio)
+    install(TARGETS Studio DESTINATION bin)
 endif(UNIX AND NOT(APPLE))
 
 target_include_directories(Studio

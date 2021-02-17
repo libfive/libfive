@@ -35,24 +35,21 @@ void _Interpreter::init()
 #ifdef Q_OS_MAC
     const auto app_dir = QCoreApplication::applicationDirPath().toLocal8Bit();
 
-    // We include a pre-compiled Guile standard library in the Mac app bundle.
-    qputenv("GUILE_LOAD_COMPILED_PATH", "/../Resources/guile/ccache/");
+    // We include a pre-compiled Guile standard library in the Mac app bundle,
+    // then fall back to assuming we're in the the build directory, then
+    // fall back to standard system library search paths
+    qputenv("GUILE_LOAD_COMPILED_PATH", "/../Resources/guile/ccache/:libfive/bind/guile");
 
     // This hints at Guile where to find libfive.dylib
     qputenv("LIBFIVE_FRAMEWORK_DIR", app_dir + "/../Frameworks/");
+#else
+    // Assume that we're in the build directory, then fall back to Linux
+    // system libraries (if the Studio executable was installed, then the Guile
+    // precompiled files should be as well).
+    qputenv("GUILE_LOAD_COMPILED_PATH", "libfive/bind/guile");
 #endif
 
     scm_init_guile();
-
-    // This works if the executable is launched from the command line in the
-    // build directory.  Other options include
-    //  - As a bundled Mac app: in this case, the updates to
-    //    GUILE_LOAD_{COMPILED_}PATH let us find bundled resources
-    //  - Installed on a Linux system: all libraries should be installed into
-    //    standard locations, so no path tweaks are needed
-    scm_c_eval_string(R"(
-        (add-to-load-path (string-append (getcwd) "/../libfive/bind/guile"))
-    )");
 
     scm_c_use_module("libfive kernel");
     scm_eval_sandboxed = scm_c_eval_string(R"(
