@@ -74,15 +74,34 @@ LIBFIVE_STDLIB loft_between(
 ////////////////////////////////////////////////////////////////////////////////
 LIBFIVE_SECTION(shapes)
 
-LIBFIVE_STDLIB circle(float r, vec2 center__0);
-LIBFIVE_STDLIB ring(float ro, float ri, vec2 center__0);
-LIBFIVE_STDLIB polygon(float r, int n, vec2 center__0);
-LIBFIVE_STDLIB rectangle(vec2 a, vec2 b);
+LIBFIVE_STDLIB circle(
+    // A 2D circle with the given radius and optional center
+    float r, vec2 center__0);
+LIBFIVE_STDLIB ring(
+    // A 2D ring with the given outer/inner radii and optional center
+    float ro, float ri, vec2 center__0);
+LIBFIVE_STDLIB polygon(
+    // A polygon with center-to-vertex distance r and n sides
+    float r, int n, vec2 center__0);
+LIBFIVE_STDLIB rectangle(
+    // A rectangle with the given bounding corners
+    vec2 a, vec2 b);
+LIBFIVE_STDLIB rounded_rectangle(
+    // A rectangle with rounded corners
+    vec2 a, vec2 b, float r);
+LIBFIVE_STDLIB rectangle_exact(
+    // A rectangle from an exact distance field
+    vec2 a, vec2 b);
+LIBFIVE_STDLIB rectangle_centered_exact(
+    // Constructs an exact-field rectangle at the (optional) center
+    vec2 size, vec2 center__0);
 
 ////////////////////////////////////////////////////////////////////////////////
 LIBFIVE_SECTION(transforms)
 
 LIBFIVE_STDLIB move(libfive_tree t, vec3 offset);
+
+LIBFIVE_STDLIB rotate_z(libfive_tree t, float angle, vec3 center__0);
 
 #ifdef __cplusplus
 }

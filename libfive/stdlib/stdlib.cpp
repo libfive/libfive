@@ -94,17 +94,66 @@ LIBFIVE_STDLIB loft_between(libfive_tree a, libfive_tree b, vec3 lower, vec3 upp
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
+// shapes
 LIBFIVE_STDLIB circle(float r, vec2 center) {
-    auto x = Tree::X();
-    auto y = Tree::Y();
+    LIBFIVE_DEFINE_XYZ();
     auto c = sqrt(x * x + y * y) - r;
     return move(c.release(), vec3{center.x, center.y, 0});
 }
 
+LIBFIVE_STDLIB ring(float ro, float ri, vec2 center) {
+    return difference(circle(ro, center), circle(ri, center));
+}
+
+LIBFIVE_STDLIB polygon(float r, int n, vec2 center) {
+    LIBFIVE_DEFINE_XYZ();
+    r = r * cos(M_PI / n);
+    const auto half = (y - r).release();
+    auto out = half;
+    for (int i=1; i < n; ++i) {
+        out = intersection(out, rotate_z(half, 2 * M_PI * i / n, vec3{0, 0, 0}));
+    }
+    return move(out, vec3{center.x, center.y, 0});
+}
+
+LIBFIVE_STDLIB rectangle(vec2 a, vec2 b) {
+    LIBFIVE_DEFINE_XYZ();
+    return max(
+        max(a.x - x, x - b.x),
+        max(a.y - y, y - b.y)).release();
+}
+
+LIBFIVE_STDLIB rounded_rectangle(vec2 a, vec2 b, float r) {
+    return _union(
+        _union(rectangle(vec2{a.x, a.y + r}, vec2{b.x, b.y - r}),
+               rectangle(vec2{a.x + r, a.y}, vec2{b.x - r, b.y})),
+        _union(
+            _union(circle(r, vec2{a.x + r, a.y + r}),
+                   circle(r, vec2{b.x - r, b.y - r})),
+            _union(circle(r, vec2{a.x + r, b.y - r}),
+                   circle(r, vec2{b.x - r, a.y + r}))));
+}
+
+LIBFIVE_STDLIB rectangle_exact(vec2 a, vec2 b) {
+    vec2 size = {b.x - a.x, b.y - a.y};
+    vec2 center = {(a.x + b.x) / 2, (a.y + b.y) / 2};
+    return rectangle_centered_exact(size, center);
+}
+
+LIBFIVE_STDLIB rectangle_centered_exact(vec2 size, vec2 center) {
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// transforms
 LIBFIVE_STDLIB move(libfive_tree t_, vec3 offset) {
+    LIBFIVE_DEFINE_XYZ();
     auto t = Tree(t_);
-    return t.remap(Tree::X() - offset.x,
-                   Tree::Y() - offset.y,
-                   Tree::Z() - offset.z).release();
+    return t.remap(x - offset.x, y - offset.y, z - offset.z).release();
+}
+
+LIBFIVE_STDLIB rotate_z(libfive_tree t_, float angle, vec3 center) {
+    LIBFIVE_DEFINE_XYZ();
+    const auto t = Tree(move(t_, vec3{-center.x, -center.y, -center.z}));
+    return move(t.remap(cos(angle) * x + sin(angle) * y,
+                       -sin(angle) * x + cos(angle) * y, z).release(), center);
 }
