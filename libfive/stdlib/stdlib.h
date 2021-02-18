@@ -116,6 +116,10 @@ LIBFIVE_STDLIB box_exact_centered(
 LIBFIVE_STDLIB box_exact(
     // A box with the given bounds with a Euclidean distance metric
     vec3 a, vec3 b);
+LIBFIVE_STDLIB box_rounded(
+    // Rounded box with the given bounds and radius (as a 0-1 fraction)
+    vec3 a, vec3 b, float r);
+LIBFIVE_ALIAS(cube_rounded, box_rounded);
 LIBFIVE_STDLIB sphere(
     // A sphere with the given radius and (optional) center
     float radius, vec3 center__0);
@@ -139,7 +143,27 @@ LIBFIVE_ALIAS(cone, cone_z);
 LIBFIVE_STDLIB pyramid_z(
     // A pyramid defined by its base rectangle, lower Z value, and height
     vec2 a, vec2 b, float zmin, float height);
-// ...
+LIBFIVE_STDLIB torus_z(
+    // A torus with the given outer radius, inner radius, and (optional) center
+    float ro, float ri, vec3 center__0);
+LIBFIVE_ALIAS(torus, torus_z);
+LIBFIVE_STDLIB gyroid(
+    // A volume-filling gyroid with the given periods and thickness
+    vec3 period, float thickness);
+
+LIBFIVE_STDLIB array_x(
+    // Iterates a part in a 1D array
+    libfive_tree shape, int nx, float dx);
+LIBFIVE_STDLIB array_xy(
+    // Iterates a part in a 2D array
+    libfive_tree shape, int nx, int ny, vec2 delta);
+LIBFIVE_STDLIB array_xyz(
+    // Iterates a part in a 3D array
+    libfive_tree shape, int nx, int ny, int nz, vec3 delta);
+LIBFIVE_STDLIB array_polar_z(
+    // Iterates a shape about an optional center position
+    libfive_tree shape, int n, vec2 center__0);
+LIBFIVE_ALIAS(array_polar, array_polar_z);
 LIBFIVE_STDLIB extrude_z(
     // Extrudes a 2D shape between zmin and zmax
     libfive_tree t, float zmin, float zmax);

@@ -217,16 +217,17 @@ LIBFIVE_STDLIB box_exact(vec3 a, vec3 b) {
     return box_exact_centered(b - a, (a + b) / 2);
 }
 
+LIBFIVE_STDLIB box_rounded(vec3 a, vec3 b, float r) {
+    const auto d = b - a;
+    r *= fminf(d.x, fminf(d.y, d.z)) / 2;
+    vec3 v{r, r, r};
+    return offset(box_exact(a + v, b - v), r);
+}
+
 LIBFIVE_STDLIB sphere(float r, vec3 center) {
     LIBFIVE_DEFINE_XYZ();
     return move((sqrt(square(x) + square(y) + square(z)) - r).release(),
             center);
-}
-
-// ...
-LIBFIVE_STDLIB extrude_z(libfive_tree t, float zmin, float zmax) {
-    LIBFIVE_DEFINE_XYZ();
-    return max(Tree(t), max(zmin - z, z - zmax)).release();
 }
 
 LIBFIVE_STDLIB half_space(vec3 norm, vec3 point) {
@@ -249,12 +250,71 @@ LIBFIVE_STDLIB cone_ang_z(float angle, float height, vec3 base) {
 }
 
 LIBFIVE_STDLIB pyramid_z(vec2 a, vec2 b, float zmin, float height) {
-    // TODO: make this an intersection of planes instead
+    // TODO: make this an intersection of planes instead, to avoid singularity
     return taper_xy_z(
         extrude_z(rectangle(a, b), zmin, zmin + height),
         vec3{ (a.x + b.x) / 2, (a.y + b.y) / 2, zmin},
         height, 0, 1);
 }
+
+LIBFIVE_STDLIB torus_z(float ro, float ri, vec3 center) {
+    LIBFIVE_DEFINE_XYZ();
+    return move(
+        (sqrt(square(ro - sqrt(square(x) + square(y)))
+            + square(z)) - ri).release(),
+        center);
+}
+
+LIBFIVE_STDLIB gyroid(vec3 period, float thickness) {
+    LIBFIVE_DEFINE_XYZ();
+    const auto tau = 2 * M_PI;
+    return shell(
+        (sin(x * period.x / tau) * cos(y * period.y / tau) +
+         sin(y * period.y / tau) * cos(z * period.z / tau) +
+         sin(z * period.z / tau) * cos(x * period.x / tau)).release(),
+        -thickness);
+}
+
+//------------------------------------------------------------------------------
+
+LIBFIVE_STDLIB array_x(libfive_tree shape, int nx, float dx) {
+    for (int i=1; i < nx; ++i) {
+        shape = _union(shape, move(shape, vec3{dx * i, 0, 0}));
+    }
+    return shape;
+}
+
+LIBFIVE_STDLIB array_xy(libfive_tree shape, int nx, int ny, vec2 delta) {
+    shape = array_x(shape, nx, delta.x);
+    for (int i=1; i < ny; ++i) {
+        shape = _union(shape, move(shape, vec3{0, delta.y * i, 0}));
+    }
+    return shape;
+}
+
+LIBFIVE_STDLIB array_xyz(libfive_tree shape, int nx, int ny, int nz,
+                         vec3 delta) {
+    shape = array_xy(shape, nx, ny, vec2{delta.x, delta.y});
+    for (int i=1; i < nz; ++i) {
+        shape = _union(shape, move(shape, vec3{0, 0, delta.y * i}));
+    }
+    return shape;
+}
+
+LIBFIVE_STDLIB array_polar_z(libfive_tree shape, int n, vec2 center) {
+    const float a = 2 * M_PI / n;
+    vec3 c{center.x, center.y, 0};
+    for (int i=0; i < n; ++i) {
+        shape = _union(shape, rotate_z(shape, i * a, c));
+    }
+    return shape;
+}
+
+LIBFIVE_STDLIB extrude_z(libfive_tree t, float zmin, float zmax) {
+    LIBFIVE_DEFINE_XYZ();
+    return max(Tree(t), max(zmin - z, z - zmax)).release();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // transforms
