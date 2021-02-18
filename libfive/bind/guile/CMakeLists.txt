@@ -29,7 +29,7 @@ foreach(SRC ${SRCS})
         OUTPUT_VARIABLE CCACHE_FILE)
     add_custom_command(OUTPUT ${OUT}
         COMMAND guild compile -L${CMAKE_CURRENT_SOURCE_DIR} ${FULL_SRC}
-        COMMAND cp ${CCACHE_FILE} ${OUT}
+        COMMAND ${CMAKE_COMMAND} -E copy ${CCACHE_FILE} ${OUT}
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SRC})
 endforeach(SRC)
 
