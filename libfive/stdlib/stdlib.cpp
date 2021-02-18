@@ -11,6 +11,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 using namespace libfive;
 
+#define LIBFIVE_DEFINE_XYZ() const auto x = Tree::X(); (void)x; \
+                             const auto y = Tree::Y(); (void)y; \
+                             const auto z = Tree::Z(); (void)z; ;
 ////////////////////////////////////////////////////////////////////////////////
 // csg
 LIBFIVE_STDLIB _union(libfive_tree a, libfive_tree b) {
@@ -67,16 +70,14 @@ LIBFIVE_STDLIB morph(libfive_tree a, libfive_tree b, float m) {
 }
 
 LIBFIVE_STDLIB loft(libfive_tree a, libfive_tree b, float zmin, float zmax) {
-    const auto z = Tree::Z();
+    LIBFIVE_DEFINE_XYZ();
     return max(z - zmax, max(zmin - z,
         ((z - zmin) * Tree(b) + (zmax - z) * Tree(a))
             / (zmax - zmin))).release();
 }
 
 LIBFIVE_STDLIB loft_between(libfive_tree a, libfive_tree b, vec3 lower, vec3 upper) {
-    const auto x = Tree::X();
-    const auto y = Tree::Y();
-    const auto z = Tree::Z();
+    LIBFIVE_DEFINE_XYZ();
 
     const auto f = (z - lower.z) / (upper.z - lower.z);
     const auto g = (upper.z - z) / (upper.z - lower.z);

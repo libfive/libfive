@@ -49,13 +49,44 @@ It was last generated on {} by user {}
 
 '''.format(raw_name=f.raw_name or f.name,
        name=f.name.replace('_', '-'),
-       doc='" ' + f.docstring.replace('\n', '\n    ') + '"',
+       doc='" ' + f.docstring.replace('\n', '\n  ') + '"',
        arg_types=arg_types,
        arg_names=arg_names,
        arg_calls=arg_calls)
     return out[:-1]
 
+################################################################################
+
+append = {'csg':
+'''
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Hand-written functions which allow for arbitrary numbers of arguments
+(use-modules (srfi srfi-1))
+
+(define union-prev union)
+(define-public (union . args)
+  "union a [b [c [...]]]
+  Returns the union of any number of shapes"
+  (fold union-prev (car args) (cdr args)))
+
+(define intersection-prev intersection)
+(define-public (intersection . args)
+  "intersection a [b [c [...]]]
+  Returns the intersection of any number of shapes"
+  (fold intersection-prev (car args) (cdr args)))
+
+(define-public (difference a . bs)
+  "difference a b [c [d [...]]]
+  Subtracts any number of shapes from the first argument"
+  (intersection a (inverse (apply union bs))))
+'''}
+
+################################################################################
+
+
 stdlib = parse.parse_stdlib()
 for m in ['csg']:
     with open('../bind/guile/libfive/stdlib/%s.scm' % m, 'w') as f:
         f.write(format_module(stdlib, m))
+        if m in append:
+            f.write(append[m])
