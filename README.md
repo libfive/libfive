@@ -122,12 +122,11 @@ make -j4
 ```
 (adjusting the Qt path to your install location)
 
-Running `make install` will install `libfive.so` (the core shared library)
-and the `libfive` headers
-(`sudo` may be required, depending on system configuration).
+Running `sudo make install` will install `libfive.so` (the core shared library)
+and the `libfive` headers.
 If Guile bindings are enabled,
-they will be installed to Guile's `(%site-dir)` directory.
-If Studio was also built, the `studio` executable will installed as well.
+they will be pre-compiled and installed to Guile's `(%site-ccache-dir)` directory.
+If Studio was also built, the `Studio` executable will installed as well.
 [`Studio.desktop`](https://github.com/libfive/libfive/blob/master/studio/deploy/linux/Studio.desktop)
 may be used to put the program on your desktop (untested as of yet).
 
