@@ -35,6 +35,9 @@ vec3 operator+(const vec3& a, const vec3& b) {
 vec3 operator-(const vec3& a, const vec3& b) {
     return vec3{a.x - b.x, a.y - b.y, a.z - b.z};
 }
+vec3 operator-(const vec3& a) {
+    return vec3{-a.x, -a.y, -a.z};
+}
 vec3 operator*(const vec3& a, const float& b) {
     return vec3{a.x * b, a.y * b, a.z * b};
 }
@@ -84,12 +87,8 @@ LIBFIVE_STDLIB blend_rough(libfive_tree a, libfive_tree b, float m) {
         (sqrt(abs(Tree(a))) + sqrt(abs(Tree(b))) - m).release()));
 }
 
-LIBFIVE_STDLIB blend(libfive_tree a, libfive_tree b, float m) {
-    return blend_expt_unit(a, b, m);
-}
-
 LIBFIVE_STDLIB blend_difference(libfive_tree a, libfive_tree b, float m, float o) {
-    return inverse(blend(inverse(a), offset(b, o), m));
+    return inverse(blend_expt_unit(inverse(a), offset(b, o), m));
 }
 
 LIBFIVE_STDLIB morph(libfive_tree a, libfive_tree b, float m) {
@@ -199,19 +198,62 @@ LIBFIVE_STDLIB triangle(vec2 a, vec2 b, vec2 c) {
 LIBFIVE_STDLIB box_mitered(vec3 a, vec3 b) {
     return extrude_z(rectangle(vec2{a.x, a.y}, vec2{b.x, b.y}), a.z, b.z);
 }
-LIBFIVE_STDLIB cube(vec3 a, vec3 b) { return box_mitered(a, b); }
-LIBFIVE_STDLIB box(vec3 a, vec3 b) { return box_mitered(a, b); }
 
 LIBFIVE_STDLIB box_mitered_centered(vec3 size, vec3 center) {
     return box_mitered(center - size / 2, center + size / 2);
 }
-LIBFIVE_STDLIB box_centered(vec3 size, vec3 center) {
-    return box_mitered_centered(size, center);
+
+LIBFIVE_STDLIB box_exact_centered(vec3 size, vec3 center) {
+    LIBFIVE_DEFINE_XYZ();
+    const auto dx = abs(x - center.x) - (size.x / 2);
+    const auto dy = abs(y - center.y) - (size.y / 2);
+    const auto dz = abs(z - center.z) - (size.z / 2);
+    return (min(0, max(dx, max(dy, dz))) +
+            sqrt(square(max(dx, 0)) + square(max(dy, 0)) + square(max(dz, 0))))
+        .release();
 }
+
+LIBFIVE_STDLIB box_exact(vec3 a, vec3 b) {
+    return box_exact_centered(b - a, (a + b) / 2);
+}
+
+LIBFIVE_STDLIB sphere(float r, vec3 center) {
+    LIBFIVE_DEFINE_XYZ();
+    return move((sqrt(square(x) + square(y) + square(z)) - r).release(),
+            center);
+}
+
 // ...
 LIBFIVE_STDLIB extrude_z(libfive_tree t, float zmin, float zmax) {
     LIBFIVE_DEFINE_XYZ();
     return max(Tree(t), max(zmin - z, z - zmax)).release();
+}
+
+LIBFIVE_STDLIB half_space(vec3 norm, vec3 point) {
+    LIBFIVE_DEFINE_XYZ();
+    // dot(pos - point, norm)
+    return ((x - point.x) * norm.x +
+            (y - point.y) * norm.y +
+            (z - point.z) * norm.z).release();
+}
+
+LIBFIVE_STDLIB cylinder_z(float r, float h, vec3 base) {
+    return extrude_z(circle(r, vec2{base.x, base.y}), base.z, base.z + h);
+}
+
+LIBFIVE_STDLIB cone_ang_z(float angle, float height, vec3 base) {
+    LIBFIVE_DEFINE_XYZ();
+    return move(max(-z, cos(angle) * sqrt(square(x) + square(y))
+                      + sin(angle) * z - height).release(),
+                base);
+}
+
+LIBFIVE_STDLIB pyramid_z(vec2 a, vec2 b, float zmin, float height) {
+    // TODO: make this an intersection of planes instead
+    return taper_xy_z(
+        extrude_z(rectangle(a, b), zmin, zmin + height),
+        vec3{ (a.x + b.x) / 2, (a.y + b.y) / 2, zmin},
+        height, 0, 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -227,4 +269,14 @@ LIBFIVE_STDLIB rotate_z(libfive_tree t_, float angle, vec3 center) {
     const auto t = Tree(move(t_, vec3{-center.x, -center.y, -center.z}));
     return move(t.remap(cos(angle) * x + sin(angle) * y,
                        -sin(angle) * x + cos(angle) * y, z).release(), center);
+}
+
+LIBFIVE_STDLIB taper_xy_z(libfive_tree shape, vec3 base, float height,
+                          float scale, float base_scale)
+{
+    LIBFIVE_DEFINE_XYZ();
+    const auto s = height / (scale * z + base_scale * (height - z));
+    return move(
+        Tree(move(shape, -base)).remap(x * s, y * s, z).release(),
+        base);
 }

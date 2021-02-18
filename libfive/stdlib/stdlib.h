@@ -4,6 +4,7 @@
 // These are all markers used by the parser
 #define LIBFIVE_STDLIB libfive_tree
 #define LIBFIVE_SECTION(a)
+#define LIBFIVE_ALIAS(a, b)
 
 #define vec2 libfive_vec2
 #define vec3 libfive_vec3
@@ -49,9 +50,7 @@ LIBFIVE_STDLIB blend_rough(
     // Blends two shapes by the given amount, using a fast-but-rough
     // CSG approximation that may not preserve gradients
     libfive_tree a, libfive_tree b, float m);
-LIBFIVE_STDLIB blend(
-    // Alias for blend_expt_unit
-    libfive_tree a, libfive_tree b, float m);
+LIBFIVE_ALIAS(blend, blend_expt_unit);
 LIBFIVE_STDLIB blend_difference(
     // Blends the subtraction of b, with optional offset o,
     // from a, with smoothness m
@@ -102,20 +101,44 @@ LIBFIVE_STDLIB triangle(
 LIBFIVE_STDLIB box_mitered(
     // A box with the given bounds, which will stay creased if offset
     vec3 a, vec3 b);
-LIBFIVE_STDLIB cube(
-    // Alias for box_mitered
-    vec3 a, vec3 b);
-LIBFIVE_STDLIB box(
-    // Alias for box_mitered
-    vec3 a, vec3 b);
+LIBFIVE_ALIAS(cube, box_mitered);
+LIBFIVE_ALIAS(box, box_mitered);
 
 LIBFIVE_STDLIB box_mitered_centered(
     // A box with the given size and (optional) center, with edges that
     // will stay sharp if offset.
     vec3 size, vec3 center__0);
-LIBFIVE_STDLIB box_centered(
-    // Alias for box_mitered_centered
+LIBFIVE_ALIAS(box_centered, box_mitered_centered);
+LIBFIVE_STDLIB box_exact_centered(
+    // A box with the given size, centered around the given point,
+    // with a Euclidean distance metric
     vec3 size, vec3 center__0);
+LIBFIVE_STDLIB box_exact(
+    // A box with the given bounds with a Euclidean distance metric
+    vec3 a, vec3 b);
+LIBFIVE_STDLIB sphere(
+    // A sphere with the given radius and (optional) center
+    float radius, vec3 center__0);
+LIBFIVE_STDLIB half_space(
+    // A plane which divides the world into inside and outside, defined by its
+    // normal and a single point on the plane
+    vec3 norm, vec3 point__0);
+LIBFIVE_STDLIB cylinder_z(
+    // A cylinder with the given radius and height, extruded from the
+    // (optional) base position.
+    float r, float h, vec3 base__0);
+LIBFIVE_ALIAS(cylinder, cylinder_z);
+LIBFIVE_STDLIB cone_ang_z(
+    // A cone defined by its slope angle, height, and (optional) base location
+    float angle, float height, vec3 base__0);
+LIBFIVE_ALIAS(cone_ang, cone_ang_z);
+LIBFIVE_STDLIB cone_z(
+    // A cone defined by its radius, height, and (optional) base location
+    float radius, float height, vec3 base__0);
+LIBFIVE_ALIAS(cone, cone_z);
+LIBFIVE_STDLIB pyramid_z(
+    // A pyramid defined by its base rectangle, lower Z value, and height
+    vec2 a, vec2 b, float zmin, float height);
 // ...
 LIBFIVE_STDLIB extrude_z(
     // Extrudes a 2D shape between zmin and zmax
@@ -131,6 +154,12 @@ LIBFIVE_STDLIB rotate_z(
     // Rotate the given shape by an angle in radians
     // The center of rotation is [0 0 0] or specified by the optional argument
     libfive_tree t, float angle, vec3 center__0);
+LIBFIVE_STDLIB taper_xy_z(
+    // Tapers a shape in the xy plane as a function of z
+    // width = base-scale at base
+    // width = scale at base + [0 0 height]
+    libfive_tree shape, vec3 base, float height,
+    float scale, float base_scale__1);
 
 #ifdef __cplusplus
 }
