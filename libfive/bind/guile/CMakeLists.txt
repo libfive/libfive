@@ -30,7 +30,7 @@ foreach(SRC ${SRCS})
     add_custom_command(OUTPUT ${OUT}
         COMMAND guild compile -L${CMAKE_CURRENT_SOURCE_DIR} ${FULL_SRC}
         COMMAND ${CMAKE_COMMAND} -E copy ${CCACHE_FILE} ${OUT}
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SRC})
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SRC} five five-stdlib)
 endforeach(SRC)
 
 add_custom_target(libfive-guile ALL DEPENDS ${OUTS})
