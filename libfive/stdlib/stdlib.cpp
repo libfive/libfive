@@ -14,6 +14,22 @@ using namespace libfive;
 #define LIBFIVE_DEFINE_XYZ() const auto x = Tree::X(); (void)x; \
                              const auto y = Tree::Y(); (void)y; \
                              const auto z = Tree::Z(); (void)z; ;
+
+////////////////////////////////////////////////////////////////////////////////
+
+vec2 operator+(const vec2& a, const vec2& b) {
+    return vec2{a.x + b.x, a.y + b.y};
+}
+vec2 operator-(const vec2& a, const vec2& b) {
+    return vec2{a.x - b.x, a.y - b.y};
+}
+vec2 operator*(const vec2& a, const float& b) {
+    return vec2{a.x * b, a.y * b};
+}
+vec2 operator/(const vec2& a, const float& b) {
+    return vec2{a.x / b, a.y / b};
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // csg
 LIBFIVE_STDLIB _union(libfive_tree a, libfive_tree b) {
@@ -135,12 +151,37 @@ LIBFIVE_STDLIB rounded_rectangle(vec2 a, vec2 b, float r) {
 }
 
 LIBFIVE_STDLIB rectangle_exact(vec2 a, vec2 b) {
-    vec2 size = {b.x - a.x, b.y - a.y};
-    vec2 center = {(a.x + b.x) / 2, (a.y + b.y) / 2};
+    vec2 size = b - a;
+    vec2 center = (a + b) / 2;
     return rectangle_centered_exact(size, center);
 }
 
 LIBFIVE_STDLIB rectangle_centered_exact(vec2 size, vec2 center) {
+    LIBFIVE_DEFINE_XYZ();
+    const auto dx = abs(x) - size.x/2;
+    const auto dy = abs(y) - size.y/2;
+    return move(
+        (min(max(dx, dy), 0) +
+         sqrt(square(max(dx, 0)) + square(max(dy, 0)))).release(),
+        vec3{center.x, center.y, 0});
+}
+
+libfive_tree half_plane(vec2 a, vec2 b) {
+    LIBFIVE_DEFINE_XYZ();
+    return ((b.y - a.y) * (x - a.x) - (b.x - a.x) * (y - a.y)).release();
+}
+
+LIBFIVE_STDLIB triangle(vec2 a, vec2 b, vec2 c) {
+    LIBFIVE_DEFINE_XYZ();
+    const auto vec_ab = Eigen::Vector3f(b.x - a.x, b.y - a.y, 0);
+    const auto vec_ac = Eigen::Vector3f(c.x - a.x, c.y - a.y, 0);
+    if (vec_ab.cross(vec_ac).z() > 0.0f) {
+        return intersection(intersection(
+            half_plane(a, b), half_plane(b, c)), half_plane(c, a));
+    } else {
+        return intersection(intersection(
+            half_plane(a, c), half_plane(c, b)), half_plane(b, a));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

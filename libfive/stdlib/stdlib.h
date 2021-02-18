@@ -93,8 +93,11 @@ LIBFIVE_STDLIB rectangle_exact(
     // A rectangle from an exact distance field
     vec2 a, vec2 b);
 LIBFIVE_STDLIB rectangle_centered_exact(
-    // Constructs an exact-field rectangle at the (optional) center
+    // An exact-field rectangle at the (optional) center
     vec2 size, vec2 center__0);
+LIBFIVE_STDLIB triangle(
+    // A 2D triangle
+    vec2 a, vec2 b, vec2 c);
 
 ////////////////////////////////////////////////////////////////////////////////
 LIBFIVE_SECTION(transforms)
