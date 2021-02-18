@@ -16,7 +16,7 @@ using namespace libfive;
                              const auto z = Tree::Z(); (void)z; ;
 
 ////////////////////////////////////////////////////////////////////////////////
-
+// Operator overloads for C vecs
 vec2 operator+(const vec2& a, const vec2& b) {
     return vec2{a.x + b.x, a.y + b.y};
 }
@@ -29,7 +29,18 @@ vec2 operator*(const vec2& a, const float& b) {
 vec2 operator/(const vec2& a, const float& b) {
     return vec2{a.x / b, a.y / b};
 }
-
+vec3 operator+(const vec3& a, const vec3& b) {
+    return vec3{a.x + b.x, a.y + b.y, a.z + b.z};
+}
+vec3 operator-(const vec3& a, const vec3& b) {
+    return vec3{a.x - b.x, a.y - b.y, a.z - b.z};
+}
+vec3 operator*(const vec3& a, const float& b) {
+    return vec3{a.x * b, a.y * b, a.z * b};
+}
+vec3 operator/(const vec3& a, const float& b) {
+    return vec3{a.x / b, a.y / b, a.z / b};
+}
 ////////////////////////////////////////////////////////////////////////////////
 // csg
 LIBFIVE_STDLIB _union(libfive_tree a, libfive_tree b) {
@@ -182,6 +193,25 @@ LIBFIVE_STDLIB triangle(vec2 a, vec2 b, vec2 c) {
         return intersection(intersection(
             half_plane(a, c), half_plane(c, b)), half_plane(b, a));
     }
+}
+
+//------------------------------------------------------------------------------
+LIBFIVE_STDLIB box_mitered(vec3 a, vec3 b) {
+    return extrude_z(rectangle(vec2{a.x, a.y}, vec2{b.x, b.y}), a.z, b.z);
+}
+LIBFIVE_STDLIB cube(vec3 a, vec3 b) { return box_mitered(a, b); }
+LIBFIVE_STDLIB box(vec3 a, vec3 b) { return box_mitered(a, b); }
+
+LIBFIVE_STDLIB box_mitered_centered(vec3 size, vec3 center) {
+    return box_mitered(center - size / 2, center + size / 2);
+}
+LIBFIVE_STDLIB box_centered(vec3 size, vec3 center) {
+    return box_mitered_centered(size, center);
+}
+// ...
+LIBFIVE_STDLIB extrude_z(libfive_tree t, float zmin, float zmax) {
+    LIBFIVE_DEFINE_XYZ();
+    return max(Tree(t), max(zmin - z, z - zmax)).release();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

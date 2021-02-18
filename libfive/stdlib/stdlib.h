@@ -99,12 +99,38 @@ LIBFIVE_STDLIB triangle(
     // A 2D triangle
     vec2 a, vec2 b, vec2 c);
 
+LIBFIVE_STDLIB box_mitered(
+    // A box with the given bounds, which will stay creased if offset
+    vec3 a, vec3 b);
+LIBFIVE_STDLIB cube(
+    // Alias for box_mitered
+    vec3 a, vec3 b);
+LIBFIVE_STDLIB box(
+    // Alias for box_mitered
+    vec3 a, vec3 b);
+
+LIBFIVE_STDLIB box_mitered_centered(
+    // A box with the given size and (optional) center, with edges that
+    // will stay sharp if offset.
+    vec3 size, vec3 center__0);
+LIBFIVE_STDLIB box_centered(
+    // Alias for box_mitered_centered
+    vec3 size, vec3 center__0);
+// ...
+LIBFIVE_STDLIB extrude_z(
+    // Extrudes a 2D shape between zmin and zmax
+    libfive_tree t, float zmin, float zmax);
+
 ////////////////////////////////////////////////////////////////////////////////
 LIBFIVE_SECTION(transforms)
 
-LIBFIVE_STDLIB move(libfive_tree t, vec3 offset);
-
-LIBFIVE_STDLIB rotate_z(libfive_tree t, float angle, vec3 center__0);
+LIBFIVE_STDLIB move(
+    // Moves the given shape in 2D or 3D space
+    libfive_tree t, vec3 offset);
+LIBFIVE_STDLIB rotate_z(
+    // Rotate the given shape by an angle in radians
+    // The center of rotation is [0 0 0] or specified by the optional argument
+    libfive_tree t, float angle, vec3 center__0);
 
 #ifdef __cplusplus
 }
