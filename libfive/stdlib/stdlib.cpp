@@ -46,53 +46,89 @@ vec3 operator/(const vec3& a, const float& b) {
 }
 ////////////////////////////////////////////////////////////////////////////////
 // csg
+Tree _union(Tree a, Tree b) {
+    return min(a, b);
+}
 LIBFIVE_STDLIB _union(libfive_tree a, libfive_tree b) {
-    return min(Tree(a), Tree(b)).release();
+    return _union(Tree(a), Tree(b)).release();
 }
 
+Tree intersection(Tree a, Tree b) {
+    return max(a, b);
+}
 LIBFIVE_STDLIB intersection(libfive_tree a, libfive_tree b) {
-    return max(Tree(a), Tree(b)).release();
+    return intersection(Tree(a), Tree(b)).release();
 }
 
+Tree inverse(Tree a) {
+    return -a;
+}
 LIBFIVE_STDLIB inverse(libfive_tree a) {
-    return (-Tree(a)).release();
+    return inverse(Tree(a)).release();
 }
 
-LIBFIVE_STDLIB difference(libfive_tree a, libfive_tree b) {
+Tree difference(Tree a, Tree b) {
     return intersection(a, inverse(b));
 }
-
-LIBFIVE_STDLIB offset(libfive_tree a, float offset) {
-    return (Tree(a) - offset).release();
+LIBFIVE_STDLIB difference(libfive_tree a, libfive_tree b) {
+    return difference(Tree(a), Tree(b)).release();
 }
 
-LIBFIVE_STDLIB clearance(libfive_tree a, libfive_tree b, float o) {
+Tree offset(Tree a, float off) {
+    return a - off;
+}
+LIBFIVE_STDLIB offset(libfive_tree a, float off) {
+    return offset(Tree(a), off).release();
+}
+
+Tree clearance(Tree a, Tree b, float o) {
     return difference(a, offset(b, o));
 }
+LIBFIVE_STDLIB clearance(libfive_tree a, libfive_tree b, float o) {
+    return clearance(Tree(a), Tree(b), o).release();
+}
 
-LIBFIVE_STDLIB shell(libfive_tree a, float o) {
+Tree shell(Tree a, float o) {
     return clearance(a, a, o);
 }
-
-LIBFIVE_STDLIB blend_expt(libfive_tree a, libfive_tree b, float m) {
-    return (-log(exp(-m * Tree(a)) + exp(-m * Tree(b))) / m).release();
+LIBFIVE_STDLIB shell(libfive_tree a, float o) {
+    return shell(Tree(a), o).release();
 }
 
-LIBFIVE_STDLIB blend_expt_unit(libfive_tree a, libfive_tree b, float m) {
+Tree blend_expt(Tree a, Tree b, float m) {
+    return -log(exp(-m * a) + exp(-m * b)) / m;
+}
+LIBFIVE_STDLIB blend_expt(libfive_tree a, libfive_tree b, float m) {
+    return blend_expt(Tree(a), Tree(b), m).release();
+}
+
+Tree blend_expt_unit(Tree a, Tree b, float m) {
     return blend_expt(a, b, 2.75 / pow(m, 2));
 }
-
-LIBFIVE_STDLIB blend_rough(libfive_tree a, libfive_tree b, float m) {
-    return _union(a, _union(b,
-        (sqrt(abs(Tree(a))) + sqrt(abs(Tree(b))) - m).release()));
+LIBFIVE_STDLIB blend_expt_unit(libfive_tree a, libfive_tree b, float m) {
+    return blend_expt_unit(Tree(a), Tree(b), m).release();
 }
 
-LIBFIVE_STDLIB blend_difference(libfive_tree a, libfive_tree b, float m, float o) {
+Tree blend_rough(Tree a, Tree b, float m) {
+    auto c = sqrt(abs(a)) + sqrt(abs(b)) - m;
+    return _union(a, _union(b, c));
+}
+LIBFIVE_STDLIB blend_rough(libfive_tree a, libfive_tree b, float m) {
+    return blend_rough(Tree(a), Tree(b), m).release();
+}
+
+Tree blend_difference(Tree a, Tree b, float m, float o) {
     return inverse(blend_expt_unit(inverse(a), offset(b, o), m));
 }
+LIBFIVE_STDLIB blend_difference(libfive_tree a, libfive_tree b, float m, float o) {
+    return blend_difference(Tree(a), Tree(b), m, o).release();
+}
 
+Tree morph(Tree a, Tree b, float m) {
+    return a * (1 - m) + b * m;
+}
 LIBFIVE_STDLIB morph(libfive_tree a, libfive_tree b, float m) {
-    return (Tree(a) * (1 - m) + Tree(b) * m).release();
+    return morph(Tree(a), Tree(b), m).release();
 }
 
 LIBFIVE_STDLIB loft(libfive_tree a, libfive_tree b, float zmin, float zmax) {
