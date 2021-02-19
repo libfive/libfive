@@ -23,13 +23,17 @@ foreach(SRC ${SRCS})
     # to the default cache.  This means that compilation for modules that refer
     # to each other will only happen once.
     #
+    # Compilation runs with the top-level build directory as the working
+    # directory, so that relative search paths for libfive.dylib/so work.
+    #
     # Then, copy the file from Guile's compilation cache to the build directory
     execute_process(
         COMMAND guile -c "(use-modules (system base compile))(format #t \"~A\" (compiled-file-name \"${FULL_SRC}\"))"
         OUTPUT_VARIABLE CCACHE_FILE)
     add_custom_command(OUTPUT ${OUT}
         COMMAND guild compile -L${CMAKE_CURRENT_SOURCE_DIR} ${FULL_SRC}
-        COMMAND ${CMAKE_COMMAND} -E copy ${CCACHE_FILE} ${OUT}
+        COMMAND ${CMAKE_COMMAND} -E copy ${CCACHE_FILE} ${CMAKE_CURRENT_BINARY_DIR}/${OUT}
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SRC} five five-stdlib)
 endforeach(SRC)
 
