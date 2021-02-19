@@ -4,15 +4,16 @@ from datetime import datetime
 import parse
 
 def arg_type(a):
-    return {'libfive_tree':"'*",
-            'vec2': 'libfive-vec2_t',
-            'vec3': 'libfive-vec3_t',
-            'float': 'float'}[a.type]
+    return {'libfive_tree': "'*",
+            'vec2':  'libfive-vec2_t',
+            'vec3':  'libfive-vec3_t',
+            'float': 'float',
+            'int':   'int'}[a.type]
 
 def arg_call(a):
     if a.type == 'libfive_tree':
         return '(shape->ptr %s)' % a.name
-    elif a.type == 'float':
+    elif a.type in ['float', 'int']:
         return a.name
     elif a.type == 'vec2':
         return '(vec2->ffi %s)' % a.name
@@ -85,7 +86,7 @@ append = {'csg':
 
 
 stdlib = parse.parse_stdlib()
-for m in ['csg']:
+for m in ['csg', 'shapes']:
     with open('../bind/guile/libfive/stdlib/%s.scm' % m, 'w') as f:
         f.write(format_module(stdlib, m))
         if m in append:
