@@ -61,18 +61,20 @@ It was last generated on {} by user {}
         arg_types = " ".join(map(arg_type, f.args))
         arg_names = " ".join([arg_name(f.args, i) for i in range(0, len(f.args))])
         arg_calls = "\n    ".join(map(arg_call, f.args))
+        name = f.name.replace('_', '-')
         out += '''(define ffi_{name} (pointer->procedure '*
   (dynamic-func "{raw_name}" stdlib)
   (list {arg_types})))
 (define* ({name} {arg_names})
+  "{name} {arg_names}
   {doc}
   (ptr->shape (ffi_{name}
     {arg_calls})))
 (export {name})
 
 '''.format(raw_name=f.raw_name or f.name,
-       name=f.name.replace('_', '-'),
-       doc='" ' + f.docstring.replace('\n', '\n  ') + '"',
+       name=name,
+       doc=f.docstring.replace('\n', '\n  ') + '"',
        arg_types=arg_types,
        arg_names=arg_names,
        arg_calls=arg_calls)
