@@ -330,11 +330,105 @@ Tree move(Tree t, TreeVec3 offset) {
     return t.remap(x - offset.x, y - offset.y, z - offset.z);
 }
 
+Tree reflect_x(Tree t, TreeFloat x0) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(2*x0 - x, y, z);
+}
+
+Tree reflect_y(Tree t, TreeFloat y0) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(x, 2*y0 - y, z);
+}
+
+Tree reflect_z(Tree t, TreeFloat z0) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(x, y, 2*z0 - z);
+}
+
+Tree reflect_xy(Tree t) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(y, x, z);
+}
+
+Tree reflect_yz(Tree t) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(x, z, y);
+}
+
+Tree reflect_xz(Tree t) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(z, y, x);
+}
+
+Tree symmetric_x(Tree t) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(abs(x), y, z);
+}
+
+Tree symmetric_y(Tree t) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(x, abs(y), z);
+}
+
+Tree symmetric_z(Tree t) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(x, y, abs(z));
+}
+
+Tree scale_x(Tree t, TreeFloat sx, TreeFloat x0) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(x0 + (x - x0) / sx, y, z);
+}
+
+Tree scale_y(Tree t, TreeFloat sy, TreeFloat y0) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(x, y0 + (y - y0) / sy, z);
+}
+
+Tree scale_z(Tree t, TreeFloat sz, TreeFloat z0) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(x, y, z0 + (z - z0) / sz);
+}
+
+Tree scale_xyz(Tree t, TreeVec3 s, TreeVec3 center) {
+    LIBFIVE_DEFINE_XYZ();
+    return t.remap(
+        center.x + (x - center.x) / s.x,
+        center.y + (y - center.y) / s.y,
+        center.z + (z - center.z) / s.z);
+}
+
+Tree rotate_x(Tree t, TreeFloat angle, TreeVec3 center) {
+    LIBFIVE_DEFINE_XYZ();
+    t = move(t, TreeVec3{-center.x, -center.y, -center.z});
+    return move(t.remap(x,
+                        cos(angle) * y + sin(angle) * z,
+                       -sin(angle) * y + cos(angle) * z), center);
+}
+
+Tree rotate_y(Tree t, TreeFloat angle, TreeVec3 center) {
+    LIBFIVE_DEFINE_XYZ();
+    t = move(t, TreeVec3{-center.x, -center.y, -center.z});
+    return move(t.remap(cos(angle) * x + sin(angle) * z,
+                        y,
+                       -sin(angle) * x + cos(angle) * z), center);
+}
+
 Tree rotate_z(Tree t, TreeFloat angle, TreeVec3 center) {
     LIBFIVE_DEFINE_XYZ();
     t = move(t, TreeVec3{-center.x, -center.y, -center.z});
     return move(t.remap(cos(angle) * x + sin(angle) * y,
                        -sin(angle) * x + cos(angle) * y, z), center);
+}
+
+Tree taper_x_y(Tree shape, TreeVec2 base, TreeFloat height,
+                TreeFloat scale, TreeFloat base_scale)
+{
+    LIBFIVE_DEFINE_XYZ();
+    const auto s = height / (scale * y + base_scale * (height - y));
+    return move(
+        move(shape, -TreeVec3{base.x, base.y, 0}).remap(x * s, y, z),
+        TreeVec3{base.x, base.y, 0});
 }
 
 Tree taper_xy_z(Tree shape, TreeVec3 base, TreeFloat height,
@@ -345,4 +439,12 @@ Tree taper_xy_z(Tree shape, TreeVec3 base, TreeFloat height,
     return move(
         move(shape, -base).remap(x * s, y * s, z),
         base);
+}
+
+Tree shear_x_y(Tree t, TreeVec2 base, TreeFloat height, TreeFloat offset,
+               TreeFloat base_offset)
+{
+    LIBFIVE_DEFINE_XYZ();
+    const auto f = (y - base.y) / height;
+    return t.remap(x - (base_offset * (1 - f)) - offset * f, y, z);
 }

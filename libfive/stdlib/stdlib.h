@@ -181,16 +181,79 @@ LIBFIVE_SECTION(transforms)
 LIBFIVE_STDLIB move(
     // Moves the given shape in 2D or 3D space
     libfive_tree t, tvec3 offset);
+LIBFIVE_STDLIB reflect_x(
+    // Reflects a shape about the x origin or an optional offset
+    libfive_tree t, libfive_float x0__0);
+LIBFIVE_STDLIB reflect_y(
+    // Reflects a shape about the y origin or an optional offset
+    libfive_tree t, libfive_float y0__0);
+LIBFIVE_STDLIB reflect_z(
+    // Reflects a shape about the z origin or an optional offset
+    libfive_tree t, libfive_float z0__0);
+LIBFIVE_STDLIB reflect_xy(
+    // Reflects a shape about the plane X=Y
+    libfive_tree t);
+LIBFIVE_STDLIB reflect_yz(
+    // Reflects a shape about the plane Y=Z
+    libfive_tree t);
+LIBFIVE_STDLIB reflect_xz(
+    // Reflects a shape about the plane X=Z
+    libfive_tree t);
+LIBFIVE_STDLIB symmetric_x(
+    // Clips the given shape at the x origin, then duplicates the remaining
+    // shape reflected on the other side of the origin
+    libfive_tree t);
+LIBFIVE_STDLIB symmetric_y(
+    // Clips the given shape at the y origin, then duplicates the remaining
+    // shape reflected on the other side of the origin
+    libfive_tree t);
+LIBFIVE_STDLIB symmetric_z(
+    // Clips the given shape at the z origin, then duplicates the remaining
+    // shape reflected on the other side of the origin
+    libfive_tree t);
+LIBFIVE_STDLIB scale_x(
+    // Scales a shape by sx on the x axis about 0 or an optional offset
+    libfive_tree t, libfive_float sx, libfive_float x0__0);
+LIBFIVE_STDLIB scale_y(
+    // Scales a shape by sx on the x axis about 0 or an optional offset
+    libfive_tree t, libfive_float sy, libfive_float y0__0);
+LIBFIVE_STDLIB scale_z(
+    // Scales a shape by sx on the x axis about 0 or an optional offset
+    libfive_tree t, libfive_float sz, libfive_float z0__0);
+LIBFIVE_STDLIB scale_xyz(
+    // Scales a shape on all three axes, about 0 or an optional offset
+    libfive_tree t, tvec3 s, tvec3 center);
+LIBFIVE_STDLIB rotate_x(
+    // Rotate the given shape by an angle in radians
+    // The center of rotation is [0 0 0] or specified by the optional argument
+    libfive_tree t, libfive_float angle, tvec3 center__0);
+LIBFIVE_STDLIB rotate_y(
+    // Rotate the given shape by an angle in radians
+    // The center of rotation is [0 0 0] or specified by the optional argument
+    libfive_tree t, libfive_float angle, tvec3 center__0);
 LIBFIVE_STDLIB rotate_z(
     // Rotate the given shape by an angle in radians
     // The center of rotation is [0 0 0] or specified by the optional argument
     libfive_tree t, libfive_float angle, tvec3 center__0);
+LIBFIVE_ALIAS(rotate, rotate_z);
+LIBFIVE_STDLIB taper_x_y(
+    // Tapers a shape along the x axis as a function of y
+    // width = base-scale at base
+    // width = scale at base + [0 h]
+    libfive_tree shape, tvec2 base, libfive_float h,
+    libfive_float scale, libfive_float base_scale__1);
 LIBFIVE_STDLIB taper_xy_z(
     // Tapers a shape in the xy plane as a function of z
     // width = base-scale at base
     // width = scale at base + [0 0 height]
     libfive_tree shape, tvec3 base, libfive_float height,
     libfive_float scale, libfive_float base_scale__1);
+LIBFIVE_STDLIB shear_x_y(
+    // Shears a shape on the x axis as a function of y
+    // offset = base-offset at base.y
+    // offset = offset = base.y + h
+    libfive_tree t, tvec2 base, libfive_float height, libfive_float offset,
+    libfive_float base_offset__0);
 
 #ifdef __cplusplus
 }
