@@ -1,4 +1,4 @@
-add_library(five-stdlib SHARED stdlib.cpp)
+add_library(five-stdlib SHARED stdlib.cpp stdlib_impl.cpp)
 target_link_libraries(five-stdlib five)
 
 if (UNIX)

@@ -42,8 +42,9 @@ def parse_decl(line, f):
             line = f.readline().strip()
             if line.startswith('// '):
                 doc += line[3:] + '\n'
-            elif line.endswith(');'):
-                args += [parse_arg(s.strip()) for s in line.strip(');').split(',')]
+            else:
+                args += [parse_arg(s.strip()) for s in
+                         line.strip(');').split(',') if s]
 
             if line.endswith(');'):
                 break
