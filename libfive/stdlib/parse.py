@@ -2,7 +2,8 @@ from collections import namedtuple
 
 Declaration = namedtuple('Declaration', ['name', 'version', 'docstring', 'args', 'raw_name'])
 Argument = namedtuple('Argument', ['name', 'type', 'default'])
-Module = namedtuple('Module', ['shapes'])
+Module = namedtuple('Module', ['shapes', 'aliases'])
+Alias = namedtuple('Alias', ['name', 'target'])
 
 def parse_arg(arg):
     ''' Parses a single argument, returning an Argument
@@ -55,6 +56,14 @@ def parse_decl(line, f):
                        args=args, raw_name=raw_name)
 
 
+def parse_alias(s):
+    ''' Parses a declaration of the form LIBFIVE_ALIAS(name, target)
+    '''
+    name, target = s.split('(')[1].split(')')[0].split(',')
+    return Alias(name=name.strip().replace('_', '-'),
+                 target=target.strip().replace('_', '-'))
+
+
 def parse_section(s):
     ''' Parses a declaration of the form LIBFIVE_SECTION(name)
     '''
@@ -75,9 +84,11 @@ def parse(f):
         line = line.strip()
         if line.startswith('LIBFIVE_SECTION'):
             section = parse_section(line)
-            modules[section] = Module(shapes=[])
+            modules[section] = Module(shapes=[], aliases=[])
         elif line.startswith('LIBFIVE_STDLIB'):
             modules[section].shapes.append(parse_decl(line, f))
+        elif line.startswith('LIBFIVE_ALIAS'):
+            modules[section].aliases.append(parse_alias(line))
     return modules
 
 def parse_stdlib():

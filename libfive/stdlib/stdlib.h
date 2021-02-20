@@ -123,10 +123,10 @@ LIBFIVE_STDLIB box_exact_centered(
 LIBFIVE_STDLIB box_exact(
     // A box with the given bounds with a Euclidean distance metric
     tvec3 a, tvec3 b);
-LIBFIVE_STDLIB box_rounded(
+LIBFIVE_STDLIB rounded_box(
     // Rounded box with the given bounds and radius (as a 0-1 fraction)
     tvec3 a, tvec3 b, libfive_float r);
-LIBFIVE_ALIAS(cube_rounded, box_rounded);
+LIBFIVE_ALIAS(rounded_cube, rounded_box);
 LIBFIVE_STDLIB sphere(
     // A sphere with the given radius and (optional) center
     libfive_float radius, tvec3 center__0);

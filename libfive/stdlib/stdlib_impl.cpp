@@ -221,7 +221,7 @@ Tree box_exact(TreeVec3 a, TreeVec3 b) {
     return box_exact_centered(b - a, (a + b) / 2);
 }
 
-Tree box_rounded(TreeVec3 a, TreeVec3 b, TreeFloat r) {
+Tree rounded_box(TreeVec3 a, TreeVec3 b, TreeFloat r) {
     const auto d = b - a;
     r = r * min(d.x, min(d.y, d.z)) / 2;
     TreeVec3 v{r, r, r};

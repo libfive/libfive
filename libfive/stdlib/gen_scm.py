@@ -78,6 +78,10 @@ It was last generated on {} by user {}
        arg_types=arg_types,
        arg_names=arg_names,
        arg_calls=arg_calls)
+
+    for a in lib[m].aliases:
+        out += '''(define-public {} {})
+'''.format(a.name, a.target)
     return out[:-1]
 
 ################################################################################
