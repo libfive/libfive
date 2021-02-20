@@ -6,20 +6,39 @@ import parse
 def arg_type(a):
     return {'libfive_tree': "'*",
             'libfive_float': "'*",
-            'vec2':  "(list '* '*)",
-            'vec3':  "(list '* '* '*)",
+            'tvec2':  "(list '* '*)",
+            'tvec3':  "(list '* '* '*)",
             'float': 'float',
             'int':   'int'}[a.type]
+
+def arg_name(args, i):
+    a = args[i]
+    if a.default:
+        if a.type == 'libfive_float':
+            d = str(a.default)
+        elif a.type == 'tvec2':
+            d = "#[{0} {0}]".format(a.default)
+        elif a.type == 'tvec3':
+            d = "#[{0} {0} {0}]".format(a.default)
+        else:
+            raise RuntimeError("Unknown default: {}".format(a))
+        d = "({} {})".format(a.name, d)
+
+        if i == 0 or not args[i - 1].default:
+            d = "#:optional " + d
+        return d
+    else:
+        return a.name
 
 def arg_call(a):
     if a.type in ['libfive_tree', 'libfive_float']:
         return '(shape->ptr (ensure-shape %s))' % a.name
     elif a.type in ['float', 'int']:
         return a.name
-    elif a.type == 'vec2':
-        return "(make-c-struct (list '* '*) (map (lambda (t) (shape->ptr (ensure-shape t))) (list (.x {0}) (.y {0}))))".format(a.name)
-    elif a.type == 'vec3':
-        return "(make-c-struct (list '* '* '*) (map (lambda (t) (shape->ptr (ensure-shape t))) (list (.x {0}) (.y {0}) (.z {0}))))".format(a.name)
+    elif a.type == 'tvec2':
+        return "(vec2->tvec2 {})".format(a.name)
+    elif a.type == 'tvec3':
+        return "(vec3->tvec3 {})".format(a.name)
     else:
         raise RuntimeError("Unknown type %s" % a.type)
 
@@ -40,14 +59,16 @@ It was last generated on {} by user {}
 
     for f in lib[m].shapes:
         arg_types = " ".join(map(arg_type, f.args))
-        arg_names = " ".join([a.name for a in f.args])
-        arg_calls = " ".join(map(arg_call, f.args))
+        arg_names = " ".join([arg_name(f.args, i) for i in range(0, len(f.args))])
+        arg_calls = "\n    ".join(map(arg_call, f.args))
         out += '''(define ffi_{name} (pointer->procedure '*
   (dynamic-func "{raw_name}" stdlib)
   (list {arg_types})))
-(define-public ({name} {arg_names})
+(define* ({name} {arg_names})
   {doc}
-  (ptr->shape (ffi_{name} {arg_calls})))
+  (ptr->shape (ffi_{name}
+    {arg_calls})))
+(export {name})
 
 '''.format(raw_name=f.raw_name or f.name,
        name=f.name.replace('_', '-'),

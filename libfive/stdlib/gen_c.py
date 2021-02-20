@@ -10,9 +10,9 @@ def arg_in(a):
 def arg_out(a):
     if a.type in ['libfive_tree', 'libfive_float']:
         return 'Tree({})'.format(a.name)
-    elif a.type == 'vec2':
+    elif a.type == 'tvec2':
         return 'TreeVec2{{Tree({0}.x), Tree({0}.y)}}'.format(a.name)
-    elif a.type == 'vec3':
+    elif a.type == 'tvec3':
         return 'TreeVec3{{Tree({0}.x), Tree({0}.y), Tree({0}.z)}}'.format(a.name)
     elif a.type == 'int':
         return a.name
@@ -40,9 +40,9 @@ def arg_call(a):
         return 'libfive::Tree'
     elif a.type == 'libfive_float':
         return 'TreeFloat' # same as float
-    elif a.type == 'vec2':
+    elif a.type == 'tvec2':
         return 'TreeVec2'
-    elif a.type == 'vec3':
+    elif a.type == 'tvec3':
         return 'TreeVec3'
     elif a.type in ['float', 'int']:
         return a.type
