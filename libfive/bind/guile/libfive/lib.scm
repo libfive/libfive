@@ -21,10 +21,43 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ;; For now, it's manually generated, since there aren't that many functions
 (define-module (libfive lib))
 
-(use-modules (system foreign))
+(use-modules (system foreign) (srfi srfi-1) (srfi srfi-98))
 
-;; TODO: find this library with more smarts
-(define lib (dynamic-link "../../../build/libfive/src/libfive"))
+(define (try-link lib name)
+  (catch
+    #t
+    (lambda () (dynamic-link (string-append lib name)))
+    (lambda (key . args) #f)))
+
+;; Search various paths to find libfive.dylib, in order of priority:
+;;  - LIBFIVE_FRAMEWORK_DIR hint (used by Mac app)
+;;  - A relative path assuming we're in the build directory
+;;  - Empty path, which uses the default system search path
+(define lib-paths (list
+  (get-environment-variable "LIBFIVE_FRAMEWORK_DIR")
+  "libfive/src/"
+  ""
+))
+
+(define lib (any (lambda (t) (try-link t "libfive")) lib-paths))
+(if (not lib) (begin
+  (error "Could not find libfive shared library")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define libfive-interval_t (list float float))
+(define-public (libfive-interval lower upper)
+  " Constructs a libfive_interval "
+  (make-c-struct libfive-interval_t (list lower upper)))
+
+(define libfive-region_t
+  (list libfive-interval_t libfive-interval_t libfive-interval_t))
+(define-public (libfive-region X Y Z)
+  " Constructs a libfive_region "
+  (make-c-struct libfive-region_t (list X Y Z)))
+
+(define-public libfive-vec2_t (list float float))
+(define-public libfive-vec3_t (list float float float))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -63,10 +96,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (pointer->procedure
     '* (dynamic-func "libfive_tree_binary" lib) (list int '* '*)))
 
-(define-public libfive-tree-constant-vars
-  (pointer->procedure
-    '* (dynamic-func "libfive_tree_constant_vars" lib) (list '*)))
-
 (define-public libfive-tree-id
   (pointer->procedure
     '* (dynamic-func "libfive_tree_id" lib) (list '*)))
@@ -79,6 +108,39 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (pointer->procedure
     '* (dynamic-func "libfive_tree_print" lib) (list '*)))
 
-(define-public libfive-free
+(define-public libfive-free-str
   (pointer->procedure
-    void (dynamic-func "libfive_free" lib) (list '*)))
+    void (dynamic-func "libfive_free_str" lib) (list '*)))
+
+(define-public libfive-tree-save-mesh
+  (pointer->procedure
+    uint8 (dynamic-func "libfive_tree_save_mesh" lib)
+      (list '* libfive-region_t float '*)))
+
+(define-public libfive-tree-save-meshes
+  (pointer->procedure
+    uint8 (dynamic-func "libfive_tree_save_meshes" lib)
+      (list '* libfive-region_t float float '*)))
+
+(define-public libfive-tree-save
+  (pointer->procedure
+    '* (dynamic-func "libfive_tree_save" lib) (list '* '*)))
+
+(define-public libfive-tree-load
+  (pointer->procedure
+    uint8 (dynamic-func "libfive_tree_load" lib) (list '*)))
+
+(define-public libfive-tree-eval-f
+  (pointer->procedure
+    float (dynamic-func "libfive_tree_eval_f" lib)
+      (list '* libfive-vec3_t)))
+
+(define-public libfive-tree-eval-i
+  (pointer->procedure
+    libfive-interval_t (dynamic-func "libfive_tree_eval_r" lib)
+      (list '* libfive-region_t)))
+
+(define-public libfive-tree-eval-d
+  (pointer->procedure
+    libfive-vec3_t (dynamic-func "libfive_tree_eval_d" lib)
+      (list '* libfive-vec3_t)))

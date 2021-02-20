@@ -375,7 +375,7 @@ bool libfive_tree_save_mesh(libfive_tree tree, libfive_region3 R,
  *  See other argument details in libfive_tree_render_mesh
  */
 bool libfive_evaluator_save_mesh(libfive_evaluator evaluator, libfive_region3 R,
-                                   const char *f);
+                                 const char *f);
 
 /*
  *  Renders and saves multiple meshes mesh to a file
@@ -408,7 +408,7 @@ libfive_pixels* libfive_tree_render_pixels(libfive_tree tree,
 libfive_evaluator libfive_tree_evaluator(libfive_tree tree, libfive_vars vars);
 
 /*
- *  Upates the variables of the evaluator
+ *  Updates the variables of the evaluator
  */
 bool libfive_evaluator_update_vars(libfive_evaluator eval_tree, libfive_vars vars);
 

@@ -107,6 +107,9 @@ protected:
      *  during init() so that we don't need to build them over
      *  and over again at runtime */
     SCM scm_eval_sandboxed;
+    SCM scm_shape_to_ptr;
+    SCM scm_is_shape;
+
     SCM scm_port_eof_p;
     SCM scm_valid_sym;
     SCM scm_syntax_error_sym;

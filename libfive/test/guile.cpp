@@ -12,8 +12,6 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "catch.hpp"
 
-#include "libfive-guile.h"
-
 ////////////////////////////////////////////////////////////////////////////////
 
 static SCM eval_inner(void* body) {
@@ -34,13 +32,14 @@ static std::string eval(std::string input) {
     if (!initialized)
     {
         scm_init_guile();
-        scm_init_libfive_modules();
+        scm_c_eval_string(
+            "(add-to-load-path (string-append (getcwd) \"/../libfive/bind/guile\"))");
         scm_c_use_module("libfive kernel");
         scm_c_use_module("libfive vec");
-        scm_c_use_module("libfive csg");
-        scm_c_use_module("libfive shapes");
         scm_c_use_module("libfive util");
         scm_c_use_module("libfive sandbox");
+        scm_c_use_module("libfive stdlib csg");
+        scm_c_use_module("libfive stdlib shapes");
         initialized = true;
     }
 

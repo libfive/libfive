@@ -18,7 +18,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
 
 (define-module (libfive vec))
-(use-modules (oop goops) (ice-9 textual-ports) (system foreign))
+
+(use-modules (libfive lib)) ;; for FFI vec types
+
+(use-modules
+  (ice-9 textual-ports)
+  (oop goops)
+  (system foreign)
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -53,6 +60,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (define-method (- (a <vec2>) (b <number>))
   (vec2 (- (slot-ref a 'x) b)
         (- (slot-ref a 'y) b)))
+(define-method (- (a <number>) (b <vec2>))
+  (vec2 (- a (slot-ref b 'x))
+        (- a (slot-ref b 'y))))
 (define-method (- (a <vec2>))
   (vec2 (- (slot-ref a 'x))
         (- (slot-ref a 'y))))
@@ -117,6 +127,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (vec3 (- (slot-ref a 'x) b)
         (- (slot-ref a 'y) b)
         (- (slot-ref a 'z) b)))
+(define-method (- (a <number>) (b <vec3>))
+  (vec3 (- a (slot-ref b 'x))
+        (- a (slot-ref b 'y))
+        (- a (slot-ref b 'z))))
 (define-method (- (a <vec3>))
   (vec3 (- (slot-ref a 'x))
         (- (slot-ref a 'y))
@@ -183,7 +197,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public (vec2->ffi v)
   " Converts from a vec2 to a libfive_vec2 for FFI calls"
-  (make-c-struct (list float float) (list (.x v) (.y v))))
+  (make-c-struct libfive-vec2_t (list (.x v) (.y v))))
+(define-public (ffi->vec2 v)
+  (apply vec2 (parse-c-struct v libfive-vec2_t)))
+
 (define-public (vec3->ffi v)
   " Converts from a vec3 to a libfive_vec3 for FFI calls"
-  (make-c-struct (list float float float) (list (.x v) (.y v) (.z v))))
+  (make-c-struct libfive-vec3_t (list (.x v) (.y v) (.z v))))
+(define-public (ffi->vec3 v)
+  (apply vec3 (parse-c-struct v libfive-vec3_t)))

@@ -16,9 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 |#
-(use-modules (ice-9 sandbox) (ice-9 textual-ports) (libfive kernel)
-             (libfive vec) (rnrs io ports) (system vm frame) (oop goops)
-             (srfi srfi-1))
+(define-module (libfive sandbox))
+
+(use-modules
+  (ice-9 sandbox)
+  (ice-9 textual-ports)
+  (oop goops)
+  (rnrs io ports)
+  (srfi srfi-1)
+  (system vm frame)
+
+  (libfive kernel)
+  (libfive vec)
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -228,10 +238,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (append (list
           (cons '(libfive kernel) libfive-bindings)
           (get-bindings '(libfive vec))
-          (get-bindings '(libfive shapes))
-          (get-bindings '(libfive csg))
-          (get-bindings '(libfive transforms))
-          (get-bindings '(libfive text))
+          (get-bindings '(libfive stdlib shapes))
+          (get-bindings '(libfive stdlib csg))
+          (get-bindings '(libfive stdlib transforms))
+          (get-bindings '(libfive stdlib text))
           (get-bindings '(libfive util))
           '((libfive sandbox) set-bounds! set-resolution! set-quality!)
 

@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/documentation.hpp"
 #include "studio/shape.hpp"
 
-#include "libfive-guile.h"
+#include "libfive.h"
 
 _Interpreter::_Interpreter()
 {
@@ -33,20 +33,36 @@ _Interpreter::_Interpreter()
 void _Interpreter::init()
 {
 #ifdef Q_OS_MAC
-    // Modify environmental variables to use local Guile path
-    auto path = QCoreApplication::applicationDirPath().toLocal8Bit() +
-                "/../Resources/guile/";
-    qputenv("GUILE_LOAD_COMPILED_PATH", path + "ccache/");
-    qputenv("GUILE_LOAD_PATH", path + "scm/");
+    const auto app_dir = QCoreApplication::applicationDirPath().toLocal8Bit();
+
+    // We include a pre-compiled Guile standard library in the Mac app bundle,
+    // then fall back to assuming we're in the the build directory, then
+    // fall back to standard system library search paths
+    qputenv("GUILE_LOAD_COMPILED_PATH", "/../Resources/guile/ccache/:libfive/bind/guile");
+
+    // This hints at Guile where to find libfive.dylib
+    qputenv("LIBFIVE_FRAMEWORK_DIR", app_dir + "/../Frameworks/");
+#else
+    // Assume that we're in the build directory, then fall back to Linux
+    // system libraries (if the Studio executable was installed, then the Guile
+    // precompiled files should be as well).
+    qputenv("GUILE_LOAD_COMPILED_PATH", "libfive/bind/guile");
 #endif
 
     scm_init_guile();
-    scm_init_libfive_modules();
 
     scm_c_use_module("libfive kernel");
     scm_eval_sandboxed = scm_c_eval_string(R"(
 (use-modules (libfive sandbox))
 eval-sandboxed
+)");
+    scm_shape_to_ptr = scm_c_eval_string(R"(
+(use-modules (libfive kernel))
+shape->ptr
+)");
+    scm_is_shape = scm_c_eval_string(R"(
+(use-modules (libfive kernel))
+shape?
 )");
 
     scm_port_eof_p = scm_c_eval_string(R"(
@@ -63,7 +79,8 @@ port-eof?
     scm_numerical_overflow_fmt = scm_from_locale_string("~A: ~A in ~A");
 
     // Protect all of our interpreter vars from garbage collection
-    for (auto s : {scm_eval_sandboxed, scm_port_eof_p, scm_valid_sym,
+    for (auto s : {scm_eval_sandboxed, scm_shape_to_ptr, scm_is_shape,
+                   scm_port_eof_p, scm_valid_sym,
                    scm_syntax_error_sym, scm_numerical_overflow_sym,
                    scm_result_fmt, scm_syntax_error_fmt,
                    scm_numerical_overflow_fmt, scm_other_error_fmt,
@@ -81,9 +98,9 @@ port-eof?
     free(kws);
 
     // Extract a list of function names + docstrings
-    QList<QString> modules = {"(libfive shapes)",
-                              "(libfive csg)",
-                              "(libfive transforms)"};
+    QList<QString> modules = {"(libfive stdlib shapes)",
+                              "(libfive stdlib csg)",
+                              "(libfive stdlib transforms)"};
     Documentation* ds = new Documentation;
     for (auto mod : modules)
     {
@@ -228,7 +245,7 @@ void _Interpreter::eval()
             {
                 auto data = scm_cdar(v);
                 auto id = static_cast<libfive::Tree::Id>(
-                        libfive_tree_id(scm_shape_to_raw_tree(scm_car(data))));
+                    scm_to_pointer(scm_call_1(scm_shape_to_ptr, scm_car(data))));
                 auto value = scm_to_double(scm_cadr(data));
                 vars[id] = value;
 
@@ -244,9 +261,10 @@ void _Interpreter::eval()
         {
             for (auto r = scm_cdar(result); !scm_is_null(r); r = scm_cdr(r))
             {
-                if (scm_is_shape(scm_car(r)))
+                if (scm_is_true(scm_call_1(scm_is_shape, scm_car(r))))
                 {
-                    auto tree = scm_shape_to_raw_tree(scm_car(r));
+                    auto tree = static_cast<libfive_tree>(
+                        scm_to_pointer(scm_call_1(scm_shape_to_ptr, scm_car(r))));
                     auto shape = new Shape(libfive::Tree(tree), vars);
                     shape->moveToThread(QApplication::instance()->thread());
                     shapes.push_back(shape);

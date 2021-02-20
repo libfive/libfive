@@ -112,15 +112,16 @@ message("  libfive:		✓")
 
 if (BUILD_GUILE_BINDINGS)
   if (GUILE_FOUND)
-    message("  libfive-guile:	✓")
+    message("  Guile bindings:	✓")
 
-    # Sadly, this is a global setting (there's no target_link_directories)
+    # target_link_directories is available in cmake 3.13, which is slightly
+    # too fresh (not shipped by default on Ubuntu 18.04 LTS)
     link_directories(${GUILE_LIBRARY_DIRS})
   else ()
-    message("  libfive-guile:	✘   (needs Guile 2.2 or later)")
+    message("  Guile bindings:	✘   (needs Guile 2.2 or later)")
   endif()
 else()
-    message("  libfive-guile:	✘   (skipping)")
+    message("  Guile bindings:	✘   (skipping)")
 endif()
 
 if (BUILD_STUDIO_APP)
