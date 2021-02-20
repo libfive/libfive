@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (libfive stdlib transforms)
 )
 
+(define-public pi 3.14159265359)
+
 (define glyphs (make-hash-table))
 (define (make-glyph! char width shape)
   (hash-set! glyphs char (cons shape width)))

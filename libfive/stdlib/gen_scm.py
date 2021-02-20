@@ -5,20 +5,21 @@ import parse
 
 def arg_type(a):
     return {'libfive_tree': "'*",
-            'vec2':  'libfive-vec2_t',
-            'vec3':  'libfive-vec3_t',
+            'libfive_float': "'*",
+            'vec2':  "(list '* '*)",
+            'vec3':  "(list '* '* '*)",
             'float': 'float',
             'int':   'int'}[a.type]
 
 def arg_call(a):
-    if a.type == 'libfive_tree':
-        return '(shape->ptr %s)' % a.name
+    if a.type in ['libfive_tree', 'libfive_float']:
+        return '(shape->ptr (ensure-shape %s))' % a.name
     elif a.type in ['float', 'int']:
         return a.name
     elif a.type == 'vec2':
-        return '(vec2->ffi %s)' % a.name
+        return "(make-c-struct (list '* '*) (map (lambda (t) (shape->ptr (ensure-shape t))) (list (.x {0}) (.y {0}))))".format(a.name)
     elif a.type == 'vec3':
-        return '(vec3->ffi %s)' % a.name
+        return "(make-c-struct (list '* '* '*) (map (lambda (t) (shape->ptr (ensure-shape t))) (list (.x {0}) (.y {0}) (.z {0}))))".format(a.name)
     else:
         raise RuntimeError("Unknown type %s" % a.type)
 

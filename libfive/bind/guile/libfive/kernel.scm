@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   "Converts a foreign pointer to a shape, attaching a deletion finalizer"
   (make <shape> #:ptr (make-pointer (pointer-address p) libfive-tree-del-ptr)))
 
-(define (ensure-shape t)
+(define-public (ensure-shape t)
   (cond ((shape? t) t)
         ((number? t) (number->shape t))
         (else (scm-error 'wrong-type-arg ensure-shape
