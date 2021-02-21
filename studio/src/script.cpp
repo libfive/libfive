@@ -91,23 +91,57 @@ void Script::keyPressEvent(QKeyEvent* e)
     }
     else if (e->key() == Qt::Key_Return && !c.hasSelection())
     {
-        // Count the number of leading spaces on this line
-        c.movePosition(QTextCursor::StartOfLine);
-        auto prev_pos = c.position();
-        c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
-        while (*c.selectedText().rbegin() == ' ' && c.position() > prev_pos)
-        {
-            prev_pos = c.position();
-            c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
+        // Idea: having a smart indentation mechanism!
+        // We search backwards until we find a opening parenthesis
+        // that wasn't closed yet.
+        // Now we check how many characters are infront of the opening parenthesis
+        // and how many characters the first keyword takes.
+        //
+        // This should produce the following without typing any spaces/tabs
+        // (+ 1 2
+        //    3 4 (-
+        //           4 5)
+        //    6)
+        //
+        // number of spaces that should be used for indentation
+        int indentation = 0;
+
+        // Move left until finding a opening parenthesis
+        int closedParenthesis = 0;
+        while (c.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor)) {
+            if (*c.selectedText().begin() == ')') {
+                closedParenthesis += 1;
+            } else if (*c.selectedText().begin() == '(') {
+                // Is this our parenthesis we are looking for?
+                if (closedParenthesis == 0) {
+                    auto curPos = c.position();
+
+                    // Start of line
+                    c.movePosition(QTextCursor::StartOfLine);
+                    auto startPos = c.position();
+
+                    c.setPosition(curPos);
+                    // move cursor to the next white space
+                    while (c.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor))
+                    {
+                        if (c.selectedText().rbegin()->isSpace()) {
+                            c.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
+                            break;
+                        }
+                    }
+                    auto endPos = c.position();
+
+                    indentation = endPos - startPos + 1;
+                    break;
+
+                } else {
+                    closedParenthesis -= 1;
+                }
+            }
         }
 
-        // Figure out if we stopped searching due to a non-space character
-        // or hitting the end of the document
-        auto length = c.selectedText().length() - 1;
-        length += (*c.selectedText().rbegin() == ' ');
-
-        // Then match the number of leading spaces
-        insertPlainText("\n" + QString(length, ' '));
+        // insert indentation spaces
+        insertPlainText("\n" + QString(indentation, ' '));
     }
     // Backspace does 2-space aligned deletion of spaces, and deletes
     // a single character otherwise.
