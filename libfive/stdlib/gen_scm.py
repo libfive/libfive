@@ -108,7 +108,17 @@ append = {'csg':
   "difference a b [c [d [...]]]
   Subtracts any number of shapes from the first argument"
   (intersection a (inverse (apply union bs))))
-'''}
+''',
+'transforms':
+'''
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Hand-written override to let move work with vec2
+(define move-prev move)
+(define-public (move shape v)
+  (if (vec2? v) (move-prev shape #[(.x v) (.y v) 0])
+                (move-prev shape v)))
+'''
+}
 
 ################################################################################
 
