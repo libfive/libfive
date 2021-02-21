@@ -538,3 +538,83 @@ Tree revolve_y(Tree shape, TreeFloat x0) {
     shape = move(shape, -center);
     return move(_union(shape.remap(r, y, z), shape.remap(-r, y, z)), center);
 }
+
+// This is directly ported from Scheme (hence the use of std::function), and
+// I don't totally understand it - refactoring would be welcome.
+Tree generic_centered_twirl_x(Tree shape, TreeFloat amount, TreeFloat radius,
+                              TreeVec3 vec)
+{
+    LIBFIVE_DEFINE_XYZ();
+    const auto norm = sqrt(square(vec.x) + square(vec.y) + square(vec.z));
+    const auto ca = cos(amount * exp(-norm / radius));
+    const auto sa = sin(amount * exp(-norm / radius));
+
+    return shape.remap(x,
+        ca * y + sa * z,
+        ca * z - sa * y);
+}
+
+Tree centered_twirl_x(Tree shape, TreeFloat amount, TreeFloat radius) {
+    LIBFIVE_DEFINE_XYZ();
+    return generic_centered_twirl_x(shape, amount, radius, TreeVec3{x, y, z});
+}
+
+Tree centered_twirl_axis_x(Tree shape, TreeFloat amount, TreeFloat radius) {
+    LIBFIVE_DEFINE_XYZ();
+    return generic_centered_twirl_x(shape, amount, radius, TreeVec3{0, y, z});
+}
+
+Tree generic_twirl_n(Tree shape, TreeFloat amount,
+                     TreeFloat radius, TreeVec3 center,
+                     std::function<Tree(Tree, TreeFloat, TreeFloat)> method,
+                     std::function<Tree(Tree)> remap)
+{
+    shape = move(shape, -center);
+    shape = remap(shape);
+    shape = method(shape, amount, radius);
+    shape = remap(shape);
+    return move(shape, center);
+}
+
+Tree generic_twirl_x(Tree shape, TreeFloat amount, TreeFloat radius,
+                     TreeVec3 center,
+                     std::function<Tree(Tree, TreeFloat, TreeFloat)> method)
+{
+    return generic_twirl_n(shape, amount, radius, center, method,
+                           [](Tree t) { return t; });
+}
+
+Tree generic_twirl_y(Tree shape, TreeFloat amount, TreeFloat radius,
+                     TreeVec3 center,
+                     std::function<Tree(Tree, TreeFloat, TreeFloat)> method)
+{
+    return generic_twirl_n(shape, amount, radius, center, method, reflect_xy);
+}
+
+Tree generic_twirl_z(Tree shape, TreeFloat amount, TreeFloat radius,
+                     TreeVec3 center,
+                     std::function<Tree(Tree, TreeFloat, TreeFloat)> method)
+{
+    return generic_twirl_n(shape, amount, radius, center, method, reflect_xz);
+}
+
+Tree twirl_x(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 center) {
+    return generic_twirl_x(shape, amount, radius, center, centered_twirl_x);
+}
+Tree twirl_axis_x(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 center) {
+    return generic_twirl_x(shape, amount, radius, center, centered_twirl_axis_x);
+}
+
+Tree twirl_y(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 center) {
+    return generic_twirl_y(shape, amount, radius, center, centered_twirl_x);
+}
+Tree twirl_axis_y(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 center) {
+    return generic_twirl_y(shape, amount, radius, center, centered_twirl_axis_x);
+}
+
+Tree twirl_z(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 center) {
+    return generic_twirl_z(shape, amount, radius, center, centered_twirl_x);
+}
+Tree twirl_axis_z(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 center) {
+    return generic_twirl_z(shape, amount, radius, center, centered_twirl_axis_x);
+}

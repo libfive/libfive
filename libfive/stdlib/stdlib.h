@@ -328,6 +328,33 @@ LIBFIVE_STDLIB revolve_y(
     // Revolves a 2D (XY) shape about a line parallel to the Y axis with the
     // given x value
     libfive_tree shape, libfive_float x0__0);
+LIBFIVE_STDLIB twirl_x(
+    // Twirls the shape in the x axis about the (optional) center point
+    libfive_tree shape, libfive_float amount, libfive_float radius,
+    tvec3 center__0);
+LIBFIVE_STDLIB twirl_axis_x(
+    // Twirls the shape in the x axis about the line extending from the
+    // (optional) center point
+    libfive_tree shape, libfive_float amount, libfive_float radius,
+    tvec3 center__0);
+LIBFIVE_STDLIB twirl_y(
+    // Twirls the shape in the y axis about the (optional) center point
+    libfive_tree shape, libfive_float amount, libfive_float radius,
+    tvec3 center__0);
+LIBFIVE_STDLIB twirl_axis_y(
+    // Twirls the shape in the y axis about the line extending from the
+    // (optional) center point
+    libfive_tree shape, libfive_float amount, libfive_float radius,
+    tvec3 center__0);
+LIBFIVE_STDLIB twirl_z(
+    // Twirls the shape in the z axis about the (optional) center point
+    libfive_tree shape, libfive_float amount, libfive_float radius,
+    tvec3 center__0);
+LIBFIVE_STDLIB twirl_axis_z(
+    // Twirls the shape in the z axis about the line extending from the
+    // (optional) center point
+    libfive_tree shape, libfive_float amount, libfive_float radius,
+    tvec3 center__0);
 
 #ifdef __cplusplus
 }
