@@ -254,6 +254,80 @@ LIBFIVE_STDLIB shear_x_y(
     // offset = offset = base.y + h
     libfive_tree t, tvec2 base, libfive_float height, libfive_float offset,
     libfive_float base_offset__0);
+LIBFIVE_STDLIB repel(
+    // Repels the shape away from a point based upon a radius r,
+    // with optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB repel_x(
+    // Repels the shape away from a YZ plane based upon a radius r,
+    // with optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB repel_y(
+    // Repels the shape away from a XZ plane based upon a radius r,
+    // with optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB repel_z(
+    // Repels the shape away from a XY plane based upon a radius r,
+    // with optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB repel_xy(
+    // Repels the shape away from line parallel to the Z axis,
+    // with a particular radius and optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB repel_yz(
+    // Repels the shape away from line parallel to the X axis,
+    // with a particular radius and optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB repel_xz(
+    // Repels the shape away from line parallel to the Y axis,
+    // with a particular radius and optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB attract(
+    // Attracts the shape away from a point based upon a radius r,
+    // with optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB attract_x(
+    // Attracts the shape away from a YZ plane based upon a radius r,
+    // with optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB attract_y(
+    // Attracts the shape away from a XZ plane based upon a radius r,
+    // with optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB attract_z(
+    // Attracts the shape away from a XY plane based upon a radius r,
+    // with optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB attract_xy(
+    // Attracts the shape away from line parallel to the Z axis,
+    // with a particular radius and optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB attract_yz(
+    // Attracts the shape away from line parallel to the X axis,
+    // with a particular radius and optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB attract_xz(
+    // Attracts the shape away from line parallel to the Y axis,
+    // with a particular radius and optional exaggeration
+    libfive_tree shape, tvec3 locus,
+    libfive_float radius, libfive_float exaggerate__1);
+LIBFIVE_STDLIB revolve_y(
+    // Revolves a 2D (XY) shape about a line parallel to the Y axis with the
+    // given x value
+    libfive_tree shape, libfive_float x0__0);
 
 #ifdef __cplusplus
 }

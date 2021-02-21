@@ -448,3 +448,93 @@ Tree shear_x_y(Tree t, TreeVec2 base, TreeFloat height, TreeFloat offset,
     const auto f = (y - base.y) / height;
     return t.remap(x - (base_offset * (1 - f)) - offset * f, y, z);
 }
+
+#define AXIS_X 1
+#define AXIS_Y 2
+#define AXIS_Z 4
+Tree attract_repel_generic(Tree shape, TreeVec3 locus,
+                           TreeFloat radius, TreeFloat exaggerate, float sign,
+                           uint8_t axes)
+{
+    LIBFIVE_DEFINE_XYZ();
+    const auto norm = sqrt(
+        square((axes & AXIS_X) ? x : 0) +
+        square((axes & AXIS_Y) ? y : 0) +
+        square((axes & AXIS_Z) ? z : 0));
+    const auto fallout = sign * exaggerate * exp(norm / radius);
+
+    return move(
+            move(shape, -locus).remap(
+                x * ((axes & AXIS_X) ? fallout : 0),
+                y * ((axes & AXIS_Y) ? fallout : 0),
+                z * ((axes & AXIS_Z) ? fallout : 0)),
+            locus);
+}
+
+Tree repel(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(
+            shape, locus, radius, exaggerate, -1,
+            AXIS_X | AXIS_Y | AXIS_Z);
+}
+
+Tree repel_x(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, -1, AXIS_X);
+}
+
+Tree repel_y(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, -1, AXIS_Y);
+}
+
+Tree repel_z(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, -1, AXIS_Z);
+}
+
+Tree repel_xy(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, -1, AXIS_X | AXIS_Y);
+}
+
+Tree repel_yz(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, -1, AXIS_Y | AXIS_Z);
+}
+
+Tree repel_xz(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, -1, AXIS_X | AXIS_Z);
+}
+
+Tree attract(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(
+            shape, locus, radius, exaggerate, -1,
+            AXIS_X | AXIS_Y | AXIS_Z);
+}
+
+Tree attract_x(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, 1, AXIS_X);
+}
+
+Tree attract_y(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, 1, AXIS_Y);
+}
+
+Tree attract_z(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, 1, AXIS_Z);
+}
+
+Tree attract_xy(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, 1, AXIS_X | AXIS_Y);
+}
+
+Tree attract_yz(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, 1, AXIS_Y | AXIS_Z);
+}
+
+Tree attract_xz(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
+    return attract_repel_generic(shape, locus, radius, exaggerate, 1, AXIS_X | AXIS_Z);
+}
+
+Tree revolve_y(Tree shape, TreeFloat x0) {
+    LIBFIVE_DEFINE_XYZ();
+    const auto r = sqrt(square(x) + square(y));
+    const TreeVec3 center{x0, 0, 0};
+    shape = move(shape, -center);
+    return move(_union(shape.remap(r, y, z), shape.remap(-r, y, z)), center);
+}
