@@ -114,7 +114,7 @@ append = {'csg':
 
 
 stdlib = parse.parse_stdlib()
-for m in ['csg', 'shapes']:
+for m in ['csg', 'shapes', 'transforms']:
     with open('../bind/guile/libfive/stdlib/%s.scm' % m, 'w') as f:
         f.write(format_module(stdlib, m))
         if m in append:
