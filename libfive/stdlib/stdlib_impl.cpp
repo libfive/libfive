@@ -496,7 +496,7 @@ Tree repel_xz(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate
 
 Tree attract(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggerate) {
     return attract_repel_generic(
-            shape, locus, radius, exaggerate, -1,
+            shape, locus, radius, exaggerate, 1,
             AXIS_X | AXIS_Y | AXIS_Z);
 }
 
