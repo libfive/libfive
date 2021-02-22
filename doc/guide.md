@@ -196,7 +196,7 @@ Enter `,help' for help.
 scheme@(guile-user)> (use-modules (libfive kernel) (libfive stdlib csg) (libfive stdlib shapes))
 scheme@(guile-user)> (circle 1)
 $1 = #<<shape> 102275140>
-scheme@(guile-user)> (shape->mesh $1 "out.stl" 10 '((-2 . 2) (-2 . 2) (-2 . 2)))
+scheme@(guile-user)> (shape-save-mesh $1 "out.stl" 10 '((-2 . 2) (-2 . 2) (-2 . 2)))
 $2 = #t
 scheme@(guile-user)> (quit)
 bash-4.4$ open out.stl
