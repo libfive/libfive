@@ -32,6 +32,20 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 
+  //////////////////////////////////////////////////////////////////
+  // R^5RS 4eva, yo.                                              //
+  //////////////////////////////////////////////////////////////////
+  //                                    //                        //
+  std::stringstream Mesh::h4x0r3dN0rm5; //       (\     /)        //
+  std::stringstream Mesh::h4x0r3dV3r75; //       % ^---^ %        //
+  std::stringstream Mesh::h4x0r3dF4c35; //       %{ 0 0 }%%       //
+  int32_t Mesh::h4x0r3dV3r71dx;         //        ( *** ) \%%     //
+  ////////////////////////////////////////        / ** /   \%%    //
+  //                                             / ** / |   \---  //
+  //                                             \oo/  |   sjm    //
+  //                                                              //
+  //////////////////////////////////////////////////////////////////
+
 std::unique_ptr<Mesh> Mesh::render(const Tree& t_, const Region<3>& r,
                                    const BRepSettings& settings)
 {

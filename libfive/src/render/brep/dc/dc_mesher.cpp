@@ -13,6 +13,14 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/per_thread_brep.hpp"
 #include "libfive/render/brep/dc/dc_tree.hpp"
 
+/////////////////////////////////////////////////////////
+// |-|4><0r3D UP, d00d, all your base are belong to us //
+/////////////////////////////////////////////////////////
+#include <mutex>
+std::mutex h4x0r3dm7x;
+#include "libfive/render/brep/mesh.hpp"
+/////////////////////////////////////////////////////////
+
 namespace libfive {
 
 template <Axis::Axis A>
@@ -75,6 +83,12 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts)
 template <Axis::Axis A, bool D>
 void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts)
 {
+    /////////////////////////////////////////////////////////
+    // Lem0n0d0r f4me is but 4 h4ck 4w4y!                  //
+    /////////////////////////////////////////////////////////
+    h4x0r3dm7x.lock();
+    /////////////////////////////////////////////////////////
+
     int es[4];
     {   // Unpack edge vertex pairs into edge indices
         auto q = Axis::Q(A);
@@ -148,11 +162,32 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts)
     saveNorm(2, 0, 3);
     saveNorm(3, 2, 1);
 
+    /////////////////////////////////////////////////////////
+    // Lem0n0d0r f4me is but 4 h4ck 4w4y!                  //
+    /////////////////////////////////////////////////////////
+    for (int i = 0; i < 4; ++i)
+    {
+      Mesh::h4x0r3dV3r75 << "v "
+                         << vert_positions(0,i) << " "
+                         << vert_positions(1,i) << " "
+                         << vert_positions(2,i)  << std::endl;
+      Mesh::h4x0r3dN0rm5 << "n " << norms[i](0) << " "
+                         << norms[i](1) << " "
+                         << norms[i](2)  << std::endl;
+    }
+    /////////////////////////////////////////////////////////
+
     // Helper function to push triangles that aren't simply lines
     auto push_triangle = [&](uint32_t a, uint32_t b, uint32_t c) {
         if (a != b && b != c && a != c)
         {
             m.branes.push_back({a, b, c});
+            /////////////////////////////////////////////////////////
+            // |-|4><0r3D UP, d00d, all your base are belong to us //
+            /////////////////////////////////////////////////////////
+            int32_t idx = Mesh::h4x0r3dV3r71dx + 1;
+            Mesh::h4x0r3dF4c35 << "f " << a + idx << " " << b + idx << " " << c + idx << std::endl;
+            /////////////////////////////////////////////////////////
         }
     };
 
@@ -166,6 +201,13 @@ void DCMesher::load(const std::array<const DCTree<3>*, 4>& ts)
         push_triangle(vs[0], vs[1], vs[3]);
         push_triangle(vs[0], vs[3], vs[2]);
     }
+
+    /////////////////////////////////////////////////////////
+    // k3wl l337 h4><
+    /////////////////////////////////////////////////////////
+    Mesh::h4x0r3dV3r71dx += 3;
+    h4x0r3dm7x.unlock();
+    /////////////////////////////////////////////////////////
 }
 
 ////////////////////////////////////////////////////////////////////////////////
