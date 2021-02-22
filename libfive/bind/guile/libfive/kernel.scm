@@ -240,16 +240,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     bounds is a list of pairs, e.g.
       '((xmin . xmax) (ymin . ymax) (zmin . zmax))
   "
-  (let ((xmin (caar (bounds)))
-        (xmax (cdar (bounds)))
-        (ymin (caadr (bounds)))
-        (ymax (cdadr (bounds)))
-        (zmin (caaddr (bounds)))
-        (zmax (cdaddr (bounds))))
+  (let ((xmin (caar bounds))
+        (xmax (cdar bounds))
+        (ymin (caadr bounds))
+        (ymax (cdadr bounds))
+        (zmin (caaddr bounds))
+        (zmax (cdaddr bounds)))
     (libfive-tree-save-mesh (shape->ptr shape)
-      (libfive-region (libfive-interval xmin xmax)
-                      (libfive-interval ymin ymax)
-                      (libfive-interval zmin zmax))
+      (libfive-region (list xmin xmax) (list ymin ymax) (list zmin zmax))
       resolution (string->pointer filename))))
 
 (define* (shapes-save-mesh shapes filename resolution bounds
