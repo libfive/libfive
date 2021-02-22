@@ -8,7 +8,6 @@ finds every shape, and saves them to an STL file.
 TODO: Error handling is non-existent.
 !#
 
-(load-extension "libfive-guile" "scm_init_libfive_modules")
 (use-modules (libfive kernel) (libfive sandbox) (libfive vec))
 (use-modules (ice-9 textual-ports))
 
