@@ -181,21 +181,14 @@ Tree half_plane(TreeVec2 a, TreeVec2 b) {
 
 Tree triangle(TreeVec2 a, TreeVec2 b, TreeVec2 c) {
     LIBFIVE_DEFINE_XYZ();
-    /*
-    const auto vec_ab = Eigen::Vector3f(b.x - a.x, b.y - a.y, 0);
-    const auto vec_ac = Eigen::Vector3f(c.x - a.x, c.y - a.y, 0);
-    if (vec_ab.cross(vec_ac).z() > 0.0f) {
-        return intersection(intersection(
-            half_plane(a, b), half_plane(b, c)), half_plane(c, a));
-    } else {
-        return intersection(intersection(
-            half_plane(a, c), half_plane(c, b)), half_plane(b, a));
-    }
-    */
-    (void)a;
-    (void)b;
-    (void)c;
-    return Tree::X(); // TODO
+    // We don't know which way the triangle is wound, and can't actually
+    // know (because it could be parameterized, so we return the union
+    // of both possible windings)
+    return _union(
+        intersection(intersection(
+            half_plane(a, b), half_plane(b, c)), half_plane(c, a)),
+        intersection(intersection(
+            half_plane(a, c), half_plane(c, b)), half_plane(b, a)));
 }
 
 //------------------------------------------------------------------------------
