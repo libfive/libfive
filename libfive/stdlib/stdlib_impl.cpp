@@ -611,3 +611,6 @@ Tree twirl_z(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 center) {
 Tree twirl_axis_z(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 center) {
     return generic_twirl_z(shape, amount, radius, center, centered_twirl_axis_x);
 }
+////////////////////////////////////////////////////////////////////////////////
+// Text
+typedef std::pair<Tree, float> Glyph; // Glyphs are stored as [shape, width]
