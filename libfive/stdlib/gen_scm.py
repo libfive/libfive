@@ -117,6 +117,8 @@ append = {'csg':
 (define-public (move shape v)
   (if (vec2? v) (move-prev shape #[(.x v) (.y v) 0])
                 (move-prev shape v)))
+(set-procedure-property! move 'documentation
+  (procedure-documentation move-prev))
 '''
 }
 

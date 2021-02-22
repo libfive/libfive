@@ -108,7 +108,7 @@ port-eof?
         (module-map (lambda (sym var)
             (cons (symbol->string sym)
                   (if (procedure? (variable-ref var))
-                    (procedure-documentation (variable-ref var))
+                    (or (procedure-documentation (variable-ref var)) "")
                     "")))
           (resolve-interface ')" + mod + "))").toLocal8Bit().constData());
         for (; !scm_is_null(f); f = scm_cdr(f))
@@ -118,6 +118,9 @@ port-eof?
             if (strlen(doc))
             {
                 ds->insert(mod, name, doc);
+            } else {
+                std::cerr << "Warning: missing documentation for "
+                          << name << "\n";
             }
             free(name);
             free(doc);
