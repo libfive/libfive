@@ -613,4 +613,86 @@ Tree twirl_axis_z(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 cente
 }
 ////////////////////////////////////////////////////////////////////////////////
 // Text
-typedef std::pair<Tree, float> Glyph; // Glyphs are stored as [shape, width]
+typedef std::pair<float, Tree> Glyph; // Glyphs are stored as [width, shape]
+
+Glyph glyph_A(void) {
+    return Glyph(0.8,
+        _union(_union(_union(_union(
+           triangle(TreeVec2{0, 0}, TreeVec2{0.35, 1}, TreeVec2{0.1, 0}),
+           triangle(TreeVec2{0.1, 0}, TreeVec2{0.35, 1}, TreeVec2{0.45, 1})),
+           triangle(TreeVec2{0.35, 1}, TreeVec2{0.45, 1}, TreeVec2{0.8, 0})),
+           triangle(TreeVec2{0.7, 0}, TreeVec2{0.35, 1}, TreeVec2{0.8, 0})),
+           rectangle(TreeVec2{0.2, 0.3}, TreeVec2{0.6, 0.4})));
+}
+
+Glyph glyph_a(void) {
+    return Glyph(0.58,
+        move(_union(
+                shear_x_y(
+                    ring(0.275, 0.175, TreeVec2{0.25, 0.275}),
+                    TreeVec2{0, 0}, 0.35, 0.1, 0),
+                rectangle(TreeVec2{0.51, 0}, TreeVec2{0.61, 0.35})),
+            TreeVec3{-0.05, 0, 0}));
+}
+
+Glyph glyph_B(void) {
+    return Glyph(0.575,
+        _union(intersection(_union(ring(0.275, 0.175, TreeVec2{0.3, 0.725}),
+                                    ring(0.275, 0.175, TreeVec2{0.3, 0.275})),
+                             rectangle(TreeVec2{0.3, 0}, TreeVec2{1, 1})),
+                _union(_union(_union(
+                     rectangle(TreeVec2{0.1, 0}, TreeVec2{0.3, 0.1}),
+                     rectangle(TreeVec2{0.1, 0.45}, TreeVec2{0.3, 0.55})),
+                     rectangle(TreeVec2{0.1, 0.9}, TreeVec2{0.3, 1})),
+                     // Main bar of the letter
+                     rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}))));
+}
+
+Glyph glyph_b(void) {
+    return Glyph(0.525,
+      _union(intersection(ring(0.275, 0.175, TreeVec2{0.275, 0.275}),
+                          rectangle(TreeVec2{0.275, 0}, TreeVec2{1, 1})),
+            _union(_union(
+                 rectangle(TreeVec2{0.1, 0}, TreeVec2{0.275, 0.1}),
+                 rectangle(TreeVec2{0.1, 0.45}, TreeVec2{0.275, 0.55})),
+                 rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}))));
+}
+
+Glyph glyph_C(void) {
+    return Glyph(0.57,
+        _union(difference(
+                _union(ring(0.275, 0.175, TreeVec2{0.3, 0.7}),
+                       ring(0.275, 0.175, TreeVec2{0.3, 0.3})),
+                _union(rectangle(TreeVec2{0, 0.3}, TreeVec2{0.6, 0.7}),
+                       triangle(TreeVec2{0.3, 0.5}, TreeVec2{1, 1.5},
+                                TreeVec2{1, -0.5}))),
+           rectangle(TreeVec2{0.025, 0.3}, TreeVec2{0.125, 0.7})));
+}
+
+Glyph glyph_c(void) {
+    return Glyph(0.48,
+        difference(ring(0.275, 0.175, TreeVec2{0.275, 0.275}),
+                   triangle(TreeVec2{0.275, 0.275}, TreeVec2{0.55, 0.555},
+                            TreeVec2{0.55, 0})));
+}
+
+Glyph glyph_D(void) {
+    return Glyph(0.6,
+        _union(rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}),
+               intersection(rectangle(TreeVec2{0, 0}, TreeVec2{1, 1}),
+                            ring(0.5, 0.4, TreeVec2{0.1, 0.5}))));
+}
+
+Glyph glyph_d(void) {
+    auto g = glyph_b();
+    return Glyph(g.first, reflect_x(g.second, g.first/2));
+}
+
+Glyph glyph_E(void) {
+    return Glyph(0.6,
+        _union(_union(rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}),
+                      rectangle(TreeVec2{0, 0}, TreeVec2{0.6, 0.1})),
+               _union(rectangle(TreeVec2{0, 0.9}, TreeVec2{0.6, 1}),
+                      rectangle(TreeVec2{0, 0.45}, TreeVec2{0.6, 0.55}))));
+}
+
