@@ -696,3 +696,46 @@ Glyph glyph_E(void) {
                       rectangle(TreeVec2{0, 0.45}, TreeVec2{0.6, 0.55}))));
 }
 
+Glyph glyph_e(void) {
+    return Glyph(0.55,
+        intersection(
+            _union(
+                difference(
+                    ring(0.275, 0.175, TreeVec2{0.275, 0.275}),
+                    triangle(TreeVec2{0.1, 0.275}, TreeVec2{0.75, 0.275},
+                             TreeVec2{0.6, 0})),
+                rectangle(TreeVec2{0.05, 0.225}, TreeVec2{0.55, 0.315})),
+            circle(0.275, TreeVec2{0.275, 0.275})));
+}
+
+Glyph glyph_F(void) {
+    return Glyph(0.6,
+        _union(_union(
+            rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}),
+            rectangle(TreeVec2{0, 0.9}, TreeVec2{0.6, 1})),
+            rectangle(TreeVec2{0, 0.45}, TreeVec2{0.6, 0.55})));
+}
+
+Glyph glyph_f(void) {
+    return Glyph(0.4,
+        _union(
+            intersection(ring(0.25, 0.15, TreeVec2{0.4, 0.75}),
+                         rectangle(TreeVec2{0, 0.75}, TreeVec2{0.4, 1})),
+            _union(
+                rectangle(TreeVec2{0, 0.45}, TreeVec2{0.4, 0.55}),
+                rectangle(TreeVec2{0.15, 0.}, TreeVec2{0.25, 0.75}))));
+}
+
+Glyph glyph_G(void) {
+    return Glyph(0.6,
+        _union(
+            _union(
+                rectangle(TreeVec2{0, 0.3}, TreeVec2{0.1, 0.7}),
+                rectangle(TreeVec2{0.5, 0.3}, TreeVec2{0.6, 0.4})),
+            _union(
+                rectangle(TreeVec2{0.3, 0.4}, TreeVec2{0.6, 0.5}),
+                difference(
+                    _union(ring(0.3, 0.2, TreeVec2{0.3, 0.7}),
+                           ring(0.3, 0.2, TreeVec2{0.3, 0.3})),
+                    rectangle(TreeVec2{0, 0.3}, TreeVec2{0.6, 0.7})))));
+}
