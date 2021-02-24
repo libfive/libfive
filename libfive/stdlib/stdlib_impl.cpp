@@ -1037,29 +1037,46 @@ Glyph glyph_x(void) {
         triangle(TreeVec2{0.55, 0}, TreeVec2{0.425, 0}, TreeVec2{0, 0.55}));
     return Glyph(0.55, _union(half, reflect_x(half, 0.275)));
 }
+
+Glyph glyph_Y(void) {
+    return Glyph(0.8,
+        _union(
+            difference(triangle(TreeVec2{0, 1}, TreeVec2{0.4, 0.5},
+                                TreeVec2{0.8, 1}),
+                       triangle(TreeVec2{0.1, 1.01}, TreeVec2{0.4, 0.65},
+                                TreeVec2{0.7, 1.01})),
+            rectangle(TreeVec2{0.35, 0}, TreeVec2{0.45, 0.6})));
+}
+Glyph glyph_y(void) {
+    const auto half = _union(
+        triangle(TreeVec2{0, 0.55}, TreeVec2{0.1, 0.55}, TreeVec2{0.325, 0}),
+        triangle(TreeVec2{0.325, 0}, TreeVec2{0.225, 0}, TreeVec2{0, 0.55}));
+    return Glyph(0.55,
+            _union(_union(half, reflect_x(half, 0.275)),
+                   move(reflect_x(half, 0.275), TreeVec3{-0.225, -0.55, 0})));
+}
+
+Glyph glyph_Z(void) {
+    return Glyph(0.6,
+        difference(
+            rectangle(TreeVec2{0, 0}, TreeVec2{0.6, 1}),
+            _union(
+                triangle(TreeVec2{0, 0.1}, TreeVec2{0, 0.9},
+                         TreeVec2{0.45, 0.9}),
+                triangle(TreeVec2{0.6, 0.1}, TreeVec2{0.15, 0.1},
+                         TreeVec2{0.6, 0.9}))));
+}
+Glyph glyph_z(void) {
+    return Glyph(0.6,
+        difference(
+            rectangle({0, 0}, {0.6, 0.55}),
+            _union(
+                triangle({0, 0.1}, {0, 0.45}, {0.45, 0.45}),
+                triangle({0.6, 0.1}, {0.15, 0.1}, {0.6, 0.45}))));
+}
 /*
-YyZz ,.'":;!-)([]><°#1234567890+/
+ ,.'":;!-)([]><°#1234567890+/
 
-(make-glyph! #\Y 0.8
-  union(difference(triangle(TreeVec2{0, 1}, TreeVec2{0.4, 0.5}, TreeVec2{0.8, 1})
-                     triangle(TreeVec2{0.1, 1.01}, TreeVec2{0.4, 0.65}, TreeVec2{0.7, 1.01}))
-         rectangle(TreeVec2{0.35, 0}, TreeVec2{0.45, 0.6})))
-
-(make-glyph! #\y 0.55
- (let ((half union(triangle(TreeVec2{0, 0.55}, TreeVec2{0.1, 0.55}, TreeVec2{0.325, 0})
-                    triangle(TreeVec2{0.325, 0}, TreeVec2{0.225, 0}, TreeVec2{0, 0.55}))))
-   union(half (reflect-x half 0.275)
-          (move (reflect-x half 0.275) #[-0.225 -0.55]))))
-
-(make-glyph! #\Z 0.6
-  difference(rectangle(TreeVec2{0, 0}, TreeVec2{0.6, 1})
-              triangle(TreeVec2{0, 0.1}, TreeVec2{0, 0.9}, TreeVec2{0.45, 0.9})
-              triangle(TreeVec2{0.6, 0.1}, TreeVec2{0.15, 0.1}, TreeVec2{0.6, 0.9})))
-
-(make-glyph! #\z 0.6
-  difference(rectangle(TreeVec2{0, 0}, TreeVec2{0.6, 0.55})
-              triangle(TreeVec2{0, 0.1}, TreeVec2{0, 0.45}, TreeVec2{0.45, 0.45})
-              triangle(TreeVec2{0.6, 0.1}, TreeVec2{0.15, 0.1}, TreeVec2{0.6, 0.45})))
 
 (make-glyph! #\space 0.55 (lambda-shape (x y z) 1))
 
