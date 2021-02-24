@@ -739,3 +739,442 @@ Glyph glyph_G(void) {
                            ring(0.3, 0.2, TreeVec2{0.3, 0.3})),
                     rectangle(TreeVec2{0, 0.3}, TreeVec2{0.6, 0.7})))));
 }
+
+Glyph glyph_g(void) {
+    return Glyph(0.55,
+        _union(intersection(
+                ring(0.275, 0.175, TreeVec2{0.275, -0.1}),
+                rectangle(TreeVec2{0, -0.375}, TreeVec2{0.55, -0.1})),
+        _union(
+            ring(0.275, 0.175, TreeVec2{0.275, 0.275}),
+            rectangle(TreeVec2{0.45, -0.1}, TreeVec2{0.55, 0.55}))));
+}
+
+Glyph glyph_H(void) {
+    return Glyph(0.6,
+        _union(rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}),
+        _union(rectangle(TreeVec2{0.5, 0}, TreeVec2{0.6, 1}),
+               rectangle(TreeVec2{0, 0.45}, TreeVec2{0.6, 0.55}))));
+}
+
+Glyph glyph_h(void) {
+    return Glyph(0.6,
+        _union(
+            intersection(ring(0.275, 0.175, TreeVec2{0.275, 0.275}),
+                         rectangle(TreeVec2{0, 0.275}, TreeVec2{0.55, 0.55})),
+            _union(
+                rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}),
+                rectangle(TreeVec2{0.45, 0}, TreeVec2{0.55, 0.275}))));
+}
+
+Glyph glyph_I(void) {
+    return Glyph(0.5,
+        _union(rectangle(TreeVec2{0.2, 0}, TreeVec2{0.3, 1}),
+        _union(rectangle(TreeVec2{0, 0}, TreeVec2{0.5, 0.1}),
+               rectangle(TreeVec2{0, 0.9}, TreeVec2{0.5, 1}))));
+}
+
+Glyph glyph_i(void) {
+    return Glyph(0.15,
+        _union(circle(0.075, TreeVec2{0.075, 0.7}),
+               rectangle(TreeVec2{0.025, 0}, TreeVec2{0.125, 0.55})));
+}
+
+Glyph glyph_J(void) {
+    return Glyph(0.55,
+        _union(
+            rectangle(TreeVec2{0.4, 0.275}, TreeVec2{0.5, 1}),
+            intersection(
+                ring(0.225, 0.125, TreeVec2{0.275, 0.275}),
+                rectangle(TreeVec2{0, 0}, TreeVec2{0.55, 0.275}))));
+}
+Glyph glyph_j(void) {
+    return Glyph(0.3,
+        _union(_union(
+                circle(0.075, TreeVec2{0.225, 0.7}),
+                rectangle(TreeVec2{0.175, -0.1}, TreeVec2{0.275, 0.55})),
+            intersection(
+                ring(0.275, 0.175, TreeVec2{0, -0.1}),
+                rectangle(TreeVec2{0, -0.375}, TreeVec2{0.55, -0.1}))));
+}
+
+Glyph glyph_K(void) {
+    return Glyph(0.6,
+        difference(rectangle(TreeVec2{0, 0}, TreeVec2{0.6, 1}),
+            _union(_union(
+                triangle(TreeVec2{0.1, 1}, TreeVec2{0.5, 1},
+                         TreeVec2{0.1, 0.6}),
+                triangle(TreeVec2{0.5, 0}, TreeVec2{0.1, 0},
+                         TreeVec2{0.1, 0.4})),
+                triangle(TreeVec2{0.6, 0.95}, TreeVec2{0.6, 0.05},
+                         TreeVec2{0.18, 0.5}))));
+}
+
+Glyph glyph_k(void) {
+    return Glyph(0.5,
+        difference(rectangle(TreeVec2{0, 0}, TreeVec2{0.5, 1}),
+            _union(_union(
+                triangle(TreeVec2{0.1, 1}, TreeVec2{0.5, 1},
+                         TreeVec2{0.1, 0.45}),
+                triangle(TreeVec2{0.37, -0.1}, TreeVec2{0.1, -0.1},
+                         TreeVec2{0.1, 0.25})),
+            _union(
+                triangle(TreeVec2{0.6, 1}, TreeVec2{0.5, 0},
+                         TreeVec2{0.18, 0.35}),
+                triangle(TreeVec2{0.1, 1}, TreeVec2{0.6, 1},
+                         TreeVec2{0.6, 0.5})))));
+}
+
+Glyph glyph_L(void) {
+    return Glyph(0.6,
+        _union(rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}),
+               rectangle(TreeVec2{0, 0}, TreeVec2{0.6, 0.1})));
+}
+
+Glyph glyph_l(void) {
+    return Glyph(0.15,
+        rectangle(TreeVec2{0.025, 0}, TreeVec2{0.125, 1}));
+}
+Glyph glyph_M(void) {
+    return Glyph(0.8,
+        _union(rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}),
+        _union(rectangle(TreeVec2{0.7, 0}, TreeVec2{0.8, 1}),
+        _union(triangle(TreeVec2{0, 1}, TreeVec2{0.1, 1}, TreeVec2{0.45, 0}),
+        _union(triangle(TreeVec2{0.45, 0}, TreeVec2{0.35, 0}, TreeVec2{0, 1}),
+        _union(triangle(TreeVec2{0.7, 1}, TreeVec2{0.8, 1}, TreeVec2{0.35, 0}),
+        triangle(TreeVec2{0.35, 0}, TreeVec2{0.8, 1}, TreeVec2{0.45, 0})))))));
+}
+
+Glyph glyph_m(void) {
+    return Glyph(0.6,
+        _union(
+            intersection(
+                _union(ring(0.175, 0.075, TreeVec2{0.175, 0.35}),
+                       ring(0.175, 0.075, TreeVec2{0.425, 0.35})),
+                 rectangle(TreeVec2{0, 0.35}, TreeVec2{0.65, 0.65})),
+        _union(rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 0.525}),
+        _union(rectangle(TreeVec2{0.25, 0}, TreeVec2{0.35, 0.35}),
+        rectangle(TreeVec2{0.5, 0}, TreeVec2{0.6, 0.35})))));
+}
+Glyph glyph_N(void) {
+    return Glyph(0.6,
+        _union(_union(rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}),
+                      rectangle(TreeVec2{0.5, 0}, TreeVec2{0.6, 1})),
+        _union(
+            triangle(TreeVec2{0, 1}, TreeVec2{0.1, 1}, TreeVec2{0.6, 0}),
+            triangle(TreeVec2{0.6, 0}, TreeVec2{0.5, 0}, TreeVec2{0, 1}))));
+}
+
+Glyph glyph_n(void) {
+    return Glyph(0.55,
+        _union(intersection(
+                ring(0.275, 0.175, TreeVec2{0.275, 0.275}),
+                rectangle(TreeVec2{0, 0.325}, TreeVec2{0.55, 0.55})),
+            _union(
+                rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 0.55}),
+                rectangle(TreeVec2{0.45, 0}, TreeVec2{0.55, 0.325}))));
+}
+
+Glyph glyph_O(void) {
+    return Glyph(0.6,
+        _union(_union(rectangle(TreeVec2{0, 0.3}, TreeVec2{0.1, 0.7}),
+                      rectangle(TreeVec2{0.5, 0.3}, TreeVec2{0.6, 0.7})),
+            difference(
+                _union(ring(0.3, 0.2, TreeVec2{0.3, 0.7}),
+                       ring(0.3, 0.2, TreeVec2{0.3, 0.3})),
+                rectangle(TreeVec2{0, 0.3}, TreeVec2{0.6, 0.7}))));
+}
+Glyph glyph_o(void) {
+    return Glyph(0.55, ring(0.275, 0.175, TreeVec2{0.275, 0.275}));
+}
+
+Glyph glyph_P(void) {
+    return Glyph(0.575,
+        _union(difference(ring(0.275, 0.175, TreeVec2{0.3, 0.725}),
+                          rectangle(TreeVec2{0, 0}, TreeVec2{0.3, 1})),
+        _union(rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1}),
+        _union(rectangle(TreeVec2{0.1, 0.45}, TreeVec2{0.3, 0.55}),
+        rectangle(TreeVec2{0.1, 0.9}, TreeVec2{0.3, 1})))));
+}
+Glyph glyph_p(void) {
+    return Glyph(0.55,
+        _union(ring(0.275, 0.175, TreeVec2{0.275, 0.275}),
+               rectangle(TreeVec2{0, -0.375}, TreeVec2{0.1, 0.55})));
+}
+Glyph glyph_Q(void) {
+    return Glyph(0.6,
+        _union(rectangle(TreeVec2{0, 0.3}, TreeVec2{0.1, 0.7}),
+        _union(rectangle(TreeVec2{0.5, 0.3}, TreeVec2{0.6, 0.7}),
+        _union(
+            difference(
+                _union(ring(0.3, 0.2, TreeVec2{0.3, 0.7}),
+                       ring(0.3, 0.2, TreeVec2{0.3, 0.3})),
+                 rectangle(TreeVec2{0, 0.3}, TreeVec2{0.6, 0.7})),
+        _union(triangle(TreeVec2{0.5, 0.1}, TreeVec2{0.6, 0.1},
+                        TreeVec2{0.6, 0}),
+               triangle(TreeVec2{0.5, 0.1}, TreeVec2{0.5, 0.3},
+                        TreeVec2{0.6, 0.1}))))));
+}
+
+Glyph glyph_q(void) {
+    return Glyph(0.55,
+        _union(ring(0.275, 0.175, TreeVec2{0.275, 0.275}),
+               rectangle(TreeVec2{0.45, -0.375}, TreeVec2{0.55, 0.55})));
+}
+
+Glyph glyph_R(void) {
+    return Glyph(0.575,
+        _union(glyph_P().second,
+        _union(
+            triangle(TreeVec2{0.3, 0.5}, TreeVec2{0.4, 0.5},
+                     TreeVec2{0.575, 0}),
+            triangle(TreeVec2{0.475, 0}, TreeVec2{0.3, 0.5},
+                     TreeVec2{0.575, 0}))));
+}
+Glyph glyph_r(void) {
+    return Glyph(0.358,
+        _union(
+            scale_x(
+                intersection(
+                    difference(
+                        circle(0.55, TreeVec2{0.55, 0}),
+                        scale_x(circle(0.45, TreeVec2{0.55, 0}), 0.8, 0.55)),
+                    rectangle(TreeVec2{0, 0}, TreeVec2{0.55, 0.55})), 0.7, 0),
+            rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 0.55})));
+}
+/*
+SsTtUuVvWwXxYyZz ,.'":;!-)([]><°#1234567890+/
+
+(make-glyph! #\S 0.55
+  (let ((half difference(ring(0.275, 0.175, TreeVec2{0.275, 0.725})
+                          rectangle(TreeVec2{0.275, 0.45}, TreeVec2{0.55, 0.725}))))
+    union(half (reflect-x (reflect-y half 0.5) 0.275))))
+
+(make-glyph! #\s 0.4875
+ (let ((half difference(circle(0.1625, TreeVec2{0.1625, 0.1625})
+                         (scale-x circle(0.0625, TreeVec2{0.165, 0.165}) 1.5 0.165)
+                         rectangle(TreeVec2{0, 0.1625}, TreeVec2{0.1625, 0.325}))))
+   (scale-x union(half (reflect-x (reflect-y half 0.275) 0.1625)) 1.5 0)))
+
+(make-glyph! #\T 0.6
+  union(rectangle(TreeVec2{0, 0.9}, TreeVec2{0.6, 1})
+         rectangle(TreeVec2{0.25, 0}, TreeVec2{0.35, 1})))
+
+(make-glyph! #\t 0.4
+  union((intersection ring(0.25, 0.15, TreeVec2{0.4, 0.25})
+                       rectangle(TreeVec2{0., 0}, TreeVec2{0.4, 0.25}))
+         rectangle(TreeVec2{0., 0.55}, TreeVec2{0.4, 0.65})
+         rectangle(TreeVec2{0.15, 0.25},  TreeVec2{0.25, 1})))
+
+(make-glyph! #\U 0.6
+  union(rectangle(TreeVec2{0, 0.3}, TreeVec2{0.1, 1})
+         rectangle(TreeVec2{0.5, 0.3}, TreeVec2{0.6, 1})
+         difference(ring(0.3, 0.2, TreeVec2{0.3, 0.3})
+                     rectangle(TreeVec2{0, 0.3}, TreeVec2{0.6, 0.7}))))
+
+(make-glyph! #\u 0.55
+  union((intersection ring(0.275, 0.175, TreeVec2{0.275, 0.275})
+                       rectangle(TreeVec2{0, 0}, TreeVec2{0.55, 0.275}))
+         rectangle(TreeVec2{0, 0.275}, TreeVec2{0.1, 0.55})
+         rectangle(TreeVec2{0.45, 0}, TreeVec2{0.55, 0.55})))
+
+(make-glyph! #\V 0.6
+  (let ((half union(triangle(TreeVec2{0, 1}, TreeVec2{0.1, 1}, TreeVec2{0.35, 0})
+                     triangle(TreeVec2{0.35, 0}, TreeVec2{0.25, 0}, TreeVec2{0, 1}))))
+    union(half (reflect-x half 0.3))))
+
+(make-glyph! #\v 0.6
+  (let ((half union(triangle(TreeVec2{0, 0.55}, TreeVec2{0.1, 0.55}, TreeVec2{0.35, 0})
+                     triangle(TreeVec2{0.35, 0}, TreeVec2{0.25, 0}, TreeVec2{0, 0.55}))))
+    union(half (reflect-x half 0.3))))
+
+(make-glyph! #\W (- (* 2 (glyph-width #\V)) 0.1)
+  union((glyph-shape #\V)
+         (move (glyph-shape #\V) #[(- (glyph-width #\V) 0.1) 0])))
+
+(make-glyph! #\w (- (* 2 (glyph-width #\v)) 0.1)
+  union((glyph-shape #\v)
+         (move (glyph-shape #\v) #[(- (glyph-width #\v) 0.1) 0])))
+
+(make-glyph! #\X 0.8
+  (let ((half union(triangle(TreeVec2{0, 1}, TreeVec2{0.125, 1}, TreeVec2{0.8, 0})
+                     triangle(TreeVec2{0.8, 0}, TreeVec2{0.675, 0}, TreeVec2{0, 1}))))
+    union(half (reflect-x half 0.4))))
+
+(make-glyph! #\x 0.55
+  (let ((half union(triangle(TreeVec2{0, 0.55}, TreeVec2{0.125, 0.55}, TreeVec2{0.55, 0})
+                     triangle(TreeVec2{0.55, 0}, TreeVec2{0.425, 0}, TreeVec2{0, 0.55}))))
+    union(half (reflect-x half 0.275))))
+
+(make-glyph! #\Y 0.8
+  union(difference(triangle(TreeVec2{0, 1}, TreeVec2{0.4, 0.5}, TreeVec2{0.8, 1})
+                     triangle(TreeVec2{0.1, 1.01}, TreeVec2{0.4, 0.65}, TreeVec2{0.7, 1.01}))
+         rectangle(TreeVec2{0.35, 0}, TreeVec2{0.45, 0.6})))
+
+(make-glyph! #\y 0.55
+ (let ((half union(triangle(TreeVec2{0, 0.55}, TreeVec2{0.1, 0.55}, TreeVec2{0.325, 0})
+                    triangle(TreeVec2{0.325, 0}, TreeVec2{0.225, 0}, TreeVec2{0, 0.55}))))
+   union(half (reflect-x half 0.275)
+          (move (reflect-x half 0.275) #[-0.225 -0.55]))))
+
+(make-glyph! #\Z 0.6
+  difference(rectangle(TreeVec2{0, 0}, TreeVec2{0.6, 1})
+              triangle(TreeVec2{0, 0.1}, TreeVec2{0, 0.9}, TreeVec2{0.45, 0.9})
+              triangle(TreeVec2{0.6, 0.1}, TreeVec2{0.15, 0.1}, TreeVec2{0.6, 0.9})))
+
+(make-glyph! #\z 0.6
+  difference(rectangle(TreeVec2{0, 0}, TreeVec2{0.6, 0.55})
+              triangle(TreeVec2{0, 0.1}, TreeVec2{0, 0.45}, TreeVec2{0.45, 0.45})
+              triangle(TreeVec2{0.6, 0.1}, TreeVec2{0.15, 0.1}, TreeVec2{0.6, 0.45})))
+
+(make-glyph! #\space 0.55 (lambda-shape (x y z) 1))
+
+(make-glyph! #\, 0.175
+  union(circle(0.075, TreeVec2{0.1, 0.075})
+    (intersection (scale-y circle(0.075, TreeVec2{0.075, 0.075}) 3 0.075)
+                  rectangle(TreeVec2{0, -0.15}, TreeVec2{0.15, 0.075})
+                  (inverse triangle(TreeVec2{0.1, 0.2}, TreeVec2{0, -0.15}, TreeVec2{-0.5, 0.075})))
+))
+
+(make-glyph! #\. 0.175 circle(0.075, TreeVec2{0.075, 0.075}))
+
+(make-glyph! #\' 0.1 rectangle(TreeVec2{0, 0.55}, TreeVec2{0.1, 0.8}))
+
+(make-glyph! #\" 0.3
+  union(rectangle(TreeVec2{0, 0.55}, TreeVec2{0.1, 0.8})
+         rectangle(TreeVec2{0.2, 0.55}, TreeVec2{0.3, 0.8})))
+
+(make-glyph! #\: 0.15
+  union(circle(0.075, TreeVec2{0.075, 0.15})
+         circle(0.075, TreeVec2{0.075, 0.45})))
+
+(make-glyph! #\; 0.15
+  union(
+    (move (glyph-shape #\,) #[0 0.075])
+    (intersection (scale-y circle(0.074, TreeVec2{0.075, 0.15}) 3 0.015)
+                  rectangle(TreeVec2{0, 0.15}, TreeVec2{-0.075, 0.15})
+                  (inverse triangle(TreeVec2{0.075, 0.15}, TreeVec2{0, -0.075}, TreeVec2{-0.5, 0.15})))
+    circle(0.075, TreeVec2{0.075, 0.45})))
+
+(make-glyph! #\! 0.1
+  union(rectangle(TreeVec2{0.025, 0.3}, TreeVec2{0.125, 1})
+         circle(0.075, TreeVec2{0.075, 0.075})))
+
+(make-glyph! #\- 0.45 rectangle(TreeVec2{0.05, 0.4}, TreeVec2{0.35, 0.5}))
+
+(make-glyph! #\) 0.3
+  (scale-x (intersection circle(0.6, TreeVec2{0, 0.5})
+                         (inverse (scale-x circle(0.5, TreeVec2{0, 0.5}) 0.7))
+                         rectangle(TreeVec2{0, 0}, TreeVec2{0.6, 1})) 0.5))
+
+(make-glyph! #\( 0.3
+  (reflect-x (glyph-shape #\)) (/ (glyph-width #\)) 2)))
+
+(make-glyph! #\[ 0.3
+  union(rectangle(TreeVec2{0, 0}, TreeVec2{0.1, 1})
+         rectangle(TreeVec2{0, 0}, TreeVec2{0.3, 0.07})
+         rectangle(TreeVec2{0, 0.93}, TreeVec2{0.3, 1})))
+
+(make-glyph! #\] 0.3
+  (reflect-x (glyph-shape #\[) (/ (glyph-width #\[) 2)))
+
+(make-glyph! #\> 0.55
+  (let ((half union(triangle(TreeVec2{0, 0.55}, TreeVec2{0.1, 0.55}, TreeVec2{0.35, 0})
+                     triangle(TreeVec2{0.35, 0}, TreeVec2{0.25, 0}, TreeVec2{0, 0.55}))))
+    (move (rotate-z union(half (reflect-x half 0.3))
+                    (/ pi 2))
+          #[0.55 0.15] )))
+
+(make-glyph! #\< 0.55
+  (let ((half union(triangle(TreeVec2{0, 0.55}, TreeVec2{0.1, 0.55}, TreeVec2{0.35, 0})
+                     triangle(TreeVec2{0.35, 0}, TreeVec2{0.25, 0}, TreeVec2{0, 0.55}))))
+     (move (rotate-z union(half (reflect-x half 0.3))
+                     (* pi 1.5))
+           #[0 0.75] )))
+
+(make-glyph! #\° 0.4
+  ring(0.175, 0.075, TreeVec2{0.2, 0.8}))
+
+(make-glyph! #\# 0.55
+  (move (shear-x-y  union(rectangle(TreeVec2{0.1, 0.05}, TreeVec2{0.2, 0.75})
+                           rectangle(TreeVec2{0.3, 0.05}, TreeVec2{0.4, 0.75})
+                           rectangle(TreeVec2{0, 0.25}, TreeVec2{0.5, 0.35})
+                           rectangle(TreeVec2{0, 0.45}, TreeVec2{0.5, 0.55}))
+                    TreeVec2{0, 0}, 0.35 0.1)
+        TreeVec2{-0.05, 0}))
+
+(make-glyph! #\1 0.3
+  difference(rectangle(TreeVec2{0, 0}, TreeVec2{0.3, 1})
+              rectangle(TreeVec2{0, 0}, TreeVec2{0.2, 0.75})
+              circle(0.2, #[0 1])))
+
+(make-glyph! #\2 0.55
+  union(difference(ring(0.275, 0.175, TreeVec2{0.275, 0.725})
+                     rectangle(TreeVec2{0, 0}, TreeVec2{0.55, 0.725}))
+         rectangle(TreeVec2{0, 0}, TreeVec2{0.55, 0.1})
+         triangle(TreeVec2{0, 0.1}, TreeVec2{0.45, 0.775}, TreeVec2{0.55, 0.725})
+         triangle(TreeVec2{0, 0.1}, TreeVec2{0.55, 0.725}, TreeVec2{0.125, 0.1})))
+
+(make-glyph! #\3 0.55
+  (difference
+    union(ring(0.275, 0.175, TreeVec2{0.3, 0.725})
+           ring(0.275, 0.175, TreeVec2{0.3, 0.225}))
+    rectangle(TreeVec2{0, 0.275}, TreeVec2{0.275, 0.725})))
+
+(make-glyph! #\4 0.5
+  (intersection union(triangle(TreeVec2{-0.10, 0.45}, TreeVec2{0.4, 1}, TreeVec2{0.4, 0.45})
+                       rectangle(TreeVec2{0.4, 0}, TreeVec2{0.5, 1}))
+              (inverse triangle(TreeVec2{0.4, 0.85}, TreeVec2{0.4, 0.55}, TreeVec2{0.1, 0.55}))
+              rectangle(TreeVec2{0, 0}, TreeVec2{0.5, 1})))
+
+(make-glyph! #\5 0.65
+  union(difference(ring(0.325, 0.225, TreeVec2{0.325, 0.325})
+                     rectangle(TreeVec2{0, 0.325}, TreeVec2{0.325, 0.65}))
+         rectangle(TreeVec2{0, 0.55}, TreeVec2{0.325, 0.65})
+         rectangle(TreeVec2{0, 0.55}, TreeVec2{0.1, 1})
+         rectangle(TreeVec2{0.1, 0.9}, TreeVec2{0.65, 1})))
+
+(make-glyph! #\6 0.55
+  (let ((hook
+    (intersection
+      circle(0.275, TreeVec2{0.275, 0.725})
+      (inverse (scale-y circle(0.175, TreeVec2{0.275, 0.725}) 1.2 0.725))
+      rectangle(TreeVec2{0, 0.725}, TreeVec2{0.55, 1})
+      (inverse triangle(TreeVec2{0.275, 0.925}, TreeVec2{0.55, 0.9}, TreeVec2{0.55, 0.525})))))
+  union(ring(0.275, 0.175, TreeVec2{0.275, 0.275})
+         rectangle(TreeVec2{0, 0.275}, TreeVec2{0.1, 0.45})
+         difference((scale-x (scale-y hook 2 1) 1.1)
+                     rectangle(TreeVec2{0.275, 0.65}, TreeVec2{0, 0.7})))))
+
+(make-glyph! #\7 0.6
+  union(rectangle(TreeVec2{0, 0.9}, TreeVec2{0.6, 1})
+         (triangle #[0 0] #[0.475 0.9] #[0.6 0.9])
+         (triangle #[0 0] #[0.6 0.9] #[0.125 0])))
+
+(make-glyph! #\8 0.55
+  union(ring(0.275, 0.175, TreeVec2{0.3, 0.725})
+         ring(0.275, 0.175, TreeVec2{0.3, 0.225})))
+
+(make-glyph! #\9 (glyph-width #\6)
+  (reflect-x (reflect-y (glyph-shape #\6) 0.5)
+             (/ (glyph-width #\6) 2)))
+
+(make-glyph! #\0 0.7
+  (scale-x difference(circle(0.5, TreeVec2{0.5, 0.5})
+                       (scale-x circle(0.4, TreeVec2{0.5, 0.5}) (sqrt 0.7) 0.5))
+           0.7))
+
+(make-glyph! #\+ 0.55
+  union(rectangle(TreeVec2{0, 0.45}, TreeVec2{0.5, 0.55})
+         rectangle(TreeVec2{0.2, 0.25}, TreeVec2{0.3, 0.75})))
+
+(make-glyph! #\/ 0.55
+  union(triangle(TreeVec2{0, 0}, TreeVec2{0.425, 1}, TreeVec2{0.55, 1})
+         triangle(TreeVec2{0, 0}, TreeVec2{0.55, 1}, TreeVec2{0.125, 0})))
+
+(make-glyph! #\? 0.55
+  union(difference(ring(0.275, 0.175, TreeVec2{0.275, 0.725})
+                     rectangle(TreeVec2{0, 0.45}, TreeVec2{0.275, 0.725}))
+         rectangle(TreeVec2{0.225, 0.3}, TreeVec2{0.325, 0.55})
+         circle(0.075, TreeVec2{0.275, 0.075})))
+*/
