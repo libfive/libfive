@@ -70,14 +70,17 @@ std::unique_ptr<const OracleClause> TransformedOracleClause::remap(
     auto Yn = ly == deps_.end() ? this->Y_.remap(deps_) : ly->second;
     auto Zn = lz == deps_.end() ? this->Z_.remap(deps_) : lz->second;
 
-    for (auto iter : { lx, ly, lz }) {
-        if (iter != deps_.end()) {
-            deps_.erase(iter);
-        }
-    }
+    /// Variable clauses also need to be remapped in the underlying (as they are the only ones
+    /// other than constants that are not dependent on coordinates, and remapping constants is 
+    /// not supported and is a really bad idea in any case).
+    std::map<Tree::Id, Tree> varDeps;
+    std::copy_if(deps_.begin(), deps_.end(), std::inserter(varDeps, varDeps.end()), 
+      [](const std::pair<Tree::Id, Tree>& pr) {
+          return pr.first->op == Opcode::VAR_FREE || pr.first->op == Opcode::CONST_VAR; 
+      });
 
-    auto newUnderlying = deps_.empty() ? this->underlying 
-                                       : this->underlying.remap(deps_);
+    auto newUnderlying = varDeps.empty() ? this->underlying
+                                         : this->underlying.remap(varDeps);
 
     return std::unique_ptr<const OracleClause>(new TransformedOracleClause(
         newUnderlying, Xn, Yn, Zn));
