@@ -1266,3 +1266,96 @@ Glyph glyph_question(void) {
         _union(rectangle({0.225, 0.3}, {0.325, 0.55}),
                circle(0.075, {0.275, 0.075}))));
 }
+
+// Returns a glyph for the given character (without unicode support)
+Glyph get_glyph(uint8_t c) {
+    switch (c) {
+        case 'A': return glyph_A();
+        case 'a': return glyph_a();
+        case 'B': return glyph_B();
+        case 'b': return glyph_b();
+        case 'C': return glyph_C();
+        case 'c': return glyph_c();
+        case 'D': return glyph_D();
+        case 'd': return glyph_d();
+        case 'E': return glyph_E();
+        case 'e': return glyph_e();
+        case 'F': return glyph_F();
+        case 'f': return glyph_f();
+        case 'G': return glyph_G();
+        case 'g': return glyph_g();
+        case 'H': return glyph_H();
+        case 'h': return glyph_h();
+        case 'I': return glyph_I();
+        case 'i': return glyph_i();
+        case 'J': return glyph_J();
+        case 'j': return glyph_j();
+        case 'K': return glyph_K();
+        case 'k': return glyph_k();
+        case 'L': return glyph_L();
+        case 'l': return glyph_l();
+        case 'M': return glyph_M();
+        case 'm': return glyph_m();
+        case 'N': return glyph_N();
+        case 'n': return glyph_n();
+        case 'O': return glyph_O();
+        case 'o': return glyph_o();
+        case 'P': return glyph_P();
+        case 'p': return glyph_p();
+        case 'Q': return glyph_Q();
+        case 'q': return glyph_q();
+        case 'R': return glyph_R();
+        case 'r': return glyph_r();
+        case 'S': return glyph_S();
+        case 's': return glyph_s();
+        case 'T': return glyph_T();
+        case 't': return glyph_t();
+        case 'U': return glyph_U();
+        case 'u': return glyph_u();
+        case 'V': return glyph_V();
+        case 'v': return glyph_v();
+        case 'W': return glyph_W();
+        case 'w': return glyph_w();
+        case 'X': return glyph_X();
+        case 'x': return glyph_x();
+        case 'Y': return glyph_Y();
+        case 'y': return glyph_y();
+        case 'Z': return glyph_Z();
+        case 'z': return glyph_z();
+        case ' ': return glyph_space();
+        case ',': return glyph_comma();
+        case '.': return glyph_period();
+        case '\'': return glyph_quote();
+        case '"': return glyph_double_quote();
+        case ':': return glyph_colon();
+        case ';': return glyph_semicolon();
+        case '!': return glyph_exclamation();
+        case '-': return glyph_minus();
+        case ')': return glyph_rparen();
+        case '(': return glyph_lparen();
+        case ']': return glyph_rsquare();
+        case '[': return glyph_lsquare();
+        case '>': return glyph_rtri();
+        case '<': return glyph_ltri();
+        case '°': return glyph_deg();
+        case '#': return glyph_hash();
+        case '1': return glyph_1();
+        case '2': return glyph_2();
+        case '3': return glyph_3();
+        case '4': return glyph_4();
+        case '5': return glyph_5();
+        case '6': return glyph_6();
+        case '7': return glyph_7();
+        case '8': return glyph_8();
+        case '9': return glyph_9();
+        case '0': return glyph_0();
+        case '+': return glyph_plus();
+        case '/': return glyph_slash();
+        case '?': return glyph_question();
+
+        default: return glyph_question();
+    }
+}
+
+Tree text(const char* txt, TreeVec2 pos) {
+}
