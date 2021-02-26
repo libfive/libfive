@@ -8,7 +8,7 @@ def arg_in(a):
     return "{} {}".format(a.type, a.name)
 
 def arg_out(a):
-    if a.type in ['libfive_tree', 'libfive_float']:
+    if a.type in ['libfive_tree', 'tfloat']:
         return 'Tree({})'.format(a.name)
     elif a.type == 'tvec2':
         return 'TreeVec2{{Tree({0}.x), Tree({0}.y)}}'.format(a.name)
@@ -38,7 +38,7 @@ def format_module_stdlib(lib, m):
 def arg_call(a):
     if a.type == 'libfive_tree':
         return 'libfive::Tree'
-    elif a.type == 'libfive_float':
+    elif a.type == 'tfloat':
         return 'TreeFloat' # same as float
     elif a.type == 'tvec2':
         return 'TreeVec2'

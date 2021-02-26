@@ -5,7 +5,7 @@ import parse
 
 def arg_type(a):
     return {'libfive_tree': "'*",
-            'libfive_float': "'*",
+            'tfloat': "'*",
             'tvec2':  "(list '* '*)",
             'tvec3':  "(list '* '* '*)",
             'float': 'float',
@@ -15,7 +15,7 @@ def arg_type(a):
 def arg_name(args, i):
     a = args[i]
     if a.default:
-        if a.type == 'libfive_float':
+        if a.type == 'tfloat':
             d = str(a.default)
         elif a.type == 'tvec2':
             d = "#[{0} {0}]".format(a.default)
@@ -32,7 +32,7 @@ def arg_name(args, i):
         return a.name
 
 def arg_call(a):
-    if a.type in ['libfive_tree', 'libfive_float']:
+    if a.type in ['libfive_tree', 'tfloat']:
         return '(shape->ptr (ensure-shape {}))'.format(a.name)
     elif a.type in ['float', 'int']:
         return a.name
