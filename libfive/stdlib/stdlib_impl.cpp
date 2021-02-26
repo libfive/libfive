@@ -1005,7 +1005,7 @@ Glyph glyph_W(void) {
 }
 
 Glyph glyph_w(void) {
-    const auto v = glyph_V();
+    const auto v = glyph_v();
     return Glyph(v.first * 2 - 0.1,
         _union(v.second, move(v.second, {v.first - 0.1, 0, 0})));
 }
@@ -1123,7 +1123,7 @@ Glyph glyph_lparen(void) {
     return Glyph(t.first, reflect_x(t.second, t.first / 2));
 }
 
-Glyph glyph_rsquare(void) {
+Glyph glyph_lsquare(void) {
     return Glyph(0.3,
         _union(_union(
             rectangle({0, 0}, {0.1, 1}),
@@ -1131,18 +1131,19 @@ Glyph glyph_rsquare(void) {
             rectangle({0, 0.93}, {0.3, 1})));
 }
 
-Glyph glyph_lsquare(void) {
-    const auto t = glyph_rsquare();
+Glyph glyph_rsquare(void) {
+    const auto t = glyph_lsquare();
     return Glyph(t.first, reflect_x(t.second, t.first / 2));
 }
 
 Glyph glyph_rtri(void) {
     return Glyph(0.55,
         difference(rectangle({0, 0}, {0.55, 0.55}),
-            _union(intersection(half_plane({0, 0.45}, {0.45, 0.325}),
-                                half_plane({0, 0.1}, {0.45, 0.225})),
+            _union(
+            intersection(half_plane({0.4, 0.275}, {0, 0.45}),
+                         half_plane({0, 0.1}, {0.4, 0.275})),
             _union(half_plane({0, 0.55}, {0.55, 0.325}),
-                   half_plane({0, 0.0}, {0.55, 0.225})))));
+                   half_plane({0.55, 0.225}, {0, 0.0})))));
 }
 
 Glyph glyph_ltri(void) {
