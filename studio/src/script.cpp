@@ -91,23 +91,101 @@ void Script::keyPressEvent(QKeyEvent* e)
     }
     else if (e->key() == Qt::Key_Return && !c.hasSelection())
     {
-        // Count the number of leading spaces on this line
-        c.movePosition(QTextCursor::StartOfLine);
-        auto prev_pos = c.position();
-        c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
-        while (*c.selectedText().rbegin() == ' ' && c.position() > prev_pos)
-        {
-            prev_pos = c.position();
-            c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
+        // Smart indentation, roughly matching the style described at
+        //  http://community.schemewiki.org/?scheme-style
+        //
+        // We search backwards until we find a opening parenthesis
+        // that wasn't closed yet, then search forward for a space, a newline
+        // or an opening parenthesis, handling each case slightly differently.
+        //
+        // (with bonus special-casing for things like (lambda (x y z)...,
+        //  which should only be indented by two characters on the next line)
+        //
+        // This should produce the following without typing any spaces/tabs
+        // (+ 1 2
+        //    3 4 (-
+        //          4 5)
+        //    6)
+        //  (let ((i 10)
+        //        (j 20))
+        //    (+ i j))
+        //  (long-function-name
+        //    1 2 3)
+        //  (long-function-name 1
+        //                      2 3)
+        //
+        int indentation = 0;
+
+        int closedParenthesis = 0;
+        auto prev = [&c]() -> bool {
+            return c.movePosition(QTextCursor::PreviousCharacter,
+                                  QTextCursor::KeepAnchor);
+        };
+        auto next = [&c]() -> bool {
+            return c.movePosition(QTextCursor::NextCharacter,
+                                  QTextCursor::KeepAnchor);
+        };
+
+        // Move left until we find an unmatched opening parenthesis
+        while (prev()) {
+            if (*c.selectedText().begin() == ')') {
+                closedParenthesis += 1;
+            } else if (*c.selectedText().begin() == '(') {
+                // Is this our parenthesis we are looking for?
+                if (closedParenthesis == 0) {
+                    // Move cursor to the next white space or open parenthesis
+                    // If we don't find either before a newline, then offset
+                    // stays at -1, which is handled differently.
+                    int offset = -1;
+                    const auto parenPos = c.position();
+                    while (next())
+                    {
+                        const auto r = c.selectedText().begin();
+                        if (*r == QChar(uint(0x2029))) { // Newline
+                            break;
+                        } else if (r->isSpace()) {
+                            offset = 1;
+                            break;
+                        } else if (*r == '(') {
+                            offset = 0;
+                            break;
+                        }
+                    }
+                    const auto endPos = c.position();
+                    c.setPosition(endPos); // Clear the anchor
+                    c.setPosition(parenPos + 1, QTextCursor::KeepAnchor);
+
+                    // Special-case words which should have special behavior,
+                    // e.g. "(define (x y z)" should only indent by two spaces
+                    for (const auto s: {"let", "define", "lambda",
+                                        "lambda-shape", "define-shape"}) {
+                        if (c.selectedText() == s) {
+                            offset = -1;
+                            break;
+                        }
+                    }
+
+                    // Find the start of the line
+                    c.movePosition(QTextCursor::StartOfLine);
+                    const auto startPos = c.position();
+
+                    // If we found a good estimate of indentation within this
+                    // line, then use it; otherwise, indent by two spaces.
+                    if (offset != -1) {
+                        indentation = endPos - startPos + offset;
+                    } else {
+                        indentation = parenPos - startPos + 2;
+                    }
+                    // Escape out of the indentation search loop
+                    break;
+                } else {
+                    closedParenthesis -= 1;
+                }
+            }
         }
 
-        // Figure out if we stopped searching due to a non-space character
-        // or hitting the end of the document
-        auto length = c.selectedText().length() - 1;
-        length += (*c.selectedText().rbegin() == ' ');
-
-        // Then match the number of leading spaces
-        insertPlainText("\n" + QString(length, ' '));
+        // insert indentation spaces
+        insertPlainText("\n" + QString(indentation, ' '));
     }
     // Backspace does 2-space aligned deletion of spaces, and deletes
     // a single character otherwise.
