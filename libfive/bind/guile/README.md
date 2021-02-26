@@ -1,7 +1,9 @@
-# `libfive` bindings for Guile Scheme
-_Currently:_ a mix of C++ and Scheme, and building a single dynamic library.
+These are the [Guile Scheme](https://www.gnu.org/software/guile/)
+bindings to `libfive`, including the core C API and standard library
 
-_Soon:_ pure Scheme, using Guile's C FFI and `libfive.dylib`.
+These bindings are implemented as pure `.scm` files,
+both hand-written (everything in `libfive` except `stdlib`)
+and auto-generated (`libfive/stdlib/*`).
 
-(Why?  `(libfive stdlib)` is coming, and needs to use the C FFI,
-so might as well solve it for the rest of the bindings as well)
+The auto-generated files are created by [`gen_scm.py`](../../stdlib/gen_scm.py),
+and are committed to the repo for simplicity.
