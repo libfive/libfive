@@ -8,7 +8,8 @@ Alias = namedtuple('Alias', ['name', 'target'])
 def parse_arg(arg):
     ''' Parses a single argument, returning an Argument
     '''
-    type, name = arg.split(' ')
+    *type, name = arg.split(' ')
+    type = ' '.join(type)
     default = None
     if '__' in name:
         default = name.split('__')[1]

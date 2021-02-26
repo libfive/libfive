@@ -356,6 +356,11 @@ LIBFIVE_STDLIB twirl_axis_z(
     libfive_tree shape, libfive_float amount, libfive_float radius,
     tvec3 center__0);
 
+////////////////////////////////////////////////////////////////////////////////
+LIBFIVE_SECTION(text)
+
+LIBFIVE_STDLIB text(const char* txt, tvec2 pos__0);
+
 #ifdef __cplusplus
 }
 #endif

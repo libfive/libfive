@@ -1337,7 +1337,7 @@ Glyph get_glyph(uint8_t c) {
         case '[': return glyph_lsquare();
         case '>': return glyph_rtri();
         case '<': return glyph_ltri();
-        case '°': return glyph_deg();
+        case L'°': return glyph_deg();
         case '#': return glyph_hash();
         case '1': return glyph_1();
         case '2': return glyph_2();
@@ -1358,4 +1358,17 @@ Glyph get_glyph(uint8_t c) {
 }
 
 Tree text(const char* txt, TreeVec2 pos) {
+    Tree out = glyph_space().second;
+    while (*txt) {
+        if (*txt == '\n') {
+            pos.x = 0;
+            pos.y = pos.y - 1.1;
+        } else {
+            const auto g = get_glyph(*txt);
+            out = _union(out, move(g.second, {pos.x, pos.y, 0}));
+            pos.x = pos.x + g.first + 0.1;
+        }
+        ++txt;
+    }
+    return out;
 }
