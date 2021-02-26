@@ -9,6 +9,7 @@ def arg_type(a):
             'tvec2':  "(list '* '*)",
             'tvec3':  "(list '* '* '*)",
             'float': 'float',
+            'const char*': "'*",
             'int':   'int'}[a.type]
 
 def arg_name(args, i):
@@ -32,13 +33,15 @@ def arg_name(args, i):
 
 def arg_call(a):
     if a.type in ['libfive_tree', 'libfive_float']:
-        return '(shape->ptr (ensure-shape %s))' % a.name
+        return '(shape->ptr (ensure-shape {}))'.format(a.name)
     elif a.type in ['float', 'int']:
         return a.name
     elif a.type == 'tvec2':
         return "(vec2->tvec2 {})".format(a.name)
     elif a.type == 'tvec3':
         return "(vec3->tvec3 {})".format(a.name)
+    elif a.type == 'const char*':
+        return "(string->pointer {})".format(a.name)
     else:
         raise RuntimeError("Unknown type %s" % a.type)
 
