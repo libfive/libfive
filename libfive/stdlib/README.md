@@ -1,12 +1,16 @@
 # The `libfive` standard library
-`libfive` includes a standard library of shapes, CSG operations,
-transforms, and so on.
+## Overview
+In order to do useful design, we need a standard library of shapes,
+CSG operations, transforms, and so on.
+In the past, each language-level binding had to implement this on their own.
+Now, `libfive` itself includes such a standard library,
+using the _lingua franca_ of software: **C**.
 
-To avoid needing to rewrite this library in every programming language,
-it uses the _lingua franca_ of software: **C**.
+## `stdlib.h` style
+[`stdlib.h`](stdlib.h) is both a C header and a structured document
+parsed by a [helper script](parse.py).
 
-The headers in this folder are meant to be parsed by a [helper script](parse.py)
-and used to generate bindings using the C FFI of the chosen language.
+It is used to generate bindings using the C FFI of the chosen language.
 
 As C does not include niceties like default arguments,
 the function declarations in the header follow a particular style.
@@ -29,3 +33,14 @@ free variables.
 
 The suffix on the name of `tvec2 center__0` indicates that
 this is an optional argument and should default to 0 when not used.
+
+## C and C++ bindings
+The standard library is implemented in [`stdlib_impl.cpp`](stdlib_impl.cpp),
+using C++ types (e.g. `libfive::Tree`) to avoid tedious manual memory
+management.
+
+However, FFI callers will be using `C` types (e.g. `libfive_tree`).
+
+[`gen_c.py`](gen_c.py) generates two glue files:
+- [`stdlib_impl.hpp`](stdlib_impl.hpp) is a header using C++ types
+- [`stdlib.cpp`](stdlib.cpp) is a source file which call from C into C++
