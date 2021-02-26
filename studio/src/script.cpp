@@ -91,49 +91,93 @@ void Script::keyPressEvent(QKeyEvent* e)
     }
     else if (e->key() == Qt::Key_Return && !c.hasSelection())
     {
-        // Idea: having a smart indentation mechanism!
+        // Smart indentation, roughly matching the style described at
+        //  http://community.schemewiki.org/?scheme-style
+        //
         // We search backwards until we find a opening parenthesis
-        // that wasn't closed yet.
-        // Now we check how many characters are infront of the opening parenthesis
-        // and how many characters the first keyword takes.
+        // that wasn't closed yet, then search forward for a space, a newline
+        // or an opening parenthesis, handling each case slightly differently.
+        //
+        // (with bonus special-casing for things like (lambda (x y z)...,
+        //  which should only be indented by two characters on the next line)
         //
         // This should produce the following without typing any spaces/tabs
         // (+ 1 2
         //    3 4 (-
-        //           4 5)
+        //          4 5)
         //    6)
+        //  (let ((i 10)
+        //        (j 20))
+        //    (+ i j))
+        //  (long-function-name
+        //    1 2 3)
+        //  (long-function-name 1
+        //                      2 3)
         //
-        // number of spaces that should be used for indentation
         int indentation = 0;
 
-        // Move left until finding a opening parenthesis
         int closedParenthesis = 0;
-        while (c.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor)) {
+        auto prev = [&c]() -> bool {
+            return c.movePosition(QTextCursor::PreviousCharacter,
+                                  QTextCursor::KeepAnchor);
+        };
+        auto next = [&c]() -> bool {
+            return c.movePosition(QTextCursor::NextCharacter,
+                                  QTextCursor::KeepAnchor);
+        };
+
+        // Move left until we find an unmatched opening parenthesis
+        while (prev()) {
             if (*c.selectedText().begin() == ')') {
                 closedParenthesis += 1;
             } else if (*c.selectedText().begin() == '(') {
                 // Is this our parenthesis we are looking for?
                 if (closedParenthesis == 0) {
-                    auto curPos = c.position();
-
-                    // Start of line
-                    c.movePosition(QTextCursor::StartOfLine);
-                    auto startPos = c.position();
-
-                    c.setPosition(curPos);
-                    // move cursor to the next white space
-                    while (c.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor))
+                    // Move cursor to the next white space or open parenthesis
+                    // If we don't find either before a newline, then offset
+                    // stays at -1, which is handled differently.
+                    int offset = -1;
+                    const auto parenPos = c.position();
+                    while (next())
                     {
-                        if (c.selectedText().rbegin()->isSpace()) {
-                            c.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
+                        const auto r = c.selectedText().begin();
+                        if (*r == QChar(uint(0x2029))) { // Newline
+                            break;
+                        } else if (r->isSpace()) {
+                            offset = 1;
+                            break;
+                        } else if (*r == '(') {
+                            offset = 0;
                             break;
                         }
                     }
-                    auto endPos = c.position();
+                    const auto endPos = c.position();
+                    c.setPosition(endPos); // Clear the anchor
+                    c.setPosition(parenPos + 1, QTextCursor::KeepAnchor);
 
-                    indentation = endPos - startPos + 1;
+                    // Special-case words which should have special behavior,
+                    // e.g. "(define (x y z)" should only indent by two spaces
+                    for (const auto s: {"let", "define", "lambda",
+                                        "lambda-shape", "define-shape"}) {
+                        if (c.selectedText() == s) {
+                            offset = -1;
+                            break;
+                        }
+                    }
+
+                    // Find the start of the line
+                    c.movePosition(QTextCursor::StartOfLine);
+                    const auto startPos = c.position();
+
+                    // If we found a good estimate of indentation within this
+                    // line, then use it; otherwise, indent by two spaces.
+                    if (offset != -1) {
+                        indentation = endPos - startPos + offset;
+                    } else {
+                        indentation = parenPos - startPos + 2;
+                    }
+                    // Escape out of the indentation search loop
                     break;
-
                 } else {
                     closedParenthesis -= 1;
                 }
