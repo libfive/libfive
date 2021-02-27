@@ -13,8 +13,12 @@ if (BUILD_TESTS)
 endif(BUILD_TESTS)
 
 if (BUILD_GUILE_BINDINGS AND GUILE_FOUND)
-    add_subdirectory(bind/guile)
+  add_subdirectory(bind/guile)
 endif(BUILD_GUILE_BINDINGS AND GUILE_FOUND)
+
+if (BUILD_PYTHON_BINDINGS AND Python3_FOUND)
+  add_subdirectory(bind/python)
+endif()
 
 if(UNIX AND NOT(APPLE))
     set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")
