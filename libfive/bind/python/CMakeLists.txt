@@ -1,6 +1,8 @@
 set(SRCS
     libfive/__init__.py
-    libfive/lib.py)
+    libfive/ffi.py
+    libfive/shape.py
+)
 
 set(OUTS "")
 foreach(SRC ${SRCS})

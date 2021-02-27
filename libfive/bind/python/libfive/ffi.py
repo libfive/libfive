@@ -61,6 +61,8 @@ class libfive_vec3_t(ctypes.Structure):
 
 libfive_tree = ctypes.c_void_p
 
+lib.libfive_tree_delete.argtypes = [libfive_tree]
+
 lib.libfive_tree_const.argtypes = [ctypes.c_float]
 lib.libfive_tree_const.restype = libfive_tree
 
