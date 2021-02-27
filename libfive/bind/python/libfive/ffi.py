@@ -91,21 +91,21 @@ lib.libfive_tree_remap.argtypes = [libfive_tree, libfive_tree, libfive_tree, lib
 lib.libfive_tree_remap.restype = libfive_tree
 
 lib.libfive_tree_print.argtypes = [libfive_tree]
-lib.libfive_tree_print.restype = libfive_tree
+lib.libfive_tree_print.restype = ctypes.c_void_p # actually a c_char_p,
+# but we don't want Python to auto-convert into a bytestring
 
-lib.libfive_free_str.argtypes = [libfive_tree]
-lib.libfive_free_str.restype = libfive_tree
+lib.libfive_free_str.argtypes = [ctypes.c_char_p]
 
-lib.libfive_tree_save_mesh.argtypes = [libfive_tree, libfive_region_t, ctypes.c_float, libfive_tree]
+lib.libfive_tree_save_mesh.argtypes = [libfive_tree, libfive_region_t, ctypes.c_float, ctypes.c_char_p]
 lib.libfive_tree_save_mesh.restype = ctypes.c_uint8
 
-lib.libfive_tree_save_meshes.argtypes = [libfive_tree, libfive_region_t, ctypes.c_float, ctypes.c_float, libfive_tree]
+lib.libfive_tree_save_meshes.argtypes = [libfive_tree, libfive_region_t, ctypes.c_float, ctypes.c_float, ctypes.c_char_p]
 lib.libfive_tree_save_meshes.restype = ctypes.c_uint8
 
-lib.libfive_tree_save.argtypes = [libfive_tree, libfive_tree]
+lib.libfive_tree_save.argtypes = [libfive_tree, ctypes.c_char_p]
 lib.libfive_tree_save.restype = ctypes.c_bool
 
-lib.libfive_tree_load.argtypes = [libfive_tree]
+lib.libfive_tree_load.argtypes = [ctypes.c_char_p]
 lib.libfive_tree_load.restype = libfive_tree
 
 lib.libfive_tree_eval_f.argtypes = [libfive_tree, libfive_vec3_t]

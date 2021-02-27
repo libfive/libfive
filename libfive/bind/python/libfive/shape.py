@@ -64,3 +64,13 @@ class Shape:
     def Z(cls):
         return cls.new('var-z')
 
+    def __repr__(self):
+        return "<shape@0x{}>".format(self.ptr)
+
+    def __str__(self):
+        s = lib.libfive_tree_print(self.ptr)
+        try:
+            return ctypes.c_char_p(s).value.decode('utf-8')
+        finally:
+            lib.libfive_free_str(ctypes.cast(s, ctypes.c_char_p))
+
