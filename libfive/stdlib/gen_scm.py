@@ -112,6 +112,7 @@ append = {'csg':
   Subtracts any number of shapes from the first argument"
   (intersection a (inverse (apply union bs))))
 ''',
+
 'transforms':
 '''
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -122,7 +123,10 @@ append = {'csg':
                 (move-prev shape v)))
 (set-procedure-property! move 'documentation
   (procedure-documentation move-prev))
-'''
+''',
+
+'shapes':'''
+(define-public pi 3.14159265359)'''
 }
 
 ################################################################################

@@ -109,10 +109,15 @@ port-eof?
             (cons (symbol->string sym)
                   (if (procedure? (variable-ref var))
                     (or (procedure-documentation (variable-ref var)) "")
-                    "")))
+                    #f)))
           (resolve-interface ')" + mod + "))").toLocal8Bit().constData());
         for (; !scm_is_null(f); f = scm_cdr(f))
         {
+            // Filter out symbols in the module which aren't procedures
+            // (and therefore had their cdr set to #f)
+            if (scm_is_false(scm_cdar(f))) {
+                continue;
+            }
             auto name = scm_to_locale_string(scm_caar(f));
             auto doc = scm_to_locale_string(scm_cdar(f));
             if (strlen(doc))

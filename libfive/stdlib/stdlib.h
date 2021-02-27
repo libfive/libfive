@@ -222,7 +222,7 @@ LIBFIVE_STDLIB scale_z(
     libfive_tree t, tfloat sz, tfloat z0__0);
 LIBFIVE_STDLIB scale_xyz(
     // Scales a shape on all three axes, about 0 or an optional offset
-    libfive_tree t, tvec3 s, tvec3 center);
+    libfive_tree t, tvec3 s, tvec3 center__0);
 LIBFIVE_STDLIB rotate_x(
     // Rotate the given shape by an angle in radians
     // The center of rotation is [0 0 0] or specified by the optional argument
