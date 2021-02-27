@@ -46,7 +46,7 @@ public:
             changed |= IntervalEvaluator::setVar(v.first, v.second);
         }
         return changed;
-}
+    }
 };
 
 }   // namespace libfive
