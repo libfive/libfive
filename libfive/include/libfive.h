@@ -249,8 +249,12 @@ libfive_tree libfive_tree_unary(int op, libfive_tree a);
 libfive_tree libfive_tree_binary(int op, libfive_tree a, libfive_tree b);
 
 /*
- *  Returns a unique ID for the given tree.  This is post-deduplication,
- *  e.g. all constant tree of value 1.0 will return the same id.
+ *  Returns a unique ID for the given tree.  There is no global deduplication;
+ *  e.g. multiple calls to libfive_tree_const(1.0) will return trees with
+ *  different IDs.
+ *
+ *  This is primarily used to uniquely identify free variables, i.e. trees
+ *  returned from libfive_tree_var().
  */
 const void* libfive_tree_id(libfive_tree t);
 
