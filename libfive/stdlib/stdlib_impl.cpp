@@ -454,7 +454,7 @@ Tree attract_repel_generic(Tree shape, TreeVec3 locus,
         square((axes & AXIS_X) ? x : 0) +
         square((axes & AXIS_Y) ? y : 0) +
         square((axes & AXIS_Z) ? z : 0));
-    const auto fallout = sign * exaggerate * exp(norm / radius);
+    const auto fallout = 1 + sign * exaggerate * exp(-norm / radius);
 
     return move(
             move(shape, -locus).remap(
