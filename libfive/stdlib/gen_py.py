@@ -29,8 +29,10 @@ def arg_name(arg):
 def arg_wrap(a):
     if a.type in ['libfive_tree', 'tfloat']:
         return 'Shape.wrap({})'.format(a.name)
-    elif a.type in ['float', 'int', 'const char*']:
+    elif a.type in ['float', 'int']:
         return a.name
+    elif a.type == 'const char*':
+        return "{}.encode('utf-8')".format(a.name)
     elif a.type == 'tvec2':
         return "list([Shape.wrap(i) for i in {}])".format(a.name)
     elif a.type == 'tvec3':
@@ -42,7 +44,7 @@ def arg_call(a, i):
     if a.type in ['libfive_tree', 'tfloat']:
         return 'args[{}].ptr'.format(i)
     elif a.type in ['float', 'int', 'const char*']:
-        return a.name
+        return 'args[{}]'.format(i)
     elif a.type == 'tvec2':
         return "tvec2(*[a.ptr for a in args[{}]])".format(i)
     elif a.type == 'tvec3':
@@ -98,40 +100,36 @@ def {name}({arg_names}):
 
 ################################################################################
 
-append = {'csg':
-'''
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Hand-written functions which allow for arbitrary numbers of arguments
-(use-modules (srfi srfi-1))
+append = {'csg': '''
+################################################################################
+# Hand-written functions which allow for arbitrary numbers of arguments
+import functools
 
-(define union-prev union)
-(define-public (union . args)
-  "union a [b [c [...]]]
-  Returns the union of any number of shapes"
-  (fold union-prev (car args) (cdr args)))
+_prev_union = union
+def union(a, *args):
+    return functools.reduce(_prev_union, args, a)
+union.__doc__ = _prev_union.__doc__
 
-(define intersection-prev intersection)
-(define-public (intersection . args)
-  "intersection a [b [c [...]]]
-  Returns the intersection of any number of shapes"
-  (fold intersection-prev (car args) (cdr args)))
+_prev_intersection = intersection
+def intersection(a, *args):
+    return functools.reduce(_prev_intersection, args, a)
+intersection.__doc__ = _prev_intersection.__doc__
 
-(define-public (difference a . bs)
-  "difference a b [c [d [...]]]
-  Subtracts any number of shapes from the first argument"
-  (intersection a (inverse (apply union bs))))
+def difference(a, b, *rest):
+    """ Subtracts any number of shapes from the first argument
+    """
+    return intersection(a, inverse(union(b, *rest)))
 ''',
 
-'transforms':
-'''
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Hand-written override to let move work with vec2
-(define move-prev move)
-(define-public (move shape v)
-  (if (vec2? v) (move-prev shape #[(.x v) (.y v) 0])
-                (move-prev shape v)))
-(set-procedure-property! move 'documentation
-  (procedure-documentation move-prev))
+ 'transforms': '''
+################################################################################
+# Hand-written override to let move work in 2D
+_move_prev = move
+def move(shape, v):
+    if len(v) == 2:
+        v = [v[0], v[1], 0]
+    return _move_prev(shape, v)
+move.__doc__ = _move_prev.__doc__
 ''',
 }
 
