@@ -65,7 +65,7 @@ class Shape:
         return cls.new('var-z')
 
     def __repr__(self):
-        return "<shape@0x{}>".format(self.ptr)
+        return "<shape@0x{:x}>".format(self.ptr)
 
     def __str__(self):
         s = lib.libfive_tree_print(self.ptr)
@@ -104,6 +104,9 @@ class Shape:
 
     def with_constant_vars(self):
         return Shape.new('const-var', self)
+
+    def optimized(self):
+        return Shape(lib.libfive_tree_optimized(self.ptr));
 
 ################################################################################
 

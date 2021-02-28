@@ -296,6 +296,11 @@ libfive_tree libfive_tree_remap(libfive_tree p,
         libfive_tree x, libfive_tree y, libfive_tree z);
 
 /*
+ *  Returns an optimized version of the given tree
+ */
+libfive_tree libfive_tree_optimized(libfive_tree t);
+
+/*
  *  Returns a C string representing the tree in Scheme style
  *  (e.g. "(+ 1 2 x y)" )
  *

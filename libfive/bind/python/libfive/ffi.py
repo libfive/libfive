@@ -127,3 +127,6 @@ lib.libfive_tree_eval_r.restype = libfive_interval_t
 
 lib.libfive_tree_eval_d.argtypes = [libfive_tree, libfive_vec3_t]
 lib.libfive_tree_eval_d.restype = libfive_vec3_t
+
+lib.libfive_tree_optimized.argtypes = [libfive_tree]
+lib.libfive_tree_optimized.restype = libfive_tree
