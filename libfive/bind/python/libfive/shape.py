@@ -111,3 +111,15 @@ def shape(f):
     ''' Decorator which converts a target function into a Shape
     '''
     return f(Shape.X(), Shape.Y(), Shape.Z())
+
+# Hotpatch every transform (which take a shape as their first arguments)
+# into the Shape as methods, to make things easier to chain
+import libfive.stdlib.transforms as _transforms
+for (_name, _f) in _transforms.__dict__.items():
+    if callable(_f):
+        setattr(Shape, _name, _f)
+
+# Hot-patch a few CSG functions onto the Shape class
+import libfive.stdlib.csg as _csg
+for _name in ['union', 'intersection', 'difference']:
+    setattr(Shape, _name, getattr(_csg, _name))
