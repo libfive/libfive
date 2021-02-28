@@ -2,6 +2,10 @@ set(SRCS
     libfive/__init__.py
     libfive/ffi.py
     libfive/shape.py
+    libfive/stdlib/csg.py
+    libfive/stdlib/shapes.py
+    libfive/stdlib/transforms.py
+    libfive/stdlib/text.py
 )
 
 set(OUTS "")

@@ -61,6 +61,17 @@ class libfive_vec3_t(ctypes.Structure):
 
 libfive_tree = ctypes.c_void_p
 
+################################################################################
+
+# Types used in the libfive stdlib
+class tvec2(ctypes.Structure):
+    _fields_ = [("x", libfive_tree), ("y", libfive_tree)]
+class tvec3(ctypes.Structure):
+    _fields_ = [("x", libfive_tree), ("y", libfive_tree), ("z", libfive_tree)]
+tfloat = libfive_tree
+
+################################################################################
+# Function signatures
 lib.libfive_tree_delete.argtypes = [libfive_tree]
 
 lib.libfive_tree_const.argtypes = [ctypes.c_float]

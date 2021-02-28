@@ -61,8 +61,7 @@ def parse_alias(s):
     ''' Parses a declaration of the form LIBFIVE_ALIAS(name, target)
     '''
     name, target = s.split('(')[1].split(')')[0].split(',')
-    return Alias(name=name.strip().replace('_', '-'),
-                 target=target.strip().replace('_', '-'))
+    return Alias(name=name.strip(), target=target.strip())
 
 
 def parse_section(s):
