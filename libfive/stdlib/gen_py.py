@@ -26,15 +26,27 @@ def arg_name(arg):
     else:
         return arg.name
 
-def arg_call(a):
+def arg_wrap(a):
     if a.type in ['libfive_tree', 'tfloat']:
-        return 'Shape.wrap({}).ptr'.format(a.name)
+        return 'Shape.wrap({})'.format(a.name)
     elif a.type in ['float', 'int', 'const char*']:
         return a.name
     elif a.type == 'tvec2':
-        return "tvec2(*[Shape.wrap(i).ptr for i in {}])".format(a.name)
+        return "list([Shape.wrap(i) for i in {}])".format(a.name)
     elif a.type == 'tvec3':
-        return "tvec3(*[Shape.wrap(i).ptr for i in {}])".format(a.name)
+        return "list([Shape.wrap(i) for i in {}])".format(a.name)
+    else:
+        raise RuntimeError("Unknown type %s" % a.type)
+
+def arg_call(a, i):
+    if a.type in ['libfive_tree', 'tfloat']:
+        return 'args[{}].ptr'.format(i)
+    elif a.type in ['float', 'int', 'const char*']:
+        return a.name
+    elif a.type == 'tvec2':
+        return "tvec2(*[a.ptr for a in args[{}]])".format(i)
+    elif a.type == 'tvec3':
+        return "tvec3(*[a.ptr for a in args[{}]])".format(i)
     else:
         raise RuntimeError("Unknown type %s" % a.type)
 
@@ -59,19 +71,22 @@ import ctypes
 
     for f in lib[m].shapes:
         arg_types = ", ".join(map(arg_type, f.args))
-        arg_names = ", ".join([arg_name(a) for a in f.args])
-        arg_calls = ",\n        ".join(map(arg_call, f.args))
+        arg_names = ", ".join(map(arg_name, f.args))
+        arg_wraps = ", ".join(map(arg_wrap, f.args))
+        arg_calls = ",\n        ".join([arg_call(a, i) for (i, a) in enumerate(f.args)])
         out += '''stdlib.{raw_name}.argtypes = [{arg_types}]
 stdlib.{raw_name}.restype = libfive_tree
 def {name}({arg_names}):
     """ {doc}
     """
-    return Shape.wrap(stdlib.{raw_name}(
+    args = [{arg_wraps}]
+    return Shape(stdlib.{raw_name}(
         {arg_calls}))
 
 '''.format(raw_name=f.raw_name or f.name,
        name=f.name,
        doc=f.docstring.replace('\n', '\n        '),
+       arg_wraps=arg_wraps,
        arg_types=arg_types,
        arg_names=arg_names,
        arg_calls=arg_calls)
