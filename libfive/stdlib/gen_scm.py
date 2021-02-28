@@ -96,16 +96,16 @@ append = {'csg':
 (use-modules (srfi srfi-1))
 
 (define union-prev union)
-(define-public (union . args)
+(define-public (union a . args)
   "union a [b [c [...]]]
   Returns the union of any number of shapes"
-  (fold union-prev (car args) (cdr args)))
+  (fold union-prev a args))
 
 (define intersection-prev intersection)
-(define-public (intersection . args)
+(define-public (intersection a . args)
   "intersection a [b [c [...]]]
   Returns the intersection of any number of shapes"
-  (fold intersection-prev (car args) (cdr args)))
+  (fold intersection-prev a args))
 
 (define-public (difference a . bs)
   "difference a b [c [d [...]]]

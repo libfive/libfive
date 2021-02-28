@@ -22,7 +22,6 @@ class Shape:
         self.ptr = ptr
 
     def __del__(self):
-        print("Destroying {}".format(str(self)))
         lib.libfive_tree_delete(self.ptr)
 
     @classmethod

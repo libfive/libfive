@@ -359,7 +359,10 @@ LIBFIVE_STDLIB twirl_axis_z(
 ////////////////////////////////////////////////////////////////////////////////
 LIBFIVE_SECTION(text)
 
-LIBFIVE_STDLIB text(const char* txt, tvec2 pos__0);
+LIBFIVE_STDLIB text(
+    // Returns the given text, rendered in a custom f-rep font
+    // (with a character height of 1)
+    const char* txt, tvec2 pos__0);
 
 #ifdef __cplusplus
 }
