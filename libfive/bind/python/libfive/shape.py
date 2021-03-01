@@ -10,7 +10,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 import ctypes
 import numbers
 
-from libfive.ffi import lib
+from libfive.ffi import lib, libfive_region_t, libfive_interval_t
 
 class Shape:
     def __init__(self, ptr):
@@ -27,7 +27,7 @@ class Shape:
     @classmethod
     def new(cls, op, *args):
         if isinstance(op, str):
-            op = op.encode('utf-8')
+            op = op.encode('ascii')
         if isinstance(op, bytes):
             op = lib.libfive_opcode_enum(op)
         if op == -1:
@@ -70,7 +70,7 @@ class Shape:
     def __str__(self):
         s = lib.libfive_tree_print(self.ptr)
         try:
-            return ctypes.c_char_p(s).value.decode('utf-8')
+            return ctypes.c_char_p(s).value.decode('ascii')
         finally:
             lib.libfive_free_str(ctypes.cast(s, ctypes.c_char_p))
 
@@ -107,6 +107,19 @@ class Shape:
 
     def optimized(self):
         return Shape(lib.libfive_tree_optimized(self.ptr));
+
+    def save_stl(self, filename, xyz_min, xyz_max, resolution):
+        ''' Converts this Shape into a mesh and saves it as an STL file.
+
+            xyz_min/max are three-element lists of corner positions
+            resolution is the reciprocal of minimum feature size
+                (larger values = higher resolution = slower)
+        '''
+        region = libfive_region_t(*[libfive_interval_t(a, b) for a, b
+                                    in zip(xyz_min, xyz_max)])
+        lib.libfive_tree_save_mesh(self.ptr, region, resolution,
+                                   filename.encode('ascii'))
+
 
 ################################################################################
 
