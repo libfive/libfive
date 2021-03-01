@@ -193,7 +193,7 @@ protected:
     QOpenGLBuffer vert_vbo;
     QOpenGLBuffer tri_vbo;
 
-    QTime timer;
+    QElapsedTimer timer;
 
     const static int MESH_DIV_EMPTY=-1;
     const static int MESH_DIV_ABORT=-2;

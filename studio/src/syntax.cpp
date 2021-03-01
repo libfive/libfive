@@ -201,7 +201,7 @@ void Syntax::setKeywords(QString kws)
     QTextCharFormat kw_format;
     kw_format.setForeground(Color::blue);
 
-    for (auto k : kws.split(' ', QString::SkipEmptyParts))
+    for (auto k : kws.split(' ', Qt::SkipEmptyParts))
     {
         auto esc = QRegularExpression::escape(k);
         rules << Rule("(?<=[^\\w-]|^)" + esc + "(?=[^\\w-]|$)", kw_format);
