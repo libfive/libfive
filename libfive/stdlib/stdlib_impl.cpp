@@ -70,7 +70,7 @@ Tree clearance(Tree a, Tree b, TreeFloat o) {
 }
 
 Tree shell(Tree a, TreeFloat o) {
-    return clearance(a, a, o);
+    return clearance(a, a, -abs(o));
 }
 
 Tree blend_expt(Tree a, Tree b, TreeFloat m) {
