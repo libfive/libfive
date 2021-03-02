@@ -278,36 +278,40 @@ Tree gyroid(TreeVec3 period, TreeFloat thickness) {
 //------------------------------------------------------------------------------
 
 Tree array_x(Tree shape, int nx, TreeFloat dx) {
+    auto out = shape;
     for (int i=1; i < nx; ++i) {
-        shape = _union(shape, move(shape, {dx * i, 0, 0}));
+        out = _union(out, move(shape, {dx * i, 0, 0}));
     }
-    return shape;
+    return out;
 }
 
 Tree array_xy(Tree shape, int nx, int ny, TreeVec2 delta) {
     shape = array_x(shape, nx, delta.x);
+    auto out = shape;
     for (int i=1; i < ny; ++i) {
-        shape = _union(shape, move(shape, {0, delta.y * i, 0}));
+        out = _union(out, move(shape, {0, delta.y * i, 0}));
     }
-    return shape;
+    return out;
 }
 
 Tree array_xyz(Tree shape, int nx, int ny, int nz,
                          TreeVec3 delta) {
     shape = array_xy(shape, nx, ny, {delta.x, delta.y});
+    auto out = shape;
     for (int i=1; i < nz; ++i) {
-        shape = _union(shape, move(shape, {0, 0, delta.y * i}));
+        out = _union(out, move(shape, {0, 0, delta.y * i}));
     }
-    return shape;
+    return out;
 }
 
 Tree array_polar_z(Tree shape, int n, TreeVec2 center) {
     const float a = 2 * M_PI / n;
     TreeVec3 c{center.x, center.y, 0};
-    for (int i=0; i < n; ++i) {
-        shape = _union(shape, rotate_z(shape, i * a, c));
+    auto out = shape;
+    for (int i=1; i < n; ++i) {
+        out = _union(out, rotate_z(shape, i * a, c));
     }
-    return shape;
+    return out;
 }
 
 Tree extrude_z(Tree t, TreeFloat zmin, TreeFloat zmax) {
