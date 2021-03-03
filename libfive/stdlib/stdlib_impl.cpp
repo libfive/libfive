@@ -462,9 +462,9 @@ Tree attract_repel_generic(Tree shape, TreeVec3 locus,
 
     return move(
             move(shape, -locus).remap(
-                x * ((axes & AXIS_X) ? fallout : 0),
-                y * ((axes & AXIS_Y) ? fallout : 0),
-                z * ((axes & AXIS_Z) ? fallout : 0)),
+                x * ((axes & AXIS_X) ? fallout : 1),
+                y * ((axes & AXIS_Y) ? fallout : 1),
+                z * ((axes & AXIS_Z) ? fallout : 1)),
             locus);
 }
 
