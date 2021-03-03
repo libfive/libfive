@@ -530,7 +530,7 @@ Tree attract_xz(Tree shape, TreeVec3 locus, TreeFloat radius, TreeFloat exaggera
 
 Tree revolve_y(Tree shape, TreeFloat x0) {
     LIBFIVE_DEFINE_XYZ();
-    const auto r = sqrt(square(x) + square(y));
+    const auto r = sqrt(square(x) + square(z));
     const TreeVec3 center{x0, 0, 0};
     shape = move(shape, -center);
     return move(_union(shape.remap(r, y, z), shape.remap(-r, y, z)), center);
