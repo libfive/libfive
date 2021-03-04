@@ -135,11 +135,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (define-public libfive-tree-save
   (pointer->procedure
-    '* (dynamic-func "libfive_tree_save" lib) (list '* '*)))
+    uint8 (dynamic-func "libfive_tree_save" lib) (list '* '*)))
 
 (define-public libfive-tree-load
   (pointer->procedure
-    uint8 (dynamic-func "libfive_tree_load" lib) (list '*)))
+    '* (dynamic-func "libfive_tree_load" lib) (list '*)))
 
 (define-public libfive-tree-eval-f
   (pointer->procedure
