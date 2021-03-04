@@ -598,6 +598,7 @@ Tree generic_twirl_z(Tree shape, TreeFloat amount, TreeFloat radius,
 Tree twirl_x(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 center) {
     return generic_twirl_x(shape, amount, radius, center, centered_twirl_x);
 }
+
 Tree twirl_axis_x(Tree shape, TreeFloat amount, TreeFloat radius, TreeVec3 center) {
     return generic_twirl_x(shape, amount, radius, center, centered_twirl_axis_x);
 }
