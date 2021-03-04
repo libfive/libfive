@@ -201,10 +201,13 @@ void Syntax::setKeywords(QString kws)
     QTextCharFormat kw_format;
     kw_format.setForeground(Color::blue);
 
-    for (auto k : kws.split(' ', Qt::SkipEmptyParts))
-    {
-        auto esc = QRegularExpression::escape(k);
-        rules << Rule("(?<=[^\\w-]|^)" + esc + "(?=[^\\w-]|$)", kw_format);
+    for (auto k : kws.split(' ')) {
+        // TODO: use kws.split(' ', Qt::SkipEmptyParts) once Qt 5.14 is
+        // available on all supported platforms.
+        if (!k.isEmpty()) {
+            auto esc = QRegularExpression::escape(k);
+            rules << Rule("(?<=[^\\w-]|^)" + esc + "(?=[^\\w-]|$)", kw_format);
+        }
     }
 }
 
