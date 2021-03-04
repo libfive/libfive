@@ -22,6 +22,9 @@ TreeVec2 operator+(const TreeVec2& a, const TreeVec2& b) {
 TreeVec2 operator-(const TreeVec2& a, const TreeVec2& b) {
     return TreeVec2{a.x - b.x, a.y - b.y};
 }
+TreeVec2 operator-(const TreeVec2& a) {
+    return TreeVec2{-a.x, -a.y};
+}
 TreeVec2 operator*(const TreeVec2& a, const TreeFloat& b) {
     return TreeVec2{a.x * b, a.y * b};
 }
