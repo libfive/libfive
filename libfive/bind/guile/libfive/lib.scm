@@ -38,10 +38,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   "libfive/src/"
   ""
 ))
-
 (define lib (any (lambda (t) (try-link t "libfive")) lib-paths))
 (if (not lib) (begin
   (error "Could not find libfive shared library")))
+
+;; Do the same to load the standard library, which is exported to the public
+;; and used in all of the (libfive stdlib ...) modules
+(define stdlib-paths (list
+  (get-environment-variable "LIBFIVE_FRAMEWORK_DIR")
+  "libfive/stdlib/"
+  ""
+))
+(define stdlib (any (lambda (t) (try-link t "libfive-stdlib")) stdlib-paths))
+(if (not stdlib) (begin
+  (error "Could not find libfive shared standard library")))
+(export stdlib)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

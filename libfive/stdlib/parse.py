@@ -1,13 +1,15 @@
 from collections import namedtuple
 
-Declaration = namedtuple('Declaration', ['name', 'version', 'docstring', 'args'])
+Declaration = namedtuple('Declaration', ['name', 'version', 'docstring', 'args', 'raw_name'])
 Argument = namedtuple('Argument', ['name', 'type', 'default'])
-Module = namedtuple('Module', ['shapes'])
+Module = namedtuple('Module', ['shapes', 'aliases'])
+Alias = namedtuple('Alias', ['name', 'target'])
 
 def parse_arg(arg):
     ''' Parses a single argument, returning an Argument
     '''
-    type, name = arg.split(' ')
+    *type, name = arg.split(' ')
+    type = ' '.join(type)
     default = None
     if '__' in name:
         default = name.split('__')[1]
@@ -26,8 +28,12 @@ def parse_decl(line, f):
         name, version = name.split('__')
     else:
         version = None
+
     if name.startswith('_'):
+        raw_name = name
         name = name[1:]
+    else:
+        raw_name = None
 
     doc = ''
     if rest.endswith(');'): # single-line form
@@ -38,13 +44,25 @@ def parse_decl(line, f):
             line = f.readline().strip()
             if line.startswith('// '):
                 doc += line[3:] + '\n'
-            elif line.endswith(');'):
-                args += [parse_arg(s.strip()) for s in line.strip(');').split(',')]
+            else:
+                args += [parse_arg(s.strip()) for s in
+                         line.strip(');').split(',') if s]
 
             if line.endswith(');'):
                 break
+    if any([a.name == name for a in args]):
+        raise RuntimeError("Argument shadows function name in '%s'" % name)
 
-    return Declaration(name=name, version=version, docstring=doc[:-1], args=args)
+    return Declaration(name=name, version=version, docstring=doc[:-1],
+                       args=args, raw_name=raw_name)
+
+
+def parse_alias(s):
+    ''' Parses a declaration of the form LIBFIVE_ALIAS(name, target)
+    '''
+    name, target = s.split('(')[1].split(')')[0].split(',')
+    return Alias(name=name.strip().replace('_', '-'),
+                 target=target.strip().replace('_', '-'))
 
 
 def parse_section(s):
@@ -67,9 +85,11 @@ def parse(f):
         line = line.strip()
         if line.startswith('LIBFIVE_SECTION'):
             section = parse_section(line)
-            modules[section] = Module(shapes=[])
+            modules[section] = Module(shapes=[], aliases=[])
         elif line.startswith('LIBFIVE_STDLIB'):
             modules[section].shapes.append(parse_decl(line, f))
+        elif line.startswith('LIBFIVE_ALIAS'):
+            modules[section].aliases.append(parse_alias(line))
     return modules
 
 def parse_stdlib():

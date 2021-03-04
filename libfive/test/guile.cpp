@@ -40,6 +40,7 @@ static std::string eval(std::string input) {
         scm_c_use_module("libfive sandbox");
         scm_c_use_module("libfive stdlib csg");
         scm_c_use_module("libfive stdlib shapes");
+        scm_c_use_module("libfive stdlib transforms");
         initialized = true;
     }
 
@@ -184,4 +185,23 @@ TEST_CASE("libfive-guile CSG")
 
     CAPTURE(result);
     REQUIRE(boost::algorithm::starts_with(result, "#<<shape> "));
+}
+
+TEST_CASE("libfive-guile: scale-xyz without center position")
+{
+    auto result = eval(R"(
+        (scale-xyz
+            (box #[0 0 0] #[10 10 10])
+            #[1 2 3]
+        ) )");
+
+    CAPTURE(result);
+    REQUIRE(boost::algorithm::starts_with(result, "#<<shape> "));
+}
+
+TEST_CASE("libfive-guile: pi")
+{
+    auto result = eval("pi");
+    CAPTURE(result);
+    REQUIRE(boost::algorithm::starts_with(result, "3.1415"));
 }
