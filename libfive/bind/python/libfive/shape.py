@@ -9,6 +9,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import ctypes
 import numbers
+import tempfile
+import subprocess
 
 from libfive.ffi import lib, libfive_region_t, libfive_interval_t
 
@@ -108,7 +110,8 @@ class Shape:
     def optimized(self):
         return Shape(lib.libfive_tree_optimized(self.ptr));
 
-    def save_stl(self, filename, xyz_min, xyz_max, resolution):
+    def save_stl(self, filename, xyz_min=(-10,-10,-10), xyz_max=(10,10,10),
+                 resolution=10):
         ''' Converts this Shape into a mesh and saves it as an STL file.
 
             xyz_min/max are three-element lists of corner positions
@@ -119,6 +122,12 @@ class Shape:
                                     in zip(xyz_min, xyz_max)])
         lib.libfive_tree_save_mesh(self.ptr, region, resolution,
                                    filename.encode('ascii'))
+
+    def show(self, xyz_min=(-10,-10,-10), xyz_max=(10,10,10), resolution=10):
+        with open('.out.stl','wb') as f:
+            self.save_stl(f.name, xyz_min, xyz_max, resolution)
+            subprocess.run(['open', f.name])
+
 
 
 ################################################################################
