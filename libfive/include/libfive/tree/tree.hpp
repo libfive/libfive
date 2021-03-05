@@ -14,6 +14,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <map>
 #include <functional>
+#include <any>
 
 #include "libfive/tree/opcode.hpp"
 
@@ -59,6 +60,9 @@ public:
 
         /*  Programmatic branch lookup */
         const std::shared_ptr<Tree_> branch(Direction d);
+
+        /* Custom User Data attached to Node */
+        std::any userData;
 
         /*
          *  Pushes a Scheme-format serialization to an ostream
@@ -113,7 +117,7 @@ public:
     /*
      *  Returns a new unique variable
      */
-    static Tree var();
+    static Tree var(std::any userData = {});
 
     /*
      *  Destructor to ensure thread-safety while manipulating the Cache
@@ -197,6 +201,8 @@ public:
      */
     Tree lhs() const;
     Tree rhs() const;
+
+    std::any* userData() const { return (ptr ? &(ptr->userData): nullptr); }
 
 protected:
     /*
