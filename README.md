@@ -18,14 +18,14 @@ A great deal of work has gone into the meshing algorithm,
 which produces watertight, manifold,
 hierarchical, feature-preserving triangle meshes.
 The library is written in C++ and exposes a C API in `libfive.h`.
-- `libfive-guile` is a [Guile](https://www.gnu.org/software/guile/)
-binding to `libfive`.
-It exposes a high-level API to construct shapes,
-and includes a standard library
-of shapes, transforms, and CSG operations.
+- The `libfive` standard library is a library of common shapes, transforms, and CSG operations.
+  It is implemented in C++ and exposes a C API in `libfive/stdlib/stdlib.h`
+- The standard library is parsed and used to generate bindings for both
+  [Guile Scheme](https://www.gnu.org/software/guile/)
+  and [Python](https://python.org)
 - **Studio** is a GUI application in the style of
 [OpenSCAD](http://www.openscad.org/).
-It wraps `libfive-guile` and allows for live-coding of solid models.
+It uses the Guile bindings and allows for live-coding of solid models.
 The interface also includes direct modeling,
 where the user can push and pull on the model's surface
 to change variables in the script.
@@ -51,7 +51,8 @@ to change variables in the script.
 (c) 2015-2021 Matthew Keeter
 
 Different layers of this project are released under different licenses:
-- The `libfive` library is released under the
+- The `libfive` library, `libfive-stdlib` library, and Python bindings
+  are released under the
   [Mozilla Public License, version 2](https://www.mozilla.org/en-US/MPL/2.0/).
 - `libfive-guile` and `Studio` are released under the
   [GNU General Public License, version 2](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html)
@@ -82,6 +83,11 @@ and should also build with MinGW (though this is untested).
 
 If Guile isn't present, the Guile bindings won't be built.
 
+#### Python bindings (optional)
+- [Python 3.7 or later](https://www.python.org/)
+
+If Python isn't present, the Python bindings won't be built.
+
 #### Studio (optional, requires Guile bindings)
 - [Qt 5.7 or later](https://www.qt.io)
 
@@ -91,7 +97,7 @@ If Qt and Guile aren't present, Studio will not be included in the build
 ### Mac
 With `homebrew` installed, run
 ```
-brew install cmake pkg-config eigen libpng boost guile qt
+brew install cmake pkg-config eigen libpng boost guile qt python3
 ```
 Omit `guile` and/or `qt` if you do not want Guile bindings and/or Studio to be built too.
 
@@ -106,10 +112,15 @@ make
 and consider using [`ninja`](https://ninja-build.org/) for faster builds.
 
 ### Ubuntu
-#### 18.04 or later
-Ubuntu __18.04 or later__ should have all dependencies available through the package manager
+As a rule of thumb, `libfive` targets packages available in the latest Ubuntu LTS,
+(currently 20.04 LTS).  This is not automatically tested;
+if you find it's not the case, please open an issue.
+
+#### 20.04 or later
+Ubuntu __20.04 or later__ should have all dependencies available
+through the package manager
 ```
-sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-2.2-dev qtbase5-dev
+sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-2.2-dev qtbase5-dev python3
 ```
 Omit `guile-2.2-dev` and/or `qtbase5-dev` if you do not want Guile bindings and/or Studio to be built too.
 
@@ -129,6 +140,13 @@ they will be pre-compiled and installed to Guile's `(%site-ccache-dir)` director
 If Studio was also built, the `Studio` executable will installed as well.
 [`Studio.desktop`](https://github.com/libfive/libfive/blob/master/studio/deploy/linux/Studio.desktop)
 may be used to put the program on your desktop (untested as of yet).
+
+#### Before 20.04
+On Ubuntu 18.04, you may need to update to a newer version of CMake,
+which is possible using the Snappy package manager:
+```
+sudo snap install cmake --classic
+```
 
 #### Before 18.04
 Ubuntu releases __before 18.04__ do not provide `guile-2.2-dev`, so omit that from the above package install command.
