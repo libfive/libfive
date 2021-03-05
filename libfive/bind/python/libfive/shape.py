@@ -14,6 +14,15 @@ import subprocess
 
 from libfive.ffi import lib, libfive_region_t, libfive_interval_t
 
+def _wrapped(f):
+    ''' Decorator function which calls Shape.wrap on every argument
+        in f(self, *args), then calls f as usual
+    '''
+    def g(*args):
+        args = [Shape.wrap(a) for a in args]
+        return f(*args)
+    return g
+
 class Shape:
     def __init__(self, ptr):
         ''' Builds a Shape from a raw pointer.
@@ -79,23 +88,29 @@ class Shape:
     def __bool__(self):
         raise RuntimeError("Cannot check truthiness of Shape")
 
+    @_wrapped
     def __add__(self, other):
-        return Shape.new('add', self.ptr, Shape.wrap(other).ptr)
+        return Shape.new('add', self.ptr, other.ptr)
 
+    @_wrapped
     def __sub__(self, other):
-        return Shape.new('sub', self.ptr, Shape.wrap(other).ptr)
+        return Shape.new('sub', self.ptr, other.ptr)
 
+    @_wrapped
     def __mul__(self, other):
-        return Shape.new('mul', self.ptr, Shape.wrap(other).ptr)
+        return Shape.new('mul', self.ptr, other.ptr)
 
+    @_wrapped
     def __mod__(self, other):
-        return Shape.new('mod', self.ptr, Shape.wrap(other).ptr)
+        return Shape.new('mod', self.ptr, other.ptr)
 
+    @_wrapped
     def __pow__(self, other):
-        return Shape.new('pow', self.ptr, Shape.wrap(other).ptr)
+        return Shape.new('pow', self.ptr, other.ptr)
 
+    @_wrapped
     def __truediv__(self, other):
-        return Shape.new('div', self.ptr, Shape.wrap(other).ptr)
+        return Shape.new('div', self.ptr, other.ptr)
 
     def __eq__(self, other):
         raise RuntimeError("Shape does not support equality comparisons")
@@ -105,10 +120,16 @@ class Shape:
         return cls.new('var-free')
 
     def with_constant_vars(self):
-        return Shape.new('const-var', self)
+        return Shape.new('const-var', self.ptr)
 
     def optimized(self):
         return Shape(lib.libfive_tree_optimized(self.ptr));
+
+    def sqrt(self):
+        return Shape.new('sqrt', self.ptr)
+
+    def pow(self):
+        return Shape.new('pow', self.ptr)
 
     def save_stl(self, filename, xyz_min=(-10,-10,-10), xyz_max=(10,10,10),
                  resolution=10):
@@ -127,8 +148,6 @@ class Shape:
         with open('.out.stl','wb') as f:
             self.save_stl(f.name, xyz_min, xyz_max, resolution)
             subprocess.run(['open', f.name])
-
-
 
 ################################################################################
 
