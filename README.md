@@ -22,7 +22,8 @@ The library is written in C++ and exposes a C API in `libfive.h`.
   It is implemented in C++ and exposes a C API in `libfive/stdlib/stdlib.h`
 - The standard library is parsed and used to generate bindings for both
   [Guile Scheme](https://www.gnu.org/software/guile/)
-  and [Python](https://python.org)
+  and [Python](https://python.org),
+  for use in the REPL or as part of larger applications.
 - **Studio** is a GUI application in the style of
 [OpenSCAD](http://www.openscad.org/).
 It uses the Guile bindings and allows for live-coding of solid models.
