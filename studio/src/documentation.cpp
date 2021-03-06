@@ -131,7 +131,7 @@ DocumentationPane::DocumentationPane()
         QFontMetrics fm(txt->font());
         for (auto line : txt->toPlainText().split("\n"))
         {
-            max_width = std::max(max_width, fm.width(line));
+            max_width = std::max(max_width, fm.horizontalAdvance(line));
         }
         txt->setMinimumWidth(max_width + 40);
     }
@@ -140,7 +140,7 @@ DocumentationPane::DocumentationPane()
     auto completer = new QCompleter(fs.keys());
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     search->setCompleter(completer);
-    connect(completer, static_cast<void (QCompleter::*)(const QString&)>(&QCompleter::highlighted),
+    connect(completer, QOverload<const QString&>::of(&QCompleter::highlighted),
             txt, [=](const QString& str){
                 if (tags.count(str))
                 {

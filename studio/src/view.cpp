@@ -123,7 +123,7 @@ void View::setShapes(QList<Shape*> new_shapes)
             connect(s, &Shape::redraw, this, &View::update);
             connect(s, &Shape::gotMesh, this, &View::checkMeshes);
             connect(s, &Shape::gotMesh, &pick_timer,
-                    static_cast<void (QTimer::*)()>(&QTimer::start));
+                    QOverload<>::of(&QTimer::start));
             connect(this, &View::startRender,
                     s, [=](Settings st) { s->startRender(st, this->alg); });
             s->startRender(settings, alg);

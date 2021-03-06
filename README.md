@@ -90,7 +90,7 @@ If Guile isn't present, the Guile bindings won't be built.
 If Python isn't present, the Python bindings won't be built.
 
 #### Studio (optional, requires Guile bindings)
-- [Qt 5.7 or later](https://www.qt.io)
+- [Qt 5.11 or later](https://www.qt.io)
 
 If Qt and Guile aren't present, Studio will not be included in the build
 (and `cmake` will print a message to that effect).
