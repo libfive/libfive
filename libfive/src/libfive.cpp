@@ -193,6 +193,10 @@ libfive_tree libfive_tree_remap(libfive_tree p, libfive_tree x, libfive_tree y, 
     return Tree(p).remap(Tree(x), Tree(y), Tree(z)).release();
 }
 
+libfive_tree libfive_tree_optimized(libfive_tree t) {
+    return Tree(t).optimized().release();
+}
+
 float libfive_tree_eval_f(libfive_tree t, libfive_vec3 p)
 {
     ArrayEvaluator e((Tree(t)));

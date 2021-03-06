@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.12)
 project(libfive)
 
 # Properly distinguish between Apple and upstream Clang
@@ -6,6 +6,8 @@ cmake_policy(SET CMP0025 NEW)
 
 option(BUILD_STUDIO_APP "Build Studio application" ON)
 option(BUILD_GUILE_BINDINGS "Build Guile bindings" ON)
+option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+
 option(LIBFIVE_PACKED_OPCODES
     "Tightly pack opcodes (breaks compatibility with older saved f-reps)"
     OFF)
@@ -51,7 +53,9 @@ if(NOT MSVC)
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")
     endif()
+
     set(CMAKE_CXX_FLAGS_DEBUG "-O0")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DRELEASE -DEIGEN_NO_DEBUG")
 else()
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Output/Debug)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Output/Release)
@@ -61,8 +65,6 @@ else()
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 endif()
-
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DRELEASE -DEIGEN_NO_DEBUG")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -99,6 +101,7 @@ else()
 endif()
 
 find_package(PNG REQUIRED)
+find_package(Python3 COMPONENTS Development)
 
 if (UNIX AND NOT(APPLE))
     find_package(Threads REQUIRED)
@@ -113,15 +116,21 @@ message("  libfive:		✓")
 if (BUILD_GUILE_BINDINGS)
   if (GUILE_FOUND)
     message("  Guile bindings:	✓")
-
-    # target_link_directories is available in cmake 3.13, which is slightly
-    # too fresh (not shipped by default on Ubuntu 18.04 LTS)
-    link_directories(${GUILE_LIBRARY_DIRS})
   else ()
     message("  Guile bindings:	✘   (needs Guile 2.2 or later)")
   endif()
 else()
     message("  Guile bindings:	✘   (skipping)")
+endif()
+
+if (BUILD_PYTHON_BINDINGS)
+  if (Python3_FOUND)
+    message("  Python bindings:	✓")
+  else()
+    message("  Python bindings:	✘   (Python 3 not found)")
+  endif()
+else()
+  message("  Python bindings:	✘   (skipping)")
 endif()
 
 if (BUILD_STUDIO_APP)
