@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2017-2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,11 +17,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
-
 #include <QRegularExpression>
 #include <QSyntaxHighlighter>
 #include <QPlainTextEdit>
 
+namespace Studio {
+namespace Guile {
+
+/* Guile Scheme syntax highlighter */
 class Syntax : public QSyntaxHighlighter
 {
     Q_OBJECT
@@ -64,3 +67,6 @@ protected:
     /*  Used as temporary storage when syntax highlighting is disabled */
     QTextDocument* doc=nullptr;
 };
+
+}   // namespace Guile
+}   // namespace Studio
