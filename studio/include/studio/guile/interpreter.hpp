@@ -31,9 +31,7 @@ public:
 
     void init() override;
 
-    static const QString SET_BOUNDS;
-    static const QString SET_QUALITY;
-    static const QString SET_RESOLUTION;
+    QString defaultScript() override;
 
 public slots:
     void eval(QString s) override;

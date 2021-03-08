@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "libfive/eval/tape.hpp"
 #include "libfive/eval/evaluator.hpp"
 
+namespace Studio {
+
 const int Shape::MESH_DIV_EMPTY;
 const int Shape::MESH_DIV_ABORT;
 const int Shape::MESH_DIV_NEW_VARS;
@@ -378,3 +380,5 @@ Shape::BoundedMesh Shape::renderMesh(RenderSettings s)
     auto m = libfive::Mesh::render(es.data(), r, mesh_settings);
     return {m.release(), r};
 }
+
+}   // namespace Studio

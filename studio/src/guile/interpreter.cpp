@@ -27,12 +27,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 namespace Studio {
 namespace Guile {
 
-const QString Interpreter::SET_QUALITY = "(set-quality! %1)\n";
-const QString Interpreter::SET_RESOLUTION = "(set-resolution! %1)\n";
-const QString Interpreter::SET_BOUNDS = "(set-bounds! [%1 %2 %3] [%4 %5 %6])\n";
+const static QString SET_QUALITY = "(set-quality! %1)\n";
+const static QString SET_RESOLUTION = "(set-resolution! %1)\n";
+const static QString SET_BOUNDS = "(set-bounds! [%1 %2 %3] [%4 %5 %6])\n";
 
 Interpreter::Interpreter() {
     // Nothing to do here
+}
+
+QString Interpreter::defaultScript() {
+    QString script;
+    auto default_settings = Settings::defaultSettings();
+    script += SET_BOUNDS.arg(default_settings.min.x())
+                        .arg(default_settings.min.y())
+                        .arg(default_settings.min.z())
+                        .arg(default_settings.max.x())
+                        .arg(default_settings.max.y())
+                        .arg(default_settings.max.z());
+    script += SET_QUALITY.arg(default_settings.quality);
+    script += SET_RESOLUTION.arg(default_settings.res);
+    return script;
 }
 
 void Interpreter::init() {
@@ -136,10 +150,13 @@ port-eof?
         }
     }
     // emit(docs(ds)); // TODO
+    emit(ready());
 }
 
 void Interpreter::eval(QString script)
 {
+    emit(busy());
+
     Result out;
 
     // Clear global bounds, so we can detect if they were set in the script
@@ -297,12 +314,12 @@ void Interpreter::eval(QString script)
                     {"<b>Warning:</b> Using default bounds for shapes<br>"
                      "&nbsp;&nbsp;&nbsp;&nbsp;"
                      "Use <code>set-bounds!</code> to specify.",
-                    Interpreter::SET_BOUNDS.arg(out.settings.min.x())
-                                           .arg(out.settings.min.y())
-                                           .arg(out.settings.min.z())
-                                           .arg(out.settings.max.x())
-                                           .arg(out.settings.max.y())
-                                           .arg(out.settings.max.z())});
+                    SET_BOUNDS.arg(out.settings.min.x())
+                              .arg(out.settings.min.y())
+                              .arg(out.settings.min.z())
+                              .arg(out.settings.max.x())
+                              .arg(out.settings.max.y())
+                              .arg(out.settings.max.z())});
         }
         else
         {
@@ -322,7 +339,7 @@ void Interpreter::eval(QString script)
                     "<b>Warning:</b> Using default resolution for shapes.<br>"
                     "&nbsp;&nbsp;&nbsp;&nbsp;"
                     "Use <code>set-resolution!</code> to specify.",
-                    Interpreter::SET_RESOLUTION.arg(out.settings.res)});
+                    SET_RESOLUTION.arg(out.settings.res)});
         }
         else
         {
@@ -335,7 +352,7 @@ void Interpreter::eval(QString script)
                     "<b>Warning:</b> Using default quality for shapes.<br>"
                     "&nbsp;&nbsp;&nbsp;&nbsp;"
                     "Use <code>set-quality!</code> to specify.",
-                    Interpreter::SET_QUALITY.arg(out.settings.quality)});
+                    SET_QUALITY.arg(out.settings.quality)});
         }
         else
         {

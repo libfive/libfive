@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2017-2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,10 +17,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <QTextDocument>
+#include <QTextBlockUserData>
 #include <cassert>
 
-#include "studio/syntax.hpp"
 #include "studio/color.hpp"
+#include "studio/guile/syntax.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,6 +34,9 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+
+namespace Studio {
+namespace Guile {
 
 int Syntax::searchLeft(int pos)
 {
@@ -302,3 +306,6 @@ void Syntax::highlightBlock(const QString& text)
     setCurrentBlockState(state);
     setCurrentBlockUserData(data);
 }
+
+}   // namespace Guile
+}   // namespace Studio

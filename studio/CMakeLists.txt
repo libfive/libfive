@@ -25,16 +25,20 @@ set(SRCS src/main.cpp
     src/busy.cpp
     src/camera.cpp
     src/documentation.cpp
+    src/language.cpp
     src/script.cpp
     src/settings.cpp
     src/shader.cpp
-    src/syntax.cpp
     src/shape.cpp
     src/color.cpp
     src/editor.cpp
-    src/interpreter.cpp
     src/view.cpp
     src/window.cpp
+
+    src/guile/formatter.cpp
+    src/guile/interpreter.cpp
+    src/guile/language.cpp
+    src/guile/syntax.cpp
 
     resources.qrc
 )
@@ -43,13 +47,15 @@ set(QOBJECTS
     include/studio/busy.hpp
     include/studio/camera.hpp
     include/studio/documentation.hpp
-    include/studio/settings.hpp
-    include/studio/syntax.hpp
-    include/studio/shape.hpp
     include/studio/editor.hpp
     include/studio/interpreter.hpp
+    include/studio/language.hpp
+    include/studio/shape.hpp
     include/studio/view.hpp
     include/studio/window.hpp
+
+    include/studio/guile/interpreter.hpp
+    include/studio/guile/syntax.hpp
 )
 
 if(APPLE)

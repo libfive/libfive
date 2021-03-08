@@ -22,12 +22,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QVBoxLayout>
 #include <QTimer>
 
-#include "studio/script.hpp"
-#include "studio/settings.hpp"
-#include "libfive/tree/tree.hpp"
+#include "studio/documentation.hpp"
+#include "studio/result.hpp"
+#include "studio/language.hpp"
 
-class Syntax;
+namespace Studio {
 
+class Script;
+
+/*
+ *  An Editor contains the script text editor window and an error pane
+ */
 class Editor : public QWidget
 {
     Q_OBJECT
@@ -37,53 +42,21 @@ public:
     QString getScript() const;
     void setModified(bool m);
 
-    struct Range
-    {
-        Range() : Range(-1, -1, -1, -1) {}
-        Range(int sr, int er, int sc, int ec) :
-            start_row(sr), end_row(er), start_col(sc), end_col(ec) {}
-
-        int start_row;
-        int end_row;
-        int start_col;
-        int end_col;
-    };
+    /*  Sets the script state to the default for this language */
+    void loadDefaultScript();
 
 public slots:
-    void onResult(QString result);
-    void onError(QString result, QString stack, Range p);
-    void onBusy();
-
-    /*
-     *  Adds a set of warnings to the GUI, below the result / error pane
-     *  If a second string is non-empty, then the UI also includes a
-     *  "Fix" button that prepends the second string to the script,
-     *  e.g. to fix missing defaults
-     */
-    void setWarnings(QList<QPair<QString, QString>> warnings);
+    void onInterpreterDone(Result result);
+    void onInterpreterBusy();
 
     void undo();
     void redo();
 
-    void setKeywords(QString kws);
-
     /*
-     *  When settings are changed in the script, re-emit them, using the
-     *  first_change flag to indicate if this is a brand model (in which
-     *  case the viewport should zoom to fit it)
+     *  When the text-change debouce timer expires, grab the script and
+     *  emit it with scriptChanged() so that the interpreter starts working.
      */
-    void onSettingsChanged(Settings s);
-
-    /*
-     *  When script changes, emit scriptChanged
-     */
-    void onScriptChanged();
-
-    /*
-     *  Stores the textual positions of variables
-     */
-    void setVarPositions(QMap<libfive::Tree::Id, Range> vs)
-    { vars = vs; }
+    void onTextChangedDebounce();
 
     /*
      *  Modifies the textual values of variables
@@ -105,9 +78,9 @@ signals:
     void redoAvailable(bool a);
 
     /*
-     *  Invoked when a script defines settings using specially-formatted
-     *  comment blocks.  first is true if this is the first time this script
-     *  has been evaluated, false otherwise.
+     *  Invoked when a script defines settings using special global functions.
+     *  first is true if this is the first time this script has been evaluated,
+     *  false otherwise; it is used to decide whether to zoom to shape bounds.
      */
     void settingsChanged(Settings s, bool first);
 
@@ -116,23 +89,31 @@ protected slots:
 
 protected:
     void setResult(QColor color, QString result);
-    void setError(Range p);
-    QList<QTextEdit::ExtraSelection> clearError(bool set=true);
 
-    Script* script;
-    QTextDocument* script_doc;
-    Syntax* syntax;
+    Script* script;             // owned by layout
+    QTextDocument* script_doc;  // owned by script
 
-    QPlainTextEdit* err;
-    QTextDocument* err_doc;
+    QPlainTextEdit* err;        // owned by layout
+    QTextDocument* err_doc;     // owned by err;
 
-    QVBoxLayout* layout;
+    QVBoxLayout* layout;    // owned by the widget itself
+
+    // The Language manages the embedded interpreter
+    QScopedPointer<Language> language;
+
+    // The documentation pane, constructed as needed then shown / hidden
+    QScopedPointer<DocumentationPane> doc_pane;
 
     QTextCharFormat error_format;
     QTimer spinner;
+
+    // Debounces text changes, to avoid emitting too many signals
+    QTimer m_textChangedDebounce;
 
     bool drag_should_join=false;
     bool first_change=false;
 
     QMap<libfive::Tree::Id, Range> vars;
 };
+
+}   // namespace Studio

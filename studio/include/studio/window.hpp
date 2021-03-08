@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2017-2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -25,11 +25,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "studio/args.hpp"
 
+namespace libfive { class Mesh; }
+
+namespace Studio {
 class Editor;
 class View;
 struct Documentation;
-
-namespace libfive { class Mesh; }
 
 class Window : public QMainWindow
 {
@@ -99,3 +100,4 @@ protected:
     View* view;
     bool closing=false;
 };
+}   // namespace Studio

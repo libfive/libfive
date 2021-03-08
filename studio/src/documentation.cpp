@@ -28,6 +28,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "studio/documentation.hpp"
 
+namespace Studio {
+
 void Documentation::insert(QString module, QString name, QString doc)
 {
     docs[module][name].doc = doc;
@@ -35,23 +37,19 @@ void Documentation::insert(QString module, QString name, QString doc)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-QScopedPointer<Documentation> DocumentationPane::docs;
-QPointer<DocumentationPane> DocumentationPane::instance;
-
-DocumentationPane::DocumentationPane()
-    : search(new QLineEdit)
+DocumentationPane::DocumentationPane(Documentation docs)
 {
-    Q_ASSERT(docs.data());
+    auto search = new QLineEdit();
 
     // Flatten documentation into a single-level map
     QMap<QString, QString> fs;
     QMap<QString, QString> tags;
     QMap<QString, QString> mods;
-    for (auto mod : docs->docs.keys())
+    for (auto mod : docs.docs.keys())
     {
-        for (auto f : docs->docs[mod].keys())
+        for (auto f : docs.docs[mod].keys())
         {
-            fs[f] = docs->docs[mod][f].doc;
+            fs[f] = docs.docs[mod][f].doc;
             tags.insert(f, "i" + QString::fromStdString(
                         std::to_string(tags.size())));
             mods.insert(f, mod);
@@ -184,28 +182,6 @@ DocumentationPane::DocumentationPane()
     search->setFocus();
 }
 
-void DocumentationPane::setDocs(Documentation* ds)
-{
-    docs.reset(ds);
-}
-
-bool DocumentationPane::hasDocs()
-{
-    return docs.data();
-}
-
-void DocumentationPane::open()
-{
-    if (instance.isNull())
-    {
-        instance = new DocumentationPane();
-    }
-    else
-    {
-        instance->show();
-        instance->search->setFocus();
-    }
-}
 bool DocumentationPane::eventFilter(QObject* object, QEvent* event)
 {
     Q_UNUSED(object);
@@ -213,7 +189,7 @@ bool DocumentationPane::eventFilter(QObject* object, QEvent* event)
     if (event->type() == QEvent::KeyPress &&
         static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape)
     {
-        deleteLater();
+        hide();
         return true;
     }
     else
@@ -221,3 +197,5 @@ bool DocumentationPane::eventFilter(QObject* object, QEvent* event)
         return false;
     }
 }
+
+}   // namespace Studio

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLFunctions>
 
+namespace Studio {
 class Arrow : public QOpenGLFunctions
 {
 public:
@@ -38,3 +39,4 @@ protected:
     unsigned tri_count=0;
 };
 
+}   // namespace Studio

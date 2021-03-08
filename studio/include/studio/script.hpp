@@ -20,8 +20,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <QPlainTextEdit>
 
+namespace Studio {
+class Formatter;
+
 class Script : public QPlainTextEdit
 {
+public:
+    void bind(Formatter* f);
+
 protected:
     void keyPressEvent(QKeyEvent* e) override;
+    Formatter* m_formatter=nullptr;
 };
+
+}   // namespace Studio

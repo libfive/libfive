@@ -20,6 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "studio/camera.hpp"
 
+namespace Studio {
+
 Camera::Camera(QSize size)
     : size(size), anim(this, "perspective")
 {
@@ -164,3 +166,5 @@ void Camera::zoomTo(const QVector3D& min, const QVector3D& max)
     connect(a, &QPropertyAnimation::finished, this, &Camera::animDone);
     a->start(a->DeleteWhenStopped);
 }
+
+}   // namespace Studio

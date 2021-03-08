@@ -20,6 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/color.hpp"
 #include "studio/shader.hpp"
 
+namespace Studio {
+
 Axes::Axes()
 {
     // Nothing to do here
@@ -193,3 +195,5 @@ void Axes::drawWire(QMatrix4x4 M)
 
     Shader::basic->release();
 }
+
+}   // namespace Studio

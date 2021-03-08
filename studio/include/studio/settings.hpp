@@ -25,6 +25,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QDoubleSpinBox>
 #include <QCheckBox>
 
+namespace Studio {
+
 struct Settings
 {
     /*
@@ -55,3 +57,4 @@ struct Settings
     bool operator==(const Settings& other) const;
     bool operator!=(const Settings& other) const;
 };
+} // namespace Studio

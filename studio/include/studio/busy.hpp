@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QOpenGLFunctions>
 #include <QTimer>
 
+namespace Studio {
 class Busy : public QObject, QOpenGLFunctions
 {
     Q_OBJECT
@@ -47,3 +48,4 @@ protected:
     QOpenGLVertexArrayObject vao;
     QOpenGLBuffer vbo;
 };
+} // namespace Studio

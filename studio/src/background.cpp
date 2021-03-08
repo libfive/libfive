@@ -20,6 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/color.hpp"
 #include "studio/shader.hpp"
 
+namespace Studio {
+
 void Background::initializeGL()
 {
     initializeOpenGLFunctions();
@@ -70,3 +72,5 @@ void Background::draw()
 
     Shader::basic->release();
 }
+
+}   // namespace Studio

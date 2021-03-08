@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QObject>
 #include <QPropertyAnimation>
 
+namespace Studio {
 class Camera : public QObject
 {
     Q_OBJECT
@@ -96,3 +97,4 @@ protected:
 
     QPropertyAnimation anim;
 };
+} // namespace Studio

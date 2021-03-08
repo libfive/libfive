@@ -18,6 +18,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include "studio/color.hpp"
 
+namespace Studio {
+
 const QColor Color::base03("#002b36");
 const QColor Color::base02("#073642");
 const QColor Color::base01("#586e75");
@@ -34,3 +36,5 @@ const QColor Color::violet("#6c71c4");
 const QColor Color::blue("#268bd2");
 const QColor Color::cyan("#2aa198");
 const QColor Color::green("#859900");
+
+}   // namespace Studio

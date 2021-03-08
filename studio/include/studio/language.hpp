@@ -32,6 +32,13 @@ namespace Studio {
  */
 class Language : public QObject {
     Q_OBJECT
+public:
+    Language(Interpreter* interpreter,
+             Formatter* formatter,
+             QSyntaxHighlighter* syntax);
+
+    QString defaultScript();
+
 public slots:
     /*
      *  Called when the script changes.  This should be debounced in the Editor,

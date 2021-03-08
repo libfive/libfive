@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "studio/args.hpp"
 
+namespace Studio {
+
 Arguments::Arguments(QCoreApplication* app)
 {
     QCommandLineParser parser;
@@ -42,3 +44,5 @@ Arguments::Arguments(QCoreApplication* app)
     do_syntax = !parser.isSet(no_syntax);
     vertical = parser.isSet(vertical_layout);
 }
+
+}   // namespace Studio

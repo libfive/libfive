@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLExtraFunctions>
 
+namespace Studio {
 class Camera;
 
 class BBox : public QOpenGLExtraFunctions
@@ -35,3 +36,4 @@ protected:
     QOpenGLBuffer vbo;
     QOpenGLVertexArrayObject vao;
 };
+} // namespace Studio

@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #pragma once
 #include <QCoreApplication>
 
+namespace Studio {
 struct Arguments
 {
     Arguments(QCoreApplication* app);
@@ -27,3 +28,5 @@ struct Arguments
     bool do_syntax;
     bool vertical;
 };
+
+}   // namespace Studio

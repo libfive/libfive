@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "libfive/solve/solver.hpp"
 
+namespace Studio {
+
 View::View(QWidget* parent)
     : QOpenGLWidget(parent), camera(size()),
       settings(Settings::defaultSettings())
@@ -595,3 +597,5 @@ void View::checkMeshes() const
         emit(meshesReady(meshes));
     }
 }
+
+}   // namespace Studio

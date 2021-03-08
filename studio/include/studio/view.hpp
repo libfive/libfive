@@ -32,6 +32,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "libfive/eval/eval_jacobian.hpp"
 
+namespace Studio {
+
 class View : public QOpenGLWidget, QOpenGLFunctions
 {
     Q_OBJECT
@@ -184,3 +186,5 @@ protected:
     /*  Set to true on the first draw, if the OpenGL version is new enough */
     bool gl_checked=false;
 };
+
+}   // namespace Studio

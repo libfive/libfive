@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QString>
 #include <QMap>
 
+namespace Studio {
 struct Documentation
 {
 public:
@@ -55,25 +56,12 @@ class DocumentationPane : public QWidget
 {
     Q_OBJECT
 public:
-    /*
-     *  We can only call this constructor after setDocs has been called
-     *  (throws an assertion otherwise)
-     */
-    DocumentationPane();
-
-    static void setDocs(Documentation* ds);
-    static bool hasDocs();
-    static void open();
+    DocumentationPane(Documentation docs);
 
 protected:
     /*
-     *  Special-case handling of escape (closes window)
+     *  Special-case handling of escape (hides the window)
      */
     bool eventFilter(QObject* object, QEvent* event) override;
-
-    /*  Take ownership of the documentation  */
-    static QScopedPointer<Documentation> docs;
-    static QPointer<DocumentationPane> instance;
-
-    QLineEdit* search;
 };
+} // namespace Studio

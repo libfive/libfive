@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "studio/settings.hpp"
 
+namespace Studio {
+
 Settings::Settings(QVector3D min, QVector3D max, float res, float quality)
     : min(min), max(max), res(res), quality(quality)
 {
@@ -59,3 +61,5 @@ bool Settings::operator!=(const Settings& other) const
 {
     return !(*this == other);
 }
+
+}   // namespace Studio
