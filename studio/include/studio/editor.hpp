@@ -99,7 +99,7 @@ protected:
     QVBoxLayout* layout;    // owned by the widget itself
 
     // The Language manages the embedded interpreter
-    Language language;
+    Language m_language;
 
     // The documentation pane, constructed as needed then shown / hidden
     QScopedPointer<DocumentationPane> doc_pane;

@@ -34,7 +34,7 @@ namespace Studio {
 Editor::Editor(QWidget* parent, bool do_syntax)
     : QWidget(parent), script(new Script), script_doc(script->document()),
       err(new QPlainTextEdit), err_doc(err->document()),
-      layout(new QVBoxLayout), language(Studio::Guile::language(script))
+      layout(new QVBoxLayout), m_language(Studio::Guile::language(script))
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
@@ -91,13 +91,20 @@ Editor::Editor(QWidget* parent, bool do_syntax)
 
     m_interpreterBusyDebounce.setInterval(100);
     m_interpreterBusyDebounce.setSingleShot(true);
-    // TODO: connect language's busy signal
     connect(&m_interpreterBusyDebounce, &QTimer::timeout,
             &spinner, QOverload<>::of(&QTimer::start));
+
+    connect(&m_language, &Language::interpreterBusy,
+            &m_interpreterBusyDebounce, QOverload<>::of(&QTimer::start));
+    connect(&m_language, &Language::interpreterDone,
+            this, &Editor::onInterpreterDone);
+
+    connect(this, &Editor::scriptChanged,
+            &m_language, &Language::onScriptChanged);
 }
 
 void Editor::loadDefaultScript() {
-    setScript(language.defaultScript());
+    setScript(m_language.defaultScript());
     setModified(false);
 }
 
