@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+#include <QDebug>
+
 #include "studio/language.hpp"
 
 namespace Studio {
@@ -25,14 +27,33 @@ Language::Language(Interpreter* interpreter,
                    QSyntaxHighlighter* syntax)
     : m_interpreter(interpreter), m_formatter(formatter), m_syntax(syntax)
 {
+    // Connect to the interpreter thread
+    connect(this, &Language::onScriptChanged,
+            m_interpreter.data(), &Interpreter::eval);
+    connect(m_interpreter.data(), &Interpreter::ready,
+            this, &Language::onInterpreterReady);
+    connect(m_interpreter.data(), &Interpreter::done,
+            this, &Language::interpreterDone);
+    connect(m_interpreter.data(), &Interpreter::busy,
+            this, &Language::interpreterBusy);
+
     connect(&m_interpreterThread, &QThread::started,
             m_interpreter.data(), &Interpreter::init);
     m_interpreter->moveToThread(&m_interpreterThread);
     m_interpreterThread.start();
 }
 
+Language::~Language() {
+    m_interpreterThread.quit();
+    m_interpreterThread.wait();
+}
+
 QString Language::defaultScript() {
     return m_interpreter->defaultScript();
+}
+
+void Language::onInterpreterReady() {
+    qDebug() << "Interpreter is ready";
 }
 
 }   // namespace Studio

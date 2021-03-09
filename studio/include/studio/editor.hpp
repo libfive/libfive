@@ -99,7 +99,7 @@ protected:
     QVBoxLayout* layout;    // owned by the widget itself
 
     // The Language manages the embedded interpreter
-    QScopedPointer<Language> language;
+    Language language;
 
     // The documentation pane, constructed as needed then shown / hidden
     QScopedPointer<DocumentationPane> doc_pane;
@@ -109,6 +109,9 @@ protected:
 
     // Debounces text changes, to avoid emitting too many signals
     QTimer m_textChangedDebounce;
+
+    // Debounces the interpreter's "busy" signal to avoid UI jitter
+    QTimer m_interpreterBusyDebounce;
 
     bool drag_should_join=false;
     bool first_change=false;

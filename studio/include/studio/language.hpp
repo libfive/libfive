@@ -36,21 +36,24 @@ public:
     Language(Interpreter* interpreter,
              Formatter* formatter,
              QSyntaxHighlighter* syntax);
+    ~Language();
 
     QString defaultScript();
 
-public slots:
+signals:
+    /*  Emits the result of an interpreter evaluation */
+    void interpreterDone(Result);
+    void interpreterBusy();
+
     /*
      *  Called when the script changes.  This should be debounced in the Editor,
-     *  because invoking it here will trigger immediate evaluation.
+     *  because invoking it here will trigger immediate evaluation; it forwards
+     *  the given string across the thread boundary to the interpreter.
      */
     void onScriptChanged(QString s);
 
-signals:
-    /*
-     *  Emits the result of an interpreter evaluation
-     */
-    void done(Result);
+protected slots:
+    void onInterpreterReady();
 
 protected:
     /*  A language must define three helper classes */

@@ -27,12 +27,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/script.hpp"
 #include "studio/color.hpp"
 
+#include "studio/guile/language.hpp"
+
 namespace Studio {
 
 Editor::Editor(QWidget* parent, bool do_syntax)
     : QWidget(parent), script(new Script), script_doc(script->document()),
       err(new QPlainTextEdit), err_doc(err->document()),
-      layout(new QVBoxLayout)
+      layout(new QVBoxLayout), language(Studio::Guile::language(script))
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
@@ -84,12 +86,23 @@ Editor::Editor(QWidget* parent, bool do_syntax)
 
     m_textChangedDebounce.setInterval(250);
     m_textChangedDebounce.setSingleShot(true);
-    connect(&m_textChangedDebounce, &QTimer::timeout, this, &Editor::onTextChangedDebounce);
+    connect(&m_textChangedDebounce, &QTimer::timeout,
+            this, &Editor::onTextChangedDebounce);
+
+    m_interpreterBusyDebounce.setInterval(100);
+    m_interpreterBusyDebounce.setSingleShot(true);
+    // TODO: connect language's busy signal
+    connect(&m_interpreterBusyDebounce, &QTimer::timeout,
+            &spinner, QOverload<>::of(&QTimer::start));
 }
 
 void Editor::loadDefaultScript() {
-    setScript(language->defaultScript());
+    setScript(language.defaultScript());
     setModified(false);
+}
+
+void Editor::onInterpreterBusy() {
+    m_interpreterBusyDebounce.start();
 }
 
 void Editor::onSpinner()
@@ -102,6 +115,7 @@ void Editor::onSpinner()
 
 void Editor::onInterpreterDone(Result r)
 {
+    m_interpreterBusyDebounce.stop();
     spinner.stop();
 
     // Remove error selections from the script
