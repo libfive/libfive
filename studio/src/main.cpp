@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QSurfaceFormat>
 
 #include "studio/app.hpp"
+#include "studio/documentation.hpp"
 #include "studio/result.hpp"
 
 #ifdef Q_OS_MAC
@@ -40,6 +41,7 @@ int main(int argc, char** argv)
 
     // Register metatypes to be sent between threads
     qRegisterMetaType<Result>("Result");
+    qRegisterMetaType<Documentation>("Documentation");
 
 #ifdef Q_OS_MAC
     PlatformDarwin::disableWindowTabbing();

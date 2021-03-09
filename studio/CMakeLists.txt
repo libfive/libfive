@@ -16,22 +16,22 @@ find_package(Qt5Network REQUIRED)
 find_package(Qt5Concurrent REQUIRED)
 
 set(SRCS src/main.cpp
-    src/args.cpp
     src/app.cpp
+    src/args.cpp
     src/arrow.cpp
     src/axes.cpp
     src/background.cpp
     src/bbox.cpp
     src/busy.cpp
     src/camera.cpp
+    src/color.cpp
     src/documentation.cpp
+    src/editor.cpp
     src/language.cpp
     src/script.cpp
     src/settings.cpp
     src/shader.cpp
     src/shape.cpp
-    src/color.cpp
-    src/editor.cpp
     src/view.cpp
     src/window.cpp
 
@@ -51,6 +51,7 @@ set(QOBJECTS
     include/studio/interpreter.hpp
     include/studio/language.hpp
     include/studio/shape.hpp
+    include/studio/syntax.hpp
     include/studio/view.hpp
     include/studio/window.hpp
 

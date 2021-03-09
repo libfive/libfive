@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2017-2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,28 +17,18 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
-
-#include <QWidget>
-#include <QLineEdit>
-#include <QString>
-#include <QMap>
+#include <QRegularExpression>
+#include <QSyntaxHighlighter>
+#include <QPlainTextEdit>
 
 namespace Studio {
 
-typedef QMap<QString, QMap<QString, QString>> Documentation;
-
-////////////////////////////////////////////////////////////////////////////////
-
-class DocumentationPane : public QWidget
+/* Guile Scheme syntax highlighter */
+class Syntax : public QSyntaxHighlighter
 {
-    Q_OBJECT
 public:
-    DocumentationPane(Documentation docs);
-
-protected:
-    /*
-     *  Special-case handling of escape (hides the window)
-     */
-    bool eventFilter(QObject* object, QEvent* event) override;
+    Syntax(QTextDocument* doc) : QSyntaxHighlighter(doc) {}
+    virtual void setKeywords(QString kws)=0;
 };
-} // namespace Studio
+
+}   // namespace Studio

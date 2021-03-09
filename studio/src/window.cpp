@@ -578,7 +578,7 @@ void Window::onExportReady(QList<const libfive::Mesh*> shapes)
 {
     disconnect(view, &View::meshesReady, this, &Window::onExportReady);
     if (!libfive::Mesh::saveSTL(export_filename.toStdString(),
-                                std::list(shapes.begin(), shapes.end())))
+                                std::list<const libfive::Mesh*>(shapes.begin(), shapes.end())))
     {
         QMessageBox m(this);
         m.setText("Could not save file");

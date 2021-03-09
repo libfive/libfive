@@ -112,14 +112,14 @@ port-eof?
 (string-drop (string-drop-right
     (format #f "~A" (apply append (map cdr sandbox-bindings))) 1) 1)
 )"));
-    //emit(keywords(kws)); // TODO
+    QString keywords(kws);
     free(kws);
 
     // Extract a list of function names + docstrings
     QList<QString> modules = {"(libfive stdlib shapes)",
                               "(libfive stdlib csg)",
                               "(libfive stdlib transforms)"};
-    Documentation* ds = new Documentation;
+    Documentation docs;
     for (auto mod : modules)
     {
         auto f = scm_c_eval_string((R"(
@@ -140,7 +140,7 @@ port-eof?
             auto doc = scm_to_locale_string(scm_cdar(f));
             if (strlen(doc))
             {
-                ds->insert(mod, name, doc);
+                docs[mod][name] = doc;
             } else {
                 std::cerr << "Warning: missing documentation for "
                           << name << "\n";
@@ -149,8 +149,8 @@ port-eof?
             free(doc);
         }
     }
-    // emit(docs(ds)); // TODO
-    emit(ready());
+
+    emit(ready(keywords, docs));
 }
 
 void Interpreter::eval(QString script)
@@ -171,6 +171,7 @@ void Interpreter::eval(QString script)
             scm_from_locale_string(script.toLocal8Bit().data()));
 
     //  Loop through the whole result list, looking for an invalid clause
+    out.okay = true;
     for (auto r = result; !scm_is_null(r) && out.okay; r = scm_cdr(r))
     {
         if (!scm_is_eq(scm_caar(r), scm_valid_sym))

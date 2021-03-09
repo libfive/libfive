@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QTimer>
 
 #include "studio/result.hpp"
+#include "studio/documentation.hpp"
 
 namespace Studio {
 
@@ -42,7 +43,7 @@ public slots:
     virtual void eval(QString s)=0;
 
 signals:
-    void ready();
+    void ready(QString keywords, Documentation docs);
     void busy();
     void done(Result);
 };

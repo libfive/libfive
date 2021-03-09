@@ -21,9 +21,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QThread>
 #include <QSyntaxHighlighter>
 
-#include "studio/result.hpp"
-#include "studio/interpreter.hpp"
 #include "studio/formatter.hpp"
+#include "studio/interpreter.hpp"
+#include "studio/result.hpp"
+#include "studio/syntax.hpp"
 
 namespace Studio {
 
@@ -35,7 +36,7 @@ class Language : public QObject {
 public:
     Language(Interpreter* interpreter,
              Formatter* formatter,
-             QSyntaxHighlighter* syntax);
+             Syntax* syntax);
     ~Language();
 
     QString defaultScript();
@@ -53,13 +54,17 @@ signals:
     void onScriptChanged(QString s);
 
 protected slots:
-    void onInterpreterReady();
+    /*
+     *  Called when the interpreter finishes initialization, to populate the
+     *  keywords and documentation panes.
+     */
+    void onInterpreterReady(QString keywords, Documentation docs);
 
 protected:
     /*  A language must define three helper classes */
     QScopedPointer<Interpreter> m_interpreter;
     QScopedPointer<Formatter> m_formatter;
-    QScopedPointer<QSyntaxHighlighter> m_syntax;
+    QScopedPointer<Syntax> m_syntax;
 
     /*  This is the worker thread which the Interpreter runs in */
     QThread m_interpreterThread;

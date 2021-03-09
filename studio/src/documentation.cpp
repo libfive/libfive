@@ -30,13 +30,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 namespace Studio {
 
-void Documentation::insert(QString module, QString name, QString doc)
-{
-    docs[module][name].doc = doc;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 DocumentationPane::DocumentationPane(Documentation docs)
 {
     auto search = new QLineEdit();
@@ -45,11 +38,11 @@ DocumentationPane::DocumentationPane(Documentation docs)
     QMap<QString, QString> fs;
     QMap<QString, QString> tags;
     QMap<QString, QString> mods;
-    for (auto mod : docs.docs.keys())
+    for (auto mod : docs.keys())
     {
-        for (auto f : docs.docs[mod].keys())
+        for (auto f : docs[mod].keys())
         {
-            fs[f] = docs.docs[mod][f].doc;
+            fs[f] = docs[mod][f];
             tags.insert(f, "i" + QString::fromStdString(
                         std::to_string(tags.size())));
             mods.insert(f, mod);

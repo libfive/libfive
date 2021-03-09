@@ -84,7 +84,7 @@ endif()
 # Find all packages here at the top level so we can print debugging info
 if(NOT MSVC)
     if (BUILD_STUDIO_APP)
-        find_package(Qt5Core)
+        find_package(Qt5Core 5.12)
     endif ()
     find_package(Boost REQUIRED)
     find_package(PkgConfig REQUIRED)

@@ -127,8 +127,10 @@ void Editor::onInterpreterDone(Result r)
 
     // Remove error selections from the script
     auto selections = script->extraSelections();
-    std::remove_if(selections.begin(), selections.end(),
-        [=](auto itr) { return itr.format == error_format; });
+    selections.erase(
+        std::remove_if(selections.begin(), selections.end(),
+            [=](auto itr) { return itr.format == error_format; }),
+        selections.end());
 
     if (r.okay) {
         setResult(Color::green, r.result);

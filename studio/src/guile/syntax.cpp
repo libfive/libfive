@@ -135,7 +135,7 @@ QPoint Syntax::matchedParen(int pos)
 ////////////////////////////////////////////////////////////////////////////////
 
 Syntax::Syntax(QTextDocument* doc)
-    : QSyntaxHighlighter(doc)
+    : ::Studio::Syntax(doc)
 {
     {   // Strings (single and multi-line)
         QTextCharFormat string_format;
@@ -198,21 +198,6 @@ Syntax::Syntax(QTextDocument* doc)
 
     // Set format for matched parentheses
     parens_highlight.setBackground(Color::base2);
-}
-
-void Syntax::setKeywords(QString kws)
-{
-    QTextCharFormat kw_format;
-    kw_format.setForeground(Color::blue);
-
-    for (auto k : kws.split(' ')) {
-        // TODO: use kws.split(' ', Qt::SkipEmptyParts) once Qt 5.14 is
-        // available on all supported platforms.
-        if (!k.isEmpty()) {
-            auto esc = QRegularExpression::escape(k);
-            rules << Rule("(?<=[^\\w-]|^)" + esc + "(?=[^\\w-]|$)", kw_format);
-        }
-    }
 }
 
 void Syntax::matchParens(QPlainTextEdit* text, int cursor_pos)
@@ -305,6 +290,17 @@ void Syntax::highlightBlock(const QString& text)
 
     setCurrentBlockState(state);
     setCurrentBlockUserData(data);
+}
+
+void Syntax::setKeywords(QString kws) {
+    QTextCharFormat kw_format;
+    kw_format.setForeground(Color::blue);
+
+    for (auto k : kws.split(' ', Qt::SkipEmptyParts))
+    {
+        auto esc = QRegularExpression::escape(k);
+        rules << Rule("(?<=[^\\w-]|^)" + esc + "(?=[^\\w-]|$)", kw_format);
+    }
 }
 
 }   // namespace Guile

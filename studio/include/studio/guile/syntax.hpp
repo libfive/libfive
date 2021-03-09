@@ -17,23 +17,20 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
-#include <QRegularExpression>
-#include <QSyntaxHighlighter>
-#include <QPlainTextEdit>
+#include "studio/syntax.hpp"
 
 namespace Studio {
 namespace Guile {
 
 /* Guile Scheme syntax highlighter */
-class Syntax : public QSyntaxHighlighter
+class Syntax : public ::Studio::Syntax
 {
     Q_OBJECT
 public:
     Syntax(QTextDocument* doc);
     void matchParens(QPlainTextEdit* text, int cursor_pos);
 
-public slots:
-    void setKeywords(QString kws);
+    void setKeywords(QString kws) override;
 
 protected:
     QPoint matchedParen(int pos);

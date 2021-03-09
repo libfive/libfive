@@ -24,7 +24,7 @@ namespace Studio {
 
 Language::Language(Interpreter* interpreter,
                    Formatter* formatter,
-                   QSyntaxHighlighter* syntax)
+                   Syntax* syntax)
     : m_interpreter(interpreter), m_formatter(formatter), m_syntax(syntax)
 {
     // Connect to the interpreter thread
@@ -52,8 +52,8 @@ QString Language::defaultScript() {
     return m_interpreter->defaultScript();
 }
 
-void Language::onInterpreterReady() {
-    qDebug() << "Interpreter is ready";
+void Language::onInterpreterReady(QString keywords, Documentation docs) {
+    m_syntax->setKeywords(keywords);
 }
 
 }   // namespace Studio
