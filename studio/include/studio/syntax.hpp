@@ -23,12 +23,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 namespace Studio {
 
-/* Guile Scheme syntax highlighter */
 class Syntax : public QSyntaxHighlighter
 {
+    Q_OBJECT
 public:
     Syntax(QTextDocument* doc) : QSyntaxHighlighter(doc) {}
     virtual void setKeywords(QStringList kws)=0;
+
+public slots:
+    virtual void onCursorMoved(QPlainTextEdit* text)=0;
 };
 
 }   // namespace Studio

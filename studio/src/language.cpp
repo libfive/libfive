@@ -36,6 +36,9 @@ Language::Language(Interpreter* interpreter,
     connect(m_interpreter.data(), &Interpreter::busy,
             this, &Language::interpreterBusy);
 
+    connect(this, &Language::onCursorMoved,
+            m_syntax.data(), &Syntax::onCursorMoved);
+
     connect(&m_interpreterThread, &QThread::started,
             m_interpreter.data(), &Interpreter::init);
     m_interpreter->moveToThread(&m_interpreterThread);

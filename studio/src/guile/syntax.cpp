@@ -96,7 +96,7 @@ int Syntax::searchRight(int pos)
     return -1;
 }
 
-QPoint Syntax::matchedParen(int pos)
+QPoint Syntax::findMatchedParen(int pos)
 {
     auto block = document()->findBlock(pos);
     assert(block.isValid());
@@ -205,20 +205,17 @@ Syntax::Syntax(QTextDocument* doc)
     m_keyword = Rule(R"((?<=[^\w-]|^)[\w\-!?\*]+(?=[^\\w-]|$))", kw_format);
 }
 
-void Syntax::matchParens(QPlainTextEdit* text, int cursor_pos)
+void Syntax::onCursorMoved(QPlainTextEdit* text)
 {
     // Erase previous parens-matching selections, leaving other
     // extra selections intact (e.g. for error highlighting)
     auto selections = text->extraSelections();
-    for (auto itr = selections.begin(); itr != selections.end(); ++itr)
-    {
-        if (itr->format == parens_highlight)
-        {
-            itr = --selections.erase(itr);
-        }
-    }
+    selections.erase(
+        std::remove_if(selections.begin(), selections.end(),
+            [=](auto itr) { return itr.format == parens_highlight; }),
+        selections.end());
 
-    auto pos = matchedParen(cursor_pos);
+    auto pos = findMatchedParen(text->textCursor().position());
     if (pos.x() != -1 && pos.y() != -1)
     {
         for (auto p : {pos.x(), pos.y()})

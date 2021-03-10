@@ -28,16 +28,18 @@ class Syntax : public ::Studio::Syntax
     Q_OBJECT
 public:
     Syntax(QTextDocument* doc);
-    void matchParens(QPlainTextEdit* text, int cursor_pos);
-
     void setKeywords(QStringList kws) override;
 
+public slots:
+    void onCursorMoved(QPlainTextEdit* text) override;
+
 protected:
-    QPoint matchedParen(int pos);
+    QPoint findMatchedParen(int pos);
 
     int searchLeft(int pos);
     int searchRight(int pos);
 
+    /*  Overrides highlightBlock in QSyntaxHighlighter */
     void highlightBlock(const QString& text) override;
 
     /*  Define states to keep track of multiline strings and comments. */

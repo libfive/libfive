@@ -55,6 +55,9 @@ signals:
      */
     void onScriptChanged(QString s);
 
+    /*  Called when the cursor moves, forwarding to syntax highlighter */
+    void onCursorMoved(QPlainTextEdit* text);
+
 public slots:
     void onShowDocs();
 

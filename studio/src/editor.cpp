@@ -61,6 +61,9 @@ Editor::Editor(QWidget* parent)
 
     setStyleSheet("QPlainTextEdit { " + style);
 
+    connect(script, &QPlainTextEdit::cursorPositionChanged,
+            &m_language, [&](){ m_language.onCursorMoved(script); });
+
     // Emit the script whenever text changes
     connect(script, &QPlainTextEdit::textChanged,
             &m_textChangedDebounce, QOverload<>::of(&QTimer::start));
