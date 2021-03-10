@@ -308,7 +308,7 @@ void Syntax::highlightBlock(const QString& text)
 }
 
 void Syntax::setKeywords(QStringList kws) {
-    m_keywords = QSet(kws.begin(), kws.end());
+    m_keywords = QSet<QString>(kws.begin(), kws.end());
 }
 
 }   // namespace Guile
