@@ -28,7 +28,7 @@ class Syntax : public QSyntaxHighlighter
 {
 public:
     Syntax(QTextDocument* doc) : QSyntaxHighlighter(doc) {}
-    virtual void setKeywords(QString kws)=0;
+    virtual void setKeywords(QStringList kws)=0;
 };
 
 }   // namespace Studio

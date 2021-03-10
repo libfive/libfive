@@ -198,6 +198,10 @@ Syntax::Syntax(QTextDocument* doc)
 
     // Set format for matched parentheses
     parens_highlight.setBackground(Color::base2);
+
+    QTextCharFormat kw_format;
+    kw_format.setForeground(Color::blue);
+    m_keyword = Rule(R"((?<=[^\w-]|^)[\w\-!?\*]+(?=[^\\w-]|$))", kw_format);
 }
 
 void Syntax::matchParens(QPlainTextEdit* text, int cursor_pos)
@@ -242,6 +246,16 @@ void Syntax::highlightBlock(const QString& text)
     {
         Rule rule;
         QRegularExpressionMatch match;
+
+        // First, check for a match against a language keyword by finding
+        // a keyword-shaped blob of text, then comparing it against the map.
+        auto m = m_keyword.regex.match(text, offset);
+        if (m.hasMatch()) {
+            if (m_keywords.contains(m.captured(0))) {
+                match = m;
+                rule = m_keyword;
+            }
+        }
 
         // Iterate over every rule, picking out the first match
         for (auto r : rules)
@@ -292,15 +306,8 @@ void Syntax::highlightBlock(const QString& text)
     setCurrentBlockUserData(data);
 }
 
-void Syntax::setKeywords(QString kws) {
-    QTextCharFormat kw_format;
-    kw_format.setForeground(Color::blue);
-
-    for (auto k : kws.split(' ', Qt::SkipEmptyParts))
-    {
-        auto esc = QRegularExpression::escape(k);
-        rules << Rule("(?<=[^\\w-]|^)" + esc + "(?=[^\\w-]|$)", kw_format);
-    }
+void Syntax::setKeywords(QStringList kws) {
+    m_keywords = QSet(kws.begin(), kws.end());
 }
 
 }   // namespace Guile

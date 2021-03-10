@@ -61,7 +61,7 @@ protected slots:
      *  Called when the interpreter finishes initialization, to populate the
      *  keywords and documentation panes.
      */
-    void onInterpreterReady(QString keywords, Documentation docs);
+    void onInterpreterReady(QStringList keywords, Documentation docs);
 
 protected:
     /*  A language must define three helper classes */
@@ -74,6 +74,10 @@ protected:
 
     /*  Constructed after the interpreter declares that it is ready */
     QScopedPointer<DocumentationPane> m_docs;
+
+    /*  If the UI requests that docs be shown before the interpreter is
+     *  booted, then we set this flag to show them once they're ready. */
+    bool m_showDocsWhenReady;
 };
 
 } // namespace Studio

@@ -43,7 +43,7 @@ public slots:
     virtual void eval(QString s)=0;
 
 signals:
-    void ready(QString keywords, Documentation docs);
+    void ready(QStringList keywords, Documentation docs);
     void busy();
     void done(Result);
 };

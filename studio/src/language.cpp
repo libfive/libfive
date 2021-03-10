@@ -23,7 +23,8 @@ namespace Studio {
 Language::Language(Interpreter* interpreter,
                    Formatter* formatter,
                    Syntax* syntax)
-    : m_interpreter(interpreter), m_formatter(formatter), m_syntax(syntax)
+    : m_interpreter(interpreter), m_formatter(formatter), m_syntax(syntax),
+      m_showDocsWhenReady(false)
 {
     // Connect to the interpreter thread
     connect(this, &Language::onScriptChanged,
@@ -49,6 +50,8 @@ Language::~Language() {
 void Language::onShowDocs() {
     if (m_docs) {
         m_docs->show();
+    } else {
+        m_showDocsWhenReady = true;
     }
 }
 
@@ -56,9 +59,12 @@ QString Language::defaultScript() {
     return m_interpreter->defaultScript();
 }
 
-void Language::onInterpreterReady(QString keywords, Documentation docs) {
+void Language::onInterpreterReady(QStringList keywords, Documentation docs) {
     m_syntax->setKeywords(keywords);
     m_docs.reset(new DocumentationPane(docs));
+    if (m_showDocsWhenReady) {
+        m_docs->show();
+    }
 }
 
 }   // namespace Studio

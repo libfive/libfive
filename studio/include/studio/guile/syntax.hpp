@@ -30,7 +30,7 @@ public:
     Syntax(QTextDocument* doc);
     void matchParens(QPlainTextEdit* text, int cursor_pos);
 
-    void setKeywords(QString kws) override;
+    void setKeywords(QStringList kws) override;
 
 protected:
     QPoint matchedParen(int pos);
@@ -60,6 +60,11 @@ protected:
     };
     QList<Rule> rules;
     QTextCharFormat parens_highlight;
+
+    /* We use a special rule for language keywords, to avoid having one rule
+     * per keyword, which would slow things down by a lot. */
+    Rule m_keyword;
+    QSet<QString> m_keywords;
 
     /*  Used as temporary storage when syntax highlighting is disabled */
     QTextDocument* doc=nullptr;

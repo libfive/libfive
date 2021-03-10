@@ -150,7 +150,7 @@ port-eof?
         }
     }
 
-    emit(ready(keywords, docs));
+    emit(ready(keywords.split(' ', Qt::SkipEmptyParts), docs));
 }
 
 void Interpreter::eval(QString script)
