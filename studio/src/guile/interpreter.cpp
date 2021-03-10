@@ -150,7 +150,11 @@ port-eof?
         }
     }
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     emit(ready(keywords.split(' ', Qt::SkipEmptyParts), docs));
+#else
+    emit(ready(keywords.split(' ', QString::SkipEmptyParts), docs));
+#endif
 }
 
 void Interpreter::eval(QString script)
