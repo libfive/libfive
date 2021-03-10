@@ -101,6 +101,7 @@ Editor::Editor(QWidget* parent, bool do_syntax)
 
     connect(this, &Editor::scriptChanged,
             &m_language, &Language::onScriptChanged);
+    connect(this, &Editor::onShowDocs, &m_language, &Language::onShowDocs);
 }
 
 void Editor::loadDefaultScript() {

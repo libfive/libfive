@@ -236,7 +236,7 @@ Window::Window(Arguments args)
             this, &Window::onLoadTutorial);
     auto ref_action = help_menu->addAction("Shape reference");
     ref_action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Slash));
-    //connect(ref_action, &QAction::triggered, this, &Window::onShowDocs); // TODO
+    connect(ref_action, &QAction::triggered, editor, &Editor::onShowDocs);
 
     #ifdef Q_OS_LINUX
         setWindowTitle("Studio[*]");

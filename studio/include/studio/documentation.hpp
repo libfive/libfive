@@ -35,10 +35,15 @@ class DocumentationPane : public QWidget
 public:
     DocumentationPane(Documentation docs);
 
+    /*  Shows the documentation pane and makes the search window focused */
+    void show();
+
 protected:
     /*
      *  Special-case handling of escape (hides the window)
      */
     bool eventFilter(QObject* object, QEvent* event) override;
+
+    QLineEdit* m_search;
 };
 } // namespace Studio

@@ -78,6 +78,12 @@ signals:
     void redoAvailable(bool a);
 
     /*
+     *  Shows the documentation pane attached to the language
+     *  (forwarded to m_language)
+     */
+    void onShowDocs();
+
+    /*
      *  Invoked when a script defines settings using special global functions.
      *  first is true if this is the first time this script has been evaluated,
      *  false otherwise; it is used to decide whether to zoom to shape bounds.

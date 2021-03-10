@@ -16,8 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-#include <QDebug>
-
 #include "studio/language.hpp"
 
 namespace Studio {
@@ -48,12 +46,19 @@ Language::~Language() {
     m_interpreterThread.wait();
 }
 
+void Language::onShowDocs() {
+    if (m_docs) {
+        m_docs->show();
+    }
+}
+
 QString Language::defaultScript() {
     return m_interpreter->defaultScript();
 }
 
 void Language::onInterpreterReady(QString keywords, Documentation docs) {
     m_syntax->setKeywords(keywords);
+    m_docs.reset(new DocumentationPane(docs));
 }
 
 }   // namespace Studio

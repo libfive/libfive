@@ -53,6 +53,9 @@ signals:
      */
     void onScriptChanged(QString s);
 
+public slots:
+    void onShowDocs();
+
 protected slots:
     /*
      *  Called when the interpreter finishes initialization, to populate the
@@ -68,6 +71,9 @@ protected:
 
     /*  This is the worker thread which the Interpreter runs in */
     QThread m_interpreterThread;
+
+    /*  Constructed after the interpreter declares that it is ready */
+    QScopedPointer<DocumentationPane> m_docs;
 };
 
 } // namespace Studio

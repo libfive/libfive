@@ -31,9 +31,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 namespace Studio {
 
 DocumentationPane::DocumentationPane(Documentation docs)
+    : m_search(new QLineEdit)
 {
-    auto search = new QLineEdit();
-
     // Flatten documentation into a single-level map
     QMap<QString, QString> fs;
     QMap<QString, QString> tags;
@@ -130,7 +129,7 @@ DocumentationPane::DocumentationPane(Documentation docs)
     // Build a search bar
     auto completer = new QCompleter(fs.keys());
     completer->setCaseSensitivity(Qt::CaseInsensitive);
-    search->setCompleter(completer);
+    m_search->setCompleter(completer);
     connect(completer, QOverload<const QString&>::of(&QCompleter::highlighted),
             txt, [=](const QString& str){
                 if (tags.count(str))
@@ -138,7 +137,7 @@ DocumentationPane::DocumentationPane(Documentation docs)
                     txt->scrollToAnchor(tags[str]);
                 }
             });
-    connect(search, &QLineEdit::textChanged, txt, [=](const QString& str){
+    connect(m_search, &QLineEdit::textChanged, txt, [=](const QString& str){
                 for (auto& t : tags.keys())
                 {
                     if (t.startsWith(str))
@@ -148,7 +147,7 @@ DocumentationPane::DocumentationPane(Documentation docs)
                     }
                 }
             });
-    search->installEventFilter(this);
+    m_search->installEventFilter(this);
 
     auto layout = new QVBoxLayout();
     auto row = new QHBoxLayout;
@@ -156,7 +155,7 @@ DocumentationPane::DocumentationPane(Documentation docs)
     row->addSpacing(5);
     row->addWidget(new QLabel("🔍  "));
     row->addSpacing(5);
-    row->addWidget(search);
+    row->addWidget(m_search);
     layout->addItem(row);
     layout->setMargin(0);
     layout->setSpacing(0);
@@ -169,10 +168,11 @@ DocumentationPane::DocumentationPane(Documentation docs)
     setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint |
                    Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
 #endif
-    setAttribute(Qt::WA_DeleteOnClose);
+}
 
-    show();
-    search->setFocus();
+void DocumentationPane::show() {
+    QWidget::show();
+    m_search->setFocus();
 }
 
 bool DocumentationPane::eventFilter(QObject* object, QEvent* event)
