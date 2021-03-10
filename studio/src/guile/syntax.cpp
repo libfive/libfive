@@ -199,6 +199,7 @@ Syntax::Syntax(QTextDocument* doc)
     // Set format for matched parentheses
     parens_highlight.setBackground(Color::base2);
 
+    // Special regex for keywords, to avoid having one rule for each
     QTextCharFormat kw_format;
     kw_format.setForeground(Color::blue);
     m_keyword = Rule(R"((?<=[^\w-]|^)[\w\-!?\*]+(?=[^\\w-]|$))", kw_format);

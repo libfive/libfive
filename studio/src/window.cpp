@@ -45,7 +45,7 @@ switch (checkUnsaved())                                                     \
 namespace Studio {
 
 Window::Window(Arguments args)
-    : QMainWindow(), editor(new Editor(nullptr, args.do_syntax)), view(new View)
+    : QMainWindow(), editor(new Editor(nullptr)), view(new View)
 {
     resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
 

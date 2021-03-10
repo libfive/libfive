@@ -61,6 +61,8 @@ QString Language::defaultScript() {
 
 void Language::onInterpreterReady(QStringList keywords, Documentation docs) {
     m_syntax->setKeywords(keywords);
+    emit(syntaxReady());
+
     m_docs.reset(new DocumentationPane(docs));
     if (m_showDocsWhenReady) {
         m_docs->show();

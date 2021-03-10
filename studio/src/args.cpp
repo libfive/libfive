@@ -30,9 +30,6 @@ Arguments::Arguments(QCoreApplication* app)
     parser.addHelpOption();
     parser.addPositionalArgument("filename", "File to load");
 
-    QCommandLineOption no_syntax("no-syntax", "Turn off syntax highlighting");
-    parser.addOption(no_syntax);
-
     QCommandLineOption vertical_layout("vertical", "Use vertical layout for editor / 3D view.");
     parser.addOption(vertical_layout);
 
@@ -41,7 +38,6 @@ Arguments::Arguments(QCoreApplication* app)
     const QStringList ps = parser.positionalArguments();
     filename = ps.isEmpty() ? "" : ps[0];
 
-    do_syntax = !parser.isSet(no_syntax);
     vertical = parser.isSet(vertical_layout);
 }
 

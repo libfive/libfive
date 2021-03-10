@@ -25,7 +25,6 @@ struct Arguments
     Arguments(QCoreApplication* app);
 
     QString filename;
-    bool do_syntax;
     bool vertical;
 };
 

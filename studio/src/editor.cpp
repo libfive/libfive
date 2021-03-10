@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 namespace Studio {
 
-Editor::Editor(QWidget* parent, bool do_syntax)
+Editor::Editor(QWidget* parent)
     : QWidget(parent), script(new Script), script_doc(script->document()),
       err(new QPlainTextEdit), err_doc(err->document()),
       layout(new QVBoxLayout), m_language(Studio::Guile::language(script))
@@ -98,6 +98,7 @@ Editor::Editor(QWidget* parent, bool do_syntax)
             &m_interpreterBusyDebounce, QOverload<>::of(&QTimer::start));
     connect(&m_language, &Language::interpreterDone,
             this, &Editor::onInterpreterDone);
+    connect(&m_language, &Language::syntaxReady, this, &Editor::onSyntaxReady);
 
     connect(this, &Editor::scriptChanged,
             &m_language, &Language::onScriptChanged);
@@ -349,6 +350,10 @@ void Editor::setVarValues(QMap<libfive::Tree::Id, float> vs)
     // be locked).
     drag_cursor.endEditBlock();
     script->setEnabled(false);
+}
+
+void Editor::onSyntaxReady() {
+    script_doc->contentsChange(0, 0, script_doc->toPlainText().length());
 }
 
 }   // namespace Studio

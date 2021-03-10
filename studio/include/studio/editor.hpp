@@ -37,7 +37,7 @@ class Editor : public QWidget
 {
     Q_OBJECT
 public:
-    Editor(QWidget* parent=nullptr, bool do_syntax=true);
+    Editor(QWidget* parent=nullptr);
     void setScript(const QString& s, bool reload=false);
     QString getScript() const;
     void setModified(bool m);
@@ -92,6 +92,9 @@ signals:
 
 protected slots:
     void onSpinner();
+
+    /*  Marks the whole script as changed, which triggers re-highlighting */
+    void onSyntaxReady();
 
 protected:
     void setResult(QColor color, QString result);

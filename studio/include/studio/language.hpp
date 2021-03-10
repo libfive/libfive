@@ -46,6 +46,8 @@ signals:
     void interpreterDone(Result);
     void interpreterBusy();
 
+    void syntaxReady();
+
     /*
      *  Called when the script changes.  This should be debounced in the Editor,
      *  because invoking it here will trigger immediate evaluation; it forwards
