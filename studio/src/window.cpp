@@ -238,6 +238,10 @@ Window::Window(Arguments args)
     ref_action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Slash));
     connect(ref_action, &QAction::triggered, editor, &Editor::onShowDocs);
 
+    // Link up the editor and the view
+    connect(editor, &Editor::shapes, view, &View::setShapes);
+    connect(view, &View::varsDragged, editor, &Editor::setVarValues);
+
     #ifdef Q_OS_LINUX
         setWindowTitle("Studio[*]");
     #endif

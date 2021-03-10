@@ -139,6 +139,8 @@ void Editor::onInterpreterDone(Result r)
 
         // Store the textual position of variables, for later editing
         vars = r.vars;
+
+        emit(shapes(r.shapes));
     } else {
         setResult(Color::red, r.error.error + "\n\nStack trace:\n" + r.error.stack);
 

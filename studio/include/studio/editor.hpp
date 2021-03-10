@@ -78,6 +78,11 @@ signals:
     void redoAvailable(bool a);
 
     /*
+     *  Emitted when the interpreter delivers us a list of shapes
+     */
+    void shapes(QList<Shape*> shapes);
+
+    /*
      *  Shows the documentation pane attached to the language
      *  (forwarded to m_language)
      */
