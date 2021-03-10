@@ -146,11 +146,11 @@ void Editor::onInterpreterDone(Result r)
 
         // Add new selections for errors in the script doc
         QTextCursor c(script_doc);
-        c.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, r.error.range.start_row);
-        c.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, r.error.range.start_col);
-        c.movePosition(QTextCursor::Down, QTextCursor::KeepAnchor, r.error.range.end_row - r.error.range.start_row);
+        c.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, r.error.range.top());
+        c.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, r.error.range.left());
+        c.movePosition(QTextCursor::Down, QTextCursor::KeepAnchor, r.error.range.height());
         c.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
-        c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, r.error.range.end_col);
+        c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, r.error.range.right());
 
         QTextEdit::ExtraSelection s;
         s.cursor = c;
@@ -296,8 +296,8 @@ void Editor::setVarValues(QMap<libfive::Tree::Id, float> vs)
     auto comp = [&](libfive::Tree::Id a, libfive::Tree::Id b){
         auto& pa = vars[a];
         auto& pb = vars[b];
-        return (pa.start_row != pb.start_row) ? (pa.start_row < pb.start_row)
-                                              : (pa.start_col < pb.start_col);
+        return (pa.top() != pb.top()) ? (pa.top() < pb.top())
+                                      : (pa.left() < pb.left());
     };
     std::set<libfive::Tree::Id, decltype(comp)> ordered(comp);
     for (auto v=vs.begin(); v != vs.end(); ++v)
@@ -316,24 +316,23 @@ void Editor::setVarValues(QMap<libfive::Tree::Id, float> vs)
         // changed already in this line
         auto pos = vars.find(v.key());
         assert(pos != vars.end());
-        if (pos.value().start_row == line)
+        if (pos.value().top() == line)
         {
-            pos.value().start_col += offset;
-            pos.value().end_col += offset;
+            pos.value().translate({offset, 0});
         }
         else
         {
-            line = pos.value().start_row;
+            line = pos.value().top();
             offset = 0;
         }
 
         drag_cursor.movePosition(QTextCursor::Start);
         drag_cursor.movePosition(
-                QTextCursor::Down, QTextCursor::MoveAnchor, pos.value().start_row);
+                QTextCursor::Down, QTextCursor::MoveAnchor, pos.value().top());
         drag_cursor.movePosition(
-                QTextCursor::Right, QTextCursor::MoveAnchor, pos.value().start_col);
+                QTextCursor::Right, QTextCursor::MoveAnchor, pos.value().left());
 
-        const auto length_before = pos.value().end_col - pos.value().start_col;
+        const auto length_before = pos.value().right() - pos.value().left();
         drag_cursor.movePosition(
                 QTextCursor::Right, QTextCursor::KeepAnchor, length_before);
         drag_cursor.removeSelectedText();
@@ -343,7 +342,7 @@ void Editor::setVarValues(QMap<libfive::Tree::Id, float> vs)
         drag_cursor.insertText(str);
         auto length_after = str.length();
 
-        pos.value().end_col = pos.value().start_col + length_after;
+        pos.value().setRight(pos.value().left() + length_after);
         offset += length_after - length_before;
     }
 

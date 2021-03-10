@@ -222,12 +222,16 @@ void Interpreter::eval(QString script)
         }
         auto str = scm_to_locale_string(_str);
         auto stack = scm_to_locale_string(_stack);
+        const int start_row = scm_to_int(scm_car(before));
+        const int end_row = scm_to_int(scm_cdr(before));
+        const int start_col = scm_to_int(scm_car(after));
+        const int end_col = scm_to_int(scm_cdr(after));
+
         out.error = Error {
             QString(str), QString(stack),
-            {scm_to_int(scm_car(before)),
-             scm_to_int(scm_car(after)),
-             scm_to_int(scm_cdr(before)),
-             scm_to_int(scm_cdr(after))}};
+                QRect(start_col, start_row,
+                      end_col - start_col,
+                      end_row - start_row) };
         free(str);
         free(stack);
     }
@@ -275,9 +279,11 @@ void Interpreter::eval(QString script)
                 vars[id] = value;
 
                 auto vp = scm_caddr(data);
-                out.vars[id] = {scm_to_int(scm_car(vp)), 0,
-                                scm_to_int(scm_cadr(vp)),
-                                scm_to_int(scm_caddr(vp))};
+                const int start_row = scm_to_int(scm_car(vp));
+                const int start_col = scm_to_int(scm_cadr(vp));
+                const int end_col = scm_to_int(scm_caddr(vp));
+                out.vars[id] = QRect(start_col, start_row,
+                                     end_col - start_col, 1);
             }
         }
 

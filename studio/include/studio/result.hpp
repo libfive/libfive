@@ -19,7 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #pragma once
 #include <QList>
 
-#include "studio/range.hpp"
 #include "studio/settings.hpp"
 
 #include "libfive/tree/tree.hpp"
@@ -31,7 +30,7 @@ class Shape;
 struct Error {
     QString error;
     QString stack;
-    Range range;
+    QRect range;
 };
 
 struct Result {
@@ -47,7 +46,7 @@ struct Result {
     /*  All of the other things which a valid script can produce */
     Settings settings;
     QList<Shape*> shapes;
-    QMap<libfive::Tree::Id, Range> vars;
+    QMap<libfive::Tree::Id, QRect> vars;
 
     /*  Warnings to be drawn in the GUI, along with quick-fixes.  This is used
      *  when the script does not define bounds, resolution, etc. */

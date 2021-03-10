@@ -130,7 +130,7 @@ protected:
     bool drag_should_join=false;
     bool first_change=false;
 
-    QMap<libfive::Tree::Id, Range> vars;
+    QMap<libfive::Tree::Id, QRect> vars;
 };
 
 }   // namespace Studio
