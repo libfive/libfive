@@ -6,6 +6,8 @@
         <file>gl/line.vert</file>
 
         <file>examples/tutorial.io</file>
+
+        <file>font/Inconsolata.otf</file>
     </qresource>
 </RCC>
 
