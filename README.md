@@ -73,7 +73,7 @@ and should also build with MinGW (though this is untested).
 ### Dependencies
 
 #### libfive
-- [`cmake`](https://cmake.org/)
+- [`cmake 1.65 or later`](https://cmake.org/)
 - [`pkg-config`](https://www.freedesktop.org/wiki/Software/pkg-config/)
 - [Eigen 3.3.x](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
@@ -90,7 +90,7 @@ If Guile isn't present, the Guile bindings won't be built.
 If Python isn't present, the Python bindings won't be built.
 
 #### Studio (optional, requires Guile bindings)
-- [Qt 5.11 or later](https://www.qt.io)
+- [Qt 5.12 or later](https://www.qt.io)
 
 If Qt and Guile aren't present, Studio will not be included in the build
 (and `cmake` will print a message to that effect).
@@ -98,15 +98,15 @@ If Qt and Guile aren't present, Studio will not be included in the build
 ### Mac
 With `homebrew` installed, run
 ```
-brew install cmake pkg-config eigen libpng boost guile qt python3
+brew install cmake pkg-config eigen libpng boost guile python3 qt
 ```
-Omit `guile` and/or `qt` if you do not want Guile bindings and/or Studio to be built too.
+Omit `guile`, `python3`, or `qt` to avoid building bindings and/or the UI.
 
 Then, from the `libfive` folder, run something like:
 ```
 mkdir build
 cd build
-cmake -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt5/5.7.0  ..
+cmake -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt5/5.12.0  ..
 make
 ```
 (adjust based on your Qt installation,
@@ -148,10 +148,20 @@ which is possible using the Snappy package manager:
 ```
 sudo snap install cmake --classic
 ```
+(untested)
+
+CMake downloads are also available on [their website](https://cmake.org/download/)
+
+18.04 _also_ does not have a new enough Qt in the package manager,
+so omit `qtbase5-dev` from the above package install command.
+To install Qt 5.12 or later,
+use the [Qt Online Installer](https://www.qt.io/download-qt-installer).
+The installer will prompt for the install path, which defaults to `$HOME/Qt`.
 
 #### Before 18.04
-Ubuntu releases __before 18.04__ do not provide `guile-2.2-dev`, so omit that from the above package install command.
-To build guile 2.2.3 from source, run
+Ubuntu releases __before 18.04__ do not provide `guile-2.2-dev`,
+so omit that from the above package install command.
+To build Guile 2.2.3 from source, run
 ```
 sudo apt-get install libgmp-dev libltdl-dev libunistring-dev libgc-dev libffi-dev pkg-config
 wget https://ftp.gnu.org/gnu/guile/guile-2.2.3.tar.gz
@@ -161,14 +171,6 @@ cd guile-2.2.3
 make -j4
 sudo make install
 ```
-
-Then, build as above.
-
-#### Before 17.04
-Ubuntu releases __before 17.04__ do not have high enough Qt versions,
-so _also_ omit `qtbase5-dev` from the above package install command.
-To install Qt 5.7 or later, use the [Qt Online Installer](https://www.qt.io/download-qt-installer).
-The installer will prompt for the install path, which defaults to `$HOME/Qt`.
 
 Then, build as above.
 

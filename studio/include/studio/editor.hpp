@@ -115,7 +115,8 @@ protected:
     // The Language manages the embedded interpreter
     Language m_language;
 
-    // The documentation pane, constructed as needed then shown / hidden
+    // The documentation pane, constructed when the interpreter is ready
+    // then shown / hidden as needed
     QScopedPointer<DocumentationPane> doc_pane;
 
     QTextCharFormat error_format;
