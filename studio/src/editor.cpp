@@ -28,13 +28,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/color.hpp"
 
 #include "studio/guile/language.hpp"
+#include "studio/python/language.hpp"
 
 namespace Studio {
 
 Editor::Editor(QWidget* parent)
     : QWidget(parent), script(new Script), script_doc(script->document()),
       err(new QPlainTextEdit), err_doc(err->document()),
-      layout(new QVBoxLayout), m_language(Studio::Guile::language(script))
+      layout(new QVBoxLayout)
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
@@ -65,9 +66,6 @@ Editor::Editor(QWidget* parent)
             .arg(Color::base00.name());
 
     setStyleSheet("QPlainTextEdit { " + style);
-
-    connect(script, &QPlainTextEdit::cursorPositionChanged,
-            &m_language, [&](){ m_language.onCursorMoved(script); });
 
     // Emit the script whenever text changes
     connect(script, &QPlainTextEdit::textChanged,
@@ -102,19 +100,11 @@ Editor::Editor(QWidget* parent)
     connect(&m_interpreterBusyDebounce, &QTimer::timeout,
             &spinner, QOverload<>::of(&QTimer::start));
 
-    connect(&m_language, &Language::interpreterBusy,
-            &m_interpreterBusyDebounce, QOverload<>::of(&QTimer::start));
-    connect(&m_language, &Language::interpreterDone,
-            this, &Editor::onInterpreterDone);
-    connect(&m_language, &Language::syntaxReady, this, &Editor::onSyntaxReady);
-
-    connect(this, &Editor::scriptChanged,
-            &m_language, &Language::onScriptChanged);
-    connect(this, &Editor::onShowDocs, &m_language, &Language::onShowDocs);
+    setLanguage(Language::LANGUAGE_GUILE);
 }
 
 void Editor::loadDefaultScript() {
-    setScript(m_language.defaultScript());
+    setScript(m_language->defaultScript());
     setModified(false);
 }
 
@@ -363,6 +353,37 @@ void Editor::setVarValues(QMap<libfive::Tree::Id, float> vs)
 
 void Editor::onSyntaxReady() {
     script_doc->contentsChange(0, 0, script_doc->toPlainText().length());
+}
+
+void Editor::setLanguage(Language::Type t) {
+    const bool was_default = m_language &&
+        script_doc->toPlainText() == m_language->defaultScript();
+
+    switch (t) {
+        case Language::LANGUAGE_GUILE:
+            m_language.reset(Studio::Guile::language(script));
+            break;
+        case Language::LANGUAGE_PYTHON:
+            m_language.reset(Studio::Python::language(script));
+            break;
+    }
+
+    connect(script, &QPlainTextEdit::cursorPositionChanged,
+            m_language.data(), [&](){ m_language->onCursorMoved(script); });
+    connect(m_language.data(), &Language::interpreterBusy,
+            &m_interpreterBusyDebounce, QOverload<>::of(&QTimer::start));
+    connect(m_language.data(), &Language::interpreterDone,
+            this, &Editor::onInterpreterDone);
+    connect(m_language.data(), &Language::syntaxReady,
+            this, &Editor::onSyntaxReady);
+
+    connect(this, &Editor::scriptChanged,
+            m_language.data(), &Language::onScriptChanged);
+    connect(this, &Editor::onShowDocs, m_language.data(), &Language::onShowDocs);
+
+    if (was_default) {
+        loadDefaultScript();
+    }
 }
 
 }   // namespace Studio

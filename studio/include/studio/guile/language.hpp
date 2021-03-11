@@ -25,7 +25,7 @@ namespace Studio {
 class Script;
 namespace Guile {
 
-class Language language(Script* script);
+::Studio::Language* language(Script* script);
 
 }   // namespace Guile
 }   // namespace Studio

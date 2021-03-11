@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2017-2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -16,28 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-#include <QFileOpenEvent>
+#include <QEvent>
 
-#include "studio/app.hpp"
-#include "studio/args.hpp"
+#include "studio/python/formatter.hpp"
 
 namespace Studio {
+namespace Python {
 
-App::App(int& argc, char** argv)
-    : QApplication(argc, argv),
-      window(Arguments(this))
+void Formatter::keyPressEvent(QPlainTextEdit* doc, QKeyEvent* e)
 {
-    // Nothing to do here
+    e->ignore();
 }
 
-bool App::event(QEvent *event)
-{
-    if (event->type() == QEvent::FileOpen) {
-        QFileOpenEvent *openEvent = static_cast<QFileOpenEvent*>(event);
-        window.openFile(openEvent->file());
-    }
-
-    return QApplication::event(event);
-}
-
+}   // namespace Python
 }   // namespace Studio

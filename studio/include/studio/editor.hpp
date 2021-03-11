@@ -45,6 +45,9 @@ public:
     /*  Sets the script state to the default for this language */
     void loadDefaultScript();
 
+    /*  Updates the language type */
+    void setLanguage(Language::Type type);
+
 public slots:
     void onInterpreterDone(Result result);
     void onInterpreterBusy();
@@ -113,7 +116,7 @@ protected:
     QVBoxLayout* layout;    // owned by the widget itself
 
     // The Language manages the embedded interpreter
-    Language m_language;
+    QScopedPointer<Language> m_language;
 
     // The documentation pane, constructed when the interpreter is ready
     // then shown / hidden as needed

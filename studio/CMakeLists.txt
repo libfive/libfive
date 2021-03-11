@@ -40,6 +40,11 @@ set(SRCS src/main.cpp
     src/guile/language.cpp
     src/guile/syntax.cpp
 
+    src/python/formatter.cpp
+    src/python/interpreter.cpp
+    src/python/language.cpp
+    src/python/syntax.cpp
+
     resources.qrc
 )
 set(QOBJECTS
@@ -57,6 +62,9 @@ set(QOBJECTS
 
     include/studio/guile/interpreter.hpp
     include/studio/guile/syntax.hpp
+
+    include/studio/python/interpreter.hpp
+    include/studio/python/syntax.hpp
 )
 
 if(APPLE)
@@ -76,13 +84,14 @@ endif(UNIX AND NOT(APPLE))
 
 target_include_directories(Studio
     PUBLIC include
-    PRIVATE ${GUILE_INCLUDE_DIRS})
+    PRIVATE ${GUILE_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS})
 target_link_libraries(Studio five
     Qt5::Widgets
     Qt5::Gui
     Qt5::OpenGL
     Qt5::Concurrent
     ${GUILE_LIBRARIES}
+    ${Python3_LIBRARIES}
     ${EXTRA_LIBS}
 )
 

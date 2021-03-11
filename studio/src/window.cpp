@@ -228,6 +228,21 @@ Window::Window(Arguments args)
     connect(iso_meshing, &QAction::triggered, view, &View::toIsoMeshing);
     connect(hybrid_meshing, &QAction::triggered, view, &View::toHybridMeshing);
 
+    auto lang_menu = menuBar()->addMenu("Language");
+    auto lang_guile = new QAction("Guile Scheme", nullptr);
+    auto lang_python = new QAction("Python", nullptr);
+    auto lang_group = new QActionGroup(lang_menu);
+    for (auto& m : { lang_guile, lang_python }) {
+        lang_menu->addAction(m);
+        lang_group->addAction(m);
+        m->setCheckable(true);
+    }
+    lang_guile->setChecked(true);
+    connect(lang_guile, &QAction::triggered, this,
+            [=](bool){ editor->setLanguage(Language::LANGUAGE_GUILE); });
+    connect(lang_python, &QAction::triggered, this,
+            [=](bool){ editor->setLanguage(Language::LANGUAGE_PYTHON); });
+
     // Help menu
     auto help_menu = menuBar()->addMenu("Help");
     connect(help_menu->addAction("About"), &QAction::triggered,
@@ -670,6 +685,11 @@ bool Window::onLoadTutorial(bool)
 void Window::onQuit(bool)
 {
     Window::close();
+}
+
+void Window::setLanguage(Language::Type t) {
+    editor->setLanguage(t);
+    // TODO: handle sandbox here
 }
 
 }   // namespace Studio

@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QFileSystemWatcher>
 
 #include "studio/args.hpp"
+#include "studio/language.hpp"
 
 namespace libfive { class Mesh; }
 
@@ -79,6 +80,8 @@ protected:
 
     bool loadFile(QString f, bool reload=false);
     bool saveFile(QString f);
+
+    void setLanguage(Language::Type t);
 
     /*  Filename of the current file, or empty string */
     QString filename;

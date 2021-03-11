@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -16,28 +16,43 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-#include <QFileOpenEvent>
+#include <Python.h>
+#include <QApplication>
 
-#include "studio/app.hpp"
-#include "studio/args.hpp"
+#include "studio/python/interpreter.hpp"
+#include "studio/documentation.hpp"
+#include "studio/shape.hpp"
+
+#include "libfive.h"
 
 namespace Studio {
+namespace Python {
 
-App::App(int& argc, char** argv)
-    : QApplication(argc, argv),
-      window(Arguments(this))
-{
+Interpreter::Interpreter() {
     // Nothing to do here
 }
 
-bool App::event(QEvent *event)
-{
-    if (event->type() == QEvent::FileOpen) {
-        QFileOpenEvent *openEvent = static_cast<QFileOpenEvent*>(event);
-        window.openFile(openEvent->file());
-    }
-
-    return QApplication::event(event);
+QString Interpreter::defaultScript() {
+    return "print('hello, world')";
 }
 
+void Interpreter::init() {
+    Py_Initialize();
+    emit(ready({}, Documentation()));
+}
+
+void Interpreter::eval(QString script)
+{
+    (void)script;
+
+    emit(busy());
+
+    Result out;
+    out.okay = true;
+    out.result = "Not yet implemented";
+
+    emit(done(out));
+}
+
+}   // namespace Python
 }   // namespace Studio
