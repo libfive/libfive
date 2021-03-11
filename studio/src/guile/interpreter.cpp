@@ -223,14 +223,14 @@ void Interpreter::eval(QString script)
         auto str = scm_to_locale_string(_str);
         auto stack = scm_to_locale_string(_stack);
         const int start_row = scm_to_int(scm_car(before));
-        const int end_row = scm_to_int(scm_cdr(before));
-        const int start_col = scm_to_int(scm_car(after));
+        const int end_row = scm_to_int(scm_car(after));
+        const int start_col = scm_to_int(scm_cdr(before));
         const int end_col = scm_to_int(scm_cdr(after));
 
         out.error = Error {
             QString(str), QString(stack),
                 QRect(start_col, start_row,
-                      end_col - start_col,
+                      end_col - start_col + 1,
                       end_row - start_row) };
         free(str);
         free(stack);
