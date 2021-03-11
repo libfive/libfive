@@ -18,8 +18,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
 
+namespace Studio {
+
 class PlatformDarwin
 {
 public:
     static void disableWindowTabbing();
 };
+} // namespace Studio

@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/busy.hpp"
 #include "studio/shader.hpp"
 
+namespace Studio {
+
 Busy::Busy()
 {
     connect(&timer, &QTimer::timeout, this, &Busy::redraw);
@@ -118,3 +120,5 @@ void Busy::draw(const QSize& size)
         Shader::busy->release();
     }
 }
+
+}   // namespace Studio

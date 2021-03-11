@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,33 +17,40 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
+#include <QList>
 
-#include <QWidget>
-#include <QLineEdit>
-#include <QString>
-#include <QMap>
+#include "studio/settings.hpp"
+
+#include "libfive/tree/tree.hpp"
 
 namespace Studio {
 
-typedef QMap<QString, QMap<QString, QString>> Documentation;
+class Shape;
 
-////////////////////////////////////////////////////////////////////////////////
-
-class DocumentationPane : public QWidget
-{
-    Q_OBJECT
-public:
-    DocumentationPane(Documentation docs);
-
-    /*  Shows the documentation pane and makes the search window focused */
-    void show();
-
-protected:
-    /*
-     *  Special-case handling of escape (hides the window)
-     */
-    bool eventFilter(QObject* object, QEvent* event) override;
-
-    QLineEdit* m_search;
+struct Error {
+    QString error;
+    QString stack;
+    QRect range;
 };
+
+struct Result {
+    /*  Sets whether result or error is valid */
+    bool okay;
+
+    /* A valid result, which should be shown in the GUI */
+    QString result;
+
+    /*  An error, which should be shown in the GUI and highlighted */
+    Error error;
+
+    /*  All of the other things which a valid script can produce */
+    Settings settings;
+    QList<Shape*> shapes;
+    QMap<libfive::Tree::Id, QRect> vars;
+
+    /*  Warnings to be drawn in the GUI, along with quick-fixes.  This is used
+     *  when the script does not define bounds, resolution, etc. */
+    QList<QPair<QString, QString>> warnings;
+};
+
 } // namespace Studio

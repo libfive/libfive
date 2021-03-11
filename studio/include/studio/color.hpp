@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <QColor>
 
+namespace Studio {
 namespace Color
 {
 extern const QColor base03;
@@ -40,5 +41,6 @@ extern const QColor blue;
 extern const QColor cyan;
 extern const QColor green;
 }
+} // namespace Studio
 
 #define COLOR(c)     Color::c.red()/255.0f, Color::c.green()/255.0f, Color::c.blue()/255.0f

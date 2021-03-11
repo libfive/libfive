@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2017-2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,10 +17,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <QTextDocument>
+#include <QTextBlockUserData>
 #include <cassert>
 
-#include "studio/syntax.hpp"
 #include "studio/color.hpp"
+#include "studio/guile/syntax.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,6 +34,9 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+
+namespace Studio {
+namespace Guile {
 
 int Syntax::searchLeft(int pos)
 {
@@ -92,7 +96,7 @@ int Syntax::searchRight(int pos)
     return -1;
 }
 
-QPoint Syntax::matchedParen(int pos)
+QPoint Syntax::findMatchedParen(int pos)
 {
     auto block = document()->findBlock(pos);
     assert(block.isValid());
@@ -131,7 +135,7 @@ QPoint Syntax::matchedParen(int pos)
 ////////////////////////////////////////////////////////////////////////////////
 
 Syntax::Syntax(QTextDocument* doc)
-    : QSyntaxHighlighter(doc)
+    : ::Studio::Syntax(doc)
 {
     {   // Strings (single and multi-line)
         QTextCharFormat string_format;
@@ -194,37 +198,24 @@ Syntax::Syntax(QTextDocument* doc)
 
     // Set format for matched parentheses
     parens_highlight.setBackground(Color::base2);
-}
 
-void Syntax::setKeywords(QString kws)
-{
+    // Special regex for keywords, to avoid having one rule for each
     QTextCharFormat kw_format;
     kw_format.setForeground(Color::blue);
-
-    for (auto k : kws.split(' ')) {
-        // TODO: use kws.split(' ', Qt::SkipEmptyParts) once Qt 5.14 is
-        // available on all supported platforms.
-        if (!k.isEmpty()) {
-            auto esc = QRegularExpression::escape(k);
-            rules << Rule("(?<=[^\\w-]|^)" + esc + "(?=[^\\w-]|$)", kw_format);
-        }
-    }
+    m_keyword = Rule(R"((?<=[^\w-]|^)[\w\-!?\*]+(?=[^\\w-]|$))", kw_format);
 }
 
-void Syntax::matchParens(QPlainTextEdit* text, int cursor_pos)
+void Syntax::onCursorMoved(QPlainTextEdit* text)
 {
     // Erase previous parens-matching selections, leaving other
     // extra selections intact (e.g. for error highlighting)
     auto selections = text->extraSelections();
-    for (auto itr = selections.begin(); itr != selections.end(); ++itr)
-    {
-        if (itr->format == parens_highlight)
-        {
-            itr = --selections.erase(itr);
-        }
-    }
+    selections.erase(
+        std::remove_if(selections.begin(), selections.end(),
+            [=](auto itr) { return itr.format == parens_highlight; }),
+        selections.end());
 
-    auto pos = matchedParen(cursor_pos);
+    auto pos = findMatchedParen(text->textCursor().position());
     if (pos.x() != -1 && pos.y() != -1)
     {
         for (auto p : {pos.x(), pos.y()})
@@ -253,6 +244,16 @@ void Syntax::highlightBlock(const QString& text)
     {
         Rule rule;
         QRegularExpressionMatch match;
+
+        // First, check for a match against a language keyword by finding
+        // a keyword-shaped blob of text, then comparing it against the map.
+        auto m = m_keyword.regex.match(text, offset);
+        if (m.hasMatch()) {
+            if (m_keywords.contains(m.captured(0))) {
+                match = m;
+                rule = m_keyword;
+            }
+        }
 
         // Iterate over every rule, picking out the first match
         for (auto r : rules)
@@ -302,3 +303,12 @@ void Syntax::highlightBlock(const QString& text)
     setCurrentBlockState(state);
     setCurrentBlockUserData(data);
 }
+
+void Syntax::setKeywords(QStringList kws) {
+    for (auto k: kws) {
+        m_keywords.insert(k);
+    }
+}
+
+}   // namespace Guile
+}   // namespace Studio

@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,19 +17,43 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
-#include <QApplication>
+#include <libguile.h>
 
-#include "studio/window.hpp"
+#include "studio/interpreter.hpp"
 
 namespace Studio {
-class App : public QApplication
-{
+namespace Guile {
+
+class Interpreter: public ::Studio::Interpreter {
     Q_OBJECT
 public:
-    App(int& argc, char** argv);
-protected:
-    bool event(QEvent* event) override;
+    Interpreter();
 
-    Window window;
+    void init() override;
+
+    QString defaultScript() override;
+
+public slots:
+    void eval(QString s) override;
+
+protected:
+    /*  Lots of miscellaneous Scheme objects, constructed once
+     *  during init() so that we don't need to build them over
+     *  and over again at runtime */
+    SCM scm_eval_sandboxed;
+    SCM scm_shape_to_ptr;
+    SCM scm_is_shape;
+
+    SCM scm_port_eof_p;
+    SCM scm_valid_sym;
+    SCM scm_syntax_error_sym;
+    SCM scm_numerical_overflow_sym;
+
+    SCM scm_syntax_error_fmt;
+    SCM scm_numerical_overflow_fmt;
+    SCM scm_other_error_fmt;
+    SCM scm_result_fmt;
+    SCM scm_in_function_fmt;
 };
+}   // namespace Guile
 }   // namespace Studio

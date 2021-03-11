@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "studio/platform_darwin.hpp"
 
+namespace Studio {
+
 void PlatformDarwin::disableWindowTabbing()
 {
 #ifndef __GNUC__
@@ -36,3 +38,5 @@ void PlatformDarwin::disableWindowTabbing()
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NSDisabledCharacterPaletteMenuItem"];
 #endif
 }
+
+}   // namespace Studio

@@ -20,14 +20,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QSurfaceFormat>
 
 #include "studio/app.hpp"
-#include "studio/editor.hpp"
-#include "studio/window.hpp"
-#include "studio/settings.hpp"
-#include "studio/shape.hpp"
+#include "studio/documentation.hpp"
+#include "studio/result.hpp"
 
 #ifdef Q_OS_MAC
 #include "studio/platform_darwin.hpp"
 #endif
+
+using namespace Studio;
 
 int main(int argc, char** argv)
 {
@@ -39,14 +39,9 @@ int main(int argc, char** argv)
         QSurfaceFormat::setDefaultFormat(format);
     }
 
-    // Register settings and shape meta-types to be sent across threads
-    qRegisterMetaType<Settings>("Settings");
-    qRegisterMetaType<QList<Shape*>>("QList<Shape*>");
-    qRegisterMetaType<Editor::Range>("Editor::Range");
-    qRegisterMetaType<QMap<libfive::Tree::Id,Editor::Range>>(
-            "QMap<libfive::Tree::Id,Editor::Range>");
-    qRegisterMetaType<QList<QPair<QString, QString>>>(
-            "QList<QPair<QString,QString>>");
+    // Register metatypes to be sent between threads
+    qRegisterMetaType<Result>("Result");
+    qRegisterMetaType<Documentation>("Documentation");
 
 #ifdef Q_OS_MAC
     PlatformDarwin::disableWindowTabbing();

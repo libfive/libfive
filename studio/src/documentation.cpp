@@ -28,30 +28,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "studio/documentation.hpp"
 
-void Documentation::insert(QString module, QString name, QString doc)
+namespace Studio {
+
+DocumentationPane::DocumentationPane(Documentation docs)
+    : m_search(new QLineEdit)
 {
-    docs[module][name].doc = doc;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-QScopedPointer<Documentation> DocumentationPane::docs;
-QPointer<DocumentationPane> DocumentationPane::instance;
-
-DocumentationPane::DocumentationPane()
-    : search(new QLineEdit)
-{
-    Q_ASSERT(docs.data());
-
     // Flatten documentation into a single-level map
     QMap<QString, QString> fs;
     QMap<QString, QString> tags;
     QMap<QString, QString> mods;
-    for (auto mod : docs->docs.keys())
+    for (auto mod : docs.keys())
     {
-        for (auto f : docs->docs[mod].keys())
+        for (auto f : docs[mod].keys())
         {
-            fs[f] = docs->docs[mod][f].doc;
+            fs[f] = docs[mod][f];
             tags.insert(f, "i" + QString::fromStdString(
                         std::to_string(tags.size())));
             mods.insert(f, mod);
@@ -131,7 +121,7 @@ DocumentationPane::DocumentationPane()
         QFontMetrics fm(txt->font());
         for (auto line : txt->toPlainText().split("\n"))
         {
-            max_width = std::max(max_width, fm.width(line));
+            max_width = std::max(max_width, fm.horizontalAdvance(line));
         }
         txt->setMinimumWidth(max_width + 40);
     }
@@ -139,15 +129,15 @@ DocumentationPane::DocumentationPane()
     // Build a search bar
     auto completer = new QCompleter(fs.keys());
     completer->setCaseSensitivity(Qt::CaseInsensitive);
-    search->setCompleter(completer);
-    connect(completer, static_cast<void (QCompleter::*)(const QString&)>(&QCompleter::highlighted),
+    m_search->setCompleter(completer);
+    connect(completer, QOverload<const QString&>::of(&QCompleter::highlighted),
             txt, [=](const QString& str){
                 if (tags.count(str))
                 {
                     txt->scrollToAnchor(tags[str]);
                 }
             });
-    connect(search, &QLineEdit::textChanged, txt, [=](const QString& str){
+    connect(m_search, &QLineEdit::textChanged, txt, [=](const QString& str){
                 for (auto& t : tags.keys())
                 {
                     if (t.startsWith(str))
@@ -157,7 +147,7 @@ DocumentationPane::DocumentationPane()
                     }
                 }
             });
-    search->installEventFilter(this);
+    m_search->installEventFilter(this);
 
     auto layout = new QVBoxLayout();
     auto row = new QHBoxLayout;
@@ -165,7 +155,7 @@ DocumentationPane::DocumentationPane()
     row->addSpacing(5);
     row->addWidget(new QLabel("🔍  "));
     row->addSpacing(5);
-    row->addWidget(search);
+    row->addWidget(m_search);
     layout->addItem(row);
     layout->setMargin(0);
     layout->setSpacing(0);
@@ -178,34 +168,13 @@ DocumentationPane::DocumentationPane()
     setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint |
                    Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
 #endif
-    setAttribute(Qt::WA_DeleteOnClose);
-
-    show();
-    search->setFocus();
 }
 
-void DocumentationPane::setDocs(Documentation* ds)
-{
-    docs.reset(ds);
+void DocumentationPane::show() {
+    QWidget::show();
+    m_search->setFocus();
 }
 
-bool DocumentationPane::hasDocs()
-{
-    return docs.data();
-}
-
-void DocumentationPane::open()
-{
-    if (instance.isNull())
-    {
-        instance = new DocumentationPane();
-    }
-    else
-    {
-        instance->show();
-        instance->search->setFocus();
-    }
-}
 bool DocumentationPane::eventFilter(QObject* object, QEvent* event)
 {
     Q_UNUSED(object);
@@ -213,7 +182,7 @@ bool DocumentationPane::eventFilter(QObject* object, QEvent* event)
     if (event->type() == QEvent::KeyPress &&
         static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape)
     {
-        deleteLater();
+        hide();
         return true;
     }
     else
@@ -221,3 +190,5 @@ bool DocumentationPane::eventFilter(QObject* object, QEvent* event)
         return false;
     }
 }
+
+}   // namespace Studio

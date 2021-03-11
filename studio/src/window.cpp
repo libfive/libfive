@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/window.hpp"
 #include "studio/documentation.hpp"
 #include "studio/editor.hpp"
-#include "studio/interpreter.hpp"
 #include "studio/view.hpp"
 
 #include "libfive.h"
@@ -43,8 +42,10 @@ switch (checkUnsaved())                                                     \
     default:    assert(false);                                              \
 }
 
+namespace Studio {
+
 Window::Window(Arguments args)
-    : QMainWindow(), editor(new Editor(nullptr, args.do_syntax)), view(new View)
+    : QMainWindow(), editor(new Editor(nullptr)), view(new View)
 {
     resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
 
@@ -235,28 +236,11 @@ Window::Window(Arguments args)
             this, &Window::onLoadTutorial);
     auto ref_action = help_menu->addAction("Shape reference");
     ref_action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Slash));
-    connect(ref_action, &QAction::triggered, this, &Window::onShowDocs);
+    connect(ref_action, &QAction::triggered, editor, &Editor::onShowDocs);
 
-    // Start embedded Guile interpreter
-    auto interpreter = new Interpreter();
-    connect(editor, &Editor::scriptChanged,
-            interpreter, &Interpreter::onScriptChanged);
-
-    connect(interpreter, &Interpreter::busy, editor, &Editor::onBusy);
-    connect(interpreter, &Interpreter::gotResult, editor, &Editor::onResult);
-    connect(interpreter, &Interpreter::gotError, editor, &Editor::onError);
-    connect(interpreter, &Interpreter::gotWarnings,
-            editor, &Editor::setWarnings);
-    connect(interpreter, &Interpreter::keywords, editor, &Editor::setKeywords);
-    connect(interpreter, &Interpreter::docs, this, &Window::setDocs);
-    connect(interpreter, &Interpreter::gotShapes, view, &View::setShapes);
-    connect(interpreter, &Interpreter::gotVars,
-            editor, &Editor::setVarPositions);
-    connect(interpreter, &Interpreter::gotSettings,
-            editor, &Editor::onSettingsChanged);
+    // Link up the editor and the view
+    connect(editor, &Editor::shapes, view, &View::setShapes);
     connect(view, &View::varsDragged, editor, &Editor::setVarValues);
-
-    interpreter->start();
 
     #ifdef Q_OS_LINUX
         setWindowTitle("Studio[*]");
@@ -466,21 +450,7 @@ bool Window::onNew(bool)
         setWindowTitle("Studio[*]");
     #endif
 
-    {   // Construct a starter script that uses the default settings for
-        // bounds, quality and resolution.
-        QString script;
-        auto default_settings = Settings::defaultSettings();
-        script += Interpreter::SET_BOUNDS.arg(default_settings.min.x())
-                                         .arg(default_settings.min.y())
-                                         .arg(default_settings.min.z())
-                                         .arg(default_settings.max.x())
-                                         .arg(default_settings.max.y())
-                                         .arg(default_settings.max.z());
-        script += Interpreter::SET_QUALITY.arg(default_settings.quality);
-        script += Interpreter::SET_RESOLUTION.arg(default_settings.res);
-        editor->setScript(script);
-    }
-    editor->setModified(false);
+    editor->loadDefaultScript();
     emit(setAutoload(false));
     return true;
 }
@@ -612,7 +582,7 @@ void Window::onExportReady(QList<const libfive::Mesh*> shapes)
 {
     disconnect(view, &View::meshesReady, this, &Window::onExportReady);
     if (!libfive::Mesh::saveSTL(export_filename.toStdString(),
-                                std::list(shapes.begin(), shapes.end())))
+                                std::list<const libfive::Mesh*>(shapes.begin(), shapes.end())))
     {
         QMessageBox m(this);
         m.setText("Could not save file");
@@ -697,20 +667,9 @@ bool Window::onLoadTutorial(bool)
     return false;
 }
 
-void Window::setDocs(Documentation* docs)
-{
-    DocumentationPane::setDocs(docs);
-}
-
-void Window::onShowDocs(bool)
-{
-    if (DocumentationPane::hasDocs())
-    {
-        DocumentationPane::open();
-    }
-}
-
 void Window::onQuit(bool)
 {
     Window::close();
 }
+
+}   // namespace Studio

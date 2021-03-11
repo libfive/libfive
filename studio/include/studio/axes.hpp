@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLFunctions>
 
+namespace Studio {
 class Axes : public QOpenGLFunctions
 {
 public:
@@ -39,3 +40,4 @@ protected:
     QOpenGLBuffer wire_vbo;
     QOpenGLVertexArrayObject wire_vao;
 };
+} // namespace Studio

@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,20 +18,38 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <QApplication>
 
-#include "studio/interpreter.hpp"
+#include "studio/guile/interpreter.hpp"
 #include "studio/documentation.hpp"
 #include "studio/shape.hpp"
 
 #include "libfive.h"
 
-_Interpreter::_Interpreter()
-{
-    connect(&thread, &QThread::started, this, &_Interpreter::init);
-    moveToThread(&thread);
+namespace Studio {
+namespace Guile {
+
+const static QString SET_QUALITY = "(set-quality! %1)\n";
+const static QString SET_RESOLUTION = "(set-resolution! %1)\n";
+const static QString SET_BOUNDS = "(set-bounds! [%1 %2 %3] [%4 %5 %6])\n";
+
+Interpreter::Interpreter() {
+    // Nothing to do here
 }
 
-void _Interpreter::init()
-{
+QString Interpreter::defaultScript() {
+    QString script;
+    auto default_settings = Settings::defaultSettings();
+    script += SET_BOUNDS.arg(default_settings.min.x())
+                        .arg(default_settings.min.y())
+                        .arg(default_settings.min.z())
+                        .arg(default_settings.max.x())
+                        .arg(default_settings.max.y())
+                        .arg(default_settings.max.z());
+    script += SET_QUALITY.arg(default_settings.quality);
+    script += SET_RESOLUTION.arg(default_settings.res);
+    return script;
+}
+
+void Interpreter::init() {
 #ifdef Q_OS_MAC
     const auto app_dir = QCoreApplication::applicationDirPath().toLocal8Bit();
 
@@ -94,14 +112,14 @@ port-eof?
 (string-drop (string-drop-right
     (format #f "~A" (apply append (map cdr sandbox-bindings))) 1) 1)
 )"));
-    emit(keywords(kws));
+    QString keywords(kws);
     free(kws);
 
     // Extract a list of function names + docstrings
     QList<QString> modules = {"(libfive stdlib shapes)",
                               "(libfive stdlib csg)",
                               "(libfive stdlib transforms)"};
-    Documentation* ds = new Documentation;
+    Documentation docs;
     for (auto mod : modules)
     {
         auto f = scm_c_eval_string((R"(
@@ -122,7 +140,7 @@ port-eof?
             auto doc = scm_to_locale_string(scm_cdar(f));
             if (strlen(doc))
             {
-                ds->insert(mod, name, doc);
+                docs[mod][name] = doc;
             } else {
                 std::cerr << "Warning: missing documentation for "
                           << name << "\n";
@@ -131,17 +149,19 @@ port-eof?
             free(doc);
         }
     }
-    emit(docs(ds));
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+    emit(ready(keywords.split(' ', Qt::SkipEmptyParts), docs));
+#else
+    emit(ready(keywords.split(' ', QString::SkipEmptyParts), docs));
+#endif
 }
 
-void _Interpreter::eval()
+void Interpreter::eval(QString script)
 {
-    // Safely read in the text of the script
-    QString script;
-    {
-        QMutexLocker lock(&mutex);
-        script = _script;
-    }
+    emit(busy());
+
+    Result out;
 
     // Clear global bounds, so we can detect if they were set in the script
     scm_c_eval_string(R"(
@@ -155,12 +175,12 @@ void _Interpreter::eval()
             scm_from_locale_string(script.toLocal8Bit().data()));
 
     //  Loop through the whole result list, looking for an invalid clause
-    bool valid = true;
-    for (auto r = result; !scm_is_null(r) && valid; r = scm_cdr(r))
+    out.okay = true;
+    for (auto r = result; !scm_is_null(r) && out.okay; r = scm_cdr(r))
     {
         if (!scm_is_eq(scm_caar(r), scm_valid_sym))
         {
-            valid = false;
+            out.okay = false;
         }
     }
 
@@ -168,7 +188,7 @@ void _Interpreter::eval()
     // into a string (with special cases for various error forms)
     auto last = scm_is_null(result) ? nullptr
                                     : scm_cdr(scm_car(scm_last_pair(result)));
-    if (!valid)
+    if (!out.okay)
     {
         /* last = '(before after key params) */
         auto before = scm_car(last);
@@ -202,14 +222,18 @@ void _Interpreter::eval()
         }
         auto str = scm_to_locale_string(_str);
         auto stack = scm_to_locale_string(_stack);
-        emit(gotError(QString(str), QString(stack),
-                    {scm_to_int(scm_car(before)),
-                     scm_to_int(scm_car(after)),
-                     scm_to_int(scm_cdr(before)),
-                     scm_to_int(scm_cdr(after))}));
+        const int start_row = scm_to_int(scm_car(before));
+        const int end_row = scm_to_int(scm_cdr(before));
+        const int start_col = scm_to_int(scm_car(after));
+        const int end_col = scm_to_int(scm_cdr(after));
+
+        out.error = Error {
+            QString(str), QString(stack),
+                QRect(start_col, start_row,
+                      end_col - start_col,
+                      end_row - start_row) };
         free(str);
         free(stack);
-        emit(gotWarnings({}));
     }
     else if (last)
     {
@@ -219,30 +243,27 @@ void _Interpreter::eval()
             auto str = scm_to_locale_string(
                     scm_simple_format(SCM_BOOL_F, scm_result_fmt,
                                       scm_list_1(scm_car(last))));
-            emit(gotResult(QString(str)));
+            out.result = QString(str);
         }
         else
         {
             auto str = scm_to_locale_string(
                     scm_simple_format(SCM_BOOL_F, scm_result_fmt,
                                       scm_list_1(last)));
-            emit(gotResult("(values " + QString(str) + ")"));
+            out.result = "(values " + QString(str) + ")";
         }
         free(str);
     }
     else
     {
-        emit(gotResult("#<eof>"));
+        out.result = "#<eof>";
     }
 
     // Then iterate over the results, picking out shapes
-    if (valid)
+    if (out.okay)
     {
-        QList<Shape*> shapes;
-
         // Initialize variables and their textual positions
         std::map<libfive::Tree::Id, float> vars;
-        QMap<libfive::Tree::Id, Editor::Range> var_pos;
 
         {   // Walk through the global variable map
             auto vs = scm_c_eval_string(R"(
@@ -258,9 +279,11 @@ void _Interpreter::eval()
                 vars[id] = value;
 
                 auto vp = scm_caddr(data);
-                var_pos[id] = {scm_to_int(scm_car(vp)), 0,
-                               scm_to_int(scm_cadr(vp)),
-                               scm_to_int(scm_caddr(vp))};
+                const int start_row = scm_to_int(scm_car(vp));
+                const int start_col = scm_to_int(scm_cadr(vp));
+                const int end_col = scm_to_int(scm_caddr(vp));
+                out.vars[id] = QRect(start_col, start_row,
+                                     end_col - start_col, 1);
             }
         }
 
@@ -275,13 +298,11 @@ void _Interpreter::eval()
                         scm_to_pointer(scm_call_1(scm_shape_to_ptr, scm_car(r))));
                     auto shape = new Shape(libfive::Tree(tree), vars);
                     shape->moveToThread(QApplication::instance()->thread());
-                    shapes.push_back(shape);
+                    out.shapes.push_back(shape);
                 }
             }
             result = scm_cdr(result);
         }
-        emit(gotShapes(shapes));
-        emit(gotVars(var_pos));
 
         // Detect variables that should be set in the script but were not,
         // and emit warnings for them (as well as storing reasonable defaults)
@@ -297,120 +318,61 @@ void _Interpreter::eval()
         (use-modules (libfive sandbox)) global-quality
         )");
 
-        QList<QPair<QString, QString>> warnings;
-        auto settings = Settings::defaultSettings();
+        out.settings = Settings::defaultSettings();
         if (scm_is_false(bounds))
         {
-            warnings.append({"<b>Warning:</b> Using default bounds for shapes<br>"
-                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                             "Use <code>set-bounds!</code> to specify.",
-                    Interpreter::SET_BOUNDS.arg(settings.min.x())
-                                           .arg(settings.min.y())
-                                           .arg(settings.min.z())
-                                           .arg(settings.max.x())
-                                           .arg(settings.max.y())
-                                           .arg(settings.max.z())});
+            out.warnings.append(
+                    {"<b>Warning:</b> Using default bounds for shapes<br>"
+                     "&nbsp;&nbsp;&nbsp;&nbsp;"
+                     "Use <code>set-bounds!</code> to specify.",
+                    SET_BOUNDS.arg(out.settings.min.x())
+                              .arg(out.settings.min.y())
+                              .arg(out.settings.min.z())
+                              .arg(out.settings.max.x())
+                              .arg(out.settings.max.y())
+                              .arg(out.settings.max.z())});
         }
         else
         {
             auto lower = bounds;
-            settings.min = QVector3D(scm_to_double(scm_car(lower)),
+            out.settings.min = QVector3D(scm_to_double(scm_car(lower)),
                                      scm_to_double(scm_cadr(lower)),
                                      scm_to_double(scm_caddr(lower)));
             auto upper = scm_cdddr(bounds);
-            settings.max = QVector3D(scm_to_double(scm_car(upper)),
+            out.settings.max = QVector3D(scm_to_double(scm_car(upper)),
                                      scm_to_double(scm_cadr(upper)),
                                      scm_to_double(scm_caddr(upper)));
         }
 
         if (scm_is_false(resolution))
         {
-            warnings.append({"<b>Warning:</b> Using default resolution for shapes.<br>"
-                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                             "Use <code>set-resolution!</code> to specify.",
-                    Interpreter::SET_RESOLUTION.arg(settings.res)});
+            out.warnings.append({
+                    "<b>Warning:</b> Using default resolution for shapes.<br>"
+                    "&nbsp;&nbsp;&nbsp;&nbsp;"
+                    "Use <code>set-resolution!</code> to specify.",
+                    SET_RESOLUTION.arg(out.settings.res)});
         }
         else
         {
-            settings.res = scm_to_double(resolution);
+            out.settings.res = scm_to_double(resolution);
         }
 
         if (scm_is_false(quality))
         {
-            warnings.append({"<b>Warning:</b> Using default quality for shapes.<br>"
-                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                             "Use <code>set-quality!</code> to specify.",
-                    Interpreter::SET_QUALITY.arg(settings.quality)});
+            out.warnings.append({
+                    "<b>Warning:</b> Using default quality for shapes.<br>"
+                    "&nbsp;&nbsp;&nbsp;&nbsp;"
+                    "Use <code>set-quality!</code> to specify.",
+                    SET_QUALITY.arg(out.settings.quality)});
         }
         else
         {
-            settings.quality = scm_to_double(quality);
+            out.settings.quality = scm_to_double(quality);
         }
-
-        emit(gotWarnings(warnings));
-        emit(gotSettings(settings));
     }
+
+    emit(done(out));
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-
-const QString Interpreter::SET_QUALITY = "(set-quality! %1)\n";
-const QString Interpreter::SET_RESOLUTION = "(set-resolution! %1)\n";
-const QString Interpreter::SET_BOUNDS = "(set-bounds! [%1 %2 %3] [%4 %5 %6])\n";
-
-Interpreter::Interpreter()
-{
-    // Start evaluation some amount of time after the most recent change
-    // to the script (should feel responsive, but we don't need to re-evaluate
-    // every single character change).
-    eval_timer.setSingleShot(true);
-    eval_timer.setInterval(250);
-    connect(&eval_timer, &QTimer::timeout, &interpreter, &_Interpreter::eval);
-
-    // After the interpreter is kicked off, then emit the busy signal after
-    // a short delay.  This is cancelled by either of the interpreter's
-    // "done" signals (gotResult and gotError), to avoid jittering the UI
-    // during very short evaluations.
-    busy_timer.setSingleShot(true);
-    busy_timer.setInterval(100);
-    connect(&eval_timer, &QTimer::timeout, &busy_timer,
-            static_cast<void (QTimer::*)()>(&QTimer::start));
-    connect(&busy_timer, &QTimer::timeout, this, &Interpreter::busy);
-    connect(&interpreter, &_Interpreter::gotResult,
-            &busy_timer, [&](QString){ busy_timer.stop(); });
-    connect(&interpreter, &_Interpreter::gotError, &busy_timer,
-            [&](QString, QString, Editor::Range){ busy_timer.stop(); });
-
-    // Forward all signals from _Interpreter (running in its own thread)
-    connect(&interpreter, &_Interpreter::gotResult,
-            this, &Interpreter::gotResult);
-    connect(&interpreter, &_Interpreter::gotError,
-            this, &Interpreter::gotError);
-    connect(&interpreter, &_Interpreter::gotWarnings,
-            this, &Interpreter::gotWarnings);
-    connect(&interpreter, &_Interpreter::keywords,
-            this, &Interpreter::keywords);
-    connect(&interpreter, &_Interpreter::docs,
-            this, &Interpreter::docs);
-    connect(&interpreter, &_Interpreter::gotShapes,
-            this, &Interpreter::gotShapes);
-    connect(&interpreter, &_Interpreter::gotVars,
-            this, &Interpreter::gotVars);
-    connect(&interpreter, &_Interpreter::gotSettings,
-            this, &Interpreter::gotSettings);
-}
-
-void Interpreter::start()
-{
-    interpreter.thread.start();
-}
-
-void Interpreter::onScriptChanged(QString s)
-{
-    {   // Swap the script into the other thread
-        QMutexLocker lock(&interpreter.mutex);
-        interpreter._script = s;
-    }
-    eval_timer.start();
-}
+}   // namespace Guile
+}   // namespace Studio

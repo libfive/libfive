@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/camera.hpp"
 #include "studio/shader.hpp"
 
+namespace Studio {
 void BBox::initializeGL()
 {
     initializeOpenGLFunctions();
@@ -142,3 +143,4 @@ void BBox::draw(const QVector3D& min, const QVector3D& max,
     glDisable(GL_STENCIL_TEST);
 }
 
+}   // namespace Studio

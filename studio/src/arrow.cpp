@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/arrow.hpp"
 #include "studio/shader.hpp"
 
+namespace Studio {
+
 Arrow::Arrow()
 {
     // Nothing to do here
@@ -156,3 +158,4 @@ void Arrow::draw(QMatrix4x4 M, QVector3D pos, float scale,
     Shader::basic->release();
 }
 
+}   // namespace Studio

@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/app.hpp"
 #include "studio/args.hpp"
 
+namespace Studio {
+
 App::App(int& argc, char** argv)
     : QApplication(argc, argv),
       window(Arguments(this))
@@ -38,3 +40,5 @@ bool App::event(QEvent *event)
 
     return QApplication::event(event);
 }
+
+}   // namespace Studio
