@@ -23,27 +23,42 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/color.hpp"
 #include "studio/python/syntax.hpp"
 
-////////////////////////////////////////////////////////////////////////////////
-
-typedef std::pair<int, QString> MatchInfo;
-
-class BlockData : public QTextBlockUserData
-{
-public:
-    std::list<MatchInfo> data;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
 namespace Studio {
 namespace Python {
-
-////////////////////////////////////////////////////////////////////////////////
 
 Syntax::Syntax(QTextDocument* doc)
     : ::Studio::Syntax(doc)
 {
-    // Nothing to do here
+    {   // Strings
+        QTextCharFormat string_format;
+        string_format.setForeground(Color::green);
+
+        // Strings on a single line
+        rules << Rule(R"("(?:\\.|[^"\\])*")", string_format);
+        rules << Rule(R"('(?:\\.|[^'\\])*')", string_format);
+    }
+
+    {   // Numbers (float and integer)
+        QTextCharFormat num_format;
+        num_format.setForeground(Color::orange);
+
+        rules << Rule(R"(\b(?:-|)\d+\.\d*e\d+)", num_format);
+        rules << Rule(R"(\b(?:-|)\d+\.\d*)", num_format);
+        rules << Rule(R"(\b(?:-|)\d+e\d+)", num_format);
+        rules << Rule(R"(\b(?:-|)\d+\b)", num_format);
+    }
+
+    {   // Comments!
+        QTextCharFormat comment_format;
+        comment_format.setForeground(Color::base1);
+
+        rules << Rule(R"(#.*)", comment_format);
+    }
+
+    // Special regex for keywords, to avoid having one rule for each
+    QTextCharFormat kw_format;
+    kw_format.setForeground(Color::blue);
+    m_keyword = Rule(R"((?<=[^\w-]|^)[\w\-!?\*]+(?=[^\\w-]|$))", kw_format);
 }
 
 void Syntax::onCursorMoved(QPlainTextEdit* text)
