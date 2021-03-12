@@ -34,31 +34,31 @@ Syntax::Syntax(QTextDocument* doc)
         string_format.setForeground(Color::green);
 
         // Strings on a single line
-        rules << Rule(R"("(?:\\.|[^"\\])*")", string_format);
-        rules << Rule(R"('(?:\\.|[^'\\])*')", string_format);
+        m_rules << Rule(R"("(?:\\.|[^"\\])*")", string_format);
+        m_rules << Rule(R"('(?:\\.|[^'\\])*')", string_format);
     }
 
     {   // Numbers (float and integer)
         QTextCharFormat num_format;
         num_format.setForeground(Color::orange);
 
-        rules << Rule(R"(\b(?:-|)\d+\.\d*e\d+)", num_format);
-        rules << Rule(R"(\b(?:-|)\d+\.\d*)", num_format);
-        rules << Rule(R"(\b(?:-|)\d+e\d+)", num_format);
-        rules << Rule(R"(\b(?:-|)\d+\b)", num_format);
+        m_rules << Rule(R"(\b(?:-|)\d+\.\d*e\d+)", num_format);
+        m_rules << Rule(R"(\b(?:-|)\d+\.\d*)", num_format);
+        m_rules << Rule(R"(\b(?:-|)\d+e\d+)", num_format);
+        m_rules << Rule(R"(\b(?:-|)\d+\b)", num_format);
     }
 
     {   // Comments!
         QTextCharFormat comment_format;
         comment_format.setForeground(Color::base1);
 
-        rules << Rule(R"(#.*)", comment_format);
+        m_rules << Rule(R"(#.*)", comment_format);
     }
 
     // Special regex for keywords, to avoid having one rule for each
     QTextCharFormat kw_format;
     kw_format.setForeground(Color::blue);
-    m_keyword = Rule(R"((?<=[^\w-]|^)[\w\-!?\*]+(?=[^\\w-]|$))", kw_format);
+    m_keywordRule = Rule(R"((?<=[^\w-]|^)[\w\-!?\*]+(?=[^\\w-]|$))", kw_format);
 }
 
 void Syntax::onCursorMoved(QPlainTextEdit* text)

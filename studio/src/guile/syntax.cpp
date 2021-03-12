@@ -133,58 +133,58 @@ Syntax::Syntax(QTextDocument* doc)
 
         // Strings on a single line
         // (with clever regex for escaped chars)
-        rules << Rule(R"("(?:\\.|[^"\\])*")", string_format, BASE, BASE);
+        m_rules << Rule(R"("(?:\\.|[^"\\])*")", string_format, BASE, BASE);
 
         // Multi-line strings
-        rules << Rule(R"("(?:\\.|[^"\\])*$)", string_format, BASE, STRING);
-        rules << Rule(R"(^(?:\\.|[^"\\])*")", string_format, STRING, BASE);
-        rules << Rule(R"((?:\\.|[^"\\])+)", string_format, STRING, STRING);
+        m_rules << Rule(R"("(?:\\.|[^"\\])*$)", string_format, BASE, STRING);
+        m_rules << Rule(R"(^(?:\\.|[^"\\])*")", string_format, STRING, BASE);
+        m_rules << Rule(R"((?:\\.|[^"\\])+)", string_format, STRING, STRING);
     }
 
     {   // Variables (float and integer)
         QTextCharFormat var_format;
         var_format.setForeground(Color::orange);
 
-        rules << Rule(R"(\B\#(?:-|)\d+\.\d*e\d+)", var_format);
-        rules << Rule(R"(\B\#(?:-|)\d+\.\d*)", var_format);
-        rules << Rule(R"(\B\#(?:-|)\d+e\d+)", var_format);
-        rules << Rule(R"(\B\#(?:-|)\d+\b)", var_format);
+        m_rules << Rule(R"(\B\#(?:-|)\d+\.\d*e\d+)", var_format);
+        m_rules << Rule(R"(\B\#(?:-|)\d+\.\d*)", var_format);
+        m_rules << Rule(R"(\B\#(?:-|)\d+e\d+)", var_format);
+        m_rules << Rule(R"(\B\#(?:-|)\d+\b)", var_format);
     }
 
     {   // Numbers (float and integer)
         QTextCharFormat num_format;
         num_format.setForeground(Color::orange);
 
-        rules << Rule(R"(\b(?:-|)\d+\.\d*e\d+)", num_format);
-        rules << Rule(R"(\b(?:-|)\d+\.\d*)", num_format);
-        rules << Rule(R"(\b(?:-|)\d+e\d+)", num_format);
-        rules << Rule(R"(\b(?:-|)\d+\b)", num_format);
+        m_rules << Rule(R"(\b(?:-|)\d+\.\d*e\d+)", num_format);
+        m_rules << Rule(R"(\b(?:-|)\d+\.\d*)", num_format);
+        m_rules << Rule(R"(\b(?:-|)\d+e\d+)", num_format);
+        m_rules << Rule(R"(\b(?:-|)\d+\b)", num_format);
     }
 
     {   // Comments!
         QTextCharFormat comment_format;
         comment_format.setForeground(Color::base1);
 
-        rules << Rule(R"(\;.*)", comment_format);
+        m_rules << Rule(R"(\;.*)", comment_format);
 
         // Single-line block comments of the form #| ... |#
-        rules << Rule(R"(#\|(?:\|(?!#)|[^|])*\|#)", comment_format, BASE, BASE);
+        m_rules << Rule(R"(#\|(?:\|(?!#)|[^|])*\|#)", comment_format, BASE, BASE);
 
         // Multi-line block comment of the form #| ... |#
-        rules << Rule(R"(#\|(?:\|(?!#)|[^|])*$)", comment_format, BASE, COMMENT_BAR);
-        rules << Rule(R"(^(?:\|(?!#)|[^|])*\|#)", comment_format, COMMENT_BAR, BASE);
-        rules << Rule(R"((?:\|(?!#)|[^|])+)", comment_format, COMMENT_BAR, COMMENT_BAR);
+        m_rules << Rule(R"(#\|(?:\|(?!#)|[^|])*$)", comment_format, BASE, COMMENT_BAR);
+        m_rules << Rule(R"(^(?:\|(?!#)|[^|])*\|#)", comment_format, COMMENT_BAR, BASE);
+        m_rules << Rule(R"((?:\|(?!#)|[^|])+)", comment_format, COMMENT_BAR, COMMENT_BAR);
 
         // Block comments with #! ... !#
-        rules << Rule(R"(#!(?:!(?!#)|[^!])*!#)", comment_format, BASE, BASE);
-        rules << Rule(R"(#!(?:!(?!#)|[^!])*$)", comment_format, BASE, COMMENT_BANG);
-        rules << Rule(R"(^(?:!(?!#)|[^!])*!#)", comment_format, COMMENT_BANG, BASE);
-        rules << Rule(R"((?:!(?!#)|[^!])+)", comment_format, COMMENT_BANG, COMMENT_BANG);
+        m_rules << Rule(R"(#!(?:!(?!#)|[^!])*!#)", comment_format, BASE, BASE);
+        m_rules << Rule(R"(#!(?:!(?!#)|[^!])*$)", comment_format, BASE, COMMENT_BANG);
+        m_rules << Rule(R"(^(?:!(?!#)|[^!])*!#)", comment_format, COMMENT_BANG, BASE);
+        m_rules << Rule(R"((?:!(?!#)|[^!])+)", comment_format, COMMENT_BANG, COMMENT_BANG);
     }
 
     // Special regex to catch parentheses
     // The target capture group is 1
-    rules << Rule(R"([^()]*(\(|\)))", QTextCharFormat(), BASE, BASE, 1);
+    m_rules << Rule(R"([^()]*(\(|\)))", QTextCharFormat(), BASE, BASE, 1);
 
     // Set format for matched parentheses
     parens_highlight.setBackground(Color::base2);
@@ -192,7 +192,7 @@ Syntax::Syntax(QTextDocument* doc)
     // Special regex for keywords, to avoid having one rule for each
     QTextCharFormat kw_format;
     kw_format.setForeground(Color::blue);
-    m_keyword = Rule(R"((?<=[^\w-]|^)[\w\-!?\*]+(?=[^\\w-]|$))", kw_format);
+    m_keywordRule = Rule(R"((?<=[^\w-]|^)[\w\-!?\*]+(?=[^\\w-]|$))", kw_format);
 }
 
 void Syntax::onCursorMoved(QPlainTextEdit* text)

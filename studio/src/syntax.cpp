@@ -24,6 +24,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 namespace Studio {
 
+Syntax::Syntax(QTextDocument* doc)
+        : QSyntaxHighlighter(doc)
+{
+    // Nothing to do here
+}
+
 void Syntax::highlightBlock(const QString& text)
 {
     int offset = 0;
@@ -38,16 +44,16 @@ void Syntax::highlightBlock(const QString& text)
 
         // First, check for a match against a language keyword by finding
         // a keyword-shaped blob of text, then comparing it against the map.
-        auto m = m_keyword.regex.match(text, offset);
+        auto m = m_keywordRule.regex.match(text, offset);
         if (m.hasMatch()) {
             if (m_keywords.contains(m.captured(0))) {
                 match = m;
-                rule = m_keyword;
+                rule = m_keywordRule;
             }
         }
 
         // Iterate over every rule, picking out the first match
-        for (auto r : rules)
+        for (auto r : m_rules)
         {
             if (r.state_in != state)
             {
