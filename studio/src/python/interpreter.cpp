@@ -69,21 +69,32 @@ void Interpreter::init() {
 
 void Interpreter::eval(QString script)
 {
-    const auto tuple = PyTuple_New(1);
-    PyTuple_SetItem(tuple, 0, PyUnicode_FromString(script.toStdString().c_str()));
+    emit(busy());
 
+    const auto tuple = PyTuple_New(1);
+    PyTuple_SetItem(tuple, 0,
+            PyUnicode_FromString(script.toStdString().c_str()));
     const auto ret = PyObject_CallObject(m_runFunc, tuple);
+    Py_DECREF(tuple);
+
     PyErr_Print();
 
-    emit(busy());
+    const auto ret_size = PyList_Size(ret);
 
     Result out;
     out.okay = true;
-    out.result = "Not yet implemented";
+
+    // Check to see if we're okay
+    for (unsigned i=0; i < ret_size; ++i) {
+        const auto item = PyList_GetItem(ret, i);
+        out.okay &= (PyTuple_GetItem(item, 0) == Py_True);
+    }
+
+    out.result = "Okay!";
+    out.error = {"Error!", "", QRect()};
 
     emit(done(out));
 
-    Py_DECREF(tuple);
     Py_DECREF(ret);
 }
 
