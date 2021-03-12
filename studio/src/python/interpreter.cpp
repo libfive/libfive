@@ -32,18 +32,48 @@ Interpreter::Interpreter() {
     // Nothing to do here
 }
 
+Interpreter::~Interpreter() {
+    Py_XDECREF(m_runFunc);
+}
+
 QString Interpreter::defaultScript() {
     return "print('hello, world')";
 }
 
 void Interpreter::init() {
-    Py_Initialize();
+    static bool initialized = false;
+    if (!initialized) {
+        Py_Initialize();
+        auto s = PyUnicode_FromString("libfive/bind/python");
+        PyList_Insert(PySys_GetObject("path"), 0, s);
+        Py_DECREF(s);
+        initialized = true;
+    }
+
+    const auto runner_mod_name = PyUnicode_FromString("libfive.runner");
+    const auto runner_mod = PyImport_Import(runner_mod_name);
+    Py_DECREF(runner_mod_name);
+    if (runner_mod != NULL) {
+        m_runFunc = PyObject_GetAttrString(runner_mod, "run");
+        if (!m_runFunc) {
+            PyErr_Print();
+        }
+        Py_DECREF(runner_mod);
+    } else {
+        PyErr_Print();
+    }
     emit(ready({}, Documentation()));
 }
 
+// Use PyErr_SetInterrupt to interrupt running script
+
 void Interpreter::eval(QString script)
 {
-    (void)script;
+    const auto tuple = PyTuple_New(1);
+    PyTuple_SetItem(tuple, 0, PyUnicode_FromString(script.toStdString().c_str()));
+
+    const auto ret = PyObject_CallObject(m_runFunc, tuple);
+    PyErr_Print();
 
     emit(busy());
 
@@ -52,6 +82,9 @@ void Interpreter::eval(QString script)
     out.result = "Not yet implemented";
 
     emit(done(out));
+
+    Py_DECREF(tuple);
+    Py_DECREF(ret);
 }
 
 }   // namespace Python

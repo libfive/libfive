@@ -17,9 +17,12 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
-#include <libguile.h>
 
 #include "studio/interpreter.hpp"
+
+// Forward declaration of PyObject, because including Python.h wreaks havok
+// with Qt headers due to dueling definitions of "slots"
+typedef struct _object PyObject;
 
 namespace Studio {
 namespace Python {
@@ -28,12 +31,16 @@ class Interpreter: public ::Studio::Interpreter {
     Q_OBJECT
 public:
     Interpreter();
+    ~Interpreter();
 
     void init() override;
     QString defaultScript() override;
 
 public slots:
     void eval(QString s) override;
+
+protected:
+    PyObject* m_runFunc=NULL;
 
 };
 
