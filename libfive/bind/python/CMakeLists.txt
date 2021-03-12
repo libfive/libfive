@@ -1,6 +1,7 @@
 set(SRCS
     libfive/__init__.py
     libfive/ffi.py
+    libfive/runner.py
     libfive/shape.py
     libfive/stdlib/csg.py
     libfive/stdlib/shapes.py
