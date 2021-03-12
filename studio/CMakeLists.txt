@@ -86,7 +86,7 @@ endif(UNIX AND NOT(APPLE))
 target_include_directories(Studio
     PUBLIC include
     PRIVATE ${GUILE_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS})
-target_link_libraries(Studio five
+target_link_libraries(Studio five five-stdlib
     Qt5::Widgets
     Qt5::Gui
     Qt5::OpenGL
