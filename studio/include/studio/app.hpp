@@ -30,6 +30,6 @@ public:
 protected:
     bool event(QEvent* event) override;
 
-    Window window;
+    QScopedPointer<Window> window;
 };
 }   // namespace Studio

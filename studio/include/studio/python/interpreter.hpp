@@ -41,8 +41,9 @@ public slots:
 
 protected:
     PyObject* m_runFunc=NULL;
+    PyObject* m_shapeClass=NULL;
 
 };
 
 }   // namespace Python
-}   // maespace Studio
+}   // namespace Studio

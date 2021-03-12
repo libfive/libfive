@@ -34,10 +34,11 @@ Interpreter::Interpreter() {
 
 Interpreter::~Interpreter() {
     Py_XDECREF(m_runFunc);
+    Py_XDECREF(m_shapeClass);
 }
 
 QString Interpreter::defaultScript() {
-    return "print('hello, world')";
+    return "from libfive.stdlib import *\n\nsphere(1)";
 }
 
 void Interpreter::init() {
@@ -53,27 +54,51 @@ void Interpreter::init() {
     const auto runner_mod = PyImport_ImportModule("libfive.runner");
     if (runner_mod != NULL) {
         m_runFunc = PyObject_GetAttrString(runner_mod, "run");
-        if (!m_runFunc) {
-            PyErr_Print();
-        }
-        Py_DECREF(runner_mod);
-    } else {
-        PyErr_Print();
     }
+    Py_XDECREF(runner_mod);
+    PyErr_Print();
+
+    const auto shape_mod = PyImport_ImportModule("libfive.shape");
+    if (shape_mod) {
+        m_shapeClass = PyObject_GetAttrString(shape_mod, "Shape");
+    }
+    Py_XDECREF(shape_mod);
+    PyErr_Print();
 
     QStringList keywords;
-    const auto keyword_mod = PyImport_ImportModule("keyword");
-    const auto kwlist = PyObject_GetAttrString(keyword_mod, "kwlist");
-    const auto kwlist_len = PyList_Size(kwlist);
-    for (unsigned i=0; i < kwlist_len; ++i) {
-        const auto s = PyObject_Str(PyList_GetItem(kwlist, i));
-        const auto ws = PyUnicode_AsWideCharString(s, NULL);
-        keywords << QString::fromWCharArray(ws);
-        PyMem_Free(ws);
-        Py_DECREF(s);
+
+    {
+        const auto keyword_mod = PyImport_ImportModule("keyword");
+        const auto kwlist = PyObject_GetAttrString(keyword_mod, "kwlist");
+        const auto kwlist_len = PyList_Size(kwlist);
+        for (unsigned i=0; i < kwlist_len; ++i) {
+            const auto s = PyObject_Str(PyList_GetItem(kwlist, i));
+            const auto ws = PyUnicode_AsWideCharString(s, NULL);
+            keywords << QString::fromWCharArray(ws);
+            PyMem_Free(ws);
+            Py_DECREF(s);
+        }
+        Py_DECREF(kwlist);
+        Py_DECREF(keyword_mod);
     }
-    Py_DECREF(kwlist);
-    Py_DECREF(keyword_mod);
+
+    {
+        const auto builtins_mod = PyImport_ImportModule("builtins");
+        const auto builtins_list = PyObject_Dir(builtins_mod);
+        const auto builtins_len = PyList_Size(builtins_list);
+        for (unsigned i=0; i < builtins_len; ++i) {
+            const auto s = PyObject_Str(PyList_GetItem(builtins_list, i));
+            const auto ws = PyUnicode_AsWideCharString(s, NULL);
+            keywords << QString::fromWCharArray(ws);
+            PyMem_Free(ws);
+            Py_DECREF(s);
+        }
+        Py_DECREF(builtins_list);
+        Py_DECREF(builtins_mod);
+    }
+
+    PyErr_Print();
+
     emit(ready(keywords, Documentation()));
 }
 
@@ -90,18 +115,33 @@ void Interpreter::eval(QString script)
     Py_DECREF(tuple);
 
     Result out;
+    out.settings = Settings::defaultSettings();
     out.okay = !PyErr_Occurred();
 
     if (out.okay) {
         const auto ret_size = PyList_Size(ret);
         if (ret_size) {
-            const auto s = PyObject_Str(PyList_GetItem(ret, ret_size - 1));
+            const auto s = PyObject_Repr(PyList_GetItem(ret, ret_size - 1));
             const auto ws = PyUnicode_AsWideCharString(s, NULL);
             out.result = QString::fromWCharArray(ws);
             PyMem_Free(ws);
             Py_DECREF(s);
         } else {
             out.result = "None";
+        }
+        for (unsigned i=0; i < ret_size; ++i) {
+            const auto s = PyList_GetItem(ret, i);
+            if (PyObject_IsInstance(s, m_shapeClass)) {
+                const auto ptr_obj = PyObject_GetAttrString(s, "ptr");
+                const auto ptr = PyLong_AsVoidPtr(ptr_obj);
+                const auto tree = static_cast<libfive_tree>(ptr);
+                const auto shape = new Shape(libfive::Tree(tree), {});
+                shape->moveToThread(QApplication::instance()->thread());
+                out.shapes.push_back(shape);
+
+                Py_DECREF(ptr_obj);
+                PyErr_Print();
+            }
         }
     } else {
         PyObject *type, *value, *tb;

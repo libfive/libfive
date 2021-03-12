@@ -43,12 +43,6 @@ Editor::Editor(QWidget* parent)
     script->setLineWrapMode(QPlainTextEdit::NoWrap);
     err->setReadOnly(true);
 
-    static bool font_loaded = false;
-    if (!font_loaded) {
-        QFontDatabase::addApplicationFont(":/font/Inconsolata.otf");
-        font_loaded = true;
-    }
-
     {   // Use Inconsolata as our default font
         QFont font("Inconsolata", 14);
         QFontMetrics fm(font);
