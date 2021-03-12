@@ -11,12 +11,11 @@ import ast
 
 def run(s):
     ''' Evaluates a string, clause-by-clause.
-        Returns a list of (okay, error-or-value) tuples
+
+        Returns a list of values from each expression in the string, or
+        raises an error if something went wrong.
     '''
-    try:
-        parsed = ast.parse(s)
-    except SyntaxError as e:
-        return [(False, e)]
+    parsed = ast.parse(s)
     # TODO: hotpatch var(...) nodes
     gs = {}
     out = []
@@ -24,19 +23,13 @@ def run(s):
         if isinstance(p, ast.Expr):
             exp = ast.Expression(p.value)
             f = compile(exp, '<file>', 'eval')
-            try:
-                r = eval(f, gs)
-                if r is not None:
-                    out.append((True, r))
-            except Exception as e:
-                out.append((False, e))
+            r = eval(f, gs)
+            if r is not None:
+                out.append(r)
         else:
             mod = ast.Module([p])
             mod.type_ignores = []
             f = compile(mod, '<file>', 'exec')
-            try:
-                exec(f, gs)
-            except Exception as e:
-                out.append((False, e))
+            exec(f, gs)
     return out
 

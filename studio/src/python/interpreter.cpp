@@ -77,25 +77,33 @@ void Interpreter::eval(QString script)
     const auto ret = PyObject_CallObject(m_runFunc, tuple);
     Py_DECREF(tuple);
 
-    PyErr_Print();
-
-    const auto ret_size = PyList_Size(ret);
-
     Result out;
-    out.okay = true;
+    out.okay = !PyErr_Occurred();
 
-    // Check to see if we're okay
-    for (unsigned i=0; i < ret_size; ++i) {
-        const auto item = PyList_GetItem(ret, i);
-        out.okay &= (PyTuple_GetItem(item, 0) == Py_True);
+    if (out.okay) {
+        const auto ret_size = PyList_Size(ret);
+        if (ret_size) {
+            const auto s = PyObject_Str(PyList_GetItem(ret, ret_size - 1));
+            const auto ws = PyUnicode_AsWideCharString(s, NULL);
+            out.result = QString::fromWCharArray(ws);
+            PyMem_Free(ws);
+            Py_DECREF(s);
+        } else {
+            out.result = "None";
+        }
+    } else {
+        PyObject *type, *value, *tb;
+        PyErr_Fetch(&type, &value, &tb);
+        const auto s = PyObject_Str(value);
+        const auto ws = PyUnicode_AsWideCharString(s, NULL);
+        PyErr_Print();
+        out.error = {QString::fromWCharArray(ws), "", QRect()};
+        PyMem_Free(ws);
+        Py_XDECREF(s);
     }
 
-    out.result = "Okay!";
-    out.error = {"Error!", "", QRect()};
-
     emit(done(out));
-
-    Py_DECREF(ret);
+    Py_XDECREF(ret);
 }
 
 }   // namespace Python
