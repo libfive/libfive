@@ -28,7 +28,6 @@ class Syntax : public ::Studio::Syntax
     Q_OBJECT
 public:
     Syntax(QTextDocument* doc);
-    void setKeywords(QStringList kws) override;
 
 public slots:
     void onCursorMoved(QPlainTextEdit* text) override;
@@ -39,37 +38,10 @@ protected:
     int searchLeft(int pos);
     int searchRight(int pos);
 
-    /*  Overrides highlightBlock in QSyntaxHighlighter */
-    void highlightBlock(const QString& text) override;
-
     /*  Define states to keep track of multiline strings and comments. */
-    enum State { BASE = -1, STRING = 1, COMMENT_BANG = 2, COMMENT_BAR = 3 };
+    enum State { BASE = 0, STRING, COMMENT_BANG, COMMENT_BAR };
 
-    /*  Structure to use as a rule when highlighting    */
-    struct Rule
-    {
-        Rule() {}
-        Rule(QString r, QTextCharFormat f, State si=BASE, State so=BASE,
-             int capture=0)
-            : regex(QRegularExpression(r)), format(f), state_in(si), state_out(so),
-              capture(capture)
-        { /* Nothing to do here */ }
-
-        QRegularExpression regex;
-        QTextCharFormat format;
-        State state_in, state_out;
-        int capture;
-    };
-    QList<Rule> rules;
     QTextCharFormat parens_highlight;
-
-    /* We use a special rule for language keywords, to avoid having one rule
-     * per keyword, which would slow things down by a lot. */
-    Rule m_keyword;
-    QSet<QString> m_keywords;
-
-    /*  Used as temporary storage when syntax highlighting is disabled */
-    QTextDocument* doc=nullptr;
 };
 
 }   // namespace Guile

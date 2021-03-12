@@ -32,6 +32,7 @@ set(SRCS src/main.cpp
     src/settings.cpp
     src/shader.cpp
     src/shape.cpp
+    src/syntax.cpp
     src/view.cpp
     src/window.cpp
 

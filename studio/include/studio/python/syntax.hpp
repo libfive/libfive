@@ -28,14 +28,9 @@ class Syntax : public ::Studio::Syntax
     Q_OBJECT
 public:
     Syntax(QTextDocument* doc);
-    void setKeywords(QStringList kws) override;
 
 public slots:
     void onCursorMoved(QPlainTextEdit* text) override;
-
-protected:
-    /*  Overrides highlightBlock in QSyntaxHighlighter */
-    void highlightBlock(const QString& text) override;
 };
 
 }   // namespace Python

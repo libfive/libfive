@@ -51,14 +51,5 @@ void Syntax::onCursorMoved(QPlainTextEdit* text)
     (void)text;
 }
 
-void Syntax::highlightBlock(const QString& text)
-{
-    // Nothing to do here
-}
-
-void Syntax::setKeywords(QStringList kws) {
-    (void)kws;
-}
-
 }   // namespace Guile
 }   // namespace Studio
