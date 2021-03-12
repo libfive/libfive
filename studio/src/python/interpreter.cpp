@@ -50,9 +50,7 @@ void Interpreter::init() {
         initialized = true;
     }
 
-    const auto runner_mod_name = PyUnicode_FromString("libfive.runner");
-    const auto runner_mod = PyImport_Import(runner_mod_name);
-    Py_DECREF(runner_mod_name);
+    const auto runner_mod = PyImport_ImportModule("libfive.runner");
     if (runner_mod != NULL) {
         m_runFunc = PyObject_GetAttrString(runner_mod, "run");
         if (!m_runFunc) {
@@ -62,7 +60,21 @@ void Interpreter::init() {
     } else {
         PyErr_Print();
     }
-    emit(ready({}, Documentation()));
+
+    QStringList keywords;
+    const auto keyword_mod = PyImport_ImportModule("keyword");
+    const auto kwlist = PyObject_GetAttrString(keyword_mod, "kwlist");
+    const auto kwlist_len = PyList_Size(kwlist);
+    for (unsigned i=0; i < kwlist_len; ++i) {
+        const auto s = PyObject_Str(PyList_GetItem(kwlist, i));
+        const auto ws = PyUnicode_AsWideCharString(s, NULL);
+        keywords << QString::fromWCharArray(ws);
+        PyMem_Free(ws);
+        Py_DECREF(s);
+    }
+    Py_DECREF(kwlist);
+    Py_DECREF(keyword_mod);
+    emit(ready(keywords, Documentation()));
 }
 
 // Use PyErr_SetInterrupt to interrupt running script
