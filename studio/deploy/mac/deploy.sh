@@ -29,6 +29,8 @@ cp -r studio/$APP $APP
 MACDEPLOYQT=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:\(.*\)lib/QtCore.*:\1/bin/macdeployqt:gp"`
 GUILE_SCM=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:lib/libguile.*:share/guile/3.0/:gp"`
 GUILE_CCACHE=`otool -L $APP/Contents/MacOS/$EXE | sed -n -e "s:lib/libguile.*:lib/guile/3.0/ccache/:gp"`
+PY3_VERSION=`otool -L studio/Studio.app/Contents/MacOS/Studio | sed -n -e "s:.*Python.framework/Versions/\(3\..\).*:\1:gp"`
+PY3_FRAMEWORK=`otool -L studio/Studio.app/Contents/MacOS/Studio | sed -n -e "s:\(.*Python.framework\)/Versions.*:\1:gp"`
 
 $MACDEPLOYQT $APP
 
@@ -79,6 +81,34 @@ do
     fix_qt $LIB.framework/Versions/Current/$LIB
 done
 
+# Deploy the Python framework, cleaning out unused info
+rm -rf Python.framework
+cp -R  $PY3_FRAMEWORK .
+file Python.framework/Versions/Current/lib/python$PY3_VERSION/site-packages
+rm -rf Python.framework/Versions/Current/lib/python$PY3_VERSION/site-packages
+rm -r  Python.framework/Versions/Current/lib/python$PY3_VERSION/test
+rm -r  Python.framework/Versions/Current/lib/python$PY3_VERSION/__pycache__
+rm -rf Python.framework/Versions/Current/lib/python$PY3_VERSION/*/__pycache__
+rm -r  Python.framework/Versions/Current/share/doc
+
+# For some reason, the Python framework links against the Homebrew libintl,
+# so bring that along for good measure.
+LIBINTL=`otool -L Python.framework/Python | sed -n -e "s:\(.*libintl.*dylib\).*:\1:gp"`
+cp $LIBINTL .
+install_name_tool -change $LIBINTL "@executable_path/../Frameworks/$(basename $LIBINTL)" Python.framework/Python
+
+# Copy the libfive Python libraries into the site-packages dir
+mkdir Python.framework/Versions/Current/lib/python$PY3_VERSION/site-packages
+cp -r ../../../../libfive/bind/python/libfive \
+      Python.framework/Versions/Current/lib/python$PY3_VERSION/site-packages/
+
+# Rewire the executable to point at the bundled framework
+cd ../MacOS
+install_name_tool -change \
+    $PY3_FRAMEWORK/Versions/$PY3_VERSION/Python \
+    @executable_path/../Frameworks/Python.framework/Versions/$PY3_VERSION/Python \
+    Studio
+
 # Deploy Guile library (including both bare scm files and precompiled,
 # on the assumption that stuff which is useful for this application
 # will have been pre-compiled at least one)
@@ -94,9 +124,9 @@ cp -r ../../../../libfive/bind/guile/libfive guile/scm
 cd guile/ccache && find . -name "*.go" | sed "s/\.go//g" | sort > ../../ccache_list
 cd ../scm && find . -name "*.scm" | sed "s/\.scm//g" | sort > ../../scm_list
 cd ../..
-for v in $(comm -2 -3 scm_list ccache_list); do
-    LIBFIVE_FRAMEWORK_DIR=../Frameworks/ guild compile -Lguile/scm -o guile/ccache/$v.go guile/scm/$v.scm
-done
+comm -2 -3 scm_list ccache_list | \
+     LIBFIVE_FRAMEWORK_DIR=../Frameworks/ xargs -I{} -P8 \
+        guild compile -Lguile/scm -o guile/ccache/{}.go guile/scm/{}.scm
 rm ccache_list scm_list
 rm -r guile/scm
 
