@@ -331,7 +331,8 @@ void View::paintGL()
     if (cursor_pos_valid)
     {
         QFont font = painter.font();
-        font.setFamily("Courier");
+        font.setFamily("Inconsolata");
+        font.setPointSize(14);
         painter.setFont(font);
 
         painter.setBrush(Qt::NoBrush);
