@@ -46,7 +46,7 @@ protected:
     /*  Structure to use as a rule when highlighting    */
     struct Rule {
         Rule() {}
-        Rule(QString r, QTextCharFormat f, int si=0, int so=0, int capture=0)
+        Rule(QString r, QTextCharFormat f, int si=-1, int so=-1, int capture=0)
             : regex(QRegularExpression(r)), format(f),
               state_in(si), state_out(so), capture(capture)
         { /* Nothing to do here */ }

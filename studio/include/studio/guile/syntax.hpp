@@ -39,7 +39,7 @@ protected:
     int searchRight(int pos);
 
     /*  Define states to keep track of multiline strings and comments. */
-    enum State { BASE = 0, STRING, COMMENT_BANG, COMMENT_BAR };
+    enum State { BASE = -1, STRING = 1, COMMENT_BANG, COMMENT_BAR };
 
     QTextCharFormat parens_highlight;
 };
