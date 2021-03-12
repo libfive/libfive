@@ -130,8 +130,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ;; Hand-written overload for expt
 (define-method (expt (a <shape>) (b <fraction>))
-  (make-shape 'nth-root (make-shape 'pow a (numerator b))
-                        (denominator b)))
+  (make-shape 'nth-root (make-shape 'pow a (ensure-shape (numerator b)))
+                        (ensure-shape (denominator b))))
 (define-method (expt (a <shape>) (b <number>))
   (scm-error 'wrong-type-arg 'expt
       "RHS of exponentiation must be rational, not ~A"
