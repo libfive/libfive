@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Forward declaration of PyObject, because including Python.h wreaks havok
 // with Qt headers due to dueling definitions of "slots"
 typedef struct _object PyObject;
+typedef struct _ts PyThreadState;
 
 namespace Studio {
 namespace Python {
@@ -34,6 +35,8 @@ public:
 
     void init() override;
     QString defaultScript() override;
+    void halt() override;
+    void preinit() override;
 
 public slots:
     void eval(QString s) override;
@@ -41,6 +44,8 @@ public slots:
 protected:
     PyObject* m_runFunc=NULL;
     PyObject* m_shapeClass=NULL;
+    PyThreadState* m_threadState=NULL;
+    unsigned long m_workerThreadId=0;
 
 };
 

@@ -41,11 +41,13 @@ Language::Language(Interpreter* interpreter,
 
     connect(&m_interpreterThread, &QThread::started,
             m_interpreter.data(), &Interpreter::init);
+    m_interpreter->preinit();
     m_interpreter->moveToThread(&m_interpreterThread);
     m_interpreterThread.start();
 }
 
 Language::~Language() {
+    m_interpreter->halt();
     m_interpreterThread.quit();
     m_interpreterThread.wait();
 }

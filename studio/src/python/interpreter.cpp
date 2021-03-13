@@ -33,6 +33,11 @@ Interpreter::Interpreter() {
 }
 
 Interpreter::~Interpreter() {
+    // The destructor is called from the main thread after the interpreter
+    // thread has finished.  We reclaim the thread state, so the GIL lives
+    // in the main thread until another Interpreter is created.
+    PyEval_RestoreThread(m_threadState);
+
     Py_XDECREF(m_runFunc);
     Py_XDECREF(m_shapeClass);
 }
@@ -41,15 +46,29 @@ QString Interpreter::defaultScript() {
     return "from libfive.stdlib import *\n\nsphere(1)";
 }
 
-void Interpreter::init() {
-    static bool initialized = false;
-    if (!initialized) {
+void Interpreter::halt() {
+    // Restore the thread state and claim the GIL
+    PyEval_RestoreThread(m_threadState);
+
+    // Interrupt the worker thread by ID
+    PyThreadState_SetAsyncExc(m_workerThreadId, PyExc_Exception);
+
+    // Then release the thread state again, saving it locally
+    m_threadState = PyEval_SaveThread();
+}
+
+void Interpreter::preinit() {
+    if (!Py_IsInitialized()) {
         Py_Initialize();
         auto s = PyUnicode_FromString("libfive/bind/python");
         PyList_Insert(PySys_GetObject("path"), 0, s);
         Py_DECREF(s);
-        initialized = true;
     }
+    m_threadState = PyEval_SaveThread();
+}
+
+void Interpreter::init() {
+    PyGILState_STATE gstate = PyGILState_Ensure();
 
     // TODO: do a first import check and raise a reasonable error instead of
     // crashing if the module isn't available? (it *should* always be available)
@@ -62,6 +81,14 @@ void Interpreter::init() {
     const auto shape_mod = PyImport_ImportModule("libfive.shape");
     m_shapeClass = PyObject_GetAttrString(shape_mod, "Shape");
     Py_DECREF(shape_mod);
+
+    const auto threading_mod = PyImport_ImportModule("threading");
+    const auto get_ident = PyObject_GetAttrString(threading_mod, "get_ident");
+    const auto thread_id = PyObject_CallFunctionObjArgs(get_ident, NULL);
+    m_workerThreadId = PyLong_AsLong(thread_id);
+    Py_DECREF(thread_id);
+    Py_DECREF(get_ident);
+    Py_DECREF(threading_mod);
 
     QStringList keywords;
 
@@ -159,14 +186,15 @@ void Interpreter::init() {
 
     PyErr_Print();
 
+    PyGILState_Release(gstate);
     emit(ready(keywords, docs));
 }
-
-// Use PyErr_SetInterrupt to interrupt running script
 
 void Interpreter::eval(QString script)
 {
     emit(busy());
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
 
     const auto tuple = PyTuple_New(1);
     PyTuple_SetItem(tuple, 0,
@@ -213,9 +241,10 @@ void Interpreter::eval(QString script)
         PyMem_Free(ws);
         Py_XDECREF(s);
     }
+    Py_XDECREF(ret);
+    PyGILState_Release(gstate);
 
     emit(done(out));
-    Py_XDECREF(ret);
 }
 
 }   // namespace Python

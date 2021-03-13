@@ -19,7 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #pragma once
 
 #include <QObject>
-#include <QTimer>
 
 #include "studio/result.hpp"
 #include "studio/documentation.hpp"
@@ -37,6 +36,13 @@ public:
 
     /*  Returns a reasonable default script */
     virtual QString defaultScript()=0;
+
+    /*  Requests that the interpreter stop the current evaluation.
+     *  This will be called from the main thread! */
+    virtual void halt() {}
+
+    /*  Called from the main thread before the worker thread starts */
+    virtual void preinit() {}
 
 public slots:
     /*  Evaluates a new script, returning done(...) when done. */
