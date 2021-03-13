@@ -27,8 +27,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/script.hpp"
 #include "studio/color.hpp"
 
+#ifdef STUDIO_WITH_GUILE
 #include "studio/guile/language.hpp"
+#endif
+
+#ifdef STUDIO_WITH_PYTHON
 #include "studio/python/language.hpp"
+#endif
 
 namespace Studio {
 
@@ -94,7 +99,7 @@ Editor::Editor(QWidget* parent)
     connect(&m_interpreterBusyDebounce, &QTimer::timeout,
             &spinner, QOverload<>::of(&QTimer::start));
 
-    setLanguage(Language::LANGUAGE_GUILE);
+    setLanguage(defaultLanguage());
 }
 
 void Editor::loadDefaultScript() {
@@ -349,17 +354,49 @@ void Editor::onSyntaxReady() {
     script_doc->contentsChange(0, 0, script_doc->toPlainText().length());
 }
 
+Language::Type Editor::defaultLanguage() {
+#if defined(STUDIO_WITH_GUILE)
+    return Language::LANGUAGE_GUILE;
+#elif defined(STUDIO_WITH_PYTHON)
+    return Language::LANGUAGE_PYTHON;
+#else
+#error Must have at least one language defined
+#endif
+}
+
+bool Editor::supportsLanguage(Language::Type t) {
+    switch (t) {
+        case Language::LANGUAGE_GUILE:
+#ifdef STUDIO_WITH_GUILE
+            return true;
+#else
+            return false;
+#endif
+        case Language::LANGUAGE_PYTHON:
+#ifdef STUDIO_WITH_PYTHON
+            return true;
+#else
+            return false;
+#endif
+    }
+}
+
 void Editor::setLanguage(Language::Type t) {
     const bool was_default = m_language &&
         script_doc->toPlainText() == m_language->defaultScript();
 
     switch (t) {
+#ifdef STUDIO_WITH_GUILE
         case Language::LANGUAGE_GUILE:
             m_language.reset(Studio::Guile::language(script));
             break;
+#endif
+#ifdef STUDIO_WITH_PYTHON
         case Language::LANGUAGE_PYTHON:
             m_language.reset(Studio::Python::language(script));
             break;
+#endif
+        default: return;
     }
 
     connect(script, &QPlainTextEdit::cursorPositionChanged,

@@ -28,7 +28,6 @@ namespace Studio {
 namespace Python {
 
 class Interpreter: public ::Studio::Interpreter {
-    Q_OBJECT
 public:
     Interpreter();
     ~Interpreter();

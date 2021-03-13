@@ -25,7 +25,6 @@ namespace Studio {
 namespace Guile {
 
 class Interpreter: public ::Studio::Interpreter {
-    Q_OBJECT
 public:
     Interpreter();
 

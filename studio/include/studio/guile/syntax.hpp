@@ -25,7 +25,6 @@ namespace Guile {
 /* Guile Scheme syntax highlighter */
 class Syntax : public ::Studio::Syntax
 {
-    Q_OBJECT
 public:
     Syntax(QTextDocument* doc);
 

@@ -48,6 +48,12 @@ public:
     /*  Updates the language type */
     void setLanguage(Language::Type type);
 
+    /*  Checks whether the given language is supported */
+    static bool supportsLanguage(Language::Type type);
+
+    /*  Returns a default language based on preprocessor macros */
+    static Language::Type defaultLanguage();
+
 public slots:
     void onInterpreterDone(Result result);
     void onInterpreterBusy();

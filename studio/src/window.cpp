@@ -237,11 +237,20 @@ Window::Window(Arguments args)
         lang_group->addAction(m);
         m->setCheckable(true);
     }
-    lang_guile->setChecked(true);
+    switch (Editor::defaultLanguage()) {
+        case Language::LANGUAGE_GUILE: lang_guile->setChecked(true); break;
+        case Language::LANGUAGE_PYTHON: lang_python->setChecked(true); break;
+    }
     connect(lang_guile, &QAction::triggered, this,
             [=](bool){ editor->setLanguage(Language::LANGUAGE_GUILE); });
     connect(lang_python, &QAction::triggered, this,
             [=](bool){ editor->setLanguage(Language::LANGUAGE_PYTHON); });
+    if (!Editor::supportsLanguage(Language::LANGUAGE_GUILE)) {
+        lang_guile->setEnabled(false);
+    }
+    if (!Editor::supportsLanguage(Language::LANGUAGE_PYTHON)) {
+        lang_python->setEnabled(false);
+    }
 
     // Help menu
     auto help_menu = menuBar()->addMenu("Help");
