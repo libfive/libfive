@@ -26,9 +26,14 @@ Language::Language(Interpreter* interpreter,
     : m_interpreter(interpreter), m_formatter(formatter), m_syntax(syntax),
       m_showDocsWhenReady(false)
 {
-    // Connect to the interpreter thread
+    // Run halt() in the main thread when the script changes, then pass data
+    // into the interpreter worker thread
+    connect(this, &Language::onScriptChanged,
+            this, [=](QString){ m_interpreter->halt(); });
     connect(this, &Language::onScriptChanged,
             m_interpreter.data(), &Interpreter::eval);
+
+    // Signals coming out of the interpreter are attached below:
     connect(m_interpreter.data(), &Interpreter::ready,
             this, &Language::onInterpreterReady);
     connect(m_interpreter.data(), &Interpreter::done,
@@ -39,6 +44,7 @@ Language::Language(Interpreter* interpreter,
     connect(this, &Language::onCursorMoved,
             m_syntax.data(), &Syntax::onCursorMoved);
 
+    // Kick off the interpreter thread, which causes init() to run
     connect(&m_interpreterThread, &QThread::started,
             m_interpreter.data(), &Interpreter::init);
     m_interpreter->preinit();
