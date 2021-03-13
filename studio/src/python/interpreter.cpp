@@ -51,33 +51,40 @@ void Interpreter::init() {
         initialized = true;
     }
 
+    // TODO: do a first import check and raise a reasonable error instead of
+    // crashing if the module isn't available? (it *should* always be available)
+
     const auto runner_mod = PyImport_ImportModule("libfive.runner");
-    if (runner_mod != NULL) {
-        m_runFunc = PyObject_GetAttrString(runner_mod, "run");
-    }
-    Py_XDECREF(runner_mod);
     PyErr_Print();
+    m_runFunc = PyObject_GetAttrString(runner_mod, "run");
+    Py_DECREF(runner_mod);
 
     const auto shape_mod = PyImport_ImportModule("libfive.shape");
-    if (shape_mod) {
-        m_shapeClass = PyObject_GetAttrString(shape_mod, "Shape");
-    }
-    Py_XDECREF(shape_mod);
-    PyErr_Print();
+    m_shapeClass = PyObject_GetAttrString(shape_mod, "Shape");
+    Py_DECREF(shape_mod);
 
     QStringList keywords;
+
+    // Equivalent to str(obj), returning a QString
+    auto str = [](PyObject* obj) -> QString {
+        const auto s = PyObject_Str(obj);
+        const auto ws = PyUnicode_AsWideCharString(s, NULL);
+        const auto out = QString::fromWCharArray(ws);
+        PyMem_Free(ws);
+        Py_DECREF(s);
+        return out;
+    };
+    auto dump_keywords = [&](PyObject* list) {
+        const auto list_len = PyList_Size(list);
+        for (unsigned i=0; i < list_len; ++i) {
+            keywords << str(PyList_GetItem(list, i));
+        }
+    };
 
     {
         const auto keyword_mod = PyImport_ImportModule("keyword");
         const auto kwlist = PyObject_GetAttrString(keyword_mod, "kwlist");
-        const auto kwlist_len = PyList_Size(kwlist);
-        for (unsigned i=0; i < kwlist_len; ++i) {
-            const auto s = PyObject_Str(PyList_GetItem(kwlist, i));
-            const auto ws = PyUnicode_AsWideCharString(s, NULL);
-            keywords << QString::fromWCharArray(ws);
-            PyMem_Free(ws);
-            Py_DECREF(s);
-        }
+        dump_keywords(kwlist);
         Py_DECREF(kwlist);
         Py_DECREF(keyword_mod);
     }
@@ -85,21 +92,74 @@ void Interpreter::init() {
     {
         const auto builtins_mod = PyImport_ImportModule("builtins");
         const auto builtins_list = PyObject_Dir(builtins_mod);
-        const auto builtins_len = PyList_Size(builtins_list);
-        for (unsigned i=0; i < builtins_len; ++i) {
-            const auto s = PyObject_Str(PyList_GetItem(builtins_list, i));
-            const auto ws = PyUnicode_AsWideCharString(s, NULL);
-            keywords << QString::fromWCharArray(ws);
-            PyMem_Free(ws);
-            Py_DECREF(s);
-        }
+        dump_keywords(builtins_list);
         Py_DECREF(builtins_list);
         Py_DECREF(builtins_mod);
     }
 
+    Documentation docs;
+
+    {   // Load all the keywords from the stdlib, then build the docs
+        const auto stdlib_mod = PyImport_ImportModule("libfive.stdlib");
+        const auto stdlib_list = PyObject_Dir(stdlib_mod);
+        const auto stdlib_len = PyList_Size(stdlib_list);
+        PyErr_Print();
+
+        const auto inspect_mod = PyImport_ImportModule("inspect");
+        const auto sig = PyObject_GetAttrString(inspect_mod, "signature");
+        const auto getdoc = PyObject_GetAttrString(inspect_mod, "getdoc");
+        PyErr_Print();
+
+        for (unsigned i=0; i < stdlib_len; ++i) {
+            const auto item = PyList_GetItem(stdlib_list, i); // borrowed ref
+            const auto item_str = str(item);
+            if (item_str.startsWith("_")) {
+                continue;
+            }
+            keywords << item_str;
+
+            // Don't add classes to the standard library documentation
+            const auto item_obj = PyObject_GetAttr(stdlib_mod, item);
+            if (!PyFunction_Check(item_obj)) {
+                Py_DECREF(item_obj);
+                continue;
+            }
+            const auto item_name_obj = PyObject_GetAttrString(item_obj, "__name__");
+            const auto item_name = str(item_name_obj);
+            Py_DECREF(item_name_obj);
+
+            const auto item_signature = PyObject_CallFunctionObjArgs(
+                    sig, item_obj, NULL);
+            const auto item_docstring = PyObject_CallFunctionObjArgs(
+                    getdoc, item_obj, NULL);
+
+            if (!item_signature || !item_docstring) {
+                std::cerr << "Warning: missing documentation for "
+                    << item_str.toStdString()
+                    << "; " << str(item_signature).toStdString()
+                    << "; " << str(item_docstring).toStdString();
+            }
+            docs["libfive.stdlib"][item_str] =
+                (item_name + str(item_signature) + "\n" +
+                 str(item_docstring)).trimmed();
+
+            // inspect.getmodule
+
+            Py_DECREF(item_obj);
+            Py_XDECREF(item_signature);
+            Py_XDECREF(item_docstring);
+        }
+
+        Py_DECREF(getdoc);
+        Py_DECREF(sig);
+        Py_DECREF(inspect_mod);
+        Py_DECREF(stdlib_list);
+        Py_DECREF(stdlib_mod);
+    }
+
     PyErr_Print();
 
-    emit(ready(keywords, Documentation()));
+    emit(ready(keywords, docs));
 }
 
 // Use PyErr_SetInterrupt to interrupt running script
