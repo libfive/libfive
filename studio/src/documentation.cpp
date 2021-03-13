@@ -18,11 +18,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <iostream>
 
+#include <QCompleter>
 #include <QEvent>
 #include <QKeyEvent>
-#include <QPointer>
 #include <QLabel>
-#include <QCompleter>
+#include <QPointer>
+#include <QRegularExpression>
 #include <QTextBrowser>
 #include <QVBoxLayout>
 
@@ -34,25 +35,24 @@ DocumentationPane::DocumentationPane(Documentation docs)
     : m_search(new QLineEdit)
 {
     // Flatten documentation into a single-level map
-    QMap<QString, QString> fs;
-    QMap<QString, QString> tags;
-    QMap<QString, QString> mods;
+    QMap<QString, QString> fs;   // shape name -> docstring
+    QMap<QString, QString> tags; // shape name -> unique tag (used in search)
+    QMap<QString, QString> mods; // shape name -> module name
+    int max_name = 0;
     for (auto mod : docs.keys())
     {
         for (auto f : docs[mod].keys())
         {
-            fs[f] = docs[mod][f];
-            tags.insert(f, "i" + QString::fromStdString(
-                        std::to_string(tags.size())));
+            fs.insert(f, docs[mod][f]);
+            tags.insert(f, QString("i%1").arg(tags.size()));
             mods.insert(f, mod);
+            max_name = std::max(f.length(), max_name);
         }
     }
 
-    int max_name = 0;
-    for (auto& f : fs.keys())
-    {
-        max_name = std::max(f.length(), max_name);
-    }
+    // The first word of the docstring should be the function name, which we
+    // use to detect aliases (where the name doesn't match)
+    QRegularExpression first_keyword(R"(^([\w\-_!?\*]+))");
 
     // Unpack documentation into a text box
     auto txt = new QTextBrowser();
@@ -60,14 +60,9 @@ DocumentationPane::DocumentationPane(Documentation docs)
     {
         const auto doc = fs[f];
 
-        auto f_ = doc.count(" ") ? doc.split(" ")[0] : "";
-
         // Add padding so that the module names all line up
-        QString padding;
-        for (int i=0; i < max_name - f.length() + 4; ++i)
-        {
-            padding += "&nbsp;";
-        }
+        const auto padding = QString("&nbsp;")
+            .repeated(max_name - f.length() + 4);
 
         txt->insertHtml(
                 "<tt><a name=\"" + tags[f] +
@@ -75,37 +70,42 @@ DocumentationPane::DocumentationPane(Documentation docs)
                 padding +
                 "<font color=\"silver\">" + mods[f] + "</font>" +
                 "</tt><br>");
-        if (f_ != f)
-        {
-            txt->insertHtml("<tt>" + f + "</tt>");
-            txt->insertHtml(": alias for ");
-            if (fs.count(f_) != 1)
+
+        const auto m = first_keyword.match(doc);
+        if (m.hasMatch()) {
+            const auto f_ = m.captured(0);
+            if (f != f_)
             {
-                std::cerr << "DocumentationPane: missing alias "
-                          << f_.toStdString() << " for " << f.toStdString()
-                          << std::endl;
-                txt->insertHtml("<tt>" + f_ + "</tt> (missing)\n");
+                txt->insertHtml("<tt>" + f + "</tt>: alias for ");
+                if (fs.count(f_) != 1)
+                {
+                    std::cerr << "DocumentationPane: missing alias "
+                              << f_.toStdString() << " for " << f.toStdString()
+                              << std::endl;
+                    txt->insertHtml("<tt>" + f_ + "</tt> (missing)\n");
+                }
+                else
+                {
+                    txt->insertHtml("<tt><a href=\"#" + tags[f_] + "\">" + f_ + "</a></tt><br>");
+                }
+                txt->insertPlainText("\n");
+            } else {
+                auto lines = doc.split("\n");
+                if (lines.size() > 0)
+                {
+                    txt->insertHtml("<tt>" + lines[0] + "</tt><br>");
+                }
+                for (int i=1; i < lines.size(); ++i)
+                {
+                    txt->insertPlainText(lines[i] + "\n");
+                }
+                txt->insertPlainText("\n");
             }
-            else
-            {
-                txt->insertHtml("<tt><a href=\"#" + tags[f_] + "\">" + f_ + "</a></tt><br>");
-            }
-            txt->insertPlainText("\n");
-        }
-        else
-        {
-            auto lines = doc.split("\n");
-            if (lines.size() > 0)
-            {
-                txt->insertHtml("<tt>" + lines[0] + "</tt><br>");
-            }
-            for (int i=1; i < lines.size(); ++i)
-            {
-                txt->insertPlainText(lines[i] + "\n");
-            }
-            txt->insertPlainText("\n");
+        } else {
+            txt->insertHtml("<tt>" + f + "</tt>: Bad docstring format<br><br>");
         }
     }
+
     {   // Erase the two trailing newlines
         auto cursor = QTextCursor(txt->document());
         cursor.movePosition(QTextCursor::End);

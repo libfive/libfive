@@ -58,7 +58,7 @@ Syntax::Syntax(QTextDocument* doc)
     // Special regex for keywords, to avoid having one rule for each
     QTextCharFormat kw_format;
     kw_format.setForeground(Color::blue);
-    m_keywordRule = Rule(R"((?<=[^\w-]|^)[\w\-!?\*]+(?=[^\\w-]|$))", kw_format);
+    m_keywordRule = Rule(R"((?<=[^\w-]|^)[\w_!?\*]+(?=[^\\w-]|$))", kw_format);
 }
 
 void Syntax::onCursorMoved(QPlainTextEdit* text)
