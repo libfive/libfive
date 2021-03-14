@@ -35,6 +35,8 @@ public:
 
     void init() override;
     QString defaultScript() override;
+    QString extension() override { return ".py"; }
+
     void halt() override;
     void preinit() override;
 

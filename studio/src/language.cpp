@@ -70,6 +70,10 @@ QString Language::defaultScript() {
     return m_interpreter->defaultScript();
 }
 
+QString Language::extension() {
+    return m_interpreter->extension();
+}
+
 void Language::onInterpreterReady(QStringList keywords, Documentation docs) {
     m_syntax->setKeywords(keywords);
     emit(syntaxReady());

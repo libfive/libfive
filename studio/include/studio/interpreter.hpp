@@ -37,6 +37,9 @@ public:
     /*  Returns a reasonable default script */
     virtual QString defaultScript()=0;
 
+    /*  Returns a default extension for this language */
+    virtual QString extension()=0;
+
     /*  Requests that the interpreter stop the current evaluation.
      *  This will be called from the main thread! */
     virtual void halt() {}

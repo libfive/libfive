@@ -309,7 +309,7 @@ bool Window::onOpen(bool)
     CHECK_UNSAVED();
 
     QString f = QFileDialog::getOpenFileName(this, "Open",
-            workingDirectory(), "Libfive Studio files (*.io);;Any files (*)");
+            workingDirectory(), "Studio (*.io *.py);;Any files (*)");
     if (!f.isEmpty())
     {
         return openFile(f);
@@ -352,6 +352,7 @@ bool Window::loadFile(QString f, bool reload)
     {
         editor->setScript(file.readAll(), reload);
         editor->setModified(false);
+        editor->guessLanguage(QFileInfo(file.fileName()).suffix().toLower());
         return true;
     }
 }
@@ -451,7 +452,8 @@ bool Window::onSave(bool)
 bool Window::onSaveAs(bool)
 {
     QString f = QFileDialog::getSaveFileName(this, "Save as",
-            workingDirectory(), "Libfive Studio files (*.io);;Any files (*)");
+            workingDirectory(),
+            QString("Studio (*%1);;Any files (*)").arg(editor->getExtension()));
     if (!f.isEmpty())
     {
         if (saveFile(f))

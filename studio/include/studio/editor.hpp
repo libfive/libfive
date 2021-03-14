@@ -48,6 +48,12 @@ public:
     /*  Updates the language type */
     void setLanguage(Language::Type type);
 
+    /*  Switches the language type based on file extension */
+    void guessLanguage(QString extension);
+
+    /*  Returns an extension for the given language */
+    QString getExtension();
+
     /*  Checks whether the given language is supported */
     static bool supportsLanguage(Language::Type type);
 

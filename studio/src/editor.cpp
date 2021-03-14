@@ -382,6 +382,22 @@ bool Editor::supportsLanguage(Language::Type t) {
     return false;
 }
 
+void Editor::guessLanguage(QString ext) {
+    if (ext == "py") {
+#ifdef STUDIO_WITH_PYTHON
+        setLanguage(Language::LANGUAGE_PYTHON);
+#endif
+    } else if (ext == "scm" || ext == "io") {
+#ifdef STUDIO_WITH_GUILE
+        setLanguage(Language::LANGUAGE_GUILE);
+#endif
+    }
+}
+
+QString Editor::getExtension() {
+    return m_language->extension();
+}
+
 void Editor::setLanguage(Language::Type t) {
     const bool was_default = m_language &&
         script_doc->toPlainText() == m_language->defaultScript();

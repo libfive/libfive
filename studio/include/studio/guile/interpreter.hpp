@@ -31,6 +31,7 @@ public:
     void init() override;
 
     QString defaultScript() override;
+    QString extension() override { return ".scm"; }
 
 public slots:
     void eval(QString s) override;

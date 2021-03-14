@@ -43,6 +43,7 @@ public:
     ~Language();
 
     QString defaultScript();
+    QString extension();
 
 signals:
     /*  Emits the result of an interpreter evaluation */
