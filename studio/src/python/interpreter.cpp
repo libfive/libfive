@@ -135,6 +135,7 @@ void Interpreter::init() {
         const auto inspect_mod = PyImport_ImportModule("inspect");
         const auto sig = PyObject_GetAttrString(inspect_mod, "signature");
         const auto getdoc = PyObject_GetAttrString(inspect_mod, "getdoc");
+        const auto getmod = PyObject_GetAttrString(inspect_mod, "getmodule");
         PyErr_Print();
 
         for (unsigned i=0; i < stdlib_len; ++i) {
@@ -151,7 +152,8 @@ void Interpreter::init() {
                 Py_DECREF(item_obj);
                 continue;
             }
-            const auto item_name_obj = PyObject_GetAttrString(item_obj, "__name__");
+            const auto item_name_obj = PyObject_GetAttrString(
+                    item_obj, "__name__");
             const auto item_name = str(item_name_obj);
             Py_DECREF(item_name_obj);
 
@@ -166,11 +168,16 @@ void Interpreter::init() {
                     << "; " << str(item_signature).toStdString()
                     << "; " << str(item_docstring).toStdString();
             }
-            docs["libfive.stdlib"][item_str] =
+            const auto mod = PyObject_CallFunctionObjArgs(
+                    getmod, item_obj, NULL);
+            const auto mod_name = PyObject_GetAttrString(mod, "__name__");
+            const auto mod_name_str = str(mod_name);
+            Py_DECREF(mod_name);
+            Py_DECREF(mod);
+
+            docs[mod_name_str][item_str] =
                 (item_name + str(item_signature) + "\n" +
                  str(item_docstring)).trimmed();
-
-            // inspect.getmodule
 
             Py_DECREF(item_obj);
             Py_XDECREF(item_signature);
@@ -178,6 +185,7 @@ void Interpreter::init() {
         }
 
         Py_DECREF(getdoc);
+        Py_DECREF(getmod);
         Py_DECREF(sig);
         Py_DECREF(inspect_mod);
         Py_DECREF(stdlib_list);
