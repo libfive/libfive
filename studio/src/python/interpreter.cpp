@@ -25,6 +25,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "libfive.h"
 
+// We inject a dummy module named "studio" into the Python namespace, then
+// use it to control settings (resolution, bounds, etc)
+extern "C" {
+static struct PyModuleDef studio_module = {
+    PyModuleDef_HEAD_INIT,
+    "studio",   /* name of module */
+    "Global parameters to control the Studio GUI",
+    -1,
+    NULL, // m_methods
+    NULL, // m_slots
+    NULL, // m_traverse
+    NULL, // m_clear
+    NULL, // m_free
+};
+PyMODINIT_FUNC PyInit_studio(void) {
+    return PyModule_Create(&studio_module);
+}
+}    // extern "C"
+
 namespace Studio {
 namespace Python {
 
@@ -59,10 +78,14 @@ void Interpreter::halt() {
 
 void Interpreter::preinit() {
     if (!Py_IsInitialized()) {
+        PyImport_AppendInittab("studio", PyInit_studio);
         Py_Initialize();
         auto s = PyUnicode_FromString("libfive/bind/python");
         PyList_Insert(PySys_GetObject("path"), 0, s);
         Py_DECREF(s);
+
+        // Create a dummy module for settings
+        PyModule_Create(&studio_module);
     }
     m_threadState = PyEval_SaveThread();
 }
