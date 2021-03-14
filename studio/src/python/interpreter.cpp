@@ -28,12 +28,50 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // We inject a dummy module named "studio" into the Python namespace, then
 // use it to control settings (resolution, bounds, etc)
 extern "C" {
+
+static PyObject* set_resolution(PyObject* self, PyObject* args) {
+    double res;
+    if (!PyArg_ParseTuple(args, "d", &res)) {
+        return NULL;
+    }
+    PyObject_SetAttrString(self, "__resolution", PyFloat_FromDouble(res));
+    Py_RETURN_NONE;
+}
+
+static PyObject* set_quality(PyObject* self, PyObject* args) {
+    double qua;
+    if (!PyArg_ParseTuple(args, "d", &qua)) {
+        return NULL;
+    }
+    PyObject_SetAttrString(self, "__quality", PyFloat_FromDouble(qua));
+    Py_RETURN_NONE;
+}
+
+static PyObject* set_bounds(PyObject* self, PyObject* args) {
+    double xmin, ymin, zmin, xmax, ymax, zmax;
+    if (!PyArg_ParseTuple(args, "(ddd)(ddd)", &xmin, &ymin, &zmin,
+                          &xmax, &ymax, &zmax))
+    {
+        // The error flag is set by PyArg_ParseTuple
+        return NULL;
+    }
+    PyObject_SetAttrString(self, "__bounds", args);
+    Py_RETURN_NONE;
+}
+
+static PyMethodDef studio_methods[] = {
+    {"set_resolution", set_resolution, METH_VARARGS, "Sets render resolution"},
+    {"set_quality", set_quality, METH_VARARGS, "Sets render quality"},
+    {"set_bounds", set_bounds, METH_VARARGS, "Sets render bounds"},
+    {NULL, NULL, 0, NULL}        /* Sentinel */
+};
+
 static struct PyModuleDef studio_module = {
     PyModuleDef_HEAD_INIT,
     "studio",   /* name of module */
     "Global parameters to control the Studio GUI",
     -1,
-    NULL, // m_methods
+    studio_methods, // m_methods
     NULL, // m_slots
     NULL, // m_traverse
     NULL, // m_clear
@@ -46,6 +84,10 @@ PyMODINIT_FUNC PyInit_studio(void) {
 
 namespace Studio {
 namespace Python {
+
+const static QString SET_QUALITY = "studio.set_quality(%1)\n";
+const static QString SET_RESOLUTION = "studio.set_resolution(%1)\n";
+const static QString SET_BOUNDS = "studio.set_bounds([%1, %2, %3], [%4, %5, %6])\n";
 
 Interpreter::Interpreter() {
     // Nothing to do here
@@ -62,7 +104,17 @@ Interpreter::~Interpreter() {
 }
 
 QString Interpreter::defaultScript() {
-    return "from libfive.stdlib import *\n\nsphere(1)";
+    auto default_settings = Settings::defaultSettings();
+    return "import studio\n" +
+        SET_BOUNDS.arg(default_settings.min.x())
+                  .arg(default_settings.min.y())
+                  .arg(default_settings.min.z())
+                  .arg(default_settings.max.x())
+                  .arg(default_settings.max.y())
+                  .arg(default_settings.max.z()) +
+        SET_QUALITY.arg(default_settings.quality) +
+        SET_RESOLUTION.arg(default_settings.res) +
+        "\nfrom libfive.stdlib import *\nsphere(1)";
 }
 
 void Interpreter::halt() {
@@ -227,11 +279,14 @@ void Interpreter::eval(QString script)
 
     PyGILState_STATE gstate = PyGILState_Ensure();
 
-    const auto tuple = PyTuple_New(1);
-    PyTuple_SetItem(tuple, 0,
-            PyUnicode_FromString(script.toStdString().c_str()));
-    const auto ret = PyObject_CallObject(m_runFunc, tuple);
-    Py_DECREF(tuple);
+    // Reset all settings
+    const auto studio_mod = PyImport_ImportModule("studio");
+    PyObject_SetAttrString(studio_mod, "__resolution", Py_None);
+    PyObject_SetAttrString(studio_mod, "__quality", Py_None);
+    PyObject_SetAttrString(studio_mod, "__bounds", Py_None);
+
+    const auto ret = PyObject_CallFunctionObjArgs(m_runFunc,
+        PyUnicode_FromString(script.toStdString().c_str()), NULL);
 
     Result out;
     out.settings = Settings::defaultSettings();
@@ -261,6 +316,76 @@ void Interpreter::eval(QString script)
                 Py_DECREF(ptr_obj);
                 PyErr_Print();
             }
+        }
+
+        // Check whether settings were assigned in the script
+        auto res = PyObject_GetAttrString(studio_mod, "__resolution");
+        if (res != Py_None) {
+            const double r = PyFloat_AsDouble(res);
+            if (!PyErr_Occurred()) {
+                out.settings.res = r;
+            } else {
+                res = NULL;
+            }
+        }
+        if (res == Py_None || res == NULL) {
+            out.warnings.append({
+                    "<b>Warning:</b> Using default resolution for shapes.<br>"
+                    "&nbsp;&nbsp;&nbsp;&nbsp;"
+                    "Assign to <code>studio.resolution</code> to specify.",
+                    SET_RESOLUTION.arg(out.settings.res)});
+        }
+        Py_XDECREF(res);
+
+        auto qua = PyObject_GetAttrString(studio_mod, "__quality");
+        if (qua != Py_None) {
+            const double q = PyFloat_AsDouble(qua);
+            if (!PyErr_Occurred()) {
+                out.settings.quality = q;
+            } else {
+                qua = NULL;
+            }
+        }
+        if (qua == Py_None || qua == NULL) {
+            out.warnings.append({
+                    "<b>Warning:</b> Using default quality for shapes.<br>"
+                    "&nbsp;&nbsp;&nbsp;&nbsp;"
+                    "Assign to <code>studio.quality</code> to specify.",
+                    SET_QUALITY.arg(out.settings.quality)});
+        }
+        Py_XDECREF(qua);
+
+        auto bounds = PyObject_GetAttrString(studio_mod, "__bounds");
+        if (bounds != Py_None) {
+            double xmin, ymin, zmin, xmax, ymax, zmax;
+            if (PyArg_ParseTuple(bounds, "(ddd)(ddd)", &xmin, &ymin, &zmin,
+                                  &xmax, &ymax, &zmax))
+            {
+                out.settings.min = QVector3D(xmin, ymin, zmin);
+                out.settings.max = QVector3D(xmax, ymax, zmax);
+            } else {
+                PyErr_Clear();
+                bounds = NULL;
+            }
+        }
+        if (bounds == Py_None || bounds == NULL) {
+            out.warnings.append(
+                    {"<b>Warning:</b> Using default bounds for shapes<br>"
+                     "&nbsp;&nbsp;&nbsp;&nbsp;"
+                     "Assign to <code>studio.bounds</code> to specify.",
+                    SET_BOUNDS.arg(out.settings.min.x())
+                              .arg(out.settings.min.y())
+                              .arg(out.settings.min.z())
+                              .arg(out.settings.max.x())
+                              .arg(out.settings.max.y())
+                              .arg(out.settings.max.z())});
+        }
+        Py_XDECREF(bounds);
+
+        if (!out.warnings.isEmpty() && !script.contains("import studio")) {
+            out.warnings.insert(0, {
+                "<b>Warning:</b> Missing import of <code>studio</code> module",
+                "import studio\n"});
         }
     } else {
         PyObject *type, *value, *tb;

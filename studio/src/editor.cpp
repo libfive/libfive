@@ -188,9 +188,9 @@ void Editor::onInterpreterDone(Result r)
             auto button = new QPushButton("Fix All", this);
             connect(button, &QPushButton::pressed, this, [=](){
                 QTextCursor c(script_doc);
+                c.movePosition(QTextCursor::Start);
                 for (auto& f : fixes)
                 {
-                    c.movePosition(QTextCursor::Start);
                     c.insertText(f);
                 }});
             v->addWidget(button, 0, Qt::AlignHCenter);
