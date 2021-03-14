@@ -379,6 +379,7 @@ bool Editor::supportsLanguage(Language::Type t) {
             return false;
 #endif
     }
+    return false;
 }
 
 void Editor::setLanguage(Language::Type t) {
