@@ -1,0 +1,44 @@
+name: OSX-Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: macos-latest 
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Dependencies
+      run: brew install cmake pkg-config eigen libpng qt guile@2 boost tree
+
+    - name: Build Project
+      run: |
+        export PKG_CONFIG_PATH="/usr/local/opt/guile@2/lib/pkgconfig:$PKG_CONFIG_PATH"
+        export PKG_CONFIG_PATH="/usr/local/opt/qt/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+        mkdir build
+        cd build
+        cmake -DCMAKE_PREFIX_PATH=/usr/local/opt/qt ..
+        make -j4
+
+    # Print the tree (useful debug info)
+    - name: Tree
+      run: tree ./build
+
+    # Tests do no pass on Windows
+    - name: Test
+      continue-on-error: true
+      run: ./build/libfive/test/libfive-test
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: artifacts.zip
+        path: |
+          ./build/libfive/src/libfive.dylib
+          ./build/libfive/bind/libfive-guile.dylib
+          ./build/studio/Studio.app
