@@ -27,8 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // We inject a dummy module named "studio" into the Python namespace, then
 // use it to control settings (resolution, bounds, etc)
-extern "C" {
-
 static PyObject* set_resolution(PyObject* self, PyObject* args) {
     double res;
     if (!PyArg_ParseTuple(args, "d", &res)) {
@@ -77,10 +75,12 @@ static struct PyModuleDef studio_module = {
     NULL, // m_clear
     NULL, // m_free
 };
+
 PyMODINIT_FUNC PyInit_studio(void) {
     return PyModule_Create(&studio_module);
 }
-}    // extern "C"
+
+////////////////////////////////////////////////////////////////////////////////
 
 namespace Studio {
 namespace Python {
