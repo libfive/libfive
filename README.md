@@ -26,10 +26,10 @@ The library is written in C++ and exposes a C API in `libfive.h`.
   for use in the REPL or as part of larger applications.
 - **Studio** is a GUI application in the style of
 [OpenSCAD](http://www.openscad.org/).
-It uses the Guile bindings and allows for live-coding of solid models.
+It uses the Python and Guile bindings and allows for live-coding of solid models.
 The interface also includes direct modeling,
 where the user can push and pull on the model's surface
-to change variables in the script.
+to change variables in the script (direct modeling is Guile-only, for now).
 
 ## Other projects using `libfive`
 ### Language bindings
