@@ -85,9 +85,10 @@ PyMODINIT_FUNC PyInit_studio(void) {
 namespace Studio {
 namespace Python {
 
-const static QString SET_QUALITY = "studio.set_quality(%1)\n";
-const static QString SET_RESOLUTION = "studio.set_resolution(%1)\n";
-const static QString SET_BOUNDS = "studio.set_bounds([%1, %2, %3], [%4, %5, %6])\n";
+const static QString SET_QUALITY_STR = "studio.set_quality(%1)\n";
+const static QString SET_RESOLUTION_STR = "studio.set_resolution(%1)\n";
+const static QString SET_BOUNDS_STR = "studio.set_bounds([%1, %2, %3], "
+                                                        "[%4, %5, %6])\n";
 
 Interpreter::Interpreter() {
     // Nothing to do here
@@ -106,14 +107,14 @@ Interpreter::~Interpreter() {
 QString Interpreter::defaultScript() {
     auto default_settings = Settings::defaultSettings();
     return "import studio\n" +
-        SET_BOUNDS.arg(default_settings.min.x())
-                  .arg(default_settings.min.y())
-                  .arg(default_settings.min.z())
-                  .arg(default_settings.max.x())
-                  .arg(default_settings.max.y())
-                  .arg(default_settings.max.z()) +
-        SET_QUALITY.arg(default_settings.quality) +
-        SET_RESOLUTION.arg(default_settings.res) +
+        SET_BOUNDS_STR.arg(default_settings.min.x())
+                      .arg(default_settings.min.y())
+                      .arg(default_settings.min.z())
+                      .arg(default_settings.max.x())
+                      .arg(default_settings.max.y())
+                      .arg(default_settings.max.z()) +
+        SET_QUALITY_STR.arg(default_settings.quality) +
+        SET_RESOLUTION_STR.arg(default_settings.res) +
         "\nfrom libfive.stdlib import *\nsphere(1)";
 }
 
@@ -333,7 +334,7 @@ void Interpreter::eval(QString script)
                     "<b>Warning:</b> Using default resolution for shapes.<br>"
                     "&nbsp;&nbsp;&nbsp;&nbsp;"
                     "Assign to <code>studio.resolution</code> to specify.",
-                    SET_RESOLUTION.arg(out.settings.res)});
+                    SET_RESOLUTION_STR.arg(out.settings.res)});
         }
         Py_XDECREF(res);
 
@@ -351,7 +352,7 @@ void Interpreter::eval(QString script)
                     "<b>Warning:</b> Using default quality for shapes.<br>"
                     "&nbsp;&nbsp;&nbsp;&nbsp;"
                     "Assign to <code>studio.quality</code> to specify.",
-                    SET_QUALITY.arg(out.settings.quality)});
+                    SET_QUALITY_STR.arg(out.settings.quality)});
         }
         Py_XDECREF(qua);
 
@@ -373,12 +374,12 @@ void Interpreter::eval(QString script)
                     {"<b>Warning:</b> Using default bounds for shapes<br>"
                      "&nbsp;&nbsp;&nbsp;&nbsp;"
                      "Assign to <code>studio.bounds</code> to specify.",
-                    SET_BOUNDS.arg(out.settings.min.x())
-                              .arg(out.settings.min.y())
-                              .arg(out.settings.min.z())
-                              .arg(out.settings.max.x())
-                              .arg(out.settings.max.y())
-                              .arg(out.settings.max.z())});
+                    SET_BOUNDS_STR.arg(out.settings.min.x())
+                                  .arg(out.settings.min.y())
+                                  .arg(out.settings.min.z())
+                                  .arg(out.settings.max.x())
+                                  .arg(out.settings.max.y())
+                                  .arg(out.settings.max.z())});
         }
         Py_XDECREF(bounds);
 

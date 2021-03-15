@@ -174,7 +174,40 @@ sudo make install
 
 Then, build as above.
 
+### Windows (MSYS2)
+Using [MSYS2](https://www.msys2.org/) enables building and running the Studio GUI
+as a native Windows executable (with Python support only).
+
+Start by installing [MSYS2](https://www.msys2.org/).
+
+In _System Settings → Advanced System Settings → Advanced →  Environment Variables_,
+add `C:\msys64\mingw64\bin\` to `Path` in the _User Variables_ section.
+
+Then, open a *MSYS2 MinGW 64-Bit* terminal and
+run through the following sequence of commands:
+```
+pacman -Syuu
+# The terminal may restart at this point
+pacman -S git make mingw-w64-x86_64-eigen3 mingw-w64-x86_64-boost mingw-w64-x86_64-python3 mingw-w64-x86_64-cmake mingw-w64-x86_64-qt5 mingw-w64-x86_64-toolchain
+git clone https://github.com/libfive/libfive
+cd libfive
+mkdir build
+cd build
+/mingw64/bin/cmake -G"MSYS Makefiles" ..
+make -j8
+cp libfive/src/libfive.dll studio
+```
+
+At this point, you should be able to run the `Studio.exe` executable
+from the `build` directory with
+```
+PYTHONHOME=/mingw64 ./studio/Studio.exe
+```
+
 ### Windows (MSVC)
+This allows you to build just the core libraries, without the GUI,
+for integration into larger MSVC-based projects.
+
 With Visual Studio 2017 installed, run from `libfive` folder
 ```
 git clone https://github.com/Microsoft/vcpkg.git
