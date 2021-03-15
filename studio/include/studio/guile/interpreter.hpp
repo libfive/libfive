@@ -27,6 +27,7 @@ namespace Guile {
 class Interpreter: public ::Studio::Interpreter {
 public:
     Interpreter();
+    ~Interpreter();
 
     void init() override;
 
@@ -54,6 +55,11 @@ protected:
     SCM scm_other_error_fmt;
     SCM scm_result_fmt;
     SCM scm_in_function_fmt;
+
+    /*  Unprotects all of the SCM objects above.  This function must be called
+     *  from a thread in Guile mode, e.g. using scm_with_guile */
+    void unprotectGuileVars();
+    static void* unprotectGuileVars(void* t);
 };
 }   // namespace Guile
 }   // namespace Studio

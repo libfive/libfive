@@ -35,6 +35,27 @@ Interpreter::Interpreter() {
     // Nothing to do here
 }
 
+Interpreter::~Interpreter() {
+    scm_with_guile(Interpreter::unprotectGuileVars, this);
+}
+
+void* Interpreter::unprotectGuileVars(void* t) {
+    static_cast<Studio::Guile::Interpreter*>(t)->unprotectGuileVars();
+    return NULL;
+}
+
+void Interpreter::unprotectGuileVars() {
+    for (auto s : {scm_eval_sandboxed, scm_shape_to_ptr, scm_is_shape,
+                   scm_port_eof_p, scm_valid_sym,
+                   scm_syntax_error_sym, scm_numerical_overflow_sym,
+                   scm_result_fmt, scm_syntax_error_fmt,
+                   scm_numerical_overflow_fmt, scm_other_error_fmt,
+                   scm_in_function_fmt})
+    {
+        scm_gc_unprotect_object(s);
+    }
+}
+
 QString Interpreter::defaultScript() {
     QString script;
     auto default_settings = Settings::defaultSettings();
@@ -102,7 +123,7 @@ port-eof?
                    scm_numerical_overflow_fmt, scm_other_error_fmt,
                    scm_in_function_fmt})
     {
-        scm_permanent_object(s);
+        scm_gc_protect_object(s);
     }
 
     //  Extract a list of keywords from our list of sandbox-safe symbols
