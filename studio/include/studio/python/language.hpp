@@ -1,6 +1,6 @@
 /*
 Studio: a simple GUI for the libfive CAD kernel
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2021  Matt Keeter
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,19 +17,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #pragma once
-#include <QApplication>
-
-#include "studio/window.hpp"
+#include "studio/language.hpp"
 
 namespace Studio {
-class App : public QApplication
-{
-    Q_OBJECT
-public:
-    App(int& argc, char** argv);
-protected:
-    bool event(QEvent* event) override;
+class Script;
+namespace Python {
 
-    QScopedPointer<Window> window;
-};
+::Studio::Language* language(Script* script);
+
+}   // namespace Python
 }   // namespace Studio
+

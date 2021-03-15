@@ -26,10 +26,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 namespace Studio {
 namespace Guile {
 
-class Language language(Script* script) {
+::Studio::Language* language(Script* script) {
     auto f = new Formatter();
     script->bind(f);
-    return Language(new Interpreter(), f, new Syntax(script->document()));
+    return new Language(new Interpreter(), f, new Syntax(script->document()));
 }
 
 }   // namespace Guile

@@ -27,26 +27,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "studio/script.hpp"
 #include "studio/color.hpp"
 
+#ifdef STUDIO_WITH_GUILE
 #include "studio/guile/language.hpp"
+#endif
+
+#ifdef STUDIO_WITH_PYTHON
+#include "studio/python/language.hpp"
+#endif
 
 namespace Studio {
 
 Editor::Editor(QWidget* parent)
     : QWidget(parent), script(new Script), script_doc(script->document()),
       err(new QPlainTextEdit), err_doc(err->document()),
-      layout(new QVBoxLayout), m_language(Studio::Guile::language(script))
+      layout(new QVBoxLayout)
 {
     error_format.setUnderlineColor(Color::red);
     error_format.setUnderlineStyle(QTextCharFormat::SingleUnderline);
 
     script->setLineWrapMode(QPlainTextEdit::NoWrap);
     err->setReadOnly(true);
-
-    static bool font_loaded = false;
-    if (!font_loaded) {
-        QFontDatabase::addApplicationFont(":/font/Inconsolata.otf");
-        font_loaded = true;
-    }
 
     {   // Use Inconsolata as our default font
         QFont font("Inconsolata", 14);
@@ -65,9 +65,6 @@ Editor::Editor(QWidget* parent)
             .arg(Color::base00.name());
 
     setStyleSheet("QPlainTextEdit { " + style);
-
-    connect(script, &QPlainTextEdit::cursorPositionChanged,
-            &m_language, [&](){ m_language.onCursorMoved(script); });
 
     // Emit the script whenever text changes
     connect(script, &QPlainTextEdit::textChanged,
@@ -102,19 +99,11 @@ Editor::Editor(QWidget* parent)
     connect(&m_interpreterBusyDebounce, &QTimer::timeout,
             &spinner, QOverload<>::of(&QTimer::start));
 
-    connect(&m_language, &Language::interpreterBusy,
-            &m_interpreterBusyDebounce, QOverload<>::of(&QTimer::start));
-    connect(&m_language, &Language::interpreterDone,
-            this, &Editor::onInterpreterDone);
-    connect(&m_language, &Language::syntaxReady, this, &Editor::onSyntaxReady);
-
-    connect(this, &Editor::scriptChanged,
-            &m_language, &Language::onScriptChanged);
-    connect(this, &Editor::onShowDocs, &m_language, &Language::onShowDocs);
+    setLanguage(defaultLanguage());
 }
 
 void Editor::loadDefaultScript() {
-    setScript(m_language.defaultScript());
+    setScript(m_language->defaultScript());
     setModified(false);
 }
 
@@ -199,9 +188,9 @@ void Editor::onInterpreterDone(Result r)
             auto button = new QPushButton("Fix All", this);
             connect(button, &QPushButton::pressed, this, [=](){
                 QTextCursor c(script_doc);
+                c.movePosition(QTextCursor::Start);
                 for (auto& f : fixes)
                 {
-                    c.movePosition(QTextCursor::Start);
                     c.insertText(f);
                 }});
             v->addWidget(button, 0, Qt::AlignHCenter);
@@ -363,6 +352,86 @@ void Editor::setVarValues(QMap<libfive::Tree::Id, float> vs)
 
 void Editor::onSyntaxReady() {
     script_doc->contentsChange(0, 0, script_doc->toPlainText().length());
+}
+
+Language::Type Editor::defaultLanguage() {
+#if defined(STUDIO_WITH_GUILE)
+    return Language::LANGUAGE_GUILE;
+#elif defined(STUDIO_WITH_PYTHON)
+    return Language::LANGUAGE_PYTHON;
+#else
+#error Must have at least one language defined
+#endif
+}
+
+bool Editor::supportsLanguage(Language::Type t) {
+    switch (t) {
+        case Language::LANGUAGE_GUILE:
+#ifdef STUDIO_WITH_GUILE
+            return true;
+#else
+            return false;
+#endif
+        case Language::LANGUAGE_PYTHON:
+#ifdef STUDIO_WITH_PYTHON
+            return true;
+#else
+            return false;
+#endif
+    }
+    return false;
+}
+
+void Editor::guessLanguage(QString ext) {
+    if (ext == "py") {
+#ifdef STUDIO_WITH_PYTHON
+        setLanguage(Language::LANGUAGE_PYTHON);
+#endif
+    } else if (ext == "scm" || ext == "io") {
+#ifdef STUDIO_WITH_GUILE
+        setLanguage(Language::LANGUAGE_GUILE);
+#endif
+    }
+}
+
+QString Editor::getExtension() {
+    return m_language->extension();
+}
+
+void Editor::setLanguage(Language::Type t) {
+    const bool was_default = m_language &&
+        script_doc->toPlainText() == m_language->defaultScript();
+
+    switch (t) {
+#ifdef STUDIO_WITH_GUILE
+        case Language::LANGUAGE_GUILE:
+            m_language.reset(Studio::Guile::language(script));
+            break;
+#endif
+#ifdef STUDIO_WITH_PYTHON
+        case Language::LANGUAGE_PYTHON:
+            m_language.reset(Studio::Python::language(script));
+            break;
+#endif
+        default: return;
+    }
+
+    connect(script, &QPlainTextEdit::cursorPositionChanged,
+            m_language.data(), [&](){ m_language->onCursorMoved(script); });
+    connect(m_language.data(), &Language::interpreterBusy,
+            &m_interpreterBusyDebounce, QOverload<>::of(&QTimer::start));
+    connect(m_language.data(), &Language::interpreterDone,
+            this, &Editor::onInterpreterDone);
+    connect(m_language.data(), &Language::syntaxReady,
+            this, &Editor::onSyntaxReady);
+
+    connect(this, &Editor::scriptChanged,
+            m_language.data(), &Language::onScriptChanged);
+    connect(this, &Editor::onShowDocs, m_language.data(), &Language::onShowDocs);
+
+    if (was_default) {
+        loadDefaultScript();
+    }
 }
 
 }   // namespace Studio

@@ -228,6 +228,30 @@ Window::Window(Arguments args)
     connect(iso_meshing, &QAction::triggered, view, &View::toIsoMeshing);
     connect(hybrid_meshing, &QAction::triggered, view, &View::toHybridMeshing);
 
+    auto lang_menu = menuBar()->addMenu("Language");
+    auto lang_guile = new QAction("Guile Scheme", nullptr);
+    auto lang_python = new QAction("Python", nullptr);
+    auto lang_group = new QActionGroup(lang_menu);
+    for (auto& m : { lang_guile, lang_python }) {
+        lang_menu->addAction(m);
+        lang_group->addAction(m);
+        m->setCheckable(true);
+    }
+    switch (Editor::defaultLanguage()) {
+        case Language::LANGUAGE_GUILE: lang_guile->setChecked(true); break;
+        case Language::LANGUAGE_PYTHON: lang_python->setChecked(true); break;
+    }
+    connect(lang_guile, &QAction::triggered, this,
+            [=](bool){ editor->setLanguage(Language::LANGUAGE_GUILE); });
+    connect(lang_python, &QAction::triggered, this,
+            [=](bool){ editor->setLanguage(Language::LANGUAGE_PYTHON); });
+    if (!Editor::supportsLanguage(Language::LANGUAGE_GUILE)) {
+        lang_guile->setEnabled(false);
+    }
+    if (!Editor::supportsLanguage(Language::LANGUAGE_PYTHON)) {
+        lang_python->setEnabled(false);
+    }
+
     // Help menu
     auto help_menu = menuBar()->addMenu("Help");
     connect(help_menu->addAction("About"), &QAction::triggered,
@@ -285,7 +309,7 @@ bool Window::onOpen(bool)
     CHECK_UNSAVED();
 
     QString f = QFileDialog::getOpenFileName(this, "Open",
-            workingDirectory(), "Libfive Studio files (*.io);;Any files (*)");
+            workingDirectory(), "Studio (*.io *.py);;Any files (*)");
     if (!f.isEmpty())
     {
         return openFile(f);
@@ -328,6 +352,7 @@ bool Window::loadFile(QString f, bool reload)
     {
         editor->setScript(file.readAll(), reload);
         editor->setModified(false);
+        editor->guessLanguage(QFileInfo(file.fileName()).suffix().toLower());
         return true;
     }
 }
@@ -427,7 +452,8 @@ bool Window::onSave(bool)
 bool Window::onSaveAs(bool)
 {
     QString f = QFileDialog::getSaveFileName(this, "Save as",
-            workingDirectory(), "Libfive Studio files (*.io);;Any files (*)");
+            workingDirectory(),
+            QString("Studio (*%1);;Any files (*)").arg(editor->getExtension()));
     if (!f.isEmpty())
     {
         if (saveFile(f))
@@ -670,6 +696,11 @@ bool Window::onLoadTutorial(bool)
 void Window::onQuit(bool)
 {
     Window::close();
+}
+
+void Window::setLanguage(Language::Type t) {
+    editor->setLanguage(t);
+    // TODO: handle sandbox here
 }
 
 }   // namespace Studio

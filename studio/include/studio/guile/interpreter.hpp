@@ -25,13 +25,13 @@ namespace Studio {
 namespace Guile {
 
 class Interpreter: public ::Studio::Interpreter {
-    Q_OBJECT
 public:
     Interpreter();
 
     void init() override;
 
     QString defaultScript() override;
+    QString extension() override { return ".scm"; }
 
 public slots:
     void eval(QString s) override;

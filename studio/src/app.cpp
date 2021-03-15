@@ -17,7 +17,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <QFileOpenEvent>
-#include <QDebug>
 
 #include "studio/app.hpp"
 #include "studio/args.hpp"
@@ -25,17 +24,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 namespace Studio {
 
 App::App(int& argc, char** argv)
-    : QApplication(argc, argv),
-      window(Arguments(this))
+    : QApplication(argc, argv)
 {
-    // Nothing to do here
+    // This hints at interpreters where to find libfive.dylib
+    const auto app_dir = QCoreApplication::applicationDirPath();
+    qputenv("LIBFIVE_FRAMEWORK_DIR",
+            (app_dir + "/../Frameworks/").toLocal8Bit());
+
+    QFontDatabase::addApplicationFont(":/font/Inconsolata.otf");
+
+    window.reset(new Window(Arguments(this)));
 }
 
 bool App::event(QEvent *event)
 {
     if (event->type() == QEvent::FileOpen) {
         QFileOpenEvent *openEvent = static_cast<QFileOpenEvent*>(event);
-        window.openFile(openEvent->file());
+        window->openFile(openEvent->file());
     }
 
     return QApplication::event(event);

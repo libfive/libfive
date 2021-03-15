@@ -51,15 +51,13 @@ QString Interpreter::defaultScript() {
 
 void Interpreter::init() {
 #ifdef Q_OS_MAC
-    const auto app_dir = QCoreApplication::applicationDirPath().toLocal8Bit();
-
     // We include a pre-compiled Guile standard library in the Mac app bundle,
     // then fall back to assuming we're in the the build directory, then
     // fall back to standard system library search paths
-    qputenv("GUILE_LOAD_COMPILED_PATH", "/../Resources/guile/ccache/:libfive/bind/guile");
-
-    // This hints at Guile where to find libfive.dylib
-    qputenv("LIBFIVE_FRAMEWORK_DIR", app_dir + "/../Frameworks/");
+    const auto app_dir = QCoreApplication::applicationDirPath();
+    qputenv("GUILE_LOAD_COMPILED_PATH",
+            (app_dir + "/../Resources/guile/ccache/:libfive/bind/guile")
+                .toLocal8Bit());
 #else
     // Assume that we're in the build directory, then fall back to Linux
     // system libraries (if the Studio executable was installed, then the Guile

@@ -27,11 +27,50 @@ class Syntax : public QSyntaxHighlighter
 {
     Q_OBJECT
 public:
-    Syntax(QTextDocument* doc) : QSyntaxHighlighter(doc) {}
-    virtual void setKeywords(QStringList kws)=0;
+    Syntax(QTextDocument* doc);
+    void setKeywords(QStringList kws);
+
+    using MatchInfo = std::pair<int, QString>;
+    class BlockData : public QTextBlockUserData {
+    public:
+        std::list<MatchInfo> data;
+    };
 
 public slots:
     virtual void onCursorMoved(QPlainTextEdit* text)=0;
+
+protected:
+    /*  Overrides highlightBlock in QSyntaxHighlighter */
+    void highlightBlock(const QString& text) override;
+
+    /*  Structure to use as a rule when highlighting    */
+    struct Rule {
+        Rule() {}
+        Rule(QString r, QTextCharFormat f, int si=-1, int so=-1, int capture=0)
+            : regex(QRegularExpression(r)), format(f),
+              state_in(si), state_out(so), capture(capture)
+        { /* Nothing to do here */ }
+
+        QRegularExpression regex;
+        QTextCharFormat format;
+
+        /*  Flags for multi-line sections (e.g. long comments or strings) */
+        int state_in, state_out;
+
+        /*  Marks which regex clause is highlighted */
+        int capture;
+    };
+
+    /*  General-purpose rules */
+    QList<Rule> m_rules;
+
+    /* We use a special rule for language keywords, to avoid having one rule
+     * per keyword, which would slow things down by a lot. */
+    Rule m_keywordRule;
+    QSet<QString> m_keywords;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
 
 }   // namespace Studio

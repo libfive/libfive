@@ -34,12 +34,16 @@ namespace Studio {
 class Language : public QObject {
     Q_OBJECT
 public:
+    enum Type { LANGUAGE_GUILE,
+                LANGUAGE_PYTHON };
+
     Language(Interpreter* interpreter,
              Formatter* formatter,
              Syntax* syntax);
     ~Language();
 
     QString defaultScript();
+    QString extension();
 
 signals:
     /*  Emits the result of an interpreter evaluation */
