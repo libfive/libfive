@@ -112,7 +112,6 @@ public:
     static Tree nullary(Opcode::Opcode op);
 
     // Constructs a constant Tree with a floating-point value
-    Tree(float v);
     Tree(double v);
 
     // Constructs a Tree from an OracleClause
