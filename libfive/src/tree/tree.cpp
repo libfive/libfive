@@ -74,6 +74,12 @@ Tree::Tree(float f)
     // Nothing to do here
 }
 
+Tree::Tree(double f)
+    : Tree(static_cast<float>(f))
+{
+    // Nothing to do here
+}
+
 Tree::Tree(const Data* d, bool increment_refcount, uint32_t flags)
     : ptr(d), flags(flags)
 {
