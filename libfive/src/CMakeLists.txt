@@ -1,17 +1,3 @@
-# Add a custom command that produces version.c, plus
-# a dummy output that's not actually produced, in order
-# to force version.cmake to always be re-run before the build
-ADD_CUSTOM_TARGET(five-version
-    BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/version.c
-    # Pass the current source dir to version.cmake, so that it can run git
-    # commands there instead of in the binary dir. This enables it to find
-    # the right info when the build dir is outside the libfive repo.
-    COMMAND ${CMAKE_COMMAND}
-        -DLIBFIVE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj /DFIVE_DLL")
 endif()
@@ -97,10 +83,50 @@ add_library(five SHARED
     oracle/transformed_oracle_clause.cpp
 
     libfive.cpp
-
-    ${CMAKE_CURRENT_BINARY_DIR}/version.c
 )
-add_dependencies(five five-version)
+
+################################################################################
+# Attach the Git revision to libfive.cpp
+execute_process(COMMAND git log --pretty=format:'%h' -n 1
+                OUTPUT_VARIABLE GIT_REV
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                ERROR_QUIET)
+
+# Check whether we got any revision (which isn't always the case, e.g.
+# when someone downloaded a zip file from Github instead of a checkout)
+if ("${GIT_REV}" STREQUAL "")
+    set(GIT_REV "N/A")
+    set(GIT_DIFF "")
+    set(GIT_TAG "N/A")
+    set(GIT_BRANCH "N/A")
+else()
+    execute_process(COMMAND bash -c "git diff --quiet --exit-code || echo +"
+                    OUTPUT_VARIABLE GIT_DIFF
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    execute_process(COMMAND git describe --exact-match --tags
+                    OUTPUT_VARIABLE GIT_TAG
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    ERROR_QUIET)
+    execute_process(COMMAND git rev-parse --abbrev-ref HEAD
+                    OUTPUT_VARIABLE GIT_BRANCH
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+    string(STRIP "${GIT_REV}" GIT_REV)
+    string(SUBSTRING "${GIT_REV}" 1 7 GIT_REV)
+    string(STRIP "${GIT_DIFF}" GIT_DIFF)
+    string(STRIP "${GIT_TAG}" GIT_TAG)
+    string(STRIP "${GIT_BRANCH}" GIT_BRANCH)
+endif()
+
+set_property(
+    SOURCE libfive.cpp
+    APPEND PROPERTY COMPILE_DEFINITIONS
+    GIT_TAG="${GIT_TAG}"
+    GIT_REV="${GIT_REV}${GIT_DIFF}"
+    GIT_BRANCH="${GIT_BRANCH}"
+)
+
+################################################################################
 
 target_include_directories(five SYSTEM PUBLIC
     ${Boost_INCLUDE_DIRS}
