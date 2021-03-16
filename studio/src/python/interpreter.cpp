@@ -133,23 +133,40 @@ void Interpreter::preinit() {
     if (!Py_IsInitialized()) {
         PyImport_AppendInittab("studio", PyInit_studio);
         Py_Initialize();
-#ifdef Q_OS_WIN
-        // On Windows, the working directory is likely to be build/studio,
-        // which means we have to go up one directory to get to the Python
-        // bindings path.
-        s = PyUnicode_FromString(
-            QDir::toNativeSeparators("../libfive/bind/python")
-                .toLocal8Bit().data());
-        PyList_Insert(PySys_GetObject("path"), 1, s);
-        Py_DECREF(s);
-#else
-        // On other OS's, we're probably running in the build/ directory
-        // itself, so the bindings are below us.
-        auto s = PyUnicode_FromString(
-            QDir::toNativeSeparators("libfive/bind/python")
-                .toLocal8Bit().data());
-        PyList_Insert(PySys_GetObject("path"), 0, s);
-        Py_DECREF(s);
+
+        // Walk up directories, looking for the libfive/bind/python subdir
+        // (where the Python bindings live), then adding it to sys.path
+        //
+        // Depending on the OS, we'll have to walk up a different number of
+        // directories, so we'll be flexible here.
+        const auto bind_dir = QDir::toNativeSeparators("libfive/bind/python");
+        auto app_dir = QDir(QCoreApplication::applicationDirPath());
+        do {
+            if (app_dir.exists(bind_dir)) {
+                const auto s = PyUnicode_FromString(
+                    app_dir.filePath(bind_dir)
+                        .toLocal8Bit().data());
+                PyList_Insert(PySys_GetObject("path"), 1, s);
+                Py_DECREF(s);
+                break;
+            }
+        } while (app_dir.cdUp());
+
+#if Q_OS_WIN
+        // On Windows, we also write the PYTHONHOME environment variable, so
+        // that Python can find itself.  We assume that things were built per
+        // the README, i.e. a directory named vcpkg above the build directory
+        // (although this will also catch a global vcpkg in C:\vcpkg)
+        const auto home_dir = QDir::toNativeSeparators(
+                "vcpkg/installed/x64-windows/tools/python3");
+        app_dir = QDir(QCoreApplication::applicationDirPath());
+        do {
+            if (app_dir.exists(home_dir)) {
+                qputenv("PYTHONHOME",
+                        app_dir.filePath(home_dir).toLocal8Bit());
+                break;
+            }
+        } while (app_dir.cdUp());
 #endif
 
         // Create a dummy module for settings
@@ -170,6 +187,7 @@ void Interpreter::init() {
     Py_DECREF(runner_mod);
 
     const auto shape_mod = PyImport_ImportModule("libfive.shape");
+    PyErr_Print();
     m_shapeClass = PyObject_GetAttrString(shape_mod, "Shape");
     Py_DECREF(shape_mod);
 

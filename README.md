@@ -174,47 +174,52 @@ sudo make install
 
 Then, build as above.
 
-### Windows (MSYS2)
-Using [MSYS2](https://www.msys2.org/) enables building and running the Studio GUI
-as a native Windows executable (with Python support only).
+### Windows (VS2019)
+Install [Git](https://git-scm.com/download/win),
+choosing settings so that it can be invoked from a Windows _Command Prompt_
+(the defaults should be fine).
 
-Start by installing [MSYS2](https://www.msys2.org/).
+Install [VS2019](https://visualstudio.microsoft.com/vs/) (Community Edition),
+configured for "Desktop development with C++".
+You only _need_ MSVC, Windows 10 SDK, and C++ CMake tools for Windows,
+so feel free to uncheck other optional packages in the right sidebar,
+then run the installation!
 
-In _System Settings → Advanced System Settings → Advanced →  Environment Variables_,
-add `C:\msys64\mingw64\bin\` to `Path` in the _User Variables_ section.
+Next, install dependencies using `vcpkg`.
 
-Then, open a *MSYS2 MinGW 64-Bit* terminal and
-run through the following sequence of commands:
+(This step touches many files, so you may want to disable the
+_Antimalware Service Executable_,
+which will otherwise scan every single file and slow things down dramatically:
+in "Windows Security → Virus & thread protection settings",
+uncheck "Real-time protection".)
+
+In a Windows _Command Prompt_:
 ```
-pacman -Syuu
-# The terminal may restart at this point
-pacman -S git make mingw-w64-x86_64-eigen3 mingw-w64-x86_64-boost mingw-w64-x86_64-python3 mingw-w64-x86_64-cmake mingw-w64-x86_64-qt5 mingw-w64-x86_64-toolchain
-git clone https://github.com/libfive/libfive
+git.exe clone https://github.com/libfive/libfive
 cd libfive
+git clone https://github.com/Microsoft/vcpkg.git
+.\vcpkg\bootstrap-vcpkg.bat
+.\vcpkg\vcpkg.exe install --triplet x64-windows eigen3 boost-container boost-bimap boost-interval boost-lockfree boost-functional boost-algorithm boost-math libpng qt5-base python3
+```
+Go get some coffee or something - this will take a while.
+
+Once this is done installing,
+you're ready to actually build `libfive` and Studio!
+```
 mkdir build
 cd build
-/mingw64/bin/cmake -G"MSYS Makefiles" ..
-make -j8
-cp libfive/src/libfive.dll studio
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -G"Visual Studio 16 2019" ..
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build . --config Release --target Studio -- -v:n -m:8
+.\studio\Release\Studio.exe
 ```
 
-At this point, you should be able to run the `Studio.exe` executable
-from the `build` directory with
-```
-PYTHONHOME=/mingw64 ./studio/Studio.exe
-```
+At this point, you can also double-click on `Studio.exe` to launch it,
+and create a shortcut to put it on your desktop.
 
-### Windows (MSVC)
-This allows you to build just the core libraries, without the GUI,
-for integration into larger MSVC-based projects.
+(don't move it out of the `build` directory,
+or the precarious house of cards that finds Python will come tumbling down)
 
-With Visual Studio 2017 installed, run from `libfive` folder
+When changes are made, you _should_ only need to re-run the build step, i.e.
 ```
-git clone https://github.com/Microsoft/vcpkg.git
-vcpkg\bootstrap-vcpkg.bat
-vcpkg\vcpkg install eigen3:x86-windows-static boost:x86-windows-static libpng:x86-windows-static
-md build
-cd build
-cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build . --config Release --target Studio -- -v:n -m:8
 ```
-Now open `build\libfiv.sln` and build the solution. Check that `libfive-test` runs correctly.

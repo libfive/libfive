@@ -103,6 +103,7 @@ if(STUDIO_WITH_GUILE)
         SOURCE src/editor.cpp
         APPEND PROPERTY COMPILE_DEFINITIONS
         STUDIO_WITH_GUILE)
+    add_dependencies(Studio libfive-guile)
 endif(STUDIO_WITH_GUILE)
 
 if(STUDIO_WITH_PYTHON)
@@ -112,4 +113,17 @@ if(STUDIO_WITH_PYTHON)
         SOURCE src/editor.cpp
         APPEND PROPERTY COMPILE_DEFINITIONS
         STUDIO_WITH_PYTHON)
+    add_dependencies(Studio libfive-python)
 endif(STUDIO_WITH_PYTHON)
+
+if (MSVC)
+    # Copy the DLLs into the build directory, so that Studio.exe can find them
+    add_custom_command(TARGET Studio POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:libfive>
+            $<TARGET_FILE_DIR:Studio>)
+    add_custom_command(TARGET Studio POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:libfive-stdlib>
+            $<TARGET_FILE_DIR:Studio>)
+endif(MSVC)
