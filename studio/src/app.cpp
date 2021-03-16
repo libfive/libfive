@@ -27,9 +27,11 @@ App::App(int& argc, char** argv)
     : QApplication(argc, argv)
 {
     // This hints at interpreters where to find libfive.dylib
+#ifdef Q_OS_MAC
     const auto app_dir = QCoreApplication::applicationDirPath();
     qputenv("LIBFIVE_FRAMEWORK_DIR",
             (app_dir + "/../Frameworks/").toLocal8Bit());
+#endif
 
     QFontDatabase::addApplicationFont(":/font/Inconsolata.otf");
 
