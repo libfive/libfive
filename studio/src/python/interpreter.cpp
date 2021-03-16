@@ -133,9 +133,24 @@ void Interpreter::preinit() {
     if (!Py_IsInitialized()) {
         PyImport_AppendInittab("studio", PyInit_studio);
         Py_Initialize();
-        auto s = PyUnicode_FromString("libfive/bind/python");
+#ifdef Q_OS_WIN
+        // On Windows, the working directory is likely to be build/studio,
+        // which means we have to go up one directory to get to the Python
+        // bindings path.
+        s = PyUnicode_FromString(
+            QDir::toNativeSeparators("../libfive/bind/python")
+                .toLocal8Bit().data());
+        PyList_Insert(PySys_GetObject("path"), 1, s);
+        Py_DECREF(s);
+#else
+        // On other OS's, we're probably running in the build/ directory
+        // itself, so the bindings are below us.
+        auto s = PyUnicode_FromString(
+            QDir::toNativeSeparators("libfive/bind/python")
+                .toLocal8Bit().data());
         PyList_Insert(PySys_GetObject("path"), 0, s);
         Py_DECREF(s);
+#endif
 
         // Create a dummy module for settings
         PyModule_Create(&studio_module);

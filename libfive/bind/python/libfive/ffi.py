@@ -24,27 +24,30 @@ def try_link(folder, name):
     except OSError:
         return None
 
-lib_paths = ["libfive/src", ""]
-framework_dir = os.environ.get('LIBFIVE_FRAMEWORK_DIR')
-if framework_dir:
-    lib_paths.insert(0, framework_dir)
-for p in lib_paths:
-    lib = try_link(p, 'libfive')
-    if lib is not None:
-        break
-if lib is None:
-    raise RuntimeError("Could not find libfive library")
+def paths_for(folder):
+    # In most cases, we are running from the top-level build folder, which
+    # contains libfive/{folder}/{library}.{suffix}
+    paths = [os.path.join('libfive', folder)]
 
-stdlib_paths = ["libfive/stdlib", ""]
-framework_dir = os.environ.get('LIBFIVE_FRAMEWORK_DIR')
-if framework_dir:
-    stdlib_paths.insert(0, framework_dir)
-for p in stdlib_paths:
-    stdlib = try_link(p, 'libfive-stdlib')
-    if stdlib is not None:
-        break
-if stdlib is None:
-    raise RuntimeError("Could not find libfive standard library")
+    # On Windows, we may be running from the studio subfolder if Studio.exe
+    # was double-checked, which puts the build directory up one level.
+    if sys.platform == 'win32':
+        paths.append(os.path.join('..', 'libfive', folder))
+    paths.append("")
+    framework_dir = os.environ.get('LIBFIVE_FRAMEWORK_DIR')
+    if framework_dir:
+        paths.insert(0, framework_dir)
+    return paths
+
+def link_lib(folder, name):
+    for p in paths_for(folder):
+        lib = try_link(p, name)
+        if lib is not None:
+            return lib
+    raise RuntimeError("Could not find {} library".format(name))
+
+lib = link_lib('src', 'libfive')
+stdlib = link_lib('stdlib', 'libfive-stdlib')
 
 ################################################################################
 
