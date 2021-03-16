@@ -152,7 +152,7 @@ void Interpreter::preinit() {
             }
         } while (app_dir.cdUp());
 
-#if Q_OS_WIN
+#ifdef Q_OS_WIN
         // On Windows, we also write the PYTHONHOME environment variable, so
         // that Python can find itself.  We assume that things were built per
         // the README, i.e. a directory named vcpkg above the build directory
