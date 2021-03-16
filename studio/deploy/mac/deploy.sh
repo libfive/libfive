@@ -94,10 +94,10 @@ rm -r  Python.framework/Versions/Current/share/doc
 # For some reason, the Python framework links against the Homebrew libintl,
 # so bring that along for good measure.
 LIBINTL=$(otool -L Python.framework/Python | sed -n -e "s:\(.*libintl.*dylib\).*:\1:gp")
-if [ -n "$LIBINTL" ]; then
-    cp "$LIBINTL" .
-    LIBINTL_BASE=$(basename "$LIBINTL")
-    install_name_tool -change "$LIBINTL" \
+if [ -n $LIBINTL ]; then
+    cp $LIBINTL .
+    LIBINTL_BASE=$(basename $LIBINTL)
+    install_name_tool -change $LIBINTL \
         "@executable_path/../Frameworks/$LIBINTL_BASE" Python.framework/Python
 fi
 
