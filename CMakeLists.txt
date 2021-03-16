@@ -83,9 +83,7 @@ endif()
 ################################################################################
 # Find all packages here at the top level so we can print debugging info
 if(NOT MSVC)
-    if (BUILD_STUDIO_APP)
-        find_package(Qt5Core 5.12)
-    endif ()
+    # These packages have different naming conventions in MSVC vs Linux
     find_package(Boost REQUIRED)
     find_package(PkgConfig REQUIRED)
 
@@ -100,8 +98,14 @@ else()
     find_package(boost REQUIRED 1.65.0)
 endif()
 
+# These packages have consistent names across OS's
 find_package(PNG REQUIRED)
 find_package(Python3 COMPONENTS Development)
+
+# Both Windows and Linux will attempt to build the Studio UI
+if (BUILD_STUDIO_APP)
+    find_package(Qt5Core 5.12)
+endif()
 
 if (UNIX AND NOT(APPLE))
     find_package(Threads REQUIRED)
