@@ -131,26 +131,7 @@ void Interpreter::halt() {
 
 void Interpreter::preinit() {
     if (!Py_IsInitialized()) {
-        PyImport_AppendInittab("studio", PyInit_studio);
-        Py_Initialize();
-
-        // Walk up directories, looking for the libfive/bind/python subdir
-        // (where the Python bindings live), then adding it to sys.path
-        //
-        // Depending on the OS, we'll have to walk up a different number of
-        // directories, so we'll be flexible here.
-        const auto bind_dir = QDir::toNativeSeparators("libfive/bind/python");
-        auto app_dir = QDir(QCoreApplication::applicationDirPath());
-        do {
-            if (app_dir.exists(bind_dir)) {
-                const auto s = PyUnicode_FromString(
-                    app_dir.filePath(bind_dir)
-                        .toLocal8Bit().data());
-                PyList_Insert(PySys_GetObject("path"), 1, s);
-                Py_DECREF(s);
-                break;
-            }
-        } while (app_dir.cdUp());
+        QDir app_dir;
 
 #ifdef Q_OS_WIN
         // On Windows, we also write the PYTHONHOME environment variable, so
@@ -168,6 +149,27 @@ void Interpreter::preinit() {
             }
         } while (app_dir.cdUp());
 #endif
+
+        PyImport_AppendInittab("studio", PyInit_studio);
+        Py_Initialize();
+
+        // Walk up directories, looking for the libfive/bind/python subdir
+        // (where the Python bindings live), then adding it to sys.path
+        //
+        // Depending on the OS, we'll have to walk up a different number of
+        // directories, so we'll be flexible here.
+        const auto bind_dir = QDir::toNativeSeparators("libfive/bind/python");
+        app_dir = QDir(QCoreApplication::applicationDirPath());
+        do {
+            if (app_dir.exists(bind_dir)) {
+                const auto s = PyUnicode_FromString(
+                    app_dir.filePath(bind_dir)
+                        .toLocal8Bit().data());
+                PyList_Insert(PySys_GetObject("path"), 1, s);
+                Py_DECREF(s);
+                break;
+            }
+        } while (app_dir.cdUp());
 
         // Create a dummy module for settings
         PyModule_Create(&studio_module);
