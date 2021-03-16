@@ -2,7 +2,7 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj /DFIVE_DLL")
 endif()
 
-add_library(five SHARED
+add_library(libfive SHARED
     eval/base.cpp
     eval/deck.cpp
     eval/eval_interval.cpp
@@ -127,13 +127,15 @@ set_property(
 )
 
 ################################################################################
+# Produce a library named 'libfive' on all platforms
+set_target_properties(libfive PROPERTIES PREFIX "")
 
-target_include_directories(five SYSTEM PUBLIC
+target_include_directories(libfive SYSTEM PUBLIC
     ${Boost_INCLUDE_DIRS}
     ${PNG_INCLUDE_DIR}
     ${EIGEN_INCLUDE_DIRS}
 )
-target_include_directories(five PUBLIC
+target_include_directories(libfive PUBLIC
     ../include
 )
 
@@ -144,10 +146,10 @@ if(UNIX AND NOT(APPLE))
 endif(UNIX AND NOT(APPLE))
 
 if (UNIX)
-    install(TARGETS five DESTINATION lib)
+    install(TARGETS libfive DESTINATION lib)
     install(FILES ../include/libfive.h DESTINATION include)
     install(DIRECTORY ../include/libfive DESTINATION include
             FILES_MATCHING PATTERN "*.hpp")
 endif(UNIX)
 
-target_link_libraries(five ${LIBS})
+target_link_libraries(libfive ${LIBS})

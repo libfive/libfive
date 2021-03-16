@@ -87,7 +87,7 @@ if(UNIX AND NOT(APPLE))
 endif(UNIX AND NOT(APPLE))
 
 target_include_directories(Studio PUBLIC include)
-target_link_libraries(Studio five five-stdlib
+target_link_libraries(Studio libfive libfive-stdlib
     Qt5::Widgets
     Qt5::Gui
     Qt5::OpenGL

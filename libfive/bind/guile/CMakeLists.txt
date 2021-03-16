@@ -34,7 +34,7 @@ foreach(SRC ${SRCS})
         COMMAND guild compile -L${CMAKE_CURRENT_SOURCE_DIR} ${FULL_SRC}
         COMMAND ${CMAKE_COMMAND} -E copy ${CCACHE_FILE} ${CMAKE_CURRENT_BINARY_DIR}/${OUT}
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-        DEPENDS ${FULL_SRC} five five-stdlib)
+        DEPENDS ${FULL_SRC} libfive libfive-stdlib)
 endforeach(SRC)
 
 add_custom_target(libfive-guile ALL DEPENDS ${OUTS})
