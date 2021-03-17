@@ -57,10 +57,46 @@ static PyObject* set_bounds(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-static PyObject* var_func(PyObject* self, PyObject* args) {
-    (void)self;
-    PyObject_Print(args, stdout, 0);
-    Py_RETURN_NONE;
+static PyObject* var_func(PyObject* studio_mod, PyObject* args) {
+    // Parse the argument, which should be patched in the AST by runner.run
+    double value;
+    int lineno, end_lineno, col_offset, end_col_offset;
+    if (!PyArg_ParseTuple(args, "d(iiii)", &value,
+        &lineno, &end_lineno, &col_offset, &end_col_offset))
+    {
+            return NULL;
+    }
+
+    const auto prev_vars = PyObject_GetAttrString(studio_mod, "__prev_vars");
+    const auto vars = PyObject_GetAttrString(studio_mod, "__vars");
+    const auto num_vars = PyList_Size(vars);
+    PyErr_Print();
+
+    PyObject* v;
+    if (num_vars < PyList_Size(prev_vars)) {
+        // Pull just the Shape object from the tuple
+        auto item = PyList_GetItem(prev_vars, num_vars);
+        v = PyTuple_GetItem(item, 0);
+    } else {
+        // Build a new free variable using Shape.var()
+        const auto shape_mod = PyImport_ImportModule("libfive.shape");
+        const auto Shape = PyObject_GetAttrString(shape_mod, "Shape");
+        v = PyObject_CallMethod(Shape, "var", NULL);
+        Py_DECREF(shape_mod);
+        Py_DECREF(Shape);
+    }
+
+    const auto new_var = Py_BuildValue("Od(iiii)",
+        v, value, lineno, end_lineno, col_offset, end_col_offset);
+    PyList_Append(vars, new_var);
+
+    Py_DECREF(new_var);
+    Py_DECREF(vars);
+    Py_DECREF(prev_vars);
+    Py_DECREF(v);
+    PyErr_Print();
+
+    return v;
 }
 
 static PyMethodDef studio_methods[] = {
@@ -209,8 +245,14 @@ void Interpreter::init() {
     Py_DECREF(get_ident);
     Py_DECREF(threading_mod);
 
+    // Store the var() function locally for easy access
     const auto studio_mod = PyImport_ImportModule("studio");
     m_varFunc = PyObject_GetAttrString(studio_mod, "__var");
+
+    // Reset studio.__vars to an empty list
+    const auto empty_list = PyList_New(0);
+    PyObject_SetAttrString(studio_mod, "__vars", empty_list);
+    Py_DECREF(empty_list);
     Py_DECREF(studio_mod);
 
     QStringList keywords;
@@ -231,7 +273,7 @@ void Interpreter::init() {
         }
     };
 
-    {
+    {   // Highlight all Python keywords
         const auto keyword_mod = PyImport_ImportModule("keyword");
         const auto kwlist = PyObject_GetAttrString(keyword_mod, "kwlist");
         dump_keywords(kwlist);
@@ -239,7 +281,7 @@ void Interpreter::init() {
         Py_DECREF(keyword_mod);
     }
 
-    {
+    {   // Highlight all Python builtins
         const auto builtins_mod = PyImport_ImportModule("builtins");
         const auto builtins_list = PyObject_Dir(builtins_mod);
         dump_keywords(builtins_list);
@@ -332,6 +374,14 @@ void Interpreter::eval(QString script)
     PyObject_SetAttrString(studio_mod, "__resolution", Py_None);
     PyObject_SetAttrString(studio_mod, "__quality", Py_None);
     PyObject_SetAttrString(studio_mod, "__bounds", Py_None);
+
+    // Copy from __vars to __prev_vars, then reset __vars
+    const auto vars = PyObject_GetAttrString(studio_mod, "__vars");
+    PyObject_SetAttrString(studio_mod, "__prev_vars", vars);
+    const auto empty_list = PyList_New(0);
+    PyObject_SetAttrString(studio_mod, "__vars", empty_list);
+    Py_DECREF(empty_list);
+    Py_DECREF(vars);
 
     auto args = PyTuple_New(1);
     PyTuple_SetItem(args, 0,
