@@ -266,7 +266,7 @@ Window::Window(Arguments args)
     connect(editor, &Editor::shapes, view, &View::setShapes);
     connect(view, &View::varsDragged, editor, &Editor::setVarValues);
 
-    #ifdef Q_OS_LINUX
+    #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
         setWindowTitle("Studio[*]");
     #endif
     show();
@@ -472,7 +472,7 @@ bool Window::onNew(bool)
     CHECK_UNSAVED();
 
     setFilename("");
-    #ifdef Q_OS_LINUX
+    #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
         setWindowTitle("Studio[*]");
     #endif
 
@@ -566,7 +566,7 @@ void Window::setFilename(const QString& f)
     if (filename.startsWith(":/"))
     {
         QString title = QFileInfo(filename).fileName() + " (read-only)";
-        #ifdef Q_OS_LINUX
+        #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
             setWindowTitle(title+"[*]");
         #else
             setWindowTitle(title);
@@ -574,7 +574,7 @@ void Window::setFilename(const QString& f)
     }
     else
     {
-        #ifdef Q_OS_LINUX
+        #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
             setWindowTitle(QFileInfo(filename).fileName() + "[*]");
         #else
             setWindowTitle(QString());

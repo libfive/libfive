@@ -85,9 +85,10 @@ PyMODINIT_FUNC PyInit_studio(void) {
 namespace Studio {
 namespace Python {
 
-const static QString SET_QUALITY = "studio.set_quality(%1)\n";
-const static QString SET_RESOLUTION = "studio.set_resolution(%1)\n";
-const static QString SET_BOUNDS = "studio.set_bounds([%1, %2, %3], [%4, %5, %6])\n";
+const static QString SET_QUALITY_STR = "studio.set_quality(%1)\n";
+const static QString SET_RESOLUTION_STR = "studio.set_resolution(%1)\n";
+const static QString SET_BOUNDS_STR = "studio.set_bounds([%1, %2, %3], "
+                                                        "[%4, %5, %6])\n";
 
 Interpreter::Interpreter() {
     // Nothing to do here
@@ -106,14 +107,14 @@ Interpreter::~Interpreter() {
 QString Interpreter::defaultScript() {
     auto default_settings = Settings::defaultSettings();
     return "import studio\n" +
-        SET_BOUNDS.arg(default_settings.min.x())
-                  .arg(default_settings.min.y())
-                  .arg(default_settings.min.z())
-                  .arg(default_settings.max.x())
-                  .arg(default_settings.max.y())
-                  .arg(default_settings.max.z()) +
-        SET_QUALITY.arg(default_settings.quality) +
-        SET_RESOLUTION.arg(default_settings.res) +
+        SET_BOUNDS_STR.arg(default_settings.min.x())
+                      .arg(default_settings.min.y())
+                      .arg(default_settings.min.z())
+                      .arg(default_settings.max.x())
+                      .arg(default_settings.max.y())
+                      .arg(default_settings.max.z()) +
+        SET_QUALITY_STR.arg(default_settings.quality) +
+        SET_RESOLUTION_STR.arg(default_settings.res) +
         "\nfrom libfive.stdlib import *\nsphere(1)";
 }
 
@@ -130,11 +131,45 @@ void Interpreter::halt() {
 
 void Interpreter::preinit() {
     if (!Py_IsInitialized()) {
+        QDir app_dir;
+
+#ifdef Q_OS_WIN
+        // On Windows, we also write the PYTHONHOME environment variable, so
+        // that Python can find itself.  We assume that things were built per
+        // the README, i.e. a directory named vcpkg above the build directory
+        // (although this will also catch a global vcpkg in C:\vcpkg)
+        const auto home_dir = QDir::toNativeSeparators(
+                "vcpkg/installed/x64-windows/tools/python3");
+        app_dir = QDir(QCoreApplication::applicationDirPath());
+        do {
+            if (app_dir.exists(home_dir)) {
+                qputenv("PYTHONHOME",
+                        app_dir.filePath(home_dir).toLocal8Bit());
+                break;
+            }
+        } while (app_dir.cdUp());
+#endif
+
         PyImport_AppendInittab("studio", PyInit_studio);
         Py_Initialize();
-        auto s = PyUnicode_FromString("libfive/bind/python");
-        PyList_Insert(PySys_GetObject("path"), 0, s);
-        Py_DECREF(s);
+
+        // Walk up directories, looking for the libfive/bind/python subdir
+        // (where the Python bindings live), then adding it to sys.path
+        //
+        // Depending on the OS, we'll have to walk up a different number of
+        // directories, so we'll be flexible here.
+        const auto bind_dir = QDir::toNativeSeparators("libfive/bind/python");
+        app_dir = QDir(QCoreApplication::applicationDirPath());
+        do {
+            if (app_dir.exists(bind_dir)) {
+                const auto s = PyUnicode_FromString(
+                    app_dir.filePath(bind_dir)
+                        .toLocal8Bit().data());
+                PyList_Insert(PySys_GetObject("path"), 1, s);
+                Py_DECREF(s);
+                break;
+            }
+        } while (app_dir.cdUp());
 
         // Create a dummy module for settings
         PyModule_Create(&studio_module);
@@ -154,6 +189,7 @@ void Interpreter::init() {
     Py_DECREF(runner_mod);
 
     const auto shape_mod = PyImport_ImportModule("libfive.shape");
+    PyErr_Print();
     m_shapeClass = PyObject_GetAttrString(shape_mod, "Shape");
     Py_DECREF(shape_mod);
 
@@ -333,7 +369,7 @@ void Interpreter::eval(QString script)
                     "<b>Warning:</b> Using default resolution for shapes.<br>"
                     "&nbsp;&nbsp;&nbsp;&nbsp;"
                     "Assign to <code>studio.resolution</code> to specify.",
-                    SET_RESOLUTION.arg(out.settings.res)});
+                    SET_RESOLUTION_STR.arg(out.settings.res)});
         }
         Py_XDECREF(res);
 
@@ -351,7 +387,7 @@ void Interpreter::eval(QString script)
                     "<b>Warning:</b> Using default quality for shapes.<br>"
                     "&nbsp;&nbsp;&nbsp;&nbsp;"
                     "Assign to <code>studio.quality</code> to specify.",
-                    SET_QUALITY.arg(out.settings.quality)});
+                    SET_QUALITY_STR.arg(out.settings.quality)});
         }
         Py_XDECREF(qua);
 
@@ -373,12 +409,12 @@ void Interpreter::eval(QString script)
                     {"<b>Warning:</b> Using default bounds for shapes<br>"
                      "&nbsp;&nbsp;&nbsp;&nbsp;"
                      "Assign to <code>studio.bounds</code> to specify.",
-                    SET_BOUNDS.arg(out.settings.min.x())
-                              .arg(out.settings.min.y())
-                              .arg(out.settings.min.z())
-                              .arg(out.settings.max.x())
-                              .arg(out.settings.max.y())
-                              .arg(out.settings.max.z())});
+                    SET_BOUNDS_STR.arg(out.settings.min.x())
+                                  .arg(out.settings.min.y())
+                                  .arg(out.settings.min.z())
+                                  .arg(out.settings.max.x())
+                                  .arg(out.settings.max.y())
+                                  .arg(out.settings.max.z())});
         }
         Py_XDECREF(bounds);
 

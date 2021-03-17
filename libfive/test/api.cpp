@@ -216,22 +216,22 @@ TEST_CASE("libfive_tree_print")
 
 TEST_CASE("libfive_tree_nullary")
 {
-    REQUIRE(libfive_tree_nullary(Opcode::OP_MIN) == NULL);
+    REQUIRE(libfive_tree_nullary(Opcode::OP_MIN) == nullptr);
 
     auto x = libfive_tree_nullary(Opcode::VAR_X);
-    REQUIRE(x != NULL);
+    REQUIRE(x != nullptr);
     libfive_tree_delete(x);
 }
 
 TEST_CASE("libfive_tree_unary")
 {
     auto x = libfive_tree_x();
-    REQUIRE(libfive_tree_unary(Opcode::OP_ADD, x) == NULL);
-    REQUIRE(libfive_tree_unary(Opcode::OP_COS, NULL) == NULL);
-    REQUIRE(libfive_tree_unary(Opcode::OP_ADD, NULL) == NULL);
+    REQUIRE(libfive_tree_unary(Opcode::OP_ADD, x) == nullptr);
+    REQUIRE(libfive_tree_unary(Opcode::OP_COS, nullptr) == nullptr);
+    REQUIRE(libfive_tree_unary(Opcode::OP_ADD, nullptr) == nullptr);
 
     auto t = libfive_tree_unary(Opcode::OP_COS, x);
-    REQUIRE(t != NULL);
+    REQUIRE(t != nullptr);
     libfive_tree_delete(x);
     libfive_tree_delete(t);
 }
@@ -240,12 +240,12 @@ TEST_CASE("libfive_tree_binary")
 {
     auto x = libfive_tree_x();
     auto y = libfive_tree_y();
-    REQUIRE(libfive_tree_binary(Opcode::OP_COS, x, y) == NULL);
-    REQUIRE(libfive_tree_binary(Opcode::OP_ADD, x, NULL) == NULL);
-    REQUIRE(libfive_tree_binary(Opcode::OP_ADD, NULL, y) == NULL);
+    REQUIRE(libfive_tree_binary(Opcode::OP_COS, x, y) == nullptr);
+    REQUIRE(libfive_tree_binary(Opcode::OP_ADD, x, nullptr) == nullptr);
+    REQUIRE(libfive_tree_binary(Opcode::OP_ADD, nullptr, y) == nullptr);
 
     auto t = libfive_tree_binary(Opcode::OP_ADD, x, y);
-    REQUIRE(t != NULL);
+    REQUIRE(t != nullptr);
     libfive_tree_delete(x);
     libfive_tree_delete(y);
     libfive_tree_delete(t);

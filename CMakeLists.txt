@@ -57,8 +57,6 @@ if(NOT MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "-O0")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DRELEASE -DEIGEN_NO_DEBUG")
 else()
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Output/Debug)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Output/Release)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     set(CMAKE_CXX_FLAGS "/EHsc /WX /D_USE_MATH_DEFINES /D_SCL_SECURE_NO_WARNINGS")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267 /wd4244 /wd4305")
@@ -83,9 +81,7 @@ endif()
 ################################################################################
 # Find all packages here at the top level so we can print debugging info
 if(NOT MSVC)
-    if (BUILD_STUDIO_APP)
-        find_package(Qt5Core 5.12)
-    endif ()
+    # These packages have different naming conventions in MSVC vs Linux
     find_package(Boost REQUIRED)
     find_package(PkgConfig REQUIRED)
 
@@ -100,8 +96,14 @@ else()
     find_package(boost REQUIRED 1.65.0)
 endif()
 
+# These packages have consistent names across OS's
 find_package(PNG REQUIRED)
 find_package(Python3 COMPONENTS Development)
+
+# Both Windows and Linux will attempt to build the Studio UI
+if (BUILD_STUDIO_APP)
+    find_package(Qt5Core 5.12)
+endif()
 
 if (UNIX AND NOT(APPLE))
     find_package(Threads REQUIRED)

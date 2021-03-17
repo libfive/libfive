@@ -68,8 +68,8 @@ Tree::~Tree() {
     }
 }
 
-Tree::Tree(float f)
-    : Tree(new Data(TreeConstant { f }))
+Tree::Tree(double f)
+    : Tree(new Data(TreeConstant { static_cast<float>(f) }))
 {
     // Nothing to do here
 }

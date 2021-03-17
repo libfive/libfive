@@ -174,14 +174,52 @@ sudo make install
 
 Then, build as above.
 
-### Windows (MSVC)
-With Visual Studio 2017 installed, run from `libfive` folder
+### Windows (VS2019)
+Install [Git](https://git-scm.com/download/win),
+choosing settings so that it can be invoked from a Windows _Command Prompt_
+(the defaults should be fine).
+
+Install [VS2019](https://visualstudio.microsoft.com/vs/) (Community Edition),
+configured for "Desktop development with C++".
+You only _need_ MSVC, Windows 10 SDK, and C++ CMake tools for Windows,
+so feel free to uncheck other optional packages in the right sidebar,
+then run the installation!
+
+Next, install dependencies using `vcpkg`.
+
+(This step touches many files, so you may want to disable the
+_Antimalware Service Executable_,
+which will otherwise scan every single file and slow things down dramatically:
+in "Windows Security → Virus & thread protection settings",
+uncheck "Real-time protection".)
+
+In a Windows _Command Prompt_:
 ```
+git.exe clone https://github.com/libfive/libfive
+cd libfive
 git clone https://github.com/Microsoft/vcpkg.git
-vcpkg\bootstrap-vcpkg.bat
-vcpkg\vcpkg install eigen3:x86-windows-static boost:x86-windows-static libpng:x86-windows-static
-md build
-cd build
-cmake -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x86-windows-static" -G "Visual Studio 15 2017" ..
+.\vcpkg\bootstrap-vcpkg.bat
+.\vcpkg\vcpkg.exe install --triplet x64-windows eigen3 boost-container boost-bimap boost-interval boost-lockfree boost-functional boost-algorithm boost-math libpng qt5-base python3
 ```
-Now open `build\libfiv.sln` and build the solution. Check that `libfive-test` runs correctly.
+Go get some coffee or something - this will take a while.
+
+Once this is done installing,
+you're ready to actually build `libfive` and Studio!
+```
+mkdir build
+cd build
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -G"Visual Studio 16 2019" ..
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build . --config Release --target Studio -- -v:n -m:8
+.\studio\Release\Studio.exe
+```
+
+At this point, you can also double-click on `Studio.exe` to launch it,
+and create a shortcut to put it on your desktop.
+
+(don't move it out of the `build` directory,
+or the precarious house of cards that finds Python will come tumbling down)
+
+When changes are made, you _should_ only need to re-run the build step, i.e.
+```
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build . --config Release --target Studio -- -v:n -m:8
+```
