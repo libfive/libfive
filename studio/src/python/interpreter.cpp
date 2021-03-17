@@ -57,10 +57,17 @@ static PyObject* set_bounds(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+static PyObject* var_func(PyObject* self, PyObject* args) {
+    (void)self;
+    PyObject_Print(args, stdout, 0);
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef studio_methods[] = {
     {"set_resolution", set_resolution, METH_VARARGS, "Sets render resolution"},
     {"set_quality", set_quality, METH_VARARGS, "Sets render quality"},
     {"set_bounds", set_bounds, METH_VARARGS, "Sets render bounds"},
+    {"__var", var_func, METH_VARARGS, "Constructs a free variable"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -102,6 +109,7 @@ Interpreter::~Interpreter() {
 
     Py_XDECREF(m_runFunc);
     Py_XDECREF(m_shapeClass);
+    Py_XDECREF(m_varFunc);
 }
 
 QString Interpreter::defaultScript() {
@@ -200,6 +208,10 @@ void Interpreter::init() {
     Py_DECREF(thread_id);
     Py_DECREF(get_ident);
     Py_DECREF(threading_mod);
+
+    const auto studio_mod = PyImport_ImportModule("studio");
+    m_varFunc = PyObject_GetAttrString(studio_mod, "__var");
+    Py_DECREF(studio_mod);
 
     QStringList keywords;
 
@@ -321,8 +333,14 @@ void Interpreter::eval(QString script)
     PyObject_SetAttrString(studio_mod, "__quality", Py_None);
     PyObject_SetAttrString(studio_mod, "__bounds", Py_None);
 
-    const auto ret = PyObject_CallFunctionObjArgs(m_runFunc,
-        PyUnicode_FromString(script.toStdString().c_str()), NULL);
+    auto args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0,
+            PyUnicode_FromString(script.toLocal8Bit().data()));
+    auto kwargs = PyDict_New();
+    PyDict_SetItemString(kwargs, "var", m_varFunc);
+    const auto ret = PyObject_Call(m_runFunc, args, kwargs);
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
 
     Result out;
     out.settings = Settings::defaultSettings();

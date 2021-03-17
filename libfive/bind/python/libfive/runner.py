@@ -44,7 +44,7 @@ class VarTransformer(ast.NodeTransformer):
             self._i += 1
         return node
 
-def run(s):
+def run(s, **env):
     ''' Evaluates a string, clause-by-clause.
 
         Returns a list of values from each expression in the string, or
@@ -52,7 +52,7 @@ def run(s):
     '''
     parsed = ast.parse(s)
     tagged = VarTransformer().generic_visit(parsed)
-    gs = {}
+    gs = {**env}
     out = []
     for p in tagged.body:
         if isinstance(p, ast.Expr):
