@@ -29,7 +29,7 @@ The library is written in C++ and exposes a C API in `libfive.h`.
 It uses the Python and Guile bindings and allows for live-coding of solid models.
 The interface also includes direct modeling,
 where the user can push and pull on the model's surface
-to change variables in the script (direct modeling is Guile-only, for now).
+to change variables in the script.
 
 ## Other projects using `libfive`
 ### Language bindings
