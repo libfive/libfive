@@ -58,6 +58,15 @@ static PyObject* set_bounds(PyObject* self, PyObject* args) {
 }
 
 static PyObject* var_func(PyObject* studio_mod, PyObject* args) {
+    if (PyTuple_Size(args) == 1) {
+        const char* err_str;
+        if (!PyArg_ParseTuple(args, "s", &err_str)) {
+            return NULL;
+        } else {
+            PyErr_SetString(PyExc_RuntimeError, err_str);
+            return NULL;
+        }
+    }
     // Parse the argument, which should be patched in the AST by runner.run
     double value;
     int lineno, end_lineno, col_offset, end_col_offset;
@@ -82,7 +91,7 @@ static PyObject* var_func(PyObject* studio_mod, PyObject* args) {
         // Build a new free variable using Shape.var()
         const auto shape_mod = PyImport_ImportModule("libfive.shape");
         const auto Shape = PyObject_GetAttrString(shape_mod, "Shape");
-        v = PyObject_CallMethod(Shape, "var", NULL);
+        v = PyObject_CallMethod(Shape, "var", NULL); // new reference
         Py_DECREF(shape_mod);
         Py_DECREF(Shape);
     }
@@ -94,7 +103,6 @@ static PyObject* var_func(PyObject* studio_mod, PyObject* args) {
     Py_DECREF(new_var);
     Py_DECREF(vars);
     Py_DECREF(prev_vars);
-    Py_DECREF(v);
     PyErr_Print();
 
     return v;
@@ -403,21 +411,15 @@ void Interpreter::eval(QString script)
     if (out.okay) {
         // Parse vars from studio.__vars
         const auto vars_size = PyList_Size(vars_list);
-        PyObject_Print(vars_list, stdout, 0);
-        printf("   ; Got %lu items\n", vars_size);
         for (unsigned i=0; i < vars_size; ++i) {
             PyObject* s;
             double value;
             int lineno, end_lineno, col_offset, end_col_offset;
             const auto item = PyList_GetItem(vars_list, i);
 
-            PyObject_Print(item, stdout, 0);
-            printf(" <- item\n");
             PyArg_ParseTuple(item, "Od(iiii)", &s, &value,
                 &lineno, &end_lineno, &col_offset, &end_col_offset);
             PyErr_Print();
-            PyObject_Print(s, stdout, 0);
-            printf(" <- obj\n");
 
             // Link up the ID with the value and position in the text
             const auto ptr_obj = PyObject_GetAttrString(s, "ptr");
@@ -426,8 +428,9 @@ void Interpreter::eval(QString script)
             PyErr_Print();
             const auto id = static_cast<libfive::Tree::Id>(ptr);
             vars[id] = value;
-            out.vars[id] = QRect(col_offset, lineno,
-                end_col_offset - col_offset, end_lineno - lineno);
+            out.vars[id] = QRect(col_offset, lineno - 1,
+                                 end_col_offset - col_offset,
+                                 end_lineno - lineno);
             Py_DECREF(ptr_obj);
             PyErr_Print();
         }
