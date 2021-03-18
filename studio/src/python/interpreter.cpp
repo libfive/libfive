@@ -57,10 +57,62 @@ static PyObject* set_bounds(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+static PyObject* var_func(PyObject* studio_mod, PyObject* args) {
+    if (PyTuple_Size(args) == 1) {
+        const char* err_str;
+        if (!PyArg_ParseTuple(args, "s", &err_str)) {
+            return NULL;
+        } else {
+            PyErr_SetString(PyExc_RuntimeError, err_str);
+            return NULL;
+        }
+    }
+    // Parse the argument, which should be patched in the AST by runner.run
+    double value;
+    int lineno, end_lineno, col_offset, end_col_offset;
+    if (!PyArg_ParseTuple(args, "d(iiii)", &value,
+        &lineno, &end_lineno, &col_offset, &end_col_offset))
+    {
+            return NULL;
+    }
+
+    const auto prev_vars = PyObject_GetAttrString(studio_mod, "__prev_vars");
+    const auto vars = PyObject_GetAttrString(studio_mod, "__vars");
+    const auto num_vars = PyList_Size(vars);
+    PyErr_Print();
+
+    PyObject* v;
+    if (num_vars < PyList_Size(prev_vars)) {
+        // Pull just the Shape object from the tuple
+        auto item = PyList_GetItem(prev_vars, num_vars); // borrowed
+        v = PyTuple_GetItem(item, 0); // borrowed
+        Py_INCREF(v);
+    } else {
+        // Build a new free variable using Shape.var()
+        const auto shape_mod = PyImport_ImportModule("libfive.shape");
+        const auto Shape = PyObject_GetAttrString(shape_mod, "Shape");
+        v = PyObject_CallMethod(Shape, "var", NULL); // new reference
+        Py_DECREF(shape_mod);
+        Py_DECREF(Shape);
+    }
+
+    const auto new_var = Py_BuildValue("Od(iiii)",
+        v, value, lineno, end_lineno, col_offset, end_col_offset);
+    PyList_Append(vars, new_var);
+
+    Py_DECREF(new_var);
+    Py_DECREF(vars);
+    Py_DECREF(prev_vars);
+    PyErr_Print();
+
+    return v;
+}
+
 static PyMethodDef studio_methods[] = {
     {"set_resolution", set_resolution, METH_VARARGS, "Sets render resolution"},
     {"set_quality", set_quality, METH_VARARGS, "Sets render quality"},
     {"set_bounds", set_bounds, METH_VARARGS, "Sets render bounds"},
+    {"__var", var_func, METH_VARARGS, "Constructs a free variable"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -102,6 +154,7 @@ Interpreter::~Interpreter() {
 
     Py_XDECREF(m_runFunc);
     Py_XDECREF(m_shapeClass);
+    Py_XDECREF(m_varFunc);
 }
 
 QString Interpreter::defaultScript() {
@@ -201,6 +254,16 @@ void Interpreter::init() {
     Py_DECREF(get_ident);
     Py_DECREF(threading_mod);
 
+    // Store the var() function locally for easy access
+    const auto studio_mod = PyImport_ImportModule("studio");
+    m_varFunc = PyObject_GetAttrString(studio_mod, "__var");
+
+    // Reset studio.__vars to an empty list
+    const auto empty_list = PyList_New(0);
+    PyObject_SetAttrString(studio_mod, "__vars", empty_list);
+    Py_DECREF(empty_list);
+    Py_DECREF(studio_mod);
+
     QStringList keywords;
 
     // Equivalent to str(obj), returning a QString
@@ -219,7 +282,7 @@ void Interpreter::init() {
         }
     };
 
-    {
+    {   // Highlight all Python keywords
         const auto keyword_mod = PyImport_ImportModule("keyword");
         const auto kwlist = PyObject_GetAttrString(keyword_mod, "kwlist");
         dump_keywords(kwlist);
@@ -227,7 +290,7 @@ void Interpreter::init() {
         Py_DECREF(keyword_mod);
     }
 
-    {
+    {   // Highlight all Python builtins
         const auto builtins_mod = PyImport_ImportModule("builtins");
         const auto builtins_list = PyObject_Dir(builtins_mod);
         dump_keywords(builtins_list);
@@ -321,14 +384,57 @@ void Interpreter::eval(QString script)
     PyObject_SetAttrString(studio_mod, "__quality", Py_None);
     PyObject_SetAttrString(studio_mod, "__bounds", Py_None);
 
-    const auto ret = PyObject_CallFunctionObjArgs(m_runFunc,
-        PyUnicode_FromString(script.toStdString().c_str()), NULL);
+    // Copy from __vars to __prev_vars, then reset __vars
+    const auto prev_vars = PyObject_GetAttrString(studio_mod, "__vars");
+    PyObject_SetAttrString(studio_mod, "__prev_vars", prev_vars);
+    Py_DECREF(prev_vars);
+    const auto vars_list = PyList_New(0);
+    PyObject_SetAttrString(studio_mod, "__vars", vars_list);
+
+    auto args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0,
+            PyUnicode_FromString(script.toLocal8Bit().data()));
+    auto kwargs = PyDict_New();
+    PyDict_SetItemString(kwargs, "var", m_varFunc);
+    const auto ret = PyObject_Call(m_runFunc, args, kwargs);
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
 
     Result out;
     out.settings = Settings::defaultSettings();
     out.okay = !PyErr_Occurred();
 
+    // Map storing vars and their desired values (with the mapping to positions
+    // stored elsewhere in the Result structure)
+    std::map<libfive::Tree::Id, float> vars;
+
     if (out.okay) {
+        // Parse vars from studio.__vars
+        const auto vars_size = PyList_Size(vars_list);
+        for (unsigned i=0; i < vars_size; ++i) {
+            PyObject* s;
+            double value;
+            int lineno, end_lineno, col_offset, end_col_offset;
+            const auto item = PyList_GetItem(vars_list, i);
+
+            PyArg_ParseTuple(item, "Od(iiii)", &s, &value,
+                &lineno, &end_lineno, &col_offset, &end_col_offset);
+            PyErr_Print();
+
+            // Link up the ID with the value and position in the text
+            const auto ptr_obj = PyObject_GetAttrString(s, "ptr");
+            PyErr_Print();
+            const auto ptr = PyLong_AsVoidPtr(ptr_obj);
+            PyErr_Print();
+            const auto id = static_cast<libfive::Tree::Id>(ptr);
+            vars[id] = value;
+            out.vars[id] = QRect(col_offset, lineno - 1,
+                                 end_col_offset - col_offset,
+                                 end_lineno - lineno);
+            Py_DECREF(ptr_obj);
+            PyErr_Print();
+        }
+
         const auto ret_size = PyList_Size(ret);
         if (ret_size) {
             const auto s = PyObject_Repr(PyList_GetItem(ret, ret_size - 1));
@@ -345,7 +451,7 @@ void Interpreter::eval(QString script)
                 const auto ptr_obj = PyObject_GetAttrString(s, "ptr");
                 const auto ptr = PyLong_AsVoidPtr(ptr_obj);
                 const auto tree = static_cast<libfive_tree>(ptr);
-                const auto shape = new Shape(libfive::Tree(tree), {});
+                const auto shape = new Shape(libfive::Tree(tree), vars);
                 shape->moveToThread(QApplication::instance()->thread());
                 out.shapes.push_back(shape);
 
@@ -433,6 +539,8 @@ void Interpreter::eval(QString script)
         PyMem_Free(ws);
         Py_XDECREF(s);
     }
+
+    Py_DECREF(vars_list);
     Py_XDECREF(ret);
     PyGILState_Release(gstate);
 

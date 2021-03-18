@@ -122,6 +122,9 @@ class Shape:
     def with_constant_vars(self):
         return Shape.new('const-var', self.ptr)
 
+    def lock(self):
+        return self.with_constant_vars()
+
     def optimized(self):
         return Shape(lib.libfive_tree_optimized(self.ptr));
 

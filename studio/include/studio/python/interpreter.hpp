@@ -46,6 +46,7 @@ public slots:
 protected:
     PyObject* m_runFunc=NULL;
     PyObject* m_shapeClass=NULL;
+    PyObject* m_varFunc=NULL;
     PyThreadState* m_threadState=NULL;
     unsigned long m_workerThreadId=0;
 
