@@ -38,7 +38,15 @@ public:
     /*  Shows the documentation pane and makes the search window focused */
     void show();
 
+
 protected:
+    /*
+     *  Hides the completer popup in the close event; otherwise, if the
+     *  DocumentationPane is closed by pressing the button in the corner,
+     *  the completer popup remains awkwardly floating by itself.
+     */
+    void closeEvent(QCloseEvent* event) override;
+
     /*
      *  Special-case handling of escape (hides the window)
      */

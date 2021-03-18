@@ -18,6 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <iostream>
 
+#include <QAbstractItemView>
 #include <QCompleter>
 #include <QEvent>
 #include <QKeyEvent>
@@ -127,7 +128,8 @@ DocumentationPane::DocumentationPane(Documentation docs)
     }
 
     // Build a search bar
-    auto completer = new QCompleter(fs.keys());
+    auto completer = new QCompleter(fs.keys(), this);
+
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     m_search->setCompleter(completer);
     connect(completer, QOverload<const QString&>::of(&QCompleter::highlighted),
@@ -173,6 +175,12 @@ DocumentationPane::DocumentationPane(Documentation docs)
 void DocumentationPane::show() {
     QWidget::show();
     m_search->setFocus();
+    m_search->selectAll();
+}
+
+void DocumentationPane::closeEvent(QCloseEvent* event) {
+    m_search->completer()->popup()->hide();
+    QWidget::closeEvent(event);
 }
 
 bool DocumentationPane::eventFilter(QObject* object, QEvent* event)
