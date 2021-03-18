@@ -70,7 +70,6 @@ def run(s, **env):
     '''
     parsed = ast.parse(s)
     tagged = VarTransformer().generic_visit(parsed)
-    print(ast.unparse(tagged))
     gs = {**env}
     out = []
     for p in tagged.body:
