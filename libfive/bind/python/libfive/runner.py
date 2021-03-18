@@ -9,6 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import ast
 import numbers
+import sys
 
 class VarTransformer(ast.NodeTransformer):
     def __init__(self):
@@ -70,7 +71,8 @@ def run(s, **env):
     '''
     parsed = ast.parse(s)
     tagged = VarTransformer().generic_visit(parsed)
-    print(ast.unparse(tagged))
+    if sys.version_info[1] >= 9:
+        print(ast.unparse(tagged))
     gs = {**env}
     out = []
     for p in tagged.body:
