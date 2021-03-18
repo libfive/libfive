@@ -134,6 +134,23 @@ class Shape:
     def pow(self):
         return Shape.new('pow', self.ptr)
 
+    def sin(self):
+        return Shape.new('sin', self.ptr)
+    def cos(self):
+        return Shape.new('cos', self.ptr)
+    def tan(self):
+        return Shape.new('tan', self.ptr)
+    def asin(self):
+        return Shape.new('asin', self.ptr)
+    def acos(self):
+        return Shape.new('acos', self.ptr)
+    def atan(self):
+        return Shape.new('atan', self.ptr)
+    def log(self):
+        return Shape.new('log', self.ptr)
+    def square(self):
+        return Shape.new('square', self.ptr)
+
     def save_stl(self, filename, xyz_min=(-10,-10,-10), xyz_max=(10,10,10),
                  resolution=10):
         ''' Converts this Shape into a mesh and saves it as an STL file.
