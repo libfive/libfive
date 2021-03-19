@@ -77,11 +77,10 @@ def run(s, **env):
             exp = ast.Expression(p.value)
             f = compile(exp, '<file>', 'eval')
             r = eval(f, gs)
-            if r is not None:
-                out.append(r)
         else:
             mod = ast.Module([p])
             mod.type_ignores = []
             f = compile(mod, '<file>', 'exec')
-            exec(f, gs)
+            r = exec(f, gs)
+        out.append(r)
     return out
