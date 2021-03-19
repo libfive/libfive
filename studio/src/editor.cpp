@@ -406,12 +406,14 @@ void Editor::setLanguage(Language::Type t) {
 
     const auto prev_type = m_language ? m_language->type()
                                       : Language::LANGUAGE_NONE;
+    bool changed = false;
 
     switch (t) {
 #ifdef STUDIO_WITH_GUILE
         case Language::LANGUAGE_GUILE:
             if (prev_type != Language::LANGUAGE_GUILE) {
                 m_language.reset(Studio::Guile::language(script));
+                changed = true;
             }
             break;
 #endif
@@ -419,24 +421,28 @@ void Editor::setLanguage(Language::Type t) {
         case Language::LANGUAGE_PYTHON:
             if (prev_type != Language::LANGUAGE_PYTHON) {
                 m_language.reset(Studio::Python::language(script));
+                changed = true;
             }
             break;
 #endif
         default: return;
     }
 
-    connect(script, &QPlainTextEdit::cursorPositionChanged,
-            m_language.data(), [&](){ m_language->onCursorMoved(script); });
-    connect(m_language.data(), &Language::interpreterBusy,
-            &m_interpreterBusyDebounce, QOverload<>::of(&QTimer::start));
-    connect(m_language.data(), &Language::interpreterDone,
-            this, &Editor::onInterpreterDone);
-    connect(m_language.data(), &Language::syntaxReady,
-            this, &Editor::onSyntaxReady);
+    if (changed) {
+        connect(script, &QPlainTextEdit::cursorPositionChanged,
+                m_language.data(), [&](){ m_language->onCursorMoved(script); });
+        connect(m_language.data(), &Language::interpreterBusy,
+                &m_interpreterBusyDebounce, QOverload<>::of(&QTimer::start));
+        connect(m_language.data(), &Language::interpreterDone,
+                this, &Editor::onInterpreterDone);
+        connect(m_language.data(), &Language::syntaxReady,
+                this, &Editor::onSyntaxReady);
 
-    connect(this, &Editor::scriptChanged,
-            m_language.data(), &Language::onScriptChanged);
-    connect(this, &Editor::onShowDocs, m_language.data(), &Language::onShowDocs);
+        connect(this, &Editor::scriptChanged,
+                m_language.data(), &Language::onScriptChanged);
+        connect(this, &Editor::onShowDocs,
+                m_language.data(), &Language::onShowDocs);
+    }
 
     if (was_default) {
         loadDefaultScript();
