@@ -41,7 +41,8 @@ namespace libfive {
 // called before recursing to children, while PostCallable will be called
 // afterward; there is no guarantee that the two will be called on the same 
 // thread (or with the same Local&).  If "recurse" is set to false by 
-// PreCallable, PostCallable will not be called.
+// PreCallable, or if the algorithm was cancelled via tbb, PostCallable will 
+// not be called.
 
 // The final two function arguments (parent and childNo) should not be passed in
 // except via recursive calling.
@@ -99,7 +100,9 @@ Out multithreadRecursive(
                 list.push_back(*task);
             }
             waiter->spawn_and_wait_for_all(list);
-            post(std::move(root), locals.local());
+            if (!tbb::task::self().is_cancelled()) {
+              post(std::move(root), locals.local());
+            }
         }
     }
     else {
@@ -117,7 +120,9 @@ Out multithreadRecursive(
             }
             assert(i == children.size());
             waiter->spawn_and_wait_for_all(list);
-            post(std::move(root), out, locals.local());
+            if (!tbb::task::self().is_cancelled()) {
+              post(std::move(root), out, locals.local());
+            }
         }
         return out;
     }
