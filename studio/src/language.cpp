@@ -22,9 +22,9 @@ namespace Studio {
 
 Language::Language(Interpreter* interpreter,
                    Formatter* formatter,
-                   Syntax* syntax)
+                   Syntax* syntax, Type type)
     : m_interpreter(interpreter), m_formatter(formatter), m_syntax(syntax),
-      m_showDocsWhenReady(false)
+      m_type(type), m_showDocsWhenReady(false)
 {
     // Run halt() in the main thread when the script changes, then pass data
     // into the interpreter worker thread
@@ -72,6 +72,10 @@ QString Language::defaultScript() {
 
 QString Language::extension() {
     return m_interpreter->extension();
+}
+
+Language::Type Language::type() {
+    return m_type;
 }
 
 void Language::onInterpreterReady(QStringList keywords, Documentation docs) {

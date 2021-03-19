@@ -366,6 +366,8 @@ Language::Type Editor::defaultLanguage() {
 
 bool Editor::supportsLanguage(Language::Type t) {
     switch (t) {
+        case Language::LANGUAGE_NONE:
+            return false;
         case Language::LANGUAGE_GUILE:
 #ifdef STUDIO_WITH_GUILE
             return true;
@@ -402,15 +404,22 @@ void Editor::setLanguage(Language::Type t) {
     const bool was_default = m_language &&
         script_doc->toPlainText() == m_language->defaultScript();
 
+    const auto prev_type = m_language ? m_language->type()
+                                      : Language::LANGUAGE_NONE;
+
     switch (t) {
 #ifdef STUDIO_WITH_GUILE
         case Language::LANGUAGE_GUILE:
-            m_language.reset(Studio::Guile::language(script));
+            if (prev_type != Language::LANGUAGE_GUILE) {
+                m_language.reset(Studio::Guile::language(script));
+            }
             break;
 #endif
 #ifdef STUDIO_WITH_PYTHON
         case Language::LANGUAGE_PYTHON:
-            m_language.reset(Studio::Python::language(script));
+            if (prev_type != Language::LANGUAGE_PYTHON) {
+                m_language.reset(Studio::Python::language(script));
+            }
             break;
 #endif
         default: return;

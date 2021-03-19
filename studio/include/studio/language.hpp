@@ -34,16 +34,18 @@ namespace Studio {
 class Language : public QObject {
     Q_OBJECT
 public:
-    enum Type { LANGUAGE_GUILE,
+    enum Type { LANGUAGE_NONE,
+                LANGUAGE_GUILE,
                 LANGUAGE_PYTHON };
 
     Language(Interpreter* interpreter,
              Formatter* formatter,
-             Syntax* syntax);
+             Syntax* syntax, Type type);
     ~Language();
 
     QString defaultScript();
     QString extension();
+    Type type();
 
 signals:
     /*  Emits the result of an interpreter evaluation */
@@ -77,6 +79,7 @@ protected:
     QScopedPointer<Interpreter> m_interpreter;
     QScopedPointer<Formatter> m_formatter;
     QScopedPointer<Syntax> m_syntax;
+    const Type m_type;
 
     /*  This is the worker thread which the Interpreter runs in */
     QThread m_interpreterThread;

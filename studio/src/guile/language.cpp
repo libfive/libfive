@@ -29,7 +29,8 @@ namespace Guile {
 ::Studio::Language* language(Script* script) {
     auto f = new Formatter();
     script->bind(f);
-    return new Language(new Interpreter(), f, new Syntax(script->document()));
+    return new Language(new Interpreter(), f, new Syntax(script->document()),
+                        Language::LANGUAGE_GUILE);
 }
 
 }   // namespace Guile

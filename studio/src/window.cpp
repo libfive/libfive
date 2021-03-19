@@ -240,6 +240,7 @@ Window::Window(Arguments args)
     switch (Editor::defaultLanguage()) {
         case Language::LANGUAGE_GUILE: lang_guile->setChecked(true); break;
         case Language::LANGUAGE_PYTHON: lang_python->setChecked(true); break;
+        case Language::LANGUAGE_NONE: break;
     }
     connect(lang_guile, &QAction::triggered, this,
             [=](bool){ editor->setLanguage(Language::LANGUAGE_GUILE); });
