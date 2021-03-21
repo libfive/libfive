@@ -93,16 +93,32 @@ class Shape:
         return Shape.new('add', self.ptr, other.ptr)
 
     @_wrapped
+    def __radd__(self, other):
+        return Shape.new('add', other.ptr, self.ptr)
+
+    @_wrapped
     def __sub__(self, other):
         return Shape.new('sub', self.ptr, other.ptr)
+
+    @_wrapped
+    def __rsub__(self, other):
+        return Shape.new('sub', other.ptr, self.ptr)
 
     @_wrapped
     def __mul__(self, other):
         return Shape.new('mul', self.ptr, other.ptr)
 
     @_wrapped
+    def __rmul__(self, other):
+        return Shape.new('mul', other.ptr, self.ptr)
+
+    @_wrapped
     def __mod__(self, other):
         return Shape.new('mod', self.ptr, other.ptr)
+
+    @_wrapped
+    def __rmod__(self, other):
+        return Shape.new('mod', other.ptr, self.ptr)
 
     @_wrapped
     def __pow__(self, other):
@@ -111,6 +127,17 @@ class Shape:
     @_wrapped
     def __truediv__(self, other):
         return Shape.new('div', self.ptr, other.ptr)
+
+    @_wrapped
+    def __rtruediv__(self, other):
+        return Shape.new('div', other.ptr, self.ptr)
+
+    @_wrapped
+    def remap(self, x_, y_, z_):
+        ''' Performs the remapping f(x_, y_, z_)
+        '''
+        return Shape(lib.libfive_tree_remap(
+            self.ptr, x_.ptr, y_.ptr, z_.ptr))
 
     def __eq__(self, other):
         raise RuntimeError("Shape does not support equality comparisons")
