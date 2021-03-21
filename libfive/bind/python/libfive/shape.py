@@ -128,6 +128,9 @@ class Shape:
     def __truediv__(self, other):
         return Shape.new('div', self.ptr, other.ptr)
 
+    def __neg__(self):
+        return Shape.new('neg', self.ptr)
+
     @_wrapped
     def __rtruediv__(self, other):
         return Shape.new('div', other.ptr, self.ptr)
@@ -177,6 +180,20 @@ class Shape:
         return Shape.new('log', self.ptr)
     def square(self):
         return Shape.new('square', self.ptr)
+    def abs(self):
+        return Shape.new('abs', self.ptr)
+
+    @_wrapped
+    def min(self, other):
+        return Shape.new('min', self.ptr, other.ptr)
+
+    @_wrapped
+    def max(self, other):
+        return Shape.new('max', self.ptr, other.ptr)
+
+    @_wrapped
+    def compare(self, other):
+        return Shape.new('compare', self.ptr, other.ptr)
 
     def save_stl(self, filename, xyz_min=(-10,-10,-10), xyz_max=(10,10,10),
                  resolution=10):
