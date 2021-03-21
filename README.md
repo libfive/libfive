@@ -190,7 +190,7 @@ Next, install dependencies using `vcpkg`.
 (This step touches many files, so you may want to disable the
 _Antimalware Service Executable_,
 which will otherwise scan every single file and slow things down dramatically:
-in "Windows Security → Virus & thread protection settings",
+in "Windows Security → Virus & threat protection settings",
 uncheck "Real-time protection".)
 
 In a Windows _Command Prompt_:
