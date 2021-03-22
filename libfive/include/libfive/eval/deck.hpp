@@ -8,7 +8,10 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #pragma once
 
+#pragma warning( push )
+#pragma warning( disable : 4834 )
 #include <boost/bimap.hpp>
+#pragma warning( pop )
 
 #include "libfive/tree/tree.hpp"
 #include "libfive/eval/clause.hpp"
