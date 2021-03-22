@@ -161,8 +161,9 @@ class Shape:
     def sqrt(self):
         return Shape.new('sqrt', self.ptr)
 
-    def pow(self):
-        return Shape.new('pow', self.ptr)
+    @_wrapped
+    def pow(self, other):
+        return Shape.new('pow', self.ptr, other.ptr)
 
     def sin(self):
         return Shape.new('sin', self.ptr)
