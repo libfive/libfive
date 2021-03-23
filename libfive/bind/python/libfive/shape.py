@@ -199,6 +199,12 @@ class Shape:
         else:
             raise RuntimeError("x/y/z arguments must be numbers")
 
+    def call(self, fn, *args, **kwargs):
+        ''' Calls the given function with self as the first argument.
+            This is convenient to chain transforms without deep call trees.
+        '''
+        return fn(self, *args, **kwargs)
+
     @_wrapped
     def compare(self, other):
         return Shape.new('compare', self.ptr, other.ptr)
