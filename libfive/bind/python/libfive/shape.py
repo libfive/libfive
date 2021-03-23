@@ -12,7 +12,8 @@ import numbers
 import tempfile
 import subprocess
 
-from libfive.ffi import lib, libfive_region_t, libfive_interval_t
+from libfive.ffi import (lib, libfive_region_t, libfive_interval_t,
+                         libfive_vec3_t)
 
 def _wrapped(f):
     ''' Decorator function which calls Shape.wrap on every argument
@@ -191,6 +192,12 @@ class Shape:
     @_wrapped
     def max(self, other):
         return Shape.new('max', self.ptr, other.ptr)
+
+    def __call__(self, x, y, z):
+        if all([isinstance(c, numbers.Number) for c in [x, y, z]]):
+            return lib.libfive_tree_eval_f(self.ptr, libfive_vec3_t(x, y, z))
+        else:
+            raise RuntimeError("x/y/z arguments must be numbers")
 
     @_wrapped
     def compare(self, other):
