@@ -88,9 +88,18 @@ void Formatter::keyPressEvent(QPlainTextEdit* doc, QKeyEvent* e)
         }
         c.endEditBlock();
     }
-    // TODO: smarter indentation on return
+    // On Return, indent to match the previous line's leading whitespace
     else if (e->key() == Qt::Key_Return && !c.hasSelection()) {
-        e->ignore();
+
+        c.movePosition(QTextCursor::StartOfLine);
+        c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
+        unsigned indentation=0;
+        while (c.selectedText() == " ") {
+            indentation++;
+            c.clearSelection();
+            c.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
+        }
+        doc->insertPlainText("\n" + QString(indentation, ' '));
     }
     // Backspace does 4-space aligned deletion of spaces, and deletes
     // a single character otherwise.
