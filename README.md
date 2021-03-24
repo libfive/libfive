@@ -1,12 +1,6 @@
 # libfive
-*Infrastructure for solid modeling.*
-
-(formerly known as [mkeeter/ao](https://github.com/mkeeter/ao))
-
-## About
-- [Project homepage](https://libfive.com) (with demo videos!)
-- [API Examples](https://libfive.com/examples)
-- [Downloads](https://libfive.com/download)
+*Infrastructure for solid modeling.*  
+[Homepage](https://libfive.com) | [API Examples](https://libfive.com/examples) | [Downloads](https://libfive.com/download)
 
 `libfive` is a framework for solid modeling using
 [functional representations](https://en.wikipedia.org/wiki/Function_representation).
@@ -89,10 +83,10 @@ If Guile isn't present, the Guile bindings won't be built.
 
 If Python isn't present, the Python bindings won't be built.
 
-#### Studio (optional, requires Guile bindings)
+#### Studio (optional, requires Guile or Python bindings)
 - [Qt 5.12 or later](https://www.qt.io)
 
-If Qt and Guile aren't present, Studio will not be included in the build
+If prerequisites aren't met, Studio will not be included in the build
 (and `cmake` will print a message to that effect).
 
 ### Mac
@@ -113,7 +107,7 @@ make
 and consider using [`ninja`](https://ninja-build.org/) for faster builds.
 
 ### Ubuntu
-As a rule of thumb, `libfive` targets packages available in the latest Ubuntu LTS,
+As a rule of thumb, `libfive` targets packages available in the latest Ubuntu LTS
 (currently 20.04 LTS).  This is not automatically tested;
 if you find it's not the case, please open an issue.
 
@@ -121,9 +115,9 @@ if you find it's not the case, please open an issue.
 Ubuntu __20.04 or later__ should have all dependencies available
 through the package manager
 ```
-sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-2.2-dev qtbase5-dev python3
+sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-3.0-dev qtbase5-dev python3
 ```
-Omit `guile-2.2-dev` and/or `qtbase5-dev` if you do not want Guile bindings and/or Studio to be built too.
+Omit `guile-3.0-dev` and/or `qtbase5-dev` if you do not want Guile bindings and/or Studio to be built too.
 
 Building is similar as on Mac: clone the repository, then run something like
 ```
