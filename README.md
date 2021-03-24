@@ -58,14 +58,9 @@ to discuss custom development, integration,
 or commercial support.
 
 ## Compiling from source
-The full system (`libfive` + `libfive-guile` + **Studio**)
-has been successfully compiled on Mac and Linux.
-
-The `libfive` kernel builds on MSVC,
-and should also build with MinGW (though this is untested).
+`libfive` and Studio are compatible with macOS, Linux, and Windows.
 
 ### Dependencies
-
 #### libfive
 - [`cmake 1.65 or later`](https://cmake.org/)
 - [`pkg-config`](https://www.freedesktop.org/wiki/Software/pkg-config/)
@@ -73,21 +68,26 @@ and should also build with MinGW (though this is untested).
 - [`libpng`](http://www.libpng.org/pub/png/libpng.html)
 - [Boost 1.65 or later](https://www.boost.org)
 
-#### Guile bindings (optional)
+#### Guile bindings (optional, macOS and Linux only)
 - [Guile 2.2.1 or later](https://www.gnu.org/software/guile/)
-
-If Guile isn't present, the Guile bindings won't be built.
 
 #### Python bindings (optional)
 - [Python 3.7 or later](https://www.python.org/)
 
-If Python isn't present, the Python bindings won't be built.
-
 #### Studio (optional, requires Guile or Python bindings)
 - [Qt 5.12 or later](https://www.qt.io)
 
-If prerequisites aren't met, Studio will not be included in the build
-(and `cmake` will print a message to that effect).
+When `cmake` is first run,
+it will check for all dependencies and print details of what
+will be build, e.g.
+
+```
+Checking dependencies:
+  libfive:              ✓
+  Guile bindings:       ✓
+  Python bindings:      ✓
+  Studio:               ✓   (Python + Guile)
+```
 
 ### Mac
 With `homebrew` installed, run
