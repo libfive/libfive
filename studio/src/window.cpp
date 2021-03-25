@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 switch (checkUnsaved())                                                     \
 {                                                                           \
     case QMessageBox::Save:     if (!onSave()) return false;                \
-    case QMessageBox::Ok:                               /* FALLTHROUGH */   \
+    case QMessageBox::Ok:       /* FALLTHROUGH */                           \
     case QMessageBox::Discard:  break;                                      \
     case QMessageBox::Cancel:   return false;                               \
     default:    assert(false);                                              \
@@ -246,9 +246,9 @@ Window::Window(Arguments args)
         case Language::LANGUAGE_NONE: break;
     }
     connect(lang_guile, &QAction::triggered,
-            this, [=](bool){ editor->setLanguage(Language::LANGUAGE_GUILE); });
+            this, [=](bool){ setLanguage(Language::LANGUAGE_GUILE); });
     connect(lang_python, &QAction::triggered,
-            this, [=](bool){ editor->setLanguage(Language::LANGUAGE_PYTHON); });
+            this, [=](bool){ setLanguage(Language::LANGUAGE_PYTHON); });
     connect(lang_load_default, &QAction::triggered,
             this, &Window::onLoadDefault);
     if (!Editor::supportsLanguage(Language::LANGUAGE_GUILE)) {
@@ -712,9 +712,11 @@ void Window::onQuit(bool)
     Window::close();
 }
 
-void Window::setLanguage(Language::Type t) {
+bool Window::setLanguage(Language::Type t) {
+    CHECK_UNSAVED();
     editor->setLanguage(t);
     // TODO: handle sandbox here
+    return true;
 }
 
 }   // namespace Studio

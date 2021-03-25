@@ -407,9 +407,6 @@ Language::Type Editor::getLanguage() const {
 }
 
 void Editor::setLanguage(Language::Type t) {
-    const bool was_default = m_language &&
-        script_doc->toPlainText() == m_language->defaultScript();
-
     const auto prev_type = m_language ? m_language->type()
                                       : Language::LANGUAGE_NONE;
     bool changed = false;
@@ -450,9 +447,7 @@ void Editor::setLanguage(Language::Type t) {
                 m_language.data(), &Language::onShowDocs);
     }
 
-    if (was_default) {
-        loadDefaultScript();
-    }
+    loadDefaultScript();
 }
 
 }   // namespace Studio

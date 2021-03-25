@@ -82,7 +82,7 @@ protected:
     bool loadFile(QString f, bool reload=false);
     bool saveFile(QString f);
 
-    void setLanguage(Language::Type t);
+    bool setLanguage(Language::Type t);
 
     /*  Filename of the current file, or empty string */
     QString filename;
