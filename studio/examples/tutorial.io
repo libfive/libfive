@@ -1,8 +1,10 @@
 ;; Studio demo
 ;; ================
 ;;
-;; Welcome to Studio, a Scheme-based GUI
-;; for the libfive CAD kernel.
+;; Welcome to Studio, a GUI for the libfive CAD kernel.
+;;
+;; This file is written in Guile Scheme, but Studio supports both Scheme
+;; and Python.  To change languages, use the Language menu.
 
 
 ;; Shapes are defined in this pane, and rendered
@@ -13,7 +15,10 @@
 
 ;; Any top-level expression that evaluates to a
 ;; shape will be rendered as a mesh.  You can
-;; control bounds and resolution in the View menu.
+;; control bounds and resolution using these special commands:
+(set-quality! 8)
+(set-resolution! 10)
+(set-bounds! [-10 -10 -10] [10 10 10])
 
 
 ;; Constructive solid geometry (CSG)
@@ -55,11 +60,3 @@
 ;; repository--locally or online:
 ;;
 ;;   <https://github.com/libfive/libfive/tree/master/studio/examples>
-
-;; To learn more, dig into the source code;
-;; documentation is sparse at the moment, but
-;; libfive-guile.cpp should be informative.
-
-(set-quality! 8)
-(set-resolution! 10)
-(set-bounds! [-10 -10 -10] [10 10 10])
