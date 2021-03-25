@@ -398,8 +398,12 @@ void Editor::guessLanguage(QString ext) {
     }
 }
 
-QString Editor::getExtension() {
+QString Editor::getExtension() const {
     return m_language->extension();
+}
+
+Language::Type Editor::getLanguage() const {
+    return m_language->type();
 }
 
 void Editor::setLanguage(Language::Type t) {

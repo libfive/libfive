@@ -237,7 +237,7 @@ Window::Window(Arguments args)
         lang_group->addAction(m);
         m->setCheckable(true);
     }
-    switch (Editor::defaultLanguage()) {
+    switch (editor->getLanguage()) {
         case Language::LANGUAGE_GUILE: lang_guile->setChecked(true); break;
         case Language::LANGUAGE_PYTHON: lang_python->setChecked(true); break;
         case Language::LANGUAGE_NONE: break;
