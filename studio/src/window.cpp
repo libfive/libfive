@@ -237,15 +237,20 @@ Window::Window(Arguments args)
         lang_group->addAction(m);
         m->setCheckable(true);
     }
+    lang_menu->addSeparator();
+    auto lang_load_default = new QAction("Load default script", nullptr);
+    lang_menu->addAction(lang_load_default);
     switch (editor->getLanguage()) {
         case Language::LANGUAGE_GUILE: lang_guile->setChecked(true); break;
         case Language::LANGUAGE_PYTHON: lang_python->setChecked(true); break;
         case Language::LANGUAGE_NONE: break;
     }
-    connect(lang_guile, &QAction::triggered, this,
-            [=](bool){ editor->setLanguage(Language::LANGUAGE_GUILE); });
-    connect(lang_python, &QAction::triggered, this,
-            [=](bool){ editor->setLanguage(Language::LANGUAGE_PYTHON); });
+    connect(lang_guile, &QAction::triggered,
+            this, [=](bool){ editor->setLanguage(Language::LANGUAGE_GUILE); });
+    connect(lang_python, &QAction::triggered,
+            this, [=](bool){ editor->setLanguage(Language::LANGUAGE_PYTHON); });
+    connect(lang_load_default, &QAction::triggered,
+            this, &Window::onLoadDefault);
     if (!Editor::supportsLanguage(Language::LANGUAGE_GUILE)) {
         lang_guile->setEnabled(false);
     }
@@ -692,6 +697,14 @@ bool Window::onLoadTutorial(bool)
         return true;
     }
     return false;
+}
+
+bool Window::onLoadDefault(bool)
+{
+    CHECK_UNSAVED();
+
+    editor->loadDefaultScript();
+    return true;
 }
 
 void Window::onQuit(bool)

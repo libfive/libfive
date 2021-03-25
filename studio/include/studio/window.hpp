@@ -58,6 +58,7 @@ protected slots:
     void onExport(bool=false);
     void onAbout(bool=false);
     bool onLoadTutorial(bool=false);
+    bool onLoadDefault(bool=false);
     void onAutoLoad(const QString&);
     void onAutoLoadPath(const QString&);
     void onQuit(bool=false);
