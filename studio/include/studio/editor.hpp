@@ -45,7 +45,9 @@ public:
     /*  Sets the script state to the default for this language */
     void loadDefaultScript();
 
-    /*  Updates the language type */
+    /*  Updates the language type, loading the default script for the new
+     *  language if the existing script hasn't been modified from the old
+     *  language's default script. */
     void setLanguage(Language::Type type);
 
     /*  Returns the language currently loaded */
