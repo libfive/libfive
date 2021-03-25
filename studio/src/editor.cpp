@@ -37,8 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 namespace Studio {
 
-Editor::Editor(QWidget* parent)
-    : QWidget(parent), script(new Script), script_doc(script->document()),
+Editor::Editor(Language::Type language)
+    : QWidget(nullptr), script(new Script), script_doc(script->document()),
       err(new QPlainTextEdit), err_doc(err->document()),
       layout(new QVBoxLayout)
 {
@@ -99,7 +99,9 @@ Editor::Editor(QWidget* parent)
     connect(&m_interpreterBusyDebounce, &QTimer::timeout,
             &spinner, QOverload<>::of(&QTimer::start));
 
-    setLanguage(defaultLanguage());
+    setLanguage(language == Language::LANGUAGE_NONE
+            ? defaultLanguage()
+            : language);
 }
 
 void Editor::loadDefaultScript() {

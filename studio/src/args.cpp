@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QCommandLineParser>
 
 #include "studio/args.hpp"
+#include "studio/editor.hpp"
 
 namespace Studio {
 
@@ -33,12 +34,23 @@ Arguments::Arguments(QCoreApplication* app)
     QCommandLineOption vertical_layout("vertical", "Use vertical layout for editor / 3D view.");
     parser.addOption(vertical_layout);
 
+    QCommandLineOption python_option(
+            QStringList() << "p" << "python",
+            "Boot the interpreter in Python mode");
+    if (Editor::supportsLanguage(Language::LANGUAGE_PYTHON)) {
+        parser.addOption(python_option);
+    }
+
     parser.process(*app);
 
     const QStringList ps = parser.positionalArguments();
     filename = ps.isEmpty() ? "" : ps[0];
 
     vertical = parser.isSet(vertical_layout);
+
+    if (parser.isSet(python_option)) {
+        language = Language::LANGUAGE_PYTHON;
+    }
 }
 
 }   // namespace Studio

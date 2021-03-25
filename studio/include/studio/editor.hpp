@@ -37,7 +37,7 @@ class Editor : public QWidget
 {
     Q_OBJECT
 public:
-    Editor(QWidget* parent=nullptr);
+    Editor(Language::Type language);
     void setScript(const QString& s, bool reload=false);
     QString getScript() const;
     void setModified(bool m);

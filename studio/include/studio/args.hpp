@@ -19,13 +19,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #pragma once
 #include <QCoreApplication>
 
+#include "studio/language.hpp"
+
 namespace Studio {
 struct Arguments
 {
     Arguments(QCoreApplication* app);
 
     QString filename;
-    bool vertical;
+    bool vertical=false;
+    Language::Type language=Language::LANGUAGE_NONE;
 };
 
 }   // namespace Studio
