@@ -201,8 +201,10 @@ void Editor::onInterpreterDone(Result r)
     }
 
     // Announce the settings
-    emit(settingsChanged(r.settings, first_change));
-    first_change = false;
+    if (r.okay) {
+        emit(settingsChanged(r.settings, first_change));
+        first_change = false;
+    }
 }
 
 void Editor::undo()
