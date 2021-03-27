@@ -41,12 +41,14 @@ add_custom_target(libfive-guile ALL DEPENDS ${OUTS})
 
 ################################################################################
 
-# Find the installation directory for compiled files
-execute_process(
-    COMMAND guile -c "(format #t \"~A\" (%site-ccache-dir))"
-    OUTPUT_VARIABLE GUILE_CCACHE_DIR)
+if(UNIX)
+    # Find the installation directory for compiled files
+    execute_process(
+        COMMAND guile -c "(format #t \"~A\" (%site-ccache-dir))"
+        OUTPUT_VARIABLE GUILE_CCACHE_DIR)
 
-# Install pre-compiled libfive modules
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libfive/
-        DESTINATION ${GUILE_CCACHE_DIR}/libfive
-        FILES_MATCHING PATTERN "*.go")
+    # Install pre-compiled libfive modules
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libfive/
+            DESTINATION ${GUILE_CCACHE_DIR}/libfive
+            FILES_MATCHING PATTERN "*.go")
+endif(UNIX)
