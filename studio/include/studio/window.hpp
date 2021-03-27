@@ -82,7 +82,14 @@ protected:
     bool loadFile(QString f, bool reload=false);
     bool saveFile(QString f);
 
+    /* Changes the Editor language and reloads the default script
+     * (warning if there are unsaved changes) */
     bool setLanguage(Language::Type t);
+
+    /*  Resets the script to the default for the given language,
+     *  clearing the filename and autoload parameters.  If the language
+     *  is LANGUAGE_NONE, then leave it unchanged. */
+    bool reset(Language::Type t);
 
     /*  Filename of the current file, or empty string */
     QString filename;

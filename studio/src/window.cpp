@@ -475,16 +475,7 @@ bool Window::onSaveAs(bool)
 
 bool Window::onNew(bool)
 {
-    CHECK_UNSAVED();
-
-    setFilename("");
-    #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
-        setWindowTitle("Studio[*]");
-    #endif
-
-    editor->loadDefaultScript();
-    emit(setAutoload(false));
-    return true;
+    return reset(Language::LANGUAGE_NONE);
 }
 
 void Window::closeEvent(QCloseEvent* event)
@@ -712,12 +703,24 @@ void Window::onQuit(bool)
     Window::close();
 }
 
-bool Window::setLanguage(Language::Type t) {
+bool Window::reset(Language::Type t) {
     CHECK_UNSAVED();
-    editor->setLanguage(t);
+
+    setFilename("");
+    #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
+        setWindowTitle("Studio[*]");
+    #endif
+
+    if (t != Language::LANGUAGE_NONE) {
+        editor->setLanguage(t);
+    }
     editor->loadDefaultScript();
-    // TODO: handle sandbox here
+    emit(setAutoload(false));
     return true;
+}
+
+bool Window::setLanguage(Language::Type t) {
+    return reset(t);
 }
 
 }   // namespace Studio
