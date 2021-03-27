@@ -107,13 +107,10 @@ make
 and consider using [`ninja`](https://ninja-build.org/) for faster builds.
 
 ### Ubuntu
-As a rule of thumb, `libfive` targets packages available in the latest Ubuntu LTS
-(currently 20.04 LTS).  This is not automatically tested;
-if you find it's not the case, please open an issue.
+`libfive` should build out of the box on the latest Ubuntu LTS
+(currently 20.04).  If you find that's not the case, please open an issue!
 
-#### 20.04 or later
-Ubuntu __20.04 or later__ should have all dependencies available
-through the package manager
+Start by installing dependencies through the package manager:
 ```
 sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-3.0-dev qtbase5-dev python3
 ```
@@ -123,10 +120,12 @@ Building is similar as on Mac: clone the repository, then run something like
 ```
 mkdir build
 cd build
-cmake -DCMAKE_PREFIX_PATH=<QT INSTALL PATH>/5.7/gcc_64 ..
+cmake ..
 make -j4
 ```
 (adjusting the Qt path to your install location)
+
+Once building is complete, run Studio with `./studio/Studio`.
 
 Running `sudo make install` will install `libfive.so` (the core shared library)
 and the `libfive` headers.
@@ -136,37 +135,10 @@ If Studio was also built, the `Studio` executable will installed as well.
 [`Studio.desktop`](https://github.com/libfive/libfive/blob/master/studio/deploy/linux/Studio.desktop)
 may be used to put the program on your desktop (untested as of yet).
 
-#### Before 20.04
-On Ubuntu 18.04, you may need to update to a newer version of CMake,
-which is possible using the Snappy package manager:
-```
-sudo snap install cmake --classic
-```
-(untested)
-
-CMake downloads are also available on [their website](https://cmake.org/download/)
-
-18.04 _also_ does not have a new enough Qt in the package manager,
-so omit `qtbase5-dev` from the above package install command.
-To install Qt 5.12 or later,
-use the [Qt Online Installer](https://www.qt.io/download-qt-installer).
-The installer will prompt for the install path, which defaults to `$HOME/Qt`.
-
-#### Before 18.04
-Ubuntu releases __before 18.04__ do not provide `guile-2.2-dev`,
-so omit that from the above package install command.
-To build Guile 2.2.3 from source, run
-```
-sudo apt-get install libgmp-dev libltdl-dev libunistring-dev libgc-dev libffi-dev pkg-config
-wget https://ftp.gnu.org/gnu/guile/guile-2.2.3.tar.gz
-tar -xf guile-2.2.3.tar.gz
-cd guile-2.2.3
-./configure
-make -j4
-sudo make install
-```
-
-Then, build as above.
+Ubuntu releases before 20.04 are not officially supported;
+if you insist,
+there are hints [here](https://github.com/libfive/libfive/blob/b4e0e0bbf8c740a313754062a205a98ac336a19c/README.md#before-2004)
+and a discussion of Python linking issues [here](https://github.com/libfive/libfive/issues/408).
 
 ### Windows (VS2019)
 Install [Git](https://git-scm.com/download/win),
