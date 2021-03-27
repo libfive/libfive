@@ -715,6 +715,7 @@ void Window::onQuit(bool)
 bool Window::setLanguage(Language::Type t) {
     CHECK_UNSAVED();
     editor->setLanguage(t);
+    editor->loadDefaultScript();
     // TODO: handle sandbox here
     return true;
 }

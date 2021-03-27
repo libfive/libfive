@@ -102,6 +102,7 @@ Editor::Editor(Language::Type language)
     setLanguage(language == Language::LANGUAGE_NONE
             ? defaultLanguage()
             : language);
+    loadDefaultScript();
 }
 
 void Editor::loadDefaultScript() {
@@ -448,8 +449,6 @@ void Editor::setLanguage(Language::Type t) {
         connect(this, &Editor::onShowDocs,
                 m_language.data(), &Language::onShowDocs);
     }
-
-    loadDefaultScript();
 }
 
 }   // namespace Studio

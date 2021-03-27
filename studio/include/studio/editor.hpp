@@ -42,18 +42,17 @@ public:
     QString getScript() const;
     void setModified(bool m);
 
-    /*  Sets the script state to the default for this language */
+    /*  Sets the script state to the default for the current language */
     void loadDefaultScript();
 
-    /*  Updates the language type, loading the default script for the new
-     *  language if the existing script hasn't been modified from the old
-     *  language's default script. */
+    /*  Loads an interpreter / syntax / formatter for the given language */
     void setLanguage(Language::Type type);
 
     /*  Returns the language currently loaded */
     Language::Type getLanguage() const;
 
-    /*  Switches the language type based on file extension */
+    /*  Guesses the language type based on file extension, then calls
+     *  setLanguage to load the appropriate interpreter */
     void guessLanguage(QString extension);
 
     /*  Returns an extension for the given language */
