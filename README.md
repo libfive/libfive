@@ -123,7 +123,6 @@ cd build
 cmake ..
 make -j4
 ```
-(adjusting the Qt path to your install location)
 
 Once building is complete, run Studio with `./studio/Studio`.
 
