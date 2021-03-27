@@ -126,13 +126,15 @@ make -j4
 
 Once building is complete, run Studio with `./studio/Studio`.
 
-Running `sudo make install` will install `libfive.so` (the core shared library)
-and the `libfive` headers.
-If Guile bindings are enabled,
-they will be pre-compiled and installed to Guile's `(%site-ccache-dir)` directory.
-If Studio was also built, the `Studio` executable will installed as well.
+Running `sudo make install` will install components to system-wide destinations,
+e.g. `/usr/local/bin/Studio` for the main executable.
+This will let you invoke `Studio` from anywhere in the system,
+rather than just the `build` directory.
+If you are using this workflow,
+`sudo make install` must be run after changes to the repository
+to update the system-wide installation of the executable and libraries.
 [`Studio.desktop`](https://github.com/libfive/libfive/blob/master/studio/deploy/linux/Studio.desktop)
-may be used to put the program on your desktop (untested as of yet).
+may be used to put a shortcut on your desktop.
 
 Ubuntu releases before 20.04 are not officially supported;
 if you insist,
