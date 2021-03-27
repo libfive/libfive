@@ -30,7 +30,7 @@ add_custom_target(libfive-python ALL DEPENDS ${OUTS})
 if(UNIX)
     # Find the site-packages directory
     execute_process(
-        COMMAND python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(), end='')"
+        COMMAND ${Python3_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(), end='')"
         OUTPUT_VARIABLE PYTHON_SITE_PACKAGES_DIR)
 
     # Install all Python files into that directory

@@ -98,7 +98,7 @@ endif()
 
 # These packages have consistent names across OS's
 find_package(PNG REQUIRED)
-find_package(Python3 COMPONENTS Development)
+find_package(Python3 COMPONENTS Interpreter Development)
 
 # Both Windows and Linux will attempt to build the Studio UI
 if (BUILD_STUDIO_APP)
