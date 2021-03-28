@@ -45,3 +45,12 @@ if (BUILD_GUILE_BINDINGS AND GUILE_FOUND)
     target_include_directories(libfive-test PUBLIC . ${GUILE_INCLUDE_DIRS})
     target_link_directories(libfive-test PUBLIC ${GUILE_LIBRARY_DIRS})
 endif(BUILD_GUILE_BINDINGS AND GUILE_FOUND)
+
+if (MSVC)
+    # Copy the libfive DLL into the build/libfive/test directory, so that
+    # libfive-test.exe can find them
+    add_custom_command(TARGET libfive-test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:libfive>
+            $<TARGET_FILE_DIR:libfive-test>)
+endif (MSVC)
