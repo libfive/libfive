@@ -142,7 +142,7 @@ void Editor::onInterpreterDone(Result r)
 
         emit(shapes(r.shapes));
     } else {
-        setResult(Color::red, r.error.error + "\n\nStack trace:\n" + r.error.stack);
+        setResult(Color::red, r.error.error);
 
         // Add new selections for errors in the script doc
         QTextCursor c(script_doc);

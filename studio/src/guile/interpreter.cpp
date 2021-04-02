@@ -247,10 +247,10 @@ void Interpreter::eval(QString script)
         const int end_col = scm_to_int(scm_cdr(after));
 
         out.error = Error {
-            QString(str), QString(stack),
-                QRect(start_col, start_row,
-                      end_col - start_col + 1,
-                      end_row - start_row) };
+            QString(str) + "\n\nStack trace:\n" + QString(stack),
+            QRect(start_col, start_row,
+                  end_col - start_col + 1,
+                  end_row - start_row) };
         free(str);
         free(stack);
     }

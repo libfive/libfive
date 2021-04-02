@@ -29,7 +29,6 @@ class Shape;
 
 struct Error {
     QString error;
-    QString stack;
     QRect range;
 };
 

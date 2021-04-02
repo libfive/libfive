@@ -535,7 +535,7 @@ void Interpreter::eval(QString script)
         const auto s = PyObject_Str(value);
         const auto ws = PyUnicode_AsWideCharString(s, NULL);
         PyErr_Print();
-        out.error = {QString::fromWCharArray(ws), "", QRect()};
+        out.error = {QString::fromWCharArray(ws), QRect()};
         PyMem_Free(ws);
         Py_XDECREF(s);
     }
