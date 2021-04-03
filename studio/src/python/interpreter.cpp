@@ -391,15 +391,6 @@ void Interpreter::eval(QString script)
     const auto vars_list = PyList_New(0);
     PyObject_SetAttrString(studio_mod, "__vars", vars_list);
 
-    // Replace sys.stderr with an io.StringIO object, so that we can capture
-    // the printed traceback into a string.
-    auto io_mod = PyImport_ImportModule("io");
-    auto string_io = PyObject_GetAttrString(io_mod, "StringIO");
-    auto new_stderr = PyObject_CallNoArgs(string_io);
-    PySys_SetObject("stderr", new_stderr);
-    Py_DECREF(string_io);
-    Py_DECREF(io_mod);
-
     auto args = PyTuple_New(1);
     PyTuple_SetItem(args, 0,
             PyUnicode_FromString(script.toLocal8Bit().data()));
@@ -539,22 +530,36 @@ void Interpreter::eval(QString script)
                 "import studio\n"});
         }
     } else {
-        PyErr_Print();
+        // Stash the error, because it will be cleared by the code below
+        PyObject *type, *value, *traceback;
+        PyErr_Fetch(&type, &value, &traceback);
+
+        // Replace sys.stderr with an io.StringIO object, so that we can capture
+        // the printed traceback into a string.
+        auto io_mod = PyImport_ImportModule("io");
+        auto string_io = PyObject_GetAttrString(io_mod, "StringIO");
+        auto new_stderr = PyObject_CallNoArgs(string_io);
+        PySys_SetObject("stderr", new_stderr);
 
         // Print the error to our StringIO, then decode it into a QString
         // and attach it to the returned value.
+        PyErr_Restore(type, value, traceback);
+        PyErr_Print();
+
         const auto s = PyObject_CallMethod(new_stderr, "getvalue", NULL);
         const auto ws = PyUnicode_AsWideCharString(s, NULL);
         out.error = {QString::fromWCharArray(ws), QRect()};
 
+        // Restore previous stderr
+        PySys_SetObject("stderr", PySys_GetObject("__stderr__"));
+
         // Cleanup!
         PyMem_Free(ws);
         Py_DECREF(s);
+        Py_DECREF(new_stderr);
+        Py_DECREF(string_io);
+        Py_DECREF(io_mod);
     }
-
-    // Restore previous stderr
-    PySys_SetObject("stderr", PySys_GetObject("__stderr__"));
-    Py_DECREF(new_stderr);
 
     Py_DECREF(vars_list);
     Py_XDECREF(ret);
