@@ -28,9 +28,12 @@ def format_module_stdlib(lib, m):
         args_in = ", ".join(map(arg_in, f.args))
         args_out = ", ".join(map(arg_out, f.args))
         out += '''LIBFIVE_STDLIB {name}({args_in}) {{
-    return {name}({args_out}).release();
+    return {name}{u}({args_out}).release();
 }}
-'''.format(name=f.raw_name or f.name, args_in=args_in, args_out=args_out)
+'''.format(name=f.raw_name or f.name,
+           u='' if f.args else '_',
+           args_in=args_in,
+           args_out=args_out)
     return out
 
 ################################################################################
@@ -55,8 +58,10 @@ def format_module_header(lib, m):
 '''.format(m)
     for f in lib[m].shapes:
         args_call = ", ".join(map(arg_call, f.args))
-        out += '''libfive::Tree {name}({args_call});
-'''.format(name=f.raw_name or f.name, args_call=args_call)
+        out += '''libfive::Tree {name}{u}({args_call});
+'''.format(name=f.raw_name or f.name,
+           u='' if f.args else '_',
+           args_call=args_call)
     return out
 
 ################################################################################

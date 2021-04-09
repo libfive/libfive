@@ -69,7 +69,7 @@ It was last generated on {} by user {}
   (dynamic-func "{raw_name}" stdlib)
   (list {arg_types})))
 (define* ({name} {arg_names})
-  "{name} {arg_names}
+  "{name}{s}{arg_names}
   {doc}
   (ptr->shape (ffi_{name}
     {arg_calls})))
@@ -77,6 +77,7 @@ It was last generated on {} by user {}
 
 '''.format(raw_name=f.raw_name or f.name,
        name=name,
+       s=' ' if f.args else '',
        doc=f.docstring.replace('\n', '\n  ') + '"',
        arg_types=arg_types,
        arg_names=arg_names,

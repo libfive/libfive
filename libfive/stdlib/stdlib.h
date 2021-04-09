@@ -157,6 +157,9 @@ LIBFIVE_ALIAS(torus, torus_z)
 LIBFIVE_STDLIB gyroid(
     // A volume-filling gyroid with the given periods and thickness
     tvec3 period, tfloat thickness);
+LIBFIVE_STDLIB emptiness(
+    // A value which is empty everywhere
+    );
 
 LIBFIVE_STDLIB array_x(
     // Iterates a part in a 1D array

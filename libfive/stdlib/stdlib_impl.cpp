@@ -278,6 +278,10 @@ Tree gyroid(TreeVec3 period, TreeFloat thickness) {
         -thickness);
 }
 
+Tree emptiness_() { // Trailing underscore due to no arguments
+    return Tree(std::numeric_limits<float>::infinity());
+}
+
 //------------------------------------------------------------------------------
 
 Tree array_x(Tree shape, int nx, TreeFloat dx) {
