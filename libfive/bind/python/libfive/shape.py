@@ -31,6 +31,12 @@ class Shape:
             It is unlikely that you want to call this by hand; consider using
             X/Y/Z, the @shape decorator, or functions in libfive.stdlib instead
         '''
+        if not isinstance(ptr, int):
+            raise TypeError(
+                "Must call Shape.__init__ with a c_void_p returned " +
+                "from a libfive shared library function.  It is unlikely "
+                "that you want to call this by hand; consider using " +
+                "Shape.X() (and Y and Z), or the @shape decorator")
         self.ptr = ptr
 
     def __del__(self):
