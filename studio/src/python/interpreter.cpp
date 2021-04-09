@@ -538,7 +538,7 @@ void Interpreter::eval(QString script)
         // the printed traceback into a string.
         auto io_mod = PyImport_ImportModule("io");
         auto string_io = PyObject_GetAttrString(io_mod, "StringIO");
-        auto new_stderr = PyObject_CallNoArgs(string_io);
+        auto new_stderr = PyObject_CallObject(string_io, NULL);
         PySys_SetObject("stderr", new_stderr);
 
         // Print the error to our StringIO, then decode it into a QString
