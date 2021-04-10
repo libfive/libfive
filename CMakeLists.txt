@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
+include(CheckCXXCompilerFlag)
 project(libfive)
 
 # Properly distinguish between Apple and upstream Clang
@@ -49,7 +50,7 @@ endif()
 ################################################################################
 
 if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -g -fPIC -pedantic -Werror=switch -march=native")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -g -fPIC -pedantic -Werror=switch")
     if (${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     else()
@@ -64,6 +65,12 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267 /wd4244 /wd4305")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD/ /DEIGEN_NO_DEBUG /arch:AVX2")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+endif()
+
+# Sometimes the flag is not supported (this is the case for Apple Silicon)
+check_cxx_compiler_flag("-march=native" MARCH_SUPPORTED)
+if(MARCH_SUPPORTED)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
