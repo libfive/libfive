@@ -21,6 +21,8 @@ if (LIBFIVE_PACKED_OPCODES)
     add_definitions(-DLIBFIVE_PACKED_OPCODES)
 endif()
 
+add_definitions(-DCATCH_CONFIG_ENABLE_BENCHMARKING)
+
 # Build libfive with ccache if the package is present
 set(LIBFIVE_CCACHE_BUILD OFF CACHE BOOL "Set to ON for a ccache enabled build")
 if(LIBFIVE_CCACHE_BUILD)
