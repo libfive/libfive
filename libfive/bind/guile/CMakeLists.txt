@@ -43,9 +43,11 @@ add_custom_target(libfive-guile ALL DEPENDS ${OUTS})
 
 if(UNIX)
     # Find the installation directory for compiled files
-    execute_process(
-        COMMAND guile -c "(format #t \"~A\" (%site-ccache-dir))"
-        OUTPUT_VARIABLE GUILE_CCACHE_DIR)
+    if (NOT DEFINED GUILE_CCACHE_DIR)
+        execute_process(
+            COMMAND guile -c "(format #t \"~A\" (%site-ccache-dir))"
+            OUTPUT_VARIABLE GUILE_CCACHE_DIR)
+    endif()
 
     # Install pre-compiled libfive modules
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libfive/
