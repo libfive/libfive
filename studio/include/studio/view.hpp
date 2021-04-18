@@ -64,6 +64,9 @@ public slots:
     void toPerspective(bool=false)  { camera.toPerspective();   }
     void toTurnZ(bool=false) { camera.toTurnZ();  }
     void toTurnY(bool=false)  { camera.toTurnY();   }
+    void setLowRotSensitivity(bool=false)  { camera.setRotationSensitivity(240); }
+    void setMedRotSensitivity(bool=false)  { camera.setRotationSensitivity(360); }
+    void setHighRotSensitivity(bool=false) { camera.setRotationSensitivity(720); }
     void zoomTo(bool=false) { camera.zoomTo(settings.min, settings.max); }
 
     void toDCMeshing();

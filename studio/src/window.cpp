@@ -219,6 +219,9 @@ Window::Window(Arguments args)
     sense_mode->addAction(sensitivity_low);
     sense_mode->addAction(sensitivity_medium);
     sense_mode->addAction(sensitivity_high);
+    connect(sensitivity_low, &QAction::triggered, view, &View::setLowRotSensitivity);
+    connect(sensitivity_medium, &QAction::triggered, view, &View::setMedRotSensitivity);
+    connect(sensitivity_high, &QAction::triggered, view, &View::setHighRotSensitivity);
     view_menu->addMenu(sensitivity_menu);
 
     view_menu->addSeparator();

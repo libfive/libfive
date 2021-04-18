@@ -141,6 +141,11 @@ void Camera::toTurnY()
     animateAxis(QQuaternion::fromDirection({0, 1, 0}, {0, 0, 1}));
 }
 
+void Camera::setRotationSensitivity(float sensitivity)
+{
+    rotationSensitivity = sensitivity;
+}
+
 void Camera::zoomTo(const QVector3D& min, const QVector3D& max)
 {
     QVector3D center_start = center;
