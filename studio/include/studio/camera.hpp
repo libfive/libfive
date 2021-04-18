@@ -88,6 +88,7 @@ protected:
     QVector3D center={0,0,0};
     float pitch=128;
     float yaw=-59;
+    float rotationSensitivity=360;
 
     float perspective=0.25;
     Q_PROPERTY(float perspective MEMBER perspective NOTIFY changed)
