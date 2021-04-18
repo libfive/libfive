@@ -42,6 +42,14 @@ public:
     void toTurnY();
 
     /*
+     *  Sets the mouse rotation sensitivity of the viewport 
+     *  in degrees per windown size. (Angle rotated for 
+     *  distance dragged across the screen, relative to the 
+     *  size of the window)
+     */
+    void setRotationSensitivity(float sensitivity);
+
+    /*
      *  Triggers an animation to zoom to the given setting
      */
     void zoomTo(const QVector3D& min, const QVector3D& max);
@@ -88,6 +96,7 @@ protected:
     QVector3D center={0,0,0};
     float pitch=128;
     float yaw=-59;
+    float rotationSensitivity=360;
 
     float perspective=0.25;
     Q_PROPERTY(float perspective MEMBER perspective NOTIFY changed)

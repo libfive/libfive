@@ -69,8 +69,8 @@ QMatrix4x4 Camera::M() const
 
 void Camera::rotateIncremental(QPoint delta)
 {
-    pitch += delta.y();
-    yaw += delta.x();
+    pitch += rotationSensitivity*float(delta.y()/float(size.height()));
+    yaw += rotationSensitivity*float(delta.x()/float(size.width()));
 
     pitch = fmax(fmin(pitch, 180), 0);
     yaw = fmod(yaw, 360);
@@ -139,6 +139,11 @@ void Camera::toTurnZ()
 void Camera::toTurnY()
 {
     animateAxis(QQuaternion::fromDirection({0, 1, 0}, {0, 0, 1}));
+}
+
+void Camera::setRotationSensitivity(float sensitivity)
+{
+    rotationSensitivity = sensitivity;
 }
 
 void Camera::zoomTo(const QVector3D& min, const QVector3D& max)
