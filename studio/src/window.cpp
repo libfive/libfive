@@ -204,6 +204,23 @@ Window::Window(Arguments args)
     connect(turn_y_up, &QAction::triggered, view, &View::toTurnY);
     view_menu->addMenu(rotation_menu);
 
+    auto sensitivity_low = new QAction("Low Sensitivity", nullptr);
+    auto sensitivity_medium = new QAction("Medium Sensitivity", nullptr);
+    auto sensitivity_high = new QAction("High Sensitivity", nullptr);
+    auto sensitivity_menu = new QMenu("Rotation Sensitivity");
+    sensitivity_menu->addAction(sensitivity_low);
+    sensitivity_menu->addAction(sensitivity_medium);
+    sensitivity_menu->addAction(sensitivity_high);
+    sensitivity_low->setCheckable(true);
+    sensitivity_medium->setCheckable(true);
+    sensitivity_medium->setChecked(true);
+    sensitivity_high->setCheckable(true);
+    auto sense_mode = new QActionGroup(sensitivity_menu);
+    sense_mode->addAction(sensitivity_low);
+    sense_mode->addAction(sensitivity_medium);
+    sense_mode->addAction(sensitivity_high);
+    view_menu->addMenu(sensitivity_menu);
+
     view_menu->addSeparator();
     auto zoom_to_action = new QAction("Zoom to bounds", nullptr);
     view_menu->addAction(zoom_to_action);
