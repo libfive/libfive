@@ -22,23 +22,30 @@ namespace Studio {
 namespace Shader {
 
 QOpenGLShaderProgram* basic;
+QOpenGLShaderProgram* outline;
 QOpenGLShaderProgram* point;
 QOpenGLShaderProgram* busy;
 QOpenGLShaderProgram* line;
 
 void initializeGL()
 {
-    auto build = [](QString vert, QString frag) {
+    auto build = [](QString vert, QString frag, QString geom="") {
         auto s = new QOpenGLShaderProgram;
         s->addShaderFromSourceFile(
                 QOpenGLShader::Vertex, ":/gl/" + vert + ".vert");
         s->addShaderFromSourceFile(
                 QOpenGLShader::Fragment, ":/gl/" + frag + ".frag");
+        if (geom.length() != 0)
+        {
+            s->addShaderFromSourceFile(
+                    QOpenGLShader::Geometry, ":/gl/" + geom + ".geom");
+        }
         s->link();
         return s;
     };
 
     basic = build("basic", "basic");
+    outline = build("outline", "outline", "outline");
     busy = build("basic", "busy");
     line = build("line", "basic");
 }

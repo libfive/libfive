@@ -2,6 +2,9 @@
     <qresource prefix="/">
         <file>gl/basic.vert</file>
         <file>gl/basic.frag</file>
+        <file>gl/outline.vert</file>
+        <file>gl/outline.frag</file>
+        <file>gl/outline.geom</file>
         <file>gl/busy.frag</file>
         <file>gl/line.vert</file>
 
