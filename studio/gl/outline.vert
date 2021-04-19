@@ -13,19 +13,7 @@ out vec3 frag_norm;
 
 void main()
 {
-    // base_pos = vertex_position;
-
-    // gl_Position = M * vec4(vertex_position, 1.0f);
-    // gl_Position.w = max(0, gl_Position.w);
-
-    // frag_pos = gl_Position.xyz / gl_Position.w;
-    // frag_color = vec4(vertex_color, 1.0f);
-
-    // vec4 norm_pos = M * vec4(vertex_position + vertex_norm, 1.0f);
-    // frag_norm = (norm_pos.xyz / norm_pos.w) - frag_pos;
-    // frag_norm.z *= -8;
-    // frag_norm = normalize(frag_norm);
-
-
+    //Simple pass-through
+    //transformation matrix is handled in the geometry shader
     gl_Position = vec4(vertex_position, 1);
 }

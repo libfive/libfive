@@ -42,7 +42,7 @@ void main() {
         float specular = pow(max(0.0, dot(norm, spos)), shininess);
 
         //mix diffuse and specular
-        float brightness = mix(diffuse, specular, 0.5);
+        float brightness = mix(diffuse, specular, 0.5); //50% mix
 
         fragColor = vec4(brightness, brightness, brightness, 1.0);
     }

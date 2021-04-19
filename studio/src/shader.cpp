@@ -35,6 +35,7 @@ void initializeGL()
                 QOpenGLShader::Vertex, ":/gl/" + vert + ".vert");
         s->addShaderFromSourceFile(
                 QOpenGLShader::Fragment, ":/gl/" + frag + ".frag");
+        //Only use geometry shader if name is specified
         if (geom.length() != 0)
         {
             s->addShaderFromSourceFile(
