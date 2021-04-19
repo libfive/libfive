@@ -179,6 +179,7 @@ void Shape::draw(const QMatrix4x4& M)
     {
         auto s = (grabbed || hover) ? 1 : 0.9;
 
+        //Draw Shape
         Shader::basic->bind();
         glUniform4f(Shader::basic->uniformLocation("color_mul"),
                     0.96 * s, 0.75 * s, 0.63 * s, 1.0f);
@@ -191,6 +192,19 @@ void Shape::draw(const QMatrix4x4& M)
         glDrawElements(GL_TRIANGLES, mesh->branes.size() * 3, GL_UNSIGNED_INT, NULL);
         vao.release();
         Shader::basic->release();
+
+
+        //Draw Outline
+        Shader::outline->bind();
+        glUniformMatrix4fv(Shader::outline->uniformLocation("M"),
+                           1, GL_FALSE, M.data());
+        vao.bind();
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT); //Cull front faces so only outline is drawn
+        glDrawElements(GL_TRIANGLES, mesh->branes.size() * 3, GL_UNSIGNED_INT, NULL);
+        glDisable(GL_CULL_FACE);
+        vao.release();
+        Shader::outline->release();
     }
 }
 
