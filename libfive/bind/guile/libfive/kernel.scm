@@ -43,7 +43,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (cond ((shape? t) t)
         ((number? t) (number->shape t))
         (else (scm-error 'wrong-type-arg ensure-shape
-               "Wrong argument ~A (should be number or shape) " (list t) (list t)))))
+               "Wrong argument ~A (should be number or shape) "
+               (list t) (list t)))))
 (define-public (ensure-shape-ptr t)
   " Converts a shape or a number to a foreign shape pointer"
   (shape->ptr (ensure-shape t)))
@@ -52,7 +53,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   " Converts a symbol to an opcode, or throws an error if no match is found"
   (define op (libfive-opcode-enum (string->pointer (symbol->string s))))
   (if (eq? op -1)
-    (error (format "Invalid opcode: ~s" s))
+    (scm-error 'wrong-type-arg "opcode-enum" "Invalid opcode ~s"
+               (list s) (list s))
     op))
 
 (define-public (number->shape f)
@@ -65,16 +67,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   (cond
     ((= args 0)
       (if (or a b)
-        (error (format "Opcode ~s takes 0 arguments" op))
+        (scm-error 'wrong-number-of-args
+                   "make-shape" "Opcode ~s takes 0 arguments"
+                   (list op) (list op))
         (ptr->shape (libfive-tree-nullary opcode))))
     ((= args 1)
-      (if (or (not (shape? a)) b)
-        (error (format "Opcode ~s takes 1 shape argument" op))
-        (ptr->shape (libfive-tree-unary opcode (shape->ptr a)))))
+      (cond
+        ((or (not a) b)
+          (scm-error 'wrong-number-of-args
+                     "make-shape" "Opcode ~s takes 1 shape argument"
+                     (list op) (list op)))
+        (not (shape? a)
+          (scm-error 'wrong-type-arg
+                     "make-shape" "Opcode ~s takes 1 shape argument"
+                     (list op) (list op)))
+        (#t
+          (ptr->shape (libfive-tree-unary opcode (shape->ptr a))))))
     ((= args 2)
-      (if (or (not (shape? a)) (not (shape? b)))
-        (error (format "Opcode ~s takes 2 shape arguments" op))
-        (ptr->shape (libfive-tree-binary opcode (shape->ptr a) (shape->ptr b)))))
+      (cond
+        ((or (not a) (not b))
+          (scm-error 'wrong-number-of-args
+                     "make-shape" "Opcode ~s takes 2 shape arguments"
+                     (list op) (list op)))
+        ((or (not (shape? a)) (not (shape? b)))
+          (scm-error 'wrong-type-arg
+                     "make-shape" "Opcode ~s takes 2 shape arguments"
+                     (list op) (list op)))
+        (#t
+          (ptr->shape (libfive-tree-binary opcode (shape->ptr a)
+                                                  (shape->ptr b))))))
 ))
 (export make-shape)
 
