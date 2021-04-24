@@ -33,7 +33,9 @@ App::App(int& argc, char** argv)
             (app_dir + "/../Frameworks/").toLocal8Bit());
 #endif
 
-    QFontDatabase::addApplicationFont(":/font/Inconsolata.otf");
+    if (QFontDatabase::addApplicationFont(":/font/Inconsolata.otf") == -1) {
+        std::cerr << "App: could not add application font";
+    }
 
     window.reset(new Window(Arguments(this)));
 }
