@@ -76,9 +76,17 @@ void Interpreter::init() {
     // then fall back to assuming we're in the the build directory, then
     // fall back to standard system library search paths
     const auto app_dir = QCoreApplication::applicationDirPath();
+
+    // If the application is deployed, the Guile files are in the Resources
+    // subfolder of the .app bundle.
+    const auto app_resource_dir = app_dir + "/../Resources/guile/ccache/";
+
+    // Otherwise, we're hopefully in the build directory, so use a relative
+    // path to where the Guile files are included.
+    const auto finder_build_dir = app_dir + "/../../../../libfive/bind/guile";
+
     qputenv("GUILE_LOAD_COMPILED_PATH",
-            (app_dir + "/../Resources/guile/ccache/:libfive/bind/guile")
-                .toLocal8Bit());
+            (app_resource_dir + ":" + finder_build_dir).toLocal8Bit());
 #else
     // Assume that we're in the build directory, then fall back to Linux
     // system libraries (if the Studio executable was installed, then the Guile
