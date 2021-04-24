@@ -204,10 +204,10 @@ Window::Window(Arguments args)
     connect(turn_y_up, &QAction::triggered, view, &View::toTurnY);
     view_menu->addMenu(rotation_menu);
 
-    auto sensitivity_low = new QAction("Low Sensitivity", nullptr);
-    auto sensitivity_medium = new QAction("Medium Sensitivity", nullptr);
-    auto sensitivity_high = new QAction("High Sensitivity", nullptr);
-    auto sensitivity_menu = new QMenu("Rotation Sensitivity");
+    auto sensitivity_low = new QAction("Low", nullptr);
+    auto sensitivity_medium = new QAction("Medium", nullptr);
+    auto sensitivity_high = new QAction("High", nullptr);
+    auto sensitivity_menu = new QMenu("Rotation sensitivity");
     sensitivity_menu->addAction(sensitivity_low);
     sensitivity_menu->addAction(sensitivity_medium);
     sensitivity_menu->addAction(sensitivity_high);
