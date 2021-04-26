@@ -138,9 +138,17 @@ TEST_CASE("#[vector notation]")
 
 TEST_CASE("shape-eval")
 {
-    auto result = eval(
-            "(shape-eval (lambda-shape (x y z) (* x (/ 1 z))) #[0 0 0])");
-    REQUIRE(result == "+nan.0");
+    SECTION("NaN") {
+        auto result = eval(
+                "(shape-eval (lambda-shape (x y z) (* x (/ 1 z))) #[0 0 0])");
+        REQUIRE(result == "+nan.0");
+    }
+
+    SECTION("sqrt") {
+        auto result = eval(
+                "(shape-eval (lambda-shape (x y z) (sqrt x)) #[0 0 0])");
+        REQUIRE(result == "0.0");
+    }
 }
 
 TEST_CASE("eval-sandboxed")

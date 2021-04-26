@@ -77,7 +77,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
           (scm-error 'wrong-number-of-args
                      "make-shape" "Opcode ~s takes 1 shape argument"
                      (list op) (list op)))
-        (not (shape? a)
+        ((not (shape? a))
           (scm-error 'wrong-type-arg
                      "make-shape" "Opcode ~s takes 1 shape argument"
                      (list op) (list op)))
