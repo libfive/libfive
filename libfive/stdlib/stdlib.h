@@ -15,6 +15,8 @@ struct tvec3 {
     libfive_tree x, y, z;
 };
 typedef libfive_tree tfloat;
+typedef struct tvec2 tvec2;
+typedef struct tvec3 tvec3;
 
 #ifdef __cplusplus
 extern "C" {
