@@ -233,7 +233,7 @@ float libfive_tree_get_const(libfive_tree t, bool* success);
  */
 libfive_tree libfive_tree_nullary(int op);
 
-[[deprecated("use libfive_tree_nullary instead")]]
+__attribute__((deprecated("deprecated", "libfive_tree_nullary")))
 libfive_tree libfive_tree_nonary(int op);
 
 /*
