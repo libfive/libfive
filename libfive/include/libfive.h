@@ -233,9 +233,6 @@ float libfive_tree_get_const(libfive_tree t, bool* success);
  */
 libfive_tree libfive_tree_nullary(int op);
 
-__attribute__((deprecated("deprecated", "libfive_tree_nullary")))
-libfive_tree libfive_tree_nonary(int op);
-
 /*
  *  Constructs a tree with the given one-argument opcode
  *  Returns NULL if the opcode or argument is invalid

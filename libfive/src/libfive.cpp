@@ -120,11 +120,6 @@ static bool opcode_is_valid(int op, size_t expected_args)
            Opcode::args(Opcode::Opcode(op)) == expected_args;
 }
 
-libfive_tree libfive_tree_nonary(int op)
-{
-    return libfive_tree_nullary(op);
-}
-
 libfive_tree libfive_tree_nullary(int op)
 {
     return opcode_is_valid(op, 0)
