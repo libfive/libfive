@@ -23,10 +23,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 (use-modules (system foreign) (srfi srfi-1) (srfi srfi-98))
 
+; Workaround for a bug in Guile 3.0.7, reported to the mailing list: on macOS,
+; it doesn't match the %host-type string, so fails to look for files ending
+; in .dylib
+(define (dynamic-link-workaround name)
+  (if (and (string=? (version) "3.0.7") (string-contains %host-type "-darwin"))
+    (begin
+      (use-modules (system foreign-library))
+      (load-foreign-library name #:extensions '(".dylib")))
+    (dynamic-link name)))
+
 (define (try-link lib name)
   (catch
     #t
-    (lambda () (dynamic-link (string-append lib name)))
+    (lambda () (dynamic-link-workaround (string-append lib name)))
     (lambda (key . args) #f)))
 
 ;; Search various paths to find libfive.dylib, in order of priority:
