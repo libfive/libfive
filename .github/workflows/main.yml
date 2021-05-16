@@ -14,9 +14,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      with:
-        submodules: recursive
     - run: brew install ninja eigen boost guile python3 qt@5
-
     - name: Release build
-      run: mkdir build && cd build && cmake -GNinja -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 .. && ninja
+      run: ./studio/deploy/mac/deploy.sh dmg
+    - uses: actions/upload-artifact@v2
+      with:
+        path: Studio.dmg
