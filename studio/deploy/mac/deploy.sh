@@ -9,7 +9,6 @@ VERSION=`echo $VERSION|sed s:/:-:g`
 
 QT_DIR=$(find /usr/local/Cellar/qt -name "5.1*" -depth 1|head -n1)
 
-cd ../../..
 rm -rf build
 mkdir build
 cd build
