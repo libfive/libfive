@@ -69,8 +69,13 @@ libfive_tree = ctypes.c_void_p
 # Types used in the libfive stdlib
 class tvec2(ctypes.Structure):
     _fields_ = [("x", libfive_tree), ("y", libfive_tree)]
+    def __init__(self, x, y):
+        super().__init__(x, y)
+
 class tvec3(ctypes.Structure):
     _fields_ = [("x", libfive_tree), ("y", libfive_tree), ("z", libfive_tree)]
+    def __init__(self, x, y, z):
+        super().__init__(x, y, z)
 tfloat = libfive_tree
 
 ################################################################################
