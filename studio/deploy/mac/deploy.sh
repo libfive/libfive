@@ -11,6 +11,7 @@ rm -rf build
 mkdir build
 cd build
 cmake -GNinja\
+    -DBUILD_GUILE_BINDINGS=OFF \
     -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5 \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12  ..
 rm -rf $APP studio/$APP
@@ -115,9 +116,9 @@ install_name_tool -change \
 cd ../Resources
 mkdir -p guile/scm
 mkdir -p guile/ccache
-cp -r $GUILE_SCM guile/scm/
-cp -r $GUILE_CCACHE guile/ccache/
-cp -r ../../../../libfive/bind/guile/libfive guile/scm
+# cp -r $GUILE_SCM guile/scm/
+# cp -r $GUILE_CCACHE guile/ccache/
+# cp -r ../../../../libfive/bind/guile/libfive guile/scm
 
 # In the Resources directory, find any uncompiled scm files and compile them
 # now for a faster startup, then delete them to reduce bundle size
