@@ -30,6 +30,7 @@ to change variables in the script.
 - [Tovero](https://gitlab.com/kavalogic-inc/tovero): A 3D modeling system for Common Lisp
 - [`libfivepy`](https://gitlab.com/rcmz0/libfivepy): A Python CAD library (work in progress)
 - [Bindings for Unity](https://github.com/zalo/libfive-unity)
+- High level [Rust bindings](https://crates.io/crates/libfive)
 - Unpublished [Stanza](http://lbstanza.org/) bindings (email for details)
 
 ### Viewers
