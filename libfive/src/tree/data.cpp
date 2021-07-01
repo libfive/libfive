@@ -41,7 +41,7 @@ const Tree& TreeData::lhs() const {
     } else if (auto i = std::get_if<TreeBinaryOp>(this)) {
         return i->lhs;
     } else {
-        throw ValueException();
+        throw ChildException();
     }
 }
 
@@ -49,7 +49,7 @@ const Tree& TreeData::rhs() const {
     if (auto i = std::get_if<TreeBinaryOp>(this)) {
         return i->rhs;
     } else {
-        throw ValueException();
+        throw ChildException();
     }
 }
 
