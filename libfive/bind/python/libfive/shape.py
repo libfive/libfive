@@ -184,12 +184,26 @@ class Shape:
         return Shape.new('acos', self.ptr)
     def atan(self):
         return Shape.new('atan', self.ptr)
+    def exp(self):
+        return Shape.new('exp', self.ptr)
     def log(self):
         return Shape.new('log', self.ptr)
     def square(self):
         return Shape.new('square', self.ptr)
     def abs(self):
         return Shape.new('abs', self.ptr)
+
+    @_wrapped
+    def atan2(self, other):
+        return Shape.new('atan2', self.ptr, other.ptr)
+
+    @_wrapped
+    def nth_root(self, other):
+        return Shape.new('nth-root', self.ptr, other.ptr)
+
+    @_wrapped
+    def nanfill(self, other):
+        return Shape.new('nanfill', self.ptr, other.ptr)
 
     @_wrapped
     def min(self, other):
