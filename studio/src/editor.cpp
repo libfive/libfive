@@ -435,6 +435,8 @@ void Editor::setLanguage(Language::Type t) {
     }
 
     if (changed) {
+        emit languageChanged();
+
         connect(script, &QPlainTextEdit::cursorPositionChanged,
                 m_language.data(), [&](){ m_language->onCursorMoved(script); });
         connect(m_language.data(), &Language::interpreterBusy,

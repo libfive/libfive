@@ -37,8 +37,16 @@ Arguments::Arguments(QCoreApplication* app)
     QCommandLineOption python_option(
             QStringList() << "p" << "python",
             "Boot the interpreter in Python mode");
+
+    QCommandLineOption guile_option(
+            QStringList() << "g" << "guile",
+            "Boot the interpreter in Guile mode");
+
     if (Editor::supportsLanguage(Language::LANGUAGE_PYTHON)) {
         parser.addOption(python_option);
+    }
+    if (Editor::supportsLanguage(Language::LANGUAGE_GUILE)) {
+        parser.addOption(guile_option);
     }
 
     parser.process(*app);
@@ -48,9 +56,12 @@ Arguments::Arguments(QCoreApplication* app)
 
     vertical = parser.isSet(vertical_layout);
 
-    if (parser.isSet(python_option)) {
+    if (parser.isSet(python_option) && parser.isSet(guile_option))
+        std::cerr << "-p and -g cannot be set at the same time" << std::endl;
+    else if (parser.isSet(python_option))
         language = Language::LANGUAGE_PYTHON;
-    }
+    else if (parser.isSet(guile_option))
+        language = Language::LANGUAGE_GUILE;
 }
 
 }   // namespace Studio

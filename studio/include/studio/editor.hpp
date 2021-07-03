@@ -91,6 +91,7 @@ public slots:
     void onDragEnd();
 
 signals:
+    void languageChanged();
     void scriptChanged(QString s);
     void modificationChanged(bool m);
     void undoAvailable(bool a);
