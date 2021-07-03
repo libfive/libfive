@@ -46,10 +46,34 @@ namespace Studio {
 
 Window::Window(Arguments args)
     : QMainWindow()
-    , editor(new Editor(args.language))
     , view(new View)
     , settings("impraxical", "Studio")
 {
+    Language::Type language = Language::LANGUAGE_NONE;
+
+    if (args.language != Language::LANGUAGE_NONE)
+    {
+        // give precedence to command line arguments
+        language = args.language;
+    }
+    else if (settings.contains("language"))
+    {
+        // then application settings
+        QString language_str = settings.value("language").toString();
+        if (language_str == "guile")
+            language = Language::LANGUAGE_GUILE;
+        else if (language_str == "python")
+            language = Language::LANGUAGE_PYTHON;
+    }
+    // otherwise the editor will pick the default
+
+    editor = new Editor(language);
+
+    // the first languageChanged signal happens at construction, when we're not yet connected
+    onLanguageChanged();
+    connect(editor, &Editor::languageChanged,
+            this, &Window::onLanguageChanged);
+
     resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
 
     setAcceptDrops(true);
@@ -828,6 +852,14 @@ bool Window::reset(Language::Type t) {
 
 bool Window::setLanguage(Language::Type t) {
     return reset(t);
+}
+
+void Window::onLanguageChanged() {
+    Language::Type lang = editor->getLanguage();
+    if (lang == Language::LANGUAGE_GUILE)
+        settings.setValue("language", "guile");
+    else if (lang == Language::LANGUAGE_PYTHON)
+        settings.setValue("language", "python");
 }
 
 }   // namespace Studio
