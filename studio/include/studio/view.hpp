@@ -60,14 +60,16 @@ public slots:
     void showAxes(bool a);
     void showBBox(bool b);
 
-    void toOrthographic(bool=false) { camera.toOrthographic();  }
-    void toPerspective(bool=false)  { camera.toPerspective();   }
-    void toTurnZ(bool=false) { camera.toTurnZ();  }
-    void toTurnY(bool=false)  { camera.toTurnY();   }
-    void setLowRotSensitivity(bool=false)  { camera.setRotationSensitivity(240); }
-    void setMedRotSensitivity(bool=false)  { camera.setRotationSensitivity(360); }
-    void setHighRotSensitivity(bool=false) { camera.setRotationSensitivity(720); }
-    void zoomTo(bool=false) { camera.zoomTo(settings.min, settings.max); }
+    void toOrthographic() { camera.toOrthographic();  }
+    void toPerspective()  { camera.toPerspective();   }
+    void toTurnZ() { camera.toTurnZ();  }
+    void toTurnY()  { camera.toTurnY();   }
+    void setLowRotSensitivity()  { camera.setRotationSensitivity(240); }
+    void setMedRotSensitivity()  { camera.setRotationSensitivity(360); }
+    void setHighRotSensitivity() { camera.setRotationSensitivity(720); }
+    void setZoomCursorCentric() { zoom_cursor_centric = true; }
+    void setZoomSceneCentric() { zoom_cursor_centric = false; }
+    void zoomTo() { camera.zoomTo(settings.min, settings.max); }
 
     void toDCMeshing();
     void toIsoMeshing();
@@ -167,6 +169,8 @@ protected:
 
     bool show_axes=true;
     bool show_bbox=false;
+
+    bool zoom_cursor_centric = true;
 
     /*  Framebuffer to render pick data  */
     QScopedPointer<QOpenGLFramebufferObject> pick_fbo;
