@@ -45,7 +45,10 @@ switch (checkUnsaved())                                                     \
 namespace Studio {
 
 Window::Window(Arguments args)
-    : QMainWindow(), editor(new Editor(args.language)), view(new View)
+    : QMainWindow()
+    , editor(new Editor(args.language))
+    , view(new View)
+    , settings("impraxical", "Studio")
 {
     resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
 
@@ -164,13 +167,19 @@ Window::Window(Arguments args)
     auto view_menu = menuBar()->addMenu("&View");
     auto show_axes_action = view_menu->addAction("Show axes");
     show_axes_action->setCheckable(true);
-    show_axes_action->setChecked(true);
-    connect(show_axes_action, &QAction::triggered,
-            view, &View::showAxes);
+    connect(show_axes_action, &QAction::toggled, [this](bool b){
+        view->showAxes(b);
+        settings.setValue("show-axes", b);
+    });
+    show_axes_action->setChecked(settings.value("show-axes", true).toBool());
 
     auto show_bbox_action = view_menu->addAction("Show bounding box(es)");
     show_bbox_action->setCheckable(true);
-    connect(show_bbox_action, &QAction::triggered, view, &View::showBBox);
+    connect(show_bbox_action, &QAction::toggled, [this](bool b) {
+        view->showBBox(b);
+        settings.setValue("show-bounding-box", b);
+    });
+    show_bbox_action->setChecked(settings.value("show-bounding-box", false).toBool());
 
     auto perspective_action = new QAction("Perspective", nullptr);
     auto ortho_action = new QAction("Orthographic", nullptr);
@@ -178,16 +187,25 @@ Window::Window(Arguments args)
     proj_menu->addAction(perspective_action);
     proj_menu->addAction(ortho_action);
     perspective_action->setCheckable(true);
-    perspective_action->setChecked(true);
     ortho_action->setCheckable(true);
     auto projection = new QActionGroup(proj_menu);
     projection->addAction(perspective_action);
     projection->addAction(ortho_action);
-    connect(perspective_action, &QAction::triggered,
-            view, &View::toPerspective);
-    connect(ortho_action, &QAction::triggered,
-            view, &View::toOrthographic);
+    connect(perspective_action, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->toPerspective();
+        settings.setValue("projection", "perspective");
+    });
+    connect(ortho_action, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->toOrthographic();
+        settings.setValue("projection", "orthographic");
+    });
     view_menu->addMenu(proj_menu);
+    if (settings.value("projection", "").toString() == "orthographic")
+        ortho_action->setChecked(true);
+    else
+        perspective_action->setChecked(true);
 
     auto turn_z_up = new QAction("Turntable (Z up)", nullptr);
     auto turn_y_up = new QAction("Turntable (Y up)", nullptr);
@@ -195,14 +213,25 @@ Window::Window(Arguments args)
     rotation_menu->addAction(turn_z_up);
     rotation_menu->addAction(turn_y_up);
     turn_z_up->setCheckable(true);
-    turn_z_up->setChecked(true);
     turn_y_up->setCheckable(true);
     auto rot_mode = new QActionGroup(rotation_menu);
     rot_mode->addAction(turn_z_up);
     rot_mode->addAction(turn_y_up);
-    connect(turn_z_up, &QAction::triggered, view, &View::toTurnZ);
-    connect(turn_y_up, &QAction::triggered, view, &View::toTurnY);
+    connect(turn_z_up, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->toTurnZ();
+        settings.setValue("rotation", "turntable-z-up");
+    });
+    connect(turn_y_up, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->toTurnY();
+        settings.setValue("rotation", "turntable-y-up");
+    });
     view_menu->addMenu(rotation_menu);
+    if (settings.value("rotation", "").toString() == "turntable-y-up")
+        turn_y_up->setChecked(true);
+    else
+        turn_z_up->setChecked(true);
 
     auto sensitivity_low = new QAction("Low", nullptr);
     auto sensitivity_medium = new QAction("Medium", nullptr);
@@ -213,16 +242,34 @@ Window::Window(Arguments args)
     sensitivity_menu->addAction(sensitivity_high);
     sensitivity_low->setCheckable(true);
     sensitivity_medium->setCheckable(true);
-    sensitivity_medium->setChecked(true);
     sensitivity_high->setCheckable(true);
     auto sense_mode = new QActionGroup(sensitivity_menu);
     sense_mode->addAction(sensitivity_low);
     sense_mode->addAction(sensitivity_medium);
     sense_mode->addAction(sensitivity_high);
-    connect(sensitivity_low, &QAction::triggered, view, &View::setLowRotSensitivity);
-    connect(sensitivity_medium, &QAction::triggered, view, &View::setMedRotSensitivity);
-    connect(sensitivity_high, &QAction::triggered, view, &View::setHighRotSensitivity);
+    connect(sensitivity_low, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->setLowRotSensitivity();
+        settings.setValue("rotation-sensitvity", "low");
+    });
+    connect(sensitivity_medium, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->setMedRotSensitivity();
+        settings.setValue("rotation-sensitvity", "medium");
+    });
+    connect(sensitivity_high, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->setHighRotSensitivity();
+        settings.setValue("rotation-sensitvity", "high");
+    });
     view_menu->addMenu(sensitivity_menu);
+    QString rotation_setting = settings.value("rotation-sensitvity", "").toString();
+    if (rotation_setting == "low")
+        sensitivity_low->setChecked(true);
+    else if (rotation_setting == "high")
+        sensitivity_high->setChecked(true);
+    else
+        sensitivity_medium->setChecked(true);
 
     auto cursor_centric = new QAction("Cursor", nullptr);
     auto scene_centric = new QAction("Scene", nullptr);
@@ -231,13 +278,24 @@ Window::Window(Arguments args)
     zoom_menu->addAction(scene_centric);
     cursor_centric->setCheckable(true);
     scene_centric->setCheckable(true);
-    cursor_centric->setChecked(true);
     auto zoom_mode = new QActionGroup(zoom_menu);
     zoom_mode->addAction(cursor_centric);
     zoom_mode->addAction(scene_centric);
-    connect(cursor_centric, &QAction::triggered, view, &View::setZoomCursorCentric);
-    connect(scene_centric, &QAction::triggered, view, &View::setZoomSceneCentric);
+    connect(cursor_centric, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->setZoomCursorCentric();
+        settings.setValue("zoom-center", "cursor");
+    });
+    connect(scene_centric, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->setZoomSceneCentric();
+        settings.setValue("zoom-center", "scene");
+    });
     view_menu->addMenu(zoom_menu);
+    if (settings.value("zoom-center", "").toString() == "scene")
+        scene_centric->setChecked(true);
+    else
+        cursor_centric->setChecked(true);
 
     view_menu->addSeparator();
     auto zoom_to_action = new QAction("Zoom to bounds", nullptr);
@@ -258,10 +316,28 @@ Window::Window(Arguments args)
         meshing_mode->addAction(m);
         m->setCheckable(true);
     }
-    dc_meshing->setChecked(true);
-    connect(dc_meshing, &QAction::triggered, view, &View::toDCMeshing);
-    connect(iso_meshing, &QAction::triggered, view, &View::toIsoMeshing);
-    connect(hybrid_meshing, &QAction::triggered, view, &View::toHybridMeshing);
+    connect(dc_meshing, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->toDCMeshing();
+        settings.setValue("meshing-algorithm", "dual-contouring");
+    });
+    connect(iso_meshing, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->toIsoMeshing();
+        settings.setValue("meshing-algorithm", "iso-simplex");
+    });
+    connect(hybrid_meshing, &QAction::toggled, [this](bool b) {
+        if (!b) return;
+        view->toHybridMeshing();
+        settings.setValue("meshing-algorithm", "hybrid");
+    });
+    QString algorithm_setting = settings.value("meshing-algorithm", "").toString();
+    if (algorithm_setting == "iso-simplex")
+        iso_meshing->setChecked(true);
+    else if (algorithm_setting == "hybrid")
+        hybrid_meshing->setChecked(true);
+    else
+        dc_meshing->setChecked(true);
 
     auto lang_menu = menuBar()->addMenu("Language");
     auto lang_guile = new QAction("Guile Scheme", nullptr);
@@ -312,16 +388,12 @@ Window::Window(Arguments args)
     #endif
     show();
 
-    {   //  Load the tutorial file on first run if there's no target
-        QSettings settings("impraxical", "Studio");
-        if (settings.contains("first-run") &&
-            settings.value("first-run").toBool() &&
-            args.filename.isEmpty())
-        {
-            args.filename = ":/examples/tutorial.io";
-        }
-        settings.setValue("first-run", false);
+    if (settings.value("first-run", true).toBool() &&
+        args.filename.isEmpty())
+    {
+        args.filename = ":/examples/tutorial.io";
     }
+    settings.setValue("first-run", false);
 
     onNew();
     if (!args.filename.isEmpty() && loadFile(args.filename))

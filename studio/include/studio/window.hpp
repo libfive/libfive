@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QFileSystemWatcher>
+#include <QSettings>
 
 #include "studio/args.hpp"
 #include "studio/language.hpp"
@@ -107,5 +108,8 @@ protected:
     Editor* editor;
     View* view;
     bool closing=false;
+
+    /* Used to (re)store the state of the application */
+    QSettings settings;
 };
 }   // namespace Studio
