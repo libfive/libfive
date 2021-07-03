@@ -733,6 +733,10 @@ void Window::onExport(bool)
     {
         return;
     }
+    if (!export_filename.endsWith(".stl", Qt::CaseInsensitive))
+    {
+        export_filename += ".stl";
+    }
 
     connect(view, &View::meshesReady, this, &Window::onExportReady);
 
