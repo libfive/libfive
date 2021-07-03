@@ -503,7 +503,8 @@ void View::wheelEvent(QWheelEvent *event)
 {
     QOpenGLWidget::wheelEvent(event);
     event->accept();
-    camera.zoomIncremental(event->angleDelta().y(), mouse.pos);
+    const QPoint& center = zoom_cursor_centric ? mouse.pos : rect().center();
+    camera.zoomIncremental(event->angleDelta().y(), center);
     update();
     pick_timer.start();
 }

@@ -67,6 +67,8 @@ public slots:
     void setLowRotSensitivity(bool=false)  { camera.setRotationSensitivity(240); }
     void setMedRotSensitivity(bool=false)  { camera.setRotationSensitivity(360); }
     void setHighRotSensitivity(bool=false) { camera.setRotationSensitivity(720); }
+    void setZoomCursorCentric(bool=false) { zoom_cursor_centric = true; }
+    void setZoomSceneCentric(bool=false) { zoom_cursor_centric = false; }
     void zoomTo(bool=false) { camera.zoomTo(settings.min, settings.max); }
 
     void toDCMeshing();
@@ -167,6 +169,8 @@ protected:
 
     bool show_axes=true;
     bool show_bbox=false;
+
+    bool zoom_cursor_centric = true;
 
     /*  Framebuffer to render pick data  */
     QScopedPointer<QOpenGLFramebufferObject> pick_fbo;

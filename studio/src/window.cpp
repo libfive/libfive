@@ -224,6 +224,21 @@ Window::Window(Arguments args)
     connect(sensitivity_high, &QAction::triggered, view, &View::setHighRotSensitivity);
     view_menu->addMenu(sensitivity_menu);
 
+    auto cursor_centric = new QAction("Cursor", nullptr);
+    auto scene_centric = new QAction("Scene", nullptr);
+    auto zoom_menu = new QMenu("Zoom center");
+    zoom_menu->addAction(cursor_centric);
+    zoom_menu->addAction(scene_centric);
+    cursor_centric->setCheckable(true);
+    scene_centric->setCheckable(true);
+    cursor_centric->setChecked(true);
+    auto zoom_mode = new QActionGroup(zoom_menu);
+    zoom_mode->addAction(cursor_centric);
+    zoom_mode->addAction(scene_centric);
+    connect(cursor_centric, &QAction::triggered, view, &View::setZoomCursorCentric);
+    connect(scene_centric, &QAction::triggered, view, &View::setZoomSceneCentric);
+    view_menu->addMenu(zoom_menu);
+
     view_menu->addSeparator();
     auto zoom_to_action = new QAction("Zoom to bounds", nullptr);
     view_menu->addAction(zoom_to_action);
