@@ -64,6 +64,17 @@ class libfive_vec3_t(ctypes.Structure):
 
 libfive_tree = ctypes.c_void_p
 
+class libfive_tri_t(ctypes.Structure):
+    _fields_ = [("a", ctypes.c_uint32),
+                ("b", ctypes.c_uint32),
+                ("c", ctypes.c_uint32)]
+
+class libfive_mesh_t(ctypes.Structure):
+    _fields_ = [("verts", ctypes.POINTER(libfive_vec3_t)),
+                ("tris",  ctypes.POINTER(libfive_tri_t)),
+                ("tri_count", ctypes.c_uint32),
+                ("vert_count", ctypes.c_uint32)]
+
 ################################################################################
 
 # Types used in the libfive stdlib
@@ -138,3 +149,8 @@ lib.libfive_tree_eval_d.restype = libfive_vec3_t
 
 lib.libfive_tree_optimized.argtypes = [libfive_tree]
 lib.libfive_tree_optimized.restype = libfive_tree
+
+lib.libfive_tree_render_mesh.argtypes = [libfive_tree, libfive_region_t, ctypes.c_float]
+lib.libfive_tree_render_mesh.restype = ctypes.POINTER(libfive_mesh_t)
+
+lib.libfive_mesh_delete.argtypes = [ctypes.POINTER(libfive_mesh_t)]

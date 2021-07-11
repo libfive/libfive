@@ -242,6 +242,32 @@ class Shape:
         lib.libfive_tree_save_mesh(self.ptr, region, resolution,
                                    filename.encode('ascii'))
 
+    def get_mesh(self, xyz_min=(-10,-10,-10), xyz_max=(10,10,10),
+                 resolution=10):
+        ''' Converts this Shape into a mesh, and returns that mesh in
+            the form of a face-vertex mesh.
+
+        Options are the same as in save_stl().
+
+        Returns:
+        verts - List of (x, y, z) vertices
+        tris - List of (a, b, c) indices into verts
+        '''
+        region = libfive_region_t(*[libfive_interval_t(a, b) for a, b
+                                    in zip(xyz_min, xyz_max)])
+        mesh_p = lib.libfive_tree_render_mesh(self.ptr, region, resolution)
+        mesh = mesh_p[0]
+        tris = []
+        for i in range(mesh.tri_count):
+            f = mesh.tris[i]
+            tris.append((f.a, f.b, f.c))
+        verts = []
+        for i in range(mesh.vert_count):
+            v = mesh.verts[i]
+            verts.append((v.x, v.y, v.z))
+        lib.libfive_mesh_delete(mesh_p)
+        return verts, tris
+
     def show(self, xyz_min=(-10,-10,-10), xyz_max=(10,10,10), resolution=10):
         with open('.out.stl','wb') as f:
             self.save_stl(f.name, xyz_min, xyz_max, resolution)
