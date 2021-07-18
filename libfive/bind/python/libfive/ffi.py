@@ -27,13 +27,16 @@ def try_link(folder, name):
 def paths_for(folder):
     # In most cases, we are running from the top-level build folder, which
     # contains libfive/{folder}/{library}.{suffix}
-    paths = [os.path.join('libfive', folder),
-             os.path.join('${CMAKE_INSTALL_PREFIX}', 'lib')]
+    paths = [os.path.join('libfive', folder)]
 
     # On Windows, we may be running from the studio subfolder if Studio.exe
     # was double-checked, which puts the build directory up one level.
     if sys.platform == 'win32':
         paths.append(os.path.join('..', 'libfive', folder))
+
+    # On linux, the libraries are installed to CMAKE_INSTALL_PREFIX/lib.
+    if sys.platform == "linux" or sys.platform == "linux2":
+        paths.append(os.path.join('${CMAKE_INSTALL_PREFIX}', 'lib'))
     paths.append("")
     framework_dir = os.environ.get('LIBFIVE_FRAMEWORK_DIR')
     if framework_dir:
