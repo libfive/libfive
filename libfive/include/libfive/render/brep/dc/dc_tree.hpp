@@ -86,6 +86,16 @@ struct DCLeaf
     double BtB;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    #if EIGEN_MAJOR_VERSION == 4
+    void *operator new[](std::size_t size) {
+        return std::aligned_alloc(std::alignment_of_v<DCLeaf>, size);
+    }
+
+    void operator delete[](void* ptr) {
+        ::operator delete[](ptr);
+    }
+    #endif
 };
 
 template <unsigned N>
@@ -183,6 +193,16 @@ public:
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    #if EIGEN_MAJOR_VERSION == 4
+    void *operator new[](std::size_t size) {
+        return std::aligned_alloc(std::alignment_of_v<DCTree>, size);
+    }
+
+    void operator delete[](void* ptr) {
+        ::operator delete[](ptr);
+    }
+    #endif
 
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;

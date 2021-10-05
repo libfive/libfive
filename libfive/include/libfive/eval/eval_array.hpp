@@ -124,6 +124,12 @@ public:
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
+    #if EIGEN_MAJOR_VERSION == 4
+    void *operator new[](std::size_t size) {
+        return std::aligned_alloc(std::alignment_of_v<ArrayEvaluator>, size);
+    }
+    #endif
 };
 
 }   // namespace libfive

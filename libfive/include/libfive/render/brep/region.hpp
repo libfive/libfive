@@ -264,6 +264,12 @@ public:
 
     /*  Boilerplate for an object that contains an Eigen struct  */
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    #if EIGEN_MAJOR_VERSION == 4
+    void *operator new[](std::size_t size) {
+        return std::aligned_alloc(std::alignment_of_v<Region>, size);
+    }
+    #endif
 };
 
 }   // namespace libfive

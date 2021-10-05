@@ -95,6 +95,16 @@ struct Intersection {
     double BtB;
     mutable int8_t rank=-1;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    #if EIGEN_MAJOR_VERSION == 4
+    void *operator new[](std::size_t size) {
+        return std::aligned_alloc(std::alignment_of_v<Intersection>, size);
+    }
+
+    void operator delete[](void* ptr) {
+        ::operator delete[](ptr);
+    }
+    #endif
 };
 
 }   // namespace libfive
