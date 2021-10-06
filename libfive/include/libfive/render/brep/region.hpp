@@ -12,6 +12,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <array>
 
 #include "libfive/render/brep/util.hpp"
+#include "libfive/render/brep/default_new_delete.hpp"
 
 namespace libfive {
 
@@ -263,13 +264,8 @@ public:
     int32_t level;
 
     /*  Boilerplate for an object that contains an Eigen struct  */
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    ALIGNED_OPERATOR_NEW_AND_DELETE(Region)
 
-    #if EIGEN_MAJOR_VERSION == 4
-    void *operator new[](std::size_t size) {
-        return std::aligned_alloc(std::alignment_of_v<Region>, size);
-    }
-    #endif
 };
 
 }   // namespace libfive

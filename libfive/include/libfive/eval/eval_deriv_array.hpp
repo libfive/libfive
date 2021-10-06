@@ -75,7 +75,7 @@ public:
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    ALIGNED_OPERATOR_NEW_AND_DELETE(DerivArrayEvaluator)
 };
 
 }   // namespace libfive

@@ -17,6 +17,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/simplex/surface_edge_map.hpp"
 #include "libfive/render/brep/simplex/qef.hpp"
+#include "libfive/render/brep/default_new_delete.hpp"
 
 namespace libfive {
 
@@ -80,17 +81,7 @@ struct HybridLeaf
     /*  Tape used for evaluation within this leaf */
     Tape::Handle tape;
 
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-    #if EIGEN_MAJOR_VERSION == 4
-    void *operator new[](std::size_t size) {
-        return std::aligned_alloc(std::alignment_of_v<HybridLeaf>, size);
-    }
-
-    void operator delete[](void* ptr) {
-        ::operator delete[](ptr);
-    }
-    #endif
+    ALIGNED_OPERATOR_NEW_AND_DELETE(HybridLeaf)
 };
 
 template <unsigned N>
@@ -182,17 +173,7 @@ public:
     typedef Eigen::Matrix<double, N, 1> Vec;
 
     /*  Boilerplate for an object that contains an Eigen struct  */
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-    #if EIGEN_MAJOR_VERSION == 4
-    void *operator new[](std::size_t size) {
-        return std::aligned_alloc(std::alignment_of_v<HybridTree>, size);
-    }
-
-    void operator delete[](void* ptr) {
-        ::operator delete[](ptr);
-    }
-    #endif
+    ALIGNED_OPERATOR_NEW_AND_DELETE(HybridTree)
 
     /*
      *  Releases this tree and any leaf objects to the given object pool

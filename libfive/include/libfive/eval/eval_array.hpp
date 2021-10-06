@@ -13,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/eval/base.hpp"
 #include "libfive/eval/deck.hpp"
 #include "libfive/eval/eval_array_size.hpp"
+#include "libfive/render/brep/default_new_delete.hpp"
 
 namespace libfive {
 
@@ -123,13 +124,7 @@ public:
 
     /*  Make an aligned new operator, as this class has Eigen structs
      *  inside of it (which are aligned for SSE) */
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    
-    #if EIGEN_MAJOR_VERSION == 4
-    void *operator new[](std::size_t size) {
-        return std::aligned_alloc(std::alignment_of_v<ArrayEvaluator>, size);
-    }
-    #endif
+    ALIGNED_OPERATOR_NEW_AND_DELETE(ArrayEvaluator)
 };
 
 }   // namespace libfive
