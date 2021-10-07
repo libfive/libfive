@@ -23,9 +23,9 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/xtree.hpp"
 #include "libfive/render/brep/object_pool.hpp"
-#include "libfive/render/brep/default_new_delete.hpp"
 #include "libfive/render/brep/simplex/qef.hpp"
 #include "libfive/render/brep/simplex/surface_edge_map.hpp"
+#include "libfive/render/brep/default_new_delete.hpp"
 
 namespace libfive {
 
@@ -58,7 +58,7 @@ struct SimplexLeafSubspace {
      *  the pool while they're still in use.  */
     std::atomic<uint32_t> refcount;
 
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    ALIGNED_OPERATOR_NEW_AND_DELETE(SimplexLeafSubspace)
 };
 
 template <unsigned N>
@@ -184,7 +184,7 @@ public:
     void releaseTo(Pool& object_pool);
 
     /*  Boilerplate for an object that contains an Eigen struct  */
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    ALIGNED_OPERATOR_NEW_AND_DELETE(SimplexTree)
 
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;

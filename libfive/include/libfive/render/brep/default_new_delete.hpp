@@ -35,3 +35,18 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
         ::operator delete(ptr, args...);                            \
     }
 
+// Eigen 4 makes EIGEN_MAKE_ALIGNED_OPERATOR_NEW a no-op, but... this doesn't
+// seem to work (see libfive issues #462 and #464).  This macro replaces it
+// for new Eigen versions, while staying backwards-compatible for Eigen 3.x
+#if EIGEN_MAJOR_VERSION == 4
+#define ALIGNED_OPERATOR_NEW_AND_DELETE(T) \
+    void *operator new[](std::size_t size) {                        \
+        return std::aligned_alloc(std::alignment_of_v<T>, size);    \
+    }                                                               \
+                                                                    \
+    void operator delete[](void* ptr) {                             \
+        ::operator delete[](ptr);                                   \
+    }
+#else
+#define ALIGNED_OPERATOR_NEW_AND_DELETE(T) EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif

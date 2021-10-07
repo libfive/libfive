@@ -13,6 +13,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/util.hpp"
 #include "libfive/render/brep/region.hpp"
 #include "libfive/render/brep/indexes.hpp"
+#include "libfive/render/brep/default_new_delete.hpp"
 
 #ifdef LIBFIVE_VERBOSE_QEF_DEBUG
 #include <iostream>
@@ -609,7 +610,7 @@ protected:
     Matrix AtBp;
     Matrix BptBp;
 
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    ALIGNED_OPERATOR_NEW_AND_DELETE(QEF)
 
     friend class QEF<0>;
     friend class QEF<1>;

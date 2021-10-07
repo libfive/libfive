@@ -11,6 +11,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <Eigen/Eigen>
 
 #include "libfive/render/brep/dc/dc_flags.hpp"
+#include "libfive/render/brep/default_new_delete.hpp"
 
 namespace libfive {
 
@@ -94,7 +95,8 @@ struct Intersection {
     Eigen::Matrix<double, N, 1> AtB;
     double BtB;
     mutable int8_t rank=-1;
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    ALIGNED_OPERATOR_NEW_AND_DELETE(Intersection)
 };
 
 }   // namespace libfive
