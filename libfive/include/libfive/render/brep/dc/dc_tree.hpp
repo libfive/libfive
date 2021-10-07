@@ -183,7 +183,7 @@ public:
     bool checkConsistency(const DCNeighbors<N>& neighbors) const;
 
     /*  Boilerplate for an object that contains an Eigen struct  */
-    ALIGNED_OPERATOR_NEW_AND_DELETE(DCNeighbors)
+    ALIGNED_OPERATOR_NEW_AND_DELETE(DCTree)
 
     /*  Helper typedef for N-dimensional column vector */
     typedef Eigen::Matrix<double, N, 1> Vec;
