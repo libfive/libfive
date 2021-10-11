@@ -42,7 +42,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #if EIGEN_MAJOR_VERSION == 4
 #define ALIGNED_OPERATOR_NEW_AND_DELETE(T) \
     void *operator new[](std::size_t size) {                        \
-        return std::aligned_alloc(std::alignment_of_v<T>, size);    \
+        using namespace std;                                        \
+        return aligned_alloc(std::alignment_of_v<T>, size);         \
     }                                                               \
                                                                     \
     void operator delete[](void* ptr) {                             \
