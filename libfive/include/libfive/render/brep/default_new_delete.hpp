@@ -6,6 +6,7 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/.
 */
+#include <cstdlib>
 
 #define DEFAULT_OPERATORS_NEW_AND_DELETE \
     /*  Required for ObjectPool, but we're just using the default */\
@@ -41,7 +42,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #if EIGEN_MAJOR_VERSION == 4
 #define ALIGNED_OPERATOR_NEW_AND_DELETE(T) \
     void *operator new[](std::size_t size) {                        \
-        return std::aligned_alloc(std::alignment_of_v<T>, size);    \
+        using namespace std;                                        \
+        return aligned_alloc(std::alignment_of_v<T>, size);         \
     }                                                               \
                                                                     \
     void operator delete[](void* ptr) {                             \
