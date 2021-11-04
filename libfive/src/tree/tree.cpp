@@ -74,19 +74,6 @@ Tree::Tree(Opcode::Opcode op, Tree a, Tree b)
     assert((Opcode::args(op) == 0 && a.ptr.get() == 0 && b.ptr.get() == 0) ||
            (Opcode::args(op) == 1 && a.ptr.get() != 0 && b.ptr.get() == 0) ||
            (Opcode::args(op) == 2 && a.ptr.get() != 0 && b.ptr.get() != 0));
-
-    // POW only accepts integral values as its second argument
-    if (op == Opcode::OP_POW)
-    {
-        assert(b->op == Opcode::CONSTANT &&
-               b->value == std::round(b->value));
-    }
-    else if (op == Opcode::OP_NTH_ROOT)
-    {
-        assert(b->op == Opcode::CONSTANT &&
-               b->value == std::round(b->value) &&
-               b->value > 0);
-    }
 }
 
 Tree Tree::var(std::any userData)
