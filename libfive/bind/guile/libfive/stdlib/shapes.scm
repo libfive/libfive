@@ -330,6 +330,7 @@ It was last generated on 2021-04-08 20:31:42 by user mkeeter
 (export extrude-z)
 
 (define-public cube box-mitered)
+(define-public cube-centered box-mitered-centered)
 (define-public box box-mitered)
 (define-public box-centered box-mitered-centered)
 (define-public rounded-cube rounded-box)
