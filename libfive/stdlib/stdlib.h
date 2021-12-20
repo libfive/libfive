@@ -111,6 +111,7 @@ LIBFIVE_STDLIB box_mitered(
     // A box with the given bounds, which will stay creased if offset
     tvec3 a, tvec3 b);
 LIBFIVE_ALIAS(cube, box_mitered)
+LIBFIVE_ALIAS(cube_centered, box_mitered_centered)
 LIBFIVE_ALIAS(box, box_mitered)
 
 LIBFIVE_STDLIB box_mitered_centered(
