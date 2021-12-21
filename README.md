@@ -43,6 +43,14 @@ to change variables in the script.
   a technical paper extending `libfive` to render on the GPU
   ([reference implementation](https://github.com/mkeeter/mpr/))
 
+## Community
+For `libfive`-specific discussions, consider opening a topic in the
+[Github Discussions tab](https://github.com/libfive/libfive/discussions).
+
+There's also a `libfive` subforum in the [SDF User Group Discourse](https://sdfug.discourse.group/),
+which is a good place for general discussion of modeling with signed distance
+fields.
+
 ## License
 (c) 2015-2021 Matthew Keeter
 
