@@ -137,6 +137,13 @@ to update the system-wide installation of the executable and libraries.
 [`Studio.desktop`](https://github.com/libfive/libfive/blob/master/studio/deploy/linux/Studio.desktop)
 may be used to put a shortcut on your desktop.
 
+If you don't want the python bindings installed under /usr/lib, you
+can specify the install directory using the cmake variable
+PYTHON_SITE_PACKAGES_DIR, e.g.:
+```
+cmake -DPYTHON_SITE_PACKAGES_DIR=/usr/local/lib/python3.9/dist-packages .
+```
+
 Ubuntu releases before 20.04 are not officially supported;
 if you insist,
 there are hints [here](https://github.com/libfive/libfive/blob/b4e0e0bbf8c740a313754062a205a98ac336a19c/README.md#before-2004)

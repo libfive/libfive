@@ -28,10 +28,12 @@ add_custom_target(libfive-python ALL DEPENDS ${OUTS})
 ################################################################################
 
 if(UNIX)
-    # Find the site-packages directory
-    execute_process(
-        COMMAND ${Python3_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(), end='')"
-        OUTPUT_VARIABLE PYTHON_SITE_PACKAGES_DIR)
+    if (NOT DEFINED PYTHON_SITE_PACKAGES_DIR)
+        # Find the site-packages directory
+	execute_process(
+            COMMAND ${Python3_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(), end='')"
+            OUTPUT_VARIABLE PYTHON_SITE_PACKAGES_DIR)
+    endif()
 
     # Install all Python files into that directory
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libfive
