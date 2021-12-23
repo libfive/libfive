@@ -145,9 +145,9 @@ to update the system-wide installation of the executable and libraries.
 [`Studio.desktop`](https://github.com/libfive/libfive/blob/master/studio/deploy/linux/Studio.desktop)
 may be used to put a shortcut on your desktop.
 
-If you don't want the python bindings installed under /usr/lib, you
-can specify the install directory using the cmake variable
-PYTHON_SITE_PACKAGES_DIR, e.g.:
+If you don't want the Python bindings installed under `/usr/lib`, you
+can specify the install directory using the `cmake` variable
+`PYTHON_SITE_PACKAGES_DIR`, e.g.
 ```
 cmake -DPYTHON_SITE_PACKAGES_DIR=/usr/local/lib/python3.9/dist-packages .
 ```
