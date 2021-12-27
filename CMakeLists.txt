@@ -3,6 +3,7 @@ project(libfive)
 
 # Properly distinguish between Apple and upstream Clang
 cmake_policy(SET CMP0025 NEW)
+include(CheckCXXCompilerFlag)
 
 option(BUILD_STUDIO_APP "Build Studio application" ON)
 option(BUILD_GUILE_BINDINGS "Build Guile bindings" ON)
@@ -47,7 +48,14 @@ endif()
 ################################################################################
 
 if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -g -fPIC -pedantic -Werror=switch -march=native")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -g -fPIC -pedantic -Werror=switch")
+
+    # Sometimes this flag is not supported (e.g. on Apple Silicon)
+    check_cxx_compiler_flag("-march=native" MARCH_SUPPORTED)
+    if(MARCH_SUPPORTED)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+    endif()
+
     set(CMAKE_CXX_FLAGS_DEBUG "-O0")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DEIGEN_NO_DEBUG")
 else()
