@@ -9,11 +9,19 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 # Find the Qt libraries
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Widgets REQUIRED)
-find_package(Qt5OpenGL REQUIRED)
-find_package(Qt5Network REQUIRED)
-find_package(Qt5Concurrent REQUIRED)
+if (Qt5Core_FOUND)
+    find_package(Qt5Core REQUIRED)
+    find_package(Qt5Widgets REQUIRED)
+    find_package(Qt5OpenGL REQUIRED)
+    find_package(Qt5Network REQUIRED)
+    find_package(Qt5Concurrent REQUIRED)
+elseif (Qt6Core_FOUND)
+    find_package(Qt6Core REQUIRED)
+    find_package(Qt6Widgets REQUIRED)
+    find_package(Qt6OpenGL REQUIRED)
+    find_package(Qt6Network REQUIRED)
+    find_package(Qt6Concurrent REQUIRED)
+endif()
 
 set(SRCS src/main.cpp
     src/app.cpp
@@ -90,10 +98,10 @@ endif(UNIX AND NOT(APPLE))
 
 target_include_directories(Studio PUBLIC include)
 target_link_libraries(Studio libfive libfive-stdlib
-    Qt5::Widgets
-    Qt5::Gui
-    Qt5::OpenGL
-    Qt5::Concurrent
+    Qt::Widgets
+    Qt::Gui
+    Qt::OpenGL
+    Qt::Concurrent
     ${EXTRA_LIBS}
 )
 
