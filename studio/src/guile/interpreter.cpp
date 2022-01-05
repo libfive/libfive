@@ -91,7 +91,10 @@ void Interpreter::init() {
     // Assume that we're in the build directory, then fall back to Linux
     // system libraries (if the Studio executable was installed, then the Guile
     // precompiled files should be as well).
-    qputenv("GUILE_LOAD_COMPILED_PATH", "libfive/bind/guile");
+    qputenv("GUILE_LOAD_COMPILED_PATH", QByteArray::fromStdString("libfive/bind/guile") +
+            (qEnvironmentVariableIsSet("GUILE_LOAD_COMPILED_PATH") ?
+             QByteArray::fromStdString(":") + qgetenv("GUILE_LOAD_COMPILED_PATH") :
+             ""));
 #endif
 
     scm_init_guile();
