@@ -735,7 +735,14 @@ double DCTree<N>::findVertex(unsigned index)
     assert(this->leaf != nullptr);
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, N, N>> es(
             this->leaf->AtA);
+
     assert(this->leaf->mass_point(N) > 0);
+    Vec center = this->leaf->mass_point.template head<N>() /
+                 this->leaf->mass_point(N);
+    if (es.info() != Eigen::Success) {
+        this->leaf->verts.col(index) = center;
+        return std::numeric_limits<double>::max();
+    }
 
     // We need to find the pseudo-inverse of AtA.
     auto eigenvalues = es.eigenvalues().real();
@@ -792,8 +799,6 @@ double DCTree<N>::findVertex(unsigned index)
     auto AtAp = (U * D * U.transpose()).eval();
 
     // Solve for vertex position (minimizing distance to center)
-    Vec center = this->leaf->mass_point.template head<N>() /
-                 this->leaf->mass_point(N);
     Vec v = AtAp * (this->leaf->AtB - (this->leaf->AtA * center)) + center;
 
     // Store this specific vertex in the verts matrix
