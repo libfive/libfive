@@ -6,6 +6,10 @@
 #define LIBFIVE_SECTION(a)
 #define LIBFIVE_ALIAS(a, b)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // We accept trees for every argument, even those that would normally be
 // floats, so that we can pass in free variables to parameterize shapes.
 struct tvec2 {
@@ -17,10 +21,6 @@ struct tvec3 {
 typedef libfive_tree tfloat;
 typedef struct tvec2 tvec2;
 typedef struct tvec3 tvec3;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 LIBFIVE_SECTION(csg)

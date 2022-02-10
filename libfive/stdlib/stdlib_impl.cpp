@@ -9,7 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include "stdlib_impl.hpp"
 
-using namespace libfive;
+namespace libfive {
 
 #define LIBFIVE_DEFINE_XYZ() const auto x = Tree::X(); (void)x; \
                              const auto y = Tree::Y(); (void)y; \
@@ -1385,3 +1385,5 @@ Tree text(const char* txt, TreeVec2 pos) {
     }
     return out;
 }
+
+}   // namespace libfive
