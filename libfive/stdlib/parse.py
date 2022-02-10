@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from collections import namedtuple
 
 Declaration = namedtuple('Declaration', ['name', 'version', 'docstring', 'args', 'raw_name'])
