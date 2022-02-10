@@ -6,8 +6,8 @@ In the past, each language-level binding had to implement this on their own.
 Now, `libfive` itself includes such a standard library,
 using the _lingua franca_ of software: **C**.
 
-## `stdlib.h` style
-[`stdlib.h`](stdlib.h) is both a C header and a structured document
+## `libfive_std.h` style
+[`libfive_std.h`](libfive_std.h) is both a C header and a structured document
 parsed by a [helper script](parse.py).
 
 It is used to generate bindings using the C FFI of the chosen language.
