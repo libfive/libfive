@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from collections import namedtuple
 
 Declaration = namedtuple('Declaration', ['name', 'version', 'docstring', 'args', 'raw_name'])
@@ -71,7 +73,7 @@ def parse_section(s):
 
 
 def parse(f):
-    ''' Parses stdlib.h, based on idiosyncratic conventions
+    ''' Parses libfive_stdlib.h, based on idiosyncratic conventions
 
         This is a terrible parser and won't work for any other C header file
     '''
@@ -92,7 +94,7 @@ def parse(f):
     return modules
 
 def parse_stdlib():
-    with open('stdlib.h', 'r') as f:
+    with open('libfive_stdlib.h', 'r') as f:
         return parse(f)
 
 if __name__ == '__main__':
