@@ -39,7 +39,7 @@ DocumentationPane::DocumentationPane(Documentation docs)
     QMap<QString, QString> fs;   // shape name -> docstring
     QMap<QString, QString> tags; // shape name -> unique tag (used in search)
     QMap<QString, QString> mods; // shape name -> module name
-    int max_name = 0;
+    long max_name = 0;
     for (auto mod : docs.keys())
     {
         for (auto f : docs[mod].keys())
@@ -47,7 +47,7 @@ DocumentationPane::DocumentationPane(Documentation docs)
             fs.insert(f, docs[mod][f]);
             tags.insert(f, QString("i%1").arg(tags.size()));
             mods.insert(f, mod);
-            max_name = std::max(f.length(), max_name);
+            max_name = std::max(f.length(), (long long)max_name);
         }
     }
 
@@ -159,7 +159,7 @@ DocumentationPane::DocumentationPane(Documentation docs)
     row->addSpacing(5);
     row->addWidget(m_search);
     layout->addItem(row);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     setLayout(layout);
 

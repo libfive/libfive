@@ -17,7 +17,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <QActionGroup>
-#include <QDesktopWidget>
 #include <QFileDialog>
 #include <QProgressDialog>
 #include <QSplitter>
@@ -74,7 +73,7 @@ Window::Window(Arguments args)
     connect(editor, &Editor::languageChanged,
             this, &Window::onLanguageChanged);
 
-    resize(QDesktopWidget().availableGeometry(this).size() * 0.75);
+    resize(QGuiApplication::primaryScreen()->availableGeometry().size() * 0.75);
 
     setAcceptDrops(true);
 
@@ -153,7 +152,7 @@ Window::Window(Arguments args)
     file_menu->addSeparator();
 
     auto export_action = file_menu->addAction("Export STL...");
-    export_action->setShortcuts({Qt::CTRL + Qt::Key_E, Qt::Key_F7});
+    export_action->setShortcuts({Qt::CTRL | Qt::Key_E, Qt::Key_F7});
     connect(export_action, &QAction::triggered, this, &Window::onExport);
 
     file_menu->addSeparator();
@@ -400,7 +399,7 @@ Window::Window(Arguments args)
     connect(help_menu->addAction("Load tutorial"), &QAction::triggered,
             this, &Window::onLoadTutorial);
     auto ref_action = help_menu->addAction("Shape reference");
-    ref_action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Slash));
+    ref_action->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
     connect(ref_action, &QAction::triggered, editor, &Editor::onShowDocs);
 
     // Link up the editor and the view

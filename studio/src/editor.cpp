@@ -82,7 +82,7 @@ Editor::Editor(Language::Type language)
 
     layout->addWidget(script);
     layout->addWidget(err);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(2);
     setLayout(layout);
 
@@ -179,7 +179,7 @@ void Editor::onInterpreterDone(Result r)
         QStringList fixes;
 
         auto v = new QVBoxLayout();
-        v->setMargin(10);
+        v->setContentsMargins(10, 10, 10, 10);
         for (auto& f : r.warnings) {
             v->addWidget(new QLabel(f.first, this));
             if (!f.second.isEmpty()) {

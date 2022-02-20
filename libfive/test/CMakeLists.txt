@@ -38,6 +38,7 @@ set(LIBS libfive)
 add_executable(libfive-test ${SRCS})
 target_link_libraries(libfive-test ${LIBS})
 target_include_directories(libfive-test PRIVATE .)
+target_compile_definitions(libfive-test PRIVATE -DCATCH_CONFIG_ENABLE_BENCHMARKING)
 
 if (BUILD_GUILE_BINDINGS AND GUILE_FOUND)
     target_sources(libfive-test PRIVATE guile.cpp)
