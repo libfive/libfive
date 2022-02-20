@@ -18,7 +18,7 @@ if (Qt5Core_FOUND)
 elseif (Qt6Core_FOUND)
     find_package(Qt6Core REQUIRED)
     find_package(Qt6Widgets REQUIRED)
-    find_package(Qt6OpenGL REQUIRED)
+    find_package(Qt6OpenGLWidgets REQUIRED)
     find_package(Qt6Network REQUIRED)
     find_package(Qt6Concurrent REQUIRED)
 endif()
@@ -97,13 +97,23 @@ if(UNIX AND NOT(APPLE))
 endif(UNIX AND NOT(APPLE))
 
 target_include_directories(Studio PUBLIC include)
-target_link_libraries(Studio libfive libfive-stdlib
-    Qt::Widgets
-    Qt::Gui
-    Qt::OpenGL
-    Qt::Concurrent
-    ${EXTRA_LIBS}
-)
+target_link_libraries(Studio libfive libfive-stdlib ${EXTRA_LIBS})
+
+if (Qt5Core_FOUND)
+    target_link_libraries(Studio
+        Qt::Widgets
+        Qt::Gui
+        Qt::OpenGL
+        Qt::Concurrent
+    )
+elseif (Qt6Core_FOUND)
+    target_link_libraries(Studio
+        Qt::Widgets
+        Qt::Gui
+        Qt::OpenGLWidgets
+        Qt::Concurrent
+    )
+endif()
 
 if(STUDIO_WITH_GUILE)
     target_include_directories(Studio PRIVATE ${GUILE_INCLUDE_DIRS})

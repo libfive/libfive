@@ -20,12 +20,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QList>
 
 #include "studio/settings.hpp"
+#include "studio/shape.hpp"
 
 #include "libfive/tree/tree.hpp"
 
 namespace Studio {
-
-class Shape;
 
 struct Error {
     QString error;

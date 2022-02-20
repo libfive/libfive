@@ -249,7 +249,7 @@ void Shape::startRender(RenderSettings s)
 
         timer.start();
         running = true;
-        mesh_future = QtConcurrent::run(this, &Shape::renderMesh, s);
+        mesh_future = QtConcurrent::run(&Shape::renderMesh, this, s);
         mesh_watcher.setFuture(mesh_future);
 
         next = {s.settings, s.div - 1, s.alg};
