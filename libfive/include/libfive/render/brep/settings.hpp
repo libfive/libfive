@@ -52,8 +52,8 @@ public:
      *  completely disable cell merging.  */
     double max_err;
 
-    /*  Number of worker threads to use while meshing.  Set as 0 to use the
-     *  platform-default number of threads. */
+    /*  Number of worker threads to use while meshing.  This must be > 0;
+     *  otherwise the renderer will segfault. */
     unsigned workers;
 
     /*  This is the meshing algorti */
