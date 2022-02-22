@@ -18,11 +18,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include <QActionGroup>
 #include <QFileDialog>
-#include <QProgressDialog>
-#include <QSplitter>
+#include <QFileSystemWatcher>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QFileSystemWatcher>
+#include <QProgressDialog>
+#include <QScreen>
+#include <QSplitter>
 
 #include "studio/window.hpp"
 #include "studio/documentation.hpp"

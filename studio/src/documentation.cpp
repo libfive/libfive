@@ -47,7 +47,7 @@ DocumentationPane::DocumentationPane(Documentation docs)
             fs.insert(f, docs[mod][f]);
             tags.insert(f, QString("i%1").arg(tags.size()));
             mods.insert(f, mod);
-            max_name = std::max(f.length(), (long long)max_name);
+            max_name = std::max((long)f.length(), max_name);
         }
     }
 

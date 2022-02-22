@@ -432,9 +432,9 @@ QVector3D View::toModelPos(QPoint pt) const
 
 QVector3D View::toModelPos(QPoint pt, float z) const
 {
-    return camera.M().inverted() * QVector3D(
+    return camera.M().inverted().map(QVector3D(
             (pt.x() * 2.0) / pick_img.width() - 1,
-            1 - (pt.y() * 2.0) / pick_img.height(), z);
+            1 - (pt.y() * 2.0) / pick_img.height(), z));
 }
 
 void View::mousePressEvent(QMouseEvent* event)

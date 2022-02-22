@@ -249,7 +249,11 @@ void Shape::startRender(RenderSettings s)
 
         timer.start();
         running = true;
+#if QT_VERSION >= 0x060000
         mesh_future = QtConcurrent::run(&Shape::renderMesh, this, s);
+#else
+        mesh_future = QtConcurrent::run(this, &Shape::renderMesh, s);
+#endif
         mesh_watcher.setFuture(mesh_future);
 
         next = {s.settings, s.div - 1, s.alg};
