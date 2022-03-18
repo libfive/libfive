@@ -100,11 +100,12 @@ target_include_directories(Studio PUBLIC include)
 target_link_libraries(Studio libfive libfive-stdlib ${EXTRA_LIBS})
 
 if (Qt5Core_FOUND)
-    target_link_libraries(Studio
-        Qt::Widgets
-        Qt::Gui
-        Qt::OpenGL
-        Qt::Concurrent
+    target_link_libraries(Studio libfive libfive-stdlib
+        Qt5::Widgets
+        Qt5::Gui
+        Qt5::OpenGL
+        Qt5::Concurrent
+        ${EXTRA_LIBS}
     )
 elseif (Qt6Core_FOUND)
     target_link_libraries(Studio
