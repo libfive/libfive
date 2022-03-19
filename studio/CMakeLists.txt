@@ -105,7 +105,6 @@ if (Qt5Core_FOUND)
         Qt5::Gui
         Qt5::OpenGL
         Qt5::Concurrent
-        ${EXTRA_LIBS}
     )
 elseif (Qt6Core_FOUND)
     target_link_libraries(Studio
