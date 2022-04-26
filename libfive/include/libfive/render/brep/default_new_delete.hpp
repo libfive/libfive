@@ -8,6 +8,11 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <cstdlib>
 
+#if _MSC_VER
+#include <malloc.h>
+#include <stdio.h>
+#endif
+
 #define DEFAULT_OPERATORS_NEW_AND_DELETE \
     /*  Required for ObjectPool, but we're just using the default */\
     /*  operators because there are no alignment requirements.    */\
@@ -40,6 +45,16 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 // seem to work (see libfive issues #462 and #464).  This macro replaces it
 // for new Eigen versions, while staying backwards-compatible for Eigen 3.x
 #if EIGEN_MAJOR_VERSION == 4
+#if _MSC_VER
+#define ALIGNED_OPERATOR_NEW_AND_DELETE(T) \
+    void *operator new[](std::size_t size) {                        \
+        return _aligned_malloc(size, std::alignment_of_v<T>);       \
+    }                                                               \
+                                                                    \
+    void operator delete[](void* ptr) {                             \
+        _aligned_free(ptr);                                         \
+    }
+#else
 #define ALIGNED_OPERATOR_NEW_AND_DELETE(T) \
     void *operator new[](std::size_t size) {                        \
         using namespace std;                                        \
@@ -49,6 +64,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
     void operator delete[](void* ptr) {                             \
         ::operator delete[](ptr);                                   \
     }
+#endif
 #else
 #define ALIGNED_OPERATOR_NEW_AND_DELETE(T) EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif
