@@ -31,7 +31,7 @@ foreach(SRC ${SRCS})
         COMMAND guile -c "(use-modules (system base compile))(format #t \"~A\" (compiled-file-name \"${FULL_SRC}\"))"
         OUTPUT_VARIABLE CCACHE_FILE)
     add_custom_command(OUTPUT ${OUT}
-        COMMAND guild compile -L${CMAKE_CURRENT_SOURCE_DIR} ${FULL_SRC}
+        COMMAND ${CMAKE_COMMAND} -E env LIBFIVE_FRAMEWORK_DIR=$<TARGET_FILE_DIR:libfive>/ LIBFIVE_STDLIB_DIR=$<TARGET_FILE_DIR:libfive-stdlib>/ guild compile -L${CMAKE_CURRENT_SOURCE_DIR} ${FULL_SRC}
         COMMAND ${CMAKE_COMMAND} -E copy ${CCACHE_FILE} ${CMAKE_CURRENT_BINARY_DIR}/${OUT}
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         DEPENDS ${FULL_SRC} libfive libfive-stdlib)

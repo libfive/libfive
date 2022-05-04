@@ -21,23 +21,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ;; For now, it's manually generated, since there aren't that many functions
 (define-module (libfive lib))
 
-(use-modules (system foreign) (srfi srfi-1) (srfi srfi-98))
-
-; Workaround for a bug in Guile 3.0.7, reported to the mailing list: on macOS,
-; it doesn't match the %host-type string, so fails to look for files ending
-; in .dylib
-(define (dynamic-link-workaround name)
-  (if (and (string=? (version) "3.0.7") (string-contains %host-type "-darwin"))
-    (begin
-      (use-modules (system foreign-library))
-      (load-foreign-library name #:extensions '(".dylib")))
-    (dynamic-link name)))
+(use-modules
+  (system foreign)
+  (system foreign-library)
+  (srfi srfi-1)
+  (srfi srfi-98))
 
 (define (try-link lib name)
   (catch
     #t
-    (lambda () (dynamic-link-workaround (string-append lib name)))
-    (lambda (key . args) #f)))
+    (lambda () (load-foreign-library (string-append lib name)))
+    (lambda (key . args) (begin
+      (format #t "Error: ~A ~A ~A\n" key args (getcwd))
+      #f))))
 
 ;; Search various paths to find libfive.dylib, in order of priority:
 ;;  - LIBFIVE_FRAMEWORK_DIR hint (used by Mac app)
@@ -55,7 +51,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ;; Do the same to load the standard library, which is exported to the public
 ;; and used in all of the (libfive stdlib ...) modules
 (define stdlib-paths (list
-  (get-environment-variable "LIBFIVE_FRAMEWORK_DIR")
+  (get-environment-variable "LIBFIVE_STDLIB_DIR")
   "libfive/stdlib/"
   ""
 ))
