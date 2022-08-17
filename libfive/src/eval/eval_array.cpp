@@ -236,10 +236,10 @@ void ArrayEvaluator::operator()(Opcode::Opcode op, Clause::Id id,
             out = a * b;
             break;
         case Opcode::OP_MIN:
-            out = a.cwiseMin(b);
+            out = a.template cwiseMin<Eigen::NaNPropagationOptions::PropagateNumbers>(b);
             break;
         case Opcode::OP_MAX:
-            out = a.cwiseMax(b);
+            out = a.template cwiseMax<Eigen::NaNPropagationOptions::PropagateNumbers>(b);
             break;
         case Opcode::OP_SUB:
             out = a - b;
