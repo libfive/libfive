@@ -23,7 +23,7 @@ Voxels::Voxels(const Eigen::Vector3f& lower, const Eigen::Vector3f& upper,
 Voxels::Voxels(const Eigen::Vector3f& _lower, const Eigen::Vector3f& _upper,
                const Eigen::Vector3f& res)
 {
-    Eigen::Array3i size = (res.array() * (_upper - _lower).array()).ceil().cwiseMax(1).cast<int>();
+    Eigen::Array3i size = (res.array() * (_upper - _lower).array()).ceil().max(1).cast<int>();
 
     // Figure out much should be added to each axis, masking out
     // the case where resolution is zero
