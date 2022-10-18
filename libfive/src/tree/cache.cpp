@@ -8,11 +8,13 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <cassert>
 #include <cmath>
+#include <queue>
 
 #include "libfive/tree/cache.hpp"
 #include "libfive/eval/eval_array.hpp"
 
 namespace libfive {
+
 int Cache::shutdown()
 {
     auto mutPtr = mut();
@@ -185,37 +187,39 @@ void Cache::del(Opcode::Opcode op, Node lhs, Node rhs)
     ops.erase(o);
 }
 
-std::map<Cache::Node, float> Cache::asAffine(Node n)
+std::map<Cache::Node, std::pair<float,int>> Cache::asAffine(Node n)
 {
-    std::map<Node, float> out;
+    std::map<Node, std::pair<float, int>> out;
 
     if (n->op == Opcode::OP_ADD)
     {
         out = asAffine(n->lhs);
+        auto offset = out.size();
         for (const auto& i : asAffine(n->rhs))
         {
             if (out.find(i.first) == out.end())
             {
-                out.insert(i);
+                out.insert({ i.first, {i.second.first, i.second.second + offset} });
             }
             else
             {
-                out[i.first] += i.second;
+                out[i.first].first += i.second.first;
             }
         }
     }
     else if (n->op == Opcode::OP_SUB)
     {
         out = asAffine(n->lhs);
+        auto offset = out.size();
         for (const auto& i : asAffine(n->rhs))
         {
             if (out.find(i.first) == out.end())
             {
-                out.insert({i.first, -i.second});
+                out.insert({ i.first, {-i.second.first, i.second.second + offset} });
             }
             else
             {
-                out[i.first] -= i.second;
+                out[i.first].first -= i.second.first;
             }
         }
     }
@@ -223,7 +227,7 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
     {
         for (const auto& i : asAffine(n->lhs))
         {
-            out.insert({i.first, -i.second});
+            out.insert({ i.first, {-i.second.first, i.second.second} });
         }
     }
     else if (n->op == Opcode::OP_MUL)
@@ -232,19 +236,19 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
         {
             for (const auto& i : asAffine(n->rhs))
             {
-                out.insert({i.first, i.second * n->lhs->value});
+                out.insert({ i.first, {i.second.first * n->lhs->value, i.second.second} });
             }
         }
         else if (n->rhs->op == Opcode::CONSTANT)
         {
             for (const auto& i : asAffine(n->lhs))
             {
-                out.insert({i.first, i.second * n->rhs->value});
+                out.insert({ i.first, {i.second.first * n->rhs->value, i.second.second} });
             }
         }
         else
         {
-            out.insert({n, 1});
+            out.insert({ n, {1, 0} });
         }
     }
     else if (n->op == Opcode::OP_DIV)
@@ -253,49 +257,62 @@ std::map<Cache::Node, float> Cache::asAffine(Node n)
         {
             for (const auto& i : asAffine(n->lhs))
             {
-                out.insert({i.first, i.second / n->rhs->value});
+                out.insert({ i.first, {i.second.first / n->rhs->value, i.second.second} });
             }
         }
         else
         {
-            out.insert({n, 1});
+            out.insert({ n, {1, 0} });
         }
     }
     else if (n->op == Opcode::CONSTANT)
     {
-        out.insert({constant(1), n->value});
+        out.insert({ constant(1), {n->value, 0} });
     }
     else
     {
-        out.insert({n, 1});
+        out.insert({ n, {1, 0} });
     }
 
     return out;
 }
 
-Cache::Node Cache::fromAffine(const std::map<Node, float>& ns)
+Cache::Node Cache::fromAffine(const std::map<Node, std::pair<float, int>>& ns)
 {
-    std::map<float, std::list<Node>> cs;
+    std::priority_queue<std::tuple<int, float, Node>> qs;
     for (const auto& n : ns)
     {
-        if (cs.find(n.second) == cs.end())
+      qs.push({(n.second).second, (n.second).first, n.first});
+    }
+
+    std::vector<std::pair<float, std::list<Node>>> vs;
+    std::map<float, int> cs;
+    for (; !qs.empty(); qs.pop())
+    {
+        const auto& q = qs.top();
+        auto k = std::get<1>(q);
+        auto l = std::get<2>(q);
+        if (cs.find(k) == cs.end())
         {
-            cs.insert({n.second, {}});
+            cs.insert({k, vs.size()});
+            vs.push_back({ k, {l} });
         }
-        cs.at(n.second).push_back(n.first);
+        else {
+            (vs[cs.at(k)].second).push_back(l);
+        }
     }
 
     std::list<std::pair<float, std::list<Node>>> pos;
     std::list<std::pair<float, std::list<Node>>> neg;
-    for (const auto& c : cs)
+    for (const auto& v : vs)
     {
-        if (c.first < 0)
+        if (v.first < 0)
         {
-            neg.push_back({-c.first, c.second});
+            neg.push_back({-v.first, v.second});
         }
-        else if (c.first > 0)
+        else if (v.first > 0)
         {
-            pos.push_back(c);
+            pos.push_back(v);
         }
     }
 
@@ -477,6 +494,7 @@ Cache::Node Cache::checkAffine(Opcode::Opcode op, Node a_, Node b_)
 
     auto a = asAffine(a_);
     const auto b = asAffine(b_);
+    auto offset = a.size();
 
     bool overlap = false;
     for (auto& k : b)
@@ -484,19 +502,20 @@ Cache::Node Cache::checkAffine(Opcode::Opcode op, Node a_, Node b_)
         auto itr = a.find(k.first);
         if (itr != a.end())
         {
+            auto& ak = a.at(k.first);
             if (op == Opcode::OP_ADD)
             {
-                a.at(k.first) += k.second;
+                ak.first += (k.second).first;
             }
             else
             {
-                a.at(k.first) -= k.second;
+                ak.first -= (k.second).first;
             }
             overlap = true;
         }
         else
         {
-            a.insert({k.first, op == Opcode::OP_ADD ? k.second : -k.second});
+            a.insert({ k.first, {op == Opcode::OP_ADD ? (k.second).first : -(k.second).first, k.second.second + offset } });
         }
     }
 

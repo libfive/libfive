@@ -77,12 +77,12 @@ public:
      *  This is a building block for automatic collapsing of affine
      *  expressions, exposed here primarily for unit testing.
      */
-    std::map<Node, float> asAffine(Node n);
+    std::map<Node, std::pair<float, int>> asAffine(Node n);
 
     /*
      *  Converts a sum-of-multiplications into an affine tree.
      */
-    Node fromAffine(const std::map<Node, float>& ns);
+    Node fromAffine(const std::map<Node, std::pair<float, int>>& ns);
 
 protected:
     static std::recursive_mutex* mut() {
