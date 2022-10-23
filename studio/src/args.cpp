@@ -56,11 +56,16 @@ Arguments::Arguments(QCoreApplication* app)
 
     vertical = parser.isSet(vertical_layout);
 
-    if (parser.isSet(python_option) && parser.isSet(guile_option))
+    const bool py = Editor::supportsLanguage(Language::LANGUAGE_PYTHON) &&
+                    parser.isSet(python_option);
+    const bool gu = Editor::supportsLanguage(Language::LANGUAGE_GUILE) &&
+                    parser.isSet(guile_option);
+
+    if (py && gu)
         std::cerr << "-p and -g cannot be set at the same time" << std::endl;
-    else if (parser.isSet(python_option))
+    else if (py)
         language = Language::LANGUAGE_PYTHON;
-    else if (parser.isSet(guile_option))
+    else if (gu)
         language = Language::LANGUAGE_GUILE;
 }
 
