@@ -253,11 +253,58 @@ Tree cone_z(TreeFloat radius, TreeFloat height, TreeVec3 base) {
 }
 
 Tree pyramid_z(TreeVec2 a, TreeVec2 b, TreeFloat zmin, TreeFloat height) {
-    // TODO: make this an intersection of planes instead, to avoid singularity
-    return taper_xy_z(
-        extrude_z(rectangle(a, b), zmin, zmin + height),
-        { (a.x + b.x) / 2, (a.y + b.y) / 2, zmin},
-        height, 0, 1);
+    LIBFIVE_DEFINE_XYZ();
+
+    // Base of the xz triangle
+    const auto dx = (b.x - a.x) / 2;
+
+    // Hypotenuse of the xz triangle
+    const auto hy_x = sqrt(square(dx) + square(height));
+
+    // Area of the xz triangle, per numerically stable Heron's formula
+    const auto short_x = min(dx, height);
+    const auto mid_x = max(dx, height);
+    const auto area_x = sqrt(
+        (hy_x + (mid_x + short_x)) *
+        (short_x - (hy_x - mid_x)) *
+        (short_x + (hy_x - mid_x)) *
+        (hy_x + (mid_x - short_x))) / 4;
+
+    // Offset of the xz plane
+    const auto x_offset = 2 * area_x / hy_x;
+
+    // The actual xz planes
+    const auto x_plane = -(x * height / hy_x - z * dx/hy_x + x_offset);
+    const auto x_planes = intersection(x_plane, reflect_x(x_plane, 0.0));
+
+    // Now, do the same for yz
+    const auto dy = (b.y - a.y) / 2;
+
+    // Hypotenuse of the yz triangle
+    const auto hy_y = sqrt(square(dy) + square(height));
+
+    // Area of the yz triangle, per numerically stable Heron's formula
+    const auto short_y = min(dy, height);
+    const auto mid_y = max(dy, height);
+    const auto area_y = sqrt(
+        (hy_y + (mid_y + short_y)) *
+        (short_y - (hy_y - mid_y)) *
+        (short_y + (hy_y - mid_y)) *
+        (hy_y + (mid_y - short_y))) / 4;
+
+    // Offset of the yz plane
+    const auto y_offset = 2 * area_y / hy_y;
+
+    // The actual yz planes
+    const auto y_plane = -(y * height / hy_y - z * dy/hy_y + y_offset);
+    const auto y_planes = intersection(y_plane, reflect_y(y_plane, 0.0));
+
+    const auto planes = intersection(x_planes, y_planes);
+    const auto out = intersection(planes, -z);
+
+    const auto px = (a.x + b.x) / 2;
+    const auto py = (a.y + b.y) / 2;
+    return move(out, {px, py, zmin});
 }
 
 Tree torus_z(TreeFloat ro, TreeFloat ri, TreeVec3 center) {
