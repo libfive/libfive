@@ -34,7 +34,7 @@ to change variables in the script.
 - Unpublished [Stanza](http://lbstanza.org/) bindings (email for details)
 
 ### Viewers
-- [Inspekt3D](https://gitlab.com/kavalogic-inc/inspekt3d): Lightweight pure-Guile viewer
+- [Inspekt3D](https://github.com/Kreyren/inspekt3d/tree/recovered): Lightweight pure-Guile viewer
 - [PyFive3D](https://gitlab.com/kavalogic-inc/pyfive3d): Lightweight pure-Python viewer (work in progress)
 - [C5H12 (Pentane)](https://gitlab.com/kavalogic-inc/C5H12): Lightweight C viewer
 
