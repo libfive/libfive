@@ -150,7 +150,7 @@ if(UNIX AND NOT(APPLE))
 endif(UNIX AND NOT(APPLE))
 
 if (UNIX)
-    install(TARGETS libfive DESTINATION lib)
+    install(TARGETS libfive DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(FILES ../include/libfive.h DESTINATION include)
     install(DIRECTORY ../include/libfive DESTINATION include
             FILES_MATCHING PATTERN "*.hpp")

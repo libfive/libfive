@@ -93,7 +93,7 @@ else()
 endif()
 
 if(UNIX AND NOT(APPLE))
-    install(TARGETS Studio DESTINATION bin)
+    install(TARGETS Studio DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif(UNIX AND NOT(APPLE))
 
 target_include_directories(Studio PUBLIC include)

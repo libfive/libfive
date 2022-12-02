@@ -5,5 +5,5 @@ set_target_properties(libfive-stdlib PROPERTIES PREFIX "")
 target_link_libraries(libfive-stdlib libfive)
 
 if (UNIX)
-    install(TARGETS libfive-stdlib DESTINATION lib)
+    install(TARGETS libfive-stdlib DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(UNIX)
