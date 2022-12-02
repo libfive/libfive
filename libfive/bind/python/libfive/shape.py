@@ -289,5 +289,5 @@ for (_name, _f) in _transforms.__dict__.items():
 
 # Hot-patch a few CSG functions onto the Shape class
 import libfive.stdlib.csg as _csg
-for _name in ['union', 'intersection', 'difference']:
+for _name in ['union', 'intersection', 'difference', 'offset']:
     setattr(Shape, _name, getattr(_csg, _name))
