@@ -161,6 +161,10 @@ void TransformedOracle::evalDerivArray(
     auto zDerivs = ctx ? zEvaluator.derivs(count, *ctx->tz)
                        : zEvaluator.derivs(count);
 
+    for (unsigned i = 0; i < count; ++i) {
+      underlying->set({ xDerivs(3, i), yDerivs(3, i), zDerivs(3, i) }, i);
+    }
+
     underlying->bind(ctx ? ctx->u : nullptr, nullptr);
     underlying->evalDerivArray(out);
     underlying->unbind();
