@@ -30,7 +30,7 @@ VolTree::VolTree()
 
 std::unique_ptr<VolTree> VolTree::empty()
 {
-    std::unique_ptr<VolTree> t(new VolTree);
+    std::unique_ptr<VolTree> t = std::make_unique<VolTree>();
     t->type = Interval::EMPTY;
     return t;
 }
