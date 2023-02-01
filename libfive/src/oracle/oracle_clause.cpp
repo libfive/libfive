@@ -1,3 +1,4 @@
+#include <exception>
 #include <iostream>
 #include <cassert>
 
@@ -31,6 +32,7 @@ bool OracleClause::serialize(const std::string& name,
     auto itr = installed().find(name);
     if (itr == installed().end())
     {
+        throw std::invalid_argument(name);
         std::cerr << "OracleClause::serialize: no installed \""
                   << name << "\"\n"
                   << "  You may need to call OracleClause::install."
