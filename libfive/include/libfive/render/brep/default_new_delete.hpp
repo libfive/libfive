@@ -8,7 +8,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <cstdlib>
 
-#if _MSC_VER
+#ifdef _WIN32
 #include <malloc.h>
 #include <stdio.h>
 #endif
@@ -45,7 +45,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 // seem to work (see libfive issues #462 and #464).  This macro replaces it
 // for new Eigen versions, while staying backwards-compatible for Eigen 3.x
 #if EIGEN_MAJOR_VERSION == 4
-#if _MSC_VER
+#ifdef _WIN32
 #define ALIGNED_OPERATOR_NEW_AND_DELETE(T) \
     void *operator new[](std::size_t size) {                        \
         return _aligned_malloc(size, std::alignment_of_v<T>);       \
