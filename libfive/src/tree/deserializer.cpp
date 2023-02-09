@@ -99,7 +99,7 @@ Archive::Shape Deserializer::deserializeShape(char tag)
                     std::cerr
                         << "Deserializer: failed to deserialize Oracle \""
                         << name << "\"" << std::endl;
-                    return out;
+                    throw std::invalid_argument(name);
                 }
                 trees.insert({next, Tree(std::move(o))});
             }
