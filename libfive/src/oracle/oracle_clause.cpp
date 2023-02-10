@@ -1,3 +1,4 @@
+#include <exception>
 #include <iostream>
 #include <cassert>
 
@@ -35,7 +36,7 @@ bool OracleClause::serialize(const std::string& name,
                   << name << "\"\n"
                   << "  You may need to call OracleClause::install."
                   << std::endl;
-        return false;
+        throw std::invalid_argument(name);
     }
     else
     {
