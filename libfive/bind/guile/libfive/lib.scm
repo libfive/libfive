@@ -30,9 +30,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 (define (try-link lib name)
   (catch
     #t
-    (lambda () (load-foreign-library (string-append lib name)))
+    (lambda () (if lib (load-foreign-library (string-append lib name)) #f))
     (lambda (key . args) (begin
-      (format #t "Error: ~A ~A ~A\n" key args (getcwd))
+      (format (current-error-port) "Error: ~A ~A ~A\n" key args (getcwd))
       #f))))
 
 ;; Search various paths to find libfive.dylib, in order of priority:
