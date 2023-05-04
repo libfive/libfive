@@ -40,7 +40,11 @@ bool OracleClause::serialize(const std::string& name,
     }
     else
     {
-        return (*itr).second.first(clause, out);
+        if (!(*itr).second.first(clause, out)) 
+        {
+          throw std::invalid_argument(name + " clash");
+        } 
+        return true;
     }
 }
 
