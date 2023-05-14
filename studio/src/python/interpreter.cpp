@@ -447,7 +447,8 @@ void Interpreter::eval(QString script)
         }
         for (unsigned i=0; i < ret_size; ++i) {
             const auto s = PyList_GetItem(ret, i);
-            std::cout << std::endl;
+            recordShape(s, out, vars);
+
             const auto iter = PyObject_GetIter(s);
             if (iter) {
                 PyObject* item = NULL;
