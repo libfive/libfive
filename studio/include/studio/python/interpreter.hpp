@@ -44,6 +44,10 @@ public slots:
     void eval(QString s) override;
 
 protected:
+    // If the given PyObject represents a shape, record it in out.shapes
+    void recordShape(
+        PyObject* obj, Result &out, std::map<libfive::Tree::Id, float>& vars);
+
     PyObject* m_runFunc=NULL;
     PyObject* m_shapeClass=NULL;
     PyObject* m_varFunc=NULL;

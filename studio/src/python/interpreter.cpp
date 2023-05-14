@@ -447,16 +447,18 @@ void Interpreter::eval(QString script)
         }
         for (unsigned i=0; i < ret_size; ++i) {
             const auto s = PyList_GetItem(ret, i);
-            if (PyObject_IsInstance(s, m_shapeClass)) {
-                const auto ptr_obj = PyObject_GetAttrString(s, "ptr");
-                const auto ptr = PyLong_AsVoidPtr(ptr_obj);
-                const auto tree = static_cast<libfive_tree>(ptr);
-                const auto shape = new Shape(libfive::Tree(tree), vars);
-                shape->moveToThread(QApplication::instance()->thread());
-                out.shapes.push_back(shape);
-
-                Py_DECREF(ptr_obj);
-                PyErr_Print();
+            std::cout << std::endl;
+            const auto iter = PyObject_GetIter(s);
+            if (iter) {
+                PyObject* item = NULL;
+                while ((item = PyIter_Next(iter))) {
+                    recordShape(item, out, vars);
+                    Py_DECREF(item);
+                }
+                Py_DECREF(iter);
+            } else {
+                // PyObject_GetIter sets an error
+                PyErr_Clear();
             }
         }
 
@@ -566,6 +568,24 @@ void Interpreter::eval(QString script)
     PyGILState_Release(gstate);
 
     emit(done(out));
+}
+
+void Interpreter::recordShape(
+        PyObject* obj,
+        Result &out,
+        std::map<libfive::Tree::Id, float>& vars)
+{
+    if (PyObject_IsInstance(obj, m_shapeClass)) {
+        const auto ptr_obj = PyObject_GetAttrString(obj, "ptr");
+        const auto ptr = PyLong_AsVoidPtr(ptr_obj);
+        const auto tree = static_cast<libfive_tree>(ptr);
+        const auto shape = new Shape(libfive::Tree(tree), vars);
+        shape->moveToThread(QApplication::instance()->thread());
+        out.shapes.push_back(shape);
+
+        Py_DECREF(ptr_obj);
+        PyErr_Print();
+    }
 }
 
 }   // namespace Python
