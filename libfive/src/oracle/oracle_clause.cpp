@@ -36,7 +36,7 @@ bool OracleClause::serialize(const std::string& name,
                   << name << "\"\n"
                   << "  You may need to call OracleClause::install."
                   << std::endl;
-      throw std::invalid_argument(name + " serializar missing");
+      throw std::invalid_argument(name + " serializer missing");
     }
     else
     {
