@@ -193,13 +193,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     (libfive-tree-eval-f (shape->ptr a) (vec3->ffi pt)))
 
 (define-method (shape-eval (a <shape>) (lower <vec3>) (upper <vec3>))
-    (apply cons
-      (parse-c-struct
-        (libfive-tree-eval-i (shape->ptr a)
-                 (libfive-region (libfive-interval (.x lower) (.x upper))
-                          (libfive-interval (.y lower) (.y upper))
-                          (libfive-interval (.z lower) (.z upper))))
-        (list float float))))
+  (apply cons
+         (parse-c-struct
+          (libfive-tree-eval-i (shape->ptr a)
+                               (libfive-region (list (.x lower) (.x upper))
+                                               (list (.y lower) (.y upper))
+                                               (list (.z lower) (.z upper))))
+          (list float float))))
 
 (define-method (shape-derivs (a <shape>) (pt <vec3>))
     (ffi->vec3 (libfive-tree-eval-d (shape->ptr a) (vec3->ffi pt))))
