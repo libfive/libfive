@@ -308,6 +308,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     define-shape
     remap-shape
     make-var
+    shape?
     shape->string
     shape-eval
     shape-derivs
