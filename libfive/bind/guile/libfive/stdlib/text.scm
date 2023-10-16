@@ -18,6 +18,6 @@ It was last generated on 2022-02-09 19:39:26 by user bramp
   Returns the given text, rendered in a custom f-rep font
   (with a character height of 1)"
   (ptr->shape (ffi_text
-    (string->pointer txt)
+    (string->pointer txt "latin1")
     (vec2->tvec2 pos))))
 (export text)

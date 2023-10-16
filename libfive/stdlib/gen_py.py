@@ -34,7 +34,7 @@ def arg_wrap(a):
     elif a.type in ['float', 'int']:
         return a.name
     elif a.type == 'const char*':
-        return "{}.encode('utf-8')".format(a.name)
+        return "{}.encode('latin1')".format(a.name)
     elif a.type == 'tvec2':
         return "list([Shape.wrap(i) for i in {}])".format(a.name)
     elif a.type == 'tvec3':
