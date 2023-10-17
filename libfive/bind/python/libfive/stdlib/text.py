@@ -20,7 +20,7 @@ def text(txt, pos=(0, 0)):
     """ Returns the given text, rendered in a custom f-rep font
         (with a character height of 1)
     """
-    args = [txt.encode('utf-8'), list([Shape.wrap(i) for i in pos])]
+    args = [txt.encode('latin1'), list([Shape.wrap(i) for i in pos])]
     return Shape(stdlib.text(
         args[0],
         tvec2(*[a.ptr for a in args[1]])))
