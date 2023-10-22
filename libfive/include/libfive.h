@@ -356,6 +356,12 @@ void libfive_tree_save_slice(libfive_tree tree, libfive_region2 R,
 libfive_mesh* libfive_tree_render_mesh(libfive_tree tree,
                                        libfive_region3 R, float res);
 /*
+ * Same as libfive_tree_render_mesh, but forces single-threaded meshing to
+ * play nicely with FFI.
+ */
+libfive_mesh* libfive_tree_render_mesh_st(libfive_tree tree,
+                                       libfive_region3 R, float res);
+/*
  *  Renders to an alternate mesh format, see description of
  *  libfive_mesh_coords above.  The returned struct must be freed with
  *  libfive_mesh_coords_delete.

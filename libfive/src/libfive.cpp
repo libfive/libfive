@@ -303,12 +303,11 @@ void libfive_tree_save_slice(libfive_tree tree, libfive_region2 R, float z, floa
     cs->saveSVG(f);
 }
 
-libfive_mesh* libfive_tree_render_mesh(libfive_tree tree, libfive_region3 R, float res)
+libfive_mesh* libfive_tree_render_mesh_(libfive_tree tree, libfive_region3 R,
+                                        const BRepSettings& settings)
 {
     Region<3> region({R.X.lower, R.Y.lower, R.Z.lower},
                      {R.X.upper, R.Y.upper, R.Z.upper});
-    BRepSettings settings;
-    settings.min_feature = 1/res;
     auto ms = Mesh::render(Tree(tree), region, settings);
     if (ms.get() == nullptr)
     {
@@ -339,6 +338,19 @@ libfive_mesh* libfive_tree_render_mesh(libfive_tree tree, libfive_region3 R, flo
     return out;
 }
 
+libfive_mesh* libfive_tree_render_mesh(libfive_tree tree, libfive_region3 R, float res) {
+  BRepSettings settings;
+  settings.min_feature = 1/res;
+  return libfive_tree_render_mesh_(tree, R, settings);
+}
+
+libfive_mesh* libfive_tree_render_mesh_st(libfive_tree tree, libfive_region3 R, float res) {
+  BRepSettings settings;
+  settings.min_feature = 1/res;
+  settings.workers = 1;
+  return libfive_tree_render_mesh_(tree, R, settings);
+}
+ 
 libfive_mesh_coords* libfive_tree_render_mesh_coords(libfive_tree tree,
                                                      libfive_region3 R,
                                                      float res)
