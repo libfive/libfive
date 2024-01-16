@@ -157,12 +157,12 @@ if you insist,
 there are hints [here](https://github.com/libfive/libfive/blob/b4e0e0bbf8c740a313754062a205a98ac336a19c/README.md#before-2004)
 and a discussion of Python linking issues [here](https://github.com/libfive/libfive/issues/408).
 
-### Windows (VS2019)
+### Windows (VS2022)
 Install [Git](https://git-scm.com/download/win),
 choosing settings so that it can be invoked from a Windows _Command Prompt_
 (the defaults should be fine).
 
-Install [VS2019](https://visualstudio.microsoft.com/vs/) (Community Edition),
+Install [VS2022](https://visualstudio.microsoft.com/vs/) (Community Edition),
 configured for "Desktop development with C++".
 You only _need_ MSVC, Windows 10 SDK, and C++ CMake tools for Windows,
 so feel free to uncheck other optional packages in the right sidebar,
@@ -191,8 +191,8 @@ you're ready to actually build `libfive` and Studio!
 ```
 mkdir build
 cd build
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -G"Visual Studio 16 2019" ..
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build . --config Release --target Studio -- -v:n -m:8
+& "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -G"Visual Studio 17 2022" ..
+& "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build . --config Release --target Studio --
 .\studio\Release\Studio.exe
 ```
 
@@ -204,5 +204,5 @@ or the precarious house of cards that finds Python will come tumbling down)
 
 When changes are made, you _should_ only need to re-run the build step, i.e.
 ```
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build . --config Release --target Studio -- -v:n -m:8
+& "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build . --config Release --target Studio --
 ```
