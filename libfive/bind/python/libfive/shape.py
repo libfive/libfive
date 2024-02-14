@@ -13,7 +13,7 @@ import tempfile
 import subprocess
 
 from libfive.ffi import (lib, libfive_region_t, libfive_interval_t,
-                         libfive_vec3_t)
+                         libfive_vec3_t, libfive_tree)
 
 def _wrapped(f):
     ''' Decorator function which calls Shape.wrap on every argument
@@ -230,16 +230,19 @@ class Shape:
         return Shape.new('compare', self.ptr, other.ptr)
 
     def save_stl(self, filename, xyz_min=(-10,-10,-10), xyz_max=(10,10,10),
-                 resolution=10):
+                 resolution=10, quality=8):
         ''' Converts this Shape into a mesh and saves it as an STL file.
 
             xyz_min/max are three-element lists of corner positions
             resolution is the reciprocal of minimum feature size
                 (larger values = higher resolution = slower)
+            quality is the negative order of magnitude of maximum error
         '''
         region = libfive_region_t(*[libfive_interval_t(a, b) for a, b
                                     in zip(xyz_min, xyz_max)])
-        lib.libfive_tree_save_mesh(self.ptr, region, resolution,
+        ptr_array = [self.ptr]
+        trees = (libfive_tree * len(ptr_array))(*ptr_array)
+        lib.libfive_tree_save_meshes(trees, region, resolution, quality,
                                    filename.encode('ascii'))
 
     def get_mesh(self, xyz_min=(-10,-10,-10), xyz_max=(10,10,10),
