@@ -121,7 +121,7 @@ and consider using [`ninja`](https://ninja-build.org/) for faster builds.
 
 Start by installing dependencies through the package manager:
 ```
-sudo apt-get install cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-3.0-dev qtbase5-dev python3
+sudo apt-get install g++ cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-3.0-dev qtbase5-dev python3
 ```
 Omit `guile-3.0-dev` and/or `qtbase5-dev` if you do not want Guile bindings and/or Studio to be built too.
 
