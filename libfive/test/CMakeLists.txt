@@ -2,6 +2,7 @@ set(SRCS main.cpp
     api.cpp
     archive.cpp
     contours.cpp
+    curv.cpp
     deck.cpp
     dual.cpp
     eval_interval.cpp
