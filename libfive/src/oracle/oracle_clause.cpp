@@ -52,4 +52,10 @@ std::unique_ptr<const OracleClause> OracleClause::remap(
     return std::make_unique<TransformedOracleClause>(self, X_, Y_, Z_);
 }
 
+std::map<std::string, OracleClause::SerDe>& OracleClause::installed()
+{
+    static std::map<std::string, SerDe> m;
+    return m;
+}
+
 }   // namespace libfive
