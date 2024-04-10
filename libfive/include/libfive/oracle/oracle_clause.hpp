@@ -71,6 +71,15 @@ public:
     }
 
     /*
+     * Uninstalls a particular class's serializer / deserializer pair.
+     * Must be called with the class's name().
+     */
+    static void uninstall(const std::string& name)
+    {
+      installed().erase(name);
+    }
+
+    /*
      *  Serializes an oracle clause by looking up an installed serializer.
      *      data is pushed back into the data vector
      *      returns false on failure
@@ -140,6 +149,9 @@ class T##_Installer { \
 public: \
     T##_Installer() { \
         OracleClause::install<T>(#T); \
+    }\
+    ~T##_Installer() { \
+        OracleClause::uninstall(#T); \
     }\
 };\
 static T##_Installer T##_Installer_Instance;
