@@ -25,6 +25,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/dc/dc_neighbors.hpp"
 #include "libfive/render/brep/dc/dc_flags.hpp"
 #include "libfive/render/brep/region.hpp"
+#include "libfive/render/brep/settings.hpp"
 #include "libfive/render/axes.hpp"
 
 #include "../xtree.inl"
@@ -728,10 +729,18 @@ void DCTree<N>::collectChildren(Evaluator* eval,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
 template <unsigned N>
 double DCTree<N>::findVertex(unsigned index)
 {
+    if (true) {
+      assert(this->leaf->mass_point(N) > 0);
+      Vec center = this->leaf->mass_point.template head<N>() / this->leaf->mass_point(N);
+
+      // Store this specific vertex in the verts matrix
+      this->leaf->verts.col(index) = center;
+      return std::numeric_limits<double>::max();
+    }
+
     assert(this->leaf != nullptr);
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, N, N>> es(
             this->leaf->AtA);

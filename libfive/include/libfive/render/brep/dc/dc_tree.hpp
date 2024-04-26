@@ -23,6 +23,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "libfive/render/brep/object_pool.hpp"
 #include "libfive/render/brep/dc/intersection.hpp"
 #include "libfive/render/brep/dc/marching.hpp"
+#include "libfive/render/brep/settings.hpp"
 
 namespace libfive {
 
@@ -31,6 +32,7 @@ class Evaluator;
 class Tape;
 template <unsigned N> class Region;
 template <unsigned N> class DCNeighbors;
+class PseudoDCNeighbors2;
 
 /*  AMBIGUOUS leaf cells have more data, which we heap-allocate in
  *  this struct to keep the overall tree smaller. */
@@ -284,6 +286,213 @@ protected:
      */
     static uint8_t buildCornerMask(
             const std::array<Interval::State, 1 << N>& corners);
+};
+
+
+class PseudoDCTree2 : public XTree<2, PseudoDCTree2, DCLeaf<2>>
+{
+//public:
+//  explicit PseudoDCTree2();
+//  explicit PseudoDCTree2(PseudoDCTree2* parent, unsigned index, const Region<2>& region);
+//  static std::unique_ptr<PseudoDCTree2> empty();
+//protected:
+//  
+//  PseudoDCTree2(Interval::State type);
+//  virtual double findVertex(unsigned index);
+
+  public:
+    using Pool = ObjectPool<PseudoDCTree2, DCLeaf<2>, Intersection<2>>;
+
+    /*
+     *  Simple constructor
+     *
+     *  Pointers are initialized to nullptr, but other members
+     *  are invalid until reset() is called.
+     */
+    explicit PseudoDCTree2();
+    explicit PseudoDCTree2(PseudoDCTree2* parent, unsigned index, const Region<2>& region);
+    static std::unique_ptr<PseudoDCTree2> empty();
+
+    /*
+     *  Populates type, setting corners, manifold, and done if this region is
+     *  fully inside or outside the mode.
+     *
+     *  Returns a shorter version of the tape that ignores unambiguous clauses.
+     */
+    std::shared_ptr<Tape> evalInterval(Evaluator* eval,
+                                       const std::shared_ptr<Tape>& tape,
+                                       Pool& object_pool);
+
+    /*
+     *  Evaluates and stores a result at every corner of the cell.
+     *  Sets type to FILLED / EMPTY / AMBIGUOUS based on the corner values.
+     *  Then, solves for vertex position, populating AtA / AtB / BtB.
+     */
+    void evalLeaf(Evaluator* eval,
+                  const std::shared_ptr<Tape>& tape,
+                  Pool& spare_leafs,
+                  const PseudoDCNeighbors2& neighbors);
+
+    /*
+     *  Collapse based on the error metrics from the combined QEF 
+     *  (or interval filled / empty state).
+     *
+     *  Should only be called once all children have been built.
+     */
+    void collectChildren(Evaluator* eval,
+                         const std::shared_ptr<Tape>& tape,
+                         Pool& object_pool,
+                         double max_err);
+
+    /*
+     *  Returns the filled / empty state for the ith corner
+     */
+    Interval::State cornerState(uint8_t i) const;
+
+    /*
+     *  Checks whether this cell is manifold.
+     *  This must only be called on non-branching cells.
+     */
+    bool isManifold() const;
+
+    /*
+     *  Looks up this cell's corner mask (used in various tables)
+     *  This must only be called on non-branching cells.
+     */
+    uint8_t cornerMask() const;
+
+    /*  Looks up the cell's level.
+     *
+     *  This must only be called on non-branching cells.
+     *
+     *  level is defined as 0 for EMPTY or FILLED terminal cells;
+     *  for ambiguous leaf cells, it is the depth of the largest 
+     *  chain of leafs that were merged into this cell.
+     */
+    unsigned level() const;
+
+    /*
+     *  Looks up this cell's feature rank.
+     *
+     *  This must only be called on non-branching cells.
+     *
+     *  rank is defined as 0 for EMPTY and FILLED cells;
+     *  otherwise, it is 1 for a plane, 2 for an edge,
+     *  3 for a vertex (in the 3D case).
+     */
+    unsigned rank() const;
+
+    /*
+     *  Sanity-check a DCTree by ensuring that all corners are consistent
+     *  between shared subtrees.  This is useful for debugging segfaults
+     *  in meshing, which are usually caused by inconsistent trees.
+     */
+    bool checkConsistency() const;
+    bool checkConsistency(const PseudoDCNeighbors2& neighbors) const;
+
+    /*  Boilerplate for an object that contains an Eigen struct  */
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    /*  Helper typedef for N-dimensional column vector */
+    typedef Eigen::Matrix<double, 2, 1> Vec;
+
+    /*
+     *  Look up a particular vertex by index
+     */
+    Vec vert(unsigned i=0) const;
+
+    /*
+     *  Looks up a particular intersection array by corner indices
+     */
+    Intersection<2>* intersection(unsigned a, unsigned b) const;
+
+    /*
+     *  Looks up a particular intersection array by (directed) edge index
+     */
+    Intersection<2>* intersection(unsigned edge) const;
+
+    /*
+     *  Releases this tree and any leaf objects to the given object pool
+     */
+    void releaseTo(Pool& object_pool);
+
+    static constexpr bool hasSingletons() { return true; }
+    static PseudoDCTree2* singletonEmpty() {
+        static PseudoDCTree2 empty(Interval::EMPTY);
+        return &empty;
+    }
+    static PseudoDCTree2* singletonFilled() {
+        static PseudoDCTree2 filled(Interval::FILLED);
+        return &filled;
+    }
+    static bool isSingleton(const PseudoDCTree2* t) {
+        return t == singletonEmpty() || t == singletonFilled();
+    }
+
+protected:
+    /*  Private constructor for a dummy tree of a particular type */
+    PseudoDCTree2(Interval::State type);
+
+    /*
+     *  Searches for a vertex within the DCTree cell, using the QEF matrices
+     *  that are pre-populated in AtA, AtB, etc.
+     *
+     *  Minimizes the QEF towards mass_point
+     *
+     *  Stores the vertex in vert and returns the QEF error
+     */
+    double findVertex(unsigned i=0);
+
+    /*
+     *  Writes the given intersection into the intersections list
+     *  for the specified edge.  Allocates an interesections list
+     *  if none already exists.  The given set of derivatives is normalized
+     *  (to become a surface normal).  If the normal is invalid, then
+     *  we store an intersection with an all-zero normal.  This means we
+     *  can still use the intersection for mass-point calculation, but
+     *  can detect that the normal is invalid (and so will not use it for
+     *  building the A and b matrices).
+     */
+    void saveIntersection(const Vec& pos, const Vec& derivs,
+                          const double value, const size_t edge,
+                          Pool& object_pool);
+
+    /*
+     *  Returns a table such that looking up a particular corner
+     *  configuration returns whether that configuration is safe to
+     *  collapse.
+     *  (must be specialized for a specific dimensionality)
+     *
+     *  This implements the test from [Gerstner et al, 2000], as
+     *  described in [Ju et al, 2002].
+     */
+    static bool cornersAreManifold(const uint8_t corner_mask);
+
+    /*
+     *  Checks to make sure that the fine contour is topologically equivalent
+     *  to the coarser contour by comparing signs in edges and faces
+     *  (must be specialized for a specific dimensionality)
+     *
+     *  Returns true if the cell can be collapsed without changing topology
+     *  (with respect to the leaves)
+     */
+    static bool leafsAreManifold(
+            const std::array<PseudoDCTree2*, 1 <<2>& children,
+            const std::array<Interval::State, 1 <<2>& corners);
+
+    /*
+     *  When collecting children and collapsing, each child can contribute the
+     *  intersections on the N edges (2*N directed edges) adjacent to the
+     *  corner that it contributes.  This method uses mt, which therefore
+     *  must have been built first.
+     */
+    static std::array<unsigned, 4> edgesFromChild(unsigned childIndex);
+
+    /*
+     *  Returns a corner mask bitfield from the given array
+     */
+    static uint8_t buildCornerMask(
+            const std::array<Interval::State, 1 << 2 >& corners);
 };
 
 }   // namespace libfive

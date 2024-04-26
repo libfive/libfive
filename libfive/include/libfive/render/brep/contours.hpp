@@ -29,6 +29,10 @@ public:
         const Tree t, const Region<2>& r,
         const BRepSettings& settings);
 
+    static std::unique_ptr<Contours> pseudoRender(
+        const Tree t, const Region<2>& r,
+        const BRepSettings& settings);
+
     /*
      *  Saves the contours to an SVG file
      */
