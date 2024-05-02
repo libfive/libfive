@@ -16,6 +16,7 @@ namespace libfive {
 
 /*  Forward declarations */
 template <unsigned N> class DCTree;
+class PseudoDCTree2;
 template <unsigned N> class PerThreadBRep;
 class Contours;
 
@@ -35,6 +36,26 @@ public:
 protected:
     template <Axis::Axis A, bool D>
     void load(const std::array<const DCTree<2>*, 2>& ts);
+
+    PerThreadBRep<2>& m;
+};
+
+class PseudoDCContourer
+{
+public:
+    using Output = Contours;
+    using Input = PseudoDCTree2;
+
+    PseudoDCContourer(PerThreadBRep<2>& m) : m(m) {}
+
+    template <Axis::Axis A>
+    void load(const std::array<const PseudoDCTree2*, 2>& ts);
+
+    static bool needsTopEdges() { return false; }
+
+protected:
+    template <Axis::Axis A, bool D>
+    void load(const std::array<const PseudoDCTree2*, 2>& ts);
 
     PerThreadBRep<2>& m;
 };

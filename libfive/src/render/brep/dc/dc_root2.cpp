@@ -13,4 +13,5 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace libfive {
 template class Root<DCTree<2>>;
+template class Root<PseudoDCTree2>;
 }   // namespace libfive

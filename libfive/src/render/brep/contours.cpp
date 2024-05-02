@@ -22,6 +22,26 @@ namespace libfive {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+std::unique_ptr<Contours> Contours::pseudoRender(
+        const Tree t, const Region<2>& r,
+        const BRepSettings& settings)
+{
+    tbb::enumerable_thread_specific<Evaluator> es([&t]() {return Evaluator(t); });
+
+    // Create the quadtree on the scaffold
+    auto xtree = Root<PseudoDCTree2>::build(es, r, settings);
+
+    // Abort early if the cancellation flag is set
+    if (settings.cancel == true) {
+        return nullptr;
+    }
+
+    // Perform marching squares, collecting into Contours
+    auto cs = Dual<2>::walk<PseudoDCContourer>(xtree, settings);
+    cs->bbox = r;
+    return cs;
+}
+
 std::unique_ptr<Contours> Contours::render(
         const Tree t, const Region<2>& r,
         const BRepSettings& settings)
