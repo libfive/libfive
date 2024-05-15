@@ -86,10 +86,10 @@ void ArrayEvaluator::setCount(size_t count)
 #elif defined EIGEN_VECTORIZE_NEON
     #define LIBFIVE_SIMD_SIZE 4
 #elif defined EIGEN_VECTORIZE
-    #warning "EIGEN_VECTORIZE is set but no vectorization flag is found"
+    #pragma message ("EIGEN_VECTORIZE is set but no vectorization flag is found")
     #define LIBFIVE_SIMD_SIZE 0
 #else
-    #warning "No SIMD flags detected"
+    #pragma message ("No SIMD flags detected")
     #define LIBFIVE_SIMD_SIZE 0
 #endif
     // If we have SIMD instructions, then round the evaluation size up
