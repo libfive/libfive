@@ -91,6 +91,12 @@ struct TreeData : public TreeDataVariant
         }
     };
 
+    struct PowValueException : public std::exception {
+        const char* what() const throw () override {
+            return "Power and nth-root argument must be a constant integer";
+        }
+    };
+
     /*  Returns left and right-hand Tree references.
      *  Throws a ChildException if the requested branch is missing. */
     const Tree& lhs() const;

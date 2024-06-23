@@ -34,8 +34,6 @@ OP_BINARY(max, OP_MAX) \
 OP_BINARY(operator-, OP_SUB) \
 OP_BINARY(operator/, OP_DIV) \
 OP_BINARY(atan2, OP_ATAN2) \
-OP_BINARY(pow, OP_POW) \
-OP_BINARY(nth_root, OP_NTH_ROOT) \
 OP_BINARY(mod, OP_MOD) \
 OP_BINARY(nanfill, OP_NANFILL) \
 OP_BINARY(compare, OP_COMPARE)
@@ -47,6 +45,20 @@ OP_BINARY(compare, OP_COMPARE)
 LIBFIVE_TREE_OPERATORS
 #undef OP_UNARY
 #undef OP_BINARY
+
+/*
+ *  Builds an `OP_POW` node
+ *
+ * `b` must be an integer constant; otherwise, this throws PowValueException
+ */
+libfive::Tree pow(const libfive::Tree& a, const libfive::Tree& b);
+
+/*
+ *  Builds an `OP_NTH_ROOT` node
+ *
+ * `b` must be an integer constant; otherwise, this throws PowValueException
+ */
+libfive::Tree nth_root(const libfive::Tree& a, const libfive::Tree& b);
 
 /*  Prints the tree to the given ostream. */
 std::ostream& operator<<(std::ostream& stream, const libfive::Tree& tree);

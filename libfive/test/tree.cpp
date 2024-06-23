@@ -615,6 +615,14 @@ TEST_CASE("Tree::eq") {
 #undef REQUIRE_EQ
 }
 
+TEST_CASE("Tree: exceptions on invalid inputs") {
+    SECTION("pow") {
+        REQUIRE_THROWS(libfive::pow(Tree::X(), 1.0/3.0f));
+    }
+    SECTION("nth_root") {
+        REQUIRE_THROWS(libfive::nth_root(Tree::X(), 1.0/3.0f));
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Taken from old test/cache.cpp
