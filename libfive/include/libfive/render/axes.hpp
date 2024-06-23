@@ -1,6 +1,6 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2024  Matt Keeter
 
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -12,7 +12,7 @@ namespace libfive {
 namespace Axis {
 
     /*  Enumerator to refer to spatial axes  */
-    enum Axis { X = 1, Y = 2, Z = 4 };
+    enum Axis { X = 1, Y = 2, Z = 4, Invalid = -1 };
 
     /*  a, Q[a], R[a] is right-handed */
     inline constexpr Axis Q(Axis a)
@@ -39,7 +39,7 @@ namespace Axis {
         return (i == 0) ? Axis::X :
                (i == 1) ? Axis::Y :
                (i == 2) ? Axis::Z :
-               static_cast<Axis>(-1);
+               Axis::Invalid;
     }
 
 }   // namespace Axis
