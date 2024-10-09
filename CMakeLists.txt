@@ -48,7 +48,7 @@ endif()
 ################################################################################
 
 if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -g -fPIC -pedantic -Werror=switch")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -fPIC -pedantic -Werror=switch")
 
     # Sometimes this flag is not supported (e.g. on Apple Silicon)
     check_cxx_compiler_flag("-march=native" MARCH_SUPPORTED)
