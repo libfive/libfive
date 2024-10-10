@@ -8,6 +8,7 @@ include(CheckCXXCompilerFlag)
 option(BUILD_STUDIO_APP "Build Studio application" ON)
 option(BUILD_GUILE_BINDINGS "Build Guile bindings" ON)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+option(ENABLE_DEBUG "Add debugging Symbols to the binaries" ON)
 
 option(LIBFIVE_PACKED_OPCODES
     "Tightly pack opcodes (breaks compatibility with older saved f-reps)"
@@ -47,8 +48,14 @@ endif()
 
 ################################################################################
 
+if(ENABLE_DEBUG)
+  set(LIBFIVE_DEBUGGING "-g ")
+else()
+  set(LIBFIVE_DEBUGGING "")
+endif()
+
 if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -g -fPIC -pedantic -Werror=switch")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra ${LIBFIVE_DEBUGGING}-fPIC -pedantic -Werror=switch")
 
     # Sometimes this flag is not supported (e.g. on Apple Silicon)
     check_cxx_compiler_flag("-march=native" MARCH_SUPPORTED)
