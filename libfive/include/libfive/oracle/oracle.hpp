@@ -45,7 +45,8 @@ public:
      *  Sets a region for interval evaluation
      */
     virtual void set(const Eigen::Vector3f& lower,
-                     const Eigen::Vector3f& upper)=0;
+                     const Eigen::Vector3f& upper,
+                     int32_t level_hint=16)=0;
 
     /*
      *  Sets a variable.  Returns whether anything changed as a result.

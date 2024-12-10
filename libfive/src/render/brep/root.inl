@@ -75,6 +75,9 @@ Root<T> Root<T>::build(tbb::enumerable_thread_specific<Evaluator>& eval,
                 }
             }
             if (t->type == Interval::UNKNOWN) {
+                // Smuggle our level out as a hint; if we are at level 1 we can likely skip
+                // instruction pruning 
+                out.tape->level = t->region.level; 
                 out.next_tape = 
                     t->evalInterval(&local.eval, out.tape, local.object_pool);
             }

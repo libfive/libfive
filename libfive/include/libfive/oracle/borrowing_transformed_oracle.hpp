@@ -25,7 +25,7 @@ public:
 
     /* The set methods are no-ops, since we're getting our input information
      * from the deck.*/
-    void set(const Eigen::Vector3f&, const Eigen::Vector3f&) override {}
+    void set(const Eigen::Vector3f&, const Eigen::Vector3f&, int32_t) override {}
     void set(const Eigen::Vector3f&, size_t) override {}
 
     void evalInterval(Interval& out) override;

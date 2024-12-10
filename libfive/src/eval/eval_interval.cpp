@@ -77,9 +77,11 @@ Interval IntervalEvaluator::eval(
     i[deck->Y] = {lower.y(), upper.y()};
     i[deck->Z] = {lower.z(), upper.z()};
 
+    int32_t level = tape->level.value_or(256);
+
     for (auto& o : deck->oracles)
     {
-        o->set(lower, upper);
+        o->set(lower, upper, level);
     }
 
     deck->bindOracles(*tape, this);
