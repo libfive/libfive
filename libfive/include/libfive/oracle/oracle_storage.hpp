@@ -9,6 +9,8 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #pragma once
 
+#include <optional>
+
 #include <Eigen/Eigen>
 
 #include "libfive/oracle/oracle.hpp"
@@ -26,10 +28,12 @@ public:
     }
 
     void set(const Eigen::Vector3f& _lower,
-             const Eigen::Vector3f& _upper) override
+             const Eigen::Vector3f& _upper,
+             int32_t _level) override
     {
         lower = _lower;
         upper = _upper;
+        level = _level;
     }
 
     /*
@@ -62,6 +66,7 @@ protected:
     /* Local storage for set(Interval) */
     Eigen::Vector3f lower;
     Eigen::Vector3f upper;
+    std::optional<int32_t> level;
 };
 
 }   // namespace libfive

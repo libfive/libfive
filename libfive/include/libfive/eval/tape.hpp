@@ -9,6 +9,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include <vector>
+#include <optional>
 #include <memory>
 
 #include <Eigen/Eigen>
@@ -62,6 +63,12 @@ public:
     { return t.crend(); }
 
     Clause::Id root() const { return i; }
+
+    /* Instruction pruning can be skipped if we know that we are at the 
+    * bottom of a quad/octree descent; we use "level" here to hint where
+    * we are; a level of 1 is the bottom.
+    */
+    std::optional<int32_t> level;
 
 protected:
     /*  The tape itself, as a vector of clauses  */
