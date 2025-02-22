@@ -2,6 +2,22 @@
 *Infrastructure for solid modeling.*  
 [Homepage](https://libfive.com) | [API Examples](https://libfive.com/examples) | [Downloads](https://libfive.com/download)
 
+## Table of Contents
+- [Introduction](#introduction)
+- [Other Projects Using libfive](#other-projects-using-libfive)
+  - [Language Bindings](#language-bindings)
+  - [Viewers](#viewers)
+  - [Research](#research)
+- [Community](#community)
+- [License](#license)
+- [Compiling From Source](#compiling-from-source)
+    - [Dependencies Required](#dependencies-required)
+    - [Installing on macOS](#macos)
+    - [Installing on Ubuntu](#ubuntu)
+    - [Installing on Windows](#windows-vs2022)
+
+## Introduction
+
 `libfive` is a framework for solid modeling using
 [functional representations](https://en.wikipedia.org/wiki/Function_representation).
 
@@ -11,7 +27,7 @@ It includes several layers, ranging from infrastructure to GUI:
 A great deal of work has gone into the meshing algorithm,
 which produces watertight, manifold,
 hierarchical, feature-preserving triangle meshes.
-The library is written in C++ and exposes a C API in `libfive.h`.
+The library is written in C++ and exposes a C API in `libfive.h`
 - The `libfive` standard library is a library of common shapes, transforms, and CSG operations.
   It is implemented in C++ and exposes a C API in `libfive/stdlib/stdlib.h`
 - The standard library is parsed and used to generate bindings for both
@@ -66,10 +82,10 @@ Different layers of this project are released under different licenses:
 to discuss custom development, integration,
 or commercial support.
 
-## Compiling from source
+## Compiling From Source
 `libfive` and Studio are compatible with macOS, Linux, and Windows.
 
-### Dependencies
+### Dependencies Required
 #### libfive
 - [`cmake 1.65 or later`](https://cmake.org/)
 - [`pkg-config`](https://www.freedesktop.org/wiki/Software/pkg-config/)
@@ -98,14 +114,19 @@ Checking dependencies:
   Studio:               ✓   (Python + Guile)
 ```
 
-### Mac
-With `homebrew` installed, run
+### macOS
+
+#### 1. With `homebrew` installed, install the dependencies
 ```
 brew install cmake pkg-config eigen libpng boost guile python3 qt
 ```
 Omit `guile`, `python3`, or `qt` to avoid building bindings and/or the UI.
 
-Then, from the `libfive` folder, run something like:
+#### 2. Clone the repository
+
+`git clone https://github.com/libfive/libfive.git`
+
+#### 3. From the `libfive` folder, run something like:
 ```
 mkdir build
 cd build
@@ -115,17 +136,23 @@ make
 (adjust based on your Qt installation,
 and consider using [`ninja`](https://ninja-build.org/) for faster builds.
 
+*If you are unsure about the gt installation path, run:*
+`brew info qt`. *Then update `CMAKE_PREFIX_PATH` accordingly.*
+
 ### Ubuntu
 `libfive` should build out of the box on the latest Ubuntu LTS
 (currently 20.04).  If you find that's not the case, please open an issue!
 
-Start by installing dependencies through the package manager:
+#### 1. Install dependencies through the package manager:
 ```
 sudo apt-get install g++ cmake pkg-config libeigen3-dev libpng-dev libboost-all-dev guile-3.0-dev qtbase5-dev python3
 ```
-Omit `guile-3.0-dev` and/or `qtbase5-dev` if you do not want Guile bindings and/or Studio to be built too.
+*Omit `guile-3.0-dev` and/or `qtbase5-dev` if you do not want Guile bindings and/or Studio to be built too.*
 
-Building is similar as on Mac: clone the repository, then run something like
+#### 2. Clone the repository
+`git clone https://github.com/libfive/libfive.git`
+
+#### 3. Run something like
 ```
 mkdir build
 cd build
@@ -162,13 +189,13 @@ Install [Git](https://git-scm.com/download/win),
 choosing settings so that it can be invoked from a Windows _Command Prompt_
 (the defaults should be fine).
 
-Install [VS2022](https://visualstudio.microsoft.com/vs/) (Community Edition),
+#### 1. Install [VS2022](https://visualstudio.microsoft.com/vs/) (Community Edition),
 configured for "Desktop development with C++".
 You only _need_ MSVC, Windows 10 SDK, and C++ CMake tools for Windows,
 so feel free to uncheck other optional packages in the right sidebar,
 then run the installation!
 
-Next, install dependencies using `vcpkg`.
+#### 2. Install dependencies using `vcpkg`.
 
 (This step touches many files, so you may want to disable the
 _Antimalware Service Executable_,
@@ -176,7 +203,7 @@ which will otherwise scan every single file and slow things down dramatically:
 in "Windows Security → Virus & threat protection settings",
 uncheck "Real-time protection".)
 
-In a Windows _Command Prompt_:
+#### 3. In a Windows _Command Prompt_:
 ```
 git.exe clone https://github.com/libfive/libfive
 cd libfive
@@ -186,8 +213,7 @@ git clone https://github.com/Microsoft/vcpkg.git
 ```
 Go get some coffee or something - this will take a while.
 
-Once this is done installing,
-you're ready to actually build `libfive` and Studio!
+#### 4. Once this is done installing, you're ready to actually build `libfive` and Studio!* 
 ```
 mkdir build
 cd build
