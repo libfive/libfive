@@ -189,19 +189,18 @@ Install [Git](https://git-scm.com/download/win),
 choosing settings so that it can be invoked from a Windows _Command Prompt_
 (the defaults should be fine).
 
-#### 1. Install [VS2022](https://visualstudio.microsoft.com/vs/) (Community Edition),
-configured for "Desktop development with C++".
+#### 1. Install [VS2022](https://visualstudio.microsoft.com/vs/) (Community Edition), configured for "Desktop development with C++".
 You only _need_ MSVC, Windows 10 SDK, and C++ CMake tools for Windows,
 so feel free to uncheck other optional packages in the right sidebar,
 then run the installation!
 
 #### 2. Install dependencies using `vcpkg`.
 
-(This step touches many files, so you may want to disable the
+This step touches many files, so you may want to disable the
 _Antimalware Service Executable_,
 which will otherwise scan every single file and slow things down dramatically:
 in "Windows Security → Virus & threat protection settings",
-uncheck "Real-time protection".)
+uncheck "Real-time protection".
 
 #### 3. In a Windows _Command Prompt_:
 ```
