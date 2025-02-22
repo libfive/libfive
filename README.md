@@ -9,12 +9,12 @@
   - [Viewers](#viewers)
   - [Research](#research)
 - [Community](#community)
-- [License](#license)
 - [Compiling From Source](#compiling-from-source)
     - [Dependencies Required](#dependencies-required)
     - [Installing on macOS](#macos)
     - [Installing on Ubuntu](#ubuntu)
     - [Installing on Windows](#windows-vs2022)
+ - [License](#license)
 
 ## Introduction
 
@@ -66,21 +66,6 @@ For `libfive`-specific discussions, consider opening a topic in the
 There's also a `libfive` subforum in the [SDF User Group Discourse](https://sdfug.discourse.group/),
 which is a good place for general discussion of modeling with signed distance
 fields.
-
-## License
-(c) 2015-2021 Matthew Keeter
-
-Different layers of this project are released under different licenses:
-- The `libfive` library, `libfive-stdlib` library, and Python bindings
-  are released under the
-  [Mozilla Public License, version 2](https://www.mozilla.org/en-US/MPL/2.0/).
-- `libfive-guile` and `Studio` are released under the
-  [GNU General Public License, version 2](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html)
-  [or later](https://www.gnu.org/licenses/gpl-3.0-standalone.html).
-
-[Contact the author](matt.j.keeter@gmail.com)
-to discuss custom development, integration,
-or commercial support.
 
 ## Compiling From Source
 `libfive` and Studio are compatible with macOS, Linux, and Windows.
@@ -231,3 +216,17 @@ When changes are made, you _should_ only need to re-run the build step, i.e.
 ```
 & "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build . --config Release --target Studio --
 ```
+## License
+(c) 2015-2021 Matthew Keeter
+
+Different layers of this project are released under different licenses:
+- The `libfive` library, `libfive-stdlib` library, and Python bindings
+  are released under the
+  [Mozilla Public License, version 2](https://www.mozilla.org/en-US/MPL/2.0/).
+- `libfive-guile` and `Studio` are released under the
+  [GNU General Public License, version 2](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html)
+  [or later](https://www.gnu.org/licenses/gpl-3.0-standalone.html).
+
+[Contact the author](matt.j.keeter@gmail.com)
+to discuss custom development, integration,
+or commercial support.
