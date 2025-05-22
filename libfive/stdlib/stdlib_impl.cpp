@@ -353,7 +353,7 @@ Tree array_xyz(Tree shape, int nx, int ny, int nz,
     shape = array_xy(shape, nx, ny, {delta.x, delta.y});
     auto out = shape;
     for (int i=1; i < nz; ++i) {
-        out = _union(out, move(shape, {0, 0, delta.y * i}));
+        out = _union(out, move(shape, {0, 0, delta.z * i}));
     }
     return out;
 }
