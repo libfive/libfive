@@ -8,8 +8,13 @@ finds every shape, and saves them to an STL file.
 TODO: Error handling is non-existent.
 !#
 
-(use-modules (libfive kernel) (libfive sandbox) (libfive vec))
-(use-modules (ice-9 textual-ports))
+(use-modules (libfive lib)
+             (libfive kernel)
+             (libfive sandbox)
+             (libfive vec))
+
+(use-modules (ice-9 match)
+             (ice-9 textual-ports))
 
 (define args (program-arguments))
 
@@ -30,9 +35,10 @@ TODO: Error handling is non-existent.
 
 (define filename (caddr args))
 
-;; Extract bounds from the six-element list
-(define upper (apply vec3 (cdddr global-bounds)))
-(list-cdr-set! global-bounds 2 '())
-(define lower (apply vec3 global-bounds))
-
-(shapes->mesh shapes filename lower upper global-resolution global-quality)
+(match global-bounds
+  ((xmin ymin zmin xmax ymax zmax)
+   (shapes-save-mesh shapes filename global-resolution
+                     (libfive-region (list xmin xmax)
+                                     (list ymin ymax)
+                                     (list zmin zmax))
+                     global-quality)))
