@@ -13,33 +13,29 @@ TODO: Error handling is non-existent.
              (libfive sandbox)
              (libfive vec))
 
-(use-modules (ice-9 match)
+(use-modules (srfi srfi-1)
+             (ice-9 match)
              (ice-9 textual-ports))
 
-(define args (program-arguments))
-
-(when (not (eq? (length args) 3))
-  (format #t "Usage: ~A input.io output.stl\n  Headless utility to export meshes from a Studio file\n" (car args))
-  (exit 1))
-
-(define text (call-with-input-file (cadr args)
-               get-string-all))
-(define r (eval-sandboxed text))
-
-(define shapes
-  (let f ((r r))
-    (cond ((eq? 0 (length r)) '())
-          ((eq? (caar r) 'error) (error (car r)))
-          ((shape? (cadar r)) (append (cons (cadar r) (f (cdr r)))))
-          (else (f (cdr r))))))
-
-
-(define filename (caddr args))
-
-(match global-bounds
-  ((xmin ymin zmin xmax ymax zmax)
-   (shapes-save-mesh shapes filename global-resolution
-                     (libfive-region (list xmin xmax)
-                                     (list ymin ymax)
-                                     (list zmin zmax))
-                     global-quality)))
+(match (program-arguments)
+  ((_ source-file stl-file)
+   (let ((shapes (append-map (match-lambda
+                               ((and ('error _ ...)
+                                     arg)
+                                (error arg))
+                               ((_ (? shape? shape))
+                                (list shape))
+                               (_ '()))
+                             (eval-sandboxed (call-with-input-file source-file
+                                               get-string-all)))))
+     (match global-bounds
+       ((xmin ymin zmin xmax ymax zmax)
+        (shapes-save-mesh shapes stl-file global-resolution
+                          (libfive-region (list xmin xmax)
+                                          (list ymin ymax)
+                                          (list zmin zmax))
+                          global-quality)))))
+  ((program _ ...)
+   (format #t "Usage: ~A input.io output.stl\n  Headless utility to export meshes from a Studio file\n"
+           program)
+   (exit 1)))
