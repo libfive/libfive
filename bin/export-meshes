@@ -8,14 +8,13 @@ finds every shape, and saves them to an STL file.
 TODO: Error handling is non-existent.
 !#
 
-(use-modules (libfive lib)
+(use-modules (srfi srfi-1)
+             (ice-9 match)
+             (ice-9 textual-ports)
+             (libfive lib)
              (libfive kernel)
              (libfive sandbox)
              (libfive vec))
-
-(use-modules (srfi srfi-1)
-             (ice-9 match)
-             (ice-9 textual-ports))
 
 (match (program-arguments)
   ((_ source-file stl-file)
