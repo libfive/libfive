@@ -22,7 +22,8 @@ TODO: Error handling is non-existent.
   (format #t "Usage: ~A input.io output.stl\n  Headless utility to export meshes from a Studio file\n" (car args))
   (exit 1))
 
-(define text (get-string-all (open-input-file (cadr args))))
+(define text (call-with-input-file (cadr args)
+               get-string-all))
 (define r (eval-sandboxed text))
 
 (define shapes
