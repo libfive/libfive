@@ -1,6 +1,6 @@
 /*
 libfive: a CAD kernel for modeling with implicit functions
-Copyright (C) 2017  Matt Keeter
+Copyright (C) 2017-2024 Matt Keeter
 
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -71,6 +71,15 @@ public:
     }
 
     /*
+     * Uninstalls a particular class's serializer / deserializer pair.
+     * Must be called with the class's name().
+     */
+    static void uninstall(const std::string& name)
+    {
+      installed().erase(name);
+    }
+
+    /*
      *  Serializes an oracle clause by looking up an installed serializer.
      *      data is pushed back into the data vector
      *      returns false on failure
@@ -126,11 +135,7 @@ protected:
      *  order dependencies.
      *  https://isocpp.org/wiki/faq/ctors#construct-on-first-use-v2
      */
-    static std::map<std::string, SerDe>& installed()
-    {
-        static std::map<std::string, SerDe> m;
-        return m;
-    }
+    static std::map<std::string, SerDe>& installed();
 };
 
 }   // namespace libfive
@@ -144,6 +149,9 @@ class T##_Installer { \
 public: \
     T##_Installer() { \
         OracleClause::install<T>(#T); \
+    }\
+    ~T##_Installer() { \
+        OracleClause::uninstall(#T); \
     }\
 };\
 static T##_Installer T##_Installer_Instance;
