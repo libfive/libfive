@@ -16,6 +16,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <utility>
 #include <variant>
 #include <vector>
+#include <cstdint>
 
 #include "libfive/tree/opcode.hpp"
 #include "libfive/tree/operations.hpp"
