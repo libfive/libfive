@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QMatrix4x4>
 #include <QObject>
 #include <QPropertyAnimation>
+#include <QQuaternion>
 
 namespace Studio {
 class Camera : public QObject
