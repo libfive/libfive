@@ -135,6 +135,12 @@ lib.libfive_tree_save_meshes.restype = ctypes.c_uint8
 lib.libfive_tree_save.argtypes = [libfive_tree, ctypes.c_char_p]
 lib.libfive_tree_save.restype = ctypes.c_bool
 
+lib.libfive_tree_serialize.argtypes = [libfive_tree, ctypes.POINTER(ctypes.c_void_p), ctypes.POINTER(ctypes.c_size_t)]
+lib.libfive_tree_serialize.restype = ctypes.c_bool
+
+lib.libfive_tree_deserialize.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+lib.libfive_tree_deserialize.restype = libfive_tree
+
 lib.libfive_tree_load.argtypes = [ctypes.c_char_p]
 lib.libfive_tree_load.restype = libfive_tree
 
@@ -154,3 +160,37 @@ lib.libfive_tree_render_mesh.argtypes = [libfive_tree, libfive_region_t, ctypes.
 lib.libfive_tree_render_mesh.restype = ctypes.POINTER(libfive_mesh_t)
 
 lib.libfive_mesh_delete.argtypes = [ctypes.POINTER(libfive_mesh_t)]
+
+################################################################################
+
+def serialize_tree(tree):
+    """
+    Serializes a tree to a Python bytes object.
+    Automatically handles allocation on the C/C++ side and frees the memory.
+    """
+    buf = ctypes.c_void_p()
+    size = ctypes.c_size_t()
+    
+    success = lib.libfive_tree_serialize(tree, ctypes.byref(buf), ctypes.byref(size))
+    if not success:
+        return None
+        
+    try:
+        if size.value > 0 and buf.value is not None:
+            return ctypes.string_at(buf.value, size.value)
+        return b""
+    finally:
+        if buf.value is not None:
+            lib.libfive_free_str(ctypes.cast(buf, ctypes.c_char_p))
+
+def deserialize_tree(data):
+    """
+    Deserializes a tree from a bytes object.
+    Returns the libfive_tree pointer, or None on failure.
+    """
+    if not isinstance(data, bytes):
+        raise TypeError("Expected bytes object for deserialization")
+    ptr = lib.libfive_tree_deserialize(data, len(data))
+    if ptr is None or ptr == 0:
+        return None
+    return ptr

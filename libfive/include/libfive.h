@@ -284,6 +284,21 @@ void libfive_tree_delete(libfive_tree ptr);
  *  The file format is not archival, and may change without notice */
 bool libfive_tree_save(libfive_tree ptr, const char* filename);
 
+/*
+ *  Serializes the given tree to a memory buffer.
+ *  The buffer contains binary data and is not null-terminated.
+ *  The caller is responsible for freeing the buffer with free().
+ *  Returns true on success, false on failure (e.g., invalid tree, null pointers, or allocation failure).
+ *  On failure, *data is set to nullptr and *size is set to 0.
+ */
+bool libfive_tree_serialize(libfive_tree ptr, char** data, size_t* size);
+
+/*
+ *  Deserializes a tree from a memory buffer.
+ *  Returns the deserialized tree, or NULL on failure.
+ */
+libfive_tree libfive_tree_deserialize(const char* data, size_t size);
+
 /*  Deserializes a tree from a file. */
 libfive_tree libfive_tree_load(const char* filename);
 

@@ -8,6 +8,7 @@ You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "libfive.h"
 
@@ -166,6 +167,65 @@ bool libfive_tree_save(libfive_tree ptr, const char* filename)
     {
         std::cerr << "libfive_tree_save: could not open file" << std::endl;
         return false;
+    }
+}
+
+bool libfive_tree_serialize(libfive_tree ptr, char** data, size_t* size)
+{
+    if (data == nullptr || size == nullptr)
+    {
+        return false;
+    }
+    *data = nullptr;
+    *size = 0;
+    if (ptr == nullptr)
+    {
+        return false;
+    }
+
+    try {
+        std::stringstream ss;
+        Tree(ptr).serialize(ss);
+        std::string s = ss.str();
+        if (s.empty()) {
+            return true;
+        }
+
+        char* buf = (char*)malloc(s.length());
+        if (buf == nullptr) {
+            return false;
+        }
+
+        memcpy(buf, s.data(), s.length());
+        *data = buf;
+        *size = s.length();
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+libfive_tree libfive_tree_deserialize(const char* data, size_t size)
+{
+    if (data == nullptr || size == 0)
+    {
+        return nullptr;
+    }
+
+    try {
+        std::string s(data, size);
+        std::stringstream ss(s);
+        auto t = Tree::deserialize(ss);
+        if (t.id() && t.is_valid())
+        {
+            return t.release();
+        }
+        else
+        {
+            return nullptr;
+        }
+    } catch (...) {
+        return nullptr;
     }
 }
 
